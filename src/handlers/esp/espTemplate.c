@@ -137,7 +137,7 @@ bool espCompile(HttpConn *conn, cchar *name, cchar *path, char *module)
 
     if (esp->env) {
         mprAddNullItem(esp->env);
-        mprSetDefaultCmdEnv(cmd, (char**) &esp->env->items[0]);
+        mprSetDefaultCmdEnv(cmd, (cchar**) &esp->env->items[0]);
     }
     if (mprRunCmd(cmd, commandLine, &out, &err, 0) != 0) {
 printf("ERROR\n");
