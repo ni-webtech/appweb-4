@@ -9,7 +9,7 @@
 
 /***************************** Forward Declarations ****************************/
 
-static bool featureSupported(char *key);
+static bool conditionalDefinition(char *key);
 static MaConfigState *pushState(MaConfigState *state, int *top);
 static int processSetting(MaMeta *server, char *key, char *value, MaConfigState *state);
 
@@ -326,7 +326,7 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
                     Want to be able to nest <if> directives.
                  */
                 state = pushState(state, &top);
-                state->enabled = featureSupported(value);
+                state->enabled = conditionalDefinition(value);
                 if (!state->enabled) {
                     mprLog(7, "If \"%s\" conditional is false at %s:%d", value, state->filename, state->lineNumber);
                 }
@@ -1450,7 +1450,7 @@ static MaConfigState *pushState(MaConfigState *state, int *top)
 }
 
 
-static bool featureSupported(char *key)
+static bool conditionalDefinition(char *key)
 {
     //  TODO - should always create a conditional directive when a module is loaded. Even for user modules.
     if (scasecmp(key, "BLD_COMMERCIAL") == 0) {
@@ -1478,8 +1478,13 @@ static bool featureSupported(char *key)
         
     } else if (scasecmp(key, "SSL_MODULE") == 0) {
         return BLD_FEATURE_SSL;
+
+    } else if (scasecmp(key, BLD_OS) == 0) {
+        return 1;
+
+    } else if (scasecmp(key, BLD_CPU) == 0) {
+        return 1;
     }
-    mprError("Unknown conditional \"%s\"", key);
     return 0;
 }
 

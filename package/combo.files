@@ -45,7 +45,6 @@ combo ${S}/server/appweb.c | egrep -v '#include.*appweb|#include.*http' >>${SRC}
 #	appweb.conf
 #
 cp ${S}/server/*.conf ${SRC}
-cp ${S}/server/conf/esp/*.conf ${SRC}
 
 #
 #	Doc
