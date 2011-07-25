@@ -156,6 +156,7 @@ static void runView(HttpConn *conn, cchar *actionKey)
 
     req = conn->data;
     esp = req->esp;
+
     req->path = mprJoinPath(conn->host->documentRoot, actionKey);
     req->source = mprJoinPathExt(req->path, ".esp");
     req->baseName = mprGetMD5Hash(req->source, slen(req->source), "espView_");
@@ -185,7 +186,7 @@ static void runView(HttpConn *conn, cchar *actionKey)
             }
             //  MOB - this should return an error msg
             if (mprLoadModule(mp) < 0) {
-                httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load compiled module for %s", req->source);
+                httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load compiled esp module for %s", req->source);
                 return;
             }
         }
@@ -194,6 +195,8 @@ static void runView(HttpConn *conn, cchar *actionKey)
         httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find defined view for %s", req->path);
         return;
     }
+
+	httpAddHeaderString(conn, "Content-Type", "text/html");
     (view)(conn);
 }
 
@@ -572,7 +575,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         esp->keepSource = (scasecmp(value, "on") == 0 || scasecmp(value, "yes") == 0);
         return 1;
 
-    } else if (scasecmp(key, "EspModules") == 0) {
+    } else if (scasecmp(key, "EspModuleDir") == 0) {
         esp->modDir = sclone(value);
         return 1;
 
@@ -616,6 +619,8 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         mprAddItem(esp->routes, route);
         return 1;
         
+    } else if (scasecmp(key, "EspShowErrors") == 0) {
+		esp->showErrors = (scasecmp(value, "on") == 0 || scasecmp(value, "yes") == 0);
 #if UNUSED
     } else if (scasecmp(key, "EspWorkers") == 0) {
         if ((stage = httpLookupStage(http, "espHandler")) == 0) {
@@ -714,7 +719,10 @@ int maEspHandlerInit(Http *http)
     }
     esp->lifespan = ESP_LIFESPAN;
     esp->keepSource = 0;
-    esp->reload = BLD_DEBUG;
+#if BLD_DEBUG
+	esp->reload = 1;
+	esp->showErrors = 1;
+#endif
     return 0;
 }
 

@@ -95,6 +95,7 @@ typedef struct Esp {
     MprTime         lifespan;               /* Default cache lifespan */
     int             reload;                 /* Auto-reload modified ESP source */
     int             keepSource;             /* Preserve generated source */
+	int				showErrors;				/* Send server errors back to client */
 } Esp;
 
 /*

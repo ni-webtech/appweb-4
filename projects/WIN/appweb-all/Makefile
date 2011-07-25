@@ -73,19 +73,19 @@ libpcre.vcxproj: libpcre.custom Makefile $(CONFIG)
 	$(VSP) --project libpcre.vcxproj --library pcre --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" \
 		--custom libpcre.custom \
-		--def libpcre.def --libs "$(LIBS)" $(MPR_HDR) $(SRC)/deps/pcre/pcre.c
+		--def libpcre.def --libs "$(LIBS)" $(SRC)/deps/pcre/pcre.c
 	
 libhttp.vcxproj: libhttp.custom Makefile $(CONFIG)
 	$(VSP) --project libhttp.vcxproj --library http --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps "libmpr libmprssl" \
 		--custom libhttp.custom \
-		--def libhttp.def --libs "libmpr.lib libmprssl.lib $(LIBS)" $(MPR_HDR) $(HTTP_HDR) $(SRC)/deps/http/httpLib.c
+		--def libhttp.def --libs "libmpr.lib libmprssl.lib $(LIBS)" $(HTTP_HDR) $(SRC)/deps/http/httpLib.c
 	
 libappweb.vcxproj: libappweb.custom Makefile $(CONFIG)
 	$(VSP) --project libappweb.vcxproj --library appweb --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps "libmpr libhttp libpcre" \
 		--custom libappweb.custom \
-		--def libappweb.def --libs "libmpr.lib $(LIBS)" $(MPR_HDR) $(APPWEB_HDR) $(APPWEB_SRC)
+		--def libappweb.def --libs "libmpr.lib $(LIBS)" $(APPWEB_HDR) $(APPWEB_SRC)
 
 #
 #	Modules
@@ -95,19 +95,19 @@ mod_cgi.vcxproj: Makefile $(CONFIG)
 		--props "$(PROPS)" --deps libappweb \
 		--condition "'$$\(BLD_FEATURE_CGI)' == '1'" \
 		--def mod_cgi.def --libs "libmpr.lib libhttp.lib libappweb.lib $(LIBS)" \
-		$(MPR_HDR) $(SRC)/handlers/cgiHandler.c
+		$(SRC)/handlers/cgiHandler.c
 
 mod_ejs.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project mod_ejs.vcxproj --library ejs --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps libappweb \
 		--condition "'$$\(BLD_FEATURE_EJS)' == '1'" \
 		--def mod_ejs.def --libs "libmpr.lib libhttp.lib libsqlite3.lib libejs.lib libappweb.lib $(LIBS)" \
-		$(MPR_HDR) $(EJS_HDR) $(SRC)/handlers/ejsHandler.c
+		$(EJS_HDR) $(SRC)/handlers/ejsHandler.c
 
 mod_esp.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project mod_esp.vcxproj --library esp --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps libappweb \
-		--def mod_esp.def --libs "libmpr.lib libhttp.lib libpcre.lib libappweb.lib $(LIBS)" $(MPR_HDR) \
+		--def mod_esp.def --libs "libmpr.lib libhttp.lib libpcre.lib libappweb.lib $(LIBS)" \
 		$(SRC)/handlers/esp/espHandler.c $(SRC)/handlers/esp/espFramework.c $(SRC)/handlers/esp/espTemplate.c
 
 mod_php.vcxproj: Makefile $(CONFIG)
@@ -115,14 +115,14 @@ mod_php.vcxproj: Makefile $(CONFIG)
 		--props "$(PROPS)" --deps libappweb \
 		--condition "'$$\(BLD_FEATURE_PHP)' == '1'" \
 		--iflags "$(PHP_IFLAGS)" --def mod_php.def --libs "libmpr.lib libhttp.lib libappweb.lib $(LIBS)" \
-        $(MPR_HDR) $(SRC)/handlers/phpHandler.c
+        $(SRC)/handlers/phpHandler.c
 
 mod_ssl.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project mod_ssl.vcxproj --library ssl --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps libappweb \
 		--condition "'$$\(BLD_FEATURE_SSL)' == '1'" \
 		--def mod_ssl.def --libs "libmpr.lib libmprssl.lib libhttp.lib libappweb.lib $(LIBS)" \
-		$(MPR_HDR) $(SRC)/modules/sslModule.c
+		$(SRC)/modules/sslModule.c
 
 #
 #	Executables
@@ -130,25 +130,25 @@ mod_ssl.vcxproj: Makefile $(CONFIG)
 appweb.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project appweb.vcxproj --exe appweb.exe --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps libappweb \
-		--libs "libmpr.lib libhttp.lib libappweb.lib $(LIBS)" $(MPR_HDR) $(APPWEB_HDR) $(SRC)/server/appweb.c
+		--libs "libmpr.lib libhttp.lib libappweb.lib $(LIBS)" $(APPWEB_HDR) $(SRC)/server/appweb.c
 
 angel.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project angel.vcxproj --graphical --exe angel.exe \
 		--props "$(PROPS)" --deps libmpr \
-		--dflags "$(DFLAGS)" --libs "libmpr.lib $(LIBS)" $(MPR_HDR) $(APPWEB_HDR) $(SRC)/deps/mpr/angel.c
+		--dflags "$(DFLAGS)" --libs "libmpr.lib $(LIBS)" $(APPWEB_HDR) $(SRC)/deps/mpr/angel.c
 
 appwebMonitor.vcxproj: appwebMonitor.custom Makefile $(CONFIG)
 	$(VSP) --project appwebMonitor.vcxproj --graphical --exe appwebMonitor.exe \
 		--props "$(PROPS)" --deps libmpr \
 		--custom appwebMonitor.custom \
 		--resources $(SRC)/server/appweb.rc \
-		--dflags "$(DFLAGS)" --libs "libmpr.lib $(LIBS)" $(MPR_HDR) $(APPWEB_HDR) \
+		--dflags "$(DFLAGS)" --libs "libmpr.lib $(LIBS)" $(APPWEB_HDR) \
         $(SRC)/include/appwebMonitor.h $(SRC)/server/WIN/appwebMonitor.c
 
 auth.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project auth.vcxproj --exe auth.exe --search "$(BLD_MPR_LIBPATHS)" \
 		--props "$(PROPS)" --deps libmpr \
-        --dflags "$(DFLAGS)" --libs "libmpr.lib $(LIBS)" $(MPR_HDR) $(SRC)/utils/auth.c
+        --dflags "$(DFLAGS)" --libs "libmpr.lib $(LIBS)" $(SRC)/utils/auth.c
 
 http.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project http.vcxproj --exe http.exe --search "$(BLD_MPR_LIBPATHS)" --dflags "$(DFLAGS)" \
@@ -161,7 +161,7 @@ http.vcxproj: Makefile $(CONFIG)
 libsqlite3.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project libsqlite3.vcxproj --library sqlite3 --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps libmpr \
-		--def libsqlite3.def --libs "libmpr.lib $(LIBS)" $(MPR_HDR) $(SRC)/deps/ejs/sqlite3.c
+		--def libsqlite3.def --libs "libmpr.lib $(LIBS)" $(SRC)/deps/ejs/sqlite3.c
 	
 ejspage.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project ejspage.vcxproj --exe ejspage.exe --search "$(BLD_MPR_LIBPATHS)" --dflags "$(DFLAGS)" \

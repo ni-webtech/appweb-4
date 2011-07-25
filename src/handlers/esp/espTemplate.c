@@ -133,18 +133,22 @@ bool espCompile(HttpConn *conn, cchar *name, cchar *path, char *module)
 
     cmd = mprCreateCmd(conn->dispatcher);
     commandLine = getCompileCommand(conn, path, module);
-    mprLog(0, "ESP compile: %s\n", commandLine);
+    mprLog(4, "ESP compile: %s\n", commandLine);
 
     if (esp->env) {
         mprAddNullItem(esp->env);
         mprSetDefaultCmdEnv(cmd, (cchar**) &esp->env->items[0]);
     }
-    if (mprRunCmd(cmd, commandLine, &out, &err, 0) != 0) {
-printf("ERROR\n");
-printf("OUT %s\n", out);
-printf("ERR %s\n", err);
-
-        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't compile view %s, error %s", path, err);
+	if (mprRunCmd(cmd, commandLine, &out, &err, 0) != 0) {
+		if (err == 0 || *err == '\0') {
+			/* Windows puts errors to stdout Ugh! */
+			err = out;
+		}
+		if (esp->showErrors) {
+			httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't compile view %s, error %s", path, err);
+		} else {
+			httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't compile view %s", path);
+		}
         return 0;
     }
     if (!esp->keepSource) {
