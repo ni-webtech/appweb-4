@@ -10998,22 +10998,27 @@ int mprAddItem(MprList *lp, cvoid *item)
 
 int mprAddNullItem(MprList *lp)
 {
+    int     index;
+
     mprAssert(lp);
     mprAssert(lp->capacity >= 0);
     mprAssert(lp->length >= 0);
 
     lock(lp);
-    if (lp->length == 0 || lp->items[lp->length - 1] != 0) {
+    if (lp->length != 0 && lp->items[lp->length - 1] == 0) {
+        index = lp->length - 1;
+    } else {
         if (lp->length >= lp->capacity) {
             if (growList(lp, 1) < 0) {
                 unlock(lp);
                 return MPR_ERR_TOO_MANY;
             }
         }
-        lp->items[lp->length - 1] = 0;
+        index = lp->length;
+        lp->items[index] = 0;
     }
     unlock(lp);
-    return lp->length - 1;
+    return index;
 }
 
 
