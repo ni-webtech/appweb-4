@@ -26,7 +26,7 @@ static char *getOutDir(cchar *name)
 #if DEBUG_IDE
     return mprGetAppDir();
 #else
-    return mprAsprintf("%s/../%s", mprGetAppDir(), name); 
+    return mprGetNormalizedPath(mprAsprintf("%s/../%s", mprGetAppDir(), name)); 
 #endif
 }
 
@@ -44,15 +44,30 @@ static char *getCompileCommand(HttpConn *conn, cchar *source, cchar *module)
     buf = mprCreateBuf(-1, -1);
 
     for (cp = esp->compile; *cp; cp++) {
-        if (cp > esp->compile && cp[-1] == '\\') {
-            mprPutStringToBuf(buf, cp);
-        } else if (*cp == '$') {
+		if (*cp == '$') {
             if (sncmp(cp, "${SRC}", 6) == 0) {
                 /* Currently putting temp C code in the modules directory */
                 mprPutStringToBuf(buf, out);
                 cp += 5;
+            } else if (sncmp(cp, "${CC}", 5) == 0) {
+                mprPutCharToBuf(buf, '"');
+                mprPutStringToBuf(buf, BLD_CC);
+                mprPutCharToBuf(buf, '"');
+                cp += 4;
             } else if (sncmp(cp, "${DEBUG}", 8) == 0) {
-                mprPutStringToBuf(buf, BLD_DEBUG ? "-g" : "");
+#if BLD_DEBUG
+    #if WIN
+                mprPutStringToBuf(buf, "-Zi -Od");
+    #else
+                mprPutStringToBuf(buf, "-g");
+    #endif
+#else
+    #if WIN
+                mprPutStringToBuf(buf, "-O");
+    #else
+                mprPutStringToBuf(buf, "O2");
+    #endif
+#endif
                 cp += 7;
             } else if (sncmp(cp, "${ARCH}", 7) == 0) {
                 mprPutStringToBuf(buf, BLD_HOST_CPU);
@@ -68,6 +83,9 @@ static char *getCompileCommand(HttpConn *conn, cchar *source, cchar *module)
                 cp += 5;
             } else if (sncmp(cp, "${SHLIB}", 8) == 0) {
                 mprPutStringToBuf(buf, BLD_SHLIB);
+                cp += 7;
+            } else if (sncmp(cp, "${SHOBJ}", 8) == 0) {
+                mprPutStringToBuf(buf, BLD_SHOBJ);
                 cp += 7;
             } else {
                 mprPutCharToBuf(buf, *cp);
@@ -116,6 +134,11 @@ bool espCompile(HttpConn *conn, cchar *name, cchar *path, char *module)
     cmd = mprCreateCmd(conn->dispatcher);
     commandLine = getCompileCommand(conn, path, module);
     mprLog(0, "ESP compile: %s\n", commandLine);
+
+    if (esp->env) {
+        mprAddNullItem(esp->env);
+        mprSetDefaultCmdEnv(cmd, (char**) &esp->env->items[0]);
+    }
     if (mprRunCmd(cmd, commandLine, &out, &err, 0) != 0) {
 printf("ERROR\n");
 printf("OUT %s\n", out);
@@ -166,7 +189,7 @@ static char *joinLine(cchar *str)
 static int buildScript(cchar *path, cchar *name, char *page, char **script, char **err)
 {
     EspParse    parse;
-    char        *include, *incBuf, *incText;
+    char        *include, *incBuf, *incText, *export;
     int         state, tid, rc;
 
     mprAssert(script);
@@ -251,6 +274,11 @@ static int buildScript(cchar *path, cchar *name, char *page, char **script, char
         /*
             Wrap the script
          */
+#if BLD_WIN_LIKE
+	export = "__declspec(dllexport) ";
+#else
+	export = "";
+#endif
 printf("SCRIPT: \n%s\n", *script);
         *script = sfmt(\
             "/*\n * Generated from %s\n */\n"\
@@ -258,11 +286,11 @@ printf("SCRIPT: \n%s\n", *script);
             "static void %s(HttpConn *conn) {\n"\
             "   %s\n"\
             "}\n\n"\
-            "int espInit_%s(Esp *esp, MprModule *module) {\n"\
+            "%sint espInit_%s(Esp *esp, MprModule *module) {\n"\
             "   espDefineView(esp, \"%s\", %s);\n"\
             "   return 0;\n"\
             "}\n",
-            path, name, *script, name, path, name);
+            path, name, *script, export, name, mprGetPortablePath(path), name);
     }
     return rc;
 }
