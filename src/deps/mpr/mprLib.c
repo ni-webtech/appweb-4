@@ -10996,6 +10996,27 @@ int mprAddItem(MprList *lp, cvoid *item)
 }
 
 
+int mprAddNullItem(MprList *lp)
+{
+    mprAssert(lp);
+    mprAssert(lp->capacity >= 0);
+    mprAssert(lp->length >= 0);
+
+    lock(lp);
+    if (lp->length == 0 || lp->items[lp->length - 1] != 0) {
+        if (lp->length >= lp->capacity) {
+            if (growList(lp, 1) < 0) {
+                unlock(lp);
+                return MPR_ERR_TOO_MANY;
+            }
+        }
+        lp->items[lp->length - 1] = 0;
+    }
+    unlock(lp);
+    return lp->length - 1;
+}
+
+
 /*
     Insert an item to the list at a specified position. We insert before the item at "index".
     ie. The inserted item will go into the "index" location and the other elements will be moved up.

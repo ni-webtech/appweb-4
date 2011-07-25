@@ -3634,6 +3634,7 @@ typedef int (*MprListCompareProc)(cvoid *arg1, cvoid *arg2);
     @ingroup MprList
  */
 extern int mprAddItem(MprList *list, cvoid *item);
+extern int mprAddNullItem(MprList *list);
 
 /**
     Append a list
