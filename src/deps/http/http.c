@@ -54,6 +54,7 @@ typedef struct App {
     int      showHeaders;        /* Output the response headers */
     int      singleStep;         /* Pause between requests */
     char     *target;            /* Destination url */
+    int      text;               /* Emit errors in plain text */
     int      timeout;            /* Timeout in msecs for a non-responsive server */
     int      upload;             /* Upload using multipart mime */
     char     *username;          /* User name for authentication of requests */
@@ -381,6 +382,9 @@ static bool parseArgs(int argc, char **argv)
         } else if (strcmp(argp, "--single") == 0 || strcmp(argp, "-s") == 0) {
             app->singleStep++;
 
+        } else if (strcmp(argp, "--text") == 0) {
+            app->text++;
+
         } else if (strcmp(argp, "--threads") == 0 || strcmp(argp, "-t") == 0) {
             if (nextArg >= argc) {
                 return 0;
@@ -640,6 +644,9 @@ static int prepRequest(HttpConn *conn, MprList *files, int retry)
 
     for (next = 0; (header = mprGetNextItem(app->headers, &next)) != 0; ) {
         httpAppendHeader(conn, header->key, header->value);
+    }
+    if (app->text) {
+        httpSetHeader(conn, "Accept", "text/plain");
     }
     if (app->sequence) {
         static int next = 0;

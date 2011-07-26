@@ -3109,6 +3109,7 @@ void httpWritable(HttpConn *conn)
     HTTP_NOTIFY(conn, HTTP_EVENT_IO, HTTP_NOTIFY_WRITABLE);
 }
 
+//  MOB - move these into httpError.c
 
 void httpFormatErrorV(HttpConn *conn, int status, cchar *fmt, va_list args)
 {
@@ -4736,6 +4737,7 @@ static void manageLoc(HttpLoc *loc, int flags)
         mprMark(loc->script);
         mprMark(loc->scriptPath);
         mprMark(loc->ssl);
+        mprMark(loc->data);
     }
 }
 
@@ -4765,9 +4767,6 @@ HttpLoc *httpCreateInheritedLocation(HttpLoc *parent)
     loc->expiresByType = parent->expiresByType;
     loc->connector = parent->connector;
     loc->errorDocuments = parent->errorDocuments;
-#if UNUSED
-    loc->sessionTimeout = parent->sessionTimeout;
-#endif
     loc->auth = httpCreateAuth(parent->auth);
     loc->uploadDir = parent->uploadDir;
     loc->autoDelete = parent->autoDelete;
@@ -5092,6 +5091,23 @@ cchar *httpLookupErrorDocument(HttpLoc *loc, int code)
     return (cchar*) mprLookupKey(loc->errorDocuments, numBuf);
 }
 
+
+void httpSetLocationData(HttpLoc *loc, cchar *key, void *data)
+{
+    if (loc->data == 0) {
+        loc->data = mprCreateHash(-1, 0);
+    }
+    mprAddKey(loc->data, key, data);
+}
+
+
+void *httpGetLocationData(HttpLoc *loc, cchar *key)
+{
+    if (!loc->data) {
+        return 0;
+    }
+    return mprLookupKey(loc->data, key);
+}
 
 /*
     @copy   default
@@ -11096,17 +11112,21 @@ int httpFormatBody(HttpConn *conn, cchar *title, cchar *fmt, ...)
     char        *body;
 
     tx = conn->tx;
-    mprAssert(tx->altBody == 0);
-
     va_start(args, fmt);
-    body = mprAsprintfv(fmt, args);
-    tx->altBody = mprAsprintf(
-        "<!DOCTYPE html>\r\n"
-        "<html><head><title>%s</title></head>\r\n"
-        "<body>\r\n%s\r\n</body>\r\n</html>\r\n",
-        title, body);
+
     httpOmitBody(conn);
-    va_end(args);
+    body = mprAsprintfv(fmt, args);
+
+    if (scmp(conn->rx->accept, "text/plain") == 0) {
+        tx->altBody = body;
+    } else {
+        tx->altBody = mprAsprintf(
+            "<!DOCTYPE html>\r\n"
+            "<html><head><title>%s</title></head>\r\n"
+            "<body>\r\n%s\r\n</body>\r\n</html>\r\n",
+            title, body);
+        va_end(args);
+    }
     return (int) strlen(tx->altBody);
 }
 
@@ -11118,7 +11138,6 @@ void httpSetResponseBody(HttpConn *conn, int status, cchar *msg)
 {
     HttpTx      *tx;
     cchar       *statusMsg;
-    char        *emsg;
 
     mprAssert(msg && msg);
     tx = conn->tx;
@@ -11132,8 +11151,12 @@ void httpSetResponseBody(HttpConn *conn, int status, cchar *msg)
     tx->status = status;
     if (tx->altBody == 0) {
         statusMsg = httpLookupStatus(conn->http, status);
-        emsg = mprEscapeHtml(msg);
-        httpFormatBody(conn, statusMsg, "<h2>Access Error: %d -- %s</h2>\r\n<p>%s</p>\r\n", status, statusMsg, emsg);
+        if (scmp(conn->rx->accept, "text/plain") == 0) {
+            httpFormatBody(conn, statusMsg, "Access Error: %d -- %s\r\n%s\r\n", status, statusMsg, msg);
+        } else {
+            httpFormatBody(conn, statusMsg, "<h2>Access Error: %d -- %s</h2>\r\n<p>%s</p>\r\n", status, statusMsg, 
+                mprEscapeHtml(msg));
+        }
     }
     httpDontCache(conn);
 }

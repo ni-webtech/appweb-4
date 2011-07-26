@@ -90,6 +90,7 @@ typedef struct Esp {
     MprHashTable    *modules;               /* Compiled modules */
     MprList         *env;                   /* Environment for compiler */
     MprList         *routes;                /* Ordered list of routes */
+    HttpLoc         *loc;                   /* Controlling Http location definition */
     char            *compile;               /* Compile template */
     char            *modDir;                /* Directory for cache files */
     MprTime         lifespan;               /* Default cache lifespan */
@@ -108,7 +109,8 @@ typedef struct EspRoute {
     char            *action;                /* Original matching action to run */
     MprList         *tokens;                /* Tokens in pattern, {name} */
     char            *params;                /* Params to define. Extracted from pattern. (compiled) */
-    char            *module;                /* Module containing the controller/action code */
+    char            *controllerName;        /* Controller containing actions */
+    char            *controllerPath;        /* Full source path source of controller */
     char            *template;              /* URI template for forming links based on this route */
     char            *patternExpression;     /* Pattern regular expression */
     void            *compiledPattern;       /* Compiled pattern regular expression */
@@ -135,7 +137,7 @@ typedef struct EspReq {
 typedef void (*EspAction)(HttpConn *conn);
 typedef void (*EspView)(HttpConn *conn);
 
-extern bool espCompile(HttpConn *conn, cchar *name, cchar *source, char *module);
+extern bool espCompile(HttpConn *conn, cchar *name, cchar *source, char *module, int isView);
 
 //  MOB - move to pcre
 #define PCRE_GLOBAL     0x1

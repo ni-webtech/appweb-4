@@ -40,14 +40,16 @@ static char *getCompileCommand(HttpConn *conn, cchar *source, cchar *module)
     
     req = conn->data;
     esp = req->esp;
+    if (esp->compile == 0) {
+        return 0;
+    }
     out = mprTrimPathExtension(module);
     buf = mprCreateBuf(-1, -1);
 
     for (cp = esp->compile; *cp; cp++) {
 		if (*cp == '$') {
             if (sncmp(cp, "${SRC}", 6) == 0) {
-                /* Currently putting temp C code in the modules directory */
-                mprPutStringToBuf(buf, out);
+                mprPutStringToBuf(buf, source);
                 cp += 5;
             } else if (sncmp(cp, "${CC}", 5) == 0) {
                 mprPutCharToBuf(buf, '"');
@@ -76,7 +78,7 @@ static char *getCompileCommand(HttpConn *conn, cchar *source, cchar *module)
                 mprPutStringToBuf(buf, out);
                 cp += 5;
             } else if (sncmp(cp, "${INC}", 6) == 0) {
-                mprPutStringToBuf(buf, getOutDir(BLD_INC_NAME));
+                mprPutStringToBuf(buf, mprResolvePath(mprGetAppDir(), BLD_INC_NAME));
                 cp += 5;
             } else if (sncmp(cp, "${LIB}", 6) == 0) {
                 mprPutStringToBuf(buf, getOutDir(BLD_LIB_NAME));
@@ -99,40 +101,47 @@ static char *getCompileCommand(HttpConn *conn, cchar *source, cchar *module)
 }
 
 
-bool espCompile(HttpConn *conn, cchar *name, cchar *path, char *module)
+bool espCompile(HttpConn *conn, cchar *name, cchar *path, char *module, int isView)
 {
     MprCmd      *cmd;
     MprFile     *fp;
     EspReq      *req;
     Esp         *esp;
-    char        *source, *script, *commandLine, *page, *err, *out;
+    cchar       *source;
+    char        *script, *commandLine, *page, *err, *out;
     ssize       len;
 
     req = conn->data;
     esp = req->esp;
-    if ((page = readFileToMem(path)) == 0) {
-        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't read view %s", path);
-        return 0;
-    }
-    if (buildScript(path, name, page, &script, &err) < 0) {
-        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't build view %s, error %s", path, err);
-        return 0;
-    }
-    source = mprJoinPathExt(mprTrimPathExtension(module), ".c");
-    if ((fp = mprOpenFile(source, O_WRONLY | O_TRUNC | O_CREAT | O_BINARY, 0664)) == 0) {
-        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't open compiled script file %s", source);
-        return 0;
-    }
-    len = slen(script);
-    if (mprWriteFile(fp, script, len) != len) {
-        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't write compiled script file %s", source);
-        mprCloseFile(fp);
-        return 0;
-    }
-    mprCloseFile(fp);
 
+    if (isView) {
+        if ((page = readFileToMem(path)) == 0) {
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't read %s", path);
+            return 0;
+        }
+        if (buildScript(path, name, page, &script, &err) < 0) {
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't build %s, error %s", path, err);
+            return 0;
+        }
+        source = mprJoinPathExt(mprTrimPathExtension(module), ".c");
+        if ((fp = mprOpenFile(source, O_WRONLY | O_TRUNC | O_CREAT | O_BINARY, 0664)) == 0) {
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't open compiled script file %s", source);
+            return 0;
+        }
+        len = slen(script);
+        if (mprWriteFile(fp, script, len) != len) {
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't write compiled script file %s", source);
+            mprCloseFile(fp);
+            return 0;
+        }
+        mprCloseFile(fp);
+    } else {
+        source = path;
+    }
     cmd = mprCreateCmd(conn->dispatcher);
-    commandLine = getCompileCommand(conn, path, module);
+    if ((commandLine = getCompileCommand(conn, source, module)) == 0) {
+        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Missing EspCompile directive for %s", source);
+    }
     mprLog(4, "ESP compile: %s\n", commandLine);
 
     if (esp->env) {
@@ -145,13 +154,13 @@ bool espCompile(HttpConn *conn, cchar *name, cchar *path, char *module)
 			err = out;
 		}
 		if (esp->showErrors) {
-			httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't compile view %s, error %s", path, err);
+			httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't compile %s, error %s", path, err);
 		} else {
-			httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't compile view %s", path);
+			httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't compile %s", path);
 		}
         return 0;
     }
-    if (!esp->keepSource) {
+    if (!esp->keepSource && isView) {
         mprDeletePath(source);
     }
     return 1;
@@ -285,7 +294,7 @@ static int buildScript(cchar *path, cchar *name, char *page, char **script, char
 #endif
 printf("SCRIPT: \n%s\n", *script);
         *script = sfmt(\
-            "/*\n * Generated from %s\n */\n"\
+            "/*\n   Generated from %s\n */\n"\
             "#include \"esp.h\"\n\n"\
             "static void %s(HttpConn *conn) {\n"\
             "   %s\n"\

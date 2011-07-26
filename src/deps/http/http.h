@@ -1941,7 +1941,7 @@ typedef struct HttpLoc {
     HttpAlias       *alias;                 /**< Associated alias for this location */
     HttpStage       *connector;             /**< Network connector to use */
     HttpStage       *handler;               /**< Fixed handler */
-    void            *handlerData;           /**< Data reserved for the handler */
+    MprHashTable    *data;                  /**< Hash of extra data configuration */
     MprHashTable    *extensions;            /**< Hash of handlers by extensions */
     MprHashTable    *expires;               /**< Expiry of content by extension */
     MprHashTable    *expiresByType;         /**< Expiry of content by mime type */
@@ -1977,6 +1977,8 @@ extern void httpSetLocationScript(HttpLoc *location, cchar *script, cchar *scrip
 extern void httpSetLocationWorkers(HttpLoc *location, int workers);
 extern int httpSetConnector(HttpLoc *location, cchar *name);
 extern int httpAddHandler(HttpLoc *location, cchar *name, cchar *extensions);
+extern void *httpGetLocationData(HttpLoc *loc, cchar *key);
+extern void httpSetLocationData(HttpLoc *loc, cchar *key, void *data);
 
 extern HttpLoc *httpCreateLocation();
 extern HttpLoc *httpCreateInheritedLocation(HttpLoc *location);
