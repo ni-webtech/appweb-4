@@ -10979,7 +10979,6 @@ void httpAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
  */
 void httpAddHeaderString(HttpConn *conn, cchar *key, cchar *value)
 {
-
     mprAssert(key && *key);
     mprAssert(value);
 
@@ -11428,16 +11427,13 @@ void httpSetEntityLength(HttpConn *conn, int64 len)
 }
 
 
-/*
-    Set the tx status
- */
 void httpSetStatus(HttpConn *conn, int status)
 {
     conn->tx->status = status;
 }
 
 
-void httpSetMimeType(HttpConn *conn, cchar *mimeType)
+void httpSetContentType(HttpConn *conn, cchar *mimeType)
 {
     httpSetHeaderString(conn, "Content-Type", sclone(mimeType));
 }

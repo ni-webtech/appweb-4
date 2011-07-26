@@ -332,7 +332,7 @@ static int sendHeaders(sapi_headers_struct *phpHeaders TSRMLS_DC)
     conn = (HttpConn*) SG(server_context);
     mprLog(6, "php: send headers");
     httpSetStatus(conn, phpHeaders->http_response_code);
-    httpSetMimeType(conn, phpHeaders->mimetype);
+    httpSetContentType(conn, phpHeaders->mimetype);
     return SAPI_HEADER_SENT_SUCCESSFULLY;
 }
 

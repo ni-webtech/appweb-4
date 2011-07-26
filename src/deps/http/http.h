@@ -2658,13 +2658,13 @@ extern void httpSetResponseBody(HttpConn *conn, int status, cchar *msg);
 extern void httpSetStatus(HttpConn *conn, int status);
 
 /** 
-    Set the transmission (response)  mime type
+    Set the transmission (response) content mime type
     @description Set the mime type Http header in the transmission
     @param conn HttpConn connection object created via $httpCreateConn
     @param mimeType Mime type string
     @ingroup HttpTx
  */
-extern void httpSetMimeType(HttpConn *conn, cchar *mimeType);
+extern void httpSetContentType(HttpConn *conn, cchar *mimeType);
 
 /** 
     Set a simple key/value transmission header

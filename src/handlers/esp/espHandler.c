@@ -163,9 +163,6 @@ static int runAction(HttpConn *conn, cchar *actionKey)
     esp = req->esp;
     route = req->route;
 
-#if UNUSED
-    req->path = mprJoinPath(conn->host->documentRoot, actionKey);
-#endif
     req->baseName = mprGetMD5Hash(route->controllerPath, slen(route->controllerPath), "action_");
     req->module = mprGetNormalizedPath(mprAsprintf("%s/%s%s", req->esp->modDir, req->baseName, BLD_SHOBJ));
 
@@ -361,10 +358,7 @@ static int prepRoute(Esp *esp, HttpHost *host, EspRoute *route, char *methods)
 
             } else if (*cp == ')') {
                 mprPutStringToBuf(pattern, ")?");
-#if UNUSED
-            } else if (*cp == '/') {
-                mprPutStringToBuf(pattern, "\\/");
-#endif
+
             } else if (*cp == '{' && (cp == route->pattern || cp[-1] != '\\')) {
                 if ((ep = schr(cp, '}')) != 0) {
                     /* Trim {} off the token and replace in pattern with "([^/]*)"  */
@@ -787,16 +781,6 @@ espDefineAction(esp, "test", testAction);
     } else if (scasecmp(key, "EspShowErrors") == 0) {
 		esp->showErrors = (scasecmp(value, "on") == 0 || scasecmp(value, "yes") == 0);
         return 1;
-
-#if UNUSED
-    } else if (scasecmp(key, "EspWorkers") == 0) {
-        if ((stage = httpLookupStage(http, "espHandler")) == 0) {
-            mprError("EspHandler is not configured");
-            return MPR_ERR_BAD_SYNTAX;
-        }
-        loc->workers = atoi(value);
-        return 1;
-#endif
     }
     return 0;
 }
@@ -862,33 +846,6 @@ int maEspHandlerInit(Http *http)
     handler->open = openEsp; 
     handler->start = startEsp; 
     handler->parse = (HttpParse) parseEsp; 
-#if UNUSED
-    handler->stageData = esp;
-
-    if ((esp->actions = mprCreateHash(-1, MPR_HASH_STATIC_VALUES)) == 0) {
-        return MPR_ERR_MEMORY;
-    }
-    if ((esp->routes = mprCreateList(-1, 0)) == 0) {
-        return MPR_ERR_MEMORY;
-    }
-    if ((esp->views = mprCreateHash(-1, MPR_HASH_STATIC_VALUES)) == 0) {
-        return MPR_ERR_MEMORY;
-    }
-#if DEBUG_IDE
-    esp->modDir = mprGetAppDir();
-#else
-    esp->modDir = mprJoinPath(mprGetAppDir(), "../" BLD_LIB_NAME);
-#endif
-    if (!mprPathExists(esp->modDir, X_OK)) {
-        esp->modDir = sclone(".");
-    }
-    esp->lifespan = ESP_LIFESPAN;
-    esp->keepSource = 0;
-#if BLD_DEBUG
-	esp->reload = 1;
-	esp->showErrors = 1;
-#endif
-#endif
     return 0;
 }
 
