@@ -67,7 +67,7 @@ static char *getCompileCommand(HttpConn *conn, cchar *source, cchar *module)
     #if WIN
                 mprPutStringToBuf(buf, "-O");
     #else
-                mprPutStringToBuf(buf, "O2");
+                mprPutStringToBuf(buf, "-O2");
     #endif
 #endif
                 cp += 7;
@@ -197,18 +197,34 @@ static char *joinLine(cchar *str)
 
 
 /*
-      Convert an ESP web page into C code
+    Convert an ESP web page into C code
+    Directives
+        <%                  Begin esp section containing C code
+        <%=                 Begin esp section containing an expression to evaluate and substitute
+        %>                  End esp section
+        <%@ include "file"  Include an esp file
+        <%@ layout "file"   Specify a layout page to use. Use layout "" to disable layout management
+        <%@ content         Mark the location to substitute content in a layout pag
+        @@var               To expand the value of "var". Var can also be simple expressions (without spaces)
+
+        <%g     Global. #include
+        <%!     Declarations
+        <%!!    Static - once only initialization
+        <%p     Prolog - top of function
+        <%e     Epilog - cleanup code
+        <%="%fmt" "args", "args", "args">
  */
 static int buildScript(cchar *path, cchar *name, char *page, char **script, char **err)
 {
     EspParse    parse;
-    char        *include, *incBuf, *incText, *export;
+    char        *include, *incBuf, *incText, *export, *functions;
     int         state, tid, rc;
 
     mprAssert(script);
     mprAssert(page);
 
     rc = 0;
+    functions = 0;
     state = ESP_STAGE_BEGIN;
     *script = 0;
     *err = 0;
@@ -299,11 +315,12 @@ printf("SCRIPT: \n%s\n", *script);
             "static void %s(HttpConn *conn) {\n"\
             "   %s\n"\
             "}\n\n"\
+            "%s\n\n"\
             "%sint espInit_%s(Esp *esp, MprModule *module) {\n"\
             "   espDefineView(esp, \"%s\", %s);\n"\
             "   return 0;\n"\
             "}\n",
-            path, name, *script, export, name, mprGetPortablePath(path), name);
+            path, name, *script, functions, export, name, mprGetPortablePath(path), name);
     }
     return rc;
 }
@@ -392,9 +409,8 @@ static int getEspToken(int state, EspParse *parse)
 
     c = *parse->inp++;
     for (done = 0; !done; c = *parse->inp++) {
-
         /*
-         *    Get room for 3 more characters in the token buffer
+              Get room for 3 more characters in the token buffer
          */
         if (growTokenBuf(parse, 3) < 0) {
             return ESP_TOK_ERR;
@@ -482,14 +498,13 @@ static int getEspToken(int state, EspParse *parse)
                     done++;
                     break;
                 }
+                //  MOB - should be %@
                 if (*parse->inp == 'i' && strncmp(parse->inp, "include", 7) == 0 && isspace((int) parse->inp[7])) {
                     tid = ESP_TOK_INCLUDE;
                     parse->inp += 7;
                     while (isspace((int) *parse->inp)) {
                         parse->inp++;
                     }
-                //WAS while (*parse->inp && !isspace((int) *parse->inp) && *parse->inp != '%' && parse->tokp < parse->endp) 
-
                     while (*parse->inp && (*parse->inp != '%' || parse->inp[1] != '>' || parse->inp[-1] == '\\')) {
                         if (growTokenBuf(parse, 2) < 0) {
                             return ESP_TOK_ERR;

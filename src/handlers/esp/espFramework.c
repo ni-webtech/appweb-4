@@ -81,7 +81,7 @@ void espAutoFinalize(HttpConn *conn)
 
 void espDontCache(HttpConn *conn)
 {
-    return httpDontCache(conn);
+    httpDontCache(conn);
 }
 
 
