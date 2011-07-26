@@ -224,7 +224,7 @@ static int buildScript(cchar *path, cchar *name, char *page, char **script, char
     mprAssert(page);
 
     rc = 0;
-    functions = 0;
+    functions = "";
     state = ESP_STAGE_BEGIN;
     *script = 0;
     *err = 0;
