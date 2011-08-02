@@ -1,0 +1,6 @@
+<% 
+    // This will emit a plain-text dump of the request details
+    httpCreateCGIVars(conn);
+    espSetContentType(conn, "text/plain");
+    espShowRequest(conn); 
+-%>

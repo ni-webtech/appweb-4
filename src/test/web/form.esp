@@ -1,0 +1,14 @@
+<html><head><title>form.esp</title></head>
+<body>
+	<form name="details" method="post" action="form.esp">
+		Name <input type="text" name="name" value="<%= httpGetFormVar(conn, "name", "") %>">
+		Address <input type="text" name="address" value="<%= httpGetFormVar(conn, "address", "") %>">
+		<input type="submit" name="submit" value="OK">
+	</form>
+
+    <h3>Request Details</h3>
+    <pre>
+        <% espShowRequest(conn); %>
+    </pre>
+</body>
+</html>

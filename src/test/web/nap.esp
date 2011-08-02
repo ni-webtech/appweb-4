@@ -1,0 +1,13 @@
+<html>
+<head><title>ESP Nap Page</title></head>
+<body>
+<% 	
+    //  This is used by some esp tests
+    espWrite(conn, "Napping 2 seconds .. " );
+    espFlush(conn);
+    mprSleep(2 * 1000);
+    espWrite(conn, "Awake");
+%>
+</body>
+</html>
+
