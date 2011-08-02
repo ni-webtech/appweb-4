@@ -1,0 +1,144 @@
+/*
+    esp.tst - ESP tests
+ */
+
+const HTTP = (global.tsession && tsession["http"]) || ":4100"
+let http: Http = new Http
+
+/* Suport routines */
+
+if (!test || test.config["esp"] == 1) {
+    function contains(pat): Void {
+        assert(http.response.contains(pat))
+    }
+
+    function keyword(pat: String): String {
+        pat.replace(/\//, "\\/").replace(/\[/, "\\[")
+        let reg = RegExp(".*" + pat + "=([^<]*).*", "s")
+        return http.response.replace(reg, "$1")
+    }
+
+    function match(key: String, value: String): Void {
+        if (keyword(key) != value) {
+            print("Key " + keyword(key) + " not equal to expected: " + value)
+            print(http.response)
+        }
+        assert(keyword(key) == value)
+    }
+
+
+    /* Tests */
+
+    function basic() {
+        //  Test various forms to invoke esp programs
+        http.get(HTTP + "/esp/espProgram")
+        assert(http.status == 200)
+        contains("espProgram: ESP Output")
+    }
+
+    function forms() {
+        //  Test various forms to invoke esp programs
+        http.get(HTTP + "/esp/espProgram")
+        assert(http.status == 200)
+        contains("espProgram: ESP Output")
+
+        http.get(HTTP + "/espProgram.esp")
+        assert(http.status == 200)
+        contains("espProgram: ESP Output")
+    }
+
+    function alias() {
+        http.get(HTTP + "/MyInProcScripts/espProgram.esp")
+        assert(http.status == 200)
+        contains("espProgram: ESP Output")
+        match("SCRIPT_NAME", "/MyInProcScripts/espProgram.esp")
+        match("QUERY_STRING", "")
+    }
+
+    function query() {
+        http.get(HTTP + "/espProgram.esp?a=b&c=d&e=f")
+        match("SCRIPT_NAME", "/espProgram.esp")
+        contains("QVAR a=b")
+        contains("QVAR c=d")
+
+        //
+        //  Query string vars should not be turned into variables for GETs
+        //
+        http.get(HTTP + "/esp/espProgram?var1=a+a&var2=b%20b&var3=c")
+        match("SCRIPT_NAME", "/esp/espProgram")
+        match("QUERY_STRING", "var1=a+a&var2=b%20b&var3=c")
+        match("QVAR var1", "a a")
+        match("QVAR var2", "b b")
+        match("QVAR var3", "c")
+
+        //
+        //  Post data should be turned into variables
+        //
+        http.form(HTTP + "/esp/espProgram?var1=a+a&var2=b%20b&var3=c", 
+            { name: "Peter", address: "777 Mulberry Lane" })
+        match("QUERY_STRING", "var1=a+a&var2=b%20b&var3=c")
+        match("QVAR var1", "a a")
+        match("QVAR var2", "b b")
+        match("QVAR var3", "c")
+        match("PVAR name", "Peter")
+        match("PVAR address", "777 Mulberry Lane")
+    }
+
+    function encoding() {
+        http.get(HTTP + "/esp/espProgram.esp?var%201=value%201")
+        match("QUERY_STRING", "var%201=value%201")
+        match("SCRIPT_NAME", "/esp/espProgram.esp")
+        match("QVAR var 1", "value 1")
+    }
+
+    function status() {
+        http.get(HTTP + "/esp/espProgram?SWITCHES=-s%20711")
+        assert(http.status == 711)
+    }
+
+    function location() {
+        let http = new Http
+        http.followRedirects = false
+        http.get(HTTP + "/esp/espProgram?SWITCHES=-l%20http://www.redhat.com/")
+        assert(http.status == 302)
+        http.close()
+    }
+
+    function quoting() {
+        http.get(HTTP + "/esp/espProgram?a+b+c")
+        match("QUERY_STRING", "a+b+c")
+        match("QVAR a b c", "")
+
+        http.get(HTTP + "/esp/espProgram?a=1&b=2&c=3")
+        match("QUERY_STRING", "a=1&b=2&c=3")
+        match("QVAR a", "1")
+        match("QVAR b", "2")
+        match("QVAR c", "3")
+
+        http.get(HTTP + "/esp/espProgram?a%20a=1%201+b%20b=2%202")
+        match("QUERY_STRING", "a%20a=1%201+b%20b=2%202")
+        match("QVAR a a", "1 1 b b=2 2")
+
+        http.get(HTTP + "/esp/espProgram?a%20a=1%201&b%20b=2%202")
+        match("QUERY_STRING", "a%20a=1%201&b%20b=2%202")
+        match("QVAR a a", "1 1")
+        match("QVAR b b", "2 2")
+
+        http.get(HTTP + "/esp/espProgram?a|b+c>d+e?f+g>h+i'j+k\"l+m%20n")
+        contains("QVAR a|b c>d e?f g>h i'j k\"l m n=")
+        match("QUERY_STRING", "a|b+c>d+e?f+g>h+i'j+k\"l+m%20n")
+        assert(http.response.contains("QVAR a|b c>d e?f g>h i'j k\"l m n"))
+    }
+
+    basic()
+    forms()
+    alias()
+    query()
+    encoding()
+    status()
+    location()
+    quoting()
+
+} else {
+    test.skip("Run only for debug builds")
+}

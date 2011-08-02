@@ -56,29 +56,20 @@ extern "C" {
  */
 #define ESP_TOK_ERR            -1            /* Any input error */
 #define ESP_TOK_EOF             0            /* End of file */
-#define ESP_TOK_START_ESP       1            /* <% */
-#define ESP_TOK_END_ESP         2            /* %> */
-#define ESP_TOK_ATAT            3            /* @@var */
-#define ESP_TOK_LITERAL         4            /* literal HTML */
-#define ESP_TOK_INCLUDE         5            /* include file.esp */
-#define ESP_TOK_EQUALS          6            /* = var */
-
-/*
-      ESP parser states
- */
-#define ESP_STAGE_BEGIN         1            /* Starting state */
-#define ESP_STAGE_IN_ESP_TAG    2            /* Inside a <% %> group */
+#define ESP_TOK_CODE            1            /* <% text %> */
+#define ESP_TOK_VAR             2            /* @@var */
+#define ESP_TOK_LITERAL         3            /* literal HTML */
+#define ESP_TOK_EXPR            4            /* <%= expression %> */
+#define ESP_TOK_CONTROL         5            /* <%@ control */
 
 /*
     ESP page parser structure
  */
 typedef struct EspParse {
-    char    *inBuf;                         /* Input data to parse */
-    char    *inp;                           /* Next character for input */
-    char    *endp;                          /* End of storage (allow for null) */
-    char    *tokp;                          /* Pointer to current parsed token */
-    char    *token;                         /* Storage buffer for token */
-    int     tokLen;                         /* Length of buffer */
+    char    *data;                          /* Input data to parse */
+    char    *next;                          /* Next character in input */
+    MprBuf  *token;                         /* Storage buffer for token */
+    int     lineNumber;                     /* Line number for error reporting */
 } EspParse;
 
 /*
@@ -92,6 +83,7 @@ typedef struct Esp {
     MprList         *routes;                /* Ordered list of routes */
     HttpLoc         *loc;                   /* Controlling Http location definition */
     char            *compile;               /* Compile template */
+    char            *link;                  /* Link template */
     char            *modDir;                /* Directory for cache files */
     MprTime         lifespan;               /* Default cache lifespan */
     int             reload;                 /* Auto-reload modified ESP source */
@@ -143,15 +135,38 @@ extern bool espCompile(HttpConn *conn, cchar *name, cchar *source, char *module,
 #define PCRE_GLOBAL     0x1
 extern char *pcre_replace(cchar *str, void *pattern, cchar *replacement, MprList **parts, int flags);
 
-extern ssize espWrite(HttpConn *conn, cchar *buf, ssize len);
-extern void espRedirect(HttpConn *conn, int status, cchar *target);
-extern void espSetStatus(HttpConn *conn, int status);
-extern void espFinalize(HttpConn *conn);
-extern bool espFinalized(HttpConn *conn); 
-extern bool espSetAutoFinalizing(HttpConn *conn, int on);
+extern void espAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
+extern void espAddHeaderString(HttpConn *conn, cchar *key, cchar *value);
+extern void espAppendHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
+extern void espAppendHeaderString(HttpConn *conn, cchar *key, cchar *value);
 extern void espAutoFinalize(HttpConn *conn);
-
+extern void espDefineAction(Esp *esp, cchar *path, void *action);
 extern void espDefineView(Esp *esp, cchar *path, void *view);
+extern void espDontCache(HttpConn *conn);
+extern MprOff espGetContentLength(HttpConn *conn);
+extern cchar *espGetCookies(HttpConn *conn);
+extern MprHashTable *espGetFormVars(HttpConn *conn);
+extern cchar *espGetHeader(HttpConn *conn, cchar *key);
+extern MprHashTable *espGetHeaderHash(HttpConn *conn);
+extern char *espGetHeaders(HttpConn *conn);
+extern cchar *espGetQueryString(HttpConn *conn);
+extern int espGetStatus(HttpConn *conn);
+extern char *espGetStatusMessage(HttpConn *conn);
+extern void espFinalize(HttpConn *conn);
+extern bool espFinalized(HttpConn *conn);
+extern void espFlush(HttpConn *conn);
+extern void espRedirect(HttpConn *conn, int status, cchar *target);
+extern int espRemoveHeader(HttpConn *conn, cchar *key);
+extern bool espSetAutoFinalizing(HttpConn *conn, int on);
+extern void espSetContentLength(HttpConn *conn, MprOff length);
+extern void espSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *cookieDomain, int lifetime, bool isSecure);
+extern void espSetContentType(HttpConn *conn, cchar *mimeType);
+extern void espSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
+extern void espSetHeaderString(HttpConn *conn, cchar *key, cchar *value);
+extern void espSetStatus(HttpConn *conn, int status);
+extern ssize espWrite(HttpConn *conn, cchar *fmt, ...);
+extern ssize espWriteBlock(HttpConn *conn, cchar *buf, ssize size);
+extern ssize espWriteString(HttpConn *conn, cchar *s);
 
 #ifdef __cplusplus
 } /* extern C */

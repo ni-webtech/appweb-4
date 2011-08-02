@@ -97,9 +97,21 @@ cchar *espGetCookies(HttpConn *conn)
 }
 
 
+MprHashTable *espGetFormVars(HttpConn *conn)
+{
+    return httpGetFormVars(conn);
+}
+
+
 cchar *espGetHeader(HttpConn *conn, cchar *key)
 {
     return httpGetHeader(conn, key);
+}
+
+
+MprHashTable *espGetHeaderHash(HttpConn *conn)
+{
+    return httpGetHeaderHash(conn);
 }
 
 
@@ -149,6 +161,11 @@ void espFlush(HttpConn *conn)
 
 void espRedirect(HttpConn *conn, int status, cchar *target)
 {
+    EspReq  *req;
+    
+    req = conn->data;
+    //  MOB - this responded MUST Be pushed down into http
+    req->responded = 1;
     httpRedirect(conn, status, target);
 }
 
@@ -225,21 +242,183 @@ void espSetStatus(HttpConn *conn, int status)
 }
 
 
-ssize espWrite(HttpConn *conn, cchar *buf, ssize len)
+
+ssize espWriteBlock(HttpConn *conn, cchar *buf, ssize size)
 {
     EspReq      *req;
-    ssize       written;
     
     req = conn->data;
-    if (len < 0) {
-        len = slen(buf);
-    }
-    written = httpWriteBlock(conn->writeq, buf, len);
     //  MOB - should responded be pushed down into Conn
     //  MOB - capture output for caching here
     req->responded = 1;
-    return written;
+#if BLD_DEBUG
+{
+    /* Verify length */
+    ssize len = slen(buf);
+    mprAssert(len == size);
 }
+#endif
+    return httpWriteBlock(conn->writeq, buf, size);
+}
+
+
+ssize espWriteString(HttpConn *conn, cchar *s)
+{
+    return espWriteBlock(conn, s, strlen(s));
+}
+
+
+ssize espWrite(HttpConn *conn, cchar *fmt, ...)
+{
+    va_list     vargs;
+    char        *buf;
+
+    va_start(vargs, fmt);
+    buf = mprAsprintfv(fmt, vargs);
+    va_end(vargs);
+    return espWriteString(conn, buf);
+}
+    
+
+/*
+    Convert queue data in key / value pairs
+ */
+static int getVars(char ***keys, char *buf, int len)
+{
+    char**  keyList;
+    char    *eq, *cp, *pp, *tok;
+    int     i, keyCount;
+
+    *keys = 0;
+
+    /*
+        Change all plus signs back to spaces
+     */
+    keyCount = (len > 0) ? 1 : 0;
+    for (cp = buf; cp < &buf[len]; cp++) {
+        if (*cp == '+') {
+            *cp = ' ';
+        } else if (*cp == '&' && (cp > buf && cp < &buf[len - 1])) {
+            keyCount++;
+        }
+    }
+    if (keyCount == 0) {
+        return 0;
+    }
+
+    /*
+        Crack the input into name/value pairs 
+     */
+    keyList = mprAlloc((keyCount * 2) * sizeof(char**));
+    i = 0;
+    tok = 0;
+    for (pp = stok(buf, "&", &tok); pp; pp = stok(0, "&", &tok)) {
+        if ((eq = strchr(pp, '=')) != 0) {
+            *eq++ = '\0';
+            pp = mprUriDecode(pp);
+            eq = mprUriDecode(eq);
+        } else {
+            pp = mprUriDecode(pp);
+            eq = 0;
+        }
+        if (i < (keyCount * 2)) {
+            keyList[i++] = pp;
+            keyList[i++] = eq;
+        }
+    }
+    *keys = keyList;
+    return keyCount;
+}
+
+
+void espShowRequest(HttpConn *conn)
+{
+    MprHashTable    *env;
+    MprHash         *hp;
+    MprBuf          *buf;
+    HttpRx          *rx;
+    HttpQueue       *q;
+    cchar           *query;
+    char            qbuf[MPR_MAX_STRING], **keys, *value;
+    int             i, numKeys;
+
+    rx = conn->rx;
+    espDontCache(conn);
+    espWrite(conn, "\r\n");
+
+    /*
+        Query
+     */
+    if ((query = espGetQueryString(conn)) != 0) {
+        scopy(qbuf, sizeof(qbuf), query);
+        if ((numKeys = getVars(&keys, qbuf, (int) strlen(qbuf))) > 0) {
+            for (i = 0; i < (numKeys * 2); i += 2) {
+                value = keys[i+1];
+                espWrite(conn, "QUERY %s=%s\r\n", keys[i], value ? value: "null");
+            }
+        }
+        espWrite(conn, "\r\n");
+    }
+
+    /*
+        Http Headers
+     */
+    env = espGetHeaderHash(conn);
+    for (hp = 0; (hp = mprGetNextKey(env, hp)) != 0; ) {
+        espWrite(conn, "HEADER %s=%s\r\n", hp->key, hp->data ? hp->data: "null");
+    }
+    espWrite(conn, "\r\n");
+
+    /*
+        Form vars
+     */
+    if ((env = espGetFormVars(conn)) != 0) {
+        for (hp = 0; (hp = mprGetNextKey(env, hp)) != 0; ) {
+            espWrite(conn, "FORM %s=%s\r\n", hp->key, hp->data ? hp->data: "null");
+        }
+        espWrite(conn, "\r\n");
+    }
+
+    /*
+        Body
+     */
+    q = conn->readq;
+    if (q->first && rx->bytesRead > 0 && scmp(rx->mimeType, "application/x-www-form-urlencoded") == 0) {
+        buf = q->first->content;
+        mprAddNullToBuf(buf);
+        if ((numKeys = getVars(&keys, mprGetBufStart(buf), (int) mprGetBufLength(buf))) > 0) {
+            for (i = 0; i < (numKeys * 2); i += 2) {
+                value = keys[i+1];
+                espWrite(conn, "BODY %s=%s\r\n", keys[i], value ? value: "null");
+            }
+        }
+        espWrite(conn, "\r\n");
+    }
+}
+
+
+#if FUTURE
+#if MACOSX
+    static MprThreadLocal *tls;
+
+    HttpConn *espGetCurrentConn() {
+        return mprGetThreadData(tls);
+    }
+#elif __GCC__ && (LINUX || VXWORKS)
+    static __thread currentConn;
+    HttpConn *espGetCurrentConn() {
+        return currentConn;
+    }
+#endif
+//  MOB - move to espSession.c
+
+char *session(cchar *key)
+{
+    HttpConn    *conn;
+
+    conn = espGetCurrentConn();
+}
+#endif
 
 
 #endif /* BLD_FEATURE_ESP */

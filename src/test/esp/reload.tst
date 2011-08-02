@@ -5,7 +5,7 @@
 const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
-if (test.os != "WIN") {
+if (!global.test || test.os != "WIN") {
     //  First get
     let path = new Path("../web/reload.esp")
     path.write('<html><body><% espWrite(conn, "First", -1); %></body></html>')
@@ -15,7 +15,7 @@ if (test.os != "WIN") {
     http.close()
 
 
-    //  Second get
+    //  Create a new file and do a second get
     path.write('<html><body><% espWrite(conn, "Second", -1); %></body></html>')
     http.get(HTTP + "/reload.esp")
     assert(http.status == 200)

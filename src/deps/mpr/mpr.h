@@ -3490,6 +3490,9 @@ extern char *mprFormatTime(cchar *fmt, struct tm *timep);
  */
 extern MprTime mprGetTime();
 
+//  DOC
+extern char *mprGetDate(char *fmt);
+
 /**
     Get the CPU tick count.
     @description Get the elapsed CPU tick count. Will return the system time if CPU ticks are not available.

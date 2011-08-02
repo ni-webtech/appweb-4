@@ -3516,10 +3516,10 @@ HttpHost *httpCloneHost(HttpHost *parent)
 void httpSetHostDocumentRoot(HttpHost *host, cchar *dir)
 {
     char    *doc;
-    int     len;
+    ssize   len;
 
-    doc = host->documentRoot = httpMakePath(host, dir);
-    len = (int) strlen(doc);
+    doc = host->documentRoot = httpMakePath(host->loc, dir);
+    len = slen(doc);
     if (doc[len - 1] == '/') {
         doc[len - 1] = '\0';
     }
@@ -3642,13 +3642,13 @@ int httpAddDir(HttpHost *host, HttpDir *dir)
 }
 
 
-int httpAddLocation(HttpHost *host, HttpLoc *newLocation)
+int httpAddLocation(HttpHost *host, HttpLoc *loc)
 {
-    HttpLoc     *loc;
+    HttpLoc     *lp;
     int         next, rc;
 
-    mprAssert(newLocation);
-    mprAssert(newLocation->prefix);
+    mprAssert(loc);
+    mprAssert(loc->prefix);
     
     if (host->parent && host->locations == host->parent->locations) {
         host->locations = mprCloneList(host->parent->locations);
@@ -3657,19 +3657,20 @@ int httpAddLocation(HttpHost *host, HttpLoc *newLocation)
     /*
         Sort in reverse collating sequence. Must make sure that /abc/def sorts before /abc
      */
-    for (next = 0; (loc = mprGetNextItem(host->locations, &next)) != 0; ) {
-        rc = strcmp(newLocation->prefix, loc->prefix);
+    for (next = 0; (lp = mprGetNextItem(host->locations, &next)) != 0; ) {
+        rc = strcmp(loc->prefix, lp->prefix);
         if (rc == 0) {
-            mprRemoveItem(host->locations, loc);
-            mprInsertItemAtPos(host->locations, next - 1, newLocation);
+            mprRemoveItem(host->locations, lp);
+            mprInsertItemAtPos(host->locations, next - 1, loc);
             return 0;
         }
-        if (strcmp(newLocation->prefix, loc->prefix) > 0) {
-            mprInsertItemAtPos(host->locations, next - 1, newLocation);
+        if (strcmp(loc->prefix, lp->prefix) > 0) {
+            mprInsertItemAtPos(host->locations, next - 1, loc);
             return 0;
         }
     }
-    mprAddItem(host->locations, newLocation);
+    mprAddItem(host->locations, loc);
+    loc->host = host;
     return 0;
 }
 
@@ -3846,96 +3847,6 @@ int httpSetupTrace(HttpHost *host, cchar *ext)
         }
     }
     return host->traceMask;
-}
-
-
-/*
-    Make a path name. This replaces $references, converts to an absolute path name, cleans the path and maps delimiters.
- */
-char *httpMakePath(HttpHost *host, cchar *file)
-{
-    char    *result, *path;
-
-    mprAssert(file);
-
-    if ((path = httpReplaceReferences(host, file)) == 0) {
-        /*  Overflow */
-        return 0;
-    }
-    if (*path == '\0' || strcmp(path, ".") == 0) {
-        result = sclone(host->serverRoot);
-
-#if BLD_WIN_LIKE
-    } else if (*path != '/' && path[1] != ':' && path[2] != '/') {
-        result = mprJoinPath(host->serverRoot, path);
-#elif VXWORKS
-    } else if (strchr((path), ':') == 0 && *path != '/') {
-        result = mprJoinPath(host->serverRoot, path);
-#else
-    } else if (*path != '/') {
-        result = mprJoinPath(host->serverRoot, path);
-#endif
-    } else {
-        result = mprGetAbsPath(path);
-    }
-    return result;
-}
-
-
-static int matchRef(cchar *key, char **src)
-{
-    ssize   len;
-
-    mprAssert(src);
-    mprAssert(key && *key);
-
-    len = strlen(key);
-    if (strncmp(*src, key, len) == 0) {
-        *src += len;
-        return 1;
-    }
-    return 0;
-}
-
-
-/*
-    Replace a limited set of $VAR references. Currently support DOCUMENT_ROOT, SERVER_ROOT and PRODUCT, OS
-    TODO - Expand and formalize this. Should support many more variables.
- */
-char *httpReplaceReferences(HttpHost *host, cchar *str)
-{
-    MprBuf  *buf;
-    char    *src;
-    char    *result;
-
-    buf = mprCreateBuf(0, 0);
-    if (str) {
-        for (src = (char*) str; *src; ) {
-            if (*src == '$') {
-                ++src;
-                if (matchRef("DOCUMENT_ROOT", &src)) {
-                    mprPutStringToBuf(buf, host->documentRoot);
-                    continue;
-
-                } else if (matchRef("SERVER_ROOT", &src)) {
-                    mprPutStringToBuf(buf, host->serverRoot);
-                    continue;
-
-                } else if (matchRef("PRODUCT", &src)) {
-                    mprPutStringToBuf(buf, BLD_PRODUCT);
-                    continue;
-
-                } else if (matchRef("OS", &src)) {
-                    mprPutStringToBuf(buf, BLD_OS);
-                    continue;
-                }
-            }
-            mprPutCharToBuf(buf, *src++);
-        }
-    }
-    mprAddNullToBuf(buf);
-    result = sclone(mprGetBufStart(buf));
-    return result;
 }
 
 
@@ -4688,6 +4599,7 @@ static void updateCurrentDate(Http *http)
 
 
 
+static void defineKeywords(HttpLoc *loc);
 static void manageLoc(HttpLoc *loc, int flags);
 
 
@@ -4704,6 +4616,7 @@ HttpLoc *httpCreateLocation()
     loc->extensions = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
     loc->expires = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_STATIC_VALUES);
     loc->expiresByType = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_STATIC_VALUES);
+    loc->keywords = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
     loc->inputStages = mprCreateList(-1, 0);
     loc->outputStages = mprCreateList(-1, 0);
     loc->prefix = mprEmptyString();
@@ -4711,6 +4624,7 @@ HttpLoc *httpCreateLocation()
     loc->auth = httpCreateAuth(0);
     loc->flags = HTTP_LOC_SMART;
     loc->workers = -1;
+    defineKeywords(loc);
     return loc;
 }
 
@@ -4726,6 +4640,7 @@ static void manageLoc(HttpLoc *loc, int flags)
         mprMark(loc->extensions);
         mprMark(loc->expires);
         mprMark(loc->expiresByType);
+        mprMark(loc->keywords);
         mprMark(loc->handlers);
         mprMark(loc->inputStages);
         mprMark(loc->outputStages);
@@ -4789,6 +4704,7 @@ static void graduate(HttpLoc *loc)
         loc->expires = mprCloneHash(loc->parent->expires);
         loc->expiresByType = mprCloneHash(loc->parent->expiresByType);
         loc->extensions = mprCloneHash(loc->parent->extensions);
+        loc->keywords = mprCloneHash(loc->parent->keywords);
         loc->handlers = mprCloneList(loc->parent->handlers);
         loc->inputStages = mprCloneList(loc->parent->inputStages);
         loc->outputStages = mprCloneList(loc->parent->outputStages);
@@ -5108,6 +5024,96 @@ void *httpGetLocationData(HttpLoc *loc, cchar *key)
     }
     return mprLookupKey(loc->data, key);
 }
+
+
+static void defineKeywords(HttpLoc *loc)
+{
+    mprAddKey(loc->keywords, "PRODUCT", BLD_PRODUCT);
+    mprAddKey(loc->keywords, "OS", BLD_OS);
+    mprAddKey(loc->keywords, "VERSION", BLD_VERSION);
+    mprAddKey(loc->keywords, "DOCUMENT_ROOT", 0);
+    mprAddKey(loc->keywords, "SERVER_ROOT", 0);
+    mprAddKey(loc->keywords, "DOCUMENT_ROOT", 0);
+}
+
+
+void httpAddLocationKey(HttpLoc *loc, cchar *key, cchar *value)
+{
+    mprAssert(key);
+    mprAssert(value);
+    mprAssert(MPR->httpService);
+
+    mprAddKey(loc->keywords, key, value);
+}
+
+
+/*
+    Make a path name. This replaces $references, converts to an absolute path name, cleans the path and maps delimiters.
+ */
+char *httpMakePath(HttpLoc *loc, cchar *file)
+{
+    HttpHost    *host;
+    char        *result, *path;
+
+    mprAssert(file);
+    host = loc->host;
+
+    if ((path = httpReplaceReferences(loc, file)) == 0) {
+        /*  Overflow */
+        return 0;
+    }
+    if (mprIsRelPath(path)) {
+        result = mprJoinPath(host->serverRoot, path);
+    } else {
+        result = mprGetAbsPath(path);
+    }
+    return result;
+}
+
+
+/*
+    Replace a limited set of $VAR references. Currently support DOCUMENT_ROOT, SERVER_ROOT and PRODUCT, OS and VERSION.
+ */
+char *httpReplaceReferences(HttpLoc *loc, cchar *str)
+{
+    Http    *http;
+    MprBuf  *buf;
+    char    *src, *result, *value, *cp, *tok;
+
+    http = MPR->httpService;
+    buf = mprCreateBuf(0, 0);
+    if (str) {
+        for (src = (char*) str; *src; ) {
+            if (*src == '$') {
+                ++src;
+                for (cp = src; *cp && !isspace((int) *cp); cp++) ;
+                tok = snclone(src, cp - src);
+                if ((value = mprLookupKey(loc->keywords, src)) != 0) {
+                    if (value == 0) {
+                        if (scmp(tok, "DOCUMENT_ROOT")) {
+                            mprPutStringToBuf(buf, loc->host->documentRoot);
+                            src = cp;
+                            continue;
+                        } else if (scmp(tok, "SERVER_ROOT")) {
+                            mprPutStringToBuf(buf, loc->host->serverRoot);
+                            src = cp;
+                            continue;
+                        }
+                    } else {
+                        mprPutStringToBuf(buf, value);
+                        src = cp;
+                        continue;
+                    }
+                }
+            }
+            mprPutCharToBuf(buf, *src++);
+        }
+    }
+    mprAddNullToBuf(buf);
+    result = sclone(mprGetBufStart(buf));
+    return result;
+}
+
 
 /*
     @copy   default
@@ -9042,6 +9048,16 @@ MprHashTable *httpGetHeaderHash(HttpConn *conn)
         return 0;
     }
     return conn->rx->headers;
+}
+
+
+MprHashTable *httpGetFormVars(HttpConn *conn)
+{
+    if (conn->rx == 0) {
+        mprAssert(conn->rx);
+        return 0;
+    }
+    return conn->rx->formVars;
 }
 
 
@@ -13077,6 +13093,17 @@ MprHashTable *httpAddVarsFromQueue(MprHashTable *table, HttpQueue *q)
         table = httpAddVars(table, mprGetBufStart(content), mprGetBufLength(content));
     }
     return table;
+}
+
+
+void httpAddFormVars(HttpConn *conn)
+{
+    HttpRx      *rx;
+
+    rx = conn->rx;
+    if (rx->form && rx->formVars == 0) {
+        rx->formVars = httpAddVarsFromQueue(rx->formVars, conn->readq);
+    }
 }
 
 

@@ -64,7 +64,7 @@ static int parseSsl(Http *http, cchar *key, char *value, MaConfigState *state)
         mprError("SSLEngine is deprecated. Please use ListenSecure");
     }
 #endif
-    path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+    path = httpMakePath(loc, strim(value, "\"", MPR_TRIM_BOTH));
 
     if (scasecmp(key, "SSLCACertificatePath") == 0) {
         mprSetSslCaPath(loc->ssl, path);

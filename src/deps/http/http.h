@@ -372,6 +372,7 @@ extern void httpRemoveServer(Http *http, struct HttpServer *server);
 extern void httpSetSoftware(Http *http, cchar *software);
 extern void httpAddHost(Http *http, struct HttpHost *host);
 extern void httpRemoveHost(Http *http, struct HttpHost *host);
+extern void httpAddKey(cchar *key, cchar *value);
 
 /** 
     Http limits
@@ -1939,12 +1940,14 @@ typedef struct HttpLoc {
     char            *prefix;                /**< Location prefix name */
     int             prefixLen;              /**< Length of the prefix name */
     HttpAlias       *alias;                 /**< Associated alias for this location */
+    struct HttpHost *host;                  /**< Owning hsot */
     HttpStage       *connector;             /**< Network connector to use */
     HttpStage       *handler;               /**< Fixed handler */
     MprHashTable    *data;                  /**< Hash of extra data configuration */
     MprHashTable    *extensions;            /**< Hash of handlers by extensions */
     MprHashTable    *expires;               /**< Expiry of content by extension */
     MprHashTable    *expiresByType;         /**< Expiry of content by mime type */
+    MprHashTable    *keywords;              /**< Keyword expansion values. Used for $var refrerences */
     MprList         *handlers;              /**< List of handlers for this location */
     MprList         *inputStages;           /**< Input stages */
     MprList         *outputStages;          /**< Output stages */
@@ -1987,6 +1990,9 @@ extern int httpAddFilter(HttpLoc *location, cchar *name, cchar *extensions, int 
 extern void httpClearStages(HttpLoc *location, int direction);
 extern void httpAddLocationExpiry(HttpLoc *location, MprTime when, cchar *extensions);
 extern void httpAddLocationExpiryByType(HttpLoc *location, MprTime when, cchar *mimeTypes);
+extern void httpAddLocationKey(HttpLoc *loc, cchar *key, cchar *value);
+extern char *httpMakePath(HttpLoc *loc, cchar *file);
+extern char *httpReplaceReferences(HttpLoc *loc, cchar *str);
 
 /**
     Upload File
@@ -2171,6 +2177,7 @@ extern char *httpGetHeaders(HttpConn *conn);
     @ingroup HttpRx
  */
 extern MprHashTable *httpGetHeaderHash(HttpConn *conn);
+extern MprHashTable *httpGetFormVars(HttpConn *conn);
 
 /** 
     Get the request query string
@@ -2253,6 +2260,9 @@ extern MprHashTable *httpAddVars(MprHashTable *table, cchar *buf, ssize len);
     @param q Queue reference
  */
 extern MprHashTable *httpAddVarsFromQueue(MprHashTable *table, HttpQueue *q);
+
+//  DOC
+extern void httpAddFormVars(HttpConn *conn);
 
 /**
     Compare a form variable
@@ -2928,8 +2938,6 @@ extern HttpDir *httpLookupDir(HttpHost *host, cchar *pathArg);
 extern HttpLoc *httpLookupBestLocation(HttpHost *host, cchar *uri);
 extern HttpLoc *httpLookupLocation(HttpHost *host, cchar *prefix);
 extern HttpDir *httpLookupBestDir(HttpHost *host, cchar *path);
-extern char *httpMakePath(HttpHost *host, cchar *file);
-extern char *httpReplaceReferences(HttpHost *host, cchar *str);
 extern void httpSetHostDocumentRoot(HttpHost *host, cchar *dir);
 extern void httpSetHostLogRotation(HttpHost *host, int logCount, int logSize);
 extern void httpSetHostName(HttpHost *host, cchar *ip, int port);

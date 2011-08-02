@@ -226,7 +226,7 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
         if (scasecmp(key, "Include") == 0) {
             state->lineNumber++;
             value = strim(value, "\"", MPR_TRIM_BOTH);
-            value = httpReplaceReferences(host, value);
+            value = httpReplaceReferences(state->loc, value);
             if ((cp = strchr(value, '*')) == 0) {
                 state = pushState(state, &top);
                 state->lineNumber = 0;
@@ -349,7 +349,7 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
                 }
 
             } else if (scasecmp(key, "Directory") == 0) {
-                path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+                path = httpMakePath(state->loc, strim(value, "\"", MPR_TRIM_BOTH));
                 state = pushState(state, &top);
 
                 if ((dir = httpLookupDir(host, path)) != 0) {
@@ -479,7 +479,7 @@ int maValidateConfiguration(MaMeta *meta)
             Check aliases have directory blocks. Inherit authorization from the best matching directory
          */
         for (nextAlias = 0; (alias = mprGetNextItem(host->aliases, &nextAlias)) != 0; ) {
-            path = httpMakePath(host, alias->filename);
+            path = httpMakePath(host->loc, alias->filename);
             if ((bestDir = httpLookupBestDir(host, path)) == 0) {
                 bestDir = httpCreateBareDir(alias->filename);
                 httpAddDir(host, bestDir);
@@ -541,8 +541,8 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             if (maSplitConfigValue(&prefix, &path, value, 1) < 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            prefix = httpReplaceReferences(host, prefix);
-            path = httpMakePath(host, path);
+            prefix = httpReplaceReferences(loc, prefix);
+            path = httpMakePath(loc, path);
             if (httpLookupAlias(host, prefix)) {
                 mprError("Alias \"%s\" already exists", prefix);
                 return MPR_ERR_BAD_SYNTAX;
@@ -552,6 +552,9 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             if (httpAddAlias(host, alias) < 0) {
                 mprError("Can't insert alias: %s", prefix);
                 return MPR_ERR_BAD_SYNTAX;
+            }
+            if (scmp(loc->prefix, alias->prefix) == 0) {
+                httpSetLocationAlias(loc, alias);
             }
             return 1;
 
@@ -610,7 +613,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
         } else if (scasecmp(key, "AuthGroupFile") == 0) {
 #if BLD_FEATURE_AUTH_FILE
             //  TODO - this belongs elsewhere
-            path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+            path = httpMakePath(loc, strim(value, "\"", MPR_TRIM_BOTH));
             if (httpReadGroupFile(http, auth, path) < 0) {
                 mprError("Can't open AuthGroupFile %s", path);
                 return MPR_ERR_BAD_SYNTAX;
@@ -660,7 +663,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
         } else if (scasecmp(key, "AuthUserFile") == 0) {
 #if BLD_FEATURE_AUTH_FILE
             //  TODO - this belons elsewhere
-            path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+            path = httpMakePath(loc, strim(value, "\"", MPR_TRIM_BOTH));
             if (httpReadUserFile(http, auth, path) < 0) {
                 mprError("Can't open AuthUserFile %s", path);
                 return MPR_ERR_BAD_SYNTAX;
@@ -710,7 +713,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
 
         } else if (scasecmp(key, "Chroot") == 0) {
 #if BLD_UNIX_LIKE
-            path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+            path = httpMakePath(loc, strim(value, "\"", MPR_TRIM_BOTH));
             if (chdir(path) < 0) {
                 mprError("Can't change working directory to %s", path);
                 return MPR_ERR_CANT_OPEN;
@@ -753,7 +756,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             if (path == 0 || format == 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            path = httpMakePath(host, path);
+            path = httpMakePath(loc, path);
             maSetAccessLog(host, path, strim(format, "\"", MPR_TRIM_BOTH));
 #endif
             return 1;
@@ -778,7 +781,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             return 1;
 
         } else if (scasecmp(key, "DocumentRoot") == 0) {
-            path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+            path = httpMakePath(loc, strim(value, "\"", MPR_TRIM_BOTH));
             httpSetHostDocumentRoot(host, path);
             httpSetDirPath(dir, path);
             return 1;
@@ -803,7 +806,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
                 } else {
                     maStopLogging(meta);
                     if (strncmp(path, "stdout", 6) != 0 && !strncmp(path, "stderr", 6) != 0) {
-                        path = httpMakePath(host, path);
+                        path = httpMakePath(loc, path);
                     }
                     if (maStartLogging(host, path) < 0) {
                         mprError("Can't write to ErrorLog: %s", path);
@@ -1265,7 +1268,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             return 1;
 
         } else if (scasecmp(key, "ServerRoot") == 0) {
-            path = httpReplaceReferences(host, strim(value, "\"", MPR_TRIM_BOTH));
+            path = httpReplaceReferences(loc, strim(value, "\"", MPR_TRIM_BOTH));
             maSetMetaRoot(meta, path);
             httpSetHostServerRoot(host, path);
             mprLog(MPR_CONFIG, "Server Root \"%s\"", path);
@@ -1316,7 +1319,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             return 1;
 
         } else if (scasecmp(key, "TypesConfig") == 0) {
-            path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+            path = httpMakePath(loc, strim(value, "\"", MPR_TRIM_BOTH));
             if ((host->mimeTypes = mprCreateMimeTypes(path)) == 0) {
                 mprError("Can't open TypesConfig mime file %s", path);
                 host->mimeTypes = mprCreateMimeTypes(NULL);
@@ -1343,7 +1346,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             return 1;
 
         } else if (scasecmp(key, "UploadDir") == 0 || scasecmp(key, "FileUploadDir") == 0) {
-            path = httpMakePath(host, strim(value, "\"", MPR_TRIM_BOTH));
+            path = httpMakePath(loc, strim(value, "\"", MPR_TRIM_BOTH));
             loc->uploadDir = sclone(path);
             mprLog(MPR_CONFIG, "Upload directory: %s", path);
             return 1;
@@ -1394,8 +1397,8 @@ HttpLoc *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *prefixAr
 
     host = state->host;
 
-    prefix = httpReplaceReferences(host, prefixArg);
-    path = httpMakePath(host, pathArg);
+    prefix = httpReplaceReferences(loc, prefixArg);
+    path = httpMakePath(loc, pathArg);
 
     /*
         Create an ejs application location block and alias
@@ -1518,7 +1521,6 @@ int maGetConfigValue(char **arg, char *buf, char **nextToken, int quotes)
     while (isspace((int) *buf)) {
         buf++;
     }
-
     if (quotes && *buf == '\"') {
         *arg = ++buf;
         if ((endp = strchr(buf, '\"')) != 0) {

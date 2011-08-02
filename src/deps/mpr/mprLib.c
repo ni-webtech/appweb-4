@@ -15649,7 +15649,7 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list arg)
     int64         iValue;
     uint64        uValue;
     int           state;
-    char          c;
+    char          c, *safe;
 
     if (spec == 0) {
         spec = "";
@@ -15800,8 +15800,19 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list arg)
                 }
                 break;
 
-            case 'S':       /* TODO - remove this alias */
-                mprAssert(c != 'S');
+            case 'S':
+                /* Safe string */
+#if BLD_CHAR_LEN > 1
+                if (fmt.flags & SPRINTF_LONG) {
+                    safe = mprEscapeHtml(va_arg(arg, MprChar*));
+                    outWideString(&fmt, safe, -1);
+                } else
+#endif
+                {
+                    safe = mprEscapeHtml(va_arg(arg, MprChar*));
+                    outString(&fmt, safe, -1);
+                }
+                break;
 
             case '@':
                 /* MprEjsString */
@@ -21332,8 +21343,7 @@ MprThreadLocal *mprCreateThreadLocal()
 {
     MprThreadLocal      *tls;
 
-    tls = mprAllocObj(MprThreadLocal, manageThreadLocal);
-    if (tls == 0) {
+    if ((tls = mprAllocObj(MprThreadLocal, manageThreadLocal)) == 0) {
         return 0;
     }
 #if BLD_UNIX_LIKE
@@ -22264,6 +22274,18 @@ void mprDecodeLocalTime(struct tm *tp, MprTime when)
 void mprDecodeUniversalTime(struct tm *tp, MprTime when)
 {
     decodeTime(tp, when, 0);
+}
+
+
+char *mprGetDate(char *fmt)
+{
+    struct tm   tm;
+
+    mprDecodeLocalTime(&tm, mprGetTime());
+    if (fmt == 0 || *fmt == '\0') {
+        fmt = "%a %b %d %Y %T GMT%z (%Z)";
+    }
+    return mprFormatTime(fmt, &tm);
 }
 
 

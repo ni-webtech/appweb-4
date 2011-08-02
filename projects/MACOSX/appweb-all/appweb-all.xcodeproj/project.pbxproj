@@ -1637,6 +1637,10 @@
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				INSTALL_PATH = "$(INSTALL_PATH)/lib";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../../out/bin\"",
+				);
 				PRODUCT_NAME = libappweb;
 			};
 			name = Debug;
@@ -1646,6 +1650,10 @@
 			buildSettings = {
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				INSTALL_PATH = "$(INSTALL_PATH)/lib";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../../out/bin\"",
+				);
 				PRODUCT_NAME = libappweb;
 			};
 			name = Release;

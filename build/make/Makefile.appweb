@@ -9,7 +9,7 @@
 #
 config:
 	$(call log) "[Config]" "configure"
-	./configure
+	./configure --without-ejs --without-php --without-cgi
 	make depend clean >/dev/null
 
 esp:
