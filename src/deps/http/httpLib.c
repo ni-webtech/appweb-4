@@ -3463,7 +3463,7 @@ HttpHost *httpCreateHost(HttpLoc *loc)
     host->traceLevel = 3;
     host->traceMaxLength = MAXINT;
 
-    host->loc = (loc) ? loc : httpCreateLocation();
+    host->loc = (loc) ? loc : httpCreateLocation(host);
     httpAddLocation(host, host->loc);
     host->loc->auth = httpCreateAuth(host->loc->auth);
     httpAddDir(host, httpCreateBareDir("."));
@@ -3497,7 +3497,7 @@ HttpHost *httpCloneHost(HttpHost *parent)
     host->limits = mprMemdup(parent->limits, sizeof(HttpLimits));
     host->documentRoot = parent->documentRoot;
     host->serverRoot = parent->serverRoot;
-    host->loc = httpCreateInheritedLocation(parent->loc);
+    host->loc = httpCreateInheritedLocation(parent->loc, host);
     host->traceMask = parent->traceMask;
     host->traceLevel = parent->traceLevel;
     host->traceMaxLength = parent->traceMaxLength;
@@ -3670,7 +3670,7 @@ int httpAddLocation(HttpHost *host, HttpLoc *loc)
         }
     }
     mprAddItem(host->locations, loc);
-    loc->host = host;
+    mprAssert(loc->host == host);
     return 0;
 }
 
@@ -4005,7 +4005,7 @@ Http *httpCreate()
 
     http->clientLimits = httpCreateLimits(0);
     http->serverLimits = httpCreateLimits(1);
-    http->clientLocation = httpInitLocation(http, 0);
+    http->clientLocation = httpCreateConfiguredLocation(0);
 
     mprSetIdleCallback(isIdle);
     return http;
@@ -4113,14 +4113,16 @@ void httpRemoveHost(Http *http, HttpHost *host)
 }
 
 
-HttpLoc *httpInitLocation(Http *http, int serverSide)
+HttpLoc *httpCreateConfiguredLocation(int serverSide)
 {
     HttpLoc     *loc;
+    Http        *http;
 
     /*
         Create default incoming and outgoing pipelines. Order matters.
      */
-    loc = httpCreateLocation();
+    http = MPR->httpService;
+    loc = httpCreateLocation(0);
     if (serverSide) {
         httpAddFilter(loc, http->authFilter->name, NULL, HTTP_STAGE_RX);
     }
@@ -4603,7 +4605,7 @@ static void defineKeywords(HttpLoc *loc);
 static void manageLoc(HttpLoc *loc, int flags);
 
 
-HttpLoc *httpCreateLocation()
+HttpLoc *httpCreateLocation(HttpHost *host)
 {
     HttpLoc  *loc;
 
@@ -4611,12 +4613,13 @@ HttpLoc *httpCreateLocation()
         return 0;
     }
     loc->http = MPR->httpService;
+    loc->host = host;
     loc->errorDocuments = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
     loc->handlers = mprCreateList(-1, 0);
     loc->extensions = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
     loc->expires = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_STATIC_VALUES);
     loc->expiresByType = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_STATIC_VALUES);
-    loc->keywords = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
+    loc->keywords = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
     loc->inputStages = mprCreateList(-1, 0);
     loc->outputStages = mprCreateList(-1, 0);
     loc->prefix = mprEmptyString();
@@ -4659,17 +4662,18 @@ static void manageLoc(HttpLoc *loc, int flags)
 /*  
     Create a new location block. Inherit from the parent. We use a copy-on-write scheme if these are modified later.
  */
-HttpLoc *httpCreateInheritedLocation(HttpLoc *parent)
+HttpLoc *httpCreateInheritedLocation(HttpLoc *parent, HttpHost *host)
 {
     HttpLoc  *loc;
 
     if (parent == 0) {
-        return httpCreateLocation();
+        return httpCreateLocation(host);
     }
     if ((loc = mprAllocObj(HttpLoc, manageLoc)) == 0) {
         return 0;
     }
     loc->http = MPR->httpService;
+    loc->host = host;
     loc->prefix = sclone(parent->prefix);
     loc->parent = parent;
     loc->prefixLen = parent->prefixLen;
@@ -4680,6 +4684,7 @@ HttpLoc *httpCreateInheritedLocation(HttpLoc *parent)
     loc->extensions = parent->extensions;
     loc->expires = parent->expires;
     loc->expiresByType = parent->expiresByType;
+    loc->keywords = parent->keywords;
     loc->connector = parent->connector;
     loc->errorDocuments = parent->errorDocuments;
     loc->auth = httpCreateAuth(parent->auth);
@@ -5028,9 +5033,9 @@ void *httpGetLocationData(HttpLoc *loc, cchar *key)
 
 static void defineKeywords(HttpLoc *loc)
 {
-    mprAddKey(loc->keywords, "PRODUCT", BLD_PRODUCT);
-    mprAddKey(loc->keywords, "OS", BLD_OS);
-    mprAddKey(loc->keywords, "VERSION", BLD_VERSION);
+    mprAddKey(loc->keywords, "PRODUCT", sclone(BLD_PRODUCT));
+    mprAddKey(loc->keywords, "OS", sclone(BLD_OS));
+    mprAddKey(loc->keywords, "VERSION", sclone(BLD_VERSION));
     mprAddKey(loc->keywords, "DOCUMENT_ROOT", 0);
     mprAddKey(loc->keywords, "SERVER_ROOT", 0);
     mprAddKey(loc->keywords, "DOCUMENT_ROOT", 0);
@@ -5043,7 +5048,7 @@ void httpAddLocationKey(HttpLoc *loc, cchar *key, cchar *value)
     mprAssert(value);
     mprAssert(MPR->httpService);
 
-    mprAddKey(loc->keywords, key, value);
+    mprAddKey(loc->keywords, key, sclone(value));
 }
 
 
@@ -5076,31 +5081,35 @@ char *httpMakePath(HttpLoc *loc, cchar *file)
  */
 char *httpReplaceReferences(HttpLoc *loc, cchar *str)
 {
-    Http    *http;
-    MprBuf  *buf;
-    char    *src, *result, *value, *cp, *tok;
+    Http        *http;
+    MprBuf      *buf;
+    MprHash     *hp;
+    cchar       *seps;
+    char        *src, *result, *cp, *tok;
 
     http = MPR->httpService;
     buf = mprCreateBuf(0, 0);
+
     if (str) {
+        seps = mprGetPathSeparators(str);
         for (src = (char*) str; *src; ) {
             if (*src == '$') {
                 ++src;
-                for (cp = src; *cp && !isspace((int) *cp); cp++) ;
+                for (cp = src; *cp && !isspace((int) *cp) && (*cp != seps[0]); cp++) ;
                 tok = snclone(src, cp - src);
-                if ((value = mprLookupKey(loc->keywords, src)) != 0) {
-                    if (value == 0) {
-                        if (scmp(tok, "DOCUMENT_ROOT")) {
+                if ((hp = mprLookupKeyEntry(loc->keywords, tok)) != 0) {
+                    if (hp->data == 0) {
+                        if (scmp(tok, "DOCUMENT_ROOT") == 0) {
                             mprPutStringToBuf(buf, loc->host->documentRoot);
                             src = cp;
                             continue;
-                        } else if (scmp(tok, "SERVER_ROOT")) {
+                        } else if (scmp(tok, "SERVER_ROOT") == 0) {
                             mprPutStringToBuf(buf, loc->host->serverRoot);
                             src = cp;
                             continue;
                         }
                     } else {
-                        mprPutStringToBuf(buf, value);
+                        mprPutStringToBuf(buf, (cchar*) hp->data);
                         src = cp;
                         continue;
                     }
@@ -9947,7 +9956,7 @@ HttpServer *httpCreateServer(cchar *ip, int port, MprDispatcher *dispatcher, int
     server->port = port;
     server->ip = sclone(ip);
     server->dispatcher = dispatcher;
-    server->loc = httpInitLocation(http, 1);
+    server->loc = httpCreateConfiguredLocation(1);
     server->hosts = mprCreateList(-1, 0);
     httpAddServer(http, server);
 

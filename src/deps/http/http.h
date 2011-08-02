@@ -1963,7 +1963,7 @@ typedef struct HttpLoc {
     struct MprSsl   *ssl;                   /**< SSL configuration */
 } HttpLoc;
 
-extern HttpLoc *httpInitLocation(Http *http, int serverSide);
+extern HttpLoc *httpCreateConfiguredLocation(int serverSide);
 extern void httpAddErrorDocument(HttpLoc *location, cchar *code, cchar *url);
 
 extern void httpFinalizeLocation(HttpLoc *location);
@@ -1983,8 +1983,8 @@ extern int httpAddHandler(HttpLoc *location, cchar *name, cchar *extensions);
 extern void *httpGetLocationData(HttpLoc *loc, cchar *key);
 extern void httpSetLocationData(HttpLoc *loc, cchar *key, void *data);
 
-extern HttpLoc *httpCreateLocation();
-extern HttpLoc *httpCreateInheritedLocation(HttpLoc *location);
+extern HttpLoc *httpCreateLocation(struct HttpHost *host);
+extern HttpLoc *httpCreateInheritedLocation(HttpLoc *location, struct HttpHost *host);
 extern int httpSetHandler(HttpLoc *location, cchar *name);
 extern int httpAddFilter(HttpLoc *location, cchar *name, cchar *extensions, int direction);
 extern void httpClearStages(HttpLoc *location, int direction);

@@ -13537,6 +13537,9 @@ static MPR_INLINE bool isAbsPath(MprFileSystem *fs, cchar *path)
     mprAssert(fs);
     mprAssert(path);
 
+    if (path == NULL || *path == '\0') {
+        return 0;
+    }
     if (fs->hasDriveSpecs) {
         if ((cp = firstSep(fs, path)) != 0) {
             if ((endDrive = strchr(path, ':')) != 0) {
@@ -19226,6 +19229,10 @@ char *sclone(cchar *str)
 }
 
 
+/*
+    Clone a sub-string of a specified length. The null is added after the length. The given len can be longer than the
+    source string.
+ */
 char *snclone(cchar *str, ssize len)
 {
     char    *ptr;

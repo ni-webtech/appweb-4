@@ -711,7 +711,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
             mprError("Location already exists for \"%s\"", value);
             return MPR_ERR_BAD_SYNTAX;
         }
-        loc = httpCreateInheritedLocation(state->loc);
+        loc = httpCreateInheritedLocation(state->loc, host);
         httpSetLocationPrefix(loc, prefix);
         httpSetLocationAlias(loc, alias);
         httpSetLocationAuth(loc, state->dir->auth);

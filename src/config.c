@@ -90,7 +90,7 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
                 alias = httpCreateAlias("/cgi-bin/", path, 0);
                 mprLog(4, "ScriptAlias \"/cgi-bin/\":\"%s\"", path);
                 httpAddAlias(host, alias);
-                cloc = httpCreateInheritedLocation(host->loc);
+                cloc = httpCreateInheritedLocation(host->loc, host);
                 httpSetLocationPrefix(cloc, "/cgi-bin/");
                 httpSetHandler(cloc, "cgiHandler");
                 httpAddLocation(host, cloc);
@@ -375,7 +375,7 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
                     goto err;
                 }
                 state = pushState(state, &top);
-                state->loc = httpCreateInheritedLocation(state->loc);
+                state->loc = httpCreateInheritedLocation(state->loc, host);
                 state->auth = state->loc->auth;
                 httpSetLocationPrefix(state->loc, value);
                 if (httpAddLocation(host, state->loc) < 0) {
@@ -1390,15 +1390,14 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
 HttpLoc *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *prefixArg, cchar *pathArg, cchar *handlerName, 
         int flags)
 {
-    HttpHost      *host;
-    HttpAlias     *alias;
+    HttpHost    *host;
+    HttpAlias   *alias;
     HttpLoc     *loc;
     char        *path, *prefix;
 
     host = state->host;
-
-    prefix = httpReplaceReferences(loc, prefixArg);
-    path = httpMakePath(loc, pathArg);
+    prefix = httpReplaceReferences(state->loc, prefixArg);
+    path = httpMakePath(state->loc, pathArg);
 
     /*
         Create an ejs application location block and alias
@@ -1411,7 +1410,7 @@ HttpLoc *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *prefixAr
         mprError("Location block already exists for \"%s\"", prefix);
         return 0;
     }
-    loc = httpCreateInheritedLocation(state->loc);
+    loc = httpCreateInheritedLocation(state->loc, host);
     httpSetLocationAuth(loc, state->dir->auth);
     httpSetLocationPrefix(loc, prefix);
     httpAddLocation(host, loc);

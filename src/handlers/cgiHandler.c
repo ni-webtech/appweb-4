@@ -1010,7 +1010,7 @@ static int parseCgi(Http *http, cchar *key, char *value, MaConfigState *state)
         /*
             Create an alias and location with a cgiHandler and pathInfo processing
          */
-        path = httpMakePath(host, path);
+        path = httpMakePath(loc, path);
         if (httpLookupDir(host, path) == 0) {
             parent = mprGetFirstItem(host->dirs);
             dir = httpCreateDir(path, parent);
@@ -1021,7 +1021,7 @@ static int parseCgi(Http *http, cchar *key, char *value, MaConfigState *state)
         httpAddAlias(host, alias);
 
         if ((loc = httpLookupLocation(host, prefix)) == 0) {
-            loc = httpCreateInheritedLocation(state->loc);
+            loc = httpCreateInheritedLocation(state->loc, host);
             httpSetLocationAuth(loc, state->dir->auth);
             httpSetLocationPrefix(loc, prefix);
             httpAddLocation(host, loc);

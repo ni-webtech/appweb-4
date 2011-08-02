@@ -105,8 +105,8 @@ static int parseEjs(Http *http, cchar *key, char *value, MaConfigState *state)
         maGetConfigValue(&script, next, &next, 1);
         maGetConfigValue(&workers, next, &next, 1);
 
-        prefix = httpReplaceReferences(host, prefix);
-        path = httpMakePath(host, path);
+        prefix = httpReplaceReferences(loc, prefix);
+        path = httpMakePath(loc, path);
         if (script) {
             script = strim(script, "\"", MPR_TRIM_BOTH);
         }
