@@ -8,11 +8,10 @@ The key files are:
 
 File                 Purpose
 ----------------------------
+
+esp                - Directory containing ESP handler
 cgiHandler.c       - CGI handler
-dirHandler.c       - Directory listing handler
-egiHandler.c       - Embedded Gateway Interface (EGI) handler
 ejsHandler.c       - Ejscript (JavaScript) handler
-fileHandler.c      - File handler for static content 
 phpHandler.c       - PHP handler
 .makedep           - Makefile dependencies
 Makefile           - Makefile to build all modules

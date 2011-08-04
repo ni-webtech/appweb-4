@@ -185,6 +185,9 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't read %s", source);
             return 0;
         }
+        /*
+            Use layouts iff there is a controller provided on the route
+         */
         layout = (req->route->controllerName) ? mprJoinPath(esp->layoutsDir, "default.esp") : 0;
         if ((script = buildScript(conn, page, source, cacheName, layout, &err)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't build %s, error %s", source, err);
@@ -212,9 +215,9 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
         if (runCommand(conn, esp->link, csource, module) < 0) {
             return 0;
         }
-#if !(DEBUG_IDE && MACOSX)
+#if !(BLD_DEBUG && MACOSX)
         /*
-            Xcode needs the object for debug information
+            MAC needs the object for debug information
          */
         mprDeletePath(mprJoinPathExt(mprTrimPathExtension(module), BLD_OBJ));
 #endif
