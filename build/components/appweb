@@ -5,7 +5,7 @@ defineComponent() {
     local deps libs optional path libdir builtin imports moddir incdir SHOBJ pcre appweb present
 
     path="${1:-.}"
-        eval SHOBJ=\$BLD_${kind}_SHOBJ
+    eval SHOBJ=\$BLD_${kind}_SHOBJ
     builtin=`[ "$path" = "." -a -f src/appweb.h ] && echo --builtin`
     eval pcre=\$CFG_${kind}_PCRE
 

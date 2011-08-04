@@ -992,16 +992,17 @@ extern void httpMarkQueueHead(HttpQueue *q);
 #define HTTP_STAGE_HANDLER        0x2000            /**< Stage is a handler  */
 #define HTTP_STAGE_FILTER         0x4000            /**< Stage is a filter  */
 #define HTTP_STAGE_MODULE         0x8000            /**< Stage is a filter  */
-#define HTTP_STAGE_CGI_VARS       0x10000           /**< Create CGI variables */
-#define HTTP_STAGE_QUERY_VARS     0x80000           /**< Create variables from URI query */
-#define HTTP_STAGE_VIRTUAL        0x100000          /**< Handler serves virtual resources not the physical file system */
-#define HTTP_STAGE_EXTRA_PATH     0x200000          /**< Do extra path info (for CGI|PHP) */
-#define HTTP_STAGE_AUTO_DIR       0x400000          /**< Want auto directory redirection */
-#define HTTP_STAGE_VERIFY_ENTITY  0x800000          /**< Verify the request entity exists */
-#define HTTP_STAGE_MISSING_EXT    0x1000000         /**< Support URIs with missing extensions */
-#define HTTP_STAGE_UNLOADED       0x2000000         /**< Stage module library has been unloaded */
-#define HTTP_STAGE_RX             0x4000000         /**< Stage to be used in the Rx direction */
-#define HTTP_STAGE_TX             0x8000000         /**< Stage to be used in the Tx direction */
+#define HTTP_STAGE_FORM_VARS      0x10000           /**< Create formVars hash */
+#define HTTP_STAGE_CGI_VARS       0x20000           /**< Create CGI variables (implies FORM_VARS) */
+#define HTTP_STAGE_QUERY_VARS     0x40000           /**< Create variables from URI query (implies FORM_VARS) */
+#define HTTP_STAGE_VIRTUAL        0x80000           /**< Handler serves virtual resources not the physical file system */
+#define HTTP_STAGE_EXTRA_PATH     0x100000          /**< Do extra path info (for CGI|PHP) */
+#define HTTP_STAGE_AUTO_DIR       0x200000          /**< Want auto directory redirection */
+#define HTTP_STAGE_VERIFY_ENTITY  0x400000          /**< Verify the request entity exists */
+#define HTTP_STAGE_MISSING_EXT    0x800000          /**< Support URIs with missing extensions */
+#define HTTP_STAGE_UNLOADED       0x1000000         /**< Stage module library has been unloaded */
+#define HTTP_STAGE_RX             0x2000000         /**< Stage to be used in the Rx direction */
+#define HTTP_STAGE_TX             0x4000000         /**< Stage to be used in the Tx direction */
 
 typedef int (*HttpParse)(Http *http, cchar *key, char *value, void *state);
 
@@ -1947,7 +1948,7 @@ typedef struct HttpLoc {
     MprHashTable    *extensions;            /**< Hash of handlers by extensions */
     MprHashTable    *expires;               /**< Expiry of content by extension */
     MprHashTable    *expiresByType;         /**< Expiry of content by mime type */
-    MprHashTable    *keywords;              /**< Keyword expansion values. Used for $var refrerences */
+    MprHashTable    *tokens;                /**< Tokens to use for $var refrerences */
     MprList         *handlers;              /**< List of handlers for this location */
     MprList         *inputStages;           /**< Input stages */
     MprList         *outputStages;          /**< Output stages */
@@ -1983,16 +1984,16 @@ extern int httpAddHandler(HttpLoc *location, cchar *name, cchar *extensions);
 extern void *httpGetLocationData(HttpLoc *loc, cchar *key);
 extern void httpSetLocationData(HttpLoc *loc, cchar *key, void *data);
 
-extern HttpLoc *httpCreateLocation(struct HttpHost *host);
-extern HttpLoc *httpCreateInheritedLocation(HttpLoc *location, struct HttpHost *host);
+extern HttpLoc *httpCreateLocation();
+extern HttpLoc *httpCreateInheritedLocation(HttpLoc *location);
 extern int httpSetHandler(HttpLoc *location, cchar *name);
 extern int httpAddFilter(HttpLoc *location, cchar *name, cchar *extensions, int direction);
 extern void httpClearStages(HttpLoc *location, int direction);
 extern void httpAddLocationExpiry(HttpLoc *location, MprTime when, cchar *extensions);
 extern void httpAddLocationExpiryByType(HttpLoc *location, MprTime when, cchar *mimeTypes);
-extern void httpAddLocationKey(HttpLoc *loc, cchar *key, cchar *value);
+extern void httpAddLocationToken(HttpLoc *loc, cchar *token, cchar *value);
 extern char *httpMakePath(HttpLoc *loc, cchar *file);
-extern char *httpReplaceReferences(HttpLoc *loc, cchar *str);
+extern void httpSetLocationHost(HttpLoc *loc, struct HttpHost *host);
 
 /**
     Upload File
@@ -2246,20 +2247,20 @@ extern bool httpMatchEtag(HttpConn *conn, char *requestedEtag);
 extern bool httpMatchModified(HttpConn *conn, MprTime time);
 
 /**
-    Add query and post form variables
+    Add encoded form data
     @description Add new variables encoded in the supplied buffer
     @param conn HttpConn connection object
     @param buf Buffer containing www-urlencoded data
     @param len Length of buf
     @ingroup HttpRx
  */
-extern MprHashTable *httpAddVars(MprHashTable *table, cchar *buf, ssize len);
+extern void httpAddVars(HttpConn *conn, cchar *buf, ssize len);
 
 /**
-    Add env vars from body data
+    Add encoded form data from queued content
     @param q Queue reference
  */
-extern MprHashTable *httpAddVarsFromQueue(MprHashTable *table, HttpQueue *q);
+extern void httpAddVarsFromQueue(HttpQueue *q);
 
 //  DOC
 extern void httpAddFormVars(HttpConn *conn);
@@ -2390,6 +2391,7 @@ typedef struct HttpTx {
     ssize           chunkSize;              /**< Chunk size to use when using transfer encoding. Zero for unchunked. */
     int             flags;                  /**< Response flags */
     int             finalized;              /**< Finalization done */
+    int             responded;              /**< The request has responded (server). Some output has been initiated */
     MprOff          length;                 /**< Transmission content length */
     int             status;                 /**< HTTP request status */
     int             traceMethods;           /**< Handler methods supported */

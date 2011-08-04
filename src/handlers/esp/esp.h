@@ -11,6 +11,7 @@
 
 #include    "appweb.h"
 
+#if BLD_FEATURE_ESP
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -49,8 +50,6 @@ extern "C" {
 #define ESP_LIFESPAN            (86400 * MPR_TICKS_PER_SEC)       /* Default HTML cache lifespan */
 
 /********************************** Defines ***********************************/
-
-
 /*
       ESP lexical analyser tokens
  */
@@ -73,23 +72,33 @@ typedef struct EspParse {
 } EspParse;
 
 /*
-    Primary ESP control. Singleton
+    EspLoc structure. One per location.
  */
-typedef struct Esp {
+typedef struct EspLoc {
     MprHashTable    *actions;               /* Table of actions */
     MprHashTable    *views;                 /* Table of views */
     MprHashTable    *modules;               /* Compiled modules */
     MprList         *env;                   /* Environment for compiler */
     MprList         *routes;                /* Ordered list of routes */
-    HttpLoc         *loc;                   /* Controlling Http location definition */
+    HttpLoc         *loc;                   /* Controlling Http location */
     char            *compile;               /* Compile template */
     char            *link;                  /* Link template */
-    char            *modDir;                /* Directory for cache files */
+
+    char            *dir;                   /* Base directory for location */
+    char            *cacheDir;              /* Directory for cached compiled controllers and views */
+    char            *controllersDir;        /* Directory for controllers */
+    char            *databasesDir;          /* Directory for databases */
+    char            *layoutsDir;            /* Directory for layouts */
+    char            *modelsDir;             /* Directory for models */
+    char            *viewsDir;              /* Directory for views */
+    char            *webDir;                /* Directory for static web content */
+
     MprTime         lifespan;               /* Default cache lifespan */
     int             reload;                 /* Auto-reload modified ESP source */
     int             keepSource;             /* Preserve generated source */
 	int				showErrors;				/* Send server errors back to client */
-} Esp;
+} EspLoc;
+
 
 /*
     ESP Route structure. One per route.
@@ -105,31 +114,35 @@ typedef struct EspRoute {
     char            *controllerPath;        /* Full source path source of controller */
     char            *template;              /* URI template for forming links based on this route */
     char            *patternExpression;     /* Pattern regular expression */
-    void            *compiledPattern;       /* Compiled pattern regular expression */
-    //  MOB - naming - not a RE
-    char            *compiledAction;        /* Matching action to run (compiled) */
+    void            *patternCompiled;       /* Compiled pattern regular expression */
+    char            *actionReplacement;     /* Matching action to run (compiled) */
 } EspRoute;
+
+extern EspRoute *espCreateRoute(cchar *name, cchar *methods, cchar *pattern, cchar *action, cchar *controller);
+extern char *espMatchRoute(HttpConn *conn, EspRoute *route);
+
 
 /*
     ESP request state
  */
 typedef struct EspReq {
-    Esp             *esp;                   /* Convenient back pointer */
+    EspLoc          *esp;                   /* Convenient back pointer */
     EspRoute        *route;                 /* Route used for request */
+    HttpLoc         *loc;                   /* Location reference */
     MprBuf          *cacheBuffer;           /* HTML output caching */
-    char            *baseName;              /* Base name of intermediate compiled file */
+    char            *cacheName;             /* Base name of intermediate compiled file */
     char            *module;                /* Name of compiled module */
     char            *source;                /* Name of ESP source */
-    char            *path;                  /* Path to controller */
+    char            *controller;            /* Path to controller */
+    char            *view;                  /* Path to view */
     char            *entry;                 /* Module entry point */
-    int             responded;              /* Controller/action has responded in part */
     int             autoFinalize;           /* Request is/will-be auto-finalized */
 } EspReq;
 
 typedef void (*EspAction)(HttpConn *conn);
 typedef void (*EspView)(HttpConn *conn);
 
-extern bool espCompile(HttpConn *conn, cchar *name, cchar *source, char *module, int isView);
+extern bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, int isView);
 
 //  MOB - move to pcre
 #define PCRE_GLOBAL     0x1
@@ -140,8 +153,9 @@ extern void espAddHeaderString(HttpConn *conn, cchar *key, cchar *value);
 extern void espAppendHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 extern void espAppendHeaderString(HttpConn *conn, cchar *key, cchar *value);
 extern void espAutoFinalize(HttpConn *conn);
-extern void espDefineAction(Esp *esp, cchar *path, void *action);
-extern void espDefineView(Esp *esp, cchar *path, void *view);
+extern int espCompareVar(HttpConn *conn, cchar *var, cchar *value);
+extern void espDefineAction(EspLoc *esp, cchar *path, void *action);
+extern void espDefineView(EspLoc *esp, cchar *path, void *view);
 extern void espDontCache(HttpConn *conn);
 extern MprOff espGetContentLength(HttpConn *conn);
 extern cchar *espGetCookies(HttpConn *conn);
@@ -149,9 +163,11 @@ extern MprHashTable *espGetFormVars(HttpConn *conn);
 extern cchar *espGetHeader(HttpConn *conn, cchar *key);
 extern MprHashTable *espGetHeaderHash(HttpConn *conn);
 extern char *espGetHeaders(HttpConn *conn);
+extern int espGetIntVar(HttpConn *conn, cchar *var, int defaultValue);
 extern cchar *espGetQueryString(HttpConn *conn);
 extern int espGetStatus(HttpConn *conn);
 extern char *espGetStatusMessage(HttpConn *conn);
+extern cchar *espGetVar(HttpConn *conn, cchar *var, cchar *defaultValue);
 extern void espFinalize(HttpConn *conn);
 extern bool espFinalized(HttpConn *conn);
 extern void espFlush(HttpConn *conn);
@@ -163,7 +179,10 @@ extern void espSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path,
 extern void espSetContentType(HttpConn *conn, cchar *mimeType);
 extern void espSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 extern void espSetHeaderString(HttpConn *conn, cchar *key, cchar *value);
+extern void espSetIntVar(HttpConn *conn, cchar *var, int value);
 extern void espSetStatus(HttpConn *conn, int status);
+extern void espSetVar(HttpConn *conn, cchar *var, cchar *value);
+extern void espShowRequest(HttpConn *conn);
 extern ssize espWrite(HttpConn *conn, cchar *fmt, ...);
 extern ssize espWriteBlock(HttpConn *conn, cchar *buf, ssize size);
 extern ssize espWriteString(HttpConn *conn, cchar *s);
@@ -171,7 +190,7 @@ extern ssize espWriteString(HttpConn *conn, cchar *s);
 #ifdef __cplusplus
 } /* extern C */
 #endif
-
+#endif /* BLD_FEATURE_ESP */
 #endif /* _h_ESP */
 
 /*

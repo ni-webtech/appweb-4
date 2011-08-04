@@ -24,7 +24,7 @@ if (!global.test || test.os != "WIN") {
 	//	</body>
 	//	</html>
 
-    http.get(HTTP + "/directives.esp")
+    http.get(HTTP + "/directives.esp?weather=sunny&exploit=<html>")
     assert(http.status == 200)
     let r = http.response
     assert(r.contains("ESP Directives"))
@@ -32,6 +32,8 @@ if (!global.test || test.os != "WIN") {
     assert(r.contains("Today's Message: Hello World"))
     assert(r.contains("Lucky Number: 42"))
     assert(r.contains("Formatted Number: 12,345,678"))
-    assert(r.contains("Safe Strings: &lt;html&gt;"))
+    assert(r.contains("Safe Strings: &lt;bold&gt;"))
+    assert(r.contains("Safe Variables: &lt;html&gt;"))
+    assert(r.contains("Weather: sunny"))
     http.close()
 }

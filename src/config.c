@@ -90,7 +90,8 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
                 alias = httpCreateAlias("/cgi-bin/", path, 0);
                 mprLog(4, "ScriptAlias \"/cgi-bin/\":\"%s\"", path);
                 httpAddAlias(host, alias);
-                cloc = httpCreateInheritedLocation(host->loc, host);
+                cloc = httpCreateInheritedLocation(host->loc);
+                httpSetLocationHost(cloc, host);
                 httpSetLocationPrefix(cloc, "/cgi-bin/");
                 httpSetHandler(cloc, "cgiHandler");
                 httpAddLocation(host, cloc);
@@ -226,7 +227,7 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
         if (scasecmp(key, "Include") == 0) {
             state->lineNumber++;
             value = strim(value, "\"", MPR_TRIM_BOTH);
-            value = httpReplaceReferences(state->loc, value);
+            value = stemplate(value, state->loc->tokens);
             if ((cp = strchr(value, '*')) == 0) {
                 state = pushState(state, &top);
                 state->lineNumber = 0;
@@ -375,7 +376,8 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
                     goto err;
                 }
                 state = pushState(state, &top);
-                state->loc = httpCreateInheritedLocation(state->loc, host);
+                state->loc = httpCreateInheritedLocation(state->loc);
+                httpSetLocationHost(state->loc, host);
                 state->auth = state->loc->auth;
                 httpSetLocationPrefix(state->loc, value);
                 if (httpAddLocation(host, state->loc) < 0) {
@@ -541,7 +543,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             if (maSplitConfigValue(&prefix, &path, value, 1) < 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            prefix = httpReplaceReferences(loc, prefix);
+            prefix = stemplate(prefix, loc->tokens);
             path = httpMakePath(loc, path);
             if (httpLookupAlias(host, prefix)) {
                 mprError("Alias \"%s\" already exists", prefix);
@@ -1268,7 +1270,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             return 1;
 
         } else if (scasecmp(key, "ServerRoot") == 0) {
-            path = httpReplaceReferences(loc, strim(value, "\"", MPR_TRIM_BOTH));
+            path = stemplate(strim(value, "\"", MPR_TRIM_BOTH), loc->tokens);
             maSetMetaRoot(meta, path);
             httpSetHostServerRoot(host, path);
             mprLog(MPR_CONFIG, "Server Root \"%s\"", path);
@@ -1396,7 +1398,7 @@ HttpLoc *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *prefixAr
     char        *path, *prefix;
 
     host = state->host;
-    prefix = httpReplaceReferences(state->loc, prefixArg);
+    prefix = stemplate(prefixArg, state->loc->tokens);
     path = httpMakePath(state->loc, pathArg);
 
     /*
@@ -1410,7 +1412,8 @@ HttpLoc *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *prefixAr
         mprError("Location block already exists for \"%s\"", prefix);
         return 0;
     }
-    loc = httpCreateInheritedLocation(state->loc, host);
+    loc = httpCreateInheritedLocation(state->loc);
+    httpSetLocationHost(loc, host);
     httpSetLocationAuth(loc, state->dir->auth);
     httpSetLocationPrefix(loc, prefix);
     httpAddLocation(host, loc);
@@ -1506,7 +1509,7 @@ int maSplitConfigValue(char **s1, char **s2, char *buf, int quotes)
 }
 
 
-//  MOB - should these allocate
+//  MOB - refactor this API. Should be like stok()
 int maGetConfigValue(char **arg, char *buf, char **nextToken, int quotes)
 {
     char    *endp;

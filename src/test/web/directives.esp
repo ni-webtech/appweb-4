@@ -5,15 +5,20 @@
 <body>
 <%^start 
     char    *msg = "Hello World";
-    int     number = 42; 
+    int     x = 42; 
+
+    espSetVar(conn, "message", msg);
+    espSetIntVar(conn, "number", x);
 -%>
     <h1>ESP Directives</h1>
-    Today's Message: @@msg
-    Lucky Number: @@%d:number
+    Today's Message: @@message
+    Lucky Number: @@number
     Hostname: <%= mprGetDomainName() %>.<%= %s mprGetHostName() %>
     Time: <%= mprGetDate(0) %>
     Formatted Number: <%= %,d 12345678 %>
-    Safe Strings: <%= %S "<html>" %>
+    Safe Strings: <%= %S "<bold>" %>
+    Safe Variables: @@exploit
+    Weather: @@weather
 </body>
 </html>
 

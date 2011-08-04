@@ -149,9 +149,9 @@ else
 		endif
 	endif
 
-	ifeq		($(BLD_CPU_ARCH),MPR_CPU_MIPS)
-        _CFLAGS		+= -G 0
-	endif
+#	ifeq		($(BLD_CPU_ARCH),MPR_CPU_MIPS)
+#       _CFLAGS		+= -G 0
+#	endif
 
 	ifeq ($(BLD_CPU_ARCH),MPR_CPU_PPC)
 		ifneq ($(BLD_CPU_MODEL),)

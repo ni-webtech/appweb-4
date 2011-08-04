@@ -5,50 +5,73 @@
 #
 
 OBJECTS				= 
+CGI				:= mod_cgi
+FILE			:= mod_file
+EJS				:= mod_ejs
+PHP				:= mod_php
 
-include 			.makedep
+include 		.makedep
 
-OBJECTS				:= \
-	$(BLD_OBJ_DIR)/fileHandler$(BLD_OBJ)
+POST_DIRS		+= esp
 
 ifeq	($(BLD_FEATURE_CGI),1)
-	OBJECTS 		+= $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ)
-endif
-ifeq	($(BLD_FEATURE_DIR),1)
-	OBJECTS 		+= $(BLD_OBJ_DIR)/dirHandler$(BLD_OBJ)
+	OBJECTS		+= $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ)
 endif
 ifeq	($(BLD_FEATURE_EJS),1)
-	OBJECTS 		+= $(BLD_OBJ_DIR)/ejsHandler$(BLD_OBJ)
+	OBJECTS 	+= $(BLD_OBJ_DIR)/ejsHandler$(BLD_OBJ)
 endif
 ifeq	($(BLD_FEATURE_PHP),1)
-	OBJECTS			+= $(BLD_OBJ_DIR)/phpHandler$(BLD_OBJ)
+	OBJECTS		+= $(BLD_OBJ_DIR)/phpHandler$(BLD_OBJ)
 endif
-ifeq	($(BLD_FEATURE_ESP),1)
-	PRE_DIRS		+= esp
+
+#
+#	Order of modules matters. Dependencies must be earlier in the list.
+#
+ifeq	($(BLD_FEATURE_CGI),1)
+	MODULES		+= $(BLD_LIB_DIR)/$(CGI)$(BLD_SHOBJ)
+endif
+ifeq	($(BLD_FEATURE_EJS),1)
+	MODULES		+= $(BLD_LIB_DIR)/$(EJS)$(BLD_SHOBJ)
+endif
+ifeq	($(BLD_FEATURE_PHP),1)
+	MODULES		+= $(BLD_LIB_DIR)/$(PHP)$(BLD_SHOBJ)
+	IMPORTS 	+= $(BLD_PHP_IMPORTS)
+	IMPORTED	+= $(patsubst %,$(BLD_LIB_DIR)/%, $(notdir $(IMPORTS)))
 endif
 
 ejsHandler_IFLAGS	+= $(BLD_EJS_IFLAGS)
 phpHandler_IFLAGS	+= $(BLD_PHP_IFLAGS)
 DEPEND_FLAGS		+= $(BLD_PHP_IFLAGS)
-
-compileExtra: $(OBJECTS)
+LIBS				+= $(BLD_APPWEB_LIBS)
 
 #
 #	Remove shorten-64 warnings because PHP headers trigger this
 #
 _CFLAGS				:= $(patsubst -Wshorten-64-to-32,,$(_CFLAGS))
 
-ifeq	($(BLD_FEATURE_PHP),1)
-	IMPORTS 	+= $(BLD_OPENSSL_IMPORTS) $(BLD_PHP_IMPORTS)
-	IMPORTED	+= $(patsubst %,$(BLD_LIB_DIR)/%, $(notdir $(IMPORTS)))
-endif
-
-compileExtra: 	$(IMPORTED)
+compileExtra: $(IMPORTED) $(OBJECTS) $(MODULES)
 
 $(IMPORTED): $(IMPORTS)
 	getlib $^
 	$(call log) "[Import]" "$(IMPORTS)"
 	
+#
+#	Build Modules
+#
+$(BLD_LIB_DIR)/$(CGI)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
+	bld --shared --library $(BLD_LIB_DIR)/$(CGI) --libs "$(LIBS)" $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ)
+
+$(BLD_LIB_DIR)/$(EJS)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/ejsHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
+	bld --shared --library $(BLD_LIB_DIR)/$(EJS) --search "$(BLD_EJS_LIBPATHS)" --libs "$(LIBS) $(BLD_EJS_LIBS)" \
+		$(BLD_OBJ_DIR)/ejsHandler$(BLD_OBJ)
+
+$(BLD_LIB_DIR)/$(PHP)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/phpHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
+	bld --shared --library $(BLD_LIB_DIR)/$(PHP) --rpath "$(BLD_LIB_PREFIX)" \
+		--search "$(BLD_PHP_LIBPATHS)" --libs "$(BLD_PHP_LIBS) $(LIBS)" $(BLD_OBJ_DIR)/phpHandler$(BLD_OBJ)
+
+cleanExtra:
+	rm -f $(MODULES)
+
 #
 #   Local variables:
 #   tab-width: 4

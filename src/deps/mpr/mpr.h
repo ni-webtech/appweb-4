@@ -937,6 +937,8 @@ struct  MprEvent;
 struct  MprEventService;
 struct  MprFile;
 struct  MprFileSystem;
+struct  MprHash;
+struct  MprHashTable;
 struct  MprHeap;
 struct  MprModule;
 struct  MprMutex;
@@ -2668,6 +2670,14 @@ extern ssize sspn(cchar *str, cchar *set);
     @return Returns TRUE if the pattern was found. Otherwise returns zero.
  */
 extern int sstarts(cchar *str, cchar *prefix);
+
+/**
+    Replace template tokens in a string with values from a lookup table. Tokens are ${variable} references. 
+    @param str String to expand
+    @param tokens Hash table of token values to use
+    @return An expanded string. May return the original string if no "$" references are present.
+  */
+extern char *stemplate(cchar *str, struct MprHashTable *tokens);
 
 /**
     Convert a string to an integer.
@@ -4987,6 +4997,11 @@ extern void mprMapSeparators(char *path, int separator);
     @ingroup MprPath
  */
 extern bool mprPathExists(cchar *path, int omode);
+
+/*
+    Read the contents of a file
+ */
+extern char *mprReadPath(cchar *path);
 
 /**
     Resolve paths

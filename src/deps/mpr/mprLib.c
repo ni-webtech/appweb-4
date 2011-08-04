@@ -14606,6 +14606,30 @@ bool mprPathExists(cchar *path, int omode)
 }
 
 
+char *mprReadPath(cchar *path)
+{
+    MprFile     *file;
+    MprPath     info;
+    char        *buf;
+
+    if ((file = mprOpenFile(path, O_RDONLY | O_BINARY, 0)) == 0) {
+        mprError("Can't open %s", path);
+        return 0;
+    }
+    if (mprGetPathInfo(path, &info) < 0) {
+        return 0;
+    }
+    if ((buf = mprAlloc(info.size + 1)) == 0) {
+        return 0;
+    }
+    if (mprReadFile(file, buf, info.size) != info.size) {
+        return 0;
+    }
+    buf[info.size] = '\0';
+    return buf;
+}
+
+
 /*
     Resolve one path against another path. Returns a joined (normalized) path.
     If other is absolute, then return other. If other is null, empty or "." then return path.
@@ -14903,6 +14927,7 @@ char *mprGetAppDir()
     }
     return sclone(MPR->appDir); 
 } 
+
 
 /*
     @copy   default
@@ -17444,7 +17469,7 @@ static void signalEvent(MprSignal *sp, MprEvent *event)
 static void standardSignalHandler(void *ignored, MprSignal *sp)
 {
     mprLog(6, "standardSignalHandler signo %d, flags %x", sp->signo, sp->flags);
-#if DEBUG_IDE
+#if DEBUG_IDE && UNUSED
     if (sp->signo == SIGINT) return;
 #endif
     if (sp->signo == SIGTERM) {
@@ -19646,13 +19671,18 @@ char *sreplace(char *str, char *pattern, char *replacement)
 {
     MprBuf      *buf;
     char        *s;
+    ssize       plen;
 
     buf = mprCreateBuf(-1, -1);
-    for (s = str; *s; s++) {
-        if (strstr(s, pattern) != 0) {
-            mprPutStringToBuf(buf, replacement);
-        } else {
-            mprPutCharToBuf(buf, *s);
+    if (pattern && *pattern && replacement && *replacement) {
+        plen = slen(pattern);
+        for (s = str; *s; s++) {
+            if (sncmp(s, pattern, plen) == 0) {
+                mprPutStringToBuf(buf, replacement);
+                s += plen - 1;
+            } else {
+                mprPutCharToBuf(buf, *s);
+            }
         }
     }
     mprAddNullToBuf(buf);
@@ -19886,6 +19916,56 @@ char *supper(cchar *str)
         str = s;
     }
     return (char*) str;
+}
+
+
+/*
+    Expand ${token} references in a path or string.
+    Currently support DOCUMENT_ROOT, SERVER_ROOT and PRODUCT, OS and VERSION.
+ */
+char *stemplate(cchar *str, MprHashTable *keys)
+{
+    MprBuf      *buf;
+    char        *src, *result, *cp, *tok, *value;
+
+    if (str) {
+        if (schr(str, '$') == 0) {
+            return sclone(str);
+        }
+        buf = mprCreateBuf(0, 0);
+        for (src = (char*) str; *src; ) {
+            if (*src == '$') {
+                if (*++src == '{') {
+                    for (cp = ++src; *cp && *cp != '}'; cp++) ;
+                    tok = snclone(src, cp - src);
+                } else {
+                    for (cp = src; *cp && (isalnum((int) *cp) || *cp == '_'); cp++) ;
+                    tok = snclone(src, cp - src);
+                }
+                if ((value = mprLookupKey(keys, tok)) != 0) {
+                    mprPutStringToBuf(buf, value);
+                    if (src > str && src[-1] == '{') {
+                        src = cp + 1;
+                    } else {
+                        src = cp;
+                    }
+                } else {
+                    mprPutCharToBuf(buf, '$');
+                    if (src > str && src[-1] == '{') {
+                        mprPutCharToBuf(buf, '{');
+                    }
+                    mprPutCharToBuf(buf, *src++);
+                }
+            } else {
+                mprPutCharToBuf(buf, *src++);
+            }
+        }
+        mprAddNullToBuf(buf);
+        result = sclone(mprGetBufStart(buf));
+    } else {
+        result = MPR->emptyString;
+    }
+    return result;
 }
 
 

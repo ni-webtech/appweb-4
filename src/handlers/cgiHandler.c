@@ -217,7 +217,7 @@ static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
             q->queueData = 0;
             httpError(conn, HTTP_CODE_BAD_REQUEST, "Client supplied insufficient body data");
         }
-        rx->formVars = httpAddVarsFromQueue(rx->formVars, q);
+        httpAddVarsFromQueue(q);
     } else {
         /* No service routine, we just need it to be queued for writeToCGI */
         httpPutForService(q, packet, 0);
@@ -1021,7 +1021,8 @@ static int parseCgi(Http *http, cchar *key, char *value, MaConfigState *state)
         httpAddAlias(host, alias);
 
         if ((loc = httpLookupLocation(host, prefix)) == 0) {
-            loc = httpCreateInheritedLocation(state->loc, host);
+            loc = httpCreateInheritedLocation(state->loc);
+            httpSetLocationHost(loc, host);
             httpSetLocationAuth(loc, state->dir->auth);
             httpSetLocationPrefix(loc, prefix);
             httpAddLocation(host, loc);

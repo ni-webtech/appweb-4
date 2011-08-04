@@ -2,11 +2,11 @@
 #   OpenSSL
 #
 defineComponent() {
-	local path search ver libs libpaths imports
+	local path search ver libs libpaths imports SHOBJ
 
     ver="latest"
-
-    if [ "$BLD_HOST_OS" = MACOSX -o "$BLD_HOST_OS" = LINUX ] ; then
+    eval SHOBJ=\$BLD_${kind}_SHOBJ
+    if [ "$BLD_HOST_OS" = LINUX ] ; then
         path=${1:-/usr/include:/usr/lib}
     else
         path="${1:-.}"
@@ -30,9 +30,7 @@ defineComponent() {
         libpaths=`probe --name openssl --search "$path:extensions/openssl/$ver" --dir "libcrypto" `
         iflags=-I`probe --name openssl --search "$path:extensions/openssl/$ver/include" --dir "openssl/ssl.h"`
         libs="ssl crypto"
-        if [ $OS != MACOSX ] ; then
-            imports="$libpaths/libssl.so $libpaths/libcrypto.so"
-        fi
+        imports="$libpaths/libssl.1*${SHOBJ} $libpaths/libcrypto.1*${SHOBJ}"
     fi
     if [ "$libpaths" = "" ] ; then
         warnComponent "openssl"

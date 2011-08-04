@@ -70,8 +70,13 @@ static void openEjs(HttpQueue *q)
      */
     if (alias->prefixLen > 0) {
         uri = &uri[alias->prefixLen];
+#if UNUSED
         if (*uri != '/' && uri[-1] == '/') {
             uri--;
+        }
+#endif
+        if (*uri == '\0') {
+            uri = "/";
         }
         rx->scriptName = alias->prefix;
         rx->pathInfo = sclone(uri);
@@ -105,7 +110,7 @@ static int parseEjs(Http *http, cchar *key, char *value, MaConfigState *state)
         maGetConfigValue(&script, next, &next, 1);
         maGetConfigValue(&workers, next, &next, 1);
 
-        prefix = httpReplaceReferences(loc, prefix);
+        prefix = stemplate(prefix, loc->tokens);
         path = httpMakePath(loc, path);
         if (script) {
             script = strim(script, "\"", MPR_TRIM_BOTH);

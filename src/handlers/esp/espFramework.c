@@ -11,7 +11,7 @@
 #include    "appweb.h"
 
 #if BLD_FEATURE_ESP
-    #include    "esp.h"
+#include    "esp.h"
 
 /************************************* Local **********************************/
 
@@ -164,8 +164,6 @@ void espRedirect(HttpConn *conn, int status, cchar *target)
     EspReq  *req;
     
     req = conn->data;
-    //  MOB - this responded MUST Be pushed down into http
-    req->responded = 1;
     httpRedirect(conn, status, target);
 }
 
@@ -210,6 +208,36 @@ void espSetContentType(HttpConn *conn, cchar *mimeType)
 }
 
 
+int espGetIntVar(HttpConn *conn, cchar *var, int defaultValue)
+{
+    return httpGetIntFormVar(conn, var, defaultValue);
+}
+
+
+cchar *espGetVar(HttpConn *conn, cchar *var, cchar *defaultValue)
+{
+    return httpGetFormVar(conn, var, defaultValue);
+}
+
+
+void espSetIntVar(HttpConn *conn, cchar *var, int value) 
+{
+    return httpSetIntFormVar(conn, var, value);
+}
+
+
+void espSetVar(HttpConn *conn, cchar *var, cchar *value) 
+{
+    return httpSetFormVar(conn, var, value);
+}
+
+
+int espCompareVar(HttpConn *conn, cchar *var, cchar *value)
+{
+    return httpCompareFormVar(conn, var, value);
+}
+
+
 /*  
     Set a http header. Overwrite if present.
  */
@@ -237,10 +265,8 @@ void espSetStatus(HttpConn *conn, int status)
     EspReq      *req;
 
     req = conn->data;
-    req->responded = 1;
     httpSetStatus(conn, status);
 }
-
 
 
 ssize espWriteBlock(HttpConn *conn, cchar *buf, ssize size)
@@ -248,9 +274,6 @@ ssize espWriteBlock(HttpConn *conn, cchar *buf, ssize size)
     EspReq      *req;
     
     req = conn->data;
-    //  MOB - should responded be pushed down into Conn
-    //  MOB - capture output for caching here
-    req->responded = 1;
 #if BLD_DEBUG
 {
     /* Verify length */
@@ -262,9 +285,16 @@ ssize espWriteBlock(HttpConn *conn, cchar *buf, ssize size)
 }
 
 
+ssize espWriteSafeString(HttpConn *conn, cchar *s)
+{
+    s = mprEscapeHtml(s);
+    return espWriteBlock(conn, s, slen(s));
+}
+
+
 ssize espWriteString(HttpConn *conn, cchar *s)
 {
-    return espWriteBlock(conn, s, strlen(s));
+    return espWriteBlock(conn, s, slen(s));
 }
 
 

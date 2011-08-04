@@ -1,7 +1,5 @@
 /*
-    espHandler.c -- Embedded Gateway Interface (ESP) handler. Fast in-process replacement for CGI.
-
-    The ESP handler implements a very fast in-process CGI scheme.
+    espHandler.c -- Embedded Server Pages (ESP) handler. Fast in-process replacement for CGI.
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
@@ -11,20 +9,19 @@
 #include    "appweb.h"
 
 #if BLD_FEATURE_ESP
-    #include    "esp.h"
+#include    "esp.h"
 //  MOB - does esp require pcre?
-    #include    "pcre.h"
+#include    "pcre.h"
 
 /************************************* Local **********************************/
 
 #define ESP_NAME "espHandler"
 
+static EspLoc *allocEspLoc(HttpLoc *loc);
 static bool moduleIsCurrent(HttpConn *conn, cchar *source, cchar *module);
 static int fetchCachedResponse(HttpConn *conn);
-static void manageEsp(Esp *esp, int flags);
+static void manageEspLoc(EspLoc *esp, int flags);
 static void manageReq(EspReq *req, int flags);
-static void manageRoute(EspRoute *route, int flags);
-static char *matchRoute(HttpConn *conn, EspRoute *route);
 static int  runAction(HttpConn *conn, cchar *actionKey);
 static void runView(HttpConn *conn, cchar *name);
 static int saveCachedResponse(HttpConn *conn);
@@ -46,9 +43,13 @@ static void openEsp(HttpQueue *q)
         httpMemoryError(conn);
         return;
     }
+    req->loc = rx->loc;
     conn->data = req;
     req->autoFinalize = 1;
-    req->esp = httpGetLocationData(rx->loc, ESP_NAME);
+    if ((req->esp = httpGetLocationData(rx->loc, ESP_NAME)) == 0) {
+        req->esp = allocEspLoc(rx->loc);
+        httpSetLocationData(rx->loc, ESP_NAME, req->esp);
+    }
     mprAssert(req->esp);
 
     /*
@@ -59,8 +60,13 @@ static void openEsp(HttpQueue *q)
     alias = rx->alias;
     if (alias->prefixLen > 0) {
         uri = &uri[alias->prefixLen];
-        if (*uri != '/' && uri[-1] == '/') {
+#if UNUSED
+        if (uri > rx->pathInfo && *uri != '/' && uri[-1] == '/') {
             uri--;
+        }
+#endif
+        if (*uri == '\0') {
+            uri = "/";
         }
         rx->scriptName = alias->prefix;
         rx->pathInfo = sclone(uri);
@@ -72,7 +78,7 @@ static void openEsp(HttpQueue *q)
 static void startEsp(HttpQueue *q)
 {
     HttpConn        *conn;
-    Esp             *esp;
+    EspLoc          *esp;
     EspReq          *req;
     EspRoute        *route;
     cchar           *actionKey;
@@ -87,7 +93,7 @@ static void startEsp(HttpQueue *q)
         return;
     }
     for (next = 0; (route = mprGetNextItem(esp->routes, &next)) != 0; ) {
-        if ((actionKey = matchRoute(conn, route)) != 0) {
+        if ((actionKey = espMatchRoute(conn, route)) != 0) {
             break;
         }
     }
@@ -96,6 +102,8 @@ static void startEsp(HttpQueue *q)
         return;
     }
     req->route = route;
+    mprLog(4, "Using route: %s for %s", route->name, conn->rx->pathInfo);
+
     httpAddFormVars(conn);
 #if FUTURE
     espSetConn(conn);
@@ -109,7 +117,7 @@ static void startEsp(HttpQueue *q)
     if (route->controllerName && !runAction(conn, actionKey)) {
         return;
     }
-    if (!req->responded && req->autoFinalize) {
+    if (!conn->tx->responded && req->autoFinalize) {
         runView(conn, actionKey);
     }
     if (req->autoFinalize && !conn->tx->finalized) {
@@ -139,11 +147,11 @@ static int saveCachedResponse(HttpConn *conn)
 }
 
 
-static char *getControllerEntry(cchar *actionKey)
+static char *getControllerEntry(cchar *controllerName)
 {
     char    *cp, *entry;
 
-    entry = sfmt("espController_%s", actionKey);
+    entry = sfmt("espController_%s", mprGetPathBase(controllerName));
     for (cp = entry; *cp; cp++) {
         if (!isalnum((int) *cp) && *cp != '_') {
             *cp = '_';
@@ -156,7 +164,7 @@ static char *getControllerEntry(cchar *actionKey)
 static int runAction(HttpConn *conn, cchar *actionKey)
 {
     MprModule   *mp;
-    Esp         *esp;
+    EspLoc      *esp;
     EspReq      *req;
     EspRoute    *route;
     EspAction   action;
@@ -165,9 +173,15 @@ static int runAction(HttpConn *conn, cchar *actionKey)
     esp = req->esp;
     route = req->route;
 
-    //  MOB - rename baseName cacheName
-    req->baseName = mprGetMD5Hash(route->controllerPath, slen(route->controllerPath), "controller_");
-    req->module = mprGetNormalizedPath(mprAsprintf("%s/%s%s", esp->modDir, req->baseName, BLD_SHOBJ));
+    /*
+        Expand any form var $tokens. This permits ${controller} and user form data to be used in the controller name
+     */
+    if (schr(route->controllerName, '$')) {
+        route->controllerName = stemplate(route->controllerName, conn->rx->formVars);
+    }
+    route->controllerPath = mprJoinPath(esp->controllersDir, route->controllerName);
+    req->cacheName = mprGetMD5Hash(route->controllerPath, slen(route->controllerPath), "controller_");
+    req->module = mprGetNormalizedPath(sfmt("%s/%s%s", esp->cacheDir, req->cacheName, BLD_SHOBJ));
 
     if (esp->reload) {
         if (!mprPathExists(route->controllerPath, R_OK)) {
@@ -182,7 +196,7 @@ static int runAction(HttpConn *conn, cchar *actionKey)
                 mprUnloadModule(mp);
             }
             //  WARNING: this will allow GC
-            if (!espCompile(conn, req->baseName, route->controllerPath, req->module, 0)) {
+            if (!espCompile(conn, route->controllerPath, req->module, req->cacheName, 0)) {
                 return 0;
             }
         }
@@ -202,8 +216,13 @@ static int runAction(HttpConn *conn, cchar *actionKey)
         }
     }
     if ((action = mprLookupKey(esp->actions, actionKey)) == 0) {
-        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find defined action for %s", actionKey);
-        return 0;
+        actionKey = (cchar*) sfmt("%s-missing", mprTrimPathExtension(route->controllerName));
+        if ((action = mprLookupKey(esp->actions, actionKey)) == 0) {
+            if ((action = mprLookupKey(esp->actions, "missing")) == 0) {
+                httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Missing action for %s", actionKey);
+                return 0;
+            }
+        }
     }
     (action)(conn);
     return 1;
@@ -213,18 +232,23 @@ static int runAction(HttpConn *conn, cchar *actionKey)
 static void runView(HttpConn *conn, cchar *actionKey)
 {
     MprModule   *mp;
-    Esp         *esp;
+    EspLoc      *esp;
     EspReq      *req;
+    EspRoute    *route;
     EspView     view;
-
+    
     req = conn->data;
     esp = req->esp;
-
-    //  MOB - refactor these names here and in runAction
-    req->path = mprJoinPath(conn->host->documentRoot, actionKey);
-    req->source = mprJoinPathExt(req->path, ".esp");
-    req->baseName = mprGetMD5Hash(req->source, slen(req->source), "view_");
-    req->module = mprGetNormalizedPath(mprAsprintf("%s/%s%s", req->esp->modDir, req->baseName, BLD_SHOBJ));
+    route = req->route;
+    
+    if (route->controllerName) {
+        req->view = mprJoinPath(esp->viewsDir, actionKey);
+    } else {
+        req->view = mprJoinPath(conn->host->documentRoot, actionKey);
+    }
+    req->source = mprJoinPathExt(req->view, ".esp");
+    req->cacheName = mprGetMD5Hash(req->source, slen(req->source), "view_");
+    req->module = mprGetNormalizedPath(sfmt("%s/%s%s", req->esp->cacheDir, req->cacheName, BLD_SHOBJ));
 
     if (esp->reload) {
         if (!mprPathExists(req->source, R_OK)) {
@@ -239,12 +263,12 @@ static void runView(HttpConn *conn, cchar *actionKey)
                 mprUnloadModule(mp);
             }
             //  WARNING: this will allow GC
-            if (!espCompile(conn, req->baseName, req->source, req->module, 1)) {
+            if (!espCompile(conn, req->source, req->module, req->cacheName, 1)) {
                 return;
             }
         }
         if (mprLookupModule(req->source) == 0) {
-            req->entry = sfmt("espInit_%s", req->baseName);
+            req->entry = sfmt("espInit_%s", req->cacheName);
             //  MOB - who keeps reference to module?
             if ((mp = mprCreateModule(req->source, req->module, req->entry, esp)) == 0) {
                 httpMemoryError(conn);
@@ -257,8 +281,8 @@ static void runView(HttpConn *conn, cchar *actionKey)
             }
         }
     }
-    if ((view = mprLookupKey(esp->views, mprGetPortablePath(req->path))) == 0) {
-        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find defined view for %s", req->path);
+    if ((view = mprLookupKey(esp->views, mprGetPortablePath(req->source))) == 0) {
+        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find defined view for %s", req->view);
         return;
     }
 	httpAddHeaderString(conn, "Content-Type", "text/html");
@@ -285,7 +309,7 @@ static bool moduleIsCurrent(HttpConn *conn, cchar *source, cchar *module)
 }
 
 
-void espDefineAction(Esp *esp, cchar *name, void *action)
+void espDefineAction(EspLoc *esp, cchar *name, void *action)
 {
     mprAssert(esp);
     mprAssert(name && *name);
@@ -295,7 +319,7 @@ void espDefineAction(Esp *esp, cchar *name, void *action)
 }
 
 
-void espDefineView(Esp *esp, cchar *path, void *view)
+void espDefineView(EspLoc *esp, cchar *path, void *view)
 {
     mprAssert(esp);
     mprAssert(path && *path);
@@ -305,269 +329,11 @@ void espDefineView(Esp *esp, cchar *path, void *view)
 }
 
 
-//  MOB - split route into separate file
-/*
-    Compile the route into fast forms. This compiles the route->methods into a hash table, route->pattern into 
-    a regular expression in route->compiledPattern.
-    MOB - refactor into separate functions
- */
-static int prepRoute(Esp *esp, HttpHost *host, HttpLoc *loc, EspRoute *route, char *methods)
+static EspLoc *allocEspLoc(HttpLoc *loc)
 {
-    MprBuf  *pattern, *params, *buf;
-    cchar   *errMsg, *item;
-    char    *method, *tok, *cp, *ep, *token;
-    int     column, errCode, index, next, braced;
+    EspLoc  *esp;
 
-    /*
-        Convert the methods into a method hash
-     */
-    if (route->methods == 0) {
-        if ((route->methods = mprCreateHash(-1, 0)) == 0) {
-            return MPR_ERR_MEMORY;
-        }
-    }
-    //  MOB - does this work having methods always defined?
-    while ((method = stok(methods, ", \t\n\r", &tok)) != 0) {
-        mprAddKey(route->methods, method, route);
-        methods = 0;
-    }
-    /*
-        Prepend the module directory to the module name
-     */
-    if (route->controllerName) {
-        route->controllerPath = mprJoinPath(host->documentRoot, route->controllerName);
-    }
-    /*
-        Prepare the pattern. 
-            - Extract the tokens and change tokens: "{word}" to "(word)"
-            - Change optional sections: "(portion)" to "(?:portion)?"
-            - Change "/" to "\/"
-            - Create a params RE replacement string of the form "$1:$2:$3" for the {tokens}
-            - Wrap the pattern in "^" and "$"
-     */
-    route->tokens = mprCreateList(-1, 0);
-    pattern = mprCreateBuf(-1, -1);
-    params = mprCreateBuf(-1, -1);
-
-    if (route->pattern[0] == '%') {
-        route->patternExpression = sclone(&route->pattern[1]);
-        if (route->action) {
-            route->compiledAction = route->action;
-        } else {
-            /* Replace with everything */
-            route->compiledAction = sclone("$&");
-        }
-        /* Can't have a link template if using regular expressions */
-
-    } else {
-        for (cp = route->pattern; *cp; cp++) {
-            if (*cp == '(') {
-                mprPutStringToBuf(pattern, "(?:");
-
-            } else if (*cp == ')') {
-                mprPutStringToBuf(pattern, ")?");
-
-            } else if (*cp == '{' && (cp == route->pattern || cp[-1] != '\\')) {
-                if ((ep = schr(cp, '}')) != 0) {
-                    /* Trim {} off the token and replace in pattern with "([^/]*)"  */
-                    mprPutStringToBuf(pattern, "([^/]*)");
-
-                    /* Params ends up looking like "$1:$2:$3:$4" */
-                    index = mprAddItem(route->tokens, snclone(&cp[1], ep - cp -1));
-                    mprPutCharToBuf(params, '$');
-                    mprPutIntToBuf(params, index + 1);
-                    mprPutCharToBuf(params, ':');
-                    cp = ep;
-                }
-            } else {
-                mprPutCharToBuf(pattern, *cp);
-            }
-        }
-        mprAddNullToBuf(pattern);
-        mprAddNullToBuf(params);
-        route->patternExpression = sclone(mprGetBufStart(pattern));
-
-        /* Trim last ":" from params */
-        route->params = sclone(mprGetBufStart(params));
-        route->params[slen(route->params) - 1] = '\0';
-
-        /*
-            Prepare the action. Change $token to $N
-         */
-        buf = mprCreateBuf(-1, -1);
-        for (cp = route->action; *cp; cp++) {
-            if ((tok = schr(cp, '$')) != 0 && (tok == route->action || tok[-1] != '\\')) {
-                if (tok > cp) {
-                    mprPutBlockToBuf(buf, cp, tok - cp);
-                }
-                if ((braced = (*++tok == '{')) != 0) {
-                    tok++;
-                }
-                for (ep = tok; isalnum(*ep); ep++) ;
-                token = snclone(tok, ep - tok);
-                for (next = 0; (item = mprGetNextItem(route->tokens, &next)) != 0; ) {
-                    if (scmp(item, token) == 0) {
-                        break;
-                    }
-                }
-                if (item) {
-                    mprPutCharToBuf(buf, '$');
-                    mprPutIntToBuf(buf, next);
-                } else {
-                    mprError("Can't find token \"%s\" in template \"%s\"", token, route->pattern);
-                }
-                if (braced) {
-                    ep++;
-                }
-                cp = ep - 1;
-            } else {
-                mprPutCharToBuf(buf, *cp);
-            }
-        }
-        mprAddNullToBuf(buf);
-        route->compiledAction = sclone(mprGetBufStart(buf));
-
-        /*
-            Create a template for links. Strip "()" and "/.*" from the pattern.
-         */
-        route->template = sreplace(route->pattern, "(", "");
-        route->template = sreplace(route->template, ")", "");
-        route->template = sreplace(route->template, "/.*", "");
-    }
-    if ((route->compiledPattern = pcre_compile2(route->patternExpression, 0, &errCode, &errMsg, &column, NULL)) == 0) {
-        mprError("Can't compile route. Error %s at column %d", errMsg, column); 
-    }
-    return 0;
-}
-
-
-char *pcre_replace(cchar *str, void *pattern, cchar *replacement, MprList **parts, int flags)
-{
-    MprBuf  *result;
-    cchar   *end, *cp, *lastReplace;
-    ssize   len, count;
-    int     matches[ESP_MAX_ROUTE_MATCHES * 3];
-    int     i, endLastMatch, startNextMatch, submatch;
-
-    len = slen(str);
-    startNextMatch = endLastMatch = 0;
-    result = mprCreateBuf(-1, -1);
-    do {
-        if (startNextMatch > len) {
-            break;
-        }
-        count = pcre_exec(pattern, NULL, str, (int) len, startNextMatch, 0, matches, sizeof(matches) / sizeof(int));
-        if (count < 0) {
-            break;
-        }
-        if (endLastMatch < matches[0]) {
-            /* Append prior string text */
-            mprPutSubStringToBuf(result, &str[endLastMatch], matches[0] - endLastMatch);
-        }
-        end = &replacement[slen(replacement)];
-        lastReplace = replacement;
-        for (cp = replacement; cp < end; ) {
-            if (*cp == '$') {
-                if (lastReplace < cp) {
-                    mprPutSubStringToBuf(result, lastReplace, (int) (cp - lastReplace));
-                }
-                switch (*++cp) {
-                case '$':
-                    mprPutCharToBuf(result, '$');
-                    break;
-                case '&':
-                    /* Replace the matched string */
-                    mprPutSubStringToBuf(result, &str[matches[0]], matches[1] - matches[0]);
-                    break;
-                case '`':
-                    /* Insert the portion that preceeds the matched string */
-                    mprPutSubStringToBuf(result, str, matches[0]);
-                    break;
-                case '\'':
-                    /* Insert the portion that follows the matched string */
-                    mprPutSubStringToBuf(result, &str[matches[1]], len - matches[1]);
-                    break;
-                default:
-                    /* Insert the nth submatch */
-                    if (isdigit((int) *cp)) {
-                        submatch = (int) wtoi(cp, 10, NULL);
-                        while (isdigit((int) *++cp))
-                            ;
-                        cp--;
-                        if (submatch < count) {
-                            submatch *= 2;
-                            mprPutSubStringToBuf(result, &str[matches[submatch]], matches[submatch + 1] - matches[submatch]);
-                        }
-                    } else {
-                        mprError("Bad replacement $ specification in page");
-                        return 0;
-                    }
-                }
-                lastReplace = cp + 1;
-            }
-            cp++;
-        }
-        if (lastReplace < cp && lastReplace < end) {
-            mprPutSubStringToBuf(result, lastReplace, (int) (cp - lastReplace));
-        }
-        endLastMatch = matches[1];
-        startNextMatch = (startNextMatch == endLastMatch) ? startNextMatch + 1 : endLastMatch;
-    } while (flags & PCRE_GLOBAL);
-
-    if (endLastMatch < len) {
-        /* Append remaining string text */
-        mprPutSubStringToBuf(result, &str[endLastMatch], len - endLastMatch);
-    }
-    mprAddNullToBuf(result);
-    if (parts) {
-        *parts = mprCreateList(-1, 0);
-        for (i = 2; i < (count * 2); i += 2) {
-            char *token = snclone(&str[matches[i]], matches[i + 1] - matches[i]);
-            mprAddItem(*parts, token);
-        }
-    }
-    return sclone(mprGetBufStart(result));
-}
-
-
-static char *matchRoute(HttpConn *conn, EspRoute *route)
-{
-    HttpRx      *rx;
-    MprList     *parts;
-    cchar       *token, *actionKey;
-    int         matches[ESP_MAX_ROUTE_MATCHES * 3];
-    int         next, start, count;
-
-    rx = conn->rx;
-    if (!mprLookupKey(route->methods, conn->rx->method)) {
-        return 0;
-    }
-    start = 0;
-    count = pcre_exec(route->compiledPattern, NULL, rx->pathInfo, (int) slen(rx->pathInfo), start, 0, 
-        matches, sizeof(matches) / sizeof(int));
-    if (count < 0) {
-        return 0;
-    }
-    if (route->params) {
-        if (!pcre_replace(rx->pathInfo, route->compiledPattern, route->params, &parts, 0)) {
-            return 0;
-        }
-        //  MOB - must trim "/" from parts
-        for (next = 0; (token = mprGetNextItem(route->tokens, &next)) != 0; ) {
-            //  MOB - is next -1 right?
-            httpSetFormVar(conn, token, mprGetItem(parts, next - 1));
-        }
-    }
-    actionKey = pcre_replace(rx->pathInfo, route->compiledPattern, route->compiledAction, NULL, 0);
-    return strim(actionKey, "/", MPR_TRIM_START);
-}
-
-
-static Esp *allocEsp(HttpLoc *loc)
-{
-    Esp     *esp;
-
-    if ((esp = mprAllocObj(Esp, manageEsp)) == 0) {
+    if ((esp = mprAllocObj(EspLoc, manageEspLoc)) == 0) {
         return 0;
     }
     if ((esp->actions = mprCreateHash(-1, MPR_HASH_STATIC_VALUES)) == 0) {
@@ -585,14 +351,30 @@ static Esp *allocEsp(HttpLoc *loc)
         return 0;
     }
 #endif
+    esp->dir = (loc->alias) ? loc->alias->filename : loc->host->serverRoot;
+    esp->controllersDir = esp->dir;
+    esp->databasesDir = esp->dir;
+    esp->layoutsDir = esp->dir;
+    esp->modelsDir = esp->dir;
+    esp->viewsDir = esp->dir;
+    esp->webDir = esp->dir;
+
+    /*
+        Setup default parameters for $expansion of Http location paths
+     */
+    httpAddLocationToken(loc, "CONTROLLERS_DIR", esp->controllersDir);
+    httpAddLocationToken(loc, "DATABASES_DIR", esp->databasesDir);
+    httpAddLocationToken(loc, "LAYOUTS_DIR", esp->layoutsDir);
+    httpAddLocationToken(loc, "MODELS_DIR", esp->modelsDir);
+    httpAddLocationToken(loc, "STATIC_DIR", esp->webDir);
+    httpAddLocationToken(loc, "VIEWS_DIR", esp->viewsDir);
+
 #if DEBUG_IDE
-    esp->modDir = mprGetAppDir();
+    esp->cacheDir = mprGetAppDir();
 #else
-    esp->modDir = mprJoinPath(mprGetAppDir(), "../" BLD_LIB_NAME);
+    esp->cacheDir = mprJoinPath(mprGetAppDir(), "../" BLD_LIB_NAME);
 #endif
-    if (!mprPathExists(esp->modDir, X_OK)) {
-        esp->modDir = sclone(".");
-    }
+
     esp->lifespan = ESP_LIFESPAN;
     esp->keepSource = 0;
 #if BLD_DEBUG
@@ -604,24 +386,23 @@ static Esp *allocEsp(HttpLoc *loc)
 }
 
 
-static Esp *cloneEsp(HttpLoc *loc)
+static EspLoc *cloneEspLoc(HttpLoc *loc)
 {
-    Esp         *esp, *outer;
+    EspLoc      *esp, *outer;
     HttpLoc     *parent;
 
     parent = loc->parent;
 
     if ((outer = httpGetLocationData(parent, ESP_NAME)) == 0) {
-        return allocEsp(loc);
+        return allocEspLoc(loc);
     }
-    if ((esp = mprAllocObj(Esp, manageEsp)) == 0) {
+    if ((esp = mprAllocObj(EspLoc, manageEspLoc)) == 0) {
         return 0;
     }
     esp->reload = outer->reload;
     esp->keepSource = outer->keepSource;
     esp->showErrors = outer->showErrors;
     esp->lifespan = outer->lifespan;
-    esp->modDir = sclone(outer->modDir);
     if (outer->compile) {
         esp->compile = sclone(outer->compile);
     }
@@ -646,6 +427,15 @@ static Esp *cloneEsp(HttpLoc *loc)
     } else {
         esp->views = mprCreateHash(-1, MPR_HASH_STATIC_VALUES);   
     }
+    esp->dir = outer->dir;
+    esp->cacheDir = outer->cacheDir;
+    esp->controllersDir = outer->controllersDir;
+    esp->databasesDir = outer->databasesDir;
+    esp->layoutsDir = outer->layoutsDir;
+    esp->modelsDir = outer->modelsDir;
+    esp->viewsDir = outer->viewsDir;
+    esp->webDir = outer->webDir;
+
     if (mprHasMemError()) {
         return 0;
     }
@@ -659,9 +449,9 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
     HttpHost    *host;
     HttpAlias   *alias;
     HttpDir     *dir, *parent;
-    Esp         *esp;
+    EspLoc      *esp;
     EspRoute    *route;
-    char        *name, *ekey, *evalue, *prefix, *path, *next, *methods, *prior;
+    char        *name, *ekey, *evalue, *prefix, *path, *next, *methods, *prior, *pattern, *action, *controller;
     
     host = state->host;
     loc = state->loc;
@@ -671,17 +461,13 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
     }
     if ((esp = httpGetLocationData(loc, ESP_NAME)) == 0) {
         if (loc->parent) {
-            esp = cloneEsp(loc);
+            esp = cloneEspLoc(loc);
         } else {
-            esp = allocEsp(loc);
+            esp = allocEspLoc(loc);
         }
         if (esp == 0) {
             return MPR_ERR_MEMORY;
         }
-        httpAddLocationKey(loc, "CONTROLLERS", sclone("."));
-        httpAddLocationKey(loc, "LAYOUTS", sclone("."));
-        httpAddLocationKey(loc, "STATIC", sclone("."));
-        httpAddLocationKey(loc, "VIEWS", sclone("."));
         httpSetLocationData(loc, ESP_NAME, esp);
     }
     mprAssert(esp);
@@ -696,27 +482,27 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         if (maGetConfigValue(&path, next, &next, 1) < 0) {
             path = ".";
         }
-        prefix = httpReplaceReferences(loc, prefix);
-        path = httpMakePath(loc, path);
+        prefix = stemplate(prefix, loc->tokens);
+        esp->dir = path = httpMakePath(loc, path);
         if (httpLookupDir(host, path) == 0) {
             parent = mprGetFirstItem(host->dirs);
             dir = httpCreateDir(path, parent);
             httpAddDir(host, dir);
         }
-        alias = httpCreateAlias(prefix, path, 0);
-        mprLog(4, "EspAlias \"%s\" for \"%s\"", prefix, path);
-        httpAddAlias(host, alias);
-
-        if (httpLookupLocation(host, prefix)) {
-            mprError("Location already exists for \"%s\"", value);
-            return MPR_ERR_BAD_SYNTAX;
+        if ((loc = httpLookupLocation(host, prefix)) == 0) {
+            loc = httpCreateInheritedLocation(state->loc);
+            httpSetLocationHost(loc, host);
+            httpSetLocationPrefix(loc, prefix);
+            httpSetLocationAuth(loc, state->dir->auth);
+            httpAddLocation(host, loc);
+            httpSetHandler(loc, "espHandler");
         }
-        loc = httpCreateInheritedLocation(state->loc, host);
-        httpSetLocationPrefix(loc, prefix);
-        httpSetLocationAlias(loc, alias);
-        httpSetLocationAuth(loc, state->dir->auth);
-        httpAddLocation(host, loc);
-        httpSetHandler(loc, "espHandler");
+        if (loc->alias == 0) {
+            alias = httpCreateAlias(prefix, path, 0);
+            mprLog(4, "EspAlias \"%s\" for \"%s\"", prefix, path);
+            httpSetLocationAlias(loc, alias);
+            httpAddAlias(host, alias);
+        }
         return 1;
 
     } else if (scasecmp(key, "EspCache") == 0) {
@@ -731,16 +517,49 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         /*
             EspDir name dir
          */
-        if (scmp(name, "mvc-defaults") == 0) {
-            httpAddLocationKey(loc, "CONTROLLERS", sclone("controllers"));
-            httpAddLocationKey(loc, "LAYOUTS", sclone("layouts"));
-            httpAddLocationKey(loc, "STATIC", sclone("static"));
-            httpAddLocationKey(loc, "VIEWS", sclone("views"));
+        if (maGetConfigValue(&name, value, &next, 1) < 0) {
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        if (scmp(name, "mvc") == 0) {
+            esp->cacheDir = mprJoinPath(esp->dir, "cache");
+            httpAddLocationToken(loc, "CACHE_DIR", esp->cacheDir);
+
+            esp->controllersDir = mprJoinPath(esp->dir, "controllers");
+            httpAddLocationToken(loc, "CONTROLLERS_DIR", esp->controllersDir);
+
+            esp->databasesDir = mprJoinPath(esp->dir, "databases");
+            httpAddLocationToken(loc, "DATABASES_DIR", esp->databasesDir);
+
+            esp->layoutsDir  = mprJoinPath(esp->dir, "layouts");
+            httpAddLocationToken(loc, "LAYOUTS_DIR", esp->layoutsDir);
+
+            esp->modelsDir  = mprJoinPath(esp->dir, "models");
+            httpAddLocationToken(loc, "MODELS_DIR", esp->modelsDir);
+
+            esp->webDir = mprJoinPath(esp->dir, "static");
+            httpAddLocationToken(loc, "STATIC_DIR", esp->webDir);
+
+            esp->viewsDir = mprJoinPath(esp->dir, "views");
+            httpAddLocationToken(loc, "VIEWS_DIR", esp->viewsDir);
+
         } else {
-            if (maGetConfigValue(&name, value, &next, 1) < 0) {
-                return MPR_ERR_BAD_SYNTAX;
+            path = stemplate(mprJoinPath(esp->dir, next), loc->tokens);
+            if (scmp(name, "cache") == 0) {
+                esp->cacheDir = path;
+            } if (scmp(name, "controllers") == 0) {
+                esp->controllersDir = path;
+            } else if (scmp(name, "databases") == 0) {
+                esp->databasesDir = path;
+            } else if (scmp(name, "layouts") == 0) {
+                esp->layoutsDir = path;
+            } else if (scmp(name, "models") == 0) {
+                esp->modelsDir = path;
+            } else if (scmp(name, "static") == 0) {
+                esp->webDir = path;
+            } else if (scmp(name, "views") == 0) {
+                esp->viewsDir = path;
             }
-            httpAddLocationKey(loc, name, value);
+            httpAddLocationToken(loc, name, path);
         }
         return 1;
 
@@ -769,52 +588,36 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         esp->link = sclone(value);
         return 1;
 
-    } else if (scasecmp(key, "EspModuleDir") == 0) {
-        esp->modDir = sclone(value);
-        return 1;
-
     } else if (scasecmp(key, "EspReload") == 0) {
         esp->reload = scasecmp(value, "on") == 0;
         return 1;
 
     } else if (scasecmp(key, "EspReset") == 0) {
-        esp = allocEsp(loc);
+        esp = allocEspLoc(loc);
         return 1;
 
     } else if (scasecmp(key, "EspRoute") == 0) {
         /*
             EspRoute name methods pattern action [controller]
          */
-        if ((route = mprAllocObj(EspRoute, manageRoute)) == 0) {
-            return MPR_ERR_MEMORY;
-        }
-        if (maGetConfigValue(&route->name, value, &next, 1) < 0) {
+        if (maGetConfigValue(&name, value, &next, 1) < 0) {
             return MPR_ERR_BAD_SYNTAX;
         }
-        //  MOB - should maGetConfigValue do a clone?
-        route->name = sclone(route->name);
-
         if (maGetConfigValue(&methods, next, &next, 1) < 0) {
             return MPR_ERR_BAD_SYNTAX;
         }
-        if (maGetConfigValue(&route->pattern, next, &next, 1) < 0) {
+        if (maGetConfigValue(&pattern, next, &next, 1) < 0) {
             return MPR_ERR_BAD_SYNTAX;
         }
-        if (route->pattern) {
-            route->pattern = sclone(route->pattern);
+        maGetConfigValue(&action, next, &next, 1);
+        if (action) {
+            action = stemplate(action, loc->tokens);
         }
-        maGetConfigValue(&route->action, next, &next, 1);
-        if (route->action) {
-            route->action = sclone(route->action);
+        maGetConfigValue(&controller, next, &next, 1);
+        if (controller) {
+            controller = stemplate(controller, loc->tokens);
         }
-        maGetConfigValue(&route->controllerName, next, &next, 1);
-        if (route->controllerName) {
-            route->controllerName = sclone(httpReplaceReferences(loc, route->controllerName));
-        }
-        if (scasecmp(methods, "ALL") == 0) {
-            methods = "DELETE, GET, HEAD, OPTIONS, POST, PUT, TRACE";
-        }
-        if (prepRoute(esp, host, loc, route, methods) < 0) {
+        if ((route = espCreateRoute(name, methods, pattern, action, controller)) == 0) {
             return MPR_ERR_MEMORY;
         }
         mprAddItem(esp->routes, route);
@@ -828,7 +631,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
 }
 
 
-static void manageEsp(Esp *esp, int flags)
+static void manageEspLoc(EspLoc *esp, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(esp->actions);
@@ -836,8 +639,15 @@ static void manageEsp(Esp *esp, int flags)
         mprMark(esp->views);
         mprMark(esp->compile);
         mprMark(esp->link);
-        mprMark(esp->modDir);
         mprMark(esp->env);
+        mprMark(esp->dir);
+        mprMark(esp->cacheDir);
+        mprMark(esp->controllersDir);
+        mprMark(esp->databasesDir);
+        mprMark(esp->layoutsDir);
+        mprMark(esp->modelsDir);
+        mprMark(esp->viewsDir);
+        mprMark(esp->webDir);
     }
 }
 
@@ -846,33 +656,14 @@ static void manageReq(EspReq *req, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(req->entry);
-        mprMark(req->path);
+        mprMark(req->view);
+        mprMark(req->controller);
         mprMark(req->source);
         mprMark(req->module);
-        mprMark(req->baseName);
+        mprMark(req->cacheName);
         mprMark(req->cacheBuffer);
         mprMark(req->route);
         mprMark(req->esp);
-    }
-}
-
-
-static void manageRoute(EspRoute *route, int flags)
-{
-    if (flags & MPR_MANAGE_MARK) {
-        mprMark(route->name);
-        mprMark(route->methods);
-        mprMark(route->pattern);
-        mprMark(route->action);
-        mprMark(route->controllerName);
-        mprMark(route->controllerPath);
-        mprMark(route->patternExpression);
-        mprMark(route->compiledAction);
-        mprMark(route->params);
-        mprMark(route->tokens);
-
-    } else if (flags & MPR_MANAGE_FREE) {
-        free(route->compiledPattern);
     }
 }
 
@@ -881,9 +672,7 @@ int maEspHandlerInit(Http *http)
 {
     HttpStage       *handler;
 
-    handler = httpCreateHandler(http, "espHandler", 
-        HTTP_STAGE_QUERY_VARS | HTTP_STAGE_EXTRA_PATH | HTTP_STAGE_VIRTUAL, NULL);
-    if (handler == 0) {
+    if ((handler = httpCreateHandler(http, "espHandler", HTTP_STAGE_QUERY_VARS | HTTP_STAGE_VIRTUAL, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     handler->open = openEsp; 

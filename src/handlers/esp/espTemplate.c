@@ -9,13 +9,20 @@
 #include    "appweb.h"
 
 #if BLD_FEATURE_ESP
-    #include    "esp.h"
+#include    "esp.h"
 
 /************************************ Forwards ********************************/
 
-static int buildScript(cchar *path, cchar *name, char *page, char **script, char **err);
+#define CONTENT_MARKER  "${_ESP_CONTENT_MARKER_}"
+
+#if BLD_WIN_LIKE
+    #define ESP_EXPORT "__declspec(dllexport) "
+#else
+    #define ESP_EXPORT ""
+#endif
+
+static char *buildScript(HttpConn *conn, cchar *page, cchar *path, cchar *name, cchar *layout, char **err);
 static int getEspToken(EspParse *parse);
-static char *readFileToMem(cchar *path);
 
 /************************************* Code ***********************************/
 
@@ -44,7 +51,7 @@ static char *getOutDir(cchar *name)
  */
 static char *expandCommand(HttpConn *conn, cchar *command, cchar *source, cchar *module)
 {
-    Esp     *esp;
+    EspLoc  *esp;
     EspReq  *req;
     MprBuf  *buf;
     cchar   *cp, *out;
@@ -118,10 +125,10 @@ static char *expandCommand(HttpConn *conn, cchar *command, cchar *source, cchar 
 }
 
 
-static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *module, cchar *source)
+static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *module)
 {
     EspReq      *req;
-    Esp         *esp;
+    EspLoc      *esp;
     MprCmd      *cmd;
     char        *commandLine, *err, *out;
 
@@ -144,9 +151,9 @@ static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *mod
 			err = out;
 		}
 		if (esp->showErrors) {
-			httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't run command %s, error %s", source, err);
+			httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't run command %s, error %s", commandLine, err);
 		} else {
-			httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't run command %s", source);
+			httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't run command %s", commandLine);
 		}
         return MPR_ERR_CANT_COMPLETE;
     }
@@ -157,28 +164,29 @@ static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *mod
 /*
     Compile a view or controller.
 
-    name        MD5 base name
+    cacheName   MD5 cache name (not a full path)
     source      ESP source file name
     module      Module file name
  */
-bool espCompile(HttpConn *conn, cchar *name, cchar *source, char *module, int isView)
+bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, int isView)
 {
     MprFile     *fp;
     EspReq      *req;
-    Esp         *esp;
+    EspLoc      *esp;
     cchar       *csource;
-    char        *script, *page, *err;
+    char        *layout, *script, *page, *err;
     ssize       len;
 
     req = conn->data;
     esp = req->esp;
 
     if (isView) {
-        if ((page = readFileToMem(source)) == 0) {
+        if ((page = mprReadPath(source)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't read %s", source);
             return 0;
         }
-        if (buildScript(source, name, page, &script, &err) < 0) {
+        layout = (req->route->controllerName) ? mprJoinPath(esp->layoutsDir, "default.esp") : 0;
+        if ((script = buildScript(conn, page, source, cacheName, layout, &err)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't build %s, error %s", source, err);
             return 0;
         }
@@ -197,11 +205,11 @@ bool espCompile(HttpConn *conn, cchar *name, cchar *source, char *module, int is
     } else {
         csource = source;
     }
-    if (runCommand(conn, esp->compile, csource, module, source) < 0) {
+    if (runCommand(conn, esp->compile, csource, module) < 0) {
         return 0;
     }
     if (esp->link) {
-        if (runCommand(conn, esp->link, csource, module, source) < 0) {
+        if (runCommand(conn, esp->link, csource, module) < 0) {
             return 0;
         }
 #if !(DEBUG_IDE && MACOSX)
@@ -283,31 +291,32 @@ static char *joinLine(cchar *str, ssize *lenp)
         -%>                 End esp section and trim trailing newline
 
         @@var               Substitue the value of a variable. Var can also be simple expressions (without spaces)
-        @@[%fmt:]var        Substitue the formatted value of a variable.
 
  */
-static int buildScript(cchar *path, cchar *name, char *page, char **script, char **err)
+static char *buildScript(HttpConn *conn, cchar *page, cchar *path, cchar *cacheName, cchar *layout, char **err)
 {
     EspParse    parse;
-    char        *control, *incBuf, *incText, *export, *global, *token, *body, *where;
-    char        *rest, *start, *end, *include, *line, *fmt;
+    EspReq      *req;
+    EspLoc      *esp;
+    char        *control, *incBuf, *incText, *global, *token, *body, *where;
+    char        *rest, *start, *end, *include, *line, *fmt, *layoutPage, *layoutBuf;
     ssize       len;
-    int         tid, rc;
+    int         tid;
 
-    mprAssert(script);
     mprAssert(page);
 
-    rc = 0;
+    req = conn->data;
+    esp = req->esp;
+
     body = start = end = global = "";
-    *script = 0;
     *err = 0;
 
     memset(&parse, 0, sizeof(parse));
-    parse.data = page;
+    parse.data = (char*) page;
     parse.next = parse.data;
 
     if ((parse.token = mprCreateBuf(-1, -1)) == 0) {
-        return MPR_ERR_MEMORY;
+        return 0;
     }
     tid = getEspToken(&parse);
     while (tid != ESP_TOK_EOF) {
@@ -324,9 +333,14 @@ static int buildScript(cchar *path, cchar *name, char *page, char **script, char
             break;
 
         case ESP_TOK_VAR:
-        case ESP_TOK_EXPR:
             /* @@var */
-            /* <%= expr %>r */
+            token = strim(token, " \t\r\n;", MPR_TRIM_BOTH);
+            body = sjoin(body, "  espWriteSafeString(conn, espGetVar(conn, \"", token, "\", \"\"));\n", NULL);
+            break;
+
+
+        case ESP_TOK_EXPR:
+            /* <%= expr %> */
             if (*token == '%') {
                 fmt = stok(token, ": \t\r\n", &token);
                 if (token == 0) { 
@@ -335,7 +349,7 @@ static int buildScript(cchar *path, cchar *name, char *page, char **script, char
             } else {
                 fmt = "%s";
             }
-            token = strim(token, " \t\r\n", MPR_TRIM_BOTH);
+            token = strim(token, " \t\r\n;", MPR_TRIM_BOTH);
             body = sjoin(body, "  espWrite(conn, \"", fmt, "\", ", token, ");\n", NULL);
             break;
 
@@ -368,7 +382,10 @@ static int buildScript(cchar *path, cchar *name, char *page, char **script, char
         case ESP_TOK_CONTROL:
             /* NOTE: layout parsing not supported */
             control = stok(token, " \t\r\n", &token);
-            if (scmp(control, "include") == 0) {
+            if (scmp(control, "content") == 0) {
+                body = sjoin(body, CONTENT_MARKER, NULL);
+
+            } else if (scmp(control, "include") == 0) {
                 if (token == 0) {
                     token = "";
                 }
@@ -379,63 +396,82 @@ static int buildScript(cchar *path, cchar *name, char *page, char **script, char
                 } else {
                     include = mprJoinPath(mprGetPathDir(path), token);
                 }
-                if ((incText = readFileToMem(include)) == 0) {
+                if ((incText = mprReadPath(include)) == 0) {
                     *err = mprAsprintf("Can't read include file: %s", include);
-                    return MPR_ERR_CANT_READ;
+                    return 0;
                 }
                 /* Recurse and process the include script */
                 incBuf = 0;
-                if ((rc = buildScript(include, NULL, incText, &incBuf, err)) < 0) {
-                    return rc;
+                if ((incBuf = buildScript(conn, incText, include, NULL, NULL, err)) == 0) {
+                    return 0;
                 }
                 body = sjoin(body, incBuf, NULL);
 
+            } else if (scmp(control, "layout") == 0) {
+                token = strim(token, " \t\r\n\"", MPR_TRIM_BOTH);
+                if (*token == '\0') {
+                    layout = 0;
+                } else {
+                    token = mprGetNormalizedPath(token);
+                    if (token[0] == '/') {
+                        layout = sclone(token);
+                    } else {
+                        layout = mprJoinPath(mprGetPathDir(path), token);
+                    }
+                    if (!mprPathExists(layout, F_OK)) {
+                        *err = mprAsprintf("Can't access layout page %s", layout);
+                        return 0;
+                    }
+                }
+
             } else {
                 *err = mprAsprintf("Unknown control %s at line %d", control, parse.lineNumber);
-                return MPR_ERR_BAD_STATE;;                
+                return 0;                
             }
             break;
 
         case ESP_TOK_ERR:
         default:
-            return MPR_ERR_BAD_SYNTAX;
+            return 0;
         }
         tid = getEspToken(&parse);
     }
-    if (name) {
+    if (cacheName) {
         /*
-            Wrap the script
+            CacheName will only be set for the outermost invocation
          */
-#if BLD_WIN_LIKE
-	export = "__declspec(dllexport) ";
-#else
-	export = "";
-#endif
+        if (layout) {
+            if ((layoutPage = mprReadPath(layout)) == 0) {
+                *err = mprAsprintf("Can't read layout page: %s", layout);
+                return 0;
+            }
+            layoutBuf = 0;
+            if ((layoutBuf = buildScript(conn, layoutPage, layout, NULL, NULL, err)) == 0) {
+                return 0;
+            }
+            body = sreplace(layoutBuf, CONTENT_MARKER, body);
+        }
         if (start && start[slen(start) - 1] != '\n') {
             start = sjoin(start, "\n", 0);
         }
         if (end && end[slen(end) - 1] != '\n') {
             end = sjoin(end, "\n", 0);
         }
-        *script = sfmt(\
+        body = sfmt(\
             "/*\n   Generated from %s\n */\n"\
             "#include \"esp.h\"\n"\
             "%s\n"\
             "static void %s(HttpConn *conn) {\n"\
-            "%s"\
-            "%s"\
-            "%s"\
+            "%s%s%s"\
             "}\n\n"\
-            "%sint espInit_%s(Esp *esp, MprModule *module) {\n"\
+            "%sint espInit_%s(EspLoc *esp, MprModule *module) {\n"\
             "   espDefineView(esp, \"%s\", %s);\n"\
             "   return 0;\n"\
             "}\n",
-            path, global, name, start, body, end, export, name, mprGetPortablePath(path), name);
-printf("SCRIPT: \n%s\n", *script);
-    } else {
-        *script = body;
+            path, global, cacheName, start, body, end, ESP_EXPORT, cacheName, mprGetPortablePath(path), cacheName);
+        mprLog(6, "Create ESP script: \n%s\n", body);
     }
-    return rc;
+    return body;
 }
 
 
@@ -555,13 +591,23 @@ static int getEspToken(EspParse *parse)
                     tid = ESP_TOK_VAR;
                     next = eatSpace(parse, next);
                     /* Format is:  @@[%5.2f],var */
+#if UNUSED
                     while (isalnum((int) *next) || *next == '[' || *next == ']' || *next == '.' || *next == '$' || 
-                            *next == '_' || *next == '"' || *next == '\'' || *next == ',' || *next == '%' || *next == ':') {
+                            *next == '_' || *next == '"' || *next == '\'' || *next == ',' || *next == '%' || *next == ':' ||
+                            *next == '(' || *next == ')') {
                         if (*next == '\n') parse->lineNumber++;
                         if (!addChar(parse, *next++)) {
                             return ESP_TOK_ERR;
                         }
                     }
+#else
+                    while (isalnum((int) *next) || *next == '_') {
+                        if (*next == '\n') parse->lineNumber++;
+                        if (!addChar(parse, *next++)) {
+                            return ESP_TOK_ERR;
+                        }
+                    }
+#endif
                     next--;
                 }
                 done++;
@@ -594,31 +640,6 @@ static int getEspToken(EspParse *parse)
     }
     parse->next = next;
     return tid;
-}
-
-
-static char *readFileToMem(cchar *path)
-{
-    MprFile     *file;
-    MprPath     info;
-    char        *data;
-    ssize       len;
-
-    if (mprGetPathInfo(path, &info) < 0) {
-        return 0;
-    }
-    len = (ssize) info.size;
-    if ((file = mprOpenFile(path, O_RDONLY | O_BINARY, 0)) == 0) {
-        return 0;
-    }
-    if ((data = mprAlloc(len + 1)) == 0) {
-        return 0;
-    }
-    if (mprReadFile(file, data, len) != len) {
-        return 0;
-    }
-    data[len] = '\0';
-    return data;
 }
 
 

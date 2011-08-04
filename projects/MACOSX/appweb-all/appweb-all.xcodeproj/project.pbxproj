@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 44;
+	objectVersion = 46;
 	objects = {
 
 /* Begin PBXAggregateTarget section */
@@ -95,6 +95,7 @@
 		C9817CDC110D231500F241EF /* libhttp.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9817C51110D183800F241EF /* libhttp.dylib */; };
 		C9817E00110D7D3100F241EF /* fileHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C976206C0FD04E38009C78E1 /* fileHandler.c */; };
 		C98181B9110EC20600F241EF /* dirHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C976206A0FD04E38009C78E1 /* dirHandler.c */; };
+		C99C3E1513EB18F300665C47 /* espRouter.c in Sources */ = {isa = PBXBuildFile; fileRef = C99C3E1413EB18F300665C47 /* espRouter.c */; };
 		C9A26CE613D1787B007A3D7C /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C9A26CE713D1787B007A3D7C /* libappweb.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DC30FD03FD9009C78E1 /* libappweb.dylib */; };
 		C9A26CE813D1787B007A3D7C /* libhttp.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9817C51110D183800F241EF /* libhttp.dylib */; };
@@ -409,6 +410,7 @@
 		C9817C23110D170500F241EF /* log.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = log.c; path = ../../../src/log.c; sourceTree = SOURCE_ROOT; };
 		C9817C51110D183800F241EF /* libhttp.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libhttp.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9817CF0110D234800F241EF /* makerom.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = makerom.c; path = ../../../src/deps/mpr/makerom.c; sourceTree = SOURCE_ROOT; };
+		C99C3E1413EB18F300665C47 /* espRouter.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espRouter.c; path = esp/espRouter.c; sourceTree = "<group>"; };
 		C9A26CED13D1787B007A3D7C /* mod_ejs.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_ejs.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9A44E9813D74BAC009BF64B /* appweb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = appweb.h; path = ../../../src/appweb.h; sourceTree = "<group>"; };
 		C9A44E9913D74BAC009BF64B /* customize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = customize.h; path = ../../../src/customize.h; sourceTree = "<group>"; };
@@ -573,6 +575,7 @@
 			isa = PBXGroup;
 			children = (
 				C9E4B74013C7F547005345FA /* esp.h */,
+				C99C3E1413EB18F300665C47 /* espRouter.c */,
 				C9E4B74213C7F547005345FA /* espFramework.c */,
 				C9E4B73F13C7F547005345FA /* espHandler.c */,
 				C9E4B74113C7F547005345FA /* espTemplate.c */,
@@ -1024,8 +1027,11 @@
 /* Begin PBXProject section */
 		C9AFCC4A0FC521150080E908 /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0410;
+			};
 			buildConfigurationList = C9AFCC4D0FC521150080E908 /* Build configuration list for PBXProject "appweb-all" */;
-			compatibilityVersion = "Xcode 2.4";
+			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -1368,6 +1374,7 @@
 				C9E4B74413C7F547005345FA /* espHandler.c in Sources */,
 				C9E4B74813C7F547005345FA /* espTemplate.c in Sources */,
 				C9E4B74A13C7F547005345FA /* espFramework.c in Sources */,
+				C99C3E1513EB18F300665C47 /* espRouter.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1557,7 +1564,6 @@
 		C93E6F0011E83A3B00248470 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				PRODUCT_NAME = prep;
 			};
 			name = Release;
@@ -1565,7 +1571,6 @@
 		C94086B1101A665B0019809C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_PREFIX_HEADER = "";
 				INSTALL_PATH = "$(INSTALL_PATH)/bin";
 				PRODUCT_NAME = testAppweb;
@@ -1576,7 +1581,6 @@
 		C94086B2101A665B0019809C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_PREFIX_HEADER = "";
 				INSTALL_PATH = "$(INSTALL_PATH)/bin";
 				PRODUCT_NAME = testAppweb;
@@ -1587,7 +1591,6 @@
 		C9761DA10FD03F95009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				INSTALL_PATH = "$(INSTALL_PATH)/lib\n";
 				PRODUCT_NAME = libmpr;
 			};
@@ -1596,7 +1599,6 @@
 		C9761DA20FD03F95009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				INSTALL_PATH = "$(INSTALL_PATH)/lib\n";
 				PRODUCT_NAME = libmpr;
 			};
@@ -1606,7 +1608,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				EXECUTABLE_PREFIX = "";
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -1621,7 +1622,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				EXECUTABLE_PREFIX = "";
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
@@ -1635,7 +1635,6 @@
 		C9761DC40FD03FD9009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1648,7 +1647,6 @@
 		C9761DC50FD03FD9009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1661,7 +1659,6 @@
 		C9761E050FD04151009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				INSTALL_PATH = "$(INSTALL_PATH)/bin";
 				PRODUCT_NAME = http;
 			};
@@ -1670,7 +1667,6 @@
 		C9761E060FD04151009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				INSTALL_PATH = "$(INSTALL_PATH)/bin";
 				PRODUCT_NAME = http;
 			};
@@ -1679,7 +1675,6 @@
 		C9761E0C0FD0415B009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				INSTALL_PATH = "$(INSTALL_PATH)/bin";
 				PRODUCT_NAME = auth;
 			};
@@ -1688,7 +1683,6 @@
 		C9761E0D0FD0415B009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				INSTALL_PATH = "$(INSTALL_PATH)/bin";
 				PRODUCT_NAME = auth;
 			};
@@ -1704,7 +1698,6 @@
 		C9761F7D0FD049F6009C78E1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				PRODUCT_NAME = All;
 			};
 			name = Release;
@@ -1712,7 +1705,6 @@
 		C9761FFE0FD04D5C009C78E1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = mod_cgi;
 			};
@@ -1722,7 +1714,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				EXECUTABLE_PREFIX = "";
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = mod_cgi;
 			};
@@ -1731,7 +1722,6 @@
 		C97DCAB9101D4FE7008EB048 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = mod_ssl;
 			};
@@ -1741,7 +1731,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				EXECUTABLE_PREFIX = "";
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = mod_ssl;
 			};
@@ -1750,7 +1739,6 @@
 		C9817C4F110D183800F241EF /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = libhttp;
 			};
@@ -1759,7 +1747,6 @@
 		C9817C50110D183800F241EF /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = libhttp;
 			};
@@ -1768,7 +1755,6 @@
 		C9A26CEB13D1787B007A3D7C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					$TOP/../ejs/out/inc,
@@ -1786,7 +1772,6 @@
 		C9A26CEC13D1787B007A3D7C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					$TOP/../ejs/out/inc,
@@ -1823,7 +1808,6 @@
 		C9AFCC590FC521450080E908 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
 				INSTALL_PATH = "$(INSTALL_PATH)/bin";
@@ -1834,7 +1818,6 @@
 		C9AFCC5A0FC521450080E908 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
 				INSTALL_PATH = "$(INSTALL_PATH)/bin";
@@ -1845,7 +1828,6 @@
 		C9B12BC813D175C300470A96 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = libpcre;
 			};
@@ -1854,7 +1836,6 @@
 		C9B12BC913D175C300470A96 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = libpcre;
 			};
@@ -1863,7 +1844,6 @@
 		C9D7A7C713D4F28D000428C7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				INSTALL_PATH = "$(INSTALL_PATH)/bin";
 				PRODUCT_NAME = angel;
 			};
@@ -1872,7 +1852,6 @@
 		C9D7A7C813D4F28D000428C7 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				INSTALL_PATH = "$(INSTALL_PATH)/bin";
 				PRODUCT_NAME = angel;
 			};
@@ -1888,7 +1867,6 @@
 		C9D7B35913D8C030006C3A9B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				PRODUCT_NAME = test;
 			};
 			name = Release;
@@ -1896,7 +1874,6 @@
 		C9D817AB101D4C2A0039DD9D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					../../../extensions/php/latest/TSRM,
@@ -1917,7 +1894,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				EXECUTABLE_PREFIX = "";
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					../../../extensions/php/latest/TSRM,
@@ -1937,7 +1913,6 @@
 		C9E4B73B13C7F4F3005345FA /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = mod_esp;
 			};
@@ -1946,7 +1921,6 @@
 		C9E4B73C13C7F4F3005345FA /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				PRODUCT_NAME = mod_esp;
 			};

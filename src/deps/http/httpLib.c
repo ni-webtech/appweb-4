@@ -2937,18 +2937,6 @@ void *httpGetConnHost(HttpConn *conn)
 }
 
 
-cchar *httpGetError(HttpConn *conn)
-{
-    if (conn->errorMsg) {
-        return conn->errorMsg;
-    } else if (conn->state >= HTTP_STATE_FIRST) {
-        return httpLookupStatus(conn->http, conn->rx->status);
-    } else {
-        return "";
-    }
-}
-
-
 void httpResetCredentials(HttpConn *conn)
 {
     conn->authType = 0;
@@ -3107,111 +3095,6 @@ HttpLimits *httpSetUniqueConnLimits(HttpConn *conn)
 void httpWritable(HttpConn *conn)
 {
     HTTP_NOTIFY(conn, HTTP_EVENT_IO, HTTP_NOTIFY_WRITABLE);
-}
-
-//  MOB - move these into httpError.c
-
-void httpFormatErrorV(HttpConn *conn, int status, cchar *fmt, va_list args)
-{
-    if (conn->errorMsg == 0) {
-        conn->errorMsg = mprAsprintfv(fmt, args);
-        if (status) {
-            if (conn->server && conn->tx) {
-                conn->tx->status = status;
-            } else if (conn->rx) {
-                conn->rx->status = status;
-            }
-        }
-        if (conn->rx == 0 || conn->rx->uri == 0) {
-            mprLog(2, "\"%s\", status %d: %s.", httpLookupStatus(conn->http, status), status, conn->errorMsg);
-        } else {
-            mprLog(2, "Error: \"%s\", status %d for URI \"%s\": %s.",
-                httpLookupStatus(conn->http, status), status, conn->rx->uri ? conn->rx->uri : "", conn->errorMsg);
-        }
-    }
-}
-
-
-/*
-    Just format conn->errorMsg and set status - nothing more
- */
-void httpFormatError(HttpConn *conn, int status, cchar *fmt, ...)
-{
-    va_list     args;
-
-    va_start(args, fmt); 
-    httpFormatErrorV(conn, status, fmt, args);
-    va_end(args); 
-}
-
-
-/*
-    The current request has an error and cannot complete as normal. This call sets the Http response status and 
-    overrides the normal output with an alternate error message. If the output has alread started (headers sent), then
-    the connection MUST be closed so the client can get some indication the request failed.
- */
-static void httpErrorV(HttpConn *conn, int flags, cchar *fmt, va_list args)
-{
-    HttpTx      *tx;
-    int         status;
-
-    mprAssert(fmt);
-    tx = conn->tx;
-
-    if (flags & HTTP_ABORT) {
-        conn->connError = 1;
-    }
-    conn->error = 1;
-    status = flags & HTTP_CODE_MASK;
-    httpFormatErrorV(conn, status, fmt, args);
-
-    if (flags & (HTTP_ABORT | HTTP_CLOSE)) {
-        conn->keepAliveCount = -1;
-    }
-    if (conn->server) {
-        /*
-            Server side must not call httpCloseConn() as it will remove wait handlers.
-         */
-        if (flags & HTTP_ABORT || (tx && tx->flags & HTTP_TX_HEADERS_CREATED)) {
-            /* 
-                If headers have been sent, must let the client know the request has failed - abort is the only way.
-                Disconnect will cause a readable (EOF) event
-             */
-            httpDisconnect(conn);
-        } else {
-            httpSetResponseBody(conn, status, conn->errorMsg);
-        }
-    } else {
-        if (flags & HTTP_ABORT || (tx && tx->flags & HTTP_TX_HEADERS_CREATED)) {
-            httpCloseConn(conn);
-        }
-    }
-}
-
-
-void httpError(HttpConn *conn, int flags, cchar *fmt, ...)
-{
-    va_list     args;
-
-    va_start(args, fmt);
-    httpErrorV(conn, flags, fmt, args);
-    va_end(args);
-}
-
-
-void httpMemoryError(HttpConn *conn)
-{
-    httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Memory allocation error");
-}
-
-
-void httpDisconnect(HttpConn *conn)
-{
-    if (conn->sock) {
-        mprDisconnectSocket(conn->sock);
-    }
-    conn->connError = 1;
-    conn->keepAliveCount = -1;
 }
 
 /*
@@ -3393,6 +3276,180 @@ void httpSetDirIndex(HttpDir *dir, cchar *name)
 
 /************************************************************************/
 /*
+ *  Start of file "./src/error.c"
+ */
+/************************************************************************/
+
+/*
+    error.c -- Http error handling
+    Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
+ */
+
+
+
+
+void httpFormatErrorV(HttpConn *conn, int status, cchar *fmt, va_list args)
+{
+    if (conn->errorMsg == 0) {
+        conn->errorMsg = mprAsprintfv(fmt, args);
+        if (status) {
+            if (conn->server && conn->tx) {
+                conn->tx->status = status;
+            } else if (conn->rx) {
+                conn->rx->status = status;
+            }
+        }
+        if (conn->rx == 0 || conn->rx->uri == 0) {
+            mprLog(2, "\"%s\", status %d: %s.", httpLookupStatus(conn->http, status), status, conn->errorMsg);
+        } else {
+            mprLog(2, "Error: \"%s\", status %d for URI \"%s\": %s.",
+                httpLookupStatus(conn->http, status), status, conn->rx->uri ? conn->rx->uri : "", conn->errorMsg);
+        }
+    }
+}
+
+
+/*
+    Just format conn->errorMsg and set status - nothing more
+ */
+void httpFormatError(HttpConn *conn, int status, cchar *fmt, ...)
+{
+    va_list     args;
+
+    va_start(args, fmt); 
+    httpFormatErrorV(conn, status, fmt, args);
+    va_end(args); 
+}
+
+
+/*
+    The current request has an error and cannot complete as normal. This call sets the Http response status and 
+    overrides the normal output with an alternate error message. If the output has alread started (headers sent), then
+    the connection MUST be closed so the client can get some indication the request failed.
+ */
+static void httpErrorV(HttpConn *conn, int flags, cchar *fmt, va_list args)
+{
+    HttpTx      *tx;
+    int         status;
+
+    mprAssert(fmt);
+    tx = conn->tx;
+
+    if (flags & HTTP_ABORT) {
+        conn->connError = 1;
+    }
+    conn->error = 1;
+    tx->responded = 1;
+    status = flags & HTTP_CODE_MASK;
+    httpFormatErrorV(conn, status, fmt, args);
+
+    if (flags & (HTTP_ABORT | HTTP_CLOSE)) {
+        conn->keepAliveCount = -1;
+    }
+    if (conn->server) {
+        /*
+            Server side must not call httpCloseConn() as it will remove wait handlers.
+         */
+        if (flags & HTTP_ABORT || (tx && tx->flags & HTTP_TX_HEADERS_CREATED)) {
+            /* 
+                If headers have been sent, must let the client know the request has failed - abort is the only way.
+                Disconnect will cause a readable (EOF) event
+             */
+            httpDisconnect(conn);
+        } else {
+            httpSetResponseBody(conn, status, conn->errorMsg);
+        }
+    } else {
+        if (flags & HTTP_ABORT || (tx && tx->flags & HTTP_TX_HEADERS_CREATED)) {
+            httpCloseConn(conn);
+        }
+    }
+}
+
+
+void httpError(HttpConn *conn, int flags, cchar *fmt, ...)
+{
+    va_list     args;
+
+    va_start(args, fmt);
+    httpErrorV(conn, flags, fmt, args);
+    va_end(args);
+}
+
+
+void httpMemoryError(HttpConn *conn)
+{
+    httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Memory allocation error");
+}
+
+
+void httpDisconnect(HttpConn *conn)
+{
+    if (conn->sock) {
+        mprDisconnectSocket(conn->sock);
+    }
+    conn->connError = 1;
+    conn->keepAliveCount = -1;
+}
+
+
+cchar *httpGetError(HttpConn *conn)
+{
+    if (conn->errorMsg) {
+        return conn->errorMsg;
+    } else if (conn->state >= HTTP_STATE_FIRST) {
+        return httpLookupStatus(conn->http, conn->rx->status);
+    } else {
+        return "";
+    }
+}
+
+
+/*
+    @copy   default
+
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire
+    a commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.TXT distributed with
+    this software for full details.
+
+    This software is open source; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; either version 2 of the License, or (at your
+    option) any later version. See the GNU General Public License for more
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+
+    This program is distributed WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+    This GPL license does NOT permit incorporating this software into
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses
+    for this software and support services are available from Embedthis
+    Software at http://www.embedthis.com
+ 
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "./src/error.c"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
  *  Start of file "./src/host.c"
  */
 /************************************************************************/
@@ -3497,7 +3554,8 @@ HttpHost *httpCloneHost(HttpHost *parent)
     host->limits = mprMemdup(parent->limits, sizeof(HttpLimits));
     host->documentRoot = parent->documentRoot;
     host->serverRoot = parent->serverRoot;
-    host->loc = httpCreateInheritedLocation(parent->loc, host);
+    host->loc = httpCreateInheritedLocation(parent->loc);
+    httpSetLocationHost(host->loc, host);
     host->traceMask = parent->traceMask;
     host->traceLevel = parent->traceLevel;
     host->traceMaxLength = parent->traceMaxLength;
@@ -3670,7 +3728,7 @@ int httpAddLocation(HttpHost *host, HttpLoc *loc)
         }
     }
     mprAddItem(host->locations, loc);
-    mprAssert(loc->host == host);
+    httpSetLocationHost(loc, host);
     return 0;
 }
 
@@ -3683,11 +3741,6 @@ HttpAlias *httpGetAlias(HttpHost *host, cchar *uri)
     if (uri) {
         for (next = 0; (alias = mprGetNextItem(host->aliases, &next)) != 0; ) {
             if (strncmp(alias->prefix, uri, alias->prefixLen) == 0) {
-#if UNUSED
-                if (uri[alias->prefixLen] == '\0' || uri[alias->prefixLen] == '/') {
-                    return alias;
-                }
-#endif
                 return alias;
             }
         }
@@ -4601,11 +4654,12 @@ static void updateCurrentDate(Http *http)
 
 
 
-static void defineKeywords(HttpLoc *loc);
+static void defineTokens(HttpLoc *loc);
+static void defineHostTokens(HttpLoc *loc);
 static void manageLoc(HttpLoc *loc, int flags);
 
 
-HttpLoc *httpCreateLocation(HttpHost *host)
+HttpLoc *httpCreateLocation()
 {
     HttpLoc  *loc;
 
@@ -4613,13 +4667,12 @@ HttpLoc *httpCreateLocation(HttpHost *host)
         return 0;
     }
     loc->http = MPR->httpService;
-    loc->host = host;
     loc->errorDocuments = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
     loc->handlers = mprCreateList(-1, 0);
     loc->extensions = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
     loc->expires = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_STATIC_VALUES);
     loc->expiresByType = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_STATIC_VALUES);
-    loc->keywords = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
+    loc->tokens = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
     loc->inputStages = mprCreateList(-1, 0);
     loc->outputStages = mprCreateList(-1, 0);
     loc->prefix = mprEmptyString();
@@ -4627,7 +4680,7 @@ HttpLoc *httpCreateLocation(HttpHost *host)
     loc->auth = httpCreateAuth(0);
     loc->flags = HTTP_LOC_SMART;
     loc->workers = -1;
-    defineKeywords(loc);
+    defineTokens(loc);
     return loc;
 }
 
@@ -4643,7 +4696,7 @@ static void manageLoc(HttpLoc *loc, int flags)
         mprMark(loc->extensions);
         mprMark(loc->expires);
         mprMark(loc->expiresByType);
-        mprMark(loc->keywords);
+        mprMark(loc->tokens);
         mprMark(loc->handlers);
         mprMark(loc->inputStages);
         mprMark(loc->outputStages);
@@ -4659,21 +4712,21 @@ static void manageLoc(HttpLoc *loc, int flags)
     }
 }
 
+
 /*  
     Create a new location block. Inherit from the parent. We use a copy-on-write scheme if these are modified later.
  */
-HttpLoc *httpCreateInheritedLocation(HttpLoc *parent, HttpHost *host)
+HttpLoc *httpCreateInheritedLocation(HttpLoc *parent)
 {
     HttpLoc  *loc;
 
     if (parent == 0) {
-        return httpCreateLocation(host);
+        return httpCreateLocation();
     }
     if ((loc = mprAllocObj(HttpLoc, manageLoc)) == 0) {
         return 0;
     }
     loc->http = MPR->httpService;
-    loc->host = host;
     loc->prefix = sclone(parent->prefix);
     loc->parent = parent;
     loc->prefixLen = parent->prefixLen;
@@ -4684,7 +4737,7 @@ HttpLoc *httpCreateInheritedLocation(HttpLoc *parent, HttpHost *host)
     loc->extensions = parent->extensions;
     loc->expires = parent->expires;
     loc->expiresByType = parent->expiresByType;
-    loc->keywords = parent->keywords;
+    loc->tokens = parent->tokens;
     loc->connector = parent->connector;
     loc->errorDocuments = parent->errorDocuments;
     loc->auth = httpCreateAuth(parent->auth);
@@ -4709,13 +4762,21 @@ static void graduate(HttpLoc *loc)
         loc->expires = mprCloneHash(loc->parent->expires);
         loc->expiresByType = mprCloneHash(loc->parent->expiresByType);
         loc->extensions = mprCloneHash(loc->parent->extensions);
-        loc->keywords = mprCloneHash(loc->parent->keywords);
+        loc->tokens = mprCloneHash(loc->parent->tokens);
         loc->handlers = mprCloneList(loc->parent->handlers);
         loc->inputStages = mprCloneList(loc->parent->inputStages);
         loc->outputStages = mprCloneList(loc->parent->outputStages);
         loc->parent = 0;
     }
 }
+
+
+void httpSetLocationHost(HttpLoc *loc, HttpHost *host)
+{
+    loc->host = host;
+    defineHostTokens(loc);
+}
+
 
 void httpFinalizeLocation(HttpLoc *loc)
 {
@@ -5031,25 +5092,45 @@ void *httpGetLocationData(HttpLoc *loc, cchar *key)
 }
 
 
-static void defineKeywords(HttpLoc *loc)
+static void defineTokens(HttpLoc *loc)
 {
-    mprAddKey(loc->keywords, "PRODUCT", sclone(BLD_PRODUCT));
-    mprAddKey(loc->keywords, "OS", sclone(BLD_OS));
-    mprAddKey(loc->keywords, "VERSION", sclone(BLD_VERSION));
-    mprAddKey(loc->keywords, "DOCUMENT_ROOT", 0);
-    mprAddKey(loc->keywords, "SERVER_ROOT", 0);
-    mprAddKey(loc->keywords, "DOCUMENT_ROOT", 0);
+    mprAddKey(loc->tokens, "PRODUCT", sclone(BLD_PRODUCT));
+    mprAddKey(loc->tokens, "OS", sclone(BLD_OS));
+    mprAddKey(loc->tokens, "VERSION", sclone(BLD_VERSION));
+    if (loc->host) {
+        defineHostTokens(loc);
+    }
 }
 
 
-void httpAddLocationKey(HttpLoc *loc, cchar *key, cchar *value)
+static void defineHostTokens(HttpLoc *loc) 
+{
+    mprAddKey(loc->tokens, "DOCUMENT_ROOT", loc->host->documentRoot);
+    mprAddKey(loc->tokens, "SERVER_ROOT", loc->host->serverRoot);
+}
+
+
+void httpAddLocationToken(HttpLoc *loc, cchar *key, cchar *value)
 {
     mprAssert(key);
     mprAssert(value);
-    mprAssert(MPR->httpService);
 
-    mprAddKey(loc->keywords, key, sclone(value));
+    if (schr(value, '$')) {
+        value = stemplate(value, loc->tokens);
+    }
+    mprAddKey(loc->tokens, key, sclone(value));
 }
+
+
+#if UNUSED
+void httpAddLocationTokenPath(HttpLoc *loc, cchar *key, cchar *path)
+{
+    mprAssert(key);
+    mprAssert(path);
+
+    mprAddKey(loc->tokens, key, path);
+}
+#endif
 
 
 /*
@@ -5057,18 +5138,15 @@ void httpAddLocationKey(HttpLoc *loc, cchar *key, cchar *value)
  */
 char *httpMakePath(HttpLoc *loc, cchar *file)
 {
-    HttpHost    *host;
-    char        *result, *path;
+    char    *result, *path;
 
     mprAssert(file);
-    host = loc->host;
 
-    if ((path = httpReplaceReferences(loc, file)) == 0) {
-        /*  Overflow */
+    if ((path = stemplate(file, loc->tokens)) == 0) {
         return 0;
     }
     if (mprIsRelPath(path)) {
-        result = mprJoinPath(host->serverRoot, path);
+        result = mprJoinPath(loc->host->serverRoot, path);
     } else {
         result = mprGetAbsPath(path);
     }
@@ -5076,28 +5154,27 @@ char *httpMakePath(HttpLoc *loc, cchar *file)
 }
 
 
+#if UNUSED
 /*
-    Replace a limited set of $VAR references. Currently support DOCUMENT_ROOT, SERVER_ROOT and PRODUCT, OS and VERSION.
+    Expand ${token} references in a path or string.
+    Currently support DOCUMENT_ROOT, SERVER_ROOT and PRODUCT, OS and VERSION.
  */
-char *httpReplaceReferences(HttpLoc *loc, cchar *str)
+char *httpExpandPath(MprHashTable *keys, cchar *str)
 {
-    Http        *http;
     MprBuf      *buf;
-    MprHash     *hp;
     cchar       *seps;
     char        *src, *result, *cp, *tok;
 
-    http = MPR->httpService;
-    buf = mprCreateBuf(0, 0);
-
     if (str) {
+        buf = mprCreateBuf(0, 0);
         seps = mprGetPathSeparators(str);
         for (src = (char*) str; *src; ) {
             if (*src == '$') {
                 ++src;
                 for (cp = src; *cp && !isspace((int) *cp) && (*cp != seps[0]); cp++) ;
                 tok = snclone(src, cp - src);
-                if ((hp = mprLookupKeyEntry(loc->keywords, tok)) != 0) {
+                if ((value = mprLookupKey(keys, tok) != 0) {
+#if UNUSED
                     if (hp->data == 0) {
                         if (scmp(tok, "DOCUMENT_ROOT") == 0) {
                             mprPutStringToBuf(buf, loc->host->documentRoot);
@@ -5109,7 +5186,8 @@ char *httpReplaceReferences(HttpLoc *loc, cchar *str)
                             continue;
                         }
                     } else {
-                        mprPutStringToBuf(buf, (cchar*) hp->data);
+#endif
+                        mprPutStringToBuf(buf, value);
                         src = cp;
                         continue;
                     }
@@ -5117,11 +5195,14 @@ char *httpReplaceReferences(HttpLoc *loc, cchar *str)
             }
             mprPutCharToBuf(buf, *src++);
         }
+        mprAddNullToBuf(buf);
+        result = sclone(mprGetBufStart(buf));
+    } else {
+        result = MPR->emptyString;
     }
-    mprAddNullToBuf(buf);
-    result = sclone(mprGetBufStart(buf));
     return result;
 }
+#endif
 
 
 /*
@@ -6766,10 +6847,10 @@ static void trimExtraPath(HttpConn *conn)
 
     /*
         Find the script name in the uri. This is assumed to be either:
-        - The original uri up to and including first path component containing a ".", or
-        - The entire original uri
-        Once found, set the scriptName and trim the extraPath from pathInfo
-        The filename is used to search for a component with "." because we want to skip the alias prefix.
+            - the original uri up to and including first path component containing a ".", or
+            - the entire original uri
+        Once found, set the scriptName and trim the extraPath from pathInfo. The filename is used to search for a 
+        component with "." because we want to skip the alias prefix.
      */
     start = &tx->filename[strlen(alias->filename)];
     seps = mprGetPathSeparators(start);
@@ -6799,8 +6880,11 @@ static void setVars(HttpConn *conn)
     if (tx->handler->flags & HTTP_STAGE_EXTRA_PATH) {
         trimExtraPath(conn);
     }
+    if (tx->handler->flags & (HTTP_STAGE_CGI_VARS | HTTP_STAGE_FORM_VARS | HTTP_STAGE_QUERY_VARS)) {
+        rx->formVars = mprCreateHash(HTTP_MED_HASH_SIZE, 0);
+    }
     if (tx->handler->flags & HTTP_STAGE_QUERY_VARS && rx->parsedUri->query) {
-        rx->formVars = httpAddVars(rx->formVars, rx->parsedUri->query, slen(rx->parsedUri->query));
+        httpAddVars(conn, rx->parsedUri->query, slen(rx->parsedUri->query));
     }
     if (tx->handler->flags & HTTP_STAGE_CGI_VARS) {
         httpCreateCGIVars(conn);
@@ -7382,6 +7466,8 @@ ssize httpWriteBlock(HttpQueue *q, cchar *buf, ssize size)
     if (tx->finalized) {
         return MPR_ERR_CANT_WRITE;
     }
+    tx->responded = 1;
+
     for (written = 0; size > 0; ) {
         LOG(6, "httpWriteBlock q_count %d, q_max %d", q->count, q->max);
         if (conn->state >= HTTP_STATE_COMPLETE) {
@@ -11103,6 +11189,7 @@ void httpFinalize(HttpConn *conn)
         return;
     }
     tx->finalized = 1;
+    tx->responded = 1;
     httpPutForService(conn->writeq, httpCreateEndPacket(), 1);
     httpServiceQueues(conn);
     if (conn->state == HTTP_STATE_RUNNING && conn->writeComplete && !conn->advancing) {
@@ -11151,6 +11238,7 @@ int httpFormatBody(HttpConn *conn, cchar *title, cchar *fmt, ...)
             title, body);
         va_end(args);
     }
+    tx->responded = 1;
     return (int) strlen(tx->altBody);
 }
 
@@ -11259,6 +11347,7 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
         "<body><h1>%s</h1>\r\n<p>The document has moved <a href=\"%s\">here</a>.</p>\r\n"
         "<address>%s at %s</address></body>\r\n</html>\r\n",
         msg, msg, targetUri, HTTP_NAME, conn->host->name);
+    tx->responded = 1;
     httpOmitBody(conn);
 }
 
@@ -11455,6 +11544,7 @@ void httpSetEntityLength(HttpConn *conn, int64 len)
 void httpSetStatus(HttpConn *conn, int status)
 {
     conn->tx->status = status;
+    conn->tx->responded = 1;
 }
 
 
@@ -11482,6 +11572,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
     if (tx->flags & HTTP_TX_HEADERS_CREATED) {
         return;
     }    
+    tx->responded = 1;
     if (conn->headersCallback) {
         /* Must be before headers below */
         (conn->headersCallback)(conn->headersCallbackArg);
@@ -12983,9 +13074,13 @@ void httpCreateCGIVars(HttpConn *conn)
     host = conn->host;
     sock = conn->sock;
 
+    mprAssert(rx->formVars);
+    table = rx->formVars;
+#if UNUSED
     if ((table = rx->formVars) == 0) {
         table = rx->formVars = mprCreateHash(HTTP_MED_HASH_SIZE, 0);
     }
+#endif
     mprAddKey(table, "AUTH_TYPE", rx->authType);
     mprAddKey(table, "AUTH_USER", conn->authUser);
     mprAddKey(table, "AUTH_GROUP", conn->authGroup);
@@ -13041,14 +13136,16 @@ void httpCreateCGIVars(HttpConn *conn)
     Make variables for each keyword in a query string. The buffer must be url encoded (ie. key=value&key2=value2..., 
     spaces converted to '+' and all else should be %HEX encoded).
  */
-MprHashTable *httpAddVars(MprHashTable *table, cchar *buf, ssize len)
+void httpAddVars(HttpConn *conn, cchar *buf, ssize len)
 {
-    cchar   *oldValue;
-    char    *newValue, *decoded, *keyword, *value, *tok;
+    MprHashTable    *table;
+    cchar           *oldValue;
+    char            *newValue, *decoded, *keyword, *value, *tok;
 
-    if (table == 0) {
-        table = mprCreateHash(HTTP_MED_HASH_SIZE, 0);
-    }
+    mprAssert(conn);
+    table = conn->rx->formVars;
+    mprAssert(table);
+
     decoded = mprAlloc(len + 1);
     decoded[len] = '\0';
     memcpy(decoded, buf, len);
@@ -13079,11 +13176,10 @@ MprHashTable *httpAddVars(MprHashTable *table, cchar *buf, ssize len)
         }
         keyword = stok(0, "&", &tok);
     }
-    return table;
 }
 
 
-MprHashTable *httpAddVarsFromQueue(MprHashTable *table, HttpQueue *q)
+void httpAddVarsFromQueue(HttpQueue *q)
 {
     HttpConn    *conn;
     HttpRx      *rx;
@@ -13099,9 +13195,8 @@ MprHashTable *httpAddVarsFromQueue(MprHashTable *table, HttpQueue *q)
         content = q->first->content;
         mprAddNullToBuf(content);
         mprLog(6, "Form body data: length %d, \"%s\"", mprGetBufLength(content), mprGetBufStart(content));
-        table = httpAddVars(table, mprGetBufStart(content), mprGetBufLength(content));
+        httpAddVars(conn, mprGetBufStart(content), mprGetBufLength(content));
     }
-    return table;
 }
 
 
@@ -13110,8 +13205,8 @@ void httpAddFormVars(HttpConn *conn)
     HttpRx      *rx;
 
     rx = conn->rx;
-    if (rx->form && rx->formVars == 0) {
-        rx->formVars = httpAddVarsFromQueue(rx->formVars, conn->readq);
+    if (rx->form) {
+        httpAddVarsFromQueue(conn->readq);
     }
 }
 
@@ -13132,7 +13227,7 @@ cchar *httpGetFormVar(HttpConn *conn, cchar *var, cchar *defaultValue)
     MprHashTable    *vars;
     cchar           *value;
     
-    if ((vars = conn->rx->formVars) == 0) {
+    if ((vars = conn->rx->formVars) != 0) {
         value = mprLookupKey(vars, var);
         return (value) ? value : defaultValue;
     }
@@ -13145,7 +13240,7 @@ int httpGetIntFormVar(HttpConn *conn, cchar *var, int defaultValue)
     MprHashTable    *vars;
     cchar           *value;
     
-    if ((vars = conn->rx->formVars) == 0) {
+    if ((vars = conn->rx->formVars) != 0) {
         value = mprLookupKey(vars, var);
         return (value) ? (int) stoi(value, 10, NULL) : defaultValue;
     }
@@ -13170,7 +13265,6 @@ void httpSetIntFormVar(HttpConn *conn, cchar *var, int value)
     MprHashTable    *vars;
     
     if ((vars = conn->rx->formVars) == 0) {
-        /* This is allowed. Upload filter uses this when uploading to the file handler */
         return;
     }
     mprAddKey(vars, var, mprAsprintf("%d", value));

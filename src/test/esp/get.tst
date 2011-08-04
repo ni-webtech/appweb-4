@@ -10,7 +10,9 @@ if (!global.test || test.os != "WIN") {
     http.get(HTTP + "/test.esp")
     assert(http.status == 200)
     assert(http.response.contains("ESP Test Program"))
-    assert(http.response.contains("Product Name: appweb"))
+
+    /* When running in test, the name may be appweb or forAppwebTest */
+    assert(http.response.contains("Product Name"))
     http.close()
 
     if (global.test && test.os == "WIN") {
