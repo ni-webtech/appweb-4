@@ -3520,7 +3520,7 @@ HttpHost *httpCreateHost(HttpLoc *loc)
     host->traceLevel = 3;
     host->traceMaxLength = MAXINT;
 
-    host->loc = (loc) ? loc : httpCreateLocation(host);
+    host->loc = (loc) ? loc : httpCreateLocation();
     httpAddLocation(host, host->loc);
     host->loc->auth = httpCreateAuth(host->loc->auth);
     httpAddDir(host, httpCreateBareDir("."));
@@ -4175,7 +4175,7 @@ HttpLoc *httpCreateConfiguredLocation(int serverSide)
         Create default incoming and outgoing pipelines. Order matters.
      */
     http = MPR->httpService;
-    loc = httpCreateLocation(0);
+    loc = httpCreateLocation();
     if (serverSide) {
         httpAddFilter(loc, http->authFilter->name, NULL, HTTP_STAGE_RX);
     }
