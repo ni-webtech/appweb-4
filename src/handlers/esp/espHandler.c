@@ -70,7 +70,7 @@ static void openEsp(HttpQueue *q)
         }
         rx->scriptName = alias->prefix;
         rx->pathInfo = sclone(uri);
-        mprLog(5, "ejs: set script name: \"%s\", pathInfo: \"%s\"", rx->scriptName, rx->pathInfo);
+        mprLog(5, "esp: set script name: \"%s\", pathInfo: \"%s\"", rx->scriptName, rx->pathInfo);
     }
 }
 
@@ -392,6 +392,7 @@ static EspLoc *cloneEspLoc(HttpLoc *loc)
     HttpLoc     *parent;
 
     parent = loc->parent;
+    mprAssert(parent);
 
     if ((outer = httpGetLocationData(parent, ESP_NAME)) == 0) {
         return allocEspLoc(loc);
@@ -399,6 +400,7 @@ static EspLoc *cloneEspLoc(HttpLoc *loc)
     if ((esp = mprAllocObj(EspLoc, manageEspLoc)) == 0) {
         return 0;
     }
+    esp->loc = loc;
     esp->reload = outer->reload;
     esp->keepSource = outer->keepSource;
     esp->showErrors = outer->showErrors;
@@ -443,6 +445,31 @@ static EspLoc *cloneEspLoc(HttpLoc *loc)
 }
 
 
+static void setMvcDirs(EspLoc *esp)
+{
+    esp->cacheDir = mprJoinPath(esp->dir, "cache");
+    httpAddLocationToken(esp->loc, "CACHE_DIR", esp->cacheDir);
+
+    esp->controllersDir = mprJoinPath(esp->dir, "controllers");
+    httpAddLocationToken(esp->loc, "CONTROLLERS_DIR", esp->controllersDir);
+
+    esp->databasesDir = mprJoinPath(esp->dir, "databases");
+    httpAddLocationToken(esp->loc, "DATABASES_DIR", esp->databasesDir);
+
+    esp->layoutsDir  = mprJoinPath(esp->dir, "layouts");
+    httpAddLocationToken(esp->loc, "LAYOUTS_DIR", esp->layoutsDir);
+
+    esp->modelsDir  = mprJoinPath(esp->dir, "models");
+    httpAddLocationToken(esp->loc, "MODELS_DIR", esp->modelsDir);
+
+    esp->webDir = mprJoinPath(esp->dir, "static");
+    httpAddLocationToken(esp->loc, "STATIC_DIR", esp->webDir);
+
+    esp->viewsDir = mprJoinPath(esp->dir, "views");
+    httpAddLocationToken(esp->loc, "VIEWS_DIR", esp->viewsDir);
+}
+
+
 static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
 {
     HttpLoc     *loc;
@@ -451,7 +478,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
     HttpDir     *dir, *parent;
     EspLoc      *esp;
     EspRoute    *route;
-    char        *name, *ekey, *evalue, *prefix, *path, *next, *methods, *prior, *pattern, *action, *controller;
+    char        *name, *ekey, *evalue, *prefix, *path, *next, *methods, *prior, *pattern, *action, *controller, *mvc;
     
     host = state->host;
     loc = state->loc;
@@ -471,10 +498,12 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         httpSetLocationData(loc, ESP_NAME, esp);
     }
     mprAssert(esp);
+    mprAssert(esp->loc);
 
     if (scasecmp(key, "EspAlias") == 0) {
         /*
-            EspAlias prefix [path]
+            EspAlias prefix [path [mvc]]
+            If the prefix matches an existing location block, it modifies that. Otherwise a new location is created.
          */
         if (maGetConfigValue(&prefix, value, &next, 1) < 0) {
             return MPR_ERR_BAD_SYNTAX;
@@ -482,14 +511,11 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         if (maGetConfigValue(&path, next, &next, 1) < 0) {
             path = ".";
         }
+        maGetConfigValue(&mvc, next, &next, 1);
         prefix = stemplate(prefix, loc->tokens);
-        esp->dir = path = httpMakePath(loc, path);
-        if (httpLookupDir(host, path) == 0) {
-            parent = mprGetFirstItem(host->dirs);
-            dir = httpCreateDir(path, parent);
-            httpAddDir(host, dir);
-        }
         if ((loc = httpLookupLocation(host, prefix)) == 0) {
+            esp = cloneEspLoc(esp->loc);
+            httpSetLocationData(loc, ESP_NAME, esp);
             loc = httpCreateInheritedLocation(state->loc);
             httpSetLocationHost(loc, host);
             httpSetLocationPrefix(loc, prefix);
@@ -497,12 +523,27 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
             httpAddLocation(host, loc);
             httpSetHandler(loc, "espHandler");
         }
+        esp->dir = path = httpMakePath(loc, path);
+        if (httpLookupDir(host, path) == 0) {
+            parent = mprGetFirstItem(host->dirs);
+            dir = httpCreateDir(path, parent);
+            httpAddDir(host, dir);
+        }
         if (loc->alias == 0) {
             alias = httpCreateAlias(prefix, path, 0);
             mprLog(4, "EspAlias \"%s\" for \"%s\"", prefix, path);
             httpSetLocationAlias(loc, alias);
             httpAddAlias(host, alias);
         }
+        if (mvc) {
+            setMvcDirs(esp);
+            esp->routes = mprCreateList(-1, 0);
+            mprAddItem(esp->routes, espCreateRoute("home", "GET,POST,PUT", "%^/$", "${STATIC_DIR}/index.esp", NULL));
+            mprAddItem(esp->routes, espCreateRoute("static", "GET", "%^/static/(.*)", "${STATIC_DIR}/$1", NULL));
+            mprAddItem(esp->routes, 
+                espCreateRoute("default", NULL, "^/{controller}(/{action})$", "${controller}-${action}", "${controller}.c"));
+        }
+        mprAddItem(esp->routes, espCreateRoute("esp", NULL, "%\\.esp$", NULL, NULL));
         return 1;
 
     } else if (scasecmp(key, "EspCache") == 0) {
@@ -521,27 +562,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
             return MPR_ERR_BAD_SYNTAX;
         }
         if (scmp(name, "mvc") == 0) {
-            esp->cacheDir = mprJoinPath(esp->dir, "cache");
-            httpAddLocationToken(loc, "CACHE_DIR", esp->cacheDir);
-
-            esp->controllersDir = mprJoinPath(esp->dir, "controllers");
-            httpAddLocationToken(loc, "CONTROLLERS_DIR", esp->controllersDir);
-
-            esp->databasesDir = mprJoinPath(esp->dir, "databases");
-            httpAddLocationToken(loc, "DATABASES_DIR", esp->databasesDir);
-
-            esp->layoutsDir  = mprJoinPath(esp->dir, "layouts");
-            httpAddLocationToken(loc, "LAYOUTS_DIR", esp->layoutsDir);
-
-            esp->modelsDir  = mprJoinPath(esp->dir, "models");
-            httpAddLocationToken(loc, "MODELS_DIR", esp->modelsDir);
-
-            esp->webDir = mprJoinPath(esp->dir, "static");
-            httpAddLocationToken(loc, "STATIC_DIR", esp->webDir);
-
-            esp->viewsDir = mprJoinPath(esp->dir, "views");
-            httpAddLocationToken(loc, "VIEWS_DIR", esp->viewsDir);
-
+            setMvcDirs(esp);
         } else {
             path = stemplate(mprJoinPath(esp->dir, next), loc->tokens);
             if (scmp(name, "cache") == 0) {
