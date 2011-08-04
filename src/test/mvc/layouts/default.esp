@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@@title</title>
+</head>
+<body>
+    <div class="content">
+        <%@ content %>
+    </div>
+    <div class="bottom">
+        <p class="footnote">Layout Footnote</p>
+    </div>
+</body>
+</html>

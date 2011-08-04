@@ -1,0 +1,6 @@
+<html>
+<body>
+    <h1>Index Page</h1>
+    <%= mprGetDate(0) %>
+</body>
+</html>

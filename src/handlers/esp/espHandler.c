@@ -102,7 +102,7 @@ static void startEsp(HttpQueue *q)
         return;
     }
     req->route = route;
-    mprLog(4, "Using route: %s for %s", route->name, conn->rx->pathInfo);
+    mprLog(4, "Using route: %s for %s, actionKey %s", route->name, conn->rx->pathInfo, actionKey);
 
     httpAddFormVars(conn);
 #if FUTURE
@@ -593,7 +593,12 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         return 1;
 
     } else if (scasecmp(key, "EspReset") == 0) {
-        esp = allocEspLoc(loc);
+        if (scasecmp(value, "all") == 0) {
+            esp = allocEspLoc(loc);
+            httpSetLocationData(loc, ESP_NAME, esp);
+        } else if (scasecmp(value, "routes") == 0) {
+            esp->routes = mprCreateList(-1, 0);
+        }
         return 1;
 
     } else if (scasecmp(key, "EspRoute") == 0) {
