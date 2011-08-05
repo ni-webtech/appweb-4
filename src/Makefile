@@ -7,7 +7,6 @@
 CGI				:= mod_cgi
 FILE			:= mod_file
 EJS				:= mod_ejs
-ESP				:= mod_esp
 PHP				:= mod_php
 SSL				:= mod_ssl
 

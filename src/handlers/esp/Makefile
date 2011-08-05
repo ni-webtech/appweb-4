@@ -14,8 +14,8 @@ endif
 
 compileExtra: $(OBJECTS) $(MODULES)
 
-$(BLD_LIB_DIR)/$(ESP)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/esp*$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
-	bld --shared --library $(BLD_LIB_DIR)/$(ESP) --libs "$(BLD_APPWEB_LIBS)" $(BLD_OBJ_DIR)/esp*$(BLD_OBJ)
+$(BLD_LIB_DIR)/$(ESP)$(BLD_SHOBJ): $(OBJECTS) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
+	bld --shared --library $(BLD_LIB_DIR)/$(ESP) --libs "$(BLD_APPWEB_LIBS)" $(OBJECTS)
 
 cleanExtra:
 	rm -f $(MODULES)
