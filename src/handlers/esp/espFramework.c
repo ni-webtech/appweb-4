@@ -222,13 +222,13 @@ cchar *espGetVar(HttpConn *conn, cchar *var, cchar *defaultValue)
 
 void espSetIntVar(HttpConn *conn, cchar *var, int value) 
 {
-    return httpSetIntFormVar(conn, var, value);
+    httpSetIntFormVar(conn, var, value);
 }
 
 
 void espSetVar(HttpConn *conn, cchar *var, cchar *value) 
 {
-    return httpSetFormVar(conn, var, value);
+    httpSetFormVar(conn, var, value);
 }
 
 

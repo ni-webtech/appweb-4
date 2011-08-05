@@ -1,30 +1,5 @@
-Next:
-    - What is 2nd arg
-        - espDefineAction(esp, "what-goes-here", SomeAction);
-    - Problem, if just text, then not a good match for route->replacement as it will vary with
-        controller and action strings
-    - In Dev mode
-        - Reload defaults to on, off in release mode
-
-
-Questions
-    - Nice to have DLL for just controllers
-    - Nice to have multiple actions in one DLL
-    - How to reload code that is being used on some other thread? (need EspIdle flag)
-
-Notes:
-    - cache HTML output
-    - views *.esp
-    - Routing 
-        - Route URI pattern controller/action or to PAGE.esp
-        - Are restful routes the default?
-    - Caching
-        - Must be enabled in code. Cache(), updateCache(), writeCached() APIs to control.
-
     Directives
-- MOB - what about EjsRestfulRoute or
-        EjsRestfulRoute NAME URI 
-        - EjsShowRoutes
+        EjsShowRoutes
 
         EspReload on|off                # Reload changed source code
         EspModules "cache"
