@@ -36,8 +36,8 @@ if (!global.test || test.os != "WIN") {
     assert(http.status == 200)
     assert(http.response.contains("Check: OK"))
 
-    //  /mvc/user/login - this tests templates
-    http.get(HTTP + "/mvc/user/login")
+    //  /mvc/user/details - this tests templates
+    http.get(HTTP + "/mvc/user/details")
     assert(http.status == 200)
     assert(http.response.contains("<title>MVC Title</title>"))
     assert(http.response.contains("Layout Footnote"))

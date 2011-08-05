@@ -87,7 +87,7 @@ static void startEsp(HttpQueue *q)
     EspLoc          *el;
     EspReq          *req;
     EspRoute        *route;
-    cchar           *actionKey;
+    char            *actionKey;
     int             next;
 
     conn = q->conn;
@@ -108,6 +108,7 @@ static void startEsp(HttpQueue *q)
         return;
     }
     req->route = route;
+    req->actionKey = actionKey;
     mprLog(4, "Using route: %s for %s, actionKey %s", route->name, conn->rx->pathInfo, actionKey);
 
     httpAddFormVars(conn);
@@ -744,6 +745,7 @@ static void manageReq(EspReq *req, int flags)
         mprMark(req->route);
         mprMark(req->el);
         mprMark(req->commandLine);
+        mprMark(req->actionKey);
     }
 }
 

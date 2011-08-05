@@ -140,6 +140,7 @@ typedef struct EspReq {
     EspRoute        *route;                 /* Route used for request */
     HttpLoc         *loc;                   /* Location reference */
     MprBuf          *cacheBuffer;           /* HTML output caching */
+    char            *actionKey;             /* Request actionKey value */
     char            *cacheName;             /* Base name of intermediate compiled file */
     char            *module;                /* Name of compiled module */
     char            *source;                /* Name of ESP source */
@@ -152,6 +153,17 @@ typedef struct EspReq {
 
 typedef void (*EspAction)(HttpConn *conn);
 typedef void (*EspView)(HttpConn *conn);
+
+typedef struct EspSession {
+    char            *key;               /* Session ID key */
+    MprHashTable    *cache;             /* Cache store reference */
+    MprTime         timeout;            /* Session inactivity timeout (msecs) */
+#if UNUSED
+    int             ready;              /* Data cached from store into pot */
+#endif
+    int             options;            /* Default write options */
+} EspSession;
+
 
 extern bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, int isView);
 

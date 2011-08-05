@@ -5,7 +5,7 @@ if (test.depth > 1) {
 
     const HTTP = (global.tsession && tsession["http"]) || ":4100"
 
-    let command = locate("http") + " --host " + HTTP + " "
+    let command = Cmd.locate("http") + " --host " + HTTP + " "
     if (test.verbosity > 2) {
         command += "-v "
     }

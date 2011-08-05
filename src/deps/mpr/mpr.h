@@ -4926,13 +4926,13 @@ extern bool mprIsRelPath(cchar *path);
 
 /**
     Join paths
-    @description Resolve one path relative to another
-    @param dir Directory path name to test use as the base/dir.
+    @description Join a path to a base path. If path is absolute, it will be returned.
+    @param base Directory path name to use as the base.
     @param other Other path name to resolve against path.
     @returns Allocated string containing the resolved path.
     @ingroup MprPath
  */
-extern char *mprJoinPath(cchar *dir, cchar *other);
+extern char *mprJoinPath(cchar *base, cchar *path);
 
 /**
     Join an extension to a path
@@ -5005,14 +5005,27 @@ extern char *mprReadPath(cchar *path);
 
 /**
     Resolve paths
-    @description Resolve one path relative to another. If the other path is absolute, it is returned. Otherwise
-        it is resolved relative to the directory containing the first path.
-    @param path Path name to test use as the base.
-    @param other Other path name to resolve against path.
+    @description Resolve paths in the neighborhood of this path. Resolve operates like join, except that it joins the 
+    given paths to the directory portion of the current ("this") path. For example: 
+    Path("/usr/bin/ejs/bin").resolve("lib") will return "/usr/lib/ejs/lib". i.e. it will return the
+    sibling directory "lib".
+
+    Resolve operates by determining a virtual current directory for this Path object. It then successively 
+    joins the given paths to the directory portion of the current result. If the next path is an absolute path, 
+    it is used unmodified.  The effect is to find the given paths with a virtual current directory set to the 
+    directory containing the prior path.
+
+    Resolve is useful for creating paths in the region of the current path and gracefully handles both 
+    absolute and relative path segments.
+
+    Returns a joined (normalized) path.
+    If path is absolute, then return path. If path is null, empty or "." then return path.
+    @param base Base path to use as the base.
+    @param path Path name to resolve against base.
     @returns Allocated string containing the resolved path.
     @ingroup MprPath
  */
-extern char *mprResolvePath(cchar *path, cchar *other);
+extern char *mprResolvePath(cchar *base, cchar *path);
 
 /**
     Compare two paths if they are the same
@@ -7095,6 +7108,35 @@ extern ssize mprWriteCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize);
 extern int mprIsCmdComplete(MprCmd *cmd);
 
 extern void mprSetDefaultCmdEnv(MprCmd *cmd, cchar **env);
+
+
+#define MPR_CACHE_SHARED        0x1     /* Use shared cache */
+#define MPR_CACHE_ADD           0x2     /* Add key if not already existing */
+#define MPR_CACHE_SET           0x4     /* Update key value, create if required */
+#define MPR_CACHE_APPEND        0x8     /* Set and append if already existing */
+#define MPR_CACHE_PREPEND       0x10    /* Set and prepend if already existing */
+
+typedef struct MprCache
+{
+    MprHashTable    *store;             /* Key/value store */
+    MprMutex        *mutex;             /* Cache lock*/
+    MprEvent        *timer;             /* Pruning timer */
+    MprTime         lifespan;           /* Default lifespan (msec) */
+    int             resolution;         /* Frequence for pruner */
+    ssize           usedMem;            /* Memory in use for keys and data */
+    ssize           maxKeys;            /* Max number of keys */
+    ssize           maxMem;             /* Max memory for session data */
+    struct MprCache *shared;            /* Shared common cache */
+} MprCache;
+
+extern MprCache *mprCreateCache(int argc, int options);
+extern void *mprDestroyCache(MprCache *cache);
+extern int mprExpireCache(MprCache *cache, cchar *key, MprTime expires);
+extern int64 mprIncCacheItem(MprCache *cache, cchar *key, int64 amount);
+extern char *mprReadCache(MprCache *cache, cchar *key, int64 *version);
+extern bool mprRemoveCacheItem(MprCache *cache, cchar *key);
+extern void mprSetCacheLimits(MprCache *cache, int64 keys, int64 lifespan, int64 memory, int resolution);
+extern ssize mprWriteCacheItem(MprCache *cache, cchar *key, cchar *value, MprTime expires, int64 version, int options);
 
 /**
     Mime Type hash table entry (the URL extension is the key)

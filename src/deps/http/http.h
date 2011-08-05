@@ -2657,7 +2657,7 @@ extern void httpSetEntityLength(HttpConn *conn, MprOff len);
  */
 extern void httpSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 
-//MOB
+//DOC
 extern void httpSetResponseBody(HttpConn *conn, int status, cchar *msg);
 
 /** 
@@ -2668,6 +2668,9 @@ extern void httpSetResponseBody(HttpConn *conn, int status, cchar *msg);
     @ingroup HttpTx
  */
 extern void httpSetStatus(HttpConn *conn, int status);
+
+//  DOC
+extern void httpSetResponded(HttpConn *conn);
 
 /** 
     Set the transmission (response) content mime type

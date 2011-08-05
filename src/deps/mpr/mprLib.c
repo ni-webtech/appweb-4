@@ -4383,6 +4383,466 @@ int mprPutStringToWideBuf(MprBuf *bp, cchar *str)
 
 /************************************************************************/
 /*
+ *  Start of file "./src/mprCache.c"
+ */
+/************************************************************************/
+
+/**
+    mprCache.c - 
+
+    Copyright (c) All Rights Reserved. See details at the end of the file.
+ */
+
+
+
+
+static MprCache *shared;                /* Singleton shared cache */
+
+typedef struct CacheItem
+{
+    char        *key;                   /* Original key */
+    char        *data;                  /* Cache data */
+    MprTime     expires;                /* Fixed expiry date. If zero, key is imortal. */
+    MprTime     lifespan;               /* Lifespan after each access to key (msec) */
+    int64       version;
+} CacheItem;
+
+#define CACHE_TIMER_PERIOD      (60 * MPR_TICKS_PER_SEC)
+#define CACHE_HASH_SIZE         257
+#define CACHE_LIFESPAN          (86400 * MPR_TICKS_PER_SEC)
+
+
+static void localPruner(MprCache *cache, MprEvent *event);
+static void manageCache(MprCache *cache, int flags);
+static void manageCacheItem(CacheItem *item, int flags);
+static void removeItem(MprCache *cache, CacheItem *item);
+
+
+MprCache *mprCreateCache(int argc, int options)
+{
+    MprCache    *cache;
+    int         wantShared;
+
+    if ((cache = mprAllocObj(MprCache, manageCache)) == 0) {
+        return 0;
+    }
+    wantShared = (options & MPR_CACHE_SHARED);
+    if (wantShared && shared) {
+        cache->shared = shared;
+    } else {
+        cache->mutex = mprCreateLock();
+        cache->store = mprCreateHash(CACHE_HASH_SIZE, 0);
+        cache->maxMem = MAXSSIZE;
+        cache->maxKeys = MAXSSIZE;
+        cache->resolution = CACHE_TIMER_PERIOD;
+        cache->lifespan = CACHE_LIFESPAN;
+        if (wantShared) {
+            shared = cache;
+        }
+    }
+    return cache;
+}
+
+
+void *mprDestroyCache(MprCache *cache)
+{
+    if (cache->timer && cache != shared) {
+        mprRemoveEvent(cache->timer);
+        cache->timer = 0;
+    }
+    //  MOB - race here
+    if (cache == shared) {
+        shared = 0;
+    }
+    return 0;
+}
+
+
+int mprExpireCache(MprCache *cache, cchar *key, MprTime expires)
+{
+    CacheItem   *item;
+
+    if (cache->shared) {
+        cache = cache->shared;
+        mprAssert(cache == shared);
+    }
+    lock(cache);
+    //  UNICODE
+    if ((item = mprLookupKey(cache->store, key)) == 0) {
+        unlock(cache);
+        return MPR_ERR_CANT_FIND;
+    }
+#if UNUSED
+    item->lifespan = 0;
+#endif
+    if (expires == 0) {
+        removeItem(cache, item);
+    } else {
+        item->expires = expires;
+    }
+    unlock(cache);
+    return 0;
+}
+
+
+int64 mprIncCacheItem(MprCache *cache, cchar *key, int64 amount)
+{
+    CacheItem   *item;
+    char        nbuf[32];
+
+    if (cache->shared) {
+        cache = cache->shared;
+        mprAssert(cache == shared);
+    }
+
+    lock(cache);
+    //  UNICODE
+    if ((item = mprLookupKey(cache->store, key)) == 0) {
+        if ((item = mprAllocObj(CacheItem, manageCacheItem)) == 0) {
+            return 0;
+        }
+    } else {
+        amount += stoi(item->data, 10, 0);
+    }
+    if (item->data) {
+        cache->usedMem -= slen(item->data);
+    }
+    item->data = itos(nbuf, sizeof(nbuf), amount, 10);
+    cache->usedMem += slen(item->data);
+#if UNUSED
+    item->expires = mprGetTime() + item->lifespan;
+#endif
+    item->version++;
+    unlock(cache);
+    return stoi(item->data, 10, 0);
+}
+
+
+char *mprReadCache(MprCache *cache, cchar *key, int64 *version)
+{
+    CacheItem   *item;
+    char        *result;
+
+    if (cache->shared) {
+        cache = cache->shared;
+        mprAssert(cache == shared);
+    }
+    lock(cache);
+    //  UNICODE
+    if ((item = mprLookupKey(cache->store, key)) == 0) {
+        unlock(cache);
+        return 0;
+    }
+    if (item->expires && item->expires <= mprGetTime()) {
+        unlock(cache);
+        return 0;
+    }
+#if UNUSED && FUTURE
+    //  MOB - reading should not refresh cache
+    //  Perhaps option "read-refresh"
+    if (item->lifespan) {
+        item->expires = mprGetTime() + item->lifespan;
+    }
+#endif
+    if (version) {
+        *version = item->version;
+    } else {
+        result = item->data;
+    }
+    unlock(cache);
+    return result;
+}
+
+
+bool mprRemoveCacheItem(MprCache *cache, cchar *key)
+{
+    CacheItem   *item;
+    bool        result;
+
+    if (cache->shared) {
+        cache = cache->shared;
+        mprAssert(cache == shared);
+    }
+    lock(cache);
+    if (key) {
+        //  UNICODE
+        if ((item = mprLookupKey(cache->store, key)) != 0) {
+            cache->usedMem -= (slen(key) + slen(item->data));
+            mprRemoveKey(cache->store, key);
+            result = 1;
+        } else {
+            result = 0;
+        }
+
+    } else {
+        /* Remove all keys */
+        result = mprGetHashLength(cache->store) ? 1 : 0;
+        cache->store = mprCreateHash(CACHE_HASH_SIZE, 0);
+        cache->usedMem = 0;
+    }
+    unlock(cache);
+    return result;
+}
+
+
+void mprSetCacheLimits(MprCache *cache, int64 keys, MprTime lifespan, int64 memory, int resolution)
+{
+    if (cache->shared) {
+        cache = cache->shared;
+        mprAssert(cache == shared);
+    }
+    if (keys) {
+        cache->maxKeys = (ssize) keys;
+        if (cache->maxKeys <= 0) {
+            cache->maxKeys = MAXSSIZE;
+        }
+    }
+    if (lifespan) {
+        cache->lifespan = lifespan;
+    }
+    if (memory) {
+        cache->maxMem = (ssize) memory;
+        if (cache->maxMem <= 0) {
+            cache->maxMem = MAXSSIZE;
+        }
+    }
+    if (resolution) {
+        cache->resolution = resolution;
+        if (cache->resolution <= 0) {
+            cache->resolution = CACHE_TIMER_PERIOD;
+        }
+    }
+}
+
+
+ssize mprWriteCacheItem(MprCache *cache, cchar *key, cchar *value, MprTime lifespan, int64 version, int options)
+{
+    CacheItem   *item;
+    MprHash     *hp;
+    ssize       len, oldLen;
+    int         exists, add, set, prepend, append, throw;
+
+    if (cache->shared) {
+        cache = cache->shared;
+        mprAssert(cache == shared);
+    }
+    exists = add = prepend = append = throw = 0;
+    add = options & MPR_CACHE_ADD;
+    append = options & MPR_CACHE_APPEND;
+    prepend = options & MPR_CACHE_PREPEND;
+    set = options & MPR_CACHE_SET;
+
+    lock(cache);
+    if ((hp = mprLookupKeyEntry(cache->store, key)) != 0) {
+        exists++;
+        item = (CacheItem*) hp->data;
+        if (version) {
+            if (item->version != version) {
+                unlock(cache);
+                return MPR_ERR_BAD_STATE;
+            }
+        }
+    } else {
+        if ((item = mprAllocObj(CacheItem, manageCacheItem)) == 0) {
+            unlock(cache);
+            return 0;
+        }
+        //  UNICODE
+        mprAddKey(cache->store, key, item);
+        item->key = sclone(key);
+        set = 1;
+    }
+    oldLen = (item->data) ? (slen(item->key) + slen(item->data)) : 0;
+    if (set) {
+        item->data = sclone(value);
+    } else if (add) {
+        if (exists) {
+            return 0;
+        }
+        item->data = sclone(value);
+    } else if (append) {
+        item->data = sjoin(item->data, value, 0);
+    } else if (prepend) {
+        item->data = sjoin(value, item->data, 0);
+    }
+    item->lifespan = lifespan;
+    item->expires = mprGetTime() + lifespan;
+    item->version++;
+    len = slen(item->key) + slen(item->data);
+    cache->usedMem += (len - oldLen);
+
+    if (cache->timer == 0) {
+        mprLog(5, "Start Cache pruner with resolution %d", cache->resolution);
+        /* 
+            Use the MPR dispatcher incase this VM is destroyed 
+         */
+        cache->timer = mprCreateTimerEvent(MPR->dispatcher, "localCacheTimer", cache->resolution, localPruner, cache, 
+            MPR_EVENT_STATIC_DATA); 
+    }
+    unlock(cache);
+    return len;
+}
+
+
+static void removeItem(MprCache *cache, CacheItem *item)
+{
+    lock(cache);
+    mprRemoveKey(cache->store, item->key);
+    cache->usedMem -= (slen(item->key) + slen(item->data));
+    unlock(cache);
+}
+
+
+/*
+    Check for expired keys
+ */
+static void localPruner(MprCache *cache, MprEvent *event)
+{
+    MprTime         when, factor;
+    MprHash         *hp;
+    CacheItem       *item;
+    ssize           excessKeys;
+
+    if (mprTryLock(cache->mutex)) {
+        when = mprGetTime();
+        for (hp = 0; (hp = mprGetNextKey(cache->store, hp)) != 0; ) {
+            item = (CacheItem*) hp->data;
+            mprLog(6, "Cache: \"%@\" lifespan %d, expires in %d secs", item->key, 
+                    item->lifespan / 1000, (item->expires - when) / 1000);
+            if (item->expires && item->expires <= when) {
+                mprLog(5, "Cache prune expired key %s", hp->key);
+                removeItem(cache, item);
+            }
+        }
+        mprAssert(cache->usedMem >= 0);
+
+        /*
+            If too many keys or too much memory used, prune keys expiring first.
+         */
+        if (cache->maxKeys < MAXSSIZE || cache->maxMem < MAXSSIZE) {
+            excessKeys = mprGetHashLength(cache->store) - cache->maxKeys;
+            while (excessKeys > 0 || cache->usedMem > cache->maxMem) {
+                for (factor = 3600; excessKeys > 0 && factor < (86400 * 1000); factor *= 4) {
+                    for (hp = 0; (hp = mprGetNextKey(cache->store, hp)) != 0; ) {
+                        item = (CacheItem*) hp->data;
+                        if (item->expires && item->expires <= when) {
+                            mprLog(5, "Cache too big execess keys %Ld, mem %Ld, prune key %s", 
+                                    excessKeys, (cache->maxMem - cache->usedMem), hp->key);
+                            removeItem(cache, item);
+                        }
+                    }
+                    when += factor;
+                }
+            }
+        }
+        mprAssert(cache->usedMem >= 0);
+
+        if (mprGetHashLength(cache->store) == 0) {
+            mprRemoveEvent(event);
+            cache->timer = 0;
+        }
+        unlock(cache);
+    }
+}
+
+
+static void manageCache(MprCache *cache, int flags) 
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(cache->store);
+        mprMark(cache->mutex);
+        mprMark(cache->timer);
+        mprMark(cache->shared);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+        if (cache == shared) {
+            shared = 0;
+        }
+    }
+}
+
+
+static void manageCacheItem(CacheItem *item, int flags) 
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(item->key);
+        mprMark(item->data);
+    }
+}
+
+
+#if UNUSED
+static MprCache *cloneCache(Mpr *ejs, MprCache *src, bool deep)
+{
+    MprCache   *dest;
+
+    if ((dest = ejsCreateObj(ejs, TYPE(src), 0)) == 0) {
+        return 0;
+    }
+    if (src->shared) {
+        dest->shared = src->shared;
+    } else if (src == shared) {
+        dest->shared = src;
+    } else {
+        dest->store = mprCreateHash(CACHE_HASH_SIZE, 0);
+        dest->mutex = mprCreateLock();
+        dest->timer = 0;
+        dest->lifespan = src->lifespan;
+        dest->resolution = src->resolution;
+        dest->usedMem = src->usedMem;
+        dest->maxMem = src->maxMem;
+        dest->maxKeys = src->maxKeys;
+        dest->shared = src->shared;
+    }
+    return dest;
+}
+#endif
+
+/*
+    @copy   default
+
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire
+    a commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.TXT distributed with
+    this software for full details.
+
+    This software is open source; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; either version 2 of the License, or (at your
+    option) any later version. See the GNU General Public License for more
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+
+    This program is distributed WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+    This GPL license does NOT permit incorporating this software into
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses
+    for this software and support services are available from Embedthis
+    Software at http://www.embedthis.com
+
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "./src/mprCache.c"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
  *  Start of file "./src/mprCmd.c"
  */
 /************************************************************************/
@@ -13206,6 +13666,7 @@ MprModule *mprCreateModule(cchar *name, cchar *path, cchar *entry, void *data)
     mp->path = sclone(path);
     mp->entry = sclone(entry);
     mp->moduleData = data;
+    //  MOB - this is not fully implemented
     mp->lastActivity = mprGetTime();
     index = mprAddItem(ms->modules, mp);
     if (index < 0 || mp->name == 0) {
@@ -14031,6 +14492,7 @@ char *mprGetPortablePath(cchar *path)
 }
 
 
+//  MOB - could generalize this to get a path relative to any directory
 /*
     This returns a path relative to the current working directory for the given path
  */
@@ -14631,36 +15093,49 @@ char *mprReadPath(cchar *path)
 
 
 /*
-    Resolve one path against another path. Returns a joined (normalized) path.
-    If other is absolute, then return other. If other is null, empty or "." then return path.
+    Resolve paths in the neighborhood of this path. Resolve operates like join, except that it joins the 
+    given paths to the directory portion of the current ("this") path. For example: 
+    Path("/usr/bin/ejs/bin").resolve("lib") will return "/usr/lib/ejs/lib". i.e. it will return the
+    sibling directory "lib".
+
+    Resolve operates by determining a virtual current directory for this Path object. It then successively 
+    joins the given paths to the directory portion of the current result. If the next path is an absolute path, 
+    it is used unmodified.  The effect is to find the given paths with a virtual current directory set to the 
+    directory containing the prior path.
+
+    Resolve is useful for creating paths in the region of the current path and gracefully handles both 
+    absolute and relative path segments.
+
+    Returns a joined (normalized) path.
+    If path is absolute, then return path. If path is null, empty or "." then return path.
  */
-char *mprResolvePath(cchar *path, cchar *other)
+char *mprResolvePath(cchar *base, cchar *path)
 {
     MprFileSystem   *fs;
     char            *join, *drive, *cp, *dir;
 
-    fs = mprLookupFileSystem(path);
-    if (other == NULL || *other == '\0' || strcmp(other, ".") == 0) {
-        return sclone(path);
+    fs = mprLookupFileSystem(base);
+    if (path == NULL || *path == '\0' || strcmp(path, ".") == 0) {
+        return sclone(base);
     }
-    if (isAbsPath(fs, other)) {
-        if (fs->hasDriveSpecs && !isFullPath(fs, other) && isFullPath(fs, path)) {
+    if (isAbsPath(fs, path)) {
+        if (fs->hasDriveSpecs && !isFullPath(fs, path) && isFullPath(fs, base)) {
             /*
-                Other is absolute, but without a drive. Use the drive from path.
+                Other is absolute, but without a drive. Use the drive from base.
              */
-            drive = sclone(path);
+            drive = sclone(base);
             if ((cp = strchr(drive, ':')) != 0) {
                 *++cp = '\0';
             }
-            return sjoin(drive, other, NULL);
+            return sjoin(drive, path, NULL);
         }
-        return mprGetNormalizedPath(other);
+        return mprGetNormalizedPath(path);
     }
-    if (path == NULL || *path == '\0') {
-        return mprGetNormalizedPath(other);
+    if (base == NULL || *base == '\0') {
+        return mprGetNormalizedPath(path);
     }
-    dir = mprGetPathDir(path);
-    if ((join = mprAsprintf("%s/%s", dir, other)) == 0) {
+    dir = mprGetPathDir(base);
+    if ((join = mprAsprintf("%s/%s", dir, path)) == 0) {
         return 0;
     }
     return mprGetNormalizedPath(join);
@@ -14707,6 +15182,7 @@ int mprSamePath(cchar *path1, cchar *path2)
 }
 
 
+//  MOB - not a great name
 /*
     Compare two file path to determine if they point to the same file.
  */

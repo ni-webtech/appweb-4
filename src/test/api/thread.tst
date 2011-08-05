@@ -3,7 +3,7 @@
  */
 
 if (test.multithread) {
-    let command = locate("testAppweb") + " --host " + tsession["host"] + " --name mpr.api.c --iterations 5 " + 
+    let command = Cmd.locate("testAppweb") + " --host " + tsession["host"] + " --name mpr.api.c --iterations 5 " + 
         test.mapVerbosity(-2)
 
     for each (threadCount in [2, 4, 8, 16]) {
