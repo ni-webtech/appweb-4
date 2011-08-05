@@ -4,7 +4,6 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
 
-OBJECTS				= 
 ESP					:= mod_esp
 
 include 			.makedep
@@ -15,8 +14,7 @@ endif
 
 compileExtra: $(OBJECTS) $(MODULES)
 
-$(BLD_LIB_DIR)/$(ESP)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/espFramework$(BLD_OBJ) $(BLD_OBJ_DIR)/espHandler$(BLD_OBJ) \
-		$(BLD_OBJ_DIR)/espTemplate$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
+$(BLD_LIB_DIR)/$(ESP)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/esp*$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
 	bld --shared --library $(BLD_LIB_DIR)/$(ESP) --libs "$(BLD_APPWEB_LIBS)" $(BLD_OBJ_DIR)/esp*$(BLD_OBJ)
 
 cleanExtra:

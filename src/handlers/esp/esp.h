@@ -72,11 +72,21 @@ typedef struct EspParse {
 } EspParse;
 
 /*
+    Top level ESP structure
+ */
+typedef struct Esp {
+    MprHashTable    *actions;               /* Table of actions */
+    MprHashTable    *views;                 /* Table of views */
+} Esp;
+
+/*
     EspLoc structure. One per location.
  */
 typedef struct EspLoc {
+#if UNUSED
     MprHashTable    *actions;               /* Table of actions */
     MprHashTable    *views;                 /* Table of views */
+#endif
     MprHashTable    *modules;               /* Compiled modules */
     MprList         *env;                   /* Environment for compiler */
     MprList         *routes;                /* Ordered list of routes */
@@ -126,7 +136,7 @@ extern char *espMatchRoute(HttpConn *conn, EspRoute *route);
     ESP request state
  */
 typedef struct EspReq {
-    EspLoc          *esp;                   /* Convenient back pointer */
+    EspLoc          *el;                    /* Back pointer to Esp Location */
     EspRoute        *route;                 /* Route used for request */
     HttpLoc         *loc;                   /* Location reference */
     MprBuf          *cacheBuffer;           /* HTML output caching */
@@ -136,6 +146,7 @@ typedef struct EspReq {
     char            *controller;            /* Path to controller */
     char            *view;                  /* Path to view */
     char            *entry;                 /* Module entry point */
+    char            *commandLine;           /* Command line for compile/link */
     int             autoFinalize;           /* Request is/will-be auto-finalized */
 } EspReq;
 
@@ -186,6 +197,7 @@ extern void espShowRequest(HttpConn *conn);
 extern ssize espWrite(HttpConn *conn, cchar *fmt, ...);
 extern ssize espWriteBlock(HttpConn *conn, cchar *buf, ssize size);
 extern ssize espWriteString(HttpConn *conn, cchar *s);
+extern ssize espWriteSafeString(HttpConn *conn, cchar *s);
 
 #ifdef __cplusplus
 } /* extern C */

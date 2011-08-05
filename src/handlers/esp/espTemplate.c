@@ -51,13 +51,11 @@ static char *getOutDir(cchar *name)
  */
 static char *expandCommand(HttpConn *conn, cchar *command, cchar *source, cchar *module)
 {
-    EspLoc  *esp;
     EspReq  *req;
     MprBuf  *buf;
     cchar   *cp, *out;
     
     req = conn->data;
-    esp = req->esp;
     if (command == 0) {
         return 0;
     }
@@ -128,32 +126,33 @@ static char *expandCommand(HttpConn *conn, cchar *command, cchar *source, cchar 
 static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *module)
 {
     EspReq      *req;
-    EspLoc      *esp;
+    EspLoc      *el;
     MprCmd      *cmd;
-    char        *commandLine, *err, *out;
+    char        *err, *out;
 
     req = conn->data;
-    esp = req->esp;
+    el = req->el;
 
     cmd = mprCreateCmd(conn->dispatcher);
-    if ((commandLine = expandCommand(conn, command, csource, module)) == 0) {
+    if ((req->commandLine = expandCommand(conn, command, csource, module)) == 0) {
         httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Missing EspCompile directive for %s", csource);
         return MPR_ERR_CANT_READ;
     }
-    mprLog(4, "ESP command: %s\n", commandLine);
-    if (esp->env) {
-        mprAddNullItem(esp->env);
-        mprSetDefaultCmdEnv(cmd, (cchar**) &esp->env->items[0]);
+    mprLog(4, "ESP command: %s\n", req->commandLine);
+    if (el->env) {
+        mprAddNullItem(el->env);
+        mprSetDefaultCmdEnv(cmd, (cchar**) &el->env->items[0]);
     }
-	if (mprRunCmd(cmd, commandLine, &out, &err, 0) != 0) {
+    //  WARNING: GC will run here
+	if (mprRunCmd(cmd, req->commandLine, &out, &err, 0) != 0) {
 		if (err == 0 || *err == '\0') {
 			/* Windows puts errors to stdout Ugh! */
 			err = out;
 		}
-		if (esp->showErrors) {
-			httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't run command %s, error %s", commandLine, err);
+		if (el->showErrors) {
+			httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't run command %s, error %s", req->commandLine, err);
 		} else {
-			httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't run command %s", commandLine);
+			httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't run command %s", req->commandLine);
 		}
         return MPR_ERR_CANT_COMPLETE;
     }
@@ -172,13 +171,13 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
 {
     MprFile     *fp;
     EspReq      *req;
-    EspLoc      *esp;
+    EspLoc      *el;
     cchar       *csource;
     char        *layout, *script, *page, *err;
     ssize       len;
 
     req = conn->data;
-    esp = req->esp;
+    el = req->el;
 
     if (isView) {
         if ((page = mprReadPath(source)) == 0) {
@@ -188,7 +187,7 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
         /*
             Use layouts iff there is a controller provided on the route
          */
-        layout = (req->route->controllerName) ? mprJoinPath(esp->layoutsDir, "default.esp") : 0;
+        layout = (req->route->controllerName) ? mprJoinPath(el->layoutsDir, "default.esp") : 0;
         if ((script = buildScript(conn, page, source, cacheName, layout, &err)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't build %s, error %s", source, err);
             return 0;
@@ -208,11 +207,11 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
     } else {
         csource = source;
     }
-    if (runCommand(conn, esp->compile, csource, module) < 0) {
+    if (runCommand(conn, el->compile, csource, module) < 0) {
         return 0;
     }
-    if (esp->link) {
-        if (runCommand(conn, esp->link, csource, module) < 0) {
+    if (el->link) {
+        if (runCommand(conn, el->link, csource, module) < 0) {
             return 0;
         }
 #if !(BLD_DEBUG && MACOSX)
@@ -222,7 +221,7 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
         mprDeletePath(mprJoinPathExt(mprTrimPathExtension(module), BLD_OBJ));
 #endif
     }
-    if (!esp->keepSource && isView) {
+    if (!el->keepSource && isView) {
         mprDeletePath(csource);
     }
     return 1;
@@ -300,7 +299,7 @@ static char *buildScript(HttpConn *conn, cchar *page, cchar *path, cchar *cacheN
 {
     EspParse    parse;
     EspReq      *req;
-    EspLoc      *esp;
+    EspLoc      *el;
     char        *control, *incBuf, *incText, *global, *token, *body, *where;
     char        *rest, *start, *end, *include, *line, *fmt, *layoutPage, *layoutBuf;
     ssize       len;
@@ -309,7 +308,7 @@ static char *buildScript(HttpConn *conn, cchar *page, cchar *path, cchar *cacheN
     mprAssert(page);
 
     req = conn->data;
-    esp = req->esp;
+    el = req->el;
 
     body = start = end = global = "";
     *err = 0;
@@ -460,6 +459,11 @@ static char *buildScript(HttpConn *conn, cchar *page, cchar *path, cchar *cacheN
         if (end && end[slen(end) - 1] != '\n') {
             end = sjoin(end, "\n", 0);
         }
+        
+        mprAssert(slen(path) > slen(el->dir));
+        mprAssert(sncmp(path, el->dir, slen(el->dir)) == 0);
+        path = &path[slen(el->dir) + 1];
+        
         body = sfmt(\
             "/*\n   Generated from %s\n */\n"\
             "#include \"esp.h\"\n"\
@@ -467,11 +471,11 @@ static char *buildScript(HttpConn *conn, cchar *page, cchar *path, cchar *cacheN
             "static void %s(HttpConn *conn) {\n"\
             "%s%s%s"\
             "}\n\n"\
-            "%sint espInit_%s(EspLoc *esp, MprModule *module) {\n"\
-            "   espDefineView(esp, \"%s\", %s);\n"\
+            "%sint espInit_%s(EspLoc *el, MprModule *module) {\n"\
+            "   espDefineView(el, \"%s\", %s);\n"\
             "   return 0;\n"\
             "}\n",
-            path, global, cacheName, start, body, end, ESP_EXPORT, cacheName, mprGetPortablePath(path), cacheName);
+            path, global, cacheName, start, body, end, ESP_EXPORT, cacheName, path, cacheName);
         mprLog(6, "Create ESP script: \n%s\n", body);
     }
     return body;
