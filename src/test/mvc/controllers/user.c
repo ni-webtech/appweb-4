@@ -35,14 +35,14 @@ static void login(HttpConn *conn) {
     cchar   *username, *from;
 
     common(conn);
-    if ((username = espGetSessionVar(conn, "id", 0)) != 0) {
+    if (espGetSessionVar(conn, "id", 0) != 0) {
         espWrite(conn, "Logged in");
         espFinalize(conn);
 
     } else if (espMatchVar(conn, "username", "admin") && espMatchVar(conn, "password", "secret")) {
         espWrite(conn, "Valid Login");
         espFinalize(conn);
-        espSetSessionVar(conn, "id", username, 0);
+        espSetSessionVar(conn, "id", "admin", 0);
 
     } else if (scmp(conn->rx->method, "POST") == 0) {
         espWrite(conn, "Invalid login, please retry.");

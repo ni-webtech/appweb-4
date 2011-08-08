@@ -126,11 +126,11 @@ static void startEsp(HttpQueue *q)
     if (!conn->tx->responded && req->autoFinalize) {
         runView(conn);
     }
+    if (req->autoFinalize && !req->finalized) {
+        espFinalize(conn);
+    }
     if (req->cacheBuffer) {
         saveCachedResponse(conn);
-    }
-    if (req->autoFinalize && !req->finalized) {
-        httpFinalize(conn);
     }
 }
 
@@ -852,6 +852,7 @@ static void manageReq(EspReq *req, int flags)
         mprMark(req->commandLine);
         mprMark(req->actionKey);
         mprMark(req->action);
+        mprMark(req->session);
     }
 }
 

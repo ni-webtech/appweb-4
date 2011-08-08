@@ -6,11 +6,12 @@ defineComponent() {
 
     ver="latest"
     eval SHOBJ=\$BLD_${kind}_SHOBJ
-    if [ "$BLD_HOST_OS" = LINUX ] ; then
+    if [ "$BLD_HOST_OS" = LINUX -o "$BLD_HOST_OS" = MACOSX ] ; then
         path=${1:-/usr/include:/usr/lib}
     else
         path="${1:-.}"
     fi
+
     if [ $OS = WIN ] ; then
         libpaths=`probe --name openssl --search "$path:extensions/openssl/$ver" --dir "out32dll/libeay32" `
         imports="$libpaths/out32dll/libeay32.dll $libpaths/out32dll/ssleay32.dll"
@@ -26,11 +27,15 @@ defineComponent() {
         libs="ssl crypto"
         iflags="-I/usr/lib/include"
 
-    elif [ $OS = MACSOX ] ; then
+    elif [ $OS = MACOSX ] ; then
+#       libpaths=`probe --name openssl --search "$path:extensions/openssl/$ver" --dir "libcrypto" `
+#       iflags=-I`probe --name openssl --search "$path:extensions/openssl/$ver/include" --dir "openssl/ssl.h"`
+#       libs="ssl crypto"
+#       imports="$libpaths/libssl.1*${SHOBJ} $libpaths/libcrypto.1*${SHOBJ}"
+
         libpaths=`probe --name openssl --search "$path:extensions/openssl/$ver" --dir "libcrypto" `
         iflags=-I`probe --name openssl --search "$path:extensions/openssl/$ver/include" --dir "openssl/ssl.h"`
         libs="ssl crypto"
-        imports="$libpaths/libssl.1*${SHOBJ} $libpaths/libcrypto.1*${SHOBJ}"
 
     else 
         libpaths=`probe --name openssl --search "$path:extensions/openssl/$ver" --dir "libcrypto" `

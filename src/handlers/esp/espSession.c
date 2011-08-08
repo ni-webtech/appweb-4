@@ -26,7 +26,6 @@ EspSession *espAllocSession(HttpConn *conn, cchar *id, MprTime lifespan, int cre
     EspSession  *sp;
 
     mprAssert(conn);
-    mprAssert(id && *id);
     req = conn->data;
     mprAssert(req);
 
