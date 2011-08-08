@@ -4,7 +4,7 @@
 
 if (false && test.os == "LINUX") {
 
-    let command = Cmd.locate("testAppweb") + " --host " + host["host"] + " --name mpr.api.valgrind --iterations 5 "
+    let command = Cmd.locate("testAppweb").portable + " --host " + host["host"] + " --name mpr.api.valgrind --iterations 5 "
     let valgrind = "/usr/bin/env valgrind -q --tool=memcheck --suppressions=mpr.supp " + command + test.mapVerbosity(-2)
 
     if (test.depth >= 2) {
