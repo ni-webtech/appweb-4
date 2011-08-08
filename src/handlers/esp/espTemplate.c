@@ -15,12 +15,6 @@
 
 #define CONTENT_MARKER  "${_ESP_CONTENT_MARKER_}"
 
-#if BLD_WIN_LIKE
-    #define ESP_EXPORT "__declspec(dllexport) "
-#else
-    #define ESP_EXPORT ""
-#endif
-
 static char *buildScript(HttpConn *conn, cchar *page, cchar *path, cchar *name, cchar *layout, char **err);
 static int getEspToken(EspParse *parse);
 
@@ -141,7 +135,10 @@ static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *mod
     mprLog(4, "ESP command: %s\n", req->commandLine);
     if (el->env) {
         mprAddNullItem(el->env);
-        mprSetDefaultCmdEnv(cmd, (cchar**) &el->env->items[0]);
+        mprSetCmdDefaultEnv(cmd, (cchar**) &el->env->items[0]);
+    }
+    if (el->searchPath) {
+        mprSetCmdSearchPath(cmd, el->searchPath);
     }
     //  WARNING: GC will run here
 	if (mprRunCmd(cmd, req->commandLine, &out, &err, 0) != 0) {
@@ -473,11 +470,11 @@ static char *buildScript(HttpConn *conn, cchar *page, cchar *path, cchar *cacheN
             "static void %s(HttpConn *conn) {\n"\
             "%s%s%s"\
             "}\n\n"\
-            "%sint espInit_%s(EspLoc *el, MprModule *module) {\n"\
+            "%s int espInit_%s(EspLoc *el, MprModule *module) {\n"\
             "   espDefineView(el, \"%s\", %s);\n"\
             "   return 0;\n"\
             "}\n",
-            path, global, cacheName, start, body, end, ESP_EXPORT, cacheName, path, cacheName);
+            path, global, cacheName, start, body, end, ESP_EXPORT_STRING, cacheName, mprGetPortablePath(path), cacheName);
         mprLog(6, "Create ESP script: \n%s\n", body);
     }
     return body;

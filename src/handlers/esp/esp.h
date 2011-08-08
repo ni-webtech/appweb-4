@@ -50,6 +50,14 @@ extern "C" {
 #define ESP_LIFESPAN            (86400 * MPR_TICKS_PER_SEC)       /* Default HTML cache lifespan */
 
 /********************************** Defines ***********************************/
+
+#if BLD_WIN_LIKE
+    #define ESP_EXPORT __declspec(dllexport) 
+#else
+    #define ESP_EXPORT 
+#endif
+    #define ESP_EXPORT_STRING MPR_STRINGIFY(ESP_EXPORT)
+
 /*
       ESP lexical analyser tokens
  */
@@ -84,16 +92,13 @@ typedef struct Esp {
     EspLoc structure. One per location.
  */
 typedef struct EspLoc {
-#if UNUSED
-    MprHashTable    *actions;               /* Table of actions */
-    MprHashTable    *views;                 /* Table of views */
-#endif
     MprHashTable    *modules;               /* Compiled modules */
     MprList         *env;                   /* Environment for compiler */
     MprList         *routes;                /* Ordered list of routes */
     HttpLoc         *loc;                   /* Controlling Http location */
     char            *compile;               /* Compile template */
     char            *link;                  /* Link template */
+    char            *searchPath;            /* Search path to use when locating compiler / linker */
 
     char            *dir;                   /* Base directory for location */
     char            *cacheDir;              /* Directory for cached compiled controllers and views */
@@ -138,10 +143,6 @@ typedef struct EspSession {
     char            *id;                /* Session ID key */
     MprCache        *cache;             /* Cache store reference */
     MprTime         lifespan;           /* Session inactivity timeout (msecs) */
-#if UNUSED
-    //  MOB - is this used?
-    int             options;            /* Default write options */
-#endif
 } EspSession;
 
 

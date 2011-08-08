@@ -445,7 +445,8 @@ void espDefineView(EspLoc *el, cchar *path, void *view)
     mprAssert(path && *path);
     mprAssert(view);
 
-    mprAddKey(esp->views, mprJoinPath(el->dir, path), view);
+	path = mprGetPortablePath(mprJoinPath(el->dir, path));
+    mprAddKey(esp->views, path, view);
 }
 
 
@@ -685,7 +686,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
                 espCreateRoute("default", NULL, "^/{controller}(/{action})", "${controller}-${action}", "${controller}.c"));
         }
         if (mvc || needRoutes) {
-            mprAddItem(el->routes, espCreateRoute("esp", NULL, "%\\.esp$", NULL, NULL));
+            mprAddItem(el->routes, espCreateRoute("esp", NULL, "%\\.[eE][sS][pP]$", NULL, NULL));
         }
         return 1;
 
@@ -741,6 +742,13 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
             mprAddItem(el->env, sfmt("%s=%s;%s", ekey, evalue, prior));
         } else {
             mprAddItem(el->env, sfmt("%s=%s", ekey, evalue));
+        }
+        if (scasecmp(ekey, "PATH") == 0) {
+            if (el->searchPath) {
+                el->searchPath = sclone(evalue);
+            } else {
+                el->searchPath = sjoin(el->searchPath, MPR_SEARCH_SEP, evalue, 0);
+            }
         }
         return 1;
 
@@ -833,6 +841,7 @@ static void manageEspLoc(EspLoc *el, int flags)
         mprMark(el->modelsDir);
         mprMark(el->viewsDir);
         mprMark(el->webDir);
+        mprMark(el->searchPath);
     }
 }
 

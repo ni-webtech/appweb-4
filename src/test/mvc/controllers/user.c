@@ -32,8 +32,6 @@ static void cached(HttpConn *conn) {
 }
 
 static void login(HttpConn *conn) { 
-    cchar   *username, *from;
-
     common(conn);
     if (espGetSessionVar(conn, "id", 0) != 0) {
         espWrite(conn, "Logged in");
@@ -54,7 +52,7 @@ static void login(HttpConn *conn) {
 }
 
 
-int espController_user_c(EspLoc *el, MprModule *module) {
+ESP_EXPORT int espController_user_c(EspLoc *el, MprModule *module) {
     espDefineAction(el, "user-check", check);
     espDefineAction(el, "user-cached", cached);
     espDefineAction(el, "user-details", details);
