@@ -19,6 +19,9 @@ ifeq ($(BLD_FEATURE_SSL),1)
 	IMPORTS 	+= $(BLD_OPENSSL_IMPORTS)
 	IMPORTED	+= $(patsubst %,$(BLD_LIB_DIR)/%, $(notdir $(IMPORTS)))
 endif
+ifeq ($(MACOSX),1)
+	sslModule_IFLAGS   +=  -Wno-deprecated-declarations
+endif
 
 compileExtra: $(OBJECTS) $(MODULES) $(IMPORTED)
 

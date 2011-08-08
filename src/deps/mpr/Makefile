@@ -31,7 +31,7 @@ TARGETS				+= $(BLD_BIN_DIR)/angel$(BLD_EXE)
 TARGETS				+= $(BLD_BIN_DIR)/makerom$(BLD_EXE)
 
 ifeq ($(MACOSX),1)
-	mprSsl_IFLAGS	+=  -Wno-deprecated-declarations
+	mprSsl_IFLAGS   +=  -Wno-deprecated-declarations
 endif
 
 compileTargets: imports $(TARGETS)
