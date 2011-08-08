@@ -143,3 +143,5 @@ rpm.log
 *.stackdump
 .publisher
 *.guid
+cache/view_*.c
+src/test/*/cache/view_*.c
