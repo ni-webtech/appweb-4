@@ -3,7 +3,7 @@
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
 
-    usage: %s [options] [IpAddr][:port] [documentRoot]
+    usage: appweb [options] [IpAddr][:port] [documentRoot]
             --config configFile     # Use given config file instead 
             --debugger              # Disable timeouts to make debugging easier
             --ejs name:path         # Create an ejs application at the path
@@ -39,9 +39,8 @@ static App *app;
 
 /***************************** Forward Declarations ***************************/
 
-extern void appwebOsTerm();
 static int  changeRoot(cchar *jail);
-extern int  checkEnvironment(cchar *program);
+static int  checkEnvironment(cchar *program);
 static int  findConfigFile();
 static void manageApp(App *app, int flags);
 static int  initialize(cchar *ip, int port);
@@ -327,7 +326,7 @@ static void usageError(Mpr *mpr)
 /*
     Security checks. Make sure we are staring with a safe environment
  */
-int checkEnvironment(cchar *program)
+static int checkEnvironment(cchar *program)
 {
 #if BLD_UNIX_LIKE
     char   *home;
@@ -335,9 +334,6 @@ int checkEnvironment(cchar *program)
     if (unixSecurityChecks(program, home) < 0) {
         return -1;
     }
-    /*
-        Ensure the binaries directory is in the path. Used by ejs to run ejsweb from /usr/local/bin
-     */
     app->pathVar = sjoin("PATH=", getenv("PATH"), ":", mprGetAppDir(), NULL);
     putenv(app->pathVar);
 #endif
