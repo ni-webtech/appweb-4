@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{E2E0A7CD-3563-4EF9-BFE0-D1603FA6C16F}</ProjectGuid>
+    <ProjectGuid>{3E148212-8E98-4CC2-99F7-6922DF435EC4}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -60,9 +60,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ClInclude Include="..\..\..\out\inc\buildConfig.h" />
-    <ClInclude Include="..\..\..\out\inc\mpr.h" />
-    <ClInclude Include="..\..\..\out\inc\mprSsl.h" />
     <ClInclude Include="..\..\..\out\inc\appweb.h" />
   </ItemGroup>
 
@@ -78,7 +75,7 @@
 
   <ItemGroup>
     <ProjectReference Include="libappweb.vcxproj">
-      <Project>{757287D4-E500-4999-B4DC-D464B8423CF4}</Project>
+      <Project>{B5F25E9B-108A-4CA7-AB34-7BAD152FF35F}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

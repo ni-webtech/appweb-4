@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{C451508D-5CD3-4BAF-9182-F5F817F2B1BB}</ProjectGuid>
+    <ProjectGuid>{4397C73A-75B9-48D4-82D5-1C7BE55B3B8F}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -58,12 +58,6 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\bin\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\</IntDir>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ClInclude Include="..\..\..\out\inc\buildConfig.h" />
-    <ClInclude Include="..\..\..\out\inc\mpr.h" />
-    <ClInclude Include="..\..\..\out\inc\mprSsl.h" />
-  </ItemGroup>
 
   <ItemGroup >
     <ClCompile Include="..\..\..\src\deps\pcre\pcre.c" />

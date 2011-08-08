@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{DBAA0B0F-43B0-4B50-B027-2F85C8B4E0C4}</ProjectGuid>
+    <ProjectGuid>{D082DE9B-62AC-452B-9D24-161B3B84FD47}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -59,12 +59,6 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\</IntDir>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ClInclude Include="..\..\..\out\inc\buildConfig.h" />
-    <ClInclude Include="..\..\..\out\inc\mpr.h" />
-    <ClInclude Include="..\..\..\out\inc\mprSsl.h" />
-  </ItemGroup>
-
   <ItemGroup Condition="'$(BLD_FEATURE_CGI)' == '1'">
     <ClCompile Include="..\..\..\src\handlers\cgiHandler.c" />
   </ItemGroup>
@@ -83,7 +77,7 @@
 
   <ItemGroup>
     <ProjectReference Include="libappweb.vcxproj">
-      <Project>{757287D4-E500-4999-B4DC-D464B8423CF4}</Project>
+      <Project>{B5F25E9B-108A-4CA7-AB34-7BAD152FF35F}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

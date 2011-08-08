@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{557495E9-7022-4957-A128-AC8475C5D09B}</ProjectGuid>
+    <ProjectGuid>{272B4E71-41EA-48E2-97EA-FF1269E2F999}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -60,9 +60,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ClInclude Include="..\..\..\out\inc\buildConfig.h" />
-    <ClInclude Include="..\..\..\out\inc\mpr.h" />
-    <ClInclude Include="..\..\..\out\inc\mprSsl.h" />
     <ClInclude Include="..\..\..\out\inc\appweb.h" />
   </ItemGroup>
 
@@ -84,7 +81,7 @@
 
   <ItemGroup>
     <ProjectReference Include="libmpr.vcxproj">
-      <Project>{EA8063EB-98A0-4719-A98F-D2EABBE906DE}</Project>
+      <Project>{7EE34632-A975-4F35-8F8D-BA4EF01E900A}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
