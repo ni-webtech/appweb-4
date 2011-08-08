@@ -25,13 +25,14 @@ static Esp *esp;
 /************************************ Forward *********************************/
 static EspLoc *allocEspLoc(HttpLoc *loc);
 static bool moduleIsCurrent(HttpConn *conn, cchar *source, cchar *module);
-static int fetchCachedResponse(HttpConn *conn);
+static bool fetchCachedResponse(HttpConn *conn);
+static void manageAction(EspAction *cp, int flags);
 static void manageEsp(Esp *esp, int flags);
 static void manageEspLoc(EspLoc *el, int flags);
 static void manageReq(EspReq *req, int flags);
-static int  runAction(HttpConn *conn, cchar *actionKey);
-static void runView(HttpConn *conn, cchar *name);
-static int saveCachedResponse(HttpConn *conn);
+static int  runAction(HttpConn *conn);
+static void runView(HttpConn *conn);
+static void saveCachedResponse(HttpConn *conn);
 
 /************************************* Code ***********************************/
 
@@ -51,6 +52,7 @@ static void openEsp(HttpQueue *q)
         return;
     }
     req->loc = rx->loc;
+    req->esp = esp;
     conn->data = req;
     req->autoFinalize = 1;
     if ((req->el = httpGetLocationData(rx->loc, ESP_NAME)) == 0) {
@@ -109,6 +111,7 @@ static void startEsp(HttpQueue *q)
     }
     req->route = route;
     req->actionKey = actionKey;
+    req->action = mprLookupKey(esp->actions, actionKey);
     mprLog(4, "Using route: %s for %s, actionKey %s", route->name, conn->rx->pathInfo, actionKey);
 
     httpAddFormVars(conn);
@@ -117,40 +120,103 @@ static void startEsp(HttpQueue *q)
         mprSetThreadData(el->tls, conn);
         //  MOB - better to use
 #endif
-
-    if (el->lifespan && fetchCachedResponse(conn)) {
-        return;
-    }
-    if (route->controllerName && !runAction(conn, actionKey)) {
+    if (route->controllerName && !runAction(conn)) {
         return;
     }
     if (!conn->tx->responded && req->autoFinalize) {
-        runView(conn, actionKey);
-    }
-    if (req->autoFinalize && !conn->tx->finalized) {
-        httpFinalize(conn);
+        runView(conn);
     }
     if (req->cacheBuffer) {
         saveCachedResponse(conn);
     }
+    if (req->autoFinalize && !req->finalized) {
+        httpFinalize(conn);
+    }
 }
 
 
-static int fetchCachedResponse(HttpConn *conn)
+static char *makeCacheKey(HttpConn *conn, cchar *actionKey, cchar *uri)
 {
-    //  MOB complete
-    //  MOB - allocate cacheBuffer
-    return 0;
+    EspReq      *req;
+    HttpQueue   *q;
+    char        *path, *form, *key;
+
+    req = conn->data;
+    q = conn->readq;
+
+    path = mprJoinPath(req->el->controllersDir, actionKey);
+    if (uri) {
+        form = httpGetFormData(conn);
+        key = sfmt("content-%s:%s?%s", req->el->controllersDir, uri, form);
+        
+    } else {
+        key = sfmt("content-%s", mprJoinPath(req->el->controllersDir, actionKey));
+    }
+    return key;
 }
 
 
-static int saveCachedResponse(HttpConn *conn)
+static bool fetchCachedResponse(HttpConn *conn)
 {
-    //  MOB - or does the write buffer prevent this being set?
-    //  MOB complete
-    if (conn->tx->finalized) {
+    EspReq  *req;
+    char    *content, *extraUri, *key;
+
+    req = conn->data;
+    if (req->action && req->action->lifespan) {
+        extraUri = req->action ? req->action->uri : 0;
+        if (extraUri && scmp(extraUri, "*") == 0) {
+            extraUri = conn->rx->pathInfo;
+        }
+        key = makeCacheKey(conn, req->actionKey, extraUri);
+        if ((content = mprReadCache(esp->cache, key, 0)) != 0) {
+            espWriteString(conn, content);
+            return 1;
+        }
     }
     return 0;
+}
+
+
+static void saveCachedResponse(HttpConn *conn)
+{
+    EspReq      *req;
+    EspAction   *action;
+    MprBuf      *buf;
+    char        *key, *extraUri;
+
+    req = conn->data;
+    if (req->finalized) {
+        buf = req->cacheBuffer;
+        req->cacheBuffer = 0;
+        mprAddNullToBuf(buf);
+        action = req->action;
+        extraUri = req->action->uri;
+        if (action->uri && scmp(action->uri, "*") == 0) {
+            extraUri = conn->rx->pathInfo;
+        }
+        key = makeCacheKey(conn, req->actionKey, extraUri);
+        mprWriteCache(esp->cache, key, mprGetBufStart(buf), action->lifespan, 0, 0);
+        espWriteBlock(conn, mprGetBufStart(buf), mprGetBufLength(buf));
+        espFinalize(conn);
+    }
+}
+
+
+void espUpdateCache(HttpConn *conn, cchar *actionKey, cchar *data, int lifesecs, cchar *uri)
+{
+    mprWriteCache(esp->cache, makeCacheKey(conn, actionKey, uri), data, lifesecs * MPR_TICKS_PER_SEC, 0, 00);
+}
+
+
+bool espWriteCached(HttpConn *conn, cchar *actionKey, cchar *uri)
+{
+    cchar   *content;
+
+    if ((content = mprReadCache(esp->cache, makeCacheKey(conn, actionKey, uri), 0)) == 0) {
+        return 0;
+    }
+    espWriteString(conn, content);
+    return 1;
 }
 
 
@@ -168,18 +234,20 @@ static char *getControllerEntry(cchar *controllerName)
 }
 
 
-static int runAction(HttpConn *conn, cchar *actionKey)
+static int runAction(HttpConn *conn)
 {
     MprModule   *mp;
     EspLoc      *el;
     EspReq      *req;
     EspRoute    *route;
-    EspAction   action;
+    EspAction   *action;
     char        *key;
+    int         reloaded;
 
     req = conn->data;
     el = req->el;
     route = req->route;
+    reloaded = 0;
 
     /*
         Expand any form var $tokens. This permits ${controller} and user form data to be used in the controller name
@@ -221,39 +289,53 @@ static int runAction(HttpConn *conn, cchar *actionKey)
                     "Can't load compiled esp module for %s", route->controllerPath);
                 return 0;
             }
+            reloaded = 1;
         }
     }
-    key = mprJoinPath(el->controllersDir, actionKey);
+    key = mprJoinPath(el->controllersDir, req->actionKey);
     if ((action = mprLookupKey(esp->actions, key)) == 0) {
         key = sfmt("%s/%s-missing", route->controllerPath, mprTrimPathExtension(route->controllerName));
         if ((action = mprLookupKey(esp->actions, key)) == 0) {
             if ((action = mprLookupKey(esp->actions, "missing")) == 0) {
-                httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Missing action for %s", actionKey);
+                httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Missing action for %s", req->actionKey);
                 return 0;
             }
         }
     }
-    (action)(conn);
-    return 1;
+    req->action = action;
+    
+    if (el->lifespan) {
+        /* Must stabilize form data prior to controllers injecting variables */
+        httpGetFormData(conn);
+        if (!reloaded && fetchCachedResponse(conn)) {
+            return 1;
+        }
+        req->cacheBuffer = mprCreateBuf(-1, -1);
+    }
+    if (action->actionFn) {
+        (action->actionFn)(conn);
+        return 1;
+    }
+    return 0;
 }
 
 
-static void runView(HttpConn *conn, cchar *actionKey)
+static void runView(HttpConn *conn)
 {
     MprModule   *mp;
     EspLoc      *el;
     EspReq      *req;
     EspRoute    *route;
-    EspView     view;
+    EspViewFn   view;
     
     req = conn->data;
     el = req->el;
     route = req->route;
     
     if (route->controllerName) {
-        req->view = mprJoinPath(el->viewsDir, actionKey);
+        req->view = mprJoinPath(el->viewsDir, req->actionKey);
     } else {
-        req->view = mprJoinPath(conn->host->documentRoot, actionKey);
+        req->view = mprJoinPath(conn->host->documentRoot, req->actionKey);
     }
     req->source = mprJoinPathExt(req->view, ".esp");
     req->cacheName = mprGetMD5Hash(req->source, slen(req->source), "view_");
@@ -318,16 +400,39 @@ static bool moduleIsCurrent(HttpConn *conn, cchar *source, cchar *module)
 }
 
 
-/*
-    Name is typically an app-local controller-action name pair. But it can be any actionKey defined in the route tables.
- */
-void espDefineAction(EspLoc *el, cchar *name, void *action)
+void espCacheControl(EspLoc *el, cchar *actionKey, int lifesecs, cchar *uri)
 {
-    mprAssert(el);
-    mprAssert(name && *name);
-    mprAssert(action);
+    EspAction  *action;
+    
+    if ((action = mprLookupKey(esp->actions, mprJoinPath(el->controllersDir, actionKey))) == 0) {
+        if ((action = mprAllocObj(EspAction, manageAction)) == 0) {
+            return;
+        }
+    }
+    if (uri) {
+        action->uri = sclone(uri);
+    }
+    if (lifesecs == 0) {
+        action->lifespan = el->lifespan;
+    } else {
+        action->lifespan = lifesecs * MPR_TICKS_PER_SEC;
+    }
+}
 
-    mprAddKey(esp->actions, mprJoinPath(el->controllersDir, name), action);
+
+void espDefineAction(EspLoc *el, cchar *actionKey, void *actionFn)
+{
+    EspAction   *action;
+
+    mprAssert(el);
+    mprAssert(actionKey && *actionKey);
+    mprAssert(actionFn);
+
+    if ((action = mprAllocObj(EspAction, manageAction)) == 0) {
+        return;
+    }
+    action->actionFn = actionFn;
+    mprAddKey(esp->actions, mprJoinPath(el->controllersDir, actionKey), action);
 }
 
 
@@ -577,7 +682,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
             mprAddItem(el->routes, espCreateRoute("static", "GET", "%^/static/(.*)", 
                 stemplate("${STATIC_DIR}/$1", loc->tokens), NULL));
             mprAddItem(el->routes, 
-                espCreateRoute("default", NULL, "^/{controller}(/{action})$", "${controller}-${action}", "${controller}.c"));
+                espCreateRoute("default", NULL, "^/{controller}(/{action})", "${controller}-${action}", "${controller}.c"));
         }
         if (mvc || needRoutes) {
             mprAddItem(el->routes, espCreateRoute("esp", NULL, "%\\.esp$", NULL, NULL));
@@ -746,6 +851,15 @@ static void manageReq(EspReq *req, int flags)
         mprMark(req->el);
         mprMark(req->commandLine);
         mprMark(req->actionKey);
+        mprMark(req->action);
+    }
+}
+
+
+static void manageAction(EspAction *ap, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(ap->uri);
     }
 }
 
@@ -755,6 +869,7 @@ static void manageEsp(Esp *esp, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(esp->actions);
         mprMark(esp->views);
+        mprMark(esp->cache);
     }
 }
 
@@ -777,8 +892,11 @@ int maEspHandlerInit(Http *http)
     if ((ep->views = mprCreateHash(-1, MPR_HASH_STATIC_VALUES)) == 0) {
         return 0;
     }
-    if ((ep->actions = mprCreateHash(-1, MPR_HASH_STATIC_VALUES)) == 0) {
+    if ((ep->actions = mprCreateHash(-1, 0)) == 0) {
         return 0;
+    }
+    if ((ep->cache = mprCreateCache(MPR_CACHE_SHARED)) == 0) {
+        return MPR_ERR_MEMORY;
     }
     return 0;
 }

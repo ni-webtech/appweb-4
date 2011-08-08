@@ -73,8 +73,13 @@ void espAutoFinalize(HttpConn *conn)
     EspReq  *req;
 
     req = conn->data;
-    if (req->autoFinalize && !conn->tx->finalized) {
-        httpFinalize(conn);
+    if (req->autoFinalize && !req->finalized) {
+        req->finalized = 1;
+        if (req->cacheBuffer) {
+            httpSetResponded(conn);
+        } else  {
+            httpFinalize(conn);
+        }
     }
 }
 
@@ -143,13 +148,24 @@ char *espGetStatusMessage(HttpConn *conn)
 
 void espFinalize(HttpConn *conn) 
 {
-    httpFinalize(conn);
+    EspReq     *req;
+    
+    req = conn->data;
+    if (req->cacheBuffer) {
+        httpSetResponded(conn);
+    } else {
+        httpFinalize(conn);
+    }
+    req->finalized = 1;
 }
 
 
 bool espFinalized(HttpConn *conn) 
 {
-    return conn->tx->finalized;
+    EspReq      *req;
+
+    req = conn->data;
+    return req->finalized;
 }
 
 
@@ -165,6 +181,14 @@ void espRedirect(HttpConn *conn, int status, cchar *target)
     
     req = conn->data;
     httpRedirect(conn, status, target);
+}
+
+
+void espRedirectBack(HttpConn *conn)
+{
+    if (conn->rx->referrer) {
+        espRedirect(conn, HTTP_CODE_MOVED_TEMPORARILY, conn->rx->referrer); 
+    }
 }
 
 
@@ -232,9 +256,9 @@ void espSetVar(HttpConn *conn, cchar *var, cchar *value)
 }
 
 
-int espCompareVar(HttpConn *conn, cchar *var, cchar *value)
+bool espMatchVar(HttpConn *conn, cchar *var, cchar *value)
 {
-    return httpCompareFormVar(conn, var, value);
+    return httpMatchFormVar(conn, var, value);
 }
 
 
@@ -269,6 +293,18 @@ void espSetStatus(HttpConn *conn, int status)
 }
 
 
+ssize espWrite(HttpConn *conn, cchar *fmt, ...)
+{
+    va_list     vargs;
+    char        *buf;
+
+    va_start(vargs, fmt);
+    buf = mprAsprintfv(fmt, vargs);
+    va_end(vargs);
+    return espWriteString(conn, buf);
+}
+    
+
 ssize espWriteBlock(HttpConn *conn, cchar *buf, ssize size)
 {
     EspReq      *req;
@@ -281,7 +317,20 @@ ssize espWriteBlock(HttpConn *conn, cchar *buf, ssize size)
     mprAssert(len == size);
 }
 #endif
-    return httpWriteBlock(conn->writeq, buf, size);
+    if (req->cacheBuffer) {
+        httpSetResponded(conn);
+        return mprPutBlockToBuf(req->cacheBuffer, buf, size);
+    } else {
+        return httpWriteBlock(conn->writeq, buf, size);
+    }
+}
+
+
+ssize espWriteFile(HttpConn *conn, cchar *path)
+{
+    //  MOB - TODO (must read in small chunks)
+    //  finalized = 1;
+    return 0;
 }
 
 
@@ -298,17 +347,16 @@ ssize espWriteString(HttpConn *conn, cchar *s)
 }
 
 
-ssize espWrite(HttpConn *conn, cchar *fmt, ...)
+ssize espWriteVar(HttpConn *conn, cchar *name)
 {
-    va_list     vargs;
-    char        *buf;
+    cchar   *value;
 
-    va_start(vargs, fmt);
-    buf = mprAsprintfv(fmt, vargs);
-    va_end(vargs);
-    return espWriteString(conn, buf);
+    if ((value = espGetVar(conn, name, 0)) == 0) {
+        value = espGetSessionVar(conn, name, "");
+    }
+    return espWriteString(conn, mprEscapeHtml(value));
 }
-    
+
 
 /*
     Convert queue data in key / value pairs

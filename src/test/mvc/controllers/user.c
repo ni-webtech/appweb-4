@@ -3,48 +3,63 @@
  */
 #include "esp.h"
 
+
+static void common(HttpConn *conn) {
+    espSetVar(conn, "title", "MVC Title");
+}
+
+
 static void check(HttpConn *conn) { 
     espWrite(conn, "Check: OK\r\n");
     espFinalize(conn);
     /* No view used */
 }
 
+
 static void details(HttpConn *conn) { 
+    common(conn);
     espSetVar(conn, "title", "MVC Title");
     espSetIntVar(conn, "secret", 42);
     /* View will be rendered */
 }
 
-static void login(HttpConn *conn) { 
-#if 0
-    char    *username;
-
-    username = espGetVar(conn, "username", 0);
-    if (!username) {
-        //  MOB - need ApI for referrer
-        espRedirect(conn, HTTP_CODE_MOVED_TEMPORARILY, conn->rx->referrer); 
-        return;
-    }
-    //  MOB - espMatchVar 
-    if (espCompareVar(conn, "username", "admin") && espCompareVar(conn, "password", "secret")) {
-        //  inform("Welcome Back")
-        if (session("referrer")) {
-            espRedirect(conn, HTTP_CODE_MOVED_TEMPORARILY, session("referrer")); 
-        } else {
-            // espRedirect(conn, HTTP_CODE_MOVED_TEMPORARILY, "@Dash/show");
-            espRedirect(conn, HTTP_CODE_MOVED_TEMPORARILY, "/");
-        }
-        espSetSession("id", username);
-    } else if (scmp(conn->rx->method, "POST") == 0) {
-        //  MOB - was error
-        error("Invalid login")
-    }
-#endif
+static void cached(HttpConn *conn) { 
+    common(conn);
+    espWrite(conn, "When: %s\r\n", mprGetDate(0));
+    espWrite(conn, "URI: %s\r\n", conn->rx->uri);
+    espWrite(conn, "QUERY: %s\r\n", conn->rx->parsedUri->query);
+    espFinalize(conn);
 }
 
-int espController_user_c(EspLoc *esp, MprModule *module) {
-    espDefineAction(esp, "user-check", check);
-    espDefineAction(esp, "user-details", details);
-    espDefineAction(esp, "user-login", login);
+static void login(HttpConn *conn) { 
+    cchar   *username, *from;
+
+    common(conn);
+    if ((username = espGetSessionVar(conn, "id", 0)) != 0) {
+        espWrite(conn, "Logged in");
+        espFinalize(conn);
+
+    } else if (espMatchVar(conn, "username", "admin") && espMatchVar(conn, "password", "secret")) {
+        espWrite(conn, "Valid Login");
+        espFinalize(conn);
+        espSetSessionVar(conn, "id", username, 0);
+
+    } else if (scmp(conn->rx->method, "POST") == 0) {
+        espWrite(conn, "Invalid login, please retry.");
+        espFinalize(conn);
+
+    } else {
+        espGetSession(conn, 1);
+    }
+}
+
+
+int espController_user_c(EspLoc *el, MprModule *module) {
+    espDefineAction(el, "user-check", check);
+    espDefineAction(el, "user-cached", cached);
+    espDefineAction(el, "user-details", details);
+    espDefineAction(el, "user-login", login);
+
+    espCacheControl(el, "user-cached", 0, "*");
     return 0;
 }

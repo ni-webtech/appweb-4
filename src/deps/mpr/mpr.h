@@ -7129,14 +7129,14 @@ typedef struct MprCache
     struct MprCache *shared;            /* Shared common cache */
 } MprCache;
 
-extern MprCache *mprCreateCache(int argc, int options);
+extern MprCache *mprCreateCache(int options);
 extern void *mprDestroyCache(MprCache *cache);
 extern int mprExpireCache(MprCache *cache, cchar *key, MprTime expires);
-extern int64 mprIncCacheItem(MprCache *cache, cchar *key, int64 amount);
+extern int64 mprIncCache(MprCache *cache, cchar *key, int64 amount);
 extern char *mprReadCache(MprCache *cache, cchar *key, int64 *version);
-extern bool mprRemoveCacheItem(MprCache *cache, cchar *key);
+extern bool mprRemoveCache(MprCache *cache, cchar *key);
 extern void mprSetCacheLimits(MprCache *cache, int64 keys, int64 lifespan, int64 memory, int resolution);
-extern ssize mprWriteCacheItem(MprCache *cache, cchar *key, cchar *value, MprTime expires, int64 version, int options);
+extern ssize mprWriteCache(MprCache *cache, cchar *key, cchar *value, MprTime expires, int64 version, int options);
 
 /**
     Mime Type hash table entry (the URL extension is the key)

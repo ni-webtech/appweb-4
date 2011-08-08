@@ -2124,10 +2124,15 @@ typedef struct HttpRx {
     int             autoDelete;             /**< Auto delete uploaded files */
 
     /*
+        Misc
+     */
+    char            *formData;              /**< Cached form data as a string*/
+
+    /*
         Extensions for Appweb. Inline for performance.
      */
-    struct HttpAlias  *alias;                 /**< Matching alias */
-    struct HttpDir    *dir;                   /**< Best matching dir (PTR only) */
+    struct HttpAlias  *alias;               /**< Matching alias */
+    struct HttpDir    *dir;                 /**< Best matching dir (PTR only) */
 } HttpRx;
 
 
@@ -2245,6 +2250,7 @@ extern int  httpSetUri(HttpConn *conn, cchar *newUri, cchar *query);
 extern void httpSetEtag(HttpConn *conn, MprPath *info);
 extern bool httpMatchEtag(HttpConn *conn, char *requestedEtag);
 extern bool httpMatchModified(HttpConn *conn, MprTime time);
+extern char *httpGetFormData(HttpConn *conn);
 
 /**
     Add encoded form data
@@ -2266,15 +2272,15 @@ extern void httpAddVarsFromQueue(HttpQueue *q);
 extern void httpAddFormVars(HttpConn *conn);
 
 /**
-    Compare a form variable
+    Match a form variable with an expected value
     @description Compare a form variable and return true if it exists and its value matches.
     @param conn HttpConn connection object
     @param var Name of the form variable 
-    @param value Value to compare
+    @param expected Expected value to match with
     @return True if the value matches
     @ingroup HttpRx
  */
-extern int httpCompareFormVar(HttpConn *conn, cchar *var, cchar *value);
+extern bool httpMatchFormVar(HttpConn *conn, cchar *var, cchar *expected);
 
 /**
     Get the cookies
@@ -2632,11 +2638,12 @@ extern void httpSetContentLength(HttpConn *conn, MprOff length);
     @param value Cookie value
     @param path URI path to which the cookie applies
     @param domain Domain in which the cookie applies. Must have 2-3 dots.
-    @param lifetime Duration for the cookie to persist in seconds
+    @param lifespan Duration for the cookie to persist in msec
     @param secure Set to true if the cookie only applies for SSL based connections
     @ingroup HttpTx
  */
-extern void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *domain, int lifetime, bool secure);
+extern void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *domain, 
+        MprTime lifespan, bool secure);
 
 /**
     Define the length of the transmission content. When static content is used for the transmission body, defining

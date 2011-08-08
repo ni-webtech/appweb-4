@@ -207,6 +207,7 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
     } else {
         csource = source;
     }
+    mprMakeDir(el->cacheDir, 0775, 1);
     if (runCommand(conn, el->compile, csource, module) < 0) {
         return 0;
     }
@@ -337,7 +338,8 @@ static char *buildScript(HttpConn *conn, cchar *page, cchar *path, cchar *cacheN
         case ESP_TOK_VAR:
             /* @@var */
             token = strim(token, " \t\r\n;", MPR_TRIM_BOTH);
-            body = sjoin(body, "  espWriteSafeString(conn, espGetVar(conn, \"", token, "\", \"\"));\n", NULL);
+            body = sjoin(body, "  espWriteVar(conn, \"", token, "\");\n", NULL);
+            //MOB  body = sjoin(body, "  espWriteSafeString(conn, espGetVar(conn, \"", token, "\", \"\"));\n", NULL);
             break;
 
 

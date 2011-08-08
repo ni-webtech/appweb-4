@@ -7986,6 +7986,7 @@ static void manageRx(HttpRx *rx, int flags)
         mprMark(rx->uploadDir);
         mprMark(rx->alias);
         mprMark(rx->dir);
+        mprMark(rx->formData);
 
     } else if (flags & MPR_MANAGE_FREE) {
         if (rx->conn) {
@@ -9586,6 +9587,55 @@ char *httpMakeFilename(HttpConn *conn, HttpAlias *alias, cchar *url, bool skipAl
     return mprGetNativePath(path);
 }
 
+
+static int sortForm(MprHash **h1, MprHash **h2)
+{
+    return scmp((*h1)->key, (*h2)->key);
+}
+
+
+/*
+    Return form data as a string. This will return the exact same string regardless of the order of form parameters.
+ */
+char *httpGetFormData(HttpConn *conn)
+{
+    HttpRx          *rx;
+    MprHashTable    *formVars;
+    MprHash         *hp;
+    MprList         *list;
+    char            *buf, *cp;
+    ssize           len;
+    int             next;
+
+    mprAssert(conn);
+
+    rx = conn->rx;
+
+    if (rx->formData == 0) {
+        if ((formVars = conn->rx->formVars) != 0) {
+            if ((list = mprCreateList(mprGetHashLength(formVars), 0)) != 0) {
+                len = 0;
+                for (hp = 0; (hp = mprGetNextKey(formVars, hp)) != NULL; ) {
+                    mprAddItem(list, hp);
+                    len += slen(hp->key) + slen(hp->data) + 2;
+                }
+                if ((buf = mprAlloc(len + 1)) != 0) {
+                    mprSortList(list, sortForm);
+                    cp = buf;
+                    for (next = 0; (hp = mprGetNextItem(list, &next)) != 0; ) {
+                        strcpy(cp, hp->key); cp += slen(hp->key);
+                        *cp++ = '=';
+                        strcpy(cp, hp->data); cp += slen(hp->data);
+                        *cp++ = '&';
+                    }
+                    cp[-1] = '\0';
+                    rx->formData = buf;
+                }
+            }
+        }
+    }
+    return rx->formData;
+}
 
 /*
     @copy   default
@@ -11266,7 +11316,7 @@ void httpSetResponseBody(HttpConn *conn, int status, cchar *msg)
         if (scmp(conn->rx->accept, "text/plain") == 0) {
             httpFormatBody(conn, statusMsg, "Access Error: %d -- %s\r\n%s\r\n", status, statusMsg, msg);
         } else {
-            httpFormatBody(conn, statusMsg, "<h2>Access Error: %d -- %s</h2>\r\n<p>%s</p>\r\n", status, statusMsg, 
+            httpFormatBody(conn, statusMsg, "<h2>Access Error: %d -- %s</h2>\r\n<pre>%s</pre>\r\n", status, statusMsg, 
                 mprEscapeHtml(msg));
         }
     }
@@ -11312,6 +11362,9 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
     uri = 0;
     tx->status = status;
     prev = rx->parsedUri;
+    if (targetUri == 0) {
+        targetUri = "/";
+    }
     target = httpCreateUri(targetUri, 0);
 
     if (conn->http->redirectCallback) {
@@ -11365,7 +11418,8 @@ void httpSetContentLength(HttpConn *conn, MprOff length)
 }
 
 
-void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *cookieDomain, int lifetime, bool isSecure)
+void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *cookieDomain, 
+        MprTime lifespan, bool isSecure)
 {
     HttpRx      *rx;
     struct tm   tm;
@@ -11409,8 +11463,8 @@ void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar
     } else {
         domainAtt = "";
     }
-    if (lifetime > 0) {
-        mprDecodeUniversalTime(&tm, conn->http->now + (lifetime * MPR_TICKS_PER_SEC));
+    if (lifespan > 0) {
+        mprDecodeUniversalTime(&tm, conn->http->now + lifespan);
         expiresAtt = "; expires=";
         expires = mprFormatTime(MPR_HTTP_DATE, &tm);
 
@@ -13277,7 +13331,7 @@ void httpSetIntFormVar(HttpConn *conn, cchar *var, int value)
 }
 
 
-int httpCompareFormVar(HttpConn *conn, cchar *var, cchar *value)
+bool httpMatchFormVar(HttpConn *conn, cchar *var, cchar *value)
 {
     MprHashTable    *vars;
     

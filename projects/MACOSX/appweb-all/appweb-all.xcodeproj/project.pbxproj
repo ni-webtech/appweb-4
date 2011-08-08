@@ -120,6 +120,7 @@
 		C9E4B74A13C7F547005345FA /* espFramework.c in Sources */ = {isa = PBXBuildFile; fileRef = C9E4B74213C7F547005345FA /* espFramework.c */; };
 		C9F2260213EB34AD00AD8F7C /* dirHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C9F2260013EB34AD00AD8F7C /* dirHandler.c */; };
 		C9F2260313EB34AD00AD8F7C /* fileHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C9F2260113EB34AD00AD8F7C /* fileHandler.c */; };
+		C9F2262313ECA97700AD8F7C /* espSession.c in Sources */ = {isa = PBXBuildFile; fileRef = C9F2262213ECA97700AD8F7C /* espSession.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
@@ -424,6 +425,7 @@
 		C9E4B74213C7F547005345FA /* espFramework.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espFramework.c; path = esp/espFramework.c; sourceTree = "<group>"; };
 		C9F2260013EB34AD00AD8F7C /* dirHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dirHandler.c; path = ../dirHandler.c; sourceTree = "<group>"; };
 		C9F2260113EB34AD00AD8F7C /* fileHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fileHandler.c; path = ../fileHandler.c; sourceTree = "<group>"; };
+		C9F2262213ECA97700AD8F7C /* espSession.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espSession.c; path = esp/espSession.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -576,6 +578,7 @@
 			children = (
 				C9E4B74013C7F547005345FA /* esp.h */,
 				C99C3E1413EB18F300665C47 /* espRouter.c */,
+				C9F2262213ECA97700AD8F7C /* espSession.c */,
 				C9E4B74213C7F547005345FA /* espFramework.c */,
 				C9E4B73F13C7F547005345FA /* espHandler.c */,
 				C9E4B74113C7F547005345FA /* espTemplate.c */,
@@ -1375,6 +1378,7 @@
 				C9E4B74813C7F547005345FA /* espTemplate.c in Sources */,
 				C9E4B74A13C7F547005345FA /* espFramework.c in Sources */,
 				C99C3E1513EB18F300665C47 /* espRouter.c in Sources */,
+				C9F2262313ECA97700AD8F7C /* espSession.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -77,6 +77,7 @@ typedef struct EspParse {
 typedef struct Esp {
     MprHashTable    *actions;               /* Table of actions */
     MprHashTable    *views;                 /* Table of views */
+    MprCache        *cache;                 /* Session and content cache */
 } Esp;
 
 /*
@@ -131,6 +132,35 @@ typedef struct EspRoute {
 extern EspRoute *espCreateRoute(cchar *name, cchar *methods, cchar *pattern, cchar *action, cchar *controller);
 extern char *espMatchRoute(HttpConn *conn, EspRoute *route);
 
+#define ESP_SESSION             "-esp-session-"
+
+typedef struct EspSession {
+    char            *id;                /* Session ID key */
+    MprCache        *cache;             /* Cache store reference */
+    MprTime         lifespan;           /* Session inactivity timeout (msecs) */
+#if UNUSED
+    //  MOB - is this used?
+    int             options;            /* Default write options */
+#endif
+} EspSession;
+
+
+extern EspSession *espAllocSession(HttpConn *conn, cchar *id, MprTime timeout, int create);
+extern void espDestroySession(EspSession *sp);
+extern EspSession *espGetSession(HttpConn *conn, int create);
+extern cchar *espGetSessionVar(HttpConn *conn, cchar *key, cchar *defaultValue);
+extern int espSetSessionVar(HttpConn *conn, cchar *key, cchar *value, MprTime lifespan);
+extern void espExpireSessionVar(HttpConn *conn, cchar *key, MprTime lifespan);
+extern char *espGetSessionID(HttpConn *conn);
+
+typedef void (*EspActionFn)(HttpConn *conn);
+typedef void (*EspViewFn)(HttpConn *conn);
+
+typedef struct EspAction {
+    EspActionFn     actionFn;
+    MprTime         lifespan;
+    char            *uri;
+} EspAction;
 
 /*
     ESP request state
@@ -138,6 +168,9 @@ extern char *espMatchRoute(HttpConn *conn, EspRoute *route);
 typedef struct EspReq {
     EspLoc          *el;                    /* Back pointer to Esp Location */
     EspRoute        *route;                 /* Route used for request */
+    EspSession      *session;               /* Session data object */
+    EspAction       *action;                /* Action to invoke */
+    Esp             *esp;                   /* Convenient esp reference */
     HttpLoc         *loc;                   /* Location reference */
     MprBuf          *cacheBuffer;           /* HTML output caching */
     char            *actionKey;             /* Request actionKey value */
@@ -149,20 +182,9 @@ typedef struct EspReq {
     char            *entry;                 /* Module entry point */
     char            *commandLine;           /* Command line for compile/link */
     int             autoFinalize;           /* Request is/will-be auto-finalized */
+    int             finalized;              /* Request has been finalized */
+    int             sessionProbed;          /* Already probed for session store */
 } EspReq;
-
-typedef void (*EspAction)(HttpConn *conn);
-typedef void (*EspView)(HttpConn *conn);
-
-typedef struct EspSession {
-    char            *key;               /* Session ID key */
-    MprHashTable    *cache;             /* Cache store reference */
-    MprTime         timeout;            /* Session inactivity timeout (msecs) */
-#if UNUSED
-    int             ready;              /* Data cached from store into pot */
-#endif
-    int             options;            /* Default write options */
-} EspSession;
 
 
 extern bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, int isView);
@@ -176,7 +198,6 @@ extern void espAddHeaderString(HttpConn *conn, cchar *key, cchar *value);
 extern void espAppendHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 extern void espAppendHeaderString(HttpConn *conn, cchar *key, cchar *value);
 extern void espAutoFinalize(HttpConn *conn);
-extern int espCompareVar(HttpConn *conn, cchar *var, cchar *value);
 extern void espDefineAction(EspLoc *esp, cchar *path, void *action);
 extern void espDefineView(EspLoc *esp, cchar *path, void *view);
 extern void espDontCache(HttpConn *conn);
@@ -194,7 +215,9 @@ extern cchar *espGetVar(HttpConn *conn, cchar *var, cchar *defaultValue);
 extern void espFinalize(HttpConn *conn);
 extern bool espFinalized(HttpConn *conn);
 extern void espFlush(HttpConn *conn);
+extern bool espMatchVar(HttpConn *conn, cchar *var, cchar *value);
 extern void espRedirect(HttpConn *conn, int status, cchar *target);
+extern void espRedirectBack(HttpConn *conn);
 extern int espRemoveHeader(HttpConn *conn, cchar *key);
 extern bool espSetAutoFinalizing(HttpConn *conn, int on);
 extern void espSetContentLength(HttpConn *conn, MprOff length);
@@ -210,6 +233,7 @@ extern ssize espWrite(HttpConn *conn, cchar *fmt, ...);
 extern ssize espWriteBlock(HttpConn *conn, cchar *buf, ssize size);
 extern ssize espWriteString(HttpConn *conn, cchar *s);
 extern ssize espWriteSafeString(HttpConn *conn, cchar *s);
+extern ssize espWriteVar(HttpConn *conn, cchar *name);
 
 #ifdef __cplusplus
 } /* extern C */
