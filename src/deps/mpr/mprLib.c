@@ -4971,6 +4971,7 @@ static void manageCmd(MprCmd *cmd, int flags)
         mprMark(cmd->stderrBuf);
         mprMark(cmd->userData);
         mprMark(cmd->mutex);
+        mprMark(cmd->searchPath);
 #if BLD_WIN_LIKE
         mprMark(cmd->command);
         mprMark(cmd->arg0);
@@ -5142,9 +5143,16 @@ int mprRunCmd(MprCmd *cmd, cchar *command, char **out, char **err, int flags)
 /*
     Env is an array of "KEY=VALUE" strings. Null terminated
  */
-void mprSetDefaultCmdEnv(MprCmd *cmd, cchar **env)
+void mprSetCmdDefaultEnv(MprCmd *cmd, cchar **env)
 {
+    /* WARNING: defaultEnv is not cloned */
     cmd->defaultEnv = env;
+}
+
+
+void mprSetCmdSearchPath(MprCmd *cmd, cchar *search)
+{
+    cmd->searchPath = sclone(search);
 }
 
 
@@ -5247,7 +5255,7 @@ static void addCmdHandlers(MprCmd *cmd)
 int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags)
 {
     MprPath     info;
-    char        *program;
+    char        *program, *search;
     int         rc;
 
     mprAssert(cmd);
@@ -5269,7 +5277,8 @@ int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags)
         mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
     }
-    if ((program = mprSearchPath(program, MPR_SEARCH_EXE, MPR->pathEnv, NULL)) == 0) {
+    search = cmd->searchPath ? cmd->searchPath : MPR->pathEnv;
+    if ((program = mprSearchPath(program, MPR_SEARCH_EXE, search, NULL)) == 0) {
         mprLog(1, "cmd: can't access %s, errno %d", cmd->program, mprGetOsError());
         return MPR_ERR_CANT_ACCESS;
     }
@@ -15055,6 +15064,7 @@ char *mprReadPath(cchar *path)
 {
     MprFile     *file;
     MprPath     info;
+    ssize       len;
     char        *buf;
 
     if ((file = mprOpenFile(path, O_RDONLY | O_BINARY, 0)) == 0) {
@@ -15064,13 +15074,14 @@ char *mprReadPath(cchar *path)
     if (mprGetPathInfo(path, &info) < 0) {
         return 0;
     }
-    if ((buf = mprAlloc(info.size + 1)) == 0) {
+    len = (ssize) info.size;
+    if ((buf = mprAlloc(len + 1)) == 0) {
         return 0;
     }
-    if (mprReadFile(file, buf, info.size) != info.size) {
+    if (mprReadFile(file, buf, len) != len) {
         return 0;
     }
-    buf[info.size] = '\0';
+    buf[len] = '\0';
     return buf;
 }
 

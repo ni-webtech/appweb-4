@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{17B644A7-71EE-40C7-A0F8-6833F1D58B74}</ProjectGuid>
+    <ProjectGuid>{F97DB85A-B985-4B5D-B562-7B39EDF4358F}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -59,12 +59,6 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\</IntDir>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ClInclude Include="..\..\..\out\inc\buildConfig.h" />
-    <ClInclude Include="..\..\..\out\inc\mpr.h" />
-    <ClInclude Include="..\..\..\out\inc\mprSsl.h" />
-  </ItemGroup>
-
   <ItemGroup >
     <ClCompile Include="..\..\..\src\handlers\esp\espHandler.c" />
     <ClCompile Include="..\..\..\src\handlers\esp\espFramework.c" />
@@ -85,7 +79,7 @@
 
   <ItemGroup>
     <ProjectReference Include="libappweb.vcxproj">
-      <Project>{757287D4-E500-4999-B4DC-D464B8423CF4}</Project>
+      <Project>{B5F25E9B-108A-4CA7-AB34-7BAD152FF35F}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

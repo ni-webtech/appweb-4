@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{F2390368-E010-4728-8D88-D215AF840608}</ProjectGuid>
+    <ProjectGuid>{1D98FBA7-BE52-46FB-900E-FE184B84A5AC}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -60,13 +60,22 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ClInclude Include="..\..\..\out\inc\buildConfig.h" />
-    <ClInclude Include="..\..\..\out\inc\mpr.h" />
-    <ClInclude Include="..\..\..\out\inc\mprSsl.h" />
+    <ClInclude Include="..\..\..\out\inc\ejs.cache.local.slots.h" />
+    <ClInclude Include="..\..\..\out\inc\ejs.db.mapper.slots.h" />
+    <ClInclude Include="..\..\..\out\inc\ejs.db.slots.h" />
+    <ClInclude Include="..\..\..\out\inc\ejs.db.sqlite.slots.h" />
     <ClInclude Include="..\..\..\out\inc\ejs.h" />
+    <ClInclude Include="..\..\..\out\inc\ejs.slots.h" />
+    <ClInclude Include="..\..\..\out\inc\ejs.tar.slots.h" />
+    <ClInclude Include="..\..\..\out\inc\ejs.template.slots.h" />
+    <ClInclude Include="..\..\..\out\inc\ejs.unix.slots.h" />
+    <ClInclude Include="..\..\..\out\inc\ejs.web.slots.h" />
     <ClInclude Include="..\..\..\out\inc\ejsByteCode.h" />
     <ClInclude Include="..\..\..\out\inc\ejsByteCodeTable.h" />
+    <ClInclude Include="..\..\..\out\inc\ejsByteGoto.h" />
     <ClInclude Include="..\..\..\out\inc\ejsCompiler.h" />
+    <ClInclude Include="..\..\..\out\inc\ejsmod.h" />
+    <ClInclude Include="..\..\..\out\inc\ejsWeb.h" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(BLD_FEATURE_EJS)' == '1'">
@@ -87,7 +96,7 @@
 
   <ItemGroup>
     <ProjectReference Include="libappweb.vcxproj">
-      <Project>{757287D4-E500-4999-B4DC-D464B8423CF4}</Project>
+      <Project>{B5F25E9B-108A-4CA7-AB34-7BAD152FF35F}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

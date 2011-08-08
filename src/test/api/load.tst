@@ -5,7 +5,7 @@
 const HOST = (global.tsession && tsession["host"]) || "http://127.0.0.1:4100"
 
 if (test.depth >= 4) {
-    let command = Cmd.locate("testAppweb") + " --host " + HOST + 
+    let command = Cmd.locate("testAppweb").portable + " --host " + HOST + 
         " --name mpr.api.c --iterations 400 " + test.mapVerbosity(-2)
 
     testCmd(command)

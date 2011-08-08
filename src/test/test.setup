@@ -47,7 +47,7 @@ function stop() {
     }           
 }
 
-let cmd = Cmd.locate("appweb") + " --log trace.txt:4 --name forAppwebTest --config appweb.conf"
+let cmd = Cmd.locate("appweb").portable + " --log trace.txt:4 --name forAppwebTest --config appweb.conf"
 
 if (test.phase == "init") {
     if (!App.getenv("SECOND")) {

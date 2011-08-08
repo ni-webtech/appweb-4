@@ -67,6 +67,7 @@ EXPORTS
   ecResetParser
   ecSetCertFile
   ecSetOptimizeLevel
+  ecSetOutputDir
   ecSetOutputFile
   ecSetRequire
   ecSetStreamBuf

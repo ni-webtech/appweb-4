@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{12091435-4FCF-42E7-AFFC-E8347968732E}</ProjectGuid>
+    <ProjectGuid>{7525051A-8D1B-4E13-A782-C8E8A74FB4F2}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -59,12 +59,6 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\</IntDir>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ClInclude Include="..\..\..\out\inc\buildConfig.h" />
-    <ClInclude Include="..\..\..\out\inc\mpr.h" />
-    <ClInclude Include="..\..\..\out\inc\mprSsl.h" />
-  </ItemGroup>
-
   <ItemGroup >
     <ClCompile Include="..\..\..\src\utils\auth.c" />
   </ItemGroup>
@@ -77,7 +71,7 @@
 
   <ItemGroup>
     <ProjectReference Include="libmpr.vcxproj">
-      <Project>{EA8063EB-98A0-4719-A98F-D2EABBE906DE}</Project>
+      <Project>{7EE34632-A975-4F35-8F8D-BA4EF01E900A}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
