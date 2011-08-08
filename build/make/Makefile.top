@@ -66,9 +66,37 @@ all clean clobber compile depend package test projects: always
 .PHONY: always
 endif
 
-diff import sync:
+diff import:
 	for dep in $(DEPS) ; do \
 		$(BLD_TOOLS_DIR)/syncup --$@ ../$$dep/out/releases/$$dep-combo.tgz ; \
+	done
+	echo
+
+sync:
+	for dep in $(DEPS) ; do \
+		$(BLD_TOOLS_DIR)/syncup --$@ ../$$dep/out/releases/$$dep-combo.tgz ; \
+	done
+	for f in $(BLD_IMPORTS) ; do \
+		eval f="$${f}" ; \
+		ext=".$${f##*.}" ; \
+		base="$${f##*/}" ; \
+		if [ ! -f "$${f}" ] ; then \
+			echo "Can't find $${f} to import" ; \
+			exit 255 ; \
+		elif [ "$${ext}" = ".h" ] ; then \
+			rm -f "$(BLD_INC_DIR)/$${base}" ; \
+			cp "$${f}" "$(BLD_INC_DIR)"; \
+		elif [ "$${ext}" = "$(BLD_SHOBJ)" ] ; then \
+			QUIET=1 $(BLD_TOOLS_DIR)/getlib $${f} ; \
+		elif [ "$${ext}" = ".mod" -o "$${ext}" = ".a" ] ; then \
+			if [ "$(BLD_OS)" = WIN ] ; then \
+				cp "$${f}" "$(BLD_BIN_DIR)"; \
+			else \
+				cp "$${f}" "$(BLD_LIB_DIR)"; \
+			fi ; \
+		else \
+			cp "$${f}" "$(BLD_BIN_DIR)"; \
+		fi ; \
 	done
 	echo
 
