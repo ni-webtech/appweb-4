@@ -158,7 +158,7 @@ static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *mod
 
 
 /*
-    Compile a view or controller.
+    Compile a view or controller
 
     cacheName   MD5 cache name (not a full path)
     source      ESP source file name

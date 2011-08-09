@@ -20158,10 +20158,10 @@ char *srejoinv(char *buf, va_list args)
 }
 
 
-char *sreplace(char *str, char *pattern, char *replacement)
+char *sreplace(cchar *str, cchar *pattern, cchar *replacement)
 {
     MprBuf      *buf;
-    char        *s;
+    cchar       *s;
     ssize       plen;
 
     buf = mprCreateBuf(-1, -1);

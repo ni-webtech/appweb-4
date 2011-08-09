@@ -27,32 +27,6 @@ Usage: mvc [options] [commands] ...
     --verbose
 
   Commands:
-    mvc clean
-        ## remove cache/ *
-    mvc compile [flat | app | controller_names | view_names]
-        ## [] - compile controllers and views separately into cache
-        ## [controller_names/view_names] - compile single file
-        ## [app] - compile all files into a single source file with one init that calls all sub-init files
-    mvc compile path/name.ejs ...
-        ## [controller_names/view_names] - compile single file
-    mvc compile static
-        ## use makerom code and compile static into a file in cache
-    mvc generate app name
-        # mkdir cache views controllers layouts
-        # generate *.conf
-        # generate layouts/default.esp, 
-        #   ./layouts/default.esp
-        #   ./static/favicon.ico
-        #   ./static/images/banner.jpg          (need these rommed)
-        #   ./static/images/splash.jpg
-        #   ./static/index.esp
-        #   ./static/js/jquery.esp.js
-        #   ./static/js/jquery.js
-        #   ./static/js/jquery.simplemodal.js
-        #   ./static/js/jquery.tablesorter.js
-        #   ./static/layout.css
-        #   ./static/themes/default.css
-        #
     mvc generate controller name [action [, action] ...]
         # generate a new controller with names
     mvc run
@@ -76,30 +50,45 @@ typedef struct App {
     char        *documentRoot;
     char        *serverRoot;
     char        *configFile;
-    char        *pathVar;
+    char        *pathEnv;
 
-    char        *libDir;
-    char        *appwebDir;
-    char        *appDir;
+    char        *libDir;                /* Appweb lib directory */
+    char        *wwwDir;                /* Appweb esp-www default files directory */
+    char        *confDir;               /* Appweb etc config directory */
+
+    char        *appName;               /* Application name */
+    char        *appDir;                /* Application top level base directory */
+    char        *appCacheDir;           /* Cache directory */
+    char        *appControllersDir;     /* Controllers directory */
+    char        *appViewsDir;           /* Views directory */
+
+    int         overwrite;
+    int         quiet;
+    int         error;
 } App;
 
-static App *app;
-static Http *http;
+static App      *app;
+static Esp      *esp;
+static Http     *http;
 static MaAppweb *appweb;
-static Esp *esp;
 
 /***************************** Forward Declarations ***************************/
 
-static int  clean(int argc, char **argv);
-static int  compile(int argc, char **argv);
-static int  findConfigFile();
-static int  generate(int argc, char **argv);
-static int  generateAppStaticFiles(cchar *name);
-static int  generateAppConfigFile(cchar *name);
-static int  initialize();
+static void clean(int argc, char **argv);
+static void compile(int argc, char **argv);
+static void copyDir(cchar *fromDir, cchar *toDir);
+static void error(cchar *fmt, ...);
+static void findConfigFile();
+static void generate(int argc, char **argv);
+static void generateAppDirs();
+static void generateAppFiles();
+static void generateAppConfigFile();
+static void initialize();
+static void makeDir(cchar *dir);
 static void manageApp(App *app, int flags);
-static int  process(int argc, char **argv);
-static int  usageError();
+static void process(int argc, char **argv);
+static void trace(cchar *tag, cchar *fmt, ...);
+static void usageError();
 
 #ifndef BLD_SERVER_ROOT
     #define BLD_SERVER_ROOT mprGetCurrentPath()
@@ -114,7 +103,7 @@ MAIN(appweb, int argc, char **argv)
 {
     Mpr     *mpr;
     cchar   *argp;
-    int     argind;
+    int     argind, rc;
 
     if ((mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD)) == NULL) {
         exit(1);
@@ -135,65 +124,78 @@ MAIN(appweb, int argc, char **argv)
         if (*argp != '-') {
             break;
         }
-        if (strcmp(argp, "--config") == 0) {
+        if (scmp(argp, "--config") == 0) {
             if (argind >= argc) {
-                return usageError();
+                usageError();
+            } else {
+                app->configFile = sclone(argv[++argind]);
             }
-            app->configFile = sclone(argv[++argind]);
 
-        } else if (strcmp(argp, "--log") == 0 || strcmp(argp, "-l") == 0) {
+        } else if (scmp(argp, "--log") == 0 || scmp(argp, "-l") == 0) {
             if (argind >= argc) {
-                return usageError();
+                usageError();
+            } else {
+                maStartLogging(NULL, argv[++argind]);
+                mprSetCmdlineLogging(1);
             }
-            maStartLogging(NULL, argv[++argind]);
-            mprSetCmdlineLogging(1);
 
-        } else if (strcmp(argp, "--verbose") == 0 || strcmp(argp, "-v") == 0) {
+        } else if (scmp(argp, "--overwrite") == 0) {
+            app->overwrite = 1;
+
+        } else if (scmp(argp, "--quiet") == 0 || scmp(argp, "-q") == 0) {
+            app->quiet = 1;
+
+        } else if (scmp(argp, "--verbose") == 0 || scmp(argp, "-v") == 0) {
             maStartLogging(NULL, "stderr:2");
             mprSetCmdlineLogging(1);
 
-        } else if (strcmp(argp, "--version") == 0 || strcmp(argp, "-V") == 0) {
+        } else if (scmp(argp, "--version") == 0 || scmp(argp, "-V") == 0) {
             mprPrintf("%s %s-%s\n", mprGetAppTitle(), BLD_VERSION, BLD_NUMBER);
             exit(0);
 
         } else {
-            mprError("Unknown switch \"%s\"", argp);
-            return usageError();
+            error("Unknown switch \"%s\"", argp);
+            usageError();
         }
+    }
+    if (app->error) {
+        return app->error;
     }
     if (mprStart() < 0) {
         mprUserError("Can't start MPR for %s", mprGetAppName());
         mprDestroy(MPR_EXIT_DEFAULT);
         return MPR_ERR_CANT_INITIALIZE;
     }
-    if (argc > argind) {
-        if (argc > (argind + 2)) {
-            return usageError();
-        }
-    } else if (findConfigFile() < 0) {
-        exit(7);
+    findConfigFile();
+    initialize();
+    if (!app->error) {
+        process(argc - argind, &argv[argind]);
     }
-    if (initialize() < 0) {
-        return MPR_ERR_CANT_INITIALIZE;
-    }
-    if (process(argc - argind, &argv[argind]) < 0) {
-        //  MOB - RC
-        return MPR_ERR_CANT_INITIALIZE;
-    }
+    rc = app->error;
     mprLog(1, "Exit complete");
     mprDestroy(MPR_EXIT_DEFAULT);
-    return 0;
+    return rc;
 }
 
 
 static void manageApp(App *app, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(app->configFile);
-        mprMark(app->documentRoot);
-        mprMark(app->pathVar);
-        mprMark(app->libDir);
+        mprMark(app->mpr);
+        mprMark(app->appweb);
         mprMark(app->meta);
+        mprMark(app->serverRoot);
+        mprMark(app->documentRoot);
+        mprMark(app->configFile);
+        mprMark(app->pathEnv);
+        mprMark(app->libDir);
+        mprMark(app->wwwDir);
+        mprMark(app->confDir);
+        mprMark(app->appDir);
+        mprMark(app->appName);
+        mprMark(app->appCacheDir);
+        mprMark(app->appControllersDir);
+        mprMark(app->appViewsDir);
     }
 }
 
@@ -201,151 +203,275 @@ static void manageApp(App *app, int flags)
 static void getDirs()
 {
     app->libDir = mprJoinPath(mprGetPathParent(mprGetAppDir()), BLD_LIB_NAME);
-    app->appwebDir = mprGetPathDir(app->configFile);
+    app->wwwDir = mprJoinPath(app->libDir, "esp-www");
+    app->confDir = mprGetPathDir(app->configFile);
+
+    app->appDir = mprGetCurrentPath();
+    app->appName = mprGetPathBase(app->appDir);
+
+    //  MOB - these dir names must come from appweb.conf
+    app->appCacheDir = mprJoinPath(app->appDir, "cache");
+    app->appControllersDir = mprJoinPath(app->appDir, "controllers");
+    app->appViewsDir = mprJoinPath(app->appDir, "views");
+
 #if BLD_UNIX_LIKE
-    app->pathVar = sjoin("PATH=", getenv("PATH"), ":", mprGetAppDir(), NULL);
-    putenv(app->pathVar);
+    app->pathEnv = sjoin("PATH=", getenv("PATH"), ":", mprGetAppDir(), NULL);
+    putenv(app->pathEnv);
 #endif
 }
 
 
-static int initialize()
+static void initialize()
 {
     HttpStage   *stage;
 
-    getDirs();
     if ((app->appweb = maCreateAppweb()) == 0) {
-        mprUserError("Can't create HTTP service for %s", mprGetAppName());
-        return MPR_ERR_CANT_CREATE;
+        error("Can't create HTTP service for %s", mprGetAppName());
+        return;
     }
     appweb = app->appweb;
     http = app->appweb->http;
 
     if ((app->meta = maCreateMeta(appweb, "default", NULL, NULL, -1)) == 0) {
-        mprUserError("Can't create HTTP server for %s", mprGetAppName());
-        return MPR_ERR_CANT_CREATE;
+        error("Can't create HTTP server for %s", mprGetAppName());
+        return;
     }
     if (maParseConfig(app->meta, app->configFile) < 0) {
-        mprUserError("Can't configure the server, exiting.");
-        return MPR_ERR_CANT_CREATE;
+        error("Can't configure the server, exiting.");
+        return;
     }
     if ((stage = httpLookupStage(http, "espHandler")) == 0) {
-        mprUserError("Can't find ESP handler in %s", app->configFile);
-        return MPR_ERR_CANT_CREATE;
+        error("Can't find ESP handler in %s", app->configFile);
+        return;
     }
     esp = stage->stageData;
-    return 0;
+    getDirs();
 }
 
 
-static int process(int argc, char **argv)
+static void process(int argc, char **argv)
 {
     cchar   *cmd;
 
     cmd = argv[0];
 
     if (scmp(cmd, "clean") == 0) {
-        clean(argc, argv);
+        clean(argc - 1, &argv[1]);
 
     } else if (scmp(cmd, "compile") == 0) {
-        compile(argc, argv);
+        compile(argc - 1, &argv[1]);
 
     } else if (scmp(cmd, "generate") == 0) {
-        generate(argc, argv);
+        generate(argc - 1, &argv[1]);
 
     } else {
-        mprError("Unknown command %s", cmd);
-        return MPR_ERR_CANT_FIND;
+        error("Unknown command %s", cmd);
     }
-    return 0;
 }
 
 
-static int clean(int argc, char **argv)
+static void clean(int argc, char **argv)
 {
-    // files = mprGetPathFiles(app->cacheDir, 0);
-    return 0;
+    MprList         *files;
+    MprDirEntry     *dp;
+    char            *path;
+    int             next;
+
+    files = mprGetPathFiles(app->appCacheDir, 0);
+    for (next = 0; (dp = mprGetNextItem(files, &next)) != 0; ) {
+        path = mprJoinPath(app->appCacheDir, dp->name);
+        mprDeletePath(path);
+    }
 }
 
 
-static int compile(int argc, char **argv)
+static void compileFile(cchar *path, bool isController)
 {
-    return 0;
+    cchar   *cacheName, *module;
+
+    if (isController) {
+        cacheName = mprGetMD5Hash(path, slen(path), "controller_");
+        module = mprGetNormalizedPath(sfmt("%s/%s%s", app->appCacheDir, cacheName, BLD_SHOBJ));
+    } else {
+    }
+    // espCompile(conn, 
 }
 
 
 /*
- mvc generate app name
- # mkdir cache views controllers layouts
- # generate *.conf
- # generate layouts/default.esp, 
- #   ./layouts/default.esp
- #   ./static/favicon.ico
- #   ./static/images/banner.jpg          (need these rommed)
- #   ./static/images/splash.jpg
- #   ./static/index.esp
- #   ./static/js/jquery.esp.js
- #   ./static/js/jquery.js
- #   ./static/js/jquery.simplemodal.js
- #   ./static/js/jquery.tablesorter.js
- #   ./static/layout.css
- #   ./static/themes/default.css
- #
-
+    mvc compile [flat | app | controller_names | view_names]
+        ## [] - compile controllers and views separately into cache
+        ## [controller_names/view_names] - compile single file
+        ## [app] - compile all files into a single source file with one init that calls all sub-init files
+    mvc compile path/name.ejs ...
+        ## [controller_names/view_names] - compile single file
+    mvc compile static
+        ## use makerom code and compile static into a file in cache
  */
-static int generate(int argc, char **argv)
+static void compile(int argc, char **argv)
 {
-    char    *kind, *name;
+    MprList     *files;
+    MprDirEntry *dp;
+    char        *path, *kind;
+    int         next;
 
-    /*
-        generate app name
-     */
-    if (argc < 2) {
-        return usageError();
-    }
-    kind = argv[0];
-    name = argv[1];
-
-    if (scmp(kind, "app") == 0) {
-        generateAppStaticFiles(name);
-        generateAppConfigFile(name);
+    if (argc == 0) {
+        kind = "*";
     } else {
-        mprError("Unknown generation kind %s", kind);
-        return usageError();
+        kind = argv[0];
     }
-    return 0;
+    if (scmp(kind, "*") == 0) {
+        /*
+            Build all items separately
+         */
+        files = mprGetPathFiles(app->appControllersDir, 1);
+        for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
+            path = mprJoinPath(app->appControllersDir, dp->name);
+            compileFile(path, 1);
+        }
+    }
 }
 
 
-static int generateAppStaticFiles(cchar *name)
+static void generate(int argc, char **argv)
+{
+    char    *kind, *path;
+
+    /*
+        generate app path
+     */
+    if (argc < 2) {
+        usageError();
+        return;
+    }
+    kind = argv[0];
+
+    if (scmp(kind, "app") == 0) {
+        path = argv[1];
+        app->appName = mprGetPathBase(path);
+        app->appDir = mprJoinPath(app->confDir, path);
+        app->appCacheDir = mprJoinPath(app->appDir, "cache");
+        app->appControllersDir = mprJoinPath(app->appDir, "controllers");
+        app->appViewsDir = mprJoinPath(app->appDir, "views");
+        generateAppDirs();
+        generateAppFiles();
+        generateAppConfigFile();
+
+    } else {
+        mprError("Unknown generation kind %s", kind);
+        usageError();
+    }
+}
+
+
+static void generateAppDirs()
+{
+    makeDir("");
+    makeDir("cache");
+    makeDir("controllers");
+    makeDir("layouts");
+    makeDir("static");
+    makeDir("static/images");
+    makeDir("static/js");
+    makeDir("static/themes");
+    makeDir("views");
+}
+
+
+static void fixupFile(cchar *path)
+{
+    char    *data, *tmp;
+
+    path = mprJoinPath(app->appDir, path);
+    if ((data = mprReadPath(path)) == 0) {
+        error("Can't read %s", path);
+        return;
+    }
+    data = sreplace(data, "${NAME}", app->appName);
+    data = sreplace(data, "${DIR}", app->appDir);
+
+    tmp = mprGetTempPath(0);
+    if (mprWritePath(tmp, data, slen(data), 0644) < 0) {
+        error("Can't write %s", path);
+        return;
+    }
+    if (rename(tmp, path) < 0) {
+        error("Can't rename %s to %s", tmp, path);
+    }
+}
+
+
+static void generateAppFiles()
+{
+    copyDir(mprJoinPath(app->wwwDir, "files"), app->appDir);
+    fixupFile("layouts/default.esp");
+}
+
+
+static void copyDir(cchar *fromDir, cchar *toDir)
 {
     MprList     *files;
+    MprDirEntry *dp;
     char        *from, *to;
     int         next;
 
-    files = mprGetPathFiles(mprJoinPath(app->libDir, "www"), 1);
-    for (next = 0; (from = mprGetNextItem(files, &next)) != 0; ) {
-        to = mprJoinPath(name, from);
-        mprMakeDir(mprGetPathDir(to), 0755, 1);
-        mprCopyPath(from, to, 0644);
+    files = mprGetPathFiles(fromDir, 1);
+    for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
+        from = mprJoinPath(fromDir, dp->name);
+        to = mprJoinPath(toDir, dp->name);
+        if (dp->isDir) {
+            if (!mprPathExists(to, R_OK)) {
+                if (mprMakeDir(to, 0755, 1) < 0) {
+                    error("Can't make directory %s", to);
+                    return;
+                }
+                trace("CREATE",  "Directory: %s", to);
+            }
+            copyDir(from, to);
+        
+        } else {
+            if (mprMakeDir(mprGetPathDir(to), 0755, 1) < 0) {
+                error("Can't make directory %s", mprGetPathDir(to));
+                return;
+            }
+            if (mprCopyPath(from, to, 0644) < 0) {
+                error("Can't copy file %s to %s", from, to);
+                return;
+            }
+            if (mprPathExists(to, R_OK) && !app->overwrite) {
+                trace("EXISTS",  "File: %s", to);
+            } else {
+                trace("CREATED",  "Static web file: %s", to);
+            }
+        }
     }
-    return 0;
 }
 
 
-static int generateAppConfigFile(cchar *name)
+static void generateAppConfigFile()
 {
-    char    *directive;
+    char    *from, *to, *conf;
 
-    directive = sfmt("/*\n *    ESP Configuration for %s\n */\n\nEspAlias %s %s mvc\n", name, "/mvc", name);
-#if UNUSED
-    mprWritePath(sfmt("%s/conf/%s", app->appwebDir, name), directive);
-#endif
-    return 0;
+    from = mprJoinPath(app->wwwDir, "app.conf");
+    if ((conf = mprReadPath(from)) == 0) {
+        error("Can't read %s", from);
+        return;
+    }
+    to = sfmt("%s/conf/%s.conf", app->confDir, mprGetPathBase(app->appName));
+    if (mprPathExists(to, R_OK) && !app->overwrite) {
+        trace("EXISTS",  "Config file: %s", to);
+        return;
+
+    } else if (mprWritePath(to, conf, slen(conf), 0644) < 0) {
+        error("Can't write %s", to);
+        return;
+    }
+    fixupFile(to);
+    trace("CREATED",  "Config file: %s", to);
 }
 
 
-static int findConfigFile()
+static void findConfigFile()
 {
     cchar   *userPath;
 
@@ -354,20 +480,36 @@ static int findConfigFile()
         app->configFile = mprJoinPathExt(BLD_PRODUCT, ".conf");
     }
     if (mprPathExists(app->configFile, R_OK)) {
-        return 0;
+        return;
     }
     if (!userPath) {
         app->configFile = mprJoinPath(mprGetAppDir(), mprAsprintf("../%s/%s.conf", BLD_LIB_NAME, mprGetAppName()));
         if (mprPathExists(app->configFile, R_OK)) {
-            return 0;
+            return;
         }
     }
-    mprError("Can't open config file %s", app->configFile);
-    return MPR_ERR_CANT_OPEN;
+    error("Can't open config file %s", app->configFile);
 }
 
 
-static int usageError(Mpr *mpr)
+static void makeDir(cchar *dir)
+{
+    char    *path;
+
+    path = mprJoinPath(app->appDir, dir);
+    if (mprPathExists(path, X_OK)) {
+        trace("EXISTS",  "Directory: %s", path);
+    } else {
+        if (mprMakeDir(path, 0755, 1) < 0) {
+            app->error++;
+        } else {
+            trace("CREATE",  "Directory: %s", path);
+        }
+    }
+}
+
+
+static void usageError(Mpr *mpr)
 {
     cchar   *name;
 
@@ -381,7 +523,36 @@ static int usageError(Mpr *mpr)
     "    --version              # Output version information\n\n"
     "  Without IPaddress, %s will read the appweb.conf configuration file.\n\n",
         mprGetAppTitle(), name, name, name, name);
-    return MPR_ERR_BAD_STATE;
+
+    app->error++;
+}
+
+
+static void error(cchar *fmt, ...)
+{
+    va_list     args;
+    char        *msg;
+
+    va_start(args, fmt);
+    msg = mprAsprintfv(fmt, args);
+    mprError("%s", msg);
+    va_end(args);
+    app->error++;
+}
+
+
+static void trace(cchar *tag, cchar *fmt, ...)
+{
+    va_list     args;
+    char        *msg;
+
+    if (!app->quiet) {
+        va_start(args, fmt);
+        msg = mprAsprintfv(fmt, args);
+        tag = sfmt("[%s]", tag);
+        mprRawLog(0, "%12s %s\n", tag, msg);
+        va_end(args);
+    }
 }
 
 

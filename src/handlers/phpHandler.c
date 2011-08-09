@@ -468,6 +468,12 @@ static int finalizePhp(MprModule *mp)
     Http        *http;
     HttpStage   *stage;
 
+    if ((stage = httpLookupStage(MPR->httpService, "phpHandler")) == 0) {
+        return 0;
+    }
+    if (stage->stageData == 0) {
+        return 0;
+    }
     TSRMLS_FETCH();
 
     mprLog(4, "php: Finalize library before unloading");
@@ -475,9 +481,7 @@ static int finalizePhp(MprModule *mp)
     sapi_shutdown();
     tsrm_shutdown();
     http = MPR->httpService;
-    if ((stage = httpLookupStage(http, "phpHandler")) != 0) {
-        stage->stageData = 0;
-    }
+    stage->stageData = 0;
     return 0;
 }
 

@@ -380,6 +380,48 @@
 			remoteGlobalIDString = C9E4B72F13C7F4F3005345FA;
 			remoteInfo = mod_esp;
 		};
+		C9F7305613F0AA720090C643 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9761D9F0FD03F94009C78E1;
+			remoteInfo = libmpr;
+		};
+		C9F7305813F0AA720090C643 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9761DAD0FD03FBA009C78E1;
+			remoteInfo = libmprssl;
+		};
+		C9F7305A13F0AA720090C643 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9B12BC213D175C300470A96;
+			remoteInfo = libpcre;
+		};
+		C9F7305C13F0AA720090C643 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9817C49110D183800F241EF;
+			remoteInfo = libhttp;
+		};
+		C9F7305E13F0AA720090C643 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9761DC20FD03FD9009C78E1;
+			remoteInfo = libappweb;
+		};
+		C9F7306013F0AA720090C643 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9E4B72F13C7F4F3005345FA;
+			remoteInfo = mod_esp;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -1059,6 +1101,12 @@
 			buildRules = (
 			);
 			dependencies = (
+				C9F7305713F0AA720090C643 /* PBXTargetDependency */,
+				C9F7305913F0AA720090C643 /* PBXTargetDependency */,
+				C9F7305B13F0AA720090C643 /* PBXTargetDependency */,
+				C9F7305D13F0AA720090C643 /* PBXTargetDependency */,
+				C9F7305F13F0AA720090C643 /* PBXTargetDependency */,
+				C9F7306113F0AA720090C643 /* PBXTargetDependency */,
 			);
 			name = esp;
 			productName = http;
@@ -1603,6 +1651,36 @@
 			isa = PBXTargetDependency;
 			target = C9E4B72F13C7F4F3005345FA /* mod_esp */;
 			targetProxy = C9E4B74B13C7F55B005345FA /* PBXContainerItemProxy */;
+		};
+		C9F7305713F0AA720090C643 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9761D9F0FD03F94009C78E1 /* libmpr */;
+			targetProxy = C9F7305613F0AA720090C643 /* PBXContainerItemProxy */;
+		};
+		C9F7305913F0AA720090C643 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9761DAD0FD03FBA009C78E1 /* libmprssl */;
+			targetProxy = C9F7305813F0AA720090C643 /* PBXContainerItemProxy */;
+		};
+		C9F7305B13F0AA720090C643 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9B12BC213D175C300470A96 /* libpcre */;
+			targetProxy = C9F7305A13F0AA720090C643 /* PBXContainerItemProxy */;
+		};
+		C9F7305D13F0AA720090C643 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9817C49110D183800F241EF /* libhttp */;
+			targetProxy = C9F7305C13F0AA720090C643 /* PBXContainerItemProxy */;
+		};
+		C9F7305F13F0AA720090C643 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9761DC20FD03FD9009C78E1 /* libappweb */;
+			targetProxy = C9F7305E13F0AA720090C643 /* PBXContainerItemProxy */;
+		};
+		C9F7306113F0AA720090C643 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9E4B72F13C7F4F3005345FA /* mod_esp */;
+			targetProxy = C9F7306013F0AA720090C643 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 

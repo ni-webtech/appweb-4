@@ -690,10 +690,6 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         }
         return 1;
 
-    } else if (scasecmp(key, "EspCache") == 0) {
-        el->lifespan = ((MprTime) atoi(value)) * MPR_TICKS_PER_SEC;
-        return 1;
-
     } else if (scasecmp(key, "EspCompile") == 0) {
         el->compile = sclone(value);
         return 1;
@@ -754,6 +750,10 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
 
     } else if (scasecmp(key, "EspKeepSource") == 0) {
         el->keepSource = (scasecmp(value, "on") == 0 || scasecmp(value, "yes") == 0);
+        return 1;
+
+    } else if (scasecmp(key, "EspLifespan") == 0) {
+        el->lifespan = ((MprTime) atoi(value)) * MPR_TICKS_PER_SEC;
         return 1;
 
     } else if (scasecmp(key, "EspLink") == 0) {
