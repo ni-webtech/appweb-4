@@ -57,6 +57,10 @@ char *espExpandCommand(cchar *command, cchar *source, cchar *module)
                 /* Build architecture */
                 mprPutStringToBuf(buf, BLD_HOST_CPU);
                 cp += 6;
+            } else if (sncmp(cp, "${CC}", 5) == 0) {
+                /* Include directory (out/inc) */
+                mprPutStringToBuf(buf, BLD_CC);
+                cp += 4;
             } else if (sncmp(cp, "${DEBUG}", 8) == 0) {
                 mprPutStringToBuf(buf, ESP_DEBUG);
                 cp += 7;
