@@ -37,6 +37,7 @@ var web: Path = build.BLD_WEB_PREFIX
 var ssl: Path = cfg.join("ssl")
 var etc: Path = root.join("etc")
 var init: Path = etc.join("init.d")
+var cache: Path = spl.join("cache")
 
 bin.makeDir()
 inc.makeDir()
@@ -44,7 +45,6 @@ lib.makeDir()
 ver.makeDir()
 cfg.makeDir()
 cfg.join("config").makeDir()
-spl.join("cache").makeDir()
 web.makeDir()
 if (!bare) {
     man.join("man1").makeDir()
@@ -85,6 +85,8 @@ if (!bare) {
     })
     log.makeDir()
     log.join("error.log").write("")
+    cache.makeDir()
+    cache.join(".dummy").write("")
 
     copy("server.*", ssl, {from: "src/server/ssl"})
 
@@ -95,7 +97,7 @@ if (!bare) {
 
     copy("*", inc, {
         from: sinc,
-        exclude: /appwebMonitor.h|buildConfig.h|testAppweb.h/,
+        exclude: /appwebMonitor.h|testAppweb.h/,
     })
 
 } else {
@@ -154,7 +156,7 @@ if (!bare) {
     } else if (os == "LINUX") {
         init.makeDir()
         if (options.task == "Package") {
-            copy("package/LINUX/" + product + ".init", init.join(product), {permission: 0755, expand: true})
+            copy("package/LINUX/" + product + ".init", init.join(product), {permissions: 0755, expand: true})
         } else {
             if (App.uid == 0 && options.root != "") {
                 if (options.openwrt) {

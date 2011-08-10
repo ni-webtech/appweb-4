@@ -21,8 +21,8 @@
 
 HOME=`pwd`
 FMT=
-SITE=127.0.0.1
-PAGE=/index.html
+SITE=localhost
+PAGE=/index.esp
 
 HOSTNAME=`hostname`
 BLD_COMPANY="!!BLD_COMPANY!!"
@@ -48,8 +48,8 @@ BLD_WEB_PREFIX="!!ORIG_BLD_WEB_PREFIX!!"
 
 installbin=Y
 runDaemon=Y
-HTTP_PORT=7777
-SSL_PORT=4443
+HTTP_PORT=80
+SSL_PORT=443
 
 PATH=$PATH:/sbin:/usr/sbin
 
@@ -458,10 +458,6 @@ installFiles() {
         find "$BLD_BIN_PREFIX" -name '*.dll' -exec chmod 755 "{}" \;
         find "$BLD_BIN_PREFIX" -name '*.exe' -exec chmod 755 "{}" \;
     fi
-    #
-    #   TODO - Temp for Ejscript
-    #
-    chmod 777 "$BLD_WEB_PREFIX/test"
     echo
 }
 
