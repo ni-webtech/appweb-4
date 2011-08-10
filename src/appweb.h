@@ -364,6 +364,7 @@ typedef struct MaConfigState {
     HttpLoc     *loc;                   /**< Current location */
     HttpAuth    *auth;                  /**< Current auth object */
     MprFile     *file;                  /**< Config file handle */
+    char        *configDir;             /**< Directory containing config file */
     char        *filename;              /**< Config file name */
     int         lineNumber;             /**< Current line number */
     int         enabled;                /**< True if the current block is enabled */

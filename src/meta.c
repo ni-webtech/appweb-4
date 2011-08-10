@@ -241,12 +241,17 @@ void maSetMetaRoot(MaMeta *meta, cchar *path)
         return;
     }
 #endif
+    meta->serverRoot = mprGetAbsPath(path);
+    mprLog(MPR_CONFIG, "Set meta server root to: \"%s\"", meta->serverRoot);
+
+#if UNUSED
     if (chdir((char*) path) < 0) {
         mprError("Can't set server root to %s\n", path);
     } else {
         meta->serverRoot = mprGetAbsPath(path);
         mprLog(MPR_CONFIG, "Set meta server root to: \"%s\"", meta->serverRoot);
     }
+#endif
 }
 
 

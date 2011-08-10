@@ -3779,7 +3779,7 @@ HttpDir *httpLookupDir(HttpHost *host, cchar *pathArg)
         tmpPath = 0;
     }
     for (next = 0; (dir = mprGetNextItem(host->dirs, &next)) != 0; ) {
-        mprAssert(strlen(dir->path) == 0 || dir->path[strlen(dir->path) - 1] != '/');
+        mprAssert(slen(dir->path) == 0 || dir->path[slen(dir->path) - 1] != '/');
         if (dir->path != 0) {
             if (mprSamePath(dir->path, path)) {
                 return dir;
@@ -5097,6 +5097,8 @@ static void defineTokens(HttpLoc *loc)
     mprAddKey(loc->tokens, "PRODUCT", sclone(BLD_PRODUCT));
     mprAddKey(loc->tokens, "OS", sclone(BLD_OS));
     mprAddKey(loc->tokens, "VERSION", sclone(BLD_VERSION));
+    mprAddKey(loc->tokens, "LIBDIR", mprGetNormalizedPath(sfmt("%s/../%s", mprGetAppDir(), BLD_LIB_NAME))); 
+
     if (loc->host) {
         defineHostTokens(loc);
     }
@@ -5122,17 +5124,6 @@ void httpAddLocationToken(HttpLoc *loc, cchar *key, cchar *value)
 }
 
 
-#if UNUSED
-void httpAddLocationTokenPath(HttpLoc *loc, cchar *key, cchar *path)
-{
-    mprAssert(key);
-    mprAssert(path);
-
-    mprAddKey(loc->tokens, key, path);
-}
-#endif
-
-
 /*
     Make a path name. This replaces $references, converts to an absolute path name, cleans the path and maps delimiters.
  */
@@ -5152,57 +5143,6 @@ char *httpMakePath(HttpLoc *loc, cchar *file)
     }
     return result;
 }
-
-
-#if UNUSED
-/*
-    Expand ${token} references in a path or string.
-    Currently support DOCUMENT_ROOT, SERVER_ROOT and PRODUCT, OS and VERSION.
- */
-char *httpExpandPath(MprHashTable *keys, cchar *str)
-{
-    MprBuf      *buf;
-    cchar       *seps;
-    char        *src, *result, *cp, *tok;
-
-    if (str) {
-        buf = mprCreateBuf(0, 0);
-        seps = mprGetPathSeparators(str);
-        for (src = (char*) str; *src; ) {
-            if (*src == '$') {
-                ++src;
-                for (cp = src; *cp && !isspace((int) *cp) && (*cp != seps[0]); cp++) ;
-                tok = snclone(src, cp - src);
-                if ((value = mprLookupKey(keys, tok) != 0) {
-#if UNUSED
-                    if (hp->data == 0) {
-                        if (scmp(tok, "DOCUMENT_ROOT") == 0) {
-                            mprPutStringToBuf(buf, loc->host->documentRoot);
-                            src = cp;
-                            continue;
-                        } else if (scmp(tok, "SERVER_ROOT") == 0) {
-                            mprPutStringToBuf(buf, loc->host->serverRoot);
-                            src = cp;
-                            continue;
-                        }
-                    } else {
-#endif
-                        mprPutStringToBuf(buf, value);
-                        src = cp;
-                        continue;
-                    }
-                }
-            }
-            mprPutCharToBuf(buf, *src++);
-        }
-        mprAddNullToBuf(buf);
-        result = sclone(mprGetBufStart(buf));
-    } else {
-        result = MPR->emptyString;
-    }
-    return result;
-}
-#endif
 
 
 /*

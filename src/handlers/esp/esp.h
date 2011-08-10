@@ -47,9 +47,48 @@ extern "C" {
     #define ESP_MAX_ROUTE_MATCHES   256
 #endif
 
+/*
+    Default listening endpoint
+ */
+#define ESP_LISTEN  "4000"
+
+/*
+    Default compiler settings for ${DEBUG} and ${LIBS} tokens in EspCompile and EspLink
+ */
+#if BLD_DEBUG
+    #if WIN
+        #define ESP_DEBUG "-Zi -Od");
+    #else
+        #define ESP_DEBUG "-g"
+    #endif
+#else
+    #if WIN
+        #define ESP_DEBUG "-O"
+    #else
+        #define ESP_DEBUG "-O2"
+    #endif
+#endif
+#if WIN
+    #define ESP_CORE_LIBS "${LIBDIR}\\mod_esp${SHLIB} ${LIBDIR}\\libappweb.lib ${LIBDIR}\\libhttp.lib ${LIBDIR}\\libmpr.lib"
+#else
+    #define ESP_CORE_LIBS "${LIBDIR}/mod_esp${SHOBJ} -lappweb -lpcre -lhttp -lmpr -lpthread -lm"
+#endif
+#if BLD_FEATURE_SSL
+    #if WIN
+        #define ESP_SSL_LIBS " ${LIBDIR}\\libmprssl.lib"
+    #else
+        #define ESP_SSL_LIBS " -lmprssl"
+    #endif
+#endif
+#define ESP_LIBS ESP_CORE_LIBS ESP_SSL_LIBS
+
+#define CONTENT_MARKER  "${_ESP_CONTENT_MARKER_}"
+
 #define ESP_LIFESPAN            (86400 * MPR_TICKS_PER_SEC)       /* Default HTML cache lifespan */
 
 /********************************** Defines ***********************************/
+
+#define ESP_NAME "espHandler"
 
 #if BLD_WIN_LIKE
     #define ESP_EXPORT __declspec(dllexport) 
@@ -189,6 +228,8 @@ typedef struct EspReq {
 
 
 extern bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, int isView);
+extern char *espBuildScript(EspLoc *el, cchar *page, cchar *path, cchar *name, cchar *layout, char **err);
+extern char *espExpandCommand(cchar *command, cchar *source, cchar *module);
 
 //  MOB - move to pcre
 #define PCRE_GLOBAL     0x1
@@ -235,6 +276,10 @@ extern ssize espWriteBlock(HttpConn *conn, cchar *buf, ssize size);
 extern ssize espWriteString(HttpConn *conn, cchar *s);
 extern ssize espWriteSafeString(HttpConn *conn, cchar *s);
 extern ssize espWriteVar(HttpConn *conn, cchar *name);
+
+//  MOB - rename espCache
+extern void espCacheControl(EspLoc *el, cchar *actionKey, int lifesecs, cchar *uri);
+
 
 #ifdef __cplusplus
 } /* extern C */

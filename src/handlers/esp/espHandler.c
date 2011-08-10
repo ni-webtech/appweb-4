@@ -14,9 +14,6 @@
 #include    "pcre.h"
 
 /************************************* Local **********************************/
-
-#define ESP_NAME "espHandler"
-
 /*
     Singleton ESP control structure
  */
@@ -271,7 +268,7 @@ static int runAction(HttpConn *conn)
                 //  MOB - must complete all other running requests first
                 mprUnloadModule(mp);
             }
-            //  WARNING: this will allow GC
+            //  WARNING: GC yield here
             if (!espCompile(conn, route->controllerPath, req->module, req->cacheName, 0)) {
                 return 0;
             }
@@ -475,7 +472,7 @@ static EspLoc *allocEspLoc(HttpLoc *loc)
         return 0;
     }
 #endif
-    el->dir = (loc->alias) ? loc->alias->filename : loc->host->serverRoot;
+    el->dir = mprGetAbsPath((loc->alias) ? loc->alias->filename : loc->host->serverRoot);
     el->controllersDir = el->dir;
     el->databasesDir = el->dir;
     el->layoutsDir = el->dir;
@@ -663,7 +660,8 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         } else {
             httpAddHandler(loc, "espHandler", 0);
         }
-        el->dir = path = httpMakePath(loc, path);
+        path = httpMakePath(loc, path);
+        el->dir = mprGetAbsPath(path);
         if (httpLookupDir(host, path) == 0) {
             parentDir = mprGetFirstItem(host->dirs);
             dir = httpCreateDir(path, parentDir);

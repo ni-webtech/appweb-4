@@ -3,29 +3,6 @@
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
 
-    usage: %s [options] [commands]
-            --config configFile     # Use given config file instead 
-            --debugger              # Disable timeouts to make debugging easier
-            --ejs name:path         # Create an ejs application at the path
-            --home path             # Set the home working directory
-            --log logFile:level     # Log to file file at verbosity level
-            --threads maxThreads    # Set maximum worker threads
-            --version               # Output version information
-            -v                      # Same as --log stderr:2
-
-Usage: mvc [options] [commands] ...
-  Options:
-    --apply                      # Apply migrations
-    --database [sqlite | mysql]  # Sqlite only currently supported adapter
-    --full
-    --keep
-    --layout layoutPage
-    --listen port
-    --min
-    --overwrite
-    --quiet
-    --verbose
-
   Commands:
     mvc generate controller name [action [, action] ...]
         # generate a new controller with names
@@ -47,20 +24,32 @@ typedef struct App {
     Mpr         *mpr;
     MaAppweb    *appweb;
     MaMeta      *meta;
-    char        *documentRoot;
     char        *serverRoot;
     char        *configFile;
     char        *pathEnv;
+    char        *listen;
 
+    char        *currentDir;            /* Initial starting current directory */
     char        *libDir;                /* Appweb lib directory */
     char        *wwwDir;                /* Appweb esp-www default files directory */
-    char        *confDir;               /* Appweb etc config directory */
 
     char        *appName;               /* Application name */
     char        *appDir;                /* Application top level base directory */
     char        *appCacheDir;           /* Cache directory */
     char        *appControllersDir;     /* Controllers directory */
     char        *appViewsDir;           /* Views directory */
+    char        *appStaticDir;          /* Static directory */
+    EspLoc      *loc;                   /* Location block for app */
+
+    /*
+        GC retention
+     */
+    MprList     *files;                 /* List of files to process */
+    char        *command;               /* Compilation or link command */
+    char        *cacheName;             /* MD5 name of cached component */
+    cchar       *csource;               /* Name of "C" source for controller or view */
+    char        *module;                /* Compiled module name */
+    char        *source;
 
     int         overwrite;
     int         quiet;
@@ -71,6 +60,10 @@ static App      *app;
 static Esp      *esp;
 static Http     *http;
 static MaAppweb *appweb;
+
+#define ESP_CONTROLLER  0x1
+#define ESP_VIEW        0x2
+#define ESP_PAGE        0x4
 
 /***************************** Forward Declarations ***************************/
 
@@ -99,13 +92,13 @@ static void usageError();
 
 /*********************************** Code *************************************/
 
-MAIN(appweb, int argc, char **argv)
+MAIN(esp, int argc, char **argv)
 {
     Mpr     *mpr;
     cchar   *argp;
     int     argind, rc;
 
-    if ((mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD)) == NULL) {
+    if ((mpr = mprCreate(argc, argv, 0)) == NULL) {
         exit(1);
     }
     if ((app = mprAllocObj(App, manageApp)) == NULL) {
@@ -118,6 +111,7 @@ MAIN(appweb, int argc, char **argv)
     argv = mpr->argv;
     app->mpr = mpr;
     app->configFile = BLD_CONFIG_FILE;
+    app->listen = sclone(ESP_LISTEN);
 
     for (argind = 1; argind < argc; argind++) {
         argp = argv[argind];
@@ -129,6 +123,13 @@ MAIN(appweb, int argc, char **argv)
                 usageError();
             } else {
                 app->configFile = sclone(argv[++argind]);
+            }
+
+        } else if (scmp(argp, "--listen") == 0 || scmp(argp, "-l") == 0) {
+            if (argind >= argc) {
+                usageError();
+            } else {
+                app->listen = sclone(argv[++argind]);
             }
 
         } else if (scmp(argp, "--log") == 0 || scmp(argp, "-l") == 0) {
@@ -166,7 +167,6 @@ MAIN(appweb, int argc, char **argv)
         mprDestroy(MPR_EXIT_DEFAULT);
         return MPR_ERR_CANT_INITIALIZE;
     }
-    findConfigFile();
     initialize();
     if (!app->error) {
         process(argc - argind, &argv[argind]);
@@ -185,39 +185,62 @@ static void manageApp(App *app, int flags)
         mprMark(app->appweb);
         mprMark(app->meta);
         mprMark(app->serverRoot);
-        mprMark(app->documentRoot);
         mprMark(app->configFile);
         mprMark(app->pathEnv);
+        mprMark(app->listen);
+        mprMark(app->currentDir);
         mprMark(app->libDir);
         mprMark(app->wwwDir);
-        mprMark(app->confDir);
         mprMark(app->appDir);
         mprMark(app->appName);
         mprMark(app->appCacheDir);
         mprMark(app->appControllersDir);
         mprMark(app->appViewsDir);
+        mprMark(app->appStaticDir);
+        mprMark(app->command);
+        mprMark(app->cacheName);
+        mprMark(app->csource);
+        mprMark(app->module);
+        mprMark(app->source);
+        mprMark(app->files);
     }
 }
 
 
-static void getDirs()
+static void getAppDirs()
 {
+    HttpHost    *host;
+    HttpLoc     *loc;
+    char        *prefix;
+
+    app->appDir = app->currentDir;
+    app->appName = mprGetPathBase(app->appDir);
+
+    app->serverRoot = mprGetAbsPath(mprGetPathDir(app->configFile));
     app->libDir = mprJoinPath(mprGetPathParent(mprGetAppDir()), BLD_LIB_NAME);
     app->wwwDir = mprJoinPath(app->libDir, "esp-www");
-    app->confDir = mprGetPathDir(app->configFile);
-
-    app->appDir = mprGetCurrentPath();
-    app->appName = mprGetPathBase(app->appDir);
 
     //  MOB - these dir names must come from appweb.conf
     app->appCacheDir = mprJoinPath(app->appDir, "cache");
     app->appControllersDir = mprJoinPath(app->appDir, "controllers");
     app->appViewsDir = mprJoinPath(app->appDir, "views");
+    app->appStaticDir = mprJoinPath(app->appDir, "static");
 
 #if BLD_UNIX_LIKE
     app->pathEnv = sjoin("PATH=", getenv("PATH"), ":", mprGetAppDir(), NULL);
     putenv(app->pathEnv);
 #endif
+
+    //  MOB - must support non-default hosts
+    host = app->meta->defaultHost;
+    //  MOB - must support more complex prefixes
+    prefix = sfmt("/%s", app->appName);
+    if ((loc = httpLookupBestLocation(host, prefix)) == 0) {
+        error("Can't find EspAlias or Location block for %s", prefix);
+    }
+    if ((app->loc = httpGetLocationData(loc, ESP_NAME)) == 0) {
+        error("Can't find ESP data for Location block for %s", prefix);
+    }
 }
 
 
@@ -225,14 +248,16 @@ static void initialize()
 {
     HttpStage   *stage;
 
+    app->currentDir = mprGetCurrentPath();
     if ((app->appweb = maCreateAppweb()) == 0) {
         error("Can't create HTTP service for %s", mprGetAppName());
         return;
     }
     appweb = app->appweb;
     http = app->appweb->http;
+    findConfigFile();
 
-    if ((app->meta = maCreateMeta(appweb, "default", NULL, NULL, -1)) == 0) {
+    if ((app->meta = maCreateMeta(appweb, "default", app->serverRoot, NULL, -1)) == 0) {
         error("Can't create HTTP server for %s", mprGetAppName());
         return;
     }
@@ -245,7 +270,6 @@ static void initialize()
         return;
     }
     esp = stage->stageData;
-    getDirs();
 }
 
 
@@ -254,15 +278,20 @@ static void process(int argc, char **argv)
     cchar   *cmd;
 
     cmd = argv[0];
+    if (scmp(cmd, "generate") == 0) {
+        generate(argc - 1, &argv[1]);
+        return;
+    }
+    getAppDirs();
+    if (app->error) {
+        return;
+    }
 
     if (scmp(cmd, "clean") == 0) {
         clean(argc - 1, &argv[1]);
 
     } else if (scmp(cmd, "compile") == 0) {
         compile(argc - 1, &argv[1]);
-
-    } else if (scmp(cmd, "generate") == 0) {
-        generate(argc - 1, &argv[1]);
 
     } else {
         error("Unknown command %s", cmd);
@@ -285,16 +314,96 @@ static void clean(int argc, char **argv)
 }
 
 
-static void compileFile(cchar *path, bool isController)
+static int runCommand(cchar *command, cchar *csource, cchar *module)
 {
-    cchar   *cacheName, *module;
+    MprCmd      *cmd;
+    char        *err, *out;
 
-    if (isController) {
-        cacheName = mprGetMD5Hash(path, slen(path), "controller_");
-        module = mprGetNormalizedPath(sfmt("%s/%s%s", app->appCacheDir, cacheName, BLD_SHOBJ));
-    } else {
+    cmd = mprCreateCmd(0);
+    if ((app->command = espExpandCommand(command, csource, module)) == 0) {
+        error("Missing EspCompile directive for %s", csource);
+        return MPR_ERR_CANT_READ;
     }
-    // espCompile(conn, 
+    mprLog(4, "ESP command: %s\n", app->command);
+    if (app->loc->env) {
+        mprAddNullItem(app->loc->env);
+        mprSetCmdDefaultEnv(cmd, (cchar**) &app->loc->env->items[0]);
+    }
+    if (app->loc->searchPath) {
+        mprSetCmdSearchPath(cmd, app->loc->searchPath);
+    }
+    //  WARNING: GC will run here
+    mprLog(1, "Run: %s", app->command);
+	if (mprRunCmd(cmd, app->command, &out, &err, 0) != 0) {
+		if (err == 0 || *err == '\0') {
+			/* Windows puts errors to stdout Ugh! */
+			err = out;
+		}
+		if (app->loc->showErrors) {
+			error("Can't run command %s, error %s", app->command, err);
+		} else {
+			error("Can't run command %s", app->command);
+		}
+        return MPR_ERR_CANT_COMPLETE;
+    }
+    return 0;
+}
+
+
+static void compileFile(cchar *source, int kind)
+{
+    cchar   *script, *page, *layout;
+    char    *err;
+    ssize   len;
+
+    layout = 0;
+    app->cacheName = mprGetMD5Hash(source, slen(source), (kind == ESP_CONTROLLER) ? "controller_" : "view_");
+    app->module = mprGetNormalizedPath(sfmt("%s/%s%s", app->appCacheDir, app->cacheName, BLD_SHOBJ));
+
+    if (kind == ESP_CONTROLLER) {
+        app->csource = source;
+    }
+    if (kind & (ESP_PAGE | ESP_VIEW)) {
+        layout = mprJoinPath(mprJoinPath(app->serverRoot, app->loc->layoutsDir), "default.esp");
+        if ((page = mprReadPath(source)) == 0) {
+            error("Can't read %s", source);
+            return;
+        }
+        /* No yield here */
+        if ((script = espBuildScript(app->loc, page, source, app->cacheName, layout, &err)) == 0) {
+            error("Can't build %s, error %s", source, err);
+            return;
+        }
+        trace("BUILD", "%s", source);
+        len = slen(script);
+        app->csource = mprJoinPathExt(mprTrimPathExtension(app->module), ".c");
+        if (mprWritePath(app->csource, script, len, 0664) < 0) {
+            error("Can't write compiled script file %s", app->csource);
+            return;
+        }
+    }
+    /*
+        WARNING: GC yield here
+     */
+    trace("COMPILE", "%s", app->csource);
+    if (runCommand(app->loc->compile, app->csource, app->module) < 0) {
+        return;
+    }
+    if (app->loc->link) {
+        trace("LINK", "%s", app->module);
+        if (runCommand(app->loc->link, app->csource, app->module) < 0) {
+            return;
+        }
+#if !(BLD_DEBUG && MACOSX)
+        /*
+            MAC needs the object for debug information
+         */
+        mprDeletePath(mprJoinPathExt(mprTrimPathExtension(app->module), BLD_OBJ));
+#endif
+    }
+    if (!app->loc->keepSource && (kind & (ESP_VIEW | ESP_PAGE))) {
+        mprDeletePath(app->csource);
+    }
 }
 
 
@@ -313,7 +422,7 @@ static void compile(int argc, char **argv)
     MprList     *files;
     MprDirEntry *dp;
     char        *path, *kind;
-    int         next;
+    int         i, next;
 
     if (argc == 0) {
         kind = "*";
@@ -324,10 +433,35 @@ static void compile(int argc, char **argv)
         /*
             Build all items separately
          */
-        files = mprGetPathFiles(app->appControllersDir, 1);
+        app->files = files = mprGetPathFiles(app->appControllersDir, 1);
         for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
-            path = mprJoinPath(app->appControllersDir, dp->name);
-            compileFile(path, 1);
+            if (scmp(mprGetPathExtension(dp->name), "c") == 0) {
+                path = mprJoinPath(app->appControllersDir, dp->name);
+                compileFile(path, ESP_CONTROLLER);
+            }
+        }
+        app->files = files = mprGetPathFiles(app->appViewsDir, 1);
+        for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
+            path = mprJoinPath(app->appViewsDir, dp->name);
+            compileFile(path, ESP_VIEW);
+        }
+
+        //  MOB - Is the name right?
+        //  MOB - what about pattern matching?
+        app->files = files = mprFindFiles(app->appStaticDir, 0);
+        for (next = 0; (path = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
+            if (scmp(mprGetPathExtension(path), "esp") == 0) {
+                compileFile(path, ESP_PAGE);
+            }
+        }
+    } else {
+        for (i = 0; i < argc; i++) {
+            if (scmp(mprGetPathExtension(argv[i]), "esp") != 0) {
+                error("Command arguments must be files with a \".esp\" extension");
+                return;
+            }
+            path = mprJoinPath(app->appDir, argv[i]);
+            compileFile(path, ESP_PAGE);
         }
     }
 }
@@ -349,10 +483,11 @@ static void generate(int argc, char **argv)
     if (scmp(kind, "app") == 0) {
         path = argv[1];
         app->appName = mprGetPathBase(path);
-        app->appDir = mprJoinPath(app->confDir, path);
+        app->appDir = mprJoinPath(app->currentDir, path);
         app->appCacheDir = mprJoinPath(app->appDir, "cache");
         app->appControllersDir = mprJoinPath(app->appDir, "controllers");
         app->appViewsDir = mprJoinPath(app->appDir, "views");
+        app->appStaticDir = mprJoinPath(app->appDir, "static");
         generateAppDirs();
         generateAppFiles();
         generateAppConfigFile();
@@ -452,12 +587,16 @@ static void generateAppConfigFile()
 {
     char    *from, *to, *conf;
 
-    from = mprJoinPath(app->wwwDir, "app.conf");
+    if (0) {
+        from = mprJoinPath(app->wwwDir, "app.conf");
+    } else {
+        from = mprJoinPath(app->wwwDir, "appweb.conf");
+    }
     if ((conf = mprReadPath(from)) == 0) {
         error("Can't read %s", from);
         return;
     }
-    to = sfmt("%s/conf/%s.conf", app->confDir, mprGetPathBase(app->appName));
+    to = sfmt("%s/conf/%s.conf", app->serverRoot, mprGetPathBase(app->appName));
     if (mprPathExists(to, R_OK) && !app->overwrite) {
         trace("EXISTS",  "Config file: %s", to);
         return;
@@ -479,16 +618,19 @@ static void findConfigFile()
     if (app->configFile == 0) {
         app->configFile = mprJoinPathExt(BLD_PRODUCT, ".conf");
     }
-    if (mprPathExists(app->configFile, R_OK)) {
-        return;
-    }
-    if (!userPath) {
-        app->configFile = mprJoinPath(mprGetAppDir(), mprAsprintf("../%s/%s.conf", BLD_LIB_NAME, mprGetAppName()));
-        if (mprPathExists(app->configFile, R_OK)) {
+    if (!mprPathExists(app->configFile, R_OK)) {
+        if (userPath) {
+            error("Can't open config file %s", app->configFile);
             return;
         }
+        app->configFile = mprJoinPath(mprGetAppDir(), sfmt("../%s/%s.conf", BLD_LIB_NAME, BLD_PRODUCT));
+        if (!mprPathExists(app->configFile, R_OK)) {
+            error("Can't open config file %s", app->configFile);
+            return;
+        }
+        //  MOB -- should search up for config.
     }
-    error("Can't open config file %s", app->configFile);
+    app->serverRoot = mprGetPathDir(app->configFile);
 }
 
 
@@ -515,15 +657,23 @@ static void usageError(Mpr *mpr)
 
     name = mprGetAppName();
 
-    mprPrintfError("\n%s Usage:\n\n"
-    "  %s [options] [IPaddress][:port] [documentRoot]\n\n"
+    mprPrintfError("\nESP Usage:\n\n"
+    "  %s [options] [commands]\n\n"
     "  Options:\n"
     "    --config configFile    # Use named config file instead appweb.conf\n"
+    "    --listen [ip:]port     # Listen on specified address \n"
     "    --log logFile:level    # Log to file file at verbosity level\n"
-    "    --version              # Output version information\n\n"
-    "  Without IPaddress, %s will read the appweb.conf configuration file.\n\n",
-        mprGetAppTitle(), name, name, name, name);
-
+    "    --overwrite            # Overwrite existing files \n"
+    "    --quiet                # Don't emit trace \n"
+    "    --verbose              # Emit verbose trace \n"
+    "\n"
+    "  Commands:\n"
+    "    esp clean              # Clean cached files\n"
+    "    esp compile            # Compile all controllers, views and pages\n"
+    "    esp compile app        # Compile all into a single module\n"
+    "    esp compile path/*.esp # Compile a single web page\n"
+    "    esp run                # Run appweb and the ESP app\n"
+    "", name);
     app->error++;
 }
 

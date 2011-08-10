@@ -145,6 +145,7 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
 
     defaultHost = host = httpCreateHost(0);
     httpSetHostName(host, "default", -1);
+    httpSetHostServerRoot(host, meta->serverRoot);
     meta->defaultHost = defaultHost;
 
     top = 0;
@@ -158,6 +159,8 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
     state->lineNumber = 0;
 
     state->filename = (char*) configFile;
+    state->configDir = mprGetAbsPath(mprGetPathDir(state->filename));
+
     state->file = mprOpenFile(configFile, O_RDONLY | O_TEXT, 0444);
     if (state->file == 0) {
         mprError("Can't open %s for config directives", configFile);
@@ -615,7 +618,8 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
         } else if (scasecmp(key, "AuthGroupFile") == 0) {
 #if BLD_FEATURE_AUTH_FILE
             //  TODO - this belongs elsewhere
-            path = httpMakePath(loc, strim(value, "\"", MPR_TRIM_BOTH));
+            path = mprJoinPath(state->configDir, strim(value, "\"", MPR_TRIM_BOTH));
+            path = httpMakePath(loc, path);
             if (httpReadGroupFile(http, auth, path) < 0) {
                 mprError("Can't open AuthGroupFile %s", path);
                 return MPR_ERR_BAD_SYNTAX;
@@ -665,7 +669,8 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
         } else if (scasecmp(key, "AuthUserFile") == 0) {
 #if BLD_FEATURE_AUTH_FILE
             //  TODO - this belons elsewhere
-            path = httpMakePath(loc, strim(value, "\"", MPR_TRIM_BOTH));
+            path = mprJoinPath(state->configDir, strim(value, "\"", MPR_TRIM_BOTH));
+            path = httpMakePath(loc, path);
             if (httpReadUserFile(http, auth, path) < 0) {
                 mprError("Can't open AuthUserFile %s", path);
                 return MPR_ERR_BAD_SYNTAX;
@@ -807,7 +812,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
                     mprLog(4, "Already logging. Ignoring ErrorLog directive");
                 } else {
                     maStopLogging(meta);
-                    if (strncmp(path, "stdout", 6) != 0 && !strncmp(path, "stderr", 6) != 0) {
+                    if (strncmp(path, "stdout", 6) != 0 && strncmp(path, "stderr", 6) != 0) {
                         path = httpMakePath(loc, path);
                     }
                     if (maStartLogging(host, path) < 0) {

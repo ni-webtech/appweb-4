@@ -67,14 +67,17 @@ static int parseSsl(Http *http, cchar *key, char *value, MaConfigState *state)
     path = httpMakePath(loc, strim(value, "\"", MPR_TRIM_BOTH));
 
     if (scasecmp(key, "SSLCACertificatePath") == 0) {
+        path = mprJoinPath(host->serverRoot, path);
         mprSetSslCaPath(loc->ssl, path);
         return 1;
 
     } else if (scasecmp(key, "SSLCACertificateFile") == 0) {
+        path = mprJoinPath(host->serverRoot, path);
         mprSetSslCaFile(loc->ssl, path);
         return 1;
 
     } else if (scasecmp(key, "SSLCertificateFile") == 0) {
+        path = mprJoinPath(host->serverRoot, path);
         mprSetSslCertFile(loc->ssl, path);
         return 1;
 

@@ -13,9 +13,6 @@
 
 /************************************ Forwards ********************************/
 
-#define CONTENT_MARKER  "${_ESP_CONTENT_MARKER_}"
-
-static char *buildScript(HttpConn *conn, cchar *page, cchar *path, cchar *name, cchar *layout, char **err);
 static int getEspToken(EspParse *parse);
 
 /************************************* Code ***********************************/
@@ -25,7 +22,7 @@ static char *getOutDir(cchar *name)
 #if DEBUG_IDE
     return mprGetAppDir();
 #else
-    return mprGetNormalizedPath(mprAsprintf("%s/../%s", mprGetAppDir(), name)); 
+    return mprGetNormalizedPath(sfmt("%s/../%s", mprGetAppDir(), name)); 
 #endif
 }
 
@@ -36,20 +33,18 @@ static char *getOutDir(cchar *name)
     CC          Compiler (cc)
     DEBUG       Debug compilation options (-g, -Zi -Od)
     INC         Include directory out/inc
-    LIB         Library directory (out/lib, xcode/VS: out/bin)
+    LIBDIR      Library directory (out/lib, xcode/VS: out/bin)
     OBJ         Name of compiled source (out/lib/view-MD5.o)
     OUT         Output module (view_MD5.dylib)
     SHLIB       Shared library (.lib, .so)
     SHOBJ       Shared Object (.dll, .so)
     SRC         Source code for view or controller (already templated)
  */
-static char *expandCommand(HttpConn *conn, cchar *command, cchar *source, cchar *module)
+char *espExpandCommand(cchar *command, cchar *source, cchar *module)
 {
-    EspReq  *req;
     MprBuf  *buf;
     cchar   *cp, *out;
     
-    req = conn->data;
     if (command == 0) {
         return 0;
     }
@@ -63,19 +58,7 @@ static char *expandCommand(HttpConn *conn, cchar *command, cchar *source, cchar 
                 mprPutStringToBuf(buf, BLD_HOST_CPU);
                 cp += 6;
             } else if (sncmp(cp, "${DEBUG}", 8) == 0) {
-#if BLD_DEBUG
-    #if WIN
-                mprPutStringToBuf(buf, "-Zi -Od");
-    #else
-                mprPutStringToBuf(buf, "-g");
-    #endif
-#else
-    #if WIN
-                mprPutStringToBuf(buf, "-O");
-    #else
-                mprPutStringToBuf(buf, "-O2");
-    #endif
-#endif
+                mprPutStringToBuf(buf, ESP_DEBUG);
                 cp += 7;
             } else if (sncmp(cp, "${INC}", 6) == 0) {
                 /* Include directory (out/inc) */
@@ -105,6 +88,10 @@ static char *expandCommand(HttpConn *conn, cchar *command, cchar *source, cchar 
                 /* View (already parsed into C code) or controller source */
                 mprPutStringToBuf(buf, source);
                 cp += 5;
+            } else if (sncmp(cp, "${LIBS}", 7) == 0) {
+                /* Required libraries to link. These may have nested ${TOKENS} */
+                mprPutStringToBuf(buf, espExpandCommand(ESP_LIBS, source, module));
+                cp += 6;
             } else {
                 mprPutCharToBuf(buf, *cp);
             }
@@ -128,7 +115,7 @@ static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *mod
     el = req->el;
 
     cmd = mprCreateCmd(conn->dispatcher);
-    if ((req->commandLine = expandCommand(conn, command, csource, module)) == 0) {
+    if ((req->commandLine = espExpandCommand(command, csource, module)) == 0) {
         httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Missing EspCompile directive for %s", csource);
         return MPR_ERR_CANT_READ;
     }
@@ -185,7 +172,7 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
             Use layouts iff there is a controller provided on the route
          */
         layout = (req->route->controllerName) ? mprJoinPath(el->layoutsDir, "default.esp") : 0;
-        if ((script = buildScript(conn, page, source, cacheName, layout, &err)) == 0) {
+        if ((script = espBuildScript(el, page, source, cacheName, layout, &err)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't build %s, error %s", source, err);
             return 0;
         }
@@ -205,10 +192,16 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
         csource = source;
     }
     mprMakeDir(el->cacheDir, 0775, 1);
+    /*
+        WARNING: GC yield here
+     */
     if (runCommand(conn, el->compile, csource, module) < 0) {
         return 0;
     }
     if (el->link) {
+        /*
+            WARNING: GC yield here
+         */
         if (runCommand(conn, el->link, csource, module) < 0) {
             return 0;
         }
@@ -293,20 +286,15 @@ static char *joinLine(cchar *str, ssize *lenp)
         @@var               Substitue the value of a variable. Var can also be simple expressions (without spaces)
 
  */
-static char *buildScript(HttpConn *conn, cchar *page, cchar *path, cchar *cacheName, cchar *layout, char **err)
+char *espBuildScript(EspLoc *el, cchar *page, cchar *path, cchar *cacheName, cchar *layout, char **err)
 {
     EspParse    parse;
-    EspReq      *req;
-    EspLoc      *el;
     char        *control, *incBuf, *incText, *global, *token, *body, *where;
     char        *rest, *start, *end, *include, *line, *fmt, *layoutPage, *layoutBuf;
     ssize       len;
     int         tid;
 
     mprAssert(page);
-
-    req = conn->data;
-    el = req->el;
 
     body = start = end = global = "";
     *err = 0;
@@ -398,12 +386,12 @@ static char *buildScript(HttpConn *conn, cchar *page, cchar *path, cchar *cacheN
                     include = mprJoinPath(mprGetPathDir(path), token);
                 }
                 if ((incText = mprReadPath(include)) == 0) {
-                    *err = mprAsprintf("Can't read include file: %s", include);
+                    *err = sfmt("Can't read include file: %s", include);
                     return 0;
                 }
                 /* Recurse and process the include script */
                 incBuf = 0;
-                if ((incBuf = buildScript(conn, incText, include, NULL, NULL, err)) == 0) {
+                if ((incBuf = espBuildScript(el, incText, include, NULL, NULL, err)) == 0) {
                     return 0;
                 }
                 body = sjoin(body, incBuf, NULL);
@@ -420,13 +408,13 @@ static char *buildScript(HttpConn *conn, cchar *page, cchar *path, cchar *cacheN
                         layout = mprJoinPath(mprGetPathDir(path), token);
                     }
                     if (!mprPathExists(layout, F_OK)) {
-                        *err = mprAsprintf("Can't access layout page %s", layout);
+                        *err = sfmt("Can't access layout page %s", layout);
                         return 0;
                     }
                 }
 
             } else {
-                *err = mprAsprintf("Unknown control %s at line %d", control, parse.lineNumber);
+                *err = sfmt("Unknown control %s at line %d", control, parse.lineNumber);
                 return 0;                
             }
             break;
@@ -443,11 +431,11 @@ static char *buildScript(HttpConn *conn, cchar *page, cchar *path, cchar *cacheN
          */
         if (layout) {
             if ((layoutPage = mprReadPath(layout)) == 0) {
-                *err = mprAsprintf("Can't read layout page: %s", layout);
+                *err = sfmt("Can't read layout page: %s", layout);
                 return 0;
             }
             layoutBuf = 0;
-            if ((layoutBuf = buildScript(conn, layoutPage, layout, NULL, NULL, err)) == 0) {
+            if ((layoutBuf = espBuildScript(el, layoutPage, layout, NULL, NULL, err)) == 0) {
                 return 0;
             }
             body = sreplace(layoutBuf, CONTENT_MARKER, body);
@@ -458,7 +446,6 @@ static char *buildScript(HttpConn *conn, cchar *page, cchar *path, cchar *cacheN
         if (end && end[slen(end) - 1] != '\n') {
             end = sjoin(end, "\n", 0);
         }
-        
         mprAssert(slen(path) > slen(el->dir));
         mprAssert(sncmp(path, el->dir, slen(el->dir)) == 0);
         path = &path[slen(el->dir) + 1];
