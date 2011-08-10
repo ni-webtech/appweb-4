@@ -124,12 +124,12 @@ if (options.task != "Remove") {
     /*
         Patch appweb.conf
      */
-    Cmd.sh("BLD_HTTP_PORT=" + build.BLD_HTTP_PORT + " BLD_SSL_PORT=" + build.BLD_SSL_PORT + " " +
+    Cmd.sh("BLD_HTTP_PORT=" + build.BLD_HTTP_PORT + " BLD_SSL_PORT=" + build.BLD_SSL_PORT + " BLD_SPL_PREFIX=" + build.BLD_SPL_PREFIX + " " +
         "patchAppwebConf \"" + cfg.join("appweb.conf") + "\"")
 }
 
 if (build.BLD_FEATURE_EJSCRIPT == 1) {
-    copy("ejs*", bin, {from: sbin, permissions: 0755, strip: true})
+    // copy("ejs*", bin, {from: sbin, permissions: 0755, strip: true})
     copy("ejs*.mod", lib, {from: slib})
 }
 
@@ -156,8 +156,6 @@ if (!bare) {
                     /*
                      	Daemon start / stop scripts
                      */
-                    // copy("appweb.init", etc.join("rc.d", product), {from: "package/LINUX", permissions: 0755, expand: true})
-print("HERE")
                     copy("appweb.init", init.join(product), {from: "package/LINUX", permissions: 0755, expand: true, trace: true})
 
                     for each (i in [2, 3, 4, 5]) {
