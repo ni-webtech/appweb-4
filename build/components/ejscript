@@ -92,5 +92,5 @@ defineComponent() {
     fi
     configureComponent --libs "$libs" --iflags "$iflags" --libpaths "$libdir" --withlibs "$withlibs" \
         $builtin $present --dependencies "$deps" --optional-dependencies "$optional" --imports "$imports" \
-        --path "$libdir" ejscript
+        --path "$ejslib" ejscript
 }

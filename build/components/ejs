@@ -17,11 +17,13 @@ defineComponent() {
             fi
             search="${search}:../ejs-master-${type}/out/bin"
         fi
+        path=`probe --exe --name ejs --search "$search" ejs`
+        if [ "$path" = "" ] ; then
+            warnComponent ejs
+            return
+        fi
+    else
+        path=`canonPath ${BLD_OUT_DIR}/bin/ejs`
     fi
-    path=`probe --exe --name ejs --search "$search" ejs`
-    if [ "$path" = "" ] ; then
-        warnComponent ejs
-        return
-	fi
-    configureComponent --path "$path" ejs
+    configureComponent $builtin --path "$path" ejs
 }
