@@ -46,7 +46,7 @@ fi
 if [ "$BLD_FEATURE_SSL" = 1 ] ; then
     cpy src/server/ssl/server.* "${ROOT_DIR}"
 fi
-if [ "$BLD_FEATURE_EJS" = 1 ] ; then
+if [ "$BLD_FEATURE_EJSCRIPT" = 1 ] ; then
     # MOB - cleanup - not using ajs anymore
 	cpy -d ${BLD_LIB_DIR} "ajs.mod" "${ROOT_DIR}"
     if [ "$BLD_CROSS" = 0 ] ; then

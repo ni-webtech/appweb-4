@@ -5,7 +5,7 @@
 const HTTP = (global.tsession && tsession["http"]) || ":4100"
 const TESTFILE = "upload-" + hashcode(self) + ".tdat"
 
-if (!test || test.config["ejs"] == 1) {
+if (!test || test.config["ejscript"] == 1) {
 
     let http: Http = new Http
 
@@ -37,7 +37,7 @@ if (!test || test.config["ejs"] == 1) {
 
         let uploaded = Path("../web/tmp").join(Path(TESTFILE).basename)
         assert(uploaded.size == size)
-        sh("diff " + uploaded + " " + TESTFILE)
+        Cmd.sh("diff " + uploaded + " " + TESTFILE)
     }
     Path(TESTFILE).remove
 

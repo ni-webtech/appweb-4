@@ -10,11 +10,11 @@ if (test.depth >= 4) {
 
     testCmd(command)
     if (test.multithread) {
-        sh(command + "--threads " + 2)
+        Cmd.sh(command + "--threads " + 2)
     }
     if (test.multithread) {
         for each (count in [2, 4, 8, 16]) {
-            sh(command + "--threads " + count)
+            Cmd.sh(command + "--threads " + count)
         }
     }
 } else {

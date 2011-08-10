@@ -5,7 +5,7 @@
 const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
-if (!test || test.config["ejs"] == 1) {
+if (!test || test.config["ejscript"] == 1) {
     /* Tests */
 
     function basic() {

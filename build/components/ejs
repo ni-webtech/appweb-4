@@ -1,97 +1,27 @@
 #
-#   Ejs
+#   ejs shell
 #
 defineComponent() {
-    local deps libs optional path libdir builtin imports incdir iflags present SHOBJ type
+    local file path builtin
 
     path="${1:-.}"
-    eval SHOBJ=\$BLD_${kind}_SHOBJ
     builtin=`[ "$path" = "." -a -f src/ejs.h ] && echo --builtin`
-    eval pcre=\$CFG_${kind}_PCRE
-
-    deps="mpr http"
-    optional="ssl"
-    libs="ejs"
-    if [ "$pcre" = 1 ] ; then
-        withlibs="pcre"
-        libs="$libs pcre"
-    fi
-
-    if [ "$BLD_FEATURE_EJS_ALL_IN_ONE" = 1 ] ; then
-        if isdefined SQLITE ; then
-            optional="$optional sqlite"
-        fi
-    fi
-
     if [ "$builtin" = "" ] ; then
-        search="$path/out/lib:$path/out/inc:$path"
+        search="$path/out/bin"
         if [ "${path}" = "." ] ; then
-            search="${search}:../ejs/out/lib:../ejs/out/inc:../ejs/out/bin"
+            search="${search}:../ejs/out/bin"
             if [ "$BLD_DEBUG" = 1 ] ; then
                 type=standard
             else
                 type=release
             fi
-            search="${search}:../ejs-master-${type}/out/lib:../ejs-master-${type}/out/bin"
-            search="${search}:../ejs-master-${type}/out/inc"
+            search="${search}:../ejs-master-${type}/out/bin"
         fi
-
-        libdir=`probe --name libejs --dir --search "$search" "libejs" `
-        if [ "$libdir" = "" -a "$path" != "." ] ; then
-            warnComponent ejs "Can't locate libejs"
-            return
-        fi
-        for lib in `echo $libdir/libejs* $libdir/libmpr* $libdir/libhttp* $libdir/libpcre* $libdir/ejs*${SHOBJ}` ; do
-            if [ ! -f "$lib" ] ; then
-                warnComponent ejs "Ejs is not correctly built. Missing $lib"
-                echo "Can't use ejs. Ejs is not correctly built. Missing $lib"
-                return
-            fi
-            libraries="$lib $libraries"
-        done
-        if [ "$BLD_FEATURE_EJS_ALL_IN_ONE" = 1 ] ; then
-            if isdefined SQLITE ; then
-                libraries="$libraries `echo $libdir/libsqlite3*`"
-            fi
-        fi
-        ejsbin=`probe --exe --name ejs --search "$search" ejs`
-
-        if [ "$libdir" != "" ] ; then
-            imports="$libraries"
-            modules=`echo $libdir/*.mod`
-            imports="$imports $modules"
-            http=`probe --exe --name http --search "$search" http`
-            if [ "$http" != "" ] ; then
-                imports="$imports $http"
-            fi
-            makerom=`probe --exe --name makerom --search "$search" makerom`
-            if [ "$makerom" != "" ] ; then
-                imports="$imports $makerom"
-            fi
-            ejspage=`probe --exe --name ejspage --search "$search" ejspage`
-            if [ "$ejspage" != "" ] ; then
-                imports="$imports $ejspage"
-            fi
-            libs="$libs ejs.web"
-            if [ "${ejsbin}" != "" ] ; then
-                imports="$imports $ejsbin"
-            fi
-        else
-            optional=
-            libs=
-            withlibs=
-            deps=
-            present="--present 0"
-        fi
-    else
-        ejsbin=`canonPath ${BLD_OUT_DIR}/bin/ejs`
     fi
-    incdir=`probe --name ejs.h --dir --search "$search" "ejs.h" `
-    if [ "$incdir" != "" ] ; then
-        headers="`echo $incdir/ejs*.h $incdir/customize.h`"
-        imports="$imports $headers"
-    fi
-    configureComponent --libs "$libs" --iflags "$iflags" --libpaths "$libdir" --withlibs "$withlibs" \
-        $builtin $present --dependencies "$deps" --optional-dependencies "$optional" --imports "$imports" \
-        --path "$ejsbin" ejs
+    path=`probe --exe --name ejs --search "$search" ejs`
+    if [ "$path" = "" ] ; then
+        warnComponent ejs
+        return
+	fi
+    configureComponent --path "$path" ejs
 }

@@ -29,7 +29,7 @@ manageFeatures()
         echo
         exit 255
     fi
-    if [ "$BLD_FEATURE_EJS" = 1 ] ; then
+    if [ "$BLD_FEATURE_EJSCRIPT" = 1 ] ; then
         if [ "$BLD_FEATURE_FLOAT" != 1 ] ; then
             echo " "
             echo "Floating point support is required for Ejscript."
@@ -111,7 +111,7 @@ Additional Appweb Features:
   --sslPort=PORT           Set the default SSL port to use for the product.
   --webDir=PATH            Set the directory for web documents (DocumentRoot).
 
-Optional Components: cgi, dir, ejs, esp, matrixssl, openssl, php, sqlite
+Optional Components: cgi, dir, ejscript, esp, matrixssl, openssl, php, sqlite
 
   --with-NAME=[DIR]        Support the NAME component. DIR is the base 
                            directory to find the component.  The 

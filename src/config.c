@@ -1478,7 +1478,7 @@ static bool conditionalDefinition(char *key)
         return 1;
 
     } else if (scasecmp(key, "EJS_MODULE") == 0) {
-        return BLD_FEATURE_EJS;
+        return BLD_FEATURE_EJSCRIPT;
 
     } else if (scasecmp(key, "ESP_MODULE") == 0) {
         return BLD_FEATURE_ESP;

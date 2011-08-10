@@ -1871,7 +1871,8 @@ emitComponents() {
             echo -e "${t}BLD_FEATURE_${p}=1" 
         fi
 
-        set | grep "^CFG_${kind}_${p}" | egrep -v "_EMITTER|_WITH=|_WITH_|_MANDATORY=|_PRESENT=" | while read v
+        set | egrep "^CFG_${kind}_${p}=|^CFG_${kind}_${p}_" | \
+            egrep -v "_EMITTER|_WITH=|_WITH_|_MANDATORY=|_PRESENT=" | while read v
         do
             [ "$v" = "CFG_${kind}_${p}=1" ] && continue
             v=${v%=*}

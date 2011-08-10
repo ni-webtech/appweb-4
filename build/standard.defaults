@@ -44,6 +44,7 @@ with --os=linux ranlib
 with --os=macosx ranlib
 with --os=win ld mt rc
 with --os=wince ld
+with --optional ejs
 
 with --build --optional doxygen
 with --os=win --build --optional pkg
@@ -53,7 +54,7 @@ with http
 with --host --optional openssl ssl
 with --host --optional php
 
-with --optional ejs
+with --optional ejscript
 with --optional pcre
 with --optional dir
 with --optional cgi

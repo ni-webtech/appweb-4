@@ -11,7 +11,7 @@ http.get(HTTP + "/test.xml")
 assert(http.readXml().customer.name == "Joe Green")
 */
 
-if (!test || test.config["ejs"] == 1) {
+if (!test || test.config["ejscript"] == 1) {
     //  Test http.read() into a byte array
     http.get(HTTP + "/big.ejs")
     buf = new ByteArray

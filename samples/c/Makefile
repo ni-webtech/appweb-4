@@ -7,21 +7,13 @@
 include 		.makedep
 
 PRE_DIRS		+= simpleServer 
+PRE_DIRS 		+= simpleClient 
+PRE_DIRS 		+= simpleHandler
 
-ifeq ($(BLD_FEATURE_HTTP_CLIENT),1)
-	PRE_DIRS 	+= simpleClient 
-endif
+# 	MOB - need simpleEsp
 
-ifeq ($(BLD_STATIC),0)
-	PRE_DIRS 	+= simpleHandler
-endif
-
-ifeq ($(BLD_FEATURE_EJS),1)
+ifeq ($(BLD_FEATURE_EJSCRIPT),1)
 	PRE_DIRS 	+= simpleEjs
-endif
-
-ifeq ($(BLD_FEATURE_EGI),1)
-	PRE_DIRS 	+= simpleEgi
 endif
 
 #

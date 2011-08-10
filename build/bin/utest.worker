@@ -4,6 +4,8 @@
 
 require ejs.unix
 
+const PIDFILE = ".pidfile"
+
 enumerable public class Test {
     public var bin: Path
     public var config: Object
@@ -60,7 +62,7 @@ function assert(cond: Boolean, message: String = null): Void {
 
 /* 
     Redefine the Global.assert function 
-*/
+ */
 Object.defineProperty(global, "assert", { writable: true, value: assert})
 
 
@@ -70,63 +72,10 @@ public function cleanDir(path) {
 }
 
 
-/*
-    Used to start support programs. This does capture output.
- */
-public function sh(args): String {
-    // App.log.activity("Run", "Run: " + args)
-    // return System.run(("/bin/sh -c \"" + args.replace(/\\/g, "\\\\") + "\"").trim('\n'))
-    return Cmd.sh(args)
-}
-
-
-/*
-    Test a command
-    MOB - what does this function really do?
- */
-public function testCmdNoCapture(args): Boolean {
-    App.log.activity("Test", "Run test: " + args)
-    try {
-        args = args.toString().toJSON().trim('"')
-        System.runx(("/bin/sh -c \"" + args + "\"").trim('\n'))
-        assert(true)
-        return true
-    } catch (e) {
-        print("testCmdNoCapture: CATCH " + e)
-        assert(false)
-        return false
-    }
-}
-
-
-// MOB - what does this function really do? - why not just use sh?
-
-public function testCmd(args): Boolean {
-    App.log.debug(4, "Run test: " + args)
-    try {
-        args = args.toString().toJSON().trim('"')
-        System.run(("/bin/sh -c \"" + args + "\"").trim('\n'))
-        assert(true)
-        return true
-    } catch (e) {
-        print("testCmd: CATCH " + e)
-        assert(false)
-        return false
-    }
-}
-
-
-public function locate(program): String {
-    return test.bin.join(program).portable.toString()
-}
-
-
 public function share(key: String, value: String) {
     postMessage({ key: key, value: value })
 }
 
-
-const PIDFILE = ".pidfile"
 
 public function stopService() {
     if (Path(PIDFILE).exists) {
@@ -138,17 +87,21 @@ public function stopService() {
 }
 
 
-public function startService(cmd: String, port: Number): Void {
+public function startService(cmdline: String, options = {}): Void {
     stopService()
     if (!App.getenv("NOSERVER")) {
-        let pid = System.daemon(App.exePath + " " + cmd)
+        let cmd = new Cmd
+        blend(options, {detach: true})
+        cmd.start(cmdline, options)
+        cmd.finalize()
+        let pid = cmd.pid
         Path(PIDFILE).write(pid)
-
-        port ||= App.config.test.http_port
+        let port = options.port || App.config.test.http_port
         let url = ":" + port + "/web/ready.ready"
         for (i in 10) {
             http = new Http
-            try { http.get(url); 
+            try { 
+                http.get(url)
                 /* Expect to get a not-found response */
                 if (http.status == 404 || http.status == 200) {
                     break
@@ -164,9 +117,10 @@ public function startService(cmd: String, port: Number): Void {
     }
 }
 
-public function httpService(cmd: String, port: Number = 80): Void {
+
+public function httpService(cmd: String, options = {}): Void {
     if (test.phase == "init") {
-        startService(cmd)
+        startService("ejs " + cmd, options)
     } else {
         stopService()
     }

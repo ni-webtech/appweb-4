@@ -17,7 +17,7 @@ POST_DIRS		+= esp
 ifeq	($(BLD_FEATURE_CGI),1)
 	OBJECTS		+= $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ)
 endif
-ifeq	($(BLD_FEATURE_EJS),1)
+ifeq	($(BLD_FEATURE_EJSCRIPT),1)
 	OBJECTS 	+= $(BLD_OBJ_DIR)/ejsHandler$(BLD_OBJ)
 endif
 ifeq	($(BLD_FEATURE_PHP),1)
@@ -30,7 +30,7 @@ endif
 ifeq	($(BLD_FEATURE_CGI),1)
 	MODULES		+= $(BLD_LIB_DIR)/$(CGI)$(BLD_SHOBJ)
 endif
-ifeq	($(BLD_FEATURE_EJS),1)
+ifeq	($(BLD_FEATURE_EJSCRIPT),1)
 	MODULES		+= $(BLD_LIB_DIR)/$(EJS)$(BLD_SHOBJ)
 endif
 ifeq	($(BLD_FEATURE_PHP),1)

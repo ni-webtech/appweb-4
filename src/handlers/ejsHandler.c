@@ -7,7 +7,7 @@
 
 #include    "appweb.h"
 
-#if BLD_FEATURE_EJS
+#if BLD_FEATURE_EJSCRIPT
     #include    "ejs.h"
 
 /************************************* Data ***********************************/
@@ -169,14 +169,14 @@ int maEjsHandlerInit(Http *http, MprModule *module)
     }
     return 0;
 }
-#else /* BLD_FEATURE_EJS */
+#else /* BLD_FEATURE_EJSCRIPT */
 
 int maEjsHandlerInit(Http *http, MprModule *module)
 {
     mprNop(0);
     return 0;
 }
-#endif /* BLD_FEATURE_EJS */
+#endif /* BLD_FEATURE_EJSCRIPT */
 
 /*
     @copy   default

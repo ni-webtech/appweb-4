@@ -59,7 +59,7 @@ if (test.depth > 1) {
     run("--user 'joshua:pass1' /basic/basic.html")
     run("--user 'joshua' --password 'pass1' /basic/basic.html")
 
-    if (!test || test.config["ejs"] == 1) {
+    if (!test || test.config["ejscript"] == 1) {
         //  Form data
         data = run("--form 'name=John+Smith&address=300+Park+Avenue' /form.ejs")
         assert(data.contains('"address": "300 Park Avenue"'))
@@ -94,7 +94,7 @@ if (test.depth > 1) {
     assert(data.contains('content-type'))
 
     //  Upload
-    if (!test || test.config["ejs"] == 1) {
+    if (!test || test.config["ejscript"] == 1) {
         let files = Path(".").files().join(" ")
         data = run("--upload " + files + " /upload.ejs")
         assert(data.contains('"clientFilename": "http.tst"'))

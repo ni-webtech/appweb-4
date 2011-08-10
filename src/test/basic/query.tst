@@ -5,7 +5,7 @@
 const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
-if (!test || test.config["ejs"] == 1) {
+if (!test || test.config["ejscript"] == 1) {
     http.get(HTTP + "/form.ejs?a&b&c")
     assert(http.status == 200)
     assert(http.response.contains('"a": ""'))

@@ -13,40 +13,6 @@ const HTTP       = "http://" + LOCALHOST + ":" + PORT
 const HTTPS      = "https://" + LOCALHOST + ":" + SSL_PORT
 const PIDFILE    = ".pidfile"
 
-function start(cmd: String): Void {
-    stop()
-    if (!App.getenv("NOSERVER")) {
-        let pid = System.daemon(cmd)
-        Path(PIDFILE).write(pid)
-    }
-
-    let url = ":" + PORT + "/web/ready.ready"
-    for (i in 10) {
-        http = new Http
-        try { 
-            http.get(url); 
-            /* Expect to get a not-found response */
-            if (http.status == 404 || http.status == 200) {
-                break
-            }
-        } catch (e) { }
-        App.sleep(100)
-        http.close()
-    }
-    if (http.status != 404 && http.status != 200) {
-        throw "Can't start web server"
-    }
-    http.close()
-}
-
-function stop() {
-    if (Path(PIDFILE).exists) {
-        pid = Path(PIDFILE).readString()
-        Path(PIDFILE).remove()
-        try { kill(pid); } catch (e) { }
-    }           
-}
-
 let cmd = Cmd.locate("appweb").portable + " --log trace.txt:4 --name forAppwebTest --config appweb.conf"
 
 if (test.phase == "init") {
@@ -59,7 +25,7 @@ if (test.phase == "init") {
             rm(f)
         }
     }
-    start(cmd)
+    startService(cmd, {port: PORT})
 } else {
     stopService()
     for each (f in find(".", "*.tdat", true)) {
