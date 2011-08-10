@@ -61,13 +61,12 @@
                 <li>Incase you don't have the latest copy of Appweb
                 (Version: 
                 you can download a binary distribution from:
-            <a href="http://appwebserver.org/downloads/appweb/">http://appwebserver.org/downloads/appweb/</a></li>
+            <a href="http://appwebserver.org/downloads/appweb/">http://appwebserver.org/downloads/appweb/</a>.</li>
               
             <li>You can always download the source code from:
-            <a href="http://appwebserver.org/downloads/appweb/source.ejs">http://appwebserver.org/downloads/appweb/source.ejs</a>
+            <a href="http://appwebserver.org/downloads/appweb/source.ejs">http://appwebserver.org/downloads/appweb/source.ejs</a>.</li>
             <li>Or you can go straight to the public source code repository at:
-            <a href="https://github.com/embedthis/appweb-4">https://github.com/embedthis/appweb-4</a>
-            </li>
+            <a href="https://github.com/embedthis/appweb-4">https://github.com/embedthis/appweb-4</a>.</li>
 
             <li>You may wish to read the latest <a href="http://appwebserver.org/products/appweb/doc/product/releaseNotes.html">Release Notes</a>,  <a href="http://appwebserver.org/products/appweb/doc/product/changeLog.html">Change Log</a>,
                 <a href="http://appwebserver.org/products/appweb/doc/product/install/overview.html">Installation Instructions</a> or 
@@ -80,8 +79,7 @@
             Don't forget to check out the samples included with the product documentation. They will guide your use.
             Our aim is to fix bugs as quickly as possible and we are always looking for ways to improve the product 
             and our service &mdash; so please let us know, by emailing 
-            <a href="mailto:dev@embdthis.com">dev@embedthis.com</a>. 
-            </li>
+            <a href="mailto:dev@embdthis.com">dev@embedthis.com</a>.</li>
 
             <li>For details about our commercial support offerings, see the 
             <a href="http://embedthis.com/support/">Embedthis Support Center</a>.
@@ -90,7 +88,7 @@
             If you have issues, fixes, suggestions or comments, please email us at: support@embedthis.com
             </ul>
 
-            <p>Thanks, Embedthis Team</p>
+            <p>Thanks, Embedthis Team.</p>
         </div>
     </div>
 
