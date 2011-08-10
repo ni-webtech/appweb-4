@@ -166,6 +166,7 @@ struct HttpUri;
 #define HTTP_CODE_CONFLICT                  409
 #define HTTP_CODE_GONE                      410
 #define HTTP_CODE_LENGTH_REQUIRED           411
+#define HTTP_CODE_PRECOND_FAILED            412
 #define HTTP_CODE_REQUEST_TOO_LARGE         413
 #define HTTP_CODE_REQUEST_URL_TOO_LARGE     414
 #define HTTP_CODE_UNSUPPORTED_MEDIA_TYPE    415

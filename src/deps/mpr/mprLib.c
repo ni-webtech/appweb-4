@@ -10139,6 +10139,7 @@ ssize mprWriteFileString(MprFile *file, cchar *str)
 }
 
 
+//  MOB - rethink name
 ssize mprWriteFileFormat(MprFile *file, cchar *fmt, ...)
 {
     va_list     ap;
@@ -14328,6 +14329,9 @@ char *mprGetPathBase(cchar *path)
     MprFileSystem   *fs;
     char            *cp;
 
+    if (path == 0) {
+        return sclone("");
+    }
     fs = mprLookupFileSystem(path);
     cp = (char*) lastSep(fs, path);
     if (cp == 0) {

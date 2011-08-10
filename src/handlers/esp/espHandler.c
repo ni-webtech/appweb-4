@@ -156,7 +156,6 @@ static bool fetchCachedResponse(HttpConn *conn)
 {
     EspReq  *req;
     char    *content, *extraUri, *key;
-    int     status;
 
     req = conn->data;
     if (req->action && req->action->lifespan) {
@@ -167,8 +166,10 @@ static bool fetchCachedResponse(HttpConn *conn)
         key = makeCacheKey(conn, req->actionKey, extraUri);
         if ((content = mprReadCache(esp->cache, key, 0)) != 0) {
 #if 0
+            if (!extraUri) {
     struct tm tm;
     MprTime when;
+    int     status;
             /*
                 Observe headers
                 If-None-Match: "ec18d-54-4d706a63"
