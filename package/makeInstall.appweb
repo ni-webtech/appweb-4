@@ -29,6 +29,8 @@ configureProduct() {
 		rm -fr "/var/spool/${BLD_PRODUCT}"
 		rm -f "${BLD_LIB_PREFIX}/libcrypto"*
 		rm -f "${BLD_LIB_PREFIX}/libssl"*
+		rm -f "${BLD_LIB_PREFIX}/*.mod"
+		rm -f "${BLD_LIB_PREFIX}/*.so"
 		rm -f "${BLD_LOG_PREFIX}"/access.log*
 		rm -f "${BLD_LOG_PREFIX}"/error.log*
 		rm -rf "${BLD_SPL_PREFIX}"

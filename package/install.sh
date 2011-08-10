@@ -10,10 +10,7 @@
 #
 #   The configFile is of the format:
 #       FMT=[rpm|deb|tar]               # Package format to use
-#       srcDir=sourcePath               # Where to install the doc
-#       devDir=documentationPath        # Where to install the doc
 #       installbin=[YN]                 # Install binary package
-#       installdev=[YN]                 # Install dev headers package
 #       runDaemon=[YN]                  # Run the program as a daemon
 #       httpPort=portNumber             # Http port to listen on
 #       sslPort=portNumber              # SSL port to listen on
@@ -45,11 +42,11 @@ BLD_INC_PREFIX="!!ORIG_BLD_INC_PREFIX!!"
 BLD_LIB_PREFIX="!!ORIG_BLD_LIB_PREFIX!!"
 BLD_LOG_PREFIX="!!ORIG_BLD_LOG_PREFIX!!"
 BLD_MAN_PREFIX="!!ORIG_BLD_MAN_PREFIX!!"
+BLD_SPL_PREFIX="!!ORIG_BLD_SPL_PREFIX!!"
 BLD_SRC_PREFIX="!!ORIG_BLD_SRC_PREFIX!!"
 BLD_WEB_PREFIX="!!ORIG_BLD_WEB_PREFIX!!"
 
 installbin=Y
-installdev=Y
 runDaemon=Y
 HTTP_PORT=7777
 SSL_PORT=4443
@@ -169,8 +166,6 @@ askUser() {
     do
         echo
         installbin=`yesno "Install binary package" "$installbin"`
-        installdev=`yesno "Install development headers, samples and documentation package" "$installdev"`
-    
         if [ "$installbin" = "Y" ] ; then
             runDaemon=`yesno "Start $BLD_PRODUCT automatically at system boot" $runDaemon`
             HTTP_PORT=`ask "Enter the HTTP port number" "$HTTP_PORT"`
@@ -183,7 +178,6 @@ askUser() {
     
         echo -e "\nInstalling with this configuration:" 
         echo -e "    Install binary package: $installbin"
-        echo -e "    Install development headers and samples package: $installdev"
     
         if [ "$installbin" = "Y" ] ; then
             echo -e "    Start automatically at system boot: $runDaemon"
@@ -196,7 +190,7 @@ askUser() {
         finished=`yesno "Accept this configuration" "Y"`
     done
     
-    if [ "$installbin" = "N" -a "$installdev" = "N" ] ; then
+    if [ "$installbin" = "N" ] ; then
         echo -e "\nNothing to install, exiting. "
         exit 0
     fi
@@ -263,7 +257,7 @@ saveSetup() {
     local firstChar
 
     mkdir -p "$BLD_CFG_PREFIX"
-    echo -e "FMT=$FMT\nbinDir=\"${BLD_PRD_PREFIX}\"\ninstallbin=$installbin\ninstalldev=$installdev\nrunDaemon=$runDaemon\nhttpPort=$HTTP_PORT\nsslPort=$SSL_PORT\nusername=$username\ngroupname=$groupname\nhostname=$HOSTNAME" \
+    echo -e "FMT=$FMT\nbinDir=\"${BLD_PRD_PREFIX}\"\ninstallbin=$installbin\nrunDaemon=$runDaemon\nhttpPort=$HTTP_PORT\nsslPort=$SSL_PORT\nusername=$username\ngroupname=$groupname\nhostname=$HOSTNAME" \
         >"$BLD_PRD_PREFIX/install.conf"
 }
 
@@ -283,6 +277,7 @@ patchAppwebConf()
             s!^ServerRoot.*\".*!ServerRoot \"${BLD_CFG_PREFIX}\"!
             s!^DocumentRoot.*\".*!DocumentRoot \"${BLD_WEB_PREFIX}\"!
             s!^LoadModulePath.*\".*!LoadModulePath \"${BLD_LIB_PREFIX}\"!
+            s!EspDir cache.*!EspDir cache \"${BLD_SPL_PREFIX}/cache\"!
             s!^Listen.*!Listen ${BLD_HTTP_PORT}!
             s!^User .*!User ${username}!
             s!^Group .*!Group ${groupname}!" <"$conf" >"$conf.new"
@@ -333,7 +328,6 @@ patchAppwebConf()
 configureService() {
     local action=$1
 
-echo CFS $action
     case $action in
     start|stop)
         if [ $BLD_HOST_OS = WIN ] ; then
@@ -356,7 +350,6 @@ echo CFS $action
         elif which launchctl >/dev/null 2>&1 ; then
             local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
             if [ $action = start ] ; then
-echo launchctl start com.${company}.${BLD_PRODUCT}
                 launchctl start com.${company}.${BLD_PRODUCT}
             else
                 launchctl stop com.${company}.${BLD_PRODUCT} 2>/dev/null
@@ -375,8 +368,6 @@ echo launchctl start com.${company}.${BLD_PRODUCT}
             fi
         elif which launchctl >/dev/null 2>&1 ; then
             local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
-echo launchctl unload /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist
-echo launchctl load -w /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist
             launchctl unload /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist 2>/dev/null
             launchctl load -w /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist
         elif which chkconfig >/dev/null 2>&1 ; then
@@ -410,8 +401,7 @@ installFiles() {
 
     echo -e "\nExtracting files ...\n"
 
-    for pkg in bin dev src ; do
-        
+    for pkg in bin ; do
         doins=`eval echo \\$install${pkg}`
         if [ "$doins" = Y ] ; then
             upper=`echo $pkg | tr '[:lower:]' '[:upper:]'`
@@ -524,7 +514,6 @@ startBrowser() {
 setup $*
 askUser
 
-echo HERE $installbin
 if [ "$installbin" = "Y" ] ; then
     configureService stop >/dev/null 2>&1
     configureService remove >/dev/null 2>&1
