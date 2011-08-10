@@ -347,18 +347,14 @@ static void clean(int argc, char **argv)
 static void run(int argc, char **argv)
 {
     MprCmd      *cmd;
-    char        *err, *out;
 
     cmd = mprCreateCmd(0);
     if (mprRunCmd(cmd, "appweb -v", NULL, NULL, MPR_CMD_DETACH) != 0) {
-		if (err == 0 || *err == '\0') {
-			/* Windows puts errors to stdout Ugh! */
-			err = out;
-		}
-        error("Can't run command %s, error %s", app->command, err);
+        error("Can't run command %s", app->command);
     }
     mprWaitForCmd(cmd, -1);
 }
+
 
 static int runCommand(cchar *command, cchar *csource, cchar *module)
 {
