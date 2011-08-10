@@ -1,8 +1,8 @@
 /**
     makerom.c - Compile source files into C code suitable for embedding in ROM.
- *
+  
     Usage: makerom -p prefix -r romName filelist >rom.c
- *
+  
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
@@ -146,7 +146,6 @@ static int binToC(MprList *files, char *romName, char *prefix)
         if (*cp == '/') {
             cp++;
         }
-
         if (*cp == '.' && cp[1] == '\0') {
             cp++;
         }

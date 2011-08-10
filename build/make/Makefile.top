@@ -87,7 +87,7 @@ sync:
 			rm -f "$(BLD_INC_DIR)/$${base}" ; \
 			cp "$${f}" "$(BLD_INC_DIR)"; \
 		elif [ "$${ext}" = "$(BLD_SHOBJ)" ] ; then \
-			QUIET=1 $(BLD_TOOLS_DIR)/getlib $f ; \
+			QUIET=1 $(BLD_TOOLS_DIR)/getlib $${f} ; \
 		elif [ "$${ext}" = ".mod" -o "$${ext}" = ".a" ] ; then \
 			if [ "$(BLD_OS)" = WIN ] ; then \
 				cp "$${f}" "$(BLD_BIN_DIR)"; \
