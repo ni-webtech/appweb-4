@@ -14,10 +14,10 @@ BLD_DATE=`date '+%c'`
 ################################################################################
 
 setupRPM() {
-    echo -e "\n#\n# Create the RPM package ...\n#"
     #
     #   Setup the RPM directory and create the spec file
     #
+    log Generate "RPM package ..."
     mkdir -p $RPM_DIR $RPM_DIR/SOURCES $RPM_DIR/SPECS $RPM_DIR/BUILD
     mkdir -p $RPM_DIR/RPMS $RPM_DIR/RPMS/${BLD_HOST_CPU} $RPM_DIR/SRPMS
 }
