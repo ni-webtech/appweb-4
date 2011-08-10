@@ -4,7 +4,7 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2009. All Rights Reserved.
 #
 
-PRE_DIRS	= appweb-dynamic
+PRE_DIRS	= appweb-all
 
 include     .makedep
 

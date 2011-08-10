@@ -8,13 +8,13 @@ let http: Http = new Http
 //  /mvc
 http.get(HTTP + "/mvc")
 assert(http.status == 200)
-assert(http.response.contains("Index Page"))
+assert(http.response.contains("Welcome to ESP"))
 http.close()
 
 //  /mvc/
 http.get(HTTP + "/mvc/")
 assert(http.status == 200)
-assert(http.response.contains("Index Page"))
+assert(http.response.contains("Welcome to ESP"))
 http.close()
 
 //  /mvc/static/layout.css
@@ -26,7 +26,7 @@ http.close()
 //  /mvc/static/index.esp
 http.get(HTTP + "/mvc/static/index.esp")
 assert(http.status == 200)
-assert(http.response.contains("Index Page"))
+assert(http.response.contains("Welcome to ESP"))
 http.close()
 
 //  /mvc/user/check - this tests a controller without view

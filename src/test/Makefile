@@ -110,13 +110,14 @@ cleanExtra: testPrep
 	rm -f *.o *.lo *.obj *.out */*.mod */*/*.mod
 	rm -f ../cgi-bin/*cgi* ../cgi-bin/testScript
 	rm -f web/cgiProgram.cgi
+	rm -f cache/* mvc/cache/*
 
 #
 #	Don't copy this. Ensure you set minimal permissions on upload and temp directories
 #
 dependExtra:
-	mkdir -p web/tmp
-	chmod 777 web/tmp
+	mkdir -p web/tmp cache mvc/cache
+	chmod 777 web/tmp cache mvc/cache
 
 #
 #   Local variables:

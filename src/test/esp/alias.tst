@@ -9,13 +9,13 @@ let app = "/mvc2"
 //  /mvc2
 http.get(HTTP + app)
 assert(http.status == 200)
-assert(http.response.contains("Index Page"))
+assert(http.response.contains("Welcome to ESP"))
 http.close()
 
 //  /mvc2/
 http.get(HTTP + app + "/")
 assert(http.status == 200)
-assert(http.response.contains("Index Page"))
+assert(http.response.contains("Welcome to ESP"))
 http.close()
 
 //  /mvc2/static/layout.css
@@ -27,7 +27,7 @@ http.close()
 //  /mvc2/static/index.esp
 http.get(HTTP + app + "/static/index.esp")
 assert(http.status == 200)
-assert(http.response.contains("Index Page"))
+assert(http.response.contains("Welcome to ESP"))
 http.close()
 
 //  /mvc2/user/check - this tests a controller without view
