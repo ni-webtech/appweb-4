@@ -47,6 +47,7 @@ ver.makeDir(dperms)
 cfg.makeDir(dperms)
 cfg.join("config").makeDir(dperms)
 web.makeDir(dperms)
+
 if (!bare) {
     man.join("man1").makeDir(dperms)
     lib.join("www").makeDir(dperms)
@@ -92,6 +93,7 @@ if (!bare) {
     copy("*", web, {
         from: "src/server/web",
         exclude: /mgmt\//,
+        recurse: true,
     })
 
     copy("*", inc, {
