@@ -111,7 +111,7 @@ cleanExtra: testPrep
 	rm -f access.log error.log leak.log
 	rm -f $(MODULES) $(BLD_BIN_DIR)/testAppweb$(BLD_EXE) testAppweb$(BLD_EXE)
 	rm -f *.o *.lo *.obj *.out */*.mod */*/*.mod
-	rm -f ../cgi-bin/*cgi* ../cgi-bin/testScript
+	rm -f cgi-bin/*cgi* ../cgi-bin/testScript
 	rm -f web/cgiProgram.cgi
 	rm -f cache/* app/cache/*
 
