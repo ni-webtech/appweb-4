@@ -8,7 +8,6 @@
 export BLD_HOST_CPU_MAPPED=$BLD_HOST_CPU
 
 setupDeb() {
-    # echo -e "\n#\n# Create the Debian packages ...\n#"
     log Generate "Debian packages ..."
     if [ "$BLD_HOST_CPU_ARCH" = "MPR_CPU_IX86" ] ; then
         BLD_HOST_CPU_MAPPED=i386
