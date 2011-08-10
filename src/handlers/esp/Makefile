@@ -22,7 +22,7 @@ $(BLD_LIB_DIR)/$(ESP)$(BLD_SHOBJ): $(OBJECTS) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
 
 $(BLD_BIN_DIR)/esp$(BLD_EXE): $(OBJECTS)
 	bld --exe $(BLD_BIN_DIR)/esp$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" --libs "$(BLD_APPWEB_LIBS) $(LIBS)" \
-		$(BLD_LIB_DIR)/mod_esp$(BLD_SHOBJ) esp$(BLD_OBJ)
+		$(BLD_LIB_DIR)/mod_esp$(BLD_SHLIB) esp$(BLD_OBJ)
 
 $(BLD_LIB_DIR)/esp-www: www/*
 	$(call log) [Copy] "www to $(BLD_LIB_DIR)/esp-www"

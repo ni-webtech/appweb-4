@@ -57,7 +57,7 @@ extern "C" {
  */
 #if BLD_DEBUG
     #if WIN
-        #define ESP_DEBUG "-Zi -Od");
+        #define ESP_DEBUG "-Zi -Od"
     #else
         #define ESP_DEBUG "-g"
     #endif
