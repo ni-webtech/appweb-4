@@ -637,11 +637,11 @@ static char *getBrowserPath(int size)
     char    cmd[MPR_MAX_STRING];
     char    *type, *cp, *path;
 
-    if (mprReadRegistry(&type, MPR_MAX_STRING, "HKEY_CLASSES_ROOT\\.htm", "") < 0) {
+    if ((type = mprReadRegistry("HKEY_CLASSES_ROOT\\.htm", "")) == 0) {
         return 0;
     }
     mprSprintf(cmd, MPR_MAX_STRING, "HKEY_CLASSES_ROOT\\%s\\shell\\open\\command", type);
-    if (mprReadRegistry(&path, size, cmd, "") < 0) {
+    if ((path = mprReadRegistry(cmd, "")) == 0) {
         return 0;
     }
     for (cp = path; *cp; cp++) {

@@ -27,6 +27,18 @@ static char *getOutDir(cchar *name)
 }
 
 
+static bool matchToken(cchar **str, cchar *token)
+{
+    ssize   len;
+
+    len = slen(token);
+    if (sncmp(*str, token, len) == 0) {
+        *str += len;
+        return 1;
+    }
+    return 0;
+}
+
 /*
     Tokens:
     ARCH        Build architecture (x86_64)
@@ -43,7 +55,7 @@ static char *getOutDir(cchar *name)
 char *espExpandCommand(cchar *command, cchar *source, cchar *module)
 {
     MprBuf  *buf;
-    cchar   *cp, *out;
+    cchar   *cp, *out, *path;
     
     if (command == 0) {
         return 0;
@@ -51,56 +63,73 @@ char *espExpandCommand(cchar *command, cchar *source, cchar *module)
     out = mprTrimPathExtension(module);
     buf = mprCreateBuf(-1, -1);
 
-    for (cp = command; *cp; cp++) {
+    for (cp = command; *cp; ) {
 		if (*cp == '$') {
-            if (sncmp(cp, "${ARCH}", 7) == 0) {
+            if (matchToken(&cp, "${ARCH}")) {
                 /* Build architecture */
                 mprPutStringToBuf(buf, BLD_HOST_CPU);
-                cp += 6;
-            } else if (sncmp(cp, "${CC}", 5) == 0) {
-                /* Include directory (out/inc) */
+
+#if BLD_WIN_LIKE
+            } else if (matchToken(&cp, "${WINSDK}")) {
+                path = mprReadRegistry("HKLM\\SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows", "CurrentInstallFolder");
+				path = strim(path, "\\", MPR_TRIM_END);
+                mprPutStringToBuf(buf, path);
+
+            } else if (matchToken(&cp, "${VS}")) {
+                path = mprGetPathParent(mprGetPathParent(getenv("VS100COMNTOOLS")));
+                mprPutStringToBuf(buf, mprGetPortablePath(path));
+#else
+#endif
+                
+            } else if (matchToken(&cp, "${CC}")) {
+                /* Compiler */
+                //  MOB - what about cross compilation
+#if BLD_WIN_LIKE
+                path = mprJoinPath(mprGetPathParent(mprGetPathParent(getenv("VS100COMNTOOLS"))), "VC/bin/cl.exe");
+                mprPutStringToBuf(buf, mprGetPortablePath(path));
+#else
                 mprPutStringToBuf(buf, BLD_CC);
-                cp += 4;
-            } else if (sncmp(cp, "${DEBUG}", 8) == 0) {
+#endif
+            } else if (matchToken(&cp, "${DEBUG}")) {
                 mprPutStringToBuf(buf, ESP_DEBUG);
-                cp += 7;
-            } else if (sncmp(cp, "${INC}", 6) == 0) {
+
+            } else if (matchToken(&cp, "${INC}")) {
                 /* Include directory (out/inc) */
                 mprPutStringToBuf(buf, mprResolvePath(mprGetAppDir(), BLD_INC_NAME));
-                cp += 5;
-            } else if (sncmp(cp, "${LIBDIR}", 9) == 0) {
+
+            } else if (matchToken(&cp, "${LIBDIR}")) {
                 /* Library directory. IDE's use bin dir */
                 mprPutStringToBuf(buf, getOutDir(BLD_LIB_NAME));
-                cp += 8;
-            } else if (sncmp(cp, "${OBJ}", 6) == 0) {
+
+            } else if (matchToken(&cp, "${OBJ}")) {
                 /* Output object with extension (.o) */
                 mprPutStringToBuf(buf, mprJoinPathExt(out, BLD_OBJ));
-                cp += 5;
-            } else if (sncmp(cp, "${OUT}", 6) == 0) {
+
+            } else if (matchToken(&cp, "${OUT}")) {
                 /* Output modules */
                 mprPutStringToBuf(buf, out);
-                cp += 5;
-            } else if (sncmp(cp, "${SHLIB}", 8) == 0) {
+
+            } else if (matchToken(&cp, "${SHLIB}")) {
                 /* .lib */
                 mprPutStringToBuf(buf, BLD_SHLIB);
-                cp += 7;
-            } else if (sncmp(cp, "${SHOBJ}", 8) == 0) {
+
+            } else if (matchToken(&cp, "${SHOBJ}")) {
                 /* .dll */
                 mprPutStringToBuf(buf, BLD_SHOBJ);
-                cp += 7;
-            } else if (sncmp(cp, "${SRC}", 6) == 0) {
+
+            } else if (matchToken(&cp, "${SRC}")) {
                 /* View (already parsed into C code) or controller source */
                 mprPutStringToBuf(buf, source);
-                cp += 5;
-            } else if (sncmp(cp, "${LIBS}", 7) == 0) {
+
+            } else if (matchToken(&cp, "${LIBS}")) {
                 /* Required libraries to link. These may have nested ${TOKENS} */
                 mprPutStringToBuf(buf, espExpandCommand(ESP_LIBS, source, module));
-                cp += 6;
+
             } else {
-                mprPutCharToBuf(buf, *cp);
+                mprPutCharToBuf(buf, *cp++);
             }
         } else {
-            mprPutCharToBuf(buf, *cp);
+            mprPutCharToBuf(buf, *cp++);
         }
     }
     mprAddNullToBuf(buf);
