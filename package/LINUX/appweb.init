@@ -25,15 +25,9 @@ APPWEB_BIN=!!ORIG_BLD_BIN_PREFIX!!
 INITLOG_ARGS=""
 RETVAL=0
 
-if [ "!!BLD_FEATURE_ANGEL!!" = 1 ] ; then
-    APPWEB_CMD=$APPWEB_BIN/angel
-    APPWEB_SWITCHES="--daemon --home "$APPWEB_DIR" $APPWEB_BIN/$APPWEB"
-    SWITCHES=
-else
-    APPWEB_CMD=$APPWEB_BIN/${APPWEB}
-    APPWEB_SWITCHES=
-    SWITCHES=-b
-fi
+APPWEB_CMD=$APPWEB_BIN/angel
+APPWEB_SWITCHES="--daemon --home "$APPWEB_DIR" $APPWEB_BIN/$APPWEB"
+SWITCHES=
 
 #
 #   Source utility functions
@@ -69,11 +63,9 @@ start() {
 }
 
 stop() {
-	if [ "!!BLD_FEATURE_ANGEL!!" = 1 ] ; then
-		${APPWEB_CMD} --stop
-	fi
+    ${APPWEB_CMD} --stop
     if type start-stop-daemon >/dev/null 2>&1 ; then
-        echo -n $"Stopping ${APPWEB_NAME}: "
+        echo -n "Stopping ${APPWEB_NAME}: "
         if [ -f /etc/SuSE-release ] ; then
             start-stop-daemon --stop --quiet --oknodo --exec "${APPWEB_CMD}"
         else 

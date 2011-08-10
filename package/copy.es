@@ -229,7 +229,7 @@ public function expand(path: Path, options)
 {
     let data = path.readString()
     for (token in options.build) {
-        data.replace(RegExp("!!" + token + "!!", "g"), options.build[token])
+        data = data.replace(RegExp("!!" + token + "!!", "g"), options.build[token])
     }
     path.write(data)
 }
