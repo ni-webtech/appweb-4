@@ -39,17 +39,18 @@ var etc: Path = root.join("etc")
 var init: Path = etc.join("init.d")
 var cache: Path = spl.join("cache")
 
-bin.makeDir()
-inc.makeDir()
-lib.makeDir()
-ver.makeDir()
-cfg.makeDir()
-cfg.join("config").makeDir()
-web.makeDir()
+var dperms = {permissions: 0755, owner: '0', group: '0' }
+bin.makeDir(dperms)
+inc.makeDir(dperms)
+lib.makeDir(dperms)
+ver.makeDir(dperms)
+cfg.makeDir(dperms)
+cfg.join("config").makeDir(dperms)
+web.makeDir(dperms)
 if (!bare) {
-    man.join("man1").makeDir()
-    lib.join("www").makeDir()
-    cfg.join("ssl").makeDir()
+    man.join("man1").makeDir(dperms)
+    lib.join("www").makeDir(dperms)
+    cfg.join("ssl").makeDir(dperms)
 }
 
 var saveLink 
@@ -58,8 +59,6 @@ if (options.task == "Remove" && bin.join("linkup").exists) {
     bin.join("linkup").copy(saveLink)
     saveLink.attributes = {permissions: 0755}
 }
-
-cfg.makeDir()
 
 copy("appweb*", bin, {from: sbin, permissions: 0755, strip: true})
 
@@ -83,9 +82,9 @@ if (!bare) {
         exclude: cmdFilter,
         permissions: 0755,
     })
-    log.makeDir()
+    log.makeDir(dperms)
     log.join("error.log").write("")
-    cache.makeDir()
+    cache.makeDir(dperms)
     cache.join(".dummy").write("")
 
     copy("server.*", ssl, {from: "src/server/ssl"})
@@ -150,17 +149,17 @@ if (build.BLD_FEATURE_EJSCRIPT == 1) {
 if (!bare) {
     if (os == "MACOSX") {
         let daemons = root.join("Library/LaunchDaemons")
-        daemons.makeDir()
+        daemons.makeDir(dperms)
         copy("com.embedthis.appweb.plist", daemons, {from: "package/MACOSX", permissions: 0644, expand: true})
 
     } else if (os == "LINUX") {
-        init.makeDir()
+        init.makeDir(dperms)
         if (options.task == "Package") {
             copy("package/LINUX/" + product + ".init", init.join(product), {permissions: 0755, expand: true})
         } else {
             if (App.uid == 0 && options.root != "") {
                 if (options.openwrt) {
-                    root.join("CONTROL").makeDir()
+                    root.join("CONTROL").makeDir(dperms)
                     copy("p*", root.join("CONTROL"), {from: "package/LINUX/deb.bin", permissions: 0755, expand: true})
                     copy("appweb.openwrt", init.join(product), {from: "package/LINUX", permissions: 0755, expand: true})
                 } else {
@@ -174,7 +173,7 @@ if (!bare) {
                         let level = ".d/S81"
                         etc.join("rc" + i + level + product).remove()
                         if (options.task != "Remove") {
-                            etc.join("rc" + i + level).makeDir()
+                            etc.join("rc" + i + level).makeDir(dperms)
                             Cmd.sh("rm -f " + etc.join("rc" + i + level + product))
                             Cmd.sh("ln -s " + init.join(product) + " " + etc.join("rc" + i + level + product))
                         }
@@ -183,7 +182,7 @@ if (!bare) {
                         let level = ".d/K15"
                         etc.join("rc" + i + level + product).remove()
                         if (options.task != "Remove") {
-                            etc.join("rc" + i + level).makeDir()
+                            etc.join("rc" + i + level).makeDir(dperms)
                             Cmd.sh("rm -f " + etc.join("rc" + i + level + product))
                             Cmd.sh("ln -s " + init.join(product) + " " + etc.join("rc" + i + level + product))
                         }
@@ -215,3 +214,4 @@ if (options.task == "Install") {
     Cmd.sh(saveLink + " " + options.task + " " + options.root)
     saveLink.remove()
 }
+

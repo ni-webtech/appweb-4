@@ -458,6 +458,10 @@ installFiles() {
         find "$BLD_BIN_PREFIX" -name '*.dll' -exec chmod 755 "{}" \;
         find "$BLD_BIN_PREFIX" -name '*.exe' -exec chmod 755 "{}" \;
     fi
+    mkdir -p "$BLD_SPL_PREFIX" "$BLD_SPL_PREFIX/cache" "$BLD_LOG_PREFIX"
+    chown $username "$BLD_SPL_PREFIX" "$BLD_SPL_PREFIX/cache" "$BLD_LOG_PREFIX"
+    chgrp $groupname "$BLD_SPL_PREFIX" "$BLD_SPL_PREFIX/cache" "$BLD_LOG_PREFIX"
+    chmod 755 "$BLD_SPL_PREFIX" "$BLD_SPL_PREFIX/cache" "$BLD_LOG_PREFIX"
     echo
 }
 
