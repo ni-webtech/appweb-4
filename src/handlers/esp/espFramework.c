@@ -16,6 +16,78 @@
 /************************************* Local **********************************/
 
 /************************************* Code ***********************************/
+#if TODO
+    - Request.flash
+    - Request.cookies
+    - Request.contentType
+    - Request.dir
+    - Request.contentLength
+    - Request.files
+    - Request.home (home URI)
+    - Request.isSecure
+    - Request.method
+    - Request.originalMethod        (Need code to modify method based on header)
+    - Request.extension
+
+    - Request.checkSecurityToken()
+    - Request.clearFlash
+    - Request.createSession()
+    - Request.dontAutoFinalize()
+    - Request.destroySession()
+    - Request.error(), inform(), notify(), warn()
+    - Request.finalizeFlash
+    - Request.link
+    - Request.matchContent
+    - Request.read()                What about incoming content?
+    - Request.securityToken() 
+    - Request.setCookie() 
+    - Request.setHeader() 
+    - Request.setHeaders() 
+    - Request.setupFlash() 
+    - Request.trace() 
+    - Request.writeContent() 
+    - Request.writeError() 
+    - Request.writeFile() 
+    - Request.writeResponse() 
+    - Request.writeSafe() 
+    - Request.written() 
+
+    - Controller.before(), after()
+    - Controller.writeView()
+    - Controller.writePartialTemplate()
+    - Controller.writeTemplate()
+    - Controller.writeTemplateLiteral()
+    - Controller.runCheckers()
+    - Controller.viewExists()
+
+    - Html.alert
+    - Html.anchor
+    - Html.button
+    - Html.buttonLink
+    - Html.chart
+    - Html.checkbox
+    - Html.div
+    - Html.endform
+    - Html.flash
+    - Html.form
+    - Html.icon
+    - Html.image
+    - Html.label
+    - Html.list
+    - Html.mail
+    - Html.progress
+    - Html.radio
+    - Html.refresh
+    - Html.script
+    - Html.securityToken
+    - Html.stylesheet
+    - Html.table
+    - Html.tabs
+    - Html.text
+    - Html.tree
+    - Html.emitFormErros
+#endif
+
 /*  
     Add a http header if not already defined
  */

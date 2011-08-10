@@ -51,8 +51,12 @@ static void login(HttpConn *conn) {
     }
 }
 
+static void missing(HttpConn *conn) {
+    httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Missing action");
+}
 
 ESP_EXPORT int espInit_controller_user(EspLoc *el, MprModule *module) {
+    espDefineAction(el, "missing", check);
     espDefineAction(el, "user-check", check);
     espDefineAction(el, "user-cached", cached);
     espDefineAction(el, "user-details", details);

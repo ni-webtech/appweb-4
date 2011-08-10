@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <% /* securityToken() */ %>
+    <% /* icon("/static/images/favicon.ico") */ %>
+    <% /* stylesheet() */ %>
+    <% /* script() */ %>
+    <title>@@title</title>
+</head>
+
+<body>
+    <div class="top">
+        <h1><% /* label("${NAME} Application", request.home) */ %></h1>
+    </div>
+    <div id="logo">Appweb&trade;</div>
+
+    <% /* flash(["inform", "error", "message", "warning"]) */ %>
+    <div class="content">
+        <%@ content %>
+    </div>
+
+    <div class="bottom">
+        <p class="footnote">Powered by Appweb&trade;</p>
+    </div>
+</body>
+</html>

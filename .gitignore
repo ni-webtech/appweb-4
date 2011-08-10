@@ -146,3 +146,6 @@ rpm.log
 cache/view_*.c
 src/test/*/cache/view_*.c
 src/test/mvc/cache/*
+src/test/cache
+src/test/junk
+src/test/farm.conf

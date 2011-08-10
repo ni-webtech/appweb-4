@@ -156,6 +156,7 @@ static bool fetchCachedResponse(HttpConn *conn)
 {
     EspReq  *req;
     char    *content, *extraUri, *key;
+    int     status;
 
     req = conn->data;
     if (req->action && req->action->lifespan) {
@@ -165,7 +166,40 @@ static bool fetchCachedResponse(HttpConn *conn)
         }
         key = makeCacheKey(conn, req->actionKey, extraUri);
         if ((content = mprReadCache(esp->cache, key, 0)) != 0) {
+#if 0
+    struct tm tm;
+    MprTime when;
+            /*
+                Observe headers
+                If-None-Match: "ec18d-54-4d706a63"
+                If-Modified-Since: Fri, 04 Mar 2011 04:28:19 GMT
+             */
+            status = HTTP_CODE_OK;;
+            if ((value = httpGetHeader(conn, "If-None-Match")) != 0 && scmp(value, item.tag) == 0) {
+                /* 
+                    RFC2616 requires returning PrecondFailed, but chrome doesn't send an If-Modified-Since header 
+                    and so returning PrecondFailed caused Chrome to fail.
+
+                    status = HTTP_CODE_PRECOND_FAILED;
+                 */
+                status = HTTP_CODE_NOT_MODIFIED;
+            }
+            if ((value = httpGetHeader(conn, "If-Modified-Since")) != 0) {
+                mprParseTime(&when, value, 0, 0);
+                if (item.modified <= when) {
+                    status = HTTP_CODE_NOT_MODIFIED;
+                }
+            }
+            mprDecodeUniversalTime(&tm, item.modified);
+            httpSetHeader(conn, "Last-Modified, mprFormatTime(MPR_HTTP_DATE, &tm));
+            httpSetHeader(conn, "Etag, mprGetMD5Hash(cacheName), slen(cacheName)", 0));
+            if (status == HTTP_CODE_OK) {
+                espWriteString(conn, content);
+            }
+            httpSetStatus(conn, status);
+#else
             espWriteString(conn, content);
+#endif
             return 1;
         }
     }
