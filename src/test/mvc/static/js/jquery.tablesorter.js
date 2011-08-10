@@ -11,7 +11,7 @@
  * http://www.gnu.org/licenses/gpl.html
  * 
  */
-/*
+/**
  *
  * @description Create a sortable table with multi-column sorting capabilitys
  * 
@@ -202,7 +202,7 @@
 				
 					for (var i=0;i < totalRows; ++i) {
 						
-						/* Add the table data to main data array */
+						/** Add the table data to main data array */
 						var c = $(table.tBodies[0].rows[i]), cols = [];
 					
 						// if this is a child row, add it to the last row's children and continue to the next row

@@ -25,7 +25,6 @@ static bool moduleIsCurrent(HttpConn *conn, cchar *source, cchar *module);
 static bool fetchCachedResponse(HttpConn *conn);
 static void manageAction(EspAction *cp, int flags);
 static void manageEsp(Esp *esp, int flags);
-static void manageEspLoc(EspLoc *el, int flags);
 static void manageReq(EspReq *req, int flags);
 static int  runAction(HttpConn *conn);
 static void runView(HttpConn *conn);
@@ -221,7 +220,7 @@ static char *getControllerEntry(cchar *controllerName)
 {
     char    *cp, *entry;
 
-    entry = sfmt("espController_%s", mprGetPathBase(controllerName));
+    entry = sfmt("espInit_controller_%s", mprTrimPathExtension(mprGetPathBase(controllerName)));
     for (cp = entry; *cp; cp++) {
         if (!isalnum((int) *cp) && *cp != '_') {
             *cp = '_';
@@ -238,13 +237,13 @@ static int runAction(HttpConn *conn)
     EspReq      *req;
     EspRoute    *route;
     EspAction   *action;
-    char        *key;
-    int         reloaded;
+    char        *key, *name, *entry;
+    int         updated;
 
     req = conn->data;
     el = req->el;
     route = req->route;
-    reloaded = 0;
+    updated = 0;
 
     /*
         Expand any form var $tokens. This permits ${controller} and user form data to be used in the controller name
@@ -256,7 +255,7 @@ static int runAction(HttpConn *conn)
     req->cacheName = mprGetMD5Hash(route->controllerPath, slen(route->controllerPath), "controller_");
     req->module = mprGetNormalizedPath(sfmt("%s/%s%s", el->cacheDir, req->cacheName, BLD_SHOBJ));
 
-    if (el->reload) {
+    if (el->update) {
         if (!mprPathExists(route->controllerPath, R_OK)) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find controller %s", route->controllerPath);
             return 0;
@@ -286,7 +285,21 @@ static int runAction(HttpConn *conn)
                     "Can't load compiled esp module for %s", route->controllerPath);
                 return 0;
             }
-            reloaded = 1;
+            updated = 1;
+        }
+
+    } else if (el->app) {
+        name = mprJoinPath(el->cacheDir, el->app);
+        if (mprLookupModule(name) == 0) {
+            entry = sfmt("espInit_app_%s", mprGetPathBase(el->dir));
+            if ((mp = mprCreateModule(name, el->app, entry, el)) == 0) {
+                httpMemoryError(conn);
+                return 0;
+            }
+            if (mprLoadModule(mp) < 0) {
+                httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load compiled esp module for %s", name);
+                return 0;
+            }
         }
     }
     key = mprJoinPath(el->controllersDir, req->actionKey);
@@ -304,7 +317,7 @@ static int runAction(HttpConn *conn)
     if (el->lifespan) {
         /* Must stabilize form data prior to controllers injecting variables */
         httpGetFormData(conn);
-        if (!reloaded && fetchCachedResponse(conn)) {
+        if (!updated && fetchCachedResponse(conn)) {
             return 1;
         }
         req->cacheBuffer = mprCreateBuf(-1, -1);
@@ -338,7 +351,7 @@ static void runView(HttpConn *conn)
     req->cacheName = mprGetMD5Hash(req->source, slen(req->source), "view_");
     req->module = mprGetNormalizedPath(sfmt("%s/%s%s", req->el->cacheDir, req->cacheName, BLD_SHOBJ));
 
-    if (el->reload) {
+    if (el->update) {
         if (!mprPathExists(req->source, R_OK)) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find view %s", req->source);
             return;
@@ -451,7 +464,7 @@ static EspLoc *allocEspLoc(HttpLoc *loc)
 {
     EspLoc  *el;
 
-    if ((el = mprAllocObj(EspLoc, manageEspLoc)) == 0) {
+    if ((el = mprAllocObj(EspLoc, espManageEspLoc)) == 0) {
         return 0;
     }
     httpSetLocationData(loc, ESP_NAME, el);
@@ -478,7 +491,7 @@ static EspLoc *allocEspLoc(HttpLoc *loc)
     el->layoutsDir = el->dir;
     el->modelsDir = el->dir;
     el->viewsDir = el->dir;
-    el->webDir = el->dir;
+    el->staticDir = el->dir;
 
     /*
         Setup default parameters for $expansion of Http location paths
@@ -487,7 +500,7 @@ static EspLoc *allocEspLoc(HttpLoc *loc)
     httpAddLocationToken(loc, "DATABASES_DIR", el->databasesDir);
     httpAddLocationToken(loc, "LAYOUTS_DIR", el->layoutsDir);
     httpAddLocationToken(loc, "MODELS_DIR", el->modelsDir);
-    httpAddLocationToken(loc, "STATIC_DIR", el->webDir);
+    httpAddLocationToken(loc, "STATIC_DIR", el->staticDir);
     httpAddLocationToken(loc, "VIEWS_DIR", el->viewsDir);
 
 #if DEBUG_IDE
@@ -499,7 +512,7 @@ static EspLoc *allocEspLoc(HttpLoc *loc)
     el->lifespan = ESP_LIFESPAN;
     el->keepSource = 0;
 #if BLD_DEBUG
-	el->reload = 1;
+	el->update = 1;
 	el->showErrors = 1;
 #endif
     el->loc = loc;
@@ -514,12 +527,12 @@ static EspLoc *cloneEspLoc(EspLoc *parent, HttpLoc *loc)
     mprAssert(parent);
     mprAssert(loc);
 
-    if ((el = mprAllocObj(EspLoc, manageEspLoc)) == 0) {
+    if ((el = mprAllocObj(EspLoc, espManageEspLoc)) == 0) {
         return 0;
     }
     httpSetLocationData(loc, ESP_NAME, el);
     el->loc = loc;
-    el->reload = parent->reload;
+    el->update = parent->update;
     el->keepSource = parent->keepSource;
     el->showErrors = parent->showErrors;
     el->lifespan = parent->lifespan;
@@ -537,18 +550,6 @@ static EspLoc *cloneEspLoc(EspLoc *parent, HttpLoc *loc)
     } else {
         el->routes = mprCreateList(-1, 0);
     }
-#if UNUSED
-    if (parent->actions) {
-        el->actions = mprCloneHash(parent->actions);
-    } else {
-        el->actions = mprCreateHash(-1, MPR_HASH_STATIC_VALUES);
-    }
-    if (parent->views) {
-        el->views = mprCloneHash(parent->views);
-    } else {
-        el->views = mprCreateHash(-1, MPR_HASH_STATIC_VALUES);   
-    }
-#endif
     el->dir = parent->dir;
     el->cacheDir = parent->cacheDir;
     el->controllersDir = parent->controllersDir;
@@ -556,7 +557,7 @@ static EspLoc *cloneEspLoc(EspLoc *parent, HttpLoc *loc)
     el->layoutsDir = parent->layoutsDir;
     el->modelsDir = parent->modelsDir;
     el->viewsDir = parent->viewsDir;
-    el->webDir = parent->webDir;
+    el->staticDir = parent->staticDir;
 
     if (mprHasMemError()) {
         return 0;
@@ -582,8 +583,8 @@ static void setMvcDirs(EspLoc *el)
     el->modelsDir  = mprJoinPath(el->dir, "models");
     httpAddLocationToken(el->loc, "MODELS_DIR", el->modelsDir);
 
-    el->webDir = mprJoinPath(el->dir, "static");
-    httpAddLocationToken(el->loc, "STATIC_DIR", el->webDir);
+    el->staticDir = mprJoinPath(el->dir, "static");
+    httpAddLocationToken(el->loc, "STATIC_DIR", el->staticDir);
 
     el->viewsDir = mprJoinPath(el->dir, "views");
     httpAddLocationToken(el->loc, "VIEWS_DIR", el->viewsDir);
@@ -644,6 +645,9 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         }
         maGetConfigValue(&mvc, next, &next, 1);
         prefix = stemplate(prefix, loc->tokens);
+        if (scmp(prefix, "/") == 0) {
+            prefix = MPR->emptyString;
+        }
         needRoutes = 0;
         if ((loc = httpLookupLocation(host, prefix)) == 0) {
             /*
@@ -714,7 +718,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
             } else if (scmp(name, "models") == 0) {
                 el->modelsDir = path;
             } else if (scmp(name, "static") == 0) {
-                el->webDir = path;
+                el->staticDir = path;
             } else if (scmp(name, "views") == 0) {
                 el->viewsDir = path;
             }
@@ -758,8 +762,8 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         el->link = sclone(value);
         return 1;
 
-    } else if (scasecmp(key, "EspReload") == 0) {
-        el->reload = scasecmp(value, "on") == 0;
+    } else if (scasecmp(key, "EspLoad") == 0) {
+        el->app = mprJoinPath(el->cacheDir, "app");
         return 1;
 
     } else if (scasecmp(key, "EspReset") == 0) {
@@ -819,12 +823,16 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
     } else if (scasecmp(key, "EspShowErrors") == 0) {
 		el->showErrors = (scasecmp(value, "on") == 0 || scasecmp(value, "yes") == 0);
         return 1;
+
+    } else if (scasecmp(key, "EspUpdate") == 0) {
+        el->update = scasecmp(value, "on") == 0;
+        return 1;
     }
     return 0;
 }
 
 
-static void manageEspLoc(EspLoc *el, int flags)
+void espManageEspLoc(EspLoc *el, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(el->routes);
@@ -838,8 +846,9 @@ static void manageEspLoc(EspLoc *el, int flags)
         mprMark(el->layoutsDir);
         mprMark(el->modelsDir);
         mprMark(el->viewsDir);
-        mprMark(el->webDir);
+        mprMark(el->staticDir);
         mprMark(el->searchPath);
+        mprMark(el->app);
     }
 }
 

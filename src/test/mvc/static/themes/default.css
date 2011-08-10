@@ -236,18 +236,18 @@ form td {
 /*
    	Ejscript web framework controls style sheet
  */
-.-esp-field-error {
+.-ejs-field-error {
 	border: 1px solid #FF0000;
 	-webkit-box-shadow: 3px 3px 3px #AAA;
 }
 
-div.-esp-formError {
+div.-ejs-formError {
 	border: 2px solid #FF0000;
 	-webkit-box-shadow: 3px 3px 3px #AAA;
     text-indent: 10px;
 }
 
-div.-esp-formError h2 {
+div.-ejs-formError h2 {
     background-color: #FF0000;
     color: #FFFFFF;
     font-size: 12pt;
@@ -265,7 +265,7 @@ div.-esp-formError h2 {
 /*
     Flash web control
  */
-div.-esp-flash {
+div.-ejs-flash {
 	-webkit-box-shadow: 4px 4px 4px #BBB;
 	-moz-border-radius: 7px;
 	-webkit-border-radius: 7px;
@@ -274,31 +274,31 @@ div.-esp-flash {
     color: #FFFFFF;
 }
 
-div.-esp-flash-inform {
+div.-ejs-flash-inform {
     background-color: #228000;
 }
 
-div.-esp-flash-message {
+div.-ejs-flash-message {
     background-color: #A0A0A0;
 }
 
-div.-esp-flash-error {
+div.-ejs-flash-error {
     background-color: #FF0000;
     font-weight: bold;
 }
 
-div.-esp-flash-warning {
+div.-ejs-flash-warning {
     background-color: #FF8020;
 }
 
 /*
     Tabs control
  */
-div.-esp-tabs ul {
+div.-ejs-tabs ul {
 	list-style: none;
 }
 
-div.-esp-tabs li {
+div.-ejs-tabs li {
     background-color: #555;
     background: -webkit-gradient(linear, left bottom, left top, from(#333), to(#999));
     -moz-border-radius-topleft: 5px; -webkit-border-top-left-radius: 5px;
@@ -306,38 +306,38 @@ div.-esp-tabs li {
 	-webkit-box-shadow: 4px -2px 5px #CCC;
 }
 
-div.-esp-tabs li, div.-esp-tabs a {
+div.-ejs-tabs li, div.-ejs-tabs a {
     color: #FFF;
 }
 
-div.-esp-tabs li.selected {
+div.-ejs-tabs li.selected {
     background-color: #BBB;
     background: -webkit-gradient(linear, left bottom, left top, from(#DDD), to(#A77));
     color: #000;
 }
 
-div.-esp-tabs ul li:hover { 
+div.-ejs-tabs ul li:hover { 
     background-color: #222;
     background: -webkit-gradient(linear, left bottom, left top, from(#000), to(#777));
     color: #FFF;
 }
 
-div.-esp-tabs li {
+div.-ejs-tabs li {
     cursor: pointer;
 }
 
 /*
  *  Table control section
  */
-div.-esp-table {
+div.-ejs-table {
 }
 
-table.-esp-table {
+table.-ejs-table {
     margin-top: 27px;
     border: 2px solid #686;
 }
 
-table.-esp-table thead { 
+table.-ejs-table thead { 
     background: #A0BB88;
     background: -webkit-gradient(linear, left top, left bottom, from(rgba(150,170,120,.95)), color-stop(5, #eff));
 	color: #000;
@@ -345,7 +345,7 @@ table.-esp-table thead {
     cursor: pointer;
 }
 
-table.-esp-table thead tr td {
+table.-ejs-table thead tr td {
 	text-align: left;
 	font-weight: bold;
     font-size: 110%;
@@ -353,7 +353,7 @@ table.-esp-table thead tr td {
     border: none;
 }
 
-table.-esp-table th {
+table.-ejs-table th {
     background-color: #C8E0B0;
     background: -webkit-gradient(linear, left top, left bottom, from(rgba(150,200,140,.25)), color-stop(1, #eff));
 	color: #106010;
@@ -364,28 +364,28 @@ table.-esp-table th {
     padding: 6px 4px 6px 10px;
 }
 
-table.-esp-table tbody { 
+table.-ejs-table tbody { 
     _cursor: pointer;
 }
 
-table.-esp-table tbody td { 
+table.-ejs-table tbody td { 
     padding: 4px 4px 4px 10px;
 }
 
-table.-esp-table td {
+table.-ejs-table td {
     text-align: center;
 }
 
-.-esp-table-odd {
+.-ejs-table-odd {
     background-color: #F0F0FF;
     background: -webkit-gradient(linear, left bottom, left top, from(rgba(220,220,250,.95)), color-stop(1, #eff));
     color: #000000;
 }
 
-.-esp-table-even {
+.-ejs-table-even {
     background-color: #FFFFFF;
 }
 
-table.-esp-table .right {
+table.-ejs-table .right {
     text-align: right;
 }

@@ -138,6 +138,7 @@ typedef struct EspLoc {
     char            *compile;               /* Compile template */
     char            *link;                  /* Link template */
     char            *searchPath;            /* Search path to use when locating compiler / linker */
+    char            *app;                   /* App module if compiled flat */
 
     char            *dir;                   /* Base directory for location */
     char            *cacheDir;              /* Directory for cached compiled controllers and views */
@@ -145,15 +146,16 @@ typedef struct EspLoc {
     char            *databasesDir;          /* Directory for databases */
     char            *layoutsDir;            /* Directory for layouts */
     char            *modelsDir;             /* Directory for models */
+    char            *staticDir;             /* Directory for static web content */
     char            *viewsDir;              /* Directory for views */
-    char            *webDir;                /* Directory for static web content */
 
     MprTime         lifespan;               /* Default cache lifespan */
-    int             reload;                 /* Auto-reload modified ESP source */
+    int             update;                 /* Auto-update modified ESP source */
     int             keepSource;             /* Preserve generated source */
 	int				showErrors;				/* Send server errors back to client */
 } EspLoc;
 
+void espManageEspLoc(EspLoc *el, int flags);
 
 /*
     ESP Route structure. One per route.

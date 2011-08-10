@@ -52,7 +52,7 @@ static void login(HttpConn *conn) {
 }
 
 
-ESP_EXPORT int espController_user_c(EspLoc *el, MprModule *module) {
+ESP_EXPORT int espInit_controller_user(EspLoc *el, MprModule *module) {
     espDefineAction(el, "user-check", check);
     espDefineAction(el, "user-cached", cached);
     espDefineAction(el, "user-details", details);

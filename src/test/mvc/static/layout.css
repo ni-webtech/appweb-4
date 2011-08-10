@@ -166,50 +166,50 @@ form td {
 /*
  * 	Ejscript web controls layout style sheet
  */
-div.-esp-tabs {
+div.-ejs-tabs {
     margin-left: 40px;
 }
 
-div.-esp-tabs ul {
+div.-ejs-tabs ul {
     margin: 0;
     padding: 0;
 	white-space: nowrap;
 }
 
-div.-esp-tabs li {
+div.-ejs-tabs li {
     float: left;
 	margin: 4px 4px 0 0;
 	padding: 8px 6px 8px 4px;
 }
 
-div.-esp-pane-visible {
+div.-ejs-pane-visible {
     visibility: visible;
     display: block;
 }
 
-div.-esp-pane-hidden {
+div.-ejs-pane-hidden {
     visibility: hidden;
     display: none;
 }
 
-div.-esp-formError {
+div.-ejs-formError {
     width: 550px;
     margin-bottom: 20px;
     padding-bottom: 10px;
 }
 
-div.-esp-flash {
+div.-ejs-flash {
     width: 500px;
     margin: 20px;
     padding: 10px;
 }
 
-#-esp-modal-background {
+#-ejs-modal-background {
     background-color: #000; 
     cursor: wait;
 }
 
-#-esp-modal-foreground {
+#-ejs-modal-foreground {
     color: #bbb; 
     background-color: #333; 
     border: 4px solid #444; 
