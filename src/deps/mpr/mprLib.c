@@ -26352,24 +26352,22 @@ int mprUnloadNativeModule(MprModule *mp)
 }
 
 
-int mprReadRegistry(char **buf, ssize max, cchar *key, cchar *name)
+char *mprReadRegistry(cchar *key, cchar *name)
 {
     HKEY        top, h;
     char        *value;
     ulong       type, size;
 
     mprAssert(key && *key);
-    mprAssert(buf);
 
     /*
         Get the registry hive
      */
     if ((key = getHive(key, &top)) == 0) {
-        return MPR_ERR_CANT_ACCESS;
+        return 0;
     }
-
     if (RegOpenKeyEx(top, key, 0, KEY_READ, &h) != ERROR_SUCCESS) {
-        return MPR_ERR_CANT_ACCESS;
+        return 0;
     }
 
     /*
@@ -26377,26 +26375,22 @@ int mprReadRegistry(char **buf, ssize max, cchar *key, cchar *name)
      */
     if (RegQueryValueEx(h, name, 0, &type, 0, &size) != ERROR_SUCCESS) {
         RegCloseKey(h);
-        return MPR_ERR_CANT_READ;
+        return 0;
     }
     if (type != REG_SZ && type != REG_EXPAND_SZ) {
         RegCloseKey(h);
-        return MPR_ERR_BAD_TYPE;
+        return 0;
     }
-
-    value = mprAlloc(size);
-    if ((int) size > max) {
-        RegCloseKey(h);
-        mprAssert(!MPR_ERR_WONT_FIT);
-        return MPR_ERR_WONT_FIT;
+    if ((value = mprAlloc(size + 1)) == 0) {
+        return 0;
     }
     if (RegQueryValueEx(h, name, 0, &type, (uchar*) value, &size) != ERROR_SUCCESS) {
         RegCloseKey(h);
-        return MPR_ERR_CANT_READ;
+        return 0;
     }
     RegCloseKey(h);
-    *buf = value;
-    return 0;
+    value[size] = '\0';
+    return value;
 }
 
 
@@ -26495,7 +26489,6 @@ int mprWriteRegistry(cchar *key, cchar *name, cchar *value)
     if ((key = getHive(key, &top)) == 0) {
         return MPR_ERR_CANT_ACCESS;
     }
-
     if (name) {
         /*
             Write a registry string value
@@ -26542,15 +26535,15 @@ static cchar *getHive(cchar *keyPath, HKEY *hive)
     scopy(key, sizeof(key), keyPath);
     key[sizeof(key) - 1] = '\0';
 
-    if (cp = strchr(key, '\\')) {
+    if (cp = schr(key, '\\')) {
         *cp++ = '\0';
     }
     if (cp == 0 || *cp == '\0') {
         return 0;
     }
-    if (!scasecmp(key, "HKEY_LOCAL_MACHINE")) {
+    if (!scasecmp(key, "HKEY_LOCAL_MACHINE") || !scasecmp(key, "HKLM")) {
         *hive = HKEY_LOCAL_MACHINE;
-    } else if (!scasecmp(key, "HKEY_CURRENT_USER")) {
+    } else if (!scasecmp(key, "HKEY_CURRENT_USER") || !scasecmp(key, "HKCU")) {
         *hive = HKEY_CURRENT_USER;
     } else if (!scasecmp(key, "HKEY_USERS")) {
         *hive = HKEY_USERS;

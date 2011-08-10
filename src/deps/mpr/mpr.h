@@ -7587,7 +7587,7 @@ extern void mprSetLogLevel(int level);
 extern void mprSleep(MprTime msec);
 
 #if BLD_WIN_LIKE
-extern int mprReadRegistry(char **buf, ssize max, cchar *key, cchar *val);
+extern char *mprReadRegistry(cchar *key, cchar *val);
 extern int mprWriteRegistry(cchar *key, cchar *name, cchar *value);
 #endif
 

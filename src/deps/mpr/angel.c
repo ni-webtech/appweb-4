@@ -832,8 +832,8 @@ static void angel()
         Read the service home directory and args. Default to the current dir if none specified.
      */
     mprSprintf(key, sizeof(key), "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\%s", app->serviceName);
-    mprReadRegistry(&app->homeDir, MPR_MAX_FNAME, key, "HomeDir");
-    mprReadRegistry(&app->serviceArgs, MPR_MAX_FNAME, key, "Args");
+    app->homeDir = mprReadRegistry(key, "HomeDir");
+    app->serviceArgs = mprReadRegistry(key, "Args");
 
     /*
         Expect to find the service executable in the same directory as this angel program.

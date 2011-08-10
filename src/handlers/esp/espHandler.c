@@ -771,6 +771,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         if (el->env == 0) {
             el->env = mprCreateList(-1, 0);
         }
+        evalue = espExpandCommand(evalue, "", "");
         if ((prior = getenv(ekey)) != 0) {
             mprAddItem(el->env, sfmt("%s=%s;%s", ekey, evalue, prior));
         } else {
