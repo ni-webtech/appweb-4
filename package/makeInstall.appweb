@@ -126,7 +126,6 @@ configureProduct() {
 			verb=Stopping
             [ $TASK = Remove -a $QUIET = 0 ] && log Stop $BLD_PRODUCT
 		fi
-
 		if [ $BLD_HOST_OS = WIN ] ; then
 			if [ $action = start ] ; then
 				if [ -x "$BLD_BIN_PREFIX/angel.exe" ] ; then

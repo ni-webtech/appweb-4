@@ -61,7 +61,7 @@ if (options.task == "Remove" && bin.join("linkup").exists) {
     saveLink.attributes = {permissions: 0755}
 }
 
-copy("appweb*", bin, {from: sbin, permissions: 0755, strip: true})
+copy("appweb*", bin, {from: sbin, permissions: 0755, strip: true, trace: true})
 
 if (!bare) {
     copy("LICENSE.TXT", ver, { from: "doc/licenses", fold: true, expand: true })
@@ -169,7 +169,7 @@ if (!bare) {
                      	Daemon start / stop scripts
                      */
                     copy("appweb.init", init.join(product), 
-                        {from: "package/LINUX", permissions: 0755, expand: true, trace: true})
+                        {from: "package/LINUX", permissions: 0755, expand: true})
 
                     for each (i in [2, 3, 4, 5]) {
                         let level = ".d/S81"

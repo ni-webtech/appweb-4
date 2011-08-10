@@ -195,7 +195,7 @@ copyRemoveFiles() {
         processPackage ${packName}
         installRemoveLog ${packName}
     done
-    configureProduct --quiet copy
+    configureProduct copy
 
 #    #
 #    #   Don't remove empty directories if installing to "/"
