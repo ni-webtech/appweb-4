@@ -416,7 +416,7 @@ static void runView(HttpConn *conn)
     if (route->controllerName) {
         req->view = mprJoinPath(el->viewsDir, req->actionKey);
     } else {
-        req->view = mprJoinPath(conn->host->documentRoot, req->actionKey);
+        req->view = mprJoinPath(conn->rx->alias->filename, req->actionKey);
     }
     req->source = mprJoinPathExt(req->view, ".esp");
 
@@ -594,6 +594,11 @@ static EspLoc *allocEspLoc(HttpLoc *loc)
         return 0;
     }
 #endif
+#if DEBUG_IDE
+    el->cacheDir = mprGetAppDir();
+#else
+    el->cacheDir = mprJoinPath(mprGetAppDir(), "../" BLD_LIB_NAME);
+#endif
     el->dir = mprGetAbsPath((loc->alias) ? loc->alias->filename : loc->host->serverRoot);
     el->controllersDir = el->dir;
     el->databasesDir = el->dir;
@@ -611,12 +616,6 @@ static EspLoc *allocEspLoc(HttpLoc *loc)
     httpAddLocationToken(loc, "MODELS_DIR", el->modelsDir);
     httpAddLocationToken(loc, "STATIC_DIR", el->staticDir);
     httpAddLocationToken(loc, "VIEWS_DIR", el->viewsDir);
-
-#if DEBUG_IDE
-    el->cacheDir = mprGetAppDir();
-#else
-    el->cacheDir = mprJoinPath(mprGetAppDir(), "../" BLD_LIB_NAME);
-#endif
 
     el->lifespan = ESP_LIFESPAN;
     el->keepSource = 0;
@@ -672,6 +671,19 @@ static EspLoc *cloneEspLoc(EspLoc *parent, HttpLoc *loc)
         return 0;
     }
     return el;
+}
+
+
+static void setSimpleDirs(EspLoc *el)
+{
+    /* Don't set cache dir here - keep inherited value */
+    el->dir = mprGetAbsPath((el->loc->alias) ? el->loc->alias->filename : el->loc->host->serverRoot);
+    el->controllersDir = el->dir;
+    el->databasesDir = el->dir;
+    el->layoutsDir = el->dir;
+    el->modelsDir = el->dir;
+    el->viewsDir = el->dir;
+    el->staticDir = el->dir;
 }
 
 
@@ -822,6 +834,8 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
             el->routes = mprCreateList(-1, 0);
             addRoute(el, "home", "GET,POST,PUT", "%^/$", stemplate("${STATIC_DIR}/index.esp", loc->tokens), NULL);
             addRoute(el, "static", "GET", "%^/static/(.*)", stemplate("${STATIC_DIR}/$1", loc->tokens), NULL);
+        } else {
+            setSimpleDirs(el);
         }
         if (restful) {
             prefix = "{controller}";
