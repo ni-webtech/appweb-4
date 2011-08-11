@@ -94,7 +94,7 @@ static void usageError();
 
 /*********************************** Code *************************************/
 
-MAIN(esp, int argc, char **argv)
+int main(int argc, char **argv)
 {
     Mpr     *mpr;
     cchar   *argp;
