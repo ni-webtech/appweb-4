@@ -84,6 +84,8 @@ extern "C" {
     #else
         #define ESP_SSL_LIBS " -lmprssl"
     #endif
+#else
+    #define ESP_SSL_LIBS
 #endif
 #define ESP_LIBS ESP_CORE_LIBS ESP_SSL_LIBS
 
