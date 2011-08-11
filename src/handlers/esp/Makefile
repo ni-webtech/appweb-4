@@ -18,7 +18,8 @@ endif
 compileExtra: $(OBJECTS) $(MODULES) $(TARGETS)
 
 $(BLD_LIB_DIR)/$(ESP)$(BLD_SHOBJ): $(OBJECTS) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
-	bld --shared --library $(BLD_LIB_DIR)/$(ESP) --libs "$(BLD_APPWEB_LIBS)" $(OBJECTS)
+	bld --shared --library $(BLD_LIB_DIR)/$(ESP) --libs "$(BLD_APPWEB_LIBS)" \
+		espFramework$(BLD_OBJ) espHandler$(BLD_OBJ) espRouter$(BLD_OBJ) espSession$(BLD_OBJ) espTemplate$(BLD_OBJ)
 
 $(BLD_BIN_DIR)/esp$(BLD_EXE): $(OBJECTS)
 	bld --exe $(BLD_BIN_DIR)/esp$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" --libs "$(BLD_APPWEB_LIBS) $(LIBS)" \
