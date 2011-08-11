@@ -199,8 +199,8 @@ static bool fetchCachedResponse(HttpConn *conn)
                 }
             }
             mprDecodeUniversalTime(&tm, item.modified);
-            httpSetHeader(conn, "Last-Modified, mprFormatTime(MPR_HTTP_DATE, &tm));
-            httpSetHeader(conn, "Etag, mprGetMD5Hash(cacheName), slen(cacheName)", 0));
+            httpSetHeader(conn, "Last-Modified", mprFormatTime(MPR_HTTP_DATE, &tm));
+            httpSetHeader(conn, "Etag", mprGetMD5Hash(cacheName), slen(cacheName), 0));
             if (status == HTTP_CODE_OK) {
                 espWriteString(conn, content);
             }
