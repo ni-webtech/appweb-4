@@ -134,7 +134,6 @@ static int prepRoute(EspRoute *route, cchar *methods)
                     if ((field = schr(token, '=')) != 0) {
                         *field++ = '\0';
                     } else {
-                        mprPutStringToBuf(pattern, "([^/]*)");
                         field = "([^/]*)";
                     }
                     mprPutStringToBuf(pattern, field);
