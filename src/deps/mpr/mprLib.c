@@ -22916,22 +22916,22 @@ char *mprGetDate(char *fmt)
 char *mprFormatLocalTime(cchar *fmt, MprTime time)
 {
     struct tm   tm;
-    mprDecodeLocalTime(&tm, time);
     if (fmt == 0) {
         fmt = MPR_DEFAULT_DATE;
     }
-    return mprFormatTm(MPR_DEFAULT_DATE, &tm);
+    mprDecodeLocalTime(&tm, time);
+    return mprFormatTm(fmt, &tm);
 }
 
 
 char *mprFormatUniversalTime(cchar *fmt, MprTime time)
 {
     struct tm   tm;
-    mprDecodeUniversalTime(&tm, time);
     if (fmt == 0) {
         fmt = MPR_DEFAULT_DATE;
     }
-    return mprFormatTm(MPR_DEFAULT_DATE, &tm);
+    mprDecodeUniversalTime(&tm, time);
+    return mprFormatTm(fmt, &tm);
 }
 
 
