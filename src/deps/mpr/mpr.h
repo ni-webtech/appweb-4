@@ -5148,6 +5148,7 @@ typedef struct MprModule {
     char            *entry;             /**< Module library init entry point */
     void            *moduleData;        /**< Module specific data */
     void            *handle;            /**< O/S shared library load handle */
+    MprTime         modified;           /**< When the module file was last modified */
     MprTime         lastActivity;       /**< When the module was last used */
     MprTime         timeout;            /**< Inactivity unload timeout */
     int             flags;              /**< Module control flags */

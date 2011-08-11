@@ -53,6 +53,11 @@ extern "C" {
 #define ESP_LISTEN  "4000"
 
 /*
+    Timeout to wait for ESP requests to complete when reloading modules
+ */
+#define ESP_UNLOAD_TIMEOUT  (30 * 1000)
+
+/*
     Default compiler settings for ${DEBUG} and ${LIBS} tokens in EspCompile and EspLink
  */
 #if BLD_DEBUG
@@ -125,6 +130,8 @@ typedef struct Esp {
     MprHashTable    *actions;               /* Table of actions */
     MprHashTable    *views;                 /* Table of views */
     MprCache        *cache;                 /* Session and content cache */
+    MprMutex        *mutex;                 /* Multithread lock */
+    int             inUse;                  /* Active ESP request counter */
 } Esp;
 
 /*
@@ -138,7 +145,8 @@ typedef struct EspLoc {
     char            *compile;               /* Compile template */
     char            *link;                  /* Link template */
     char            *searchPath;            /* Search path to use when locating compiler / linker */
-    char            *app;                   /* App module if compiled flat */
+    char            *appModuleName;         /* App module name when compiled flat */
+    char            *appModulePath;         /* App module path when compiled flat */
 
     char            *dir;                   /* Base directory for location */
     char            *cacheDir;              /* Directory for cached compiled controllers and views */

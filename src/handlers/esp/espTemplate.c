@@ -62,6 +62,7 @@ char *espExpandCommand(cchar *command, cchar *source, cchar *module)
     }
     out = mprTrimPathExtension(module);
     buf = mprCreateBuf(-1, -1);
+    path = 0;
 
     for (cp = command; *cp; ) {
 		if (*cp == '$') {

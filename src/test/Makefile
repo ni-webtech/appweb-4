@@ -99,6 +99,7 @@ apacheBench:
 	ab -k -c 10 -n 1000 http://127.0.0.1:4010/bench.html 
 
 testPrep:
+	mkdir -p cache mvc/cache
 	rm cache/* mvc/cache/*
 	mkdir -p web/tmp
 	rm -f web/tmp/*

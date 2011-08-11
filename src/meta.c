@@ -410,14 +410,12 @@ int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
     } else {
         path = sclone(libname);
     }
-    module = mprLookupModule(path);
-    if (module) {
+    if ((module = mprLookupModule(path)) != 0) {
         mprLog(MPR_CONFIG, "Activating module (Builtin) %s", name);
         return 0;
     }
     mprSprintf(entryPoint, sizeof(entryPoint), "ma%sInit", name);
     entryPoint[2] = toupper((int) entryPoint[2]);
-
     if ((module = mprCreateModule(name, path, entryPoint, MPR->httpService)) == 0) {
         return 0;
     }

@@ -13639,6 +13639,7 @@ MprModule *mprCreateModule(cchar *name, cchar *path, cchar *entry, void *data)
 {
     MprModuleService    *ms;
     MprModule           *mp;
+    MprPath             info;
     char                *at;
     int                 index;
 
@@ -13655,10 +13656,12 @@ MprModule *mprCreateModule(cchar *name, cchar *path, cchar *entry, void *data)
     if ((mp = mprAllocObj(MprModule, manageModule)) == 0) {
         return 0;
     }
+    mprGetPathInfo(path, &info);
     mp->name = sclone(name);
     mp->path = sclone(path);
     mp->entry = sclone(entry);
     mp->moduleData = data;
+    mp->modified = info.mtime;
     //  MOB - this is not fully implemented
     mp->lastActivity = mprGetTime();
     index = mprAddItem(ms->modules, mp);

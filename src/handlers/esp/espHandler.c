@@ -21,7 +21,6 @@ static Esp *esp;
 
 /************************************ Forward *********************************/
 static EspLoc *allocEspLoc(HttpLoc *loc);
-static bool moduleIsCurrent(HttpConn *conn, cchar *source, cchar *module);
 static bool fetchCachedResponse(HttpConn *conn);
 static void manageAction(EspAction *cp, int flags);
 static void manageEsp(Esp *esp, int flags);
@@ -29,6 +28,8 @@ static void manageReq(EspReq *req, int flags);
 static int  runAction(HttpConn *conn);
 static void runView(HttpConn *conn);
 static void saveCachedResponse(HttpConn *conn);
+static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *recompile);
+static bool unloadModule(cchar *module);
 
 /************************************* Code ***********************************/
 
@@ -64,11 +65,6 @@ static void openEsp(HttpQueue *q)
     alias = rx->alias;
     if (alias->prefixLen > 0) {
         uri = &uri[alias->prefixLen];
-#if UNUSED
-        if (uri > rx->pathInfo && *uri != '/' && uri[-1] == '/') {
-            uri--;
-        }
-#endif
         if (*uri == '\0') {
             uri = "/";
         }
@@ -76,6 +72,17 @@ static void openEsp(HttpQueue *q)
         rx->pathInfo = sclone(uri);
         mprLog(5, "esp: set script name: \"%s\", pathInfo: \"%s\"", rx->scriptName, rx->pathInfo);
     }
+    lock(esp);
+    esp->inUse++;
+    unlock(esp);
+}
+
+
+static void closeEsp(HttpQueue *q)
+{
+    lock(esp);
+    esp->inUse--;
+    unlock(esp);
 }
 
 
@@ -272,13 +279,15 @@ static int runAction(HttpConn *conn)
     EspReq      *req;
     EspRoute    *route;
     EspAction   *action;
-    char        *key, *name, *entry;
-    int         updated;
+    MprPath     minfo;
+    char        *key, *entry;
+    int         updated, recompile;
 
     req = conn->data;
     el = req->el;
     route = req->route;
     updated = 0;
+    recompile = 0;
 
     /*
         Expand any form var $tokens. This permits ${controller} and user form data to be used in the controller name
@@ -290,51 +299,52 @@ static int runAction(HttpConn *conn)
     req->cacheName = mprGetMD5Hash(route->controllerPath, slen(route->controllerPath), "controller_");
     req->module = mprGetNormalizedPath(sfmt("%s/%s%s", el->cacheDir, req->cacheName, BLD_SHOBJ));
 
-    if (el->update) {
+    if (el->appModuleName) {
+        if ((mp = mprLookupModule(el->appModuleName)) != 0) {
+            if (el->update) {
+                mprGetPathInfo(el->appModuleName, &minfo);
+                if (minfo.valid && mp->modified < minfo.mtime) {
+                    unloadModule(el->appModuleName);
+                    mp = 0;
+                }
+            }
+        }
+        if (mp == 0) {
+            entry = sfmt("espInit_app_%s", mprGetPathBase(el->dir));
+            if ((mp = mprCreateModule(el->appModuleName, el->appModulePath, entry, el)) == 0) {
+                httpMemoryError(conn);
+                return 0;
+            }
+            if (mprLoadModule(mp) < 0) {
+                httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load compiled esp module for %s", el->appModuleName);
+                return 0;
+            }
+        }
+
+    } else if (el->update) {
         if (!mprPathExists(route->controllerPath, R_OK)) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find controller %s", route->controllerPath);
             return 0;
         }
-        if (!moduleIsCurrent(conn, route->controllerPath, req->module)) {
-            /* Modules are named by source to aid debugging */
-            if ((mp = mprLookupModule(route->controllerPath)) != 0) {
-                //  What if some modules cant be unloaded?
-                //  MOB - must complete all other running requests first
-                mprUnloadModule(mp);
-            }
-            //  WARNING: GC yield here
-            if (!espCompile(conn, route->controllerPath, req->module, req->cacheName, 0)) {
+        if (moduleIsStale(conn, route->controllerPath, req->module, &recompile)) {
+            unloadModule(route->controllerPath);
+            /*  WARNING: GC yield here */
+            if (recompile && !espCompile(conn, route->controllerPath, req->module, req->cacheName, 0)) {
                 return 0;
             }
         }
         if (mprLookupModule(route->controllerPath) == 0) {
             req->entry = getControllerEntry(route->controllerName);
-            //  MOB - who keeps reference to module?
             if ((mp = mprCreateModule(route->controllerPath, req->module, req->entry, el)) == 0) {
                 httpMemoryError(conn);
                 return 0;
             }
-            //  MOB - this should return an error msg
             if (mprLoadModule(mp) < 0) {
                 httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, 
                     "Can't load compiled esp module for %s", route->controllerPath);
                 return 0;
             }
             updated = 1;
-        }
-
-    } else if (el->app) {
-        name = mprJoinPath(el->cacheDir, el->app);
-        if (mprLookupModule(name) == 0) {
-            entry = sfmt("espInit_app_%s", mprGetPathBase(el->dir));
-            if ((mp = mprCreateModule(name, el->app, entry, el)) == 0) {
-                httpMemoryError(conn);
-                return 0;
-            }
-            if (mprLoadModule(mp) < 0) {
-                httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load compiled esp module for %s", name);
-                return 0;
-            }
         }
     }
     key = mprJoinPath(el->controllersDir, req->actionKey);
@@ -372,10 +382,12 @@ static void runView(HttpConn *conn)
     EspReq      *req;
     EspRoute    *route;
     EspViewFn   view;
+    int         recompile;
     
     req = conn->data;
     el = req->el;
     route = req->route;
+    recompile = 0;
     
     if (route->controllerName) {
         req->view = mprJoinPath(el->viewsDir, req->actionKey);
@@ -391,15 +403,10 @@ static void runView(HttpConn *conn)
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find view %s", req->source);
             return;
         }
-        if (!moduleIsCurrent(conn, req->source, req->module)) {
-            /* Modules are named by source to aid debugging */
-            if ((mp = mprLookupModule(req->source)) != 0) {
-                //  What if some modules cant be unloaded?
-                //  MOB - must complete all other running requests first
-                mprUnloadModule(mp);
-            }
-            //  WARNING: this will allow GC
-            if (!espCompile(conn, req->source, req->module, req->cacheName, 1)) {
+        if (moduleIsStale(conn, req->source, req->module, &recompile)) {
+            unloadModule(req->source);
+            /* WARNING: this will allow GC */
+            if (recompile && !espCompile(conn, req->source, req->module, req->cacheName, 1)) {
                 return;
             }
         }
@@ -426,20 +433,53 @@ static void runView(HttpConn *conn)
 }
 
 
-static bool moduleIsCurrent(HttpConn *conn, cchar *source, cchar *module)
+static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *recompile)
 {
+    MprModule   *mp;
     EspReq      *req;
     MprPath     sinfo, minfo;
 
     req = conn->data;
-    if (mprPathExists(module, R_OK)) {
-        mprGetPathInfo(source, &sinfo);
-        mprGetPathInfo(module, &minfo);
-        //  MOB - also want a universal touch to rebuild all. Touch appweb.conf
-        /* The loaded module is named by source to aid debugging */
-        if (sinfo.mtime < minfo.mtime) {
+    *recompile = 0;
+
+    mprGetPathInfo(module, &minfo);
+    if (!minfo.valid) {
+        *recompile = 1;
+        return 1;
+    }
+    mprGetPathInfo(source, &sinfo);
+    if (sinfo.valid && sinfo.mtime > minfo.mtime) {
+        *recompile = 1;
+        return 1;
+    }
+    if ((mp = mprLookupModule(req->source)) != 0) {
+        if (mp->modified < minfo.mtime) {
+            /* Module file has been updated */
             return 1;
         }
+    }
+    /* Loaded module is current */
+    return 0;
+}
+
+
+static bool unloadModule(cchar *module)
+{
+    MprModule   *mp;
+    MprTime     mark;
+
+    if ((mp = mprLookupModule(module)) != 0) {
+        mark = mprGetTime();
+        do {
+            lock(esp);
+            if (esp->inUse == 0) {
+                mprUnloadModule(mp);
+                unlock(esp);
+                return 1;
+            }
+            unlock(esp);
+            mprSleep(20);
+        } while (mprGetRemainingTime(mark, ESP_UNLOAD_TIMEOUT));
     }
     return 0;
 }
@@ -644,9 +684,9 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
     HttpDir     *dir, *parentDir;
     EspLoc      *el, *parent;
     EspRoute    *route;
-    char        *name, *ekey, *evalue, *prefix, *path, *next, *methods, *prior, *pattern;
-    char        *action, *controller, *mvc;
-    int         needRoutes;
+    char        *name, *ekey, *evalue, *prefix, *path, *next, *methods, *prior, *pattern, *kind;
+    char        *action, *controller;
+    int         needRoutes, mvc;
     
     host = state->host;
     loc = state->loc;
@@ -669,7 +709,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
 
     if (scasecmp(key, "EspAlias") == 0) {
         /*
-            EspAlias prefix [path [mvc]]
+            EspAlias prefix [path [mvc|simple]]
             If the prefix matches an existing location block, it modifies that. Otherwise a new location is created.
          */
         if (maGetConfigValue(&prefix, value, &next, 1) < 0) {
@@ -678,7 +718,11 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         if (maGetConfigValue(&path, next, &next, 1) < 0) {
             path = ".";
         }
-        maGetConfigValue(&mvc, next, &next, 1);
+        if (maGetConfigValue(&kind, next, &next, 1) < 0) {
+            mvc = 1;
+        } else {
+            mvc = (scasecmp(kind, "mvc") == 0);
+        }
         prefix = stemplate(prefix, loc->tokens);
         if (scmp(prefix, "/") == 0) {
             prefix = MPR->emptyString;
@@ -799,7 +843,11 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         return 1;
 
     } else if (scasecmp(key, "EspLoad") == 0) {
-        el->app = mprJoinPath(el->cacheDir, "app");
+        if (maGetConfigValue(&name, value, &path, 1) < 0) {
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        el->appModuleName = sclone(name);
+        el->appModulePath = sclone(path);
         return 1;
 
     } else if (scasecmp(key, "EspReset") == 0) {
@@ -884,7 +932,8 @@ void espManageEspLoc(EspLoc *el, int flags)
         mprMark(el->viewsDir);
         mprMark(el->staticDir);
         mprMark(el->searchPath);
-        mprMark(el->app);
+        mprMark(el->appModuleName);
+        mprMark(el->appModulePath);
     }
 }
 
@@ -920,6 +969,7 @@ static void manageAction(EspAction *ap, int flags)
 static void manageEsp(Esp *esp, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
+        mprMark(esp->mutex);
         mprMark(esp->actions);
         mprMark(esp->views);
         mprMark(esp->cache);
@@ -929,26 +979,26 @@ static void manageEsp(Esp *esp, int flags)
 
 int maEspHandlerInit(Http *http)
 {
-    Esp             *ep;
     HttpStage       *handler;
 
     if ((handler = httpCreateHandler(http, "espHandler", HTTP_STAGE_QUERY_VARS | HTTP_STAGE_VIRTUAL, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     handler->open = openEsp; 
+    handler->close = closeEsp; 
     handler->start = startEsp; 
     handler->parse = (HttpParse) parseEsp; 
-//MOB - fix
-    if ((esp = ep = handler->stageData = mprAllocObj(Esp, manageEsp)) == 0) {
+    if ((esp = handler->stageData = mprAllocObj(Esp, manageEsp)) == 0) {
         return MPR_ERR_MEMORY;
     }
-    if ((ep->views = mprCreateHash(-1, MPR_HASH_STATIC_VALUES)) == 0) {
+    esp->mutex = mprCreateLock();
+    if ((esp->views = mprCreateHash(-1, MPR_HASH_STATIC_VALUES)) == 0) {
         return 0;
     }
-    if ((ep->actions = mprCreateHash(-1, 0)) == 0) {
+    if ((esp->actions = mprCreateHash(-1, 0)) == 0) {
         return 0;
     }
-    if ((ep->cache = mprCreateCache(MPR_CACHE_SHARED)) == 0) {
+    if ((esp->cache = mprCreateCache(MPR_CACHE_SHARED)) == 0) {
         return MPR_ERR_MEMORY;
     }
     return 0;
