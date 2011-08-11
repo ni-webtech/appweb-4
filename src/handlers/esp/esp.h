@@ -236,6 +236,7 @@ typedef struct EspReq {
     int             autoFinalize;           /* Request is/will-be auto-finalized */
     int             finalized;              /* Request has been finalized */
     int             sessionProbed;          /* Already probed for session store */
+    int             appLoaded;              /* App module already probed */
 } EspReq;
 
 

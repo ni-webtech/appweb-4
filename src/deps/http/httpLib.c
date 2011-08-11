@@ -4432,7 +4432,7 @@ void httpAddConn(Http *http, HttpConn *conn)
     mprAddItem(http->connections, conn);
     conn->started = http->now;
     conn->seqno = http->connCount++;
-    if ((http->now + MPR_TICKS_PER_SEC) < conn->started) {
+    if (http->now < (conn->started - MPR_TICKS_PER_SEC)) {
         updateCurrentDate(http);
     }
     if (http->timer == 0) {

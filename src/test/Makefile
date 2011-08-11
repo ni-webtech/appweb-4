@@ -99,8 +99,8 @@ apacheBench:
 	ab -k -c 10 -n 1000 http://127.0.0.1:4010/bench.html 
 
 testPrep:
-	mkdir -p cache mvc/cache
-	rm cache/* mvc/cache/*
+	mkdir -p cache app/cache
+	rm cache/* app/cache/*
 	mkdir -p web/tmp
 	rm -f web/tmp/*
 	find . -name '*.mod' | xargs rm -f >/dev/null 2>&1 ; true
@@ -112,14 +112,14 @@ cleanExtra: testPrep
 	rm -f *.o *.lo *.obj *.out */*.mod */*/*.mod
 	rm -f ../cgi-bin/*cgi* ../cgi-bin/testScript
 	rm -f web/cgiProgram.cgi
-	rm -f cache/* mvc/cache/*
+	rm -f cache/* app/cache/*
 
 #
 #	Don't copy this. Ensure you set minimal permissions on upload and temp directories
 #
 dependExtra:
-	mkdir -p web/tmp cache mvc/cache
-	chmod 777 web/tmp cache mvc/cache
+	mkdir -p web/tmp cache app/cache
+	chmod 777 web/tmp cache app/cache
 
 #
 #   Local variables:

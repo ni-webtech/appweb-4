@@ -272,6 +272,49 @@ static char *getControllerEntry(cchar *controllerName)
 }
 
 
+/*
+    Load the (flat) app module. If modified, unload and reload if required.
+ */
+static int loadApp(HttpConn *conn, int *updated)
+{
+    MprModule   *mp;
+    EspLoc      *el;
+    EspReq      *req;
+    MprPath     minfo;
+    char        *entry;
+
+    req = conn->data;
+    if (req->appLoaded) {
+        return 1;
+    }
+    *updated = 0;
+    el = req->el;
+    if ((mp = mprLookupModule(el->appModuleName)) != 0) {
+        if (el->update) {
+            mprGetPathInfo(mp->path, &minfo);
+            if (minfo.valid && mp->modified < minfo.mtime) {
+                unloadModule(el->appModuleName);
+                mp = 0;
+            }
+        }
+    }
+    if (mp == 0) {
+        entry = sfmt("espInit_app_%s", mprGetPathBase(el->dir));
+        if ((mp = mprCreateModule(el->appModuleName, el->appModulePath, entry, el)) == 0) {
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find module %s", el->appModulePath);
+            return 0;
+        }
+        if (mprLoadModule(mp) < 0) {
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load compiled esp module for %s", el->appModuleName);
+            return 0;
+        }
+        *updated = 1;
+    }
+    req->appLoaded = 1;
+    return 1;
+}
+
+
 static int runAction(HttpConn *conn)
 {
     MprModule   *mp;
@@ -279,8 +322,7 @@ static int runAction(HttpConn *conn)
     EspReq      *req;
     EspRoute    *route;
     EspAction   *action;
-    MprPath     minfo;
-    char        *key, *entry;
+    char        *key;
     int         updated, recompile;
 
     req = conn->data;
@@ -295,39 +337,20 @@ static int runAction(HttpConn *conn)
     if (schr(route->controllerName, '$')) {
         route->controllerName = stemplate(route->controllerName, conn->rx->formVars);
     }
-    route->controllerPath = mprJoinPath(el->controllersDir, route->controllerName);
-    req->cacheName = mprGetMD5Hash(route->controllerPath, slen(route->controllerPath), "controller_");
-    req->module = mprGetNormalizedPath(sfmt("%s/%s%s", el->cacheDir, req->cacheName, BLD_SHOBJ));
-
     if (el->appModuleName) {
-        if ((mp = mprLookupModule(el->appModuleName)) != 0) {
-            if (el->update) {
-                mprGetPathInfo(el->appModuleName, &minfo);
-                if (minfo.valid && mp->modified < minfo.mtime) {
-                    unloadModule(el->appModuleName);
-                    mp = 0;
-                }
-            }
+        if (!loadApp(conn, &updated)) {
+            return 0;
         }
-        if (mp == 0) {
-            entry = sfmt("espInit_app_%s", mprGetPathBase(el->dir));
-            if ((mp = mprCreateModule(el->appModuleName, el->appModulePath, entry, el)) == 0) {
-                httpMemoryError(conn);
-                return 0;
-            }
-            if (mprLoadModule(mp) < 0) {
-                httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load compiled esp module for %s", el->appModuleName);
-                return 0;
-            }
-        }
-
     } else if (el->update) {
+        route->controllerPath = mprJoinPath(el->controllersDir, route->controllerName);
+        req->cacheName = mprGetMD5Hash(route->controllerPath, slen(route->controllerPath), "controller_");
+        req->module = mprGetNormalizedPath(sfmt("%s/%s%s", el->cacheDir, req->cacheName, BLD_SHOBJ));
+
         if (!mprPathExists(route->controllerPath, R_OK)) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find controller %s", route->controllerPath);
             return 0;
         }
         if (moduleIsStale(conn, route->controllerPath, req->module, &recompile)) {
-            unloadModule(route->controllerPath);
             /*  WARNING: GC yield here */
             if (recompile && !espCompile(conn, route->controllerPath, req->module, req->cacheName, 0)) {
                 return 0;
@@ -349,6 +372,7 @@ static int runAction(HttpConn *conn)
     }
     key = mprJoinPath(el->controllersDir, req->actionKey);
     if ((action = mprLookupKey(esp->actions, key)) == 0) {
+        route->controllerPath = mprJoinPath(el->controllersDir, route->controllerName);
         key = sfmt("%s/%s-missing", route->controllerPath, mprTrimPathExtension(route->controllerName));
         if ((action = mprLookupKey(esp->actions, key)) == 0) {
             if ((action = mprLookupKey(esp->actions, "missing")) == 0) {
@@ -382,12 +406,12 @@ static void runView(HttpConn *conn)
     EspReq      *req;
     EspRoute    *route;
     EspViewFn   view;
-    int         recompile;
+    int         recompile, updated;
     
     req = conn->data;
     el = req->el;
     route = req->route;
-    recompile = 0;
+    recompile = updated = 0;
     
     if (route->controllerName) {
         req->view = mprJoinPath(el->viewsDir, req->actionKey);
@@ -395,16 +419,21 @@ static void runView(HttpConn *conn)
         req->view = mprJoinPath(conn->host->documentRoot, req->actionKey);
     }
     req->source = mprJoinPathExt(req->view, ".esp");
-    req->cacheName = mprGetMD5Hash(req->source, slen(req->source), "view_");
-    req->module = mprGetNormalizedPath(sfmt("%s/%s%s", req->el->cacheDir, req->cacheName, BLD_SHOBJ));
 
-    if (el->update) {
+    if (el->appModuleName) {
+        if (!loadApp(conn, &updated)) {
+            return;
+        }
+
+    } else if (el->update) {
+        req->cacheName = mprGetMD5Hash(req->source, slen(req->source), "view_");
+        req->module = mprGetNormalizedPath(sfmt("%s/%s%s", req->el->cacheDir, req->cacheName, BLD_SHOBJ));
+
         if (!mprPathExists(req->source, R_OK)) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find view %s", req->source);
             return;
         }
         if (moduleIsStale(conn, req->source, req->module, &recompile)) {
-            unloadModule(req->source);
             /* WARNING: this will allow GC */
             if (recompile && !espCompile(conn, req->source, req->module, req->cacheName, 1)) {
                 return;
@@ -436,25 +465,29 @@ static void runView(HttpConn *conn)
 static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *recompile)
 {
     MprModule   *mp;
-    EspReq      *req;
     MprPath     sinfo, minfo;
 
-    req = conn->data;
     *recompile = 0;
-
     mprGetPathInfo(module, &minfo);
     if (!minfo.valid) {
         *recompile = 1;
         return 1;
     }
     mprGetPathInfo(source, &sinfo);
-    if (sinfo.valid && sinfo.mtime > minfo.mtime) {
+    /*
+        Use >= to ensure we reload. This may cause redundant reloads as mtime has a 1 sec granularity.
+     */
+    if (sinfo.valid && sinfo.mtime >= minfo.mtime) {
         *recompile = 1;
+        if ((mp = mprLookupModule(source)) != 0) {
+            unloadModule(source);
+        }
         return 1;
     }
-    if ((mp = mprLookupModule(req->source)) != 0) {
-        if (mp->modified < minfo.mtime) {
+    if ((mp = mprLookupModule(source)) != 0) {
+        if (minfo.mtime > mp->modified) {
             /* Module file has been updated */
+            unloadModule(source);
             return 1;
         }
     }
@@ -472,7 +505,8 @@ static bool unloadModule(cchar *module)
         mark = mprGetTime();
         do {
             lock(esp);
-            if (esp->inUse == 0) {
+            /* Own request will count as 1 */
+            if (esp->inUse <= 1) {
                 mprUnloadModule(mp);
                 unlock(esp);
                 return 1;
@@ -666,13 +700,33 @@ static void setMvcDirs(EspLoc *el)
 }
 
 
-static void addRoute(EspLoc *el, cchar *name, cchar *methods, cchar *pattern, cchar *action, cchar *controller, 
+static void addRoute(EspLoc *el, cchar *name, cchar *methods, cchar *pattern, cchar *action, cchar *controller)
+{
+    mprAddItem(el->routes, espCreateRoute(name, methods, pattern, action, controller));
+}
+
+
+static void addRestfulRoute(EspLoc *el, cchar *name, cchar *methods, cchar *pattern, cchar *action, cchar *controller, 
         cchar *prefix, cchar *controllerPattern)
 {
     pattern = sfmt(pattern, prefix);
     action = sfmt(action, controllerPattern);
     controller = sfmt(controller, controllerPattern);
     mprAddItem(el->routes, espCreateRoute(name, methods, pattern, action, controller));
+}
+
+
+static void addRestfulRoutes(EspLoc *el, cchar *prefix, cchar *controller)
+{
+    addRestfulRoute(el, "init",    "GET",    "^/%s/init",       "%s-init",      "%s.c", prefix, controller);
+    addRestfulRoute(el, "index",   "GET",    "^/%s(/)$",        "%s-index",     "%s.c", prefix, controller);
+    addRestfulRoute(el, "create",  "POST",   "^/%s(/)",         "%s-create",    "%s.c", prefix, controller);
+    //  MOB - these IDs need to be numeric
+    addRestfulRoute(el, "edit",    "GET",    "^/%s/{id}/edit",  "%s-edit",      "%s.c", prefix, controller);
+    addRestfulRoute(el, "show",    "GET",    "^/%s/{id}",       "%s-show",      "%s.c", prefix, controller);
+    addRestfulRoute(el, "update",  "PUT",    "^/%s/{id}",       "%s-update",    "%s.c", prefix, controller);
+    addRestfulRoute(el, "destroy", "DELETE", "^/%s/{id}",       "%s-destroy",   "%s.c", prefix, controller);
+    addRestfulRoute(el, "default", "ALL",    "^/%s(/{action})", "%s-${action}", "%s.c", prefix, controller);
 }
 
 
@@ -686,7 +740,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
     EspRoute    *route;
     char        *name, *ekey, *evalue, *prefix, *path, *next, *methods, *prior, *pattern, *kind;
     char        *action, *controller;
-    int         needRoutes, mvc;
+    int         needRoutes, mvc, restful;
     
     host = state->host;
     loc = state->loc;
@@ -718,10 +772,17 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         if (maGetConfigValue(&path, next, &next, 1) < 0) {
             path = ".";
         }
+        mvc = restful= 0;
         if (maGetConfigValue(&kind, next, &next, 1) < 0) {
             mvc = 1;
         } else {
-            mvc = (scasecmp(kind, "mvc") == 0);
+            if (scasecmp(kind, "simple") == 0) {
+                mvc = 0;
+            } if (scasecmp(kind, "mvc") == 0) {
+                mvc = 1;
+            } else if (scasecmp(kind, "restful") == 0) {
+                restful = mvc = 1;
+            }
         }
         prefix = stemplate(prefix, loc->tokens);
         if (scmp(prefix, "/") == 0) {
@@ -730,7 +791,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         needRoutes = 0;
         if ((loc = httpLookupLocation(host, prefix)) == 0) {
             /*
-                This EjsAlias is for a new location. Create a location block and set needRoutes
+                This EjsAlias is for a new location. Create a location block and set needRoutes.
              */
             loc = httpCreateInheritedLocation(state->loc);
             el = cloneEspLoc(el, loc);
@@ -759,15 +820,18 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         if (mvc) {
             setMvcDirs(el);
             el->routes = mprCreateList(-1, 0);
-            mprAddItem(el->routes, espCreateRoute("home", "GET,POST,PUT", "%^/$", 
-                stemplate("${STATIC_DIR}/index.esp", loc->tokens), NULL));
-            mprAddItem(el->routes, espCreateRoute("static", "GET", "%^/static/(.*)", 
-                stemplate("${STATIC_DIR}/$1", loc->tokens), NULL));
-            mprAddItem(el->routes, 
-                espCreateRoute("default", NULL, "^/{controller}(/{action})", "${controller}-${action}", "${controller}.c"));
+            addRoute(el, "home", "GET,POST,PUT", "%^/$", stemplate("${STATIC_DIR}/index.esp", loc->tokens), NULL);
+            addRoute(el, "static", "GET", "%^/static/(.*)", stemplate("${STATIC_DIR}/$1", loc->tokens), NULL);
+        }
+        if (restful) {
+            prefix = "{controller}";
+            controller = "${controller}";
+            addRestfulRoutes(el, prefix, controller);
+        } else if (mvc) {
+            addRoute(el, "default", NULL, "^/{controller}(/{action})", "${controller}-${action}", "${controller}.c");
         }
         if (mvc || needRoutes) {
-            mprAddItem(el->routes, espCreateRoute("esp", NULL, "%\\.[eE][sS][pP]$", NULL, NULL));
+            addRoute(el, "esp", NULL, "%\\.[eE][sS][pP]$", NULL, NULL);
         }
         return 1;
 
@@ -867,14 +931,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
             controller = "${controller}";
         }
         prefix = strim(prefix, "/", MPR_TRIM_START);
-        addRoute(el, "init",    "GET",    "^/%s/init",       "%s-init",      "%s.c", prefix, controller);
-        addRoute(el, "index",   "GET",    "^/%s(/)$",        "%s-index",     "%s.c", prefix, controller);
-        addRoute(el, "create",  "POST",   "^/%s(/)",         "%s-create",    "%s.c", prefix, controller);
-        addRoute(el, "edit",    "GET",    "^/%s/{id}/edit",  "%s-edit",      "%s.c", prefix, controller);
-        addRoute(el, "show",    "GET",    "^/%s/{id}",       "%s-show",      "%s.c", prefix, controller);
-        addRoute(el, "update",  "PUT",    "^/%s/{id}",       "%s-update",    "%s.c", prefix, controller);
-        addRoute(el, "destroy", "DELETE", "^/%s/{id}",       "%s-destroy",   "%s.c", prefix, controller);
-        addRoute(el, "default", "ALL",    "^/%s(/{action})", "%s-${action}", "%s.c", prefix, controller);
+        addRestfulRoutes(el, prefix, controller);
         return 1;
 
     } else if (scasecmp(key, "EspRoute") == 0) {

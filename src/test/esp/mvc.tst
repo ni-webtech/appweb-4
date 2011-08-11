@@ -5,37 +5,37 @@
 const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
-//  /mvc
-http.get(HTTP + "/mvc")
+//  /app
+http.get(HTTP + "/app")
 assert(http.status == 200)
 assert(http.response.contains("Welcome to ESP"))
 http.close()
 
-//  /mvc/
-http.get(HTTP + "/mvc/")
+//  /app/
+http.get(HTTP + "/app/")
 assert(http.status == 200)
 assert(http.response.contains("Welcome to ESP"))
 http.close()
 
-//  /mvc/static/layout.css
-http.get(HTTP + "/mvc/static/layout.css")
+//  /app/static/layout.css
+http.get(HTTP + "/app/static/layout.css")
 assert(http.status == 200)
 assert(http.response.contains("Default layout style sheet"))
 http.close()
 
-//  /mvc/static/index.esp
-http.get(HTTP + "/mvc/static/index.esp")
+//  /app/static/index.esp
+http.get(HTTP + "/app/static/index.esp")
 assert(http.status == 200)
 assert(http.response.contains("Welcome to ESP"))
 http.close()
 
-//  /mvc/user/check - this tests a controller without view
-http.get(HTTP + "/mvc/user/check")
+//  /app/user/check - this tests a controller without view
+http.get(HTTP + "/app/user/check")
 assert(http.status == 200)
 assert(http.response.contains("Check: OK"))
 
-//  /mvc/user/details - this tests templates
-http.get(HTTP + "/mvc/user/details")
+//  /app/user/details - this tests templates
+http.get(HTTP + "/app/user/details")
 assert(http.status == 200)
 assert(http.response.contains("<title>MVC Title</title>"))
 assert(http.response.contains("Powered by Appweb"))
