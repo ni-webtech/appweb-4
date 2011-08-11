@@ -16,7 +16,7 @@
 /************************************* Local **********************************/
 
 static void manageRoute(EspRoute *route, int flags);
-static int prepRoute(EspRoute *route, cchar *methods);
+static int prepRoute(EspRoute *route);
 
 /************************************* Code ***********************************/
 
@@ -38,10 +38,11 @@ EspRoute *espCreateRoute(cchar *name, cchar *methods, cchar *pattern, cchar *act
     if (controller) {
         route->controllerName = sclone(controller);
     }
-    if (methods == 0 || scasecmp(methods, "ALL") == 0) {
-        methods = "DELETE, GET, HEAD, OPTIONS, POST, PUT, TRACE";
+    if (methods == 0) {
+        methods = "ALL";
     }
-    if (prepRoute(route, methods) < 0) {
+    route->methods = sclone(methods);
+    if (prepRoute(route) < 0) {
         return 0;
     }
     return route;
@@ -53,6 +54,7 @@ static void manageRoute(EspRoute *route, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(route->name);
         mprMark(route->methods);
+        mprMark(route->methodHash);
         mprMark(route->pattern);
         mprMark(route->action);
         mprMark(route->controllerName);
@@ -74,25 +76,29 @@ static void manageRoute(EspRoute *route, int flags)
     a regular expression in route->patternCompiled.
     MOB - refactor into separate functions
  */
-static int prepRoute(EspRoute *route, cchar *methods)
+static int prepRoute(EspRoute *route)
 {
     MprBuf  *pattern, *params, *buf;
     cchar   *errMsg, *item;
-    char    *mstr, *method, *tok, *cp, *ep, *token, *field;
+    char    *methods, *method, *tok, *cp, *ep, *token, *field;
     int     column, errCode, index, next, braced;
 
     /*
         Convert the methods into a method hash
      */
-    if (route->methods == 0) {
-        if ((route->methods = mprCreateHash(-1, 0)) == 0) {
+    if (route->methodHash == 0) {
+        if ((route->methodHash = mprCreateHash(-1, 0)) == 0) {
             return MPR_ERR_MEMORY;
         }
     }
-    mstr = sclone(methods);
-    while ((method = stok(mstr, ", \t\n\r", &tok)) != 0) {
-        mprAddKey(route->methods, method, route);
-        mstr = 0;
+    methods = route->methods;
+    if (scasecmp(route->methods, "ALL") == 0) {
+        methods = "DELETE, GET, HEAD, OPTIONS, POST, PUT, TRACE";
+    }
+    methods = sclone(methods);
+    while ((method = stok(methods, ", \t\n\r", &tok)) != 0) {
+        mprAddKey(route->methodHash, method, route);
+        methods = 0;
     }
 
     /*
@@ -375,7 +381,7 @@ char *espMatchRoute(HttpConn *conn, EspRoute *route)
     int         matches[ESP_MAX_ROUTE_MATCHES * 3], matchCount, next, start;
 
     rx = conn->rx;
-    if (!mprLookupKey(route->methods, rx->method)) {
+    if (!mprLookupKey(route->methodHash, rx->method)) {
         return 0;
     }
     /*

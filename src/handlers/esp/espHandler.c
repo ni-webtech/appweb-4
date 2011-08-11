@@ -769,9 +769,9 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
     HttpDir     *dir, *parentDir;
     EspLoc      *el, *parent;
     EspRoute    *route;
-    char        *name, *ekey, *evalue, *prefix, *path, *next, *methods, *prior, *pattern, *kind;
+    char        *name, *ekey, *evalue, *prefix, *path, *nextToken, *methods, *prior, *pattern, *kind;
     char        *action, *controller;
-    int         needRoutes, mvc, restful;
+    int         needRoutes, mvc, restful, next;
     
     host = state->host;
     loc = state->loc;
@@ -797,14 +797,14 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
             EspAlias prefix [path [mvc|simple]]
             If the prefix matches an existing location block, it modifies that. Otherwise a new location is created.
          */
-        if (maGetConfigValue(&prefix, value, &next, 1) < 0) {
+        if (maGetConfigValue(&prefix, value, &nextToken, 1) < 0) {
             return MPR_ERR_BAD_SYNTAX;
         }
-        if (maGetConfigValue(&path, next, &next, 1) < 0) {
+        if (maGetConfigValue(&path, nextToken, &nextToken, 1) < 0) {
             path = ".";
         }
         mvc = restful= 0;
-        if (maGetConfigValue(&kind, next, &next, 1) < 0) {
+        if (maGetConfigValue(&kind, nextToken, &nextToken, 1) < 0) {
             mvc = 1;
         } else {
             if (scasecmp(kind, "simple") == 0) {
@@ -876,13 +876,13 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         /*
             EspDir name dir
          */
-        if (maGetConfigValue(&name, value, &next, 1) < 0) {
+        if (maGetConfigValue(&name, value, &nextToken, 1) < 0) {
             return MPR_ERR_BAD_SYNTAX;
         }
         if (scmp(name, "mvc") == 0) {
             setMvcDirs(el);
         } else {
-            path = stemplate(mprJoinPath(el->dir, next), loc->tokens);
+            path = stemplate(mprJoinPath(el->dir, nextToken), loc->tokens);
             if (scmp(name, "cache") == 0) {
                 el->cacheDir = path;
             } if (scmp(name, "controllers") == 0) {
@@ -903,10 +903,10 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         return 1;
 
     } else if (scasecmp(key, "EspEnv") == 0) {
-        if (maGetConfigValue(&ekey, value, &next, 1) < 0) {
+        if (maGetConfigValue(&ekey, value, &nextToken, 1) < 0) {
             return MPR_ERR_BAD_SYNTAX;
         }
-        if (maGetConfigValue(&evalue, next, &next, 1) < 0) {
+        if (maGetConfigValue(&evalue, nextToken, &nextToken, 1) < 0) {
             return MPR_ERR_BAD_SYNTAX;
         }
         if (el->env == 0) {
@@ -971,20 +971,20 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         /*
             EspRoute name methods pattern action [controller]
          */
-        if (maGetConfigValue(&name, value, &next, 1) < 0) {
+        if (maGetConfigValue(&name, value, &nextToken, 1) < 0) {
             return MPR_ERR_BAD_SYNTAX;
         }
-        if (maGetConfigValue(&methods, next, &next, 1) < 0) {
+        if (maGetConfigValue(&methods, nextToken, &nextToken, 1) < 0) {
             return MPR_ERR_BAD_SYNTAX;
         }
-        if (maGetConfigValue(&pattern, next, &next, 1) < 0) {
+        if (maGetConfigValue(&pattern, nextToken, &nextToken, 1) < 0) {
             return MPR_ERR_BAD_SYNTAX;
         }
-        maGetConfigValue(&action, next, &next, 1);
+        maGetConfigValue(&action, nextToken, &nextToken, 1);
         if (action) {
             action = stemplate(action, loc->tokens);
         }
-        maGetConfigValue(&controller, next, &next, 1);
+        maGetConfigValue(&controller, nextToken, &nextToken, 1);
         if (controller) {
             controller = stemplate(controller, loc->tokens);
         }
@@ -994,6 +994,18 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         mprAddItem(el->routes, route);
         return 1;
         
+    } else if (scasecmp(key, "EspLogRoutes") == 0) {
+        mprLog(0, "ESP Routes for URI %s at %s", el->loc->prefix, el->dir);
+        for (next = 0; (route = mprGetNextItem(el->routes, &next)) != 0; ) {
+            if (route->controllerName) {
+                mprLog(0, "  %-14s %-20s %-30s %-14s", route->name, route->methods ? route->methods : "", route->pattern, 
+                    route->action);
+            } else {
+                mprLog(0, "  %-14s %-20s %-30s", route->name, route->methods ? route->methods : "", route->pattern);
+            }
+        }
+        return 1;
+
     } else if (scasecmp(key, "EspShowErrors") == 0) {
 		el->showErrors = (scasecmp(value, "on") == 0 || scasecmp(value, "yes") == 0);
         return 1;

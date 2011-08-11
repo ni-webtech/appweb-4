@@ -172,7 +172,8 @@ void espManageEspLoc(EspLoc *el, int flags);
  */
 typedef struct EspRoute {
     char            *name;                  /* Route name */
-    MprHashTable    *methods;               /* Supported HTTP methods */
+    MprHashTable    *methodHash;            /* Supported HTTP methods */
+    char            *methods;               /* Supported HTTP methods */
     char            *pattern;               /* Original matching URI pattern for the route */
     char            *action;                /* Original matching action to run */
     MprList         *tokens;                /* Tokens in pattern, {name} */
