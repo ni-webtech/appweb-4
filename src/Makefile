@@ -19,7 +19,7 @@ TARGETS			+= $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
 SOURCES			+= $(shell ls *.c | egrep -v 'deps')
 OBJECTS			= $(patsubst %.c,$(BLD_OBJ_DIR)/%$(BLD_OBJ),$(notdir $(SOURCES)))
 
-compileFirst: tools
+compileFirst: prep tools
 
 tools:
 	$(MAKE) -S --no-print-directory BUILDING_NATIVE=1 TRACE=$(TRACE) DIR=$(DIR)/deps -C deps compile
@@ -36,6 +36,9 @@ compileExtra: $(TARGETS)
 #
 $(BLD_LIB_DIR)/libappweb$(BLD_LIB): Makefile $(OBJECTS) $(BLD_MPR_MAKEDEP)
 	bld --library $(BLD_LIB_DIR)/libappweb --search "$(BLD_APPWEB_LIBPATHS)" --libs "http $(BLD_APPWEB_WITHLIBS)" $(OBJECTS)
+
+prep:
+	[ -f $(BLD_BIN_DIR)/.ideBuild ] && rm -f $(BLD_BIN_DIR)/* $(BLD_BIN_DIR)/.ideBuild ; true
 
 #
 #   Local variables:

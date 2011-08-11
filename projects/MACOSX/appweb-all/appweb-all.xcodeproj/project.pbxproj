@@ -142,6 +142,41 @@
 /* End PBXBuildRule section */
 
 /* Begin PBXContainerItemProxy section */
+		C92FC1AE13F4371E00DFA08D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C93E6EFE11E83A3B00248470;
+			remoteInfo = prep;
+		};
+		C92FC1B013F4372600DFA08D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C93E6EFE11E83A3B00248470;
+			remoteInfo = prep;
+		};
+		C92FC1B213F4372B00DFA08D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C93E6EFE11E83A3B00248470;
+			remoteInfo = prep;
+		};
+		C92FC1B413F4373000DFA08D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C93E6EFE11E83A3B00248470;
+			remoteInfo = prep;
+		};
+		C92FC1B613F4373400DFA08D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C93E6EFE11E83A3B00248470;
+			remoteInfo = prep;
+		};
 		C93E6F0111E83A4400248470 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
@@ -860,6 +895,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C92FC1B713F4373400DFA08D /* PBXTargetDependency */,
 				C9B12BD713D176BF00470A96 /* PBXTargetDependency */,
 				C9B12BD913D176BF00470A96 /* PBXTargetDependency */,
 				C9B12BDB13D176BF00470A96 /* PBXTargetDependency */,
@@ -934,6 +970,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C92FC1B313F4372B00DFA08D /* PBXTargetDependency */,
 			);
 			name = http;
 			productName = http;
@@ -950,6 +987,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C92FC1B513F4373000DFA08D /* PBXTargetDependency */,
 				C976D55513D3AC98001BBFDF /* PBXTargetDependency */,
 				C976D55313D3AC93001BBFDF /* PBXTargetDependency */,
 			);
@@ -1038,6 +1076,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C92FC1AF13F4371E00DFA08D /* PBXTargetDependency */,
 				C9B12BA613D170C700470A96 /* PBXTargetDependency */,
 				C9B12BA813D170C700470A96 /* PBXTargetDependency */,
 				C9B12BAA13D170C700470A96 /* PBXTargetDependency */,
@@ -1129,6 +1168,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C92FC1B113F4372600DFA08D /* PBXTargetDependency */,
 				C9F7306313F1D5030090C643 /* PBXTargetDependency */,
 				C9F7306513F1D5030090C643 /* PBXTargetDependency */,
 				C9F7306713F1D5030090C643 /* PBXTargetDependency */,
@@ -1205,7 +1245,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#\n#   Prepare for build - This imports required libraries, headers and executables\n#\nmkdir -p $OUT/inc $OUT/bin\nif [ ! -f $OUT/inc/buildConfig.h -o buildConfig.master -nt $OUT/inc/buildConfig.h ] ; then\n    # echo Install buildConfig.default to $OUT/inc/buildConfig.h\n    [ -f $OUT/inc/buildConfig.h ] && chmod +w $OUT/inc/buildConfig.h\n    cp buildConfig.master $OUT/inc/buildConfig.h\n    export BLD_TOP=$TOP\n    export BLD_OUT_DIR=$BLD_TOP/out\n    . `${BLD_TOP}/build/bin/cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`\nfi\nexit 0";
+			shellScript = "#\n#   Prepare for build - This imports required libraries, headers and executables\n#\nmkdir -p $OUT/inc $OUT/bin\nif [ ! -f $OUT/inc/buildConfig.h -o buildConfig.master -nt $OUT/inc/buildConfig.h ] ; then\n    # echo Install buildConfig.default to $OUT/inc/buildConfig.h\n    [ -f $OUT/inc/buildConfig.h ] && chmod +w $OUT/inc/buildConfig.h\n    cp buildConfig.master $OUT/inc/buildConfig.h\n    export BLD_TOP=$TOP\n    export BLD_OUT_DIR=$BLD_TOP/out\n    . `${BLD_TOP}/build/bin/cacheConfig $OUT/inc/buildConfig.h`\nfi\ntouch $OUT/bin/.ideBuild\nexit 0";
 		};
 		C976D54A13D35902001BBFDF /* Export Headers */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1514,6 +1554,31 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		C92FC1AF13F4371E00DFA08D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C93E6EFE11E83A3B00248470 /* prep */;
+			targetProxy = C92FC1AE13F4371E00DFA08D /* PBXContainerItemProxy */;
+		};
+		C92FC1B113F4372600DFA08D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C93E6EFE11E83A3B00248470 /* prep */;
+			targetProxy = C92FC1B013F4372600DFA08D /* PBXContainerItemProxy */;
+		};
+		C92FC1B313F4372B00DFA08D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C93E6EFE11E83A3B00248470 /* prep */;
+			targetProxy = C92FC1B213F4372B00DFA08D /* PBXContainerItemProxy */;
+		};
+		C92FC1B513F4373000DFA08D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C93E6EFE11E83A3B00248470 /* prep */;
+			targetProxy = C92FC1B413F4373000DFA08D /* PBXContainerItemProxy */;
+		};
+		C92FC1B713F4373400DFA08D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C93E6EFE11E83A3B00248470 /* prep */;
+			targetProxy = C92FC1B613F4373400DFA08D /* PBXContainerItemProxy */;
+		};
 		C93E6F0211E83A4400248470 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = C93E6EFE11E83A3B00248470 /* prep */;
