@@ -91,7 +91,7 @@ extern "C" {
 
 #define CONTENT_MARKER  "${_ESP_CONTENT_MARKER_}"
 
-#define ESP_LIFESPAN            (86400 * MPR_TICKS_PER_SEC)       /* Default HTML cache lifespan */
+#define ESP_LIFESPAN    (3600 * MPR_TICKS_PER_SEC)       /* Default generated content cache lifespan */
 
 /********************************** Defines ***********************************/
 
