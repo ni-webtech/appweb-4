@@ -340,7 +340,7 @@ static void clean(int argc, char **argv)
         trace("CLEAN", "%s", path);
         mprDeletePath(path);
     }
-    trace("TASK", "Complete", path);
+    trace("TASK", "Complete");
 }
 
 
