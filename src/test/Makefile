@@ -100,7 +100,7 @@ apacheBench:
 
 testPrep:
 	mkdir -p cache app/cache
-	rm cache/* app/cache/*
+	rm -f cache/* app/cache/*
 	mkdir -p web/tmp
 	rm -f web/tmp/*
 	find . -name '*.mod' | xargs rm -f >/dev/null 2>&1 ; true

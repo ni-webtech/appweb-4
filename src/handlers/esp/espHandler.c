@@ -730,15 +730,14 @@ static void addRestfulRoute(EspLoc *el, cchar *name, cchar *methods, cchar *patt
 
 static void addRestfulRoutes(EspLoc *el, cchar *prefix, cchar *controller)
 {
-    addRestfulRoute(el, "init",    "GET",    "^/%s/init",       "%s-init",      "%s.c", prefix, controller);
-    addRestfulRoute(el, "index",   "GET",    "^/%s(/)$",        "%s-index",     "%s.c", prefix, controller);
-    addRestfulRoute(el, "create",  "POST",   "^/%s(/)",         "%s-create",    "%s.c", prefix, controller);
-    //  MOB - these IDs need to be numeric
-    addRestfulRoute(el, "edit",    "GET",    "^/%s/{id}/edit",  "%s-edit",      "%s.c", prefix, controller);
-    addRestfulRoute(el, "show",    "GET",    "^/%s/{id}",       "%s-show",      "%s.c", prefix, controller);
-    addRestfulRoute(el, "update",  "PUT",    "^/%s/{id}",       "%s-update",    "%s.c", prefix, controller);
-    addRestfulRoute(el, "destroy", "DELETE", "^/%s/{id}",       "%s-destroy",   "%s.c", prefix, controller);
-    addRestfulRoute(el, "default", "ALL",    "^/%s(/{action})", "%s-${action}", "%s.c", prefix, controller);
+    addRestfulRoute(el, "init",    "GET",    "^/%s/init",             "%s-init",      "%s.c", prefix, controller);
+    addRestfulRoute(el, "index",   "GET",    "^/%s(/)$",              "%s-index",     "%s.c", prefix, controller);
+    addRestfulRoute(el, "create",  "POST",   "^/%s(/)",               "%s-create",    "%s.c", prefix, controller);
+    addRestfulRoute(el, "edit",    "GET",    "^/%s/{id=[0-9]+}/edit", "%s-edit",      "%s.c", prefix, controller);
+    addRestfulRoute(el, "show",    "GET",    "^/%s/{id=[0-9]+}",      "%s-show",      "%s.c", prefix, controller);
+    addRestfulRoute(el, "update",  "PUT",    "^/%s/{id=[0-9]+}",      "%s-update",    "%s.c", prefix, controller);
+    addRestfulRoute(el, "destroy", "DELETE", "^/%s/{id=[0-9]+}",      "%s-destroy",   "%s.c", prefix, controller);
+    addRestfulRoute(el, "default", "ALL",    "^/%s(/{action})",       "%s-${action}", "%s.c", prefix, controller);
 }
 
 

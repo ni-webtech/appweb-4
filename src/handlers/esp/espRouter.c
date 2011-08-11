@@ -78,7 +78,7 @@ static int prepRoute(EspRoute *route, cchar *methods)
 {
     MprBuf  *pattern, *params, *buf;
     cchar   *errMsg, *item;
-    char    *mstr, *method, *tok, *cp, *ep, *token;
+    char    *mstr, *method, *tok, *cp, *ep, *token, *field;
     int     column, errCode, index, next, braced;
 
     /*
@@ -130,10 +130,17 @@ static int prepRoute(EspRoute *route, cchar *methods)
             } else if (*cp == '{' && (cp == route->pattern || cp[-1] != '\\')) {
                 if ((ep = schr(cp, '}')) != 0) {
                     /* Trim {} off the token and replace in pattern with "([^/]*)"  */
-                    mprPutStringToBuf(pattern, "([^/]*)");
+                    token = snclone(&cp[1], ep - cp - 1);
+                    if ((field = schr(token, '=')) != 0) {
+                        *field++ = '\0';
+                    } else {
+                        mprPutStringToBuf(pattern, "([^/]*)");
+                        field = "([^/]*)";
+                    }
+                    mprPutStringToBuf(pattern, field);
 
+                    index = mprAddItem(route->tokens, token);
                     /* Params ends up looking like "$1:$2:$3:$4" */
-                    index = mprAddItem(route->tokens, snclone(&cp[1], ep - cp -1));
                     mprPutCharToBuf(params, '$');
                     mprPutIntToBuf(params, index + 1);
                     mprPutCharToBuf(params, ':');
