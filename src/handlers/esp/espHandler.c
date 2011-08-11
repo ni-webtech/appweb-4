@@ -202,6 +202,7 @@ static bool fetchCachedResponse(HttpConn *conn)
                 }
             }
             status = (canUseClientCache && cacheOk) ? HTTP_CODE_NOT_MODIFIED : HTTP_CODE_OK;
+            mprLog(5, "Use cached content for %s, status %d", key, status);
             httpSetStatus(conn, status);
             httpSetHeader(conn, "Etag", mprGetMD5Hash(key, slen(key), 0));
             httpSetHeader(conn, "Last-Modified", mprFormatUniversalTime(MPR_HTTP_DATE, modified));
@@ -209,6 +210,8 @@ static bool fetchCachedResponse(HttpConn *conn)
                 espWriteString(conn, content);
             }
             return 1;
+        } else {
+            mprLog(5, "No cached content for %s", key);
         }
     }
     return 0;
