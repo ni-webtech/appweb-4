@@ -93,7 +93,7 @@ cchar *espGetSessionVar(HttpConn *conn, cchar *key, cchar *defaultValue)
 
     result = 0;
     if ((sp = espGetSession(conn, 0)) != 0) {
-        result = mprReadCache(sp->cache, makeKey(sp, key), 0);
+        result = mprReadCache(sp->cache, makeKey(sp, key), 0, 0);
     }
     return result ? result : defaultValue;
 }
@@ -115,7 +115,7 @@ int espSetSessionVar(HttpConn *conn, cchar *key, cchar *value, MprTime lifespan)
     if (lifespan == 0) {
         lifespan = sp->lifespan;
     }
-    if (mprWriteCache(sp->cache, makeKey(sp, key), value, lifespan, 0, MPR_CACHE_SET) == 0) {
+    if (mprWriteCache(sp->cache, makeKey(sp, key), value, 0, lifespan, 0, MPR_CACHE_SET) == 0) {
         return MPR_ERR_CANT_WRITE;
     }
     return 0;

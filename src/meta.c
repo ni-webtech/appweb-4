@@ -101,7 +101,7 @@ int maStartAppweb(MaAppweb *appweb)
             return MPR_ERR_CANT_INITIALIZE;
         }
     }
-    timeText = mprFormatLocalTime(mprGetTime());
+    timeText = mprGetDate(0);
     mprLog(1, "HTTP services Started at %s with max %d threads", timeText, mprGetMaxWorkers(appweb));
     return 0;
 }

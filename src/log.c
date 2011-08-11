@@ -294,7 +294,7 @@ void maLogRequest(HttpConn *conn)
 
         case 't':                           /* Time */
             mprPutCharToBuf(buf, '[');
-            timeText = mprFormatLocalTime(mprGetTime());
+            timeText = mprFormatLocalTime(MPR_DEFAULT_DATE, mprGetTime());
             mprPutStringToBuf(buf, timeText);
             mprPutCharToBuf(buf, ']');
             break;

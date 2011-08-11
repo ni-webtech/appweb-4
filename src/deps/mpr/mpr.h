@@ -411,7 +411,7 @@ typedef int64 MprOff;
 /**
     Date and Time Service
     @stability Evolving
-    @see MprTime, mprDecodeLocalTime, mprDecodeUniversalTime, mprFormatLocalTime, mprFormatTime, mprParseTime
+    @see MprTime, mprDecodeLocalTime, mprDecodeUniversalTime, mprFormatLocalTime, mprFormatTm, mprParseTime
     @defgroup MprTime MprTime
  */
 typedef int64 MprTime;
@@ -3432,8 +3432,20 @@ extern int mprPutFmtToWideBuf(MprBuf *buf, cchar *fmt, ...);
     Format a date according to RFC822: (Fri, 07 Jan 2003 12:12:21 PDT)
  */
 #define MPR_RFC_DATE        "%a, %d %b %Y %T %Z"
+
+/*
+    Default date format used in mprFormatLocalTime/mprFormatUniversalTime when no format supplied
+ */
 #define MPR_DEFAULT_DATE    "%a %b %d %T %Y %Z"
+
+/*
+    Date format for use in HTTP (headers)
+ */
 #define MPR_HTTP_DATE       "%a, %d %b %Y %T GMT"
+
+#if UNUSED
+#define MPR_LEGACY_DATE     "%a %b %d %Y %T GMT%z (%Z)"
+#endif
 
 /**
     Mpr time structure.
@@ -3441,7 +3453,6 @@ extern int mprPutFmtToWideBuf(MprBuf *buf, cchar *fmt, ...);
         since the epoch: 00:00:00 UTC Jan 1 1970. MprTime is typically a 64 bit quantity.
     @ingroup MprTime
  */
-
 extern int mprCreateTimeService();
 
 /**
@@ -3480,7 +3491,8 @@ extern void mprDecodeUniversalTime(struct tm *timep, MprTime time);
     @return The formatting time string
     @ingroup MprTime
  */
-extern char *mprFormatLocalTime(MprTime time);
+extern char *mprFormatLocalTime(cchar *fmt, MprTime time);
+extern char *mprFormatUniversalTime(cchar *fmt, MprTime time);
 
 /**
     Format a time value as a local time.
@@ -3490,7 +3502,7 @@ extern char *mprFormatLocalTime(MprTime time);
     @return The formatting time string.
     @ingroup MprTime
  */
-extern char *mprFormatTime(cchar *fmt, struct tm *timep);
+extern char *mprFormatTm(cchar *fmt, struct tm *timep);
 
 /**
     Get the system time.
@@ -7143,10 +7155,11 @@ extern MprCache *mprCreateCache(int options);
 extern void *mprDestroyCache(MprCache *cache);
 extern int mprExpireCache(MprCache *cache, cchar *key, MprTime expires);
 extern int64 mprIncCache(MprCache *cache, cchar *key, int64 amount);
-extern char *mprReadCache(MprCache *cache, cchar *key, int64 *version);
+extern char *mprReadCache(MprCache *cache, cchar *key, MprTime *modified, int64 *version);
 extern bool mprRemoveCache(MprCache *cache, cchar *key);
 extern void mprSetCacheLimits(MprCache *cache, int64 keys, int64 lifespan, int64 memory, int resolution);
-extern ssize mprWriteCache(MprCache *cache, cchar *key, cchar *value, MprTime expires, int64 version, int options);
+extern ssize mprWriteCache(MprCache *cache, cchar *key, cchar *value, MprTime modified, MprTime expires, 
+        int64 version, int options);
 
 /**
     Mime Type hash table entry (the URL extension is the key)

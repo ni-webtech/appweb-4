@@ -161,8 +161,10 @@ static char *makeCacheKey(HttpConn *conn, cchar *actionKey, cchar *uri)
 
 static bool fetchCachedResponse(HttpConn *conn)
 {
-    EspReq  *req;
-    char    *content, *extraUri, *key;
+    EspReq      *req;
+    MprTime     modified, when;
+    cchar       *value, *extraUri, *content, *key, *tag;
+    int         status, cacheOk, canUseClientCache;
 
     req = conn->data;
     if (req->action && req->action->lifespan) {
@@ -171,43 +173,41 @@ static bool fetchCachedResponse(HttpConn *conn)
             extraUri = conn->rx->pathInfo;
         }
         key = makeCacheKey(conn, req->actionKey, extraUri);
-        if ((content = mprReadCache(esp->cache, key, 0)) != 0) {
-#if 0
-            if (!extraUri) {
-    struct tm tm;
-    MprTime when;
-    int     status;
-            /*
-                Observe headers
-                If-None-Match: "ec18d-54-4d706a63"
-                If-Modified-Since: Fri, 04 Mar 2011 04:28:19 GMT
-             */
-            status = HTTP_CODE_OK;;
-            if ((value = httpGetHeader(conn, "If-None-Match")) != 0 && scmp(value, item.tag) == 0) {
-                /* 
-                    RFC2616 requires returning PrecondFailed, but chrome doesn't send an If-Modified-Since header 
-                    and so returning PrecondFailed caused Chrome to fail.
+        tag = mprGetMD5Hash(key, slen(key), 0);
 
-                    status = HTTP_CODE_PRECOND_FAILED;
-                 */
-                status = HTTP_CODE_NOT_MODIFIED;
-            }
-            if ((value = httpGetHeader(conn, "If-Modified-Since")) != 0) {
-                mprParseTime(&when, value, 0, 0);
-                if (item.modified <= when) {
-                    status = HTTP_CODE_NOT_MODIFIED;
+        if ((value = httpGetHeader(conn, "Cache-Control")) != 0 && 
+                (scontains(value, "max-age=0", -1) == 0 || scontains(value, "no-cache", -1) == 0)) {
+            mprLog(5, "Cache-control header rejects use of cached content");
+
+        } else if ((content = mprReadCache(esp->cache, key, &modified, 0)) != 0) {
+            /*
+                Observe headers:
+                    If-None-Match: "ec18d-54-4d706a63"
+                    If-Modified-Since: Fri, 04 Mar 2011 04:28:19 GMT
+                Set status to OK when content must be transmitted.
+             */
+            cacheOk = 1;
+            canUseClientCache = 0;
+            if ((value = httpGetHeader(conn, "If-None-Match")) != 0) {
+                canUseClientCache = 1;
+                if (scmp(value, tag) != 0) {
+                    cacheOk = 0;
                 }
             }
-            mprDecodeUniversalTime(&tm, item.modified);
-            httpSetHeader(conn, "Last-Modified", mprFormatTime(MPR_HTTP_DATE, &tm));
-            httpSetHeader(conn, "Etag", mprGetMD5Hash(cacheName), slen(cacheName), 0));
+            if (cacheOk && (value = httpGetHeader(conn, "If-Modified-Since")) != 0) {
+                canUseClientCache = 1;
+                mprParseTime(&when, value, 0, 0);
+                if (modified > when) {
+                    cacheOk = 0;
+                }
+            }
+            status = (canUseClientCache && cacheOk) ? HTTP_CODE_NOT_MODIFIED : HTTP_CODE_OK;
+            httpSetStatus(conn, status);
+            httpSetHeader(conn, "Etag", mprGetMD5Hash(key, slen(key), 0));
+            httpSetHeader(conn, "Last-Modified", mprFormatUniversalTime(MPR_HTTP_DATE, modified));
             if (status == HTTP_CODE_OK) {
                 espWriteString(conn, content);
             }
-            httpSetStatus(conn, status);
-#else
-            espWriteString(conn, content);
-#endif
             return 1;
         }
     }
@@ -220,6 +220,7 @@ static void saveCachedResponse(HttpConn *conn)
     EspReq      *req;
     EspAction   *action;
     MprBuf      *buf;
+    MprTime     modified;
     char        *key, *extraUri;
 
     req = conn->data;
@@ -233,7 +234,13 @@ static void saveCachedResponse(HttpConn *conn)
             extraUri = conn->rx->pathInfo;
         }
         key = makeCacheKey(conn, req->actionKey, extraUri);
-        mprWriteCache(esp->cache, key, mprGetBufStart(buf), action->lifespan, 0, 0);
+        /*
+            Truncate modified to get a 1 sec resolution. This is the resolution for If-Modified headers
+         */
+        modified = mprGetTime() / MPR_TICKS_PER_SEC * MPR_TICKS_PER_SEC;
+        mprWriteCache(esp->cache, key, mprGetBufStart(buf), modified, action->lifespan, 0, 0);
+        httpAddHeader(conn, "Etag", mprGetMD5Hash(key, slen(key), 0));
+        httpAddHeader(conn, "Last-Modified", mprFormatUniversalTime(MPR_HTTP_DATE, modified));
         espWriteBlock(conn, mprGetBufStart(buf), mprGetBufLength(buf));
         espFinalize(conn);
     }
@@ -242,18 +249,28 @@ static void saveCachedResponse(HttpConn *conn)
 
 void espUpdateCache(HttpConn *conn, cchar *actionKey, cchar *data, int lifesecs, cchar *uri)
 {
-    mprWriteCache(esp->cache, makeCacheKey(conn, actionKey, uri), data, lifesecs * MPR_TICKS_PER_SEC, 0, 00);
+    mprWriteCache(esp->cache, makeCacheKey(conn, actionKey, uri), data, 0, lifesecs * MPR_TICKS_PER_SEC, 0, 0);
 }
 
 
 bool espWriteCached(HttpConn *conn, cchar *actionKey, cchar *uri)
 {
-    cchar   *content;
+    EspReq      *req;
+    MprTime     modified;
+    cchar       *key, *content;
 
-    if ((content = mprReadCache(esp->cache, makeCacheKey(conn, actionKey, uri), 0)) == 0) {
+    req = conn->data;
+    key = makeCacheKey(conn, actionKey, uri);
+    if ((content = mprReadCache(esp->cache, key, &modified, 0)) == 0) {
+        mprLog(5, "No cached data for ", key);
         return 0;
     }
+    mprLog(5, "Used cached ", key);
+    req->cacheBuffer = 0;
+    espSetHeader(conn, "Etag", mprGetMD5Hash(key, slen(key), 0));
+    espSetHeader(conn, "Last-Modified", mprFormatUniversalTime(MPR_HTTP_DATE, modified));
     espWriteString(conn, content);
+    espFinalize(conn);
     return 1;
 }
 
