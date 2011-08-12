@@ -14,7 +14,7 @@ if (!test || test.config["ejscript"] == 1) {
     assert(lines[799].contains("aaaaabbb") && lines[799].contains("00799"))
 
 } else {
-    test.skip("EJS not enabled")
+    test.skip("Ejscript not enabled")
 }
 
 //TODO more 

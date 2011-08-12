@@ -21,5 +21,5 @@ if (!test || test.config["ejscript"] == 1) {
     assert(http.response.contains('"address": "100 Mayfair"'))
 
 } else {
-    test.skip("EJS not enabled")
+    test.skip("Ejscript not enabled")
 }

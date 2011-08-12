@@ -1,5 +1,5 @@
 /*
-    ejs.tst - EJS basic tests
+    ejs.tst - Ejscript basic tests
  */
 
 const HTTP = (global.tsession && tsession["http"]) || ":4100"
@@ -138,5 +138,5 @@ if (!test || test.config["ejscript"] == 1) {
     quoting()
 
 } else {
-    test.skip("EJS not enabled")
+    test.skip("Ejscript not enabled")
 }

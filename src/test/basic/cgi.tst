@@ -238,5 +238,5 @@ if (!test || test.config["cgi"] == 1) {
     quoting()
 
 } else {
-    test.skip("EJS not enabled")
+    test.skip("Ejscript not enabled")
 }

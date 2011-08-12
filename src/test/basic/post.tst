@@ -17,7 +17,7 @@ if (!test || test.config["ejscript"] == 1) {
     http.close()
 
 } else {
-    test.skip("EJS not enabled")
+    test.skip("Ejscript not enabled")
 }
 
 //  TODO MORE 

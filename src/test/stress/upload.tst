@@ -42,5 +42,5 @@ if (!test || test.config["ejscript"] == 1) {
     Path(TESTFILE).remove
 
 } else {
-    test.skip("EJS not enabled")
+    test.skip("Ejscript not enabled")
 }

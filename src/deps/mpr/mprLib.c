@@ -24545,22 +24545,21 @@ void mprSleep(MprTime timeout)
  */
 void mprWriteToOsLog(cchar *message, int flags, int level)
 {
-    char    *tag;
     int     sflag;
 
     if (flags & MPR_FATAL_SRC) {
-        tag = "fatal error: ";
         sflag = LOG_ERR;
 
     } else if (flags & MPR_ASSERT_SRC) {
-        tag = "program assertion error: ";
         sflag = LOG_WARNING;
 
+    } else if (flags & MPR_ERROR_SRC) {
+        sflag = LOG_ERR;
+
     } else {
-        tag = "error: ";
         sflag = LOG_WARNING;
     }
-    syslog(sflag, "%s %s", tag, message);
+    syslog(sflag, "%s", message);
 }
 
 

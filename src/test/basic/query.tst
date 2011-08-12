@@ -19,5 +19,5 @@ if (!test || test.config["ejscript"] == 1) {
     assert(http.response.contains('"c": "z"'))
 
 } else {
-    test.skip("EJS not enabled")
+    test.skip("Ejscript not enabled")
 }
