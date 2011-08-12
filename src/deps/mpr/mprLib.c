@@ -11877,8 +11877,7 @@ MprKeyValue *mprCreateKeyPair(cchar *key, cchar *value)
 {
     MprKeyValue     *pair;
     
-    pair = mprAllocObj(MprKeyValue, manageKeyValue);
-    if (pair == 0) {
+    if ((pair = mprAllocObj(MprKeyValue, manageKeyValue)) == 0) {
         return 0;
     }
     pair->key = sclone(key);
