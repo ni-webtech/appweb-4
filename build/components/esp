@@ -3,5 +3,6 @@
 #
 defineComponent() {
     eval file=\$BLD_${KIND}_ESP
-    configureComponent --builtin esp
+
+    configureComponent --dependencies pcre --libs pcre --withlibs pcre --builtin esp
 }

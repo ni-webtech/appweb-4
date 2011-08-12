@@ -4,9 +4,9 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
 
-ESP					:= mod_esp
+ESP			:= mod_esp
 
-include 			.makedep
+include 	.makedep
 
 ifeq	($(BLD_FEATURE_ESP),1)
 	MODULES		+= $(BLD_LIB_DIR)/$(ESP)$(BLD_SHOBJ)

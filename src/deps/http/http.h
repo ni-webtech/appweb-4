@@ -1992,7 +1992,7 @@ extern int httpAddFilter(HttpLoc *location, cchar *name, cchar *extensions, int 
 extern void httpClearStages(HttpLoc *location, int direction);
 extern void httpAddLocationExpiry(HttpLoc *location, MprTime when, cchar *extensions);
 extern void httpAddLocationExpiryByType(HttpLoc *location, MprTime when, cchar *mimeTypes);
-extern void httpAddLocationToken(HttpLoc *loc, cchar *token, cchar *value);
+extern void httpSetLocationToken(HttpLoc *loc, cchar *token, cchar *value);
 extern char *httpMakePath(HttpLoc *loc, cchar *file);
 extern void httpSetLocationHost(HttpLoc *loc, struct HttpHost *host);
 

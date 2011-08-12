@@ -51,15 +51,6 @@ HttpAlias *httpCreateAlias(cchar *prefix, cchar *target, int code)
     }
     ap->prefix = sclone(prefix);
     ap->prefixLen = slen(prefix);
-
-#if UNUSED
-    /*  
-        Always strip trailing "/" from the prefix
-     */
-    if (ap->prefixLen > 0 && ap->prefix[ap->prefixLen - 1] == '/') {
-        ap->prefix[--ap->prefixLen] = '\0';
-    }
-#endif
     if (code) {
         ap->redirectCode = code;
         ap->uri = sclone(target);
@@ -1764,9 +1755,6 @@ static void openChunk(HttpQueue *q)
     rx = conn->rx;
 
     q->packetSize = min(conn->limits->chunkSize, q->max);
-#if UNUSED
-    rx->chunkState = HTTP_CHUNK_START;
-#endif
 }
 
 
@@ -5108,11 +5096,12 @@ static void defineHostTokens(HttpLoc *loc)
 }
 
 
-void httpAddLocationToken(HttpLoc *loc, cchar *key, cchar *value)
+void httpSetLocationToken(HttpLoc *loc, cchar *key, cchar *value)
 {
     mprAssert(key);
     mprAssert(value);
 
+    graduate(loc);
     if (schr(value, '$')) {
         value = stemplate(value, loc->tokens);
     }
@@ -6561,9 +6550,6 @@ void httpCreateRxPipeline(HttpConn *conn, HttpLoc *loc)
     tx = conn->tx;
 
     rx->inputPipeline = mprCreateList(-1, 0);
-#if UNUSED
-    mprAddItem(rx->inputPipeline, http->netConnector);
-#endif
     if (loc) {
         for (next = 0; (filter = mprGetNextItem(loc->inputStages, &next)) != 0; ) {
             if (!matchFilter(conn, filter, HTTP_STAGE_RX)) {
@@ -8958,9 +8944,6 @@ static ssize getChunkPacketSize(HttpConn *conn, MprBuf *buf)
     default:
         mprAssert(0);
     }
-#if UNUSED
-    rx->remainingContent = need;
-#endif
     return need;
 }
 
@@ -13067,14 +13050,9 @@ void httpCreateCGIVars(HttpConn *conn)
     tx = conn->tx;
     host = conn->host;
     sock = conn->sock;
-
-    mprAssert(rx->formVars);
     table = rx->formVars;
-#if UNUSED
-    if ((table = rx->formVars) == 0) {
-        table = rx->formVars = mprCreateHash(HTTP_MED_HASH_SIZE, 0);
-    }
-#endif
+    mprAssert(table);
+
     mprAddKey(table, "AUTH_TYPE", rx->authType);
     mprAddKey(table, "AUTH_USER", conn->authUser);
     mprAddKey(table, "AUTH_GROUP", conn->authGroup);

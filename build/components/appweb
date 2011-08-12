@@ -11,11 +11,11 @@ defineComponent() {
 
     deps="mpr http"
     optional="ssl"
+    libs="appweb"
     if [ "$pcre" = 1 ] ; then
         withlibs="pcre"
-        libs="appweb pcre"
+        libs="${libs} pcre"
     fi
-
     if [ "$builtin" = "" ] ; then
         search="$path/out/lib:$path/out/inc:$path"
         if [ "${path}" = "." ] ; then

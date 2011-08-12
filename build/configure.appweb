@@ -22,7 +22,6 @@ manageFeatures()
     local file status
 
     BLD_FEATURE_MPR=1
-
     if [ "$BLD_FEATURE_ROMFS" = 1 -a "$BLD_CROSS" = 0 ] ; then
         echo
         echo "ROM-based storage is only supported if doing cross-compilation"
@@ -42,18 +41,10 @@ manageFeatures()
             echo " "
             echo "PCRE (Regular expression support is required for ESP."
             echo "Enabling the PCRE support."
+            CFG_HOST_PCRE=1
             BLD_FEATURE_PCRE=1
         fi
     fi
-    if [ "$BLD_FEATURE_SEND" = 1 ] ; then
-        if [ "$BLD_FEATURE_ROMFS" = 1 ] ; then
-            BLD_FEATURE_SEND=0
-        fi
-        if [ "$BLD_HOST_OS" != LINUX -a "$BLD_HOST_OS" != MACOSX -a "$BLD_HOST_OS" != FREEBSD ] ; then
-            BLD_FEATURE_SEND=0
-        fi
-    fi
-
     if [ "$BLD_FEATURE_AUTH_PAM" = 1 ] ; then
         if [ "$BLD_HOST_OS" = WIN  -o "$BLD_HOST_OS" = VXWORKS ] ; then
             echo " "

@@ -229,43 +229,45 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
 
         if (scasecmp(key, "Include") == 0) {
             state->lineNumber++;
-            value = strim(value, "\"", MPR_TRIM_BOTH);
-            value = stemplate(value, state->loc->tokens);
-            if ((cp = strchr(value, '*')) == 0) {
-                state = pushState(state, &top);
-                state->lineNumber = 0;
-                state->filename = mprJoinPath(meta->serverRoot, value);
-                state->file = mprOpenFile(state->filename, O_RDONLY | O_TEXT, 0444);
-                if (state->file == 0) {
-                    mprError("Can't open include file %s for config directives", state->filename);
-                    return MPR_ERR_CANT_OPEN;
-                }
-                mprLog(5, "Parsing config file: %s", state->filename);
-
-            } else {
-                /*
-                    Process wild cards. This is very simple - only "*" is supported.
-                 */
-                *cp = '\0';
-                len = (int) strlen(value);
-                if (value[len - 1] == '/') {
-                    value[len - 1] = '\0';
-                }
-                cp = mprJoinPath(meta->serverRoot, value);
-                includes = mprGetPathFiles(cp, 0);
-                if (includes == 0) {
-                    continue;
-                }
-                value = mprJoinPath(meta->serverRoot, value);
-                for (next = 0; (dp = mprGetNextItem(includes, &next)) != 0; ) {
+            if (state->enabled) {
+                value = strim(value, "\"", MPR_TRIM_BOTH);
+                value = stemplate(value, state->loc->tokens);
+                if ((cp = strchr(value, '*')) == 0) {
                     state = pushState(state, &top);
-                    state->filename = mprJoinPath(value, dp->name);
+                    state->lineNumber = 0;
+                    state->filename = mprJoinPath(meta->serverRoot, value);
                     state->file = mprOpenFile(state->filename, O_RDONLY | O_TEXT, 0444);
                     if (state->file == 0) {
                         mprError("Can't open include file %s for config directives", state->filename);
                         return MPR_ERR_CANT_OPEN;
                     }
                     mprLog(5, "Parsing config file: %s", state->filename);
+
+                } else {
+                    /*
+                        Process wild cards. This is very simple - only "*" is supported.
+                     */
+                    *cp = '\0';
+                    len = (int) strlen(value);
+                    if (value[len - 1] == '/') {
+                        value[len - 1] = '\0';
+                    }
+                    cp = mprJoinPath(meta->serverRoot, value);
+                    includes = mprGetPathFiles(cp, 0);
+                    if (includes == 0) {
+                        continue;
+                    }
+                    value = mprJoinPath(meta->serverRoot, value);
+                    for (next = 0; (dp = mprGetNextItem(includes, &next)) != 0; ) {
+                        state = pushState(state, &top);
+                        state->filename = mprJoinPath(value, dp->name);
+                        state->file = mprOpenFile(state->filename, O_RDONLY | O_TEXT, 0444);
+                        if (state->file == 0) {
+                            mprError("Can't open include file %s for config directives", state->filename);
+                            return MPR_ERR_CANT_OPEN;
+                        }
+                        mprLog(5, "Parsing config file: %s", state->filename);
+                    }
                 }
             }
             continue;
@@ -804,6 +806,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             path = httpMakePath(loc, strim(value, "\"", MPR_TRIM_BOTH));
             httpSetHostDocumentRoot(host, path);
             httpSetDirPath(dir, path);
+            httpSetLocationToken(loc, "DOCUMENT_ROOT", path);
             return 1;
         }
         break;
@@ -1291,6 +1294,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             path = stemplate(strim(value, "\"", MPR_TRIM_BOTH), loc->tokens);
             maSetMetaRoot(meta, path);
             httpSetHostServerRoot(host, path);
+            httpSetLocationToken(loc, "SERVER_ROOT", path);
             mprLog(MPR_CONFIG, "Server Root \"%s\"", path);
             return 1;
 
@@ -1488,7 +1492,7 @@ static bool conditionalDefinition(char *key)
         return BLD_FEATURE_CGI;
 
     } else if (scasecmp(key, "DIR_MODULE") == 0) {
-        return 1;
+        return BLD_FEATURE_DIR;
 
     } else if (scasecmp(key, "EJS_MODULE") == 0) {
         return BLD_FEATURE_EJSCRIPT;

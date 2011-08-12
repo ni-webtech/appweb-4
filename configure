@@ -793,25 +793,6 @@ findComponents() {
             unset MSG
             eval os=\$BLD_${kind}_OS
             OS=$os NAME=$name KIND=$kind defineComponent "$path"
-
-#            eval path="\$CFG_${kind}_${upperName}"
-#            if [ "$mandatory" = 1 -a "$path" = "" ] ; then
-#                eval realName=\$BLD_${kind}_${upperName}
-#                [ "$realName" != "" ] && name=$realName
-#                echo -e "\nconfigure: Can't find mandatory component: $name"  1>&2
-#                exit 255
-#            fi
-#
-#            if [ "$path" != "" ] ; then
-#                eval ${kind}_COMPONENTS=\"\$${kind}_COMPONENTS ${name}\"
-#                [ $quiet = 0 -a $verbose = 0 ] && echo "$path"
-#            else
-#                if [ "$MSG" != "" ] ; then
-#                    [ $quiet = 0 ] && echo $MSG
-#                else
-#                    [ $quiet = 0 ] && echo "optional component not included"
-#                fi
-#            fi
         done
         [ $BLD_CROSS = 0 ] && break
     done
@@ -1870,7 +1851,6 @@ emitComponents() {
         else
             echo -e "${t}BLD_FEATURE_${p}=1" 
         fi
-
         set | egrep "^CFG_${kind}_${p}=|^CFG_${kind}_${p}_" | \
             egrep -v "_EMITTER|_WITH=|_WITH_|_MANDATORY=|_PRESENT=" | while read v
         do

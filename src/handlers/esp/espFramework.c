@@ -382,13 +382,6 @@ ssize espWriteBlock(HttpConn *conn, cchar *buf, ssize size)
     EspReq      *req;
     
     req = conn->data;
-#if BLD_DEBUG
-{
-    /* Verify length */
-    ssize len = slen(buf);
-    mprAssert(len == size);
-}
-#endif
     if (req->cacheBuffer) {
         httpSetResponded(conn);
         return mprPutBlockToBuf(req->cacheBuffer, buf, size);

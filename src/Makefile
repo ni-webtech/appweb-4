@@ -38,7 +38,10 @@ $(BLD_LIB_DIR)/libappweb$(BLD_LIB): Makefile $(OBJECTS) $(BLD_MPR_MAKEDEP)
 	bld --library $(BLD_LIB_DIR)/libappweb --search "$(BLD_APPWEB_LIBPATHS)" --libs "http $(BLD_APPWEB_WITHLIBS)" $(OBJECTS)
 
 prep:
-	[ -f $(BLD_BIN_DIR)/.ideBuild ] && rm -f $(BLD_BIN_DIR)/* $(BLD_BIN_DIR)/.ideBuild ; true
+	if [ -f $(BLD_BIN_DIR)/.ideBuild ] ; then \
+		rm -f $(BLD_BIN_DIR)/* $(BLD_BIN_DIR)/.ideBuild ; \
+		make -C ../build/src ; \
+	fi
 
 #
 #   Local variables:

@@ -631,12 +631,12 @@ static EspLoc *allocEspLoc(HttpLoc *loc)
     /*
         Setup default parameters for $expansion of Http location paths
      */
-    httpAddLocationToken(loc, "CONTROLLERS_DIR", el->controllersDir);
-    httpAddLocationToken(loc, "DATABASES_DIR", el->databasesDir);
-    httpAddLocationToken(loc, "LAYOUTS_DIR", el->layoutsDir);
-    httpAddLocationToken(loc, "MODELS_DIR", el->modelsDir);
-    httpAddLocationToken(loc, "STATIC_DIR", el->staticDir);
-    httpAddLocationToken(loc, "VIEWS_DIR", el->viewsDir);
+    httpSetLocationToken(loc, "CONTROLLERS_DIR", el->controllersDir);
+    httpSetLocationToken(loc, "DATABASES_DIR", el->databasesDir);
+    httpSetLocationToken(loc, "LAYOUTS_DIR", el->layoutsDir);
+    httpSetLocationToken(loc, "MODELS_DIR", el->modelsDir);
+    httpSetLocationToken(loc, "STATIC_DIR", el->staticDir);
+    httpSetLocationToken(loc, "VIEWS_DIR", el->viewsDir);
 
     el->lifespan = ESP_LIFESPAN;
     el->keepSource = 0;
@@ -711,25 +711,25 @@ static void setSimpleDirs(EspLoc *el)
 static void setMvcDirs(EspLoc *el)
 {
     el->cacheDir = mprJoinPath(el->dir, "cache");
-    httpAddLocationToken(el->loc, "CACHE_DIR", el->cacheDir);
+    httpSetLocationToken(el->loc, "CACHE_DIR", el->cacheDir);
 
     el->controllersDir = mprJoinPath(el->dir, "controllers");
-    httpAddLocationToken(el->loc, "CONTROLLERS_DIR", el->controllersDir);
+    httpSetLocationToken(el->loc, "CONTROLLERS_DIR", el->controllersDir);
 
     el->databasesDir = mprJoinPath(el->dir, "databases");
-    httpAddLocationToken(el->loc, "DATABASES_DIR", el->databasesDir);
+    httpSetLocationToken(el->loc, "DATABASES_DIR", el->databasesDir);
 
     el->layoutsDir  = mprJoinPath(el->dir, "layouts");
-    httpAddLocationToken(el->loc, "LAYOUTS_DIR", el->layoutsDir);
+    httpSetLocationToken(el->loc, "LAYOUTS_DIR", el->layoutsDir);
 
     el->modelsDir  = mprJoinPath(el->dir, "models");
-    httpAddLocationToken(el->loc, "MODELS_DIR", el->modelsDir);
+    httpSetLocationToken(el->loc, "MODELS_DIR", el->modelsDir);
 
     el->staticDir = mprJoinPath(el->dir, "static");
-    httpAddLocationToken(el->loc, "STATIC_DIR", el->staticDir);
+    httpSetLocationToken(el->loc, "STATIC_DIR", el->staticDir);
 
     el->viewsDir = mprJoinPath(el->dir, "views");
-    httpAddLocationToken(el->loc, "VIEWS_DIR", el->viewsDir);
+    httpSetLocationToken(el->loc, "VIEWS_DIR", el->viewsDir);
 }
 
 
@@ -931,7 +931,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
             } else if (scmp(name, "views") == 0) {
                 el->viewsDir = path;
             }
-            httpAddLocationToken(loc, name, path);
+            httpSetLocationToken(loc, name, path);
         }
         return 1;
 

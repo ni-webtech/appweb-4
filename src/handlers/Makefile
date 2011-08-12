@@ -12,8 +12,9 @@ PHP				:= mod_php
 
 include 		.makedep
 
-POST_DIRS		+= esp
-
+ifeq	($(BLD_FEATURE_ESP),1)
+	POST_DIRS		+= esp
+endif
 ifeq	($(BLD_FEATURE_CGI),1)
 	OBJECTS		+= $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ)
 endif
@@ -56,7 +57,7 @@ $(IMPORTED): $(IMPORTS)
 	$(call log) "[Import]" "$(IMPORTS)"
 	
 #
-#	Build Modules
+#	Build Modules (esp does its own build, see ./esp/Makefile)
 #
 $(BLD_LIB_DIR)/$(CGI)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
 	bld --shared --library $(BLD_LIB_DIR)/$(CGI) --libs "$(LIBS)" $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ)

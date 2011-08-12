@@ -55,9 +55,14 @@ with --host --optional openssl ssl
 with --host --optional php
 
 with --optional ejscript
-with --optional pcre
 with --optional dir
 with --optional cgi
+
+if [ "$CFG_ESP_MANDATORY" = 1 ] ; then
+    with --optional pcre
+else
+    with --mandatory pcre
+fi
 with --optional esp
 with appweb
 
@@ -101,19 +106,9 @@ BLD_FEATURE_AUTH_FILE=1
 BLD_FEATURE_AUTH_PAM=0
 
 #
-#	Common Gateway Interface (CGI) handler
-#
-BLD_FEATURE_CGI=1
-
-#
 #	Directory listing handler
 #
 BLD_FEATURE_DIR=1
-
-#
-#	Embedded Server Pages (ESP) handler
-#
-BLD_FEATURE_ESP=1
 
 ################################################################################
 #
