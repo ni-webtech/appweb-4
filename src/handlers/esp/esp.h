@@ -172,7 +172,9 @@ void espManageEspLoc(EspLoc *el, int flags);
  */
 typedef struct EspRoute {
     char            *name;                  /* Route name */
-    MprHashTable    *methodHash;            /* Supported HTTP methods */
+    MprHashTable    *methodHash;            /* Matching HTTP methods */
+    MprList         *formFields;            /* Matching form data values */
+    MprList         *headers;               /* Matching header values */
     char            *methods;               /* Supported HTTP methods */
     char            *pattern;               /* Original matching URI pattern for the route */
     char            *action;                /* Original matching action to run */
@@ -187,6 +189,7 @@ typedef struct EspRoute {
 } EspRoute;
 
 extern EspRoute *espCreateRoute(cchar *name, cchar *methods, cchar *pattern, cchar *action, cchar *controller);
+extern int espFinalizeRoute(EspRoute *route);
 extern char *espMatchRoute(HttpConn *conn, EspRoute *route);
 
 #define ESP_SESSION             "-esp-session-"
@@ -197,7 +200,17 @@ typedef struct EspSession {
     MprTime         lifespan;           /* Session inactivity timeout (msecs) */
 } EspSession;
 
+#define ESP_PAIR_NOT            0x1
+#define ESP_PAIR_STATIC_VALUES  0x2
+#define ESP_PAIR_FREE           0x4
 
+typedef struct EspPair {
+    char            *key;
+    void            *data;
+    int             flags;
+} EspPair;
+
+extern EspPair *espCreatePair(cchar *key, void *data, int flags);
 extern EspSession *espAllocSession(HttpConn *conn, cchar *id, MprTime timeout, int create);
 extern void espDestroySession(EspSession *sp);
 extern EspSession *espGetSession(HttpConn *conn, int create);

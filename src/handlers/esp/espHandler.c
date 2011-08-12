@@ -24,6 +24,7 @@ static EspLoc *allocEspLoc(HttpLoc *loc);
 static bool fetchCachedResponse(HttpConn *conn);
 static void manageAction(EspAction *cp, int flags);
 static void manageEsp(Esp *esp, int flags);
+static void manageEspPair(EspPair *pair, int flags);
 static void manageReq(EspReq *req, int flags);
 static int  runAction(HttpConn *conn);
 static void runView(HttpConn *conn);
@@ -357,12 +358,13 @@ static int runAction(HttpConn *conn)
     if (schr(route->controllerName, '$')) {
         route->controllerName = stemplate(route->controllerName, conn->rx->formVars);
     }
+    route->controllerPath = mprJoinPath(el->controllersDir, route->controllerName);
+
     if (el->appModuleName) {
         if (!loadApp(conn, &updated)) {
             return 0;
         }
-    } else if (el->update) {
-        route->controllerPath = mprJoinPath(el->controllersDir, route->controllerName);
+    } else if (el->update || !mprLookupModule(route->controllerPath)) {
         req->cacheName = mprGetMD5Hash(route->controllerPath, slen(route->controllerPath), "controller_");
         req->module = mprGetNormalizedPath(sfmt("%s/%s%s", el->cacheDir, req->cacheName, BLD_SHOBJ));
 
@@ -444,8 +446,7 @@ static void runView(HttpConn *conn)
         if (!loadApp(conn, &updated)) {
             return;
         }
-
-    } else if (el->update) {
+    } else if (el->update || !mprLookupModule(req->source)) {
         req->cacheName = mprGetMD5Hash(req->source, slen(req->source), "view_");
         req->module = mprGetNormalizedPath(sfmt("%s/%s%s", req->el->cacheDir, req->cacheName, BLD_SHOBJ));
 
@@ -761,6 +762,25 @@ static void addRestfulRoutes(EspLoc *el, cchar *prefix, cchar *controller)
 }
 
 
+static char *trimSlashes(cchar *str)
+{
+    ssize   len;
+
+    if (str == 0) {
+        return MPR->emptyString;
+    }
+    if (*str == '/') {
+        str++;
+    }
+    len = slen(str);
+    if (str[len - 1] == '/') {
+        return snclone(str, len - 1);
+    } else {
+        return sclone(str);
+    }
+}
+
+
 static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
 {
     HttpLoc     *loc;
@@ -769,12 +789,15 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
     HttpDir     *dir, *parentDir;
     EspLoc      *el, *parent;
     EspRoute    *route;
+    cchar       *errMsg;
     char        *name, *ekey, *evalue, *prefix, *path, *nextToken, *methods, *prior, *pattern, *kind;
-    char        *action, *controller;
-    int         needRoutes, mvc, restful, next;
+    char        *action, *controller, *header, *not;
+    void        *expr;
+    int         mvc, restful, next, column, pairFlags;
     
     host = state->host;
     loc = state->loc;
+    route = state->route;
 
     if (!sstarts(key, "Esp")) {
         return 0;
@@ -819,10 +842,9 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         if (scmp(prefix, "/") == 0) {
             prefix = MPR->emptyString;
         }
-        needRoutes = 0;
         if ((loc = httpLookupLocation(host, prefix)) == 0) {
             /*
-                This EjsAlias is for a new location. Create a location block and set needRoutes.
+                This EjsAlias is for a new location. Create a location block.
              */
             loc = httpCreateInheritedLocation(state->loc);
             el = cloneEspLoc(el, loc);
@@ -831,7 +853,6 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
             httpSetLocationAuth(loc, state->dir->auth);
             httpAddLocation(host, loc);
             httpSetHandler(loc, "espHandler");
-            needRoutes++;
         } else {
             httpAddHandler(loc, "espHandler", 0);
         }
@@ -848,23 +869,35 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
             httpSetLocationAlias(loc, alias);
             httpAddAlias(host, alias);
         }
-        if (mvc) {
-            setMvcDirs(el);
-            el->routes = mprCreateList(-1, 0);
-            addRoute(el, "home", "GET,POST,PUT", "%^/$", stemplate("${STATIC_DIR}/index.esp", loc->tokens), NULL);
-            addRoute(el, "static", "GET", "%^/static/(.*)", stemplate("${STATIC_DIR}/$1", loc->tokens), NULL);
-        } else {
+
+        /*
+            Apply a route package: none, simple, mvc, restful. Also set the location directories (cache, views ...)
+         */
+        if (scmp(kind, "none") == 0) {
             setSimpleDirs(el);
-        }
-        if (restful) {
+
+        } else if (scmp(kind, "simple") == 0) {
+            el->routes = mprCreateList(-1, 0);
+            setSimpleDirs(el);
+            addRoute(el, "esp", NULL, "/\\.[eE][sS][pP]$/", NULL, NULL);
+
+        } else if (scmp(kind, "mvc") == 0) {
+            el->routes = mprCreateList(-1, 0);
+            setMvcDirs(el);
+            addRoute(el, "home", "GET,POST,PUT", "^/$", stemplate("${STATIC_DIR}/index.esp", loc->tokens), NULL);
+            addRoute(el, "static", "GET", "%^/static/(.*)", stemplate("${STATIC_DIR}/$1", loc->tokens), NULL);
+            addRoute(el, "default", NULL, "^/{controller}(/{action})", "${controller}-${action}", "${controller}.c");
+            addRoute(el, "esp", NULL, "\\.[eE][sS][pP]$", NULL, NULL);
+
+        } else if (scmp(kind, "restful") == 0) {
+            el->routes = mprCreateList(-1, 0);
+            setMvcDirs(el);
             prefix = "{controller}";
             controller = "${controller}";
+            addRoute(el, "home", "GET,POST,PUT", "^/$", stemplate("${STATIC_DIR}/index.esp", loc->tokens), NULL);
+            addRoute(el, "static", "GET", "%^/static/(.*)", stemplate("${STATIC_DIR}/$1", loc->tokens), NULL);
+            addRoute(el, "esp", NULL, "\\.[eE][sS][pP]$", NULL, NULL);
             addRestfulRoutes(el, prefix, controller);
-        } else if (mvc) {
-            addRoute(el, "default", NULL, "^/{controller}(/{action})", "${controller}-${action}", "${controller}.c");
-        }
-        if (mvc || needRoutes) {
-            addRoute(el, "esp", NULL, "%\\.[eE][sS][pP]$", NULL, NULL);
         }
         return 1;
 
@@ -968,6 +1001,100 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         return 1;
 
     } else if (scasecmp(key, "EspRoute") == 0) {
+        if ((route = espCreateRoute(value, 0, 0, 0, 0)) == 0) {
+            return MPR_ERR_MEMORY;
+        }
+        mprAddItem(el->routes, route);
+        state->route = route;
+        return 1;
+
+    } else if (scasecmp(key, "EspFinalizeRoute") == 0) {
+        /* This is an internal directive and not used in config files */
+        espFinalizeRoute(route);
+
+    } else if (scasecmp(key, "EspUri") == 0) {
+        if (route == 0) {
+            mprError("Directive must be used inside a EspRoute block");
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        route->pattern = sclone(value);
+        return 1;
+
+    } else if (scasecmp(key, "EspHeader") == 0) {
+        if (route == 0) {
+            mprError("Directive must be used inside a EspRoute block");
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        if (maGetConfigValue(&header, value, &value, 1) < 0) {
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        pairFlags = ESP_PAIR_STATIC_VALUES;
+        if (value && *value == '!') {
+            if (maGetConfigValue(&not, value, &value, 1) < 0) {
+                return MPR_ERR_BAD_SYNTAX;
+            }
+            pairFlags |= ESP_PAIR_NOT;
+        }
+        if (route->headers == 0) {
+            route->headers = mprCreateList(-1, 0);
+        }
+        if ((expr = pcre_compile2(trimSlashes(value), 0, 0, &errMsg, &column, NULL)) == 0) {
+            mprError("Can't compile header pattern. Error %s at column %d", errMsg, column); 
+        } else {
+            mprAddItem(route->headers, espCreatePair(header, expr, pairFlags));
+        }
+        return 1;
+
+    } else if (scasecmp(key, "EspField") == 0) {
+        if (route == 0) {
+            mprError("Directive must be used inside a EspRoute block");
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        if (maGetConfigValue(&header, value, &value, 1) < 0) {
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        pairFlags = ESP_PAIR_STATIC_VALUES;
+        if (value && *value == '!') {
+            if (maGetConfigValue(&not, value, &value, 1) < 0) {
+                return MPR_ERR_BAD_SYNTAX;
+            }
+            pairFlags |= ESP_PAIR_NOT;
+        }
+        if (route->formFields == 0) {
+            route->formFields = mprCreateList(-1, 0);
+        }
+        if ((expr= pcre_compile2(trimSlashes(value), 0, 0, &errMsg, &column, NULL)) == 0) {
+            mprError("Can't compile form field pattern. Error %s at column %d", errMsg, column); 
+        } else {
+            mprAddItem(route->formFields, espCreatePair(header, expr, pairFlags));
+        }
+        return 1;
+
+    } else if (scasecmp(key, "EspMethods") == 0) {
+        if (route == 0) {
+            mprError("Directive must be used inside a EspRoute block");
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        route->methods = sclone(value);
+        return 1;
+
+    } else if (scasecmp(key, "EspAction") == 0) {
+        if (route == 0) {
+            mprError("Directive must be used inside a EspRoute block");
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        route->action = sclone(value);
+        return 1;
+
+    } else if (scasecmp(key, "EspController") == 0) {
+        if (route == 0) {
+            mprError("Directive must be used inside a EspRoute block");
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        route->controllerName = sclone(value);
+        return 1;
+        
+    } else if (scasecmp(key, "EspRouteLine") == 0) {
         /*
             EspRoute name methods pattern action [controller]
          */
@@ -1015,6 +1142,36 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         return 1;
     }
     return 0;
+}
+
+
+EspPair *espCreatePair(cchar *key, void *data, int flags)
+{
+    EspPair     *pair;
+
+    if ((pair = mprAllocObj(EspPair, manageEspPair)) == 0) {
+        return 0;
+    }
+    pair->key = sclone(key);
+    pair->data = data;
+    pair->flags = flags;
+    return pair;
+}
+
+
+void manageEspPair(EspPair *pair, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(pair->key);
+        if (!(pair->flags & ESP_PAIR_STATIC_VALUES)) {
+            mprMark(pair->data);
+        }
+    } else if (flags & MPR_MANAGE_FREE) {
+        if (pair->flags & ESP_PAIR_FREE) {
+            free(pair->data);
+            pair->data = 0;
+        }
+    }
 }
 
 

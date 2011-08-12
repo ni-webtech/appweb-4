@@ -2041,6 +2041,7 @@
 			baseConfigurationReference = C969664713D8A11000B16C66 /* Debug.xcconfig */;
 			buildSettings = {
 				"ADDITIONAL_SDKS[arch=*]" = "";
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				BLD_PRODUCT_NAME = appweb;
 				MACOSX_DEPLOYMENT_TARGET = "";
 				SKIP_INSTALL = YES;
@@ -2051,6 +2052,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = C969664813D8A11900B16C66 /* Release.xcconfig */;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				BLD_PRODUCT_NAME = appweb;
 				MACOSX_DEPLOYMENT_TARGET = "";
 				SKIP_INSTALL = YES;

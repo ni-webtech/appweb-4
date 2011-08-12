@@ -270,7 +270,14 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
             }
             continue;
 
-        } else if (*key != '<') {
+        /*
+            Special hack just for ESP until next-gen parser arrives
+         */
+        } else if (*key != '<' || scasecmp(key, "<EspRoute") == 0) {
+            if (*key == '<') {
+                value = strim(strim(value, ">", MPR_TRIM_END), "\"", MPR_TRIM_BOTH);
+                key = &key[1];
+            }
 
             if (!state->enabled) {
                 mprLog(8, "Skipping key %s at %s:%d", key, state->filename, state->lineNumber);
@@ -414,6 +421,12 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
 
             } else if (scasecmp(key, "Location") == 0) {
                 top--;
+
+            } else if (scasecmp(key, "EspRoute") == 0) {
+                /*
+                    Special hack just for ESP until next-gen parser arrives
+                 */
+                rc = processSetting(meta, "EspFinalizeRoute", 0, state);
             }
             if (top < 0) {
                 goto syntaxErr;
