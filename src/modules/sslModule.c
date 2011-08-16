@@ -13,7 +13,7 @@
 
 static int parseSsl(Http *http, cchar *key, char *value, MaConfigState *state)
 {
-    HttpLoc     *loc;
+    HttpRoute   *route;
     HttpHost    *host;
     char        *path, *tok, *word, *enable, *provider;
     char        prefix[MPR_MAX_FNAME];
@@ -21,7 +21,7 @@ static int parseSsl(Http *http, cchar *key, char *value, MaConfigState *state)
     static int  hasBeenWarned = 0;
 
     host = state->host;
-    loc = state->loc;
+    route = state->route;
 
     scopy(prefix, sizeof(prefix), key);
     prefix[3] = '\0';
@@ -36,15 +36,15 @@ static int parseSsl(Http *http, cchar *key, char *value, MaConfigState *state)
         return 0;
         /* return MPR_ERR_BAD_SYNTAX; */
     }
-    if (loc->ssl == 0) {
-        loc->ssl = mprCreateSsl(loc);
+    if (route->ssl == 0) {
+        route->ssl = mprCreateSsl(route);
     }
 #if UNUSED || 1
     if (scasecmp(key, "SSLEngine") == 0 || scasecmp(key, "SSL") == 0) {
         enable = stok(value, " \t", &tok);
         provider = stok(0, " \t", &tok);
         if (scasecmp(value, "on") == 0 || *value == '\0') {
-            if (httpSecureServerByName(host->name, loc->ssl) < 0) {
+            if (httpSecureServerByName(host->name, route->ssl) < 0) {
                 mprError("No HttpServer at %s to secure", host->name);
             }
         } else if (scasecmp(value, "off") == 0) {
@@ -53,7 +53,7 @@ static int parseSsl(Http *http, cchar *key, char *value, MaConfigState *state)
             }
         } else {
             /*  MOB - should doc this option:  SSLEngine IP:PORT */
-            if (httpSecureServerByName(value, loc->ssl) < 0) {
+            if (httpSecureServerByName(value, route->ssl) < 0) {
                 mprError("No HttpServer at %s to secure", value);
             }
         }
@@ -64,37 +64,37 @@ static int parseSsl(Http *http, cchar *key, char *value, MaConfigState *state)
         mprError("SSLEngine is deprecated. Please use ListenSecure");
     }
 #endif
-    path = httpMakePath(loc, strim(value, "\"", MPR_TRIM_BOTH));
+    path = httpMakePath(route, strim(value, "\"", MPR_TRIM_BOTH));
 
     if (scasecmp(key, "SSLCACertificatePath") == 0) {
         path = mprJoinPath(host->serverRoot, path);
-        mprSetSslCaPath(loc->ssl, path);
+        mprSetSslCaPath(route->ssl, path);
         return 1;
 
     } else if (scasecmp(key, "SSLCACertificateFile") == 0) {
         path = mprJoinPath(host->serverRoot, path);
-        mprSetSslCaFile(loc->ssl, path);
+        mprSetSslCaFile(route->ssl, path);
         return 1;
 
     } else if (scasecmp(key, "SSLCertificateFile") == 0) {
         path = mprJoinPath(host->serverRoot, path);
-        mprSetSslCertFile(loc->ssl, path);
+        mprSetSslCertFile(route->ssl, path);
         return 1;
 
     } else if (scasecmp(key, "SSLCertificateKeyFile") == 0) {
-        mprSetSslKeyFile(loc->ssl, path);
+        mprSetSslKeyFile(route->ssl, path);
         return 1;
 
     } else if (scasecmp(key, "SSLCipherSuite") == 0) {
-        mprSetSslCiphers(loc->ssl, value);
+        mprSetSslCiphers(route->ssl, value);
         return 1;
 
     } else if (scasecmp(key, "SSLVerifyClient") == 0) {
         if (scasecmp(value, "require") == 0) {
-            mprVerifySslClients(loc->ssl, 1);
+            mprVerifySslClients(route->ssl, 1);
 
         } else if (scasecmp(value, "none") == 0) {
-            mprVerifySslClients(loc->ssl, 0);
+            mprVerifySslClients(route->ssl, 0);
 
         } else {
             return -1;
@@ -130,7 +130,7 @@ static int parseSsl(Http *http, cchar *key, char *value, MaConfigState *state)
             }
             word = stok(0, " \t", &tok);
         }
-        mprSetSslProtocols(loc->ssl, protoMask);
+        mprSetSslProtocols(route->ssl, protoMask);
         return 1;
     }
     return 0;

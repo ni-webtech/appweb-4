@@ -65,6 +65,7 @@
 		C94086DE101A672F0019809C /* testHttp.c in Sources */ = {isa = PBXBuildFile; fileRef = C94086D2101A672F0019809C /* testHttp.c */; };
 		C9570D8313F042B900B7DEBB /* esp.c in Sources */ = {isa = PBXBuildFile; fileRef = C9570D8213F042B900B7DEBB /* esp.c */; };
 		C96176F412DCE345002702E0 /* auth.c in Sources */ = {isa = PBXBuildFile; fileRef = C96176F312DCE345002702E0 /* auth.c */; };
+		C970D6F313F5F3FD00775043 /* libpcre.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9B12BCA13D175C300470A96 /* libpcre.dylib */; };
 		C9761EF60FD046EF009C78E1 /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C9761EF80FD046FA009C78E1 /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C9761EF90FD0470B009C78E1 /* libmprssl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DAE0FD03FBA009C78E1 /* libmprssl.dylib */; };
@@ -302,13 +303,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = C9761FFC0FD04D5C009C78E1;
 			remoteInfo = mod_cgi;
-		};
-		C9B12BA713D170C700470A96 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = C9E4B72F13C7F4F3005345FA;
-			remoteInfo = mod_esp;
 		};
 		C9B12BA913D170C700470A96 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -622,6 +616,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C970D6F313F5F3FD00775043 /* libpcre.dylib in Frameworks */,
 				C9817C6D110D192400F241EF /* libmprssl.dylib in Frameworks */,
 				C9817C64110D18D600F241EF /* libmpr.dylib in Frameworks */,
 			);
@@ -1078,7 +1073,6 @@
 			dependencies = (
 				C92FC1AF13F4371E00DFA08D /* PBXTargetDependency */,
 				C9B12BA613D170C700470A96 /* PBXTargetDependency */,
-				C9B12BA813D170C700470A96 /* PBXTargetDependency */,
 				C9B12BAA13D170C700470A96 /* PBXTargetDependency */,
 				C9B12BAC13D170C700470A96 /* PBXTargetDependency */,
 			);
@@ -1668,11 +1662,6 @@
 			isa = PBXTargetDependency;
 			target = C9761FFC0FD04D5C009C78E1 /* mod_cgi */;
 			targetProxy = C9B12BA513D170C700470A96 /* PBXContainerItemProxy */;
-		};
-		C9B12BA813D170C700470A96 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = C9E4B72F13C7F4F3005345FA /* mod_esp */;
-			targetProxy = C9B12BA713D170C700470A96 /* PBXContainerItemProxy */;
 		};
 		C9B12BAA13D170C700470A96 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;

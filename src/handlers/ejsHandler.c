@@ -29,7 +29,7 @@ static void openEjs(HttpQueue *q)
     HttpConn    *conn;
     HttpRx      *rx;
     HttpAlias   *alias;
-    HttpLoc     *loc;
+    HttpRoute   *loc;
     Ejs         *ejs;
     EjsPool     *pool;
     char        *uri;
@@ -88,7 +88,7 @@ static void openEjs(HttpQueue *q)
 static int parseEjs(Http *http, cchar *key, char *value, MaConfigState *state)
 {
     HttpStage   *stage;
-    HttpLoc     *loc;
+    HttpRoute   *loc;
     HttpHost    *host;
     HttpAlias   *alias;
     HttpDir     *dir, *parent;

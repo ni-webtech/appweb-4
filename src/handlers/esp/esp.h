@@ -143,7 +143,7 @@ typedef struct EspLoc {
     MprHashTable    *modules;               /* Compiled modules */
     MprList         *env;                   /* Environment for compiler */
     MprList         *routes;                /* Ordered list of routes */
-    HttpLoc         *loc;                   /* Controlling Http location */
+    HttpRoute       *route;                 /* Controlling Http route */
     char            *compile;               /* Compile template */
     char            *link;                  /* Link template */
     char            *searchPath;            /* Search path to use when locating compiler / linker */
@@ -233,11 +233,13 @@ typedef struct EspAction {
  */
 typedef struct EspReq {
     EspLoc          *el;                    /* Back pointer to Esp Location */
-    EspRoute        *route;                 /* Route used for request */
+#if UNUSED
+    EspRoute        *eroute;                /* Route used for request */
+#endif
     EspSession      *session;               /* Session data object */
     EspAction       *action;                /* Action to invoke */
     Esp             *esp;                   /* Convenient esp reference */
-    HttpLoc         *loc;                   /* Location reference */
+    HttpRoute       *route;                 /* Location reference */
     MprBuf          *cacheBuffer;           /* HTML output caching */
     char            *actionKey;             /* Request actionKey value */
     char            *cacheName;             /* Base name of intermediate compiled file */

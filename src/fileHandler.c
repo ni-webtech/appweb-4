@@ -26,14 +26,14 @@ static void openFile(HttpQueue *q)
 {
     HttpRx      *rx;
     HttpTx      *tx;
-    HttpLoc     *loc;
+    HttpRoute   *route;
     HttpConn    *conn;
     char        *date;
 
     conn = q->conn;
     tx = conn->tx;
     rx = conn->rx;
-    loc = rx->loc;
+    route = rx->route;
 
     mprLog(5, "Open file handler");
     if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST)) {
@@ -66,7 +66,7 @@ static void openFile(HttpQueue *q)
             }
         }
 
-    } else if ((rx->flags & (HTTP_PUT | HTTP_DELETE)) && (loc->flags & HTTP_LOC_PUT_DELETE)) {
+    } else if ((rx->flags & (HTTP_PUT | HTTP_DELETE)) && (route->flags & HTTP_LOC_PUT_DELETE)) {
         httpOmitBody(conn);
     } else {
         httpError(q->conn, HTTP_CODE_BAD_METHOD, "Method \"%s\" is not supported by file handler", rx->method);

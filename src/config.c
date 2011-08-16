@@ -10,13 +10,9 @@
 /***************************** Forward Declarations ****************************/
 
 static bool conditionalDefinition(char *key);
+static int parseRoute(Http *http, cchar *key, char *value, MaConfigState *state);
 static MaConfigState *pushState(MaConfigState *state, int *top);
 static int processSetting(MaMeta *server, char *key, char *value, MaConfigState *state);
-
-#if BLD_FEATURE_CONFIG_SAVE
-static void tabs(int fd, int indent);
-static void printAuth(int fd, HttpHost *host, HttpAuth *auth, int indent);
-#endif
 
 /******************************************************************************/
 /*  
@@ -28,8 +24,7 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
     Http            *http;
     HttpServer      *server;
     HttpHost        *host;
-    HttpAlias       *alias;
-    HttpLoc         *loc, *cloc;
+    HttpRoute       *route, *cgiRoute;
     char            *path, *searchPath, *dir;
 
     appweb = meta->appweb;
@@ -53,7 +48,7 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
         host = meta->defaultHost = mprGetFirstItem(server->hosts);
         mprAssert(host);
 
-        loc = host->loc;
+        route = host->route;
 #if WIN
         searchPath = mprAsprintf("%s" MPR_SEARCH_SEP ".", dir);
 #else
@@ -66,50 +61,53 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
         mprSetModuleSearchPath(searchPath);
 
 #if UNUSED
-        httpSetConnector(loc, "netConnector");
+        httpSetConnector(route, "netConnector");
 
         /*
             Auth must be added first to authorize all requests. File is last as a catch all.
          */
         if (httpLookupStage(http, "authFilter")) {
-            httpAddHandler(loc, "authFilter", "");
-            httpAddFilter(loc, http->rangeFilter->name, NULL, HTTP_STAGE_TX);
-            httpAddFilter(loc, http->chunkFilter->name, NULL, HTTP_STAGE_RX | HTTP_STAGE_TX);
-            httpAddFilter(loc, "uploadFilter", NULL, HTTP_STAGE_RX);
-            httpAddFilter(loc, "authFilter", NULL, HTTP_STAGE_RX);
+            httpAddRouteHandler(route, "authFilter", "");
+            httpAddRouteFilter(route, http->rangeFilter->name, NULL, HTTP_STAGE_TX);
+            httpAddRouteFilter(route, http->chunkFilter->name, NULL, HTTP_STAGE_RX | HTTP_STAGE_TX);
+            httpAddRouteFilter(route, "uploadFilter", NULL, HTTP_STAGE_RX);
+            httpAddRouteFilter(route, "authFilter", NULL, HTTP_STAGE_RX);
         }
 #endif
         maLoadModule(appweb, "cgiHandler", "mod_cgi");
         if (httpLookupStage(http, "cgiHandler")) {
-            httpAddHandler(loc, "cgiHandler", ".cgi .cgi-nph .bat .cmd .pl .py");
+            httpAddRouteHandler(route, "cgiHandler", ".cgi .cgi-nph .bat .cmd .pl .py");
             /*
-                Add cgi-bin with a loc block for the /cgi-bin URL prefix.
+                Add cgi-bin with a route for the /cgi-bin URL prefix.
              */
             path = "cgi-bin";
             if (mprPathExists(path, X_OK)) {
-                alias = httpCreateAlias("/cgi-bin/", path, 0);
+                cgiRoute = httpCreateAliasRoute(route, "/cgi-bin/", path, 0);
                 mprLog(4, "ScriptAlias \"/cgi-bin/\":\"%s\"", path);
+#if UNUSED
                 httpAddAlias(host, alias);
-                cloc = httpCreateInheritedLocation(host->loc);
-                httpSetLocationHost(cloc, host);
-                httpSetLocationPrefix(cloc, "/cgi-bin/");
-                httpSetHandler(cloc, "cgiHandler");
-                httpAddLocation(host, cloc);
+                cgiRoute = httpCreateInheritedRoute(host->route);
+                httpSetRoutePrefix(cgiRoute, "/cgi-bin/");
+#endif
+                httpSetRouteHost(cgiRoute, host);
+                httpSetRouteHandler(cgiRoute, "cgiHandler");
+                httpFinalizeRoute(cgiRoute);
+                httpAddRoute(host, cgiRoute);
             }
         }
         maLoadModule(appweb, "ejsHandler", "mod_ejs");
         if (httpLookupStage(http, "ejsHandler")) {
-            httpAddHandler(loc, "ejsHandler", ".ejs");
+            httpAddRouteHandler(route, "ejsHandler", ".ejs");
 #if UNUSED
-            httpSetLocationScript(loc, "start.es");
+            httpSetRouteScript(route, "start.es");
 #endif
         }
         maLoadModule(appweb, "phpHandler", "mod_php");
         if (httpLookupStage(http, "phpHandler")) {
-            httpAddHandler(loc, "phpHandler", ".php");
+            httpAddRouteHandler(route, "phpHandler", ".php");
         }
         if (httpLookupStage(http, "fileHandler")) {
-            httpAddHandler(loc, "fileHandler", "");
+            httpAddRouteHandler(route, "fileHandler", "");
         }
     }
     if (serverRoot) {
@@ -153,8 +151,8 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
     state->meta = meta;
     state->host = host;
     state->dir = httpCreateBareDir(".");
-    state->loc = defaultHost->loc;
-    state->loc->connector = http->netConnector;
+    state->route = defaultHost->route;
+    state->route->connector = http->netConnector;
     state->enabled = 1;
     state->lineNumber = 0;
 
@@ -170,7 +168,7 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
     /*
         Set the default location authorization definition to match the default directory auth
      */
-    state->loc->auth = state->dir->auth;
+    state->route->auth = state->dir->auth;
     state->auth = state->dir->auth;
     httpAddDir(host, state->dir);
 
@@ -178,7 +176,6 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
         Parse each line in the config file
      */
     for (state->lineNumber = 1; top >= 0; state->lineNumber++) {
-
         state = &stack[top];
         mprAssert(state->file);
         if ((buf = mprGetFileString(state->file, 0, NULL)) == 0) {
@@ -231,7 +228,7 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
             state->lineNumber++;
             if (state->enabled) {
                 value = strim(value, "\"", MPR_TRIM_BOTH);
-                value = stemplate(value, state->loc->tokens);
+                value = stemplate(value, state->route->pathVars);
                 if ((cp = strchr(value, '*')) == 0) {
                     state = pushState(state, &top);
                     state->lineNumber = 0;
@@ -272,10 +269,10 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
             }
             continue;
 
-        /*
-            Special hack just for ESP until next-gen parser arrives
-         */
-        } else if (*key != '<' || scasecmp(key, "<EspRoute") == 0) {
+        } else if (*key != '<' || scasecmp(key, "<EspRoute") == 0 || scasecmp(key, "<Route") == 0) {
+            /*
+                Special hack just for ESP until next-gen parser arrives
+             */
             if (*key == '<') {
                 value = strim(strim(value, ">", MPR_TRIM_END), "\"", MPR_TRIM_BOTH);
                 key = &key[1];
@@ -288,7 +285,24 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
             /*
                 Keywords outside of a virtual host or directory section
              */
-            rc = processSetting(meta, key, value, state);
+            if (scmp(key, "Uri") == 0 || 
+                scmp(key, "Methods") == 0 || 
+                scmp(key, "Header") == 0 || 
+                scmp(key, "Field") == 0 || 
+                scmp(key, "Condition") == 0 || 
+                scmp(key, "Modify") == 0 || 
+                scmp(key, "Target") == 0 || 
+                scmp(key, "Load") == 0 || 
+                scmp(key, "FinalizeRoute") == 0 || 
+                scmp(key, "Source") == 0 || 
+                scmp(key, "Reset") == 0) {
+                rc = parseRoute(http, key, value, state);
+            } else {
+                rc = 0;
+            }
+            if (!rc) {
+                rc = processSetting(meta, key, value, state);
+            }
             if (rc == 0) {
                 char    *extraMsg;
                 if (strcmp(key, "SSLEngine") == 0) {
@@ -312,7 +326,7 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
         mprLog(9, "AT %d, key %s", state->lineNumber, key);
 
         /*
-            Directory, Location and virtual host sections
+            Directory, Route and virtual host sections
          */
         key++;
         i = (int) strlen(key) - 1;
@@ -350,8 +364,8 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
                 mprParseIp(value, &ip, &port, -1);
                 host = state->host = httpCloneHost(host);
                 httpSetHostName(host, ip, port);
-                state->loc = host->loc;
-                state->auth = host->loc->auth;
+                state->route = host->route;
+                state->auth = host->route->auth;
                 state->dir = httpCreateDir(stack[top - 1].dir->path, stack[top - 1].dir);
                 state->auth = state->dir->auth;
                 httpAddDir(host, state->dir);
@@ -362,7 +376,7 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
                 }
 
             } else if (scasecmp(key, "Directory") == 0) {
-                path = httpMakePath(state->loc, strim(value, "\"", MPR_TRIM_BOTH));
+                path = httpMakePath(state->route, strim(value, "\"", MPR_TRIM_BOTH));
                 state = pushState(state, &top);
 
                 if ((dir = httpLookupDir(host, path)) != 0) {
@@ -381,54 +395,58 @@ int maParseConfig(MaMeta *meta, cchar *configFile)
                 }
                 state->auth = state->dir->auth;
 
-            } else if (scasecmp(key, "Location") == 0) {
+            } else if (scasecmp(key, "Location") == 0 || scasecmp(key, "Route") == 0) {
                 value = strim(value, "\"", MPR_TRIM_BOTH);
-                if (httpLookupLocation(host, value)) {
-                    mprError("Location block already exists for \"%s\"", value);
+#if UNUSED
+                if (httpLookupRoute(host, value)) {
+                    mprError("Route already exists for \"%s\"", value);
                     goto err;
                 }
+#endif
                 state = pushState(state, &top);
-                state->loc = httpCreateInheritedLocation(state->loc);
-                httpSetLocationHost(state->loc, host);
-                state->auth = state->loc->auth;
-                httpSetLocationPrefix(state->loc, value);
-                if (httpAddLocation(host, state->loc) < 0) {
-                    mprError("Can't add location %s", value);
+                state->route = httpCreateInheritedRoute(state->route);
+                httpSetRouteHost(state->route, host);
+                httpSetRoutePattern(state->route, value);
+                if (httpAddRoute(host, state->route) < 0) {
+                    mprError("Can't add route %s", value);
                     goto err;
                 }
-                mprAssert(host->loc->prefix);
+                state->auth = state->route->auth;
             }
 
         } else {
-
-            stack[top - 1].lineNumber = state->lineNumber + 1;
             key++;
 
             /*
                 Closing tags
              */
-            if (state->enabled && state->loc != stack[top-1].loc) {
-                httpFinalizeLocation(state->loc);
+            if (state->enabled && state->route != stack[top-1].route) {
+                httpFinalizeRoute(state->route);
             }
             if (scasecmp(key, "If") == 0) {
                 top--;
+                stack[top].lineNumber = state->lineNumber + 1;
                 host = stack[top].host;
 
             } else if (scasecmp(key, "VirtualHost") == 0) {
                 top--;
+                stack[top].lineNumber = state->lineNumber + 1;
                 host = stack[top].host;
 
             } else if (scasecmp(key, "Directory") == 0) {
                 top--;
+                stack[top].lineNumber = state->lineNumber + 1;
 
-            } else if (scasecmp(key, "Location") == 0) {
+            } else if (scasecmp(key, "Route") == 0) {
+                rc = parseRoute(http, "-FinalizeRoute-", 0, state);
                 top--;
+                stack[top].lineNumber = state->lineNumber + 1;
 
             } else if (scasecmp(key, "EspRoute") == 0) {
                 /*
                     Special hack just for ESP until next-gen parser arrives
                  */
-                rc = processSetting(meta, "EspFinalizeRoute", 0, state);
+                rc = processSetting(meta, "-FinalizeRoute-", 0, state);
             }
             if (top < 0) {
                 goto syntaxErr;
@@ -454,16 +472,144 @@ err:
 }
 
 
+static bool checkRoute(HttpRoute *route)
+{
+    if (!route) {
+        mprError("Directive must be used inside a Route");
+        return 0;
+    }
+    return 1;
+}
+
+
+static int parseNot(char **value, int flags) 
+{
+    char    *not;
+
+    if (*value && **value == '!') {
+        maGetConfigValue(&not, *value, value, 1);
+        flags |= HTTP_ROUTE_NOT;
+    }
+    return flags;
+}
+
+
+static int parseRoute(Http *http, cchar *key, char *value, MaConfigState *state)
+{
+    HttpRoute   *route;
+    HttpHost    *host;
+    char        *kind, *details, *header;
+    int         next, flags;
+    
+    host = state->host;
+    route = state->route;
+    route = state->route;
+
+    if (scasecmp(key, "Target") == 0) {
+        if (!checkRoute(route)) {
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        if (maGetConfigValue(&kind, value, &details, 1) < 0) {
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        httpSetRouteTarget(route, kind, details);
+        return 1;
+
+    } else if (scasecmp(key, "Condition") == 0) {
+        flags = parseNot(&value, HTTP_ROUTE_STATIC_VALUES);
+        httpAddRouteCondition(route, value, flags);
+        return 1;
+
+    } else if (scasecmp(key, "Field") == 0) {
+        if (!checkRoute(route)) {
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        if (maGetConfigValue(&header, value, &value, 1) < 0) {
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        flags = parseNot(&value, HTTP_ROUTE_STATIC_VALUES);
+        httpAddRouteField(route, header, value, flags);
+        return 1;
+
+    } else if (scasecmp(key, "-FinalizeRoute-") == 0) {
+        /* This is an internal directive and not used in config files */
+        httpFinalizeRoute(route);
+
+    } else if (scasecmp(key, "Header") == 0) {
+        if (!checkRoute(route)) {
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        if (maGetConfigValue(&header, value, &value, 1) < 0) {
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        flags = parseNot(&value, HTTP_ROUTE_STATIC_VALUES);
+        httpAddRouteHeader(route, header, value, flags);
+        return 1;
+
+#if UNUSED
+    } else if (scasecmp(key, "Load") == 0) {
+        if (maGetConfigValue(&name, value, &path, 1) < 0) {
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        route->appModuleName = sclone(name);
+        route->appModulePath = sclone(path);
+        return 1;
+#endif
+
+    } else if (scasecmp(key, "LogRoutes") == 0) {
+        mprLog(0, "HTTP Routes for URI %s", route->pattern);
+        for (next = 0; (route = mprGetNextItem(host->routes, &next)) != 0; ) {
+            if (route->targetDest) {
+                mprLog(0, "  %-14s %-20s %-30s %-14s", route->name, route->methods ? route->methods : "", route->pattern, 
+                    route->targetDest);
+            } else {
+                mprLog(0, "  %-14s %-20s %-30s", route->name, route->methods ? route->methods : "", route->pattern);
+            }
+        }
+        return 1;
+
+    } else if (scasecmp(key, "Methods") == 0) {
+        if (!checkRoute(route)) {
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        httpSetRouteMethods(route, value);
+        return 1;
+
+    } else if (scasecmp(key, "Modify") == 0) {
+        flags = parseNot(&value, HTTP_ROUTE_STATIC_VALUES);
+        httpAddRouteModification(route, value, flags);
+        return 1;
+
+    } else if (scasecmp(key, "Reset") == 0) {
+        //  TODO MOB
+        return 1;
+
+    } else if (scasecmp(key, "Source") == 0 || scasecmp(key, "Controller") == 0) {
+        if (route == 0) {
+            mprError("Directive must be used inside a Route");
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        httpSetRouteSource(route, value);
+        return 1;
+        
+    } else if (scasecmp(key, "Uri") == 0) {
+        if (!checkRoute(route)) {
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        httpSetRoutePattern(route, value);
+        return 1;
+    }
+    return 0;
+}
+
+
 int maValidateConfiguration(MaMeta *meta)
 {
     MaAppweb        *appweb;
     Http            *http;
-    HttpAlias       *alias;
-    HttpDir         *bestDir;
     HttpHost        *host, *defaultHost;
     HttpServer      *server;
-    char            *path;
-    int             nextAlias, nextHost, nextServer;
+    int             nextHost, nextServer;
 
     appweb = meta->appweb;
     http = appweb->http;
@@ -495,16 +641,18 @@ int maValidateConfiguration(MaMeta *meta)
         if (host->mimeTypes == 0) {
             host->mimeTypes = defaultHost->mimeTypes;
         }
+#if UNUSED
         /*
-            Check aliases have directory blocks. Inherit authorization from the best matching directory
+            Check routes have directory blocks. Inherit authorization from the best matching directory
          */
-        for (nextAlias = 0; (alias = mprGetNextItem(host->aliases, &nextAlias)) != 0; ) {
-            path = httpMakePath(host->loc, alias->filename);
+        for (nextRoute = 0; (route = mprGetNextItem(host->routes, &nextRoute)) != 0; ) {
+            path = httpMakePath(host->route, alias->filename);
             if ((bestDir = httpLookupBestDir(host, path)) == 0) {
                 bestDir = httpCreateBareDir(alias->filename);
                 httpAddDir(host, bestDir);
             }
         }
+#endif
         mprLog(MPR_CONFIG, "Host \"%s\"", host->name);
         mprLog(MPR_CONFIG, "    ServerRoot \"%s\"", host->serverRoot);
         mprLog(MPR_CONFIG, "    DocumentRoot: \"%s\"", host->documentRoot);
@@ -521,8 +669,7 @@ int maValidateConfiguration(MaMeta *meta)
 static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *state)
 {
     MaAppweb    *appweb;
-    HttpAlias   *alias;
-    HttpLoc     *loc;
+    HttpRoute   *route, *alias;
     HttpHost    *host;
     HttpDir     *dir;
     Http        *http;
@@ -534,7 +681,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
     MprModule   *module;
     MprOff      onum;
     char        *name, *path, *prefix, *cp, *tok, *ext, *mimeType, *url, *newUrl, *extensions, *codeStr, *ip;
-    char        *names, *type, *items, *include, *exclude, *when, *mimeTypes, *lib, *sep;
+    char        *names, *type, *items, *include, *exclude, *when, *mimeTypes, *lib, *sep, *suffix, *position, *lang;
     ssize       len;
     int         port, rc, code, num, colonCount, mask, level;
 
@@ -547,8 +694,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
     host = state->host;
     limits = host->limits;
     dir = state->dir;
-    loc = state->loc;
-    mprAssert(state->loc->prefix);
+    route = state->route;
 
     mprAssert(host);
     mprAssert(dir);
@@ -556,13 +702,40 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
 
     switch (toupper((int) key[0])) {
     case 'A':
-        if (scasecmp(key, "Alias") == 0) {
+        if (scasecmp(key, "AddLanguage") == 0) {
+            return 1;
+
+        } else if (scasecmp(key, "AddLanguageRoot") == 0) {
+            if (maSplitConfigValue(&lang, &path, value, 1) < 0) {
+                return MPR_ERR_BAD_SYNTAX;
+            }
+            httpAddRouteLanguageRoot(route, lang, path);
+            return 1;
+
+        } else if (scasecmp(key, "AddLanguage") == 0) {
+            if (maGetConfigValue(&lang, value, &tok, 1) < 0) {
+                return MPR_ERR_BAD_SYNTAX;
+            }
+            if (maGetConfigValue(&suffix, tok, &tok, 1) < 0) {
+                return MPR_ERR_BAD_SYNTAX;
+            }
+            if (maGetConfigValue(&position, tok, &tok, 1) < 0) {
+                return MPR_ERR_BAD_SYNTAX;
+            }
+            httpAddRouteLanguage(route, lang, suffix, scasecmp(position, "after") == 0 ? HTTP_LANG_AFTER : HTTP_LANG_BEFORE);
+            return 1;
+
+        } else if (scasecmp(key, "Alias") == 0) {
             /* Scope: server, host */
             if (maSplitConfigValue(&prefix, &path, value, 1) < 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            prefix = stemplate(prefix, loc->tokens);
-            path = httpMakePath(loc, path);
+            prefix = stemplate(prefix, route->pathVars);
+            path = httpMakePath(route, path);
+            alias = httpCreateAliasRoute(route, prefix, path, 0);
+            httpFinalizeRoute(alias);
+            httpAddRoute(host, alias);
+#if UNUSED
             if (httpLookupAlias(host, prefix)) {
                 mprError("Alias \"%s\" already exists", prefix);
                 return MPR_ERR_BAD_SYNTAX;
@@ -573,42 +746,41 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
                 mprError("Can't insert alias: %s", prefix);
                 return MPR_ERR_BAD_SYNTAX;
             }
-            if (scmp(loc->prefix, alias->prefix) == 0) {
-                httpSetLocationAlias(loc, alias);
-            }
+            httpCreateRouteAlias(route, alias);
+#endif
             return 1;
 
         } else if (scasecmp(key, "AddFilter") == 0) {
-            /* Scope: server, host, location */
+            /* Scope: server, host, route */
             name = stok(value, " \t", &extensions);
-            if (httpAddFilter(loc, name, extensions, HTTP_STAGE_RX | HTTP_STAGE_TX) < 0) {
+            if (httpAddRouteFilter(route, name, extensions, HTTP_STAGE_RX | HTTP_STAGE_TX) < 0) {
                 mprError("Can't add filter %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
             return 1;
 
         } else if (scasecmp(key, "AddInputFilter") == 0) {
-            /* Scope: server, host, location */
+            /* Scope: server, host, route */
             name = stok(value, " \t", &extensions);
-            if (httpAddFilter(loc, name, extensions, HTTP_STAGE_RX) < 0) {
+            if (httpAddRouteFilter(route, name, extensions, HTTP_STAGE_RX) < 0) {
                 mprError("Can't add filter %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
             return 1;
 
         } else if (scasecmp(key, "AddOutputFilter") == 0) {
-            /* Scope: server, host, location */
+            /* Scope: server, host, route */
             name = stok(value, " \t", &extensions);
-            if (httpAddFilter(loc, name, extensions, HTTP_STAGE_TX) < 0) {
+            if (httpAddRouteFilter(route, name, extensions, HTTP_STAGE_TX) < 0) {
                 mprError("Can't add filter %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
             return 1;
 
         } else if (scasecmp(key, "AddHandler") == 0) {
-            /* Scope: server, host, location */
+            /* Scope: server, host, route */
             name = stok(value, " \t", &extensions);
-            if (httpAddHandler(state->loc, name, extensions) < 0) {
+            if (httpAddRouteHandler(state->route, name, extensions) < 0) {
                 mprError("Can't add handler %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
@@ -634,7 +806,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
 #if BLD_FEATURE_AUTH_FILE
             //  TODO - this belongs elsewhere
             path = mprJoinPath(state->configDir, strim(value, "\"", MPR_TRIM_BOTH));
-            path = httpMakePath(loc, path);
+            path = httpMakePath(route, path);
             if (httpReadGroupFile(http, auth, path) < 0) {
                 mprError("Can't open AuthGroupFile %s", path);
                 return MPR_ERR_BAD_SYNTAX;
@@ -685,7 +857,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
 #if BLD_FEATURE_AUTH_FILE
             //  TODO - this belons elsewhere
             path = mprJoinPath(state->configDir, strim(value, "\"", MPR_TRIM_BOTH));
-            path = httpMakePath(loc, path);
+            path = httpMakePath(route, path);
             if (httpReadUserFile(http, auth, path) < 0) {
                 mprError("Can't open AuthUserFile %s", path);
                 return MPR_ERR_BAD_SYNTAX;
@@ -721,21 +893,21 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
         break;
 
     case 'C':
-        if (scasecmp(key, "Cache") == 0) {
+        if (scasecmp(key, "ClientCache") == 0) {
             value = strim(value, "\"", MPR_TRIM_BOTH);
             when = stok(value, " \t", &extensions);
-            httpAddLocationExpiry(loc, (MprTime) stoi(when, 10, NULL), extensions);
+            httpAddRouteExpiry(route, (MprTime) stoi(when, 10, NULL), extensions);
             return 1;
 
         } else if (scasecmp(key, "CacheByType") == 0) {
             value = strim(value, "\"", MPR_TRIM_BOTH);
             when = stok(value, " \t", &mimeTypes);
-            httpAddLocationExpiryByType(loc, (MprTime) stoi(when, 10, NULL), mimeTypes);
+            httpAddRouteExpiryByType(route, (MprTime) stoi(when, 10, NULL), mimeTypes);
             return 1;
 
         } else if (scasecmp(key, "Chroot") == 0) {
 #if BLD_UNIX_LIKE
-            path = httpMakePath(loc, strim(value, "\"", MPR_TRIM_BOTH));
+            path = httpMakePath(route, strim(value, "\"", MPR_TRIM_BOTH));
             if (chdir(path) < 0) {
                 mprError("Can't change working directory to %s", path);
                 return MPR_ERR_CANT_OPEN;
@@ -778,7 +950,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             if (path == 0 || format == 0) {
                 return MPR_ERR_BAD_SYNTAX;
             }
-            path = httpMakePath(loc, path);
+            path = httpMakePath(route, path);
             maSetAccessLog(host, path, strim(format, "\"", MPR_TRIM_BOTH));
 #endif
             return 1;
@@ -803,10 +975,10 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             return 1;
 
         } else if (scasecmp(key, "DocumentRoot") == 0) {
-            path = httpMakePath(loc, strim(value, "\"", MPR_TRIM_BOTH));
+            path = httpMakePath(route, strim(value, "\"", MPR_TRIM_BOTH));
             httpSetHostDocumentRoot(host, path);
             httpSetDirPath(dir, path);
-            httpSetLocationToken(loc, "DOCUMENT_ROOT", path);
+            httpSetRoutePathVar(route, "DOCUMENT_ROOT", path);
             return 1;
         }
         break;
@@ -818,7 +990,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
                 mprError("Bad ErrorDocument directive");
                 return MPR_ERR_BAD_SYNTAX;
             }
-            httpAddErrorDocument(loc, codeStr, url);
+            httpAddRouteErrorDocument(route, codeStr, url);
             return 1;
 
         } else if (scasecmp(key, "ErrorLog") == 0) {
@@ -829,7 +1001,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
                 } else {
                     maStopLogging(meta);
                     if (strncmp(path, "stdout", 6) != 0 && strncmp(path, "stderr", 6) != 0) {
-                        path = httpMakePath(loc, path);
+                        path = httpMakePath(route, path);
                     }
                     if (maStartLogging(host, path) < 0) {
                         mprError("Can't write to ErrorLog: %s", path);
@@ -1180,9 +1352,9 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
 
         } else if (scasecmp(key, "PutMethod") == 0) {
             if (scasecmp(value, "on") == 0) {
-                loc->flags |= HTTP_LOC_PUT_DELETE;
+                route->flags |= HTTP_LOC_PUT_DELETE;
             } else {
-                loc->flags &= ~HTTP_LOC_PUT_DELETE;
+                route->flags &= ~HTTP_LOC_PUT_DELETE;
             }
             return 1;
         }
@@ -1224,9 +1396,13 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             }
             url = strim(url, "\"", MPR_TRIM_BOTH);
             newUrl = strim(newUrl, "\"", MPR_TRIM_BOTH);
-            mprLog(4, "insertAlias: Redirect %d from \"%s\" to \"%s\"", code, url, newUrl);
+            alias = httpCreateAliasRoute(route, url, newUrl, code);
+            httpFinalizeRoute(alias);
+            httpAddRoute(host, alias);
+#if UNUSED
             alias = httpCreateAlias(url, newUrl, code);
             httpAddAlias(host, alias);
+#endif
             return 1;
 
         } else if (scasecmp(key, "Require") == 0) {
@@ -1263,7 +1439,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             return 1;
 
         } else if (scasecmp(key, "ResetPipeline") == 0) {
-            httpResetPipeline(loc);
+            httpResetRoutePipeline(route);
             return 1;
 
         } else if (scasecmp(key, "RunHandler") == 0) {
@@ -1271,11 +1447,11 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             name = stok(value, " \t", &value);
             value = slower(strim(value, "\"", MPR_TRIM_BOTH));
             if (scmp(value, "before") == 0) {
-                state->loc->flags |= HTTP_LOC_BEFORE;
+                state->route->flags |= HTTP_LOC_BEFORE;
             } else if (scmp(value, "after") == 0) {
-                state->loc->flags |= HTTP_LOC_AFTER;
+                state->route->flags |= HTTP_LOC_AFTER;
             } else if (scmp(value, "smart") == 0) {
-                state->loc->flags |= HTTP_LOC_SMART;
+                state->route->flags |= HTTP_LOC_SMART;
             } else {
                 mprError("Unknown RunHandler argument %s, valid [before|after|smart]", value);
                 return MPR_ERR_BAD_SYNTAX;
@@ -1291,26 +1467,26 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             return 1;
 
         } else if (scasecmp(key, "ServerRoot") == 0) {
-            path = stemplate(strim(value, "\"", MPR_TRIM_BOTH), loc->tokens);
+            path = stemplate(strim(value, "\"", MPR_TRIM_BOTH), route->pathVars);
             maSetMetaRoot(meta, path);
             httpSetHostServerRoot(host, path);
-            httpSetLocationToken(loc, "SERVER_ROOT", path);
+            httpSetRoutePathVar(route, "SERVER_ROOT", path);
             mprLog(MPR_CONFIG, "Server Root \"%s\"", path);
             return 1;
 
         } else if (scasecmp(key, "SetConnector") == 0) {
-            /* Scope: meta, host, loc */
+            /* Scope: meta, host, route */
             value = strim(value, "\"", MPR_TRIM_BOTH);
-            if (httpSetConnector(loc, value) < 0) {
+            if (httpSetRouteConnector(route, value) < 0) {
                 mprError("Can't add handler %s", value);
                 return MPR_ERR_CANT_CREATE;
             }
             return 1;
 
         } else if (scasecmp(key, "SetHandler") == 0) {
-            /* Scope: meta, host, location */
+            /* Scope: meta, host, route */
             name = stok(value, " \t", &extensions);
-            if (httpSetHandler(state->loc, name) < 0) {
+            if (httpSetRouteHandler(state->route, name) < 0) {
                 mprError("Can't add handler %s", name);
                 return MPR_ERR_CANT_CREATE;
             }
@@ -1343,7 +1519,7 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             return 1;
 
         } else if (scasecmp(key, "TypesConfig") == 0) {
-            path = httpMakePath(loc, strim(value, "\"", MPR_TRIM_BOTH));
+            path = httpMakePath(route, strim(value, "\"", MPR_TRIM_BOTH));
             if ((host->mimeTypes = mprCreateMimeTypes(path)) == 0) {
                 mprError("Can't open TypesConfig mime file %s", path);
                 host->mimeTypes = mprCreateMimeTypes(NULL);
@@ -1370,14 +1546,14 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
             return 1;
 
         } else if (scasecmp(key, "UploadDir") == 0 || scasecmp(key, "FileUploadDir") == 0) {
-            path = httpMakePath(loc, strim(value, "\"", MPR_TRIM_BOTH));
-            loc->uploadDir = sclone(path);
+            path = httpMakePath(route, strim(value, "\"", MPR_TRIM_BOTH));
+            route->uploadDir = sclone(path);
             mprLog(MPR_CONFIG, "Upload directory: %s", path);
             return 1;
 
         } else if (scasecmp(key, "UploadAutoDelete") == 0) {
             value = strim(value, "\"", MPR_TRIM_BOTH);
-            loc->autoDelete = (scasecmp(value, "on") == 0);
+            route->autoDelete = (scasecmp(value, "on") == 0);
             return 1;
 
         } else if (scasecmp(key, "User") == 0) {
@@ -1388,6 +1564,21 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
     }
     rc = 0;
 
+    if (scmp(key, "Uri") == 0 || 
+        scmp(key, "Methods") == 0 || 
+        scmp(key, "Header") == 0 || 
+        scmp(key, "Field") == 0 || 
+        scmp(key, "Condition") == 0 || 
+        scmp(key, "Modify") == 0 || 
+        scmp(key, "Target") == 0 || 
+        scmp(key, "Load") == 0 || 
+        scmp(key, "FinalizeRoute") == 0 || 
+        scmp(key, "Source") == 0 || 
+        scmp(key, "Reset") == 0) {
+        if ((rc = parseRoute(http, key, value, state)) != 0) {
+            return rc;
+        }
+    }
     /*
         Allow all stages to parse the request
      */
@@ -1408,41 +1599,43 @@ static int processSetting(MaMeta *meta, char *key, char *value, MaConfigState *s
 }
 
 
+#if UNUSED
 /*
-    Create a location block for a handler and an alias. Convenience routine for ScriptAlias, EjsAppAlias, EjsAppDirAlias.
+    Create a route for a handler and an alias. Convenience routine for ScriptAlias, EjsAppAlias, EjsAppDirAlias.
  */
-HttpLoc *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *prefixArg, cchar *pathArg, cchar *handlerName, 
+HttpRoute *maCreateRouteAlias(Http *http, MaConfigState *state, cchar *prefixArg, cchar *pathArg, cchar *handlerName, 
         int flags)
 {
     HttpHost    *host;
     HttpAlias   *alias;
-    HttpLoc     *loc;
+    HttpRoute   *route;
     char        *path, *prefix;
 
     host = state->host;
-    prefix = stemplate(prefixArg, state->loc->tokens);
-    path = httpMakePath(state->loc, pathArg);
+    prefix = stemplate(prefixArg, state->route->pathVars);
+    path = httpMakePath(state->route, pathArg);
 
     /*
-        Create an ejs application location block and alias
+        Create an ejs application route and alias
      */
     alias = httpCreateAlias(prefix, path, 0);
     httpAddAlias(host, alias);
     mprLog(4, "Alias \"%s\" for \"%s\"", prefix, path);
 
-    if (httpLookupLocation(host, prefix)) {
-        mprError("Location block already exists for \"%s\"", prefix);
+    if (httpLookupRoute(host, prefix)) {
+        mprError("Route already exists for \"%s\"", prefix);
         return 0;
     }
-    loc = httpCreateInheritedLocation(state->loc);
-    httpSetLocationHost(loc, host);
-    httpSetLocationAuth(loc, state->dir->auth);
-    httpSetLocationPrefix(loc, prefix);
-    httpAddLocation(host, loc);
-    httpSetLocationFlags(loc, flags);
-    httpSetHandler(loc, handlerName);
-    return loc;
+    route = httpCreateInheritedRoute(state->route);
+    httpSetRouteHost(route, host);
+    httpSetRouteAuth(route, state->dir->auth);
+    httpSetRoutePrefix(route, prefix);
+    httpAddRoute(host, route);
+    httpSetRouteFlags(route, flags);
+    httpSetRouteHandler(route, handlerName);
+    return route;
 }
+#endif
 
 
 /*
@@ -1450,7 +1643,7 @@ HttpLoc *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *prefixAr
         Default Server          Level 1
             <VirtualHost>       Level 2
                 <Directory>     Level 3
-                    <Location>  Level 4
+                    <Route>     Level 4
  *
  */
 static MaConfigState *pushState(MaConfigState *state, int *top)
@@ -1465,7 +1658,7 @@ static MaConfigState *pushState(MaConfigState *state, int *top)
     next = state + 1;
     next->meta = state->meta;
     next->host = state->host;
-    next->loc = state->loc;
+    next->route = state->route;
     next->dir = state->dir;
     next->auth = state->auth;
     next->lineNumber = state->lineNumber;
@@ -1561,6 +1754,7 @@ int maGetConfigValue(char **arg, char *buf, char **nextToken, int quotes)
     }
     return 0;
 }
+
 
 /*
     @copy   default

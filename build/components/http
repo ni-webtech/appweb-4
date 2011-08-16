@@ -2,7 +2,7 @@
 #   Http
 #
 defineComponent() {
-    local iflags libpaths builtin libraries imports headers
+    local iflags libpaths builtin libraries imports headers libs withlibs
 
     path="${1:-.}"
     builtin=`[ $path = "." ] && echo --builtin`
@@ -22,7 +22,8 @@ defineComponent() {
         imports="$imports $libraries"
         libpaths="${libraries%/*}"
     fi
-    libs="http"
+    libs="http pcre"
+    withlibs="pcre"
     if [ `eval echo \\$${KIND}_HAS_PAM` = 1 ] ; then
         libs="$libs pam"
         withlibs="$withlibs pam"

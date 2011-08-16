@@ -20,10 +20,9 @@
  */
 /************************************************************************/
 
+#if UNUSED
 /*
     alias.c -- Alias service for aliasing URLs to file storage.
-
-    This module supports the alias directives and mapping URLs to physical locations. 
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
@@ -78,6 +77,7 @@ static void manageAlias(HttpAlias *alias, int flags)
         mprMark(alias->uri);
     }
 }
+#endif
 
 
 /*
@@ -351,6 +351,488 @@ void httpInitAuth(Http *http)
 /************************************************************************/
 /*
  *  End of file "./src/auth.c"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "./src/authCheck.c"
+ */
+/************************************************************************/
+
+/*
+    authCheck.c - Authorization checking for basic and digest authentication.
+    Copyright (c) All Rights Reserved. See details at the end of the file.
+ */
+
+
+
+/*
+    Per-request authorization data
+ */
+typedef struct AuthData 
+{
+    char            *password;          /* User password or digest */
+    char            *userName;
+    char            *cnonce;
+    char            *nc;
+    char            *nonce;
+    char            *opaque;
+    char            *qop;
+    char            *realm;
+    char            *uri;
+} AuthData;
+
+
+static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *realm, cchar *uri, 
+    cchar *nonce, cchar *qop, cchar *nc, cchar *cnonce, cchar *method);
+static char *createDigestNonce(HttpConn *conn, cchar *secret, cchar *etag, cchar *realm);
+static void decodeBasicAuth(HttpConn *conn, AuthData *ad);
+static int  decodeDigestDetails(HttpConn *conn, AuthData *ad);
+static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *msg, char *logMsg);
+static int parseDigestNonce(char *nonce, cchar **secret, cchar **etag, cchar **realm, MprTime *when);
+
+#if UNUSED
+int httpOpenAuthFilter(Http *http)
+{
+    HttpStage     *filter;
+
+    mprLog(5, "Open auth filter");
+    if ((filter = httpCreateFilter(http, "authFilter", HTTP_STAGE_ALL, NULL)) == 0) {
+        return MPR_ERR_CANT_CREATE;
+    }
+    http->authFilter = filter;
+    return 0;
+}
+#endif
+
+int httpCheckAuth(HttpConn *conn)
+{
+    Http        *http;
+    HttpRx      *rx;
+    HttpTx      *tx;
+    HttpAuth    *auth;
+    AuthData    *ad;
+    MprTime     when;
+    cchar       *requiredPassword;
+    char        *msg, *requiredDigest;
+    cchar       *secret, *etag, *realm;
+    int         actualAuthType;
+
+    rx = conn->rx;
+    tx = conn->tx;
+    http = conn->http;
+    auth = rx->dir->auth ? rx->dir->auth : rx->route->auth;
+
+    if (!conn->server || auth == 0 || auth->type == 0) {
+        return 0;
+    }
+    if ((ad = mprAllocStruct(AuthData)) == 0) {
+        return 0;
+    }
+    if (rx->authDetails == 0) {
+        formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, Missing authorization details.", 0);
+        return HTTP_ROUTE_ACCEPTED;
+    }
+    if (scasecmp(rx->authType, "basic") == 0) {
+        decodeBasicAuth(conn, ad);
+        actualAuthType = HTTP_AUTH_BASIC;
+
+    } else if (scasecmp(rx->authType, "digest") == 0) {
+        if (decodeDigestDetails(conn, ad) < 0) {
+            httpError(conn, 400, "Bad authorization header");
+            return HTTP_ROUTE_ACCEPTED;
+        }
+        actualAuthType = HTTP_AUTH_DIGEST;
+    } else {
+        actualAuthType = HTTP_AUTH_UNKNOWN;
+    }
+    mprLog(4, "matchAuth: type %d, url %s\nDetails %s\n", auth->type, rx->pathInfo, rx->authDetails);
+
+    if (ad->userName == 0) {
+        formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, Missing user name", 0);
+        return HTTP_ROUTE_ACCEPTED;
+    }
+    if (auth->type != actualAuthType) {
+        formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, Wrong authentication protocol", 0);
+        return HTTP_ROUTE_ACCEPTED;
+    }
+    /*  
+        Some backend methods can't return the password and will simply do everything in validateCred. 
+        In this case, they and will return "". That is okay.
+     */
+    if ((requiredPassword = (http->getPassword)(auth, auth->requiredRealm, ad->userName)) == 0) {
+        formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, authentication error", "User not defined");
+        return 1;
+    }
+    if (auth->type == HTTP_AUTH_DIGEST) {
+        if (scmp(ad->qop, auth->qop) != 0) {
+            formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied. Protection quality does not match", 0);
+            return HTTP_ROUTE_ACCEPTED;
+        }
+        calcDigest(&requiredDigest, 0, requiredPassword, ad->realm, rx->pathInfo, ad->nonce, ad->qop, ad->nc, 
+            ad->cnonce, rx->method);
+        requiredPassword = requiredDigest;
+
+        /*
+            Validate the nonce value - prevents replay attacks
+         */
+        when = 0; secret = 0; etag = 0; realm = 0;
+        parseDigestNonce(ad->nonce, &secret, &etag, &realm, &when);
+        if (scmp(secret, http->secret) != 0 || scmp(etag, tx->etag) != 0 || scmp(realm, auth->requiredRealm) != 0) {
+            formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access denied, authentication error", "Nonce mismatch");
+        } else if ((when + (5 * 60 * MPR_TICKS_PER_SEC)) < http->now) {
+            formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access denied, authentication error", "Nonce is stale");
+        }
+    }
+    if (!(http->validateCred)(auth, auth->requiredRealm, ad->userName, ad->password, requiredPassword, &msg)) {
+        formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access denied, incorrect username/password", msg);
+    }
+    rx->authenticated = 1;
+    return HTTP_ROUTE_ACCEPTED;
+}
+
+
+/*  
+    Decode basic authorization details
+ */
+static void decodeBasicAuth(HttpConn *conn, AuthData *ad)
+{
+    HttpRx  *rx;
+    char    *decoded, *cp;
+
+    rx = conn->rx;
+    if ((decoded = mprDecode64(rx->authDetails)) == 0) {
+        return;
+    }
+    if ((cp = strchr(decoded, ':')) != 0) {
+        *cp++ = '\0';
+    }
+    if (cp) {
+        ad->userName = sclone(decoded);
+        ad->password = sclone(cp);
+
+    } else {
+        ad->userName = mprEmptyString();
+        ad->password = mprEmptyString();
+    }
+    httpSetAuthUser(conn, ad->userName);
+}
+
+
+/*  
+    Decode the digest authentication details.
+ */
+static int decodeDigestDetails(HttpConn *conn, AuthData *ad)
+{
+    HttpRx      *rx;
+    char        *value, *tok, *key, *dp, *sp;
+    int         seenComma;
+
+    rx = conn->rx;
+    key = sclone(rx->authDetails);
+
+    while (*key) {
+        while (*key && isspace((int) *key)) {
+            key++;
+        }
+        tok = key;
+        while (*tok && !isspace((int) *tok) && *tok != ',' && *tok != '=') {
+            tok++;
+        }
+        *tok++ = '\0';
+
+        while (isspace((int) *tok)) {
+            tok++;
+        }
+        seenComma = 0;
+        if (*tok == '\"') {
+            value = ++tok;
+            while (*tok != '\"' && *tok != '\0') {
+                tok++;
+            }
+        } else {
+            value = tok;
+            while (*tok != ',' && *tok != '\0') {
+                tok++;
+            }
+            seenComma++;
+        }
+        *tok++ = '\0';
+
+        /*
+            Handle back-quoting
+         */
+        if (strchr(value, '\\')) {
+            for (dp = sp = value; *sp; sp++) {
+                if (*sp == '\\') {
+                    sp++;
+                }
+                *dp++ = *sp++;
+            }
+            *dp = '\0';
+        }
+
+        /*
+            user, response, oqaque, uri, realm, nonce, nc, cnonce, qop
+         */
+        switch (tolower((int) *key)) {
+        case 'a':
+            if (scasecmp(key, "algorithm") == 0) {
+                break;
+            } else if (scasecmp(key, "auth-param") == 0) {
+                break;
+            }
+            break;
+
+        case 'c':
+            if (scasecmp(key, "cnonce") == 0) {
+                ad->cnonce = sclone(value);
+            }
+            break;
+
+        case 'd':
+            if (scasecmp(key, "domain") == 0) {
+                break;
+            }
+            break;
+
+        case 'n':
+            if (scasecmp(key, "nc") == 0) {
+                ad->nc = sclone(value);
+            } else if (scasecmp(key, "nonce") == 0) {
+                ad->nonce = sclone(value);
+            }
+            break;
+
+        case 'o':
+            if (scasecmp(key, "opaque") == 0) {
+                ad->opaque = sclone(value);
+            }
+            break;
+
+        case 'q':
+            if (scasecmp(key, "qop") == 0) {
+                ad->qop = sclone(value);
+            }
+            break;
+
+        case 'r':
+            if (scasecmp(key, "realm") == 0) {
+                ad->realm = sclone(value);
+            } else if (scasecmp(key, "response") == 0) {
+                /* Store the response digest in the password field */
+                ad->password = sclone(value);
+            }
+            break;
+
+        case 's':
+            if (scasecmp(key, "stale") == 0) {
+                break;
+            }
+        
+        case 'u':
+            if (scasecmp(key, "uri") == 0) {
+                ad->uri = sclone(value);
+            } else if (scasecmp(key, "user") == 0) {
+                ad->userName = sclone(value);
+            }
+            break;
+
+        default:
+            /*  Just ignore keywords we don't understand */
+            ;
+        }
+        key = tok;
+        if (!seenComma) {
+            while (*key && *key != ',') {
+                key++;
+            }
+            if (*key) {
+                key++;
+            }
+        }
+    }
+    if (ad->userName == 0 || ad->realm == 0 || ad->nonce == 0 || ad->uri == 0 || ad->password == 0) {
+        return MPR_ERR_BAD_ARGS;
+    }
+    if (ad->qop && (ad->cnonce == 0 || ad->nc == 0)) {
+        return MPR_ERR_BAD_ARGS;
+    }
+    if (ad->qop == 0) {
+        ad->qop = mprEmptyString();
+    }
+    httpSetAuthUser(conn, ad->userName);
+    return 0;
+}
+
+
+/*  
+    Format an authentication response. This is typically a 401 response code.
+ */
+static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *msg, char *logMsg)
+{
+    HttpTx  *tx;
+    char    *qopClass, *nonce, *etag;
+
+    tx = conn->tx;
+    if (logMsg == 0) {
+        logMsg = msg;
+    }
+    mprLog(3, "Auth response: code %d, %s", code, logMsg);
+
+    if (auth->type == HTTP_AUTH_BASIC) {
+        httpSetHeader(conn, "WWW-Authenticate", "Basic realm=\"%s\"", auth->requiredRealm);
+
+    } else if (auth->type == HTTP_AUTH_DIGEST) {
+        qopClass = auth->qop;
+        etag = tx->etag ? tx->etag : "";
+        nonce = createDigestNonce(conn, conn->http->secret, etag, auth->requiredRealm);
+        mprAssert(conn->host);
+
+        if (scmp(qopClass, "auth") == 0) {
+            httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", domain=\"%s\", "
+                "qop=\"auth\", nonce=\"%s\", opaque=\"%s\", algorithm=\"MD5\", stale=\"FALSE\"", 
+                auth->requiredRealm, conn->host->name, nonce, etag);
+
+        } else if (scmp(qopClass, "auth-int") == 0) {
+            httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", domain=\"%s\", "
+                "qop=\"auth\", nonce=\"%s\", opaque=\"%s\", algorithm=\"MD5\", stale=\"FALSE\"", 
+                auth->requiredRealm, conn->host->name, nonce, etag);
+
+        } else {
+            httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", nonce=\"%s\"", auth->requiredRealm, nonce);
+        }
+    }
+    httpError(conn, code, "Authentication Error: %s", msg);
+    httpSetPipelineHandler(conn, conn->http->passHandler);
+}
+
+
+/*
+    Create a nonce value for digest authentication (RFC 2617)
+ */ 
+static char *createDigestNonce(HttpConn *conn, cchar *secret, cchar *etag, cchar *realm)
+{
+    MprTime     now;
+    char        nonce[256];
+
+    mprAssert(realm && *realm);
+
+    now = conn->http->now;
+    mprSprintf(nonce, sizeof(nonce), "%s:%s:%s:%Lx", secret, etag, realm, now);
+    return mprEncode64(nonce);
+}
+
+
+static int parseDigestNonce(char *nonce, cchar **secret, cchar **etag, cchar **realm, MprTime *when)
+{
+    char    *tok, *decoded, *whenStr;
+
+    if ((decoded = mprDecode64(nonce)) == 0) {
+        return MPR_ERR_CANT_READ;
+    }
+    *secret = stok(decoded, ":", &tok);
+    *etag = stok(NULL, ":", &tok);
+    *realm = stok(NULL, ":", &tok);
+    whenStr = stok(NULL, ":", &tok);
+    *when = (MprTime) stoi(whenStr, 16, NULL); 
+    return 0;
+}
+
+
+static char *md5(cchar *string)
+{
+    return mprGetMD5Hash(string, slen(string), NULL);
+}
+
+
+/*
+    Get a Digest value using the MD5 algorithm -- See RFC 2617 to understand this code.
+ */ 
+static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *realm, cchar *uri, 
+    cchar *nonce, cchar *qop, cchar *nc, cchar *cnonce, cchar *method)
+{
+    char    a1Buf[256], a2Buf[256], digestBuf[256];
+    char    *ha1, *ha2;
+
+    mprAssert(qop);
+
+    /*
+        Compute HA1. If userName == 0, then the password is already expected to be in the HA1 format 
+        (MD5(userName:realm:password).
+     */
+    if (userName == 0) {
+        ha1 = sclone(password);
+    } else {
+        mprSprintf(a1Buf, sizeof(a1Buf), "%s:%s:%s", userName, realm, password);
+        ha1 = md5(a1Buf);
+    }
+
+    /*
+        HA2
+     */ 
+    mprSprintf(a2Buf, sizeof(a2Buf), "%s:%s", method, uri);
+    ha2 = md5(a2Buf);
+
+    /*
+        H(HA1:nonce:HA2)
+     */
+    if (scmp(qop, "auth") == 0) {
+        mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2);
+
+    } else if (scmp(qop, "auth-int") == 0) {
+        mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2);
+
+    } else {
+        mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s", ha1, nonce, ha2);
+    }
+    *digest = md5(digestBuf);
+    return 0;
+}
+
+
+
+/*
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://www.embedthis.com 
+    
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "./src/authCheck.c"
  */
 /************************************************************************/
 
@@ -1044,497 +1526,6 @@ void __nativeAuthFile() {}
 
 /************************************************************************/
 /*
- *  Start of file "./src/authFilter.c"
- */
-/************************************************************************/
-
-/*
-    authFilter.c - Authorization filter for basic and digest authentication.
-    Copyright (c) All Rights Reserved. See details at the end of the file.
- */
-
-
-
-/*
-    Per-request authorization data
- */
-typedef struct AuthData 
-{
-    char            *password;          /* User password or digest */
-    char            *userName;
-    char            *cnonce;
-    char            *nc;
-    char            *nonce;
-    char            *opaque;
-    char            *qop;
-    char            *realm;
-    char            *uri;
-} AuthData;
-
-
-static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *realm, cchar *uri, 
-    cchar *nonce, cchar *qop, cchar *nc, cchar *cnonce, cchar *method);
-static char *createDigestNonce(HttpConn *conn, cchar *secret, cchar *etag, cchar *realm);
-static void decodeBasicAuth(HttpConn *conn, AuthData *ad);
-static int  decodeDigestDetails(HttpConn *conn, AuthData *ad);
-static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *msg, char *logMsg);
-static bool matchAuth(HttpConn *conn, HttpStage *handler, int dir);
-static int parseDigestNonce(char *nonce, cchar **secret, cchar **etag, cchar **realm, MprTime *when);
-
-
-int httpOpenAuthFilter(Http *http)
-{
-    HttpStage     *filter;
-
-    mprLog(5, "Open auth filter");
-    if ((filter = httpCreateFilter(http, "authFilter", HTTP_STAGE_ALL, NULL)) == 0) {
-        return MPR_ERR_CANT_CREATE;
-    }
-    http->authFilter = filter;
-    filter->match = matchAuth; 
-    return 0;
-}
-
-
-static bool matchAuth(HttpConn *conn, HttpStage *handler, int dir)
-{
-    Http        *http;
-    HttpRx      *rx;
-    HttpTx      *tx;
-    HttpAuth    *auth;
-    AuthData    *ad;
-    MprTime     when;
-    cchar       *requiredPassword;
-    char        *msg, *requiredDigest;
-    cchar       *secret, *etag, *realm;
-    int         actualAuthType;
-
-    rx = conn->rx;
-    tx = conn->tx;
-    http = conn->http;
-    auth = rx->auth;
-
-#if BLD_DEBUG
-    if (dir & HTTP_STAGE_TX) {
-        mprError("AuthFilter configured as output filter. It should be configured as an input filter.");
-        formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, Missing authorization details.", 0);
-        return 1;
-    }
-#endif
-    if (!(dir & HTTP_STAGE_RX) || !conn->server || auth == 0 || auth->type == 0) {
-        return 0;
-    }
-    if ((ad = mprAllocStruct(AuthData)) == 0) {
-        return 1;
-    }
-    if (rx->authDetails == 0) {
-        formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, Missing authorization details.", 0);
-        return 1;
-    }
-    if (scasecmp(rx->authType, "basic") == 0) {
-        decodeBasicAuth(conn, ad);
-        actualAuthType = HTTP_AUTH_BASIC;
-
-    } else if (scasecmp(rx->authType, "digest") == 0) {
-        if (decodeDigestDetails(conn, ad) < 0) {
-            httpError(conn, 400, "Bad authorization header");
-            return 1;
-        }
-        actualAuthType = HTTP_AUTH_DIGEST;
-    } else {
-        actualAuthType = HTTP_AUTH_UNKNOWN;
-    }
-    mprLog(4, "matchAuth: type %d, url %s\nDetails %s\n", auth->type, rx->pathInfo, rx->authDetails);
-
-    if (ad->userName == 0) {
-        formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, Missing user name", 0);
-        return 1;
-    }
-    if (auth->type != actualAuthType) {
-        formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, Wrong authentication protocol", 0);
-        return 1;
-    }
-    /*  
-        Some backend methods can't return the password and will simply do everything in validateCred. 
-        In this case, they and will return "". That is okay.
-     */
-    if ((requiredPassword = (http->getPassword)(auth, auth->requiredRealm, ad->userName)) == 0) {
-        formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, authentication error", "User not defined");
-        return 1;
-    }
-    if (auth->type == HTTP_AUTH_DIGEST) {
-        if (scmp(ad->qop, auth->qop) != 0) {
-            formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied. Protection quality does not match", 0);
-            return 1;
-        }
-        calcDigest(&requiredDigest, 0, requiredPassword, ad->realm, rx->pathInfo, ad->nonce, ad->qop, ad->nc, 
-            ad->cnonce, rx->method);
-        requiredPassword = requiredDigest;
-
-        /*
-            Validate the nonce value - prevents replay attacks
-         */
-        when = 0; secret = 0; etag = 0; realm = 0;
-        parseDigestNonce(ad->nonce, &secret, &etag, &realm, &when);
-        if (scmp(secret, http->secret) != 0 || scmp(etag, tx->etag) != 0 || scmp(realm, auth->requiredRealm) != 0) {
-            formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access denied, authentication error", "Nonce mismatch");
-        } else if ((when + (5 * 60 * MPR_TICKS_PER_SEC)) < http->now) {
-            formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access denied, authentication error", "Nonce is stale");
-        }
-    }
-    if (!(http->validateCred)(auth, auth->requiredRealm, ad->userName, ad->password, requiredPassword, &msg)) {
-        formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access denied, incorrect username/password", msg);
-    }
-    rx->authenticated = 1;
-    return 1;
-}
-
-
-/*  
-    Decode basic authorization details
- */
-static void decodeBasicAuth(HttpConn *conn, AuthData *ad)
-{
-    HttpRx  *rx;
-    char    *decoded, *cp;
-
-    rx = conn->rx;
-    if ((decoded = mprDecode64(rx->authDetails)) == 0) {
-        return;
-    }
-    if ((cp = strchr(decoded, ':')) != 0) {
-        *cp++ = '\0';
-    }
-    if (cp) {
-        ad->userName = sclone(decoded);
-        ad->password = sclone(cp);
-
-    } else {
-        ad->userName = mprEmptyString();
-        ad->password = mprEmptyString();
-    }
-    httpSetAuthUser(conn, ad->userName);
-}
-
-
-/*  
-    Decode the digest authentication details.
- */
-static int decodeDigestDetails(HttpConn *conn, AuthData *ad)
-{
-    HttpRx      *rx;
-    char        *value, *tok, *key, *dp, *sp;
-    int         seenComma;
-
-    rx = conn->rx;
-    key = sclone(rx->authDetails);
-
-    while (*key) {
-        while (*key && isspace((int) *key)) {
-            key++;
-        }
-        tok = key;
-        while (*tok && !isspace((int) *tok) && *tok != ',' && *tok != '=') {
-            tok++;
-        }
-        *tok++ = '\0';
-
-        while (isspace((int) *tok)) {
-            tok++;
-        }
-        seenComma = 0;
-        if (*tok == '\"') {
-            value = ++tok;
-            while (*tok != '\"' && *tok != '\0') {
-                tok++;
-            }
-        } else {
-            value = tok;
-            while (*tok != ',' && *tok != '\0') {
-                tok++;
-            }
-            seenComma++;
-        }
-        *tok++ = '\0';
-
-        /*
-            Handle back-quoting
-         */
-        if (strchr(value, '\\')) {
-            for (dp = sp = value; *sp; sp++) {
-                if (*sp == '\\') {
-                    sp++;
-                }
-                *dp++ = *sp++;
-            }
-            *dp = '\0';
-        }
-
-        /*
-            user, response, oqaque, uri, realm, nonce, nc, cnonce, qop
-         */
-        switch (tolower((int) *key)) {
-        case 'a':
-            if (scasecmp(key, "algorithm") == 0) {
-                break;
-            } else if (scasecmp(key, "auth-param") == 0) {
-                break;
-            }
-            break;
-
-        case 'c':
-            if (scasecmp(key, "cnonce") == 0) {
-                ad->cnonce = sclone(value);
-            }
-            break;
-
-        case 'd':
-            if (scasecmp(key, "domain") == 0) {
-                break;
-            }
-            break;
-
-        case 'n':
-            if (scasecmp(key, "nc") == 0) {
-                ad->nc = sclone(value);
-            } else if (scasecmp(key, "nonce") == 0) {
-                ad->nonce = sclone(value);
-            }
-            break;
-
-        case 'o':
-            if (scasecmp(key, "opaque") == 0) {
-                ad->opaque = sclone(value);
-            }
-            break;
-
-        case 'q':
-            if (scasecmp(key, "qop") == 0) {
-                ad->qop = sclone(value);
-            }
-            break;
-
-        case 'r':
-            if (scasecmp(key, "realm") == 0) {
-                ad->realm = sclone(value);
-            } else if (scasecmp(key, "response") == 0) {
-                /* Store the response digest in the password field */
-                ad->password = sclone(value);
-            }
-            break;
-
-        case 's':
-            if (scasecmp(key, "stale") == 0) {
-                break;
-            }
-        
-        case 'u':
-            if (scasecmp(key, "uri") == 0) {
-                ad->uri = sclone(value);
-            } else if (scasecmp(key, "user") == 0) {
-                ad->userName = sclone(value);
-            }
-            break;
-
-        default:
-            /*  Just ignore keywords we don't understand */
-            ;
-        }
-        key = tok;
-        if (!seenComma) {
-            while (*key && *key != ',') {
-                key++;
-            }
-            if (*key) {
-                key++;
-            }
-        }
-    }
-    if (ad->userName == 0 || ad->realm == 0 || ad->nonce == 0 || ad->uri == 0 || ad->password == 0) {
-        return MPR_ERR_BAD_ARGS;
-    }
-    if (ad->qop && (ad->cnonce == 0 || ad->nc == 0)) {
-        return MPR_ERR_BAD_ARGS;
-    }
-    if (ad->qop == 0) {
-        ad->qop = mprEmptyString();
-    }
-    httpSetAuthUser(conn, ad->userName);
-    return 0;
-}
-
-
-/*  
-    Format an authentication response. This is typically a 401 response code.
- */
-static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *msg, char *logMsg)
-{
-    HttpTx  *tx;
-    char    *qopClass, *nonce, *etag;
-
-    tx = conn->tx;
-    if (logMsg == 0) {
-        logMsg = msg;
-    }
-    mprLog(3, "Auth response: code %d, %s", code, logMsg);
-
-    if (auth->type == HTTP_AUTH_BASIC) {
-        httpSetHeader(conn, "WWW-Authenticate", "Basic realm=\"%s\"", auth->requiredRealm);
-
-    } else if (auth->type == HTTP_AUTH_DIGEST) {
-        qopClass = auth->qop;
-        etag = tx->etag ? tx->etag : "";
-        nonce = createDigestNonce(conn, conn->http->secret, etag, auth->requiredRealm);
-        mprAssert(conn->host);
-
-        if (scmp(qopClass, "auth") == 0) {
-            httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", domain=\"%s\", "
-                "qop=\"auth\", nonce=\"%s\", opaque=\"%s\", algorithm=\"MD5\", stale=\"FALSE\"", 
-                auth->requiredRealm, conn->host->name, nonce, etag);
-
-        } else if (scmp(qopClass, "auth-int") == 0) {
-            httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", domain=\"%s\", "
-                "qop=\"auth\", nonce=\"%s\", opaque=\"%s\", algorithm=\"MD5\", stale=\"FALSE\"", 
-                auth->requiredRealm, conn->host->name, nonce, etag);
-
-        } else {
-            httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", nonce=\"%s\"", auth->requiredRealm, nonce);
-        }
-    }
-    httpError(conn, code, "Authentication Error: %s", msg);
-    httpSetPipelineHandler(conn, conn->http->passHandler);
-}
-
-
-/*
-    Create a nonce value for digest authentication (RFC 2617)
- */ 
-static char *createDigestNonce(HttpConn *conn, cchar *secret, cchar *etag, cchar *realm)
-{
-    MprTime     now;
-    char        nonce[256];
-
-    mprAssert(realm && *realm);
-
-    now = conn->http->now;
-    mprSprintf(nonce, sizeof(nonce), "%s:%s:%s:%Lx", secret, etag, realm, now);
-    return mprEncode64(nonce);
-}
-
-
-static int parseDigestNonce(char *nonce, cchar **secret, cchar **etag, cchar **realm, MprTime *when)
-{
-    char    *tok, *decoded, *whenStr;
-
-    if ((decoded = mprDecode64(nonce)) == 0) {
-        return MPR_ERR_CANT_READ;
-    }
-    *secret = stok(decoded, ":", &tok);
-    *etag = stok(NULL, ":", &tok);
-    *realm = stok(NULL, ":", &tok);
-    whenStr = stok(NULL, ":", &tok);
-    *when = (MprTime) stoi(whenStr, 16, NULL); 
-    return 0;
-}
-
-
-static char *md5(cchar *string)
-{
-    return mprGetMD5Hash(string, slen(string), NULL);
-}
-
-
-/*
-    Get a Digest value using the MD5 algorithm -- See RFC 2617 to understand this code.
- */ 
-static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *realm, cchar *uri, 
-    cchar *nonce, cchar *qop, cchar *nc, cchar *cnonce, cchar *method)
-{
-    char    a1Buf[256], a2Buf[256], digestBuf[256];
-    char    *ha1, *ha2;
-
-    mprAssert(qop);
-
-    /*
-        Compute HA1. If userName == 0, then the password is already expected to be in the HA1 format 
-        (MD5(userName:realm:password).
-     */
-    if (userName == 0) {
-        ha1 = sclone(password);
-    } else {
-        mprSprintf(a1Buf, sizeof(a1Buf), "%s:%s:%s", userName, realm, password);
-        ha1 = md5(a1Buf);
-    }
-
-    /*
-        HA2
-     */ 
-    mprSprintf(a2Buf, sizeof(a2Buf), "%s:%s", method, uri);
-    ha2 = md5(a2Buf);
-
-    /*
-        H(HA1:nonce:HA2)
-     */
-    if (scmp(qop, "auth") == 0) {
-        mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2);
-
-    } else if (scmp(qop, "auth-int") == 0) {
-        mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2);
-
-    } else {
-        mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s", ha1, nonce, ha2);
-    }
-    *digest = md5(digestBuf);
-    return 0;
-}
-
-
-
-/*
-    @copy   default
-    
-    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
-    
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.TXT distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
-    
-    Local variables:
-    tab-width: 4
-    c-basic-offset: 4
-    End:
-    vim: sw=4 ts=4 expandtab
-
-    @end
- */
-/************************************************************************/
-/*
- *  End of file "./src/authFilter.c"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
  *  Start of file "./src/authPam.c"
  */
 /************************************************************************/
@@ -1716,8 +1707,8 @@ int httpOpenChunkFilter(Http *http)
         return MPR_ERR_CANT_CREATE;
     }
     http->chunkFilter = filter;
-    filter->open = openChunk; 
     filter->match = matchChunk; 
+    filter->open = openChunk; 
     filter->outgoingService = outgoingChunkService; 
     filter->incomingData = incomingChunkData; 
     return 0;
@@ -1736,13 +1727,12 @@ static bool matchChunk(HttpConn *conn, HttpStage *handler, int dir)
         tx = conn->tx;
         return (tx->length < 0 && tx->chunkSize != 0) ? 1 : 0;
 
-    } else {
-        /* 
-            Must always be ready to handle chunked response data. Clients create their incoming pipeline before it is
-            know what the response data looks like (chunked or not).
-         */
-        return 1;
     }
+    /* 
+        Must always be ready to handle chunked response data. Clients create their incoming pipeline before it is
+        know what the response data looks like (chunked or not).
+     */
+    return 1;
 }
 
 
@@ -2185,7 +2175,7 @@ int httpConnect(HttpConn *conn, cchar *method, cchar *url)
     if (openConnection(conn, url) == 0) {
         return MPR_ERR_CANT_OPEN;
     }
-    httpCreateTxPipeline(conn, conn->http->clientLocation);
+    httpCreateTxPipeline(conn, conn->http->clientRoute);
 
     if (setClientHeaders(conn) < 0) {
         return MPR_ERR_CANT_INITIALIZE;
@@ -3281,6 +3271,9 @@ void httpFormatErrorV(HttpConn *conn, int status, cchar *fmt, va_list args)
     if (conn->errorMsg == 0) {
         conn->errorMsg = mprAsprintfv(fmt, args);
         if (status) {
+            if (status < 0) {
+                status = HTTP_CODE_INTERNAL_SERVER_ERROR;
+            }
             if (conn->server && conn->tx) {
                 conn->tx->status = status;
             } else if (conn->rx) {
@@ -3457,35 +3450,7 @@ cchar *httpGetError(HttpConn *conn)
 static void manageHost(HttpHost *host, int flags);
 
 
-static void manageHost(HttpHost *host, int flags)
-{
-    if (flags & MPR_MANAGE_MARK) {
-        mprMark(host->name);
-        mprMark(host->ip);
-        mprMark(host->parent);
-        mprMark(host->aliases);
-        mprMark(host->dirs);
-        mprMark(host->locations);
-        mprMark(host->loc);
-        mprMark(host->mimeTypes);
-        mprMark(host->documentRoot);
-        mprMark(host->serverRoot);
-        mprMark(host->traceInclude);
-        mprMark(host->traceExclude);
-        mprMark(host->protocol);
-        mprMark(host->mutex);
-        mprMark(host->log);
-        mprMark(host->logFormat);
-        mprMark(host->logPath);
-        mprMark(host->limits);
-
-    } else if (flags & MPR_MANAGE_FREE) {
-        httpRemoveHost(MPR->httpService, host);
-    }
-}
-
-
-HttpHost *httpCreateHost(HttpLoc *loc)
+HttpHost *httpCreateHost(HttpRoute *route)
 {
     HttpHost    *host;
     Http        *http;
@@ -3495,9 +3460,8 @@ HttpHost *httpCreateHost(HttpLoc *loc)
         return 0;
     }
     host->mutex = mprCreateLock();
-    host->aliases = mprCreateList(-1, 0);
     host->dirs = mprCreateList(-1, 0);
-    host->locations = mprCreateList(-1, 0);
+    host->routes = mprCreateList(-1, 0);
     host->limits = mprMemdup(http->serverLimits, sizeof(HttpLimits));
     host->flags = HTTP_HOST_NO_TRACE;
     host->protocol = sclone("HTTP/1.1");
@@ -3508,9 +3472,9 @@ HttpHost *httpCreateHost(HttpLoc *loc)
     host->traceLevel = 3;
     host->traceMaxLength = MAXINT;
 
-    host->loc = (loc) ? loc : httpCreateLocation();
-    httpAddLocation(host, host->loc);
-    host->loc->auth = httpCreateAuth(host->loc->auth);
+    host->route = (route) ? route : httpCreateDefaultRoute();
+    httpAddRoute(host, host->route);
+    host->route->auth = httpCreateAuth(host->route->auth);
     httpAddDir(host, httpCreateBareDir("."));
     httpAddHost(http, host);
     return host;
@@ -3530,20 +3494,19 @@ HttpHost *httpCloneHost(HttpHost *parent)
     host->mutex = mprCreateLock();
 
     /*  
-        The aliases, dirs and locations are all copy-on-write
+        The dirs and routes are all copy-on-write
      */
     host->parent = parent;
-    host->aliases = parent->aliases;
     host->dirs = parent->dirs;
-    host->locations = parent->locations;
+    host->routes = parent->routes;
     host->flags = parent->flags | HTTP_HOST_VHOST;
     host->protocol = parent->protocol;
     host->mimeTypes = parent->mimeTypes;
     host->limits = mprMemdup(parent->limits, sizeof(HttpLimits));
     host->documentRoot = parent->documentRoot;
     host->serverRoot = parent->serverRoot;
-    host->loc = httpCreateInheritedLocation(parent->loc);
-    httpSetLocationHost(host->loc, host);
+    host->route = httpCreateInheritedRoute(parent->route);
+    httpSetRouteHost(host->route, host);
     host->traceMask = parent->traceMask;
     host->traceLevel = parent->traceLevel;
     host->traceMaxLength = parent->traceMaxLength;
@@ -3553,9 +3516,36 @@ HttpHost *httpCloneHost(HttpHost *parent)
     if (parent->traceExclude) {
         host->traceExclude = mprCloneHash(parent->traceExclude);
     }
-    httpAddLocation(host, host->loc);
+    httpAddRoute(host, host->route);
     httpAddHost(http, host);
     return host;
+}
+
+
+static void manageHost(HttpHost *host, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(host->name);
+        mprMark(host->ip);
+        mprMark(host->parent);
+        mprMark(host->dirs);
+        mprMark(host->routes);
+        mprMark(host->route);
+        mprMark(host->mimeTypes);
+        mprMark(host->documentRoot);
+        mprMark(host->serverRoot);
+        mprMark(host->traceInclude);
+        mprMark(host->traceExclude);
+        mprMark(host->protocol);
+        mprMark(host->mutex);
+        mprMark(host->log);
+        mprMark(host->logFormat);
+        mprMark(host->logPath);
+        mprMark(host->limits);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+        httpRemoveHost(MPR->httpService, host);
+    }
 }
 
 
@@ -3564,13 +3554,15 @@ void httpSetHostDocumentRoot(HttpHost *host, cchar *dir)
     char    *doc;
     ssize   len;
 
-    doc = host->documentRoot = httpMakePath(host->loc, dir);
+    doc = host->documentRoot = httpMakePath(host->route, dir);
     len = slen(doc);
     if (doc[len - 1] == '/') {
         doc[len - 1] = '\0';
     }
+#if UNUSED
     /*  Create a catch-all alias */
     httpAddAlias(host, httpCreateAlias("", doc, 0));
+#endif
 }
 
 
@@ -3621,6 +3613,7 @@ void httpSetHostProtocol(HttpHost *host, cchar *protocol)
 }
 
 
+#if UNUSED
 int httpAddAlias(HttpHost *host, HttpAlias *newAlias)
 {
     HttpAlias   *alias;
@@ -3653,6 +3646,7 @@ int httpAddAlias(HttpHost *host, HttpAlias *newAlias)
     mprAddItem(host->aliases, newAlias);
     return 0;
 }
+#endif
 
 
 int httpAddDir(HttpHost *host, HttpDir *dir)
@@ -3688,39 +3682,30 @@ int httpAddDir(HttpHost *host, HttpDir *dir)
 }
 
 
-int httpAddLocation(HttpHost *host, HttpLoc *loc)
+int httpAddRoute(HttpHost *host, HttpRoute *route)
 {
-    HttpLoc     *lp;
-    int         next, rc;
+    int     pos;
 
-    mprAssert(loc);
-    mprAssert(loc->prefix);
+    mprAssert(route);
     
-    if (host->parent && host->locations == host->parent->locations) {
-        host->locations = mprCloneList(host->parent->locations);
+    if (host->parent && host->routes == host->parent->routes) {
+        host->routes = mprCloneList(host->parent->routes);
     }
-
     /*
-        Sort in reverse collating sequence. Must make sure that /abc/def sorts before /abc
+        Insert at the tail before the last route which must always be "--default--"
      */
-    for (next = 0; (lp = mprGetNextItem(host->locations, &next)) != 0; ) {
-        rc = strcmp(loc->prefix, lp->prefix);
-        if (rc == 0) {
-            mprRemoveItem(host->locations, lp);
-            mprInsertItemAtPos(host->locations, next - 1, loc);
-            return 0;
-        }
-        if (strcmp(loc->prefix, lp->prefix) > 0) {
-            mprInsertItemAtPos(host->locations, next - 1, loc);
-            return 0;
-        }
+    pos = mprGetListLength(host->routes) - 1;
+    if (pos < 0) {
+        pos = 0;
     }
-    mprAddItem(host->locations, loc);
-    httpSetLocationHost(loc, host);
+    mprInsertItemAtPos(host->routes, pos, route);
+    httpSetRouteHost(route, host);
     return 0;
 }
 
 
+#if UNUSED
+//  MOB - should be named GetBestAlias
 HttpAlias *httpGetAlias(HttpHost *host, cchar *uri)
 {
     HttpAlias     *alias;
@@ -3752,6 +3737,7 @@ HttpAlias *httpLookupAlias(HttpHost *host, cchar *prefix)
     }
     return 0;
 }
+#endif
 
 
 HttpDir *httpLookupDir(HttpHost *host, cchar *pathArg)
@@ -3803,38 +3789,40 @@ HttpDir *httpLookupBestDir(HttpHost *host, cchar *path)
 }
 
 
-HttpLoc *httpLookupLocation(HttpHost *host, cchar *prefix)
+#if UNUSED
+HttpRoute *httpLookupRoute(HttpHost *host, cchar *prefix)
 {
-    HttpLoc     *loc;
+    HttpRoute   *route;
     int         next;
 
     mprAssert(host);
 
-    for (next = 0; (loc = mprGetNextItem(host->locations, &next)) != 0; ) {
-        if (strcmp(prefix, loc->prefix) == 0) {
-            return loc;
+    for (next = 0; (route = mprGetNextItem(host->routes, &next)) != 0; ) {
+        if (strcmp(prefix, route->prefix) == 0) {
+            return route;
         }
     }
     return 0;
 }
 
 
-HttpLoc *httpLookupBestLocation(HttpHost *host, cchar *uri)
+HttpRoute *httpLookupBestRoute(HttpHost *host, cchar *uri)
 {
-    HttpLoc     *loc;
+    HttpRoute   *route;
     int         next, rc;
 
     if (uri) {
         mprAssert(host);
-        for (next = 0; (loc = mprGetNextItem(host->locations, &next)) != 0; ) {
-            rc = sncmp(loc->prefix, uri, loc->prefixLen);
+        for (next = 0; (route = mprGetNextItem(host->routes, &next)) != 0; ) {
+            rc = sncmp(route->prefix, uri, route->prefixLen);
             if (rc == 0) {
-                return loc;
+                return route;
             }
         }
     }
-    return mprGetLastItem(host->locations);
+    return mprGetLastItem(host->routes);
 }
+#endif
 
 
 void httpSetHostTrace(HttpHost *host, int level, int mask)
@@ -4023,6 +4011,9 @@ Http *httpCreate()
     http->protocol = sclone("HTTP/1.1");
     http->mutex = mprCreateLock(http);
     http->stages = mprCreateHash(-1, 0);
+    http->routeTargets = mprCreateHash(-1, MPR_HASH_STATIC_VALUES);
+    http->routeConditions = mprCreateHash(-1, MPR_HASH_STATIC_VALUES);
+    http->routeModifications = mprCreateHash(-1, MPR_HASH_STATIC_VALUES);
     http->hosts = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
     http->servers = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
     http->connections = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
@@ -4038,7 +4029,6 @@ Http *httpCreate()
     httpInitAuth(http);
     httpOpenNetConnector(http);
     httpOpenSendConnector(http);
-    httpOpenAuthFilter(http);
     httpOpenRangeFilter(http);
     httpOpenChunkFilter(http);
     httpOpenUploadFilter(http);
@@ -4046,9 +4036,10 @@ Http *httpCreate()
 
     http->clientLimits = httpCreateLimits(0);
     http->serverLimits = httpCreateLimits(1);
-    http->clientLocation = httpCreateConfiguredLocation(0);
+    http->clientRoute = httpCreateConfiguredRoute(0);
 
     mprSetIdleCallback(isIdle);
+    httpDefineRouteBuiltins();
     return http;
 }
 
@@ -4067,7 +4058,7 @@ static void manageHttp(Http *http, int flags)
         mprMark(http->statusCodes);
         mprMark(http->clientLimits);
         mprMark(http->serverLimits);
-        mprMark(http->clientLocation);
+        mprMark(http->clientRoute);
         mprMark(http->timer);
         mprMark(http->mutex);
         mprMark(http->software);
@@ -4080,6 +4071,9 @@ static void manageHttp(Http *http, int flags)
         mprMark(http->proxyHost);
         mprMark(http->servers);
         mprMark(http->defaultClientHost);
+        mprMark(http->routeTargets);
+        mprMark(http->routeConditions);
+        mprMark(http->routeModifications);
 
         /*
             Servers keep connections alive until a timeout. Keep marking even if no other references.
@@ -4154,23 +4148,25 @@ void httpRemoveHost(Http *http, HttpHost *host)
 }
 
 
-HttpLoc *httpCreateConfiguredLocation(int serverSide)
+HttpRoute *httpCreateConfiguredRoute(int serverSide)
 {
-    HttpLoc     *loc;
+    HttpRoute     *loc;
     Http        *http;
 
     /*
         Create default incoming and outgoing pipelines. Order matters.
      */
     http = MPR->httpService;
-    loc = httpCreateLocation();
+    loc = httpCreateRoute();
+#if UNUSED
     if (serverSide) {
         httpAddFilter(loc, http->authFilter->name, NULL, HTTP_STAGE_RX);
     }
-    httpAddFilter(loc, http->rangeFilter->name, NULL, HTTP_STAGE_TX);
-    httpAddFilter(loc, http->chunkFilter->name, NULL, HTTP_STAGE_RX | HTTP_STAGE_TX);
+#endif
+    httpAddRouteFilter(loc, http->rangeFilter->name, NULL, HTTP_STAGE_TX);
+    httpAddRouteFilter(loc, http->chunkFilter->name, NULL, HTTP_STAGE_RX | HTTP_STAGE_TX);
     if (serverSide) {
-        httpAddFilter(loc, http->uploadFilter->name, NULL, HTTP_STAGE_RX);
+        httpAddRouteFilter(loc, http->uploadFilter->name, NULL, HTTP_STAGE_RX);
     }
     loc->connector = http->netConnector;
     return loc;
@@ -4623,558 +4619,6 @@ static void updateCurrentDate(Http *http)
 
 /************************************************************************/
 /*
- *  Start of file "./src/location.c"
- */
-/************************************************************************/
-
-/*
-    location.c -- Server configuration for portions of the server (Location blocks).
-
-    Location directives provide authorization and handler matching based on URL prefixes.
-
-    Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
- */
-
-
-
-
-static void defineTokens(HttpLoc *loc);
-static void defineHostTokens(HttpLoc *loc);
-static void manageLoc(HttpLoc *loc, int flags);
-
-
-HttpLoc *httpCreateLocation()
-{
-    HttpLoc  *loc;
-
-    if ((loc = mprAllocObj(HttpLoc, manageLoc)) == 0) {
-        return 0;
-    }
-    loc->http = MPR->httpService;
-    loc->errorDocuments = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
-    loc->handlers = mprCreateList(-1, 0);
-    loc->extensions = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
-    loc->expires = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_STATIC_VALUES);
-    loc->expiresByType = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_STATIC_VALUES);
-    loc->tokens = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
-    loc->inputStages = mprCreateList(-1, 0);
-    loc->outputStages = mprCreateList(-1, 0);
-    loc->prefix = mprEmptyString();
-    loc->prefixLen = (int) strlen(loc->prefix);
-    loc->auth = httpCreateAuth(0);
-    loc->flags = HTTP_LOC_SMART;
-    loc->workers = -1;
-    defineTokens(loc);
-    return loc;
-}
-
-
-static void manageLoc(HttpLoc *loc, int flags)
-{
-    if (flags & MPR_MANAGE_MARK) {
-        mprMark(loc->auth);
-        mprMark(loc->http);
-        mprMark(loc->prefix);
-        mprMark(loc->connector);
-        mprMark(loc->handler);
-        mprMark(loc->extensions);
-        mprMark(loc->expires);
-        mprMark(loc->expiresByType);
-        mprMark(loc->tokens);
-        mprMark(loc->handlers);
-        mprMark(loc->inputStages);
-        mprMark(loc->outputStages);
-        mprMark(loc->errorDocuments);
-        mprMark(loc->parent);
-        mprMark(loc->context);
-        mprMark(loc->uploadDir);
-        mprMark(loc->searchPath);
-        mprMark(loc->script);
-        mprMark(loc->scriptPath);
-        mprMark(loc->ssl);
-        mprMark(loc->data);
-    }
-}
-
-
-/*  
-    Create a new location block. Inherit from the parent. We use a copy-on-write scheme if these are modified later.
- */
-HttpLoc *httpCreateInheritedLocation(HttpLoc *parent)
-{
-    HttpLoc  *loc;
-
-    if (parent == 0) {
-        return httpCreateLocation();
-    }
-    if ((loc = mprAllocObj(HttpLoc, manageLoc)) == 0) {
-        return 0;
-    }
-    loc->http = MPR->httpService;
-    loc->prefix = sclone(parent->prefix);
-    loc->parent = parent;
-    loc->prefixLen = parent->prefixLen;
-    loc->flags = parent->flags;
-    loc->inputStages = parent->inputStages;
-    loc->outputStages = parent->outputStages;
-    loc->handlers = parent->handlers;
-    loc->extensions = parent->extensions;
-    loc->expires = parent->expires;
-    loc->expiresByType = parent->expiresByType;
-    loc->tokens = parent->tokens;
-    loc->connector = parent->connector;
-    loc->errorDocuments = parent->errorDocuments;
-    loc->auth = httpCreateAuth(parent->auth);
-    loc->uploadDir = parent->uploadDir;
-    loc->autoDelete = parent->autoDelete;
-    loc->script = parent->script;
-    loc->scriptPath = parent->scriptPath;
-    loc->searchPath = parent->searchPath;
-    loc->ssl = parent->ssl;
-    loc->workers = parent->workers;
-    return loc;
-}
-
-
-/*
-    Separate from parent. Clone own configuration
- */
-static void graduate(HttpLoc *loc) 
-{
-    if (loc->parent) {
-        loc->errorDocuments = mprCloneHash(loc->parent->errorDocuments);
-        loc->expires = mprCloneHash(loc->parent->expires);
-        loc->expiresByType = mprCloneHash(loc->parent->expiresByType);
-        loc->extensions = mprCloneHash(loc->parent->extensions);
-        loc->tokens = mprCloneHash(loc->parent->tokens);
-        loc->handlers = mprCloneList(loc->parent->handlers);
-        loc->inputStages = mprCloneList(loc->parent->inputStages);
-        loc->outputStages = mprCloneList(loc->parent->outputStages);
-        loc->parent = 0;
-    }
-}
-
-
-void httpSetLocationHost(HttpLoc *loc, HttpHost *host)
-{
-    loc->host = host;
-    defineHostTokens(loc);
-}
-
-
-void httpFinalizeLocation(HttpLoc *loc)
-{
-#if BLD_FEATURE_SSL
-    if (loc->ssl) {
-        mprConfigureSsl(loc->ssl);
-    }
-#endif
-}
-
-
-/*  
-    Add a handler. This adds a handler to the set of possible handlers for a set of file extensions.
- */
-int httpAddHandler(HttpLoc *loc, cchar *name, cchar *extensions)
-{
-    Http        *http;
-    HttpStage   *handler;
-    char        *extlist, *word, *tok;
-
-    mprAssert(loc);
-
-    http = loc->http;
-    graduate(loc);
-
-    if ((handler = httpLookupStage(http, name)) == 0) {
-        mprError("Can't find stage %s", name); 
-        return MPR_ERR_CANT_FIND;
-    }
-    if (extensions && *extensions) {
-        mprLog(MPR_CONFIG, "Add handler \"%s\" for extensions: %s", name, extensions);
-    } else {
-        mprLog(MPR_CONFIG, "Add handler \"%s\" for prefix: \"%s\"", name, loc->prefix);
-    }
-    if (extensions && *extensions) {
-        /*
-            Add to the handler extension hash. Skip over "*." and "."
-         */ 
-        extlist = sclone(extensions);
-        word = stok(extlist, " \t\r\n", &tok);
-        while (word) {
-            if (*word == '*' && word[1] == '.') {
-                word += 2;
-            } else if (*word == '.') {
-                word++;
-            } else if (*word == '\"' && word[1] == '\"') {
-                word = "";
-            }
-            mprAddKey(loc->extensions, word, handler);
-            word = stok(0, " \t\r\n", &tok);
-        }
-
-    } else {
-        if (handler->match == 0) {
-            /*
-                Only match by extensions if no-match routine provided.
-             */
-            mprAddKey(loc->extensions, "", handler);
-        }
-        if (mprLookupItem(loc->handlers, handler) < 0) {
-            mprAddItem(loc->handlers, handler);
-        }
-    }
-    return 0;
-}
-
-
-/*  
-    Set a handler to apply to requests in this location block.
- */
-int httpSetHandler(HttpLoc *loc, cchar *name)
-{
-    HttpStage     *handler;
-
-    mprAssert(loc);
-    
-    graduate(loc);
-    handler = httpLookupStage(loc->http, name);
-    if (handler == 0) {
-        mprError("Can't find handler %s", name); 
-        return MPR_ERR_CANT_FIND;
-    }
-    loc->handler = handler;
-    return 0;
-}
-
-
-/*  
-    Add a filter. Direction defines what direction the stage filter be defined.
- */
-int httpAddFilter(HttpLoc *loc, cchar *name, cchar *extensions, int direction)
-{
-    HttpStage   *stage;
-    HttpStage   *filter;
-    char        *extlist, *word, *tok;
-
-    mprAssert(loc);
-    
-    stage = httpLookupStage(loc->http, name);
-    if (stage == 0) {
-        mprError("Can't find filter %s", name); 
-        return MPR_ERR_CANT_FIND;
-    }
-    /*
-        Clone an existing stage because each filter stores its own set of extensions to match against
-     */
-    filter = httpCloneStage(loc->http, stage);
-
-    if (extensions && *extensions) {
-        filter->extensions = mprCreateHash(0, MPR_HASH_CASELESS);
-        extlist = sclone(extensions);
-        word = stok(extlist, " \t\r\n", &tok);
-        while (word) {
-            if (*word == '*' && word[1] == '.') {
-                word += 2;
-            } else if (*word == '.') {
-                word++;
-            } else if (*word == '\"' && word[1] == '\"') {
-                word = "";
-            }
-            mprAddKey(filter->extensions, word, filter);
-            word = stok(0, " \t\r\n", &tok);
-        }
-    }
-    graduate(loc);
-    if (direction & HTTP_STAGE_RX) {
-        mprAddItem(loc->inputStages, filter);
-    }
-    if (direction & HTTP_STAGE_TX) {
-        mprAddItem(loc->outputStages, filter);
-    }
-    return 0;
-}
-
-
-void httpAddLocationExpiry(HttpLoc *loc, MprTime when, cchar *extensions)
-{
-    char    *types, *ext, *tok;
-
-    if (extensions && *extensions) {
-        graduate(loc);
-        types = sclone(extensions);
-        ext = stok(types, " ,\t\r\n", &tok);
-        while (ext) {
-            mprAddKey(loc->expires, ext, ITOP(when));
-            ext = stok(0, " \t\r\n", &tok);
-        }
-    }
-}
-
-
-void httpAddLocationExpiryByType(HttpLoc *loc, MprTime when, cchar *mimeTypes)
-{
-    char    *types, *mime, *tok;
-
-    if (mimeTypes && *mimeTypes) {
-        graduate(loc);
-        types = sclone(mimeTypes);
-        mime = stok(types, " ,\t\r\n", &tok);
-        while (mime) {
-            mprAddKey(loc->expiresByType, mime, ITOP(when));
-            mime = stok(0, " \t\r\n", &tok);
-        }
-    }
-}
-
-
-void httpClearStages(HttpLoc *loc, int direction)
-{
-    if (direction & HTTP_STAGE_RX) {
-        loc->inputStages = mprCreateList(-1, 0);
-    }
-    if (direction & HTTP_STAGE_TX) {
-        loc->outputStages = mprCreateList(-1, 0);
-    }
-}
-
-
-/* 
-   Set the network connector
- */
-int httpSetConnector(HttpLoc *loc, cchar *name)
-{
-    HttpStage     *stage;
-
-    mprAssert(loc);
-    
-    stage = httpLookupStage(loc->http, name);
-    if (stage == 0) {
-        mprError("Can't find connector %s", name); 
-        return MPR_ERR_CANT_FIND;
-    }
-    loc->connector = stage;
-    mprLog(MPR_CONFIG, "Set connector \"%s\"", name);
-    return 0;
-}
-
-
-void httpResetPipeline(HttpLoc *loc)
-{
-    if (loc->parent == 0) {
-        loc->errorDocuments = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
-        loc->expires = mprCreateHash(0, MPR_HASH_STATIC_VALUES);
-        loc->extensions = mprCreateHash(0, MPR_HASH_CASELESS);
-        loc->handlers = mprCreateList(-1, 0);
-        loc->inputStages = mprCreateList(-1, 0);
-        loc->inputStages = mprCreateList(-1, 0);
-    }
-    loc->outputStages = mprCreateList(-1, 0);
-}
-
-
-void httpResetHandlers(HttpLoc *loc)
-{
-    graduate(loc);
-    loc->handlers = mprCreateList(-1, 0);
-}
-
-
-HttpStage *httpGetHandlerByExtension(HttpLoc *loc, cchar *ext)
-{
-    return (HttpStage*) mprLookupKey(loc->extensions, ext);
-}
-
-
-void httpSetLocationAlias(HttpLoc *loc, HttpAlias *alias)
-{
-    mprAssert(loc);
-    mprAssert(alias);
-
-    loc->alias = alias;
-}
-
-
-void httpSetLocationAuth(HttpLoc *loc, HttpAuth *auth)
-{
-    loc->auth = auth;
-}
-
-
-void httpSetLocationPrefix(HttpLoc *loc, cchar *uri)
-{
-    mprAssert(loc);
-
-    loc->prefix = sclone(uri);
-    loc->prefixLen = (int) strlen(loc->prefix);
-}
-
-
-void httpSetLocationFlags(HttpLoc *loc, int flags)
-{
-    loc->flags = flags;
-}
-
-
-void httpSetLocationAutoDelete(HttpLoc *loc, int enable)
-{
-    loc->autoDelete = enable;
-}
-
-
-void httpSetLocationScript(HttpLoc *loc, cchar *script, cchar *scriptPath)
-{
-    if (script) {
-        loc->script = sclone(script);
-    }
-    if (scriptPath) {
-        loc->scriptPath = sclone(scriptPath);
-    }
-}
-
-
-void httpSetLocationWorkers(HttpLoc *loc, int workers)
-{
-    loc->workers = workers;
-}
-
-
-void httpAddErrorDocument(HttpLoc *loc, cchar *code, cchar *url)
-{
-    graduate(loc);
-    mprAddKey(loc->errorDocuments, code, sclone(url));
-}
-
-
-cchar *httpLookupErrorDocument(HttpLoc *loc, int code)
-{
-    char        numBuf[16];
-
-    if (loc->errorDocuments == 0) {
-        return 0;
-    }
-    itos(numBuf, sizeof(numBuf), code, 10);
-    return (cchar*) mprLookupKey(loc->errorDocuments, numBuf);
-}
-
-
-void httpSetLocationData(HttpLoc *loc, cchar *key, void *data)
-{
-    if (loc->data == 0) {
-        loc->data = mprCreateHash(-1, 0);
-    }
-    mprAddKey(loc->data, key, data);
-}
-
-
-void *httpGetLocationData(HttpLoc *loc, cchar *key)
-{
-    if (!loc->data) {
-        return 0;
-    }
-    return mprLookupKey(loc->data, key);
-}
-
-
-static void defineTokens(HttpLoc *loc)
-{
-    mprAddKey(loc->tokens, "PRODUCT", sclone(BLD_PRODUCT));
-    mprAddKey(loc->tokens, "OS", sclone(BLD_OS));
-    mprAddKey(loc->tokens, "VERSION", sclone(BLD_VERSION));
-    mprAddKey(loc->tokens, "LIBDIR", mprGetNormalizedPath(sfmt("%s/../%s", mprGetAppDir(), BLD_LIB_NAME))); 
-
-    if (loc->host) {
-        defineHostTokens(loc);
-    }
-}
-
-
-static void defineHostTokens(HttpLoc *loc) 
-{
-    mprAddKey(loc->tokens, "DOCUMENT_ROOT", loc->host->documentRoot);
-    mprAddKey(loc->tokens, "SERVER_ROOT", loc->host->serverRoot);
-}
-
-
-void httpSetLocationToken(HttpLoc *loc, cchar *key, cchar *value)
-{
-    mprAssert(key);
-    mprAssert(value);
-
-    graduate(loc);
-    if (schr(value, '$')) {
-        value = stemplate(value, loc->tokens);
-    }
-    mprAddKey(loc->tokens, key, sclone(value));
-}
-
-
-/*
-    Make a path name. This replaces $references, converts to an absolute path name, cleans the path and maps delimiters.
- */
-char *httpMakePath(HttpLoc *loc, cchar *file)
-{
-    char    *result, *path;
-
-    mprAssert(file);
-
-    if ((path = stemplate(file, loc->tokens)) == 0) {
-        return 0;
-    }
-    if (mprIsRelPath(path)) {
-        result = mprJoinPath(loc->host->serverRoot, path);
-    } else {
-        result = mprGetAbsPath(path);
-    }
-    return result;
-}
-
-
-/*
-    @copy   default
-    
-    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
-    
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.TXT distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
-    
-    Local variables:
-    tab-width: 4
-    c-basic-offset: 4
-    End:
-    vim: sw=4 ts=4 expandtab
-
-    @end
- */
-/************************************************************************/
-/*
- *  End of file "./src/location.c"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
  *  Start of file "./src/match.c"
  */
 /************************************************************************/
@@ -5186,13 +4630,7 @@ char *httpMakePath(HttpLoc *loc, cchar *file)
  */
 
 
-
-
-static HttpStage *checkDirectory(HttpConn *conn, HttpStage *handler);
-static char *getExtension(HttpConn *conn, cchar *path);
-static HttpStage *checkHandler(HttpConn *conn, HttpStage *stage);
-static HttpStage *findHandler(HttpConn *conn);
-static bool rewriteRequest(HttpConn *conn);
+#include    "pcre.h"
 
 
 void httpMatchHost(HttpConn *conn)
@@ -5230,261 +4668,36 @@ void httpMatchHost(HttpConn *conn)
     Find the matching handler for a request. If any errors occur, the pass handler is used to pass errors onto the 
     net/sendfile connectors to send to the client. This routine may rewrite the request URI and may redirect the request.
  */
-void httpMatchHandler(HttpConn *conn)
+void httpRouteRequest(HttpConn *conn)
 {
-    Http        *http;
     HttpRx      *rx;
     HttpTx      *tx;
-    HttpStage   *handler;
+    HttpRoute   *route;
+    int         next, rewrites, match;
 
-    http = conn->http;
     rx = conn->rx;
     tx = conn->tx;
-    handler = 0;
 
-    mprAssert(rx->pathInfo);
-    mprAssert(rx->uri);
-    mprAssert(rx->loc);
-    mprAssert(rx->alias);
-    mprAssert(tx->filename);
-    mprAssert(tx->fileInfo.checked);
-
-    for (handler = 0; !handler && !conn->error && (rx->rewrites < HTTP_MAX_REWRITE); rx->rewrites++) {
-        if (!rewriteRequest(conn)) {
-            handler = findHandler(conn);
+    for (next = rewrites = 0; rewrites < HTTP_MAX_REWRITE; ) {
+        if ((route = mprGetNextItem(conn->host->routes, &next)) == 0) {
+            break;
+        }
+        if ((match = httpMatchRoute(conn, route)) == HTTP_ROUTE_ACCEPTED) {
+            rx->route = route;
+            mprAssert(tx->handler);
+            break;
+        } else if (match == HTTP_ROUTE_REROUTE) {
+            next = 0;
+            rewrites++;
         }
     }
-    if (!handler || conn->error) {
-        handler = http->passHandler;
-        if (!conn->error && rx->rewrites >= HTTP_MAX_REWRITE) {
+    if (conn->error) {
+        tx->handler = conn->http->passHandler;
+        if (rewrites >= HTTP_MAX_REWRITE) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Too many request rewrites");
         }
     }
-    tx->handler = handler;
-}
-
-
-static bool rewriteRequest(HttpConn *conn)
-{
-    HttpStage       *handler;
-    HttpAlias       *alias;
-    HttpLoc         *loc;
-    HttpRx          *rx;
-    HttpTx          *tx;
-    MprHash         *he;
-    int             next;
-
-    rx = conn->rx;
-    tx = conn->tx;
-    loc = rx->loc;
-    alias = rx->alias;
-
-    mprAssert(rx->alias);
-    mprAssert(tx->filename);
-    mprAssert(tx->fileInfo.checked);
-
-    if (alias->redirectCode) {
-        httpRedirect(conn, alias->redirectCode, alias->uri);
-        return 1;
-    }
-    for (next = 0; (handler = mprGetNextItem(loc->handlers, &next)) != 0; ) {
-        if (handler->rewrite && handler->rewrite(conn, handler)) {
-            return 1;
-        }
-    }
-    for (he = 0; (he = mprGetNextKey(loc->extensions, he)) != 0; ) {
-        handler = (HttpStage*) he->data;
-        if (handler->rewrite && handler->rewrite(conn, handler)) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-
-static char *getExtension(HttpConn *conn, cchar *path)
-{
-    HttpRx      *rx;
-    char        *cp, *ep, *ext;
-
-    rx = conn->rx;
-
-    if (rx && rx->pathInfo) {
-        if ((cp = strrchr(path, '.')) != 0) {
-            ext = sclone(++cp);
-            for (ep = ext; *ep && isalnum((int)*ep); ep++) {
-                ;
-            }
-            *ep = '\0';
-            return ext;
-        }
-    }
-    return 0;
-}
-
-
-/*
-    Get the request extension. Look first at the URI (pathInfo). If no extension, look at the filename.
-    Return NULL if no extension.
- */
-char *httpGetExtension(HttpConn *conn)
-{
-    HttpRx  *rx;
-    char    *ext;
-
-    rx = conn->rx;
-    if ((ext = getExtension(conn, &rx->pathInfo[rx->alias->prefixLen])) == 0) {
-        ext = getExtension(conn, conn->tx->filename);
-    }
-    return ext;
-}
-
-
-/*
-    Search for a handler by request extension. If that fails, use handler custom matching.
- */
-static HttpStage *findHandler(HttpConn *conn)
-{
-    Http        *http;
-    HttpHost    *host;
-    HttpRx      *rx;
-    HttpTx      *tx;
-    HttpStage   *handler, *h;
-    HttpLoc     *loc;
-    MprHash     *hp;
-    char        *path;
-    int         next;
-
-    http = conn->http;
-    rx = conn->rx;
-    tx = conn->tx;
-    loc = rx->loc;
-    handler = 0;
-    host = httpGetConnHost(conn);
-
-    mprAssert(rx->uri);
-    mprAssert(tx->filename);
-    mprAssert(tx->fileInfo.checked);
-    mprAssert(rx->pathInfo);
-    mprAssert(host);
-
-    /*
-        Check for any explicitly defined handlers (SetHandler directive)
-     */
-    if ((handler = checkHandler(conn, loc->handler)) == 0) {
-        /* 
-            Perform custom handler matching first on all defined handlers. Accept the handler if it has a match() 
-            routine and it accepts the request.
-         */
-        for (next = 0; (h = mprGetNextItem(loc->handlers, &next)) != 0; ) {
-            if (h->match && checkHandler(conn, h)) {
-                handler = h;
-                break;
-            }
-        }
-        if (handler == 0) {
-            if (tx->extension) {
-                handler = checkHandler(conn, httpGetHandlerByExtension(loc, tx->extension));
-
-            } else if (!tx->fileInfo.valid) {
-                /*
-                    URI has no extension, check if the addition of configured  extensions results in a valid filename.
-                 */
-                for (path = 0, hp = 0; (hp = mprGetNextKey(loc->extensions, hp)) != 0; ) {
-                    if (*hp->key && (((HttpStage*)hp->data)->flags & HTTP_STAGE_MISSING_EXT)) {
-                        path = sjoin(tx->filename, ".", hp->key, NULL);
-                        if (mprGetPathInfo(path, &tx->fileInfo) == 0) {
-                            mprLog(5, "findHandler: Adding extension, new path %s\n", path);
-                            httpSetUri(conn, sjoin(rx->uri, ".", hp->key, NULL), NULL);
-                            handler = (HttpStage*) hp->data;
-                            break;
-                        }
-                    }
-                }
-            }
-            if (handler == 0) {
-                handler = checkHandler(conn, httpGetHandlerByExtension(loc, ""));
-                if (handler == 0) {
-                    if (!(rx->flags & (HTTP_OPTIONS | HTTP_TRACE))) {
-                        httpError(conn, HTTP_CODE_NOT_IMPLEMENTED, "No handler for \"%s\" \"%s\"", rx->method, rx->pathInfo);
-                    }
-                    handler = http->passHandler;
-                }
-            }
-        }
-    }
-    return checkDirectory(conn, handler);
-}
-
-
-/*
-    Manage requests to directories. This will either do an external redirect back to the browser or do an internal 
-    (transparent) redirection and serve different content back to the browser. This routine may modify the requested 
-    URI and/or the request handler.
- */
-static HttpStage *checkDirectory(HttpConn *conn, HttpStage *handler)
-{
-    HttpRx      *rx;
-    HttpTx      *tx;
-    HttpUri     *prior;
-    char        *path, *pathInfo, *uri;
-
-    rx = conn->rx;
-    tx = conn->tx;
-    prior = rx->parsedUri;
-
-    mprAssert(rx->dir);
-    mprAssert(rx->dir->indexName);
-    mprAssert(rx->pathInfo);
-
-    if (!tx->fileInfo.isDir || handler == 0 || handler->flags & HTTP_STAGE_VIRTUAL) {
-        return handler;
-    }
-    if (sends(rx->pathInfo, "/")) {
-        /*  
-            Internal directory redirections
-         */
-        path = mprJoinPath(tx->filename, rx->dir->indexName);
-        if (mprPathExists(path, R_OK)) {
-            /*  
-                Index file exists, so do an internal redirect to it. Client will not be aware of this happening.
-                Return zero so the request will be rematched on return.
-             */
-            pathInfo = mprJoinPath(rx->pathInfo, rx->dir->indexName);
-            uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
-            httpSetUri(conn, uri, 0);
-            /* Force a rematch */
-            return 0;
-        }
-    } else {
-        /* Must not append the index for the external redirect */
-        pathInfo = sjoin(rx->pathInfo, "/", NULL);
-        uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
-        httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, uri);
-        handler = conn->http->passHandler;
-    }
-    return handler;
-}
-
-
-static HttpStage *checkHandler(HttpConn *conn, HttpStage *stage)
-{
-    HttpRx   *rx;
-
-    rx = conn->rx;
-    if (stage == 0) {
-        return 0;
-    }
-    if ((stage->flags & HTTP_STAGE_ALL & rx->flags) == 0) {
-        return 0;
-    }
-    if (stage->match && !(stage->flags & HTTP_STAGE_UNLOADED)) {
-        /* Can't have match routines on unloaded modules */
-        if (!stage->match(conn, stage, HTTP_STAGE_RX | HTTP_STAGE_TX)) {
-            return 0;
-        }
-    }
-    return stage;
+    mprLog(4, "Select handler: \"%s\" for \"%s\"", tx->handler->name, rx->uri);
 }
 
 
@@ -5734,7 +4947,7 @@ static void addPacketForNet(HttpQueue *q, HttpPacket *packet)
         addToNetVector(q, mprGetBufStart(packet->content), mprGetBufLength(packet->content));
     }
     item = (packet->flags & HTTP_PACKET_HEADER) ? HTTP_TRACE_HEADER : HTTP_TRACE_BODY;
-    if (httpShouldTrace(conn, HTTP_TRACE_TX, item, tx->extension) >= 0) {
+    if (httpShouldTrace(conn, HTTP_TRACE_TX, item, tx->ext) >= 0) {
         httpTraceContent(conn, HTTP_TRACE_TX, item, packet, 0, (ssize) tx->bytesWritten);
     }
 }
@@ -6473,7 +5686,7 @@ static void pairQueues(HttpConn *conn);
 static void setVars(HttpConn *conn);
 
 
-void httpCreateTxPipeline(HttpConn *conn, HttpLoc *loc)
+void httpCreateTxPipeline(HttpConn *conn, HttpRoute *loc)
 {
     Http        *http;
     HttpTx      *tx;
@@ -6505,7 +5718,7 @@ void httpCreateTxPipeline(HttpConn *conn, HttpLoc *loc)
     if (tx->connector == 0) {
         if (tx->handler == http->fileHandler && rx->flags & HTTP_GET && !tx->outputRanges && 
                 !conn->secure && tx->chunkSize <= 0 &&
-                httpShouldTrace(conn, HTTP_TRACE_TX, HTTP_TRACE_BODY, tx->extension) < 0) {
+                httpShouldTrace(conn, HTTP_TRACE_TX, HTTP_TRACE_BODY, tx->ext) < 0) {
             tx->connector = http->sendConnector;
         } else if (loc && loc->connector) {
             tx->connector = loc->connector;
@@ -6533,7 +5746,7 @@ void httpCreateTxPipeline(HttpConn *conn, HttpLoc *loc)
 }
 
 
-void httpCreateRxPipeline(HttpConn *conn, HttpLoc *loc)
+void httpCreateRxPipeline(HttpConn *conn, HttpRoute *loc)
 {
     Http        *http;
     HttpTx      *tx;
@@ -6754,9 +5967,9 @@ void httpDiscardTransmitData(HttpConn *conn)
 }
 
 
+#if UNUSED
 static void trimExtraPath(HttpConn *conn)
 {
-    HttpAlias   *alias;
     HttpRx      *rx;
     HttpTx      *tx;
     cchar       *seps;
@@ -6765,19 +5978,18 @@ static void trimExtraPath(HttpConn *conn)
 
     rx = conn->rx;
     tx = conn->tx;
-    alias = rx->alias;
 
     /*
-        Find the script name in the uri. This is assumed to be either:
+        Heuristically find the script name in the uri. This is assumed to be either:
             - the original uri up to and including first path component containing a ".", or
             - the entire original uri
-        Once found, set the scriptName and trim the extraPath from pathInfo. The filename is used to search for a 
-        component with "." because we want to skip the alias prefix.
+        Once found, set the scriptName and trim the extraPath from pathInfo.
+        WARNING: ExtraPath is an old, unreliable, CGI specific technique. Directories with "." will thwart this code.
      */
-    start = &tx->filename[strlen(alias->filename)];
+    start = tx->filename;
     seps = mprGetPathSeparators(start);
     if ((cp = strchr(start, '.')) != 0 && (extra = strchr(cp, seps[0])) != 0) {
-        len = alias->prefixLen + extra - start;
+        len = extra - start;
         if (0 < len && len < slen(rx->pathInfo)) {
             *extra = '\0';
             rx->extraPath = sclone(&rx->pathInfo[len]);
@@ -6786,6 +5998,7 @@ static void trimExtraPath(HttpConn *conn)
         }
     }
 }
+#endif
 
 
 /*
@@ -6799,9 +6012,11 @@ static void setVars(HttpConn *conn)
     rx = conn->rx;
     tx = conn->tx;
 
+#if UNUSED
     if (tx->handler->flags & HTTP_STAGE_EXTRA_PATH) {
         trimExtraPath(conn);
     }
+#endif
     if (tx->handler->flags & (HTTP_STAGE_CGI_VARS | HTTP_STAGE_FORM_VARS | HTTP_STAGE_QUERY_VARS)) {
         rx->formVars = mprCreateHash(HTTP_MED_HASH_SIZE, 0);
     }
@@ -6825,8 +6040,8 @@ static bool matchFilter(HttpConn *conn, HttpStage *filter, int dir)
     if (filter->match) {
         return filter->match(conn, filter, dir);
     }
-    if (filter->extensions && tx->extension) {
-        return mprLookupKey(filter->extensions, tx->extension) != 0;
+    if (filter->extensions && tx->ext) {
+        return mprLookupKey(filter->extensions, tx->ext) != 0;
     }
     return 1;
 }
@@ -7815,6 +7030,1635 @@ static bool fixRangeLength(HttpConn *conn)
 
 /************************************************************************/
 /*
+ *  Start of file "./src/route.c"
+ */
+/************************************************************************/
+
+/*
+    route.c -- Http request routing 
+
+    Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
+ */
+
+
+#include    "pcre.h"
+
+
+static HttpLang *createLangDef(cchar *path, cchar *suffix, int flags);
+static HttpRouteItem *createRouteItem(cchar *key, cchar *details, void *data, cchar *path, int flags);
+static void definePathVars(HttpRoute *route);
+static void defineHostVars(HttpRoute *route);
+static char *expandTargetTokens(HttpConn *conn, char *targetKey);
+static void manageRoute(HttpRoute *route, int flags);
+static void manageLang(HttpLang *lang, int flags);
+static void manageRouteItem(HttpRouteItem *item, int flags);
+static int mapToStorage(HttpConn *conn, HttpRoute *route);
+static int modifyRequest(HttpConn *conn, HttpRoute *route, HttpRouteItem *modification);
+static int processDirectories(HttpConn *conn, HttpRoute *route);
+static char *replace(cchar *str, cchar *replacement, int *matches, int matchCount);
+static int selectHandler(HttpConn *conn, HttpRoute *route);
+static int testCondition(HttpConn *conn, HttpRoute *route, HttpRouteItem *condition);
+static void trimExtraPath(HttpConn *conn);
+
+
+HttpRoute *httpCreateRoute()
+{
+    HttpRoute  *route;
+
+    if ((route = mprAllocObj(HttpRoute, manageRoute)) == 0) {
+        return 0;
+    }
+    route->http = MPR->httpService;
+    route->errorDocuments = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
+    route->handlers = mprCreateList(-1, 0);
+    route->extensions = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
+    route->expires = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_STATIC_VALUES);
+    route->expiresByType = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_STATIC_VALUES);
+    route->pathVars = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
+    route->inputStages = mprCreateList(-1, 0);
+    route->outputStages = mprCreateList(-1, 0);
+    route->auth = httpCreateAuth(0);
+    route->flags = HTTP_LOC_SMART;
+    route->workers = -1;
+    definePathVars(route);
+
+#if UNUSED
+    /*
+        The selectHandler modification must be first, followed immediately by mapToStorage. User modifications come next.
+     */
+    route->modifications = mprCreateList(-1, 0);
+#endif
+    return route;
+}
+
+
+HttpRoute *httpCreateDefaultRoute()
+{
+    HttpRoute   *route;
+
+    if ((route = httpCreateRoute("--default--")) == 0) {
+        return 0;
+    }
+#if UNUSED
+    httpSetRouteTarget(route, "accept", 0);
+#endif
+    return route;
+}
+
+
+/*  
+    Create a new location block. Inherit from the parent. We use a copy-on-write scheme if these are modified later.
+ */
+HttpRoute *httpCreateInheritedRoute(HttpRoute *parent)
+{
+    HttpRoute  *route;
+
+    if (parent == 0) {
+        return httpCreateRoute();
+    }
+    if ((route = mprAllocObj(HttpRoute, manageRoute)) == 0) {
+        return 0;
+    }
+    route->http = MPR->httpService;
+    route->parent = parent;
+    route->flags = parent->flags;
+    route->inputStages = parent->inputStages;
+    route->outputStages = parent->outputStages;
+    route->handlers = parent->handlers;
+    route->extensions = parent->extensions;
+    route->expires = parent->expires;
+    route->expiresByType = parent->expiresByType;
+    route->pathVars = parent->pathVars;
+    route->connector = parent->connector;
+    route->errorDocuments = parent->errorDocuments;
+    route->auth = httpCreateAuth(parent->auth);
+    route->uploadDir = parent->uploadDir;
+    route->autoDelete = parent->autoDelete;
+    route->script = parent->script;
+    route->scriptPath = parent->scriptPath;
+    route->searchPath = parent->searchPath;
+    route->ssl = parent->ssl;
+    route->workers = parent->workers;
+
+    route->methodHash = parent->methodHash;
+    route->formFields = parent->formFields;
+    route->headers = parent->headers;
+    route->conditions = parent->conditions;
+    route->modifications = parent->modifications;
+    route->methods = parent->methods;
+    route->pattern = parent->pattern;
+    route->patternExpression = parent->patternExpression;
+    route->patternCompiled = parent->patternCompiled;
+    route->kind = parent->kind;
+    route->targetDest = parent->targetDest;
+    route->targetStatus = parent->targetStatus;
+    route->sourceName = parent->sourceName;
+    route->sourcePath = parent->sourcePath;
+    route->template = parent->template;
+    route->params = parent->params;
+    route->tokens = parent->tokens;
+    return route;
+}
+
+
+HttpRoute *httpCreateAliasRoute(HttpRoute *parent, cchar *prefix, cchar *path, int status)
+{
+    HttpRoute   *route;
+
+    if ((route = httpCreateInheritedRoute(parent)) == 0) {
+        return 0;
+    }
+    httpSetRoutePattern(route, prefix);
+    httpSetRouteTarget(route, "fileTarget", sfmt("%s/%s", path, "$&"));
+    route->targetStatus = status;
+    httpFinalizeRoute(route);
+    return route;
+}
+
+
+static void manageRoute(HttpRoute *route, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(route->auth);
+        mprMark(route->http);
+        mprMark(route->connector);
+        mprMark(route->handler);
+        mprMark(route->extensions);
+        mprMark(route->expires);
+        mprMark(route->expiresByType);
+        mprMark(route->pathVars);
+        mprMark(route->handlers);
+        mprMark(route->inputStages);
+        mprMark(route->outputStages);
+        mprMark(route->errorDocuments);
+        mprMark(route->parent);
+        mprMark(route->context);
+        mprMark(route->uploadDir);
+        mprMark(route->searchPath);
+        mprMark(route->script);
+        mprMark(route->scriptPath);
+        mprMark(route->ssl);
+        mprMark(route->data);
+        mprMark(route->lang);
+        mprMark(route->langPref);
+
+        mprMark(route->name);
+        mprMark(route->conditions);
+        mprMark(route->modifications);
+        mprMark(route->methods);
+        mprMark(route->methodHash);
+        mprMark(route->pattern);
+        mprMark(route->sourceName);
+        mprMark(route->sourcePath);
+        mprMark(route->patternExpression);
+        mprMark(route->params);
+        mprMark(route->tokens);
+        mprMark(route->formFields);
+        mprMark(route->headers);
+
+        mprMark(route->kind);
+        mprMark(route->targetDetails);
+        mprMark(route->targetDest);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+        if (route->patternCompiled) {
+            free(route->patternCompiled);
+        }
+    }
+}
+
+
+/*
+    Compile the route into fast forms. This compiles the route->methods into a hash table, route->pattern into 
+    a regular expression in route->patternCompiled.
+ */
+int httpFinalizeRoute(HttpRoute *route)
+{
+    MprBuf      *pattern, *params, *buf;
+    cchar       *errMsg, *item;
+    char        *methods, *method, *tok, *cp, *ep, *token, *field;
+    int         column, errCode, index, next, braced;
+
+    /*
+        Convert the methods into a method hash
+     */
+    methods = route->methods;
+    if (methods && *methods && scasecmp(route->methods, "ALL") != 0 && scmp(route->methods, "*") != 0) {
+        if ((route->methodHash = mprCreateHash(-1, 0)) == 0) {
+            return MPR_ERR_MEMORY;
+        }
+        methods = sclone(methods);
+        while ((method = stok(methods, ", \t\n\r", &tok)) != 0) {
+            mprAddKey(route->methodHash, method, route);
+            methods = 0;
+        }
+    } else {
+        route->methods = sclone("*");
+    }
+    /*
+        Prepare the pattern. 
+            - Extract the tokens and change tokens: "{word}" to "(word)"
+            - Change optional sections: "(portion)" to "(?:portion)?"
+            - Create a params RE replacement string of the form "$1:$2:$3" for the {tokens}
+            - Wrap the pattern in "^" and "$"
+     */
+    route->tokens = mprCreateList(-1, 0);
+    pattern = mprCreateBuf(-1, -1);
+
+    if (route->pattern && *route->pattern) {
+        if (route->pattern[0] == '%') {
+            route->patternExpression = sclone(&route->pattern[1]);
+            if (route->targetDetails) {
+                route->targetDest = route->targetDetails;
+            }
+            /* Can't have a link template if using regular expressions */
+
+        } else {
+            params = mprCreateBuf(-1, -1);
+            for (cp = route->pattern; *cp; cp++) {
+                if (*cp == '(') {
+                    mprPutStringToBuf(pattern, "(?:");
+
+                } else if (*cp == ')') {
+                    mprPutStringToBuf(pattern, ")?");
+
+                } else if (*cp == '{' && (cp == route->pattern || cp[-1] != '\\')) {
+                    if ((ep = schr(cp, '}')) != 0) {
+                        /* Trim {} off the token and replace in pattern with "([^/]*)"  */
+                        token = snclone(&cp[1], ep - cp - 1);
+                        if ((field = schr(token, '=')) != 0) {
+                            *field++ = '\0';
+                        } else {
+                            field = "([^/]*)";
+                        }
+                        mprPutStringToBuf(pattern, field);
+
+                        index = mprAddItem(route->tokens, token);
+                        /* Params ends up looking like "$1:$2:$3:$4" */
+                        mprPutCharToBuf(params, '$');
+                        mprPutIntToBuf(params, index + 1);
+                        mprPutCharToBuf(params, ':');
+                        cp = ep;
+                    }
+                } else {
+                    mprPutCharToBuf(pattern, *cp);
+                }
+            }
+            mprAddNullToBuf(pattern);
+            mprAddNullToBuf(params);
+            route->patternExpression = sclone(mprGetBufStart(pattern));
+
+            /* Trim last ":" from params */
+            if (mprGetBufLength(params) > 0) {
+                route->params = sclone(mprGetBufStart(params));
+                route->params[slen(route->params) - 1] = '\0';
+            }
+
+            /*
+                Prepare the target. Change $token to $N
+             */
+            if (route->targetDetails) {
+                buf = mprCreateBuf(-1, -1);
+                for (cp = route->targetDetails; *cp; cp++) {
+                    if ((tok = schr(cp, '$')) != 0 && (tok == route->targetDetails || tok[-1] != '\\')) {
+                        if (tok > cp) {
+                            mprPutBlockToBuf(buf, cp, tok - cp);
+                        }
+                        if ((braced = (*++tok == '{')) != 0) {
+                            tok++;
+                        }
+                        if (*tok == '&' || *tok == '\'' || *tok == '`' || *tok == '$') {
+                            mprPutCharToBuf(buf, '$');
+                            mprPutCharToBuf(buf, *tok);
+                            ep = tok + 1;
+                        } else {
+                            for (ep = tok; *ep && *ep != '}'; ep++) ;
+                            token = snclone(tok, ep - tok);
+                            if (schr(token, ':')) {
+                                mprPutStringToBuf(buf, "$${");
+                                mprPutStringToBuf(buf, token);
+                                mprPutCharToBuf(buf, '}');
+                            } else {
+                                for (next = 0; (item = mprGetNextItem(route->tokens, &next)) != 0; ) {
+                                    if (scmp(item, token) == 0) {
+                                        break;
+                                    }
+                                }
+                                if (item) {
+                                    mprPutCharToBuf(buf, '$');
+                                    mprPutIntToBuf(buf, next);
+                                } else {
+                                    mprError("Can't find token \"%s\" in template \"%s\"", token, route->pattern);
+                                }
+                            }
+                        }
+                        if (braced) {
+                            ep++;
+                        }
+                        cp = ep - 1;
+                    } else {
+                        mprPutCharToBuf(buf, *cp);
+                    }
+                }
+                mprAddNullToBuf(buf);
+                route->targetDest = sclone(mprGetBufStart(buf));
+            }
+            /*
+                Create a template for links. Strip "()" and "/.*" from the pattern.
+             */
+            route->template = sreplace(route->pattern, "(", "");
+            route->template = sreplace(route->template, ")", "");
+            route->template = sreplace(route->template, "/.*", "");
+        }
+        if ((route->patternCompiled = pcre_compile2(route->patternExpression, 0, &errCode, &errMsg, &column, NULL)) == 0) {
+            mprError("Can't compile route. Error %s at column %d", errMsg, column); 
+        }
+    }
+#if BLD_FEATURE_SSL
+    if (route->ssl) {
+        mprConfigureSsl(route->ssl);
+    }
+#endif
+    return 0;
+}
+
+
+int httpMatchRoute(HttpConn *conn, HttpRoute *route)
+{
+    HttpRouteItem   *item, *condition, *modification;
+    HttpRouteProc   *proc;
+    HttpRx          *rx;
+    cchar           *token, *value, *header, *field;
+    int             next, rc, matched[10 * 3], count;
+
+    rx = conn->rx;
+
+    if (route->patternCompiled) {
+        if ((rx->matchCount = pcre_exec(route->patternCompiled, NULL, rx->pathInfo, (int) slen(rx->pathInfo), 0, 0, 
+                rx->matches, sizeof(rx->matches) / sizeof(int))) < 0) {
+            return 0;
+        }
+    }
+    if (route->methodHash && !mprLookupKey(route->methodHash, rx->method)) {
+        return 0;
+    }
+    if (route->headers) {
+        for (next = 0; (item = mprGetNextItem(route->headers, &next)) != 0; ) {
+            if ((header = httpGetHeader(conn, item->name)) != 0) {
+                count = pcre_exec(item->mdata, NULL, header, (int)slen(header), 0, 0, matched, sizeof(matched) / sizeof(int)); 
+                rc = count > 0;
+                if (item->flags & HTTP_ROUTE_NOT) {
+                    rc = !rc;
+                }
+                if (!rc) {
+                    return 0;
+                }
+            }
+        }
+    }
+    if (route->formFields) {
+        for (next = 0; (item = mprGetNextItem(route->formFields, &next)) != 0; ) {
+            if ((field = httpGetFormVar(conn, item->name, "")) != 0) {
+                count = pcre_exec(item->mdata, NULL, field, (int)slen(field), 0, 0, matched, sizeof(matched) / sizeof(int)); 
+                rc = count > 0;
+                if (item->flags & HTTP_ROUTE_NOT) {
+                    rc = !rc;
+                }
+                if (!rc) {
+                    return 0;
+                }
+            }
+        }
+    }
+
+    selectHandler(conn, route);
+
+    if (route->conditions) {
+        for (next = 0; (condition = mprGetNextItem(route->conditions, &next)) != 0; ) {
+            rc = testCondition(conn, route, condition);
+            if (rc == HTTP_ROUTE_REROUTE) {
+                return rc;
+            }
+            if (condition->flags & HTTP_ROUTE_NOT) {
+                rc = !rc;
+            }
+            if (!rc) {
+                return 0;
+            }
+        }
+    }
+    //  Point of no return
+
+    if (route->modifications) {
+        for (next = 0; (modification = mprGetNextItem(route->modifications, &next)) != 0; ) {
+            if ((rc = modifyRequest(conn, route, modification)) == HTTP_ROUTE_REROUTE) {
+                return rc;
+            }
+        }
+    }
+    if (route->params) {
+        for (next = 0; (token = mprGetNextItem(route->tokens, &next)) != 0; ) {
+            value = snclone(&rx->pathInfo[rx->matches[next * 2]], rx->matches[(next * 2) + 1] - rx->matches[(next * 2)]);
+            httpSetFormVar(conn, token, value);
+        }
+    }
+    if ((proc = mprLookupKey(conn->http->routeTargets, route->kind)) == 0) {
+        httpError(conn, -1, "Can't find route target name %s", route->kind);
+        return 0;
+    }
+    mprLog(0, "Run route \"%s\" target \"%s\"", route->name, route->kind);
+    return (*proc)(conn, route, 0);
+}
+
+
+static int selectHandler(HttpConn *conn, HttpRoute *route)
+{
+    HttpTx      *tx;
+
+    tx = conn->tx;
+    if (route->handler) {
+        tx->handler = route->handler;
+    } else {
+        if ((tx->handler = mprLookupKey(route->extensions, tx->ext)) == 0) {
+            tx->handler = mprLookupKey(route->extensions, "");
+        }
+        if (tx->handler->match) {
+            if (!tx->handler->match(conn, tx->handler, 0)) {
+                tx->handler = conn->http->passHandler;
+            }
+        }
+    }
+    return HTTP_ROUTE_ACCEPTED;
+}
+
+
+static int mapToStorage(HttpConn *conn, HttpRoute *route)
+{
+    HttpRx      *rx;
+    HttpTx      *tx;
+    HttpHost    *host;
+    MprPath     *info, ginfo;
+    char        *gfile;
+
+    rx = conn->rx;
+    tx = conn->tx;
+    host = conn->host;
+    mprAssert(tx->handler);
+
+    if (tx->handler->flags & HTTP_STAGE_VIRTUAL) {
+        return HTTP_ROUTE_ACCEPTED;
+    }
+    mprAssert(route->targetDest && *route->targetDest);
+
+    //  MOB - what about: seps = mprGetPathSeparators(path);
+
+    if (route->targetDest) {
+        tx->filename = expandTargetTokens(conn, replace(rx->pathInfo, route->targetDest, rx->matches, rx->matchCount));
+    } else {
+        tx->filename = sclone(&rx->pathInfo[1]);
+    }
+    tx->ext = httpGetExtension(conn);
+    if ((rx->dir = httpLookupBestDir(host, tx->filename)) == 0) {
+        httpError(conn, HTTP_CODE_NOT_FOUND, "Missing directory block for \"%s\"", tx->filename);
+        return 0;
+    }
+    info = &tx->fileInfo;
+    mprGetPathInfo(tx->filename, info);
+    if (!info->valid && rx->acceptEncoding && strstr(rx->acceptEncoding, "gzip") != 0) {
+        gfile = sfmt("%s.gz", tx->filename);
+        if (mprGetPathInfo(gfile, &ginfo) == 0) {
+            tx->filename = gfile;
+            tx->fileInfo = ginfo;
+            httpSetHeader(conn, "Content-Encoding", "gzip");
+        }
+    }
+    if (info->valid) {
+        //  MOB - should this be moved to handlers ... yes
+        tx->etag = sfmt("\"%x-%Lx-%Lx\"", info->inode, info->size, info->mtime);
+    }
+    if (tx->handler->flags & HTTP_STAGE_EXTRA_PATH) {
+        trimExtraPath(conn);
+    }
+    mprLog(5, "mapToStorage uri \"%s\", filename: \"%s\", extension: \"%s\"", rx->uri, tx->filename, tx->ext);
+    return HTTP_ROUTE_ACCEPTED;
+}
+
+
+/*
+    Manage file requests that resolve to directories. This will either do an external redirect back to the browser 
+    or do an internal (transparent) redirection and serve different content back to the browser.
+ */
+static int processDirectories(HttpConn *conn, HttpRoute *route)
+{
+    HttpRx      *rx;
+    HttpTx      *tx;
+    HttpUri     *prior;
+    char        *path, *pathInfo, *uri;
+
+    tx = conn->tx;
+    if (tx->handler->flags & HTTP_STAGE_VIRTUAL) {
+        return HTTP_ROUTE_ACCEPTED;
+    }
+    rx = conn->rx;
+    prior = rx->parsedUri;
+
+    mprAssert(rx->dir);
+    mprAssert(rx->dir->indexName);
+    mprAssert(rx->pathInfo);
+    mprAssert(tx->fileInfo.checked);
+
+    if (!tx->fileInfo.isDir) {
+        return HTTP_ROUTE_ACCEPTED;
+    }
+    if (sends(rx->pathInfo, "/")) {
+        /*  
+            Internal directory redirections
+         */
+        path = mprJoinPath(tx->filename, rx->dir->indexName);
+        if (mprPathExists(path, R_OK)) {
+            /*  
+                Index file exists, so do an internal redirect to it. Client will not be aware of this happening.
+             */
+            pathInfo = mprJoinPath(rx->pathInfo, rx->dir->indexName);
+            uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
+            httpSetUri(conn, uri, 0);
+            return HTTP_ROUTE_REROUTE;
+        }
+    } else {
+        /* Must not append the index for the external redirect */
+        pathInfo = sjoin(rx->pathInfo, "/", NULL);
+        uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
+        httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, uri);
+    }
+    return HTTP_ROUTE_ACCEPTED;
+}
+
+
+/*
+    Trim extra path information after the uri/filename. This is used by CGI (only).
+    Strategy is to heuristically find the script name in the uri. This is assumed to be either:
+        - the original uri up to and including first path component containing a ".", or
+        - the entire original uri
+    Once found, set the scriptName and trim the extraPath from pathInfo.
+    WARNING: ExtraPath is an old, unreliable, CGI specific technique. Directories with "." will thwart this code.
+ */
+static void trimExtraPath(HttpConn *conn)
+{
+    HttpRx      *rx;
+    cchar       *seps;
+    char        *cp, *extra, *start;
+    ssize       len;
+
+    rx = conn->rx;
+
+    start = conn->tx->filename;
+    seps = mprGetPathSeparators(start);
+    if ((cp = strchr(start, '.')) != 0 && (extra = strchr(cp, seps[0])) != 0) {
+        len = extra - start;
+        if (0 < len && len < slen(rx->pathInfo)) {
+            *extra = '\0';
+            rx->extraPath = sclone(&rx->pathInfo[len]);
+            rx->pathInfo[len] = '\0';
+            return;
+        }
+    }
+}
+
+
+void httpAddRouteAuth(HttpRoute *route)
+{
+    httpAddRouteCondition(route, "auth", 0);
+}
+
+
+void httpAddRouteCondition(HttpRoute *route, cchar *name, int flags)
+{
+    if (route->conditions == 0) {
+        route->conditions = mprCreateList(0, -1);
+    } else if (route->parent && route->conditions == route->parent->conditions) {
+        route->conditions = mprCloneList(route->parent->conditions);
+    }
+    mprAddItem(route->conditions, createRouteItem(name, 0, 0, 0, flags));
+}
+
+
+void httpAddRouteExpiry(HttpRoute *route, MprTime when, cchar *extensions)
+{
+    char    *types, *ext, *tok;
+
+    if (extensions && *extensions) {
+        if (route->parent && route->expires == route->parent->expires) {
+            route->expires = mprCloneHash(route->parent->expires);
+        }
+        types = sclone(extensions);
+        ext = stok(types, " ,\t\r\n", &tok);
+        while (ext) {
+            mprAddKey(route->expires, ext, ITOP(when));
+            ext = stok(0, " \t\r\n", &tok);
+        }
+    }
+}
+
+
+void httpAddRouteExpiryByType(HttpRoute *route, MprTime when, cchar *mimeTypes)
+{
+    char    *types, *mime, *tok;
+
+    if (mimeTypes && *mimeTypes) {
+        if (route->parent && route->expires == route->parent->expires) {
+            route->expiresByType = mprCloneHash(route->parent->expiresByType);
+        }
+        types = sclone(mimeTypes);
+        mime = stok(types, " ,\t\r\n", &tok);
+        while (mime) {
+            mprAddKey(route->expiresByType, mime, ITOP(when));
+            mime = stok(0, " \t\r\n", &tok);
+        }
+    }
+}
+
+
+int httpAddRouteFilter(HttpRoute *route, cchar *name, cchar *extensions, int direction)
+{
+    HttpStage   *stage;
+    HttpStage   *filter;
+    char        *extlist, *word, *tok;
+
+    mprAssert(route);
+    
+    stage = httpLookupStage(route->http, name);
+    if (stage == 0) {
+        mprError("Can't find filter %s", name); 
+        return MPR_ERR_CANT_FIND;
+    }
+    /*
+        Clone an existing stage because each filter stores its own set of extensions to match against
+     */
+    filter = httpCloneStage(route->http, stage);
+
+    if (extensions && *extensions) {
+        filter->extensions = mprCreateHash(0, MPR_HASH_CASELESS);
+        extlist = sclone(extensions);
+        word = stok(extlist, " \t\r\n", &tok);
+        while (word) {
+            if (*word == '*' && word[1] == '.') {
+                word += 2;
+            } else if (*word == '.') {
+                word++;
+            } else if (*word == '\"' && word[1] == '\"') {
+                word = "";
+            }
+            mprAddKey(filter->extensions, word, filter);
+            word = stok(0, " \t\r\n", &tok);
+        }
+    }
+    if (direction & HTTP_STAGE_RX) {
+        if (route->parent && route->inputStages == route->parent->inputStages) {
+            route->inputStages = mprCloneList(route->parent->inputStages);
+        }
+        mprAddItem(route->inputStages, filter);
+    }
+    if (direction & HTTP_STAGE_TX) {
+        if (route->parent && route->outputStages == route->parent->outputStages) {
+            route->outputStages = mprCloneList(route->parent->outputStages);
+        }
+        mprAddItem(route->outputStages, filter);
+    }
+    return 0;
+}
+
+
+void httpAddRouteField(HttpRoute *route, cchar *field, cchar *value, int flags)
+{
+    cchar   *errMsg;
+    void    *mdata;
+    int     column;
+
+    mprAssert(route);
+    mprAssert(field && *field);
+    mprAssert(value && *value);
+
+    if (route->formFields == 0) {
+        route->formFields = mprCreateList(-1, 0);
+    } else if  (route->parent && route->outputStages == route->parent->outputStages) {
+        route->formFields = mprCloneList(route->parent->formFields);
+    }
+    if ((mdata = pcre_compile2(value, 0, 0, &errMsg, &column, NULL)) == 0) {
+        mprError("Can't compile field pattern. Error %s at column %d", errMsg, column); 
+    } else {
+        mprAddItem(route->formFields, createRouteItem(field, 0, mdata, 0, flags));
+    }
+}
+
+
+int httpAddRouteHandler(HttpRoute *route, cchar *name, cchar *extensions)
+{
+    Http            *http;
+    HttpStage       *handler;
+    char            *extlist, *word, *tok;
+
+    mprAssert(route);
+
+    http = route->http;
+    if ((handler = httpLookupStage(http, name)) == 0) {
+        mprError("Can't find stage %s", name); 
+        return MPR_ERR_CANT_FIND;
+    }
+    if (extensions && *extensions) {
+        mprLog(MPR_CONFIG, "Add handler \"%s\" for extensions: %s", name, extensions);
+    } else {
+        mprLog(MPR_CONFIG, "Add handler \"%s\" for route: \"%s\"", name, route->pattern);
+    }
+    if (route->parent && route->extensions == route->parent->extensions) {
+        route->extensions = mprCloneHash(route->parent->extensions);
+    }
+    if (route->parent && route->handlers == route->parent->handlers) {
+        route->handlers = mprCloneList(route->parent->handlers);
+    }
+    if (extensions && *extensions) {
+        /*
+            Add to the handler extension hash. Skip over "*." and "."
+         */ 
+        extlist = sclone(extensions);
+        word = stok(extlist, " \t\r\n", &tok);
+        while (word) {
+            if (*word == '*' && word[1] == '.') {
+                word += 2;
+            } else if (*word == '.') {
+                word++;
+            } else if (*word == '\"' && word[1] == '\"') {
+                word = "";
+            }
+            mprAddKey(route->extensions, word, handler);
+            word = stok(0, " \t\r\n", &tok);
+        }
+
+    } else {
+        if (handler->match == 0) {
+            /*
+                Only match by extensions if no-match routine provided.
+             */
+            mprAddKey(route->extensions, "", handler);
+        }
+        if (mprLookupItem(route->handlers, handler) < 0) {
+            mprAddItem(route->handlers, handler);
+        }
+    }
+#if UNUSED
+    /*
+        Optimize and eliminate adjacent addhandler mods
+     */
+    mods = route->modifications;
+    len = mprGetListLength(mods);
+    if (len > 0 && (item = mprGetItem(mods, len -1 )) && scmp(item->name, "selectHandler") == 0) {
+        return 0;
+    }
+    httpAddRouteModification(route, "selectHandler", 0);
+#endif
+    return 0;
+}
+
+
+void httpAddRouteHeader(HttpRoute *route, cchar *header, cchar *value, int flags)
+{
+    cchar   *errMsg;
+    void    *mdata;
+    int     column;
+
+    mprAssert(route);
+    mprAssert(header && *header);
+    mprAssert(value && *value);
+
+    if (route->headers == 0) {
+        route->headers = mprCreateList(-1, 0);
+    } else if (route->parent && route->headers == route->parent->headers) {
+        route->headers = mprCloneList(route->parent->headers);
+    }
+    if ((mdata = pcre_compile2(value, 0, 0, &errMsg, &column, NULL)) == 0) {
+        mprError("Can't compile header pattern. Error %s at column %d", errMsg, column); 
+    } else {
+        mprAddItem(route->headers, createRouteItem(header, 0, mdata, 0, flags));
+    }
+}
+
+
+void httpAddRouteLoad(HttpRoute *route, cchar *module, cchar *path)
+{
+    if (route->modifications == 0) {
+        route->modifications = mprCreateList(0, -1);
+    } else if (route->parent && route->modifications == route->parent->modifications) {
+        route->modifications = mprCloneList(route->parent->modifications);
+    }
+    mprAddItem(route->modifications, createRouteItem("--load--", module, 0, path, 0));
+}
+
+
+void httpAddRouteModification(HttpRoute *route, cchar *name, int flags)
+{
+    mprAddItem(route->modifications, createRouteItem(name, 0, 0, 0, flags));
+}
+
+
+void httpClearRouteStages(HttpRoute *route, int direction)
+{
+    if (direction & HTTP_STAGE_RX) {
+        route->inputStages = mprCreateList(-1, 0);
+    }
+    if (direction & HTTP_STAGE_TX) {
+        route->outputStages = mprCreateList(-1, 0);
+    }
+}
+
+
+void httpDefineRouteTarget(cchar *key, HttpRouteProc *proc)
+{
+    mprAddKey(((Http*) MPR->httpService)->routeTargets, key, proc);
+}
+
+
+void httpDefineRouteCondition(cchar *key, HttpRouteProc *proc)
+{
+    mprAddKey(((Http*) MPR->httpService)->routeConditions, key, proc);
+}
+
+
+void httpDefineRouteModification(cchar *key, HttpRouteProc *proc)
+{
+    mprAddKey(((Http*) MPR->httpService)->routeModifications, key, proc);
+}
+
+
+void *httpGetRouteData(HttpRoute *route, cchar *key)
+{
+    if (!route->data) {
+        return 0;
+    }
+    return mprLookupKey(route->data, key);
+}
+
+
+void httpSetRouteAuth(HttpRoute *route, HttpAuth *auth)
+{
+    route->auth = auth;
+}
+
+
+void httpSetRouteAutoDelete(HttpRoute *route, int enable)
+{
+    route->autoDelete = enable;
+}
+
+
+int httpSetRouteConnector(HttpRoute *route, cchar *name)
+{
+    HttpStage     *stage;
+
+    mprAssert(route);
+    
+    stage = httpLookupStage(route->http, name);
+    if (stage == 0) {
+        mprError("Can't find connector %s", name); 
+        return MPR_ERR_CANT_FIND;
+    }
+    route->connector = stage;
+    mprLog(MPR_CONFIG, "Set connector \"%s\"", name);
+    return 0;
+}
+
+
+void httpSetRouteData(HttpRoute *route, cchar *key, void *data)
+{
+    if (route->data == 0) {
+        route->data = mprCreateHash(-1, 0);
+    }
+    mprAddKey(route->data, key, data);
+}
+
+
+void httpSetRouteFlags(HttpRoute *route, int flags)
+{
+    route->flags = flags;
+}
+
+
+int httpSetRouteHandler(HttpRoute *route, cchar *name)
+{
+    HttpStage     *handler;
+
+    mprAssert(route);
+    
+    if ((handler = httpLookupStage(route->http, name)) == 0) {
+        mprError("Can't find handler %s", name); 
+        return MPR_ERR_CANT_FIND;
+    }
+    route->handler = handler;
+#if UNUSED
+    httpAddRouteModification(route, "setHandlerModification", 0);
+#endif
+    return 0;
+}
+
+
+void httpSetRouteHost(HttpRoute *route, HttpHost *host)
+{
+    route->host = host;
+    defineHostVars(route);
+}
+
+
+void httpResetRoutePipeline(HttpRoute *route)
+{
+    if (route->parent == 0) {
+        route->errorDocuments = mprCreateHash(HTTP_SMALL_HASH_SIZE, 0);
+        route->expires = mprCreateHash(0, MPR_HASH_STATIC_VALUES);
+        route->extensions = mprCreateHash(0, MPR_HASH_CASELESS);
+        route->handlers = mprCreateList(-1, 0);
+        route->inputStages = mprCreateList(-1, 0);
+        route->inputStages = mprCreateList(-1, 0);
+    }
+    route->outputStages = mprCreateList(-1, 0);
+}
+
+
+void httpResetHandlers(HttpRoute *route)
+{
+    route->handlers = mprCreateList(-1, 0);
+}
+
+
+void httpSetRouteMethods(HttpRoute *route, cchar *methods)
+{
+    mprAssert(route);
+    mprAssert(methods && methods);
+
+    route->methods = sclone(methods);
+}
+
+
+void httpSetRoutePattern(HttpRoute *route, cchar *pattern)
+{
+    route->pattern = sclone(pattern);
+}
+
+
+void httpSetRouteSource(HttpRoute *route, cchar *source)
+{
+    mprAssert(route);
+    mprAssert(source && *source);
+
+    route->sourceName = sclone(source);
+}
+
+
+void httpSetRouteScript(HttpRoute *route, cchar *script, cchar *scriptPath)
+{
+    if (script) {
+        route->script = sclone(script);
+    }
+    if (scriptPath) {
+        route->scriptPath = sclone(scriptPath);
+    }
+}
+
+
+/*
+    Target names are extensible and hashed in http->routeTargets. 
+    Internal names are: "close", "redirect", "file", "virt"
+
+    Target alias "${DOCUMENT_ROOT}"
+    Target close [immediate]
+    Target redirect [status] URI            # Redirect to a new URI and re-route
+    Target file "${DOCUMENT_ROOT}/${request:uri}"
+    Target virt ${controller}-${name} 
+    Target dest "${DOCUMENT_ROOT}/${request:rest}"
+ */
+void httpSetRouteTarget(HttpRoute *route, cchar *kind, cchar *details)
+{
+    char        *status;
+
+    mprAssert(route);
+    mprAssert(kind && *kind);
+
+    route->kind = sclone(kind);
+    if (scmp(kind, "redirect") == 0) {
+        if (isdigit(details[0])) {
+            status = stok(sclone(details), " \t", (char**) &details);
+            route->targetStatus = atoi(status);
+        }
+    }
+    route->targetDest = sclone(details);
+}
+
+
+void httpSetRouteWorkers(HttpRoute *route, int workers)
+{
+    route->workers = workers;
+}
+
+
+//  MOB - could this be done via routes?
+void httpAddRouteErrorDocument(HttpRoute *route, cchar *code, cchar *url)
+{
+    if (route->parent && route->errorDocuments == route->parent->errorDocuments) {
+        route->errorDocuments = mprCloneHash(route->parent->errorDocuments);
+    }
+    mprAddKey(route->errorDocuments, code, sclone(url));
+}
+
+
+cchar *httpLookupRouteErrorDocument(HttpRoute *route, int code)
+{
+    char        numBuf[16];
+
+    if (route->errorDocuments == 0) {
+        return 0;
+    }
+    itos(numBuf, sizeof(numBuf), code, 10);
+    return (cchar*) mprLookupKey(route->errorDocuments, numBuf);
+}
+
+
+void httpSetRoutePathVar(HttpRoute *route, cchar *key, cchar *value)
+{
+    mprAssert(key);
+    mprAssert(value);
+
+    if (route->parent && route->pathVars == route->parent->pathVars) {
+        route->pathVars = mprCloneHash(route->parent->pathVars);
+    }
+    if (schr(value, '$')) {
+        value = stemplate(value, route->pathVars);
+    }
+    mprAddKey(route->pathVars, key, sclone(value));
+}
+
+
+/*
+    Make a path name. This replaces $references, converts to an absolute path name, cleans the path and maps delimiters.
+ */
+char *httpMakePath(HttpRoute *route, cchar *file)
+{
+    char    *result, *path;
+
+    mprAssert(file);
+
+    if ((path = stemplate(file, route->pathVars)) == 0) {
+        return 0;
+    }
+    if (mprIsRelPath(path)) {
+        result = mprJoinPath(route->host->serverRoot, path);
+    } else {
+        result = mprGetAbsPath(path);
+    }
+    return result;
+}
+
+
+void httpAddRouteLanguage(HttpRoute *route, cchar *lang, cchar *suffix, int flags)
+{
+    if (route->lang == 0) {
+        route->lang = mprCreateHash(-1, 0);
+    }
+    mprAddKey(route->lang, lang, createLangDef(0, suffix, flags));
+}
+
+
+void httpAddRouteLanguageRoot(HttpRoute *route, cchar *lang, cchar *path)
+{
+    if (route->lang == 0) {
+        route->lang = mprCreateHash(-1, 0);
+    }
+    mprAddKey(route->lang, lang, createLangDef(path, 0, 0));
+}
+
+
+static int compareLang(char **s1, char **s2)
+{
+    return scmp(*s1, *s2);
+}
+
+
+MprList *httpGetBestLanguage(HttpRoute *route, cchar *accept)
+{
+    MprList     *list;
+    char        *lang, *next, *tok, *quality;
+
+    if (route->langPref) {
+        route->langPref = list = mprCreateList(-1, 0);
+    }
+    for (tok = stok(sclone(accept), ",", &next); tok; tok = stok(next, ",", &next)) {
+        lang = stok(tok, ";", &quality);
+        mprAddItem(list, sfmt("%d %s", (int) (atof(quality) * 100), lang));
+    }
+    mprSortList(list, compareLang);
+    return list;
+}
+
+
+static int testCondition(HttpConn *conn, HttpRoute *route, HttpRouteItem *condition)
+{
+    HttpRouteProc   *proc;
+
+    if ((proc = mprLookupKey(conn->http->routeConditions, condition->name)) == 0) {
+        httpError(conn, -1, "Can't find route condition name %s", condition->name);
+        return 0;
+    }
+    mprLog(0, "run condition on route %s condition %s", route->name, condition->name);
+    return (*proc)(conn, route, condition);
+}
+
+
+static int modifyRequest(HttpConn *conn, HttpRoute *route, HttpRouteItem *modification)
+{
+    HttpRouteProc   *proc;
+
+    if ((proc = mprLookupKey(conn->http->routeModifications, modification->name)) == 0) {
+        httpError(conn, -1, "Can't find route modification name %s", modification->name);
+        return 0;
+    }
+    mprLog(0, "run modification on route %s modification %s", route->name, modification->name);
+    return (*proc)(conn, route, modification);
+}
+
+
+static int authCondition(HttpConn *conn, HttpRoute *route, HttpRouteItem *unused)
+{
+    HttpRx      *rx;
+    HttpAuth    *auth;
+
+    rx = conn->rx;
+    auth = rx->dir->auth ? rx->dir->auth : rx->route->auth;
+    if (conn->server || auth == 0 || auth->type == 0) {
+        return HTTP_ROUTE_ACCEPTED;
+    }
+    return httpCheckAuth(conn);
+}
+
+
+static int fileMissingCondition(HttpConn *conn, HttpRoute *route, HttpRouteItem *unused)
+{
+    HttpTx  *tx;
+
+    tx = conn->tx;
+    if (!tx->filename) {
+        mapToStorage(conn, conn->rx->route);
+    }
+    if (tx->fileInfo.valid) {
+        return HTTP_ROUTE_ACCEPTED;
+    }
+    return 0;
+}
+
+
+static int directoryCondition(HttpConn *conn, HttpRoute *route, HttpRouteItem *unused)
+{
+    HttpTx  *tx;
+
+    tx = conn->tx;
+    if (!tx->fileInfo.checked) {
+        mprGetPathInfo(tx->filename, &tx->fileInfo);
+    }
+    if (tx->fileInfo.isDir) {
+        return HTTP_ROUTE_ACCEPTED;
+    } 
+    return 0;
+}
+
+
+static int fieldModification(HttpConn *conn, HttpRoute *route, HttpRouteItem *modification)
+{
+#if FUTURE
+    httpSetFormVar(conn, modification->name, momdification->value);
+#endif
+    return 0;
+}
+
+
+
+#if UNUSED
+static int acceptTarget(HttpConn *conn, HttpRoute *route, HttpRouteItem *unused)
+{
+    return HTTP_ROUTE_ACCEPTED;
+}
+#endif
+
+
+static int closeTarget(HttpConn *conn, HttpRoute *route, HttpRouteItem *unused)
+{
+    httpError(conn, HTTP_CODE_RESET, "Route target \"close\" is closing request");
+    if (scmp(route->targetDetails, "immediate") == 0) {
+        httpDisconnect(conn);
+    }
+    return HTTP_ROUTE_ACCEPTED;
+}
+
+
+#if FUTURE
+static int cmdTarget(HttpConn *conn, HttpRoute *route, HttpRouteItem *unused)
+{
+    //  MOB - is this terminal?
+    //  MOB - what response should be sent to the client
+    return 0;
+}
+#endif
+
+
+static int redirectTarget(HttpConn *conn, HttpRoute *route, HttpRouteItem *unused)
+{
+    HttpRx      *rx;
+    HttpUri     *dest, *prior;
+    cchar       *query, *reference, *uri;
+
+    rx = conn->rx;
+
+    if (route->targetStatus) {
+        httpRedirect(conn, route->targetStatus, route->targetDest);
+        return HTTP_ROUTE_ACCEPTED;
+    }
+    dest = httpCreateUri(route->targetDest, 0);
+    prior = rx->parsedUri;
+    query = dest->query ? dest->query : prior->query;
+    reference = dest->reference ? dest->reference : prior->reference;
+    uri = httpFormatUri(prior->scheme, prior->host, prior->port, route->targetDest, prior->reference, prior->query, 0);
+    httpSetUri(conn, uri, 0);
+    return HTTP_ROUTE_REROUTE;
+}
+
+
+static int fileTarget(HttpConn *conn, HttpRoute *route, HttpRouteItem *unused)
+{
+    HttpRx  *rx;
+
+    rx = conn->rx;
+    if (route->targetDest) {
+        rx->targetKey = expandTargetTokens(conn, replace(rx->pathInfo, route->targetDest, rx->matches, rx->matchCount));
+    } else {
+        rx->targetKey = sclone(&rx->pathInfo[1]);
+    }
+    mapToStorage(conn, route);
+    return processDirectories(conn, route);
+}
+
+
+static int virtTarget(HttpConn *conn, HttpRoute *route, HttpRouteItem *unused)
+{
+    HttpRx  *rx;
+
+    rx = conn->rx;
+    if (route->targetDest) {
+        rx->targetKey = expandTargetTokens(conn, replace(rx->pathInfo, route->targetDest, rx->matches, rx->matchCount));
+    } else {
+        rx->targetKey = sclone(&rx->pathInfo[1]);
+    }
+    return HTTP_ROUTE_ACCEPTED;
+}
+
+
+/*
+    Route items are used per-route for headers and fields
+    MOB _ not a great API
+ */
+static HttpRouteItem *createRouteItem(cchar *name, cchar *details, void *mdata, cchar *path, int flags)
+{
+    HttpRouteItem   *item;
+
+    if ((item = mprAllocObj(HttpRouteItem, manageRouteItem)) == 0) {
+        return 0;
+    }
+    item->name = sclone(name);
+    item->details = sclone(details);
+    item->path = sclone(path);
+    item->mdata = mdata;
+    item->flags = flags;
+    return item;
+}
+
+
+static void manageRouteItem(HttpRouteItem *item, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(item->name);
+        mprMark(item->path);
+        mprMark(item->details);
+
+    } else if (flags & MPR_MANAGE_FREE) {
+        if (item->flags & HTTP_ROUTE_FREE) {
+            free(item->mdata);
+            item->mdata = 0;
+        }
+    }
+}
+
+
+static HttpLang *createLangDef(cchar *path, cchar *suffix, int flags)
+{
+    HttpLang    *lang;
+
+    if ((lang = mprAllocObj(HttpLang, manageLang)) == 0) {
+        return 0;
+    }
+    if (path) {
+        lang->path = sclone(path);
+    }
+    if (suffix) {
+        lang->suffix = sclone(suffix);
+    }
+    if (flags == 0) {
+        flags |= HTTP_LANG_BEFORE;
+    }
+    lang->flags = flags;
+    return lang;
+}
+
+
+static void manageLang(HttpLang *lang, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(lang->path);
+        mprMark(lang->suffix);
+    }
+}
+
+
+static void definePathVars(HttpRoute *route)
+{
+    mprAddKey(route->pathVars, "PRODUCT", sclone(BLD_PRODUCT));
+    mprAddKey(route->pathVars, "OS", sclone(BLD_OS));
+    mprAddKey(route->pathVars, "VERSION", sclone(BLD_VERSION));
+    mprAddKey(route->pathVars, "LIBDIR", mprGetNormalizedPath(sfmt("%s/../%s", mprGetAppDir(), BLD_LIB_NAME))); 
+
+    //  MOB - is host ever set?
+    if (route->host) {
+        defineHostVars(route);
+    }
+}
+
+
+static void defineHostVars(HttpRoute *route) 
+{
+    mprAddKey(route->pathVars, "DOCUMENT_ROOT", route->host->documentRoot);
+    mprAddKey(route->pathVars, "SERVER_ROOT", route->host->serverRoot);
+}
+
+
+/*
+    Expand the target tokens "head" and "field"
+    WARNING: targetKey is modified. Result is allocated string
+ */
+static char *expandTargetTokens(HttpConn *conn, char *targetKey)
+{
+    HttpRx  *rx;
+    HttpTx  *tx;
+    MprBuf  *buf;
+    char    *tok, *cp, *key, *value;
+
+    rx = conn->rx;
+    tx = conn->tx;
+    buf = mprCreateBuf(-1, -1);
+    for (cp = targetKey; cp && *cp; ) {
+        if ((tok = strstr(cp, "${")) == 0) {
+            break;
+        }
+        if (tok > cp) {
+            mprPutBlockToBuf(buf, cp, tok - cp);
+        }
+        if ((key = stok(&tok[2], ":", &value)) == 0) {
+            continue;
+        }
+        stok(value, "}", &cp);
+
+        if (scasecmp(key, "header") == 0) {
+            mprPutStringToBuf(buf, httpGetHeader(conn, value));
+
+        } else if (scasecmp(key, "field") == 0) {
+            mprPutStringToBuf(buf, httpGetFormVar(conn, value, ""));
+
+        } else if (scasecmp(key, "request") == 0) {
+
+            if (scasecmp(value, "extraPath") == 0) {
+                mprPutStringToBuf(buf, rx->extraPath);
+
+            } else if (scasecmp(value, "filename") == 0) {
+                mprPutStringToBuf(buf, tx->filename);
+
+            } else if (scasecmp(value, "host") == 0) {
+                mprPutStringToBuf(buf, rx->parsedUri->host);
+
+            } else if (scasecmp(value, "ext") == 0) {
+                mprPutStringToBuf(buf, rx->parsedUri->ext);
+
+            } else if (scasecmp(value, "reference") == 0) {
+                mprPutStringToBuf(buf, rx->parsedUri->reference);
+
+            } else if (scasecmp(value, "query") == 0) {
+                mprPutStringToBuf(buf, rx->parsedUri->query);
+
+            } else if (scasecmp(value, "method") == 0) {
+                mprPutStringToBuf(buf, rx->method);
+
+            } else if (scasecmp(value, "originalUri") == 0) {
+                mprPutStringToBuf(buf, rx->originalUri);
+
+            } else if (scasecmp(value, "path") == 0) {
+                mprPutStringToBuf(buf, rx->parsedUri->path);
+
+            } else if (scasecmp(value, "pathInfo") == 0) {
+                mprPutStringToBuf(buf, rx->pathInfo);
+
+            } else if (scasecmp(value, "port") == 0) {
+                mprPutIntToBuf(buf, conn->sock->acceptPort);
+
+            } else if (scasecmp(value, "scheme") == 0) {
+                mprPutStringToBuf(buf, rx->parsedUri->scheme);
+
+            } else if (scasecmp(value, "scriptName") == 0) {
+                mprPutStringToBuf(buf, rx->scriptName);
+
+            } else if (scasecmp(value, "serverAddr") == 0) {
+                mprPutStringToBuf(buf, conn->sock->acceptIp);
+
+            } else if (scasecmp(value, "serverPort") == 0) {
+                mprPutIntToBuf(buf, conn->sock->acceptPort);
+
+            } else if (scasecmp(value, "uri") == 0) {
+                mprPutStringToBuf(buf, rx->uri);
+            }
+        }
+    }
+    if (tok) {
+        if (tok > cp) {
+            mprPutBlockToBuf(buf, tok, tok - cp);
+        }
+    } else {
+        mprPutStringToBuf(buf, cp);
+    }
+    mprAddNullToBuf(buf);
+    return sclone(mprGetBufStart(buf));
+}
+
+
+/*
+    Replace text using pcre regular expression match indicies
+ */
+static char *replace(cchar *str, cchar *replacement, int *matches, int matchCount)
+{
+    MprBuf  *result;
+    cchar   *end, *cp, *lastReplace;
+    int     submatch;
+
+    if (matchCount <= 0) {
+        return MPR->emptyString;
+    }
+    result = mprCreateBuf(-1, -1);
+
+    lastReplace = replacement;
+    end = &replacement[slen(replacement)];
+
+    for (cp = replacement; cp < end; ) {
+        if (*cp == '$') {
+            if (lastReplace < cp) {
+                mprPutSubStringToBuf(result, lastReplace, (int) (cp - lastReplace));
+            }
+            switch (*++cp) {
+            case '$':
+                mprPutCharToBuf(result, '$');
+                break;
+            case '&':
+                /* Replace the matched string */
+                mprPutSubStringToBuf(result, &str[matches[0]], matches[1] - matches[0]);
+                break;
+            case '`':
+                /* Insert the portion that preceeds the matched string */
+                mprPutSubStringToBuf(result, str, matches[0]);
+                break;
+            case '\'':
+                /* Insert the portion that follows the matched string */
+                mprPutSubStringToBuf(result, &str[matches[1]], slen(str) - matches[1]);
+                break;
+            default:
+                /* Insert the nth submatch */
+                if (isdigit((int) *cp)) {
+                    submatch = (int) wtoi(cp, 10, NULL);
+                    while (isdigit((int) *++cp))
+                        ;
+                    cp--;
+                    if (submatch < matchCount) {
+                        submatch *= 2;
+                        mprPutSubStringToBuf(result, &str[matches[submatch]], matches[submatch + 1] - matches[submatch]);
+                    }
+                } else {
+                    mprError("Bad replacement $ specification in page");
+                    return 0;
+                }
+            }
+            lastReplace = cp + 1;
+        }
+        cp++;
+    }
+    if (lastReplace < cp && lastReplace < end) {
+        mprPutSubStringToBuf(result, lastReplace, (int) (cp - lastReplace));
+    }
+    mprAddNullToBuf(result);
+    return sclone(mprGetBufStart(result));
+}
+
+
+void httpDefineRouteBuiltins()
+{
+    httpDefineRouteCondition("auth", authCondition);
+    httpDefineRouteCondition("missing", fileMissingCondition);
+    httpDefineRouteCondition("directory", directoryCondition);
+
+    httpDefineRouteModification("field", fieldModification);
+
+    //  MOB - what about "alias"
+    httpDefineRouteTarget("close", closeTarget);
+    httpDefineRouteTarget("redirect", redirectTarget);
+    httpDefineRouteTarget("file", fileTarget);
+    httpDefineRouteTarget("virt", virtTarget);
+}
+
+
+#if UNUSED
+HttpStage *httpGetHandlerByExtension(HttpRoute *route, cchar *ext)
+{
+    return (HttpStage*) mprLookupKey(route->extensions, ext);
+}
+
+char *httpMakeFilename(HttpConn *conn, cchar *url, bool skipAliasPrefix)
+{
+    cchar   *seps;
+    char    *path;
+    int     len;
+
+    mprAssert(url);
+
+    if (skipAliasPrefix) {
+        url += alias->prefixLen;
+    }
+    while (*url == '/') {
+        url++;
+    }
+    len = (int) strlen(alias->filename);
+    if ((path = mprAlloc(len + strlen(url) + 2)) == 0) {
+        return 0;
+    }
+    strcpy(path, alias->filename);
+    if (*url) {
+        seps = mprGetPathSeparators(path);
+        path[len++] = seps[0];
+        strcpy(&path[len], url);
+    }
+    return mprGetNativePath(path);
+}
+#endif
+
+
+/*
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://www.embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://www.embedthis.com 
+    
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "./src/route.c"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
  *  Start of file "./src/rx.c"
  */
 /************************************************************************/
@@ -7825,9 +8669,6 @@ static bool fixRangeLength(HttpConn *conn)
  */
 
 
-
-
-static char *authTypes[] = { "none", "basic", "digest" };
 
 
 static void addMatchEtag(HttpConn *conn, char *etag);
@@ -7881,13 +8722,14 @@ static void manageRx(HttpRx *rx, int flags)
         mprMark(rx->headerPacket);
         mprMark(rx->headers);
         mprMark(rx->inputPipeline);
-        mprMark(rx->loc);
+        mprMark(rx->route);
         mprMark(rx->parsedUri);
         mprMark(rx->requestData);
         mprMark(rx->statusMessage);
         mprMark(rx->accept);
         mprMark(rx->acceptCharset);
         mprMark(rx->acceptEncoding);
+        mprMark(rx->acceptLanguage);
         mprMark(rx->cookie);
         mprMark(rx->connection);
         mprMark(rx->contentLength);
@@ -7899,16 +8741,18 @@ static void manageRx(HttpRx *rx, int flags)
         mprMark(rx->userAgent);
         mprMark(rx->formVars);
         mprMark(rx->inputRange);
-        mprMark(rx->auth);
         mprMark(rx->authAlgorithm);
         mprMark(rx->authDetails);
         mprMark(rx->authStale);
         mprMark(rx->authType);
         mprMark(rx->files);
         mprMark(rx->uploadDir);
+#if UNUSED
         mprMark(rx->alias);
+#endif
         mprMark(rx->dir);
         mprMark(rx->formData);
+        mprMark(rx->targetKey);
 
     } else if (flags & MPR_MANAGE_FREE) {
         if (rx->conn) {
@@ -7977,7 +8821,7 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
 {
     HttpRx      *rx;
     HttpTx      *tx;
-    HttpLoc     *loc;
+    HttpRoute   *route;
     ssize       len;
     char        *start, *end;
 
@@ -8023,28 +8867,29 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
             httpError(conn, HTTP_CLOSE | HTTP_CODE_BAD_REQUEST, "Bad URL format");
             return 0;
         }
+        //  MOB - cleanup
         if (conn->secure) {
             rx->parsedUri->scheme = sclone("https");
         }
         rx->parsedUri->port = conn->sock->listenSock->port;
         rx->parsedUri->host = rx->hostHeader ? rx->hostHeader : conn->host->name;
-        if (!tx->handler) {
-            httpMatchHandler(conn);  
-        }
-        loc = rx->loc;
-        mprAssert(loc);
-
-        mprLog(4, "Select handler: \"%s\" for \"%s\"", tx->handler->name, rx->uri);
         httpSetState(conn, HTTP_STATE_PARSED);        
+
+        mprAssert(!tx->handler);
+        httpRouteRequest(conn);  
+
         /* Clients have already created their Tx pipeline */
-        httpCreateRxPipeline(conn, loc);
-        httpCreateTxPipeline(conn, loc);
-        rx->startAfterContent = (loc->flags & HTTP_LOC_AFTER || ((rx->form || rx->upload) && loc->flags & HTTP_LOC_SMART));
+
+        route = rx->route;
+        mprAssert(route);
+        httpCreateRxPipeline(conn, route);
+        httpCreateTxPipeline(conn, route);
+        rx->startAfterContent = (route->flags & HTTP_LOC_AFTER || ((rx->form || rx->upload) && route->flags & HTTP_LOC_SMART));
 
     //  MOB - what happens if server responds to client with other status
     } else if (!(100 <= rx->status && rx->status < 200)) {
         httpSetState(conn, HTTP_STATE_PARSED);        
-        httpCreateRxPipeline(conn, conn->http->clientLocation);
+        httpCreateRxPipeline(conn, conn->http->clientRoute);
     }
     return 1;
 }
@@ -8069,7 +8914,7 @@ static void traceRequest(HttpConn *conn, HttpPacket *packet)
         if ((cp = schr(++cp, ' ')) != 0) {
             for (ext = --cp; ext > content->start && *ext != '.'; ext--) ;
             ext = (*ext == '.') ? snclone(&ext[1], cp - ext) : 0;
-            conn->tx->extension = ext;
+            conn->tx->ext = ext;
         }
     }
 
@@ -8207,7 +9052,7 @@ static void parseResponseLine(HttpConn *conn, HttpPacket *packet)
     tx = conn->tx;
     traced = 0;
 
-    if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, tx->extension) >= 0) {
+    if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_HEADER, tx->ext) >= 0) {
         content = packet->content;
         endp = strstr((char*) content->start, "\r\n\r\n");
         len = (endp) ? (int) (endp - mprGetBufStart(content) + 4) : 0;
@@ -8230,7 +9075,7 @@ static void parseResponseLine(HttpConn *conn, HttpPacket *packet)
     if (slen(rx->statusMessage) >= conn->limits->uriSize) {
         httpError(conn, HTTP_CODE_REQUEST_URL_TOO_LARGE, "Bad response. Status message too long");
     }
-    if (!traced && (level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, tx->extension)) >= 0) {
+    if (!traced && (level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, tx->ext)) >= 0) {
         mprLog(level, "%s %d %s", protocol, rx->status, rx->statusMessage);
     }
 }
@@ -8295,6 +9140,9 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
 
             } else if (strcmp(key, "accept-encoding") == 0) {
                 rx->acceptEncoding = sclone(value);
+
+            } else if (strcmp(key, "accept-language") == 0) {
+                rx->acceptLanguage = sclone(value);
             }
             break;
 
@@ -8725,7 +9573,7 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
     mprAssert(nbytes >= 0);
 
     if (nbytes > 0) {
-        if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_BODY, tx->extension) >= 0) {
+        if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_BODY, tx->ext) >= 0) {
             httpTraceContent(conn, HTTP_TRACE_RX, HTTP_TRACE_BODY, packet, nbytes, 0);
         }
     }
@@ -8841,7 +9689,7 @@ static void measure(HttpConn *conn)
     }
     uri = (conn->server) ? conn->rx->uri : tx->parsedUri->path;
    
-    if (httpShouldTrace(conn, 0, HTTP_TRACE_TIME, tx->extension) >= 0) {
+    if (httpShouldTrace(conn, 0, HTTP_TRACE_TIME, tx->ext) >= 0) {
         elapsed = mprGetTime() - conn->startTime;
 #if MPR_HIGH_RES_TIMER
         if (elapsed < 1000) {
@@ -8963,6 +9811,7 @@ bool httpContentNotModified(HttpConn *conn)
             If both checks, the last modification time and etag, claim that the request doesn't need to be
             performed, skip the transfer.
          */
+        mprAssert(tx->fileInfo.valid);
         modified = (MprTime) tx->fileInfo.mtime * MPR_TICKS_PER_SEC;
         same = httpMatchModified(conn, modified) && httpMatchEtag(conn, tx->etag);
         if (tx->outputRanges && !same) {
@@ -9094,63 +9943,18 @@ char *httpGetStatusMessage(HttpConn *conn)
 }
 
 
-int httpMapToStorage(HttpConn *conn)
-{
-    HttpRx      *rx;
-    HttpTx      *tx;
-    HttpHost    *host;
-    MprPath     *info, ginfo;
-    char        *gfile;
-
-    rx = conn->rx;
-    tx = conn->tx;
-    host = conn->host;
-    info = &tx->fileInfo;
-
-    rx->alias = httpGetAlias(host, rx->pathInfo);
-    tx->filename = httpMakeFilename(conn, rx->alias, rx->pathInfo, 1);
-    tx->extension = httpGetExtension(conn);
-
-    if ((rx->dir = httpLookupBestDir(host, tx->filename)) == 0) {
-        httpError(conn, HTTP_CODE_NOT_FOUND, "Missing directory block for \"%s\"", tx->filename);
-        return MPR_ERR_CANT_ACCESS;
-    }
-    if (rx->dir->auth) {
-        rx->auth = rx->dir->auth;
-    }
-    if ((rx->loc = httpLookupBestLocation(host, rx->pathInfo)) == 0) {
-        httpError(conn, HTTP_CODE_NOT_FOUND, "Missing location block for \"%s\"", rx->pathInfo);
-        return MPR_ERR_CANT_ACCESS;
-    }
-    if (rx->auth == 0) {
-        rx->auth = rx->loc->auth;
-    }
-    mprGetPathInfo(tx->filename, info);
-    if (!info->valid && rx->acceptEncoding && strstr(rx->acceptEncoding, "gzip") != 0) {
-        gfile = mprAsprintf("%s.gz", tx->filename);
-        if (mprGetPathInfo(gfile, &ginfo) == 0) {
-            tx->filename = gfile;
-            tx->fileInfo = ginfo;
-            httpSetHeader(conn, "Content-Encoding", "gzip");
-        }
-    }
-    if (info->valid) {
-        tx->etag = mprAsprintf("\"%x-%Lx-%Lx\"", info->inode, info->size, info->mtime);
-    }
-    mprLog(5, "Request Details: uri \"%s\"", rx->uri);
-    mprLog(5, "Filename: \"%s\", extension: \"%s\"", tx->filename, tx->extension);
-    mprLog(5, "Location: \"%s\", alias: \"%s\" => \"%s\"", rx->loc->prefix, rx->alias->prefix, rx->alias->filename);
-    mprLog(5, "Auth: \"%s\"", authTypes[rx->auth->type]);
-    return 0;
-}
 
 
 int httpSetUri(HttpConn *conn, cchar *uri, cchar *query)
 {
     HttpRx      *rx;
+    HttpTx      *tx;
     HttpUri     *prior;
+    HttpHost    *host;
 
     rx = conn->rx;
+    tx = conn->tx;
+    host = conn->host;
     prior = rx->parsedUri;
 
     if ((rx->parsedUri = httpCreateUri(uri, 0)) == 0) {
@@ -9176,7 +9980,15 @@ int httpSetUri(HttpConn *conn, cchar *uri, cchar *query)
     rx->uri = rx->parsedUri->path;
     rx->pathInfo = httpNormalizeUriPath(mprUriDecode(rx->parsedUri->path));
     rx->scriptName = mprEmptyString();
+    tx->ext = httpGetExtension(conn);
+#if MOVED
+    rx->alias = httpGetAlias(host, rx->pathInfo);
+    if ((rx->route = httpLookupBestRoute(host, rx->pathInfo)) == 0) {
+        httpError(conn, HTTP_CODE_NOT_FOUND, "Missing route for \"%s\"", rx->pathInfo);
+        return MPR_ERR_CANT_ACCESS;
+    }
     httpMapToStorage(conn);
+#endif
     return 0;
 }
 
@@ -9478,35 +10290,6 @@ cvoid *httpGetStageData(HttpConn *conn, cchar *key)
 }
 
 
-char *httpMakeFilename(HttpConn *conn, HttpAlias *alias, cchar *url, bool skipAliasPrefix)
-{
-    cchar   *seps;
-    char    *path;
-    int     len;
-
-    mprAssert(alias);
-    mprAssert(url);
-
-    if (skipAliasPrefix) {
-        url += alias->prefixLen;
-    }
-    while (*url == '/') {
-        url++;
-    }
-    len = (int) strlen(alias->filename);
-    if ((path = mprAlloc(len + strlen(url) + 2)) == 0) {
-        return 0;
-    }
-    strcpy(path, alias->filename);
-    if (*url) {
-        seps = mprGetPathSeparators(path);
-        path[len++] = seps[0];
-        strcpy(&path[len], url);
-    }
-    return mprGetNativePath(path);
-}
-
-
 static int sortForm(MprHash **h1, MprHash **h2)
 {
     return scmp((*h1)->key, (*h2)->key);
@@ -9652,6 +10435,7 @@ void httpSendOpen(HttpQueue *q)
     tx = conn->tx;
 
     if (!(tx->flags & HTTP_TX_NO_BODY)) {
+        mprAssert(tx->fileInfo.valid);
         if (tx->fileInfo.size > conn->limits->transmissionBodySize) {
             httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE,
                 "Http transmission aborted. File size exceeds max body of %d bytes", conn->limits->transmissionBodySize);
@@ -9828,7 +10612,7 @@ static void addPacketForSend(HttpQueue *q, HttpPacket *packet)
          */
         addToSendVector(q, mprGetBufStart(packet->content), httpGetPacketLength(packet));
         item = (packet->flags & HTTP_PACKET_HEADER) ? HTTP_TRACE_HEADER : HTTP_TRACE_BODY;
-        if (httpShouldTrace(conn, HTTP_TRACE_TX, item, tx->extension) >= 0) {
+        if (httpShouldTrace(conn, HTTP_TRACE_TX, item, tx->ext) >= 0) {
             httpTraceContent(conn, HTTP_TRACE_TX, item, packet, 0, tx->bytesWritten);
         }
     }
@@ -10011,12 +10795,12 @@ HttpServer *httpCreateServer(cchar *ip, int port, MprDispatcher *dispatcher, int
     server->port = port;
     server->ip = sclone(ip);
     server->dispatcher = dispatcher;
-    server->loc = httpCreateConfiguredLocation(1);
+    server->route = httpCreateConfiguredRoute(1);
     server->hosts = mprCreateList(-1, 0);
     httpAddServer(http, server);
 
     if (flags & HTTP_CREATE_HOST) {
-        host = httpCreateHost(server->loc);
+        host = httpCreateHost(server->route);
         httpSetHostName(host, ip, port);
         httpAddHostToServer(server, host);
     }
@@ -10044,7 +10828,7 @@ static int manageServer(HttpServer *server, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(server->http);
-        mprMark(server->loc);
+        mprMark(server->route);
         mprMark(server->limits);
         mprMark(server->waitHandler);
         mprMark(server->clientLoad);
@@ -10128,9 +10912,11 @@ static bool validateServer(HttpServer *server)
         mprError("Missing host object on server");
         return 0;
     }
+#if UNUSED
     if (mprGetListLength(host->aliases) == 0) {
         httpAddAlias(host, httpCreateAlias("", host->documentRoot, 0));
     }
+#endif
     return 1;
 }
 
@@ -10338,11 +11124,11 @@ void httpSetServerContext(HttpServer *server, void *context)
 }
 
 
-void httpSetServerLocation(HttpServer *server, HttpLoc *loc)
+void httpSetServerRoute(HttpServer *server, HttpRoute *route)
 {
     mprAssert(server);
-    mprAssert(loc);
-    server->loc = loc;
+    mprAssert(route);
+    server->route = route;
 }
 
 
@@ -10940,6 +11726,7 @@ void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssi
 
 
 
+static char *getExtension(HttpConn *conn, cchar *path);
 static void manageTx(HttpTx *tx, int flags);
 
 
@@ -11003,7 +11790,7 @@ static void manageTx(HttpTx *tx, int flags)
         mprMark(tx->altBody);
         mprMark(tx->file);
         mprMark(tx->filename);
-        mprMark(tx->extension);
+        mprMark(tx->ext);
 
     } else if (flags & MPR_MANAGE_FREE) {
         httpDestroyTx(tx);
@@ -11252,6 +12039,7 @@ void *httpGetQueueData(HttpConn *conn)
 }
 
 
+//  MOB - refactor how this is done
 void httpOmitBody(HttpConn *conn)
 {
     if (conn->tx) {
@@ -11310,7 +12098,7 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
         }
         targetUri = uri;
     }
-    httpSetHeader(conn, "Location", "%s", targetUri);
+    httpSetHeader(conn, "Route", "%s", targetUri);
     mprAssert(tx->altBody == 0);
     msg = httpLookupStatus(conn->http, status);
     tx->altBody = mprAsprintf(
@@ -11420,8 +12208,8 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
 
     httpAddHeaderString(conn, "Date", conn->http->currentDate);
 
-    if (tx->extension) {
-        if ((mimeType = (char*) mprLookupMime(conn->host->mimeTypes, tx->extension)) != 0) {
+    if (tx->ext) {
+        if ((mimeType = (char*) mprLookupMime(conn->host->mimeTypes, tx->ext)) != 0) {
             if (conn->error) {
                 httpAddHeaderString(conn, "Content-Type", "text/html");
             } else {
@@ -11432,18 +12220,18 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
     if (tx->flags & HTTP_TX_DONT_CACHE) {
         httpAddHeaderString(conn, "Cache-Control", "no-cache");
 
-    } else if (rx->loc) {
+    } else if (rx->route) {
         expires = 0;
-        if (tx->extension) {
-            expires = PTOL(mprLookupKey(rx->loc->expires, tx->extension));
+        if (tx->ext) {
+            expires = PTOL(mprLookupKey(rx->route->expires, tx->ext));
         }
         if (expires == 0 && (mimeType = mprLookupKey(tx->headers, "Content-Type")) != 0) {
-            expires = PTOL(mprLookupKey(rx->loc->expiresByType, mimeType));
+            expires = PTOL(mprLookupKey(rx->route->expiresByType, mimeType));
         }
         if (expires == 0) {
-            expires = PTOL(mprLookupKey(rx->loc->expires, ""));
+            expires = PTOL(mprLookupKey(rx->route->expires, ""));
             if (expires == 0) {
-                expires = PTOL(mprLookupKey(rx->loc->expiresByType, ""));
+                expires = PTOL(mprLookupKey(rx->route->expiresByType, ""));
             }
         }
         if (expires) {
@@ -11584,7 +12372,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
             }
         }
     }
-    if ((level = httpShouldTrace(conn, HTTP_TRACE_TX, HTTP_TRACE_FIRST, tx->extension)) >= mprGetLogLevel(tx)) {
+    if ((level = httpShouldTrace(conn, HTTP_TRACE_TX, HTTP_TRACE_FIRST, tx->ext)) >= mprGetLogLevel(tx)) {
         mprAddNullToBuf(buf);
         mprLog(level, "%s", mprGetBufStart(buf));
     }
@@ -11616,6 +12404,61 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
     }
     tx->headerSize = mprGetBufLength(buf);
     tx->flags |= HTTP_TX_HEADERS_CREATED;
+}
+
+
+bool httpFileExists(HttpConn *conn)
+{
+    HttpTx      *tx;
+
+    tx = conn->tx;
+    if (!(tx->handler->flags & HTTP_STAGE_VIRTUAL)) {
+        if (!tx->fileInfo.checked) {
+            mprGetPathInfo(tx->filename, &tx->fileInfo);
+        }
+        return tx->fileInfo.valid;
+    }
+    return 0;
+}
+
+
+/*
+    Get the request extension. Look first at the URI (pathInfo). If no extension, look at the filename.
+    Return NULL if no extension.
+ */
+char *httpGetExtension(HttpConn *conn)
+{
+    HttpRx  *rx;
+    char    *ext;
+
+    rx = conn->rx;
+    if ((ext = getExtension(conn, rx->pathInfo)) == 0) {
+        if (conn->tx->filename) {
+            ext = getExtension(conn, conn->tx->filename);
+        }
+    }
+    return ext;
+}
+
+
+static char *getExtension(HttpConn *conn, cchar *path)
+{
+    HttpRx      *rx;
+    char        *cp, *ep, *ext;
+
+    rx = conn->rx;
+
+    if (rx && rx->pathInfo) {
+        if ((cp = strrchr(path, '.')) != 0) {
+            ext = sclone(++cp);
+            for (ep = ext; *ep && isalnum((int)*ep); ep++) {
+                ;
+            }
+            *ep = '\0';
+            return ext;
+        }
+    }
+    return 0;
 }
 
 
@@ -13085,7 +13928,8 @@ void httpCreateCGIVars(HttpConn *conn)
         /*  
             Only set PATH_TRANSLATED if extraPath is set (CGI spec) 
          */
-        mprAddKey(table, "PATH_TRANSLATED", httpMakeFilename(conn, rx->alias, rx->extraPath, 0));
+        mprAssert(rx->extraPath[0] == '/');
+        mprAddKey(table, "PATH_TRANSLATED", mprGetNormalizedPath(sfmt("%s%s", host->documentRoot, rx->extraPath)));
     }
     if (rx->files) {
         for (index = 0, hp = 0; (hp = mprGetNextKey(conn->rx->files, hp)) != 0; index++) {

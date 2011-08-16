@@ -361,17 +361,20 @@ typedef struct MaConfigState {
     MaMeta      *meta;                  /**< Current meta-server */
     HttpHost    *host;                  /**< Current host */
     HttpDir     *dir;                   /**< Current directory block */
-    HttpLoc     *loc;                   /**< Current location */
+    HttpRoute   *route;                 /**< Current route */
     HttpAuth    *auth;                  /**< Current auth object */
     MprFile     *file;                  /**< Config file handle */
-    void        *route;                 /**< Esp current route */ 
+#if UNUSED
+    //  MOB - remove
+    void        *espRoute;              /**< Esp current route */ 
+#endif
     char        *configDir;             /**< Directory containing config file */
     char        *filename;              /**< Config file name */
     int         lineNumber;             /**< Current line number */
     int         enabled;                /**< True if the current block is enabled */
 } MaConfigState;
 
-extern HttpLoc *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *prefix, cchar *path, 
+extern HttpRoute *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *prefix, cchar *path, 
         cchar *handlerName, int flags);
 
 extern char         *maMakePath(HttpHost *host, cchar *file);

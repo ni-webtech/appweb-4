@@ -224,7 +224,7 @@ int espFinalizeRoute(EspRoute *route)
 }
 
 
-char *pcre_extract(cchar *str, cchar *replacement, int *matches, int matchCount)
+char *AApcre_extract(cchar *str, cchar *replacement, int *matches, int matchCount)
 {
     MprBuf  *result;
     cchar   *end, *cp, *lastReplace;
@@ -356,7 +356,7 @@ char *espMatchRoute(HttpConn *conn, EspRoute *route)
         /*
             actionReplacement is "$N-$N $N"
          */
-        actionKey = pcre_extract(rx->pathInfo, route->actionReplacement, matches, matchCount);
+        actionKey = AApcre_extract(rx->pathInfo, route->actionReplacement, matches, matchCount);
         actionKey = expandActionKey(conn, actionKey);
     } else {
         actionKey = sclone(&rx->pathInfo[1]);

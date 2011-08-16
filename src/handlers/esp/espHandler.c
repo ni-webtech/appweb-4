@@ -762,6 +762,7 @@ static void addRestfulRoutes(EspLoc *el, cchar *prefix, cchar *controller)
 }
 
 
+//  MOB - trim slashes not needed
 static char *trimSlashes(cchar *str)
 {
     ssize   len;
@@ -844,7 +845,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         }
         if ((loc = httpLookupLocation(host, prefix)) == 0) {
             /*
-                This EjsAlias is for a new location. Create a location block.
+                This EspAlias is for a new route
              */
             loc = httpCreateInheritedLocation(state->loc);
             el = cloneEspLoc(el, loc);
@@ -1008,7 +1009,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         state->route = route;
         return 1;
 
-    } else if (scasecmp(key, "EspFinalizeRoute") == 0) {
+    } else if (scasecmp(key, "-FinalizeRoute-") == 0) {
         /* This is an internal directive and not used in config files */
         espFinalizeRoute(route);
 
@@ -1038,6 +1039,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         if (route->headers == 0) {
             route->headers = mprCreateList(-1, 0);
         }
+        //  MOB - trim slashes not needed
         if ((expr = pcre_compile2(trimSlashes(value), 0, 0, &errMsg, &column, NULL)) == 0) {
             mprError("Can't compile header pattern. Error %s at column %d", errMsg, column); 
         } else {
@@ -1063,6 +1065,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         if (route->formFields == 0) {
             route->formFields = mprCreateList(-1, 0);
         }
+        //  MOB - trim slashes not needed
         if ((expr= pcre_compile2(trimSlashes(value), 0, 0, &errMsg, &column, NULL)) == 0) {
             mprError("Can't compile form field pattern. Error %s at column %d", errMsg, column); 
         } else {

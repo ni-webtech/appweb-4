@@ -83,7 +83,7 @@ static void startCgi(HttpQueue *q)
     rx = conn->rx;
     tx = conn->tx;
 
-    mprAssert(conn->state <= HTTP_STATE_CONTENT || rx->form || rx->upload || rx->loc->flags & HTTP_LOC_AFTER);
+    mprAssert(conn->state <= HTTP_STATE_CONTENT || rx->form || rx->upload || rx->route->flags & HTTP_LOC_AFTER);
 
     /*
         The command uses the conn dispatcher. This serializes all I/O for both the connection and the CGI gateway
@@ -660,8 +660,8 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
     argind = 0;
     argc = *argcp;
 
-    if (tx->extension) {
-        actionProgram = mprGetMimeProgram(host->mimeTypes, tx->extension);
+    if (tx->ext) {
+        actionProgram = mprGetMimeProgram(host->mimeTypes, tx->ext);
         if (actionProgram != 0) {
             argc++;
         }
@@ -806,7 +806,7 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
 {
     HttpRx      *rx;
     HttpTx      *tx;
-    HttpLoc     *loc;
+    HttpRoute   *route;
     MprHash     *hp;
     MprFile     *file;
     cchar       *actionProgram, *ext, *cmdShell;
@@ -814,7 +814,7 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
 
     rx = conn->rx;
     tx = conn->tx;
-    loc = rx->loc;
+    route = rx->route;
 
     *bangScript = 0;
     *script = 0;
@@ -822,14 +822,14 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
     path = 0;
 
     actionProgram = mprGetMimeProgram(conn->host->mimeTypes, rx->mimeType);
-    ext = tx->extension;
+    ext = tx->ext;
 
     /*
         If not found, go looking for the fileName with the extensions defined in appweb.conf. 
         NOTE: we don't use PATH deliberately!!!
      */
     if (access(fileName, X_OK) < 0) {
-        for (hp = 0; (hp = mprGetNextKey(loc->extensions, hp)) != 0; ) {
+        for (hp = 0; (hp = mprGetNextKey(route->extensions, hp)) != 0; ) {
             path = sjoin(fileName, ".", hp->key, NULL);
             if (access(path, X_OK) == 0) {
                 break;
@@ -987,14 +987,13 @@ static int copyVars(char **envv, int index, MprHashTable *vars, cchar *prefix)
 
 static int parseCgi(Http *http, cchar *key, char *value, MaConfigState *state)
 {
-    HttpLoc     *loc;
+    HttpRoute   *route, *cgiRoute;
     HttpHost    *host;
-    HttpAlias   *alias;
     HttpDir     *dir, *parent;
     char        *program, *mimeType, *prefix, *path;
 
     host = state->host;
-    loc = state->loc;
+    route = state->route;
 
     if (scasecmp(key, "Action") == 0) {
         if (maSplitConfigValue(&mimeType, &program, value, 1) < 0) {
@@ -1008,28 +1007,23 @@ static int parseCgi(Http *http, cchar *key, char *value, MaConfigState *state)
             return MPR_ERR_BAD_SYNTAX;
         }
         /*
-            Create an alias and location with a cgiHandler and pathInfo processing
+            Create an route with a cgiHandler and pathInfo processing
          */
-        path = httpMakePath(loc, path);
+        path = httpMakePath(route, path);
         if (httpLookupDir(host, path) == 0) {
             parent = mprGetFirstItem(host->dirs);
             dir = httpCreateDir(path, parent);
             httpAddDir(host, dir);
         }
-        alias = httpCreateAlias(prefix, path, 0);
+        cgiRoute = httpCreateAliasRoute(route, prefix, path, 0);
         mprLog(4, "ScriptAlias \"%s\" for \"%s\"", prefix, path);
-        httpAddAlias(host, alias);
 
-        if ((loc = httpLookupLocation(host, prefix)) == 0) {
-            loc = httpCreateInheritedLocation(state->loc);
-            httpSetLocationHost(loc, host);
-            httpSetLocationAuth(loc, state->dir->auth);
-            httpSetLocationPrefix(loc, prefix);
-            httpAddLocation(host, loc);
-        } else {
-            httpSetLocationPrefix(loc, prefix);
-        }
-        httpSetHandler(loc, "cgiHandler");
+        httpSetRouteHost(cgiRoute, host);
+        httpSetRouteAuth(cgiRoute, state->dir->auth);
+        httpSetRoutePattern(cgiRoute, prefix);
+        httpSetRouteHandler(cgiRoute, "cgiHandler");
+        httpFinalizeRoute(cgiRoute);
+        httpAddRoute(host, cgiRoute);
         return 1;
     }
     return 0;

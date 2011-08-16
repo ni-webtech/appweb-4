@@ -261,8 +261,9 @@ static int initialize(cchar *ip, int port)
         /* mprUserError("Can't configure the server, exiting."); */
         return MPR_ERR_CANT_CREATE;
     }
+    //  MOB - is this still needed?
     if (app->script) {
-        app->meta->defaultHost->loc->script = app->script;
+        app->meta->defaultHost->route->script = app->script;
     }
     if (app->workers >= 0) {
         mprSetMaxWorkers(app->workers);

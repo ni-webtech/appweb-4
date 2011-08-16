@@ -13,7 +13,7 @@ PHP				:= mod_php
 include 		.makedep
 
 ifeq	($(BLD_FEATURE_ESP),1)
-	POST_DIRS		+= esp
+	# POST_DIRS		+= esp
 endif
 ifeq	($(BLD_FEATURE_CGI),1)
 	OBJECTS		+= $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ)
