@@ -32,6 +32,7 @@ struct MaMeta;
 #endif
 
 /********************************** Defines ***********************************/
+
 /**
     Appweb Service
     @description There is one instance of MaAppweb per application. It manages a list of HTTP servers running in
@@ -43,6 +44,7 @@ struct MaMeta;
 typedef struct MaAppweb {
     struct MaMeta       *defaultMeta;       /**< Default meta server object */
     MprList             *metas;             /**< List of meta server objects */
+    MprHashTable        *directives;        /**< Config file directives */
     Http                *http;              /**< Http service object */
     char                *user;              /**< O/S application user name */
     char                *group;             /**< O/S application group name */
@@ -128,6 +130,9 @@ extern int maPhpHandlerInit(Http *http, MprModule *mp);
 extern int maRangeFilterInit(Http *http, MprModule *mp);
 extern int maSslModuleInit(Http *http, MprModule *mp);
 extern int maUploadFilterInit(Http *http, MprModule *mp);
+
+extern int maParseInit(MaAppweb *appweb);
+
 
 /********************************** MaMeta **********************************/
 /**
@@ -239,6 +244,8 @@ extern int      maSplitConfigValue(char **s1, char **s2, char *buf, int quotes);
 extern int      maStartMeta(MaMeta *meta);
 extern int      maStopMeta(MaMeta *meta);
 extern int      maValidateConfiguration(MaMeta *meta);
+extern void     maCreateMetaDefaultHost(MaMeta *meta);
+
 
 #if UNUSED
 extern void     maAddHost(MaMeta *meta, struct HttpHost *host);
@@ -354,27 +361,29 @@ typedef struct  HttpReceiverModified {
 /**
     Current config parse state
     @stability Evolving
-    @defgroup MaConfigState MaConfigState
-    @see MaConfigState
+    @defgroup MaState MaState
+    @see MaState
  */
-typedef struct MaConfigState {
+typedef struct MaState {
+    MaAppweb    *appweb;
+    Http        *http;
     MaMeta      *meta;                  /**< Current meta-server */
     HttpHost    *host;                  /**< Current host */
     HttpDir     *dir;                   /**< Current directory block */
     HttpRoute   *route;                 /**< Current route */
     HttpAuth    *auth;                  /**< Current auth object */
     MprFile     *file;                  /**< Config file handle */
-#if UNUSED
-    //  MOB - remove
-    void        *espRoute;              /**< Esp current route */ 
-#endif
+    HttpLimits  *limits;                /**< Current limits (host->limits) */
     char        *configDir;             /**< Directory containing config file */
     char        *filename;              /**< Config file name */
+    char        *currentBlock;          /**< Current block directive */
     int         lineNumber;             /**< Current line number */
     int         enabled;                /**< True if the current block is enabled */
-} MaConfigState;
+    struct MaState *prev;
+    struct MaState *currentState;       /**< Used to handle includes */
+} MaState;
 
-extern HttpRoute *maCreateLocationAlias(Http *http, MaConfigState *state, cchar *prefix, cchar *path, 
+extern HttpRoute *maCreateLocationAlias(Http *http, MaState *state, cchar *prefix, cchar *path, 
         cchar *handlerName, int flags);
 
 extern char         *maMakePath(HttpHost *host, cchar *file);
@@ -386,8 +395,11 @@ extern int          maStartLogging(HttpHost *host, cchar *logSpec);
 extern void         maSetLogHost(HttpHost *host, HttpHost *logHost);
 extern int          maStartAccessLogging(HttpHost *host);
 extern int          maStopAccessLogging(HttpHost *host);
+extern int          maTokenize(MaState *state, cchar *line, cchar *fmt, ...);
 
-/************************************ EGI *************************************/
+typedef int         (MaDirective)(MaState *state, cchar *key, cchar *value);
+
+extern void         maAddDirective(MaAppweb *appweb, cchar *directive, MaDirective proc);
 
 #ifdef __cplusplus
 } /* extern C */

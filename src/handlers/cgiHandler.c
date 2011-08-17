@@ -985,47 +985,45 @@ static int copyVars(char **envv, int index, MprHashTable *vars, cchar *prefix)
 }
 
 
-static int parseCgi(Http *http, cchar *key, char *value, MaConfigState *state)
+static int actionDirective(MaState *state, cchar *key, cchar *value)
 {
-    HttpRoute   *route, *cgiRoute;
-    HttpHost    *host;
-    HttpDir     *dir, *parent;
-    char        *program, *mimeType, *prefix, *path;
+    char    *mimeType, *program;
 
-    host = state->host;
-    route = state->route;
-
-    if (scasecmp(key, "Action") == 0) {
-        if (maSplitConfigValue(&mimeType, &program, value, 1) < 0) {
-            return MPR_ERR_BAD_SYNTAX;
-        }
-        mprSetMimeProgram(host->mimeTypes, mimeType, program);
-        return 1;
-
-    } else if (scasecmp(key, "ScriptAlias") == 0) {
-        if (maSplitConfigValue(&prefix, &path, value, 1) < 0 || path == 0 || prefix == 0) {
-            return MPR_ERR_BAD_SYNTAX;
-        }
-        /*
-            Create an route with a cgiHandler and pathInfo processing
-         */
-        path = httpMakePath(route, path);
-        if (httpLookupDir(host, path) == 0) {
-            parent = mprGetFirstItem(host->dirs);
-            dir = httpCreateDir(path, parent);
-            httpAddDir(host, dir);
-        }
-        cgiRoute = httpCreateAliasRoute(route, prefix, path, 0);
-        mprLog(4, "ScriptAlias \"%s\" for \"%s\"", prefix, path);
-
-        httpSetRouteHost(cgiRoute, host);
-        httpSetRouteAuth(cgiRoute, state->dir->auth);
-        httpSetRoutePattern(cgiRoute, prefix);
-        httpSetRouteHandler(cgiRoute, "cgiHandler");
-        httpFinalizeRoute(cgiRoute);
-        httpAddRoute(host, cgiRoute);
-        return 1;
+    if (!maTokenize(state, value, "%S %S", &mimeType, &program)) {
+        return MPR_ERR_BAD_SYNTAX;
     }
+    mprSetMimeProgram(state->host->mimeTypes, mimeType, program);
+    return 0;
+}
+
+
+static int scriptAliasDirective(MaState *state, cchar *key, cchar *value)
+{
+    HttpRoute   *route;
+    HttpDir     *dir, *parentDir;
+    char        *prefix, *path;
+
+    if (!maTokenize(state, value, "%S %S", &prefix, &path)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    /*
+        Create an route with a cgiHandler and pathInfo processing
+     */
+    path = httpMakePath(route, path);
+    if (httpLookupDir(state->host, path) == 0) {
+        parentDir = mprGetFirstItem(state->host->dirs);
+        dir = httpCreateDir(path, parentDir);
+        httpAddDir(state->host, dir);
+    }
+    route = httpCreateAliasRoute(state->route, prefix, path, 0);
+    mprLog(4, "ScriptAlias \"%s\" for \"%s\"", prefix, path);
+
+    httpSetRouteHost(route, state->host);
+    httpSetRouteAuth(route, state->dir->auth);
+    httpSetRoutePattern(route, prefix);
+    httpSetRouteHandler(route, "cgiHandler");
+    httpFinalizeRoute(route);
+    httpAddRoute(state->host, route);
     return 0;
 }
 
@@ -1035,7 +1033,8 @@ static int parseCgi(Http *http, cchar *key, char *value, MaConfigState *state)
  */
 int maCgiHandlerInit(Http *http, MprModule *module)
 {
-    HttpStage     *handler;
+    HttpStage   *handler;
+    MaAppweb    *appweb;
 
     handler = httpCreateHandler(http, "cgiHandler", 
         HTTP_STAGE_QUERY_VARS | HTTP_STAGE_CGI_VARS | HTTP_STAGE_EXTRA_PATH | HTTP_STAGE_MISSING_EXT, module);
@@ -1048,7 +1047,10 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     handler->incomingData = incomingCgiData; 
     handler->start = startCgi; 
     handler->process = processCgi; 
-    handler->parse = (HttpParse) parseCgi; 
+            
+    appweb = httpGetContext(http);
+    maAddDirective(appweb, "Action", actionDirective);
+    maAddDirective(appweb, "ScriptAlias", scriptAliasDirective);
     return 0;
 }
 

@@ -137,20 +137,25 @@ typedef struct Esp {
 } Esp;
 
 /*
-    EspLoc structure. One per location.
+    EspLoc structure. One per route.
  */
 typedef struct EspLoc {
     MprHashTable    *modules;               /* Compiled modules */
     MprList         *env;                   /* Environment for compiler */
+#if UNUSED
     MprList         *routes;                /* Ordered list of routes */
     HttpRoute       *route;                 /* Controlling Http route */
+#endif
     char            *compile;               /* Compile template */
     char            *link;                  /* Link template */
     char            *searchPath;            /* Search path to use when locating compiler / linker */
+#if UNUSED
     char            *appModuleName;         /* App module name when compiled flat */
     char            *appModulePath;         /* App module path when compiled flat */
+#endif
 
-    char            *dir;                   /* Base directory for location */
+    //  MOB - this should be pused down into HttpRoute
+    char            *dir;                   /* Base directory for route */
     char            *cacheDir;              /* Directory for cached compiled controllers and views */
     char            *controllersDir;        /* Directory for controllers */
     char            *databasesDir;          /* Directory for databases */
@@ -167,6 +172,7 @@ typedef struct EspLoc {
 
 void espManageEspLoc(EspLoc *el, int flags);
 
+#if UNUSED
 /*
     ESP Route structure. One per route.
  */
@@ -191,6 +197,7 @@ typedef struct EspRoute {
 extern EspRoute *espCreateRoute(cchar *name, cchar *methods, cchar *pattern, cchar *action, cchar *controller);
 extern int espFinalizeRoute(EspRoute *route);
 extern char *espMatchRoute(HttpConn *conn, EspRoute *route);
+#endif
 
 #define ESP_SESSION             "-esp-session-"
 
@@ -233,13 +240,13 @@ typedef struct EspAction {
  */
 typedef struct EspReq {
     EspLoc          *el;                    /* Back pointer to Esp Location */
+    HttpRoute       *route;                 /* Route reference */
 #if UNUSED
     EspRoute        *eroute;                /* Route used for request */
 #endif
     EspSession      *session;               /* Session data object */
     EspAction       *action;                /* Action to invoke */
     Esp             *esp;                   /* Convenient esp reference */
-    HttpRoute       *route;                 /* Location reference */
     MprBuf          *cacheBuffer;           /* HTML output caching */
     char            *actionKey;             /* Request actionKey value */
     char            *cacheName;             /* Base name of intermediate compiled file */

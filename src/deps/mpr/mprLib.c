@@ -9802,6 +9802,7 @@ static char *findNewline(cchar *str, cchar *newline, ssize len, ssize *nlen)
 }
 
 
+//  MOB -- reanem mprReadFileLine
 /*
     Get a string from the file. This will put the file into buffered mode.
     Return NULL on eof.
@@ -14495,8 +14496,7 @@ MprList *mprGetPathFiles(cchar *path, bool enumDirs)
     char            *fileName;
     int             rc;
 
-    dir = opendir((char*) path);
-    if (dir == 0) {
+    if ((dir = opendir((char*) path)) == 0) {
         return 0;
     }
     list = mprCreateList(256, 0);
@@ -19724,6 +19724,12 @@ int scasecmp(cchar *s1, cchar *s2)
 }
 
 
+bool scasesame(cchar *s1, cchar *s2)
+{
+    return scasecmp(s1, s2) == 0;
+}
+
+
 char *scontains(cchar *str, cchar *pattern, ssize limit)
 {
     cchar   *cp, *s1, *s2;
@@ -19780,29 +19786,6 @@ char *sclone(cchar *str)
         str = "";
     }
     len = slen(str);
-    size = len + 1;
-    if ((ptr = mprAlloc(size)) != 0) {
-        memcpy(ptr, str, len);
-        ptr[len] = '\0';
-    }
-    return ptr;
-}
-
-
-/*
-    Clone a sub-string of a specified length. The null is added after the length. The given len can be longer than the
-    source string.
- */
-char *snclone(cchar *str, ssize len)
-{
-    char    *ptr;
-    ssize   size, l;
-
-    if (str == 0) {
-        str = "";
-    }
-    l = slen(str);
-    len = min(l, len);
     size = len + 1;
     if ((ptr = mprAlloc(size)) != 0) {
         memcpy(ptr, str, len);
@@ -20068,6 +20051,29 @@ int sncasecmp(cchar *s1, cchar *s2, ssize n)
 
 
 /*
+    Clone a sub-string of a specified length. The null is added after the length. The given len can be longer than the
+    source string.
+ */
+char *snclone(cchar *str, ssize len)
+{
+    char    *ptr;
+    ssize   size, l;
+
+    if (str == 0) {
+        str = "";
+    }
+    l = slen(str);
+    len = min(l, len);
+    size = len + 1;
+    if ((ptr = mprAlloc(size)) != 0) {
+        memcpy(ptr, str, len);
+        ptr[len] = '\0';
+    }
+    return ptr;
+}
+
+
+/*
     Case sensitive string comparison. Limited by length
  */
 int sncmp(cchar *s1, cchar *s2, ssize n)
@@ -20222,6 +20228,12 @@ char *sreplace(cchar *str, cchar *pattern, cchar *replacement)
     }
     mprAddNullToBuf(buf);
     return sclone(mprGetBufStart(buf));
+}
+
+
+bool ssame(cchar *s1, cchar *s2)
+{
+    return scmp(s1, s2) == 0;
 }
 
 
@@ -20407,6 +20419,9 @@ char *ssub(cchar *str, ssize offset, ssize len)
 }
 
 
+/*
+    Returns a newly allocated string
+ */
 char *strim(cchar *str, cchar *set, int where)
 {
     char    *s;

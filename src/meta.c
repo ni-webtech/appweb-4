@@ -35,6 +35,7 @@ MaAppweb *maCreateAppweb()
     httpSetContext(http, appweb);
     appweb->metas = mprCreateList(-1, 0);
     maGetUserGroup(appweb);
+    maParseInit(appweb);
     openHandlers(http);
     return appweb; 
 }
@@ -48,6 +49,7 @@ static void manageAppweb(MaAppweb *appweb, int flags)
         mprMark(appweb->http);
         mprMark(appweb->user);
         mprMark(appweb->group);
+        mprMark(appweb->directives);
 
     } else if (flags & MPR_MANAGE_FREE) {
         maStopAppweb(appweb);
@@ -154,6 +156,7 @@ MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, int 
     meta->limits = httpCreateLimits(1);
     meta->appweb = appweb;
     meta->http = appweb->http;
+    meta->alreadyLogging = mprGetLogHandler() ? 1 : 0;
 
     maAddMeta(appweb, meta);
     maSetMetaRoot(meta, root);
@@ -165,6 +168,17 @@ MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, int 
     }
     maSetDefaultMeta(appweb, meta);
     return meta;
+}
+
+
+void maCreateMetaDefaultHost(MaMeta *meta)
+{
+    HttpHost    *host;
+
+    host = httpCreateHost(0);
+    meta->defaultHost = host;
+    httpSetHostName(host, "default", -1);
+    httpSetHostServerRoot(host, meta->serverRoot);
 }
 
 

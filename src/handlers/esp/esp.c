@@ -245,7 +245,7 @@ static void initialize()
 static void getAppDirs()
 {
     HttpHost    *host;
-    HttpLoc     *hp;
+    HttpRoute     *hp;
     char        *prefix;
 
     //  MOB - must support non-default hosts
@@ -253,11 +253,11 @@ static void getAppDirs()
     //  MOB - must support more complex prefixes
     //  MOB - but the /app is not used if doing a stand-alone appweb.conf
     prefix = sfmt("/%s", app->appName);
-    if ((hp = httpLookupBestLocation(host, prefix)) == 0) {
-        error("Can't find EspAlias or Location block for %s", prefix);
+    if ((hp = httpLookupBestRoute(host, prefix)) == 0) {
+        error("Can't find EspAlias or Route for %s", prefix);
     }
-    if ((app->loc = httpGetLocationData(hp, ESP_NAME)) == 0) {
-        error("Can't find ESP data for Location block for %s", prefix);
+    if ((app->loc = httpGetRouteData(hp, ESP_NAME)) == 0) {
+        error("Can't find ESP data for Route for %s", prefix);
     }
     loc = app->loc;
     app->appName = mprGetPathBase(loc->dir);

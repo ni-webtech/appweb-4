@@ -20,7 +20,7 @@
 static Esp *esp;
 
 /************************************ Forward *********************************/
-static EspLoc *allocEspLoc(HttpLoc *loc);
+static EspLoc *allocEspLoc(HttpRoute *loc);
 static bool fetchCachedResponse(HttpConn *conn);
 static void manageAction(EspAction *cp, int flags);
 static void manageEsp(Esp *esp, int flags);
@@ -37,7 +37,6 @@ static bool unloadModule(cchar *module);
 static void openEsp(HttpQueue *q)
 {
     HttpConn    *conn;
-    HttpAlias   *alias;
     HttpRx      *rx;
     EspReq      *req;
     char        *uri;
@@ -53,11 +52,12 @@ static void openEsp(HttpQueue *q)
     req->esp = esp;
     conn->data = req;
     req->autoFinalize = 1;
-    if ((req->el = httpGetLocationData(rx->loc, ESP_NAME)) == 0) {
+    if ((req->el = httpGetRouteData(rx->loc, ESP_NAME)) == 0) {
         req->el = allocEspLoc(rx->loc);
     }
     mprAssert(req->el);
 
+#if UNUSED
     /*
         Set the scriptName to the alias prefix and remove from pathInfo
      */
@@ -73,6 +73,7 @@ static void openEsp(HttpQueue *q)
         rx->pathInfo = sclone(uri);
         mprLog(5, "esp: set script name: \"%s\", pathInfo: \"%s\"", rx->scriptName, rx->pathInfo);
     }
+#endif
     lock(esp);
     esp->inUse++;
     unlock(esp);
@@ -590,14 +591,14 @@ void espDefineView(EspLoc *el, cchar *path, void *view)
 }
 
 
-static EspLoc *allocEspLoc(HttpLoc *loc)
+static EspLoc *allocEspLoc(HttpRoute *route)
 {
     EspLoc  *el;
 
     if ((el = mprAllocObj(EspLoc, espManageEspLoc)) == 0) {
         return 0;
     }
-    httpSetLocationData(loc, ESP_NAME, el);
+    httpSetRouteData(route, ESP_NAME, el);
     if ((el->routes = mprCreateList(-1, 0)) == 0) {
         return 0;
     }
@@ -620,7 +621,7 @@ static EspLoc *allocEspLoc(HttpLoc *loc)
 #else
     el->cacheDir = mprJoinPath(mprGetAppDir(), "../" BLD_LIB_NAME);
 #endif
-    el->dir = mprGetAbsPath((loc->alias) ? loc->alias->filename : loc->host->serverRoot);
+    el->dir = mprGetAbsPath((route->alias) ? route->alias->filename : route->host->serverRoot);
     el->controllersDir = el->dir;
     el->databasesDir = el->dir;
     el->layoutsDir = el->dir;
@@ -629,14 +630,14 @@ static EspLoc *allocEspLoc(HttpLoc *loc)
     el->staticDir = el->dir;
 
     /*
-        Setup default parameters for $expansion of Http location paths
+        Setup default parameters for $expansion of Http route paths
      */
-    httpSetLocationToken(loc, "CONTROLLERS_DIR", el->controllersDir);
-    httpSetLocationToken(loc, "DATABASES_DIR", el->databasesDir);
-    httpSetLocationToken(loc, "LAYOUTS_DIR", el->layoutsDir);
-    httpSetLocationToken(loc, "MODELS_DIR", el->modelsDir);
-    httpSetLocationToken(loc, "STATIC_DIR", el->staticDir);
-    httpSetLocationToken(loc, "VIEWS_DIR", el->viewsDir);
+    httpSetRoutePathVar(route, "CONTROLLERS_DIR", el->controllersDir);
+    httpSetRoutePathVar(route, "DATABASES_DIR", el->databasesDir);
+    httpSetRoutePathVar(route, "LAYOUTS_DIR", el->layoutsDir);
+    httpSetRoutePathVar(route, "MODELS_DIR", el->modelsDir);
+    httpSetRoutePathVar(route, "STATIC_DIR", el->staticDir);
+    httpSetRoutePathVar(route, "VIEWS_DIR", el->viewsDir);
 
     el->lifespan = ESP_LIFESPAN;
     el->keepSource = 0;
@@ -644,23 +645,23 @@ static EspLoc *allocEspLoc(HttpLoc *loc)
 	el->update = 1;
 	el->showErrors = 1;
 #endif
-    el->loc = loc;
+    el->route = route;
     return el;
 }
 
 
-static EspLoc *cloneEspLoc(EspLoc *parent, HttpLoc *loc)
+static EspLoc *cloneEspLoc(EspLoc *parent, HttpRoute *route)
 {
     EspLoc      *el;
     
     mprAssert(parent);
-    mprAssert(loc);
+    mprAssert(route);
 
     if ((el = mprAllocObj(EspLoc, espManageEspLoc)) == 0) {
         return 0;
     }
-    httpSetLocationData(loc, ESP_NAME, el);
-    el->loc = loc;
+    httpSetRouteData(route, ESP_NAME, el);
+    el->route = route;
     el->update = parent->update;
     el->keepSource = parent->keepSource;
     el->showErrors = parent->showErrors;
@@ -698,7 +699,7 @@ static EspLoc *cloneEspLoc(EspLoc *parent, HttpLoc *loc)
 static void setSimpleDirs(EspLoc *el)
 {
     /* Don't set cache dir here - keep inherited value */
-    el->dir = mprGetAbsPath((el->loc->alias) ? el->loc->alias->filename : el->loc->host->serverRoot);
+    el->dir = mprGetAbsPath((el->route->alias) ? el->route->alias->filename : el->route->host->serverRoot);
     el->controllersDir = el->dir;
     el->databasesDir = el->dir;
     el->layoutsDir = el->dir;
@@ -711,25 +712,25 @@ static void setSimpleDirs(EspLoc *el)
 static void setMvcDirs(EspLoc *el)
 {
     el->cacheDir = mprJoinPath(el->dir, "cache");
-    httpSetLocationToken(el->loc, "CACHE_DIR", el->cacheDir);
+    httpSetRoutePathVar(el->route, "CACHE_DIR", el->cacheDir);
 
     el->controllersDir = mprJoinPath(el->dir, "controllers");
-    httpSetLocationToken(el->loc, "CONTROLLERS_DIR", el->controllersDir);
+    httpSetRoutePathVar(el->route, "CONTROLLERS_DIR", el->controllersDir);
 
     el->databasesDir = mprJoinPath(el->dir, "databases");
-    httpSetLocationToken(el->loc, "DATABASES_DIR", el->databasesDir);
+    httpSetRoutePathVar(el->route, "DATABASES_DIR", el->databasesDir);
 
     el->layoutsDir  = mprJoinPath(el->dir, "layouts");
-    httpSetLocationToken(el->loc, "LAYOUTS_DIR", el->layoutsDir);
+    httpSetRoutePathVar(el->route, "LAYOUTS_DIR", el->layoutsDir);
 
     el->modelsDir  = mprJoinPath(el->dir, "models");
-    httpSetLocationToken(el->loc, "MODELS_DIR", el->modelsDir);
+    httpSetRoutePathVar(el->route, "MODELS_DIR", el->modelsDir);
 
     el->staticDir = mprJoinPath(el->dir, "static");
-    httpSetLocationToken(el->loc, "STATIC_DIR", el->staticDir);
+    httpSetRoutePathVar(el->route, "STATIC_DIR", el->staticDir);
 
     el->viewsDir = mprJoinPath(el->dir, "views");
-    httpSetLocationToken(el->loc, "VIEWS_DIR", el->viewsDir);
+    httpSetRoutePathVar(el->route, "VIEWS_DIR", el->viewsDir);
 }
 
 
@@ -784,7 +785,7 @@ static char *trimSlashes(cchar *str)
 
 static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
 {
-    HttpLoc     *loc;
+    HttpRoute   *route;
     HttpHost    *host;
     HttpAlias   *alias;
     HttpDir     *dir, *parentDir;
@@ -797,29 +798,29 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
     int         mvc, restful, next, column, pairFlags;
     
     host = state->host;
-    loc = state->loc;
+    route = state->route;
     route = state->route;
 
     if (!sstarts(key, "Esp")) {
         return 0;
     }
-    if ((el = httpGetLocationData(loc, ESP_NAME)) == 0) {
-        if (loc->parent && (parent = httpGetLocationData(loc->parent, ESP_NAME)) != 0) {
-            el = cloneEspLoc(parent, loc);
+    if ((el = httpGetRouteData(route, ESP_NAME)) == 0) {
+        if (route->parent && (parent = httpGetRouteData(route->parent, ESP_NAME)) != 0) {
+            el = cloneEspLoc(parent, route);
         } else {
-            el = allocEspLoc(loc);
+            el = allocEspLoc(route);
         }
         if (el == 0) {
             return MPR_ERR_MEMORY;
         }
     }
     mprAssert(el);
-    mprAssert(el->loc);
+    mprAssert(el->route);
 
     if (scasecmp(key, "EspAlias") == 0) {
         /*
             EspAlias prefix [path [mvc|simple]]
-            If the prefix matches an existing location block, it modifies that. Otherwise a new location is created.
+            If the prefix matches an existing route, it modifies that. Otherwise a new route is created.
          */
         if (maGetConfigValue(&prefix, value, &nextToken, 1) < 0) {
             return MPR_ERR_BAD_SYNTAX;
@@ -839,40 +840,41 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
                 restful = mvc = 1;
             }
         }
-        prefix = stemplate(prefix, loc->tokens);
+        prefix = stemplate(prefix, route->tokens);
         if (scmp(prefix, "/") == 0) {
             prefix = MPR->emptyString;
         }
-        if ((loc = httpLookupLocation(host, prefix)) == 0) {
+        //  MOB - can't do this anymore
+        if ((route = httpLookupRoute(host, prefix)) == 0) {
             /*
                 This EspAlias is for a new route
              */
-            loc = httpCreateInheritedLocation(state->loc);
-            el = cloneEspLoc(el, loc);
-            httpSetLocationHost(loc, host);
-            httpSetLocationPrefix(loc, prefix);
-            httpSetLocationAuth(loc, state->dir->auth);
-            httpAddLocation(host, loc);
-            httpSetHandler(loc, "espHandler");
+            route = httpCreateInheritedRoute(state->route);
+            el = cloneEspLoc(el, route);
+            httpSetRouteHost(route, host);
+            httpSetRoutePrefix(route, prefix);
+            httpSetRouteAuth(route, state->dir->auth);
+            httpAddRoute(host, route);
+            httpSetHandler(route, "espHandler");
         } else {
-            httpAddHandler(loc, "espHandler", 0);
+            httpAddHandler(route, "espHandler", 0);
         }
-        path = httpMakePath(loc, path);
+        path = httpMakePath(route, path);
         el->dir = mprGetAbsPath(path);
         if (httpLookupDir(host, path) == 0) {
             parentDir = mprGetFirstItem(host->dirs);
             dir = httpCreateDir(path, parentDir);
             httpAddDir(host, dir);
         }
-        if (loc->alias == 0) {
+        if (route->alias == 0) {
             alias = httpCreateAlias(prefix, path, 0);
             mprLog(4, "EspAlias \"%s\" for \"%s\"", prefix, path);
-            httpSetLocationAlias(loc, alias);
+            httpSetRouteAlias(route, alias);
             httpAddAlias(host, alias);
         }
 
         /*
-            Apply a route package: none, simple, mvc, restful. Also set the location directories (cache, views ...)
+            Apply a route package: none, simple, mvc, restful. Also set the route directories (cache, views ...)
          */
         if (scmp(kind, "none") == 0) {
             setSimpleDirs(el);
@@ -885,8 +887,8 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         } else if (scmp(kind, "mvc") == 0) {
             el->routes = mprCreateList(-1, 0);
             setMvcDirs(el);
-            addRoute(el, "home", "GET,POST,PUT", "^/$", stemplate("${STATIC_DIR}/index.esp", loc->tokens), NULL);
-            addRoute(el, "static", "GET", "%^/static/(.*)", stemplate("${STATIC_DIR}/$1", loc->tokens), NULL);
+            addRoute(el, "home", "GET,POST,PUT", "^/$", stemplate("${STATIC_DIR}/index.esp", route->tokens), NULL);
+            addRoute(el, "static", "GET", "%^/static/(.*)", stemplate("${STATIC_DIR}/$1", route->tokens), NULL);
             addRoute(el, "default", NULL, "^/{controller}(/{action})", "${controller}-${action}", "${controller}.c");
             addRoute(el, "esp", NULL, "\\.[eE][sS][pP]$", NULL, NULL);
 
@@ -895,8 +897,8 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
             setMvcDirs(el);
             prefix = "{controller}";
             controller = "${controller}";
-            addRoute(el, "home", "GET,POST,PUT", "^/$", stemplate("${STATIC_DIR}/index.esp", loc->tokens), NULL);
-            addRoute(el, "static", "GET", "%^/static/(.*)", stemplate("${STATIC_DIR}/$1", loc->tokens), NULL);
+            addRoute(el, "home", "GET,POST,PUT", "^/$", stemplate("${STATIC_DIR}/index.esp", route->tokens), NULL);
+            addRoute(el, "static", "GET", "%^/static/(.*)", stemplate("${STATIC_DIR}/$1", route->tokens), NULL);
             addRoute(el, "esp", NULL, "\\.[eE][sS][pP]$", NULL, NULL);
             addRestfulRoutes(el, prefix, controller);
         }
@@ -916,7 +918,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
         if (scmp(name, "mvc") == 0) {
             setMvcDirs(el);
         } else {
-            path = stemplate(mprJoinPath(el->dir, nextToken), loc->tokens);
+            path = stemplate(mprJoinPath(el->dir, nextToken), route->tokens);
             if (scmp(name, "cache") == 0) {
                 el->cacheDir = path;
             } if (scmp(name, "controllers") == 0) {
@@ -932,7 +934,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
             } else if (scmp(name, "views") == 0) {
                 el->viewsDir = path;
             }
-            httpSetLocationToken(loc, name, path);
+            httpSetRoutePathVar(route, name, path);
         }
         return 1;
 
@@ -983,7 +985,7 @@ static int parseEsp(Http *http, cchar *key, char *value, MaConfigState *state)
 
     } else if (scasecmp(key, "EspReset") == 0) {
         if (scasecmp(value, "all") == 0) {
-            el = allocEspLoc(loc);
+            el = allocEspLoc(route);
         } else if (scasecmp(value, "routes") == 0) {
             el->routes = mprCreateList(-1, 0);
         }

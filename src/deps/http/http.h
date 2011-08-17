@@ -237,7 +237,7 @@ typedef struct Http {
 
     MprHashTable    *routeTargets;          /**< Http route target functions */
     MprHashTable    *routeConditions;       /**< Http route condition functions */
-    MprHashTable    *routeModifications;    /**< Http route modification functions */
+    MprHashTable    *routeUpdates;          /**< Http route update functions */
 
     /*  
         Some standard pipeline stages
@@ -1130,6 +1130,7 @@ typedef struct HttpStage {
      */
     void (*incomingService)(HttpQueue *q);
 
+#if UNUSED
     /** 
         Parse configuration data.
         @description This is invoked when parsing appweb configuration files
@@ -1142,6 +1143,7 @@ typedef struct HttpStage {
         @ingroup HttpStage
      */
     int (*parse)(Http *http, cchar *key, char *value, void *state);
+#endif
 
 } HttpStage;
 
@@ -1932,11 +1934,14 @@ typedef struct  HttpDir {
     HttpAuth        *auth;                  /**< Authorization control */
     char            *indexName;             /**< Default index document name */
     char            *path;                  /**< Directory filename */
+#if UNUSED
+    //  MOB - remove
     size_t          pathLen;                /**< Length of the directory path */
+#endif
 } HttpDir;
 
-extern HttpDir *httpCreateBareDir(cchar *path);
-extern HttpDir *httpCreateDir(cchar *path, HttpDir *parent);
+extern HttpDir *httpCreateDir(cchar *path);
+extern HttpDir *httpCreateInheritedDir(HttpDir *parent);
 extern void httpSetDirPath(HttpDir *dir, cchar *filename);
 extern void httpSetDirPath(HttpDir *dir, cchar *filename);
 extern void httpSetDirIndex(HttpDir *dir, cchar *name);
@@ -1970,24 +1975,18 @@ typedef struct HttpLang {
  */
 typedef struct HttpRoute {
     char            *name;                  /**< Route name */
+    HttpDir         *dir;                   /**< Physical directory description */
     HttpAuth        *auth;                  /**< Per route block authentication */
     Http            *http;                  /**< Http service object (copy of appweb->http) */
+    struct HttpHost *host;                  /**< Owning host */
+    struct HttpRoute *parent;               /**< Parent route */
     int             flags;                  /**< Route flags */
-
-#if UNUSED
-    char            *prefix;                /**< Route prefix name */
-    int             prefixLen;              /**< Length of the prefix name */
-    HttpAlias       *alias;                 /**< Associated alias for this route */
-#endif
 
     MprHashTable    *extensions;            /**< Hash of handlers by extensions */
     MprList         *handlers;              /**< List of handlers for this route */
     HttpStage       *handler;               /**< Fixed handler */
-
-    struct HttpHost *host;                  /**< Owning hsot */
     HttpStage       *connector;             /**< Network connector to use */
 
-    //  MOB - is this now needed. MOB - rename
     MprHashTable    *data;                  /**< Hash of extra data configuration */
     MprHashTable    *expires;               /**< Expiry of content by extension */
     MprHashTable    *expiresByType;         /**< Expiry of content by mime type */
@@ -1999,7 +1998,6 @@ typedef struct HttpRoute {
     MprList         *inputStages;           /**< Input stages */
     MprList         *outputStages;          /**< Output stages */
     MprHashTable    *errorDocuments;        /**< Set of error documents to use on errors */
-    struct HttpRoute  *parent;                /**< Parent route */
     void            *context;               /**< Hosting context (Appweb == EjsPool) */
     char            *uploadDir;             /**< Upload directory */
     int             autoDelete;             /**< Auto delete uploaded files */
@@ -2014,12 +2012,11 @@ typedef struct HttpRoute {
 
     struct MprSsl   *ssl;                   /**< SSL configuration */
 
-    //  ROUTING
     MprHashTable    *methodHash;            /**< Matching HTTP methods */
     MprList         *formFields;            /**< Matching form data values */
     MprList         *headers;               /**< Matching header values */
     MprList         *conditions;            /**< Route conditions */
-    MprList         *modifications;         /**< Route modifications */
+    MprList         *updates;               /**< Route and request updates */
     char            *methods;               /**< Supported HTTP methods */
 
     char            *pattern;               /**< Original matching URI pattern for the route */
@@ -2031,7 +2028,6 @@ typedef struct HttpRoute {
     char            *targetDest;            /**< Route destination - processed from details */
     int             targetStatus;           /**< Route redirect status code */
 
-//  MOB Rename to sourceName, sourcePath
     char            *sourceName;            /**< Source name for route target */
     char            *sourcePath;            /**< Source path for route target */
 
@@ -2063,7 +2059,7 @@ extern void httpAddRouteHeader(HttpRoute *route, cchar *header, cchar *value, in
 extern void httpAddRouteLanguage(HttpRoute *route, cchar *lang, cchar *suffix, int before);
 extern void httpAddRouteLanguageRoot(HttpRoute *route, cchar *lang, cchar *path);
 extern int httpAddRouteHandler(HttpRoute *route, cchar *name, cchar *extensions);
-extern void httpAddRouteModification(HttpRoute *route, cchar *name, int flags);
+extern void httpAddRouteUpdate(HttpRoute *route, cchar *name, cchar *details, int flags);
 extern void httpAddRouteCondition(HttpRoute *route, cchar *name, int flags);
 extern void httpClearRouteStages(HttpRoute *route, int direction);
 extern HttpRoute *httpCreateAliasRoute(HttpRoute *parent, cchar *prefix, cchar *path, int status);
@@ -2072,7 +2068,7 @@ extern HttpRoute *httpCreateDefaultRoute();
 extern HttpRoute *httpCreateRoute();
 extern HttpRoute *httpCreateInheritedRoute(HttpRoute *route);
 extern void httpDefineRouteTarget(cchar *key, HttpRouteProc *proc);
-extern void httpDefineRouteModification(cchar *key, HttpRouteProc *proc);
+extern void httpDefineRouteUpdate(cchar *key, HttpRouteProc *proc);
 extern void httpDefineRouteCondition(cchar *key, HttpRouteProc *proc);
 extern int httpFinalizeRoute(HttpRoute *route);
 extern MprList *httpGetBestLanguage(HttpRoute *route, cchar *accept);
@@ -2081,13 +2077,13 @@ extern cchar *httpLookupRouteErrorDocument(HttpRoute *route, int code);
 extern char *httpMakePath(HttpRoute *route, cchar *file);
 extern int httpMatchRoute(HttpConn *conn, HttpRoute *route);
 
-//  MOB - how does this compare with "Reset routes"
 extern void httpResetRoutePipeline(HttpRoute *route);
 extern void httpSetRouteAuth(HttpRoute *route, HttpAuth *auth);
 extern void httpSetRouteAutoDelete(HttpRoute *route, int enable);
 extern void httpSetRouteCondition(HttpRoute *route, cchar *source, int flags);
 extern int httpSetRouteConnector(HttpRoute *route, cchar *name);
 extern void httpSetRouteData(HttpRoute *route, cchar *key, void *data);
+extern void httpSetRouteDir(HttpRoute *route, HttpDir *dir);
 extern void httpSetRouteField(HttpRoute *route, cchar *key, cchar *value, int flags);
 extern void httpSetRouteFlags(HttpRoute *route, int flags);
 extern int httpSetRouteHandler(HttpRoute *route, cchar *name);
@@ -2095,7 +2091,7 @@ extern void httpSetRouteHeader(HttpRoute *route, cchar *key, cchar *value, int f
 extern void httpSetRouteHost(HttpRoute *route, struct HttpHost *host);
 extern void httpSetRouteLoad(HttpRoute *route, cchar *name, cchar *path);
 extern void httpSetRouteMethods(HttpRoute *route, cchar *methods);
-extern void httpSetRouteModification(HttpRoute *route, cchar *name, int flags);
+extern void httpSetRouteUpdate(HttpRoute *route, cchar *name, int flags);
 extern void httpSetRouteName(HttpRoute *route, cchar *name);
 extern void httpSetRoutePathVar(HttpRoute *route, cchar *token, cchar *value);
 extern void httpSetRoutePattern(HttpRoute *route, cchar *pattern);
@@ -2253,10 +2249,8 @@ typedef struct HttpRx {
     /*
         Extensions for Appweb. Inline for performance.
      */
-#if UNUSED
-    struct HttpAlias  *alias;               /**< Matching alias */
-#endif
-    struct HttpDir    *dir;                 /**< Best matching dir (PTR only) */
+    //  MOB - review
+    struct HttpDir    *dir;                 /**< Best matching dir */
 } HttpRx;
 
 
@@ -3041,8 +3035,6 @@ typedef struct HttpHost {
     HttpRoute       *route;                 /**< Default route */
     MprHashTable    *mimeTypes;             /**< Hash table of mime types (key is extension) */
 
-    //  MOB - rename documents and home
-    char            *documentRoot;          /**< Default directory for web documents */
     char            *serverRoot;            /**< Directory for configuration files */
 
     int             traceLevel;             /**< Trace activation level */
@@ -3071,15 +3063,20 @@ extern HttpAlias *httpGetAlias(HttpHost *host, cchar *uri);
 extern HttpAlias *httpLookupAlias(HttpHost *host, cchar *prefix);
 #endif
 
-extern int httpAddDir(HttpHost *host, HttpDir *dir);
-extern int  httpAddRoute(HttpHost *host, HttpRoute *newRoute);
+extern int httpAddHostDir(HttpHost *host, HttpDir *dir);
+extern int  httpAddHostRoute(HttpHost *host, HttpRoute *newRoute);
+extern void httpAddHostToServer(HttpServer *server, HttpHost *host);
 extern HttpHost *httpCreateHost(HttpRoute *route);
 extern HttpHost *httpCloneHost(HttpHost *parent);
+extern bool httpIsNamedVirtualServer(HttpServer *server);
 extern HttpDir *httpLookupDir(HttpHost *host, cchar *pathArg);
 extern HttpRoute *httpLookupBestRoute(HttpHost *host, cchar *uri);
 extern HttpRoute *httpLookupRoute(HttpHost *host, cchar *prefix);
+extern void httpResetRoutes(HttpHost *route);
+#if UNUSED
 extern HttpDir *httpLookupBestDir(HttpHost *host, cchar *path);
 extern void httpSetHostDocumentRoot(HttpHost *host, cchar *dir);
+#endif
 extern void httpSetHostLogRotation(HttpHost *host, int logCount, int logSize);
 extern void httpSetHostName(HttpHost *host, cchar *ip, int port);
 extern void httpSetHostAddress(HttpHost *host, cchar *ip, int port);
@@ -3087,10 +3084,8 @@ extern void httpSetHostProtocol(HttpHost *host, cchar *protocol);
 extern void httpSetHostTrace(HttpHost *host, int level, int mask);
 extern void httpSetHostTraceFilter(HttpHost *host, ssize len, cchar *include, cchar *exclude);
 extern void httpSetHostServerRoot(HttpHost *host, cchar *dir);
-extern int  httpSetupTrace(HttpHost *host, cchar *ext);
-extern void httpAddHostToServer(HttpServer *server, HttpHost *host);
-extern bool httpIsNamedVirtualServer(HttpServer *server);
 extern void httpSetNamedVirtualServer(HttpServer *server);
+extern int  httpSetupTrace(HttpHost *host, cchar *ext);
 
 #ifdef __cplusplus
 } /* extern C */

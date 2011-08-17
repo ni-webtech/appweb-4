@@ -28,12 +28,12 @@ typedef struct Dir {
 /****************************** Forward Declarations **************************/
 
 static void filterDirList(HttpConn *conn, MprList *list);
+static Dir* getDir();
 static int  match(cchar *pattern, cchar *file);
 static void outputFooter(HttpQueue *q);
 static void outputHeader(HttpQueue *q, cchar *dir, int nameSize);
 static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *dir, int nameSize);
 static void parseQuery(HttpConn *conn);
-static void parseWords(MprList *list, cchar *str);
 static void sortList(HttpConn *conn, MprList *list);
 
 /************************************* Code ***********************************/
@@ -509,93 +509,103 @@ static int match(cchar *pattern, cchar *file)
 }
 
 
-static int parseDir(Http *http, cchar *key, char *value, MaConfigState *state)
+#if FUTURE
+static int addIconDirective(MaState *state, cchar *key, cchar *value)
 {
-    HttpStage   *handler;
-    Dir         *dir;
-    char        *extensions, *option, *nextTok, *junk;
-
-    handler = httpLookupStage(http, "dirHandler");
-    dir = handler->stageData;
-    mprAssert(dir);
-    
-    if (scasecmp(key, "AddIcon") == 0) {
-        /*  AddIcon file ext ext ext */
-        /*  Not yet supported */
-        /* name = */ stok(value, " \t", &extensions);
-        parseWords(dir->extList, extensions);
-        return 1;
-
-    } else if (scasecmp(key, "DefaultIcon") == 0) {
-        /*  DefaultIcon file */
-        /*  Not yet supported */
-        dir->defaultIcon = stok(value, " \t", &junk);
-        return 1;
-
-    } else if (scasecmp(key, "IndexOrder") == 0) {
-        /*  IndexOrder ascending|descending name|date|size */
-        dir->sortField = 0;
-        option = stok(value, " \t", &dir->sortField);
-        if (scasecmp(option, "ascending") == 0) {
-            dir->sortOrder = 1;
-        } else {
-            dir->sortOrder = -1;
-        }
-        if (dir->sortField) {
-            dir->sortField = sclone(dir->sortField);
-        }
-        return 1;
-
-    } else if (scasecmp(key, "IndexIgnore") == 0) {
-        /*  IndexIgnore pat ... */
-        /*  Not yet supported */
-        parseWords(dir->ignoreList, value);
-        return 1;
-
-    } else if (scasecmp(key, "IndexOptions") == 0) {
-        /*  IndexOptions FancyIndexing|FoldersFirst ... (set of options) */
-        option = stok(value, " \t", &nextTok);
-        while (option) {
-            if (scasecmp(option, "FancyIndexing") == 0) {
-                dir->fancyIndexing = 1;
-            } else if (scasecmp(option, "HTMLTable") == 0) {
-                dir->fancyIndexing = 2;
-            } else if (scasecmp(option, "FoldersFirst") == 0) {
-                dir->foldersFirst = 1;
-            }
-            option = stok(nextTok, " \t", &nextTok);
-        }
-        return 1;
-
-    } else if (scasecmp(key, "Options") == 0) {
-        /*  Options Indexes */
-        option = stok(value, " \t", &nextTok);
-        while (option) {
-            if (scasecmp(option, "Indexes") == 0) {
-                dir->enabled = 1;
-            }
-            option = stok(nextTok, " \t", &nextTok);
-        }
-        return 1;
+    if (!maTokenize(state, value, "%S %W", &path, &dir->extList)) {
+        return MPR_ERR_BAD_SYNTAX;
     }
     return 0;
 }
 
 
-static void parseWords(MprList *list, cchar *str)
+static int defaultIconDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *word, *tok, *strTok;
+    state->dir->defaultIcon = sclone(value);
+    return 0;
+}
 
-    mprAssert(str);
-    if (str == 0 || *str == '\0') {
-        return;
+/*  
+    IndexIgnore pat ... 
+ */
+static int indexIgnoreDirective(MaState *state, cchar *key, cchar *value)
+{
+    if (!maTokenize(state, value, "%W", &dir->ignoreList)) {
+        return MPR_ERR_BAD_SYNTAX;
     }
-    strTok = sclone(str);
-    word = stok(strTok, " \t\r\n", &tok);
-    while (word) {
-        mprAddItem(list, word);
-        word = stok(0, " \t\r\n", &tok);
+    return 0;
+}
+
+#endif
+
+
+/*  
+    IndexOrder ascending|descending name|date|size 
+ */
+static int indexOrderDirective(MaState *state, cchar *key, cchar *value)
+{
+    Dir     *dir;
+    char    *option;
+
+    dir = getDir();
+    dir->sortField = 0;
+
+    if (!maTokenize(state, value, "%S %field", &option, &dir->sortField)) {
+        return MPR_ERR_BAD_SYNTAX;
     }
+    if (scasesame(option, "ascending")) {
+        dir->sortOrder = 1;
+    } else {
+        dir->sortOrder = -1;
+    }
+    if (dir->sortField) {
+        dir->sortField = sclone(dir->sortField);
+    }
+    return 0;
+}
+
+
+/*  
+    IndexOptions FancyIndexing|FoldersFirst ... (set of options) 
+ */
+static int indexOptionsDirective(MaState *state, cchar *key, cchar *value)
+{
+    Dir     *dir;
+    char    *option, *tok;
+
+    dir = getDir();
+    option = stok(sclone(value), " \t", &tok);
+    while (option) {
+        if (scasesame(option, "FancyIndexing")) {
+            dir->fancyIndexing = 1;
+        } else if (scasesame(option, "HTMLTable")) {
+            dir->fancyIndexing = 2;
+        } else if (scasesame(option, "FoldersFirst")) {
+            dir->foldersFirst = 1;
+        }
+        option = stok(tok, " \t", &tok);
+    }
+    return 0;
+}
+
+
+/*  
+    Options Indexes 
+ */
+static int optionsDirective(MaState *state, cchar *key, cchar *value)
+{
+    Dir     *dir;
+    char    *option, *tok;
+
+    dir = getDir();
+    option = stok(sclone(value), " \t", &tok);
+    while (option) {
+        if (scasesame(option, "Indexes")) {
+            dir->enabled = 1;
+        }
+        option = stok(tok, " \t", &tok);
+    }
+    return 0;
 }
 
 
@@ -608,9 +618,16 @@ static void manageDir(Dir *dir, int flags)
         mprMark(dir->ignoreList);
         mprMark(dir->pattern);
         mprMark(dir->sortField);
-        
-    } else if (flags & MPR_MANAGE_FREE) {
     }
+}
+
+
+static Dir* getDir()
+{
+    HttpStage   *handler;
+
+    handler = httpLookupStage(MPR->httpService, "dirHandler");
+    return (Dir*) handler->stageData;
 }
 
 
@@ -620,6 +637,7 @@ static void manageDir(Dir *dir, int flags)
 int maOpenDirHandler(Http *http)
 {
     HttpStage   *handler;
+    MaAppweb    *appweb;
     Dir         *dir;
 
     if ((handler = httpCreateHandler(http, "dirHandler", HTTP_STAGE_GET | HTTP_STAGE_HEAD, NULL)) == 0) {
@@ -630,9 +648,13 @@ int maOpenDirHandler(Http *http)
     }
     handler->match = matchDir; 
     handler->process = processDir; 
-    handler->parse = (HttpParse) parseDir; 
     http->dirHandler = handler;
     dir->sortOrder = 1;
+
+    appweb = httpGetContext(http);
+    maAddDirective(appweb, "IndexOrder", indexOrderDirective);
+    maAddDirective(appweb, "indexOptions", indexOptionsDirective);
+    maAddDirective(appweb, "Options", optionsDirective);
     return 0;
 }
 
