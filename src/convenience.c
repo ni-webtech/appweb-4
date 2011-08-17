@@ -29,7 +29,7 @@ MaMeta *maCreateWebServer(cchar *configFile)
         if ((appweb = maCreateAppweb(mpr)) == 0) {
             mprError("Can't create appweb object");
         } else {
-            if ((meta = maCreateMeta(appweb, "default", ".", NULL, 0)) == 0) {
+            if ((meta = maCreateMeta(appweb, "default", ".", ".", NULL, 0)) == 0) {
                 mprError("Can't create the web server");
             } else {
                 if (maParseConfig(meta, configFile) < 0) {
@@ -79,7 +79,7 @@ int maRunWebServer(cchar *configFile)
 }
 
 
-int maRunSimpleWebServer(cchar *ip, int port, cchar *docRoot)
+int maRunSimpleWebServer(cchar *ip, int port, cchar *home, cchar *documents)
 {
     Mpr         *mpr;
     MaMeta      *meta;
@@ -100,17 +100,14 @@ int maRunSimpleWebServer(cchar *ip, int port, cchar *docRoot)
         mprError("Can't create the web server http services");
         return MPR_ERR_CANT_INITIALIZE;
     }
-
     /*  
         Create and start the HTTP server. Give the server a name of "default" and define "." as the default serverRoot, 
         ie. the directory with the server configuration files.
      */
-    if ((meta = maCreateMeta(appweb, ip, ".", ip, port)) == 0) {
+    if ((meta = maCreateMeta(appweb, ip, home, documents, ip, port)) == 0) {
         mprError("Can't create the web server");
         return MPR_ERR_CANT_CREATE;
     }
-    httpSetHostDocumentRoot(meta->defaultHost, docRoot);
-    
     if (maStartMeta(meta) < 0) {
         mprError("Can't start the web server");
         return MPR_ERR_CANT_CREATE;

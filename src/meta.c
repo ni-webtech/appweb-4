@@ -127,7 +127,7 @@ static void manageMeta(MaMeta *meta, int flags)
         mprMark(meta->appweb);
         mprMark(meta->http);
         mprMark(meta->name);
-        mprMark(meta->serverRoot);
+        mprMark(meta->home);
         mprMark(meta->servers);
 
     } else if (flags & MPR_MANAGE_FREE) {
@@ -137,13 +137,15 @@ static void manageMeta(MaMeta *meta, int flags)
 
 
 /*  
-    Create a new meta-server. This may manage may virtual hosts. If ip and port are supplied,
-    create a HttpServer now on that endpoint. Otherwise, call maConfigureMeta later.
+    Create a new meta-server. A meta-server may manage may multiple servers and virtual hosts. 
+    If ip/port endpoint is supplied, this call will create a Server on that endpoint. Otherwise, 
+    maConfigureMeta should be called later. A default route is created with the document root set to "."
  */
-MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, int port)
+MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *home, cchar *documents, cchar *ip, int port)
 {
     MaMeta      *meta;
     HttpServer  *server;
+    HttpHost    *host;
 
     mprAssert(appweb);
     mprAssert(name && *name);
@@ -158,27 +160,37 @@ MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, int 
     meta->http = appweb->http;
     meta->alreadyLogging = mprGetLogHandler() ? 1 : 0;
 
-    maAddMeta(appweb, meta);
-    maSetMetaRoot(meta, root);
+    if (documents == 0 || *documents == '\0') {
+        documents = ".";
+    }
+    if (home == 0 || *home == '\0') {
+        home = ".";
+    }
+    maSetMetaHome(meta, home);
+    host = maCreateDefaultHost(meta);
+    httpSetRouteDir(host->route, documents);
 
     if (ip && port > 0) {
         /* Passing NULL for the dispatcher will cause a new dispatcher to be created for each accepted connection */
-        server = httpCreateServer(ip, port, NULL, HTTP_CREATE_HOST);
+        server = httpCreateServer(ip, port, NULL, 0);
+        httpAddHostToServer(server, host);
         maAddServer(meta, server);
     }
     maSetDefaultMeta(appweb, meta);
+    maAddMeta(appweb, meta);
     return meta;
 }
 
 
-void maCreateMetaDefaultHost(MaMeta *meta)
+HttpHost *maCreateDefaultHost(MaMeta *meta)
 {
     HttpHost    *host;
 
     host = httpCreateHost(0);
     meta->defaultHost = host;
     httpSetHostName(host, "default", -1);
-    httpSetHostServerRoot(host, meta->serverRoot);
+    httpSetHostHome(host, meta->home);
+    return host;
 }
 
 
@@ -198,7 +210,7 @@ int maStartMeta(MaMeta *meta)
             count++;
         }
         for (nextHost = 0; (host = mprGetNextItem(server->hosts, &nextHost)) != 0; ) {
-            mprLog(3, "Serving %s at \"%s\"", host->name, host->documentRoot);
+            mprLog(3, "Serving %s", host->name);
         }
     }
     if (count == 0) {
@@ -239,9 +251,9 @@ void maRemoveServer(MaMeta *meta, HttpServer *server)
 
 
 /*  
-    Set the Server Root directory. We convert path into an absolute path.
+    Set the home directory (Server Root). We convert path into an absolute path.
  */
-void maSetMetaRoot(MaMeta *meta, cchar *path)
+void maSetMetaHome(MaMeta *meta, cchar *path)
 {
     if (path == 0 || BLD_FEATURE_ROMFS) {
         path = ".";
@@ -255,15 +267,15 @@ void maSetMetaRoot(MaMeta *meta, cchar *path)
         return;
     }
 #endif
-    meta->serverRoot = mprGetAbsPath(path);
-    mprLog(MPR_CONFIG, "Set meta server root to: \"%s\"", meta->serverRoot);
+    meta->home = mprGetAbsPath(path);
+    mprLog(MPR_CONFIG, "Set meta server root to: \"%s\"", meta->home);
 
 #if UNUSED
     if (chdir((char*) path) < 0) {
         mprError("Can't set server root to %s\n", path);
     } else {
-        meta->serverRoot = mprGetAbsPath(path);
-        mprLog(MPR_CONFIG, "Set meta server root to: \"%s\"", meta->serverRoot);
+        meta->home = mprGetAbsPath(path);
+        mprLog(MPR_CONFIG, "Set meta server root to: \"%s\"", meta->home);
     }
 #endif
 }

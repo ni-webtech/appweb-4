@@ -13,6 +13,7 @@ static bool closingBlock(MaState *state, cchar *key);
 static bool conditionalDefinition(cchar *key);
 static int configError(MaState *state, cchar *key);
 static MaState *createState(MaMeta *meta);
+static char *getSearchPath(cchar *dir);
 static void manageState(MaState *state, int flags);
 static int parseFile(MaState *state, cchar *path);
 static MaState *popState(MaState *state);
@@ -20,9 +21,9 @@ static MaState *pushState(MaState *state, cchar *block);
 
 /******************************************************************************/
 /*
-    Configure the meta-server. If the configFile is defined, use it. If not, then consider serverRoot, docRoot, ip and port.
+    Configure the meta-server. If the configFile is defined, use it. If not, then consider home, documents, ip and port.
  */
-int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *docRoot, cchar *ip, int port)
+int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *home, cchar *documents, cchar *ip, int port)
 {
     MaAppweb        *appweb;
     Http            *http;
@@ -44,8 +45,8 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
         return 0;
 
     } else {
-        mprLog(2, "DocumentRoot %s", docRoot);
-        if ((server = httpCreateConfiguredServer(docRoot, ip, port)) == 0) {
+        mprLog(2, "DocumentRoot %s", documents);
+        if ((server = httpCreateConfiguredServer(home, documents, ip, port)) == 0) {
             return MPR_ERR_CANT_OPEN;
         }
         maAddServer(meta, server);
@@ -53,31 +54,9 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
         mprAssert(host);
 
         route = host->route;
-#if WIN
-        searchPath = mprAsprintf("%s" MPR_SEARCH_SEP ".", dir);
-#else
-{
-        char *libDir = mprJoinPath(mprGetPathParent(dir), BLD_LIB_NAME);
-        searchPath = mprAsprintf("%s" MPR_SEARCH_SEP "%s" MPR_SEARCH_SEP ".", dir,
-            mprSamePath(BLD_BIN_PREFIX, dir) ? BLD_LIB_PREFIX: libDir);
-}
-#endif
+        searchPath = getSearchPath(dir);
         mprSetModuleSearchPath(searchPath);
 
-#if UNUSED
-        httpSetConnector(route, "netConnector");
-
-        /*
-            Auth must be added first to authorize all requests. File is last as a catch all.
-         */
-        if (httpLookupStage(http, "authFilter")) {
-            httpAddRouteHandler(route, "authFilter", "");
-            httpAddRouteFilter(route, http->rangeFilter->name, NULL, HTTP_STAGE_TX);
-            httpAddRouteFilter(route, http->chunkFilter->name, NULL, HTTP_STAGE_RX | HTTP_STAGE_TX);
-            httpAddRouteFilter(route, "uploadFilter", NULL, HTTP_STAGE_RX);
-            httpAddRouteFilter(route, "authFilter", NULL, HTTP_STAGE_RX);
-        }
-#endif
         maLoadModule(appweb, "cgiHandler", "mod_cgi");
         if (httpLookupStage(http, "cgiHandler")) {
             httpAddRouteHandler(route, "cgiHandler", ".cgi .cgi-nph .bat .cmd .pl .py");
@@ -88,23 +67,19 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
             if (mprPathExists(path, X_OK)) {
                 cgiRoute = httpCreateAliasRoute(route, "/cgi-bin/", path, 0);
                 mprLog(4, "ScriptAlias \"/cgi-bin/\":\"%s\"", path);
-#if UNUSED
-                httpAddAlias(host, alias);
-                cgiRoute = httpCreateInheritedRoute(host->route);
-                httpSetRoutePrefix(cgiRoute, "/cgi-bin/");
-#endif
                 httpSetRouteHost(cgiRoute, host);
                 httpSetRouteHandler(cgiRoute, "cgiHandler");
                 httpFinalizeRoute(cgiRoute);
                 httpAddRoute(host, cgiRoute);
             }
         }
+        maLoadModule(appweb, "espHandler", "mod_esp");
+        if (httpLookupStage(http, "espHandler")) {
+            httpAddRouteHandler(route, "espHandler", ".esp");
+        }
         maLoadModule(appweb, "ejsHandler", "mod_ejs");
         if (httpLookupStage(http, "ejsHandler")) {
             httpAddRouteHandler(route, "ejsHandler", ".ejs");
-#if UNUSED
-            httpSetRouteScript(route, "start.es");
-#endif
         }
         maLoadModule(appweb, "phpHandler", "mod_php");
         if (httpLookupStage(http, "phpHandler")) {
@@ -114,8 +89,8 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *d
             httpAddRouteHandler(route, "fileHandler", "");
         }
     }
-    if (serverRoot) {
-        maSetMetaRoot(meta, serverRoot);
+    if (home) {
+        maSetMetaHome(meta, home);
     }
     if (ip || port > 0) {
         maSetMetaAddress(meta, ip, port);
@@ -142,9 +117,6 @@ int maParseConfig(MaMeta *meta, cchar *path)
     MaState     *state;
 
     mprLog(2, "Config File %s", path);
-    //  MOB - should this be here?
-    maCreateMetaDefaultHost(meta);
-
     state = createState(meta);
     if (parseFile(state, path) < 0) {
         return MPR_ERR_BAD_SYNTAX;
@@ -187,7 +159,7 @@ static int parseFile(MaState *state, cchar *path)
             mprError("Unknown directive \"%s\"\nAt line %d in %s\n\n", key, state->lineNumber, state->filename);
             return MPR_ERR_BAD_SYNTAX;
         }
-        if (!(*directive)(state, key, value)) {
+        if ((*directive)(state, key, value) < 0) {
             return MPR_ERR_BAD_SYNTAX;
         }
         state = state->currentState;
@@ -326,7 +298,6 @@ static int aliasDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S %P", &prefix, &path)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    path = httpMakePath(state->route, path);
     alias = httpCreateAliasRoute(state->route, prefix, path, 0);
     httpFinalizeRoute(alias);
     httpAddRoute(state->host, alias);
@@ -538,34 +509,25 @@ static int denyDirective(MaState *state, cchar *key, cchar *value)
 
 static int directoryDirective(MaState *state, cchar *key, cchar *value)
 {
-    HttpDir     *dir;
     char        *path;
 
-    path = httpMakePath(state->route, value);
     state = pushState(state, key);
-
-    if ((dir = httpLookupDir(state->host, path)) != 0) {
-        /* Allow multiple occurences of the same directory. Append directives.  */
-        state->dir = dir;
-    } else {
-        state->dir = httpCreateDir(path, state->prev->dir);
-        httpAddDir(state->host, state->dir);
-    }
-    state->auth = state->dir->auth;
+    state->route = httpCreateInheritedRoute(state->route);
+    httpSetRouteDir(state->route, path);
     return 0;
 }
 
 
 static int directoryIndexDirective(MaState *state, cchar *key, cchar *value)
 {
-    httpSetDirIndex(state->dir, value);
+    httpSetRouteIndex(state->route, value);
     return 0;
 }
 
 
 static int documentRootDirective(MaState *state, cchar *key, cchar *value)
 {
-    httpSetDirPath(state->dir, httpMakePath(state->route, value));
+    httpSetRouteDir(state->route, value);
     return 0;
 }
 
@@ -652,9 +614,9 @@ static int includeDirective(MaState *state, cchar *key, cchar *value)
         /* Process wild cards. This is very simple - only "*" is supported.  */
         *cp = '\0';
         value = strim(value, "/", MPR_TRIM_END);
-        cp = mprJoinPath(state->meta->serverRoot, value);
+        cp = mprJoinPath(state->meta->home, value);
         if ((includes = mprGetPathFiles(cp, 0)) != 0) {
-            value = mprJoinPath(state->meta->serverRoot, value);
+            value = mprJoinPath(state->meta->home, value);
             for (next = 0; (dp = mprGetNextItem(includes, &next)) != 0; ) {
                 if (parseFile(state, dp->name) < 0) {
                     return MPR_ERR_CANT_OPEN;
@@ -1017,7 +979,7 @@ static int methodsDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
-static int modifyDirective(MaState *state, cchar *key, cchar *value)
+static int updateDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *kind, *rest;
     int     not;
@@ -1025,7 +987,7 @@ static int modifyDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S %! %*", &kind, &not, &rest)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    httpAddRouteModification(state->route, kind, rest, not | HTTP_ROUTE_STATIC_VALUES);
+    httpAddRouteUpdate(state->route, kind, rest, not | HTTP_ROUTE_STATIC_VALUES);
     return 0;
 }
 
@@ -1072,9 +1034,9 @@ static int putMethodDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_BAD_SYNTAX;
     }
     if (on) {
-        state->route->flags |= HTTP_LOC_PUT_DELETE;
+        state->route->flags |= HTTP_ROUTE_PUT_DELETE;
     } else {
-        state->route->flags &= ~HTTP_LOC_PUT_DELETE;
+        state->route->flags &= ~HTTP_ROUTE_PUT_DELETE;
     }
     return 0;
 }
@@ -1175,7 +1137,7 @@ static int routeDirective(MaState *state, cchar *key, cchar *value)
     httpSetRouteHost(state->route, state->host);
     httpSetRoutePattern(state->route, value);
     httpAddRoute(state->host, state->route);
-    state->auth = state->route->auth;
+    state->auth = state->auth;
     return 0;
 }
 
@@ -1188,11 +1150,11 @@ static int runHandlerDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_BAD_SYNTAX;
     }
     if (scasesame(value, "before")) {
-        state->route->flags |= HTTP_LOC_BEFORE;
+        state->route->flags |= HTTP_ROUTE_BEFORE;
     } else if (scasesame(value, "after")) {
-        state->route->flags |= HTTP_LOC_AFTER;
+        state->route->flags |= HTTP_ROUTE_AFTER;
     } else if (scasesame(value, "smart")) {
-        state->route->flags |= HTTP_LOC_SMART;
+        state->route->flags |= HTTP_ROUTE_SMART;
     } else {
         return configError(state, key);
     }
@@ -1214,8 +1176,8 @@ static int serverRootDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%T", &path)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    maSetMetaRoot(state->meta, path);
-    httpSetHostServerRoot(state->host, path);
+    maSetMetaHome(state->meta, path);
+    httpSetHostHome(state->host, path);
     httpSetRoutePathVar(state->route, "SERVER_ROOT", path);
     mprLog(MPR_CONFIG, "Server Root \"%s\"", path);
     return 0;
@@ -1380,10 +1342,6 @@ static int virtualHostDirective(MaState *state, cchar *key, cchar *value)
     host = state->host = httpCloneHost(host);
     httpSetHostName(host, ip, port);
     state->route = host->route;
-    state->auth = host->route->auth;
-    state->dir = httpCreateDir(state->prev->dir->path, state->prev->dir);
-    state->auth = state->dir->auth;
-    httpAddDir(host, state->dir);
     if ((server = httpLookupServer(state->http, ip, port)) == 0) {
         mprError("Can't find listen directive for virtual host %s", value);
         return MPR_ERR_BAD_SYNTAX;
@@ -1421,18 +1379,14 @@ int maValidateConfiguration(MaMeta *meta)
     }
     for (nextHost = 0; (host = mprGetNextItem(http->hosts, &nextHost)) != 0; ) {
         mprAssert(host->name && host->name);
-        if (host->documentRoot == 0) {
-            httpSetHostDocumentRoot(host, defaultHost->documentRoot);
-        }
-        if (host->serverRoot == 0) {
-            httpSetHostServerRoot(host, defaultHost->serverRoot);
+        if (host->home == 0) {
+            httpSetHostHome(host, defaultHost->home);
         }
         if (host->mimeTypes == 0) {
             host->mimeTypes = defaultHost->mimeTypes;
         }
         mprLog(MPR_CONFIG, "Host \"%s\"", host->name);
-        mprLog(MPR_CONFIG, "    ServerRoot \"%s\"", host->serverRoot);
-        mprLog(MPR_CONFIG, "    DocumentRoot: \"%s\"", host->documentRoot);
+        mprLog(MPR_CONFIG, "    ServerRoot \"%s\"", host->home);
     }
     return 1;
 }
@@ -1488,19 +1442,22 @@ static bool conditionalDefinition(cchar *key)
         %W - Parse words into a list
         %! - Optional negate. Set value to HTTP_ROUTE_NOT present, otherwise zero.
  */
-int maTokenize(MaState *state, cchar *line, cchar *fmt, ...)
+bool maTokenize(MaState *state, cchar *line, cchar *fmt, ...)
 {
     va_list     args;
     MprList     *list;
     cchar       *f;
-    char        *tok, *etok, *value, *word;
+    char        *tok, *etok, *value, *word, *end;
     int         quote;
 
     mprAssert(fmt && *fmt);
     va_start(args, fmt);
-    quote = 0;
 
-    for (f = fmt, tok = sclone(line); *f && *tok; f++) {
+    quote = 0;
+    tok = sclone(line);
+    end = &tok[slen(line)];
+
+    for (f = fmt; *f && tok < end; f++) {
         for (; isspace((int) *tok); tok++) ;
         if (*tok == '\0' || *tok == '#') {
             break;
@@ -1509,20 +1466,30 @@ int maTokenize(MaState *state, cchar *line, cchar *fmt, ...)
             continue;
         }
         if (*f == '%') {
-            if (*f == '*') {
-                * va_arg(args, char**) = sclone(tok);
-                break;
-            }
+            f++;
             if (*tok == '"' || *tok == '\'') {
                 quote = *tok;
             }
             if (quote) {
-                for (etok = &tok[1]; *etok && (*etok != quote || etok[-1] != '\\'); etok++) ;
+                for (etok = ++tok; *etok && (*etok != quote && etok[-1] != '\\'); etok++) ; 
                 *etok++ = '\0';
+                quote = 0;
+            } else if (*f == '*') {
+                for (etok = tok; *etok; etok++) {
+                    if (*etok == '#') {
+                        *etok = '\0';
+                    }
+                }
             } else {
-                for (etok = tok; isspace((int) *etok); etok++) ;
+                for (etok = tok; !isspace((int) *etok); etok++) ;
             }
             *etok++ = '\0';
+
+            if (*f == '*') {
+                * va_arg(args, char**) = sclone(tok);
+                tok = etok;
+                break;
+            }
 
             switch (*f) {
             case '!':
@@ -1567,10 +1534,10 @@ int maTokenize(MaState *state, cchar *line, cchar *fmt, ...)
     }
     if (*tok) {
         mprError("Bad directive \"%s\"\nAt line %d in %s\n\n", line, state->lineNumber, state->filename);
-        return MPR_ERR_BAD_SYNTAX;
+        return 0;
     }
     va_end(args);
-    return 0;
+    return 1;
 }
 
 
@@ -1586,14 +1553,12 @@ static MaState *createState(MaMeta *meta)
     state->http = meta->http;
     state->host = meta->defaultHost;
     state->limits = state->host->limits;
-    state->dir = httpCreateBareDir(".");
     state->route = meta->defaultHost->route;
     state->route->connector = meta->http->netConnector;
     state->enabled = 1;
     state->lineNumber = 0;
-    state->route->auth = state->dir->auth;
-    state->auth = state->dir->auth;
-    httpAddDir(state->host, state->dir);
+    state->auth = state->route->auth;
+    state->currentState = state;
     return state;
 }
 
@@ -1607,12 +1572,12 @@ static MaState *pushState(MaState *prev, cchar *block)
     }
     state->prev = prev;
     prev->currentState = state;
+    state->currentState = state;
+    state->appweb = prev->appweb;
     state->http = prev->http;
     state->meta = prev->meta;
     state->host = prev->host;
     state->route = prev->route;
-    state->dir = prev->dir;
-    state->auth = prev->auth;
     state->lineNumber = prev->lineNumber;
     state->enabled = prev->enabled;
     state->filename = prev->filename;
@@ -1623,6 +1588,7 @@ static MaState *pushState(MaState *prev, cchar *block)
     } else {
         state->currentBlock = prev->currentBlock;
     }
+    state->auth = state->route->auth;
     return state;
 }
 
@@ -1634,7 +1600,6 @@ static void manageState(MaState *state, int flags)
 		mprMark(state->http);
 		mprMark(state->meta);
 		mprMark(state->host);
-		mprMark(state->dir);
 		mprMark(state->route);
 		mprMark(state->auth);
 		mprMark(state->file);
@@ -1758,7 +1723,6 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "MaxKeepAliveRequests", maxKeepAliveRequestsDirective);
     maAddDirective(appweb, "MemoryDepletionPolicy", memoryDepletionPolicyDirective);
     maAddDirective(appweb, "Methods", methodsDirective);
-    maAddDirective(appweb, "Modify", modifyDirective);
     maAddDirective(appweb, "NameVirtualHost", nameVirtualHostDirective);
     maAddDirective(appweb, "Order", orderDirective);
     maAddDirective(appweb, "Protocol", protocolDirective);
@@ -1781,9 +1745,10 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "ThreadStackSize", threadStackSizeDirective);
     maAddDirective(appweb, "TraceMethod", traceMethodDirective);
     maAddDirective(appweb, "TypesConfig", typesConfigDirective);
+    maAddDirective(appweb, "Update", updateDirective);
     maAddDirective(appweb, "UnloadModule", unloadModuleDirective);
-    maAddDirective(appweb, "UploadDir", uploadDirDirective);
     maAddDirective(appweb, "UploadAutoDelete", uploadAutoDeleteDirective);
+    maAddDirective(appweb, "UploadDir", uploadDirDirective);
     maAddDirective(appweb, "User", userDirective);
 
     maAddDirective(appweb, "<VirtualHost", virtualHostDirective);
@@ -1791,6 +1756,17 @@ int maParseInit(MaAppweb *appweb)
     return 0;
 }
 
+
+static char *getSearchPath(cchar *dir)
+{
+#if WIN
+        return sfmt("%s" MPR_SEARCH_SEP ".", dir);
+#else
+        char *libDir = mprJoinPath(mprGetPathParent(dir), BLD_LIB_NAME);
+        return sfmt("%s" MPR_SEARCH_SEP "%s" MPR_SEARCH_SEP ".", dir,
+            mprSamePath(BLD_BIN_PREFIX, dir) ? BLD_LIB_PREFIX: libDir);
+#endif
+}
 
 /*
     @copy   default

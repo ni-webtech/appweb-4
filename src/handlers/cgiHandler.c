@@ -83,7 +83,7 @@ static void startCgi(HttpQueue *q)
     rx = conn->rx;
     tx = conn->tx;
 
-    mprAssert(conn->state <= HTTP_STATE_CONTENT || rx->form || rx->upload || rx->route->flags & HTTP_LOC_AFTER);
+    mprAssert(conn->state <= HTTP_STATE_CONTENT || rx->form || rx->upload || rx->route->flags & HTTP_ROUTE_AFTER);
 
     /*
         The command uses the conn dispatcher. This serializes all I/O for both the connection and the CGI gateway
@@ -1000,12 +1000,12 @@ static int actionDirective(MaState *state, cchar *key, cchar *value)
 static int scriptAliasDirective(MaState *state, cchar *key, cchar *value)
 {
     HttpRoute   *route;
-    HttpDir     *dir, *parentDir;
     char        *prefix, *path;
 
     if (!maTokenize(state, value, "%S %S", &prefix, &path)) {
         return MPR_ERR_BAD_SYNTAX;
     }
+#if UNUSED
     /*
         Create an route with a cgiHandler and pathInfo processing
      */
@@ -1015,12 +1015,15 @@ static int scriptAliasDirective(MaState *state, cchar *key, cchar *value)
         dir = httpCreateDir(path, parentDir);
         httpAddDir(state->host, dir);
     }
+#endif
     route = httpCreateAliasRoute(state->route, prefix, path, 0);
     mprLog(4, "ScriptAlias \"%s\" for \"%s\"", prefix, path);
 
     httpSetRouteHost(route, state->host);
+#if UNUSED
     httpSetRouteAuth(route, state->dir->auth);
     httpSetRoutePattern(route, prefix);
+#endif
     httpSetRouteHandler(route, "cgiHandler");
     httpFinalizeRoute(route);
     httpAddRoute(state->host, route);

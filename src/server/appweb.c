@@ -3,7 +3,7 @@
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
 
-    usage: appweb [options] [IpAddr][:port] [documentRoot]
+    usage: appweb [options] [IpAddr][:port] [documents]
             --config configFile     # Use given config file instead 
             --debugger              # Disable timeouts to make debugging easier
             --ejs name:path         # Create an ejs application at the path
@@ -28,8 +28,8 @@ typedef struct App {
     MaAppweb    *appweb;
     MaMeta      *meta;
     char        *script;
-    char        *documentRoot;
-    char        *serverRoot;
+    char        *documents;
+    char        *home;
     char        *configFile;
     char        *pathVar;
     int         workers;
@@ -88,8 +88,8 @@ MAIN(appweb, int argc, char **argv)
     app->mpr = mpr;
     app->workers = -1;
     app->configFile = BLD_CONFIG_FILE;
-    app->serverRoot = BLD_SERVER_ROOT;
-    app->documentRoot = app->serverRoot;
+    app->home = BLD_SERVER_ROOT;
+    app->documents = app->home;
 
 #if BLD_FEATURE_ROMFS
     extern MprRomInode romFiles[];
@@ -128,9 +128,9 @@ MAIN(appweb, int argc, char **argv)
             if (argind >= argc) {
                 usageError();
             }
-            app->serverRoot = mprGetAbsPath(argv[++argind]);
-            if (chdir(app->serverRoot) < 0) {
-                mprError("%s: Can't change directory to %s", mprGetAppName(), app->serverRoot);
+            app->home = mprGetAbsPath(argv[++argind]);
+            if (chdir(app->home) < 0) {
+                mprError("%s: Can't change directory to %s", mprGetAppName(), app->home);
                 exit(4);
             }
 
@@ -181,7 +181,7 @@ MAIN(appweb, int argc, char **argv)
         }
         ipAddrPort = argv[argind++];
         if (argc > argind) {
-            app->documentRoot = sclone(argv[argind++]);
+            app->documents = sclone(argv[argind++]);
         }
         mprParseIp(ipAddrPort, &ip, &port, HTTP_DEFAULT_PORT);
         
@@ -215,11 +215,11 @@ static void manageApp(App *app, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(app->configFile);
-        mprMark(app->documentRoot);
+        mprMark(app->documents);
         mprMark(app->pathVar);
         mprMark(app->script);
         mprMark(app->meta);
-        mprMark(app->serverRoot);
+        mprMark(app->home);
     }
 }
 
@@ -230,8 +230,8 @@ static void manageApp(App *app, int flags)
 static int changeRoot(cchar *jail)
 {
 #if BLD_UNIX_LIKE
-    if (chdir(app->serverRoot) < 0) {
-        mprError("%s: Can't change directory to %s", mprGetAppName(), app->serverRoot);
+    if (chdir(app->home) < 0) {
+        mprError("%s: Can't change directory to %s", mprGetAppName(), app->home);
         return MPR_ERR_CANT_INITIALIZE;
     }
     if (chroot(jail) < 0) {
@@ -253,11 +253,11 @@ static int initialize(cchar *ip, int port)
         mprUserError("Can't create HTTP service for %s", mprGetAppName());
         return MPR_ERR_CANT_CREATE;
     }
-    if ((app->meta = maCreateMeta(app->appweb, "default", NULL, NULL, -1)) == 0) {
+    if ((app->meta = maCreateMeta(app->appweb, "default", 0, 0, 0, -1)) == 0) {
         mprUserError("Can't create HTTP server for %s", mprGetAppName());
         return MPR_ERR_CANT_CREATE;
     }
-    if (maConfigureMeta(app->meta, app->configFile, app->serverRoot, app->documentRoot, ip, port) < 0) {
+    if (maConfigureMeta(app->meta, app->configFile, app->home, app->documents, ip, port) < 0) {
         /* mprUserError("Can't configure the server, exiting."); */
         return MPR_ERR_CANT_CREATE;
     }
@@ -307,7 +307,7 @@ static void usageError(Mpr *mpr)
     name = mprGetAppName();
 
     mprPrintfError("\n%s Usage:\n\n"
-    "  %s [options] [IPaddress][:port] [documentRoot]\n\n"
+    "  %s [options] [IPaddress][:port] [documents]\n\n"
     "  Options:\n"
     "    --config configFile    # Use named config file instead appweb.conf\n"
     "    --chroot directory     # Change root directory to run more securely (Unix)\n"

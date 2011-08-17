@@ -153,7 +153,7 @@ typedef struct MaMeta {
     HttpLimits      *limits;                /**< Limits for this server */
     MprList         *servers;               /**< List of HttpServers */
     struct HttpHost *defaultHost;           /**< Primary host */
-    char            *serverRoot;            /**< Server root */
+    char            *home;                  /**< Server root */
     bool            alreadyLogging;         /**< Already logging */
 } MaMeta;
 
@@ -193,11 +193,12 @@ extern int maRunWebServer(cchar *configFile);
         exposes the Http object.
     @param ip IP address on which to listen. Set to "0.0.0.0" to listen on all interfaces.
     @param port Port number to listen to
-    @param docRoot Directory containing the documents to serve.
+    @param home Home directory for the web server
+    @param documents Directory containing the documents to serve.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
     @ingroup MaMeta
  */
-extern int maRunSimpleWebServer(cchar *ip, int port, cchar *docRoot);
+extern int maRunSimpleWebServer(cchar *ip, int port, cchar *home, cchar *documents);
 
 /** Create an MaMeta object
     @description Create new MaMeta object. This routine creates a bare MaMeta object, loads any required static
@@ -213,7 +214,7 @@ extern int maRunSimpleWebServer(cchar *ip, int port, cchar *docRoot);
     @return MaMeta A newly created MaMeta object. Use mprFree to free and release.
     @ingroup MaMeta
  */
-extern MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *root, cchar *ip, int port);
+extern MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *home, cchar *documents, cchar *ip, int port);
 
 /** 
     Configure a web server.
@@ -221,20 +222,20 @@ extern MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *root, cchar *i
         IP address and port. 
     @param meta MaMeta object created via #maCreateMeta
     @param configFile File name of the Appweb configuration file (appweb.conf) that defines the web server configuration.
-    @param serverRoot Admin directory for the server. This overrides the value in the config file.
-    @param documentRoot Default directory for web documents to serve. This overrides the value in the config file.
+    @param home Admin directory for the server. This overrides the value in the config file.
+    @param documents Default directory for web documents to serve. This overrides the value in the config file.
     @param ip IP address to listen on. This overrides the value specified in the config file.
     @param port Port address to listen on. This overrides the value specified in the config file.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
     @ingroup MaMeta
  */
-extern int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *serverRoot, cchar *documentRoot, cchar *ip, int port);
+extern int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *home, cchar *documents, cchar *ip, int port);
 
 extern void     maAddServer(MaMeta *meta, HttpServer *server);
 extern int      maGetConfigValue(char **arg, char *buf, char **nextToken, int quotes);
 extern int      maParseConfig(MaMeta *meta, cchar *configFile);
 extern void     maSetMetaAddress(MaMeta *meta, cchar *ip, int port);
-extern void     maSetMetaRoot(MaMeta *meta, cchar *path);
+extern void     maSetMetaHome(MaMeta *meta, cchar *path);
 extern int      maSplitConfigValue(char **s1, char **s2, char *buf, int quotes);
 
 /**
@@ -244,7 +245,7 @@ extern int      maSplitConfigValue(char **s1, char **s2, char *buf, int quotes);
 extern int      maStartMeta(MaMeta *meta);
 extern int      maStopMeta(MaMeta *meta);
 extern int      maValidateConfiguration(MaMeta *meta);
-extern void     maCreateMetaDefaultHost(MaMeta *meta);
+extern HttpHost *maCreateDefaultHost(MaMeta *meta);
 
 
 #if UNUSED
@@ -256,7 +257,6 @@ extern void     maNotifyServerStateChange(HttpConn *conn, int state, int notifyF
 extern HttpHostAddress *maRemoveHostFromHostAddress(MaMeta *meta, cchar *ip, int port, struct HttpHost *host);
 extern void     maSetMetaDefaultHost(MaMeta *meta, struct HttpHost *host);
 extern void     maSetMetaDefaultIndex(MaMeta *meta, cchar *path, cchar *filename);
-extern void     maSetDocumentRoot(MaMeta *meta, cchar *path);
 #endif
 
 /************************************* Auth *********************************/
@@ -369,9 +369,8 @@ typedef struct MaState {
     Http        *http;
     MaMeta      *meta;                  /**< Current meta-server */
     HttpHost    *host;                  /**< Current host */
-    HttpDir     *dir;                   /**< Current directory block */
+    HttpAuth    *auth;                  /**< Quick alias for route->auth */
     HttpRoute   *route;                 /**< Current route */
-    HttpAuth    *auth;                  /**< Current auth object */
     MprFile     *file;                  /**< Config file handle */
     HttpLimits  *limits;                /**< Current limits (host->limits) */
     char        *configDir;             /**< Directory containing config file */
@@ -395,7 +394,7 @@ extern int          maStartLogging(HttpHost *host, cchar *logSpec);
 extern void         maSetLogHost(HttpHost *host, HttpHost *logHost);
 extern int          maStartAccessLogging(HttpHost *host);
 extern int          maStopAccessLogging(HttpHost *host);
-extern int          maTokenize(MaState *state, cchar *line, cchar *fmt, ...);
+extern bool         maTokenize(MaState *state, cchar *line, cchar *fmt, ...);
 
 typedef int         (MaDirective)(MaState *state, cchar *key, cchar *value);
 

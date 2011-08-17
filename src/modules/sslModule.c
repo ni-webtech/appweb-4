@@ -35,7 +35,7 @@ static int listenSecureDirective(MaState *state, cchar *key, cchar *value)
 static int sslCaCertificatePathDirective(MaState *state, cchar *key, cchar *value)
 {
     checkSsl(state);
-    mprSetSslCaPath(state->route->ssl, mprJoinPath(state->host->serverRoot, value));
+    mprSetSslCaPath(state->route->ssl, mprJoinPath(state->host->home, value));
     return 0;
 }
 
@@ -43,7 +43,7 @@ static int sslCaCertificatePathDirective(MaState *state, cchar *key, cchar *valu
 static int sslCaCertificateFileDirective(MaState *state, cchar *key, cchar *value)
 {
     checkSsl(state);
-    mprSetSslCaFile(state->route->ssl, mprJoinPath(state->host->serverRoot, value));
+    mprSetSslCaFile(state->route->ssl, mprJoinPath(state->host->home, value));
     return 0;
 }
 
@@ -51,7 +51,7 @@ static int sslCaCertificateFileDirective(MaState *state, cchar *key, cchar *valu
 static int sslCertificateFileDirective(MaState *state, cchar *key, cchar *value)
 {
     checkSsl(state);
-    mprSetSslCertFile(state->route->ssl, mprJoinPath(state->host->serverRoot, value));
+    mprSetSslCertFile(state->route->ssl, mprJoinPath(state->host->home, value));
     return 0;
 }
 
@@ -59,7 +59,7 @@ static int sslCertificateFileDirective(MaState *state, cchar *key, cchar *value)
 static int sslCertificateKeyFileDirective(MaState *state, cchar *key, cchar *value)
 {
     checkSsl(state);
-    mprSetSslKeyFile(state->route->ssl, mprJoinPath(state->host->serverRoot, value));
+    mprSetSslKeyFile(state->route->ssl, mprJoinPath(state->host->home, value));
     return 0;
 }
 
