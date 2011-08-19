@@ -184,7 +184,7 @@ static void sortList(HttpConn *conn, MprList *list)
 
     count = mprGetListLength(list);
     items = (MprDirEntry**) list->items;
-    if (scasecmp(dir->sortField, "Name") == 0) {
+    if (scasematch(dir->sortField, "Name")) {
         for (i = 1; i < count; i++) {
             for (j = 0; j < i; j++) {
                 rc = strcmp(items[i]->name, items[j]->name);
@@ -204,7 +204,7 @@ static void sortList(HttpConn *conn, MprList *list)
             }
         }
 
-    } else if (scasecmp(dir->sortField, "Size") == 0) {
+    } else if (scasematch(dir->sortField, "Size")) {
         for (i = 1; i < count; i++) {
             for (j = 0; j < i; j++) {
                 rc = (items[i]->size < items[j]->size) ? -1 : 1;
@@ -224,7 +224,7 @@ static void sortList(HttpConn *conn, MprList *list)
             }
         }
 
-    } else if (scasecmp(dir->sortField, "Date") == 0) {
+    } else if (scasematch(dir->sortField, "Date")) {
         for (i = 1; i < count; i++) {
             for (j = 0; j < i; j++) {
                 rc = (items[i]->lastModified < items[j]->lastModified) ? -1: 1;
@@ -384,7 +384,7 @@ static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *path, int nameSize)
         dirSuffix = "/";
     } else {
         host = httpGetConnHost(q->conn);
-        ext = mprGetPathExtension(ep->name);
+        ext = mprGetPathExt(ep->name);
         if (ext && (mimeType = mprLookupMime(host->mimeTypes, ext)) != 0) {
             if (strcmp(ext, "es") == 0 || strcmp(ext, "ejs") == 0 || strcmp(ext, "php") == 0) {
                 icon = "text";
@@ -550,10 +550,10 @@ static int indexOrderDirective(MaState *state, cchar *key, cchar *value)
     dir = getDir();
     dir->sortField = 0;
 
-    if (!maTokenize(state, value, "%S %field", &option, &dir->sortField)) {
+    if (!maTokenize(state, value, "%S %S", &option, &dir->sortField)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if (scasesame(option, "ascending")) {
+    if (scasematch(option, "ascending")) {
         dir->sortOrder = 1;
     } else {
         dir->sortOrder = -1;
@@ -576,11 +576,11 @@ static int indexOptionsDirective(MaState *state, cchar *key, cchar *value)
     dir = getDir();
     option = stok(sclone(value), " \t", &tok);
     while (option) {
-        if (scasesame(option, "FancyIndexing")) {
+        if (scasematch(option, "FancyIndexing")) {
             dir->fancyIndexing = 1;
-        } else if (scasesame(option, "HTMLTable")) {
+        } else if (scasematch(option, "HTMLTable")) {
             dir->fancyIndexing = 2;
-        } else if (scasesame(option, "FoldersFirst")) {
+        } else if (scasematch(option, "FoldersFirst")) {
             dir->foldersFirst = 1;
         }
         option = stok(tok, " \t", &tok);
@@ -600,7 +600,7 @@ static int optionsDirective(MaState *state, cchar *key, cchar *value)
     dir = getDir();
     option = stok(sclone(value), " \t", &tok);
     while (option) {
-        if (scasesame(option, "Indexes")) {
+        if (scasematch(option, "Indexes")) {
             dir->enabled = 1;
         }
         option = stok(tok, " \t", &tok);

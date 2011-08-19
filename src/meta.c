@@ -128,7 +128,7 @@ static void manageMeta(MaMeta *meta, int flags)
         mprMark(meta->http);
         mprMark(meta->name);
         mprMark(meta->home);
-        mprMark(meta->servers);
+        mprMark(meta->endpoints);
 
     } else if (flags & MPR_MANAGE_FREE) {
         maStopMeta(meta);
@@ -143,9 +143,9 @@ static void manageMeta(MaMeta *meta, int flags)
  */
 MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *home, cchar *documents, cchar *ip, int port)
 {
-    MaMeta      *meta;
-    HttpServer  *server;
-    HttpHost    *host;
+    MaMeta          *meta;
+    HttpEndpoint    *endpoint;
+    HttpHost        *host;
 
     mprAssert(appweb);
     mprAssert(name && *name);
@@ -154,7 +154,7 @@ MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *home, cchar *document
         return 0;
     }
     meta->name = sclone(name);
-    meta->servers = mprCreateList(-1, 0);
+    meta->endpoints = mprCreateList(-1, 0);
     meta->limits = httpCreateLimits(1);
     meta->appweb = appweb;
     meta->http = appweb->http;
@@ -172,9 +172,9 @@ MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *home, cchar *document
 
     if (ip && port > 0) {
         /* Passing NULL for the dispatcher will cause a new dispatcher to be created for each accepted connection */
-        server = httpCreateServer(ip, port, NULL, 0);
-        httpAddHostToServer(server, host);
-        maAddServer(meta, server);
+        endpoint = httpCreateEndpoint(ip, port, NULL);
+        httpAddHostToEndpoint(endpoint, host);
+        maAddEndpoint(meta, endpoint);
     }
     maSetDefaultMeta(appweb, meta);
     maAddMeta(appweb, meta);
@@ -196,20 +196,20 @@ HttpHost *maCreateDefaultHost(MaMeta *meta)
 
 int maStartMeta(MaMeta *meta)
 {
-    HttpServer  *server;
-    HttpHost    *host;
-    int         next, nextHost, count, warned;
+    HttpEndpoint    *endpoint;
+    HttpHost        *host;
+    int             next, nextHost, count, warned;
 
     warned = 0;
     count = 0;
-    for (next = 0; (server = mprGetNextItem(meta->servers, &next)) != 0; ) {
-        if (httpStartServer(server) < 0) {
+    for (next = 0; (endpoint = mprGetNextItem(meta->endpoints, &next)) != 0; ) {
+        if (httpStartEndpoint(endpoint) < 0) {
             warned++;
             break;
         } else {
             count++;
         }
-        for (nextHost = 0; (host = mprGetNextItem(server->hosts, &nextHost)) != 0; ) {
+        for (nextHost = 0; (host = mprGetNextItem(endpoint->hosts, &nextHost)) != 0; ) {
             mprLog(3, "Serving %s", host->name);
         }
     }
@@ -228,25 +228,25 @@ int maStartMeta(MaMeta *meta)
 
 int maStopMeta(MaMeta *meta)
 {
-    HttpServer  *server;
-    int         next;
+    HttpEndpoint    *endpoint;
+    int             next;
 
-    for (next = 0; (server = mprGetNextItem(meta->servers, &next)) != 0; ) {
-        httpStopServer(server);
+    for (next = 0; (endpoint = mprGetNextItem(meta->endpoints, &next)) != 0; ) {
+        httpStopEndpoint(endpoint);
     }
     return 0;
 }
 
 
-void maAddServer(MaMeta *meta, HttpServer *server)
+void maAddEndpoint(MaMeta *meta, HttpEndpoint *endpoint)
 {
-    mprAddItem(meta->servers, server);
+    mprAddItem(meta->endpoints, endpoint);
 }
 
 
-void maRemoveServer(MaMeta *meta, HttpServer *server)
+void maRemoveEndpoint(MaMeta *meta, HttpEndpoint *endpoint)
 {
-    mprRemoveItem(meta->servers, server);
+    mprRemoveItem(meta->endpoints, endpoint);
 }
 
 
@@ -286,11 +286,11 @@ void maSetMetaHome(MaMeta *meta, cchar *path)
  */
 void maSetMetaAddress(MaMeta *meta, cchar *ip, int port)
 {
-    HttpServer  *server;
-    int         next;
+    HttpEndpoint    *endpoint;
+    int             next;
 
-    for (next = 0; ((server = mprGetNextItem(meta->servers, &next)) != 0); ) {
-        httpSetServerAddress(server, ip, port);
+    for (next = 0; ((endpoint = mprGetNextItem(meta->endpoints, &next)) != 0); ) {
+        httpSetEndpointAddress(endpoint, ip, port);
     }
 }
 

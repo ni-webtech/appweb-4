@@ -14548,13 +14548,16 @@ char *mprGetPathLink(cchar *path)
     Return the extension portion of a pathname.
     Return the extension without the "."
  */
-char *mprGetPathExtension(cchar *path)
+char *mprGetPathExt(cchar *path)
 {
     MprFileSystem  *fs;
     char            *cp;
 
     if ((cp = srchr(path, '.')) != NULL) {
         fs = mprLookupFileSystem(path);
+        /*
+            If there is no separator ("/") after the extension, then use it.
+         */
         if (firstSep(fs, cp) == 0) {
             return sclone(++cp);
         }
@@ -15444,11 +15447,10 @@ ssize mprWritePath(cchar *path, cchar *buf, ssize len, int mode)
 
 
 
-//  MOB - should be TrimPathExt
 /*
     Return the extension portion of a pathname.
  */
-char *mprTrimPathExtension(cchar *path)
+char *mprTrimPathExt(cchar *path)
 {
     MprFileSystem   *fs;
     char            *cp, *ext;
@@ -19698,6 +19700,19 @@ char *itos(char *buf, ssize count, int64 value, int radix)
 }
 
 
+bool snumber(cchar *token)
+{
+    cchar   *cp;
+
+    for (cp = token; *cp; cp++) {
+        if (!isdigit((int) *cp)) {
+            return 0;
+        }
+    }
+    return 1;
+} 
+
+
 char *schr(cchar *s, int c)
 {
     if (s == 0) {
@@ -19724,7 +19739,7 @@ int scasecmp(cchar *s1, cchar *s2)
 }
 
 
-bool scasesame(cchar *s1, cchar *s2)
+bool scasematch(cchar *s1, cchar *s2)
 {
     return scasecmp(s1, s2) == 0;
 }
@@ -19998,7 +20013,7 @@ ssize slen(cchar *s)
 
 
 /*  
-    Map a string to lower case. Allocates a new string 
+    Map a string to lower case. Allocates a new string.
  */
 char *slower(cchar *str)
 {
@@ -20016,6 +20031,12 @@ char *slower(cchar *str)
         str = s;
     }
     return (char*) str;
+}
+
+
+bool smatch(cchar *s1, cchar *s2)
+{
+    return scmp(s1, s2) == 0;
 }
 
 
@@ -20231,12 +20252,6 @@ char *sreplace(cchar *str, cchar *pattern, cchar *replacement)
 }
 
 
-bool ssame(cchar *s1, cchar *s2)
-{
-    return scmp(s1, s2) == 0;
-}
-
-
 ssize sspn(cchar *str, cchar *set)
 {
 #if KEEP
@@ -20420,7 +20435,7 @@ char *ssub(cchar *str, ssize offset, ssize len)
 
 
 /*
-    Returns a newly allocated string
+    Trim characters from the given set. Returns a newly allocated string.
  */
 char *strim(cchar *str, cchar *set, int where)
 {
@@ -23969,19 +23984,6 @@ static int getNumOrSym(char **token, int sep, int kind, int *isAlpah)
 }
 
 
-static bool allDigits(cchar *token)
-{
-    cchar   *cp;
-
-    for (cp = token; *cp; cp++) {
-        if (!isdigit((int) *cp)) {
-            return 0;
-        }
-    }
-    return 1;
-} 
-
-
 static void swapDayMonth(struct tm *tp)
 {
     int     tmp;
@@ -24046,7 +24048,7 @@ int mprParseTime(MprTime *time, cchar *dateString, int zoneFlags, struct tm *def
     token = stok(str, sep, &next);
 
     while (token && *token) {
-        if (allDigits(token)) {
+        if (snumber(token)) {
             /*
                 Parse either day of month or year. Priority to day of month. Format: <29> Jan <15> <2011>
              */ 

@@ -83,7 +83,7 @@ static void startCgi(HttpQueue *q)
     rx = conn->rx;
     tx = conn->tx;
 
-    mprAssert(conn->state <= HTTP_STATE_CONTENT || rx->form || rx->upload || rx->route->flags & HTTP_ROUTE_AFTER);
+    mprAssert(conn->state <= HTTP_STATE_CONTENT || rx->form || rx->upload || rx->route->flags & HTTP_ROUTE_HANDLER_AFTER);
 
     /*
         The command uses the conn dispatcher. This serializes all I/O for both the connection and the CGI gateway
@@ -1040,7 +1040,7 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     MaAppweb    *appweb;
 
     handler = httpCreateHandler(http, "cgiHandler", 
-        HTTP_STAGE_QUERY_VARS | HTTP_STAGE_CGI_VARS | HTTP_STAGE_EXTRA_PATH | HTTP_STAGE_MISSING_EXT, module);
+        HTTP_STAGE_QUERY_VARS | HTTP_STAGE_CGI_VARS | HTTP_STAGE_EXTRA_PATH, module);
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }

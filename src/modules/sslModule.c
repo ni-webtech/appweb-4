@@ -77,12 +77,12 @@ static int sslDirective(MaState *state, cchar *key, cchar *value)
     char    *provider;
     bool    on;
 
-    if (!maTokenize(state, value, "%B %S", &on, &provider)) {
+    if (!maTokenize(state, value, "%B ?S", &on, &provider)) {
         return MPR_ERR_BAD_SYNTAX;
     }
     if (on) {
-        if (httpSecureServerByName(state->host->name, state->route->ssl) < 0) {
-            mprError("No HttpServer at %s to secure", state->host->name);
+        if (httpSecureEndpointByName(state->host->name, state->route->ssl) < 0) {
+            mprError("No HttpEndpoint at %s to secure", state->host->name);
             return MPR_ERR_BAD_STATE;
         }
     }

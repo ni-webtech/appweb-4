@@ -12,6 +12,7 @@
 
 /********************************* Tunables ***********************************/
 
+#define MA_UNLOAD_TIMEOUT       300             /**< Default module inactivity unload timeout */
 #define MA_MAX_CONFIG_DEPTH     16              /**< Max nest of directives in config file */
 #define MA_MAX_ACCESS_LOG       20971520        /**< Access file size (20 MB) */
 #define MA_MAX_REWRITE          10              /**< Maximum recursive URI rewrites */
@@ -151,7 +152,7 @@ typedef struct MaMeta {
     MaAppweb        *appweb;                /**< Appweb control object */
     Http            *http;                  /**< Http service object (copy of appweb->http) */
     HttpLimits      *limits;                /**< Limits for this server */
-    MprList         *servers;               /**< List of HttpServers */
+    MprList         *endpoints;             /**< List of HttpEndpoints */
     struct HttpHost *defaultHost;           /**< Primary host */
     char            *home;                  /**< Server root */
     bool            alreadyLogging;         /**< Already logging */
@@ -207,7 +208,7 @@ extern int maRunSimpleWebServer(cchar *ip, int port, cchar *home, cchar *documen
         If you want a one-line embedding of Appweb, use #maRunWebServer or #maRunSimpleWebServer.
     @param appweb Http object returned from #maCreateAppweb
     @param name Name of the web server. This name is used as the initial server name.
-    @param root Server root directory
+    @param home Server home directory
     @param ip If not-null, create and open a listening endpoint on this IP address. If you are configuring via a
         config file, use #maConfigureMeta and set ip to null.
     @param port Port number to listen on. Set to -1 if you do not want to open a listening endpoint on ip:port
@@ -231,7 +232,7 @@ extern MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *home, cchar *d
  */
 extern int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *home, cchar *documents, cchar *ip, int port);
 
-extern void     maAddServer(MaMeta *meta, HttpServer *server);
+extern void     maAddEndpoint(MaMeta *meta, HttpEndpoint *server);
 extern int      maGetConfigValue(char **arg, char *buf, char **nextToken, int quotes);
 extern int      maParseConfig(MaMeta *meta, cchar *configFile);
 extern void     maSetMetaAddress(MaMeta *meta, cchar *ip, int port);
@@ -373,9 +374,9 @@ typedef struct MaState {
     HttpRoute   *route;                 /**< Current route */
     MprFile     *file;                  /**< Config file handle */
     HttpLimits  *limits;                /**< Current limits (host->limits) */
+    char        *key;                   /**< Current directive being parsed */
     char        *configDir;             /**< Directory containing config file */
     char        *filename;              /**< Config file name */
-    char        *currentBlock;          /**< Current block directive */
     int         lineNumber;             /**< Current line number */
     int         enabled;                /**< True if the current block is enabled */
     struct MaState *prev;
@@ -386,6 +387,8 @@ extern HttpRoute *maCreateLocationAlias(Http *http, MaState *state, cchar *prefi
         cchar *handlerName, int flags);
 
 extern char         *maMakePath(HttpHost *host, cchar *file);
+extern MaState      *maPopState(MaState *state);
+extern MaState      *maPushState(MaState *state, cchar *block);
 extern char         *maReplaceReferences(HttpHost *host, cchar *str);
 extern void         maRotateLog(cchar *path, int count, int maxSize);
 extern void         maSetAccessLog(HttpHost *host, cchar *path, cchar *format);

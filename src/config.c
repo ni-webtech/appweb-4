@@ -9,15 +9,12 @@
 
 /***************************** Forward Declarations ****************************/
 
-static bool closingBlock(MaState *state, cchar *key);
 static bool conditionalDefinition(cchar *key);
 static int configError(MaState *state, cchar *key);
 static MaState *createState(MaMeta *meta);
 static char *getSearchPath(cchar *dir);
 static void manageState(MaState *state, int flags);
 static int parseFile(MaState *state, cchar *path);
-static MaState *popState(MaState *state);
-static MaState *pushState(MaState *state, cchar *block);
 
 /******************************************************************************/
 /*
@@ -27,7 +24,7 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *home, cchar *documen
 {
     MaAppweb        *appweb;
     Http            *http;
-    HttpServer      *server;
+    HttpEndpoint    *endpoint;
     HttpHost        *host;
     HttpRoute       *route, *cgiRoute;
     char            *path, *searchPath, *dir;
@@ -46,11 +43,11 @@ int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *home, cchar *documen
 
     } else {
         mprLog(2, "DocumentRoot %s", documents);
-        if ((server = httpCreateConfiguredServer(home, documents, ip, port)) == 0) {
+        if ((endpoint = httpCreateConfiguredEndpoint(home, documents, ip, port)) == 0) {
             return MPR_ERR_CANT_OPEN;
         }
-        maAddServer(meta, server);
-        host = meta->defaultHost = mprGetFirstItem(server->hosts);
+        maAddEndpoint(meta, endpoint);
+        host = meta->defaultHost = mprGetFirstItem(endpoint->hosts);
         mprAssert(host);
 
         route = host->route;
@@ -124,6 +121,7 @@ int maParseConfig(MaMeta *meta, cchar *path)
     if (!maValidateConfiguration(meta)) {
         return MPR_ERR_BAD_ARGS;
     }
+    httpFinalizeRoute(state->route);
     if (mprHasMemError()) {
         mprError("Memory allocation error when initializing");
         return MPR_ERR_MEMORY;
@@ -137,7 +135,7 @@ static int parseFile(MaState *state, cchar *path)
     MaDirective     *directive;
     char            *line, *tok, *key, *value;
 
-    if ((state = pushState(state, 0)) == 0) {
+    if ((state = maPushState(state, 0)) == 0) {
         return 0;
     }
     if (maOpenConfig(state, path) < 0) {
@@ -148,18 +146,23 @@ static int parseFile(MaState *state, cchar *path)
         if (*tok == '\0' || *tok == '#') {
             continue;
         }
-        if (!maTokenize(state, line, "%S %*", &key, &value)) {
+        state->key = 0;
+        if (!maTokenize(state, line, "%D ?*", &key, &value)) {
             break;
         }
-        if (!state->enabled && !closingBlock(state, key)) {
-            mprLog(8, "Skipping key %s at %s:%d", key, state->filename, state->lineNumber);
+        if (!state->enabled && key[0] != '<') {
+            //MOB 8
+            mprLog(0, "Skip: %s %s", key, value);
             continue;
         }
         if ((directive = mprLookupKey(state->appweb->directives, key)) == 0) {
             mprError("Unknown directive \"%s\"\nAt line %d in %s\n\n", key, state->lineNumber, state->filename);
             return MPR_ERR_BAD_SYNTAX;
         }
+        state->key = key;
+        mprLog(0, "Parse %s %s", key, value ? value : "");
         if ((*directive)(state, key, value) < 0) {
+            mprError("Bad directive \"%s\"\nAt line %d in %s\n\n", key, state->lineNumber, state->filename);
             return MPR_ERR_BAD_SYNTAX;
         }
         state = state->currentState;
@@ -178,6 +181,10 @@ static int parseFile(MaState *state, cchar *path)
 }
 
 
+/*
+    AccessLog path
+    TODO MOB: AccessLog conf/log.conf append,rotate,limit=10K
+ */
 static int accessLogDirective(MaState *state, cchar *key, cchar *value)
 {
 #if !BLD_FEATURE_ROMFS
@@ -194,48 +201,68 @@ static int accessLogDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    AddFilter filter [ext ext ext ...]
+ */
 static int addFilterDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *name, *extensions;
+    char    *filter, *extensions;
 
-    if (!maTokenize(state, value, "%S %*", &name, &extensions)) {
+    if (!maTokenize(state, value, "%S ?*", &filter, &extensions)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if (httpAddRouteFilter(state->route, name, extensions, HTTP_STAGE_RX | HTTP_STAGE_TX) < 0) {
-        mprError("Can't add filter %s", name);
+    if (httpAddRouteFilter(state->route, filter, extensions, HTTP_STAGE_RX | HTTP_STAGE_TX) < 0) {
+        mprError("Can't add filter %s", filter);
         return MPR_ERR_CANT_CREATE;
     }
     return 0;
 }
 
 
+/*
+    AddInputFilter filter [ext ext ext ...]
+ */
 static int addInputFilterDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *name, *extensions;
+    char    *filter, *extensions;
 
-    if (!maTokenize(state, value, "%S %*", &name, &extensions)) {
+    if (!maTokenize(state, value, "%S ?*", &filter, &extensions)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if (httpAddRouteFilter(state->route, name, extensions, HTTP_STAGE_RX) < 0) {
-        mprError("Can't add filter %s", name);
+    if (httpAddRouteFilter(state->route, filter, extensions, HTTP_STAGE_RX) < 0) {
+        mprError("Can't add filter %s", filter);
         return MPR_ERR_CANT_CREATE;
     }
     return 0;
 }
 
 
+/*
+    AddLanguage lang ext position
+    AddLanguage en .en before
+ */
 static int addLanguageDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *lang, *path, *position;
+    char    *lang, *ext, *position;
+    int     flags;
 
-    if (!maTokenize(state, value, "%S %P %S", &lang, &path, position)) {
+    if (!maTokenize(state, value, "%S %S ?S", &lang, &ext, &position)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    httpAddRouteLanguage(state->route, lang, path, scasecmp(position, "after") == 0 ? HTTP_LANG_AFTER : HTTP_LANG_BEFORE);
+    flags = 0;
+    if (scasematch(position, "after")) {
+        flags |= HTTP_LANG_AFTER;
+    } else if (scasematch(position, "before")) {
+        flags |= HTTP_LANG_BEFORE;
+    }
+    httpAddRouteLanguage(state->route, lang, ext, flags);
     return 0;
 }
 
 
+/*
+    AddLanguageRoot lang path
+ */
 static int addLanguageRootDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *lang, *path;
@@ -248,48 +275,60 @@ static int addLanguageRootDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    AddOutputFilter filter [ext ext ...]
+ */
 static int addOutputFilterDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *name, *extensions;
+    char    *filter, *extensions;
 
-    if (!maTokenize(state, value, "%S %*", &name, &extensions)) {
+    if (!maTokenize(state, value, "%S ?*", &filter, &extensions)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if (httpAddRouteFilter(state->route, name, extensions, HTTP_STAGE_TX) < 0) {
-        mprError("Can't add filter %s", name);
+    if (httpAddRouteFilter(state->route, filter, extensions, HTTP_STAGE_TX) < 0) {
+        mprError("Can't add filter %s", filter);
         return MPR_ERR_CANT_CREATE;
     }
     return 0;
 }
 
 
+/*
+    AddHandler handler [ext ext ...]
+ */
 static int addHandlerDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *name, *extensions;
+    char    *handler, *extensions;
 
-    if (!maTokenize(state, value, "%S %*", &name, &extensions)) {
+    if (!maTokenize(state, value, "%S ?*", &handler, &extensions)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if (httpAddRouteHandler(state->route, name, extensions) < 0) {
-        mprError("Can't add handler %s", name);
+    if (httpAddRouteHandler(state->route, handler, extensions) < 0) {
+        mprError("Can't add handler %s", handler);
         return MPR_ERR_CANT_CREATE;
     }
     return 0;
 }
 
 
+/*
+    AddType mimeType ext
+ */
 static int addTypeDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *name, *mimeType;
+    char    *ext, *mimeType;
 
-    if (!maTokenize(state, value, "%S %S", &name, &mimeType)) {
+    if (!maTokenize(state, value, "%S %S", &mimeType, &ext)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    mprAddMime(state->host->mimeTypes, name, mimeType);
+    mprAddMime(state->host->mimeTypes, mimeType, ext);
     return 0;
 }
 
 
+/*
+    Alias /uriPrefix /path
+ */
 static int aliasDirective(MaState *state, cchar *key, cchar *value)
 {
     HttpRoute   *alias;
@@ -305,6 +344,9 @@ static int aliasDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    Allow
+ */
 static int allowDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *from, *spec;
@@ -313,10 +355,13 @@ static int allowDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_BAD_SYNTAX;
     }
     httpSetAuthAllow(state->auth, spec);
-    return 0;
+    return httpAddRouteCondition(state->route, "allow", 0);
 }
 
 
+/*
+    AuthGroupFile path
+ */
 static int authGroupFileDirective(MaState *state, cchar *key, cchar *value)
 {
 #if BLD_FEATURE_AUTH_FILE
@@ -336,6 +381,9 @@ static int authGroupFileDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    AuthMethod pam|file
+ */
 static int authMethodDirective(MaState *state, cchar *key, cchar *value)
 {
     if (scasecmp(value, "pam") == 0) {
@@ -349,7 +397,20 @@ static int authMethodDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    AuthName realm
+ */
 static int authNameDirective(MaState *state, cchar *key, cchar *value)
+{
+    httpSetAuthRealm(state->auth, value);
+    return 0;
+}
+
+
+/*
+    AuthType basic|digest|none
+ */
+static int authTypeDirective(MaState *state, cchar *key, cchar *value)
 {
     if (scasecmp(value, "Basic") == 0) {
         state->auth->type = HTTP_AUTH_BASIC;
@@ -361,17 +422,14 @@ static int authNameDirective(MaState *state, cchar *key, cchar *value)
         mprError("Unsupported authorization protocol");
         return MPR_ERR_BAD_SYNTAX;
     }
+    httpAddRouteCondition(state->route, "auth", 0);
     return 0;
 }
 
 
-static int authRealmDirective(MaState *state, cchar *key, cchar *value)
-{
-    httpSetAuthRealm(state->auth, value);
-    return 0;
-}
-
-
+/*
+    AuthUserFile path
+ */
 static int authUserFileDirective(MaState *state, cchar *key, cchar *value)
 {
 #if BLD_FEATURE_AUTH_FILE
@@ -390,9 +448,12 @@ static int authUserFileDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    AuthDigestQop none|auth|auth-int
+ */
 static int authDigestQopDirective(MaState *state, cchar *key, cchar *value)
 {
-    if (!scasesame(value, "none") && !scasesame(value, "auth") && !scasesame(value, "auth-int")) {
+    if (!scasematch(value, "none") && !scasematch(value, "auth") && !scasematch(value, "auth-int")) {
         return MPR_ERR_BAD_SYNTAX;
     }
     httpSetAuthQop(state->auth, value);
@@ -400,7 +461,25 @@ static int authDigestQopDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
-static int cacheByTypeDirective(MaState *state, cchar *key, cchar *value)
+/*
+    ClientCache timeout ext ...
+ */
+static int clientCacheDirective(MaState *state, cchar *key, cchar *value)
+{
+    char    *when, *extensions;
+
+    if (!maTokenize(state, value, "%S %*", &when, &extensions)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    httpAddRouteExpiry(state->route, (MprTime) stoi(when, 10, NULL), extensions);
+    return 0;
+}
+
+
+/*
+    ClientCacheByType timeout mimeTypes ...
+ */
+static int clientCacheByTypeDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *when, *mimeTypes;
 
@@ -412,18 +491,9 @@ static int cacheByTypeDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
-static int clientCacheDirective(MaState *state, cchar *key, cchar *value)
-{
-    char    *when, *extensions;
-
-    if (!maTokenize(state, value, "%S %S", &when, &extensions)) {
-        return MPR_ERR_BAD_SYNTAX;
-    }
-    httpAddRouteExpiry(state->route, (MprTime) stoi(when, 10, NULL), extensions);
-    return 0;
-}
-
-
+/*
+    Chroot path
+ */
 static int chrootDirective(MaState *state, cchar *key, cchar *value)
 {
 #if BLD_UNIX_LIKE
@@ -450,34 +520,68 @@ static int chrootDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
-static int closeRouteDirective(MaState *state, cchar *key, cchar *value)
+/*
+    </Route>, </Directory>, </VirtualHost>, </If>
+ */
+static int closeDirective(MaState *state, cchar *key, cchar *value)
 {
+    /*
+        The order of route finalization will be from the inside. Route finalization causes the route to be added
+        to the enclosing host. This ensures that nested routes are defined BEFORE outer/enclosing routes.
+     */
     if (state->route != state->prev->route) {
         httpFinalizeRoute(state->route);
     }
+    maPopState(state);
     return 0;
 }
 
 
-static int closeDirective(MaState *state, cchar *key, cchar *value)
+/*
+    Compress [gzip|none]
+ */
+static int compressDirective(MaState *state, cchar *key, cchar *value)
 {
-    popState(state);
-    return 0;
-}
+    char    *format;
 
-
-static int conditionDirective(MaState *state, cchar *key, cchar *value)
-{
-    int     not;
-
-    if (!maTokenize(state, value, "%! %*", &not, &value)) {
+    if (!maTokenize(state, value, "%S", &format)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    httpAddRouteCondition(state->route, value, not | HTTP_ROUTE_STATIC_VALUES);
+    if (scasematch(format, "gzip")) {
+        httpSetRouteCompression(state->route, HTTP_ROUTE_GZIP);
+
+    } else if (scasematch(format, "none") || scasematch(format, "off")) {
+        httpSetRouteCompression(state->route, 0);
+    }
     return 0;
 }
 
 
+/*
+    Condition [!] condition
+
+    Condition [!] exists string
+    Condition [!] directory string
+    Condition [!] match pattern string
+
+    Strings can contain route->pattern and request ${tokens}
+ */
+static int conditionDirective(MaState *state, cchar *key, cchar *value)
+{
+    char    *condition;
+    int     not;
+
+    if (!maTokenize(state, value, "%! %*", &not, &condition)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    httpAddRouteCondition(state->route, condition, not | HTTP_ROUTE_STATIC_VALUES);
+    return 0;
+}
+
+
+/*
+    CustomLog path format
+ */
 static int customLogDirective(MaState *state, cchar *key, cchar *value)
 {
 #if !BLD_FEATURE_ROMFS
@@ -495,6 +599,16 @@ static int customLogDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+static int defaultLanguageDirective(MaState *state, cchar *key, cchar *value)
+{
+    httpSetRouteDefaultLanguage(state->route, value);
+    return 0;
+}
+
+
+/*
+    Deny "from" address
+ */
 static int denyDirective(MaState *state, cchar *key, cchar *value)
 {
     char *from, *spec;
@@ -507,17 +621,31 @@ static int denyDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    <Directory path>
+ */
 static int directoryDirective(MaState *state, cchar *key, cchar *value)
 {
+#if UNUSED
     char        *path;
-
-    state = pushState(state, key);
-    state->route = httpCreateInheritedRoute(state->route);
-    httpSetRouteDir(state->route, path);
+    state = maPushState(state, key);
+    if (state->enabled) {
+        state->route = httpCreateInheritedRoute(state->route);
+        path = httpMakePath(state->route, value);
+        httpSetRouteDir(state->route, path);
+        httpSetRouteName(state->route, sfmt("dir: %s", path));
+    }
     return 0;
+#else
+    mprError("The <Directory> directive is deprecated. Use <Route> with a DocumentRoot instead.");
+    return MPR_ERR_BAD_SYNTAX;
+#endif
 }
 
 
+/*
+    DirectoryIndex path
+ */
 static int directoryIndexDirective(MaState *state, cchar *key, cchar *value)
 {
     httpSetRouteIndex(state->route, value);
@@ -525,6 +653,9 @@ static int directoryIndexDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    DocumentRoot path
+ */
 static int documentRootDirective(MaState *state, cchar *key, cchar *value)
 {
     httpSetRouteDir(state->route, value);
@@ -532,18 +663,24 @@ static int documentRootDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    ErrorDocument status URI
+ */
 static int errorDocumentDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *status, *url;
+    char    *status, *uri;
 
-    if (!maTokenize(state, value, "%S %S", &status, &url)) {
+    if (!maTokenize(state, value, "%S %S", &status, &uri)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    httpAddRouteErrorDocument(state->route, status, url);
+    httpAddRouteErrorDocument(state->route, status, uri);
     return 0;
 }
 
 
+/*
+    ErrorLog logSpec
+ */
 static int errorLogDirective(MaState *state, cchar *key, cchar *value)
 {
     if (state->meta->alreadyLogging) {
@@ -562,19 +699,25 @@ static int errorLogDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    Field [!] name value
+ */
 static int fieldDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *field;
     int     not;
 
-    if (!maTokenize(state, value, "%S %! %*", &field, &not, &value)) {
+    if (!maTokenize(state, value, "?! %S %*", &not, &field, &value)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    httpAddRouteField(state->route, field, value, not | HTTP_ROUTE_STATIC_VALUES);
+    httpAddRouteField(state->route, field, value, not);
     return 0;
 }
 
 
+/*
+    Group groupName
+ */
 static int groupDirective(MaState *state, cchar *key, cchar *value)
 {
     maSetHttpGroup(state->appweb, value);
@@ -582,43 +725,49 @@ static int groupDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    Header [!] name value
+ */
 static int headerDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *header;
     int     not;
 
-    if (!maTokenize(state, value, "%S %! %*", &header, &not, &value)) {
+    if (!maTokenize(state, value, "?! %S %*", &not, &header, &value)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    httpAddRouteHeader(state->route, header, value, not | HTTP_ROUTE_STATIC_VALUES);
+    httpAddRouteHeader(state->route, header, value, not);
     return 0;
 }
 
 
+/*
+    <Include pattern>
+ */
+//  MOB -- must support better wildcards
 static int includeDirective(MaState *state, cchar *key, cchar *value)
 {
     MprList         *includes;
     MprDirEntry     *dp;
-    char            *cp;
+    char            *path;
     int             next;
 
     if (!maTokenize(state, value, "%P", &value)) {
         return MPR_ERR_BAD_SYNTAX;
     }
     //  MOB - change this to support proper regexp
-    if ((cp = strchr(value, '*')) == 0) {
+    if ((path = strchr(value, '*')) == 0) {
         if (parseFile(state, value) < 0) {
             return MPR_ERR_CANT_OPEN;
         }
     } else {
         /* Process wild cards. This is very simple - only "*" is supported.  */
-        *cp = '\0';
+        *path = '\0';
         value = strim(value, "/", MPR_TRIM_END);
-        cp = mprJoinPath(state->meta->home, value);
-        if ((includes = mprGetPathFiles(cp, 0)) != 0) {
-            value = mprJoinPath(state->meta->home, value);
+        path = mprJoinPath(state->meta->home, value);
+        if ((includes = mprGetPathFiles(path, 0)) != 0) {
             for (next = 0; (dp = mprGetNextItem(includes, &next)) != 0; ) {
-                if (parseFile(state, dp->name) < 0) {
+                if (parseFile(state, mprJoinPath(path, dp->name)) < 0) {
                     return MPR_ERR_CANT_OPEN;
                 }
             }
@@ -628,17 +777,25 @@ static int includeDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    <If DEFINITION>
+ */
 static int ifDirective(MaState *state, cchar *key, cchar *value)
 {
-    state = pushState(state, key);
-    state->enabled = conditionalDefinition(value);
-    if (!state->enabled) {
-        mprLog(7, "If \"%s\" conditional is false at %s:%d", value, state->filename, state->lineNumber);
+    state = maPushState(state, key);
+    if (state->enabled) {
+        state->enabled = conditionalDefinition(value);
+        if (!state->enabled) {
+            mprLog(7, "If \"%s\" conditional is false at %s:%d", value, state->filename, state->lineNumber);
+        }
     }
     return 0;
 }
 
 
+/*
+    KeepAlive on|off
+ */
 static int keepAliveDirective(MaState *state, cchar *key, cchar *value)
 {
     bool    on;
@@ -651,6 +808,9 @@ static int keepAliveDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    KeepAliveTimeout secs
+ */
 static int keepAliveTimeoutDirective(MaState *state, cchar *key, cchar *value)
 {
     if (! mprGetDebugMode()) {
@@ -660,6 +820,9 @@ static int keepAliveTimeoutDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    LimitChunkSize bytes
+ */
 static int limitChunkSizeDirective(MaState *state, cchar *key, cchar *value)
 {
     //  MOB - API for this
@@ -668,6 +831,9 @@ static int limitChunkSizeDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    LimitClients count
+ */
 static int limitClientsDirective(MaState *state, cchar *key, cchar *value)
 {
     mprSetMaxSocketClients(atoi(value));
@@ -675,6 +841,9 @@ static int limitClientsDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    LimitMemoryMax bytes
+ */
 static int limitMemoryMaxDirective(MaState *state, cchar *key, cchar *value)
 {
     mprSetMemLimits(-1, (ssize) stoi(value, 10, 0));
@@ -682,6 +851,9 @@ static int limitMemoryMaxDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    LimitMemoryRedline bytes
+ */
 static int limitMemoryRedlineDirective(MaState *state, cchar *key, cchar *value)
 {
     mprSetMemLimits((ssize) stoi(value, 10, 0), -1);
@@ -689,6 +861,9 @@ static int limitMemoryRedlineDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    LimitRequestBody bytes
+ */
 static int limitRequestBodyDirective(MaState *state, cchar *key, cchar *value)
 {
     state->host->limits->receiveBodySize = stoi(value, 10, 0);
@@ -696,20 +871,29 @@ static int limitRequestBodyDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
-static int limitRequestFieldsDirective(MaState *state, cchar *key, cchar *value)
+/*
+    LimitRequestHeaderCount count
+ */
+static int limitRequestHeaderCountDirective(MaState *state, cchar *key, cchar *value)
 {
     state->host->limits->headerCount = atoi(value);
     return 0;
 }
 
 
-static int limitRequestFieldSizeDirective(MaState *state, cchar *key, cchar *value)
+/*
+    LimitRequestHeaderSize bytes
+ */
+static int limitRequestHeaderSizeDirective(MaState *state, cchar *key, cchar *value)
 {
     state->host->limits->headerSize = atoi(value);
     return 0;
 }
 
 
+/*
+    LimitResponsebody bytes
+ */
 static int limitResponseBodyDirective(MaState *state, cchar *key, cchar *value)
 {
     state->limits->transmissionBodySize = stoi(value, 10, 0);
@@ -717,6 +901,9 @@ static int limitResponseBodyDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    LimitStageBuffer bytes
+ */
 static int limitStageBufferDirective(MaState *state, cchar *key, cchar *value)
 {
     state->limits->stageBufferSize = atoi(value);
@@ -724,6 +911,9 @@ static int limitStageBufferDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    LimitUri bytes
+ */
 static int limitUriDirective(MaState *state, cchar *key, cchar *value)
 {
     state->limits->uriSize = atoi(value);
@@ -731,6 +921,9 @@ static int limitUriDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    LimitUploadSize bytes
+ */
 static int limitUploadSizeDirective(MaState *state, cchar *key, cchar *value)
 {
     state->limits->uploadSize = stoi(value, 10, 0);
@@ -739,18 +932,18 @@ static int limitUploadSizeDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    Listen Options:
-        ip:port
-        ip          default port MA_SERVER_DEFAULT_PORT_NUM
-        port        All ip interfaces on this port
-    Where ipAddr may be "::::::" for ipv6 addresses or may be enclosed in "[]" if appending a port.
+    Listen ip:port
+    Listen ip
+    Listen port
+
+    Where ip may be "::::::" for ipv6 addresses or may be enclosed in "[]" if appending a port.
  */
 static int listenDirective(MaState *state, cchar *key, cchar *value)
 {
-    HttpServer  *server;
-    char        *ip, *cp, *vp;
-    ssize       len;
-    int         port, colonCount;
+    HttpEndpoint    *endpoint;
+    char            *ip, *cp, *vp;
+    ssize           len;
+    int             port, colonCount;
 
     vp = sclone(value);
     if (isdigit((int) *vp) && strchr(vp, '.') == 0 && strchr(vp, ':') == 0) {
@@ -810,13 +1003,17 @@ static int listenDirective(MaState *state, cchar *key, cchar *value)
         mprError("Bad or missing port %d in Listen directive", port);
         return -1;
     }
-    server = httpCreateServer(ip, port, NULL, 0);
-    server->limits = state->limits;
-    mprAddItem(state->meta->servers, server);
+    endpoint = httpCreateEndpoint(ip, port, NULL);
+    endpoint->limits = state->limits;
+    mprAddItem(state->meta->endpoints, endpoint);
     return 0;
 }
 
 
+/*
+    Load name path
+ */
+//  MOB - complete
 static int loadDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *name, *path;
@@ -830,6 +1027,9 @@ static int loadDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    LogLevel 0-9
+ */
 static int logLevelDirective(MaState *state, cchar *key, cchar *value)
 {
     if (state->meta->alreadyLogging) {
@@ -841,6 +1041,10 @@ static int logLevelDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    LogRotation count size
+ */
+//  MOB - redesign
 static int logRotationDirective(MaState *state, cchar *key, cchar *value)
 {
     int     count, size;
@@ -854,6 +1058,9 @@ static int logRotationDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    LogRoutes 
+ */
 static int logRoutesDirective(MaState *state, cchar *key, cchar *value)
 {
     HttpRoute   *rp;
@@ -861,9 +1068,8 @@ static int logRoutesDirective(MaState *state, cchar *key, cchar *value)
 
     mprLog(0, "HTTP Routes for URI %s", state->route->pattern);
     for (next = 0; (rp = mprGetNextItem(state->host->routes, &next)) != 0; ) {
-        if (rp->targetDest) {
-            mprLog(0, "  %-14s %-20s %-30s %-14s", rp->name, rp->methods ? rp->methods : "", rp->pattern,
-                rp->targetDest);
+        if (rp->target) {
+            mprLog(0, "  %-14s %-20s %-30s %-14s", rp->name, rp->methods ? rp->methods : "", rp->pattern, rp->target);
         } else {
             mprLog(0, "  %-14s %-20s %-30s", rp->name, rp->methods ? rp->methods : "", rp->pattern);
         }
@@ -872,6 +1078,9 @@ static int logRoutesDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    LogTrace level items
+ */
 static int logTraceDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *items;
@@ -912,6 +1121,9 @@ static int logTraceDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    LogTraceFilter size include exclude
+ */
 static int logTraceFilterDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *include, *exclude;
@@ -925,6 +1137,9 @@ static int logTraceFilterDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    LoadModulePath searchPath
+ */
 static int loadModulePathDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *sep, *lib, *path;
@@ -937,11 +1152,14 @@ static int loadModulePathDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    LoadModule name path
+ */
 static int loadModuleDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *name, *path;
 
-    if (!maTokenize(state, value, "%N %S %S", &name, &path)) {
+    if (!maTokenize(state, value, "%S %S", &name, &path)) {
         return MPR_ERR_BAD_SYNTAX;
     }
     if (maLoadModule(state->appweb, name, path) < 0) {
@@ -952,6 +1170,9 @@ static int loadModuleDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    MaxKeepAliveRequests count
+ */
 static int maxKeepAliveRequestsDirective(MaState *state, cchar *key, cchar *value)
 {
     state->host->limits->keepAliveCount = atoi(value);
@@ -959,6 +1180,9 @@ static int maxKeepAliveRequestsDirective(MaState *state, cchar *key, cchar *valu
 }
 
 
+/*
+    MemoryDepletionPolicy exit|restart
+ */
 static int memoryDepletionPolicyDirective(MaState *state, cchar *key, cchar *value)
 {
     value = slower(value);
@@ -972,6 +1196,9 @@ static int memoryDepletionPolicyDirective(MaState *state, cchar *key, cchar *val
 }
 
 
+/*
+    Methods method method ...
+ */
 static int methodsDirective(MaState *state, cchar *key, cchar *value)
 {
     httpSetRouteMethods(state->route, value);
@@ -979,19 +1206,24 @@ static int methodsDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+   Update field var value
+   Update cmd commandLine
+ */
 static int updateDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *kind, *rest;
-    int     not;
 
-    if (!maTokenize(state, value, "%S %! %*", &kind, &not, &rest)) {
+    if (!maTokenize(state, value, "%S %*", &kind, &rest)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    httpAddRouteUpdate(state->route, kind, rest, not | HTTP_ROUTE_STATIC_VALUES);
-    return 0;
+    return httpAddRouteUpdate(state->route, kind, rest, 0);
 }
 
 
+/*
+    NameVirtualHost ip[:port]
+ */
 static int nameVirtualHostDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *ip;
@@ -999,26 +1231,36 @@ static int nameVirtualHostDirective(MaState *state, cchar *key, cchar *value)
 
     mprLog(4, "NameVirtual Host: %s ", value);
     mprParseIp(value, &ip, &port, -1);
-    httpSetNamedVirtualServers(state->http, ip, port);
+    httpSetNamedVirtualEndpoints(state->http, ip, port);
     return 0;
 }
 
 
+/*
+    Order Allow,Deny
+    Order Deny,Allow
+ */
 static int orderDirective(MaState *state, cchar *key, cchar *value)
 {
     if (scasecmp(value, "Allow,Deny") == 0) {
         httpSetAuthOrder(state->auth, HTTP_ALLOW_DENY);
-    } else {
+    } else if (scasecmp(value, "Deny,Allow") == 0) {
         httpSetAuthOrder(state->auth, HTTP_DENY_ALLOW);
+    } else {
+        return MPR_ERR_BAD_SYNTAX;
     }
     return 0;
 }
 
 
+/*
+    Protocol HTTP/1.0
+    Protocol HTTP/1.1
+ */
 static int protocolDirective(MaState *state, cchar *key, cchar *value)
 {
     httpSetHostProtocol(state->host, value);
-    if (!scasesame(value, "HTTP/1.0") && !scasesame(value, "HTTP/1.1")) {
+    if (!scasematch(value, "HTTP/1.0") && !scasematch(value, "HTTP/1.1")) {
         mprError("Unknown http protocol %s. Should be HTTP/1.0 or HTTP/1.1", value);
         return MPR_ERR_BAD_SYNTAX;
     }
@@ -1026,6 +1268,9 @@ static int protocolDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    PutMethod on|off
+ */
 static int putMethodDirective(MaState *state, cchar *key, cchar *value)
 {
     bool    on;
@@ -1042,6 +1287,9 @@ static int putMethodDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    Redirect [status|permanent|temp|seeother|gone] prefix path
+ */
 static int redirectDirective(MaState *state, cchar *key, cchar *value)
 {
     HttpRoute   *alias;
@@ -1061,13 +1309,13 @@ static int redirectDirective(MaState *state, cchar *key, cchar *value)
         if (!maTokenize(state, value, "%S %S %S", &code, &uri, &path)) {
             return MPR_ERR_BAD_SYNTAX;
         }
-        if (scasesame(code, "permanent")) {
+        if (scasematch(code, "permanent")) {
             status = 301;
-        } else if (scasesame(code, "temp")) {
+        } else if (scasematch(code, "temp")) {
             status = 302;
-        } else if (scasesame(code, "seeother")) {
+        } else if (scasematch(code, "seeother")) {
             status = 303;
-        } else if (scasesame(code, "gone")) {
+        } else if (scasematch(code, "gone")) {
             status = 410;
         } else {
             return configError(state, key);
@@ -1086,11 +1334,14 @@ static int redirectDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    Require acl|valid-user|user|group details
+ */
 static int requireDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *type, *rest;
 
-    if (!maTokenize(state, value, "%S %*", &type, &rest)) {
+    if (!maTokenize(state, value, "%S ?*", &type, &rest)) {
         return MPR_ERR_BAD_SYNTAX;
     }
     if (scasecmp(type, "acl") == 0) {
@@ -1112,6 +1363,10 @@ static int requireDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    Reset routes
+    Reset pipeline
+ */
 static int resetDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *kind;
@@ -1119,9 +1374,9 @@ static int resetDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S", &kind)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if (scasesame(key, "routes")) {
+    if (scasematch(key, "routes")) {
         httpResetRoutes(state->host);
-    } else if (scasesame(key, "pipeline")) {
+    } else if (scasematch(key, "pipeline")) {
         httpResetRoutePipeline(state->route);
     } else {
         return configError(state, key);
@@ -1130,38 +1385,46 @@ static int resetDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    ResetPipeline (alias for Reset routes)
+ */
+static int resetPipelineDirective(MaState *state, cchar *key, cchar *value)
+{
+    httpResetRoutePipeline(state->route);
+    return 0;
+}
+
+
+/*
+    <Route pattern>
+ */
 static int routeDirective(MaState *state, cchar *key, cchar *value)
 {
-    state = pushState(state, key);
-    state->route = httpCreateInheritedRoute(state->route);
-    httpSetRouteHost(state->route, state->host);
-    httpSetRoutePattern(state->route, value);
-    httpAddRoute(state->host, state->route);
-    state->auth = state->auth;
+    state = maPushState(state, key);
+    if (state->enabled) {
+        state->route = httpCreateInheritedRoute(state->route);
+        httpSetRoutePattern(state->route, value);
+        httpSetRouteHost(state->route, state->host);
+        /* Routes are added when the route block is closed (see closeDirective) */
+        state->auth = state->route->auth;
+    }
     return 0;
 }
 
 
-static int runHandlerDirective(MaState *state, cchar *key, cchar *value)
+/*
+    RouteName name
+ */
+static int routeNameDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *name, *when;
-
-    if (!maTokenize(state, value, "%S %*", &name, &when)) {
-        return MPR_ERR_BAD_SYNTAX;
-    }
-    if (scasesame(value, "before")) {
-        state->route->flags |= HTTP_ROUTE_BEFORE;
-    } else if (scasesame(value, "after")) {
-        state->route->flags |= HTTP_ROUTE_AFTER;
-    } else if (scasesame(value, "smart")) {
-        state->route->flags |= HTTP_ROUTE_SMART;
-    } else {
-        return configError(state, key);
-    }
+    httpSetRouteName(state->route, value);
     return 0;
 }
 
 
+/*
+    ServerName URI
+ */
 static int serverNameDirective(MaState *state, cchar *key, cchar *value)
 {
     httpSetHostName(state->host, strim(value, "http://", MPR_TRIM_START), -1);
@@ -1169,6 +1432,9 @@ static int serverNameDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    ServerRoot path
+ */
 static int serverRootDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *path;
@@ -1184,6 +1450,9 @@ static int serverRootDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    SetConnector connector
+ */
 static int setConnectorDirective(MaState *state, cchar *key, cchar *value)
 {
     if (httpSetRouteConnector(state->route, value) < 0) {
@@ -1194,6 +1463,9 @@ static int setConnectorDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    SetHandler handler
+ */
 static int setHandlerDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *name;
@@ -1209,6 +1481,9 @@ static int setHandlerDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    Source path
+ */
 static int sourceDirective(MaState *state, cchar *key, cchar *value)
 {
     httpSetRouteSource(state->route, value);
@@ -1216,6 +1491,32 @@ static int sourceDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    StartHandler before|after|smart
+ */
+static int startHandlerDirective(MaState *state, cchar *key, cchar *value)
+{
+    char    *name, *when;
+
+    if (!maTokenize(state, value, "%S %*", &name, &when)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    if (scasematch(value, "before")) {
+        state->route->flags |= HTTP_ROUTE_HANDLER_BEFORE;
+    } else if (scasematch(value, "after")) {
+        state->route->flags |= HTTP_ROUTE_HANDLER_AFTER;
+    } else if (scasematch(value, "smart")) {
+        state->route->flags |= HTTP_ROUTE_HANDLER_SMART;
+    } else {
+        return configError(state, key);
+    }
+    return 0;
+}
+
+
+/*
+    StartThreads count
+ */
 static int startThreadsDirective(MaState *state, cchar *key, cchar *value)
 {
     mprSetMinWorkers(atoi(value));
@@ -1224,14 +1525,9 @@ static int startThreadsDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    Standard target values are
-        "alias", "close", "dest", "file", "redirect", "virt"
-
-    Target alias "${DOCUMENT_ROOT}"
     Target close [immediate]
-    Target dest "${DOCUMENT_ROOT}/${request:rest}"
+    Target file ${DOCUMENT_ROOT}/${request:uri}
     Target redirect [status] URI            # Redirect to a new URI and re-route
-    Target file "${DOCUMENT_ROOT}/${request:uri}"
     Target virt ${controller}-${name} 
  */
 static int targetDirective(MaState *state, cchar *key, cchar *value)
@@ -1241,11 +1537,13 @@ static int targetDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S %*", &kind, &details)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    httpSetRouteTarget(state->route, kind, details);
-    return 0;
+    return httpSetRouteTarget(state->route, kind, details);
 }
 
 
+/*
+    ThreadLimit count
+ */
 static int threadLimitDirective(MaState *state, cchar *key, cchar *value)
 {
     mprSetMaxWorkers(atoi(value));
@@ -1253,6 +1551,9 @@ static int threadLimitDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    ThreadStackSize bytes
+ */
 static int threadStackSizeDirective(MaState *state, cchar *key, cchar *value)
 {
     mprSetThreadStackSize(atoi(value));
@@ -1260,6 +1561,9 @@ static int threadStackSizeDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    Timeout secs
+ */
 static int timeoutDirective(MaState *state, cchar *key, cchar *value)
 {
     state->limits->requestTimeout = atoi(value) * MPR_TICKS_PER_SEC;
@@ -1267,13 +1571,24 @@ static int timeoutDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    TraceMethod on|off
+ */
 static int traceMethodDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->limits->enableTraceMethod = (scasecmp(value, "on") == 0);
+    bool    on;
+
+    if (!maTokenize(state, value, "%B", &on)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    state->limits->enableTraceMethod = on;
     return 0;
 }
 
 
+/*  
+    TypesConfig path
+ */
 static int typesConfigDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *path;
@@ -1288,13 +1603,17 @@ static int typesConfigDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    UnloadModule name [timeout]
+ */
 static int unloadModuleDirective(MaState *state, cchar *key, cchar *value)
 {
     MprModule   *module;
     char        *name;
     int         timeout;
 
-    if (!maTokenize(state, value, "%S %N", &name, &timeout)) {
+    timeout = MA_UNLOAD_TIMEOUT;
+    if (!maTokenize(state, value, "%S ?N", &name, &timeout)) {
         return MPR_ERR_BAD_SYNTAX;
     }
     if ((module = mprLookupModule(name)) == 0) {
@@ -1306,6 +1625,9 @@ static int unloadModuleDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    UploadDir path
+ */
 static int uploadDirDirective(MaState *state, cchar *key, cchar *value)
 {
     state->route->uploadDir = httpMakePath(state->route, value);
@@ -1314,6 +1636,9 @@ static int uploadDirDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    UploadAutoDelete on|off
+ */
 static int uploadAutoDeleteDirective(MaState *state, cchar *key, cchar *value)
 {
     if (!maTokenize(state, value, "%B", &state->route->autoDelete)) {
@@ -1323,6 +1648,9 @@ static int uploadAutoDeleteDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    User username
+ */
 static int userDirective(MaState *state, cchar *key, cchar *value)
 {
     maSetHttpUser(state->appweb, value);
@@ -1330,23 +1658,28 @@ static int userDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    <VirtualHost ip[:port]>
+ */
 static int virtualHostDirective(MaState *state, cchar *key, cchar *value)
 {
-    HttpServer  *server;
-    HttpHost    *host;
-    char        *ip;
-    int         port;
+    HttpEndpoint    *endpoint;
+    char            *ip;
+    int             port;
 
-    state = pushState(state, key);
-    mprParseIp(value, &ip, &port, -1);
-    host = state->host = httpCloneHost(host);
-    httpSetHostName(host, ip, port);
-    state->route = host->route;
-    if ((server = httpLookupServer(state->http, ip, port)) == 0) {
-        mprError("Can't find listen directive for virtual host %s", value);
-        return MPR_ERR_BAD_SYNTAX;
-    } else {
-        httpAddHostToServer(server, host);
+    state = maPushState(state, key);
+    if (state->enabled) {
+        mprParseIp(value, &ip, &port, -1);
+        state->host = httpCloneHost(state->host);
+        httpSetHostName(state->host, ip, port);
+        state->route = state->host->route;
+        httpSetRouteName(state->route, sfmt("host: %s", state->host->name));
+        if ((endpoint = httpLookupEndpoint(state->http, ip, port)) == 0) {
+            mprError("Can't find listen directive for virtual host %s", value);
+            return MPR_ERR_BAD_SYNTAX;
+        } else {
+            httpAddHostToEndpoint(endpoint, state->host);
+        }
     }
     return 0;
 }
@@ -1357,23 +1690,24 @@ int maValidateConfiguration(MaMeta *meta)
     MaAppweb        *appweb;
     Http            *http;
     HttpHost        *host, *defaultHost;
-    HttpServer      *server;
-    int             nextHost, nextServer;
+    HttpEndpoint    *endpoint;
+    HttpRoute       *route;
+    int             nextHost, nextEndpoint, nextRoute;
 
     appweb = meta->appweb;
     http = appweb->http;
     defaultHost = meta->defaultHost;
     mprAssert(defaultHost);
 
-    if (mprGetListLength(meta->servers) == 0) {
-        mprError("Missing listening HttpServer. Must have a Listen directive.");
+    if (mprGetListLength(meta->endpoints) == 0) {
+        mprError("Missing listening HttpEndpoint. Must have a Listen directive.");
         return 0;
     }
-    for (nextServer = 0; (server = mprGetNextItem(http->servers, &nextServer)) != 0; ) {
-        if (mprGetListLength(server->hosts) == 0) {
-            httpAddHostToServer(server, defaultHost);
+    for (nextEndpoint = 0; (endpoint = mprGetNextItem(http->endpoints, &nextEndpoint)) != 0; ) {
+        if (mprGetListLength(endpoint->hosts) == 0) {
+            httpAddHostToEndpoint(endpoint, defaultHost);
             if (defaultHost->ip == 0) {
-                httpSetHostName(defaultHost, server->ip, server->port);
+                httpSetHostName(defaultHost, endpoint->ip, endpoint->port);
             }
         }
     }
@@ -1385,6 +1719,13 @@ int maValidateConfiguration(MaMeta *meta)
         if (host->mimeTypes == 0) {
             host->mimeTypes = defaultHost->mimeTypes;
         }
+        for (nextRoute = 0; (route = mprGetNextItem(host->routes, &nextRoute)) != 0; ) {
+            if (!mprLookupKey(route->extensions, "")) {
+                mprError("Route %s in host %s is missing a catch-all handler\n"
+                        "Adding: AddHandler fileHandler \"\"", route->name, host->name);
+                httpAddRouteHandler(route, "fileHandler", "");
+            }
+        }
         mprLog(MPR_CONFIG, "Host \"%s\"", host->name);
         mprLog(MPR_CONFIG, "    ServerRoot \"%s\"", host->home);
     }
@@ -1395,36 +1736,36 @@ int maValidateConfiguration(MaMeta *meta)
 static bool conditionalDefinition(cchar *key)
 {
     //  TODO - should always create a conditional directive when a module is loaded. Even for user modules.
-    if (scasesame(key, "BLD_COMMERCIAL")) {
+    if (scasematch(key, "BLD_COMMERCIAL")) {
         return strcmp(BLD_COMMERCIAL, "0");
 
 #ifdef BLD_DEBUG
-    } else if (scasesame(key, "BLD_DEBUG")) {
+    } else if (scasematch(key, "BLD_DEBUG")) {
         return BLD_DEBUG;
 #endif
 
-    } else if (scasesame(key, "CGI_MODULE")) {
+    } else if (scasematch(key, "CGI_MODULE")) {
         return BLD_FEATURE_CGI;
 
-    } else if (scasesame(key, "DIR_MODULE")) {
+    } else if (scasematch(key, "DIR_MODULE")) {
         return BLD_FEATURE_DIR;
 
-    } else if (scasesame(key, "EJS_MODULE")) {
+    } else if (scasematch(key, "EJS_MODULE")) {
         return BLD_FEATURE_EJSCRIPT;
 
-    } else if (scasesame(key, "ESP_MODULE")) {
+    } else if (scasematch(key, "ESP_MODULE")) {
         return BLD_FEATURE_ESP;
 
-    } else if (scasesame(key, "PHP_MODULE")) {
+    } else if (scasematch(key, "PHP_MODULE")) {
         return BLD_FEATURE_PHP;
 
-    } else if (scasesame(key, "SSL_MODULE")) {
+    } else if (scasematch(key, "SSL_MODULE")) {
         return BLD_FEATURE_SSL;
 
-    } else if (scasesame(key, BLD_OS)) {
+    } else if (scasematch(key, BLD_OS)) {
         return 1;
 
-    } else if (scasesame(key, BLD_CPU)) {
+    } else if (scasematch(key, BLD_CPU)) {
         return 1;
     }
     return 0;
@@ -1432,10 +1773,10 @@ static bool conditionalDefinition(cchar *key)
 
 
 /*
-    MOB - must support quoted args
-
-    Tokenizes a line using the tokens:
+    Tokenizes a line using %formats. Mandatory tokens can be specified with %. Optional tokens are specified with ?. 
+    Supported tokens:
         %B - Boolean. Parses: on/off, true/false, yes/no.
+        %D - Directive key parsing.
         %N - Number. Parses numbers in base 10.
         %S - String. Removes quotes.
         %P - Template path string. Removes quotes and expands ${PathVars}.
@@ -1444,99 +1785,13 @@ static bool conditionalDefinition(cchar *key)
  */
 bool maTokenize(MaState *state, cchar *line, cchar *fmt, ...)
 {
-    va_list     args;
-    MprList     *list;
-    cchar       *f;
-    char        *tok, *etok, *value, *word, *end;
-    int         quote;
+    va_list     ap;
 
-    mprAssert(fmt && *fmt);
-    va_start(args, fmt);
-
-    quote = 0;
-    tok = sclone(line);
-    end = &tok[slen(line)];
-
-    for (f = fmt; *f && tok < end; f++) {
-        for (; isspace((int) *tok); tok++) ;
-        if (*tok == '\0' || *tok == '#') {
-            break;
-        }
-        if (isspace((int) *f)) {
-            continue;
-        }
-        if (*f == '%') {
-            f++;
-            if (*tok == '"' || *tok == '\'') {
-                quote = *tok;
-            }
-            if (quote) {
-                for (etok = ++tok; *etok && (*etok != quote && etok[-1] != '\\'); etok++) ; 
-                *etok++ = '\0';
-                quote = 0;
-            } else if (*f == '*') {
-                for (etok = tok; *etok; etok++) {
-                    if (*etok == '#') {
-                        *etok = '\0';
-                    }
-                }
-            } else {
-                for (etok = tok; !isspace((int) *etok); etok++) ;
-            }
-            *etok++ = '\0';
-
-            if (*f == '*') {
-                * va_arg(args, char**) = sclone(tok);
-                tok = etok;
-                break;
-            }
-
-            switch (*f) {
-            case '!':
-                if (*tok == '!') {
-                    *va_arg(args, int*) = HTTP_ROUTE_NOT;
-                } else {
-                    *va_arg(args, int*) = 0;
-                    continue;
-                }
-                break;
-            case 'B':
-                if (scasecmp(tok, "on") == 0 || scasecmp(tok, "true") == 0 || scasecmp(tok, "yes") == 0) {
-                    *va_arg(args, bool*) = 1;
-                } else {
-                    *va_arg(args, bool*) = 0;
-                }
-                break;
-            case 'N':
-                *va_arg(args, int*) = (int) stoi(tok, 10, 0);
-                break;
-            case 'S':
-                *va_arg(args, char**) = strim(tok, "\"", MPR_TRIM_BOTH);
-                break;
-            case 'T':
-                value = strim(tok, "\"", MPR_TRIM_BOTH);
-                *va_arg(args, char**) = stemplate(value, state->route->pathVars);
-                break;
-            case 'W':
-                list = va_arg(args, MprList*);
-                word = stok(tok, " \t\r\n", &tok);
-                while (word) {
-                    mprAddItem(list, word);
-                    word = stok(0, " \t\r\n", &tok);
-                }
-                break;
-            default:
-                mprError("Unknown token pattern %%\"%c\"", *f);
-                break;
-            }
-            tok = etok;
-        }
+    va_start(ap, fmt);
+    if (httpTokenizev(state->route, line, fmt, ap) < 0) {
+        mprError("Bad \"%s\" directive at line %d in %s\nLine: %s %s\n", 
+                state->key, state->lineNumber, state->filename, state->key, line);
     }
-    if (*tok) {
-        mprError("Bad directive \"%s\"\nAt line %d in %s\n\n", line, state->lineNumber, state->filename);
-        return 0;
-    }
-    va_end(args);
     return 1;
 }
 
@@ -1554,16 +1809,19 @@ static MaState *createState(MaMeta *meta)
     state->host = meta->defaultHost;
     state->limits = state->host->limits;
     state->route = meta->defaultHost->route;
+#if UNUSED
     state->route->connector = meta->http->netConnector;
+#endif
     state->enabled = 1;
     state->lineNumber = 0;
     state->auth = state->route->auth;
     state->currentState = state;
+    httpSetRouteName(state->route, "global");
     return state;
 }
 
 
-static MaState *pushState(MaState *prev, cchar *block)
+MaState *maPushState(MaState *prev, cchar *block)
 {
     MaState   *state;
 
@@ -1583,11 +1841,13 @@ static MaState *pushState(MaState *prev, cchar *block)
     state->filename = prev->filename;
     state->file = prev->file;
     state->limits = prev->limits;
+#if UNUSED
     if (block) {
         state->currentBlock = sclone(&block[1]);
     } else {
         state->currentBlock = prev->currentBlock;
     }
+#endif
     state->auth = state->route->auth;
     return state;
 }
@@ -1606,9 +1866,12 @@ static void manageState(MaState *state, int flags)
 		mprMark(state->limits);
 		mprMark(state->configDir);
 		mprMark(state->filename);
+#if UNUSED
 		mprMark(state->currentBlock);
+#endif
 		mprMark(state->prev);
 		mprMark(state->currentState);
+		mprMark(state->key);
     }
 }
 
@@ -1620,7 +1883,7 @@ static int configError(MaState *state, cchar *key)
 }
 
 
-static MaState *popState(MaState *state)
+MaState *maPopState(MaState *state)
 {
     if (state->prev == 0) {
         mprError("Too many closing blocks.\nAt line %d in %s\n\n", state->lineNumber, state->filename);
@@ -1629,13 +1892,15 @@ static MaState *popState(MaState *state)
 }
 
 
+#if UNUSED
 static bool closingBlock(MaState *state, cchar *key)
 {
     if (key == 0 || *key == '\0') {
         return 0;
     }
-    return scasesame(key, state->currentBlock);
+    return scasematch(key, state->currentBlock);
 }
+#endif
 
 
 void maAddDirective(MaAppweb *appweb, cchar *directive, MaDirective proc)
@@ -1646,7 +1911,7 @@ void maAddDirective(MaAppweb *appweb, cchar *directive, MaDirective proc)
 
 int maParseInit(MaAppweb *appweb)
 {
-    if ((appweb->directives = mprCreateHash(-1, 0)) == 0) {
+    if ((appweb->directives = mprCreateHash(-1, MPR_HASH_STATIC_VALUES | MPR_HASH_CASELESS)) == 0) {
         return MPR_ERR_MEMORY;
     }
     maAddDirective(appweb, "AccessLog", accessLogDirective);
@@ -1662,14 +1927,16 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "AuthGroupFile", authGroupFileDirective);
     maAddDirective(appweb, "AuthMethod", authMethodDirective);
     maAddDirective(appweb, "AuthName", authNameDirective);
-    maAddDirective(appweb, "AuthRealm", authRealmDirective);
+    maAddDirective(appweb, "AuthType", authTypeDirective);
     maAddDirective(appweb, "AuthUserFile", authUserFileDirective);
     maAddDirective(appweb, "AuthDigestQop", authDigestQopDirective);
     maAddDirective(appweb, "ClientCache", clientCacheDirective);
-    maAddDirective(appweb, "CacheByType", cacheByTypeDirective);
+    maAddDirective(appweb, "ClientCacheByType", clientCacheByTypeDirective);
     maAddDirective(appweb, "Chroot", chrootDirective);
-    maAddDirective(appweb, "CustomLog", customLogDirective);
+    maAddDirective(appweb, "Compress", compressDirective);
     maAddDirective(appweb, "Condition", conditionDirective);
+    maAddDirective(appweb, "CustomLog", customLogDirective);
+    maAddDirective(appweb, "DefaultLanguage", defaultLanguageDirective);
     maAddDirective(appweb, "Deny", denyDirective);
     maAddDirective(appweb, "DirectoryIndex", directoryIndexDirective);
     maAddDirective(appweb, "DocumentRoot", documentRootDirective);
@@ -1682,26 +1949,29 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "Header", headerDirective);
     maAddDirective(appweb, "<If", ifDirective);
     maAddDirective(appweb, "</If", closeDirective);
-    maAddDirective(appweb, "<Include", includeDirective);
+    maAddDirective(appweb, "Include", includeDirective);
     maAddDirective(appweb, "KeepAlive", keepAliveDirective);
     maAddDirective(appweb, "KeepAliveTimeout", keepAliveTimeoutDirective);
 
     /* TODO Deprecated */
     maAddDirective(appweb, "<Location", routeDirective);
     maAddDirective(appweb, "</Location", closeDirective);
+
     maAddDirective(appweb, "LimitChunkSize", limitChunkSizeDirective);
     maAddDirective(appweb, "LimitClients", limitClientsDirective);
     maAddDirective(appweb, "LimitMemoryMax", limitMemoryMaxDirective);
     maAddDirective(appweb, "LimitMemoryRedline", limitMemoryRedlineDirective);
     maAddDirective(appweb, "LimitRequestBody", limitRequestBodyDirective);
-    maAddDirective(appweb, "LimitRequestFields", limitRequestFieldsDirective);
 
     /* Deprecated */
-    maAddDirective(appweb, "LimitRequestHeaderCount", limitRequestFieldsDirective);
-    maAddDirective(appweb, "LimitRequestFieldSize", limitRequestFieldSizeDirective);
+    maAddDirective(appweb, "LimitRequestFields", limitRequestHeaderCountDirective);
+    maAddDirective(appweb, "LimitRequestFieldSize", limitRequestHeaderSizeDirective);
+
+    maAddDirective(appweb, "LimitRequestHeaderCount", limitRequestHeaderCountDirective);
+    maAddDirective(appweb, "LimitRequestHeaderSize", limitRequestHeaderSizeDirective);
+
 
     /* Deprecated */
-    maAddDirective(appweb, "LimitRequestHeaderSize", limitRequestFieldSizeDirective);
     maAddDirective(appweb, "LimitResponseBody", limitResponseBodyDirective);
     maAddDirective(appweb, "LimitStageBuffer", limitStageBufferDirective);
     maAddDirective(appweb, "LimitUri", limitUriDirective);
@@ -1730,14 +2000,16 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "Redirect", redirectDirective);
     maAddDirective(appweb, "Require", requireDirective);
     maAddDirective(appweb, "Reset", resetDirective);
+    maAddDirective(appweb, "ResetPipeline", resetPipelineDirective);
     maAddDirective(appweb, "<Route", routeDirective);
-    maAddDirective(appweb, "</Route", closeRouteDirective);
-    maAddDirective(appweb, "RunHandler", runHandlerDirective);
+    maAddDirective(appweb, "</Route", closeDirective);
+    maAddDirective(appweb, "RouteName", routeNameDirective);
     maAddDirective(appweb, "ServerName", serverNameDirective);
     maAddDirective(appweb, "ServerRoot", serverRootDirective);
     maAddDirective(appweb, "SetConnector", setConnectorDirective);
     maAddDirective(appweb, "SetHandler", setHandlerDirective);
     maAddDirective(appweb, "Source", sourceDirective);
+    maAddDirective(appweb, "StartHandler", startHandlerDirective);
     maAddDirective(appweb, "StartThreads", startThreadsDirective);
     maAddDirective(appweb, "Target", targetDirective);
     maAddDirective(appweb, "Timeout", timeoutDirective);

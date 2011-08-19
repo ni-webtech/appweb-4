@@ -58,11 +58,13 @@ static void openFile(HttpQueue *q)
         } else if (!(tx->connector == conn->http->sendConnector)) {
             /*
                 Open the file if a body must be sent with the response. The file will be automatically closed when 
-                the response is freed. Cool eh?
+                the request completes.
              */
-            tx->file = mprOpenFile(tx->filename, O_RDONLY | O_BINARY, 0);
-            if (tx->file == 0) {
-                httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", tx->filename);
+            if (!(tx->flags & HTTP_TX_NO_BODY)) {
+                tx->file = mprOpenFile(tx->filename, O_RDONLY | O_BINARY, 0);
+                if (tx->file == 0) {
+                    httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", tx->filename);
+                }
             }
         }
 
@@ -347,7 +349,7 @@ int maOpenFileHandler(Http *http)
     /* 
         This handler serves requests without using thread workers.
      */
-    if ((handler = httpCreateHandler(http, "fileHandler", HTTP_STAGE_VERIFY_ENTITY, NULL)) == 0) {
+    if ((handler = httpCreateHandler(http, "fileHandler", 0, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     handler->open = openFile;

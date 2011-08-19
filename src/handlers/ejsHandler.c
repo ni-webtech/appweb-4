@@ -14,7 +14,7 @@
 
 static char startup[] = "\
     require ejs.web; \
-    let server: HttpServer = new HttpServer; \
+    let server: HttpEndpoint = new HttpEndpoint; \
     var router = Router(Router.Top); \
     server.on('readable', function (event, request) { \
         server.serve(request, router) \
@@ -50,7 +50,7 @@ static void openEjs(HttpQueue *q)
             }
 #if UNUSED
             filename = mprGetPortablePath(alias->filename);
-            poolScript = sfmt("require ejs.web; global.ejs::HttpServerHome = '%s'; global.ejs::HttpServerDocuments = '%s';",
+            poolScript = sfmt("require ejs.web; global.ejs::HttpEndpointHome = '%s'; global.ejs::HttpEndpointDocuments = '%s';",
                 alias->filename, alias->filename);
 #endif
             loc->context = ejsCreatePool(loc->workers, "require ejs.web", loc->script, loc->scriptPath, alias->filename);
