@@ -1886,14 +1886,14 @@ typedef struct HttpLang {
 #define HTTP_ROUTE_FREE           0x4
 
 /*
-    Route flags
+    Route flags (set above the API flasg)
  */
-#define HTTP_ROUTE_PUT_DELETE     0x1         /**< Support PUT|DELETE */
-#define HTTP_ROUTE_HANDLER_BEFORE 0x2         /**< Start handler before content */
-#define HTTP_ROUTE_HANDLER_AFTER  0x4         /**< Start handler after content */
-#define HTTP_ROUTE_HANDLER_SMART  0x8         /**< Start handler after for forms and upload */
-#define HTTP_ROUTE_GZIP           0x10        /**< Support gzipped conent */
-#define HTTP_ROUTE_MAPPED         0x20        /**< Route has been mapped to storage */
+#define HTTP_ROUTE_PUT_DELETE     0x100     /**< Support PUT|DELETE */
+#define HTTP_ROUTE_HANDLER_BEFORE 0x200     /**< Start handler before content */
+#define HTTP_ROUTE_HANDLER_AFTER  0x400     /**< Start handler after content */
+#define HTTP_ROUTE_HANDLER_SMART  0x800     /**< Start handler after for forms and upload */
+#define HTTP_ROUTE_GZIP           0x1000    /**< Support gzipped conent */
+#define HTTP_ROUTE_MAPPED         0x2000    /**< Route has been mapped to storage */
 
 /**
     Route Control
@@ -1913,11 +1913,12 @@ typedef struct HttpRoute {
     char            *target;                /**< Original route target details */
     char            *targetOp;              /**< Target operation */
 
-    char            *fileTarget;            /**< Route destination - processed from details */
-    char            *redirectTarget;        /**< Route destination - processed from details */
-    char            *closeTarget;           /**< Route destination - processed from details */
-    char            *virtualTarget;         /**< Route destination - processed from details */
-    int             redirectStatus;         /**< Route redirect status code */
+    char            *fileTarget;            /**< File target path */
+    char            *redirectTarget;        /**< Redirect target URI */
+    char            *closeTarget;           /**< Close target parameters */
+    char            *virtualTarget;         /**< Virtual target key */
+    char            *writeTarget;           /**< Write target text */
+    int             responseStatus;         /**< Response status code */
 
     char            *template;              /**< URI template for forming links based on this route */
     HttpStage       *handler;               /**< Fixed handler */
@@ -2028,7 +2029,7 @@ extern void httpSetRouteName(HttpRoute *route, cchar *name);
 extern void httpSetRouteUpdate(HttpRoute *route, cchar *name, int flags);
 extern void httpSetRouteName(HttpRoute *route, cchar *name);
 extern void httpSetRoutePathVar(HttpRoute *route, cchar *token, cchar *value);
-extern void httpSetRoutePattern(HttpRoute *route, cchar *pattern);
+extern void httpSetRoutePattern(HttpRoute *route, cchar *pattern, int flags);
 extern void httpSetRoutePrefix(HttpRoute *route, cchar *uri);
 extern void httpSetRouteScript(HttpRoute *route, cchar *script, cchar *scriptPath);
 extern void httpSetRouteSource(HttpRoute *route, cchar *source);
@@ -2587,7 +2588,9 @@ extern void httpFollowRedirects(HttpConn *conn, bool follow);
     @return A count of the number of bytes in the transmission body.
     @ingroup HttpTx
  */
-extern int httpFormatBody(HttpConn *conn, cchar *title, cchar *fmt, ...);
+extern ssize httpFormatBody(HttpConn *conn, cchar *title, cchar *fmt, ...);
+extern ssize httpFormatResponse(HttpConn *conn, cchar *fmt, ...);
+extern ssize httpFormatResponsev(HttpConn *conn, cchar *fmt, va_list args);
 
 /** 
     Format an error transmission
@@ -2713,7 +2716,8 @@ extern void httpSetEntityLength(HttpConn *conn, MprOff len);
 extern void httpSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 
 //DOC
-extern void httpSetResponseBody(HttpConn *conn, int status, cchar *msg);
+extern void httpSetResponseBody(HttpConn *conn, int status, cchar *fmt, ...);
+extern void httpSetResponseError(HttpConn *conn, int status, cchar *fmt, ...);
 
 /** 
     Set a Http response status.

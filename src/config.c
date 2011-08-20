@@ -160,7 +160,7 @@ static int parseFile(MaState *state, cchar *path)
             return MPR_ERR_BAD_SYNTAX;
         }
         state->key = key;
-        mprLog(0, "Parse %s %s", key, value ? value : "");
+        mprLog(0, "Line %d, Parse %s %s", state->lineNumber, key, value ? value : "");
         if ((*directive)(state, key, value) < 0) {
             mprError("Bad directive \"%s\"\nAt line %d in %s\n\n", key, state->lineNumber, state->filename);
             return MPR_ERR_BAD_SYNTAX;
@@ -1400,10 +1400,16 @@ static int resetPipelineDirective(MaState *state, cchar *key, cchar *value)
  */
 static int routeDirective(MaState *state, cchar *key, cchar *value)
 {
+    char    *pattern;
+    int     not;
+
     state = maPushState(state, key);
     if (state->enabled) {
+        if (!maTokenize(state, value, "%!%S", &not, &pattern)) {
+            return MPR_ERR_BAD_SYNTAX;
+        }
         state->route = httpCreateInheritedRoute(state->route);
-        httpSetRoutePattern(state->route, value);
+        httpSetRoutePattern(state->route, pattern, not);
         httpSetRouteHost(state->route, state->host);
         /* Routes are added when the route block is closed (see closeDirective) */
         state->auth = state->route->auth;
@@ -1534,7 +1540,7 @@ static int targetDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *kind, *details;
 
-    if (!maTokenize(state, value, "%S %*", &kind, &details)) {
+    if (!maTokenize(state, value, "%S ?*", &kind, &details)) {
         return MPR_ERR_BAD_SYNTAX;
     }
     return httpSetRouteTarget(state->route, kind, details);
@@ -1788,10 +1794,11 @@ bool maTokenize(MaState *state, cchar *line, cchar *fmt, ...)
     va_list     ap;
 
     va_start(ap, fmt);
-    if (httpTokenizev(state->route, line, fmt, ap) < 0) {
+    if (!httpTokenizev(state->route, line, fmt, ap)) {
         mprError("Bad \"%s\" directive at line %d in %s\nLine: %s %s\n", 
                 state->key, state->lineNumber, state->filename, state->key, line);
     }
+    va_end(ap);
     return 1;
 }
 
@@ -1888,6 +1895,7 @@ MaState *maPopState(MaState *state)
     if (state->prev == 0) {
         mprError("Too many closing blocks.\nAt line %d in %s\n\n", state->lineNumber, state->filename);
     }
+    state->prev->lineNumber = state->lineNumber;
     return state->currentState = state->prev;
 }
 

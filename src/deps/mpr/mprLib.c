@@ -14823,7 +14823,7 @@ char *mprJoinPath(cchar *path, cchar *other)
 
 /*
     Join an extension to a path. If path already has an extension, this call does nothing.
-    MOB - the extension should not have "." But BLD_EXE and buildConfig extensions do.
+    The extension should not have a ".", but this routine is tolerant if it does.
  */
 char *mprJoinPathExt(cchar *path, cchar *ext)
 {
@@ -14838,7 +14838,11 @@ char *mprJoinPathExt(cchar *path, cchar *ext)
     if (cp && firstSep(fs, cp) == 0) {
         return sclone(path);
     }
-    return sjoin(path, ext, NULL);
+    if (ext[0] == '.') {
+        return sjoin(path, ext, NULL);
+    } else {
+        return sjoin(path, ".", ext, NULL);
+    }
 }
 
 
