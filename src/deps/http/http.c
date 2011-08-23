@@ -643,7 +643,11 @@ static int prepRequest(HttpConn *conn, MprList *files, int retry)
     httpPrepClientConn(conn, retry);
 
     for (next = 0; (header = mprGetNextItem(app->headers, &next)) != 0; ) {
-        httpAppendHeader(conn, header->key, header->value);
+        if (scasematch(header->key, "User-Agent")) {
+            httpSetHeader(conn, header->key, header->value);
+        } else {
+            httpAppendHeader(conn, header->key, header->value);
+        }
     }
     if (app->text) {
         httpSetHeader(conn, "Accept", "text/plain");

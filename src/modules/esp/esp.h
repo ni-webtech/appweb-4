@@ -137,25 +137,28 @@ typedef struct Esp {
 } Esp;
 
 /*
-    EspLoc structure. One per route.
+    EspRoute structure. Extended route configuration.
  */
-typedef struct EspLoc {
+typedef struct EspRoute {
     MprHashTable    *modules;               /* Compiled modules */
     MprList         *env;                   /* Environment for compiler */
 #if UNUSED
     MprList         *routes;                /* Ordered list of routes */
-    HttpRoute       *route;                 /* Controlling Http route */
 #endif
+    HttpRoute       *route;                 /* Controlling Http route */
     char            *compile;               /* Compile template */
     char            *link;                  /* Link template */
     char            *searchPath;            /* Search path to use when locating compiler / linker */
-#if UNUSED
+
+    char            *controllerName;        /* Alias for route->sourceName */
+    char            *controllerPath;        /* Alias for route->sourcePath */
+
     char            *appModuleName;         /* App module name when compiled flat */
     char            *appModulePath;         /* App module path when compiled flat */
-#endif
 
-    //  MOB - this should be pused down into HttpRoute
-    char            *dir;                   /* Base directory for route */
+    //  MOB - remove and use ->route->dir
+    char            *dir;                   /* Base directory (alias for route->dir) */
+
     char            *cacheDir;              /* Directory for cached compiled controllers and views */
     char            *controllersDir;        /* Directory for controllers */
     char            *databasesDir;          /* Directory for databases */
@@ -168,9 +171,9 @@ typedef struct EspLoc {
     int             update;                 /* Auto-update modified ESP source */
     int             keepSource;             /* Preserve generated source */
 	int				showErrors;				/* Send server errors back to client */
-} EspLoc;
+} EspRoute;
 
-void espManageEspLoc(EspLoc *el, int flags);
+void espManageEspRoute(EspRoute *el, int flags);
 
 #if UNUSED
 /*
@@ -239,16 +242,12 @@ typedef struct EspAction {
     ESP request state
  */
 typedef struct EspReq {
-    EspLoc          *el;                    /* Back pointer to Esp Location */
     HttpRoute       *route;                 /* Route reference */
-#if UNUSED
-    EspRoute        *eroute;                /* Route used for request */
-#endif
+    EspRoute        *eroute;                /* Extended route info */
     EspSession      *session;               /* Session data object */
     EspAction       *action;                /* Action to invoke */
     Esp             *esp;                   /* Convenient esp reference */
     MprBuf          *cacheBuffer;           /* HTML output caching */
-    char            *actionKey;             /* Request actionKey value */
     char            *cacheName;             /* Base name of intermediate compiled file */
     char            *module;                /* Name of compiled module */
     char            *source;                /* Name of ESP source */
@@ -264,7 +263,7 @@ typedef struct EspReq {
 
 
 extern bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, int isView);
-extern char *espBuildScript(EspLoc *el, cchar *page, cchar *path, cchar *name, cchar *layout, char **err);
+extern char *espBuildScript(EspRoute *el, cchar *page, cchar *path, cchar *name, cchar *layout, char **err);
 extern char *espExpandCommand(cchar *command, cchar *source, cchar *module);
 
 //  MOB - move to pcre
@@ -276,8 +275,8 @@ extern void espAddHeaderString(HttpConn *conn, cchar *key, cchar *value);
 extern void espAppendHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 extern void espAppendHeaderString(HttpConn *conn, cchar *key, cchar *value);
 extern void espAutoFinalize(HttpConn *conn);
-extern void espDefineAction(EspLoc *esp, cchar *path, void *action);
-extern void espDefineView(EspLoc *esp, cchar *path, void *view);
+extern void espDefineAction(EspRoute *esp, cchar *path, void *action);
+extern void espDefineView(EspRoute *esp, cchar *path, void *view);
 extern void espDontCache(HttpConn *conn);
 extern MprOff espGetContentLength(HttpConn *conn);
 extern cchar *espGetCookies(HttpConn *conn);
@@ -314,7 +313,7 @@ extern ssize espWriteSafeString(HttpConn *conn, cchar *s);
 extern ssize espWriteVar(HttpConn *conn, cchar *name);
 
 //  MOB - rename espCache
-extern void espCacheControl(EspLoc *el, cchar *actionKey, int lifesecs, cchar *uri);
+extern void espCacheControl(EspRoute *el, cchar *actionKey, int lifesecs, cchar *uri);
 
 
 #ifdef __cplusplus

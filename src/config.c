@@ -9,12 +9,15 @@
 
 /***************************** Forward Declarations ****************************/
 
+static int addCondition(MaState *state, cchar *condition, int flags);
+static int addUpdate(MaState *state, cchar *kind, cchar *details, int flags);
 static bool conditionalDefinition(cchar *key);
 static int configError(MaState *state, cchar *key);
 static MaState *createState(MaMeta *meta);
 static char *getSearchPath(cchar *dir);
 static void manageState(MaState *state, int flags);
 static int parseFile(MaState *state, cchar *path);
+static int setTarget(MaState *state, cchar *kind, cchar *details);
 
 /******************************************************************************/
 /*
@@ -130,6 +133,32 @@ int maParseConfig(MaMeta *meta, cchar *path)
 }
 
 
+/*
+    Get the directive and value details. Return key and *valuep.
+ */
+static char *getDirective(char *line, char **valuep)
+{
+    char    *key, *value;
+    ssize   len;
+    
+    *valuep = 0;
+    key = stok(line, " \t", &value);
+    key = strim(key, ">", MPR_TRIM_END);
+    if (value) {
+        value = strim(value, " \t\r\n>", MPR_TRIM_END);
+        /*
+            Trim quotes if wrapping the entire value. Preserve embedded quotes and leading/trailing "" etc.
+         */
+        len = slen(value);
+        if (*value == '\"' && value[len - 1] == '\"' && len > 2 && value[1] != '\"') {
+            value = snclone(&value[1], len - 2);
+        }
+        *valuep = value;
+    }
+    return key;
+}
+
+
 static int parseFile(MaState *state, cchar *path)
 {
     MaDirective     *directive;
@@ -147,9 +176,7 @@ static int parseFile(MaState *state, cchar *path)
             continue;
         }
         state->key = 0;
-        if (!maTokenize(state, line, "%D ?*", &key, &value)) {
-            break;
-        }
+        key = getDirective(line, &value);
         if (!state->enabled && key[0] != '<') {
             //MOB 8
             mprLog(0, "Skip: %s %s", key, value);
@@ -238,7 +265,7 @@ static int addInputFilterDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    AddLanguage lang ext position
+    AddLanguage lang ext [position]
     AddLanguage en .en before
  */
 static int addLanguageDirective(MaState *state, cchar *key, cchar *value)
@@ -355,7 +382,7 @@ static int allowDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_BAD_SYNTAX;
     }
     httpSetAuthAllow(state->auth, spec);
-    return httpAddRouteCondition(state->route, "allow", 0);
+    return addCondition(state, "allowDeny", 0);
 }
 
 
@@ -422,8 +449,7 @@ static int authTypeDirective(MaState *state, cchar *key, cchar *value)
         mprError("Unsupported authorization protocol");
         return MPR_ERR_BAD_SYNTAX;
     }
-    httpAddRouteCondition(state->route, "auth", 0);
-    return 0;
+    return addCondition(state, "auth", 0);
 }
 
 
@@ -574,8 +600,7 @@ static int conditionDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%! %*", &not, &condition)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    httpAddRouteCondition(state->route, condition, not | HTTP_ROUTE_STATIC_VALUES);
-    return 0;
+    return addCondition(state, condition, not | HTTP_ROUTE_STATIC_VALUES);
 }
 
 
@@ -617,7 +642,7 @@ static int denyDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_BAD_SYNTAX;
     }
     httpSetAuthDeny(state->auth, spec);
-    return 0;
+    return addCondition(state, "allowDeny", 0);
 }
 
 
@@ -700,9 +725,9 @@ static int errorLogDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    Field [!] name value
+    Query [!] name value
  */
-static int fieldDirective(MaState *state, cchar *key, cchar *value)
+static int queryDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *field;
     int     not;
@@ -710,7 +735,7 @@ static int fieldDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "?! %S %*", &not, &field, &value)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    httpAddRouteField(state->route, field, value, not);
+    httpAddRouteQuery(state->route, field, value, not);
     return 0;
 }
 
@@ -1217,7 +1242,7 @@ static int updateDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S %*", &kind, &rest)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    return httpAddRouteUpdate(state->route, kind, rest, 0);
+    return addUpdate(state, kind, rest, 0);
 }
 
 
@@ -1376,8 +1401,10 @@ static int resetDirective(MaState *state, cchar *key, cchar *value)
     }
     if (scasematch(key, "routes")) {
         httpResetRoutes(state->host);
+
     } else if (scasematch(key, "pipeline")) {
         httpResetRoutePipeline(state->route);
+
     } else {
         return configError(state, key);
     }
@@ -1424,6 +1451,16 @@ static int routeDirective(MaState *state, cchar *key, cchar *value)
 static int routeNameDirective(MaState *state, cchar *key, cchar *value)
 {
     httpSetRouteName(state->route, value);
+    return 0;
+}
+
+
+/*
+    ScriptName prefix
+ */
+static int scriptNameDirective(MaState *state, cchar *key, cchar *value)
+{
+    httpSetRouteScriptName(state->route, value);
     return 0;
 }
 
@@ -1543,7 +1580,7 @@ static int targetDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S ?*", &kind, &details)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    return httpSetRouteTarget(state->route, kind, details);
+    return setTarget(state, kind, details);
 }
 
 
@@ -1803,6 +1840,39 @@ bool maTokenize(MaState *state, cchar *line, cchar *fmt, ...)
 }
 
 
+static int addCondition(MaState *state, cchar *condition, int flags)
+{
+    if (httpAddRouteCondition(state->route, condition, flags) < 0) {
+        mprError("Bad \"%s\" directive at line %d in %s\nLine: %s %s\n", 
+                state->key, state->lineNumber, state->filename, state->key, condition);
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    return 0;
+}
+
+
+static int addUpdate(MaState *state, cchar *kind, cchar *details, int flags)
+{
+    if (httpAddRouteUpdate(state->route, kind, details, flags) < 0) {
+        mprError("Bad \"%s\" directive at line %d in %s\nLine: %s %s %s\n", 
+                state->key, state->lineNumber, state->filename, state->key, kind, details);
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    return 0;
+}
+
+
+static int setTarget(MaState *state, cchar *kind, cchar *details)
+{
+    if (httpSetRouteTarget(state->route, kind, details) < 0) {
+        mprError("Bad \"%s\" directive at line %d in %s\nLine: %s %s %s\n", 
+                state->key, state->lineNumber, state->filename, state->key, kind, details);
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    return 0;
+}
+
+
 static MaState *createState(MaMeta *meta)
 {
     MaState     *state;
@@ -1952,7 +2022,6 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "</Directory", closeDirective);
     maAddDirective(appweb, "ErrorDocument", errorDocumentDirective);
     maAddDirective(appweb, "ErrorLog", errorLogDirective);
-    maAddDirective(appweb, "Field", fieldDirective);
     maAddDirective(appweb, "Group", groupDirective);
     maAddDirective(appweb, "Header", headerDirective);
     maAddDirective(appweb, "<If", ifDirective);
@@ -2005,6 +2074,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "Order", orderDirective);
     maAddDirective(appweb, "Protocol", protocolDirective);
     maAddDirective(appweb, "PutMethod", putMethodDirective);
+    maAddDirective(appweb, "Query", queryDirective);
     maAddDirective(appweb, "Redirect", redirectDirective);
     maAddDirective(appweb, "Require", requireDirective);
     maAddDirective(appweb, "Reset", resetDirective);
@@ -2012,6 +2082,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "<Route", routeDirective);
     maAddDirective(appweb, "</Route", closeDirective);
     maAddDirective(appweb, "RouteName", routeNameDirective);
+    maAddDirective(appweb, "ScriptName", scriptNameDirective);
     maAddDirective(appweb, "ServerName", serverNameDirective);
     maAddDirective(appweb, "ServerRoot", serverRootDirective);
     maAddDirective(appweb, "SetConnector", setConnectorDirective);

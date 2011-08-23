@@ -60,7 +60,7 @@ char *espExpandCommand(cchar *command, cchar *source, cchar *module)
     if (command == 0) {
         return 0;
     }
-    out = mprTrimPathExtension(module);
+    out = mprTrimPathExt(module);
     buf = mprCreateBuf(-1, -1);
     path = 0;
 
@@ -141,12 +141,12 @@ char *espExpandCommand(cchar *command, cchar *source, cchar *module)
 static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *module)
 {
     EspReq      *req;
-    EspLoc      *el;
+    EspRoute    *eroute;
     MprCmd      *cmd;
     char        *err, *out;
 
     req = conn->data;
-    el = req->el;
+    eroute = req->eroute;
 
     cmd = mprCreateCmd(conn->dispatcher);
     if ((req->commandLine = espExpandCommand(command, csource, module)) == 0) {
@@ -154,12 +154,12 @@ static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *mod
         return MPR_ERR_CANT_READ;
     }
     mprLog(4, "ESP command: %s\n", req->commandLine);
-    if (el->env) {
-        mprAddNullItem(el->env);
-        mprSetCmdDefaultEnv(cmd, (cchar**) &el->env->items[0]);
+    if (eroute->env) {
+        mprAddNullItem(eroute->env);
+        mprSetCmdDefaultEnv(cmd, (cchar**) &eroute->env->items[0]);
     }
-    if (el->searchPath) {
-        mprSetCmdSearchPath(cmd, el->searchPath);
+    if (eroute->searchPath) {
+        mprSetCmdSearchPath(cmd, eroute->searchPath);
     }
     //  WARNING: GC will run here
 	if (mprRunCmd(cmd, req->commandLine, &out, &err, 0) != 0) {
@@ -167,7 +167,7 @@ static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *mod
 			/* Windows puts errors to stdout Ugh! */
 			err = out;
 		}
-		if (el->showErrors) {
+		if (eroute->showErrors) {
 			httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't run command %s, error %s", req->commandLine, err);
 		} else {
 			httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't run command %s", req->commandLine);
@@ -189,13 +189,13 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
 {
     MprFile     *fp;
     EspReq      *req;
-    EspLoc      *el;
+    EspRoute    *eroute;
     cchar       *csource;
     char        *layout, *script, *page, *err;
     ssize       len;
 
     req = conn->data;
-    el = req->el;
+    eroute = req->eroute;
 
     if (isView) {
         if ((page = mprReadPath(source)) == 0) {
@@ -205,12 +205,12 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
         /*
             Use layouts iff there is a controller provided on the route
          */
-        layout = (req->route->controllerName) ? mprJoinPath(el->layoutsDir, "default.esp") : 0;
-        if ((script = espBuildScript(el, page, source, cacheName, layout, &err)) == 0) {
+        layout = (eroute->controllerName) ? mprJoinPath(eroute->layoutsDir, "default.esp") : 0;
+        if ((script = espBuildScript(eroute, page, source, cacheName, layout, &err)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't build %s, error %s", source, err);
             return 0;
         }
-        csource = mprJoinPathExt(mprTrimPathExtension(module), ".c");
+        csource = mprJoinPathExt(mprTrimPathExt(module), ".c");
         if ((fp = mprOpenFile(csource, O_WRONLY | O_TRUNC | O_CREAT | O_BINARY, 0664)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't open compiled script file %s", csource);
             return 0;
@@ -225,28 +225,28 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
     } else {
         csource = source;
     }
-    mprMakeDir(el->cacheDir, 0775, 1);
+    mprMakeDir(eroute->cacheDir, 0775, 1);
     /*
         WARNING: GC yield here
      */
-    if (runCommand(conn, el->compile, csource, module) < 0) {
+    if (runCommand(conn, eroute->compile, csource, module) < 0) {
         return 0;
     }
-    if (el->link) {
+    if (eroute->link) {
         /*
             WARNING: GC yield here
          */
-        if (runCommand(conn, el->link, csource, module) < 0) {
+        if (runCommand(conn, eroute->link, csource, module) < 0) {
             return 0;
         }
 #if !(BLD_DEBUG && MACOSX)
         /*
             MAC needs the object for debug information
          */
-        mprDeletePath(mprJoinPathExt(mprTrimPathExtension(module), BLD_OBJ));
+        mprDeletePath(mprJoinPathExt(mprTrimPathExt(module), BLD_OBJ));
 #endif
     }
-    if (!el->keepSource && isView) {
+    if (!eroute->keepSource && isView) {
         mprDeletePath(csource);
     }
     return 1;
@@ -320,7 +320,7 @@ static char *joinLine(cchar *str, ssize *lenp)
         @@var               Substitue the value of a variable. Var can also be simple expressions (without spaces)
 
  */
-char *espBuildScript(EspLoc *el, cchar *page, cchar *path, cchar *cacheName, cchar *layout, char **err)
+char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheName, cchar *layout, char **err)
 {
     EspParse    parse;
     char        *control, *incBuf, *incText, *global, *token, *body, *where;
@@ -425,7 +425,7 @@ char *espBuildScript(EspLoc *el, cchar *page, cchar *path, cchar *cacheName, cch
                 }
                 /* Recurse and process the include script */
                 incBuf = 0;
-                if ((incBuf = espBuildScript(el, incText, include, NULL, NULL, err)) == 0) {
+                if ((incBuf = espBuildScript(eroute, incText, include, NULL, NULL, err)) == 0) {
                     return 0;
                 }
                 body = sjoin(body, incBuf, NULL);
@@ -469,7 +469,7 @@ char *espBuildScript(EspLoc *el, cchar *page, cchar *path, cchar *cacheName, cch
                 return 0;
             }
             layoutBuf = 0;
-            if ((layoutBuf = espBuildScript(el, layoutPage, layout, NULL, NULL, err)) == 0) {
+            if ((layoutBuf = espBuildScript(eroute, layoutPage, layout, NULL, NULL, err)) == 0) {
                 return 0;
             }
             body = sreplace(layoutBuf, CONTENT_MARKER, body);
@@ -480,9 +480,9 @@ char *espBuildScript(EspLoc *el, cchar *page, cchar *path, cchar *cacheName, cch
         if (end && end[slen(end) - 1] != '\n') {
             end = sjoin(end, "\n", 0);
         }
-        mprAssert(slen(path) > slen(el->dir));
-        mprAssert(sncmp(path, el->dir, slen(el->dir)) == 0);
-        path = &path[slen(el->dir) + 1];
+        mprAssert(slen(path) > slen(eroute->dir));
+        mprAssert(sncmp(path, eroute->dir, slen(eroute->dir)) == 0);
+        path = &path[slen(eroute->dir) + 1];
         
         body = sfmt(\
             "/*\n   Generated from %s\n */\n"\
@@ -491,8 +491,8 @@ char *espBuildScript(EspLoc *el, cchar *page, cchar *path, cchar *cacheName, cch
             "static void %s(HttpConn *conn) {\n"\
             "%s%s%s"\
             "}\n\n"\
-            "%s int espInit_%s(EspLoc *el, MprModule *module) {\n"\
-            "   espDefineView(el, \"%s\", %s);\n"\
+            "%s int espInit_%s(EspRoute *eroute, MprModule *module) {\n"\
+            "   espDefineView(eroute, \"%s\", %s);\n"\
             "   return 0;\n"\
             "}\n",
             path, global, cacheName, start, body, end, ESP_EXPORT_STRING, cacheName, mprGetPortablePath(path), cacheName);

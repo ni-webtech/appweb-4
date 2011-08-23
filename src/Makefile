@@ -12,12 +12,13 @@ SSL				:= mod_ssl
 
 include 		.makedep
 
-PRE_DIRS		+= deps
-POST_DIRS		+= handlers filters modules
+PRE_DIRS		+= deps modules
 POST_DIRS		+= utils server test
 TARGETS			+= $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
 SOURCES			+= $(shell ls *.c | egrep -v 'deps')
-OBJECTS			= $(patsubst %.c,$(BLD_OBJ_DIR)/%$(BLD_OBJ),$(notdir $(SOURCES)))
+# OBJECTS			= $(patsubst %.c,$(BLD_OBJ_DIR)/%$(BLD_OBJ),$(notdir $(SOURCES)))
+OBJECTS			+= $(BLD_OBJ_DIR)/fileHandler$(BLD_OBJ)
+OBJECTS			+= $(BLD_OBJ_DIR)/dirHandler$(BLD_OBJ)
 
 compileFirst: prep tools
 
@@ -29,7 +30,7 @@ ifeq ($(BLD_CROSS),1)
 endif
 
 compileExtra: $(TARGETS)
-	@T=modules D=deps/ejs ; $(DO_RECURSE)
+	@T=modules D=modules ; $(DO_RECURSE)
 
 #
 #	Build the appweb library (includes dirHandler, fileHandler.)

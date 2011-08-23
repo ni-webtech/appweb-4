@@ -4187,16 +4187,6 @@ extern MprHashTable *mprCloneHash(MprHashTable *table);
  */
 extern MprHashTable *mprCreateHash(int hashSize, int flags);
 
-#if UNUSED
-/**
-    Set the case comparision mechanism for a hash table. The case of keys and values are always preserved, this call
-        only affects lookup.
-    @param table Hash table created via $mprCreateHash
-    @param caseMatters Set to true if case matters in comparisions. Set to zero for case insensitive comparisions
- */
-void mprSetKeyCase(MprHashTable *table, int caseMatters);
-#endif
-
 /**
     Return the first symbol in a symbol entry
     @description Prepares for walking the contents of a symbol table by returning the first entry in the symbol table.

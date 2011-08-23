@@ -41,7 +41,7 @@ typedef struct App {
     /*
         GC retention
      */
-    EspLoc      *loc;
+    EspRoute    *eroute;
     MprList     *files;                 /* List of files to process */
     char        *command;               /* Compilation or link command */
     char        *cacheName;             /* MD5 name of cached component */
@@ -55,11 +55,12 @@ typedef struct App {
     int         quiet;
 } App;
 
-static App      *app;
-static Esp      *esp;
-static EspLoc   *loc;
-static Http     *http;
-static MaAppweb *appweb;
+static App       *app;
+static Esp       *esp;
+static HttpRoute *route;
+static EspRoute  *eroute;
+static Http      *http;
+static MaAppweb  *appweb;
 
 #define ESP_CONTROLLER  0x1
 #define ESP_VIEW        0x2
@@ -186,43 +187,43 @@ MAIN(espgen, int argc, char **argv)
 static void manageApp(App *app, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(app->mpr);
-        mprMark(app->appweb);
-        mprMark(app->meta);
-        mprMark(app->serverRoot);
-        mprMark(app->configFile);
-        mprMark(app->pathEnv);
-        mprMark(app->listen);
-        mprMark(app->currentDir);
-        mprMark(app->libDir);
-        mprMark(app->wwwDir);
         mprMark(app->appName);
-        mprMark(app->command);
+        mprMark(app->appweb);
         mprMark(app->cacheName);
+        mprMark(app->command);
+        mprMark(app->configFile);
         mprMark(app->csource);
-        mprMark(app->module);
-        mprMark(app->source);
+        mprMark(app->currentDir);
+        mprMark(app->eroute);
         mprMark(app->files);
-        mprMark(app->loc);
-        mprMark(app->flatItems);
         mprMark(app->flatFile);
+        mprMark(app->flatItems);
         mprMark(app->flatPath);
+        mprMark(app->libDir);
+        mprMark(app->listen);
+        mprMark(app->meta);
+        mprMark(app->module);
+        mprMark(app->mpr);
+        mprMark(app->pathEnv);
+        mprMark(app->serverRoot);
+        mprMark(app->source);
+        mprMark(app->wwwDir);
     }
 }
 
 
-static void setLocDirs(cchar *path)
+static void setDirs(cchar *path)
 {
-    if ((app->loc = mprAllocObj(EspLoc, espManageEspLoc)) == 0) {
+    if ((app->eroute = mprAllocObj(EspRoute, espManageEspRoute)) == 0) {
         return;
     }
-    loc = app->loc;
-    loc->dir = sclone(path);
-    loc->cacheDir = mprJoinPath(loc->dir, "cache");
-    loc->controllersDir = mprJoinPath(loc->dir, "controllers");
-    loc->layoutsDir = mprJoinPath(loc->dir, "layouts");
-    loc->staticDir = mprJoinPath(loc->dir, "static");
-    loc->viewsDir = mprJoinPath(loc->dir, "views");
+    eroute = app->eroute;
+    eroute->dir = sclone(path);
+    eroute->cacheDir = mprJoinPath(eroute->dir, "cache");
+    eroute->controllersDir = mprJoinPath(eroute->dir, "controllers");
+    eroute->layoutsDir = mprJoinPath(eroute->dir, "layouts");
+    eroute->staticDir = mprJoinPath(eroute->dir, "static");
+    eroute->viewsDir = mprJoinPath(eroute->dir, "views");
 }
 
 
@@ -233,7 +234,7 @@ static void initialize()
     app->libDir = mprJoinPath(mprGetPathParent(mprGetAppDir()), BLD_LIB_NAME);
     app->wwwDir = mprJoinPath(app->libDir, "esp-www");
 
-    setLocDirs(app->currentDir);
+    setDirs(app->currentDir);
 
 #if BLD_UNIX_LIKE
     app->pathEnv = sjoin("PATH=", getenv("PATH"), ":", mprGetAppDir(), NULL);
@@ -245,22 +246,35 @@ static void initialize()
 static void getAppDirs()
 {
     HttpHost    *host;
-    HttpRoute     *hp;
+    HttpRoute   *rp;
     char        *prefix;
+    int         next;
 
     //  MOB - must support non-default hosts
     host = app->meta->defaultHost;
+
     //  MOB - must support more complex prefixes
     //  MOB - but the /app is not used if doing a stand-alone appweb.conf
     prefix = sfmt("/%s", app->appName);
-    if ((hp = httpLookupBestRoute(host, prefix)) == 0) {
+
+    for (next = 0; (rp = mprGetNextItem(host->routes, &next)) != 0; ) {
+        //  MOB - should this work if no scriptName?
+        if (strncmp(prefix, rp->scriptName, rp->scriptNameLen) != 0) {
+            break;
+        }
+    }
+    if (rp == 0) {
         error("Can't find EspAlias or Route for %s", prefix);
+        return;
     }
-    if ((app->loc = httpGetRouteData(hp, ESP_NAME)) == 0) {
+    if ((app->eroute = httpGetRouteData(rp, ESP_NAME)) == 0) {
         error("Can't find ESP data for Route for %s", prefix);
+        return;
     }
-    loc = app->loc;
-    app->appName = mprGetPathBase(loc->dir);
+    route = rp;
+    eroute = app->eroute;
+    eroute->dir = route->dir;
+    app->appName = mprGetPathBase(eroute->dir);
 }
 
 
@@ -277,7 +291,7 @@ static void readConfig()
 
     findConfigFile();
 
-    if ((app->meta = maCreateMeta(appweb, "default", app->serverRoot, NULL, -1)) == 0) {
+    if ((app->meta = maCreateMeta(appweb, "default", app->serverRoot, NULL, NULL, -1)) == 0) {
         error("Can't create HTTP server for %s", mprGetAppName());
         return;
     }
@@ -334,9 +348,9 @@ static void clean(int argc, char **argv)
     char            *path;
     int             next;
 
-    files = mprGetPathFiles(loc->cacheDir, 0);
+    files = mprGetPathFiles(eroute->cacheDir, 0);
     for (next = 0; (dp = mprGetNextItem(files, &next)) != 0; ) {
-        path = mprJoinPath(loc->cacheDir, dp->name);
+        path = mprJoinPath(eroute->cacheDir, dp->name);
         trace("CLEAN", "%s", path);
         mprDeletePath(path);
     }
@@ -367,12 +381,12 @@ static int runCommand(cchar *command, cchar *csource, cchar *module)
         return MPR_ERR_CANT_READ;
     }
     mprLog(4, "ESP command: %s\n", app->command);
-    if (loc->env) {
-        mprAddNullItem(loc->env);
-        mprSetCmdDefaultEnv(cmd, (cchar**) &loc->env->items[0]);
+    if (eroute->env) {
+        mprAddNullItem(eroute->env);
+        mprSetCmdDefaultEnv(cmd, (cchar**) &eroute->env->items[0]);
     }
-    if (loc->searchPath) {
-        mprSetCmdSearchPath(cmd, loc->searchPath);
+    if (eroute->searchPath) {
+        mprSetCmdSearchPath(cmd, eroute->searchPath);
     }
     //  WARNING: GC will run here
     mprLog(1, "Run: %s", app->command);
@@ -396,7 +410,7 @@ static void compileFile(cchar *source, int kind)
 
     layout = 0;
     app->cacheName = mprGetMD5Hash(source, slen(source), (kind == ESP_CONTROLLER) ? "controller_" : "view_");
-    app->module = mprGetNormalizedPath(sfmt("%s/%s%s", loc->cacheDir, app->cacheName, BLD_SHOBJ));
+    app->module = mprGetNormalizedPath(sfmt("%s/%s%s", eroute->cacheDir, app->cacheName, BLD_SHOBJ));
 
     if (kind == ESP_CONTROLLER) {
         app->csource = source;
@@ -410,17 +424,17 @@ static void compileFile(cchar *source, int kind)
                 return;
             }
             mprWriteFileFormat(app->flatFile, "\n\n");
-            mprAddItem(app->flatItems, sfmt("espInit_controller_%s", mprTrimPathExtension(mprGetPathBase(source))));
+            mprAddItem(app->flatItems, sfmt("espInit_controller_%s", mprTrimPathExt(mprGetPathBase(source))));
         }
     }
     if (kind & (ESP_PAGE | ESP_VIEW)) {
-        layout = mprJoinPath(mprJoinPath(loc->dir, loc->layoutsDir), "default.esp");
+        layout = mprJoinPath(mprJoinPath(eroute->dir, eroute->layoutsDir), "default.esp");
         if ((page = mprReadPath(source)) == 0) {
             error("Can't read %s", source);
             return;
         }
         /* No yield here */
-        if ((script = espBuildScript(loc, page, source, app->cacheName, layout, &err)) == 0) {
+        if ((script = espBuildScript(eroute, page, source, app->cacheName, layout, &err)) == 0) {
             error("Can't build %s, error %s", source, err);
             return;
         }
@@ -435,7 +449,7 @@ static void compileFile(cchar *source, int kind)
 
         } else {
             trace("BUILD", "%s", source);
-            app->csource = mprJoinPathExt(mprTrimPathExtension(app->module), ".c");
+            app->csource = mprJoinPathExt(mprTrimPathExt(app->module), ".c");
             if (mprWritePath(app->csource, script, len, 0664) < 0) {
                 error("Can't write compiled script file %s", app->csource);
                 return;
@@ -447,26 +461,26 @@ static void compileFile(cchar *source, int kind)
             WARNING: GC yield here
          */
         trace("COMPILE", "%s", app->csource);
-        if (!loc->compile) {
+        if (!eroute->compile) {
             error("Missing EspCompile directive for %s", app->csource);
             return;
         }
-        if (runCommand(loc->compile, app->csource, app->module) < 0) {
+        if (runCommand(eroute->compile, app->csource, app->module) < 0) {
             return;
         }
-        if (loc->link) {
+        if (eroute->link) {
             trace("LINK", "%s", app->module);
-            if (runCommand(loc->link, app->csource, app->module) < 0) {
+            if (runCommand(eroute->link, app->csource, app->module) < 0) {
                 return;
             }
 #if !(BLD_DEBUG && MACOSX)
             /*
                 MAC needs the object for debug information
              */
-            mprDeletePath(mprJoinPathExt(mprTrimPathExtension(app->module), BLD_OBJ));
+            mprDeletePath(mprJoinPathExt(mprTrimPathExt(app->module), BLD_OBJ));
 #endif
         }
-        if (!loc->keepSource && (kind & (ESP_VIEW | ESP_PAGE))) {
+        if (!eroute->keepSource && (kind & (ESP_VIEW | ESP_PAGE))) {
             mprDeletePath(app->csource);
         }
     }
@@ -506,24 +520,24 @@ static void compile(int argc, char **argv)
         /*
             Build all items separately
          */
-        app->files = files = mprGetPathFiles(loc->controllersDir, 1);
+        app->files = files = mprGetPathFiles(eroute->controllersDir, 1);
         for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
-            if (scmp(mprGetPathExtension(dp->name), "c") == 0) {
-                path = mprJoinPath(loc->controllersDir, dp->name);
+            if (scmp(mprGetPathExt(dp->name), "c") == 0) {
+                path = mprJoinPath(eroute->controllersDir, dp->name);
                 compileFile(path, ESP_CONTROLLER);
             }
         }
-        app->files = files = mprGetPathFiles(loc->viewsDir, 1);
+        app->files = files = mprGetPathFiles(eroute->viewsDir, 1);
         for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
-            path = mprJoinPath(loc->viewsDir, dp->name);
+            path = mprJoinPath(eroute->viewsDir, dp->name);
             compileFile(path, ESP_VIEW);
         }
 
         //  MOB - Is the name right?
         //  MOB - what about pattern matching?
-        app->files = files = mprFindFiles(loc->staticDir, 0);
+        app->files = files = mprFindFiles(eroute->staticDir, 0);
         for (next = 0; (path = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
-            if (scmp(mprGetPathExtension(path), "esp") == 0) {
+            if (scmp(mprGetPathExt(path), "esp") == 0) {
                 compileFile(path, ESP_PAGE);
             }
         }
@@ -533,34 +547,34 @@ static void compile(int argc, char **argv)
             Catenate all source
          */
         app->flatItems = mprCreateList(-1, 0);
-        app->flatPath = path = mprJoinPath(loc->cacheDir, "app.c");
+        app->flatPath = path = mprJoinPath(eroute->cacheDir, "app.c");
         if ((app->flatFile = mprOpenFile(path, O_WRONLY | O_TRUNC | O_CREAT | O_BINARY, 0664)) == 0) {
             error("Can't open %s", path);
             return;
         }
         mprWriteFileFormat(app->flatFile, "/*\n *  Flat compilation of %s\n */\n\n", app->appName);
 
-        app->files = files = mprGetPathFiles(loc->controllersDir, 1);
+        app->files = files = mprGetPathFiles(eroute->controllersDir, 1);
         for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
-            if (scmp(mprGetPathExtension(dp->name), "c") == 0) {
-                path = mprJoinPath(loc->controllersDir, dp->name);
+            if (scmp(mprGetPathExt(dp->name), "c") == 0) {
+                path = mprJoinPath(eroute->controllersDir, dp->name);
                 compileFile(path, ESP_CONTROLLER);
             }
         }
-        app->files = files = mprGetPathFiles(loc->viewsDir, 1);
+        app->files = files = mprGetPathFiles(eroute->viewsDir, 1);
         for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
-            path = mprJoinPath(loc->viewsDir, dp->name);
+            path = mprJoinPath(eroute->viewsDir, dp->name);
             compileFile(path, ESP_VIEW);
         }
         //  MOB - Is the name right?
         //  MOB - what about pattern matching?
-        app->files = files = mprFindFiles(loc->staticDir, 0);
+        app->files = files = mprFindFiles(eroute->staticDir, 0);
         for (next = 0; (path = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
-            if (scmp(mprGetPathExtension(path), "esp") == 0) {
+            if (scmp(mprGetPathExt(path), "esp") == 0) {
                 compileFile(path, ESP_PAGE);
             }
         }
-        mprWriteFileFormat(app->flatFile, "\nESP_EXPORT int espInit_app_%s(EspLoc *el, MprModule *module) {\n", 
+        mprWriteFileFormat(app->flatFile, "\nESP_EXPORT int espInit_app_%s(EspRoute *el, MprModule *module) {\n", 
             app->appName);
         for (next = 0; (line = mprGetNextItem(app->flatItems, &next)) != 0; ) {
             mprWriteFileFormat(app->flatFile, "    %s(el, module);\n", line);
@@ -568,14 +582,14 @@ static void compile(int argc, char **argv)
         mprWriteFileFormat(app->flatFile, "    return 0;\n}\n");
         mprCloseFile(app->flatFile);
 
-        app->module = mprGetNormalizedPath(sfmt("%s/app%s", loc->cacheDir, BLD_SHOBJ));
+        app->module = mprGetNormalizedPath(sfmt("%s/app%s", eroute->cacheDir, BLD_SHOBJ));
         trace("COMPILE", "%s", app->csource);
-        if (runCommand(loc->compile, app->flatPath, app->module) < 0) {
+        if (runCommand(eroute->compile, app->flatPath, app->module) < 0) {
             return;
         }
-        if (loc->link) {
+        if (eroute->link) {
             trace("LINK", "%s", app->module);
-            if (runCommand(loc->link, app->flatPath, app->module) < 0) {
+            if (runCommand(eroute->link, app->flatPath, app->module) < 0) {
                 return;
             }
         }
@@ -585,11 +599,11 @@ static void compile(int argc, char **argv)
 
     } else {
         for (i = 0; i < argc; i++) {
-            if (scmp(mprGetPathExtension(argv[i]), "esp") != 0) {
+            if (scmp(mprGetPathExt(argv[i]), "esp") != 0) {
                 error("Command arguments must be files with a \".esp\" extension");
                 return;
             }
-            path = mprJoinPath(loc->dir, argv[i]);
+            path = mprJoinPath(eroute->dir, argv[i]);
             compileFile(path, ESP_PAGE);
         }
     }
@@ -613,7 +627,7 @@ static void generate(int argc, char **argv)
     kind = argv[0];
 
     if (scmp(kind, "app") == 0) {
-        setLocDirs(argv[1]);
+        setDirs(argv[1]);
         generateAppDirs();
         generateAppFiles();
         generateAppConfigFile();
@@ -646,13 +660,13 @@ static void fixupFile(cchar *path)
 {
     char    *data, *tmp;
 
-    path = mprJoinPath(loc->dir, path);
+    path = mprJoinPath(eroute->dir, path);
     if ((data = mprReadPath(path)) == 0) {
         error("Can't read %s", path);
         return;
     }
     data = sreplace(data, "${NAME}", app->appName);
-    data = sreplace(data, "${DIR}", loc->dir);
+    data = sreplace(data, "${DIR}", eroute->dir);
     data = sreplace(data, "${LISTEN}", app->listen);
     data = sreplace(data, "${LIBDIR}", app->libDir);
 
@@ -669,7 +683,7 @@ static void fixupFile(cchar *path)
 
 static void generateAppFiles()
 {
-    copyDir(mprJoinPath(app->wwwDir, "files"), loc->dir);
+    copyDir(mprJoinPath(app->wwwDir, "files"), eroute->dir);
     fixupFile("layouts/default.esp");
 }
 
@@ -752,7 +766,7 @@ static void generateAppConfigFile()
         error("Can't read %s", from);
         return;
     }
-    to = mprJoinPath(loc->dir, "appweb.conf");
+    to = mprJoinPath(eroute->dir, "appweb.conf");
     if (mprPathExists(to, R_OK) && !app->overwrite) {
         trace("EXISTS",  "Config file: %s", to);
         return;
@@ -794,7 +808,7 @@ static void makeDir(cchar *dir)
 {
     char    *path;
 
-    path = mprJoinPath(loc->dir, dir);
+    path = mprJoinPath(eroute->dir, dir);
     if (mprPathExists(path, X_OK)) {
         trace("EXISTS",  "Directory: %s", path);
     } else {
