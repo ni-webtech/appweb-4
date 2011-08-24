@@ -55,13 +55,13 @@ static void missing(HttpConn *conn) {
     httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Missing action");
 }
 
-ESP_EXPORT int espInit_controller_user(EspLoc *el, MprModule *module) {
-    espDefineAction(el, "missing", check);
-    espDefineAction(el, "user-check", check);
-    espDefineAction(el, "user-cached", cached);
-    espDefineAction(el, "user-details", details);
-    espDefineAction(el, "user-login", login);
+ESP_EXPORT int espInit_controller_user(EspRoute *eroute, MprModule *module) {
+    espDefineAction(eroute, "missing", check);
+    espDefineAction(eroute, "user-check", check);
+    espDefineAction(eroute, "user-cached", cached);
+    espDefineAction(eroute, "user-details", details);
+    espDefineAction(eroute, "user-login", login);
 
-    espCacheControl(el, "user-cached", 0, "*");
+    espCacheControl(eroute, "user-cached", 0, "*");
     return 0;
 }

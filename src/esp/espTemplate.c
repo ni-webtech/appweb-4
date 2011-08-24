@@ -188,12 +188,14 @@ static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *mod
 bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, int isView)
 {
     MprFile     *fp;
+    HttpRx      *rx;
     EspReq      *req;
     EspRoute    *eroute;
     cchar       *csource;
     char        *layout, *script, *page, *err;
     ssize       len;
 
+    rx = conn->rx;
     req = conn->data;
     eroute = req->eroute;
 
@@ -205,7 +207,7 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
         /*
             Use layouts iff there is a controller provided on the route
          */
-        layout = (eroute->controllerName) ? mprJoinPath(eroute->layoutsDir, "default.esp") : 0;
+        layout = (rx->route->sourceName) ? mprJoinPath(eroute->layoutsDir, "default.esp") : 0;
         if ((script = espBuildScript(eroute, page, source, cacheName, layout, &err)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't build %s, error %s", source, err);
             return 0;

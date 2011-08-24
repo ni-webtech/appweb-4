@@ -140,25 +140,15 @@ typedef struct Esp {
     EspRoute structure. Extended route configuration.
  */
 typedef struct EspRoute {
-    MprHashTable    *modules;               /* Compiled modules */
     MprList         *env;                   /* Environment for compiler */
-#if UNUSED
-    MprList         *routes;                /* Ordered list of routes */
-#endif
-    HttpRoute       *route;                 /* Controlling Http route */
     char            *compile;               /* Compile template */
     char            *link;                  /* Link template */
     char            *searchPath;            /* Search path to use when locating compiler / linker */
 
-    char            *controllerName;        /* Alias for route->sourceName */
-    char            *controllerPath;        /* Alias for route->sourcePath */
-
     char            *appModuleName;         /* App module name when compiled flat */
     char            *appModulePath;         /* App module path when compiled flat */
 
-    //  MOB - remove and use ->route->dir
     char            *dir;                   /* Base directory (alias for route->dir) */
-
     char            *cacheDir;              /* Directory for cached compiled controllers and views */
     char            *controllersDir;        /* Directory for controllers */
     char            *databasesDir;          /* Directory for databases */
@@ -175,34 +165,7 @@ typedef struct EspRoute {
 
 void espManageEspRoute(EspRoute *el, int flags);
 
-#if UNUSED
-/*
-    ESP Route structure. One per route.
- */
-typedef struct EspRoute {
-    char            *name;                  /* Route name */
-    MprHashTable    *methodHash;            /* Matching HTTP methods */
-    MprList         *formFields;            /* Matching form data values */
-    MprList         *headers;               /* Matching header values */
-    char            *methods;               /* Supported HTTP methods */
-    char            *pattern;               /* Original matching URI pattern for the route */
-    char            *action;                /* Original matching action to run */
-    MprList         *tokens;                /* Tokens in pattern, {name} */
-    char            *params;                /* Params to define. Extracted from pattern. (compiled) */
-    char            *controllerName;        /* Controller containing actions */
-    char            *controllerPath;        /* Full source path source of controller */
-    char            *template;              /* URI template for forming links based on this route */
-    char            *patternExpression;     /* Pattern regular expression */
-    void            *patternCompiled;       /* Compiled pattern regular expression */
-    char            *actionReplacement;     /* Matching action to run (compiled) */
-} EspRoute;
-
-extern EspRoute *espCreateRoute(cchar *name, cchar *methods, cchar *pattern, cchar *action, cchar *controller);
-extern int espFinalizeRoute(EspRoute *route);
-extern char *espMatchRoute(HttpConn *conn, EspRoute *route);
-#endif
-
-#define ESP_SESSION             "-esp-session-"
+#define ESP_SESSION "-esp-session-"
 
 typedef struct EspSession {
     char            *id;                /* Session ID key */
@@ -210,17 +173,6 @@ typedef struct EspSession {
     MprTime         lifespan;           /* Session inactivity timeout (msecs) */
 } EspSession;
 
-#define ESP_PAIR_NOT            0x1
-#define ESP_PAIR_STATIC_VALUES  0x2
-#define ESP_PAIR_FREE           0x4
-
-typedef struct EspPair {
-    char            *key;
-    void            *data;
-    int             flags;
-} EspPair;
-
-extern EspPair *espCreatePair(cchar *key, void *data, int flags);
 extern EspSession *espAllocSession(HttpConn *conn, cchar *id, MprTime timeout, int create);
 extern void espDestroySession(EspSession *sp);
 extern EspSession *espGetSession(HttpConn *conn, int create);
@@ -249,9 +201,10 @@ typedef struct EspReq {
     Esp             *esp;                   /* Convenient esp reference */
     MprBuf          *cacheBuffer;           /* HTML output caching */
     char            *cacheName;             /* Base name of intermediate compiled file */
+    char            *controllerName;        /* Controller name */
+    char            *controllerPath;        /* Path to controller source */
     char            *module;                /* Name of compiled module */
     char            *source;                /* Name of ESP source */
-    char            *controller;            /* Path to controller */
     char            *view;                  /* Path to view */
     char            *entry;                 /* Module entry point */
     char            *commandLine;           /* Command line for compile/link */

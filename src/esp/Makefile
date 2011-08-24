@@ -1,15 +1,12 @@
 #
-#	Makefile for the ESP handler
+#	Makefile for the ESP web framework
 #
 #	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
 
-ESP			:= mod_esp
-
 include 	.makedep
 
 ifeq	($(BLD_FEATURE_ESP),1)
-	MODULES		+= $(BLD_LIB_DIR)/$(ESP)$(BLD_SHOBJ)
 	TARGETS		+= $(BLD_BIN_DIR)/esp$(BLD_EXE)
 	TARGETS		+= $(BLD_LIB_DIR)/esp-www
 	TARGETS		+= $(BLD_LIB_DIR)/esp.conf
@@ -17,11 +14,7 @@ endif
 
 compileExtra: $(OBJECTS) 
 	
-modules: $(MODULES) $(TARGETS)
-
-$(BLD_LIB_DIR)/$(ESP)$(BLD_SHOBJ): $(OBJECTS) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
-	bld --shared --library $(BLD_LIB_DIR)/$(ESP) --libs "$(BLD_APPWEB_LIBS)" \
-		espFramework$(BLD_OBJ) espHandler$(BLD_OBJ) espSession$(BLD_OBJ) espTemplate$(BLD_OBJ)
+modules: $(TARGETS)
 
 $(BLD_BIN_DIR)/esp$(BLD_EXE): $(OBJECTS)
 	bld --exe $(BLD_BIN_DIR)/esp$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" --libs "$(BLD_APPWEB_LIBS) $(LIBS)" \
@@ -40,7 +33,6 @@ $(BLD_LIB_DIR)/esp.conf: esp.conf
 
 cleanExtra:
 	rm -rf $(BLD_LIB_DIR)/esp-www 
-	rm -f $(MODULES)
 
 #
 #   Local variables:

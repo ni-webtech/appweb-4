@@ -1242,7 +1242,6 @@ extern void *httpLookupStageData(Http *http, cchar *name);
 extern void httpAddStage(Http *http, HttpStage *stage);
 extern int httpOpenNetConnector(Http *http);
 extern int httpOpenSendConnector(Http *http);
-extern int httpOpenAuthFilter(Http *http);
 extern int httpOpenChunkFilter(Http *http);
 extern int httpOpenPassHandler(Http *http);
 extern int httpOpenRangeFilter(Http *http);
@@ -2323,6 +2322,7 @@ extern void httpAddVars(HttpConn *conn, cchar *buf, ssize len);
 extern void httpAddVarsFromQueue(HttpQueue *q);
 
 //  DOC
+extern MprHashTable *httpGetFormVars(HttpConn *conn);
 extern void httpAddFormVars(HttpConn *conn);
 extern void httpAddQueryVars(HttpConn *conn);
 

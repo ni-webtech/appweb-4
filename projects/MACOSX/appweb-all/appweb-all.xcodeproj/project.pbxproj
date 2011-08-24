@@ -59,11 +59,15 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		C913688214041CBA0024EB0A /* espFramework.c in Sources */ = {isa = PBXBuildFile; fileRef = C913687E14041CBA0024EB0A /* espFramework.c */; };
+		C913688314041CBA0024EB0A /* espSession.c in Sources */ = {isa = PBXBuildFile; fileRef = C913687F14041CBA0024EB0A /* espSession.c */; };
+		C913688414041CBA0024EB0A /* espTemplate.c in Sources */ = {isa = PBXBuildFile; fileRef = C913688014041CBA0024EB0A /* espTemplate.c */; };
+		C913688614041CD70024EB0A /* espHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C913688514041CD70024EB0A /* espHandler.c */; };
+		C913689114041D7A0024EB0A /* esp.c in Sources */ = {isa = PBXBuildFile; fileRef = C913687D14041CBA0024EB0A /* esp.c */; };
 		C92D5C6B130DF56C0097EBA8 /* meta.c in Sources */ = {isa = PBXBuildFile; fileRef = C92D5C6A130DF56C0097EBA8 /* meta.c */; };
 		C94086AF101A665B0019809C /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C94086D8101A672F0019809C /* testAppweb.c in Sources */ = {isa = PBXBuildFile; fileRef = C94086CB101A672F0019809C /* testAppweb.c */; };
 		C94086DE101A672F0019809C /* testHttp.c in Sources */ = {isa = PBXBuildFile; fileRef = C94086D2101A672F0019809C /* testHttp.c */; };
-		C9570D8313F042B900B7DEBB /* esp.c in Sources */ = {isa = PBXBuildFile; fileRef = C9570D8213F042B900B7DEBB /* esp.c */; };
 		C96176F412DCE345002702E0 /* auth.c in Sources */ = {isa = PBXBuildFile; fileRef = C96176F312DCE345002702E0 /* auth.c */; };
 		C970D6F313F5F3FD00775043 /* libpcre.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9B12BCA13D175C300470A96 /* libpcre.dylib */; };
 		C9761EF60FD046EF009C78E1 /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
@@ -82,7 +86,6 @@
 		C9817C2A110D173400F241EF /* config.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C1C110D170500F241EF /* config.c */; };
 		C9817C2C110D173400F241EF /* convenience.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C1E110D170500F241EF /* convenience.c */; };
 		C9817C31110D173400F241EF /* log.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C23110D170500F241EF /* log.c */; };
-		C9817C35110D173400F241EF /* appweb.c in Sources */ = {isa = PBXBuildFile; fileRef = C95C31E80FC5292A00FB3105 /* appweb.c */; };
 		C9817C3B110D177600F241EF /* mprSsl.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C12110D157800F241EF /* mprSsl.c */; };
 		C9817C46110D181600F241EF /* mprLib.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C11110D157800F241EF /* mprLib.c */; };
 		C9817C64110D18D600F241EF /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
@@ -120,14 +123,10 @@
 		C9D817A8101D4C2A0039DD9D /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C9D817A9101D4C2A0039DD9D /* libappweb.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DC30FD03FD9009C78E1 /* libappweb.dylib */; };
 		C9D817AE101D4C8E0039DD9D /* phpHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C97620700FD04E38009C78E1 /* phpHandler.c */; };
-		C9E4B74413C7F547005345FA /* espHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C9E4B73F13C7F547005345FA /* espHandler.c */; };
-		C9E4B74813C7F547005345FA /* espTemplate.c in Sources */ = {isa = PBXBuildFile; fileRef = C9E4B74113C7F547005345FA /* espTemplate.c */; };
-		C9E4B74A13C7F547005345FA /* espFramework.c in Sources */ = {isa = PBXBuildFile; fileRef = C9E4B74213C7F547005345FA /* espFramework.c */; };
 		C9E6CC9213F0402F0090CCA8 /* libmprssl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DAE0FD03FBA009C78E1 /* libmprssl.dylib */; };
 		C9E6CC9313F0402F0090CCA8 /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C9F2260213EB34AD00AD8F7C /* dirHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C9F2260013EB34AD00AD8F7C /* dirHandler.c */; };
 		C9F2260313EB34AD00AD8F7C /* fileHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C9F2260113EB34AD00AD8F7C /* fileHandler.c */; };
-		C9F2262313ECA97700AD8F7C /* espSession.c in Sources */ = {isa = PBXBuildFile; fileRef = C9F2262213ECA97700AD8F7C /* espSession.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
@@ -142,6 +141,34 @@
 /* End PBXBuildRule section */
 
 /* Begin PBXContainerItemProxy section */
+		C913688714041D0A0024EB0A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9761FFC0FD04D5C009C78E1;
+			remoteInfo = mod_cgi;
+		};
+		C913688B14041D0A0024EB0A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9D817A1101D4C2A0039DD9D;
+			remoteInfo = mod_php;
+		};
+		C913688D14041D0A0024EB0A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C97DCAAF101D4FE7008EB048;
+			remoteInfo = mod_ssl;
+		};
+		C913688F14041D190024EB0A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9B12BC213D175C300470A96;
+			remoteInfo = libpcre;
+		};
 		C92FC1AE13F4371E00DFA08D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
@@ -176,13 +203,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = C93E6EFE11E83A3B00248470;
 			remoteInfo = prep;
-		};
-		C93762AC14040973002400C5 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = C9761F7B0FD049F5009C78E1;
-			remoteInfo = All;
 		};
 		C93E6F0111E83A4400248470 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -447,12 +467,16 @@
 
 /* Begin PBXFileReference section */
 		C9081AA513D899CE00FE7376 /* Product.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Product.xcconfig; sourceTree = "<group>"; };
+		C913687D14041CBA0024EB0A /* esp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = esp.c; path = ../../../src/esp/esp.c; sourceTree = "<group>"; };
+		C913687E14041CBA0024EB0A /* espFramework.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espFramework.c; path = ../../../src/esp/espFramework.c; sourceTree = "<group>"; };
+		C913687F14041CBA0024EB0A /* espSession.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espSession.c; path = ../../../src/esp/espSession.c; sourceTree = "<group>"; };
+		C913688014041CBA0024EB0A /* espTemplate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espTemplate.c; path = ../../../src/esp/espTemplate.c; sourceTree = "<group>"; };
+		C913688514041CD70024EB0A /* espHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = espHandler.c; sourceTree = "<group>"; };
 		C92D5C6A130DF56C0097EBA8 /* meta.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = meta.c; path = ../../../src/meta.c; sourceTree = SOURCE_ROOT; };
 		C938480E1123BD80002AD34B /* ejsHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ejsHandler.c; sourceTree = "<group>"; };
 		C94086B3101A665B0019809C /* testAppweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testAppweb; sourceTree = BUILT_PRODUCTS_DIR; };
 		C94086CB101A672F0019809C /* testAppweb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testAppweb.c; path = ../../../src/test/testAppweb.c; sourceTree = SOURCE_ROOT; };
 		C94086D2101A672F0019809C /* testHttp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testHttp.c; path = ../../../src/test/testHttp.c; sourceTree = SOURCE_ROOT; };
-		C9570D8213F042B900B7DEBB /* esp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = esp.c; path = esp/esp.c; sourceTree = "<group>"; };
 		C95C31E80FC5292A00FB3105 /* appweb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = appweb.c; path = ../../../src/server/appweb.c; sourceTree = SOURCE_ROOT; };
 		C96176F312DCE345002702E0 /* auth.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = auth.c; path = ../../../src/utils/auth.c; sourceTree = SOURCE_ROOT; };
 		C969664713D8A11000B16C66 /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
@@ -489,14 +513,9 @@
 		C9D7A7CB13D4F2CD000428C7 /* angel.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = angel.c; path = ../../../src/deps/mpr/angel.c; sourceTree = "<group>"; };
 		C9D817AD101D4C2A0039DD9D /* mod_php.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_php.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9E4B73D13C7F4F3005345FA /* mod_esp.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_esp.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
-		C9E4B73F13C7F547005345FA /* espHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espHandler.c; path = esp/espHandler.c; sourceTree = "<group>"; };
-		C9E4B74013C7F547005345FA /* esp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = esp.h; path = esp/esp.h; sourceTree = "<group>"; };
-		C9E4B74113C7F547005345FA /* espTemplate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espTemplate.c; path = esp/espTemplate.c; sourceTree = "<group>"; };
-		C9E4B74213C7F547005345FA /* espFramework.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espFramework.c; path = esp/espFramework.c; sourceTree = "<group>"; };
 		C9E6CC9713F0402F0090CCA8 /* esp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = esp; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9F2260013EB34AD00AD8F7C /* dirHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = dirHandler.c; sourceTree = "<group>"; };
 		C9F2260113EB34AD00AD8F7C /* fileHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fileHandler.c; sourceTree = "<group>"; };
-		C9F2262213ECA97700AD8F7C /* espSession.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espSession.c; path = esp/espSession.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -658,15 +677,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		C90C0CCD13CCFE7B00A43FD9 /* esp */ = {
+		C913687214041C690024EB0A /* esp */ = {
 			isa = PBXGroup;
 			children = (
-				C9570D8213F042B900B7DEBB /* esp.c */,
-				C9E4B74013C7F547005345FA /* esp.h */,
-				C9F2262213ECA97700AD8F7C /* espSession.c */,
-				C9E4B74213C7F547005345FA /* espFramework.c */,
-				C9E4B73F13C7F547005345FA /* espHandler.c */,
-				C9E4B74113C7F547005345FA /* espTemplate.c */,
+				C913687D14041CBA0024EB0A /* esp.c */,
+				C913687E14041CBA0024EB0A /* espFramework.c */,
+				C913687F14041CBA0024EB0A /* espSession.c */,
+				C913688014041CBA0024EB0A /* espTemplate.c */,
 			);
 			name = esp;
 			sourceTree = "<group>";
@@ -708,12 +725,12 @@
 		C97620660FD04E38009C78E1 /* modules */ = {
 			isa = PBXGroup;
 			children = (
+				C913688514041CD70024EB0A /* espHandler.c */,
 				C9F2260013EB34AD00AD8F7C /* dirHandler.c */,
 				C9F2260113EB34AD00AD8F7C /* fileHandler.c */,
 				C97620690FD04E38009C78E1 /* cgiHandler.c */,
 				C938480E1123BD80002AD34B /* ejsHandler.c */,
 				C97620700FD04E38009C78E1 /* phpHandler.c */,
-				C90C0CCD13CCFE7B00A43FD9 /* esp */,
 				C97620760FD04E38009C78E1 /* sslModule.c */,
 			);
 			name = modules;
@@ -770,6 +787,7 @@
 			children = (
 				C9817C13110D15C400F241EF /* http */,
 				C9AFCC6A0FC522600080E908 /* mpr */,
+				C913687214041C690024EB0A /* esp */,
 				C9817C16110D160F00F241EF /* pcre */,
 				C97620660FD04E38009C78E1 /* modules */,
 				C95C31E70FC528C700FB3105 /* server */,
@@ -1024,8 +1042,11 @@
 			buildRules = (
 			);
 			dependencies = (
+				C913689014041D190024EB0A /* PBXTargetDependency */,
+				C913688814041D0A0024EB0A /* PBXTargetDependency */,
+				C913688C14041D0A0024EB0A /* PBXTargetDependency */,
+				C913688E14041D0A0024EB0A /* PBXTargetDependency */,
 				C9D2590514040995003F675B /* PBXTargetDependency */,
-				C93762AD14040973002400C5 /* PBXTargetDependency */,
 				C92FC1AF13F4371E00DFA08D /* PBXTargetDependency */,
 			);
 			name = appweb;
@@ -1202,7 +1223,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cp $SRC/modules/esp/esp.conf $OUT/lib\nexit 0";
+			shellScript = "cp $SRC/esp/esp.conf $OUT/lib\nexit 0";
 		};
 		C976D54A13D35902001BBFDF /* Export Headers */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1216,7 +1237,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cp $SRC/modules/esp/esp.h $OUT/inc\nexit 0";
+			shellScript = "cp $SRC/esp/esp.h $OUT/inc\nexit 0";
 			showEnvVarsInLog = 0;
 		};
 		C976D54B13D35989001BBFDF /* Export Headers */ = {
@@ -1401,7 +1422,6 @@
 				C9817C2A110D173400F241EF /* config.c in Sources */,
 				C9817C2C110D173400F241EF /* convenience.c in Sources */,
 				C9817C31110D173400F241EF /* log.c in Sources */,
-				C9817C35110D173400F241EF /* appweb.c in Sources */,
 				C92D5C6B130DF56C0097EBA8 /* meta.c in Sources */,
 				C9F2260213EB34AD00AD8F7C /* dirHandler.c in Sources */,
 				C9F2260313EB34AD00AD8F7C /* fileHandler.c in Sources */,
@@ -1492,10 +1512,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C9E4B74413C7F547005345FA /* espHandler.c in Sources */,
-				C9E4B74813C7F547005345FA /* espTemplate.c in Sources */,
-				C9E4B74A13C7F547005345FA /* espFramework.c in Sources */,
-				C9F2262313ECA97700AD8F7C /* espSession.c in Sources */,
+				C913688214041CBA0024EB0A /* espFramework.c in Sources */,
+				C913688314041CBA0024EB0A /* espSession.c in Sources */,
+				C913688414041CBA0024EB0A /* espTemplate.c in Sources */,
+				C913688614041CD70024EB0A /* espHandler.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1503,13 +1523,33 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C9570D8313F042B900B7DEBB /* esp.c in Sources */,
+				C913689114041D7A0024EB0A /* esp.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		C913688814041D0A0024EB0A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9761FFC0FD04D5C009C78E1 /* mod_cgi */;
+			targetProxy = C913688714041D0A0024EB0A /* PBXContainerItemProxy */;
+		};
+		C913688C14041D0A0024EB0A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9D817A1101D4C2A0039DD9D /* mod_php */;
+			targetProxy = C913688B14041D0A0024EB0A /* PBXContainerItemProxy */;
+		};
+		C913688E14041D0A0024EB0A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C97DCAAF101D4FE7008EB048 /* mod_ssl */;
+			targetProxy = C913688D14041D0A0024EB0A /* PBXContainerItemProxy */;
+		};
+		C913689014041D190024EB0A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9B12BC213D175C300470A96 /* libpcre */;
+			targetProxy = C913688F14041D190024EB0A /* PBXContainerItemProxy */;
+		};
 		C92FC1AF13F4371E00DFA08D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = C93E6EFE11E83A3B00248470 /* prep */;
@@ -1534,11 +1574,6 @@
 			isa = PBXTargetDependency;
 			target = C93E6EFE11E83A3B00248470 /* prep */;
 			targetProxy = C92FC1B613F4373400DFA08D /* PBXContainerItemProxy */;
-		};
-		C93762AD14040973002400C5 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = C9761F7B0FD049F5009C78E1 /* All */;
-			targetProxy = C93762AC14040973002400C5 /* PBXContainerItemProxy */;
 		};
 		C93E6F0211E83A4400248470 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;

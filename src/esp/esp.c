@@ -43,6 +43,8 @@ typedef struct App {
      */
     EspRoute    *eroute;
     MprList     *files;                 /* List of files to process */
+    char        *routeName;             /* Name of route to use for ESP configuration */
+    char        *routePrefix;           /* Route prefix to use for ESP configuration */
     char        *command;               /* Compilation or link command */
     char        *cacheName;             /* MD5 name of cached component */
     cchar       *csource;               /* Name of "C" source for controller or view */
@@ -121,24 +123,24 @@ MAIN(espgen, int argc, char **argv)
         if (*argp != '-') {
             break;
         }
-        if (scmp(argp, "--config") == 0) {
+        if (smatch(argp, "--config")) {
             if (argind >= argc) {
                 usageError();
             } else {
                 app->configFile = sclone(argv[++argind]);
             }
 
-        } else if (scmp(argp, "--flat") == 0 || scmp(argp, "-f") == 0) {
+        } else if (smatch(argp, "--flat") || smatch(argp, "-f")) {
             app->flat = 1;
 
-        } else if (scmp(argp, "--listen") == 0 || scmp(argp, "-l") == 0) {
+        } else if (smatch(argp, "--listen") || smatch(argp, "-l")) {
             if (argind >= argc) {
                 usageError();
             } else {
                 app->listen = sclone(argv[++argind]);
             }
 
-        } else if (scmp(argp, "--log") == 0 || scmp(argp, "-l") == 0) {
+        } else if (smatch(argp, "--log") || smatch(argp, "-l")) {
             if (argind >= argc) {
                 usageError();
             } else {
@@ -146,17 +148,31 @@ MAIN(espgen, int argc, char **argv)
                 mprSetCmdlineLogging(1);
             }
 
-        } else if (scmp(argp, "--overwrite") == 0) {
+        } else if (smatch(argp, "--overwrite")) {
             app->overwrite = 1;
 
-        } else if (scmp(argp, "--quiet") == 0 || scmp(argp, "-q") == 0) {
+        } else if (smatch(argp, "--quiet") || smatch(argp, "-q")) {
             app->quiet = 1;
 
-        } else if (scmp(argp, "--verbose") == 0 || scmp(argp, "-v") == 0) {
+        } else if (smatch(argp, "--routeName")) {
+            if (argind >= argc) {
+                usageError();
+            } else {
+                app->routeName = sclone(argv[++argind]);
+            }
+
+        } else if (smatch(argp, "--routePrefix")) {
+            if (argind >= argc) {
+                usageError();
+            } else {
+                app->routePrefix = sclone(argv[++argind]);
+            }
+
+        } else if (smatch(argp, "--verbose") || smatch(argp, "-v")) {
             maStartLogging(NULL, "stderr:2");
             mprSetCmdlineLogging(1);
 
-        } else if (scmp(argp, "--version") == 0 || scmp(argp, "-V") == 0) {
+        } else if (smatch(argp, "--version") || smatch(argp, "-V")) {
             mprPrintf("%s %s-%s\n", mprGetAppTitle(), BLD_VERSION, BLD_NUMBER);
             exit(0);
 
@@ -205,6 +221,8 @@ static void manageApp(App *app, int flags)
         mprMark(app->module);
         mprMark(app->mpr);
         mprMark(app->pathEnv);
+        mprMark(app->routeName);
+        mprMark(app->routePrefix);
         mprMark(app->serverRoot);
         mprMark(app->source);
         mprMark(app->wwwDir);
@@ -247,28 +265,28 @@ static void getAppDirs()
 {
     HttpHost    *host;
     HttpRoute   *rp;
-    char        *prefix;
+    char        *routeName, *routePrefix;
     int         next;
 
-    //  MOB - must support non-default hosts
     host = app->meta->defaultHost;
-
-    //  MOB - must support more complex prefixes
-    //  MOB - but the /app is not used if doing a stand-alone appweb.conf
-    prefix = sfmt("/%s", app->appName);
+    routeName = app->routeName;
+    routePrefix = app->routePrefix ? app->routePrefix : "/";
 
     for (next = 0; (rp = mprGetNextItem(host->routes, &next)) != 0; ) {
-        //  MOB - should this work if no scriptName?
-        if (strncmp(prefix, rp->scriptName, rp->scriptNameLen) != 0) {
+        if (routeName) {
+            if (strcmp(routeName, rp->name) != 0) {
+                continue;
+            }
+        }
+        if (strcmp(routePrefix, rp->prefix) != 0) {
+            continue;
+        }
+        if ((app->eroute = httpGetRouteData(rp, ESP_NAME)) != 0 && app->eroute->compile) {
             break;
         }
     }
     if (rp == 0) {
-        error("Can't find EspAlias or Route for %s", prefix);
-        return;
-    }
-    if ((app->eroute = httpGetRouteData(rp, ESP_NAME)) == 0) {
-        error("Can't find ESP data for Route for %s", prefix);
+        error("Can't find ESP configuration in config file");
         return;
     }
     route = rp;
@@ -313,22 +331,22 @@ static void process(int argc, char **argv)
     cchar   *cmd;
 
     cmd = argv[0];
-    if (scmp(cmd, "generate") == 0) {
+    if (smatch(cmd, "generate")) {
         generate(argc - 1, &argv[1]);
         return;
     }
     if (app->error) {
         return;
     }
-    if (scmp(cmd, "clean") == 0) {
+    if (smatch(cmd, "clean")) {
         readConfig();
         clean(argc - 1, &argv[1]);
 
-    } else if (scmp(cmd, "compile") == 0) {
+    } else if (smatch(cmd, "compile")) {
         readConfig();
         compile(argc - 1, &argv[1]);
 
-    } else if (scmp(cmd, "run") == 0) {
+    } else if (smatch(cmd, "run")) {
         run(argc - 1, &argv[1]);
 
     } else {
@@ -388,8 +406,9 @@ static int runCommand(cchar *command, cchar *csource, cchar *module)
     if (eroute->searchPath) {
         mprSetCmdSearchPath(cmd, eroute->searchPath);
     }
-    //  WARNING: GC will run here
     mprLog(1, "Run: %s", app->command);
+
+    //  WARNING: GC will run here
 	if (mprRunCmd(cmd, app->command, &out, &err, 0) != 0) {
 		if (err == 0 || *err == '\0') {
 			/* Windows puts errors to stdout Ugh! */
@@ -492,8 +511,10 @@ static void compileFile(cchar *source, int kind)
         ## [] - compile controllers and views separately into cache
         ## [controller_names/view_names] - compile single file
         ## [app] - compile all files into a single source file with one init that calls all sub-init files
+
     esp compile path/name.ejs ...
         ## [controller_names/view_names] - compile single file
+
     esp compile static
         ## use makerom code and compile static into a file in cache
  */
@@ -512,17 +533,17 @@ static void compile(int argc, char **argv)
         }
     } else {
         kind = argv[0];
-        if (scmp(kind, "flat") == 0) {
+        if (smatch(kind, "flat")) {
             app->flat = 1;
         }
     }
-    if (scmp(kind, "*") == 0) {
+    if (smatch(kind, "*")) {
         /*
             Build all items separately
          */
         app->files = files = mprGetPathFiles(eroute->controllersDir, 1);
         for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
-            if (scmp(mprGetPathExt(dp->name), "c") == 0) {
+            if (smatch(mprGetPathExt(dp->name), "c")) {
                 path = mprJoinPath(eroute->controllersDir, dp->name);
                 compileFile(path, ESP_CONTROLLER);
             }
@@ -537,12 +558,12 @@ static void compile(int argc, char **argv)
         //  MOB - what about pattern matching?
         app->files = files = mprFindFiles(eroute->staticDir, 0);
         for (next = 0; (path = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
-            if (scmp(mprGetPathExt(path), "esp") == 0) {
+            if (smatch(mprGetPathExt(path), "esp")) {
                 compileFile(path, ESP_PAGE);
             }
         }
 
-    } else if (scmp(kind, "flat") == 0) {
+    } else if (smatch(kind, "flat")) {
         /*
             Catenate all source
          */
@@ -556,7 +577,7 @@ static void compile(int argc, char **argv)
 
         app->files = files = mprGetPathFiles(eroute->controllersDir, 1);
         for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
-            if (scmp(mprGetPathExt(dp->name), "c") == 0) {
+            if (smatch(mprGetPathExt(dp->name), "c")) {
                 path = mprJoinPath(eroute->controllersDir, dp->name);
                 compileFile(path, ESP_CONTROLLER);
             }
@@ -570,7 +591,7 @@ static void compile(int argc, char **argv)
         //  MOB - what about pattern matching?
         app->files = files = mprFindFiles(eroute->staticDir, 0);
         for (next = 0; (path = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
-            if (scmp(mprGetPathExt(path), "esp") == 0) {
+            if (smatch(mprGetPathExt(path), "esp")) {
                 compileFile(path, ESP_PAGE);
             }
         }
@@ -613,20 +634,20 @@ static void compile(int argc, char **argv)
 }
 
 
+/*
+    generate app path
+ */
 static void generate(int argc, char **argv)
 {
     char    *kind;
 
-    /*
-        generate app path
-     */
     if (argc < 2) {
         usageError();
         return;
     }
     kind = argv[0];
 
-    if (scmp(kind, "app") == 0) {
+    if (smatch(kind, "app")) {
         setDirs(argv[1]);
         generateAppDirs();
         generateAppFiles();
@@ -836,6 +857,8 @@ static void usageError(Mpr *mpr)
     "    --log logFile:level    # Log to file file at verbosity level\n"
     "    --overwrite            # Overwrite existing files \n"
     "    --quiet                # Don't emit trace \n"
+    "    --routeName name       # Route name in appweb.conf to use \n"
+    "    --routePrefix prefix   # Route prefix in appweb.conf to use \n"
     "    --static               # Compile static content into C code\n"
     "    --verbose              # Emit verbose trace \n"
     "\n"

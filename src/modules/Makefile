@@ -8,19 +8,19 @@ OBJECTS			=
 CGI				:= mod_cgi
 FILE			:= mod_file
 EJS				:= mod_ejs
+ESP				:= mod_esp
 PHP				:= mod_php
 SSL				:= mod_ssl
 
 include 		.makedep
 
-ifeq	($(BLD_FEATURE_ESP),1)
-	POST_DIRS		+= esp
-endif
-
 OBJECTS			= $(BLD_OBJ_DIR)/dirHandler$(BLD_OBJ)
 OBJECTS			+= $(BLD_OBJ_DIR)/fileHandler$(BLD_OBJ)
 ifeq	($(BLD_FEATURE_CGI),1)
 	OBJECTS		+= $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ)
+endif
+ifeq	($(BLD_FEATURE_ESP),1)
+	OBJECTS 	+= $(BLD_OBJ_DIR)/espHandler$(BLD_OBJ)
 endif
 ifeq	($(BLD_FEATURE_EJSCRIPT),1)
 	OBJECTS 	+= $(BLD_OBJ_DIR)/ejsHandler$(BLD_OBJ)
@@ -40,6 +40,9 @@ ifeq	($(BLD_FEATURE_CGI),1)
 endif
 ifeq	($(BLD_FEATURE_EJSCRIPT),1)
 	MODULES		+= $(BLD_LIB_DIR)/$(EJS)$(BLD_SHOBJ)
+endif
+ifeq	($(BLD_FEATURE_ESP),1)
+	MODULES		+= $(BLD_LIB_DIR)/$(ESP)$(BLD_SHOBJ)
 endif
 ifeq	($(BLD_FEATURE_PHP),1)
 	MODULES		+= $(BLD_LIB_DIR)/$(PHP)$(BLD_SHOBJ)
@@ -69,8 +72,6 @@ _CFLAGS				:= $(patsubst -Wshorten-64-to-32,,$(_CFLAGS))
 compileExtra: $(IMPORTED) $(OBJECTS) 
 	
 modules: $(MODULES) $(IMPORTED)
-	@T=modules D=esp ; $(DO_RECURSE)
-
 
 #
 #	Build Modules (esp does its own build, see ./esp/Makefile)
@@ -80,15 +81,19 @@ $(BLD_LIB_DIR)/$(CGI)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ) $(BLD_LIB
 
 $(BLD_LIB_DIR)/$(EJS)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/ejsHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
 	bld --shared --library $(BLD_LIB_DIR)/$(EJS) --search "$(BLD_EJSCRIPT_LIBPATHS)" --libs "$(LIBS) $(BLD_EJSCRIPT_LIBS)" \
-		$(BLD_OBJ_DIR)/ejsHandler$(BLD_OBJ)
+		ejsHandler$(BLD_OBJ) 
+
+$(BLD_LIB_DIR)/$(ESP)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/espHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
+	bld --shared --library $(BLD_LIB_DIR)/$(ESP) --search "$(BLD_ESP_LIBPATHS)" --libs "$(LIBS) $(BLD_ESP_LIBS)" \
+		espHandler$(BLD_OBJ) espFramework$(BLD_OBJ) espSession$(BLD_OBJ) espTemplate$(BLD_OBJ)
 
 $(BLD_LIB_DIR)/$(PHP)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/phpHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
 	bld --shared --library $(BLD_LIB_DIR)/$(PHP) --rpath "$(BLD_LIB_PREFIX)" \
-		--search "$(BLD_PHP_LIBPATHS)" --libs "$(BLD_PHP_LIBS) $(LIBS)" $(BLD_OBJ_DIR)/phpHandler$(BLD_OBJ)
+		--search "$(BLD_PHP_LIBPATHS)" --libs "$(BLD_PHP_LIBS) $(LIBS)" phpHandler$(BLD_OBJ)
 
 $(BLD_LIB_DIR)/$(SSL)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/sslModule$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
 	bld --shared --library $(BLD_LIB_DIR)/$(SSL) --search "$(BLD_SSL_LIBPATHS)" --libs "$(BLD_APPWEB_LIBS) $(BLD_SSL_LIBS)" \
-		$(BLD_OBJ_DIR)/sslModule$(BLD_OBJ)
+		sslModule$(BLD_OBJ)
 
 $(IMPORTED): $(IMPORTS)
 	getlib $^

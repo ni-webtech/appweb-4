@@ -6,6 +6,7 @@
 /********************************* Includes ***********************************/
 
 #include    "appweb.h"
+#include    "pcre.h"
 
 /***************************** Forward Declarations ****************************/
 
@@ -17,6 +18,7 @@ static MaState *createState(MaMeta *meta);
 static char *getSearchPath(cchar *dir);
 static void manageState(MaState *state, int flags);
 static int parseFile(MaState *state, cchar *path);
+static int parseFileInner(MaState *state, cchar *path);
 static int setTarget(MaState *state, cchar *kind, cchar *details);
 
 /******************************************************************************/
@@ -161,12 +163,26 @@ static char *getDirective(char *line, char **valuep)
 
 static int parseFile(MaState *state, cchar *path)
 {
-    MaDirective     *directive;
-    char            *line, *tok, *key, *value;
+    int     rc;
 
-    if ((state = maPushState(state, 0)) == 0) {
+    if ((state = maPushState(state)) == 0) {
         return 0;
     }
+    mprAssert(state == state->top->current);
+    
+    rc = parseFileInner(state, path);
+    state->lineNumber = state->prev->lineNumber;
+    state = maPopState(state);
+    mprAssert(state->top->current == state);
+    return rc;
+}
+
+
+static int parseFileInner(MaState *state, cchar *path)
+{
+    MaDirective *directive;
+    char        *tok, *key, *line, *value;
+    
     if (maOpenConfig(state, path) < 0) {
         return MPR_ERR_CANT_OPEN;
     }
@@ -179,7 +195,7 @@ static int parseFile(MaState *state, cchar *path)
         key = getDirective(line, &value);
         if (!state->enabled && key[0] != '<') {
             //MOB 8
-            mprLog(0, "Skip: %s %s", key, value);
+            mprLog(8, "Skip: %s %s", key, value);
             continue;
         }
         if ((directive = mprLookupKey(state->appweb->directives, key)) == 0) {
@@ -187,12 +203,12 @@ static int parseFile(MaState *state, cchar *path)
             return MPR_ERR_BAD_SYNTAX;
         }
         state->key = key;
-        mprLog(0, "Line %d, Parse %s %s", state->lineNumber, key, value ? value : "");
+        mprLog(8, "Line %d, Parse %s %s", state->lineNumber, key, value ? value : "");
         if ((*directive)(state, key, value) < 0) {
             mprError("Bad directive \"%s\"\nAt line %d in %s\n\n", key, state->lineNumber, state->filename);
             return MPR_ERR_BAD_SYNTAX;
         }
-        state = state->currentState;
+        state = state->top->current;
     }
     /* EOF */
     if (state->prev && state->file == state->prev->file) {
@@ -202,8 +218,6 @@ static int parseFile(MaState *state, cchar *path)
         }
     }
     mprCloseFile(state->file);
-    state = state->prev;
-    state->lineNumber++;
     return 0;
 }
 
@@ -651,20 +665,8 @@ static int denyDirective(MaState *state, cchar *key, cchar *value)
  */
 static int directoryDirective(MaState *state, cchar *key, cchar *value)
 {
-#if UNUSED
-    char        *path;
-    state = maPushState(state, key);
-    if (state->enabled) {
-        state->route = httpCreateInheritedRoute(state->route);
-        path = httpMakePath(state->route, value);
-        httpSetRouteDir(state->route, path);
-        httpSetRouteName(state->route, sfmt("dir: %s", path));
-    }
-    return 0;
-#else
     mprError("The <Directory> directive is deprecated. Use <Route> with a DocumentRoot instead.");
     return MPR_ERR_BAD_SYNTAX;
-#endif
 }
 
 
@@ -769,31 +771,43 @@ static int headerDirective(MaState *state, cchar *key, cchar *value)
 /*
     <Include pattern>
  */
-//  MOB -- must support better wildcards
 static int includeDirective(MaState *state, cchar *key, cchar *value)
 {
     MprList         *includes;
     MprDirEntry     *dp;
-    char            *path;
-    int             next;
+    void            *compiled;
+    cchar           *errMsg;
+    char            *path, *pattern;
+    int             matches[4 * 3], next, count, column;
 
     if (!maTokenize(state, value, "%P", &value)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    //  MOB - change this to support proper regexp
-    if ((path = strchr(value, '*')) == 0) {
+    if (strpbrk(value, "^$*+?([|{") == 0) {
         if (parseFile(state, value) < 0) {
             return MPR_ERR_CANT_OPEN;
         }
     } else {
-        /* Process wild cards. This is very simple - only "*" is supported.  */
-        *path = '\0';
-        value = strim(value, "/", MPR_TRIM_END);
-        path = mprJoinPath(state->meta->home, value);
+        /*
+            Convert glob style to regexp
+         */
+        path = mprGetPathDir(mprJoinPath(state->meta->home, value));
+        pattern = mprGetPathBase(value);
+        pattern = sreplace(pattern, ".", "\\.");
+        pattern = sreplace(pattern, "*", ".*");
+        pattern = sjoin("^", pattern, "$", 0);
         if ((includes = mprGetPathFiles(path, 0)) != 0) {
+            if ((compiled = pcre_compile2(pattern, 0, 0, &errMsg, &column, NULL)) == 0) {
+                mprError("Can't compile include pattern. Error %s at column %d", errMsg, column);
+                return 0;
+            }
             for (next = 0; (dp = mprGetNextItem(includes, &next)) != 0; ) {
-                if (parseFile(state, mprJoinPath(path, dp->name)) < 0) {
-                    return MPR_ERR_CANT_OPEN;
+                count = pcre_exec(compiled, NULL, dp->name, (int) slen(dp->name), 0, 0, matches, 
+                    sizeof(matches) / sizeof(int));
+                if (count > 0) {
+                    if (parseFile(state, mprJoinPath(path, dp->name)) < 0) {
+                        return MPR_ERR_CANT_OPEN;
+                    }
                 }
             }
         }
@@ -807,7 +821,7 @@ static int includeDirective(MaState *state, cchar *key, cchar *value)
  */
 static int ifDirective(MaState *state, cchar *key, cchar *value)
 {
-    state = maPushState(state, key);
+    state = maPushState(state);
     if (state->enabled) {
         state->enabled = conditionalDefinition(value);
         if (!state->enabled) {
@@ -1430,7 +1444,7 @@ static int routeDirective(MaState *state, cchar *key, cchar *value)
     char    *pattern;
     int     not;
 
-    state = maPushState(state, key);
+    state = maPushState(state);
     if (state->enabled) {
         if (!maTokenize(state, value, "%!%S", &not, &pattern)) {
             return MPR_ERR_BAD_SYNTAX;
@@ -1710,7 +1724,7 @@ static int virtualHostDirective(MaState *state, cchar *key, cchar *value)
     char            *ip;
     int             port;
 
-    state = maPushState(state, key);
+    state = maPushState(state);
     if (state->enabled) {
         mprParseIp(value, &ip, &port, -1);
         state->host = httpCloneHost(state->host);
@@ -1880,34 +1894,31 @@ static MaState *createState(MaMeta *meta)
     if ((state = mprAllocObj(MaState, manageState)) == 0) {
         return 0;
     }
+    state->top = state;
+    state->current = state;
     state->meta = meta;
     state->appweb = meta->appweb;
     state->http = meta->http;
     state->host = meta->defaultHost;
     state->limits = state->host->limits;
     state->route = meta->defaultHost->route;
-#if UNUSED
-    state->route->connector = meta->http->netConnector;
-#endif
     state->enabled = 1;
     state->lineNumber = 0;
     state->auth = state->route->auth;
-    state->currentState = state;
     httpSetRouteName(state->route, "global");
     return state;
 }
 
 
-MaState *maPushState(MaState *prev, cchar *block)
+MaState *maPushState(MaState *prev)
 {
     MaState   *state;
 
     if ((state = mprAllocObj(MaState, manageState)) == 0) {
         return 0;
     }
+    state->top = prev->top;
     state->prev = prev;
-    prev->currentState = state;
-    state->currentState = state;
     state->appweb = prev->appweb;
     state->http = prev->http;
     state->meta = prev->meta;
@@ -1918,14 +1929,20 @@ MaState *maPushState(MaState *prev, cchar *block)
     state->filename = prev->filename;
     state->file = prev->file;
     state->limits = prev->limits;
-#if UNUSED
-    if (block) {
-        state->currentBlock = sclone(&block[1]);
-    } else {
-        state->currentBlock = prev->currentBlock;
-    }
-#endif
     state->auth = state->route->auth;
+    state->top->current = state;
+    return state;
+}
+
+
+MaState *maPopState(MaState *state)
+{
+    if (state->prev == 0) {
+        mprError("Too many closing blocks.\nAt line %d in %s\n\n", state->lineNumber, state->filename);
+    }
+    state->prev->lineNumber = state->lineNumber;
+    state = state->prev;
+    state->top->current = state;
     return state;
 }
 
@@ -1943,11 +1960,9 @@ static void manageState(MaState *state, int flags)
 		mprMark(state->limits);
 		mprMark(state->configDir);
 		mprMark(state->filename);
-#if UNUSED
-		mprMark(state->currentBlock);
-#endif
 		mprMark(state->prev);
-		mprMark(state->currentState);
+		mprMark(state->top);
+		mprMark(state->current);
 		mprMark(state->key);
     }
 }
@@ -1959,26 +1974,6 @@ static int configError(MaState *state, cchar *key)
     return MPR_ERR_BAD_SYNTAX;
 }
 
-
-MaState *maPopState(MaState *state)
-{
-    if (state->prev == 0) {
-        mprError("Too many closing blocks.\nAt line %d in %s\n\n", state->lineNumber, state->filename);
-    }
-    state->prev->lineNumber = state->lineNumber;
-    return state->currentState = state->prev;
-}
-
-
-#if UNUSED
-static bool closingBlock(MaState *state, cchar *key)
-{
-    if (key == 0 || *key == '\0') {
-        return 0;
-    }
-    return scasematch(key, state->currentBlock);
-}
-#endif
 
 
 void maAddDirective(MaAppweb *appweb, cchar *directive, MaDirective proc)

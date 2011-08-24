@@ -380,7 +380,8 @@ typedef struct MaState {
     int         lineNumber;             /**< Current line number */
     int         enabled;                /**< True if the current block is enabled */
     struct MaState *prev;
-    struct MaState *currentState;       /**< Used to handle includes */
+    struct MaState *top;                /**< Top level state */
+    struct MaState *current;            /**< Current state */
 } MaState;
 
 extern HttpRoute *maCreateLocationAlias(Http *http, MaState *state, cchar *prefix, cchar *path, 
@@ -388,7 +389,7 @@ extern HttpRoute *maCreateLocationAlias(Http *http, MaState *state, cchar *prefi
 
 extern char         *maMakePath(HttpHost *host, cchar *file);
 extern MaState      *maPopState(MaState *state);
-extern MaState      *maPushState(MaState *state, cchar *block);
+extern MaState      *maPushState(MaState *state);
 extern char         *maReplaceReferences(HttpHost *host, cchar *str);
 extern void         maRotateLog(cchar *path, int count, int maxSize);
 extern void         maSetAccessLog(HttpHost *host, cchar *path, cchar *format);
