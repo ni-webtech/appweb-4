@@ -7189,7 +7189,9 @@ HttpRoute *httpCreateInheritedRoute(HttpRoute *parent)
     route->scriptName = parent->scriptName;
     route->scriptNameLen = parent->scriptNameLen;
     route->scriptPath = parent->scriptPath;
+#if UNUSED
     route->searchPath = parent->searchPath;
+#endif
     route->sourceName = parent->sourceName;
     route->sourcePath = parent->sourcePath;
     route->ssl = parent->ssl;
@@ -7257,7 +7259,9 @@ static void manageRoute(HttpRoute *route, int flags)
         mprMark(route->script);
         mprMark(route->scriptName);
         mprMark(route->scriptPath);
+#if UNUSED
         mprMark(route->searchPath);
+#endif
         mprMark(route->sourceName);
         mprMark(route->sourcePath);
         mprMark(route->ssl);
@@ -8059,7 +8063,6 @@ void httpSetRouteSource(HttpRoute *route, cchar *source)
 }
 
 
-//  MOB - who is using this?
 void httpSetRouteScript(HttpRoute *route, cchar *script, cchar *scriptPath)
 {
     if (script) {

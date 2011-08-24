@@ -6253,7 +6253,7 @@ int startProcess(MprCmd *cmd)
     }
     program = mprGetPathBase(cmd->program);
     if (entryPoint == 0) {
-        program = mprTrimPathExtension(program);
+        program = mprTrimPathExt(program);
 #if BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64
         entryPoint = sjoin("_", program, "Main", NULL);
 #else
@@ -7523,7 +7523,7 @@ static int getPathInfo(MprDiskFileSystem *fileSystem, cchar *path, MprPath *info
     info->isDir = (s.st_mode & S_IFDIR) != 0;
     info->isReg = (s.st_mode & S_IFREG) != 0;
     info->isLink = 0;
-    ext = mprGetPathExtension(path);
+    ext = mprGetPathExt(path);
     if (ext && strcmp(ext, "lnk") == 0) {
         info->isLink = 1;
     }
@@ -7548,7 +7548,7 @@ static int getPathInfo(MprDiskFileSystem *fileSystem, cchar *path, MprPath *info
     info->isDir = (s.st_mode & S_IFDIR) != 0;
     info->isReg = (s.st_mode & S_IFREG) != 0;
     info->isLink = 0;
-    ext = mprGetPathExtension(path);
+    ext = mprGetPathExt(path);
     if (ext && strcmp(ext, "lnk") == 0) {
         info->isLink = 1;
     }

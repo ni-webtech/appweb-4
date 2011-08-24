@@ -1948,13 +1948,16 @@ typedef struct HttpRoute {
     char            *uploadDir;             /**< Upload directory */
     int             autoDelete;             /**< Auto delete uploaded files */
 
-    //  MOB - who uses this?
-    int             workers;                /**< Number of workers to use for this route */
+#if UNUSED
     char            *searchPath;            /**< Search path */
+#endif
 
-    //  MOB is this used?
+    /*
+        Used by Ejscript
+     */
     char            *script;                /**< Startup script for handlers serving this route */
     char            *scriptPath;            /**< Startup script path for handlers serving this route */
+    int             workers;                /**< Number of workers to use for this route */
 
     MprHashTable    *methodHash;            /**< Matching HTTP methods */
     MprList         *headers;               /**< Matching header values */
@@ -2034,9 +2037,7 @@ extern void httpSetRouteName(HttpRoute *route, cchar *name);
 extern void httpSetRoutePathVar(HttpRoute *route, cchar *token, cchar *value);
 extern void httpSetRoutePattern(HttpRoute *route, cchar *pattern, int flags);
 extern void httpSetRoutePrefix(HttpRoute *route, cchar *uri);
-//  MOB - who uses this?
 extern void httpSetRouteScript(HttpRoute *route, cchar *script, cchar *scriptPath);
-
 extern void httpSetRouteScriptName(HttpRoute *route, cchar *scriptName);
 extern void httpSetRouteSource(HttpRoute *route, cchar *source);
 extern void httpSetRouteWorkers(HttpRoute *route, int workers);
