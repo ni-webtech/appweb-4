@@ -12,13 +12,13 @@
 /*  
     Create a web server described by a config file. 
  */
-MaMeta *maCreateWebServer(cchar *configFile)
+MaServer *maCreateWebServer(cchar *configFile)
 {
     Mpr         *mpr;
     MaAppweb    *appweb;
-    MaMeta      *meta;
+    MaServer    *server;
 
-    meta = NULL;
+    server = NULL;
     if ((mpr = mprCreate(0, NULL, 0)) == 0) {
         mprError("Can't create the web server runtime");
         return 0;
@@ -29,12 +29,12 @@ MaMeta *maCreateWebServer(cchar *configFile)
         if ((appweb = maCreateAppweb(mpr)) == 0) {
             mprError("Can't create appweb object");
         } else {
-            if ((meta = maCreateMeta(appweb, "default", ".", ".", NULL, 0)) == 0) {
+            if ((server = maCreateServer(appweb, 0)) == 0) {
                 mprError("Can't create the web server");
             } else {
-                if (maParseConfig(meta, configFile) < 0) {
+                if (maParseConfig(server, configFile) < 0) {
                     mprError("Can't parse the config file %s", configFile);
-                    meta = 0;
+                    server = 0;
                 }
             }
         }
@@ -42,21 +42,21 @@ MaMeta *maCreateWebServer(cchar *configFile)
     if (mpr) {
         mprDestroy(0);
     }
-    return meta;
+    return server;
 }
 
 
 /*  
     Service requests for a web server.
  */
-int maServiceWebServer(MaMeta *meta)
+int maServiceWebServer(MaServer *server)
 {
-    if (maStartMeta(meta) < 0) {
+    if (maStartServer(server) < 0) {
         mprError("Can't start the web server");
         return MPR_ERR_CANT_CREATE;
     }
     mprServiceEvents(-1, 0);
-    maStopMeta(meta);
+    maStopServer(server);
     return 0;
 }
 
@@ -66,15 +66,15 @@ int maServiceWebServer(MaMeta *meta)
  */
 int maRunWebServer(cchar *configFile)
 {
-    MaMeta      *meta;
+    MaServer    *server;
     int         rc;
 
-    if ((meta = maCreateWebServer(configFile)) == 0) {
+    if ((server = maCreateWebServer(configFile)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
-    mprAddRoot(meta);
-    rc = maServiceWebServer(meta);
-    mprRemoveRoot(meta);
+    mprAddRoot(server);
+    rc = maServiceWebServer(server);
+    mprRemoveRoot(server);
     return rc;
 }
 
@@ -82,7 +82,7 @@ int maRunWebServer(cchar *configFile)
 int maRunSimpleWebServer(cchar *ip, int port, cchar *home, cchar *documents)
 {
     Mpr         *mpr;
-    MaMeta      *meta;
+    MaServer    *server;
     MaAppweb    *appweb;
 
     /*  
@@ -100,20 +100,20 @@ int maRunSimpleWebServer(cchar *ip, int port, cchar *home, cchar *documents)
         mprError("Can't create the web server http services");
         return MPR_ERR_CANT_INITIALIZE;
     }
-    /*  
-        Create and start the HTTP server. Give the server a name of "default" and define "." as the default serverRoot, 
-        ie. the directory with the server configuration files.
-     */
-    if ((meta = maCreateMeta(appweb, ip, home, documents, ip, port)) == 0) {
+    if ((server = maCreateServer(appweb, 0)) == 0) {
         mprError("Can't create the web server");
         return MPR_ERR_CANT_CREATE;
     }
-    if (maStartMeta(meta) < 0) {
+    if (maConfigureServer(server, 0, home, documents, ip, port) < 0) {
+        mprError("Can't create the web server");
+        return MPR_ERR_CANT_CREATE;
+    }
+    if (maStartServer(server) < 0) {
         mprError("Can't start the web server");
         return MPR_ERR_CANT_CREATE;
     }
     mprServiceEvents(-1, 0);
-    maStopMeta(meta);
+    maStopServer(server);
     mprDestroy(MPR_EXIT_DEFAULT);
     return 0;
 }

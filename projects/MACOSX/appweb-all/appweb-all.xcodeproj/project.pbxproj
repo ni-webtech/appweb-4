@@ -64,7 +64,6 @@
 		C913688414041CBA0024EB0A /* espTemplate.c in Sources */ = {isa = PBXBuildFile; fileRef = C913688014041CBA0024EB0A /* espTemplate.c */; };
 		C913688614041CD70024EB0A /* espHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C913688514041CD70024EB0A /* espHandler.c */; };
 		C913689114041D7A0024EB0A /* esp.c in Sources */ = {isa = PBXBuildFile; fileRef = C913687D14041CBA0024EB0A /* esp.c */; };
-		C92D5C6B130DF56C0097EBA8 /* meta.c in Sources */ = {isa = PBXBuildFile; fileRef = C92D5C6A130DF56C0097EBA8 /* meta.c */; };
 		C94086AF101A665B0019809C /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C94086D8101A672F0019809C /* testAppweb.c in Sources */ = {isa = PBXBuildFile; fileRef = C94086CB101A672F0019809C /* testAppweb.c */; };
 		C94086DE101A672F0019809C /* testHttp.c in Sources */ = {isa = PBXBuildFile; fileRef = C94086D2101A672F0019809C /* testHttp.c */; };
@@ -79,6 +78,7 @@
 		C97620820FD04F12009C78E1 /* cgiHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C97620690FD04E38009C78E1 /* cgiHandler.c */; };
 		C97620830FD04F17009C78E1 /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C97620840FD04F17009C78E1 /* libappweb.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DC30FD03FD9009C78E1 /* libappweb.dylib */; };
+		C976CD0A1405906C00D21AFA /* server.c in Sources */ = {isa = PBXBuildFile; fileRef = C976CD091405906C00D21AFA /* server.c */; };
 		C97DCAB6101D4FE7008EB048 /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C97DCAB7101D4FE7008EB048 /* libappweb.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DC30FD03FD9009C78E1 /* libappweb.dylib */; };
 		C97DCABC101D5088008EB048 /* sslModule.c in Sources */ = {isa = PBXBuildFile; fileRef = C97620760FD04E38009C78E1 /* sslModule.c */; };
@@ -472,7 +472,6 @@
 		C913687F14041CBA0024EB0A /* espSession.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espSession.c; path = ../../../src/esp/espSession.c; sourceTree = "<group>"; };
 		C913688014041CBA0024EB0A /* espTemplate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espTemplate.c; path = ../../../src/esp/espTemplate.c; sourceTree = "<group>"; };
 		C913688514041CD70024EB0A /* espHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = espHandler.c; sourceTree = "<group>"; };
-		C92D5C6A130DF56C0097EBA8 /* meta.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = meta.c; path = ../../../src/meta.c; sourceTree = SOURCE_ROOT; };
 		C938480E1123BD80002AD34B /* ejsHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ejsHandler.c; sourceTree = "<group>"; };
 		C94086B3101A665B0019809C /* testAppweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testAppweb; sourceTree = BUILT_PRODUCTS_DIR; };
 		C94086CB101A672F0019809C /* testAppweb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testAppweb.c; path = ../../../src/test/testAppweb.c; sourceTree = SOURCE_ROOT; };
@@ -492,6 +491,7 @@
 		C97620690FD04E38009C78E1 /* cgiHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cgiHandler.c; sourceTree = "<group>"; };
 		C97620700FD04E38009C78E1 /* phpHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = phpHandler.c; sourceTree = "<group>"; };
 		C97620760FD04E38009C78E1 /* sslModule.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sslModule.c; sourceTree = "<group>"; };
+		C976CD091405906C00D21AFA /* server.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = server.c; path = ../../../src/server.c; sourceTree = "<group>"; };
 		C976D54813D356A8001BBFDF /* testAppweb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = testAppweb.h; path = ../../../src/test/testAppweb.h; sourceTree = "<group>"; };
 		C97DCABB101D4FE7008EB048 /* mod_ssl.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_ssl.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9817C11110D157800F241EF /* mprLib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mprLib.c; path = ../../../src/deps/mpr/mprLib.c; sourceTree = SOURCE_ROOT; };
@@ -701,13 +701,13 @@
 		C95C31E70FC528C700FB3105 /* server */ = {
 			isa = PBXGroup;
 			children = (
+				C976CD091405906C00D21AFA /* server.c */,
 				C9A44E9813D74BAC009BF64B /* appweb.h */,
 				C9A44E9913D74BAC009BF64B /* customize.h */,
 				C95C31E80FC5292A00FB3105 /* appweb.c */,
 				C9817C1C110D170500F241EF /* config.c */,
 				C9817C1E110D170500F241EF /* convenience.c */,
 				C9817C23110D170500F241EF /* log.c */,
-				C92D5C6A130DF56C0097EBA8 /* meta.c */,
 			);
 			name = server;
 			sourceTree = "<group>";
@@ -725,8 +725,8 @@
 		C97620660FD04E38009C78E1 /* modules */ = {
 			isa = PBXGroup;
 			children = (
-				C913688514041CD70024EB0A /* espHandler.c */,
 				C9F2260013EB34AD00AD8F7C /* dirHandler.c */,
+				C913688514041CD70024EB0A /* espHandler.c */,
 				C9F2260113EB34AD00AD8F7C /* fileHandler.c */,
 				C97620690FD04E38009C78E1 /* cgiHandler.c */,
 				C938480E1123BD80002AD34B /* ejsHandler.c */,
@@ -1422,9 +1422,9 @@
 				C9817C2A110D173400F241EF /* config.c in Sources */,
 				C9817C2C110D173400F241EF /* convenience.c in Sources */,
 				C9817C31110D173400F241EF /* log.c in Sources */,
-				C92D5C6B130DF56C0097EBA8 /* meta.c in Sources */,
 				C9F2260213EB34AD00AD8F7C /* dirHandler.c in Sources */,
 				C9F2260313EB34AD00AD8F7C /* fileHandler.c in Sources */,
+				C976CD0A1405906C00D21AFA /* server.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

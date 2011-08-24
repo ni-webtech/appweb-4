@@ -23,7 +23,7 @@
 typedef struct App {
     Mpr         *mpr;
     MaAppweb    *appweb;
-    MaMeta      *meta;
+    MaServer    *server;
     char        *serverRoot;
     char        *configFile;
     char        *pathEnv;
@@ -217,12 +217,12 @@ static void manageApp(App *app, int flags)
         mprMark(app->flatPath);
         mprMark(app->libDir);
         mprMark(app->listen);
-        mprMark(app->meta);
         mprMark(app->module);
         mprMark(app->mpr);
         mprMark(app->pathEnv);
         mprMark(app->routeName);
         mprMark(app->routePrefix);
+        mprMark(app->server);
         mprMark(app->serverRoot);
         mprMark(app->source);
         mprMark(app->wwwDir);
@@ -268,7 +268,7 @@ static void getAppDirs()
     char        *routeName, *routePrefix;
     int         next;
 
-    host = app->meta->defaultHost;
+    host = httpLookupHost(http, "default");
     routeName = app->routeName;
     routePrefix = app->routePrefix ? app->routePrefix : "/";
 
@@ -309,11 +309,11 @@ static void readConfig()
 
     findConfigFile();
 
-    if ((app->meta = maCreateMeta(appweb, "default", app->serverRoot, NULL, NULL, -1)) == 0) {
+    if ((app->server = maCreateServer(appweb, "default")) == 0) {
         error("Can't create HTTP server for %s", mprGetAppName());
         return;
     }
-    if (maParseConfig(app->meta, app->configFile) < 0) {
+    if (maParseConfig(app->server, app->configFile) < 0) {
         error("Can't configure the server, exiting.");
         return;
     }

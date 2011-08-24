@@ -1,8 +1,8 @@
 /*
-    meta.c -- Manage a meta-server with one or more virtual hosts.
+    server.c -- Manage a web server with one or more virtual hosts.
 
-    A meta-server supports multiple endpoints and one or more (virtual) hosts.
-    Meta Servers may be configured manually or via an "appweb.conf" configuration  file.
+    A server supports multiple endpoints and one or more (virtual) hosts.
+    Server Servers may be configured manually or via an "appweb.conf" configuration  file.
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
@@ -13,9 +13,7 @@
 
 /***************************** Forward Declarations ***************************/
 
-#if BLD_UNIX_LIKE
-static int allDigits(cchar *s);
-#endif
+static char *getSearchPath(cchar *dir);
 static void manageAppweb(MaAppweb *appweb, int flags);
 static void openHandlers(Http *http);
 
@@ -33,7 +31,7 @@ MaAppweb *maCreateAppweb()
     }
     appweb->http = http = httpCreate(appweb);
     httpSetContext(http, appweb);
-    appweb->metas = mprCreateList(-1, 0);
+    appweb->servers = mprCreateList(-1, 0);
     maGetUserGroup(appweb);
     maParseInit(appweb);
     openHandlers(http);
@@ -44,8 +42,8 @@ MaAppweb *maCreateAppweb()
 static void manageAppweb(MaAppweb *appweb, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(appweb->defaultMeta);
-        mprMark(appweb->metas);
+        mprMark(appweb->defaultServer);
+        mprMark(appweb->servers);
         mprMark(appweb->http);
         mprMark(appweb->user);
         mprMark(appweb->group);
@@ -66,26 +64,26 @@ static void openHandlers(Http *http)
 }
 
 
-void maAddMeta(MaAppweb *appweb, MaMeta *meta)
+void maAddServer(MaAppweb *appweb, MaServer *server)
 {
-    mprAddItem(appweb->metas, meta);
+    mprAddItem(appweb->servers, server);
 }
 
 
-void maSetDefaultMeta(MaAppweb *appweb, MaMeta *meta)
+void maSetDefaultServer(MaAppweb *appweb, MaServer *server)
 {
-    appweb->defaultMeta = meta;
+    appweb->defaultServer = server;
 }
 
 
-MaMeta *maLookupMeta(MaAppweb *appweb, cchar *name)
+MaServer *maLookupServer(MaAppweb *appweb, cchar *name)
 {
-    MaMeta  *meta;
-    int     next;
+    MaServer    *server;
+    int         next;
 
-    for (next = 0; (meta = mprGetNextItem(appweb->metas, &next)) != 0; ) {
-        if (strcmp(meta->name, name) == 0) {
-            return meta;
+    for (next = 0; (server = mprGetNextItem(appweb->servers, &next)) != 0; ) {
+        if (strcmp(server->name, name) == 0) {
+            return server;
         }
     }
     return 0;
@@ -94,12 +92,12 @@ MaMeta *maLookupMeta(MaAppweb *appweb, cchar *name)
 
 int maStartAppweb(MaAppweb *appweb)
 {
-    MaMeta  *meta;
-    char    *timeText;
-    int     next;
+    MaServer    *server;
+    char        *timeText;
+    int         next;
 
-    for (next = 0; (meta = mprGetNextItem(appweb->metas, &next)) != 0; ) {
-        if (maStartMeta(meta) < 0) {
+    for (next = 0; (server = mprGetNextItem(appweb->servers, &next)) != 0; ) {
+        if (maStartServer(server) < 0) {
             return MPR_ERR_CANT_INITIALIZE;
         }
     }
@@ -111,90 +109,186 @@ int maStartAppweb(MaAppweb *appweb)
 
 int maStopAppweb(MaAppweb *appweb)
 {
-    MaMeta  *meta;
+    MaServer  *server;
     int     next;
 
-    for (next = 0; (meta = mprGetNextItem(appweb->metas, &next)) != 0; ) {
-        maStopMeta(meta);
+    for (next = 0; (server = mprGetNextItem(appweb->servers, &next)) != 0; ) {
+        maStopServer(server);
     }
     return 0;
 }
 
 
-static void manageMeta(MaMeta *meta, int flags)
+static void manageServer(MaServer *server, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(meta->appweb);
-        mprMark(meta->http);
-        mprMark(meta->name);
-        mprMark(meta->home);
-        mprMark(meta->endpoints);
+        mprMark(server->appweb);
+        mprMark(server->http);
+        mprMark(server->name);
+        mprMark(server->home);
+        mprMark(server->endpoints);
 
     } else if (flags & MPR_MANAGE_FREE) {
-        maStopMeta(meta);
+        maStopServer(server);
     }
 }
 
 
 /*  
-    Create a new meta-server. A meta-server may manage may multiple servers and virtual hosts. 
+    Create a new server. A server may manage may multiple servers and virtual hosts. 
     If ip/port endpoint is supplied, this call will create a Server on that endpoint. Otherwise, 
-    maConfigureMeta should be called later. A default route is created with the document root set to "."
+    maConfigureServer should be called later. A default route is created with the document root set to "."
  */
-MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *home, cchar *documents, cchar *ip, int port)
+MaServer *maCreateServer(MaAppweb *appweb, cchar *name)
 {
-    MaMeta          *meta;
-    HttpEndpoint    *endpoint;
-    HttpHost        *host;
+    MaServer    *server;
 
     mprAssert(appweb);
-    mprAssert(name && *name);
 
-    if ((meta = mprAllocObj(MaMeta, manageMeta)) == NULL) {
+    if ((server = mprAllocObj(MaServer, manageServer)) == NULL) {
         return 0;
     }
-    meta->name = sclone(name);
-    meta->endpoints = mprCreateList(-1, 0);
-    meta->limits = httpCreateLimits(1);
-    meta->appweb = appweb;
-    meta->http = appweb->http;
-    meta->alreadyLogging = mprGetLogHandler() ? 1 : 0;
+    if (name == 0 || *name == '\0') {
+        name = "default";
+    }
+    server->name = sclone(name);
+    server->endpoints = mprCreateList(-1, 0);
+    server->limits = httpCreateLimits(1);
+    server->appweb = appweb;
+    server->http = appweb->http;
+    server->alreadyLogging = mprGetLogHandler() ? 1 : 0;
 
+#if UNUSED
+    HttpEndpoint    *endpoint;
+    HttpHost        *host;
+    HttpRoute       *route;
     if (documents == 0 || *documents == '\0') {
         documents = ".";
     }
     if (home == 0 || *home == '\0') {
         home = ".";
     }
-    maSetMetaHome(meta, home);
-    host = maCreateDefaultHost(meta);
-    httpSetRouteDir(host->route, documents);
+    maSetServerHome(server, home);
+    host = maCreateDefaultHost(server);
+    route = httpCreateRoute(host);
+    httpSetRouteDir(route, documents);
+    httpFinalizeRoute(route);
 
     if (ip && port > 0) {
         /* Passing NULL for the dispatcher will cause a new dispatcher to be created for each accepted connection */
         endpoint = httpCreateEndpoint(ip, port, NULL);
         httpAddHostToEndpoint(endpoint, host);
-        maAddEndpoint(meta, endpoint);
+        maAddEndpoint(server, endpoint);
     }
-    maSetDefaultMeta(appweb, meta);
-    maAddMeta(appweb, meta);
-    return meta;
+#endif
+    maAddServer(appweb, server);
+    if (appweb->defaultServer == 0) {
+        maSetDefaultServer(appweb, server);
+    }
+    return server;
 }
 
 
-HttpHost *maCreateDefaultHost(MaMeta *meta)
+/*
+    Configure the server. If the configFile is defined, use it. If not, then consider home, documents, ip and port.
+ */
+int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *documents, cchar *ip, int port)
+{
+    MaAppweb        *appweb;
+    Http            *http;
+    HttpEndpoint    *endpoint;
+    HttpHost        *host;
+    HttpRoute       *route, *cgiRoute;
+    char            *path, *searchPath, *dir;
+
+    appweb = server->appweb;
+    http = appweb->http;
+    dir = mprGetAppDir();
+
+    if (configFile) {
+        path = mprGetAbsPath(configFile);
+        if (maParseConfig(server, path) < 0) {
+            /* mprUserError("Can't configure server using %s", path); */
+            return MPR_ERR_CANT_INITIALIZE;
+        }
+        return 0;
+
+    } else {
+        mprLog(2, "DocumentRoot %s", documents);
+        if ((endpoint = httpCreateConfiguredEndpoint(home, documents, ip, port)) == 0) {
+            return MPR_ERR_CANT_OPEN;
+        }
+        maAddEndpoint(server, endpoint);
+#if UNUSED
+        host = server->defaultHost = mprGetFirstItem(endpoint->hosts);
+#endif
+        host = mprGetFirstItem(endpoint->hosts);
+        mprAssert(host);
+
+        route = httpCreateRoute(host);
+        searchPath = getSearchPath(dir);
+        mprSetModuleSearchPath(searchPath);
+
+        maLoadModule(appweb, "cgiHandler", "mod_cgi");
+        if (httpLookupStage(http, "cgiHandler")) {
+            httpAddRouteHandler(route, "cgiHandler", "cgi cgi-nph bat cmd pl py");
+            /*
+                Add cgi-bin with a route for the /cgi-bin URL prefix.
+             */
+            path = "cgi-bin";
+            if (mprPathExists(path, X_OK)) {
+                cgiRoute = httpCreateAliasRoute(route, "/cgi-bin/", path, 0);
+                mprLog(4, "ScriptAlias \"/cgi-bin/\":\"%s\"", path);
+#if UNUSED
+                httpSetRouteHost(cgiRoute, host);
+#endif
+                httpSetRouteHandler(cgiRoute, "cgiHandler");
+                httpFinalizeRoute(cgiRoute);
+#if UNUSED
+                httpAddRoute(host, cgiRoute);
+#endif
+            }
+        }
+        maLoadModule(appweb, "espHandler", "mod_esp");
+        if (httpLookupStage(http, "espHandler")) {
+            httpAddRouteHandler(route, "espHandler", "esp");
+        }
+        maLoadModule(appweb, "ejsHandler", "mod_ejs");
+        if (httpLookupStage(http, "ejsHandler")) {
+            httpAddRouteHandler(route, "ejsHandler", "ejs");
+        }
+        maLoadModule(appweb, "phpHandler", "mod_php");
+        if (httpLookupStage(http, "phpHandler")) {
+            httpAddRouteHandler(route, "phpHandler", "php");
+        }
+        httpAddRouteHandler(route, "fileHandler", "");
+        httpFinalizeRoute(route);
+    }
+    if (home) {
+        maSetServerHome(server, home);
+    }
+    if (ip || port > 0) {
+        maSetServerAddress(server, ip, port);
+    }
+    return 0;
+}
+
+
+#if UNUSED
+HttpHost *maCreateDefaultHost(MaServer *server)
 {
     HttpHost    *host;
 
     host = httpCreateHost(0);
-    meta->defaultHost = host;
+    server->defaultHost = host;
     httpSetHostName(host, "default", -1);
-    httpSetHostHome(host, meta->home);
+    httpSetHostHome(host, server->home);
     return host;
 }
+#endif
 
 
-int maStartMeta(MaMeta *meta)
+int maStartServer(MaServer *server)
 {
     HttpEndpoint    *endpoint;
     HttpHost        *host;
@@ -202,7 +296,7 @@ int maStartMeta(MaMeta *meta)
 
     warned = 0;
     count = 0;
-    for (next = 0; (endpoint = mprGetNextItem(meta->endpoints, &next)) != 0; ) {
+    for (next = 0; (endpoint = mprGetNextItem(server->endpoints, &next)) != 0; ) {
         if (httpStartEndpoint(endpoint) < 0) {
             warned++;
             break;
@@ -219,41 +313,41 @@ int maStartMeta(MaMeta *meta)
         }
         return MPR_ERR_CANT_OPEN;
     }
-    if (maApplyChangedGroup(meta->appweb) < 0 || maApplyChangedUser(meta->appweb) < 0) {
+    if (maApplyChangedGroup(server->appweb) < 0 || maApplyChangedUser(server->appweb) < 0) {
         return MPR_ERR_CANT_COMPLETE;
     }
     return 0;
 }
 
 
-int maStopMeta(MaMeta *meta)
+int maStopServer(MaServer *server)
 {
     HttpEndpoint    *endpoint;
     int             next;
 
-    for (next = 0; (endpoint = mprGetNextItem(meta->endpoints, &next)) != 0; ) {
+    for (next = 0; (endpoint = mprGetNextItem(server->endpoints, &next)) != 0; ) {
         httpStopEndpoint(endpoint);
     }
     return 0;
 }
 
 
-void maAddEndpoint(MaMeta *meta, HttpEndpoint *endpoint)
+void maAddEndpoint(MaServer *server, HttpEndpoint *endpoint)
 {
-    mprAddItem(meta->endpoints, endpoint);
+    mprAddItem(server->endpoints, endpoint);
 }
 
 
-void maRemoveEndpoint(MaMeta *meta, HttpEndpoint *endpoint)
+void maRemoveEndpoint(MaServer *server, HttpEndpoint *endpoint)
 {
-    mprRemoveItem(meta->endpoints, endpoint);
+    mprRemoveItem(server->endpoints, endpoint);
 }
 
 
 /*  
     Set the home directory (Server Root). We convert path into an absolute path.
  */
-void maSetMetaHome(MaMeta *meta, cchar *path)
+void maSetServerHome(MaServer *server, cchar *path)
 {
     if (path == 0 || BLD_FEATURE_ROMFS) {
         path = ".";
@@ -267,15 +361,15 @@ void maSetMetaHome(MaMeta *meta, cchar *path)
         return;
     }
 #endif
-    meta->home = mprGetAbsPath(path);
-    mprLog(MPR_CONFIG, "Set meta server root to: \"%s\"", meta->home);
+    server->home = mprGetAbsPath(path);
+    mprLog(MPR_CONFIG, "Set server root to: \"%s\"", server->home);
 
 #if UNUSED
     if (chdir((char*) path) < 0) {
         mprError("Can't set server root to %s\n", path);
     } else {
-        meta->home = mprGetAbsPath(path);
-        mprLog(MPR_CONFIG, "Set meta server root to: \"%s\"", meta->home);
+        server->home = mprGetAbsPath(path);
+        mprLog(MPR_CONFIG, "Set server root to: \"%s\"", server->home);
     }
 #endif
 }
@@ -284,21 +378,23 @@ void maSetMetaHome(MaMeta *meta, cchar *path)
 /*
     Set the document root for the default server (only)
  */
-void maSetMetaAddress(MaMeta *meta, cchar *ip, int port)
+void maSetServerAddress(MaServer *server, cchar *ip, int port)
 {
     HttpEndpoint    *endpoint;
     int             next;
 
-    for (next = 0; ((endpoint = mprGetNextItem(meta->endpoints, &next)) != 0); ) {
+    for (next = 0; ((endpoint = mprGetNextItem(server->endpoints, &next)) != 0); ) {
         httpSetEndpointAddress(endpoint, ip, port);
     }
 }
 
 
-void maSetMetaDefaultHost(MaMeta *meta, HttpHost *host)
+#if UNUSED
+void maSetServerDefaultHost(MaServer *server, HttpHost *host)
 {
-    meta->defaultHost = host;
+    server->defaultHost = host;
 }
+#endif
 
 
 void maGetUserGroup(MaAppweb *appweb)
@@ -330,7 +426,7 @@ int maSetHttpUser(MaAppweb *appweb, cchar *newUser)
 #if BLD_UNIX_LIKE
     struct passwd   *pp;
 
-    if (allDigits(newUser)) {
+    if (snumber(newUser)) {
         appweb->uid = atoi(newUser);
         if ((pp = getpwuid(appweb->uid)) == 0) {
             mprError("Bad user id: %d", appweb->uid);
@@ -357,7 +453,7 @@ int maSetHttpGroup(MaAppweb *appweb, cchar *newGroup)
 #if BLD_UNIX_LIKE
     struct group    *gp;
 
-    if (allDigits(newGroup)) {
+    if (snumber(newGroup)) {
         appweb->gid = atoi(newGroup);
         if ((gp = getgrgid(appweb->gid)) == 0) {
             mprError("Bad group id: %d", appweb->gid);
@@ -453,12 +549,16 @@ int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
 }
 
 
-#if BLD_UNIX_LIKE
-static int allDigits(cchar *s)
+static char *getSearchPath(cchar *dir)
 {
-    return strspn(s, "1234567890") == strlen(s);
-}
+#if WIN
+        return sfmt("%s" MPR_SEARCH_SEP ".", dir);
+#else
+        char *libDir = mprJoinPath(mprGetPathParent(dir), BLD_LIB_NAME);
+        return sfmt("%s" MPR_SEARCH_SEP "%s" MPR_SEARCH_SEP ".", dir,
+            mprSamePath(BLD_BIN_PREFIX, dir) ? BLD_LIB_PREFIX: libDir);
 #endif
+}
 
 /*
     @copy   default

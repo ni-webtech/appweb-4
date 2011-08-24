@@ -59,8 +59,6 @@ static void openEsp(HttpQueue *q)
     }
     if (eroute == 0) {
         eroute = allocEspRoute(route);
-        //MOB - locking
-        httpSetRouteData(route, ESP_NAME, eroute);
         return;
     }
     conn->data = req;
@@ -917,14 +915,21 @@ static EspRoute *getEspRoute(HttpRoute *route)
 {
     EspRoute    *eroute, *parent;
 
-    if ((eroute = httpGetRouteData(route, ESP_NAME)) == 0) {
+    eroute = httpGetRouteData(route, ESP_NAME);
+    if (route->parent) {
+        /*
+            If the parent route has the same route data, then force a clone so the parent route does not get modified
+         */ 
+        parent = httpGetRouteData(route->parent, ESP_NAME);
+        if (eroute == parent) {
+            eroute = 0;
+        }
+    }
+    if (eroute == 0) {
         if (route->parent && (parent = httpGetRouteData(route->parent, ESP_NAME)) != 0) {
             eroute = cloneEspRoute(parent, route);
         } else {
             eroute = allocEspRoute(route);
-        }
-        if (eroute == 0) {
-            return 0;
         }
     }
     mprAssert(eroute);
@@ -1045,7 +1050,7 @@ static int espDirDirective(MaState *state, cchar *key, cchar *value)
     if ((eroute = getEspRoute(state->route)) == 0) {
         return MPR_ERR_MEMORY;
     }
-    if (!maTokenize(state, value, "%S %S", &name, &path)) {
+    if (!maTokenize(state, value, "%S ?S", &name, &path)) {
         return MPR_ERR_BAD_SYNTAX;
     }
     if (scmp(name, "mvc") == 0) {
@@ -1187,7 +1192,7 @@ static int espRoutePackDirective(MaState *state, cchar *key, cchar *value)
     if ((eroute = getEspRoute(state->route)) == 0) {
         return MPR_ERR_MEMORY;
     }
-    if (!maTokenize(state, value, "%S %S %P", &kind, &prefix, &controller)) {
+    if (!maTokenize(state, value, "%S ?S ?P", &kind, &prefix, &controller)) {
         return MPR_ERR_BAD_SYNTAX;
     }
     if (prefix == 0) {

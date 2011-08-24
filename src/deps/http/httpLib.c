@@ -3118,22 +3118,19 @@ HttpEndpoint *httpCreateConfiguredEndpoint(cchar *home, cchar *documents, cchar 
             if ((endpoint = httpCreateEndpoint(ip, port, NULL)) == 0) {
                 return 0;
             }
-            host = httpCreateHost();
-            httpSetHostName(host, ip, port);
-            httpAddHostToEndpoint(endpoint, host);
         }
     } else {
         if ((endpoint = httpCreateEndpoint(ip, port, NULL)) == 0) {
             return 0;
         }
-        host = httpCreateHost();
-        httpSetHostName(host, ip, port);
-        httpAddHostToEndpoint(endpoint, host);
     }
-    mprAssert(mprGetListLength(endpoint->hosts) == 1);
-    host = mprGetFirstItem(endpoint->hosts);
+    host = httpCreateHost();
+    httpSetHostIpAddr(host, ip, port);
+    httpAddHostToEndpoint(endpoint, host);
     httpSetHostHome(host, home);
+#if UNUSED
     httpSetRouteDir(host->route, documents);
+#endif
     if ((host->mimeTypes = mprCreateMimeTypes("mime.types")) == 0) {
         host->mimeTypes = MPR->mimeTypes;
     }
@@ -3441,7 +3438,7 @@ void httpSetNamedVirtualEndpoint(HttpEndpoint *endpoint)
 }
 
 
-HttpHost *httpLookupHost(HttpEndpoint *endpoint, cchar *name)
+HttpHost *httpLookupHostOnEndpoint(HttpEndpoint *endpoint, cchar *name)
 {
     HttpHost    *host;
     char        *ip;
@@ -3746,8 +3743,10 @@ HttpHost *httpCreateHost()
     host->traceMask = HTTP_TRACE_TX | HTTP_TRACE_RX | HTTP_TRACE_FIRST | HTTP_TRACE_HEADER;
     host->traceLevel = 3;
     host->traceMaxLength = MAXINT;
-
+#if UNUSED
     host->route = httpCreateDefaultRoute(host);
+    //  MOB _ this 
+#endif
     httpAddHost(http, host);
     return host;
 }
@@ -3766,7 +3765,8 @@ HttpHost *httpCloneHost(HttpHost *parent)
     host->mutex = mprCreateLock();
 
     /*  
-        The dirs and routes are all copy-on-write
+        The dirs and routes are all copy-on-write.
+        Don't clone ip, port and name
      */
     host->parent = parent;
     host->dirs = parent->dirs;
@@ -3776,8 +3776,10 @@ HttpHost *httpCloneHost(HttpHost *parent)
     host->mimeTypes = parent->mimeTypes;
     host->limits = mprMemdup(parent->limits, sizeof(HttpLimits));
     host->home = parent->home;
+#if UNUSED
     host->route = httpCreateInheritedRoute(parent->route);
     httpSetRouteHost(host->route, host);
+#endif
     host->traceMask = parent->traceMask;
     host->traceLevel = parent->traceLevel;
     host->traceMaxLength = parent->traceMaxLength;
@@ -3800,7 +3802,9 @@ static void manageHost(HttpHost *host, int flags)
         mprMark(host->parent);
         mprMark(host->dirs);
         mprMark(host->routes);
+#if UNUSED
         mprMark(host->route);
+#endif
         mprMark(host->mimeTypes);
         mprMark(host->home);
         mprMark(host->traceInclude);
@@ -3832,30 +3836,38 @@ void httpSetHostHome(HttpHost *host, cchar *home)
 
 
 /*
-    Set the host name intelligently from the name specified by ip:port. Port may be set to -1 and ip may contain a port
-    specifier, ie. "address:port". This routines sets host->name and host->ip, host->port which is used for vhost matching.
+    IP may be null in which case the host is listening on all interfaces. Port may be set to -1 and ip may contain a port
+    specifier, ie. "address:port".
  */
-void httpSetHostName(HttpHost *host, cchar *ip, int port)
+void httpSetHostIpAddr(HttpHost *host, cchar *ip, int port)
 {
+    char    *pip;
+
     if (port < 0 && schr(ip, ':')) {
-        char *pip;
         mprParseIp(ip, &pip, &port, -1);
         ip = pip;
     }
-    if (ip) {
-        if (port > 0) {
-            host->name = mprAsprintf("%s:%d", ip, port);
+    host->ip = sclone(ip);
+    host->port = port;
+
+    if (!host->name) {
+        if (ip) {
+            if (port > 0) {
+                host->name = sfmt("%s:%d", ip, port);
+            } else {
+                host->name = sclone(ip);
+            }
         } else {
-            host->name = sclone(ip);
+            mprAssert(port > 0);
+            host->name = sfmt("*:%d", port);
         }
-    } else {
-        mprAssert(port > 0);
-        host->name = mprAsprintf("*:%d", port);
     }
-    if (scmp(ip, "default") != 0) {
-        host->ip = sclone(ip);
-        host->port = port;
-    }
+}
+
+
+void httpSetHostName(HttpHost *host, cchar *name)
+{
+    host->name = sclone(name);
 }
 
 
@@ -3882,11 +3894,15 @@ int httpAddRoute(HttpHost *host, HttpRoute *route)
 
 void httpResetRoutes(HttpHost *host)
 {
+#if UNUSED
     HttpRoute   *route;
-
+    //  MOB - is this right to preserve the last route?
     route = mprGetLastItem(host->routes);
+#endif
     host->routes = mprCreateList(-1, 0);
+#if UNUSED
     mprAddItem(host->routes, route);
+#endif
 }
 
 
@@ -4200,6 +4216,9 @@ HttpEndpoint *httpGetFirstEndpoint(Http *http)
 }
 
 
+/*
+    WARNING: this should not be called by users as httpCreateHost will automatically call this.
+ */
 void httpAddHost(Http *http, HttpHost *host)
 {
     mprAddItem(http->hosts, host);
@@ -4212,22 +4231,17 @@ void httpRemoveHost(Http *http, HttpHost *host)
 }
 
 
-HttpRoute *httpCreateConfiguredRoute(HttpHost *host, int serverSide)
+HttpHost *httpLookupHost(Http *http, cchar *name)
 {
-    HttpRoute   *route;
-    Http        *http;
+    HttpHost    *host;
+    int         next;
 
-    /*
-        Create default incoming and outgoing pipelines. Order matters.
-     */
-    http = MPR->httpService;
-    route = httpCreateRoute(host);
-    httpAddRouteFilter(route, http->rangeFilter->name, NULL, HTTP_STAGE_TX);
-    httpAddRouteFilter(route, http->chunkFilter->name, NULL, HTTP_STAGE_RX | HTTP_STAGE_TX);
-    if (serverSide) {
-        httpAddRouteFilter(route, http->uploadFilter->name, NULL, HTTP_STAGE_RX);
+    for (next = 0; (host = mprGetNextItem(http->hosts, &next)) != 0; ) {
+        if (smatch(name, host->name)) {
+            return host;
+        }
     }
-    return route;
+    return 0;
 }
 
 
@@ -4707,7 +4721,7 @@ void httpMatchHost(HttpConn *conn)
         return;
     }
     if (httpIsNamedVirtualEndpoint(endpoint)) {
-        host = httpLookupHost(endpoint, conn->rx->hostHeader);
+        host = httpLookupHostOnEndpoint(endpoint, conn->rx->hostHeader);
     } else {
         host = mprGetFirstItem(endpoint->hosts);
     }
@@ -4748,6 +4762,10 @@ void httpRouteRequest(HttpConn *conn)
             next = 0;
             rewrites++;
         }
+    }
+    if (rx->route == 0) {
+        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find route for request");
+        return;
     }
     if (conn->error || tx->redirected || tx->altBody) {
         tx->handler = conn->http->passHandler;
@@ -5635,7 +5653,8 @@ void httpHandleOptionsTrace(HttpQueue *q)
             tx->status = HTTP_CODE_NOT_ACCEPTABLE;
             httpFormatBody(conn, "Trace Request Denied", "<p>The TRACE method is disabled on this server.</p>");
         } else {
-            tx->altBody = mprAsprintf("%s %s %s\r\n", rx->method, rx->uri, conn->protocol);
+            tx->altBody = sfmt("%s %s %s\r\n", rx->method, rx->uri, conn->protocol);
+            httpOmitBody(conn);
         }
 
     } else if (rx->flags & HTTP_OPTIONS) {
@@ -7134,6 +7153,40 @@ HttpRoute *httpCreateDefaultRoute(HttpHost *host)
         return 0;
     }
     httpSetRouteName(route, "default");
+    httpFinalizeRoute(route);
+    return route;
+}
+
+
+HttpRoute *httpCreateConfiguredRoute(HttpHost *host, int serverSide)
+{
+    HttpRoute   *route;
+    Http        *http;
+
+    /*
+        Create default incoming and outgoing pipelines. Order matters.
+     */
+    route = httpCreateRoute(host);
+    http = route->http;
+    httpAddRouteFilter(route, http->rangeFilter->name, NULL, HTTP_STAGE_TX);
+    httpAddRouteFilter(route, http->chunkFilter->name, NULL, HTTP_STAGE_RX | HTTP_STAGE_TX);
+    if (serverSide) {
+        httpAddRouteFilter(route, http->uploadFilter->name, NULL, HTTP_STAGE_RX);
+    }
+    return route;
+}
+
+
+HttpRoute *httpCreateAliasRoute(HttpRoute *parent, cchar *prefix, cchar *path, int status)
+{
+    HttpRoute   *route;
+
+    if ((route = httpCreateInheritedRoute(parent)) == 0) {
+        return 0;
+    }
+    httpSetRoutePattern(route, prefix, 0);
+    httpSetRouteDir(route, path);
+    route->responseStatus = status;
     return route;
 }
 
@@ -7203,20 +7256,6 @@ HttpRoute *httpCreateInheritedRoute(HttpRoute *parent)
     route->virtualTarget = parent->virtualTarget;
     route->writeTarget = parent->writeTarget;
     route->workers = parent->workers;
-    return route;
-}
-
-
-HttpRoute *httpCreateAliasRoute(HttpRoute *parent, cchar *prefix, cchar *path, int status)
-{
-    HttpRoute   *route;
-
-    if ((route = httpCreateInheritedRoute(parent)) == 0) {
-        return 0;
-    }
-    httpSetRoutePattern(route, prefix, 0);
-    httpSetRouteDir(route, path);
-    route->responseStatus = status;
     return route;
 }
 
@@ -7429,7 +7468,7 @@ static int matchRoute(HttpConn *conn, HttpRoute *route)
         httpError(conn, -1, "Can't find route target name \"%s\"", route->targetOp);
         return 0;
     }
-    mprLog(0, "Run route target \"%s\" target \"%s\"", route->name, route->targetOp);
+    mprLog(0, "Selected route \"%s\" target \"%s\"", route->name, route->targetOp);
     return (*proc)(conn, route, 0);
 }
 
@@ -7977,6 +8016,8 @@ void httpSetRouteData(HttpRoute *route, cchar *key, void *data)
 {
     if (route->data == 0) {
         route->data = mprCreateHash(-1, 0);
+    } else {
+        GRADUATE_HASH(route, data);
     }
     mprAddKey(route->data, key, data);
 }
@@ -12128,7 +12169,7 @@ void httpSetResponseBody(HttpConn *conn, int status, cchar *fmt, ...)
     HttpTx      *tx;
     cchar       *msg;
 
-    mprAssert(msg && msg);
+    mprAssert(fmt && fmt);
     tx = conn->tx;
 
     va_start(args, fmt);
@@ -12150,7 +12191,7 @@ void httpSetResponseError(HttpConn *conn, int status, cchar *fmt, ...)
     cchar       *statusMsg;
     char        *msg;
 
-    mprAssert(msg && msg);
+    mprAssert(fmt && fmt);
 
     va_start(args, fmt);
     msg = mprAsprintfv(fmt, args);

@@ -19693,16 +19693,9 @@ char *itos(char *buf, ssize count, int64 value, int radix)
 }
 
 
-bool snumber(cchar *token)
+bool snumber(cchar *s)
 {
-    cchar   *cp;
-
-    for (cp = token; *cp; cp++) {
-        if (!isdigit((int) *cp)) {
-            return 0;
-        }
-    }
-    return 1;
+    return s && *s && strspn(s, "1234567890") == strlen(s);
 } 
 
 

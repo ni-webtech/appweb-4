@@ -29,7 +29,7 @@ extern "C" {
 
 #if !DOXYGEN
 struct MaSsl;
-struct MaMeta;
+struct MaServer;
 #endif
 
 /********************************** Defines ***********************************/
@@ -43,8 +43,8 @@ struct MaMeta;
     @see Http maCreateApweb maStartApweb maStopApweb
  */
 typedef struct MaAppweb {
-    struct MaMeta       *defaultMeta;       /**< Default meta server object */
-    MprList             *metas;             /**< List of meta server objects */
+    struct MaServer     *defaultServer;     /**< Default server object */
+    MprList             *servers;           /**< List of server objects */
     MprHashTable        *directives;        /**< Config file directives */
     Http                *http;              /**< Http service object */
     char                *user;              /**< O/S application user name */
@@ -105,13 +105,13 @@ extern void maGetUserGroup(MaAppweb *appweb);
  */
 extern int maSetHttpGroup(MaAppweb *appweb, cchar *group);
 
-extern void maAddMeta(MaAppweb *appweb, struct MaMeta *meta);
+extern void maAddServer(MaAppweb *appweb, struct MaServer *server);
 extern int maApplyChangedGroup(MaAppweb *appweb);
 extern int maApplyChangedUser(MaAppweb *appweb);
-extern struct MaMeta *maLookupMeta(MaAppweb *appweb, cchar *name);
+extern struct MaServer *maLookupServer(MaAppweb *appweb, cchar *name);
 extern int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname);
 
-extern void maSetDefaultMeta(MaAppweb *appweb, struct MaMeta *meta);
+extern void maSetDefaultServer(MaAppweb *appweb, struct MaServer *server);
 
 extern void maSetKeepAliveTimeout(MaAppweb *appweb, int timeout);
 extern void maSetTimeout(MaAppweb *appweb, int timeout);
@@ -135,28 +135,30 @@ extern int maUploadFilterInit(Http *http, MprModule *mp);
 extern int maParseInit(MaAppweb *appweb);
 
 
-/********************************** MaMeta **********************************/
+/********************************** MaServer **********************************/
 /**
-    MaMeta Control - 
+    MaServer Control - 
     An application may have any number of HTTP servers, each managed by an instance of the Server class. Typically
     there will be only one server in an application. There may be multiple virtual hosts and one default host for
     each server class. A server will typically be configured by calling the configure method for each server which
     parses a file to define the server and virtual host configuration.
     @stability Evolving
-    @defgroup MaMeta MaMeta
-    @see MaMeta maCreateWebServer maServiceWebServer maRunWebServer maRunSimpleWebServer maCreateMeta 
-        maConfigureMeta maSplitConfigValue
+    @defgroup MaServer MaServer
+    @see MaServer maCreateWebServer maServiceWebServer maRunWebServer maRunSimpleWebServer maCreateServer 
+        maConfigureServer maSplitConfigValue
  */
-typedef struct MaMeta {
-    char            *name;                  /**< Unique name for this meta-server */
+typedef struct MaServer {
+    char            *name;                  /**< Unique name for this server */
     MaAppweb        *appweb;                /**< Appweb control object */
     Http            *http;                  /**< Http service object (copy of appweb->http) */
     HttpLimits      *limits;                /**< Limits for this server */
     MprList         *endpoints;             /**< List of HttpEndpoints */
+#if UNUSED
     struct HttpHost *defaultHost;           /**< Primary host */
+#endif
     char            *home;                  /**< Server root */
     bool            alreadyLogging;         /**< Already logging */
-} MaMeta;
+} MaServer;
 
 /** Create a web server
     @description Create a web server configuration based on the supplied config file. Once created, the
@@ -164,18 +166,18 @@ typedef struct MaMeta {
         object. If you want a one-line embedding of Appweb, use #maRunWebServer or #maRunSimpleWebServer.
     @param configFile File name of the Appweb configuration file (appweb.conf) that defines the web server configuration.
     @return Http object.
-    @ingroup MaMeta
+    @ingroup MaServer
  */
-extern MaMeta *maCreateWebServer(cchar *configFile);
+extern MaServer *maCreateWebServer(cchar *configFile);
 
 /** Service a web server
-    @description Run a web server configuration. This is will start http services via $maStartMeta and will service
+    @description Run a web server configuration. This is will start http services via $maStartServer and will service
         incoming Http requests until instructed to exit. This is often used in conjunction with #maCreateWebServer.
-    @param meta Meta server object created via #maCreateWebServer or #maCreateMeta.
+    @param server Server object created via #maCreateWebServer or #maCreateServer.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
-    @ingroup MaMeta
+    @ingroup MaServer
  */
-extern int maServiceWebServer(MaMeta *meta);
+extern int maServiceWebServer(MaServer *server);
 
 /** Create and run a web server based on a configuration file
     @description Create a web server configuration based on the supplied config file. This routine provides 
@@ -183,7 +185,7 @@ extern int maServiceWebServer(MaMeta *meta);
         instead. If you need more control, try #maCreateWebServer which exposes the Http object.
     @param configFile File name of the Appweb configuration file (appweb.conf) that defines the web server configuration.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
-    @ingroup MaMeta
+    @ingroup MaServer
  */
 extern int maRunWebServer(cchar *configFile);
 
@@ -197,12 +199,12 @@ extern int maRunWebServer(cchar *configFile);
     @param home Home directory for the web server
     @param documents Directory containing the documents to serve.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
-    @ingroup MaMeta
+    @ingroup MaServer
  */
 extern int maRunSimpleWebServer(cchar *ip, int port, cchar *home, cchar *documents);
 
-/** Create an MaMeta object
-    @description Create new MaMeta object. This routine creates a bare MaMeta object, loads any required static
+/** Create an MaServer object
+    @description Create new MaServer object. This routine creates a bare MaServer object, loads any required static
         modules  and performs minimal configuration. To use the server object created, more configuration will be 
         required before starting Http services.
         If you want a one-line embedding of Appweb, use #maRunWebServer or #maRunSimpleWebServer.
@@ -210,54 +212,54 @@ extern int maRunSimpleWebServer(cchar *ip, int port, cchar *home, cchar *documen
     @param name Name of the web server. This name is used as the initial server name.
     @param home Server home directory
     @param ip If not-null, create and open a listening endpoint on this IP address. If you are configuring via a
-        config file, use #maConfigureMeta and set ip to null.
+        config file, use #maConfigureServer and set ip to null.
     @param port Port number to listen on. Set to -1 if you do not want to open a listening endpoint on ip:port
-    @return MaMeta A newly created MaMeta object. Use mprFree to free and release.
-    @ingroup MaMeta
+    @return MaServer A newly created MaServer object. Use mprFree to free and release.
+    @ingroup MaServer
  */
-extern MaMeta *maCreateMeta(MaAppweb *appweb, cchar *name, cchar *home, cchar *documents, cchar *ip, int port);
+extern MaServer *maCreateServer(MaAppweb *appweb, cchar *name);
 
 /** 
     Configure a web server.
     @description This will configure a web server based on either a configuration file or using the supplied
         IP address and port. 
-    @param meta MaMeta object created via #maCreateMeta
+    @param server MaServer object created via #maCreateServer
     @param configFile File name of the Appweb configuration file (appweb.conf) that defines the web server configuration.
     @param home Admin directory for the server. This overrides the value in the config file.
     @param documents Default directory for web documents to serve. This overrides the value in the config file.
     @param ip IP address to listen on. This overrides the value specified in the config file.
     @param port Port address to listen on. This overrides the value specified in the config file.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
-    @ingroup MaMeta
+    @ingroup MaServer
  */
-extern int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *home, cchar *documents, cchar *ip, int port);
+extern int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *documents, cchar *ip, int port);
 
-extern void     maAddEndpoint(MaMeta *meta, HttpEndpoint *server);
+extern void     maAddEndpoint(MaServer *server, HttpEndpoint *endpoint);
 extern int      maGetConfigValue(char **arg, char *buf, char **nextToken, int quotes);
-extern int      maParseConfig(MaMeta *meta, cchar *configFile);
-extern void     maSetMetaAddress(MaMeta *meta, cchar *ip, int port);
-extern void     maSetMetaHome(MaMeta *meta, cchar *path);
+extern int      maParseConfig(MaServer *server, cchar *configFile);
+extern void     maSetServerAddress(MaServer *server, cchar *ip, int port);
+extern void     maSetServerHome(MaServer *server, cchar *path);
 extern int      maSplitConfigValue(char **s1, char **s2, char *buf, int quotes);
 
 /**
-    Start a meta server
-    @param meta Object created via #maCreateMeta
+    Start a server
+    @param server Object created via #maCreateServer
  */
-extern int      maStartMeta(MaMeta *meta);
-extern int      maStopMeta(MaMeta *meta);
-extern int      maValidateConfiguration(MaMeta *meta);
-extern HttpHost *maCreateDefaultHost(MaMeta *meta);
+extern int      maStartServer(MaServer *server);
+extern int      maStopServer(MaServer *server);
+extern int      maValidateConfiguration(MaServer *server);
+extern HttpHost *maCreateDefaultHost(MaServer *server);
 
 
 #if UNUSED
-extern void     maAddHost(MaMeta *meta, struct HttpHost *host);
-extern HttpHostAddress *maAddHostAddress(MaMeta *meta, cchar *ip, int port);
-extern int      maCreateHostAddresses(MaMeta *meta, struct HttpHost *host, cchar *value);
-extern struct HttpHost *maLookupHost(MaMeta *meta, cchar *name);
+extern void     maAddHost(MaServer *server, struct HttpHost *host);
+extern HttpHostAddress *maAddHostAddress(MaServer *server, cchar *ip, int port);
+extern int      maCreateHostAddresses(MaServer *server, struct HttpHost *host, cchar *value);
+extern struct HttpHost *maLookupHost(MaServer *server, cchar *name);
 extern void     maNotifyServerStateChange(HttpConn *conn, int state, int notifyFlags);
-extern HttpHostAddress *maRemoveHostFromHostAddress(MaMeta *meta, cchar *ip, int port, struct HttpHost *host);
-extern void     maSetMetaDefaultHost(MaMeta *meta, struct HttpHost *host);
-extern void     maSetMetaDefaultIndex(MaMeta *meta, cchar *path, cchar *filename);
+extern HttpHostAddress *maRemoveHostFromHostAddress(MaServer *server, cchar *ip, int port, struct HttpHost *host);
+extern void     maSetServerDefaultHost(MaServer *server, struct HttpHost *host);
+extern void     maSetServerDefaultIndex(MaServer *server, cchar *path, cchar *filename);
 #endif
 
 /************************************* Auth *********************************/
@@ -311,16 +313,16 @@ extern bool     maIsGroupEnabled(HttpAuth *auth, cchar *group);
 extern bool     maIsUserEnabled(HttpAuth *auth, cchar *realm, cchar *user);
 extern HttpAcl    maParseAcl(HttpAuth *auth, cchar *aclStr);
 extern int      maRemoveGroup(HttpAuth *auth, cchar *group);
-extern int      maReadGroupFile(MaMeta *meta, HttpAuth *auth, char *path);
-extern int      maReadUserFile(MaMeta *meta, HttpAuth *auth, char *path);
+extern int      maReadGroupFile(MaServer *server, HttpAuth *auth, char *path);
+extern int      maReadUserFile(MaServer *server, HttpAuth *auth, char *path);
 extern int      maRemoveUser(HttpAuth *auth, cchar *realm, cchar *user);
 extern int      maRemoveUserFromGroup(MaGroup *gp, cchar *user);
 extern int      maRemoveUsersFromGroup(HttpAuth *auth, cchar *group, cchar *users);
 extern int      maSetGroupAcl(HttpAuth *auth, cchar *group, HttpAcl acl);
 extern void     maSetRequiredAcl(HttpAuth *auth, HttpAcl acl);
 extern void     maUpdateUserAcls(HttpAuth *auth);
-extern int      maWriteUserFile(MaMeta *meta, HttpAuth *auth, char *path);
-extern int      maWriteGroupFile(MaMeta *meta, HttpAuth *auth, char *path);
+extern int      maWriteUserFile(MaServer *server, HttpAuth *auth, char *path);
+extern int      maWriteGroupFile(MaServer *server, HttpAuth *auth, char *path);
 extern bool     maValidateNativeCredentials(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, 
                     cchar *requiredPass, char **msg);
 #endif /* AUTH_FILE */
@@ -368,7 +370,7 @@ typedef struct  HttpReceiverModified {
 typedef struct MaState {
     MaAppweb    *appweb;
     Http        *http;
-    MaMeta      *meta;                  /**< Current meta-server */
+    MaServer    *server;                /**< Current server */
     HttpHost    *host;                  /**< Current host */
     HttpAuth    *auth;                  /**< Quick alias for route->auth */
     HttpRoute   *route;                 /**< Current route */

@@ -68,8 +68,12 @@ static void openFile(HttpQueue *q)
             }
         }
 
+    } else if (rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
+        httpHandleOptionsTrace(q);
+
     } else if ((rx->flags & (HTTP_PUT | HTTP_DELETE)) && (route->flags & HTTP_ROUTE_PUT_DELETE)) {
         httpOmitBody(conn);
+
     } else {
         httpError(q->conn, HTTP_CODE_BAD_METHOD, "Method \"%s\" is not supported by file handler", rx->method);
     }

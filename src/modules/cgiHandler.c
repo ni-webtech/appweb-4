@@ -28,7 +28,6 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd);
 static int processCgiData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf);
 static void writeToCGI(HttpQueue *q);
 static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf);
-static void startCgi(HttpQueue *q);
 
 #if BLD_DEBUG
     static void traceCGIData(MprCmd *cmd, char *src, ssize size);
@@ -45,6 +44,21 @@ static void startCgi(HttpQueue *q);
 #endif
 
 /************************************* Code ***********************************/
+
+static void openCgi(HttpQueue *q)
+{
+    HttpRx      *rx;
+    HttpConn    *conn;
+
+    conn = q->conn;
+    rx = conn->rx;
+
+    mprLog(5, "Open CGI handler");
+    if (rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
+        httpHandleOptionsTrace(q);
+    }
+}
+
 
 static void closeCgi(HttpQueue *q)
 {
@@ -1048,6 +1062,7 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     handler->close = closeCgi; 
     handler->outgoingService = outgoingCgiService;
     handler->incomingData = incomingCgiData; 
+    handler->open = openCgi; 
     handler->start = startCgi; 
     handler->process = processCgi; 
             

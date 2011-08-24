@@ -14,92 +14,13 @@ static int addCondition(MaState *state, cchar *condition, int flags);
 static int addUpdate(MaState *state, cchar *kind, cchar *details, int flags);
 static bool conditionalDefinition(cchar *key);
 static int configError(MaState *state, cchar *key);
-static MaState *createState(MaMeta *meta);
-static char *getSearchPath(cchar *dir);
+static MaState *createState(MaServer *server, HttpHost *host, HttpRoute *route);
 static void manageState(MaState *state, int flags);
 static int parseFile(MaState *state, cchar *path);
 static int parseFileInner(MaState *state, cchar *path);
 static int setTarget(MaState *state, cchar *kind, cchar *details);
 
 /******************************************************************************/
-/*
-    Configure the meta-server. If the configFile is defined, use it. If not, then consider home, documents, ip and port.
- */
-int maConfigureMeta(MaMeta *meta, cchar *configFile, cchar *home, cchar *documents, cchar *ip, int port)
-{
-    MaAppweb        *appweb;
-    Http            *http;
-    HttpEndpoint    *endpoint;
-    HttpHost        *host;
-    HttpRoute       *route, *cgiRoute;
-    char            *path, *searchPath, *dir;
-
-    appweb = meta->appweb;
-    http = appweb->http;
-    dir = mprGetAppDir();
-
-    if (configFile) {
-        path = mprGetAbsPath(configFile);
-        if (maParseConfig(meta, path) < 0) {
-            /* mprUserError("Can't configure meta-server using %s", path); */
-            return MPR_ERR_CANT_INITIALIZE;
-        }
-        return 0;
-
-    } else {
-        mprLog(2, "DocumentRoot %s", documents);
-        if ((endpoint = httpCreateConfiguredEndpoint(home, documents, ip, port)) == 0) {
-            return MPR_ERR_CANT_OPEN;
-        }
-        maAddEndpoint(meta, endpoint);
-        host = meta->defaultHost = mprGetFirstItem(endpoint->hosts);
-        mprAssert(host);
-
-        route = host->route;
-        searchPath = getSearchPath(dir);
-        mprSetModuleSearchPath(searchPath);
-
-        maLoadModule(appweb, "cgiHandler", "mod_cgi");
-        if (httpLookupStage(http, "cgiHandler")) {
-            httpAddRouteHandler(route, "cgiHandler", ".cgi .cgi-nph .bat .cmd .pl .py");
-            /*
-                Add cgi-bin with a route for the /cgi-bin URL prefix.
-             */
-            path = "cgi-bin";
-            if (mprPathExists(path, X_OK)) {
-                cgiRoute = httpCreateAliasRoute(route, "/cgi-bin/", path, 0);
-                mprLog(4, "ScriptAlias \"/cgi-bin/\":\"%s\"", path);
-                httpSetRouteHost(cgiRoute, host);
-                httpSetRouteHandler(cgiRoute, "cgiHandler");
-                httpFinalizeRoute(cgiRoute);
-                httpAddRoute(host, cgiRoute);
-            }
-        }
-        maLoadModule(appweb, "espHandler", "mod_esp");
-        if (httpLookupStage(http, "espHandler")) {
-            httpAddRouteHandler(route, "espHandler", ".esp");
-        }
-        maLoadModule(appweb, "ejsHandler", "mod_ejs");
-        if (httpLookupStage(http, "ejsHandler")) {
-            httpAddRouteHandler(route, "ejsHandler", ".ejs");
-        }
-        maLoadModule(appweb, "phpHandler", "mod_php");
-        if (httpLookupStage(http, "phpHandler")) {
-            httpAddRouteHandler(route, "phpHandler", ".php");
-        }
-        if (httpLookupStage(http, "fileHandler")) {
-            httpAddRouteHandler(route, "fileHandler", "");
-        }
-    }
-    if (home) {
-        maSetMetaHome(meta, home);
-    }
-    if (ip || port > 0) {
-        maSetMetaAddress(meta, ip, port);
-    }
-    return 0;
-}
-
 
 int maOpenConfig(MaState *state, cchar *path)
 {
@@ -114,16 +35,25 @@ int maOpenConfig(MaState *state, cchar *path)
 }
 
 
-int maParseConfig(MaMeta *meta, cchar *path)
+int maParseConfig(MaServer *server, cchar *path)
 {
     MaState     *state;
+    HttpHost    *host;
+    HttpRoute   *route;
 
     mprLog(2, "Config File %s", path);
-    state = createState(meta);
+
+    /*
+        Create top level host and route
+     */
+    host = httpCreateHost();
+    route = httpCreateRoute(host);
+
+    state = createState(server, host, route);
     if (parseFile(state, path) < 0) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if (!maValidateConfiguration(meta)) {
+    if (!maValidateConfiguration(server)) {
         return MPR_ERR_BAD_ARGS;
     }
     httpFinalizeRoute(state->route);
@@ -380,7 +310,9 @@ static int aliasDirective(MaState *state, cchar *key, cchar *value)
     }
     alias = httpCreateAliasRoute(state->route, prefix, path, 0);
     httpFinalizeRoute(alias);
+#if UNUSED
     httpAddRoute(state->host, alias);
+#endif
     return 0;
 }
 
@@ -710,11 +642,11 @@ static int errorDocumentDirective(MaState *state, cchar *key, cchar *value)
  */
 static int errorLogDirective(MaState *state, cchar *key, cchar *value)
 {
-    if (state->meta->alreadyLogging) {
+    if (state->server->alreadyLogging) {
         mprLog(4, "Already logging. Ignoring ErrorLog directive");
         return 0;
     }
-    maStopLogging(state->meta);
+    maStopLogging(state->server);
     if (sncmp(value, "stdout", 6) != 0 && sncmp(value, "stderr", 6) != 0) {
         value = httpMakePath(state->route, value);
     }
@@ -791,7 +723,7 @@ static int includeDirective(MaState *state, cchar *key, cchar *value)
         /*
             Convert glob style to regexp
          */
-        path = mprGetPathDir(mprJoinPath(state->meta->home, value));
+        path = mprGetPathDir(mprJoinPath(state->server->home, value));
         pattern = mprGetPathBase(value);
         pattern = sreplace(pattern, ".", "\\.");
         pattern = sreplace(pattern, "*", ".*");
@@ -1044,7 +976,7 @@ static int listenDirective(MaState *state, cchar *key, cchar *value)
     }
     endpoint = httpCreateEndpoint(ip, port, NULL);
     endpoint->limits = state->limits;
-    mprAddItem(state->meta->endpoints, endpoint);
+    mprAddItem(state->server->endpoints, endpoint);
     return 0;
 }
 
@@ -1071,7 +1003,7 @@ static int loadDirective(MaState *state, cchar *key, cchar *value)
  */
 static int logLevelDirective(MaState *state, cchar *key, cchar *value)
 {
-    if (state->meta->alreadyLogging) {
+    if (state->server->alreadyLogging) {
         mprLog(4, "Already logging. Ignoring LogLevel directive");
     } else {
         mprSetLogLevel(atoi(value));
@@ -1368,7 +1300,9 @@ static int redirectDirective(MaState *state, cchar *key, cchar *value)
     }
     alias = httpCreateAliasRoute(state->route, uri, path, status);
     httpFinalizeRoute(alias);
+#if UNUSED
     httpAddRoute(state->host, alias);
+#endif
     return 0;
 }
 
@@ -1484,7 +1418,7 @@ static int scriptNameDirective(MaState *state, cchar *key, cchar *value)
  */
 static int serverNameDirective(MaState *state, cchar *key, cchar *value)
 {
-    httpSetHostName(state->host, strim(value, "http://", MPR_TRIM_START), -1);
+    httpSetHostName(state->host, strim(value, "http://", MPR_TRIM_START));
     return 0;
 }
 
@@ -1499,7 +1433,7 @@ static int serverRootDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%T", &path)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    maSetMetaHome(state->meta, path);
+    maSetServerHome(state->server, path);
     httpSetHostHome(state->host, path);
     httpSetRoutePathVar(state->route, "SERVER_ROOT", path);
     mprLog(MPR_CONFIG, "Server Root \"%s\"", path);
@@ -1728,8 +1662,9 @@ static int virtualHostDirective(MaState *state, cchar *key, cchar *value)
     if (state->enabled) {
         mprParseIp(value, &ip, &port, -1);
         state->host = httpCloneHost(state->host);
-        httpSetHostName(state->host, ip, port);
-        state->route = state->host->route;
+        httpSetHostIpAddr(state->host, ip, port);
+        state->route = httpCreateInheritedRoute(state->route);
+        httpSetRouteHost(state->route, state->host);
         httpSetRouteName(state->route, sfmt("host: %s", state->host->name));
         if ((endpoint = httpLookupEndpoint(state->http, ip, port)) == 0) {
             mprError("Can't find listen directive for virtual host %s", value);
@@ -1742,7 +1677,7 @@ static int virtualHostDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
-int maValidateConfiguration(MaMeta *meta)
+int maValidateConfiguration(MaServer *server)
 {
     MaAppweb        *appweb;
     Http            *http;
@@ -1751,20 +1686,23 @@ int maValidateConfiguration(MaMeta *meta)
     HttpRoute       *route;
     int             nextHost, nextEndpoint, nextRoute;
 
-    appweb = meta->appweb;
+    appweb = server->appweb;
     http = appweb->http;
-    defaultHost = meta->defaultHost;
+    defaultHost = mprGetFirstItem(http->hosts);
     mprAssert(defaultHost);
 
-    if (mprGetListLength(meta->endpoints) == 0) {
+    if (mprGetListLength(server->endpoints) == 0) {
         mprError("Missing listening HttpEndpoint. Must have a Listen directive.");
         return 0;
     }
+    /*
+        Add hosts to relevant listen endpoints
+     */
     for (nextEndpoint = 0; (endpoint = mprGetNextItem(http->endpoints, &nextEndpoint)) != 0; ) {
         if (mprGetListLength(endpoint->hosts) == 0) {
             httpAddHostToEndpoint(endpoint, defaultHost);
-            if (defaultHost->ip == 0) {
-                httpSetHostName(defaultHost, endpoint->ip, endpoint->port);
+            if (!defaultHost->ip) {
+                httpSetHostIpAddr(defaultHost, endpoint->ip, endpoint->port);
             }
         }
     }
@@ -1783,8 +1721,7 @@ int maValidateConfiguration(MaMeta *meta)
                 httpAddRouteHandler(route, "fileHandler", "");
             }
         }
-        mprLog(MPR_CONFIG, "Host \"%s\"", host->name);
-        mprLog(MPR_CONFIG, "    ServerRoot \"%s\"", host->home);
+        mprLog(MPR_CONFIG, "Host \"%s\", ServerRoot \"%s\"", host->name, host->home);
     }
     return 1;
 }
@@ -1887,7 +1824,10 @@ static int setTarget(MaState *state, cchar *kind, cchar *details)
 }
 
 
-static MaState *createState(MaMeta *meta)
+/*
+    This is used to create the outermost state only
+ */
+static MaState *createState(MaServer *server, HttpHost *host, HttpRoute *route)
 {
     MaState     *state;
 
@@ -1896,12 +1836,12 @@ static MaState *createState(MaMeta *meta)
     }
     state->top = state;
     state->current = state;
-    state->meta = meta;
-    state->appweb = meta->appweb;
-    state->http = meta->http;
-    state->host = meta->defaultHost;
+    state->server = server;
+    state->appweb = server->appweb;
+    state->http = server->http;
+    state->host = host;
     state->limits = state->host->limits;
-    state->route = meta->defaultHost->route;
+    state->route = route;
     state->enabled = 1;
     state->lineNumber = 0;
     state->auth = state->route->auth;
@@ -1921,7 +1861,7 @@ MaState *maPushState(MaState *prev)
     state->prev = prev;
     state->appweb = prev->appweb;
     state->http = prev->http;
-    state->meta = prev->meta;
+    state->server = prev->server;
     state->host = prev->host;
     state->route = prev->route;
     state->lineNumber = prev->lineNumber;
@@ -1951,19 +1891,19 @@ static void manageState(MaState *state, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
 		mprMark(state->appweb);
-		mprMark(state->http);
-		mprMark(state->meta);
-		mprMark(state->host);
-		mprMark(state->route);
 		mprMark(state->auth);
-		mprMark(state->file);
-		mprMark(state->limits);
 		mprMark(state->configDir);
-		mprMark(state->filename);
-		mprMark(state->prev);
-		mprMark(state->top);
 		mprMark(state->current);
+		mprMark(state->file);
+		mprMark(state->filename);
+		mprMark(state->host);
+		mprMark(state->http);
 		mprMark(state->key);
+		mprMark(state->limits);
+		mprMark(state->prev);
+		mprMark(state->route);
+		mprMark(state->server);
+		mprMark(state->top);
     }
 }
 
@@ -2102,17 +2042,6 @@ int maParseInit(MaAppweb *appweb)
     return 0;
 }
 
-
-static char *getSearchPath(cchar *dir)
-{
-#if WIN
-        return sfmt("%s" MPR_SEARCH_SEP ".", dir);
-#else
-        char *libDir = mprJoinPath(mprGetPathParent(dir), BLD_LIB_NAME);
-        return sfmt("%s" MPR_SEARCH_SEP "%s" MPR_SEARCH_SEP ".", dir,
-            mprSamePath(BLD_BIN_PREFIX, dir) ? BLD_LIB_PREFIX: libDir);
-#endif
-}
 
 /*
     @copy   default

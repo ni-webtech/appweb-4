@@ -445,7 +445,7 @@ static int initializePhp(Http *http)
 #ifdef BLD_FEATURE_PHP_INI
     phpSapiBlock.php_ini_path_override = BLD_FEATURE_PHP_INI;
 #else
-    phpSapiBlock.php_ini_path_override = appweb->defaultMeta->home;
+    phpSapiBlock.php_ini_path_override = appweb->defaultServer->home;
 #endif
     mprLog(2, "Look for php.ini at %s", phpSapiBlock.php_ini_path_override);
     sapi_startup(&phpSapiBlock);

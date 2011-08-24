@@ -45,6 +45,7 @@ typedef struct MprSsl {
     char            *caFile;            /* Client verification cert file or bundle */
     char            *caPath;            /* Client verification cert directory */
     char            *ciphers;
+    int             configured;
 
     /*
         Client configuration
@@ -53,8 +54,10 @@ typedef struct MprSsl {
     int             verifyDepth;
 
     int             protocols;
+#if UNUSED
     bool            initialized;
     bool            connTraced;
+#endif
 
     /*
         Per-SSL provider context information

@@ -380,6 +380,7 @@ extern void httpAddHost(Http *http, struct HttpHost *host);
 extern void httpRemoveHost(Http *http, struct HttpHost *host);
 extern void httpAddKey(cchar *key, cchar *value);
 extern void httpDefineRouteBuiltins();
+extern struct HttpHost *httpLookupHost(Http *http, cchar *name);
 
 /** 
     Http limits
@@ -2931,7 +2932,7 @@ extern void httpStopEndpoint(HttpEndpoint *endpoint);
 extern int httpSecureEndpoint(HttpEndpoint *endpoint, struct MprSsl *ssl);
 extern int httpSecureEndpointByName(cchar *name, struct MprSsl *ssl);
 extern void httpSetEndpointAddress(HttpEndpoint *endpoint, cchar *ip, int port);
-extern struct HttpHost *httpLookupHost(HttpEndpoint *endpoint, cchar *name);
+extern struct HttpHost *httpLookupHostOnEndpoint(HttpEndpoint *endpoint, cchar *name);
 
 extern HttpEndpoint *httpCreateConfiguredEndpoint(cchar *home, cchar *documents, cchar *ip, int port);
 
@@ -2968,7 +2969,9 @@ typedef struct HttpHost {
     MprList         *dirs;                  /**< List of Directory definitions */
     MprList         *routes;                /**< List of Route defintions */
     HttpLimits      *limits;                /**< Host resource limits */
+#if UNUSED
     HttpRoute       *route;                 /**< Default (and outermost) route */
+#endif
     MprHashTable    *mimeTypes;             /**< Hash table of mime types (key is extension) */
 
     char            *home;                  /**< Directory for configuration files */
@@ -3001,7 +3004,8 @@ extern HttpRoute *httpLookupBestRoute(HttpHost *host, cchar *uri);
 extern HttpRoute *httpLookupRoute(HttpHost *host, cchar *prefix);
 extern void httpResetRoutes(HttpHost *route);
 extern void httpSetHostLogRotation(HttpHost *host, int logCount, int logSize);
-extern void httpSetHostName(HttpHost *host, cchar *ip, int port);
+extern void httpSetHostName(HttpHost *host, cchar *name);
+extern void httpSetHostIpAddr(HttpHost *host, cchar *ip, int port);
 extern void httpSetHostAddress(HttpHost *host, cchar *ip, int port);
 extern void httpSetHostProtocol(HttpHost *host, cchar *protocol);
 extern void httpSetHostTrace(HttpHost *host, int level, int mask);
