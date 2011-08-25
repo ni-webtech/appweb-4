@@ -230,7 +230,6 @@ extern void espAppendHeaderString(HttpConn *conn, cchar *key, cchar *value);
 extern void espAutoFinalize(HttpConn *conn);
 extern void espDefineAction(EspRoute *esp, cchar *path, void *action);
 extern void espDefineView(EspRoute *esp, cchar *path, void *view);
-extern void espDontCache(HttpConn *conn);
 extern MprOff espGetContentLength(HttpConn *conn);
 extern cchar *espGetCookies(HttpConn *conn);
 extern MprHashTable *espGetFormVars(HttpConn *conn);

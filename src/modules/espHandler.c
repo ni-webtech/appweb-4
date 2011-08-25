@@ -48,24 +48,28 @@ static void openEsp(HttpQueue *q)
     conn = q->conn;
     rx = conn->rx;
 
-    if ((req = mprAllocObj(EspReq, manageReq)) == 0) {
-        httpMemoryError(conn);
-        return;
-    }
-    for (route = rx->route; route; route = route->parent) {
-        if ((eroute = httpGetRouteData(route, ESP_NAME)) != 0) {
-            break;
-        }
-    }
-    if (eroute == 0) {
-        eroute = allocEspRoute(route);
-        return;
-    }
-    conn->data = req;
-    req->esp = esp;
-    req->eroute = eroute;
-    req->autoFinalize = 1;
+    if (rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
+        httpHandleOptionsTrace(q);
 
+    } else {
+        if ((req = mprAllocObj(EspReq, manageReq)) == 0) {
+            httpMemoryError(conn);
+            return;
+        }
+        for (route = rx->route; route; route = route->parent) {
+            if ((eroute = httpGetRouteData(route, ESP_NAME)) != 0) {
+                break;
+            }
+        }
+        if (eroute == 0) {
+            eroute = allocEspRoute(route);
+            return;
+        }
+        conn->data = req;
+        req->esp = esp;
+        req->eroute = eroute;
+        req->autoFinalize = 1;
+    }
     lock(esp);
     esp->inUse++;
     unlock(esp);
@@ -89,19 +93,20 @@ static void startEsp(HttpQueue *q)
     conn = q->conn;
     req = conn->data;
 
-    //  MOB - has this already been done?
-    httpAddFormVars(conn);
-
-    if (!runAction(conn)) {
-        return;
-    }
-    if (req->autoFinalize) {
-        if (!conn->tx->responded) {
-            runView(conn);
+    if (req) {
+        httpAddFormVars(conn);
+        
+        if (!runAction(conn)) {
+            return;
         }
-        espFinalize(conn);
+        if (req->autoFinalize) {
+            if (!conn->tx->responded) {
+                runView(conn);
+            }
+            espFinalize(conn);
+        }
+        saveCachedResponse(conn);
     }
-    saveCachedResponse(conn);
 }
 
 

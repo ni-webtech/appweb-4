@@ -45,16 +45,17 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
 
 /************************************* Code ***********************************/
 
+static bool matchCgi(HttpConn *conn, HttpRoute *route, int direction)
+{
+    httpTrimExtraPath(conn);
+    return 1;
+}
+
+
 static void openCgi(HttpQueue *q)
 {
-    HttpRx      *rx;
-    HttpConn    *conn;
-
-    conn = q->conn;
-    rx = conn->rx;
-
     mprLog(5, "Open CGI handler");
-    if (rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
+    if (q->conn->rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
         httpHandleOptionsTrace(q);
     }
 }
@@ -89,8 +90,6 @@ static void startCgi(HttpQueue *q)
     char            **argv, **envv, *fileName;
     int             argc, varCount, count;
 
-    mprLog(5, "CGI: Start");
-
     argv = 0;
     argc = 0;
     conn = q->conn;
@@ -98,6 +97,7 @@ static void startCgi(HttpQueue *q)
     tx = conn->tx;
 
     mprAssert(conn->state <= HTTP_STATE_CONTENT || rx->form || rx->upload || rx->route->flags & HTTP_ROUTE_HANDLER_AFTER);
+    mprLog(5, "CGI: Start");
 
     /*
         The command uses the conn dispatcher. This serializes all I/O for both the connection and the CGI gateway
@@ -185,7 +185,7 @@ static void outgoingCgiService(HttpQueue *q)
 
     cmd = (MprCmd*) q->queueData;
     mprLog(7, "CGI: OutgoingCgiService pid %d, q->count %d, q->flags %x, writeBlocked %d", 
-        cmd->pid, q->count, q->flags, q->conn->writeBlocked);
+        (cmd) ? cmd->pid: -1, q->count, q->flags, q->conn->writeBlocked);
            
     /*
         This will copy outgoing packets downstream toward the network connector and on to the browser. 
@@ -196,7 +196,7 @@ static void outgoingCgiService(HttpQueue *q)
      */ 
     httpDefaultOutgoingServiceStage(q);
 
-    if (cmd->userFlags & MA_CGI_FLOW_CONTROL && q->count < q->low) {
+    if (cmd && cmd->userFlags & MA_CGI_FLOW_CONTROL && q->count < q->low) {
         mprLog(7, "CGI: @@@ OutgoingCgiService - re-enable gateway output count %d (low %d)", q->count, q->low);
         cmd->userFlags &= ~MA_CGI_FLOW_CONTROL;
         mprEnableCmdEvents(cmd, MPR_CMD_STDOUT);
@@ -1019,28 +1019,13 @@ static int scriptAliasDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S %S", &prefix, &path)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-#if UNUSED
-    /*
-        Create an route with a cgiHandler and pathInfo processing
-     */
-    path = httpMakePath(route, path);
-    if (httpLookupDir(state->host, path) == 0) {
-        parentDir = mprGetFirstItem(state->host->dirs);
-        dir = httpCreateDir(path, parentDir);
-        httpAddDir(state->host, dir);
-    }
-#endif
     route = httpCreateAliasRoute(state->route, prefix, path, 0);
-    mprLog(4, "ScriptAlias \"%s\" for \"%s\"", prefix, path);
-
-    httpSetRouteHost(route, state->host);
-#if UNUSED
-    httpSetRouteAuth(route, state->dir->auth);
-    httpSetRoutePattern(route, prefix);
-#endif
     httpSetRouteHandler(route, "cgiHandler");
+    httpSetRoutePattern(route, sfmt("^%s(.*)$", prefix), 0);
+    httpSetRouteTarget(route, "file", "$1");
     httpFinalizeRoute(route);
     httpAddRoute(state->host, route);
+    mprLog(4, "ScriptAlias \"%s\" for \"%s\"", prefix, path);
     return 0;
 }
 
@@ -1062,6 +1047,7 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     handler->close = closeCgi; 
     handler->outgoingService = outgoingCgiService;
     handler->incomingData = incomingCgiData; 
+    handler->match = matchCgi; 
     handler->open = openCgi; 
     handler->start = startCgi; 
     handler->process = processCgi; 

@@ -13,22 +13,28 @@
     Handler configuration
  */
 typedef struct Dir {
-    cchar           *defaultIcon;
+#if FUTURE
     MprList         *dirList;
-    bool            enabled;
+    cchar           *defaultIcon;
     MprList         *extList;
+    MprList         *ignoreList;
+#endif
+    bool            enabled;
     int             fancyIndexing;
     bool            foldersFirst;
-    MprList         *ignoreList;
     cchar           *pattern;
     char            *sortField;
     int             sortOrder;              /* 1 == ascending, -1 descending */
 } Dir;
 
+#define DIR_NAME "dirHandler"
+
 /****************************** Forward Declarations **************************/
 
+static Dir *allocDir(HttpRoute *route);
+static Dir *cloneDir(Dir *parent, HttpRoute *route);
 static void filterDirList(HttpConn *conn, MprList *list);
-static Dir* getDir();
+static Dir* getDir(MaState *state);
 static int  match(cchar *pattern, cchar *file);
 static void outputFooter(HttpQueue *q);
 static void outputHeader(HttpQueue *q, cchar *dir, int nameSize);
@@ -38,9 +44,9 @@ static void sortList(HttpConn *conn, MprList *list);
 
 /************************************* Code ***********************************/
 /*
-    Match if the url maps to a directory. The pathInfo must end with "/".
+    Match if the filename maps to a directory and directory listings are enabled via "Options Indexes"
  */
-static bool matchDir(HttpConn *conn, HttpStage *handler, int dirrection)
+bool maMatchDir(HttpConn *conn, HttpRoute *route, int direction)
 {
     HttpRx      *rx;
     HttpTx      *tx;
@@ -51,8 +57,10 @@ static bool matchDir(HttpConn *conn, HttpStage *handler, int dirrection)
     mprAssert(tx->filename);
     mprAssert(tx->fileInfo.checked);
 
-    if (dirrection & HTTP_STAGE_TX) {
-        dir = handler->stageData;
+    if (direction & HTTP_STAGE_TX) {
+        if ((dir = httpGetRouteData(rx->route, DIR_NAME)) == 0) {
+            return 0;
+        }
         return dir->enabled && tx->fileInfo.isDir && sends(rx->pathInfo, "/");
     }
     return 0;
@@ -67,7 +75,6 @@ static void processDir(HttpQueue *q)
     MprList         *list;
     MprDirEntry     *dp;
     Dir             *dir;
-    cchar           *filename;
     uint            nameSize;
     int             next;
 
@@ -77,14 +84,13 @@ static void processDir(HttpQueue *q)
     dir = q->stage->stageData;
 
     mprLog(5, "processDir");
-    filename = tx->filename;
-    mprAssert(filename);
+    mprAssert(tx->filename);
 
-    httpDontCache(conn);
-    httpSetHeader(conn, "Last-Modified", conn->http->currentDate);
+    httpSetHeaderString(conn, "Cache-Control", "no-cache");
+    httpSetHeaderString(conn, "Last-Modified", conn->http->currentDate);
     parseQuery(conn);
 
-    list = mprGetPathFiles(filename, 1);
+    list = mprGetPathFiles(tx->filename, 1);
     if (list == 0) {
         httpWrite(q, "<h2>Can't get file list</h2>\r\n");
         outputFooter(q);
@@ -106,7 +112,7 @@ static void processDir(HttpQueue *q)
 
     outputHeader(q, rx->pathInfo, nameSize);
     for (next = 0; (dp = mprGetNextItem(list, &next)) != 0; ) {
-        outputLine(q, dp, filename, nameSize);
+        outputLine(q, dp, tx->filename, nameSize);
     }
     outputFooter(q);
     httpFinalize(conn);
@@ -547,12 +553,12 @@ static int indexOrderDirective(MaState *state, cchar *key, cchar *value)
     Dir     *dir;
     char    *option;
 
-    dir = getDir();
-    dir->sortField = 0;
+    dir = getDir(state);
 
     if (!maTokenize(state, value, "%S %S", &option, &dir->sortField)) {
         return MPR_ERR_BAD_SYNTAX;
     }
+    dir->sortField = 0;
     if (scasematch(option, "ascending")) {
         dir->sortOrder = 1;
     } else {
@@ -573,7 +579,7 @@ static int indexOptionsDirective(MaState *state, cchar *key, cchar *value)
     Dir     *dir;
     char    *option, *tok;
 
-    dir = getDir();
+    dir = getDir(state);
     option = stok(sclone(value), " \t", &tok);
     while (option) {
         if (scasematch(option, "FancyIndexing")) {
@@ -597,7 +603,7 @@ static int optionsDirective(MaState *state, cchar *key, cchar *value)
     Dir     *dir;
     char    *option, *tok;
 
-    dir = getDir();
+    dir = getDir(state);
     option = stok(sclone(value), " \t", &tok);
     while (option) {
         if (scasematch(option, "Indexes")) {
@@ -612,23 +618,76 @@ static int optionsDirective(MaState *state, cchar *key, cchar *value)
 static void manageDir(Dir *dir, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(dir->defaultIcon);
+#if FUTURE
         mprMark(dir->dirList);
+        mprMark(dir->defaultIcon);
         mprMark(dir->extList);
         mprMark(dir->ignoreList);
+#endif
         mprMark(dir->pattern);
         mprMark(dir->sortField);
     }
 }
 
 
-static Dir* getDir()
+static Dir *getDir(MaState *state)
 {
-    HttpStage   *handler;
+    HttpRoute   *route;
+    Dir         *dir, *parent;
 
-    handler = httpLookupStage(MPR->httpService, "dirHandler");
-    return (Dir*) handler->stageData;
+    route = state->route;
+    dir = httpGetRouteData(route, DIR_NAME);
+    if (route->parent) {
+        /*
+            If the parent route has the same route data, then force a clone so the parent route does not get modified
+         */ 
+        parent = httpGetRouteData(route->parent, DIR_NAME);
+        if (dir == parent) {
+            dir = 0;
+        }
+    }
+    if (dir == 0) {
+        if (route->parent && (parent = httpGetRouteData(route->parent, DIR_NAME)) != 0) {
+            dir = cloneDir(parent, route);
+        } else {
+            dir = allocDir(route);
+        }
+    }
+    mprAssert(dir);
+    return dir;
 }
+
+
+static Dir *allocDir(HttpRoute *route)
+{
+    Dir     *dir;
+
+    if ((dir = mprAllocObj(Dir, manageDir)) == 0) {
+        return 0;
+    }
+    httpSetRouteData(route, DIR_NAME, dir);
+    return dir;
+}
+
+
+static Dir *cloneDir(Dir *parent, HttpRoute *route)
+{
+    Dir     *dir;
+
+    if ((dir = mprAllocObj(Dir, manageDir)) == 0) {
+        return 0;
+    }
+    dir->enabled = parent->enabled;
+    dir->fancyIndexing = parent->fancyIndexing;
+    dir->foldersFirst = parent->foldersFirst;
+    dir->pattern = parent->pattern;
+    dir->sortField = parent->sortField;
+    dir->sortOrder = parent->sortOrder;
+    httpSetRouteData(route, DIR_NAME, dir);
+    return dir;
+}
+
+
 
 
 /*
@@ -646,7 +705,7 @@ int maOpenDirHandler(Http *http)
     if ((handler->stageData = dir = mprAllocObj(Dir, manageDir)) == 0) {
         return MPR_ERR_MEMORY;
     }
-    handler->match = matchDir; 
+    handler->match = maMatchDir; 
     handler->process = processDir; 
     http->dirHandler = handler;
     dir->sortOrder = 1;

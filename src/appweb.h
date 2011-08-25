@@ -133,7 +133,7 @@ extern int maSslModuleInit(Http *http, MprModule *mp);
 extern int maUploadFilterInit(Http *http, MprModule *mp);
 
 extern int maParseInit(MaAppweb *appweb);
-
+extern bool maMatchDir(HttpConn *conn, HttpRoute *route, int direction);
 
 /********************************** MaServer **********************************/
 /**

@@ -111,6 +111,13 @@ static sapi_module_struct phpSapiBlock = {
 
 /********************************** Code ***************************/
 
+static bool matchPhp(HttpConn *conn, HttpRoute *route, int direction)
+{
+    httpTrimExtraPath(conn);
+    return 1;
+}
+
+
 static void openPhp(HttpQueue *q)
 {
     HttpRx      *rx;
@@ -118,14 +125,18 @@ static void openPhp(HttpQueue *q)
     rx = q->conn->rx;
 
     mprLog(5, "Open php handler");
-    if (!q->stage->stageData) {
-        if (initializePhp(q->conn->http) < 0) {
-            httpError(q->conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "PHP initialization failed");
+    if (rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
+        httpHandleOptionsTrace(q);
+
+    } else if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST | HTTP_PUT)) {
+        if (!q->stage->stageData) {
+            if (initializePhp(q->conn->http) < 0) {
+                httpError(q->conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "PHP initialization failed");
+            }
+            q->stage->stageData = mprAlloc(1);
         }
-        q->stage->stageData = mprAlloc(1);
-    }
-    if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST | HTTP_PUT)) {
         q->queueData = mprAllocObj(MaPhp, NULL);
+
     } else {
         httpError(q->conn, HTTP_CODE_BAD_METHOD, "Method not supported by file handler: %s", rx->method);
     }
@@ -153,6 +164,10 @@ static void processPhp(HttpQueue *q)
     rx = conn->rx;
     tx = conn->tx;
     php = q->queueData;
+
+    if (!php) {
+        return;
+    }
 
     /*
         Set the request context
@@ -238,7 +253,6 @@ static void processPhp(HttpQueue *q)
         fseek(fp, 0L, SEEK_SET);
     }
 #endif
-
     mprYield(0);
     zend_try {
         php_execute_script(&file_handle TSRMLS_CC);
@@ -500,6 +514,7 @@ int maPhpHandlerInit(Http *http, MprModule *module)
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }
+    handler->match = matchPhp;
     handler->open = openPhp;
     handler->process = processPhp;
     http->phpHandler = handler;

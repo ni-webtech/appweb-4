@@ -13,12 +13,96 @@
 
 /***************************** Forward Declarations ***************************/
 
-//  TODO -- more unique prefixes for combo dist
+//  MOB TODO -- more unique prefixes for combo dist
 static void handleDeleteRequest(HttpQueue *q);
 static void handlePutRequest(HttpQueue *q);
 static ssize readFileData(HttpQueue *q, HttpPacket *packet, MprOff pos, ssize size);
 
 /*********************************** Code *************************************/
+
+static bool findFile(HttpQueue *q)
+{
+    HttpConn    *conn;
+    HttpRx      *rx;
+    HttpTx      *tx;
+    HttpUri     *prior;
+    HttpRoute   *route;
+    MprPath     *info, zipInfo;
+    char        *path, *pathInfo, *uri, *zipfile;
+
+    conn = q->conn;
+    tx = conn->tx;
+    rx = conn->rx;
+    route = rx->route;
+    prior = rx->parsedUri;
+    info = &tx->fileInfo;
+
+    mprAssert(route == rx->route);
+    mprAssert(route->index);
+    mprAssert(rx->pathInfo);
+    mprAssert(info->checked);
+
+    if (info->isDir) {
+        if (!sends(rx->pathInfo, "/")) {
+            /* 
+               Append "/" and do an external redirect 
+             */
+            pathInfo = sjoin(rx->pathInfo, "/", NULL);
+            uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
+            httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, uri);
+            return 0;
+
+        } else if (route->index && *route->index) {
+            /*  
+                Internal directory redirections. Transparently append index.
+             */
+            path = mprJoinPath(tx->filename, route->index);
+            if (mprPathExists(path, R_OK)) {
+                /*  
+                    Index file exists, so do an internal redirect to it. Client will not be aware of this happening.
+                 */
+                pathInfo = mprJoinPath(rx->pathInfo, route->index);
+                uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
+                httpSetUri(conn, uri, 0);
+                tx->filename = path;
+                tx->ext = httpGetExt(conn);
+                mprGetPathInfo(tx->filename, info);
+                return 1;
+
+            } else if (info->isDir) {
+                if (maMatchDir(conn, route, HTTP_STAGE_TX)) {
+                    tx->handler = conn->http->dirHandler;
+                    httpAssignQueue(q, conn->http->dirHandler, HTTP_QUEUE_TX);
+                    return 0;
+                }
+            }
+        } else {
+            if (maMatchDir(conn, route, HTTP_STAGE_TX)) {
+                tx->handler = conn->http->dirHandler;
+                httpAssignQueue(q, conn->http->dirHandler, HTTP_QUEUE_TX);
+                return 0;
+            }
+        }
+    }
+    if (!info->valid && (route->flags & HTTP_ROUTE_GZIP) && rx->acceptEncoding && strstr(rx->acceptEncoding, "gzip") != 0) {
+        zipfile = sfmt("%s.gz", tx->filename);
+        if (mprGetPathInfo(zipfile, &zipInfo) == 0) {
+            tx->filename = zipfile;
+            tx->fileInfo = zipInfo;
+            httpSetHeader(conn, "Content-Encoding", "gzip");
+        }
+    }
+    if (!(info->valid || info->isDir) && !(conn->rx->flags & HTTP_PUT)) {
+        httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", conn->tx->filename);
+        return 0;
+    }
+    if (info->valid && !info->isDir) {
+        tx->etag = sfmt("\"%x-%Lx-%Lx\"", info->inode, info->size, info->mtime);
+    }
+    return 1;
+}
+
+
 /*
     Initialize a handler instance for the file handler.
  */
@@ -37,6 +121,9 @@ static void openFile(HttpQueue *q)
 
     mprLog(5, "Open file handler");
     if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST)) {
+        if (!findFile(q)) {
+            return;
+        }
         if (tx->fileInfo.valid && tx->fileInfo.mtime) {
             //  TODO - OPT could cache this
             date = httpGetDateString(&tx->fileInfo);
@@ -75,7 +162,7 @@ static void openFile(HttpQueue *q)
         httpOmitBody(conn);
 
     } else {
-        httpError(q->conn, HTTP_CODE_BAD_METHOD, "Method \"%s\" is not supported by file handler", rx->method);
+        httpError(q->conn, HTTP_CODE_BAD_METHOD, "The \"%s\" method is not supported by file handler", rx->method);
     }
 }
 

@@ -156,12 +156,6 @@ void espAutoFinalize(HttpConn *conn)
 }
 
 
-void espDontCache(HttpConn *conn)
-{
-    httpDontCache(conn);
-}
-
-
 MprOff espGetContentLength(HttpConn *conn)
 {
     return httpGetContentLength(conn);
@@ -486,7 +480,7 @@ void espShowRequest(HttpConn *conn)
     int             i, numKeys;
 
     rx = conn->rx;
-    espDontCache(conn);
+    httpSetHeaderString(conn, "Cache-Control", "no-cache");
     espWrite(conn, "\r\n");
 
     /*

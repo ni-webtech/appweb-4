@@ -38,7 +38,11 @@ static void openEjs(HttpQueue *q)
     uri = rx->pathInfo;
     route = rx->route;
 
-    if (!conn->ejs) {
+    mprLog(5, "Open EJS handler");
+    if (rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
+        httpHandleOptionsTrace(q);
+
+    } else if (!conn->ejs) {
         if (!route->context) {
             if (route->script == 0) {
                 route->script = sclone(startup);
