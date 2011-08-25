@@ -1040,9 +1040,9 @@ static int logRoutesDirective(MaState *state, cchar *key, cchar *value)
     mprLog(0, "HTTP Routes for URI %s", state->route->pattern);
     for (next = 0; (rp = mprGetNextItem(state->host->routes, &next)) != 0; ) {
         if (rp->target) {
-            mprLog(0, "  %-14s %-20s %-30s %-14s", rp->name, rp->methods ? rp->methods : "", rp->pattern, rp->target);
+            mprLog(0, "  %-12s %-16s %-30s %-14s", rp->name, rp->methods ? rp->methods : "", rp->pattern, rp->target);
         } else {
-            mprLog(0, "  %-14s %-20s %-30s", rp->name, rp->methods ? rp->methods : "", rp->pattern);
+            mprLog(0, "  %-12s %-16s %-30s", rp->name, rp->methods ? rp->methods : "", rp->pattern);
         }
     }
     return 0;
@@ -1721,7 +1721,7 @@ int maValidateConfiguration(MaServer *server)
                 httpAddRouteHandler(route, "fileHandler", "");
             }
         }
-        mprLog(MPR_CONFIG, "Host \"%s\", ServerRoot \"%s\"", host->name, host->home);
+        mprLog(MPR_CONFIG, "Configured host \"%s\" at \"%s\"", host->name, host->home);
     }
     return 1;
 }

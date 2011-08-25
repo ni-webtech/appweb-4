@@ -6213,6 +6213,7 @@ void httpAssignQueue(HttpQueue *q, HttpStage *stage, int dir)
         q->put = stage->incomingData;
         q->service = stage->incomingService;
     }
+    q->owner = stage->name;
 }
 
 
@@ -7508,20 +7509,19 @@ static void mapFile(HttpConn *conn, HttpRoute *route)
 {
     HttpRx      *rx;
     HttpTx      *tx;
-    HttpHost    *host;
     HttpLang    *lang;
     MprPath     *info;
     char        *filename;
 
     rx = conn->rx;
     tx = conn->tx;
-    host = conn->host;
     lang = rx->lang;
     mprAssert(tx->handler);
 
-    filename = route->fileTarget ? expandPath(conn, route->fileTarget) : rx->pathInfo;
-    if (filename && filename[0] == '/') {
-        filename = sclone(&filename[1]);
+    if (route->target) {
+        filename = expandPath(conn, route->fileTarget);
+    } else {
+        filename = &rx->pathInfo[1];
     }
     if (lang && lang->path) {
         tx->filename = mprJoinPath(lang->path, filename);
@@ -7530,7 +7530,6 @@ static void mapFile(HttpConn *conn, HttpRoute *route)
     tx->ext = httpGetExt(conn);
     info = &tx->fileInfo;
     mprGetPathInfo(tx->filename, info);
-
     mprLog(5, "mapFile uri \"%s\", filename: \"%s\", extension: \"%s\"", rx->uri, tx->filename, tx->ext);
 }
 
@@ -7720,7 +7719,7 @@ int httpAddRouteHandler(HttpRoute *route, cchar *name, cchar *extensions)
 {
     Http            *http;
     HttpStage       *handler;
-    char            *extlist, *word, *tok;
+    char            *extlist, *word, *tok, *hostName;
 
     mprAssert(route);
 
@@ -7729,10 +7728,12 @@ int httpAddRouteHandler(HttpRoute *route, cchar *name, cchar *extensions)
         mprError("Can't find stage %s", name); 
         return MPR_ERR_CANT_FIND;
     }
+    hostName = route->host->name ? route->host->name : "default"; 
     if (extensions && *extensions) {
-        mprLog(MPR_CONFIG, "Add handler \"%s\" for extensions: %s", name, extensions);
+        mprLog(MPR_CONFIG, "Add handler \"%s\" on host \"%s\" for extensions: %s", name, hostName, extensions);
     } else {
-        mprLog(MPR_CONFIG, "Add handler \"%s\" for route: \"%s\"", name, route->pattern);
+        mprLog(MPR_CONFIG, "Add handler \"%s\" on host \"%s\" for route: \"%s\"", name, hostName, 
+            mprJoinPath(route->scriptName, route->pattern));
     }
     GRADUATE_HASH(route, extensions);
 
@@ -11024,7 +11025,6 @@ int httpTrimExtraPath(HttpConn *conn)
             len = extra - start;
             if (0 < len && len < slen(rx->pathInfo)) {
                 rx->extraPath = sclone(&rx->pathInfo[len]);
-                *extra = '\0';
                 rx->pathInfo[len] = '\0';
             }
         }
