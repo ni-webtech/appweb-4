@@ -5888,7 +5888,7 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
         dp = (char*) mprAlloc(len);
         endp = &dp[len];
         cmd->env = (char**) dp;
-        for (ep = env; ep && *ep; ep++) {
+        for (ep = env, i = 0; ep && *ep; ep++, i++) {
             mprLog(4, "    env[%d]: %s", i, *ep);
             strcpy(dp, *ep);
             dp += slen(*ep) + 1;
