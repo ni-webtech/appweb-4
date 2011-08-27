@@ -158,29 +158,6 @@ MaServer *maCreateServer(MaAppweb *appweb, cchar *name)
     server->http = appweb->http;
     server->alreadyLogging = mprGetLogHandler() ? 1 : 0;
 
-#if UNUSED
-    HttpEndpoint    *endpoint;
-    HttpHost        *host;
-    HttpRoute       *route;
-    if (documents == 0 || *documents == '\0') {
-        documents = ".";
-    }
-    if (home == 0 || *home == '\0') {
-        home = ".";
-    }
-    maSetServerHome(server, home);
-    host = maCreateDefaultHost(server);
-    route = httpCreateRoute(host);
-    httpSetRouteDir(route, documents);
-    httpFinalizeRoute(route);
-
-    if (ip && port > 0) {
-        /* Passing NULL for the dispatcher will cause a new dispatcher to be created for each accepted connection */
-        endpoint = httpCreateEndpoint(ip, port, NULL);
-        httpAddHostToEndpoint(endpoint, host);
-        maAddEndpoint(server, endpoint);
-    }
-#endif
     maAddServer(appweb, server);
     if (appweb->defaultServer == 0) {
         maSetDefaultServer(appweb, server);
@@ -219,9 +196,6 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *d
             return MPR_ERR_CANT_OPEN;
         }
         maAddEndpoint(server, endpoint);
-#if UNUSED
-        host = server->defaultHost = mprGetFirstItem(endpoint->hosts);
-#endif
         host = mprGetFirstItem(endpoint->hosts);
         mprAssert(host);
 
@@ -239,14 +213,8 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *d
             if (mprPathExists(path, X_OK)) {
                 cgiRoute = httpCreateAliasRoute(route, "/cgi-bin/", path, 0);
                 mprLog(4, "ScriptAlias \"/cgi-bin/\":\"%s\"", path);
-#if UNUSED
-                httpSetRouteHost(cgiRoute, host);
-#endif
                 httpSetRouteHandler(cgiRoute, "cgiHandler");
                 httpFinalizeRoute(cgiRoute);
-#if UNUSED
-                httpAddRoute(host, cgiRoute);
-#endif
             }
         }
         maLoadModule(appweb, "espHandler", "mod_esp");
@@ -272,20 +240,6 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *d
     }
     return 0;
 }
-
-
-#if UNUSED
-HttpHost *maCreateDefaultHost(MaServer *server)
-{
-    HttpHost    *host;
-
-    host = httpCreateHost(0);
-    server->defaultHost = host;
-    httpSetHostName(host, "default", -1);
-    httpSetHostHome(host, server->home);
-    return host;
-}
-#endif
 
 
 int maStartServer(MaServer *server)
@@ -363,15 +317,6 @@ void maSetServerHome(MaServer *server, cchar *path)
 #endif
     server->home = mprGetAbsPath(path);
     mprLog(MPR_CONFIG, "Set server root to: \"%s\"", server->home);
-
-#if UNUSED
-    if (chdir((char*) path) < 0) {
-        mprError("Can't set server root to %s\n", path);
-    } else {
-        server->home = mprGetAbsPath(path);
-        mprLog(MPR_CONFIG, "Set server root to: \"%s\"", server->home);
-    }
-#endif
 }
 
 
@@ -387,14 +332,6 @@ void maSetServerAddress(MaServer *server, cchar *ip, int port)
         httpSetEndpointAddress(endpoint, ip, port);
     }
 }
-
-
-#if UNUSED
-void maSetServerDefaultHost(MaServer *server, HttpHost *host)
-{
-    server->defaultHost = host;
-}
-#endif
 
 
 void maGetUserGroup(MaAppweb *appweb)

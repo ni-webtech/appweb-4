@@ -276,18 +276,6 @@ static char *joinLine(cchar *str, ssize *lenp)
         if (*cp == '\n') {
             *bp++ = '\\';
             *bp++ = 'n';
-#if UNUSED
-            for (s = &cp[1]; *s; s++) {
-                if (!isspace((int) *s)) {
-                    break;
-                }
-            }
-            if (*s == '\0') {
-                /* Improve readability - pull onto one line if the rest of the token is white-space */
-                len--;
-                continue;
-            }
-#endif
             *bp++ = '\\';
         } else if (*cp == '\\' && cp[1] != '\\') {
             bquote++;
@@ -620,23 +608,12 @@ static int getEspToken(EspParse *parse)
                     tid = ESP_TOK_VAR;
                     next = eatSpace(parse, next);
                     /* Format is:  @@[%5.2f],var */
-#if UNUSED
-                    while (isalnum((int) *next) || *next == '[' || *next == ']' || *next == '.' || *next == '$' || 
-                            *next == '_' || *next == '"' || *next == '\'' || *next == ',' || *next == '%' || *next == ':' ||
-                            *next == '(' || *next == ')') {
-                        if (*next == '\n') parse->lineNumber++;
-                        if (!addChar(parse, *next++)) {
-                            return ESP_TOK_ERR;
-                        }
-                    }
-#else
                     while (isalnum((int) *next) || *next == '_') {
                         if (*next == '\n') parse->lineNumber++;
                         if (!addChar(parse, *next++)) {
                             return ESP_TOK_ERR;
                         }
                     }
-#endif
                     next--;
                 }
                 done++;
@@ -652,15 +629,9 @@ static int getEspToken(EspParse *parse)
                     return ESP_TOK_ERR;
                 }
             }
-#if UNUSED
-            if (!isspace(c) || mprGetBufLength(parse->token) > 0) {
-#endif
-                if (!addChar(parse, c)) {
-                    return ESP_TOK_ERR;
-                }
-#if UNUSED
+            if (!addChar(parse, c)) {
+                return ESP_TOK_ERR;
             }
-#endif
             break;
         }
     }

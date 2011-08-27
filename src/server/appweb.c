@@ -294,11 +294,7 @@ static int findConfigFile()
     }
     if (!mprPathExists(app->configFile, R_OK)) {
         if (!userPath) {
-#if UNUSED
-            app->configFile = mprAsprintf("%s/../%s/%s.conf", mprGetAppDir(), BLD_LIB_NAME, mprGetAppName());
-#else
             app->configFile = mprJoinPath(mprGetAppDir(), mprAsprintf("../%s/%s.conf", BLD_LIB_NAME, mprGetAppName()));
-#endif
         }
         if (!mprPathExists(app->configFile, R_OK)) {
             mprError("Can't open config file %s", app->configFile);

@@ -153,9 +153,6 @@ typedef struct MaServer {
     Http            *http;                  /**< Http service object (copy of appweb->http) */
     HttpLimits      *limits;                /**< Limits for this server */
     MprList         *endpoints;             /**< List of HttpEndpoints */
-#if UNUSED
-    struct HttpHost *defaultHost;           /**< Primary host */
-#endif
     char            *home;                  /**< Server root */
     bool            alreadyLogging;         /**< Already logging */
 } MaServer;
@@ -250,17 +247,6 @@ extern int      maStopServer(MaServer *server);
 extern int      maValidateConfiguration(MaServer *server);
 extern HttpHost *maCreateDefaultHost(MaServer *server);
 
-
-#if UNUSED
-extern void     maAddHost(MaServer *server, struct HttpHost *host);
-extern HttpHostAddress *maAddHostAddress(MaServer *server, cchar *ip, int port);
-extern int      maCreateHostAddresses(MaServer *server, struct HttpHost *host, cchar *value);
-extern struct HttpHost *maLookupHost(MaServer *server, cchar *name);
-extern void     maNotifyServerStateChange(HttpConn *conn, int state, int notifyFlags);
-extern HttpHostAddress *maRemoveHostFromHostAddress(MaServer *server, cchar *ip, int port, struct HttpHost *host);
-extern void     maSetServerDefaultHost(MaServer *server, struct HttpHost *host);
-extern void     maSetServerDefaultIndex(MaServer *server, cchar *path, cchar *filename);
-#endif
 
 /************************************* Auth *********************************/
 #if BLD_FEATURE_AUTH_FILE

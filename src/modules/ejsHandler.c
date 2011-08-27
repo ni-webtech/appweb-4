@@ -50,15 +50,9 @@ static void openEjs(HttpQueue *q)
             if (route->workers < 0) {
                 route->workers = mprGetMaxWorkers();
             }
-#if UNUSED
-            filename = mprGetPortablePath(alias->filename);
-            poolScript = sfmt("require ejs.web; global.ejs::HttpEndpointHome = '%s'; global.ejs::HttpEndpointDocuments = '%s';",
-                alias->filename, alias->filename);
-#endif
             route->context = ejsCreatePool(route->workers, "require ejs.web", route->script, route->scriptPath, route->dir);
             mprLog(5, "ejs: Demand load Ejscript web framework");
         }
-        //  MOB - remove conn->pool and store in ejs->pool
         pool = conn->pool = route->context;
         if ((ejs = ejsAllocPoolVM(pool, EJS_FLAG_HOSTED)) == 0) {
             httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, "Can't create Ejs interpreter");
@@ -67,26 +61,6 @@ static void openEjs(HttpQueue *q)
         conn->ejs = ejs;
         ejs->hosted = 1;
     }
-
-#if UNUSED
-    /*
-        Set the scriptName to the alias prefix and remove from pathInfo
-     */
-    if (alias->prefixLen > 0) {
-        uri = &uri[alias->prefixLen];
-#if UNUSED
-        if (*uri != '/' && uri[-1] == '/') {
-            uri--;
-        }
-#endif
-        if (*uri == '\0') {
-            uri = "/";
-        }
-        rx->scriptName = alias->prefix;
-        rx->pathInfo = sclone(uri);
-        mprLog(5, "ejs: set script name: \"%s\", pathInfo: \"%s\"", rx->scriptName, rx->pathInfo);
-    }
-#endif
 }
 
 
@@ -105,30 +79,11 @@ static int ejsAliasDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%P ?P ?S ?N", &prefix, &path, &script, &workers)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-#if UNUSED
-    prefix = stemplate(prefix, route->tokens);
-    path = httpMakePath(route, path);
-#endif
     if (script) {
         script = strim(script, "\"", MPR_TRIM_BOTH);
     }
-#if UNUSED
-    if (httpLookupDir(host, path) == 0) {
-        parent = mprGetFirstItem(host->dirs);
-        dir = httpCreateDir(path, parent);
-        httpAddDir(host, dir);
-    }
-    alias = httpCreateAlias(prefix, path, 0);
-    mprLog(4, "EjsAlias \"%s\" for \"%s\"", prefix, path);
-    httpAddAlias(host, alias);
-
-    if (httpLookupLocation(host, prefix)) {
-        mprError("Location already exists for \"%s\"", value);
-        return MPR_ERR_BAD_SYNTAX;
-    }
-#endif
     route = httpCreateInheritedRoute(state->route);
-    httpSetRouteScriptName(route, sjoin("/", prefix, 0));
+    httpSetRoutePrefix(route, sjoin("/", prefix, 0));
     httpSetRouteScript(route, 0, script);
     if (workers) {
         httpSetRouteWorkers(route, atoi(workers));

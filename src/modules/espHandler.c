@@ -19,7 +19,6 @@ static Esp *esp;
 
 /************************************ Forward *********************************/
 
-static void addExtRoute(HttpRoute *parent);
 static void addDefaultRoutes(HttpRoute *parent);
 static void addRoutePack(HttpRoute *parent, cchar *pack, cchar *prefix, cchar *controller);
 static EspRoute *allocEspRoute(HttpRoute *loc);
@@ -768,27 +767,14 @@ static void addDefaultRoutes(HttpRoute *parent)
 }
 
 
-static void addExtRoute(HttpRoute *parent)
-{
-#if UNUSED
-    HttpRoute   *route;
-
-    route = addRoute(parent, "esp", NULL, "\\.[eE][sS][pP]$", NULL, NULL);
-    httpSetRouteTarget(route, "file", 0);
-#endif
-}
-
- 
 static void addRoutePack(HttpRoute *parent, cchar *pack, cchar *prefix, cchar *controller)
 {
     if (scasematch(pack, "simple")) {
-        addExtRoute(parent);
         addDefaultRoutes(parent);
 
     } else if (scasematch(pack, "mvc")) {
         addDefaultRoutes(parent);
         addRoute(parent, "default", NULL, "^/{controller}(~/{action}~)", "${controller}-${action}", "${controller}.c");
-        addExtRoute(parent);
 
     } else if (scasematch(pack, "restful")) {
         if (prefix == 0) {
@@ -797,67 +783,12 @@ static void addRoutePack(HttpRoute *parent, cchar *pack, cchar *prefix, cchar *c
         if (controller == 0) {
             controller = "${controller}";
         }
-        addExtRoute(parent);
         addRestfulRoutes(parent, prefix, controller);
 
     } else if (!scasematch(pack, "none")) {
         mprError("Unknown route pack %s", pack);
     }
 }
-
-
-#if UNUSED
-//  MOB - trim slashes not needed
-static char *trimSlashes(cchar *str)
-{
-    ssize   len;
-
-    if (str == 0) {
-        return MPR->emptyString;
-    }
-    if (*str == '/') {
-        str++;
-    }
-    len = slen(str);
-    if (str[len - 1] == '/') {
-        return snclone(str, len - 1);
-    } else {
-        return sclone(str);
-    }
-}
-#endif
-
-
-#if UNUSED
-EspPair *espCreatePair(cchar *key, void *data, int flags)
-{
-    EspPair     *pair;
-
-    if ((pair = mprAllocObj(EspPair, manageEspPair)) == 0) {
-        return 0;
-    }
-    pair->key = sclone(key);
-    pair->data = data;
-    pair->flags = flags;
-    return pair;
-}
-
-
-void manageEspPair(EspPair *pair, int flags)
-{
-    if (flags & MPR_MANAGE_MARK) {
-        mprMark(pair->key);
-        if (!(pair->flags & ESP_PAIR_STATIC_VALUES)) {
-            mprMark(pair->data);
-        }
-    } else if (flags & MPR_MANAGE_FREE) {
-        if (pair->flags & ESP_PAIR_FREE) {
-            free(pair->data);
-            pair->data = 0;
-        }
-    }
-}
-#endif
 
 
 void espManageEspRoute(EspRoute *eroute, int flags)
@@ -999,7 +930,7 @@ static int espAppDirective(MaState *state, cchar *key, cchar *value)
     if (scmp(scriptName, "/") == 0) {
         scriptName = MPR->emptyString;
     }
-    httpSetRouteScriptName(route, scriptName);
+    httpSetRoutePrefix(route, scriptName);
     if (route->pattern == 0) {
         httpSetRoutePattern(route, sjoin("/", scriptName, 0), 0);
     }
@@ -1031,10 +962,6 @@ static int espAppAliasDirective(MaState *state, cchar *key, cchar *value)
     state = maPushState(state);
     state->route = route;
     rc = espAppDirective(state, NULL, value);
-#if UNUSED
-    /* MOB - route is not added because it is not really used for routing */
-    httpFinalizeRoute(route);
-#endif
     maPopState(state);
     return rc;
 }

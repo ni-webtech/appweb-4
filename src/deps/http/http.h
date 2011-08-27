@@ -1921,8 +1921,8 @@ typedef struct HttpRoute {
 
     char            *literalPattern;        /**< Starting literal segment of pattern */
     ssize           literalPatternLen;      /**< Length of literalPattern */
-    char            *scriptName;            /**< Application scriptName prefix */
-    ssize           scriptNameLen;          /**< ScriptName length */
+    char            *prefix;                /**< Application scriptName prefix */
+    ssize           prefixLen;              /**< Prefix length */
 
     char            *template;              /**< URI template for forming links based on this route */
     HttpStage       *handler;               /**< Fixed handler */
@@ -1948,10 +1948,6 @@ typedef struct HttpRoute {
     void            *context;               /**< Hosting context (Appweb == EjsPool) */
     char            *uploadDir;             /**< Upload directory */
     int             autoDelete;             /**< Auto delete uploaded files */
-
-#if UNUSED
-    char            *searchPath;            /**< Search path */
-#endif
 
     /*
         Used by Ejscript
@@ -2037,9 +2033,8 @@ extern void httpSetRouteUpdate(HttpRoute *route, cchar *name, int flags);
 extern void httpSetRouteName(HttpRoute *route, cchar *name);
 extern void httpSetRoutePathVar(HttpRoute *route, cchar *token, cchar *value);
 extern void httpSetRoutePattern(HttpRoute *route, cchar *pattern, int flags);
-extern void httpSetRoutePrefix(HttpRoute *route, cchar *uri);
+extern void httpSetRoutePrefix(HttpRoute *route, cchar *prefix);
 extern void httpSetRouteScript(HttpRoute *route, cchar *script, cchar *scriptPath);
-extern void httpSetRouteScriptName(HttpRoute *route, cchar *scriptName);
 extern void httpSetRouteSource(HttpRoute *route, cchar *source);
 extern void httpSetRouteWorkers(HttpRoute *route, int workers);
 extern int httpSetRouteTarget(HttpRoute *route, cchar *kind, cchar *details);
@@ -2421,12 +2416,9 @@ extern void httpCreateCGIVars(HttpConn *conn);
 /*  
     Tx flags
  */
-#if UNUSED
-#define HTTP_TX_DONT_CACHE          0x1     /**< Add no-cache to the transmission */
-#endif
-#define HTTP_TX_NO_BODY             0x2     /**< No transmission body, only sent headers */
-#define HTTP_TX_HEADERS_CREATED     0x4     /**< Response headers have been created */
-#define HTTP_TX_SENDFILE            0x8     /**< Relay output via Send connector */
+#define HTTP_TX_NO_BODY             0x1     /**< No transmission body, only sent headers */
+#define HTTP_TX_HEADERS_CREATED     0x2     /**< Response headers have been created */
+#define HTTP_TX_SENDFILE            0x4     /**< Relay output via Send connector */
 
 /** 
     Http Tx
@@ -2547,17 +2539,6 @@ extern HttpTx *httpCreateTx(HttpConn *conn, MprHashTable *headers);
 
 //  MOB DOC
 extern void httpDestroyTx(HttpTx *tx);
-
-#if UNUSED
-/** 
-    Dont cache the transmission 
-    @description Instruct the client not to cache the transmission body. This is done by setting the Cache-control Http
-        header.
-    @param conn HttpConn connection object
-    @ingroup HttpTx
- */
-extern void httpDontCache(HttpConn *conn);
-#endif
 
 /** 
     Enable Multipart-Mime File Upload for this request. This will define a "Content-Type: multipart/form-data..."
@@ -2976,9 +2957,6 @@ typedef struct HttpHost {
     MprList         *dirs;                  /**< List of Directory definitions */
     MprList         *routes;                /**< List of Route defintions */
     HttpLimits      *limits;                /**< Host resource limits */
-#if UNUSED
-    HttpRoute       *route;                 /**< Default (and outermost) route */
-#endif
     MprHashTable    *mimeTypes;             /**< Hash table of mime types (key is extension) */
 
     char            *home;                  /**< Directory for configuration files */

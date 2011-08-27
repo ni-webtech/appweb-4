@@ -52,12 +52,7 @@ typedef struct MprSsl {
      */
     int             verifyClient;
     int             verifyDepth;
-
     int             protocols;
-#if UNUSED
-    bool            initialized;
-    bool            connTraced;
-#endif
 
     /*
         Per-SSL provider context information

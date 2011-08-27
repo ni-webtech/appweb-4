@@ -1415,11 +1415,11 @@ static int routeNameDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    ScriptName prefix
+    Prefix /URI-PREFIX
  */
-static int scriptNameDirective(MaState *state, cchar *key, cchar *value)
+static int prefixDirective(MaState *state, cchar *key, cchar *value)
 {
-    httpSetRouteScriptName(state->route, value);
+    httpSetRoutePrefix(state->route, value);
     return 0;
 }
 
@@ -2017,6 +2017,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "Methods", methodsDirective);
     maAddDirective(appweb, "NameVirtualHost", nameVirtualHostDirective);
     maAddDirective(appweb, "Order", orderDirective);
+    maAddDirective(appweb, "Prefix", prefixDirective);
     maAddDirective(appweb, "Protocol", protocolDirective);
     maAddDirective(appweb, "PutMethod", putMethodDirective);
     maAddDirective(appweb, "Query", queryDirective);
@@ -2027,7 +2028,6 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "<Route", routeDirective);
     maAddDirective(appweb, "</Route", closeDirective);
     maAddDirective(appweb, "RouteName", routeNameDirective);
-    maAddDirective(appweb, "ScriptName", scriptNameDirective);
     maAddDirective(appweb, "ServerName", serverNameDirective);
     maAddDirective(appweb, "ServerRoot", serverRootDirective);
     maAddDirective(appweb, "SetConnector", setConnectorDirective);
