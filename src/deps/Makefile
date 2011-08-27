@@ -13,11 +13,11 @@ ifeq ($(BLD_FEATURE_EJSCRIPT),0)
 	ifeq ($(BLD_MPR_BUILTIN),1)
 		PRE_DIRS	+= mpr
 	endif
-	ifeq ($(BLD_HTTP_BUILTIN),1)
-		PRE_DIRS	+= http
-	endif
 	ifeq ($(BLD_PCRE_BUILTIN),1)
 		PRE_DIRS	+= pcre
+	endif
+	ifeq ($(BLD_HTTP_BUILTIN),1)
+		PRE_DIRS	+= http
 	endif
 endif
 
