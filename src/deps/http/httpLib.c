@@ -11129,7 +11129,6 @@ int httpTrimExtraPath(HttpConn *conn)
 {
     HttpTx      *tx;
     HttpRx      *rx;
-    cchar       *seps;
     char        *cp, *extra, *start;
     ssize       len;
 
@@ -11138,8 +11137,7 @@ int httpTrimExtraPath(HttpConn *conn)
 
     if ((tx->handler && tx->handler->flags & HTTP_STAGE_EXTRA_PATH) && !(rx->flags & (HTTP_OPTIONS | HTTP_TRACE))) { 
         start = rx->pathInfo;
-        seps = mprGetPathSeparators(start);
-        if ((cp = strchr(start, '.')) != 0 && (extra = strchr(cp, seps[0])) != 0) {
+        if ((cp = strchr(start, '.')) != 0 && (extra = strchr(cp, '/')) != 0) {
             len = extra - start;
             if (0 < len && len < slen(rx->pathInfo)) {
                 rx->extraPath = sclone(&rx->pathInfo[len]);
