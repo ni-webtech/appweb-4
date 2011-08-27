@@ -6673,9 +6673,11 @@ extern char *mprEncode64(cchar *str);
     @param buf Buffer to checksum
     @param len Size of the buffer
     @param prefix String prefix to insert at the start of the result
-    @returns An MD5 checksum string.
+    @returns An allocated MD5 checksum string.
  */
-extern char *mprGetMD5Hash(cchar *buf, ssize len, cchar *prefix);
+extern char *mprGetMD5WithPrefix(cchar *buf, ssize len, cchar *prefix);
+
+extern char *mprGetMD5(cchar *s);
 
 extern int mprCalcDigest(char **digest, cchar *userName, cchar *password, cchar *realm,
                 cchar *uri, cchar *nonce, cchar *qop, cchar *nc, cchar *cnonce, cchar *method);

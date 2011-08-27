@@ -1919,8 +1919,8 @@ typedef struct HttpRoute {
     char            *writeTarget;           /**< Write target text */
     int             responseStatus;         /**< Response status code */
 
-    char            *prefix;                /**< Simple route prefix */
-    ssize           prefixLen;              /**< Simple route prefix length */
+    char            *literalPattern;        /**< Starting literal segment of pattern */
+    ssize           literalPatternLen;      /**< Length of literalPattern */
     char            *scriptName;            /**< Application scriptName prefix */
     ssize           scriptNameLen;          /**< ScriptName length */
 
@@ -1994,8 +1994,8 @@ extern void httpAddRouteExpiry(HttpRoute *route, MprTime when, cchar *extensions
 extern void httpAddRouteExpiryByType(HttpRoute *route, MprTime when, cchar *mimeTypes);
 extern int httpAddRouteFilter(HttpRoute *route, cchar *name, cchar *extensions, int direction);
 extern void httpAddRouteHeader(HttpRoute *route, cchar *header, cchar *value, int flags);
-extern void httpAddRouteLanguage(HttpRoute *route, cchar *lang, cchar *suffix, int before);
-extern void httpAddRouteLanguageRoot(HttpRoute *route, cchar *lang, cchar *path);
+extern int httpAddRouteLanguage(HttpRoute *route, cchar *lang, cchar *suffix, int before);
+extern int httpAddRouteLanguageRoot(HttpRoute *route, cchar *lang, cchar *path);
 extern int httpAddRouteHandler(HttpRoute *route, cchar *name, cchar *extensions);
 extern void httpAddRouteQuery(HttpRoute *route, cchar *field, cchar *value, int flags);
 extern int httpAddRouteUpdate(HttpRoute *route, cchar *name, cchar *details, int flags);
@@ -2298,7 +2298,7 @@ extern void httpCloseRx(struct HttpConn *conn);
 extern bool httpContentNotModified(HttpConn *conn);
 extern HttpRange *httpCreateRange(HttpConn *conn, MprOff start, MprOff end);
 extern void httpDestroyRx(HttpRx *rx);
-extern HttpLang *httpGetLanguage(HttpConn *conn, MprHashTable *spoken);
+extern HttpLang *httpGetLanguage(HttpConn *conn, MprHashTable *spoken, cchar *defaultLanguage);
 extern char *httpGetFormData(HttpConn *conn);
 extern bool httpMatchEtag(HttpConn *conn, char *requestedEtag);
 extern bool httpMatchModified(HttpConn *conn, MprTime time);

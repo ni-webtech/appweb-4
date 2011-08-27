@@ -96,7 +96,7 @@ static bool findFile(HttpQueue *q)
         httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", conn->tx->filename);
         return 0;
     }
-    if (info->valid && !info->isDir) {
+    if (tx->etag == 0 && info->valid) {
         tx->etag = sfmt("\"%x-%Lx-%Lx\"", info->inode, info->size, info->mtime);
     }
     return 1;

@@ -701,13 +701,13 @@
 		C95C31E70FC528C700FB3105 /* server */ = {
 			isa = PBXGroup;
 			children = (
-				C976CD091405906C00D21AFA /* server.c */,
 				C9A44E9813D74BAC009BF64B /* appweb.h */,
 				C9A44E9913D74BAC009BF64B /* customize.h */,
 				C95C31E80FC5292A00FB3105 /* appweb.c */,
 				C9817C1C110D170500F241EF /* config.c */,
 				C9817C1E110D170500F241EF /* convenience.c */,
 				C9817C23110D170500F241EF /* log.c */,
+				C976CD091405906C00D21AFA /* server.c */,
 			);
 			name = server;
 			sourceTree = "<group>";
@@ -725,11 +725,11 @@
 		C97620660FD04E38009C78E1 /* modules */ = {
 			isa = PBXGroup;
 			children = (
+				C97620690FD04E38009C78E1 /* cgiHandler.c */,
 				C9F2260013EB34AD00AD8F7C /* dirHandler.c */,
+				C938480E1123BD80002AD34B /* ejsHandler.c */,
 				C913688514041CD70024EB0A /* espHandler.c */,
 				C9F2260113EB34AD00AD8F7C /* fileHandler.c */,
-				C97620690FD04E38009C78E1 /* cgiHandler.c */,
-				C938480E1123BD80002AD34B /* ejsHandler.c */,
 				C97620700FD04E38009C78E1 /* phpHandler.c */,
 				C97620760FD04E38009C78E1 /* sslModule.c */,
 			);

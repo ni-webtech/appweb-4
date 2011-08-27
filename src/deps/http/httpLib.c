@@ -303,11 +303,11 @@ typedef struct AuthData
 
 static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *realm, cchar *uri, 
     cchar *nonce, cchar *qop, cchar *nc, cchar *cnonce, cchar *method);
-static char *createDigestNonce(HttpConn *conn, cchar *secret, cchar *etag, cchar *realm);
+static char *createDigestNonce(HttpConn *conn, cchar *secret, cchar *realm);
 static void decodeBasicAuth(HttpConn *conn, AuthData *ad);
 static int  decodeDigestDetails(HttpConn *conn, AuthData *ad);
 static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *msg, char *logMsg);
-static int parseDigestNonce(char *nonce, cchar **secret, cchar **etag, cchar **realm, MprTime *when);
+static int parseDigestNonce(char *nonce, cchar **secret, cchar **realm, MprTime *when);
 
 
 int httpCheckAuth(HttpConn *conn)
@@ -316,17 +316,19 @@ int httpCheckAuth(HttpConn *conn)
     HttpRx      *rx;
     HttpTx      *tx;
     HttpAuth    *auth;
+    HttpRoute   *route;
     AuthData    *ad;
     MprTime     when;
     cchar       *requiredPassword;
     char        *msg, *requiredDigest;
-    cchar       *secret, *etag, *realm;
+    cchar       *secret, *realm;
     int         actualAuthType;
 
     rx = conn->rx;
     tx = conn->tx;
     http = conn->http;
-    auth = rx->route->auth;
+    route = rx->route;
+    auth = route->auth;
 
     if (!conn->endpoint || auth == 0 || auth->type == 0) {
         return 0;
@@ -381,9 +383,9 @@ int httpCheckAuth(HttpConn *conn)
         /*
             Validate the nonce value - prevents replay attacks
          */
-        when = 0; secret = 0; etag = 0; realm = 0;
-        parseDigestNonce(ad->nonce, &secret, &etag, &realm, &when);
-        if (scmp(secret, http->secret) != 0 || scmp(etag, tx->etag) != 0 || scmp(realm, auth->requiredRealm) != 0) {
+        when = 0; secret = 0; realm = 0;
+        parseDigestNonce(ad->nonce, &secret, &realm, &when);
+        if (scmp(secret, http->secret) != 0 || scmp(realm, auth->requiredRealm) != 0) {
             formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access denied, authentication error", "Nonce mismatch");
         } else if ((when + (5 * 60 * MPR_TICKS_PER_SEC)) < http->now) {
             formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access denied, authentication error", "Nonce is stale");
@@ -538,7 +540,7 @@ static int decodeDigestDetails(HttpConn *conn, AuthData *ad)
         case 'u':
             if (scasecmp(key, "uri") == 0) {
                 ad->uri = sclone(value);
-            } else if (scasecmp(key, "user") == 0) {
+            } else if (scasecmp(key, "username") == 0 || scasecmp(key, "user") == 0) {
                 ad->userName = sclone(value);
             }
             break;
@@ -577,7 +579,7 @@ static int decodeDigestDetails(HttpConn *conn, AuthData *ad)
 static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *msg, char *logMsg)
 {
     HttpTx  *tx;
-    char    *qopClass, *nonce, *etag;
+    char    *qopClass, *nonce;
 
     tx = conn->tx;
     if (logMsg == 0) {
@@ -590,19 +592,18 @@ static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *m
 
     } else if (auth->type == HTTP_AUTH_DIGEST) {
         qopClass = auth->qop;
-        etag = tx->etag ? tx->etag : "";
-        nonce = createDigestNonce(conn, conn->http->secret, etag, auth->requiredRealm);
+        nonce = createDigestNonce(conn, conn->http->secret, auth->requiredRealm);
         mprAssert(conn->host);
 
         if (scmp(qopClass, "auth") == 0) {
             httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", domain=\"%s\", "
                 "qop=\"auth\", nonce=\"%s\", opaque=\"%s\", algorithm=\"MD5\", stale=\"FALSE\"", 
-                auth->requiredRealm, conn->host->name, nonce, etag);
+                auth->requiredRealm, conn->host->name, nonce, "");
 
         } else if (scmp(qopClass, "auth-int") == 0) {
             httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", domain=\"%s\", "
                 "qop=\"auth\", nonce=\"%s\", opaque=\"%s\", algorithm=\"MD5\", stale=\"FALSE\"", 
-                auth->requiredRealm, conn->host->name, nonce, etag);
+                auth->requiredRealm, conn->host->name, nonce, "");
 
         } else {
             httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", nonce=\"%s\"", auth->requiredRealm, nonce);
@@ -616,38 +617,33 @@ static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *m
 /*
     Create a nonce value for digest authentication (RFC 2617)
  */ 
-static char *createDigestNonce(HttpConn *conn, cchar *secret, cchar *etag, cchar *realm)
+static char *createDigestNonce(HttpConn *conn, cchar *secret, cchar *realm)
 {
-    MprTime     now;
-    char        nonce[256];
+    MprTime      now;
+    char         nonce[256];
+    static int64 next = 0;
 
     mprAssert(realm && *realm);
 
     now = conn->http->now;
-    mprSprintf(nonce, sizeof(nonce), "%s:%s:%s:%Lx", secret, etag, realm, now);
+    mprSprintf(nonce, sizeof(nonce), "%s:%s:%Lx:%Lx", secret, realm, now, next++);
     return mprEncode64(nonce);
 }
 
 
-static int parseDigestNonce(char *nonce, cchar **secret, cchar **etag, cchar **realm, MprTime *when)
+static int parseDigestNonce(char *nonce, cchar **secret, cchar **realm, MprTime *when)
 {
-    char    *tok, *decoded, *whenStr;
+    char    *tok, *decoded, *whenStr, *junk;
 
     if ((decoded = mprDecode64(nonce)) == 0) {
         return MPR_ERR_CANT_READ;
     }
     *secret = stok(decoded, ":", &tok);
-    *etag = stok(NULL, ":", &tok);
     *realm = stok(NULL, ":", &tok);
     whenStr = stok(NULL, ":", &tok);
     *when = (MprTime) stoi(whenStr, 16, NULL); 
+    junk = stok(NULL, ":", &tok);
     return 0;
-}
-
-
-static char *md5(cchar *string)
-{
-    return mprGetMD5Hash(string, slen(string), NULL);
 }
 
 
@@ -670,14 +666,14 @@ static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *re
         ha1 = sclone(password);
     } else {
         mprSprintf(a1Buf, sizeof(a1Buf), "%s:%s:%s", userName, realm, password);
-        ha1 = md5(a1Buf);
+        ha1 = mprGetMD5(a1Buf);
     }
 
     /*
         HA2
      */ 
     mprSprintf(a2Buf, sizeof(a2Buf), "%s:%s", method, uri);
-    ha2 = md5(a2Buf);
+    ha2 = mprGetMD5(a2Buf);
 
     /*
         H(HA1:nonce:HA2)
@@ -691,7 +687,7 @@ static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *re
     } else {
         mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s", ha1, nonce, ha2);
     }
-    *digest = md5(digestBuf);
+    *digest = mprGetMD5(digestBuf);
     return 0;
 }
 
@@ -782,14 +778,12 @@ bool httpValidateNativeCredentials(HttpAuth *auth, cchar *realm, cchar *user, cc
     char **msg)
 {
     char    passbuf[HTTP_MAX_PASS * 2], *hashedPassword;
-    ssize   len;
 
     hashedPassword = 0;
     
     if (auth->type == HTTP_AUTH_BASIC) {
         mprSprintf(passbuf, sizeof(passbuf), "%s:%s:%s", user, realm, password);
-        len = strlen(passbuf);
-        hashedPassword = mprGetMD5Hash(passbuf, len, NULL);
+        hashedPassword = mprGetMD5(passbuf);
         password = hashedPassword;
     }
     if (!isUserValid(auth, realm, user)) {
@@ -1963,7 +1957,6 @@ static int setClientHeaders(HttpConn *conn)
     HttpTx      *tx;
     HttpUri     *parsedUri;
     char        *encoded;
-    ssize       len;
 
     mprAssert(conn);
 
@@ -1987,11 +1980,9 @@ static int setClientHeaders(HttpConn *conn)
         conn->authCnonce = mprAsprintf("%s:%s:%x", http->secret, conn->authRealm, (int) http->now);
 
         mprSprintf(a1Buf, sizeof(a1Buf), "%s:%s:%s", conn->authUser, conn->authRealm, conn->authPassword);
-        len = strlen(a1Buf);
-        ha1 = mprGetMD5Hash(a1Buf, len, NULL);
+        ha1 = mprGetMD5(a1Buf);
         mprSprintf(a2Buf, sizeof(a2Buf), "%s:%s", tx->method, parsedUri->path);
-        len = strlen(a2Buf);
-        ha2 = mprGetMD5Hash(a2Buf, len, NULL);
+        ha2 = mprGetMD5(a2Buf);
         qop = (conn->authQop) ? conn->authQop : (char*) "";
 
         conn->authNc++;
@@ -2005,15 +1996,15 @@ static int setClientHeaders(HttpConn *conn)
             qop = "";
             mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s", ha1, conn->authNonce, ha2);
         }
-        digest = mprGetMD5Hash(digestBuf, strlen(digestBuf), NULL);
+        digest = mprGetMD5(digestBuf);
 
         if (*qop == '\0') {
-            httpAddHeader(conn, "Authorization", "Digest user=\"%s\", realm=\"%s\", nonce=\"%s\", "
+            httpAddHeader(conn, "Authorization", "Digest username=\"%s\", realm=\"%s\", nonce=\"%s\", "
                 "uri=\"%s\", response=\"%s\"",
                 conn->authUser, conn->authRealm, conn->authNonce, parsedUri->path, digest);
 
         } else if (strcmp(qop, "auth") == 0) {
-            httpAddHeader(conn, "Authorization", "Digest user=\"%s\", realm=\"%s\", domain=\"%s\", "
+            httpAddHeader(conn, "Authorization", "Digest username=\"%s\", realm=\"%s\", domain=\"%s\", "
                 "algorithm=\"MD5\", qop=\"%s\", cnonce=\"%s\", nc=\"%08x\", nonce=\"%s\", opaque=\"%s\", "
                 "stale=\"FALSE\", uri=\"%s\", response=\"%s\"",
                 conn->authUser, conn->authRealm, conn->authDomain, conn->authQop, conn->authCnonce, conn->authNc,
@@ -3197,7 +3188,7 @@ int httpStartEndpoint(HttpEndpoint *endpoint)
     }
     proto = mprIsSocketSecure(endpoint->sock) ? "HTTPS" : "HTTP ";
     ip = *endpoint->ip ? endpoint->ip : "*";
-    mprLog(MPR_CONFIG, "Started %s endpoint on \"%s:%d\"", proto, ip, endpoint->port);
+    mprLog(MPR_CONFIG, "Started %s service on \"%s:%d\"", proto, ip, endpoint->port);
     return 0;
 }
 
@@ -3441,20 +3432,24 @@ void httpSetNamedVirtualEndpoint(HttpEndpoint *endpoint)
 HttpHost *httpLookupHostOnEndpoint(HttpEndpoint *endpoint, cchar *name)
 {
     HttpHost    *host;
-    char        *ip;
-    int         next, port;
+    int         next;
 
-    if (name == 0) {
+    if (name == 0 || *name == '\0') {
         return mprGetFirstItem(endpoint->hosts);
     }
-    mprParseIp(name, &ip, &port, -1);
 
     for (next = 0; (host = mprGetNextItem(endpoint->hosts, &next)) != 0; ) {
+        if (smatch(host->name, name)) {
+            return host;
+        }
+#if UNUSED
+        mprParseIp(name, &ip, &port, -1);
         if (host->port <= 0 || port <= 0 || host->port == port) {
             if (*host->ip == '\0' || *ip == '\0' || scmp(host->ip, ip) == 0) {
                 return host;
             }
         }
+#endif
     }
     return 0;
 }
@@ -7101,7 +7096,7 @@ static HttpLang *createLangDef(cchar *path, cchar *suffix, int flags);
 static HttpRouteOp *createRouteOp(cchar *name, int flags);
 static void definePathVars(HttpRoute *route);
 static void defineHostVars(HttpRoute *route);
-static char *expandPath(HttpConn *conn, cchar *path);
+static char *expandTokens(HttpConn *conn, cchar *path);
 static char *expandPatternTokens(cchar *str, cchar *replacement, int *matches, int matchCount);
 static char *expandRequestTokens(HttpConn *conn, char *targetKey);
 static void finalizeMethods(HttpRoute *route);
@@ -7183,15 +7178,17 @@ HttpRoute *httpCreateConfiguredRoute(HttpHost *host, int serverSide)
 }
 
 
-HttpRoute *httpCreateAliasRoute(HttpRoute *parent, cchar *prefix, cchar *path, int status)
+HttpRoute *httpCreateAliasRoute(HttpRoute *parent, cchar *pattern, cchar *path, int status)
 {
     HttpRoute   *route;
 
     if ((route = httpCreateInheritedRoute(parent)) == 0) {
         return 0;
     }
-    httpSetRoutePattern(route, prefix, 0);
-    httpSetRouteDir(route, path);
+    httpSetRoutePattern(route, pattern, 0);
+    if (path) {
+        httpSetRouteDir(route, path);
+    }
     route->responseStatus = status;
     return route;
 }
@@ -7289,6 +7286,7 @@ static void manageRoute(HttpRoute *route, int flags)
         mprMark(route->index);
         mprMark(route->inputStages);
         mprMark(route->languages);
+        mprMark(route->literalPattern);
         mprMark(route->methodHash);
         mprMark(route->methods);
         mprMark(route->name);
@@ -7297,16 +7295,12 @@ static void manageRoute(HttpRoute *route, int flags)
         mprMark(route->parent);
         mprMark(route->pathVars);
         mprMark(route->pattern);
-        mprMark(route->prefix);
         mprMark(route->processedPattern);
         mprMark(route->queryFields);
         mprMark(route->redirectTarget);
         mprMark(route->script);
         mprMark(route->scriptName);
         mprMark(route->scriptPath);
-#if UNUSED
-        mprMark(route->searchPath);
-#endif
         mprMark(route->sourceName);
         mprMark(route->sourcePath);
         mprMark(route->ssl);
@@ -7343,15 +7337,13 @@ int httpMatchRoute(HttpConn *conn, HttpRoute *route)
          */
         mprAssert(rx->pathInfo[0] == '/');
         len = route->scriptNameLen;
-        if (strncmp(&rx->pathInfo[1], route->scriptName, len) != 0) {
+        if (strncmp(rx->pathInfo, route->scriptName, len) != 0) {
             return 0;
         }
-        len++;
         if (rx->pathInfo[len] && rx->pathInfo[len] != '/') {
             return 0;
         }
-
-        pathInfo = &rx->pathInfo[1 + slen(route->scriptName)];
+        pathInfo = &rx->pathInfo[route->scriptNameLen];
         if (*pathInfo == '\0') {
             pathInfo = "/";
         }
@@ -7380,7 +7372,7 @@ static int matchRoute(HttpConn *conn, HttpRoute *route)
     tx = conn->tx;
 
     if (route->patternCompiled) {
-        if (route->prefix && strncmp(rx->pathInfo, route->prefix, route->prefixLen) != 0) {
+        if (route->literalPattern && strncmp(rx->pathInfo, route->literalPattern, route->literalPatternLen) != 0) {
             return 0;
         }
         rx->matchCount = pcre_exec(route->patternCompiled, NULL, rx->pathInfo, (int) slen(rx->pathInfo), 0, 0, 
@@ -7511,83 +7503,29 @@ static void mapFile(HttpConn *conn, HttpRoute *route)
     HttpTx      *tx;
     HttpLang    *lang;
     MprPath     *info;
-    char        *filename;
 
     rx = conn->rx;
     tx = conn->tx;
     lang = rx->lang;
     mprAssert(tx->handler);
 
-    if (route->target) {
-        filename = expandPath(conn, route->fileTarget);
+    if (route->target && *route->target) {
+        tx->filename = expandTokens(conn, route->fileTarget);
     } else {
-        filename = &rx->pathInfo[1];
+        tx->filename = &rx->pathInfo[1];
     }
     if (lang && lang->path) {
-        tx->filename = mprJoinPath(lang->path, filename);
+        tx->filename = mprJoinPath(lang->path, tx->filename);
     }
-    tx->filename = mprJoinPath(route->dir, filename);
+    tx->filename = mprJoinPath(route->dir, tx->filename);
     tx->ext = httpGetExt(conn);
     info = &tx->fileInfo;
     mprGetPathInfo(tx->filename, info);
+    if (info->valid) {
+        tx->etag = sfmt("\"%x-%Lx-%Lx\"", info->inode, info->size, info->mtime);
+    }
     mprLog(5, "mapFile uri \"%s\", filename: \"%s\", extension: \"%s\"", rx->uri, tx->filename, tx->ext);
 }
-
-
-#if UNUSED
-/*
-    Manage file requests that resolve to directories. This will either do an external redirect back to the browser 
-    or do an internal (transparent) redirection and serve different content back to the browser.
- */
-static int processDirectories(HttpConn *conn, HttpRoute *route)
-{
-    HttpRx      *rx;
-    HttpTx      *tx;
-    HttpUri     *prior;
-    char        *path, *pathInfo, *uri;
-
-    tx = conn->tx;
-    rx = conn->rx;
-    prior = rx->parsedUri;
-
-    mprAssert(route == rx->route);
-    mprAssert(route->index);
-    mprAssert(rx->pathInfo);
-    mprAssert(tx->fileInfo.checked);
-
-    if (route->index && *route->index) {
-        if (sends(rx->pathInfo, "/")) {
-            /*  
-                Internal directory redirections. Append index transparently to the client.
-             */
-            path = mprJoinPath(tx->filename, route->index);
-            if (mprPathExists(path, R_OK)) {
-                /*  
-                    Index file exists, so do an internal redirect to it. Client will not be aware of this happening.
-                 */
-                pathInfo = mprJoinPath(rx->pathInfo, route->index);
-                uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
-                httpSetUri(conn, uri, 0);
-                tx->filename = path;
-                tx->ext = httpGetExt(conn);
-                mprGetPathInfo(tx->filename, &tx->fileInfo);
-                return HTTP_ROUTE_REROUTE;
-
-            } else {
-            }
-        } else {
-            /* 
-               Append "/" and do an external redirect 
-             */
-            pathInfo = sjoin(rx->pathInfo, "/", NULL);
-            uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
-            httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, uri);
-            return HTTP_ROUTE_ACCEPTED;
-        }
-    }
-    return 0;
-}
-#endif
 
 
 
@@ -7853,6 +7791,10 @@ int httpAddRouteUpdate(HttpRoute *route, cchar *kind, cchar *details, int flags)
             return MPR_ERR_BAD_SYNTAX;
         }
         op->value = finalizeReplacement(route, value);
+    
+    } else if (scasematch(kind, "lang")) {
+        /* Nothing to do */;
+
     } else {
         return MPR_ERR_BAD_SYNTAX;
     }
@@ -8025,8 +7967,8 @@ void httpSetRouteName(HttpRoute *route, cchar *name)
 
 void httpSetRoutePattern(HttpRoute *route, cchar *pattern, int flags)
 {
-    route->pattern = sclone(pattern);
     route->flags |= (flags & HTTP_ROUTE_NOT);
+    route->pattern = sclone(pattern);
     finalizePattern(route);
 }
 
@@ -8035,6 +7977,9 @@ void httpSetRouteScriptName(HttpRoute *route, cchar *scriptName)
 {
     route->scriptName = sclone(scriptName);
     route->scriptNameLen = slen(scriptName);
+    if (route->pattern) {
+        finalizePattern(route);
+    }
 }
 
 
@@ -8167,8 +8112,8 @@ static void finalizeMethods(HttpRoute *route)
 static void finalizePattern(HttpRoute *route)
 {
     MprBuf      *pattern, *params;
-    cchar       *errMsg, *start;
-    char        *cp, *ep, *token, *field;
+    cchar       *errMsg;
+    char        *startPattern, *cp, *ep, *token, *field;
     ssize       len;
     int         column, submatch;
 
@@ -8179,7 +8124,25 @@ static void finalizePattern(HttpRoute *route)
         route->name = route->pattern;
     }
     params = mprCreateBuf(-1, -1);
-    for (submatch = 0, cp = route->pattern; *cp; cp++) {
+
+    /*
+        Remove the scriptName from the start of the compiled pattern and then create an optimized 
+        simple literal pattern from the remainder to optimize route rejection.
+     */
+    startPattern = route->pattern[0] == '^' ? &route->pattern[1] : route->pattern;
+    if (route->scriptName && sstarts(startPattern, route->scriptName)) {
+        startPattern = sclone(&startPattern[route->scriptNameLen]);
+    }
+    len = strcspn(startPattern, "^$*+?.(|{[\\");
+    if (len) {
+        route->literalPatternLen = len;
+        route->literalPattern = snclone(startPattern, len);
+    } else {
+        /* Need to reset incase re-defining the pattern */
+        route->literalPattern = 0;
+        route->literalPatternLen = 0;
+    }
+    for (submatch = 0, cp = startPattern; *cp; cp++) {
         /* Alias for optional, non-capturing pattern:  "(?: PAT )?" */
         if (*cp == '(' && cp[1] == '~') {
             mprPutStringToBuf(pattern, "(?:");
@@ -8229,20 +8192,12 @@ static void finalizePattern(HttpRoute *route)
     mprAddNullToBuf(params);
     route->processedPattern = sclone(mprGetBufStart(pattern));
 
-    /*
-        Create an optimized simple prefix to optimize route rejection
-     */
-    start = route->pattern[0] == '^' ? &route->pattern[1] : route->pattern;
-    len = strcspn(start, "$*+?.(|{[\\");
-    if (len) {
-        route->prefixLen = len;
-        route->prefix = snclone(start, len);
-    }
-
     /* Trim last ":" from params */
     if (mprGetBufLength(params) > 0) {
         route->params = sclone(mprGetBufStart(params));
         route->params[slen(route->params) - 1] = '\0';
+    } else {
+        route->params = 0;
     }
     if ((route->patternCompiled = pcre_compile2(route->processedPattern, 0, 0, &errMsg, &column, NULL)) == 0) {
         mprError("Can't compile route. Error %s at column %d", errMsg, column); 
@@ -8363,6 +8318,7 @@ void httpSetRoutePathVar(HttpRoute *route, cchar *key, cchar *value)
 
 /*
     Make a path name. This replaces $references, converts to an absolute path name, cleans the path and maps delimiters.
+    Paths are resolved relative to host->home (ServerRoot).
  */
 char *httpMakePath(HttpRoute *route, cchar *file)
 {
@@ -8380,7 +8336,7 @@ char *httpMakePath(HttpRoute *route, cchar *file)
 }
 
 
-void httpAddRouteLanguage(HttpRoute *route, cchar *lang, cchar *suffix, int flags)
+int httpAddRouteLanguage(HttpRoute *route, cchar *lang, cchar *suffix, int flags)
 {
     HttpLang    *lp;
 
@@ -8395,11 +8351,11 @@ void httpAddRouteLanguage(HttpRoute *route, cchar *lang, cchar *suffix, int flag
     } else {
         mprAddKey(route->languages, lang, createLangDef(0, suffix, flags));
     }
-    httpAddRouteUpdate(route, "lang", 0, 0);
+    return httpAddRouteUpdate(route, "lang", 0, 0);
 }
 
 
-void httpAddRouteLanguageRoot(HttpRoute *route, cchar *lang, cchar *path)
+int httpAddRouteLanguageRoot(HttpRoute *route, cchar *lang, cchar *path)
 {
     HttpLang    *lp;
 
@@ -8413,12 +8369,13 @@ void httpAddRouteLanguageRoot(HttpRoute *route, cchar *lang, cchar *path)
     } else {
         mprAddKey(route->languages, lang, createLangDef(path, 0, 0));
     }
+    return httpAddRouteUpdate(route, "lang", 0, 0);
 }
 
 
-void httpSetRouteDefaultLanguage(HttpRoute *route, cchar *lang)
+void httpSetRouteDefaultLanguage(HttpRoute *route, cchar *language)
 {
-    route->defaultLanguage = sclone(lang);
+    route->defaultLanguage = sclone(language);
 }
 
 
@@ -8504,7 +8461,7 @@ static int directoryCondition(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 
     tx = conn->tx;
     mapFile(conn, route);
-    path = mprJoinPath(route->dir, expandPath(conn, op->details));
+    path = mprJoinPath(route->dir, expandTokens(conn, op->details));
     tx->ext = tx->filename = 0;
     mprGetPathInfo(path, &info);
     if (info.isDir) {
@@ -8525,7 +8482,7 @@ static int existsCondition(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
     tx = conn->tx;
     /* Must have tx->filename set when expanding op->details, so map fileTarget now */
     mapFile(conn, route);
-    path = mprJoinPath(route->dir, expandPath(conn, op->details));
+    path = mprJoinPath(route->dir, expandTokens(conn, op->details));
     tx->ext = tx->filename = 0;
     if (mprPathExists(path, R_OK)) {
         return HTTP_ROUTE_ACCEPTED;
@@ -8541,7 +8498,7 @@ static int matchCondition(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
     int         matched[HTTP_MAX_ROUTE_MATCHES * 2], count;
 
     rx = conn->rx;
-    str = expandPath(conn, op->details);
+    str = expandTokens(conn, op->details);
     count = pcre_exec(op->mdata, NULL, str, (int) slen(str), 0, 0, matched, sizeof(matched) / sizeof(int)); 
     if (count > 0) {
         return HTTP_ROUTE_ACCEPTED;
@@ -8572,11 +8529,12 @@ static int cmdUpdate(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
     int     status;
 
     rx = conn->rx;
-    command = expandPath(conn, op->details);
+    command = expandTokens(conn, op->details);
     cmd = mprCreateCmd(conn->dispatcher);
     if ((status = mprRunCmd(cmd, command, &out, &err, 0)) != 0) {
-        mprError("Command failed: %s\nStatus: %d\n%s\n%s", command, status, out, err);
-        /* This request will continue. Note: no error sent to the client. */
+        /* Don't call httpError, just set errorMsg which can be retrieved via: ${request:error} */
+        conn->errorMsg = sfmt("Command failed: %s\nStatus: %d\n%s\n%s", command, status, out, err);
+        mprError("%s", conn->errorMsg);
         return 0;
     }
     return HTTP_ROUTE_ACCEPTED;
@@ -8588,7 +8546,7 @@ static int fieldUpdate(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
     HttpRx  *rx;
 
     rx = conn->rx;
-    httpSetFormVar(conn, op->var, expandPath(conn, op->value));
+    httpSetFormVar(conn, op->var, expandTokens(conn, op->value));
     return HTTP_ROUTE_ACCEPTED;
 }
 
@@ -8604,21 +8562,24 @@ static int langUpdate(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
     prior = rx->parsedUri;
     mprAssert(route->languages);
 
-    if ((lang = httpGetLanguage(conn, route->languages)) != 0) {
+    if ((lang = httpGetLanguage(conn, route->languages, 0)) != 0) {
         rx->lang = lang;
         if (lang->suffix) {
+            pathInfo = 0;
             if (lang->flags & HTTP_LANG_AFTER) {
                 pathInfo = sjoin(rx->pathInfo, ".", lang->suffix, 0);
             } else if (lang->flags & HTTP_LANG_BEFORE) {
                 ext = httpGetExt(conn);
                 if (ext && *ext) {
-                    pathInfo = sjoin(mprJoinPathExt(mprTrimPathExt(pathInfo), lang->suffix), ".", ext, 0);
+                    pathInfo = sjoin(mprJoinPathExt(mprTrimPathExt(rx->pathInfo), lang->suffix), ".", ext, 0);
                 } else {
-                    pathInfo = mprJoinPathExt(mprTrimPathExt(pathInfo), lang->suffix);
+                    pathInfo = mprJoinPathExt(mprTrimPathExt(rx->pathInfo), lang->suffix);
                 }
             }
-            uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
-            httpSetUri(conn, uri, 0);
+            if (pathInfo) {
+                uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
+                httpSetUri(conn, uri, 0);
+            }
         }
     }
     return HTTP_ROUTE_ACCEPTED;
@@ -8653,7 +8614,7 @@ static int redirectTarget(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
     rx = conn->rx;
     mprAssert(route->redirectTarget && *route->redirectTarget);
 
-    target = expandPath(conn, route->redirectTarget);
+    target = expandTokens(conn, route->redirectTarget);
     if (route->responseStatus) {
         httpRedirect(conn, route->responseStatus, target);
         return HTTP_ROUTE_ACCEPTED;
@@ -8673,7 +8634,7 @@ static int redirectTarget(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 
 static int virtualTarget(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 {
-    conn->rx->targetKey = route->virtualTarget ? expandPath(conn, route->virtualTarget) : sclone(&conn->rx->pathInfo[1]);
+    conn->rx->targetKey = route->virtualTarget ? expandTokens(conn, route->virtualTarget) : sclone(&conn->rx->pathInfo[1]);
     return HTTP_ROUTE_ACCEPTED;
 }
 
@@ -8682,7 +8643,7 @@ static int writeTarget(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 {
     char    *str;
 
-    str = route->writeTarget ? expandPath(conn, route->writeTarget) : sclone(&conn->rx->pathInfo[1]);
+    str = route->writeTarget ? expandTokens(conn, route->writeTarget) : sclone(&conn->rx->pathInfo[1]);
     httpSetStatus(conn, route->responseStatus);
     httpFormatResponse(conn, "%s", str);
     return HTTP_ROUTE_ACCEPTED;
@@ -8762,9 +8723,14 @@ static HttpLang *createLangDef(cchar *path, cchar *suffix, int flags)
     if (suffix) {
         lang->suffix = sclone(suffix);
     }
+#if UNUSED
+    /*
+        Do not do this as users may use ${Request:language} to manually add the suffix
+     */
     if (flags == 0) {
         flags |= HTTP_LANG_BEFORE;
     }
+#endif
     lang->flags = flags;
     return lang;
 }
@@ -8798,7 +8764,7 @@ static void defineHostVars(HttpRoute *route)
 }
 
 
-static char *expandPath(HttpConn *conn, cchar *str)
+static char *expandTokens(HttpConn *conn, cchar *str)
 {
     HttpRx      *rx;
 
@@ -8856,9 +8822,6 @@ static char *expandRequestTokens(HttpConn *conn, char *str)
 
         } else if (smatch(key, "request")) {
             value = stok(value, "=", &defaultValue);
-            if (defaultValue == 0) {
-                defaultValue = "";
-            }
             //  MOB - implement default value below for those that can be null
             //  MOB - OPT with switch on first char
             if (smatch(value, "clientAddress")) {
@@ -8866,6 +8829,9 @@ static char *expandRequestTokens(HttpConn *conn, char *str)
 
             } else if (smatch(value, "clientPort")) {
                 mprPutIntToBuf(buf, conn->port);
+
+            } else if (smatch(value, "error")) {
+                mprPutStringToBuf(buf, conn->errorMsg);
 
             } else if (smatch(value, "ext")) {
                 mprPutStringToBuf(buf, rx->parsedUri->ext);
@@ -8877,15 +8843,21 @@ static char *expandRequestTokens(HttpConn *conn, char *str)
                 mprPutStringToBuf(buf, tx->filename);
 
             } else if (scasematch(value, "language")) {
-                if (!*defaultValue) {
+                if (!defaultValue) {
                     defaultValue = route->defaultLanguage;
                 }
-                lang = httpGetLanguage(conn, route->languages);
-                mprPutStringToBuf(buf, (lang) ? lang->suffix : defaultValue);
+                if ((lang = httpGetLanguage(conn, route->languages, defaultValue)) != 0) {
+                    mprPutStringToBuf(buf, lang->suffix);
+                } else {
+                    mprPutStringToBuf(buf, defaultValue);
+                }
 
             } else if (scasematch(value, "languageRoot")) {
-                lang = httpGetLanguage(conn, route->languages);
-                mprPutStringToBuf(buf, lang ? lang->path : ".");
+                lang = httpGetLanguage(conn, route->languages, 0);
+                if (!defaultValue) {
+                    defaultValue = ".";
+                }
+                mprPutStringToBuf(buf, lang ? lang->path : defaultValue);
 
             } else if (smatch(value, "host")) {
                 mprPutStringToBuf(buf, rx->parsedUri->host);
@@ -9033,7 +9005,7 @@ void httpDefineRouteBuiltins()
         %B - Boolean. Parses: on/off, true/false, yes/no.
         %N - Number. Parses numbers in base 10.
         %S - String. Removes quotes.
-        %P - Template path string. Removes quotes and expands ${PathVars}.
+        %P - Path string. Removes quotes and expands ${PathVars}. Resolved relative to host->dir (ServerRoot).
         %W - Parse words into a list
         %! - Optional negate. Set value to HTTP_ROUTE_NOT present, otherwise zero.
     Values wrapped in quotes will have the outermost quotes trimmed.
@@ -9071,13 +9043,13 @@ bool httpTokenizev(HttpRoute *route, cchar *line, cchar *fmt, va_list args)
         if (*f == '%' || *f == '?') {
             f++;
             quote = 0;
-            if (*tok == '"' || *tok == '\'') {
+            if (*f != '*' && (*tok == '"' || *tok == '\'')) {
                 quote = *tok++;
             }
             if (*f == '!') {
                 etok = &tok[1];
             } else {
-                if (quote && *f != '*') {
+                if (quote) {
                     for (etok = tok; *etok && !(*etok == quote && etok[-1] != '\\'); etok++) ; 
                     *etok++ = '\0';
                 } else if (*f == '*') {
@@ -10964,7 +10936,7 @@ static int compareLang(char **s1, char **s2)
 }
 
 
-HttpLang *httpGetLanguage(HttpConn *conn, MprHashTable *spoken)
+HttpLang *httpGetLanguage(HttpConn *conn, MprHashTable *spoken, cchar *defaultLang)
 {
     HttpRx      *rx;
     HttpLang    *lang;
@@ -10996,6 +10968,10 @@ HttpLang *httpGetLanguage(HttpConn *conn, MprHashTable *spoken)
                 return lang;
             }
         }
+    }
+    if (defaultLang && (lang = mprLookupKey(rx->route->languages, defaultLang)) != 0) {
+        rx->lang = lang;
+        return lang;
     }
     return 0;
 }

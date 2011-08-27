@@ -6,9 +6,9 @@ const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
 //  Test route-01  ^/route/(user|admin)/{action}/[^a-z]\{2}(\.[hH][tT][mM][lL])$>
-http.get(HTTP + "/route/user/login/AA.html"
+http.get(HTTP + "/route/user/login/AA.html")
 assert(http.status == 200)
 assert(http.response == "user")
 
-http.get(HTTP + "/route/user/login/aA.html"
+http.get(HTTP + "/route/user/login/aA.html")
 assert(http.status == 404)

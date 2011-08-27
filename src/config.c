@@ -236,12 +236,20 @@ static int addLanguageDirective(MaState *state, cchar *key, cchar *value)
  */
 static int addLanguageRootDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *lang, *path;
+    HttpRoute   *route;
+    char        *lang, *path;
 
-    if (!maTokenize(state, value, "%S %P", &lang, &path)) {
+    route = state->route;
+    if (!maTokenize(state, value, "%S %S", &lang, &path)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    httpAddRouteLanguageRoot(state->route, lang, path);
+    if ((path = stemplate(path, route->pathVars)) == 0) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    if (mprIsRelPath(path)) {
+        path = mprJoinPath(route->dir, path);
+    }
+    httpAddRouteLanguageRoot(route, lang, mprGetAbsPath(path));
     return 0;
 }
 
@@ -303,16 +311,22 @@ static int addTypeDirective(MaState *state, cchar *key, cchar *value)
 static int aliasDirective(MaState *state, cchar *key, cchar *value)
 {
     HttpRoute   *alias;
+    MprPath     info;
     char        *prefix, *path;
 
     if (!maTokenize(state, value, "%S %P", &prefix, &path)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    alias = httpCreateAliasRoute(state->route, prefix, path, 0);
+    mprGetPathInfo(path, &info);
+    if (info.isDir) {
+        alias = httpCreateAliasRoute(state->route, prefix, path, 0);
+        httpSetRoutePattern(alias, sfmt("^%s(.*)$", prefix), 0);
+        httpSetRouteTarget(alias, "file", "$1");
+    } else {
+        alias = httpCreateAliasRoute(state->route, prefix, 0, 0);
+        httpSetRouteTarget(alias, "file", path);
+    }
     httpFinalizeRoute(alias);
-#if UNUSED
-    httpAddRoute(state->host, alias);
-#endif
     return 0;
 }
 
@@ -1300,9 +1314,6 @@ static int redirectDirective(MaState *state, cchar *key, cchar *value)
     }
     alias = httpCreateAliasRoute(state->route, uri, path, status);
     httpFinalizeRoute(alias);
-#if UNUSED
-    httpAddRoute(state->host, alias);
-#endif
     return 0;
 }
 
@@ -1770,10 +1781,9 @@ static bool conditionalDefinition(cchar *key)
     Tokenizes a line using %formats. Mandatory tokens can be specified with %. Optional tokens are specified with ?. 
     Supported tokens:
         %B - Boolean. Parses: on/off, true/false, yes/no.
-        %D - Directive key parsing.
         %N - Number. Parses numbers in base 10.
         %S - String. Removes quotes.
-        %P - Template path string. Removes quotes and expands ${PathVars}.
+        %P - Path string. Removes quotes and expands ${PathVars}. Resolved relative to host->dir (ServerRoot).
         %W - Parse words into a list
         %! - Optional negate. Set value to HTTP_ROUTE_NOT present, otherwise zero.
  */

@@ -150,7 +150,7 @@ static bool fetchCachedResponse(HttpConn *conn)
             extraUri = conn->rx->pathInfo;
         }
         key = makeCacheKey(conn, rx->targetKey, extraUri);
-        tag = mprGetMD5Hash(key, slen(key), 0);
+        tag = mprGetMD5(key);
 
         if ((value = httpGetHeader(conn, "Cache-Control")) != 0 && 
                 (scontains(value, "max-age=0", -1) == 0 || scontains(value, "no-cache", -1) == 0)) {
@@ -181,7 +181,7 @@ static bool fetchCachedResponse(HttpConn *conn)
             status = (canUseClientCache && cacheOk) ? HTTP_CODE_NOT_MODIFIED : HTTP_CODE_OK;
             mprLog(5, "Use cached content for %s, status %d", key, status);
             httpSetStatus(conn, status);
-            httpSetHeader(conn, "Etag", mprGetMD5Hash(key, slen(key), 0));
+            httpSetHeader(conn, "Etag", mprGetMD5(key));
             httpSetHeader(conn, "Last-Modified", mprFormatUniversalTime(MPR_HTTP_DATE, modified));
             if (status == HTTP_CODE_OK) {
                 espWriteString(conn, content);
@@ -222,7 +222,7 @@ static void saveCachedResponse(HttpConn *conn)
          */
         modified = mprGetTime() / MPR_TICKS_PER_SEC * MPR_TICKS_PER_SEC;
         mprWriteCache(esp->cache, key, mprGetBufStart(buf), modified, action->lifespan, 0, 0);
-        httpAddHeader(conn, "Etag", mprGetMD5Hash(key, slen(key), 0));
+        httpAddHeader(conn, "Etag", mprGetMD5(key));
         httpAddHeader(conn, "Last-Modified", mprFormatUniversalTime(MPR_HTTP_DATE, modified));
         espWriteBlock(conn, mprGetBufStart(buf), mprGetBufLength(buf));
         espFinalize(conn);
@@ -250,7 +250,7 @@ bool espWriteCached(HttpConn *conn, cchar *targetKey, cchar *uri)
     }
     mprLog(5, "Used cached ", key);
     req->cacheBuffer = 0;
-    espSetHeader(conn, "Etag", mprGetMD5Hash(key, slen(key), 0));
+    espSetHeader(conn, "Etag", mprGetMD5(key));
     espSetHeader(conn, "Last-Modified", mprFormatUniversalTime(MPR_HTTP_DATE, modified));
     espWriteString(conn, content);
     espFinalize(conn);
@@ -352,7 +352,7 @@ static int runAction(HttpConn *conn)
             return 0;
         }
     } else if (eroute->update || !mprLookupModule(req->controllerPath)) {
-        req->cacheName = mprGetMD5Hash(req->controllerPath, slen(req->controllerPath), "controller_");
+        req->cacheName = mprGetMD5WithPrefix(req->controllerPath, slen(req->controllerPath), "controller_");
         req->module = mprGetNormalizedPath(sfmt("%s/%s%s", eroute->cacheDir, req->cacheName, BLD_SHOBJ));
 
         if (!mprPathExists(req->controllerPath, R_OK)) {
@@ -434,7 +434,7 @@ static void runView(HttpConn *conn)
             return;
         }
     } else if (eroute->update || !mprLookupModule(req->source)) {
-        req->cacheName = mprGetMD5Hash(req->source, slen(req->source), "view_");
+        req->cacheName = mprGetMD5WithPrefix(req->source, slen(req->source), "view_");
         req->module = mprGetNormalizedPath(sfmt("%s/%s%s", eroute->cacheDir, req->cacheName, BLD_SHOBJ));
 
         if (!mprPathExists(req->source, R_OK)) {
@@ -689,6 +689,8 @@ static void setMvcDirs(EspRoute *eroute, HttpRoute *route)
     char    *dir;
 
     dir = route->dir;
+    eroute->dir = route->dir;
+
     eroute->cacheDir = mprJoinPath(dir, "cache");
     httpSetRoutePathVar(route, "CACHE_DIR", eroute->cacheDir);
 
@@ -722,12 +724,14 @@ static HttpRoute *addRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar
     }
     httpSetRouteName(route, name);
     httpSetRoutePattern(route, pattern, 0);
-    httpSetRouteTarget(route, "virtual", targetKey);
     if (methods) {
         httpSetRouteMethods(route, methods);
     }
     if (controller) {
+        httpSetRouteTarget(route, "virtual", targetKey);
         httpSetRouteSource(route, controller);
+    } else {
+        httpSetRouteTarget(route, "file", targetKey);
     }
     httpFinalizeRoute(route);
     return route;
@@ -760,7 +764,7 @@ static void addRestfulRoutes(HttpRoute *parent, cchar *prefix, cchar *controller
 static void addDefaultRoutes(HttpRoute *parent)
 {
     addRoute(parent, "home", "GET,POST,PUT", "^/$", stemplate("${STATIC_DIR}/index.esp", parent->pathVars), NULL);
-    addRoute(parent, "static", "GET", "%^/static/(.*)", stemplate("${STATIC_DIR}/$1", parent->pathVars), NULL);
+    addRoute(parent, "static", "GET", "^/static/(.*)", stemplate("${STATIC_DIR}/$1", parent->pathVars), NULL);
 }
 
 
@@ -987,6 +991,10 @@ static int espAppDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S %S ?S", &scriptName, &path, &routePack)) {
         return MPR_ERR_BAD_SYNTAX;
     }
+    if (*scriptName != '/') {
+        mprError("Script name should start with a \"/\"");
+        scriptName = sjoin("/", scriptName, 0);
+    }
     scriptName = stemplate(scriptName, route->pathVars);
     if (scmp(scriptName, "/") == 0) {
         scriptName = MPR->emptyString;
@@ -998,8 +1006,11 @@ static int espAppDirective(MaState *state, cchar *key, cchar *value)
     httpSetRouteDir(route, path);
     eroute->dir = route->dir;
     httpAddRouteHandler(route, "espHandler", "");
-    addRoutePack(state->route, routePack, 0, 0);
+    
+    /* Must set dirs first before defining route pack */
     setRouteDirs(state, routePack);
+    addRoutePack(state->route, routePack, 0, 0);
+    
     //  MOB - is this needed or desired
     httpSetRouteTarget(route, "file", 0);
     return 0;

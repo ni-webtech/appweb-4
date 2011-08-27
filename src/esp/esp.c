@@ -268,7 +268,10 @@ static void getAppDirs()
     char        *routeName, *routePrefix;
     int         next;
 
-    host = httpLookupHost(http, "default");
+    if ((host = mprGetFirstItem(http->hosts)) == 0) {
+        error("Can't find default host");
+        return;
+    }
     routeName = app->routeName;
     routePrefix = app->routePrefix ? app->routePrefix : "/";
 
@@ -278,7 +281,7 @@ static void getAppDirs()
                 continue;
             }
         }
-        if (strcmp(routePrefix, rp->prefix) != 0) {
+        if (strcmp(routePrefix, rp->literalPattern) != 0) {
             continue;
         }
         if ((app->eroute = httpGetRouteData(rp, ESP_NAME)) != 0 && app->eroute->compile) {
@@ -428,7 +431,7 @@ static void compileFile(cchar *source, int kind)
     ssize   len;
 
     layout = 0;
-    app->cacheName = mprGetMD5Hash(source, slen(source), (kind == ESP_CONTROLLER) ? "controller_" : "view_");
+    app->cacheName = mprGetMD5WithPrefix(source, slen(source), (kind == ESP_CONTROLLER) ? "controller_" : "view_");
     app->module = mprGetNormalizedPath(sfmt("%s/%s%s", eroute->cacheDir, app->cacheName, BLD_SHOBJ));
 
     if (kind == ESP_CONTROLLER) {

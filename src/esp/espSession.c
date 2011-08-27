@@ -191,7 +191,7 @@ static char *makeSessionID(HttpConn *conn)
 
     /* Thread race here on nextSession++ not critical */
     mprSprintf(idBuf, sizeof(idBuf), "%08x%08x%d", PTOI(conn->data) + PTOI(conn), (int) mprGetTime(), nextSession++);
-    return mprGetMD5Hash(idBuf, sizeof(idBuf), "::esp.session::");
+    return mprGetMD5WithPrefix(idBuf, sizeof(idBuf), "::esp.session::");
 }
 
 

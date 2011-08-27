@@ -5,11 +5,11 @@
 const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
-http.get(HTTP + "/route/query?name=ralph"
+http.get(HTTP + "/route/query?name=ralph")
 assert(http.status == 404)
 http.close()
 
-http.get(HTTP + "/route/query?name=peter"
+http.get(HTTP + "/route/query?name=peter")
 assert(http.status == 200)
-assert(http.response == "name=peter")
+assert(http.response == "peter")
 http.close()

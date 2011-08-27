@@ -6996,10 +6996,16 @@ char *mprEncode64(cchar *s)
 }
 
 
+char *mprGetMD5(cchar *s)
+{
+    return mprGetMD5WithPrefix(s, slen(s), NULL);
+}
+
+
 /*
     Return the MD5 hash of a block. Returns allocated string. A prefix for the result can be supplied.
  */
-char *mprGetMD5Hash(cchar *buf, ssize length, cchar *prefix)
+char *mprGetMD5WithPrefix(cchar *buf, ssize length, cchar *prefix)
 {
     MD5CONTEXT      context;
     uchar           hash[CRYPT_HASH_SIZE];
@@ -7009,9 +7015,9 @@ char *mprGetMD5Hash(cchar *buf, ssize length, cchar *prefix)
     ssize           len;
     int             i;
 
-    /*
-        Take the MD5 hash of the string argument.
-     */
+    if (length < 0) {
+        length = slen(buf);
+    }
     initMD5(&context);
     update(&context, (uchar*) buf, (uint) length);
     finalize(hash, &context);

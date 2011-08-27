@@ -5,15 +5,15 @@
 const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
-let path = Path("/tmp/route-update.tmp")
+let path = Path("/tmp/route-update-cmd.tmp")
 path.remove()
-assert(!path.exists())
+assert(!path.exists)
 
-//  Run a command that creates /tmp/route-update.tmp
+//  Run a command that creates /tmp/route-update-cmd.tmp
   
 http.get(HTTP + "/route/update/cmd")
 assert(http.status == 200)
-assert(http.response == "test-update.tmp")
-assert(path.exists())
+assert(http.response == "UPDATED")
+assert(path.exists)
 assert(path.remove())
 http.close()
