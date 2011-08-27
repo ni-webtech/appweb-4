@@ -8760,7 +8760,6 @@ static int virtualTarget(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 {
     mprAssert(conn);
     mprAssert(route);
-    mprAssert(op);
 
     conn->rx->targetKey = route->virtualTarget ? expandTokens(conn, route->virtualTarget) : sclone(&conn->rx->pathInfo[1]);
     return HTTP_ROUTE_ACCEPTED;
@@ -8773,7 +8772,6 @@ static int writeTarget(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 
     mprAssert(conn);
     mprAssert(route);
-    mprAssert(op);
 
     str = route->writeTarget ? expandTokens(conn, route->writeTarget) : sclone(&conn->rx->pathInfo[1]);
     httpSetStatus(conn, route->responseStatus);
@@ -11243,6 +11241,11 @@ void httpSendOpen(HttpQueue *q)
     conn = q->conn;
     tx = conn->tx;
 
+    if (tx->connector != conn->http->sendConnector) {
+        httpAssignQueue(q, tx->connector, HTTP_QUEUE_TX);
+        tx->connector->open(q);
+        return;
+    }
     if (!(tx->flags & HTTP_TX_NO_BODY)) {
         mprAssert(tx->fileInfo.valid);
         if (tx->fileInfo.size > conn->limits->transmissionBodySize) {

@@ -1027,7 +1027,7 @@ static int espDirDirective(MaState *state, cchar *key, cchar *value)
 static int espEnvDirective(MaState *state, cchar *key, cchar *value)
 {
     EspRoute    *eroute;
-    char        *ekey, *evalue, *prior;
+    char        *ekey, *evalue;
 
     if ((eroute = getEspRoute(state->route)) == 0) {
         return MPR_ERR_MEMORY;
@@ -1039,11 +1039,15 @@ static int espEnvDirective(MaState *state, cchar *key, cchar *value)
         eroute->env = mprCreateList(-1, 0);
     }
     evalue = espExpandCommand(evalue, "", "");
+#if UNUSED && KEEP
+    /*
+        This messes up TMP by prepending an existing value
+     */
     if ((prior = getenv(ekey)) != 0) {
         mprAddItem(eroute->env, sfmt("%s=%s;%s", ekey, evalue, prior));
     } else {
-        mprAddItem(eroute->env, sfmt("%s=%s", ekey, evalue));
-    }
+#endif
+    mprAddItem(eroute->env, sfmt("%s=%s", ekey, evalue));
     if (scasematch(ekey, "PATH")) {
         if (eroute->searchPath) {
             eroute->searchPath = sclone(evalue);

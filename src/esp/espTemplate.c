@@ -51,11 +51,13 @@ static bool matchToken(cchar **str, cchar *token)
     SHLIB       Shared library (.lib, .so)
     SHOBJ       Shared Object (.dll, .so)
     SRC         Source code for view or controller (already templated)
+    TMP         Temp directory
  */
 char *espExpandCommand(cchar *command, cchar *source, cchar *module)
 {
     MprBuf  *buf;
     cchar   *cp, *out, *path;
+    char    *tmp;
     
     if (command == 0) {
         return 0;
@@ -79,7 +81,6 @@ char *espExpandCommand(cchar *command, cchar *source, cchar *module)
             } else if (matchToken(&cp, "${VS}")) {
                 path = mprGetPathParent(mprGetPathParent(getenv("VS100COMNTOOLS")));
                 mprPutStringToBuf(buf, mprGetPortablePath(path));
-#else
 #endif
                 
             } else if (matchToken(&cp, "${CC}")) {
@@ -102,6 +103,10 @@ char *espExpandCommand(cchar *command, cchar *source, cchar *module)
                 /* Library directory. IDE's use bin dir */
                 mprPutStringToBuf(buf, getOutDir(BLD_LIB_NAME));
 
+            } else if (matchToken(&cp, "${LIBS}")) {
+                /* Required libraries to link. These may have nested ${TOKENS} */
+                mprPutStringToBuf(buf, espExpandCommand(ESP_LIBS, source, module));
+
             } else if (matchToken(&cp, "${OBJ}")) {
                 /* Output object with extension (.o) */
                 mprPutStringToBuf(buf, mprJoinPathExt(out, BLD_OBJ));
@@ -122,9 +127,15 @@ char *espExpandCommand(cchar *command, cchar *source, cchar *module)
                 /* View (already parsed into C code) or controller source */
                 mprPutStringToBuf(buf, source);
 
-            } else if (matchToken(&cp, "${LIBS}")) {
-                /* Required libraries to link. These may have nested ${TOKENS} */
-                mprPutStringToBuf(buf, espExpandCommand(ESP_LIBS, source, module));
+            } else if (matchToken(&cp, "${TMP}")) {
+#if BLD_WIN_LIKE
+                if ((tmp = getenv("TMP")) == 0) {
+                    tmp = getenv("TEMP");
+                }
+#else
+                tmp = getenv("TMPDIR");
+#endif
+                mprPutStringToBuf(buf, tmp ? tmp : ".");
 
             } else {
                 mprPutCharToBuf(buf, *cp++);

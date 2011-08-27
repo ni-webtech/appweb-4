@@ -14,6 +14,9 @@ if (!global.test || test.config.debug == "1") {
     assert(http.response.contains("First"))
     http.close()
 
+    //  To ensure all file system record a different mtime for the file
+    App.sleep(1000);
+
     //  Create a new file and do a second get
     path.write('<html><body><% espWrite(conn, "Second", -1); %></body></html>')
     http.get(HTTP + "/reload.esp")

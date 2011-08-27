@@ -149,3 +149,4 @@ src/test/mvc/cache/*
 src/test/cache
 src/test/junk
 src/test/farm.conf
+src/test/app/cache

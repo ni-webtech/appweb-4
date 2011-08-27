@@ -51,8 +51,8 @@ static bool findFile(HttpQueue *q)
             uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
             httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, uri);
             return 0;
-
-        } else if (route->index && *route->index) {
+        } 
+        if (route->index && *route->index) {
             /*  
                 Internal directory redirections. Transparently append index.
              */
@@ -68,20 +68,13 @@ static bool findFile(HttpQueue *q)
                 tx->ext = httpGetExt(conn);
                 mprGetPathInfo(tx->filename, info);
                 return 1;
-
-            } else if (info->isDir) {
-                if (maMatchDir(conn, route, HTTP_STAGE_TX)) {
-                    tx->handler = conn->http->dirHandler;
-                    httpAssignQueue(q, conn->http->dirHandler, HTTP_QUEUE_TX);
-                    return 0;
-                }
             }
-        } else {
-            if (maMatchDir(conn, route, HTTP_STAGE_TX)) {
-                tx->handler = conn->http->dirHandler;
-                httpAssignQueue(q, conn->http->dirHandler, HTTP_QUEUE_TX);
-                return 0;
-            }
+        }
+        if (info->isDir && maMatchDir(conn, route, HTTP_STAGE_TX)) {
+            tx->handler = conn->http->dirHandler;
+            tx->connector = conn->http->netConnector;
+            httpAssignQueue(q, conn->http->dirHandler, HTTP_QUEUE_TX);
+            return 0;
         }
     }
     if (!info->valid && (route->flags & HTTP_ROUTE_GZIP) && rx->acceptEncoding && strstr(rx->acceptEncoding, "gzip") != 0) {
