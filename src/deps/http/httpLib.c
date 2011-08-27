@@ -8393,13 +8393,16 @@ char *httpMakePath(HttpRoute *route, cchar *file)
     return mprGetAbsPath(path);
 }
 
-
+/*
+    Language can be an empty string
+ */
 int httpAddRouteLanguage(HttpRoute *route, cchar *language, cchar *suffix, int flags)
 {
     HttpLang    *lp;
 
     mprAssert(route);
-    mprAssert(language && *language);
+    mprAssert(language);
+    mprAssert(suffix && *suffix);
 
     if (route->languages == 0) {
         route->languages = mprCreateHash(-1, 0);
@@ -8715,7 +8718,6 @@ static int fileTarget(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 {
     mprAssert(conn);
     mprAssert(route);
-    mprAssert(op);
 
     mapFile(conn, route);
     return HTTP_ROUTE_ACCEPTED;
