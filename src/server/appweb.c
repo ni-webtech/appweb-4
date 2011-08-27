@@ -51,7 +51,7 @@ static void usageError();
 #if BLD_UNIX_LIKE
 static int  unixSecurityChecks(cchar *program, cchar *home);
 #elif BLD_WIN_LIKE
-static int writePort(HttpHost *host);
+static int writePort(MaServer *server);
 static long msgProc(HWND hwnd, uint msg, uint wp, long lp);
 #endif
 
@@ -278,7 +278,7 @@ static int initialize(cchar *ip, int port)
         mprSetMaxWorkers(app->workers);
     }
 #if BLD_WIN_LIKE
-    writePort(app->server->defaultHost);
+    writePort(app->server);
 #endif
     return 0;
 }
@@ -390,11 +390,13 @@ static int unixSecurityChecks(cchar *program, cchar *home)
 /*
     Write the port so the monitor can manage
  */ 
-static int writePort(HttpHost *host)
+static int writePort(MaServer *server)
 {
-    char    numBuf[16], *path;
-    int     fd, len;
+    HttpHost    *host;
+    char        numBuf[16], *path;
+    int         fd, len;
 
+    host = mprGetFirstItem(server->http->hosts);
     //  TODO - should really go to a BLD_LOG_DIR
     path = mprJoinPath(mprGetAppDir(), "../.port.log");
     if ((fd = open(path, O_CREAT | O_WRONLY | O_TRUNC, 0666)) < 0) {
