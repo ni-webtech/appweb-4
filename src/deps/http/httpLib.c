@@ -8297,7 +8297,9 @@ int httpFinalizeRoute(HttpRoute *route)
         This is important as requests process routes in-order.
      */
     httpAddRoute(route->host, route);
+#if BLD_FEATURE_SSL
     mprConfigureSsl(route->ssl);
+#endif
     return 0;
 }
 

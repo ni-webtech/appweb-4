@@ -10,7 +10,7 @@ usePrefixes SRC
 #
 #   Standard release files
 #
-makeDir "${DIR}/src/include" "${DIR}/build/bin" "${DIR}/obj" "${DIR}/bin" "${DIR}/lib" "${DIR}/modules" "${DIR}/all"
+makeDir ${DIR}/build/bin" "${DIR}/obj" "${DIR}/bin" "${DIR}/lib" "${DIR}/modules" "${DIR}/all"
 
 cpy -e Makefile "${DIR}"
 cpy -w -e "*.TXT" "${DIR}"
@@ -43,10 +43,10 @@ projectsFilter="/Debug|/Release|\.user|\.suo|\.ncb|*.mode1v3|*.pbxuser|/appweb.b
 cpy -f "${projectsFilter}" -p projects "${DIR}"
 
 # cat out/include/buildConfig.h | sed 's/-VERSION-/${BLD_VERSION}/;s/-NUMBER-/${BLD_NUMBER}/' \
-#     >"${DIR}/src/include/buildConfig.h"
+#     >"${DIR}/out/inc/buildConfig.h"
 # 
 # if [ $TASK = Remove ] ; then
 #     if [ "`pwd`" != "$DIR" ] ; then
-#         ${RM} -f "${DIR}/buildConfig.*" "${DIR}/src/include/buildConfig.*" "${DIR}/build/bin/buildConfig.*"
+#         ${RM} -f "${DIR}/buildConfig.*" "${DIR}/out/inc/buildConfig.*" "${DIR}/build/bin/buildConfig.*"
 #     fi
 # fi

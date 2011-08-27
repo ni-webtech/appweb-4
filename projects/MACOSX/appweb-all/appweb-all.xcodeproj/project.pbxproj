@@ -24,6 +24,7 @@
 			buildPhases = (
 			);
 			dependencies = (
+				C9E274DE1409588D00006182 /* PBXTargetDependency */,
 				C9D25907140409A0003F675B /* PBXTargetDependency */,
 				C9D7A82613D4F3BA000428C7 /* PBXTargetDependency */,
 				C93E6F0211E83A4400248470 /* PBXTargetDependency */,
@@ -413,6 +414,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = C9D817A1101D4C2A0039DD9D;
 			remoteInfo = mod_php;
+		};
+		C9E274DD1409588D00006182 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9A26CDF13D1787B007A3D7C;
+			remoteInfo = mod_ejs;
 		};
 		C9E4B74B13C7F55B005345FA /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -1209,7 +1217,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#\n#   Prepare for build - This imports required libraries, headers and executables\n#\nmkdir -p $OUT/inc $OUT/bin\nif [ ! -f $OUT/inc/buildConfig.h -o buildConfig.master -nt $OUT/inc/buildConfig.h ] ; then\n    # echo Install buildConfig.default to $OUT/inc/buildConfig.h\n    [ -f $OUT/inc/buildConfig.h ] && chmod +w $OUT/inc/buildConfig.h\n    cp buildConfig.master $OUT/inc/buildConfig.h\n    export BLD_TOP=$TOP\n    export BLD_OUT_DIR=$BLD_TOP/out\n    . `${BLD_TOP}/build/bin/cacheConfig $OUT/inc/buildConfig.h`\nfi\ntouch $OUT/bin/.ideBuild\nexit 0";
+			shellScript = "#\n#   Prepare for build - This imports required libraries, headers and executables\n#\nmkdir -p $OUT/inc $OUT/bin\nif [ ! -f $OUT/inc/buildConfig.h -o buildConfig.master -nt $OUT/inc/buildConfig.h ] ; then\n    [ -f $OUT/inc/buildConfig.h ] && chmod +w $OUT/inc/buildConfig.h\n    cp buildConfig.master $OUT/inc/buildConfig.h\n    export BLD_TOP=$TOP\n    export BLD_OUT_DIR=$BLD_TOP/out\n    . `${BLD_TOP}/build/bin/cacheConfig $OUT/inc/buildConfig.h`\nfi\ntouch $OUT/bin/.ideBuild\nexit 0";
 		};
 		C94E96071404178700A1797C /* Export Scripts */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1282,7 +1290,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "DEST=\"$BUILT_PRODUCTS_DIR\"\nexport BLD_TOP=$TOP\nexport BLD_TOOLS_DIR=$BLD_TOP/build/bin\nexport BLD_OUT_DIR=$BLD_TOP/out\n\n. `${BLD_TOOLS_DIR}/cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`\n\nif [ \"$BLD_FEATURE_EJS\" = 1 ] ; then\n    $BLD_TOOLS_DIR/getImports \"$DEST\" $BLD_EJS_IMPORTS\nelse\n    if [ ! -f \"$DEST/libejs.dylib\" ] ; then\n        >/tmp/empty$$.c ; cc -dynamiclib -o \"$DEST/libejs.dylib\" /tmp/empty$$.c; rm -f /tmp/empty$$.c\n    fi\n    if [ ! -f \"$DEST/ejs.web.dylib\" ] ; then\n        >/tmp/empty$$.c ; cc -dynamiclib -o \"$DEST/ejs.web.dylib\" /tmp/empty$$.c; rm -f /tmp/empty$$.c\n    fi\nfi\nexit 0";
+			shellScript = "DEST=\"$BUILT_PRODUCTS_DIR\"\nexport BLD_TOP=$TOP\nexport BLD_TOOLS_DIR=$BLD_TOP/build/bin\nexport BLD_OUT_DIR=$BLD_TOP/out\n\n. `${BLD_TOOLS_DIR}/cacheConfig ${BLD_OUT_DIR}/inc/buildConfig.h`\n\nif [ \"$BLD_FEATURE_EJSCRIPT\" = 1 ] ; then\n    $BLD_TOOLS_DIR/getImports \"$DEST\" $BLD_EJSCRIPT_IMPORTS\nelse\n    if [ ! -f \"$DEST/libejs.dylib\" ] ; then\n        >/tmp/empty$$.c ; cc -dynamiclib -o \"$DEST/libejs.dylib\" /tmp/empty$$.c; rm -f /tmp/empty$$.c\n    fi\n    if [ ! -f \"$DEST/ejs.web.dylib\" ] ; then\n        >/tmp/empty$$.c ; cc -dynamiclib -o \"$DEST/ejs.web.dylib\" /tmp/empty$$.c; rm -f /tmp/empty$$.c\n    fi\nfi\nexit 0";
 			showEnvVarsInLog = 0;
 		};
 		C976D54E13D3A5DC001BBFDF /* Import Libraries and Headers */ = {
@@ -1725,6 +1733,11 @@
 			target = C9D817A1101D4C2A0039DD9D /* mod_php */;
 			targetProxy = C9D817B2101D4CC70039DD9D /* PBXContainerItemProxy */;
 		};
+		C9E274DE1409588D00006182 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9A26CDF13D1787B007A3D7C /* mod_ejs */;
+			targetProxy = C9E274DD1409588D00006182 /* PBXContainerItemProxy */;
+		};
 		C9E4B74C13C7F55B005345FA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = C9E4B72F13C7F4F3005345FA /* mod_esp */;
@@ -1966,6 +1979,8 @@
 		C9A26CEB13D1787B007A3D7C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					$TOP/../ejs/out/inc,
@@ -1983,6 +1998,8 @@
 		C9A26CEC13D1787B007A3D7C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					$TOP/../ejs/out/inc,
@@ -2004,6 +2021,8 @@
 				"ADDITIONAL_SDKS[arch=*]" = "";
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				BLD_PRODUCT_NAME = appweb;
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
 				MACOSX_DEPLOYMENT_TARGET = "";
 				SKIP_INSTALL = YES;
 			};
@@ -2015,6 +2034,8 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				BLD_PRODUCT_NAME = appweb;
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
 				MACOSX_DEPLOYMENT_TARGET = "";
 				SKIP_INSTALL = YES;
 			};

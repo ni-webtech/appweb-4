@@ -759,7 +759,8 @@ fi
 if [ "${BLD_WIN_LIKE}" = 1 ] ; then
     DSO=-dll
 elif [ "${BLD_OS}" = MACOSX ] ; then
-    DSO="-dynamiclib -compatibility_version ${BLD_VERSION} -current_version ${BLD_VERSION}"
+    DSO="-dynamiclib"
+    # DSO="-dynamiclib -compatibility_version ${BLD_VERSION} -current_version ${BLD_VERSION}"
 elif [ "${BLD_OS}" = VXWORKS ] ; then
     DSO=-nostdlib
 else
