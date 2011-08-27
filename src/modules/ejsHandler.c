@@ -14,7 +14,7 @@
 
 static char startup[] = "\
     require ejs.web; \
-    let server: HttpEndpoint = new HttpEndpoint; \
+    let server: HttpServer = new HttpServer; \
     var router = Router(Router.Top); \
     server.on('readable', function (event, request) { \
         server.serve(request, router) \
