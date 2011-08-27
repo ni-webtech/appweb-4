@@ -27,9 +27,6 @@ typedef struct App {
     Mpr         *mpr;
     MaAppweb    *appweb;
     MaServer    *server;
-#if UNUSED
-    char        *script;
-#endif
     char        *documents;
     char        *home;
     char        *configFile;
@@ -119,15 +116,6 @@ MAIN(appweb, int argc, char **argv)
 
         } else if (strcmp(argp, "--debugger") == 0 || strcmp(argp, "-D") == 0) {
             mprSetDebugMode(1);
-
-#if UNUSED
-        //  MOB - is this needed?
-        } else if (strcmp(argp, "--ejs") == 0) {
-            if (argind >= argc) {
-                usageError();
-            }
-            app->script = sclone(argv[++argind]);
-#endif
 
         } else if (strcmp(argp, "--home") == 0) {
             if (argind >= argc) {
@@ -222,9 +210,6 @@ static void manageApp(App *app, int flags)
         mprMark(app->configFile);
         mprMark(app->documents);
         mprMark(app->pathVar);
-#if UNUSED
-        mprMark(app->script);
-#endif
         mprMark(app->server);
         mprMark(app->home);
     }
@@ -268,12 +253,6 @@ static int initialize(cchar *ip, int port)
         /* mprUserError("Can't configure the server, exiting."); */
         return MPR_ERR_CANT_CREATE;
     }
-#if UNUSED
-    //  MOB - is this still needed?
-    if (app->script) {
-        app->server->defaultHost->route->script = app->script;
-    }
-#endif
     if (app->workers >= 0) {
         mprSetMaxWorkers(app->workers);
     }
@@ -317,7 +296,6 @@ static void usageError(Mpr *mpr)
     "    --config configFile    # Use named config file instead appweb.conf\n"
     "    --chroot directory     # Change root directory to run more securely (Unix)\n"
     "    --debugger             # Disable timeouts to make debugging easier\n"
-    "    --ejs script           # Ejscript startup script\n"
     "    --home directory       # Change to directory to run\n"
     "    --name uniqueName      # Unique name for this instance\n"
     "    --log logFile:level    # Log to file file at verbosity level\n"

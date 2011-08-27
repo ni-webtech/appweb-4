@@ -15,6 +15,7 @@ static int addUpdate(MaState *state, cchar *kind, cchar *details, int flags);
 static bool conditionalDefinition(cchar *key);
 static int configError(MaState *state, cchar *key);
 static MaState *createState(MaServer *server, HttpHost *host, HttpRoute *route);
+static char *getDirective(char *line, char **valuep);
 static void manageState(MaState *state, int flags);
 static int parseFile(MaState *state, cchar *path);
 static int parseFileInner(MaState *state, cchar *path);
@@ -24,6 +25,9 @@ static int setTarget(MaState *state, cchar *kind, cchar *details);
 
 int maOpenConfig(MaState *state, cchar *path)
 {
+    mprAssert(state);
+    mprAssert(path && *path);
+
     state->filename = sclone(path);
     state->configDir = mprGetAbsPath(mprGetPathDir(state->filename));
     if ((state->file = mprOpenFile(path, O_RDONLY | O_TEXT, 0444)) == 0) {
@@ -40,6 +44,9 @@ int maParseConfig(MaServer *server, cchar *path)
     MaState     *state;
     HttpHost    *host;
     HttpRoute   *route;
+
+    mprAssert(server);
+    mprAssert(path && *path);
 
     mprLog(2, "Config File %s", path);
 
@@ -65,35 +72,12 @@ int maParseConfig(MaServer *server, cchar *path)
 }
 
 
-/*
-    Get the directive and value details. Return key and *valuep.
- */
-static char *getDirective(char *line, char **valuep)
-{
-    char    *key, *value;
-    ssize   len;
-    
-    *valuep = 0;
-    key = stok(line, " \t", &value);
-    key = strim(key, ">", MPR_TRIM_END);
-    if (value) {
-        value = strim(value, " \t\r\n>", MPR_TRIM_END);
-        /*
-            Trim quotes if wrapping the entire value. Preserve embedded quotes and leading/trailing "" etc.
-         */
-        len = slen(value);
-        if (*value == '\"' && value[len - 1] == '\"' && len > 2 && value[1] != '\"') {
-            value = snclone(&value[1], len - 2);
-        }
-        *valuep = value;
-    }
-    return key;
-}
-
-
 static int parseFile(MaState *state, cchar *path)
 {
     int     rc;
+
+    mprAssert(state);
+    mprAssert(path && *path);
 
     if ((state = maPushState(state)) == 0) {
         return 0;
@@ -113,6 +97,9 @@ static int parseFileInner(MaState *state, cchar *path)
     MaDirective *directive;
     char        *tok, *key, *line, *value;
     
+    mprAssert(state);
+    mprAssert(path && *path);
+
     if (maOpenConfig(state, path) < 0) {
         return MPR_ERR_CANT_OPEN;
     }
@@ -1924,6 +1911,34 @@ static int configError(MaState *state, cchar *key)
     return MPR_ERR_BAD_SYNTAX;
 }
 
+
+/*
+    Get the directive and value details. Return key and *valuep.
+ */
+static char *getDirective(char *line, char **valuep)
+{
+    char    *key, *value;
+    ssize   len;
+    
+    mprAssert(line);
+    mprAssert(valuep);
+
+    *valuep = 0;
+    key = stok(line, " \t", &value);
+    key = strim(key, ">", MPR_TRIM_END);
+    if (value) {
+        value = strim(value, " \t\r\n>", MPR_TRIM_END);
+        /*
+            Trim quotes if wrapping the entire value. Preserve embedded quotes and leading/trailing "" etc.
+         */
+        len = slen(value);
+        if (*value == '\"' && value[len - 1] == '\"' && len > 2 && value[1] != '\"') {
+            value = snclone(&value[1], len - 2);
+        }
+        *valuep = value;
+    }
+    return key;
+}
 
 
 void maAddDirective(MaAppweb *appweb, cchar *directive, MaDirective proc)
