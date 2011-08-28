@@ -365,7 +365,7 @@ ssize espWrite(HttpConn *conn, cchar *fmt, ...)
     char        *buf;
 
     va_start(vargs, fmt);
-    buf = sfmt(fmt, vargs);
+    buf = sfmtv(fmt, vargs);
     va_end(vargs);
     return espWriteString(conn, buf);
 }
