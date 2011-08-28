@@ -4859,6 +4859,7 @@ static void netOutgoingService(HttpQueue *q)
             if (tx->flags & HTTP_TX_HEADERS_CREATED) {
                 tx->flags &= ~HTTP_TX_SENDFILE;
             } else {
+                tx->connector = conn->http->sendConnector;
                 httpSendOpen(q);
             }
         }
