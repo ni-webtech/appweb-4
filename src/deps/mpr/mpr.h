@@ -3727,21 +3727,18 @@ extern int mprParseTime(MprTime *time, cchar *dateString, int timezone, struct t
  */
 extern int mprGetTimeZoneOffset(MprTime when);
 
-
-#define MPR_LIST_STATIC_VALUES  0x1     /**< List values are permanent and should not be marked by GC */
-
 /**
-    List Module.
-    @description The MprList is a dynamic growable list suitable for storing pointers to arbitrary objects.
+    List data structure.
+    @description The MprList is a dynamic, growable list suitable for storing pointers to arbitrary objects.
     @stability Evolving.
-    @see MprList, mprAddItem, mprGetItem, mprCreateList, mprClearList, mprLookupItem, 
-        mprGetFirstItem, mprGetListCapacity, mprGetListCount, mprGetNextItem, mprGetPrevItem, 
-        mprRemoveItem, mprRemoveItemByIndex, mprRemoveRangeOfItems, mprAppendList, mprSortList, 
-        mprCloneList, MprListCompareProc, mprCreateKeyPair
+    @see MprList MprListCompareProc mprAddItem mprAddNullItem mprAppendList mprClearList mprCloneList mprCopyList 
+        mprCreateKeyPair mprCreateList mprGetFirstItem mprGetItem mprGetLastItem mprGetListCapacity mprGetListLength 
+        mprGetNextItem mprGetPrevItem mprInitList mprInsertItemAtPos mprLookupItem mprPopItem mprPushItem 
+        mprRemoveItem mprRemoveItemAtPos mprRemoveRangeOfItems mprSetItem mprSetListLimits mprSortList 
     @defgroup MprList MprList
  */
 typedef struct MprList {
-    MprMutex    *mutex;                 /**< GC thread safety */
+    MprMutex    *mutex;                 /**< Multithread lock */
     void        **items;                /**< List item data */
     int         length;                 /**< Current length of the list contents */
     int         capacity;               /**< Current list size */ 
@@ -3794,6 +3791,40 @@ extern int mprAddNullItem(MprList *list);
 extern MprList *mprAppendList(MprList *list, MprList *add);
 
 /**
+    Clears the list of all items.
+    @description Resets the list length to zero and clears all items. Existing items are not freed, they 
+        are only removed from the list.
+    @param list List pointer returned from mprCreateList.
+    @ingroup MprList
+ */
+extern void mprClearList(MprList *list);
+
+/**
+    Clone a list and all elements
+    @description Copy the contents of a list into a new list. 
+    @param src Source list to copy
+    @return Returns a new list reference
+    @ingroup MprList
+ */
+extern MprList *mprCloneList(MprList *src);
+
+/**
+    Copy list contents
+    @description Copy the contents of a list into an existing list. The destination list is cleared first and 
+        has its dimensions set to that of the source clist.
+    @param dest Destination list for the copy
+    @param src Source list
+    @return Returns zero if successful, otherwise a negative MPR error code.
+    @ingroup MprList
+ */
+extern int mprCopyListContents(MprList *dest, MprList *src);
+
+/** 
+    Flag for #mprCreateList indicating list values are permanent and should not be marked by GC 
+ */
+#define MPR_LIST_STATIC_VALUES  0x1         
+
+/**
     Create a list.
     @description Creates an empty list. MprList's can store generic pointers. They automatically grow as 
         required when items are added to the list.
@@ -3806,45 +3837,6 @@ extern MprList *mprAppendList(MprList *list, MprList *add);
 extern MprList *mprCreateList(int size, int flags);
 
 /**
-    Copy a list
-    @description Copy the contents of a list into an existing list. The destination list is cleared first and 
-        has its dimensions set to that of the source clist.
-    @param dest Destination list for the copy
-    @param src Source list
-    @return Returns zero if successful, otherwise a negative MPR error code.
-    @ingroup MprList
- */
-extern int mprCopyList(MprList *dest, MprList *src);
-
-/**
-    Clone a list and all elements
-    @description Copy the contents of a list into a new list. 
-    @param src Source list to copy
-    @return Returns a new list reference
-    @ingroup MprList
- */
-extern MprList *mprCloneList(MprList *src);
-
-/**
-    Clears the list of all items.
-    @description Resets the list length to zero and clears all items. Existing items are not freed, they 
-        are only removed from the list.
-    @param list List pointer returned from mprCreateList.
-    @ingroup MprList
- */
-extern void mprClearList(MprList *list);
-
-/**
-    Find an item and return its index.
-    @description Search for an item in the list and return its index.
-    @param list List pointer returned from mprCreateList.
-    @param item Pointer to value stored in the list.
-    @return Positive list index if found, otherwise a negative MPR error code.
-    @ingroup MprList
- */
-extern int mprLookupItem(MprList *list, cvoid *item);
-
-/**
     Get the first item in the list.
     @description Returns the value of the first item in the list. After calling this routine, the remaining 
         list items can be walked using mprGetNextItem.
@@ -3854,15 +3846,6 @@ extern int mprLookupItem(MprList *list, cvoid *item);
 extern void *mprGetFirstItem(MprList *list);
 
 /**
-    Get the last item in the list.
-    @description Returns the value of the last item in the list. After calling this routine, the remaining 
-        list items can be walked using mprGetPrevItem.
-    @param list List pointer returned from mprCreateList.
-    @ingroup MprList
- */
-extern void *mprGetLastItem(MprList *list);
-
-/**
     Get an list item.
     @description Get an list item specified by its index.
     @param list List pointer returned from mprCreateList.
@@ -3870,6 +3853,15 @@ extern void *mprGetLastItem(MprList *list);
     @ingroup MprList
  */
 extern void *mprGetItem(MprList *list, int index);
+
+/**
+    Get the last item in the list.
+    @description Returns the value of the last item in the list. After calling this routine, the remaining 
+        list items can be walked using mprGetPrevItem.
+    @param list List pointer returned from mprCreateList.
+    @ingroup MprList
+ */
+extern void *mprGetLastItem(MprList *list);
 
 /**
     Get the current capacity of the list.
@@ -3929,6 +3921,16 @@ extern void mprInitList(MprList *list);
     @ingroup MprList
  */
 extern int mprInsertItemAtPos(MprList *list, int index, cvoid *item);
+
+/**
+    Find an item and return its index.
+    @description Search for an item in the list and return its index.
+    @param list List pointer returned from mprCreateList.
+    @param item Pointer to value stored in the list.
+    @return Positive list index if found, otherwise a negative MPR error code.
+    @ingroup MprList
+ */
+extern int mprLookupItem(MprList *list, cvoid *item);
 
 /**
     Remove an item from the list
@@ -4044,8 +4046,9 @@ extern int mprPushItem(MprList *list, cvoid *item);
     Logging Services
     @stability Evolving
     @defgroup MprLog MprLog
-    @see mprError, mprLog, mprSetLogHandler, mprSetLogLevel, mprUserError, mprRawLog, mprFatalError, MprLogHandler
-        mprGetLogHandler, mprMemoryError, mprAssertError, mprUsingDefaultLogHandler
+    @see MprLogHandler mprAssertError mprError mprFatalError mprGetLogFile mprGetLogHandler mprLog mprMemoryError 
+        mprRawLog mprSetLogFile mprSetLogHandler mprSetLogLevel mprStaticError mprUserError mprUsingDefaultLogHandler 
+        mprWarn 
  */
 typedef struct MprLog { int dummy; } MprLog;
 
@@ -4063,6 +4066,17 @@ typedef struct MprLog { int dummy; } MprLog;
 typedef void (*MprLogHandler)(int flags, int level, cchar *msg);
 
 /**
+    Output an assertion failed message.
+    @description This will emit an assertion failed message to the standard error output. It will bypass the logging
+        system.
+    @param loc Source code location string. Use MPR_LOC to define a file name and line number string suitable for this
+        parameter.
+    @param msg Simple string message to output
+    @ingroup MprLog
+ */
+extern void mprAssertError(cchar *loc, cchar *msg);
+
+/**
     Log an error message.
     @description Send an error message to the MPR debug logging subsystem. The 
         message will be to the log handler defined by #mprSetLogHandler. It 
@@ -4072,27 +4086,6 @@ typedef void (*MprLogHandler)(int flags, int level, cchar *msg);
     @ingroup MprLog
  */
 extern void mprError(cchar *fmt, ...);
-
-/**
-    Log a warning message.
-    @description Send a warning message to the MPR debug logging subsystem. The 
-        message will be to the log handler defined by #mprSetLogHandler. It 
-        is up to the log handler to respond appropriately and log the message.
-    @param fmt Printf style format string. Variable number of arguments to 
-    @param ... Variable number of arguments for printf data
-    @ingroup MprLog
- */
-extern void mprWarn(cchar *fmt, ...);
-
-/**
-    Display an error message to the console without allocating any memory.
-    @description Display an error message to the console. This will bypass the MPR logging subsystem.
-        It will not allocated any memory and is used by low level memory allocating and garbage collection routines.
-    @param fmt Printf style format string. Variable number of arguments to 
-    @param ... Variable number of arguments for printf data
-    @ingroup MprLog
- */
-extern void mprStaticError(cchar *fmt, ...);
 
 /**
     Log a fatal error message and exit.
@@ -4106,28 +4099,20 @@ extern void mprStaticError(cchar *fmt, ...);
 extern void mprFatalError(cchar *fmt, ...);
 
 /**
-    Get the current MPR debug log handler.
-    @description Get the log handler defined via #mprSetLogHandler
-    @returns A function of the signature #MprLogHandler
-    @ingroup MprLog
- */
-extern MprLogHandler mprGetLogHandler();
-
-/**
-    Determine if the app is using the default MPR log handler.
-    @description Returns true if no custom log handler has been installed.
-    @returns True if using the default log handler
-    @ingroup MprLog
- */
-extern int mprUsingDefaultLogHandler();
-
-/**
     Get the log file object
     @description Returns the MprFile object used for logging
     @returns An MprFile object for logging
     @ingroup MprLog
  */
 extern struct MprFile *mprGetLogFile();
+
+/**
+    Get the current MPR debug log handler.
+    @description Get the log handler defined via #mprSetLogHandler
+    @returns A function of the signature #MprLogHandler
+    @ingroup MprLog
+ */
+extern MprLogHandler mprGetLogHandler();
 
 /**
     Write a message to the diagnostic log file.
@@ -4154,29 +4139,6 @@ extern void mprLog(int level, cchar *fmt, ...);
 extern void mprMemoryError(cchar *fmt, ...);
 
 /**
-    Set an MPR debug log handler.
-    @description Defines a callback handler for MPR debug and error log messages. When output is sent to 
-        the debug channel, the log handler will be invoked to accept the output message.
-    @param handler Callback handler
- */
-extern void mprSetLogHandler(MprLogHandler handler);
-
-/**
-    Set a file to be used for logging
-    @param file MprFile object instance
- */
-extern void mprSetLogFile(struct MprFile *file);
-
-/*
-    Optimized calling sequence
- */
-#if BLD_DEBUG
-#define LOG mprLog
-#else
-#define LOG if (0) mprLog
-#endif
-
-/**
     Write a raw log message to the diagnostic log file.
     @description Send a raw message to the MPR logging subsystem. Raw messages do not have any application prefix
         attached to the message and do not append a newline to the message.
@@ -4189,15 +4151,28 @@ extern void mprSetLogFile(struct MprFile *file);
 extern void mprRawLog(int level, cchar *fmt, ...);
 
 /**
-    Output an assertion failed message.
-    @description This will emit an assertion failed message to the standard error output. It will bypass the logging
-        system.
-    @param loc Source code location string. Use MPR_LOC to define a file name and line number string suitable for this
-        parameter.
-    @param msg Simple string message to output
+    Set a file to be used for logging
+    @param file MprFile object instance
+ */
+extern void mprSetLogFile(struct MprFile *file);
+
+/**
+    Set an MPR debug log handler.
+    @description Defines a callback handler for MPR debug and error log messages. When output is sent to 
+        the debug channel, the log handler will be invoked to accept the output message.
+    @param handler Callback handler
+ */
+extern void mprSetLogHandler(MprLogHandler handler);
+
+/**
+    Display an error message to the console without allocating any memory.
+    @description Display an error message to the console. This will bypass the MPR logging subsystem.
+        It will not allocated any memory and is used by low level memory allocating and garbage collection routines.
+    @param fmt Printf style format string. Variable number of arguments to 
+    @param ... Variable number of arguments for printf data
     @ingroup MprLog
  */
-extern void mprAssertError(cchar *loc, cchar *msg);
+extern void mprStaticError(cchar *fmt, ...);
 
 /**
     Display an error message to the user.
@@ -4210,6 +4185,34 @@ extern void mprAssertError(cchar *loc, cchar *msg);
     @ingroup MprLog
  */
 extern void mprUserError(cchar *fmt, ...);
+
+/**
+    Determine if the app is using the default MPR log handler.
+    @description Returns true if no custom log handler has been installed.
+    @returns True if using the default log handler
+    @ingroup MprLog
+ */
+extern int mprUsingDefaultLogHandler();
+
+/**
+    Log a warning message.
+    @description Send a warning message to the MPR debug logging subsystem. The 
+        message will be to the log handler defined by #mprSetLogHandler. It 
+        is up to the log handler to respond appropriately and log the message.
+    @param fmt Printf style format string. Variable number of arguments to 
+    @param ... Variable number of arguments for printf data
+    @ingroup MprLog
+ */
+extern void mprWarn(cchar *fmt, ...);
+
+/*
+    Optimized calling sequence
+ */
+#if BLD_DEBUG
+#define LOG mprLog
+#else
+#define LOG if (0) mprLog
+#endif
 
 /*
     Just for easy debugging. Adds a "\n" automatically.
@@ -4227,7 +4230,8 @@ extern int print(cchar *fmt, ...);
 
 /**
     Hash table entry structure.
-    @description Each hash entry has a descriptor entry. This is used to manage the hash table link chains.
+    @description The hash structure supports growable hash tables with high performance, collision resistant hashes.
+    Each hash entry has a descriptor entry. This is used to manage the hash table link chains.
     @see MprHash, mprAddKey, mprAddDuplicateHash, mprCloneHash, mprCreateHash, mprGetFirstHash, mprGetNextKey,
         mprGethashCount, mprLookupKey, mprLookupKeyEntry, mprRemoveKey, mprCreateKeyPair
     @stability Evolving.

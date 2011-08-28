@@ -2816,11 +2816,11 @@ static void getArgs(Mpr *mpr, int argc, char **argv)
 #if WINCE
     MprArgs *args = (MprArgs*) argv;
     command = mprToMulti((uni*) args->command);
-    mprMakeArgv(command, &argc, &argv, MPR_ARGV_ARGS_ONLY);
+    argc = mprMakeArgv(command, &argv, MPR_ARGV_ARGS_ONLY);
     argv[0] = sclone(args->program);
 #elif VXWORKS
     MprArgs *args = (MprArgs*) argv;
-    mprMakeArgv("", &argc, &argv, MPR_ARGV_ARGS_ONLY);
+    argc = mprMakeArgv("", &argv, MPR_ARGV_ARGS_ONLY);
     argv[0] = sclone(args->program);
 #endif
     mpr->argc = argc;
@@ -11338,7 +11338,7 @@ int mprSetListLimits(MprList *lp, int initialSize, int maxSize)
 }
 
 
-int mprCopyList(MprList *dest, MprList *src)
+int mprCopyListContents(MprList *dest, MprList *src)
 {
     void        *item;
     int         next;
@@ -11370,7 +11370,7 @@ MprList *mprCloneList(MprList *src)
     if ((lp = mprCreateList(src->capacity, src->flags)) == 0) {
         return 0;
     }
-    if (mprCopyList(lp, src) < 0) {
+    if (mprCopyListContents(lp, src) < 0) {
         return 0;
     }
     return lp;
