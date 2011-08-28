@@ -437,7 +437,7 @@ static void compileFile(cchar *source, int kind)
     if (kind == ESP_CONTROLLER) {
         app->csource = source;
         if (app->flatFile) {
-            if ((data = mprReadPath(source)) == 0) {
+            if ((data = mprReadPath(source, &len)) == 0) {
                 error("Can't read %s", source);
                 return;
             }
@@ -451,7 +451,7 @@ static void compileFile(cchar *source, int kind)
     }
     if (kind & (ESP_PAGE | ESP_VIEW)) {
         layout = mprJoinPath(mprJoinPath(eroute->dir, eroute->layoutsDir), "default.esp");
-        if ((page = mprReadPath(source)) == 0) {
+        if ((page = mprReadPath(source, &len)) == 0) {
             error("Can't read %s", source);
             return;
         }
@@ -682,10 +682,11 @@ static void generateAppDirs()
 
 static void fixupFile(cchar *path)
 {
+    ssize   len;
     char    *data, *tmp;
 
     path = mprJoinPath(eroute->dir, path);
-    if ((data = mprReadPath(path)) == 0) {
+    if ((data = mprReadPath(path, &len)) == 0) {
         error("Can't read %s", path);
         return;
     }
@@ -784,9 +785,10 @@ static void installAppConf()
 static void generateAppConfigFile()
 {
     char    *from, *to, *conf;
+    ssize   len;
 
     from = mprJoinPath(app->wwwDir, "appweb.conf");
-    if ((conf = mprReadPath(from)) == 0) {
+    if ((conf = mprReadPath(from, &len)) == 0) {
         error("Can't read %s", from);
         return;
     }

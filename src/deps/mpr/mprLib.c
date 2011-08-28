@@ -9800,7 +9800,7 @@ static char *findNewline(cchar *str, cchar *newline, ssize len, ssize *nlen)
 }
 
 
-//  MOB -- reanem mprReadFileLine
+//  MOB -- rename mprReadFileLine
 /*
     Get a string from the file. This will put the file into buffered mode.
     Return NULL on eof.
@@ -13750,6 +13750,9 @@ void *mprLookupModuleData(cchar *name)
 
 void mprSetModuleTimeout(MprModule *module, MprTime timeout)
 {
+    /*
+        Module timeouts are not yet implemented
+     */
     module->timeout = timeout;
 }
 
@@ -15232,7 +15235,7 @@ bool mprPathExists(cchar *path, int omode)
 }
 
 
-char *mprReadPath(cchar *path)
+char *mprReadPath(cchar *path, ssize *lenp)
 {
     MprFile     *file;
     MprPath     info;
@@ -15254,6 +15257,9 @@ char *mprReadPath(cchar *path)
         return 0;
     }
     buf[len] = '\0';
+    if (lenp) {
+        *lenp = len;
+    }
     return buf;
 }
 
@@ -18001,7 +18007,7 @@ static void signalEvent(MprSignal *sp, MprEvent *event)
 
 /*
     Standard signal handler.  Ignore signals SIGPIPE and SIGXFSZ. 
-    Do graceful shutdown for SIGTERM, immediate exit for SIGABRT.  All other signals do normal exit.
+    Do graceful shutdown for SIGTERM, immediate exit for SIGINT.  All other signals do normal exit.
  */
 static void standardSignalHandler(void *ignored, MprSignal *sp)
 {
@@ -18038,7 +18044,9 @@ void mprAddStandardSignals()
     mprAddItem(ssp->standard, mprAddSignalHandler(SIGINT,  standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
     mprAddItem(ssp->standard, mprAddSignalHandler(SIGQUIT, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
     mprAddItem(ssp->standard, mprAddSignalHandler(SIGTERM, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
+#if UNUSED && KEEP
     mprAddItem(ssp->standard, mprAddSignalHandler(SIGUSR1, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
+#endif
     mprAddItem(ssp->standard, mprAddSignalHandler(SIGPIPE, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
 #if SIGXFSZ
     mprAddItem(ssp->standard, mprAddSignalHandler(SIGXFSZ, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
@@ -18151,7 +18159,6 @@ MprSocketService *mprCreateSocketService()
     if (ss == 0) {
         return 0;
     }
-    ss->next = 0;
     ss->maxClients = MAXINT;
     ss->numClients = 0;
 

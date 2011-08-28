@@ -1337,7 +1337,7 @@ static int configureOss(MprSsl *ssl)
                 return MPR_ERR_CANT_ACCESS;
             }
             if (ssl->caFile) {
-                STACK_OF(X509_NAME)     *certNames;
+                STACK_OF(X509_NAME) *certNames;
                 certNames = SSL_load_client_CA_file(ssl->caFile);
                 if (certNames == 0) {
                     ;
