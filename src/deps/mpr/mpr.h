@@ -411,7 +411,9 @@ typedef int64 MprOff;
 /**
     Date and Time Service
     @stability Evolving
-    @see MprTime, mprDecodeLocalTime, mprDecodeUniversalTime, mprFormatLocalTime, mprFormatTm, mprParseTime
+    @see MprTime mprCompareTime mprCreateTimeService mprDecodeLocalTime mprDecodeUniversalTime mprFormatLocalTime 
+        mprFormatTm mprGetDate mprGetElapsedTime mprGetRemainingTime mprGetTicks mprGetTimeZoneOffset mprMakeTime 
+        mprMakeUniversalTime mprParseTime 
     @defgroup MprTime MprTime
  */
 typedef int64 MprTime;
@@ -1354,8 +1356,10 @@ extern void mprBreakpoint();
 
 /**
     Multithreaded Synchronization Services
-    @see MprMutex, mprLock, mprTryLock, mprUnlock, mprGlobalLock, mprGlobalUnlock, 
-        MprSpin, mprCreateSpinLock, MprCond, mprCreateCond, mprWaitForCond, mprSignalCond
+    @see MprCond MprMutex MprSpin mprAtomicAdd mprAtomicAdd64 mprAtomicBarrier mprAtomicCas mprAtomicExchange 
+        mprAtomicListInsert mprCreateCond mprCreateLock mprCreateSpinLock mprGlobalLock mprGlobalUnlock mprInitLock 
+        mprInitSpinLock mprLock mprResetCond mprSignalCond mprSignalMultiCond mprSpinLock mprSpinUnlock mprTryLock 
+        mprTrySpinLock mprUnlock mprWaitForCond mprWaitForMultiCond 
     @stability Evolving.
     @defgroup MprSynch MprSynch
  */
@@ -1644,6 +1648,7 @@ extern void mprGlobalUnlock();
 
 /**
     Apply a full (read+write) memory barrier
+    @ingroup MprSynch
  */ 
 extern void mprAtomicBarrier();
 
@@ -1653,6 +1658,7 @@ extern void mprAtomicBarrier();
     @param head list head
     @param link Reference to the list head link field
     @param item Item to insert
+    @ingroup MprSynch
  */ 
 extern void mprAtomicListInsert(void * volatile *head, volatile void **link, void *item);
 
@@ -1662,6 +1668,7 @@ extern void mprAtomicListInsert(void * volatile *head, volatile void **link, voi
     @param expected Expected value of the target
     @param value New value to store at the target
     @return TRUE if the swap was successful
+    @ingroup MprSynch
  */
 extern int mprAtomicCas(void * volatile * target, void *expected, cvoid *value);
 
@@ -1669,6 +1676,7 @@ extern int mprAtomicCas(void * volatile * target, void *expected, cvoid *value);
     Atomic Add. This is a lock free function.
     @param target Address of the target word to add to.
     @param value Value to add to the target
+    @ingroup MprSynch
  */
 extern void mprAtomicAdd(volatile int *target, int value);
 
@@ -1676,6 +1684,7 @@ extern void mprAtomicAdd(volatile int *target, int value);
     Atomic 64 bit Add. This is a lock free function.
     @param target Address of the target word to add to.
     @param value Value to add to the target
+    @ingroup MprSynch
  */
 extern void mprAtomicAdd64(volatile int64 *target, int value);
 
@@ -1683,6 +1692,7 @@ extern void mprAtomicAdd64(volatile int64 *target, int value);
     Exchange the target and a value
     @param target Address of the target word to exchange
     @param value Value to store to the target
+    @ingroup MprSynch
  */
 extern void *mprAtomicExchange(void * volatile *target, cvoid *value);
 
@@ -1690,8 +1700,8 @@ extern void *mprAtomicExchange(void * volatile *target, cvoid *value);
     Allocator debug and stats selection
  */
 #if BLD_DEBUG
-    #define BLD_MEMORY_DEBUG        1                   /* Fill blocks, verifies block integrity. */
-    #define BLD_MEMORY_STATS        1                   /* Include memory stats routines */
+    #define BLD_MEMORY_DEBUG        1                   /**< Fill blocks, verifies block integrity. */
+    #define BLD_MEMORY_STATS        1                   /**< Include memory stats routines */
 #else
     #define BLD_MEMORY_DEBUG        0
     #define BLD_MEMORY_STATS        0
@@ -1748,15 +1758,25 @@ extern void *mprAtomicExchange(void * volatile *target, cvoid *value);
     \n\n
     The allocator handles memory allocation errors globally. The application may configure a memory limit so that 
     memory depletion can be proactively detected and handled before memory allocations actually fail.
+    \n\n
+    A memory block that is being used must be marked as active to prevent the garbage collector from reclaiming it. 
+    To mark a block as active, #mprMarkBlock must be called for each garbage collection cycle. When allocating non-temporal
+    memroy blocks, a manager callback can be specified via #mprAllocObj. This manager routine will be called by the 
+    collector so that dependant memory blocks can be marked as active.
+    
+    The collector performs the marking phase by invoking the manager routines for a set of root blocks. A block can be 
+    added to the set of roots by calling #mprAddRoot. Each root's manager routine will mark other blocks which will cause
+    their manager routines to run and so on, until all active blocks have been marked. Non-marked blocks can then safely
+    be reclaimed as garbage. A block may alternatively be permanently marked as active by calling #mprHold.
 
     @stability Evolving
     @defgroup MprMem MprMem
-    @see mprAlloc, mprRealloc, mprAllocObj, mprAllocZeroed, mprSetMemPolicy, mprHasMemError, mprIsValid, mprSetManager, 
-        mprIsParent, mprCreate, mprSetAllocLimits, mprMemdup, mprMemcpy, mprMemcmp,
-        mprMark, mprAddRoot, mprRemoveRoot, mprSetName, mprGetMpr, mprGetPageSize, mprGetBlockSize,
-        mprPrintMem, mprGetMemStats, mprGetMem, mprGetPageSize, mprIsDead, mprRevive, mprResetMemError, mprVerifyMem
-        mprSetMemNotifier, mprSetMemError, mprSetMemLimits, mprSetMemPolicy, mprVirtAlloc, mprVirtFree,
-        mprRequestGC, mprEnableGC, mprHold, mprRelease, mprAddRoot, mprRemoveRoot, mprMark
+    @see MprFreeMem MprHeap MprManager MprMemNotifier MprRegion mprAddRoot mprAlloc mprAllocMem mprAllocObj 
+        mprAllocZeroed mprCreateMemService mprDestroyMemService mprEnableGC mprGetBlockSize mprGetMem 
+        mprGetMemStats mprGetMpr mprGetPageSize mprHasMemError mprHold mprIsDead mprIsParent mprIsValid mprMark 
+        mprMemcmp mprMemcpy mprMemdup mprPrintMem mprRealloc mprRelease mprRemoveRoot mprRequestGC mprResetMemError 
+        mprRevive mprSetAllocLimits mprSetManager mprSetMemError mprSetMemLimits mprSetMemNotifier mprSetMemPolicy 
+        mprSetName mprValidateBlock mprVerifyMem mprVirtAlloc mprVirtFree 
  */
 typedef struct MprMem {
     /*
@@ -1871,6 +1891,7 @@ typedef void (*MprManager)(void *ptr, int flags);
 /**
     Block structure when on a free list. This overlays MprMem and replaces sibling and children with forw/back
     The implies a minimum memory block size of 8 bytes in 32 bits and 16 bytes in 64 bits.
+    @ingroup MemMem
  */
 typedef struct MprFreeMem {
     union {
@@ -1898,6 +1919,7 @@ typedef struct MprLocationStats {
 
 /**
     Memory allocator statistics
+    @ingroup MemMem
   */
 typedef struct MprMemStats {
     int             inMemException;         /**< Recursive protect */
@@ -1935,6 +1957,7 @@ typedef struct MprMemStats {
 
 /**
    Memmory regions allocated from the O/S
+    @ingroup MemMem
  */
 typedef struct MprRegion {
     struct MprRegion *next;                 /**< Next region */
@@ -1947,6 +1970,7 @@ typedef struct MprRegion {
 
 /**
     Memory allocator heap
+    @ingroup MemMem
  */
 typedef struct MprHeap {
     MprFreeMem       freeq[MPR_ALLOC_NUM_GROUPS * MPR_ALLOC_NUM_BUCKETS];
@@ -2019,9 +2043,9 @@ extern void mprDestroyMemService();
 /**
     Allocate a block of memory.
     @description This is the lowest level of memory allocation routine. Memory is freed via the garbage collector. 
-    To protect memory from being freed, it must have a reference to it. Memory blocks can specify a manager routine
-    which is invoked by the garbage collector to "mark" referenced memory as being in-use. Marked memory will not be
-    reclaimed by teh garbage collector.
+    To protect an active memory block memory block from being reclaimed, it must have a reference to it. Memory blocks 
+    can specify a manager routine via #mprAllocObj. The manager is is invoked by the garbage collector to "mark" 
+    dependant active blocks. Marked blocks will not be reclaimed by the garbage collector.
     @param size Size of the memory block to allocate.
     @param flags Allocation flags. Supported flags include: MPR_ALLOC_MANAGER to reserve room for a manager callback and
         MPR_ALLOC_ZERO to zero allocated memory.
@@ -2073,20 +2097,6 @@ extern ssize mprGetBlockSize(cvoid *ptr);
  */
 extern bool mprHasMemError();
 
-/**
-    Test is a pointer is a valid memory context. This is used to test if a block has been dynamically allocated.
-    @param ptr Any memory context allocated by mprAlloc or mprCreate.
-    @ingroup MprMem
- */
-extern int mprIsValid(cvoid *ptr);
-
-/**
-    Verify all memory. This checks the integrity of all memory blocks by verifying the block headers and contents
-    of all free memory blocks. Will only do anything meaningful when the product is compiled in debug mode.
-    @ingroup MprMem
- */
-extern void mprVerifyMem();
-
 /*
     Test if a memory block is unreferenced by the last garbage collection sweep.
     @param ptr Reference to an allocated memory block.
@@ -2096,13 +2106,25 @@ extern void mprVerifyMem();
  */
 extern int mprIsDead(cvoid* ptr);
 
-/*
-    Revive a memory block scheduled for collection. This should only ever be called in the manager routine for a block
-    when the manage flags parameter is set to MPR_MANAGE_FREE. Reviving a block aborts its collection.
-    @param ptr Reference to an allocated memory block.
-    @internal
+/**
+    Test is a pointer is a valid memory context. This is used to test if a block has been dynamically allocated.
+    @param ptr Any memory context allocated by mprAlloc or mprCreate.
+    @ingroup MprMem
  */
-extern void mprRevive(cvoid* ptr);
+extern int mprIsValid(cvoid *ptr);
+
+/**
+    Compare two byte strings.
+    @description Safely compare two byte strings. This is a safe replacement for memcmp.
+    @param b1 Pointer to the first byte string.
+    @param b1Len Length of the first byte string.
+    @param b2 Pointer to the second byte string.
+    @param b2Len Length of the second byte string.
+    @return Returns zero if the byte strings are identical. Otherwise returns -1 if the first string is less than the 
+        second. Returns 1 if the first is greater than the first.
+    @ingroup MprMem
+ */
+extern int mprMemcmp(cvoid *b1, ssize b1Len, cvoid *b2, ssize b2Len);
 
 /**
     Safe copy for a block of data.
@@ -2117,19 +2139,6 @@ extern void mprRevive(cvoid* ptr);
     @ingroup MprMem
  */
 extern ssize mprMemcpy(void *dest, ssize destMax, cvoid *src, ssize nbytes);
-
-/**
-    Compare two byte strings.
-    @description Safely compare two byte strings. This is a safe replacement for memcmp.
-    @param b1 Pointer to the first byte string.
-    @param b1Len Length of the first byte string.
-    @param b2 Pointer to the second byte string.
-    @param b2Len Length of the second byte string.
-    @return Returns zero if the byte strings are identical. Otherwise returns -1 if the first string is less than the 
-        second. Returns 1 if the first is greater than the first.
-    @ingroup MprMem
- */
-extern int mprMemcmp(cvoid *b1, ssize b1Len, cvoid *b2, ssize b2Len);
 
 /**
     Duplicate a block of memory.
@@ -2168,6 +2177,21 @@ extern void *mprRealloc(void *ptr, ssize size);
     @ingroup MprMem
  */
 extern void mprResetMemError();
+
+/*
+    Revive a memory block scheduled for collection. This should only ever be called in the manager routine for a block
+    when the manage flags parameter is set to MPR_MANAGE_FREE. Reviving a block aborts its collection.
+    @param ptr Reference to an allocated memory block.
+    @internal
+ */
+extern void mprRevive(cvoid* ptr);
+
+/**
+    Verify all memory. This checks the integrity of all memory blocks by verifying the block headers and contents
+    of all free memory blocks. Will only do anything meaningful when the product is compiled in debug mode.
+    @ingroup MprMem
+ */
+extern void mprVerifyMem();
 
 /**
     Define a memory notifier
@@ -2291,7 +2315,7 @@ extern void *mprAlloc(ssize size);
     @return Returns a pointer to the allocated block. If memory is not available the memory exhaustion handler 
         specified via mprCreate will be called to allow global recovery.
     @remarks Do not mix calls to malloc and mprAlloc.
-    @stability Prototype. This function names are highly likely to be refactored.
+    @stability Evolving. This function names are highly likely to be refactored.
     @ingroup MprMem
  */
 extern void *mprAllocObj(Type type, MprManager manager) { return 0;}
@@ -2362,6 +2386,15 @@ extern bool mprEnableGC(bool on);
 extern void mprHold(void *ptr);
 
 /**
+    Mark a block as "in-use" for the Garbage Collector.
+    The MPR memory garbage collector requires that all allocated memory be marked as in-use during a garbage collection
+    sweep. When a memory block is allocated, it may provide a "manage" callback function that will be invoked during
+    garbage collection so the block can be marked as "in-use".
+    @param ptr Reference to the block to mark as currently being used.
+ */
+extern void mprMarkBlock(cvoid *ptr);
+
+/**
     Release a memory block
     @description This call is used to allow a memory block to be freed freed by the garbage collector after calling
         mprHold.
@@ -2401,15 +2434,6 @@ extern void mprRemoveRoot(void *ptr);
 } else {
 #endif
 
-/**
-    Mark a block as "in-use" for the Garbage Collector.
-    The MPR memory garbage collector requires that all allocated memory be marked as in-use during a garbage collection
-    sweep. When a memory block is allocated, it may provide a "manage" callback function that will be invoked during
-    garbage collection so the block can be marked as "in-use".
-    @param ptr Reference to the block to mark as currently being used.
- */
-extern void mprMarkBlock(cvoid *ptr);
-
 /*
     Internal
  */
@@ -2422,11 +2446,11 @@ extern int  mprSyncThreads(MprTime timeout);
     Safe String Module
     @description The MPR provides a suite of safe ascii string manipulation routines to help prevent buffer overflows
         and other potential security traps.
-    @see MprString, 
-        mprAsprintf, mprAsprintfv, mprMemcpy, mprPrintf, mprPrintfError, mprSprintf,
-        itos, schr, scasecmp, sclone, scmp, scontains, scopy, sends, sfmt, sfmtv, shash, shashlower, sjoin, sjoinv,
-        slen, slower, sncasecmp, snclone, sncmp, sncopy, spbrk, srchr, srejoin, srejoinv, sspn, sstarts, stoi, stok,
-        ssub, supper, strim
+    @defgroup MprString MprString
+    @see MprString itos mprPrintf mprPrintfError mprSprintf scasecmp scasematch schr sclone scmp scontains scopy sends 
+        sfmt sfmtv shash shashlower sjoin sjoinv slen slower smatch sncasecmp snclone sncmp sncopy snumber spbrk 
+        srchr srejoin srejoinv sreplace sspn sstarts ssub stemplate stoi stok strim supper 
+        mprFprintf mprSprintfv
  */
 typedef struct MprString { void *dummy; } MprString;
 
@@ -2442,17 +2466,6 @@ typedef struct MprString { void *dummy; } MprString;
     @ingroup MprString
  */
 extern char *itos(char *buf, ssize size, int64 value, int radix);
-
-/**
-   Find a character in a string. 
-   @description This is a safe replacement for strchr. It can handle NULL args.
-   @param str String to examine
-   @param c Character to search for
-   @return If the character is found, the call returns a reference to the character position in the string. Otherwise,
-        returns NULL.
-    @ingroup MprString
- */
-extern char *schr(cchar *str, int c);
 
 /**
     Compare strings ignoring case. This is a safe replacement for strcasecmp. It can handle NULL args.
@@ -2474,6 +2487,17 @@ extern int scasecmp(cchar *s1, cchar *s2);
     @ingroup MprString
  */
 extern bool scasematch(cchar *s1, cchar *s2);
+
+/**
+   Find a character in a string. 
+   @description This is a safe replacement for strchr. It can handle NULL args.
+   @param str String to examine
+   @param c Character to search for
+   @return If the character is found, the call returns a reference to the character position in the string. Otherwise,
+        returns NULL.
+    @ingroup MprString
+ */
+extern char *schr(cchar *str, int c);
 
 /**
     Clone a string.
@@ -2533,7 +2557,6 @@ extern int sends(cchar *str, cchar *suffix);
     Format a string. This is a secure verion of printf that can handle null args.
     @description Format the given arguments according to the printf style format. See mprPrintf for a full list of the
         format specifies. This is a secure replacement for sprintf, it can handle null arguments without crashes.
-        This routine is the same as mprAsprintf.
     @param fmt Printf style format string
     @param ... Variable arguments for the format string
     @return Returns a newly allocated string
@@ -2545,7 +2568,6 @@ extern char *sfmt(cchar *fmt, ...);
     Format a string. This is a secure verion of printf that can handle null args.
     @description Format the given arguments according to the printf style format. See mprPrintf for a full list of the
         format specifies. This is a secure replacement for sprintf, it can handle null arguments without crashes.
-        This routine is the same as mprAsprintfv.
     @param fmt Printf style format string
     @param args Varargs argument obtained from va_start.
     @return Returns a newly allocated string
@@ -2791,15 +2813,6 @@ extern char *stok(char *str, cchar *delim, char **last);
  */
 extern char *ssub(cchar *str, ssize offset, ssize length);
 
-/**
-    Convert a string to upper case.
-    @description Convert a string to its upper case equivalent.
-    @param str String to convert.
-    @return Returns a pointer to the converted string. Will always equal str.
-    @ingroup MprString
- */
-extern char *supper(cchar *str);
-
 /*
     String trim flags
  */
@@ -2817,6 +2830,15 @@ extern char *supper(cchar *str);
     @ingroup MprString
  */
 extern char *strim(cchar *str, cchar *set, int where);
+
+/**
+    Convert a string to upper case.
+    @description Convert a string to its upper case equivalent.
+    @param str String to convert.
+    @return Returns a pointer to the converted string. Will always equal str.
+    @ingroup MprString
+ */
+extern char *supper(cchar *str);
 
 /*
     Low-level unicode wide string support. Unicode characters are build-time configurable to be 1, 2 or 4 bytes
@@ -3012,10 +3034,12 @@ extern char *mprSprintfv(char *buf, ssize maxSize, cchar *fmt, va_list args);
     @description This call will dynamically allocate a buffer up to the specified maximum size and will format the 
         supplied arguments into the buffer.  A trailing null will always be appended. The call returns
         the size of the allocated string excluding the null.
+        This call is deprecated. Use #sfmt instead.
     @param fmt Printf style format string
     @param ... Variable arguments to format
     @return Returns the number of characters in the string.
     @ingroup MprString
+    @internal
  */
 extern char *mprAsprintf(cchar *fmt, ...);
 
@@ -3024,10 +3048,12 @@ extern char *mprAsprintf(cchar *fmt, ...);
     @description This call will dynamically allocate a buffer up to the specified maximum size and will format 
         the supplied arguments into the buffer. A trailing null will always be appended. The call returns
         the size of the allocated string excluding the null.
+        This call is deprecated. Use #sfmtv instead.
     @param fmt Printf style format string
     @param arg Varargs argument obtained from va_start.
     @return Returns the number of characters in the string.
     @ingroup MprString
+    @internal
  */
 extern char *mprAsprintfv(cchar *fmt, va_list arg);
 
@@ -3035,7 +3061,7 @@ extern char *mprAsprintfv(cchar *fmt, va_list arg);
 /**
     Floating Point Services
     @stability Evolving
-    @see mprDota, mprIsInfinite, mprIsZero, mprIsNan
+    @see mprDota mprIsInfinite mprIsNan mprIsZero 
     @defgroup MprFloat MprFloat
   */
 typedef struct MprFloat { int dummy; } MprFloat;
@@ -3109,12 +3135,13 @@ typedef int (*MprBufProc)(struct MprBuf* bp, void *arg);
     For performance, the specification of MprBuf is deliberately exposed. All members of MprBuf are implicitly public.
     However, it is still recommended that wherever possible, you use the accessor routines provided.
     @stability Evolving.
-    @see MprBuf, mprCreateBuf, mprSetBufMax, mprStealBuf, mprAdjustBufStart, mprAdjustBufEnd, mprCopyBufDown,
-        mprFlushBuf, mprGetCharFromBuf, mprGetBlockFromBuf, mprGetBufLength, mprGetBufOrigin, mprGetBufSize,
-        mprGetBufEnd, mprGetBufSpace, mprGetGrowBuf, mprGrowBuf, mprInsertCharToBuf,
-        mprLookAtNextCharInBuf, mprLookAtLastCharInBuf, mprPutCharToBuf, mprPutBlockToBuf, mprPutIntToBuf,
-        mprPutStringToBuf, mprPutFmtToBuf, mprRefillBuf, mprResetBufIfEmpty, mprSetBufSize, mprGetBufRefillProc,
-        mprSetBufRefillProc, MprBufProc
+    @see MprBuf MprBufProc mprAddNullToBuf mprAddNullToWideBuf mprAdjustBufEnd mprAdjustBufStart mprCloneBuf 
+        mprCompactBuf mprCreateBuf mprFlushBuf mprGetBlockFromBuf mprGetBufEnd mprGetBufLength mprGetBufOrigin 
+        mprGetBufRefillProc mprGetBufSize mprGetBufSpace mprGetBufStart mprGetCharFromBuf mprGrowBuf 
+        mprInsertCharToBuf mprLookAtLastCharInBuf mprLookAtNextCharInBuf mprPutBlockToBuf mprPutCharToBuf 
+        mprPutCharToWideBuf mprPutFmtToBuf mprPutFmtToWideBuf mprPutIntToBuf mprPutPadToBuf mprPutStringToBuf 
+        mprPutStringToWideBuf mprPutSubStringToBuf mprRefillBuf mprResetBufIfEmpty mprSetBufMax mprSetBufRefillProc 
+        mprSetBufSize 
     @defgroup MprBuf MprBuf
  */
 typedef struct MprBuf {
@@ -3128,6 +3155,40 @@ typedef struct MprBuf {
     MprBufProc      refillProc;         /**< Auto-refill procedure */
     void            *refillArg;         /**< Refill arg */
 } MprBuf;
+
+/**
+    Add a null character to the buffer contents.
+    @description Add a null byte but do not change the buffer content lengths. The null is added outside the
+        "official" content length. This is useful when calling #mprGetBufStart and using the returned pointer 
+        as a "C" string pointer.
+    @param buf Buffer created via mprCreateBuf
+    @ingroup MprBuf
+ */
+extern void mprAddNullToBuf(MprBuf *buf);
+
+/**
+    Adjust the buffer end position
+    @description Adjust the buffer start end position by the specified amount. This is typically used to advance the
+        end position as content is appended to the buffer. Adjusting the start or end position will change the value 
+        returned by #mprGetBufLength. If using the mprPutBlock or mprPutChar routines, adjusting the end position is
+        done automatically.
+    @param buf Buffer created via mprCreateBuf
+    @param count Positive or negative count of bytes to adjust the start position.
+    @ingroup MprBuf
+ */
+extern void mprAdjustBufEnd(MprBuf *buf, ssize count);
+
+/**
+    Adjust the buffer start position
+    @description Adjust the buffer start position by the specified amount. This is typically used to advance the
+        start position as content is consumed. Adjusting the start or end position will change the value returned
+        by #mprGetBufLength. If using the mprGetBlock or mprGetChar routines, adjusting the start position is
+        done automatically.
+    @param buf Buffer created via mprCreateBuf
+    @param count Positive or negative count of bytes to adjust the start position.
+    @ingroup MprBuf
+ */
+extern void mprAdjustBufStart(MprBuf *buf, ssize count);
 
 /**
     Create a new buffer
@@ -3148,58 +3209,6 @@ extern MprBuf *mprCreateBuf(ssize initialSize, ssize maxSize);
 extern MprBuf *mprCloneBuf(MprBuf *orig);
 
 /**
-    Set the maximum buffer size
-    @description Update the maximum buffer size set when the buffer was created
-    @param buf Buffer created via mprCreateBuf
-    @param maxSize New maximum size the buffer can grow to
-    @ingroup MprBuf
- */
-extern void mprSetBufMax(MprBuf *buf, ssize maxSize);
-
-/**
-    Get a reference to the the buffer memory.
-    @param buf Buffer created via mprCreateBuf
-    @return pointer to the buffer contents. Use mprGetBufLength before calling $mprGetBuf to determine the resulting
-        size of the contents.
-    @ingroup MprBuf
- */
-extern char *mprGetBuf(MprBuf *buf);
-
-/**
-    Add a null character to the buffer contents.
-    @description Add a null byte but do not change the buffer content lengths. The null is added outside the
-        "official" content length. This is useful when calling #mprGetBufStart and using the returned pointer 
-        as a "C" string pointer.
-    @param buf Buffer created via mprCreateBuf
-    @ingroup MprBuf
- */
-extern void mprAddNullToBuf(MprBuf *buf);
-
-/**
-    Adjust the buffer start position
-    @description Adjust the buffer start position by the specified amount. This is typically used to advance the
-        start position as content is consumed. Adjusting the start or end position will change the value returned
-        by #mprGetBufLength. If using the mprGetBlock or mprGetChar routines, adjusting the start position is
-        done automatically.
-    @param buf Buffer created via mprCreateBuf
-    @param count Positive or negative count of bytes to adjust the start position.
-    @ingroup MprBuf
- */
-extern void mprAdjustBufStart(MprBuf *buf, ssize count);
-
-/**
-    Adjust the buffer end position
-    @description Adjust the buffer start end position by the specified amount. This is typically used to advance the
-        end position as content is appended to the buffer. Adjusting the start or end position will change the value 
-        returned by #mprGetBufLength. If using the mprPutBlock or mprPutChar routines, adjusting the end position is
-        done automatically.
-    @param buf Buffer created via mprCreateBuf
-    @param count Positive or negative count of bytes to adjust the start position.
-    @ingroup MprBuf
- */
-extern void mprAdjustBufEnd(MprBuf *buf, ssize count);
-
-/**
     Compact the buffer contents
     @description Compact the buffer contents by copying the contents down to start the the buffer origin.
     @param buf Buffer created via mprCreateBuf
@@ -3216,15 +3225,6 @@ extern void mprCompactBuf(MprBuf *buf);
 extern void mprFlushBuf(MprBuf *buf);
 
 /**
-    Get a character from the buffer
-    @description Get the next byte from the buffer start and advance the start position.
-    @param buf Buffer created via mprCreateBuf
-    @return The character or -1 if the buffer is empty.
-    @ingroup MprBuf
- */
-extern int mprGetCharFromBuf(MprBuf *buf);
-
-/**
     Get a block of data from the buffer
     @description Get a block of data from the buffer start and advance the start position. If the requested
         length is greater than the available buffer content, then return whatever data is available.
@@ -3237,6 +3237,15 @@ extern int mprGetCharFromBuf(MprBuf *buf);
 extern ssize mprGetBlockFromBuf(MprBuf *buf, char *blk, ssize count);
 
 /**
+    Get a reference to the end of the buffer contents
+    @description Get a pointer to the location immediately after the end of the buffer contents.
+    @param buf Buffer created via mprCreateBuf
+    @returns Pointer to the end of the buffer data contents. Points to the location one after the last data byte.
+    @ingroup MprBuf
+ */
+extern char *mprGetBufEnd(MprBuf *buf);
+
+/**
     Get the buffer content length.
     @description Get the length of the buffer contents. This is not the same as the buffer size which may be larger.
     @param buf Buffer created via mprCreateBuf
@@ -3244,6 +3253,15 @@ extern ssize mprGetBlockFromBuf(MprBuf *buf, char *blk, ssize count);
     @ingroup MprBuf
  */
 extern ssize mprGetBufLength(MprBuf *buf);
+
+/**
+    Get the buffer refill procedure
+    @description Return the buffer refill callback function.
+    @param buf Buffer created via mprCreateBuf
+    @returns The refill call back function if defined.
+    @ingroup MprBuf
+ */
+extern MprBufProc mprGetBufRefillProc(MprBuf *buf);
 
 /**
     Get the origin of the buffer content storage.
@@ -3285,13 +3303,13 @@ extern ssize mprGetBufSpace(MprBuf *buf);
 extern char *mprGetBufStart(MprBuf *buf);
 
 /**
-    Get a reference to the end of the buffer contents
-    @description Get a pointer to the location immediately after the end of the buffer contents.
+    Get a character from the buffer
+    @description Get the next byte from the buffer start and advance the start position.
     @param buf Buffer created via mprCreateBuf
-    @returns Pointer to the end of the buffer data contents. Points to the location one after the last data byte.
+    @return The character or -1 if the buffer is empty.
     @ingroup MprBuf
  */
-extern char *mprGetBufEnd(MprBuf *buf);
+extern int mprGetCharFromBuf(MprBuf *buf);
 
 /**
     Grow the buffer
@@ -3335,27 +3353,6 @@ extern int mprLookAtNextCharInBuf(MprBuf *buf);
 extern int mprLookAtLastCharInBuf(MprBuf *buf);
 
 /**
-    Put a character to the buffer.
-    @description Append a character to the buffer at the end position and increment the end pointer.
-    @param buf Buffer created via mprCreateBuf
-    @param c Character to append
-    @returns Zero if successful and otherwise a negative error code 
-    @ingroup MprBuf
- */
-extern int mprPutCharToBuf(MprBuf *buf, int c);
-
-/**
-    Put padding characters to the buffer.
-    @description Append padding characters to the buffer at the end position and increment the end pointer.
-    @param buf Buffer created via mprCreateBuf
-    @param c Character to append
-    @param count Count of pad characters to put
-    @returns Zero if successful and otherwise a negative error code 
-    @ingroup MprBuf
- */
-extern ssize mprPutPadToBuf(MprBuf *buf, int c, ssize count);
-
-/**
     Put a block to the buffer.
     @description Append a block of data  to the buffer at the end position and increment the end pointer.
     @param buf Buffer created via mprCreateBuf
@@ -3367,6 +3364,27 @@ extern ssize mprPutPadToBuf(MprBuf *buf, int c, ssize count);
 extern ssize mprPutBlockToBuf(MprBuf *buf, cchar *ptr, ssize size);
 
 /**
+    Put a character to the buffer.
+    @description Append a character to the buffer at the end position and increment the end pointer.
+    @param buf Buffer created via mprCreateBuf
+    @param c Character to append
+    @returns Zero if successful and otherwise a negative error code 
+    @ingroup MprBuf
+ */
+extern int mprPutCharToBuf(MprBuf *buf, int c);
+
+/**
+    Put a formatted string to the buffer.
+    @description Format a string and append to the buffer at the end position and increment the end pointer.
+    @param buf Buffer created via mprCreateBuf
+    @param fmt Printf style format string
+    @param ... Variable arguments for the format string
+    @returns Zero if successful and otherwise a negative error code 
+    @ingroup MprBuf
+ */
+extern ssize mprPutFmtToBuf(MprBuf *buf, cchar *fmt, ...);
+
+/**
     Put an integer to the buffer.
     @description Append a integer to the buffer at the end position and increment the end pointer.
     @param buf Buffer created via mprCreateBuf
@@ -3375,6 +3393,17 @@ extern ssize mprPutBlockToBuf(MprBuf *buf, cchar *ptr, ssize size);
     @ingroup MprBuf
  */
 extern ssize mprPutIntToBuf(MprBuf *buf, int64 i);
+
+/**
+    Put padding characters to the buffer.
+    @description Append padding characters to the buffer at the end position and increment the end pointer.
+    @param buf Buffer created via mprCreateBuf
+    @param c Character to append
+    @param count Count of pad characters to put
+    @returns Zero if successful and otherwise a negative error code 
+    @ingroup MprBuf
+ */
+extern ssize mprPutPadToBuf(MprBuf *buf, int c, ssize count);
 
 /**
     Put a string to the buffer.
@@ -3398,17 +3427,6 @@ extern ssize mprPutStringToBuf(MprBuf *buf, cchar *str);
 extern ssize mprPutSubStringToBuf(MprBuf *buf, cchar *str, ssize count);
 
 /**
-    Put a formatted string to the buffer.
-    @description Format a string and append to the buffer at the end position and increment the end pointer.
-    @param buf Buffer created via mprCreateBuf
-    @param fmt Printf style format string
-    @param ... Variable arguments for the format string
-    @returns Zero if successful and otherwise a negative error code 
-    @ingroup MprBuf
- */
-extern ssize mprPutFmtToBuf(MprBuf *buf, cchar *fmt, ...);
-
-/**
     Refill the buffer with data
     @description Refill the buffer by calling the refill procedure specified via #mprSetBufRefillProc
     @param buf Buffer created via mprCreateBuf
@@ -3426,6 +3444,26 @@ extern int mprRefillBuf(MprBuf *buf);
 extern void mprResetBufIfEmpty(MprBuf *buf);
 
 /**
+    Set the maximum buffer size
+    @description Update the maximum buffer size set when the buffer was created
+    @param buf Buffer created via mprCreateBuf
+    @param maxSize New maximum size the buffer can grow to
+    @ingroup MprBuf
+ */
+extern void mprSetBufMax(MprBuf *buf, ssize maxSize);
+
+/**
+    Set the buffer refill procedure
+    @description Define a buffer refill procedure. The MprBuf module will not invoke or manage this refill procedure.
+        It is simply stored to allow upper layers to use and provide their own auto-refill mechanism.
+    @param buf Buffer created via mprCreateBuf
+    @param fn Callback function to store.
+    @param arg Callback data argument.
+    @ingroup MprBuf
+ */
+extern void mprSetBufRefillProc(MprBuf *buf, MprBufProc fn, void *arg);
+
+/**
     Set the buffer size
     @description Set the current buffer content size and maximum size limit. Setting a current size will
         immediately grow the buffer to be this size. If the size is less than the current buffer size, 
@@ -3440,26 +3478,6 @@ extern void mprResetBufIfEmpty(MprBuf *buf);
     @ingroup MprBuf
  */
 extern int mprSetBufSize(MprBuf *buf, ssize size, ssize maxSize);
-
-/**
-    Get the buffer refill procedure
-    @description Return the buffer refill callback function.
-    @param buf Buffer created via mprCreateBuf
-    @returns The refill call back function if defined.
-    @ingroup MprBuf
- */
-extern MprBufProc mprGetBufRefillProc(MprBuf *buf);
-
-/**
-    Set the buffer refill procedure
-    @description Define a buffer refill procedure. The MprBuf module will not invoke or manage this refill procedure.
-        It is simply stored to allow upper layers to use and provide their own auto-refill mechanism.
-    @param buf Buffer created via mprCreateBuf
-    @param fn Callback function to store.
-    @param arg Callback data argument.
-    @ingroup MprBuf
- */
-extern void mprSetBufRefillProc(MprBuf *buf, MprBufProc fn, void *arg);
 
 #if DOXYGEN || BLD_CHAR_LEN > 1
 /**
@@ -3509,17 +3527,17 @@ extern int mprPutFmtToWideBuf(MprBuf *buf, cchar *fmt, ...);
 #define mprPutFmtToWideBuf      mprPutFmtToBuf
 #endif
 
-/*
+/**
     Format a date according to RFC822: (Fri, 07 Jan 2003 12:12:21 PDT)
  */
 #define MPR_RFC_DATE        "%a, %d %b %Y %T %Z"
 
-/*
+/**
     Default date format used in mprFormatLocalTime/mprFormatUniversalTime when no format supplied
  */
 #define MPR_DEFAULT_DATE    "%a %b %d %T %Y %Z"
 
-/*
+/**
     Date format for use in HTTP (headers)
  */
 #define MPR_HTTP_DATE       "%a, %d %b %Y %T GMT"
@@ -3542,6 +3560,7 @@ extern int mprCreateTimeService();
     @param t1 First time
     @param t2 Second time
     @returns Zero if equal, -1 if t1 is less than t2 otherwise one.
+    @ingroup MprTime
  */
 extern int mprCompareTime(MprTime t1, MprTime t2);
 
@@ -3603,13 +3622,20 @@ extern char *mprFormatTm(cchar *fmt, struct tm *timep);
  */
 extern MprTime mprGetTime();
 
-//  DOC
+/**
+    Get a string representation of the current date/time
+    @description Get the current date/time as a string according to the given format.
+    @param fmt Date formatting string. See strftime for acceptable date format specifiers. 
+        If null, then this routine uses the #MPR_DEFAULT_DATE format.
+    @return An allocated date string
+ */
 extern char *mprGetDate(char *fmt);
 
 /**
     Get the CPU tick count.
-    @description Get the elapsed CPU tick count. Will return the system time if CPU ticks are not available.
-    @return Returns the CPU time in ticks
+    @description Get the current CPU tick count. This is a system dependant high resolution timer. On some systems, 
+    this return time in nanosecond resolution. 
+    @return Returns the CPU time in ticks. Will return the system time if CPU ticks are not available.
     @ingroup MprTime
  */
 extern uint64 mprGetTicks();
@@ -5207,7 +5233,7 @@ extern char *mprTrimPathExt(cchar *path);
     @description The file is created, written and closed. If the file already exists, it is recreated.
     @param path Filename to create
     @param buf Buffer of data to write to the file
-    @param len Size of the #buf parameter in bytes
+    @param len Size of the buf parameter in bytes
     @param mode File permissions with which to create the file. E.g. 0644.
     @return The number of bytes written. Should equal len. Otherwise return a negative MPR error code.
  */
@@ -5355,7 +5381,7 @@ extern int mprUnloadNativeModule(MprModule *mp);
 /**
     Set a module timeout
     @param module Module object to modify
-    @param timeout Inactivity timeout in ticks before unloading the module
+    @param timeout Inactivity timeout in milliseconds before unloading the module
     @internal
  */
 extern void mprSetModuleTimeout(MprModule *module, MprTime timeout);
@@ -5545,12 +5571,10 @@ extern void mprEnableDispatcher(MprDispatcher *dispatcher);
 #define MPR_SERVICE_NO_GC       0x8         /**< Don't run GC */
 
 /**
-    Schedule events. This can be called by any thread. Typically an app will dedicate one thread to be an event service 
+    Service events. This can be called by any thread. Typically an app will dedicate one thread to be an event service 
     thread. This call will service events until the timeout expires or if MPR_SERVICE_ONE_THING is specified in flags, 
     after one event. This will service all enabled dispatcher queues and pending I/O events.
-    @param dispatcher Primary dispatcher to service. This dispatcher is set to the running state and events on this
-        dispatcher will be serviced without starting a worker thread. This can be set to NULL.
-    @param timeout Time in milliseconds to wait. Set to zero for no wait. Set to -1 to wait forever.
+    @param delay Time in milliseconds to wait. Set to zero for no wait. Set to -1 to wait forever.
     @param flags If set to MPR_SERVICE_ONE_THING, this call will service at most one event. Otherwise set to zero.
     @returns The number of events serviced. Returns MPR_ERR_BUSY is another thread is servicing events and timeout is zero.
     @ingroup MprEvent
@@ -5560,8 +5584,8 @@ extern int mprServiceEvents(MprTime delay, int flags);
 /**
     Wait for an event to occur on the given dispatcher
     @param dispatcher Event dispatcher to monitor
-    @timeout Timeout for waiting in ticks
-    @return Zero if successful and an event occurred before the timeout expired. Returns MPR_ERR_TIMEOUT if no event
+    @param timeout for waiting in milliseconds
+    @return Zero if successful and an event occurred before the timeout expired. Returns #MPR_ERR_TIMEOUT if no event
         is fired before the timeout expires.
  */
 extern int mprWaitForEvent(MprDispatcher *dispatcher, MprTime timeout);
@@ -5660,7 +5684,7 @@ extern void mprRescheduleEvent(MprEvent *event, int period);
     Relay an event to a dispatcher. This invokes the callback proc as though it was invoked from the given dispatcher. 
     @param dispatcher Dispatcher object created via #mprCreateDispatcher
     @param proc Procedure to invoke
-    @param data Argument to #proc
+    @param data Argument to proc
     @param event Event object
     @internal
  */
@@ -5734,7 +5758,7 @@ typedef int (*MprXmlHandler)(struct MprXml *xp, int state, cchar *tagName, cchar
 /**
     XML input stream function
     @param xp XML instance reference
-    @param argument to input stream
+    @param arg to input stream
     @param buf Buffer into which to read data
     @param size Size of buf
  */
@@ -6698,53 +6722,57 @@ extern int mprGetSocketInfo(cchar *ip, int port, int *family, int *protocol, str
     Internal
  */
 extern MprModule *mprSslInit(cchar *path);
+
+/**
+    Create the SSL control structure
+ */
 extern struct MprSsl *mprCreateSsl();
 
 /**
     Set the ciphers to use for SSL
-    @param ssl SSL instance returned from #mprCreatessl
+    @param ssl SSL instance returned from #mprCreateSsl
     @param ciphers Cipher string
  */
 extern void mprSetSslCiphers(struct MprSsl *ssl, cchar *ciphers);
 
 /**
     Set the key file to use for SSL
-    @param ssl SSL instance returned from #mprCreatessl
+    @param ssl SSL instance returned from #mprCreateSsl
     @param keyFile Path to the SSL key file
  */
 extern void mprSetSslKeyFile(struct MprSsl *ssl, cchar *keyFile);
 
 /**
     Set certificate to use for SSL
-    @param ssl SSL instance returned from #mprCreatessl
+    @param ssl SSL instance returned from #mprCreateSsl
     @param certFile Path to the SSL certificate file
  */
 extern void mprSetSslCertFile(struct MprSsl *ssl, cchar *certFile);
 
 /**
     Set the client certificate file to use for SSL
-    @param ssl SSL instance returned from #mprCreatessl
+    @param ssl SSL instance returned from #mprCreateSsl
     @param caFile Path to the SSL client certificate file
  */
 extern void mprSetSslCaFile(struct MprSsl *ssl, cchar *caFile);
 
 /**
     Set the path for the client certificate directory
-    @param ssl SSL instance returned from #mprCreatessl
-    @param caFile Path to the SSL client certificate directory
+    @param ssl SSL instance returned from #mprCreateSsl
+    @param caPath Path to the SSL client certificate directory
  */
 extern void mprSetSslCaPath(struct MprSsl *ssl, cchar *caPath);
 
 /**
     Set the SSL protocol to use
-    @param ssl SSL instance returned from #mprCreatessl
-    @param protocol SSL protocol mask
+    @param ssl SSL instance returned from #mprCreateSsl
+    @param protocols SSL protocols mask
  */
 extern void mprSetSslProtocols(struct MprSsl *ssl, int protocols);
 
 /**
     Control the verification of SSL clients
-    @param ssl SSL instance returned from #mprCreatessl
+    @param ssl SSL instance returned from #mprCreateSsl
     @param on Set to true to enable client SSL verification.
  */
 extern void mprVerifySslClients(struct MprSsl *ssl, bool on);
@@ -7066,6 +7094,7 @@ extern void mprAddStandardSignals();
     or threads.
     @param signo Signal number to handle
     @param handler Call back procedure to invoke. This has the signature #MprSignalProc.
+    @param arg Argument to provide to the handler.
     @param dispatcher Event dispatcher on which to queue an event to run the handler.
     @param flags Set to either MPR_SIGNAL_BEFORE or MPR_SIGNAL_AFTER to run the handler before/after existing handlers.
  */
@@ -7446,7 +7475,9 @@ extern void mprSetCmdSearchPath(MprCmd *cmd, cchar *search);
 #define MPR_CACHE_PREPEND       0x10    /**< Set and prepend if already existing */
 
 /**
-    In-memory caching 
+    In-memory caching. The MprCache provides a fast, in-memory caching of cache items. Cache items are string key / value 
+    pairs. Cache items have a configurable lifespan and the Cache manager will automatically prune expired items. 
+    Items also have an associated version number that can be used when writing to do transactional writes.
  */
 typedef struct MprCache
 {
@@ -7474,25 +7505,108 @@ extern MprCache *mprCreateCache(int options);
     @param cache The cache instance object returned from #mprCreateCache.
  */
 extern void *mprDestroyCache(MprCache *cache);
+
+/**
+    Set the expiry date for a cache item
+    @param cache The cache instance object returned from #mprCreateCache.
+    @param key Cache item key
+    @param expires Time when the cache item will expire. If expires is zero, the item is immediately removed from the cache.
+    @return Zero if the expiry is successfully updated. Return MPR_ERR_CANT_FIND if the cache item is not present in the
+        cache.
+ */
 extern int mprExpireCache(MprCache *cache, cchar *key, MprTime expires);
+
+/**
+    Increment a numeric cache item
+    @param cache The cache instance object returned from #mprCreateCache.
+    @param key Cache item key
+    @param amount Numeric amount to increment the cache item. This may be a negative number to decrement the item.
+    @return The new value for the cache item after incrementing.
+ */
 extern int64 mprIncCache(MprCache *cache, cchar *key, int64 amount);
+
+/**
+    Read an item from the cache.
+    @param cache The cache instance object returned from #mprCreateCache.
+    @param key Cache item key
+    @param modified Optional MprTime value reference to receive the last modified time of the cache item. Set to null
+        if not required.
+    @param version Optional int64 value reference to receive the version number of the cache item. Set to null
+        if not required. Cache items have a version number that is incremented every time the item is updated.
+    @return The cache item value
+  */
 extern char *mprReadCache(MprCache *cache, cchar *key, MprTime *modified, int64 *version);
+
+/**
+    Remove items from the cache
+    @param cache The cache instance object returned from #mprCreateCache.
+    @param key Cache item key. If set to null, then remove all keys from the cache.
+    @return True if the cache item was removed.
+  */
 extern bool mprRemoveCache(MprCache *cache, cchar *key);
+
+/**
+    Set the cache resource limits
+    @param cache The cache instance object returned from #mprCreateCache.
+    @param keys Set the maximum number of keys the cache can store
+    @param lifespan Set the default lifespan for cache items in milliseconds
+    @param memory Memory limit in bytes for all cache keys and items.
+    @param resolution Set the cache item pruner resolution. This defines how frequently the cache manager will check
+        items for expiration.
+  */
 extern void mprSetCacheLimits(MprCache *cache, int64 keys, int64 lifespan, int64 memory, int resolution);
-extern ssize mprWriteCache(MprCache *cache, cchar *key, cchar *value, MprTime modified, MprTime expires, 
+
+/**
+    Write a cache item
+    @param cache The cache instance object returned from #mprCreateCache.
+    @param key Cache item key to write
+    @param value Value to set for the cache item
+    @param modified Value to set for the cache last modified time. If set to zero, the current time is obtained via
+        #mprGetTime.
+    @param lifespan Lifespan of the item in milliseconds. The item will be removed from the cache by the Cache manager
+        when the lifetime expires unless it is rewritten to extend the lifespan.
+    @param version Expected version number of the item. This is used to do transactional writes to the cache item.
+        First the version number is retrieved via #mprReadCache and that version number is supplied to mprWriteCache when
+        the item is updated. If another caller updates the item in between the read/write, the version number will not 
+        match when the item is subsequently written and this call will fail with the #MPR_ERR_BAD_STATE return code. Set to
+        zero if version checking is not required.
+    @param options Options to control how the item value is updated. Use #MPR_CACHE_SET to update the cache item and 
+        create if it does not exist. Use #MPR_CACHE_ADD to add the item only if it does not already exits. Use 
+        #MPR_CACHE_APPEND to append the parameter value to any existing cache item value. Use #MPR_CACHE_PREPEND to 
+        prepend the value.
+    @return If writing the cache item was successful this call returns the number of bytes written. Otherwise a negative 
+        MPR error code is returned. #MPR_ERR_BAD_STATE will be returned if an invalid version number is supplied.
+        #MPR_ERR_ALREADY_EXISTS will be returned if #MPR_CACHE_ADD is specified and the cache item already exists.
+ */
+extern ssize mprWriteCache(MprCache *cache, cchar *key, cchar *value, MprTime modified, MprTime lifespan, 
         int64 version, int options);
 
 /**
     Mime Type hash table entry (the URL extension is the key)
     @stability Evolving
     @defgroup MprMime MprMime
-    @see MprMime
+    @see MprMime mprAddMime mprCreateMimeTypes mprLookupMime mprSetMimeType mprGetMimeProgram
  */
 typedef struct MprMime {
-    //  MOB
-    char    *type;
-    char    *program;
+    char    *type;                          /**< Mime type string */
+    char    *program;                       /**< Mime type string */
 } MprMime;
+
+/**
+    Add a mime type to the mime type table
+    @param table type hash table returned by #mprCreateMimeTypes
+    @param ext Filename extension to use as a key for the given mime type
+    @param mimeType Mime type string to associate with the ext key
+    @return Mime type entry object. This is owned by the mime type table.
+ */
+extern MprMime *mprAddMime(MprHashTable *table, cchar *ext, cchar *mimeType);
+
+/**
+    Create the mime types
+    @param path Filename of a mime types definition file
+    @return Hash table of mime types keyed by file extension 
+ */
+extern MprHashTable *mprCreateMimeTypes(cchar *path);
 
 /** 
     Get the mime type for an extension.
@@ -7503,11 +7617,22 @@ typedef struct MprMime {
  */
 extern cchar *mprLookupMime(MprHashTable *table, cchar *ext);
 
-//  DOC
-//  MOB
-extern MprHashTable *mprCreateMimeTypes(cchar *path);
-extern MprMime *mprAddMime(MprHashTable *table, cchar *ext, cchar *mimeType);
+/**
+    Set the mime type program
+    @param table type hash table returned by #mprCreateMimeTypes
+    @param mimeType Mime type to update
+    @param program Program name to associate with this mime type
+    @return Zero if the update is successful. Otherwise return MPR_ERR_CANT_FIND if the mime type is not present in 
+        the mime type table.
+ */
 extern int mprSetMimeProgram(MprHashTable *table, cchar *mimeType, cchar *program);
+
+/**
+    Get the mime type program for a given mimeType
+    @param table type hash table returned by #mprCreateMimeTypes
+    @param mimeType Mime type to update
+    @return The program name associated with this mime type
+ */
 extern cchar *mprGetMimeProgram(MprHashTable *table, cchar *mimeType);
 
 /*
@@ -7565,12 +7690,13 @@ typedef struct Mpr {
     int             exitStrategy;           /**< How to exit the app (normal, immediate, graceful) */
     int             exitStatus;             /**< Proposed program exit status */
     int             flags;                  /**< Misc flags */
-    int             cmdlineLogging;         /**< App has specified --log on the command line */
     int             hasError;               /**< Mpr has an initialization error */
     int             marker;                 /**< Marker thread is active */
     int             marking;                /**< Actually marking objects now */
     int             state;                  /**< Processing state */
     int             sweeper;                /**< Sweeper thread is active */
+
+    bool            cmdlineLogging;         /**< App has specified --log on the command line */
 
     /*
         Service pointers
@@ -7644,7 +7770,6 @@ extern Mpr *mprGetMpr();
         by the unit test framework.
     @param flags
     @return Returns a pointer to the Mpr object. 
-    @stability Evolving.
     @ingroup Mpr
  */
 extern Mpr *mprCreate(int argc, char **argv, int flags);
@@ -7698,7 +7823,6 @@ extern bool mprShouldAbortRequests();
     Determine if the MPR is exiting
     @description Returns true if the MPR is in the process of exiting
     @returns True if the App has been instructed to exit.
-    @stability Evolving.
     @ingroup Mpr
  */
 extern bool mprIsExiting();
@@ -7854,7 +7978,6 @@ extern cchar *mprGetIpAddr();
         observe debug mode and disable timeouts and timers so that single-step
         debugging can be used.
     @return Returns true if debug mode is enabled, otherwise returns false.
-    @stability Evolving.
     @ingroup Mpr
  */
 extern bool mprGetDebugMode();
@@ -7871,7 +7994,6 @@ extern int mprGetLogLevel();
     @description Returns an O/S error code from the most recent system call. 
         This returns errno on Unix systems or GetLastError() on Windows..
     @return The O/S error code.
-    @stability Evolving.
     @ingroup Mpr
  */
 extern int mprGetOsError();
@@ -7881,27 +8003,48 @@ extern int mprGetOsError();
     @description Returns an error code from the most recent system call. 
         This will be mapped to be either a POSIX error code or an MPR error code.
     @return The mapped error code.
-    @stability Evolving.
     @ingroup Mpr
  */
 extern int mprGetError();
 
-//  MOB
-extern int mprSetCmdlineLogging(int on);
-extern int mprGetCmdlineLogging();
+/**
+    Set if command line logging was requested.
+    @description Logging may be initiated by invoking an MPR based program with a "--log" switch. This API assists
+        programs to tell the MPR that command line logging has been used.
+    @param on Set to true to indicate command line logging is being used.
+    @return True if command line logging was enabled before this call.
+ */
+extern bool mprSetCmdlineLogging(bool on);
+
+/**
+    Get if command line logging is being used.
+    @description Logging may be initiated by invoking an MPR based program with a "--log" switch. This API assists
+        programs to tell the MPR that command line logging has been used.
+    @return True if command line logging is in use.
+*/
+extern bool mprGetCmdlineLogging();
 
 
 #define MPR_ARGV_ARGS_ONLY    0x1     /**< Command is missing program name */
 
-//  MOB
-extern int mprMakeArgv(cchar *cmd, int *argc, char ***argv, int flags);
+/**
+    Make a argv style array of command arguments
+    @description The given command is parsed and broken into separate arguments and returned in a null-terminated, argv
+        array. Arguments in the command may be quoted with single or double quotes to group words into one argument. 
+        Use back-quote "\\" to escape quotes.
+    @param command Command string to parse.
+    @param argv Output parameter containing the parsed arguments. 
+    @param flags Set to MPR_ARGV_ARGS_ONLY if the command string does not contain a program name. In this case, argv[0] 
+        will be set to "".
+    @return The count of arguments in argv
+ */
+extern int mprMakeArgv(cchar *command, char ***argv, int flags);
 
 /** 
     Turn on debug mode.
     @description Debug mode disables timeouts and timers. This makes debugging
         much easier.
     @param on Set to true to enable debugging mode.
-    @stability Evolving.
     @ingroup Mpr
  */
 extern void mprSetDebugMode(bool on);
@@ -7913,7 +8056,6 @@ extern void mprSetDebugMode(bool on);
         is greater than the defined logging level, the message is ignored.
     @param level New logging level. Must be 0-9 inclusive.
     @return Returns the previous logging level.
-    @stability Evolving.
     @ingroup MprLog
  */
 extern void mprSetLogLevel(int level);
@@ -7926,8 +8068,21 @@ extern void mprSetLogLevel(int level);
 extern void mprSleep(MprTime msec);
 
 #if BLD_WIN_LIKE
-//  MOB
-extern char *mprReadRegistry(cchar *key, cchar *val);
+/**
+    Read a key from the Windows registry
+    @param key Windows registry key to read
+    @param name Windows registry name to read.
+    @return The key/name setting
+  */
+extern char *mprReadRegistry(cchar *key, cchar *name);
+
+/**
+    Write a key value the Windows registry
+    @param key Windows registry key to write
+    @param name Windows registry name to write.
+    @param value Value to set the key/name to.
+    @return Zero if successful. Otherwise return a negative MPR error code.
+  */
 extern int mprWriteRegistry(cchar *key, cchar *name, cchar *value);
 #endif
 
@@ -7953,26 +8108,51 @@ extern int mprStartEventsThread();
         not be run. Use MPR_EXIT_NORMAL to allow garbage collection and finalizers to run. Use MPR_EXIT_GRACEFUL to
         allow all current requests and commands to complete before exiting.
     @param status Proposed program exit status.
-    @stability Evolving.
     @ingroup Mpr
  */
 extern void mprTerminate(int flags, int status);
 
-//  MOB
-extern bool mprIsService();
-extern void mprSetPriority(int pri);
-extern void mprWriteToOsLog(cchar *msg, int flags, int level);
-
 #if BLD_WIN_LIKE
-//  MOB
+/**
+    Get the Windows window handle
+    @return the windows HWND reference
+ */
 extern HWND mprGetHwnd();
-extern void mprSetHwnd(HWND h);
+
+/**
+    Set the MPR windows handle
+    @param handle Set the MPR default windows handle
+ */
+extern void mprSetHwnd(HWND handle);
+
+/**
+    Get the windows application instance
+    @return The application instance identifier
+ */
 extern long mprGetInst();
+
+/**
+    Set the windows application instance
+    @param inst The new windows application instance to set
+ */
 extern void mprSetInst(long inst);
+
+/**
+    Set the socket message number.
+    @description Set the socket message number to use when using WSAAsyncSelect for windows.
+    @param message Message number to use.
+  */
 extern void mprSetSocketMessage(int message);
 #endif
 
-extern int mprGetRandomBytes(char *buf, ssize size, int block);
+/**
+    Get some random data
+    @param buf Reference to a buffer to hold the random data
+    @param size Size of the buffer
+    @param block Set to true if it is acceptable to block while accumulating entropy sufficient to provide good 
+        random data. Setting to false will cause this API to not block and may return random data of a lower quality.
+  */
+extern int mprGetRandomBytes(char *buf, ssize size, bool block);
 
 /**
     Return the endian byte ordering for the application
@@ -7981,15 +8161,21 @@ extern int mprGetRandomBytes(char *buf, ssize size, int block);
  */
 extern int mprGetEndian();
 
-/*
-    Reference to a preallocated empty string
+/**
+    Reference to a permanent preallocated empty string.
     @return An empty string
     @ingroup Mpr
-    @internal
  */
 extern char* mprEmptyString();
-//  MOB
+
+/**
+  */
 extern void mprSetExitStrategy(int strategy);
+
+/*
+    Internal
+ */
+extern void mprWriteToOsLog(cchar *msg, int flags, int level);
 
 /*
    External dependencies
@@ -8020,15 +8206,17 @@ typedef struct MprTestDef {
 } MprTestDef;
 
 
-/*
-    Assert macros for use by unit tests
- */
 #undef  assert
+/**
+    Assert macro for use by unit tests
+ */
 #define assert(C)   assertTrue(gp, MPR_LOC, C, #C)
 
 #define MPR_TEST(level, functionName) { #functionName, level, functionName, 0, 0 }
 
-//  MOB
+/**
+    Test service facility
+ */
 typedef struct MprTestService {
     int             argc;                   /**< Count of arguments */
     char            **argv;                 /**< Arguments for test */
@@ -8054,16 +8242,44 @@ typedef struct MprTestService {
     MprMutex        *mutex;                 /**< Multi-thread sync */
 } MprTestService;
 
+/**
+    Callback parser for non-standard command line arguments
+ */
 typedef int (*MprTestParser)(int argc, char **argv);
 
-//  MOB
+/**
+    Create the test service
+    @return An MprTestService control object
+    @internal
+ */
 extern MprTestService *mprCreateTestService();
-extern int          mprParseTestArgs(MprTestService *ts, int argc, char **argv, MprTestParser extraParser);
-extern int          mprRunTests(MprTestService *sp);
-extern void         mprReportTestResults(MprTestService *sp);
+
+/**
+    Parse test command arguments
+    @param ts Test service object returned from #mprCreateTestService
+    @param argc Count of arguments in argv
+    @param argv Argument array
+    @param extraParser Callback function to invoke to parse non-standard arguments.
+    @return Zero if the command have been successfully parsed. Otherwise return a negative MPR error code.
+ */
+extern int mprParseTestArgs(MprTestService *ts, int argc, char **argv, MprTestParser extraParser);
+
+/**
+    Run the define unit tests
+    @param ts Test service object returned from #mprCreateTestService
+ */
+extern int mprRunTests(MprTestService *ts);
+
+/**
+    Report the test results
+    @description Test results are written to stdout.
+    @param ts Test service object returned from #mprCreateTestService
+ */
+extern void mprReportTestResults(MprTestService *ts);
 
 /**
     A test group is a group of tests to cover a unit of functionality. A test group may contain other test groups.
+    @internal
  */
 typedef struct MprTestGroup {
     char            *name;                  /**< Name of test */
@@ -8097,18 +8313,76 @@ typedef struct MprTestGroup {
 } MprTestGroup;
 
 
-//  MOB
+/**
+    Add a test group to the test service
+    @param ts Test service object returned from #mprCreateTestService
+    @param def Test group definition to add
+    @return MprTestGroup record for the test group 
+ */
 extern MprTestGroup *mprAddTestGroup(MprTestService *ts, MprTestDef *def);
-extern void         mprResetTestGroup(MprTestGroup *gp);
-extern bool         assertTrue(MprTestGroup *gp, cchar *loc, bool success, cchar *msg);
-extern void         mprSignalTestComplete(MprTestGroup *gp);
-extern void         mprSignalTest2Complete(MprTestGroup *gp);
-extern bool         mprWaitForTestToComplete(MprTestGroup *gp, MprTime timeout);
-extern bool         mprWaitForTest2ToComplete(MprTestGroup *gp, MprTime timeout);
 
+/**
+    Reset a test group.
+    @description This resets the success/fail flag for the group
+    @param gp Test group reference
+ */
+extern void mprResetTestGroup(MprTestGroup *gp);
+
+/**
+    Assert test
+    @description This is the primary assertion test routine for unit tests. This is typically invoked by using the
+        #assert macro. 
+    @param gp Test group reference
+    @param loc Program location string including filename and line number
+    @param success Boolean indicating whether the test passed or failed.
+    @param msg Message to display if the test failed.
+ */
+extern bool assertTrue(MprTestGroup *gp, cchar *loc, bool success, cchar *msg);
+
+/**
+    Signal a test is complete
+    @description This awakens a thread that has called mprWaitForTestToComplete
+    @param gp Test group reference
+ */
+extern void mprSignalTestComplete(MprTestGroup *gp);
+
+/**
+    Signal a test is complete.
+    @description This awakens a thread that has called mprWaitForTest2ToComplete
+    @param gp Test group reference
+    @internal
+ */
+extern void mprSignalTest2Complete(MprTestGroup *gp);
+
+/**
+    Wait for a test to complete
+    @description This blocks a thread until a test has completed and is signalled by
+        another thread calling #mprSignalTestComplete.
+    @param gp Test group reference
+    @param timeout Timeout in milliseconds to block waiting for the test to complete
+    @return True if the test was completed within the timeout
+    @internal
+ */
+extern bool mprWaitForTestToComplete(MprTestGroup *gp, MprTime timeout);
+
+/**
+    Wait for a test to complete
+    @description This blocks a thread until a test has completed and is signalled by
+        another thread calling #mprSignalTest2Complete.
+    @param gp Test group reference
+    @param timeout Timeout in milliseconds to block waiting for the test to complete
+    @return True if the test was completed within the timeout
+    @internal
+ */
+extern bool mprWaitForTest2ToComplete(MprTestGroup *gp, MprTime timeout);
+
+/**
+    Test failure record
+    @internal
+ */
 typedef struct MprTestFailure {
-    char            *loc;
-    char            *message;
+    char            *loc;               /**< Program location of the failure */
+    char            *message;           /**< Failure message typically the assertion program text */
 } MprTestFailure;
 
 

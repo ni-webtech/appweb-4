@@ -3007,7 +3007,7 @@ static int parseArgs(char *args, char **argv)
 /*
     Make an argv array
  */
-int mprMakeArgv(cchar *command, int *argcp, char ***argvp, int flags)
+int mprMakeArgv(cchar *command, char ***argvp, int flags)
 {
     char    **argv, *vector, *args;
     ssize   len;
@@ -3033,12 +3033,9 @@ int mprMakeArgv(cchar *command, int *argcp, char ***argvp, int flags)
 
     parseArgs(args, argv);
     if (flags & MPR_ARGV_ARGS_ONLY) {
-        argv[0] = sclone("");
+        argv[0] = MPR->emptyString;
     }
     argv[argc] = 0;
-    if (argcp) {
-        *argcp = argc;
-    }
     *argvp = argv;
     return argc;
 }
@@ -4486,6 +4483,7 @@ int mprExpireCache(MprCache *cache, cchar *key, MprTime expires)
 int64 mprIncCache(MprCache *cache, cchar *key, int64 amount)
 {
     CacheItem   *item;
+    int64       value;
     char        nbuf[32];
 
     mprAssert(cache);
@@ -4495,6 +4493,7 @@ int64 mprIncCache(MprCache *cache, cchar *key, int64 amount)
         cache = cache->shared;
         mprAssert(cache == shared);
     }
+    value = amount;
 
     lock(cache);
     if ((item = mprLookupKey(cache->store, key)) == 0) {
@@ -4502,16 +4501,16 @@ int64 mprIncCache(MprCache *cache, cchar *key, int64 amount)
             return 0;
         }
     } else {
-        amount += stoi(item->data, 10, 0);
+        value += stoi(item->data, 10, 0);
     }
     if (item->data) {
         cache->usedMem -= slen(item->data);
     }
-    item->data = itos(nbuf, sizeof(nbuf), amount, 10);
+    item->data = itos(nbuf, sizeof(nbuf), value, 10);
     cache->usedMem += slen(item->data);
     item->version++;
     unlock(cache);
-    return stoi(item->data, 10, 0);
+    return value;
 }
 
 
@@ -5133,7 +5132,7 @@ int mprRunCmd(MprCmd *cmd, cchar *command, char **out, char **err, int flags)
     int     argc;
 
     mprAssert(cmd);
-    if (mprMakeArgv(command, &argc, &argv, 0) < 0 || argv == 0) {
+    if ((argc = mprMakeArgv(command, &argv, 0)) < 0 || argv == 0) {
         return 0;
     }
     cmd->makeArgv = argv;
@@ -12595,9 +12594,9 @@ void mprSetLogLevel(int level)
 }
 
 
-int mprSetCmdlineLogging(int on)
+bool mprSetCmdlineLogging(bool on)
 {
-    int     wasLogging;
+    bool    wasLogging;
 
     wasLogging = MPR->cmdlineLogging;
     MPR->cmdlineLogging = on;
@@ -12605,7 +12604,7 @@ int mprSetCmdlineLogging(int on)
 }
 
 
-int mprGetCmdlineLogging()
+bool mprGetCmdlineLogging()
 {
     return MPR->cmdlineLogging;
 }
@@ -24473,7 +24472,7 @@ void mprStopOsService()
 }
 
 
-int mprGetRandomBytes(char *buf, ssize length, int block)
+int mprGetRandomBytes(char *buf, ssize length, bool block)
 {
     ssize   sofar, rc;
     int     fd;
@@ -24482,7 +24481,6 @@ int mprGetRandomBytes(char *buf, ssize length, int block)
     if (fd < 0) {
         return MPR_ERR_CANT_OPEN;
     }
-
     sofar = 0;
     do {
         rc = read(fd, &buf[sofar], length);
@@ -24672,7 +24670,7 @@ int access(const char *path, int mode)
 }
 
 
-int mprGetRandomBytes(char *buf, int length, int block)
+int mprGetRandomBytes(char *buf, int length, bool block)
 {
     int     i;
 
@@ -26332,7 +26330,7 @@ HWND mprGetHwnd()
 }
 
 
-int mprGetRandomBytes(char *buf, ssize length, int block)
+int mprGetRandomBytes(char *buf, ssize length, bool block)
 {
     HCRYPTPROV      prov;
     int             rc;
@@ -26709,13 +26707,12 @@ void mprStopOsService()
 }
 
 
-int mprGetRandomBytes(char *buf, int length, int block)
+int mprGetRandomBytes(char *buf, int length, bool block)
 {
     HCRYPTPROV      prov;
     int             rc;
 
     rc = 0;
-
     if (!CryptAcquireContext(&prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | 0x40)) {
         return mprGetError();
     }

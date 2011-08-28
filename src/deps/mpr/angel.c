@@ -295,7 +295,7 @@ static void angel()
                     close(i);
                 }
                 if (app->serviceArgs && *app->serviceArgs) {
-                    mprMakeArgv(app->serviceArgs, &ac, &av, 0);
+                    ac = mprMakeArgv(app->serviceArgs, &av, 0);
                 } else {
                     ac = 0;
                 }
@@ -621,7 +621,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
         mprError("Can't initialize application Window");
         return FALSE;
     }
-    if (mprMakeArgv(args, &argc, &argv, MPR_ARGV_ARGS_ONLY) < 0) {
+    if ((argc = mprMakeArgv(args, &argv, MPR_ARGV_ARGS_ONLY)) < 0) {
         return FALSE;
     }
     for (nextArg = 1; nextArg < argc; nextArg++) {
