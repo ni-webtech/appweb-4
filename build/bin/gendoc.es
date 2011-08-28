@@ -93,7 +93,7 @@ module embedthis.doc {
         }
         emit('<div class="footnote">Generated on ' + new Date + '<br/>')
         emit('  Copyright &copy; <a href="http://www.embedthis.com">Embedthis Software</a> ' + 
-            new Date().fullYear + '.')
+            new Date().year + '.')
         emit('</div></div></body></html>')
     }
 
@@ -119,7 +119,6 @@ module embedthis.doc {
         Parse all symbol references and build an index of symbols
      */
     function parseReferences(xml: XML) {
-
         for each (def in xml) {
             if (def.@kind == "group" || def.@kind == "struct") {
                 symbols[def.compoundname] = def.@id
@@ -131,7 +130,6 @@ module embedthis.doc {
                 }
             }
         }
-
         var sections: XML = xml.compounddef.sectiondef
         for each (section in sections) {
             var members: XML = section.memberdef
@@ -229,7 +227,6 @@ module embedthis.doc {
         Emit a file level overview
      */
     function emitOverview(xml: XML) {
-
         emit("<h1>" + title + "</h1>")
         for each (def in xml) {
             if (def.@kind != "file") {
@@ -264,7 +261,6 @@ module embedthis.doc {
         Emit an index of all services
      */
     function emitServiceIndex(def: XML) {
-
         if (all || def.briefdescription != "" || def.detaileddescription != '') {
             emit('<tr class="apiDef">')
             emit('<td class="apiName"><a href="#' + def.@id + '" class="nameRef">' + def.compoundname + '</a></td>')
@@ -275,10 +271,9 @@ module embedthis.doc {
 
 
     /*
-        Emit an index of all functions
+        Generate an index of all functions
      */
-    function emitFunctionIndex(def: XML, section: XML) {
-
+    function genFunctionIndex(def: XML, section: XML, index: Object) {
         var members: XML = section.memberdef
 
         for each (m in members) {
@@ -289,13 +284,11 @@ module embedthis.doc {
                 if (def.@kind == "file" && m.@id.toString().startsWith("group__")) {
                     continue
                 }
-
                 let definition = m.definition.toString().split(" ")
                 typedef = definition.slice(0, -1).join(" ")
                 name = definition.slice(-1)
 
-                emit('<tr class="apiDef">')
-                str = '<td class="apiType">' + ref(typedef) + '</td><td>'
+                let str = '<tr class="apiDef"><td class="apiType">' + ref(typedef) + '</td><td>'
                 str += '<a href="#' + m.@id + '" class="nameRef">' + name + '</a>'
 
                 args = m.argsstring.toString().trim('(').split(",")
@@ -307,11 +300,11 @@ module embedthis.doc {
                     }
                     str += "(" + result.join(", ")
                 }
-                emit(str + '</td></tr>')
+                str += '</td></tr>'
                 if (m.briefdescription != "") {
-                    emit('<tr class="apiBrief"><td>&nbsp;</td><td>' + 
-                        cleanDot(m.briefdescription.para) + '</td></tr>')
+                    str += '<tr class="apiBrief"><td>&nbsp;</td><td>' + cleanDot(m.briefdescription.para) + '</td></tr>'
                 }
+                index[name] = str
             }
         }
     }
@@ -321,7 +314,6 @@ module embedthis.doc {
         Emit an index of all #define directives
      */
     function emitDefineIndex(section: XML) {
-
         var members: XML = section.memberdef
 
         for each (m in members) {
@@ -347,16 +339,15 @@ module embedthis.doc {
     /*
         Emit an index of struct based typedefs
      */
-    function emitTypeIndex(def: XML) {
-
+    function emitTypeIndex(def: XML, index: Object) {
+        var str
         if (all || def.briefdescription != "" || def.detaileddescription != '') {
-            emit('<tr class="apiDef">')
             name = def.compoundname
-
             symbols[name] = def.@id
-
-            emit('<td class="apiName"><a href="#' + symbols[name] + '" class="nameRef">' + name + '</a></td>')
-            emit('<td class="apiBrief">' + cleanDot(def.briefdescription.para) + '</td></tr>')
+            str = '<tr class="apiDef">'
+            str += '<td class="apiName"><a href="#' + symbols[name] + '" class="nameRef">' + name + '</a></td>'
+            str += '<td class="apiBrief">' + cleanDot(def.briefdescription.para) + '</td></tr>'
+            index[name] = str
         }
     }
 
@@ -364,9 +355,9 @@ module embedthis.doc {
     /*
         Emit an index of all simple (non-struct) typedefs
      */
-    function emitStructTypeIndex(section: XML) {
-
+    function emitStructTypeIndex(section: XML, index: Object) {
         var members: XML = section.memberdef
+        var str
 
         for each (m in members) {
             if (m.@kind == 'typedef') {
@@ -374,23 +365,21 @@ module embedthis.doc {
                     continue
                 }
                 symbols[m.name] = m.@id
-
                 def = m.definition.toString()
                 if (def.contains("(")) {
                     /* Parse "typedef void(* MprLogHandler)(cchar *file, ... cchar *msg) */
                     name = def.toString().replace(/typedef[^\(]*\([^\w]*([\w]+).*/, "$1")
-
                 } else {
                     def = def.toString().split(" ")
                     typedef = def.slice(0, -1).join(" ")
                     name = def.slice(-1)
                 }
-
-                emit('<tr class="apiDef">')
-                emit('<td class="apiName"><a href="#' + m.@id + '" class="nameRef">' + name + '</a></td>')
+                str = '<tr class="apiDef">'
+                str += '<td class="apiName"><a href="#' + m.@id + '" class="nameRef">' + name + '</a></td>'
                 if (m.briefdescription != "") {
-                    emit('<td class="apiBrief">' + cleanDot(m.briefdescription.para) + '</td></tr>')
+                    str += '<td class="apiBrief">' + cleanDot(m.briefdescription.para) + '</td></tr>'
                 }
+                index[name] = str
             }
         }
     }
@@ -463,7 +452,6 @@ module embedthis.doc {
         Emit function args
      */
     function emitArgs(args: XML) {
-
         result = []
         for each (p in args.param) {
             if (p.type == "...") {
@@ -482,7 +470,6 @@ module embedthis.doc {
         Used for function and simple typedef details
      */
     function emitDetail(def: XML, section: XML) {
-
         var members: XML = section.memberdef
 
         if (section.@kind == "func") {
@@ -491,7 +478,6 @@ module embedthis.doc {
         } else if (section.@kind == "typedef") {
             kind = "typedef"
         }
-
         for each (m in members) {
             if (m.@kind == kind) {
                 if (!all && m.briefdescription == '' && m.detaileddescription == '') {
@@ -500,9 +486,7 @@ module embedthis.doc {
                 if (def.@kind == "file" && m.@id.toString().startsWith("group__")) {
                     continue
                 }
-
                 emit('<a name="' + m.@id + '"></a>')
-
                 emit('<div class="api">')
                 emit('  <div class="prototype">')
 
@@ -628,7 +612,6 @@ module embedthis.doc {
 
 
     function emitIndicies(xml: XML) {
-
         var sections: XML
 
         /*
@@ -650,29 +633,39 @@ module embedthis.doc {
         emit('<a name="Functions"></a><h1>Functions</h1>')
         emit('  <table class="apiIndex" summary="Functions">')
 
+        let functionIndex = {}
         for each (def in xml) {
             sections = def.sectiondef
             for each (section in sections) {
                 if (section.@kind == "func") {
-                    emitFunctionIndex(def, section)
+                    genFunctionIndex(def, section, functionIndex)
                 }
             }
+        }
+        Object.sortProperties(functionIndex)
+        for each (i in functionIndex) {
+            emit(i)
         }
         emit('</table>')
 
         emit('<a name="Typedefs"></a><h1>Typedefs</h1>')
         emit('<table class="apiIndex" summary="typedefs">')
+        let typeIndex = {}
         for each (def in xml) {
             if (def.@kind == "struct") {
-                emitTypeIndex(def)
+                emitTypeIndex(def, typeIndex)
             } else {
                 sections = def.sectiondef
                 for each (section in sections) {
                     if (section.@kind == "typedef") {
-                        emitStructTypeIndex(section)
+                        emitStructTypeIndex(section, typeIndex)
                     }
                 }
             }
+        }
+        Object.sortProperties(typeIndex)
+        for each (i in typeIndex) {
+            emit(i)
         }
         emit('</table>')
 
@@ -784,11 +777,6 @@ module embedthis.doc {
                 xml = tmp
             }
         }
-/*
-for each (n in xml) {
-    e("id " + n.@id)
-}
-*/
         parse(xml)
         saveTags()
     }
