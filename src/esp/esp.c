@@ -883,7 +883,7 @@ static void error(cchar *fmt, ...)
     char        *msg;
 
     va_start(args, fmt);
-    msg = mprAsprintfv(fmt, args);
+    msg = sfmt(fmt, args);
     mprError("%s", msg);
     va_end(args);
     app->error++;
@@ -897,7 +897,7 @@ static void trace(cchar *tag, cchar *fmt, ...)
 
     if (!app->quiet) {
         va_start(args, fmt);
-        msg = mprAsprintfv(fmt, args);
+        msg = sfmt(fmt, args);
         tag = sfmt("[%s]", tag);
         mprRawLog(0, "%12s %s\n", tag, msg);
         va_end(args);

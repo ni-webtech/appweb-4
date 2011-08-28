@@ -208,8 +208,8 @@ void maRotateLog(cchar *path, int count, int maxSize)
     int     i;
 
     for (i = count - 1; i > 0; i--) {
-        from = mprAsprintf("%s.%d", path, i);
-        to = mprAsprintf("%s.%d", path, i - 1);
+        from = sfmt("%s.%d", path, i);
+        to = sfmt("%s.%d", path, i - 1);
         unlink(to);
         rename(from, to);
     }

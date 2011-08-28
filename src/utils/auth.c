@@ -255,7 +255,7 @@ static int updatePassFile(char *passFile)
     char        *tempFile, buf[MPR_BUFSIZE];
     MprFile     *file;
 
-    tempFile = mprAsprintf("%s.tmp", passFile);
+    tempFile = sfmt("%s.tmp", passFile);
     file = mprOpenFile(tempFile, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0664);
     if (file == 0) {
         mprError("%s: Can't open %s", programName, tempFile);

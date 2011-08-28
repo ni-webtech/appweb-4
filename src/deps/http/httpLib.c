@@ -1977,7 +1977,7 @@ static int setClientHeaders(HttpConn *conn)
             mprLog(MPR_ERROR, "Http: Can't create secret for digest authentication");
             return MPR_ERR_CANT_CREATE;
         }
-        conn->authCnonce = mprAsprintf("%s:%s:%x", http->secret, conn->authRealm, (int) http->now);
+        conn->authCnonce = sfmt("%s:%s:%x", http->secret, conn->authRealm, (int) http->now);
 
         mprSprintf(a1Buf, sizeof(a1Buf), "%s:%s:%s", conn->authUser, conn->authRealm, conn->authPassword);
         ha1 = mprGetMD5(a1Buf);
@@ -2118,7 +2118,7 @@ bool httpNeedRetry(HttpConn *conn, char **url)
  */
 void httpEnableUpload(HttpConn *conn)
 {
-    conn->boundary = mprAsprintf("--BOUNDARY--%Ld", conn->http->now);
+    conn->boundary = sfmt("--BOUNDARY--%Ld", conn->http->now);
     httpSetHeader(conn, "Content-Type", "multipart/form-data; boundary=%s", &conn->boundary[2]);
 }
 
@@ -3525,7 +3525,7 @@ int httpSetNamedVirtualEndpoints(Http *http, cchar *ip, int port)
 void httpFormatErrorV(HttpConn *conn, int status, cchar *fmt, va_list args)
 {
     if (conn->errorMsg == 0) {
-        conn->errorMsg = mprAsprintfv(fmt, args);
+        conn->errorMsg = sfmtv(fmt, args);
         if (status) {
             if (status < 0) {
                 status = HTTP_CODE_INTERNAL_SERVER_ERROR;
@@ -6657,7 +6657,7 @@ ssize httpWrite(HttpQueue *q, cchar *fmt, ...)
     char        *buf;
     
     va_start(vargs, fmt);
-    buf = mprAsprintfv(fmt, vargs);
+    buf = sfmtv(fmt, vargs);
     va_end(vargs);
     return httpWriteString(q, buf);
 }
@@ -6931,7 +6931,7 @@ static void createRangeBoundary(HttpConn *conn)
     tx = conn->tx;
     mprAssert(tx->rangeBoundary == 0);
     when = (int) conn->http->now;
-    tx->rangeBoundary = mprAsprintf("%08X%08X", PTOI(tx) + PTOI(conn) * when, when);
+    tx->rangeBoundary = sfmt("%08X%08X", PTOI(tx) + PTOI(conn) * when, when);
 }
 
 
@@ -9831,7 +9831,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
             httpError(conn, HTTP_CODE_BAD_REQUEST, "Bad header key value");
         }
         if ((oldValue = mprLookupKey(rx->headers, key)) != 0) {
-            mprAddKey(rx->headers, key, mprAsprintf("%s, %s", oldValue, value));
+            mprAddKey(rx->headers, key, sfmt("%s, %s", oldValue, value));
         } else {
             mprAddKey(rx->headers, key, sclone(value));
         }
@@ -12088,7 +12088,7 @@ void httpAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
     mprAssert(fmt && *fmt);
 
     va_start(vargs, fmt);
-    value = mprAsprintfv(fmt, vargs);
+    value = sfmtv(fmt, vargs);
     va_end(vargs);
 
     if (!mprLookupKey(conn->tx->headers, key)) {
@@ -12125,12 +12125,12 @@ void httpAppendHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
     mprAssert(fmt && *fmt);
 
     va_start(vargs, fmt);
-    value = mprAsprintfv(fmt, vargs);
+    value = sfmtv(fmt, vargs);
     va_end(vargs);
 
     oldValue = mprLookupKey(conn->tx->headers, key);
     if (oldValue) {
-        addHeader(conn, key, mprAsprintf("%s, %s", oldValue, value));
+        addHeader(conn, key, sfmt("%s, %s", oldValue, value));
     } else {
         addHeader(conn, key, value);
     }
@@ -12150,7 +12150,7 @@ void httpAppendHeaderString(HttpConn *conn, cchar *key, cchar *value)
 
     oldValue = mprLookupKey(conn->tx->headers, key);
     if (oldValue) {
-        addHeader(conn, key, mprAsprintf("%s, %s", oldValue, value));
+        addHeader(conn, key, sfmt("%s, %s", oldValue, value));
     } else {
         addHeader(conn, key, value);
     }
@@ -12169,7 +12169,7 @@ void httpSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
     mprAssert(fmt && *fmt);
 
     va_start(vargs, fmt);
-    value = mprAsprintfv(fmt, vargs);
+    value = sfmtv(fmt, vargs);
     va_end(vargs);
     addHeader(conn, key, value);
 }
@@ -12223,7 +12223,7 @@ ssize httpFormatResponsev(HttpConn *conn, cchar *fmt, va_list args)
     char        *body;
 
     tx = conn->tx;
-    body = mprAsprintfv(fmt, args);
+    body = sfmtv(fmt, args);
     tx->altBody = body;
     tx->responded = 1;
     httpOmitBody(conn);
@@ -12252,11 +12252,11 @@ ssize httpFormatBody(HttpConn *conn, cchar *title, cchar *fmt, ...)
     tx = conn->tx;
     va_start(args, fmt);
 
-    body = mprAsprintfv(fmt, args);
+    body = sfmtv(fmt, args);
     if (scmp(conn->rx->accept, "text/plain") == 0) {
         msg = body;
     } else {
-        msg = mprAsprintf(
+        msg = sfmt(
             "<!DOCTYPE html>\r\n"
             "<html><head><title>%s</title></head>\r\n"
             "<body>\r\n%s\r\n</body>\r\n</html>\r\n",
@@ -12280,7 +12280,7 @@ void httpSetResponseBody(HttpConn *conn, int status, cchar *fmt, ...)
     tx = conn->tx;
 
     va_start(args, fmt);
-    msg = mprAsprintfv(fmt, args);
+    msg = sfmtv(fmt, args);
     tx->status = status;
     if (tx->altBody == 0) {
         httpFormatBody(conn, httpLookupStatus(conn->http, status), "%s", msg);
@@ -12301,7 +12301,7 @@ void httpSetResponseError(HttpConn *conn, int status, cchar *fmt, ...)
     mprAssert(fmt && fmt);
 
     va_start(args, fmt);
-    msg = mprAsprintfv(fmt, args);
+    msg = sfmtv(fmt, args);
     statusMsg = httpLookupStatus(conn->http, status);
     if (scmp(conn->rx->accept, "text/plain") == 0) {
         msg = sfmt("Access Error: %d -- %s\r\n%s\r\n", status, statusMsg, msg);
@@ -12391,7 +12391,7 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
     httpSetHeader(conn, "Location", "%s", targetUri);
     mprAssert(tx->altBody == 0);
     msg = httpLookupStatus(conn->http, status);
-    tx->altBody = mprAsprintf(
+    tx->altBody = sfmt(
         "<!DOCTYPE html>\r\n"
         "<html><head><title>%s</title></head>\r\n"
         "<body><h1>%s</h1>\r\n<p>The document has moved <a href=\"%s\">here</a>.</p>\r\n"
@@ -14178,11 +14178,11 @@ void httpCreateCGIVars(HttpConn *conn)
     if (rx->files) {
         for (index = 0, hp = 0; (hp = mprGetNextKey(conn->rx->files, hp)) != 0; index++) {
             up = (HttpUploadFile*) hp->data;
-            mprAddKey(vars, mprAsprintf("FILE_%d_FILENAME", index), up->filename);
-            mprAddKey(vars, mprAsprintf("FILE_%d_CLIENT_FILENAME", index), up->clientFilename);
-            mprAddKey(vars, mprAsprintf("FILE_%d_CONTENT_TYPE", index), up->contentType);
-            mprAddKey(vars, mprAsprintf("FILE_%d_NAME", index), hp->key);
-            mprAddKeyFmt(vars, mprAsprintf("FILE_%d_SIZE", index), "%d", up->size);
+            mprAddKey(vars, sfmt("FILE_%d_FILENAME", index), up->filename);
+            mprAddKey(vars, sfmt("FILE_%d_CLIENT_FILENAME", index), up->clientFilename);
+            mprAddKey(vars, sfmt("FILE_%d_CONTENT_TYPE", index), up->contentType);
+            mprAddKey(vars, sfmt("FILE_%d_NAME", index), hp->key);
+            mprAddKeyFmt(vars, sfmt("FILE_%d_SIZE", index), "%d", up->size);
         }
     }
     if (conn->http->envCallback) {
@@ -14338,7 +14338,7 @@ void httpSetIntFormVar(HttpConn *conn, cchar *var, int value)
     MprHashTable    *vars;
     
     vars = httpGetFormVars(conn);
-    mprAddKey(vars, var, mprAsprintf("%d", value));
+    mprAddKey(vars, var, sfmt("%d", value));
 }
 
 

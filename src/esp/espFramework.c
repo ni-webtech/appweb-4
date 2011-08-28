@@ -99,7 +99,7 @@ void espAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
     mprAssert(fmt && *fmt);
 
     va_start(vargs, fmt);
-    httpAddHeaderString(conn, key, mprAsprintfv(fmt, vargs));
+    httpAddHeaderString(conn, key, sfmt(fmt, vargs));
     va_end(vargs);
 }
 
@@ -125,7 +125,7 @@ void espAppendHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
     mprAssert(fmt && *fmt);
 
     va_start(vargs, fmt);
-    httpAppendHeaderString(conn, key, mprAsprintfv(fmt, vargs));
+    httpAppendHeaderString(conn, key, sfmt(fmt, vargs));
     va_end(vargs);
 }
 
@@ -339,7 +339,7 @@ void espSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
     mprAssert(fmt && *fmt);
 
     va_start(vargs, fmt);
-    httpSetHeader(conn, key, mprAsprintfv(fmt, vargs));
+    httpSetHeader(conn, key, sfmt(fmt, vargs));
     va_end(vargs);
 }
 
@@ -365,7 +365,7 @@ ssize espWrite(HttpConn *conn, cchar *fmt, ...)
     char        *buf;
 
     va_start(vargs, fmt);
-    buf = mprAsprintfv(fmt, vargs);
+    buf = sfmt(fmt, vargs);
     va_end(vargs);
     return espWriteString(conn, buf);
 }

@@ -4143,7 +4143,7 @@ ssize mprPutFmtToBuf(MprBuf *bp, cchar *fmt, ...)
         return 0;
     }
     va_start(ap, fmt);
-    buf = mprAsprintfv(fmt, ap);
+    buf = sfmtv(fmt, ap);
     va_end(ap);
     return mprPutStringToBuf(bp, buf);
 }
@@ -4312,7 +4312,7 @@ int mprPutFmtToWideBuf(MprBuf *bp, cchar *fmt, ...)
     va_start(ap, fmt);
     space = mprGetBufSpace(bp);
     space += (bp->maxsize - bp->buflen);
-    buf = mprAsprintfv(fmt, ap);
+    buf = sfmtv(fmt, ap);
     wbuf = amtow(bp, buf, &len);
     rc = mprPutBlockToBuf(bp, (char*) wbuf, len * sizeof(MprChar));
     va_end(ap);
@@ -5200,11 +5200,11 @@ int mprRunCmdV(MprCmd *cmd, int argc, char **argv, char **out, char **err, int f
     if (rc < 0) {
         if (err) {
             if (rc == MPR_ERR_CANT_ACCESS) {
-                *err = mprAsprintf("Can't access command %s", cmd->program);
+                *err = sfmt("Can't access command %s", cmd->program);
             } else if (MPR_ERR_CANT_OPEN) {
-                *err = mprAsprintf("Can't open standard I/O for command %s", cmd->program);
+                *err = sfmt("Can't open standard I/O for command %s", cmd->program);
             } else if (rc == MPR_ERR_CANT_CREATE) {
-                *err = mprAsprintf("Can't create process for %s", cmd->program);
+                *err = sfmt("Can't create process for %s", cmd->program);
             }
         }
         return rc;
@@ -5760,10 +5760,10 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
             Add PATH and LD_LIBRARY_PATH 
          */
         if (!hasPath && (cp = getenv("PATH")) != 0) {
-            envp[index++] = mprAsprintf("PATH=%s", cp);
+            envp[index++] = sfmt("PATH=%s", cp);
         }
         if (!hasLibPath && (cp = getenv(LD_LIBRARY_PATH)) != 0) {
-            envp[index++] = mprAsprintf("%s=%s", LD_LIBRARY_PATH, cp);
+            envp[index++] = sfmt("%s=%s", LD_LIBRARY_PATH, cp);
         }
         envp[index++] = '\0';
         mprLog(4, "mprStartCmd %s", cmd->program);
@@ -6047,7 +6047,7 @@ static int makeChannel(MprCmd *cmd, int index)
     now = ((int) mprGetTime() & 0xFFFF) % 64000;
 
     lock(MPR->cmdService);
-    pipeName = mprAsprintf("\\\\.\\pipe\\MPR_%d_%d_%d.tmp", getpid(), (int) now, ++tempSeed);
+    pipeName = sfmt("\\\\.\\pipe\\MPR_%d_%d_%d.tmp", getpid(), (int) now, ++tempSeed);
     unlock(MPR->cmdService);
 
     /*
@@ -6120,7 +6120,7 @@ static int makeChannel(MprCmd *cmd, int index)
     static int      tempSeed = 0;
 
     file = &cmd->files[index];
-    file->name = mprAsprintf("/pipe/%s_%d_%d", BLD_PRODUCT, taskIdSelf(), tempSeed++);
+    file->name = sfmt("/pipe/%s_%d_%d", BLD_PRODUCT, taskIdSelf(), tempSeed++);
 
     if (pipeDevCreate(file->name, 5, MPR_BUFSIZE) < 0) {
         mprError("Can't create pipes to run %s", cmd->program);
@@ -10152,7 +10152,7 @@ ssize mprWriteFileFormat(MprFile *file, cchar *fmt, ...)
 
     rc = -1;
     va_start(ap, fmt);
-    if ((buf = mprAsprintfv(fmt, ap)) != NULL) {
+    if ((buf = sfmtv(fmt, ap)) != NULL) {
         rc = mprWriteFileString(file, buf);
     }
     va_end(ap);
@@ -10597,7 +10597,7 @@ MprHash *mprAddKeyFmt(MprHashTable *table, cvoid *key, cchar *fmt, ...)
     char        *value;
 
     va_start(ap, fmt);
-    value = mprAsprintfv(fmt, ap);
+    value = sfmtv(fmt, ap);
     va_end(ap);
     return mprAddKey(table, key, value);
 }
@@ -12424,7 +12424,7 @@ void mprRawLog(int level, cchar *fmt, ...)
         return;
     }
     va_start(args, fmt);
-    buf = mprAsprintfv(fmt, args);
+    buf = sfmtv(fmt, args);
     va_end(args);
 
     logOutput(MPR_RAW, 0, buf);
@@ -13204,7 +13204,7 @@ MprChar *mfmt(cchar *fmt, ...)
     mprAssert(fmt);
 
     va_start(ap, fmt);
-    mresult = mprAsprintfv(fmt, ap);
+    mresult = sfmtv(fmt, ap);
     va_end(ap);
     return amtow(mresult, NULL);
 }
@@ -13215,7 +13215,7 @@ MprChar *mfmtv(cchar *fmt, va_list arg)
     char    *mresult;
 
     mprAssert(fmt);
-    mresult = mprAsprintfv(fmt, arg);
+    mresult = sfmtv(fmt, arg);
     return amtow(mresult, NULL);
 }
 
@@ -14260,9 +14260,9 @@ char *mprGetAppPath()
     char    pbuf[MPR_MAX_STRING], *path;
     int     len;
 #if SOLARIS
-    path = mprAsprintf("/proc/%i/path/a.out", getpid()); 
+    path = sfmt("/proc/%i/path/a.out", getpid()); 
 #else
-    path = mprAsprintf("/proc/%i/exe", getpid()); 
+    path = sfmt("/proc/%i/exe", getpid()); 
 #endif
     len = readlink(path, pbuf, sizeof(pbuf) - 1);
     if (len < 0) {
@@ -14816,7 +14816,7 @@ char *mprJoinPath(cchar *path, cchar *other)
     } else {
         sep = defaultSep(fs);
     }
-    if ((join = mprAsprintf("%s%c%s", path, sep, other)) == 0) {
+    if ((join = sfmt("%s%c%s", path, sep, other)) == 0) {
         return 0;
     }
     return mprGetNormalizedPath(join);
@@ -14918,7 +14918,7 @@ char *mprGetTempPath(cchar *tempDir)
     path = 0;
 
     for (i = 0; i < 128; i++) {
-        path = mprAsprintf("%s/MPR_%d_%d_%d.tmp", dir, getpid(), now, ++tempSeed);
+        path = sfmt("%s/MPR_%d_%d_%d.tmp", dir, getpid(), now, ++tempSeed);
         file = mprOpenFile(path, O_CREAT | O_EXCL | O_BINARY, 0664);
         if (file) {
             mprCloseFile(file);
@@ -14961,7 +14961,7 @@ static char *toCygPath(cchar *path)
             /*
                 Path is like: "c:/some/other/path". Prepend "/cygdrive/c/"
              */
-            result = mprAsprintf("%s/%c%s", fs->cygdrive, path[0], &path[2]);
+            result = sfmt("%s/%c%s", fs->cygdrive, path[0], &path[2]);
             len = slen(result);
             if (isSep(result[len-1])) {
                 result[len-1] = '\0';
@@ -14995,13 +14995,13 @@ static char *fromCygPath(cchar *path)
             /*
                 Has a "/cygdrive/c/" style prefix
              */
-            buf = mprAsprintf("%c:", path[len+1], &path[len + 2]);
+            buf = sfmt("%c:", path[len+1], &path[len + 2]);
 
         } else {
             /*
                 Cygwin path. Prepend "c:/cygdrive"
              */
-            buf = mprAsprintf("%s/%s", fs->cygdrive, path);
+            buf = sfmt("%s/%s", fs->cygdrive, path);
         }
         result = mprGetAbsPath(buf);
 
@@ -15307,7 +15307,7 @@ char *mprResolvePath(cchar *base, cchar *path)
         return mprGetNormalizedPath(path);
     }
     dir = mprGetPathDir(base);
-    if ((join = mprAsprintf("%s/%s", dir, path)) == 0) {
+    if ((join = sfmt("%s/%s", dir, path)) == 0) {
         return 0;
     }
     return mprGetNormalizedPath(join);
@@ -21334,7 +21334,7 @@ static bool filterTestCast(MprTestGroup *gp, MprTestCase *tc)
         See if this test has been filtered
      */
     if (mprGetListLength(testFilter) > 0) {
-        fullName = mprAsprintf("%s.%s", gp->fullName, tc->name);
+        fullName = sfmt("%s.%s", gp->fullName, tc->name);
         next = 0;
         pattern = mprGetNextItem(testFilter, &next);
         while (pattern) {
@@ -25349,7 +25349,7 @@ MprChar *wfmt(MprChar *fmt, ...)
 
     va_start(ap, fmt);
     mfmt = awtom(fmt, NULL);
-    mresult = mprAsprintfv(mfmt, ap);
+    mresult = sfmtv(mfmt, ap);
     va_end(ap);
     return amtow(mresult, NULL);
 }
@@ -25361,7 +25361,7 @@ MprChar *wfmtv(MprChar *fmt, va_list arg)
 
     mprAssert(fmt);
     mfmt = awtom(fmt, NULL);
-    mresult = mprAsprintfv(mfmt, arg);
+    mresult = sfmtv(mfmt, arg);
     return amtow(mresult, NULL);
 }
 
@@ -28186,9 +28186,9 @@ static void xmlError(MprXml *xp, char *fmt, ...)
     mprAssert(fmt);
 
     va_start(args, fmt);
-    buf = mprAsprintfv(fmt, args);
+    buf = sfmtv(fmt, args);
     va_end(args);
-    xp->errMsg = mprAsprintf("XML error: %s\nAt line %d\n", buf, xp->lineNumber);
+    xp->errMsg = sfmt("XML error: %s\nAt line %d\n", buf, xp->lineNumber);
 }
 
 

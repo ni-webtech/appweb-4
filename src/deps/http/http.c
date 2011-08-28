@@ -287,7 +287,7 @@ static bool parseArgs(int argc, char **argv)
                     app->host = &app->host[1];
                 } 
                 if (isPort(app->host)) {
-                    app->host = mprAsprintf("http://127.0.0.1:%s", app->host);
+                    app->host = sfmt("http://127.0.0.1:%s", app->host);
                 } else {
                     app->host = sclone(app->host);
                 }
@@ -357,7 +357,7 @@ static bool parseArgs(int argc, char **argv)
             } else {
                 //  TODO - should allow multiple ranges
                 if (app->ranges == 0) {
-                    app->ranges = mprAsprintf("bytes=%s", argv[++nextArg]);
+                    app->ranges = sfmt("bytes=%s", argv[++nextArg]);
                 } else {
                     app->ranges = srejoin(app->ranges, ",", argv[++nextArg], NULL);
                 }
@@ -521,7 +521,7 @@ static void processing()
     int         j;
 
     if (app->chunkSize > 0) {
-        mprAddItem(app->headers, mprCreateKeyPair("X-Appweb-Chunk-Size", mprAsprintf("%d", app->chunkSize)));
+        mprAddItem(app->headers, mprCreateKeyPair("X-Appweb-Chunk-Size", sfmt("%d", app->chunkSize)));
     }
     app->activeLoadThreads = app->loadThreads;
     app->threadData = mprCreateList(app->loadThreads, 0);
@@ -1032,21 +1032,21 @@ static char *resolveUrl(HttpConn *conn, cchar *url)
     if (*url == '/') {
         if (app->host) {
             if (sncasecmp(app->host, "http://", 7) != 0 && sncasecmp(app->host, "https://", 8) != 0) {
-                return mprAsprintf("http://%s%s", app->host, url);
+                return sfmt("http://%s%s", app->host, url);
             } else {
-                return mprAsprintf("%s%s", app->host, url);
+                return sfmt("%s%s", app->host, url);
             }
         } else {
-            return mprAsprintf("http://127.0.0.1%s", url);
+            return sfmt("http://127.0.0.1%s", url);
         }
     } 
     if (sncasecmp(url, "http://", 7) != 0 && sncasecmp(url, "https://", 8) != 0) {
         if (*url == ':' && isPort(&url[1])) {
-            return mprAsprintf("http://127.0.0.1%s", url);
+            return sfmt("http://127.0.0.1%s", url);
         } else if (isPort(url)) {
-            return mprAsprintf("http://127.0.0.1:%s", url);
+            return sfmt("http://127.0.0.1:%s", url);
         } else {
-            return mprAsprintf("http://%s", url);
+            return sfmt("http://%s", url);
         }
     }
     return sclone(url);
