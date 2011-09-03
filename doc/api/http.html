@@ -104,6 +104,7 @@
 <tr class="apiDef"><td class="apiType"><a href="#group___http" class="ref">Http*</a></td><td><a href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66" class="nameRef">httpCreate</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create a Http service object.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___http_route" class="ref">HttpRoute*</a></td><td><a href="#group___http_route_1ga2d301112d0ee03a30a206ee0d8972ac4" class="nameRef">httpCreateAliasRoute</a>(<a href="#group___http_route" class="ref">HttpRoute</a> *parent, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *pattern, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path, int status)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create a route suitable for use as an alias.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___http_auth" class="ref">HttpAuth*</a></td><td><a href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07" class="nameRef">httpCreateAuth</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create an authentication object.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___http_rx_1ga714a887029b18fc0913bc66b65b7e944" class="nameRef">httpCreateCGIVars</a>(<a href="#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create CGI style form vars.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___http_route" class="ref">HttpRoute*</a></td><td><a href="#group___http_route_1gaacfd904666b9112759be6399e8e72f72" class="nameRef">httpCreateConfiguredRoute</a>(struct HttpHost *host, int serverSide)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create a configured route.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___http_conn" class="ref">HttpConn*</a></td><td><a href="#group___http_conn_1ga0523a9be63f479ce193073c1de0b1cfa" class="nameRef">httpCreateConn</a>(<a href="#group___http" class="ref">Http</a> *http, struct HttpEndpoint *endpoint, <a href="mpr.html#struct_mpr_dispatcher" class="ref">MprDispatcher</a> *dispatcher)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create a connection object Most interactions with the Http library are via a connection object.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___http_stage" class="ref">HttpStage*</a></td><td><a href="#group___http_stage_1ga58a685d73b0d0220ddf143fe6e8bcb17" class="nameRef">httpCreateConnector</a>(<a href="#group___http" class="ref">Http</a> *http, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, int flags, <a href="mpr.html#group___mpr_module" class="ref">MprModule</a> *module)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create a connector stage.</td></tr>
@@ -156,9 +157,12 @@
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#http_8h_1a23c2dd9ef6d1b76a146bb93731fa7b7d" class="nameRef">httpFlush</a>(<a href="#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Flush tx data.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a></td><td><a href="#http_8h_1a668818c8040ad8157f0141b32b844897" class="nameRef">httpFlushQueue</a>(<a href="#group___http_queue" class="ref">HttpQueue</a> *q, <a href="mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a> block)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Flush queue data.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___http_tx_1ga425dd50ea1e631687c47f93e9bcf69dd" class="nameRef">httpFollowRedirects</a>(<a href="#group___http_conn" class="ref">HttpConn</a> *conn, <a href="mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a> follow)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Follow redirctions.</td></tr>
-<tr class="apiDef"><td class="apiType"><a href="mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="nameRef">httpFormatBody</a>(<a href="#group___http_conn" class="ref">HttpConn</a> *conn, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *title, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Format an alternate transmission body.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___http_tx_1gadd185b67da26c5ffdc76a755b89fe0d7" class="nameRef">httpFormatError</a>(<a href="#group___http_conn" class="ref">HttpConn</a> *conn, int status, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Format an error transmission.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___http_tx_1ga719f916ed81e3dace223f1ba914edb70" class="nameRef">httpFormatErrorV</a>(<a href="#group___http_conn" class="ref">HttpConn</a> *conn, int status, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, va_list args)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Format an error transmission using a va_list.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___http_tx_1ga995a6fe8623518240e9e371ecf1173a8" class="nameRef">httpFormatResponse</a>(<a href="#group___http_conn" class="ref">HttpConn</a> *conn, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Format an alternate response.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___http_tx_1ga2b15b9734780f796c9bcb9815984a52f" class="nameRef">httpFormatResponseBody</a>(<a href="#group___http_conn" class="ref">HttpConn</a> *conn, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *title, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Format a response body.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___http_tx_1ga98a5c023aaffe7cafc6279db05b484be" class="nameRef">httpFormatResponseError</a>(<a href="#group___http_conn" class="ref">HttpConn</a> *conn, int status, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Format an error response body.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___http_tx_1ga4b88ecb6665f67efeba03e6a395fa3a7" class="nameRef">httpFormatResponsev</a>(<a href="#group___http_conn" class="ref">HttpConn</a> *conn, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, va_list args)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Format an alternate response.</td></tr>
 <tr class="apiDef"><td class="apiType">char*</td><td><a href="#group___http_uri_1ga7bf1d47da607033c621fab1310a16633" class="nameRef">httpFormatUri</a>(<a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *scheme, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *host, int port, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *ref, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *query, int complete)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Format a URI.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___http_conn_1gaf9174526ff9a050731b6949351085ba9" class="nameRef">httpGetAsync</a>(<a href="#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get the async mode value for the connection.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___http_conn_1ga450dd7b36119bc30ee4060d5916deb31" class="nameRef">httpGetChunkSize</a>(<a href="#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get the preferred chunked size for transfer chunk encoding.</td></tr>
@@ -199,6 +203,7 @@
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___http_limits_1gabf99e730cf6ee3ae898a4a88f8d60e2f" class="nameRef">httpInitLimits</a>(<a href="#group___http_limits" class="ref">HttpLimits</a> *limits, <a href="mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a> serverSide)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Initialize a limits object with default values.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___http_tx_1ga37ed60f67d995067657abc8d7b26d2a8" class="nameRef">httpIsChunked</a>(<a href="#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Return whether transfer chunked encoding will be used on this request.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a></td><td><a href="#http_8h_1a0312ce08a79bdfb49854b0693480b661" class="nameRef">httpIsEof</a>(struct HttpConn *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Test is the connection has received all incoming content.</td></tr>
+<tr class="apiDef"><td class="apiType">int</td><td><a href="#group___http_tx_1gaddcc759faff073cc695a204e29b2642e" class="nameRef">httpIsFinalized</a>(<a href="#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Test if request has been finalized.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a></td><td><a href="#group___http_auth_1ga4934282cd05644d028f35fc5e38bcdb6" class="nameRef">httpIsGroupEnabled</a>(<a href="#group___http_auth" class="ref">HttpAuth</a> *auth, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *group)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Test if an authentication group is enabled.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a></td><td><a href="#group___http_queue_1gafb4d0f9b9d5caa21b605e015154de36e" class="nameRef">httpIsPacketTooBig</a>(struct HttpQueue *q, <a href="#group___http_packet" class="ref">HttpPacket</a> *packet)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Test if a packet is too big.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a></td><td><a href="#group___http_queue_1gacd6cd97710d608b988e9169637dec43c" class="nameRef">httpIsQueueEmpty</a>(<a href="#group___http_queue" class="ref">HttpQueue</a> *q)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Determine if the queue is empty.</td></tr>
@@ -297,7 +302,6 @@
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___http_conn_1gabfb77d6aba161b2641177d85de86b559" class="nameRef">httpSetProtocol</a>(<a href="#group___http_conn" class="ref">HttpConn</a> *conn, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *protocol)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set the Http protocol variant for this connection.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___http_1ga7c0a123b785f897d3d3cc5cebcc971db" class="nameRef">httpSetProxy</a>(<a href="#group___http" class="ref">Http</a> *http, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *host, int port)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Define a Http proxy host to use for all client connect requests.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___http_auth_1gab7df1e6f6778a7d17697039db8b822f7" class="nameRef">httpSetRequiredAcl</a>(<a href="#group___http_auth" class="ref">HttpAuth</a> *auth, <a href="#http_8h_1ad0816d8d19d7f938af7301ffdabae7a6" class="ref">HttpAcl</a> acl)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set the required access control list for the authentication object.</td></tr>
-<tr class="apiDef"><td class="apiType">void</td><td><a href="#http_8h_1a25e7f1c19b8b09704bc0330f96266498" class="nameRef">httpSetResponseBody</a>(<a href="#group___http_conn" class="ref">HttpConn</a> *conn, int status, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Define a.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___http_conn_1ga43fe43a026149b074825c886a9d1fba1" class="nameRef">httpSetRetries</a>(<a href="#group___http_conn" class="ref">HttpConn</a> *conn, int retries)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set the Http retry count.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___http_route_1gaeb56c9f331ecf2f6af883eb842421b66" class="nameRef">httpSetRouteAuth</a>(<a href="#group___http_route" class="ref">HttpRoute</a> *route, <a href="#group___http_auth" class="ref">HttpAuth</a> *auth)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set the route authentication.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___http_route_1gaddcc56c566e6857c3d1339f95fd5e712" class="nameRef">httpSetRouteAutoDelete</a>(<a href="#group___http_route" class="ref">HttpRoute</a> *route, <a href="mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a> on)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Control file upload auto delete.</td></tr>
@@ -5813,6 +5817,24 @@ User-Agent header.
     <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_rx_1ga1a20b6772955c290773ffd0de04e7407" class="ref">httpGetCookies</a>, <a href="#group___http_rx_1ga1bd36d37059b4d431dd597016f9983de" class="ref">httpGetQueryString</a>, <a href="#group___http_conn_1gac8760dad727f97e824e5abdb06d1cd99" class="ref">httpSetWriteBlocked</a></dd></dl>
   </div>
 </div>
+<a name="group___http_rx_1ga714a887029b18fc0913bc66b65b7e944"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    httpCreateCGIVars
+(<a href="#group___http_conn" class="ref">HttpConn</a> *conn)
+  </div>
+  <div class="apiDetail">
+<p>Create CGI style form vars.</p>
+    <dl><dt><b>Description</b>:</dt><dd>This call creates form vars for the standard CGI/1.1 environment variables. This is used by the CGI and PHP handlers. It may also be useful to handlers that wish to expose CGI style environment variables through the form vars interface.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>HttpConn connection object.</td>
+    </table></dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_rx_1ga1a20b6772955c290773ffd0de04e7407" class="ref">httpGetCookies</a>, <a href="#group___http_rx_1ga1bd36d37059b4d431dd597016f9983de" class="ref">httpGetQueryString</a>, <a href="#group___http_conn_1gac8760dad727f97e824e5abdb06d1cd99" class="ref">httpSetWriteBlocked</a></dd></dl>
+  </div>
+</div>
 <a name="group___http_rx_1gadafdace3fe2bdbbd5e62b6942af088c5"></a>
 <div class="api">
   <div class="prototype">
@@ -5888,12 +5910,19 @@ Get the cookies
   </div>
   <div class="apiDetail">
 <p>Get the form vars for the current request.</p>
+Get the form vars table
     <dl><dt><b>Description</b>:</dt><dd>This returns the hash table containing the query and request body form data.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>The form var hash table.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This call gets the form var table for the current request. Query data and www-url encoded form data is entered into the table after decoding. Use <a class="ref" BBB href="#group___mpr_hash_1ga68faa8c7289ae1180afdf994f0164a22" external="mpr.dtags">mprLookupKey</a> to retrieve data from the table.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>HttpConn connection object.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd><a class="ref" BBB href="#struct_mpr_hash_table" external="mpr.dtags">MprHashTable</a> instance containing the form vars.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_rx_1ga1a20b6772955c290773ffd0de04e7407" class="ref">httpGetCookies</a>, <a href="#group___http_rx_1ga1bd36d37059b4d431dd597016f9983de" class="ref">httpGetQueryString</a>, <a href="#group___http_conn_1gac8760dad727f97e824e5abdb06d1cd99" class="ref">httpSetWriteBlocked</a></dd></dl>
   </div>
@@ -6474,7 +6503,7 @@ This is used when creating filters configured to match certain extensions
     <dl><dt><b>Description</b>:</dt><dd>The tx object controls the transmission of data. This may be client requests or responses to client requests. Most of the APIs in the Response group still take a HttpConn object as their first parameter. This is to make the API easier to remember - APIs take a connection object rather than a rx or transmission object.</dd></dl>
     <dl><dt><b>API</b> Stability:</dt><dd>Evolving.</dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
     <dl><dt>Fields:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">char *</td><td><td>altBody</td><td>
@@ -6588,7 +6617,7 @@ Handler methods supported.
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a negative MPR error code. Returns MPR_ERR_ALREADY_EXISTS if the header already exists.</dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1ga06c3aabb158f60fb557c57ba5925d0ef"></a>
@@ -6609,7 +6638,7 @@ Handler methods supported.
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a negative MPR error code. Returns MPR_ERR_ALREADY_EXISTS if the header already exists.</dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1ga0c2d9ecdf26061816f4875cd4065255c"></a>
@@ -6630,7 +6659,7 @@ Handler methods supported.
     <tr><td class="param">...</td><td>Arguments for fmt.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1ga92bfaabfacf0c6462e1ce2b414618203"></a>
@@ -6650,7 +6679,7 @@ Handler methods supported.
     <tr><td class="param">value</td><td>Value to set for the header.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1gaf520605b399089bbe6ff768c3ed0d14f"></a>
@@ -6671,7 +6700,7 @@ Handler methods supported.
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Zero if the request was successfully sent to the server. Otherwise a negative MPR error code is returned.</dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1ga1ca6ef9897b5e753cb56a733d29b1957"></a>
@@ -6691,7 +6720,7 @@ This is used internally by the http library
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>A tx object.</dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1ga351f2b5e5ee7b801d1dea081652a914c"></a>
@@ -6709,7 +6738,7 @@ This is used internally by the http library
     <tr><td class="param">tx</td><td>Tx object.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1ga279ad49e5163402e2afd6caf478bcc70"></a>
@@ -6727,7 +6756,7 @@ This is used internally by the http library
     <tr><td class="param">conn</td><td>HttpConn connection object.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1ga425dd50ea1e631687c47f93e9bcf69dd"></a>
@@ -6746,28 +6775,6 @@ This is used internally by the http library
     <tr><td class="param">follow</td><td>Set to true to enable transparent redirections.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
-  </div>
-</div>
-<a name="group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d"></a>
-<div class="api">
-  <div class="prototype">
-    <a href="mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a>
-    httpFormatBody
-(<a href="#group___http_conn" class="ref">HttpConn</a> *conn, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *title, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)
-  </div>
-  <div class="apiDetail">
-<p>Format an alternate transmission body.</p>
-    <dl><dt><b>Description</b>:</dt><dd>Format a transmission body to use instead of data generated by the request processing pipeline.</dd></dl>
-    <dl><dt>Parameters:</dt><dd>
-    <table class="parameters" summary="Parameters">
-    <tr><td class="param">conn</td><td>HttpConn connection object created via $httpCreateConn.</td>
-    <tr><td class="param">title</td><td>Title string to format into the HTML transmission body.</td>
-    <tr><td class="param">fmt</td><td>Printf style formatted string. This string may contain HTML tags and is not HTML encoded before sending to the user. NOTE: Do not send user input back to the client using this method. Otherwise you open large security holes.</td>
-    <tr><td class="param">...</td><td>Arguments for fmt.</td>
-    </table></dd></dl>
-    <dl><dt>Returns:</dt><dd>A count of the number of bytes in the transmission body.</dd></dl>
-    <dl><dt>See Also:</dt><dd>
     <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
@@ -6780,7 +6787,7 @@ This is used internally by the http library
   </div>
   <div class="apiDetail">
 <p>Format an error transmission.</p>
-    <dl><dt><b>Description</b>:</dt><dd>Format an error message to use instead of data generated by the request processing pipeline. This is typically used to send errors and redirections.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>Format an error message to use instead of data generated by the request processing pipeline. This is typically used to send errors and redirections. The message is also sent to the error log.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object created via $httpCreateConn.</td>
@@ -6790,7 +6797,7 @@ This is used internally by the http library
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>A count of the number of bytes in the transmission body.</dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1ga719f916ed81e3dace223f1ba914edb70"></a>
@@ -6802,7 +6809,7 @@ This is used internally by the http library
   </div>
   <div class="apiDetail">
 <p>Format an error transmission using a va_list.</p>
-    <dl><dt><b>Description</b>:</dt><dd>Format an error message to use instead of data generated by the request processing pipeline. This is typically used to send errors and redirections.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>Format an error message to use instead of data generated by the request processing pipeline. This is typically used to send errors and redirections. The message is also sent to the error log.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object created via $httpCreateConn.</td>
@@ -6811,7 +6818,93 @@ This is used internally by the http library
     <tr><td class="param">args</td><td>Arguments for fmt.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+  </div>
+</div>
+<a name="group___http_tx_1ga995a6fe8623518240e9e371ecf1173a8"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a>
+    httpFormatResponse
+(<a href="#group___http_conn" class="ref">HttpConn</a> *conn, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)
+  </div>
+  <div class="apiDetail">
+<p>Format an alternate response.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Format a response to use instead of data generated by the request processing pipeline. This is used for alternate responses that are not errors.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>HttpConn connection object created via $httpCreateConn.</td>
+    <tr><td class="param">fmt</td><td>Printf style formatted string. This string may contain HTML tags and is not HTML encoded before sending to the user. NOTE: Do not send user input back to the client using this method. Otherwise you open large security holes.</td>
+    <tr><td class="param">...</td><td>Arguments for fmt.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A count of the number of bytes in the transmission body.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+  </div>
+</div>
+<a name="group___http_tx_1ga2b15b9734780f796c9bcb9815984a52f"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a>
+    httpFormatResponseBody
+(<a href="#group___http_conn" class="ref">HttpConn</a> *conn, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *title, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)
+  </div>
+  <div class="apiDetail">
+<p>Format a response body.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Format a transmission body to use instead of data generated by the request processing pipeline. The body will be created in HTML or in plain text depending on the value of the request Accept header. This call is used for alternate responses that are not errors.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>HttpConn connection object created via $httpCreateConn.</td>
+    <tr><td class="param">title</td><td>Title string to format into the HTML transmission body.</td>
+    <tr><td class="param">fmt</td><td>Printf style formatted string. This string may contain HTML tags and is not HTML encoded before sending to the user. NOTE: Do not send user input back to the client using this method. Otherwise you open large security holes.</td>
+    <tr><td class="param">...</td><td>Arguments for fmt.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A count of the number of bytes in the transmission body.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+  </div>
+</div>
+<a name="group___http_tx_1ga98a5c023aaffe7cafc6279db05b484be"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    httpFormatResponseError
+(<a href="#group___http_conn" class="ref">HttpConn</a> *conn, int status, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)
+  </div>
+  <div class="apiDetail">
+<p>Format an error response body.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Format an error message transmission body to use instead of data generated by the request processing pipeline. The body will be created in HTML or in plain text depending on the value of the request Accept header. This is an internal API and users should use <a class="ref" BBB href="#group___http_conn_1ga9f730354501b53a97b7678a91273a3be">httpError</a> instead.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>HttpConn connection object created via $httpCreateConn.</td>
+    <tr><td class="param">status</td><td>HTTP response status code.</td>
+    <tr><td class="param">fmt</td><td>Printf style formatted string. This string may contain HTML tags and is not HTML encoded before sending to the user. NOTE: Do not send user input back to the client using this method. Otherwise you open large security holes.</td>
+    <tr><td class="param">...</td><td>Arguments for fmt.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A count of the number of bytes in the transmission body.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+  </div>
+</div>
+<a name="group___http_tx_1ga4b88ecb6665f67efeba03e6a395fa3a7"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a>
+    httpFormatResponsev
+(<a href="#group___http_conn" class="ref">HttpConn</a> *conn, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, va_list args)
+  </div>
+  <div class="apiDetail">
+<p>Format an alternate response.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Format a response to use instead of data generated by the request processing pipeline. This is similar to <a class="ref" BBB href="#group___http_tx_1ga995a6fe8623518240e9e371ecf1173a8">httpFormatResponse</a></dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>HttpConn connection object created via $httpCreateConn.</td>
+    <tr><td class="param">fmt</td><td>Printf style formatted string. This string may contain HTML tags and is not HTML encoded before sending to the user. NOTE: Do not send user input back to the client using this method. Otherwise you open large security holes.</td>
+    <tr><td class="param">args</td><td>Varargs style list of arguments.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A count of the number of bytes in the transmission body.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1ga37ed60f67d995067657abc8d7b26d2a8"></a>
@@ -6829,7 +6922,25 @@ This is used internally by the http library
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>True if chunk encoding will be used.</dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+  </div>
+</div>
+<a name="group___http_tx_1gaddcc759faff073cc695a204e29b2642e"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    httpIsFinalized
+(<a href="#group___http_conn" class="ref">HttpConn</a> *conn)
+  </div>
+  <div class="apiDetail">
+<p>Test if request has been finalized.</p>
+    <dl><dt><b>Description</b>:</dt><dd>This call tests if all transmit data has been sent and finalized. Handlers call <a class="ref" BBB href="#group___http_tx_1ga279ad49e5163402e2afd6caf478bcc70">httpFinalize</a> to signify the end of transmit data.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>HttpConn connection object.</td>
+    </table></dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1ga64b9dc878c9207fedc57c32791384144"></a>
@@ -6849,7 +6960,7 @@ This is used by client requests. If authentication is required, a request must f
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>True if the request needs to be retried.</dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1ga616290c9e8fe95419d3a31f6fbb870b5"></a>
@@ -6869,7 +6980,7 @@ This is used by client requests. If authentication is required, a request must f
     <tr><td class="param">uri</td><td>New uri for the client.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1ga38e1fcae578fdda33c7cf2f697ef732a"></a>
@@ -6889,7 +7000,7 @@ This is used by client requests. If authentication is required, a request must f
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a negative MPR error code.</dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1ga469181e95b6a0b276d2d28d63ca46a4f"></a>
@@ -6908,7 +7019,7 @@ This is used by client requests. If authentication is required, a request must f
     <tr><td class="param">mimeType</td><td>Mime type string.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1ga2b35901fb42b178e7b673875af99f884"></a>
@@ -6932,7 +7043,7 @@ This is used by client requests. If authentication is required, a request must f
     <tr><td class="param">secure</td><td>Set to true if the cookie only applies for SSL based connections.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1gadc3a395967972fb839f0639f8cd66c61"></a>
@@ -6953,7 +7064,7 @@ This is used by client requests. If authentication is required, a request must f
     <tr><td class="param">...</td><td>Arguments for fmt.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1gaa1869e4617b44b032f64c2227d0c3f06"></a>
@@ -6973,7 +7084,7 @@ This is used by client requests. If authentication is required, a request must f
     <tr><td class="param">value</td><td>String value for the key.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1gab965a17de1c0a823eec176bdf95b2bee"></a>
@@ -6992,7 +7103,7 @@ This is used by client requests. If authentication is required, a request must f
     <tr><td class="param">status</td><td>Http status code.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1ga3403d2b2f33202d649ccd0ef003e1279"></a>
@@ -7012,7 +7123,7 @@ This is used by client requests. If authentication is required, a request must f
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>MOB.</dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <a name="group___http_tx_1gaed11813cf38397f69d157b55c6384018"></a>
@@ -7031,7 +7142,7 @@ This is used by client requests. If authentication is required, a request must f
     <tr><td class="param">packet</td><td>Packet into which to place the headers.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
-    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1gaeef7d1e86f5eed62239af4d7bfbaac1d" class="ref">httpFormatBody</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
+    <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_tx_1ga2b35901fb42b178e7b673875af99f884" class="ref">httpSetCookie</a></dd></dl>
   </div>
 </div>
 <h1>HttpUploadFile</h1>
@@ -7896,17 +8007,6 @@ When static content is used for the transmission body, defining the entity lengt
     </table></dd></dl>
   </div>
 </div>
-<a name="http_8h_1a25e7f1c19b8b09704bc0330f96266498"></a>
-<div class="api">
-  <div class="prototype">
-    void
-    httpSetResponseBody
-(<a href="#group___http_conn" class="ref">HttpConn</a> *conn, int status, <a href="mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)
-  </div>
-  <div class="apiDetail">
-<p>Define a.</p>
-  </div>
-</div>
 <a name="http_8h_1a74dbe19ccb82f86a72b42944906abd68"></a>
 <div class="api">
   <div class="prototype">
@@ -8182,6 +8282,6 @@ Authentication realm.
     <a href="#group___http_auth" class="ref">HttpAuth</a></dd></dl>
   </div>
 </div>
-<div class="footnote">Generated on Fri Sep 02 2011 17:12:13 GMT-0700 (PDT)<br/>
+<div class="footnote">Generated on Fri Sep 02 2011 17:41:37 GMT-0700 (PDT)<br/>
   Copyright &copy; <a href="http://www.embedthis.com">Embedthis Software</a> 2011.
 </div></div></body></html>

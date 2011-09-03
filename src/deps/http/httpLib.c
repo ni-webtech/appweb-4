@@ -3202,7 +3202,7 @@ void httpStopEndpoint(HttpEndpoint *endpoint)
 }
 
 
-int httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn)
+bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn)
 {
     HttpLimits      *limits;
     int             count;
@@ -3527,40 +3527,26 @@ int httpSetNamedVirtualEndpoints(Http *http, cchar *ip, int port)
 
 
 
-void httpFormatErrorV(HttpConn *conn, int status, cchar *fmt, va_list args)
+static void httpErrorV(HttpConn *conn, int flags, cchar *fmt, va_list args);
+
+
+void httpDisconnect(HttpConn *conn)
 {
-    if (conn->errorMsg == 0) {
-        conn->errorMsg = sfmtv(fmt, args);
-        if (status) {
-            if (status < 0) {
-                status = HTTP_CODE_INTERNAL_SERVER_ERROR;
-            }
-            if (conn->endpoint && conn->tx) {
-                conn->tx->status = status;
-            } else if (conn->rx) {
-                conn->rx->status = status;
-            }
-        }
-        if (conn->rx == 0 || conn->rx->uri == 0) {
-            mprLog(2, "\"%s\", status %d: %s.", httpLookupStatus(conn->http, status), status, conn->errorMsg);
-        } else {
-            mprLog(2, "Error: \"%s\", status %d for URI \"%s\": %s.",
-                httpLookupStatus(conn->http, status), status, conn->rx->uri ? conn->rx->uri : "", conn->errorMsg);
-        }
+    if (conn->sock) {
+        mprDisconnectSocket(conn->sock);
     }
+    conn->connError = 1;
+    conn->keepAliveCount = -1;
 }
 
 
-/*
-    Just format conn->errorMsg and set status - nothing more
- */
-void httpFormatError(HttpConn *conn, int status, cchar *fmt, ...)
+void httpError(HttpConn *conn, int flags, cchar *fmt, ...)
 {
     va_list     args;
 
-    va_start(args, fmt); 
-    httpFormatErrorV(conn, status, fmt, args);
-    va_end(args); 
+    va_start(args, fmt);
+    httpErrorV(conn, flags, fmt, args);
+    va_end(args);
 }
 
 
@@ -3599,7 +3585,7 @@ static void httpErrorV(HttpConn *conn, int flags, cchar *fmt, va_list args)
              */
             httpDisconnect(conn);
         } else {
-            httpSetResponseError(conn, status, conn->errorMsg);
+            httpFormatResponseError(conn, status, conn->errorMsg);
         }
     } else {
         if (flags & HTTP_ABORT || (tx && tx->flags & HTTP_TX_HEADERS_CREATED)) {
@@ -3609,29 +3595,45 @@ static void httpErrorV(HttpConn *conn, int flags, cchar *fmt, va_list args)
 }
 
 
-void httpError(HttpConn *conn, int flags, cchar *fmt, ...)
+/*
+    Just format conn->errorMsg and set status - nothing more
+    NOTE: this is an internal API. Users should use httpError()
+ */
+void httpFormatErrorV(HttpConn *conn, int status, cchar *fmt, va_list args)
+{
+    if (conn->errorMsg == 0) {
+        conn->errorMsg = sfmtv(fmt, args);
+        if (status) {
+            if (status < 0) {
+                status = HTTP_CODE_INTERNAL_SERVER_ERROR;
+            }
+            if (conn->endpoint && conn->tx) {
+                conn->tx->status = status;
+            } else if (conn->rx) {
+                conn->rx->status = status;
+            }
+        }
+        if (conn->rx == 0 || conn->rx->uri == 0) {
+            mprLog(2, "\"%s\", status %d: %s.", httpLookupStatus(conn->http, status), status, conn->errorMsg);
+        } else {
+            mprLog(2, "Error: \"%s\", status %d for URI \"%s\": %s.",
+                httpLookupStatus(conn->http, status), status, conn->rx->uri ? conn->rx->uri : "", conn->errorMsg);
+        }
+    }
+}
+
+
+/*
+    Just format conn->errorMsg and set status - nothing more
+    NOTE: this is an internal API. Users should use httpError()
+ */
+void httpFormatError(HttpConn *conn, int status, cchar *fmt, ...)
 {
     va_list     args;
 
-    va_start(args, fmt);
-    httpErrorV(conn, flags, fmt, args);
-    va_end(args);
-}
-
-
-void httpMemoryError(HttpConn *conn)
-{
-    httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Memory allocation error");
-}
-
-
-void httpDisconnect(HttpConn *conn)
-{
-    if (conn->sock) {
-        mprDisconnectSocket(conn->sock);
-    }
-    conn->connError = 1;
-    conn->keepAliveCount = -1;
+    va_start(args, fmt); 
+    httpFormatErrorV(conn, status, fmt, args);
+    va_end(args); 
 }
 
 
@@ -3644,6 +3646,12 @@ cchar *httpGetError(HttpConn *conn)
     } else {
         return "";
     }
+}
+
+
+void httpMemoryError(HttpConn *conn)
+{
+    httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Memory allocation error");
 }
 
 
@@ -5619,7 +5627,7 @@ void httpHandleOptionsTrace(HttpConn *conn)
     if (rx->flags & HTTP_TRACE) {
         if (!conn->limits->enableTraceMethod) {
             tx->status = HTTP_CODE_NOT_ACCEPTABLE;
-            httpFormatBody(conn, "Trace Request Denied", "The TRACE method is disabled on this server.");
+            httpFormatResponseBody(conn, "Trace Request Denied", "The TRACE method is disabled on this server.");
         } else {
             httpFormatResponse(conn, "%s %s %s\r\n", rx->method, rx->uri, conn->protocol);
         }
@@ -12228,6 +12236,10 @@ void httpFlush(HttpConn *conn)
 }
 
 
+/*
+    This formats a response and sets the altBody. The response is not HTML escaped.
+    This is the lowest level for formatResponse.
+ */
 ssize httpFormatResponsev(HttpConn *conn, cchar *fmt, va_list args)
 {
     HttpTx      *tx;
@@ -12242,6 +12254,9 @@ ssize httpFormatResponsev(HttpConn *conn, cchar *fmt, va_list args)
 }
 
 
+/*
+    This formats a response and sets the altBody. The response is not HTML escaped.
+ */
 ssize httpFormatResponse(HttpConn *conn, cchar *fmt, ...)
 {
     va_list     args;
@@ -12254,7 +12269,11 @@ ssize httpFormatResponse(HttpConn *conn, cchar *fmt, ...)
 }
 
 
-ssize httpFormatBody(HttpConn *conn, cchar *title, cchar *fmt, ...)
+/*
+    This formats a complete response. Depending on the Accept header, the response will be either HTML or plain text.
+    The response is not HTML escaped.  This calls httpFormatResponse.
+ */
+ssize httpFormatResponseBody(HttpConn *conn, cchar *title, cchar *fmt, ...)
 {
     HttpTx      *tx;
     va_list     args;
@@ -12278,6 +12297,7 @@ ssize httpFormatBody(HttpConn *conn, cchar *title, cchar *fmt, ...)
 }
 
 
+#if UNUSED
 /*
     The message is NOT html escaped
  */
@@ -12294,16 +12314,17 @@ void httpSetResponseBody(HttpConn *conn, int status, cchar *fmt, ...)
     msg = sfmtv(fmt, args);
     tx->status = status;
     if (tx->altBody == 0) {
-        httpFormatBody(conn, httpLookupStatus(conn->http, status), "%s", msg);
+        httpFormatResponseBody(conn, httpLookupStatus(conn->http, status), "%s", msg);
     }
     va_end(args);
 }
-
+#endif
 
 /*
     Create an alternate body response. Typically used for error responses. The message is HTML escaped.
+    NOTE: this is an internal API. Users should use httpFormatError
  */
-void httpSetResponseError(HttpConn *conn, int status, cchar *fmt, ...)
+void httpFormatResponseError(HttpConn *conn, int status, cchar *fmt, ...)
 {
     va_list     args;
     cchar       *statusMsg;
@@ -12320,7 +12341,7 @@ void httpSetResponseError(HttpConn *conn, int status, cchar *fmt, ...)
         msg = sfmt("<h2>Access Error: %d -- %s</h2>\r\n<pre>%s</pre>\r\n", status, statusMsg, mprEscapeHtml(msg));
     }
     httpAddHeaderString(conn, "Cache-Control", "no-cache");
-    httpFormatBody(conn, statusMsg, "%s", msg);
+    httpFormatResponseBody(conn, statusMsg, "%s", msg);
     va_end(args);
 }
 
