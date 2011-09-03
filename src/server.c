@@ -198,8 +198,9 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *d
         maAddEndpoint(server, endpoint);
         host = mprGetFirstItem(endpoint->hosts);
         mprAssert(host);
+        route = mprGetFirstItem(host->routes);
+        mprAssert(route);
 
-        route = httpCreateRoute(host);
         searchPath = getSearchPath(dir);
         mprSetModuleSearchPath(searchPath);
 

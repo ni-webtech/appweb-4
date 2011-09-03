@@ -3096,6 +3096,7 @@ HttpEndpoint *httpCreateConfiguredEndpoint(cchar *home, cchar *documents, cchar 
     Http            *http;
     HttpHost        *host;
     HttpEndpoint    *endpoint;
+    HttpRoute       *route;
 
     http = MPR->httpService;
 
@@ -3120,13 +3121,20 @@ HttpEndpoint *httpCreateConfiguredEndpoint(cchar *home, cchar *documents, cchar 
             return 0;
         }
     }
-    host = httpCreateHost();
+    if ((route = httpCreateRoute(host)) == 0) {
+        return 0;
+    }
+    if ((host = httpCreateHost()) == 0) {
+        return 0;
+    }
     httpSetHostIpAddr(host, ip, port);
     httpAddHostToEndpoint(endpoint, host);
     httpSetHostHome(host, home);
     if ((host->mimeTypes = mprCreateMimeTypes("mime.types")) == 0) {
         host->mimeTypes = MPR->mimeTypes;
     }
+    httpSetRouteDir(route, documents);
+    httpFinalizeRoute(route);
     return endpoint;
 }
 
@@ -3419,15 +3427,19 @@ void httpAddHostToEndpoint(HttpEndpoint *endpoint, HttpHost *host)
 }
 
 
-bool httpIsNamedVirtualEndpoint(HttpEndpoint *endpoint)
+bool httpHasNamedVirtualHosts(HttpEndpoint *endpoint)
 {
     return endpoint->flags & HTTP_NAMED_VHOST;
 }
 
 
-void httpSetNamedVirtualEndpoint(HttpEndpoint *endpoint)
+void httpSetHasNamedVirtualHosts(HttpEndpoint *endpoint, bool on)
 {
-    endpoint->flags |= HTTP_NAMED_VHOST;
+    if (on) {
+        endpoint->flags |= HTTP_NAMED_VHOST;
+    } else {
+        endpoint->flags &= ~HTTP_NAMED_VHOST;
+    }
 }
 
 
@@ -3449,7 +3461,7 @@ HttpHost *httpLookupHostOnEndpoint(HttpEndpoint *endpoint, cchar *name)
 }
 
 
-int httpSetNamedVirtualEndpoints(Http *http, cchar *ip, int port)
+int httpConfigureNamedVirtualEndpoints(Http *http, cchar *ip, int port)
 {
     HttpEndpoint    *endpoint;
     int             next, count;
@@ -3461,7 +3473,7 @@ int httpSetNamedVirtualEndpoints(Http *http, cchar *ip, int port)
         if (endpoint->port <= 0 || port <= 0 || endpoint->port == port) {
             mprAssert(endpoint->ip);
             if (*endpoint->ip == '\0' || *ip == '\0' || scmp(endpoint->ip, ip) == 0) {
-                httpSetNamedVirtualEndpoint(endpoint);
+                httpSetHasNamedVirtualHosts(endpoint, 1);
                 count++;
             }
         }
@@ -3803,6 +3815,7 @@ static void manageHost(HttpHost *host, int flags)
         mprMark(host->limits);
 
     } else if (flags & MPR_MANAGE_FREE) {
+        /* The http->hosts list is static. ie. The hosts won't be marked via http->hosts */
         httpRemoveHost(MPR->httpService, host);
     }
 }
@@ -3924,6 +3937,7 @@ void httpSetHostTraceFilter(HttpHost *host, ssize len, cchar *include, cchar *ex
 }
 
 
+#if UNUSED
 int httpSetupTrace(HttpHost *host, cchar *ext)
 {
     if (ext) {
@@ -3936,6 +3950,7 @@ int httpSetupTrace(HttpHost *host, cchar *ext)
     }
     return host->traceMask;
 }
+#endif
 
 
 /*
@@ -4703,7 +4718,7 @@ void httpMatchHost(HttpConn *conn)
         mprCloseSocket(conn->sock, 0);
         return;
     }
-    if (httpIsNamedVirtualEndpoint(endpoint)) {
+    if (httpHasNamedVirtualHosts(endpoint)) {
         host = httpLookupHostOnEndpoint(endpoint, conn->rx->hostHeader);
     } else {
         host = mprGetFirstItem(endpoint->hosts);

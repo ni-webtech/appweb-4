@@ -1204,7 +1204,7 @@ static int nameVirtualHostDirective(MaState *state, cchar *key, cchar *value)
 
     mprLog(4, "NameVirtual Host: %s ", value);
     mprParseIp(value, &ip, &port, -1);
-    httpSetNamedVirtualEndpoints(state->http, ip, port);
+    httpConfigureNamedVirtualEndpoints(state->http, ip, port);
     return 0;
 }
 

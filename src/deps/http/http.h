@@ -335,11 +335,13 @@ typedef struct Http {
 extern Http *httpCreate();
 
 /**
-    Destroy the Http service object
+    Configure endpoints with named virtual hosts
     @param http Http service object.
-    @ingroup Http
+    @param ip IP address for the named virtual host
+    @param port address for the named virtual host
+    @ingroup HttpEndpoint
  */
-extern void httpDestroy(Http *http);
+extern int httpConfigureNamedVirtualEndpoints(Http *http, cchar *ip, int port);
 
 /**  
     Create the Http secret data for crypto
@@ -349,6 +351,13 @@ extern void httpDestroy(Http *http);
     @ingroup Http
  */
 extern int httpCreateSecret(Http *http);
+
+/**
+    Destroy the Http service object
+    @param http Http service object.
+    @ingroup Http
+ */
+extern void httpDestroy(Http *http);
 
 /**
     Get the http context object
@@ -452,7 +461,6 @@ extern void httpAddConn(Http *http, struct HttpConn *conn);
 extern struct HttpEndpoint *httpGetFirstEndpoint(Http *http);
 extern void httpRemoveConn(Http *http, struct HttpConn *conn);
 extern void httpAddEndpoint(Http *http, struct HttpEndpoint *endpoint);
-extern int httpSetNamedVirtualEndpoints(Http *http, cchar *ip, int port);
 extern void httpRemoveEndpoint(Http *http, struct HttpEndpoint *endpoint);
 extern void httpAddHost(Http *http, struct HttpHost *host);
 extern void httpRemoveHost(Http *http, struct HttpHost *host);
@@ -3960,8 +3968,21 @@ extern void httpAddVars(HttpConn *conn, cchar *buf, ssize len);
  */
 extern void httpAddVarsFromQueue(HttpQueue *q);
 
-//  MOB DOC
+//  MOB - name could be improved: httpAddFormToVars
+/**
+    Add form body data to form vars
+    @description This adds www-url encoded form body data to the form vars.
+    @param conn HttpConn connection object
+    @ingroup HttpRx
+ */
 extern void httpAddFormVars(HttpConn *conn);
+
+/**
+    Add query data to form vars
+    @description This adds query field data to the form vars
+    @param conn HttpConn connection object
+    @ingroup HttpRx
+ */
 extern void httpAddQueryVars(HttpConn *conn);
 
 /**
@@ -4536,6 +4557,29 @@ typedef struct HttpEndpoint {
         } \
     } else \
 
+/**
+    Add a host to an endpoint
+    @description Add the host to the endpoint's list  of hosts. A listening endpoint may have multiple
+        virutal hosts.
+    @param endpoint Endpoint to which the host will be added.
+    @param host HttpHost object to add.
+    @return Zero if the host can be added.
+    @ingroup HttpEndpoint
+ */
+extern void httpAddHostToEndpoint(HttpEndpoint *endpoint, struct HttpHost *host);
+
+/**
+    Create and configure a new endpoint.
+    @description Convenience function to create and configure a new endpoint without using a config file.
+        An endpoint is created with a default host and default route.
+    @param home Home directory for configuration files for the endpoint 
+    @param documents Directory containing the 
+    @param ip IP address to use for the endpoint. Set to null to listen on all interfaces.
+    @param port Listening port number to use for the endpoint
+    @return A configured HttpEndpoint object instance
+*/
+extern HttpEndpoint *httpCreateConfiguredEndpoint(cchar *home, cchar *documents, cchar *ip, int port);
+
 /** 
     Create an endpoint  object.
     @description Creates a listening endpoint on the given IP:PORT. Use httpStartEndpoint to begin listening for client
@@ -4568,18 +4612,12 @@ extern void httpDestroyEndpoint(HttpEndpoint *endpoint);
 extern HttpConn *httpAcceptConn(HttpEndpoint *endpoint, MprEvent *event);
 
 /**
-    Validate the request against defined resource limits
-    @description The Http library supports a suite of resource limits that restrict the impact of a request on
-        the system. This call validates a processing event for the current request against the server's endpoint
-        limits.
-    @param endpoint The endpoint on which the server was listening
-    @param event Processing event. The supported events are: HTTP_VALIDATE_OPEN_CONN, HTTP_VALIDATE_CLOSE_CONN,
-        HTTP_VALIDATE_OPEN_REQUEST and HTTP_VALIDATE_CLOSE_REQUEST.
-    @param conn HttpConn connection object
-    @return True if the request can be successfully validated against the endpoint limits.
-    @ingroup HttpRx
+    Test if an endpoint has named virtual hosts.
+    @param endpoint Endpoint object to examine
+    @return True if the endpoint has named virutal hosts.
+    @ingroup HttpEndpoint
  */
-extern bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn);
+extern bool httpHasNamedVirtualHosts(HttpEndpoint *endpoint);
 
 /**
     Get if the endpoint is running in asynchronous mode
@@ -4617,6 +4655,14 @@ extern void httpSetEndpointContext(HttpEndpoint *endpoint, void *context);
     @ingroup HttpConn
  */
 extern void httpSetEndpointNotifier(HttpEndpoint *endpoint, HttpNotifier fn);
+
+/**
+    Control whether the endpoint has named virtual hosts.
+    @param endpoint Endpoint object to examine
+    @param on Set to true to enable named virtual hosts
+    @ingroup HttpEndpoint
+ */
+extern void httpSetHasNamedVirtualHosts(HttpEndpoint *endpoint, bool on);
 
 /** 
     Start listening for client connections.
@@ -4677,30 +4723,31 @@ extern void httpSetEndpointAddress(HttpEndpoint *endpoint, cchar *ip, int port);
 extern struct HttpHost *httpLookupHostOnEndpoint(HttpEndpoint *endpoint, cchar *name);
 
 /**
-    Create and configure a new endpoint.
-    @description Convenience function to create and configure a new endpoint without using a config file.
-MOB is home used?
-    @param home Home directory for configuration files for the endpoint 
-MOB - documents is not used
-    @param documents Directory containing the 
-    @param ip IP address to use for the endpoint. Set to null to listen on all interfaces.
-    @param port Listening port number to use for the endpoint
-    @return A configured HttpEndpoint object instance
-*/
-extern HttpEndpoint *httpCreateConfiguredEndpoint(cchar *home, cchar *documents, cchar *ip, int port);
+    Validate the request against defined resource limits
+    @description The Http library supports a suite of resource limits that restrict the impact of a request on
+        the system. This call validates a processing event for the current request against the server's endpoint
+        limits.
+    @param endpoint The endpoint on which the server was listening
+    @param event Processing event. The supported events are: HTTP_VALIDATE_OPEN_CONN, HTTP_VALIDATE_CLOSE_CONN,
+        HTTP_VALIDATE_OPEN_REQUEST and HTTP_VALIDATE_CLOSE_REQUEST.
+    @param conn HttpConn connection object
+    @return True if the request can be successfully validated against the endpoint limits.
+    @ingroup HttpRx
+ */
+extern bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn);
 
 /*
     Flags
  */
-//  MOB DOC
-#define HTTP_HOST_VHOST         0x1         /* Is a virtual host */
-#define HTTP_HOST_NAMED_VHOST   0x2         /* Named virtual host */
+#define HTTP_HOST_VHOST         0x1         /**< Host flag to signify host is a virtual host */
+#define HTTP_HOST_NAMED_VHOST   0x2         /**< Host flag for a named virtual host */
 
-//  MOB -- should be better way than this
-#define HTTP_HOST_NO_TRACE      0x10        /* Prevent use of TRACE */
+#define HTTP_HOST_NO_TRACE      0x10        /**< Host flag to disable the of TRACE HTTP method */
 
+#if UNUSED && KEEP
 #define HTTP_LOG_ROTATE         0x1         /* Rotate log on startup */
 #define HTTP_LOG_TRUNCATE       0x2         /* Truncate log on startup */
+#endif
 
 /**
     Host Object
@@ -4746,27 +4793,119 @@ typedef struct HttpHost {
     MprMutex        *mutex;                 /**< Multithread sync */
 } HttpHost;
 
-//  MOB DOC
+/**
+    Add a route to a host
+    @description Add the route to the host list of routes. During request route matching, routes are processed 
+    in order, so it is important to define routes in the order in which you wish to match them.
+    @param host HttpHost object
+    @param route Route to add
+    @return Zero if the route can be added.
+    @ingroup HttpHost
+ */
 extern int  httpAddRoute(HttpHost *host, HttpRoute *route);
-extern void httpAddHostToEndpoint(HttpEndpoint *endpoint, HttpHost *host);
-extern HttpHost *httpCreateHost();
-extern HttpHost *httpCloneHost(HttpHost *parent);
-extern bool httpIsNamedVirtualEndpoint(HttpEndpoint *endpoint);
-extern HttpRoute *httpLookupBestRoute(HttpHost *host, cchar *uri);
-extern HttpRoute *httpLookupRoute(HttpHost *host, cchar *prefix);
-extern void httpResetRoutes(HttpHost *route);
-extern void httpSetHostLogRotation(HttpHost *host, int logCount, int logSize);
-extern void httpSetHostName(HttpHost *host, cchar *name);
-extern void httpSetHostIpAddr(HttpHost *host, cchar *ip, int port);
-extern void httpSetHostAddress(HttpHost *host, cchar *ip, int port);
-extern void httpSetHostProtocol(HttpHost *host, cchar *protocol);
-extern void httpSetHostTrace(HttpHost *host, int level, int mask);
-extern void httpSetHostTraceFilter(HttpHost *host, ssize len, cchar *include, cchar *exclude);
-extern void httpSetHostHome(HttpHost *host, cchar *dir);
-extern void httpSetNamedVirtualEndpoint(HttpEndpoint *endpoint);
-extern int  httpSetupTrace(HttpHost *host, cchar *ext);
 
-//  Need a misc group
+/**
+    Create a host
+    @description Create a new host object. The host is added to the Http service's list of hosts.
+    @return The new HttpHost object.
+    @ingroup HttpHost
+ */
+extern HttpHost *httpCreateHost();
+
+/**
+    Clone a host
+    @description The parent host is cloned and a new host returned. The new host inherites the parent's configuration.
+    @param parent Parent HttpHost object to clone
+    @return The new HttpHost object.
+    @ingroup HttpHost
+ */
+extern HttpHost *httpCloneHost(HttpHost *parent);
+
+/**
+    Reset the list of routes for the host
+    @param host HttpHost object
+    @ingroup HttpHost
+ */
+extern void httpResetRoutes(HttpHost *host);
+
+/**
+    Set the host name
+    @description The host name is used when matching virtual hosts with the Http Host header. The host name is also
+        used for some redirections.
+    in order, so it is important to define routes in the order in which you wish to match them.
+    @param host HttpHost object
+    @param name Host name to use
+    @return Zero if the route can be added.
+    @ingroup HttpHost
+ */
+extern void httpSetHostName(HttpHost *host, cchar *name);
+
+/**
+    Set the host internet address
+    @description Set the host IP and port address.
+    @param host HttpHost object
+    @param ip Internet address. This can be an IP address or a symbolic domain and host name.
+    @param port Port number 
+    @return Zero if the route can be added.
+    @ingroup HttpHost
+ */
+extern void httpSetHostIpAddr(HttpHost *host, cchar *ip, int port);
+
+/**
+    Set the host HTTP protocol version
+    @description Set the host protocol version to either HTTP/1.0 or HTTP/1.1
+    @param host HttpHost object
+    @param protocol Set to either HTTP/1.0 or HTTP/1.1
+    @ingroup HttpHost
+ */
+extern void httpSetHostProtocol(HttpHost *host, cchar *protocol);
+
+/**
+    Set the host trace level and mask
+    @description Add the route to the host list of routes. During request route matching, routes are processed 
+    in order, so it is important to define routes in the order in which you wish to match them.
+    @param host HttpHost object
+    @param level Trace level (0-9)
+    @param mask Trace mask. Choose from HTTP_TRACE_TX and HTTP_TRACE_RX to select the trace direction.
+        Also choose any set from among the following to trace options: HTTP_TRACE_CONN,
+        HTTP_TRACE_FIRST, HTTP_TRACE_HEADER, HTTP_TRACE_BODY, HTTP_TRACE_TIME.
+    @ingroup HttpHost
+ */
+extern void httpSetHostTrace(HttpHost *host, int level, int mask);
+
+/**
+    Set the trace host filter
+    @description Trace filters include or exclude trace items based on the request filename extension.
+    @param host HttpHost object
+    @param len Maximum content length eligible for tracing.
+    @param include Comma or space separated list of extensions to include in tracing
+    @param exclude Comma or space separated list of extensions to exclude from tracing
+    @ingroup HttpHost
+ */
+extern void httpSetHostTraceFilter(HttpHost *host, ssize len, cchar *include, cchar *exclude);
+
+/**
+    Set the home directory for a host
+    @description The home directory is used by some host and route components to location configuration files.
+    @param host HttpHost object
+    @param dir Directory path for the host home
+    @ingroup HttpHost
+ */
+extern void httpSetHostHome(HttpHost *host, cchar *dir);
+
+#if UNUSED
+/**
+    Setup trace for expedited processing
+    @description A request should call 
+    in order, so it is important to define routes in the order in which you wish to match them.
+    @param host HttpHost object
+    @param route Route to add
+    @return Zero if the route can be added.
+    @ingroup HttpHost
+ */
+extern int  httpSetupTrace(HttpHost *host, cchar *ext);
+#endif
+
 /**
     Get a path extension 
     @param path File pathname to examine
