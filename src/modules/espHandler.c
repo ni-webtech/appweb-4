@@ -48,7 +48,7 @@ static void openEsp(HttpQueue *q)
     rx = conn->rx;
 
     if (rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
-        httpHandleOptionsTrace(q);
+        httpHandleOptionsTrace(q->conn);
 
     } else {
         if ((req = mprAllocObj(EspReq, manageReq)) == 0) {

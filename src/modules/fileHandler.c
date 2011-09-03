@@ -149,7 +149,7 @@ static void openFile(HttpQueue *q)
         }
 
     } else if (rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
-        httpHandleOptionsTrace(q);
+        httpHandleOptionsTrace(q->conn);
 
     } else if ((rx->flags & (HTTP_PUT | HTTP_DELETE)) && (route->flags & HTTP_ROUTE_PUT_DELETE)) {
         httpOmitBody(conn);
@@ -304,7 +304,7 @@ static void outgoingFileService(HttpQueue *q)
             }
             mprLog(7, "OutgoingFileService readData %d", rc);
         }
-        httpSendPacketToNext(q, packet);
+        httpPutPacketToNext(q, packet);
     }
     mprLog(7, "OutgoingFileService complete");
 }

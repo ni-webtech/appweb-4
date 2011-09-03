@@ -4,30 +4,38 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
 
+NAME		:= mpr
 STAGING		:= staging
 
 include		.makedep
 
 gen:
-	make -C ../../../package/dist dist
+	make -C ../../..
+	make SKIP_CLEAN=1 -C ../../.. packageCombo
 	rm -fr ./$(STAGING) xml html
 	mkdir -p ./$(STAGING) xml html
-	tar xf $(BLD_OUT_DIR)/releases/$(BLD_PRODUCT)-dist.tgz -C $(STAGING)
-	mv $(STAGING)/appweb-$(BLD_VERSION)/* $(STAGING)
-	rmdir $(STAGING)/appweb-$(BLD_VERSION)
-	$(call log) "[Generate]" "doxygen appweb.spec"
-	doxygen appweb.spec
+	tar xf $(BLD_OUT_DIR)/releases/$(BLD_PRODUCT)-combo.tgz -C $(STAGING)
+	mv $(STAGING)/$(NAME)-$(BLD_VERSION)/* $(STAGING)
+	rmdir $(STAGING)/$(NAME)-$(BLD_VERSION)
+	$(call log) "[Generate]" "doxygen $(NAME).spec"
+	doxygen $(NAME).spec
+
+next:
 	$(call log) "[Transform]" "gendoc"
-	ejs $(BLD_TOOLS_DIR)/gendoc.es --bare --title "Appweb Native API" --tags ../appweb.tags \
-		xml/appweb_8h.xml xml/group* xml/struct_*.xml >../appwebBare.html
-	ejs $(BLD_TOOLS_DIR)/gendoc.es --title "Appweb Native API" --tags ../appweb.tags \
-		xml/appweb_8h.xml xml/group* xml/struct_*.xml >../appweb.html
+	ejs $(BLD_TOOLS_DIR)/gendoc.es --title "Appweb - Native API" --tags ../mpr.html --tags ../http.html \
+		--out ../$(NAME).tags xml/$(NAME)_8h.xml xml/group* xml/struct_*.xml >../$(NAME).html
+
+rest:
+	ejs $(BLD_TOOLS_DIR)/gendoc.es --bare --title "Appweb - Native API" --tags ../mpr.html --tags ../http.html \
+		--out ../$(NAME)Bare.html xml/$(NAME)_8h.xml xml/group* xml/struct_*.xml
+	rm -fr ./$(STAGING) xml html
 
 cleanExtra:
-	rm -rf xml html ../appweb.tags
+	rm -rf xml html ../$(NAME).tags
 
 clobberExtra:
-	rm -f ../appweb.html ../appwebBare.html ../ejs.html ../mpr.html
+	rm -f ../$(NAME).html ../$(NAME)Bare.html
+	rm -fr ./$(STAGING)
 
 #
 #   Local variables:

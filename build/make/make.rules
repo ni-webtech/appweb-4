@@ -216,11 +216,9 @@ testPrep testFinal testCleanup:
 #   TestExtra is overridable
 #
 testExtra::
-	# Execute default test rule only at the outermost make level
-	if [ "$(DIR)" = "." ] ; then \
-        if [ ! -x "$(BLD_EJS)" ] ; then \
-            $(call log) "[Test]" "Skip unit tests. Missing \"ejs\" to run utest." ; \
-        elif [ "$(BLD_CROSS)" != 1 ] ; then \
+	# Execute default test rule only at the outermost make level and not at the topmost directory 
+	if [ "$(DIR)" = "." -a ! -f configure ] ; then \
+        if [ -x "$(BLD_EJS)" -a "$(BLD_CROSS)" != 1 ] ; then \
             $(BLD_EJS) $(BLD_TOOLS_DIR)/utest -v -d $(BUILD_DEPTH) ; \
         fi ; \
     fi

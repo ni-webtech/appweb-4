@@ -10,8 +10,8 @@
 
 /***************************** Forward Declarations ****************************/
 
-static int addCondition(MaState *state, cchar *condition, int flags);
-static int addUpdate(MaState *state, cchar *kind, cchar *details, int flags);
+static int addCondition(MaState *state, cchar *name, cchar *condition, int flags);
+static int addUpdate(MaState *state, cchar *name, cchar *details, int flags);
 static bool conditionalDefinition(cchar *key);
 static int configError(MaState *state, cchar *key);
 static MaState *createState(MaServer *server, HttpHost *host, HttpRoute *route);
@@ -19,7 +19,7 @@ static char *getDirective(char *line, char **valuep);
 static void manageState(MaState *state, int flags);
 static int parseFile(MaState *state, cchar *path);
 static int parseFileInner(MaState *state, cchar *path);
-static int setTarget(MaState *state, cchar *kind, cchar *details);
+static int setTarget(MaState *state, cchar *name, cchar *details);
 
 /******************************************************************************/
 
@@ -329,7 +329,7 @@ static int allowDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_BAD_SYNTAX;
     }
     httpSetAuthAllow(state->auth, spec);
-    return addCondition(state, "allowDeny", 0);
+    return addCondition(state, "allowDeny", 0, 0);
 }
 
 
@@ -343,7 +343,7 @@ static int authGroupFileDirective(MaState *state, cchar *key, cchar *value)
 
     path = mprJoinPath(state->configDir, value);
     path = httpMakePath(state->route, path);
-    if (httpReadGroupFile(state->http, state->auth, path) < 0) {
+    if (httpReadGroupFile(state->auth, path) < 0) {
         mprError("Can't open AuthGroupFile %s", path);
         return MPR_ERR_BAD_SYNTAX;
     }
@@ -396,7 +396,7 @@ static int authTypeDirective(MaState *state, cchar *key, cchar *value)
         mprError("Unsupported authorization protocol");
         return MPR_ERR_BAD_SYNTAX;
     }
-    return addCondition(state, "auth", 0);
+    return addCondition(state, "auth", 0, 0);
 }
 
 
@@ -409,7 +409,7 @@ static int authUserFileDirective(MaState *state, cchar *key, cchar *value)
     char    *path;
     path = mprJoinPath(state->configDir, value);
     path = httpMakePath(state->route, path);
-    if (httpReadUserFile(state->http, state->auth, path) < 0) {
+    if (httpReadUserFile(state->auth, path) < 0) {
         mprError("Can't open AuthUserFile %s", path);
         return MPR_ERR_BAD_SYNTAX;
     }
@@ -541,13 +541,13 @@ static int compressDirective(MaState *state, cchar *key, cchar *value)
  */
 static int conditionDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *condition;
+    char    *name, *details;
     int     not;
 
-    if (!maTokenize(state, value, "%! %*", &not, &condition)) {
+    if (!maTokenize(state, value, "%! %S %*", &not, &name, &details)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    return addCondition(state, condition, not | HTTP_ROUTE_STATIC_VALUES);
+    return addCondition(state, name, details, not /* UNUSED | HTTP_ROUTE_STATIC_VALUES */);
 }
 
 
@@ -589,7 +589,7 @@ static int denyDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_BAD_SYNTAX;
     }
     httpSetAuthDeny(state->auth, spec);
-    return addCondition(state, "allowDeny", 0);
+    return addCondition(state, "allowDeny", 0, 0);
 }
 
 
@@ -628,9 +628,10 @@ static int documentRootDirective(MaState *state, cchar *key, cchar *value)
  */
 static int errorDocumentDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *status, *uri;
+    char    *uri;
+    int     status;
 
-    if (!maTokenize(state, value, "%S %S", &status, &uri)) {
+    if (!maTokenize(state, value, "%D %S", &status, &uri)) {
         return MPR_ERR_BAD_SYNTAX;
     }
     httpAddRouteErrorDocument(state->route, status, uri);
@@ -1184,12 +1185,12 @@ static int methodsDirective(MaState *state, cchar *key, cchar *value)
  */
 static int updateDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *kind, *rest;
+    char    *name, *rest;
 
-    if (!maTokenize(state, value, "%S %*", &kind, &rest)) {
+    if (!maTokenize(state, value, "%S %*", &name, &rest)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    return addUpdate(state, kind, rest, 0);
+    return addUpdate(state, name, rest, 0);
 }
 
 
@@ -1340,19 +1341,19 @@ static int requireDirective(MaState *state, cchar *key, cchar *value)
  */
 static int resetDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *kind;
+    char    *name;
 
-    if (!maTokenize(state, value, "%S", &kind)) {
+    if (!maTokenize(state, value, "%S", &name)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if (scasematch(key, "routes")) {
+    if (scasematch(name, "routes")) {
         httpResetRoutes(state->host);
 
-    } else if (scasematch(key, "pipeline")) {
+    } else if (scasematch(name, "pipeline")) {
         httpResetRoutePipeline(state->route);
 
     } else {
-        return configError(state, key);
+        return configError(state, name);
     }
     return 0;
 }
@@ -1521,12 +1522,12 @@ static int startThreadsDirective(MaState *state, cchar *key, cchar *value)
  */
 static int targetDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *kind, *details;
+    char    *name, *details;
 
-    if (!maTokenize(state, value, "%S ?*", &kind, &details)) {
+    if (!maTokenize(state, value, "%S ?*", &name, &details)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    return setTarget(state, kind, details);
+    return setTarget(state, name, details);
 }
 
 
@@ -1788,9 +1789,9 @@ bool maTokenize(MaState *state, cchar *line, cchar *fmt, ...)
 }
 
 
-static int addCondition(MaState *state, cchar *condition, int flags)
+static int addCondition(MaState *state, cchar *name, cchar *condition, int flags)
 {
-    if (httpAddRouteCondition(state->route, condition, flags) < 0) {
+    if (httpAddRouteCondition(state->route, name, condition, flags) < 0) {
         mprError("Bad \"%s\" directive at line %d in %s\nLine: %s %s\n", 
                 state->key, state->lineNumber, state->filename, state->key, condition);
         return MPR_ERR_BAD_SYNTAX;
@@ -1799,22 +1800,22 @@ static int addCondition(MaState *state, cchar *condition, int flags)
 }
 
 
-static int addUpdate(MaState *state, cchar *kind, cchar *details, int flags)
+static int addUpdate(MaState *state, cchar *name, cchar *details, int flags)
 {
-    if (httpAddRouteUpdate(state->route, kind, details, flags) < 0) {
+    if (httpAddRouteUpdate(state->route, name, details, flags) < 0) {
         mprError("Bad \"%s\" directive at line %d in %s\nLine: %s %s %s\n", 
-                state->key, state->lineNumber, state->filename, state->key, kind, details);
+                state->key, state->lineNumber, state->filename, state->key, name, details);
         return MPR_ERR_BAD_SYNTAX;
     }
     return 0;
 }
 
 
-static int setTarget(MaState *state, cchar *kind, cchar *details)
+static int setTarget(MaState *state, cchar *name, cchar *details)
 {
-    if (httpSetRouteTarget(state->route, kind, details) < 0) {
+    if (httpSetRouteTarget(state->route, name, details) < 0) {
         mprError("Bad \"%s\" directive at line %d in %s\nLine: %s %s %s\n", 
-                state->key, state->lineNumber, state->filename, state->key, kind, details);
+                state->key, state->lineNumber, state->filename, state->key, name, details);
         return MPR_ERR_BAD_SYNTAX;
     }
     return 0;

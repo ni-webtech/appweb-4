@@ -126,7 +126,7 @@ static void openPhp(HttpQueue *q)
 
     mprLog(5, "Open php handler");
     if (rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
-        httpHandleOptionsTrace(q);
+        httpHandleOptionsTrace(q->conn);
 
     } else if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST | HTTP_PUT)) {
         if (!q->stage->stageData) {

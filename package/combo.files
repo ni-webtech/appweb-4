@@ -55,6 +55,9 @@ cp ${S}/server/*.conf ${SRC}
 #
 #	Doc
 #
+cp ${BLD_TOP}/doc/api/appweb.html ${DOC}/api
+cp ${BLD_TOP}/doc/api/appwebBare.html ${DOC}/api
+cp ${BLD_TOP}/doc/api/appweb.tags ${DOC}/api
 cp ${BLD_TOP}/doc/man/appweb.1 ${DOC}/man
 cp ${BLD_TOP}/doc/man/appwebMonitor.1 ${DOC}/man
 cp ${BLD_TOP}/doc/man/auth.1 ${DOC}

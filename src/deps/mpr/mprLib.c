@@ -621,7 +621,9 @@ static MprMem *allocFromHeap(ssize required, int flags)
             }
             groupMap &= ~(((ssize) 1) << group);
             heap->groupMap &= ~(((ssize) 1) << group);
+#if UNUSED && KEEP
             triggerGC(0);
+#endif
         }
     }
     unlockHeap();
@@ -668,7 +670,11 @@ static MprMem *growHeap(ssize required, int flags)
     mp = (MprMem*) region->start;
     hasManager = (flags & MPR_ALLOC_MANAGER) ? 1 : 0;
     spareLen = size - required - rsize;
-    INIT_BLK(mp, required, hasManager, (spareLen > 0) ? 0 : 1, NULL);
+    if (spareLen < sizeof(MprFreeMem)) {
+        required = size - rsize; 
+        spareLen = 0;
+    }
+    INIT_BLK(mp, required, hasManager, spareLen > 0 ? 0 : 1, NULL);
     if (hasManager) {
         SET_MANAGER(mp, dummyManager);
     }
@@ -679,6 +685,7 @@ static MprMem *growHeap(ssize required, int flags)
     } while (!mprAtomicCas((void* volatile*) &heap->regions, region->next, region));
 
     if (spareLen > 0) {
+        mprAssert(spareLen > sizeof(MprFreeMem));
         spare = (MprMem*) ((char*) mp + required);
         INIT_BLK(spare, spareLen, 0, 1, mp);
         CHECK(spare);

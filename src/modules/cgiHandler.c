@@ -56,7 +56,7 @@ static void openCgi(HttpQueue *q)
 {
     mprLog(5, "Open CGI handler");
     if (q->conn->rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
-        httpHandleOptionsTrace(q);
+        httpHandleOptionsTrace(q->conn);
     }
 }
 

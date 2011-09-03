@@ -40,7 +40,7 @@ static void openEjs(HttpQueue *q)
 
     mprLog(5, "Open EJS handler");
     if (rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
-        httpHandleOptionsTrace(q);
+        httpHandleOptionsTrace(q->conn);
 
     } else if (!conn->ejs) {
         if (!route->context) {
