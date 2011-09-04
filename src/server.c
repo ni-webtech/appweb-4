@@ -420,6 +420,7 @@ int maApplyChangedUser(MaAppweb *appweb)
         if ((setuid(appweb->uid)) != 0) {
             mprError("Can't change user to: %s: %d\n"
                 "WARNING: This is a major security exposure", appweb->user, appweb->uid);
+            return MPR_ERR_BAD_STATE;
 #if LINUX && PR_SET_DUMPABLE
         } else {
             prctl(PR_SET_DUMPABLE, 1);
@@ -439,6 +440,7 @@ int maApplyChangedGroup(MaAppweb *appweb)
         if (setgid(appweb->gid) != 0) {
             mprError("Can't change group to %s: %d\n"
                 "WARNING: This is a major security exposure", appweb->group, appweb->gid);
+            return MPR_ERR_BAD_STATE;
 #if LINUX && PR_SET_DUMPABLE
         } else {
             prctl(PR_SET_DUMPABLE, 1);

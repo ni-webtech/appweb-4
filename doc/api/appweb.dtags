@@ -1,0 +1,119 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='yes' ?>
+<tagfile>
+  <compound kind="group">
+    <name>Appweb</name>
+    <title>Appweb</title>
+    <filename>group___appweb.html</filename>
+    <member kind="function">
+      <type>MaAppweb *</type>
+      <name>maCreateAppweb</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>ga3c5d11ffcda01cb1d75ae24faa39cdee</anchor>
+      <arglist>()</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>maSetHttpGroup</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>ga29500f7d8b117921cf5c68beb7ef40ad</anchor>
+      <arglist>(MaAppweb *appweb, cchar *group)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>maSetHttpUser</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>gaf824d096f9596ebf8840d7e8d005baad</anchor>
+      <arglist>(MaAppweb *appweb, cchar *user)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>maStartAppweb</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>gaad2b501a1eef1b0210189ef055c4f158</anchor>
+      <arglist>(MaAppweb *appweb)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>maStopAppweb</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>gae98b753968134ec1c2bc50d5d63b2a1f</anchor>
+      <arglist>(MaAppweb *appweb)</arglist>
+    </member>
+  </compound>
+  <compound kind="group">
+    <name>MaServer</name>
+    <title>MaServer</title>
+    <filename>group___ma_server.html</filename>
+    <member kind="function">
+      <type>int</type>
+      <name>maConfigureServer</name>
+      <anchorfile>group___ma_server.html</anchorfile>
+      <anchor>ga95cc0d8c3f161d0a9d4a2a4925e50158</anchor>
+      <arglist>(MaServer *server, cchar *configFile, cchar *home, cchar *documents, cchar *ip, int port)</arglist>
+    </member>
+    <member kind="function">
+      <type>MaServer *</type>
+      <name>maCreateServer</name>
+      <anchorfile>group___ma_server.html</anchorfile>
+      <anchor>gad21a5a81aa006217ecc220da1198ff7f</anchor>
+      <arglist>(MaAppweb *appweb, cchar *name)</arglist>
+    </member>
+    <member kind="function">
+      <type>MaServer *</type>
+      <name>maCreateWebServer</name>
+      <anchorfile>group___ma_server.html</anchorfile>
+      <anchor>ga8c3f14dce5b7efcff18ad607aea7522e</anchor>
+      <arglist>(cchar *configFile)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>maRunSimpleWebServer</name>
+      <anchorfile>group___ma_server.html</anchorfile>
+      <anchor>ga88a2bd1d0f26f024e6cb2d693c13e4f7</anchor>
+      <arglist>(cchar *ip, int port, cchar *home, cchar *documents)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>maRunWebServer</name>
+      <anchorfile>group___ma_server.html</anchorfile>
+      <anchor>ga4994c273e87409b094418dd7bd370ee4</anchor>
+      <arglist>(cchar *configFile)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>maServiceWebServer</name>
+      <anchorfile>group___ma_server.html</anchorfile>
+      <anchor>ga4a2f9501514bf2193c90a03f15635db9</anchor>
+      <arglist>(MaServer *server)</arglist>
+    </member>
+  </compound>
+  <compound kind="group">
+    <name>MaState</name>
+    <title>MaState</title>
+    <filename>group___ma_state.html</filename>
+  </compound>
+  <compound kind="dir">
+    <name>staging/src/deps/appweb/</name>
+    <path>/Users/mob/git/appweb/doc/api/appweb/staging/src/deps/appweb/</path>
+    <filename>dir_11b42e9abefce95d31a30d44cbfd673b.html</filename>
+    <file>appweb.h</file>
+  </compound>
+  <compound kind="dir">
+    <name>staging/src/deps/</name>
+    <path>/Users/mob/git/appweb/doc/api/appweb/staging/src/deps/</path>
+    <filename>dir_f314609b9351bf2ff0752397c1324837.html</filename>
+    <dir>staging/src/deps/appweb/</dir>
+  </compound>
+  <compound kind="dir">
+    <name>staging/src/</name>
+    <path>/Users/mob/git/appweb/doc/api/appweb/staging/src/</path>
+    <filename>dir_4d9286c2dd6b2f042052d85a9e1ecf9b.html</filename>
+    <dir>staging/src/deps/</dir>
+  </compound>
+  <compound kind="dir">
+    <name>staging/</name>
+    <path>/Users/mob/git/appweb/doc/api/appweb/staging/</path>
+    <filename>dir_d773023a19cf5c44633fc74de0eab3f4.html</filename>
+    <dir>staging/src/</dir>
+  </compound>
+</tagfile>

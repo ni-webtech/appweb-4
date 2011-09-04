@@ -19,7 +19,7 @@
 #define MA_SERVER_NAME          "Embedthis-Appweb/" BLD_VERSION
 
 #undef HTTP_NAME
-#define HTTP_NAME               MA_SERVER_NAME
+#define HTTP_NAME               MA_SERVER_NAME  /**< Default web server software identification */
 
 /****************************** Forward Declarations **************************/
 
@@ -48,12 +48,39 @@ typedef struct MaAppweb {
     Http                *http;              /**< Http service object */
     char                *user;              /**< O/S application user name */
     char                *group;             /**< O/S application group name */
-    //  TODO - should this be in http?
+    //  MOB - should this be in http?
     int                 uid;                /**< User Id */
     int                 gid;                /**< Group Id */
-    int                 userChanged;
-    int                 groupChanged;
+    int                 userChanged;        /**< User name changed */
+    int                 groupChanged;       /**< Group name changed */
 } MaAppweb;
+
+/**
+    Add a server
+    @description Add a server to the list of appweb managed web servers
+    @param appweb Appweb object created via #maCreateAppweb
+    @param server MaServer object
+    @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
+    @ingroup Appweb
+ */
+extern void maAddServer(MaAppweb *appweb, struct MaServer *server);
+
+/**
+    Apply the changed group
+    @description Apply configuration changes and actually change the Appweb group id
+    @param appweb Appweb object created via #maCreateAppweb
+    @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
+    @ingroup Appweb
+ */
+extern int maApplyChangedGroup(MaAppweb *appweb);
+
+/**
+    Apply the changed user
+    @description Apply configuration changes and actually change the Appweb user id
+    @param appweb Appweb object created via #maCreateAppweb
+    @ingroup Appweb
+ */
+extern int maApplyChangedUser(MaAppweb *appweb);
 
 /** Create the Appweb object.
     @description Appweb uses a singleton Appweb object to manage multiple web servers instances.
@@ -61,6 +88,34 @@ typedef struct MaAppweb {
     @ingroup Appweb
  */
 extern MaAppweb *maCreateAppweb();
+
+/**
+    Get the user group
+    @description Get the user name and ID for appweb
+    @param appweb Appweb object created via #maCreateAppweb
+    @ingroup Appweb
+ */
+extern void maGetUserGroup(MaAppweb *appweb);
+
+/**
+    Set the Http Group
+    @description Define the group name under which to run the Appweb service
+    @param appweb Appweb object created via #maCreateAppweb
+    @param group Group name. Must be defined in the system group file.
+    @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
+    @ingroup Appweb
+ */
+extern int maSetHttpGroup(MaAppweb *appweb, cchar *group);
+
+/**
+    Set the Http User
+    @description Define the user name under which to run the Appweb service
+    @param appweb Appweb object created via #maCreateAppweb
+    @param user User name. Must be defined in the system password file.
+    @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
+    @ingroup Appweb
+ */
+extern int maSetHttpUser(MaAppweb *appweb, cchar *user);
 
 /**
     Start Appweb services
@@ -80,33 +135,6 @@ extern int maStartAppweb(MaAppweb *appweb);
  */
 extern int maStopAppweb(MaAppweb *appweb);
 
-/**
-    Set the Http User
-    @description Define the user name under which to run the Appweb service
-    @param appweb Appweb object created via #maCreateAppweb
-    @param user User name. Must be defined in the system password file.
-    @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
-    @ingroup Appweb
- */
-extern int maSetHttpUser(MaAppweb *appweb, cchar *user);
-
-//  DOC
-extern void maGetUserGroup(MaAppweb *appweb);
-
-/**
-    Set the Http Group
-    @description Define the group name under which to run the Appweb service
-    @param appweb Appweb object created via #maCreateAppweb
-    @param group Group name. Must be defined in the system group file.
-    @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
-    @ingroup Appweb
- */
-extern int maSetHttpGroup(MaAppweb *appweb, cchar *group);
-
-//  MOB DOC
-extern void maAddServer(MaAppweb *appweb, struct MaServer *server);
-extern int maApplyChangedGroup(MaAppweb *appweb);
-extern int maApplyChangedUser(MaAppweb *appweb);
 extern struct MaServer *maLookupServer(MaAppweb *appweb, cchar *name);
 extern int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname);
 
