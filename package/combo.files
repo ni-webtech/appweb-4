@@ -12,13 +12,7 @@ DIR="${BLD_OUT_DIR}/staging/${BLD_PRODUCT}-${BLD_VERSION}"
 SRC="${DIR}/src/deps/appweb"
 DOC="${DIR}/doc"
 
-APPWEB_HEADERS="${BLD_INC_DIR}/mpr.h ${BLD_INC_DIR}/mprSsl.h ${BLD_INC_DIR}/http.h ${BLD_INC_DIR}/appweb.h ${BLD_INC_DIR}/appwebMonitor.h"
-if [ "$BLD_FEATURE_ESP" = 1 ] ; then
-	APPWEB_HEADERS="${APPWEB_HEADERS} ${BLD_INC_DIR}/esp.h"
-fi
-if [ "$BLD_FEATURE_PCRE" = 1 ] ; then
-	APPWEB_HEADERS="${APPWEB_HEADERS} ${BLD_INC_DIR}/pcre.h"
-fi
+APPWEB_HEADERS="${BLD_INC_DIR}/appweb.h ${BLD_INC_DIR}/appwebMonitor.h"
 LIB_SOURCES=`find ${S} -name '*.c' | egrep -v 'deps|server/|test|utils|sav|angel|makerom'`
 DEP_SOURCES=`find ${S}/deps -name '*.c' | egrep -v 'angel|makerom|utils|test|http/http.c'`
 
@@ -33,7 +27,7 @@ cp ${BLD_INC_DIR}/buildConfig.h "${DIR}/buildConfig.h"
 #	appweb.h
 #
 echo '#include "buildConfig.h"' >${SRC}/appweb.h
-combo ${APPWEB_HEADERS} | egrep -v '#include.*appweb|#include.*http|#include.*esp|#include.*mpr|#include.*pcre|#include.*customize.h' >>${SRC}/appweb.h
+combo ${APPWEB_HEADERS} | egrep -v '#include.*appweb' >>${SRC}/appweb.h
 
 #
 #	appwebLib.c

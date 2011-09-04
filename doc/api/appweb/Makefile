@@ -4,7 +4,7 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
 
-NAME		:= mpr
+NAME		:= appweb
 STAGING		:= staging
 
 include		.makedep
@@ -22,11 +22,11 @@ gen:
 
 next:
 	$(call log) "[Transform]" "gendoc"
-	ejs $(BLD_TOOLS_DIR)/gendoc.es --title "Appweb - Native API" --tags ../mpr.html --tags ../http.html \
-		--out ../$(NAME).tags xml/$(NAME)_8h.xml xml/group* xml/struct_*.xml >../$(NAME).html
+	ejs $(BLD_TOOLS_DIR)/gendoc.es --title "Appweb - Native API" --tags ../mpr.tags --tags ../http.tags \
+		--out ../$(NAME).html xml/$(NAME)_8h.xml xml/group* xml/struct_*.xml
 
 rest:
-	ejs $(BLD_TOOLS_DIR)/gendoc.es --bare --title "Appweb - Native API" --tags ../mpr.html --tags ../http.html \
+	ejs $(BLD_TOOLS_DIR)/gendoc.es --bare --title "Appweb - Native API" --tags ../mpr.tags --tags ../http.tags \
 		--out ../$(NAME)Bare.html xml/$(NAME)_8h.xml xml/group* xml/struct_*.xml
 	rm -fr ./$(STAGING) xml html
 

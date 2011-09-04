@@ -429,7 +429,7 @@ SORT_GROUP_NAMES       = YES
 # Note: This option applies only to the class list, not to the 
 # alphabetical list.
 
-SORT_BY_SCOPE_NAME     = YES
+SORT_BY_SCOPE_NAME     = NO
 
 # The GENERATE_TODOLIST tag can be used to enable (YES) or 
 # disable (NO) the todo list. This list is created by putting \todo 
@@ -617,7 +617,7 @@ EXCLUDE_SYMLINKS       = NO
 # against the file with absolute path, so to exclude all test directories 
 # for example use the pattern */test/*
 
-EXCLUDE_PATTERNS       = pcre* mprPcre* http.c mprSsl*
+EXCLUDE_PATTERNS       = pcre* mprPcre* http* ejs*
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names 
 # (namespaces, classes, functions, etc.) that should be excluded from the 
@@ -1239,7 +1239,7 @@ SEARCH_INCLUDES        = YES
 # contain include files that are not input files but should be processed by 
 # the preprocessor.
 
-INCLUDE_PATH           = ../../../src/include
+INCLUDE_PATH           = ../../../src
 
 # You can use the INCLUDE_FILE_PATTERNS tag to specify one or more wildcard 
 # patterns (like *.h and *.hpp) to filter out the header-files in the 
@@ -1258,25 +1258,17 @@ INCLUDE_FILE_PATTERNS  =
 
 PREDEFINED             = WIN=1 \
 						 LINUX=1 \
-						 BREW=1 \
                          BLD_UNIX_LIKE=1 \
                          BLD_WIN_LIKE=1 \
                          BLD_FEATURE_ASSERT=1 \
-                         BLD_FEATURE_ALLOC_STATS=1 \
-                         BLD_FEATURE_FLOATING_POINT=1 \
-                         BLD_FEATURE_INT64=1 \
-                         BLD_FEATURE_LEGACY_API=1 \
-                         BLD_FEATURE_MULTITHREAD=1 \
-                         BLD_FEATURE_SAFE_STRINGS=1 \
-                         BLD_FEATURE_TEST=1 \
-                         BLD_FEATURE_ROMFS=1 \
-                         BLD_FEATURE_CMD=1 \
+                         BLD_FEATURE_FLOAT=1 \
                          BLD_FEATURE_HTTP=1 \
                          BLD_FEATURE_REGEXP=1 \
                          BLD_FEATURE_SSL=1 \
-                         BLD_FEATURE_XML=1 \
                          BLD_FEATURE_OPENSSL=1 \
                          BLD_FEATURE_MATRIXSSL=1 \
+                         BLD_FEATURE_AUTH_FILE=1 \
+                         BLD_FEATURE_AUTH_PAM=1 \
                          DOXYGEN=1
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 

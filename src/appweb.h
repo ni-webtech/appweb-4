@@ -33,7 +33,6 @@ struct MaServer;
 #endif
 
 /********************************** Defines ***********************************/
-
 /**
     Appweb Service
     @description There is one instance of MaAppweb per application. It manages a list of HTTP servers running in
@@ -55,7 +54,6 @@ typedef struct MaAppweb {
     int                 userChanged;
     int                 groupChanged;
 } MaAppweb;
-
 
 /** Create the Appweb object.
     @description Appweb uses a singleton Appweb object to manage multiple web servers instances.
@@ -105,6 +103,7 @@ extern void maGetUserGroup(MaAppweb *appweb);
  */
 extern int maSetHttpGroup(MaAppweb *appweb, cchar *group);
 
+//  MOB DOC
 extern void maAddServer(MaAppweb *appweb, struct MaServer *server);
 extern int maApplyChangedGroup(MaAppweb *appweb);
 extern int maApplyChangedUser(MaAppweb *appweb);
@@ -132,6 +131,7 @@ extern int maRangeFilterInit(Http *http, MprModule *mp);
 extern int maSslModuleInit(Http *http, MprModule *mp);
 extern int maUploadFilterInit(Http *http, MprModule *mp);
 
+//  MOB DOC
 extern int maParseInit(MaAppweb *appweb);
 extern bool maMatchDir(HttpConn *conn, HttpRoute *route, int direction);
 
@@ -207,10 +207,6 @@ extern int maRunSimpleWebServer(cchar *ip, int port, cchar *home, cchar *documen
         If you want a one-line embedding of Appweb, use #maRunWebServer or #maRunSimpleWebServer.
     @param appweb Http object returned from #maCreateAppweb
     @param name Name of the web server. This name is used as the initial server name.
-    @param home Server home directory
-    @param ip If not-null, create and open a listening endpoint on this IP address. If you are configuring via a
-        config file, use #maConfigureServer and set ip to null.
-    @param port Port number to listen on. Set to -1 if you do not want to open a listening endpoint on ip:port
     @return MaServer A newly created MaServer object. Use mprFree to free and release.
     @ingroup MaServer
  */
@@ -231,6 +227,7 @@ extern MaServer *maCreateServer(MaAppweb *appweb, cchar *name);
  */
 extern int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *documents, cchar *ip, int port);
 
+//  MOB DOC
 extern void     maAddEndpoint(MaServer *server, HttpEndpoint *endpoint);
 extern int      maGetConfigValue(char **arg, char *buf, char **nextToken, int quotes);
 extern int      maParseConfig(MaServer *server, cchar *configFile);
@@ -282,6 +279,7 @@ typedef struct  MaGroup {
 //  TODO - simplify this API
 //  TODO -- all these routines should be generic (not native) and use some switch table to vector to the right backend method
 
+//  MOB DOC -- MOB most of this is in in http?
 extern int      maAddGroup(HttpAuth *auth, cchar *group, HttpAcl acl, bool enabled);
 extern int      maAddUser(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, bool enabled);
 extern int      maAddUserToGroup(HttpAuth *auth, MaGroup *gp, cchar *user);
@@ -372,6 +370,7 @@ typedef struct MaState {
     struct MaState *current;            /**< Current state */
 } MaState;
 
+//  MOB DOC 
 extern HttpRoute *maCreateLocationAlias(Http *http, MaState *state, cchar *prefix, cchar *path, 
         cchar *handlerName, int flags);
 

@@ -1,11 +1,58 @@
+body, table, div, p, dl {
+	font-family: Lucida Grande, Verdana, Geneva, Arial, sans-serif;
+	font-size: 12px;
+}
+
+div.contents {
+    margin: 20px;
+}
+
 div.api {
 	margin: 20px 0 10px 0;
 	padding: 0;
 }
 
-.prototype {
+table.apiIndex {
+    width: 90%;
+	background-color: #FAFAFA;
+	border: 1px solid #ccc;
+    border-collapse: collapse;
+}
+
+tr.apiDef {
+	border-top: 1px solid #ccc;
+}
+
+.apiBrief {
+	font-size: 90%;
+	color: #666666;
+	font-style: italic;
+}
+
+td.apiType {
+    vertical-align: top;
+	text-align: right;
+    white-space: nowrap;
+}
+
+td.apiName {
+    padding-right: 10px;
+    width: 15%;
+    white-space: nowrap;
+}
+
+tr.apiDef td {
+    padding-top: 2px;
+}
+
+tr.apiBrief td {
+    padding-bottom: 2px;
+}
+
+div.prototype {
 	border: 1px solid #84b0c7;	
-	color: #202060;
+	color: #000040;
+    margin-right: 10px;
 	padding: 8px 10px 8px 40px;
     text-indent: -30px;
 	background-color: #d5e1e8;
@@ -19,77 +66,32 @@ div.api {
 
 div.apiDetail {
 	margin-bottom: 30px;
-	padding: 2px 10px 5px 10px;
+	margin-right: 10px;
+	padding: 2px 5px 0 10px;
 	border: 1px solid #84b0c7;	
-	background-color: #F6F6fA;
+	background-color: #eef3f5;
+	background-color: #F4FAfF;
 	border-top-width: 0;
 	-webkit-border-bottom-left-radius: 10px;
 	-webkit-border-bottom-right-radius: 10px;
 	-moz-border-radius-bottomleft: 10px;
 	-moz-border-radius-bottomright: 10px;
-    line-height: 140%;
-}
-
-table.apiIndex {
-    width: 100%;
-	background-color: #FAFAFA;
-	border: 1px solid #ccc;
-    border-collapse: collapse;
-    padding: 0px;
-    margin: 0px;
-    line-height: 100%;
-    font-size: 8pt;
-}
-
-tr.apiDef {
-	border-top: 1px solid #ccc;
-}
-
-.apiBrief {
-	font-size: 95%;
-	color: #333333;
-	font-style: italic;
-}
-
-td.apiType {
-	vertical-align: top;
-	text-align: right;
-    white-space: nowrap;
-}
-
-td.apiName {
-    padding-right: 10px;
-    width: 15%;
-    white-space: nowrap;
-}
-
-tr.apiDef td {
-    padding-top: 4px;
-    border: none;
-    line-height: 140%;
-}
-
-tr.apiBrief td {
-    padding: 0 0 4px 0;
-    border: none;
 }
 
 table.parameters {
-    padding: 6px;
-    margin-right: 10px;
+    border-collapse: separate;
+    padding: 5px;
 }
 
 table.parameters td {
-    border-collapse: separate;
-    border: none;
-	padding: 2px 6px 2px 8px;
+    padding-right: 10px;
+    padding-bottom: 10px;
     vertical-align: top;
 }
 
 td.param {
 	font-style: italic;
 	text-align: right;
-    white-space: nowrap;
 }
 
 /* Details headings "Parameters", "Returns", "See Also" ... */
@@ -112,6 +114,7 @@ a.nameRef:hover, a.ref:hover {
 	color: #0000D0;
 	text-decoration: underline;
 }
+
 
 div.footnote {
 	padding-top: 10px;
