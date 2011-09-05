@@ -144,7 +144,7 @@ static bool fetchCachedResponse(HttpConn *conn)
     rx = conn->rx;
 
     if (req->action && req->action->lifespan) {
-        extraUri = req->action ? req->action->uri : 0;
+        extraUri = req->action ? req->action->cacheUri : 0;
         if (extraUri && scmp(extraUri, "*") == 0) {
             extraUri = conn->rx->pathInfo;
         }
@@ -211,8 +211,8 @@ static void saveCachedResponse(HttpConn *conn)
         req->cacheBuffer = 0;
         mprAddNullToBuf(buf);
         action = req->action;
-        extraUri = req->action->uri;
-        if (action->uri && scmp(action->uri, "*") == 0) {
+        extraUri = req->action->cacheUri;
+        if (action->cacheUri && scmp(action->cacheUri, "*") == 0) {
             extraUri = conn->rx->pathInfo;
         }
         key = makeCacheKey(conn, rx->targetKey, extraUri);
@@ -399,8 +399,8 @@ static int runAction(HttpConn *conn)
         }
         req->cacheBuffer = mprCreateBuf(-1, -1);
     }
-    if (action->actionFn) {
-        (action->actionFn)(conn);
+    if (action->actionProc) {
+        (action->actionProc)(conn);
         return 1;
     }
     return 0;
@@ -413,7 +413,7 @@ static void runView(HttpConn *conn)
     HttpRx      *rx;
     EspRoute    *eroute;
     EspReq      *req;
-    EspViewFn   view;
+    EspViewProc view;
     int         recompile, updated;
     
     rx = conn->rx;
@@ -536,7 +536,7 @@ void espCacheControl(EspRoute *eroute, cchar *targetKey, int lifesecs, cchar *ur
         }
     }
     if (uri) {
-        action->uri = sclone(uri);
+        action->cacheUri = sclone(uri);
     }
     if (lifesecs == 0) {
         action->lifespan = eroute->lifespan;
@@ -546,18 +546,18 @@ void espCacheControl(EspRoute *eroute, cchar *targetKey, int lifesecs, cchar *ur
 }
 
 
-void espDefineAction(EspRoute *eroute, cchar *targetKey, void *actionFn)
+void espDefineAction(EspRoute *eroute, cchar *targetKey, void *actionProc)
 {
     EspAction   *action;
 
     mprAssert(eroute);
     mprAssert(targetKey && *targetKey);
-    mprAssert(actionFn);
+    mprAssert(actionProc);
 
     if ((action = mprAllocObj(EspAction, manageAction)) == 0) {
         return;
     }
-    action->actionFn = actionFn;
+    action->actionProc = actionProc;
     mprAddKey(esp->actions, mprJoinPath(eroute->controllersDir, targetKey), action);
 }
 
@@ -835,7 +835,7 @@ static void manageReq(EspReq *req, int flags)
 static void manageAction(EspAction *ap, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(ap->uri);
+        mprMark(ap->cacheUri);
     }
 }
 
@@ -1207,7 +1207,7 @@ static int espUpdateDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
-int maEspHandlerInit(Http *http)
+int maEspHandlerInit(Http *http, MprModule *mp)
 {
     HttpStage   *handler;
     MaAppweb    *appweb;

@@ -6,11 +6,9 @@
 
 /********************************** Includes **********************************/
 
-#include    "appweb.h"
-
-#if BLD_FEATURE_ESP
 #include    "esp.h"
 
+#if BLD_FEATURE_ESP
 /************************************ Forwards ********************************/
 
 static int getEspToken(EspParse *parse);
@@ -45,7 +43,7 @@ static bool matchToken(cchar **str, cchar *token)
     CC          Compiler (cc)
     DEBUG       Debug compilation options (-g, -Zi -Od)
     INC         Include directory out/inc
-    LIBDIR      Library directory (out/lib, xcode/VS: out/bin)
+    LIB         Library directory (out/lib, xcode/VS: out/bin)
     OBJ         Name of compiled source (out/lib/view-MD5.o)
     OUT         Output module (view_MD5.dylib)
     SHLIB       Shared library (.lib, .so)
@@ -99,7 +97,7 @@ char *espExpandCommand(cchar *command, cchar *source, cchar *module)
                 /* Include directory (out/inc) */
                 mprPutStringToBuf(buf, mprResolvePath(mprGetAppDir(), BLD_INC_NAME));
 
-            } else if (matchToken(&cp, "${LIBDIR}")) {
+            } else if (matchToken(&cp, "${LIB}")) {
                 /* Library directory. IDE's use bin dir */
                 mprPutStringToBuf(buf, getOutDir(BLD_LIB_NAME));
 

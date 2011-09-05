@@ -1246,6 +1246,8 @@ extern ssize httpWriteBlock(HttpQueue *q, cchar *buf, ssize size);
  */
 extern ssize httpWriteString(HttpQueue *q, cchar *s);
 
+//  MOB - need httpWriteSafeString (see esp)
+
 /* Internal */
 extern HttpQueue *httpFindPreviousQueue(HttpQueue *q);
 extern HttpQueue *httpCreateQueueHead(struct HttpConn *conn, cchar *name);
@@ -3854,8 +3856,8 @@ extern bool httpContentNotModified(HttpConn *conn);
 extern void httpCreateCGIVars(HttpConn *conn);
 
 /** 
-    Get a rx content length
-    @description Get the length of the rx body content (if any). This is used in servers to get the length of posted
+    Get the receive body content length
+    @description Get the length of the receive body content (if any). This is used in servers to get the length of posted
         data and in clients to get the response body length.
     @param conn HttpConn connection object created via $httpCreateConn
     @return A count of the response content data in bytes.
@@ -3896,7 +3898,7 @@ extern cchar *httpGetFormVar(HttpConn *conn, cchar *var, cchar *defaultValue);
 extern MprHashTable *httpGetFormVars(HttpConn *conn);
 
 /** 
-    Get a rx http header.
+    Get an rx http header.
     @description Get a http response header for a given header key.
     @param conn HttpConn connection object created via $httpCreateConn
     @param key Name of the header to retrieve. This should be a lower case header name. For example: "Connection"
@@ -3915,7 +3917,7 @@ extern cchar *httpGetHeader(HttpConn *conn, cchar *key);
 extern MprHashTable *httpGetHeaderHash(HttpConn *conn);
 
 /** 
-    Get all the response http headers.
+    Get all the request http headers.
     @description Get all the rx headers. The returned string formats all the headers in the form:
         key: value\\nkey2: value2\\n...
     @param conn HttpConn connection object created via $httpCreateConn
@@ -3958,7 +3960,7 @@ extern HttpLang *httpGetLanguage(HttpConn *conn, MprHashTable *spoken, cchar *de
 extern cchar *httpGetQueryString(HttpConn *conn);
 
 /** 
-    Get a status associated with a response to a client request.
+    Get the response status 
     @param conn HttpConn connection object created via $httpCreateConn
     @return An integer Http response code. Typically 200 is success.
     @ingroup HttpRx
@@ -3966,8 +3968,7 @@ extern cchar *httpGetQueryString(HttpConn *conn);
 extern int httpGetStatus(HttpConn *conn);
 
 /** 
-    Get the Http status message associated with a response to a client request. The Http status message is supplied 
-    on the first line of the Http response.
+    Get the Http response status message. The Http status message is supplied on the first line of the Http response.
     @param conn HttpConn connection object created via $httpCreateConn
     @returns A Http status message. 
     @ingroup HttpRx
@@ -4220,6 +4221,7 @@ extern void httpDestroyTx(HttpTx *tx);
     Finalize transmission of the http request
     @description Finalize writing Http data by writing the final chunk trailer if required. If using chunked transfers, 
     a null chunk trailer is required to signify the end of write data. 
+    If the request is already finalized, this call does nothing.
     @param conn HttpConn connection object
     @ingroup HttpTx
  */
@@ -4228,6 +4230,7 @@ extern void httpFinalize(HttpConn *conn);
 /**
     Flush tx data. This writes any buffered data. 
     @param conn HttpConn connection object created via $httpCreateConn
+    @ingroup HttpTx
  */
 void httpFlush(HttpConn *conn);
 
@@ -4396,9 +4399,18 @@ extern int httpRemoveHeader(HttpConn *conn, cchar *key);
     Define a content length header in the transmission. This will define a "Content-Length: NNN" request header.
     @param conn HttpConn connection object created via $httpCreateConn
     @param length Numeric value for the content length header.
-    @ingroup HttpConn
+    @ingroup HttpTx
  */
 extern void httpSetContentLength(HttpConn *conn, MprOff length);
+
+/** 
+    Set the transmission (response) content mime type
+    @description Set the mime type Http header in the transmission
+    @param conn HttpConn connection object created via $httpCreateConn
+    @param mimeType Mime type string
+    @ingroup HttpTx
+ */
+extern void httpSetContentType(HttpConn *conn, cchar *mimeType);
 
 /** 
     Set a transmission cookie
@@ -4435,6 +4447,16 @@ extern void httpSetEntityLength(HttpConn *conn, MprOff len);
 extern void httpSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 
 /** 
+    Set a simple key/value transmission header
+    @description Set a Http header to send with the request. If the header already exists, it its value is overwritten.
+    @param conn HttpConn connection object created via $httpCreateConn
+    @param key Http response header key
+    @param value String value for the key
+    @ingroup HttpTx
+ */
+extern void httpSetHeaderString(HttpConn *conn, cchar *key, cchar *value);
+
+/** 
     Set a Http response status.
     @description Set the Http response status for the request. This defaults to 200 (OK).
     @param conn HttpConn connection object created via $httpCreateConn
@@ -4451,25 +4473,6 @@ extern void httpSetStatus(HttpConn *conn, int status);
     @ingroup HttpTx
  */
 extern void httpSetResponded(HttpConn *conn);
-
-/** 
-    Set the transmission (response) content mime type
-    @description Set the mime type Http header in the transmission
-    @param conn HttpConn connection object created via $httpCreateConn
-    @param mimeType Mime type string
-    @ingroup HttpTx
- */
-extern void httpSetContentType(HttpConn *conn, cchar *mimeType);
-
-/** 
-    Set a simple key/value transmission header
-    @description Set a Http header to send with the request. If the header already exists, it its value is overwritten.
-    @param conn HttpConn connection object created via $httpCreateConn
-    @param key Http response header key
-    @param value String value for the key
-    @ingroup HttpTx
- */
-extern void httpSetHeaderString(HttpConn *conn, cchar *key, cchar *value);
 
 /**
     Indicate that the transmission socket is blocked

@@ -75,6 +75,7 @@ void maSetDefaultServer(MaAppweb *appweb, MaServer *server)
     appweb->defaultServer = server;
 }
 
+//  MOB - sort this file
 
 MaServer *maLookupServer(MaAppweb *appweb, cchar *name)
 {
@@ -275,7 +276,7 @@ int maStartServer(MaServer *server)
 }
 
 
-int maStopServer(MaServer *server)
+void maStopServer(MaServer *server)
 {
     HttpEndpoint    *endpoint;
     int             next;
@@ -283,7 +284,6 @@ int maStopServer(MaServer *server)
     for (next = 0; (endpoint = mprGetNextItem(server->endpoints, &next)) != 0; ) {
         httpStopEndpoint(endpoint);
     }
-    return 0;
 }
 
 
@@ -322,7 +322,7 @@ void maSetServerHome(MaServer *server, cchar *path)
 
 
 /*
-    Set the document root for the default server (only)
+    Set the document root for the default server
  */
 void maSetServerAddress(MaServer *server, cchar *ip, int port)
 {
@@ -454,7 +454,7 @@ int maApplyChangedGroup(MaAppweb *appweb)
 
 
 /*
-    Load a module. Returns 0 if the modules is successfully loaded either statically or dynamically.
+    Load a module. Returns 0 if the modules is successfully loaded (may have already been loaded).
  */
 int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
 {

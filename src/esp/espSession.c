@@ -16,11 +16,8 @@ static char *makeSessionID(HttpConn *conn);
 static void manageSession(EspSession *sp, int flags);
 
 /************************************* Code ***********************************/
-/*
-    Get (create) a session object using the supplied key. If the key has expired or is NULL, then generate a new key if
-    create is true. The lifespan is in msec.
- */
-EspSession *espAllocSession(HttpConn *conn, cchar *id, MprTime lifespan, int create)
+
+EspSession *espAllocSession(HttpConn *conn, cchar *id, MprTime lifespan)
 {
     EspReq      *req;
     EspSession  *sp;
@@ -73,7 +70,7 @@ EspSession *espGetSession(HttpConn *conn, int create)
     }
     id = espGetSessionID(conn);
     if (id || create) {
-        req->session = espAllocSession(conn, id, conn->limits->sessionTimeout, create);
+        req->session = espAllocSession(conn, id, conn->limits->sessionTimeout);
         if (req->session && !id) {
             httpSetCookie(conn, ESP_SESSION, req->session->id, "/", NULL, 0, conn->secure);
         }
@@ -99,7 +96,7 @@ cchar *espGetSessionVar(HttpConn *conn, cchar *key, cchar *defaultValue)
 }
 
 
-int espSetSessionVar(HttpConn *conn, cchar *key, cchar *value, MprTime lifespan)
+int espSetSessionVar(HttpConn *conn, cchar *key, cchar *value)
 {
     EspReq      *req;
     EspSession  *sp;
@@ -112,16 +109,16 @@ int espSetSessionVar(HttpConn *conn, cchar *key, cchar *value, MprTime lifespan)
     if ((sp = espGetSession(conn, 1)) == 0) {
         return 0;
     }
-    if (lifespan == 0) {
-        lifespan = sp->lifespan;
-    }
-    if (mprWriteCache(sp->cache, makeKey(sp, key), value, 0, lifespan, 0, MPR_CACHE_SET) == 0) {
+//  MOB - should not the session expire all at once?
+    if (mprWriteCache(sp->cache, makeKey(sp, key), value, 0, sp->lifespan, 0, MPR_CACHE_SET) == 0) {
         return MPR_ERR_CANT_WRITE;
     }
     return 0;
 }
 
 
+#if UNUSED
+//  MOB - sessions should expire in their entirity
 void espExpireSessionVar(HttpConn *conn, cchar *key, MprTime lifespan)
 {
     EspReq      *req;
@@ -134,6 +131,7 @@ void espExpireSessionVar(HttpConn *conn, cchar *key, MprTime lifespan)
     sp = req->session;
     mprExpireCache(sp->cache, makeKey(sp, key), mprGetTime() + lifespan);
 }
+#endif
 
 
 char *espGetSessionID(HttpConn *conn)

@@ -1,0 +1,448 @@
+<?xml version='1.0' encoding='ISO-8859-1' standalone='yes' ?>
+<tagfile>
+  <compound kind="group">
+    <name>EspParse</name>
+    <title>EspParse</title>
+    <filename>group___esp_parse.html</filename>
+  </compound>
+  <compound kind="group">
+    <name>EspRoute</name>
+    <title>EspRoute</title>
+    <filename>group___esp_route.html</filename>
+    <member kind="function">
+      <type>char *</type>
+      <name>espBuildScript</name>
+      <anchorfile>group___esp_route.html</anchorfile>
+      <anchor>ga2fe633ebe5e6a9dd266e1da8863f55b0</anchor>
+      <arglist>(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheName, cchar *layout, char **err)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>espCompile</name>
+      <anchorfile>group___esp_route.html</anchorfile>
+      <anchor>ga3b649e2be364263d078bb29ae3cbbb0a</anchor>
+      <arglist>(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, int isView)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espDefineAction</name>
+      <anchorfile>group___esp_route.html</anchorfile>
+      <anchor>gaea173dc388d5badd02f2cd17743b479c</anchor>
+      <arglist>(EspRoute *eroute, cchar *targetKey, void *actionProc)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espDefineView</name>
+      <anchorfile>group___esp_route.html</anchorfile>
+      <anchor>ga7cec7c28d284376b7670bf0065159870</anchor>
+      <arglist>(EspRoute *eroute, cchar *path, void *viewProc)</arglist>
+    </member>
+    <member kind="function">
+      <type>char *</type>
+      <name>espExpandCommand</name>
+      <anchorfile>group___esp_route.html</anchorfile>
+      <anchor>ga680226fbc5c0a870ff91eef7d13ac4c8</anchor>
+      <arglist>(cchar *command, cchar *source, cchar *module)</arglist>
+    </member>
+  </compound>
+  <compound kind="group">
+    <name>EspSession</name>
+    <title>EspSession</title>
+    <filename>group___esp_session.html</filename>
+    <member kind="function">
+      <type>EspSession *</type>
+      <name>espAllocSession</name>
+      <anchorfile>group___esp_session.html</anchorfile>
+      <anchor>ga7d2c9558796acec2501b7d31dfc877b9</anchor>
+      <arglist>(HttpConn *conn, cchar *id, MprTime lifespan)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espDestroySession</name>
+      <anchorfile>group___esp_session.html</anchorfile>
+      <anchor>gab325d1d70bce4551a89fd7f0d1208b07</anchor>
+      <arglist>(EspSession *sp)</arglist>
+    </member>
+    <member kind="function">
+      <type>EspSession *</type>
+      <name>espGetSession</name>
+      <anchorfile>group___esp_session.html</anchorfile>
+      <anchor>ga4a615da785dba2c514e3237f37c92338</anchor>
+      <arglist>(HttpConn *conn, int create)</arglist>
+    </member>
+    <member kind="function">
+      <type>char *</type>
+      <name>espGetSessionID</name>
+      <anchorfile>group___esp_session.html</anchorfile>
+      <anchor>ga74599c6792fca6d518dc85ea51fe12ab</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>cchar *</type>
+      <name>espGetSessionVar</name>
+      <anchorfile>group___esp_session.html</anchorfile>
+      <anchor>ga60a5effb2a9ef53fdb02dbe865bf6093</anchor>
+      <arglist>(HttpConn *conn, cchar *name, cchar *defaultValue)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>espSetSessionVar</name>
+      <anchorfile>group___esp_session.html</anchorfile>
+      <anchor>ga100b653cb5cb53f21805db558ffe609f</anchor>
+      <arglist>(HttpConn *conn, cchar *name, cchar *value)</arglist>
+    </member>
+  </compound>
+  <compound kind="group">
+    <name>EspReq</name>
+    <title>EspReq</title>
+    <filename>group___esp_req.html</filename>
+    <class kind="struct">EspAction</class>
+    <member kind="typedef">
+      <type>void(*</type>
+      <name>EspActionProc</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gab449f4bb41a5afc1af4870db06fa131f</anchor>
+      <arglist>)(HttpConn *conn)</arglist>
+    </member>
+    <member kind="typedef">
+      <type>void(*</type>
+      <name>EspViewProc</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga4645d40178e3548fd0e6ad13fec1b5ed</anchor>
+      <arglist>)(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espAddHeader</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gaae88740666af5ee9b21ad39648857db8</anchor>
+      <arglist>(HttpConn *conn, cchar *key, cchar *fmt,...)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espAddHeaderString</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gad772b64162b7f4eb80ef1a3a1795175d</anchor>
+      <arglist>(HttpConn *conn, cchar *key, cchar *value)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espAppendHeader</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gaa50588be6fe69e04738fc0276d7afbbb</anchor>
+      <arglist>(HttpConn *conn, cchar *key, cchar *fmt,...)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espAppendHeaderString</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gacb696dcdff91355fc9df37f5c7171a01</anchor>
+      <arglist>(HttpConn *conn, cchar *key, cchar *value)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espAutoFinalize</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gab6aeea9bb5cb500eabf3e1cfd1745f03</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espFinalize</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gac142434246bc5558dfe73a78ded7a7f0</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>espFinalized</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga5a3491684933d6cb6fdf6774a7fbb083</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espFlush</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gadf50b51bf7ab10d828e85be140c005c5</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>MprOff</type>
+      <name>espGetContentLength</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga3cb308121f5659d48f58c217959c3800</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>cchar *</type>
+      <name>espGetCookies</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga1c47b7c05e41bc39b9f3426134c1bf7c</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>MprHashTable *</type>
+      <name>espGetFormVars</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gaf0b081478fe242608c9776e27491e02b</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>cchar *</type>
+      <name>espGetHeader</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gaddf870926cbeee2779b687522d5db0aa</anchor>
+      <arglist>(HttpConn *conn, cchar *key)</arglist>
+    </member>
+    <member kind="function">
+      <type>MprHashTable *</type>
+      <name>espGetHeaderHash</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga3f2366767ded6bb0f7e8fd86bb08bca7</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>espGetIntVar</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gae5fc1c38d3117f0403050035ead3b33c</anchor>
+      <arglist>(HttpConn *conn, cchar *var, int defaultValue)</arglist>
+    </member>
+    <member kind="function">
+      <type>cchar *</type>
+      <name>espGetQueryString</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gaf84aa1df39869744c4e0ac87e99f1a89</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>espGetStatus</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga4323100f7ccf0a198b0ee2593749fe5e</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>char *</type>
+      <name>espGetStatusMessage</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gad4631deeb02544938b8590806ae8bb8e</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>cchar *</type>
+      <name>espGetVar</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gaa9052e93703bbd5cb13def655614ea43</anchor>
+      <arglist>(HttpConn *conn, cchar *var, cchar *defaultValue)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>espMatchVar</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga0dc5fb70fa9a677662eacf818293f993</anchor>
+      <arglist>(HttpConn *conn, cchar *var, cchar *value)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espRedirect</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga2b1dc5b4a688fc1062395d6420e85ef9</anchor>
+      <arglist>(HttpConn *conn, int status, cchar *target)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espRedirectBack</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gaaf5114ed096b363628229ea0ae0f94c3</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>espRemoveHeader</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga8743524e4c8aff73135e0ad6f2d44d7c</anchor>
+      <arglist>(HttpConn *conn, cchar *key)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>espSetAutoFinalizing</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga54f5ce21966922b0883d1942ccbeae8d</anchor>
+      <arglist>(HttpConn *conn, bool on)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espSetContentLength</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gae9b3e3ddb3bf784d77cba59045dfeb81</anchor>
+      <arglist>(HttpConn *conn, MprOff length)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espSetContentType</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga7bb7c062a2fb64c1756c93dc79481c2c</anchor>
+      <arglist>(HttpConn *conn, cchar *mimeType)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espSetCookie</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga1e261501c2546b6b3b9ddf98a84b0646</anchor>
+      <arglist>(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *cookieDomain, MprTime lifespan, bool isSecure)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espSetHeader</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga66c536436b8a99612b1ce571c315b39b</anchor>
+      <arglist>(HttpConn *conn, cchar *key, cchar *fmt,...)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espSetHeaderString</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gafcb200922fb98165c0485348ea640d01</anchor>
+      <arglist>(HttpConn *conn, cchar *key, cchar *value)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espSetIntVar</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga1c582f2c263bbf97f0d85a781e26c2cc</anchor>
+      <arglist>(HttpConn *conn, cchar *var, int value)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espSetStatus</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga3151f73107b752661efecbacf9011894</anchor>
+      <arglist>(HttpConn *conn, int status)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espSetVar</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga900feca01971b8e0cd3ea1cc61a04315</anchor>
+      <arglist>(HttpConn *conn, cchar *var, cchar *value)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espShowRequest</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga4ed2f95cccb206fc9069c0a77c5c1e62</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>ssize</type>
+      <name>espWrite</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gafb783e22dfaf983aec46f1718dcec201</anchor>
+      <arglist>(HttpConn *conn, cchar *fmt,...)</arglist>
+    </member>
+    <member kind="function">
+      <type>ssize</type>
+      <name>espWriteBlock</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gad9edd910735ba5ee653419ff6af8540b</anchor>
+      <arglist>(HttpConn *conn, cchar *buf, ssize size)</arglist>
+    </member>
+    <member kind="function">
+      <type>ssize</type>
+      <name>espWriteString</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga265a6a50f12c3af1512aa4a30477665d</anchor>
+      <arglist>(HttpConn *conn, cchar *s)</arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>Esp</name>
+    <filename>struct_esp.html</filename>
+    <member kind="variable">
+      <type>MprHashTable *</type>
+      <name>actions</name>
+      <anchorfile>struct_esp.html</anchorfile>
+      <anchor>a65d39e00e8d4bfbbb02e5c00cb4235cc</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>MprCache *</type>
+      <name>cache</name>
+      <anchorfile>struct_esp.html</anchorfile>
+      <anchor>a16a000f17fb7a06a8754988a341a3b8d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>int</type>
+      <name>inUse</name>
+      <anchorfile>struct_esp.html</anchorfile>
+      <anchor>a51968fa5fbde715934d2a3e00980d647</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>MprMutex *</type>
+      <name>mutex</name>
+      <anchorfile>struct_esp.html</anchorfile>
+      <anchor>a71156c2af5c1018ffa495d97fc21c6ec</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>MprHashTable *</type>
+      <name>views</name>
+      <anchorfile>struct_esp.html</anchorfile>
+      <anchor>a15cace83d25a3928b0dcb3d5c335817b</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>EspAction</name>
+    <filename>struct_esp_action.html</filename>
+    <member kind="variable">
+      <type>EspActionProc</type>
+      <name>actionProc</name>
+      <anchorfile>struct_esp_action.html</anchorfile>
+      <anchor>afbab1ce1641a41a3cdb188e34bac783e</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>char *</type>
+      <name>cacheUri</name>
+      <anchorfile>struct_esp_action.html</anchorfile>
+      <anchor>af852004159946e32e2230e04a7091a1e</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>MprTime</type>
+      <name>lifespan</name>
+      <anchorfile>struct_esp_action.html</anchorfile>
+      <anchor>a26b7d2efa31ea0016d317cc907934eb0</anchor>
+      <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="dir">
+    <name>staging/src/deps/appweb/</name>
+    <path>/Users/mob/git/appweb/doc/api/esp/staging/src/deps/appweb/</path>
+    <filename>dir_d28b9e948734c14b7b338e6a96a73050.html</filename>
+    <file>esp.h</file>
+  </compound>
+  <compound kind="dir">
+    <name>staging/src/deps/</name>
+    <path>/Users/mob/git/appweb/doc/api/esp/staging/src/deps/</path>
+    <filename>dir_79fc5a58a5d24f790ff1bb9eb0a5f3c5.html</filename>
+    <dir>staging/src/deps/appweb/</dir>
+  </compound>
+  <compound kind="dir">
+    <name>staging/src/</name>
+    <path>/Users/mob/git/appweb/doc/api/esp/staging/src/</path>
+    <filename>dir_915be1fa0fcc09b5d6c31b8740bba507.html</filename>
+    <dir>staging/src/deps/</dir>
+  </compound>
+  <compound kind="dir">
+    <name>staging/</name>
+    <path>/Users/mob/git/appweb/doc/api/esp/staging/</path>
+    <filename>dir_03eab0e60d46e787cf82d9a9e0017627.html</filename>
+    <dir>staging/src/</dir>
+  </compound>
+</tagfile>

@@ -4,12 +4,124 @@
     <name>Appweb</name>
     <title>Appweb</title>
     <filename>group___appweb.html</filename>
+    <member kind="typedef">
+      <type>int(</type>
+      <name>MaDirective</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>ga6a437d214b5963248c0985eb1bc2a096</anchor>
+      <arglist>)(MaState *state, cchar *key, cchar *value)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>maAddDirective</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>ga2288c0f827a92c4f693c98072c37a1b8</anchor>
+      <arglist>(MaAppweb *appweb, cchar *directive, MaDirective proc)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>maAddEndpoint</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>ga4f98dc51b9f96f3636ba16d4075d2550</anchor>
+      <arglist>(MaServer *server, HttpEndpoint *endpoint)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>maAddServer</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>ga6dddb0f76c4bb135ee006f2fb48f38ae</anchor>
+      <arglist>(MaAppweb *appweb, struct MaServer *server)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>maApplyChangedGroup</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>gaf558e80479e238939e4c4edf16a16ec0</anchor>
+      <arglist>(MaAppweb *appweb)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>maApplyChangedUser</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>ga04b040307aaccc46eaf6fef1dd61d024</anchor>
+      <arglist>(MaAppweb *appweb)</arglist>
+    </member>
     <member kind="function">
       <type>MaAppweb *</type>
       <name>maCreateAppweb</name>
       <anchorfile>group___appweb.html</anchorfile>
       <anchor>ga3c5d11ffcda01cb1d75ae24faa39cdee</anchor>
       <arglist>()</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>maGetUserGroup</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>gaeea4a201c9a8cca9521cd006436b8570</anchor>
+      <arglist>(MaAppweb *appweb)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>maLoadModule</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>gaba2d0d4cfa73dbc028719098908eaa89</anchor>
+      <arglist>(MaAppweb *appweb, cchar *name, cchar *libname)</arglist>
+    </member>
+    <member kind="function">
+      <type>struct MaServer *</type>
+      <name>maLookupServer</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>gaf5f955fddd686c69147a13fe34f57a9b</anchor>
+      <arglist>(MaAppweb *appweb, cchar *name)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>maMatchDir</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>ga98cb5fc9be7ee253af2f0e0734478155</anchor>
+      <arglist>(HttpConn *conn, HttpRoute *route, int direction)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>maParseConfig</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>ga6739626fc5e5975c12057794df7fcd73</anchor>
+      <arglist>(MaServer *server, cchar *path)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>maParseInit</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>gaf72ae42c5d6c767a221d6d84f4f0b83b</anchor>
+      <arglist>(MaAppweb *appweb)</arglist>
+    </member>
+    <member kind="function">
+      <type>MaState *</type>
+      <name>maPopState</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>ga2ff0312d66ba2c173b2ff6882e1f4ce9</anchor>
+      <arglist>(MaState *state)</arglist>
+    </member>
+    <member kind="function">
+      <type>MaState *</type>
+      <name>maPushState</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>gad960c7ab5089293e33a0cf221f41072d</anchor>
+      <arglist>(MaState *state)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>maSetAccessLog</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>ga7168a722ecf30b5caf8e0c9f29acdc5c</anchor>
+      <arglist>(HttpHost *host, cchar *path, cchar *format)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>maSetDefaultServer</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>ga30109915ae5446c9299173528c2c880e</anchor>
+      <arglist>(MaAppweb *appweb, struct MaServer *server)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
@@ -26,6 +138,27 @@
       <arglist>(MaAppweb *appweb, cchar *user)</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>maSetServerAddress</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>ga8c95d4a11a227962df2feaddf98c4151</anchor>
+      <arglist>(MaServer *server, cchar *ip, int port)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>maSetServerHome</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>ga8e99d32507bca4e743bd52fb9175c6f3</anchor>
+      <arglist>(MaServer *server, cchar *path)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>maStartAccessLogging</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>gadac92b232e7f075ba35c660ca1bbd3ed</anchor>
+      <arglist>(HttpHost *host)</arglist>
+    </member>
+    <member kind="function">
       <type>int</type>
       <name>maStartAppweb</name>
       <anchorfile>group___appweb.html</anchorfile>
@@ -34,10 +167,38 @@
     </member>
     <member kind="function">
       <type>int</type>
+      <name>maStartLogging</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>ga7a5b52ceee1b22f1d40a8cea80d44d2c</anchor>
+      <arglist>(HttpHost *host, cchar *logSpec)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>maStopAccessLogging</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>ga1a9f476cc950658d26cedddcfe6f72bb</anchor>
+      <arglist>(HttpHost *host)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
       <name>maStopAppweb</name>
       <anchorfile>group___appweb.html</anchorfile>
       <anchor>gae98b753968134ec1c2bc50d5d63b2a1f</anchor>
       <arglist>(MaAppweb *appweb)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>maStopLogging</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>ga0230e2295d47feb959701eb07478354b</anchor>
+      <arglist>()</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>maValidateServer</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>gabd0d6aff18d184020e8ed1f0a388c3fc</anchor>
+      <arglist>(MaServer *server)</arglist>
     </member>
   </compound>
   <compound kind="group">
@@ -59,13 +220,6 @@
       <arglist>(MaAppweb *appweb, cchar *name)</arglist>
     </member>
     <member kind="function">
-      <type>MaServer *</type>
-      <name>maCreateWebServer</name>
-      <anchorfile>group___ma_server.html</anchorfile>
-      <anchor>ga8c3f14dce5b7efcff18ad607aea7522e</anchor>
-      <arglist>(cchar *configFile)</arglist>
-    </member>
-    <member kind="function">
       <type>int</type>
       <name>maRunSimpleWebServer</name>
       <anchorfile>group___ma_server.html</anchorfile>
@@ -78,13 +232,6 @@
       <anchorfile>group___ma_server.html</anchorfile>
       <anchor>ga4994c273e87409b094418dd7bd370ee4</anchor>
       <arglist>(cchar *configFile)</arglist>
-    </member>
-    <member kind="function">
-      <type>int</type>
-      <name>maServiceWebServer</name>
-      <anchorfile>group___ma_server.html</anchorfile>
-      <anchor>ga4a2f9501514bf2193c90a03f15635db9</anchor>
-      <arglist>(MaServer *server)</arglist>
     </member>
   </compound>
   <compound kind="group">

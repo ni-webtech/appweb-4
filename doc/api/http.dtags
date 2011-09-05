@@ -888,13 +888,6 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>httpSetContentLength</name>
-      <anchorfile>group___http_conn.html</anchorfile>
-      <anchor>ga6ddf505606e2c7e5341cb383e843267d</anchor>
-      <arglist>(HttpConn *conn, MprOff length)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
       <name>httpSetCredentials</name>
       <anchorfile>group___http_conn.html</anchorfile>
       <anchor>gaa5e60e413456e688bb7286e238b50948</anchor>
@@ -1945,6 +1938,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>httpFlush</name>
+      <anchorfile>group___http_tx.html</anchorfile>
+      <anchor>ga23c2dd9ef6d1b76a146bb93731fa7b7d</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>httpFollowRedirects</name>
       <anchorfile>group___http_tx.html</anchorfile>
       <anchor>ga425dd50ea1e631687c47f93e9bcf69dd</anchor>
@@ -2026,6 +2026,13 @@
       <anchorfile>group___http_tx.html</anchorfile>
       <anchor>ga38e1fcae578fdda33c7cf2f697ef732a</anchor>
       <arglist>(HttpConn *conn, cchar *key)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>httpSetContentLength</name>
+      <anchorfile>group___http_tx.html</anchorfile>
+      <anchor>ga6ddf505606e2c7e5341cb383e843267d</anchor>
+      <arglist>(HttpConn *conn, MprOff length)</arglist>
     </member>
     <member kind="function">
       <type>void</type>

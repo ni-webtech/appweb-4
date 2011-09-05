@@ -61,6 +61,7 @@ static void logHandler(int flags, int level, cchar *msg)
 }
 
 
+//  MOB - logging should really be per-host
 /*
     Start error and information logging. Note: this is not per-request access logging.
  */
@@ -94,8 +95,9 @@ int maStartLogging(HttpHost *host, cchar *logSpec)
             if (host && host->logCount) {
                 mode |= O_APPEND;
                 mprGetPathInfo(spec, &info);
+                //  MOB - is this access logging or error logging details?
                 if (host->logSize <= 0 || (info.valid && info.size > host->logSize)) {
-                    maRotateLog(spec, host->logCount, host->logSize);
+                    maArchiveLog(spec, host->logCount, host->logSize);
                 }
             } else {
                 mode |= O_TRUNC;
@@ -131,7 +133,7 @@ int maStartLogging(HttpHost *host, cchar *logSpec)
 /*
     Stop the error and information logging. Note: this is not per-request access logging
  */
-int maStopLogging()
+void maStopLogging()
 {
     MprFile     *file;
     Mpr         *mpr;
@@ -143,7 +145,6 @@ int maStopLogging()
         mprSetLogHandler(0);
         mprSetLogFile(0);
     }
-    return 0;
 }
 
 
@@ -154,6 +155,7 @@ int maStartAccessLogging(HttpHost *host)
         host->log = mprOpenFile(host->logPath, O_CREAT | O_APPEND | O_WRONLY | O_TEXT, 0664);
         if (host->log == 0) {
             mprError("Can't open log file %s", host->logPath);
+            return MPR_ERR_CANT_OPEN;
         }
     }
 #endif
@@ -161,10 +163,9 @@ int maStartAccessLogging(HttpHost *host)
 }
 
 
-int maStopAccessLogging(HttpHost *host)
+void maStopAccessLogging(HttpHost *host)
 {
     host->log = 0;
-    return 0;
 }
 
 
@@ -202,17 +203,20 @@ void maWriteAccessLogEntry(HttpHost *host, cchar *buf, int len)
 }
 
 
-void maRotateLog(cchar *path, int count, int maxSize)
+int maArchiveLog(cchar *path, int count, int maxSize)
 {
     char    *from, *to;
     int     i;
 
+    //  MOB - not right. Not handling to level log file
     for (i = count - 1; i > 0; i--) {
         from = sfmt("%s.%d", path, i);
         to = sfmt("%s.%d", path, i - 1);
+        //  MOB RC
         unlink(to);
         rename(from, to);
     }
+    return 0;
 }
 
 
@@ -276,9 +280,11 @@ void maLogRequest(HttpConn *conn)
             mprPutStringToBuf(buf, rx->parsedUri->host);
             break;
 
+#if UNUSED
         case 'l':                           /* Supplied in authorization */
             mprPutStringToBuf(buf, conn->authUser ? conn->authUser : "-");
             break;
+#endif
 
         case 'O':                           /* Bytes written (including headers) */
             mprPutIntToBuf(buf, tx->bytesWritten);

@@ -13,9 +13,9 @@
 
 /********************************* Includes ***********************************/
 
-#include    "appweb.h"
 #include    "esp.h"
 
+#if BLD_FEATURE_ESP
 /********************************** Locals ************************************/
 /*
     Global application object. Provides the top level roots of all data objects for the GC.
@@ -904,6 +904,7 @@ static void trace(cchar *tag, cchar *fmt, ...)
     }
 }
 
+#endif /* BLD_FEATURE_ESP */
 
 /*
     @copy   default

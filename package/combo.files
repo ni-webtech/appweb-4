@@ -13,6 +13,7 @@ SRC="${DIR}/src/deps/appweb"
 DOC="${DIR}/doc"
 
 APPWEB_HEADERS="${BLD_INC_DIR}/appweb.h ${BLD_INC_DIR}/appwebMonitor.h"
+ESP_HEADERS="${BLD_INC_DIR}/esp.h"
 LIB_SOURCES=`find ${S} -name '*.c' | egrep -v 'deps|server/|test|utils|sav|angel|makerom'`
 DEP_SOURCES=`find ${S}/deps -name '*.c' | egrep -v 'angel|makerom|utils|test|http/http.c'`
 
@@ -45,6 +46,18 @@ combo ${S}/server/appweb.c | egrep -v '#include.*appweb|#include.*http' >>${SRC}
 #	appweb.conf
 #
 cp ${S}/server/*.conf ${SRC}
+
+#
+#	esp.h
+#
+echo '#include "buildConfig.h"' >${SRC}/esp.h
+combo ${ESP_HEADERS} | egrep -v '#include.*UNUSED' >>${SRC}/esp.h
+
+#
+#	esp.c
+#
+echo '#include "esp.h"' >${SRC}/esp.c
+combo ${S}/esp/esp*.c | egrep -v '#include.*UNUSED' >>${SRC}/esp.c
 
 #
 #	Doc

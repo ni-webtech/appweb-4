@@ -60,7 +60,7 @@ int maParseConfig(MaServer *server, cchar *path)
     if (parseFile(state, path) < 0) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if (!maValidateConfiguration(server)) {
+    if (!maValidateServer(server)) {
         return MPR_ERR_BAD_ARGS;
     }
     httpFinalizeRoute(state->route);
@@ -1676,7 +1676,7 @@ static int virtualHostDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
-int maValidateConfiguration(MaServer *server)
+bool maValidateServer(MaServer *server)
 {
     MaAppweb        *appweb;
     Http            *http;

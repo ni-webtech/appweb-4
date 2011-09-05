@@ -8,11 +8,9 @@
 
 /********************************** Includes **********************************/
 
-#include    "appweb.h"
-
-#if BLD_FEATURE_ESP
 #include    "esp.h"
 
+#if BLD_FEATURE_ESP
 /************************************* Local **********************************/
 
 /************************************* Code ***********************************/
@@ -268,10 +266,10 @@ int espRemoveHeader(HttpConn *conn, cchar *key)
 }
 
 
-bool espSetAutoFinalizing(HttpConn *conn, int on) 
+bool espSetAutoFinalizing(HttpConn *conn, bool on) 
 {
     EspReq  *req;
-    int     old;
+    bool    old;
 
     req = conn->data;
     old = req->autoFinalize;
@@ -286,9 +284,10 @@ void espSetContentLength(HttpConn *conn, MprOff length)
 }
 
 
-void espSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *cookieDomain, int lifetime, bool isSecure)
+void espSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *cookieDomain, MprTime lifespan, 
+        bool isSecure)
 {
-    httpSetCookie(conn, name, value, path, cookieDomain, lifetime, isSecure);
+    httpSetCookie(conn, name, value, path, cookieDomain, lifespan, isSecure);
 }
 
 
@@ -413,7 +412,7 @@ ssize espWriteVar(HttpConn *conn, cchar *name)
     if ((value = espGetVar(conn, name, 0)) == 0) {
         value = espGetSessionVar(conn, name, "");
     }
-    return espWriteString(conn, mprEscapeHtml(value));
+    return espWriteSafeString(conn, value);
 }
 
 
