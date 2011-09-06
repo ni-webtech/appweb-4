@@ -12465,10 +12465,10 @@ void httpSetContentLength(HttpConn *conn, MprOff length)
 
 
 void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *cookieDomain, 
-        MprTime lifespan, bool isSecure)
+        MprTime lifespan, int flags)
 {
     HttpRx      *rx;
-    char        *cp, *expiresAtt, *expires, *domainAtt, *domain, *secure;
+    char        *cp, *expiresAtt, *expires, *domainAtt, *domain, *extra;
     int         webkitVersion;
 
     rx = conn->rx;
@@ -12490,6 +12490,7 @@ void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar
             webkitVersion = (cp[0] - '0') * 100 + (cp[2] - '0') * 10 + (cp[4] - '0');
         }
     }
+    domain = (char*) cookieDomain;
     if (webkitVersion >= 312) {
         domain = sclone(rx->hostHeader);
         if ((cp = strchr(domain, ':')) != 0) {
@@ -12500,13 +12501,12 @@ void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar
         } else {
             domain = 0;
         }
-    } else {
-        domain = 0;
     }
     if (domain) {
         domainAtt = "; domain=";
     } else {
         domainAtt = "";
+        domain = "";
     }
     if (lifespan > 0) {
         expiresAtt = "; expires=";
@@ -12515,16 +12515,18 @@ void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar
     } else {
         expires = expiresAtt = "";
     }
-    if (isSecure) {
-        secure = "; secure";
+    if (flags & HTTP_COOKIE_SECURE) {
+        extra = "; secure";
+    } else if (flags & HTTP_COOKIE_HTTP) {
+        extra = "; secure";
     } else {
-        secure = ";";
+        extra = ";";
     }
     /* 
        Allow multiple cookie headers. Even if the same name. Later definitions take precedence
      */
     httpAppendHeader(conn, "Set-Cookie", 
-        sjoin(name, "=", value, "; path=", path, domainAtt, domain, expiresAtt, expires, secure, NULL));
+        sjoin(name, "=", value, "; path=", path, domainAtt, domain, expiresAtt, expires, extra, NULL));
     httpAppendHeader(conn, "Cache-control", "no-cache=\"set-cookie\"");
 }
 

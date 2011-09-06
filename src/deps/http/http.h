@@ -4412,6 +4412,9 @@ extern void httpSetContentLength(HttpConn *conn, MprOff length);
  */
 extern void httpSetContentType(HttpConn *conn, cchar *mimeType);
 
+#define HTTP_COOKIE_SECURE   0x1         /**< Flag for httpSetCookie for secure cookies (https only) */
+#define HTTP_COOKIE_HTTP     0x2         /**< Flag for httpSetCookie for http cookies (http only) */
+
 /** 
     Set a transmission cookie
     @description Define a cookie to send in the transmission Http header
@@ -4421,11 +4424,12 @@ extern void httpSetContentType(HttpConn *conn, cchar *mimeType);
     @param path URI path to which the cookie applies
     @param domain Domain in which the cookie applies. Must have 2-3 dots.
     @param lifespan Duration for the cookie to persist in msec
-    @param secure Set to true if the cookie only applies for SSL based connections
+    @param flags. Select from HTTP_COOKIE_SECURE for a "secure" cookie, or HTTP_COOKIE_HTTP for a "httponly" cookie.
+        See RFC 2109 for details about secure and httponly cookies.
     @ingroup HttpTx
  */
 extern void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *domain, 
-        MprTime lifespan, bool secure);
+        MprTime lifespan, int flags);
 
 /**
     Define the length of the transmission content. When static content is used for the transmission body, defining
