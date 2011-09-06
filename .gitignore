@@ -151,3 +151,6 @@ src/test/junk
 src/test/farm.conf
 src/test/app/cache
 .DS_Store
+doc/apiu/esp/html
+doc/api/esp/xml
+doc/api/esp/html

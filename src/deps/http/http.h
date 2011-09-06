@@ -1222,6 +1222,7 @@ extern bool httpWillNextQueueAcceptSize(HttpQueue *q, ssize size);
  */
 extern ssize httpWrite(HttpQueue *q, cchar *fmt, ...);
 
+//  MOB - will this return short?
 /** 
     Write a block of data to the queue
     @description Write a block of data into packets onto the end of the queue. Data packets will be created
@@ -2820,16 +2821,15 @@ typedef struct HttpLang {
     @defgroup HttpRoute HttpRoute
     @see HttpRoute httpAddRouteCondition httpAddRouteErrorDocument httpAddRouteExpiry httpAddRouteExpiryByType 
         httpAddRouteFilter httpAddRouteHandler httpAddRouteHeader httpAddRouteLanguage httpAddRouteLanguageRoot 
-        httpAddRouteQuery httpAddRouteUpdate httpClearRouteStages httpCreateAliasRoute httpCreateConfiguredRoute 
-        httpCreateInheritedRoute httpCreateRoute httpDefineRouteCondition httpDefineRouteTarget httpDefineRouteUpdate 
-        httpFinalizeRoute httpGetRouteData httpGetRouteDir httpLink httpLookupRouteErrorDocument 
-        httpMakePath httpMatchRoute httpResetRoutePipeline httpSetRouteAuth httpSetRouteAutoDelete 
-        httpSetRouteCompression httpSetRouteConnector httpSetRouteData httpSetRouteDefaultLanguage httpSetRouteDir 
-        httpSetRouteFlags httpSetRouteHandler httpSetRouteHost httpSetRouteIndex httpSetRouteMethods httpSetRouteName 
-        httpSetRoutePathVar httpSetRoutePattern httpSetRoutePrefix httpSetRouteScript httpSetRouteSource 
-        httpSetRouteTarget httpSetRouteWorkers httpTokenize httpTokenizev 
-        httpAddRouteLoad
-        httpCreateDefaultRoute
+        httpAddRouteLoad httpAddRouteQuery httpAddRouteUpdate httpClearRouteStages httpCreateAliasRoute 
+        httpCreateConfiguredRoute httpCreateDefaultRoute httpCreateInheritedRoute httpCreateRoute 
+        httpDefineRouteCondition httpDefineRouteTarget httpDefineRouteUpdate httpFinalizeRoute httpGetRouteData 
+        httpGetRouteDir httpLink httpLookupRouteErrorDocument httpMakePath httpMatchRoute httpResetRoutePipeline 
+        httpSetRouteAuth httpSetRouteAutoDelete httpSetRouteCompression httpSetRouteConnector httpSetRouteData 
+        httpSetRouteDefaultLanguage httpSetRouteDir httpSetRouteFlags httpSetRouteHandler httpSetRouteHost 
+        httpSetRouteIndex httpSetRouteMethods httpSetRouteName httpSetRoutePathVar httpSetRoutePattern 
+        httpSetRoutePrefix httpSetRouteScript httpSetRouteSource httpSetRouteTarget httpSetRouteWorkers httpTokenize 
+        httpTokenizev 
  */
 typedef struct HttpRoute {
     /* Ordered for debugging */
