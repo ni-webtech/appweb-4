@@ -814,7 +814,6 @@
             <h3>Fixes</h3>
             <ul>
                 <li>Fix for VxWorks truncating large files</li>
-                <li>Fix for doubling of EGI variable values</li>
                 <li>Fix PHP flushing</li>
             </ul>
             <h2 class="section">Changes in 2.0.0</h2>
@@ -851,7 +850,7 @@
                 <li>Merged appweb and winAppweb. Windows application intelligently runs as a command line program,
                 windows program or system service depending on the command line switches. Easier invocation by
                 supporting configuration via command line. Can now just run "appweb".</li>
-                <li>File upload module completed and now supported. File upload usable from ESP, EGI and CGI.</li>
+                <li>File upload module completed and now supported. File upload usable from ESP, EJS and CGI.</li>
                 <li>PHP 5.0 support</li>
                 <li>Save configuration routines to save the run-time configuration back to a standard Appweb
                 configuration file.</li>
@@ -994,8 +993,6 @@
                     <ul>
                         <li>Fix in validating URLs with consecutive "/" characters. (Thanks Tom Gerardy)</li>
                         <li>Fix for upload handler with ":" characters in the upload URL. ((Thanks Pauli Saksa)</li>
-                        <li>Fix for EGI and the Compat module for GoAhead WebServer compatibility (Thanks Hew
-                        Wolff).</li>
                         <li>Add new directive ListenIF that allows listening on an interface. (Thanks Pauli Saksa)</li>
                         <li>Fix corruption bug for long ESP/EJS tokens. (Thanks Axialdev)</li>
                     </ul>
@@ -1055,7 +1052,6 @@
                 <li>Easier invocation by supporting configuration via command line. Can now just run "appweb".</li>
                 <li>Merged appweb and winAppweb. Windows application intelligently runs as a command line program,
                 windows program or system service depending on the command line switches.</li>
-                <li>File upload module completed and now supported. File upload usable from ESP, EGI and CGI.</li>
                 <li>PHP 5.0 support</li>
                 <li>Save configuration routines to save the run-time configuration back to a standard Appweb
                 configuration file.</li>
@@ -1372,8 +1368,8 @@
                 <li>Add support for TRACE and OPTIONS HTTP methods</li>
                 <li>Tighten handler checking to only respond to supported HTTP methods</li>
                 <li>Allow ESP pages to post back forms to themselves. Test on REQUEST_METHOD == "POST" to determine if
-                the page is being displayed for the first time or whether the form is being submitted. This eliminates
-                the need for EGI forms in many cases. One ESP page can be used to display and process the data.</li>
+                the page is being displayed for the first time or whether the form is being submitted. 
+                One ESP page can be used to display and process the data.</li>
                 <li>Improved debug trace for httpClient and the appweb servers.</li>
                 <li>Improved unit test for CGI and</li>
             </ul>

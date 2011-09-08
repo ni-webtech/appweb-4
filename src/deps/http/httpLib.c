@@ -9211,9 +9211,11 @@ bool httpTokenizev(HttpRoute *route, cchar *line, cchar *fmt, va_list args)
     int         quote;
 
     mprAssert(route);
-    mprAssert(line);
     mprAssert(fmt);
 
+    if (line == 0) {
+        line = "";
+    }
     tok = sclone(line);
     end = &tok[slen(line)];
 

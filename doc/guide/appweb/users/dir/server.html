@@ -371,7 +371,9 @@ http://site/esp/myScript.esp/extra/path
                     <tr>
                         <td class="pivot">Examples</td>
                         <td>Listen 80<br />
-                        Listen 205.162.77.64:7777</td>
+                            Listen 205.162.77.64:7777<br/>
+                            Listen [::]
+                        </td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
@@ -384,6 +386,8 @@ http://site/esp/myScript.esp/extra/path
                             endpoint that the virtual host will serve. It makes no difference where you specify a
                             Listen directive. in the configuration file. For compatibility with Apache, you should
                             specify your listen directives outside any VirtualHost blocks.</p>
+                            <p>For IPv6 endpoints, enclose the IP address in square brackets. For example:
+                                Listen [2001:05c0:9168:0000:0000:0000:0000:0001]
                         </td>
                     </tr>
                 </tbody>

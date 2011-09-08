@@ -93,28 +93,16 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>mod_auth</td>
-                        <td>Authorization handler</td>
-                    </tr>
-                    <tr>
                         <td>mod_cgi</td>
                         <td>Common Gateway Interface (CGI) handler</td>
-                    </tr>
-                    <tr>
-                        <td>mod_chunk</td>
-                        <td>Transfer Chunk Encoding filter</td>
                     </tr>
                     <tr>
                         <td>mod_dir</td>
                         <td>Directory listing handler</td>
                     </tr>
                     <tr>
-                        <td>mod_file</td>
-                        <td>Static file handler</td>
-                    </tr>
-                    <tr>
-                        <td>mod_egi</td>
-                        <td>Embedded Gateway Interface (EGI) handler</td>
+                        <td>mod_esp</td>
+                        <td>Embedded Server Pages (ESP) handler</td>
                     </tr>
                     <tr>
                         <td>mod_ejs</td>
@@ -125,28 +113,18 @@
                         <td>PHP handler</td>
                     </tr>
                     <tr>
-                        <td>mod_range</td>
-                        <td>Ranged requests filter</td>
-                    </tr>
-                    <tr>
                         <td>mod_ssl</td>
                         <td>Secure Sockets Layer (SSL) module</td>
                     </tr>
-                    <tr>
-                        <td>mod_upload</td>
-                        <td>File upload handler</td>
-                    </tr>
                 </tbody>
             </table><a name="dynamicAndStaticLoading" id="dynamicAndStaticLoading"></a>
-            <h3>Dynamic and Static Loading</h3>
+            <h3>Dynamic Loading</h3>
             <p>An Appweb loadable module is a discrete unit of functionality that may be linked into Appweb to enhance
-            the core HTTP server. Loadable Modules may be delivered in two forms:</p>
-            <ul>
-                <li>Dynamically loadable library / Shared Library</li>
-                <li>Statically linkable libraries</li>
-            </ul>
-            <p>The same programming interface applies to both forms and you can create a single image which can be both
-            dynamically and statically loaded.</p><a name="loadModuleDirective" id="loadModuleDirective"></a>
+            the core HTTP server. Loadable Modules may be dynamically loaded via shared libraries or DLLs</p>
+            <p>If building Appweb from source, modules can also be statically linked when the library initialization
+                entry point is explicitly invoked from the web server main program.</p>
+            
+            <a name="loadModuleDirective" id="loadModuleDirective"></a>
             <h3>LoadModule Directive</h3>
             <p>The Appweb configuration file specifies which modules to load and in what order. As some modules may
             depend on the functionality provided by other modules -- order does matter.</p>

@@ -98,11 +98,6 @@
                         ignored by other web servers.</td>
                     </tr>
                     <tr>
-                        <td>--compare dir</td>
-                        <td>Compare the retrieved files against master copies in dir. Warn if any retrieved files are
-                        corrupted.</td>
-                    </tr>
-                    <tr>
                         <td>--continue</td>
                         <td>Continue on errors. Default is to stop on the first error.</td>
                     </tr>
@@ -114,17 +109,6 @@
                         <td>--data bodyData</td>
                         <td>String of raw body data to send with the request. Assumed to not be URL encoded. You cannot
                         use this switch with either the --datafile or --form switches.</td>
-                    </tr>
-                    <tr>
-                        <td>--datafile filename</td>
-                        <td>Specify a filename containing the raw body data to send with the the request. Assumed to
-                        not be URL encoded. You cannot use this switch with either the --data or --form switches.</td>
-                    </tr>
-                    <tr>
-                        <td>--files fileList</td>
-                        <td>Retrieve the files in the specified file list. The format of the file is: {GET|POST} URL If
-                        using POST, the line after the URL should contain encoded POST data and it should begin with a
-                        TAB.</td>
                     </tr>
                     <tr>
                         <td>--form formData</td>
@@ -141,11 +125,6 @@
                         <td>--host name</td>
                         <td>Prepend all URLs with the specified host. For example if '-h www.myHost.com:8888" were used
                         with the URL "/index.html", then http will retrieve http://www.myHost.com:8888.</td>
-                    </tr>
-                    <tr>
-                        <td nowrap="nowrap">--http HTTP_VERSION</td>
-                        <td>Use the specified HTTP protocol. httpVersion should be either '0' for HTTP/1.0 or 1 for
-                        HTTP/1.1.</td>
                     </tr>
                     <tr>
                         <td>--iterations count</td>
@@ -167,17 +146,30 @@
                         abbreviated as -n.</td>
                     </tr>
                     <tr>
+                        <td>--out filename</td>
+                        <td>Send output to the given file.</td>
+                    </tr>
+                    <tr>
                         <td nowrap="nowrap">--password passPhrase</td>
                         <td>Specify a password to send with the request. Requires a user name to be also specified via
                         --user.</td>
                     </tr>
                     <tr>
-                        <td>--poolThreads count</td>
-                        <td>Specify the number of pool threads to use. Pool threads are used to process callbacks.</td>
+                        <td>--post</td>
+                        <td>Use POST method. Shortcut for --method POST.</td>
                     </tr>
                     <tr>
                         <td>--printable</td>
                         <td>Make binary output printable by printing hex digits for each character.</td>
+                    </tr>
+                    <tr>
+                        <td nowrap="nowrap">--protocol HTTP_VERSION</td>
+                        <td>Use the specified HTTP protocol. httpVersion should be either '0' for HTTP/1.0 or 1 for
+                        HTTP/1.1.</td>
+                    </tr>
+                    <tr>
+                        <td>--put</td>
+                        <td>Use PUT method. Shortcut for --method PUT.</td>
                     </tr>
                     <tr>
                         <td>--range byteRange</td>
@@ -188,16 +180,16 @@
                         bytes 1- Skip first byte then emit the rest</td>
                     </tr>
                     <tr>
-                        <td>--retries retryCount</td>
+                        <td>--retries count</td>
                         <td>Retry failed requests this number of times.</td>
-                    </tr>
-                    <tr>
-                        <td>--save dir</td>
-                        <td>Save retrieved files to the specified directory.</td>
                     </tr>
                     <tr>
                         <td>--showHeaders</td>
                         <td>Output HTTP headers. Useful for debugging.</td>
+                    </tr>
+                    <tr>
+                        <td>--showStatus</td>
+                        <td>Output the HTTP response status code.</td>
                     </tr>
                     <tr>
                         <td>--single</td>
@@ -223,6 +215,10 @@
                         <td>--verbose</td>
                         <td>Verbose mode. Trace activity to stdout. Can by specified multiple times for more verbose
                         tracing. This switch can also be abbreviated as -v.</td>
+                    </tr>
+                    <tr>
+                        <td>--workers count</td>
+                        <td>Set maximum number of worker threads.</td>
                     </tr>
                 </tbody>
             </table>

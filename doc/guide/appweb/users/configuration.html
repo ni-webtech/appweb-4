@@ -129,10 +129,9 @@ AddHandler fileHandler html
             <pre>
 &lt;Route "/myapp/"&gt;
     SetHandler esp
-&lt;/Directory&gt;
+&lt;/Route&gt;
 </pre>
-            <p>This will configure Appweb to pass requests that begin with the URL "/myapp" to the <b>esp</b> handler.
-            So whereas a Directory block applies to physical files, Route blocks apply to URL names.</p>
+            <p>This will configure Appweb to pass requests that begin with the URL "/myapp" to the <b>esp</b> handler</p>
             <h3>Virtual Host Blocks</h3>
             <p>A Virtual host block defines a group of directives that apply to a virtual sub-server. A virtual server
             may be associated with a virtual server name or with an IP address. Virtual hosts enable you to segment the
@@ -299,10 +298,6 @@ Include conf/applications/*.conf
                     <tr>
                         <td><a href="dir/auth.html#deny">Deny</a></td>
                         <td>Define which servers cannot access content.</td>
-                    </tr>
-                    <tr>
-                        <td><a href="dir/dir.html#directory">Directory</a></td>
-                        <td>Define a block of directives to apply to a directory tree.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/dir.html#directoryIndex">DirectoryIndex</a></td>

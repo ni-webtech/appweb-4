@@ -202,13 +202,12 @@ chmod 755  . lib logs
             <pre>
 AddType application/x-httpd-php .web
 </pre>
-            <h2 class="section">Embedded Gateway Interface</h2>
-            <p>EGI forms are secure from file-based permission flaws because they run in-process and access no
-            files.</p><a name="ssl" id="ssl"></a>
-            <p>However, this does not mean that EGI forms are immune to security flaws. It is highly recommended that
-            you use the <a href="../../../api/mpr.html">MPR</a> services for all your EGI code. This portable runtime
+            <h2 class="section">Embedded Server Pages</h2>
+            <p>ESP applications are not immune to security flaws. It is highly recommended that
+            you use the <a href="../../../api/mpr.html">MPR</a> services for all your ESP code. This portable runtime
             has been extensively tested and includes routines to guard against common buffer overflows and other such
             exploits.</p>
+            <a name="ssl" id="ssl"></a>
             <h2 class="section">SSL Servers</h2>
             <p>If you configure a SSL virtual server, remember to define a separate DocumentRoot if you want to only
             serve private content to SSL users. Otherwise those pages will also be visible via the default

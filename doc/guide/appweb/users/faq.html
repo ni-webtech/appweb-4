@@ -98,72 +98,7 @@
             <p class="question"><a name="XSP" id="XSP"></a>What web framework should I use for my dynamic web
             appliation?</p>
             <div class="answer">
-                <p>You have several choices: ESP, Ejscript, PHP and CGI.</p>
-                <p>ESP is a new web framework that provides templates, caching, Model-View-Controller paradigm, 
-                and a set of web controls that are pre-integrated with jQuery. ESP uses "C" language code
-                embedded in web pages for native-speed execution. It is fast, compact and uses "C".</p>
-
-                <p>PHP is a common web page creation environment with a large eco-system of modules. It is suitable 
-                for enterprise application development, but is often too large for embedded use.</p>
-
-                <p>Ejscript is a server-side JavaScript framework that is ideal for creating dynamic web applications.
-                It is compact and fast. Not quite as small as ESP, nor as fast, but is is a very powerful web framework.
-                Good for embedded web interfaces, but also good for async communications services.</p>
-
-                <p>CGI stands for the Common Gateway Interface and it is the legacy extension interface for running
-                external programs to generate dynamic data. It is standard, but very slow and cumbersome.</p>
-
-                <p>For embedded devices and applications: we recommend using <b>ESP</b>. It provides the fastest, most
-                compact web framework without compromising on functionality. Use <b>Ejscript</b> for large applications
-                that have more memory available for execution.</p>
-                <p>The following table may help summarize the differences:</p>
-
-                <table width="100%" border="1" summary="">
-                    <thead>
-                        <tr>
-                            <td></td>
-                            <td><b>CGI</b></td>
-                            <td><b>ESP</b></td>
-                            <td><b>Ejscript</b></td>
-                            <td><b>PHP</b></td>
-                        </tr>
-                    </thead>
-                    <tr>
-                        <td><b>Target Use</b></td>
-                        <td>Have existing CGI program</td>
-                        <td>Web user interfaces, comms services</td>
-                        <td>Dynamic embedded web pages and forms</td>
-                        <td>Enterprise web pages and forms</td>
-                    </tr>
-                    <tr>
-                        <td><b>Memory (excluding core Appweb)</b></td>
-                        <td>External program</td>
-                        <td>200K plus form code</td>
-                        <td>1MB plus app code</td>
-                        <td>5-20MB plus app code</td>
-                    </tr>
-                    <tr>
-                        <td><b>Performance</b></td>
-                        <td>Slow</td>
-                        <td>Fastest</td>
-                        <td>Fast page and form processing</td>
-                        <td>Medium speed but large memory consumption</td>
-                    </tr>
-                    <tr>
-                        <td><b>Advantages</b></td>
-                        <td>Standard in wide-use</td>
-                        <td>Simple fast forms processing</td>
-                        <td>Fast, compact and flexible</td>
-                        <td>Large base of PHP code and developers</td>
-                    </tr>
-                    <tr>
-                        <td><b>Disadvantages</b></td>
-                        <td>Slow. Limit to forms. Can't design page WYSIWYG</td>
-                        <td>Limit to forms. Can't design page WYSIWYG</td>
-                        <td>Open source, but still specific to Appweb</td>
-                        <td>Large memory footprint</td>
-                    </tr>
-                </table>
+                See the detailed <a href="frameworks.html">Web Framework Comparision</a>
             </div>
             <p class="question"><a name="runTimeModules" id="runTimeModules"></a>Can I disable features to minimize
             memory footprint at run-time?</p>

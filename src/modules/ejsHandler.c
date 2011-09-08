@@ -71,7 +71,8 @@ static int ejsAliasDirective(MaState *state, cchar *key, cchar *value)
 {
     HttpRoute   *route;
     HttpHost    *host;
-    char        *prefix, *path, *script, *workers;
+    char        *prefix, *path, *script;
+    int         workers;
     
     route = state->route;
     host = state->host;
@@ -86,7 +87,7 @@ static int ejsAliasDirective(MaState *state, cchar *key, cchar *value)
     httpSetRoutePrefix(route, sjoin("/", prefix, 0));
     httpSetRouteScript(route, 0, script);
     if (workers) {
-        httpSetRouteWorkers(route, atoi(workers));
+        httpSetRouteWorkers(route, workers);
     }
     httpAddRouteHandler(route, "ejsHandler", "");
     httpFinalizeRoute(route);

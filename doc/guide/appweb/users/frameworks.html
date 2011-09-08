@@ -46,7 +46,7 @@
                 <li><a href="#ejs">Ejscript</a></li>
                 <li><a href="#php">PHP</a></li>
                 <li><a href="#cgi">CGI</a></li>
-                <li><a href="#egi">EGI</a></li>
+                <li><a href="#esp">ESP</a></li>
                 <li><a href="#custom">Custom Handlers</a></li>
             </ul>
 <!-- BeginDsi "dsi/usersGuideSeeAlso.html" -->
@@ -77,125 +77,106 @@
             slow and difficult to create a functional and appealing web application using the legacy <a href=
             "cgi.html">CGI</a> protocol. It's interface is too low level and it provides little assistance to
             manipulate server-side data, render UI elements and manage Ajax interactions.</p>
-            <p>In contrast, environments such as <a href="ejs.html">Ejscript</a>, Rails or even <a href="#php">PHP</a>
-            provide much more support for dynamic web content.</p>
+            <p>In contrast, environments such as <a href="esp.html">ESP</a>, <a href="ejs.html">Ejscript</a>, 
+                or <a href="#php">PHP</a> provide much more support for dynamic web content.</p>
+
+            <a name="comparison" id="comparison"></a>
+            <h2 class="section">Comparison</h2>
+            
             <p>Appweb provides a rich set of options to use when creating web pages or web applications. This document
             compares the alternatives and suggests where each option is best deployed.</p>
-            <ul>
-                <li><a href="#cgi">CGI</a></li>
-                <li><a href="#egi">Embedded Gateway Interface</a></li>
-                <li><a href="#ejs">Ejscript</a></li>
-                <li><a href="#php">PHP</a></li>
-                <li><a href="#custom">Custom Modules and Handlers</a></li>
-            </ul><a name="comparison" id="comparison"></a>
-            <h2 class="section">Comparison</h2>
-            <p>The following table summarizes the differences between the various web application environments.</p>
-            <table summary="">
-                <thead>
-                    <tr>
-                        <td></td>
-                        <td><a href="#cgi"><strong>CGI</strong></a></td>
-                        <td><a href="#egi"><strong>EGI</strong></a></td>
-                        <td><a href="#ejs">Ejscript</a></td>
-                        <td><a href="#php">PHP</a></td>
-                        <td><a href="#custom">Handler</a></td>
-                    </tr>
-                </thead>
-                <tr>
-                    <td><strong>Target Use</strong></td>
-                    <td>Legacy dynamic pages and forms</td>
-                    <td>In-memory form processing</td>
-                    <td>Dynamic embedded web pages and forms</td>
-                    <td>Enterprise web pages and forms</td>
-                    <td>Custom URL processing</td>
-                </tr>
-                <tr>
-                    <td><strong>Typical Memory Footprint</strong></td>
-                    <td>External program. 500K</td>
-                    <td>20K</td>
-                    <td>200K</td>
-                    <td>4-8MB</td>
-                    <td>20K</td>
-                </tr>
-                <tr>
-                    <td><strong>Performance</strong></td>
-                    <td>Slow</td>
-                    <td>Very fast form processing</td>
-                    <td>Very fast page and form processing</td>
-                    <td>Fast page and form processing</td>
-                    <td>Fastest possible</td>
-                </tr>
-                <tr>
-                    <td><strong>Advantages</strong></td>
-                    <td>Standard in wide-use</td>
-                    <td>Simple fast forms processing</td>
-                    <td>Easy creation of dynamic web pages</td>
-                    <td>Large base of PHP code and developers</td>
-                    <td>Allows any URL handling desired</td>
-                </tr>
-                <tr>
-                    <td><strong>Disadvantages</strong></td>
-                    <td>Slow. Hard to visualize output</td>
-                    <td>Limited to forms. Can't design page WYSIWYG</td>
-                    <td>Relatively new</td>
-                    <td>Very large memory footprint</td>
-                    <td>Must build functionality</td>
-                </tr>
-                <tr>
-                    <td><b>Remarks</b></td>
-                    <td>Use just for legacy CGI programs and scripts. Use Ejscript or PHP instead.</td>
-                    <td>Use just for simple forms..</td>
-                    <td>Preferred in embedded applications and devices.</td>
-                    <td>Use where memory footprint is not a concern. Useful for enterprise web applications.</td>
-                    <td>Use for custom HTTP processing.</td>
-                </tr>
-            </table>
-            <p>In summary, we recommend using <b>Ejscript</b> for embedded applications and devices and <b>PHP</b> for
-            enterprise and legacy applications. <a name="ejs" id="ejs"></a></p>
-            <h2 class="section">Ejscript</h2>
+
+            <h3>Embedded Server Pages</h3>
+            <p>ESP is a new web framework that provides templates, caching, Model-View-Controller paradigm, 
+            and a set of web controls that are pre-integrated with jQuery. ESP uses "C" language code
+            embedded in web pages for native-speed execution. It is fast, compact and uses "C".</p>
+
+            <a name="ejs" id="ejs"></a></p>
+            <h3>Ejscript</h3>
+
             <p>The <a href="http://ejscript.org">Ejscript</a> Web Framework is a web application environment that
-            uses server-side JavaScript and a Model / View / Controller paradigm. It provides an application generator,
-            templating engine, a powerful Model/View/Controller framework and a library of Ajax view controls.</p>
-            <p>Ejscript was designed to make it dramatically easier to create dynamic web applications and it excells
-            when embedded in applications or devices. It is also ideal for back-end hosting of applications behind a
-            reverse-proxy.</p>
-            <p>Ejscript has a very small memory footprint (~300 including the JavaScript) and yet offers a powerful
-            suite of features:</p>
-            <ul>
-                <li>Server-side ECMA-262 compliant JavaScript language</li>
-                <li>Compact and fast JavaScript virtual machine</li>
-                <li>Extensive system class library with classes for Events, Timers, File I/O, Streams, Sockets, HTTP,
-                XML, Regular expressions and SQL Database</li>
-                <li>Integrated SQLite database</li>
-                <li>SQL Object Relational Mapping (ORM) layer</li>
-                <li>Templating engine</li>
-                <li>High level user interface control (e.g. Smart Table and charting)s</li>
-                <li>Support for leading Ajax libraries</li>
-                <li>One line binding to C data and functions</li>
-            </ul>
-            <p>For more information, please read <a href="ejs.html">Using Ejscript</a>.</p><a name="php" id="php"></a>
-            <h2 class="section">PHP</h2>
+            uses server-side JavaScript. It provides an application generator, templating engine, 
+            a powerful Model/View/Controller framework and a library of Ajax view controls. JavaScript is an expressive
+            language, and so Ejscript web apps often need very few lines of code to implement.</p>
+            <p>Ejscript is not as small as ESP, nor as fast, but is is a very powerful web framework. Good for 
+            embedded web interfaces and async communications services where sufficient memory is available.
+            For more information, please read <a href="ejs.html">Using Ejscript</a>.</p>
+
+            <a name="php" id="php"></a>
+            <h3>PHP</h3>
             <p><acronym title="recursive acronym for PHP: Hypertext Preprocessor">PHP</acronym> is a widely-used
             general-purpose scripting language that is especially suited for enterprise Web development. It provides an
             object-oriented programming language, numerous extensions and a broad developer community. The power of PHP
-            comes at a price, it typically has a memory footprint of 1-2 MB for the PHP code alone. For embedded
-            systems, this is often too big and so we recommend using Ejscript for such systems.</p><a name="cgi" id=
-            "cgi"></a>
-            <h2 class="section">CGI</h2>
+            comes at a price, it typically has a memory footprint of more than 5 MB for the PHP code alone. For embedded
+            systems, this is often too big and so we recommend using ESP instead for such systems.</p>
+
+            <a name="cgi" id= "cgi"></a>
+            <h3>CGI</h3>
             <p>CGI stands for the Common Gateway Interface and it is the legacy extension interface for running
             external programs to generate dynamic data. It is standard but slow. Unless you have legacy CGI programs or
-            need to run a scripting language via CGI, you are better served by using either PHP or
-            Ejscript.</p><a name="egi" id="egi"></a>
-            <h2 class="section">EGI</h2>
-            <p>The Embedded Gateway Interface (EGI) was implemented by Embedthis as an in-memory, faster replacement
-            for CGI. It can be used to migrate and accelerate CGI programs by running them inside the Appweb address
-            space. However, in most cases Ejscript can do everything that EGI could be used for and so Ejscript is a
-            better choice.</p><a name="custom" id="custom"></a>
-            <h2 class="section">Custom Handlers</h2>
-            <p>Occasionally, you may require total control over how the HTTP server should respond to a request. Appweb
-            allows you to create your own custom HTTP handler that can respond and process HTTP requests. This is
-            useful if you have custom HTTP protocol extensions, proprietary authentication or authorization procedures
-            or specific request timeout requirements.</p>
+            need to run a scripting language via CGI, you are better served by using either ESP or Ejscript.</p>
+            
+            <h2>Summary</h2>
+            <p>For embedded devices and applications: we recommend using <b>ESP</b>. It provides the fastest, most
+            compact web framework without compromising on functionality. Use <b>Ejscript</b> for large applications
+            that have more memory available for execution.</p>
+
+            <ul>
+                <li><a href="#cgi">CGI</a></li>
+                <li><a href="#esp">Embedded Server Pages</a></li>
+                <li><a href="#ejs">Ejscript</a></li>
+                <li><a href="#php">PHP</a></li>
+                <li><a href="#custom">Custom Modules and Handlers</a></li>
+            </ul>
+            
+            <p>The following table may help summarize the differences:</p>
+
+            <table width="100%" border="1" summary="">
+                <thead>
+                    <tr>
+                        <td></td>
+                        <td><b>CGI</b></td>
+                        <td><b>ESP</b></td>
+                        <td><b>Ejscript</b></td>
+                        <td><b>PHP</b></td>
+                    </tr>
+                </thead>
+                <tr>
+                    <td><b>Target Use</b></td>
+                    <td>Have existing CGI program</td>
+                    <td>Web user interfaces, comms services</td>
+                    <td>Dynamic embedded web pages and forms</td>
+                    <td>Enterprise web pages and forms</td>
+                </tr>
+                <tr>
+                    <td><b>Memory (excluding core Appweb)</b></td>
+                    <td>External program</td>
+                    <td>200K plus form code</td>
+                    <td>1MB plus app code</td>
+                    <td>5-20MB plus app code</td>
+                </tr>
+                <tr>
+                    <td><b>Performance</b></td>
+                    <td>Slow</td>
+                    <td>Fastest</td>
+                    <td>Fast page and form processing</td>
+                    <td>Medium speed but large memory consumption</td>
+                </tr>
+                <tr>
+                    <td><b>Advantages</b></td>
+                    <td>Standard in wide-use</td>
+                    <td>Simple fast forms processing</td>
+                    <td>Fast, compact and flexible</td>
+                    <td>Large base of PHP code and developers</td>
+                </tr>
+                <tr>
+                    <td><b>Disadvantages</b></td>
+                    <td>Slow. Limit to forms. Can't design page WYSIWYG</td>
+                    <td>Limit to forms. Can't design page WYSIWYG</td>
+                    <td>Open source, but still specific to Appweb</td>
+                    <td>Large memory footprint</td>
+                </tr>
+            </table>
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->

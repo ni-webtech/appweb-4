@@ -79,61 +79,53 @@
             id="errorLog"></a>
             <h2 class="section">Error Log</h2>
             <p>The Error Log records the essential Appweb configuration, details of denied requests and other trace
-            information. The location of the error log file is specified by the <a href=
-            "dir/log.html#errorLog">ErrorLog</a> configuration file directive and the level of logging is specified by
+            information. The location of the error log file is specified by the 
+            <a href="dir/log.html#errorLog">ErrorLog</a> 
+            configuration file directive and the level of logging is specified by
             the <a href="dir/log.html#logLevel">LogLevel</a> directive.</p>
-            <p>The verbosity of the messages written to the error log can be specified by the &lt;
-            href="dir/log.html#logLevel"&gt;LogLevel directive. The log level is a digit ranging from 0, the least
+            <p>The verbosity of the messages written to the error log can be specified by the 
+            <a href="dir/log.html#logLevel">LogLevel</a> directive. The log level is a digit ranging from 0, the least
             verbose to 9 being the most verbose. For example, If you set the log level to 2, messages at levels 0 and 1
             will be output to the log. Level 0 will only record errors. Level 2 is the default and will record denied
             accesses. Levels 3-9 will record various internal Appweb activities. You should be very careful with levels
             above 4 as the error log can grow very large with high log levels.</p>
             <p>Here is a sample error log. Some lines have been manually wrapped to fit on the page.</p>
             <pre>
-appweb: 2: Configuration for Embedthis Appweb
-appweb: 2: --------------------------------------------
-appweb: 2: Host:               saturn.local
-appweb: 2: CPU:                i386
+appweb: 2: Configuration for Embedthis Ejscript
+appweb: 2: ---------------------------------------------
+appweb: 2: Host:               magnetar.local
+appweb: 2: CPU:                x86_64
 appweb: 2: OS:                 MACOSX
-appweb: 2: Distribution:       Apple 10.5.6
-appweb: 2: OS:                 MACOSX
-appweb: 2: Version:            3.0A.2.16081
-appweb: 2: BuildType:          RELEASE
-appweb: 2: Started at:         Mon Mar  9 15:56:03 2011
-appweb: 2: --------------------------------------------
-appweb: 2: Server Root "/Users/mob/hg/appweb/src/server/."
-appweb: 2: Document Root for Main Server is "/Users/mob/hg/appweb/src/server/web"
+appweb: 2: Distribution:       Apple 10.7.1
+appweb: 2: Version:            4.0.0-B0
+appweb: 2: BuildType:          DEBUG
+appweb: 2: ---------------------------------------------
+appweb: 2: Config File /Users/mob/git/appweb/src/server/appweb.conf
+appweb: 2: Set server root to: "/Users/mob/git/appweb/src/server"
+appweb: 2: Server Root "."
 appweb: 2: Set connector "netConnector"
-appweb: 2: Activating module (Loadable) authFilter
-appweb: 2: Add filter "authFilter" to location "" for all extensions
-appweb: 2: Activating module (Loadable) rangeFilter
-appweb: 2: Add filter "rangeFilter" to location "" for all extensions
-appweb: 2: Activating module (Loadable) chunkFilter
-appweb: 2: Add filter "chunkFilter" to location "" for all extensions
-appweb: 2: Activating module (Loadable) phpHandler
-appweb: 2: Add handler "phpHandler" to location "" for extensions ".php"
-appweb: 2: Activating module (Loadable) ejsHandler
-appweb: 2: Add handler "ejsHandler" to location "" for extensions ".ejs"
-appweb: 2: Set handler "ejsHandler" for location "/ejs/"
-appweb: 2: Activating module (Loadable) egiHandler
-appweb: 2: Add handler "egiHandler" to location "" for extensions ".egi"
-appweb: 2: Set handler "egiHandler" for location "/egi/"
-appweb: 2: Activating module (Loadable) dirHandler
-appweb: 2: Add handler "dirHandler" to location "" for all extensions
+appweb: 2: Add handler "fileHandler" on host "default" for extensions: 
+           html gif jpeg jpg png pdf ico css js  ""
 appweb: 2: Activating module (Loadable) cgiHandler
-appweb: 2: Add handler "cgiHandler" to location "" for extensions ".exe .cgi .cgi-nph .bat .cmd .pl .py"
-appweb: 2: Set handler "cgiHandler" for location "/cgi-bin/"
-appweb: 2: Activating module (Loadable) fileHandler
-appweb: 2: Add handler "fileHandler" to location "" for extensions ".html .gif .jpeg .png .pdf """
+appweb: 2: Add handler "cgiHandler" on host "default" for extensions: 
+           exe cgi cgi-nph out bat cmd pl py
+appweb: 2: Activating module (Loadable) ejsHandler
+appweb: 2: Add handler "ejsHandler" on host "default" for extensions: 
+           ejs es
+appweb: 2: Activating module (Loadable) espHandler
+appweb: 2: Add handler "espHandler" on host "default" for extensions: esp
+appweb: 2: Activating module (Loadable) phpHandler
+appweb: 2: Add handler "phpHandler" on host "default" for extensions: php
+appweb: 2: Upload directory: /tmp
 appweb: 2: Activating the SSL provider
 appweb: 2: Loading OpenSSL module
 appweb: 2: Activating module (Loadable) sslModule
-appweb: 2: Document Root for 127.0.0.1:4443 is "/Users/mob/hg/appweb/src/server/web"
-appweb: 1: Starting host named: "127.0.0.1:7777"
-appweb: 1: Starting host named: "127.0.0.1:4443"
-appweb: 2: Listening for HTTP on *:7777
-appweb: 2: Listening for HTTPS on *:4443
-appweb: 1: HTTP services are ready (single-threaded).
+appweb: 2: Configured host ":7777" at "/Users/mob/git/appweb/src/server"
+appweb: 2: Configured host "*:4443" at "/Users/mob/git/appweb/src/server"
+appweb: 2: Started HTTP  service on "*:7777"
+appweb: 2: Started HTTP  service on "*:4443"
+appweb: 1: HTTP services Started at Thu Sep 08 15:31:04 2011 PDT 
+           with max 10 threads
 appweb: 2  [Mon Mar  9 18:54:23 2011]
 appweb: 1  Error: 404 "Not Found" for "/myFile.html", 
            file "/var/appweb/web/myFile.html": 

@@ -72,20 +72,26 @@
             <h1>Authorization</h1>
             <p>Authorization is the process by which a client's identity is verified before gaining access to
             documents. Authorization is essential when you have content that you wish to protect and provide only to
-            specific approved clients.</p>
+            specific, approved clients.</p>
             <p>Appweb implements a powerful and flexible authorization mechanism that supports both the Basic and
             Digest authorization schemes prevalent in most browsers. It employs a unified user account and user group
-            database for easy configuration.</p><a name="basicAuthentication" id="basicAuthentication"></a>
+            database for easy configuration.</p>
+
+            <p>Appweb also supports HTML web based authentication schemes via the ESP and Ejscript web frameworks. These
+            both provide access to sessions, cookies and provide assistance in creating login dialogs.</p>
+            
+            
+            </p><a name="basicAuthentication" id="basicAuthentication"></a>
             <h3>HTTP-Based Authentication</h3>
             <p>Basic and Digest authentication are HTTP protocol mechanisms defined by the <a href=
             "http://www.w3.org/Protocols/rfc2616/rfc2616.html">HTTP/1.1</a> specification. Because they operate at the
             protocol level, they offer a low level of capability and flexibility. When a user attempts to access
             secured content, the browser displays a generic pop-up dialog box to prompt for the user's credentials. On
             the server, Appweb consults generic (not application specific) user password files. While these can be
-            customized via VirtualHost and Directory directives, sometimes applications need to apply an
+            customized via VirtualHost and Route directives, often applications need to apply an
             application-level user login mechanism. Such login facilities are defined at the application level using
-            session state storage and cookies and are beyond the scope of this document. The Ejscript web application
-            framework is ideal for such application level authentication.</p>
+            session state storage and cookies and are beyond the scope of this document. The ESP web framework
+            is ideal for such application level authentication.</p>
             <h2 class="section">Basic Authentication</h2>
             <p>Basic authentication was the original HTTP/1.0 authentication scheme. It transmits user names and
             passwords using a trivial encoding that is no better than using plain text.</p>
@@ -93,14 +99,14 @@
             authentication instead if it is supported by your clients.</p>
             <h3>Basic Authentication Directives</h3>
             <p>Appweb basic authorization is controlled by configuration file directives that may be used inside a
-            Directory or VirtualHost block, or within the Default server configuration.</p>
+            Route or VirtualHost block, or within the Default server configuration.</p>
             <pre>
-&lt;Directory $DOCUMENT_ROOT/acme&gt;
+&lt;Route /private/&gt;
     <b>AuthType basic</b>
     AuthName "Acme Inc"
     AuthUserFile users.db
     Require valid-user
-&lt;/Directory&gt;
+&lt;/Route&gt;
 </pre>
             <p>This example restricts access to the "/acme" directory and all sub-directories to users whose username
             and password are validated against the user.db password file.</p>
@@ -127,14 +133,14 @@
             cryptographic techniques to encode passwords and does not transmit sensitive information in clear-text.</p>
             <h3>Digest Authentication Directives</h3>
             <p>Appweb digest authorization is controlled by configuration file directives that may be used within any
-            Directory, VirtualHost block or within the Default server configuration.</p>
+            Route, VirtualHost block or within the Default server configuration.</p>
             <pre>
-&lt;Directory $DOCUMENT_ROOT/acme&gt;
+&lt;Route /private/&gt;
     <b>AuthType Digest</b>
     AuthName "Acme Inc"
     AuthUserFile users.db
     Require use roadRunner
-&lt;/Directory&gt;
+&lt;/Route&gt;
 </pre>
             <p>This example restricts access to the "/acme" directory and all sub-directories to users whose username
             and password are validated against the designated user.db password file. The essential differences between

@@ -83,8 +83,8 @@
             and outgoing data in some way, and network connectors send the final response over the network to the
             client.</p>
             <p>Appweb has a set of handlers for common application and content types. Different handlers service
-            different content. Appweb provides the following handlers: PHP, CGI, EGI, Ejscript, directory listings,
-            file upload and a file handler for static file content. An API is also provided so you can create your own
+            different content. Appweb provides the following handlers: PHP, CGI, ESP, Ejscript, directory listings,
+            and a file handler for static file content. An API is also provided so you can create your own
             request handlers and pipeline filters and connectors.</p>
             <h2 class="section">Handlers</h2>
             <p>Appweb handlers typically utilize the Appweb <a href="modules.html">loadable module</a> interface and
@@ -95,16 +95,14 @@
             <p>The following is an example set of Appweb configuration file directives that loads modules and defines
             the handlers to process client requests.</p>
             <pre>
-<a href="dir/module.html#loadModule">LoadModule</a> auth mod_auth
 <a href="dir/module.html#loadModule">LoadModule</a> ejs mod_ejs
 LoadModule file mod_file
-<a href="dir/location.html#addHandler">AddHandler</a> authHandler
-<a href="dir/location.html#addHandler">AddHandler</a> ejsHandler .ejs .esp .asp
+<a href="dir/location.html#addHandler">AddHandler</a> ejsHandler ejs
 <a href="dir/location.html#addHandler">AddHandler</a> fileHandler
 </pre>
             <p>The order of the directives is important. When a request is received from a client, the handlers
             specified in the configuration file will be matched against the request. If a handler does not specify an
-            extension (as the authHandler and the fileHandler do not), then they will always match. If the request URL
+            extension, then it will always match. If the request URL
             extension matches the extension for a handler, then that handler will be added to the list of handlers for
             this request.</p>
             <p>For example: "http://www.acme.com/myDoc.esp" would match the ".esp" extension for the ejsHandler. The

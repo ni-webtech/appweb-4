@@ -73,33 +73,36 @@
             <p>To create an Appweb module, you must create an initialization function that is called when Appweb loads
             your module. This must be named according to the form:</p>
             <pre>
-mpr<b>Name</b>ModuleInit(MaHttp *http)
+ma<b>Name</b>Init(Http *http, MprModule *module)
 </pre>
-            <p>where <b>Name</b> is the name of your module. The first letter must be upper case. This function will be
+            <p>where <b>Name</b> is the name of your module. For example: <tt>maCgiHandlerInit</tt> is the 
+            library initialization entry point for the cgiHandler. 
+            Note: The first letter must be upper case. This function will be
             called immediately after loading the module code.</p>
-            <p>The initialization function must call the <b>mprCreateModule</b> API and supply a unique name, module
-            version string and optional module data and start/stop functions. This call returns a module instance that
-            is registered with Appweb.</p>
-            <pre>
-MprModule *mprSimpleModuleInit(MaHttp *http)
+            <p>The init function is passed a reference to the Http service object and a module object for this module.</p>
+<pre>
+int mprSimpleModuleInit(Http *http, MprModule *module)
 {
-    MprModule   *module;
-    module = mprCreateModule(http, "testModule", "1.0.0", NULL, NULL, NULL);
-    if (module == 0) {
-        return 0;
+    HttpStage   *handler;
+
+    handler = httpCreateHandler(http, "testHandler", 0, module);
+    if (handler == 0) {
+        return MPR_ERR_CANT_CREATE;
     }
-    /* Put custom initialization here */
-    return module;
+    handler->open = openTest; 
+    handler->close = closeTest; 
+    handler->start = startTest; 
+    return 0;
 }
 </pre>
-            <p>Initialization functions are passed the Http service object as a parameter and must return the module
-            object for the module. You can put any custom code in the initialization function. If you supply start or
-            stop functions as parameters to the mprCreateModule API, these will be invoked when Appweb starts.</p>
-            <p>Modules can be dynamically loaded in response to the <a href=
+            <p>You can put any custom code in the initialization function. Often a module will create a request handler
+            or request pipeline filter. If you call mprSetModuleFinalizer you can register a callback to run before
+            the module is stopped or unloaded.
+            <p>Modules can be loaded at startup in response to the <a href=
             "../users/dir/module.html#loadModule">LoadModule</a> Appweb configuration directive. You can also load
-            modules via the <b>maLoadModule</b> C API.</p>
-            <p>To package your module, you must create a DLL / shared library containing your module and on Windows,
-            you must export the initialization function. If you want to statically link your module, you need to ensure
+            modules at run-time via the <b>maLoadModule</b> C API.</p>
+            <p>To package your module, you must create a DLL / shared library containing your module. On Windows,
+            you also must export the initialization function. If you want to statically link your module, you need to ensure
             the main program explicitly calls your initialization function during its initialization.</p>
         </div>
     </div>
