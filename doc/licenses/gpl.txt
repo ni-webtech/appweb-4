@@ -13,7 +13,7 @@ organizations that do not want to release their source code as open
 source / free software as governed by the GPL license below. For 
 more information on licensing, please see:
 
-    http://www.embedthis.com/downloads/licensing.html
+    http://embedthis.com/downloads/licensing.html
 
 ================================================================
 

@@ -1,5 +1,6 @@
 <!-- BeginDsi "dsi/head.html" -->
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <title>Embedthis Appweb 4.0.0 Documentation</title>
     <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
@@ -16,16 +17,16 @@
 
 <body>
     <div class="top">
-        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
                         <label title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
-                        <input type="hidden" name="domains" value="ejscript.org" /> 
-                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                        <input type="hidden" name="domains" value="appwebserver.org" /> 
+                        <input type="hidden" name="sitesearch" value="appwebserver.org" />
                     </p>
                  </form>
               </div>
@@ -101,24 +102,19 @@
                 <p>ESP is a new web framework that provides templates, caching, Model-View-Controller paradigm, 
                 and a set of web controls that are pre-integrated with jQuery. ESP uses "C" language code
                 embedded in web pages for native-speed execution.</p>
-
                 <p>PHP is a high functionality, web page creation environment. It is suitable for enterprise
                 application development, but is very large. Definitely not for embedded use.</p>
                 <p>Ejscript is a server-side JavaScript framework that is ideal for creating dynamic web applications.
                 It is compact and fast. Great for embedded, but also good for smaller enterprise apps.</p>
-
                 <p>CGI stands for the Common Gateway Interface and it is the legacy extension interface for running
                 external programs to generate dynamic data. It is standard but very slow and cumbersome.</p>
                 <p>EGI stands for the Embedded Gateway Interface and is unique to Appweb. It is an in-memory
                 replacement for CGI. However, Ejscript is a better choice in most cases.</p>
-
                 <p>Custom handlers are loadable Appweb modules, written in C, that add custom request handling logic to
                 Appweb. They are the fastest and most compact request handling mechanism. But they are harder to write
                 and secure.</p>
-
                 <p><b>For embedded devices and applications: we recommend using <b>ESP</b>. It provides the fastest, most
                     compact web framework without compromising on functionality
-
                     for embedded applications and smaller enterprise applications.
                 Use <b>PHP</b> for larger enterprise applications.</p>
                 <p>The following table may help summarize the differences:</p>
@@ -199,7 +195,7 @@
             <p class="question"><a name="buildPHP" id="buildPHP"></a>How can I rebuild PHP?</p>
             <div class="answer">
                 <p>Building PHP can sometimes be tricky, especially on Windows. We provide snapshots of various
-                packages at http://hg.embedthis.com/packages. This URL is a Git repository for PHP, OpenSSL and
+                packages at https://github.com/embedthis/packages. This URL is a Git repository for PHP, OpenSSL and
                 MatrixSSL with Makefiles to assist those wanting to rebuild these packages.</p>
                 <p><b>NOTE:</b>These packages are not supported. They are provides as a service only.</p>
                 <p>If you are building Ubuntu Linux, you will need to run the following command to get the necessary
@@ -376,7 +372,7 @@ CFLAGS="-I$DIR/include \
             </div>
             <h2 class="section">Need more help?</h2>
             <p>If you have any further questions, please go to the Appweb community support <a href=
-            "http://www.appwebserver.org/forum/">Forum</a>.</p>
+            "http://appwebserver.org/forum/">Forum</a>.</p>
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->

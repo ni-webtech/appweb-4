@@ -246,7 +246,7 @@ void httpInitAuth(Http *http)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -255,7 +255,7 @@ void httpInitAuth(Http *http)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -711,7 +711,7 @@ static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *re
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -720,7 +720,7 @@ static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *re
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -1396,7 +1396,7 @@ void __nativeAuthFile() {}
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -1405,7 +1405,7 @@ void __nativeAuthFile() {}
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -1546,7 +1546,7 @@ void __pamAuth() {}
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -1555,7 +1555,7 @@ void __pamAuth() {}
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -1839,7 +1839,7 @@ static void setChunkPrefix(HttpQueue *q, HttpPacket *packet)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -1848,7 +1848,7 @@ static void setChunkPrefix(HttpQueue *q, HttpPacket *packet)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -2211,7 +2211,7 @@ ssize httpWriteUploadData(HttpConn *conn, MprList *fileData, MprList *formData)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -2220,7 +2220,7 @@ ssize httpWriteUploadData(HttpConn *conn, MprList *fileData, MprList *formData)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -2984,7 +2984,7 @@ void httpWritable(HttpConn *conn)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -2993,7 +2993,7 @@ void httpWritable(HttpConn *conn)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
  
     Local variables:
     tab-width: 4
@@ -3499,7 +3499,7 @@ int httpConfigureNamedVirtualEndpoints(Http *http, cchar *ip, int port)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -3508,7 +3508,7 @@ int httpConfigureNamedVirtualEndpoints(Http *http, cchar *ip, int port)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -3684,7 +3684,7 @@ void httpMemoryError(HttpConn *conn)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -3693,7 +3693,7 @@ void httpMemoryError(HttpConn *conn)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
  
     Local variables:
     tab-width: 4
@@ -3970,7 +3970,7 @@ int httpSetupTrace(HttpHost *host, cchar *ext)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -3979,7 +3979,7 @@ int httpSetupTrace(HttpHost *host, cchar *ext)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -4661,7 +4661,7 @@ static void updateCurrentDate(Http *http)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -4670,7 +4670,7 @@ static void updateCurrentDate(Http *http)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -4792,7 +4792,7 @@ void httpRouteRequest(HttpConn *conn)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -4801,7 +4801,7 @@ void httpRouteRequest(HttpConn *conn)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -5133,7 +5133,7 @@ static void adjustNetVec(HttpQueue *q, ssize written)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -5142,7 +5142,7 @@ static void adjustNetVec(HttpQueue *q, ssize written)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -5586,7 +5586,7 @@ HttpPacket *httpSplitPacket(HttpPacket *orig, ssize offset)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -5595,7 +5595,7 @@ HttpPacket *httpSplitPacket(HttpPacket *orig, ssize offset)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -5710,7 +5710,7 @@ int httpOpenPassHandler(Http *http)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -5719,7 +5719,7 @@ int httpOpenPassHandler(Http *http)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -6090,7 +6090,7 @@ static bool matchFilter(HttpConn *conn, HttpStage *filter, HttpRoute *route, int
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -6099,7 +6099,7 @@ static bool matchFilter(HttpConn *conn, HttpStage *filter, HttpRoute *route, int
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -6705,7 +6705,7 @@ ssize httpWrite(HttpQueue *q, cchar *fmt, ...)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -6714,7 +6714,7 @@ ssize httpWrite(HttpQueue *q, cchar *fmt, ...)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -7031,7 +7031,7 @@ static bool fixRangeLength(HttpConn *conn)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -7040,7 +7040,7 @@ static bool fixRangeLength(HttpConn *conn)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -9380,7 +9380,7 @@ static char *trimQuotes(char *str)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -9389,7 +9389,7 @@ static char *trimQuotes(char *str)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -11193,7 +11193,7 @@ void httpTrimExtraPath(HttpConn *conn)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -11202,7 +11202,7 @@ void httpTrimExtraPath(HttpConn *conn)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -11574,7 +11574,7 @@ void httpSendOutgoingService(HttpQueue *q) {}
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -11583,7 +11583,7 @@ void httpSendOutgoingService(HttpQueue *q) {}
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -11785,7 +11785,7 @@ HttpStage *httpCreateConnector(Http *http, cchar *name, int flags, MprModule *mo
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -11794,7 +11794,7 @@ HttpStage *httpCreateConnector(Http *http, cchar *name, int flags, MprModule *mo
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -11977,7 +11977,7 @@ void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssi
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -11986,7 +11986,7 @@ void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssi
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
  
     Local variables:
     tab-width: 4
@@ -12773,7 +12773,7 @@ bool httpFileExists(HttpConn *conn)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -12782,7 +12782,7 @@ bool httpFileExists(HttpConn *conn)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -13429,7 +13429,7 @@ static char *getBoundary(void *buf, ssize bufLen, void *boundary, ssize boundary
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -13438,7 +13438,7 @@ static char *getBoundary(void *buf, ssize bufLen, void *boundary, ssize boundary
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -14128,7 +14128,7 @@ static void trimPathToDirname(HttpUri *uri)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -14137,7 +14137,7 @@ static void trimPathToDirname(HttpUri *uri)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -14466,7 +14466,7 @@ void httpRemoveAllUploadedFiles(HttpConn *conn)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -14475,7 +14475,7 @@ void httpRemoveAllUploadedFiles(HttpConn *conn)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4

@@ -2562,7 +2562,7 @@ static void checkYielded()
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -2571,7 +2571,7 @@ static void checkYielded()
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -3237,7 +3237,7 @@ void mprNop(void *ptr) {}
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -3246,7 +3246,7 @@ void mprNop(void *ptr) {}
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -3529,7 +3529,7 @@ void stubMprAsync() {}
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -3538,7 +3538,7 @@ void stubMprAsync() {}
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -3722,7 +3722,7 @@ void mprAtomicListInsert(void * volatile *head, volatile void **link, void *item
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -3731,7 +3731,7 @@ void mprAtomicListInsert(void * volatile *head, volatile void **link, void *item
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -4354,7 +4354,7 @@ int mprPutStringToWideBuf(MprBuf *bp, cchar *str)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -4363,7 +4363,7 @@ int mprPutStringToWideBuf(MprBuf *bp, cchar *str)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -4804,7 +4804,7 @@ static void manageCacheItem(CacheItem *item, int flags)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -4813,7 +4813,7 @@ static void manageCacheItem(CacheItem *item, int flags)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -6442,7 +6442,7 @@ static char **fixenv(MprCmd *cmd)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -6451,7 +6451,7 @@ static char **fixenv(MprCmd *cmd)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -6757,7 +6757,7 @@ void mprSignalMultiCond(MprCond *cp)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -6766,7 +6766,7 @@ void mprSignalMultiCond(MprCond *cp)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -7793,7 +7793,7 @@ MprDiskFileSystem *mprCreateDiskFileSystem(cchar *path)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -7802,7 +7802,7 @@ MprDiskFileSystem *mprCreateDiskFileSystem(cchar *path)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -8631,7 +8631,7 @@ void mprSignalDispatcher(MprDispatcher *dispatcher)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -8640,7 +8640,7 @@ void mprSignalDispatcher(MprDispatcher *dispatcher)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -8908,7 +8908,7 @@ char *mprEscapeHtml(cchar *html)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -8917,7 +8917,7 @@ char *mprEscapeHtml(cchar *html)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -9228,7 +9228,7 @@ void stubMmprEpoll() {}
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -9237,7 +9237,7 @@ void stubMmprEpoll() {}
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -9588,7 +9588,7 @@ static void dequeueEvent(MprEvent *event)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -9597,7 +9597,7 @@ static void dequeueEvent(MprEvent *event)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -10243,7 +10243,7 @@ int mprGetFileFd(MprFile *file)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -10252,7 +10252,7 @@ int mprGetFileFd(MprFile *file)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -10416,7 +10416,7 @@ void mprSetPathNewline(cchar *path, cchar *newline)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -10425,7 +10425,7 @@ void mprSetPathNewline(cchar *path, cchar *newline)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -10863,7 +10863,7 @@ static void *dupKey(MprHashTable *table, MprHash *sp, cvoid *key)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -10872,7 +10872,7 @@ static void *dupKey(MprHashTable *table, MprHash *sp, cvoid *key)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -11212,7 +11212,7 @@ void stubMprKqueue() {}
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -11221,7 +11221,7 @@ void stubMprKqueue() {}
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -11906,7 +11906,7 @@ MprKeyValue *mprCreateKeyPair(cchar *key, cchar *value)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -11915,7 +11915,7 @@ MprKeyValue *mprCreateKeyPair(cchar *key, cchar *value)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -12339,7 +12339,7 @@ void mprSpinUnlock(MprSpin *lock)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -12348,7 +12348,7 @@ void mprSpinUnlock(MprSpin *lock)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -12776,7 +12776,7 @@ int _cmp(char *s1, char *s2)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -12785,7 +12785,7 @@ int _cmp(char *s1, char *s2)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -13072,7 +13072,7 @@ cchar *mprLookupMime(MprHashTable *table, cchar *ext)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -13081,7 +13081,7 @@ cchar *mprLookupMime(MprHashTable *table, cchar *ext)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -13530,7 +13530,7 @@ void dummyWide() {}
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -13539,7 +13539,7 @@ void dummyWide() {}
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -13914,7 +13914,7 @@ char *mprSearchForModule(cchar *filename)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -13923,7 +13923,7 @@ char *mprSearchForModule(cchar *filename)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -15493,7 +15493,7 @@ char *mprTrimPathExt(cchar *path)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -15502,7 +15502,7 @@ char *mprTrimPathExt(cchar *path)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -15838,7 +15838,7 @@ void stubMprPollWait() {}
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -15847,7 +15847,7 @@ void stubMprPollWait() {}
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -16988,7 +16988,7 @@ int print(cchar *fmt, ...)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -16997,7 +16997,7 @@ int print(cchar *fmt, ...)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -17335,7 +17335,7 @@ void stubRomfs() {}
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -17344,7 +17344,7 @@ void stubRomfs() {}
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -17691,7 +17691,7 @@ void stubMprSelectWait() {}
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -17700,7 +17700,7 @@ void stubMprSelectWait() {}
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -18083,7 +18083,7 @@ void mprAddStandardSignals()
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -18092,7 +18092,7 @@ void mprAddStandardSignals()
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -19627,7 +19627,7 @@ void mprSetSocketPrebindCallback(MprSocketPrebind callback)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -19636,7 +19636,7 @@ void mprSetSocketPrebindCallback(MprSocketPrebind callback)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -20555,7 +20555,7 @@ char *stemplate(cchar *str, MprHashTable *keys)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -20564,7 +20564,7 @@ char *stemplate(cchar *str, MprHashTable *keys)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -21603,7 +21603,7 @@ static int setLogging(char *logSpec)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -21612,7 +21612,7 @@ static int setLogging(char *logSpec)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -22653,7 +22653,7 @@ static int changeState(MprWorker *worker, int state)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -22662,7 +22662,7 @@ static int changeState(MprWorker *worker, int state)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -24404,7 +24404,7 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -24413,7 +24413,7 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -24608,7 +24608,7 @@ void stubMprUnix() {}
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -24617,7 +24617,7 @@ void stubMprUnix() {}
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -24829,7 +24829,7 @@ void stubMprVxWorks() {}
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -24838,7 +24838,7 @@ void stubMprVxWorks() {}
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -25136,7 +25136,7 @@ void mprDoWaitRecall(MprWaitService *ws)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -25145,7 +25145,7 @@ void mprDoWaitRecall(MprWaitService *ws)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -26251,7 +26251,7 @@ char *awtom(MprChar *src, ssize *len)
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -26260,7 +26260,7 @@ char *awtom(MprChar *src, ssize *len)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -26621,7 +26621,7 @@ void stubMprWin() {}
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -26630,7 +26630,7 @@ void stubMprWin() {}
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4
@@ -27535,7 +27535,7 @@ void stubMprWince() {}
     under the terms of the GNU General Public License as published by the
     Free Software Foundation; either version 2 of the License, or (at your
     option) any later version. See the GNU General Public License for more
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
 
     This program is distributed WITHOUT ANY WARRANTY; without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -27544,7 +27544,7 @@ void stubMprWince() {}
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses
     for this software and support services are available from Embedthis
-    Software at http://www.embedthis.com
+    Software at http://embedthis.com
 
     Local variables:
     tab-width: 4
@@ -28238,7 +28238,7 @@ int mprXmlGetLineNumber(MprXml *xp)
     under the terms of the GNU General Public License as published by the 
     Free Software Foundation; either version 2 of the License, or (at your 
     option) any later version. See the GNU General Public License for more 
-    details at: http://www.embedthis.com/downloads/gplLicense.html
+    details at: http://embedthis.com/downloads/gplLicense.html
     
     This program is distributed WITHOUT ANY WARRANTY; without even the 
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
@@ -28247,7 +28247,7 @@ int mprXmlGetLineNumber(MprXml *xp)
     proprietary programs. If you are unable to comply with the GPL, you must
     acquire a commercial license to use this software. Commercial licenses 
     for this software and support services are available from Embedthis 
-    Software at http://www.embedthis.com 
+    Software at http://embedthis.com 
     
     Local variables:
     tab-width: 4

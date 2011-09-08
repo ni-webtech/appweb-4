@@ -1,5 +1,6 @@
 <!-- BeginDsi "dsi/head.html" -->
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <title>Embedthis Appweb 4.0.0 Documentation</title>
     <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
@@ -16,16 +17,16 @@
 
 <body>
     <div class="top">
-        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
                         <label title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
-                        <input type="hidden" name="domains" value="ejscript.org" /> 
-                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                        <input type="hidden" name="domains" value="appwebserver.org" /> 
+                        <input type="hidden" name="sitesearch" value="appwebserver.org" />
                     </p>
                  </form>
               </div>
@@ -83,12 +84,10 @@
                             <p>The EjsAlias directive defines an Ejscript application at the given directory which
                             will receive all requests that begin with specified URI prefix. This one-line directive 
                             is typically all you need to do to define an Ejscript application.</p>
-
                             <p>The UriPrefix argument is mandatory, all others are optional.
                             The Directory argument is used to define the ejs HttpServer home and documents properties that
                             describe the base directory for the ejs application and the static documents directory. 
                             This may be overridden by modifying the home and documents properties of the HttpServer instance.
-
                             <p>The Script argument specifies the application startup script.
                             If not startup script is specified, the following default script is used by default:</p>
                             <pre>require ejs.web

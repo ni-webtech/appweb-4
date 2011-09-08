@@ -16,10 +16,10 @@
 
 <body>
     <div class="top">
-        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search www.embedthis.com">
+                 <form method="get" action="http://www.google.com/search" title="Search embedthis.com">
                      <p>
                         <label title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
@@ -46,7 +46,6 @@
             <h2>See Also</h2>
             <ul>
                 <li><a href="../ref/ejs/index.html">Programmers Reference</a></li>
-                <li><a href="../api/gen/ejscript/index.html" target="new">Script Library</a></li>
                 <li><a href="../api/ejs/native.html">Native APIs</a></li>
             </ul>
             <!-- EndDsi -->

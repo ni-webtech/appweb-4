@@ -1,5 +1,6 @@
 <!-- BeginDsi "dsi/head.html" -->
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <title>Embedthis Appweb 4.0.0 Documentation</title>
     <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
@@ -16,16 +17,16 @@
 
 <body>
     <div class="top">
-        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
                         <label title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
-                        <input type="hidden" name="domains" value="ejscript.org" /> 
-                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                        <input type="hidden" name="domains" value="appwebserver.org" /> 
+                        <input type="hidden" name="sitesearch" value="appwebserver.org" />
                     </p>
                  </form>
               </div>
@@ -42,10 +43,6 @@
             <h2>Quick Nav</h2>
             <ul>
                 <li><a href="#components">Appweb Components</a></li>
-                <li><a href="#goals">Goals</a></li>
-                <li><a href="#uses">Target Uses</a></li>
-                <li><a href="#internals">Internals</a></li>
-                <li><a href="#security">Security</a></li>
                 <li><a href="#more">Want More?</a></li>
             </ul>
 <!-- BeginDsi "dsi/genSeeAlso.html" -->
@@ -67,12 +64,13 @@
         </div>
         <div class="contentLeft">
             <h1>Embedthis Appweb&trade; Overview</h1>
-            <p>Appweb is an embedded web server for the efficient hosting of web applications and frameworks. It is
-            exceptionally fast and compact and has an extensive set of features.</p>
+            <p>Appweb is a blazingly fast and compact embedded web server for the efficient hosting of embedded web 
+            applications. Appweb dramatically cuts the time and cost of developing web applications by including the 
+            ESP web framework and an extensive set of features.</p>
             <h3>Highly Optimized</h3>
-            <p>Appweb is optimized for hosting dynamic web applications via an event driven, multi-threaded core to
+            <p>Appweb is optimized for hosting dynamic embedded web applications via an event driven, multi-threaded core to
             deliver exceptional throughput and effective memory utilization. It is compact and will embed using as
-            little as 800K of memory. It is especially effective in reducing the per-request memory overhead for web
+            little as 1MB of memory. It is especially effective in reducing the per-request memory overhead for web
             applications.</p>
             <h3>Extensive Features</h3>
             <p>Appweb has a strong set features including: SSL, TLS, basic and digest authentication, virtual hosting,
@@ -93,115 +91,25 @@
                 <li>HTTP web server program and library</li>
                 <li>HTTP client program and library</li>
                 <li>Angel and monitor processes</li>
-                <li>Support for the web frameworks: PHP and Ejscript</li>
+                <li>ESP web framework</li>
                 <li>Loadable modules for CGI, EGI, authentication, directory listings and file upload</li>
                 <li>Secure Socket Layer (SSL/TLS)</li>
+                <li>Support for other web frameworks: PHP and Ejscript</li>
                 <li>Complete documentation with samples</li>
                 <li>Full source code</li>
-            </ul><a name="goals" id="goals"></a>
-            <h2 class="section">Goals and Non-Goals</h2>
-            <p>The goal of Appweb is to create the best web server for hosting web applications and frameworks whether
-            they be embedded device applications or enterprise applications behind a reverse proxy. This requires that
-            Appweb be:</p>
-            <ol>
-                <li>Robust and secure</li>
-                <li>Efficient with memory</li>
-                <li>Fast with low latency</li>
-                <li>Easy to configure and manage</li>
-            </ol><a name="nonGoals" id="nonGoals"></a>
-            <h3>Non Goals</h3><img src="../../images/scalable.jpg" alt="" class="wrapLeft" />
-            <p>Appweb was specifically designed to handle small loads exceptionally well. An explicit goal was
-            <b>NOT</b> to create a single, monolithic, highly scalable web server like Apache, that can handle
-            thousands of simultaneous users. Note that Appweb will scale very well when used behind a <a href=
-            "#proxy">reverse-proxy</a> such as Apache or Lighttpd.</p><a name="uses" id="uses"></a>
-            <h2 class="section">Target Uses</h2><a name="embedded" id="embedded"></a>
-            <h3>Embedded Device Applications</h3><img src="../../images/board.jpg" alt="" class="wrapRight" height=
-            "150" width="150" />
-            <p>When used in embedded devices or applications, web servers must assume they are secondary to the
-            essential functions the device or application must perform. As such, the web server must minimize its
-            resource demands and should be deterministic in the load it places on a system.</p>
-            <p>Appweb excels in this regard and is:</p>
-            <ul>
-                <li>Fast and compact with a small memory footprint (from 800K).</li>
-                <li>Easily embedded in applications and devices &mdash; via a one line API.</li>
-                <li>Easy to configure and administer &mdash; via an Apache compatible configuration and extensive build
-                time configuration options.</li>
-                <li>Secure by design and by default.</li>
-                <li>Minimal in its demand on system resources &mdash; via configurable resource limits.</li>
             </ul>
-            <p>Appweb is the #1 <i>embedded</i> web server and has been successfully deployed in <a href=
-            "http://www.appwebserver.org/products/appweb/users.html">millions of devices</a> and embedded
-            applications.</p><a name="proxy" id="proxy"></a>
-            <h3>Web Applications Behind Reverse Proxies</h3>
-            <p>Ruby and PHP have transformed the landscape for developing web 2.0 applications. They have made many
-            tasks easier, but deploying these applications has not been quite so smooth. The "dirty-little-secret"
-            about using these web frameworks is &mdash; deployment is messy and difficult.</p>
-            <p>CGI, FastCGI, Mongrel-Clusters ... many solutions have been tried. More recently, the best solution is
-            emerging &mdash; to deploy these applications behind a reverse proxy. This permits the front-end web server
-            to exclusively serve static content and route the incoming requests. The back-end can then focus on
-            actually running the application.</p>
-            <p><img src="../../images/proxied.jpg" alt="" /></p>
-            <p>Appweb is an ideal back-end web server in this scenario for running web applications. Because Appweb is
-            a fast, multi-threaded, event driven server, each Appweb instance can host several web application sessions
-            for maximum efficiency and minimal memory footprint. Due to its Apache compatible configuration file, you
-            don't have to learn a whole new configuration setup. Using this configuration, you will lighten the load on
-            your web installation, provide better response to clients and simplify your configuration.</p><a name=
-            "internals" id="internals"></a>
-            <h2 class="section">Appweb Internals</h2>
-            <p>The core of Appweb is an event-driven, multi-threaded HTTP pipeline above which modules are loaded to
-            provide content specific handling and to extend its functionality.</p>
-            <p><img src="../../images/modules.jpg" alt="" /></p>
-            <p>Appweb has the following feaures:</p>
-            <ul>
-                <li>High performance multi-threaded core.</li>
-                <li>Modular architecture with dynamic module loading.</li>
-                <li>Request oriented memory allocator for fast allocations and to eliminate memory leaks.</li>
-                <li>Portable runtime layer to isolate platform dependencies.</li>
-                <li>Sandboxing to limit resource consumption for more robust operation.</li>
-                <li>Safe programming layer to prevent buffer overrun exploits.</li>
-                <li>Apache compatible configuration.</li>
-                <li>Extensive logging and debug trace.</li>
-            </ul><a name="pipeline" id="pipeline"></a>
-            <h3>Request Pipeline</h3>
-            <p>Appweb has an efficient, zero-copy request bi-directional pipeline to process requests and generate
-            responses. This consists of a mechanism of queues, packets, buffering and event scheduling. The pipeline
-            architecture is highly optimized and supports the efficient transmission of data without copying. It uses
-            sendfile, async I/O and vectored, scatter/gather writes to the network to avoid the costly aggregation of
-            data and headers in a single buffer before writing to the network. <img src="../../images/pipeline.jpg"
-            alt="" /> <a name="security" id="security"></a></p>
-            <h2 class="section">Security</h2>
-            <p>Most web servers have become more secure by a painful process of discovery. While it is no guarantee,
-            developing a web server to be secure by design is easier than trying to engineer-in security after the
-            fact. Securing embedded web servers is even more difficult, as it must be done without increasing memory
-            footprint or degrading performance.</p><a name="mpr" id="mpr"></a>
-            <h3>Embedthis Portable Runtime (MPR)</h3>
-            <p>Appweb has been designed to be secure from the foundation up by using a Portable Runtime (MPR). The MPR
-            is a cross-platform layer that permits over 97% of the Appweb code to be portable. It includes many
-            mechanisms to assist in the creation of secure application. One such facility is a safe string and buffer
-            handling module to help eliminate buffer overflows that have plagued many products.</p><a name="sandboxing"
-            id="sandboxing"></a>
-            <h3>Sandboxing</h3>
-            <p>Appweb closely controls its use of system resources via a technique known as "sandboxing". This means
-            running the web server within tightly controlled limits so that request errors will not compromise system
-            operation. Appweb has also been hardened against several common denial of service attacks.</p>
-            <p>Appweb can be configured to:</p>
-            <ul>
-                <li>Preallocate memory and not grow beyond predefined memory limits</li>
-                <li>Reject requests that are too large</li>
-                <li>Reject URLs that are too long</li>
-                <li>Run single-threaded or use a limited pool of reusable threads to service requests</li>
-                <li>Be run by a designated user account or user group</li>
-            </ul>
-            <p>To build on this foundation, Appweb also provides a Secure Sockets Layer and Digest
-            authentication.</p><a name="more" id="more"></a>
+            <a name="more" id="more"></a>
             <h2 class="section">Want More?</h2>
             <p>To learn more about Appweb, please read:</p>
             <ul>
+                <li><a href="goals.html">Appweb Design Goals</a></li>
+                <li><a href="uses.html">Appweb Target Uses</a></li>
+                <li><a href="internals.html">Appweb Internals</a></li>
                 <li><a href="../../ref/appweb/architecture.html">Appweb Architecture</a></li>
-                <li><a href="http://www.appwebserver.org">Appweb Web Site</a></li>
-                <li><a href="http://www.appwebserver.org/downloads/appweb/download.php">Appweb Download</a></li>
-                <li><a href="http://www.appwebserver.org/forum/">Appweb Support Forum</a></li>
-                <li><a href="http://www.embedthis.com">Embedthis Web Site for Commercial Licenses and Support</a></li>
+                <li><a href="http://appwebserver.org">Appweb Web Site</a></li>
+                <li><a href="http://appwebserver.org/downloads/appweb/download">Appweb Download</a></li>
+                <li><a href="http://appwebserver.org/forum/">Appweb Support Forum</a></li>
+                <li><a href="http://embedthis.com">Embedthis Web Site for Commercial Licenses and Support</a></li>
                 <li><a href="../../index.html">Appweb Documentation</a></li>
             </ul>
         </div>

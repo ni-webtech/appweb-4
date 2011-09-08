@@ -1,5 +1,6 @@
 <!-- BeginDsi "dsi/head.html" -->
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <title>Embedthis Appweb 4.0.0 Documentation</title>
     <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
@@ -16,16 +17,16 @@
 
 <body>
     <div class="top">
-        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
                         <label title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
-                        <input type="hidden" name="domains" value="ejscript.org" /> 
-                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                        <input type="hidden" name="domains" value="appwebserver.org" /> 
+                        <input type="hidden" name="sitesearch" value="appwebserver.org" />
                     </p>
                  </form>
               </div>
@@ -63,11 +64,8 @@
             <ul>
                 <li>Appweb HTTP Server main program</li>
                 <li>Appweb HTTP Client program</li>
-                <li>Appweb HTTP Server library</li>
-                <li>Appweb HTTP Client library</li>
-                <li>Appweb loadable modules for server-side JavaScript, Embedded Gateway Interface, Common Gateway
-                Interface, and PHP</li>
-                <li>Ejscript web framework for server-side JavaScript programming</li>
+                <li>Appweb HTTP Client and Server libraries</li>
+                <li>Multiple web frameworks</li>
                 <li>Secure Sockets Layer (SSL/TLS)</li>
                 <li>Documentation</li>
                 <li>Samples</li>
@@ -77,57 +75,57 @@
             <h3>HTTP Server Engine</h3>
             <ul>
                 <li>Full HTTP/1.1 support</li>
-                <li>Mulit-threaded, event based server</li>
+                <li>Multithreaded, event-based server</li>
                 <li>Fast co-routine request pipeline</li>
-                <li>Per-request virtual arena-based memory allocator (prevents memory leaks)</li>
-                <li>Sendfile and vectored I/O</li>
+                <li>Request routing with RegularExpression request rewriting</li>
                 <li>Supports ranged, chunked and pipelined requests</li>
-                <li>Supports transfer chunk encoding to preserve keep-alive</li>
+                <li>Sendfile and vectored I/O</li>
                 <li>Virtual Hosting. IP-based and Name-based</li>
                 <li>Error and access Logging (Common Log Format)</li>
                 <li>Apache style configuration</li>
                 <li>Angel monitoring process</li>
                 <li>Sand-box resource limits</li>
+                <li>Garbage collection based memory allocator</li>
             </ul>
             <h3>Performance</h3>
             <ul>
-                <li>Request throughput (&gt; 4,500 requests per second)</li>
-                <li>Multi-threaded scaling on multi-cpu systems</li>
-                <li>Small memory footprint even under heavy load (from 800K)</li>
+                <li>Request throughput (&gt; 5,000 requests per second)</li>
+                <li>Multi-threaded core for scale and blocking requests</li>
+                <li>Small memory footprint even under heavy load (from 1MB)</li>
             </ul>
             <h3>Modularity</h3>
             <ul>
                 <li>Dynamic loading of modules</li>
-                <li>Modules for CGI, PHP, Authorization, Chunked requests, Ranged reqeusts, directory listings, EGI,
-                static file requests, file upload and SSL</li>
-                <li>Extensible URL handlers</li>
+                <li>Modules for CGI, Directory Listings, ESP, Ejscript, PHP, file upload and SSL</li>
+                <li>Configurable request routing</li>
                 <li>Extensible / replaceable authorization, SSL and script</li>
             </ul>
             <h3>Security</h3>
             <ul>
                 <li>Secure Sockets Layer (SSL)</li>
                 <li>Basic and Digest Authentication</li>
-                <li>Directory and URL location based authorization</li>
+                <li>Route based authorization</li>
                 <li>Sandbox limits</li>
                 <li>Access and access violation logging</li>
                 <li>Safe portable runtime to protect against memory leaks and buffer overflows</li>
             </ul>
             <h3>Dynamic Content</h3>
             <ul>
-                <li>Ejscript Server-Side JavaScript</li>
-                <li>Embedded Gateway Interface (in-memory CGI)</li>
+                <li>Embedded Server Pages (included)</li>
+                <li>Support for Ejscript Server-Side JavaScript (separate product)</li>
+                <li>PHP (separate)</li>
                 <li>CGI/1.1</li>
-                <li>PHP</li>
             </ul>
-            <h3>Ejscript Web Framework</h3>
+            <h3>Embedded Server Pages (ESP) Web Framework</h3>
             <ul>
-                <li>Server-side JavaScripting</li>
+                <li>Web page templating engine without layout pages</li>
                 <li>Model / View / Controller paradigm or stand-alone web pages</li>
-                <li>SQLite database and ORM layer and database migrations</li>
-                <li>Web page templating engine</li>
+                <li>Embedded "C" language code in HTML pages</li>
+                <li>Fast, automatic recompilation and reloading of updated web pages</li>
                 <li>Ajax View Controls with jQuery support</li>
-                <li>Embedded scripting in HTML pages</li>
                 <li>Session and flash inter-request state management</li>
+                <li>Routing of URL requests directly to "C" language functions</li>
+                <li>Integrated and transparent content caching</li>
             </ul>
             <h3>Developer Support</h3>
             <ul>
@@ -149,18 +147,18 @@
             <ul>
                 <li>Linux (2.4, 2.6: Ubuntu, Fedora)</li>
                 <li>Windows (XP, Vista, 7)</li>
-                <li>MAC OSX (Leopard)</li>
+                <li>MAC OSX (Leopard, Lion)</li>
                 <li>VxWorks (5.4, 6.3)</li>
                 <li>Free BSD</li>
+                <li>Unix</li>
                 <li>Windows CE</li>
             </ul>
             <h3>Embedding Support</h3>
             <ul>
-                <li>Supports ARM, MIPS, X86, PPC, Sparc processors</li>
+                <li>Supports ARM, MIPS, X86, PPC and Sparc processors</li>
                 <li>Full cross-compilation support. Use Windows, Linux or Mac as build system</li>
                 <li>Fine-grained control for conditional build and compilation</li>
-                <li>Build statically or shared</li>
-                <li>Execute from ROM. Supports XIP</li>
+                <li>Execute from ROM (XIP)</li>
             </ul>
             <h3>Other Features</h3>
             <ul>

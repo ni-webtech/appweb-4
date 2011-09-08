@@ -1,5 +1,6 @@
 <!-- BeginDsi "dsi/head.html" -->
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <title>Embedthis Appweb 4.0.0 Documentation</title>
     <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
@@ -16,16 +17,16 @@
 
 <body>
     <div class="top">
-        <a class="logo" href="http://www.appwebserver.org/">&nbsp;</a>
+        <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search www.ejscript.org">
+                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
                         <label title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
-                        <input type="hidden" name="domains" value="ejscript.org" /> 
-                        <input type="hidden" name="sitesearch" value="ejscript.org" />
+                        <input type="hidden" name="domains" value="appwebserver.org" /> 
+                        <input type="hidden" name="sitesearch" value="appwebserver.org" />
                     </p>
                  </form>
               </div>
@@ -83,7 +84,7 @@
             (MPR).</p>
             <p><b>NOTE:</b> When attempting a port, you should get the latest copy of the development source branch
             rather than using the download source package. You can get the latest development source by checking out a
-            copy from the <a href="http://hg.embedthis.com/ejs/">repository</a>.</p>
+            copy from the <a href="https://github.com/embedthis/appweb-4">repository</a>.</p>
             <p><b>NOTE:</b> Please read <a href="building.html">Building from Source</a> before your read this
             document. It provides valuable background about the Appweb build system.</p><a name="newOs" id="newOs"></a>
             <h2>Steps in Porting to a new Operating System</h2>
@@ -172,7 +173,7 @@
                     <p><b>NOTE:</b> the mpr.h and mprLib.c files are an all-in-one amalgamation of lots of smaller mpr
                     files. When you have finished your port, the changes to mpr.h and mprLib.c will need to be
                     back-ported to the Mpr release at <a href=
-                    "http://hg.embedthis.com/mpr">http://hg.embedthis.com/mpr</a>.</p>
+                    "https://github.com/embedthis/mpr-4">https://github.com/embedthis/mpr-4</a>.</p>
                 </li>
                 <li>
                     <h3>Test the Headers with a Hello World Program.</h3>
@@ -189,7 +190,7 @@
                     intend to support single-threading, you can largely skip these code sections.</p>
                     <p>When you have finished your port, the changes to mprLib.c and mprLib.c will need to be
                     back-ported to the Mpr release at <a href=
-                    "http://hg.embedthis.com/mpr">http://hg.embedthis.com/mpr</a>.</p>
+                    "https://github.com/embedthis/mpr-4">https://github.com/embedthis/mpr-4</a>.</p>
                 </li>
                 <li>
                     <h3>Test the Make Subsystem</h3>

@@ -7,7 +7,7 @@ This document contains details regarding the installation procedure for the bina
 
 You can read the documentation for the latest release online at:
 
-    http://www.embedthis.com/products/appweb/doc/product/index.html
+    http://embedthis.com/products/appweb/doc/product/index.html
 
 This software is copyrighted and distributed under license. Please read the LICENSE.TXT for details.
 
@@ -228,5 +228,5 @@ Embedthis Software, LLC.
 4616 25th Ave NE, #733
 Seattle, WA 98105.
 +1 (425) 329-3490
-www.embedthis.com
+embedthis.com
 info@embedthis.com
