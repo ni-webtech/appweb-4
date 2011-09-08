@@ -9682,7 +9682,6 @@ int mprFlushFile(MprFile *file)
     if (file->buf == 0) {
         return 0;
     }
-
     if (file->mode & (O_WRONLY | O_RDWR)) {
         fs = file->fileSystem;
         bp = file->buf;

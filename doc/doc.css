@@ -308,7 +308,7 @@ pre a:link, pre a:visited, pre a:hover {
 }
 
 pre.paper { 
-	font-size: 130%;
+	font-size: 120%;
 	line-height: 130%; 
 	font-family: Consolas, Monaco, Courier, Courier New, Courier, monospace; 
 	padding: 10px 15px 10px 15px;

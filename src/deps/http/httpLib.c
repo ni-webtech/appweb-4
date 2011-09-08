@@ -7551,7 +7551,6 @@ int httpAddRouteCondition(HttpRoute *route, cchar *name, cchar *details, int fla
     int         column;
 
     mprAssert(route);
-    mprAssert(details && *details);
 
     GRADUATE_LIST(route, conditions);
     if ((op = createRouteOp(name, flags)) == 0) {
@@ -8309,70 +8308,71 @@ static char *finalizeReplacement(HttpRoute *route, cchar *str)
     int         next, braced;
 
     mprAssert(route);
-    mprAssert(str);
 
     /*
         Prepare a replacement string. Change $token to $N
      */
     buf = mprCreateBuf(-1, -1);
-    for (cp = str; *cp; cp++) {
-        if ((tok = schr(cp, '$')) != 0 && (tok == str || tok[-1] != '\\')) {
-            if (tok > cp) {
-                mprPutBlockToBuf(buf, cp, tok - cp);
-            }
-            if ((braced = (*++tok == '{')) != 0) {
-                tok++;
-            }
-            if (*tok == '&' || *tok == '\'' || *tok == '`' || *tok == '$') {
-                mprPutCharToBuf(buf, '$');
-                mprPutCharToBuf(buf, *tok);
-                ep = tok + 1;
-            } else {
-                if (braced) {
-                    for (ep = tok; *ep && *ep != '}'; ep++) ;
-                } else {
-                    for (ep = tok; *ep && isdigit((int) *ep); ep++) ;
+    if (str == 0 || *str == '\0') {
+        for (cp = str; *cp; cp++) {
+            if ((tok = schr(cp, '$')) != 0 && (tok == str || tok[-1] != '\\')) {
+                if (tok > cp) {
+                    mprPutBlockToBuf(buf, cp, tok - cp);
                 }
-                token = snclone(tok, ep - tok);
-                if (schr(token, ':')) {
-                    mprPutStringToBuf(buf, "$${");
-                    mprPutStringToBuf(buf, token);
-                    mprPutCharToBuf(buf, '}');
+                if ((braced = (*++tok == '{')) != 0) {
+                    tok++;
+                }
+                if (*tok == '&' || *tok == '\'' || *tok == '`' || *tok == '$') {
+                    mprPutCharToBuf(buf, '$');
+                    mprPutCharToBuf(buf, *tok);
+                    ep = tok + 1;
                 } else {
-                    for (next = 0; (item = mprGetNextItem(route->tokens, &next)) != 0; ) {
-                        if (scmp(item, token) == 0) {
-                            break;
+                    if (braced) {
+                        for (ep = tok; *ep && *ep != '}'; ep++) ;
+                    } else {
+                        for (ep = tok; *ep && isdigit((int) *ep); ep++) ;
+                    }
+                    token = snclone(tok, ep - tok);
+                    if (schr(token, ':')) {
+                        mprPutStringToBuf(buf, "$${");
+                        mprPutStringToBuf(buf, token);
+                        mprPutCharToBuf(buf, '}');
+                    } else {
+                        for (next = 0; (item = mprGetNextItem(route->tokens, &next)) != 0; ) {
+                            if (scmp(item, token) == 0) {
+                                break;
+                            }
+                        }
+                        if (item) {
+                            mprPutCharToBuf(buf, '$');
+                            mprPutIntToBuf(buf, next);
+                        } else if (snumber(token)) {
+                            mprPutCharToBuf(buf, '$');
+                            mprPutStringToBuf(buf, token);
+                        } else {
+                            mprError("Can't find token \"%s\" in template \"%s\"", token, route->pattern);
                         }
                     }
-                    if (item) {
-                        mprPutCharToBuf(buf, '$');
-                        mprPutIntToBuf(buf, next);
-                    } else if (snumber(token)) {
-                        mprPutCharToBuf(buf, '$');
-                        mprPutStringToBuf(buf, token);
-                    } else {
-                        mprError("Can't find token \"%s\" in template \"%s\"", token, route->pattern);
-                    }
                 }
-            }
-            if (braced) {
-                ep++;
-            }
-            cp = ep - 1;
+                if (braced) {
+                    ep++;
+                }
+                cp = ep - 1;
 
-        } else {
-            if (*cp == '\\') {
-                if (cp[1] == 'r') {
-                    mprPutCharToBuf(buf, '\r');
-                    cp++;
-                } else if (cp[1] == 'n') {
-                    mprPutCharToBuf(buf, '\n');
-                    cp++;
+            } else {
+                if (*cp == '\\') {
+                    if (cp[1] == 'r') {
+                        mprPutCharToBuf(buf, '\r');
+                        cp++;
+                    } else if (cp[1] == 'n') {
+                        mprPutCharToBuf(buf, '\n');
+                        cp++;
+                    } else {
+                        mprPutCharToBuf(buf, *cp);
+                    }
                 } else {
                     mprPutCharToBuf(buf, *cp);
                 }
-            } else {
-                mprPutCharToBuf(buf, *cp);
             }
         }
     }

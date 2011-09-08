@@ -1,5 +1,3 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <!-- BeginDsi "dsi/head.html" -->
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -44,8 +42,9 @@
             <h2>Quick Nav</h2>
             <ul>
                 <li><a href="#api">API Compatibility</a></li>
-                <li><a href="#r2">Appweb 2</a></li>
+                <li><a href="#r4">Appweb 4</a></li>
                 <li><a href="#r3">Appweb 3</a></li>
+                <li><a href="#r2">Appweb 2</a></li>
             </ul>
 <!-- BeginDsi "dsi/genSeeAlso.html" -->
             <h2>See Also</h2>
@@ -72,7 +71,7 @@
                 <li><a href="http://hoohoo.ncsa.uiuc.edu/cgi/">CGI 1.1</a></li>
                 <li><a href="http://ftp.ics.uci.edu/pub/ietf/html/rfc1867.txt">Form-based File Upload in HTML</a></li>
                 <li><a href="http://www.ecma-international.org/publications/standards/Ecma-262.htm">ECMA-262 for server
-                side JavaScript</a></li>
+                side JavaScript if using Ejscript</a></li>
             </ul><a name="api" id="api"></a>
             <h2 class="section">API Compatibility</h2>
             <p>The Appweb APIs are evolving and are thus subject to change between minor releases. The documentation
@@ -80,14 +79,20 @@
             the stability with regard to backwards compatibility.</p>
             <p>We do <b>not</b> provide a blanket commitment to backward compatibility. Rather, we adopt a more
             surgical approach on an API by API basis.</p><a name="r2" id="r2"></a>
-            <h2>Appweb 2</h2>
-            <p>Appweb 2 is a stable release that in now in maintenance mode. The core programming APIs are relatively
-            stable and are not expected to change significantly. Appweb 2 will be maintained until the end of
-            2011.</p><a name="r3" id="r3"></a>
+            <a name="r4" id="r4"></a>
+            <h2>Appweb 4</h2>
+            <p>Appweb 4 is an evolutionalry release change relative to Appweb 3. Some APIs have changed and APIs have
+            been added for new functionality. Appweb 4 uses a garbage collection based memory allocator. This eliminates
+            the need to manually free memory and this has the general design of some APIs.
+            You can migrate code from Appweb 3 to Appweb 4 with some refactoring.</p>
             <h2>Appweb 3</h2>
             <p>Appweb 3 is a major change relative to Appweb 2. Most of the APIs have changed in some capacity and you
             should regard Appweb 3.X as a next generation web server. You can migrate code from Appweb 2 to Appweb 3,
             however you should expect to have significant refactoring work when transitioning.</p>
+            <h2>Appweb 2</h2>
+            <p>Appweb 2 is a stable release that in now in maintenance mode. The core programming APIs are relatively
+            stable and are not expected to change significantly. Appweb 2 will be maintained until the end of
+            2011.</p>
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->

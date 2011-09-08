@@ -2196,13 +2196,12 @@ extern void httpWritable(HttpConn *conn);
 /** Internal APIs */
 extern struct HttpConn *httpAccept(struct HttpEndpoint *endpoint);
 extern void httpEnableConnEvents(HttpConn *conn);
-extern void httpUsePrimary(HttpConn *conn);
-extern void httpUseWorker(HttpConn *conn, MprDispatcher *dispatcher, MprEvent *event);
-
 extern void httpInitTrace(HttpTrace *trace);
+extern HttpLimits *httpSetUniqueConnLimits(HttpConn *conn);
 extern int httpShouldTrace(HttpConn *conn, int dir, int item, cchar *ext);
 extern void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssize len, MprOff total);
-extern HttpLimits *httpSetUniqueConnLimits(HttpConn *conn);
+extern void httpUsePrimary(HttpConn *conn);
+extern void httpUseWorker(HttpConn *conn, MprDispatcher *dispatcher, MprEvent *event);
 
 /*  
     Deny/Allow order

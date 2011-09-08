@@ -1,5 +1,3 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <!-- BeginDsi "dsi/head.html" -->
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -69,7 +67,7 @@
         <div class="contentLeft">
             <h1>Appweb&trade; FAQ</h1>
             <p>If your question is not answered here FAQ, please submit your question to the online community support
-            <a href="http://www.appwebserver.org/forum/">Forum</a>.</p>
+            <a href="http://appwebserver.org/forum/">Forum</a>.</p>
             <h2 class="section">Questions</h2>
             <h3>General Questions</h3>
             <ul class="questions">
@@ -99,19 +97,29 @@
             <p class="question"><a name="XSP" id="XSP"></a>What web framework should I use for my dynamic web
             appliation?</p>
             <div class="answer">
-                <p>You have several choices: PHP, Ejscript, CGI, EGI and custom handlers.</p>
+                <p>You have several choices: ESP, Ejscript, PHP, CGI, and custom handlers.</p>
+                <p>ESP is a new web framework that provides templates, caching, Model-View-Controller paradigm, 
+                and a set of web controls that are pre-integrated with jQuery. ESP uses "C" language code
+                embedded in web pages for native-speed execution.</p>
+
                 <p>PHP is a high functionality, web page creation environment. It is suitable for enterprise
                 application development, but is very large. Definitely not for embedded use.</p>
                 <p>Ejscript is a server-side JavaScript framework that is ideal for creating dynamic web applications.
                 It is compact and fast. Great for embedded, but also good for smaller enterprise apps.</p>
+
                 <p>CGI stands for the Common Gateway Interface and it is the legacy extension interface for running
                 external programs to generate dynamic data. It is standard but very slow and cumbersome.</p>
                 <p>EGI stands for the Embedded Gateway Interface and is unique to Appweb. It is an in-memory
                 replacement for CGI. However, Ejscript is a better choice in most cases.</p>
+
                 <p>Custom handlers are loadable Appweb modules, written in C, that add custom request handling logic to
                 Appweb. They are the fastest and most compact request handling mechanism. But they are harder to write
                 and secure.</p>
-                <p><b>We recommend using Ejscript</b> for embedded applications and smaller enterprise applications.
+
+                <p><b>For embedded devices and applications: we recommend using <b>ESP</b>. It provides the fastest, most
+                    compact web framework without compromising on functionality
+
+                    for embedded applications and smaller enterprise applications.
                 Use <b>PHP</b> for larger enterprise applications.</p>
                 <p>The following table may help summarize the differences:</p>
                 <table width="100%" border="1" summary="">
