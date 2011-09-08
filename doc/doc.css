@@ -344,6 +344,10 @@ thead {
 	font-size: 110%;
 }
 
+thead b {
+	color: #FFFFFF;
+}
+
 th {
     padding: 4px 8px 4px 4px;
 	text-align: left;
@@ -472,7 +476,7 @@ div.note {
 
 tt {
     font-weight: bold;
-    font-size: 133%;
+    font-size: 110%;
     color: #AA0000;
 	font-family: Consolas, Monaco, Courier, Monaco, Courier, Courier New, Courier, monospace; 
 }

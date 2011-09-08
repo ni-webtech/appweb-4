@@ -109,14 +109,13 @@ ServerName http://localhost:7777
 DocumentRoot "/var/web"
 Listen 7777
 LoadModule fileHandler mod_file
-AddHandler fileHandler .html
+AddHandler fileHandler html
 </pre><a name="blocks" id="blocks"></a>
             <h2 class="section">Configuration Blocks</h2>
             <p>The configuration file is comprised of several directive groups or blocks:</p>
             <ul>
                 <li>Global Directives</li>
-                <li>Directory Blocks</li>
-                <li>Location Blocks</li>
+                <li>Route Blocks</li>
                 <li>Virtual Host Blocks</li>
             </ul>
             <p>When a new block is defined, it inherits the settings of the outer block. New directives defined inside
@@ -124,27 +123,16 @@ AddHandler fileHandler .html
             <h3>Global Directives</h3>
             <p>A directive is regarded as global if it is not enclosed in a block. You cannot nest blocks of a like
             kind. i.e. you cannot nest a directory block inside a directory block.</p>
-            <h3>Directory Blocks</h3>
-            <p>A Directory block defines a group of directives that apply to a physical disk location. The block is
-            created by the <b>Directory</b> directive.</p>
+            <h3>Route Blocks</h3>
+            <p>A Route block defines a group of directives that apply to a specific URL. The block is created by the
+            <b>Route</b> directive.</p>
             <pre>
-&lt;Directory "/home/my/docs&gt;
-    AuthType digest
-    AuthName "MyCorp"
-    Require valid-user
+&lt;Route "/myapp/"&gt;
+    SetHandler esp
 &lt;/Directory&gt;
 </pre>
-            <p>This will enable user authentication for accesses to the documents in the "/home/my/docs" directory.</p>
-            <h3>Location Blocks</h3>
-            <p>A Location block defines a group of directives that apply to a specific URL. The block is created by the
-            <b>Location</b> directive.</p>
-            <pre>
-&lt;Location "/myapp/"&gt;
-    SetHandler egi
-&lt;/Directory&gt;
-</pre>
-            <p>This will configure Appweb to pass requests that begin with the URL "/myapp" to the <b>egi</b> handler.
-            So whereas a Directory block applies to physical files, Location blocks apply to URL names.</p>
+            <p>This will configure Appweb to pass requests that begin with the URL "/myapp" to the <b>esp</b> handler.
+            So whereas a Directory block applies to physical files, Route blocks apply to URL names.</p>
             <h3>Virtual Host Blocks</h3>
             <p>A Virtual host block defines a group of directives that apply to a virtual sub-server. A virtual server
             may be associated with a virtual server name or with an IP address. Virtual hosts enable you to segment the
@@ -168,15 +156,12 @@ NameVirtualHost 206.148.96.56
             <p>See <a href="vhosts.html">Virtual Hosting</a> for more details.</p><a name="include" id="include"></a>
             <h2 class="section">Include Directives</h2>
             <p>The <b>include</b> directive allows other files to be included in the configuration file. The include
-            directive can include a single file or, via a simple wild-card, can include all the files in a
-            directory.</p>
+            directive can be a single filename or filename with wildcards</p>
             <pre>
 Include myconfig.conf
-Include conf/applications/*
+Include conf/applications/*.conf
 </pre>
-            <p>NOTE: The "*" wild card means all the files in this directory. You cannot use "*.conf" or other
-            conditional wild cards in the current release.</p>
-            <p>The only wild-card supported is "*".</p><a name="conditional" id="conditional"></a>
+            </p><a name="conditional" id="conditional"></a>
             <h2 class="section">Conditional Directives</h2>
             <p>The configuration file supports conditional processing via the <b>&lt;if&gt;</b> directive. The
             <b>if</b> directive tests a symbolic value and if true, it enables parsing the nested directives. If the
@@ -197,47 +182,22 @@ Include conf/applications/*
                 </thead>
                 <tbody>
                     <tr>
-                        <td>ACCESS_LOG</td>
-                        <td>True if access logging is enabled</td>
-                    </tr>
-                    <tr>
                         <td>BLD_DEBUG</td>
                         <td>True if this is a DEBUG build</td>
                     </tr>
                     <tr>
-                        <td>DIGEST</td>
-                        <td>True if digest authentication is enabled</td>
-                    </tr>
-                    <tr>
-                        <td>DOC</td>
-                        <td>True if documentation is enabled</td>
-                    </tr>
-                    <tr>
-                        <td>LOG</td>
-                        <td>True if logging is enabled</td>
-                    </tr>
-                    <tr>
                         <td>NAME_MODULE</td>
                         <td>True if the module if enabled, where NAME is the name of the module.</td>
-                    </tr>
-                    <tr>
-                        <td>MULTITHREAD</td>
-                        <td>True if this build is multi-threaded</td>
-                    </tr>
-                    <tr>
-                        <td>SAMPLES</td>
-                        <td>True if building samples</td>
-                    </tr>
-                    <tr>
-                        <td>TEST</td>
-                        <td>True if building unit tests</td>
                     </tr>
                 </tbody>
             </table><a name="order" id="order"></a>
             <h2 class="section">Order of Processing</h2>
             <p>The configuration file is parsed in a single top-to-bottom pass. Because certain directives depend on
             others, the order of directives is important. For example, you must define the ServerRoot before using the
-            LoadModule directive.</p><a name="directives" id="directives"></a>
+            LoadModule directive. Also, block level directives inherit their configuration from the outer block. 
+            For example: a Route block will inherit the outer configuration and may modify that inside the Route block.</p>
+            
+            <a name="directives" id="directives"></a>
             <h2 class="section">Configuration File Directives</h2>
             <p>This is the list of Appweb supported configuration directives.</p>
             <table summary="" width="100%">
@@ -253,15 +213,23 @@ Include conf/applications/*
                         <td>CGI program to run to handle specific content.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/location.html#addHandler">AddHandler</a></td>
-                        <td>Add a handler for processing given file extensions.</td>
+                        <td><a href="dir/route.html#addLanguage">AddLanguage</a></td>
+                        <td>Add a supported language.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/location.html#addInputFilter">AddInputFilter</a></td>
+                        <td><a href="dir/route.html#addLanguageRoot">AddLanguageRoot</a></td>
+                        <td>Add a per-langague content directory.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/route.html#addInputFilter">AddInputFilter</a></td>
                         <td>Add an input filter to the processing pipeline.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/location.html#addOutputFilter">AddOutputFilter</a></td>
+                        <td><a href="dir/route.html#addHandler">AddHandler</a></td>
+                        <td>Add a handler for processing given file extensions.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/route.html#addOutputFilter">AddOutputFilter</a></td>
                         <td>Add an output filter to the processing pipeline.</td>
                     </tr>
                     <tr>
@@ -301,11 +269,11 @@ Include conf/applications/*
                         <td>Defines the file of user names.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/location.html#cache">Cache</a></td>
+                        <td><a href="dir/route.html#cache">CacheClient</a></td>
                         <td>Control client-side caching by document extension.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/location.html#cacheByType">CacheByType</a></td>
+                        <td><a href="dir/route.html#cacheByType">CacheByType</a></td>
                         <td>Control client-side caching by document mime type.</td>
                     </tr>
                     <tr>
@@ -313,8 +281,20 @@ Include conf/applications/*
                         <td>Define the directory for a "chroot jail" in which Appweb will execute.</td>
                     </tr>
                     <tr>
+                        <td><a href="dir/route.html#compress">Compress</a></td>
+                        <td>Control the use of compressed content.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/route.html#condition">Condition</a></td>
+                        <td>Define a conditional test for a route.</td>
+                    </tr>
+                    <tr>
                         <td><a href="dir/log.html#customLog">CustomLog</a></td>
                         <td>Define the location and format of the access log.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/route.html#defaultLanguage">DefaultLanguage</a></td>
+                        <td>Set the default language to use for a route.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/auth.html#deny">Deny</a></td>
@@ -351,12 +331,41 @@ Include conf/applications/*
                     <tr>
                         <td><a href="dir/log.html#errorLog">ErrorLog</a></td>
                         <td>Define the location and format of the error log.</td>
-                    </tr><!--
+                    </tr>
+                    <tr><td><a href="dir/esp.html#espApp">EspApp</a></td>
+                        <td>Define an ESP application inside a Route for the App.</td></tr>
+                    <tr><td><a href="dir/esp.html#espAppAlias">EspAppAlias</a></td>
+                        <td>Define an ESP application and Route.</td></tr>
+                    <tr><td><a href="dir/esp.html#espCompile">EspCompile</a></td>
+                        <td>Define the compilation command.</td></tr>
+                    <tr><td><a href="dir/esp.html#espDir">EspDir</a></td>
+                        <td>Set the directory for ESP MVC components.</td></tr>
+                    <tr><td><a href="dir/esp.html#espEnv">EspEnv</a></td>
+                        <td>Set an environment variable for ESP compilation commands.</td></tr>
+                    <tr><td><a href="dir/esp.html#espKeepSource">EspKeepSource</a></td>
+                        <td>Control the preservation of intermediate source code.</td></tr>
+                    <tr><td><a href="dir/esp.html#espLifespan">EspLifespan</a></td>
+                        <td>Set the default cached content lifespan.</td></tr>
+                    <tr><td><a href="dir/esp.html#espLink">EspLink</a></td>
+                        <td>Define the link command.</td></tr>
+                    <tr><td><a href="dir/esp.html#espLoad">EspLoad</a></td>
+                        <td>Load an application.</td></tr>
+                    <tr><td><a href="dir/esp.html#espRoute">EspRoute</a></td>
+                        <td>Create a new route for ESP controllers and pages.</td></tr>
+                    <tr><td><a href="dir/esp.html#espRoutePack">EspRoutePack</a></td>
+                        <td>Define a package of routes for ESP.</td></tr>
+                    <tr><td><a href="dir/esp.html#espShowErrors">EspShowErrors</a></td>
+                        <td>Show server side errors back to the client.</td></tr>
+                    <tr><td><a href="dir/esp.html#espUpdate">EspUpdate</a></td>
+                        <td>Control whether updated ESP source code triggers reloading.</td></tr>
                     <tr>
-                        <td><a href="dir/module.html#fileUploadDir">FileUploadDir</a></td>
+                        <td><a href="dir/module.html#uploadDir">UploadDir</a></td>
                         <td>Set the directory for uploaded files.</td>
                     </tr>
-                    -->
+                    <tr>
+                        <td><a href="dir/module.html#uploadDir">UploadAutoDelete</a></td>
+                        <td>Control if files are auto-deleted after uploading.</td>
+                    </tr>
                     <tr>
                         <td><a href="dir/server.html#group">Group</a></td>
                         <td>Define the O/S account group used by Appweb.</td>
@@ -422,10 +431,6 @@ Include conf/applications/*
                         <td>Specify a list of directories to search for modules.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/location.html#location">Location</a></td>
-                        <td>Define a block of directives to apply to a URL location.</td>
-                    </tr>
-                    <tr>
                         <td><a href="dir/log.html#logLevel">LogLevel</a></td>
                         <td>Define the verbosity of messages to the error log.</td>
                     </tr>
@@ -442,19 +447,31 @@ Include conf/applications/*
                         <td>Define the re-use count for a connection.</td>
                     </tr>
                     <tr>
+                        <td><a href="dir/perf.html#memoryDepletionPolicy">MemoryDepletionPolicy</a></td>
+                        <td>Define the action to take when memory is depleted.</td>
+                    </tr>
+                    <tr>
                         <td><a href="dir/vhost.html#namedVirtualHost">NameVirtualHost</a></td>
                         <td>Nominate an IP address for name-based virtual hosting.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/dir.html#options">Options</a></td>
+                        <td>Control directory listing options.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/auth.html#order">Order</a></td>
                         <td>Specify the order in which the allow and deny directives apply.</td>
                     </tr>
                     <tr>
+                        <td><a href="dir/route.html#prefix">Prefix</a></td>
+                        <td>Define a route prefix to trim from the URI.</td>
+                    </tr>
+                    <tr>
                         <td><a href="dir/server.html#protocol">Protocol</a></td>
                         <td>Define the HTTP protocol to use.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/location.html#putMethod">PutMethod</a></td>
+                        <td><a href="dir/route.html#putMethod">PutMethod</a></td>
                         <td>Control use of the HTTP PUT method.</td>
                     </tr>
                     <tr>
@@ -466,8 +483,16 @@ Include conf/applications/*
                         <td>Define which authenticated users will be permitted access to content.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/location.html#resetPipeline">ResetPipeline</a></td>
+                        <td><a href="dir/route.html#resetPipeline">ResetPipeline</a></td>
                         <td>Reset the input and output pipeline for a block.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/route.html#route">Route</a></td>
+                        <td>Define a block of directives to apply to a URL route.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/route.html#routeName">RouteName</a></td>
+                        <td>Set the route name.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/server.html#scriptAlias">ScriptAlias</a></td>
@@ -478,11 +503,11 @@ Include conf/applications/*
                         <td>Set the TCP/IP internal buffer size.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/location.html#setConnector">SetConnector</a></td>
+                        <td><a href="dir/route.html#setConnector">SetConnector</a></td>
                         <td>Set the connector stage for a block.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/location.html#setHandler">SetHandler</a></td>
+                        <td><a href="dir/route.html#setHandler">SetHandler</a></td>
                         <td>Set the handler to process requests.</td>
                     </tr>
                     <tr>
@@ -538,12 +563,24 @@ Include conf/applications/*
                         <td>Set the SSL protocols to enable.</td>
                     </tr>
                     <tr>
+                        <td><a href="dir/route.html#target">Target</a></td>
+                        <td>Define a route target.</td>
+                    </tr>
+                    <tr>
                         <td><a href="dir/server.html#traceMethod">TraceMethod</a></td>
                         <td>Control whether the HTTP Trace method is enabled.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/server.html#typesConfig">TypesConfig</a></td>
                         <td>Specify the location of the MIME types file.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/module.html#unloadModule">UnloadModule</a></td>
+                        <td>Unload an Appweb module.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/route.html#update">Update</a></td>
+                        <td>Define an update modification for a route.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/server.html#user">User</a></td>
