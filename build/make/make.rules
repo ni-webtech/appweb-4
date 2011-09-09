@@ -217,9 +217,13 @@ testPrep testFinal testCleanup:
 #
 testExtra::
 	# Execute default test rule only at the outermost make level and not at the topmost directory 
-	if [ "$(DIR)" = "." -a ! -f configure ] ; then \
+	if [ "$(DIR)" = "." ] ; then \
         if [ -x "$(BLD_EJS)" -a "$(BLD_CROSS)" != 1 ] ; then \
-            $(BLD_EJS) $(BLD_TOOLS_DIR)/utest -v -d $(BUILD_DEPTH) ; \
+            if [ -d src -a -f configure ] ; then \
+                $(MAKE) -C src -S --no-print-directory "DIR=." PRE=$(PRE) TRACE=$(TRACE) test ; \
+            else \
+                $(BLD_EJS) $(BLD_TOOLS_DIR)/utest -v -d $(BUILD_DEPTH) ; \
+            fi ; \
         fi ; \
     fi
 
