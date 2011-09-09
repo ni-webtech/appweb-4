@@ -8313,7 +8313,7 @@ static char *finalizeReplacement(HttpRoute *route, cchar *str)
         Prepare a replacement string. Change $token to $N
      */
     buf = mprCreateBuf(-1, -1);
-    if (str == 0 || *str == '\0') {
+    if (str && *str) {
         for (cp = str; *cp; cp++) {
             if ((tok = schr(cp, '$')) != 0 && (tok == str || tok[-1] != '\\')) {
                 if (tok > cp) {
