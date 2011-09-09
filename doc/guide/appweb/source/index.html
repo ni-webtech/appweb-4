@@ -75,33 +75,45 @@
         </div>
         <div class="contentLeft">
             <h1>Working with the Appweb Source Code</h1>
-            <p>Appweb releases are available in either a binary or source code distribution. It is your choice which
+            <p>Appweb releases are available as either a binary or source code distribution. It is your choice which
             distribution you choose, but the source code distribution has several advantages:</p>
             <ul>
                 <li>You can recompile Appweb to optimize it for your specific system environment.</li>
                 <li>You can reconfigure Appweb using a wide variety of configuration options to select the specific
                 features that you require.</li>
-                <li>You can modify the core number type to be double, int-32 or int-64.</li>
+                <li>You can minimize the memory footprint and decrease the securable surface area.</li>
             </ul><a name="get" id="get"></a>
             <h2>Getting the Source Code</h2>
             <p>With each Appweb release, a complete source code snapshot is provided. You can get the latest source
             code from the <a href="http://appwebserver.org/downloads/appweb/download">download</a> site or you can
-            access the <a href="https://github.com/embedthis/appweb-4">source code repository</a>.</p><a name="repository" id=
-            "repository"></a>
+            access the <a href="https://github.com/embedthis/appweb-4">source code repository</a>.</p>
+            <a name="repository" id="repository"></a>
+
             <h3>Source Repository</h3>
-            <p>Go to <a href="https://github.com/embedthis/appweb-4">https://github.com/embedthis/appweb-4</a> to get the latest source
-            code. The repository source code will contain the latest features and fixes, but it will also contain bugs
-            and issues that have not been resolved. Use of the respository source code is not recommended for
-            production or development use.</p>
             <p>The Appweb source code is hosted in a Git repository. We provide open read-only access. Write
             access is available to regular contributing developers. To check out the source use this command:</p>
             <pre>
 $ git clone http://github.com/embedthis/appweb-4
 </pre>
+            <p>You can also view the repository at <a href="https://github.com/embedthis/appweb-4">https://github.com/embedthis/appweb-4</a>. This is also a convenient way to get the source code. 
+
+
+            <h3>Repository Branches</h3>
+            The repository has three branches for various phases of development and release: Master, Dev and Stable. 
+            <h4>Master Branch</h4>
+            The Master branch in the repository source code is the code base for the next minor and major release. It 
+            will contain the latest features and fixes, but it will also contain bugs and issues that have not been 
+            resolved. Use of the respository source code is not recommended for production or development use.  
+            <h4>Dev Branch</h4>
+            The Dev branch is updated when the Master branch is relatively steady and usable, but prior to release. The Dev 
+            branch is used to create Beta releases. It is not as bug-free as the Stable branch and yet has most of the 
+            features in the master branch. 
+            <h4>Stable Branch</h4>
+            The stable branch is for ongoing maintenance of the current stable release.</p>
             <a name="building" id="building"></a>
             <h2>Building Appweb from Source</h2>
             <p>The Appweb source distribution contains all the required source files, headers, tools and test framework
-            to reconfigure, build and verify Appweb. See also the detailed <a href="building.html">building from
+            to reconfigure, build and verify Appweb. For details, see the <a href="building.html">building from
             source</a> instructions.</p><a name="testing" id="testing"></a>
             <h2>Running Unit Tests</h2>
             <p>The Appweb source code uses a large test suite to verify correct operation and trap regression errors.

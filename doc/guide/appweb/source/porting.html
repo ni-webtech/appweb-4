@@ -80,7 +80,7 @@
             port Appweb to a new operating system or processor architecture.</p>
             <p>Appweb has been written to maximize the ease of porting to a new environment. The O/S and
             processor-dependent code have been contained while the bulk of the code is cross-platform. Most of this
-            dependent code is under the <b>src/mpr</b> sub-directory which represents the Embedthis Portable Runtime
+            dependent code is under the <b>src/deps/mpr</b> sub-directory which represents the Embedthis Portable Runtime
             (MPR).</p>
             <p><b>NOTE:</b> When attempting a port, you should get the latest copy of the development source branch
             rather than using the download source package. You can get the latest development source by checking out a
@@ -94,10 +94,9 @@
                     <p>Edit the build/standard.defaults configuration file. This file contains the factory defaults for
                     the configure program. Select the features you wish to support. But start with the smallest set
                     possible.</p>
-                    <p>You should turn BLD_FEATURE_MULTITHREAD off (use configure --disable-multi-thread) for your
-                    first porting effort as it will make debugging much easier. Disable all the features that your O/S
-                    does not support. See the <a href="building.html">Building from Source</a> document for definitions
-                    of all the build variables used in these files.</p>
+                    <p>Use <tt>./configure --disable-all</tt> to select the minimal feature set.</p>
+                    See also the <a href="building.html">Building from Source</a> document for definitions
+                    of the various the build variables used in the out/inc/buildConfig.h file.</p>
                 </li>
                 <li>
                     <h3>Define your O/S configuration string</h3>
@@ -161,7 +160,7 @@
                 <li>
                     <h3>Tailor the cross-platform O/S header.</h3>
                     <p>To insulate most of the Appweb source code from the differences of various operating systems,
-                    the <b>include/</b><b>mpr.h</b> header file wraps all the required O/S headers and publishes a
+                    the <tt>src/deps/mpr/mpr.h</tt> header file wraps all the required O/S headers and publishes a
                     consistent set of types and prototypes. None of the source files include normal O/S headers like
                     &lt;string.h&gt;. While this does slow the build by including more headers than are required
                     &mdash; it is barely noticeable on modern CPUs.</p>
@@ -188,9 +187,6 @@
                     The main sections to modify will be mprOs.c, mprSocket.c, mprThread.c mprTime.c and mprWait.c. The
                     mprThread.c file contains the multiprocessing thread, lock and condition variable code. If you only
                     intend to support single-threading, you can largely skip these code sections.</p>
-                    <p>When you have finished your port, the changes to mprLib.c and mprLib.c will need to be
-                    back-ported to the Mpr release at <a href=
-                    "https://github.com/embedthis/mpr-4">https://github.com/embedthis/mpr-4</a>.</p>
                 </li>
                 <li>
                     <h3>Test the Make Subsystem</h3>
@@ -205,6 +201,14 @@
                     may require more modifications required to your make.rules file.</p>
                 </li>
                 <li>
+                    <h3>Compile the Tools</h3>
+                    <p>Before you can build, various build tools must be made. 
+                    <pre>
+cd build
+make
+</pre>
+                </li>
+                <li>
                     <h3>Test Compile the Mpr</h3>
                     <p>To start out, test compile one file in MPR first. Let's pick an easy one: <b>buf.cpp.</b> The
                     Appweb build system compiles objects for most directories into a top level objects directory
@@ -212,7 +216,7 @@
                     libraries. So to compile a single object, you need to specify the target object which will usually
                     not be in the current directory.</p>
                     <pre>
-cd src/mpr
+cd src/deps/mpr
 make 
 </pre>
                     <p>At this stage of the porting effort, the <b>make</b> command will undoubtedly provoke a stream

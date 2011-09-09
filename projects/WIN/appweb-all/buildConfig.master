@@ -562,6 +562,7 @@ else
     #define BLD_APPWEB_OPTIONAL_DEPENDENCIES "ssl"
     #define BLD_APPWEB_WITHLIBS "pcre mpr http"
     #define BLD_FEATURE_EJS 0
+    #define BLD_FEATURE_EJSCRIPT 0
     #define BLD_FEATURE_MATRIXSSL 0
     #define BLD_FEATURE_OPENSSL 0
     #define BLD_FEATURE_PHP 0

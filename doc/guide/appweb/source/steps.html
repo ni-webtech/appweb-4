@@ -87,27 +87,6 @@
             <p>If you want to build using source from the source code repository, please read these <a href=
             "#repository">additional instructions</a>.</p><a name="env" id="env"></a>
             <h2 class="section">Define the Environment for Building</h2>
-            <h3>Linux, Unix and MAC OS X</h3>
-            <p>If you wish to debug programs for release builds locally in your build tree, you may need to modify your
-            environment to define the LD_LIBRARY_PATH variable so that Appweb programs can locate the dynamically
-            loaded modules and libraries. If you only wish to build and install without running in the build tree, or
-            if you are doing a debug build (configure --type=debug) then you do not need to modify your environment.
-            Either way, it won't hurt to define LD_LIBRARY_PATH. On MAC OS X, the variable is DYLD_LIBRARY_PATH.</p>
-            <p>Set the <b>LD_LIBRARY_PATH</b> environment variable to include the <i>lib</i> directory in the source
-            directory. This overrides the library search path compiled into the various Appweb executables which is
-            normally set to the build prefix (/usr/lib/ejs).</p>
-            <p>LD_LIBRARY_PATH has a format similar to PATH and can be set via the command:</p>
-            <pre>
-export LD_LIBRARY_PATH=/usr/src/ejs/lib:$LD_LIBRARY_PATH
-</pre>
-            <p>This command may vary if you specify a non-default source installation directory, but normally this
-            location is:</p>
-            <pre>
-/usr/src/ejs/lib
-</pre>
-            <p>If you have installed Appweb in a non-default location, replace the path with the current installation
-            directory for the source. You may wish to include these commands in your <b>.profile</b> or <b>.bashrc</b>
-            login script to setup your environment each time you login.</p>
             <h3>Building on Windows</h3>
             <p>To use the configure program on Windows, you will need to install the Cygwin UNIX emulation development
             tools. These provide UNIX-like commands under Windows and provide a consistent development environment on
@@ -121,10 +100,11 @@ export LD_LIBRARY_PATH=/usr/src/ejs/lib:$LD_LIBRARY_PATH
             variables.</p>
             <p>If you wish to be able to run the <b>configure</b> program or use the <b>make</b> command to build from
             the command line, then you will need to download the Cygwin tools from <a href=
-                "http://www.cygwin.com">www.cygwin.com</a>. You will need to install the binutils package. If you have 
-            the disk space, it is simplest to install all cygwin packages. Once installed, you should add 
-            the Cygwin programs directories
-            to your PATH enviroment variable.</p><a name="configuring" id="configuring"></a>
+                "http://www.cygwin.com">www.cygwin.com</a>. You will need to install the binutils package, but we 
+            recommend you install all of cygwin if you have the room. 
+            Once installed, you should add the Cygwin programs directories to your PATH enviroment variable.</p>
+            
+            <a name="configuring" id="configuring"></a>
             <h2 class="section">Configuring the Build</h2>
             <p>The <b>configure</b> program is used to tailor the software's configuration to suit your needs. It is
             the master configuration tool and it will create the "build/buildConfig.*" configuration files. These files
@@ -219,17 +199,12 @@ sudo make uninstall
                 </thead>
                 <tr>
                     <td>make install</td>
-                    <td>Install the binaries and dev heders (same as make install-binary install-dev)</td>
+                    <td>Install the program binaries and libraries</td>
                     <td>--prefix</td>
                 </tr>
                 <tr>
-                    <td>make install-binary</td>
-                    <td>Install minimal binary files only</td>
-                    <td>--prefix --webDir</td>
-                </tr>
-                <tr>
                     <td>make install-dev</td>
-                    <td>Install the product documentation</td>
+                    <td>Install the product documentation and headers</td>
                     <td>--libDir --incDir</td>
                 </tr>
             </table>
@@ -239,7 +214,8 @@ sudo make uninstall
 make TRACE=1 install
 </pre>
             <h3>Capturing Install Files</h3>
-            <p>If you want to capture the files to be installed, you can install to a local directory by rebasing the
+            <p>If you want to capture the files to be installed, you can install to a local directory via "make deploy".
+            This will prompt for a local directory in which to install Appweb. This can also be done by rebasing the
             ROOT_DIR variable. This will prepend the ROOT_DIR to all the installation directories. This is useful to
             stage all the files necessary for deployment on another system. From this directory, the files can be
             zipped or packaged for convenience. For example:</p>
@@ -264,10 +240,6 @@ make TRACE=1 install
                         <td>Description</td>
                     </tr>
                 </thead>
-                <tr>
-                    <td>bin</td>
-                    <td></td>
-                    <td>Directory to hold generated executables and DLLs on windows.</td>
                 </tr>
                 <tr>
                     <td>build</td>
@@ -300,19 +272,39 @@ make TRACE=1 install
                     <td>Source code for build tools.</td>
                 </tr>
                 <tr>
-                    <td>build</td>
-                    <td></td>
-                    <td>Essential build configuration files and Makefile rules.</td>
-                </tr>
-                <tr>
                     <td>doc</td>
                     <td></td>
                     <td>Product documentation.</td>
                 </tr>
                 <tr>
-                    <td>obj</td>
+                    <td>out</td>
                     <td></td>
+                    <td>Build output directory.</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>bin</td>
+                    <td>Directory to hold generated executables and DLLs on windows.</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>inc</td>
+                    <td>Include headers</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>lib</td>
+                    <td>Generated libraries.</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>obj</td>
                     <td>Directory to hold generated objects.</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>releases</td>
+                    <td>Generated release distributions.</td>
                 </tr>
                 <tr>
                     <td>package</td>
@@ -336,13 +328,8 @@ make TRACE=1 install
                 </tr>
                 <tr>
                     <td></td>
-                    <td>all</td>
-                    <td>Staging directory for all-in-one builds.</td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td>mpr</td>
-                    <td>Embedthis Portable Runtime (MPR) for cross-platform O/S services.</td>
+                    <td>deps</td>
+                    <td>Dependant libraries including MPR, Http, Pcre.</td>
                 </tr>
                 <tr>
                     <td>test</td>
@@ -364,18 +351,9 @@ make TRACE=1 install
                     file from the conf directory.</td>
                 </tr>
                 <tr>
-                    <td>buildConfig.h</td>
+                    <td>out/inc/buildConfig.h</td>
                     <td>Build header created by configure and included in all source files. On Windows, this file may
                     be edited to modify the build.</td>
-                </tr>
-                <tr>
-                    <td>buildConfig.make</td>
-                    <td>Build configuration file created by configure and used by Make.</td>
-                </tr>
-                <tr>
-                    <td>buildConfig.sh</td>
-                    <td>Build configuration file created by configure and used by shell scripts including the bld
-                    program.</td>
                 </tr>
                 <tr>
                     <td>configure</td>
