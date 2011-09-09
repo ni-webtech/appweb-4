@@ -5,6 +5,7 @@
 const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
+//  Should fail
 http.get(HTTP + "/route/query?name=ralph")
 assert(http.status == 404)
 http.close()

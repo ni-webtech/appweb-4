@@ -40,7 +40,7 @@ static void login(HttpConn *conn) {
     } else if (espMatchVar(conn, "username", "admin") && espMatchVar(conn, "password", "secret")) {
         espWrite(conn, "Valid Login");
         espFinalize(conn);
-        espSetSessionVar(conn, "id", "admin", 0);
+        espSetSessionVar(conn, "id", "admin");
 
     } else if (scmp(conn->rx->method, "POST") == 0) {
         espWrite(conn, "Invalid login, please retry.");
