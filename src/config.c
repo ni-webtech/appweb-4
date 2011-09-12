@@ -1519,6 +1519,7 @@ static int startThreadsDirective(MaState *state, cchar *key, cchar *value)
     Target file ${DOCUMENT_ROOT}/${request:uri}
     Target redirect [status] URI            # Redirect to a new URI and re-route
     Target virt ${controller}-${name} 
+    Target write [-r] status "Hello World\r\n"
  */
 static int targetDirective(MaState *state, cchar *key, cchar *value)
 {

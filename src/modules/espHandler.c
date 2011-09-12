@@ -1,5 +1,5 @@
 /*
-    espHandler.c -- Embedded Server Pages (ESP) handler. Fast in-process replacement for CGI.
+    espHandler.c -- Embedded Server Pages (ESP) handler
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
