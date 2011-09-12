@@ -308,10 +308,10 @@ static int aliasDirective(MaState *state, cchar *key, cchar *value)
     if (info.isDir) {
         alias = httpCreateAliasRoute(state->route, prefix, path, 0);
         httpSetRoutePattern(alias, sfmt("^%s(.*)$", prefix), 0);
-        httpSetRouteTarget(alias, "file", "$1");
+        httpSetRouteTarget(alias, "run", "$1");
     } else {
         alias = httpCreateAliasRoute(state->route, prefix, 0, 0);
-        httpSetRouteTarget(alias, "file", path);
+        httpSetRouteTarget(alias, "run", path);
     }
     httpFinalizeRoute(alias);
     return 0;
@@ -362,7 +362,7 @@ static int authMethodDirective(MaState *state, cchar *key, cchar *value)
 {
     if (scasecmp(value, "pam") == 0) {
         state->auth->backend = HTTP_AUTH_METHOD_PAM;
-    } else if (scasecmp(value, "file") == 0) {
+    } else if (scasecmp(value, "run") == 0) {
         state->auth->backend = HTTP_AUTH_METHOD_FILE;
     } else {
         return configError(state, key);
@@ -1361,6 +1361,7 @@ static int resetDirective(MaState *state, cchar *key, cchar *value)
 
 /*
     ResetPipeline (alias for Reset routes)
+    DEPRECATED
  */
 static int resetPipelineDirective(MaState *state, cchar *key, cchar *value)
 {
@@ -1516,9 +1517,9 @@ static int startThreadsDirective(MaState *state, cchar *key, cchar *value)
 
 /*
     Target close [immediate]
-    Target file ${DOCUMENT_ROOT}/${request:uri}
     Target redirect [status] URI            # Redirect to a new URI and re-route
-    Target virt ${controller}-${name} 
+    Target run ${DOCUMENT_ROOT}/${request:uri}
+    Target run ${controller}-${name} 
     Target write [-r] status "Hello World\r\n"
  */
 static int targetDirective(MaState *state, cchar *key, cchar *value)
@@ -2041,6 +2042,8 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "Redirect", redirectDirective);
     maAddDirective(appweb, "Require", requireDirective);
     maAddDirective(appweb, "Reset", resetDirective);
+
+    /* Deprecated */
     maAddDirective(appweb, "ResetPipeline", resetPipelineDirective);
     maAddDirective(appweb, "<Route", routeDirective);
     maAddDirective(appweb, "</Route", closeDirective);

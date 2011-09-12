@@ -54,9 +54,15 @@ static bool matchCgi(HttpConn *conn, HttpRoute *route, int direction)
 
 static void openCgi(HttpQueue *q)
 {
+    HttpRx      *rx;
+
+    rx = q->conn->rx;
+
     mprLog(5, "Open CGI handler");
-    if (q->conn->rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
+    if (rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
         httpHandleOptionsTrace(q->conn);
+    } else {
+        httpMapFile(q->conn, rx->route);
     }
 }
 
@@ -1022,7 +1028,7 @@ static int scriptAliasDirective(MaState *state, cchar *key, cchar *value)
     route = httpCreateAliasRoute(state->route, prefix, path, 0);
     httpSetRouteHandler(route, "cgiHandler");
     httpSetRoutePattern(route, sfmt("^%s(.*)$", prefix), 0);
-    httpSetRouteTarget(route, "file", "$1");
+    httpSetRouteTarget(route, "run", "$1");
     httpFinalizeRoute(route);
     httpAddRoute(state->host, route);
     mprLog(4, "ScriptAlias \"%s\" for \"%s\"", prefix, path);

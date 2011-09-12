@@ -43,7 +43,6 @@
         <div class="contentRight">
             <h2>Quick Nav</h2>
             <ul>
-                <li><a href="#directory">Directory</a></li>
                 <li><a href="#directoryIndex">DirectoryIndex</a></li>
                 <li><a href="#indexOptions">IndexOptions</a></li>
                 <li><a href="#indexOrder">IndexOrder</a></li>
@@ -56,48 +55,8 @@
             </ul>
         </div>
         <div class="contentLeft">
-            <h1>Directory Directives</h1><a name="directory" id="directory"></a>
-            <h2>Directory</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
-                    <tr>
-                        <td class="pivot">Description</td>
-                        <td>Define a block of directives to apply to a directory tree</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Synopsis</td>
-                        <td>&lt;Directory directoryPath&gt;<br />
-                        ...<br />
-                        &lt;/Directory</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Context</td>
-                        <td>Default server, Virtual host</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Example</td>
-                        <td>&lt;Directory "/var/www/acme"&gt;<br />
-                        &nbsp; &nbsp; AuthType Digest<br />
-                        &nbsp; &nbsp; AuthName "Acme Inc."<br />
-                        &nbsp; &nbsp; Require valid-user<br />
-                        &lt;/Directory&gt;</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Notes</td>
-                        <td>
-                            <p>The Directory directive defines a block of directives that apply to the named directory
-                            and all sub-directories and files. The directoryPath is the full path to the directory.
-                            Unlike Apache, it may not contain wildcards.</p>
-                            <p>Inside the directory block, you may use any directive that supports a Directory context.
-                            You may not nest Directory directives inside other Directory blocks. But you may use
-                            Directory blocks inside VirtualHost blocks.</p>
-                            <p>The difference between the Directory and <a href="location.html#location">Location</a>
-                            directives is that while the Directory directive applies to files in the file system, the
-                            Location directive applies to the URLs before they are mapped to file names.</p>
-                        </td>
-                    </tr>
-                </tbody>
-            </table><a name="directoryIndex" id="directoryIndex"></a>
+            <h1>Directory Directives</h1>
+            <a name="directoryIndex" id="directoryIndex"></a>
             <h2>DirectoryIndex</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>

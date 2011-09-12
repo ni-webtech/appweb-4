@@ -266,7 +266,6 @@ BLD_INC_DIR := ../out/inc
 #   Read the build configuration settings and make variable definitions.
 #
 include $(BLD_INC_DIR)/buildConfig.h
-
 OBJECTS = $(BLD_OBJ_DIR)/mprSample$(BLD_OBJ)
  
 $(BLD_OBJ_DIR)/mprSample$(BLD_OBJ):  \
@@ -277,7 +276,6 @@ $(BLD_OBJ_DIR)/mprSample$(BLD_OBJ):  \
 #   Read the Makefile rules and per-os make definitions.
 #
 include $(BLD_TOP)/build/make/make.rules
-
 ifeq ($(BUILDING_NATIVE),1)
    include $(BLD_TOP)/build/make/make.$(BLD_BUILD_OS)
 else

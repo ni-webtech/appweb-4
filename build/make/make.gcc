@@ -242,8 +242,7 @@ $(BLD_OBJ_DIR)/%${BLD_OBJ}: %.c
 	@if [ "$(TRACE)" = 1 ] ; then echo $(BLD_CC) -c $($(*)_DFLAGS) $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $($(*)_CLFAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $($(*)_IFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@ ; \
 	else $(call log) "[Compile]" "$(DIR)/$<" ; fi
 	@$(BLD_CC) -c $($(*)_DFLAGS) $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $($(*)_CLFAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $($(*)_IFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@ ; \
-	if [ $$? != 0 -a "$(TRACE)" != 1 ] ; then \
-	    $(call log) "[DETAILS]" "$(BLD_CC) -c $($(*)_DFLAGS) $(MAKE_DFLAGS) $(_DFLAGS) $(BLD_DFLAGS) $($(*)_CLFAGS) $(MAKE_CFLAGS) $(_CFLAGS) $(BLD_CFLAGS) $($(*)_IFLAGS) $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $< -o $@" ; \
+	if [ $$? != 0 ] ; then \
         exit 255; \
 	fi
 

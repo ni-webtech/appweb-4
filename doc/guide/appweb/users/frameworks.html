@@ -55,6 +55,7 @@
                 <li><a href="../../../guide/appweb/users/index.html">User Guide Overview</a></li>
                 <li><a href="../../../guide/appweb/users/configuration.html">Configuring Appweb</a></li>
                 <li><a href="../../../guide/appweb/users/ports.html">Ports and Binding</a></li>
+                <li><a href="../../../guide/appweb/users/routing.html">Request Routing</a></li>
                 <li><a href="../../../guide/appweb/users/authorization.html">User Authorization</a></li>
                 <li><a href="../../../guide/appweb/users/logFiles.html">Log Files</a></li>
                 <li><a href="../../../guide/appweb/users/vhosts.html">Virtual Hosts</a></li>
@@ -64,9 +65,6 @@
                 <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
                 <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
-                <li><a href="../../../guide/appweb/users/ejs.html">Ejscript</a></li>
-                <li><a href="../../../guide/appweb/users/php.html">PHP</a></li>
-                <li><a href="../../../guide/appweb/users/cgi.html">CGI</a></li>
                 <li><a href="../../../ref/appweb/architecture.html">Appweb Architecture</a></li>
             </ul>
 <!-- EndDsi -->
@@ -79,21 +77,17 @@
             manipulate server-side data, render UI elements and manage Ajax interactions.</p>
             <p>In contrast, environments such as <a href="esp.html">ESP</a>, <a href="ejs.html">Ejscript</a>, 
                 or <a href="#php">PHP</a> provide much more support for dynamic web content.</p>
-
             <a name="comparison" id="comparison"></a>
             <h2 class="section">Comparison</h2>
             
             <p>Appweb provides a rich set of options to use when creating web pages or web applications. This document
             compares the alternatives and suggests where each option is best deployed.</p>
-
             <h3>Embedded Server Pages</h3>
             <p>ESP is a new web framework that provides templates, caching, Model-View-Controller paradigm, 
             and a set of web controls that are pre-integrated with jQuery. ESP uses "C" language code
             embedded in web pages for native-speed execution. It is fast, compact and uses "C".</p>
-
             <a name="ejs" id="ejs"></a></p>
             <h3>Ejscript</h3>
-
             <p>The <a href="http://ejscript.org">Ejscript</a> Web Framework is a web application environment that
             uses server-side JavaScript. It provides an application generator, templating engine, 
             a powerful Model/View/Controller framework and a library of Ajax view controls. JavaScript is an expressive
@@ -101,7 +95,6 @@
             <p>Ejscript is not as small as ESP, nor as fast, but is is a very powerful web framework. Good for 
             embedded web interfaces and async communications services where sufficient memory is available.
             For more information, please read <a href="ejs.html">Using Ejscript</a>.</p>
-
             <a name="php" id="php"></a>
             <h3>PHP</h3>
             <p><acronym title="recursive acronym for PHP: Hypertext Preprocessor">PHP</acronym> is a widely-used
@@ -109,7 +102,6 @@
             object-oriented programming language, numerous extensions and a broad developer community. The power of PHP
             comes at a price, it typically has a memory footprint of more than 5 MB for the PHP code alone. For embedded
             systems, this is often too big and so we recommend using ESP instead for such systems.</p>
-
             <a name="cgi" id= "cgi"></a>
             <h3>CGI</h3>
             <p>CGI stands for the Common Gateway Interface and it is the legacy extension interface for running
@@ -120,7 +112,6 @@
             <p>For embedded devices and applications: we recommend using <b>ESP</b>. It provides the fastest, most
             compact web framework without compromising on functionality. Use <b>Ejscript</b> for large applications
             that have more memory available for execution.</p>
-
             <ul>
                 <li><a href="#cgi">CGI</a></li>
                 <li><a href="#esp">Embedded Server Pages</a></li>
@@ -130,7 +121,6 @@
             </ul>
             
             <p>The following table may help summarize the differences:</p>
-
             <table width="100%" border="1" summary="">
                 <thead>
                     <tr>

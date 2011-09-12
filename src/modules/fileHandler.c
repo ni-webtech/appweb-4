@@ -37,9 +37,8 @@ static bool findFile(HttpQueue *q)
     prior = rx->parsedUri;
     info = &tx->fileInfo;
 
-    mprAssert(route == rx->route);
     mprAssert(route->index);
-    mprAssert(rx->pathInfo);
+
     mprAssert(info->checked);
 
     if (info->isDir) {
@@ -113,6 +112,8 @@ static void openFile(HttpQueue *q)
     route = rx->route;
 
     mprLog(5, "Open file handler");
+    httpMapFile(conn, route);
+
     if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST)) {
         if (!findFile(q)) {
             return;

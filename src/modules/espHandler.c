@@ -109,7 +109,7 @@ static void startEsp(HttpQueue *q)
 }
 
 
-static char *makeCacheKey(HttpConn *conn, cchar *targetKey, cchar *uri)
+static char *makeCacheKey(HttpConn *conn, cchar *target, cchar *uri)
 {
     EspReq      *req;
     EspRoute    *eroute;
@@ -120,13 +120,13 @@ static char *makeCacheKey(HttpConn *conn, cchar *targetKey, cchar *uri)
     eroute = req->eroute;
     q = conn->readq;
 
-    path = mprJoinPath(eroute->controllersDir, targetKey);
+    path = mprJoinPath(eroute->controllersDir, target);
     if (uri) {
         form = httpGetFormData(conn);
         key = sfmt("content-%s:%s?%s", eroute->controllersDir, uri, form);
         
     } else {
-        key = sfmt("content-%s", mprJoinPath(eroute->controllersDir, targetKey));
+        key = sfmt("content-%s", mprJoinPath(eroute->controllersDir, target));
     }
     return key;
 }
@@ -148,7 +148,7 @@ static bool fetchCachedResponse(HttpConn *conn)
         if (extraUri && scmp(extraUri, "*") == 0) {
             extraUri = conn->rx->pathInfo;
         }
-        key = makeCacheKey(conn, rx->targetKey, extraUri);
+        key = makeCacheKey(conn, rx->target, extraUri);
         tag = mprGetMD5(key);
 
         if ((value = httpGetHeader(conn, "Cache-Control")) != 0 && 
@@ -215,7 +215,7 @@ static void saveCachedResponse(HttpConn *conn)
         if (action->cacheUri && scmp(action->cacheUri, "*") == 0) {
             extraUri = conn->rx->pathInfo;
         }
-        key = makeCacheKey(conn, rx->targetKey, extraUri);
+        key = makeCacheKey(conn, rx->target, extraUri);
         /*
             Truncate modified to get a 1 sec resolution. This is the resolution for If-Modified headers
          */
@@ -229,20 +229,20 @@ static void saveCachedResponse(HttpConn *conn)
 }
 
 
-void espUpdateCache(HttpConn *conn, cchar *targetKey, cchar *data, int lifesecs, cchar *uri)
+void espUpdateCache(HttpConn *conn, cchar *target, cchar *data, int lifesecs, cchar *uri)
 {
-    mprWriteCache(esp->cache, makeCacheKey(conn, targetKey, uri), data, 0, lifesecs * MPR_TICKS_PER_SEC, 0, 0);
+    mprWriteCache(esp->cache, makeCacheKey(conn, target, uri), data, 0, lifesecs * MPR_TICKS_PER_SEC, 0, 0);
 }
 
 
-bool espWriteCached(HttpConn *conn, cchar *targetKey, cchar *uri)
+bool espWriteCached(HttpConn *conn, cchar *target, cchar *uri)
 {
     EspReq      *req;
     MprTime     modified;
     cchar       *key, *content;
 
     req = conn->data;
-    key = makeCacheKey(conn, targetKey, uri);
+    key = makeCacheKey(conn, target, uri);
     if ((content = mprReadCache(esp->cache, key, &modified, 0)) == 0) {
         mprLog(5, "No cached data for ", key);
         return 0;
@@ -378,13 +378,13 @@ static int runAction(HttpConn *conn)
             updated = 1;
         }
     }
-    key = mprJoinPath(eroute->controllersDir, conn->rx->targetKey);
+    key = mprJoinPath(eroute->controllersDir, conn->rx->target);
     if ((action = mprLookupKey(esp->actions, key)) == 0) {
         req->controllerPath = mprJoinPath(eroute->controllersDir, req->controllerName);
         key = sfmt("%s/%s-missing", req->controllerPath, mprTrimPathExt(req->controllerName));
         if ((action = mprLookupKey(esp->actions, key)) == 0) {
             if ((action = mprLookupKey(esp->actions, "missing")) == 0) {
-                httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Missing action for %s", conn->rx->targetKey);
+                httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Missing action for %s", conn->rx->target);
                 return 0;
             }
         }
@@ -422,9 +422,10 @@ static void runView(HttpConn *conn)
     recompile = updated = 0;
     
     if (req->controllerName) {
-        req->view = mprJoinPath(eroute->viewsDir, rx->targetKey);
+        req->view = mprJoinPath(eroute->viewsDir, rx->target);
         req->source = mprJoinPathExt(req->view, ".esp");
     } else {
+        httpMapFile(conn, rx->route);
         req->view = conn->tx->filename;
         req->source = req->view;
     }
@@ -526,11 +527,11 @@ static bool unloadModule(cchar *module)
 }
 
 
-void espCacheControl(EspRoute *eroute, cchar *targetKey, int lifesecs, cchar *uri)
+void espCacheControl(EspRoute *eroute, cchar *target, int lifesecs, cchar *uri)
 {
     EspAction  *action;
     
-    if ((action = mprLookupKey(esp->actions, mprJoinPath(eroute->controllersDir, targetKey))) == 0) {
+    if ((action = mprLookupKey(esp->actions, mprJoinPath(eroute->controllersDir, target))) == 0) {
         if ((action = mprAllocObj(EspAction, manageAction)) == 0) {
             return;
         }
@@ -546,19 +547,19 @@ void espCacheControl(EspRoute *eroute, cchar *targetKey, int lifesecs, cchar *ur
 }
 
 
-void espDefineAction(EspRoute *eroute, cchar *targetKey, void *actionProc)
+void espDefineAction(EspRoute *eroute, cchar *target, void *actionProc)
 {
     EspAction   *action;
 
     mprAssert(eroute);
-    mprAssert(targetKey && *targetKey);
+    mprAssert(target && *target);
     mprAssert(actionProc);
 
     if ((action = mprAllocObj(EspAction, manageAction)) == 0) {
         return;
     }
     action->actionProc = actionProc;
-    mprAddKey(esp->actions, mprJoinPath(eroute->controllersDir, targetKey), action);
+    mprAddKey(esp->actions, mprJoinPath(eroute->controllersDir, target), action);
 }
 
 
@@ -713,8 +714,7 @@ static void setMvcDirs(EspRoute *eroute, HttpRoute *route)
 }
 
 
-static HttpRoute *addRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *targetKey, 
-        cchar *controller)
+static HttpRoute *addRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, cchar *controller)
 {
     HttpRoute   *route;
 
@@ -727,23 +727,21 @@ static HttpRoute *addRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar
         httpSetRouteMethods(route, methods);
     }
     if (controller) {
-        httpSetRouteTarget(route, "virtual", targetKey);
         httpSetRouteSource(route, controller);
-    } else {
-        httpSetRouteTarget(route, "file", targetKey);
     }
+    httpSetRouteTarget(route, "run", target);
     httpFinalizeRoute(route);
     return route;
 }
 
 
-static void addRestfulRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *targetKey, 
+static void addRestfulRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, 
     cchar *controller, cchar *prefix, cchar *controllerPattern)
 {
     pattern = sfmt(pattern, prefix);
-    targetKey = sfmt(targetKey, controllerPattern);
+    target = sfmt(target, controllerPattern);
     controller = sfmt(controller, controllerPattern);
-    addRoute(parent, name, methods, pattern, targetKey, controller);
+    addRoute(parent, name, methods, pattern, target, controller);
 }
 
 
@@ -1154,16 +1152,16 @@ static int espRoutePackDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    EspRoute name methods pattern targetKey source
+    EspRoute name methods pattern target source
  */
 static int espRouteDirective(MaState *state, cchar *key, cchar *value)
 {
-    char        *name, *methods, *pattern, *targetKey, *source;
+    char        *name, *methods, *pattern, *target, *source;
 
-    if (!maTokenize(state, value, "%S %S %S %S %S", &name, &methods, &pattern, &targetKey, &source)) {
+    if (!maTokenize(state, value, "%S %S %S %S %S", &name, &methods, &pattern, &target, &source)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    addRoute(state->route, name, methods, pattern, targetKey, source);
+    addRoute(state->route, name, methods, pattern, target, source);
     return 0;
 }
 

@@ -129,6 +129,7 @@ static void openPhp(HttpQueue *q)
         httpHandleOptionsTrace(q->conn);
 
     } else if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST | HTTP_PUT)) {
+        httpMapFile(q->conn, rx->route);
         if (!q->stage->stageData) {
             if (initializePhp(q->conn->http) < 0) {
                 httpError(q->conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "PHP initialization failed");

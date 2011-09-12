@@ -84,7 +84,6 @@ ma<b>Name</b>Init(Http *http, MprModule *module)
 int mprSimpleModuleInit(Http *http, MprModule *module)
 {
     HttpStage   *handler;
-
     handler = httpCreateHandler(http, "testHandler", 0, module);
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;

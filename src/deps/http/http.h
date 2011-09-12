@@ -2839,14 +2839,17 @@ typedef struct HttpRoute {
     char            *pattern;               /**< Original matching URI pattern for the route */
     char            *params;                /**< Params to define. Extracted from pattern. (compiled) */
     char            *processedPattern;      /**< Expanded {tokens} => $N */
-    char            *target;                /**< Original route target details */
-    char            *targetOp;              /**< Target operation */
+    char            *targetRule;            /**< Target rule */
+    char            *target;                /**< Route target details */
 
+#if UNUSED
     char            *fileTarget;            /**< File target path */
     char            *redirectTarget;        /**< Redirect target URI */
     char            *closeTarget;           /**< Close target parameters */
     char            *virtualTarget;         /**< Virtual target key */
     char            *writeTarget;           /**< Write target text */
+#else
+#endif
     int             responseStatus;         /**< Response status code */
 
     char            *literalPattern;        /**< Starting literal segment of pattern */
@@ -3299,6 +3302,14 @@ extern cchar *httpLookupRouteErrorDocument(HttpRoute *route, int status);
     @ingroup HttpRoute
  */
 extern char *httpMakePath(HttpRoute *route, cchar *path);
+
+/**
+    Map the request URI and route target to a filename
+    @description This sets the HttpTx filename, ext, etag and info fields.
+    @param conn HttpConn connection object 
+    @param route Route to modify
+ */
+extern void httpMapFile(HttpConn *conn, HttpRoute *route);
 
 /**
     Match a route against the current request 
@@ -3795,7 +3806,7 @@ typedef struct HttpRx {
     /*
         Routing info
      */
-    char            *targetKey;             /**< Route target key */
+    char            *target;                /**< Route target */
     int             matches[HTTP_MAX_ROUTE_MATCHES * 2];
     int             matchCount;
 } HttpRx;
