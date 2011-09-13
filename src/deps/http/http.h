@@ -1283,10 +1283,6 @@ extern void httpAssignQueue(HttpQueue *q, struct HttpStage *stage, int dir);
 #define HTTP_STAGE_FILTER         0x4000            /**< Stage is a filter  */
 #define HTTP_STAGE_MODULE         0x8000            /**< Stage is a filter  */
 #define HTTP_STAGE_PARAMS         0x10000           /**< Create params from URI query and form body data */
-#if UNUSED
-#define HTTP_STAGE_CGI_PARAMS     0x20000           /**< Create CGI variables */
-#define HTTP_STAGE_EXTRA_PATH     0x40000           /**< Do extra path info (for CGI|PHP) */
-#endif
 #define HTTP_STAGE_AUTO_DIR       0x80000           /**< Want auto directory redirection */
 #define HTTP_STAGE_UNLOADED       0x100000          /**< Stage module library has been unloaded */
 #define HTTP_STAGE_RX             0x200000          /**< Stage to be used in the Rx direction */
@@ -1701,7 +1697,9 @@ typedef struct HttpConn {
     struct HttpHost *host;                  /**< Host object (if releveant) */
 
     int             state;                  /**< Connection state */
+#if UNUSED
     int             flags;                  /**< Connection flags */
+#endif
     int             advancing;              /**< In httpProcess (reentrancy prevention) */
     int             writeComplete;          /**< All write data has been sent (set by connectors) */
     int             error;                  /**< A request error has occurred */
@@ -1763,9 +1761,6 @@ typedef struct HttpConn {
     char            *authRealm;             /**< Authentication realm */
     char            *authQop;               /**< Digest authentication qop value */
     char            *authType;              /**< Basic or Digest */
-#if UNUSED
-    char            *authGroup;             /**< Group name credentials for authorized client requests */
-#endif
     char            *authUser;              /**< User name credentials for authorized client requests */
     char            *authPassword;          /**< Password credentials for authorized client requests */
     int             sentCredentials;        /**< Sent authorization credentials */
@@ -2316,18 +2311,6 @@ extern void httpSetAuthAnyValidUser(HttpAuth *auth);
  */
 extern void httpSetAuthDeny(HttpAuth *auth, cchar *deny);
 
-#if UNUSED
-/**
-    Set the authentication group for this auth object
-    @description This configures the required group for basic or digest authentication
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @ingroup HttpAuth
-    @internal
- */
-extern void httpSetAuthGroup(HttpConn *conn, cchar *group);
-#endif
-
 /**
     Set the auth allow/deny order
     @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
@@ -2807,19 +2790,10 @@ typedef struct HttpLang {
 #define HTTP_ROUTE_FREE           0x2       /**< Free Route.mdata back to malloc when route is freed */
 #define HTTP_ROUTE_RAW            0x4       /**< Don't html encode the write data */
 
-#if UNUSED
-#define HTTP_ROUTE_STATIC_VALUES  0x2
-#endif
-
 /*
     Route flags (set above the API flasg)
  */
 #define HTTP_ROUTE_PUT_DELETE     0x100     /**< Support PUT|DELETE */
-#if UNUSED
-#define HTTP_ROUTE_HANDLER_BEFORE 0x200     /**< Start handler before content */
-#define HTTP_ROUTE_HANDLER_AFTER  0x400     /**< Start handler after content */
-#define HTTP_ROUTE_HANDLER_SMART  0x800     /**< Start handler after for forms and upload */
-#endif
 #define HTTP_ROUTE_GZIP           0x1000    /**< Support gzipped conent */
 
 /**
@@ -2845,23 +2819,10 @@ typedef struct HttpRoute {
     char            *index;                 /**< Default index document name */
     char            *methodSpec;            /**< Supported HTTP methods */
     char            *pattern;               /**< Original matching URI pattern for the route */
-#if UNUSED
-    char            *params;                /**< Params to define. Extracted from pattern. (compiled) */
-#endif
     char            *processedPattern;      /**< Expanded {tokens} => $N */
     char            *targetRule;            /**< Target rule */
     char            *target;                /**< Route target details */
-
-#if UNUSED
-    char            *fileTarget;            /**< File target path */
-    char            *redirectTarget;        /**< Redirect target URI */
-    char            *closeTarget;           /**< Close target parameters */
-    char            *virtualTarget;         /**< Virtual target key */
-    char            *writeTarget;           /**< Write target text */
-#else
-#endif
     int             responseStatus;         /**< Response status code */
-
     char            *literalPattern;        /**< Starting literal segment of pattern */
     ssize           literalPatternLen;      /**< Length of literalPattern */
     char            *prefix;                /**< Application scriptName prefix */
@@ -3772,9 +3733,6 @@ typedef struct HttpRx {
     int             flags;                  /**< Rx modifiers */
     int             form;                   /**< Using mime-type application/x-www-form-urlencoded */
     int             needInputPipeline;      /**< Input pipeline required to process received data */
-#if UNUSED
-    int             startAfterContent;      /**< Start handler after receiving all body content */
-#endif
     int             upload;                 /**< Request is using file upload */
 
     ssize           chunkSize;              /**< Size of the next chunk */
@@ -3840,41 +3798,6 @@ typedef struct HttpRx {
     int             matchCount;
 } HttpRx;
 
-
-#if UNUSED
-/**
-    Add parameters (encoded form data) from a buffer
-    @description Add new variables encoded in the supplied buffer
-    @param conn HttpConn connection object
-    @param buf Buffer containing www-urlencoded data
-    @param len Length of buf
-    @ingroup HttpRx
- */
-extern void httpAddParamsFromBuf(HttpConn *conn, cchar *buf, ssize len);
-
-/**
-    Add parameters (encoded form data) from queued content
-    @param q Queue reference
- */
-extern void httpAddParamsFromQueue(HttpQueue *q);
-
-/**
-    Add params (encoded form data) from body data
-    @description This adds www-url encoded form body data to the form vars.
-    @param conn HttpConn connection object
-    @ingroup HttpRx
- */
-extern void httpAddBodyParams(HttpConn *conn);
-
-/**
-    Add query data to form vars
-    @description This adds query field data to the form vars
-    @param conn HttpConn connection object
-    @ingroup HttpRx
- */
-extern void httpAddQueryParams(HttpConn *conn);
-#else
-
 /**
     Add query and form body data to params
     @description This adds query data and posted body data to the request params
@@ -3883,7 +3806,6 @@ extern void httpAddQueryParams(HttpConn *conn);
     @internal
  */
 extern void httpAddParams(HttpConn *conn);
-#endif
 
 /**
     Test if the content has not been modified
@@ -4164,6 +4086,7 @@ typedef struct HttpTx {
     int             flags;                  /**< Response flags */
     HttpStage       *handler;               /**< Server-side request handler stage */
     MprOff          length;                 /**< Transmission content length */
+    int             started;                /**< Handler has started */
     int             responded;              /**< The request has responded (endpoint). Some output has been initiated */
     int             redirected;             /**< The request has been redirected to a new URI */
     int             status;                 /**< HTTP request status */
@@ -4797,7 +4720,6 @@ extern bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn
  */
 #define HTTP_HOST_VHOST         0x1         /**< Host flag to signify host is a virtual host */
 #define HTTP_HOST_NAMED_VHOST   0x2         /**< Host flag for a named virtual host */
-
 #define HTTP_HOST_NO_TRACE      0x10        /**< Host flag to disable the of TRACE HTTP method */
 
 #if UNUSED && KEEP

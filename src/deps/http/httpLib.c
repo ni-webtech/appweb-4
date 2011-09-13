@@ -125,7 +125,7 @@ void httpSetAuthDeny(HttpAuth *auth, cchar *client)
 }
 
 
-#if UNUSED
+#if UNUSED && KEEP
 void httpSetAuthGroup(HttpConn *conn, cchar *group)
 {
     conn->authGroup = sclone(group);
@@ -2339,7 +2339,7 @@ static void manageConn(HttpConn *conn, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(conn->authCnonce);
         mprMark(conn->authDomain);
-#if UNUSED
+#if UNUSED && KEEP
         mprMark(conn->authGroup);
 #endif
         mprMark(conn->authNonce);
@@ -2448,7 +2448,9 @@ static void commonPrep(HttpConn *conn)
     conn->canProceed = 1;
     conn->error = 0;
     conn->errorMsg = 0;
+#if UNUSED
     conn->flags = 0;
+#endif
     conn->state = 0;
     conn->writeComplete = 0;
     conn->lastActivity = conn->http->now;
@@ -3938,7 +3940,7 @@ void httpSetHostTraceFilter(HttpHost *host, ssize len, cchar *include, cchar *ex
 }
 
 
-#if UNUSED
+#if UNUSED && KEEP
 int httpSetupTrace(HttpHost *host, cchar *ext)
 {
     if (ext) {
@@ -4350,14 +4352,6 @@ void httpSetListenCallback(Http *http, HttpListenCallback fn)
 {
     http->listenCallback = fn;
 }
-
-
-#if UNUSED
-void httpSetMatchCallback(Http *http, HttpMatchCallback fn)
-{
-    http->matchCallback = fn;
-}
-#endif
 
 
 /*  
@@ -5948,6 +5942,10 @@ void httpStartPipeline(HttpConn *conn)
     HttpTx      *tx;
     
     tx = conn->tx;
+    if (tx->started) {
+        return;
+    }
+    tx->started = 1;
 
     if (conn->rx->needInputPipeline) {
         qhead = tx->queue[HTTP_QUEUE_RX];
@@ -5976,7 +5974,6 @@ void httpStartPipeline(HttpConn *conn)
         q->flags |= HTTP_QUEUE_STARTED;
         HTTP_TIME(conn, q->stage->name, "start", q->stage->start(q));
     }
-
     if (!conn->error && !conn->writeComplete && conn->rx->remainingContent > 0) {
         /* If no remaining content, wait till the processing stage to avoid duplicate writable events */
         httpWritable(conn);
@@ -6038,27 +6035,6 @@ void httpDiscardTransmitData(HttpConn *conn)
     }
 }
 
-
-#if UNUSED
-/*
-    Create the form variables based on the URI query.
- */
-static void setVars(HttpConn *conn)
-{
-    HttpRx      *rx;
-    HttpTx      *tx;
-
-    rx = conn->rx;
-    tx = conn->tx;
-
-    if (tx->handler->flags & HTTP_STAGE_PARAMS) {
-        httpAddParams(conn);
-    }
-    if (tx->handler->flags & HTTP_STAGE_CGI_PARAMS) {
-        httpCreateCGIParams(conn);
-    }
-}
-#endif
 
 static bool matchFilter(HttpConn *conn, HttpStage *filter, HttpRoute *route, int dir)
 {
@@ -7129,7 +7105,7 @@ HttpRoute *httpCreateRoute(HttpHost *host)
     route->extensions = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
 
     //  MOB - reconsider this GZIP
-    route->flags = /* UNUSED HTTP_ROUTE_HANDLER_SMART | */ HTTP_ROUTE_GZIP;
+    route->flags = HTTP_ROUTE_GZIP;
     route->handlers = mprCreateList(-1, 0);
     route->host = host;
     route->http = MPR->httpService;
@@ -7235,9 +7211,6 @@ HttpRoute *httpCreateInheritedRoute(HttpRoute *parent)
     route->methods = parent->methods;
     route->methodSpec = parent->methodSpec;
     route->outputStages = parent->outputStages;
-#if UNUSED
-    route->params = parent->params;
-#endif
     route->params = parent->params;
     route->parent = parent;
     route->pathTokens = parent->pathTokens;
@@ -7289,9 +7262,6 @@ static void manageRoute(HttpRoute *route, int flags)
         mprMark(route->methodSpec);
         mprMark(route->name);
         mprMark(route->outputStages);
-#if UNUSED
-        mprMark(route->params);
-#endif
         mprMark(route->params);
         mprMark(route->parent);
         mprMark(route->pathTokens);
@@ -7462,11 +7432,6 @@ static int matchRoute(HttpConn *conn, HttpRoute *route)
     if (tx->handler->flags & HTTP_STAGE_PARAMS) {
         httpAddParams(conn);
     }
-#if UNUSED
-    if (tx->handler->flags & HTTP_STAGE_CGI_PARAMS) {
-        httpCreateCGIParams(conn);
-    }
-#endif
     if (route->tokens) {
         for (next = 0; (token = mprGetNextItem(route->tokens, &next)) != 0; ) {
             value = snclone(&rx->pathInfo[rx->matches[next * 2]], rx->matches[(next * 2) + 1] - rx->matches[(next * 2)]);
@@ -8199,9 +8164,6 @@ static void finalizeMethods(HttpRoute *route)
         - Change "\~" to "~"
         - Change "(~ PAT ~)" to "(?: PAT )?"
         - Extract the tokens and change tokens: "{word}" to "([^/]*)"
-#if UNUSED
-        - Create a params RE replacement string of the form "$1:$2:$3" for the {tokens}
-#endif
  */
 static void finalizePattern(HttpRoute *route)
 {
@@ -8218,9 +8180,6 @@ static void finalizePattern(HttpRoute *route)
     if (route->name == 0) {
         route->name = route->pattern;
     }
-#if UNUSED
-    params = mprCreateBuf(-1, -1);
-#endif
 
     /*
         Remove the route prefix from the start of the compiled pattern and then create an optimized 
@@ -8239,7 +8198,7 @@ static void finalizePattern(HttpRoute *route)
         route->literalPattern = 0;
         route->literalPatternLen = 0;
     }
-    for (/* UNUSED submatch = 0, */ cp = startPattern; *cp; cp++) {
+    for (cp = startPattern; *cp; cp++) {
         /* Alias for optional, non-capturing pattern:  "(?: PAT )?" */
         if (*cp == '(' && cp[1] == '~') {
             mprPutStringToBuf(pattern, "(?:");
@@ -8247,9 +8206,6 @@ static void finalizePattern(HttpRoute *route)
 
         } else if (*cp == '(') {
             mprPutCharToBuf(pattern, *cp);
-#if UNUSED
-            ++submatch;
-#endif
         } else if (*cp == '~' && cp[1] == ')') {
             mprPutStringToBuf(pattern, ")?");
             cp++;
@@ -8273,11 +8229,6 @@ static void finalizePattern(HttpRoute *route)
                     mprPutStringToBuf(pattern, field);
                     mprAddItem(route->tokens, token);
                     /* Params ends up looking like "$1:$2:$3:$4" */
-#if UNUSED
-                    mprPutCharToBuf(params, '$');
-                    mprPutIntToBuf(params, ++submatch);
-                    mprPutCharToBuf(params, ':');
-#endif
                     cp = ep;
                 }
             }
@@ -8289,20 +8240,7 @@ static void finalizePattern(HttpRoute *route)
         }
     }
     mprAddNullToBuf(pattern);
-#if UNUSED
-    mprAddNullToBuf(params);
-#endif
     route->processedPattern = sclone(mprGetBufStart(pattern));
-
-#if UNUSED
-    /* Trim last ":" from params */
-    if (mprGetBufLength(params) > 0) {
-        route->params = sclone(mprGetBufStart(params));
-        route->params[slen(route->params) - 1] = '\0';
-    } else {
-        route->params = 0;
-    }
-#endif
     if (mprGetListLength(route->tokens) == 0) {
         route->tokens = 0;
     }
@@ -9635,8 +9573,13 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
         httpSetState(conn, HTTP_STATE_PARSED);        
         if (!rx->form) {
             routeRequest(conn);
+        }
+#if UNUSED
+        if (!(rx->form || rx->upload)) {
+            /* Forms and upload need to wait for all rx data */
             httpStartPipeline(conn);
         }
+#endif
 
     } else if (!(100 <= rx->status && rx->status < 200)) {
         httpSetState(conn, HTTP_STATE_PARSED);        
@@ -9655,10 +9598,6 @@ static void routeRequest(HttpConn *conn)
     httpRouteRequest(conn);  
     httpCreateRxPipeline(conn, rx->route);
     httpCreateTxPipeline(conn, rx->route);
-#if UNUSED
-    rx->startAfterContent = (route->flags & HTTP_ROUTE_HANDLER_AFTER || 
-         ((rx->form || rx->upload) && route->flags & HTTP_ROUTE_HANDLER_SMART));
-#endif
 }
 
 
@@ -9972,6 +9911,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
             } else if (strcmp(key, "content-type") == 0) {
                 rx->mimeType = sclone(value);
                 rx->form = (rx->flags & HTTP_POST) && scontains(rx->mimeType, "application/x-www-form-urlencoded", -1);
+                rx->upload = (rx->flags & HTTP_POST) && scontains(rx->mimeType, "multipart/form-data", -1);
 
             } else if (strcmp(key, "cookie") == 0) {
                 if (rx->cookie && *rx->cookie) {
@@ -10130,6 +10070,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                 }
                 *value++ = '\0';
                 conn->authType = slower(conn->authType);
+                // MOB - move this into the auth filter
                 if (!parseAuthenticate(conn, value)) {
                     httpError(conn, HTTP_CODE_BAD_REQUEST, "Bad Authentication header");
                     break;
@@ -10158,6 +10099,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
 
 /*  
     Parse an authentication response (client side only)
+    MOB - move this into the auth filter
  */
 static bool parseAuthenticate(HttpConn *conn, char *authDetails)
 {
@@ -10300,13 +10242,11 @@ static bool processParsed(HttpConn *conn)
     HttpRx      *rx;
 
     rx = conn->rx;
-#if UNUSED
-    if (!conn->rx->startAfterContent) {
+    if (!(rx->form || rx->upload)) {
         httpStartPipeline(conn);
     }
-#endif
     httpSetState(conn, HTTP_STATE_CONTENT);
-    if (conn->workerEvent && !(rx->form || rx->upload) /* UNUSED !conn->rx->startAfterContent */) {
+    if (conn->workerEvent && !(rx->form || rx->upload)) {
         if (conn->connError || conn->rx->remainingContent <= 0) {
             httpSetState(conn, HTTP_STATE_RUNNING);
         }
@@ -10423,14 +10363,9 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
             }
         }
         httpPutPacketToNext(q, httpCreateEndPacket());
-        if (rx->form) {
+        if (rx->form || rx->upload) {
             httpStartPipeline(conn);
         }
-#if UNUSED
-        if (rx->startAfterContent) {
-            httpStartPipeline(conn);
-        }
-#endif
         httpSetState(conn, HTTP_STATE_RUNNING);
         return conn->workerEvent ? 0 : 1;
     }
@@ -12358,29 +12293,6 @@ ssize httpFormatResponseBody(HttpConn *conn, cchar *title, cchar *fmt, ...)
 }
 
 
-#if UNUSED
-/*
-    The message is NOT html escaped
- */
-void httpSetResponseBody(HttpConn *conn, int status, cchar *fmt, ...)
-{
-    va_list     args;
-    HttpTx      *tx;
-    cchar       *msg;
-
-    mprAssert(fmt && fmt);
-    tx = conn->tx;
-
-    va_start(args, fmt);
-    msg = sfmtv(fmt, args);
-    tx->status = status;
-    if (tx->altBody == 0) {
-        httpFormatResponseBody(conn, httpLookupStatus(conn->http, status), "%s", msg);
-    }
-    va_end(args);
-}
-#endif
-
 /*
     Create an alternate body response. Typically used for error responses. The message is HTML escaped.
     NOTE: this is an internal API. Users should use httpFormatError
@@ -14236,9 +14148,6 @@ void httpCreateCGIParams(HttpConn *conn)
 
     mprAddKey(vars, "AUTH_TYPE", rx->authType);
     mprAddKey(vars, "AUTH_USER", conn->authUser);
-#if UNUSED
-    mprAddKey(vars, "AUTH_GROUP", conn->authGroup);
-#endif
     mprAddKey(vars, "AUTH_ACL", MPR->emptyString);
     mprAddKey(vars, "CONTENT_LENGTH", rx->contentLength);
     mprAddKey(vars, "CONTENT_TYPE", rx->mimeType);
