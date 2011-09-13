@@ -356,8 +356,8 @@ char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheNam
         case ESP_TOK_VAR:
             /* @@var */
             token = strim(token, " \t\r\n;", MPR_TRIM_BOTH);
-            body = sjoin(body, "  espWriteVar(conn, \"", token, "\");\n", NULL);
-            //MOB  body = sjoin(body, "  espWriteSafeString(conn, espGetVar(conn, \"", token, "\", \"\"));\n", NULL);
+            body = sjoin(body, "  espWriteParam(conn, \"", token, "\");\n", NULL);
+            //MOB  body = sjoin(body, "  espWriteSafeString(conn, espGetParam(conn, \"", token, "\", \"\"));\n", NULL);
             break;
 
 

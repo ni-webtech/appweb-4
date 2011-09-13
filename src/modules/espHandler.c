@@ -93,8 +93,9 @@ static void startEsp(HttpQueue *q)
     req = conn->data;
 
     if (req) {
-        httpAddFormVars(conn);
-        
+#if UNUSED
+        httpAddParams(conn);
+#endif
         if (!runAction(conn)) {
             return;
         }
@@ -340,7 +341,7 @@ static int runAction(HttpConn *conn)
         Expand any form var $tokens. This permits ${controller} and user form data to be used in the controller name
      */
     if (schr(route->sourceName, '$')) {
-        req->controllerName = stemplate(route->sourceName, conn->rx->formVars);
+        req->controllerName = stemplate(route->sourceName, conn->rx->params);
     } else {
         req->controllerName = route->sourceName;
     }
@@ -760,8 +761,8 @@ static void addRestfulRoutes(HttpRoute *parent, cchar *prefix, cchar *controller
 
 static void addDefaultRoutes(HttpRoute *parent)
 {
-    addRoute(parent, "home", "GET,POST,PUT", "^/$", stemplate("${STATIC_DIR}/index.esp", parent->pathVars), NULL);
-    addRoute(parent, "static", "GET", "^/static/(.*)", stemplate("${STATIC_DIR}/$1", parent->pathVars), NULL);
+    addRoute(parent, "home", "GET,POST,PUT", "^/$", stemplate("${STATIC_DIR}/index.esp", parent->pathTokens), NULL);
+    addRoute(parent, "static", "GET", "^/static/(.*)", stemplate("${STATIC_DIR}/$1", parent->pathTokens), NULL);
 }
 
 
@@ -924,7 +925,7 @@ static int espAppDirective(MaState *state, cchar *key, cchar *value)
         mprError("Script name should start with a \"/\"");
         scriptName = sjoin("/", scriptName, 0);
     }
-    scriptName = stemplate(scriptName, route->pathVars);
+    scriptName = stemplate(scriptName, route->pathTokens);
     if (scmp(scriptName, "/") == 0) {
         scriptName = MPR->emptyString;
     }
@@ -997,7 +998,7 @@ static int espDirDirective(MaState *state, cchar *key, cchar *value)
     if (scmp(name, "mvc") == 0) {
         setMvcDirs(eroute, state->route);
     } else {
-        path = stemplate(mprJoinPath(state->host->home, path), state->route->pathVars);
+        path = stemplate(mprJoinPath(state->host->home, path), state->route->pathTokens);
         if (scmp(name, "cache") == 0) {
             eroute->cacheDir = path;
         } if (scmp(name, "controllers") == 0) {
@@ -1210,7 +1211,7 @@ int maEspHandlerInit(Http *http, MprModule *mp)
     HttpStage   *handler;
     MaAppweb    *appweb;
 
-    if ((handler = httpCreateHandler(http, "espHandler", HTTP_STAGE_QUERY_VARS, NULL)) == 0) {
+    if ((handler = httpCreateHandler(http, "espHandler", HTTP_STAGE_PARAMS, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     handler->open = openEsp; 

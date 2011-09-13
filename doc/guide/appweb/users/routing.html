@@ -86,7 +86,10 @@
             is always a catch-all route that will process the request if all prior routes fail to qualify.</p>
             <p>A route may modify the request during processing by changing the request URI or request data. The
             route may also run commands as a side-effect during processing.</p>
+
             <a name="configuration"></a>
+
+
             <h2 class="section">Route Configuration</h2>
             <p>Routes are defined in the appweb.conf configuration file or via an API and are processed at run-time when 
             client HTTP requests are received. 
@@ -133,8 +136,11 @@
             <p><tt>VirtualHost</tt> directives also define implicit route blocks. In this way, they inherit the route
             configuration that existed at the point in the configuration file where the VirtualHost is defined, but they
             can override this to create a unique route configuration for the virtual host.</p>
+
+
             <a name="directives"></a>
             <h2 class="section">Route Directives</h2>
+
             <p>Other route related configuration directives include:
             <h3><a href="dir/route.html#addHandler">AddHandler</a> and 
                 <a href="dir/route.html#setHandler">SetHandler</a></h3>
@@ -183,33 +189,45 @@
             The <tt>write</tt> rule is used to respond to the client with literal text and is useful for 
             debug responses.</p>
             <h3><a href="dir/route.html#update">Update</a></h3>
-            <p>The update directive modifies the request or environment. Updates have two rules: <tt>field</tt> and
-            <tt>cmd</tt>. The <tt>field</tt> rule can be used to set request params to a specific value. 
+            <p>The update directive modifies the request or environment. Updates have two rules: <tt>param</tt> and
+            <tt>cmd</tt>. The <tt>param</tt> rule can be used to set request <a href="#params">params</a> 
+            to a specific value. 
             The <tt>cmd</tt> rule can be used to run external commands.</p>
-            <p>Different web frameworks handle request params differently. For CGI, request params are mapped
-            to environment variables, for PHP they are mapped to server variables. For ESP they are mapped to 
-            form variables and for Ejscript, they are mapped to request params[s].</p>
+
+            <a name="params"></a>
+            <h4>Request Params</h4>
+            <p>Request parameters are comprised of a set of request state information. This includes:
+            <ul>
+                <li>Query field values</li>
+                <li>Posted form fields</li>
+                <li>Tokenized route pattern fields</li>
+                <li>Fields explicitly set via the Update directive</li>
+            </ul>
+
+            <p>Different web frameworks handle request parameters differently. For CGI, request parameters are mapped
+            to environment variables, for PHP they are mapped to PHP server variables. For ESP they are mapped to 
+            form variables and are accessed via the <tt>espGetVar</tt> API. And for Ejscript, request parameters they 
+            are mapped to Request.params[] collection.</p>
             <a name="tokens"></a>
-            <h2 class="section"><a href="dir/route.html#tokens">Target Tokens</a></h2>
-            <p>Route targets and condition and update directives can reference tokenized values which are expanded
-            at run-time. There are three classes of tokens:
+            <h2 class="section"><a href="dir/route.html#tokens">Tokens</a></h2>
+            <p>Target, Condition and Update directives directives can reference tokenized values that are expanded
+            when evaluated at run-time. There are three classes of tokens:
             <ul>  
                 <li>System varibles &mdash; DOCUMENT_ROOT, LIBDIR, PRODUCT, OS, SERVER_ROOT, VERSION.</li>
                 <li>Route URI tokens &mdash; these are the braced tokens in the route pattern.</li>
-                <li>Request fields &mdash; these are request state and property values.</li>
+                <li>Request tokens &mdash; these are request state and property values.</li>
             </ul>
             <h4>System and URI Tokens</h4>
             <p>System and URI tokens are of the form: <tt>"${token}"</tt> where "token" is the name of the variable or 
             URI token to substitute.</p>
             <h4>Request Field Tokens</h4>
-            <p>Request fields are of the form: <tt>"${family:name=defaultValue}"</tt> where the family 
+            <p>Request tokens are of the form: <tt>"${family:name=defaultValue}"</tt> where the family 
             defines a set of values. 
-            If the named field is not present, an optional default value "=defaultValue" will be used instead.
-            These supported request field families are:</p>
+            If the named tokens is not present, an optional default value "=defaultValue" will be used instead.
+            These supported request token families are:</p>
             <ul>  
                 <li>header &mdash; for request HTTP header values</li>
-                <li>field &mdash; for request form field values</li>
-                <li>query &mdash; for request query field values</li>
+                <li>form &mdash; for request form values</li>
                 <li>request &mdash; for request details</li>
             </ul>
             <p>The supported request key names are:</p>
@@ -227,7 +245,7 @@
                 <li>originalUri &mdash; The original, pre-decoded URI</li>
                 <li>pathInfo &mdash; The path portion of the URI after the host and port information</li>
                 <li>prefix &mdash; The route prefix</li>
-                <li>query &mdash; The request query information</li>
+                <li>query &mdash; The request query string</li>
                 <li>reference &mdash; The request reference fragment. This is the URI portion after "#"</li>
                 <li>scheme &mdash; The request protocol scheme. E.g. "http"</li>
                 <li>scriptName &mdash; The request script or application name</li>
@@ -237,10 +255,8 @@
             </ul>
             For example, to select the client's browser string passed in the HTTP headers:
 <pre>Target run ${header:User-Agent}</pre>
-            For example to select the client's browser string passed in the HTTP headers:
-<pre>run ${field:name}</pre>
-            For example, if the URI <tt>/info/Mary</tt> matched the pattern: <tt>^/info/{name}</tt>, 
-            then the <tt>${name}</tt> token could be used in a Target run rule as such:
+            To select a form field value, consider if the URI <tt>/info/Mary</tt> matched the pattern: 
+            <tt>^/info/{name}</tt>. Then the <tt>${name}</tt> token could be used in a Target run rule as such:
 <pre>run ${name}.html</pre>
             <a name="processing"></a>
             <h2 class="section">Route Processing</h2>
@@ -256,10 +272,11 @@
                 <li><a href="#step-pattern">Pattern Matching</a> &mdash; Test if the request URI matches route pattern.</li>
                 <li><a href="#step-method">Optional Method Matching</a> &mdash; Test if the request method is valid.</li>
                 <li>Optional <a href="#step-header">Header Matching</a> &mdash; Test if the request has the require headers.</li>
-                <li>Optional <a href="#step-query">Query Field Matching</a> &mdash; Test if the request query has required values.</li>
+                <li>Optional <a href="#step-form">Form Field Matching</a> &mdash; Test if form data has required values.</li>
                 <li>Optional <a href="#step-condition">Condition Matching</a> &mdash; Test if the required conditions are true.</li>
                 <li>Optional <a href="#step-update">Updates</a> &mdash; Modify the request with specified updates.</li>
-                <li><a href="#step-param">Param Definition</a> &mdash; Define tokens as request parameters.</li>
+                <li><a href="#step-param">Param Definition</a> &mdash; Define tokens as request 
+                    <a href="#params">params</a>.</li>
                 <li><a href="#step-target">Target Execution</a> &mdash; Select the Appweb handler and determine the target resource.</li>
             </ol>
             <a name="step-pattern"></a>
@@ -268,10 +285,12 @@
             request URI. The route pattern may match the entire request URI, just a subset at the start of the URI
             or any portion in between. Regular expressions are ideal for route patterns as they can express a wide 
             variety of URI formats and can also extract sub-expressions for later evaluation.</p>
+
             <h4>URI Tokenization</h4>
             <p>Often the request URI will not only provide a path to a resource, but it will contains tokens of 
             information that must be isolated and extracted from the URI. Appweb route patterns provide an easy and
-            efficient means to extract such tokens and define as request params to pass to the request.  
+            efficient means to extract such tokens and define as request <a href="#params">params</a> 
+            to pass to the request.  
             To do this, Appweb route patterns extend the standard regular expression syntax via embedded tokens.
             
             <p>A token is a 
@@ -336,11 +355,12 @@ will match any of the URIs:
 &lt;/Route>
 </pre>
             </p>
-            <a name="step-query"></a>
-            <h3>Query Field Matching</h3>
-            <p>Query field matching is an optional step. Routes can be configured to require that the request has 
-            URI query data with or without defined values. NOTE: Route matching occurs before POST data has been 
-            received from the client, so routes cannot discriminate based on POST data fields.</p>
+            <a name="step-form"></a>
+            <h3>Form Value Matching</h3>
+            <p>Form value matching is an optional step. Routes can be configured to require that the request has 
+            form data with or without defined values. Form data is sourced from the request URI query string and from
+            form body (POST) data. Form data must have a Content-Type of "application/x-www-form-urlencoded" &mdash;
+            normal HTML forms are encoded this way.</p>
 <pre>
 &lt;Route ^/info/>
     Query name /(Mary)|(John)/
@@ -358,11 +378,13 @@ will match any of the URIs:
             can also test any request parameter against a regular expression.</p>
             <a name="step-update"></a>
             <h3>Request Update</h3>
-            <p>Request update matching is an optional step where the request parameters can be modified. Request
-            parameters are the query and post data fields and other environment variables.</p>
+            <p>Request update matching is an optional step where the request <a href="#params">params</a> 
+            can be modified.</p>
+
             <a name="step-param"></a>
             <h3>Param Definition</h3>
-            <p>After a route fully qualifies, request parameters are created for route pattern tokens. This provides an
+            <p>After a route fully qualifies, request <a href="#params">params</a>
+            are created for route pattern tokens. This provides an
             easy mechanism for extracting useful information from the request URI and passing it to the web page or
             controller for processing.</p>
             <a name="step-target"></a>
@@ -396,7 +418,7 @@ Target write 200 "Running controller ${controller} action ${action}\n\n"
             routes can be defined for each application that specify the URI prefix for each application. However, it is
             often convenient to have the application prefix removed from the URI once the route is selected. The Prefix
             directive defines a URI prefix that will be stripped from the start of the request URI once the route
-            is selected. If the route defines a header, field or condition that is not satisfied, the prefix is restored
+            is selected. If the route defines a header, form or condition that is not satisfied, the prefix is restored
             to let other routes see the full URI.
             <a name="examples"/></a>
             <h2 class="section">Route Examples</h2>

@@ -433,15 +433,15 @@ extern MprOff espGetContentLength(HttpConn *conn);
 extern cchar *espGetCookies(HttpConn *conn);
 
 /**
-    Get the form vars table
-    @description This call gets the form var table for the current request.
-        Query data and www-url encoded form data is entered into the table after decoding.
+    Get the request parameter hash table
+    @description This call gets the params hash table for the current request.
+        Query data and www-url encoded form data is entered into the params table after decoding.
         Use #mprLookupKey to retrieve data from the table.
     @param conn HttpConn connection object
-    @return #MprHashTable instance containing the form vars
+    @return #MprHashTable instance containing the request parameters
     @ingroup EspReq
  */
-extern MprHashTable *espGetFormVars(HttpConn *conn);
+extern MprHashTable *espGetParams(HttpConn *conn);
 
 /** 
     Get an rx http header.
@@ -473,16 +473,16 @@ extern MprHashTable *espGetHeaderHash(HttpConn *conn);
 extern char *espGetHeaders(HttpConn *conn);
 
 /**
-    Get a form variable as an integer
-    @description Get the value of a named form variable as an integer. Form variables are define via 
+    Get a request pararmeter as an integer
+    @description Get the value of a named request parameter as an integer. Form variables are define via 
         www-urlencoded query or post data contained in the request.
     @param conn HttpConn connection object
-    @param var Name of the form variable to retrieve
+    @param var Name of the request parameter to retrieve
     @param defaultValue Default value to return if the variable is not defined. Can be null.
-    @return Integer containing the form variable's value
+    @return Integer containing the request parameter's value
     @ingroup EspReq
  */
-extern int espGetIntVar(HttpConn *conn, cchar *var, int defaultValue);
+extern int espGetIntParam(HttpConn *conn, cchar *var, int defaultValue);
 
 /** 
     Get the request query string
@@ -510,16 +510,16 @@ extern int espGetStatus(HttpConn *conn);
 extern char *espGetStatusMessage(HttpConn *conn);
 
 /**
-    Get a form variable
-    @description Get the value of a named form variable. Form variables are define via www-urlencoded query or post
+    Get a request parameter
+    @description Get the value of a named request parameter. Form variables are define via www-urlencoded query or post
         data contained in the request.
     @param conn HttpConn connection object
-    @param var Name of the form variable to retrieve
+    @param var Name of the request parameter to retrieve
     @param defaultValue Default value to return if the variable is not defined. Can be null.
-    @return String containing the form variable's value. Caller should not free.
+    @return String containing the request parameter's value. Caller should not free.
     @ingroup EspReq
  */
-extern cchar *espGetVar(HttpConn *conn, cchar *var, cchar *defaultValue);
+extern cchar *espGetParam(HttpConn *conn, cchar *var, cchar *defaultValue);
 
 /** 
     Finalize transmission of the http request
@@ -548,15 +548,15 @@ extern bool espFinalized(HttpConn *conn);
 extern void espFlush(HttpConn *conn);
 
 /**
-    Match a form variable with an expected value
-    @description Compare a form variable and return true if it exists and its value matches.
+    Match a request parameter with an expected value
+    @description Compare a request parameter and return true if it exists and its value matches.
     @param conn HttpConn connection object
-    @param var Name of the form variable 
+    @param var Name of the request parameter 
     @param value Expected value to match
     @return True if the value matches
     @ingroup EspReq
  */
-extern bool espMatchVar(HttpConn *conn, cchar *var, cchar *value);
+extern bool espMatchParam(HttpConn *conn, cchar *var, cchar *value);
 
 /** 
     Redirect the client
@@ -650,15 +650,15 @@ extern void espSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 extern void espSetHeaderString(HttpConn *conn, cchar *key, cchar *value);
 
 /**
-    Set an integer form variable value
-    @description Set the value of a named form variable to an integer value. Form variables are define via 
+    Set an integer request parameter value
+    @description Set the value of a named request parameter to an integer value. Form variables are define via 
         www-urlencoded query or post data contained in the request.
     @param conn HttpConn connection object
-    @param var Name of the form variable to retrieve
-    @param value Default value to return if the variable is not defined. Can be null.
+    @param var Name of the request parameter to set
+    @param value value to set.
     @ingroup EspReq
  */
-extern void espSetIntVar(HttpConn *conn, cchar *var, int value);
+extern void espSetIntParam(HttpConn *conn, cchar *var, int value);
 
 /** 
     Set a Http response status.
@@ -670,15 +670,15 @@ extern void espSetIntVar(HttpConn *conn, cchar *var, int value);
 extern void espSetStatus(HttpConn *conn, int status);
 
 /**
-    Set a form variable value
-    @description Set the value of a named form variable to a string value. Form variables are define via 
+    Set a request parameter value
+    @description Set the value of a named request parameter to a string value. Form variables are define via 
         www-urlencoded query or post data contained in the request.
     @param conn HttpConn connection object
-    @param var Name of the form variable to retrieve
-    @param value Default value to return if the variable is not defined. Can be null.
+    @param var Name of the request parameter to set
+    @param value Value to set.
     @ingroup EspReq
  */
-extern void espSetVar(HttpConn *conn, cchar *var, cchar *value);
+extern void espSetParam(HttpConn *conn, cchar *var, cchar *value);
 
 /**
     Show request details
@@ -736,14 +736,14 @@ extern ssize espWriteString(HttpConn *conn, cchar *s);
 extern ssize espWriteSafeString(HttpConn *conn, cchar *s);
 
 /** 
-    Write the value of a form variable to the client
-    @description This writes the value of a form variable after HTML escaping its value.
+    Write the value of a request parameter to the client
+    @description This writes the value of request parameter after HTML escaping its value.
     @param conn HttpConn connection object
     @param name Form variable name
     @return A count of the bytes actually written
     @ingroup HttpQueue
  */
-extern ssize espWriteVar(HttpConn *conn, cchar *name);
+extern ssize espWriteParam(HttpConn *conn, cchar *name);
 
 //  MOB - move to pcre
 #define PCRE_GLOBAL     0x1

@@ -7,8 +7,8 @@
     char    *msg = "Hello World";
     int     x = 42; 
 
-    espSetVar(conn, "message", msg);
-    espSetIntVar(conn, "number", x);
+    espSetParam(conn, "message", msg);
+    espSetIntParam(conn, "number", x);
 -%>
     <h1>ESP Directives</h1>
     Today's Message: @@message

@@ -69,6 +69,7 @@ struct HttpUri;
     #define HTTP_MAX_HEADERS           2048                 /**< Max size of the headers */
     #define HTTP_MAX_IOVEC             16                   /**< Number of fragments in a single socket write */
     #define HTTP_MAX_NUM_HEADERS       20                   /**< Max number of header lines */
+    #define HTTP_MAX_RECEIVE_FORM      (1024 * 1024)        /**< Maximum incoming form size */
     #define HTTP_MAX_RECEIVE_BODY      (128 * 1024 * 1024)  /**< Maximum incoming body size */
     #define HTTP_MAX_REQUESTS          20                   /**< Max concurrent requests */
     #define HTTP_MAX_CLIENTS           10                   /**< Max concurrent client endpoints */
@@ -86,6 +87,7 @@ struct HttpUri;
     #define HTTP_MAX_HEADERS           (8 * 1024)
     #define HTTP_MAX_IOVEC             24
     #define HTTP_MAX_NUM_HEADERS       40
+    #define HTTP_MAX_RECEIVE_FORM      (8 * 1024 * 1024)
     #define HTTP_MAX_RECEIVE_BODY      (128 * 1024 * 1024)
     #define HTTP_MAX_REQUESTS          50
     #define HTTP_MAX_CLIENTS           25
@@ -103,6 +105,7 @@ struct HttpUri;
     #define HTTP_MAX_HEADERS           (8 * 1024)
     #define HTTP_MAX_IOVEC             32
     #define HTTP_MAX_NUM_HEADERS       256
+    #define HTTP_MAX_RECEIVE_FORM      (16 * 1024 * 1024)
     #define HTTP_MAX_RECEIVE_BODY      (256 * 1024 * 1024)
     #define HTTP_MAX_REQUESTS          1000
     #define HTTP_MAX_CLIENTS           500
@@ -483,6 +486,7 @@ typedef struct HttpLimits {
     ssize   stageBufferSize;        /**< Max buffering by any pipeline stage */
     ssize   uriSize;                /**< Max size of a uri */
 
+    MprOff  receiveFormSize;        /**< Max size of form data */
     MprOff  receiveBodySize;        /**< Max size of receive body data */
     MprOff  transmissionBodySize;   /**< Max size of transmission body content */
     MprOff  uploadSize;             /**< Max size of an uploaded file */
@@ -1278,9 +1282,11 @@ extern void httpAssignQueue(HttpQueue *q, struct HttpStage *stage, int dir);
 #define HTTP_STAGE_HANDLER        0x2000            /**< Stage is a handler  */
 #define HTTP_STAGE_FILTER         0x4000            /**< Stage is a filter  */
 #define HTTP_STAGE_MODULE         0x8000            /**< Stage is a filter  */
-#define HTTP_STAGE_QUERY_VARS     0x10000           /**< Create variables from URI query (implies FORM_VARS) */
-#define HTTP_STAGE_CGI_VARS       0x20000           /**< Create CGI variables (implies FORM_VARS) */
+#define HTTP_STAGE_PARAMS         0x10000           /**< Create params from URI query and form body data */
+#if UNUSED
+#define HTTP_STAGE_CGI_PARAMS     0x20000           /**< Create CGI variables */
 #define HTTP_STAGE_EXTRA_PATH     0x40000           /**< Do extra path info (for CGI|PHP) */
+#endif
 #define HTTP_STAGE_AUTO_DIR       0x80000           /**< Want auto directory redirection */
 #define HTTP_STAGE_UNLOADED       0x100000          /**< Stage module library has been unloaded */
 #define HTTP_STAGE_RX             0x200000          /**< Stage to be used in the Rx direction */
@@ -2809,9 +2815,11 @@ typedef struct HttpLang {
     Route flags (set above the API flasg)
  */
 #define HTTP_ROUTE_PUT_DELETE     0x100     /**< Support PUT|DELETE */
+#if UNUSED
 #define HTTP_ROUTE_HANDLER_BEFORE 0x200     /**< Start handler before content */
 #define HTTP_ROUTE_HANDLER_AFTER  0x400     /**< Start handler after content */
 #define HTTP_ROUTE_HANDLER_SMART  0x800     /**< Start handler after for forms and upload */
+#endif
 #define HTTP_ROUTE_GZIP           0x1000    /**< Support gzipped conent */
 
 /**
@@ -2835,9 +2843,11 @@ typedef struct HttpRoute {
     char            *name;                  /**< Route name */
     char            *dir;                   /**< Directory filename */
     char            *index;                 /**< Default index document name */
-    char            *methods;               /**< Supported HTTP methods */
+    char            *methodSpec;            /**< Supported HTTP methods */
     char            *pattern;               /**< Original matching URI pattern for the route */
+#if UNUSED
     char            *params;                /**< Params to define. Extracted from pattern. (compiled) */
+#endif
     char            *processedPattern;      /**< Expanded {tokens} => $N */
     char            *targetRule;            /**< Target rule */
     char            *target;                /**< Route target details */
@@ -2873,7 +2883,7 @@ typedef struct HttpRoute {
     MprHashTable    *data;                  /**< Hash of extra data configuration */
     MprHashTable    *expires;               /**< Expiry of content by extension */
     MprHashTable    *expiresByType;         /**< Expiry of content by mime type */
-    MprHashTable    *pathVars;              /**< Path $var refrerences */
+    MprHashTable    *pathTokens;            /**< Path $token refrerences */
     MprHashTable    *languages;             /**< Languages supported */
     MprList         *inputStages;           /**< Input stages */
     MprList         *outputStages;          /**< Output stages */
@@ -2889,9 +2899,9 @@ typedef struct HttpRoute {
     char            *scriptPath;            /**< Startup script path for handlers serving this route */
     int             workers;                /**< Number of workers to use for this route */
 
-    MprHashTable    *methodHash;            /**< Matching HTTP methods */
+    MprHashTable    *methods;               /**< Matching HTTP methods */
+    MprList         *params;                /**< Matching param field data */
     MprList         *headers;               /**< Matching header values */
-    MprList         *queryFields;           /**< Matching query field data */
     MprList         *conditions;            /**< Route conditions */
     MprList         *updates;               /**< Route and request updates */
 
@@ -3065,15 +3075,15 @@ extern int httpAddRouteLanguageRoot(HttpRoute *route, cchar *language, cchar *pa
 extern void httpAddRouteLoad(HttpRoute *route, cchar *name, cchar *path);
 
 /**
-    Add a route query check
-    @description This configures the route to match a request only if the specified query field matches a specific value.
+    Add a route param check
+    @description This configures the route to match a request only if the specified param field matches a specific value.
     @param route Route to modify
-    @param field Query field to interrogate
+    @param field Param field to interrogate
     @param value Header value that will match
     @param flags Set to HTTP_ROUTE_NOT to negate the query test
     @ingroup HttpRoute
  */
-extern void httpAddRouteQuery(HttpRoute *route, cchar *field, cchar *value, int flags);
+extern void httpAddRouteParam(HttpRoute *route, cchar *field, cchar *value, int flags);
 
 /**
     Add a route update rule
@@ -3084,7 +3094,7 @@ extern void httpAddRouteQuery(HttpRoute *route, cchar *field, cchar *value, int 
         \n\n
         The "cmd" rule is used to run external commands. For example: "cmd touch /tmp/filename".
         \n\n
-        The "field" rule is used to set values in the request form fields. For example: "field priority high". 
+        The "param" rule is used to set values in the request param fields. For example: "param priority high". 
         \n\n
         The "lang" update rule is uses internally to implement the various language options.
         The See #httpSetRouteTarget for a list of the token values that can be included in the condition rule details.
@@ -3211,6 +3221,14 @@ extern void *httpGetRouteData(HttpRoute *route, cchar *key);
     @ingroup HttpRoute
  */
 extern cchar *httpGetRouteDir(HttpRoute *route);
+
+/**
+    Get the route method list
+    @param route Route to examine
+    @return The the list of support methods. Return NULL if not method list is defined.
+    @ingroup HttpRoute
+ */
+extern cchar *httpGetRouteMethods(HttpRoute *route);
 
 /** 
     Create a URI link. The target parameter may contain partial or complete URI information. The missing parts 
@@ -3480,7 +3498,7 @@ extern void httpSetRoutePathVar(HttpRoute *route, cchar *token, cchar *value);
     @description This call defines the route regular expression pattern that is used to match against the request URI.
         The route pattern is an enhanced JavaScript-compatibile regular expression. It is enhanced by optionally 
         embedding braced tokens "{name}" in the patter. During request URI matching, these tokens are extracted and
-        defined in the request form vars and are available to the request. The normal regular expression repeat syntax 
+        defined in the request params and are available to the request. The normal regular expression repeat syntax 
         also uses "{}". To use the traditional (uncommon) repeat syntax, back quote with "\\".
         Sub-expressions and token expressions are also available in various rules as numbered tokens "$1". For example:
         the pattern "/app/(.*)(\.html)$" will permit a file target "$1.${request.Language=fr}.$2".
@@ -3525,18 +3543,28 @@ extern void httpSetRouteSource(HttpRoute *route, cchar *source);
     Set a route target
     @description This configures the route pipeline by defining a route target. The route target is interpreted by
         the selected route handler to process the request. 
-        Route targets can contain symbolic tokens that are expanded at run-time with their corresponding values. Tokens
-        are of the form: "${family:name=defaultValue}". The family defines a set of values. If the named field is not 
-        present, an optional default value "=defaultValue" will be used instead.
-        These supported token families are:
+        Route targets can contain symbolic tokens that are expanded at run-time with their corresponding values. There are 
+        three classes of tokens:
+        <ul>  
+            <li>System varibles - such as DOCUMENT_ROOT, LIBDIR, PRODUCT, OS, SERVER_ROOT, VERSION.</li>
+            <li>Route URI tokens - these are the braced tokens in the route pattern.</li>
+            <li>Request fields - these are request state and property values.</li>
+        </ul>
+        System and URI tokens are of the form: "${token}" where "token" is the name of the variable or URI token. 
+        Request fields are of the form: "${family:name=defaultValue}" where the family defines a set of values. 
+        If the named field is not present, an optional default value "=defaultValue" will be used instead.
+        These supported request field families are:
         <ul>  
             <li>header - for request HTTP header values</li>
-            <li>field - for request form field values</li>
+            <li>param - for request params</li>
             <li>query - for request query field values</li>
             <li>request - for request details</li>
+            <li>Any URI pattern  token</li>
         </ul>
-        For example: "file ${header:User-Agent}" to select the client's browser string passed in the HTTP headers.
-        For example: "file ${field:name}" to select the client's browser string passed in the HTTP headers.
+        For example: "run ${header:User-Agent}" to select the client's browser string passed in the HTTP headers.
+        For example: "run ${field:name}" to select the client's browser string passed in the HTTP headers.
+        For example: "run ${name}.html" where {name} was a token in the route pattern.
+        For example: "run ${name}.html" where {name} was a token in the route pattern.
         The supported request key names are:
         <ul>
             <li>clientAddress - The client IP address</li>
@@ -3563,20 +3591,18 @@ extern void httpSetRouteSource(HttpRoute *route, cchar *source);
         Also see #httpMakePath for additional tokens (DOCUMENT_ROOT, LIBDIR, PRODUCT, OS, SERVER_ROOT, VERSION).
     @param route Route to modify
     @param name Target rule to add. Supported update rules include:
-        "close", "file" and "redirect", "virtual" and "write". 
+        "close", "redirect", "run" and "write". 
         \n\n
         The "close" rule is used to do abortive closes for the request. This is useful for ward off known security attackers.
         For example: "close immediate". The "close" rule takes no addition parameters. 
         \n\n
-        The "file" target is used to create a physical filename to serve for the request.
-        For example: "file ${DOCUMENT_ROOT}/${request.uri}.gz". 
         \n\n
         The "redirect" rule is used to redirect the request to a new resource. For example: "redirect 302 /tryAgain.html". 
         The "redirect" takes the form: "redirect status URI". The status code is used as the HTTP response
         code. The URI can be a fully qualified URI beginning with "http" or it can be a relative URI.
         \n\n
-        The "virtual" rule is used by handlers to process requests that serve dynamic content that does not come 
-        from a physical file. 
+        The "run" target is used to run the configured handler to respond to the request.
+        For example: "file ${DOCUMENT_ROOT}/${request.uri}.gz". 
         \n\n
         The "write" rule is used to write literal data back to the client. For example: "write 200 Hello World\r\n". 
         The "write" rule takes the form: "write [-r] status message". Write data is by default HTML encoded to help
@@ -3696,8 +3722,8 @@ extern void httpRemoveUploadFile(HttpConn *conn, cchar *id);
 #define HTTP_CREATE_ENV         0x100       /**< Must create env for this request */
 #define HTTP_IF_MODIFIED        0x200       /**< If-[un]modified-since supplied */
 #define HTTP_CHUNKED            0x400       /**< Content is chunk encoded */
-#define HTTP_ADDED_QUERY_VARS   0x800       /**< Query vars added to formVars */
-#define HTTP_ADDED_FORM_VARS    0x1000      /**< Form body data added to formVars */
+#define HTTP_ADDED_QUERY_PARAMS 0x800       /**< Query added to params */
+#define HTTP_ADDED_FORM_PARAMS  0x1000      /**< Form body data added to params */
 
 /*  
     Incoming chunk encoding states
@@ -3712,11 +3738,11 @@ extern void httpRemoveUploadFile(HttpConn *conn, cchar *id);
         to make the API easier to remember - APIs take a connection object rather than a rx or tx object.
     @stability Evolving
     @defgroup HttpRx HttpRx
-    @see HttpConn HttpRx HttpTx httpAddFormVars httpAddVars httpAddVarsFromQueue httpContentNotModified 
-        httpCreateCGIVars httpGetContentLength httpGetCookies httpGetFormVar httpGetFormVars httpGetHeader 
-        httpGetHeaderHash httpGetHeaders httpGetIntFormVar httpGetLanguage httpGetQueryString httpGetStatus 
-        httpGetStatusMessage httpMatchFormVar httpRead httpReadString httpSetFormVar httpSetIntFormVar httpSetUri 
-        httpSetWriteBlocked httpTestFormVar httpTrimExtraPath 
+    @see HttpConn HttpRx HttpTx httpAddBodyVars httpAddParamsFromBuf httpAddParamsFromQueue httpContentNotModified 
+        httpCreateCGIParams httpGetContentLength httpGetCookies httpGetParam httpGetParams httpGetHeader 
+        httpGetHeaderHash httpGetHeaders httpGetIntParam httpGetLanguage httpGetQueryString httpGetStatus 
+        httpGetStatusMessage httpMatchParam httpRead httpReadString httpSetParam httpSetIntParam httpSetUri 
+        httpSetWriteBlocked httpTestParam httpTrimExtraPath 
  */
 typedef struct HttpRx {
     /* Ordered for debugging */
@@ -3745,7 +3771,9 @@ typedef struct HttpRx {
     int             flags;                  /**< Rx modifiers */
     int             form;                   /**< Using mime-type application/x-www-form-urlencoded */
     int             needInputPipeline;      /**< Input pipeline required to process received data */
+#if UNUSED
     int             startAfterContent;      /**< Start handler after receiving all body content */
+#endif
     int             upload;                 /**< Request is using file upload */
 
     ssize           chunkSize;              /**< Size of the next chunk */
@@ -3778,7 +3806,7 @@ typedef struct HttpRx {
     char            *referrer;              /**< Refering URL */
     char            *userAgent;             /**< User-Agent header */
 
-    MprHashTable    *formVars;              /**< Query and post data variables */
+    MprHashTable    *params;                /**< Request params (Query and post data variables) */
     HttpRange       *inputRange;            /**< Specified range for rx (post) data */
 
     /*  
@@ -3812,30 +3840,30 @@ typedef struct HttpRx {
 } HttpRx;
 
 
+#if UNUSED
 /**
-    Add encoded form data
+    Add parameters (encoded form data) from a buffer
     @description Add new variables encoded in the supplied buffer
     @param conn HttpConn connection object
     @param buf Buffer containing www-urlencoded data
     @param len Length of buf
     @ingroup HttpRx
  */
-extern void httpAddVars(HttpConn *conn, cchar *buf, ssize len);
+extern void httpAddParamsFromBuf(HttpConn *conn, cchar *buf, ssize len);
 
 /**
-    Add encoded form data from queued content
+    Add parameters (encoded form data) from queued content
     @param q Queue reference
  */
-extern void httpAddVarsFromQueue(HttpQueue *q);
+extern void httpAddParamsFromQueue(HttpQueue *q);
 
-//  MOB - name could be improved: httpAddFormToVars
 /**
-    Add form body data to form vars
+    Add params (encoded form data) from body data
     @description This adds www-url encoded form body data to the form vars.
     @param conn HttpConn connection object
     @ingroup HttpRx
  */
-extern void httpAddFormVars(HttpConn *conn);
+extern void httpAddBodyParams(HttpConn *conn);
 
 /**
     Add query data to form vars
@@ -3843,7 +3871,18 @@ extern void httpAddFormVars(HttpConn *conn);
     @param conn HttpConn connection object
     @ingroup HttpRx
  */
-extern void httpAddQueryVars(HttpConn *conn);
+extern void httpAddQueryParams(HttpConn *conn);
+#else
+
+/**
+    Add query and form body data to params
+    @description This adds query data and posted body data to the request params
+    @param conn HttpConn connection object
+    @ingroup HttpRx
+    @internal
+ */
+extern void httpAddParams(HttpConn *conn);
+#endif
 
 /**
     Test if the content has not been modified
@@ -3856,14 +3895,15 @@ extern void httpAddQueryVars(HttpConn *conn);
 extern bool httpContentNotModified(HttpConn *conn);
 
 /**
-    Create CGI style form vars
-    @description This call creates form vars for the standard CGI/1.1 environment variables. This is used by
-    the CGI and PHP handlers. It may also be useful to handlers that wish to expose CGI style environment variables
+    Create CGI parameters
+    @description This call creates request params corresponding to the standard CGI/1.1 environment variables. 
+    This is used by the CGI and PHP handlers. It may also be useful to handlers that wish to expose CGI style 
+    environment variables
     through the form vars interface.
     @param conn HttpConn connection object
     @ingroup HttpRx
  */
-extern void httpCreateCGIVars(HttpConn *conn);
+extern void httpCreateCGIParams(HttpConn *conn);
 
 /** 
     Get the receive body content length
@@ -3885,19 +3925,19 @@ extern MprOff httpGetContentLength(HttpConn *conn);
 extern cchar *httpGetCookies(HttpConn *conn);
 
 /**
-    Get a form variable
-    @description Get the value of a named form variable. Form variables are define via www-urlencoded query or post
+    Get a request param
+    @description Get the value of a named request param. Form variables are define via www-urlencoded query or post
         data contained in the request.
     @param conn HttpConn connection object
-    @param var Name of the form variable to retrieve
+    @param var Name of the request param to retrieve
     @param defaultValue Default value to return if the variable is not defined. Can be null.
-    @return String containing the form variable's value. Caller should not free.
+    @return String containing the request param's value. Caller should not free.
     @ingroup HttpRx
  */
-extern cchar *httpGetFormVar(HttpConn *conn, cchar *var, cchar *defaultValue);
+extern cchar *httpGetParam(HttpConn *conn, cchar *var, cchar *defaultValue);
 
 /**
-    Get the form vars table
+    Get the request params table
     @description This call gets the form var table for the current request.
         Query data and www-url encoded form data is entered into the table after decoding.
         Use #mprLookupKey to retrieve data from the table.
@@ -3905,7 +3945,7 @@ extern cchar *httpGetFormVar(HttpConn *conn, cchar *var, cchar *defaultValue);
     @return #MprHashTable instance containing the form vars
     @ingroup HttpRx
  */
-extern MprHashTable *httpGetFormVars(HttpConn *conn);
+extern MprHashTable *httpGetParams(HttpConn *conn);
 
 /** 
     Get an rx http header.
@@ -3946,7 +3986,7 @@ extern char *httpGetHeaders(HttpConn *conn);
     @return Integer containing the form variable's value
     @ingroup HttpRx
  */
-extern int httpGetIntFormVar(HttpConn *conn, cchar *var, int defaultValue);
+extern int httpGetIntParam(HttpConn *conn, cchar *var, int defaultValue);
 
 /**
     Get the language to use for the request
@@ -3994,7 +4034,7 @@ extern char *httpGetStatusMessage(HttpConn *conn);
     @return True if the value matches
     @ingroup HttpRx
  */
-extern bool httpMatchFormVar(HttpConn *conn, cchar *var, cchar *expected);
+extern bool httpMatchParam(HttpConn *conn, cchar *var, cchar *expected);
 
 /** 
     Read rx body data. This will read available body data. If in sync mode, this call may block. If in async
@@ -4017,26 +4057,26 @@ extern ssize httpRead(HttpConn *conn, char *buffer, ssize size);
 extern char *httpReadString(HttpConn *conn);
 
 /**
-    Set a form variable value
-    @description Set the value of a named form variable to a string value. Form variables are define via 
+    Set a request param value
+    @description Set the value of a named request param to a string value. Form variables are define via 
         www-urlencoded query or post data contained in the request.
     @param conn HttpConn connection object
-    @param var Name of the form variable to retrieve
+    @param var Name of the request param to retrieve
     @param value Default value to return if the variable is not defined. Can be null.
     @ingroup HttpRx
  */
-extern void httpSetFormVar(HttpConn *conn, cchar *var, cchar *value);
+extern void httpSetParam(HttpConn *conn, cchar *var, cchar *value);
 
 /**
-    Set an integer form variable value
-    @description Set the value of a named form variable to an integer value. Form variables are define via 
+    Set an integer request param value
+    @description Set the value of a named request param to an integer value. Form variables are define via 
         www-urlencoded query or post data contained in the request.
     @param conn HttpConn connection object
-    @param var Name of the form variable to retrieve
+    @param var Name of the request param to retrieve
     @param value Default value to return if the variable is not defined. Can be null.
     @ingroup HttpRx
  */
-extern void httpSetIntFormVar(HttpConn *conn, cchar *var, int value);
+extern void httpSetIntParam(HttpConn *conn, cchar *var, int value);
 
 /**
     Set a new URI for processing
@@ -4056,13 +4096,13 @@ extern void httpSetIntFormVar(HttpConn *conn, cchar *var, int value);
 extern int  httpSetUri(HttpConn *conn, cchar *uri, cchar *query);
 
 /**
-    Test if a form variable is defined
+    Test if a request param is defined
     @param conn HttpConn connection object
-    @param var Name of the form variable to retrieve
-    @return True if the form variable is defined
+    @param var Name of the request param to retrieve
+    @return True if the request param is defined
     @ingroup HttpRx
  */
-extern int httpTestFormVar(HttpConn *conn, cchar *var);
+extern int httpTestParam(HttpConn *conn, cchar *var);
 
 /**
     Trim extra path from the URI

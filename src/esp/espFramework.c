@@ -166,9 +166,9 @@ cchar *espGetCookies(HttpConn *conn)
 }
 
 
-MprHashTable *espGetFormVars(HttpConn *conn)
+MprHashTable *espGetParams(HttpConn *conn)
 {
-    return httpGetFormVars(conn);
+    return httpGetParams(conn);
 }
 
 
@@ -297,33 +297,33 @@ void espSetContentType(HttpConn *conn, cchar *mimeType)
 }
 
 
-int espGetIntVar(HttpConn *conn, cchar *var, int defaultValue)
+int espGetIntParam(HttpConn *conn, cchar *var, int defaultValue)
 {
-    return httpGetIntFormVar(conn, var, defaultValue);
+    return httpGetIntParam(conn, var, defaultValue);
 }
 
 
-cchar *espGetVar(HttpConn *conn, cchar *var, cchar *defaultValue)
+cchar *espGetParam(HttpConn *conn, cchar *var, cchar *defaultValue)
 {
-    return httpGetFormVar(conn, var, defaultValue);
+    return httpGetParam(conn, var, defaultValue);
 }
 
 
-void espSetIntVar(HttpConn *conn, cchar *var, int value) 
+void espSetIntParam(HttpConn *conn, cchar *var, int value) 
 {
-    httpSetIntFormVar(conn, var, value);
+    httpSetIntParam(conn, var, value);
 }
 
 
-void espSetVar(HttpConn *conn, cchar *var, cchar *value) 
+void espSetParam(HttpConn *conn, cchar *var, cchar *value) 
 {
-    httpSetFormVar(conn, var, value);
+    httpSetParam(conn, var, value);
 }
 
 
-bool espMatchVar(HttpConn *conn, cchar *var, cchar *value)
+bool espMatchParam(HttpConn *conn, cchar *var, cchar *value)
 {
-    return httpMatchFormVar(conn, var, value);
+    return httpMatchParam(conn, var, value);
 }
 
 
@@ -405,11 +405,11 @@ ssize espWriteString(HttpConn *conn, cchar *s)
 }
 
 
-ssize espWriteVar(HttpConn *conn, cchar *name)
+ssize espWriteParam(HttpConn *conn, cchar *name)
 {
     cchar   *value;
 
-    if ((value = espGetVar(conn, name, 0)) == 0) {
+    if ((value = espGetParam(conn, name, 0)) == 0) {
         value = espGetSessionVar(conn, name, "");
     }
     return espWriteSafeString(conn, value);
@@ -418,8 +418,9 @@ ssize espWriteVar(HttpConn *conn, cchar *name)
 
 /*
     Convert queue data in key / value pairs
+    MOB - should be able to remove this and use standard form parsing
  */
-static int getVars(char ***keys, char *buf, int len)
+static int getParams(char ***keys, char *buf, int len)
 {
     char**  keyList;
     char    *eq, *cp, *pp, *tok;
@@ -487,7 +488,7 @@ void espShowRequest(HttpConn *conn)
      */
     if ((query = espGetQueryString(conn)) != 0) {
         scopy(qbuf, sizeof(qbuf), query);
-        if ((numKeys = getVars(&keys, qbuf, (int) strlen(qbuf))) > 0) {
+        if ((numKeys = getParams(&keys, qbuf, (int) strlen(qbuf))) > 0) {
             for (i = 0; i < (numKeys * 2); i += 2) {
                 value = keys[i+1];
                 espWrite(conn, "QUERY %s=%s\r\n", keys[i], value ? value: "null");
@@ -508,7 +509,7 @@ void espShowRequest(HttpConn *conn)
     /*
         Form vars
      */
-    if ((env = espGetFormVars(conn)) != 0) {
+    if ((env = espGetParams(conn)) != 0) {
         for (hp = 0; (hp = mprGetNextKey(env, hp)) != 0; ) {
             espWrite(conn, "FORM %s=%s\r\n", hp->key, hp->data ? hp->data: "null");
         }
@@ -522,7 +523,7 @@ void espShowRequest(HttpConn *conn)
     if (q->first && rx->bytesRead > 0 && scmp(rx->mimeType, "application/x-www-form-urlencoded") == 0) {
         buf = q->first->content;
         mprAddNullToBuf(buf);
-        if ((numKeys = getVars(&keys, mprGetBufStart(buf), (int) mprGetBufLength(buf))) > 0) {
+        if ((numKeys = getParams(&keys, mprGetBufStart(buf), (int) mprGetBufLength(buf))) > 0) {
             for (i = 0; i < (numKeys * 2); i += 2) {
                 value = keys[i+1];
                 espWrite(conn, "BODY %s=%s\r\n", keys[i], value ? value: "null");

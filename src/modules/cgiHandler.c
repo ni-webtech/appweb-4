@@ -63,6 +63,7 @@ static void openCgi(HttpQueue *q)
         httpHandleOptionsTrace(q->conn);
     } else {
         httpMapFile(q->conn, rx->route);
+        httpCreateCGIParams(q->conn);
     }
 }
 
@@ -102,7 +103,6 @@ static void startCgi(HttpQueue *q)
     rx = conn->rx;
     tx = conn->tx;
 
-    mprAssert(conn->state <= HTTP_STATE_CONTENT || rx->form || rx->upload || rx->route->flags & HTTP_ROUTE_HANDLER_AFTER);
     mprLog(5, "CGI: Start");
 
     /*
@@ -128,9 +128,9 @@ static void startCgi(HttpQueue *q)
     /*  
         Build environment variables
      */
-    varCount = mprGetHashLength(rx->formVars) + mprGetHashLength(rx->headers);
+    varCount = mprGetHashLength(rx->params) + mprGetHashLength(rx->headers);
     if ((envv = mprAlloc((varCount + 1) * sizeof(char*))) != 0) {
-        count = copyVars(envv, 0, rx->formVars, "");
+        count = copyVars(envv, 0, rx->params, "");
         count = copyVars(envv, count, rx->headers, "HTTP_");
         mprAssert(count <= varCount);
     }
@@ -237,7 +237,9 @@ static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
             q->queueData = 0;
             httpError(conn, HTTP_CODE_BAD_REQUEST, "Client supplied insufficient body data");
         }
-        httpAddVarsFromQueue(q);
+#if UNUSED
+        httpAddParamsFromQueue(q);
+#endif
     } else {
         /* No service routine, we just need it to be queued for writeToCGI */
         httpPutForService(q, packet, 0);
@@ -1045,7 +1047,7 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     MaAppweb    *appweb;
 
     handler = httpCreateHandler(http, "cgiHandler", 
-        HTTP_STAGE_QUERY_VARS | HTTP_STAGE_CGI_VARS | HTTP_STAGE_EXTRA_PATH, module);
+        HTTP_STAGE_PARAMS /* UNUSED | HTTP_STAGE_CGI_PARAMS | HTTP_STAGE_EXTRA_PATH */, module);
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }

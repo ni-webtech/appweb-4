@@ -130,6 +130,7 @@ static void openPhp(HttpQueue *q)
 
     } else if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST | HTTP_PUT)) {
         httpMapFile(q->conn, rx->route);
+        httpCreateCGIParams(q->conn);
         if (!q->stage->stageData) {
             if (initializePhp(q->conn->http) < 0) {
                 httpError(q->conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "PHP initialization failed");
@@ -217,14 +218,14 @@ static void processPhp(HttpQueue *q)
             }
             hp = mprGetNextKey(rx->headers, hp);
         }
-        if (rx->formVars) {
-            hp = mprGetFirstKey(rx->formVars);
+        if (rx->params) {
+            hp = mprGetFirstKey(rx->params);
             while (hp) {
                 if (hp->data) {
                     php_register_variable(supper(hp->key), (char*) hp->data, php->var_array TSRMLS_CC);
                     mprLog(4, "php: form var %s = %s", hp->key, hp->data);
                 }
-                hp = mprGetNextKey(rx->formVars, hp);
+                hp = mprGetNextKey(rx->params, hp);
             }
         }
     } zend_end_try();
@@ -511,7 +512,7 @@ int maPhpHandlerInit(Http *http, MprModule *module)
 
     mprSetModuleFinalizer(module, finalizePhp); 
 
-    handler = httpCreateHandler(http, module->name, HTTP_STAGE_CGI_VARS | HTTP_STAGE_EXTRA_PATH, module);
+    handler = httpCreateHandler(http, module->name, /* UNUSED HTTP_STAGE_CGI_PARAMS | HTTP_STAGE_EXTRA_PATH */ 0, module);
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }

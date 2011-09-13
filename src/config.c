@@ -230,7 +230,7 @@ static int addLanguageRootDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S %S", &lang, &path)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if ((path = stemplate(path, route->pathVars)) == 0) {
+    if ((path = stemplate(path, route->pathTokens)) == 0) {
         return MPR_ERR_BAD_SYNTAX;
     }
     if (mprIsRelPath(path)) {
@@ -535,7 +535,7 @@ static int compressDirective(MaState *state, cchar *key, cchar *value)
 
     Condition [!] exists string
     Condition [!] directory string
-    Condition [!] match pattern string
+    Condition [!] match string valuePattern
 
     Strings can contain route->pattern and request ${tokens}
  */
@@ -661,22 +661,6 @@ static int errorLogDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    Query [!] name value
- */
-static int queryDirective(MaState *state, cchar *key, cchar *value)
-{
-    char    *field;
-    int     not;
-
-    if (!maTokenize(state, value, "?! %S %*", &not, &field, &value)) {
-        return MPR_ERR_BAD_SYNTAX;
-    }
-    httpAddRouteQuery(state->route, field, value, not);
-    return 0;
-}
-
-
-/*
     Group groupName
  */
 static int groupDirective(MaState *state, cchar *key, cchar *value)
@@ -687,7 +671,7 @@ static int groupDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    Header [!] name value
+    Header [!] name valuePattern
  */
 static int headerDirective(MaState *state, cchar *key, cchar *value)
 {
@@ -840,6 +824,16 @@ static int limitMemoryRedlineDirective(MaState *state, cchar *key, cchar *value)
 static int limitRequestBodyDirective(MaState *state, cchar *key, cchar *value)
 {
     state->host->limits->receiveBodySize = stoi(value, 10, 0);
+    return 0;
+}
+
+
+/*
+    LimitRequestForm bytes
+ */
+static int limitRequestFormDirective(MaState *state, cchar *key, cchar *value)
+{
+    state->host->limits->receiveFormSize = stoi(value, 10, 0);
     return 0;
 }
 
@@ -1037,14 +1031,16 @@ static int logRotationDirective(MaState *state, cchar *key, cchar *value)
 static int logRoutesDirective(MaState *state, cchar *key, cchar *value)
 {
     HttpRoute   *rp;
+    cchar       *methods;
     int         next;
 
     mprLog(0, "HTTP Routes for URI %s", state->route->pattern);
     for (next = 0; (rp = mprGetNextItem(state->host->routes, &next)) != 0; ) {
+        methods = httpGetRouteMethods(rp);
         if (rp->target) {
-            mprLog(0, "  %-12s %-16s %-30s %-14s", rp->name, rp->methods ? rp->methods : "", rp->pattern, rp->target);
+            mprLog(0, "  %-12s %-16s %-30s %-14s", rp->name, methods ? methods : "", rp->pattern, rp->target);
         } else {
-            mprLog(0, "  %-12s %-16s %-30s", rp->name, rp->methods ? rp->methods : "", rp->pattern);
+            mprLog(0, "  %-12s %-16s %-30s", rp->name, methods ? methods : "", rp->pattern);
         }
     }
     return 0;
@@ -1180,7 +1176,7 @@ static int methodsDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-   Update field var value
+   Update param var value
    Update cmd commandLine
  */
 static int updateDirective(MaState *state, cchar *key, cchar *value)
@@ -1222,6 +1218,32 @@ static int orderDirective(MaState *state, cchar *key, cchar *value)
     } else {
         return MPR_ERR_BAD_SYNTAX;
     }
+    return 0;
+}
+
+
+/*
+    Param [!] name valuePattern
+ */
+static int paramDirective(MaState *state, cchar *key, cchar *value)
+{
+    char    *field;
+    int     not;
+
+    if (!maTokenize(state, value, "?! %S %*", &not, &field, &value)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    httpAddRouteParam(state->route, field, value, not);
+    return 0;
+}
+
+
+/*
+    Prefix /URI-PREFIX
+ */
+static int prefixDirective(MaState *state, cchar *key, cchar *value)
+{
+    httpSetRoutePrefix(state->route, value);
     return 0;
 }
 
@@ -1404,16 +1426,6 @@ static int routeNameDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    Prefix /URI-PREFIX
- */
-static int prefixDirective(MaState *state, cchar *key, cchar *value)
-{
-    httpSetRoutePrefix(state->route, value);
-    return 0;
-}
-
-
-/*
     ServerName URI
  */
 static int serverNameDirective(MaState *state, cchar *key, cchar *value)
@@ -1482,6 +1494,7 @@ static int sourceDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+#if UNUSED
 /*
     StartHandler before|after|smart
  */
@@ -1503,6 +1516,7 @@ static int startHandlerDirective(MaState *state, cchar *key, cchar *value)
     }
     return 0;
 }
+#endif
 
 
 /*
@@ -2002,6 +2016,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "LimitMemoryMax", limitMemoryMaxDirective);
     maAddDirective(appweb, "LimitMemoryRedline", limitMemoryRedlineDirective);
     maAddDirective(appweb, "LimitRequestBody", limitRequestBodyDirective);
+    maAddDirective(appweb, "LimitRequestForm", limitRequestFormDirective);
 
     /* Deprecated */
     maAddDirective(appweb, "LimitRequestFields", limitRequestHeaderCountDirective);
@@ -2035,10 +2050,10 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "Methods", methodsDirective);
     maAddDirective(appweb, "NameVirtualHost", nameVirtualHostDirective);
     maAddDirective(appweb, "Order", orderDirective);
+    maAddDirective(appweb, "Param", paramDirective);
     maAddDirective(appweb, "Prefix", prefixDirective);
     maAddDirective(appweb, "Protocol", protocolDirective);
     maAddDirective(appweb, "PutMethod", putMethodDirective);
-    maAddDirective(appweb, "Query", queryDirective);
     maAddDirective(appweb, "Redirect", redirectDirective);
     maAddDirective(appweb, "Require", requireDirective);
     maAddDirective(appweb, "Reset", resetDirective);
@@ -2053,7 +2068,9 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "SetConnector", setConnectorDirective);
     maAddDirective(appweb, "SetHandler", setHandlerDirective);
     maAddDirective(appweb, "Source", sourceDirective);
+#if UNUSED
     maAddDirective(appweb, "StartHandler", startHandlerDirective);
+#endif
     maAddDirective(appweb, "StartThreads", startThreadsDirective);
     maAddDirective(appweb, "Target", targetDirective);
     maAddDirective(appweb, "Timeout", timeoutDirective);

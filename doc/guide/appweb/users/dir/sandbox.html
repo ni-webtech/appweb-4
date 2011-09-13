@@ -46,6 +46,7 @@
                 <li><a href="#limitChunkSize">LimitChunkSize</a></li>
                 <li><a href="#limitClients">LimitClients</a></li>
                 <li><a href="#limitRequestBody">LimitRequestBody</a></li>
+                <li><a href="#limitRequestForm">LimitRequestForm</a></li>
                 <li><a href="#limitRequestFields">LimitRequestFields</a></li>
                 <li><a href="#limitRequestFieldSize">LimitRequestFieldSize</a></li>
                 <li><a href="#limitResponseBody">LimitResponseBody</a></li>
@@ -124,7 +125,9 @@
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="limitRequestBody" id="limitRequestBody"></a>
+            </table>
+            
+            <a name="limitRequestBody" id="limitRequestBody"></a>
             <h2>LimitRequestBody</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>
@@ -164,7 +167,56 @@
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="limitRequestFields" id="limitRequestFields"></a>
+            </table>
+            
+            <a name="limitRequestForm" id="limitRequestForm"></a>
+            <h2>LimitRequestForm</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Set the maximum size of the request form from the client.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>LimitRequestForm limit</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>LimitRequestForm 65536</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The LimitRequestForm directive defines a maximum size for the request form data. 
+                            Form data is encoded with a Content-Type of "application/x-www-form-urlencoded". Form data
+                            is fully buffered before doing Route matching and constructing the pipeline. Whereas, 
+                            non-form data is streamed to the handler and not buffered.</p>
+                            <p>For embedded
+                            applications, it is useful to limit the request body to the expected maximum. This ensures
+                            that rogue or malicious requests will not cause the server to allocate unwanted memory to
+                            servicing the request.</p>
+                            <p>The limit is an integer between zero and 2147483647 (2GB), where zero means unlimited.
+                            If a request is received that is larger than the limit, it will be rejected and the client
+                            will receive an error. The default limit is 64 MB.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="security">Security</td>
+                        <td>
+                            <p>This directive can be quite useful in certain denial-of-service attacks where the
+                            attacker sends large documents of a certain type.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            
+            <a name="limitRequestFields" id="limitRequestFields"></a>
             <h2>LimitRequestFields</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>

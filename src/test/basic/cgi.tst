@@ -5,7 +5,7 @@
 const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
-if (!test || test.config["cgi"] == 1) {
+if (!global.test || test.config["cgi"] == 1) {
     /* Suport routines */
 
     function contains(pat): Void {
@@ -39,7 +39,7 @@ if (!test || test.config["cgi"] == 1) {
         assert(http.status == 200)
         contains("cgiProgram: Output")
 
-        if (test.os == "WIN") {
+        if (global.test && test.os == "WIN") {
             http.get(HTTP + "/cgi-bin/cgiProgram.exe")
             assert(http.status == 200)
             contains("cgiProgram: Output")
@@ -216,7 +216,7 @@ if (!test || test.config["cgi"] == 1) {
         match("ARG.5.", "g\\>h")
         match("ARG.6.", "i\\'j")
 
-        if (test.os == "WIN") {
+        if (global.test && test.os == "WIN") {
             //  TODO - fix. Windows is eating a backslash
             match("ARG.7.", "k\"l")
         } else {

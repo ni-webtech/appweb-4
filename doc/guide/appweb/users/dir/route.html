@@ -1,0 +1,1047 @@
+<!-- BeginDsi "dsi/head.html" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Embedthis Appweb 4.0.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="appwebserver.org" /> 
+                        <input type="hidden" name="sitesearch" value="appwebserver.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 4.0.0
+        </div>
+        <div class="crumbs">
+            <a href="../../../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <a href="../index.html">Users Guide</a> &gt; <a href="../configuration.html#directives">Configuration
+            Directives</a> &gt; <b>Route Directives</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <h2>Quick Nav</h2>
+            <ul>
+                <li><a href="#addHandler">AddHandler</a></li>
+                <li><a href="#addInputFilter">AddInputFilter</a></li>
+                <li><a href="#addLanguage">AddLanguage</a></li>
+                <li><a href="#addLanguageRoot">AddLanguageRoot</a></li>
+                <li><a href="#addOutputFilter">AddOutputFilter</a></li>
+                <li><a href="#alias">Alias</a></li>
+                <li><a href="#clientCache">ClientCache</a></li>
+                <li><a href="#clientCacheByType">ClientCacheByType</a></li>
+                <li><a href="#compress">Compress</a></li>
+                <li><a href="#condition">Condition</a></li>
+                <li><a href="#defaultLanguage">DefaultLanguage</a></li>
+                <li><a href="#documentRoot">DocumentRoot</a></li>
+                <li><a href="#errorDocument">ErrorDocument</a></li>
+                <li><a href="#form">Form</a></li>
+                <li><a href="#header">Header</a></li>
+                <li><a href="#logRoutes">LogRoutes</a></li>
+                <li><a href="#prefix">Prefix</a></li>
+                <li><a href="#putMethod">PutMethod</a></li>
+                <li><a href="#redirect">Redirect</a></li>
+                <li><a href="#reset">Reset</a></li>
+                <li><a href="#route">Route</a></li>
+                <li><a href="#routeName">RouteName</a></li>
+                <li><a href="#scriptAlias">ScriptAlias</a></li>
+                <li><a href="#setConnector">SetConnector</a></li>
+                <li><a href="#setHandler">SetHandler</a></li>
+<li><a href="#target">Target</a></li>
+                <li><a href="#traceMethod">TraceMethod</a></li>
+                <li><a href="#update">Update</a></li>
+            </ul>
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../configuration.html">Configuration</a></li>
+                <li><a href="../configuration.html#directives">Configuration Directives</a></li>
+            </ul>
+        </div>
+        <div class="contentLeft">
+            <a href="../configuration.html#directives"></a>
+
+            <h1>Route Directives</h1><a name="addHandler" id="addHandler"></a>
+            <h2>AddHandler</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Add a handler for processing content with specific file extensions</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>AddHandler handlerName extension [extension] ...</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, Virtual host, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>AddHandler ejsHandler ejs asp</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The AddHandler directive ensures that the Appweb handler specified by handlerName, will
+                            be run whenever a document with the given extension is requested. Multiple extensions may
+                            be specified and multiple AddHandler directives may exist for any handler.</p>
+                            <p>If the AddHandler directive is specified within a <a href="vhost.html">VirtualHost</a>
+                            or <a href="location.html">Route</a> block, it is only valid within that context.
+                            VirtualHosts and Route blocks inherit the handler settings defined by outer blocks. I.e.
+                            a VirtualHost will inherit all the handlers of the default server. If you wish to remove a
+                            handler mapping, use <tt>Reset pipeline</tt> and then re-add the required handlers.</p>
+                            <p>NOTE: Unlike Apache, the extensions are case sensitive on systems that have case
+                            sensitive file systems. Also, the period must be part of the extension.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="addInputFilter" id="addInputFilter"></a>
+            <h2>AddInputFilter</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Add the specified filter to the input processing pipeline</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>AddInputFilter filterName</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>&lt;Route /secret/&gt;<br />
+                        &nbsp; &nbsp; AddInputFilter decryptFilter<br />
+                        &lt;/Route&gt;</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The AddInputFilter directive adds a filter to the input processing pipeline. Incoming
+                            request data is passed through the input pipeline and may be processed by each filter in
+                            turn.</p>
+                            <p>Filters stack and thus have an order. The first filter added will receive the data last
+                            and the last filter defined for a given URI will be the first filter to receive the
+                            data.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="addOutputFilter" id="addOutputFilter"></a>
+            <h2>AddOutputFilter</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Add the specified filter to the output processing pipeline</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>AddOutputFilter filterName</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>&lt;Route /capture/&gt;<br />
+                        &nbsp; &nbsp; AddOutputFilter compressFilter<br />
+                        &lt;/Route&gt;</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The AddOutputFilter directive adds a filter to the output processing pipeline. Output
+                            response data is passed through the output pipeline before being sent to the client.</p>
+                            <p>Filters stack and thus have an order. The first filter added will receive the output
+                            data first and the last filter defined for a given URI will be the last filter to receive
+                            the data before it is passed to the network connector for transmitting to the client.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <a name="addLanguage" id="addLanguage"></a>
+            <h2>AddLanguage</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Add the specified language</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>AddLanguage lang suffix [position]</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>&lt;Route /public/&gt;<br />
+                        &nbsp; &nbsp; AddLanguage en en before<br />
+                        &lt;/Route&gt;</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The AddLanguage directive defines a language with an associated filename suffix. When
+                            a client request is served, the appropriate language will be selected using the language
+                            specified by the client's Accept HTTP header. Then, the document filename will be constructed
+                            using the language suffix. The suffix can be positioned either before or after the document
+                            extension via the "position" argument.</p>
+                            <p>If the client requested language is not defined, the language specified via the 
+                            <a href="#defaultLanguage">DefaultLanguage</a> directive or "english" will be used.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <a name="addLanguageRoot" id="addLanguageRoot"></a>
+            <h2>AddLanguageRoot</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Add the specified language and language document directory to the route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>AddLanguageRoot lang path</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>&lt;Route /public/&gt;<br />
+                        &nbsp; &nbsp; AddLanguageRoot en english-docs<br />
+                        &lt;/Route&gt;</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The AddLanguageRoot directive defines a language with an associated directory of language
+                                specific content. When
+                            a client request is served, the appropriate language will be selected using the language
+                            specified by the client's Accept HTTP header. Then, the document filename will be constructed
+                            using the language content path. 
+                            <p>If the client requested language is not defined, the language specified via the 
+                            <a href="#defaultLanguage">DefaultLanguage</a> directive or "english" will be used.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <a name="alias" id="alias"></a>
+            <h2>Alias</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Map URIs and leading URI portions to file system locations.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Alias urlPortion destinationPath</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, Virtual host</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Alias /manual /ftp/manualDirectory</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The Alias directive is a short-cut to create a Route that maps a URI prefix to a 
+                            Document Root. It allows URIs to refer to documents that are stored outside the
+                            Document Root. The urlPortion of the request URI will be mapped onto the nominated
+                            destinationPath which may be a file or a directory anywhere on the system.</p>
+                            <p>It is an easy mistake to have mismatched trailing slashes. If you have a trailing slash
+                            on the urlPortion ensure you also have one on the destinationPath.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <a name="clientCache" id="clientCache"></a>
+            <h2>ClientCache</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Control client-side caching by document extension</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>ClientCache lifespan extensions ...</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>ClientCache 86400 html gif jpeg jpg png pdf ico js<br/>
+                            ClientCache 86400 ""</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The ClientCache directive enables the generation of "Cache-Control" and "Expires" HTTP 
+                            headers for matching documents. The Cache-Control and Expires HTTP headers instruct
+                            clients to cache response content for a specified duration. If the document is subsequently
+                            required by the client before the response content has expired, the document will be served
+                            from the client cache without contacting the server. </p>
+                            <p>The ClientCache directive specifies a lifespan in seconds to be used for any document that
+                            matches one of the set of given extensions. An empty extension "" may be given to match
+                            all documents regardless of extension.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="clientCacheByType" id="clientCacheByType"></a>
+            <h2>ClientCacheByType</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Control client-side caching by document mime type</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>ClientCacheByType lifespan mime-types ...</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>ClientCacheByType 86400 image/gif text/css</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The CacheByType directive enables the generation of "Cache-Control" and "Expires" HTTP 
+                            headers for matching documents. The Cache-Control and Expires HTTP headers instruct
+                            clients to cache response content for a specified duration. If the document is subsequently
+                            required by the client before the response content has expired, the document will be served
+                            from the client cache without contacting the server. </p>
+                            <p>The ClientCacheByType directive specifies a lifespan in seconds to be used for any document 
+                            that matches one of the set of given mime-types for the document. An empty mime-type "" may be 
+                            given to match all documents regardless of type.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="compress" id="compress"></a>
+            <h2>Compress</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Control serving of compressed documents.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Compress [gzip|none]</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Compress gzip</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The <tt>"Compress gzip"</tt> directive enables the serving of compressed content by
+                            the fileHandler and other supported handlers. If a document is not present, but a compressed
+                            version of the document exists, then the compressed version will be served. The filename
+                            for compressed content is assumed to be the normal filename with a ".gz" extension added.</p>
+                            <p>The <tt>"Compress none"</tt> directive can be used to turn compression off.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="condition" id="condition"></a>
+            <h2>Condition</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define a pre-condition that must be true for the route to be selected.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Condition [!] rule details ...<br/>
+                            Condition [!] missing<br/>
+                            Condition [!] directory string<br/>
+                            Condition [!] exists string<br/>
+                            Condition [!] match string pattern<br/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Condition missing<br />
+                            Condition directory ${request:filename}<br />
+                            Condition ! exists ${request:filename}<br />
+                            Condition match ${header:User-Agent} (Chrome|Safari) 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The Condition directive support four rules: </p>
+                            <ul>
+                                <li>missing &mdash; True if the default request filename is missing.</li>
+                                <li>directory &mdash; True the if rule argument evaluates to a directory</li>
+                                <li>exists &mdash; True if the rule argument evaluates to an existing file</li>
+                                <li>match &mdash; True if the regular expression matches the argument</li>
+                            </ul>
+                            <p>The rule result can be negated by prefixing with "<tt>!</tt>".</p>
+                            <p>For information about embedded {tokens}, see <a href="../routing.html#tokens">Tokens</a>
+                            in the <a href="../routing.html">Routing Guide</a>.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="defaultLanguage" id="defaultLanguage"></a>
+            <h2>DefaultLanguage</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Set the default language to select for content.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>DefaultLanguage languageNmenonic</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>DefaultLanguage en</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The DefaultLanguage directive defines the default language to use when the
+                                the client Accept HTTP header is either absent or requests a non-supported language.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="documentRoot" id="documentRoot"></a>
+            <h2>DocumentRoot</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Top level directory containing the documents to be published for context.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>DocumentRoot directoryPath</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, Virtual host, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>DocumentRoot /var/www</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The DocumentRoot directive defines the directory containing the documents that will be
+                            served. Each route can have a different document root. The directoryPath should not have 
+                            a trailing slash.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="errorDocument" id="errorDocument"></a>
+            <h2>ErrorDocument</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define an error document to be served when a HTTP error occurs</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>ErrorDocument code URI</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, Virtual host, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>ErrorDocument 404 /notFound.html</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>This directive configures a specific web page to be served whenever a given HTTP error
+                            code is encountered.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="form" id="form"></a>
+            <h2>Form</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define a form field value must match a value for the route to be selected.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Form [!] field pattern</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Form name "John Smith"</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The Form directive tests if the specified request form field value matches the
+                            required value. Form fields are sourced from the request query and posted form data.
+                            The rule result can be negated by prefixing with "<tt>!</tt>".</p>
+                            <p>For information about embedded {tokens}, see <a href="../routing.html#tokens">Tokens</a>
+                            in the <a href="../routing.html">Routing Guide</a>.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="header" id="header"></a>
+            <h2>Header</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define a header value must match a value for the route to be selected.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Header [!] field pattern</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Header User-Agent (Chrome|Safari)</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The Header directive tests if the specified request HTTP header value matches the
+                            required value. The rule result can be negated by prefixing with "<tt>!</tt>".</p>
+                            <p>For information about embedded {tokens}, see <a href="../routing.html#tokens">Tokens</a>
+                            in the <a href="../routing.html">Routing Guide</a>.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="logRoutes" id="logRoutes"></a>
+            <h2>LogRoutes</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Show the route table in the error log.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>LogRoutes</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>LogRoutes</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The LogRoutes directive prints a representation of the important route configuration to
+                                the error log.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="prefix" id="prefix"></a>
+            <h2>Prefix</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define a URI prefix for the route.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Prefix URI-Prefix</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Prefix /info</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The Prefix directive defines a URI-prefix that will be stripped from the request URI
+                            if the route is selected to handle the request. Once stripped, the Request.scriptName will
+                            be set to the prefix. This is useful for an application to be able to be installed with 
+                            various URI application prefixes without having to modify the application.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            
+            <a name="putMethod" id="putMethod"></a>
+            <h2>PutMethod</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Control use of the HTTP PUT method inside a route block.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>PutMethod [on|off]</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual host, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>PutMethod on</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The HTTP PUT method is used for sending content to the server. It can be destructive
+                            and so the PUT method is disabled by default. It must be explicitly enabled for a location
+                            block efore use.
+                            <p>NOTE: PutMethod is a proprietary Appweb directive.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="redirect" id="redirect"></a>
+            <h2>Redirect</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Redirect requests to a new target.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Redirect [status] oldUrl newUrl</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Redirect temp /pressRelease.html /fixedPressRelease.html<br />
+                        Redirect permanent /acme.html http://www.coyote.com/acme.html<br />
+                        Redirect 410 /membersOnly</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The Redirect directive is a short-cut to create a Route that maps requests to a URI 
+                            to a new URI or document. 
+                            The old URI may be a full URI or it may be a leading portion of a URI. Typical use for 
+                            URI portions is to redirect all requests below a directory to another directory or site.</p>
+                            <p>The new URI may be local to the system, in which case it will begin with a "/"
+                            character. Or it may be on another system, in which case it will begin with "http://". In
+                            both cases, the user will receive a HTTP redirection response informing them of the new
+                            location of the document.</p>
+                            <p>The status argument may be either a numeric HTTP code or it may be one of the following
+                            symbolic codes:</p>
+                            <ul>
+                                <li>permanent &mdash; redirection. HTTP code 301.</li>
+                                <li>temp &mdash; redirection. HTTP code 302</li>
+                                <li>seeother &mdash; has been replaced, see other document. HTTP code 303.</li>
+                                <li>gone &mdash; resource has been remove. HTTP code 410. The newURI argument is
+                                ignored.</li>
+                            </ul>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="reset" id="reset"></a>
+            <h2>Reset [routes|pipeline]</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Reset the input and output processing pipeline.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Reset pipeline<br/>
+                        Reset routes</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual host, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Reset routes</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The <tt>Reset routes</tt> directive erases the configured and inherited route definition. 
+                            This is useful to start with a clean slate for route configuration. The <tt>Reset pipeline</tt>
+                            preserves route configuration but erases defined handlers, filters and
+                            connectors for the specified context. Use AddInputFilter, AddoutputFilter, AddHandler and 
+                            AddConnector to reinitialize the pipeline.</p>
+                            <p><tt>Reset pipeline</tt> is most often used inside VirtualHost blocks when you want to 
+                            limit the pipeline to a small set of handlers and filters for that Virtual Host.</p>
+                            <p>NOTE: <tt>Reset</tt> is a proprietary Appweb directive.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="route" id="route"></a>
+            <h2>Route</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define a block of directives to apply to a matching URI pattern</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>&lt;Route URI-Pattern&gt;<br />
+                        ...<br />
+                        &lt;/Route&gt;</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>&lt;Route /admin/debug&gt;<br />
+                        &nbsp; &nbsp; AddHandler myDebugHandler<br />
+                        &lt;/Route&gt;</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The Route directive defines a block of directives that apply to URIs 
+                            that match specified URI pattern.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="routeName" id="routeName"></a>
+            <h2>RouteName</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define a name for the route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>RouteName string</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>RouteName web-service-login</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The RouteName directive defines a name for the route that will be used by the LogRoutes
+                            directive when displaying the route table in the error log. If no route name is defined,
+                            the route pattern is used instead.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="scriptAlias" id="scriptAlias"></a>
+            <h2>ScriptAlias</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Map a URI to a destination and enable CGI script processing for that location.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>ScriptAlias urlPath destinationPath</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, Virtual Host, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>ScriptAlias /cgi-bin/ /var/myHost/cgi-bin</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The ScriptAlias directive is a short-cut to create a Route that maps matching URIs to
+                            a directory containing CGI scripts.
+                            The ScriptAlias directive is a convenient short-hand and is
+                            equivalent to the following directives:</p>
+                            <pre>
+&lt;Route /cgi-bin&gt;
+   Alias /cgi-bin/ "/var/myHost/cgi-bin/"
+   SetHandler cgiHandler
+&lt;/Route&gt;
+</pre>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="security">Security</td>
+                        <td>Make sure you locate your CGI script directories outside the DocumentRoot.</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="setConnector" id="setConnector"></a>
+            <h2>SetConnector</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Set the connector to transmit the response to the client</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>SetConnector connectorName</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, Virtual host, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>SetConnector netConnector</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The SetConnector directive defines the network connector that will transmit a response
+                            to the client. The connector represents the last stage in the output request pipeline.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="setHandler" id="setHandler"></a>
+            <h2>SetHandler</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Set the handler to processing requests</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>SetHandler handlerName</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, Virtual host, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>SetHandler handlerName</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The SetHandler directive defines the request handler that will service a request
+                            matching the enclosing block.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <a name="traceMethod" id="traceMethod"></a>
+            <h2>TraceMethod</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Control the Trace HTTP method</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>TraceMethod on|off</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, Virtual host, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>TraceMethod on</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The TraceMethod directive controls whether the TRACE HTTP method is enabled or not.
+                            Starting with version 2.2.2, the Trace method is disabled by default as it can represent a
+                            security risk. Use "TraceMethod on" to enable the trace method.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="security">Security</td>
+                        <td>It is considered by some to be a security risk to enable the Trace method.</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="update" id="update"></a>
+            <h2>Update</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define an update rule to modify the request when the route is selected.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Update field var value ...<br/>
+                            Update cmd commandLine...
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Condition missing<br />
+                            Condition directory ${request:filename}<br />
+                            Condition ! exists ${request:filename}<br />
+                            Condition match ${header:User-Agent} (Chrome|Safari) 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The Condition directive support four rules: </p>
+                            <ul>
+                                <li>missing &mdash; True if the default request filename is missing.</li>
+                                <li>directory &mdash; True the if rule argument evaluates to a directory</li>
+                                <li>exists &mdash; True if the rule argument evaluates to an existing file</li>
+                                <li>match &mdash; True if the regular expression matches the argument</li>
+                            </ul>
+                            <p>The rule result can be negated by prefixing with "<tt>!</tt>".</p>
+                            <p>For information about embedded {tokens}, see <a href="../routing.html#tokens">Tokens</a>
+                            in the <a href="../routing.html">Routing Guide</a>.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2011. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

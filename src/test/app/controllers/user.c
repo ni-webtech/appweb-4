@@ -5,7 +5,7 @@
 
 
 static void common(HttpConn *conn) {
-    espSetVar(conn, "title", "MVC Title");
+    espSetParam(conn, "title", "MVC Title");
 }
 
 
@@ -18,8 +18,8 @@ static void check(HttpConn *conn) {
 
 static void details(HttpConn *conn) { 
     common(conn);
-    espSetVar(conn, "title", "MVC Title");
-    espSetIntVar(conn, "secret", 42);
+    espSetParam(conn, "title", "MVC Title");
+    espSetIntParam(conn, "secret", 42);
     /* View will be rendered */
 }
 
@@ -37,7 +37,7 @@ static void login(HttpConn *conn) {
         espWrite(conn, "Logged in");
         espFinalize(conn);
 
-    } else if (espMatchVar(conn, "username", "admin") && espMatchVar(conn, "password", "secret")) {
+    } else if (espMatchParam(conn, "username", "admin") && espMatchParam(conn, "password", "secret")) {
         espWrite(conn, "Valid Login");
         espFinalize(conn);
         espSetSessionVar(conn, "id", "admin");
