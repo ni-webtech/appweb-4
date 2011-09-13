@@ -547,7 +547,7 @@ static int conditionDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%! %S %*", &not, &name, &details)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    return addCondition(state, name, details, not /* UNUSED | HTTP_ROUTE_STATIC_VALUES */);
+    return addCondition(state, name, details, not);
 }
 
 
@@ -1494,31 +1494,6 @@ static int sourceDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
-#if UNUSED
-/*
-    StartHandler before|after|smart
- */
-static int startHandlerDirective(MaState *state, cchar *key, cchar *value)
-{
-    char    *name, *when;
-
-    if (!maTokenize(state, value, "%S %*", &name, &when)) {
-        return MPR_ERR_BAD_SYNTAX;
-    }
-    if (scasematch(value, "before")) {
-        state->route->flags |= HTTP_ROUTE_HANDLER_BEFORE;
-    } else if (scasematch(value, "after")) {
-        state->route->flags |= HTTP_ROUTE_HANDLER_AFTER;
-    } else if (scasematch(value, "smart")) {
-        state->route->flags |= HTTP_ROUTE_HANDLER_SMART;
-    } else {
-        return configError(state, key);
-    }
-    return 0;
-}
-#endif
-
-
 /*
     StartThreads count
  */
@@ -2068,9 +2043,6 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "SetConnector", setConnectorDirective);
     maAddDirective(appweb, "SetHandler", setHandlerDirective);
     maAddDirective(appweb, "Source", sourceDirective);
-#if UNUSED
-    maAddDirective(appweb, "StartHandler", startHandlerDirective);
-#endif
     maAddDirective(appweb, "StartThreads", startThreadsDirective);
     maAddDirective(appweb, "Target", targetDirective);
     maAddDirective(appweb, "Timeout", timeoutDirective);
