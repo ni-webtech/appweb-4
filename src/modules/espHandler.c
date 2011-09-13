@@ -1202,7 +1202,6 @@ static int espUpdateDirective(MaState *state, cchar *key, cchar *value)
     }
     eroute->update = on;
     return 0;
-
 }
 
 

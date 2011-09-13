@@ -65,7 +65,7 @@ static void openEjs(HttpQueue *q)
 
 
 /*
-    EjsAlias scriptName [[path] script]]
+    EjsAlias appName [[path] script]]
  */
 static int ejsAliasDirective(MaState *state, cchar *key, cchar *value)
 {
