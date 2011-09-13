@@ -5,8 +5,8 @@
     <title>Embedthis Appweb 4.0.0 Documentation</title>
     <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
         embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
-    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
-        and applications." />
+    <meta name="description" content="Embedthis Sofware provides commercial and open source embedded web servers for 
+        devices and applications." />
 	<meta name="robots" content="index,follow" />
 	<link href="../../doc.css" rel="stylesheet" type="text/css" />
 	<link href="../../print.css" rel="stylesheet" type="text/css" media="print"/>
@@ -75,14 +75,16 @@
         - Key objects
 -->
             <p>The Appweb HTTP web server is a compact, modular, high-performance embedded web server. It supports an
-            extensive feature set including: HTTP/1.1, TLS/SSL, CGI, PHP, Ejscript, Ruby, Virtual Hosts, Digest
-            Authentication, Apache compatible configuration and logging and security sandboxing. Yet it remains very
-            small (from 1MB) and exceptionally fast (&gt; 4,500 requests per second).</p>
-            <p>Appweb is Apache configuration compatible and supports leading web application frameworks like PHP,
-            Ejscript, Perl and Ruby. It is an event-driven, multi-threaded web server and is able to support many
-            thousands of requests per second but it does not try to scale up like Apache for top-tier web sites.
-            Rather, it aims to be robust, secure and exceptionally fast with low memory utilization.</p><a name=
-            "deployment" id="deployment"></a>
+            extensive feature set including: HTTP/1.1, TLS/SSL, CGI, PHP, ESP, Ejscript, Virtual Hosts, Digest
+            Authentication, Apache style configuration and logging and security sandboxing. Yet Appweb remains very
+            small (from 1MB) and exceptionally fast (&gt; 5,000 requests per second).</p>
+            <p>Appweb supports leading web application frameworks like ESP, Ejscript and PHP. It also supports older
+            web creation strategies like CGI.</p>
+            <p>Appweb is an event-driven, multi-threaded web server and is able to support many
+            thousands of requests per second but it does not try to scale out like an enterprise-class server for 
+            top-tier web sites.
+            Rather, it aims to be robust, secure and blazingly fast with low and predictable memory utilization.</p>
+            <a name= "deployment" id="deployment"></a>
             <h2 class="section">Deployment Models</h2>
             <p>Appweb can be deployed in several ways:</p>
             <ul>
@@ -101,18 +103,21 @@
             <h3>Proxied</h3>
             <p>Appweb is an ideal application web server when running behind a reverse proxy such as Apache. The
             reverse proxy dispatches incoming requests to a set of Appweb instances which can effectively host
-            Ejscript, PHP or Ruby applications.</p><img src="../../images/proxied.jpg" alt="" /> <a name="processing"
-            id="processing"></a>
+            ESP, Ejscript or PHP applications.</p>
+            <img src="../../images/proxied.jpg" alt="" /> 
+            
+            <a name="processing" id="processing"></a>
             <h2 class="section">Processing Architecture</h2>
-            <p>Appweb runs typically as a single, multi-threaded, event driven process. Appweb uses a non-blocking
+            <p>Appweb typically runs one, multi-threaded, event driven process. Appweb uses a non-blocking
             event driven architecture and is capable of running many requests simultaneously.</p>
             <h3>Event Driven and Multi-threaded</h3>
             <p>While Appweb is multi-threaded, it does not consume a thread per request. A high performance thread pool
             is used to temporarily loan worker threads as required to service incoming requests. While waiting for
             incoming and outgoing I/O, the worker thread is returned to the pool for use by other requests. This
             architecture minimizes memory usage by reusing threads and provides excellent performance due to the thread
-            pool. Further, it scales well as one thread can service many requests.</p><a name="modules" id=
-            "modules"></a>
+            pool. Further, it scales well, as one thread can service many requests.</p>
+            
+            <a name="modules" id="modules"></a>
             <h2 class="section">Appweb Modules</h2>
             <p>Embeddable web servers have several competing goals:</p>
             <ul>
@@ -146,7 +151,7 @@
                     logging.</td>
                 </tr>
                 <tr>
-                    <td>Appweb HTTP Server</td>
+                    <td>Appweb HTTP Core Library</td>
                     <td>Core HTTP server. Includes services for initialization, HTTP protocol handling, socket
                     connection management, logging, virtual hosts, directory and location blocks, request processing
                     pipeline and module loading and management.</td>
@@ -164,8 +169,9 @@
                     Ideal for dynamic web applications.</td>
                 </tr>
                 <tr>
-                    <td>EGI Handler</td>
-                    <td>The embedded Gateway Interface handler supports in-process CGI.</td>
+                    <td>ESP Handler</td>
+                    <td>The Embedded Server Pages (ESP) web framework is an advanced, Model,View,Controller "C" 
+                        language web framework.</td>
                 </tr>
                 <tr>
                     <td>PHP Handler</td>
@@ -174,16 +180,6 @@
                 <tr>
                     <td>CGI Handler</td>
                     <td>Common Gateway Interface handler.</td>
-                </tr>
-                <tr>
-                    <td>Upload Handler</td>
-                    <td>Form-based file upload handler.</td>
-                </tr>
-                <tr>
-                    <td>Auth Filter</td>
-                    <td>Authorization filter. Supports Basic and Digest authorization on a per directory or virtual
-                    host basis. This module filters incoming requests and validates user credentials before passing the
-                    request onto the relevant handler for processing.</td>
                 </tr>
                 <tr>
                     <td>Chunk Filter</td>
@@ -210,16 +206,13 @@
                     data. These strategies dramatically boost the performance of serving static data.</td>
                 </tr>
                 <tr>
-                    <td>Web Frameworks</td>
-                    <td>Appweb supports in-memory modules for Ejscript and PHP web frameworks. By running in-memory,
-                    the performance of applications using these frameworks is greatly enhanced.</td>
-                </tr>
-                <tr>
                     <td>Secure Sockets Layer (SSL)</td>
                     <td>Secure Socket Layer protocol stack. This is a virtual interface that can selectively support a
                     variety of SSL providers including: the Peersec MatrixSSL and OpenSSL stacks.</td>
                 </tr>
-            </table><a name="httpServer" id="httpServer"></a>
+            </table>
+            
+            <a name="httpServer" id="httpServer"></a>
             <h3>Appweb HTTP Server Core</h3>
             <p>The core Appweb HTTP server is relatively one of the smaller components of the Appweb product when
             compared to the dynamic modules that run atop it. The core server provides a set of services for the
@@ -229,10 +222,12 @@
             parsing the Appweb configuration file, server, virtual host and directory authorization management, request
             pipeline management and request processing.</p>
             <p>The core server also configures and enforces any sandbox resource limits that have been requested in the
-            configuration file, for example: thread limits and request URL and body size limitations. This enables
+            configuration file, for example: thread limits and request URI and body size limitations. This enables
             Appweb to be deterministic in its use of system resources and to be a good system citizen. The core Appweb
             server can be configured to execute single or multi-threaded. With appropriate sandbox limits, it can serve
-            thousands of requests per second if required.</p><a name="configuration" id="configuration"></a>
+            thousands of requests per second if required.</p>
+            
+            <a name="configuration" id="configuration"></a>
             <h2 class="section">Appweb Configuration</h2>
             <p>Appweb uses an Apache style configuration file. This configuration file is read when Appweb starts and
             it manages every aspect of Appweb's configuration including what ports and addresses to listen to, what
@@ -240,8 +235,9 @@
             <p>The configuration file supports a wide variety of directives such as virtual hosting, directory
             authentication, port binding, aliasing, logging and request pipeline configuration. It has conditional
             declarations and supports the inclusion of sub-configuation files. Appweb uses a one-pass traversal of the
-            configuration file which means that the order of directives matters.</p><a name="requests" id=
-            "requests"></a>
+            configuration file which means that the order of directives matters.</p>
+            
+            <a name="requests" id="requests"></a>
             <h2 class="section">Request Processing</h2><!--
         - Header parsing
         - Request Matching
@@ -264,7 +260,7 @@
             used to initially parse the request. See the <a href="../../guide/appweb/users/vhosts.html">Virtual
             Hosts</a> for more information.</p>
             <h3>HTTP Header Parsing</h3>
-            <p>The first line of the HTTP request specifies the HTTP operation method to use, the URL to access and the
+            <p>The first line of the HTTP request specifies the HTTP operation method to use, the URI to access and the
             variant of the HTTP protocol to use. This typically looks like:</p>
             <pre>
 GET /index.html HTTP/1.1
@@ -302,7 +298,7 @@ HeaderName: value
                 </tr>
                 <tr>
                     <td>COOKIE</td>
-                    <td>Cookie associated with the URL in the clients cookie cache.</td>
+                    <td>Cookie associated with the URI in the clients cookie cache.</td>
                 </tr>
                 <tr>
                     <td>HOST</td>
@@ -329,31 +325,38 @@ Connection: keep-alive
             handlers and pipeline stages. When all the headers have been processed Appweb proceeds to do handler
             matching. This will occur before any associated POST data has been read from the client. POST data may be
             form data submitted by the client or it may be a file upload using the PUT method.</p>
-            <h3>Handler Matching</h3>
-            <p>Appweb has a powerful handler matching algorithm that is adaptable to most requirements. Handlers may
-            match requests based on the URL extension or on the leading portion of a URL (called prefix matching). Both
-            forms are specified per handler in the Appweb configuration file.</p>
+            <h3>Request Routing</h3>
+            <p>Appweb has a powerful request routing engine that processes client HTTP requests. The engine is 
+            configured with a set of routes from the Appweb configuration file. When a request is received, 
+            it tests various routes and selects 
+            the best route to handle the request. In the process, routes may redirect or rewrite the request as required.</p>
+            <p>An Appweb configuration will typically have many routes. The configured routes are tested in-order 
+            by matching the route regular expression pattern against the request URI. A route may require that 
+            further preconditions 
+            be met before it is suitable to process the request. If the required conditions are not met, the next 
+            route in the configuration will be tested. There is always a catch-all route that will process the 
+            request if all prior routes fail to qualify.</p>
+            <p>To define a route, use the <a href=
+            "../../guide/appweb/users/dir/route.html">Route</a> directive. For example:</p>
+            <pre>
+&lt;Route /projects/video&gt;
+    SetHandler videoHandler
+&lt;/Route&gt;
+</pre>
+            <p>This will cause the videoHandler to respond to any URI that begins with "/projects/video" after the
+            http://site portion of the URI.</p>
             <p>To associate a handler to a given extension, use the <a href=
             "../../guide/appweb/users/dir/route.html#addHandler">AddHandler</a> directive. For example:</p>
-            <pre>
-AddHandler espHandler .myDoc
+<pre>
+AddHandler espHandler myDoc
 </pre>
-            <p>This will cause the ejsHandler to respond to any URL that has a ".myDoc" extension.</p>
-            <p>To associate a handler with a URL prefix, use the <a href=
-            "../../guide/appweb/users/dir/route.html">Location</a> directive. For example:</p>
-            <pre>
-&lt;Location /projects/video&gt;
-    SetHandler videoHandler
-&lt;/Location&gt;
-</pre>
-            <p>This will cause the videoHandler to respond to any URL that begins with "/projects/video" after the
-            http://site portion of the URL.</p>
-            <p>Multiple handlers may match a URL. In this case they are applied in the order they are specified in the
-            Appweb configuration file. In the default configuration, the fileHandler is specified last, without any
-            extension and it thus becomes a catch-all. It will process any document not matched by other handlers and
-            it will return the document without processing back to the client.</p>
-            <p>Once the handlers have been matched, the request pipeline is constructed and run.</p><a name="pipeline"
-            id="pipeline"></a>
+            <p>This will cause the ejsHandler to respond to any URI that has a "<tt>.myDoc</tt>" extension.</p>
+            <p>Multiple routes may match a URI. In this case they are applied in the order they are specified in the
+            Appweb configuration file. 
+            <p>Once the route has been selected, the request pipeline is constructed and the request handler is started
+            to create the response for the client.</p>
+            
+            <a name="pipeline" id="pipeline"></a>
             <h2 class="section">Request Pipeline</h2>
             <p>The Appweb core uses a bi-direction pipeline to process requests and generate responses. This consists
             of a mechanism of queues, packets, buffering and event scheduling. The pipeline architecture is highly
@@ -422,25 +425,28 @@ AddHandler espHandler .myDoc
             <h4>Net Connector</h4>
             <p>The Net connector is a generalized network connector that can transmit content from any handler to the
             client. It supports vectored writes to avoid copying data when interleaving with HTTP, range or chunk
-            headers.</p><a name="frameworks" id="frameworks"></a>
+            headers.</p>
+            
+            <a name="frameworks" id="frameworks"></a>
             <h2 class="section">Web Frameworks</h2>
-            <p>Appweb supports in-memory modules for the Ejscript and PHP web application frameworks. These provide the
-            highest levels of performance.</p>
-            <p>Running application frameworks in-memory can affect system reliability. A flaw in the web application or
-            framework can compromise Appweb. There are two ways to address this potential issue:</p>
-            <ul>
-                <li>Use the Appweb Angel to monitor and restart Appweb if required.</li>
-                <li>Use a reverse-proxy in front of Appweb to manage multiple Appweb instances.</li>
-            </ul>
+            <p>Appweb supports loadable modules for the ESP, Ejscript and PHP web frameworks.</p>
+            <h3>Embedded Server Pages  Web Framework</h3>
+            <p>The ESP web framework is a high performance, Model,View,Controller web framework. 
+            It uses the "C" language embedded in HTML web pages and for Controllers. It provides 
+            an application generator, templating and layout engine, a Model/View/Controller framework, extensive caching
+            and a library of Ajax view controls. It is blazingly fast via the use of "C" and caching of 
+            compiled web pages and rendered HTML.
+            See the <a href="espArchitecture.html">ESP Web Framework</a> for more details.</p>
             <h3>Ejscript Web Framework</h3>
             <p>The Ejscript Web Framework was designed to make it easier to create dynamic web applications. It uses
-            server-side JavaScript as the application language and provides provides an application generator,
-            templating engine, a powerful Model/View/Controller framework and a library of Ajax view controls.</p>See
-            the <a href="../../ejs/ref/ejs/webArchitecture.html">Ejscript Web Framework</a> for more details.
+                server-side JavaScript as the application language and provides provides an application generator,
+                templating engine, a powerful Model/View/Controller framework and a library of Ajax view controls. See
+                the <a href="ejsArchitecture.html">Ejscript Web Framework</a> for more details.</p>
             <h3>PHP</h3>
             <p>PHP is a widely-used general-purpose scripting language that is especially suited for Web development
-            and can be embedded into HTML. Appweb provides a fast, in-memory handler for the PHP web
-            framework.</p><a name="security" id="security"></a>
+            and can be embedded into HTML. Appweb provides a fast, in-memory handler for the PHP web framework.</p>
+            
+            <a name="security" id="security"></a>
             <h2 class="section">Security</h2>
             <p>Appweb provides a suite of measures designed to increase the security of your web server:</p>
             <ul>
@@ -459,14 +465,16 @@ AddHandler espHandler .myDoc
             <p>Sandboxing is the term applied to running Appweb in a confined environment. Appweb has a set of
             configuration file directives that allow you to define a sandbox which limits the resources that Appweb may
             used for a given request. By using well defined sandbox directives, you can help ensure that your
-            application and system will not be compromised by malicious requests.</p><a name="mpr" id="mpr"></a>
-            <h2 class="section">Portable Runtime (MPR)</h2>
+            application and system will not be compromised by malicious requests.</p>
+            
+            <a name="mpr" id="mpr"></a>
+            <h2 class="section">Multithreaded Portable Runtime (MPR)</h2>
             <p>Appweb is built upon a portable runtime layer called the MPR. This layer insulates the rest of the
             product from the underlying platform and allows it to be highly portable to new operating systems or
             hardware.</p>
-            <p>The MPR also provides a suite of services that facilitate the creation of high performance,
-            multi-threaded management and server applications, including: thread and communications management, dynamic
-            module loading, timers and logging.</p>
+            <p>The MPR provides a suite of services that facilitate the creation of high performance,
+            multi-threaded management and server applications, including: thread management, dynamic module loading, 
+            networking, safe string handling, timers, XML parsing and logging.</p>
             <p>The MPR also provides a safer environment in which to program as it replaces C APIs that are prone to
             buffer overflows and other similar security exploits. The MPR includes a high performance, safe string
             library that supports a secure programming style.</p>
@@ -474,13 +482,16 @@ AddHandler espHandler .myDoc
             single and multi-threaded architectures, polled or async event notification, POSIX select waiting and
             Windows message loops. When coupled with C and C++ APIs, API web can be easily integrated into most C/C++
             applications.</p>
-            <p>The MPR uses a high performance memory allocator that provides slab and arena based allocations. When
-            memory is allocated in the MPR, it is connected to a parent memory block, thus forming a tree of blocks.
-            When a block is freed, all children blocks are automatically freed. When a request completes, one free
-            operation releases all memory allocated by the request. This virtually eliminates memory leaks.</p>
-            <p>The memory allocator uses arenas of virtual memory to eliminate internal memory fragmentation. Each
-            request allocates memory out of a single virtual block (arena) of memory. This results in very fast
-            allocations.</p><a name="misc" id="misc"></a>
+            <p>The MPR includes a high performance memory allocator and generational garbage collector. 
+            The allocator is a fast, coalescing allocator that exhibits very low fragmentation.  It is optimized 
+            for frequent allocations of small blocks and uses a background collector for freeing unused memory.</p>
+            <p>The garbage collector is somewhat unusual in a C program. However, garbage collection it is 
+            especially well suited for long running applications like a web server as it virtually eliminates 
+            memory leaks. Unlike traditional memory allocation where free must be called, Appweb 4 uses the 
+            opposite approach where memory that must be retained, needs to be actively managed to prevent 
+            garbage collection. This means that a managed reference must be held for all active memory. 
+            See <a href="memory.html">Memory Allocation</a> for more details.</p>
+            <a name="misc" id="misc"></a>
             <h2 class="section">Misc Features</h2>
             <h3>IP Networking</h3>
             <p>Appweb fully supports both IPv4 and IPv6 for both server and client operations. You can configure Appweb

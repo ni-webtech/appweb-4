@@ -5,8 +5,8 @@
     <title>Embedthis Appweb 4.0.0 Documentation</title>
     <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
         embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
-    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
-        and applications." />
+    <meta name="description" content="Embedthis Sofware provides commercial and open source embedded web servers for 
+        devices and applications." />
 	<meta name="robots" content="index,follow" />
 	<link href="../../../doc.css" rel="stylesheet" type="text/css" />
 	<link href="../../../print.css" rel="stylesheet" type="text/css" media="print"/>
@@ -110,6 +110,14 @@
                         use this switch with either the --datafile or --form switches.</td>
                     </tr>
                     <tr>
+                        <td>--debugger</td>
+                        <td>Disable timeouts to make running in a debugger easier.</td>
+                    </tr>
+                    <tr>
+                        <td>--delete</td>
+                        <td>Use DELETE method. Shortcut for --method DELETE.</td>
+                    </tr>
+                    <tr>
                         <td>--form formData</td>
                         <td>String of body data to send with the request. Assumed to be URL encoded. ie.
                         "name=paul&amp;address=uk". You cannot use this switch with either the --datafile or --form
@@ -138,6 +146,10 @@
                     <tr>
                         <td>--method method</td>
                         <td>Set the HTTP method. Values may be "GET", "PUT", "OPTIONS", "TRACE".</td>
+                    </tr>
+                    <tr>
+                        <td>--nofollow</td>
+                        <td>Don't automatically follow redirect responses.</td>
                     </tr>
                     <tr>
                         <td>--noout</td>
@@ -204,7 +216,7 @@
                         <td>Specify a timeout to use for each request in seconds.</td>
                     </tr>
                     <tr>
-                        <td>--username user</td>
+                        <td>--user user</td>
                         <td>Specify a user name to send with the request. If a password is not specified via
                         --password, the program will prompt for a password (which will not be echoed). The username and
                         password will be sent with the request according to the authentication protocol required by the

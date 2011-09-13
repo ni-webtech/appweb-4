@@ -5,8 +5,8 @@
     <title>Embedthis Appweb 4.0.0 Documentation</title>
     <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
         embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
-    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
-        and applications." />
+    <meta name="description" content="Embedthis Sofware provides commercial and open source embedded web servers for 
+        devices and applications." />
 	<meta name="robots" content="index,follow" />
 	<link href="../doc.css" rel="stylesheet" type="text/css" />
 	<link href="../print.css" rel="stylesheet" type="text/css" media="print"/>
@@ -82,9 +82,10 @@
             surgical approach on an API by API basis.</p><a name="r2" id="r2"></a>
             <a name="r4" id="r4"></a>
             <h2>Appweb 4</h2>
-            <p>Appweb 4 is an evolutionalry release change relative to Appweb 3. Some APIs have changed and APIs have
-            been added for new functionality. Appweb 4 uses a garbage collection based memory allocator. This eliminates
-            the need to manually free memory and this has the general design of some APIs.
+            <p>Appweb 4 is an evolutionary release relative to Appweb 3. Some APIs have changed and APIs have
+            been added for new functionality. Appweb 4 uses a new memory allocator that does not require a memory context
+            as the first argument to most APIs. The allocator uses garbage collection and this eliminates
+            the need to manually free memory.
             You can migrate code from Appweb 3 to Appweb 4 with some refactoring.</p>
             <h2>Appweb 3</h2>
             <p>Appweb 3 is a major change relative to Appweb 2. Most of the APIs have changed in some capacity and you

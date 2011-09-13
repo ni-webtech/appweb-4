@@ -5,8 +5,8 @@
     <title>Embedthis Appweb 4.0.0 Documentation</title>
     <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
         embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
-    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
-        and applications." />
+    <meta name="description" content="Embedthis Sofware provides commercial and open source embedded web servers for 
+        devices and applications." />
 	<meta name="robots" content="index,follow" />
 	<link href="../../doc.css" rel="stylesheet" type="text/css" />
 	<link href="../../print.css" rel="stylesheet" type="text/css" media="print"/>
@@ -46,7 +46,8 @@
             <ul>
                 <li><a href="../../ref/appweb/index.html">Programmers Reference</a></li>
                 <li><a href="../../ref/appweb/architecture.html">Appweb Architecture</a></li>
-                <li><a href="../../ejs/ref/ejs/webArchitecture.html">Ejscript Web Framework</a></li>
+                <li><a href="../../ref/appweb/espArchitecture.html">ESP Web Framework</a></li>
+                <li><a href="../../ref/appweb/ejsArchitecture.html">Ejscript Web Framework</a></li>
                 <li><a href="../../api/native.html">Native APIs</a></li>
                 <li><a href="../../api/appweb.html">Appweb Native API</a></li>
                 <li><a href="../../api/esp.html">ESP Native API</a></li>
@@ -65,26 +66,40 @@
         </div>
         <div class="contentLeft">
             <h1>Programmers Reference</h1>
-            <p>The programmers reference describes the Appweb architecture and programming APIs.</p>
-            <h2>Architecture Overviews and Directives</h2>
+            <p>The programmers reference describes the Appweb architecture, web frameworks and programming APIs.</p>
+            <h2>Architectural Overviews</h2>
             <ul>
                 <li><a href="architecture.html">Appweb Architecture</a></li>
-                <li><a href="../../guide/appweb/users/configuration.html#directives">Appweb Configuration
-                Directives</a></li>
+                <li><a href="espArchitecture.html">ESP Web Framework</a></li>
+                <li><a href="ejsArchitecture.html">Ejscript Web Framework</a></li>
+                <li><a href="memory.html">Appweb Memory Allocation</a></li>
+                <li><a href="multithread.html">Multithreaded Programming</a></li>
             </ul>
             <h2>Programming APIs</h2>
-            <p>The APIs are divided into two kinds: Ejscript APIs for developers to create Ejscript web applications
-            and C APIs for system's developers to embed and extend Appweb itself.</p>
-            <table summary="" width="60%">
+            <p>The Appweb Native APIs consist of C language headers, function prototypes, structure definitions and
+                defines. They are divided into one of these areas.</p>
+            <table summary="" width="100%">
                 <thead>
                     <tr>
-                        <td>Group</td>
+                        <td>Area</td>
                         <td>Description</td>
                     </tr>
                 </thead>
                 <tr>
-                    <td><a href="../../api/native.html">Appweb Native APIs</a></td>
-                    <td>C Language APIs</td>
+                    <td><a href="appweb.html">Appweb</a></td>
+                    <td>Appweb Http API</td>
+                </tr>
+                <tr>
+                    <td><a href="esp.html">ESP</a></td>
+                    <td>Embedded Server Pages API</td>
+                </tr>
+                <tr>
+                    <td><a href="http.html">Http</a></td>
+                    <td>Http Client and Server Library API</td>
+                </tr>
+                <tr>
+                    <td nowrap="nowrap"><a href="mpr.html">MPR</a></td>
+                    <td>Multithreaded Platform Runtime API</td>
                 </tr>
             </table>
             <h3>Stability Classifications</h3>
