@@ -1,0 +1,146 @@
+<!-- BeginDsi "dsi/head.html" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Embedthis Appweb 4.0.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides open source embedded web servers for devices 
+        and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="appwebserver.org" /> 
+                        <input type="hidden" name="sitesearch" value="appwebserver.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 4.0.0
+        </div>
+        <div class="crumbs">
+            <a href="../../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt; <a href="index.html">Users Guide</a> &gt; <b>Multi-Language Support</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            
+            <h2>Quick Nav</h2>
+            <ul>
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#configuration">Route Configuration</a></li>
+            </ul>
+<!-- BeginDsi "dsi/usersGuideSeeAlso.html" -->
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../../../guide/appweb/users/index.html">User Guide Overview</a></li>
+                <li><a href="../../../guide/appweb/users/configuration.html">Configuring Appweb</a></li>
+                <li><a href="../../../guide/appweb/users/ports.html">Ports and Binding</a></li>
+                <li><a href="../../../guide/appweb/users/routing.html">Request Routing</a></li>
+                <li><a href="../../../guide/appweb/users/lang.html">Multi-Language Support</a></li>
+                <li><a href="../../../guide/appweb/users/authorization.html">User Authorization</a></li>
+                <li><a href="../../../guide/appweb/users/logFiles.html">Log Files</a></li>
+                <li><a href="../../../guide/appweb/users/vhosts.html">Virtual Hosts</a></li>
+                <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
+                <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
+                <li><a href="../../../guide/appweb/users/modules.html">Loadable Modules</a></li>
+                <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
+                <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
+                <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
+                <li><a href="../../../ref/appweb/architecture.html">Appweb Architecture</a></li>
+            </ul>
+<!-- EndDsi -->
+        </div>
+        <div class="contentLeft">
+            <h1>Multi-Language Support</h1>
+            <a name="overview"></a>
+            <p>Appweb supports the ability to create and manage multi-language web applications. The support includes 
+            a language-aware <a href="routing.html">Routing Engine</a> and a set of 
+            <a href="configuration.html#directives">configuration file directives</a> to configure and control 
+            response language selection.</p>
+            <p>When a client sends a request, the HTTP headers typically include an <tt>Accept-Language</tt> HTTP header that
+            specifies the client's language preference for the request. The Appweb routing engine listens for this
+            header and will modify the request to select response content of the appropriate language.</p>
+            <a name="documents"></a>
+            <h2 class="section">Language Document Organization</h2>
+            <p>There are two organization models supported by Appweb for multi-language applications:</p>
+            <ul>
+                <li>Separate directories for each language content, and </li>
+                <li>Unified storage for content with a language suffix integrated into the each document filename.</li>
+            </ul>
+            <p>Appweb manages these models via the <tt>AddLanguageDir</tt> and <tt>AddLanguageSuffix</tt>
+            directives.</p>
+            <a name="configuration"></a>
+            <h2 class="section">Language Configuration Directives</h2>
+            <p>Three directives control the language configuration on a per-route basis: 
+            <tt>AddLanguageDir</tt>, <tt>AddLanguageSuffix</tt> and <tt>DefaultLanguage</tt>.
+            <a name="isotag"></a>
+            <h3>ISO Language Tags</h3>
+            <p>The AddLanguageDir and AddLanguageSuffix directives add support for a single language and so a typical Appweb
+            configuration file will have multiple such directives. These directives specify the language via
+            a language tag as defined by <a href="http://www.faqs.org/rfcs/rfc1766.html">RFC 1766 &mdash; Tags for the 
+            identification of Languages</a> and country codes defined 
+            in <a href="http://www.iso.org/iso/iso-3166-1_decoding_table">ISO 3166-1</a>.</p>
+            <h3>AddLanguageDir Directive</h3>
+            <p>The AddLanguageDir directive is used when language content is stored in separate directories. This directive 
+            defines a supported language 
+            <a href="#isotag">tag</a> 
+            with an associated directory of language for 
+            the language specific content. 
+            When a client request is received, the appropriate language directory will be selected by the routing engine
+            using the language specified by the client's <tt>Accept-Language</tt> HTTP header.</p>
+<pre>
+&lt;Route /info/>
+    AddLanguageDir en /path/to/english-docs
+&lt;/Route>
+</pre>
+            <h3>AddLanguageSuffix Directive</h3>
+            <p>The AddLanguageSuffix directive defines a supported language 
+            <a href="#isotag">tag</a> with an associated filename suffix. When
+            a client request is received, the appropriate language will be selected using the language
+            specified by the client's <tt>Accept-Language</tt> HTTP header. Then, the document filename will be constructed
+            using the language suffix. The suffix can be positioned either before or after the document
+            extension via the directives "position" argument.</p>
+<pre>
+&lt;Route /info/>
+    AddLanguageSuffix en eng before
+&lt;/Route>
+</pre>
+            <p>With this configuration, a request for <tt>/index.html</tt> will resolve to <tt>index.eng.html</tt>.</p>
+            <h3>DefaultLanguage</h3>
+            <p>The DefaultLanguage directive defines the language to use when the the client <tt>Accept-Language</tt>
+            HTTP header is either absent or requests a non-supported language.</p>
+<pre>
+&lt;Route />
+    DefaultLanguage en
+&lt;/Route>
+</pre>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2011. 
+            All rights reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>
