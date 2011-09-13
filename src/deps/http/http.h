@@ -2795,7 +2795,7 @@ extern bool httpValidatePamCredentials(HttpAuth *auth, cchar *realm, cchar *user
     @ingroup HttpRoute
   */
 typedef struct HttpLang {
-    char        *path;                      /**< Document root for the language */
+    char        *path;                      /**< Document directory for the language */
     char        *suffix;                    /**< Suffix to add to filenames */
     int         flags;                      /**< Control suffix position */
 } HttpLang;
@@ -2827,7 +2827,7 @@ typedef struct HttpLang {
     @stability Evolving
     @defgroup HttpRoute HttpRoute
     @see HttpRoute httpAddRouteCondition httpAddRouteErrorDocument httpAddRouteExpiry httpAddRouteExpiryByType 
-        httpAddRouteFilter httpAddRouteHandler httpAddRouteHeader httpAddRouteLanguage httpAddRouteLanguageRoot 
+        httpAddRouteFilter httpAddRouteHandler httpAddRouteHeader httpAddRouteLanguageSuffix httpAddRouteLanguageDir 
         httpAddRouteLoad httpAddRouteQuery httpAddRouteUpdate httpClearRouteStages httpCreateAliasRoute 
         httpCreateConfiguredRoute httpCreateDefaultRoute httpCreateInheritedRoute httpCreateRoute 
         httpDefineRouteCondition httpDefineRouteTarget httpDefineRouteUpdate httpFinalizeRoute httpGetRouteData 
@@ -3038,8 +3038,9 @@ extern int httpAddRouteHandler(HttpRoute *route, cchar *name, cchar *extensions)
 extern void httpAddRouteHeader(HttpRoute *route, cchar *header, cchar *value, int flags);
 
 /**
-    Add a route language
+    Add a route language suffix
     @description This configures the route pipeline by adding the given language for request processing.
+        The language definition includes a suffix which will be added to the request filename.
     @param route Route to modify
     @param language Language symbolic name. For example: "en" for english.
     @param suffix Extension suffix to add when creating filenames for the request. For example: "fr" to add to "index.html"
@@ -3049,19 +3050,19 @@ extern void httpAddRouteHeader(HttpRoute *route, cchar *header, cchar *value, in
     @return Zero if successful, otherwise a negative MPR error code.
     @ingroup HttpRoute
  */
-extern int httpAddRouteLanguage(HttpRoute *route, cchar *language, cchar *suffix, int flags);
+extern int httpAddRouteLanguageSuffix(HttpRoute *route, cchar *language, cchar *suffix, int flags);
 
 /**
-    Add a route language root directory
-    @description This configures the route pipeline by adding the given language root.
-        When creating filenames for matching requests, the language root is prepended to the request filename.
+    Add a route language directory
+    @description This configures the route pipeline by adding the given language content directory.
+        When creating filenames for matching requests, the language directory is prepended to the request filename.
     @param route Route to modify
     @param language Language symbolic name. For example: "en" for english.
     @param path File system directory to contain content for matching requests.
     @return Zero if successful, otherwise a negative MPR error code.
     @ingroup HttpRoute
  */
-extern int httpAddRouteLanguageRoot(HttpRoute *route, cchar *language, cchar *path);
+extern int httpAddRouteLanguageDir(HttpRoute *route, cchar *language, cchar *path);
 
 /**
     MOB - complete
@@ -3574,7 +3575,7 @@ extern void httpSetRouteSource(HttpRoute *route, cchar *source);
             <li>extraPath - The request extra path after the script extension</li>
             <li>filename - The mapped request filename in physical storage</li>
             <li>language - The selected language for the request</li>
-            <li>languageRoot - The langauge root directory</li>
+            <li>languageDir - The langauge directory</li>
             <li>host - The host name owning the route for the request</li>
             <li>method - The request HTTP method</li>
             <li>originalUri - The original, pre-decoded URI</li>

@@ -14,63 +14,57 @@
 /*
     Run the handler. This is called when all input data has been received.
  */
-static void runSimple(MaQueue *q)
+static void processSimple(HttpQueue *q)
 {
-    MaConn          *conn;
-    MaRequest       *req;
+    HttpConn    *conn;
+    HttpRx      *rx;
 
     conn = q->conn;
-    req = conn->request;
+    rx = conn->rx;
     
-    maSetHeader(conn, 0, "Last-Modified", req->host->currentDate);
-    maDontCacheResponse(conn);
+    httpSetHeader(conn, 0, "Last-Modified", conn->http->currentDate);
 
     /*
         Create the empty header packet. This will be filled in by the downstream network connector stage.
      */
-    maPutForService(q, maCreateHeaderPacket(conn), 0);
+    httpPutForService(q, httpCreateHeaderPacket(conn), 0);
 
     /*
         Generate some dynamic data. If you generate a lot, this will buffer up to a configured maximum. 
         If that limit is exceeded, the packet will be sent downstream and the response headers will be created.
      */
-    maWrite(q, "Hello World");
+    httpWrite(q, "Hello World");
 
     /*
         Send an end of data packet
      */
-    maPutForService(q, maCreateEndPacket(conn), 1);
+    httpPutForService(q, httpCreateEndPacket(conn), 1);
 }
 
 
 
-static void incomingSimpleData(MaQueue *q, MaPacket *packet)
+static void incomingSimpleData(HttpQueue *q, HttpPacket *packet)
 {
     /*
         Do something with the incoming data in packet and then free the packet.
      */
-    mprLog(q, 0, "Data in packet is %s", mprGetBufStart(packet->content));
-    mprFree(packet);
+    mprLog(0, "Data in packet is %s", mprGetBufStart(packet->content));
 }
 
 
 /*
     Module load initialization. This is called when the module is first loaded. The module name is "Simple".
  */
-MprModule *mprSimpleHandlerInit(MaHttp *http)
+int maSimpleHandlerInit(Http *http, MprModule *module)
 {
-    MprModule   *module;
-    MaStage     *stage;
+    HttpStage   *stage;
 
-    if ((module = mprCreateModule(http, "simpleHandler", BLD_VERSION, NULL, NULL, NULL)) == 0) {
-        return 0;
+    if ((stage = httpCreateHandler(http, "simpleHandler", 0, module)) == 0) {
+        return MPR_ERR_CANT_CREATE;
     }
-    if ((stage = maCreateHandler(http, "simpleHandler", MA_STAGE_ALL | MA_STAGE_VIRTUAL)) == 0) {
-        return 0;
-    }
-    stage->run = runSimple;
+    stage->process = processSimple;
     stage->incomingData = incomingSimpleData;
-    return module;
+    return 0;
 }
 
 

@@ -45,8 +45,8 @@
             <ul>
                 <li><a href="#addHandler">AddHandler</a></li>
                 <li><a href="#addInputFilter">AddInputFilter</a></li>
-                <li><a href="#addLanguage">AddLanguage</a></li>
-                <li><a href="#addLanguageRoot">AddLanguageRoot</a></li>
+                <li><a href="#addLanguageDir">AddLanguageDir</a></li>
+                <li><a href="#addLanguageSuffix">AddLanguageSuffix</a></li>
                 <li><a href="#addOutputFilter">AddOutputFilter</a></li>
                 <li><a href="#alias">Alias</a></li>
                 <li><a href="#clientCache">ClientCache</a></li>
@@ -56,9 +56,9 @@
                 <li><a href="#defaultLanguage">DefaultLanguage</a></li>
                 <li><a href="#documentRoot">DocumentRoot</a></li>
                 <li><a href="#errorDocument">ErrorDocument</a></li>
-                <li><a href="#form">Form</a></li>
                 <li><a href="#header">Header</a></li>
                 <li><a href="#logRoutes">LogRoutes</a></li>
+                <li><a href="#param">Param</a></li>
                 <li><a href="#prefix">Prefix</a></li>
                 <li><a href="#putMethod">PutMethod</a></li>
                 <li><a href="#redirect">Redirect</a></li>
@@ -68,7 +68,7 @@
                 <li><a href="#scriptAlias">ScriptAlias</a></li>
                 <li><a href="#setConnector">SetConnector</a></li>
                 <li><a href="#setHandler">SetHandler</a></li>
-<li><a href="#target">Target</a></li>
+                <li><a href="#target">Target</a></li>
                 <li><a href="#traceMethod">TraceMethod</a></li>
                 <li><a href="#update">Update</a></li>
             </ul>
@@ -76,11 +76,11 @@
             <ul>
                 <li><a href="../configuration.html">Configuration</a></li>
                 <li><a href="../configuration.html#directives">Configuration Directives</a></li>
+                <li><a href="../routing.html">Request Routing</a></li>
             </ul>
         </div>
         <div class="contentLeft">
             <a href="../configuration.html#directives"></a>
-
             <h1>Route Directives</h1><a name="addHandler" id="addHandler"></a>
             <h2>AddHandler</h2>
             <table class="directive" summary="" width="100%">
@@ -108,7 +108,7 @@
                             be run whenever a document with the given extension is requested. Multiple extensions may
                             be specified and multiple AddHandler directives may exist for any handler.</p>
                             <p>If the AddHandler directive is specified within a <a href="vhost.html">VirtualHost</a>
-                            or <a href="location.html">Route</a> block, it is only valid within that context.
+                            or <a href="route.html">Route</a> block, it is only valid within that context.
                             VirtualHosts and Route blocks inherit the handler settings defined by outer blocks. I.e.
                             a VirtualHost will inherit all the handlers of the default server. If you wish to remove a
                             handler mapping, use <tt>Reset pipeline</tt> and then re-add the required handlers.</p>
@@ -189,46 +189,8 @@
                     </tr>
                 </tbody>
             </table>
-
-            <a name="addLanguage" id="addLanguage"></a>
-            <h2>AddLanguage</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
-                    <tr>
-                        <td class="pivot">Description</td>
-                        <td>Add the specified language</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Synopsis</td>
-                        <td>AddLanguage lang suffix [position]</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Context</td>
-                        <td>Default server, VirtualHost, Route</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Example</td>
-                        <td>&lt;Route /public/&gt;<br />
-                        &nbsp; &nbsp; AddLanguage en en before<br />
-                        &lt;/Route&gt;</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Notes</td>
-                        <td>
-                            <p>The AddLanguage directive defines a language with an associated filename suffix. When
-                            a client request is served, the appropriate language will be selected using the language
-                            specified by the client's Accept HTTP header. Then, the document filename will be constructed
-                            using the language suffix. The suffix can be positioned either before or after the document
-                            extension via the "position" argument.</p>
-                            <p>If the client requested language is not defined, the language specified via the 
-                            <a href="#defaultLanguage">DefaultLanguage</a> directive or "english" will be used.</p>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <a name="addLanguageRoot" id="addLanguageRoot"></a>
-            <h2>AddLanguageRoot</h2>
+            <a name="addLanguageDir" id="addLanguageDir"></a>
+            <h2>AddLanguageDir</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>
                     <tr>
@@ -237,7 +199,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>AddLanguageRoot lang path</td>
+                        <td>AddLanguageDir iso-lang-tag path</td>
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
@@ -246,17 +208,55 @@
                     <tr>
                         <td class="pivot">Example</td>
                         <td>&lt;Route /public/&gt;<br />
-                        &nbsp; &nbsp; AddLanguageRoot en english-docs<br />
+                        &nbsp; &nbsp; AddLanguageDir en english-docs<br />
                         &lt;/Route&gt;</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The AddLanguageRoot directive defines a language with an associated directory of language
+                            <p>The AddLanguageDir directive defines a language with an associated directory of language
                                 specific content. When
                             a client request is served, the appropriate language will be selected using the language
-                            specified by the client's Accept HTTP header. Then, the document filename will be constructed
-                            using the language content path. 
+                            specified by the client's Accept-Language HTTP header. Then, the document filename will be 
+                            constructed using the language content path. </p>
+                            <p>If the client requested language is not defined, the language specified via the 
+                            <a href="#defaultLanguage">DefaultLanguage</a> directive or "english" will be used.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <a name="addLanguageSuffix" id="addLanguageSuffix"></a>
+            <h2>AddLanguageSuffix</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Add the specified language</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>AddLanguageSuffix iso-lang-tag suffix [position]</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>&lt;Route /public/&gt;<br />
+                        &nbsp; &nbsp; AddLanguageSuffix en en before<br />
+                        &lt;/Route&gt;</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The AddLanguageSuffix directive defines a supported language with an associated 
+                            filename suffix.  When a client request is received, the appropriate language will 
+                            be selected using the language specified by the client's Accept-Language HTTP header. 
+                            Then, the document filename will be constructed
+                            using the language suffix. The suffix can be positioned either before or after the document
+                            extension via the "position" argument.</p>
                             <p>If the client requested language is not defined, the language specified via the 
                             <a href="#defaultLanguage">DefaultLanguage</a> directive or "english" will be used.</p>
                         </td>
@@ -297,7 +297,6 @@
                     </tr>
                 </tbody>
             </table>
-
             <a name="clientCache" id="clientCache"></a>
             <h2>ClientCache</h2>
             <table class="directive" summary="" width="100%">
@@ -436,7 +435,7 @@
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The Condition directive support four rules: </p>
+                            <p>The Condition directive supports four rule varieties: </p>
                             <ul>
                                 <li>missing &mdash; True if the default request filename is missing.</li>
                                 <li>directory &mdash; True the if rule argument evaluates to a directory</li>
@@ -475,7 +474,7 @@
                         <td class="pivot">Notes</td>
                         <td>
                             <p>The DefaultLanguage directive defines the default language to use when the
-                                the client Accept HTTP header is either absent or requests a non-supported language.</p>
+                                the client Accept-Language HTTP header is either absent or requests a non-supported language.</p>
                         </td>
                     </tr>
                 </tbody>
@@ -542,39 +541,6 @@
                 </tbody>
             </table>
             
-            <a name="form" id="form"></a>
-            <h2>Form</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
-                    <tr>
-                        <td class="pivot">Description</td>
-                        <td>Define a form field value must match a value for the route to be selected.</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Synopsis</td>
-                        <td>Form [!] field pattern</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Context</td>
-                        <td>Default server, VirtualHost, Route</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Example</td>
-                        <td>Form name "John Smith"</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Notes</td>
-                        <td>
-                            <p>The Form directive tests if the specified request form field value matches the
-                            required value. Form fields are sourced from the request query and posted form data.
-                            The rule result can be negated by prefixing with "<tt>!</tt>".</p>
-                            <p>For information about embedded {tokens}, see <a href="../routing.html#tokens">Tokens</a>
-                            in the <a href="../routing.html">Routing Guide</a>.</p>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            
             <a name="header" id="header"></a>
             <h2>Header</h2>
             <table class="directive" summary="" width="100%">
@@ -632,6 +598,40 @@
                         <td>
                             <p>The LogRoutes directive prints a representation of the important route configuration to
                                 the error log.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="param" id="param"></a>
+            <h2>Param</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Add a request param test that must match for the route to be selected.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Param [!] field pattern</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Param name "John Smith"</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The Param directive tests if the specified request param value matches the
+                            required value. Request <a href="../routing.html#params">params</a> are sourced from 
+                            the request URI query and posted form data.</p>
+                            <P>The rule result can be negated by prefixing with "<tt>!</tt>".</p>
+                            <p>For information about embedded {tokens}, see <a href="../routing.html#tokens">Tokens</a>
+                            in the <a href="../routing.html">Routing Guide</a>.</p>
                         </td>
                     </tr>
                 </tbody>
@@ -952,7 +952,61 @@
                     </tr>
                 </tbody>
             </table>
-
+            <a name="target" id="target"></a>
+            <h2>Target</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define the route target rule that describes how the request should be handled.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Target rule details ...<br/>
+                            Target close<br/>
+                            Target redirect status URI<br/>
+                            Target run document<br/>
+                            Target write [-r] status message<br/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Target close<br />
+                            Target redirect 302 /updated/$&<br />
+                            Target run<br />
+                            Target run ${request:filename}.gz<br />
+                            Target write 200 "Hello World\r\n"<br/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The Target directive support four rules: </p>
+                            <ul>
+                                <li>close &mdash; Immediately close the connection without sending a response to the
+                                        client.</li>
+                                <li>redirect &mdash; Redirect the client with the given status and URI.</a>
+                                <li>run &mdash; Run the selected handler and use the any argument as the destination
+                                document or resource to serve back to the client. If the argument is omitted, most handlers
+                                will construct a filename from the request URI and the route document root and serve
+                                that to the client.</li>
+                                <li>write &mdash; Writes the given message to the client with the specified status.
+                                By default, this rule will escape embeded HTML sequences. If you need to emit pure HTML, 
+                                use the <tt>-r</tt> switch for raw write output.</li>
+                            </ul>
+                            <p>If the Target directive is omitted in a Route, the default action is <tt>Target run</tt>.</p>
+                            <p>Arguments for the <tt>redirect</tt> and <tt>run</tt> rules may contain embedded tokens. 
+                            For information about embedded {tokens}, see <a href="../routing.html#tokens">Tokens</a>
+                            in the <a href="../routing.html">Routing Guide</a>.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
             <a name="traceMethod" id="traceMethod"></a>
             <h2>TraceMethod</h2>
             <table class="directive" summary="" width="100%">
@@ -998,7 +1052,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>Update field var value ...<br/>
+                        <td>Update param var value ...<br/>
                             Update cmd commandLine...
                         </td>
                     </tr>
@@ -1008,24 +1062,20 @@
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>Condition missing<br />
-                            Condition directory ${request:filename}<br />
-                            Condition ! exists ${request:filename}<br />
-                            Condition match ${header:User-Agent} (Chrome|Safari) 
+                        <td> Update param client ${request:clientAddress}<br/
+                            Update cmd sh -c 'echo Demo Downloaded | mail -s"Download from ${request:clientAddress}"'</td>
                         </td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The Condition directive support four rules: </p>
+                            <p>The Update directive support two rules: </p>
                             <ul>
-                                <li>missing &mdash; True if the default request filename is missing.</li>
-                                <li>directory &mdash; True the if rule argument evaluates to a directory</li>
-                                <li>exists &mdash; True if the rule argument evaluates to an existing file</li>
-                                <li>match &mdash; True if the regular expression matches the argument</li>
+                                <li>param &mdash; Set a request parameter.</p>
+                                <li>cmd &mdash; Run an external command.</li>
                             </ul>
-                            <p>The rule result can be negated by prefixing with "<tt>!</tt>".</p>
-                            <p>For information about embedded {tokens}, see <a href="../routing.html#tokens">Tokens</a>
+                            <p>Upate arguments can contain embedded tokens.
+                            For information about embedded {tokens}, see <a href="../routing.html#tokens">Tokens</a>
                             in the <a href="../routing.html">Routing Guide</a>.</p>
                         </td>
                     </tr>

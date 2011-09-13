@@ -81,22 +81,25 @@
             and flags that modify the behavior of the handler.</p>
             <p>The following demonstrates the creation of a "sample" handler.</p>
             <pre>
-int maOpenSimpleHandler(MaHttp *http)
+int maSimpleHandlerInit(Http *http, MprModule *module)
 {
-    MaStage     *handler;
-    <b>handler = maCreateHandler(http, "simpleHandler", MA_STAGE_ALL | MA_STAGE_VIRTUAL);</b>
+    HttpStage   *handler;
+    <b>handler = httpCreateHandler(http, "simpleHandler", 0, module);</b>
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     /* Define function callbacks */
-    handler-&gt;run = runSimple;
-    handler-&gt;parse = parseSimple;
     handler-&gt;match = matchSimple;
     handler-&gt;open = openSimple;
     handler-&gt;close = closeSimple;
+    handler-&gt;start = startSimple;
+    handler-&gt;process = processSimple;
     handler-&gt;incomingData = incomingDataSimple;
+    handler-&gt;outgoingData = outgoingDataSimple;
+    handler-&gt;incomingService = incomingServiceSimple;
+    handler-&gt;outgoingService = outgoingServiceSimple;
     /* Set handler private data */
-    handler-&gt;data = mprAllocTypeZeroed(handler, SimpleData);
+    handler-&gt;stageData = mprAllocObj(SimpleData, 0);
     return 0;
 }
 </pre><a name="createFilter" id="createFilter"></a>
@@ -107,10 +110,10 @@ int maOpenSimpleHandler(MaHttp *http)
             flags that modify the behavior of the filter.</p>
             <p>The following demonstrates the creation of a "compress" filter.</p>
             <pre>
-int maOpenCompressFilter(MaHttp *http)
+int maCompressFilterInit(Http *http, MprModule *module)
 {
-    MaStage     *filter;
-    <b>filter = maCreateFilter(http, "compressFilter", MA_STAGE_ALL);</b>
+    HttpStage   *filter;
+    <b>filter = httpCreateFilter(http, "compressFilter", 0, module);</b>
     if (filter == 0) {
         return MPR_ERR_CANT_CREATE;
     }
@@ -126,10 +129,10 @@ int maOpenCompressFilter(MaHttp *http)
             name and flags that modify the behavior of the connector.</p>
             <p>The following demonstrates the creation of a "turbo" connector.</p>
             <pre>
-int maOpenTurboConnector(MaHttp *http)
+int maTurboConnectorInit(Http *http, MprModule *module)
 {
-    MaStage     *connector;
-    <b>connector = maCreateConnector(http, "turboConnector", MA_STAGE_ALL);</b>
+    HttpStage   *connector;
+    <b>connector = httpCreateConnector(http, "turboConnector", 0, module);</b>
     if (connector == 0) {
         return MPR_ERR_CANT_CREATE;
     }
@@ -142,9 +145,6 @@ int maOpenTurboConnector(MaHttp *http)
             <h2 class="section">Pipeline Stages Callbacks</h2>
             <p>Pipeline stages can optionally provide callback functions which are run at various stages of the HTTP
             request processing. If they are not provided, a default implementation is used.</p>
-            <h3>parse</h3>
-            <p>This callback is invoked to parse configuration directives that may be relevant to the stage. It is
-            called at Appweb startup.</p>
             <h3>match</h3>
             <p>This callback is invoked to test if the current request should be serviced by the stage. It is invoked
             after the request headers are parsed by the Appweb core and before running the request pipeline. If the
@@ -153,19 +153,24 @@ int maOpenTurboConnector(MaHttp *http)
             <p>This callback is invoked to give the stage a chance to initialize for a given request and potentially
             allocate any request specific data or state. It is called at the start of request processing after the
             "match" callback.</p>
+            <h3>close</h3>
+            <p>The "close" callback is invoked to give stages an opportunity to release any request specific data. It
+            is invoked just prior to dismantling the request pipeline.</p>
+            <h3>start</h3>
+            <p>The run callback is invoked to start processing the response for the client. 
+            If the request is a form with Content-Type of "application/x-www-form-urlencoded",
+            the start callback is called after processing all input client data. Otherwise, it is called before 
+            any input data.</p>
+            <h3>process</h3>
+            <p>The run callback is invoked periodically after I/O events to allow the stage to pump data through the
+                request pipeline.</p>
             <h3>incomingData</h3>
             <p>This callback is invoked to receive any incoming client data (typically POST or PUT data). It is is
             called after the "open" callback and before the "run" callback.</p>
-            <h3>run</h3>
-            <p>The run callback is invoked to render the response to the client. It is called after processing all
-            input client data.</p>
             <h3>outgoingData</h3>
             <p>The outgoingData callback is never called for handlers. Handlers generate data and send it downstream.
             Filters and connectors will have their outgoingData callback invoked to receive data from upstream. The
             outgoingData callback will be invoked after the "run" callback has been called for the handler.</p>
-            <h3>close</h3>
-            <p>The "close" callback is invoked to give stages an opportunity to release any request specific data. It
-            is invoked just prior to dismantling the request pipeline.</p>
             <h3>Stage Data</h3>
             <p>Stages can allocate stage data and store it in the <b>stage-&gt;data</b> field. If the stage needs to
             store per-request data, it can store it in the stage's <b>queue-&gt;data</b> field which is unique for each
@@ -182,52 +187,40 @@ int maOpenTurboConnector(MaHttp *http)
                 </thead>
                 <tbody>
                     <tr>
-                        <td>MA_STAGE_ALL</td>
+                        <td>HTTP_STAGE_ALL</td>
                         <td>All the HTTP methods are suppported.</td>
                     </tr>
                     <tr>
-                        <td>MA_STAGE_DELETE</td>
+                        <td>HTTP_STAGE_DELETE</td>
                         <td>The stage supports the HTTP DELETE method.</td>
                     </tr>
                     <tr>
-                        <td>MA_STAGE_ENV_VARS</td>
-                        <td>The handler requires a CGI style request environment.</td>
+                        <td>HTTP_STAGE_PARAMS</td>
+                        <td>The handler requires query and form data to be stored in the request params.</td>
                     </tr>
                     <tr>
-                        <td>MA_STAGE_FORM_VARS</td>
-                        <td>The handler requires query and form data to be stored in the request environment.</td>
-                    </tr>
-                    <tr>
-                        <td>MA_STAGE_GET</td>
+                        <td>HTTP_STAGE_GET</td>
                         <td>The stage supports the HTTP GET method.</td>
                     </tr>
                     <tr>
-                        <td>MA_STAGE_HEAD</td>
+                        <td>HTTP_STAGE_HEAD</td>
                         <td>The stage supports the HTTP HEAD method.</td>
                     </tr>
                     <tr>
-                        <td>MA_STAGE_OPTIONS</td>
+                        <td>HTTP_STAGE_OPTIONS</td>
                         <td>The stage supports the HTTP OPTIONS method.</td>
                     </tr>
                     <tr>
-                        <td>MA_STAGE_PATH_INFO</td>
-                        <td>The handler requires PATH_INFO processing. The CGI handler is the primary user.</td>
-                    </tr>
-                    <tr>
-                        <td>MA_STAGE_POST</td>
+                        <td>HTTP_STAGE_POST</td>
                         <td>The stage supports the HTTP POST method.</td>
                     </tr>
                     <tr>
-                        <td>MA_STAGE_PUT</td>
+                        <td>HTTP_STAGE_PUT</td>
                         <td>The stage supports the HTTP PUT method.</td>
                     </tr>
                     <tr>
-                        <td>MA_STAGE_TRACE</td>
+                        <td>HTTP_STAGE_TRACE</td>
                         <td>The stage supports the HTTP TRACE method.</td>
-                    </tr>
-                    <tr>
-                        <td>MA_STAGE_VIRTUAL</td>
-                        <td>URLs don't map directly onto physical storage for this handler.</td>
                     </tr>
                 </tbody>
             </table>

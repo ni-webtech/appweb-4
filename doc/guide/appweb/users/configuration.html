@@ -56,6 +56,7 @@
                 <li><a href="../../../guide/appweb/users/configuration.html">Configuring Appweb</a></li>
                 <li><a href="../../../guide/appweb/users/ports.html">Ports and Binding</a></li>
                 <li><a href="../../../guide/appweb/users/routing.html">Request Routing</a></li>
+                <li><a href="../../../guide/appweb/users/lang.html">Multi-Language Support</a></li>
                 <li><a href="../../../guide/appweb/users/authorization.html">User Authorization</a></li>
                 <li><a href="../../../guide/appweb/users/logFiles.html">Log Files</a></li>
                 <li><a href="../../../guide/appweb/users/vhosts.html">Virtual Hosts</a></li>
@@ -210,20 +211,20 @@ Include conf/applications/*.conf
                         <td>CGI program to run to handle specific content.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/route.html#addLanguage">AddLanguage</a></td>
-                        <td>Add a supported language.</td>
-                    </tr>
-                    <tr>
-                        <td><a href="dir/route.html#addLanguageRoot">AddLanguageRoot</a></td>
-                        <td>Add a per-langague content directory.</td>
-                    </tr>
-                    <tr>
                         <td><a href="dir/route.html#addInputFilter">AddInputFilter</a></td>
                         <td>Add an input filter to the processing pipeline.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/route.html#addHandler">AddHandler</a></td>
                         <td>Add a handler for processing given file extensions.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/route.html#addLanguageSuffix">AddLanguageSuffix</a></td>
+                        <td>Add a supported language and filename suffix to use for this language.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/route.html#addLanguageDir">AddLanguageDir</a></td>
+                        <td>Add a per-language content directory.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/route.html#addOutputFilter">AddOutputFilter</a></td>
@@ -266,11 +267,11 @@ Include conf/applications/*.conf
                         <td>Defines the file of user names.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/route.html#cache">CacheClient</a></td>
+                        <td><a href="dir/route.html#cache">ClientCache</a></td>
                         <td>Control client-side caching by document extension.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/route.html#cacheByType">CacheByType</a></td>
+                        <td><a href="dir/route.html#cacheByType">ClientCacheByType</a></td>
                         <td>Control client-side caching by document mime type.</td>
                     </tr>
                     <tr>
@@ -352,12 +353,8 @@ Include conf/applications/*.conf
                     <tr><td><a href="dir/esp.html#espUpdate">EspUpdate</a></td>
                         <td>Control whether updated ESP source code triggers reloading.</td></tr>
                     <tr>
-                        <td><a href="dir/module.html#uploadDir">UploadDir</a></td>
-                        <td>Set the directory for uploaded files.</td>
-                    </tr>
-                    <tr>
-                        <td><a href="dir/module.html#uploadDir">UploadAutoDelete</a></td>
-                        <td>Control if files are auto-deleted after uploading.</td>
+                        <td><a href="dir/route.html#header">Header</a></td>
+                        <td>Define a HTTP header test for a route.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/server.html#group">Group</a></td>
@@ -432,6 +429,10 @@ Include conf/applications/*.conf
                         <td>Define the verbosity of messages to the error log.</td>
                     </tr>
                     <tr>
+                        <td><a href="dir/route.html#logRoutes">LogRoutes</a></td>
+                        <td>Display the route table in the error log.</td>
+                    </tr>
+                    <tr>
                         <td><a href="dir/log.html#logTrace">LogTrace</a></td>
                         <td>Control the tracing of HTTP messages.</td>
                     </tr>
@@ -458,6 +459,10 @@ Include conf/applications/*.conf
                     <tr>
                         <td><a href="dir/auth.html#order">Order</a></td>
                         <td>Specify the order in which the allow and deny directives apply.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/route.html#param">Param</a></td>
+                        <td>Define a route step to test request param values.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/route.html#prefix">Prefix</a></td>
@@ -510,6 +515,10 @@ Include conf/applications/*.conf
                     <tr>
                         <td><a href="dir/sandbox.html#startThreads">StartThreads</a></td>
                         <td>Number of threads to pre-allocate.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/route.html#target">Target</a></td>
+                        <td>Define the target action to take for a route to serve a response to the client.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/sandbox.html#threadLimit">ThreadLimit</a></td>
@@ -578,6 +587,14 @@ Include conf/applications/*.conf
                     <tr>
                         <td><a href="dir/route.html#update">Update</a></td>
                         <td>Define an update modification for a route.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/module.html#uploadDir">UploadDir</a></td>
+                        <td>Set the directory for uploaded files.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/module.html#uploadDir">UploadAutoDelete</a></td>
+                        <td>Control if files are auto-deleted after uploading.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/server.html#user">User</a></td>

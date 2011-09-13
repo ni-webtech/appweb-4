@@ -51,6 +51,7 @@
                 <li><a href="../../../guide/appweb/users/configuration.html">Configuring Appweb</a></li>
                 <li><a href="../../../guide/appweb/users/ports.html">Ports and Binding</a></li>
                 <li><a href="../../../guide/appweb/users/routing.html">Request Routing</a></li>
+                <li><a href="../../../guide/appweb/users/lang.html">Multi-Language Support</a></li>
                 <li><a href="../../../guide/appweb/users/authorization.html">User Authorization</a></li>
                 <li><a href="../../../guide/appweb/users/logFiles.html">Log Files</a></li>
                 <li><a href="../../../guide/appweb/users/vhosts.html">Virtual Hosts</a></li>
@@ -95,8 +96,8 @@
             <pre>
 <a href="dir/module.html#loadModule">LoadModule</a> ejs mod_ejs
 LoadModule file mod_file
-<a href="dir/location.html#addHandler">AddHandler</a> ejsHandler ejs
-<a href="dir/location.html#addHandler">AddHandler</a> fileHandler
+<a href="dir/route.html#addHandler">AddHandler</a> ejsHandler ejs
+<a href="dir/route.html#addHandler">AddHandler</a> fileHandler
 </pre>
             <p>The order of the directives is important. When a request is received from a client, the handlers
             specified in the configuration file will be matched against the request. If a handler does not specify an
@@ -109,9 +110,9 @@ LoadModule file mod_file
             request.</p>
             <h2 class="section">Filters</h2>
             <p>Filters can manipulate the request as it passes through the request pipeline. Typical uses are to
-            compress or encrypt data. Appweb implements Transfer Chunk Encoding, Ranged requests and user authorization
-            via filters. Filters are configured via the <a href="dir/location.html#addInputFilter">AddInputFilter</a>
-            and <a href="dir/location.html#addOutputFilter">AddOutputFilter</a> configuration file directives.</p>
+            compress or encrypt data. Appweb implements Transfer Chunk Encoding and Ranged requests via filters. 
+            Filters are configured via the <a href="dir/route.html#addInputFilter">AddInputFilter</a>
+            and <a href="dir/route.html#addOutputFilter">AddOutputFilter</a> configuration file directives.</p>
             <h2 class="section">Connectors</h2>
             <p>Network connectors are the end of the outgoing stream of the pipeline. Their job is to transmit data
             back to the client. Appweb supplies two connectors. One general purpose <b>net</b> connector and a

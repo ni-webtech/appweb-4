@@ -196,10 +196,10 @@ static int addInputFilterDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    AddLanguage lang ext [position]
-    AddLanguage en .en before
+    AddLanguageSuffix lang ext [position]
+    AddLanguageSuffix en .en before
  */
-static int addLanguageDirective(MaState *state, cchar *key, cchar *value)
+static int addLanguageSuffixDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *lang, *ext, *position;
     int     flags;
@@ -213,15 +213,15 @@ static int addLanguageDirective(MaState *state, cchar *key, cchar *value)
     } else if (scasematch(position, "before")) {
         flags |= HTTP_LANG_BEFORE;
     }
-    httpAddRouteLanguage(state->route, lang, ext, flags);
+    httpAddRouteLanguageSuffix(state->route, lang, ext, flags);
     return 0;
 }
 
 
 /*
-    AddLanguageRoot lang path
+    AddLanguageDir lang path
  */
-static int addLanguageRootDirective(MaState *state, cchar *key, cchar *value)
+static int addLanguageDirDirective(MaState *state, cchar *key, cchar *value)
 {
     HttpRoute   *route;
     char        *lang, *path;
@@ -236,7 +236,7 @@ static int addLanguageRootDirective(MaState *state, cchar *key, cchar *value)
     if (mprIsRelPath(path)) {
         path = mprJoinPath(route->dir, path);
     }
-    httpAddRouteLanguageRoot(route, lang, mprGetAbsPath(path));
+    httpAddRouteLanguageDir(route, lang, mprGetAbsPath(path));
     return 0;
 }
 
@@ -1970,8 +1970,8 @@ int maParseInit(MaAppweb *appweb)
         return MPR_ERR_MEMORY;
     }
     maAddDirective(appweb, "AccessLog", accessLogDirective);
-    maAddDirective(appweb, "AddLanguage", addLanguageDirective);
-    maAddDirective(appweb, "AddLanguageRoot", addLanguageRootDirective);
+    maAddDirective(appweb, "AddLanguageSuffix", addLanguageSuffixDirective);
+    maAddDirective(appweb, "AddLanguageDir", addLanguageDirDirective);
     maAddDirective(appweb, "AddFilter", addFilterDirective);
     maAddDirective(appweb, "AddInputFilter", addInputFilterDirective);
     maAddDirective(appweb, "AddOutputFilter", addOutputFilterDirective);

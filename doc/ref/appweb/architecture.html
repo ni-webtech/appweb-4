@@ -334,13 +334,13 @@ Connection: keep-alive
             match requests based on the URL extension or on the leading portion of a URL (called prefix matching). Both
             forms are specified per handler in the Appweb configuration file.</p>
             <p>To associate a handler to a given extension, use the <a href=
-            "../../guide/appweb/users/dir/location.html#addHandler">AddHandler</a> directive. For example:</p>
+            "../../guide/appweb/users/dir/route.html#addHandler">AddHandler</a> directive. For example:</p>
             <pre>
 AddHandler espHandler .myDoc
 </pre>
             <p>This will cause the ejsHandler to respond to any URL that has a ".myDoc" extension.</p>
             <p>To associate a handler with a URL prefix, use the <a href=
-            "../../guide/appweb/users/dir/location.html">Location</a> directive. For example:</p>
+            "../../guide/appweb/users/dir/route.html">Location</a> directive. For example:</p>
             <pre>
 &lt;Location /projects/video&gt;
     SetHandler videoHandler
@@ -385,16 +385,16 @@ AddHandler espHandler .myDoc
             the client.</p>
             <p>There is one handler for each request. The Appweb core selects that handler based on a request matching
             algorithm. Handlers are configured in the Appweb configure file via the <a href=
-            "../../guide/appweb/users/dir/location.html#addHandler">AddHandler</a> and the <a href=
-            "../../guide/appweb/users/dir/location.html#setHandler">SetHandler</a> directives.</p>
+            "../../guide/appweb/users/dir/route.html#addHandler">AddHandler</a> and the <a href=
+            "../../guide/appweb/users/dir/route.html#setHandler">SetHandler</a> directives.</p>
             <h3>Filters</h3>
             <p>The filters job is to permute the data in some way and pass it on to the next stage in the pipeline.
             Filters connect one to another and multiple filters may be used in both the incoming and outgoing pipeline
             directions.</p>
             <p>The order of filters typically does matter. For example, compressing data before encrypting is not the
             same as encrypting then compressing. Appweb provides the <a href=
-            "../../guide/appweb/users/dir/location.html#addInputFilter">AddInputFilter</a> and <a href=
-            "../../guide/appweb/users/dir/location.html#addOutputFilter">AddOutputFilter</a> directives to assist in
+            "../../guide/appweb/users/dir/route.html#addInputFilter">AddInputFilter</a> and <a href=
+            "../../guide/appweb/users/dir/route.html#addOutputFilter">AddOutputFilter</a> directives to assist in
             constructing filter pipelines.</p>
             <p>Appweb uses filters to implement Transfer Authorization, Chunk Encoding and HTTP Ranged requests. By
             using filters to implement these features, they automatically become available to all handlers and all

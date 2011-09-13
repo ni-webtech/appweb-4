@@ -57,6 +57,7 @@
                 <li><a href="../../../guide/appweb/users/configuration.html">Configuring Appweb</a></li>
                 <li><a href="../../../guide/appweb/users/ports.html">Ports and Binding</a></li>
                 <li><a href="../../../guide/appweb/users/routing.html">Request Routing</a></li>
+                <li><a href="../../../guide/appweb/users/lang.html">Multi-Language Support</a></li>
                 <li><a href="../../../guide/appweb/users/authorization.html">User Authorization</a></li>
                 <li><a href="../../../guide/appweb/users/logFiles.html">Log Files</a></li>
                 <li><a href="../../../guide/appweb/users/vhosts.html">Virtual Hosts</a></li>
@@ -86,10 +87,7 @@
             is always a catch-all route that will process the request if all prior routes fail to qualify.</p>
             <p>A route may modify the request during processing by changing the request URI or request data. The
             route may also run commands as a side-effect during processing.</p>
-
             <a name="configuration"></a>
-
-
             <h2 class="section">Route Configuration</h2>
             <p>Routes are defined in the appweb.conf configuration file or via an API and are processed at run-time when 
             client HTTP requests are received. 
@@ -136,11 +134,8 @@
             <p><tt>VirtualHost</tt> directives also define implicit route blocks. In this way, they inherit the route
             configuration that existed at the point in the configuration file where the VirtualHost is defined, but they
             can override this to create a unique route configuration for the virtual host.</p>
-
-
             <a name="directives"></a>
             <h2 class="section">Route Directives</h2>
-
             <p>Other route related configuration directives include:
             <h3><a href="dir/route.html#addHandler">AddHandler</a> and 
                 <a href="dir/route.html#setHandler">SetHandler</a></h3>
@@ -193,7 +188,6 @@
             <tt>cmd</tt>. The <tt>param</tt> rule can be used to set request <a href="#params">params</a> 
             to a specific value. 
             The <tt>cmd</tt> rule can be used to run external commands.</p>
-
             <a name="params"></a>
             <h4>Request Params</h4>
             <p>Request parameters are comprised of a set of request state information. This includes:
@@ -203,11 +197,10 @@
                 <li>Tokenized route pattern fields</li>
                 <li>Fields explicitly set via the Update directive</li>
             </ul>
-
-            <p>Different web frameworks handle request parameters differently. For CGI, request parameters are mapped
-            to environment variables, for PHP they are mapped to PHP server variables. For ESP they are mapped to 
-            form variables and are accessed via the <tt>espGetVar</tt> API. And for Ejscript, request parameters they 
-            are mapped to Request.params[] collection.</p>
+            <p>Different web frameworks expose request parameters in different ways. CGI provides access to
+            request parameters via environment variables. In PHP, they are mapped to PHP server variables. In ESP 
+            they are accessed via the <tt>espGetParam</tt> API, and in Ejscript, request parameters are exposed via
+            the Request.params[] collection.</p>
             <a name="tokens"></a>
             <h2 class="section"><a href="dir/route.html#tokens">Tokens</a></h2>
             <p>Target, Condition and Update directives directives can reference tokenized values that are expanded
@@ -220,7 +213,7 @@
             <h4>System and URI Tokens</h4>
             <p>System and URI tokens are of the form: <tt>"${token}"</tt> where "token" is the name of the variable or 
             URI token to substitute.</p>
-            <h4>Request Field Tokens</h4>
+            <h4>Request Tokens</h4>
             <p>Request tokens are of the form: <tt>"${family:name=defaultValue}"</tt> where the family 
             defines a set of values. 
             If the named tokens is not present, an optional default value "=defaultValue" will be used instead.
@@ -285,7 +278,6 @@
             request URI. The route pattern may match the entire request URI, just a subset at the start of the URI
             or any portion in between. Regular expressions are ideal for route patterns as they can express a wide 
             variety of URI formats and can also extract sub-expressions for later evaluation.</p>
-
             <h4>URI Tokenization</h4>
             <p>Often the request URI will not only provide a path to a resource, but it will contains tokens of 
             information that must be isolated and extracted from the URI. Appweb route patterns provide an easy and
@@ -380,7 +372,6 @@ will match any of the URIs:
             <h3>Request Update</h3>
             <p>Request update matching is an optional step where the request <a href="#params">params</a> 
             can be modified.</p>
-
             <a name="step-param"></a>
             <h3>Param Definition</h3>
             <p>After a route fully qualifies, request <a href="#params">params</a>
@@ -410,7 +401,7 @@ Target write 200 "Running controller ${controller} action ${action}\n\n"
 </pre>
             <p>This will write the message back to the client with a HTML status code of 200 .</p>
             <p>Note: to be more secure, the <tt>write</tt> rule will escape embeded HTML sequences. If you need to emit
-            HTML, use the -r switch for raw write output.</p>
+            HTML, use the <tt>-r</tt> switch for raw write output.</p>
             <h3>Prefix Removal</h3>
             <p>If Appweb is running several applications, Appweb will need to be able to route and distinguish 
             requests for each application. There are two primary ways to achieve this: run each application
@@ -459,25 +450,27 @@ Target write 200 "Running controller ${controller} action ${action}\n\n"
 &lt;/Route>
 </pre>
             <h3>Multi-Language Content</h3>
-            <p>This example stores English content under the <tt>"english"</tt> directory and French under the <tt>"french"</tt> directory. The client's browser should include an <tt>Accept</tt> header which stipulates what language is preferred.
+            <p>This example stores English content under the <tt>"english-docs"</tt> directory and French under the 
+            <tt>"french-docs"</tt> directory. The client's browser should include an <tt>Accept-Language</tt> 
+            header which stipulates what language is preferred.
             If the accept header is missing or the requested language is not English or French, then the DefaultLanguage
             directive indicates that english content should be returned.</p>
 <pre>
 &lt;Route />
     DefaultLanguage en
-    AddLanguageRoot en english
-    AddLanguageRoot fr french
+    AddLanguageDir en /path/to/english-docs
+    AddLanguageDir fr /path/to/french-docs
 &lt;/Route>
 </pre>
             <h3>Multi-Language by Suffix</h3>
-            <p>This example stores content for all languages together and appends a language suffix to the request document
+            <p>This example stores content for all languages together and includes a language suffix to the request document
             filename. If the client requested a French version of <tt>index.html</tt>, then the document 
             <tt>index.fr.html</tt> would be served.</p>
 <pre>
 &lt;Route />
     DefaultLanguage en
-    AddLanguage en en before
-    AddLanguage fr fr
+    AddLanguageSuffix en en before
+    AddLanguageSuffix fr fr
 &lt;/Route>
 </pre>
             <h3>Application Isolation</h3>

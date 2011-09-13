@@ -81,7 +81,7 @@ ma<b>Name</b>Init(Http *http, MprModule *module)
             called immediately after loading the module code.</p>
             <p>The init function is passed a reference to the Http service object and a module object for this module.</p>
 <pre>
-int mprSimpleModuleInit(Http *http, MprModule *module)
+int maSimpleModuleInit(Http *http, MprModule *module)
 {
     HttpStage   *handler;
     handler = httpCreateHandler(http, "testHandler", 0, module);

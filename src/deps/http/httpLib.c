@@ -8452,7 +8452,7 @@ char *httpMakePath(HttpRoute *route, cchar *file)
 /*
     Language can be an empty string
  */
-int httpAddRouteLanguage(HttpRoute *route, cchar *language, cchar *suffix, int flags)
+int httpAddRouteLanguageSuffix(HttpRoute *route, cchar *language, cchar *suffix, int flags)
 {
     HttpLang    *lp;
 
@@ -8475,7 +8475,7 @@ int httpAddRouteLanguage(HttpRoute *route, cchar *language, cchar *suffix, int f
 }
 
 
-int httpAddRouteLanguageRoot(HttpRoute *route, cchar *language, cchar *path)
+int httpAddRouteLanguageDir(HttpRoute *route, cchar *language, cchar *path)
 {
     HttpLang    *lp;
 
@@ -9032,7 +9032,7 @@ static char *expandRequestTokens(HttpConn *conn, char *str)
                     mprPutStringToBuf(buf, defaultValue);
                 }
 
-            } else if (scasematch(value, "languageRoot")) {
+            } else if (scasematch(value, "languageDir")) {
                 lang = httpGetLanguage(conn, route->languages, 0);
                 if (!defaultValue) {
                     defaultValue = ".";
