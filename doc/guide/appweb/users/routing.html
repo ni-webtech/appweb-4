@@ -272,6 +272,17 @@
                     <a href="#params">params</a>.</li>
                 <li><a href="#step-target">Target Execution</a> &mdash; Select the Appweb handler and determine the target resource.</li>
             </ol>
+            <h3>Route Timing</h3>
+            <p>Appweb will initiate request routing at a different time depending on whether the request has form data. 
+            If a request has form data, it is worthwhile to delay routing until after the form data
+            has been read from the client. This enables the routing directives to take action based on the received form
+            data. If a request has no form data, it is routed immediately after the HTTP headers have been read and 
+            parsed.</p>
+            <p>A request with form data has a <tt>Content-Type</tt> header of
+            <tt>application/x-www-form-urlencoded</tt>. Requests with a <tt>Content-Type</tt> set to 
+            <tt>multipart/form-data</tt> which indicates form based file upload, will also delay routing until the uploaded
+            file has been fully received.</p>
+
             <a name="step-pattern"></a>
             <h3>Pattern Matching</h3>
             <p>A route pattern is a specially prepared regular expression that can be quickly matched against the 
