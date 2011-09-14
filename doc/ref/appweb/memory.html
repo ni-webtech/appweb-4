@@ -53,6 +53,7 @@
             </ul>
             <h2>See Also</h2>
             <ul>
+                <li><a href="multithread.html">Multithreaded</a></li>
                 <li><a href="architecture.html">Appweb Architecture</a></li>
                 <li><a href="../../guide/appweb/overview.html">User Guide Overview</a></li>
                 <li><a href="../../guide/appweb/users/authorization.html">Authorization</a></li>
@@ -68,7 +69,6 @@
         </div>
         <div class="contentLeft">
             <h1>MPR Memory Allocator</h1>
-
             <a name="overview"></a>
             <h2>Overview</h2>
             <p>Appweb provides an application specific memory allocator to use instead of malloc. This allocator is 
@@ -76,7 +76,6 @@
             It is faster than most general purpose malloc allocators for these workloads. It is deterministic and 
             allocates and frees memory in constant time O(1). It exhibits very low fragmentation and accurate 
             coalescing.</p>
-
             <p>The allocator uses a garbage collector for locating unused memory. The collector is a generational, 
             cooperative and non-compacting collector.  The use of a garbage collector is somewhat unusual in a C program. 
             However, garbage collection it is especially well suited for long running applications like a web server,
@@ -84,18 +83,15 @@
             to release memory, Appweb uses the opposite approach where memory that must be retained, needs 
             to be actively managed to 
             prevent garbage collection. This means that a <tt>managed reference</tt> must be held for all active memory.</p>
-
             <a name="allocator"></a>
             <h2>Allocator</h2>
             <p>The allocator is optimized for frequent allocations of small blocks (< 4K). It 
             uses a scheme of free queues for fast allocation. Memory allocations are aligned on 16 byte boundaries on 64-bit 
             systems and otherwise on 8 byte boundaries. It will return chunks unused memory back to the O/S.</p>
-
             <h4>Appweb 3 Allocator</h4>
             <p>Appweb 3 used memory contexts for all memory allocations. This required many APIs to have a memory context
             as the first parameter. Appweb 4 does not require this and these APIs have removed the memory context 
             parameter.</p>
-
             <a name="errors"></a>
             <h2>Error Handling</h2>
             <p> It is difficult for programmers to consistently
@@ -109,7 +105,6 @@
             When memory usage exceeds a pre-configured redline value, the depletion handler is invoked. 
             The application can then determine what action to take. Appweb will restart automatically in such 
             circumstances.</p>
-
             <a name="collector"></a>
             <h2>Garbage Collection</h2>
             <p>The MPR garbage collector will run periodically to reclaim unused memory and potentially return 
@@ -120,22 +115,18 @@
             This strategy permits worker threads to allocate temporary memory without fear. The memory will not be 
             prematurely collected until the worker explicitly acknowleges and yields to the collector by 
             calling <tt>mprYield</tt>.
-
             <p>To prevent collection of a memory block and retain the block over a yield point, the application must 
             hold a managed reference for the block. A managed reference, is a reference to an allocated block that 
             will be marked as active during a collection cycle by the owning blocks manager function. Manager functions
             are defined when allocating blocks that will hold managed references.</p>
-
             <a name="phases"></a>
             <h3>Collection Phases</h3>
             <p>The collector reclaims memory in three phases: Wait, Mark and Sweep. The Wait phase waits for all
             threads to yield. This quiesces the system for reliable collection. NOTE: this does not mean that all 
             request activity must cease. Rather, pre-determined rendezvous yield points are inserted in key locations 
             in the Appweb HTTP processing engine.</p>
-
             <p>The Mark phase traverses memory and marks all blocks that are 
             currently being used. The Sweep phase finally reclaims all blocks that are not marked.</p>
-
             <a name="marking"></a>
             <h3>Marking Blocks</h3>
             <p>The Mark phase beings with a set of known root memory blocks. The ultimate root is the Mpr object 
@@ -146,7 +137,6 @@
             The mprMark function will then invoke the manager for these managed references and so on.
             In this manner, managed memory forms a tree from the roots to the leaves and the mark phase visits every 
             managed block currently in use.</p>
-
             <a name="alloc"></a>
             <h3>Allocating Memory</h3>
             <p>Managers are defined when allocating a block of memory. For example, this code will allocate a block
@@ -160,7 +150,6 @@ char **block = mprAllocObj(char*, manageBlock);
             and copies the string argument. The mprAllocObj function is used to allocate structures with managers. Use
             mprAllocMem to allocate a block of memory and reserve room for a manager function. Then use mprSetManager to
             define a manager function.</p>
-
             <a name="managers"></a>
             <h3>Managers</h3>
             <p>A manager function is invoked by the collector during each collector Mark phase of the collection cycle.
@@ -171,19 +160,16 @@ void manageBlock(char *ptr, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(*ptr);
-
     } else if (flags & MPR_MANAGE_FREE) {
         /* Custom code when the block is freed */
     }
 }
 </pre>
-
             <p>A common technique it to define a top level application structure which will be the root memory block
             for the entire application. Store top level managed references in this block and call mprAddRoot to define
             it as a root block.</p>
         </div>
     </div>
-
 <!-- BeginDsi "dsi/bottom.html" -->
 
 	<div class="bottom">

@@ -334,14 +334,14 @@ static int runAction(HttpConn *conn)
     updated = 0;
     recompile = 0;
 
-    if (rx->route->sourceName == 0) {
+    if (route->sourceName == 0 || *route->sourceName == '\0') {
         return 1;
     }
     /*
         Expand any form var $tokens. This permits ${controller} and user form data to be used in the controller name
      */
     if (schr(route->sourceName, '$')) {
-        req->controllerName = stemplate(route->sourceName, conn->rx->params);
+        req->controllerName = stemplate(route->sourceName, rx->params);
     } else {
         req->controllerName = route->sourceName;
     }
@@ -379,13 +379,13 @@ static int runAction(HttpConn *conn)
             updated = 1;
         }
     }
-    key = mprJoinPath(eroute->controllersDir, conn->rx->target);
+    key = mprJoinPath(eroute->controllersDir, rx->target);
     if ((action = mprLookupKey(esp->actions, key)) == 0) {
         req->controllerPath = mprJoinPath(eroute->controllersDir, req->controllerName);
         key = sfmt("%s/%s-missing", req->controllerPath, mprTrimPathExt(req->controllerName));
         if ((action = mprLookupKey(esp->actions, key)) == 0) {
             if ((action = mprLookupKey(esp->actions, "missing")) == 0) {
-                httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Missing action for %s", conn->rx->target);
+                httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Missing action for %s", rx->target);
                 return 0;
             }
         }
@@ -401,6 +401,8 @@ static int runAction(HttpConn *conn)
         req->cacheBuffer = mprCreateBuf(-1, -1);
     }
     if (action->actionProc) {
+        //  MOB - does this need a lock
+        mprSetThreadData(esp->local, conn);
         (action->actionProc)(conn);
         return 1;
     }
@@ -467,6 +469,9 @@ static void runView(HttpConn *conn)
         return;
     }
 	httpAddHeaderString(conn, "Content-Type", "text/html");
+
+    //  MOB - does this need a lock
+    mprSetThreadData(esp->local, conn);
     (view)(conn);
 }
 
@@ -761,8 +766,11 @@ static void addRestfulRoutes(HttpRoute *parent, cchar *prefix, cchar *controller
 
 static void addDefaultRoutes(HttpRoute *parent)
 {
-    addRoute(parent, "home", "GET,POST,PUT", "^/$", stemplate("${STATIC_DIR}/index.esp", parent->pathTokens), NULL);
-    addRoute(parent, "static", "GET", "^/static/(.*)", stemplate("${STATIC_DIR}/$1", parent->pathTokens), NULL);
+    cchar   *controller;
+
+    controller = parent->sourceName;
+    addRoute(parent, "home", "GET,POST,PUT", "^/$", stemplate("${STATIC_DIR}/index.esp", parent->pathTokens), controller);
+    addRoute(parent, "static", "GET", "^/static/(.*)", stemplate("${STATIC_DIR}/$1", parent->pathTokens), controller);
 }
 
 
@@ -846,6 +854,7 @@ static void manageEsp(Esp *esp, int flags)
         mprMark(esp->actions);
         mprMark(esp->views);
         mprMark(esp->cache);
+        mprMark(esp->local);
     }
 }
 
@@ -903,7 +912,7 @@ static void setRouteDirs(MaState *state, cchar *kind)
 
     This should only be used inside dedicated ESP routes. This directive is equivalent to:
 
-        ScriptName   scriptName
+        Prefix       scriptName
         DocumentRoot path
         SetHandler   espHandler
         EspRoutePack routePack
@@ -926,13 +935,15 @@ static int espAppDirective(MaState *state, cchar *key, cchar *value)
         scriptName = sjoin("/", scriptName, 0);
     }
     scriptName = stemplate(scriptName, route->pathTokens);
-    if (scmp(scriptName, "/") == 0) {
+    if (scriptName == 0 || *scriptName == '\0' || scmp(scriptName, "/") == 0) {
         scriptName = MPR->emptyString;
+    } else {
+        httpSetRoutePrefix(route, scriptName);
     }
-    httpSetRoutePrefix(route, scriptName);
     if (route->pattern == 0) {
         httpSetRoutePattern(route, sjoin("/", scriptName, 0), 0);
     }
+    httpSetRouteSource(route, "");
     httpSetRouteDir(route, path);
     eroute->dir = route->dir;
     httpAddRouteHandler(route, "espHandler", "");
@@ -940,9 +951,10 @@ static int espAppDirective(MaState *state, cchar *key, cchar *value)
     /* Must set dirs first before defining route pack */
     setRouteDirs(state, routePack);
     addRoutePack(state->route, routePack, 0, 0);
-    
+#if UNUSED
     //  MOB - is this needed or desired
     httpSetRouteTarget(route, "file", 0);
+#endif
     return 0;
 }
 
@@ -960,7 +972,7 @@ static int espAppAliasDirective(MaState *state, cchar *key, cchar *value)
     }
     state = maPushState(state);
     state->route = route;
-    rc = espAppDirective(state, NULL, value);
+    rc = espAppDirective(state, key, value);
     maPopState(state);
     return rc;
 }
@@ -1220,6 +1232,7 @@ int maEspHandlerInit(Http *http, MprModule *mp)
         return MPR_ERR_MEMORY;
     }
     esp->mutex = mprCreateLock();
+    esp->local = mprCreateThreadLocal();
     if ((esp->views = mprCreateHash(-1, MPR_HASH_STATIC_VALUES)) == 0) {
         return 0;
     }

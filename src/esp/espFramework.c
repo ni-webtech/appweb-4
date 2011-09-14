@@ -1,7 +1,5 @@
 /*
-    espFramework.c -- 
-
-    The ESP handler implements a very fast in-process CGI scheme.
+    espFramework.c -- ESP Web Framework API
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
@@ -28,31 +26,32 @@
     - Request.extension
 
     - Request.checkSecurityToken()
-    - Request.clearFlash
-    - Request.createSession()
-    - Request.dontAutoFinalize()
+espClearFlash()     - Request.clearFlash
+
+espCreateSession()  - Request.createSession()
+#   - Request.dontAutoFinalize()
     - Request.destroySession()
     - Request.error(), inform(), notify(), warn()
     - Request.finalizeFlash
-    - Request.link
+httpLink()    - Request.link
     - Request.matchContent
     - Request.read()                What about incoming content?
     - Request.securityToken() 
     - Request.setCookie() 
-    - Request.setHeader() 
+#   - Request.setHeader() 
     - Request.setHeaders() 
     - Request.setupFlash() 
     - Request.trace() 
-    - Request.writeContent() 
-    - Request.writeError() 
-    - Request.writeFile() 
-    - Request.writeResponse() 
-    - Request.writeSafe() 
+espWriteContent    - Request.writeContent() 
+espWriteError    - Request.writeError() 
+#   - Request.writeFile() 
+#   - Request.writeResponse() 
+#   - Request.writeSafe() 
     - Request.written() 
 
     - Controller.before(), after()
-    - Controller.writeView()
-    - Controller.writePartialTemplate()
+espWriteView    - Controller.writeView()
+espWritePartialView    - Controller.writePartialTemplate()
     - Controller.writeTemplate()
     - Controller.writeTemplateLiteral()
     - Controller.runCheckers()
@@ -89,6 +88,7 @@
 /*  
     Add a http header if not already defined
  */
+//NAME: addHeader
 void espAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
 {
     va_list     vargs;
@@ -105,6 +105,7 @@ void espAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
 /*
     Add a header string if not already defined
  */
+//NAME: addHeaderString
 void espAddHeaderString(HttpConn *conn, cchar *key, cchar *value)
 {
     httpAddHeaderString(conn, key, value);
@@ -210,6 +211,7 @@ char *espGetStatusMessage(HttpConn *conn)
 }
 
 
+//NAME: finalize
 void espFinalize(HttpConn *conn) 
 {
     EspReq     *req;
@@ -224,6 +226,7 @@ void espFinalize(HttpConn *conn)
 }
 
 
+//NAME: isFinalized
 bool espFinalized(HttpConn *conn) 
 {
     EspReq      *req;
@@ -233,12 +236,14 @@ bool espFinalized(HttpConn *conn)
 }
 
 
+//NAME: flush
 void espFlush(HttpConn *conn) 
 {
     httpFlush(conn);
 }
 
 
+//NAME: redirect
 void espRedirect(HttpConn *conn, int status, cchar *target)
 {
     EspReq  *req;
@@ -309,18 +314,37 @@ cchar *espGetParam(HttpConn *conn, cchar *var, cchar *defaultValue)
 }
 
 
+cchar *espGetSecurityToken(HttpConn *conn)
+{
+    HttpRx      *rx;
+
+    rx = conn->rx;
+
+    if (rx->securityToken == 0) {
+        rx->securityToken = (char*) espGetSessionVar(conn, ESP_SECURITY_TOKEN_NAME, 0);
+        if (rx->securityToken == 0) {
+            rx->securityToken = mprGetMD5(sfmt("%d-%p", mprGetTicks(), conn->rx));
+            espSetSessionVar(conn, ESP_SECURITY_TOKEN_NAME, rx->securityToken);
+        }
+    }
+    return rx->securityToken;
+}
+
+
 void espSetIntParam(HttpConn *conn, cchar *var, int value) 
 {
     httpSetIntParam(conn, var, value);
 }
 
 
+//NAME: set
 void espSetParam(HttpConn *conn, cchar *var, cchar *value) 
 {
     httpSetParam(conn, var, value);
 }
 
 
+//NAME: match
 bool espMatchParam(HttpConn *conn, cchar *var, cchar *value)
 {
     return httpMatchParam(conn, var, value);
@@ -330,6 +354,7 @@ bool espMatchParam(HttpConn *conn, cchar *var, cchar *value)
 /*  
     Set a http header. Overwrite if present.
  */
+//NAME: setHeader
 void espSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
 {
     va_list     vargs;
@@ -358,6 +383,7 @@ void espSetStatus(HttpConn *conn, int status)
 }
 
 
+//NAME: write, send, put, wr()
 ssize espWrite(HttpConn *conn, cchar *fmt, ...)
 {
     va_list     vargs;
@@ -392,6 +418,17 @@ ssize espWriteFile(HttpConn *conn, cchar *path)
 }
 
 
+ssize espWriteParam(HttpConn *conn, cchar *name)
+{
+    cchar   *value;
+
+    if ((value = espGetParam(conn, name, 0)) == 0) {
+        value = espGetSessionVar(conn, name, "");
+    }
+    return espWriteSafeString(conn, value);
+}
+
+
 ssize espWriteSafeString(HttpConn *conn, cchar *s)
 {
     s = mprEscapeHtml(s);
@@ -402,17 +439,6 @@ ssize espWriteSafeString(HttpConn *conn, cchar *s)
 ssize espWriteString(HttpConn *conn, cchar *s)
 {
     return espWriteBlock(conn, s, slen(s));
-}
-
-
-ssize espWriteParam(HttpConn *conn, cchar *name)
-{
-    cchar   *value;
-
-    if ((value = espGetParam(conn, name, 0)) == 0) {
-        value = espGetSessionVar(conn, name, "");
-    }
-    return espWriteSafeString(conn, value);
 }
 
 
@@ -468,6 +494,7 @@ static int getParams(char ***keys, char *buf, int len)
 }
 
 
+//  NAME show
 void espShowRequest(HttpConn *conn)
 {
     MprHashTable    *env;

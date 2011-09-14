@@ -6,7 +6,7 @@ NAME
        auth - Create and manage passwords
 
 SYNOPSIS
-       httpComp [-c] [-p password] passwordFile realm userName
+       auth [-c] [-p password] passwordFile realm userName
 
 OPTIONS
        -p password

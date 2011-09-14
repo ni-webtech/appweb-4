@@ -85,6 +85,9 @@ extern "C" {
 #define ESP_TOK_EXPR            4            /* <%= expression %> */
 #define ESP_TOK_CONTROL         5            /* <%@ control */
 
+//MOB DOC
+#define ESP_SECURITY_TOKEN_NAME "__esp_security_token__"
+
 /********************************** Parsing ***********************************/
 /**
     ESP page parser structure
@@ -104,6 +107,7 @@ typedef struct EspParse {
 typedef struct Esp {
     MprHashTable    *actions;               /**< Table of actions */
     MprHashTable    *views;                 /**< Table of views */
+    MprThreadLocal  *local;                 /**< Thread local data */
     MprCache        *cache;                 /**< Session and content cache */
     MprMutex        *mutex;                 /**< Multithread lock */
     int             inUse;                  /**< Active ESP request counter */
@@ -492,6 +496,15 @@ extern int espGetIntParam(HttpConn *conn, cchar *var, int defaultValue);
     @ingroup EspReq
  */
 extern cchar *espGetQueryString(HttpConn *conn);
+
+/**
+    Get a unique security token 
+    @description Security tokens help mitigate against replay attacks. The security token is stored in HttpRx.securityToken
+        and in the session store.
+    @param conn HttpConn connection object
+    @return The security token string
+ */
+extern cchar *espGetSecurityToken(HttpConn *conn);
 
 /** 
     Get the response status

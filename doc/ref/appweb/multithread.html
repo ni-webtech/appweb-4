@@ -54,6 +54,7 @@
             <h2>See Also</h2>
             <ul>
                 <li><a href="architecture.html">Appweb Architecture</a></li>
+                <li><a href="memory.html">MPR Memory Allocator</a></li>
                 <li><a href="../../guide/appweb/overview.html">User Guide Overview</a></li>
                 <li><a href="../../guide/appweb/users/authorization.html">Authorization</a></li>
                 <li><a href="../../guide/appweb/users/configuration.html">Configuration</a></li>
@@ -68,28 +69,63 @@
         </div>
         <div class="contentLeft">
             <h1>Multithreaded Programming</h1>
-
             <a name="overview"></a>
             <h2>Overview</h2>
-            - Mpr is a multithreaded portable runtime
-            - Multithreaded programming is hard
-            - Mpr provides facilities to make this less painful
-
-            - The problem of I/O events
-                - Callbacks on another thread
-                - Freeing connections becomes a hard problem
-                - Solutions ... in-use counters, global release managers
-
-<pre>
-- Overview
-- Dispatchers
-- I/O Events
-- Threadsafe APIs
-- Worker Thread Pool
-</pre>
+            <p>Programmming in a multithreaded environment can be hard. Sometimes programming errors are timing related 
+            as multiple threads interact. Multithread locks can become tangled and bugs can be difficult to reproduce. 
+            To aleviate these problems and
+            enable the benefits of a multi-threaded core, Appweb provides a suite of facilities to make multithreaded
+            programming easier, more reliable and efficient.</p>
+            <h3>The Problem of Multithreaded I/O Events</h3>
+            <p>A particular thorny issue in multithreaded servers, is how to handle I/O without consuming a thread for
+            each request. It is not practical to dedicate a thread to each HTTP request. A single browser will often
+            send 6-10 simulaneous requests. If each request consumed a thread for the duration, the web server would
+            quickly consume too many threads and system performance would greatly suffer. </p>
+            <p>One solution is to use a thread pool. This allows a request to borrow a thread from a thread pool while 
+            the request is active and return the thread when it cannot immediately continue with servicing the request. 
+            A thread may
+            not be able to continue because it is waiting for I/O from the client, or waiting for I/O to the client to 
+            drain over the network. Returning the thread to the pool allows other requests to use the thread while the
+            first request is waiting for network I/O. When the network is ready, a thread can be obtained from the pool
+            and the original request can continue. For this to work, an efficient network event service is 
+            essential. Appweb uses such a thread pool and event service to efficiently manage thread resources. </p>
+            
+            <p>However using such an event service and thread pool, this raises another problem: races between the 
+            foreground request thread and the background async I/O event thread. It is easy for these two threads to 
+            simultaneously interact and corrupt critical data structures. A typical solution is to use multithread
+            locks to serialize access to such data, but this is a crude solution and often leads to brittle applications.
+            Appweb has a better solution that effectively serializes all activity for a request: per-request 
+            event dispatchers.</p>
+            <h3>Event Dispatchers</h3>
+            <p>The Multithreaded Portable Runtime (MPR) that Appweb  uses, has a facility called Event Dispatchers. These
+            are event queues on which all I/O and other event activity for a request can be queued and serviced. 
+            Each request has its own dispatcher and so events for a request are serialized.  When a network I/O event
+            is received by Appweb for a request, an event is queued on the request's dispatcher. If the request is 
+            currently active (using a thread from the thread pool), the event is queued and no further action is taken. 
+            When the request has finished its current activity, it will service events on its dispatcher queue and 
+            eventually service the I/O event. If the request is currently idle, a thread is assigned from the thread 
+            pool for the request and the thread is resumed to service the request's dispatcher queue. This greatly 
+            simplifies Appweb as all activity for a request is thus serialized via the dispatcher queue.</p>
+            <h3>Multithreaded Appweb</h3>
+            <p>By using request dispatchers, Appweb serializes all request activity, yet it can support many 
+            simultaneous requests due to its multithreaded core. Appweb efficiently utilizes thread resources by using
+            a thread pool and not dedicating threads permanently to requests. Threads are temporarily assigned
+            only as required by active requests.</p>
+            <h3>Simplified Modules</h3>
+            <p>Appweb can be extended by writing loadable modules. Modules can add request handlers, pipeline filters,
+            or network connectors. All module code can rely on the fact that request activity will be serialized and
+            no locking is required to serilize I/O activity. Consequently, most module code can be effectively 
+            single-threaded.</p>
+            <p>Appweb can also be extended via Embedded Server Pages applications. These are loadable ESP web pages,
+            and ESP Model-View-Controller applications. These too can rely on the fact that request activity is serialized
+            and locking primitives are typically not required. ESP code can thus be simple, 
+            single-threaded application code.</p>
+            <h3>Locking</h3>
+            <p>If you have a requirement for a data structure that will be accessed and manipulated simultaneously
+            by multiple threads, the MPR provides a suite of locking primitives. See
+            <a href="../../api/mpr.html#group___mpr_synch">MprSynch</a> for the MPR Multithreaded Synchronization Services.</p>
         </div>
     </div>
-
 <!-- BeginDsi "dsi/bottom.html" -->
 
 	<div class="bottom">

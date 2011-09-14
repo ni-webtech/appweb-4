@@ -150,7 +150,6 @@ td {
     padding: 4px 8px 4px 8px;
 }
 
-
 th {
     padding: 6px 10px 6px 6px;
 }
@@ -163,8 +162,15 @@ form td {
     padding: 2px;
 }
 
+tt {
+    font-weight: bold;
+    font-size: 110%;
+    color: #AA0000;
+	font-family: Consolas, Monaco, Courier, Monaco, Courier, Courier New, Courier, monospace; 
+}
+
 /*
- *     Ejscript web controls layout style sheet
+       Web controls layout style sheet
  */
 div.-ejs-tabs {
     margin-left: 40px;

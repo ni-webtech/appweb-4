@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <% /* securityToken() */ %>
-    <% /* icon("/static/images/favicon.ico") */ %>
-    <% /* stylesheet() */ %>
-    <% /* script() */ %>
+    <% espSecurityToken(conn); %>
+    <% espIcon(conn, "/static/images/favicon.ico", 0); %>
+    <% espStylesheet(conn, 0, 0); %>
+    <% espScript(conn, 0, 0); %>
     <title>@@title</title>
 </head>
 

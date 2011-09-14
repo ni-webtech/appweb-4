@@ -120,7 +120,7 @@ setp() {
         [ "$owner" = "root" -o "$owner" = 0 ] && owner=Administrators
         [ "$group" = "root" -o "$group" = 0 ] && group=SYSTEM
         # Cygwin bug when using "c:/" 
-        f="${f##C:}"
+        # f="${f##C:}"
         ${CHOWN} ${owner} "${f}"
         ${CHGRP} ${group} "${f}"
     else

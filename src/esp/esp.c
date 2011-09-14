@@ -3,11 +3,6 @@
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
 
-  Commands:
-    esp generate controller name [action [, action] ...]
-        # generate a new controller with names
-    esp run
-
     MOB - what about romming
  */
 
@@ -871,6 +866,7 @@ static void usageError(Mpr *mpr)
     "    esp clean              # Clean cached files\n"
     "    esp compile            # Compile all controllers, views and pages\n"
     "    esp compile path/*.esp # Compile a single web page\n"
+    "    esp generate app name  # Generate a new application\n"
     "    esp run                # Run appweb and the ESP app\n"
     "", name);
     app->error++;
@@ -897,7 +893,7 @@ static void trace(cchar *tag, cchar *fmt, ...)
 
     if (!app->quiet) {
         va_start(args, fmt);
-        msg = sfmt(fmt, args);
+        msg = sfmtv(fmt, args);
         tag = sfmt("[%s]", tag);
         mprRawLog(0, "%12s %s\n", tag, msg);
         va_end(args);

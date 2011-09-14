@@ -8033,8 +8033,9 @@ void httpSetRoutePrefix(HttpRoute *route, cchar *prefix)
 void httpSetRouteSource(HttpRoute *route, cchar *source)
 {
     mprAssert(route);
-    mprAssert(source && *source);
+    mprAssert(source);
 
+    /* Source can be empty */
     route->sourceName = sclone(source);
 }
 
@@ -9445,6 +9446,7 @@ static void manageRx(HttpRx *rx, int flags)
         mprMark(rx->requestData);
         mprMark(rx->route);
         mprMark(rx->scriptName);
+        mprMark(rx->securityToken);
         mprMark(rx->statusMessage);
         mprMark(rx->target);
         mprMark(rx->uploadDir);

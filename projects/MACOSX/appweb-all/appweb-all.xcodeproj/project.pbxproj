@@ -65,6 +65,7 @@
 		C913688414041CBA0024EB0A /* espTemplate.c in Sources */ = {isa = PBXBuildFile; fileRef = C913688014041CBA0024EB0A /* espTemplate.c */; };
 		C913688614041CD70024EB0A /* espHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C913688514041CD70024EB0A /* espHandler.c */; };
 		C913689114041D7A0024EB0A /* esp.c in Sources */ = {isa = PBXBuildFile; fileRef = C913687D14041CBA0024EB0A /* esp.c */; };
+		C93ACAB414206B17006FF043 /* espHtml.c in Sources */ = {isa = PBXBuildFile; fileRef = C93ACAB214206B17006FF043 /* espHtml.c */; };
 		C94086AF101A665B0019809C /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C94086D8101A672F0019809C /* testAppweb.c in Sources */ = {isa = PBXBuildFile; fileRef = C94086CB101A672F0019809C /* testAppweb.c */; };
 		C94086DE101A672F0019809C /* testHttp.c in Sources */ = {isa = PBXBuildFile; fileRef = C94086D2101A672F0019809C /* testHttp.c */; };
@@ -481,6 +482,7 @@
 		C913688014041CBA0024EB0A /* espTemplate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espTemplate.c; path = ../../../src/esp/espTemplate.c; sourceTree = "<group>"; };
 		C913688514041CD70024EB0A /* espHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = espHandler.c; sourceTree = "<group>"; };
 		C938480E1123BD80002AD34B /* ejsHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ejsHandler.c; sourceTree = "<group>"; };
+		C93ACAB214206B17006FF043 /* espHtml.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espHtml.c; path = ../../../src/esp/espHtml.c; sourceTree = "<group>"; };
 		C94086B3101A665B0019809C /* testAppweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testAppweb; sourceTree = BUILT_PRODUCTS_DIR; };
 		C94086CB101A672F0019809C /* testAppweb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testAppweb.c; path = ../../../src/test/testAppweb.c; sourceTree = SOURCE_ROOT; };
 		C94086D2101A672F0019809C /* testHttp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testHttp.c; path = ../../../src/test/testHttp.c; sourceTree = SOURCE_ROOT; };
@@ -689,6 +691,7 @@
 			isa = PBXGroup;
 			children = (
 				C913687D14041CBA0024EB0A /* esp.c */,
+				C93ACAB214206B17006FF043 /* espHtml.c */,
 				C913687E14041CBA0024EB0A /* espFramework.c */,
 				C913687F14041CBA0024EB0A /* espSession.c */,
 				C913688014041CBA0024EB0A /* espTemplate.c */,
@@ -1524,6 +1527,7 @@
 				C913688314041CBA0024EB0A /* espSession.c in Sources */,
 				C913688414041CBA0024EB0A /* espTemplate.c in Sources */,
 				C913688614041CD70024EB0A /* espHandler.c in Sources */,
+				C93ACAB414206B17006FF043 /* espHtml.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
