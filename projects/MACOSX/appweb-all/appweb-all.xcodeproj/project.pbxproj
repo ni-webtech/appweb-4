@@ -60,6 +60,9 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		C9120B84142CE2B5006826A9 /* edi.c in Sources */ = {isa = PBXBuildFile; fileRef = C9120B81142CE2B5006826A9 /* edi.c */; };
+		C9120B85142CE2B5006826A9 /* mdb.c in Sources */ = {isa = PBXBuildFile; fileRef = C9120B82142CE2B5006826A9 /* mdb.c */; };
+		C9120B86142CE2B5006826A9 /* sdb.c in Sources */ = {isa = PBXBuildFile; fileRef = C9120B83142CE2B5006826A9 /* sdb.c */; };
 		C913688214041CBA0024EB0A /* espFramework.c in Sources */ = {isa = PBXBuildFile; fileRef = C913687E14041CBA0024EB0A /* espFramework.c */; };
 		C913688314041CBA0024EB0A /* espSession.c in Sources */ = {isa = PBXBuildFile; fileRef = C913687F14041CBA0024EB0A /* espSession.c */; };
 		C913688414041CBA0024EB0A /* espTemplate.c in Sources */ = {isa = PBXBuildFile; fileRef = C913688014041CBA0024EB0A /* espTemplate.c */; };
@@ -476,6 +479,12 @@
 
 /* Begin PBXFileReference section */
 		C9081AA513D899CE00FE7376 /* Product.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Product.xcconfig; sourceTree = "<group>"; };
+		C9120B81142CE2B5006826A9 /* edi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = edi.c; path = ../../../src/esp/edi.c; sourceTree = "<group>"; };
+		C9120B82142CE2B5006826A9 /* mdb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mdb.c; path = ../../../src/esp/mdb.c; sourceTree = "<group>"; };
+		C9120B83142CE2B5006826A9 /* sdb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sdb.c; path = ../../../src/esp/sdb.c; sourceTree = "<group>"; };
+		C9120B87142CE2C2006826A9 /* edi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = edi.h; path = ../../../src/esp/edi.h; sourceTree = "<group>"; };
+		C9120B88142CE2C2006826A9 /* esp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = esp.h; path = ../../../src/esp/esp.h; sourceTree = "<group>"; };
+		C9120B89142CE2C2006826A9 /* mdb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mdb.h; path = ../../../src/esp/mdb.h; sourceTree = "<group>"; };
 		C913687D14041CBA0024EB0A /* esp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = esp.c; path = ../../../src/esp/esp.c; sourceTree = "<group>"; };
 		C913687E14041CBA0024EB0A /* espFramework.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espFramework.c; path = ../../../src/esp/espFramework.c; sourceTree = "<group>"; };
 		C913687F14041CBA0024EB0A /* espSession.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espSession.c; path = ../../../src/esp/espSession.c; sourceTree = "<group>"; };
@@ -690,11 +699,17 @@
 		C913687214041C690024EB0A /* esp */ = {
 			isa = PBXGroup;
 			children = (
+				C9120B87142CE2C2006826A9 /* edi.h */,
+				C9120B88142CE2C2006826A9 /* esp.h */,
+				C9120B89142CE2C2006826A9 /* mdb.h */,
+				C9120B81142CE2B5006826A9 /* edi.c */,
 				C913687D14041CBA0024EB0A /* esp.c */,
 				C93ACAB214206B17006FF043 /* espHtml.c */,
 				C913687E14041CBA0024EB0A /* espFramework.c */,
 				C913687F14041CBA0024EB0A /* espSession.c */,
 				C913688014041CBA0024EB0A /* espTemplate.c */,
+				C9120B82142CE2B5006826A9 /* mdb.c */,
+				C9120B83142CE2B5006826A9 /* sdb.c */,
 			);
 			name = esp;
 			sourceTree = "<group>";
@@ -1528,6 +1543,9 @@
 				C913688414041CBA0024EB0A /* espTemplate.c in Sources */,
 				C913688614041CD70024EB0A /* espHandler.c in Sources */,
 				C93ACAB414206B17006FF043 /* espHtml.c in Sources */,
+				C9120B84142CE2B5006826A9 /* edi.c in Sources */,
+				C9120B85142CE2B5006826A9 /* mdb.c in Sources */,
+				C9120B86142CE2B5006826A9 /* sdb.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

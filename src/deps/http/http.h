@@ -1731,6 +1731,7 @@ typedef struct HttpConn {
     void            *pool;                  /**< Pool of VMs */
     void            *mark;                  /**< Reference for GC marking */
     void            *data;                  /**< Custom data for request */
+    void            *record;                /**< Current request database record for MVC apps */
     char            *boundary;              /**< File upload boundary */
     char            *errorMsg;              /**< Error message for the last request (if any) */
     char            *ip;                    /**< Remote client IP address */
@@ -3251,7 +3252,9 @@ extern cchar *httpGetRouteMethods(HttpRoute *route);
     r.link({route: "default", action: "{AT}checkout")
     r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}")
 */
-extern void httpLink(HttpRoute *route, cchar *target, cchar *options);
+//  MOB - move to conn?
+//  MOB - DOC
+extern char *httpLink(HttpConn *conn, cchar *target);
 
 /**
     Lookup an error document by HTTP status code
@@ -3588,6 +3591,9 @@ extern int httpSetRouteTarget(HttpRoute *route, cchar *name, cchar *details);
     @internal
  */
 extern void httpSetRouteWorkers(HttpRoute *route, int workers);
+
+//  MOB DOC
+extern char *httpTemplate(HttpConn *conn, HttpRoute *route, MprHashTable *options);
 
 /**
     Tokenize a string based on route data
@@ -4017,7 +4023,7 @@ extern void httpSetIntParam(HttpConn *conn, cchar *var, int value);
     @return True if the content is current and has not been modified.
     @ingroup HttpRx
  */
-extern int  httpSetUri(HttpConn *conn, cchar *uri, cchar *query);
+extern int httpSetUri(HttpConn *conn, cchar *uri, cchar *query);
 
 /**
     Test if a request param is defined
@@ -4802,6 +4808,13 @@ extern HttpHost *httpCloneHost(HttpHost *parent);
 extern HttpHost *httpCreateHost();
 
 /**
+    Lookup a route by name
+    @param host HttpHost object owning the route table
+    @param name Route name to find. If null or empty, look for "default"
+ */
+extern HttpRoute *httpLookupRoute(HttpHost *host, cchar *name);
+
+/**
     Reset the list of routes for the host
     @param host HttpHost object
     @ingroup HttpHost
@@ -4892,6 +4905,37 @@ extern int  httpSetupTrace(HttpHost *host, cchar *ext);
     @return The path extension sans "."
   */
 extern char *httpGetPathExt(cchar *path);
+
+/**
+    Extract a field value from an option string. 
+    @param options. Option string of the form: "field='value' field='value'..."
+    @param field Field key name
+    @param defaultValue Value to use if "field" is not found in options
+    @return Allocated value string.
+ */
+extern cchar *httpGetOption(MprHashTable *options, cchar *field, cchar *defaultValue);
+
+//  MOB DOC
+extern MprHashTable *httpGetOptionHash(MprHashTable *options, cchar *field);
+
+/**
+    Convert an options string into an options table
+    @param options. Option string of the form: "{field:'value', field:'value'}"
+        This is a sub-set of the JSON syntax. Arrays are not supported.
+    @return Options table
+ */
+extern MprHashTable *httpGetOptions(cchar *options);
+
+/**
+    Add an option to the options table
+    @param options. Option table returned from #httpGetOptions
+    @param field Field key name
+    @param value Value to use for the field
+ */
+extern void httpAddOption(MprHashTable *options, cchar *field, cchar *value);
+
+//  MOB DOC
+extern void httpSetOption(MprHashTable *options, cchar *field, cchar *value);
 
 #ifdef __cplusplus
 } /* extern C */

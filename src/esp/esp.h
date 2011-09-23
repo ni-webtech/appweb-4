@@ -13,6 +13,10 @@
 
 #if BLD_FEATURE_ESP
 
+#if BLD_FEATURE_EDI || 1
+#include    "edi.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -62,15 +66,20 @@ extern "C" {
 #define ESP_LIBS ESP_CORE_LIBS ESP_SSL_LIBS
 
 /********************************** Defines ***********************************/
+/**
+    Procedure callback
+    @ingroup Esp
+ */
+typedef void (*EspProc)(HttpConn *conn);
 
 #define CONTENT_MARKER  "${_ESP_CONTENT_MARKER_}"       /* Layout content marker */
 #define ESP_NAME        "espHandler"                    /* Name of the ESP handler */
 #define ESP_SESSION     "-esp-session-"                 /* ESP session cookie name */
 
 #if BLD_WIN_LIKE
-    #define ESP_EXPORT __declspec(dllexport) 
+    #define ESP_EXPORT __declspec(dllexport)
 #else
-    #define ESP_EXPORT 
+    #define ESP_EXPORT
 #endif
     #define ESP_EXPORT_STRING MPR_STRINGIFY(ESP_EXPORT)
 
@@ -107,11 +116,20 @@ typedef struct EspParse {
 typedef struct Esp {
     MprHashTable    *actions;               /**< Table of actions */
     MprHashTable    *views;                 /**< Table of views */
+    MprHashTable    *internalOptions;       /**< Table of internal HTML control options  */
     MprThreadLocal  *local;                 /**< Thread local data */
     MprCache        *cache;                 /**< Session and content cache */
     MprMutex        *mutex;                 /**< Multithread lock */
+#if BLD_FEATURE_EDI || 1
+    EdiService      *ediService;            /**< Database service */
+#endif
     int             inUse;                  /**< Active ESP request counter */
 } Esp;
+
+/*
+    Add HTLM internal options to the Esp.options hash
+ */
+extern void espInitHtmlOptions(Esp *esp);
 
 /********************************** Routes ************************************/
 /**
@@ -124,6 +142,8 @@ typedef struct EspRoute {
     char            *compile;               /**< Compile template */
     char            *link;                  /**< Link template */
     char            *searchPath;            /**< Search path to use when locating compiler / linker */
+    Edi             *edi;                   /**< Default database for this route */
+    EspProc         controllerBase;         /**< Initialize base for a controller */
 
     char            *appModuleName;         /**< App module name when compiled flat */
     char            *appModulePath;         /**< App module path when compiled flat */
@@ -143,9 +163,9 @@ typedef struct EspRoute {
 	int				showErrors;				/**< Send server errors back to client */
 } EspRoute;
 
-/** 
+/**
     Control the caching of content for a given targetKey
-    @description This routine the response data content caching. 
+    @description This routine the response data content caching.
     @param eroute EspRoute object
     @param targetKey The HttpRoute target key to cache.
     @param lifesecs Lifespan of cache items in seconds.
@@ -189,10 +209,13 @@ extern char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *c
     @description Actions are C procedures that are invoked when specific URIs are routed to the controller/action pair.
     @param eroute ESP route object
     @param targetKey Target key used to select the action in a HttpRoute target. This is typically a URI prefix.
-    @param actionProc EspActionProc callback procedure to invoke when the action is requested.
+    @param actionProc EspProc callback procedure to invoke when the action is requested.
     @ingroup EspRoute
  */
 extern void espDefineAction(EspRoute *eroute, cchar *targetKey, void *actionProc);
+
+//  MOB - DOC
+extern void espDefineBase(EspRoute *eroute, void *baseProc);
 
 /**
     Define a view
@@ -206,7 +229,7 @@ extern void espDefineView(EspRoute *eroute, cchar *path, void *viewProc);
 
 /**
     Expand a compile or link command template
-    @description This expands a command template and replaces "${tokens}" with their equivalent value. The supported 
+    @description This expands a command template and replaces "${tokens}" with their equivalent value. The supported
         tokens are:
         <ul>
             <li>ARCH - Build architecture (i386, x86_64)</li>
@@ -294,7 +317,7 @@ extern cchar *espGetSessionVar(HttpConn *conn, cchar *name, cchar *defaultValue)
     @description
     @param conn Http connection object
     @param name Variable name to set
-    @param value Variable value to use 
+    @param value Variable value to use
     @return A session state object
     @ingroup EspSession
  */
@@ -311,12 +334,6 @@ extern char *espGetSessionID(HttpConn *conn);
 
 /********************************** Requests **********************************/
 /**
-    Action procedure callback
-    @ingroup EspReq
- */
-typedef void (*EspActionProc)(HttpConn *conn);
-
-/**
     View procedure callback
     @param conn Http connection object
     @ingroup EspReq
@@ -330,7 +347,7 @@ typedef void (*EspViewProc)(HttpConn *conn);
     @see
  */
 typedef struct EspAction {
-    EspActionProc   actionProc;             /**< Action procedure to run to respond to the request */
+    EspProc         actionProc;             /**< Action procedure to run to respond to the request */
     MprTime         lifespan;               /**< Lifespan for cached action content */
     char            *cacheUri;              /**< Per-URI caching details */
 } EspAction;
@@ -347,6 +364,7 @@ typedef struct EspReq {
     EspAction       *action;                /**< Action to invoke */
     Esp             *esp;                   /**< Convenient esp reference */
     MprBuf          *cacheBuffer;           /**< HTML output caching */
+    MprHashTable    *flash;                 /**< Flash messages */
     char            *cacheName;             /**< Base name of intermediate compiled file */
     char            *controllerName;        /**< Controller name */
     char            *controllerPath;        /**< Path to controller source */
@@ -355,13 +373,15 @@ typedef struct EspReq {
     char            *view;                  /**< Path to view */
     char            *entry;                 /**< Module entry point */
     char            *commandLine;           /**< Command line for compile/link */
+    EdiRec          *record;                /**< Current data record */
     int             autoFinalize;           /**< Request is/will-be auto-finalized */
     int             finalized;              /**< Request has been finalized */
     int             sessionProbed;          /**< Already probed for session store */
     int             appLoaded;              /**< App module already probed */
+    int             lastDomID;              /**< Last generated DOM ID */
 } EspReq;
 
-/** 
+/**
     Add a header to the transmission using a format string.
     @description Add a header if it does not already exits.
     @param conn HttpConn connection object created via $httpCreateConn
@@ -374,7 +394,7 @@ typedef struct EspReq {
  */
 extern void espAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 
-/** 
+/**
     Add a header to the transmission
     @description Add a header if it does not already exits.
     @param conn HttpConn connection object created via $httpCreateConn
@@ -386,7 +406,7 @@ extern void espAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
  */
 extern void espAddHeaderString(HttpConn *conn, cchar *key, cchar *value);
 
-/** 
+/**
     Append a transmission header
     @description Set the header if it does not already exists. Append with a ", " separator if the header already exists.
     @param conn HttpConn connection object created via $httpCreateConn
@@ -397,7 +417,7 @@ extern void espAddHeaderString(HttpConn *conn, cchar *key, cchar *value);
  */
 extern void espAppendHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 
-/** 
+/**
     Append a transmission header string
     @description Set the header if it does not already exists. Append with a ", " separator if the header already exists.
     @param conn HttpConn connection object created via $httpCreateConn
@@ -407,17 +427,17 @@ extern void espAppendHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
  */
 extern void espAppendHeaderString(HttpConn *conn, cchar *key, cchar *value);
 
-/** 
+/**
     Auto finalize transmission of the http request
-    @description If auto-finalization is enabled via #espSetAutoFinalizing, this call will finalize writing Http response 
-    data by writing the final chunk trailer if required. If using chunked transfers, a null chunk trailer is required 
+    @description If auto-finalization is enabled via #espSetAutoFinalizing, this call will finalize writing Http response
+    data by writing the final chunk trailer if required. If using chunked transfers, a null chunk trailer is required
     to signify the end of write data.  If the request is already finalized, this call does nothing.
     @param conn HttpConn connection object
     @ingroup EspReq
  */
 extern void espAutoFinalize(HttpConn *conn);
 
-/** 
+/**
     Get the receive body content length
     @description Get the length of the receive body content (if any). This is used in servers to get the length of posted
         data and in clients to get the response body length.
@@ -427,7 +447,7 @@ extern void espAutoFinalize(HttpConn *conn);
  */
 extern MprOff espGetContentLength(HttpConn *conn);
 
-/** 
+/**
     Get the request cookies
     @description Get the cookies defined in the current requeset
     @param conn HttpConn connection object created via $httpCreateConn
@@ -447,7 +467,7 @@ extern cchar *espGetCookies(HttpConn *conn);
  */
 extern MprHashTable *espGetParams(HttpConn *conn);
 
-/** 
+/**
     Get an rx http header.
     @description Get a http response header for a given header key.
     @param conn HttpConn connection object created via $httpCreateConn
@@ -457,7 +477,7 @@ extern MprHashTable *espGetParams(HttpConn *conn);
  */
 extern cchar *espGetHeader(HttpConn *conn, cchar *key);
 
-/** 
+/**
     Get the hash table of rx Http headers
     @description Get the internal hash table of rx headers
     @param conn HttpConn connection object created via $httpCreateConn
@@ -466,19 +486,27 @@ extern cchar *espGetHeader(HttpConn *conn, cchar *key);
  */
 extern MprHashTable *espGetHeaderHash(HttpConn *conn);
 
-/** 
+/**
     Get all the requeset http headers.
     @description Get all the rx headers. The returned string formats all the headers in the form:
         key: value\\nkey2: value2\\n...
     @param conn HttpConn connection object created via $httpCreateConn
     @return String containing all the headers. The caller must free this returned string.
-    @ingroup EspREq
+    @ingroup EspReq
  */
 extern char *espGetHeaders(HttpConn *conn);
 
 /**
+    Get a relative URI to the home ("/") of the application.
+    @param conn HttpConn connection object created via $httpCreateConn
+    @return String Relative URI to the pathInfo of "/"
+    @ingroup EspReq
+ */
+char *espGetHome(HttpConn *conn);
+
+/**
     Get a request pararmeter as an integer
-    @description Get the value of a named request parameter as an integer. Form variables are define via 
+    @description Get the value of a named request parameter as an integer. Form variables are define via
         www-urlencoded query or post data contained in the request.
     @param conn HttpConn connection object
     @param var Name of the request parameter to retrieve
@@ -488,7 +516,7 @@ extern char *espGetHeaders(HttpConn *conn);
  */
 extern int espGetIntParam(HttpConn *conn, cchar *var, int defaultValue);
 
-/** 
+/**
     Get the request query string
     @description Get query string sent with the current request.
     @param conn HttpConn connection object
@@ -498,7 +526,15 @@ extern int espGetIntParam(HttpConn *conn, cchar *var, int defaultValue);
 extern cchar *espGetQueryString(HttpConn *conn);
 
 /**
-    Get a unique security token 
+    Get the referring URI
+    @param conn HttpConn connection object created via $httpCreateConn
+    @return String URI back to the referring URI. If no referrer is defined, refers to the home URI.
+    @ingroup EspReq
+ */
+char *espGetReferrer(HttpConn *conn);
+
+/**
+    Get a unique security token
     @description Security tokens help mitigate against replay attacks. The security token is stored in HttpRx.securityToken
         and in the session store.
     @param conn HttpConn connection object
@@ -506,7 +542,7 @@ extern cchar *espGetQueryString(HttpConn *conn);
  */
 extern cchar *espGetSecurityToken(HttpConn *conn);
 
-/** 
+/**
     Get the response status
     @param conn HttpConn connection object created via $httpCreateConn
     @return An integer Http response code. Typically 200 is success.
@@ -514,10 +550,10 @@ extern cchar *espGetSecurityToken(HttpConn *conn);
  */
 extern int espGetStatus(HttpConn *conn);
 
-/** 
+/**
     Get the Http response status message. The Http status message is supplied on the first line of the Http response.
     @param conn HttpConn connection object created via $httpCreateConn
-    @returns A Http status message. 
+    @returns A Http status message.
     @ingroup EspReq
  */
 extern char *espGetStatusMessage(HttpConn *conn);
@@ -534,17 +570,17 @@ extern char *espGetStatusMessage(HttpConn *conn);
  */
 extern cchar *espGetParam(HttpConn *conn, cchar *var, cchar *defaultValue);
 
-/** 
+/**
     Finalize transmission of the http request
-    @description Finalize writing Http data by writing the final chunk trailer if required. If using chunked transfers, 
-    a null chunk trailer is required to signify the end of write data. 
+    @description Finalize writing Http data by writing the final chunk trailer if required. If using chunked transfers,
+    a null chunk trailer is required to signify the end of write data.
     If the request is already finalized, this call does nothing.
     @param conn HttpConn connection object
     @ingroup EspReq
  */
 extern void espFinalize(HttpConn *conn);
 
-/** 
+/**
     Test if a http request is finalized.
     @description This tests if #espFinalize or #httpFinalize has been called for a request.
     @param conn HttpConn connection object
@@ -554,7 +590,7 @@ extern void espFinalize(HttpConn *conn);
 extern bool espFinalized(HttpConn *conn);
 
 /**
-    Flush transmit data. This writes any buffered data. 
+    Flush transmit data. This writes any buffered data.
     @param conn HttpConn connection object created via $httpCreateConn
     @ingroup EspReq
  */
@@ -564,14 +600,14 @@ extern void espFlush(HttpConn *conn);
     Match a request parameter with an expected value
     @description Compare a request parameter and return true if it exists and its value matches.
     @param conn HttpConn connection object
-    @param var Name of the request parameter 
+    @param var Name of the request parameter
     @param value Expected value to match
     @return True if the value matches
     @ingroup EspReq
  */
 extern bool espMatchParam(HttpConn *conn, cchar *var, cchar *value);
 
-/** 
+/**
     Redirect the client
     @description Redirect the client to a new uri.
     @param conn HttpConn connection object created via $httpCreateConn
@@ -581,7 +617,7 @@ extern bool espMatchParam(HttpConn *conn, cchar *var, cchar *value);
  */
 extern void espRedirect(HttpConn *conn, int status, cchar *target);
 
-/** 
+/**
     Redirect the client back to the referrer
     @description Redirect the client to the referring URI.
     @param conn HttpConn connection object created via $httpCreateConn
@@ -589,7 +625,7 @@ extern void espRedirect(HttpConn *conn, int status, cchar *target);
  */
 extern void espRedirectBack(HttpConn *conn);
 
-/** 
+/**
     Remove a header from the transmission
     @description Remove a header if present.
     @param conn HttpConn connection object created via $httpCreateConn
@@ -599,7 +635,7 @@ extern void espRedirectBack(HttpConn *conn);
  */
 extern int espRemoveHeader(HttpConn *conn, cchar *key);
 
-/** 
+/**
     Enable auto-finalizing for this request
     @description Remove a header if present.
     @param conn HttpConn connection object created via $httpCreateConn
@@ -609,7 +645,7 @@ extern int espRemoveHeader(HttpConn *conn, cchar *key);
  */
 extern bool espSetAutoFinalizing(HttpConn *conn, bool on);
 
-/** 
+/**
     Define a content length header in the transmission. This will define a "Content-Length: NNN" request header.
     @param conn HttpConn connection object created via $httpCreateConn
     @param length Numeric value for the content length header.
@@ -617,7 +653,7 @@ extern bool espSetAutoFinalizing(HttpConn *conn, bool on);
  */
 extern void espSetContentLength(HttpConn *conn, MprOff length);
 
-/** 
+/**
     Set a cookie in the transmission
     @description Define a cookie to send in the transmission Http header
     @param conn HttpConn connection object created via $httpCreateConn
@@ -629,10 +665,10 @@ extern void espSetContentLength(HttpConn *conn, MprOff length);
     @param isSecure Set to true if the cookie only applies for SSL based connections
     @ingroup EspReq
  */
-extern void espSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *cookieDomain, MprTime lifespan, 
+extern void espSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *cookieDomain, MprTime lifespan,
         bool isSecure);
 
-/** 
+/**
     Set the transmission (response) content mime type
     @description Set the mime type Http header in the transmission
     @param conn HttpConn connection object created via $httpCreateConn
@@ -641,7 +677,7 @@ extern void espSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path,
  */
 extern void espSetContentType(HttpConn *conn, cchar *mimeType);
 
-/** 
+/**
     Set a transmission header
     @description Set a Http header to send with the request. If the header already exists, it its value is overwritten.
     @param conn HttpConn connection object created via $httpCreateConn
@@ -652,7 +688,7 @@ extern void espSetContentType(HttpConn *conn, cchar *mimeType);
  */
 extern void espSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 
-/** 
+/**
     Set a simple key/value transmission header
     @description Set a Http header to send with the request. If the header already exists, it its value is overwritten.
     @param conn HttpConn connection object created via $httpCreateConn
@@ -664,7 +700,7 @@ extern void espSetHeaderString(HttpConn *conn, cchar *key, cchar *value);
 
 /**
     Set an integer request parameter value
-    @description Set the value of a named request parameter to an integer value. Form variables are define via 
+    @description Set the value of a named request parameter to an integer value. Form variables are define via
         www-urlencoded query or post data contained in the request.
     @param conn HttpConn connection object
     @param var Name of the request parameter to set
@@ -673,7 +709,7 @@ extern void espSetHeaderString(HttpConn *conn, cchar *key, cchar *value);
  */
 extern void espSetIntParam(HttpConn *conn, cchar *var, int value);
 
-/** 
+/**
     Set a Http response status.
     @description Set the Http response status for the request. This defaults to 200 (OK).
     @param conn HttpConn connection object created via $httpCreateConn
@@ -684,7 +720,7 @@ extern void espSetStatus(HttpConn *conn, int status);
 
 /**
     Set a request parameter value
-    @description Set the value of a named request parameter to a string value. Form variables are define via 
+    @description Set the value of a named request parameter to a string value. Form variables are define via
         www-urlencoded query or post data contained in the request.
     @param conn HttpConn connection object
     @param var Name of the request parameter to set
@@ -701,7 +737,7 @@ extern void espSetParam(HttpConn *conn, cchar *var, cchar *value);
  */
 extern void espShowRequest(HttpConn *conn);
 
-/** 
+/**
     Write a formatted string
     @description Write a formatted string of data into packets to the client. Data packets will be created
         as required to store the write data. This call may block waiting for data to drain to the client.
@@ -714,7 +750,7 @@ extern void espShowRequest(HttpConn *conn);
 extern ssize espWrite(HttpConn *conn, cchar *fmt, ...);
 
 //  MOB - can this return short?
-/** 
+/**
     Write a block of data to the client
     @description Write a block of data to the client. Data packets will be created as required to store the write data.
     @param conn HttpConn connection object
@@ -725,7 +761,7 @@ extern ssize espWrite(HttpConn *conn, cchar *fmt, ...);
  */
 extern ssize espWriteBlock(HttpConn *conn, cchar *buf, ssize size);
 
-/** 
+/**
     Write a string of data to the client
     @description Write a string of data to the client. Data packets will be created
         as required to store the write data. This call may block waiting for data to drain to the client.
@@ -736,7 +772,7 @@ extern ssize espWriteBlock(HttpConn *conn, cchar *buf, ssize size);
  */
 extern ssize espWriteString(HttpConn *conn, cchar *s);
 
-/** 
+/**
     Write a safe string of data to the client
     @description HTML escape a string and then write the string of data to the client.
         Data packets will be created as required to store the write data. This call may block waiting for the data to
@@ -748,7 +784,7 @@ extern ssize espWriteString(HttpConn *conn, cchar *s);
  */
 extern ssize espWriteSafeString(HttpConn *conn, cchar *s);
 
-/** 
+/**
     Write the value of a request parameter to the client
     @description This writes the value of request parameter after HTML escaping its value.
     @param conn HttpConn connection object
@@ -758,10 +794,109 @@ extern ssize espWriteSafeString(HttpConn *conn, cchar *s);
  */
 extern ssize espWriteParam(HttpConn *conn, cchar *name);
 
+//  MOB DOC - should this return ssize?
+extern void espWriteView(HttpConn *conn, cchar *name);
+
+//  MOB - DOC and sort
+void espInform(HttpConn *conn, cchar *fmt, ...);
+void espError(HttpConn *conn, cchar *fmt, ...);
+void espWarn(HttpConn *conn, cchar *fmt, ...);
+void espNotice(HttpConn *conn, cchar *kind, cchar *fmt, ...);
+void espNoticev(HttpConn *conn, cchar *kind, cchar *fmt, va_list args);
+
 //  MOB - move to pcre
 #define PCRE_GLOBAL     0x1
 extern char *pcre_replace(cchar *str, void *pattern, cchar *replacement, MprList **parts, int flags);
 
+//  MOB DOC
+extern void espAlert(HttpConn *conn, cchar *text, cchar *options);
+extern void espAnchor(HttpConn *conn, cchar *text, cchar *uri, cchar *options);
+extern void espButton(HttpConn *conn, cchar *name, cchar *value, cchar *options);
+extern void espButtonLink(HttpConn *conn, cchar *text, cchar *uri, cchar *options);
+extern void espChart(HttpConn *conn);
+extern void espCheckbox(HttpConn *conn, cchar *field, cchar *checkedValue, cchar *options);
+extern void espDivision(HttpConn *conn, cchar *body, cchar *options);
+extern void espEndform(HttpConn *conn);
+extern void espFlash(HttpConn *conn, cchar *kinds, cchar *options);
+extern void espForm(HttpConn *conn, EdiRec *record, cchar *options);
+extern void espIcon(HttpConn *conn, cchar *uri, cchar *options);
+extern void espImage(HttpConn *conn, cchar *uri, cchar *options);
+extern void espInput(HttpConn *conn, cchar *name, cchar *options);
+extern void espLabel(HttpConn *conn, cchar *text, cchar *options);
+extern void espList(HttpConn *conn, cchar *name, cchar *choices, cchar *options);
+extern void espMail(HttpConn *conn, cchar *name, cchar *address, cchar *options);
+extern void espProgress(HttpConn *conn, cchar *data, cchar *options);
+extern void espRadio(HttpConn *conn, cchar *field, void *choices, cchar *options);
+extern void espRefresh(HttpConn *conn, cchar *on, cchar *off, cchar *options);
+extern void espScript(HttpConn *conn, cchar *uri, cchar *options);
+extern void espSecurityToken(HttpConn *conn);
+extern void espStylesheet(HttpConn *conn, cchar *uri, cchar *options);
+extern void espTable(HttpConn *conn, EdiGrid *grid, cchar *options);
+extern void espTabs(HttpConn *conn, EdiGrid *grid, cchar *options);
+extern void espText(HttpConn *conn, cchar *field, cchar *options);
+extern void espTree(HttpConn *conn, EdiGrid *grid, cchar *options);
+
+extern HttpConn *espGetConn();
+extern void alert(cchar *text, cchar *options);
+extern void anchor(cchar *text, cchar *uri, cchar *options);
+extern void button(cchar *name, cchar *value, cchar *options);
+extern void buttonLink(cchar *text, cchar *uri, cchar *options);
+extern void chart(HttpConn *conn);
+extern void checkbox(cchar *field, cchar *checkedValue, cchar *options);
+extern void division(cchar *body, cchar *options);
+extern void endform();
+extern void flash(cchar *kind, cchar *options);
+extern void form(void *record, cchar *options);
+extern void icon(cchar *uri, cchar *options);
+extern void image(cchar *uri, cchar *options);
+extern void input(cchar *name, cchar *options);
+extern void label(cchar *text, cchar *options);
+extern void list(cchar *name, cchar *choices, cchar *options);
+extern void mail(HttpConn *conn, cchar *name, cchar *address, cchar *options);
+extern void progress(cchar *data, cchar *options);
+extern void radio(cchar *name, void *choices, cchar *options);
+extern void refresh(cchar *on, cchar *off, cchar *options);
+extern void script(cchar *uri, cchar *options);
+extern void securityToken();
+extern void stylesheet(cchar *uri, cchar *options);
+extern void table(EdiGrid *grid, cchar *options);
+extern void tabs(EdiGrid *grid, cchar *options);
+extern void text(cchar *field, cchar *options);
+extern void tree(EdiGrid *grid, cchar *options);
+
+extern void createSession();
+extern void error(cchar *fmt, ...);
+extern void finalize();
+extern HttpConn *getConn();
+extern Edi *getEdi();
+extern EspRoute *getEroute();
+extern cchar *getMethod();
+extern void inform(cchar *fmt, ...);
+extern void notice(cchar *kind, cchar *fmt, ...);
+extern MprHashTable *params();
+extern cchar *param(cchar *key, cchar *defaultValue);
+extern void redirect(cchar *target);
+extern cchar *session(cchar *key);
+extern void setParam(cchar *key, cchar *value);
+extern void setSession(cchar *key, cchar *value);
+extern ssize render(cchar *msg, ...);
+extern void warn(cchar *fmt, ...);
+extern void writeView(cchar *view);
+
+
+/*
+    Database
+ */
+//  MOB - is it better to use "record":  createRecord, findRecord, saveRecord, or just save?
+//  MOB - consistency but use "record"
+extern EdiRec *createRec(cchar *tableName, MprHashTable *params);
+extern EdiRec *findRec(cchar *tableName, cchar *key);
+extern EdiGrid *findAll(cchar *tableName);
+extern bool saveRec();
+extern EdiRec *getRec();
+extern void setRec(EdiRec *rec);
+
+//  MOB -- more needed here
 
 #ifdef __cplusplus
 } /* extern C */

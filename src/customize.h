@@ -21,5 +21,4 @@
 
     #define script xx_script
  */
-
 #endif /* _h_CUSTOMIZE_h */

@@ -1,0 +1,109 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- BeginDsi "dsi/head.html" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Embedthis Appweb 4.0.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides commercial and open source embedded web servers for 
+        devices and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="appwebserver.org" /> 
+                        <input type="hidden" name="sitesearch" value="appwebserver.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 4.0.0
+        </div>
+        <div class="crumbs">
+            <a href="../../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt;<a href="index.html">ESP Guide</a>&gt; <b>Model-View-Controller Framework</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <h2>Quick Nav</h2>
+            <ul>
+                <li><a href="#models">Models</a></li>
+                <li><a href="#views">Views</a></li>
+                <li><a href="#controllers">Controllers</a></li>
+            </ul>
+<!-- BeginDsi "dsi/espSeeAlso.html" -->
+		        <h2>See Also</h2>
+		        <ul>
+		          <li><a href="../../../../../../guide/appweb/esp/espTour.html">Web Framework Tour</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/mvc.html">Model-View-Controller</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/generator.html">Application Generator</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/controllers.html">Controllers and Actions</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/views.html">Views and Layouts</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/controls.html">Ajax View Controls</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/models.html">Database Models</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/hosting.html">Hosting in Web Servers</a></li>
+		        </ul>
+<!-- EndDsi -->
+        </div>
+        <div class="contentLeft">
+            <h1>Model View Controller Framework</h1>
+            <p>The Model-View-Controller (MVC) paradigm is a design pattern used for creating applications. It
+            partitions the separate concerns of application data, user interface and application logic into three
+            discrete components. It has proven highly successful in simplifying application design and
+            maintenance.</p><img src="../../../images/mvc.jpg" alt="" />
+            <p>The ESP Web Framework is a Model-View-Controller environment that provides a structure and
+            assistance for your MVC application. It provides the basis and connections between your models, views and
+            controllers and routes messages between the various components.</p>
+            <p>ESP makes MVC programming easy by providing base classes that implement most of the plumbing for an
+            MVC application.</p><a name="models" id="models"></a>
+            <h3>Models</h3>
+            <p>The model is responsible for managing access to application data and state. It is also responsible for
+            ensuring the data remains valid and consistent.</p>
+            <p>ESP provides an Object Relational Mapper (ORM) via the the <b>Model</b> class. This wraps database
+            data in JavaScript objects and allows you to use object-oriented programming (OOP) when dealing with
+            database data stored in rows and columns. The model class makes SQL programming more natural in OOP
+            programs.</p><a name="views" id="views"></a>
+            <h3>Views</h3>
+            <p>The view is responsible for rendering the user interface and presenting the application to the user.
+            Views should not manage incoming requests &mdash; that is the job of Controllers.</p>
+            <p>ESP provides the <b>View</b> class and a powerful embedded scripting environment. HTML pages with
+            embedded JavaScript code are compiled and run to render the user interace. The view mechanism also provides
+            a templating engine so you can deal separately with layout pages and content pages.</p><a name=
+            "controllers" id="controllers"></a>
+            <h3>Controllers</h3>
+            <p>Controllers manage the application and respond to client requests. They orchestrate the application's
+            response, access and update model data, and display views back to the client. Incoming requests invoke
+            <b>Actions</b> in the controller which modify the application state and ultimately render a view.</p>
+            <p>ESP routes requests by parsing and decoding request URLs and matching them with the appropriate
+            Controller and Action function. ESP provides the <b>Controller</b> class that provides methods for
+            interacting with models and rendering views.</p>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2011. 
+            All rights reserved. Embedthis, ESP and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

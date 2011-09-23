@@ -2705,6 +2705,7 @@ static void manageMpr(Mpr *mpr, int flags)
         mprMark(mpr->httpService);
         mprMark(mpr->appwebService);
         mprMark(mpr->testService);
+        mprMark(mpr->espService);
         mprMark(mpr->mutex);
         mprMark(mpr->spin);
         mprMark(mpr->emptyString);
@@ -4671,9 +4672,9 @@ ssize mprWriteCache(MprCache *cache, cchar *key, cchar *value, MprTime modified,
         }
         item->data = sclone(value);
     } else if (append) {
-        item->data = sjoin(item->data, value, 0);
+        item->data = sjoin(item->data, value, NULL);
     } else if (prepend) {
-        item->data = sjoin(value, item->data, 0);
+        item->data = sjoin(value, item->data, NULL);
     }
     item->lifespan = lifespan;
     item->lastModified = modified ? modified : mprGetTime();
@@ -10686,6 +10687,18 @@ void *mprLookupKey(MprHashTable *table, cvoid *key)
 }
 
 
+void mprSetKeyBits(MprHash *hp, int bits)
+{
+    hp->bits = bits;
+}
+
+
+int mprGetKeyBits(MprHash *hp)
+{
+    return hp->bits;
+}
+
+
 /*
     Exponential primes
  */
@@ -10885,6 +10898,410 @@ static void *dupKey(MprHashTable *table, MprHash *sp, cvoid *key)
 /************************************************************************/
 /*
  *  End of file "./src/mprHash.c"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "./src/mprJSON.c"
+ */
+/************************************************************************/
+
+/**
+    mprJSON.c - A simple JSON parser.
+
+    Copyright (c) All Rights Reserved. See details at the end of the file.
+ */
+
+#if FUTURE
+
+Questions:
+    What should the outer result be?
+    []  should this return a list or hash
+
+
+
+
+typedef struct JsonState {
+    char    *data;
+    char    *end;
+    char    *next;
+    char    *error;
+} JsonState;
+
+typedef enum Token {
+    TOK_ERR,            /* Error */
+    TOK_EOF,            /* End of input */
+    TOK_LBRACE,         /* { */
+    TOK_LBRACKET,       /* [ */
+    TOK_RBRACE,         /* } */
+    TOK_RBRACKET,       /* ] */
+    TOK_COLON,          /* : */
+    TOK_COMMA,          /* , */
+    TOK_ID,             /* Unquoted ID */
+    TOK_QID,            /* Quoted ID */
+} Token;
+
+
+
+static MprTable *parseLiteral(Ejs *ejs, JsonState *js);
+static MprTable *parseLiteralInner(Ejs *ejs, MprBuf *buf, JsonState *js);
+
+
+MprTable *mprDeserialize(cchar *str)
+{
+    MprTable    *obj;
+    JsonState   js;
+
+    if (str == NULL || *str == '\0') {
+        return 0;
+    }
+    js.next = js.data = str->value;
+    js.end = &js.data[str->length];
+    js.error = 0;
+    if ((obj = parseLiteral(ejs, &js)) == 0) {
+        if (js.error) {
+            mprError("Can't parse object literal. Error at position %d.\n"
+                "===========================\n"
+                "Offending text: %w\n"
+                "===========================\n"
+                "In literal %w"
+                "\n===========================\n",
+                (int) (js.error - js.data), js.error, js.data);
+        } else {
+            mprError("Can't parse object literal. Undefined error");
+        }
+        return 0;
+    }
+    return obj;
+}
+
+
+static MprTable *parseLiteral(JsonState *js)
+{
+    return parseLiteralInner(mprCreateBuf(0, 0), js);
+}
+
+
+static char *skipComments(char *cp, char *end)
+{
+    int     inComment;
+
+    for (; cp < end && isspace((int) *cp); cp++) {}
+    while (cp < &end[-1]) {
+        if (cp < &end[-1] && *cp == '/' && cp[1] == '*') {
+            inComment = 1;
+            for (cp += 2; cp < &end[-1]; cp++) {
+                if (*cp == '*' && cp[1] == '/') {
+                    inComment = 0;
+                    cp += 2;
+                    break;
+                }
+            }
+            if (inComment) {
+                return 0;
+            }
+            while (cp < end && isspace((int) *cp)) cp++;
+
+        } else  if (cp < &end[-1] && *cp == '/' && cp[1] == '/') {
+            inComment = 1;
+            for (cp += 2; cp < end; cp++) {
+                if (*cp == '\n') {
+                    inComment = 0;
+                    cp++;
+                    break;
+                }
+            }
+            if (inComment) {
+                return 0;
+            }
+            while (cp < end && isspace((int) *cp)) cp++;
+
+        } else {
+            break;
+        }
+    }
+    return cp;
+}
+
+
+Token getNextJsonToken(MprBuf *buf, char **token, JsonState *js)
+{
+    char     *start, *cp, *end, *next;
+    char     *src, *dest;
+    int      quote, tid, c;
+
+    if (buf) {
+        mprFlushBuf(buf);
+    }
+    cp = js->next;
+    end = js->end;
+    cp = skipComments(cp, end);
+    next = cp + 1;
+    quote = -1;
+
+    if (*cp == '\0') {
+        tid = TOK_EOF;
+
+    } else  if (*cp == '{') {
+        tid = TOK_LBRACE;
+
+    } else if (*cp == '[') {
+        tid = TOK_LBRACKET;
+
+    } else if (*cp == '}' || *cp == ']') {
+        tid = *cp == '}' ? TOK_RBRACE: TOK_RBRACKET;
+        while (*++cp && isspace((int) *cp)) ;
+        if (*cp == ',' || *cp == ':') {
+            cp++;
+        }
+        next = cp;
+
+    } else {
+        if (*cp == '"' || *cp == '\'') {
+            tid = TOK_QID;
+            quote = *cp++;
+            for (start = cp; cp < end; cp++) {
+                if (*cp == '\\') {
+                    if (cp[1] == quote) {
+                        cp++;
+                    }
+                    continue;
+                }
+                if (*cp == quote) {
+                    break;
+                }
+            }
+            if (*cp != quote) {
+                js->error = cp;
+                return TOK_ERR;
+            }
+            if (buf) {
+                mprPutBlockToBuf(buf, (char*) start, (cp - start));
+            }
+            cp++;
+
+        } else if (*cp == '/') {
+            tid = TOK_ID;
+            for (start = cp++; cp < end; cp++) {
+                if (*cp == '\\') {
+                    if (cp[1] == '/') {
+                        cp++;
+                    }
+                    continue;
+                }
+                if (*cp == '/') {
+                    break;
+                }
+            }
+            if (*cp != '/') {
+                js->error = cp;
+                return TOK_ERR;
+            }
+            if (buf) {
+                mprPutBlockToBuf(buf, (char*) start, (cp - start));
+            }
+            cp++;
+
+        } else {
+            tid = TOK_ID;
+            for (start = cp; cp < end; cp++) {
+                if (*cp == '\\') {
+                    continue;
+                }
+                /* Not an allowable character outside quotes */
+                if (!(isalnum((int) *cp) || *cp == '_' || *cp == ' ' || *cp == '-' || *cp == '+' || *cp == '.')) {
+                    break;
+                }
+            }
+            if (buf) {
+                mprPutBlockToBuf(buf, (char*) start, (int) (cp - start));
+            }
+        }
+        if (buf) {
+            mprAddNullToBuf(buf);
+        }
+        if (*cp == ',' || *cp == ':') {
+            cp++;
+        } else if (*cp != '}' && *cp != ']' && *cp != '\0' && *cp != '\n' && *cp != '\r' && *cp != ' ') {
+            js->error = cp;
+            return TOK_ERR;
+        }
+        next = cp;
+
+        if (buf) {
+            for (dest = src = (char*) buf->start; src < (char*) buf->end; ) {
+                c = *src++;
+                if (c == '\\') {
+                    c = *src++;
+                    if (c == 'r') {
+                        c = '\r';
+                    } else if (c == 'n') {
+                        c = '\n';
+                    } else if (c == 'b') {
+                        c = '\b';
+                    }
+                }
+                *dest++ = c;
+            }
+            *dest = '\0';
+            *token = (char*) mprGetBufStart(buf);
+        }
+    }
+    js->next = next;
+    return tid;
+}
+
+
+Token peekNextJsonToken(JsonState *js)
+{
+    JsonState   discard = *js;
+    return getNextJsonToken(NULL, NULL, &discard);
+}
+
+
+/*
+    Parse an object literal string pointed to by js->next into the given buffer. Update js->next to point
+    to the next input token in the object literal. Supports nested object literals.
+ */
+static MprTable *parseLiteralInner(Ejs *ejs, MprBuf *buf, JsonState *js)
+{
+    MprTable    *table;
+    MprList     *list;
+    MprBuf      *valueBuf;
+    char        *token, *key, *value;
+    int         tid;
+
+    tid = getNextJsonToken(buf, &token, js);
+    if (tid == TOK_ERR || tid == TOK_EOF) {
+        return 0;
+    }
+    list = 0;
+    table = 0;
+
+    if (tid == TOK_LBRACKET) {
+        list = mprCreateList(0, 0);
+    } else if (tid == TOK_LBRACE) {
+        table = mprCreateHash(0, 0);
+    } else {
+        return ejsParse(token, S_String);
+    }
+    if (obj == 0) {
+        ejsThrowMemoryError(ejs);
+        return 0;
+    }
+    while (1) {
+        vp = 0;
+        tid = peekNextJsonToken(js);
+        if (tid == TOK_ERR) {
+            return 0;
+        } else if (tid == TOK_EOF) {
+            break;
+        } else if (tid == TOK_RBRACE || tid == TOK_RBRACKET) {
+            getNextJsonToken(buf, &key, js);
+            break;
+        }
+        if (tid == TOK_LBRACKET) {
+            /* For array values */
+            vp = parseLiteral(ejs, js);
+            mprAssert(vp);
+            
+        } else if (tid == TOK_LBRACE) {
+            /* For object values */
+            vp = parseLiteral(ejs, js);
+            mprAssert(vp);
+            
+        } else if (list) {
+            tid = getNextJsonToken(buf, &value, js);
+            vp = ejsParse(ejs, value, (tid == TOK_QID) ? S_String: -1);
+            mprAssert(vp);
+            
+        } else {
+            getNextJsonToken(buf, &key, js);
+            tid = peekNextJsonToken(js);
+            if (tid == TOK_ERR) {
+                return 0;
+            } else if (tid == TOK_EOF) {
+                break;
+            } else if (tid == TOK_LBRACE || tid == TOK_LBRACKET) {
+                vp = parseLiteral(ejs, js);
+
+            } else if (tid == TOK_ID || tid == TOK_QID) {
+                valueBuf = mprCreateBuf(0, 0);
+                getNextJsonToken(valueBuf, &value, js);
+                if (tid == TOK_QID) {
+                    vp = ejsCreateString(ejs, value, strlen(value));
+                } else {
+                    if (mcmp(value, "null") == 0) {
+                        vp = ESV(null);
+                    } else if (mcmp(value, "undefined") == 0) {
+                        vp = ESV(undefined);
+                    } else {
+                        vp = ejsParse(ejs, value, -1);
+                    }
+                }
+                mprAssert(vp);
+            } else {
+                getNextJsonToken(buf, &value, js);
+                js->error = js->next;
+                return 0;
+            }
+        }
+        if (vp == 0) {
+            js->error = js->next;
+            return 0;
+        }
+        if (list) {
+            mprAddItem(list, vp);
+        } else {
+            mprAddKey(table, key, vp); 
+        }
+    }
+    return obj;
+}
+#endif
+
+
+/*
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://embedthis.com 
+    
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "./src/mprJSON.c"
  */
 /************************************************************************/
 
@@ -11574,7 +11991,6 @@ int mprRemoveLastItem(MprList *lp)
 int mprRemoveItemAtPos(MprList *lp, int index)
 {
     void    **items;
-    int     i;
 
     mprAssert(lp);
     mprAssert(lp->capacity > 0);
@@ -11601,9 +12017,12 @@ int mprRemoveItemAtPos(MprList *lp, int index)
         lp->length--;
     }
 #else
+    memmove(&items[index], &items[index + 1], (lp->length - index - 1) * sizeof(void*));
+#if OLD
     for (i = index; i < (lp->length - 1); i++) {
         items[i] = items[i + 1];
     }
+#endif
     lp->length--;
 #endif
     lp->items[lp->length] = 0;
@@ -13587,7 +14006,10 @@ MprModuleService *mprCreateModuleService()
         return 0;
     }
     ms->modules = mprCreateList(-1, 0);
-    ms->searchPath = sfmt(".:%s:%s/../%s:%s", mprGetAppDir(), mprGetAppDir(), BLD_LIB_NAME, BLD_LIB_PREFIX);
+    ms->searchPath = sfmt(".%s%s%s/../%s%s%s", \
+        mprGetAppDir(), MPR_SEARCH_SEP, 
+        mprGetAppDir(), BLD_LIB_NAME, MPR_SEARCH_SEP, 
+        BLD_LIB_PREFIX);
     ms->mutex = mprCreateLock();
     return ms;
 }
@@ -13656,7 +14078,7 @@ MprModule *mprCreateModule(cchar *name, cchar *path, cchar *entry, void *data)
 
     if (path) {
         if ((at = mprSearchForModule(path)) == 0) {
-            mprError("Can't find module \"%s\", cwd: \"%s\" search path \"%s\"", path, mprGetCurrentPath(),
+            mprError("Can't find module \"%s\", cwd: \"%s\", search path \"%s\"", path, mprGetCurrentPath(),
                 mprGetModuleSearchPath());
             return 0;
         }
@@ -15266,6 +15688,12 @@ char *mprReadPath(cchar *path, ssize *lenp)
         *lenp = len;
     }
     return buf;
+}
+
+
+char *mprReplacePathExt(cchar *path, cchar *ext)
+{
+    return mprJoinPathExt(mprTrimPathExt(path), ext);
 }
 
 
@@ -19671,6 +20099,8 @@ void mprSetSocketPrebindCallback(MprSocketPrebind callback)
 
 
 
+
+//  MOB - this should be cchar *itos(int64 value, int radix);
 /*
     Format a number as a string. Support radix 10 and 16.
  */
@@ -19712,18 +20142,22 @@ char *itos(char *buf, ssize count, int64 value, int radix)
 }
 
 
-bool snumber(cchar *s)
+char *scamel(cchar *str)
 {
-    return s && *s && strspn(s, "1234567890") == strlen(s);
-} 
+    char    *ptr;
+    ssize   size, len;
 
-
-char *schr(cchar *s, int c)
-{
-    if (s == 0) {
-        return 0;
+    if (str == 0) {
+        str = "";
     }
-    return strchr(s, c);
+    len = slen(str);
+    size = len + 1;
+    if ((ptr = mprAlloc(size)) != 0) {
+        memcpy(ptr, str, len);
+        ptr[len] = '\0';
+    }
+    ptr[0] = (char) tolower((int) ptr[0]);
+    return ptr;
 }
 
 
@@ -19747,6 +20181,15 @@ int scasecmp(cchar *s1, cchar *s2)
 bool scasematch(cchar *s1, cchar *s2)
 {
     return scasecmp(s1, s2) == 0;
+}
+
+
+char *schr(cchar *s, int c)
+{
+    if (s == 0) {
+        return 0;
+    }
+    return strchr(s, c);
 }
 
 
@@ -20164,6 +20607,31 @@ ssize sncopy(char *dest, ssize destMax, cchar *src, ssize count)
 }
 
 
+bool snumber(cchar *s)
+{
+    return s && *s && strspn(s, "1234567890") == strlen(s);
+} 
+
+
+char *spascal(cchar *str)
+{
+    char    *ptr;
+    ssize   size, len;
+
+    if (str == 0) {
+        str = "";
+    }
+    len = slen(str);
+    size = len + 1;
+    if ((ptr = mprAlloc(size)) != 0) {
+        memcpy(ptr, str, len);
+        ptr[len] = '\0';
+    }
+    ptr[0] = (char) toupper((int) ptr[0]);
+    return ptr;
+}
+
+
 char *spbrk(cchar *str, cchar *set)
 {
     cchar       *sp;
@@ -20241,7 +20709,7 @@ char *sreplace(cchar *str, cchar *pattern, cchar *replacement)
     ssize       plen;
 
     buf = mprCreateBuf(-1, -1);
-    if (pattern && *pattern && replacement && *replacement) {
+    if (pattern && *pattern && replacement) {
         plen = slen(pattern);
         for (s = str; *s; s++) {
             if (sncmp(s, pattern, plen) == 0) {

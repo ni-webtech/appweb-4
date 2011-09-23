@@ -3894,6 +3894,26 @@ int httpAddRoute(HttpHost *host, HttpRoute *route)
 }
 
 
+HttpRoute *httpLookupRoute(HttpHost *host, cchar *name)
+{
+    HttpRoute   *route;
+    int         next;
+
+    if (name == 0 || *name == '\0') {
+        name = "default";
+    }
+    for (next = 0; (route = mprGetNextItem(host->routes, &next)) != 0; ) {
+        mprAssert(route->name);
+        if (smatch(route->name, name)) {
+            return route;
+        }
+    }
+    //  MOB - what is the default route? Must never return null
+    mprAssert(0);
+    return 0;
+}
+
+
 void httpResetRoutes(HttpHost *host)
 {
     host->routes = mprCreateList(-1, 0);
@@ -7076,6 +7096,7 @@ static char *expandRequestTokens(HttpConn *conn, char *targetKey);
 static void finalizeMethods(HttpRoute *route);
 static void finalizePattern(HttpRoute *route);
 static char *finalizeReplacement(HttpRoute *route, cchar *str);
+static char *finalizeTemplate(HttpRoute *route);
 static bool opPresent(MprList *list, HttpRouteOp *op);
 static void manageRoute(HttpRoute *route, int flags);
 static void manageLang(HttpLang *lang, int flags);
@@ -8181,6 +8202,7 @@ static void finalizePattern(HttpRoute *route)
     if (route->name == 0) {
         route->name = route->pattern;
     }
+    route->template = finalizeTemplate(route);
 
     /*
         Remove the route prefix from the start of the compiled pattern and then create an optimized 
@@ -8248,12 +8270,6 @@ static void finalizePattern(HttpRoute *route)
     if ((route->patternCompiled = pcre_compile2(route->processedPattern, 0, 0, &errMsg, &column, NULL)) == 0) {
         mprError("Can't compile route. Error %s at column %d", errMsg, column); 
     }
-    /*
-        Create a template for links. Strip "()" and "/.*" from the pattern.
-     */
-    route->template = sreplace(route->pattern, "(", "");
-    route->template = sreplace(route->template, ")", "");
-    route->template = sreplace(route->template, "/.*", "");
 }
 
 
@@ -8338,6 +8354,30 @@ static char *finalizeReplacement(HttpRoute *route, cchar *str)
 }
 
 
+static char *finalizeTemplate(HttpRoute *route)
+{
+    cchar   *pattern;
+    char    *template;
+
+    pattern = route->pattern;
+    if (*pattern == '^') {
+        pattern++;
+    }
+    if (strpbrk(pattern, "+?|[\\")) {
+        return MPR->emptyString;
+    }
+    template = sreplace(pattern, "(~", "");
+    template = sreplace(template, "~)", "");
+    if (*template && template[slen(template) - 1] == '$') {
+        template[slen(template) - 1] = '\0';
+    }
+    if (strpbrk(template, "(")) {
+        return MPR->emptyString;
+    }
+    return template;
+}
+
+
 void httpFinalizeRoute(HttpRoute *route)
 {
     /*
@@ -8352,6 +8392,144 @@ void httpFinalizeRoute(HttpRoute *route)
 #endif
 }
 
+
+/* 
+    Create a URI link. The target parameter may contain partial or complete URI information. The missing parts 
+    are supplied using the current request and route tables. The resulting URI is a normalized, server-local 
+    URI (begins with "/"). The URI will include any defined scriptName, but will not include scheme, host or 
+    port components.
+    @param route Route to modify
+    @param target The URI target. The target parameter can be a URI string or object hash of components. If the 
+        target is a string, it is may contain an absolute or relative URI. If the target has an absolute URI path, 
+        that path is used unmodified. If the target is a relative URI, it is appended to the current request URI 
+        path.  The target can also be an object hash of URI components: scheme, host, port, path, reference and
+        query. If these component properties are supplied, these will be combined to create a URI.
+
+        The URI will be created according to the route URI template. The template may be explicitly specified
+        via a "route" target property. Otherwise, if an "action" property is specified, the route of the same
+        name will be used. If these don't result in a usable route, the "default" route will be used. See the
+        Router for more details.
+       
+        If the target is a string that begins with "{AT}" it will be interpreted as a controller/action pair of the 
+        form "{AT}Controller/action". If the "controller/" portion is absent, the current controller is used. If 
+        the action component is missing, the "index" action is used. A bare "{AT}" refers to the "index" action 
+        of the current controller.
+
+    @param options MOB
+        Lastly, the target object hash may contain an override "uri" property. If specified, the value of the 
+        "uri" property will be returned and all other properties will be ignored.
+        <ul>
+            <li>scheme String URI scheme portion</li>
+            <li>host String URI host portion</li>
+            <li>port Number URI port number</li>
+            <li>path String URI path portion</li>
+            <li>reference String URI path reference. Does not include "#"</li>
+            <li>query String URI query parameters. Does not include "?"</li>
+            <li>controller String Controller name if using a Controller-based route. This can also be specified via
+                the action option.</li>
+            <li>action String Action to invoke. This can be a URI string or a Controller action of the form
+                {AT}Controller/action.</li>
+            <li>route String Route name to use for the URI template</li>
+    @return A normalized, server-local Uri object.
+    MOB - revise
+    Given a current request of http://example.com/samples/demo" and "r" == the current request:
+
+    httpLink("images/splash.png")
+    httpLink("/path/to/index.html")
+    httpLink("http://example.com/index.html")
+    httpLink("@Controller/checkout")
+    httpLink("@Controller/")                //  Controller = Controller, action = index
+    httpLink("@checkout")                   //  Current controller, action = checkout
+    httpLink("@")                           //  Current controller, action = index
+    httpLink("{ action: checkout' }")
+    httpLink("{ action: logout', controller: Admin' }")
+    httpLink("{ action: Admin/logout'")
+    httpLink("{ route: edit', action: checkout' }")
+    httpLink("{ product: 'candy', quantity: '10', template: '/cart/{product}/{quantity}' }")
+
+    @action
+    @controller/
+    @controller/action
+
+    // Illegal URL chars   # % & * { } \ : < >  ? / +
+*/
+char *httpLink(HttpConn *conn, cchar *target)
+{
+    HttpRoute       *route;
+    HttpRx          *rx;
+    HttpUri         *uri;
+    MprHashTable    *options;
+    cchar           *routeName;
+
+    rx = conn->rx;
+    route = rx->route;
+
+    if (*target == '@') {
+        target = sjoin("{action: '", target, "'}", NULL);
+    } 
+    if (*target == '{') {
+        options = httpGetOptions(target);
+        routeName = httpGetOption(options, "route", "default");
+        route = httpLookupRoute(conn->host, routeName);
+        mprAssert(route);
+        if (route) {
+            //  MOB does the template need a {scriptName} prefix
+            target = httpTemplate(conn, route, options);
+        }
+    }
+    //  MOB OPT
+    uri = httpCreateUri(target, 0);
+    uri = httpResolveUri(httpCreateUri(rx->uri, 0), 1, &uri, 0);
+    httpNormalizeUri(uri);
+    return httpUriToString(uri, 0);
+}
+
+
+/*
+    Expect a route->template with embedded tokens of the form: "/{controller}/{action}/{other}"
+    The options contains values for the tokens. It is of the form: "key='value' key='value"
+ */
+char *httpTemplate(HttpConn *conn, HttpRoute *route, MprHashTable *options)
+{
+    MprBuf  *buf;
+    cchar   *cp, *ep, *template, *token, *value;
+    char    key[MPR_MAX_STRING];
+    int     next;
+
+    template = route->template;
+    if (template == 0 || *template == '\0' || route->tokens == 0) {
+        //  MOB - what action should be taken here
+        return MPR->emptyString;
+    }
+    buf = mprCreateBuf(-1, -1);
+    for (cp = template; *cp; cp++) {
+        if (*cp == '{' && (cp == template || cp[-1] != '\\')) {
+            if ((ep = strchr(++cp, '}')) != 0) {
+                sncopy(key, sizeof(key), cp, ep - cp);
+                for (value = 0, next = 0; (token = mprGetNextItem(route->tokens, &next)) != 0; ) {
+                    if (smatch(key, token)) {
+                        if ((value = httpGetOption(options, key, 0)) != 0) {
+                            mprPutStringToBuf(buf, value);
+                            break;
+                        } else if ((value = mprLookupKey(conn->rx->params, key)) != 0) {
+                            mprPutStringToBuf(buf, value);
+                            break;
+                        }
+                    }
+                }
+                if (value == 0) {
+                    /* Just emity the token name if the token can't be found */
+                    mprPutStringToBuf(buf, key);
+                }
+                cp = ep;
+            }
+        } else {
+            mprPutCharToBuf(buf, *cp);
+        }
+    }
+    mprAddNullToBuf(buf);
+    return sclone(mprGetBufStart(buf));
+}
 
 
 void httpSetRoutePathVar(HttpRoute *route, cchar *key, cchar *value)
@@ -8677,11 +8855,11 @@ static int langUpdate(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
         if (lang->suffix) {
             pathInfo = 0;
             if (lang->flags & HTTP_LANG_AFTER) {
-                pathInfo = sjoin(rx->pathInfo, ".", lang->suffix, 0);
+                pathInfo = sjoin(rx->pathInfo, ".", lang->suffix, NULL);
             } else if (lang->flags & HTTP_LANG_BEFORE) {
                 ext = httpGetExt(conn);
                 if (ext && *ext) {
-                    pathInfo = sjoin(mprJoinPathExt(mprTrimPathExt(rx->pathInfo), lang->suffix), ".", ext, 0);
+                    pathInfo = sjoin(mprJoinPathExt(mprTrimPathExt(rx->pathInfo), lang->suffix), ".", ext, NULL);
                 } else {
                     pathInfo = mprJoinPathExt(mprTrimPathExt(rx->pathInfo), lang->suffix);
                 }
@@ -9312,6 +9490,176 @@ static char *trimQuotes(char *str)
     }
     return sclone(str);
 }
+
+
+#if UNUSED
+/*
+    Get the value of a field in options. If not present, return the defaultValue
+ */
+cchar *httpGetOption(cchar *options, cchar *field, cchar *defaultValue)
+{
+    cchar   *cp, *ep;
+    ssize   len;
+    int     quote;
+
+    if (options == 0) {
+        if (defaultValue) {
+            return sclone(defaultValue);
+        }
+        return defaultValue;
+    }
+    while (isspace((int) *options)) options++;
+
+    if (*options && field) {
+        len = strlen(field);
+        while (isspace((int) *options)) options++;
+        for (cp = options; *cp; cp++) {
+            if (*cp == *field && sncasecmp(cp, field, len) == 0 && cp[len] == '=' && strlen(&cp[len]) >= 2) {
+                cp = &cp[len + 1];
+                quote = (*cp == '"' || *cp == '\'') ? *cp : ' ';
+                if ((ep = strchr(++cp, quote)) != 0) {
+                    return snclone(cp, ep - cp);
+                }
+            }
+        }
+    }
+    if (defaultValue) {
+        return sclone(defaultValue);
+    }
+    return defaultValue;
+}
+#else
+
+/*
+    Trivial options parser. This is a sub-set of JSON. Does not support arrays.
+ */
+static MprHashTable *deserializeOptions(cchar **token)
+{
+    MprHashTable    *options, *value;
+    MprHash         *hp;
+    cchar           *cp, *ep, *svalue;
+    char            key[MPR_MAX_STRING];
+    int             quote;
+
+    options = mprCreateHash(-1, 0);
+    for (cp = *token; *cp; cp++) {
+        while (isspace((int) *cp)) cp++;
+        if (*cp == '{') {
+            ep = ++cp;
+            value = deserializeOptions(&ep);
+
+        } else if ((ep = strchr(cp, ':')) != 0 && (ep == *token || ep[-1] != '\\')) {
+            if (*cp == '}') {
+                break;
+            } else if (*cp == ',') {
+                continue;
+            }
+            sncopy(key, sizeof(key), cp, ep - cp);
+            for (cp = ep + 1; isspace((int) *cp); cp++) ;
+            if (*cp == '{') {
+                ep = ++cp;
+                value = deserializeOptions(&ep);
+                hp = mprAddKey(options, key, value);
+                mprSetKeyBits(hp, 1);
+            } else if (*cp == '"' || *cp == '\'') {
+                quote = *cp;
+                if ((ep = strchr(++cp, quote)) != 0 && ep[-1] != '\\') {
+                    svalue = snclone(cp, ep - cp);
+                    hp = mprAddKey(options, key, svalue);
+                } else {
+                    /* missing closing quote */
+                    break;
+                }
+            } else if ((ep = strchr(cp, ',')) != 0 && ep[-1] != '\\') {
+                svalue = snclone(cp, ep - cp);
+                hp = mprAddKey(options, key, svalue);
+                ep--;
+
+            } else if ((ep = strchr(cp, '}')) != 0 && ep[-1] != '\\') {
+                break;
+
+            } else if (ep == 0) {
+                hp = mprAddKey(options, key, sclone(cp));
+                break;
+            }
+            cp = ep;
+        }
+    }
+    *token = ep;
+    return options;
+}
+
+
+MprHashTable *httpGetOptions(cchar *options)
+{
+    if (options == 0) {
+        return mprCreateHash(-1, 0);
+    }
+    if (*options == '@') {
+        /* Allow embedded URIs as options */
+        options = sfmt("click: '%s'", options);
+    }
+    return deserializeOptions(&options);
+}
+
+
+cchar *httpGetOption(MprHashTable *options, cchar *field, cchar *defaultValue)
+{
+    MprHash     *hp;
+    cchar       *value;
+
+    if (options == 0) {
+        value = defaultValue;
+    } else if ((hp = mprLookupKeyEntry(options, field)) == 0) {
+        value = defaultValue;
+    } else if (mprGetKeyBits(hp)) {
+        mprAssert("Bad state, field is a collection" == 0);
+        value = defaultValue;
+    }
+    return value;
+}
+
+
+MprHashTable *httpGetOptionHash(MprHashTable *options, cchar *field)
+{
+    MprHash     *hp;
+
+    if (options == 0) {
+        return 0;
+    }
+    if ((hp = mprLookupKeyEntry(options, field)) == 0 || mprGetKeyBits(hp) == 0) {
+        return 0;
+    }
+    return (MprHashTable*) hp->data;
+}
+
+
+void httpAddOption(MprHashTable *options, cchar *field, cchar *value)
+{
+    MprHash     *hp;
+
+    if (options == 0) {
+        mprAssert(options);
+        return;
+    }
+    if ((hp = mprLookupKeyEntry(options, field)) != 0) {
+        mprAddKey(options, field, sjoin(hp->data, " ", value, NULL));
+    } else {
+        mprAddKey(options, field, value);
+    }
+}
+
+
+void httpSetOption(MprHashTable *options, cchar *field, cchar *value)
+{
+    if (options == 0) {
+        mprAssert(options);
+        return;
+    }
+    mprAddKey(options, field, value);
+}
+
+#endif
 
 
 /*

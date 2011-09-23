@@ -155,6 +155,26 @@ void espAutoFinalize(HttpConn *conn)
 }
 
 
+void espCheckSecurityToken(HttpConn *conn) 
+{
+    HttpRx  *rx;
+    EspReq  *req;
+    cchar   *securityToken, *sessionToken;
+
+    rx = conn->rx;
+    req = conn->data;
+
+    if (rx->securityToken == 0) {
+        rx->securityToken = (char*) espGetSessionVar(conn, ESP_SECURITY_TOKEN_NAME, "");
+        sessionToken = rx->securityToken;
+        securityToken = espGetParam(conn, ESP_SECURITY_TOKEN_NAME, "");
+        if (!smatch(sessionToken, securityToken)) {
+            httpError(conn, HTTP_CODE_NOT_ACCEPTABLE, 
+                "Security token does not match. Potential CSRF attack. Denying request");
+        }
+    }
+}
+
 MprOff espGetContentLength(HttpConn *conn)
 {
     return httpGetContentLength(conn);
@@ -191,9 +211,52 @@ char *espGetHeaders(HttpConn *conn)
 }
 
 
+char *espGetHome(HttpConn *conn)
+{
+    HttpRx      *rx;
+    cchar       *path, *end, *sp;
+    char        *home, *cp;
+    int         levels;
+
+    if (conn == NULL) {
+        return sclone("/");
+    }
+    rx = conn->rx;
+    mprAssert(rx->pathInfo);
+
+    path = rx->pathInfo;
+    end = &path[strlen(path)];
+    for (levels = 1, sp = &path[1]; sp < end; sp++) {
+        if (*sp == '/' && sp[-1] != '/') {
+            levels++;
+        }
+    }
+    home = mprAlloc(levels * 3 + 2);
+    if (levels) {
+        for (cp = home; levels > 0; levels--) {
+            strcpy(cp, "../");
+            cp += 3;
+        }
+        *cp = '\0';
+    } else {
+        strcpy(home, "./");
+    }
+    return home;
+}
+
+
 cchar *espGetQueryString(HttpConn *conn)
 {
     return httpGetQueryString(conn);
+}
+
+
+char *espGetReferrer(HttpConn *conn)
+{
+    if (conn->rx->referrer) {
+        return conn->rx->referrer;
+    }
+    return espGetHome(conn);
 }
 
 
@@ -234,6 +297,24 @@ bool espFinalized(HttpConn *conn)
     req = conn->data;
     return req->finalized;
 }
+
+
+#if UNUSED
+EdRec *espFind(HttpConn *conn, cchar *tableName, cchar *id)
+{
+    EspReq      *req;
+    EspRoute    *eroute;
+
+    req = conn->data;
+    eroute = req->eroute;
+    if (eroute->ed) {
+        return edFind(eroute->ed, tableName, id);
+    } else {
+        mprError("No database open on route %s", conn->rx->route->name);
+        return 0;
+    }
+}
+#endif
 
 
 //NAME: flush
@@ -308,12 +389,16 @@ int espGetIntParam(HttpConn *conn, cchar *var, int defaultValue)
 }
 
 
+//  MOB - sort
 cchar *espGetParam(HttpConn *conn, cchar *var, cchar *defaultValue)
 {
     return httpGetParam(conn, var, defaultValue);
 }
 
 
+/*
+    Get a security token. This will use and existing token or create if not present. It will store in the session store.
+ */
 cchar *espGetSecurityToken(HttpConn *conn)
 {
     HttpRx      *rx;
@@ -442,6 +527,8 @@ ssize espWriteString(HttpConn *conn, cchar *s)
 }
 
 
+//  MOB - missing WriteView
+
 /*
     Convert queue data in key / value pairs
     MOB - should be able to remove this and use standard form parsing
@@ -558,6 +645,66 @@ void espShowRequest(HttpConn *conn)
         }
         espWrite(conn, "\r\n");
     }
+}
+
+
+void espNoticev(HttpConn *conn, cchar *kind, cchar *fmt, va_list args)
+{
+    EspReq      *req;
+    cchar       *prior, *msg;
+
+    req = conn->data;
+    msg = sfmtv(fmt, args);
+
+    if (req->flash == 0) {
+        req->flash = mprCreateHash(0, 0);
+        espGetSession(conn, 1);
+    }
+    if ((prior = mprLookupKey(req->flash, kind)) != 0) {
+        mprAddKey(req->flash, kind, sjoin(prior, "\n", msg, NULL));
+    } else {
+        mprAddKey(req->flash, kind, sclone(msg));
+    }
+}
+
+
+void espNotice(HttpConn *conn, cchar *kind, cchar *fmt, ...)
+{
+    va_list     args;
+
+    va_start(args, fmt);
+    espNoticev(conn, kind, fmt, args);
+    va_end(args);
+}
+
+
+void espWarn(HttpConn *conn, cchar *fmt, ...)
+{
+    va_list     args;
+
+    va_start(args, fmt);
+    espNoticev(conn, "warn", fmt, args);
+    va_end(args);
+}
+
+
+void espError(HttpConn *conn, cchar *fmt, ...)
+{
+    va_list     args;
+
+    va_start(args, fmt);
+    espNoticev(conn, "error", fmt, args);
+    va_end(args);
+}
+
+
+void espInform(HttpConn *conn, cchar *fmt, ...)
+{
+    va_list     args;
+
+    va_start(args, fmt);
+    espNoticev(conn, "inform", fmt, args);
+    va_end(args);
 }
 
 

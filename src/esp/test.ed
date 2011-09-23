@@ -1,0 +1,19 @@
+//  Pretty or flat
+{
+    //  Table name
+    'users': {
+        schema: [
+            { field: 'name', type: 'string' },
+            { field: 'food', type: 'string' },      //  Comments here
+            { field: 'age',  type: 'int' },         //  Omit trailing comma
+        ],
+        index: 'name',
+        data: [
+            //  Comments
+            //  Optional quotes
+            [ 'Peter', 'Thai' ],
+            [ 'Julie', 'Chinese' ],
+            [ 'John', 'Fish' ],
+        ],
+    },
+}

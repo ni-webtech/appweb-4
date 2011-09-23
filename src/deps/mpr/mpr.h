@@ -567,6 +567,15 @@ typedef int64 MprTime;
     #define LD_LIBRARY_PATH "LD_LIBRARY_PATH"
 #endif
 
+#if VXWORKS
+/*
+    Old VxWorks can't do array[]
+ */
+#define MPR_FLEX 0
+#else
+#define MPR_FLEX
+#endif
+
 
 #if BLD_UNIX_LIKE || VXWORKS
     #define MPR_TEXT        ""
@@ -2447,14 +2456,14 @@ extern int  mprSyncThreads(MprTime timeout);
     @description The MPR provides a suite of safe ascii string manipulation routines to help prevent buffer overflows
         and other potential security traps.
     @defgroup MprString MprString
-    @see MprString itos mprPrintf mprPrintfError mprSprintf scasecmp scasematch schr sclone scmp scontains scopy sends 
-        sfmt sfmtv shash shashlower sjoin sjoinv slen slower smatch sncasecmp snclone sncmp sncopy snumber spbrk 
-        srchr srejoin srejoinv sreplace sspn sstarts ssub stemplate stoi stok strim supper 
+    @see MprString itos mprPrintf mprPrintfError mprSprintf scamel scasecmp scasematch schr sclone scmp scontains 
+        scopy sends sfmt sfmtv shash shashlower sjoin sjoinv slen slower smatch sncasecmp snclone sncmp sncopy 
+        snumber spascal spbrk srchr srejoin srejoinv sreplace sspn sstarts ssub stemplate stoi stok strim supper 
         mprFprintf mprSprintfv
  */
 typedef struct MprString { void *dummy; } MprString;
 
-//  MOB - better char *itos(int64 value, int radix);
+//  MOB - better cchar *itos(int64 value, int radix);
 /**
     Convert an integer to a string.
     @description This call converts the supplied 64 bit integer into a string formatted into the supplied buffer according
@@ -2488,6 +2497,15 @@ extern int scasecmp(cchar *s1, cchar *s2);
     @ingroup MprString
  */
 extern bool scasematch(cchar *s1, cchar *s2);
+
+/**
+    Create a camel case version of the string
+    @description Copy a string into a newly allocated block and make the first character lower case
+    @param str Pointer to the block to duplicate.
+    @return Returns a newly allocated string.
+    @ingroup MprMem
+ */
+extern char *scamel(cchar *str);
 
 /**
    Find a character in a string. 
@@ -2703,6 +2721,15 @@ extern ssize sncopy(char *dest, ssize destMax, cchar *src, ssize len);
     @return true if all characters are digits
  */
 extern bool snumber(cchar *s);
+
+/**
+    Create a Pascal case version of the string
+    @description Copy a string into a newly allocated block and make the first character upper case
+    @param str Pointer to the block to duplicate.
+    @return Returns a newly allocated string.
+    @ingroup MprMem
+ */
+extern char *spascal(cchar *str);
 
 /**
     Locate the a character in a string.
@@ -3751,6 +3778,7 @@ typedef struct MprList {
     Macros
  */
 #define MPR_GET_ITEM(list, index) list->items[index]
+#define ITERATE_ITEMS(list, item, next) next = 0; (item = mprGetNextItem(list, &next)) != 0; 
 
 /**
     List comparison procedure for sorting
@@ -4226,7 +4254,8 @@ extern int print(cchar *fmt, ...);
     @description The hash structure supports growable hash tables with high performance, collision resistant hashes.
     Each hash entry has a descriptor entry. This is used to manage the hash table link chains.
     @see MprHash MprHashProc MprHashTable mprAddDuplicateHash mprAddKey mprAddKeyFmt mprCloneHash mprCreateHash 
-        mprGetFirstKey mprGetHashLength mprGetNextKey mprLookupKey mprLookupKeyEntry mprRemoveKey 
+        mprGetFirstKey mprGetHashLength mprGetKeyBits mprGetNextKey mprLookupKey mprLookupKeyEntry mprRemoveKey 
+        mprSetKeyBits 
     @stability Evolving.
     @defgroup MprHash MprHash
  */
@@ -4234,9 +4263,9 @@ typedef struct MprHash {
     struct MprHash *next;               /**< Next symbol in hash chain */
     char            *key;               /**< Hash key */
     cvoid           *data;              /**< Pointer to symbol data */
-    int             bucket;             /**< Hash bucket index */
+    int             bits: 2;            /**< User definable bits */
+    int             bucket: 30;         /**< Hash bucket index */
 } MprHash;
-
 
 /**
     Hashing function to use for the table
@@ -4259,6 +4288,11 @@ typedef struct MprHashTable {
     int             length;             /**< Number of symbols in the table */
     int             flags;              /**< Hash control flags */
 } MprHashTable;
+
+/*
+    Macros
+ */
+#define ITERATE_KEYS(table, item) item = 0; (item = mprGetNextKey(table, item)) != 0; 
 
 /**
     Add a duplicate symbol value into the hash table
@@ -4313,6 +4347,7 @@ extern MprHashTable *mprCloneHash(MprHashTable *table);
 #define MPR_HASH_STATIC_VALUES  0x8     /**< Values are permanent - don't mark */
 #define MPR_HASH_STATIC_ALL     (MPR_HASH_STATIC_KEYS | MPR_HASH_STATIC_VALUES)
 
+//  MOB - inconsistent name. Rename  MprHashTable => MprHash and MprHash => MprKey. Then this becomes mprCreateHash
 /**
     Create a hash table
     @description Creates a hash table that can store arbitrary objects associated with string key values.
@@ -4324,6 +4359,14 @@ extern MprHashTable *mprCloneHash(MprHashTable *table);
     @ingroup MprHash
  */
 extern MprHashTable *mprCreateHash(int hashSize, int flags);
+
+/**
+    Get the user-definable bits for a key
+    @param hp Hash key entry returned by #mprLookupKeyEntry or #mprAddKey
+    @return The low-order two user definable bits
+    @ingroup MprHash
+ */
+extern int mprGetKeyBits(MprHash *hp);
 
 /**
     Return the first symbol in a symbol entry
@@ -4385,6 +4428,15 @@ extern MprHash *mprLookupKeyEntry(MprHashTable *table, cvoid *key);
     @ingroup MprHash
  */
 extern int mprRemoveKey(MprHashTable *table, cvoid *key);
+
+/**
+    Set the user-definable bits for a key
+    @param hp Hash key entry returned by #mprLookupKeyEntry or #mprAddKey
+    @param bits Bits to define. Only the low order two bits are used.
+    @return Returns zero if successful, otherwise a negative MPR error code is returned.
+    @ingroup MprHash
+ */
+extern void mprSetKeyBits(MprHash *hp, int bits);
 
 /*
     Prototypes for file system switch methods
@@ -4800,6 +4852,7 @@ extern int mprTruncateFile(cchar *path, MprOff size);
  */
 extern ssize mprWriteFile(MprFile *file, cvoid *buf, ssize count);
 
+//  MOB - rename mprWriteFmt
 /**
     Write formatted data to a file.
     @description Writes a formatted string to a file. 
@@ -4829,7 +4882,7 @@ extern ssize mprWriteFileString(MprFile *file, cchar *str);
         mprGetPathDir mprGetPathExt mprGetPathFiles mprGetPathLink mprGetPathNewline mprGetPathParent 
         mprGetPathSeparators mprGetPortablePath mprGetRelPath mprGetTempPath mprGetTransformedPath mprIsAbsPath 
         mprIsRelPath mprJoinPath mprJoinPathExt mprMakeDir mprMakeLink mprMapSeparators mprPathExists mprReadPath 
-        mprResolvePath mprSamePath mprSamePathCount mprSearchPath mprTrimPathExt mprTruncatePath 
+        mprReplacePathExt mprResolvePath mprSamePath mprSamePathCount mprSearchPath mprTrimPathExt mprTruncatePath 
     @defgroup MprPath MprPath
  */
 typedef struct MprPath {
@@ -5123,12 +5176,12 @@ extern char *mprJoinPath(cchar *base, cchar *path);
 /**
     Join an extension to a path
     @description Add an extension to a path if it does not already have one.
-    @param dir Directory path name to test use as the base/dir.
-    @param ext Extension to add. Must have period prefix.
+    @param path Path name to use as a base. Path is not modified.
+    @param ext Extension to add. Must should not have a  period prefix.
     @returns Allocated string containing the resolved path.
     @ingroup MprPath
  */
-extern char *mprJoinPathExt(cchar *dir, cchar *ext);
+extern char *mprJoinPathExt(cchar *path, cchar *ext);
 
 /**
     Make a directory
@@ -5183,6 +5236,16 @@ extern bool mprPathExists(cchar *path, int omode);
     @return An allocated string containing the file contents and return the data length in lenp.
  */
 extern char *mprReadPath(cchar *path, ssize *lenp);
+
+/**
+    Replace an extension to a path
+    @description Remove any existing path extension and then add the given path extension.
+    @param dir Directory path name to test use as the base/dir.
+    @param ext Extension to add. The extension should not have a period prefix.
+    @returns Allocated string containing the resolved path.
+    @ingroup MprPath
+ */
+extern char *mprReplacePathExt(cchar *dir, cchar *ext);
 
 /**
     Resolve paths
@@ -7854,10 +7917,16 @@ typedef struct Mpr {
     struct MprDispatcher    *dispatcher;    /**< Primary dispatcher */
     struct MprDispatcher    *nonBlock;      /**< Nonblocking dispatcher */
 
-    void            *ejsService;            /**< Ejscript service */
-    void            *httpService;           /**< Http service object */
+    /*
+        These are here to optimize access to these singleton service objects
+     */
     void            *appwebService;         /**< Appweb service object */
+    void            *ediService;            /**< EDI object */
+    void            *ejsService;            /**< Ejscript service */
+    void            *espService;            /**< ESP service object */
+    void            *httpService;           /**< Http service object */
     void            *testService;           /**< Test service object */
+
     MprIdleCallback idleCallback;           /**< Invoked to determine if the process is idle */
     MprOsThread     mainOsThread;           /**< Main OS thread ID */
     MprMutex        *mutex;                 /**< Thread synchronization */

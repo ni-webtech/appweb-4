@@ -1,0 +1,476 @@
+<!-- BeginDsi "dsi/head.html" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Embedthis Appweb 4.0.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides commercial and open source embedded web servers for 
+        devices and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="appwebserver.org" /> 
+                        <input type="hidden" name="sitesearch" value="appwebserver.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 4.0.0
+        </div>
+        <div class="crumbs">
+            <a href="../../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt;<a href="index.html">ESP Guide</a> &gt;<a href="frameworks.html">Web Frameworks</a>&gt;
+            <b>Embedded Server Pages</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <h2>Quick Nav</h2>
+            <ul>
+                <li><a href="#webServerInterface">Web Server Interface</a></li>
+                <li><a href="#generator">Application Generator</a></li>
+                <li><a href="#parser">Web Page Parser</a></li>
+                <li><a href="#mvc">MVC</a></li>
+                <li><a href="#models">Models</a></li>
+                <li><a href="#views">Views</a></li>
+                <li><a href="#viewPipeline">View Pipeline</a></li>
+                <li><a href="#controllers">Controllers</a></li>
+                <li><a href="#routing">Routing</a></li>
+                <li><a href="#actions">Actions</a></li>
+                <li><a href="#deployment">Developing</a></li>
+                <li><a href="#deployment">Deployment</a></li>
+            </ul>
+<!-- BeginDsi "dsi/webFrameSeeAlso.html" -->
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
+                <li><a href="../../../guide/appweb/users/cgi.html">CGI</a></li>
+                <li><a href="../../../guide/appweb/users/esp/index.html">ESP</a></li>
+                <li><a href="../../../guide/appweb/users/ejs.html">ESP</a></li>
+                <li><a href="../../../guide/appweb/users/php.html">PHP</a></li>
+                <li><a href="../../../guide/appweb/users/index.html">User Guide Overview</a></li>
+                <li><a href="../../../guide/appweb/users/configuration.html">Configuring Appweb</a></li>
+                <li><a href="../../../guide/appweb/users/ports.html">Ports and Binding</a></li>
+                <li><a href="../../../guide/appweb/users/authorization.html">User Authorization</a></li>
+                <li><a href="../../../guide/appweb/users/logFiles.html">Log Files</a></li>
+                <li><a href="../../../guide/appweb/users/vhosts.html">Virtual Hosts</a></li>
+                <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
+                <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
+                <li><a href="../../../guide/appweb/users/modules.html">Loadable Modules</a></li>
+                <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
+                <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
+                <li><a href="../../../ref/appweb/architecture.html">Appweb Architecture</a></li>
+            </ul>
+<!-- EndDsi -->
+        </div>
+        <div class="contentLeft">
+<!--
+- Views
+- Controllers
+- Caching
+    - Auto
+    - Manual
+- Routing
+    - Route packs
+    - Restful routes
+- Error handling
+    - Show errors
+- Templates
+    - Directives
+            include, layout, content
+            <%
+            <%^ global
+            <%^ start
+            <%^ end
+            <%= expression
+            <%= %fmt
+            -%> Omit trailing new line
+            @@pvar   param
+    - ESP API
+    - Safe HTML escaping
+- URI links
+- Form data
+- Sessions
+- Layouts
+- Transparent reload
+- Directives
+    EspApp
+    EspAppAlias
+    EspCompile
+    EspDir
+    EspEnv
+    EspKeepSource
+    EspLifespan
+    EspLink
+    EspLoad
+    EspRoutePack
+    EspRoute
+    EspShowErrors
+    EspUpdate
+- Controllers
+- Views
+- Routing
+- Ajax Controls
+- Show request
+- Examples
+- Async & Finalization
+- Generator "esp"
+-->
+            <h1>Using Embedded Server Pages</h1>
+            <p>The Embedded Server Pages (ESP) web framework makes it dramatically easier to create blazingly fast dynamic web
+            applications. The web framework provides an application generator, templating engine, a powerful
+            Model/View/Controller framework and a library of Ajax view controls to take the tedium out of creating web
+            applications. Via this framework, ESP drastically reduces the number of lines of code you need to
+            write for a compelling, dynamic web application.</p>
+            <p>This document describes the ESP web framework and how ESP is embedded in Appweb to run
+            web applications and respond to web requests. It describes the flow of execution and the main processing
+            components.</p>
+            
+            <p><b>NOTE:</b> ESP is integrated into Appweb and is not a separate product. Appweb includes the ESP
+            web framework and esp handler.
+            <p>See also the <a href="../../../ref/appweb/espArchitecture.html">ESP Architecture</a>,
+            and the <a href="../../../guide/appweb/espTour.html">ESP Tour</a>.</p>
+            <h3>ESP Web Framework Architecture</h3>
+            <p>ESP uses JavaScript for server-side web programming. Using the same language in the client and 
+            server makes web programming that much easier.</p>
+            <p>The ESP web framework builds upon the ESP core language and provides a web request handler, a
+            Model/View/Controller application framework and an edit-and-continue development model.</p><img src=
+            "../../../images/ejsArchitecture.jpg" alt="ESP Web Framework Architecture" />
+            <p>The main components of the ESP Web Framework:</p>
+            <ul>
+                <li><a href="#webServerInterface">Web Server Interface</a> - Framework hosting and request handler</li>
+                <li><a href="#generator">Application Generator</a> - for applications, scaffolds and stubs</li>
+                <li><a href="#parser">Web Page Parser</a> - Parses web pages, applies view layouts and emits pure
+                JavaScript</li>
+                <li><a href="#mvc">Framework Classes</a> - MVC, Http Request and Ajax view classes</li>
+                <li>ESP compiler - Creates and caches application byte code</li>
+                <li>ESP Virtual Machine - executes the byte code and formats the response</li>
+            </ul><a name="webServerInterface" id="webServerInterface"></a>
+            <h2 class="section">Web Server Interface</h2>
+            <p>The ESP Web Server Interface (or web interface) provides the interface and coupling between
+            ESP and the web server. It accepts incoming web requests from the web server, routes the request to
+            the appropriate application or ejscript web page, processes the output and passes it back to the web server
+            for transmission to the client.</p>
+            <h3>Appweb Hosting</h3>
+            <p>Appweb hosts ESP via a loadable module <tt>mod_ejs</tt> for the highest performance.
+            <p>ESP application will typically define an Appweb route using the EjsAlias directive
+            the EjsAppAlias directive. For example:</p>
+<pre>
+EjsAlias /myAppName/ "/Directory/to/myApp" 
+</pre>
+            <p>This instructs Appweb to send all requests with the URI prefix "myAppName" to ESP for
+            routing and processing.</p>
+            
+            <a name="formData" id="formData"></a>
+            <h3>Form Data</h3>
+            <p>The web interface converts incoming post and form data into a format suitable for easy processing by
+            ESP applications. Traditionally, form data is passed to web applications by environment variables. But
+            this format is often clumsy, doesn't scale and does not map well onto an object-oriented language such as
+            Javscript.</p>
+            <p>ESP replaces environment variables with a params[] collection object and it transparently converts
+            form data into a nested collection of objects. It automatically converts dot separated form names into
+            objects that are addressible by dot notation.</p>
+            
+            <a name="requestState" id="requestState"></a>
+            <h3>Request State</h3>
+            <p>The web interface will construct request, response and host objects that store request state. ESP
+            avoids the normal overhead in creating and populating these objects by using virtual, lazy construction.
+            Consequently, ESP applications incur minimal overhead when accessing request state.</p>
+            
+            <a name= "hosting" id="hosting"></a>
+            <h3>Interpreter Hosting</h3>A high performance web server must accept incoming requests, route to the
+            appropriate request handler, initialize the handler including necessary interpreters, gather response data,
+            transmit to the client and then tear down the handler. And this must be done many times per second, ideally
+            hundreds of times per second for dynamic content.
+            <p>To do this effectively, ESP maintains a pool of pre-created interpreter instances, complete with all the
+            requisite system classes and web framework. When incoming requests arrive, the web interface assigns one of
+            the pre-created interpreters to the new request. The interpreter pool saves memory by sharing 
+            the system types, classes and web framework. </p>
+            
+            <a name="apps" id="apps"></a></p>
+            <h2 class="section">Application Paradigms</h2>
+            <p>The ESP web framework supports three paradigms:</p>
+            <ul>
+                <li>Stand-alone web pages with embedded ESP</li>
+                <li>Pure ESPs</li>
+                <li>ESP Model/View/Controller Applications</li>
+            </ul>
+            <p>These paradigms can be combined in a single application if desired.</p>
+            <h3>Ejs Web Pages</h3>
+            <p>Ejs web pages are HTML web pages with embedded ESP code. They typically have a <tt>.ejs</tt> extension
+            and may use layout pages to define the look and feel of the application. They
+            do not use the full Model, View, Controlller paradigm, nor do they use the ESP <tt>mvc</tt> application 
+            generator. Ejs web pages often use a simple "Post-Back" paradigm where form
+            data is posted back to the same page.</p>
+            <h3>ESP</h3>
+            <p>ESP 2.X adds a new application paradigm &mdash; simple scripts. Appweb can route URI requests to
+            simple ESPs which then respond by writing status and data back to the client. These ESPs 
+            typically have a <tt>.es</tt> extension. They do not use layout pages and typically don't use the Model, View,
+            Controller facilities.
+            <p>MVC applications are more powerful. They have database models, controllers and views. They combine
+            templated ejs web pages with the power of controllers. MVC applications typically start life by using 
+            the <tt>mvc</tt> application generator. 
+            
+            <a name="generator" id="generator"></a></p>
+            <h2 class="section">Application Generator</h2>
+            The ESP <tt>mvc</tt> application generator generates new applications, scaffolds, controllers,
+            views, models and data migrations. It creates the application directory and
+            populates it with the necessary directories, configuration files and stubs to begin the application.</p>
+            <p>The application generator is named <b>mvc</b>.</p>
+            <p>To create a new application called test:</p>
+            <pre>
+mvc generate app test
+</pre>
+            <p>This will create the following directories:</p>
+            <ul>
+                <li>test/cache</li>
+                <li>test/controllers</li>
+                <li>test/db</li>
+                <li>test/layouts</li>
+                <li>test/models</li>
+                <li>test/src</li>
+                <li>test/static</li>
+                <li>test/views</li>
+            </ul>
+            <p>It will also create the following files:</p>
+            <ul>
+                <li>test/ejsrc</li>
+                <li>test/layouts/default.ejs</li>
+                <li>test/src/App.es</li>
+                <li>test/controllers/Base.es</li>
+                <li>test/views/Base/index.ejs</li>
+                <li>test/README</li>
+            </ul>
+            <p>ESP will automatically compile and load MVC components as required. You can also pre-compile your 
+            entire application via::</p>
+<pre>
+mvc -v compile
+</pre>
+            <a name="mvc" id="mvc"></a>
+            <h2 class="section">Model, View, Controller Framework</h2>
+            <p>A Model View Controller framework, also known as MVC, is a proven paradigm for organizing web
+            applications. The model manages the state of the application including the database. The controller manages
+            the application, responding to inputs and invoking the relevant views to generate the user interface.</p>
+            <p>Originally developed in the '70s, it has been more recently adapted for web applications and been
+            popularized by frameworks such as <a href="http://www.rubyonrails.org">Ruby on Rails</a>. ESP uses the
+            same paradigm with a JavaScript and embedded spin.</p>
+            
+            <a name="models" id="models"></a>
+            <h2 class="section">Models</h2>
+            <p>For object oriented languages such as ESP, there is sometimes a mismatch between relational
+            database data and the JavaScript objects that are used to represent and manage that data. To solve this
+            problem, ESP provides an Object Relational Mapping (ORM) layer to make it easy to read, modify and
+            write database data. ORM layers map database tables to classes, rows to object instances and columns to
+            properties of the classes and objects. If a database has a table named Users, then there would be a model
+            class named User.</p>
+            <p>When ESP reads records from a database table it constructs an instance of the a model class and
+            dynamically creates properties for each of the columns in the table. It also maps the SQL data types into
+            equivalent JavaScript types. This allows a natural access and update paradigm where the application can
+            deal with JavaScript objects while the ORM takes care of reading, querying and updating the database.</p>
+            <p>The web framework provides a powerful set of access methods to query, join, update and deal with SQL
+            tables. You can use higher level functions where the ORM generates appropriate SQL statements or you can
+            construct and issue your own SQL.</p>
+            <p>The ORM Methods include: belongsTo, find, findAll, findOneWhere, findWhere, getColumnNames,
+            getColumnTitles, getDb, getKeyNme, getNumRows, getTableName, hasAndBelongsToMany, hasMany, remove, save,
+            saveUpdate, setKeyName, setTableName, sql and trace.</p>
+            <p>The ESP ORM currently only provides one database connector for SQLite. It is expected that a future
+            release will add support for other major database engines.</p>
+            
+            <a name="views" id="views"></a>
+            <h2 class="section">Views</h2>
+            <p>The View part of the ESP web framework is responsible for generating the user interface. It
+            typically takes an input HTML web page with embedded ESP and generates the HTML response to send back
+            to the client. However, views can also be generated by controllers and thus require no HTML page.</p>
+            <p>The ESP View framework provides:</p>
+            <ul>
+                <li>A templating engine for master layout pages</li>
+                <li>Embedded server-side javascripting in HTML</li>
+                <li>A rich library of methods to render output</li>
+                <li>A consistent interface to Ajax libraries</li>
+                <li>A suite of view dynamic user controls such as table, chart, tab, tree, ...</li>
+            </ul>
+            
+            <a name="viewPipeline" id="viewPipeline"></a>
+            <h3>View Pipeline</h3>
+            <p>The View mechanism consists of a processing pipeline that progressively transforms the web page. Views
+            start with a partial HTML view page which typically contains embedded ESP. This is parsed by the Web
+            Page Parser and combined with layout views to create a composite web page. This is then parsed and
+            converted to pure ESP code which is compiled and cached in a module file (.mod). The module file can
+            be run repeatedly by the VM to generate the required HTML for the user view. <img src=
+            "../../../images/espWebView.jpg" alt="View Pipeline" /></p>
+            <p>The time intensive part of this pipeline processing occurs once at development time. This is comprised
+            of the pipeline stages up to and including compilation. The often less costly run-time processing for each
+            request consists of reading the module file and executing it in the VM.</p>
+            
+            <a name="parser" id= "parser"></a>
+            <h3>Web Page Parser</h3>
+            <p>The Web Page Parser is a templating engine and embedded script parser. It understands and processes
+            embedded javascript and layout directives to expand the view content pages and create a composite page that
+            represents an entire web page that the user will see.</p>
+            <p>A <b>templating engine</b> is an important part of a view framework. It allows you to specify the "look
+            and feel" and standard components of a web application in one place, and then resuse the "look and feel" in
+            content pages by simply referencing a layout page. The layout page typically contains the top level HTML
+            structure, style sheets and graphic content that is standard on every page. Is also specifies the location
+            to insert content from content pages. The content pages focus on the content and data unique to that page
+            and they do not replicate the standard content specified in the master page. In this way, changing the
+            layout page in once place will automatically change every web page in the application.</p>
+            <p>The web page parser reads content view page containing embedded ejscript code (with .ejs extension). It
+            blends the content page with the layout pages and converts it to a pure ESP program (with .es
+            extension) which represents the composite web page that the user will see.</p>
+            <p>Here is a simple layout page</p>
+            <pre>
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;@@title&lt;/title&gt;
+    &lt;link rel="stylesheet" type="text/css" href="@@style"/&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;img src="banner.jpg"&gt;
+    &lt;%@ content %&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+            <p>The <b>&lt;%@ content %&gt;</b> directive instructs the web page parser to insert the content page at
+            this location. The @@title and @@style directives access ESP variables set to the required content
+            title and style sheet at run-time.</p>
+            <p>Here is a simple content page:</p>
+            <pre>
+&lt;h1&gt;Hello World&lt;/h1&gt;
+&lt;p&gt;Today is &lt;%= new Date %&gt;
+</pre>The web parser supports the following web page directives. These can be used in layout or content pages:
+            <ul>
+                <li>&lt;%= ejscript expression %&gt;</li>
+                <li>@@variable</li>
+                <li>&lt;% ejscript code %&gt;</li>
+                <li>&lt;% include "filename" %&gt;</li>
+                <li>&lt;%@ layout "file" %&gt;</li>
+            </ul>
+            <p>The &lt;%= ejscript expression %&gt; directive will evaluate the expression and substitute the resulting
+            expression value.</p>
+            <p>The @@variable directive is a shortcut for &lt;%= expression %&gt;.</p>
+            <p>The &lt;% ejscript code %&gt; directive will invoke the given code. No automatic substitution of output
+            occurs. However, the code can call "write()" to generate output in the place of the directive.</p>
+            <p>The &lt;% include "filename" %&gt; directive will include the given file name at the location of the
+            directive when parsing the web page. Include directives can be nested.</p>
+            <p>The &lt;%@ layout "file" %&gt; directive specifies the name of the layout page. By using this directive
+            in layout pages, you can build up the web page layout by nesting layout pages. If omitted in content pages,
+            which is usually the case, the default layout is views/layouts/default.ejs. If omitted in layout pages, it
+            is assumed the layout page is the top level layout page.</p>
+            <p>The web parser supports the following web page directives in layout pages:</p>
+            <ul>
+                <li>&lt;%@ content %&gt;</li>
+            </ul>
+            <p>This specifies the location for the content page data.</p>
+            <p>Note: you do not have to use layout pages. Simple stand-alone web pages without layouts code are
+            supported. To disable templating, use a &lt;%@ layout="" %&gt; directive.</p>
+            <h3>View Controls</h3>
+            <p>The web framework provides a suite of view controls for common UI elements. These include button, chart,
+            checkbox, form, image, lable, link, list, progress bar, radio button, table, tabs, text, textarea and tree.
+            The purpose of the controls is to be a themeable and skinnable set of UI controls that provides a higher
+            level of functionality than bare HTML. For example, the table control allows the easy display of database
+            data with sortable rows and selectable columns.</p>
+            <p>The view controls are implemented via View connector modules that communicate with the web framework's
+            View connector interface. This is a modular interface for industry Ajax and UI toolkits. The ESP web
+            framework provides a HTML view connector, and a Google Ajax Visualizer connector. Users can select on a
+            control by control basis, what connector module to use for a specific control. Additional Ajax connector
+            libraries will be supported in the future.</p>
+            <p>The controls are bindable to data stored in models and many controls can dynamically refresh their
+            content using Ajax techniques without redisplaying the entire page.</p>
+            <p>Views can also use a library of view methods to generate and manage HTML output and responses. These
+            include: redirect, render, setCookie, setHeader, write, writeHtml and writeRaw.</p>
+            
+            <a name="controllers" id="controllers"></a>
+            <h2 class="section">Controllers - Responding to Requests</h2>
+            <p>The role of the controllers is to manage the application and respond to inputs so controllers form the
+            heart of the web application. Controllers are typically bound to various URIs so that user input is routed
+            to specific actions within the controls. When a controller receives an incoming Http message, the requested
+            action is run. The action will typically mutate the state of the application in some manner and then render
+            a response view to the user.</p>
+            
+            <!-- MOB -- FIX -->
+            <h3>Routing</h3>
+            <p>The ESP web framework routes incoming URI requests by tokenizing the requeste URI. The format used
+            is:</p>
+            <blockquote>
+                <p>http://site/APP/CONTROLLER/ACTION</p>
+            </blockquote>
+            <p>Where APP is the name of the application, CONTROLLER the name of the controller and ACTION is the name
+            of an action method within the controller. When such a URI request is received by ESP, it routes the
+            <!-- MOB -- FIX -->
+            request to the specified controller and invokes the action method. The routing format is currently fixed
+            and not configurable but it is anticipated that user controlled routing will be added in a future
+            release.</p>
+            
+            <a name="actions" id="actions"></a>
+            <h3>Actions</h3>
+            <p>When a controller receives a request to service, it is dispatched to the action method specified in the
+            URI. The action is a simple function defined with an "action" namespace qualifier. The job of the action
+            method is:</p>
+            <ol>
+                <li>Respond to the request</li>
+                <li>Render a response view back to the client</li>
+            </ol>
+            <p>The action reponds to the request by examining the request form parameters, query string and other Http
+            and application state information.</p>
+            <p>Here is a sample action method that updates a database table based on user submitted form data in
+            "params".</p>
+            <pre>
+action function update() {
+    /* Update */
+    portfolio = Portfolio.find(params.id)
+    if (portfolio.saveUpdate(params.portfolio)) {
+        inform("Portfolio updated successfully.")
+        redirect("list")
+    }
+}
+</pre>
+            <p>An action method can explicitly render data by calling one of the render() methods. It can redirect the
+            client to a new URI via the redirect() method. Manual rendering is ideal for RESTful web services,
+            particularly when coupled with the XML/E4X capabilities of ESP.</p>
+            <p>If the action method does not explicitly render any data, the web framework will automatically render a
+            view page of the same name as the action method. That view has access to the controller and request
+            state.</p>
+            <p>Other methods used by Controller actions include: cache, createSession, destroySession, escapeHtml,
+            html, inform, keepAlive, makeUrl, render, renderFile, renderXml, reportError, setCookie, setHeader,
+            setHttpCode, setMimeType, warn and write.</p>
+            
+            <a name="deployment" id="deployment"></a>
+            <h2 class="section">Development and Deployment</h2>
+            <p>There are two phases of use for ESP: Development and Deployment. When developing, developers need
+            quick turn-around with rapid test-modify-build cycles. Interpreted languages have a distinct advantage over
+            traditional compiled languages when used for such iterative or <a href=
+            "http://en.wikipedia.org/wiki/Agile_software_development">Agile Web Development</a>. ESP offers the
+            best of both. When developing, ESP runs as an interpreted environment. Changes made to web pages or
+            scripts cause the files to be reparsed and compiled without restarting the web server. Simply reloading the
+            web pages in the browser will trigger the changed page to be rebuilt.</p>
+            <p>When ready for deployment, the entire application can be compiled into a single module file for easy
+            deployment.</p>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2011. 
+            All rights reserved. Embedthis, ESP and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>

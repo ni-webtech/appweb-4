@@ -10,6 +10,7 @@
 
 #if BLD_FEATURE_ESP
 #include    "esp.h"
+#include    "edi.h"
 
 /************************************* Local **********************************/
 /*
@@ -28,7 +29,6 @@ static void manageAction(EspAction *cp, int flags);
 static void manageEsp(Esp *esp, int flags);
 static void manageReq(EspReq *req, int flags);
 static int  runAction(HttpConn *conn);
-static void runView(HttpConn *conn);
 static void saveCachedResponse(HttpConn *conn);
 static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *recompile);
 static void setRouteDirs(MaState *state, cchar *kind);
@@ -101,7 +101,7 @@ static void startEsp(HttpQueue *q)
         }
         if (req->autoFinalize) {
             if (!conn->tx->responded) {
-                runView(conn);
+                espWriteView(conn, 0);
             }
             espFinalize(conn);
         }
@@ -403,6 +403,9 @@ static int runAction(HttpConn *conn)
     if (action->actionProc) {
         //  MOB - does this need a lock
         mprSetThreadData(esp->local, conn);
+        if (eroute->controllerBase) {
+            (eroute->controllerBase)(conn);
+        }
         (action->actionProc)(conn);
         return 1;
     }
@@ -410,7 +413,7 @@ static int runAction(HttpConn *conn)
 }
 
 
-static void runView(HttpConn *conn)
+void espWriteView(HttpConn *conn, cchar *name)
 {
     MprModule   *mp;
     HttpRx      *rx;
@@ -424,9 +427,14 @@ static void runView(HttpConn *conn)
     eroute = req->eroute;
     recompile = updated = 0;
     
-    if (req->controllerName) {
+    if (name && *name) {
+        req->view = mprJoinPath(eroute->viewsDir, name);
+        req->source = mprJoinPathExt(name, ".esp");
+
+    } else if (req->controllerName) {
         req->view = mprJoinPath(eroute->viewsDir, rx->target);
         req->source = mprJoinPathExt(req->view, ".esp");
+
     } else {
         httpMapFile(conn, rx->route);
         req->view = conn->tx->filename;
@@ -566,6 +574,12 @@ void espDefineAction(EspRoute *eroute, cchar *target, void *actionProc)
     }
     action->actionProc = actionProc;
     mprAddKey(esp->actions, mprJoinPath(eroute->controllersDir, target), action);
+}
+
+
+void espDefineBase(EspRoute *eroute, void *baseProc)
+{
+    eroute->controllerBase = baseProc;
 }
 
 
@@ -806,6 +820,7 @@ void espManageEspRoute(EspRoute *eroute, int flags)
         mprMark(eroute->cacheDir);
         mprMark(eroute->compile);
         mprMark(eroute->controllersDir);
+        mprMark(eroute->edi);
         mprMark(eroute->databasesDir);
         mprMark(eroute->dir);
         mprMark(eroute->env);
@@ -830,7 +845,9 @@ static void manageReq(EspReq *req, int flags)
         mprMark(req->controllerPath);
         mprMark(req->entry);
         mprMark(req->eroute);
+        mprMark(req->flash);
         mprMark(req->module);
+        mprMark(req->record);
         mprMark(req->route);
         mprMark(req->session);
         mprMark(req->source);
@@ -855,6 +872,8 @@ static void manageEsp(Esp *esp, int flags)
         mprMark(esp->views);
         mprMark(esp->cache);
         mprMark(esp->local);
+        mprMark(esp->internalOptions);
+        mprMark(esp->ediService);
     }
 }
 
@@ -932,7 +951,7 @@ static int espAppDirective(MaState *state, cchar *key, cchar *value)
     }
     if (*scriptName != '/') {
         mprError("Script name should start with a \"/\"");
-        scriptName = sjoin("/", scriptName, 0);
+        scriptName = sjoin("/", scriptName, NULL);
     }
     scriptName = stemplate(scriptName, route->pathTokens);
     if (scriptName == 0 || *scriptName == '\0' || scmp(scriptName, "/") == 0) {
@@ -941,7 +960,7 @@ static int espAppDirective(MaState *state, cchar *key, cchar *value)
         httpSetRoutePrefix(route, scriptName);
     }
     if (route->pattern == 0) {
-        httpSetRoutePattern(route, sjoin("/", scriptName, 0), 0);
+        httpSetRoutePattern(route, sjoin("/", scriptName, NULL), 0);
     }
     httpSetRouteSource(route, "");
     httpSetRouteDir(route, path);
@@ -989,6 +1008,32 @@ static int espCompileDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_MEMORY;
     }
     eroute->compile = sclone(value);
+    return 0;
+}
+
+
+/*
+    EspDb provider connectionPath
+ */
+static int espDbDirective(MaState *state, cchar *key, cchar *value)
+{
+    EspRoute    *eroute;
+    cchar       *provider, *path, *autoSave;
+    int         flags;
+
+    if ((eroute = getEspRoute(state->route)) == 0) {
+        return MPR_ERR_MEMORY;
+    }
+    if (!maTokenize(state, value, "%S %S ?S", &provider, &path, &autoSave)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    flags = EDI_CREATE;
+    flags |= smatch(autoSave, "auto") ? EDI_AUTO_SAVE : 0;
+    if ((eroute->edi = ediOpen(provider, path, flags)) == 0) {
+        mprError("Can't open database %s", path);
+        return MPR_ERR_CANT_OPEN;
+    }
+    //  MOB - who closes?
     return 0;
 }
 
@@ -1063,7 +1108,7 @@ static int espEnvDirective(MaState *state, cchar *key, cchar *value)
         if (eroute->searchPath) {
             eroute->searchPath = sclone(evalue);
         } else {
-            eroute->searchPath = sjoin(eroute->searchPath, MPR_SEARCH_SEP, evalue, 0);
+            eroute->searchPath = sjoin(eroute->searchPath, MPR_SEARCH_SEP, evalue, NULL);
         }
     }
     return 0;
@@ -1228,11 +1273,16 @@ int maEspHandlerInit(Http *http, MprModule *mp)
     handler->open = openEsp; 
     handler->close = closeEsp; 
     handler->start = startEsp; 
-    if ((esp = handler->stageData = mprAllocObj(Esp, manageEsp)) == 0) {
+    if ((esp = mprAllocObj(Esp, manageEsp)) == 0) {
         return MPR_ERR_MEMORY;
     }
+    handler->stageData = esp;
+    MPR->espService = esp;
     esp->mutex = mprCreateLock();
     esp->local = mprCreateThreadLocal();
+    if ((esp->internalOptions = mprCreateHash(-1, MPR_HASH_STATIC_VALUES)) == 0) {
+        return 0;
+    }
     if ((esp->views = mprCreateHash(-1, MPR_HASH_STATIC_VALUES)) == 0) {
         return 0;
     }
@@ -1242,11 +1292,11 @@ int maEspHandlerInit(Http *http, MprModule *mp)
     if ((esp->cache = mprCreateCache(MPR_CACHE_SHARED)) == 0) {
         return MPR_ERR_MEMORY;
     }
-
     appweb = httpGetContext(http);
     maAddDirective(appweb, "EspApp", espAppDirective);
     maAddDirective(appweb, "EspAppAlias", espAppAliasDirective);
     maAddDirective(appweb, "EspCompile", espCompileDirective);
+    maAddDirective(appweb, "EspDb", espDbDirective);
     maAddDirective(appweb, "EspDir", espDirDirective);
     maAddDirective(appweb, "EspEnv", espEnvDirective);
     maAddDirective(appweb, "EspKeepSource", espKeepSourceDirective);
@@ -1257,6 +1307,18 @@ int maEspHandlerInit(Http *http, MprModule *mp)
     maAddDirective(appweb, "EspRoutePack", espRoutePackDirective);
     maAddDirective(appweb, "EspShowErrors", espShowErrorsDirective);
     maAddDirective(appweb, "EspUpdate", espUpdateDirective);
+
+#if BLD_FEATURE_EDI || 1
+    if ((esp->ediService = ediCreateService()) == 0) {
+        return 0;
+    }
+#if BLD_FEATURE_MDB || 1
+    mdbInit();
+#endif
+#if BLD_FEATURE_SQLITE &&0
+    sdbInit();
+#endif
+#endif
     return 0;
 }
 

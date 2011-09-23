@@ -474,10 +474,10 @@ char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheNam
             body = sreplace(layoutBuf, CONTENT_MARKER, body);
         }
         if (start && start[slen(start) - 1] != '\n') {
-            start = sjoin(start, "\n", 0);
+            start = sjoin(start, "\n", NULL);
         }
         if (end && end[slen(end) - 1] != '\n') {
-            end = sjoin(end, "\n", 0);
+            end = sjoin(end, "\n", NULL);
         }
         mprAssert(slen(path) > slen(eroute->dir));
         mprAssert(sncmp(path, eroute->dir, slen(eroute->dir)) == 0);

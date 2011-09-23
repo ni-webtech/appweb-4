@@ -241,13 +241,13 @@ form td {
 	-webkit-box-shadow: 3px 3px 3px #AAA;
 }
 
-div.-ejs-formError {
+div.-ejs-form-error {
 	border: 2px solid #FF0000;
 	-webkit-box-shadow: 3px 3px 3px #AAA;
     text-indent: 10px;
 }
 
-div.-ejs-formError h2 {
+div.-ejs-form-error h2 {
     background-color: #FF0000;
     color: #FFFFFF;
     font-size: 12pt;

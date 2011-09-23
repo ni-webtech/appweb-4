@@ -1,67 +1,83 @@
 /*
-    Test mvc controller
+    User mvc controller
  */
 #include "esp.h"
 
-
-static void common(HttpConn *conn) {
-    espSetParam(conn, "title", "MVC Title");
+static void common() {
+    setParam("title", "MVC Title");
 }
 
-
-static void check(HttpConn *conn) { 
-    espWrite(conn, "Check: OK\r\n");
-    espFinalize(conn);
-    /* No view used */
-}
-
-
-static void details(HttpConn *conn) { 
-    common(conn);
-    espSetParam(conn, "title", "MVC Title");
-    espSetIntParam(conn, "secret", 42);
-    /* View will be rendered */
-}
-
-static void cached(HttpConn *conn) { 
-    common(conn);
-    espWrite(conn, "When: %s\r\n", mprGetDate(0));
-    espWrite(conn, "URI: %s\r\n", conn->rx->uri);
-    espWrite(conn, "QUERY: %s\r\n", conn->rx->parsedUri->query);
-    espFinalize(conn);
-}
-
-static void login(HttpConn *conn) { 
-    common(conn);
-    if (espGetSessionVar(conn, "id", 0) != 0) {
-        espWrite(conn, "Logged in");
-        espFinalize(conn);
-
-    } else if (espMatchParam(conn, "username", "admin") && espMatchParam(conn, "password", "secret")) {
-        espWrite(conn, "Valid Login");
-        espFinalize(conn);
-        espSetSessionVar(conn, "id", "admin");
-
-    } else if (scmp(conn->rx->method, "POST") == 0) {
-        espWrite(conn, "Invalid login, please retry.");
-        espFinalize(conn);
-
+static void create() { 
+    setRec(createRec("user", params()));
+    if (save()) {
+        inform("New user created");
+        redirect("@");
     } else {
-        espGetSession(conn, 1);
+        writeView("edit");
     }
 }
 
-static void missing(HttpConn *conn) {
-    httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Missing action");
+static void destroy() { 
+    cchar   *id;
+
+    if ((id = param("id", 0)) != 0) {
+        inform("User %s removed", id);
+        remove(id);
+    }
+    redirect("@");
+}
+
+static void edit() { 
+    setRec(findRec("user", param("id", 0)));
+}
+
+static void init() { 
+    setRec(createRec("user", NULL));
+    writeView("edit");
+}
+
+static void login() { 
+    if (session("id") != 0) {
+        render("Logged in");
+
+        //  MOB - need better routine for this
+    } else if (smatch(param("username", ""), "admin") && smatch(param("password", ""), "secret")) {
+        setSession("id", "admin");
+        inform("Welcome back");
+        if (session("referrer")) {
+            redirect(session("referrer"));
+        } else {
+            redirect("@show");
+        }
+        setSession("id", param("username", ""));
+
+    //  MOB - alternatively, set conn->method
+    } else if (scmp(getMethod(), "POST") == 0) {
+        render("Invalid login, please retry.");
+
+    } else {
+        createSession();
+    }
+    finalize();
+}
+
+static void update() { 
+    setRec(findRec("user", param("id", 0)));
+    if (save()) {
+        inform("User updated successfully.");
+        redirect("@show");
+    } else {
+        writeView("edit");
+    }
 }
 
 ESP_EXPORT int espInit_controller_user(EspRoute *eroute, MprModule *module) {
-    espDefineAction(eroute, "missing", check);
-    espDefineAction(eroute, "user-check", check);
-    espDefineAction(eroute, "user-cached", cached);
-    espDefineAction(eroute, "user-details", details);
+    espDefineBase(eroute, common);
+    espDefineAction(eroute, "user-create", create);
+    espDefineAction(eroute, "user-destroy", destroy);
+    espDefineAction(eroute, "user-edit", edit);
+    espDefineAction(eroute, "user-init", init);
+    espDefineAction(eroute, "user-update", update);
     espDefineAction(eroute, "user-login", login);
-
-    espCacheControl(eroute, "user-cached", 0, "*");
     return 0;
 }

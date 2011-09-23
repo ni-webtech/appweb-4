@@ -29,13 +29,13 @@ assert(http.status == 200)
 assert(http.response.contains("Welcome to ESP"))
 http.close()
 
-//  /app/user/check - this tests a controller without view
-http.get(HTTP + "/app/user/check")
+//  /app/test/check - this tests a controller without view
+http.get(HTTP + "/app/test/check")
 assert(http.status == 200)
 assert(http.response.contains("Check: OK"))
 
-//  /app/user/details - this tests templates
-http.get(HTTP + "/app/user/details")
+//  /app/test/details - this tests templates
+http.get(HTTP + "/app/test/details")
 assert(http.status == 200)
 assert(http.response.contains("<title>MVC Title</title>"))
 assert(http.response.contains("Powered by Appweb"))

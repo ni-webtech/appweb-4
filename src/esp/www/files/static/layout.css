@@ -198,7 +198,7 @@ div.-ejs-pane-hidden {
     display: none;
 }
 
-div.-ejs-formError {
+div.-ejs-form-error {
     width: 550px;
     margin-bottom: 20px;
     padding-bottom: 10px;

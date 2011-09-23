@@ -1,0 +1,21 @@
+
+<!-- need conn-less version -->
+
+<% espWarn(conn, "Big warning"); %>
+    <h1>Edit</h1>
+    SECRET: @@secret
+
+    <% alert("<html>", "escape: true"); %>
+    <% anchor("Hello <b> World", espGetReferrer(conn), "escape: true"); %>
+
+    <% button("commit", "OK", NULL); %>
+    <% button("commit", "Cancel", NULL); %>
+
+    <% buttonLink("Cancel", "@", NULL); %>
+
+    <% checkbox("Admin", "true", NULL); %>
+    <% division("<p>Hello</p>", "{ class: 'blue', width: '70%', special: 'high' }"); %>
+
+    <% flash("all", NULL); %>
+    <% form(NULL, NULL); %>
+    <% endform(); %>

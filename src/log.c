@@ -38,7 +38,9 @@ static void logHandler(int flags, int level, cchar *msg)
         } else {
             mprSprintf(buf, sizeof(buf), "%s: Error: %s\n", prefix, msg);
         }
+#if BLD_WIN_LIKE
         mprWriteToOsLog(buf, flags, level);
+#endif
 
         /*
             Use static printing to avoid malloc when the messages are small.

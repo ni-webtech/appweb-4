@@ -2,24 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <% espSecurityToken(conn); %>
-    <% espIcon(conn, "/static/images/favicon.ico", 0); %>
-    <% espStylesheet(conn, 0, 0); %>
-    <% espScript(conn, 0, 0); %>
+    <% securityToken(); %>
+    <% icon("/static/images/favicon.ico", 0); %>
+    <% stylesheet(0, 0); %>
+    <% script(0, 0); %>
     <title>@@title</title>
 </head>
-
 <body>
     <div class="top">
-        <h1><% /* label("test Application", request.home) */ %></h1>
+        <h1><% label("test Application", "data-click: '/'"); %></h1>
     </div>
     <div id="logo">Appweb&trade;</div>
-
-    <% /* flash(["inform", "error", "message", "warning"]) */ %>
+    <% flash("all", NULL); %>
     <div class="content">
         <%@ content %>
     </div>
-
     <div class="bottom">
         <p class="footnote">Powered by Appweb&trade;</p>
     </div>

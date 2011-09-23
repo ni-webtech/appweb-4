@@ -713,7 +713,7 @@ static int includeDirective(MaState *state, cchar *key, cchar *value)
         pattern = mprGetPathBase(value);
         pattern = sreplace(pattern, ".", "\\.");
         pattern = sreplace(pattern, "*", ".*");
-        pattern = sjoin("^", pattern, "$", 0);
+        pattern = sjoin("^", pattern, "$", NULL);
         if ((includes = mprGetPathFiles(path, 0)) != 0) {
             if ((compiled = pcre_compile2(pattern, 0, 0, &errMsg, &column, NULL)) == 0) {
                 mprError("Can't compile include pattern. Error %s at column %d", errMsg, column);
@@ -1116,6 +1116,7 @@ static int loadModulePathDirective(MaState *state, cchar *key, cchar *value)
     sep = MPR_SEARCH_SEP;
     lib = mprJoinPath(mprGetPathParent(mprGetAppDir()), BLD_LIB_NAME);
     path = sjoin(value, sep, mprGetAppDir(), sep, lib, sep, BLD_LIB_PREFIX, NULL);
+print("MOB1 %s", path);
     mprSetModuleSearchPath(path);
     return 0;
 }
