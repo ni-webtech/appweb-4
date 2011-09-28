@@ -25,7 +25,7 @@ extern "C" {
 
 /********************************** Tunables **********************************/
 
-#define MDB_INCR             16
+#define MDB_INCR    8               /**< Default memory allocation increment for MDB */
 
 typedef struct MdbCol {
     EdiValidate     *validate;
@@ -33,6 +33,7 @@ typedef struct MdbCol {
     int             type;
     int             flags;
     int             cid;
+    int             nextValue;
 } MdbCol;
 
 typedef struct MdbSchema {
@@ -43,6 +44,7 @@ typedef struct MdbSchema {
 
 typedef struct MdbRow {
     struct MdbTable *table;
+    int             rid;
     int             nfields;
     EdiValue        fields[MPR_FLEX];
 } MdbRow;
@@ -51,13 +53,11 @@ typedef struct MdbTable {
     char            *name;
     MdbSchema       *schema;
     MprMutex        *mutex;
-    MprHashTable    *index;
+    MprHash         *index;
     MdbCol          *keyCol;
     MdbCol          *indexCol;
     MprList         *rows;
-    int             nextId;
 } MdbTable;
-
 
 /*
     Mdb flags

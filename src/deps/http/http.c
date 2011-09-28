@@ -637,7 +637,7 @@ static int processThread(HttpConn *conn, MprEvent *event)
 static int prepRequest(HttpConn *conn, MprList *files, int retry)
 {
     MprKeyValue     *header;
-    char            seqBuf[16];
+    char            *seq;
     int             next;
 
     httpPrepClientConn(conn, retry);
@@ -654,8 +654,8 @@ static int prepRequest(HttpConn *conn, MprList *files, int retry)
     }
     if (app->sequence) {
         static int next = 0;
-        itos(seqBuf, sizeof(seqBuf), next++, 10);
-        httpSetHeader(conn, "X-Http-Seq", seqBuf);
+        seq = itos(next++, 10);
+        httpSetHeader(conn, "X-Http-Seq", seq);
     }
     if (app->ranges) {
         httpSetHeader(conn, "Range", app->ranges);

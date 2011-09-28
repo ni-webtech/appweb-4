@@ -85,8 +85,9 @@ typedef struct EdiGrid {
 /*
     Database flags
  */
-#define EDI_CREATE       0x1         /**< Create database if not present */
-#define EDI_AUTO_SAVE    0x2         /**< Auto-save database if modified in memory */
+#define EDI_CREATE         0x1          /**< Create database if not present */
+#define EDI_AUTO_SAVE      0x2          /**< Auto-save database if modified in memory */
+#define EDI_SUPPRESS_SAVE  0x4          /**< Temporarily suppress auto-save */
 
 /*
     Set flags
@@ -123,13 +124,13 @@ typedef struct EdiProvider {
     int       (*renameTable)(Edi *edi, cchar *tableName, cchar *newTableName);
     int       (*renameColumn)(Edi *edi, cchar *tableName, cchar *columnName, cchar *newColumnName);
     int       (*setField)(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value, int flags);
-    int       (*setRec)(Edi *edi, cchar *tableName, cchar *key, MprHashTable *params);
+    int       (*setRec)(Edi *edi, cchar *tableName, cchar *key, MprHash *params);
     int       (*save)(Edi *edi);
 } EdiProvider;
 
 typedef struct EdiService {
-    MprHashTable    *providers;
-    MprHashTable    *validations;
+    MprHash    *providers;
+    MprHash    *validations;
 } EdiService;
 
 extern EdiService *ediCreateService();
@@ -166,7 +167,7 @@ extern int ediRemoveTable(Edi *edi, cchar *tableName);
 extern int ediRenameTable(Edi *edi, cchar *tableName, cchar *newTableName);
 extern int ediRenameColumn(Edi *edi, cchar *tableName, cchar *columnName, cchar *newColumnName);
 extern int ediSetField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value, int flags);
-extern int ediSetRec(Edi *edi, cchar *tableName, cchar *key, MprHashTable *params);
+extern int ediSetRec(Edi *edi, cchar *tableName, cchar *key, MprHash *params);
 extern int ediSave(Edi *edi);
 
 
@@ -197,7 +198,7 @@ extern MprList *ediGetGridColumns(EdiGrid *grid);
 /*
     Support routines for providers
  */
-extern EdiGrid *ediCreateGrid(int nrows);
+extern EdiGrid *ediCreateGrid(Edi *edi, cchar *tableName, int nrows);
 extern EdiRec *ediCreateRec(Edi *edi, cchar *tableName, cchar *id, int nfields, EdiField *fields);
 extern char *ediGetTypeString(int type);
 extern void ediManageEdiRec(EdiRec *rec, int flags);

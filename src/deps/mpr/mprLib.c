@@ -4207,12 +4207,9 @@ int mprGrowBuf(MprBuf *bp, ssize need)
  */
 ssize mprPutIntToBuf(MprBuf *bp, int64 i)
 {
-    char        numBuf[16];
     ssize       rc;
 
-    itos(numBuf, sizeof(numBuf), i, 10);
-    rc = mprPutStringToBuf(bp, numBuf);
-
+    rc = mprPutStringToBuf(bp, itos(i, 10));
     if (bp->end < bp->endbuf) {
         *((char*) bp->end) = (char) '\0';
     }
@@ -4492,7 +4489,6 @@ int64 mprIncCache(MprCache *cache, cchar *key, int64 amount)
 {
     CacheItem   *item;
     int64       value;
-    char        nbuf[32];
 
     mprAssert(cache);
     mprAssert(key && *key);
@@ -4514,7 +4510,7 @@ int64 mprIncCache(MprCache *cache, cchar *key, int64 amount)
     if (item->data) {
         cache->usedMem -= slen(item->data);
     }
-    item->data = itos(nbuf, sizeof(nbuf), value, 10);
+    item->data = itos(value, 10);
     cache->usedMem += slen(item->data);
     item->version++;
     unlock(cache);
@@ -4624,13 +4620,13 @@ ssize mprWriteCache(MprCache *cache, cchar *key, cchar *value, MprTime modified,
     int64 version, int options)
 {
     CacheItem   *item;
-    MprHash     *hp;
+    MprKey      *kp;
     ssize       len, oldLen;
     int         exists, add, set, prepend, append, throw;
 
     mprAssert(cache);
     mprAssert(key && *key);
-    mprAssert(value && *value);
+    mprAssert(value);
 
     if (cache->shared) {
         cache = cache->shared;
@@ -4645,9 +4641,9 @@ ssize mprWriteCache(MprCache *cache, cchar *key, cchar *value, MprTime modified,
         set = 1;
     }
     lock(cache);
-    if ((hp = mprLookupKeyEntry(cache->store, key)) != 0) {
+    if ((kp = mprLookupKeyEntry(cache->store, key)) != 0) {
         exists++;
-        item = (CacheItem*) hp->data;
+        item = (CacheItem*) kp->data;
         if (version) {
             if (item->version != version) {
                 unlock(cache);
@@ -4714,7 +4710,7 @@ static void removeItem(MprCache *cache, CacheItem *item)
 static void localPruner(MprCache *cache, MprEvent *event)
 {
     MprTime         when, factor;
-    MprHash         *hp;
+    MprKey          *kp;
     CacheItem       *item;
     ssize           excessKeys;
 
@@ -4723,12 +4719,12 @@ static void localPruner(MprCache *cache, MprEvent *event)
 
     if (mprTryLock(cache->mutex)) {
         when = mprGetTime();
-        for (hp = 0; (hp = mprGetNextKey(cache->store, hp)) != 0; ) {
-            item = (CacheItem*) hp->data;
+        for (kp = 0; (kp = mprGetNextKey(cache->store, kp)) != 0; ) {
+            item = (CacheItem*) kp->data;
             mprLog(6, "Cache: \"%@\" lifespan %d, expires in %d secs", item->key, 
                     item->lifespan / 1000, (item->expires - when) / 1000);
             if (item->expires && item->expires <= when) {
-                mprLog(5, "Cache prune expired key %s", hp->key);
+                mprLog(5, "Cache prune expired key %s", kp->key);
                 removeItem(cache, item);
             }
         }
@@ -4741,11 +4737,11 @@ static void localPruner(MprCache *cache, MprEvent *event)
             excessKeys = mprGetHashLength(cache->store) - cache->maxKeys;
             while (excessKeys > 0 || cache->usedMem > cache->maxMem) {
                 for (factor = 3600; excessKeys > 0 && factor < (86400 * 1000); factor *= 4) {
-                    for (hp = 0; (hp = mprGetNextKey(cache->store, hp)) != 0; ) {
-                        item = (CacheItem*) hp->data;
+                    for (kp = 0; (kp = mprGetNextKey(cache->store, kp)) != 0; ) {
+                        item = (CacheItem*) kp->data;
                         if (item->expires && item->expires <= when) {
                             mprLog(5, "Cache too big execess keys %Ld, mem %Ld, prune key %s", 
-                                    excessKeys, (cache->maxMem - cache->usedMem), hp->key);
+                                    excessKeys, (cache->maxMem - cache->usedMem), kp->key);
                             removeItem(cache, item);
                         }
                     }
@@ -10451,9 +10447,9 @@ void mprSetPathNewline(cchar *path, cchar *newline)
 /************************************************************************/
 
 /*
-    mprHash.c - Fast hashing table lookup module
+    mprHash.c - Fast hashing hash lookup module
 
-    This hash table uses a fast key lookup mechanism. Keys may be C strings or unicode strings. The hash value entries 
+    This hash hash uses a fast key lookup mechanism. Keys may be C strings or unicode strings. The hash value entries 
     are arbitrary pointers. The keys are hashed into a series of buckets which then have a chain of hash entries.
     The chain in in collating sequence so search time through the chain is on average (N/hashSize)/2.
 
@@ -10466,138 +10462,123 @@ void mprSetPathNewline(cchar *path, cchar *newline)
 
 
 
-static void *dupKey(MprHashTable *table, MprHash *sp, cvoid *key);
-static MprHash  *lookupHash(int *index, MprHash **prevSp, MprHashTable *table, cvoid *key);
-static void manageHashTable(MprHashTable *table, int flags);
+static void *dupKey(MprHash *hash, MprKey *sp, cvoid *key);
+static MprKey *lookupHash(int *index, MprKey **prevSp, MprHash *hash, cvoid *key);
+static void manageHashTable(MprHash *hash, int flags);
 
 /*
-    Create a new hash table of a given size. Caller should provide a size that is a prime number for the greatest efficiency.
+    Create a new hash hash of a given size. Caller should provide a size that is a prime number for the greatest efficiency.
  */
-MprHashTable *mprCreateHash(int hashSize, int flags)
+MprHash *mprCreateHash(int hashSize, int flags)
 {
-    MprHashTable    *table;
+    MprHash     *hash;
 
-    if ((table = mprAllocObj(MprHashTable, manageHashTable)) == 0) {
+    if ((hash = mprAllocObj(MprHash, manageHashTable)) == 0) {
         return 0;
     }
     if (hashSize < MPR_DEFAULT_HASH_SIZE) {
         hashSize = MPR_DEFAULT_HASH_SIZE;
     }
-    if ((table->buckets = mprAllocZeroed(sizeof(MprHash*) * hashSize)) == 0) {
+    if ((hash->buckets = mprAllocZeroed(sizeof(MprKey*) * hashSize)) == 0) {
         return NULL;
     }
-    table->hashSize = hashSize;
-    table->flags = flags;
-    table->length = 0;
-    table->mutex = mprCreateLock();
+    hash->size = hashSize;
+    hash->flags = flags;
+    hash->length = 0;
+    hash->mutex = mprCreateLock();
 #if BLD_CHAR_LEN > 1
-    if (table->flags & MPR_HASH_UNICODE) {
-        if (table->flags & MPR_HASH_CASELESS) {
-            table->hash = (MprHashProc) whashlower;
+    if (hash->flags & MPR_HASH_UNICODE) {
+        if (hash->flags & MPR_HASH_CASELESS) {
+            hash->fn = (MprHashProc) whashlower;
         } else {
-            table->hash = (MprHashProc) whash;
+            hash->fn = (MprHashProc) whash;
         }
     } else 
 #endif
     {
-        if (table->flags & MPR_HASH_CASELESS) {
-            table->hash = (MprHashProc) shashlower;
+        if (hash->flags & MPR_HASH_CASELESS) {
+            hash->fn = (MprHashProc) shashlower;
         } else {
-            table->hash = (MprHashProc) shash;
+            hash->fn = (MprHashProc) shash;
         }
     }
-    return table;
+    return hash;
 }
 
 
-static void manageHashTable(MprHashTable *table, int flags)
+static void manageHashTable(MprHash *hash, int flags)
 {
-    MprHash     *sp;
+    MprKey      *sp;
     int         i;
 
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(table->mutex);
-        mprMark(table->buckets);
-        lock(table);
-        for (i = 0; i < table->hashSize; i++) {
-            for (sp = (MprHash*) table->buckets[i]; sp; sp = sp->next) {
+        mprMark(hash->mutex);
+        mprMark(hash->buckets);
+        lock(hash);
+        for (i = 0; i < hash->size; i++) {
+            for (sp = (MprKey*) hash->buckets[i]; sp; sp = sp->next) {
                 mprAssert(mprIsValid(sp));
                 mprMark(sp);
-                if (!(table->flags & MPR_HASH_STATIC_VALUES)) {
+                if (!(hash->flags & MPR_HASH_STATIC_VALUES)) {
                     mprAssert(sp->data == 0 || mprIsValid(sp->data));
                     mprMark(sp->data);
                 }
-                if (!(table->flags & MPR_HASH_STATIC_KEYS)) {
+                if (!(hash->flags & MPR_HASH_STATIC_KEYS)) {
                     mprAssert(mprIsValid(sp->key));
                     mprMark(sp->key);
                 }
             }
         }
-        unlock(table);
+        unlock(hash);
     }
-}
-
-
-MprHashTable *mprCloneHash(MprHashTable *master)
-{
-    MprHash         *hp;
-    MprHashTable    *table;
-
-    table = mprCreateHash(master->hashSize, master->flags);
-    if (table == 0) {
-        return 0;
-    }
-    hp = mprGetFirstKey(master);
-    while (hp) {
-        mprAddKey(table, hp->key, hp->data);
-        hp = mprGetNextKey(master, hp);
-    }
-    return table;
 }
 
 
 /*
-    Insert an entry into the hash table. If the entry already exists, update its value. 
+    Insert an entry into the hash hash. If the entry already exists, update its value. 
     Order of insertion is not preserved.
  */
-MprHash *mprAddKey(MprHashTable *table, cvoid *key, cvoid *ptr)
+MprKey *mprAddKey(MprHash *hash, cvoid *key, cvoid *ptr)
 {
-    MprHash     *sp, *prevSp;
+    MprKey      *sp, *prevSp;
     int         index;
 
-    lock(table);
-    sp = lookupHash(&index, &prevSp, table, key);
+    if (hash == 0) {
+        return 0;
+    }
+    lock(hash);
+    sp = lookupHash(&index, &prevSp, hash, key);
     if (sp != 0) {
         /*
             Already exists. Just update the data.
          */
         sp->data = ptr;
-        unlock(table);
+        unlock(hash);
         return sp;
     }
     /*
         Hash entries are managed by manageHashTable
      */
-    if ((sp = mprAllocStruct(MprHash)) == 0) {
-        unlock(table);
+    if ((sp = mprAllocStruct(MprKey)) == 0) {
+        unlock(hash);
         return 0;
     }
     sp->data = ptr;
-    if (!(table->flags & MPR_HASH_STATIC_KEYS)) {
-        sp->key = dupKey(table, sp, key);
+    if (!(hash->flags & MPR_HASH_STATIC_KEYS)) {
+        sp->key = dupKey(hash, sp, key);
     } else {
         sp->key = (void*) key;
     }
     sp->bucket = index;
-    sp->next = table->buckets[index];
-    table->buckets[index] = sp;
-    table->length++;
-    unlock(table);
+    sp->next = hash->buckets[index];
+    hash->buckets[index] = sp;
+    hash->length++;
+    unlock(hash);
     return sp;
 }
 
 
-MprHash *mprAddKeyFmt(MprHashTable *table, cvoid *key, cchar *fmt, ...)
+MprKey *mprAddKeyFmt(MprHash *hash, cvoid *key, cchar *fmt, ...)
 {
     va_list     ap;
     char        *value;
@@ -10605,98 +10586,132 @@ MprHash *mprAddKeyFmt(MprHashTable *table, cvoid *key, cchar *fmt, ...)
     va_start(ap, fmt);
     value = sfmtv(fmt, ap);
     va_end(ap);
-    return mprAddKey(table, key, value);
+    return mprAddKey(hash, key, value);
 }
 
 
 /*
-    Multiple insertion. Insert an entry into the hash table allowing for multiple entries with the same key.
+    Multiple insertion. Insert an entry into the hash hash allowing for multiple entries with the same key.
     Order of insertion is not preserved. Lookup cannot be used to retrieve all duplicate keys, some will be shadowed. 
     Use enumeration to retrieve the keys.
  */
-MprHash *mprAddDuplicateKey(MprHashTable *table, cvoid *key, cvoid *ptr)
+MprKey *mprAddDuplicateKey(MprHash *hash, cvoid *key, cvoid *ptr)
 {
-    MprHash     *sp;
+    MprKey      *sp;
     int         index;
 
-    if ((sp = mprAllocStruct(MprHash)) == 0) {
+    if ((sp = mprAllocStruct(MprKey)) == 0) {
         return 0;
     }
     sp->data = ptr;
-    if (!(table->flags & MPR_HASH_STATIC_KEYS)) {
-        sp->key = dupKey(table, sp, key);
+    if (!(hash->flags & MPR_HASH_STATIC_KEYS)) {
+        sp->key = dupKey(hash, sp, key);
     } else {
         sp->key = (void*) key;
     }
-    lock(table);
-    index = table->hash(key, -1) % table->hashSize;
+    lock(hash);
+    index = hash->fn(key, slen(key)) % hash->size;
     sp->bucket = index;
-    sp->next = table->buckets[index];
-    table->buckets[index] = sp;
-    table->length++;
-    unlock(table);
+    sp->next = hash->buckets[index];
+    hash->buckets[index] = sp;
+    hash->length++;
+    unlock(hash);
     return sp;
 }
 
 
-int mprRemoveKey(MprHashTable *table, cvoid *key)
+int mprRemoveKey(MprHash *hash, cvoid *key)
 {
-    MprHash     *sp, *prevSp;
+    MprKey      *sp, *prevSp;
     int         index;
 
-    lock(table);
-    if ((sp = lookupHash(&index, &prevSp, table, key)) == 0) {
-        unlock(table);
+    lock(hash);
+    if ((sp = lookupHash(&index, &prevSp, hash, key)) == 0) {
+        unlock(hash);
         return MPR_ERR_CANT_FIND;
     }
     if (prevSp) {
         prevSp->next = sp->next;
     } else {
-        table->buckets[index] = sp->next;
+        hash->buckets[index] = sp->next;
     }
-    table->length--;
-    unlock(table);
+    hash->length--;
+    unlock(hash);
     return 0;
+}
+
+
+MprHash *mprBlendHash(MprHash *hash, MprHash *extra)
+{
+    MprKey      *kp;
+
+    if (hash == 0 || extra == 0) {
+        return hash;
+    }
+    for (ITERATE_KEYS(extra, kp)) {
+        mprAddKey(hash, kp->key, kp->data);
+    }
+    return hash;
+}
+
+
+MprHash *mprCloneHash(MprHash *master)
+{
+    MprKey      *kp;
+    MprHash     *hash;
+
+    hash = mprCreateHash(master->size, master->flags);
+    if (hash == 0) {
+        return 0;
+    }
+    kp = mprGetFirstKey(master);
+    while (kp) {
+        mprAddKey(hash, kp->key, kp->data);
+        kp = mprGetNextKey(master, kp);
+    }
+    return hash;
 }
 
 
 /*
     Lookup a key and return the hash entry
  */
-MprHash *mprLookupKeyEntry(MprHashTable *table, cvoid *key)
+MprKey *mprLookupKeyEntry(MprHash *hash, cvoid *key)
 {
     mprAssert(key);
 
-    return lookupHash(0, 0, table, key);
+    return lookupHash(0, 0, hash, key);
 }
 
 
 /*
     Lookup a key and return the hash entry data
  */
-void *mprLookupKey(MprHashTable *table, cvoid *key)
+void *mprLookupKey(MprHash *hash, cvoid *key)
 {
-    MprHash     *sp;
+    MprKey      *sp;
 
     mprAssert(key);
 
-    if ((sp = lookupHash(0, 0, table, key)) == 0) {
+    if ((sp = lookupHash(0, 0, hash, key)) == 0) {
         return 0;
     }
     return (void*) sp->data;
 }
 
 
-void mprSetKeyBits(MprHash *hp, int bits)
+#if UNUSED
+void mprSetKeyBits(MprKey *kp, int bits)
 {
-    hp->bits = bits;
+    kp->bits = bits;
 }
 
 
-int mprGetKeyBits(MprHash *hp)
+int mprGetKeyBits(MprKey *kp)
 {
-    return hp->bits;
+    return kp->bits;
 }
+#endif
 
 
 /*
@@ -10723,27 +10738,27 @@ static int getHashSize(int numKeys)
 /*
     This is unlocked because it is read-only
  */
-static MprHash *lookupHash(int *bucketIndex, MprHash **prevSp, MprHashTable *table, cvoid *key)
+static MprKey *lookupHash(int *bucketIndex, MprKey **prevSp, MprHash *hash, cvoid *key)
 {
-    MprHash     *sp, *prev, *next;
-    MprHash     **buckets;
+    MprKey      *sp, *prev, *next;
+    MprKey      **buckets;
     int         hashSize, i, index, rc;
 
     mprAssert(key);
 
-    if (key == 0 || table == 0) {
+    if (key == 0 || hash == 0) {
         return 0;
     }
-    if (table->length > table->hashSize) {
-        hashSize = getHashSize(table->length * 4 / 3);
-        if (table->hashSize < hashSize) {
-            if ((buckets = mprAllocZeroed(sizeof(MprHash*) * hashSize)) != 0) {
-                table->length = 0;
-                for (i = 0; i < table->hashSize; i++) {
-                    for (sp = table->buckets[i]; sp; sp = next) {
+    if (hash->length > hash->size) {
+        hashSize = getHashSize(hash->length * 4 / 3);
+        if (hash->size < hashSize) {
+            if ((buckets = mprAllocZeroed(sizeof(MprKey*) * hashSize)) != 0) {
+                hash->length = 0;
+                for (i = 0; i < hash->size; i++) {
+                    for (sp = hash->buckets[i]; sp; sp = next) {
                         next = sp->next;
                         mprAssert(next != sp);
-                        index = table->hash(sp->key, slen(sp->key)) % hashSize;
+                        index = hash->fn(sp->key, slen(sp->key)) % hashSize;
                         if (buckets[index]) {
                             sp->next = buckets[index];
                         } else {
@@ -10751,36 +10766,36 @@ static MprHash *lookupHash(int *bucketIndex, MprHash **prevSp, MprHashTable *tab
                         }
                         buckets[index] = sp;
                         sp->bucket = index;
-                        table->length++;
+                        hash->length++;
                     }
                 }
-                table->hashSize = hashSize;
-                table->buckets = buckets;
+                hash->size = hashSize;
+                hash->buckets = buckets;
             }
         }
     }
-    index = table->hash(key, slen(key)) % table->hashSize;
+    index = hash->fn(key, slen(key)) % hash->size;
     if (bucketIndex) {
         *bucketIndex = index;
     }
-    sp = table->buckets[index];
+    sp = hash->buckets[index];
     prev = 0;
 
     while (sp) {
 #if BLD_CHAR_LEN > 1
-        if (table->flags & MPR_HASH_UNICODE) {
+        if (hash->flags & MPR_HASH_UNICODE) {
             MprChar *u1, *u2;
             u1 = (MprChar*) sp->key;
             u2 = (MprChar*) key;
             rc = -1;
-            if (table->flags & MPR_HASH_CASELESS) {
+            if (hash->flags & MPR_HASH_CASELESS) {
                 rc = wcasecmp(u1, u2);
             } else {
                 rc = wcmp(u1, u2);
             }
         } else 
 #endif
-        if (table->flags & MPR_HASH_CASELESS) {
+        if (hash->flags & MPR_HASH_CASELESS) {
             rc = scasecmp(sp->key, key);
         } else {
             rc = strcmp(sp->key, key);
@@ -10799,24 +10814,24 @@ static MprHash *lookupHash(int *bucketIndex, MprHash **prevSp, MprHashTable *tab
 }
 
 
-int mprGetHashLength(MprHashTable *table)
+int mprGetHashLength(MprHash *hash)
 {
-    return table->length;
+    return hash->length;
 }
 
 
 /*
-    Return the first entry in the table.
+    Return the first entry in the hash.
  */
-MprHash *mprGetFirstKey(MprHashTable *table)
+MprKey *mprGetFirstKey(MprHash *hash)
 {
-    MprHash     *sp;
+    MprKey      *sp;
     int         i;
 
-    mprAssert(table);
+    mprAssert(hash);
 
-    for (i = 0; i < table->hashSize; i++) {
-        if ((sp = (MprHash*) table->buckets[i]) != 0) {
+    for (i = 0; i < hash->size; i++) {
+        if ((sp = (MprKey*) hash->buckets[i]) != 0) {
             return sp;
         }
     }
@@ -10825,23 +10840,24 @@ MprHash *mprGetFirstKey(MprHashTable *table)
 
 
 /*
-    Return the next entry in the table
+    Return the next entry in the hash
  */
-MprHash *mprGetNextKey(MprHashTable *table, MprHash *last)
+MprKey *mprGetNextKey(MprHash *hash, MprKey *last)
 {
-    MprHash     *sp;
+    MprKey      *sp;
     int         i;
 
-    mprAssert(table);
-
+    if (hash == 0) {
+        return 0;
+    }
     if (last == 0) {
-        return mprGetFirstKey(table);
+        return mprGetFirstKey(hash);
     }
     if (last->next) {
         return last->next;
     }
-    for (i = last->bucket + 1; i < table->hashSize; i++) {
-        if ((sp = (MprHash*) table->buckets[i]) != 0) {
+    for (i = last->bucket + 1; i < hash->size; i++) {
+        if ((sp = (MprKey*) hash->buckets[i]) != 0) {
             return sp;
         }
     }
@@ -10849,14 +10865,116 @@ MprHash *mprGetNextKey(MprHashTable *table, MprHash *last)
 }
 
 
-static void *dupKey(MprHashTable *table, MprHash *sp, cvoid *key)
+static void *dupKey(MprHash *hash, MprKey *sp, cvoid *key)
 {
 #if BLD_CHAR_LEN > 1
-    if (table->flags & MPR_HASH_UNICODE) {
+    if (hash->flags & MPR_HASH_UNICODE) {
         return wclone(sp, (MprChar*) key, -1);
     } else
 #endif
         return sclone(key);
+}
+
+
+/*
+    The serial format is a subset of JSON without array support.
+    This is designed to be as fast as possible for encoding one level of properties.
+ */
+static MprHash *parseHash(MprHash *hash, cchar **token)
+{
+    cchar   *cp, *ep;
+    char    key[MPR_MAX_STRING];
+    int     quote;
+
+    for (cp = *token; *cp; cp++) {
+        while (isspace((int) *cp)) cp++;
+        if (*cp == '{') {
+            ++cp;
+            hash = parseHash(mprCreateHash(0, 0), &cp);
+
+        } else if ((ep = strchr(cp, ':')) != 0 && (ep == *token || ep[-1] != '\\')) {
+            if (*cp == '}') {
+                /* By continuing, we permit:  {options}{more options} */
+                continue;
+            } else if (*cp == ',') {
+                continue;
+            }
+            if (hash == 0) {
+                /* Missing opening "{" */
+                break;
+            }
+            if (*cp == '\'') {
+                sncopy(key, sizeof(key), &cp[1], ep - cp - 2);
+            } else {
+                sncopy(key, sizeof(key), cp, ep - cp);
+            }
+            for (cp = ep + 1; isspace((int) *cp); cp++) ;
+            if (*cp == '{') {
+                ++cp;
+                mprAddKey(hash, key, parseHash(mprCreateHash(0, 0), &cp));
+
+            } else if (*cp == '"' || *cp == '\'') {
+                quote = *cp;
+                if ((ep = strchr(++cp, quote)) != 0 && ep[-1] != '\\') {
+                    mprAddKey(hash, key, snclone(cp, ep - cp));
+                    cp = ep;
+                } else {
+                    /* missing closing quote */
+                    break;
+                }
+
+            } else if ((ep = strchr(cp, ',')) != 0 && ep[-1] != '\\') {
+                mprAddKey(hash, key, snclone(cp, ep - cp));
+                cp = ep - 1;
+
+            } else if ((ep = strchr(cp, '}')) != 0 && ep[-1] != '\\') {
+                /* Close of object "}" */
+                break;
+
+            } else if (ep == 0) {
+                mprAddKey(hash, key, sclone(cp));
+                break;
+            }
+        }
+    }
+    *token = cp;
+    return hash;
+}
+
+
+MprHash *mprParseHash(cchar *str)
+{
+    if (str == 0 || *str == '\0') {
+        return mprCreateHash(-1, 0);
+    }
+    return parseHash(NULL, &str);
+}
+
+
+/*
+    Serialize into JSON format. Assumes that all key data is simple strings.
+ */
+cchar *mprHashToString(MprHash *hash, int flags)
+{
+    MprKey  *kp;
+    MprBuf  *buf;
+    int     pretty;
+
+    pretty = (flags & MPR_HASH_PRETTY);
+    if ((buf = mprCreateBuf(0, 0)) == 0) {
+        return 0;
+    }
+    mprPutCharToBuf(buf, '{');
+    if (pretty) mprPutCharToBuf(buf, '\n');
+    for (ITERATE_KEYS(hash, kp)) {
+        if (pretty) mprPutStringToBuf(buf, "    ");
+        //  MOB - printable?
+        mprPutFmtToBuf(buf, "'%s': '%s',", kp->key, kp->data);
+        if (pretty) mprPutCharToBuf(buf, '\n');
+    }
+    mprPutCharToBuf(buf, '}');
+    if (pretty) mprPutCharToBuf(buf, '\n');
+    return sclone(mprGetBufStart(buf));
 }
 
 
@@ -11952,7 +12070,7 @@ int mprInsertItemAtPos(MprList *lp, int index, cvoid *item)
 /*
     Remove an item from the list. Return the index where the item resided.
  */
-int mprRemoveItem(MprList *lp, void *item)
+int mprRemoveItem(MprList *lp, cvoid *item)
 {
     int     index;
 
@@ -13335,16 +13453,16 @@ static char *standardMimeTypes[] = {
 };
 
 
-static void addStandardMimeTypes(MprHashTable *table);
+static void addStandardMimeTypes(MprHash *table);
 static void manageMimeType(MprMime *mt, int flags);
 
 
-MprHashTable *mprCreateMimeTypes(cchar *path)
+MprHash *mprCreateMimeTypes(cchar *path)
 {
-    MprHashTable    *table;
-    MprFile         *file;
-    char            *buf, *tok, *ext, *type;
-    int             line;
+    MprHash     *table;
+    MprFile     *file;
+    char        *buf, *tok, *ext, *type;
+    int         line;
 
     if (path) {
         if ((file = mprOpenFile(path, O_RDONLY | O_TEXT, 0)) == 0) {
@@ -13383,7 +13501,7 @@ MprHashTable *mprCreateMimeTypes(cchar *path)
 }
 
 
-static void addStandardMimeTypes(MprHashTable *table)
+static void addStandardMimeTypes(MprHash *table)
 {
     char    **cp;
 
@@ -13402,7 +13520,7 @@ static void manageMimeType(MprMime *mt, int flags)
 }
 
 
-MprMime *mprAddMime(MprHashTable *table, cchar *ext, cchar *mimeType)
+MprMime *mprAddMime(MprHash *table, cchar *ext, cchar *mimeType)
 {
     MprMime  *mt;
 
@@ -13418,15 +13536,15 @@ MprMime *mprAddMime(MprHashTable *table, cchar *ext, cchar *mimeType)
 }
 
 
-int mprSetMimeProgram(MprHashTable *table, cchar *mimeType, cchar *program)
+int mprSetMimeProgram(MprHash *table, cchar *mimeType, cchar *program)
 {
-    MprHash     *hp;
+    MprKey      *kp;
     MprMime     *mt;
     
-    hp = 0;
+    kp = 0;
     mt = 0;
-    while ((hp = mprGetNextKey(table, hp)) != 0) {
-        mt = (MprMime*) hp->data;
+    while ((kp = mprGetNextKey(table, kp)) != 0) {
+        mt = (MprMime*) kp->data;
         if (mt->type[0] == mimeType[0] && strcmp(mt->type, mimeType) == 0) {
             break;
         }
@@ -13440,7 +13558,7 @@ int mprSetMimeProgram(MprHashTable *table, cchar *mimeType, cchar *program)
 }
 
 
-cchar *mprGetMimeProgram(MprHashTable *table, cchar *mimeType)
+cchar *mprGetMimeProgram(MprHash *table, cchar *mimeType)
 {
     MprMime      *mt;
 
@@ -13454,7 +13572,7 @@ cchar *mprGetMimeProgram(MprHashTable *table, cchar *mimeType)
 }
 
 
-cchar *mprLookupMime(MprHashTable *table, cchar *ext)
+cchar *mprLookupMime(MprHash *table, cchar *ext)
 {
     MprMime     *mt;
     cchar       *ep;
@@ -15656,8 +15774,10 @@ bool mprPathExists(cchar *path, int omode)
 {
     MprFileSystem  *fs;
 
+    if (path == 0 || *path == '\0') {
+        return 0;
+    }
     fs = mprLookupFileSystem(path);
-
     return fs->accessPath(fs, path, omode);
 }
 
@@ -19745,7 +19865,7 @@ int mprGetSocketInfo(cchar *ip, int port, int *family, int *protocol, struct soc
 {
     MprSocketService    *ss;
     struct addrinfo     hints, *res, *r;
-    char                portBuf[MPR_MAX_IP_PORT];
+    char                *portStr;
     int                 v6;
 
     mprAssert(ip);
@@ -19771,13 +19891,13 @@ int mprGetSocketInfo(cchar *ip, int port, int *family, int *protocol, struct soc
     } else {
         hints.ai_family = AF_UNSPEC;
     }
-    itos(portBuf, sizeof(portBuf), port, 10);
+    portStr = itos(port, 10);
 
     /*  
         Try to sleuth the address to avoid duplicate address lookups. Then try IPv4 first then IPv6.
      */
     res = 0;
-    if (getaddrinfo(ip, portBuf, &hints, &res) != 0) {
+    if (getaddrinfo(ip, portStr, &hints, &res) != 0) {
         mprUnlock(ss->mutex);
         return MPR_ERR_CANT_OPEN;
     }
@@ -20099,15 +20219,13 @@ void mprSetSocketPrebindCallback(MprSocketPrebind callback)
 
 
 
-
-//  MOB - this should be cchar *itos(int64 value, int radix);
 /*
     Format a number as a string. Support radix 10 and 16.
  */
-char *itos(char *buf, ssize count, int64 value, int radix)
+char *itos(int64 value, int radix)
 {
     char    numBuf[32];
-    char    *cp, *dp, *endp;
+    char    *cp;
     char    digits[] = "0123456789ABCDEF";
     int     negative;
 
@@ -20120,7 +20238,6 @@ char *itos(char *buf, ssize count, int64 value, int radix)
     if (value < 0) {
         negative = 1;
         value = -value;
-        count--;
     } else {
         negative = 0;
     }
@@ -20132,12 +20249,44 @@ char *itos(char *buf, ssize count, int64 value, int radix)
     if (negative) {
         *--cp = '-';
     }
-    dp = buf;
-    endp = &buf[count];
-    while (dp < endp && *cp) {
-        *dp++ = *cp++;
+    return sclone(cp);
+}
+
+
+char *itosbuf(char *buf, ssize size, int64 value, int radix)
+{
+    char    *cp, *end;
+    char    digits[] = "0123456789ABCDEF";
+    int     negative;
+
+    if ((radix != 10 && radix != 16) || size < 2) {
+        return 0;
     }
-    *dp = '\0';
+    end = cp = &buf[size];
+    *--cp = '\0';
+
+    if (value < 0) {
+        negative = 1;
+        value = -value;
+        size--;
+    } else {
+        negative = 0;
+    }
+    do {
+        *--cp = digits[value % radix];
+        value /= radix;
+    } while (value > 0 && cp > buf);
+
+    if (negative) {
+        if (cp <= buf) {
+            return 0;
+        }
+        *--cp = '-';
+    }
+    if (buf < cp) {
+        /* Move the null too */
+        memmove(buf, cp, end - cp + 1);
+    }
     return buf;
 }
 
@@ -20271,6 +20420,7 @@ int scmp(cchar *s1, cchar *s2)
 }
 
 
+//  MOB should return bool
 int sends(cchar *str, cchar *suffix)
 {
     if (str == 0 || suffix == 0) {
@@ -20754,6 +20904,7 @@ ssize sspn(cchar *str, cchar *set)
 }
  
 
+//  MOB should return bool
 int sstarts(cchar *str, cchar *prefix)
 {
     if (str == 0 || prefix == 0) {
@@ -20856,7 +21007,7 @@ int64 stoi(cchar *str, int radix, int *err)
 
 /*
     Note "str" is modifed as per strtok()
-    MOB - warning this does not allocate
+    MOB - warning this does not allocate - should it?
  */
 char *stok(char *str, cchar *delim, char **last)
 {
@@ -20961,7 +21112,7 @@ char *supper(cchar *str)
     Expand ${token} references in a path or string.
     Currently support DOCUMENT_ROOT, SERVER_ROOT and PRODUCT, OS and VERSION.
  */
-char *stemplate(cchar *str, MprHashTable *keys)
+char *stemplate(cchar *str, MprHash *keys)
 {
     MprBuf      *buf;
     char        *src, *result, *cp, *tok, *value;
@@ -23897,7 +24048,7 @@ char *mprFormatTm(cchar *fmt, struct tm *tp)
 
             case 'C':
                 dp--;
-                itos(dp, size, (1900 + tp->tm_year) / 100, 10);
+                itosbuf(dp, size, (1900 + tp->tm_year) / 100, 10);
                 dp += slen(dp);
                 cp++;
                 break;
@@ -23913,7 +24064,7 @@ char *mprFormatTm(cchar *fmt, struct tm *tp)
                 if (tp->tm_mday < 10) {
                     *dp++ = ' ';
                 }
-                itos(dp, size - 1, (int64) tp->tm_mday, 10);
+                itosbuf(dp, size - 1, (int64) tp->tm_mday, 10);
                 dp += slen(dp);
                 cp++;
                 break;
@@ -23939,7 +24090,7 @@ char *mprFormatTm(cchar *fmt, struct tm *tp)
                 if (tp->tm_hour < 10) {
                     *dp++ = ' ';
                 }
-                itos(dp, size - 1, (int64) tp->tm_hour, 10);
+                itosbuf(dp, size - 1, (int64) tp->tm_hour, 10);
                 dp += slen(dp);
                 cp++;
                 break;
@@ -23953,7 +24104,7 @@ char *mprFormatTm(cchar *fmt, struct tm *tp)
                 if (value > 12) {
                     value -= 12;
                 }
-                itos(dp, size - 1, (int64) value, 10);
+                itosbuf(dp, size - 1, (int64) value, 10);
                 dp += slen(dp);
                 cp++;
                 break;
@@ -23989,7 +24140,7 @@ char *mprFormatTm(cchar *fmt, struct tm *tp)
 
             case 's':
                 dp--;
-                itos(dp, size, (int64) mprMakeTime(tp) / MS_PER_SEC, 10);
+                itosbuf(dp, size, (int64) mprMakeTime(tp) / MS_PER_SEC, 10);
                 dp += slen(dp);
                 cp++;
                 break;
@@ -24011,7 +24162,7 @@ char *mprFormatTm(cchar *fmt, struct tm *tp)
                 if (value == 0) {
                     value = 7;
                 }
-                itos(dp, size, (int64) value, 10);
+                itosbuf(dp, size, (int64) value, 10);
                 dp += slen(dp);
                 cp++;
                 break;
@@ -24022,7 +24173,7 @@ char *mprFormatTm(cchar *fmt, struct tm *tp)
                 if (tp->tm_mday < 10) {
                     *dp++ = ' ';
                 }
-                itos(dp, size - 1, (int64) tp->tm_mday, 10);
+                itosbuf(dp, size - 1, (int64) tp->tm_mday, 10);
                 dp += slen(dp);
                 cp++;
                 strcpy(dp, "-%b-%Y");

@@ -146,7 +146,7 @@
             var token = $('meta[name=' + tokenName + ']').attr('content');
             if (token) {
                 var form = $('<form method="post" action="' + url + '"/>').
-                    append('<input name="-esp-method-" value="' + method + '" type="hidden" />').
+                    append('<input name="-http-method-" value="' + method + '" type="hidden" />').
                     append('<input name="' + tokenName + '" value="' + token + '" type="hidden" />');
                 if (params) {
                     params = params.split("&")
@@ -396,7 +396,7 @@
     $('form').live('submit', function (e) {
         var method = $(this).attr('data-method');
         if (method) {
-            $(this).append('<input name="-esp-method-" value="' + method + '" type="hidden" />');
+            $(this).append('<input name="-http-method-" value="' + method + '" type="hidden" />');
         }
     });
 
@@ -404,7 +404,7 @@
     $('form[data-remote]').live('submit', function (e) {
         var method = $(this).attr('data-method');
         if (method) {
-            $(this).append('<input name="-esp-method-" value="' + method + '" type="hidden" />');
+            $(this).append('<input name="-http-method-" value="' + method + '" type="hidden" />');
         }
         remote.apply(this);
         e.preventDefault();

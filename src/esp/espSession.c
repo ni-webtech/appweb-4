@@ -81,6 +81,17 @@ EspSession *espGetSession(HttpConn *conn, int create)
 
 
 
+MprHash *espGetSessionObj(HttpConn *conn, cchar *key)
+{
+    cchar   *str;
+
+    if ((str = espGetSessionVar(conn, key, 0)) != 0) {
+        return mprParseHash(str);
+    }
+    return 0;
+}
+
+
 cchar *espGetSessionVar(HttpConn *conn, cchar *key, cchar *defaultValue)
 {
     EspSession  *sp;
@@ -97,6 +108,13 @@ cchar *espGetSessionVar(HttpConn *conn, cchar *key, cchar *defaultValue)
 }
 
 
+int espSetSessionObj(HttpConn *conn, cchar *key, MprHash *obj)
+{
+    espSetSessionVar(conn, key, mprHashToString(obj, 0));
+    return 0;
+}
+
+
 int espSetSessionVar(HttpConn *conn, cchar *key, cchar *value)
 {
     EspReq      *req;
@@ -104,7 +122,7 @@ int espSetSessionVar(HttpConn *conn, cchar *key, cchar *value)
 
     mprAssert(conn);
     mprAssert(key && *key);
-    mprAssert(value && *value);
+    mprAssert(value);
 
     req = conn->data;
     if ((sp = espGetSession(conn, 1)) == 0) {

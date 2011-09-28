@@ -21,7 +21,7 @@
 
 static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp);
 static void cgiCallback(MprCmd *cmd, int channel, void *data);
-static int copyVars(char **envv, int index, MprHashTable *vars, cchar *prefix);
+static int copyVars(char **envv, int index, MprHash *vars, cchar *prefix);
 static char *getCgiToken(MprBuf *buf, cchar *delim);
 static bool parseFirstCgiResponse(HttpConn *conn, MprCmd *cmd);
 static bool parseHeader(HttpConn *conn, MprCmd *cmd);
@@ -44,12 +44,13 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
 #endif
 
 /************************************* Code ***********************************/
-
-static bool matchCgi(HttpConn *conn, HttpRoute *route, int direction)
+#if UNUSED
+static int matchCgi(HttpConn *conn, HttpRoute *route, int direction)
 {
     httpTrimExtraPath(conn);
-    return 1;
+    return HTTP_ROUTE_OK;
 }
+#endif
 
 
 static void openCgi(HttpQueue *q)
@@ -59,6 +60,7 @@ static void openCgi(HttpQueue *q)
     rx = q->conn->rx;
 
     mprLog(5, "Open CGI handler");
+    httpTrimExtraPath(q->conn);
     if (rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
         httpHandleOptionsTrace(q->conn);
     } else {
@@ -666,7 +668,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
     HttpRx      *rx;
     HttpTx      *tx;
     HttpHost    *host;
-    char        *fileName, **argv, status[8], *indexQuery, *cp, *tok;
+    char        *fileName, **argv, *indexQuery, *cp, *tok;
     cchar       *actionProgram;
     size_t      len;
     int         argc, argind, i;
@@ -690,8 +692,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
         /*
             This is an Apache compatible hack for PHP 5.3
          */
-        itos(status, sizeof(status), HTTP_CODE_MOVED_TEMPORARILY, 10);
-        mprAddKey(rx->headers, "REDIRECT_STATUS", sclone(status));
+        mprAddKey(rx->headers, "REDIRECT_STATUS", itos(HTTP_CODE_MOVED_TEMPORARILY, 10));
     }
 
     /*
@@ -829,7 +830,7 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
     HttpRx      *rx;
     HttpTx      *tx;
     HttpRoute   *route;
-    MprHash     *hp;
+    MprKey      *kp;
     MprFile     *file;
     cchar       *actionProgram, *ext, *cmdShell;
     char        *tok, buf[MPR_MAX_FNAME + 1], *path;
@@ -851,15 +852,15 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
         NOTE: we don't use PATH deliberately!!!
      */
     if (access(fileName, X_OK) < 0) {
-        for (hp = 0; (hp = mprGetNextKey(route->extensions, hp)) != 0; ) {
-            path = sjoin(fileName, ".", hp->key, NULL);
+        for (kp = 0; (kp = mprGetNextKey(route->extensions, kp)) != 0; ) {
+            path = sjoin(fileName, ".", kp->key, NULL);
             if (access(path, X_OK) == 0) {
                 break;
             }
             path = 0;
         }
-        if (hp) {
-            ext = hp->key;
+        if (kp) {
+            ext = kp->key;
         } else {
             path = fileName;
         }
@@ -979,17 +980,17 @@ static void traceCGIData(MprCmd *cmd, char *src, ssize size)
 #endif
 
 
-static int copyVars(char **envv, int index, MprHashTable *vars, cchar *prefix)
+static int copyVars(char **envv, int index, MprHash *vars, cchar *prefix)
 {
-    MprHash     *hp;
-    char        *cp;
+    MprKey  *kp;
+    char    *cp;
 
-    for (hp = 0; (hp = mprGetNextKey(vars, hp)) != 0; ) {
-        if (hp->data) {
+    for (kp = 0; (kp = mprGetNextKey(vars, kp)) != 0; ) {
+        if (kp->data) {
             if (prefix) {
-                cp = sjoin(prefix, hp->key, "=", (char*) hp->data, NULL);
+                cp = sjoin(prefix, kp->key, "=", (char*) kp->data, NULL);
             } else {
-                cp = sjoin(hp->key, "=", (char*) hp->data, NULL);
+                cp = sjoin(kp->key, "=", (char*) kp->data, NULL);
             }
             envv[index] = cp;
             for (; *cp != '='; cp++) {
@@ -1032,7 +1033,7 @@ static int scriptAliasDirective(MaState *state, cchar *key, cchar *value)
     httpSetRoutePattern(route, sfmt("^%s(.*)$", prefix), 0);
     httpSetRouteTarget(route, "run", "$1");
     httpFinalizeRoute(route);
-    httpAddRoute(state->host, route);
+    httpAddRouteToHost(state->host, route);
     mprLog(4, "ScriptAlias \"%s\" for \"%s\"", prefix, path);
     return 0;
 }
@@ -1046,8 +1047,7 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     HttpStage   *handler;
     MaAppweb    *appweb;
 
-    handler = httpCreateHandler(http, "cgiHandler", 
-        HTTP_STAGE_PARAMS /* UNUSED | HTTP_STAGE_CGI_PARAMS | HTTP_STAGE_EXTRA_PATH */, module);
+    handler = httpCreateHandler(http, "cgiHandler", 0, module);
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }
@@ -1055,7 +1055,9 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     handler->close = closeCgi; 
     handler->outgoingService = outgoingCgiService;
     handler->incomingData = incomingCgiData; 
+#if UNUSED
     handler->match = matchCgi; 
+#endif
     handler->open = openCgi; 
     handler->start = startCgi; 
     handler->process = processCgi; 

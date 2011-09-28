@@ -155,6 +155,36 @@ void espAutoFinalize(HttpConn *conn)
 }
 
 
+static void manageAction(EspAction *ap, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(ap->cacheUri);
+    }
+}
+
+
+void espCacheControl(EspRoute *eroute, cchar *target, int lifesecs, cchar *uri)
+{
+    EspAction  *action;
+    Esp         *esp;
+
+    esp = MPR->espService;
+    if ((action = mprLookupKey(esp->actions, mprJoinPath(eroute->controllersDir, target))) == 0) {
+        if ((action = mprAllocObj(EspAction, manageAction)) == 0) {
+            return;
+        }
+    }
+    if (uri) {
+        action->cacheUri = sclone(uri);
+    }
+    if (lifesecs == 0) {
+        action->lifespan = eroute->lifespan;
+    } else {
+        action->lifespan = lifesecs * MPR_TICKS_PER_SEC;
+    }
+}
+
+
 void espCheckSecurityToken(HttpConn *conn) 
 {
     HttpRx  *rx;
@@ -175,6 +205,48 @@ void espCheckSecurityToken(HttpConn *conn)
     }
 }
 
+
+void espDefineAction(EspRoute *eroute, cchar *target, void *actionProc)
+{
+    EspAction   *action;
+    Esp         *esp;
+
+    mprAssert(eroute);
+    mprAssert(target && *target);
+    mprAssert(actionProc);
+
+    esp = MPR->espService;
+    if ((action = mprAllocObj(EspAction, manageAction)) == 0) {
+        return;
+    }
+    action->actionProc = actionProc;
+    mprAddKey(esp->actions, mprJoinPath(eroute->controllersDir, target), action);
+}
+
+
+void espDefineBase(EspRoute *eroute, void *baseProc)
+{
+    eroute->controllerBase = baseProc;
+}
+
+
+/*
+    Path should be an app-relative path to the view file (relative-path.esp)
+ */
+void espDefineView(EspRoute *eroute, cchar *path, void *view)
+{
+    Esp         *esp;
+
+    mprAssert(eroute);
+    mprAssert(path && *path);
+    mprAssert(view);
+
+    esp = MPR->espService;
+	path = mprGetPortablePath(mprJoinPath(eroute->dir, path));
+    mprAddKey(esp->views, path, view);
+}
+
+
 MprOff espGetContentLength(HttpConn *conn)
 {
     return httpGetContentLength(conn);
@@ -187,7 +259,7 @@ cchar *espGetCookies(HttpConn *conn)
 }
 
 
-MprHashTable *espGetParams(HttpConn *conn)
+MprHash *espGetParams(HttpConn *conn)
 {
     return httpGetParams(conn);
 }
@@ -199,7 +271,7 @@ cchar *espGetHeader(HttpConn *conn, cchar *key)
 }
 
 
-MprHashTable *espGetHeaderHash(HttpConn *conn)
+MprHash *espGetHeaderHash(HttpConn *conn)
 {
     return httpGetHeaderHash(conn);
 }
@@ -274,7 +346,6 @@ char *espGetStatusMessage(HttpConn *conn)
 }
 
 
-//NAME: finalize
 void espFinalize(HttpConn *conn) 
 {
     EspReq     *req;
@@ -317,20 +388,19 @@ EdRec *espFind(HttpConn *conn, cchar *tableName, cchar *id)
 #endif
 
 
-//NAME: flush
 void espFlush(HttpConn *conn) 
 {
     httpFlush(conn);
 }
 
 
-//NAME: redirect
 void espRedirect(HttpConn *conn, int status, cchar *target)
 {
     EspReq  *req;
     
     req = conn->data;
-    httpRedirect(conn, status, target);
+    //  MOB - should this httpLink be pushed into httpRedirect?
+    httpRedirect(conn, status, httpLink(conn, target, NULL));
 }
 
 
@@ -584,14 +654,14 @@ static int getParams(char ***keys, char *buf, int len)
 //  NAME show
 void espShowRequest(HttpConn *conn)
 {
-    MprHashTable    *env;
-    MprHash         *hp;
-    MprBuf          *buf;
-    HttpRx          *rx;
-    HttpQueue       *q;
-    cchar           *query;
-    char            qbuf[MPR_MAX_STRING], **keys, *value;
-    int             i, numKeys;
+    MprHash     *env;
+    MprKey      *kp;
+    MprBuf      *buf;
+    HttpRx      *rx;
+    HttpQueue   *q;
+    cchar       *query;
+    char        qbuf[MPR_MAX_STRING], **keys, *value;
+    int         i, numKeys;
 
     rx = conn->rx;
     httpSetHeaderString(conn, "Cache-Control", "no-cache");
@@ -615,8 +685,8 @@ void espShowRequest(HttpConn *conn)
         Http Headers
      */
     env = espGetHeaderHash(conn);
-    for (hp = 0; (hp = mprGetNextKey(env, hp)) != 0; ) {
-        espWrite(conn, "HEADER %s=%s\r\n", hp->key, hp->data ? hp->data: "null");
+    for (kp = 0; (kp = mprGetNextKey(env, kp)) != 0; ) {
+        espWrite(conn, "HEADER %s=%s\r\n", kp->key, kp->data ? kp->data: "null");
     }
     espWrite(conn, "\r\n");
 
@@ -624,8 +694,8 @@ void espShowRequest(HttpConn *conn)
         Form vars
      */
     if ((env = espGetParams(conn)) != 0) {
-        for (hp = 0; (hp = mprGetNextKey(env, hp)) != 0; ) {
-            espWrite(conn, "FORM %s=%s\r\n", hp->key, hp->data ? hp->data: "null");
+        for (kp = 0; (kp = mprGetNextKey(env, kp)) != 0; ) {
+            espWrite(conn, "FORM %s=%s\r\n", kp->key, kp->data ? kp->data: "null");
         }
         espWrite(conn, "\r\n");
     }

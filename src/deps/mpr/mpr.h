@@ -949,8 +949,8 @@ struct  MprEventService;
 struct  MprFile;
 struct  MprFileSystem;
 struct  MprHash;
-struct  MprHashTable;
 struct  MprHeap;
+struct  MprKey;
 struct  MprModule;
 struct  MprMutex;
 struct  MprOsService;
@@ -2463,19 +2463,28 @@ extern int  mprSyncThreads(MprTime timeout);
  */
 typedef struct MprString { void *dummy; } MprString;
 
-//  MOB - better cchar *itos(int64 value, int radix);
 /**
     Convert an integer to a string.
+    @description This call converts the supplied 64 bit integer to a string according to the specified radix.
+    @param value Integer value to convert
+    @param radix The base radix to use when encoding the number
+    @return An allocated string with the converted number.
+    @ingroup MprString
+ */
+extern char *itos(int64 value, int radix);
+
+/**
+    Convert an integer to a string buffer.
     @description This call converts the supplied 64 bit integer into a string formatted into the supplied buffer according
         to the specified radix.
     @param buf Pointer to the buffer that will hold the string.
     @param size Size of the buffer.
     @param value Integer value to convert
     @param radix The base radix to use when encoding the number
-    @return Returns the number of characters in an allocated string.
+    @return Returns a reference to the string.
     @ingroup MprString
  */
-extern char *itos(char *buf, ssize size, int64 value, int radix);
+extern char *itosbuf(char *buf, ssize size, int64 value, int radix);
 
 /**
     Compare strings ignoring case. This is a safe replacement for strcasecmp. It can handle NULL args.
@@ -2807,7 +2816,7 @@ extern int sstarts(cchar *str, cchar *prefix);
     @param tokens Hash table of token values to use
     @return An expanded string. May return the original string if no "$" references are present.
   */
-extern char *stemplate(cchar *str, struct MprHashTable *tokens);
+extern char *stemplate(cchar *str, struct MprHash *tokens);
 
 /**
     Convert a string to an integer.
@@ -3970,7 +3979,7 @@ extern int mprLookupItem(MprList *list, cvoid *item);
     @return Returns the positive index of the removed item, otherwise a negative MPR error code.
     @ingroup MprList
  */
-extern int mprRemoveItem(MprList *list, void *item);
+extern int mprRemoveItem(MprList *list, cvoid *item);
 
 /**
     Remove an item from the list
@@ -4035,7 +4044,7 @@ extern int mprSetListLimits(MprList *list, int initialSize, int maxSize);
 extern void mprSortList(MprList *list, void *compare);
 
 /**
-    Key value pairs for use with MprList or MprHash
+    Key value pairs for use with MprList or MprKey
     @ingroup MprList
  */
 typedef struct MprKeyValue {
@@ -4253,19 +4262,23 @@ extern int print(cchar *fmt, ...);
     Hash table entry structure.
     @description The hash structure supports growable hash tables with high performance, collision resistant hashes.
     Each hash entry has a descriptor entry. This is used to manage the hash table link chains.
-    @see MprHash MprHashProc MprHashTable mprAddDuplicateHash mprAddKey mprAddKeyFmt mprCloneHash mprCreateHash 
+    @see MprKey MprHashProc MprHash mprAddDuplicateHash mprAddKey mprAddKeyFmt mprCloneHash mprCreateHash 
         mprGetFirstKey mprGetHashLength mprGetKeyBits mprGetNextKey mprLookupKey mprLookupKeyEntry mprRemoveKey 
-        mprSetKeyBits 
+        mprSetKeyBits mprBlendHash
     @stability Evolving.
     @defgroup MprHash MprHash
  */
-typedef struct MprHash {
-    struct MprHash *next;               /**< Next symbol in hash chain */
+typedef struct MprKey {
+    struct MprKey *next;               /**< Next symbol in hash chain */
     char            *key;               /**< Hash key */
     cvoid           *data;              /**< Pointer to symbol data */
+#if UNUSED
     int             bits: 2;            /**< User definable bits */
     int             bucket: 30;         /**< Hash bucket index */
-} MprHash;
+#else
+    int             bucket;             /**< Hash bucket index */
+#endif
+} MprKey;
 
 /**
     Hashing function to use for the table
@@ -4280,14 +4293,14 @@ typedef uint (*MprHashProc)(cvoid *name, ssize len);
     Hash table control structure
     @see MprHash
  */
-typedef struct MprHashTable {
-    MprHash         **buckets;          /**< Hash collision bucket table */
-    MprHashProc     hash;               /**< Hash function */             
+typedef struct MprHash {
+    MprKey          **buckets;          /**< Hash collision bucket table */
+    MprHashProc     fn;                 /**< Hash function */             
     MprMutex        *mutex;             /**< GC marker sync */
-    int             hashSize;           /**< Size of the buckets array */
+    int             size;               /**< Size of the buckets array */
     int             length;             /**< Number of symbols in the table */
     int             flags;              /**< Hash control flags */
-} MprHashTable;
+} MprHash;
 
 /*
     Macros
@@ -4305,7 +4318,7 @@ typedef struct MprHashTable {
     @return Integer count of the number of entries.
     @ingroup MprHash
  */
-extern MprHash *mprAddDuplicateKey(MprHashTable *table, cvoid *key, cvoid *ptr);
+extern MprKey *mprAddDuplicateKey(MprHash *table, cvoid *key, cvoid *ptr);
 
 /**
     Add a symbol value into the hash table
@@ -4316,7 +4329,7 @@ extern MprHash *mprAddDuplicateKey(MprHashTable *table, cvoid *key, cvoid *ptr);
     @return Integer count of the number of entries.
     @ingroup MprHash
  */
-extern MprHash *mprAddKey(MprHashTable *table, cvoid *key, cvoid *ptr);
+extern MprKey *mprAddKey(MprHash *table, cvoid *key, cvoid *ptr);
 
 /**
     Add a key with a formatting value into the hash table
@@ -4327,7 +4340,7 @@ extern MprHash *mprAddKey(MprHashTable *table, cvoid *key, cvoid *ptr);
     @return Integer count of the number of entries.
     @ingroup MprHash
  */
-extern MprHash *mprAddKeyFmt(MprHashTable *table, cvoid *key, cchar *fmt, ...);
+extern MprKey *mprAddKeyFmt(MprHash *table, cvoid *key, cchar *fmt, ...);
 
 /**
     Copy a hash table
@@ -4336,7 +4349,7 @@ extern MprHash *mprAddKeyFmt(MprHashTable *table, cvoid *key, cchar *fmt, ...);
     @return A new hash table initialized with the contents of the original hash table.
     @ingroup MprHash
  */
-extern MprHashTable *mprCloneHash(MprHashTable *table);
+extern MprHash *mprCloneHash(MprHash *table);
 
 /*
     Flags for mprCreateHash
@@ -4347,7 +4360,6 @@ extern MprHashTable *mprCloneHash(MprHashTable *table);
 #define MPR_HASH_STATIC_VALUES  0x8     /**< Values are permanent - don't mark */
 #define MPR_HASH_STATIC_ALL     (MPR_HASH_STATIC_KEYS | MPR_HASH_STATIC_VALUES)
 
-//  MOB - inconsistent name. Rename  MprHashTable => MprHash and MprHash => MprKey. Then this becomes mprCreateHash
 /**
     Create a hash table
     @description Creates a hash table that can store arbitrary objects associated with string key values.
@@ -4358,15 +4370,17 @@ extern MprHashTable *mprCloneHash(MprHashTable *table);
     @return Returns a pointer to the allocated symbol table.
     @ingroup MprHash
  */
-extern MprHashTable *mprCreateHash(int hashSize, int flags);
+extern MprHash *mprCreateHash(int hashSize, int flags);
 
+#if UNUSED
 /**
     Get the user-definable bits for a key
     @param hp Hash key entry returned by #mprLookupKeyEntry or #mprAddKey
     @return The low-order two user definable bits
     @ingroup MprHash
  */
-extern int mprGetKeyBits(MprHash *hp);
+extern int mprGetKeyBits(MprKey *hp);
+#endif /* UNUSED */
 
 /**
     Return the first symbol in a symbol entry
@@ -4375,7 +4389,7 @@ extern int mprGetKeyBits(MprHash *hp);
     @return Pointer to the first entry in the symbol table.
     @ingroup MprHash
  */
-extern MprHash *mprGetFirstKey(MprHashTable *table);
+extern MprKey *mprGetFirstKey(MprHash *table);
 
 /**
     Return the next symbol in a symbol entry
@@ -4388,7 +4402,7 @@ extern MprHash *mprGetFirstKey(MprHashTable *table);
     @return Pointer to the first entry in the symbol table.
     @ingroup MprHash
  */
-extern MprHash *mprGetNextKey(MprHashTable *table, MprHash *last);
+extern MprKey *mprGetNextKey(MprHash *table, MprKey *last);
 
 /**
     Return the count of symbols in a symbol entry
@@ -4397,7 +4411,7 @@ extern MprHash *mprGetNextKey(MprHashTable *table, MprHash *last);
     @return Integer count of the number of entries.
     @ingroup MprHash
  */
-extern int mprGetHashLength(MprHashTable *table);
+extern int mprGetHashLength(MprHash *table);
 
 /**
     Lookup a symbol in the hash table.
@@ -4407,17 +4421,17 @@ extern int mprGetHashLength(MprHashTable *table);
     @return Value associated with the key when the entry was inserted via mprInsertSymbol.
     @ingroup MprHash
  */
-extern void *mprLookupKey(MprHashTable *table, cvoid *key);
+extern void *mprLookupKey(MprHash *table, cvoid *key);
 
 /**
     Lookup a symbol in the hash table and return the hash entry
     @description Lookup a symbol key and return the hash table descriptor associated with that key.
     @param table Symbol table returned via mprCreateSymbolTable.
     @param key String key of the symbole entry to delete.
-    @return MprHash table structure for the entry
+    @return MprKey for the entry
     @ingroup MprHash
  */
-extern MprHash *mprLookupKeyEntry(MprHashTable *table, cvoid *key);
+extern MprKey *mprLookupKeyEntry(MprHash *table, cvoid *key);
 
 /**
     Remove a symbol entry from the hash table.
@@ -4427,8 +4441,9 @@ extern MprHash *mprLookupKeyEntry(MprHashTable *table, cvoid *key);
     @return Returns zero if successful, otherwise a negative MPR error code is returned.
     @ingroup MprHash
  */
-extern int mprRemoveKey(MprHashTable *table, cvoid *key);
+extern int mprRemoveKey(MprHash *table, cvoid *key);
 
+#if UNUSED
 /**
     Set the user-definable bits for a key
     @param hp Hash key entry returned by #mprLookupKeyEntry or #mprAddKey
@@ -4436,7 +4451,14 @@ extern int mprRemoveKey(MprHashTable *table, cvoid *key);
     @return Returns zero if successful, otherwise a negative MPR error code is returned.
     @ingroup MprHash
  */
-extern void mprSetKeyBits(MprHash *hp, int bits);
+extern void mprSetKeyBits(MprKey *hp, int bits);
+#endif
+
+//  MOB DOC
+#define MPR_HASH_PRETTY 0x1
+extern MprHash *mprBlendHash(MprHash *hash, MprHash *extra);
+extern MprHash *mprParseHash(cchar *str);
+extern cchar *mprHashToString(MprHash *hash, int flags);
 
 /*
     Prototypes for file system switch methods
@@ -4511,7 +4533,7 @@ typedef struct  MprRomInode {
 
 typedef struct MprRomFileSystem {
     MprFileSystem   fileSystem;
-    MprHashTable    *fileIndex;
+    MprHash         *fileIndex;
     MprRomInode     *romInodes;
     int             rootLen;
 } MprRomFileSystem;
@@ -7663,7 +7685,7 @@ extern ssize mprWriteCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize);
  */
 typedef struct MprCache
 {
-    MprHashTable    *store;             /**< Key/value store */
+    MprHash         *store;             /**< Key/value store */
     MprMutex        *mutex;             /**< Cache lock*/
     MprEvent        *timer;             /**< Pruning timer */
     MprTime         lifespan;           /**< Default lifespan (msec) */
@@ -7789,7 +7811,7 @@ typedef struct MprMime {
     @return Mime type entry object. This is owned by the mime type table.
     @ingroup MprMime
  */
-extern MprMime *mprAddMime(MprHashTable *table, cchar *ext, cchar *mimeType);
+extern MprMime *mprAddMime(MprHash *table, cchar *ext, cchar *mimeType);
 
 /**
     Create the mime types
@@ -7797,7 +7819,7 @@ extern MprMime *mprAddMime(MprHashTable *table, cchar *ext, cchar *mimeType);
     @return Hash table of mime types keyed by file extension 
     @ingroup MprMime
  */
-extern MprHashTable *mprCreateMimeTypes(cchar *path);
+extern MprHash *mprCreateMimeTypes(cchar *path);
 
 /**
     Get the mime type program for a given mimeType
@@ -7806,7 +7828,7 @@ extern MprHashTable *mprCreateMimeTypes(cchar *path);
     @return The program name associated with this mime type
     @ingroup MprMime
  */
-extern cchar *mprGetMimeProgram(MprHashTable *table, cchar *mimeType);
+extern cchar *mprGetMimeProgram(MprHash *table, cchar *mimeType);
 
 /** 
     Get the mime type for an extension.
@@ -7816,7 +7838,7 @@ extern cchar *mprGetMimeProgram(MprHashTable *table, cchar *mimeType);
     @returns Mime type string
     @ingroup MprMime
  */
-extern cchar *mprLookupMime(MprHashTable *table, cchar *ext);
+extern cchar *mprLookupMime(MprHash *table, cchar *ext);
 
 /**
     Set the mime type program
@@ -7827,7 +7849,7 @@ extern cchar *mprLookupMime(MprHashTable *table, cchar *ext);
         the mime type table.
     @ingroup MprMime
  */
-extern int mprSetMimeProgram(MprHashTable *table, cchar *mimeType, cchar *program);
+extern int mprSetMimeProgram(MprHash *table, cchar *mimeType, cchar *program);
 
 /*
     Mpr state
@@ -7874,8 +7896,8 @@ typedef struct Mpr {
     int             logLevel;               /**< Log trace level */
     MprLogHandler   logHandler;             /**< Current log handler callback */
     MprFile         *logFile;               /**< Log file */
-    MprHashTable    *mimeTypes;             /**< Table of mime types */
-    MprHashTable    *timeTokens;            /**< Date/Time parsing tokens */
+    MprHash         *mimeTypes;             /**< Table of mime types */
+    MprHash         *timeTokens;            /**< Date/Time parsing tokens */
     char            *pathEnv;               /**< Cached PATH env var. Used by MprCmd */
     char            *name;                  /**< Product name */
     char            *title;                 /**< Product title */

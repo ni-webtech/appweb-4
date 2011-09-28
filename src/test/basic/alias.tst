@@ -14,6 +14,6 @@ http.get(HTTP + "/aliasFile/")
 assert(http.status == 200)
 assert(http.response.contains("alias/atest.html"))
 
-http.get(HTTP + "/AliasForMyDocuments/index.html")
+http.get(HTTP + "/AliasDocs/index.html")
 assert(http.status == 200)
 assert(http.response.contains("My Documents/index.html"))

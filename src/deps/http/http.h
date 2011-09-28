@@ -66,7 +66,7 @@ struct HttpUri;
      */
     #define HTTP_BUFSIZE               (8 * 1024)           /**< Default I/O buffer size */
     #define HTTP_MAX_CHUNK             (8 * 1024)           /**< Max chunk size for transfer chunk encoding */
-    #define HTTP_MAX_HEADERS           2048                 /**< Max size of the headers */
+    #define HTTP_MAX_HEADERS           4096                 /**< Max size of the headers */
     #define HTTP_MAX_IOVEC             16                   /**< Number of fragments in a single socket write */
     #define HTTP_MAX_NUM_HEADERS       20                   /**< Max number of header lines */
     #define HTTP_MAX_RECEIVE_FORM      (1024 * 1024)        /**< Maximum incoming form size */
@@ -276,12 +276,12 @@ typedef struct Http {
     MprList         *endpoints;             /**< Currently configured listening endpoints */
     MprList         *hosts;                 /**< List of host objects */
     MprList         *connections;           /**< Currently open connection requests */
-    MprHashTable    *stages;                /**< Possible stages in connection pipelines */
-    MprHashTable    *statusCodes;           /**< Http status codes */
+    MprHash         *stages;                /**< Possible stages in connection pipelines */
+    MprHash         *statusCodes;           /**< Http status codes */
 
-    MprHashTable    *routeTargets;          /**< Http route target functions */
-    MprHashTable    *routeConditions;       /**< Http route condition functions */
-    MprHashTable    *routeUpdates;          /**< Http route update functions */
+    MprHash         *routeTargets;          /**< Http route target functions */
+    MprHash         *routeConditions;       /**< Http route condition functions */
+    MprHash         *routeUpdates;          /**< Http route update functions */
 
     /*  
         Some standard pipeline stages
@@ -1282,7 +1282,9 @@ extern void httpAssignQueue(HttpQueue *q, struct HttpStage *stage, int dir);
 #define HTTP_STAGE_HANDLER        0x2000            /**< Stage is a handler  */
 #define HTTP_STAGE_FILTER         0x4000            /**< Stage is a filter  */
 #define HTTP_STAGE_MODULE         0x8000            /**< Stage is a filter  */
+#if UNUSED
 #define HTTP_STAGE_PARAMS         0x10000           /**< Create params from URI query and form body data */
+#endif
 #define HTTP_STAGE_AUTO_DIR       0x80000           /**< Want auto directory redirection */
 #define HTTP_STAGE_UNLOADED       0x100000          /**< Stage module library has been unloaded */
 #define HTTP_STAGE_RX             0x200000          /**< Stage to be used in the Rx direction */
@@ -1311,19 +1313,33 @@ typedef struct HttpStage {
     int             flags;                  /**< Stage flags */
     void            *stageData;             /**< Private stage data */
     MprModule       *module;                /**< Backing module */
-    MprHashTable    *extensions;            /**< Matching extensions for this filter */
+    MprHash         *extensions;            /**< Matching extensions for this filter */
      
      /** 
         Match a request
-        @description This method is invoked to see if the stage wishes to handle the request. If a stage denies to
+        @description This procedure is invoked to see if the stage wishes to handle the request. If a stage denies to
             handle a request, it will be removed from the pipeline for the specified direction.
         @param conn HttpConn connection object
         @param stage Stage object
-        @param dir Direction. Set to HTTP_RX or HTTP_TX. 
-        @return True if the stage wishes to process this request.
+        @param dir Direction. Set to HTTP_RX or HTTP_TX. A filter may be placed in the tx, rx or both pipeline directions.
+            The direction flag indicates what pipeline direction is being considered.
+        @return HTTP_ROUTE_OK if the request is acceptable,  HTTP_ROUTE_REJECT it the request is not acceptable,
+            and return HTTP_ROUTE_REROUTE if the request is rewritten.
         @ingroup HttpStage
       */
-    bool (*match)(struct HttpConn *conn, struct HttpRoute *route, int dir);
+    int (*match)(struct HttpConn *conn, struct HttpRoute *route, int dir);
+
+     /** 
+        Check a request
+        @description Check a fully routed request. A handler is given one last chance to accept, reject or reroute
+            a request before processing.
+        @param conn HttpConn connection object
+        @param stage Stage object
+        @return HTTP_ROUTE_OK if the request is acceptable. Return HTTP_ROUTE_REROUTE if the request is rewritten.
+            Return HTTP_ROUTE_REJECT it the request is not acceptable.
+        @ingroup HttpStage
+      */
+    int (*check)(struct HttpConn *conn, struct HttpRoute *route);
 
     /** 
         Open the queue
@@ -1616,8 +1632,8 @@ typedef struct HttpTrace {
     int             disable;                     /**< If tracing is disabled for this request */
     int             levels[HTTP_TRACE_MAX_ITEM]; /**< Level at which to trace this item */
     MprOff          size;                        /**< Maximum size of content to trace */
-    MprHashTable    *include;                    /**< Extensions to include in trace */
-    MprHashTable    *exclude;                    /**< Extensions to exclude from trace */
+    MprHash         *include;                    /**< Extensions to include in trace */
+    MprHash         *exclude;                    /**< Extensions to exclude from trace */
 } HttpTrace;
 
 extern void httpManageTrace(HttpTrace *trace, int flags);
@@ -1697,9 +1713,6 @@ typedef struct HttpConn {
     struct HttpHost *host;                  /**< Host object (if releveant) */
 
     int             state;                  /**< Connection state */
-#if UNUSED
-    int             flags;                  /**< Connection flags */
-#endif
     int             advancing;              /**< In httpProcess (reentrancy prevention) */
     int             writeComplete;          /**< All write data has been sent (set by connectors) */
     int             error;                  /**< A request error has occurred */
@@ -1707,7 +1720,7 @@ typedef struct HttpConn {
 
     HttpLimits      *limits;                /**< Service limits */
     Http            *http;                  /**< Http service object  */
-    MprHashTable    *stages;                /**< Stages in pipeline */
+    MprHash         *stages;                /**< Stages in pipeline */
     MprDispatcher   *dispatcher;            /**< Event dispatcher */
     MprDispatcher   *newDispatcher;         /**< New dispatcher if using a worker thread */
     MprDispatcher   *oldDispatcher;         /**< Original dispatcher if using a worker thread */
@@ -2199,6 +2212,7 @@ extern void httpWritable(HttpConn *conn);
 extern struct HttpConn *httpAccept(struct HttpEndpoint *endpoint);
 extern void httpEnableConnEvents(HttpConn *conn);
 extern void httpInitTrace(HttpTrace *trace);
+extern void httpParseMethod(HttpConn *conn);
 extern HttpLimits *httpSetUniqueConnLimits(HttpConn *conn);
 extern int httpShouldTrace(HttpConn *conn, int dir, int item, cchar *ext);
 extern void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssize len, MprOff total);
@@ -2252,8 +2266,8 @@ typedef struct HttpAuth {
     bool            anyValidUser;           /**< If any valid user will do */
     int             type;                   /**< Kind of authorization */
 
-    MprHashTable    *allow;                 /**< Clients to allow */
-    MprHashTable    *deny;                  /**< Clients to deny */
+    MprHash         *allow;                 /**< Clients to allow */
+    MprHash         *deny;                  /**< Clients to deny */
     char            *requiredRealm;         /**< Realm to use for access */
     char            *requiredGroups;        /**< Auth group for access */
     char            *requiredUsers;         /**< User name for access */
@@ -2269,8 +2283,8 @@ typedef struct HttpAuth {
      */
     char            *userFile;              /**< User name auth file */
     char            *groupFile;             /**< Group auth file  */
-    MprHashTable    *users;                 /**< Hash of user file  */
-    MprHashTable    *groups;                /**< Hash of group file  */
+    MprHash         *users;                 /**< Hash of user file  */
+    MprHash         *groups;                /**< Hash of group file  */
 } HttpAuth;
 
 
@@ -2839,17 +2853,17 @@ typedef struct HttpRoute {
     int             flags;                  /**< Route flags */
 
     char            *defaultLanguage;       /**< Default language */
-    MprHashTable    *extensions;            /**< Hash of handlers by extensions */
+    MprHash         *extensions;            /**< Hash of handlers by extensions */
     MprList         *handlers;              /**< List of handlers for this route */
     HttpStage       *connector;             /**< Network connector to use */
-    MprHashTable    *data;                  /**< Hash of extra data configuration */
-    MprHashTable    *expires;               /**< Expiry of content by extension */
-    MprHashTable    *expiresByType;         /**< Expiry of content by mime type */
-    MprHashTable    *pathTokens;            /**< Path $token refrerences */
-    MprHashTable    *languages;             /**< Languages supported */
+    MprHash         *data;                  /**< Hash of extra data configuration */
+    MprHash         *expires;               /**< Expiry of content by extension */
+    MprHash         *expiresByType;         /**< Expiry of content by mime type */
+    MprHash         *pathTokens;            /**< Path $token refrerences */
+    MprHash         *languages;             /**< Languages supported */
     MprList         *inputStages;           /**< Input stages */
     MprList         *outputStages;          /**< Output stages */
-    MprHashTable    *errorDocuments;        /**< Set of error documents to use on errors */
+    MprHash         *errorDocuments;        /**< Set of error documents to use on errors */
     void            *context;               /**< Hosting context (Appweb == EjsPool) */
     char            *uploadDir;             /**< Upload directory */
     int             autoDelete;             /**< Auto delete uploaded files */
@@ -2861,7 +2875,7 @@ typedef struct HttpRoute {
     char            *scriptPath;            /**< Startup script path for handlers serving this route */
     int             workers;                /**< Number of workers to use for this route */
 
-    MprHashTable    *methods;               /**< Matching HTTP methods */
+    MprHash         *methods;               /**< Matching HTTP methods */
     MprList         *params;                /**< Matching param field data */
     MprList         *headers;               /**< Matching header values */
     MprList         *conditions;            /**< Route conditions */
@@ -2888,13 +2902,24 @@ typedef struct HttpRouteOp {
     int             flags;
 } HttpRouteOp;
 
-#define HTTP_ROUTE_OK       0x1             /**< The route matches the request */
-#define HTTP_ROUTE_REROUTE  0x2             /**< Request has been modified and must be re-routed */
+/*
+    Route matching return codes
+ */
+#define HTTP_ROUTE_OK       0             /**< The route matches the request */
+#define HTTP_ROUTE_REJECT   1             /**< The route does not match the request */
+#define HTTP_ROUTE_REROUTE  2             /**< Request has been modified and must be re-routed */
 
 /**
     General route procedure. Used by targets, conditions and updates.
  */
 typedef int (HttpRouteProc)(HttpConn *conn, HttpRoute *route, HttpRouteOp *item);
+
+//  MOB DOC
+extern HttpRoute *httpAddRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, cchar *source);
+extern void httpAddResource(HttpRoute *parent, cchar *prefix, cchar *controller);
+extern void httpAddResourceGroup(HttpRoute *parent, cchar *prefix, cchar *controller);
+extern void httpAddDefaultRoutes(HttpRoute *parent);
+extern void httpAddRouteSet(HttpRoute *parent, cchar *pack, cchar *patternPrefix, cchar *controller);
 
 /**
     Add a route condition
@@ -3251,10 +3276,12 @@ extern cchar *httpGetRouteMethods(HttpRoute *route);
     r.link({uri: "http://example.com/checkout"})
     r.link({route: "default", action: "{AT}checkout")
     r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}")
+
+    MOB - update doc from route.c
 */
 //  MOB - move to conn?
 //  MOB - DOC
-extern char *httpLink(HttpConn *conn, cchar *target);
+extern char *httpLink(HttpConn *conn, cchar *target, MprHash *options);
 
 /**
     Lookup an error document by HTTP status code
@@ -3584,6 +3611,16 @@ extern void httpSetRouteSource(HttpRoute *route, cchar *source);
 extern int httpSetRouteTarget(HttpRoute *route, cchar *name, cchar *details);
 
 /**
+    Set the route template
+    @description Set the route URI template uses when constructing URIs via #httpLink.
+    @param route Route to modify
+    @param template URI template to use. Templates may contain embedded tokens "{token}" where the token names correspond
+        to the token names in the route pattern. 
+    @ingroup HttpRoute
+ */
+extern void httpSetRouteTemplate(HttpRoute *route, cchar *name);
+
+/**
     Define the maximum number of workers for a route
     @param route Route to modify
     @param workers Maximum number of workers for this route
@@ -3593,7 +3630,7 @@ extern int httpSetRouteTarget(HttpRoute *route, cchar *name, cchar *details);
 extern void httpSetRouteWorkers(HttpRoute *route, int workers);
 
 //  MOB DOC
-extern char *httpTemplate(HttpConn *conn, HttpRoute *route, MprHashTable *options);
+extern char *httpTemplate(HttpConn *conn, cchar *template, MprHash *options);
 
 /**
     Tokenize a string based on route data
@@ -3729,10 +3766,10 @@ typedef struct HttpRx {
 
     MprList         *etags;                 /**< Document etag to uniquely identify the document version */
     HttpPacket      *headerPacket;          /**< HTTP headers */
-    MprHashTable    *headers;               /**< Header variables */
+    MprHash         *headers;               /**< Header variables */
     MprList         *inputPipeline;         /**< Input processing */
     HttpUri         *parsedUri;             /**< Parsed request uri */
-    MprHashTable    *requestData;           /**< General request data storage. Users must create hash table if required */
+    MprHash         *requestData;           /**< General request data storage. Users must create hash table if required */
     MprTime         since;                  /**< If-Modified date */
 
     int             chunkState;             /**< Chunk encoding state */
@@ -3772,7 +3809,7 @@ typedef struct HttpRx {
     char            *securityToken;         /**< Security form token */
     char            *userAgent;             /**< User-Agent header */
 
-    MprHashTable    *params;                /**< Request params (Query and post data variables) */
+    MprHash         *params;                /**< Request params (Query and post data variables) */
     HttpRange       *inputRange;            /**< Specified range for rx (post) data */
 
     /*  
@@ -3787,7 +3824,7 @@ typedef struct HttpRx {
     /*  
         Upload details
      */
-    MprHashTable    *files;                 /**< Uploaded files. Managed by the upload filter */
+    MprHash         *files;                 /**< Uploaded files. Managed by the upload filter */
     char            *uploadDir;             /**< Upload directory */
     int             autoDelete;             /**< Auto delete uploaded files */
 
@@ -3872,10 +3909,10 @@ extern cchar *httpGetParam(HttpConn *conn, cchar *var, cchar *defaultValue);
         Query data and www-url encoded form data is entered into the table after decoding.
         Use #mprLookupKey to retrieve data from the table.
     @param conn HttpConn connection object
-    @return #MprHashTable instance containing the form vars
+    @return #MprHash instance containing the form vars
     @ingroup HttpRx
  */
-extern MprHashTable *httpGetParams(HttpConn *conn);
+extern MprHash *httpGetParams(HttpConn *conn);
 
 /** 
     Get an rx http header.
@@ -3894,7 +3931,7 @@ extern cchar *httpGetHeader(HttpConn *conn, cchar *key);
     @return Hash table. See MprHash for how to access the hash table.
     @ingroup HttpRx
  */
-extern MprHashTable *httpGetHeaderHash(HttpConn *conn);
+extern MprHash *httpGetHeaderHash(HttpConn *conn);
 
 /** 
     Get all the request http headers.
@@ -3928,7 +3965,7 @@ extern int httpGetIntParam(HttpConn *conn, cchar *var, int defaultValue);
     @return A HttpLang reference, or null if no language requested or no language found in the spoken table.
     @ingroup HttpRx
  */
-extern HttpLang *httpGetLanguage(HttpConn *conn, MprHashTable *spoken, cchar *defaultLang);
+extern HttpLang *httpGetLanguage(HttpConn *conn, MprHash *spoken, cchar *defaultLang);
 
 /** 
     Get the request query string
@@ -4106,7 +4143,7 @@ typedef struct HttpTx {
     HttpStage       *connector;             /**< Network connector to send / receive socket data */
     HttpQueue       *queue[2];              /**< Dummy head for the queues */
 
-    MprHashTable    *headers;               /**< Transmission headers */
+    MprHash         *headers;               /**< Transmission headers */
 
     HttpRange       *outputRanges;          /**< Data ranges for tx data */
     HttpRange       *currentRange;          /**< Current range being fullfilled */
@@ -4188,7 +4225,7 @@ extern int httpConnect(HttpConn *conn, cchar *method, cchar *uri);
     @returns A tx object
     @ingroup HttpTx
  */
-extern HttpTx *httpCreateTx(HttpConn *conn, MprHashTable *headers);
+extern HttpTx *httpCreateTx(HttpConn *conn, MprHash *headers);
 
 /**
     Destroy the tx object
@@ -4521,7 +4558,7 @@ typedef struct HttpEndpoint {
     MprList         *hosts;                 /**< List of host objects */
     HttpLimits      *limits;                /**< Alias for first host resource limits */
     MprWaitHandler  *waitHandler;           /**< I/O wait handler */
-    MprHashTable    *clientLoad;            /**< Table of active client IPs and connection counts */
+    MprHash         *clientLoad;            /**< Table of active client IPs and connection counts */
     char            *ip;                    /**< Listen IP address. May be null if listening on all interfaces. */
     int             port;                   /**< Listen port */
     int             async;                  /**< Listening is in async mode (non-blocking) */
@@ -4756,15 +4793,15 @@ typedef struct HttpHost {
     MprList         *dirs;                  /**< List of Directory definitions */
     MprList         *routes;                /**< List of Route defintions */
     HttpLimits      *limits;                /**< Host resource limits */
-    MprHashTable    *mimeTypes;             /**< Hash table of mime types (key is extension) */
+    MprHash         *mimeTypes;             /**< Hash table of mime types (key is extension) */
 
     char            *home;                  /**< Directory for configuration files */
 
     int             traceLevel;             /**< Trace activation level */
     int             traceMaxLength;         /**< Maximum trace file length (if known) */
     int             traceMask;              /**< Request/response trace mask */
-    MprHashTable    *traceInclude;          /**< Extensions to include in trace */
-    MprHashTable    *traceExclude;          /**< Extensions to exclude from trace */
+    MprHash         *traceInclude;          /**< Extensions to include in trace */
+    MprHash         *traceExclude;          /**< Extensions to exclude from trace */
 
     char            *protocol;              /**< Defaults to "HTTP/1.1" */
     int             flags;                  /**< Host flags */
@@ -4788,7 +4825,7 @@ typedef struct HttpHost {
     @return Zero if the route can be added.
     @ingroup HttpHost
  */
-extern int httpAddRoute(HttpHost *host, HttpRoute *route);
+extern int httpAddRouteToHost(HttpHost *host, HttpRoute *route);
 
 /**
     Clone a host
@@ -4806,6 +4843,9 @@ extern HttpHost *httpCloneHost(HttpHost *parent);
     @ingroup HttpHost
  */
 extern HttpHost *httpCreateHost();
+
+//  MOB DOC
+extern void httpLogRoutes(HttpHost *host);
 
 /**
     Lookup a route by name
@@ -4913,10 +4953,10 @@ extern char *httpGetPathExt(cchar *path);
     @param defaultValue Value to use if "field" is not found in options
     @return Allocated value string.
  */
-extern cchar *httpGetOption(MprHashTable *options, cchar *field, cchar *defaultValue);
+extern cchar *httpGetOption(MprHash *options, cchar *field, cchar *defaultValue);
 
 //  MOB DOC
-extern MprHashTable *httpGetOptionHash(MprHashTable *options, cchar *field);
+extern MprHash *httpGetOptionHash(MprHash *options, cchar *field);
 
 /**
     Convert an options string into an options table
@@ -4924,7 +4964,7 @@ extern MprHashTable *httpGetOptionHash(MprHashTable *options, cchar *field);
         This is a sub-set of the JSON syntax. Arrays are not supported.
     @return Options table
  */
-extern MprHashTable *httpGetOptions(cchar *options);
+extern MprHash *httpGetOptions(cchar *options);
 
 /**
     Add an option to the options table
@@ -4932,10 +4972,11 @@ extern MprHashTable *httpGetOptions(cchar *options);
     @param field Field key name
     @param value Value to use for the field
  */
-extern void httpAddOption(MprHashTable *options, cchar *field, cchar *value);
+extern void httpAddOption(MprHash *options, cchar *field, cchar *value);
 
 //  MOB DOC
-extern void httpSetOption(MprHashTable *options, cchar *field, cchar *value);
+extern void httpSetOption(MprHash *options, cchar *field, cchar *value);
+extern void httpRemoveOption(MprHash *options, cchar *field);
 
 #ifdef __cplusplus
 } /* extern C */

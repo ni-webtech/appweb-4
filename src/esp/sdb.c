@@ -124,6 +124,7 @@ static Sdb *sdbCreate(cchar *path, int flags)
         return 0;
     }
     sdb->edi.flags = flags;
+    sdb->edi.provider = &SdbProvider;
     sdb->path = sclone(path);
     return sdb;
 }

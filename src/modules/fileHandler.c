@@ -14,15 +14,28 @@
 /***************************** Forward Declarations ***************************/
 
 //  MOB TODO -- more unique prefixes for combo dist
+static int findFile(HttpConn *conn);
 static void handleDeleteRequest(HttpQueue *q);
 static void handlePutRequest(HttpQueue *q);
 static ssize readFileData(HttpQueue *q, HttpPacket *packet, MprOff pos, ssize size);
 
 /*********************************** Code *************************************/
 
-static bool findFile(HttpQueue *q)
+static int checkFile(HttpConn *conn, HttpRoute *route)
 {
-    HttpConn    *conn;
+    HttpRx      *rx;
+    
+    rx = conn->rx;
+    httpMapFile(conn, route);
+    if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST)) {
+        return findFile(conn);
+    }
+    return HTTP_ROUTE_OK;
+}
+
+
+static int findFile(HttpConn *conn)
+{
     HttpRx      *rx;
     HttpTx      *tx;
     HttpUri     *prior;
@@ -30,7 +43,6 @@ static bool findFile(HttpQueue *q)
     MprPath     *info, zipInfo;
     char        *path, *pathInfo, *uri, *zipfile;
 
-    conn = q->conn;
     tx = conn->tx;
     rx = conn->rx;
     route = rx->route;
@@ -38,7 +50,6 @@ static bool findFile(HttpQueue *q)
     info = &tx->fileInfo;
 
     mprAssert(route->index);
-
     mprAssert(info->checked);
 
     if (info->isDir) {
@@ -49,7 +60,7 @@ static bool findFile(HttpQueue *q)
             pathInfo = sjoin(rx->pathInfo, "/", NULL);
             uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
             httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, uri);
-            return 0;
+            return HTTP_ROUTE_OK;
         } 
         if (route->index && *route->index) {
             /*  
@@ -60,20 +71,26 @@ static bool findFile(HttpQueue *q)
                 /*  
                     Index file exists, so do an internal redirect to it. Client will not be aware of this happening.
                  */
+#if UNUSED
                 pathInfo = mprJoinPath(rx->pathInfo, route->index);
+#else
+                pathInfo = sjoin(rx->scriptName, rx->pathInfo, route->index, NULL);
+#endif
                 uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
                 httpSetUri(conn, uri, 0);
                 tx->filename = path;
                 tx->ext = httpGetExt(conn);
                 mprGetPathInfo(tx->filename, info);
-                return 1;
+                return HTTP_ROUTE_REROUTE;
             }
         }
         if (info->isDir && maMatchDir(conn, route, HTTP_STAGE_TX)) {
             tx->handler = conn->http->dirHandler;
             tx->connector = conn->http->netConnector;
+#if UNUSED
             httpAssignQueue(q, conn->http->dirHandler, HTTP_QUEUE_TX);
-            return 0;
+#endif
+            return HTTP_ROUTE_OK;
         }
     }
     if (!info->valid && (route->flags & HTTP_ROUTE_GZIP) && rx->acceptEncoding && strstr(rx->acceptEncoding, "gzip") != 0) {
@@ -86,12 +103,10 @@ static bool findFile(HttpQueue *q)
     }
     if (!(info->valid || info->isDir) && !(conn->rx->flags & HTTP_PUT)) {
         httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", conn->tx->filename);
-        return 0;
-    }
-    if (tx->etag == 0 && info->valid) {
+    } else if (tx->etag == 0 && info->valid) {
         tx->etag = sfmt("\"%x-%Lx-%Lx\"", info->inode, info->size, info->mtime);
     }
-    return 1;
+    return HTTP_ROUTE_OK;
 }
 
 
@@ -112,12 +127,15 @@ static void openFile(HttpQueue *q)
     route = rx->route;
 
     mprLog(5, "Open file handler");
+#if UNUSED
     httpMapFile(conn, route);
-
+#endif
     if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST)) {
+#if UNUSED
         if (!findFile(q)) {
             return;
         }
+#endif
         if (tx->fileInfo.valid && tx->fileInfo.mtime) {
             //  TODO - OPT could cache this
             date = httpGetDateString(&tx->fileInfo);
@@ -437,6 +455,7 @@ int maOpenFileHandler(Http *http)
     if ((handler = httpCreateHandler(http, "fileHandler", 0, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
+    handler->check = checkFile;
     handler->open = openFile;
     handler->start = startFile;
     handler->process = processFile;

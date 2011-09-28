@@ -67,6 +67,7 @@ typedef struct MaPhp {
 static void flushOutput(void *context);
 static int initializePhp(Http *http);
 static void logMessage(char *message);
+static char *mapHyphen(char *str);
 static char *readCookies(TSRMLS_D);
 static int  readBodyData(char *buffer, uint len TSRMLS_DC);
 static void registerServerVars(zval *varArray TSRMLS_DC);
@@ -110,12 +111,13 @@ static sapi_module_struct phpSapiBlock = {
 };
 
 /********************************** Code ***************************/
-
-static bool matchPhp(HttpConn *conn, HttpRoute *route, int direction)
+#if UNUSED
+static int matchPhp(HttpConn *conn, HttpRoute *route, int direction)
 {
     httpTrimExtraPath(conn);
-    return 1;
+    return HTTP_ROUTE_OK;
 }
+#endif
 
 
 static void openPhp(HttpQueue *q)
@@ -125,6 +127,7 @@ static void openPhp(HttpQueue *q)
     rx = q->conn->rx;
 
     mprLog(5, "Open php handler");
+    httpTrimExtraPath(q->conn);
     if (rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
         httpHandleOptionsTrace(q->conn);
 
@@ -153,7 +156,7 @@ static void processPhp(HttpQueue *q)
     HttpConn            *conn;
     HttpRx              *rx;
     HttpTx              *tx;
-    MprHash             *hp;
+    MprKey              *kp;
     MaPhp               *php;
     FILE                *fp;
     char                shebang[MPR_MAX_STRING], *key;
@@ -208,24 +211,24 @@ static void processPhp(HttpQueue *q)
     } zend_end_try();
 
     zend_try {
-        hp = mprGetFirstKey(rx->headers);
-        while (hp) {
-            if (hp->data) {
-                key = sjoin("HTTP_", supper(hp->key), NULL);
-                php_register_variable(key, (char*) hp->data, php->var_array TSRMLS_CC);
-                mprLog(4, "php: header %s = %s", key, hp->data);
+        kp = mprGetFirstKey(rx->headers);
+        while (kp) {
+            if (kp->data) {
+                key = mapHyphen(sjoin("HTTP_", supper(kp->key), NULL));
+                php_register_variable(key, (char*) kp->data, php->var_array TSRMLS_CC);
+                mprLog(4, "php: header %s = %s", key, kp->data);
 
             }
-            hp = mprGetNextKey(rx->headers, hp);
+            kp = mprGetNextKey(rx->headers, kp);
         }
         if (rx->params) {
-            hp = mprGetFirstKey(rx->params);
-            while (hp) {
-                if (hp->data) {
-                    php_register_variable(supper(hp->key), (char*) hp->data, php->var_array TSRMLS_CC);
-                    mprLog(4, "php: form var %s = %s", hp->key, hp->data);
+            kp = mprGetFirstKey(rx->params);
+            while (kp) {
+                if (kp->data) {
+                    php_register_variable(supper(kp->key), (char*) kp->data, php->var_array TSRMLS_CC);
+                    mprLog(4, "php: form var %s = %s", kp->key, kp->data);
                 }
-                hp = mprGetNextKey(rx->params, hp);
+                kp = mprGetNextKey(rx->params, kp);
             }
         }
     } zend_end_try();
@@ -503,6 +506,19 @@ static int finalizePhp(MprModule *mp)
 }
 
 
+static char *mapHyphen(char *str)
+{
+    char    *cp;
+
+    for (cp = str; *cp; cp++) {
+        if (*cp == '-') {
+            *cp = '_';
+        }
+    }
+    return str;
+}
+
+
 /*
     Module initialization
  */
@@ -516,7 +532,9 @@ int maPhpHandlerInit(Http *http, MprModule *module)
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }
+#if UNUSED
     handler->match = matchPhp;
+#endif
     handler->open = openPhp;
     handler->process = processPhp;
     http->phpHandler = handler;

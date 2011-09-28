@@ -96,6 +96,7 @@ typedef void (*EspProc)(HttpConn *conn);
 
 //MOB DOC
 #define ESP_SECURITY_TOKEN_NAME "__esp_security_token__"
+#define ESP_FLASH_VAR           "__flash__"
 
 /********************************** Parsing ***********************************/
 /**
@@ -114,9 +115,9 @@ typedef struct EspParse {
     Top level ESP structure. This is a singleton.
  */
 typedef struct Esp {
-    MprHashTable    *actions;               /**< Table of actions */
-    MprHashTable    *views;                 /**< Table of views */
-    MprHashTable    *internalOptions;       /**< Table of internal HTML control options  */
+    MprHash         *actions;               /**< Table of actions */
+    MprHash         *views;                 /**< Table of views */
+    MprHash         *internalOptions;       /**< Table of internal HTML control options  */
     MprThreadLocal  *local;                 /**< Thread local data */
     MprCache        *cache;                 /**< Session and content cache */
     MprMutex        *mutex;                 /**< Multithread lock */
@@ -173,7 +174,7 @@ typedef struct EspRoute {
     @return A count of the bytes actually written
     @ingroup HttpQueue
  */
-extern void espCache(EspRoute *eroute, cchar *targetKey, int lifesecs, cchar *uri);
+extern void espCacheControl(EspRoute *eroute, cchar *targetKey, int lifesecs, cchar *uri);
 
 /**
     Compile a view or controller
@@ -332,6 +333,11 @@ extern int espSetSessionVar(HttpConn *conn, cchar *name, cchar *value);
  */
 extern char *espGetSessionID(HttpConn *conn);
 
+//  MOB DOC
+extern int espSetSessionObj(HttpConn *conn, cchar *name, MprHash *value);
+extern MprHash *espGetSessionObj(HttpConn *conn, cchar *name);
+extern void espClearFlash(HttpConn *conn);
+
 /********************************** Requests **********************************/
 /**
     View procedure callback
@@ -364,7 +370,8 @@ typedef struct EspReq {
     EspAction       *action;                /**< Action to invoke */
     Esp             *esp;                   /**< Convenient esp reference */
     MprBuf          *cacheBuffer;           /**< HTML output caching */
-    MprHashTable    *flash;                 /**< Flash messages */
+    MprHash         *flash;                 /**< New flash messages */
+    MprHash         *lastFlash;             /**< Flash messages from the last request */
     char            *cacheName;             /**< Base name of intermediate compiled file */
     char            *controllerName;        /**< Controller name */
     char            *controllerPath;        /**< Path to controller source */
@@ -462,10 +469,10 @@ extern cchar *espGetCookies(HttpConn *conn);
         Query data and www-url encoded form data is entered into the params table after decoding.
         Use #mprLookupKey to retrieve data from the table.
     @param conn HttpConn connection object
-    @return #MprHashTable instance containing the request parameters
+    @return #MprHash instance containing the request parameters
     @ingroup EspReq
  */
-extern MprHashTable *espGetParams(HttpConn *conn);
+extern MprHash *espGetParams(HttpConn *conn);
 
 /**
     Get an rx http header.
@@ -484,7 +491,7 @@ extern cchar *espGetHeader(HttpConn *conn, cchar *key);
     @return Hash table. See MprHash for how to access the hash table.
     @ingroup EspReq
  */
-extern MprHashTable *espGetHeaderHash(HttpConn *conn);
+extern MprHash *espGetHeaderHash(HttpConn *conn);
 
 /**
     Get all the requeset http headers.
@@ -873,7 +880,7 @@ extern EspRoute *getEroute();
 extern cchar *getMethod();
 extern void inform(cchar *fmt, ...);
 extern void notice(cchar *kind, cchar *fmt, ...);
-extern MprHashTable *params();
+extern MprHash *params();
 extern cchar *param(cchar *key, cchar *defaultValue);
 extern void redirect(cchar *target);
 extern cchar *session(cchar *key);
@@ -889,12 +896,16 @@ extern void writeView(cchar *view);
  */
 //  MOB - is it better to use "record":  createRecord, findRecord, saveRecord, or just save?
 //  MOB - consistency but use "record"
-extern EdiRec *createRec(cchar *tableName, MprHashTable *params);
-extern EdiRec *findRec(cchar *tableName, cchar *key);
 extern EdiGrid *findAll(cchar *tableName);
+extern EdiRec *createRec(cchar *tableName, MprHash *params);
+extern EdiRec *findRec(cchar *tableName, cchar *key);
 extern bool saveRec();
+extern bool save();
+extern bool removeRec(cchar *tableName, cchar *id);
+extern bool saveUpdate(MprHash *fields);
 extern EdiRec *getRec();
-extern void setRec(EdiRec *rec);
+extern bool testRec();
+extern void record(EdiRec *rec);
 
 //  MOB -- more needed here
 

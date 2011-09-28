@@ -20,19 +20,20 @@ static Esp *esp;
 
 /************************************ Forward *********************************/
 
-static void addDefaultRoutes(HttpRoute *parent);
-static void addRoutePack(HttpRoute *parent, cchar *pack, cchar *prefix, cchar *controller);
 static EspRoute *allocEspRoute(HttpRoute *loc);
 static bool fetchCachedResponse(HttpConn *conn);
+static char *getControllerEntry(cchar *controllerName);
 static EspRoute *getEspRoute(HttpRoute *route);
-static void manageAction(EspAction *cp, int flags);
+static int loadApp(HttpConn *conn, int *updated);
 static void manageEsp(Esp *esp, int flags);
 static void manageReq(EspReq *req, int flags);
+static char *makeCacheKey(HttpConn *conn, cchar *target, cchar *uri);
+static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *recompile);
 static int  runAction(HttpConn *conn);
 static void saveCachedResponse(HttpConn *conn);
-static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *recompile);
 static void setRouteDirs(MaState *state, cchar *kind);
 static bool unloadModule(cchar *module);
+static bool viewExists(HttpConn *conn);
 
 /************************************* Code ***********************************/
 
@@ -84,6 +85,59 @@ static void closeEsp(HttpQueue *q)
 }
 
 
+/************************************ Flash ***********************************/
+
+void espClearFlash(HttpConn *conn)
+{
+    EspReq      *req;
+
+    req = conn->data;
+    req->flash = 0;
+}
+
+
+static void setupFlash(HttpConn *conn)
+{
+    EspReq      *req;
+
+    req = conn->data;
+    if (espGetSession(conn, 0)) {
+        req->flash = espGetSessionObj(conn, ESP_FLASH_VAR);
+        req->lastFlash = 0;
+        if (req->flash) {
+            espSetSessionVar(conn, ESP_FLASH_VAR, "");
+            req->lastFlash = mprCloneHash(req->flash);
+        } else {
+            req->flash = 0;
+        }
+    }
+}
+
+
+static void finalizeFlash(HttpConn *conn)
+{
+    EspReq  *req;
+    MprKey  *kp, *lp;
+
+    req = conn->data;
+    if (req->flash) {
+        if (req->lastFlash) {
+            for (ITERATE_KEYS(req->flash, kp)) {
+                for (ITERATE_KEYS(req->lastFlash, lp)) {
+                    if (smatch(kp->key, lp->key) && kp->data == lp->data) {
+                        mprRemoveKey(req->flash, kp->key);
+                    }
+                }
+            }
+        }
+        if (mprGetHashLength(req->flash) > 0) {
+            espSetSessionObj(conn, ESP_FLASH_VAR, req->flash);
+        }
+    }
+}
+
+/************************************ Flash ***********************************/
+
 static void startEsp(HttpQueue *q)
 {
     HttpConn    *conn;
@@ -93,9 +147,7 @@ static void startEsp(HttpQueue *q)
     req = conn->data;
 
     if (req) {
-#if UNUSED
-        httpAddParams(conn);
-#endif
+        setupFlash(conn);
         if (!runAction(conn)) {
             return;
         }
@@ -105,213 +157,11 @@ static void startEsp(HttpQueue *q)
             }
             espFinalize(conn);
         }
+        if (httpIsFinalized(conn)) {
+            finalizeFlash(conn);
+        }
         saveCachedResponse(conn);
     }
-}
-
-
-static char *makeCacheKey(HttpConn *conn, cchar *target, cchar *uri)
-{
-    EspReq      *req;
-    EspRoute    *eroute;
-    HttpQueue   *q;
-    char        *path, *form, *key;
-
-    req = conn->data;
-    eroute = req->eroute;
-    q = conn->readq;
-
-    path = mprJoinPath(eroute->controllersDir, target);
-    if (uri) {
-        form = httpGetFormData(conn);
-        key = sfmt("content-%s:%s?%s", eroute->controllersDir, uri, form);
-        
-    } else {
-        key = sfmt("content-%s", mprJoinPath(eroute->controllersDir, target));
-    }
-    return key;
-}
-
-
-static bool fetchCachedResponse(HttpConn *conn)
-{
-    HttpRx      *rx;
-    EspReq      *req;
-    MprTime     modified, when;
-    cchar       *value, *extraUri, *content, *key, *tag;
-    int         status, cacheOk, canUseClientCache;
-
-    req = conn->data;
-    rx = conn->rx;
-
-    if (req->action && req->action->lifespan) {
-        extraUri = req->action ? req->action->cacheUri : 0;
-        if (extraUri && scmp(extraUri, "*") == 0) {
-            extraUri = conn->rx->pathInfo;
-        }
-        key = makeCacheKey(conn, rx->target, extraUri);
-        tag = mprGetMD5(key);
-
-        if ((value = httpGetHeader(conn, "Cache-Control")) != 0 && 
-                (scontains(value, "max-age=0", -1) == 0 || scontains(value, "no-cache", -1) == 0)) {
-            mprLog(5, "Cache-control header rejects use of cached content");
-
-        } else if ((content = mprReadCache(esp->cache, key, &modified, 0)) != 0) {
-            /*
-                Observe headers:
-                    If-None-Match: "ec18d-54-4d706a63"
-                    If-Modified-Since: Fri, 04 Mar 2011 04:28:19 GMT
-                Set status to OK when content must be transmitted.
-             */
-            cacheOk = 1;
-            canUseClientCache = 0;
-            if ((value = httpGetHeader(conn, "If-None-Match")) != 0) {
-                canUseClientCache = 1;
-                if (scmp(value, tag) != 0) {
-                    cacheOk = 0;
-                }
-            }
-            if (cacheOk && (value = httpGetHeader(conn, "If-Modified-Since")) != 0) {
-                canUseClientCache = 1;
-                mprParseTime(&when, value, 0, 0);
-                if (modified > when) {
-                    cacheOk = 0;
-                }
-            }
-            status = (canUseClientCache && cacheOk) ? HTTP_CODE_NOT_MODIFIED : HTTP_CODE_OK;
-            mprLog(5, "Use cached content for %s, status %d", key, status);
-            httpSetStatus(conn, status);
-            httpSetHeader(conn, "Etag", mprGetMD5(key));
-            httpSetHeader(conn, "Last-Modified", mprFormatUniversalTime(MPR_HTTP_DATE, modified));
-            if (status == HTTP_CODE_OK) {
-                espWriteString(conn, content);
-            }
-            return 1;
-        } else {
-            mprLog(5, "No cached content for %s", key);
-        }
-    }
-    return 0;
-}
-
-
-static void saveCachedResponse(HttpConn *conn)
-{
-    HttpRx      *rx;
-    EspReq      *req;
-    EspAction   *action;
-    MprBuf      *buf;
-    MprTime     modified;
-    char        *key, *extraUri;
-
-    req = conn->data;
-    rx = conn->rx;
-
-    if (req->finalized && req->cacheBuffer) {
-        buf = req->cacheBuffer;
-        req->cacheBuffer = 0;
-        mprAddNullToBuf(buf);
-        action = req->action;
-        extraUri = req->action->cacheUri;
-        if (action->cacheUri && scmp(action->cacheUri, "*") == 0) {
-            extraUri = conn->rx->pathInfo;
-        }
-        key = makeCacheKey(conn, rx->target, extraUri);
-        /*
-            Truncate modified to get a 1 sec resolution. This is the resolution for If-Modified headers
-         */
-        modified = mprGetTime() / MPR_TICKS_PER_SEC * MPR_TICKS_PER_SEC;
-        mprWriteCache(esp->cache, key, mprGetBufStart(buf), modified, action->lifespan, 0, 0);
-        httpAddHeader(conn, "Etag", mprGetMD5(key));
-        httpAddHeader(conn, "Last-Modified", mprFormatUniversalTime(MPR_HTTP_DATE, modified));
-        espWriteBlock(conn, mprGetBufStart(buf), mprGetBufLength(buf));
-        espFinalize(conn);
-    }
-}
-
-
-void espUpdateCache(HttpConn *conn, cchar *target, cchar *data, int lifesecs, cchar *uri)
-{
-    mprWriteCache(esp->cache, makeCacheKey(conn, target, uri), data, 0, lifesecs * MPR_TICKS_PER_SEC, 0, 0);
-}
-
-
-bool espWriteCached(HttpConn *conn, cchar *target, cchar *uri)
-{
-    EspReq      *req;
-    MprTime     modified;
-    cchar       *key, *content;
-
-    req = conn->data;
-    key = makeCacheKey(conn, target, uri);
-    if ((content = mprReadCache(esp->cache, key, &modified, 0)) == 0) {
-        mprLog(5, "No cached data for ", key);
-        return 0;
-    }
-    mprLog(5, "Used cached ", key);
-    req->cacheBuffer = 0;
-    espSetHeader(conn, "Etag", mprGetMD5(key));
-    espSetHeader(conn, "Last-Modified", mprFormatUniversalTime(MPR_HTTP_DATE, modified));
-    espWriteString(conn, content);
-    espFinalize(conn);
-    return 1;
-}
-
-
-static char *getControllerEntry(cchar *controllerName)
-{
-    char    *cp, *entry;
-
-    entry = sfmt("espInit_controller_%s", mprTrimPathExt(mprGetPathBase(controllerName)));
-    for (cp = entry; *cp; cp++) {
-        if (!isalnum((int) *cp) && *cp != '_') {
-            *cp = '_';
-        }
-    }
-    return entry;
-}
-
-
-/*
-    Load the (flat) app module. If modified, unload and reload if required.
- */
-static int loadApp(HttpConn *conn, int *updated)
-{
-    MprModule   *mp;
-    EspRoute    *eroute;
-    EspReq      *req;
-    MprPath     minfo;
-    char        *entry;
-
-    req = conn->data;
-    if (req->appLoaded) {
-        return 1;
-    }
-    *updated = 0;
-    eroute = req->eroute;
-    if ((mp = mprLookupModule(eroute->appModuleName)) != 0) {
-        if (eroute->update) {
-            mprGetPathInfo(mp->path, &minfo);
-            if (minfo.valid && mp->modified < minfo.mtime) {
-                unloadModule(eroute->appModuleName);
-                mp = 0;
-            }
-        }
-    }
-    if (mp == 0) {
-        entry = sfmt("espInit_app_%s", mprGetPathBase(eroute->dir));
-        if ((mp = mprCreateModule(eroute->appModuleName, eroute->appModulePath, entry, eroute)) == 0) {
-            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find module %s", eroute->appModulePath);
-            return 0;
-        }
-        if (mprLoadModule(mp) < 0) {
-            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load compiled esp module for %s", eroute->appModuleName);
-            return 0;
-        }
-        *updated = 1;
-    }
-    req->appLoaded = 1;
-    return 1;
 }
 
 
@@ -384,14 +234,17 @@ static int runAction(HttpConn *conn)
         req->controllerPath = mprJoinPath(eroute->controllersDir, req->controllerName);
         key = sfmt("%s/%s-missing", req->controllerPath, mprTrimPathExt(req->controllerName));
         if ((action = mprLookupKey(esp->actions, key)) == 0) {
-            if ((action = mprLookupKey(esp->actions, "missing")) == 0) {
-                httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Missing action for %s", rx->target);
-                return 0;
+            if (!viewExists(conn)) {
+                if ((action = mprLookupKey(esp->actions, "missing")) == 0) {
+                    httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Missing action for %s", rx->target);
+                    return 0;
+                }
             }
         }
     }
     req->action = action;
     
+    //  MOB - not right. What about action->lifespan
     if (eroute->lifespan) {
         /* Must stabilize form data prior to controllers injecting variables */
         httpGetFormData(conn);
@@ -400,16 +253,15 @@ static int runAction(HttpConn *conn)
         }
         req->cacheBuffer = mprCreateBuf(-1, -1);
     }
-    if (action->actionProc) {
+    if (action && action->actionProc) {
         //  MOB - does this need a lock
         mprSetThreadData(esp->local, conn);
         if (eroute->controllerBase) {
             (eroute->controllerBase)(conn);
         }
         (action->actionProc)(conn);
-        return 1;
     }
-    return 0;
+    return 1;
 }
 
 
@@ -429,7 +281,7 @@ void espWriteView(HttpConn *conn, cchar *name)
     
     if (name && *name) {
         req->view = mprJoinPath(eroute->viewsDir, name);
-        req->source = mprJoinPathExt(name, ".esp");
+        req->source = mprJoinPathExt(req->view, ".esp");
 
     } else if (req->controllerName) {
         req->view = mprJoinPath(eroute->viewsDir, rx->target);
@@ -484,6 +336,222 @@ void espWriteView(HttpConn *conn, cchar *name)
 }
 
 
+/************************************ Caching *********************************/
+
+static bool fetchCachedResponse(HttpConn *conn)
+{
+    HttpRx      *rx;
+    EspReq      *req;
+    MprTime     modified, when;
+    cchar       *value, *extraUri, *content, *key, *tag;
+    int         status, cacheOk, canUseClientCache;
+
+    req = conn->data;
+    rx = conn->rx;
+
+    if (req->action && req->action->lifespan) {
+        extraUri = req->action ? req->action->cacheUri : 0;
+        if (extraUri && scmp(extraUri, "*") == 0) {
+            extraUri = conn->rx->pathInfo;
+        }
+        key = makeCacheKey(conn, rx->target, extraUri);
+        tag = mprGetMD5(key);
+
+        if ((value = httpGetHeader(conn, "Cache-Control")) != 0 && 
+                (scontains(value, "max-age=0", -1) == 0 || scontains(value, "no-cache", -1) == 0)) {
+            mprLog(5, "Cache-control header rejects use of cached content");
+
+        } else if ((content = mprReadCache(esp->cache, key, &modified, 0)) != 0) {
+            /*
+                Observe headers:
+                    If-None-Match: "ec18d-54-4d706a63"
+                    If-Modified-Since: Fri, 04 Mar 2011 04:28:19 GMT
+                Set status to OK when content must be transmitted.
+             */
+            cacheOk = 1;
+            canUseClientCache = 0;
+            if ((value = httpGetHeader(conn, "If-None-Match")) != 0) {
+                canUseClientCache = 1;
+                if (scmp(value, tag) != 0) {
+                    cacheOk = 0;
+                }
+            }
+            if (cacheOk && (value = httpGetHeader(conn, "If-Modified-Since")) != 0) {
+                canUseClientCache = 1;
+                mprParseTime(&when, value, 0, 0);
+                if (modified > when) {
+                    cacheOk = 0;
+                }
+            }
+            status = (canUseClientCache && cacheOk) ? HTTP_CODE_NOT_MODIFIED : HTTP_CODE_OK;
+            mprLog(5, "Use cached content for %s, status %d", key, status);
+            httpSetStatus(conn, status);
+            httpSetHeader(conn, "Etag", mprGetMD5(key));
+            httpSetHeader(conn, "Last-Modified", mprFormatUniversalTime(MPR_HTTP_DATE, modified));
+            if (status == HTTP_CODE_OK) {
+                espWriteString(conn, content);
+            }
+            return 1;
+        } else {
+            mprLog(5, "No cached content for %s", key);
+        }
+    }
+    return 0;
+}
+
+
+static void saveCachedResponse(HttpConn *conn)
+{
+    HttpRx      *rx;
+    EspReq      *req;
+    EspAction   *action;
+    EspRoute    *eroute;
+    MprBuf      *buf;
+    MprTime     modified;
+    char        *key, *extraUri;
+    int         lifespan;
+
+    req = conn->data;
+    rx = conn->rx;
+
+    if (req->finalized && req->cacheBuffer) {
+        buf = req->cacheBuffer;
+        req->cacheBuffer = 0;
+        mprAddNullToBuf(buf);
+        if ((action = req->action) != 0) {
+            extraUri = req->action->cacheUri;
+            if (action->cacheUri && scmp(action->cacheUri, "*") == 0) {
+                extraUri = conn->rx->pathInfo;
+            }
+            lifespan = action->lifespan;
+        } else {
+            eroute = req->eroute;
+            lifespan = eroute->lifespan;
+        }
+        key = makeCacheKey(conn, rx->target, extraUri);
+        /*
+            Truncate modified time to get a 1 sec resolution. This is the resolution for If-Modified headers
+         */
+        modified = mprGetTime() / MPR_TICKS_PER_SEC * MPR_TICKS_PER_SEC;
+        mprWriteCache(esp->cache, key, mprGetBufStart(buf), modified, lifespan, 0, 0);
+        httpAddHeader(conn, "Etag", mprGetMD5(key));
+        httpAddHeader(conn, "Last-Modified", mprFormatUniversalTime(MPR_HTTP_DATE, modified));
+        espWriteBlock(conn, mprGetBufStart(buf), mprGetBufLength(buf));
+        espFinalize(conn);
+    }
+}
+
+
+bool espWriteCached(HttpConn *conn, cchar *target, cchar *uri)
+{
+    EspReq      *req;
+    MprTime     modified;
+    cchar       *key, *content;
+
+    req = conn->data;
+    key = makeCacheKey(conn, target, uri);
+    if ((content = mprReadCache(esp->cache, key, &modified, 0)) == 0) {
+        mprLog(5, "No cached data for ", key);
+        return 0;
+    }
+    mprLog(5, "Used cached ", key);
+    req->cacheBuffer = 0;
+    espSetHeader(conn, "Etag", mprGetMD5(key));
+    espSetHeader(conn, "Last-Modified", mprFormatUniversalTime(MPR_HTTP_DATE, modified));
+    espWriteString(conn, content);
+    espFinalize(conn);
+    return 1;
+}
+
+
+static char *makeCacheKey(HttpConn *conn, cchar *target, cchar *uri)
+{
+    EspReq      *req;
+    EspRoute    *eroute;
+    HttpQueue   *q;
+    char        *path, *form, *key;
+
+    req = conn->data;
+    eroute = req->eroute;
+    q = conn->readq;
+
+    path = mprJoinPath(eroute->controllersDir, target);
+    if (uri) {
+        form = httpGetFormData(conn);
+        key = sfmt("content-%s:%s?%s", eroute->controllersDir, uri, form);
+        
+    } else {
+        key = sfmt("content-%s", mprJoinPath(eroute->controllersDir, target));
+    }
+    return key;
+}
+
+
+void espUpdateCache(HttpConn *conn, cchar *target, cchar *data, int lifesecs, cchar *uri)
+{
+    mprWriteCache(esp->cache, makeCacheKey(conn, target, uri), data, 0, lifesecs * MPR_TICKS_PER_SEC, 0, 0);
+}
+
+
+/************************************ Support *********************************/
+
+static char *getControllerEntry(cchar *controllerName)
+{
+    char    *cp, *entry;
+
+    entry = sfmt("espInit_controller_%s", mprTrimPathExt(mprGetPathBase(controllerName)));
+    for (cp = entry; *cp; cp++) {
+        if (!isalnum((int) *cp) && *cp != '_') {
+            *cp = '_';
+        }
+    }
+    return entry;
+}
+
+
+/*
+    Load the (flat) app module. If modified, unload and reload if required.
+ */
+static int loadApp(HttpConn *conn, int *updated)
+{
+    MprModule   *mp;
+    EspRoute    *eroute;
+    EspReq      *req;
+    MprPath     minfo;
+    char        *entry;
+
+    req = conn->data;
+    if (req->appLoaded) {
+        return 1;
+    }
+    *updated = 0;
+    eroute = req->eroute;
+    if ((mp = mprLookupModule(eroute->appModuleName)) != 0) {
+        if (eroute->update) {
+            mprGetPathInfo(mp->path, &minfo);
+            if (minfo.valid && mp->modified < minfo.mtime) {
+                unloadModule(eroute->appModuleName);
+                mp = 0;
+            }
+        }
+    }
+    if (mp == 0) {
+        entry = sfmt("espInit_app_%s", mprGetPathBase(eroute->dir));
+        if ((mp = mprCreateModule(eroute->appModuleName, eroute->appModulePath, entry, eroute)) == 0) {
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find module %s", eroute->appModulePath);
+            return 0;
+        }
+        if (mprLoadModule(mp) < 0) {
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load compiled esp module for %s", eroute->appModuleName);
+            return 0;
+        }
+        *updated = 1;
+    }
+    req->appLoaded = 1;
+    return 1;
+}
+
+
 static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *recompile)
 {
     MprModule   *mp;
@@ -518,6 +586,22 @@ static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *rec
 }
 
 
+static bool viewExists(HttpConn *conn)
+{
+    HttpRx      *rx;
+    EspRoute    *eroute;
+    EspReq      *req;
+    cchar       *source;
+    
+    rx = conn->rx;
+    req = conn->data;
+    eroute = req->eroute;
+    
+    source = mprJoinPathExt(mprJoinPath(eroute->viewsDir, rx->target), ".esp");
+    return mprPathExists(source, R_OK);
+}
+
+
 static bool unloadModule(cchar *module)
 {
     MprModule   *mp;
@@ -541,61 +625,7 @@ static bool unloadModule(cchar *module)
 }
 
 
-void espCacheControl(EspRoute *eroute, cchar *target, int lifesecs, cchar *uri)
-{
-    EspAction  *action;
-    
-    if ((action = mprLookupKey(esp->actions, mprJoinPath(eroute->controllersDir, target))) == 0) {
-        if ((action = mprAllocObj(EspAction, manageAction)) == 0) {
-            return;
-        }
-    }
-    if (uri) {
-        action->cacheUri = sclone(uri);
-    }
-    if (lifesecs == 0) {
-        action->lifespan = eroute->lifespan;
-    } else {
-        action->lifespan = lifesecs * MPR_TICKS_PER_SEC;
-    }
-}
-
-
-void espDefineAction(EspRoute *eroute, cchar *target, void *actionProc)
-{
-    EspAction   *action;
-
-    mprAssert(eroute);
-    mprAssert(target && *target);
-    mprAssert(actionProc);
-
-    if ((action = mprAllocObj(EspAction, manageAction)) == 0) {
-        return;
-    }
-    action->actionProc = actionProc;
-    mprAddKey(esp->actions, mprJoinPath(eroute->controllersDir, target), action);
-}
-
-
-void espDefineBase(EspRoute *eroute, void *baseProc)
-{
-    eroute->controllerBase = baseProc;
-}
-
-
-/*
-    Path should be an app-relative path to the view file (relative-path.esp)
- */
-void espDefineView(EspRoute *eroute, cchar *path, void *view)
-{
-    mprAssert(eroute);
-    mprAssert(path && *path);
-    mprAssert(view);
-
-	path = mprGetPortablePath(mprJoinPath(eroute->dir, path));
-    mprAddKey(esp->views, path, view);
-}
-
+/************************************ Esp Route *******************************/
 
 static EspRoute *allocEspRoute(HttpRoute *route)
 {
@@ -611,12 +641,6 @@ static EspRoute *allocEspRoute(HttpRoute *route)
     if ((esp->views = mprCreateHash(-1, MPR_HASH_STATIC_VALUES)) == 0) {
         return 0;
     }
-#if FUTURE
-    //  MOB - only do this where required
-    if ((eroute->tls = mprCreateThreadLocal()) == 0) {
-        return 0;
-    }
-#endif
 #if DEBUG_IDE
     eroute->cacheDir = mprGetAppDir();
 #else
@@ -640,7 +664,7 @@ static EspRoute *allocEspRoute(HttpRoute *route)
     httpSetRoutePathVar(route, "STATIC_DIR", eroute->staticDir);
     httpSetRoutePathVar(route, "VIEWS_DIR", eroute->viewsDir);
 
-    eroute->lifespan = ESP_LIFESPAN;
+    eroute->lifespan = 0;
     eroute->keepSource = BLD_DEBUG;
 #if BLD_DEBUG
 	eroute->update = 1;
@@ -662,6 +686,8 @@ static EspRoute *cloneEspRoute(EspRoute *parent, HttpRoute *route)
     }
     httpSetRouteData(route, ESP_NAME, eroute);
     eroute->searchPath = parent->searchPath;
+    eroute->edi = parent->edi;
+    eroute->controllerBase = parent->controllerBase;
     eroute->appModuleName = parent->appModuleName;
     eroute->appModulePath = parent->appModulePath;
     eroute->update = parent->update;
@@ -734,84 +760,6 @@ static void setMvcDirs(EspRoute *eroute, HttpRoute *route)
 }
 
 
-static HttpRoute *addRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, cchar *controller)
-{
-    HttpRoute   *route;
-
-    if ((route = httpCreateInheritedRoute(parent)) == 0) {
-        return 0;
-    }
-    httpSetRouteName(route, name);
-    httpSetRoutePattern(route, pattern, 0);
-    if (methods) {
-        httpSetRouteMethods(route, methods);
-    }
-    if (controller) {
-        httpSetRouteSource(route, controller);
-    }
-    httpSetRouteTarget(route, "run", target);
-    httpFinalizeRoute(route);
-    return route;
-}
-
-
-static void addRestfulRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, 
-    cchar *controller, cchar *prefix, cchar *controllerPattern)
-{
-    pattern = sfmt(pattern, prefix);
-    target = sfmt(target, controllerPattern);
-    controller = sfmt(controller, controllerPattern);
-    addRoute(parent, name, methods, pattern, target, controller);
-}
-
-
-static void addRestfulRoutes(HttpRoute *parent, cchar *prefix, cchar *controller)
-{
-    addRestfulRoute(parent, "init",    "GET",    "^/%s/init",             "%s-init",      "%s.c", prefix, controller);
-    addRestfulRoute(parent, "index",   "GET",    "^/%s(/)$",              "%s-index",     "%s.c", prefix, controller);
-    addRestfulRoute(parent, "create",  "POST",   "^/%s(/)",               "%s-create",    "%s.c", prefix, controller);
-    addRestfulRoute(parent, "edit",    "GET",    "^/%s/{id=[0-9]+}/edit", "%s-edit",      "%s.c", prefix, controller);
-    addRestfulRoute(parent, "show",    "GET",    "^/%s/{id=[0-9]+}",      "%s-show",      "%s.c", prefix, controller);
-    addRestfulRoute(parent, "update",  "PUT",    "^/%s/{id=[0-9]+}",      "%s-update",    "%s.c", prefix, controller);
-    addRestfulRoute(parent, "destroy", "DELETE", "^/%s/{id=[0-9]+}",      "%s-destroy",   "%s.c", prefix, controller);
-    addRestfulRoute(parent, "default", "ALL",    "^/%s(~/{action}~)",     "%s-${action}", "%s.c", prefix, controller);
-}
-
-
-static void addDefaultRoutes(HttpRoute *parent)
-{
-    cchar   *controller;
-
-    controller = parent->sourceName;
-    addRoute(parent, "home", "GET,POST,PUT", "^/$", stemplate("${STATIC_DIR}/index.esp", parent->pathTokens), controller);
-    addRoute(parent, "static", "GET", "^/static/(.*)", stemplate("${STATIC_DIR}/$1", parent->pathTokens), controller);
-}
-
-
-static void addRoutePack(HttpRoute *parent, cchar *pack, cchar *prefix, cchar *controller)
-{
-    if (scasematch(pack, "simple")) {
-        addDefaultRoutes(parent);
-
-    } else if (scasematch(pack, "mvc")) {
-        addDefaultRoutes(parent);
-        addRoute(parent, "default", NULL, "^/{controller}(~/{action}~)", "${controller}-${action}", "${controller}.c");
-
-    } else if (scasematch(pack, "restful")) {
-        if (prefix == 0) {
-            prefix = "{controller}";
-        }
-        if (controller == 0) {
-            controller = "${controller}";
-        }
-        addRestfulRoutes(parent, prefix, controller);
-
-    } else if (!scasematch(pack, "none")) {
-        mprError("Unknown route pack %s", pack);
-    }
-}
-
-
 void espManageEspRoute(EspRoute *eroute, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
@@ -852,14 +800,6 @@ static void manageReq(EspReq *req, int flags)
         mprMark(req->session);
         mprMark(req->source);
         mprMark(req->view);
-    }
-}
-
-
-static void manageAction(EspAction *ap, int flags)
-{
-    if (flags & MPR_MANAGE_MARK) {
-        mprMark(ap->cacheUri);
     }
 }
 
@@ -926,60 +866,58 @@ static void setRouteDirs(MaState *state, cchar *kind)
 }
 
 
+/*********************************** Directives *******************************/
 /*
-    EspApp scriptName [path [routePack]]
+    EspApp appName [path [routeSet]]
 
     This should only be used inside dedicated ESP routes. This directive is equivalent to:
 
-        Prefix       scriptName
+        Prefix       appName
         DocumentRoot path
-        SetHandler   espHandler
-        EspRoutePack routePack
+        AddHandler   espHandler
+        EspDir       routeSet
+        EspRouteSet  routeSet
  */
 static int espAppDirective(MaState *state, cchar *key, cchar *value)
 {
     HttpRoute   *route;
     EspRoute    *eroute;
-    char        *scriptName, *path, *routePack;
+    char        *appName, *path, *routeSet;
 
     route = state->route;
     if ((eroute = getEspRoute(route)) == 0) {
         return MPR_ERR_MEMORY;
     }
-    if (!maTokenize(state, value, "%S %S ?S", &scriptName, &path, &routePack)) {
+    if (!maTokenize(state, value, "%S %S ?S", &appName, &path, &routeSet)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if (*scriptName != '/') {
+    if (*appName != '/') {
         mprError("Script name should start with a \"/\"");
-        scriptName = sjoin("/", scriptName, NULL);
+        appName = sjoin("/", appName, NULL);
     }
-    scriptName = stemplate(scriptName, route->pathTokens);
-    if (scriptName == 0 || *scriptName == '\0' || scmp(scriptName, "/") == 0) {
-        scriptName = MPR->emptyString;
+    appName = stemplate(appName, route->pathTokens);
+    if (appName == 0 || *appName == '\0' || scmp(appName, "/") == 0) {
+        appName = MPR->emptyString;
     } else {
-        httpSetRoutePrefix(route, scriptName);
+        httpSetRoutePrefix(route, appName);
     }
     if (route->pattern == 0) {
-        httpSetRoutePattern(route, sjoin("/", scriptName, NULL), 0);
+        httpSetRoutePattern(route, sjoin("/", appName, NULL), 0);
     }
     httpSetRouteSource(route, "");
     httpSetRouteDir(route, path);
     eroute->dir = route->dir;
     httpAddRouteHandler(route, "espHandler", "");
     
-    /* Must set dirs first before defining route pack */
-    setRouteDirs(state, routePack);
-    addRoutePack(state->route, routePack, 0, 0);
-#if UNUSED
-    //  MOB - is this needed or desired
-    httpSetRouteTarget(route, "file", 0);
-#endif
+    /* Must set dirs first before defining route set */
+    setRouteDirs(state, routeSet);
+    httpAddRouteSet(state->route, routeSet, "{controller}", "${controller}");
     return 0;
 }
 
 
 /*
-    EspAppAlias scriptName [path [routePackage]]
+    EspAppAlias appName [path [routeSet]]
  */
 static int espAppAliasDirective(MaState *state, cchar *key, cchar *value)
 {
@@ -994,6 +932,21 @@ static int espAppAliasDirective(MaState *state, cchar *key, cchar *value)
     rc = espAppDirective(state, key, value);
     maPopState(state);
     return rc;
+}
+
+
+/*
+    EspCache lifespan
+ */
+static int espCacheDirective(MaState *state, cchar *key, cchar *value)
+{
+    EspRoute    *eroute;
+
+    if ((eroute = getEspRoute(state->route)) == 0) {
+        return MPR_ERR_MEMORY;
+    }
+    eroute->lifespan = (MprTime) stoi(value, 10, NULL);
+    return 0;
 }
 
 
@@ -1052,7 +1005,7 @@ static int espDirDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S ?S", &name, &path)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if (scmp(name, "mvc") == 0) {
+    if (scmp(name, "mvc") == 0 || scmp(name, "restful") == 0) {
         setMvcDirs(eroute, state->route);
     } else {
         path = stemplate(mprJoinPath(state->host->home, path), state->route->pathTokens);
@@ -1184,10 +1137,73 @@ static int espLoadDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+#if UNUSED
+static cchar *inheritPrefix(MaState *state, cchar *prefix)
+{
+    return state->route->prefix ? sjoin(state->route->prefix, "/", prefix, NULL) : prefix;
+}
+#endif
+    
+
 /*
-    EspRoutePack kind [/prefix controller]
+    EspResource [name ...]
  */
-static int espRoutePackDirective(MaState *state, cchar *key, cchar *value)
+static int espResourceDirective(MaState *state, cchar *key, cchar *value)
+{
+    char    *name, *next;
+
+    if (value == 0 || *value == '\0') {
+        httpAddResource(state->route, "{controller}", "${controller}");
+    } else {
+        name = stok(sclone(value), ", \t\r\n", &next);
+        while (name) {
+            httpAddResource(state->route, name, name);
+            name = stok(NULL, ", \t\r\n", &next);
+        }
+    }
+    return 0;
+}
+
+
+/*
+    EspResourceGroup name ...
+ */
+static int espResourceGroupDirective(MaState *state, cchar *key, cchar *value)
+{
+    char    *name, *next;
+
+    if (value == 0 || *value == '\0') {
+        httpAddResourceGroup(state->route, "{controller}", "${controller}");
+    } else {
+        name = stok(sclone(value), ", \t\r\n", &next);
+        while (name) {
+            httpAddResourceGroup(state->route, name, name);
+            name = stok(NULL, ", \t\r\n", &next);
+        }
+    }
+    return 0;
+}
+
+
+/*
+    EspRoute name methods pattern target source
+ */
+static int espRouteDirective(MaState *state, cchar *key, cchar *value)
+{
+    char    *name, *methods, *pattern, *target, *source;
+
+    if (!maTokenize(state, value, "%S %S %S %S %S", &name, &methods, &pattern, &target, &source)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    httpAddRoute(state->route, name, methods, pattern, target, source);
+    return 0;
+}
+
+
+/*
+    EspRouteSet kind [/prefix controller]
+ */
+static int espRouteSetDirective(MaState *state, cchar *key, cchar *value)
 {
     EspRoute    *eroute;
     char        *kind, *prefix, *controller;
@@ -1204,22 +1220,7 @@ static int espRoutePackDirective(MaState *state, cchar *key, cchar *value)
     } else {
         prefix = strim(prefix, "/", MPR_TRIM_START);
     }
-    addRoutePack(state->route, kind, prefix, controller);
-    return 0;
-}
-
-
-/*
-    EspRoute name methods pattern target source
- */
-static int espRouteDirective(MaState *state, cchar *key, cchar *value)
-{
-    char        *name, *methods, *pattern, *target, *source;
-
-    if (!maTokenize(state, value, "%S %S %S %S %S", &name, &methods, &pattern, &target, &source)) {
-        return MPR_ERR_BAD_SYNTAX;
-    }
-    addRoute(state->route, name, methods, pattern, target, source);
+    httpAddRouteSet(state->route, kind, prefix, controller);
     return 0;
 }
 
@@ -1261,13 +1262,14 @@ static int espUpdateDirective(MaState *state, cchar *key, cchar *value)
     return 0;
 }
 
+/************************************ Init ************************************/
 
 int maEspHandlerInit(Http *http, MprModule *mp)
 {
     HttpStage   *handler;
     MaAppweb    *appweb;
 
-    if ((handler = httpCreateHandler(http, "espHandler", HTTP_STAGE_PARAMS, NULL)) == 0) {
+    if ((handler = httpCreateHandler(http, "espHandler", 0, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     handler->open = openEsp; 
@@ -1295,6 +1297,7 @@ int maEspHandlerInit(Http *http, MprModule *mp)
     appweb = httpGetContext(http);
     maAddDirective(appweb, "EspApp", espAppDirective);
     maAddDirective(appweb, "EspAppAlias", espAppAliasDirective);
+    maAddDirective(appweb, "EspCache", espCacheDirective);
     maAddDirective(appweb, "EspCompile", espCompileDirective);
     maAddDirective(appweb, "EspDb", espDbDirective);
     maAddDirective(appweb, "EspDir", espDirDirective);
@@ -1303,8 +1306,10 @@ int maEspHandlerInit(Http *http, MprModule *mp)
     maAddDirective(appweb, "EspLifespan", espLifespanDirective);
     maAddDirective(appweb, "EspLink", espLinkDirective);
     maAddDirective(appweb, "EspLoad", espLoadDirective);
+    maAddDirective(appweb, "EspResource", espResourceDirective);
+    maAddDirective(appweb, "EspResourceGroup", espResourceGroupDirective);
     maAddDirective(appweb, "EspRoute", espRouteDirective);
-    maAddDirective(appweb, "EspRoutePack", espRoutePackDirective);
+    maAddDirective(appweb, "EspRouteSet", espRouteSetDirective);
     maAddDirective(appweb, "EspShowErrors", espShowErrorsDirective);
     maAddDirective(appweb, "EspUpdate", espUpdateDirective);
 
@@ -1330,7 +1335,6 @@ int maEspHandlerInit(Http *http)
     mprNop(0);
     return 0;
 }
-
 
 #endif /* BLD_FEATURE_ESP */
 /*

@@ -310,7 +310,7 @@ static int aliasDirective(MaState *state, cchar *key, cchar *value)
         httpSetRoutePattern(alias, sfmt("^%s(.*)$", prefix), 0);
         httpSetRouteTarget(alias, "run", "$1");
     } else {
-        alias = httpCreateAliasRoute(state->route, prefix, 0, 0);
+        alias = httpCreateAliasRoute(state->route, sjoin("^", prefix, NULL), 0, 0);
         httpSetRouteTarget(alias, "run", path);
     }
     httpFinalizeRoute(alias);
@@ -1027,22 +1027,12 @@ static int logRotationDirective(MaState *state, cchar *key, cchar *value)
 
 /*
     LogRoutes 
+    MOB - support two formats line for one line, and multiline with more fields
  */
 static int logRoutesDirective(MaState *state, cchar *key, cchar *value)
 {
-    HttpRoute   *rp;
-    cchar       *methods;
-    int         next;
-
     mprLog(0, "HTTP Routes for URI %s", state->route->pattern);
-    for (next = 0; (rp = mprGetNextItem(state->host->routes, &next)) != 0; ) {
-        methods = httpGetRouteMethods(rp);
-        if (rp->target) {
-            mprLog(0, "  %-12s %-16s %-30s %-14s", rp->name, methods ? methods : "", rp->pattern, rp->target);
-        } else {
-            mprLog(0, "  %-12s %-16s %-30s", rp->name, methods ? methods : "", rp->pattern);
-        }
-    }
+    httpLogRoutes(state->host);
     return 0;
 }
 
@@ -1116,7 +1106,6 @@ static int loadModulePathDirective(MaState *state, cchar *key, cchar *value)
     sep = MPR_SEARCH_SEP;
     lib = mprJoinPath(mprGetPathParent(mprGetAppDir()), BLD_LIB_NAME);
     path = sjoin(value, sep, mprGetAppDir(), sep, lib, sep, BLD_LIB_PREFIX, NULL);
-print("MOB1 %s", path);
     mprSetModuleSearchPath(path);
     return 0;
 }
@@ -1241,9 +1230,17 @@ static int paramDirective(MaState *state, cchar *key, cchar *value)
 
 /*
     Prefix /URI-PREFIX
+    NOTE: For nested routes, the prefix value will be appended out any existing parent route prefix.
+    NOTE: Prefixes do append, but route patterns do not.
  */
 static int prefixDirective(MaState *state, cchar *key, cchar *value)
 {
+#if FUTURE && UNUSED
+    //  MOB - not sure if this is a good idea
+    if (state->route->prefix) {
+        value = sjoin(state->route->prefix, value, NULL);
+    }
+#endif
     httpSetRoutePrefix(state->route, value);
     return 0;
 }
@@ -1395,20 +1392,29 @@ static int resetPipelineDirective(MaState *state, cchar *key, cchar *value)
 
 /*
     <Route pattern>
+    NOTE: routes do not prepend their parent route prefixes
  */
 static int routeDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *pattern;
-    int     not;
+    HttpRoute   *route;
+    char        *pattern;
+    int         not;
 
     state = maPushState(state);
     if (state->enabled) {
         if (!maTokenize(state, value, "%!%S", &not, &pattern)) {
             return MPR_ERR_BAD_SYNTAX;
         }
-        state->route = httpCreateInheritedRoute(state->route);
-        httpSetRoutePattern(state->route, pattern, not);
-        httpSetRouteHost(state->route, state->host);
+        if (strstr(pattern, "${")) {
+            pattern = sreplace(pattern, "${inherit}", state->route->pattern);
+        }
+        if ((route = httpLookupRoute(state->host, pattern)) != 0) {
+            state->route = route;
+        } else {
+            state->route = httpCreateInheritedRoute(state->route);
+            httpSetRoutePattern(state->route, pattern, not);
+            httpSetRouteHost(state->route, state->host);
+        }
         /* Routes are added when the route block is closed (see closeDirective) */
         state->auth = state->route->auth;
     }
@@ -1417,9 +1423,9 @@ static int routeDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    RouteName name
+    Name routeName
  */
-static int routeNameDirective(MaState *state, cchar *key, cchar *value)
+static int nameDirective(MaState *state, cchar *key, cchar *value)
 {
     httpSetRouteName(state->route, value);
     return 0;
@@ -1520,6 +1526,16 @@ static int targetDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_BAD_SYNTAX;
     }
     return setTarget(state, name, details);
+}
+
+
+/*
+    Template routeName
+ */
+static int templateDirective(MaState *state, cchar *key, cchar *value)
+{
+    httpSetRouteTemplate(state->route, value);
+    return 0;
 }
 
 
@@ -2024,6 +2040,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "MaxKeepAliveRequests", maxKeepAliveRequestsDirective);
     maAddDirective(appweb, "MemoryDepletionPolicy", memoryDepletionPolicyDirective);
     maAddDirective(appweb, "Methods", methodsDirective);
+    maAddDirective(appweb, "Name", nameDirective);
     maAddDirective(appweb, "NameVirtualHost", nameVirtualHostDirective);
     maAddDirective(appweb, "Order", orderDirective);
     maAddDirective(appweb, "Param", paramDirective);
@@ -2038,7 +2055,6 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "ResetPipeline", resetPipelineDirective);
     maAddDirective(appweb, "<Route", routeDirective);
     maAddDirective(appweb, "</Route", closeDirective);
-    maAddDirective(appweb, "RouteName", routeNameDirective);
     maAddDirective(appweb, "ServerName", serverNameDirective);
     maAddDirective(appweb, "ServerRoot", serverRootDirective);
     maAddDirective(appweb, "SetConnector", setConnectorDirective);
@@ -2046,6 +2062,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "Source", sourceDirective);
     maAddDirective(appweb, "StartThreads", startThreadsDirective);
     maAddDirective(appweb, "Target", targetDirective);
+    maAddDirective(appweb, "Template", templateDirective);
     maAddDirective(appweb, "Timeout", timeoutDirective);
     maAddDirective(appweb, "ThreadLimit", threadLimitDirective);
     maAddDirective(appweb, "ThreadStackSize", threadStackSizeDirective);

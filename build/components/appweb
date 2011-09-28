@@ -45,7 +45,7 @@ defineComponent() {
         appweb=`probe --exe --name appweb --search "$search" appweb`
         incdir=`probe --name appweb.h --dir --search "$search" "appweb.h" `
         if [ "$incdir" != "" ] ; then
-            headers="`echo $incdir/appweb*.h $incdir/server/appwebMonitor.h $incdir/esp/esp.h`"
+            headers="`echo $incdir/appweb*.h $incdir/server/appwebMonitor.h $incdir/esp/*.h`"
         fi
         http=`probe --exe --name http --search "$search" http`
         if [ "$http" != "" ] ; then
@@ -59,7 +59,7 @@ defineComponent() {
             present="--present 0"
         fi
     else
-        imports="src/appweb*.h src/server/appwebMonitor.h src/customize.h src/esp/esp.h"
+        imports="src/appweb*.h src/server/appwebMonitor.h src/customize.h src/esp/*.h"
     fi
     configureComponent --libs "$libs" --libpaths "$libdir" --withlibs "$withlibs" $builtin \
         $present --dependencies "$deps" --optional-dependencies "$optional" --imports "$imports" --path "$appweb" appweb

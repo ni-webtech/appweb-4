@@ -203,7 +203,7 @@ int ediSetField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar 
 }
 
 
-int ediSetRec(Edi *edi, cchar *tableName, cchar *key, MprHashTable *params)
+int ediSetRec(Edi *edi, cchar *tableName, cchar *key, MprHash *params)
 {
     return edi->provider->setRec(edi, tableName, key, params);
 }
@@ -309,11 +309,16 @@ EdiRec *ediCreateRec(Edi *edi, cchar *tableName, cchar *id, int nfields, EdiFiel
     mprSetAllocName(rec, "record");
     mprSetManager(rec, ediManageEdiRec);
 
+    rec->edi = edi;
     rec->tableName = sclone(tableName);
-    rec->id = sclone(id);
+    if (id && *id) {
+        rec->id = sclone(id);
+    }
     //  MOB - should this copy the row (YES)
     rec->nfields = nfields;
-    memmove(rec->fields, fields, sizeof(EdiField) * nfields);
+    if (fields) {
+        memmove(rec->fields, fields, sizeof(EdiField) * nfields);
+    }
     return rec;
 }
 
@@ -339,7 +344,7 @@ void ediManageEdiRec(EdiRec *rec, int flags)
 }
 
 
-EdiGrid *ediCreateGrid(int nrows)
+EdiGrid *ediCreateGrid(Edi *edi, cchar *tableName, int nrows)
 {
     EdiGrid  *grid;
 
@@ -348,6 +353,9 @@ EdiGrid *ediCreateGrid(int nrows)
     }
     mprSetAllocName(grid, "grid");
     mprSetManager(grid, manageEdiGrid);
+    grid->nrecords = nrows;
+    grid->edi = edi;
+    grid->tableName = sclone(tableName);
     return grid;
 }
 
@@ -558,13 +566,20 @@ MprList *ediGetGridColumns(EdiGrid *grid)
 
 int ediGetRecFieldType(EdiRec *rec, cchar *fieldName)
 {
+    int     type;
+    
+    if (ediGetSchema(rec->edi, rec->tableName, fieldName, &type, NULL) < 0) {
+        return 0;
+    }
+    return type;
+#if UNUSED
     EdiField    field;
-
     field = ediGetRecField(rec, fieldName);
     if (!field.valid) {
         return 0;
     }
     return field.type;
+#endif
 }
 
 
@@ -575,7 +590,7 @@ cchar *ediGetRecFieldAsString(EdiRec *rec, cchar *fieldName, cchar *fmt)
 
     field = ediGetRecField(rec, fieldName);
     if (!field.valid) {
-        return 0;
+        return "";
     }
     return ediToString(fmt, field);
 }

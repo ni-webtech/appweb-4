@@ -46,7 +46,7 @@ struct MaServer;
 typedef struct MaAppweb {
     struct MaServer     *defaultServer;     /**< Default server object */
     MprList             *servers;           /**< List of server objects */
-    MprHashTable        *directives;        /**< Config file directives */
+    MprHash             *directives;        /**< Config file directives */
     Http                *http;              /**< Http service object */
     char                *user;              /**< O/S application user name */
     char                *group;             /**< O/S application group name */
@@ -126,11 +126,11 @@ extern struct MaServer *maLookupServer(MaAppweb *appweb, cchar *name);
     @param conn Connection object
     @param route Matching route object
     @param direction Set to HTTP_STAGE_TX or HTTP_STAGE_RX
-    @return True if the request matches
+    @return HTTP_ROUTE_OK if the request matches.
     @ingroup Appweb
     @internal
  */
-extern bool maMatchDir(HttpConn *conn, HttpRoute *route, int direction);
+extern int maMatchDir(HttpConn *conn, HttpRoute *route, int direction);
 
 //  MOB - sort
 //  MOB - rename

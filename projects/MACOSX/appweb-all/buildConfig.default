@@ -516,7 +516,7 @@ else
     #define BLD_HTTP_BUILTIN 1
     #define BLD_HTTP_IMPORTS "${BLD_TOP}/src/deps/http/http.h "
     #define BLD_HTTP_LIBS "http pcre"
-    #define BLD_HTTP_WITH_LIBS "pcre"
+    #define BLD_HTTP_WITHLIBS "pcre"
     #define BLD_FEATURE_OPENSSL 1
     #define BLD_OPENSSL_BUILTIN 0
     #define BLD_OPENSSL_LIBS "ssl crypto"

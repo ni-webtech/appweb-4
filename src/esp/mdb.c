@@ -15,48 +15,6 @@
 #if BLD_FEATURE_ESP
 /************************************* Local **********************************/
 
-#if FUTURE
-/*
-    Validation messages
- */
-static char *errorMessages[] = {
-    accepted: "must be accepted",
-    blank: "can't be blank",
-    confirmation: "doesn't match confirmation",
-    empty: "can't be empty",
-    invalid: "is invalid",
-    missing: "is missing",
-    notNumber: "is not a number",
-    notUnique: "is not unique",
-    taken: "already taken",
-    tooLong: "is too long",
-    tooShort: "is too short",
-    wrongLength: "wrong length",
-    wrongFormat: "wrong format",
-}
-#endif
-
-/*
-    Database Load parsing states. Sample database:
-    {
-        users: {
-            hints: {
-                nrows: 2,
-                ncols: 3,
-            },
-            schema: {
-                name: { index: 'true', type: 'string' },
-                food: { type: 'string' },
-            },
-            data: [
-                [ 'Julie', 'Chinese' ],
-                [ 'John', 'Fish' ],
-                [ 'Mary', 'Salad' ],
-            ],
-        },
-    }
-
-*/
 #define MDB_LOAD_BEGIN   1       /* Initial state */
 #define MDB_LOAD_TABLE   2       /* Parsing a table */
 #define MDB_LOAD_HINTS   3       /* Parsing hints */
@@ -69,7 +27,7 @@ static char *errorMessages[] = {
 
 static void autoSave(Mdb *mdb, MdbTable *table);
 static MdbCol *createCol(MdbTable *table, cchar *columnName);
-static EdiRec *createRec(MdbRow *row);
+static EdiRec *createRec(Edi *edi, MdbRow *row);
 static MdbRow *createRow(Mdb *mdb, MdbTable *table);
 static cchar *eatSpace(cchar *tok);
 static cchar *findEndKeyword(Mdb *mdb, cchar *str);
@@ -78,6 +36,7 @@ static MdbCol *getCol(MdbTable *table, int col);
 static EdiField getField(MdbRow *row, int fid);
 static MdbRow *getRow(MdbTable *table, int rid);
 static MdbTable *getTable(Mdb *mdb, int tid);
+MdbSchema *growSchema(MdbTable *table);
 static MdbCol *lookupColumn(MdbTable *table, cchar *columnName);
 static int lookupRow(MdbTable *table, cchar *key);
 static MdbTable *lookupTable(Mdb *mdb, cchar *tableName);
@@ -89,6 +48,7 @@ static void manageTable(MdbTable *table, int flags);
 static int parseMdb(Mdb *mdb);
 static void parseError(Mdb *mdb, cchar *fmt, ...);
 static int parseType(cchar *type);
+static void setAutoInc(MdbRow *row, MdbCol *col);
 static int setField(MdbRow *row, MdbCol *col, cchar *value);
 
 static int mdbAddColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
@@ -105,7 +65,7 @@ static EdiRec *mdbGetRec(Edi *edi, cchar *tableName, cchar *key);
 static int mdbGetSchema(Edi *edi, cchar *tableName, cchar *columnName, int *type, int *flags);
 static MprList *mdbGetTables(Edi *edi);
 static int mdbLoad(Edi *edi, cchar *path);
-static int mdbLoadString(Edi *edi, cchar *string);
+static int mdbLoadFromString(Edi *edi, cchar *string);
 static int mdbLookupField(Edi *edi, cchar *tableName, cchar *fieldName);
 static Edi *mdbOpen(cchar *path, int flags);
 static EdiGrid *mdbQuery(Edi *edi, cchar *cmd);
@@ -115,36 +75,14 @@ static int mdbRemoveTable(Edi *edi, cchar *tableName);
 static int mdbRenameTable(Edi *edi, cchar *tableName, cchar *newTableName);
 static int mdbRenameColumn(Edi *edi, cchar *tableName, cchar *columnName, cchar *newColumnName);
 static int mdbSetField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value, int flags);
-static int mdbSetRec(Edi *edi, cchar *tableName, cchar *key, MprHashTable *params);
+static int mdbSetRec(Edi *edi, cchar *tableName, cchar *key, MprHash *params);
 static int mdbSave(Edi *edi);
 
 EdiProvider MdbProvider = {
     "mdb",
-    mdbAddColumn,
-    mdbAddIndex,
-    mdbAddTable,
-    mdbChangeColumn,
-    mdbClose,
-    mdbDelete,
-    mdbDeleteRow,
-    mdbGetAll,
-    mdbGetColumns,
-    mdbGetField,
-    mdbGetRec,
-    mdbGetSchema,
-    mdbGetTables,
-    mdbLoad,
-    mdbLookupField,
-    mdbOpen,
-    mdbQuery,
-    mdbRemoveColumn,
-    mdbRemoveIndex,
-    mdbRemoveTable,
-    mdbRenameTable,
-    mdbRenameColumn,
-    mdbSetField,
-    mdbSetRec,
-    mdbSave,
+    mdbAddColumn, mdbAddIndex, mdbAddTable, mdbChangeColumn, mdbClose, mdbDelete, mdbDeleteRow, mdbGetAll, mdbGetColumns,
+    mdbGetField, mdbGetRec, mdbGetSchema, mdbGetTables, mdbLoad, mdbLookupField, mdbOpen, mdbQuery, mdbRemoveColumn,
+    mdbRemoveIndex, mdbRemoveTable, mdbRenameTable, mdbRenameColumn, mdbSetField, mdbSetRec, mdbSave,
 };
 
 /************************************* Code ***********************************/
@@ -162,6 +100,7 @@ static Mdb *mdbCreate(cchar *path, int flags)
     if ((mdb = mprAllocObj(Mdb, manageMdb)) == 0) {
         return 0;
     }
+    mdb->edi.provider = &MdbProvider;
     mdb->edi.flags = flags;
     mdb->path = sclone(path);
     mdb->mutex = mprCreateLock();
@@ -212,7 +151,6 @@ static Edi *mdbOpen(cchar *path, int flags)
             }
             mprCloseFile(file);
         }
-        
     } else {
         if (mdbLoad((Edi*) mdb, path) < 0) {
             return 0;
@@ -222,12 +160,16 @@ static Edi *mdbOpen(cchar *path, int flags)
 }
 
 
-
 static int mdbAddColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags)
 {
     Mdb         *mdb;
     MdbTable    *table;
     MdbCol      *col;
+
+    mprAssert(edi);
+    mprAssert(tableName && *tableName);
+    mprAssert(columnName && *columnName);
+    mprAssert(type);
 
     mdb = (Mdb*) edi;
     if ((table = lookupTable(mdb, tableName)) == 0) {
@@ -243,12 +185,18 @@ static int mdbAddColumn(Edi *edi, cchar *tableName, cchar *columnName, int type,
 }
 
 
-//  IndexName is ignored
+/*
+    IndexName is not implemented yet
+ */
 static int mdbAddIndex(Edi *edi, cchar *tableName, cchar *columnName, cchar *indexName)
 {
     Mdb         *mdb;
     MdbTable    *table;
     MdbCol      *col;
+
+    mprAssert(edi);
+    mprAssert(tableName && *tableName);
+    mprAssert(columnName && *columnName);
 
     mdb = (Mdb*) edi;
     if ((table = lookupTable(mdb, tableName)) == 0) {
@@ -257,7 +205,9 @@ static int mdbAddIndex(Edi *edi, cchar *tableName, cchar *columnName, cchar *ind
     if ((col = lookupColumn(table, columnName)) == 0) {
         return MPR_ERR_CANT_FIND;
     }
-    table->index = mprCreateHash(0, 0);
+    if ((table->index = mprCreateHash(0, 0)) == 0) {
+        return MPR_ERR_MEMORY;
+    }
     table->indexCol = col;
     col->flags |= EDI_INDEX;
     autoSave(mdb, table);
@@ -270,15 +220,22 @@ static int mdbAddTable(Edi *edi, cchar *tableName)
     Mdb         *mdb;
     MdbTable    *table;
 
+    mprAssert(edi);
+    mprAssert(tableName && *tableName);
+
     mdb = (Mdb*) edi;
     if ((table = mprAllocObj(MdbTable, manageTable)) == 0) {
-        return 0;
+        return MPR_ERR_MEMORY;
     }
-    table->rows = mprCreateList(0, 0);
+    if ((table->rows = mprCreateList(0, 0)) == 0) {
+        return MPR_ERR_MEMORY;
+    }
     table->name = sclone(tableName);
-    table->nextId = 1;
     if (mdb->tables == 0) {
         mdb->tables = mprCreateList(0, 0);
+    }
+    if (!growSchema(table)) {
+        return MPR_ERR_MEMORY;
     }
     mprAddItem(mdb->tables, table);
     autoSave(mdb, lookupTable(mdb, tableName));
@@ -291,6 +248,11 @@ static int mdbChangeColumn(Edi *edi, cchar *tableName, cchar *columnName, int ty
     Mdb         *mdb;
     MdbTable    *table;
     MdbCol      *col;
+
+    mprAssert(edi);
+    mprAssert(tableName && *tableName);
+    mprAssert(columnName && *columnName);
+    mprAssert(type);
 
     mdb = (Mdb*) edi;
     if ((table = lookupTable(mdb, tableName)) == 0) {
@@ -310,7 +272,11 @@ static int mdbDeleteRow(Edi *edi, cchar *tableName, cchar *key)
 {
     Mdb         *mdb;
     MdbTable    *table;
-    int         r;
+    int         r, rc;
+
+    mprAssert(edi);
+    mprAssert(tableName && *tableName);
+    mprAssert(key && *key);
 
     mdb = (Mdb*) edi;
     if ((table = lookupTable(mdb, tableName)) == 0) {
@@ -319,7 +285,9 @@ static int mdbDeleteRow(Edi *edi, cchar *tableName, cchar *key)
     if ((r = lookupRow(table, key)) < 0) {
         return MPR_ERR_CANT_FIND;
     }
-    return mprRemoveItemAtPos(table->rows, r);
+    rc = mprRemoveItemAtPos(table->rows, r);
+    autoSave(mdb, table);
+    return rc;
 }
 
 
@@ -331,21 +299,27 @@ static EdiGrid *mdbGetAll(Edi *edi, cchar *tableName)
     MdbRow      *row;
     int         nrows, next;
 
+    mprAssert(edi);
+    mprAssert(tableName && *tableName);
+
     mdb = (Mdb*) edi;
     if ((table = lookupTable(mdb, tableName)) == 0) {
         return 0;
     }
     nrows = mprGetListLength(table->rows);
-    if ((grid = ediCreateGrid(nrows)) == 0) {
+    if ((grid = ediCreateGrid(edi, tableName, nrows)) == 0) {
         return 0;
     }
     for (ITERATE_ITEMS(table->rows, row, next)) {
-        grid->records[next - 1] = createRec(row);
+        grid->records[next - 1] = createRec(edi, row);
     }
     return grid;
 }
 
 
+/*
+    Return a list of column names
+ */
 static MprList *mdbGetColumns(Edi *edi, cchar *tableName)
 {
     Mdb         *mdb;
@@ -354,14 +328,18 @@ static MprList *mdbGetColumns(Edi *edi, cchar *tableName)
     MprList     *list;
     int         i;
 
+    mprAssert(edi);
+    mprAssert(tableName && *tableName);
+
     mdb = (Mdb*) edi;
     if ((table = lookupTable(mdb, tableName)) == 0) {
         return 0;
     }
     schema = table->schema;
+    mprAssert(schema);
     list = mprCreateList(schema->ncols, 0);
     for (i = 0; i < schema->ncols; i++) {
-        mprAddItem(list, &schema->cols[i]);
+        mprAddItem(list, schema->cols[i].name);
     }
     return list;
 }
@@ -422,7 +400,7 @@ static EdiRec *mdbGetRec(Edi *edi, cchar *tableName, cchar *key)
         return 0;
     }
     row = mprGetItem(table->rows, r);
-    if ((rec = createRec(row)) == 0) {
+    if ((rec = createRec(edi, row)) == 0) {
         return 0;
     }
     return rec;
@@ -478,7 +456,7 @@ static int mdbLoad(Edi *edi, cchar *path)
     if ((data = mprReadPath(path, &len)) == 0) {
         return MPR_ERR_CANT_READ;
     }
-    return mdbLoadString(edi, data);
+    return mdbLoadFromString(edi, data);
 }
 
 
@@ -527,6 +505,7 @@ static int mdbRemoveColumn(Edi *edi, cchar *tableName, cchar *columnName)
         table->indexCol = 0;
     }
     schema = table->schema;
+    mprAssert(schema);
     for (c = col->cid; c < schema->ncols; c++) {
         schema->cols[c] = schema->cols[c + 1];
     }
@@ -616,7 +595,7 @@ static int mdbSetField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName,
     MdbTable    *table;
     MdbRow      *row;
     MdbCol      *col;
-    MprHash     *hp;
+    MprKey      *kp;
     int         r;
 
     mdb = (Mdb*) edi;
@@ -630,36 +609,46 @@ static int mdbSetField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName,
         return MPR_ERR_CANT_FIND;
     }
     if ((col = lookupColumn(table, fieldName)) != 0) {
-        setField(row, col, hp->data);
+        setField(row, col, kp->data);
     }
     return 0;
 }
 
 
-static int mdbSetRec(Edi *edi, cchar *tableName, cchar *key, MprHashTable *params)
+static int mdbSetRec(Edi *edi, cchar *tableName, cchar *key, MprHash *params)
 {
     Mdb         *mdb;
     MdbTable    *table;
     MdbRow      *row;
     MdbCol      *col;
-    MprHash     *hp;
-    int         r;
+    MprKey      *kp;
+    int         r, setID;
 
     mdb = (Mdb*) edi;
     if ((table = lookupTable(mdb, tableName)) == 0) {
         return MPR_ERR_CANT_FIND;
     }
-    if ((r = lookupRow(table, key)) < 0) {
+    if (key == 0 || (r = lookupRow(table, key)) < 0) {
         row = createRow(mdb, table);
-    }
-    if ((row = getRow(table, r)) == 0) {
-        return MPR_ERR_CANT_FIND;
-    }
-    for (ITERATE_KEYS(params, hp)) {
-        if ((col = lookupColumn(table, hp->key)) != 0) {
-            setField(row, col, hp->data);
+    } else {
+        if ((row = getRow(table, r)) == 0) {
+            return MPR_ERR_CANT_FIND;
         }
     }
+    setID = 0;
+    for (ITERATE_KEYS(params, kp)) {
+        if ((col = lookupColumn(table, kp->key)) != 0) {
+            setField(row, col, kp->data);
+            if (col->cid == 0) {
+                setID++;
+            }
+        }
+    }
+    if (!setID) {
+        //  MOB OPT - change to itos when it allocates
+        setField(row, getCol(table, 0), 0);
+    }
+    autoSave(mdb, table);
     return 0;
 }
 
@@ -805,15 +794,6 @@ static cchar *parseValue(Mdb *mdb)
     int     quote;
 
     value = 0;
-#if UNUSED
-    if (*mdb->tok == '{' || *mdb->tok == '[') {
-        mdb->tok++;
-        if ((rc = parseMdb(mdb)) < 0) {
-            return 0;
-        }
-
-    } else 
-#endif
     if (*mdb->tok == '"' || *mdb->tok == '\'') {
         quote = *mdb->tok;
         if ((etok = findQuote(++mdb->tok, quote)) == 0) {
@@ -913,12 +893,6 @@ static int parseMdb(Mdb *mdb)
         case '{':
         case '[':
             ++mdb->tok;
-#if UNUSED
-            /* Recurse to next inner object or array */
-            if ((rc = parseMdb(mdb)) < 0) {
-                return rc;
-            }
-#endif
             break;
 
         case '}':
@@ -942,11 +916,6 @@ static int parseMdb(Mdb *mdb)
                 mdb->tok = eatSpace(mdb->tok + 1);
                 if (*mdb->tok == '{' || *mdb->tok == '[') {
                     mdb->tok++;
-#if UNUSED
-                    if ((rc = parseMdb(mdb)) < 0) {
-                        return 0;
-                    }
-#endif
                     break;
                 } else if ((value = parseValue(mdb)) == 0) {
                     return MPR_ERR_BAD_FORMAT;
@@ -963,12 +932,13 @@ static int parseMdb(Mdb *mdb)
 }
 
 
-static int mdbLoadString(Edi *edi, cchar *string)
+static int mdbLoadFromString(Edi *edi, cchar *string)
 {
     Mdb         *mdb;
     int         rc;
 
     mdb = (Mdb*) edi;
+    mdb->edi.flags |= EDI_SUPPRESS_SAVE;
     mdb->flags |= MDB_LOADING;
     mdb->tok = string;
     mdb->loadStack = mprCreateList(0, 0);
@@ -978,6 +948,7 @@ static int mdbLoadString(Edi *edi, cchar *string)
     mdb->loadStack = 0;
     mdb->tok = 0;
     mdb->flags &= ~MDB_LOADING;
+    mdb->edi.flags &= ~EDI_SUPPRESS_SAVE;
     if (rc < 0) {
         mdb->path = 0;
         return rc;
@@ -990,7 +961,10 @@ static int mdbLoadString(Edi *edi, cchar *string)
 
 static void autoSave(Mdb *mdb, MdbTable *table)
 {
-    if (mdb->edi.flags & EDI_AUTO_SAVE) {
+    mprAssert(mdb);
+    mprAssert(table);
+
+    if (mdb->edi.flags & EDI_AUTO_SAVE && !(mdb->edi.flags & EDI_SUPPRESS_SAVE)) {
         //  MOB - should have dirty bit
         mdbSave((Edi*) mdb);
     }
@@ -1016,20 +990,22 @@ static int mdbSave(Edi *edi)
         return MPR_ERR_BAD_ARGS;
     }
     npath = mprReplacePathExt(path, "new");
-    if ((out = mprOpenFile(npath, 0664, O_WRONLY | O_TRUNC | O_CREAT | O_BINARY)) == 0) {
+    if ((out = mprOpenFile(npath, O_WRONLY | O_TRUNC | O_CREAT | O_BINARY, 0664)) == 0) {
         return 0;
     }
     ntables = mprGetListLength(mdb->tables);
     for (tid = 0; tid < ntables; tid++) {
         table = getTable(mdb, tid);
         schema = table->schema;
+        mprAssert(schema);
         mprWriteFileFormat(out, "{\n    '%s': {\n", table->name);
+        mprWriteFileFormat(out, "        hints: {\n            ncols: %d\n        },\n", schema->ncols);
         mprWriteFileString(out, "        schema: {\n");
         /* Skip the id which is always the first column */
-        for (cid = 1; cid < schema->ncols; cid++) {
+        for (cid = 0; cid < schema->ncols; cid++) {
             col = getCol(table, cid);
             type = ediGetTypeString(col->type);
-            mprWriteFileFormat(out, "                { '%s': { type: '%s'", col->name, type);
+            mprWriteFileFormat(out, "            '%s': { type: '%s'", col->name, type);
             if (col->flags & EDI_AUTO_INC) {
                 mprWriteFileString(out, ", autoinc: 'true'");
             }
@@ -1044,19 +1020,22 @@ static int mdbSave(Edi *edi)
             }
             mprWriteFileString(out, " },\n");
         }
-        mprWriteFileString(out, "            },\n");
-        mprWriteFileString(out, "        data: ['\n");
+        mprWriteFileString(out, "        },\n");
+        mprWriteFileString(out, "        data: [\n");
 
         nrows = mprGetListLength(table->rows);
         for (rid = 0; rid < nrows; rid++) {
-            mprWriteFileString(out, "        [ ");
+            mprWriteFileString(out, "            [ ");
             row = getRow(table, rid);
             for (cid = 0; cid < schema->ncols; cid++) {
+                if (col->flags & EDI_AUTO_INC) {
+                    setAutoInc(row, col);
+                }
                 field = getField(row, cid);
-                //  MOB - inline toString code here
+                //  MOB OPT - inline toString code here
                 mprWriteFileFormat(out, "'%s', ", ediToString(NULL, field));
             }
-            mprWriteFileString(out, "]\n");
+            mprWriteFileString(out, "],\n");
         }
         mprWriteFileString(out, "    ],\n    },\n");
     }
@@ -1149,13 +1128,13 @@ static void manageTable(MdbTable *table, int flags)
 //  MOB - inconsistent. Should return Row
 static int lookupRow(MdbTable *table, cchar *key)
 {
-    MprHash     *hp;
-    MdbRow       *row;
+    MprKey      *kp;
+    MdbRow      *row;
     int         nrows, r, keycol;
 
     if (table->index == 0) {
-        if ((hp = mprLookupKey(table->index, key)) != 0) {
-            return (int) PTOL(hp->data);
+        if ((kp = mprLookupKey(table->index, key)) != 0) {
+            return (int) PTOL(kp->data);
         } 
     } else {
         nrows = mprGetListLength(table->rows);
@@ -1173,6 +1152,28 @@ static int lookupRow(MdbTable *table, cchar *key)
 
 /********************************* Schema / Col ****************************/
 
+MdbSchema *growSchema(MdbTable *table)
+{
+    if (table->schema == 0) {
+        if ((table->schema = mprAllocMem(sizeof(MdbSchema) + 
+                sizeof(MdbCol) * MDB_INCR, MPR_ALLOC_MANAGER | MPR_ALLOC_ZERO)) == 0) {
+            return 0;
+        }
+        mprSetAllocName(table->schema, "schema");
+        mprSetManager(table->schema, manageSchema);
+        table->schema->capacity = MDB_INCR;
+
+    } else if (table->schema->ncols >= table->schema->capacity) {
+        if ((table->schema = mprRealloc(table->schema, sizeof(MdbSchema) + 
+                (sizeof(MdbCol) * (table->schema->capacity + MDB_INCR)))) == 0) {
+            return 0;
+        }
+        table->schema->capacity += MDB_INCR;
+    }
+    return table->schema;
+}
+
+
 static MdbCol *createCol(MdbTable *table, cchar *columnName)
 {
     MdbSchema    *schema;
@@ -1181,23 +1182,8 @@ static MdbCol *createCol(MdbTable *table, cchar *columnName)
     if ((col = lookupColumn(table, columnName)) != 0) {
         return 0;
     }
-    schema = table->schema;
-    if (schema == 0) {
-        if ((table->schema = mprAllocMem(sizeof(MdbSchema) + 
-                sizeof(MdbCol) * MDB_INCR, MPR_ALLOC_MANAGER | MPR_ALLOC_ZERO)) == 0) {
-            return 0;
-        }
-        mprSetAllocName(table->schema, "schema");
-        mprSetManager(table->schema, manageSchema);
-        schema = table->schema;
-        schema->capacity = MDB_INCR;
-
-    } else if (schema->ncols >= schema->capacity) {
-        if ((schema = mprRealloc(schema, sizeof(MdbSchema) + (sizeof(MdbCol) * (schema->capacity + MDB_INCR)))) == 0) {
-            return 0;
-        }
-        table->schema = schema;
-        schema->capacity += MDB_INCR;
+    if ((schema = growSchema(table)) == 0) {
+        return 0;
     }
     col = &schema->cols[schema->ncols];
     col->cid = schema->ncols++;
@@ -1240,12 +1226,12 @@ static MdbCol *lookupColumn(MdbTable *table, cchar *columnName)
     MdbSchema    *schema;
     MdbCol       *col;
 
-    schema = table->schema;
-    if (schema) {
-        for (col = schema->cols; col < &schema->cols[schema->ncols]; col++) {
-            if (smatch(col->name, columnName)) {
-                return col;
-            }
+    if ((schema = growSchema(table)) == 0) {
+        return 0;
+    }
+    for (col = schema->cols; col < &schema->cols[schema->ncols]; col++) {
+        if (smatch(col->name, columnName)) {
+            return col;
         }
     }
     return 0;
@@ -1270,7 +1256,7 @@ static MdbRow *createRow(Mdb *mdb, MdbTable *table)
     row->table = table;
     row->nfields = ncols;
     col = getCol(table, 0);
-    mprAddItem(table->rows, row);
+    row->rid = mprAddItem(table->rows, row);
     return row;
 }
 
@@ -1282,6 +1268,7 @@ static void manageRow(MdbRow *row, int flags)
 
     if (flags & MPR_MANAGE_MARK) {
         schema = row->table->schema;
+        mprAssert(schema);
         //  MOB - OPT - may be better to iterate over cols then rows. ie. only select string columns.
         for (fid = 0; fid < row->nfields; fid++) {
             type = schema->cols[fid].type;
@@ -1321,21 +1308,42 @@ static EdiField getField(MdbRow *row, int fid)
 }
 
 
+static void setAutoInc(MdbRow *row, MdbCol *col)
+{
+    EdiValue    *vp;
+
+    vp = &row->fields[col->cid];
+    if (col->type == EDI_TYPE_STRING && vp->str == 0) {
+        //  MOB OPT replace with stoi
+        vp->str = sfmt("%d", col->nextValue++);
+    } else if (col->type == EDI_TYPE_INT && vp->inum == 0) {
+        vp->inum = col->nextValue++;
+    } else if (col->type == EDI_TYPE_FLOAT && vp->num == 0) {
+        vp->num = col->nextValue++;
+    }
+}
+
+
 static int setField(MdbRow *row, MdbCol *col, cchar *value)
 {
+    MdbTable    *table;
+    EdiValue    *vp;
+    
     mprAssert(row);
     mprAssert(col);
 
-    //  MOB - should ID be an int?
+    table = row->table;
+    vp = &row->fields[col->cid];
 
-    if (col->flags & EDI_AUTO_INC && col->type == EDI_TYPE_STRING && (value == 0 || *value == '\0')) {
-        row->fields[col->cid].str = sfmt("%d", row->table->nextId++);
-    } else {
-        mprIsValid(value);
-        row->fields[col->cid] = ediParseValue(value, col->type);
-        if (col->type == EDI_TYPE_STRING) {
-            mprIsValid(row->fields[col->cid].str);
+    if (col->flags & EDI_AUTO_INC) {
+        if (value == 0) {
+            setAutoInc(row, col);
+        } else {
+            *vp = ediParseValue(value, col->type);
+            col->nextValue = max(col->nextValue, (int) stoi(value, 10, NULL) + 1);
         }
+    } else {
+        *vp = ediParseValue(value, col->type);
     }
     return 0;
 }
@@ -1420,7 +1428,7 @@ int mdbSetStringField(MdbRow *row, int fid, cchar *value)
 /*
     Optimized record creation
  */
-static EdiRec *createRec(MdbRow *row)
+static EdiRec *createRec(Edi *edi, MdbRow *row)
 {
     EdiRec  *rec;
     MdbCol  *col;
@@ -1432,6 +1440,7 @@ static EdiRec *createRec(MdbRow *row)
     mprSetAllocName(rec, "record");
     mprSetManager(rec, ediManageEdiRec);
 
+    rec->edi = edi;
     rec->tableName = row->table->name;
     //  MOB - assert and check there is a valid ID
     rec->id = row->fields[0].str;
@@ -1440,7 +1449,9 @@ static EdiRec *createRec(MdbRow *row)
         col = getCol(row->table, c);
         rec->fields[c] = makeFieldFromRow(row, col);
     }
+#if UNUSED
     memmove(rec->fields, row->fields, sizeof(EdiField) * row->nfields);
+#endif
     return rec;
 }
 

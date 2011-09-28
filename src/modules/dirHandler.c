@@ -46,7 +46,7 @@ static void sortList(HttpConn *conn, MprList *list);
 /*
     Match if the filename maps to a directory and directory listings are enabled via "Options Indexes"
  */
-bool maMatchDir(HttpConn *conn, HttpRoute *route, int direction)
+int maMatchDir(HttpConn *conn, HttpRoute *route, int direction)
 {
     HttpRx      *rx;
     HttpTx      *tx;
@@ -59,11 +59,13 @@ bool maMatchDir(HttpConn *conn, HttpRoute *route, int direction)
 
     if (direction & HTTP_STAGE_TX) {
         if ((dir = httpGetRouteData(rx->route, DIR_NAME)) == 0) {
-            return 0;
+            return HTTP_ROUTE_REJECT;
         }
-        return dir->enabled && tx->fileInfo.isDir && sends(rx->pathInfo, "/");
+        if (dir->enabled && tx->fileInfo.isDir && sends(rx->pathInfo, "/")) {
+            return HTTP_ROUTE_OK;
+        }
     }
-    return 0;
+    return HTTP_ROUTE_REJECT;
 }
 
 
