@@ -498,7 +498,7 @@ static void filterCols(MprList *cols, MprHash *options, MprHash *colOptions)
 
     if (colOptions) {
         for (next = 0; (columnName = mprGetNextItem(cols, &next)) != 0; ) {
-            if (!mprLookupKey(options, columnName)) {
+            if (!mprLookupKey(colOptions, columnName)) {
                 mprRemoveItem(cols, columnName);
             }
         }
@@ -557,7 +557,7 @@ void espTable(HttpConn *conn, EdiGrid *grid, cchar *optionString)
     MprList     *cols;
     EdiRec      *rec;
     cchar       *title, *width, *o, *header, *columnName, *value, *showHeader;
-    int         next, c, r, ncols, type;
+    int         next, c, r, ncols, type, cid;
    
     options = httpGetOptions(optionString);
     if (httpGetOption(options, "pivot", 0)) {
@@ -625,14 +625,14 @@ void espTable(HttpConn *conn, EdiGrid *grid, cchar *optionString)
         ncols = mprGetListLength(cols);
         for (c = 0; c < ncols; c++) {
             columnName = mprGetItem(cols, c);
-            //  MOB - must find right column in record
-            type = rec->fields[c].type;
+            cid = ediLookupField(grid->edi, grid->tableName, columnName);
+            type = rec->fields[cid].type;
             if (httpGetOption(colOptions, "align", 0) == 0) {
                 if (type == EDI_TYPE_INT || type == EDI_TYPE_FLOAT) {
                     httpAddOption(colOptions, "align", "right");
                 }
             }
-            value = formatValue(rec->fields[c], colOptions);
+            value = formatValue(rec->fields[cid], colOptions);
             espWrite(conn, "            <td%s>%s</td>\r\n", map(conn, colOptions), value);
         }
     }

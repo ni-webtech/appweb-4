@@ -86,7 +86,7 @@ MprHash *espGetSessionObj(HttpConn *conn, cchar *key)
     cchar   *str;
 
     if ((str = espGetSessionVar(conn, key, 0)) != 0) {
-        return mprParseHash(str);
+        return mprDeserialize(str);
     }
     return 0;
 }
@@ -110,7 +110,7 @@ cchar *espGetSessionVar(HttpConn *conn, cchar *key, cchar *defaultValue)
 
 int espSetSessionObj(HttpConn *conn, cchar *key, MprHash *obj)
 {
-    espSetSessionVar(conn, key, mprHashToString(obj, 0));
+    espSetSessionVar(conn, key, mprSerialize(obj, 0));
     return 0;
 }
 

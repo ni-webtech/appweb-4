@@ -910,7 +910,7 @@ static int parseMdb(Mdb *mdb)
                 return rc;
             }
             if ((sep = peekSep(mdb)) < 0) {
-                return rc;
+                return MPR_ERR;
             }
             if (sep == ':') {
                 mdb->tok = eatSpace(mdb->tok + 1);
@@ -932,7 +932,7 @@ static int parseMdb(Mdb *mdb)
 }
 
 
-static int mdbLoadFromString(Edi *edi, cchar *string)
+static int mdbLoadFromString(Edi *edi, cchar *str)
 {
     Mdb         *mdb;
     int         rc;
@@ -940,7 +940,7 @@ static int mdbLoadFromString(Edi *edi, cchar *string)
     mdb = (Mdb*) edi;
     mdb->edi.flags |= EDI_SUPPRESS_SAVE;
     mdb->flags |= MDB_LOADING;
-    mdb->tok = string;
+    mdb->tok = str;
     mdb->loadStack = mprCreateList(0, 0);
     mdb->lineNumber = 1;
     pushState(mdb, MDB_LOAD_BEGIN);

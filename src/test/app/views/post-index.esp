@@ -1,4 +1,11 @@
 <h1>Post List</h1>
 
-<% table(findAll("post"), "{data-click: '@edit'}"); %>
+<% table(findAll("post"), "{ \
+    data-click: '@edit', \
+    columns: { \
+        id: { header: 'ID' }, \
+        title: { header: 'TITLE' }, \
+        body: { header: 'BODY' }, \
+    } \
+"); %>
 <% buttonLink("New Post", "@init", 0); %>

@@ -8240,15 +8240,7 @@ static void finalizePattern(HttpRoute *route)
     startPattern = route->pattern[0] == '^' ? &route->pattern[1] : route->pattern;
 
     if (route->name == 0) {
-#if UNUSED
-        if (route->prefix) {
-            route->name = sjoin(route->prefix, startPattern, NULL);
-        } else {
-            route->name = sclone(startPattern);
-        } 
-#else
         route->name = sclone(startPattern);
-#endif
     }
     if (route->template == 0) {
         route->template = finalizeTemplate(route);
@@ -9823,69 +9815,6 @@ static char *trimQuotes(char *str)
 }
 
 
-#if UNUSED
-/*
-    Options parser. This is a sub-set of JSON. Does not support arrays.
- */
-static MprHash *deserializeOptions(MprHash *hash, cchar **token)
-{
-    cchar   *cp, *ep;
-    char    key[MPR_MAX_STRING];
-    int     quote;
-
-    for (cp = *token; *cp; cp++) {
-        while (isspace((int) *cp)) cp++;
-        if (*cp == '{') {
-            ++cp;
-            hash = deserializeOptions(mprCreateHash(0, 0), &cp);
-
-        } else if ((ep = strchr(cp, ':')) != 0 && (ep == *token || ep[-1] != '\\')) {
-            if (*cp == '}') {
-                /* By continuing, we permit:  {options}{more options} */
-                continue;
-            } else if (*cp == ',') {
-                continue;
-            }
-            if (hash == 0) {
-                /* Missing opening "{" */
-                break;
-            }
-            sncopy(key, sizeof(key), cp, ep - cp);
-            for (cp = ep + 1; isspace((int) *cp); cp++) ;
-            if (*cp == '{') {
-                ++cp;
-                mprAddKey(hash, key, deserializeOptions(mprCreateHash(0, 0), &cp));
-
-            } else if (*cp == '"' || *cp == '\'') {
-                quote = *cp;
-                if ((ep = strchr(++cp, quote)) != 0 && ep[-1] != '\\') {
-                    mprAddKey(hash, key, snclone(cp, ep - cp));
-                    cp = ep;
-                } else {
-                    /* missing closing quote */
-                    break;
-                }
-
-            } else if ((ep = strchr(cp, ',')) != 0 && ep[-1] != '\\') {
-                mprAddKey(hash, key, snclone(cp, ep - cp));
-                cp = ep - 1;
-
-            } else if ((ep = strchr(cp, '}')) != 0 && ep[-1] != '\\') {
-                /* Close of object "}" */
-                break;
-
-            } else if (ep == 0) {
-                mprAddKey(hash, key, sclone(cp));
-                break;
-            }
-        }
-    }
-    *token = cp;
-    return hash;
-}
-#endif
-
-
 MprHash *httpGetOptions(cchar *options)
 {
     if (options == 0) {
@@ -9895,11 +9824,7 @@ MprHash *httpGetOptions(cchar *options)
         /* Allow embedded URIs as options */
         options = sfmt("click: '%s'", options);
     }
-#if UNUSED
-    return deserializeOptions(NULL, &options);
-#else
-    return mprParseHash(options);
-#endif
+    return mprDeserialize(options);
 }
 
 
@@ -9926,7 +9851,10 @@ MprHash *httpGetOptionHash(MprHash *options, cchar *field)
     if (options == 0) {
         return 0;
     }
-    if ((kp = mprLookupKeyEntry(options, field)) == 0 /* MOB || mprGetKeyBits(kp) == 0 */) {
+    if ((kp = mprLookupKeyEntry(options, field)) == 0) {
+        return 0;
+    }
+    if (kp->type != MPR_JSON_ARRAY && kp->type != MPR_JSON_OBJ) {
         return 0;
     }
     return (MprHash*) kp->data;

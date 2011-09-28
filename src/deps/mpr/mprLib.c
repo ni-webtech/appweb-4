@@ -3994,7 +3994,7 @@ ssize mprGetBufSpace(MprBuf *bp)
 }
 
 
-char *mprGetBufOrigin(MprBuf *bp)
+char *mprGetBuf(MprBuf *bp)
 {
     return (char*) bp->data;
 }
@@ -10700,20 +10700,6 @@ void *mprLookupKey(MprHash *hash, cvoid *key)
 }
 
 
-#if UNUSED
-void mprSetKeyBits(MprKey *kp, int bits)
-{
-    kp->bits = bits;
-}
-
-
-int mprGetKeyBits(MprKey *kp)
-{
-    return kp->bits;
-}
-#endif
-
-
 /*
     Exponential primes
  */
@@ -10876,15 +10862,18 @@ static void *dupKey(MprHash *hash, MprKey *sp, cvoid *key)
 }
 
 
+#if UNUSED
 /*
     The serial format is a subset of JSON without array support.
     This is designed to be as fast as possible for encoding one level of properties.
  */
 static MprHash *parseHash(MprHash *hash, cchar **token)
 {
-    cchar   *cp, *ep;
-    char    key[MPR_MAX_STRING];
-    int     quote;
+    MprHash     *obj;
+    MprKey      *kp;
+    cchar       *cp, *ep;
+    char        key[MPR_MAX_STRING];
+    int         quote;
 
     for (cp = *token; *cp; cp++) {
         while (isspace((int) *cp)) cp++;
@@ -10894,8 +10883,7 @@ static MprHash *parseHash(MprHash *hash, cchar **token)
 
         } else if ((ep = strchr(cp, ':')) != 0 && (ep == *token || ep[-1] != '\\')) {
             if (*cp == '}') {
-                /* By continuing, we permit:  {options}{more options} */
-                continue;
+                break;
             } else if (*cp == ',') {
                 continue;
             }
@@ -10911,7 +10899,10 @@ static MprHash *parseHash(MprHash *hash, cchar **token)
             for (cp = ep + 1; isspace((int) *cp); cp++) ;
             if (*cp == '{') {
                 ++cp;
-                mprAddKey(hash, key, parseHash(mprCreateHash(0, 0), &cp));
+                obj = parseHash(mprCreateHash(0, 0), &cp);
+                if ((kp = mprAddKey(hash, key, obj)) != 0) {
+                    kp->isHash = 1;
+                }
 
             } else if (*cp == '"' || *cp == '\'') {
                 quote = *cp;
@@ -10936,18 +10927,54 @@ static MprHash *parseHash(MprHash *hash, cchar **token)
                 break;
             }
         }
+        if (*cp == '\0') {
+            break;
+        }
     }
     *token = cp;
     return hash;
 }
+#endif
 
 
+#if UNUSED
 MprHash *mprParseHash(cchar *str)
 {
     if (str == 0 || *str == '\0') {
         return mprCreateHash(-1, 0);
     }
+#if UNUSED
     return parseHash(NULL, &str);
+#else
+    return mprDeserialize(str);
+#endif
+}
+
+
+/*
+    Supports hashes where properties are strings or hashes of strings. N-level nest is supported.
+ */
+static cchar *hashToString(MprBuf *buf, MprHash *hash, int pretty)
+{
+    MprKey  *kp;
+
+    mprPutCharToBuf(buf, '{');
+    if (pretty) mprPutCharToBuf(buf, '\n');
+    for (ITERATE_KEYS(hash, kp)) {
+        if (pretty) mprPutStringToBuf(buf, "    ");
+        mprPutStringToBuf(buf, kp->key);
+        mprPutStringToBuf(buf, ": ");
+        if (kp->isHash) {
+            hashToString(buf, (MprHash*) kp->data, pretty);
+        } else {
+            mprPutStringToBuf(buf, kp->data);
+        }
+        mprPutCharToBuf(buf, ',');
+        if (pretty) mprPutCharToBuf(buf, '\n');
+    }
+    mprPutCharToBuf(buf, '}');
+    if (pretty) mprPutCharToBuf(buf, '\n');
+    return sclone(mprGetBufStart(buf));
 }
 
 
@@ -10956,7 +10983,6 @@ MprHash *mprParseHash(cchar *str)
  */
 cchar *mprHashToString(MprHash *hash, int flags)
 {
-    MprKey  *kp;
     MprBuf  *buf;
     int     pretty;
 
@@ -10964,19 +10990,10 @@ cchar *mprHashToString(MprHash *hash, int flags)
     if ((buf = mprCreateBuf(0, 0)) == 0) {
         return 0;
     }
-    mprPutCharToBuf(buf, '{');
-    if (pretty) mprPutCharToBuf(buf, '\n');
-    for (ITERATE_KEYS(hash, kp)) {
-        if (pretty) mprPutStringToBuf(buf, "    ");
-        //  MOB - printable?
-        mprPutFmtToBuf(buf, "'%s': '%s',", kp->key, kp->data);
-        if (pretty) mprPutCharToBuf(buf, '\n');
-    }
-    mprPutCharToBuf(buf, '}');
-    if (pretty) mprPutCharToBuf(buf, '\n');
+    hashToString(buf, hash, pretty);
     return sclone(mprGetBufStart(buf));
 }
-
+#endif
 
 /*
     @copy   default
@@ -11028,358 +11045,415 @@ cchar *mprHashToString(MprHash *hash, int flags)
 /************************************************************************/
 
 /**
-    mprJSON.c - A simple JSON parser.
+    mprJSON.c - A JSON parser and serializer. 
 
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
-#if FUTURE
-
-Questions:
-    What should the outer result be?
-    []  should this return a list or hash
 
 
 
-
-typedef struct JsonState {
-    char    *data;
-    char    *end;
-    char    *next;
-    char    *error;
-} JsonState;
-
-typedef enum Token {
-    TOK_ERR,            /* Error */
-    TOK_EOF,            /* End of input */
-    TOK_LBRACE,         /* { */
-    TOK_LBRACKET,       /* [ */
-    TOK_RBRACE,         /* } */
-    TOK_RBRACKET,       /* ] */
-    TOK_COLON,          /* : */
-    TOK_COMMA,          /* , */
-    TOK_ID,             /* Unquoted ID */
-    TOK_QID,            /* Quoted ID */
-} Token;
+static MprObj *deserialize(MprJson *jp);
+static cchar *eatSpace(cchar *tok);
+static cchar *findEndKeyword(MprJson *jp, cchar *str);
+static cchar *findQuote(cchar *tok, int quote);
+static MprObj *makeObj(MprJson *jp, bool list);
+static cchar *parseComment(MprJson *jp);
+static void parseError(MprJson *jp, cchar *fmt, ...);
+static cchar *parseName(MprJson *jp);
+static cchar *parseValue(MprJson *jp);
+static int peekSep(MprJson *jp);
+static int setItem(MprObj *obj, cchar *value, int type, int index);
+static int setKey(MprObj *obj, cchar *name, cchar *value, int type);
 
 
-
-static MprTable *parseLiteral(Ejs *ejs, JsonState *js);
-static MprTable *parseLiteralInner(Ejs *ejs, MprBuf *buf, JsonState *js);
-
-
-MprTable *mprDeserialize(cchar *str)
+MprObj *mprDeserializeCustom(cchar *str, MprSetItem setItem, MprSetKey setKey, MprMakeObj makeObj)
 {
-    MprTable    *obj;
-    JsonState   js;
+    MprJson         jp;
 
-    if (str == NULL || *str == '\0') {
-        return 0;
-    }
-    js.next = js.data = str->value;
-    js.end = &js.data[str->length];
-    js.error = 0;
-    if ((obj = parseLiteral(ejs, &js)) == 0) {
-        if (js.error) {
-            mprError("Can't parse object literal. Error at position %d.\n"
-                "===========================\n"
-                "Offending text: %w\n"
-                "===========================\n"
-                "In literal %w"
-                "\n===========================\n",
-                (int) (js.error - js.data), js.error, js.data);
-        } else {
-            mprError("Can't parse object literal. Undefined error");
-        }
-        return 0;
-    }
-    return obj;
-}
-
-
-static MprTable *parseLiteral(JsonState *js)
-{
-    return parseLiteralInner(mprCreateBuf(0, 0), js);
-}
-
-
-static char *skipComments(char *cp, char *end)
-{
-    int     inComment;
-
-    for (; cp < end && isspace((int) *cp); cp++) {}
-    while (cp < &end[-1]) {
-        if (cp < &end[-1] && *cp == '/' && cp[1] == '*') {
-            inComment = 1;
-            for (cp += 2; cp < &end[-1]; cp++) {
-                if (*cp == '*' && cp[1] == '/') {
-                    inComment = 0;
-                    cp += 2;
-                    break;
-                }
-            }
-            if (inComment) {
-                return 0;
-            }
-            while (cp < end && isspace((int) *cp)) cp++;
-
-        } else  if (cp < &end[-1] && *cp == '/' && cp[1] == '/') {
-            inComment = 1;
-            for (cp += 2; cp < end; cp++) {
-                if (*cp == '\n') {
-                    inComment = 0;
-                    cp++;
-                    break;
-                }
-            }
-            if (inComment) {
-                return 0;
-            }
-            while (cp < end && isspace((int) *cp)) cp++;
-
-        } else {
-            break;
-        }
-    }
-    return cp;
-}
-
-
-Token getNextJsonToken(MprBuf *buf, char **token, JsonState *js)
-{
-    char     *start, *cp, *end, *next;
-    char     *src, *dest;
-    int      quote, tid, c;
-
-    if (buf) {
-        mprFlushBuf(buf);
-    }
-    cp = js->next;
-    end = js->end;
-    cp = skipComments(cp, end);
-    next = cp + 1;
-    quote = -1;
-
-    if (*cp == '\0') {
-        tid = TOK_EOF;
-
-    } else  if (*cp == '{') {
-        tid = TOK_LBRACE;
-
-    } else if (*cp == '[') {
-        tid = TOK_LBRACKET;
-
-    } else if (*cp == '}' || *cp == ']') {
-        tid = *cp == '}' ? TOK_RBRACE: TOK_RBRACKET;
-        while (*++cp && isspace((int) *cp)) ;
-        if (*cp == ',' || *cp == ':') {
-            cp++;
-        }
-        next = cp;
-
-    } else {
-        if (*cp == '"' || *cp == '\'') {
-            tid = TOK_QID;
-            quote = *cp++;
-            for (start = cp; cp < end; cp++) {
-                if (*cp == '\\') {
-                    if (cp[1] == quote) {
-                        cp++;
-                    }
-                    continue;
-                }
-                if (*cp == quote) {
-                    break;
-                }
-            }
-            if (*cp != quote) {
-                js->error = cp;
-                return TOK_ERR;
-            }
-            if (buf) {
-                mprPutBlockToBuf(buf, (char*) start, (cp - start));
-            }
-            cp++;
-
-        } else if (*cp == '/') {
-            tid = TOK_ID;
-            for (start = cp++; cp < end; cp++) {
-                if (*cp == '\\') {
-                    if (cp[1] == '/') {
-                        cp++;
-                    }
-                    continue;
-                }
-                if (*cp == '/') {
-                    break;
-                }
-            }
-            if (*cp != '/') {
-                js->error = cp;
-                return TOK_ERR;
-            }
-            if (buf) {
-                mprPutBlockToBuf(buf, (char*) start, (cp - start));
-            }
-            cp++;
-
-        } else {
-            tid = TOK_ID;
-            for (start = cp; cp < end; cp++) {
-                if (*cp == '\\') {
-                    continue;
-                }
-                /* Not an allowable character outside quotes */
-                if (!(isalnum((int) *cp) || *cp == '_' || *cp == ' ' || *cp == '-' || *cp == '+' || *cp == '.')) {
-                    break;
-                }
-            }
-            if (buf) {
-                mprPutBlockToBuf(buf, (char*) start, (int) (cp - start));
-            }
-        }
-        if (buf) {
-            mprAddNullToBuf(buf);
-        }
-        if (*cp == ',' || *cp == ':') {
-            cp++;
-        } else if (*cp != '}' && *cp != ']' && *cp != '\0' && *cp != '\n' && *cp != '\r' && *cp != ' ') {
-            js->error = cp;
-            return TOK_ERR;
-        }
-        next = cp;
-
-        if (buf) {
-            for (dest = src = (char*) buf->start; src < (char*) buf->end; ) {
-                c = *src++;
-                if (c == '\\') {
-                    c = *src++;
-                    if (c == 'r') {
-                        c = '\r';
-                    } else if (c == 'n') {
-                        c = '\n';
-                    } else if (c == 'b') {
-                        c = '\b';
-                    }
-                }
-                *dest++ = c;
-            }
-            *dest = '\0';
-            *token = (char*) mprGetBufStart(buf);
-        }
-    }
-    js->next = next;
-    return tid;
-}
-
-
-Token peekNextJsonToken(JsonState *js)
-{
-    JsonState   discard = *js;
-    return getNextJsonToken(NULL, NULL, &discard);
+    memset(&jp, 0, sizeof(jp));
+    jp.lineNumber = 1;
+    jp.tok = str;
+    jp.setItem = setItem;
+    jp.setKey = setKey;
+    jp.makeObj = makeObj;
+    return deserialize(&jp);
 }
 
 
 /*
-    Parse an object literal string pointed to by js->next into the given buffer. Update js->next to point
-    to the next input token in the object literal. Supports nested object literals.
+    Deserialize a JSON string into an MprHash object. Objects and lists "[]" are stored in hashes. 
  */
-static MprTable *parseLiteralInner(Ejs *ejs, MprBuf *buf, JsonState *js)
+MprObj *mprDeserialize(cchar *str)
 {
-    MprTable    *table;
-    MprList     *list;
-    MprBuf      *valueBuf;
-    char        *token, *key, *value;
-    int         tid;
+    return mprDeserializeCustom(str, setItem, setKey, makeObj); 
+}
 
-    tid = getNextJsonToken(buf, &token, js);
-    if (tid == TOK_ERR || tid == TOK_EOF) {
-        return 0;
-    }
-    list = 0;
-    table = 0;
 
-    if (tid == TOK_LBRACKET) {
-        list = mprCreateList(0, 0);
-    } else if (tid == TOK_LBRACE) {
-        table = mprCreateHash(0, 0);
-    } else {
-        return ejsParse(token, S_String);
-    }
-    if (obj == 0) {
-        ejsThrowMemoryError(ejs);
-        return 0;
-    }
-    while (1) {
-        vp = 0;
-        tid = peekNextJsonToken(js);
-        if (tid == TOK_ERR) {
-            return 0;
-        } else if (tid == TOK_EOF) {
+static MprObj *deserialize(MprJson *jp)
+{
+    cvoid   *value;
+    void    *obj;
+    cchar   *name;
+    int     rc, sep, isArray, index, valueType;
+
+    obj = 0;
+    isArray = 0;
+    index = 0;
+
+    while (*jp->tok) {
+        jp->tok = eatSpace(jp->tok);
+        switch (*jp->tok) {
+        case '\0':
+            return obj;
+
+        case '\n':
+            jp->lineNumber++;
+            jp->tok++;
             break;
-        } else if (tid == TOK_RBRACE || tid == TOK_RBRACKET) {
-            getNextJsonToken(buf, &key, js);
-            break;
-        }
-        if (tid == TOK_LBRACKET) {
-            /* For array values */
-            vp = parseLiteral(ejs, js);
-            mprAssert(vp);
-            
-        } else if (tid == TOK_LBRACE) {
-            /* For object values */
-            vp = parseLiteral(ejs, js);
-            mprAssert(vp);
-            
-        } else if (list) {
-            tid = getNextJsonToken(buf, &value, js);
-            vp = ejsParse(ejs, value, (tid == TOK_QID) ? S_String: -1);
-            mprAssert(vp);
-            
-        } else {
-            getNextJsonToken(buf, &key, js);
-            tid = peekNextJsonToken(js);
-            if (tid == TOK_ERR) {
-                return 0;
-            } else if (tid == TOK_EOF) {
-                break;
-            } else if (tid == TOK_LBRACE || tid == TOK_LBRACKET) {
-                vp = parseLiteral(ejs, js);
 
-            } else if (tid == TOK_ID || tid == TOK_QID) {
-                valueBuf = mprCreateBuf(0, 0);
-                getNextJsonToken(valueBuf, &value, js);
-                if (tid == TOK_QID) {
-                    vp = ejsCreateString(ejs, value, strlen(value));
-                } else {
-                    if (mcmp(value, "null") == 0) {
-                        vp = ESV(null);
-                    } else if (mcmp(value, "undefined") == 0) {
-                        vp = ESV(undefined);
-                    } else {
-                        vp = ejsParse(ejs, value, -1);
-                    }
-                }
-                mprAssert(vp);
+        case ',':
+            jp->tok++;
+            index++;
+            continue;
+
+        case '/':
+            if (jp->tok[1] == '/' || jp->tok[1] == '*') {
+                jp->tok = parseComment(jp);
             } else {
-                getNextJsonToken(buf, &value, js);
-                js->error = js->next;
+                parseError(jp, "Unexpected character'%c'", *jp->tok);
+                return 0;
+            }
+            continue;
+
+        case '{':
+            obj = jp->makeObj(jp, 0);
+            isArray = 0;
+            ++jp->tok;
+            break;
+
+        case '[':
+            obj = jp->makeObj(jp, 1);
+            isArray = 1;
+            ++jp->tok;
+            break;
+
+        case '}':
+        case ']':
+            /* End of object or array */
+            jp->tok++;
+            return obj;
+            
+        default:
+            if (obj == 0) {
+                parseError(jp, "Bad format");
+                return 0;
+            }
+            if ((name = parseName(jp)) == 0) {
+                return 0;
+            }
+            if (jp->check && jp->check(jp, name) < 0) {
+                parseError(jp, "Check state failed for '%s'", name);
+                return 0;
+            }
+            if ((sep = peekSep(jp)) < 0) {
+                /* Already reported */
+                return 0;
+            }
+            if (sep == ':') {
+                if (isArray) {
+                    parseError(jp, "Bad separator '%c' in list", sep);
+                    return 0;
+                }
+                jp->tok = eatSpace(jp->tok + 1);
+                if (*jp->tok == '{') {
+                    value = deserialize(jp);
+                    valueType = MPR_JSON_OBJ;
+
+                } else if (*jp->tok == '[') {
+                    value = deserialize(jp);
+                    valueType = MPR_JSON_ARRAY;
+
+                } else {
+                    value = parseValue(jp);
+                    valueType = MPR_JSON_STRING;
+                }
+                if (value == 0) {
+                    /* Error already reported */
+                    return 0;
+                }
+                if ((rc = jp->setKey(obj, name, value, valueType)) < 0) {
+                    parseError(jp, "Can't set key '%s' value '%s'", name, value);
+                    return 0;
+                }
+            } else if (sep == ',' || sep == ']') {
+                if (isArray) {
+                    if ((rc = jp->setItem(obj, name, valueType, index)) < 0) {
+                        parseError(jp, "Can't set item '%s'", name);
+                        return 0;
+                    }
+                } else {
+                    parseError(jp, "Bad separator '%c' in properties", sep);
+                    return 0;
+                }
+            } else {
+                parseError(jp, "Bad separator '%c'", sep);
                 return 0;
             }
         }
-        if (vp == 0) {
-            js->error = js->next;
-            return 0;
-        }
-        if (list) {
-            mprAddItem(list, vp);
-        } else {
-            mprAddKey(table, key, vp); 
+    }
+    return 0;
+}
+
+
+static cchar *parseComment(MprJson *jp)
+{
+    cchar   *tok;
+
+    tok = jp->tok;
+    if (*tok == '/') {
+        for (tok++; *tok && *tok != '\n'; tok++) ;
+
+    } else if (*jp->tok == '*') {
+        tok++;
+        for (tok++; tok[0] && (tok[0] != '*' || tok[1] != '/'); tok++) {
+            if (*tok == '\n') {
+                jp->lineNumber++;
+            }
         }
     }
-    return obj;
+    return tok - 1;
 }
+
+
+static cchar *parseQuotedName(MprJson *jp)
+{
+    cchar    *etok, *name;
+    int      quote;
+
+    quote = *jp->tok;
+    if ((etok = findQuote(++jp->tok, quote)) == 0) {
+        parseError(jp, "Missing closing quote");
+        return 0;
+    }
+    name = snclone(jp->tok, etok - jp->tok);
+    jp->tok = ++etok;
+    return name;
+}
+
+
+static cchar *parseUnquotedName(MprJson *jp)
+{
+    cchar    *etok, *name;
+
+    etok = findEndKeyword(jp, jp->tok);
+    name = snclone(jp->tok, etok - jp->tok);
+    jp->tok = etok;
+    return name;
+}
+
+
+static cchar *parseName(MprJson *jp)
+{
+    jp->tok = eatSpace(jp->tok);
+    if (*jp->tok == '"' || *jp->tok == '\'') {
+        return parseQuotedName(jp);
+    } else {
+        return parseUnquotedName(jp);
+    }
+}
+
+
+static int peekSep(MprJson *jp)
+{
+    int     sep;
+
+    jp->tok = eatSpace(jp->tok);
+    sep = *jp->tok;
+    if (sep != ':' && sep != ',' && sep != ']') {
+        parseError(jp, "Missing ':', ',' or ']' in input");
+        return MPR_ERR_BAD_FORMAT;
+    } 
+    return sep;
+}
+
+
+static cchar *parseValue(MprJson *jp)
+{
+    cchar   *etok, *value;
+    int     quote;
+
+    value = 0;
+    if (*jp->tok == '"' || *jp->tok == '\'') {
+        quote = *jp->tok;
+        if ((etok = findQuote(++jp->tok, quote)) == 0) {
+            parseError(jp, "Missing closing quote");
+            return 0;
+        }
+        value = snclone(jp->tok, etok - jp->tok);
+
+    } else {
+        etok = findEndKeyword(jp, jp->tok);
+        value = snclone(jp->tok, etok - jp->tok);
+    }
+    jp->tok = etok + 1;
+    return value;
+}
+
+
+static int setItem(MprObj *obj, cchar *value, int type, int index)
+{
+    MprKey  *kp;
+    char    ibuf[32];
+
+    itosbuf(ibuf, sizeof(ibuf), index, 10);
+    if ((kp = mprAddKey(obj, ibuf, value)) == 0) {
+        return MPR_ERR_MEMORY;
+    }
+    kp->type = type;
+    return index;
+}
+
+
+static int setKey(MprObj *obj, cchar *key, cchar *value, int type)
+{
+    MprKey  *kp;
+
+    if ((kp = mprAddKey(obj, key, value)) == 0) {
+        return MPR_ERR_MEMORY;
+    }
+    kp->type = type;
+    return 0;
+}
+
+
+/*
+    Supports hashes where properties are strings or hashes of strings. N-level nest is supported.
+ */
+static cchar *objToString(MprBuf *buf, MprObj *obj, int type, int pretty)
+{
+    MprKey  *kp;
+    void    *item;
+    int     next;
+
+    if (type == MPR_JSON_ARRAY) {
+        mprPutCharToBuf(buf, '[');
+        if (pretty) mprPutCharToBuf(buf, '\n');
+        for (ITERATE_ITEMS(obj, item, next)) {
+            if (pretty) mprPutStringToBuf(buf, "    ");
+            if (kp->type != MPR_JSON_STRING) {
+                objToString(buf, (MprObj*) kp->data, kp->type, pretty);
+            } else {
+                mprPutStringToBuf(buf, kp->data);
+            }
+            mprPutCharToBuf(buf, ',');
+            if (pretty) mprPutCharToBuf(buf, '\n');
+        }
+        mprPutCharToBuf(buf, ']');
+
+    } else if (type == MPR_JSON_OBJ) {
+        mprPutCharToBuf(buf, '{');
+        if (pretty) mprPutCharToBuf(buf, '\n');
+        for (ITERATE_KEYS(obj, kp)) {
+            if (pretty) mprPutStringToBuf(buf, "    ");
+            mprPutStringToBuf(buf, kp->key);
+            mprPutStringToBuf(buf, ": ");
+            if (kp->type != MPR_JSON_STRING) {
+                objToString(buf, (MprObj*) kp->data, kp->type, pretty);
+            } else {
+                mprPutStringToBuf(buf, kp->data);
+            }
+            mprPutCharToBuf(buf, ',');
+            if (pretty) mprPutCharToBuf(buf, '\n');
+        }
+        mprPutCharToBuf(buf, '}');
+    }
+    if (pretty) mprPutCharToBuf(buf, '\n');
+    return sclone(mprGetBufStart(buf));
+}
+
+
+/*
+    Serialize into JSON format.
+ */
+cchar *mprSerialize(MprObj *obj, int flags)
+{
+    MprBuf  *buf;
+    int     pretty;
+
+    pretty = (flags & MPR_JSON_PRETTY);
+    if ((buf = mprCreateBuf(0, 0)) == 0) {
+        return 0;
+    }
+    objToString(buf, obj, MPR_JSON_OBJ, pretty);
+    return mprGetBuf(buf);
+}
+
+
+static cchar *eatSpace(cchar *tok)
+{
+    while (isspace((int) *tok) && *tok != '\n') {
+        tok++;
+    }
+    return tok;
+}
+
+
+static cchar *findQuote(cchar *tok, int quote)
+{
+    cchar   *cp;
+
+    mprAssert(tok);
+    for (cp = tok; *cp; cp++) {
+        if (*cp == quote && (cp == tok || *cp != '\\')) {
+            return cp;
+        }
+    }
+    return 0;
+}
+
+
+static cchar *findEndKeyword(MprJson *jp, cchar *str)
+{
+    cchar   *cp, *etok;
+
+    mprAssert(str);
+    for (cp = jp->tok; *cp; cp++) {
+        if ((etok = strpbrk(cp, " \t\n\r:,")) != 0) {
+            if (etok == jp->tok || *etok != '\\') {
+                return etok;
+            }
+        }
+    }
+    return &str[strlen(str)];
+}
+
+
+static void parseError(MprJson *jp, cchar *fmt, ...)
+{
+    va_list     args;
+    cchar       *msg;
+
+    va_start(args, fmt);
+    msg = sfmtv(fmt, args);
+#if UNUSED
+    mprError("%s\nIn file '%s' at line %d", msg, jp->path, jp->lineNumber);
+#else
+    mprError("%s\nAt line %d", msg, jp->lineNumber);
 #endif
+    va_end(args);
+}
+
+
+//  MOB - remove jp arg
+static MprObj *makeObj(MprJson *jp, bool list)
+{
+    if (list) {
+        return (MprObj*) mprCreateList(0, 0);
+    }
+    return (MprObj*) mprCreateHash(0, 0);
+}
+
 
 
 /*

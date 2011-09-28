@@ -3302,14 +3302,12 @@ extern MprBufProc mprGetBufRefillProc(MprBuf *buf);
 
 /**
     Get the origin of the buffer content storage.
-    @description Get a pointer to the start of the buffer content storage. This may not be equal to the start of
-        the buffer content if #mprAdjustBufStart has been called. Use #mprGetBufSize to determine the length
-        of the buffer content storage array. 
+    @description Get a pointer to the start of the buffer content storage. This is always and allocated block.
     @param buf Buffer created via mprCreateBuf
     @returns A pointer to the buffer content storage.
     @ingroup MprBuf
  */
-extern char *mprGetBufOrigin(MprBuf *buf);
+extern char *mprGetBuf(MprBuf *buf);
 
 /**
     Get the current size of the buffer content storage.
@@ -4269,15 +4267,11 @@ extern int print(cchar *fmt, ...);
     @defgroup MprHash MprHash
  */
 typedef struct MprKey {
-    struct MprKey *next;               /**< Next symbol in hash chain */
+    struct MprKey *next;                /**< Next symbol in hash chain */
     char            *key;               /**< Hash key */
     cvoid           *data;              /**< Pointer to symbol data */
-#if UNUSED
-    int             bits: 2;            /**< User definable bits */
-    int             bucket: 30;         /**< Hash bucket index */
-#else
-    int             bucket;             /**< Hash bucket index */
-#endif
+    int             type: 4;            /**< Data type */
+    int             bucket: 28;         /**< Hash bucket index */
 } MprKey;
 
 /**
@@ -4372,16 +4366,6 @@ extern MprHash *mprCloneHash(MprHash *table);
  */
 extern MprHash *mprCreateHash(int hashSize, int flags);
 
-#if UNUSED
-/**
-    Get the user-definable bits for a key
-    @param hp Hash key entry returned by #mprLookupKeyEntry or #mprAddKey
-    @return The low-order two user definable bits
-    @ingroup MprHash
- */
-extern int mprGetKeyBits(MprKey *hp);
-#endif /* UNUSED */
-
 /**
     Return the first symbol in a symbol entry
     @description Prepares for walking the contents of a symbol table by returning the first entry in the symbol table.
@@ -4443,22 +4427,13 @@ extern MprKey *mprLookupKeyEntry(MprHash *table, cvoid *key);
  */
 extern int mprRemoveKey(MprHash *table, cvoid *key);
 
-#if UNUSED
-/**
-    Set the user-definable bits for a key
-    @param hp Hash key entry returned by #mprLookupKeyEntry or #mprAddKey
-    @param bits Bits to define. Only the low order two bits are used.
-    @return Returns zero if successful, otherwise a negative MPR error code is returned.
-    @ingroup MprHash
- */
-extern void mprSetKeyBits(MprKey *hp, int bits);
-#endif
-
 //  MOB DOC
-#define MPR_HASH_PRETTY 0x1
 extern MprHash *mprBlendHash(MprHash *hash, MprHash *extra);
+#if UNUSED
+#define MPR_HASH_PRETTY 0x1
 extern MprHash *mprParseHash(cchar *str);
 extern cchar *mprHashToString(MprHash *hash, int flags);
+#endif
 
 /*
     Prototypes for file system switch methods
@@ -5977,6 +5952,50 @@ extern void mprXmlSetParseArg(MprXml *xp, void *parseArg);
     @ingroup MprXml
  */
 extern void mprXmlSetParserHandler(MprXml *xp, MprXmlHandler h);
+
+/*
+    Flags for mprSerialize
+ */
+#define MPR_JSON_PRETTY     0x1
+
+/*
+    Data types for obj property values
+ */
+#define MPR_JSON_UNKNOWN     0
+#define MPR_JSON_STRING      1
+#define MPR_JSON_OBJ         2
+#define MPR_JSON_ARRAY       3
+
+//  MOB DOC
+struct MprJson;
+typedef void MprObj;
+typedef int (*MprCheckState)(struct MprJson *jp, cchar *arg);
+typedef int (*MprSetKey)(MprObj *obj, cchar *name, cchar *value, int valueType);
+typedef int (*MprSetItem)(MprObj *obj, cchar *value, int valueType, int index);
+typedef MprObj *(*MprMakeObj)(struct MprJson *jp, bool list);
+
+//  MOB DOC
+typedef struct MprJson {
+    cchar           *tok;           /* Current parse token */
+    int             lineNumber;     /* Current line number in path */
+    MprCheckState   check;          /* Check state before defining key/item */
+    MprSetKey       setKey;         /* Property set callback function */
+    MprSetItem      setItem;        /* Property set callback function */
+    MprMakeObj      makeObj;        /* Make obj callback */
+} MprJson;
+
+//  MOB DOC
+extern cchar *mprSerialize(MprObj *obj, int flags);
+extern MprObj *mprDeserializeCustom(cchar *str, MprSetItem setItem, MprSetKey setKey, MprMakeObj makeObj);
+extern MprObj *mprDeserialize(cchar *str);
+
+#if FUTURE
+extern MprObj *mprReadObj(MprObj *obj, cchar *cmd, int *type); 
+extern MprObj *mprWriteObj(MprObj *obj, cchar *cmd, cchar *value, int type); 
+
+readObj(obj, "users.'Peter Smith'.address", &type);
+writeObj(obj, "users.'John Doe'.address", "1212 Park Ave", MPR_JSON_STRING);
+#endif
 
 /**
     Thread service
