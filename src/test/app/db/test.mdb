@@ -1,0 +1,19 @@
+{
+    'post': {
+        hints: {
+            ncols: 3
+        },
+        schema: {
+            'id': { type: 'string', autoinc: 'true', index: 'true', key: 'true' },
+            'title': { type: 'string', notnull: 'true' },
+            'body': { type: 'text' },
+        },
+        data: [
+            [ '1', 'Msg one', 'Line one
+Line two
+Line three
+', ],
+            [ '3', 'Msg three', 'bbbb', ],
+    ],
+    },
+}
