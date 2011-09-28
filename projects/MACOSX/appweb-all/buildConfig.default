@@ -281,7 +281,8 @@ BLD_MPR_LIBS=mpr
 BLD_FEATURE_HTTP=1
 BLD_HTTP_BUILTIN=1
 BLD_HTTP_IMPORTS=${BLD_TOP}/src/deps/http/http.h 
-BLD_HTTP_LIBS=http
+BLD_HTTP_LIBS=http pcre
+BLD_HTTP_WITHLIBS=pcre
 
 #
 #	OPENSSL
@@ -338,7 +339,14 @@ BLD_APPWEB_WITHLIBS=pcre mprssl ssl crypto mpr http
 BLD_FEATURE_EJS=0
 BLD_FEATURE_EJSCRIPT=0
 BLD_FEATURE_MATRIXSSL=0
-BLD_FEATURE_PHP=0
+
+BLD_FEATURE_PHP=1
+BLD_PHP_BUILTIN=0
+BLD_PHP_DEPENDENCIES=mpr
+BLD_PHP_IFLAGS=-I/Users/mob/git/appweb/extensions/php/latest -I/Users/mob/git/appweb/extensions/php/latest/main -I/Users/mob/git/appweb/extensions/php/latest/Zend -I/Users/mob/git/appweb/extensions/php/latest/TSRM
+BLD_PHP_IMPORTS=${BLD_TOP}/extensions/php/latest/libs/libphp5.dylib 
+BLD_PHP_LIBPATHS=/Users/mob/git/appweb/extensions/php/latest/libs
+BLD_PHP_LIBS=php5 mpr
 
 EXPORT_OBJECTS ?= 1
 ifeq ($(EXPORT_OBJECTS),0)
@@ -401,6 +409,7 @@ else
     #define BLD_DOC_PREFIX "/usr/lib/appweb/doc"
     #define BLD_INC_PREFIX "/usr/lib/appweb/inc"
     #define BLD_JEM_PREFIX "/usr/lib/appweb/jems"
+    #undef BLD_LIB_PREFIX
     #define BLD_LIB_PREFIX "/usr/lib/appweb/lib"
     #define BLD_LOG_PREFIX "/var/log/appweb"
     #define BLD_MAN_PREFIX "/usr/lib/appweb/man"
@@ -506,7 +515,8 @@ else
     #define BLD_FEATURE_HTTP 1
     #define BLD_HTTP_BUILTIN 1
     #define BLD_HTTP_IMPORTS "${BLD_TOP}/src/deps/http/http.h "
-    #define BLD_HTTP_LIBS "http"
+    #define BLD_HTTP_LIBS "http pcre"
+    #define BLD_HTTP_WITH_LIBS "pcre"
     #define BLD_FEATURE_OPENSSL 1
     #define BLD_OPENSSL_BUILTIN 0
     #define BLD_OPENSSL_LIBS "ssl crypto"
@@ -533,7 +543,13 @@ else
     #define BLD_APPWEB_WITHLIBS "pcre mprssl ssl crypto mpr http"
     #define BLD_FEATURE_EJS 0
     #define BLD_FEATURE_EJSCRIPT 0
-    #define BLD_FEATURE_PHP 0
+    #define BLD_FEATURE_PHP 1
+    #define BLD_PHP_BUILTIN 0
+    #define BLD_PHP_DEPENDENCIES "mpr"
+    #define BLD_PHP_IFLAGS "-I/Users/mob/git/appweb/extensions/php/latest -I/Users/mob/git/appweb/extensions/php/latest/main -I/Users/mob/git/appweb/extensions/php/latest/Zend -I/Users/mob/git/appweb/extensions/php/latest/TSRM"
+    #define BLD_PHP_IMPORTS "${BLD_TOP}/extensions/php/latest/libs/libphp5.dylib "
+    #define BLD_PHP_LIBPATHS "/Users/mob/git/appweb/extensions/php/latest/libs"
+    #define BLD_PHP_LIBS "php5 mpr"
     #define BLD_FEATURE_MATRIXSSL 0
 #endif /* IGNORE_IN_C_CODE */
 #if IGNORE_IN_C_CODE
