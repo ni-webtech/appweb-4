@@ -1399,7 +1399,7 @@ static int resetPipelineDirective(MaState *state, cchar *key, cchar *value)
 
 /*
     <Route pattern>
-    NOTE: routes do not prepend their parent route prefixes
+    NOTE: The route pattern should include the prefix when declared. When compiling the pattern, the prefix is removed.
  */
 static int routeDirective(MaState *state, cchar *key, cchar *value)
 {

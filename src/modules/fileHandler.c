@@ -84,7 +84,7 @@ static int findFile(HttpConn *conn)
                 return HTTP_ROUTE_REROUTE;
             }
         }
-        if (info->isDir && maMatchDir(conn, route, HTTP_STAGE_TX)) {
+        if (info->isDir && maMatchDir(conn, route, HTTP_STAGE_TX) == HTTP_ROUTE_OK) {
             tx->handler = conn->http->dirHandler;
             tx->connector = conn->http->netConnector;
 #if UNUSED
