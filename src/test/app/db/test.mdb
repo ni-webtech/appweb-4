@@ -13,7 +13,8 @@
 Line two
 Line three
 ', ],
-            [ '3', 'Msg three', 'bbbb', ],
+            [ '3', 'Msg three', 'a lazy', ],
+            [ '4', 'forth', 'third + 1 message', ],
     ],
     },
 }

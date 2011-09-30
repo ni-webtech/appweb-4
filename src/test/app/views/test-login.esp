@@ -1,9 +1,0 @@
-    <h4>Please Login</h4> 
-    <form method="POST" action="/mvc/user/login" id="login">
-        <table border="0"> 
-            <tr><td><b>Username</b></td><td><input name="username" type="text" value='@@username' /></td></tr> 
-            <tr><td><b>Password</b></td><td><input name="password" type="password" value='' /></td></tr> 
-            <tr><td><b>Favorite Color</b></td><td><input name="color" type="text" value='@@color'/></td></tr> 
-        </table> 
-        <input name="commit" type="submit" value="OK" />
-    </form>

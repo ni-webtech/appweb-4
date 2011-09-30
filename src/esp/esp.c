@@ -276,7 +276,7 @@ static void getAppDirs()
                 continue;
             }
         }
-        if (strcmp(routePrefix, rp->literalPattern) != 0) {
+        if (rp->startWith && strcmp(routePrefix, rp->startWith) != 0) {
             continue;
         }
         if ((app->eroute = httpGetRouteData(rp, ESP_NAME)) != 0 && app->eroute->compile) {
@@ -381,7 +381,7 @@ static void run(int argc, char **argv)
     cmd = mprCreateCmd(0);
     if (mprRunCmd(cmd, "appweb -v", NULL, NULL, MPR_CMD_DETACH) != 0) {
         printf("HERE @@%s@@\n", app->command);
-        fail("Can't run command %s", app->command);
+        fail("Can't run command: \n%s", app->command);
     }
     mprWaitForCmd(cmd, -1);
 }
@@ -413,7 +413,7 @@ static int runCommand(cchar *command, cchar *csource, cchar *module)
 			/* Windows puts errors to stdout Ugh! */
 			err = out;
 		}
-        fail("Can't run command %s, error %s", app->command, err);
+        fail("Can't run command: \n%s\nError %s", app->command, err);
         return MPR_ERR_CANT_COMPLETE;
     }
     return 0;

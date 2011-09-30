@@ -30,7 +30,8 @@ $(BLD_BIN_DIR)/testAppweb$(BLD_EXE): $(OBJECTS) $(call lib, appweb)
 #	Update the shbang path in testScript. Must be an absolute path on some systems and for valgrind.
 #
 cgi-bin/testScript: $(CGIP) Makefile $(BLD_INC_DIR)/buildConfig.h
-	echo "#!$(BLD_ABS_BIN_DIR)/cgiProgram$(BLD_EXE)" >cgi-bin/testScript
+	dir=`getpath -a "$(BLD_BIN_DIR)"` ; \
+	echo "#!$$dir/cgiProgram$(BLD_EXE)" >cgi-bin/testScript
 	chmod +x cgi-bin/testScript
 
 #

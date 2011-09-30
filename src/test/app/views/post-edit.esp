@@ -1,13 +1,11 @@
-<h1><%= testRec() ? "Edit" : "Create" %> Post</h1>
+<h1><%= hasRec() ? "Edit" : "Create" %> Post</h1>
 
     <% form(0, 0); %>
         <table border="0">
         <% {
-                MprList *cols;
                 char    *name, *uname;
                 int     next;
-
-                cols = ediGetColumns(getEdi(), "post");
+                MprList *cols = getColumns();
                 for (ITERATE_ITEMS(cols, name, next)) {
                     if (smatch(name, "id")) continue;
                     uname = spascal(name);
@@ -18,5 +16,5 @@
         </table>
         <% button("commit", "OK", 0); %>
         <% buttonLink("Cancel", "@", 0); %>
-        <% if (testRec()) buttonLink("Delete", "@destroy", "{data-method: 'DELETE'}"); %>
+        <% if (hasRec()) buttonLink("Delete", "@destroy", "{data-method: 'DELETE'}"); %>
     <% endform(); %>

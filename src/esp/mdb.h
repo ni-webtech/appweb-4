@@ -33,7 +33,7 @@ typedef struct MdbCol {
     int             type;
     int             flags;
     int             cid;
-    int             nextValue;
+    int64           nextValue;
 } MdbCol;
 
 typedef struct MdbSchema {
@@ -75,7 +75,6 @@ typedef struct Mdb {
     /*
         When loading from file
      */
-    cchar           *tok;           /* Current parse token */
     MdbTable        *loadTable;     /* Current table */
     MdbCol          *loadCol;       /* Current column */
     MdbRow          *loadRow;       /* Current row */

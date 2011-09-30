@@ -60,10 +60,10 @@ static void openCgi(HttpQueue *q)
     rx = q->conn->rx;
 
     mprLog(5, "Open CGI handler");
-    httpTrimExtraPath(q->conn);
     if (rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
         httpHandleOptionsTrace(q->conn);
     } else {
+        httpTrimExtraPath(q->conn);
         httpMapFile(q->conn, rx->route);
         httpCreateCGIParams(q->conn);
     }
@@ -1033,7 +1033,6 @@ static int scriptAliasDirective(MaState *state, cchar *key, cchar *value)
     httpSetRoutePattern(route, sfmt("^%s(.*)$", prefix), 0);
     httpSetRouteTarget(route, "run", "$1");
     httpFinalizeRoute(route);
-    httpAddRouteToHost(state->host, route);
     mprLog(4, "ScriptAlias \"%s\" for \"%s\"", prefix, path);
     return 0;
 }

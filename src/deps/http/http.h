@@ -193,6 +193,9 @@ struct HttpUri;
 #define HTTP_CODE_START_LOCAL_ERRORS        550
 #define HTTP_CODE_COMMS_ERROR               550     /**< The server had a communicationss error responding to the client */
 
+/*
+    Flags that can be ored into the status code
+ */
 #define HTTP_CODE_MASK                      0xFFFF
 #define HTTP_ABORT                          0x10000 /* Abort the request, immediately close the conn */
 #define HTTP_CLOSE                          0x20000 /* Close the conn at the completion of the request */
@@ -1744,6 +1747,7 @@ typedef struct HttpConn {
     void            *pool;                  /**< Pool of VMs */
     void            *mark;                  /**< Reference for GC marking */
     void            *data;                  /**< Custom data for request */
+    void            *grid;                  /**< Current request database grid for MVC apps */
     void            *record;                /**< Current request database record for MVC apps */
     char            *boundary;              /**< File upload boundary */
     char            *errorMsg;              /**< Error message for the last request (if any) */
@@ -2830,21 +2834,25 @@ typedef struct HttpLang {
 typedef struct HttpRoute {
     /* Ordered for debugging */
     char            *name;                  /**< Route name */
+    char            *pattern;               /**< Original matching URI pattern for the route (includes prefix) */
+    char            *startSegment;          /**< Starting literal segment of pattern (includes prefix) */
+    char            *startWith;             /**< Starting literal segment of pattern (includes prefix) */
+    char            *optimizedPattern;      /**< Processed pattern (excludes prefix) */
+    char            *prefix;                /**< Application scriptName prefix */
+    char            *template;              /**< URI template for forming links based on this route (includes prefix) */
+    char            *targetRule;            /**< Target rule */
+    char            *target;                /**< Route target details */
     char            *dir;                   /**< Directory filename */
     char            *index;                 /**< Default index document name */
     char            *methodSpec;            /**< Supported HTTP methods */
-    char            *pattern;               /**< Original matching URI pattern for the route */
-    char            *processedPattern;      /**< Expanded {tokens} => $N */
-    char            *targetRule;            /**< Target rule */
-    char            *target;                /**< Route target details */
-    int             responseStatus;         /**< Response status code */
-    char            *literalPattern;        /**< Starting literal segment of pattern */
-    ssize           literalPatternLen;      /**< Length of literalPattern */
-    char            *prefix;                /**< Application scriptName prefix */
-    ssize           prefixLen;              /**< Prefix length */
-
-    char            *template;              /**< URI template for forming links based on this route */
     HttpStage       *handler;               /**< Fixed handler */
+
+    int             nextGroup;              /**< Next route with a different startWith */
+    int             responseStatus;         /**< Response status code */
+    ssize           prefixLen;              /**< Prefix length */
+    ssize           startWithLen;           /**< Length of startWith */
+    ssize           startSegmentLen;        /**< Prefix length */
+
 
     HttpAuth        *auth;                  /**< Per route block authentication */
     Http            *http;                  /**< Http service object (copy of appweb->http) */
@@ -2915,11 +2923,10 @@ typedef struct HttpRouteOp {
 typedef int (HttpRouteProc)(HttpConn *conn, HttpRoute *route, HttpRouteOp *item);
 
 //  MOB DOC
-extern HttpRoute *httpAddRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, cchar *source);
-extern void httpAddResource(HttpRoute *parent, cchar *prefix, cchar *controller);
-extern void httpAddResourceGroup(HttpRoute *parent, cchar *prefix, cchar *controller);
+extern void httpAddResource(HttpRoute *parent, cchar *resource);
+extern void httpAddResourceGroup(HttpRoute *parent, cchar *resource);
 extern void httpAddDefaultRoutes(HttpRoute *parent);
-extern void httpAddRouteSet(HttpRoute *parent, cchar *pack, cchar *patternPrefix, cchar *controller);
+extern void httpAddRouteSet(HttpRoute *parent, cchar *pack);
 
 /**
     Add a route condition
@@ -4792,6 +4799,7 @@ typedef struct HttpHost {
     struct HttpHost *parent;                /**< Parent host to inherit aliases, dirs, routes */
     MprList         *dirs;                  /**< List of Directory definitions */
     MprList         *routes;                /**< List of Route defintions */
+    HttpRoute       *defaultRoute;          /**< Default route for the host */
     HttpLimits      *limits;                /**< Host resource limits */
     MprHash         *mimeTypes;             /**< Hash table of mime types (key is extension) */
 
@@ -4825,7 +4833,11 @@ typedef struct HttpHost {
     @return Zero if the route can be added.
     @ingroup HttpHost
  */
-extern int httpAddRouteToHost(HttpHost *host, HttpRoute *route);
+extern int httpAddRoute(HttpHost *host, HttpRoute *route);
+
+//  MOB DOC
+HttpRoute *httpAddConfiguredRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, 
+        cchar *source);
 
 /**
     Clone a host
@@ -4845,7 +4857,10 @@ extern HttpHost *httpCloneHost(HttpHost *parent);
 extern HttpHost *httpCreateHost();
 
 //  MOB DOC
-extern void httpLogRoutes(HttpHost *host);
+extern HttpRoute *httpGetHostDefaultRoute(HttpHost *host);
+
+//  MOB DOC
+extern void httpLogRoutes(HttpHost *host, bool full);
 
 /**
     Lookup a route by name
@@ -4860,6 +4875,9 @@ extern HttpRoute *httpLookupRoute(HttpHost *host, cchar *name);
     @ingroup HttpHost
  */
 extern void httpResetRoutes(HttpHost *host);
+
+//  MOB DOC
+extern void httpSetHostDefaultRoute(HttpHost *host, HttpRoute *route);
 
 /**
     Set the home directory for a host
@@ -4926,6 +4944,7 @@ extern void httpSetHostTrace(HttpHost *host, int level, int mask);
  */
 extern void httpSetHostTraceFilter(HttpHost *host, ssize len, cchar *include, cchar *exclude);
 
+//  MOB DIVIDOR
 #if UNUSED
 /**
     Setup trace for expedited processing

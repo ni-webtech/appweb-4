@@ -5969,25 +5969,29 @@ extern void mprXmlSetParserHandler(MprXml *xp, MprXmlHandler h);
 //  MOB DOC
 struct MprJson;
 typedef void MprObj;
-typedef int (*MprCheckState)(struct MprJson *jp, cchar *arg);
-typedef int (*MprSetKey)(MprObj *obj, cchar *name, cchar *value, int valueType);
-typedef int (*MprSetItem)(MprObj *obj, cchar *value, int valueType, int index);
+typedef int (*MprCheckState)(struct MprJson *jp, cchar *name);
+typedef int (*MprSetKey)(struct MprJson *jp, MprObj *obj, cchar *name, cchar *value, int valueType);
+typedef int (*MprSetItem)(struct MprJson *jp, MprObj *obj, cchar *value, int valueType, int index);
 typedef MprObj *(*MprMakeObj)(struct MprJson *jp, bool list);
 
 //  MOB DOC
 typedef struct MprJson {
     cchar           *tok;           /* Current parse token */
     int             lineNumber;     /* Current line number in path */
-    MprCheckState   check;          /* Check state before defining key/item */
+    MprCheckState   checkState;     /* Check state before defining key/item */
     MprSetKey       setKey;         /* Property set callback function */
     MprSetItem      setItem;        /* Property set callback function */
     MprMakeObj      makeObj;        /* Make obj callback */
+    int             state;          /* Custom extended state */
+    void            *data;          /* Custom data handle */
 } MprJson;
 
 //  MOB DOC
 extern cchar *mprSerialize(MprObj *obj, int flags);
-extern MprObj *mprDeserializeCustom(cchar *str, MprSetItem setItem, MprSetKey setKey, MprMakeObj makeObj);
+extern MprObj *mprDeserializeCustom(cchar *str, MprMakeObj makeObj, MprCheckState check, MprSetItem setItem, 
+        MprSetKey setKey, void *data);
 extern MprObj *mprDeserialize(cchar *str);
+extern void mprJsonParseError(MprJson *jp, cchar *fmt, ...);
 
 #if FUTURE
 extern MprObj *mprReadObj(MprObj *obj, cchar *cmd, int *type); 

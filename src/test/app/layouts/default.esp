@@ -6,11 +6,11 @@
     <% icon(0, 0); %>
     <% stylesheet(0, 0); %>
     <% script(0, 0); %>
-    <title>Blogging App</title>
+    <title>Test App</title>
 </head>
 <body>
     <div class="top">
-        <h1><% label("Blog Application", "{data-click: '/'}"); %></h1>
+        <h1><% label("Blog Application", "{data-click: '~'}"); %></h1>
     </div>
     <div id="logo">Appweb&trade;</div>
     <% flash("all", NULL); %>

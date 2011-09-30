@@ -335,7 +335,7 @@ void espInput(HttpConn *conn, cchar *fieldName, cchar *optionString)
         textInner(conn, fieldName, options);
         break;
     default:
-        mprError("Unknown field type %d", type);
+        httpError(conn, 0, "Unknown field type %d", type);
         espText(conn, fieldName, optionString);
         break;
     }
@@ -681,11 +681,187 @@ void espTree(HttpConn *conn, EdiGrid *grid, cchar *optionString)
 
 //  MOB - render a partial view
 
+/**************************************** Support *************************************/ 
+
+static void emitFormErrors(HttpConn *conn, EdiRec *rec, MprHash *options)
+{
+    MprList         *errors;
+    MprKeyValue     *error;
+    int             count, next;
+   
+    if (!rec->errors || !httpGetOption(options, "hideErrors", 0)) {
+        return;
+    }
+    errors = ediGetRecErrors(rec);
+    if (errors) {
+        count = mprGetListLength(errors);
+        espWrite(conn, "<div class='-esp-form-error'><h2>The %s has %s it being saved.</h2>\r\n",
+            count, count <= 1 ? "error that prevents" : "errors that prevent");
+        espWrite(conn, "    <p>There were problems with the following fields:</p>\r\n");
+        espWrite(conn, "    <ul>\r\n");
+        for (next = 0; (error = mprGetNextItem(errors, &next)) != 0; ) {
+            espWrite(conn, "        <li>%s %s</li>\r\n", error->key, error->value);
+        }
+        espWrite(conn, "    </ul>\r\n");
+        espWrite(conn, "</div>");
+    }
+}
+
+
+static cchar *escapeValue(cchar *value, MprHash *options)
+{
+    if (httpGetOption(options, "escape", 0)) {
+        return mprEscapeHtml(value);
+    }
+    return value;
+}
+
+
+static cchar *formatValue(EdiField value, MprHash *options)
+{
+    return ediFormatField(httpGetOption(options, "format", 0), value);
+}
+
+
+static EspRoute *getRoute()
+{
+    HttpConn    *conn;
+    EspReq      *req;
+
+    if ((conn = espGetConn()) == 0 || conn->data == 0) {
+        return 0;
+    }
+    req = conn->data;
+    return req->eroute;
+}
+
+
+static cchar *getValue(HttpConn *conn, cchar *fieldName, MprHash *options)
+{
+    EspReq      *req;
+    EdiRec      *record;
+    MprKeyValue *error;
+    cchar       *value;
+    int         next;
+
+    req = conn->data;
+    record = req->record;
+    value = 0;
+
+    if (record) {
+        value = ediGetRecField(NULL, record, fieldName);
+        if (record->errors) {
+            for (next = 0; (error = mprGetNextItem(record->errors, &next)) != 0; ) {
+                if (smatch(error->key, fieldName)) {
+                    httpAddOption(options, "class", "-esp-field-error");
+                }
+            }
+        }
+    }
+    if (value == 0) {
+        value = httpGetOption(options, "value", 0);
+    }
+    if (httpGetOption(options, "escape", 0)) {
+        value = mprEscapeHtml(value);
+    }
+    return value;
+}
+
+
+static EdiField initField(cchar *name, EdiValue value, int type, int flags)
+{
+    EdiField    f;
+
+    f.valid = 1;
+    f.value = value;
+    f.type = type;
+    f.name = name;
+    f.flags = flags;
+    return f;
+}
+
+
+/*
+    Map options to an attribute string. Remove all internal control specific options and transparently handle 
+    URI link options.
+
+    WARNING: this returns a non-cloned reference and relies on no GC yield until the returned value is used or cloned.
+    This is done as an optimization to reduce memeory allocations.
+ */
+static cchar *map(HttpConn *conn, MprHash *options)
+{
+    Esp         *esp;
+    EspReq      *req;
+    MprHash     *params;
+    MprKey      *kp;
+    MprBuf      *buf;
+    cchar       *value;
+    char        *pstr;
+
+    if (options == 0 || mprGetHashLength(options) == 0) {
+        return MPR->emptyString;
+    }
+    req = conn->data;
+    if (httpGetOption(options, "data-refresh", 0) && httpGetOption(options, "id", 0)) {
+        httpAddOption(options, "id", sfmt("id_%s", req->lastDomID++));
+    }
+    esp = MPR->espService;
+    buf = mprCreateBuf(-1, -1);
+    for (kp = 0; (kp = mprGetNextKey(options, kp)) != 0; ) {
+        if (kp->type != MPR_JSON_OBJ && kp->type != MPR_JSON_ARRAY && !mprLookupKey(esp->internalOptions, kp->key)) {
+            mprPutCharToBuf(buf, ' ');
+            value = kp->data;
+            /*
+                Support link template resolution for these options
+             */
+            if (smatch(kp->key, "data-click") || smatch(kp->key, "data-remote") || smatch(kp->key, "data-refresh")) {
+//@edit
+                value = httpLink(conn, value, options);
+                if ((params = httpGetOptionHash(options, "params")) != 0) {
+                    pstr = (char*) "";
+                    for (kp = 0; (kp = mprGetNextKey(params, kp)) != 0; ) {
+                        pstr = sjoin(pstr, mprUriEncode(kp->key, MPR_ENCODE_URI_COMPONENT), "=", 
+                            mprUriEncode(kp->data, MPR_ENCODE_URI_COMPONENT), "&", NULL);
+                    }
+                    if (pstr[0]) {
+                        /* Trim last "&" */
+                        pstr[strlen(pstr) - 1] = '\0';
+                    }
+                    mprPutFmtToBuf(buf, "%s-params='%s", params);
+                }
+            }
+            mprPutStringToBuf(buf, kp->key);
+            mprPutStringToBuf(buf, "='");
+            mprPutStringToBuf(buf, value);
+            mprPutCharToBuf(buf, '\'');
+        }
+    }
+    mprAddNullToBuf(buf);
+    return mprGetBufStart(buf);
+}
+
+
+void espInitHtmlOptions(Esp *esp)
+{
+    char   **op;
+
+    for (op = internalOptions; *op; op++) {
+        mprAddKey(esp->internalOptions, *op, op);
+    }
+}
+
+
 /************************************ Abbreviated Controls ****************************/ 
 
 HttpConn *espGetConn()
 {
     return mprGetThreadData(((Esp*) MPR->espService)->local);
+}
+
+
+void espSetConn(HttpConn *conn)
+{
+    mprSetThreadData(((Esp*) MPR->espService)->local, conn);
 }
 
 
@@ -850,191 +1026,9 @@ void tree(EdiGrid *grid, cchar *optionString)
     espTree(espGetConn(), grid, optionString);
 }
 
-
-void espInitHtmlOptions(Esp *esp)
-{
-    char   **op;
-
-    for (op = internalOptions; *op; op++) {
-        mprAddKey(esp->internalOptions, *op, op);
-    }
-}
-
-
-/*
-    Map options to an attribute string. Remove all internal control specific options and transparently handle 
-    URI link options.
-
-    WARNING: this returns a non-cloned reference and relies on no GC yield until the returned value is used or cloned.
-    This is done as an optimization to reduce memeory allocations.
- */
-static cchar *map(HttpConn *conn, MprHash *options)
-{
-    Esp         *esp;
-    EspReq      *req;
-    MprHash     *params;
-    MprKey      *kp;
-    MprBuf      *buf;
-    cchar       *value;
-    char        *pstr;
-
-    if (options == 0 || mprGetHashLength(options) == 0) {
-        return MPR->emptyString;
-    }
-    req = conn->data;
-    if (httpGetOption(options, "data-refresh", 0) && httpGetOption(options, "id", 0)) {
-        httpAddOption(options, "id", sfmt("id_%s", req->lastDomID++));
-    }
-    esp = MPR->espService;
-    buf = mprCreateBuf(-1, -1);
-    for (kp = 0; (kp = mprGetNextKey(options, kp)) != 0; ) {
-        if (!mprLookupKey(esp->internalOptions, kp->key)) {
-            mprPutCharToBuf(buf, ' ');
-            value = kp->data;
-            /*
-                Support link template resolution for these options
-             */
-            if (smatch(kp->key, "data-click") || smatch(kp->key, "data-remote") || smatch(kp->key, "data-refresh")) {
-//@edit
-                value = httpLink(conn, value, options);
-                if ((params = httpGetOptionHash(options, "params")) != 0) {
-                    pstr = (char*) "";
-                    for (kp = 0; (kp = mprGetNextKey(params, kp)) != 0; ) {
-                        pstr = sjoin(pstr, mprUriEncode(kp->key, MPR_ENCODE_URI_COMPONENT), "=", 
-                            mprUriEncode(kp->data, MPR_ENCODE_URI_COMPONENT), "&", NULL);
-                    }
-                    if (pstr[0]) {
-                        /* Trim last "&" */
-                        pstr[strlen(pstr) - 1] = '\0';
-                    }
-                    mprPutFmtToBuf(buf, "%s-params='%s", params);
-                }
-            }
-            mprPutStringToBuf(buf, kp->key);
-            mprPutStringToBuf(buf, "='");
-            mprPutStringToBuf(buf, value);
-            mprPutCharToBuf(buf, '\'');
-        }
-    }
-    mprAddNullToBuf(buf);
-    return mprGetBufStart(buf);
-}
-
-
-#if 0
-static cchar *xx(HttpConn *conn, MprHash *options)
-{
-    if (httpGetOption(options, "hasError", 0)) {
-    }
-}
-#endif
-
-
-static void emitFormErrors(HttpConn *conn, EdiRec *rec, MprHash *options)
-{
-    MprList         *errors;
-    MprKeyValue     *error;
-    int             count, next;
-   
-    if (!rec->errors || !httpGetOption(options, "hideErrors", 0)) {
-        return;
-    }
-    errors = ediGetErrors(rec);
-    if (errors) {
-        count = mprGetListLength(errors);
-        espWrite(conn, "<div class='-esp-form-error'><h2>The %s has %s it being saved.</h2>\r\n",
-            count, count <= 1 ? "error that prevents" : "errors that prevent");
-        espWrite(conn, "    <p>There were problems with the following fields:</p>\r\n");
-        espWrite(conn, "    <ul>\r\n");
-        for (next = 0; (error = mprGetNextItem(errors, &next)) != 0; ) {
-            espWrite(conn, "        <li>%s %s</li>\r\n", error->key, error->value);
-        }
-        espWrite(conn, "    </ul>\r\n");
-        espWrite(conn, "</div>");
-    }
-}
-
-
-static cchar *getValue(HttpConn *conn, cchar *fieldName, MprHash *options)
-{
-    EspReq      *req;
-    EdiRec      *record;
-    MprKeyValue *error;
-    cchar       *value;
-    int         next;
-
-    req = conn->data;
-    record = req->record;
-    value = 0;
-
-    if (record) {
-        value = ediGetRecFieldAsString(record, fieldName, NULL);
-        if (record->errors) {
-            for (next = 0; (error = mprGetNextItem(record->errors, &next)) != 0; ) {
-                if (smatch(error->key, fieldName)) {
-                    httpAddOption(options, "class", "-esp-field-error");
-                }
-            }
-        }
-    }
-    if (value == 0) {
-        value = httpGetOption(options, "value", 0);
-    }
-    if (httpGetOption(options, "escape", 0)) {
-        value = mprEscapeHtml(value);
-    }
-    return value;
-}
-
-
-static cchar *formatValue(EdiField value, MprHash *options)
-{
-    return ediToString(httpGetOption(options, "format", 0), value);
-}
-
-
-static cchar *escapeValue(cchar *value, MprHash *options)
-{
-    if (httpGetOption(options, "escape", 0)) {
-        return mprEscapeHtml(value);
-    }
-    return value;
-}
-
-
-//  MOB - not just database
 /************************************ Database *******************************/
-//  MOB - need ESP equivalents
-EdiRec *findRec(cchar *tableName, cchar *key)
-{
-    return ediGetRec(getEdi(), tableName, key);
-}
 
-
-EdiGrid *findAll(cchar *tableName)
-{
-    return ediGetAll(getEdi(), tableName);
-}
-
-
-HttpConn *getConn()
-{
-    return espGetConn();
-}
-
-
-static EdiField initField(cchar *name, EdiValue value, int type, int flags)
-{
-    EdiField    f;
-
-    f.valid = 1;
-    f.value = value;
-    f.type = type;
-    f.name = name;
-    f.flags = flags;
-    return f;
-}
-
+//  MOB - confusing vs ediCreateRec which creates and saves from fields
 
 EdiRec *createRec(cchar *tableName, MprHash *params)
 {
@@ -1042,26 +1036,162 @@ EdiRec *createRec(cchar *tableName, MprHash *params)
     EdiRec      *rec;
     MprList     *cols;
     MprKey      *kp;
-    int         f, ncols, type, flags;
+    int         cid, ncols, type, flags;
 
-    edi = getEdi();
+    edi = getDatabase();
     cols = ediGetColumns(edi, tableName);
     ncols = mprGetListLength(cols);
-    rec = ediCreateRec(edi, tableName, 0, ncols, NULL);
-    for (f = 0, ITERATE_KEYS(params, kp)) {
-        //  MOB - must check table exists
-        if (ediGetSchema(edi, tableName, kp->key, &type, &flags) == 0 && type > 0) {
-            rec->fields[f++] = initField(kp->key, ediParseValue(kp->data, type), type, flags);
+    if ((rec = ediCreateRec(edi, tableName, 0, ncols, NULL)) == 0) {
+        return 0;
+    }
+    for (ITERATE_KEYS(params, kp)) {
+        if (ediGetColumnSchema(edi, tableName, kp->key, &type, &flags, &cid) == 0) {
+            mprAssert(type);
+            if (cid < rec->nfields) {
+                rec->fields[cid] = initField(kp->key, ediParseValue(kp->data, type), type, flags);
+            }
         }
     }
+    setRec(rec);
     return rec;
 }
 
 
-//  MOB - review name
-void createSession()
+EdiRec *findRec(cchar *tableName, cchar *key)
 {
-    espGetSession(espGetConn(), 1);
+    Edi     *edi;
+
+    if ((edi = getDatabase()) == 0) {
+        return 0;
+    }
+    return ediReadRec(getDatabase(), tableName, key);
+}
+
+
+MprList *getColumns()
+{
+    EdiRec  *rec;
+
+    if ((rec = getRec()) != 0) {
+        return ediGetColumns(getDatabase(), rec->tableName);
+    }
+    return mprCreateList(0, 0);
+}
+
+
+EdiGrid *getGrid()
+{
+    return espGetConn()->grid;
+}
+
+
+EdiRec *getRec()
+{
+    return espGetConn()->record;
+}
+
+
+bool hasRec()
+{
+    EdiRec  *rec;
+
+    rec = espGetConn()->record;
+    return (rec && rec->id) ? 1 : 0;
+}
+
+
+bool hasGrid()
+{
+    return espGetConn()->grid != 0;
+}
+
+
+MprHash *makeParams(cchar *fmt, ...)
+{
+    va_list     args;
+    MprObj      *obj;
+
+    va_start(args, fmt);
+    obj = mprDeserialize(sfmtv(fmt, args));
+    va_end(args);
+    return obj;
+}
+
+
+EdiRec *readRec(cchar *tableName)
+{
+    return setRec(ediReadRec(getDatabase(), tableName, param("id")));
+}
+
+
+EdiRec *readRecByKey(cchar *tableName, cchar *key)
+{
+    return setRec(ediReadRec(getDatabase(), tableName, key));
+}
+
+
+EdiGrid *readGrid(cchar *tableName)
+{
+    return setGrid(ediReadGrid(getDatabase(), tableName));
+}
+
+
+bool removeRec(cchar *tableName, cchar *key)
+{
+    if (ediDeleteRow(getDatabase(), tableName, key) < 0) {
+        return 0;
+    }
+    return 1;
+}
+
+
+EdiGrid *setGrid(EdiGrid *grid)
+{
+    return espGetConn()->grid = grid;
+}
+
+
+EdiRec *setRec(EdiRec *rec)
+{
+    return espGetConn()->record = rec;
+}
+
+
+EdiRec *updateField(EdiRec *rec, cchar *fieldName, cchar *value)
+{
+    return ediUpdateField(rec, fieldName, value);
+}
+
+
+EdiRec *updateFields(EdiRec *rec, MprHash *params)
+{
+    return ediUpdateFields(rec, params);
+}
+
+
+bool writeField(cchar *tableName, cchar *key, cchar *fieldName, cchar *value)
+{
+    return ediWriteField(getDatabase(), tableName, key, fieldName, value) == 0;
+}
+
+
+bool writeFields(cchar *tableName, MprHash *params)
+{
+    return ediWriteFields(getDatabase(), tableName, params) == 0;
+}
+
+
+bool writeRec(EdiRec *rec)
+{
+    return ediWriteRec(rec->edi, rec) == 0;
+}
+
+
+/************************************ Misc ***********************************/
+
+EspSession *createSession()
+{
+    return espCreateSession(espGetConn());
 }
 
 
@@ -1081,23 +1211,38 @@ void finalize()
 }
 
 
-Edi *getEdi()
+HttpConn *getConn()
+{
+    return espGetConn();
+}
+
+
+Edi *getDatabase()
 {
     EspRoute    *eroute;
 
-    eroute = getEroute();
+    if ((eroute = getRoute()) == 0 || eroute->edi == 0) {
+        httpError(getConn(), 0, "Can't get database instance");
+    }
     return eroute->edi;
 }
 
 
-EspRoute *getEroute()
+cchar *getMethod()
 {
-    HttpConn    *conn;
-    EspReq      *req;
+    return espGetConn()->rx->method;
+}
 
-    conn = espGetConn();
-    req = conn->data;
-    return req->eroute;
+
+cchar *getQuery()
+{
+    return espGetConn()->rx->parsedUri->query;
+}
+
+
+cchar *getUri()
+{
+    return espGetConn()->rx->uri;
 }
 
 
@@ -1121,103 +1266,21 @@ void notice(cchar *kind, cchar *fmt, ...)
 }
 
 
-cchar *getMethod()
-{
-    return espGetConn()->rx->method;
-}
-
-
 MprHash *params()
 {
     return espGetParams(espGetConn());
 }
 
 
-cchar *param(cchar *key, cchar *defaultValue)
+cchar *param(cchar *key)
 {
-    return espGetParam(espGetConn(), key, defaultValue);
+    return espGetParam(espGetConn(), key, NULL);
 }
 
 
 void redirect(cchar *target)
 {
     espRedirect(espGetConn(), 302, target);
-}
-
-
-//  MOB - name
-EdiRec *getRec()
-{
-    EdiRec  *rec;
-
-    rec = espGetConn()->record;
-    return rec;
-}
-
-
-//  MOB - name
-bool testRec()
-{
-    EdiRec  *rec;
-
-    rec = espGetConn()->record;
-    return (rec && rec->id) ? 1 : 0;
-}
-
-
-bool removeRec(cchar *tableName, cchar *key)
-{
-    if (ediDeleteRow(getEdi(), tableName, key) < 0) {
-        return 0;
-    }
-    return 1;
-}
-
-bool save()
-{
-    return saveUpdate(espGetParams(getConn()));
-}
-
-
-bool saveUpdate(MprHash *fields)
-{
-    HttpConn    *conn;
-    Edi         *edi;
-    EdiRec      *rec;
-
-    conn = espGetConn();
-    edi = getEdi();
-    if ((rec = getRec()) == 0) {
-        return 0;
-    }
-    if (ediSetRec(edi, rec->tableName , rec->id, fields) < 0) {
-        return 0;
-    } 
-    return 1;
-}
-
-
-cchar *session(cchar *key)
-{
-    return espGetSessionVar(espGetConn(), key, 0);
-}
-
-
-void setParam(cchar *key, cchar *value)
-{
-    espSetParam(espGetConn(), key, value);
-}
-
-
-void setSession(cchar *key, cchar *value)
-{
-    espSetSessionVar(espGetConn(), key, value);
-}
-
-
-void record(EdiRec *rec)
-{
-    espGetConn()->record = rec;
 }
 
 
@@ -1235,6 +1298,30 @@ ssize render(cchar *fmt, ...)
 }
 
 
+void renderView(cchar *view)
+{
+    espWriteView(espGetConn(), view);
+}
+
+
+cchar *session(cchar *key)
+{
+    return espGetSessionVar(espGetConn(), key, "");
+}
+
+
+void setParam(cchar *key, cchar *value)
+{
+    espSetParam(espGetConn(), key, value);
+}
+
+
+void setSession(cchar *key, cchar *value)
+{
+    espSetSessionVar(espGetConn(), key, value);
+}
+
+
 void warn(cchar *fmt, ...)
 {
     va_list     args;
@@ -1242,12 +1329,6 @@ void warn(cchar *fmt, ...)
     va_start(args, fmt);
     espNoticev(espGetConn(), "warn", fmt, args);
     va_end(args);
-}
-
-
-void writeView(cchar *view)
-{
-    espWriteView(espGetConn(), view);
 }
 
 

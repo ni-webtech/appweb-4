@@ -108,24 +108,25 @@ typedef struct EdiProvider {
     void      (*close)(Edi *edi);
     int       (*delete)(Edi *edi, cchar *path);
     int       (*deleteRow)(Edi *edi, cchar *tableName, cchar *key);
-    EdiGrid   *(*getAll)(Edi *edi, cchar *tableName);
     MprList   *(*getColumns)(Edi *edi, cchar *tableName);
-    EdiField  (*getField)(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName);
-    EdiRec    *(*getRec)(Edi *edi, cchar *tableName, cchar *key);
-    int       (*getSchema)(Edi *edi, cchar *tableName, cchar *columnName, int *type, int *flags);
+    int       (*getColumnSchema)(Edi *edi, cchar *tableName, cchar *columnName, int *type, int *flags, int *cid);
     MprList   *(*getTables)(Edi *edi);
     int       (*load)(Edi *edi, cchar *path);
     int       (*lookupField)(Edi *edi, cchar *tableName, cchar *fieldName);
     Edi       *(*open)(cchar *path, int flags);
     EdiGrid   *(*query)(Edi *edi, cchar *cmd);
+    EdiField  (*readField)(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName);
+    EdiGrid   *(*readGrid)(Edi *edi, cchar *tableName);
+    EdiRec    *(*readRec)(Edi *edi, cchar *tableName, cchar *key);
     int       (*removeColumn)(Edi *edi, cchar *tableName, cchar *columnName);
     int       (*removeIndex)(Edi *edi, cchar *tableName, cchar *indexName);
     int       (*removeTable)(Edi *edi, cchar *tableName);
     int       (*renameTable)(Edi *edi, cchar *tableName, cchar *newTableName);
     int       (*renameColumn)(Edi *edi, cchar *tableName, cchar *columnName, cchar *newColumnName);
-    int       (*setField)(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value, int flags);
-    int       (*setRec)(Edi *edi, cchar *tableName, cchar *key, MprHash *params);
     int       (*save)(Edi *edi);
+    int       (*writeField)(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
+    int       (*writeFields)(Edi *edi, cchar *tableName, MprHash *params);
+    int       (*writeRec)(Edi *edi, EdiRec *rec);
 } EdiProvider;
 
 typedef struct EdiService {
@@ -139,7 +140,7 @@ extern void ediAddValidation(cchar *name, void *validation);
 
 
 /*
-    Provider wrapped calls
+    EDI user API
  */
 extern int ediAddColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
 extern int ediAddIndex(Edi *edi, cchar *tableName, cchar *columnName, cchar *indexName);
@@ -149,51 +150,41 @@ extern void ediClose(Edi *edi);
 extern int ediDelete(Edi *edi, cchar *path);
 extern int ediDeleteRow(Edi *edi, cchar *tableName, cchar *key);
 extern MprList *ediGetColumns(Edi *edi, cchar *tableName);
-
-extern EdiRec *ediGetRec(Edi *edi, cchar *tableName, cchar *key);
-extern EdiGrid *ediGetAll(Edi *edi, cchar *tableName);
-//  MOB - should key be after fieldName?
-extern EdiField ediGetField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName);
-
-extern int ediGetSchema(Edi *edi, cchar *tableName, cchar *columName, int *type, int *flags);
+extern int ediGetColumnSchema(Edi *edi, cchar *tableName, cchar *columName, int *type, int *flags, int *cid);
 extern MprList *ediGetTables(Edi *edi);
 extern int ediLoad(Edi *edi, cchar *path);
 extern int ediLookupField(Edi *edi, cchar *tableName, cchar *fieldName);
 extern Edi *ediOpen(cchar *provider, cchar *path, int flags);
 extern EdiGrid *ediQuery(Edi *edi, cchar *cmd);
+extern cchar *ediReadField(Edi *edi, cchar *fmt, cchar *tableName, cchar *key, cchar *fieldName, cchar *defaultValue);
+extern EdiGrid *ediReadGrid(Edi *edi, cchar *tableName);
+extern EdiRec *ediReadOneWhere(Edi *edi, cchar *tableName, cchar *expression);
+extern EdiField ediReadRawField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName);
+extern EdiRec *ediReadRec(Edi *edi, cchar *tableName, cchar *key);
+extern EdiGrid *ediReadWhere(Edi *edi, cchar *tableName, cchar *expression);
 extern int edRemoveColumn(Edi *edi, cchar *tableName, cchar *columnName);
 extern int ediRemoveIndex(Edi *edi, cchar *tableName, cchar *indexName);
 extern int ediRemoveTable(Edi *edi, cchar *tableName);
 extern int ediRenameTable(Edi *edi, cchar *tableName, cchar *newTableName);
 extern int ediRenameColumn(Edi *edi, cchar *tableName, cchar *columnName, cchar *newColumnName);
-extern int ediSetField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value, int flags);
-extern int ediSetRec(Edi *edi, cchar *tableName, cchar *key, MprHash *params);
 extern int ediSave(Edi *edi);
-
+extern EdiRec *ediUpdateField(EdiRec *rec, cchar *fieldName, cchar *value);
+extern EdiRec *ediUpdateFields(EdiRec *rec, MprHash *params);
+extern int ediWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
+extern int ediWriteFields(Edi *edi, cchar *tableName, MprHash *params);
+extern int ediWriteRec(Edi *edi, EdiRec *rec);
 
 /*
     Convenience Routines
  */
-extern int ediGetDbFlags(Edi *edi);
-extern EdiGrid *ediGetWhere(Edi *edi, cchar *tableName, cchar *expression);
-extern EdiRec  *ediGetOneWhere(Edi *edi, cchar *tableName, cchar *expression);
-
-//  MOB - rethink API
-extern cchar *ediGetFieldAsString(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *fmt, cchar *defaultValue);
-
-extern EdiGrid *ediMakeGrid(cchar *str);
-extern MprList *ediGetErrors(EdiRec *rec);
-extern void ediSetDbFlags(Edi *edi, int flags);
-extern cchar *ediToString(cchar *fmt, EdiField value);
-extern bool edValidateRecord(EdiRec *rec);
-
-//  MOB - position of fmt
-extern cchar *ediGetRecFieldAsString(EdiRec *rec, cchar *fieldName, cchar *fmt);
-extern EdiField ediGetRecField(EdiRec *rec, cchar *fieldName);
-
+extern cchar *ediFormatField(cchar *fmt, EdiField value);
+extern EdiField ediGetRawRecField(EdiRec *rec, cchar *fieldName);
+extern MprList *ediGetRecErrors(EdiRec *rec);
+extern cchar *ediGetRecField(cchar *fmt, EdiRec *rec, cchar *fieldName);
 extern int ediGetRecFieldType(EdiRec *rec, cchar *fieldName);
 extern MprList *ediGetGridColumns(EdiGrid *grid);
-
+extern EdiGrid *ediMakeGrid(cchar *str);
+extern bool edValidateRecord(EdiRec *rec);
 
 /*
     Support routines for providers
@@ -210,6 +201,7 @@ extern EdiValue ediParseValue(cchar *value, int type);
 extern void mdbInit();
 #endif
 
+//  MOB
 #if BLD_FEATURE_SDB && 0
 extern void sdbInit();
 #endif

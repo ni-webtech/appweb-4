@@ -52,9 +52,11 @@ int maParseConfig(MaServer *server, cchar *path)
 
     /*
         Create top level host and route
+        NOTE: the route is not added to the host until the finalization below
      */
     host = httpCreateHost();
     route = httpCreateRoute(host);
+    httpSetHostDefaultRoute(host, route);
 
     state = createState(server, host, route);
     if (parseFile(state, path) < 0) {
@@ -1026,13 +1028,18 @@ static int logRotationDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    LogRoutes 
+    LogRoutes [full]
     MOB - support two formats line for one line, and multiline with more fields
  */
 static int logRoutesDirective(MaState *state, cchar *key, cchar *value)
 {
-    mprLog(0, "HTTP Routes for URI %s", state->route->pattern);
-    httpLogRoutes(state->host);
+    cchar   *full;
+
+    if (!maTokenize(state, value, "?S", &full)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    mprRawLog(0, "\nHTTP Routes for host '%s':\n\n", state->host->name);
+    httpLogRoutes(state->host, smatch(full, "full"));
     return 0;
 }
 
@@ -1668,11 +1675,14 @@ static int virtualHostDirective(MaState *state, cchar *key, cchar *value)
     state = maPushState(state);
     if (state->enabled) {
         mprParseIp(value, &ip, &port, -1);
+        state->route = httpCreateInheritedRoute(httpGetHostDefaultRoute(state->host));
         state->host = httpCloneHost(state->host);
-        httpSetHostIpAddr(state->host, ip, port);
-        state->route = httpCreateInheritedRoute(state->route);
+        httpResetRoutes(state->host);
         httpSetRouteHost(state->route, state->host);
-        httpSetRouteName(state->route, sfmt("host: %s", state->host->name));
+        httpSetHostDefaultRoute(state->host, state->route);
+        httpSetHostIpAddr(state->host, ip, port);
+        httpSetRouteName(state->route, sfmt("default-%s", state->host->name));
+        state->auth = state->route->auth;
         if ((endpoint = httpLookupEndpoint(state->http, ip, port)) == 0) {
             mprError("Can't find listen directive for virtual host %s", value);
             return MPR_ERR_BAD_SYNTAX;
@@ -1851,7 +1861,7 @@ static MaState *createState(MaServer *server, HttpHost *host, HttpRoute *route)
     state->enabled = 1;
     state->lineNumber = 0;
     state->auth = state->route->auth;
-    httpSetRouteName(state->route, "global");
+    httpSetRouteName(state->route, "default");
     return state;
 }
 

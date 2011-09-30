@@ -30,14 +30,14 @@ assert(http.response.contains("Welcome to ESP"))
 http.close()
 
 //  /app/test/check - this tests a controller without view
-http.get(HTTP + "/app/test/check")
+http.post(HTTP + "/app/test/check")
 assert(http.status == 200)
 assert(http.response.contains("Check: OK"))
 
 //  /app/test/details - this tests templates
-http.get(HTTP + "/app/test/details")
+http.post(HTTP + "/app/test/details")
 assert(http.status == 200)
-assert(http.response.contains("<title>MVC Title</title>"))
+assert(http.response.contains("<title>Test App</title>"))
 assert(http.response.contains("Powered by Appweb"))
 assert(http.response.contains("SECRET: 42"))
 http.close()

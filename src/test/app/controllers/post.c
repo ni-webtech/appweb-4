@@ -1,54 +1,55 @@
 /*
-    Blogging Post controller
+    Post controller
  */
 #include "esp.h"
 
 static void common() {
 }
 
-//  MOB - Create should only work for POST
 static void create() { 
-    record(createRec("post", params()));
-    if (save()) {
+    if (writeRec(createRec("post", params()))) {
         inform("New post created");
         redirect("@");
     } else {
-        writeView("post-edit");
+        renderView("post-edit");
     }
 }
 
 static void destroy() { 
-    cchar   *id;
-
-    if ((id = param("id", 0)) != 0) {
-        removeRec("post", id);
-        inform("Post %s removed", id);
+    if (removeRec("post", param("id"))) {
+        inform("Post removed");
     }
     redirect("@");
 }
 
 static void edit() { 
-    record(findRec("post", param("id", 0)));
+    readRec("post");
 }
 
+static void pindex() { }
+
 static void init() { 
-    record(createRec("post", 0));
-    writeView("post-edit");
+    createRec("post", 0);
+    renderView("post-edit");
 }
 
 static void show() { 
-    record(createRec("post", 0));
-    //  MOB - need to write something here
+    readRec("post");
+    //  MOB - is this the best view?
+    renderView("post-edit");
 }
 
 static void update() { 
-    //  MOB - what happens if id is not found?
-    record(findRec("post", param("id", 0)));
-    if (save()) {
+    // rec = updateRec(readRec("post"), params());
+    // rec = updateField(readRec("post"), "name", param("name"));     
+    // if (writeRec(readRec("post"), params()))
+    // if (writeFields("post", params()))
+
+    if (writeFields("post", params())) {
         inform("Post updated successfully.");
         redirect("@");
     } else {
-        writeView("post-edit");
+        renderView("post-edit");
     }
 }
 
@@ -58,6 +59,8 @@ ESP_EXPORT int espInit_controller_post(EspRoute *eroute, MprModule *module) {
     espDefineAction(eroute, "post-destroy", destroy);
     espDefineAction(eroute, "post-edit", edit);
     espDefineAction(eroute, "post-init", init);
+    espDefineAction(eroute, "post-index", pindex);
+    espDefineAction(eroute, "post-show", show);
     espDefineAction(eroute, "post-update", update);
     return 0;
 }

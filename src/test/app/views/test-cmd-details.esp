@@ -5,8 +5,8 @@
     <h1>Edit</h1>
     SECRET: @@secret
 
-    <% alert("<html>", "escape: true"); %>
-    <% anchor("Hello <b> World", espGetReferrer(conn), "escape: true"); %>
+    <% alert("<html>", "{escape: true}"); %>
+    <% anchor("Hello <b> World", espGetReferrer(conn), "{escape: true}"); %>
 
     <% button("commit", "OK", NULL); %>
     <% button("commit", "Cancel", NULL); %>

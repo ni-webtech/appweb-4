@@ -721,6 +721,7 @@ void espShowRequest(HttpConn *conn)
 void espNoticev(HttpConn *conn, cchar *kind, cchar *fmt, va_list args)
 {
     EspReq      *req;
+    MprKey      *kp;
     cchar       *prior, *msg;
 
     req = conn->data;
@@ -731,9 +732,12 @@ void espNoticev(HttpConn *conn, cchar *kind, cchar *fmt, va_list args)
         espGetSession(conn, 1);
     }
     if ((prior = mprLookupKey(req->flash, kind)) != 0) {
-        mprAddKey(req->flash, kind, sjoin(prior, "\n", msg, NULL));
+        kp = mprAddKey(req->flash, kind, sjoin(prior, "\n", msg, NULL));
     } else {
-        mprAddKey(req->flash, kind, sclone(msg));
+        kp = mprAddKey(req->flash, kind, sclone(msg));
+    }
+    if (kp) {
+        kp->type = MPR_JSON_STRING;
     }
 }
 

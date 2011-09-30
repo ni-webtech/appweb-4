@@ -101,39 +101,92 @@ int ediDeleteRow(Edi *edi, cchar *tableName, cchar *key)
 }
 
 
-EdiGrid *ediGetAll(Edi *edi, cchar *tableName)
-{
-    return edi->provider->getAll(edi, tableName);
-}
-
-
 MprList *ediGetColumns(Edi *edi, cchar *tableName)
 {
     return edi->provider->getColumns(edi, tableName);
 }
 
 
-EdiField ediGetField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName)
+int ediGetColumnSchema(Edi *edi, cchar *tableName, cchar *columnName, int *type, int *flags, int *cid)
 {
-    return edi->provider->getField(edi, tableName, key, fieldName);
+    return edi->provider->getColumnSchema(edi, tableName, columnName, type, flags, cid);
 }
 
 
-EdiRec *ediGetRec(Edi *edi, cchar *tableName, cchar *key)
+MprList *ediGetRecErrors(EdiRec *rec)
 {
-    return edi->provider->getRec(edi, tableName, key);
+    return rec->errors;
 }
 
 
-int ediGetSchema(Edi *edi, cchar *tableName, cchar *columnName, int *type, int *flags)
+MprList *ediGetGridColumns(EdiGrid *grid)
 {
-    return edi->provider->getSchema(edi, tableName, columnName, type, flags);
+    return ediGetColumns(grid->edi, grid->tableName);
+}
+
+
+EdiField ediGetRawRecField(EdiRec *rec, cchar *fieldName)
+{
+    EdiField    err, *fp;
+
+    for (fp = rec->fields; fp < &rec->fields[rec->nfields]; fp++) {
+        if (smatch(fp->name, fieldName)) {
+            return *fp;
+        }
+    }
+    err.valid = 0;
+    return err;
+}
+
+
+int ediGetRecFieldType(EdiRec *rec, cchar *fieldName)
+{
+    int     type;
+    
+    if (ediGetColumnSchema(rec->edi, rec->tableName, fieldName, &type, NULL, NULL) < 0) {
+        return 0;
+    }
+    return type;
+}
+
+
+cchar *ediGetRecField(cchar *fmt, EdiRec *rec, cchar *fieldName)
+{
+    EdiField    field;
+
+    field = ediGetRawRecField(rec, fieldName);
+    if (!field.valid) {
+        return "";
+    }
+    return ediFormatField(fmt, field);
 }
 
 
 MprList *ediGetTables(Edi *edi)
 {
     return edi->provider->getTables(edi);
+}
+
+
+char *ediGetTypeString(int type)
+{
+    switch (type) {
+    case EDI_TYPE_BLOB:
+        return "blob";
+    case EDI_TYPE_BOOL:
+        return "bool";
+    case EDI_TYPE_DATE:
+        return "date";
+    case EDI_TYPE_FLOAT:
+        return "float";
+    case EDI_TYPE_INT:
+        return "int";
+    case EDI_TYPE_STRING:
+        return "string";
+    case EDI_TYPE_TEXT:
+        return "text";
+    }
+    return 0;
 }
 
 
@@ -167,6 +220,68 @@ EdiGrid *ediQuery(Edi *edi, cchar *cmd)
 }
 
 
+cchar *ediReadField(Edi *edi, cchar *fmt, cchar *tableName, cchar *key, cchar *columnName, cchar *defaultValue)
+{
+    EdiField    field;
+
+    field = ediReadRawField(edi, tableName, key, columnName);
+    if (!field.valid) {
+        return defaultValue;
+    }
+#if UNUSED
+    ediGetColumnSchema(edi, tableName, columnName, &type, NULL, NULL);
+#endif
+    return ediFormatField(fmt, field);
+}
+
+
+EdiGrid *ediReadGrid(Edi *edi, cchar *tableName)
+{
+    return edi->provider->readGrid(edi, tableName);
+}
+
+
+EdiRec *ediReadOneWhere(Edi *edi, cchar *tableName, cchar *expression)
+{
+    EdiGrid *grid;
+    
+    if ((grid = ediReadWhere(edi, tableName, expression)) == 0) {
+        return 0;
+    }
+    if (grid->nrecords > 0) {
+        return grid->records[0];
+    }
+    return 0;
+}
+
+
+EdiField ediReadRawField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName)
+{
+    return edi->provider->readField(edi, tableName, key, fieldName);
+}
+
+
+EdiRec *ediReadRec(Edi *edi, cchar *tableName, cchar *key)
+{
+    return edi->provider->readRec(edi, tableName, key);
+}
+
+
+EdiGrid *ediReadWhere(Edi *edi, cchar *tableName, cchar *expression)
+{
+    EdiGrid     *grid;
+    EdiRec      *rec;
+    int         r;
+
+    grid = ediReadGrid(edi, tableName);
+    for (r = 0; r < grid->nrecords; r++) {
+        rec = grid->records[r];
+        //  MOB - TODO 
+    }
+    return grid;
+}
+
+
 int edRemoveColumn(Edi *edi, cchar *tableName, cchar *columnName)
 {
     return edi->provider->removeColumn(edi, tableName, columnName);
@@ -197,39 +312,38 @@ int ediRenameColumn(Edi *edi, cchar *tableName, cchar *columnName, cchar *newCol
 }
 
 
-int ediSetField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value, int flags)
-{
-    return edi->provider->setField(edi, tableName, key, fieldName, value, flags);
-}
-
-
-int ediSetRec(Edi *edi, cchar *tableName, cchar *key, MprHash *params)
-{
-    return edi->provider->setRec(edi, tableName, key, params);
-}
-
-
 int ediSave(Edi *edi)
 {
     return edi->provider->save(edi);
 }
 
 
+int ediWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value)
+{
+    return edi->provider->writeField(edi, tableName, key, fieldName, value);
+}
+
+
+int ediWriteFields(Edi *edi, cchar *tableName, MprHash *params)
+{
+    return edi->provider->writeFields(edi, tableName, params);
+}
+
+
+int ediWriteRec(Edi *edi, EdiRec *rec)
+{
+    return edi->provider->writeRec(edi, rec);
+}
+
 /********************************* Validations *****************************/
 #if FUTURE
-
+//  MOB - complete
 void ediAddValidation(cchar *name, void *validation)
 {
     EdiService  *es;
 
     es = MPR->ediService;
     mprAddKey(es->validations, name, validation);
-}
-
-
-MprList *edGetErrors(EdiRec *record)
-{
-    return record->errors;
 }
 
 
@@ -287,10 +401,8 @@ bool edValidateRecord(EdiRec *rec)
     schema = table->schema;
     pass = 1;
     for (col = schema->cols; col < &schema->cols[schema->ncols]; col++) {
-        if (col->validate) {
-            if (!(*col->validate)(rec)) {
-                pass = 0;
-            }
+        if (col->validate && !(*col->validate)(rec)) {
+            pass = 0;
         }
     }
     return pass;
@@ -298,6 +410,9 @@ bool edValidateRecord(EdiRec *rec)
 
 #endif
 /********************************* Convenience *****************************/
+
+//  MOB - EDI arg should not be present? 
+//  MOB - who uses this routine?
 
 EdiRec *ediCreateRec(Edi *edi, cchar *tableName, cchar *id, int nfields, EdiField *fields)
 {
@@ -314,7 +429,6 @@ EdiRec *ediCreateRec(Edi *edi, cchar *tableName, cchar *id, int nfields, EdiFiel
     if (id && *id) {
         rec->id = sclone(id);
     }
-    //  MOB - should this copy the row (YES)
     rec->nfields = nfields;
     if (fields) {
         memmove(rec->fields, fields, sizeof(EdiField) * nfields);
@@ -323,27 +437,7 @@ EdiRec *ediCreateRec(Edi *edi, cchar *tableName, cchar *id, int nfields, EdiFiel
 }
 
 
-void ediManageEdiRec(EdiRec *rec, int flags)
-{
-    if (flags & MPR_MANAGE_MARK) {
-        mprMark(rec->edi);
-        mprMark(rec->errors);
-        mprMark(rec->tableName);
-        mprMark(rec->id);
-#if MOB
-        int     fid;
-        !!!! NEED TYPES in REC
-        for (fid = 0; fid < rec->nfields; fid++) {
-            type = rec->table->schema->cols[fid].type;
-            if (type == EDI_TYPE_STRING || type == EDI_TYPE_TEXT) {
-                mprMark(&row->fields[fid].value.str);
-            }
-        }
-#endif
-    }
-}
-
-
+//  MOB - EDI arg should not be present? 
 EdiGrid *ediCreateGrid(Edi *edi, cchar *tableName, int nrows)
 {
     EdiGrid  *grid;
@@ -357,6 +451,63 @@ EdiGrid *ediCreateGrid(Edi *edi, cchar *tableName, int nrows)
     grid->edi = edi;
     grid->tableName = sclone(tableName);
     return grid;
+}
+
+
+cchar *ediFormatField(cchar *fmt, EdiField field)
+{
+    switch (field.type) {
+    case EDI_TYPE_BLOB:
+        //  MOB - use printable code from MPR
+        return field.value.blob;
+
+    case EDI_TYPE_BOOL:
+        //  MOB OPT - should be mpr cloned string
+        return field.value.boolean ? sclone("true") : sclone("false");
+
+    case EDI_TYPE_DATE:
+        return mprFormatLocalTime(fmt, field.value.date);
+
+    case EDI_TYPE_FLOAT:
+        if (fmt == 0) {
+            fmt = "%f";
+        }
+        return sfmt(fmt, field.value.num);
+
+    case EDI_TYPE_INT:
+        return sfmt("%Ld", field.value.inum);
+
+    case EDI_TYPE_STRING:
+    case EDI_TYPE_TEXT:
+        if (fmt) {
+            return sfmt(fmt, field.value.str);
+        }
+        return field.value.str;
+
+    default:
+        mprError("Unknown field type %d", field.type);
+    }
+    return 0;
+}
+
+
+void ediManageEdiRec(EdiRec *rec, int flags)
+{
+    int     fid, type;
+
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(rec->edi);
+        mprMark(rec->errors);
+        mprMark(rec->tableName);
+        mprMark(rec->id);
+
+        for (fid = 0; fid < rec->nfields; fid++) {
+            type = rec->fields[fid].type;
+            if (type == EDI_TYPE_STRING || type == EDI_TYPE_TEXT) {
+                mprMark(&rec->fields[fid].value.str);
+            }
+        }
+    }
 }
 
 
@@ -374,66 +525,9 @@ static void manageEdiGrid(EdiGrid *grid, int flags)
 }
 
 
-int ediGetDbFlags(Edi *edi)
-{
-    return edi->flags;
-}
-
-
-extern MprList *ediGetErrors(EdiRec *rec)
+extern EdiGrid *ediMakeGrid(cchar *str)
 {
     //  MOB
-    return rec->errors;
-}
-
-
-EdiRec *ediGetOneWhere(Edi *edi, cchar *tableName, cchar *expression)
-{
-    EdiGrid *grid;
-    
-    if ((grid = ediGetWhere(edi, tableName, expression)) == 0) {
-        return 0;
-    }
-    if (grid->nrecords > 0) {
-        return grid->records[0];
-    }
-    return 0;
-}
-
-
-EdiGrid *ediGetWhere(Edi *edi, cchar *tableName, cchar *expression)
-{
-    EdiGrid     *grid;
-    EdiRec      *rec;
-    int         r;
-
-    grid = ediGetAll(edi, tableName);
-    for (r = 0; r < grid->nrecords; r++) {
-        rec = grid->records[r];
-        //  MOB - filter 
-    }
-    return grid;
-}
-
-
-char *ediGetTypeString(int type)
-{
-    switch (type) {
-    case EDI_TYPE_BLOB:
-        return "blob";
-    case EDI_TYPE_BOOL:
-        return "bool";
-    case EDI_TYPE_DATE:
-        return "date";
-    case EDI_TYPE_FLOAT:
-        return "float";
-    case EDI_TYPE_INT:
-        return "int";
-    case EDI_TYPE_STRING:
-        return "string";
-    case EDI_TYPE_TEXT:
-        return "text";
-    }
     return 0;
 }
 
@@ -471,13 +565,6 @@ EdiValue ediParseValue(cchar *value, int type)
 }
 
 
-extern EdiGrid *ediMakeGrid(cchar *str)
-{
-    //  MOB
-    return 0;
-}
-
-
 int ediParseTypeString(cchar *type)
 {
     if (smatch(type, "blob")) {
@@ -499,114 +586,39 @@ int ediParseTypeString(cchar *type)
 }
 
 
-void ediSetDbFlags(Edi *edi, int flags)
+EdiRec *ediUpdateField(EdiRec *rec, cchar *fieldName, cchar *value)
 {
-    //  MOB - should mask
-    edi->flags = flags;
-}
+    EdiField    *fp;
 
-
-cchar *ediToString(cchar *fmt, EdiField field)
-{
-    switch (field.type) {
-    case EDI_TYPE_BLOB:
-        //  MOB - use printable code from MPR
-        return field.value.blob;
-
-    case EDI_TYPE_BOOL:
-        //  MOB OPT - should be mpr cloned string
-        return field.value.boolean ? sclone("true") : sclone("false");
-
-    case EDI_TYPE_DATE:
-        return mprFormatLocalTime(fmt, field.value.date);
-
-    case EDI_TYPE_FLOAT:
-        if (fmt == 0) {
-            fmt = "%f";
-        }
-        return sfmt(fmt, field.value.num);
-
-    case EDI_TYPE_INT:
-        return sfmt("%Ld", field.value.inum);
-
-    case EDI_TYPE_STRING:
-    case EDI_TYPE_TEXT:
-        if (fmt) {
-            return sfmt(fmt, field.value.str);
-        }
-        return field.value.str;
-
-    default:
-        mprError("Unknown field type %d", field.type);
-    }
-    return 0;
-}
-
-
-cchar *ediGetFieldAsString(Edi *edi, cchar *tableName, cchar *key, cchar *columnName, cchar *fmt, cchar *defaultValue)
-{
-    EdiField    field;
-    int         type;
-
-    //  MOB - should getField do a format?
-    field = ediGetField(edi, tableName, key, columnName);
-    if (!field.valid) {
-        return defaultValue;
-    }
-    ediGetSchema(edi, tableName, columnName, &type, NULL);
-    return ediToString(fmt, field);
-}
-
-
-MprList *ediGetGridColumns(EdiGrid *grid)
-{
-    return ediGetColumns(grid->edi, grid->tableName);
-}
-
-
-int ediGetRecFieldType(EdiRec *rec, cchar *fieldName)
-{
-    int     type;
-    
-    if (ediGetSchema(rec->edi, rec->tableName, fieldName, &type, NULL) < 0) {
+    if (rec == 0) {
         return 0;
     }
-    return type;
-#if UNUSED
-    EdiField    field;
-    field = ediGetRecField(rec, fieldName);
-    if (!field.valid) {
+    if (fieldName == 0 || value == 0) {
         return 0;
     }
-    return field.type;
-#endif
-}
-
-
-//  MOB rethink position of fmt
-cchar *ediGetRecFieldAsString(EdiRec *rec, cchar *fieldName, cchar *fmt)
-{
-    EdiField    field;
-
-    field = ediGetRecField(rec, fieldName);
-    if (!field.valid) {
-        return "";
-    }
-    return ediToString(fmt, field);
-}
-
-
-EdiField ediGetRecField(EdiRec *rec, cchar *fieldName)
-{
-    EdiField    err, *fp;
-
     for (fp = rec->fields; fp < &rec->fields[rec->nfields]; fp++) {
         if (smatch(fp->name, fieldName)) {
-            return *fp;
+            fp->value = ediParseValue(value, fp->type);
+            return rec;
         }
     }
-    err.valid = 0;
-    return err;
+    return rec;
+}
+
+
+EdiRec *ediUpdateFields(EdiRec *rec, MprHash *params)
+{
+    MprKey  *kp;
+
+    if (rec == 0) {
+        return 0;
+    }
+    for (ITERATE_KEYS(params, kp)) {
+        if (!ediUpdateField(rec, kp->key, kp->data)) {
+            return 0;
+        }
+    }
+    return rec;
 }
 
 

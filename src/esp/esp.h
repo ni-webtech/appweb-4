@@ -300,7 +300,10 @@ extern void espDestroySession(EspSession *sp);
     @return A session state object
     @ingroup EspSession
  */
+//  MOB DOC - remove "create" argument
 extern EspSession *espGetSession(HttpConn *conn, int create);
+
+extern EspSession *espCreateSession(HttpConn *conn);
 
 /**
     Get a session state variable
@@ -754,6 +757,7 @@ extern void espShowRequest(HttpConn *conn);
     @return A count of the bytes actually written
     @ingroup EspReq
  */
+//  MOB - should all these be render?
 extern ssize espWrite(HttpConn *conn, cchar *fmt, ...);
 
 //  MOB - can this return short?
@@ -810,10 +814,13 @@ void espError(HttpConn *conn, cchar *fmt, ...);
 void espWarn(HttpConn *conn, cchar *fmt, ...);
 void espNotice(HttpConn *conn, cchar *kind, cchar *fmt, ...);
 void espNoticev(HttpConn *conn, cchar *kind, cchar *fmt, va_list args);
+extern HttpConn *espGetConn();
+extern void espSetConn(HttpConn *conn);
 
-//  MOB - move to pcre
+#if UNUSED
 #define PCRE_GLOBAL     0x1
 extern char *pcre_replace(cchar *str, void *pattern, cchar *replacement, MprList **parts, int flags);
+#endif
 
 //  MOB DOC
 extern void espAlert(HttpConn *conn, cchar *text, cchar *options);
@@ -843,7 +850,9 @@ extern void espTabs(HttpConn *conn, EdiGrid *grid, cchar *options);
 extern void espText(HttpConn *conn, cchar *field, cchar *options);
 extern void espTree(HttpConn *conn, EdiGrid *grid, cchar *options);
 
-extern HttpConn *espGetConn();
+/*
+    Abbreviated forms. Conn comes from thread local data
+ */
 extern void alert(cchar *text, cchar *options);
 extern void anchor(cchar *text, cchar *uri, cchar *options);
 extern void button(cchar *name, cchar *value, cchar *options);
@@ -853,7 +862,10 @@ extern void checkbox(cchar *field, cchar *checkedValue, cchar *options);
 extern void division(cchar *body, cchar *options);
 extern void endform();
 extern void flash(cchar *kind, cchar *options);
-extern void form(void *record, cchar *options);
+
+//  MOB - seems inconsistent that form takes a record?
+extern void form(void *rec, cchar *options);
+
 extern void icon(cchar *uri, cchar *options);
 extern void image(cchar *uri, cchar *options);
 extern void input(cchar *name, cchar *options);
@@ -871,43 +883,65 @@ extern void tabs(EdiGrid *grid, cchar *options);
 extern void text(cchar *field, cchar *options);
 extern void tree(EdiGrid *grid, cchar *options);
 
-extern void createSession();
+/*
+    Misc
+ */
+extern EspSession *createSession();
 extern void error(cchar *fmt, ...);
 extern void finalize();
 extern HttpConn *getConn();
-extern Edi *getEdi();
-extern EspRoute *getEroute();
+extern Edi *getDatabase();
 extern cchar *getMethod();
+extern cchar *getQuery();
+extern cchar *getUri();
 extern void inform(cchar *fmt, ...);
 extern void notice(cchar *kind, cchar *fmt, ...);
 extern MprHash *params();
-extern cchar *param(cchar *key, cchar *defaultValue);
+extern cchar *param(cchar *key);
 extern void redirect(cchar *target);
-extern cchar *session(cchar *key);
-extern void setParam(cchar *key, cchar *value);
-extern void setSession(cchar *key, cchar *value);
 extern ssize render(cchar *msg, ...);
+extern void renderView(cchar *view);
+extern void setParam(cchar *key, cchar *value);
+extern cchar *session(cchar *key);
+extern void setSession(cchar *key, cchar *value);
 extern void warn(cchar *fmt, ...);
-extern void writeView(cchar *view);
 
+//  TODO
+extern cchar *referrer();
 
 /*
     Database
  */
-//  MOB - is it better to use "record":  createRecord, findRecord, saveRecord, or just save?
-//  MOB - consistency but use "record"
-extern EdiGrid *findAll(cchar *tableName);
+//  MOB - which of these require a database and which do not. NEED CRUD without a database
+
+//  MOB - confusing vs ediCreateRec which creates and saves from fields
+//  rec = createRec("tableName", makeParams("{ name: 'john', age: %d, eyes: 'blue' }", 23))
+
 extern EdiRec *createRec(cchar *tableName, MprHash *params);
 extern EdiRec *findRec(cchar *tableName, cchar *key);
-extern bool saveRec();
-extern bool save();
-extern bool removeRec(cchar *tableName, cchar *id);
-extern bool saveUpdate(MprHash *fields);
+extern MprList *getColumns();
+extern EdiGrid *getGrid();
 extern EdiRec *getRec();
-extern bool testRec();
-extern void record(EdiRec *rec);
+extern bool hasGrid();
+extern bool hasRec();
+extern MprHash *makeParams(cchar *json, ...);
 
-//  MOB -- more needed here
+extern EdiRec *readRec(cchar *tableName);
+extern EdiGrid *readGrid(cchar *tableName);
+extern EdiRec *readRecByKey(cchar *tableName, cchar *key);
+extern bool removeRec(cchar *tableName, cchar *key);
+
+/* These write to the database */
+extern bool writeRec(EdiRec *rec);
+extern bool writeField(cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
+extern bool writeFields(cchar *tableName, MprHash *params);
+
+extern EdiGrid *setGrid(EdiGrid *grid);
+extern EdiRec *setRec(EdiRec *rec);
+
+/* This work locally on a record - no saving to database. Use writeRec() to do so */
+extern EdiRec *updateField(EdiRec *rec, cchar *fieldName, cchar *value);
+extern EdiRec *updateFields(EdiRec *rec, MprHash *params);
 
 #ifdef __cplusplus
 } /* extern C */

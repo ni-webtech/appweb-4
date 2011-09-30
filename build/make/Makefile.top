@@ -156,12 +156,12 @@ endif
 
 test-install-package:
 	name="$(BASE_NAME).tar.tar.gz" ; \
-	cd /tmp ; tar xvfz $(BLD_ABS_OUT_DIR)/releases/$$name ; \
+	tar -C /tmp xvfz $(BLD_OUT_DIR)/releases/$$name ; \
 	priv "$(BLD_PRODUCT)_HEADLESS=1 ./install" ; \
 
 test-uninstall-package:
 	name="$(BASE_NAME).tar.tar.gz" ; \
-	cd /tmp ; tar xvfz $(BLD_ABS_OUT_DIR)/releases/$$name ; \
+	tar -C /tmp xvfz $(BLD_OUT_DIR)/releases/$$name ; \
 	priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
 
 test-install-native-package:
@@ -179,7 +179,7 @@ test-install-native-package:
 		hdiutil eject /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION) >/dev/null 2>&1 ; \
 	else \
 		name="$(BASE_NAME).tar.tar.gz" ; \
-		cd /tmp ; tar xvfz $(BLD_ABS_OUT_DIR)/releases/$$name ; \
+		tar -C /tmp xvfz $(BLD_OUT_DIR)/releases/$$name ; \
 		priv $(BLD_PRODUCT)_HEADLESS=1 ./install ; \
 	fi
 
@@ -193,7 +193,7 @@ test-uninstall-native-package:
 		rm -fr "$(PKG_DIR)/*" ; \
 	else \
 		name="$(BASE_NAME).tar.tar.gz" ; \
-		cd /tmp ; tar xvfz $(BLD_ABS_OUT_DIR)/releases/$$name ; \
+		tar -C xvfz $(BLD_OUT_DIR)/releases/$$name ; \
 		priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
 	fi
 

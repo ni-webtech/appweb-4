@@ -1,6 +1,6 @@
 <h1>Post List</h1>
 
-<% table(findAll("post"), "{ \
+<% table(readGrid("post"), "{ \
     data-click: '@edit', \
     columns: { \
         id: { header: 'ID' }, \

@@ -3331,6 +3331,37 @@ HttpConn *httpAcceptConn(HttpEndpoint *endpoint, MprEvent *event)
 }
 
 
+void httpMatchHost(HttpConn *conn)
+{ 
+    MprSocket       *listenSock;
+    HttpEndpoint    *endpoint;
+    HttpHost        *host;
+    Http            *http;
+
+    http = conn->http;
+    listenSock = conn->sock->listenSock;
+
+    if ((endpoint = httpLookupEndpoint(http, listenSock->ip, listenSock->port)) == 0) {
+        mprError("No listening endpoint for request from %s:%d", listenSock->ip, listenSock->port);
+        mprCloseSocket(conn->sock, 0);
+        return;
+    }
+    if (httpHasNamedVirtualHosts(endpoint)) {
+        host = httpLookupHostOnEndpoint(endpoint, conn->rx->hostHeader);
+    } else {
+        host = mprGetFirstItem(endpoint->hosts);
+    }
+    if (host == 0) {
+        httpSetConnHost(conn, 0);
+        httpError(conn, HTTP_CODE_NOT_FOUND, "No host to serve request. Searching for %s", conn->rx->hostHeader);
+        conn->host = mprGetFirstItem(endpoint->hosts);
+        return;
+    }
+    mprLog(4, "Select host: \"%s\"", host->name);
+    conn->host = host;
+}
+
+
 void *httpGetEndpointContext(HttpEndpoint *endpoint)
 {
     return endpoint->context;
@@ -3578,7 +3609,9 @@ static void httpErrorV(HttpConn *conn, int flags, cchar *fmt, va_list args)
     int         status;
 
     mprAssert(fmt);
-
+    if (conn == 0) {
+        return;
+    }
     if (flags & HTTP_ABORT) {
         conn->connError = 1;
     }
@@ -3588,6 +3621,9 @@ static void httpErrorV(HttpConn *conn, int flags, cchar *fmt, va_list args)
     }
     conn->error = 1;
     status = flags & HTTP_CODE_MASK;
+    if (status == 0) {
+        status = HTTP_CODE_INTERNAL_SERVER_ERROR;
+    }
     httpFormatErrorV(conn, status, fmt, args);
 
     if (flags & (HTTP_ABORT | HTTP_CLOSE)) {
@@ -3810,6 +3846,7 @@ static void manageHost(HttpHost *host, int flags)
         mprMark(host->parent);
         mprMark(host->dirs);
         mprMark(host->routes);
+        mprMark(host->defaultRoute);
         mprMark(host->mimeTypes);
         mprMark(host->home);
         mprMark(host->traceInclude);
@@ -3828,21 +3865,63 @@ static void manageHost(HttpHost *host, int flags)
 }
 
 
-//  MOB - support different formats (one line or multi-line)
-void httpLogRoutes(HttpHost *host)
+HttpRoute *httpGetHostDefaultRoute(HttpHost *host)
+{
+    return host->defaultRoute;
+}
+
+
+static void printRoute(HttpRoute *route, int next, bool full)
+{
+    cchar   *methods, *pattern, *target;
+
+    methods = httpGetRouteMethods(route);
+    methods = methods ? methods : "*";
+    pattern = (route->pattern && *route->pattern) ? route->pattern : "^/";
+    target = (route->target && *route->target) ? route->target : "$&";
+    if (full) {
+        mprRawLog(0, "\n%d. %s\n", next, route->name);
+        mprRawLog(0, "    Pattern:      %s\n", pattern);
+        mprRawLog(0, "    StartSegment: %s\n", route->startSegment);
+        mprRawLog(0, "    StartsWith:   %s\n", route->startWith);
+        mprRawLog(0, "    RegExp:       %s\n", route->optimizedPattern);
+        mprRawLog(0, "    Methods:      %s\n", methods);
+        mprRawLog(0, "    Prefix:       %s\n", route->prefix);
+        mprRawLog(0, "    Target:       %s\n", target);
+        mprRawLog(0, "    Directory:    %s\n", route->dir);
+        mprRawLog(0, "    Index:        %s\n", route->index);
+        mprRawLog(0, "    Next Group    %d\n", route->nextGroup);
+        if (route->handler) {
+            mprRawLog(0, "    Handler:      %s\n", route->handler->name);
+        }
+        mprRawLog(0, "\n");
+    } else {
+        mprRawLog(0, "%-20s %-12s %-40s %-14s\n", route->name, methods ? methods : "*", pattern, target);
+    }
+}
+
+
+void httpLogRoutes(HttpHost *host, bool full)
 {
     HttpRoute   *route;
-    cchar       *methods;
-    int         next;
+    int         next, foundDefault;
 
-    for (next = 0; (route = mprGetNextItem(host->routes, &next)) != 0; ) {
-        methods = httpGetRouteMethods(route);
-        if (route->target) {
-            mprLog(0, "  %-20s %-12s %-40s %-14s", route->name, methods ? methods : "*", route->pattern, route->target);
-        } else {
-            mprLog(0, "  %-20s %-12s %-40s", route->name, methods ? methods : "*", route->pattern);
+    if (!full) {
+        mprRawLog(0, "%-20s %-12s %-40s %-14s\n", "Name", "Methods", "Pattern", "Target");
+    }
+    for (foundDefault = next = 0; (route = mprGetNextItem(host->routes, &next)) != 0; ) {
+        printRoute(route, next - 1, full);
+        if (route == host->defaultRoute) {
+            foundDefault++;
         }
     }
+    /*
+        Add the default so LogRoutes can print the default route which has yet been added to host->routes
+     */
+    if (!foundDefault && host->defaultRoute) {
+        printRoute(host->defaultRoute, next - 1, full);
+    }
+    mprRawLog(0, "\n");
 }
 
 
@@ -3901,15 +3980,32 @@ void httpSetHostProtocol(HttpHost *host, cchar *protocol)
 }
 
 
-int httpAddRouteToHost(HttpHost *host, HttpRoute *route)
+int httpAddRoute(HttpHost *host, HttpRoute *route)
 {
+    HttpRoute   *prev, *item;
+    int         i, thisRoute;
+
     mprAssert(route);
     
     if (host->parent && host->routes == host->parent->routes) {
         host->routes = mprCloneList(host->parent->routes);
     }
     if (mprLookupItem(host->routes, route) < 0) {
-        mprAddItem(host->routes, route);
+        thisRoute = mprAddItem(host->routes, route);
+        if (thisRoute > 0) {
+            prev = mprGetItem(host->routes, thisRoute - 1);
+            if (!smatch(prev->startSegment, route->startSegment)) {
+                prev->nextGroup = thisRoute;
+                for (i = thisRoute - 2; i >= 0; i--) {
+                    item = mprGetItem(host->routes, i);
+                    if (smatch(item->startSegment, prev->startSegment)) {
+                        item->nextGroup = thisRoute;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
     }
     httpSetRouteHost(route, host);
     return 0;
@@ -3937,6 +4033,12 @@ HttpRoute *httpLookupRoute(HttpHost *host, cchar *name)
 void httpResetRoutes(HttpHost *host)
 {
     host->routes = mprCreateList(-1, 0);
+}
+
+
+void httpSetHostDefaultRoute(HttpHost *host, HttpRoute *route)
+{
+    host->defaultRoute = route;
 }
 
 
@@ -4719,137 +4821,6 @@ static void updateCurrentDate(Http *http)
 /************************************************************************/
 /*
  *  End of file "./src/httpService.c"
- */
-/************************************************************************/
-
-
-
-/************************************************************************/
-/*
- *  Start of file "./src/match.c"
- */
-/************************************************************************/
-
-/*
-    match.c -- HTTP pipeline matching.
-
-    Copyright (c) All Rights Reserved. See details at the end of the file.
- */
-
-
-#include    "pcre.h"
-
-
-void httpMatchHost(HttpConn *conn)
-{ 
-    MprSocket       *listenSock;
-    HttpEndpoint    *endpoint;
-    HttpHost        *host;
-    Http            *http;
-
-    http = conn->http;
-    listenSock = conn->sock->listenSock;
-
-    if ((endpoint = httpLookupEndpoint(http, listenSock->ip, listenSock->port)) == 0) {
-        mprError("No listening endpoint for request from %s:%d", listenSock->ip, listenSock->port);
-        mprCloseSocket(conn->sock, 0);
-        return;
-    }
-    if (httpHasNamedVirtualHosts(endpoint)) {
-        host = httpLookupHostOnEndpoint(endpoint, conn->rx->hostHeader);
-    } else {
-        host = mprGetFirstItem(endpoint->hosts);
-    }
-    if (host == 0) {
-        httpSetConnHost(conn, 0);
-        httpError(conn, HTTP_CODE_NOT_FOUND, "No host to serve request. Searching for %s", conn->rx->hostHeader);
-        conn->host = mprGetFirstItem(endpoint->hosts);
-        return;
-    }
-    mprLog(4, "Select host: \"%s\"", host->name);
-    conn->host = host;
-}
-
-
-/*
-    Find the matching route and handler for a request. If any errors occur, the pass handler is used to pass errors onto the 
-    net/sendfile connectors to send to the client. This routine may rewrite the request URI and may redirect the request.
- */
-void httpRouteRequest(HttpConn *conn)
-{
-    HttpRx      *rx;
-    HttpTx      *tx;
-    HttpRoute   *route;
-    int         next, rewrites, match;
-
-    rx = conn->rx;
-    tx = conn->tx;
-
-    for (next = rewrites = 0; rewrites < HTTP_MAX_REWRITE; ) {
-        if ((route = mprGetNextItem(conn->host->routes, &next)) == 0) {
-            break;
-        }
-        if ((match = httpMatchRoute(conn, route)) == HTTP_ROUTE_OK) {
-            rx->route = route;
-            mprAssert(tx->handler);
-            break;
-        } else if (match == HTTP_ROUTE_REROUTE) {
-            next = 0;
-            rewrites++;
-        }
-    }
-    if (rx->route == 0) {
-        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find route for request");
-        return;
-    }
-    if (conn->error || tx->redirected || tx->altBody) {
-        tx->handler = conn->http->passHandler;
-        if (rewrites >= HTTP_MAX_REWRITE) {
-            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Too many request rewrites");
-        }
-    }
-    mprLog(4, "Select handler: \"%s\" for \"%s\"", tx->handler->name, rx->uri);
-}
-
-
-/*
-    @copy   default
- 
-    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
-
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
-    by the terms of either license. Consult the LICENSE.TXT distributed with
-    this software for full details.
-
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://embedthis.com/downloads/gplLicense.html
-
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://embedthis.com
-
-    Local variables:
-    tab-width: 4
-    c-basic-offset: 4
-    End:
-    vim: sw=4 ts=4 expandtab
-
-    @end
- */
-/************************************************************************/
-/*
- *  End of file "./src/match.c"
  */
 /************************************************************************/
 
@@ -7110,6 +7081,7 @@ static void defineHostVars(HttpRoute *route);
 static char *expandTokens(HttpConn *conn, cchar *path);
 static char *expandPatternTokens(cchar *str, cchar *replacement, int *matches, int matchCount);
 static char *expandRequestTokens(HttpConn *conn, char *targetKey);
+static cchar *expandRouteName(HttpConn *conn, cchar *routeName);
 static void finalizeMethods(HttpRoute *route);
 static void finalizePattern(HttpRoute *route);
 static char *finalizeReplacement(HttpRoute *route, cchar *str);
@@ -7118,8 +7090,8 @@ static bool opPresent(MprList *list, HttpRouteOp *op);
 static void manageRoute(HttpRoute *route, int flags);
 static void manageLang(HttpLang *lang, int flags);
 static void manageRouteOp(HttpRouteOp *op, int flags);
-static int matchRoute(HttpConn *conn, HttpRoute *route);
-static cchar *expandRouteName(HttpConn *conn, cchar *routeName);
+static int matchRequestUri(HttpConn *conn, HttpRoute *route);
+static int testRoute(HttpConn *conn, HttpRoute *route);
 static char *qualifyName(HttpRoute *route, cchar *controller, cchar *name);
 static int selectHandler(HttpConn *conn, HttpRoute *route);
 static int testCondition(HttpConn *conn, HttpRoute *route, HttpRouteOp *condition);
@@ -7157,61 +7129,6 @@ HttpRoute *httpCreateRoute(HttpHost *host)
     route->targetRule = sclone("run");
     route->workers = -1;
     definePathVars(route);
-    return route;
-}
-
-
-HttpRoute *httpCreateDefaultRoute(HttpHost *host)
-{
-    HttpRoute   *route;
-
-    mprAssert(host);
-    if ((route = httpCreateRoute(host)) == 0) {
-        return 0;
-    }
-    httpSetRouteName(route, "default");
-    httpFinalizeRoute(route);
-    return route;
-}
-
-
-/*
-    Host may be null
- */
-HttpRoute *httpCreateConfiguredRoute(HttpHost *host, int serverSide)
-{
-    HttpRoute   *route;
-    Http        *http;
-
-    /*
-        Create default incoming and outgoing pipelines. Order matters.
-     */
-    route = httpCreateRoute(host);
-    http = route->http;
-    httpAddRouteFilter(route, http->rangeFilter->name, NULL, HTTP_STAGE_TX);
-    httpAddRouteFilter(route, http->chunkFilter->name, NULL, HTTP_STAGE_RX | HTTP_STAGE_TX);
-    if (serverSide) {
-        httpAddRouteFilter(route, http->uploadFilter->name, NULL, HTTP_STAGE_RX);
-    }
-    return route;
-}
-
-
-HttpRoute *httpCreateAliasRoute(HttpRoute *parent, cchar *pattern, cchar *path, int status)
-{
-    HttpRoute   *route;
-
-    mprAssert(parent);
-    mprAssert(pattern && *pattern);
-
-    if ((route = httpCreateInheritedRoute(parent)) == 0) {
-        return 0;
-    }
-    httpSetRoutePattern(route, pattern, 0);
-    if (path) {
-        httpSetRouteDir(route, path);
-    }
-    route->responseStatus = status;
     return route;
 }
 
@@ -7256,7 +7173,7 @@ HttpRoute *httpCreateInheritedRoute(HttpRoute *parent)
     route->pathTokens = parent->pathTokens;
     route->pattern = parent->pattern;
     route->patternCompiled = parent->patternCompiled;
-    route->processedPattern = parent->processedPattern;
+    route->optimizedPattern = parent->optimizedPattern;
     route->responseStatus = parent->responseStatus;
     route->script = parent->script;
     route->prefix = parent->prefix;
@@ -7296,7 +7213,8 @@ static void manageRoute(HttpRoute *route, int flags)
         mprMark(route->index);
         mprMark(route->inputStages);
         mprMark(route->languages);
-        mprMark(route->literalPattern);
+        mprMark(route->startWith);
+        mprMark(route->startSegment);
         mprMark(route->methods);
         mprMark(route->methodSpec);
         mprMark(route->name);
@@ -7305,7 +7223,7 @@ static void manageRoute(HttpRoute *route, int flags)
         mprMark(route->parent);
         mprMark(route->pathTokens);
         mprMark(route->pattern);
-        mprMark(route->processedPattern);
+        mprMark(route->optimizedPattern);
         mprMark(route->script);
         mprMark(route->prefix);
         mprMark(route->scriptPath);
@@ -7327,31 +7245,130 @@ static void manageRoute(HttpRoute *route, int flags)
 }
 
 
+HttpRoute *httpCreateDefaultRoute(HttpHost *host)
+{
+    HttpRoute   *route;
+
+    mprAssert(host);
+    if ((route = httpCreateRoute(host)) == 0) {
+        return 0;
+    }
+    httpSetRouteName(route, "default");
+    httpFinalizeRoute(route);
+    return route;
+}
+
+
+/*
+    Create and configure a basic route. This is mainly used for client side piplines.
+    Host may be null.
+ */
+HttpRoute *httpCreateConfiguredRoute(HttpHost *host, int serverSide)
+{
+    HttpRoute   *route;
+    Http        *http;
+
+    /*
+        Create default incoming and outgoing pipelines. Order matters.
+     */
+    route = httpCreateRoute(host);
+    http = route->http;
+    httpAddRouteFilter(route, http->rangeFilter->name, NULL, HTTP_STAGE_TX);
+    httpAddRouteFilter(route, http->chunkFilter->name, NULL, HTTP_STAGE_RX | HTTP_STAGE_TX);
+    if (serverSide) {
+        httpAddRouteFilter(route, http->uploadFilter->name, NULL, HTTP_STAGE_RX);
+    }
+    return route;
+}
+
+
+HttpRoute *httpCreateAliasRoute(HttpRoute *parent, cchar *pattern, cchar *path, int status)
+{
+    HttpRoute   *route;
+
+    mprAssert(parent);
+    mprAssert(pattern && *pattern);
+
+    if ((route = httpCreateInheritedRoute(parent)) == 0) {
+        return 0;
+    }
+    httpSetRoutePattern(route, pattern, 0);
+    if (path) {
+        httpSetRouteDir(route, path);
+    }
+    route->responseStatus = status;
+    return route;
+}
+
+/*
+    Find the matching route and handler for a request. If any errors occur, the pass handler is used to 
+    pass errors via the net/sendfile connectors onto the client. This process may rewrite the request 
+    URI and may redirect the request.
+ */
+void httpRouteRequest(HttpConn *conn)
+{
+    HttpRx      *rx;
+    HttpTx      *tx;
+    HttpRoute   *route;
+    int         next, rewrites, match;
+
+    rx = conn->rx;
+    tx = conn->tx;
+
+    for (next = rewrites = 0; rewrites < HTTP_MAX_REWRITE; ) {
+        if ((route = mprGetNextItem(conn->host->routes, &next)) == 0) {
+            break;
+        }
+        if (route->startSegment && strncmp(rx->pathInfo, route->startSegment, route->startSegmentLen) != 0) {
+            /* Failed to match the first URI segment, skip to the next group */
+            mprAssert(next <= route->nextGroup);
+            next = route->nextGroup;
+
+        } else if (route->startWith && strncmp(rx->pathInfo, route->startWith, route->startWithLen) != 0) {
+            /* Failed to match starting literal segment of the route pattern, advance to test the next route */
+            continue;
+
+        } else if ((match = httpMatchRoute(conn, route)) == HTTP_ROUTE_REROUTE) {
+            next = 0;
+            route = 0;
+            rewrites++;
+
+        } else if (match == HTTP_ROUTE_OK) {
+            break;
+        }
+    }
+    if (route == 0 || tx->handler == 0) {
+        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find suitable route for request");
+        return;
+    }
+    rx->route = route;
+    if (conn->error || tx->redirected || tx->altBody) {
+        tx->handler = conn->http->passHandler;
+        if (rewrites >= HTTP_MAX_REWRITE) {
+            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Too many request rewrites");
+        }
+    }
+    mprLog(4, "Select handler: \"%s\" for \"%s\"", tx->handler->name, rx->uri);
+}
+
+
+
 int httpMatchRoute(HttpConn *conn, HttpRoute *route)
 {
     HttpRx      *rx;
     char        *savePathInfo, *pathInfo;
-    ssize       len;
     int         rc;
 
     mprAssert(conn);
     mprAssert(route);
 
     rx = conn->rx;
-    savePathInfo = rx->pathInfo;
 
+    /*
+        Remove the route prefix. Restore after matching.
+     */
     if (route->prefix) {
-        /*
-            Rewrite the pathInfo and prefix. If the route fails to match, restore below
-         */
-        mprAssert(rx->pathInfo[0] == '/');
-        len = route->prefixLen;
-        if (strncmp(rx->pathInfo, route->prefix, len) != 0) {
-            return HTTP_ROUTE_REJECT;
-        }
-        if (rx->pathInfo[len] && rx->pathInfo[len] != '/') {
-            return HTTP_ROUTE_REJECT;
-        }
+        savePathInfo = rx->pathInfo;
         pathInfo = &rx->pathInfo[route->prefixLen];
         if (*pathInfo == '\0') {
             pathInfo = "/";
@@ -7359,20 +7376,52 @@ int httpMatchRoute(HttpConn *conn, HttpRoute *route)
         rx->pathInfo = sclone(pathInfo);
         rx->scriptName = route->prefix;
     }
-    if ((rc = matchRoute(conn, route)) == HTTP_ROUTE_REJECT) {
-        //  MOB - remove test. Should never be modified if returning REJECT. Should return REROUTE
-        if (route->prefix) {
-            //  MOB - remove
-            mprAssert(smatch(rx->pathInfo, pathInfo));
-            rx->pathInfo = savePathInfo;
-            rx->scriptName = 0;
-        }
+    if ((rc = matchRequestUri(conn, route)) == HTTP_ROUTE_OK) {
+        rc = testRoute(conn, route);
+    }
+    if (route->prefix) {
+        rx->pathInfo = savePathInfo;
+        rx->scriptName = 0;
     }
     return rc;
 }
 
 
-static int matchRoute(HttpConn *conn, HttpRoute *route)
+static int matchRequestUri(HttpConn *conn, HttpRoute *route)
+{
+    HttpRx      *rx;
+
+    mprAssert(conn);
+    mprAssert(route);
+    rx = conn->rx;
+
+    if (route->patternCompiled) {
+        rx->matchCount = pcre_exec(route->patternCompiled, NULL, rx->pathInfo, (int) slen(rx->pathInfo), 0, 0, 
+                rx->matches, sizeof(rx->matches) / sizeof(int));
+        mprLog(6, "Test route pattern \"%s\", regexp %s, pathInfo %s", route->name, route->optimizedPattern, rx->pathInfo);
+
+        if (route->flags & HTTP_ROUTE_NOT) {
+            if (rx->matchCount > 0) {
+                return HTTP_ROUTE_REJECT;
+            }
+            rx->matchCount = 1;
+            rx->matches[0] = 0;
+            rx->matches[1] = (int) slen(rx->pathInfo);
+
+        } else if (rx->matchCount <= 0) {
+            return HTTP_ROUTE_REJECT;
+        }
+    }
+    mprLog(6, "Test route methods \"%s\"", route->name);
+    if (route->methods && !mprLookupKey(route->methods, rx->method)) {
+        return HTTP_ROUTE_REJECT;
+    }
+    rx->route = route;
+    return HTTP_ROUTE_OK;
+}
+
+
+static int testRoute(HttpConn *conn, HttpRoute *route)
 {
     HttpRouteOp     *op, *condition, *update;
     HttpRouteProc   *proc;
@@ -7386,32 +7435,6 @@ static int matchRoute(HttpConn *conn, HttpRoute *route)
     rx = conn->rx;
     tx = conn->tx;
 
-    if (route->patternCompiled) {
-        if (route->literalPattern && strncmp(rx->pathInfo, route->literalPattern, route->literalPatternLen) != 0) {
-            return HTTP_ROUTE_REJECT;
-        }
-        rx->matchCount = pcre_exec(route->patternCompiled, NULL, rx->pathInfo, (int) slen(rx->pathInfo), 0, 0, 
-                rx->matches, sizeof(rx->matches) / sizeof(int));
-        mprLog(6, "Test route pattern \"%s\", regexp %s, pathInfo %s", route->name, route->processedPattern, rx->pathInfo);
-        if (route->flags & HTTP_ROUTE_NOT) {
-            if (rx->matchCount > 0) {
-                return HTTP_ROUTE_REJECT;
-            }
-            rx->matchCount = 1;
-            rx->matches[0] = 0;
-            rx->matches[1] = (int) slen(rx->pathInfo);
-        } else {
-            if (rx->matchCount <= 0) {
-                return HTTP_ROUTE_REJECT;
-            }
-        }
-    }
-    rx->route = route;
-
-    mprLog(6, "Test route methods \"%s\"", route->name);
-    if (route->methods && !mprLookupKey(route->methods, rx->method)) {
-        return HTTP_ROUTE_REJECT;
-    }
     if (route->headers) {
         for (next = 0; (op = mprGetNextItem(route->headers, &next)) != 0; ) {
             mprLog(6, "Test route \"%s\" header \"%s\"", route->name, op->name);
@@ -7454,8 +7477,8 @@ static int matchRoute(HttpConn *conn, HttpRoute *route)
             if (condition->flags & HTTP_ROUTE_NOT) {
                 rc = !rc;
             }
-            if (!rc) {
-                return HTTP_ROUTE_REJECT;
+            if (rc == HTTP_ROUTE_REJECT) {
+                return rc;
             }
         }
     }
@@ -8243,25 +8266,38 @@ static void finalizePattern(HttpRoute *route)
         route->name = sclone(startPattern);
     }
     if (route->template == 0) {
+        /* Do this while the prefix is still in the route pattern */
         route->template = finalizeTemplate(route);
     }
     /*
-        Remove the route prefix from the start of the compiled pattern and then create an optimized 
-        simple literal pattern from the remainder to optimize route rejection.
+        Create an simple literal startWith string to optimize route rejection.
      */
-    if (route->prefix && sstarts(startPattern, route->prefix)) {
-        startPattern = sclone(&startPattern[route->prefixLen]);
-    }
     len = strcspn(startPattern, "^$*+?.(|{[\\");
     if (len) {
-        route->literalPattern = snclone(startPattern, len);
-        route->literalPatternLen = len;
+        route->startWith = snclone(startPattern, len);
+        route->startWithLen = len;
+        if ((cp = strchr(&route->startWith[1], '/')) != 0) {
+            route->startSegment = snclone(route->startWith, cp - route->startWith);
+        } else {
+            route->startSegment = route->startWith;
+        }
+        route->startSegmentLen = slen(route->startSegment);
     } else {
-        /* Need to reset incase re-defining the pattern */
-        route->literalPattern = 0;
-        route->literalPatternLen = 0;
+        /* Pattern has special characters */
+        route->startWith = 0;
+        route->startWithLen = 0;
+        route->startSegmentLen = 0;
+        route->startSegment = 0;
     }
-    for (cp = route->pattern; *cp; cp++) {
+
+    /*
+        Remove the route prefix from the start of the compiled pattern.
+     */
+    if (route->prefix && sstarts(startPattern, route->prefix)) {
+        mprAssert(route->prefixLen <= route->startWithLen);
+        startPattern = sfmt("^%s", &startPattern[route->prefixLen]);
+    }
+    for (cp = startPattern; *cp; cp++) {
         /* Alias for optional, non-capturing pattern:  "(?: PAT )?" */
         if (*cp == '(' && cp[1] == '~') {
             mprPutStringToBuf(pattern, "(?:");
@@ -8304,11 +8340,11 @@ static void finalizePattern(HttpRoute *route)
         }
     }
     mprAddNullToBuf(pattern);
-    route->processedPattern = sclone(mprGetBufStart(pattern));
+    route->optimizedPattern = sclone(mprGetBufStart(pattern));
     if (mprGetListLength(route->tokens) == 0) {
         route->tokens = 0;
     }
-    if ((route->patternCompiled = pcre_compile2(route->processedPattern, 0, 0, &errMsg, &column, NULL)) == 0) {
+    if ((route->patternCompiled = pcre_compile2(route->optimizedPattern, 0, 0, &errMsg, &column, NULL)) == 0) {
         mprError("Can't compile route. Error %s at column %d", errMsg, column); 
     }
 }
@@ -8408,6 +8444,9 @@ static char *finalizeTemplate(HttpRoute *route)
     if ((buf = mprCreateBuf(0, 0)) == 0) {
         return 0;
     }
+    /*
+        Note: the route->pattern includes the prefix
+     */
     for (sp = route->pattern; *sp; sp++) {
         switch (*sp) {
         default:
@@ -8471,9 +8510,12 @@ static char *finalizeTemplate(HttpRoute *route)
         mprAdjustBufEnd(buf, -1);
     }
     mprAddNullToBuf(buf);
+#if UNUSED
     if (route->prefix) {
         template = sjoin(route->prefix, mprGetBufStart(buf), NULL);
-    } else if (mprGetBufLength(buf) > 0) {
+    } else 
+#endif
+    if (mprGetBufLength(buf) > 0) {
         template = sclone(mprGetBufStart(buf));
     } else {
         template = sclone("/");
@@ -8490,7 +8532,7 @@ void httpFinalizeRoute(HttpRoute *route)
         This is important as requests process routes in-order.
      */
     mprAssert(route);
-    httpAddRouteToHost(route->host, route);
+    httpAddRoute(route->host, route);
 #if BLD_FEATURE_SSL
     mprConfigureSsl(route->ssl);
 #endif
@@ -9135,23 +9177,14 @@ static int writeTarget(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 
 
 
-HttpRoute *httpAddRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, cchar *source)
+//  MOB - better name? httpDefineRoute?
+HttpRoute *httpAddConfiguredRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, 
+        cchar *source)
 {
     HttpRoute   *route;
 
     if ((route = httpCreateInheritedRoute(parent)) == 0) {
         return 0;
-    }
-    //  MOB - remove this code
-    mprAssert(name && *name);
-    if (name == 0) {
-        name = route->pattern;
-        if (*name == '^') {
-            name++;
-        }
-        if (parent->prefix) {
-            name = sjoin(parent->prefix, "/", name, NULL);
-        }
     }
     httpSetRouteName(route, name);
     httpSetRoutePattern(route, pattern, 0);
@@ -9170,19 +9203,19 @@ HttpRoute *httpAddRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *p
 /*
     Calculate a qualified route name. The form is: /{app}/{controller}/action
  */
-static char *qualifyName(HttpRoute *route, cchar *controller, cchar *name)
+static char *qualifyName(HttpRoute *route, cchar *controller, cchar *action)
 {
     cchar   *prefix, *controllerPrefix;
 
     prefix = route->prefix ? route->prefix : "";
-    if (name == 0 || *name == '\0') {
-        name = "default";
+    if (action == 0 || *action == '\0') {
+        action = "default";
     }
     if (controller) {
         controllerPrefix = (controller && smatch(controller, "{controller}")) ? "*" : controller;
-        return sjoin(prefix, "/", controllerPrefix, "/", name, NULL);
+        return sjoin(prefix, "/", controllerPrefix, "/", action, NULL);
     } else {
-        return sjoin(prefix, "/", name, NULL);
+        return sjoin(prefix, "/", action, NULL);
     }
 }
 
@@ -9190,76 +9223,92 @@ static char *qualifyName(HttpRoute *route, cchar *controller, cchar *name)
 /*
     Add a restful route. The parent route may supply a route prefix. If defined, the route name will prepend the prefix.
  */
-static void addRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, cchar *source, 
-        cchar *prefix, cchar *controller)
+static void addRestful(HttpRoute *parent, cchar *action, cchar *methods, cchar *pattern, cchar *target, cchar *resource)
 {
-    pattern = sfmt(pattern, prefix);
-    target = sfmt(target, controller);
-    source = sfmt(source, controller);
-    name = qualifyName(parent, prefix, name);
-    httpAddRoute(parent, name, methods, pattern, target, source);
+    cchar   *name, *nameResource, *source;
+
+    nameResource = smatch(resource, "{controller}") ? "*" : resource;
+    if (parent->prefix) {
+        name = sfmt("%s/%s/%s", parent->prefix, nameResource, action);
+        pattern = sfmt("^%s/%s%s", parent->prefix, resource, pattern);
+    } else {
+        name = sfmt("%s/%s", nameResource, action);
+        pattern = sfmt("^/%s%s", resource, pattern);
+    }
+    if (*resource == '{') {
+        target = sfmt("$%s-%s", resource, target);
+        source = sfmt("$%s.c", resource);
+    } else {
+        target = sfmt("%s-%s", resource, target);
+        source = sfmt("%s.c", resource);
+    }
+    httpAddConfiguredRoute(parent, name, methods, pattern, target, source);
 }
 
 
-void httpAddResourceGroup(HttpRoute *parent, cchar *prefix, cchar *controller)
+/*
+    httpAddResourceGroup(parent, "{controller}")
+ */
+void httpAddResourceGroup(HttpRoute *parent, cchar *resource)
 {
-    addRoute(parent, "index",   "GET",    "^/%s(/)*$",                  "%s-index",     "%s.c", prefix, controller);
-    addRoute(parent, "init",    "GET",    "^/%s/init$",                 "%s-init",      "%s.c", prefix, controller);
-    addRoute(parent, "create",  "POST",   "^/%s(/)*$",                  "%s-create",    "%s.c", prefix, controller);
-    addRoute(parent, "edit",    "GET",    "^/%s/{id=[0-9]+}/edit$",     "%s-edit",      "%s.c", prefix, controller);
-    addRoute(parent, "show",    "GET",    "^/%s/{id=[0-9]+}$",          "%s-show",      "%s.c", prefix, controller);
-    addRoute(parent, "update",  "PUT",    "^/%s/{id=[0-9]+}$",          "%s-update",    "%s.c", prefix, controller);
-    addRoute(parent, "destroy", "DELETE", "^/%s/{id=[0-9]+}$",          "%s-destroy",   "%s.c", prefix, controller);
-    addRoute(parent, "custom",  "POST",   "^/%s/{action}/{id=[0-9]+}$", "%s-${action}", "%s.c", prefix, controller);
-    addRoute(parent, "default", "POST",   "^/%s/{action}$",             "%s-${action}", "%s.c", prefix, controller);
+    addRestful(parent, "index",     "GET",    "(/)*$",                   "index",         resource);
+    addRestful(parent, "init",      "GET",    "/init$",                  "init",          resource);
+    addRestful(parent, "create",    "POST",   "(/)*$",                   "create",        resource);
+    addRestful(parent, "edit",      "GET",    "/{id=[0-9]+}/edit$",      "edit",          resource);
+    addRestful(parent, "show",      "GET",    "/{id=[0-9]+}$",           "show",          resource);
+    addRestful(parent, "update",    "PUT",    "/{id=[0-9]+}$",           "update",        resource);
+    addRestful(parent, "destroy",   "DELETE", "/{id=[0-9]+}$",           "destroy",       resource);
+    addRestful(parent, "custom",    "POST",   "/{action}/{id=[0-9]+}$",  "${action}",     resource);
+    addRestful(parent, "default",   "*",      "/{action}$",              "cmd-${action}", resource);
 }
 
 
-void httpAddResource(HttpRoute *parent, cchar *prefix, cchar *controller)
+/*
+    httpAddResourceGroup(parent, "{controller}")
+ */
+void httpAddResource(HttpRoute *parent, cchar *resource)
 {
-    addRoute(parent, "init",    "GET",    "^/%s/init$",         "%s-init",      "%s.c", prefix, controller);
-    addRoute(parent, "create",  "POST",   "^/%s(/)*$",          "%s-create",    "%s.c", prefix, controller);
-    addRoute(parent, "edit",    "GET",    "^/%s/edit$",         "%s-edit",      "%s.c", prefix, controller);
-    addRoute(parent, "show",    "GET",    "^/%s$",              "%s-show",      "%s.c", prefix, controller);
-    addRoute(parent, "update",  "PUT",    "^/%s$",              "%s-update",    "%s.c", prefix, controller);
-    addRoute(parent, "destroy", "DELETE", "^/%s$",              "%s-destroy",   "%s.c", prefix, controller);
-    addRoute(parent, "default", "POST",   "^/%s/{action}$",     "%s-${action}", "%s.c", prefix, controller);
+    addRestful(parent, "init",      "GET",    "/init$",       "init",          resource);
+    addRestful(parent, "create",    "POST",   "(/)*$",        "create",        resource);
+    addRestful(parent, "edit",      "GET",    "/edit$",       "edit",          resource);
+    addRestful(parent, "show",      "GET",    "$",            "show",          resource);
+    addRestful(parent, "update",    "PUT",    "$",            "update",        resource);
+    addRestful(parent, "destroy",   "DELETE", "$",            "destroy",       resource);
+    addRestful(parent, "default",   "*",      "/{action}$",   "cmd-${action}", resource);
 }
 
 
 void httpAddDefaultRoutes(HttpRoute *parent)
 {
-    cchar   *source, *name, *path;
+    cchar   *source, *name, *path, *pattern, *prefix;
 
+    prefix = parent->prefix ? parent->prefix : "";
     source = parent->sourceName;
     name = qualifyName(parent, NULL, "home");
     path = stemplate("${STATIC_DIR}/index.esp", parent->pathTokens);
-    httpAddRoute(parent, name, "GET,POST,PUT", "^/$", path, source);
+    pattern = sfmt("^%s%s", prefix, "(/)*$");
+    httpAddConfiguredRoute(parent, name, "GET,POST,PUT", pattern, path, source);
 
     name = qualifyName(parent, NULL, "static");
     path = stemplate("${STATIC_DIR}/$1", parent->pathTokens);
-    httpAddRoute(parent, name, "GET", "^/static/(.*)", path, source);
+    pattern = sfmt("^%s%s", prefix, "/static/(.*)");
+    httpAddConfiguredRoute(parent, name, "GET", pattern, path, source);
 }
 
 
-void httpAddRouteSet(HttpRoute *parent, cchar *set, cchar *controllerPattern, cchar *controller)
+void httpAddRouteSet(HttpRoute *parent, cchar *set)
 {
     if (scasematch(set, "simple")) {
         httpAddDefaultRoutes(parent);
 
     } else if (scasematch(set, "mvc")) {
         httpAddDefaultRoutes(parent);
-        httpAddRoute(parent, "default", NULL, "^/{controller}(~/{action}~)", "${controller}-${action}", "${controller}.c");
+        httpAddConfiguredRoute(parent, "default", NULL, "^/{controller}(~/{action}~)", "${controller}-${action}", 
+            "${controller}.c");
 
     } else if (scasematch(set, "restful")) {
         httpAddDefaultRoutes(parent);
-        if (controllerPattern == 0) {
-            controllerPattern = "{controller}";
-        }
-        if (controller == 0) {
-            controller = "${controller}";
-        }
-        httpAddResourceGroup(parent, controllerPattern, controller);
+        httpAddResourceGroup(parent, "{controller}");
 
     } else if (!scasematch(set, "none")) {
         mprError("Unknown route set %s", set);
@@ -9870,10 +9919,11 @@ void httpAddOption(MprHash *options, cchar *field, cchar *value)
         return;
     }
     if ((kp = mprLookupKeyEntry(options, field)) != 0) {
-        mprAddKey(options, field, sjoin(kp->data, " ", value, NULL));
+        kp = mprAddKey(options, field, sjoin(kp->data, " ", value, NULL));
     } else {
-        mprAddKey(options, field, value);
+        kp = mprAddKey(options, field, value);
     }
+    kp->type = MPR_JSON_STRING;
 }
 
 
@@ -9889,6 +9939,8 @@ void httpRemoveOption(MprHash *options, cchar *field)
 
 void httpSetOption(MprHash *options, cchar *field, cchar *value)
 {
+    MprKey  *kp;
+
     if (value == 0) {
         return;
     }
@@ -9896,7 +9948,9 @@ void httpSetOption(MprHash *options, cchar *field, cchar *value)
         mprAssert(options);
         return;
     }
-    mprAddKey(options, field, value);
+    if ((kp = mprAddKey(options, field, value)) != 0) {
+        kp->type = MPR_JSON_STRING;
+    }
 }
 
 
@@ -11765,19 +11819,24 @@ void httpTrimExtraPath(HttpConn *conn)
 {
     HttpTx      *tx;
     HttpRx      *rx;
-    char        *cp, *extra, *start;
+    char        *cp, *extra;
     ssize       len;
 
     rx = conn->rx;
     tx = conn->tx;
 
     if (!(rx->flags & (HTTP_OPTIONS | HTTP_TRACE))) { 
-        start = rx->pathInfo;
-        if ((cp = strchr(start, '.')) != 0 && (extra = strchr(cp, '/')) != 0) {
-            len = extra - start;
+        if ((cp = strchr(rx->pathInfo, '.')) != 0 && (extra = strchr(cp, '/')) != 0) {
+            len = extra - rx->pathInfo;
             if (0 < len && len < slen(rx->pathInfo)) {
                 rx->extraPath = sclone(&rx->pathInfo[len]);
                 rx->pathInfo[len] = '\0';
+            }
+        }
+        if ((cp = strchr(rx->target, '.')) != 0 && (extra = strchr(cp, '/')) != 0) {
+            len = extra - rx->target;
+            if (0 < len && len < slen(rx->target)) {
+                rx->target[len] = '\0';
             }
         }
     }

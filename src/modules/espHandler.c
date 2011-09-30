@@ -232,7 +232,7 @@ static int runAction(HttpConn *conn)
     key = mprJoinPath(eroute->controllersDir, rx->target);
     if ((action = mprLookupKey(esp->actions, key)) == 0) {
         req->controllerPath = mprJoinPath(eroute->controllersDir, req->controllerName);
-        key = sfmt("%s/%s-missing", req->controllerPath, mprTrimPathExt(req->controllerName));
+        key = sfmt("%s/missing", mprGetPathDir(req->controllerPath));
         if ((action = mprLookupKey(esp->actions, key)) == 0) {
             if (!viewExists(conn)) {
                 if ((action = mprLookupKey(esp->actions, "missing")) == 0) {
@@ -911,7 +911,7 @@ static int espAppDirective(MaState *state, cchar *key, cchar *value)
     
     /* Must set dirs first before defining route set */
     setRouteDirs(state, routeSet);
-    httpAddRouteSet(state->route, routeSet, "{controller}", "${controller}");
+    httpAddRouteSet(state->route, routeSet);
     return 0;
 }
 
@@ -1146,18 +1146,18 @@ static cchar *inheritPrefix(MaState *state, cchar *prefix)
     
 
 /*
-    EspResource [name ...]
+    EspResource [resource ...]
  */
 static int espResourceDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *name, *next;
 
     if (value == 0 || *value == '\0') {
-        httpAddResource(state->route, "{controller}", "${controller}");
+        httpAddResource(state->route, "{controller}");
     } else {
         name = stok(sclone(value), ", \t\r\n", &next);
         while (name) {
-            httpAddResource(state->route, name, name);
+            httpAddResource(state->route, name);
             name = stok(NULL, ", \t\r\n", &next);
         }
     }
@@ -1166,18 +1166,18 @@ static int espResourceDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    EspResourceGroup name ...
+    EspResourceGroup [resource ...]
  */
 static int espResourceGroupDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *name, *next;
 
     if (value == 0 || *value == '\0') {
-        httpAddResourceGroup(state->route, "{controller}", "${controller}");
+        httpAddResourceGroup(state->route, "{controller}");
     } else {
         name = stok(sclone(value), ", \t\r\n", &next);
         while (name) {
-            httpAddResourceGroup(state->route, name, name);
+            httpAddResourceGroup(state->route, name);
             name = stok(NULL, ", \t\r\n", &next);
         }
     }
@@ -1195,32 +1195,26 @@ static int espRouteDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S %S %S %S %S", &name, &methods, &pattern, &target, &source)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    httpAddRoute(state->route, name, methods, pattern, target, source);
+    httpAddConfiguredRoute(state->route, name, methods, pattern, target, source);
     return 0;
 }
 
 
 /*
-    EspRouteSet kind [/prefix controller]
+    EspRouteSet kind
  */
 static int espRouteSetDirective(MaState *state, cchar *key, cchar *value)
 {
     EspRoute    *eroute;
-    char        *kind, *prefix, *controller;
+    char        *kind;
 
     if ((eroute = getEspRoute(state->route)) == 0) {
         return MPR_ERR_MEMORY;
     }
-    if (!maTokenize(state, value, "%S ?S ?P", &kind, &prefix, &controller)) {
+    if (!maTokenize(state, value, "%S", &kind)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if (prefix == 0) {
-        prefix = "{controller}";
-        controller = "${controller}";
-    } else {
-        prefix = strim(prefix, "/", MPR_TRIM_START);
-    }
-    httpAddRouteSet(state->route, kind, prefix, controller);
+    httpAddRouteSet(state->route, kind);
     return 0;
 }
 
