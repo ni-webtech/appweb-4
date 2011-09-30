@@ -1855,6 +1855,9 @@ static int verifyX509Certificate(int ok, X509_STORE_CTX *xContext)
     osp = (MprSslSocket*) SSL_get_app_data(osslStruct);
     ssl = (MprSsl*) osp->ssl;
 
+    if (!ssl->verifyClient) {
+        return ok;
+    }
     cert = X509_STORE_CTX_get_current_cert(xContext);
     depth = X509_STORE_CTX_get_error_depth(xContext);
     error = X509_STORE_CTX_get_error(xContext);
