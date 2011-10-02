@@ -5970,8 +5970,7 @@ extern void mprXmlSetParserHandler(MprXml *xp, MprXmlHandler h);
 struct MprJson;
 typedef void MprObj;
 typedef int (*MprCheckState)(struct MprJson *jp, cchar *name);
-typedef int (*MprSetKey)(struct MprJson *jp, MprObj *obj, cchar *name, cchar *value, int valueType);
-typedef int (*MprSetItem)(struct MprJson *jp, MprObj *obj, cchar *value, int valueType, int index);
+typedef int (*MprSetValue)(struct MprJson *jp, MprObj *obj, int index, cchar *name, cchar *value, int valueType);
 typedef MprObj *(*MprMakeObj)(struct MprJson *jp, bool list);
 
 //  MOB DOC
@@ -5979,8 +5978,7 @@ typedef struct MprJson {
     cchar           *tok;           /* Current parse token */
     int             lineNumber;     /* Current line number in path */
     MprCheckState   checkState;     /* Check state before defining key/item */
-    MprSetKey       setKey;         /* Property set callback function */
-    MprSetItem      setItem;        /* Property set callback function */
+    MprSetValue     setValue;       /* Property set callback function */
     MprMakeObj      makeObj;        /* Make obj callback */
     int             state;          /* Custom extended state */
     void            *data;          /* Custom data handle */
@@ -5988,8 +5986,7 @@ typedef struct MprJson {
 
 //  MOB DOC
 extern cchar *mprSerialize(MprObj *obj, int flags);
-extern MprObj *mprDeserializeCustom(cchar *str, MprMakeObj makeObj, MprCheckState check, MprSetItem setItem, 
-        MprSetKey setKey, void *data);
+extern MprObj *mprDeserializeCustom(cchar *str, MprMakeObj makeObj, MprCheckState check, MprSetValue setValue, void *data);
 extern MprObj *mprDeserialize(cchar *str);
 extern void mprJsonParseError(MprJson *jp, cchar *fmt, ...);
 

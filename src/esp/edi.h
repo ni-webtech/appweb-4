@@ -85,9 +85,12 @@ typedef struct EdiGrid {
 /*
     Database flags
  */
-#define EDI_CREATE         0x1          /**< Create database if not present */
-#define EDI_AUTO_SAVE      0x2          /**< Auto-save database if modified in memory */
-#define EDI_SUPPRESS_SAVE  0x4          /**< Temporarily suppress auto-save */
+#define EDI_CREATE          0x1          /**< Create database if not present */
+#define EDI_AUTO_SAVE       0x2          /**< Auto-save database if modified in memory */
+#define EDI_NO_SAVE         0x4          /**< Prevent saving to disk */
+#define EDI_LITERAL         0x8          /**< Literal schema in ediOpen source parameter */
+
+#define EDI_SUPPRESS_SAVE   0x10         /**< Temporarily suppress auto-save */
 
 /*
     Set flags
@@ -106,6 +109,7 @@ typedef struct EdiProvider {
     int       (*addTable)(Edi *edi, cchar *tableName);
     int       (*changeColumn)(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
     void      (*close)(Edi *edi);
+    EdiRec    *(*createRec)(Edi *edi, cchar *tableName);
     int       (*delete)(Edi *edi, cchar *path);
     int       (*deleteRow)(Edi *edi, cchar *tableName, cchar *key);
     MprList   *(*getColumns)(Edi *edi, cchar *tableName);
@@ -147,6 +151,7 @@ extern int ediAddIndex(Edi *edi, cchar *tableName, cchar *columnName, cchar *ind
 extern int ediAddTable(Edi *edi, cchar *tableName);
 extern int ediChangeColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
 extern void ediClose(Edi *edi);
+extern EdiRec *ediCreateRec(Edi *edi, cchar *tableName);
 extern int ediDelete(Edi *edi, cchar *path);
 extern int ediDeleteRow(Edi *edi, cchar *tableName, cchar *key);
 extern MprList *ediGetColumns(Edi *edi, cchar *tableName);
@@ -154,7 +159,7 @@ extern int ediGetColumnSchema(Edi *edi, cchar *tableName, cchar *columName, int 
 extern MprList *ediGetTables(Edi *edi);
 extern int ediLoad(Edi *edi, cchar *path);
 extern int ediLookupField(Edi *edi, cchar *tableName, cchar *fieldName);
-extern Edi *ediOpen(cchar *provider, cchar *path, int flags);
+extern Edi *ediOpen(cchar *provider, cchar *source, int flags);
 extern EdiGrid *ediQuery(Edi *edi, cchar *cmd);
 extern cchar *ediReadField(Edi *edi, cchar *fmt, cchar *tableName, cchar *key, cchar *fieldName, cchar *defaultValue);
 extern EdiGrid *ediReadGrid(Edi *edi, cchar *tableName);
@@ -183,14 +188,19 @@ extern MprList *ediGetRecErrors(EdiRec *rec);
 extern cchar *ediGetRecField(cchar *fmt, EdiRec *rec, cchar *fieldName);
 extern int ediGetRecFieldType(EdiRec *rec, cchar *fieldName);
 extern MprList *ediGetGridColumns(EdiGrid *grid);
-extern EdiGrid *ediMakeGrid(cchar *str);
 extern bool edValidateRecord(EdiRec *rec);
+
+/*
+    NO-DB API
+ */
+extern EdiGrid *ediMakeGrid(cchar *json);
+extern EdiRec *ediMakeRec(cchar *json);
 
 /*
     Support routines for providers
  */
-extern EdiGrid *ediCreateGrid(Edi *edi, cchar *tableName, int nrows);
-extern EdiRec *ediCreateRec(Edi *edi, cchar *tableName, cchar *id, int nfields, EdiField *fields);
+extern EdiGrid *ediCreateBareGrid(Edi *edi, cchar *tableName, int nrows);
+extern EdiRec *ediCreateBareRec(Edi *edi, cchar *tableName, int nfields);
 extern char *ediGetTypeString(int type);
 extern void ediManageEdiRec(EdiRec *rec, int flags);
 extern int ediParseTypeString(cchar *type);

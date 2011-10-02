@@ -245,6 +245,8 @@ static int initialize(cchar *ip, int port)
         mprUserError("Can't create HTTP service for %s", mprGetAppName());
         return MPR_ERR_CANT_CREATE;
     }
+    MPR->appwebService = app->appweb;
+
     if ((app->server = maCreateServer(app->appweb, "default")) == 0) {
         mprUserError("Can't create HTTP server for %s", mprGetAppName());
         return MPR_ERR_CANT_CREATE;

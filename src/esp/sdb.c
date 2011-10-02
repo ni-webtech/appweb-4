@@ -502,7 +502,7 @@ static EdiGrid *sdbReadGrid(Sdb *sdb, cchar *tableName)
         return 0;
     }
     nrows = mprGetListLength(table->rows);
-    if ((grid = ediCreateGrid(nrows)) == 0) {
+    if ((grid = ediCreateBareGrid(nrows)) == 0) {
         return 0;
     }
     for (ITERATE_ITEMS(table->rows, row, next)) {

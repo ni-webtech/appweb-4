@@ -98,6 +98,9 @@ enumerable class Test {
                 App.putenv("SECOND", "1")
                 App.putenv("NOSERVER", "1")
                 break
+            case "--chdir":
+                App.chdir(args[++i])
+                break
             case "-c" : case "--continue":
                 continueOnErrors = true
                 break
@@ -154,6 +157,7 @@ enumerable class Test {
 
     function usage(): Void {
         error("Usage: " + program + " [options] [filter patterns...]\n" +
+            "  --chdir dir           # Change to directory before testing\n" + 
             "  --continue            # Continue on errors\n" + 
             "  --depth number        # Zero == basic, 1 == throrough, 2 extensive\n" + 
             "  --debug               # Run in debug mode\n" + 

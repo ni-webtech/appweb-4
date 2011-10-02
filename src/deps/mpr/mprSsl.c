@@ -1888,6 +1888,7 @@ static int verifyX509Certificate(int ok, X509_STORE_CTX *xContext)
     }
     if (error != 0) {
         mprAssert(!ok);
+        /* X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY */
     }
 
 #if KEEP

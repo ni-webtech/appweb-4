@@ -352,8 +352,8 @@ void espLabel(HttpConn *conn, cchar *text, cchar *optionString)
 
 
 /*
-    list("priority", "low='0' med='1' high='2'", NULL)
-    list("priority", "low='0' med='1' high='2'", "value='2'")   //  MOB - without a record
+    list("priority", "{ low: '0' med: '1' high: '2' }", NULL)
+    list("priority", "{ low: '0' med: '1' high: '2' }", "value='2'")   //  MOB - without a record
  */
 void espList(HttpConn *conn, cchar *field, cchar *choices, cchar *optionString) 
 {
@@ -768,6 +768,7 @@ static cchar *getValue(HttpConn *conn, cchar *fieldName, MprHash *options)
 }
 
 
+#if UNUSED
 static EdiField initField(cchar *name, EdiValue value, int type, int flags)
 {
     EdiField    f;
@@ -779,6 +780,7 @@ static EdiField initField(cchar *name, EdiValue value, int type, int flags)
     f.flags = flags;
     return f;
 }
+#endif
 
 
 /*
@@ -1028,22 +1030,18 @@ void tree(EdiGrid *grid, cchar *optionString)
 
 /************************************ Database *******************************/
 
-//  MOB - confusing vs ediCreateRec which creates and saves from fields
-
 EdiRec *createRec(cchar *tableName, MprHash *params)
 {
     Edi         *edi;
     EdiRec      *rec;
-    MprList     *cols;
-    MprKey      *kp;
-    int         cid, ncols, type, flags;
 
     edi = getDatabase();
-    cols = ediGetColumns(edi, tableName);
-    ncols = mprGetListLength(cols);
-    if ((rec = ediCreateRec(edi, tableName, 0, ncols, NULL)) == 0) {
+    if ((rec = ediCreateRec(edi, tableName)) == 0) {
         return 0;
     }
+    ediUpdateFields(rec, params);
+    setRec(rec);
+#if UNUSED
     for (ITERATE_KEYS(params, kp)) {
         if (ediGetColumnSchema(edi, tableName, kp->key, &type, &flags, &cid) == 0) {
             mprAssert(type);
@@ -1052,27 +1050,17 @@ EdiRec *createRec(cchar *tableName, MprHash *params)
             }
         }
     }
-    setRec(rec);
+#endif
     return rec;
 }
 
 
-EdiRec *findRec(cchar *tableName, cchar *key)
+MprList *getColumns(EdiRec *rec)
 {
-    Edi     *edi;
-
-    if ((edi = getDatabase()) == 0) {
-        return 0;
+    if (rec == 0) {
+        rec = getRec();
     }
-    return ediReadRec(getDatabase(), tableName, key);
-}
-
-
-MprList *getColumns()
-{
-    EdiRec  *rec;
-
-    if ((rec = getRec()) != 0) {
+    if (rec) {
         return ediGetColumns(getDatabase(), rec->tableName);
     }
     return mprCreateList(0, 0);
@@ -1103,6 +1091,27 @@ bool hasRec()
 bool hasGrid()
 {
     return espGetConn()->grid != 0;
+}
+
+
+/*
+    grid = makeGrid("[ \
+        { id: '1', country: 'Australia' }, \
+        { id: '2', country: 'China' }, \
+    ]");
+ */
+EdiGrid *makeGrid(cchar *json)
+{
+    return ediMakeGrid(json);
+}
+
+
+/*
+    rec = makeRec("{ id: 1, title: 'Message One', body: 'Line one' }");
+ */
+EdiRec *makeRec(cchar *json)
+{
+    return ediMakeRec(json);
 }
 
 

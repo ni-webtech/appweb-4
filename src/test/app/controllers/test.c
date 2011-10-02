@@ -49,7 +49,7 @@ static void missing() {
 }
 
 ESP_EXPORT int espInit_controller_test(EspRoute *eroute, MprModule *module) {
-    espDefineAction(eroute, "missing", missing);
+    espDefineAction(eroute, "test-missing", missing);
     espDefineAction(eroute, "test-cmd-check", check);
     espDefineAction(eroute, "test-cmd-cached", cached);
     espDefineAction(eroute, "test-cmd-details", details);

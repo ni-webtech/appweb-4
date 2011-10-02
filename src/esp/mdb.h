@@ -78,7 +78,9 @@ typedef struct Mdb {
     MdbTable        *loadTable;     /* Current table */
     MdbCol          *loadCol;       /* Current column */
     MdbRow          *loadRow;       /* Current row */
+#if UNUSED
     int             loadField;      /* Current field */
+#endif
     MprList         *loadStack;     /* State stack */
     int             loadState;      /* Current state */
     int             loadNcols;      /* Expected number of cols */

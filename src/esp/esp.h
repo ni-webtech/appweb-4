@@ -912,19 +912,14 @@ extern cchar *referrer();
 /*
     Database
  */
-//  MOB - which of these require a database and which do not. NEED CRUD without a database
-
-//  MOB - confusing vs ediCreateRec which creates and saves from fields
-//  rec = createRec("tableName", makeParams("{ name: 'john', age: %d, eyes: 'blue' }", 23))
-
 extern EdiRec *createRec(cchar *tableName, MprHash *params);
-extern EdiRec *findRec(cchar *tableName, cchar *key);
-extern MprList *getColumns();
+extern MprList *getColumns(EdiRec *rec);
 extern EdiGrid *getGrid();
 extern EdiRec *getRec();
 extern bool hasGrid();
 extern bool hasRec();
-extern MprHash *makeParams(cchar *json, ...);
+
+extern MprHash *makeObj(cchar *json, ...);
 
 extern EdiRec *readRec(cchar *tableName);
 extern EdiGrid *readGrid(cchar *tableName);
@@ -939,7 +934,12 @@ extern bool writeFields(cchar *tableName, MprHash *params);
 extern EdiGrid *setGrid(EdiGrid *grid);
 extern EdiRec *setRec(EdiRec *rec);
 
-/* This work locally on a record - no saving to database. Use writeRec() to do so */
+/* 
+    NO-DB API
+    These work locally on a record - no saving to database
+ */
+extern EdiRec *makeRec(cchar *json);
+extern EdiGrid *makeGrid(cchar *json);
 extern EdiRec *updateField(EdiRec *rec, cchar *fieldName, cchar *value);
 extern EdiRec *updateFields(EdiRec *rec, MprHash *params);
 

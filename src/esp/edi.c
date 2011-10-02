@@ -89,6 +89,12 @@ void ediClose(Edi *edi)
 }
 
 
+EdiRec *ediCreateRec(Edi *edi, cchar *tableName)
+{
+    return edi->provider->createRec(edi, tableName);
+}
+
+
 int ediDelete(Edi *edi, cchar *path)
 {
     return edi->provider->delete(edi, path);
@@ -410,35 +416,11 @@ bool edValidateRecord(EdiRec *rec)
 
 #endif
 /********************************* Convenience *****************************/
-
-//  MOB - EDI arg should not be present? 
-//  MOB - who uses this routine?
-
-EdiRec *ediCreateRec(Edi *edi, cchar *tableName, cchar *id, int nfields, EdiField *fields)
-{
-    EdiRec   *rec;
-
-    if ((rec = mprAllocMem(sizeof(EdiRec) + sizeof(EdiField) * nfields, MPR_ALLOC_MANAGER | MPR_ALLOC_ZERO)) == 0) {
-        return 0;
-    }
-    mprSetAllocName(rec, "record");
-    mprSetManager(rec, ediManageEdiRec);
-
-    rec->edi = edi;
-    rec->tableName = sclone(tableName);
-    if (id && *id) {
-        rec->id = sclone(id);
-    }
-    rec->nfields = nfields;
-    if (fields) {
-        memmove(rec->fields, fields, sizeof(EdiField) * nfields);
-    }
-    return rec;
-}
-
-
-//  MOB - EDI arg should not be present? 
-EdiGrid *ediCreateGrid(Edi *edi, cchar *tableName, int nrows)
+/*
+    Create a free-standing grid. Not saved to the database
+    The edi and tableName parameters can be null
+ */
+EdiGrid *ediCreateBareGrid(Edi *edi, cchar *tableName, int nrows)
 {
     EdiGrid  *grid;
 
@@ -451,6 +433,27 @@ EdiGrid *ediCreateGrid(Edi *edi, cchar *tableName, int nrows)
     grid->edi = edi;
     grid->tableName = sclone(tableName);
     return grid;
+}
+
+
+/*
+    Create a free-standing record. Not saved to the database.
+    The tableName parameter can be null. The fields are not initialized (no schema).
+ */
+EdiRec *ediCreateBareRec(Edi *edi, cchar *tableName, int nfields)
+{
+    EdiRec      *rec;
+
+    if ((rec = mprAllocMem(sizeof(EdiRec) + sizeof(EdiField) * nfields, MPR_ALLOC_MANAGER | MPR_ALLOC_ZERO)) == 0) {
+        return 0;
+    }
+    mprSetAllocName(rec, "record");
+    mprSetManager(rec, ediManageEdiRec);
+
+    rec->edi = edi;
+    rec->tableName = sclone(tableName);
+    rec->nfields = nfields;
+    return rec;
 }
 
 
@@ -525,11 +528,64 @@ static void manageEdiGrid(EdiGrid *grid, int flags)
 }
 
 
-extern EdiGrid *ediMakeGrid(cchar *str)
+/*
+    grid = ediMakeGrid("[ \
+        { id: '1', country: 'Australia' }, \
+        { id: '2', country: 'China' }, \
+    ]");
+ */
+EdiGrid *ediMakeGrid(cchar *json)
 {
-    //  MOB
+    MprHash     *obj, *row;
+    MprKey      *kp;
+    EdiGrid     *grid;
+    EdiRec      *rec;
+    int         r, nrows, nfields;
+
+    if ((obj = mprDeserialize(json)) == 0) {
+        return 0;
+    }
+    nrows = mprGetHashLength(obj);
+    if ((grid = ediCreateBareGrid(NULL, "", nrows)) == 0) {
+        return 0;
+    }
+    for (r = 0, ITERATE_KEYS(obj, kp)) {
+        if (kp->type != MPR_JSON_OBJ) {
+            continue;
+        }
+        row = (MprHash*) kp->data;
+        nfields = mprGetHashLength(row);
+        if ((rec = ediCreateBareRec(NULL, "", nfields)) == 0) {
+            return 0;
+        }
+        if (ediUpdateFields(rec, row) == 0) {
+            return 0;
+        }
+        grid->records[r++] = rec;
+    }
     return 0;
 }
+
+
+/*
+    rec = ediMakeRec("{ id: 1, title: 'Message One', body: 'Line one' }");
+ */
+EdiRec *ediMakeRec(cchar *json)
+{
+    MprHash     *obj;
+    EdiRec      *rec;
+    int         nfields;
+
+    if ((obj = mprDeserialize(json)) == 0) {
+        return 0;
+    }
+    nfields = mprGetHashLength(obj);
+    if ((rec = ediCreateBareRec(NULL, "", nfields)) == 0) {
+        return 0;
+    }
+    return ediUpdateFields(rec, obj);
+}
+
 
 
 EdiValue ediParseValue(cchar *value, int type)
@@ -614,6 +670,9 @@ EdiRec *ediUpdateFields(EdiRec *rec, MprHash *params)
         return 0;
     }
     for (ITERATE_KEYS(params, kp)) {
+        if (kp->type == MPR_JSON_ARRAY || kp->type == MPR_JSON_OBJ) {
+            continue;
+        }
         if (!ediUpdateField(rec, kp->key, kp->data)) {
             return 0;
         }
