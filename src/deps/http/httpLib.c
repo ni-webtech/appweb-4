@@ -8567,7 +8567,7 @@ void httpFinalizeRoute(HttpRoute *route)
        
         If the target is a string that begins with "{AT}" it will be interpreted as a controller/action pair of the 
         form "{AT}Controller/action". If the "controller/" portion is absent, the current controller is used. If 
-        the action component is missing, the "index" action is used. A bare "{AT}" refers to the "index" action 
+        the action component is missing, the "list" action is used. A bare "{AT}" refers to the "list" action 
         of the current controller.
 
     @param options MOB
@@ -8640,7 +8640,7 @@ char *httpLink(HttpConn *conn, cchar *target, MprHash *options)
         /*
             Prep the action. Forms are:
                 . @action               # Use the current controller
-                . @controller/          # Use "index" as the action
+                . @controller/          # Use "list" as the action
                 . @controller/action
          */
         if ((action = httpGetOption(options, "action", 0)) != 0) {
@@ -8659,7 +8659,7 @@ char *httpLink(HttpConn *conn, cchar *target, MprHash *options)
                 controller = httpGetParam(conn, "controller", 0);
             }
             if (action == 0 || *action == '\0') {
-                action = "index";
+                action = "list";
             }
             if (action != originalAction) {
                 httpSetOption(options, "action", action);
@@ -9263,7 +9263,7 @@ static void addRestful(HttpRoute *parent, cchar *action, cchar *methods, cchar *
  */
 void httpAddResourceGroup(HttpRoute *parent, cchar *resource)
 {
-    addRestful(parent, "index",     "GET",    "(/)*$",                   "index",         resource);
+    addRestful(parent, "list",      "GET",    "(/)*$",                   "list",          resource);
     addRestful(parent, "init",      "GET",    "/init$",                  "init",          resource);
     addRestful(parent, "create",    "POST",   "(/)*$",                   "create",        resource);
     addRestful(parent, "edit",      "GET",    "/{id=[0-9]+}/edit$",      "edit",          resource);
@@ -9276,7 +9276,7 @@ void httpAddResourceGroup(HttpRoute *parent, cchar *resource)
 
 
 /*
-    httpAddResourceGroup(parent, "{controller}")
+    httpAddResource(parent, "{controller}")
  */
 void httpAddResource(HttpRoute *parent, cchar *resource)
 {

@@ -26,7 +26,7 @@ static void edit() {
     readRec("post");
 }
 
-static void pindex() { }
+static void list() { }
 
 static void init() { 
     createRec("post", 0);
@@ -59,7 +59,7 @@ ESP_EXPORT int espInit_controller_post(EspRoute *eroute, MprModule *module) {
     espDefineAction(eroute, "post-destroy", destroy);
     espDefineAction(eroute, "post-edit", edit);
     espDefineAction(eroute, "post-init", init);
-    espDefineAction(eroute, "post-index", pindex);
+    espDefineAction(eroute, "post-list", list);
     espDefineAction(eroute, "post-show", show);
     espDefineAction(eroute, "post-update", update);
     return 0;

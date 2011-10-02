@@ -3244,7 +3244,7 @@ extern cchar *httpGetRouteMethods(HttpRoute *route);
        
         If the target is a string that begins with "{AT}" it will be interpreted as a controller/action pair of the 
         form "{AT}Controller/action". If the "controller/" portion is absent, the current controller is used. If 
-        the action component is missing, the "index" action is used. A bare "{AT}" refers to the "index" action 
+        the action component is missing, the "list" action is used. A bare "{AT}" refers to the "list" action 
         of the current controller.
 
     @param options MOB
