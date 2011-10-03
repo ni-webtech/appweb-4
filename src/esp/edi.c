@@ -9,11 +9,13 @@
 /********************************** Includes **********************************/
 
 #include    "edi.h"
+#include    "pcre.h"
 
 #if BLD_FEATURE_ESP
 #if BLD_FEATURE_EDI || 1
 /************************************* Local **********************************/
 
+static void addValidations();
 static void manageEdiService(EdiService *es, int flags);
 static void manageEdiGrid(EdiGrid *grid, int flags);
 
@@ -28,6 +30,7 @@ EdiService *ediCreateService()
     }
     MPR->ediService = es;
     es->providers = mprCreateHash(0, MPR_HASH_STATIC_VALUES);
+    addValidations();
     return es;
 }
 
@@ -36,8 +39,20 @@ static void manageEdiService(EdiService *es, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(es->providers);
-        /* Don't mark load fields */
+        mprMark(es->validations);
     }
+}
+
+
+int ediAddColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags)
+{
+    return edi->provider->addColumn(edi, tableName, columnName, type, flags);
+}
+
+
+int ediAddIndex(Edi *edi, cchar *tableName, cchar *columnName, cchar *indexName)
+{
+    return edi->provider->addIndex(edi, tableName, columnName, indexName);
 }
 
 
@@ -59,21 +74,46 @@ static EdiProvider *lookupProvider(cchar *providerName)
 }
 
 
-int ediAddColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags)
-{
-    return edi->provider->addColumn(edi, tableName, columnName, type, flags);
-}
-
-
-int ediAddIndex(Edi *edi, cchar *tableName, cchar *columnName, cchar *indexName)
-{
-    return edi->provider->addIndex(edi, tableName, columnName, indexName);
-}
-
-
 int ediAddTable(Edi *edi, cchar *tableName)
 {
     return edi->provider->addTable(edi, tableName);
+}
+
+
+static void manageValidation(EdiValidation *vp, int flags) 
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(vp->name);
+        mprMark(vp->data);
+    }
+}
+
+
+int ediAddValidation(Edi *edi, cchar *name, cchar *tableName, cchar *columnName, cvoid *data)
+{
+    EdiService          *es;
+    EdiValidation       *vp; 
+    cchar               *errMsg;
+    int                 column;
+
+    es = MPR->ediService;
+    if ((vp = mprAllocObj(EdiValidation, manageValidation)) == 0) {
+        return MPR_ERR_MEMORY;
+    }
+    vp->name = sclone(name);
+    if ((vp->vfn = mprLookupKey(es->validations, name)) == 0) {
+        mprError("Can't find validation '%s'", name);
+        return MPR_ERR_CANT_FIND;
+    }
+    if (smatch(name, "format")) {
+        if ((vp->mdata = pcre_compile2(data, 0, 0, &errMsg, &column, NULL)) == 0) {
+            mprError("Can't compile validation pattern. Error %s at column %d", errMsg, column); 
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        data = 0;
+    }
+    vp->data = data;
+    return edi->provider->addValidation(edi, tableName, columnName, vp);
 }
 
 
@@ -240,15 +280,15 @@ cchar *ediReadField(Edi *edi, cchar *fmt, cchar *tableName, cchar *key, cchar *c
 
 EdiGrid *ediReadGrid(Edi *edi, cchar *tableName)
 {
-    return edi->provider->readGrid(edi, tableName);
+    return edi->provider->readWhere(edi, tableName, 0, 0, 0);
 }
 
 
-EdiRec *ediReadOneWhere(Edi *edi, cchar *tableName, cchar *expression)
+EdiRec *ediReadOneWhere(Edi *edi, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value)
 {
     EdiGrid *grid;
     
-    if ((grid = ediReadWhere(edi, tableName, expression)) == 0) {
+    if ((grid = ediReadWhere(edi, tableName, fieldName, operation, value)) == 0) {
         return 0;
     }
     if (grid->nrecords > 0) {
@@ -270,18 +310,9 @@ EdiRec *ediReadRec(Edi *edi, cchar *tableName, cchar *key)
 }
 
 
-EdiGrid *ediReadWhere(Edi *edi, cchar *tableName, cchar *expression)
+EdiGrid *ediReadWhere(Edi *edi, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value)
 {
-    EdiGrid     *grid;
-    EdiRec      *rec;
-    int         r;
-
-    grid = ediReadGrid(edi, tableName);
-    for (r = 0; r < grid->nrecords; r++) {
-        rec = grid->records[r];
-        //  MOB - TODO 
-    }
-    return grid;
+    return edi->provider->readWhere(edi, tableName, fieldName, operation, value);
 }
 
 
@@ -321,15 +352,15 @@ int ediSave(Edi *edi)
 }
 
 
-int ediWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value)
+bool ediValidateRec(Edi *edi, EdiRec *rec)
 {
-    return edi->provider->writeField(edi, tableName, key, fieldName, value);
+    return edi->provider->validateRec(edi, rec);
 }
 
 
-int ediWriteFields(Edi *edi, cchar *tableName, MprHash *params)
+int ediWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value)
 {
-    return edi->provider->writeFields(edi, tableName, params);
+    return edi->provider->writeField(edi, tableName, key, fieldName, value);
 }
 
 
@@ -338,80 +369,7 @@ int ediWriteRec(Edi *edi, EdiRec *rec)
     return edi->provider->writeRec(edi, rec);
 }
 
-/********************************* Validations *****************************/
-#if FUTURE
-//  MOB - complete
-void ediAddValidation(cchar *name, void *validation)
-{
-    EdiService  *es;
 
-    es = MPR->ediService;
-    mprAddKey(es->validations, name, validation);
-}
-
-
-static bool checkFormat(EdiRec *rec, cchar *fieldName, EdiField *value)
-{
-    if (value) {
-        mprAddItem(rec->errors, mprCreateKeyPair(fieldName, "is in the wrong format"));
-    }
-    return 1;
-}
-
-
-static bool checkNumber(EdiRec *rec)
-{
-    if (value) {
-        mprAddItem(rec->errors, mprCreateKeyPair(field, "is not a number"));
-    return 1;
-}
-
-
-static bool checkPresent(EdiRec *rec)
-{
-    if (value) {
-        mprAddItem(rec->errors, mprCreateKeyPair(field, "is missing"));
-    }
-    return 1;
-}
-
-
-static bool checkUnique(EdiRec *rec)
-{
-#if 0
-    if (value) {
-        if (rec->errors == 0) {
-            rec->errors = mprCreateList(rec->row->nfields, -1);
-        }
-        mprAddItem(rec->errors, mprCreateKeyPair(field, "is not unique"));
-    }
-#endif
-    return 1;
-}
-
-
-bool edValidateRecord(EdiRec *rec)
-{
-    EdiSchema   *schema;
-    EdiTable    *table;
-    EdiCol      *col;
-    bool        pass;
-
-    rec->errors = mprCreateList(0, 0);
-    if ((table = edLookupTable(rec->edi, rec->tableName)) == 0) {
-        return 0;
-    }
-    schema = table->schema;
-    pass = 1;
-    for (col = schema->cols; col < &schema->cols[schema->ncols]; col++) {
-        if (col->validate && !(*col->validate)(rec)) {
-            pass = 0;
-        }
-    }
-    return pass;
-}
-
-#endif
 /********************************* Convenience *****************************/
 /*
     Create a free-standing grid. Not saved to the database
@@ -456,33 +414,31 @@ EdiRec *ediCreateBareRec(Edi *edi, cchar *tableName, int nfields)
 
 cchar *ediFormatField(cchar *fmt, EdiField field)
 {
+    MprTime     when;
+
+    if (fmt == 0) {
+        return field.value;
+    }
     switch (field.type) {
     case EDI_TYPE_BLOB:
-        //  MOB - use printable code from MPR
-        return field.value.blob;
-
     case EDI_TYPE_BOOL:
-        //  MOB OPT - should be mpr cloned string
-        return field.value.boolean ? sclone("true") : sclone("false");
+        return field.value;
 
     case EDI_TYPE_DATE:
-        return mprFormatLocalTime(fmt, field.value.date);
+        if (mprParseTime(&when, field.value, MPR_LOCAL_TIMEZONE, 0) == 0) {
+            return mprFormatLocalTime(fmt, when);
+        }
+        return field.value;
 
     case EDI_TYPE_FLOAT:
-        if (fmt == 0) {
-            fmt = "%f";
-        }
-        return sfmt(fmt, field.value.num);
+        return sfmt(fmt, atof(field.value));
 
     case EDI_TYPE_INT:
-        return sfmt("%Ld", field.value.inum);
+        return sfmt("%Ld", stoi(field.value, 10, 0));
 
     case EDI_TYPE_STRING:
     case EDI_TYPE_TEXT:
-        if (fmt) {
-            return sfmt(fmt, field.value.str);
-        }
-        return field.value.str;
+        return sfmt(fmt, field.value);
 
     default:
         mprError("Unknown field type %d", field.type);
@@ -493,7 +449,7 @@ cchar *ediFormatField(cchar *fmt, EdiField field)
 
 void ediManageEdiRec(EdiRec *rec, int flags)
 {
-    int     fid, type;
+    int     fid;
 
     if (flags & MPR_MANAGE_MARK) {
         mprMark(rec->edi);
@@ -502,10 +458,7 @@ void ediManageEdiRec(EdiRec *rec, int flags)
         mprMark(rec->id);
 
         for (fid = 0; fid < rec->nfields; fid++) {
-            type = rec->fields[fid].type;
-            if (type == EDI_TYPE_STRING || type == EDI_TYPE_TEXT) {
-                mprMark(&rec->fields[fid].value.str);
-            }
+            mprMark(rec->fields[fid].value);
         }
     }
 }
@@ -584,40 +537,6 @@ EdiRec *ediMakeRec(cchar *json)
 }
 
 
-
-EdiValue ediParseValue(cchar *value, int type)
-{
-    EdiValue v;
-
-    switch (type) {
-    case EDI_TYPE_BLOB:
-        /* Don't clone as value is already allocated */
-        v.blob = (char*) value;
-        break;
-    case EDI_TYPE_BOOL:
-        v.boolean = smatch(value, "true") ? 1 : 0;
-        break;
-    case EDI_TYPE_DATE:
-        v.date = mprParseTime(&v.date, value, MPR_UTC_TIMEZONE, NULL);
-        break;
-    case EDI_TYPE_FLOAT:
-        v.num = atof(value);
-        break;
-    case EDI_TYPE_INT:
-        v.inum = atoi(value);
-        break;
-    case EDI_TYPE_STRING:
-    case EDI_TYPE_TEXT:
-        /* Don't clone as value is already allocated */
-        v.str = (char*) value;
-        break;
-    default:
-        mprError("Unknown field type '%d'", type);
-    }
-    return v;
-}
-
-
 int ediParseTypeString(cchar *type)
 {
     if (smatch(type, "blob")) {
@@ -651,7 +570,7 @@ EdiRec *ediUpdateField(EdiRec *rec, cchar *fieldName, cchar *value)
     }
     for (fp = rec->fields; fp < &rec->fields[rec->nfields]; fp++) {
         if (smatch(fp->name, fieldName)) {
-            fp->value = ediParseValue(value, fp->type);
+            fp->value = sclone(value);
             return rec;
         }
     }
@@ -675,6 +594,100 @@ EdiRec *ediUpdateFields(EdiRec *rec, MprHash *params)
         }
     }
     return rec;
+}
+
+
+/********************************* Validations *****************************/
+
+static cchar *checkBoolean(EdiValidation *vp, EdiRec *rec, cchar *fieldName, cchar *value)
+{
+    if (value && *value) {
+        if (strcmp(value, "true") == 0 || strcmp(value, "false") == 0) {
+            return 0;
+        }
+    }
+    return "is not a number";
+}
+
+
+static cchar *checkFormat(EdiValidation *vp, EdiRec *rec, cchar *fieldName, cchar *value)
+{
+    int     matched[HTTP_MAX_ROUTE_MATCHES * 2];
+
+    if (pcre_exec(vp->mdata, NULL, value, (int) slen(value), 0, 0, matched, sizeof(matched) / sizeof(int)) > 0) {
+        return 0;
+    }
+    return "is in the wrong format";
+}
+
+
+static cchar *checkInteger(EdiValidation *vp, EdiRec *rec, cchar *fieldName, cchar *value)
+{
+    if (value && *value) {
+        if (snumber(value)) {
+            return 0;
+        }
+    }
+    return "is not an integer";
+}
+
+
+static cchar *checkNumber(EdiValidation *vp, EdiRec *rec, cchar *fieldName, cchar *value)
+{
+    if (value && *value) {
+        if (strspn(value, "1234567890+-.") == strlen(value)) {
+            return 0;
+        }
+    }
+    return "is not a number";
+}
+
+
+static cchar *checkPresent(EdiValidation *vp, EdiRec *rec, cchar *fieldName, cchar *value)
+{
+    if (value && *value) {
+        return 0;
+    }
+    return "is missing";
+}
+
+
+static cchar *checkUnique(EdiValidation *vp, EdiRec *rec, cchar *fieldName, cchar *value)
+{
+    EdiRec  *other;
+
+    //  MOB - optimize. Could require an index to enforce this.
+    if ((other = ediReadOneWhere(rec->edi, rec->tableName, fieldName, "==", value)) == 0) {
+        return 0;
+    }
+    if (smatch(other->id, rec->id)) {
+        return 0;
+    }
+    return "is not unique";
+}
+
+
+void ediDefineValidation(cchar *name, EdiValidationProc vfn)
+{
+    EdiService  *es;
+
+    es = MPR->ediService;
+    mprAddKey(es->validations, name, vfn);
+}
+
+
+static void addValidations()
+{
+    EdiService  *es;
+
+    es = MPR->ediService;
+    es->validations = mprCreateHash(0, MPR_HASH_STATIC_VALUES);
+    ediDefineValidation("boolean", checkBoolean);
+    ediDefineValidation("format", checkFormat);
+    ediDefineValidation("integer", checkInteger);
+    ediDefineValidation("number", checkNumber);
+    ediDefineValidation("present", checkPresent);
+    ediDefineValidation("unique", checkUnique);
 }
 
 

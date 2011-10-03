@@ -29,7 +29,6 @@
     -esp-table
     -esp-table-download
     -esp-even-row
-    -esp-field-error
     -esp-form-error
 #endif
 
@@ -663,7 +662,7 @@ static void textInner(HttpConn *conn, cchar *field, MprHash *options)
         espWrite(conn, "<textarea name='%s' type='%s' cols='%s' rows='%s'%s>%s</textarea>", field, type, 
             cols, rows, map(conn, options), value);
     } else {
-          espWrite(conn, "<input name='%s' type='%s' value='%s' />", field, type, value);
+          espWrite(conn, "<input name='%s' type='%s' value='%s'%s />", field, type, value, map(conn, options));
     }
 }
 
@@ -689,14 +688,14 @@ static void emitFormErrors(HttpConn *conn, EdiRec *rec, MprHash *options)
     MprKeyValue     *error;
     int             count, next;
    
-    if (!rec->errors || !httpGetOption(options, "hideErrors", 0)) {
+    if (!rec->errors || httpGetOption(options, "hideErrors", 0)) {
         return;
     }
     errors = ediGetRecErrors(rec);
     if (errors) {
         count = mprGetListLength(errors);
         espWrite(conn, "<div class='-esp-form-error'><h2>The %s has %s it being saved.</h2>\r\n",
-            count, count <= 1 ? "error that prevents" : "errors that prevent");
+            spascal(rec->tableName), count <= 1 ? "an error that prevents" : "errors that prevent");
         espWrite(conn, "    <p>There were problems with the following fields:</p>\r\n");
         espWrite(conn, "    <ul>\r\n");
         for (next = 0; (error = mprGetNextItem(errors, &next)) != 0; ) {
@@ -766,21 +765,6 @@ static cchar *getValue(HttpConn *conn, cchar *fieldName, MprHash *options)
     }
     return value;
 }
-
-
-#if UNUSED
-static EdiField initField(cchar *name, EdiValue value, int type, int flags)
-{
-    EdiField    f;
-
-    f.valid = 1;
-    f.value = value;
-    f.type = type;
-    f.name = name;
-    f.flags = flags;
-    return f;
-}
-#endif
 
 
 /*
@@ -1040,18 +1024,7 @@ EdiRec *createRec(cchar *tableName, MprHash *params)
         return 0;
     }
     ediUpdateFields(rec, params);
-    setRec(rec);
-#if UNUSED
-    for (ITERATE_KEYS(params, kp)) {
-        if (ediGetColumnSchema(edi, tableName, kp->key, &type, &flags, &cid) == 0) {
-            mprAssert(type);
-            if (cid < rec->nfields) {
-                rec->fields[cid] = initField(kp->key, ediParseValue(kp->data, type), type, flags);
-            }
-        }
-    }
-#endif
-    return rec;
+    return setRec(rec);
 }
 
 
@@ -1127,6 +1100,22 @@ MprHash *makeParams(cchar *fmt, ...)
 }
 
 
+EdiGrid *readGrid(cchar *tableName)
+{
+    EdiGrid *grid;
+    
+    grid = ediReadWhere(getDatabase(), tableName, 0, 0, 0);
+    setGrid(grid);
+    return grid;
+}
+
+
+EdiRec *readOneWhere(cchar *tableName, cchar *fieldName, cchar *operation, cchar *value)
+{
+    return setRec(ediReadOneWhere(getDatabase(), tableName, fieldName, operation, value));
+}
+
+
 EdiRec *readRec(cchar *tableName)
 {
     return setRec(ediReadRec(getDatabase(), tableName, param("id")));
@@ -1139,9 +1128,9 @@ EdiRec *readRecByKey(cchar *tableName, cchar *key)
 }
 
 
-EdiGrid *readGrid(cchar *tableName)
+EdiGrid *readWhere(cchar *tableName, cchar *fieldName, cchar *operation, cchar *value)
 {
-    return setGrid(ediReadGrid(getDatabase(), tableName));
+    return setGrid(ediReadWhere(getDatabase(), tableName, fieldName, operation, value));
 }
 
 
@@ -1156,7 +1145,8 @@ bool removeRec(cchar *tableName, cchar *key)
 
 EdiGrid *setGrid(EdiGrid *grid)
 {
-    return espGetConn()->grid = grid;
+    espGetConn()->grid = grid;
+    return grid;
 }
 
 
@@ -1186,7 +1176,12 @@ bool writeField(cchar *tableName, cchar *key, cchar *fieldName, cchar *value)
 
 bool writeFields(cchar *tableName, MprHash *params)
 {
-    return ediWriteFields(getDatabase(), tableName, params) == 0;
+    EdiRec  *rec;
+
+    if ((rec = updateFields(readRec(tableName), params)) == 0) {
+        return 0;
+    }
+    return ediWriteRec(getDatabase(), rec) == 0;
 }
 
 

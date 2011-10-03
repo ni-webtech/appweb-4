@@ -221,6 +221,7 @@ static int runAction(HttpConn *conn)
                 httpMemoryError(conn);
                 return 0;
             }
+            mprSetThreadData(esp->local, conn);
             if (mprLoadModule(mp) < 0) {
                 httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, 
                     "Can't load compiled esp module for %s", req->controllerPath);

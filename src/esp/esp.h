@@ -817,11 +817,6 @@ void espNoticev(HttpConn *conn, cchar *kind, cchar *fmt, va_list args);
 extern HttpConn *espGetConn();
 extern void espSetConn(HttpConn *conn);
 
-#if UNUSED
-#define PCRE_GLOBAL     0x1
-extern char *pcre_replace(cchar *str, void *pattern, cchar *replacement, MprList **parts, int flags);
-#endif
-
 //  MOB DOC
 extern void espAlert(HttpConn *conn, cchar *text, cchar *options);
 extern void espAnchor(HttpConn *conn, cchar *text, cchar *uri, cchar *options);
@@ -906,7 +901,7 @@ extern cchar *session(cchar *key);
 extern void setSession(cchar *key, cchar *value);
 extern void warn(cchar *fmt, ...);
 
-//  TODO
+//  TODO MOB
 extern cchar *referrer();
 
 /*
@@ -921,18 +916,21 @@ extern bool hasRec();
 
 extern MprHash *makeObj(cchar *json, ...);
 
-extern EdiRec *readRec(cchar *tableName);
 extern EdiGrid *readGrid(cchar *tableName);
+extern EdiRec *readRec(cchar *tableName);
+extern EdiGrid *readWhere(cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
+extern EdiRec *readOneWhere(cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
 extern EdiRec *readRecByKey(cchar *tableName, cchar *key);
 extern bool removeRec(cchar *tableName, cchar *key);
+
+extern EdiGrid *setGrid(EdiGrid *grid);
+extern EdiRec *setRec(EdiRec *rec);
+
 
 /* These write to the database */
 extern bool writeRec(EdiRec *rec);
 extern bool writeField(cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
 extern bool writeFields(cchar *tableName, MprHash *params);
-
-extern EdiGrid *setGrid(EdiGrid *grid);
-extern EdiRec *setRec(EdiRec *rec);
 
 /* 
     NO-DB API

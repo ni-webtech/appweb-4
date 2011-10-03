@@ -28,7 +28,7 @@ extern "C" {
 #define MDB_INCR    8               /**< Default memory allocation increment for MDB */
 
 typedef struct MdbCol {
-    EdiValidate     *validate;
+    MprList         *validations;
     char            *name;
     int             type;
     int             flags;
@@ -46,7 +46,7 @@ typedef struct MdbRow {
     struct MdbTable *table;
     int             rid;
     int             nfields;
-    EdiValue        fields[MPR_FLEX];
+    cchar           *fields[MPR_FLEX];
 } MdbRow;
 
 typedef struct MdbTable {
@@ -67,7 +67,6 @@ typedef struct MdbTable {
 typedef struct Mdb {
     Edi             edi;            /**< */
     int             flags;
-
     char            *path;          /**< Currently open database */
     MprMutex        *mutex;         /**< Multithread lock for Schema modifications only */
     MprList         *tables;        /**< List of tables */
@@ -78,9 +77,6 @@ typedef struct Mdb {
     MdbTable        *loadTable;     /* Current table */
     MdbCol          *loadCol;       /* Current column */
     MdbRow          *loadRow;       /* Current row */
-#if UNUSED
-    int             loadField;      /* Current field */
-#endif
     MprList         *loadStack;     /* State stack */
     int             loadState;      /* Current state */
     int             loadNcols;      /* Expected number of cols */

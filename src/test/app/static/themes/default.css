@@ -234,20 +234,20 @@ form td {
 
 
 /*
-   	Ejscript web framework controls style sheet
+   	Web framework controls style sheet
  */
 .-esp-field-error {
 	border: 1px solid #FF0000;
 	-webkit-box-shadow: 3px 3px 3px #AAA;
 }
 
-div.-esp-formError {
+div.-esp-form-error {
 	border: 2px solid #FF0000;
 	-webkit-box-shadow: 3px 3px 3px #AAA;
     text-indent: 10px;
 }
 
-div.-esp-formError h2 {
+div.-esp-form-error h2 {
     background-color: #FF0000;
     color: #FFFFFF;
     font-size: 12pt;

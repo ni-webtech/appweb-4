@@ -24,7 +24,7 @@ extern "C" {
 
 /********************************** Tunables **********************************/
 /*
-   Field data types
+   Field data type hints
  */
 #define EDI_TYPE_BLOB       1
 #define EDI_TYPE_BOOL       2
@@ -37,29 +37,23 @@ extern "C" {
 /*
     Column options
  */
-#define EDI_NOT_NULL        0x1     /**< Value cannot be null */
-#define EDI_AUTO_INC        0x2     /**< Field auto increments on new row */
-#define EDI_KEY             0x4     /**< Column is the key */
-#define EDI_INDEX           0x8     /**< Column is indexed */
+#define EDI_AUTO_INC        0x1     /**< Field auto increments on new row */
+#define EDI_KEY             0x2     /**< Column is the key */
+#define EDI_INDEX           0x4     /**< Column is indexed */
  
 struct Edi;
 struct EdiGrid;
 struct EdiProvider;
 struct EdiRec;
+struct EdiValidation;
 
-typedef bool (*EdiValidate)(struct EdiRec *rec);
+typedef struct EdiModel {
+} EdiModel;
 
-typedef union EdiValue {
-    cchar       *blob;
-    cchar       *str;
-    int64       inum;
-    double      num;
-    MprTime     date;
-    bool        boolean;
-} EdiValue;
+typedef cchar* EdiValue;
 
 typedef struct EdiField {
-    EdiValue        value;
+    cchar           *value;
     cchar           *name;
     int             type:  8;
     int             valid: 8;
@@ -81,6 +75,15 @@ typedef struct EdiGrid {
     int             nrecords;
     EdiRec          *records[MPR_FLEX];
 } EdiGrid;
+
+typedef cchar *(*EdiValidationProc)(struct EdiValidation *vp, EdiRec *rec, cchar *fieldName, cchar *value);
+
+typedef struct EdiValidation {
+    cchar               *name;
+    EdiValidationProc   vfn;
+    cvoid               *mdata;         /**< Non-GC (malloc) data */
+    cvoid               *data;          /**< Allocated data that must be marked for GC */
+} EdiValidation;
 
 /*
     Database flags
@@ -107,6 +110,7 @@ typedef struct EdiProvider {
     int       (*addColumn)(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
     int       (*addIndex)(Edi *edi, cchar *tableName, cchar *columnName, cchar *indexName);
     int       (*addTable)(Edi *edi, cchar *tableName);
+    int       (*addValidation)(Edi *edi, cchar *tableName, cchar *columnName, EdiValidation *vp);
     int       (*changeColumn)(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
     void      (*close)(Edi *edi);
     EdiRec    *(*createRec)(Edi *edi, cchar *tableName);
@@ -120,16 +124,16 @@ typedef struct EdiProvider {
     Edi       *(*open)(cchar *path, int flags);
     EdiGrid   *(*query)(Edi *edi, cchar *cmd);
     EdiField  (*readField)(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName);
-    EdiGrid   *(*readGrid)(Edi *edi, cchar *tableName);
     EdiRec    *(*readRec)(Edi *edi, cchar *tableName, cchar *key);
+    EdiGrid   *(*readWhere)(Edi *edi, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
     int       (*removeColumn)(Edi *edi, cchar *tableName, cchar *columnName);
     int       (*removeIndex)(Edi *edi, cchar *tableName, cchar *indexName);
     int       (*removeTable)(Edi *edi, cchar *tableName);
     int       (*renameTable)(Edi *edi, cchar *tableName, cchar *newTableName);
     int       (*renameColumn)(Edi *edi, cchar *tableName, cchar *columnName, cchar *newColumnName);
     int       (*save)(Edi *edi);
+    bool      (*validateRec)(Edi *edi, EdiRec *rec);
     int       (*writeField)(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
-    int       (*writeFields)(Edi *edi, cchar *tableName, MprHash *params);
     int       (*writeRec)(Edi *edi, EdiRec *rec);
 } EdiProvider;
 
@@ -140,7 +144,6 @@ typedef struct EdiService {
 
 extern EdiService *ediCreateService();
 extern void ediAddProvider(EdiProvider *provider);
-extern void ediAddValidation(cchar *name, void *validation);
 
 
 /*
@@ -149,6 +152,7 @@ extern void ediAddValidation(cchar *name, void *validation);
 extern int ediAddColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
 extern int ediAddIndex(Edi *edi, cchar *tableName, cchar *columnName, cchar *indexName);
 extern int ediAddTable(Edi *edi, cchar *tableName);
+extern int ediAddValidation(Edi *edi, cchar *name, cchar *tableName, cchar *columnName, cvoid *data);
 extern int ediChangeColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
 extern void ediClose(Edi *edi);
 extern EdiRec *ediCreateRec(Edi *edi, cchar *tableName);
@@ -162,11 +166,11 @@ extern int ediLookupField(Edi *edi, cchar *tableName, cchar *fieldName);
 extern Edi *ediOpen(cchar *provider, cchar *source, int flags);
 extern EdiGrid *ediQuery(Edi *edi, cchar *cmd);
 extern cchar *ediReadField(Edi *edi, cchar *fmt, cchar *tableName, cchar *key, cchar *fieldName, cchar *defaultValue);
-extern EdiGrid *ediReadGrid(Edi *edi, cchar *tableName);
-extern EdiRec *ediReadOneWhere(Edi *edi, cchar *tableName, cchar *expression);
+extern EdiRec *ediReadOneWhere(Edi *edi, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
 extern EdiField ediReadRawField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName);
 extern EdiRec *ediReadRec(Edi *edi, cchar *tableName, cchar *key);
-extern EdiGrid *ediReadWhere(Edi *edi, cchar *tableName, cchar *expression);
+extern EdiGrid *ediReadGrid(Edi *edi, cchar *tableName);
+extern EdiGrid *ediReadWhere(Edi *edi, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
 extern int edRemoveColumn(Edi *edi, cchar *tableName, cchar *columnName);
 extern int ediRemoveIndex(Edi *edi, cchar *tableName, cchar *indexName);
 extern int ediRemoveTable(Edi *edi, cchar *tableName);
@@ -175,6 +179,7 @@ extern int ediRenameColumn(Edi *edi, cchar *tableName, cchar *columnName, cchar 
 extern int ediSave(Edi *edi);
 extern EdiRec *ediUpdateField(EdiRec *rec, cchar *fieldName, cchar *value);
 extern EdiRec *ediUpdateFields(EdiRec *rec, MprHash *params);
+extern bool ediValidateRec(Edi *edi, EdiRec *rec);
 extern int ediWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
 extern int ediWriteFields(Edi *edi, cchar *tableName, MprHash *params);
 extern int ediWriteRec(Edi *edi, EdiRec *rec);
@@ -190,6 +195,9 @@ extern int ediGetRecFieldType(EdiRec *rec, cchar *fieldName);
 extern MprList *ediGetGridColumns(EdiGrid *grid);
 extern bool edValidateRecord(EdiRec *rec);
 
+extern void ediDefineValidation(cchar *name, EdiValidationProc vfn);
+extern int ediValidate(Edi *edi, cchar *name, cchar *tableName, cchar *fieldName, cvoid *data);
+
 /*
     NO-DB API
  */
@@ -204,7 +212,7 @@ extern EdiRec *ediCreateBareRec(Edi *edi, cchar *tableName, int nfields);
 extern char *ediGetTypeString(int type);
 extern void ediManageEdiRec(EdiRec *rec, int flags);
 extern int ediParseTypeString(cchar *type);
-extern EdiValue ediParseValue(cchar *value, int type);
+extern cchar *ediParseValue(cchar *value, int type);
 
 //  MOB
 #if BLD_FEATURE_MDB || 1

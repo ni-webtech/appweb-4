@@ -370,24 +370,6 @@ bool espFinalized(HttpConn *conn)
 }
 
 
-#if UNUSED
-EdRec *espFind(HttpConn *conn, cchar *tableName, cchar *id)
-{
-    EspReq      *req;
-    EspRoute    *eroute;
-
-    req = conn->data;
-    eroute = req->eroute;
-    if (eroute->ed) {
-        return edFind(eroute->ed, tableName, id);
-    } else {
-        mprError("No database open on route %s", conn->rx->route->name);
-        return 0;
-    }
-}
-#endif
-
-
 void espFlush(HttpConn *conn) 
 {
     httpFlush(conn);

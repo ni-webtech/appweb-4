@@ -192,7 +192,7 @@ div.-esp-pane-hidden {
     display: none;
 }
 
-div.-esp-formError {
+div.-esp-form-error {
     width: 550px;
     margin-bottom: 20px;
     padding-bottom: 10px;

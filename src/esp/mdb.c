@@ -11,17 +11,29 @@
 #include    "appweb.h"
 #include    "edi.h"
 #include    "mdb.h"
+#include    "pcre.h"
 
 #if BLD_FEATURE_ESP
 /************************************* Local **********************************/
 
-#define MDB_LOAD_BEGIN   1       /* Initial state */
-#define MDB_LOAD_TABLE   2       /* Parsing a table */
-#define MDB_LOAD_HINTS   3       /* Parsing hints */
-#define MDB_LOAD_SCHEMA  4       /* Parsing schema */
-#define MDB_LOAD_COL     5       /* Parsing column schema */ 
-#define MDB_LOAD_DATA    6       /* Parsing data */
-#define MDB_LOAD_FIELD   7       /* Parsing fields */
+#define MDB_LOAD_BEGIN   1      /* Initial state */
+#define MDB_LOAD_TABLE   2      /* Parsing a table */
+#define MDB_LOAD_HINTS   3      /* Parsing hints */
+#define MDB_LOAD_SCHEMA  4      /* Parsing schema */
+#define MDB_LOAD_COL     5      /* Parsing column schema */ 
+#define MDB_LOAD_DATA    6      /* Parsing data */
+#define MDB_LOAD_FIELD   7      /* Parsing fields */
+
+/*
+    Operations for mdbReadWhere
+ */
+#define OP_ERR  -1              /* Illegal operation */
+#define OP_EQ   0               /* "==" Equal operation */
+#define OP_NEQ  0x2             /* "!=" Not equal operation */
+#define OP_LT   0x4             /* "<" Less than operation */
+#define OP_GT   0x8             /* ">" Greater than operation */
+#define OP_LTE  0x10            /* ">=" Less than or equal operation */
+#define OP_GTE  0x20            /* "<=" Greater than or equal operation */
 
 /************************************ Forwards ********************************/
 
@@ -29,7 +41,6 @@ static void autoSave(Mdb *mdb, MdbTable *table);
 static MdbCol *createCol(MdbTable *table, cchar *columnName);
 static EdiRec *createRecFromRow(Edi *edi, MdbRow *row);
 static MdbRow *createRow(Mdb *mdb, MdbTable *table);
-static cchar *getKey(EdiValue *vp, int type);
 static MdbCol *getCol(MdbTable *table, int col);
 static MdbRow *getRow(MdbTable *table, int rid);
 static MdbTable *getTable(Mdb *mdb, int tid);
@@ -42,15 +53,16 @@ static void manageMdb(Mdb *mdb, int flags);
 static void manageRow(MdbRow *row, int flags);
 static void manageSchema(MdbSchema *schema, int flags);
 static void manageTable(MdbTable *table, int flags);
-static int parseType(cchar *type);
+static int parseOperation(cchar *operation);
 static EdiField readField(MdbRow *row, int fid);
-static void autoIncField(MdbRow *row, MdbCol *col);
+static bool validateField(EdiRec *rec, MdbTable *table, MdbCol *col, cchar *value);
 static int writeField(MdbRow *row, MdbCol *col, cchar *value);
-static int writeFieldFromField(MdbRow *row, MdbCol *col, EdiField *field);
 
 static int mdbAddColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
 static int mdbAddIndex(Edi *edi, cchar *tableName, cchar *columnName, cchar *indexName);
 static int mdbAddTable(Edi *edi, cchar *tableName);
+static int mdbAddValidation(Edi *edi, cchar *tableName, cchar *fieldName, EdiValidation *vp);
+
 static int mdbChangeColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
 static void mdbClose(Edi *edi);
 static EdiRec *mdbCreateRec(Edi *edi, cchar *tableName);
@@ -65,24 +77,24 @@ static int mdbLookupField(Edi *edi, cchar *tableName, cchar *fieldName);
 static Edi *mdbOpen(cchar *path, int flags);
 static EdiGrid *mdbQuery(Edi *edi, cchar *cmd);
 static EdiField mdbReadField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName);
-static EdiGrid *mdbReadGrid(Edi *edi, cchar *tableName);
 static EdiRec *mdbReadRec(Edi *edi, cchar *tableName, cchar *key);
+static EdiGrid *mdbReadWhere(Edi *edi, cchar *tableName, cchar *columnName, cchar *operation, cchar *value);
 static int mdbRemoveColumn(Edi *edi, cchar *tableName, cchar *columnName);
 static int mdbRemoveIndex(Edi *edi, cchar *tableName, cchar *indexName);
 static int mdbRemoveTable(Edi *edi, cchar *tableName);
 static int mdbRenameTable(Edi *edi, cchar *tableName, cchar *newTableName);
 static int mdbRenameColumn(Edi *edi, cchar *tableName, cchar *columnName, cchar *newColumnName);
 static int mdbSave(Edi *edi);
+static bool mdbValidateRec(Edi *edi, EdiRec *rec);
 static int mdbWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
-static int mdbWriteFields(Edi *edi, cchar *tableName, MprHash *params);
 static int mdbWriteRec(Edi *edi, EdiRec *rec);
 
 EdiProvider MdbProvider = {
     "mdb",
-    mdbAddColumn, mdbAddIndex, mdbAddTable, mdbChangeColumn, mdbClose, mdbCreateRec, mdbDelete, mdbDeleteRow, 
-    mdbGetColumns, mdbGetColumnSchema, mdbGetTables, mdbLoad, mdbLookupField, mdbOpen, mdbQuery, mdbReadField, 
-    mdbReadGrid, mdbReadRec, mdbRemoveColumn, mdbRemoveIndex, mdbRemoveTable, mdbRenameTable, mdbRenameColumn, 
-    mdbSave, mdbWriteField, mdbWriteFields, mdbWriteRec,
+    mdbAddColumn, mdbAddIndex, mdbAddTable, mdbAddValidation, mdbChangeColumn, mdbClose, mdbCreateRec, mdbDelete, 
+    mdbDeleteRow, mdbGetColumns, mdbGetColumnSchema, mdbGetTables, mdbLoad, mdbLookupField, mdbOpen, mdbQuery, mdbReadField, 
+    mdbReadRec, mdbReadWhere, mdbRemoveColumn, mdbRemoveIndex, mdbRemoveTable, mdbRenameTable, mdbRenameColumn, 
+    mdbSave, mdbValidateRec, mdbWriteField, mdbWriteRec,
 };
 
 /************************************* Code ***********************************/
@@ -129,9 +141,6 @@ static void mdbClose(Edi *edi)
 }
 
 
-/*
-    Create a free-standing record. Not saved to the database.
- */
 static EdiRec *mdbCreateRec(Edi *edi, cchar *tableName)
 {
     Mdb         *mdb;
@@ -246,7 +255,7 @@ static int mdbAddIndex(Edi *edi, cchar *tableName, cchar *columnName, cchar *ind
     if ((col = lookupColumn(table, columnName)) == 0) {
         return MPR_ERR_CANT_FIND;
     }
-    if ((table->index = mprCreateHash(0, 0)) == 0) {
+    if ((table->index = mprCreateHash(0, MPR_HASH_STATIC_VALUES)) == 0) {
         return MPR_ERR_MEMORY;
     }
     table->indexCol = col;
@@ -280,6 +289,31 @@ static int mdbAddTable(Edi *edi, cchar *tableName)
     }
     mprAddItem(mdb->tables, table);
     autoSave(mdb, lookupTable(mdb, tableName));
+    return 0;
+}
+
+
+static int mdbAddValidation(Edi *edi, cchar *tableName, cchar *columnName, EdiValidation *vp)
+{
+    Mdb             *mdb;
+    MdbTable        *table;
+    MdbCol          *col;
+
+    mprAssert(edi);
+    mprAssert(tableName && *tableName);
+    mprAssert(columnName && *columnName);
+
+    mdb = (Mdb*) edi;
+    if ((table = lookupTable(mdb, tableName)) == 0) {
+        return MPR_ERR_CANT_FIND;
+    }
+    if ((col = lookupColumn(table, columnName)) == 0) {
+        return MPR_ERR_CANT_FIND;
+    }
+    if (col->validations == 0) {
+        col->validations = mprCreateList(0, 0);
+    }
+    mprAddItem(col->validations, vp);
     return 0;
 }
 
@@ -480,32 +514,6 @@ static EdiField mdbReadField(Edi *edi, cchar *tableName, cchar *key, cchar *fiel
 }
 
 
-static EdiGrid *mdbReadGrid(Edi *edi, cchar *tableName)
-{
-    Mdb         *mdb;
-    EdiGrid     *grid;
-    MdbTable    *table;
-    MdbRow      *row;
-    int         nrows, next;
-
-    mprAssert(edi);
-    mprAssert(tableName && *tableName);
-
-    mdb = (Mdb*) edi;
-    if ((table = lookupTable(mdb, tableName)) == 0) {
-        return 0;
-    }
-    nrows = mprGetListLength(table->rows);
-    if ((grid = ediCreateBareGrid(edi, tableName, nrows)) == 0) {
-        return 0;
-    }
-    for (ITERATE_ITEMS(table->rows, row, next)) {
-        grid->records[next - 1] = createRecFromRow(edi, row);
-    }
-    return grid;
-}
-
-
 static EdiRec *mdbReadRec(Edi *edi, cchar *tableName, cchar *key)
 {
     Mdb         *mdb;
@@ -527,6 +535,85 @@ static EdiRec *mdbReadRec(Edi *edi, cchar *tableName, cchar *key)
         return 0;
     }
     return rec;
+}
+
+
+
+bool matchRow(MdbCol *col, cchar *existing, int op, cchar *value)
+{
+    if (value == 0 || *value == '\0') {
+        return 0;
+    }
+    //  MOB - must ensure database NEVER has a null
+    switch (op) {
+    case OP_EQ:
+        if (smatch(existing, value)) {
+            return 1;
+        }
+        break;
+    case OP_NEQ:
+        if (!smatch(existing, value)) {
+            return 1;
+        }
+        break;
+#if MOB && TODO
+    case OP_LT:
+    case OP_GT:
+    case OP_LTE:
+    case OP_GTE:
+#endif
+    default:
+        mprAssert(0);
+    }
+    return 0;
+}
+
+
+static EdiGrid *mdbReadWhere(Edi *edi, cchar *tableName, cchar *columnName, cchar *operation, cchar *value)
+{
+    Mdb         *mdb;
+    EdiGrid     *grid;
+    MdbTable    *table;
+    MdbCol      *col;
+    MdbRow      *row;
+    int         nrows, next, op;
+
+    mprAssert(edi);
+    mprAssert(tableName && *tableName);
+
+    mdb = (Mdb*) edi;
+    if ((table = lookupTable(mdb, tableName)) == 0) {
+        return 0;
+    }
+    nrows = mprGetListLength(table->rows);
+    if ((grid = ediCreateBareGrid(edi, tableName, nrows)) == 0) {
+        return 0;
+    }
+    if (columnName) {
+        if ((col = lookupColumn(table, columnName)) == 0) {
+            return 0;
+        }
+        if ((op = parseOperation(operation)) < 0) {
+            return 0;
+        }
+        if (col->flags & EDI_INDEX && (op & OP_EQ)) {
+            if (lookupRow(table, value)) {
+                grid->records[0] = createRecFromRow(edi, row);
+            }
+        } else {
+            for (ITERATE_ITEMS(table->rows, row, next)) {
+                if (!matchRow(col, row->fields[col->cid], op, value)) {
+                    continue;
+                }
+                grid->records[next - 1] = createRecFromRow(edi, row);
+            }
+        }
+    } else {
+        for (ITERATE_ITEMS(table->rows, row, next)) {
+            grid->records[next - 1] = createRecFromRow(edi, row);
+        }
+    }
+    return grid;
 }
 
 
@@ -599,7 +686,7 @@ static int mdbRemoveTable(Edi *edi, cchar *tableName)
             break;
         }
     }
-    return MPR_ERR_CANT_FIND;;
+    return MPR_ERR_CANT_FIND;
 }
 
 
@@ -618,7 +705,6 @@ static int mdbRenameTable(Edi *edi, cchar *tableName, cchar *newTableName)
 }
 
 
-//  MOB - check sorting
 static int mdbRenameColumn(Edi *edi, cchar *tableName, cchar *columnName, cchar *newColumnName)
 {
     Mdb         *mdb;
@@ -638,6 +724,33 @@ static int mdbRenameColumn(Edi *edi, cchar *tableName, cchar *columnName, cchar 
 }
 
 
+bool mdbValidateRec(Edi *edi, EdiRec *rec)
+{
+    Mdb         *mdb;
+    MdbTable    *table;
+    MdbCol      *col;
+    bool        pass;
+    int         c;
+
+    mdb = (Mdb*) edi;
+    if ((table = lookupTable(mdb, rec->tableName)) == 0) {
+        return 0;
+    }
+    pass = 1;
+    for (c = 0; c < rec->nfields; c++) {
+        col = getCol(table, c);
+        if (!col->validations) {
+            continue;
+        }
+        if (!validateField(rec, table, col, rec->fields[c].value)) {
+            pass = 0;
+            /* Keep going */
+        }
+    }
+    return pass;
+}
+
+
 static int mdbWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value)
 {
     Mdb         *mdb;
@@ -651,13 +764,13 @@ static int mdbWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldNam
     if ((table = lookupTable(mdb, tableName)) == 0) {
         return MPR_ERR_CANT_FIND;
     }
+    if ((col = lookupColumn(table, fieldName)) == 0) {
+        return MPR_ERR_CANT_FIND;
+    }
     if ((r = lookupRow(table, key)) < 0) {
         row = createRow(mdb, table);
     }
     if ((row = getRow(table, r)) == 0) {
-        return MPR_ERR_CANT_FIND;
-    }
-    if ((col = lookupColumn(table, fieldName)) == 0) {
         return MPR_ERR_CANT_FIND;
     }
     writeField(row, col, kp->data);
@@ -665,6 +778,7 @@ static int mdbWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldNam
 }
 
 
+#if UNUSED
 static int mdbWriteFields(Edi *edi, cchar *tableName, MprHash *params)
 {
     Mdb         *mdb;
@@ -684,6 +798,14 @@ static int mdbWriteFields(Edi *edi, cchar *tableName, MprHash *params)
     if ((key = mprLookupKey(params, table->keyCol->name)) == 0) {
         return MPR_ERR_CANT_FIND;
     }
+    setID = 0;
+    for (ITERATE_KEYS(params, kp)) {
+        if ((col = lookupColumn(table, kp->key)) != 0) {
+            if (col->validations && validateField(edi, table, col, kp->data, NULL) != 0) {
+                return MPR_ERR_CANT_WRITE;
+            }
+        }
+    }
     if (key == 0 || (r = lookupRow(table, key)) < 0) {
         row = createRow(mdb, table);
     } else {
@@ -691,7 +813,6 @@ static int mdbWriteFields(Edi *edi, cchar *tableName, MprHash *params)
             return MPR_ERR_CANT_FIND;
         }
     }
-    setID = 0;
     for (ITERATE_KEYS(params, kp)) {
         if ((col = lookupColumn(table, kp->key)) != 0) {
             writeField(row, col, kp->data);
@@ -701,12 +822,12 @@ static int mdbWriteFields(Edi *edi, cchar *tableName, MprHash *params)
         }
     }
     if (!setID) {
-        //  MOB OPT - change to itos when it allocates
         writeField(row, getCol(table, 0), 0);
     }
     autoSave(mdb, table);
     return 0;
 }
+#endif
 
 
 static int mdbWriteRec(Edi *edi, EdiRec *rec)
@@ -721,6 +842,9 @@ static int mdbWriteRec(Edi *edi, EdiRec *rec)
     if ((table = lookupTable(mdb, rec->tableName)) == 0) {
         return MPR_ERR_CANT_FIND;
     }
+    if (!mdbValidateRec(edi, rec)) {
+        return MPR_ERR_CANT_WRITE;
+    }
     if (rec->id == 0 || (r = lookupRow(table, rec->id)) < 0) {
         row = createRow(mdb, table);
     } else {
@@ -730,40 +854,10 @@ static int mdbWriteRec(Edi *edi, EdiRec *rec)
     }
     for (f = 0; f < rec->nfields; f++) {
         if ((col = getCol(table, f)) != 0) {
-            writeFieldFromField(row, col, &rec->fields[f]);
+            writeField(row, col, rec->fields[f].value);
         }
     }
     autoSave(mdb, table);
-    return 0;
-}
-
-
-static cchar *getKey(EdiValue *vp, int type)
-{
-    switch (type) {
-    case EDI_TYPE_BLOB:
-        return vp->blob;
-
-    case EDI_TYPE_BOOL:
-        //  MOB OPT - should be mpr cloned string
-        return vp->boolean ? sclone("true") : sclone("false");
-
-    case EDI_TYPE_DATE:
-        return mprFormatLocalTime(NULL, vp->date);
-
-    case EDI_TYPE_FLOAT:
-        return sfmt("%f", vp->num);
-
-    case EDI_TYPE_INT:
-        return sfmt("%Ld", vp->inum);
-
-    case EDI_TYPE_STRING:
-    case EDI_TYPE_TEXT:
-        return vp->str;
-
-    default:
-        mprError("Unknown field type %d", type);
-    }
     return 0;
 }
 
@@ -885,7 +979,7 @@ static int setMdbValue(MprJson *jp, MprObj *obj, int cid, cchar *name, cchar *va
         if (smatch(name, "index")) {
             mdbAddIndex((Edi*) mdb, mdb->loadTable->name, mdb->loadCol->name, NULL);
         } else if (smatch(name, "type")) {
-            if ((mdb->loadCol->type = parseType(value)) <= 0) {
+            if ((mdb->loadCol->type = ediParseTypeString(value)) <= 0) {
                 mprJsonParseError(jp, "Bad column type %s", value);
                 return MPR_ERR_BAD_FORMAT;
             }
@@ -1006,9 +1100,11 @@ static int mdbSave(Edi *edi)
             if (col->flags & EDI_KEY) {
                 mprWriteFileString(out, ", key: 'true'");
             }
+#if UNUSED
             if (col->flags & EDI_NOT_NULL) {
                 mprWriteFileString(out, ", notnull: 'true'");
             }
+#endif
             mprWriteFileString(out, " },\n");
         }
         mprWriteFileString(out, "        },\n");
@@ -1020,7 +1116,7 @@ static int mdbSave(Edi *edi)
             row = getRow(table, rid);
             for (cid = 0; cid < schema->ncols; cid++) {
                 if (col->flags & EDI_AUTO_INC) {
-                    autoIncField(row, col);
+                    row->fields[col->cid] = itos(col->nextValue++, 10);
                 }
                 field = readField(row, cid);
                 //  MOB OPT - inline toString code here
@@ -1105,18 +1201,13 @@ static void manageTable(MdbTable *table, int flags)
         mprMark(table->index);
         mprMark(table->mutex);
         mprMark(table->rows);
-#if UNUSED
-        nrows = mprGetListLength(table->rows);
-        for (rid = 0; rid < nrows; rid++) {
-            row = mprGetItem(table->rows, rid);
-            manageRow(row, flags);
-        }
-#endif
     }
 }
 
 
 //  MOB - inconsistent. Should return Row
+//  MOB - need lookup by non-key field too
+//  MOB - this should be in the provider 
 static int lookupRow(MdbTable *table, cchar *key)
 {
     MprKey      *kp;
@@ -1124,7 +1215,7 @@ static int lookupRow(MdbTable *table, cchar *key)
     int         nrows, r, keycol;
 
     if (table->index) {
-        if ((kp = mprLookupKey(table->index, key)) != 0) {
+        if ((kp = mprLookupKeyEntry(table->index, key)) != 0) {
             return (int) PTOL(kp->data);
         } 
     } else {
@@ -1132,7 +1223,7 @@ static int lookupRow(MdbTable *table, cchar *key)
         keycol = table->keyCol ? table->keyCol->cid : 0;
         for (r = 0; r < nrows; r++) {
             row = mprGetItem(table->rows, r);
-            if (smatch(row->fields[keycol].str, key)) {
+            if (smatch(row->fields[keycol], key)) {
                 return r;
             }
         }
@@ -1199,6 +1290,7 @@ static void manageCol(MdbCol *col, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(col->name);
+        mprMark(col->validations);
     }
 }
 
@@ -1253,18 +1345,11 @@ static MdbRow *createRow(Mdb *mdb, MdbTable *table)
 
 static void manageRow(MdbRow *row, int flags)
 {
-    MdbSchema   *schema;
-    int         fid, type;
+    int     fid;
 
     if (flags & MPR_MANAGE_MARK) {
-        schema = row->table->schema;
-        mprAssert(schema);
-        //  MOB - OPT - may be better to iterate over cols then rows. ie. only select string columns.
         for (fid = 0; fid < row->nfields; fid++) {
-            type = schema->cols[fid].type;
-            if (type == EDI_TYPE_STRING || type == EDI_TYPE_TEXT) {
-                mprMark(row->fields[fid].str);
-            }
+            mprMark(row->fields[fid]);
         }
     }
 }
@@ -1298,26 +1383,9 @@ static EdiField readField(MdbRow *row, int fid)
 }
 
 
-static void autoIncField(MdbRow *row, MdbCol *col)
-{
-    EdiValue    *vp;
-
-    //  MOB - auto inc should only be supported for INT fields
-    vp = &row->fields[col->cid];
-    if (col->type == EDI_TYPE_STRING && vp->str == 0) {
-        vp->str = itos(col->nextValue++, 10);
-    } else if (col->type == EDI_TYPE_INT && vp->inum == 0) {
-        vp->inum = col->nextValue++;
-    } else if (col->type == EDI_TYPE_FLOAT && vp->num == 0) {
-        vp->num = col->nextValue++;
-    }
-}
-
-
 static int writeField(MdbRow *row, MdbCol *col, cchar *value)
 {
     MdbTable    *table;
-    EdiValue    *vp;
     cchar       *key;
     
     mprAssert(row);
@@ -1325,136 +1393,58 @@ static int writeField(MdbRow *row, MdbCol *col, cchar *value)
 
     table = row->table;
     if (col->flags & EDI_INDEX) {
-        key = getKey(&row->fields[col->cid], col->type);
-        mprRemoveKey(table->index, key);
+        if ((key = row->fields[col->cid]) != 0) {
+            mprRemoveKey(table->index, key);
+        }
     } else {
         key = 0;
     }
-    vp = &row->fields[col->cid];
+    //  MOB - refactor
     if (col->flags & EDI_AUTO_INC) {
         if (value == 0) {
-            autoIncField(row, col);
+            row->fields[col->cid] = itos(col->nextValue++, 10);
         } else {
-            *vp = ediParseValue(value, col->type);
+            //  MOB - clone
+            row->fields[col->cid] = sclone(value);
             col->nextValue = max(col->nextValue, (int64) stoi(value, 10, NULL) + 1);
         }
     } else {
-        *vp = ediParseValue(value, col->type);
+        //  MOB - clone
+        row->fields[col->cid] = sclone(value);
     }
-    if (col->flags & EDI_INDEX) {
-        mprAddKey(table->index, key, LTOP(row->rid));
+    if (col->flags & EDI_INDEX && value) {
+        mprAddKey(table->index, value, LTOP(row->rid));
     }
     return 0;
 }
 
+/********************************* Validations *****************************/
 
-static int writeFieldFromField(MdbRow *row, MdbCol *col, EdiField *field)
+//  MOB - try to hoist these to EDI (if no loss of performance)
+
+static bool validateField(EdiRec *rec, MdbTable *table, MdbCol *col, cchar *value)
 {
-    MdbTable    *table;
-    EdiValue    *vp;
-    
-    mprAssert(row);
-    mprAssert(col);
+    EdiValidation   *vp;
+    cchar           *error;
+    int             next;
+    bool            pass;
 
-    table = row->table;
-    vp = &row->fields[col->cid];
+    mprAssert(rec);
 
-    if (col->flags & EDI_AUTO_INC) {
-        if (!field->valid) {
-            autoIncField(row, col);
-        } else {
-            *vp = field->value;
-            if (col->type == EDI_TYPE_STRING) {
-                col->nextValue = max(col->nextValue, (int64) stoi(field->value.str, 10, NULL) + 1);
-            } else if (col->type == EDI_TYPE_INT) {
-                col->nextValue = max(col->nextValue, (int64) field->value.inum + 1);
-            } else if (col->type == EDI_TYPE_FLOAT) {
-                col->nextValue = max(col->nextValue, (int64) field->value.num + 1);
+    pass = 1;
+    if (col->validations) {
+        for (ITERATE_ITEMS(col->validations, vp, next)) {
+            if ((error = (*vp->vfn)(vp, rec, col->name, value)) != 0) {
+                if (rec->errors == 0) {
+                    rec->errors = mprCreateList(0, 0);
+                }
+                mprAddItem(rec->errors, mprCreateKeyPair(col->name, error));
+                pass = 0;
             }
         }
-    } else {
-        *vp = field->value;
     }
-    if (col->type == EDI_TYPE_STRING || col->type == EDI_TYPE_TEXT) {
-        vp->str = sclone(vp->str);
-    }
-    return 0;
+    return pass;
 }
-
-
-#if UNUSED
-int64 mdbGetIntField(MdbRow *row, int fid)
-{
-    mprAssert(0 <= fid  && fid < row->nfields);
-    return row->fields[fid].inum;
-}
-
-
-double mdbGetFloatField(MdbRow *row, int fid)
-{
-    mprAssert(0 <= fid  && fid < row->nfields);
-    return row->fields[fid].num;
-}
-
-
-MprTime mdbGetDateField(MdbRow *row, int fid)
-{
-    mprAssert(0 <= fid  && fid < row->nfields);
-    return row->fields[fid].date;
-}
-
-
-//  MOB - reconsider all these
-cchar *edGetStringField(MdbRow *row, int fid)
-{
-    mprAssert(0 <= fid  && fid < row->nfields);
-    return row->fields[fid].str;
-}
-
-
-int mdbSetIntField(MdbRow *row, int fid, int64 value)
-{
-    EdiField     f;
-
-    mprAssert(0 <= fid  && fid < row->nfields);
-    f.value.inum = value;
-    row->fields[fid] = f;
-    return 0;
-}
-
-
-int mdbSetFloatField(MdbRow *row, int fid, double value)
-{
-    EdiField     f;
-
-    mprAssert(0 <= fid  && fid < row->nfields);
-    f.value.num = value;
-    row->fields[fid] = f;
-    return 0;
-}
-
-
-int mdbSetDateField(MdbRow *row, int fid, MprTime value)
-{
-    EdiField     f;
-
-    mprAssert(0 <= fid  && fid < row->nfields);
-    f.value.date = value;
-    row->fields[fid] = f;
-    return 0;
-}
-
-
-int mdbSetStringField(MdbRow *row, int fid, cchar *value)
-{
-    EdiField     f;
-
-    mprAssert(0 <= fid  && fid < row->nfields);
-    f.value.str = value;
-    row->fields[fid] = f;
-    return 0;
-}
-#endif
 
 
 /*********************************** Support *******************************/
@@ -1476,7 +1466,7 @@ static EdiRec *createRecFromRow(Edi *edi, MdbRow *row)
     rec->edi = edi;
     rec->tableName = row->table->name;
     //  MOB - assert and check there is a valid ID
-    rec->id = row->fields[0].str;
+    rec->id = row->fields[0];
     rec->nfields = row->nfields;
     for (c = 0; c < row->nfields; c++) {
         col = getCol(row->table, c);
@@ -1486,24 +1476,35 @@ static EdiRec *createRecFromRow(Edi *edi, MdbRow *row)
 }
 
 
-static int parseType(cchar *type)
+static int parseOperation(cchar *operation)
 {
-    if (smatch(type, "blob")) {
-        return EDI_TYPE_BLOB;
-    } else if (smatch(type, "bool")) {
-        return EDI_TYPE_BOOL;
-    } else if (smatch(type, "date")) {
-        return EDI_TYPE_DATE;
-    } else if (smatch(type, "float")) {
-        return EDI_TYPE_FLOAT;
-    } else if (smatch(type, "int")) {
-        return EDI_TYPE_INT;
-    } else if (smatch(type, "string")) {
-        return EDI_TYPE_STRING;
-    } else if (smatch(type, "text")) {
-        return EDI_TYPE_TEXT;
+    switch (*operation) {
+    case '=':
+        if (smatch(operation, "==")) {
+            return OP_EQ;
+        }
+        break;
+    case '!':
+        if (smatch(operation, "=!")) {
+            return OP_EQ;
+        }
+        break;
+    case '<':
+        if (smatch(operation, "<")) {
+            return OP_LT;
+        } else if (smatch(operation, "<=")) {
+            return OP_LTE;
+        }
+        break;
+    case '>':
+        if (smatch(operation, ">")) {
+            return OP_GT;
+        } else if (smatch(operation, ">=")) {
+            return OP_GTE;
+        }
     }
-    return 0;
+    mprError("Unknown read operation '%s'", operation);
+    return OP_ERR;
 }
 
 

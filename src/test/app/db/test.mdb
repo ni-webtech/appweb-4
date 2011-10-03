@@ -5,7 +5,7 @@
         },
         schema: {
             'id': { type: 'string', autoinc: 'true', index: 'true', key: 'true' },
-            'title': { type: 'string', },
+            'title': { type: 'string' },
             'body': { type: 'text' },
         },
         data: [
@@ -13,8 +13,9 @@
 Line two
 Line three
 ', ],
-            [ '3', 'Msg three', 'a lazy', ],
-            [ '4', 'forth', 'third + 1 message', ],
+            [ '3', 'Msg one.2', 'a lazy dog', ],
+            [ '4', 'forth', 'third + 1 message dog
+', ],
     ],
     },
 }

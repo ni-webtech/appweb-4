@@ -1,6 +1,8 @@
 <h1>Post List</h1>
 
-<% table(readGrid("post"), "{ \
+<% 
+    EdiGrid *grid = readGrid("post");
+    table(grid, "{ \
     data-click: '@edit', \
     columns: { \
         id: { header: 'ID' }, \

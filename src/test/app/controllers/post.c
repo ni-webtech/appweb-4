@@ -40,11 +40,6 @@ static void show() {
 }
 
 static void update() { 
-    // rec = updateRec(readRec("post"), params());
-    // rec = updateField(readRec("post"), "name", param("name"));     
-    // if (writeRec(readRec("post"), params()))
-    // if (writeFields("post", params()))
-
     if (writeFields("post", params())) {
         inform("Post updated successfully.");
         redirect("@");
@@ -53,7 +48,11 @@ static void update() {
     }
 }
 
-ESP_EXPORT int espInit_controller_post(EspRoute *eroute, MprModule *module) {
+//  MOB - remove Init
+ESP_EXPORT int espInit_controller_post(EspRoute *eroute, MprModule *module) 
+{
+    Edi *edi;
+
     espDefineBase(eroute, common);
     espDefineAction(eroute, "post-create", create);
     espDefineAction(eroute, "post-destroy", destroy);
@@ -62,5 +61,13 @@ ESP_EXPORT int espInit_controller_post(EspRoute *eroute, MprModule *module) {
     espDefineAction(eroute, "post-list", list);
     espDefineAction(eroute, "post-show", show);
     espDefineAction(eroute, "post-update", update);
+
+    /*
+        Add model validations
+     */
+    edi = getDatabase();
+    ediAddValidation(edi, "present", "post", "title", 0);
+    ediAddValidation(edi, "unique", "post", "title", 0);
+    ediAddValidation(edi, "format", "post", "body", "(fox|dog)");
     return 0;
 }
