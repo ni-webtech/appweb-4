@@ -7,11 +7,15 @@ defineComponent() {
     path="${1:-.}"
     builtin=`[ "$path" = . ] && echo --builtin`
 
-    incdir=`probe --name sqlite --dir --warn --search "$path:$path/src/deps/ejs:$path/src/jems/ejs.db.sqlite/src" "sqlite3.h"`
+    incdir=`probe --name sqlite --dir --warn \
+        --search "$path:$path/src/deps/sqlite:$path/src/deps/ejs:$path/src/jems/ejs.db.sqlite/src" "sqlite3.h"`
     libpaths=`probe --name sqlite --dir --search "$path:$path/out/lib" "libsqlite3"`
     if [ "$libpaths" = "" -a "$incdir" = "" ] ; then
         warnComponent sqlite "Can't locate libsqlite3"
         return
     fi
-    configureComponent --libs "sqlite3" --libpaths "$libpaths" $builtin sqlite
+    if [ "$incdir" != "" ] ; then
+        imports="$incdir/sqlite3.h"
+    fi
+    configureComponent --libs "sqlite3" --libpaths "$libpaths" $builtin --imports "$imports" sqlite
 }

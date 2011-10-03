@@ -5,7 +5,7 @@
         },
         schema: {
             'id': { type: 'string', autoinc: 'true', index: 'true', key: 'true' },
-            'title': { type: 'string', notnull: 'true' },
+            'title': { type: 'string', },
             'body': { type: 'text' },
         },
         data: [

@@ -29,6 +29,7 @@ static void autoSave(Mdb *mdb, MdbTable *table);
 static MdbCol *createCol(MdbTable *table, cchar *columnName);
 static EdiRec *createRecFromRow(Edi *edi, MdbRow *row);
 static MdbRow *createRow(Mdb *mdb, MdbTable *table);
+static cchar *getKey(EdiValue *vp, int type);
 static MdbCol *getCol(MdbTable *table, int col);
 static MdbRow *getRow(MdbTable *table, int rid);
 static MdbTable *getTable(Mdb *mdb, int tid);
@@ -656,9 +657,10 @@ static int mdbWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldNam
     if ((row = getRow(table, r)) == 0) {
         return MPR_ERR_CANT_FIND;
     }
-    if ((col = lookupColumn(table, fieldName)) != 0) {
-        writeField(row, col, kp->data);
+    if ((col = lookupColumn(table, fieldName)) == 0) {
+        return MPR_ERR_CANT_FIND;
     }
+    writeField(row, col, kp->data);
     return 0;
 }
 
@@ -732,6 +734,36 @@ static int mdbWriteRec(Edi *edi, EdiRec *rec)
         }
     }
     autoSave(mdb, table);
+    return 0;
+}
+
+
+static cchar *getKey(EdiValue *vp, int type)
+{
+    switch (type) {
+    case EDI_TYPE_BLOB:
+        return vp->blob;
+
+    case EDI_TYPE_BOOL:
+        //  MOB OPT - should be mpr cloned string
+        return vp->boolean ? sclone("true") : sclone("false");
+
+    case EDI_TYPE_DATE:
+        return mprFormatLocalTime(NULL, vp->date);
+
+    case EDI_TYPE_FLOAT:
+        return sfmt("%f", vp->num);
+
+    case EDI_TYPE_INT:
+        return sfmt("%Ld", vp->inum);
+
+    case EDI_TYPE_STRING:
+    case EDI_TYPE_TEXT:
+        return vp->str;
+
+    default:
+        mprError("Unknown field type %d", type);
+    }
     return 0;
 }
 
@@ -827,7 +859,7 @@ static int checkMdbState(MprJson *jp, cchar *name)
 }
 
 
-static int setMdbValue(MprJson *jp, MprObj *obj, int index, cchar *name, cchar *value, int type)
+static int setMdbValue(MprJson *jp, MprObj *obj, int cid, cchar *name, cchar *value, int type)
 {
     Mdb         *mdb;
     MdbCol      *col;
@@ -862,8 +894,10 @@ static int setMdbValue(MprJson *jp, MprObj *obj, int index, cchar *name, cchar *
             mdb->loadTable->keyCol = mdb->loadCol;
         } else if (smatch(name, "autoinc")) {
             mdb->loadCol->flags |= EDI_AUTO_INC;
+#if FUTURE && KEEP
         } else if (smatch(name, "notnull")) {
             mdb->loadCol->flags |= EDI_NOT_NULL;
+#endif
         } else {
             mprJsonParseError(jp, "Bad property '%s' in column definition", name);
             return MPR_ERR_BAD_FORMAT;
@@ -871,11 +905,11 @@ static int setMdbValue(MprJson *jp, MprObj *obj, int index, cchar *name, cchar *
         break;
 
     case MDB_LOAD_FIELD:
-        if (index < 0) {
-            mprJsonParseError(jp, "Bad state '%d' in setMdbValue, index %d,  potential corrupt data", mdb->loadState, index);
+        if (cid < 0) {
+            mprJsonParseError(jp, "Bad state '%d' in setMdbValue, cid %d,  potential corrupt data", mdb->loadState, cid);
             return MPR_ERR_BAD_FORMAT;
         }
-        col = getCol(mdb->loadTable, index);
+        col = getCol(mdb->loadTable, cid);
         mprAssert(col);
         if (col) {
             writeField(mdb->loadRow, col, value);
@@ -941,7 +975,6 @@ static int mdbSave(Edi *edi)
     if (mdb->flags & EDI_NO_SAVE) {
         return MPR_ERR_BAD_STATE;
     }
-
     path = mdb->path;
     if (path == 0) {
         mprError("No database path specified");
@@ -1090,7 +1123,7 @@ static int lookupRow(MdbTable *table, cchar *key)
     MdbRow      *row;
     int         nrows, r, keycol;
 
-    if (table->index == 0) {
+    if (table->index) {
         if ((kp = mprLookupKey(table->index, key)) != 0) {
             return (int) PTOL(kp->data);
         } 
@@ -1285,13 +1318,19 @@ static int writeField(MdbRow *row, MdbCol *col, cchar *value)
 {
     MdbTable    *table;
     EdiValue    *vp;
+    cchar       *key;
     
     mprAssert(row);
     mprAssert(col);
 
     table = row->table;
+    if (col->flags & EDI_INDEX) {
+        key = getKey(&row->fields[col->cid], col->type);
+        mprRemoveKey(table->index, key);
+    } else {
+        key = 0;
+    }
     vp = &row->fields[col->cid];
-
     if (col->flags & EDI_AUTO_INC) {
         if (value == 0) {
             autoIncField(row, col);
@@ -1301,6 +1340,9 @@ static int writeField(MdbRow *row, MdbCol *col, cchar *value)
         }
     } else {
         *vp = ediParseValue(value, col->type);
+    }
+    if (col->flags & EDI_INDEX) {
+        mprAddKey(table->index, key, LTOP(row->rid));
     }
     return 0;
 }

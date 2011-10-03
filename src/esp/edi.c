@@ -234,9 +234,6 @@ cchar *ediReadField(Edi *edi, cchar *fmt, cchar *tableName, cchar *key, cchar *c
     if (!field.valid) {
         return defaultValue;
     }
-#if UNUSED
-    ediGetColumnSchema(edi, tableName, columnName, &type, NULL, NULL);
-#endif
     return ediFormatField(fmt, field);
 }
 

@@ -19,6 +19,9 @@ ifeq ($(BLD_FEATURE_EJSCRIPT),0)
 	ifeq ($(BLD_HTTP_BUILTIN),1)
 		PRE_DIRS	+= http
 	endif
+	ifeq ($(BLD_SQLITE_BUILTIN),1)
+		PRE_DIRS	+= sqlite
+	endif
 endif
 
 #
