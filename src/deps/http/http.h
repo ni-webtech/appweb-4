@@ -1254,7 +1254,17 @@ extern ssize httpWriteBlock(HttpQueue *q, cchar *buf, ssize size);
  */
 extern ssize httpWriteString(HttpQueue *q, cchar *s);
 
-//  MOB - need httpWriteSafeString (see esp)
+/** 
+    Write a safe string of data to the queue
+    @description This will escape any HTML sequences before writing the string into packets onto the end of the queue. 
+        Data packets will be created as required to store the write data. This call may block waiting for the 
+        downstream queue to drain if it is or becomes full.
+    @param q Queue reference
+    @param s String containing the data to write
+    @return A count of the bytes actually written
+    @ingroup HttpQueue
+ */
+extern ssize httpWriteString(HttpQueue *q, cchar *s);
 
 /* Internal */
 extern HttpQueue *httpFindPreviousQueue(HttpQueue *q);
@@ -1285,13 +1295,10 @@ extern void httpAssignQueue(HttpQueue *q, struct HttpStage *stage, int dir);
 #define HTTP_STAGE_HANDLER        0x2000            /**< Stage is a handler  */
 #define HTTP_STAGE_FILTER         0x4000            /**< Stage is a filter  */
 #define HTTP_STAGE_MODULE         0x8000            /**< Stage is a filter  */
-#if UNUSED
-#define HTTP_STAGE_PARAMS         0x10000           /**< Create params from URI query and form body data */
-#endif
-#define HTTP_STAGE_AUTO_DIR       0x80000           /**< Want auto directory redirection */
-#define HTTP_STAGE_UNLOADED       0x100000          /**< Stage module library has been unloaded */
-#define HTTP_STAGE_RX             0x200000          /**< Stage to be used in the Rx direction */
-#define HTTP_STAGE_TX             0x400000          /**< Stage to be used in the Tx direction */
+#define HTTP_STAGE_AUTO_DIR       0x10000           /**< Want auto directory redirection */
+#define HTTP_STAGE_UNLOADED       0x20000           /**< Stage module library has been unloaded */
+#define HTTP_STAGE_RX             0x40000           /**< Stage to be used in the Rx direction */
+#define HTTP_STAGE_TX             0x80000           /**< Stage to be used in the Tx direction */
 
 typedef int (*HttpParse)(Http *http, cchar *key, char *value, void *state);
 
@@ -2820,7 +2827,7 @@ typedef struct HttpLang {
     @stability Evolving
     @defgroup HttpRoute HttpRoute
     @see HttpRoute httpAddRouteCondition httpAddRouteErrorDocument httpAddRouteExpiry httpAddRouteExpiryByType 
-        httpAddRouteFilter httpAddRouteHandler httpAddRouteHeader httpAddRouteLanguageSuffix httpAddRouteLanguageDir 
+        httpAddRouteFilter httpAddRouteHandler httpAddRouteHeader httpAddRouteLanguageDir httpAddRouteLanguageSuffix 
         httpAddRouteLoad httpAddRouteQuery httpAddRouteUpdate httpClearRouteStages httpCreateAliasRoute 
         httpCreateConfiguredRoute httpCreateDefaultRoute httpCreateInheritedRoute httpCreateRoute 
         httpDefineRouteCondition httpDefineRouteTarget httpDefineRouteUpdate httpFinalizeRoute httpGetRouteData 
@@ -2828,8 +2835,8 @@ typedef struct HttpLang {
         httpSetRouteAuth httpSetRouteAutoDelete httpSetRouteCompression httpSetRouteConnector httpSetRouteData 
         httpSetRouteDefaultLanguage httpSetRouteDir httpSetRouteFlags httpSetRouteHandler httpSetRouteHost 
         httpSetRouteIndex httpSetRouteMethods httpSetRouteName httpSetRoutePathVar httpSetRoutePattern 
-        httpSetRoutePrefix httpSetRouteScript httpSetRouteSource httpSetRouteTarget httpSetRouteWorkers httpTokenize 
-        httpTokenizev 
+        httpSetRoutePrefix httpSetRouteScript httpSetRouteSource httpSetRouteTarget httpSetRouteWorkers httpTemplate 
+        httpTokenize httpTokenizev 
  */
 typedef struct HttpRoute {
     /* Ordered for debugging */
@@ -2922,11 +2929,83 @@ typedef struct HttpRouteOp {
  */
 typedef int (HttpRouteProc)(HttpConn *conn, HttpRoute *route, HttpRouteOp *item);
 
-//  MOB DOC
+/**
+    Add a routes for a resource
+    @description This routing add a set of RESTful routes for a resource. This will add the following routes:
+    <table>
+        <tr><td>Name</td><td>Method</td><td>Pattern</td><td>Action</td></tr>
+        <tr><td>init</td><td>GET</td><td>/NAME/init$</td><td>init</td></tr>
+        <tr><td>create</td><td>POST</td><td>/NAME(/)*$</td><td>create</td></tr>
+        <tr><td>edit</td><td>GET</td><td>/NAME/edit$</td><td>edit</td></tr>
+        <tr><td>show</td><td>GET</td><td>/NAME$</td><td>show</td></tr>
+        <tr><td>update</td><td>PUT</td><td>/NAME$</td><td>update</td></tr>
+        <tr><td>destroy</td><td>DELETE</td><td>/NAME$</td><td>destroy</td></tr>
+        <tr><td>default</td><td>*</td><td>/NAME/{action}$</td><td>cmd-${action}</td></tr>
+    </tr>
+    </table>
+    @param parent Parent route from which to inherit configuration.
+    @param resource Resource name. This should be a lower case, single word, alphabetic resource name.
+    @ingroup HttpRoute
+ */
 extern void httpAddResource(HttpRoute *parent, cchar *resource);
+
+/**
+    Add a routes for a group of resources
+    @description This routing add a set of RESTful routes for a resource group. This will add the following routes:
+    <table>
+        <tr><td>Name</td><td>Method</td><td>Pattern</td><td>Action</td></tr>
+        <tr><td>list</td><td>GET</td><td>/NAME(/)*$</td><td>list</td></tr>
+        <tr><td>init</td><td>GET</td><td>/NAME/init$</td><td>init</td></tr>
+        <tr><td>create</td><td>POST</td><td>/NAME(/)*$</td><td>create</td></tr>
+        <tr><td>edit</td><td>GET</td><td>/NAME/{id=[0-9]+}/edit$</td><td>edit</td></tr>
+        <tr><td>show</td><td>GET</td><td>/NAME/{id=[0-9]+}$</td><td>show</td></tr>
+        <tr><td>update</td><td>PUT</td><td>/NAME/{id=[0-9]+}$</td><td>update</td></tr>
+        <tr><td>destroy</td><td>DELETE</td><td>/NAME/{id=[0-9]+}$</td><td>destroy</td></tr>
+        <tr><td>custom</td><td>POST</td><td>/NAME/{action}/{id=[0-9]+}$</td><td>${action}</td></tr>
+        <tr><td>default</td><td>*</td><td>/NAME/{action}$</td><td>cmd-${action}</td></tr>
+    </tr>
+    </table>
+    @param parent Parent route from which to inherit configuration.
+    @param resource Resource name. This should be a lower case, single word, alphabetic resource name.
+    @ingroup HttpRoute
+ */
 extern void httpAddResourceGroup(HttpRoute *parent, cchar *resource);
-extern void httpAddDefaultRoutes(HttpRoute *parent);
-extern void httpAddRouteSet(HttpRoute *parent, cchar *pack);
+
+/**
+    Add a route for the home page.
+    @description This will add a home page route ESP applications. This will add the following route:
+    <table>
+        <tr><td>Name</td><td>Method</td><td>Pattern</td><td>Target</td></tr>
+        <tr><td>home</td><td>GET,POST,PUT</td><td>^/$</td><td>index.esp</td></tr>
+    </table>
+    @param parent Parent route from which to inherit configuration.
+    @ingroup HttpRoute
+ */
+extern void httpAddHomeRoute(HttpRoute *parent);
+
+/**
+    Add a route set package
+    @description This will add a set of routes suitable for some application paradigms.
+    <table>
+        <tr><td>Name</td><td>Method</td><td>Pattern</td><td>Target</td></tr>
+        <tr><td>home</td><td>GET,POST,PUT</td><td>^/$</td><td>index.esp</td></tr>
+        <tr><td>static</td><td>GET</td><td>^/static(/(.)*$</td><td>$1</td></tr>
+    </table>
+    @param parent Parent route from which to inherit configuration.
+    @param set Route set to select. Use "simple", "mvc", "restful" or "none". 
+        \n\n
+        The "simple" pack will invoke 
+        #httpAddHomeRoute and #httpAddStaticRoute to add "home", and "static" routes. 
+        \n\n
+        The "mvc" selection will add the default routes and then add the route:
+        <table>
+            <tr><td>Name</td><td>Method</td><td>Pattern</td><td>Target</td></tr>
+            <tr><td>default</td><td>*</td><td>^/{controller}(~/{action}~)$</td><td>${controller}-${action}</td></tr>
+        </table>
+        \n\n
+    @ingroup HttpRoute
+ */
+extern void httpAddRouteSet(HttpRoute *parent, cchar *set);
 
 /**
     Add a route condition
@@ -2956,7 +3035,7 @@ extern int httpAddRouteCondition(HttpRoute *route, cchar *name, cchar *details, 
 
 /**
     Add an error document
-    @description This defines an error document to be used when the reuqested document cannot be found. 
+    @description This defines an error document to be used when the requested document cannot be found. 
         This definition is used by some handlers for error processing.
     @param route Route to modify
     @param status The HTTP status code to use with the error document.
@@ -3059,7 +3138,7 @@ extern int httpAddRouteLanguageSuffix(HttpRoute *route, cchar *language, cchar *
 extern int httpAddRouteLanguageDir(HttpRoute *route, cchar *language, cchar *path);
 
 /**
-    MOB - complete
+    FUTURE MOB - complete
     @description 
     @param route Route to modify
     @param name 
@@ -3099,6 +3178,19 @@ extern void httpAddRouteParam(HttpRoute *route, cchar *field, cchar *value, int 
     @ingroup HttpRoute
  */
 extern int httpAddRouteUpdate(HttpRoute *route, cchar *name, cchar *details, int flags);
+
+/**
+    Add a route for static content under a "static" directory. This can be used for ESP applications. Use the EspDir
+        appweb configuration file directive to modify the "static" directory.
+    @description This will add a route for static content. This will add the following route:
+    <table>
+        <tr><td>Name</td><td>Method</td><td>Pattern</td><td>Target</td></tr>
+        <tr><td>static</td><td>GET</td><td>^/static(/(.)*$</td><td>$1</td></tr>
+    </table>
+    @param parent Parent route from which to inherit configuration.
+    @ingroup HttpRoute
+ */
+extern void httpAddStaticRoute(HttpRoute *parent);
 
 /**
     Clear the pipline stages for the route
@@ -3226,30 +3318,36 @@ extern cchar *httpGetRouteDir(HttpRoute *route);
 extern cchar *httpGetRouteMethods(HttpRoute *route);
 
 /** 
-    Create a URI link. The target parameter may contain partial or complete URI information. The missing parts 
+    Create a URI link. 
+    @description Create a URI link by expansions tokens based on the current request and route state.
+    The target parameter may contain partial or complete URI information. The missing parts 
     are supplied using the current request and route tables. The resulting URI is a normalized, server-local 
-    URI (begins with "/"). The URI will include any defined scriptName, but will not include scheme, host or 
+    URI (that begins with "/"). The URI will include any defined route prefix, but will not include scheme, host or 
     port components.
-    @param route Route to modify
-    @param target The URI target. The target parameter can be a URI string or object hash of components. If the 
-        target is a string, it is may contain an absolute or relative URI. If the target has an absolute URI path, 
-        that path is used unmodified. If the target is a relative URI, it is appended to the current request URI 
-        path.  The target can also be an object hash of URI components: scheme, host, port, path, reference and
-        query. If these component properties are supplied, these will be combined to create a URI.
-
-        The URI will be created according to the route URI template. The template may be explicitly specified
-        via a "route" target property. Otherwise, if an "action" property is specified, the route of the same
-        name will be used. If these don't result in a usable route, the "default" route will be used. See the
-        Router for more details.
-       
+    @param conn HttpConn connection object 
+    @param target The URI target. The target parameter can be a URI string or JSON style set of options. 
+        The target will have any embedded "{tokens}" expanded by using token values from the request parameters.
+        If the target has an absolute URI path, that path is used directly after tokenization. If the target begins with
+        "~", that character will be replaced with the route prefix. This is a very convenient way to create application 
+        top-level relative links.
+        \n\n
         If the target is a string that begins with "{AT}" it will be interpreted as a controller/action pair of the 
         form "{AT}Controller/action". If the "controller/" portion is absent, the current controller is used. If 
         the action component is missing, the "list" action is used. A bare "{AT}" refers to the "list" action 
         of the current controller.
-
-    @param options MOB
-        Lastly, the target object hash may contain an override "uri" property. If specified, the value of the 
-        "uri" property will be returned and all other properties will be ignored.
+        \n\n
+        If the target starts with "{" it is interpreted as being a JSON style set of options that describe the link.
+        If the target is a relative URI path, it is appended to the current request URI path.  
+        \n\n
+        If the is a JSON style of options, it can specify the URI components: scheme, host, port, path, reference and
+        query. If these component properties are supplied, these will be combined to create a URI.
+        \n\n
+        If the target specifies either a controller/action or a JSON set of options, The URI will be created according 
+        to the route URI template. The template may be explicitly specified
+        via a "route" target property. Otherwise, if an "action" property is specified, the route of the same
+        name will be used. If these don't result in a usable route, the "default" route will be used. 
+        \n\n
+        These are the properties supported in a JSON style "{ ... }" target:
         <ul>
             <li>scheme String URI scheme portion</li>
             <li>host String URI host portion</li>
@@ -3262,32 +3360,29 @@ extern cchar *httpGetRouteMethods(HttpRoute *route);
             <li>action String Action to invoke. This can be a URI string or a Controller action of the form
                 {AT}Controller/action.</li>
             <li>route String Route name to use for the URI template</li>
-    @return A normalized, server-local Uri object.
-    MOB - revise
-    Given a current request of http://example.com/samples/demo" and "r" == the current request:
+        </ul>
+    @param options Hash of option values for embedded tokens.
+    @return A normalized, server-local Uri string.
 
-    r.link("images/splash.png")                  # "/samples/images/splash.png"
-    r.link("images/splash.png").complete(r.uri)  # "http://example.com/samples/images/splash.png"
-    r.link("images/splash.png").relative(r.uri)  # "images/splash.png"
-
-    r.link("http://example.com/index.html")
-    r.link("/path/to/index.html")
-    r.link("{AT}Controller/checkout")
-    r.link("{AT}Controller/")
-    r.link("{AT}checkout")
-    r.link("{AT}")
-    r.link({action: "checkout")
-    r.link({action: "logout", controller: "Admin")
-    r.link({action: "Admin/logout")
-    r.link({action: "{AT}Admin/logout")
-    r.link({uri: "http://example.com/checkout"})
-    r.link({route: "default", action: "{AT}checkout")
-    r.link({product: "candy", quantity: "10", template: "/cart/{product}/{quantity}")
-
-    MOB - update doc from route.c
+    <pre>
+    httpLink(conn, "http://example.com/index.html", 0);
+    httpLink(conn, "/path/to/index.html", 0);
+    httpLink(conn, "../images/splash.png", 0);
+    httpLink(conn, "~/static/images/splash.png", 0);
+    httpLink(conn, "${app}/static/images/splash.png", 0);
+    httpLink(conn, "@controller/checkout", 0);
+    httpLink(conn, "@controller/")                //  Controller = Controller, action = index
+    httpLink(conn, "@init")                       //  Current controller, action = init
+    httpLink(conn, "@")                           //  Current controller, action = index
+    httpLink(conn, "{ action: '@post/create' }", 0);
+    httpLink(conn, "{ action: 'checkout' }", 0);
+    httpLink(conn, "{ action: 'logout', controller: 'admin' }", 0);
+    httpLink(conn, "{ action: 'admin/logout'", 0);
+    httpLink(conn, "{ product: 'candy', quantity: '10', template: '/cart/${product}/${quantity}' }", 0);
+    httpLink(conn, "{ route: '~/STAR/edit', action: 'checkout', id: '99' }", 0);
+    httpLink(conn, "{ template: '~/static/images/${theme}/background.jpg', theme: 'blue' }", 0);
+    </pre>
 */
-//  MOB - move to conn?
-//  MOB - DOC
 extern char *httpLink(HttpConn *conn, cchar *target, MprHash *options);
 
 /**
@@ -3619,13 +3714,13 @@ extern int httpSetRouteTarget(HttpRoute *route, cchar *name, cchar *details);
 
 /**
     Set the route template
-    @description Set the route URI template uses when constructing URIs via #httpLink.
+    @description Set the route URI template uses when constructing URIs via httpLink.
     @param route Route to modify
     @param template URI template to use. Templates may contain embedded tokens "{token}" where the token names correspond
         to the token names in the route pattern. 
     @ingroup HttpRoute
  */
-extern void httpSetRouteTemplate(HttpRoute *route, cchar *name);
+extern void httpSetRouteTemplate(HttpRoute *route, cchar *template);
 
 /**
     Define the maximum number of workers for a route
@@ -3636,7 +3731,14 @@ extern void httpSetRouteTemplate(HttpRoute *route, cchar *name);
  */
 extern void httpSetRouteWorkers(HttpRoute *route, int workers);
 
-//  MOB DOC
+/**
+    Expand a template string using given options
+    @description This expands a string with embedded tokens of the form "${token}" using values from the given options.
+    @param conn HttpConn connection object created via $httpCreateConn
+    @param template Template string to process
+    @param options Hash of option values for embedded tokens.
+    @ingroup HttpRoute
+ */
 extern char *httpTemplate(HttpConn *conn, cchar *template, MprHash *options);
 
 /**
@@ -4449,7 +4551,7 @@ extern void httpSetContentType(HttpConn *conn, cchar *mimeType);
     @param path URI path to which the cookie applies
     @param domain Domain in which the cookie applies. Must have 2-3 dots.
     @param lifespan Duration for the cookie to persist in msec
-    @param flags. Select from HTTP_COOKIE_SECURE for a "secure" cookie, or HTTP_COOKIE_HTTP for a "httponly" cookie.
+    @param flags Select from HTTP_COOKIE_SECURE for a "secure" cookie, or HTTP_COOKIE_HTTP for a "httponly" cookie.
         See RFC 2109 for details about secure and httponly cookies.
     @ingroup HttpTx
  */
@@ -4835,7 +4937,20 @@ typedef struct HttpHost {
  */
 extern int httpAddRoute(HttpHost *host, HttpRoute *route);
 
-//  MOB DOC
+/**
+    Add and configure a route
+    @description This creates a bare route and then configures it using the given parameters. The route is finalized and
+        added to the parent host.
+    @param parent Parent route from which to inherit configuration.
+    @param name Route name to define.
+    @param methods Http methods for which this route is active
+    @param pattern Matching URI pattern for which this route will qualify
+    @param target Route target string expression. This is used by handlers to determine the physical or virtual resource
+        to serve.
+    @param source Source file pattern containing the resource to activate or serve. 
+    @return Created route.
+    @ingroup HttpRoute
+ */
 HttpRoute *httpAddConfiguredRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, 
         cchar *source);
 
@@ -4856,10 +4971,26 @@ extern HttpHost *httpCloneHost(HttpHost *parent);
  */
 extern HttpHost *httpCreateHost();
 
-//  MOB DOC
+/**
+    Return the default route for a host
+    @description The host has a default route which holds default configuration. Typically the default route
+        is not directly used when routing URIs. Rather other routes inherit from the default route and are used to 
+        respond to client requests.
+    @param host Host to examine.
+    @return Default route object
+    @ingroup HttpRoute
+ */
 extern HttpRoute *httpGetHostDefaultRoute(HttpHost *host);
 
-//  MOB DOC
+/**
+    Show the current route table to the error log.
+    @description This emits the currently defined route table for a host to the route table. If the "full" argument is true,
+        a more-complete, multi-line output format will be used. Othewise, a one-line, abbreviated route description will
+        be output.
+    @param host Host to examine.
+    @param full Set to true for a "fuller" output route description.
+    @ingroup HttpRoute
+ */
 extern void httpLogRoutes(HttpHost *host, bool full);
 
 /**
@@ -4876,7 +5007,15 @@ extern HttpRoute *httpLookupRoute(HttpHost *host, cchar *name);
  */
 extern void httpResetRoutes(HttpHost *host);
 
-//  MOB DOC
+/**
+    Set the default route for a host
+    @description The host has a default route which holds default configuration. Typically the default route
+        is not directly used when routing URIs. Rather other routes inherit from the default route and are used to 
+        respond to client requests.
+    @param host Host to examine.
+    @param route Route to define as the default
+    @ingroup HttpRoute
+ */
 extern void httpSetHostDefaultRoute(HttpHost *host, HttpRoute *route);
 
 /**
@@ -4944,7 +5083,6 @@ extern void httpSetHostTrace(HttpHost *host, int level, int mask);
  */
 extern void httpSetHostTraceFilter(HttpHost *host, ssize len, cchar *include, cchar *exclude);
 
-//  MOB DIVIDOR
 #if UNUSED
 /**
     Setup trace for expedited processing
@@ -4967,19 +5105,27 @@ extern char *httpGetPathExt(cchar *path);
 
 /**
     Extract a field value from an option string. 
-    @param options. Option string of the form: "field='value' field='value'..."
+    @param options Option string of the form: "field='value' field='value'..."
     @param field Field key name
     @param defaultValue Value to use if "field" is not found in options
     @return Allocated value string.
  */
 extern cchar *httpGetOption(MprHash *options, cchar *field, cchar *defaultValue);
 
-//  MOB DOC
+/**
+    Get an option value that is itself an object (hash)
+    @description This returns an option value that is an instance of MprHash. When deserializing a JSON option string which
+    contains multiple levels, this routine can be used to extract lower option container values. 
+    @param options Options object to examine.
+    @param field Property to return.
+    @return An MprHash instance for the given field. This will contain option sub-properties.
+    @ingroup HttpRoute
+ */
 extern MprHash *httpGetOptionHash(MprHash *options, cchar *field);
 
 /**
     Convert an options string into an options table
-    @param options. Option string of the form: "{field:'value', field:'value'}"
+    @param options Option string of the form: "{field:'value', field:'value'}"
         This is a sub-set of the JSON syntax. Arrays are not supported.
     @return Options table
  */
@@ -4987,14 +5133,29 @@ extern MprHash *httpGetOptions(cchar *options);
 
 /**
     Add an option to the options table
-    @param options. Option table returned from #httpGetOptions
+    @param options Option table returned from httpGetOptions
     @param field Field key name
     @param value Value to use for the field
  */
 extern void httpAddOption(MprHash *options, cchar *field, cchar *value);
 
-//  MOB DOC
+/**
+    Set an option
+    @description Set a property in an options hash
+    @param options Options table returned from httpGetOptions
+    @param field Property field to set
+    @param value Property value to use
+    @ingroup HttpRoute
+ */
 extern void httpSetOption(MprHash *options, cchar *field, cchar *value);
+
+/**
+    Remove an option
+    @description Remove a property from an options hash
+    @param options Options table returned from httpGetOptions
+    @param field Property field to remove
+    @ingroup HttpRoute
+ */
 extern void httpRemoveOption(MprHash *options, cchar *field);
 
 #ifdef __cplusplus

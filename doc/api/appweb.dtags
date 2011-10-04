@@ -75,10 +75,10 @@
       <arglist>(MaAppweb *appweb, cchar *name)</arglist>
     </member>
     <member kind="function">
-      <type>bool</type>
+      <type>int</type>
       <name>maMatchDir</name>
       <anchorfile>group___appweb.html</anchorfile>
-      <anchor>ga98cb5fc9be7ee253af2f0e0734478155</anchor>
+      <anchor>ga0595cfc8aa7064cd3b26f4bd2c5748ba</anchor>
       <arglist>(HttpConn *conn, HttpRoute *route, int direction)</arglist>
     </member>
     <member kind="function">

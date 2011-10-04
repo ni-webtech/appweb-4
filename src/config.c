@@ -105,7 +105,7 @@ static int parseFileInner(MaState *state, cchar *path)
     if (maOpenConfig(state, path) < 0) {
         return MPR_ERR_CANT_OPEN;
     }
-    for (state->lineNumber = 1; (line = mprGetFileString(state->file, 0, NULL)) != 0; state->lineNumber++) {
+    for (state->lineNumber = 1; (line = mprReadLine(state->file, 0, NULL)) != 0; state->lineNumber++) {
         for (tok = line; isspace((int) *tok); tok++) ;
         if (*tok == '\0' || *tok == '#') {
             continue;
@@ -235,7 +235,7 @@ static int addLanguageDirDirective(MaState *state, cchar *key, cchar *value)
     if ((path = stemplate(path, route->pathTokens)) == 0) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if (mprIsRelPath(path)) {
+    if (mprIsPathRel(path)) {
         path = mprJoinPath(route->dir, path);
     }
     httpAddRouteLanguageDir(route, lang, mprGetAbsPath(path));
@@ -1196,7 +1196,7 @@ static int nameVirtualHostDirective(MaState *state, cchar *key, cchar *value)
     int     port;
 
     mprLog(4, "NameVirtual Host: %s ", value);
-    mprParseIp(value, &ip, &port, -1);
+    mprParseSocketAddress(value, &ip, &port, -1);
     httpConfigureNamedVirtualEndpoints(state->http, ip, port);
     return 0;
 }
@@ -1674,7 +1674,7 @@ static int virtualHostDirective(MaState *state, cchar *key, cchar *value)
 
     state = maPushState(state);
     if (state->enabled) {
-        mprParseIp(value, &ip, &port, -1);
+        mprParseSocketAddress(value, &ip, &port, -1);
         state->route = httpCreateInheritedRoute(httpGetHostDefaultRoute(state->host));
         state->host = httpCloneHost(state->host);
         httpResetRoutes(state->host);

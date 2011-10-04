@@ -341,7 +341,7 @@ static int sdbLoad(Sdb *sdb, cchar *path)
     cchar       *data;
     ssize       len;
 
-    if ((data = mprReadPath(path, &len)) == 0) {
+    if ((data = mprReadPathContents(path, &len)) == 0) {
         return MPR_ERR_CANT_READ;
     }
     return sdbLoadString(sdb, data);

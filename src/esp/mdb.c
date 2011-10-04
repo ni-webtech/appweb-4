@@ -222,15 +222,19 @@ static int mdbAddColumn(Edi *edi, cchar *tableName, cchar *columnName, int type,
     mprAssert(type);
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     if ((table = lookupTable(mdb, tableName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     if ((col = createCol(table, columnName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     col->type = type;
     col->flags = flags;
     autoSave(mdb, table);
+    unlock(mdb);
     return 0;
 }
 
@@ -249,18 +253,23 @@ static int mdbAddIndex(Edi *edi, cchar *tableName, cchar *columnName, cchar *ind
     mprAssert(columnName && *columnName);
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     if ((table = lookupTable(mdb, tableName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     if ((col = lookupColumn(table, columnName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     if ((table->index = mprCreateHash(0, MPR_HASH_STATIC_VALUES)) == 0) {
+        unlock(mdb);
         return MPR_ERR_MEMORY;
     }
     table->indexCol = col;
     col->flags |= EDI_INDEX;
     autoSave(mdb, table);
+    unlock(mdb);
     return 0;
 }
 
@@ -274,10 +283,13 @@ static int mdbAddTable(Edi *edi, cchar *tableName)
     mprAssert(tableName && *tableName);
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     if ((table = mprAllocObj(MdbTable, manageTable)) == 0) {
+        unlock(mdb);
         return MPR_ERR_MEMORY;
     }
     if ((table->rows = mprCreateList(0, 0)) == 0) {
+        unlock(mdb);
         return MPR_ERR_MEMORY;
     }
     table->name = sclone(tableName);
@@ -285,10 +297,12 @@ static int mdbAddTable(Edi *edi, cchar *tableName)
         mdb->tables = mprCreateList(0, 0);
     }
     if (!growSchema(table)) {
+        unlock(mdb);
         return MPR_ERR_MEMORY;
     }
     mprAddItem(mdb->tables, table);
     autoSave(mdb, lookupTable(mdb, tableName));
+    unlock(mdb);
     return 0;
 }
 
@@ -304,16 +318,20 @@ static int mdbAddValidation(Edi *edi, cchar *tableName, cchar *columnName, EdiVa
     mprAssert(columnName && *columnName);
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     if ((table = lookupTable(mdb, tableName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     if ((col = lookupColumn(table, columnName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     if (col->validations == 0) {
         col->validations = mprCreateList(0, 0);
     }
     mprAddItem(col->validations, vp);
+    unlock(mdb);
     return 0;
 }
 
@@ -330,15 +348,19 @@ static int mdbChangeColumn(Edi *edi, cchar *tableName, cchar *columnName, int ty
     mprAssert(type);
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     if ((table = lookupTable(mdb, tableName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     if ((col = lookupColumn(table, columnName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     col->name = sclone(columnName);
     col->type = type;
     autoSave(mdb, table);
+    unlock(mdb);
     return 0;
 }
 
@@ -354,14 +376,18 @@ static int mdbDeleteRow(Edi *edi, cchar *tableName, cchar *key)
     mprAssert(key && *key);
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     if ((table = lookupTable(mdb, tableName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     if ((r = lookupRow(table, key)) < 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     rc = mprRemoveItemAtPos(table->rows, r);
     autoSave(mdb, table);
+    unlock(mdb);
     return rc;
 }
 
@@ -381,7 +407,9 @@ static MprList *mdbGetColumns(Edi *edi, cchar *tableName)
     mprAssert(tableName && *tableName);
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     if ((table = lookupTable(mdb, tableName)) == 0) {
+        unlock(mdb);
         return 0;
     }
     schema = table->schema;
@@ -391,6 +419,7 @@ static MprList *mdbGetColumns(Edi *edi, cchar *tableName)
         /* No need to clone */
         mprAddItem(list, schema->cols[i].name);
     }
+    unlock(mdb);
     return list;
 }
 
@@ -415,10 +444,13 @@ static int mdbGetColumnSchema(Edi *edi, cchar *tableName, cchar *columnName, int
     MdbCol      *col;
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     if ((table = lookupTable(mdb, tableName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     if ((col = lookupColumn(table, columnName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     if (type) {
@@ -430,6 +462,7 @@ static int mdbGetColumnSchema(Edi *edi, cchar *tableName, cchar *columnName, int
     if (cid) {
         *cid = col->cid;
     }
+    unlock(mdb);
     return 0;
 }
 
@@ -442,12 +475,14 @@ static MprList *mdbGetTables(Edi *edi)
     int         tid, ntables;
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     list = mprCreateList(-1, 0);
     ntables = mprGetListLength(mdb->tables);
     for (tid = 0; tid < ntables; tid++) {
         table = mprGetItem(mdb->tables, tid);
         mprAddItem(list, table->name);
     }
+    unlock(mdb);
     return list;
 }
 
@@ -457,7 +492,7 @@ static int mdbLoad(Edi *edi, cchar *path)
     cchar       *data;
     ssize       len;
 
-    if ((data = mprReadPath(path, &len)) == 0) {
+    if ((data = mprReadPathContents(path, &len)) == 0) {
         return MPR_ERR_CANT_READ;
     }
     return mdbLoadFromString(edi, data);
@@ -471,19 +506,23 @@ static int mdbLookupField(Edi *edi, cchar *tableName, cchar *fieldName)
     MdbCol      *col;
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     if ((table = lookupTable(mdb, tableName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     if ((col = lookupColumn(table, fieldName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
+    unlock(mdb);
     return col->cid;
 }
 
 
 static EdiGrid *mdbQuery(Edi *edi, cchar *cmd)
 {
-    //  TODO
+    //  TODO MOB
     mprAssert(0);
     return 0;
 }
@@ -495,22 +534,28 @@ static EdiField mdbReadField(Edi *edi, cchar *tableName, cchar *key, cchar *fiel
     MdbTable    *table;
     MdbCol      *col;
     MdbRow      *row;
-    EdiField    err;
+    EdiField    field, err;
     int         r;
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     err.valid = 0;
     if ((table = lookupTable(mdb, tableName)) == 0) {
+        unlock(mdb);
         return err;
     }
     if ((col = lookupColumn(table, fieldName)) == 0) {
+        unlock(mdb);
         return err;
     }
     if ((r = lookupRow(table, key)) < 0) {
+        unlock(mdb);
         return err;
     }
     row = mprGetItem(table->rows, r);
-    return makeFieldFromRow(row, col);
+    field = makeFieldFromRow(row, col);
+    unlock(mdb);
+    return field;
 }
 
 
@@ -523,17 +568,19 @@ static EdiRec *mdbReadRec(Edi *edi, cchar *tableName, cchar *key)
     int         r, nrows;
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     if ((table = lookupTable(mdb, tableName)) == 0) {
+        unlock(mdb);
         return 0;
     }
     nrows = mprGetListLength(table->rows);
     if ((r = lookupRow(table, key)) < 0) {
+        unlock(mdb);
         return 0;
     }
     row = mprGetItem(table->rows, r);
-    if ((rec = createRecFromRow(edi, row)) == 0) {
-        return 0;
-    }
+    rec = createRecFromRow(edi, row);
+    unlock(mdb);
     return rec;
 }
 
@@ -582,18 +629,23 @@ static EdiGrid *mdbReadWhere(Edi *edi, cchar *tableName, cchar *columnName, ccha
     mprAssert(tableName && *tableName);
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     if ((table = lookupTable(mdb, tableName)) == 0) {
+        unlock(mdb);
         return 0;
     }
     nrows = mprGetListLength(table->rows);
     if ((grid = ediCreateBareGrid(edi, tableName, nrows)) == 0) {
+        unlock(mdb);
         return 0;
     }
     if (columnName) {
         if ((col = lookupColumn(table, columnName)) == 0) {
+            unlock(mdb);
             return 0;
         }
         if ((op = parseOperation(operation)) < 0) {
+            unlock(mdb);
             return 0;
         }
         if (col->flags & EDI_INDEX && (op & OP_EQ)) {
@@ -613,6 +665,7 @@ static EdiGrid *mdbReadWhere(Edi *edi, cchar *tableName, cchar *columnName, ccha
             grid->records[next - 1] = createRecFromRow(edi, row);
         }
     }
+    unlock(mdb);
     return grid;
 }
 
@@ -626,10 +679,13 @@ static int mdbRemoveColumn(Edi *edi, cchar *tableName, cchar *columnName)
     int         c;
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     if ((table = lookupTable(mdb, tableName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     if ((col = lookupColumn(table, columnName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     if (table->indexCol == col) {
@@ -648,6 +704,7 @@ static int mdbRemoveColumn(Edi *edi, cchar *tableName, cchar *columnName)
     schema->cols[schema->ncols].name = 0;
     mprAssert(schema->ncols >= 0);
     autoSave(mdb, table);
+    unlock(mdb);
     return 0;
 }
 
@@ -659,7 +716,9 @@ static int mdbRemoveIndex(Edi *edi, cchar *tableName, cchar *indexName)
     MdbTable    *table;
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     if ((table = lookupTable(mdb, tableName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     table->index = 0;
@@ -668,6 +727,7 @@ static int mdbRemoveIndex(Edi *edi, cchar *tableName, cchar *indexName)
         table->indexCol = 0;
         autoSave(mdb, table);
     }
+    unlock(mdb);
     return 0;
 }
 
@@ -679,13 +739,16 @@ static int mdbRemoveTable(Edi *edi, cchar *tableName)
     int         next;
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     for (ITERATE_ITEMS(mdb->tables, table, next)) {
         if (smatch(table->name, tableName)) {
             mprRemoveItem(mdb->tables, table);
             autoSave(mdb, table);
-            break;
+            unlock(mdb);
+            return 0;
         }
     }
+    unlock(mdb);
     return MPR_ERR_CANT_FIND;
 }
 
@@ -696,11 +759,14 @@ static int mdbRenameTable(Edi *edi, cchar *tableName, cchar *newTableName)
     MdbTable    *table;
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     if ((table = lookupTable(mdb, tableName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     table->name = sclone(newTableName);
     autoSave(mdb, table);
+    unlock(mdb);
     return 0;
 }
 
@@ -712,14 +778,18 @@ static int mdbRenameColumn(Edi *edi, cchar *tableName, cchar *columnName, cchar 
     MdbCol      *col;
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     if ((table = lookupTable(mdb, tableName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     if ((col = lookupColumn(table, columnName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     col->name = sclone(newColumnName);
     autoSave(mdb, table);
+    unlock(mdb);
     return 0;
 }
 
@@ -733,7 +803,9 @@ bool mdbValidateRec(Edi *edi, EdiRec *rec)
     int         c;
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     if ((table = lookupTable(mdb, rec->tableName)) == 0) {
+        unlock(mdb);
         return 0;
     }
     pass = 1;
@@ -747,6 +819,7 @@ bool mdbValidateRec(Edi *edi, EdiRec *rec)
             /* Keep going */
         }
     }
+    unlock(mdb);
     return pass;
 }
 
@@ -761,19 +834,24 @@ static int mdbWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldNam
     int         r;
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     if ((table = lookupTable(mdb, tableName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     if ((col = lookupColumn(table, fieldName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     if ((r = lookupRow(table, key)) < 0) {
         row = createRow(mdb, table);
     }
     if ((row = getRow(table, r)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     writeField(row, col, kp->data);
+    unlock(mdb);
     return 0;
 }
 
@@ -789,6 +867,7 @@ static int mdbWriteFields(Edi *edi, cchar *tableName, MprHash *params)
     cchar       *key;
     int         r, setID;
 
+    -- MOB - no locking
     mdb = (Mdb*) edi;
     if ((table = lookupTable(mdb, tableName)) == 0) {
         return MPR_ERR_CANT_FIND;
@@ -839,16 +918,20 @@ static int mdbWriteRec(Edi *edi, EdiRec *rec)
     int         f, r;
 
     mdb = (Mdb*) edi;
+    lock(mdb);
     if ((table = lookupTable(mdb, rec->tableName)) == 0) {
+        unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
     if (!mdbValidateRec(edi, rec)) {
+        unlock(mdb);
         return MPR_ERR_CANT_WRITE;
     }
     if (rec->id == 0 || (r = lookupRow(table, rec->id)) < 0) {
         row = createRow(mdb, table);
     } else {
         if ((row = getRow(table, r)) == 0) {
+            unlock(mdb);
             return MPR_ERR_CANT_FIND;
         }
     }
@@ -858,6 +941,7 @@ static int mdbWriteRec(Edi *edi, EdiRec *rec)
         }
     }
     autoSave(mdb, table);
+    unlock(mdb);
     return 0;
 }
 
@@ -1053,6 +1137,9 @@ static void autoSave(Mdb *mdb, MdbTable *table)
 }
 
 
+/*
+    Must be called locked
+ */
 static int mdbSave(Edi *edi)
 {
     Mdb         *mdb;
@@ -1083,14 +1170,14 @@ static int mdbSave(Edi *edi)
         table = getTable(mdb, tid);
         schema = table->schema;
         mprAssert(schema);
-        mprWriteFileFormat(out, "{\n    '%s': {\n", table->name);
-        mprWriteFileFormat(out, "        hints: {\n            ncols: %d\n        },\n", schema->ncols);
+        mprWriteFileFmt(out, "{\n    '%s': {\n", table->name);
+        mprWriteFileFmt(out, "        hints: {\n            ncols: %d\n        },\n", schema->ncols);
         mprWriteFileString(out, "        schema: {\n");
         /* Skip the id which is always the first column */
         for (cid = 0; cid < schema->ncols; cid++) {
             col = getCol(table, cid);
             type = ediGetTypeString(col->type);
-            mprWriteFileFormat(out, "            '%s': { type: '%s'", col->name, type);
+            mprWriteFileFmt(out, "            '%s': { type: '%s'", col->name, type);
             if (col->flags & EDI_AUTO_INC) {
                 mprWriteFileString(out, ", autoinc: 'true'");
             }
@@ -1120,7 +1207,7 @@ static int mdbSave(Edi *edi)
                 }
                 field = readField(row, cid);
                 //  MOB OPT - inline toString code here
-                mprWriteFileFormat(out, "'%s', ", ediFormatField(NULL, field));
+                mprWriteFileFmt(out, "'%s', ", ediFormatField(NULL, field));
             }
             mprWriteFileString(out, "],\n");
         }

@@ -176,7 +176,7 @@ MAIN(appweb, int argc, char **argv)
         if (argc > argind) {
             app->documents = sclone(argv[argind++]);
         }
-        mprParseIp(ipAddrPort, &ip, &port, HTTP_DEFAULT_PORT);
+        mprParseSocketAddress(ipAddrPort, &ip, &port, HTTP_DEFAULT_PORT);
         
     } else if (findConfigFile() < 0) {
         exit(7);

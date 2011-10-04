@@ -2883,7 +2883,6 @@ extern char *supper(cchar *str);
     This API is not yet public
     TODO - document these routines
  */
-
 extern MprChar *amtow(cchar *src, ssize *len);
 extern char    *awtom(MprChar *src, ssize *len);
 extern MprChar *wfmt(MprChar *fmt, ...);
@@ -4427,13 +4426,15 @@ extern MprKey *mprLookupKeyEntry(MprHash *table, cvoid *key);
  */
 extern int mprRemoveKey(MprHash *table, cvoid *key);
 
-//  MOB DOC
-extern MprHash *mprBlendHash(MprHash *hash, MprHash *extra);
-#if UNUSED
-#define MPR_HASH_PRETTY 0x1
-extern MprHash *mprParseHash(cchar *str);
-extern cchar *mprHashToString(MprHash *hash, int flags);
-#endif
+/**
+    Blend two hash tables
+    @description Blend a hash table into a target hash
+    @param target Target hash to receive the properties from the other hash 
+    @param other Hash to provide properties to blend
+    @return Returns target
+    @ingroup MprHash
+ */
+extern MprHash *mprBlendHash(MprHash *target, MprHash *other);
 
 /*
     Prototypes for file system switch methods
@@ -4599,8 +4600,8 @@ extern void mprSetPathNewline(cchar *path, cchar *newline);
          created when a file is created or opened via #mprOpenFile.
     @stability Evolving.
     @see MprFile mprAttachFileFd mprCloseFile mprDisableFileBuffering mprEnableFileBuffering mprFlushFile mprGetFileChar 
-        mprGetFilePosition mprGetFileSize mprGetFileString mprGetStderr mprGetStdin mprGetStdout mprOpenFile 
-        mprPeekFileChar mprPutFileChar mprPutFileString mprReadFile mprSeekFile mprTruncateFile mprWriteFile 
+        mprGetFilePosition mprGetFileSize mprGetStderr mprGetStdin mprGetStdout mprOpenFile 
+        mprPeekFileChar mprPutFileChar mprPutFileString mprReadFile mprReadLine mprSeekFile mprTruncateFile mprWriteFile 
         mprWriteFormat mprWriteString 
         mprGetFileFd
     @defgroup MprFile MprFile
@@ -4715,20 +4716,6 @@ extern MprOff mprGetFilePosition(MprFile *file);
  */
 extern MprOff mprGetFileSize(MprFile *file);
 
-//  MOB - rename to mprReadLine? vs mprGets
-/**
-    Read a line from the file.
-    @description Read a single line from the file. Lines are delimited by the newline character. The newline is not 
-        included in the returned buffer. This call will read lines up to the given size in length. If no newline is
-        found, all available characters, up to size, will be returned.
-    @param file Pointer to an MprFile object returned via MprOpen.
-    @param size Maximum number of characters in a line.
-    @param len Pointer to an integer to hold the length of the returned string.
-    @return An allocated string and sets *len to the number of bytes read. 
-    @ingroup MprFile
- */
-extern char *mprGetFileString(MprFile *file, ssize size, ssize *len);
-
 /**
     Return a file object for the Stderr I/O channel
     @returns A file object
@@ -4814,6 +4801,19 @@ extern ssize mprPutFileString(MprFile *file, cchar *str);
 extern ssize mprReadFile(MprFile *file, void *buf, ssize size);
 
 /**
+    Read a line from the file.
+    @description Read a single line from the file. Lines are delimited by the newline character. The newline is not 
+        included in the returned buffer. This call will read lines up to the given size in length. If no newline is
+        found, all available characters, up to size, will be returned.
+    @param file Pointer to an MprFile object returned via MprOpen.
+    @param size Maximum number of characters in a line.
+    @param len Pointer to an integer to hold the length of the returned string.
+    @return An allocated string and sets *len to the number of bytes read. 
+    @ingroup MprFile
+ */
+extern char *mprReadLine(MprFile *file, ssize size, ssize *len);
+
+/**
     Seek the I/O pointer to a new location in the file.
     @description Move the position in the file to/from which I/O will be performed in the file. Seeking prior 
         to a read or write will cause the next I/O to occur at that location.
@@ -4849,7 +4849,6 @@ extern int mprTruncateFile(cchar *path, MprOff size);
  */
 extern ssize mprWriteFile(MprFile *file, cvoid *buf, ssize count);
 
-//  MOB - rename mprWriteFmt
 /**
     Write formatted data to a file.
     @description Writes a formatted string to a file. 
@@ -4858,7 +4857,7 @@ extern ssize mprWriteFile(MprFile *file, cvoid *buf, ssize count);
     @return The number of characters actually written to the file. Returns a negative MPR error code on errors.
     @ingroup MprFile
  */
-extern ssize mprWriteFileFormat(MprFile *file, cchar *fmt, ...);
+extern ssize mprWriteFileFmt(MprFile *file, cchar *fmt, ...);
 
 /**
     Write a string to a file.
@@ -4878,7 +4877,7 @@ extern ssize mprWriteFileString(MprFile *file, cchar *str);
         mprGetFirstPathSeparator mprGetLastPathSeparator mprGetNativePath mprGetNormalizedPath mprGetPathBase 
         mprGetPathDir mprGetPathExt mprGetPathFiles mprGetPathLink mprGetPathNewline mprGetPathParent 
         mprGetPathSeparators mprGetPortablePath mprGetRelPath mprGetTempPath mprGetTransformedPath mprIsAbsPath 
-        mprIsRelPath mprJoinPath mprJoinPathExt mprMakeDir mprMakeLink mprMapSeparators mprPathExists mprReadPath 
+        mprIsRelPath mprJoinPath mprJoinPathExt mprMakeDir mprMakeLink mprMapSeparators mprPathExists mprReadPathContents 
         mprReplacePathExt mprResolvePath mprSamePath mprSamePathCount mprSearchPath mprTrimPathExt mprTruncatePath 
     @defgroup MprPath MprPath
  */
@@ -4943,16 +4942,6 @@ extern int mprDeletePath(cchar *path);
 
 #define MPR_PATH_ENUM_DIRS  0x1             /**< Flag for mprFindFiles to traverse directories */
 #define MPR_PATH_INC_DIRS   0x2             /**< Flag for mprFindFiles to include directories in results */
-
-//  MOB rename to mprGetPathTree
-/**
-    Find files below a directory
-    @param dir Directory file name to examine
-    @param flags The flags may be set to #MPR_PATH_INC_DIRS to include directories in the results or #MPR_PATH_ENUM_DIRS 
-    to enumerate directories but not include them in the results.
-    @return A list of filename character strings (char*)
- */
-extern MprList *mprFindFiles(cchar *dir, int flags);
 
 /**
     Convert a path to an absolute path
@@ -5089,6 +5078,15 @@ extern char *mprGetPathParent(cchar *path);
 extern cchar *mprGetPathSeparators(cchar *path);
 
 /**
+    Find files below a path directory
+    @param path Directory path name to examine
+    @param flags The flags may be set to #MPR_PATH_INC_DIRS to include directories in the results or #MPR_PATH_ENUM_DIRS 
+    to enumerate directories but not include them in the results.
+    @return A list of filename character strings (char*)
+ */
+extern MprList *mprGetPathTree(cchar *path, int flags);
+
+/**
     Get a portable path 
     @description Get an equivalent absolute path that is somewhat portable. 
         This means it will use forward slashes ("/") as the directory separator.
@@ -5134,14 +5132,21 @@ extern char *mprGetTempPath(cchar *tmpDir);
  */
 extern char *mprGetTransformedPath(cchar *path, int flags);
 
-//  MOB - rename to mprIsPathAbs
 /**
     Determine if a path is absolute
     @param path Path name to examine
     @returns True if the path is absolue
     @ingroup MprPath
  */ 
-extern bool mprIsAbsPath(cchar *path);
+extern bool mprIsPathAbs(cchar *path);
+
+/**
+    Determine if a path is relative
+    @param path Path name to examine
+    @returns True if the path is relative
+    @ingroup MprPath
+ */ 
+extern bool mprIsPathRel(cchar *path);
 
 /**
     Test if a character is a path separarator
@@ -5150,15 +5155,6 @@ extern bool mprIsAbsPath(cchar *path);
     @return Returns true if the character is a path separator on the file system containing the given path
  */
 extern bool mprIsPathSeparator(cchar *path, cchar c);
-
-//  MOB - rename to mprIsPathRel
-/**
-    Determine if a path is relative
-    @param path Path name to examine
-    @returns True if the path is relative
-    @ingroup MprPath
- */ 
-extern bool mprIsRelPath(cchar *path);
 
 /**
     Join paths
@@ -5224,7 +5220,6 @@ extern void mprMapSeparators(char *path, int separator);
  */
 extern bool mprPathExists(cchar *path, int omode);
 
-//  MOB - rename mprReadPathContents
 /*
     Read the contents of a file
     @param path Filename to open and read
@@ -5232,7 +5227,7 @@ extern bool mprPathExists(cchar *path, int omode);
         required.
     @return An allocated string containing the file contents and return the data length in lenp.
  */
-extern char *mprReadPath(cchar *path, ssize *lenp);
+extern char *mprReadPathContents(cchar *path, ssize *lenp);
 
 /**
     Replace an extension to a path
@@ -5956,24 +5951,47 @@ extern void mprXmlSetParserHandler(MprXml *xp, MprXmlHandler h);
 /*
     Flags for mprSerialize
  */
-#define MPR_JSON_PRETTY     0x1
+#define MPR_JSON_PRETTY     0x1         /**< Serialize output in a more human readable, multiline "pretty" format */
 
 /*
     Data types for obj property values
  */
-#define MPR_JSON_UNKNOWN     0
-#define MPR_JSON_STRING      1
-#define MPR_JSON_OBJ         2
-#define MPR_JSON_ARRAY       3
+#define MPR_JSON_UNKNOWN     0          /**< The type of a property is unknown */
+#define MPR_JSON_STRING      1          /**< The property is a string (char*) */
+#define MPR_JSON_OBJ         2          /**< The object is an object */
+#define MPR_JSON_ARRAY       3          /**< The object is an array */
 
-//  MOB DOC
 struct MprJson;
+
+/**
+    Object container for JSON parse trees.
+    @internal
+ */
 typedef void MprObj;
+
+/**
+    Check state callback for JSON deserialization
+    @internal
+ */
 typedef int (*MprCheckState)(struct MprJson *jp, cchar *name);
+
+/**
+    SetValue callback for JSON deserialization
+    @internal
+ */
 typedef int (*MprSetValue)(struct MprJson *jp, MprObj *obj, int index, cchar *name, cchar *value, int valueType);
+
+/**
+    MakeObject callback for JSON deserialization
+    @internal
+ */
 typedef MprObj *(*MprMakeObj)(struct MprJson *jp, bool list);
 
-//  MOB DOC
+/**
+    JSON parser
+    @see MprObj MprCheckState MprSetValue MprMakeObj mprSerialize mprDeserialize mprJsonParseError
+    @defgroup MprJson MprJson
+ */
 typedef struct MprJson {
     cchar           *tok;           /* Current parse token */
     int             lineNumber;     /* Current line number in path */
@@ -5984,19 +6002,53 @@ typedef struct MprJson {
     void            *data;          /* Custom data handle */
 } MprJson;
 
-//  MOB DOC
+/**
+    Serialize a JSON object tree into a string
+    @description Serializes a top level JSON object created via mprDeserialize into a characters string in JSON format.
+    @param obj Object returned via #mprDeserialize
+    @param flags Serialization flags. Supported flags include MPR_JSON_PRETTY.
+    @return Returns a serialized JSON character string.
+    @ingroup MprJson
+ */
 extern cchar *mprSerialize(MprObj *obj, int flags);
+
+/**
+    Custom deserialization from a JSON string into an object tree.
+    @description Serializes a top level JSON object created via mprDeserialize into a characters string in JSON format.
+        This extended deserialization API takes callback functions to control how the object tree is constructed. 
+    @param str JSON string to deserialize.
+    @param makeObj Callback function to construct an object for each level in the object tree. Objects will be either
+        arrays or objects.
+    @param check State check callback function. The state check function is called at the conclusion of object levels when
+        a "}" or "]" is encountered in the input stream. It is also invoked after each "name:" is parsed.
+    @param setValue Callback function to set a value in an object.
+    @param data Opaque object to pass to the given callbacks
+    @return Returns a serialized JSON character string.
+    @ingroup MprJson
+    @internal
+ */
 extern MprObj *mprDeserializeCustom(cchar *str, MprMakeObj makeObj, MprCheckState check, MprSetValue setValue, void *data);
+
+/**
+    Deserialize a JSON string into an object tree.
+    @description Serializes a top level JSON object created via mprDeserialize into a characters string in JSON format.
+    @param str JSON string to deserialize.
+    @return Returns a tree of objects. Each object represents a level in the JSON input stream. Each object is a 
+        hash table (MprHash). The hash table key entry will store the property type in the MprKey.type field. This will
+        be set to MPR_JSON_STRING, MPR_JSON_OBJ or MPR_JSON_ARRAY.
+    @ingroup MprJson
+ */
 extern MprObj *mprDeserialize(cchar *str);
+
+/**
+    Signal a parse error in the JSON input stream.
+    @description JSON callback functions will invoke mprJsonParseError when JSON parse or data semantic errors are 
+        encountered.
+    @param jp JSON control structure
+    @param fmt Printf style format string
+    @ingroup MprJson
+ */
 extern void mprJsonParseError(MprJson *jp, cchar *fmt, ...);
-
-#if FUTURE
-extern MprObj *mprReadObj(MprObj *obj, cchar *cmd, int *type); 
-extern MprObj *mprWriteObj(MprObj *obj, cchar *cmd, cchar *value, int type); 
-
-readObj(obj, "users.'Peter Smith'.address", &type);
-writeObj(obj, "users.'John Doe'.address", "1212 Park Ave", MPR_JSON_STRING);
-#endif
 
 /**
     Thread service
@@ -6749,9 +6801,9 @@ extern bool mprIsSocketEof(MprSocket *sp);
  */
 extern int mprListenOnSocket(MprSocket *sp, cchar *ip, int port, int flags);
 
-//  MOB - rename mprParseSocketAddress
 /**
-    Parse an IP address. This parses a string containing an IP:PORT specification and returns the IP address and port 
+    Parse an socket address IP address. 
+    @description This parses a string containing an IP:PORT specification and returns the IP address and port 
     components. Handles ipv4 and ipv6 addresses. 
     @param ipSpec An IP:PORT specification. The :PORT is optional. When an IP address contains an ipv6 port it should be 
     written as
@@ -6762,7 +6814,7 @@ extern int mprListenOnSocket(MprSocket *sp, cchar *ip, int port, int flags);
     @param defaultPort The default port number to use if the ipSpec does not contain a port
     @ingroup MprSocket
  */
-extern int mprParseIp(cchar *ipSpec, char **ip, int *port, int defaultPort);
+extern int mprParseSocketAddress(cchar *ipSpec, char **ip, int *port, int defaultPort);
 
 /**
     Read from a socket

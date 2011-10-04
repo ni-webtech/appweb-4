@@ -433,7 +433,7 @@ static void compileFile(cchar *source, int kind)
     if (kind == ESP_CONTROLLER) {
         app->csource = source;
         if (app->flatFile) {
-            if ((data = mprReadPath(source, &len)) == 0) {
+            if ((data = mprReadPathContents(source, &len)) == 0) {
                 fail("Can't read %s", source);
                 return;
             }
@@ -441,13 +441,13 @@ static void compileFile(cchar *source, int kind)
                 fail("Can't write compiled script file %s", app->flatFile->path);
                 return;
             }
-            mprWriteFileFormat(app->flatFile, "\n\n");
+            mprWriteFileFmt(app->flatFile, "\n\n");
             mprAddItem(app->flatItems, sfmt("espInit_controller_%s", mprTrimPathExt(mprGetPathBase(source))));
         }
     }
     if (kind & (ESP_PAGE | ESP_VIEW)) {
         layout = mprJoinPath(mprJoinPath(eroute->dir, eroute->layoutsDir), "default.esp");
-        if ((page = mprReadPath(source, &len)) == 0) {
+        if ((page = mprReadPathContents(source, &len)) == 0) {
             fail("Can't read %s", source);
             return;
         }
@@ -462,7 +462,7 @@ static void compileFile(cchar *source, int kind)
                 fail("Can't write compiled script file %s", app->flatFile->path);
                 return;
             }
-            mprWriteFileFormat(app->flatFile, "\n\n");
+            mprWriteFileFmt(app->flatFile, "\n\n");
             mprAddItem(app->flatItems, sfmt("espInit_%s", app->cacheName));
 
         } else {
@@ -555,7 +555,7 @@ static void compile(int argc, char **argv)
 
         //  MOB - Is the name right?
         //  MOB - what about pattern matching?
-        app->files = files = mprFindFiles(eroute->staticDir, 0);
+        app->files = files = mprGetPathTree(eroute->staticDir, 0);
         for (next = 0; (path = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
             if (smatch(mprGetPathExt(path), "esp")) {
                 compileFile(path, ESP_PAGE);
@@ -572,7 +572,7 @@ static void compile(int argc, char **argv)
             fail("Can't open %s", path);
             return;
         }
-        mprWriteFileFormat(app->flatFile, "/*\n *  Flat compilation of %s\n */\n\n", app->appName);
+        mprWriteFileFmt(app->flatFile, "/*\n *  Flat compilation of %s\n */\n\n", app->appName);
 
         app->files = files = mprGetPathFiles(eroute->controllersDir, 1);
         for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
@@ -586,20 +586,18 @@ static void compile(int argc, char **argv)
             path = mprJoinPath(eroute->viewsDir, dp->name);
             compileFile(path, ESP_VIEW);
         }
-        //  MOB - Is the name right?
-        //  MOB - what about pattern matching?
-        app->files = files = mprFindFiles(eroute->staticDir, 0);
+        app->files = files = mprGetPathTree(eroute->staticDir, 0);
         for (next = 0; (path = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
             if (smatch(mprGetPathExt(path), "esp")) {
                 compileFile(path, ESP_PAGE);
             }
         }
-        mprWriteFileFormat(app->flatFile, "\nESP_EXPORT int espInit_app_%s(EspRoute *el, MprModule *module) {\n", 
+        mprWriteFileFmt(app->flatFile, "\nESP_EXPORT int espInit_app_%s(EspRoute *el, MprModule *module) {\n", 
             app->appName);
         for (next = 0; (line = mprGetNextItem(app->flatItems, &next)) != 0; ) {
-            mprWriteFileFormat(app->flatFile, "    %s(el, module);\n", line);
+            mprWriteFileFmt(app->flatFile, "    %s(el, module);\n", line);
         }
-        mprWriteFileFormat(app->flatFile, "    return 0;\n}\n");
+        mprWriteFileFmt(app->flatFile, "    return 0;\n}\n");
         mprCloseFile(app->flatFile);
 
         app->module = mprGetNormalizedPath(sfmt("%s/app%s", eroute->cacheDir, BLD_SHOBJ));
@@ -682,7 +680,7 @@ static void fixupFile(cchar *path)
     char    *data, *tmp;
 
     path = mprJoinPath(eroute->dir, path);
-    if ((data = mprReadPath(path, &len)) == 0) {
+    if ((data = mprReadPathContents(path, &len)) == 0) {
         fail("Can't read %s", path);
         return;
     }
@@ -759,7 +757,7 @@ static void installAppConf()
     } else {
         from = mprJoinPath(app->wwwDir, "appweb.conf");
     }
-    if ((conf = mprReadPath(from)) == 0) {
+    if ((conf = mprReadPathContents(from)) == 0) {
         fail("Can't read %s", from);
         return;
     }
@@ -784,7 +782,7 @@ static void generateAppConfigFile()
     ssize   len;
 
     from = mprJoinPath(app->wwwDir, "appweb.conf");
-    if ((conf = mprReadPath(from, &len)) == 0) {
+    if ((conf = mprReadPathContents(from, &len)) == 0) {
         fail("Can't read %s", from);
         return;
     }

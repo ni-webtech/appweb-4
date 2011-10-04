@@ -209,7 +209,7 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
     eroute = req->eroute;
 
     if (isView) {
-        if ((page = mprReadPath(source, &len)) == 0) {
+        if ((page = mprReadPathContents(source, &len)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't read %s", source);
             return 0;
         }
@@ -418,7 +418,7 @@ char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheNam
                 } else {
                     include = mprJoinPath(mprGetPathDir(path), token);
                 }
-                if ((incText = mprReadPath(include, &len)) == 0) {
+                if ((incText = mprReadPathContents(include, &len)) == 0) {
                     *err = sfmt("Can't read include file: %s", include);
                     return 0;
                 }
@@ -463,7 +463,7 @@ char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheNam
             CacheName will only be set for the outermost invocation
          */
         if (layout) {
-            if ((layoutPage = mprReadPath(layout, &len)) == 0) {
+            if ((layoutPage = mprReadPathContents(layout, &len)) == 0) {
                 *err = sfmt("Can't read layout page: %s", layout);
                 return 0;
             }

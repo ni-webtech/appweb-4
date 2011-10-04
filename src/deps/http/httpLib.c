@@ -1255,7 +1255,7 @@ int httpReadGroupFile(HttpAuth *auth, char *path)
     if ((file = mprOpenFile(path, O_RDONLY | O_TEXT, 0444)) == 0) {
         return MPR_ERR_CANT_OPEN;
     }
-    while ((buf = mprGetFileString(file, MPR_BUFSIZE, NULL)) != NULL) {
+    while ((buf = mprReadLine(file, MPR_BUFSIZE, NULL)) != NULL) {
         enabled = stok(buf, " :\t", &tok);
         for (cp = enabled; isspace((int) *cp); cp++) {
             ;
@@ -1288,7 +1288,7 @@ int httpReadUserFile(HttpAuth *auth, char *path)
     if ((file = mprOpenFile(path, O_RDONLY | O_TEXT, 0444)) == 0) {
         return MPR_ERR_CANT_OPEN;
     }
-    while ((buf = mprGetFileString(file, MPR_BUFSIZE, NULL)) != NULL) {
+    while ((buf = mprReadLine(file, MPR_BUFSIZE, NULL)) != NULL) {
         enabled = stok(buf, " :\t", &tok);
         for (cp = enabled; isspace((int) *cp); cp++) {
             ;
@@ -2450,9 +2450,6 @@ static void commonPrep(HttpConn *conn)
     conn->canProceed = 1;
     conn->error = 0;
     conn->errorMsg = 0;
-#if UNUSED
-    conn->flags = 0;
-#endif
     conn->state = 0;
     conn->writeComplete = 0;
     conn->lastActivity = conn->http->now;
@@ -3437,7 +3434,7 @@ int httpSecureEndpointByName(cchar *name, struct MprSsl *ssl)
     int             port, next, count;
 
     http = MPR->httpService;
-    mprParseIp(name, &ip, &port, -1);
+    mprParseSocketAddress(name, &ip, &port, -1);
     if (ip == 0) {
         ip = "";
     }
@@ -3947,7 +3944,7 @@ void httpSetHostIpAddr(HttpHost *host, cchar *ip, int port)
     char    *pip;
 
     if (port < 0 && schr(ip, ':')) {
-        mprParseIp(ip, &pip, &port, -1);
+        mprParseSocketAddress(ip, &pip, &port, -1);
         ip = pip;
     }
     host->ip = sclone(ip);
@@ -6664,6 +6661,13 @@ ssize httpWriteString(HttpQueue *q, cchar *s)
 }
 
 
+ssize httpWriteSafeString(HttpQueue *q, cchar *s)
+{
+    s = mprEscapeHtml(s);
+    return httpWriteString(q, s);
+}
+
+
 ssize httpWrite(HttpQueue *q, cchar *fmt, ...)
 {
     va_list     vargs;
@@ -7793,6 +7797,7 @@ void httpAddRouteHeader(HttpRoute *route, cchar *header, cchar *value, int flags
 }
 
 
+#if FUTURE && KEEP
 void httpAddRouteLoad(HttpRoute *route, cchar *module, cchar *path)
 {
     HttpRouteOp     *op;
@@ -7805,6 +7810,7 @@ void httpAddRouteLoad(HttpRoute *route, cchar *module, cchar *path)
     op->value = sclone(path);
     mprAddItem(route->updates, op);
 }
+#endif
 
 
 /*
@@ -8519,11 +8525,6 @@ static char *finalizeTemplate(HttpRoute *route)
         mprAdjustBufEnd(buf, -1);
     }
     mprAddNullToBuf(buf);
-#if UNUSED
-    if (route->prefix) {
-        template = sjoin(route->prefix, mprGetBufStart(buf), NULL);
-    } else 
-#endif
     if (mprGetBufLength(buf) > 0) {
         template = sclone(mprGetBufStart(buf));
     } else {
@@ -8548,71 +8549,7 @@ void httpFinalizeRoute(HttpRoute *route)
 }
 
 
-/* 
-    Create a URI link. The target parameter may contain partial or complete URI information. The missing parts 
-    are supplied using the current request and route tables. The resulting URI is a normalized, server-local 
-    URI (begins with "/"). The URI will include any defined scriptName, but will not include scheme, host or 
-    port components.
-    @param route Route to modify
-    @param target The URI target. The target parameter can be a URI string or object hash of components. If the 
-        target is a string, it is may contain an absolute or relative URI. If the target has an absolute URI path, 
-        that path is used unmodified. If the target is a relative URI, it is appended to the current request URI 
-        path.  The target can also be an object hash of URI components: scheme, host, port, path, reference and
-        query. If these component properties are supplied, these will be combined to create a URI.
 
-        The URI will be created according to the route URI template. The template may be explicitly specified
-        via a "route" target property. Otherwise, if an "action" property is specified, the route of the same
-        name will be used. If these don't result in a usable route, the "default" route will be used. See the
-        Router for more details.
-       
-        If the target is a string that begins with "{AT}" it will be interpreted as a controller/action pair of the 
-        form "{AT}Controller/action". If the "controller/" portion is absent, the current controller is used. If 
-        the action component is missing, the "list" action is used. A bare "{AT}" refers to the "list" action 
-        of the current controller.
-
-    @param options MOB
-        Lastly, the target object hash may contain an override "uri" property. If specified, the value of the 
-        "uri" property will be returned and all other properties will be ignored.
-        <ul>
-            <li>scheme String URI scheme portion</li>
-            <li>host String URI host portion</li>
-            <li>port Number URI port number</li>
-            <li>path String URI path portion</li>
-            <li>reference String URI path reference. Does not include "#"</li>
-            <li>query String URI query parameters. Does not include "?"</li>
-            <li>controller String Controller name if using a Controller-based route. This can also be specified via
-                the action option.</li>
-            <li>action String Action to invoke. This can be a URI string or a Controller action of the form
-                {AT}Controller/action.</li>
-            <li>route String Route name to use for the URI template</li>
-    @return A normalized, server-local Uri object.
-    Given a current request of http://example.com/samples/demo" and "r" == the current request:
-
-    httpLink(conn, "http://example.com/index.html", 0);
-    httpLink(conn, "/path/to/index.html", 0);
-    httpLink(conn, "../images/splash.png", 0);
-    httpLink(conn, "~/static/images/splash.png", 0);
-    httpLink(conn, "${app}/static/images/splash.png", 0);
-    httpLink(conn, "@controller/checkout", 0);
-    httpLink(conn, "@controller/")                //  Controller = Controller, action = index
-    httpLink(conn, "@init")                       //  Current controller, action = init
-    httpLink(conn, "@")                           //  Current controller, action = index
-    httpLink(conn, "{ action: '@post/create' }", 0);
-    httpLink(conn, "{ action: 'checkout' }", 0);
-    httpLink(conn, "{ action: 'logout', controller: 'admin' }", 0);
-    httpLink(conn, "{ action: 'admin/logout'", 0);
-    httpLink(conn, "{ product: 'candy', quantity: '10', template: '/cart/${product}/${quantity}' }", 0);
-    httpLink(conn, "{ route: '~/STAR/edit', action: 'checkout', id: '99' }", 0);
-    httpLink(conn, "{ template: '~/static/images/${theme}/background.jpg', theme: 'blue' }", 0);
-
-    NOTE:
-        - @action is parsed into a controller/action pair and then resolved using a route template.
-        - If target is {options} then the link is calculated from a route template. The options are used to calculate the
-            route and/or template.
-        - If target does not start with "@" or "{" it will be treated as a template and tokens resolved from the request
-            parameters
-        - If "~" or "${app}" is present at the start of a link, it is replaced with the route prefix (app prefix).
-*/
 char *httpLink(HttpConn *conn, cchar *target, MprHash *options)
 {
     HttpRoute       *route, *lroute;
@@ -8702,7 +8639,6 @@ char *httpLink(HttpConn *conn, cchar *target, MprHash *options)
             target = "/";
         }
     }
-
     //  MOB OPT
     uri = httpCreateUri(target, 0);
     uri = httpResolveUri(httpCreateUri(rx->uri, 0), 1, &uri, 0);
@@ -8802,7 +8738,7 @@ char *httpMakePath(HttpRoute *route, cchar *file)
     if ((path = stemplate(file, route->pathTokens)) == 0) {
         return 0;
     }
-    if (mprIsRelPath(path)) {
+    if (mprIsPathRel(path)) {
         path = mprJoinPath(route->host->home, path);
     }
     return mprGetAbsPath(path);
@@ -9270,6 +9206,7 @@ void httpAddResourceGroup(HttpRoute *parent, cchar *resource)
     addRestful(parent, "show",      "GET",    "/{id=[0-9]+}$",           "show",          resource);
     addRestful(parent, "update",    "PUT",    "/{id=[0-9]+}$",           "update",        resource);
     addRestful(parent, "destroy",   "DELETE", "/{id=[0-9]+}$",           "destroy",       resource);
+    //  MOB - rethink "custom" name - should action be after id? Should this be custom-${action}?
     addRestful(parent, "custom",    "POST",   "/{action}/{id=[0-9]+}$",  "${action}",     resource);
     addRestful(parent, "default",   "*",      "/{action}$",              "cmd-${action}", resource);
 }
@@ -9290,7 +9227,7 @@ void httpAddResource(HttpRoute *parent, cchar *resource)
 }
 
 
-void httpAddDefaultRoutes(HttpRoute *parent)
+void httpAddStaticRoute(HttpRoute *parent)
 {
     cchar   *source, *name, *path, *pattern, *prefix;
 
@@ -9300,6 +9237,15 @@ void httpAddDefaultRoutes(HttpRoute *parent)
     path = stemplate("${STATIC_DIR}/index.esp", parent->pathTokens);
     pattern = sfmt("^%s%s", prefix, "(/)*$");
     httpAddConfiguredRoute(parent, name, "GET,POST,PUT", pattern, path, source);
+}
+
+
+void httpAddHomeRoute(HttpRoute *parent)
+{
+    cchar   *source, *name, *path, *pattern, *prefix;
+
+    prefix = parent->prefix ? parent->prefix : "";
+    source = parent->sourceName;
 
     name = qualifyName(parent, NULL, "static");
     path = stemplate("${STATIC_DIR}/$1", parent->pathTokens);
@@ -9311,15 +9257,18 @@ void httpAddDefaultRoutes(HttpRoute *parent)
 void httpAddRouteSet(HttpRoute *parent, cchar *set)
 {
     if (scasematch(set, "simple")) {
-        httpAddDefaultRoutes(parent);
+        httpAddHomeRoute(parent);
+        httpAddStaticRoute(parent);
 
     } else if (scasematch(set, "mvc")) {
-        httpAddDefaultRoutes(parent);
+        httpAddHomeRoute(parent);
+        httpAddStaticRoute(parent);
         httpAddConfiguredRoute(parent, "default", NULL, "^/{controller}(~/{action}~)", "${controller}-${action}", 
             "${controller}.c");
 
     } else if (scasematch(set, "restful")) {
-        httpAddDefaultRoutes(parent);
+        httpAddHomeRoute(parent);
+        httpAddStaticRoute(parent);
         httpAddResourceGroup(parent, "{controller}");
 
     } else if (!scasematch(set, "none")) {
@@ -10229,12 +10178,6 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
         if (!rx->form) {
             routeRequest(conn);
         }
-#if UNUSED
-        if (!(rx->form || rx->upload)) {
-            /* Forms and upload need to wait for all rx data */
-            httpStartPipeline(conn);
-        }
-#endif
 
     } else if (!(100 <= rx->status && rx->status < 200)) {
         httpSetState(conn, HTTP_STATE_PARSED);        
@@ -14881,11 +14824,7 @@ void httpCreateCGIParams(HttpConn *conn)
         In CGI|PHP terms, the scriptName is the appweb rx->pathInfo and the PATH_INFO is the extraPath. 
      */
     mprAddKey(vars, "PATH_INFO", rx->extraPath);
-#if UNUSED
-    mprAddKey(vars, "SCRIPT_NAME", rx->pathInfo);
-#else
     mprAddKeyFmt(vars, "SCRIPT_NAME", "%s%s", rx->scriptName, rx->pathInfo);
-#endif
     mprAddKey(vars, "SCRIPT_FILENAME", tx->filename);
     if (rx->extraPath) {
         /*  
