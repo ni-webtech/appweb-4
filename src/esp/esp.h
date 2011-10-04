@@ -921,7 +921,12 @@ typedef struct EspControl { int dummy; } EspControl;
     @param conn Http connection object
     @param text Alert text to display
     @param options Extra options. See $EspControl for a list of the standard options.
+    @arg period Polling period in milliseconds for the client to check the server for status message 
+    updates. If this is not specifed, the connection to the server will be kept open. This permits the 
+    server to "push" alerts to the console, but will consume a connection at the server for each client.
     @ingroup EspControl
+    @internal
+    MOB - does this do an alert popup or is this a console status widget?
  */
 extern void espAlert(HttpConn *conn, cchar *text, cchar *options);
 
@@ -964,12 +969,19 @@ extern void espButtonLink(HttpConn *conn, cchar *text, cchar *uri, cchar *option
         sorting by column, dynamic data refreshes, pagination and clicking on rows.
     TODO. This is incomplete.
     @param conn Http connection object
+    @param grid Data to display. The data is a grid of data. Use ediCreateGrid or ediReadGrid.
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @arg columns Object hash of column entries. Each column entry is in-turn an object hash of options. If unset, 
+        all columns are displayed using defaults.
+    @arg kind String Type of chart. Select from: piechart, table, linechart, annotatedtimeline, guage, map, 
+        motionchart, areachart, intensitymap, imageareachart, barchart, imagebarchart, bioheatmap, columnchart, 
+        linechart, imagelinechart, imagepiechart, scatterchart (and more)
     @ingroup EspControl
     @internal
  */
-extern void espChart(HttpConn *conn);
+extern void espChart(HttpConn *conn, EdiGrid *grid, cchar *options);
 
-//  MOB DB - inconsistent. What fields use db records and what don't
+//  MOB DB
 /**
     Render an input checkbox. 
     @description This creates a checkbox suitable for use within an input form. 
@@ -978,6 +990,7 @@ extern void espChart(HttpConn *conn);
         initial value for the checkbox. The field should be a property of the $espForm current record. 
         If this call is used without a form control record, the actual data value should be supplied via the 
         options.value property.
+    @param checkedValue Value for which the checkbox will be checked.
     @param options Extra options. See $EspControl for a list of the standard options.
     @ingroup EspControl
  */
@@ -990,15 +1003,6 @@ extern void espCheckbox(HttpConn *conn, cchar *name, cchar *checkedValue, cchar 
     @param conn Http connection object
     @param body HTML body to render
     @param options Extra options. See $EspControl for a list of the standard options.
-    @remarks 
-        <% div("{ refresh: '/getData', period: 2000}"); %>\n
-        Line 2\n
-        Line 3
-    @options <i>option1</i> details \b about option1\n
-             <i>option2</i> details about option1
-    @stability prototype
-    @example <% MOB div("{ refresh: '/getData', period: 2000}"); %>
-        Line 2
     @ingroup EspControl
  */
 extern void espDivision(HttpConn *conn, cchar *body, cchar *options);
@@ -1018,6 +1022,9 @@ extern void espEndform(HttpConn *conn);
     @param conn Http connection object
     @param kinds Space separated list of flash messages types. Typical types are: "error", "inform", "warning".
     @param options Extra options. See $EspControl for a list of the standard options.
+    @arg retain -- Number of seconds to retain the message. If <= 0, the message is retained until another
+        message is displayed. Default is 0.
+    MOB - this default implies it is displayed for zero seconds
     @ingroup EspControl
  */
 extern void espFlash(HttpConn *conn, cchar *kinds, cchar *options);
@@ -1031,7 +1038,13 @@ extern void espFlash(HttpConn *conn, cchar *kinds, cchar *options);
     @param conn Http connection object
     @param record Record to use by default to supply form field names and values.
     @param options Extra options. See $EspControl for a list of the standard options.
-MOB - options here - how to document options
+    @arg hideErrors -- Don't display database record errors. Records retain error diagnostics from the previous
+        failed write. Setting this option will prevent the display of such errors.
+    @arg modal -- Make the form a modal dialog. This will block all other HTML controls except the form.
+    @arg nosecurity -- Don't generate a security token for the form.
+    @arg securityToken -- String Override CSRF security token to include when the form is submitted. A default 
+        security token will always be generated unless options.nosecurity is defined to be true.
+        Security tokens are used by ESP to mitigate cross site scripting errors.
     @ingroup EspControl
  */
 extern void espForm(HttpConn *conn, EdiRec *record, cchar *options);
@@ -1054,26 +1067,212 @@ extern void espIcon(HttpConn *conn, cchar *uri, cchar *options);
  */
 extern void espImage(HttpConn *conn, cchar *uri, cchar *options);
 
-/*MOB
-    Render an HTML anchor link
+//  MOB DB
+//  MOB should be consistent with "name" vs "field"
+/**
+    Render an input field as part of a form. This is a smart input control that will call the appropriate
+        input control based on the database record field data type.
     @param conn Http connection object
-    @param text Anchor text to display for the link
+    @param field Name for the input field. This defines the HTML element name and provides the source 
+        of the initial value to display. The field should be a property of the form current record. 
+        If this call is used without a form control record, the actual data value should be supplied via the 
+        options.value property.
     @param options Extra options. See $EspControl for a list of the standard options.
     @ingroup EspControl
  */
-extern void espInput(HttpConn *conn, cchar *name, cchar *options);
+extern void espInput(HttpConn *conn, cchar *field, cchar *options);
+
+/**
+    Render a text label field. This renders an output-only text field. Use espText() for input fields.
+    @param conn Http connection object
+    @param text Label text to display.
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @ingroup EspControl
+ */
 extern void espLabel(HttpConn *conn, cchar *text, cchar *options);
-extern void espDropList(HttpConn *conn, cchar *name, cchar *choices, cchar *options);
+
+//  MOB DB
+//  MOB - how to get a choices list from a database
+/**
+    Render a dropdown selection list
+    @param conn Http connection object
+    @param field Record field name to provide the default value for the list. The field should be a property of the 
+        form current record.  The field name is used to create the HTML input control name.
+        If this call is used without a form control record, the actual data value should be supplied via the 
+        options.value property.
+    @param choices Choices to select from. This is a JSON style set of properties. For example:
+        espDropList(conn, "priority", "{ low: 0, med: 1, high: 2 }", NULL)
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @ingroup EspControl
+ */
+extern void espDropList(HttpConn *conn, cchar *field, cchar *choices, cchar *options);
+
+/**
+    Render a mail link
+    @param conn Http connection object
+    @param name Recipient name to display
+    @param address Mail recipient address link
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @ingroup EspControl
+ */
 extern void espMail(HttpConn *conn, cchar *name, cchar *address, cchar *options);
-extern void espProgress(HttpConn *conn, cchar *data, cchar *options);
+
+/**
+    Emit a progress bar.
+    @param conn Http connection object
+    @param progress Progress percentage (0-100) 
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @ingroup EspControl
+ */
+extern void espProgress(HttpConn *conn, cchar *progress, cchar *options);
+
+//  MOB DB
+/**
+    Render a radio button. This creates a radio button suitable for use within an input form. 
+    @param conn Http connection object
+    @param field Name for the input radio button. This defines the HTML element name and provides the source 
+        of the initial value to display. The field should be a property of the form current record. 
+        If this call is used without a form control record, the actual data value should be supplied via the 
+        options.value property.
+    @param choices Choices to select from. This is a JSON style set of properties. For example:
+        espRadio(conn, "priority", "{ low: 0, med: 1, high: 2, }", NULL)
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @ingroup EspControl
+ */
 extern void espRadio(HttpConn *conn, cchar *field, void *choices, cchar *options);
+
+/**
+    Control the refresh of web page dynamic elements
+    @param conn Http connection object
+    @param on URI to invoke when turning "on" refresh
+    @param off URI to invoke when turning "off" refresh
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @arg minified Set to true to select a minified (compressed) version of the script.
+    @ingroup EspControl
+    @internal
+ */
 extern void espRefresh(HttpConn *conn, cchar *on, cchar *off, cchar *options);
+
+/**
+    Render a script link
+    @param uri Script URI to load. Set to null to get a default set of scripts. See $httpLink for a list of possible
+        URI formats.
+    @param conn Http connection object
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @ingroup EspControl
+ */
 extern void espScript(HttpConn *conn, cchar *uri, cchar *options);
+
+/**
+    Generate a security token.
+    @description Security tokens are used to help guard against CSRF threats.
+    This call will generate a security token for the page and emit an HTML meta element for the security token.
+    The token will automatically be included whenever forms are submitted and the token be validated by the 
+    receiving Controller. Forms will normally automatically generate the security token and that explicitly
+    calling this routine is not required unless a security token is required for non-form requests such as AJAX
+    requests. The $securityToken control should be called inside the &lt;head section of the web page.
+    @param conn Http connection object
+    @ingroup EspControl
+ */
 extern void espSecurityToken(HttpConn *conn);
+
+/**
+    Render a stylesheet link
+    @param uri Stylesheet URI to load. Set to null to get a default set of stylesheets. See $httpLink for a list of possible
+        URI formats.
+    @param conn Http connection object
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @ingroup EspControl
+ */
 extern void espStylesheet(HttpConn *conn, cchar *uri, cchar *options);
+
+// MOB - review which of these are supported currently
+/**
+    Render a table.
+    @description The table control can display static or dynamic tabular data. The client table control 
+        manages sorting by column, dynamic data refreshes and clicking on rows or cells.
+    @param conn Http connection object
+    @param grid Data to display. The data is a grid of data. Use ediCreateGrid or ediReadGrid.
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @param options Optional extra options. See $View for a list of the standard options.
+    @arg cell Boolean Set to true to make click or edit links apply per cell instead of per row. 
+        The default is false.
+    @arg columns (Array|Object) The columns list is anobject hash of column objects where each column entry is 
+        hash of column options.  Column options:
+    <ul>
+        <li>align - Will right-align numbers by default</li>
+        <li>click - URI to invoke if the cell is clicked</li>
+        <li>edit - MOB </li>
+        <li>formatter - Function to invoke to format the value to display</li>
+        <li>header - Header text for the column</li>
+        <li>style - Cell styles</li>
+        <li>width - Column width. Can be a string percentage or numeric pixel width</li>
+    </ul>
+    @arg params Object Hash of post parameters to include in the request. This is a hash of key/value items.
+    @arg pivot Boolean Pivot the table by swaping rows for columns and vice-versa
+    @arg showHeader Boolean Control if column headings are displayed.
+    @arg showId Boolean If a columns option is not provided, the id column is normally hidden. 
+        To display, set showId to be true.
+    @arg sort String Enable row sorting and define the column to sort by. Defaults to the first column.
+    @arg sortOrder String Default sort order. Set to "ascending" or "descending".Defaults to ascending.
+    @arg style String CSS class to use for the table. The ultimate style to use for a table cell is the 
+        combination of style, styleCells, styleColumns and style Rows.
+    @arg styleCells 2D Array of styles to use for the table body cells. Can also provide an array to the 
+        column.style property.
+    @arg styleColumns Array of styles to use for the table body columns. Can also use the style option in the
+        columns option.
+    @arg styleRows Array of styles to use for the table body rows
+    @arg title String Table title.
+    @ingroup EspControl
+ */
 extern void espTable(HttpConn *conn, EdiGrid *grid, cchar *options);
+
+/**
+    Render a tab control. 
+    The tab control can manage a set of panes and will selectively show and hide or invoke the selected panes. 
+    If the "click" option is defined, the selected pane will be invoked via a foreground click. If the
+    "remote" option is defined, the selected pane will be invoked via a background click. If the "toggle" option is
+    defined the selected pane will be made visible and other panes will be hidden.
+    If using show/hide tabs, define the initial visible pane to be of the class "-ejs-pane-visible" and define
+    other panes to be "-ejs-pane-hidden". The control's client side code will toggle these classes to make panes
+    visible or hidden.
+    @param conn Http connection object
+    @param grid Tab data for the control. Tab data can be be a single object where the tab text is the property 
+        key and the target to invoke is the property value. It can also be an an array of objects, one per tab. 
+    @param options Optional extra options. See $View for a list of the standard options.
+    @arg click Set to true to invoke the selected pane via a foreground click.
+    @arg remote Set to true to invoke the selected pane via a background click.
+    @arg toggle Set to true to show the selected pane and hide other panes.
+    @ingroup EspControl
+ */
 extern void espTabs(HttpConn *conn, EdiGrid *grid, cchar *options);
+
+//MOB DB
+/**
+    Render a text input field as part of a form.
+    @param name Name for the input text field. This defines the HTML element name and provides the source 
+        of the initial value to display. The field should be a property of the form control record. It can 
+        be a simple property of the record or it can have multiple parts, such as: field.field.field. If 
+        this call is used without a form control record, the actual data value should be supplied via the 
+        options.value property. If the cols or rows option is defined, then a textarea HTML element will be used for
+        multiline input.
+    @param options Optional extra options. See $View for a list of the standard options.
+    @arg cols Number number of text columns
+    @arg rows Number number of text rows
+    @arg password Boolean The data to display is a password and should be obfuscated.
+    @ingroup EspControl
+ */
 extern void espText(HttpConn *conn, cchar *field, cchar *options);
+
+/**
+    Render a tree control. 
+    @description The tree control can display static or dynamic tree data.
+    @param grid Optional initial data for the control. The data option may be used with the refresh option to 
+          dynamically refresh the data. The tree data is typically an XML document.
+    @param options Optional extra options. See $View for a list of the standard options.
+    @ingroup EspControl
+    @internal
+ */
 extern void espTree(HttpConn *conn, EdiGrid *grid, cchar *options);
 
 /*
@@ -1083,7 +1282,7 @@ extern void alert(cchar *text, cchar *options);
 extern void anchor(cchar *text, cchar *uri, cchar *options);
 extern void button(cchar *name, cchar *value, cchar *options);
 extern void buttonLink(cchar *text, cchar *uri, cchar *options);
-extern void chart(HttpConn *conn);
+extern void chart(EdiGrid *grid, cchar *options);
 extern void checkbox(cchar *field, cchar *checkedValue, cchar *options);
 extern void division(cchar *body, cchar *options);
 extern void endform();
@@ -1094,12 +1293,12 @@ extern void form(void *rec, cchar *options);
 
 extern void icon(cchar *uri, cchar *options);
 extern void image(cchar *uri, cchar *options);
-extern void input(cchar *name, cchar *options);
+extern void input(cchar *field, cchar *options);
 extern void label(cchar *text, cchar *options);
-extern void droplist(cchar *name, cchar *choices, cchar *options);
+extern void droplist(cchar *field, cchar *choices, cchar *options);
 extern void mail(HttpConn *conn, cchar *name, cchar *address, cchar *options);
 extern void progress(cchar *data, cchar *options);
-extern void radio(cchar *name, void *choices, cchar *options);
+extern void radio(cchar *field, void *choices, cchar *options);
 extern void refresh(cchar *on, cchar *off, cchar *options);
 extern void script(cchar *uri, cchar *options);
 extern void securityToken();

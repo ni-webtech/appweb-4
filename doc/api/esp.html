@@ -44,7 +44,7 @@
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga5bf9787cd0cd13684a7e8ffa55aba884" class="nameRef">espButton</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *text, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an HTML button to use inside a form.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1gae7c01afaa7ef62fce8c378a0864eee84" class="nameRef">espButtonLink</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *text, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *uri, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an HTML button to use outside a form.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_route_1ga455d09e910baab0aded9a57936dec886" class="nameRef">espCacheControl</a>(<a href="#group___esp_route" class="ref">EspRoute</a> *eroute, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *targetKey, int lifesecs, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *uri)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Control the caching of content for a given targetKey.</td></tr>
-<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1gab8ba29ac8a0ec5e26f83fa642b4494b6" class="nameRef">espChart</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an graphic chart.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga40a78f3c15897c39217dad4c6c6d31a2" class="nameRef">espChart</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an graphic chart.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga4c0097201d128c40f451af90ceb5f674" class="nameRef">espCheckbox</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *checkedValue, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an input checkbox.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a></td><td><a href="#group___esp_route_1ga3b649e2be364263d078bb29ae3cbbb0a" class="nameRef">espCompile</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *source, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *module, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *cacheName, int isView)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Compile a view or controller.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___esp_session" class="ref">EspSession*</a></td><td><a href="#group___esp_session_1ga11e5e8371651e92dae33c1d778265e77" class="nameRef">espCreateSession</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create a session object.</td></tr>
@@ -53,6 +53,7 @@
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_route_1ga7cec7c28d284376b7670bf0065159870" class="nameRef">espDefineView</a>(<a href="#group___esp_route" class="ref">EspRoute</a> *eroute, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path, void *viewProc)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Define a view.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_session_1gab325d1d70bce4551a89fd7f0d1208b07" class="nameRef">espDestroySession</a>(<a href="#group___esp_session" class="ref">EspSession</a> *sp)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Destroy a session state object.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga5677ea87f674bd598faee87113b7fd2f" class="nameRef">espDivision</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *body, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an HTML division.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga5f7dd7dad36e89c0e7aa7fc09234e1b5" class="nameRef">espDropList</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *field, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *choices, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a dropdown selection list.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1gadf62f0d9f2459c1be758606992c235ac" class="nameRef">espEndform</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Signify the end of an HTML form.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_req_1ga6726adb293f1b81115cd749c8f5fa2a4" class="nameRef">espError</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Send an &quot;error&quot; flash message.</td></tr>
 <tr class="apiDef"><td class="apiType">char*</td><td><a href="#group___esp_route_1ga680226fbc5c0a870ff91eef7d13ac4c8" class="nameRef">espExpandCommand</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *command, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *source, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *module)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Expand a compile or link command template.</td></tr>
@@ -83,12 +84,20 @@
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga462c0f8e483d69249668dc4254005bd0" class="nameRef">espIcon</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *uri, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an HTML icon.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1gafdc98cdf30e71fd013d2ff2e1b10ccb1" class="nameRef">espImage</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *uri, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an HTML image.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_req_1ga335bcd4fcf7ac6da263e415a892c08b9" class="nameRef">espInform</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Send an &quot;inform&quot; flash message.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga9dc11bf739eeb2ec348d1e0adc50b5ef" class="nameRef">espInput</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *field, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an input field as part of a form.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga292e9afc5d77571f11aecb967c30855f" class="nameRef">espLabel</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *text, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a text label field.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga87d3d362beaeb6d9d698536d0e8ee593" class="nameRef">espMail</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *address, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a mail link.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a></td><td><a href="#group___esp_req_1gacc2fb39132dab5f624a0f026d2e73440" class="nameRef">espMatchParam</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *var, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Match a request parameter with an expected value.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_req_1ga0f0970da2e7a0c212c6a138477e872d1" class="nameRef">espNotice</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *kind, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Send a flash message.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_req_1gad5b3f0dcd7b870c910f302362a77b7e3" class="nameRef">espNoticev</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *kind, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, va_list args)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Send a flash message.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga6fe85fea47319ff5201edcc9be477540" class="nameRef">espProgress</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *progress, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Emit a progress bar.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga8e7a51fb64f2adbd01183236875ce890" class="nameRef">espRadio</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *field, void *choices, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a radio button.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_req_1ga2b1dc5b4a688fc1062395d6420e85ef9" class="nameRef">espRedirect</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, int status, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *target)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Redirect the client.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_req_1gaaf5114ed096b363628229ea0ae0f94c3" class="nameRef">espRedirectBack</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Redirect the client back to the referrer.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1gae38efda7004c7bfa985d300784432b9a" class="nameRef">espRefresh</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *on, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *off, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Control the refresh of web page dynamic elements.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___esp_req_1ga8743524e4c8aff73135e0ad6f2d44d7c" class="nameRef">espRemoveHeader</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *key)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Remove a header from the transmission.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga69fa3b47aaf280fe1f234ddd9944b741" class="nameRef">espScript</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *uri, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a script link.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga258632ff2d1da9acb11510e70fff745c" class="nameRef">espSecurityToken</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Generate a security token.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a></td><td><a href="#group___esp_req_1ga54f5ce21966922b0883d1942ccbeae8d" class="nameRef">espSetAutoFinalizing</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a> on)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Enable auto-finalizing for this request.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_req_1ga6ea189a01c1c680e3f5d77396b3bd3a8" class="nameRef">espSetConn</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set the current request connection.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_req_1gae9b3e3ddb3bf784d77cba59045dfeb81" class="nameRef">espSetContentLength</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1aa6887458d0a070b3665166af590089d8" class="ref">MprOff</a> length)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Define a content length header in the transmission.</td></tr>
@@ -102,6 +111,9 @@
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___esp_session_1ga100b653cb5cb53f21805db558ffe609f" class="nameRef">espSetSessionVar</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set a session variable.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_req_1ga3151f73107b752661efecbacf9011894" class="nameRef">espSetStatus</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, int status)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set a Http response status.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_req_1ga4ed2f95cccb206fc9069c0a77c5c1e62" class="nameRef">espShowRequest</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Show request details.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga63289f4ce5787e316b85c4ef1ddc42ba" class="nameRef">espStylesheet</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *uri, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a stylesheet link.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1gab137ba67f183a346258867aedd5ffecb" class="nameRef">espTable</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, EdiGrid *grid, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a table.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#esp_8h_1ae9bbcbf39a35c4a2d7de23ffc78eb938" class="nameRef">espTabs</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, EdiGrid *grid, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a tab control.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_req_1gab603a0ad6ae23ed357d18451d59afdf9" class="nameRef">espWarn</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Send an &quot;warn&quot; flash message.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___esp_req_1gafb783e22dfaf983aec46f1718dcec201" class="nameRef">espWrite</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Write a formatted string.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___esp_req_1gad9edd910735ba5ee653419ff6af8540b" class="nameRef">espWriteBlock</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *buf, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a> size)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Write a block of data to the client.</td></tr>
@@ -163,7 +175,7 @@
     <table class="parameters" summary="Parameters">
     <tr><td class="param">conn</td><td>Http connection object.</td>
     <tr><td class="param">text</td><td>Alert text to display.</td>
-    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options.</td>
+    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options. <ul><li>period Polling period in milliseconds for the client to check the server for status message updates. If this is not specifed, the connection to the server will be kept open. This permits the server to &quot;push&quot; alerts to the console, but will consume a connection at the server for each client. </li></ul></td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
@@ -231,12 +243,12 @@
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
   </div>
 </div>
-<a name="group___esp_control_1gab8ba29ac8a0ec5e26f83fa642b4494b6"></a>
+<a name="group___esp_control_1ga40a78f3c15897c39217dad4c6c6d31a2"></a>
 <div class="api">
   <div class="prototype">
     void
     espChart
-(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)
+(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)
   </div>
   <div class="apiDetail">
 <p>Render an graphic chart.</p>
@@ -244,6 +256,7 @@
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">conn</td><td>Http connection object.</td>
+    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options. <ul><li>columns Object hash of column entries. Each column entry is in-turn an object hash of options. If unset, all columns are displayed using defaults. </li><li>kind String Type of chart. Select from: piechart, table, linechart, annotatedtimeline, guage, map, motionchart, areachart, intensitymap, imageareachart, barchart, imagebarchart, bioheatmap, columnchart, linechart, imagelinechart, imagepiechart, scatterchart (and more) </li></ul></td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
@@ -263,6 +276,7 @@
     <table class="parameters" summary="Parameters">
     <tr><td class="param">conn</td><td>Http connection object.</td>
     <tr><td class="param">name</td><td>Name for the input checkbox. This defines the HTML element name and provides the source of the initial value for the checkbox. The field should be a property of the $espForm current record. If this call is used without a form control record, the actual data value should be supplied via the options.value property.</td>
+    <tr><td class="param">checkedValue</td><td>Value for which the checkbox will be checked.</td>
     <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
@@ -285,12 +299,26 @@
     <tr><td class="param">body</td><td>HTML body to render.</td>
     <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options.</td>
     </table></dd></dl>
-    <dl><dt>Example:</dt><dd>&lt;% div(&quot;{ refresh: &apos;/getData&apos;, period: 2000}&quot;); %&gt;<br/>
- Line 2<br/>
- Line 3.</dd></dl>
-    <dl><dt><b>Options</b>:</dt><dd>Option1 details <b>about</b> option1<br/>option2 details about option1.</dd></dl>
-    <dl><dt><b>API</b> Stability:</dt><dd>Prototype.</dd></dl>
-    <dl><dt><b>Example</b>:</dt><dd>&lt;% MOB div(&quot;{ refresh: &apos;/getData&apos;, period: 2000}&quot;); %&gt; Line 2.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
+  </div>
+</div>
+<a name="group___esp_control_1ga5f7dd7dad36e89c0e7aa7fc09234e1b5"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    espDropList
+(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *field, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *choices, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)
+  </div>
+  <div class="apiDetail">
+<p>Render a dropdown selection list.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>Http connection object.</td>
+    <tr><td class="param">field</td><td>Record field name to provide the default value for the list. The field should be a property of the form current record. The field name is used to create the HTML input control name. If this call is used without a form control record, the actual data value should be supplied via the options.value property.</td>
+    <tr><td class="param">choices</td><td>Choices to select from. This is a JSON style set of properties. For example: espDropList(conn, &quot;priority&quot;, &quot;{ low: 0, med: 1, high: 2 }&quot;, NULL).</td>
+    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options.</td>
+    </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
   </div>
@@ -327,7 +355,7 @@
     <table class="parameters" summary="Parameters">
     <tr><td class="param">conn</td><td>Http connection object.</td>
     <tr><td class="param">kinds</td><td>Space separated list of flash messages types. Typical types are: &quot;error&quot;, &quot;inform&quot;, &quot;warning&quot;.</td>
-    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options.</td>
+    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options. <ul><li>retain &mdash; Number of seconds to retain the message. If &lt;= 0, the message is retained until another message is displayed. Default is 0. MOB - this default implies it is displayed for zero seconds </li></ul></td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
@@ -347,7 +375,7 @@
     <table class="parameters" summary="Parameters">
     <tr><td class="param">conn</td><td>Http connection object.</td>
     <tr><td class="param">record</td><td>Record to use by default to supply form field names and values.</td>
-    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options. MOB - options here - how to document options.</td>
+    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options. <ul><li>hideErrors &mdash; Don&apos;t display database record errors. Records retain error diagnostics from the previous failed write. Setting this option will prevent the display of such errors. </li><li>modal &mdash; Make the form a modal dialog. This will block all other HTML controls except the form. </li><li>nosecurity &mdash; Don&apos;t generate a security token for the form. </li><li>securityToken &mdash; String Override CSRF security token to include when the form is submitted. A default security token will always be generated unless options.nosecurity is defined to be true. Security tokens are used by ESP to mitigate cross site scripting errors. </li></ul></td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
@@ -386,6 +414,203 @@
     <tr><td class="param">conn</td><td>Http connection object.</td>
     <tr><td class="param">uri</td><td>URI reference for the image resource.</td>
     <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options.</td>
+    </table></dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
+  </div>
+</div>
+<a name="group___esp_control_1ga9dc11bf739eeb2ec348d1e0adc50b5ef"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    espInput
+(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *field, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)
+  </div>
+  <div class="apiDetail">
+<p>Render an input field as part of a form.</p>
+This is a smart input control that will call the appropriate input control based on the database record field data type
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>Http connection object.</td>
+    <tr><td class="param">field</td><td>Name for the input field. This defines the HTML element name and provides the source of the initial value to display. The field should be a property of the form current record. If this call is used without a form control record, the actual data value should be supplied via the options.value property.</td>
+    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options.</td>
+    </table></dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
+  </div>
+</div>
+<a name="group___esp_control_1ga292e9afc5d77571f11aecb967c30855f"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    espLabel
+(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *text, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)
+  </div>
+  <div class="apiDetail">
+<p>Render a text label field.</p>
+This renders an output-only text field. Use espText() for input fields
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>Http connection object.</td>
+    <tr><td class="param">text</td><td>Label text to display.</td>
+    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options.</td>
+    </table></dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
+  </div>
+</div>
+<a name="group___esp_control_1ga87d3d362beaeb6d9d698536d0e8ee593"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    espMail
+(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *address, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)
+  </div>
+  <div class="apiDetail">
+<p>Render a mail link.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>Http connection object.</td>
+    <tr><td class="param">name</td><td>Recipient name to display.</td>
+    <tr><td class="param">address</td><td>Mail recipient address link.</td>
+    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options.</td>
+    </table></dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
+  </div>
+</div>
+<a name="group___esp_control_1ga6fe85fea47319ff5201edcc9be477540"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    espProgress
+(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *progress, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)
+  </div>
+  <div class="apiDetail">
+<p>Emit a progress bar.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>Http connection object.</td>
+    <tr><td class="param">progress</td><td>Progress percentage (0-100).</td>
+    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options.</td>
+    </table></dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
+  </div>
+</div>
+<a name="group___esp_control_1ga8e7a51fb64f2adbd01183236875ce890"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    espRadio
+(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *field, void *choices, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)
+  </div>
+  <div class="apiDetail">
+<p>Render a radio button.</p>
+This creates a radio button suitable for use within an input form
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>Http connection object.</td>
+    <tr><td class="param">field</td><td>Name for the input radio button. This defines the HTML element name and provides the source of the initial value to display. The field should be a property of the form current record. If this call is used without a form control record, the actual data value should be supplied via the options.value property.</td>
+    <tr><td class="param">choices</td><td>Choices to select from. This is a JSON style set of properties. For example: espRadio(conn, &quot;priority&quot;, &quot;{ low: 0, med: 1, high: 2, }&quot;, NULL).</td>
+    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options.</td>
+    </table></dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
+  </div>
+</div>
+<a name="group___esp_control_1gae38efda7004c7bfa985d300784432b9a"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    espRefresh
+(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *on, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *off, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)
+  </div>
+  <div class="apiDetail">
+<p>Control the refresh of web page dynamic elements.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>Http connection object.</td>
+    <tr><td class="param">on</td><td>URI to invoke when turning &quot;on&quot; refresh.</td>
+    <tr><td class="param">off</td><td>URI to invoke when turning &quot;off&quot; refresh.</td>
+    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options. <ul><li>minified Set to true to select a minified (compressed) version of the script. </li></ul></td>
+    </table></dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
+  </div>
+</div>
+<a name="group___esp_control_1ga69fa3b47aaf280fe1f234ddd9944b741"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    espScript
+(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *uri, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)
+  </div>
+  <div class="apiDetail">
+<p>Render a script link.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">uri</td><td>Script URI to load. Set to null to get a default set of scripts. See $httpLink for a list of possible URI formats.</td>
+    <tr><td class="param">conn</td><td>Http connection object.</td>
+    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options.</td>
+    </table></dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
+  </div>
+</div>
+<a name="group___esp_control_1ga258632ff2d1da9acb11510e70fff745c"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    espSecurityToken
+(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)
+  </div>
+  <div class="apiDetail">
+<p>Generate a security token.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Security tokens are used to help guard against CSRF threats. This call will generate a security token for the page and emit an HTML meta element for the security token. The token will automatically be included whenever forms are submitted and the token be validated by the receiving Controller. Forms will normally automatically generate the security token and that explicitly calling this routine is not required unless a security token is required for non-form requests such as AJAX requests. The $securityToken control should be called inside the &lt;head section of the web page.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>Http connection object.</td>
+    </table></dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
+  </div>
+</div>
+<a name="group___esp_control_1ga63289f4ce5787e316b85c4ef1ddc42ba"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    espStylesheet
+(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *uri, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)
+  </div>
+  <div class="apiDetail">
+<p>Render a stylesheet link.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">uri</td><td>Stylesheet URI to load. Set to null to get a default set of stylesheets. See $httpLink for a list of possible URI formats.</td>
+    <tr><td class="param">conn</td><td>Http connection object.</td>
+    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options.</td>
+    </table></dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
+  </div>
+</div>
+<a name="group___esp_control_1gab137ba67f183a346258867aedd5ffecb"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    espTable
+(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, EdiGrid *grid, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)
+  </div>
+  <div class="apiDetail">
+<p>Render a table.</p>
+    <dl><dt><b>Description</b>:</dt><dd>The table control can display static or dynamic tabular data. The client table control manages sorting by column, dynamic data refreshes and clicking on rows or cells.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>Http connection object.</td>
+    <tr><td class="param">grid</td><td>Data to display. The data is a grid of data. Use ediCreateGrid or ediReadGrid.</td>
+    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options.</td>
+    <tr><td class="param">options</td><td>Optional extra options. See $View for a list of the standard options. <ul><li>cell Boolean Set to true to make click or edit links apply per cell instead of per row. The default is false. </li><li>columns (Array|Object) The columns list is anobject hash of column objects where each column entry is hash of column options. Column options: <ul><li>align - Will right-align numbers by default </li><li>click - URI to invoke if the cell is clicked </li><li>edit - MOB  </li><li>formatter - Function to invoke to format the value to display </li><li>header - Header text for the column </li><li>style - Cell styles </li><li>width - Column width. Can be a string percentage or numeric pixel width </li></ul></li><li>params Object Hash of post parameters to include in the request. This is a hash of key/value items. </li><li>pivot Boolean Pivot the table by swaping rows for columns and vice-versa </li><li>showHeader Boolean Control if column headings are displayed. </li><li>showId Boolean If a columns option is not provided, the id column is normally hidden. To display, set showId to be true. </li><li>sort String Enable row sorting and define the column to sort by. Defaults to the first column. </li><li>sortOrder String Default sort order. Set to &quot;ascending&quot; or &quot;descending&quot;.Defaults to ascending. </li><li>style String CSS class to use for the table. The ultimate style to use for a table cell is the combination of style, styleCells, styleColumns and style Rows. </li><li>styleCells 2D Array of styles to use for the table body cells. Can also provide an array to the column.style property. </li><li>styleColumns Array of styles to use for the table body columns. Can also use the style option in the columns option. </li><li>styleRows Array of styles to use for the table body rows </li><li>title String Table title. </li></ul></td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
@@ -1868,6 +2093,24 @@ Session inactivity timeout (msecs).
     <dl><dt>Returns:</dt><dd>The security token string.</dd></dl>
   </div>
 </div>
+<a name="esp_8h_1ae9bbcbf39a35c4a2d7de23ffc78eb938"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    espTabs
+(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, EdiGrid *grid, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)
+  </div>
+  <div class="apiDetail">
+<p>Render a tab control.</p>
+The tab control can manage a set of panes and will selectively show and hide or invoke the selected panes. If the &quot;click&quot; option is defined, the selected pane will be invoked via a foreground click. If the &quot;remote&quot; option is defined, the selected pane will be invoked via a background click. If the &quot;toggle&quot; option is defined the selected pane will be made visible and other panes will be hidden. If using show/hide tabs, define the initial visible pane to be of the class &quot;-ejs-pane-visible&quot; and define other panes to be &quot;-ejs-pane-hidden&quot;. The control&apos;s client side code will toggle these classes to make panes visible or hidden
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>Http connection object.</td>
+    <tr><td class="param">grid</td><td>Tab data for the control. Tab data can be be a single object where the tab text is the property key and the target to invoke is the property value. It can also be an an array of objects, one per tab.</td>
+    <tr><td class="param">options</td><td>Optional extra options. See $View for a list of the standard options. <ul><li>click Set to true to invoke the selected pane via a foreground click. </li><li>remote Set to true to invoke the selected pane via a background click. </li><li>toggle Set to true to show the selected pane and hide other panes. </li></ul></td>
+    </table></dd></dl>
+  </div>
+</div>
 <h2>Typedefs</h2>
 <a name="esp_8h_1aa0c56d9f50902eb9cf16889d3d95c129"></a>
 <div class="api">
@@ -1949,6 +2192,6 @@ Lifespan for cached action content.
     </dd></dl>
   </div>
 </div>
-<div class="footnote">Generated on Tue Oct 04 2011 09:38:37 GMT-0700 (PDT)<br/>
+<div class="footnote">Generated on Tue Oct 04 2011 11:49:03 GMT-0700 (PDT)<br/>
   Copyright &copy; <a href="http://www.embedthis.com">Embedthis Software</a> 2011.
 </div></div></body></html>

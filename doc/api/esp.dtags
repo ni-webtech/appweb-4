@@ -512,8 +512,8 @@
       <type>void</type>
       <name>espChart</name>
       <anchorfile>group___esp_control.html</anchorfile>
-      <anchor>gab8ba29ac8a0ec5e26f83fa642b4494b6</anchor>
-      <arglist>(HttpConn *conn)</arglist>
+      <anchor>ga40a78f3c15897c39217dad4c6c6d31a2</anchor>
+      <arglist>(HttpConn *conn, cchar *options)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -528,6 +528,13 @@
       <anchorfile>group___esp_control.html</anchorfile>
       <anchor>ga5677ea87f674bd598faee87113b7fd2f</anchor>
       <arglist>(HttpConn *conn, cchar *body, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espDropList</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>ga5f7dd7dad36e89c0e7aa7fc09234e1b5</anchor>
+      <arglist>(HttpConn *conn, cchar *field, cchar *choices, cchar *options)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -563,6 +570,76 @@
       <anchorfile>group___esp_control.html</anchorfile>
       <anchor>gafdc98cdf30e71fd013d2ff2e1b10ccb1</anchor>
       <arglist>(HttpConn *conn, cchar *uri, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espInput</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>ga9dc11bf739eeb2ec348d1e0adc50b5ef</anchor>
+      <arglist>(HttpConn *conn, cchar *field, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espLabel</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>ga292e9afc5d77571f11aecb967c30855f</anchor>
+      <arglist>(HttpConn *conn, cchar *text, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espMail</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>ga87d3d362beaeb6d9d698536d0e8ee593</anchor>
+      <arglist>(HttpConn *conn, cchar *name, cchar *address, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espProgress</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>ga6fe85fea47319ff5201edcc9be477540</anchor>
+      <arglist>(HttpConn *conn, cchar *progress, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espRadio</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>ga8e7a51fb64f2adbd01183236875ce890</anchor>
+      <arglist>(HttpConn *conn, cchar *field, void *choices, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espRefresh</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>gae38efda7004c7bfa985d300784432b9a</anchor>
+      <arglist>(HttpConn *conn, cchar *on, cchar *off, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espScript</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>ga69fa3b47aaf280fe1f234ddd9944b741</anchor>
+      <arglist>(HttpConn *conn, cchar *uri, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espSecurityToken</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>ga258632ff2d1da9acb11510e70fff745c</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espStylesheet</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>ga63289f4ce5787e316b85c4ef1ddc42ba</anchor>
+      <arglist>(HttpConn *conn, cchar *uri, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espTable</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>gab137ba67f183a346258867aedd5ffecb</anchor>
+      <arglist>(HttpConn *conn, EdiGrid *grid, cchar *options)</arglist>
     </member>
   </compound>
   <compound kind="struct">

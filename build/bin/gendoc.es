@@ -209,6 +209,7 @@ module embedthis.doc {
         str = str.replace(/bold>/g, "b>")
         str = str.trim().trim(".").trim().trim(".")
         str = str.replace(/Remarks:/, "example")
+        str = str.replace(/--/g, "&mdash;")
         return str
     }
 
@@ -457,7 +458,7 @@ module embedthis.doc {
             emit('    <dl><dt>Returns:</dt><dd>' + cleanReturns(node.para).toPascal() + '</dd></dl>')
 
         } else if (node.@kind == "remark") {
-            emit('    <dl><dt>Example:</dt><dd>' + cleanDot(node.para).toPascal() + '</dd></dl>')
+            emit('    <dl><dt>Remarks:</dt><dd>' + cleanDot(node.para).toPascal() + '</dd></dl>')
 
         } else {
             emit('    <dl><dt>' + clean(node.title) + '</dt><dd>' + cleanDot(node.para).toPascal() + '</dd></dl>')

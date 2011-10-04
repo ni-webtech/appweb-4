@@ -171,7 +171,7 @@ void espButtonLink(HttpConn *conn, cchar *text, cchar *uri, cchar *optionString)
 }
 
 
-void espChart(HttpConn *conn) 
+void espChart(HttpConn *conn, EdiGrid *grid, cchar *optionString)
 {
     //  TODO
 }
@@ -350,8 +350,8 @@ void espLabel(HttpConn *conn, cchar *text, cchar *optionString)
 
 
 /*
-    droplist("priority", "{ low: '0' med: '1' high: '2' }", NULL)
-    droplist("priority", "{ low: '0' med: '1' high: '2' }", "value='2'")   //  MOB - without a record
+    droplist("priority", "{ low: 0, med: 1, high: 2 }", NULL)
+    droplist("priority", "{ low: 0, med: 1, high: 2 }", "value='2'")   //  MOB - without a record
  */
 void espDropList(HttpConn *conn, cchar *field, cchar *choices, cchar *optionString) 
 {
@@ -359,6 +359,7 @@ void espDropList(HttpConn *conn, cchar *field, cchar *choices, cchar *optionStri
     MprKey      *kp;
     cchar       *value, *selected;
 
+    //  MOB -- this is not using choices
     options = httpGetOptions(optionString);
     value = getValue(conn, field, options);
     espWrite(conn, "<select name='%s'%s>\r\n", field, map(conn, options));
@@ -391,8 +392,8 @@ void espProgress(HttpConn *conn, cchar *percent, cchar *optionString)
 
 
 /*
-    radio("priority", "low='0' med='1' high='2'", NULL)
-    radio("priority", "low='0' med='1' high='2'", "value='2'")  //  MOB - without a record
+    radio("priority", "low: 0, med: 1, high: 2", NULL)
+    radio("priority", "low: 0, med: 1, high: 2", "value='2'")  //  MOB - without a record
  */
 void espRadio(HttpConn *conn, cchar *field, void *choices, cchar *optionString)
 {
@@ -400,6 +401,7 @@ void espRadio(HttpConn *conn, cchar *field, void *choices, cchar *optionString)
     MprHash     *options;
     cchar       *value, *checked;
 
+    //  MOB -- this is not using choices
     options = httpGetOptions(optionString);
     value = getValue(conn, field, options);
     for (kp = 0; (kp = mprGetNextKey(options, kp)) != 0; ) {
@@ -410,6 +412,9 @@ void espRadio(HttpConn *conn, cchar *field, void *choices, cchar *optionString)
 }
 
 
+/*
+    Control the refresh of dynamic elements in the page
+ */
 void espRefresh(HttpConn *conn, cchar *on, cchar *off, cchar *optionString)
 {
     MprHash     *options;
@@ -874,9 +879,9 @@ void buttonLink(cchar *text, cchar *uri, cchar *optionString)
 }
 
 
-void chart(HttpConn *conn) 
+void chart(EdiGrid *grid, cchar *optionString)
 {
-    espChart(espGetConn());
+    espChart(espGetConn(), grid, optionString);
 }
 
 
