@@ -2,7 +2,7 @@
  *  sqlite3.h -- SQLite header. Modified for embedding in Ejscript
  */
 
-#define EJSCRIPT_MODIFICATION 1
+#define EMBEDTHIS_MODIFICATION 1
 
 /********************************** Includes **********************************/
 
@@ -20,12 +20,11 @@
 #ifndef _h_SQLITE3_
 #define _h_SQLITE3_ 1
 
-#if EJSCRIPT_MODIFICATION
+#if EMBEDTHIS_MODIFICATION
 /*********************************** Defines **********************************/
 /*
  *  Sqlite configuration for use by Embedthis Ejscript. This must match the configuration in sqlite3.c.
  */
-#define EJSCRIPT            1
 #define PACKAGE             "sqlite" 
 #define VERSION             "3.5.9"
 #define PACKAGE_TARNAME     PACKAGE
@@ -168,7 +167,7 @@
 extern int usleep(unsigned int msec);
 #endif
 
-#endif /* EJSCRIPT_MODIFICATION */
+#endif /* EMBEDTHIS_MODIFICATION */
 
 /*
 ** 2001 September 15

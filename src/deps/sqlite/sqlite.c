@@ -2,13 +2,13 @@
  *  sqlite3.c -- SQLite library. Modified for embedding in Appweb
  */
 
-#define EJSCRIPT_MODIFICATION 1
+#define EMBEDTHIS_MODIFICATION 1
 
-#if EJSCRIPT_MODIFICATION
+#if EMBEDTHIS_MODIFICATION
 #include "buildConfig.h"
 #endif
 
-#if BLD_FEATURE_SQLITE
+#if BLD_FEATURE_SQLITE || BLD_SQLITE_PRODUCT
 /*
 ** 2001 September 15
 **
@@ -39,7 +39,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 
-/* EJSCRIPT_MODIFICATION - Added && !VXWORKS */
+/* EMBEDTHIS_MODIFICATION - Added && !VXWORKS */
 #if !defined(_WIN32) && !defined(WIN32) && !defined(__OS2__) && !VXWORKS
 # include <signal.h>
 # if !defined(__RTP__) && !defined(_WRS_KERNEL)
@@ -64,7 +64,7 @@
 # define stifle_history(X)
 #endif
 
-/* EJSCRIPT_MODIFICATION - !WINCE */
+/* EMBEDTHIS_MODIFICATION - !WINCE */
 #if !WINCE
 #if defined(_WIN32) || defined(WIN32)
 # include <io.h>
@@ -83,11 +83,11 @@ extern int isatty();
  * overridden with the -batch command line option.
  */
 #define isatty(x) 1
-/* EJSCRIPT_MODIFICATION - Added FILENAME_MAX */
+/* EMBEDTHIS_MODIFICATION - Added FILENAME_MAX */
 #define FILENAME_MAX 1024
 #endif
 
-/* EJSCRIPT_MODIFICATION - Added && !VXWORKS */
+/* EMBEDTHIS_MODIFICATION - Added && !VXWORKS */
 #if !defined(_WIN32) && !defined(WIN32) && !defined(__OS2__) && !defined(__RTP__) && !defined(_WRS_KERNEL) && !VXWORKS
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -2877,7 +2877,7 @@ static int process_input(struct callback_data *p, FILE *in){
 static char *find_home_dir(void){
   char *home_dir = NULL;
 
-/* EJSCRIPT_MODIFICATION - Added && !VXWORKS */
+/* EMBEDTHIS_MODIFICATION - Added && !VXWORKS */
 #if !defined(_WIN32) && !defined(WIN32) && !defined(__OS2__) && !defined(_WIN32_WCE) && !defined(__RTP__) && !defined(_WRS_KERNEL) && !VXWORKS
   struct passwd *pwent;
   uid_t uid = getuid();
@@ -2889,7 +2889,7 @@ static char *find_home_dir(void){
 #if defined(_WIN32_WCE)
   /* Windows CE (arm-wince-mingw32ce-gcc) does not provide getenv()
    */
-  /* EJSCRIPT_MODIFICATION -- added (char*) */
+  /* EMBEDTHIS_MODIFICATION -- added (char*) */
   home_dir = (char*) strdup("/");
 #else
 

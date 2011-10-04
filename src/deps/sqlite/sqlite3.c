@@ -2,7 +2,7 @@
  *  sqlite3.c -- SQLite library. Modified for embedding in Ejscript
  */
 
-#define EJSCRIPT_MODIFICATION 1
+#define EMBEDTHIS_MODIFICATION 1
 
 /********************************** Includes **********************************/
 
@@ -11,12 +11,12 @@
 
 #if BLD_FEATURE_SQLITE
 
-#if EJSCRIPT_MODIFICATION 
+#if EMBEDTHIS_MODIFICATION 
 
 #include "sqlite3.h"
 
 SQLITE_API const char sqlite3_version[] = SQLITE_VERSION;
-#endif /* EJSCRIPT_MODIFICATION */
+#endif /* EMBEDTHIS_MODIFICATION */
 
 /******************************************************************************
 ** This file is an amalgamation of many separate C source files from SQLite
@@ -284,7 +284,7 @@ SQLITE_API const char sqlite3_version[] = SQLITE_VERSION;
 # define _GNU_SOURCE
 #endif
 
-/* EJSCRIPT_MODIFICATION - Added !VXWORKS */
+/* EMBEDTHIS_MODIFICATION - Added !VXWORKS */
 #if !VXWORKS
 /*
 ** Include standard header files as necessary
@@ -527,10 +527,10 @@ SQLITE_PRIVATE   void sqlite3Coverage(int);
 ** a boolean expression that is usually true.  GCC is able to
 ** use these hints to generate better code, sometimes.
 */
-#if EJSCRIPT_MODIFICATION
+#if EMBEDTHIS_MODIFICATION
 #undef likely
 #undef unlikely
-#endif /* EJSCRIPT_MODIFICATION */
+#endif /* EMBEDTHIS_MODIFICATION */
 #if defined(__GNUC__) && 0
 # define likely(X)    __builtin_expect((X),1)
 # define unlikely(X)  __builtin_expect((X),0)
@@ -9900,7 +9900,7 @@ SQLITE_PRIVATE void sqlite3ScratchFree(void*);
 SQLITE_PRIVATE void *sqlite3PageMalloc(int);
 SQLITE_PRIVATE void sqlite3PageFree(void*);
 SQLITE_PRIVATE void sqlite3MemSetDefault(void);
-#if !EJSCRIPT_MODIFICATION
+#if !EMBEDTHIS_MODIFICATION
 SQLITE_PRIVATE void sqlite3BenignMallocHooks(void (*)(void), void (*)(void));
 #endif
 SQLITE_PRIVATE int sqlite3MemoryAlarm(void (*)(void*, sqlite3_int64, int), void*, sqlite3_int64);
@@ -10002,7 +10002,7 @@ SQLITE_PRIVATE int sqlite3BitvecSet(Bitvec*, u32);
 SQLITE_PRIVATE void sqlite3BitvecClear(Bitvec*, u32, void*);
 SQLITE_PRIVATE void sqlite3BitvecDestroy(Bitvec*);
 SQLITE_PRIVATE u32 sqlite3BitvecSize(Bitvec*);
-#if !EJSCRIPT_MODIFICATION
+#if !EMBEDTHIS_MODIFICATION
 SQLITE_PRIVATE int sqlite3BitvecBuiltinTest(int,int*);
 #endif
 
@@ -10091,7 +10091,7 @@ SQLITE_PRIVATE void sqlite3ExprAnalyzeAggregates(NameContext*, Expr*);
 SQLITE_PRIVATE void sqlite3ExprAnalyzeAggList(NameContext*,ExprList*);
 SQLITE_PRIVATE Vdbe *sqlite3GetVdbe(Parse*);
 SQLITE_PRIVATE Expr *sqlite3CreateIdExpr(Parse *, const char*);
-#if !EJSCRIPT_MODIFICATION
+#if !EMBEDTHIS_MODIFICATION
 SQLITE_PRIVATE void sqlite3PrngSaveState(void);
 SQLITE_PRIVATE void sqlite3PrngRestoreState(void);
 SQLITE_PRIVATE void sqlite3PrngResetState(void);
@@ -21017,7 +21017,7 @@ SQLITE_API int sqlite3_os_end(void){
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-/* EJSCRIPT_MODIFICATION - Added !VXWORKS */
+/* EMBEDTHIS_MODIFICATION - Added !VXWORKS */
 #if !VXWORKS
 #include <sys/time.h>
 #endif
@@ -21039,7 +21039,7 @@ SQLITE_API int sqlite3_os_end(void){
 ** If we are to be thread-safe, include the pthreads header and define
 ** the SQLITE_UNIX_THREADS macro.
 */
-/* EJSCRIPT_MODIFICATION - Added VXWORKS */
+/* EMBEDTHIS_MODIFICATION - Added VXWORKS */
 #if SQLITE_THREADSAFE && !VXWORKS
 # define SQLITE_UNIX_THREADS 1
 #endif
@@ -21531,7 +21531,7 @@ static int sqliteErrorFromPosixError(int posixError, int sqliteIOErr) {
   case ENODEV:
   case ENXIO:
   case ENOENT:
-#if !VXWORKS && !EJSCRIPT_MODIFICATION
+#if !VXWORKS && !EMBEDTHIS_MODIFICATION
   case ESTALE:
 #endif
   case ENOSYS:
@@ -25130,7 +25130,7 @@ static int unixRandomness(sqlite3_vfs *NotUsed, int nBuf, char *zBuf){
 #if !defined(SQLITE_TEST)
   {
     int pid, fd;
-#if EJSCRIPT_MODIFICATION && VXWORKS
+#if EMBEDTHIS_MODIFICATION && VXWORKS
     fd = open("/dev/urandom", O_RDONLY, 0);
 #else
     fd = open("/dev/urandom", O_RDONLY);
@@ -26579,7 +26579,7 @@ SQLITE_API int sqlite3_open_file_count = 0;
 */
 #if SQLITE_OS_WINCE
 # define AreFileApisANSI() 1
-/* EJSCRIPT_MODIFICATION - added "a,b,c,d" */
+/* EMBEDTHIS_MODIFICATION - added "a,b,c,d" */
 # define GetDiskFreeSpaceW(a,b,c,d) 0
 #endif
 

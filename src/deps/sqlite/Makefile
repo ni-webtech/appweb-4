@@ -27,7 +27,7 @@ $(BLD_LIB_DIR)/libsqlite3$(BLD_LIB): $(BLD_OBJ_DIR)/sqlite3$(BLD_OBJ)
 	bld --library $(BLD_LIB_DIR)/libsqlite3 --libs "$(BLD_MPR_LIBS)" sqlite3
 
 $(BLD_BIN_DIR)/sqlite$(BLD_EXE): $(BLD_LIB_DIR)/libsqlite3$(BLD_LIB)
-	bld --exe $(BLD_BIN_DIR)/sqlite$(BLD_EXE) --libs "$(BLD_MPR_LIBS)" sqlite sqlite3
+	bld --exe $(BLD_BIN_DIR)/sqlite$(BLD_EXE) --libs "$(BLD_MPR_LIBS) sqlite3" sqlite
 
 #
 #   Local variables:
