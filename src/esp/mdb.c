@@ -851,7 +851,6 @@ static int mdbWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldNam
     MdbTable    *table;
     MdbRow      *row;
     MdbCol      *col;
-    MprKey      *kp;
     int         r;
 
     mdb = (Mdb*) edi;
@@ -871,7 +870,7 @@ static int mdbWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldNam
         unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
-    writeField(row, col, kp->data);
+    writeField(row, col, value);
     unlock(mdb);
     return 0;
 }
@@ -1240,6 +1239,7 @@ static int mdbSave(Edi *edi)
             mprWriteFileString(out, "            [ ");
             row = getRow(table, rid);
             for (cid = 0; cid < schema->ncols; cid++) {
+                col = getCol(table, cid);
                 if (col->flags & EDI_AUTO_INC) {
                     row->fields[col->cid] = itos(col->nextValue++, 10);
                 }
