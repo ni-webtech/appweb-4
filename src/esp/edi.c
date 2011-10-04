@@ -387,7 +387,6 @@ EdiGrid *ediCreateBareGrid(Edi *edi, cchar *tableName, int nrows)
     if ((grid = mprAllocMem(sizeof(EdiGrid) + sizeof(EdiRec*) * nrows, MPR_ALLOC_MANAGER | MPR_ALLOC_ZERO)) == 0) {
         return 0;
     }
-    mprSetAllocName(grid, "grid");
     mprSetManager(grid, manageEdiGrid);
     grid->nrecords = nrows;
     grid->edi = edi;
@@ -407,9 +406,7 @@ EdiRec *ediCreateBareRec(Edi *edi, cchar *tableName, int nfields)
     if ((rec = mprAllocMem(sizeof(EdiRec) + sizeof(EdiField) * nfields, MPR_ALLOC_MANAGER | MPR_ALLOC_ZERO)) == 0) {
         return 0;
     }
-    mprSetAllocName(rec, "record");
     mprSetManager(rec, ediManageEdiRec);
-
     rec->edi = edi;
     rec->tableName = sclone(tableName);
     rec->nfields = nfields;
