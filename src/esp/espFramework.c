@@ -290,6 +290,7 @@ char *espGetHome(HttpConn *conn)
     char        *home, *cp;
     int         levels;
 
+    //  MOB - should this just use the route.home.  ie. httpLink(conn, "~", NULL);
     if (conn == NULL) {
         return sclone("/");
     }

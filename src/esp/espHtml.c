@@ -951,7 +951,7 @@ void droplist(cchar *name, cchar *choices, cchar *optionString)
 }
 
 
-void mail(HttpConn *conn, cchar *name, cchar *address, cchar *optionString) 
+void mail(cchar *name, cchar *address, cchar *optionString) 
 {
     espMail(espGetConn(), name, address, optionString);
 }
@@ -1254,6 +1254,12 @@ cchar *getUri()
 }
 
 
+cchar *home()
+{
+    return espGetHome(espGetConn());
+}
+
+
 void inform(cchar *fmt, ...)
 {
     va_list     args;
@@ -1292,6 +1298,12 @@ void redirect(cchar *target)
 }
 
 
+cchar *referrer()
+{
+    return espGetReferrer(espGetConn());
+}
+
+
 ssize render(cchar *fmt, ...)
 {
     va_list     args;
@@ -1327,6 +1339,12 @@ void setParam(cchar *key, cchar *value)
 void setSession(cchar *key, cchar *value)
 {
     espSetSessionVar(espGetConn(), key, value);
+}
+
+
+cchar *uri(cchar *target)
+{
+    return httpLink(espGetConn(), target, 0);
 }
 
 

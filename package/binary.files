@@ -25,6 +25,9 @@ if [ "$BARE" = 0 ] ; then
     fi
     cpy -s -m 755 -d ${BLD_BIN_DIR} auth${BLD_EXE} makerom${BLD_EXE} "${BLD_BIN_PREFIX}"
     cpy -s -m 755 ${BLD_BIN_DIR}/http${BLD_EXE} "${BLD_BIN_PREFIX}"
+    if [ "$BLD_FEATURE_SQLITE" = 1 ] ; then
+        cpy -m 755 -s -d ${BLD_BIN_DIR} sqlite${BLD_EXE} "${BLD_BIN_PREFIX}"
+    fi
 fi
 
 cpy -s -m 755 "${BLD_BIN_DIR}/appweb${BLD_EXE}" "${BLD_BIN_PREFIX}"
