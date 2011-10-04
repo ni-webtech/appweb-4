@@ -182,12 +182,11 @@ void espChart(HttpConn *conn)
     checkedValue Value for which the checkbox will be checked. Defaults to true.
     Example:
         checkbox("admin", "true")
-
  */
 void espCheckbox(HttpConn *conn, cchar *field, cchar *checkedValue, cchar *optionString) 
 {
     MprHash     *options;
-    cchar           *value, *checked;
+    cchar       *value, *checked;
    
     options = httpGetOptions(optionString);
     value = getValue(conn, field, options);

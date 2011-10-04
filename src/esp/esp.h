@@ -585,7 +585,8 @@ extern cchar *espGetSecurityToken(HttpConn *conn);
 extern int espGetStatus(HttpConn *conn);
 
 /**
-    Get the Http response status message. The Http status message is supplied on the first line of the Http response.
+    Get the Http response status message. 
+    @description The HTTP status message is supplied on the first line of the HTTP response.
     @param conn HttpConn connection object created via $httpCreateConn
     @returns A Http status message.
     @ingroup EspReq
@@ -606,7 +607,7 @@ extern cchar *espGetParam(HttpConn *conn, cchar *var, cchar *defaultValue);
 
 /**
     Finalize transmission of the http request
-    @description Finalize writing Http data by writing the final chunk trailer if required. If using chunked transfers,
+    @description Finalize writing HTTP data by writing the final chunk trailer if required. If using chunked transfers,
     a null chunk trailer is required to signify the end of write data.
     If the request is already finalized, this call does nothing.
     @param conn HttpConn connection object
@@ -624,7 +625,8 @@ extern void espFinalize(HttpConn *conn);
 extern bool espFinalized(HttpConn *conn);
 
 /**
-    Flush transmit data. This writes any buffered data.
+    Flush transmit data. 
+    @description This writes any buffered data.
     @param conn HttpConn connection object created via $httpCreateConn
     @ingroup EspReq
  */
@@ -680,7 +682,8 @@ extern int espRemoveHeader(HttpConn *conn, cchar *key);
 extern bool espSetAutoFinalizing(HttpConn *conn, bool on);
 
 /**
-    Define a content length header in the transmission. This will define a "Content-Length: NNN" request header.
+    Define a content length header in the transmission. 
+    @description This will define a "Content-Length: NNN" request header.
     @param conn HttpConn connection object created via $httpCreateConn
     @param length Numeric value for the content length header.
     @ingroup EspReq
@@ -838,28 +841,226 @@ extern ssize espWriteParam(HttpConn *conn, cchar *name);
  */
 extern void espWriteView(HttpConn *conn, cchar *name);
 
-//  MOB - DOC and sort
+/**
+    Get the current request connection.
+    @return The HttpConn connection object
+    @ingroup EspReq
+ */
 extern HttpConn *espGetConn();
+
+/**
+    Send an "inform" flash message
+    @description Flash messages are passed to the next request (only) for display. Use the flash() control to
+        display.
+    @param conn Http connection object
+    @param fmt Printf style formatted string to use as the message
+    @ingroup EspReq
+ */
 void espInform(HttpConn *conn, cchar *fmt, ...);
+
+/**
+    Send an "error" flash message
+    @description Flash messages are passed to the next request (only) for display. Use the flash() control to
+        display.
+    @param conn Http connection object
+    @param fmt Printf style formatted string to use as the message
+    @ingroup EspReq
+ */
 void espError(HttpConn *conn, cchar *fmt, ...);
+
+/**
+    Send an "warn" flash message
+    @description Flash messages are passed to the next request (only) for display. Use the flash() control to
+        display.
+    @param conn Http connection object
+    @param fmt Printf style formatted string to use as the message
+    @ingroup EspReq
+ */
 void espWarn(HttpConn *conn, cchar *fmt, ...);
+
+/**
+    Send a flash message
+    @param conn Http connection object
+    @param kind Kind of flash message
+    @param fmt Printf style formatted string to use as the message
+    @ingroup EspReq
+ */
 void espNotice(HttpConn *conn, cchar *kind, cchar *fmt, ...);
+
+/**
+    Send a flash message
+    @param conn Http connection object
+    @param kind Kind of flash message
+    @param fmt Printf style formatted string to use as the message
+    @param args Varargs style list
+    @ingroup EspReq
+    @internal
+ */
 void espNoticev(HttpConn *conn, cchar *kind, cchar *fmt, va_list args);
+
+/**
+    Set the current request connection.
+    @param conn The HttpConn connection object to define
+    @ingroup EspReq
+ */
 extern void espSetConn(HttpConn *conn);
 
-//  MOB DOC
+/********************************** Controls **********************************/
+/**
+    ESP Controls
+    MOB - Overview needed
+    MOB - Talk about abbreviated forms
+    @stability Prototype
+    @see espAlert
+    @defgroup EspControl EspControl
+  */
+typedef struct EspControl { int dummy; } EspControl;
+
+/**
+    Display a popup alert message in the clients browser when the web page is displayed.
+    @param conn Http connection object
+    @param text Alert text to display
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @ingroup EspControl
+ */
 extern void espAlert(HttpConn *conn, cchar *text, cchar *options);
+
+/**
+    Render an HTML anchor link
+    @description. This is emits a label inside an anchor reference. i.e. a clickable link.
+    @param conn Http connection object
+    @param text Anchor text to display for the link
+    @param uri URI link for the anchor
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @ingroup EspControl
+ */
 extern void espAnchor(HttpConn *conn, cchar *text, cchar *uri, cchar *options);
-extern void espButton(HttpConn *conn, cchar *name, cchar *value, cchar *options);
+
+/**
+    Render an HTML button to use inside a form.
+    @description  This creates a button suitable for use inside an input form. When the button is clicked,
+        the input form will be submitted.
+    @param conn Http connection object
+    @param text Button text to display. This text is also used as the name for the form input from this control.
+    @param value Form input value to submit when the button is clicked
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @ingroup EspControl
+ */
+extern void espButton(HttpConn *conn, cchar *text, cchar *value, cchar *options);
+
+/**
+    Render an HTML button to use outside a form
+    @param conn Http connection object
+    @param text Button text to display
+    @param uri URI to invoke when the button is clicked.
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @ingroup EspControl
+ */
 extern void espButtonLink(HttpConn *conn, cchar *text, cchar *uri, cchar *options);
+
+/**
+    Render an graphic chart
+    @description The chart control can display static or dynamic tabular data. The client chart control manages
+        sorting by column, dynamic data refreshes, pagination and clicking on rows.
+    TODO. This is incomplete.
+    @param conn Http connection object
+    @ingroup EspControl
+    @internal
+ */
 extern void espChart(HttpConn *conn);
-extern void espCheckbox(HttpConn *conn, cchar *field, cchar *checkedValue, cchar *options);
+
+//  MOB DB - inconsistent. What fields use db records and what don't
+/**
+    Render an input checkbox. 
+    @description This creates a checkbox suitable for use within an input form. 
+    @param conn Http connection object
+    @param name Name for the input checkbox. This defines the HTML element name and provides the source of the
+        initial value for the checkbox. The field should be a property of the $espForm current record. 
+        If this call is used without a form control record, the actual data value should be supplied via the 
+        options.value property.
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @ingroup EspControl
+ */
+extern void espCheckbox(HttpConn *conn, cchar *name, cchar *checkedValue, cchar *options);
+
+/**
+    Render an HTML division
+    @description This creates an HTML element with the required options.It is useful to generate a dynamically 
+        refreshing division.
+    @param conn Http connection object
+    @param body HTML body to render
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @remarks 
+        <% div("{ refresh: '/getData', period: 2000}"); %>\n
+        Line 2\n
+        Line 3
+    @options <i>option1</i> details \b about option1\n
+             <i>option2</i> details about option1
+    @stability prototype
+    @example <% MOB div("{ refresh: '/getData', period: 2000}"); %>
+        Line 2
+    @ingroup EspControl
+ */
 extern void espDivision(HttpConn *conn, cchar *body, cchar *options);
+
+/**
+    Signify the end of an HTML form. 
+    @description This emits a HTML closing form tag.
+    @param conn Http connection object
+    @ingroup EspControl
+ */
 extern void espEndform(HttpConn *conn);
+
+/**
+    Render flash messages.
+    @description Flash messages are one-time messages that are displayed to the client on the next request (only).
+        See $espNotice for how to display flash messages. 
+    @param conn Http connection object
+    @param kinds Space separated list of flash messages types. Typical types are: "error", "inform", "warning".
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @ingroup EspControl
+ */
 extern void espFlash(HttpConn *conn, cchar *kinds, cchar *options);
+
+/**
+    Render an HTML form 
+    @description This will render an HTML form tag and optionally associate the given record as the current record for
+        the request. Abbreviated controls (see $EspAbbrev) use the current record to supply form data fields and values.
+        The espForm control can be used without a record. In this case, nested ESP controls may have to provide 
+        values via an Options.value field.
+    @param conn Http connection object
+    @param record Record to use by default to supply form field names and values.
+    @param options Extra options. See $EspControl for a list of the standard options.
+MOB - options here - how to document options
+    @ingroup EspControl
+ */
 extern void espForm(HttpConn *conn, EdiRec *record, cchar *options);
+
+/**
+    Render an HTML icon
+    @param conn Http connection object
+    @param uri URI reference for the icon resource
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @ingroup EspControl
+ */
 extern void espIcon(HttpConn *conn, cchar *uri, cchar *options);
+
+/**
+    Render an HTML image
+    @param conn Http connection object
+    @param uri URI reference for the image resource
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @ingroup EspControl
+ */
 extern void espImage(HttpConn *conn, cchar *uri, cchar *options);
+
+/*MOB
+    Render an HTML anchor link
+    @param conn Http connection object
+    @param text Anchor text to display for the link
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @ingroup EspControl
+ */
 extern void espInput(HttpConn *conn, cchar *name, cchar *options);
 extern void espLabel(HttpConn *conn, cchar *text, cchar *options);
 extern void espDropList(HttpConn *conn, cchar *name, cchar *choices, cchar *options);

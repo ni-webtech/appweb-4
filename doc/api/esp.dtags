@@ -176,6 +176,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>espError</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga6726adb293f1b81115cd749c8f5fa2a4</anchor>
+      <arglist>(HttpConn *conn, cchar *fmt,...)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>espFinalize</name>
       <anchorfile>group___esp_req.html</anchorfile>
       <anchor>gac142434246bc5558dfe73a78ded7a7f0</anchor>
@@ -194,6 +201,13 @@
       <anchorfile>group___esp_req.html</anchorfile>
       <anchor>gadf50b51bf7ab10d828e85be140c005c5</anchor>
       <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>HttpConn *</type>
+      <name>espGetConn</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga41a42035766ff5d2fd0fd74588e167ea</anchor>
+      <arglist>()</arglist>
     </member>
     <member kind="function">
       <type>MprOff</type>
@@ -287,11 +301,32 @@
       <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>espInform</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga335bcd4fcf7ac6da263e415a892c08b9</anchor>
+      <arglist>(HttpConn *conn, cchar *fmt,...)</arglist>
+    </member>
+    <member kind="function">
       <type>bool</type>
       <name>espMatchParam</name>
       <anchorfile>group___esp_req.html</anchorfile>
       <anchor>gacc2fb39132dab5f624a0f026d2e73440</anchor>
       <arglist>(HttpConn *conn, cchar *var, cchar *value)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espNotice</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga0f0970da2e7a0c212c6a138477e872d1</anchor>
+      <arglist>(HttpConn *conn, cchar *kind, cchar *fmt,...)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espNoticev</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gad5b3f0dcd7b870c910f302362a77b7e3</anchor>
+      <arglist>(HttpConn *conn, cchar *kind, cchar *fmt, va_list args)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -320,6 +355,13 @@
       <anchorfile>group___esp_req.html</anchorfile>
       <anchor>ga54f5ce21966922b0883d1942ccbeae8d</anchor>
       <arglist>(HttpConn *conn, bool on)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espSetConn</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga6ea189a01c1c680e3f5d77396b3bd3a8</anchor>
+      <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -385,6 +427,13 @@
       <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>espWarn</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gab603a0ad6ae23ed357d18451d59afdf9</anchor>
+      <arglist>(HttpConn *conn, cchar *fmt,...)</arglist>
+    </member>
+    <member kind="function">
       <type>ssize</type>
       <name>espWrite</name>
       <anchorfile>group___esp_req.html</anchorfile>
@@ -425,6 +474,95 @@
       <anchorfile>group___esp_req.html</anchorfile>
       <anchor>ga70933a9bf4793667887a9f7938b5d695</anchor>
       <arglist>(HttpConn *conn, cchar *name)</arglist>
+    </member>
+  </compound>
+  <compound kind="group">
+    <name>EspControl</name>
+    <title>EspControl</title>
+    <filename>group___esp_control.html</filename>
+    <member kind="function">
+      <type>void</type>
+      <name>espAlert</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>ga46d20e684116990c878ef113b0702972</anchor>
+      <arglist>(HttpConn *conn, cchar *text, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espAnchor</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>ga603c454b5dce3691e3ca7b0c1e7d860e</anchor>
+      <arglist>(HttpConn *conn, cchar *text, cchar *uri, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espButton</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>ga5bf9787cd0cd13684a7e8ffa55aba884</anchor>
+      <arglist>(HttpConn *conn, cchar *text, cchar *value, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espButtonLink</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>gae7c01afaa7ef62fce8c378a0864eee84</anchor>
+      <arglist>(HttpConn *conn, cchar *text, cchar *uri, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espChart</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>gab8ba29ac8a0ec5e26f83fa642b4494b6</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espCheckbox</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>ga4c0097201d128c40f451af90ceb5f674</anchor>
+      <arglist>(HttpConn *conn, cchar *name, cchar *checkedValue, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espDivision</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>ga5677ea87f674bd598faee87113b7fd2f</anchor>
+      <arglist>(HttpConn *conn, cchar *body, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espEndform</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>gadf62f0d9f2459c1be758606992c235ac</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espFlash</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>gad7619da182c4e98e7ff0c30036929229</anchor>
+      <arglist>(HttpConn *conn, cchar *kinds, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espForm</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>gadb29a44388231433289094ab1313c240</anchor>
+      <arglist>(HttpConn *conn, EdiRec *record, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espIcon</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>ga462c0f8e483d69249668dc4254005bd0</anchor>
+      <arglist>(HttpConn *conn, cchar *uri, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espImage</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>gafdc98cdf30e71fd013d2ff2e1b10ccb1</anchor>
+      <arglist>(HttpConn *conn, cchar *uri, cchar *options)</arglist>
     </member>
   </compound>
   <compound kind="struct">
