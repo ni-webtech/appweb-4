@@ -8,6 +8,7 @@ defineComponent() {
     eval SHOBJ=\$BLD_${kind}_SHOBJ
     builtin=`[ "$path" = "." -a -f src/ejs.h ] && echo --builtin`
     eval pcre=\$CFG_${kind}_PCRE
+    eval sqlite=\$CFG_${kind}_SQLITE
 
     deps="mpr http"
     optional="ssl"
@@ -15,6 +16,10 @@ defineComponent() {
     if [ "$pcre" = 1 ] ; then
         withlibs="pcre"
         libs="$libs pcre"
+    fi
+    if [ "$sqlite" = 1 ] ; then
+        withlibs="sqlite"
+        libs="$libs sqlite"
     fi
     if [ "$BLD_FEATURE_EJSCRIPT_ALL_IN_ONE" = 1 ] ; then
         if isdefined SQLITE ; then
@@ -40,7 +45,8 @@ defineComponent() {
             warnComponent ejs "Can't locate libejs"
             return
         fi
-        for lib in `echo $libdir/libejs* $libdir/libmpr* $libdir/libhttp* $libdir/libpcre* $libdir/ejs*${SHOBJ}` ; do
+        for lib in `echo $libdir/libejs* $libdir/libmpr* $libdir/libhttp* $libdir/libpcre* $libdir/ejs*${SHOBJ} \
+                $libdir/libsqlite3*` ; do
             if [ ! -f "$lib" ] ; then
                 warnComponent ejs "Ejs is not correctly built. Missing $lib"
                 echo "Can't use ejs. Ejs is not correctly built. Missing $lib"

@@ -48,8 +48,7 @@ static void update() {
     }
 }
 
-//  MOB - remove Init
-ESP_EXPORT int espInit_controller_post(EspRoute *eroute, MprModule *module) 
+ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module) 
 {
     Edi *edi;
 

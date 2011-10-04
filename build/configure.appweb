@@ -59,6 +59,16 @@ manageFeatures()
         echo "Enabling the auth-file authorization backend"
         BLD_FEATURE_AUTH_FILE=1
     fi
+    if [ "$BLD_FEATURE_SQLITE" = 0 -a "$BLD_FEATURE_SDB" = 1 ] ; then
+        echo " "
+        echo "Must have configure with SQLite to use SDB."
+        echo "Disabling SDB"
+        BLD_FEATURE_SDB=0
+    fi
+    if [ "$BLD_FEATURE_ESP" = 0 ] ; then
+        BLD_FEATURE_MDB=0
+        BLD_FEATURE_SDB=0
+    fi
 }
 
 
@@ -80,6 +90,12 @@ BLD_FEATURE_AUTH_PAM=$BLD_FEATURE_AUTH_PAM
 BLD_HTTP_PORT=$BLD_HTTP_PORT
 BLD_SSL_PORT=$BLD_SSL_PORT
 
+#
+#   Embedded Server Pages (ESP) options
+#
+BLD_FEATURE_MDB=$BLD_FEATURE_MDB
+BLD_FEATURE_SDB=$BLD_FEATURE_SDB
+
 !EOF_FEATURE_CONFIG1
 }
 
@@ -95,6 +111,14 @@ emitExtraComponents()
 help()
 {
     cat <<!EOF_HELP
+
+Additional ESP Features:
+  --enable-edi             Enable the embedded database interface
+  --disable-ed             Disable the embedded database interface
+  --enable-mdb             Enable the memory database support
+  --disable-mdb            Disable the memory database support
+  --enable-sdb             Enable the SQLite database support
+  --disable-sdb            Disable the SQLite database support
 
 Additional Appweb Features:
   --auth=[pam|file]        Build with file or PAM-based authorization support.
@@ -145,7 +169,19 @@ parseArg()
         BLD_FEATURE_AUTH_FILE=1
         BLD_FEATURE_AUTH_PAM=0
         BLD_FEATURE_LEGACY_API=0
+        BLD_FEATURE_MDB=0
         BLD_FEATURE_ROMFS=0
+        BLD_FEATURE_SDB=0
+        ;;
+    disable-edi)
+        BLD_FEATURE_MDB=0
+        BLD_FEATURE_SDB=0
+        ;;
+    disable-mdb)
+        BLD_FEATURE_MDB=0
+        ;;
+    disable-sdb)
+        BLD_FEATURE_SDB=0
         ;;
     enable-all)
         BLD_FEATURE_ASSERT=1
@@ -158,6 +194,16 @@ parseArg()
         else
             BLD_FEATURE_AUTH_PAM=0
         fi
+        ;;
+    enable-edi)
+        BLD_FEATURE_MDB=1
+        BLD_FEATURE_SDB=1
+        ;;
+    enable-mdb)
+        BLD_FEATURE_MDB=1
+        ;;
+    enable-sdb)
+        BLD_FEATURE_SDB=1
         ;;
     port=*)
         BLD_HTTP_PORT=${ARG}

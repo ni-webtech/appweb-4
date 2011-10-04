@@ -12,7 +12,7 @@
 #include    "appweb.h"
 #include    "edi.h"
 
-#if BLD_FEATURE_MDB || 1
+#if BLD_FEATURE_MDB
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,38 +25,49 @@ extern "C" {
 
 /********************************** Tunables **********************************/
 
-#define MDB_INCR    8               /**< Default memory allocation increment for MDB */
+#define MDB_INCR    8                   /**< Default memory allocation increment for MDB */
 
+/*
+    Per column structure
+ */
 typedef struct MdbCol {
-    MprList         *validations;
-    char            *name;
-    int             type;
-    int             flags;
-    int             cid;
+    MprList         *validations;       /* List of column validations */
+    char            *name;              /* Column name */
+    int             type;               /* Column type */
+    int             flags;              /* Column flags */
+    int             cid;                /* Column index in MdbSchema.cols */
     int64           nextValue;
 } MdbCol;
 
+/*
+    Table schema
+ */
 typedef struct MdbSchema {
-    int             ncols;
-    int             capacity;
-    MdbCol          cols[MPR_FLEX];
+    int             ncols;              /* Number of columns in table */
+    int             capacity;           /* Capacity of cols */
+    MdbCol          cols[MPR_FLEX];     /* Array of columns */
 } MdbSchema;
 
+/*
+    Per row structure
+ */
 typedef struct MdbRow {
-    struct MdbTable *table;
-    int             rid;
-    int             nfields;
+    struct MdbTable *table;             /* Reference to MdbTable */
+    int             rid;                /* Table index in MdbTable.row */
+    int             nfields;            /* Number of fields in fields */
     cchar           *fields[MPR_FLEX];
 } MdbRow;
 
+/*
+    Per table structure
+ */
 typedef struct MdbTable {
-    char            *name;
-    MdbSchema       *schema;
-    MprMutex        *mutex;
-    MprHash         *index;
-    MdbCol          *keyCol;
-    MdbCol          *indexCol;
-    MprList         *rows;
+    char            *name;              /* Table name */
+    MdbSchema       *schema;            /* Table columns schema */
+    MprHash         *index;             /* Table index */
+    MdbCol          *keyCol;            /* Reference to the key column */
+    MdbCol          *indexCol;          /* Reference to the index column */
+    MprList         *rows;              /* Table row */
 } MdbTable;
 
 /*
@@ -64,23 +75,26 @@ typedef struct MdbTable {
  */
 #define MDB_LOADING     0x1
 
+/*
+    Per database structure
+ */
 typedef struct Mdb {
-    Edi             edi;            /**< */
-    int             flags;
-    char            *path;          /**< Currently open database */
-    MprMutex        *mutex;         /**< Multithread lock for Schema modifications only */
-    MprList         *tables;        /**< List of tables */
+    Edi             edi;                /**< EDI database interface structure */
+    int             flags;              /**< Database flags */
+    char            *path;              /**< Currently open database */
+    MprMutex        *mutex;             /**< Multithread lock for Schema modifications only */
+    MprList         *tables;            /**< List of tables */
 
     /*
         When loading from file
      */
-    MdbTable        *loadTable;     /* Current table */
-    MdbCol          *loadCol;       /* Current column */
-    MdbRow          *loadRow;       /* Current row */
-    MprList         *loadStack;     /* State stack */
-    int             loadState;      /* Current state */
-    int             loadNcols;      /* Expected number of cols */
-    int             lineNumber;     /* Current line number in path */
+    MdbTable        *loadTable;         /* Current table */
+    MdbCol          *loadCol;           /* Current column */
+    MdbRow          *loadRow;           /* Current row */
+    MprList         *loadStack;         /* State stack */
+    int             loadState;          /* Current state */
+    int             loadNcols;          /* Expected number of cols */
+    int             lineNumber;         /* Current line number in path */
 } Mdb;
 
 

@@ -312,7 +312,7 @@ void espWriteView(HttpConn *conn, cchar *name)
             }
         }
         if (mprLookupModule(req->source) == 0) {
-            req->entry = sfmt("espInit_%s", req->cacheName);
+            req->entry = sfmt("esp_%s", req->cacheName);
             //  MOB - who keeps reference to module?
             if ((mp = mprCreateModule(req->source, req->module, req->entry, eroute)) == 0) {
                 httpMemoryError(conn);
@@ -500,7 +500,7 @@ static char *getControllerEntry(cchar *controllerName)
 {
     char    *cp, *entry;
 
-    entry = sfmt("espInit_controller_%s", mprTrimPathExt(mprGetPathBase(controllerName)));
+    entry = sfmt("esp_controller_%s", mprTrimPathExt(mprGetPathBase(controllerName)));
     for (cp = entry; *cp; cp++) {
         if (!isalnum((int) *cp) && *cp != '_') {
             *cp = '_';
@@ -537,7 +537,7 @@ static int loadApp(HttpConn *conn, int *updated)
         }
     }
     if (mp == 0) {
-        entry = sfmt("espInit_app_%s", mprGetPathBase(eroute->dir));
+        entry = sfmt("esp_app_%s", mprGetPathBase(eroute->dir));
         if ((mp = mprCreateModule(eroute->appModuleName, eroute->appModulePath, entry, eroute)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find module %s", eroute->appModulePath);
             return 0;
@@ -1308,14 +1308,14 @@ int maEspHandlerInit(Http *http, MprModule *mp)
     maAddDirective(appweb, "EspShowErrors", espShowErrorsDirective);
     maAddDirective(appweb, "EspUpdate", espUpdateDirective);
 
-#if BLD_FEATURE_EDI || 1
+#if BLD_FEATURE_EDI
     if ((esp->ediService = ediCreateService()) == 0) {
         return 0;
     }
-#if BLD_FEATURE_MDB || 1
+#if BLD_FEATURE_MDB
     mdbInit();
 #endif
-#if BLD_FEATURE_SQLITE &&0
+#if BLD_FEATURE_SDB
     sdbInit();
 #endif
 #endif

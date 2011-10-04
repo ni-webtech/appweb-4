@@ -11056,12 +11056,13 @@ static cchar *findEndKeyword(MprJson *jp, cchar *str);
 static cchar *findQuote(cchar *tok, int quote);
 static MprObj *makeObj(MprJson *jp, bool list);
 static cchar *parseComment(MprJson *jp);
+static void jsonParseError(MprJson *jp, cchar *msg);
 static cchar *parseName(MprJson *jp);
 static cchar *parseValue(MprJson *jp);
 static int setValue(MprJson *jp, MprObj *obj, int index, cchar *name, cchar *value, int type);
 
 
-MprObj *mprDeserializeCustom(cchar *str, MprMakeObj makeObj, MprCheckState checkState, MprSetValue setValue, void *data)
+MprObj *mprDeserializeCustom(cchar *str, MprJsonCallback callback, void *data)
 {
     MprJson     jp;
 
@@ -11071,9 +11072,7 @@ MprObj *mprDeserializeCustom(cchar *str, MprMakeObj makeObj, MprCheckState check
     memset(&jp, 0, sizeof(jp));
     jp.lineNumber = 1;
     jp.tok = str;
-    jp.makeObj = makeObj;
-    jp.checkState = checkState;
-    jp.setValue = setValue;
+    jp.callback = callback;
     jp.data = data;
     return deserialize(&jp);
 }
@@ -11084,7 +11083,13 @@ MprObj *mprDeserializeCustom(cchar *str, MprMakeObj makeObj, MprCheckState check
  */
 MprObj *mprDeserialize(cchar *str)
 {
-    return mprDeserializeCustom(str, makeObj, NULL, setValue, NULL); 
+    MprJsonCallback cb;
+
+    cb.checkState = 0;
+    cb.makeObj = makeObj;
+    cb.parseError = jsonParseError;
+    cb.setValue = setValue;
+    return mprDeserializeCustom(str, cb, 0); 
 }
 
 
@@ -11096,10 +11101,10 @@ static MprObj *deserialize(MprJson *jp)
     int     token, rc, index, valueType;
 
     if ((token = advanceToken(jp)) == '[') {
-        obj = jp->makeObj(jp, 1);
+        obj = jp->callback.makeObj(jp, 1);
         index = 0;
     } else if (token == '{') {
-        obj = jp->makeObj(jp, 0);
+        obj = jp->callback.makeObj(jp, 0);
         index = -1;
     } else {
         return (MprObj*) parseValue(jp);
@@ -11137,7 +11142,7 @@ static MprObj *deserialize(MprJson *jp)
         case '}':
         case ']':
             /* End of object or array */
-            if (jp->checkState && jp->checkState(jp, NULL) < 0) {
+            if (jp->callback.checkState && jp->callback.checkState(jp, NULL) < 0) {
                 return 0;
             }
             jp->tok++;
@@ -11158,7 +11163,7 @@ static MprObj *deserialize(MprJson *jp)
                 jp->tok++;
             }
             advanceToken(jp);
-            if (jp->checkState && jp->checkState(jp, name) < 0) {
+            if (jp->callback.checkState && jp->callback.checkState(jp, name) < 0) {
                 return 0;
             }
             if (*jp->tok == '{') {
@@ -11177,7 +11182,7 @@ static MprObj *deserialize(MprJson *jp)
                 /* Error already reported */
                 return 0;
             }
-            if ((rc = jp->setValue(jp, obj, index, name, value, valueType)) < 0) {
+            if ((rc = jp->callback.setValue(jp, obj, index, name, value, valueType)) < 0) {
                 return 0;
             }
         }
@@ -11435,6 +11440,16 @@ static cchar *findEndKeyword(MprJson *jp, cchar *str)
 }
 
 
+static void jsonParseError(MprJson *jp, cchar *msg)
+{
+    if (jp->path) {
+        mprError("%s\nIn file '%s' at line %d", msg, jp->path, jp->lineNumber);
+    } else {
+        mprError("%s\nAt line %d", msg, jp->lineNumber);
+    }
+}
+
+
 void mprJsonParseError(MprJson *jp, cchar *fmt, ...)
 {
     va_list     args;
@@ -11442,6 +11457,7 @@ void mprJsonParseError(MprJson *jp, cchar *fmt, ...)
 
     va_start(args, fmt);
     msg = sfmtv(fmt, args);
+    (jp->callback.parseError)(jp, msg);
 #if UNUSED
     mprError("%s\nIn file '%s' at line %d", msg, jp->path, jp->lineNumber);
 #else

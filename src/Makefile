@@ -12,7 +12,11 @@ SSL				:= mod_ssl
 
 include 		.makedep
 
-PRE_DIRS		+= deps esp modules
+PRE_DIRS		+= deps
+ifeq ($(BLD_FEATURE_ESP),1)
+	PRE_DIRS	+= esp
+endif
+PRE_DIRS		+= modules
 POST_DIRS		+= utils server test
 TARGETS			+= $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
 SOURCES			+= $(shell ls *.c | egrep -v 'deps')

@@ -13,7 +13,7 @@
 #include    "mdb.h"
 #include    "pcre.h"
 
-#if BLD_FEATURE_ESP
+#if BLD_FEATURE_ESP && BLD_FEATURE_MDB
 /************************************* Local **********************************/
 
 #define MDB_LOAD_BEGIN   1      /* Initial state */
@@ -62,7 +62,6 @@ static int mdbAddColumn(Edi *edi, cchar *tableName, cchar *columnName, int type,
 static int mdbAddIndex(Edi *edi, cchar *tableName, cchar *columnName, cchar *indexName);
 static int mdbAddTable(Edi *edi, cchar *tableName);
 static int mdbAddValidation(Edi *edi, cchar *tableName, cchar *fieldName, EdiValidation *vp);
-
 static int mdbChangeColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
 static void mdbClose(Edi *edi);
 static EdiRec *mdbCreateRec(Edi *edi, cchar *tableName);
@@ -71,6 +70,7 @@ static int mdbDeleteRow(Edi *edi, cchar *tableName, cchar *key);
 static MprList *mdbGetColumns(Edi *edi, cchar *tableName);
 static int mdbGetColumnSchema(Edi *edi, cchar *tableName, cchar *columnName, int *type, int *flags, int *cid);
 static MprList *mdbGetTables(Edi *edi);
+static int mdbGetTableSchema(Edi *edi, cchar *tableName, int *numRows, int *numCols);
 static int mdbLoad(Edi *edi, cchar *path);
 static int mdbLoadFromString(Edi *edi, cchar *string);
 static int mdbLookupField(Edi *edi, cchar *tableName, cchar *fieldName);
@@ -92,9 +92,9 @@ static int mdbWriteRec(Edi *edi, EdiRec *rec);
 EdiProvider MdbProvider = {
     "mdb",
     mdbAddColumn, mdbAddIndex, mdbAddTable, mdbAddValidation, mdbChangeColumn, mdbClose, mdbCreateRec, mdbDelete, 
-    mdbDeleteRow, mdbGetColumns, mdbGetColumnSchema, mdbGetTables, mdbLoad, mdbLookupField, mdbOpen, mdbQuery, mdbReadField, 
-    mdbReadRec, mdbReadWhere, mdbRemoveColumn, mdbRemoveIndex, mdbRemoveTable, mdbRenameTable, mdbRenameColumn, 
-    mdbSave, mdbValidateRec, mdbWriteField, mdbWriteRec,
+    mdbDeleteRow, mdbGetColumns, mdbGetColumnSchema, mdbGetTables, mdbGetTableSchema, mdbLoad, mdbLookupField, 
+    mdbOpen, mdbQuery, mdbReadField, mdbReadRec, mdbReadWhere, mdbRemoveColumn, mdbRemoveIndex, mdbRemoveTable, 
+    mdbRenameTable, mdbRenameColumn, mdbSave, mdbValidateRec, mdbWriteField, mdbWriteRec,
 };
 
 /************************************* Code ***********************************/
@@ -484,6 +484,28 @@ static MprList *mdbGetTables(Edi *edi)
     }
     unlock(mdb);
     return list;
+}
+
+
+static int mdbGetTableSchema(Edi *edi, cchar *tableName, int *numRows, int *numCols)
+{
+    Mdb         *mdb;
+    MdbTable    *table;
+
+    mdb = (Mdb*) edi;
+    lock(mdb);
+    if ((table = lookupTable(mdb, tableName)) == 0) {
+        unlock(mdb);
+        return MPR_ERR_CANT_FIND;
+    }
+    if (numRows) {
+        *numRows = mprGetListLength(table->rows);
+    }
+    if (numCols) {
+        *numCols = table->schema->ncols;
+    }
+    unlock(mdb);
+    return 0;
 }
 
 
@@ -1102,17 +1124,34 @@ static int setMdbValue(MprJson *jp, MprObj *obj, int cid, cchar *name, cchar *va
 }
 
 
+static void parseMdbError(MprJson *jp, cchar *msg)
+{
+    if (jp->path) {
+        mprError("%s\nIn file '%s' at line %d", msg, jp->path, jp->lineNumber);
+    } else {
+        mprError("%s\nAt line %d", msg, jp->lineNumber);
+    }
+}
+
+
 static int mdbLoadFromString(Edi *edi, cchar *str)
 {
-    Mdb         *mdb;
-    MprObj      *obj;
+    Mdb             *mdb;
+    MprObj          *obj;
+    MprJsonCallback cb;
 
     mdb = (Mdb*) edi;
     mdb->edi.flags |= EDI_SUPPRESS_SAVE;
     mdb->flags |= MDB_LOADING;
     mdb->loadStack = mprCreateList(0, 0);
     pushState(mdb, MDB_LOAD_BEGIN);
-    obj = mprDeserializeCustom(str, makeMdbObj, checkMdbState, setMdbValue, mdb);
+
+    cb.makeObj = makeMdbObj;
+    cb.checkState = checkMdbState;
+    cb.setValue = setMdbValue;
+    cb.parseError = parseMdbError;
+
+    obj = mprDeserializeCustom(str, cb, mdb);
     mdb->flags &= ~MDB_LOADING;
     mdb->edi.flags &= ~EDI_SUPPRESS_SAVE;
     mdb->loadStack = 0;
@@ -1286,7 +1325,9 @@ static void manageTable(MdbTable *table, int flags)
         mprMark(table->name);
         mprMark(table->schema);
         mprMark(table->index);
+#if UNUSED
         mprMark(table->mutex);
+#endif
         mprMark(table->rows);
     }
 }
@@ -1595,7 +1636,7 @@ static int parseOperation(cchar *operation)
 }
 
 
-#endif /* BLD_FEATURE_ESP */
+#endif /* BLD_FEATURE_ESP && BLD_FEATURE_ESP && BLD_FEATURE_MDB */
 /*
     @copy   default
     

@@ -224,7 +224,7 @@ void espDefineAction(EspRoute *eroute, cchar *target, void *actionProc)
 }
 
 
-void espDefineBase(EspRoute *eroute, void *baseProc)
+void espDefineBase(EspRoute *eroute, EspProc baseProc)
 {
     eroute->controllerBase = baseProc;
 }

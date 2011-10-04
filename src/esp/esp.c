@@ -442,7 +442,7 @@ static void compileFile(cchar *source, int kind)
                 return;
             }
             mprWriteFileFmt(app->flatFile, "\n\n");
-            mprAddItem(app->flatItems, sfmt("espInit_controller_%s", mprTrimPathExt(mprGetPathBase(source))));
+            mprAddItem(app->flatItems, sfmt("esp_controller_%s", mprTrimPathExt(mprGetPathBase(source))));
         }
     }
     if (kind & (ESP_PAGE | ESP_VIEW)) {
@@ -463,7 +463,7 @@ static void compileFile(cchar *source, int kind)
                 return;
             }
             mprWriteFileFmt(app->flatFile, "\n\n");
-            mprAddItem(app->flatItems, sfmt("espInit_%s", app->cacheName));
+            mprAddItem(app->flatItems, sfmt("esp_%s", app->cacheName));
 
         } else {
             trace("BUILD", "%s", source);
@@ -592,7 +592,7 @@ static void compile(int argc, char **argv)
                 compileFile(path, ESP_PAGE);
             }
         }
-        mprWriteFileFmt(app->flatFile, "\nESP_EXPORT int espInit_app_%s(EspRoute *el, MprModule *module) {\n", 
+        mprWriteFileFmt(app->flatFile, "\nESP_EXPORT int esp_app_%s(EspRoute *el, MprModule *module) {\n", 
             app->appName);
         for (next = 0; (line = mprGetNextItem(app->flatItems, &next)) != 0; ) {
             mprWriteFileFmt(app->flatFile, "    %s(el, module);\n", line);

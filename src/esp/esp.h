@@ -13,9 +13,7 @@
 
 #if BLD_FEATURE_ESP
 
-#if BLD_FEATURE_EDI || 1
 #include    "edi.h"
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -94,7 +92,6 @@ typedef void (*EspProc)(HttpConn *conn);
 #define ESP_TOK_EXPR            4            /* <%= expression %> */
 #define ESP_TOK_CONTROL         5            /* <%@ control */
 
-//MOB DOC
 #define ESP_SECURITY_TOKEN_NAME "__esp_security_token__"
 #define ESP_FLASH_VAR           "__flash__"
 
@@ -121,9 +118,7 @@ typedef struct Esp {
     MprThreadLocal  *local;                 /**< Thread local data */
     MprCache        *cache;                 /**< Session and content cache */
     MprMutex        *mutex;                 /**< Multithread lock */
-#if BLD_FEATURE_EDI || 1
     EdiService      *ediService;            /**< Database service */
-#endif
     int             inUse;                  /**< Active ESP request counter */
 } Esp;
 
@@ -143,7 +138,6 @@ typedef struct EspRoute {
     char            *compile;               /**< Compile template */
     char            *link;                  /**< Link template */
     char            *searchPath;            /**< Search path to use when locating compiler / linker */
-    Edi             *edi;                   /**< Default database for this route */
     EspProc         controllerBase;         /**< Initialize base for a controller */
 
     char            *appModuleName;         /**< App module name when compiled flat */
@@ -162,6 +156,8 @@ typedef struct EspRoute {
     int             update;                 /**< Auto-update modified ESP source */
     int             keepSource;             /**< Preserve generated source */
 	int				showErrors;				/**< Send server errors back to client */
+
+    Edi             *edi;                   /**< Default database for this route */
 } EspRoute;
 
 /**
@@ -172,7 +168,7 @@ typedef struct EspRoute {
     @param lifesecs Lifespan of cache items in seconds.
     @param uri Optional cache URI when using per-URI caching. Set to "*" to cache all matching URIs on a per-URI basis.
     @return A count of the bytes actually written
-    @ingroup HttpQueue
+    @ingroup EspRoute
  */
 extern void espCacheControl(EspRoute *eroute, cchar *targetKey, int lifesecs, cchar *uri);
 
@@ -215,8 +211,15 @@ extern char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *c
  */
 extern void espDefineAction(EspRoute *eroute, cchar *targetKey, void *actionProc);
 
-//  MOB - DOC
-extern void espDefineBase(EspRoute *eroute, void *baseProc);
+/**
+    Define a base function to invoke for all controller actions.
+    @description A base function can be defined that will be called before calling any controller action. This
+        emulates a super class constructor.
+    @param eroute ESP route object
+    @param baseProc Function to call just prior to invoking a controller action.
+    @ingroup EspRoute
+ */
+extern void espDefineBase(EspRoute *eroute, EspProc baseProc);
 
 /**
     Define a view
@@ -285,6 +288,16 @@ typedef struct EspSession {
 extern EspSession *espAllocSession(HttpConn *conn, cchar *id, MprTime lifespan);
 
 /**
+    Create a session object
+    @description This call creates a session object if one does not already exist.
+        Session state stores persist across individual HTTP requests.
+    @param conn Http connection object
+    @return A session state object
+    @ingroup EspSession
+ */
+extern EspSession *espCreateSession(HttpConn *conn);
+
+/**
     Destroy a session state object
     @description
     @param sp Session state object allocated with #espAllocSession
@@ -300,10 +313,7 @@ extern void espDestroySession(EspSession *sp);
     @return A session state object
     @ingroup EspSession
  */
-//  MOB DOC - remove "create" argument
 extern EspSession *espGetSession(HttpConn *conn, int create);
-
-extern EspSession *espCreateSession(HttpConn *conn);
 
 /**
     Get a session state variable
@@ -336,10 +346,24 @@ extern int espSetSessionVar(HttpConn *conn, cchar *name, cchar *value);
  */
 extern char *espGetSessionID(HttpConn *conn);
 
-//  MOB DOC
-extern int espSetSessionObj(HttpConn *conn, cchar *name, MprHash *value);
-extern MprHash *espGetSessionObj(HttpConn *conn, cchar *name);
-extern void espClearFlash(HttpConn *conn);
+/**
+    Set an object into the session state store
+    @description Store an object into the session state store by serialing all properties.
+    @param conn Http connection object
+    @param key Session state key
+    @param value Object to serialize
+    @ingroup EspSession
+ */
+extern int espSetSessionObj(HttpConn *conn, cchar *key, MprHash *value);
+
+/**
+    Get an object from the session state store
+    @description Retrieve an object from the session state store by deserializing all properties.
+    @param conn Http connection object
+    @param key Session state key
+    @ingroup EspSession
+ */
+extern MprHash *espGetSessionObj(HttpConn *conn, cchar *key);
 
 /********************************** Requests **********************************/
 /**
@@ -383,12 +407,12 @@ typedef struct EspReq {
     char            *view;                  /**< Path to view */
     char            *entry;                 /**< Module entry point */
     char            *commandLine;           /**< Command line for compile/link */
-    EdiRec          *record;                /**< Current data record */
     int             autoFinalize;           /**< Request is/will-be auto-finalized */
     int             finalized;              /**< Request has been finalized */
     int             sessionProbed;          /**< Already probed for session store */
     int             appLoaded;              /**< App module already probed */
     int             lastDomID;              /**< Last generated DOM ID */
+    EdiRec          *record;                /**< Current data record */
 } EspReq;
 
 /**
@@ -791,7 +815,7 @@ extern ssize espWriteString(HttpConn *conn, cchar *s);
     @param conn HttpConn connection object
     @param s String containing the data to write
     @return A count of the bytes actually written
-    @ingroup HttpQueue
+    @ingroup EspReq
  */
 extern ssize espWriteSafeString(HttpConn *conn, cchar *s);
 
@@ -801,20 +825,26 @@ extern ssize espWriteSafeString(HttpConn *conn, cchar *s);
     @param conn HttpConn connection object
     @param name Form variable name
     @return A count of the bytes actually written
-    @ingroup HttpQueue
+    @ingroup EspReq
  */
 extern ssize espWriteParam(HttpConn *conn, cchar *name);
 
-//  MOB DOC - should this return ssize?
+/**
+    Write a view template to the client
+    @description Actions are C procedures that are invoked when specific URIs are routed to the controller/action pair.
+    @param conn Http connection object
+    @param name view name
+    @ingroup EspReq
+ */
 extern void espWriteView(HttpConn *conn, cchar *name);
 
 //  MOB - DOC and sort
+extern HttpConn *espGetConn();
 void espInform(HttpConn *conn, cchar *fmt, ...);
 void espError(HttpConn *conn, cchar *fmt, ...);
 void espWarn(HttpConn *conn, cchar *fmt, ...);
 void espNotice(HttpConn *conn, cchar *kind, cchar *fmt, ...);
 void espNoticev(HttpConn *conn, cchar *kind, cchar *fmt, va_list args);
-extern HttpConn *espGetConn();
 extern void espSetConn(HttpConn *conn);
 
 //  MOB DOC
@@ -913,19 +943,15 @@ extern EdiGrid *getGrid();
 extern EdiRec *getRec();
 extern bool hasGrid();
 extern bool hasRec();
-
 extern MprHash *makeObj(cchar *json, ...);
-
 extern EdiGrid *readGrid(cchar *tableName);
 extern EdiRec *readRec(cchar *tableName);
 extern EdiGrid *readWhere(cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
 extern EdiRec *readOneWhere(cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
 extern EdiRec *readRecByKey(cchar *tableName, cchar *key);
 extern bool removeRec(cchar *tableName, cchar *key);
-
 extern EdiGrid *setGrid(EdiGrid *grid);
 extern EdiRec *setRec(EdiRec *rec);
-
 
 /* These write to the database */
 extern bool writeRec(EdiRec *rec);

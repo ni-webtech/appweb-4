@@ -12,7 +12,6 @@
 #include    "pcre.h"
 
 #if BLD_FEATURE_ESP
-#if BLD_FEATURE_EDI || 1
 /************************************* Local **********************************/
 
 static void addValidations();
@@ -211,6 +210,12 @@ cchar *ediGetRecField(cchar *fmt, EdiRec *rec, cchar *fieldName)
 MprList *ediGetTables(Edi *edi)
 {
     return edi->provider->getTables(edi);
+}
+
+
+int ediGetTableSchema(Edi *edi, cchar *tableName, int *numRows, int *numCols)
+{
+    return edi->provider->getTableSchema(edi, tableName, numRows, numCols);
 }
 
 
@@ -691,7 +696,6 @@ static void addValidations()
 }
 
 
-#endif /* BLD_FEATURE_EDI || 1 */
 #endif /* BLD_FEATURE_ESP */
 /*
     @copy   default

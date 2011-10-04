@@ -17,6 +17,13 @@
       <arglist>(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheName, cchar *layout, char **err)</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>espCacheControl</name>
+      <anchorfile>group___esp_route.html</anchorfile>
+      <anchor>ga455d09e910baab0aded9a57936dec886</anchor>
+      <arglist>(EspRoute *eroute, cchar *targetKey, int lifesecs, cchar *uri)</arglist>
+    </member>
+    <member kind="function">
       <type>bool</type>
       <name>espCompile</name>
       <anchorfile>group___esp_route.html</anchorfile>
@@ -29,6 +36,13 @@
       <anchorfile>group___esp_route.html</anchorfile>
       <anchor>gaea173dc388d5badd02f2cd17743b479c</anchor>
       <arglist>(EspRoute *eroute, cchar *targetKey, void *actionProc)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espDefineBase</name>
+      <anchorfile>group___esp_route.html</anchorfile>
+      <anchor>ga8dba5d871d8cca23d33839ce7e25d6c1</anchor>
+      <arglist>(EspRoute *eroute, EspProc baseProc)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -57,6 +71,13 @@
       <arglist>(HttpConn *conn, cchar *id, MprTime lifespan)</arglist>
     </member>
     <member kind="function">
+      <type>EspSession *</type>
+      <name>espCreateSession</name>
+      <anchorfile>group___esp_session.html</anchorfile>
+      <anchor>ga11e5e8371651e92dae33c1d778265e77</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
       <type>void</type>
       <name>espDestroySession</name>
       <anchorfile>group___esp_session.html</anchorfile>
@@ -78,11 +99,25 @@
       <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
+      <type>MprHash *</type>
+      <name>espGetSessionObj</name>
+      <anchorfile>group___esp_session.html</anchorfile>
+      <anchor>gac081825cc4af1199f77b638e659ab32d</anchor>
+      <arglist>(HttpConn *conn, cchar *key)</arglist>
+    </member>
+    <member kind="function">
       <type>cchar *</type>
       <name>espGetSessionVar</name>
       <anchorfile>group___esp_session.html</anchorfile>
       <anchor>ga60a5effb2a9ef53fdb02dbe865bf6093</anchor>
       <arglist>(HttpConn *conn, cchar *name, cchar *defaultValue)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>espSetSessionObj</name>
+      <anchorfile>group___esp_session.html</anchorfile>
+      <anchor>ga01ef5e61df606729516e7955f5140704</anchor>
+      <arglist>(HttpConn *conn, cchar *key, MprHash *value)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
@@ -97,13 +132,6 @@
     <title>EspReq</title>
     <filename>group___esp_req.html</filename>
     <class kind="struct">EspAction</class>
-    <member kind="typedef">
-      <type>void(*</type>
-      <name>EspActionProc</name>
-      <anchorfile>group___esp_req.html</anchorfile>
-      <anchor>gab449f4bb41a5afc1af4870db06fa131f</anchor>
-      <arglist>)(HttpConn *conn)</arglist>
-    </member>
     <member kind="typedef">
       <type>void(*</type>
       <name>EspViewProc</name>
@@ -182,13 +210,6 @@
       <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
-      <type>MprHashTable *</type>
-      <name>espGetFormVars</name>
-      <anchorfile>group___esp_req.html</anchorfile>
-      <anchor>gaf0b081478fe242608c9776e27491e02b</anchor>
-      <arglist>(HttpConn *conn)</arglist>
-    </member>
-    <member kind="function">
       <type>cchar *</type>
       <name>espGetHeader</name>
       <anchorfile>group___esp_req.html</anchorfile>
@@ -196,24 +217,59 @@
       <arglist>(HttpConn *conn, cchar *key)</arglist>
     </member>
     <member kind="function">
-      <type>MprHashTable *</type>
+      <type>MprHash *</type>
       <name>espGetHeaderHash</name>
       <anchorfile>group___esp_req.html</anchorfile>
-      <anchor>ga3f2366767ded6bb0f7e8fd86bb08bca7</anchor>
+      <anchor>ga8daa40cd83a356ad1b1b940751b1df00</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>char *</type>
+      <name>espGetHeaders</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga8b03cbaba01462fb4a7349c9d02fddf3</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>char *</type>
+      <name>espGetHome</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga014f25f00ebf03bbf9ea4a616a0fbc9e</anchor>
       <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
-      <name>espGetIntVar</name>
+      <name>espGetIntParam</name>
       <anchorfile>group___esp_req.html</anchorfile>
-      <anchor>gae5fc1c38d3117f0403050035ead3b33c</anchor>
+      <anchor>ga91bd6b5ad25cefe913aa6ebfe43fa928</anchor>
       <arglist>(HttpConn *conn, cchar *var, int defaultValue)</arglist>
+    </member>
+    <member kind="function">
+      <type>cchar *</type>
+      <name>espGetParam</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga98e63a9a924ec667a3c1b540e56792d3</anchor>
+      <arglist>(HttpConn *conn, cchar *var, cchar *defaultValue)</arglist>
+    </member>
+    <member kind="function">
+      <type>MprHash *</type>
+      <name>espGetParams</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga5bf6214a6875c73c015e7d2b96f1b57a</anchor>
+      <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
       <type>cchar *</type>
       <name>espGetQueryString</name>
       <anchorfile>group___esp_req.html</anchorfile>
       <anchor>gaf84aa1df39869744c4e0ac87e99f1a89</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>char *</type>
+      <name>espGetReferrer</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga400095fc3f1743660baedac7c95ff53c</anchor>
       <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
@@ -231,17 +287,10 @@
       <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
-      <type>cchar *</type>
-      <name>espGetVar</name>
-      <anchorfile>group___esp_req.html</anchorfile>
-      <anchor>gaa9052e93703bbd5cb13def655614ea43</anchor>
-      <arglist>(HttpConn *conn, cchar *var, cchar *defaultValue)</arglist>
-    </member>
-    <member kind="function">
       <type>bool</type>
-      <name>espMatchVar</name>
+      <name>espMatchParam</name>
       <anchorfile>group___esp_req.html</anchorfile>
-      <anchor>ga0dc5fb70fa9a677662eacf818293f993</anchor>
+      <anchor>gacc2fb39132dab5f624a0f026d2e73440</anchor>
       <arglist>(HttpConn *conn, cchar *var, cchar *value)</arglist>
     </member>
     <member kind="function">
@@ -309,10 +358,17 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>espSetIntVar</name>
+      <name>espSetIntParam</name>
       <anchorfile>group___esp_req.html</anchorfile>
-      <anchor>ga1c582f2c263bbf97f0d85a781e26c2cc</anchor>
+      <anchor>ga3d21ff0ee522ae25885378e8cb55d1e9</anchor>
       <arglist>(HttpConn *conn, cchar *var, int value)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espSetParam</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga491fdeaf71f15fb950d54245b7de865b</anchor>
+      <arglist>(HttpConn *conn, cchar *var, cchar *value)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -320,13 +376,6 @@
       <anchorfile>group___esp_req.html</anchorfile>
       <anchor>ga3151f73107b752661efecbacf9011894</anchor>
       <arglist>(HttpConn *conn, int status)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>espSetVar</name>
-      <anchorfile>group___esp_req.html</anchorfile>
-      <anchor>ga900feca01971b8e0cd3ea1cc61a04315</anchor>
-      <arglist>(HttpConn *conn, cchar *var, cchar *value)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -351,20 +400,41 @@
     </member>
     <member kind="function">
       <type>ssize</type>
+      <name>espWriteParam</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gaffb24640eb7bd8101017733e44aebf17</anchor>
+      <arglist>(HttpConn *conn, cchar *name)</arglist>
+    </member>
+    <member kind="function">
+      <type>ssize</type>
+      <name>espWriteSafeString</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga2d0caf2cb713312cd8875fcdb479d493</anchor>
+      <arglist>(HttpConn *conn, cchar *s)</arglist>
+    </member>
+    <member kind="function">
+      <type>ssize</type>
       <name>espWriteString</name>
       <anchorfile>group___esp_req.html</anchorfile>
       <anchor>ga265a6a50f12c3af1512aa4a30477665d</anchor>
       <arglist>(HttpConn *conn, cchar *s)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espWriteView</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga70933a9bf4793667887a9f7938b5d695</anchor>
+      <arglist>(HttpConn *conn, cchar *name)</arglist>
     </member>
   </compound>
   <compound kind="struct">
     <name>Esp</name>
     <filename>struct_esp.html</filename>
     <member kind="variable">
-      <type>MprHashTable *</type>
+      <type>MprHash *</type>
       <name>actions</name>
       <anchorfile>struct_esp.html</anchorfile>
-      <anchor>a65d39e00e8d4bfbbb02e5c00cb4235cc</anchor>
+      <anchor>a69abe25c82410c2d1f1f2ebe679f3fcf</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
@@ -375,10 +445,31 @@
       <arglist></arglist>
     </member>
     <member kind="variable">
+      <type>EdiService *</type>
+      <name>ediService</name>
+      <anchorfile>struct_esp.html</anchorfile>
+      <anchor>ae362960baf8e034b43b2d5debc941f39</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>MprHash *</type>
+      <name>internalOptions</name>
+      <anchorfile>struct_esp.html</anchorfile>
+      <anchor>a3de9de86229003bc08783186ff2a90b3</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
       <type>int</type>
       <name>inUse</name>
       <anchorfile>struct_esp.html</anchorfile>
       <anchor>a51968fa5fbde715934d2a3e00980d647</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>MprThreadLocal *</type>
+      <name>local</name>
+      <anchorfile>struct_esp.html</anchorfile>
+      <anchor>a26763d77bffdd2abd58af8e9bcc1a78f</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
@@ -389,10 +480,10 @@
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>MprHashTable *</type>
+      <type>MprHash *</type>
       <name>views</name>
       <anchorfile>struct_esp.html</anchorfile>
-      <anchor>a15cace83d25a3928b0dcb3d5c335817b</anchor>
+      <anchor>a23a21d717ba1e7b1f2ce7bf4b759e3bf</anchor>
       <arglist></arglist>
     </member>
   </compound>
@@ -400,10 +491,10 @@
     <name>EspAction</name>
     <filename>struct_esp_action.html</filename>
     <member kind="variable">
-      <type>EspActionProc</type>
+      <type>EspProc</type>
       <name>actionProc</name>
       <anchorfile>struct_esp_action.html</anchorfile>
-      <anchor>afbab1ce1641a41a3cdb188e34bac783e</anchor>
+      <anchor>a075f4267e47ee8b869370325a22fa274</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">

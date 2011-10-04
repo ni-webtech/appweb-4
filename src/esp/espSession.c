@@ -57,7 +57,6 @@ static void manageSession(EspSession *sp, int flags)
 }
 
 
-//  MOB - this api needs work. Need a simple createSession
 EspSession *espCreateSession(HttpConn *conn)
 {
     return espGetSession(conn, 1);

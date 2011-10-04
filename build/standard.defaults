@@ -53,6 +53,7 @@ with mpr
 with http
 with --host --optional openssl ssl
 with --host --optional php
+# with --host --optional sqlite
 
 with --optional ejscript
 with --optional dir
@@ -109,6 +110,13 @@ BLD_FEATURE_AUTH_PAM=0
 #	Directory listing handler
 #
 BLD_FEATURE_DIR=1
+
+#
+#   Embedded Server Pages Options
+#
+BLD_FEATURE_EDI=1
+BLD_FEATURE_MDB=1
+BLD_FEATURE_SDB=0
 
 ################################################################################
 #

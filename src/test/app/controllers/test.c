@@ -48,7 +48,7 @@ static void missing() {
     httpError(getConn(), HTTP_CODE_INTERNAL_SERVER_ERROR, "Missing action");
 }
 
-ESP_EXPORT int espInit_controller_test(EspRoute *eroute, MprModule *module) {
+ESP_EXPORT int esp_controller_test(EspRoute *eroute, MprModule *module) {
     espDefineAction(eroute, "test-missing", missing);
     espDefineAction(eroute, "test-cmd-check", check);
     espDefineAction(eroute, "test-cmd-cached", cached);

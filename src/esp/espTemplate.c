@@ -490,7 +490,7 @@ char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheNam
             "static void %s(HttpConn *conn) {\n"\
             "%s%s%s"\
             "}\n\n"\
-            "%s int espInit_%s(EspRoute *eroute, MprModule *module) {\n"\
+            "%s int esp_%s(EspRoute *eroute, MprModule *module) {\n"\
             "   espDefineView(eroute, \"%s\", %s);\n"\
             "   return 0;\n"\
             "}\n",

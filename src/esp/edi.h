@@ -11,7 +11,7 @@
 
 #include    "appweb.h"
 
-#if BLD_FEATURE_EDI || 1
+#if BLD_FEATURE_ESP
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,64 +23,85 @@ extern "C" {
 #endif
 
 /********************************** Tunables **********************************/
-/*
-   Field data type hints
- */
-#define EDI_TYPE_BLOB       1
-#define EDI_TYPE_BOOL       2
-#define EDI_TYPE_DATE       3
-#define EDI_TYPE_FLOAT      4
-#define EDI_TYPE_INT        5
-#define EDI_TYPE_STRING     6       /* String is UTF-8 */
-#define EDI_TYPE_TEXT       7
 
-/*
-    Column options
- */
-#define EDI_AUTO_INC        0x1     /**< Field auto increments on new row */
-#define EDI_KEY             0x2     /**< Column is the key */
-#define EDI_INDEX           0x4     /**< Column is indexed */
- 
 struct Edi;
 struct EdiGrid;
 struct EdiProvider;
 struct EdiRec;
 struct EdiValidation;
 
-typedef struct EdiModel {
-} EdiModel;
+/*
+   Field data type hints
+ */
+//  MOB DOC
+#define EDI_TYPE_BLOB       1           /**< Arbitrary binary data */
+#define EDI_TYPE_BOOL       2           /**< Boolean true|false value */
+#define EDI_TYPE_DATE       3           /**< Date type */
+#define EDI_TYPE_FLOAT      4           /**< Floating point number */
+#define EDI_TYPE_INT        5           /**< Integer number */
+#define EDI_TYPE_STRING     6           /**< String */
+#define EDI_TYPE_TEXT       7           /**< Multi-line text */
 
-typedef cchar* EdiValue;
-
+/*
+    Field flags
+ */
+#define EDI_AUTO_INC        0x1         /**< Field flag -- auto increments on new row */
+#define EDI_KEY             0x2         /**< Field flag -- Column is the key */
+#define EDI_INDEX           0x4         /**< Field flag -- Column is indexed */
+ 
+/**
+    Record field structure
+    @ingroup Edi
+  */
 typedef struct EdiField {
-    cchar           *value;
-    cchar           *name;
-    int             type:  8;
-    int             valid: 8;
-    int             flags: 8;
+    cchar           *value;             /**< Field value */
+    cchar           *name;              /**< Field name */
+    int             type:  8;           /**< Field type */
+    int             valid: 8;           /**< Field validity. Set to true if valid */
+    int             flags: 8;           /**< Field flags */
 } EdiField;
 
+/**
+    Database record structure
+    @ingroup Edi
+ */
 typedef struct EdiRec {
-    struct Edi      *edi;
-    MprList         *errors;
-    cchar           *tableName;
-    cchar           *id;                    /**<  Record ID */
-    int             nfields;
-    EdiField        fields[MPR_FLEX];
+    struct Edi      *edi;               /**< Database handle */
+    MprList         *errors;            /**< List of record errors */
+    cchar           *tableName;         /**< Base table name for record */
+    cchar           *id;                /**< Record key ID */
+    int             nfields;            /**< Number of fields in record */
+    EdiField        fields[MPR_FLEX];   /**< Field records */
 } EdiRec;
 
+/**
+    Grid structure
+    @ingroup Edi
+ */
 typedef struct EdiGrid {
-    struct Edi      *edi;
-    cchar           *tableName;
-    int             nrecords;
-    EdiRec          *records[MPR_FLEX];
+    struct Edi      *edi;               /**< Database handle */
+    cchar           *tableName;         /**< Base table name for grid */
+    int             nrecords;           /**< Number of records in grid */
+    EdiRec          *records[MPR_FLEX]; /**< Grid records */
 } EdiGrid;
 
+/*
+    Field validation callback procedure
+    @param vp Validation structure reference
+    @param rec Record to validate
+    @param fieldName Field name to validate
+    @param value Field value to validate 
+    @ingroup Edi
+ */
 typedef cchar *(*EdiValidationProc)(struct EdiValidation *vp, EdiRec *rec, cchar *fieldName, cchar *value);
 
+/**
+    Validation structure
+    @ingroup Edi
+ */
 typedef struct EdiValidation {
-    cchar               *name;
-    EdiValidationProc   vfn;
+    cchar               *name;          /**< Validation name */
+    EdiValidationProc   vfn;            /**< Validation callback procedure */
     cvoid               *mdata;         /**< Non-GC (malloc) data */
     cvoid               *data;          /**< Allocated data that must be marked for GC */
 } EdiValidation;
@@ -88,23 +109,31 @@ typedef struct EdiValidation {
 /*
     Database flags
  */
-#define EDI_CREATE          0x1          /**< Create database if not present */
-#define EDI_AUTO_SAVE       0x2          /**< Auto-save database if modified in memory */
-#define EDI_NO_SAVE         0x4          /**< Prevent saving to disk */
-#define EDI_LITERAL         0x8          /**< Literal schema in ediOpen source parameter */
+#define EDI_CREATE          0x1         /**< Create database if not present */
+#define EDI_AUTO_SAVE       0x2         /**< Auto-save database if modified in memory */
+#define EDI_NO_SAVE         0x4         /**< Prevent saving to disk */
+#define EDI_LITERAL         0x8         /**< Literal schema in ediOpen source parameter */
 
-#define EDI_SUPPRESS_SAVE   0x10         /**< Temporarily suppress auto-save */
+#define EDI_SUPPRESS_SAVE   0x10        /**< Temporarily suppress auto-save */
 
 /*
-    Set flags
+    Database flags
  */
-#define EDI_NOSAVE      0x1
+#define EDI_NOSAVE      0x1             /* Don't save the database on modifications */
 
+/**
+    Database structure
+    @defgroup Edi Edi
+  */
 typedef struct Edi {
-    struct EdiProvider *provider;
-    int             flags;          /**< Database flags */
+    struct EdiProvider *provider;       /** Database provider */
+    int             flags;              /**< Database flags */
 } Edi;
 
+/**
+    Database provider interface
+    @internal
+ */
 typedef struct EdiProvider {
     cchar     *name;
     int       (*addColumn)(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
@@ -119,6 +148,7 @@ typedef struct EdiProvider {
     MprList   *(*getColumns)(Edi *edi, cchar *tableName);
     int       (*getColumnSchema)(Edi *edi, cchar *tableName, cchar *columnName, int *type, int *flags, int *cid);
     MprList   *(*getTables)(Edi *edi);
+    int       (*getTableSchema)(Edi *edi, cchar *tableName, int *numRows, int *numCols);
     int       (*load)(Edi *edi, cchar *path);
     int       (*lookupField)(Edi *edi, cchar *tableName, cchar *fieldName);
     Edi       *(*open)(cchar *path, int flags);
@@ -137,11 +167,16 @@ typedef struct EdiProvider {
     int       (*writeRec)(Edi *edi, EdiRec *rec);
 } EdiProvider;
 
+/**
+    Edi service control structure
+    @internal
+ */
 typedef struct EdiService {
     MprHash    *providers;
     MprHash    *validations;
 } EdiService;
 
+//  MOB DOC
 extern EdiService *ediCreateService();
 extern void ediAddProvider(EdiProvider *provider);
 
@@ -156,6 +191,7 @@ extern int ediAddValidation(Edi *edi, cchar *name, cchar *tableName, cchar *colu
 extern int ediChangeColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
 extern void ediClose(Edi *edi);
 extern EdiRec *ediCreateRec(Edi *edi, cchar *tableName);
+extern void ediDefineValidation(cchar *name, EdiValidationProc vfn);
 extern int ediDelete(Edi *edi, cchar *path);
 extern int ediDeleteRow(Edi *edi, cchar *tableName, cchar *key);
 extern MprList *ediGetColumns(Edi *edi, cchar *tableName);
@@ -177,8 +213,10 @@ extern int ediRemoveTable(Edi *edi, cchar *tableName);
 extern int ediRenameTable(Edi *edi, cchar *tableName, cchar *newTableName);
 extern int ediRenameColumn(Edi *edi, cchar *tableName, cchar *columnName, cchar *newColumnName);
 extern int ediSave(Edi *edi);
+extern int ediGetTableSchema(Edi *edi, cchar *tableName, int *numRows, int *numCols);
 extern EdiRec *ediUpdateField(EdiRec *rec, cchar *fieldName, cchar *value);
 extern EdiRec *ediUpdateFields(EdiRec *rec, MprHash *params);
+extern int ediValidate(Edi *edi, cchar *name, cchar *tableName, cchar *fieldName, cvoid *data);
 extern bool ediValidateRec(Edi *edi, EdiRec *rec);
 extern int ediWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
 extern int ediWriteFields(Edi *edi, cchar *tableName, MprHash *params);
@@ -195,8 +233,6 @@ extern int ediGetRecFieldType(EdiRec *rec, cchar *fieldName);
 extern MprList *ediGetGridColumns(EdiGrid *grid);
 extern bool edValidateRecord(EdiRec *rec);
 
-extern void ediDefineValidation(cchar *name, EdiValidationProc vfn);
-extern int ediValidate(Edi *edi, cchar *name, cchar *tableName, cchar *fieldName, cvoid *data);
 
 /*
     NO-DB API
@@ -214,13 +250,11 @@ extern void ediManageEdiRec(EdiRec *rec, int flags);
 extern int ediParseTypeString(cchar *type);
 extern cchar *ediParseValue(cchar *value, int type);
 
-//  MOB
-#if BLD_FEATURE_MDB || 1
+#if BLD_FEATURE_MDB
 extern void mdbInit();
 #endif
 
-//  MOB
-#if BLD_FEATURE_SDB && 0
+#if BLD_FEATURE_SDB
 extern void sdbInit();
 #endif
 
@@ -228,7 +262,7 @@ extern void sdbInit();
 } /* extern C */
 #endif
 
-#endif /* BLD_FEATURE_EDI */
+#endif /* BLD_FEATURE_ESP */
 #endif /* _h_EDI */
 
 /*

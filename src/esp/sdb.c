@@ -10,8 +10,10 @@
 
 #include    "appweb.h"
 #include    "edi.h"
+#include    "sqlite3.h"
+#include    "pcre.h"
 
-#if BLD_FEATURE_ESP && BLD_FEATURE_SQLITE && 0
+#if BLD_FEATURE_ESP && BLD_FEATURE_SDB
 #include    "sqlite3.h"
 
 /************************************* Local **********************************/
@@ -27,12 +29,13 @@ typedef struct Sdb {
     Edi             edi;            /**< */
     sqlite3         *db;
     char            *path;          /**< Currently open database */
+    MprMutex        *mutex;
 } Sdb;
 
 static int sqliteInitialized;
 static void initSqlite();
-static EdiField makeRecField(cchar *value, cchar *name, int type)
 
+#if UNUSED
     //  MOB - HERE
 static var DataTypeToSqlType: Object = {
     "binary":       "blob",
@@ -48,64 +51,51 @@ static var DataTypeToSqlType: Object = {
     "time":         "time",
     "timestamp":    "datetime",
 };
+#endif
+
 
 /************************************ Forwards ********************************/
 
-static int sdbAddColumn(Sdb *sdb, cchar *tableName, cchar *columnName, int type, int flags);
-static int sdbAddIndex(Sdb *sdb, cchar *tableName, cchar *columnName, cchar *indexName);
-static int sdbAddTable(Sdb *sdb, cchar *tableName);
-static int sdbChangeColumn(Sdb *sdb, cchar *tableName, cchar *columnName, int type, int flags);
-static void sdbClose(Sdb *sdb);
-static int sdbDelete(Sdb *sdb, cchar *path);
-static int sdbDeleteRec(Sdb *sdb, cchar *tableName, cchar *key);
-static MprList *sdbGetColumns(Sdb *sdb, cchar *tableName);
-static int sdbGetColumnSchema(Sdb *sdb, EdiRec *rec, int fid, cchar **name, int *type, int *flags, int *cid);
-static MprList *sdbGetTables(Sdb *sdb);
-static int sdbLoad(Sdb *sdb, cchar *path);
-static int sdbLoadString(Sdb *sdb, cchar *string);
-static int sdbLookupField(Sdb *sdb, EdiRec *rec, cchar *fieldName);
-static Sdb *sdbOpen(cchar *path, int flags);
-static EdiGrid *sdbQuery(Sdb *sdb, cchar *cmd);
-static EdiField sdbReadField(Sdb *sdb, cchar *tableName, cchar *key, cchar *fieldName);
-static EdiGrid *sdbReadGrid(Sdb *sdb, cchar *tableName);
-static EdiRec *sdbReadRec(Sdb *sdb, cchar *tableName, cchar *key);
-static int sdbRemoveColumn(Sdb *sdb, cchar *tableName, cchar *columnName);
-static int sdbRemoveIndex(Sdb *sdb, cchar *tableName, cchar *indexName);
-static int sdbRemoveTable(Sdb *sdb, cchar *tableName);
-static int sdbRenameTable(Sdb *sdb, cchar *tableName, cchar *newTableName);
-static int sdbRenameColumn(Sdb *sdb, cchar *tableName, cchar *columnName, cchar *newColumnName);
-static int sdbSave(Sdb *sdb);
-static int sdbWriteField(Sdb *sdb, cchar *tableName, cchar *key, cchar *fieldName, cchar *value, int flags);
-static int sdbWriteRec(Sdb *sdb, cchar *tableName, cchar *key, MprHashTable *params);
+static int sdbAddColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
+static int sdbAddIndex(Edi *edi, cchar *tableName, cchar *columnName, cchar *indexName);
+static int sdbAddTable(Edi *edi, cchar *tableName);
+static int sdbAddValidation(Edi *edi, cchar *tableName, cchar *fieldName, EdiValidation *vp);
+static int sdbChangeColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
+static void sdbClose(Edi *edi);
+static EdiRec *sdbCreateRec(Edi *edi, cchar *tableName);
+static int sdbDelete(Edi *edi, cchar *path);
+static int sdbDeleteRow(Edi *edi, cchar *tableName, cchar *key);
+static MprList *sdbGetColumns(Edi *edi, cchar *tableName);
+static int sdbGetColumnSchema(Edi *edi, cchar *tableName, cchar *columnName, int *type, int *flags, int *cid);
+static MprList *sdbGetTables(Edi *edi);
+static int sdbGetTableSchema(Edi *edi, cchar *tableName, int *numRows, int *numCols);
+static int sdbLoad(Edi *edi, cchar *path);
+static int sdbLookupField(Edi *edi, cchar *tableName, cchar *fieldName);
+static Edi *sdbOpen(cchar *path, int flags);
+static EdiGrid *sdbQuery(Edi *edi, cchar *cmd);
+static EdiField sdbReadField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName);
+static EdiRec *sdbReadRec(Edi *edi, cchar *tableName, cchar *key);
+static EdiGrid *sdbReadWhere(Edi *edi, cchar *tableName, cchar *columnName, cchar *operation, cchar *value);
+static int sdbRemoveColumn(Edi *edi, cchar *tableName, cchar *columnName);
+static int sdbRemoveIndex(Edi *edi, cchar *tableName, cchar *indexName);
+static int sdbRemoveTable(Edi *edi, cchar *tableName);
+static int sdbRenameTable(Edi *edi, cchar *tableName, cchar *newTableName);
+static int sdbRenameColumn(Edi *edi, cchar *tableName, cchar *columnName, cchar *newColumnName);
+static int sdbSave(Edi *edi);
+static bool sdbValidateRec(Edi *edi, EdiRec *rec);
+static int sdbWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
+static int sdbWriteRec(Edi *edi, EdiRec *rec);
 
 EdiProvider SdbProvider = {
     "sdb",
-    sdbAddColumn,
-    sdbAddIndex,
-    sdbAddTable,
-    sdbChangeColumn,
-    sdbClose,
-    sdbDelete,
-    sdbDeleteRec,
-    sdbGetColumns,
-    sdbGetColumnSchema,
-    sdbGetTables,
-    sdbLoad,
-    sdbLookupField,
-    sdbOpen,
-    sdbQuery,
-    sdbReadField,
-    sdbReadGrid,
-    sdbReadRec,
-    sdbRemoveColumn,
-    sdbRemoveIndex,
-    sdbRemoveTable,
-    sdbRenameTable,
-    sdbRenameColumn,
-    sdbSave,
-    sdbWriteField,
-    sdbWriteRec,
+    sdbAddColumn, sdbAddIndex, sdbAddTable, sdbAddValidation, sdbChangeColumn, sdbClose, sdbCreateRec, sdbDelete, 
+    sdbDeleteRow, sdbGetColumns, sdbGetColumnSchema, sdbGetTables, sdbGetTableSchema, sdbLoad, sdbLookupField, 
+    sdbOpen, sdbQuery, sdbReadField, sdbReadRec, sdbReadWhere, sdbRemoveColumn, sdbRemoveIndex, sdbRemoveTable, 
+    sdbRenameTable, sdbRenameColumn, sdbSave, sdbValidateRec, sdbWriteField, sdbWriteRec,
 };
+
+static void manageSdb(Sdb *sdb, int flags);
+EdiRec *createRec(int nfields);
 
 /************************************* Code ***********************************/
 
@@ -126,6 +116,7 @@ static Sdb *sdbCreate(cchar *path, int flags)
     sdb->edi.flags = flags;
     sdb->edi.provider = &SdbProvider;
     sdb->path = sclone(path);
+    sdb->mutex = mprCreateLock();
     return sdb;
 }
 
@@ -134,29 +125,72 @@ static void manageSdb(Sdb *sdb, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(sdb->path);
+        mprMark(sdb->mutex);
     } else if (flags & MPR_MANAGE_FREE) {
-        sdbClose(sdb);
+        sdbClose((Edi*) sdb);
     }
 }
 
 
-static void sdbClose(Sdb *sdb)
+static void sdbClose(Edi *edi)
 {
+    Sdb     *sdb;
+
+    sdb = (Sdb*) edi;
     if (sdb->db) {
         sqlite3_close(sdb->db);
-        db->sdb = 0;
+        sdb->db = 0;
     }
     sdb->path = 0;
 }
 
 
-static int sdbDelete(Sdb *sdb, cchar *path)
+static EdiRec *sdbCreateRec(Edi *edi, cchar *tableName)
+{
+#if CONVERT
+    Sdb         *sdb;
+    SdbTable    *table;
+    SdbCol      *col;
+    EdiRec      *rec;
+    EdiField    *fp;
+    int         f, nfields;
+
+    sdb = (Sdb*) edi;
+    if ((table = lookupTable(sdb, tableName)) == 0) {
+        return 0;
+    }
+    nfields = max(table->schema->ncols, 1);
+    if ((rec = mprAllocMem(sizeof(EdiRec) + sizeof(EdiField) * nfields, MPR_ALLOC_MANAGER | MPR_ALLOC_ZERO)) == 0) {
+        return 0;
+    }
+    mprSetAllocName(rec, "record");
+    mprSetManager(rec, ediManageEdiRec);
+
+    rec->edi = edi;
+    rec->tableName = table->name;
+    rec->nfields = nfields;
+
+    for (f = 0; f < nfields; f++) {
+        col = getCol(table, f);
+        fp = &rec->fields[f];
+        fp->type = col->type;
+        fp->name = col->name;
+        fp->flags = col->flags;
+    }
+    return rec;
+#else
+    return 0;
+#endif
+}
+
+
+static int sdbDelete(Edi *edi, cchar *path)
 {
     return mprDeletePath(path);
 }
 
 
-static Sdb *sdbOpen(cchar *path, int flags)
+static Edi *sdbOpen(cchar *path, int flags)
 {
     Sdb     *sdb;
 
@@ -170,29 +204,35 @@ static Sdb *sdbOpen(cchar *path, int flags)
         }
         //  MOB - should be configurable somewhere
         sqlite3_soft_heap_limit(20 * 1024 * 1024);
-        sqlite3_busy_timeout(sdb, EJS_SQLITE_TIMEOUT);
-        if (sdbLoad(sdb, path) < 0) {
+        sqlite3_busy_timeout(sdb->db, 30 * 1000);
+        if (sdbLoad((Edi*) sdb, path) < 0) {
             return 0;
         }
     } else {
         return 0;
     }
-    return sdb;
+    return (Edi*) sdb;
 }
 
 
-
-static int sdbAddColumn(Sdb *sdb, cchar *tableName, cchar *columnName, int type, int flags)
+static int sdbAddColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags)
 {
+#if CONVERT
+    Sdb     *sdb;
+
+    sdb = (Sdb*) edi;
     //  MOB OPT - have option to run command without gathering a grid result
     query(sdb, "ALTER TABLE %s ADD %s %s",  tableName, columnName, mapped);
+    //  MOB - RC
+#endif
     return 0;
 }
 
 
 //  IndexName is ignored
-static int sdbAddIndex(Sdb *sdb, cchar *tableName, cchar *columnName, cchar *indexName)
+static int sdbAddIndex(Edi *edi, cchar *tableName, cchar *columnName, cchar *indexName)
 {
+#if CONVERT
     SdbTable    *table;
     SdbCol      *col;
 
@@ -206,12 +246,14 @@ static int sdbAddIndex(Sdb *sdb, cchar *tableName, cchar *columnName, cchar *ind
     table->indexCol = col;
     col->flags |= EDI_INDEX;
     autoSave(sdb, table);
+#endif
     return 0;
 }
 
 
-static int sdbAddTable(Sdb *sdb, cchar *tableName)
+static int sdbAddTable(Edi *edi, cchar *tableName)
 {
+#if CONVERT
     SdbTable     *table;
 
     if ((table = mprAllocObj(SdbTable, manageTable)) == 0) {
@@ -224,12 +266,45 @@ static int sdbAddTable(Sdb *sdb, cchar *tableName)
     }
     mprAddItem(sdb->tables, table);
     autoSave(sdb, lookupTable(sdb, tableName));
+#endif
     return 0;
 }
 
 
-static int sdbChangeColumn(Sdb *sdb, cchar *tableName, cchar *columnName, int type, int flags)
+static int sdbAddValidation(Edi *edi, cchar *tableName, cchar *columnName, EdiValidation *vp)
 {
+#if CONVERT
+    Sdb             *sdb;
+    SdbTable        *table;
+    SdbCol          *col;
+
+    mprAssert(edi);
+    mprAssert(tableName && *tableName);
+    mprAssert(columnName && *columnName);
+
+    sdb = (Sdb*) edi;
+    lock(sdb);
+    if ((table = lookupTable(sdb, tableName)) == 0) {
+        unlock(sdb);
+        return MPR_ERR_CANT_FIND;
+    }
+    if ((col = lookupColumn(table, columnName)) == 0) {
+        unlock(sdb);
+        return MPR_ERR_CANT_FIND;
+    }
+    if (col->validations == 0) {
+        col->validations = mprCreateList(0, 0);
+    }
+    mprAddItem(col->validations, vp);
+    unlock(sdb);
+#endif
+    return 0;
+}
+
+
+static int sdbChangeColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags)
+{
+#if CONVERT
     SdbTable    *table;
     SdbCol      *col;
 
@@ -242,12 +317,14 @@ static int sdbChangeColumn(Sdb *sdb, cchar *tableName, cchar *columnName, int ty
     col->name = sclone(columnName);
     col->type = type;
     autoSave(sdb, table);
+#endif
     return 0;
 }
 
 
-static int sdbDeleteRec(Sdb *sdb, cchar *tableName, cchar *key)
+static int sdbDeleteRow(Edi *edi, cchar *tableName, cchar *key)
 {
+#if CONVERT
     SdbTable    *table;
     int         r;
 
@@ -258,11 +335,14 @@ static int sdbDeleteRec(Sdb *sdb, cchar *tableName, cchar *key)
         return MPR_ERR_CANT_FIND;
     }
     return mprRemoveItemAtPos(table->rows, r);
+#endif
+    return 0;
 }
 
 
-static MprList *sdbGetColumns(Sdb *sdb, cchar *tableName)
+static MprList *sdbGetColumns(Edi *edi, cchar *tableName)
 {
+#if CONVERT
     SdbTable    *table;
     SdbSchema   *schema;
     MprList     *list;
@@ -277,10 +357,14 @@ static MprList *sdbGetColumns(Sdb *sdb, cchar *tableName)
         mprAddItem(list, &schema->cols[i]);
     }
     return list;
+#else
+    return 0;
+#endif
 }
 
 
-static EdiField makeRecField(SdbRow *row, SdbCol *col)
+#if CONVERT
+static EdiField makeFieldFromRow(SdbRow *row, SdbCol *col)
 {
     EdiField    f;
 
@@ -291,10 +375,12 @@ static EdiField makeRecField(SdbRow *row, SdbCol *col)
     f.flags = 0;
     return f;
 }
+#endif
 
 
-static int sdbGetColumnSchema(Sdb *sdb, EdiRec *rec, int fid, cchar **name, int *type, int *flags, int *cid)
+static int sdbGetColumnSchema(Edi *edi, cchar *tableName, cchar *columnName, int *type, int *flags, int *cid)
 {
+#if CONVERT
     SdbTable    *table;
     SdbCol      *col;
 
@@ -316,12 +402,14 @@ static int sdbGetColumnSchema(Sdb *sdb, EdiRec *rec, int fid, cchar **name, int 
     if (cid) {
         *cid = col->cid;
     }
+#endif
     return 0;
 }
 
 
-static MprList *sdbGetTables(Sdb *sdb)
+static MprList *sdbGetTables(Edi *edi)
 {
+#if CONVERT
     MprList     *list;
     SdbTable     *table;
     int         tid, ntables;
@@ -333,11 +421,39 @@ static MprList *sdbGetTables(Sdb *sdb)
         mprAddItem(list, table->name);
     }
     return list;
+#else
+    return 0;
+#endif
 }
 
 
-static int sdbLoad(Sdb *sdb, cchar *path)
+static int sdbGetTableSchema(Edi *edi, cchar *tableName, int *numRows, int *numCols)
 {
+#if CONVERT
+    Sdb         *sdb;
+    SdbTable    *table;
+
+    sdb = (Sdb*) edi;
+    lock(sdb);
+    if ((table = lookupTable(sdb, tableName)) == 0) {
+        unlock(sdb);
+        return MPR_ERR_CANT_FIND;
+    }
+    if (numRows) {
+        *numRows = mprGetListLength(table->rows);
+    }
+    if (numCols) {
+        *numCols = table->schema->ncols;
+    }
+    unlock(sdb);
+#endif
+    return 0;
+}
+
+
+static int sdbLoad(Edi *edi, cchar *path)
+{
+#if CONVERT
     cchar       *data;
     ssize       len;
 
@@ -345,11 +461,15 @@ static int sdbLoad(Sdb *sdb, cchar *path)
         return MPR_ERR_CANT_READ;
     }
     return sdbLoadString(sdb, data);
+#else
+    return 0;
+#endif
 }
 
 
-static int sdbLookupField(Sdb *sdb, EdiRec *rec, cchar *fieldName)
+static int sdbLookupField(Edi *edi, cchar *tableName, cchar *fieldName)
 {
+#if CONVERT
     SdbTable    *table;
     SdbCol      *col;
 
@@ -360,21 +480,27 @@ static int sdbLookupField(Sdb *sdb, EdiRec *rec, cchar *fieldName)
         return MPR_ERR_CANT_FIND;
     }
     return col->cid;
+#else
+    return 0;
+#endif
 }
 
 
-static EdiGrid *sdbQuery(Sdb *sdb, cchar *cmd)
+static EdiGrid *sdbQuery(Edi *edi, cchar *cmd)
 {
+#if CONVERT
+    Sdb             *sdb;
     sqlite3         *db;
     sqlite3_stmt    *stmt;
     EdiRec          *rec;
     MprList         *result;
     char            *tableName;
     cchar           *tail, *colName, *value, *defaultTableName;
-    int             i, ncol, rc, retries, rowNum, len;
+    int             r, i, ncol, rc, retries, rowNum, len;
 
     mprAssert(db);
 
+    sdb = (Sdb*) edi;
     retries = 0;
     if ((db = sdb->db) == 0) {
         mprError("Database '%s' is closed", sdb->path);
@@ -465,11 +591,15 @@ static EdiGrid *sdbQuery(Sdb *sdb, cchar *cmd)
         grid->records[r] = mprGetItem(result, r);
     }
     return grid;
+#else
+    return 0;
+#endif
 }
 
 
-static EdiField sdbReadField(Sdb *sdb, cchar *tableName, cchar *key, cchar *fieldName)
+static EdiField sdbReadField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName)
 {
+#if CONVERT
     SdbTable    *table;
     SdbCol      *col;
     SdbRow      *row;
@@ -488,10 +618,15 @@ static EdiField sdbReadField(Sdb *sdb, cchar *tableName, cchar *key, cchar *fiel
     }
     row = mprGetItem(table->rows, r);
     return makeRecField(row, col);
+#else
+    EdiField f;
+    return f;
+#endif
 }
 
 
-static EdiGrid *sdbReadGrid(Sdb *sdb, cchar *tableName)
+#if UNUSED
+static EdiGrid *sdbReadGrid(Edi *edi, cchar *tableName)
 {
     EdiGrid     *grid;
     SdbTable    *table;
@@ -510,10 +645,12 @@ static EdiGrid *sdbReadGrid(Sdb *sdb, cchar *tableName)
     }
     return grid;
 }
+#endif
 
 
-static EdiRec *sdbReadRec(Sdb *sdb, cchar *tableName, cchar *key)
+static EdiRec *sdbReadRec(Edi *edi, cchar *tableName, cchar *key)
 {
+#if CONVERT
     SdbTable    *table;
     SdbRow      *row;
     EdiRec      *rec;
@@ -531,11 +668,73 @@ static EdiRec *sdbReadRec(Sdb *sdb, cchar *tableName, cchar *key)
         return 0;
     }
     return rec;
+#else
+    return 0;
+#endif
 }
 
 
-static int sdbRemoveColumn(Sdb *sdb, cchar *tableName, cchar *columnName)
+static EdiGrid *sdbReadWhere(Edi *edi, cchar *tableName, cchar *columnName, cchar *operation, cchar *value)
 {
+#if CONVERT
+    Sdb         *sdb;
+    EdiGrid     *grid;
+    SdbTable    *table;
+    SdbCol      *col;
+    SdbRow      *row;
+    int         nrows, next, op;
+
+    mprAssert(edi);
+    mprAssert(tableName && *tableName);
+
+    sdb = (Sdb*) edi;
+    lock(sdb);
+    if ((table = lookupTable(sdb, tableName)) == 0) {
+        unlock(sdb);
+        return 0;
+    }
+    nrows = mprGetListLength(table->rows);
+    if ((grid = ediCreateBareGrid(edi, tableName, nrows)) == 0) {
+        unlock(sdb);
+        return 0;
+    }
+    if (columnName) {
+        if ((col = lookupColumn(table, columnName)) == 0) {
+            unlock(sdb);
+            return 0;
+        }
+        if ((op = parseOperation(operation)) < 0) {
+            unlock(sdb);
+            return 0;
+        }
+        if (col->flags & EDI_INDEX && (op & OP_EQ)) {
+            if (lookupRow(table, value)) {
+                grid->records[0] = createRecFromRow(edi, row);
+            }
+        } else {
+            for (ITERATE_ITEMS(table->rows, row, next)) {
+                if (!matchRow(col, row->fields[col->cid], op, value)) {
+                    continue;
+                }
+                grid->records[next - 1] = createRecFromRow(edi, row);
+            }
+        }
+    } else {
+        for (ITERATE_ITEMS(table->rows, row, next)) {
+            grid->records[next - 1] = createRecFromRow(edi, row);
+        }
+    }
+    unlock(sdb);
+    return grid;
+#else
+    return 0;
+#endif
+}
+
+
+static int sdbRemoveColumn(Edi *edi, cchar *tableName, cchar *columnName)
+{
+#if CONVERt
     SdbTable    *table;
     SdbSchema   *schema;
     SdbCol      *col;
@@ -559,13 +758,15 @@ static int sdbRemoveColumn(Sdb *sdb, cchar *tableName, cchar *columnName)
     schema->cols[schema->ncols].name = 0;
     mprAssert(schema->ncols >= 0);
     autoSave(sdb, table);
+#endif
     return 0;
 }
 
 
 //  MOB - indexName is ignored
-static int sdbRemoveIndex(Sdb *sdb, cchar *tableName, cchar *indexName)
+static int sdbRemoveIndex(Edi *edi, cchar *tableName, cchar *indexName)
 {
+#if CONVERT
     SdbTable    *table;
 
     if ((table = lookupTable(sdb, tableName)) == 0) {
@@ -577,12 +778,14 @@ static int sdbRemoveIndex(Sdb *sdb, cchar *tableName, cchar *indexName)
         table->indexCol = 0;
         autoSave(sdb, table);
     }
+#endif
     return 0;
 }
 
 
-static int sdbRemoveTable(Sdb *sdb, cchar *tableName)
+static int sdbRemoveTable(Edi *edi, cchar *tableName)
 {
+#if CONVERT
     SdbTable    *table;
     int         next;
 
@@ -594,11 +797,15 @@ static int sdbRemoveTable(Sdb *sdb, cchar *tableName)
         }
     }
     return MPR_ERR_CANT_FIND;;
+#else
+    return 0;
+#endif
 }
 
 
-static int sdbRenameTable(Sdb *sdb, cchar *tableName, cchar *newTableName)
+static int sdbRenameTable(Edi *edi, cchar *tableName, cchar *newTableName)
 {
+#if CONVERT
     SdbTable    *table;
 
     if ((table = lookupTable(sdb, tableName)) == 0) {
@@ -607,11 +814,15 @@ static int sdbRenameTable(Sdb *sdb, cchar *tableName, cchar *newTableName)
     table->name = sclone(newTableName);
     autoSave(sdb, table);
     return 0;
+#else
+    return 0;
+#endif
 }
 
 
-static int sdbRenameColumn(Sdb *sdb, cchar *tableName, cchar *columnName, cchar *newColumnName)
+static int sdbRenameColumn(Edi *edi, cchar *tableName, cchar *columnName, cchar *newColumnName)
 {
+#if CONVERT
     SdbTable    *table;
     SdbCol      *col;
 
@@ -623,36 +834,88 @@ static int sdbRenameColumn(Sdb *sdb, cchar *tableName, cchar *columnName, cchar 
     }
     col->name = sclone(newColumnName);
     autoSave(sdb, table);
+#endif
     return 0;
 }
 
 
-static int sdbWriteField(Sdb *sdb, cchar *tableName, cchar *key, cchar *fieldName, cchar *value, int flags)
+static int sdbSave(Edi *edi)
 {
+    return 0;
+}
+
+
+bool sdbValidateRec(Edi *edi, EdiRec *rec)
+{
+#if CONVERT
+    Sdb         *sdb;
+    SdbTable    *table;
+    SdbCol      *col;
+    bool        pass;
+    int         c;
+
+    sdb = (Sdb*) edi;
+    lock(sdb);
+    if ((table = lookupTable(sdb, rec->tableName)) == 0) {
+        unlock(sdb);
+        return 0;
+    }
+    pass = 1;
+    for (c = 0; c < rec->nfields; c++) {
+        col = getCol(table, c);
+        if (!col->validations) {
+            continue;
+        }
+        if (!validateField(rec, table, col, rec->fields[c].value)) {
+            pass = 0;
+            /* Keep going */
+        }
+    }
+    unlock(sdb);
+    return pass;
+#else
+    return 0;
+#endif
+}
+
+
+static int sdbWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value)
+{
+#if CONVERT
+    Sdb         *sdb;
     SdbTable    *table;
     SdbRow      *row;
     SdbCol      *col;
-    MprHash     *hp;
+    MprKey      *kp;
     int         r;
 
+    sdb = (Sdb*) edi;
+    lock(sdb);
     if ((table = lookupTable(sdb, tableName)) == 0) {
+        unlock(sdb);
+        return MPR_ERR_CANT_FIND;
+    }
+    if ((col = lookupColumn(table, fieldName)) == 0) {
+        unlock(sdb);
         return MPR_ERR_CANT_FIND;
     }
     if ((r = lookupRow(table, key)) < 0) {
-        row = createRow(table);
+        row = createRow(sdb, table);
     }
     if ((row = getRow(table, r)) == 0) {
+        unlock(sdb);
         return MPR_ERR_CANT_FIND;
     }
-    if ((col = lookupColumn(table, fieldName)) != 0) {
-        writeField(row, col->cid, ediParseValue(hp->data, col->cid));
-    }
+    writeField(row, col, kp->data);
+    unlock(sdb);
+#endif
     return 0;
 }
 
 
-static int sdbWriteRec(Sdb *sdb, cchar *tableName, cchar *key, MprHashTable *params)
+static int sdbWriteRec(Edi *edi, EdiRec *rec)
 {
+#if CONVERT
     SdbTable    *table;
     SdbRow      *row;
     SdbCol      *col;
@@ -673,6 +936,7 @@ static int sdbWriteRec(Sdb *sdb, cchar *tableName, cchar *key, MprHashTable *par
             writeField(row, col->cid, ediParseValue(hp->data, col->cid));
         }
     }
+#endif
     return 0;
 }
 
@@ -683,8 +947,9 @@ static int sdbWriteRec(Sdb *sdb, cchar *tableName, cchar *key, MprHashTable *par
  */
 EdiRec *createRec(int nfields)
 {
+#if UNUSED
     EdiRec  *rec;
-    MdbCol  *col;
+    SdbCol  *col;
     int     c;
 
     if ((rec = mprAllocMem(sizeof(EdiRec) + sizeof(EdiField) * nfields, MPR_ALLOC_MANAGER | MPR_ALLOC_ZERO)) == 0) {
@@ -703,9 +968,13 @@ EdiRec *createRec(int nfields)
     }
     memmove(rec->fields, row->fields, sizeof(EdiField) * row->nfields);
     return rec;
+#else
+    return 0;
+#endif
 }
 
 
+#if FUTURE
 static EdiField makeRecField(cchar *value, cchar *name, int type)
 {
     EdiField    field;
@@ -713,9 +982,18 @@ static EdiField makeRecField(cchar *value, cchar *name, int type)
     field.valid = 1;
     field.type = 0;
     field.flags = 0;
-    field.value.str = sclone(value);
+    field.value = sclone(value);
     field.name = sclone(name);
+    return field;
 }
+
+
+//  MOB RC
+static void query(Sdb *sdb, cchar *cmd, ...)
+{
+}
+#endif
+
 
 /*********************************** Alloc *********************************/
 #if MAP_ALLOC
@@ -751,7 +1029,7 @@ static void *reallocBlock(void *ptr, int size)
 
 static int blockSize(void *ptr)
 {
-    return mprGetBlockSize(ptr);
+    return (int) mprGetBlockSize(ptr);
 }
 
 
@@ -873,7 +1151,7 @@ static void initSqlite()
     }
 }
 
-#endif /* BLD_FEATURE_ESP && BLD_FEATURE_SQLITE */
+#endif /* BLD_FEATURE_ESP && BLD_FEATURE_SDB */
 
 /*
     @copy   default
