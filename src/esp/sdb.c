@@ -10,7 +10,6 @@
 
 #include    "appweb.h"
 #include    "edi.h"
-#include    "sqlite3.h"
 #include    "pcre.h"
 
 #if BLD_FEATURE_ESP && BLD_FEATURE_SDB
