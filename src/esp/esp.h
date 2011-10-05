@@ -636,6 +636,15 @@ extern bool espFinalized(HttpConn *conn);
 extern void espFlush(HttpConn *conn);
 
 /**
+    Get a flash message
+    @description This retrieves a flash message of a specified type.
+        Flash messages are special session state message that are passed to the next request (only). 
+    @param conn HttpConn connection object created via $httpCreateConn
+    @ingroup EspReq
+ */
+extern cchar *espGetFlashMessage(HttpConn *conn, cchar *type);
+
+/**
     Match a request parameter with an expected value
     @description Compare a request parameter and return true if it exists and its value matches.
     @param conn HttpConn connection object

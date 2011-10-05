@@ -12,6 +12,8 @@
 /************************************* Local **********************************/
 
 /************************************* Code ***********************************/
+
+//  MOB - cleanup
 #if TODO
     - Request.flash
     - Request.cookies
@@ -88,7 +90,6 @@ espWritePartialView    - Controller.writePartialTemplate()
 /*  
     Add a http header if not already defined
  */
-//NAME: addHeader
 void espAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
 {
     va_list     vargs;
@@ -105,7 +106,6 @@ void espAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
 /*
     Add a header string if not already defined
  */
-//NAME: addHeaderString
 void espAddHeaderString(HttpConn *conn, cchar *key, cchar *value)
 {
     httpAddHeaderString(conn, key, value);
@@ -259,6 +259,26 @@ cchar *espGetCookies(HttpConn *conn)
 }
 
 
+cchar *espGetFlashMessage(HttpConn *conn, cchar *kind)
+{
+    EspReq      *req;
+    MprKey      *kp;
+    cchar       *msg;
+   
+    req = conn->data;
+    if (kind == 0 || req->flash == 0 || mprGetHashLength(req->flash) == 0) {
+        return 0;
+    }
+    for (kp = 0; (kp = mprGetNextKey(req->flash, kp)) != 0; ) {
+        msg = kp->data;
+        if (smatch(kind, kp->key) || smatch(kind, "all")) {
+            return msg;
+        }
+    }
+    return 0;
+}
+
+
 MprHash *espGetParams(HttpConn *conn)
 {
     return httpGetParams(conn);
@@ -361,7 +381,7 @@ void espFinalize(HttpConn *conn)
 }
 
 
-//NAME: isFinalized
+//MOB rename to isFinalized
 bool espFinalized(HttpConn *conn) 
 {
     EspReq      *req;
@@ -475,14 +495,12 @@ void espSetIntParam(HttpConn *conn, cchar *var, int value)
 }
 
 
-//NAME: set
 void espSetParam(HttpConn *conn, cchar *var, cchar *value) 
 {
     httpSetParam(conn, var, value);
 }
 
 
-//NAME: match
 bool espMatchParam(HttpConn *conn, cchar *var, cchar *value)
 {
     return httpMatchParam(conn, var, value);
@@ -492,7 +510,6 @@ bool espMatchParam(HttpConn *conn, cchar *var, cchar *value)
 /*  
     Set a http header. Overwrite if present.
  */
-//NAME: setHeader
 void espSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
 {
     va_list     vargs;
@@ -521,7 +538,6 @@ void espSetStatus(HttpConn *conn, int status)
 }
 
 
-//NAME: write, send, put, wr()
 ssize espWrite(HttpConn *conn, cchar *fmt, ...)
 {
     va_list     vargs;
@@ -634,7 +650,6 @@ static int getParams(char ***keys, char *buf, int len)
 }
 
 
-//  NAME show
 void espShowRequest(HttpConn *conn)
 {
     MprHash     *env;
