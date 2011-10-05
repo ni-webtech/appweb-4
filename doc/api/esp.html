@@ -59,7 +59,7 @@
 <tr class="apiDef"><td class="apiType"><a href="#group___edi_rec" class="ref">EdiRec*</a></td><td><a href="#group___esp_abbrev_1gabc52230088c078fdeafb1e8d6a941185" class="nameRef">createRec</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#group___mpr_hash" class="ref">MprHash</a> *data)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create a record and initialize field values.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___esp_session" class="ref">EspSession*</a></td><td><a href="#group___esp_abbrev_1gacd884e13c56185b66ab13384f0501f4a" class="nameRef">createSession</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create a session state object.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga6d64e8f3ca52318774994ead312772fd" class="nameRef">division</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *body, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an HTML division.</td></tr>
-<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1gaf5d509afd80ee42b3dbcc8709fa46bc9" class="nameRef">droplist</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *field, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *choices, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a dropdown selection list.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1gae43638b69d2bf1bf6cf037459aad2ce2" class="nameRef">dropdown</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *field, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *choices, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a dropdown selection list.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1gafac7f959a214551acc56fd42a8c0e04e" class="nameRef">edRemoveColumn</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *columnName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Remove a column from a table.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1gab66595c455e15000e812ec830acce7d9" class="nameRef">ediAddColumn</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *columnName, int type, int flags)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Add a column to a table.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1gaa6413f84f22899c4ae15e8ac3f477f56" class="nameRef">ediAddIndex</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *columnName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *indexName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Add an index to a table.</td></tr>
@@ -110,7 +110,6 @@
 <tr class="apiDef"><td class="apiType"><a href="#group___edi_rec" class="ref">EdiRec*</a></td><td><a href="#group___edi_1ga0fe919a68d27c2f279858bda8935ea71" class="nameRef">ediUpdateFields</a>(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#group___mpr_hash" class="ref">MprHash</a> *data)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Update record fields without writing to the database.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a></td><td><a href="#group___edi_1ga7525ab6e695b51abc1bb342b8f35022b" class="nameRef">ediValidateRec</a>(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Validate a record.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1ga56c462e7401774404b863be140dbf683" class="nameRef">ediWriteField</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *key, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Write a value to a database table field.</td></tr>
-<tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1ga7bc3b335f68fd41b818c890998a892aa" class="nameRef">ediWriteFields</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#group___mpr_hash" class="ref">MprHash</a> *data)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Write field values to a database row.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1gaaa43a06a62872758084f26a2f33d64af" class="nameRef">ediWriteRec</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="#group___edi_rec" class="ref">EdiRec</a> *rec)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Write a record to the database.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga2400f88754f6e5556efd76ef3ddeed93" class="nameRef">endform</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Signify the end of an HTML form.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga03544bf56dde3a257391d07e1d6f6a3a" class="nameRef">error</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set an error flash notification message.</td></tr>
@@ -135,7 +134,7 @@
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_route_1ga7cec7c28d284376b7670bf0065159870" class="nameRef">espDefineView</a>(<a href="#group___esp_route" class="ref">EspRoute</a> *eroute, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path, void *viewProc)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Define a view.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_session_1gab325d1d70bce4551a89fd7f0d1208b07" class="nameRef">espDestroySession</a>(<a href="#group___esp_session" class="ref">EspSession</a> *sp)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Destroy a session state object.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga5677ea87f674bd598faee87113b7fd2f" class="nameRef">espDivision</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *body, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an HTML division.</td></tr>
-<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga5f7dd7dad36e89c0e7aa7fc09234e1b5" class="nameRef">espDropList</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *field, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *choices, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a dropdown selection list.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga74f4ebc195992a3b8e1229db1cc864d3" class="nameRef">espDropdown</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *field, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *choices, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a dropdown selection list.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1gadf62f0d9f2459c1be758606992c235ac" class="nameRef">espEndform</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Signify the end of an HTML form.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_req_1ga6726adb293f1b81115cd749c8f5fa2a4" class="nameRef">espError</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Send an &quot;error&quot; flash message.</td></tr>
 <tr class="apiDef"><td class="apiType">char*</td><td><a href="#group___esp_route_1ga680226fbc5c0a870ff91eef7d13ac4c8" class="nameRef">espExpandCommand</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *command, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *source, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *module)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Expand a compile or link command template.</td></tr>
@@ -147,6 +146,7 @@
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn*</a></td><td><a href="#group___esp_req_1ga41a42035766ff5d2fd0fd74588e167ea" class="nameRef">espGetConn</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get the current request connection.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1aa6887458d0a070b3665166af590089d8" class="ref">MprOff</a></td><td><a href="#group___esp_req_1ga3cb308121f5659d48f58c217959c3800" class="nameRef">espGetContentLength</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get the receive body content length.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar*</a></td><td><a href="#group___esp_req_1ga1c47b7c05e41bc39b9f3426134c1bf7c" class="nameRef">espGetCookies</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get the request cookies.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar*</a></td><td><a href="#group___esp_req_1ga4236af8f29a206e18c4b7a86ac32dba6" class="nameRef">espGetFlashMessage</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *type)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get a flash message.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar*</a></td><td><a href="#group___esp_req_1gaddf870926cbeee2779b687522d5db0aa" class="nameRef">espGetHeader</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *key)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get an rx http header.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#group___mpr_hash" class="ref">MprHash*</a></td><td><a href="#group___esp_req_1ga8daa40cd83a356ad1b1b940751b1df00" class="nameRef">espGetHeaderHash</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get the hash table of rx Http headers.</td></tr>
 <tr class="apiDef"><td class="apiType">char*</td><td><a href="#group___esp_req_1ga8b03cbaba01462fb4a7349c9d02fddf3" class="nameRef">espGetHeaders</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get all the requeset http headers.</td></tr>
@@ -1305,27 +1305,6 @@ Database provider.
     </dd></dl>
   </div>
 </div>
-<a name="group___edi_1ga7bc3b335f68fd41b818c890998a892aa"></a>
-<div class="api">
-  <div class="prototype">
-    int
-    ediWriteFields
-(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#group___mpr_hash" class="ref">MprHash</a> *data)
-  </div>
-  <div class="apiDetail">
-<p>Write field values to a database row.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This routine updates a database row with the given values. The "data&apos; argument supplies a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually created via <a class="ref" BBB href="#group___edi_1gac8ba9b4a0cdc2d2f30de7d915a4c51c1">ediMakeHash</a> to convert a JSON string into an options hash. For example: ediWriteFields(rec, <a class="ref" BBB href="#group___esp_abbrev_1ga3c8e01edebd0020f20411085635cca69">params()</a>); Note: field validations are not run.</dd></dl>
-    <dl><dt>Parameters:</dt><dd>
-    <table class="parameters" summary="Parameters">
-    <tr><td class="param">edi</td><td>Database handle.</td>
-    <tr><td class="param">tableName</td><td>Database table name.</td>
-    <tr><td class="param">data</td><td>Hash of field names and values to use for the update.</td>
-    </table></dd></dl>
-    <dl><dt>Returns:</dt><dd>Zero if successful. Otherwise a negative MPR error code.</dd></dl>
-    <dl><dt>See Also:</dt><dd>
-    </dd></dl>
-  </div>
-</div>
 <a name="group___edi_1gaaa43a06a62872758084f26a2f33d64af"></a>
 <div class="api">
   <div class="prototype">
@@ -1692,11 +1671,11 @@ Base table name for record.
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
   </div>
 </div>
-<a name="group___esp_abbrev_1gaf5d509afd80ee42b3dbcc8709fa46bc9"></a>
+<a name="group___esp_abbrev_1gae43638b69d2bf1bf6cf037459aad2ce2"></a>
 <div class="api">
   <div class="prototype">
     void
-    droplist
+    dropdown
 (<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *field, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *choices, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)
   </div>
   <div class="apiDetail">
@@ -1704,7 +1683,7 @@ Base table name for record.
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">field</td><td>Record field name to provide the default value for the list. The field should be a property of the form current record. The field name is used to create the HTML input control name. If this call is used without a form control record, the actual data value should be supplied via the options.value property.</td>
-    <tr><td class="param">choices</td><td>Choices to select from. This is a JSON style set of properties. For example: espDropList(conn, &quot;priority&quot;, &quot;{ low: 0, med: 1, high: 2 }&quot;, NULL).</td>
+    <tr><td class="param">choices</td><td>Choices to select from. This is a JSON style set of properties. For example: espDropdown(conn, &quot;priority&quot;, &quot;{ low: 0, med: 1, high: 2 }&quot;, NULL).</td>
     <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
@@ -2583,13 +2562,13 @@ The tab control can manage a set of panes and will selectively show and hide or 
   </div>
   <div class="apiDetail">
 <p>Write field values to a database row.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This routine updates a database row with the given values. The "data&apos; argument supplies a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually created via <a class="ref" BBB href="#group___edi_1gac8ba9b4a0cdc2d2f30de7d915a4c51c1">ediMakeHash</a> to convert a JSON string into an options hash. For example: ediWriteFields(rec, <a class="ref" BBB href="#group___esp_abbrev_1ga3c8e01edebd0020f20411085635cca69">params()</a>); Note: field validations are not run.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This routine updates the current record with the given data and then saves the record to the database. The "data&apos; argument supplies a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually created via <a class="ref" BBB href="#group___edi_1gac8ba9b4a0cdc2d2f30de7d915a4c51c1">ediMakeHash</a> to convert a JSON string into an options hash. For example: ediWriteFields(rec, <a class="ref" BBB href="#group___esp_abbrev_1ga3c8e01edebd0020f20411085635cca69">params()</a>); The record runs field validations before saving to the database.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">tableName</td><td>Database table name.</td>
     <tr><td class="param">data</td><td>Hash of field names and values to use for the update.</td>
     </table></dd></dl>
-    <dl><dt>Returns:</dt><dd>Zero if successful. Otherwise a negative MPR error code.</dd></dl>
+    <dl><dt>Returns:</dt><dd>True if the field can be successfully written. Returns false if field validations fail.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
   </div>
@@ -2783,11 +2762,11 @@ The tab control can manage a set of panes and will selectively show and hide or 
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
   </div>
 </div>
-<a name="group___esp_control_1ga5f7dd7dad36e89c0e7aa7fc09234e1b5"></a>
+<a name="group___esp_control_1ga74f4ebc195992a3b8e1229db1cc864d3"></a>
 <div class="api">
   <div class="prototype">
     void
-    espDropList
+    espDropdown
 (<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *field, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *choices, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)
   </div>
   <div class="apiDetail">
@@ -2796,7 +2775,7 @@ The tab control can manage a set of panes and will selectively show and hide or 
     <table class="parameters" summary="Parameters">
     <tr><td class="param">conn</td><td>Http connection object.</td>
     <tr><td class="param">field</td><td>Record field name to provide the default value for the list. The field should be a property of the form current record. The field name is used to create the HTML input control name. If this call is used without a form control record, the actual data value should be supplied via the options.value property.</td>
-    <tr><td class="param">choices</td><td>Choices to select from. This is a JSON style set of properties. For example: espDropList(conn, &quot;priority&quot;, &quot;{ low: 0, med: 1, high: 2 }&quot;, NULL).</td>
+    <tr><td class="param">choices</td><td>Choices to select from. This is a JSON style set of properties. For example: espDropdown(conn, &quot;priority&quot;, &quot;{ low: 0, med: 1, high: 2 }&quot;, NULL).</td>
     <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
@@ -3488,6 +3467,25 @@ Path to view.
     <tr><td class="param">conn</td><td>HttpConn connection object created via $httpCreateConn.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Return a string containing the cookies sent in the Http header of the last request.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+  </div>
+</div>
+<a name="group___esp_req_1ga4236af8f29a206e18c4b7a86ac32dba6"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *
+    espGetFlashMessage
+(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *type)
+  </div>
+  <div class="apiDetail">
+<p>Get a flash message.</p>
+    <dl><dt><b>Description</b>:</dt><dd>This retrieves a flash message of a specified type. Flash messages are special session state message that are passed to the next request (only).</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>HttpConn connection object created via $httpCreateConn.</td>
+    <tr><td class="param">type</td><td>Type of flash message to retrieve. Possible types include: &quot;error&quot;, &quot;inform&quot;, &quot;warning&quot;, &quot;all&quot;.</td>
+    </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
   </div>
@@ -4799,7 +4797,7 @@ Session inactivity timeout (msecs).
   </div>
   <div class="apiDetail">
 <p>Set the current database record.</p>
-    <dl><dt><b>Description</b>:</dt><dd>The current record is used to supply data to various abbreviated controls, such as: <a class="ref" BBB href="#group___esp_abbrev_1ga3e4c53a1a64bfb4a120fd7864d11ce59">text()</a>, <a class="ref" BBB href="#group___esp_abbrev_1gaa3f886ac8ecb0b4f2f6decb1da1f5c82">input()</a>, checkbox and <a class="ref" BBB href="#group___esp_abbrev_1gaf5d509afd80ee42b3dbcc8709fa46bc9">droplist()</a></dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>The current record is used to supply data to various abbreviated controls, such as: <a class="ref" BBB href="#group___esp_abbrev_1ga3e4c53a1a64bfb4a120fd7864d11ce59">text()</a>, <a class="ref" BBB href="#group___esp_abbrev_1gaa3f886ac8ecb0b4f2f6decb1da1f5c82">input()</a>, checkbox and <a class="ref" BBB href="#group___esp_abbrev_1gae43638b69d2bf1bf6cf037459aad2ce2">dropdown()</a></dd></dl>
     <dl><dt>Returns:</dt><dd>The grid instance. This permits chaining.</dd></dl>
   </div>
 </div>
@@ -4916,6 +4914,6 @@ Lifespan for cached action content.
     </dd></dl>
   </div>
 </div>
-<div class="footnote">Generated on Wed Oct 05 2011 09:22:50 GMT-0700 (PDT)<br/>
+<div class="footnote">Generated on Wed Oct 05 2011 10:26:18 GMT-0700 (PDT)<br/>
   Copyright &copy; <a href="http://www.embedthis.com">Embedthis Software</a> 2011.
 </div></div></body></html>

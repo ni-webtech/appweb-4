@@ -7,13 +7,17 @@ static void list() {
     render("DONE\n");
 }
 
-static void start() {
-    maStartAppweb(MPR->appwebService);
-}
-
-static void stop() {
-    maStopAppweb(MPR->appwebService);
-    mprCreateEvent(NULL, "restart", 5000, start, 0, 0);
+static void restart() {
+    MaAppweb        *appweb;
+    MaServer        *server;
+    HttpEndpoint    *endpoint;
+    
+    appweb = MPR->appwebService;
+    server = mprGetFirstItem(appweb->servers);
+    endpoint = mprGetFirstItem(server->endpoints);
+    httpStopEndpoint(endpoint);
+    endpoint->port = 5555;
+    httpStartEndpoint(endpoint);
 }
 
 ESP_EXPORT int esp_controller_demo(EspRoute *eroute, MprModule *module) {
@@ -41,7 +45,6 @@ ESP_EXPORT int esp_controller_demo(EspRoute *eroute, MprModule *module) {
     EdiRec *rec = makeRec("{ id: 1, title: 'Message One', body: 'Line one' }");
 
     espDefineAction(eroute, "demo-list", list);
-    espDefineAction(eroute, "demo-cmd-stop", stop);
-    espDefineAction(eroute, "demo-cmd-start", start);
+    espDefineAction(eroute, "demo-cmd-restart", restart);
     return 0;
 }

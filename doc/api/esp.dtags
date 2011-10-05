@@ -225,6 +225,13 @@
     </member>
     <member kind="function">
       <type>cchar *</type>
+      <name>espGetFlashMessage</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga4236af8f29a206e18c4b7a86ac32dba6</anchor>
+      <arglist>(HttpConn *conn, cchar *type)</arglist>
+    </member>
+    <member kind="function">
+      <type>cchar *</type>
       <name>espGetHeader</name>
       <anchorfile>group___esp_req.html</anchorfile>
       <anchor>gaddf870926cbeee2779b687522d5db0aa</anchor>
@@ -538,9 +545,9 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>espDropList</name>
+      <name>espDropdown</name>
       <anchorfile>group___esp_control.html</anchorfile>
-      <anchor>ga5f7dd7dad36e89c0e7aa7fc09234e1b5</anchor>
+      <anchor>ga74f4ebc195992a3b8e1229db1cc864d3</anchor>
       <arglist>(HttpConn *conn, cchar *field, cchar *choices, cchar *options)</arglist>
     </member>
     <member kind="function">
@@ -739,9 +746,9 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>droplist</name>
+      <name>dropdown</name>
       <anchorfile>group___esp_abbrev.html</anchorfile>
-      <anchor>gaf5d509afd80ee42b3dbcc8709fa46bc9</anchor>
+      <anchor>gae43638b69d2bf1bf6cf037459aad2ce2</anchor>
       <arglist>(cchar *field, cchar *choices, cchar *options)</arglist>
     </member>
     <member kind="function">
@@ -1448,13 +1455,6 @@
       <anchorfile>group___edi.html</anchorfile>
       <anchor>ga56c462e7401774404b863be140dbf683</anchor>
       <arglist>(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value)</arglist>
-    </member>
-    <member kind="function">
-      <type>int</type>
-      <name>ediWriteFields</name>
-      <anchorfile>group___edi.html</anchorfile>
-      <anchor>ga7bc3b335f68fd41b818c890998a892aa</anchor>
-      <arglist>(Edi *edi, cchar *tableName, MprHash *data)</arglist>
     </member>
     <member kind="function">
       <type>int</type>

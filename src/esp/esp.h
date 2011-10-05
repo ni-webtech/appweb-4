@@ -640,6 +640,7 @@ extern void espFlush(HttpConn *conn);
     @description This retrieves a flash message of a specified type.
         Flash messages are special session state message that are passed to the next request (only). 
     @param conn HttpConn connection object created via $httpCreateConn
+    @param type Type of flash message to retrieve. Possible types include: "error", "inform", "warning", "all".
     @ingroup EspReq
  */
 extern cchar *espGetFlashMessage(HttpConn *conn, cchar *type);
