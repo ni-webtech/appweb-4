@@ -1164,7 +1164,6 @@ static void mark()
     LOG(7, "GC: mark started");
 
     /*
-        TODO here on how marking strategy works
         When parallel, we mark blocks using the current heap->active mark. After marking, synchronization will rotate
         the active/stale/dead markers. After this, existing alive blocks may be marked stale. No blocks will be marked
         active.
@@ -7964,8 +7963,6 @@ static void manageDispatcher(MprDispatcher *dispatcher, int flags)
     es = dispatcher->service;
 
     if (flags & MPR_MANAGE_MARK) {
-        //  MOB -- remove this assert -- when shutting down, stopping may not be set
-        mprAssert(!dispatcher->destroyed || mprIsStopping());
         mprMark(dispatcher->name);
         mprMark(dispatcher->eventQ);
         mprMark(dispatcher->cond);
@@ -8089,8 +8086,7 @@ int mprServiceEvents(MprTime timeout, int flags)
 /*
     Wait for an event to occur. Expect the event to signal the cond var.
     WARNING: this will enable GC while sleeping
-    Return MPR_ERR_TIMEOUT if no event was seen before the timeout.
-    MOB - should this return a count of events?
+    Return Return 0 if an event was signalled. Return MPR_ERR_TIMEOUT if no event was seen before the timeout.
  */
 int mprWaitForEvent(MprDispatcher *dispatcher, MprTime timeout)
 {
@@ -10859,140 +10855,6 @@ static void *dupKey(MprHash *hash, MprKey *sp, cvoid *key)
         return sclone(key);
 }
 
-
-#if UNUSED
-/*
-    The serial format is a subset of JSON without array support.
-    This is designed to be as fast as possible for encoding one level of properties.
- */
-static MprHash *parseHash(MprHash *hash, cchar **token)
-{
-    MprHash     *obj;
-    MprKey      *kp;
-    cchar       *cp, *ep;
-    char        key[MPR_MAX_STRING];
-    int         quote;
-
-    for (cp = *token; *cp; cp++) {
-        while (isspace((int) *cp)) cp++;
-        if (*cp == '{') {
-            ++cp;
-            hash = parseHash(mprCreateHash(0, 0), &cp);
-
-        } else if ((ep = strchr(cp, ':')) != 0 && (ep == *token || ep[-1] != '\\')) {
-            if (*cp == '}') {
-                break;
-            } else if (*cp == ',') {
-                continue;
-            }
-            if (hash == 0) {
-                /* Missing opening "{" */
-                break;
-            }
-            if (*cp == '\'') {
-                sncopy(key, sizeof(key), &cp[1], ep - cp - 2);
-            } else {
-                sncopy(key, sizeof(key), cp, ep - cp);
-            }
-            for (cp = ep + 1; isspace((int) *cp); cp++) ;
-            if (*cp == '{') {
-                ++cp;
-                obj = parseHash(mprCreateHash(0, 0), &cp);
-                if ((kp = mprAddKey(hash, key, obj)) != 0) {
-                    kp->isHash = 1;
-                }
-
-            } else if (*cp == '"' || *cp == '\'') {
-                quote = *cp;
-                if ((ep = strchr(++cp, quote)) != 0 && ep[-1] != '\\') {
-                    mprAddKey(hash, key, snclone(cp, ep - cp));
-                    cp = ep;
-                } else {
-                    /* missing closing quote */
-                    break;
-                }
-
-            } else if ((ep = strchr(cp, ',')) != 0 && ep[-1] != '\\') {
-                mprAddKey(hash, key, snclone(cp, ep - cp));
-                cp = ep - 1;
-
-            } else if ((ep = strchr(cp, '}')) != 0 && ep[-1] != '\\') {
-                /* Close of object "}" */
-                break;
-
-            } else if (ep == 0) {
-                mprAddKey(hash, key, sclone(cp));
-                break;
-            }
-        }
-        if (*cp == '\0') {
-            break;
-        }
-    }
-    *token = cp;
-    return hash;
-}
-#endif
-
-
-#if UNUSED
-MprHash *mprParseHash(cchar *str)
-{
-    if (str == 0 || *str == '\0') {
-        return mprCreateHash(-1, 0);
-    }
-#if UNUSED
-    return parseHash(NULL, &str);
-#else
-    return mprDeserialize(str);
-#endif
-}
-
-
-/*
-    Supports hashes where properties are strings or hashes of strings. N-level nest is supported.
- */
-static cchar *hashToString(MprBuf *buf, MprHash *hash, int pretty)
-{
-    MprKey  *kp;
-
-    mprPutCharToBuf(buf, '{');
-    if (pretty) mprPutCharToBuf(buf, '\n');
-    for (ITERATE_KEYS(hash, kp)) {
-        if (pretty) mprPutStringToBuf(buf, "    ");
-        mprPutStringToBuf(buf, kp->key);
-        mprPutStringToBuf(buf, ": ");
-        if (kp->isHash) {
-            hashToString(buf, (MprHash*) kp->data, pretty);
-        } else {
-            mprPutStringToBuf(buf, kp->data);
-        }
-        mprPutCharToBuf(buf, ',');
-        if (pretty) mprPutCharToBuf(buf, '\n');
-    }
-    mprPutCharToBuf(buf, '}');
-    if (pretty) mprPutCharToBuf(buf, '\n');
-    return sclone(mprGetBufStart(buf));
-}
-
-
-/*
-    Serialize into JSON format. Assumes that all key data is simple strings.
- */
-cchar *mprHashToString(MprHash *hash, int flags)
-{
-    MprBuf  *buf;
-    int     pretty;
-
-    pretty = (flags & MPR_HASH_PRETTY);
-    if ((buf = mprCreateBuf(0, 0)) == 0) {
-        return 0;
-    }
-    hashToString(buf, hash, pretty);
-    return sclone(mprGetBufStart(buf));
-}
-#endif
-
 /*
     @copy   default
 
@@ -11114,13 +10976,6 @@ static MprObj *deserialize(MprJson *jp)
     while (*jp->tok) {
         switch (advanceToken(jp)) {
         case '\0':
-            break;
-
-        //  MOB - remove
-        case '\n':
-            mprAssert(0);
-            jp->lineNumber++;
-            jp->tok++;
             break;
 
         case ',':
@@ -11325,20 +11180,6 @@ static cchar *objToString(MprBuf *buf, MprObj *obj, int type, int pretty)
     if (type == MPR_JSON_ARRAY) {
         mprPutCharToBuf(buf, '[');
         if (pretty) mprPutCharToBuf(buf, '\n');
-#if UNUSED
-    void    *item;
-    int     next;
-        for (ITERATE_ITEMS(obj, item, next)) {
-            if (pretty) mprPutStringToBuf(buf, "    ");
-            if (kp->type == MPR_JSON_ARRAY || kp->type == MPR_JSON_OBJ) {
-                objToString(buf, (MprObj*) kp->data, kp->type, pretty);
-            } else {
-                quoteValue(buf, kp->data);
-            }
-            mprPutCharToBuf(buf, ',');
-            if (pretty) mprPutCharToBuf(buf, '\n');
-        }
-#else
         len = mprGetHashLength(obj);
         for (i = 0; i < len; i++) {
             itosbuf(numbuf, sizeof(numbuf), i, 10);
@@ -11355,7 +11196,6 @@ static cchar *objToString(MprBuf *buf, MprObj *obj, int type, int pretty)
             mprPutCharToBuf(buf, ',');
             if (pretty) mprPutCharToBuf(buf, '\n');
         }
-#endif
         mprPutCharToBuf(buf, ']');
 
     } else if (type == MPR_JSON_OBJ) {
@@ -11443,9 +11283,9 @@ static cchar *findEndKeyword(MprJson *jp, cchar *str)
 static void jsonParseError(MprJson *jp, cchar *msg)
 {
     if (jp->path) {
-        mprError("%s\nIn file '%s' at line %d", msg, jp->path, jp->lineNumber);
+        mprLog(4, "%s\nIn file '%s' at line %d", msg, jp->path, jp->lineNumber);
     } else {
-        mprError("%s\nAt line %d", msg, jp->lineNumber);
+        mprLog(4, "%s\nAt line %d", msg, jp->lineNumber);
     }
 }
 
@@ -11458,11 +11298,6 @@ void mprJsonParseError(MprJson *jp, cchar *fmt, ...)
     va_start(args, fmt);
     msg = sfmtv(fmt, args);
     (jp->callback.parseError)(jp, msg);
-#if UNUSED
-    mprError("%s\nIn file '%s' at line %d", msg, jp->path, jp->lineNumber);
-#else
-    mprError("%s\nAt line %d", msg, jp->lineNumber);
-#endif
     va_end(args);
 }
 
@@ -14297,7 +14132,6 @@ MprModule *mprCreateModule(cchar *name, cchar *path, cchar *entry, void *data)
     mp->entry = sclone(entry);
     mp->moduleData = data;
     mp->modified = info.mtime;
-    //  MOB - this is not fully implemented
     mp->lastActivity = mprGetTime();
     index = mprAddItem(ms->modules, mp);
     if (index < 0 || mp->name == 0) {
@@ -14313,8 +14147,6 @@ static void manageModule(MprModule *mp, int flags)
         mprMark(mp->name);
         mprMark(mp->path);
         mprMark(mp->entry);
-    } else if (flags & MPR_MANAGE_FREE) {
-        //  TODO - should this unload the module?
     }
 }
 
@@ -14495,7 +14327,7 @@ char *mprSearchForModule(cchar *filename)
 #if BLD_CC_DYN_LOAD
     char    *path, *f, *searchPath, *dir, *tok;
 
-    filename = mprGetNormalizedPath(filename);
+    filename = mprNormalizePath(filename);
 
     /*
         Search for the path directly
@@ -14783,12 +14615,12 @@ char *mprGetAbsPath(cchar *pathArg)
     }
 
 #if BLD_FEATURE_ROMFS
-    return mprGetNormalizedPath(pathArg);
+    return mprNormalizePath(pathArg);
 #endif
 
     fs = mprLookupFileSystem(pathArg);
     if (isFullPath(fs, pathArg)) {
-        return mprGetNormalizedPath(pathArg);
+        return mprNormalizePath(pathArg);
     }
 
 #if BLD_WIN_LIKE && !WINCE
@@ -14796,7 +14628,7 @@ char *mprGetAbsPath(cchar *pathArg)
     char    buf[MPR_MAX_PATH];
     GetFullPathName(pathArg, sizeof(buf) - 1, buf, NULL);
     buf[sizeof(buf) - 1] = '\0';
-    path = mprGetNormalizedPath(buf);
+    path = mprNormalizePath(buf);
 }
 #elif VXWORKS
 {
@@ -15266,7 +15098,7 @@ char *mprGetRelPath(cchar *pathArg)
     /*
         Must clean to ensure a minimal relative path result.
      */
-    path = mprGetNormalizedPath(pathArg);
+    path = mprNormalizePath(pathArg);
 
     if (!isAbsPath(fs, path)) {
         return path;
@@ -15443,7 +15275,7 @@ char *mprGetTransformedPath(cchar *path, int flags)
         result = mprGetRelPath(path);
 
     } else {
-        result = mprGetNormalizedPath(path);
+        result = mprNormalizePath(path);
     }
 
 #if BLD_WIN_LIKE
@@ -15481,11 +15313,11 @@ char *mprJoinPath(cchar *path, cchar *other)
             }
             return sjoin(drive, other, NULL);
         } else {
-            return mprGetNormalizedPath(other);
+            return mprNormalizePath(other);
         }
     }
     if (path == NULL || *path == '\0') {
-        return mprGetNormalizedPath(other);
+        return mprNormalizePath(other);
     }
     if ((cp = firstSep(fs, path)) != 0) {
         sep = *cp;
@@ -15497,7 +15329,7 @@ char *mprJoinPath(cchar *path, cchar *other)
     if ((join = sfmt("%s%c%s", path, sep, other)) == 0) {
         return 0;
     }
-    return mprGetNormalizedPath(join);
+    return mprNormalizePath(join);
 }
 
 
@@ -15648,12 +15480,11 @@ static char *fromCygPath(cchar *path)
 #endif
 
 
-//  TODO -- should this be mprNormalizePath?  apply to all APIs
 /*
     Normalize a path to remove redundant "./" and cleanup "../" and make separator uniform. Does not make an abs path.
     It does not map separators nor change case. 
  */
-char *mprGetNormalizedPath(cchar *pathArg)
+char *mprNormalizePath(cchar *pathArg)
 {
     MprFileSystem   *fs;
     char            *path, *sp, *dp, *mark, **segments;
@@ -15940,16 +15771,16 @@ char *mprResolvePath(cchar *base, cchar *path)
             }
             return sjoin(drive, path, NULL);
         }
-        return mprGetNormalizedPath(path);
+        return mprNormalizePath(path);
     }
     if (base == NULL || *base == '\0') {
-        return mprGetNormalizedPath(path);
+        return mprNormalizePath(path);
     }
     dir = mprGetPathDir(base);
     if ((join = sfmt("%s/%s", dir, path)) == 0) {
         return 0;
     }
-    return mprGetNormalizedPath(join);
+    return mprNormalizePath(join);
 }
 
 
@@ -15964,17 +15795,18 @@ int mprSamePath(cchar *path1, cchar *path2)
     fs = mprLookupFileSystem(path1);
 
     /*
-        Convert to absolute (normalized) paths to compare. TODO - resolve symlinks.
+        Convert to absolute (normalized) paths to compare. 
+        TODO - resolve symlinks.
      */
     if (!isFullPath(fs, path1)) {
         path1 = mprGetAbsPath(path1);
     } else {
-        path1 = mprGetNormalizedPath(path1);
+        path1 = mprNormalizePath(path1);
     }
     if (!isFullPath(fs, path2)) {
         path2 = mprGetAbsPath(path2);
     } else {
-        path2 = mprGetNormalizedPath(path2);
+        path2 = mprNormalizePath(path2);
     }
     if (fs->caseSensitive) {
         for (p1 = path1, p2 = path2; *p1 && *p2; p1++, p2++) {
@@ -16005,7 +15837,8 @@ int mprSamePathCount(cchar *path1, cchar *path2, ssize len)
     fs = mprLookupFileSystem(path1);
 
     /*
-        Convert to absolute paths to compare. TODO - resolve symlinks.
+        Convert to absolute paths to compare. 
+        TODO - resolve symlinks.
      */
     if (!isFullPath(fs, path1)) {
         path1 = mprGetAbsPath(path1);
@@ -16057,13 +15890,13 @@ char *mprSearchPath(cchar *file, int flags, cchar *search, ...)
             path = mprJoinPath(dir, file);
             if (mprPathExists(path, access)) {
                 mprLog(7, "mprSearchForFile: found %s", path);
-                return mprGetNormalizedPath(path);
+                return mprNormalizePath(path);
             }
             if ((flags & MPR_SEARCH_EXE) && *BLD_EXE) {
                 path = mprJoinPathExt(path, BLD_EXE);
                 if (mprPathExists(path, access)) {
                     mprLog(7, "mprSearchForFile: found %s", path);
-                    return mprGetNormalizedPath(path);
+                    return mprNormalizePath(path);
                 }
             }
             dir = stok(0, MPR_SEARCH_SEP, &tok);
@@ -22405,7 +22238,6 @@ void mprStopThreadService()
     mprAssert(ts);
     mprAssert(ts->mainThread);
 
-    //  MOB - why
     ts->threads->mutex = 0;
     ts->mutex = 0;
     mprRemoveItem(ts->threads, ts->mainThread);
@@ -28657,7 +28489,6 @@ static MprXmlToken getXmlToken(MprXml *xp, int state)
             If all white space, then zero the token buffer
          */
         for (cp = tokBuf->start; *cp; cp++) {
-            //  MOB - temp
             if (!isspace((int) *cp & 0x7f)) {
                 return MPR_XMLTOK_TEXT;
             }

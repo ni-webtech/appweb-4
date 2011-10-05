@@ -1115,11 +1115,11 @@ extern void espLabel(HttpConn *conn, cchar *text, cchar *options);
         If this call is used without a form control record, the actual data value should be supplied via the 
         options.value property.
     @param choices Choices to select from. This is a JSON style set of properties. For example:
-        espDropList(conn, "priority", "{ low: 0, med: 1, high: 2 }", NULL)
+        espDropdown(conn, "priority", "{ low: 0, med: 1, high: 2 }", NULL)
     @param options Extra options. See $EspControl for a list of the standard options.
     @ingroup EspControl
  */
-extern void espDropList(HttpConn *conn, cchar *field, cchar *choices, cchar *options);
+extern void espDropdown(HttpConn *conn, cchar *field, cchar *choices, cchar *options);
 
 /**
     Render a mail link
@@ -1467,11 +1467,11 @@ extern void label(cchar *text, cchar *options);
         If this call is used without a form control record, the actual data value should be supplied via the 
         options.value property.
     @param choices Choices to select from. This is a JSON style set of properties. For example:
-        espDropList(conn, "priority", "{ low: 0, med: 1, high: 2 }", NULL)
+        espDropdown(conn, "priority", "{ low: 0, med: 1, high: 2 }", NULL)
     @param options Extra options. See $EspControl for a list of the standard options.
     @ingroup EspAbbrev
  */
-extern void droplist(cchar *field, cchar *choices, cchar *options);
+extern void dropdown(cchar *field, cchar *choices, cchar *options);
 
 /**
     Render a mail link
@@ -2038,7 +2038,7 @@ extern EdiGrid *setGrid(EdiGrid *grid);
 /**
     Set the current database record
     @description The current record is used to supply data to various abbreviated controls, such as: text(), input(), 
-        checkbox and droplist()
+        checkbox and dropdown()
     @return The grid instance. This permits chaining.
     @ingroup EdiAbbrev
     @internal
@@ -2071,14 +2071,15 @@ extern bool writeField(cchar *tableName, cchar *key, cchar *fieldName, cchar *va
 
 /**
     Write field values to a database row
-    @description This routine updates a database row with the given values.  The "data' argument supplies 
+    @description This routine updates the current record with the given data and then saves the record to
+        the database. The "data' argument supplies 
         a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually
         created via #ediMakeHash to convert a JSON string into an options hash.
         For example: ediWriteFields(rec, params());
-        Note: field validations are not run.
+        The record runs field validations before saving to the database.
     @param tableName Database table name
     @param data Hash of field names and values to use for the update
-    @return Zero if successful. Otherwise a negative MPR error code.
+    @return True if the field  can be successfully written. Returns false if field validations fail.
     @ingroup EspAbbrev
  */
 extern bool writeFields(cchar *tableName, MprHash *data);

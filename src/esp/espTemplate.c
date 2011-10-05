@@ -20,7 +20,7 @@ static char *getOutDir(cchar *name)
 #if DEBUG_IDE
     return mprGetAppDir();
 #else
-    return mprGetNormalizedPath(sfmt("%s/../%s", mprGetAppDir(), name)); 
+    return mprNormalizePath(sfmt("%s/../%s", mprGetAppDir(), name)); 
 #endif
 }
 
@@ -412,7 +412,7 @@ char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheNam
                     token = "";
                 }
                 token = strim(token, " \t\r\n\"", MPR_TRIM_BOTH);
-                token = mprGetNormalizedPath(token);
+                token = mprNormalizePath(token);
                 if (token[0] == '/') {
                     include = sclone(token);
                 } else {
@@ -434,7 +434,7 @@ char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheNam
                 if (*token == '\0') {
                     layout = 0;
                 } else {
-                    token = mprGetNormalizedPath(token);
+                    token = mprNormalizePath(token);
                     if (token[0] == '/') {
                         layout = sclone(token);
                     } else {

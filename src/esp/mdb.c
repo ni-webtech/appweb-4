@@ -1304,30 +1304,12 @@ static MdbTable *lookupTable(Mdb *mdb, cchar *tableName)
 }
 
 
-#if UNUSED
-static void createID(Mdb *mdb, MdbTable *table)
-{
-    MdbCol   *col;
-
-    if (mdbAddColumn(mdb, table->name, "id", EDI_TYPE_STRING, EDI_KEY) < 0) {
-        mprAssert("Can't create ID");
-        return;
-    }
-    col = lookupColumn(table, "id");
-    col->flags |= EDI_KEY | EDI_AUTO_INC | EDI_NOT_NULL;
-}
-#endif
-
-
 static void manageTable(MdbTable *table, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(table->name);
         mprMark(table->schema);
         mprMark(table->index);
-#if UNUSED
-        mprMark(table->mutex);
-#endif
         mprMark(table->rows);
     }
 }

@@ -203,7 +203,7 @@ static int runAction(HttpConn *conn)
         }
     } else if (eroute->update || !mprLookupModule(req->controllerPath)) {
         req->cacheName = mprGetMD5WithPrefix(req->controllerPath, slen(req->controllerPath), "controller_");
-        req->module = mprGetNormalizedPath(sfmt("%s/%s%s", eroute->cacheDir, req->cacheName, BLD_SHOBJ));
+        req->module = mprNormalizePath(sfmt("%s/%s%s", eroute->cacheDir, req->cacheName, BLD_SHOBJ));
 
         if (!mprPathExists(req->controllerPath, R_OK)) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find controller %s", req->controllerPath);
@@ -299,7 +299,7 @@ void espWriteView(HttpConn *conn, cchar *name)
         }
     } else if (eroute->update || !mprLookupModule(req->source)) {
         req->cacheName = mprGetMD5WithPrefix(req->source, slen(req->source), "view_");
-        req->module = mprGetNormalizedPath(sfmt("%s/%s%s", eroute->cacheDir, req->cacheName, BLD_SHOBJ));
+        req->module = mprNormalizePath(sfmt("%s/%s%s", eroute->cacheDir, req->cacheName, BLD_SHOBJ));
 
         if (!mprPathExists(req->source, R_OK)) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find view %s", req->source);
@@ -1196,7 +1196,7 @@ static int espRouteDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S %S %S %S %S", &name, &methods, &pattern, &target, &source)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    httpAddConfiguredRoute(state->route, name, methods, pattern, target, source);
+    httpDefineRoute(state->route, name, methods, pattern, target, source);
     return 0;
 }
 

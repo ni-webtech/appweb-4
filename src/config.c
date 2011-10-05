@@ -1242,12 +1242,6 @@ static int paramDirective(MaState *state, cchar *key, cchar *value)
  */
 static int prefixDirective(MaState *state, cchar *key, cchar *value)
 {
-#if FUTURE && UNUSED
-    //  MOB - not sure if this is a good idea
-    if (state->route->prefix) {
-        value = sjoin(state->route->prefix, value, NULL);
-    }
-#endif
     httpSetRoutePrefix(state->route, value);
     return 0;
 }

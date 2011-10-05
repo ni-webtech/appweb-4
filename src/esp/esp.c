@@ -428,7 +428,7 @@ static void compileFile(cchar *source, int kind)
 
     layout = 0;
     app->cacheName = mprGetMD5WithPrefix(source, slen(source), (kind == ESP_CONTROLLER) ? "controller_" : "view_");
-    app->module = mprGetNormalizedPath(sfmt("%s/%s%s", eroute->cacheDir, app->cacheName, BLD_SHOBJ));
+    app->module = mprNormalizePath(sfmt("%s/%s%s", eroute->cacheDir, app->cacheName, BLD_SHOBJ));
 
     if (kind == ESP_CONTROLLER) {
         app->csource = source;
@@ -600,7 +600,7 @@ static void compile(int argc, char **argv)
         mprWriteFileFmt(app->flatFile, "    return 0;\n}\n");
         mprCloseFile(app->flatFile);
 
-        app->module = mprGetNormalizedPath(sfmt("%s/app%s", eroute->cacheDir, BLD_SHOBJ));
+        app->module = mprNormalizePath(sfmt("%s/app%s", eroute->cacheDir, BLD_SHOBJ));
         trace("COMPILE", "%s", app->csource);
         if (runCommand(eroute->compile, app->flatPath, app->module) < 0) {
             return;

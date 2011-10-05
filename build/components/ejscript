@@ -18,12 +18,12 @@ defineComponent() {
         libs="$libs pcre"
     fi
     if [ "$sqlite" = 1 ] ; then
-        withlibs="sqlite"
-        libs="$libs sqlite"
+        withlibs="sqlite3"
+        libs="$libs sqlite3"
     fi
     if [ "$BLD_FEATURE_EJSCRIPT_ALL_IN_ONE" = 1 ] ; then
         if isdefined SQLITE ; then
-            optional="$optional sqlite"
+            optional="$optional sqlite3"
         fi
     fi
 

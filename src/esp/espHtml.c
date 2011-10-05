@@ -350,10 +350,10 @@ void espLabel(HttpConn *conn, cchar *text, cchar *optionString)
 
 
 /*
-    droplist("priority", "{ low: 0, med: 1, high: 2 }", NULL)
-    droplist("priority", "{ low: 0, med: 1, high: 2 }", "value='2'")   //  MOB - without a record
+    dropdown("priority", "{ low: 0, med: 1, high: 2 }", NULL)
+    dropdown("priority", "{ low: 0, med: 1, high: 2 }", "value='2'")   //  MOB - without a record
  */
-void espDropList(HttpConn *conn, cchar *field, cchar *choices, cchar *optionString) 
+void espDropdown(HttpConn *conn, cchar *field, cchar *choices, cchar *optionString) 
 {
     MprHash     *options;
     MprKey      *kp;
@@ -945,9 +945,9 @@ void label(cchar *text, cchar *optionString)
 }
 
 
-void droplist(cchar *name, cchar *choices, cchar *optionString) 
+void dropdown(cchar *name, cchar *choices, cchar *optionString) 
 {
-    espDropList(espGetConn(), name, choices, optionString);
+    espDropdown(espGetConn(), name, choices, optionString);
 }
 
 

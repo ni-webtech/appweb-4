@@ -170,8 +170,7 @@ int main(int argc, char *argv[])
         return -1;
     }
     if (nextArg < argc) {
-        /* TODO - replace with mprJoin() */
-        app->serviceProgram = argv[nextArg++];
+        app->serviceProgram = sclone(argv[nextArg++]);
         for (len = 0, i = nextArg; i < argc; i++) {
             len += slen(argv[i]) + 1;
         }

@@ -2829,7 +2829,7 @@ typedef struct HttpLang {
     @see HttpRoute httpAddRouteCondition httpAddRouteErrorDocument httpAddRouteExpiry httpAddRouteExpiryByType 
         httpAddRouteFilter httpAddRouteHandler httpAddRouteHeader httpAddRouteLanguageDir httpAddRouteLanguageSuffix 
         httpAddRouteLoad httpAddRouteQuery httpAddRouteUpdate httpClearRouteStages httpCreateAliasRoute 
-        httpCreateConfiguredRoute httpCreateDefaultRoute httpCreateInheritedRoute httpCreateRoute 
+        httpCreateDefaultRoute httpCreateInheritedRoute httpCreateRoute httpDefineRoute
         httpDefineRouteCondition httpDefineRouteTarget httpDefineRouteUpdate httpFinalizeRoute httpGetRouteData 
         httpGetRouteDir httpLink httpLookupRouteErrorDocument httpMakePath httpMatchRoute httpResetRoutePipeline 
         httpSetRouteAuth httpSetRouteAutoDelete httpSetRouteCompression httpSetRouteConnector httpSetRouteData 
@@ -4657,7 +4657,7 @@ extern ssize httpWriteUploadData(HttpConn *conn, MprList *formData, MprList *fil
     @stability Evolving
     @defgroup HttpEndpoint HttpEndpoint
     @see HttpEndpoint httpAcceptConn httpAddHostToEndpoint httpCreateConfiguredEndpoint httpCreateEndpoint 
-        httpDestroyEndpoint httpGetEndpointAsync httpGetEndpointContext httpHasNamedVirtualHosts 
+        httpDestroyEndpoint httpGetEndpointContext httpHasNamedVirtualHosts httpIsEndpointAsync
         httpLookupHostOnEndpoint httpSecureEndpoint httpSecureEndpointByName httpSetEndpointAddress 
         httpSetEndpointAsync httpSetEndpointContext httpSetEndpointNotifier httpSetHasNamedVirtualHosts 
         httpStartEndpoint httpStopEndpoint httpValidateLimits 
@@ -4742,14 +4742,6 @@ extern HttpEndpoint *httpCreateEndpoint(cchar *ip, int port, MprDispatcher *disp
  */
 extern void httpDestroyEndpoint(HttpEndpoint *endpoint);
 
-//  MOB - rename httpEndpointIsASync
-/**
-    Get if the endpoint is running in asynchronous mode
-    @param endpoint HttpEndpoint object created via #httpCreateEndpoint
-    @return True if the endpoint is in async mode
- */
-extern int httpGetEndpointAsync(HttpEndpoint *endpoint);
-
 /**
     Get the endpoint context object
     @param endpoint HttpEndpoint object created via #httpCreateEndpoint
@@ -4764,6 +4756,13 @@ extern void *httpGetEndpointContext(HttpEndpoint *endpoint);
     @ingroup HttpEndpoint
  */
 extern bool httpHasNamedVirtualHosts(HttpEndpoint *endpoint);
+
+/**
+    Get if the endpoint is running in asynchronous mode
+    @param endpoint HttpEndpoint object created via #httpCreateEndpoint
+    @return True if the endpoint is in async mode
+ */
+extern int httpIsEndpointAsync(HttpEndpoint *endpoint);
 
 /**
     Lookup a host name
@@ -4938,23 +4937,6 @@ typedef struct HttpHost {
 extern int httpAddRoute(HttpHost *host, HttpRoute *route);
 
 /**
-    Add and configure a route
-    @description This creates a bare route and then configures it using the given parameters. The route is finalized and
-        added to the parent host.
-    @param parent Parent route from which to inherit configuration.
-    @param name Route name to define.
-    @param methods Http methods for which this route is active
-    @param pattern Matching URI pattern for which this route will qualify
-    @param target Route target string expression. This is used by handlers to determine the physical or virtual resource
-        to serve.
-    @param source Source file pattern containing the resource to activate or serve. 
-    @return Created route.
-    @ingroup HttpRoute
- */
-HttpRoute *httpAddConfiguredRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, 
-        cchar *source);
-
-/**
     Clone a host
     @description The parent host is cloned and a new host returned. The new host inherites the parent's configuration.
     @param parent Parent HttpHost object to clone
@@ -4970,6 +4952,22 @@ extern HttpHost *httpCloneHost(HttpHost *parent);
     @ingroup HttpHost
  */
 extern HttpHost *httpCreateHost();
+
+/**
+    Define a route
+    @description This creates a route and then configures it using the given parameters. The route is finalized and
+        added to the parent host.
+    @param parent Parent route from which to inherit configuration.
+    @param name Route name to define.
+    @param methods Http methods for which this route is active
+    @param pattern Matching URI pattern for which this route will qualify
+    @param target Route target string expression. This is used by handlers to determine the physical or virtual resource
+        to serve.
+    @param source Source file pattern containing the resource to activate or serve. 
+    @return Created route.
+    @ingroup HttpRoute
+ */
+HttpRoute *httpDefineRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, cchar *source);
 
 /**
     Return the default route for a host

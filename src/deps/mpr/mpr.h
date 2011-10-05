@@ -4874,11 +4874,12 @@ extern ssize mprWriteFileString(MprFile *file, cchar *str);
     @description MprPath is the cross platform Path (filename) information structure.
     @stability Evolving.
     @see MprDirEntry MprFile MprPath mprCopyPath mprDeletePath mprFindFiles mprGetAbsPath mprGetCurrentPath 
-        mprGetFirstPathSeparator mprGetLastPathSeparator mprGetNativePath mprGetNormalizedPath mprGetPathBase 
+        mprGetFirstPathSeparator mprGetLastPathSeparator mprGetNativePath mprGetPathBase 
         mprGetPathDir mprGetPathExt mprGetPathFiles mprGetPathLink mprGetPathNewline mprGetPathParent 
         mprGetPathSeparators mprGetPortablePath mprGetRelPath mprGetTempPath mprGetTransformedPath mprIsAbsPath 
-        mprIsRelPath mprJoinPath mprJoinPathExt mprMakeDir mprMakeLink mprMapSeparators mprPathExists mprReadPathContents 
-        mprReplacePathExt mprResolvePath mprSamePath mprSamePathCount mprSearchPath mprTrimPathExt mprTruncatePath 
+        mprIsRelPath mprJoinPath mprJoinPathExt mprMakeDir mprMakeLink mprMapSeparators mprNormalizePath
+        mprPathExists mprReadPathContents mprReplacePathExt mprResolvePath mprSamePath mprSamePathCount mprSearchPath 
+        mprTrimPathExt mprTruncatePath 
     @defgroup MprPath MprPath
  */
 typedef struct MprPath {
@@ -4981,16 +4982,6 @@ extern cchar *mprGetLastPathSeparator(cchar *path);
     @ingroup MprPath
  */
 extern char *mprGetNativePath(cchar *path);
-
-/**
-    Normalize a path
-    @description A path is normalized by redundant segments such as "./" and "../dir" and duplicate 
-        path separators. Path separators are mapped. Paths are not converted to absolute paths.
-    @param path First path to compare
-    @returns A newly allocated, clean path. 
-    @ingroup MprPath
- */
-extern char *mprGetNormalizedPath(cchar *path);
 
 /**
     Get the base portion of a path
@@ -5209,6 +5200,16 @@ extern int mprMakeLink(cchar *path, cchar *target, bool hard);
     @ingroup MprPath
  */
 extern void mprMapSeparators(char *path, int separator);
+
+/**
+    Normalize a path
+    @description A path is normalized by redundant segments such as "./" and "../dir" and duplicate 
+        path separators. Path separators are mapped. Paths are not converted to absolute paths.
+    @param path First path to compare
+    @returns A newly allocated, clean path. 
+    @ingroup MprPath
+ */
+extern char *mprNormalizePath(cchar *path);
 
 /**
     Determine if a file exists for a path name and can be accessed
@@ -5971,28 +5972,28 @@ typedef void MprObj;
 
 /**
     JSON callbacks
+    @ingroup MprJson
  */
 typedef struct MprJsonCallback {
     /**
-        Check state callback for JSON deserialization
-        @internal
+        Check state callback for JSON deserialization. This function is called at the conclusion of object levels when
+        a "}" or "]" is encountered in the input stream. It is also invoked after each "name:" is parsed.
      */
     int (*checkState)(struct MprJson *jp, cchar *name);
 
     /**
-        MakeObject callback for JSON deserialization
-        @internal
+        MakeObject callback for JSON deserialization. This function is called to construct an object for each level 
+        in the object tree. Objects will be either arrays or objects.
      */
     MprObj *(*makeObj)(struct MprJson *jp, bool list);
 
     /**
-        Handle a parse error
+        Handle a parse error. This function is called from mprJsonParseError to handle error reporting.
      */
     void (*parseError)(struct MprJson *jp, cchar *msg);
 
     /**
-        SetValue callback for JSON deserialization
-        @internal
+        SetValue callback for JSON deserialization. This function is called to a property value in an object.
      */
     int (*setValue)(struct MprJson *jp, MprObj *obj, int index, cchar *name, cchar *value, int valueType);
 } MprJsonCallback;
@@ -6027,11 +6028,7 @@ extern cchar *mprSerialize(MprObj *obj, int flags);
     @description Serializes a top level JSON object created via mprDeserialize into a characters string in JSON format.
         This extended deserialization API takes callback functions to control how the object tree is constructed. 
     @param str JSON string to deserialize.
-    @param makeObj Callback function to construct an object for each level in the object tree. Objects will be either
-        arrays or objects.
-    @param check State check callback function. The state check function is called at the conclusion of object levels when
-        a "}" or "]" is encountered in the input stream. It is also invoked after each "name:" is parsed.
-    @param setValue Callback function to set a value in an object.
+    @param callback Callback functions. This is an instance of the $MprJsonCallback structure.
     @param data Opaque object to pass to the given callbacks
     @return Returns a serialized JSON character string.
     @ingroup MprJson

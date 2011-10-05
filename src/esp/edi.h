@@ -606,6 +606,7 @@ extern bool ediValidateRec(EdiRec *rec);
  */
 extern int ediWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
 
+#if UNUSED
 /**
     Write field values to a database row
     @description This routine updates a database row with the given values.  The "data' argument supplies 
@@ -620,6 +621,7 @@ extern int ediWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldNam
     @ingroup Edi
  */
 extern int ediWriteFields(Edi *edi, cchar *tableName, MprHash *data);
+#endif
 
 /**
     Write a record to the database

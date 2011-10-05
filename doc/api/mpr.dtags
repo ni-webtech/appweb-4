@@ -10,6 +10,7 @@
     <class kind="struct">MprHash</class>
     <class kind="struct">MprHeap</class>
     <class kind="struct">MprIOVec</class>
+    <class kind="struct">MprJsonCallback</class>
     <class kind="struct">MprKeyValue</class>
     <class kind="struct">MprMemStats</class>
     <class kind="struct">MprMutex</class>
@@ -1619,13 +1620,6 @@
       <arglist>)(struct MprBuf *bp, void *arg)</arglist>
     </member>
     <member kind="typedef">
-      <type>int(*</type>
-      <name>MprCheckState</name>
-      <anchorfile>mpr_8h.html</anchorfile>
-      <anchor>a8a6df458db872a925c3f07637bb0ae2e</anchor>
-      <arglist>)(struct MprJson *jp, cchar *name)</arglist>
-    </member>
-    <member kind="typedef">
       <type>void(*</type>
       <name>MprEventProc</name>
       <anchorfile>group___mpr_event.html</anchorfile>
@@ -1659,13 +1653,6 @@
       <anchorfile>group___mpr_log.html</anchorfile>
       <anchor>ga95e033ad5fa41baa87cb3fefdb782951</anchor>
       <arglist>)(int flags, int level, cchar *msg)</arglist>
-    </member>
-    <member kind="typedef">
-      <type>MprObj *(*</type>
-      <name>MprMakeObj</name>
-      <anchorfile>mpr_8h.html</anchorfile>
-      <anchor>a2df4080faf646ed97c1879a035c26218</anchor>
-      <arglist>)(struct MprJson *jp, bool list)</arglist>
     </member>
     <member kind="typedef">
       <type>void(*</type>
@@ -1708,13 +1695,6 @@
       <anchorfile>mpr_8h.html</anchorfile>
       <anchor>aa6887458d0a070b3665166af590089d8</anchor>
       <arglist></arglist>
-    </member>
-    <member kind="typedef">
-      <type>int(*</type>
-      <name>MprSetValue</name>
-      <anchorfile>mpr_8h.html</anchorfile>
-      <anchor>a62d10b58e489ee23adcb0c2a996c6266</anchor>
-      <arglist>)(struct MprJson *jp, MprObj *obj, int index, cchar *name, cchar *value, int valueType)</arglist>
     </member>
     <member kind="typedef">
       <type>void(*</type>
@@ -2406,8 +2386,8 @@
       <type>MprObj *</type>
       <name>mprDeserializeCustom</name>
       <anchorfile>group___mpr_json.html</anchorfile>
-      <anchor>ga4859a94d4d583668858ab5a7f060f073</anchor>
-      <arglist>(cchar *str, MprMakeObj makeObj, MprCheckState check, MprSetValue setValue, void *data)</arglist>
+      <anchor>gad922d1e5cdc4d4f1c33e5e14b069b98e</anchor>
+      <arglist>(cchar *str, MprJsonCallback callback, void *data)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -3061,13 +3041,6 @@
       <arglist>(MprHash *table, MprKey *last)</arglist>
     </member>
     <member kind="function">
-      <type>char *</type>
-      <name>mprGetNormalizedPath</name>
-      <anchorfile>group___mpr_path.html</anchorfile>
-      <anchor>ga83b70b9540f86897124ad7850356dfbb</anchor>
-      <arglist>(cchar *path)</arglist>
-    </member>
-    <member kind="function">
       <type>int</type>
       <name>mprGetOsError</name>
       <anchorfile>group___mpr.html</anchorfile>
@@ -3696,6 +3669,13 @@
       <anchorfile>group___mpr_log.html</anchorfile>
       <anchor>ga72e962cc814afc5fc437010979f2ecb9</anchor>
       <arglist>(cchar *fmt,...)</arglist>
+    </member>
+    <member kind="function">
+      <type>char *</type>
+      <name>mprNormalizePath</name>
+      <anchorfile>group___mpr_path.html</anchorfile>
+      <anchor>gad90f17e239122a86c109dd4051665152</anchor>
+      <arglist>(cchar *path)</arglist>
     </member>
     <member kind="function">
       <type>MprFile *</type>
@@ -7026,13 +7006,6 @@
     </member>
     <member kind="function">
       <type>char *</type>
-      <name>mprGetNormalizedPath</name>
-      <anchorfile>group___mpr_path.html</anchorfile>
-      <anchor>ga83b70b9540f86897124ad7850356dfbb</anchor>
-      <arglist>(cchar *path)</arglist>
-    </member>
-    <member kind="function">
-      <type>char *</type>
       <name>mprGetPathBase</name>
       <anchorfile>group___mpr_path.html</anchorfile>
       <anchor>gabd75bccc31adfe405ad12b566badcc68</anchor>
@@ -7170,6 +7143,13 @@
       <anchorfile>group___mpr_path.html</anchorfile>
       <anchor>gab9be6174f5d4126e39a9380c0386e6a4</anchor>
       <arglist>(char *path, int separator)</arglist>
+    </member>
+    <member kind="function">
+      <type>char *</type>
+      <name>mprNormalizePath</name>
+      <anchorfile>group___mpr_path.html</anchorfile>
+      <anchor>gad90f17e239122a86c109dd4051665152</anchor>
+      <arglist>(cchar *path)</arglist>
     </member>
     <member kind="function">
       <type>bool</type>
@@ -7448,6 +7428,7 @@
     <name>MprJson</name>
     <title>MprJson</title>
     <filename>group___mpr_json.html</filename>
+    <class kind="struct">MprJsonCallback</class>
     <member kind="function">
       <type>MprObj *</type>
       <name>mprDeserialize</name>
@@ -7459,8 +7440,8 @@
       <type>MprObj *</type>
       <name>mprDeserializeCustom</name>
       <anchorfile>group___mpr_json.html</anchorfile>
-      <anchor>ga4859a94d4d583668858ab5a7f060f073</anchor>
-      <arglist>(cchar *str, MprMakeObj makeObj, MprCheckState check, MprSetValue setValue, void *data)</arglist>
+      <anchor>gad922d1e5cdc4d4f1c33e5e14b069b98e</anchor>
+      <arglist>(cchar *str, MprJsonCallback callback, void *data)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -9072,6 +9053,38 @@
       <anchorfile>struct_mpr_i_o_vec.html</anchorfile>
       <anchor>ae6f76b494077723e354564ff8e598111</anchor>
       <arglist></arglist>
+    </member>
+  </compound>
+  <compound kind="struct">
+    <name>MprJsonCallback</name>
+    <filename>struct_mpr_json_callback.html</filename>
+    <member kind="variable">
+      <type>int(*</type>
+      <name>checkState</name>
+      <anchorfile>struct_mpr_json_callback.html</anchorfile>
+      <anchor>ab4f5df6e1200e906a45c385ebf09c7aa</anchor>
+      <arglist>)(struct MprJson *jp, cchar *name)</arglist>
+    </member>
+    <member kind="variable">
+      <type>MprObj *(*</type>
+      <name>makeObj</name>
+      <anchorfile>struct_mpr_json_callback.html</anchorfile>
+      <anchor>a7a49a40530c19cb970c2e31f49c5d8ae</anchor>
+      <arglist>)(struct MprJson *jp, bool list)</arglist>
+    </member>
+    <member kind="variable">
+      <type>void(*</type>
+      <name>parseError</name>
+      <anchorfile>struct_mpr_json_callback.html</anchorfile>
+      <anchor>a6a540ca22ef0b4b8f962deac565bed7c</anchor>
+      <arglist>)(struct MprJson *jp, cchar *msg)</arglist>
+    </member>
+    <member kind="variable">
+      <type>int(*</type>
+      <name>setValue</name>
+      <anchorfile>struct_mpr_json_callback.html</anchorfile>
+      <anchor>aa217182243ef3aaf72ff262c29235e1e</anchor>
+      <arglist>)(struct MprJson *jp, MprObj *obj, int index, cchar *name, cchar *value, int valueType)</arglist>
     </member>
   </compound>
   <compound kind="struct">

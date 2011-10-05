@@ -1,5 +1,5 @@
 /*
-    mdb.h -- Memory Database (MED).
+    mdb.h -- Memory Database (MDB).
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */

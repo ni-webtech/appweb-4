@@ -3365,7 +3365,7 @@ void *httpGetEndpointContext(HttpEndpoint *endpoint)
 }
 
 
-int httpGetEndpointAsync(HttpEndpoint *endpoint) 
+int httpIsEndpointAsync(HttpEndpoint *endpoint) 
 {
     return endpoint->async;
 }
@@ -7119,8 +7119,6 @@ HttpRoute *httpCreateRoute(HttpHost *host)
     route->expires = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_STATIC_VALUES);
     route->expiresByType = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_STATIC_VALUES);
     route->extensions = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
-
-    //  MOB - reconsider this GZIP
     route->flags = HTTP_ROUTE_GZIP;
     route->handlers = mprCreateList(-1, 0);
     route->host = host;
@@ -9125,8 +9123,7 @@ static int writeTarget(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 
 
 
-//  MOB - better name? httpDefineRoute?
-HttpRoute *httpAddConfiguredRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, 
+HttpRoute *httpDefineRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, 
         cchar *source)
 {
     HttpRoute   *route;
@@ -9190,7 +9187,7 @@ static void addRestful(HttpRoute *parent, cchar *action, cchar *methods, cchar *
         target = sfmt("%s-%s", resource, target);
         source = sfmt("%s.c", resource);
     }
-    httpAddConfiguredRoute(parent, name, methods, pattern, target, source);
+    httpDefineRoute(parent, name, methods, pattern, target, source);
 }
 
 
@@ -9236,7 +9233,7 @@ void httpAddStaticRoute(HttpRoute *parent)
     name = qualifyName(parent, NULL, "home");
     path = stemplate("${STATIC_DIR}/index.esp", parent->pathTokens);
     pattern = sfmt("^%s%s", prefix, "(/)*$");
-    httpAddConfiguredRoute(parent, name, "GET,POST,PUT", pattern, path, source);
+    httpDefineRoute(parent, name, "GET,POST,PUT", pattern, path, source);
 }
 
 
@@ -9250,7 +9247,7 @@ void httpAddHomeRoute(HttpRoute *parent)
     name = qualifyName(parent, NULL, "static");
     path = stemplate("${STATIC_DIR}/$1", parent->pathTokens);
     pattern = sfmt("^%s%s", prefix, "/static/(.*)");
-    httpAddConfiguredRoute(parent, name, "GET", pattern, path, source);
+    httpDefineRoute(parent, name, "GET", pattern, path, source);
 }
 
 
@@ -9263,7 +9260,7 @@ void httpAddRouteSet(HttpRoute *parent, cchar *set)
     } else if (scasematch(set, "mvc")) {
         httpAddHomeRoute(parent);
         httpAddStaticRoute(parent);
-        httpAddConfiguredRoute(parent, "default", NULL, "^/{controller}(~/{action}~)", "${controller}-${action}", 
+        httpDefineRoute(parent, "default", NULL, "^/{controller}(~/{action}~)", "${controller}-${action}", 
             "${controller}.c");
 
     } else if (scasematch(set, "restful")) {
@@ -9376,7 +9373,7 @@ static void definePathVars(HttpRoute *route)
     mprAddKey(route->pathTokens, "PRODUCT", sclone(BLD_PRODUCT));
     mprAddKey(route->pathTokens, "OS", sclone(BLD_OS));
     mprAddKey(route->pathTokens, "VERSION", sclone(BLD_VERSION));
-    mprAddKey(route->pathTokens, "LIBDIR", mprGetNormalizedPath(sfmt("%s/../%s", mprGetAppDir(), BLD_LIB_NAME))); 
+    mprAddKey(route->pathTokens, "LIBDIR", mprNormalizePath(sfmt("%s/../%s", mprGetAppDir(), BLD_LIB_NAME))); 
     if (route->host) {
         defineHostVars(route);
     }
@@ -10168,7 +10165,6 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
             httpError(conn, HTTP_CLOSE | HTTP_CODE_BAD_REQUEST, "Bad URL format");
             return 0;
         }
-        //  MOB - cleanup
         if (conn->secure) {
             rx->parsedUri->scheme = sclone("https");
         }
@@ -10954,6 +10950,7 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
         }
         if (rx->form) {
             //  MOB - need limit on form data size
+            //  MOB - why EOF here ?
             httpPutForService(q, packet, 0);
         } else {
             httpPutPacketToNext(q, packet);
@@ -13526,7 +13523,7 @@ static void openUpload(HttpQueue *q)
 
     if (rx->uploadDir == 0) {
 #if BLD_WIN_LIKE
-        rx->uploadDir = mprGetNormalizedPath(getenv("TEMP"));
+        rx->uploadDir = mprNormalizePath(getenv("TEMP"));
 #else
         rx->uploadDir = sclone("/tmp");
 #endif
@@ -14831,7 +14828,7 @@ void httpCreateCGIParams(HttpConn *conn)
             Only set PATH_TRANSLATED if extraPath is set (CGI spec) 
          */
         mprAssert(rx->extraPath[0] == '/');
-        mprAddKey(vars, "PATH_TRANSLATED", mprGetNormalizedPath(sfmt("%s%s", rx->route->dir, rx->extraPath)));
+        mprAddKey(vars, "PATH_TRANSLATED", mprNormalizePath(sfmt("%s%s", rx->route->dir, rx->extraPath)));
     }
     if (rx->files) {
         for (index = 0, kp = 0; (kp = mprGetNextKey(conn->rx->files, kp)) != 0; index++) {
@@ -14854,8 +14851,7 @@ void httpCreateCGIParams(HttpConn *conn)
     Make variables for each keyword in a query string. The buffer must be url encoded (ie. key=value&key2=value2..., 
     spaces converted to '+' and all else should be %HEX encoded).
  */
-//  MOB - rename and remove http
-static void httpAddParamsFromBuf(HttpConn *conn, cchar *buf, ssize len)
+static void addParamsFromBuf(HttpConn *conn, cchar *buf, ssize len)
 {
     MprHash     *vars;
     cchar       *oldValue;
@@ -14896,8 +14892,7 @@ static void httpAddParamsFromBuf(HttpConn *conn, cchar *buf, ssize len)
 }
 
 
-//  MOB - rename and remove http
-static void httpAddParamsFromQueue(HttpQueue *q)
+static void addParamsFromQueue(HttpQueue *q)
 {
     HttpConn    *conn;
     HttpRx      *rx;
@@ -14913,26 +14908,24 @@ static void httpAddParamsFromQueue(HttpQueue *q)
         content = q->first->content;
         mprAddNullToBuf(content);
         mprLog(6, "Form body data: length %d, \"%s\"", mprGetBufLength(content), mprGetBufStart(content));
-        httpAddParamsFromBuf(conn, mprGetBufStart(content), mprGetBufLength(content));
+        addParamsFromBuf(conn, mprGetBufStart(content), mprGetBufLength(content));
     }
 }
 
 
-//  MOB - rename and remove http
-static void httpAddQueryParams(HttpConn *conn) 
+static void addQueryParams(HttpConn *conn) 
 {
     HttpRx      *rx;
 
     rx = conn->rx;
     if (rx->parsedUri->query && !(rx->flags & HTTP_ADDED_QUERY_PARAMS)) {
-        httpAddParamsFromBuf(conn, rx->parsedUri->query, slen(rx->parsedUri->query));
+        addParamsFromBuf(conn, rx->parsedUri->query, slen(rx->parsedUri->query));
         rx->flags |= HTTP_ADDED_QUERY_PARAMS;
     }
 }
 
 
-//  MOB - rename and remove http
-static void httpAddBodyParams(HttpConn *conn)
+static void addBodyParams(HttpConn *conn)
 {
     HttpRx      *rx;
 
@@ -14940,7 +14933,7 @@ static void httpAddBodyParams(HttpConn *conn)
     if (rx->form) {
         if (!(rx->flags & HTTP_ADDED_FORM_PARAMS)) {
             conn->readq = conn->tx->queue[HTTP_QUEUE_RX]->prevQ;
-            httpAddParamsFromQueue(conn->readq);
+            addParamsFromQueue(conn->readq);
             rx->flags |= HTTP_ADDED_FORM_PARAMS;
         }
     }
@@ -14949,8 +14942,8 @@ static void httpAddBodyParams(HttpConn *conn)
 
 void httpAddParams(HttpConn *conn)
 {
-    httpAddQueryParams(conn);
-    httpAddBodyParams(conn);
+    addQueryParams(conn);
+    addBodyParams(conn);
 }
 
 
