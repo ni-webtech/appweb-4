@@ -575,7 +575,8 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = ./staging/src/deps/appweb/esp.h
+INPUT                  = ./staging/src/deps/appweb/esp.h \
+                         ./staging/src/deps/appweb/edi.h
 
 # This tag can be used to specify the character encoding of the source files 
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is 
@@ -1257,7 +1258,7 @@ INCLUDE_FILE_PATTERNS  =
 # undefined via #undef or recursively expanded use the := operator 
 # instead of the = operator.
 
-PREDEFINED             = WIN=1 \
+PREDEFINED             =  WIN=1 \
 						 LINUX=1 \
                          BLD_UNIX_LIKE=1 \
                          BLD_WIN_LIKE=1 \
@@ -1271,6 +1272,7 @@ PREDEFINED             = WIN=1 \
                          BLD_FEATURE_AUTH_FILE=1 \
                          BLD_FEATURE_AUTH_PAM=1 \
                          BLD_FEATURE_ESP=1 \
+                         BLD_FEATURE_EDI=1 \
                          DOXYGEN=1
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 

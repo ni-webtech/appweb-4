@@ -65,7 +65,7 @@ static int mdbAddValidation(Edi *edi, cchar *tableName, cchar *fieldName, EdiVal
 static int mdbChangeColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
 static void mdbClose(Edi *edi);
 static EdiRec *mdbCreateRec(Edi *edi, cchar *tableName);
-static int mdbDelete(Edi *edi, cchar *path);
+static int mdbDelete(cchar *path);
 static int mdbDeleteRow(Edi *edi, cchar *tableName, cchar *key);
 static MprList *mdbGetColumns(Edi *edi, cchar *tableName);
 static int mdbGetColumnSchema(Edi *edi, cchar *tableName, cchar *columnName, int *type, int *flags, int *cid);
@@ -175,7 +175,7 @@ static EdiRec *mdbCreateRec(Edi *edi, cchar *tableName)
 }
 
 
-static int mdbDelete(Edi *edi, cchar *path)
+static int mdbDelete(cchar *path)
 {
     return mprDeletePath(path);
 }
@@ -644,7 +644,7 @@ static EdiGrid *mdbReadWhere(Edi *edi, cchar *tableName, cchar *columnName, ccha
     MdbTable    *table;
     MdbCol      *col;
     MdbRow      *row;
-    int         nrows, next, op;
+    int         nrows, next, op, r;
 
     mprAssert(edi);
     mprAssert(tableName && *tableName);
@@ -670,7 +670,8 @@ static EdiGrid *mdbReadWhere(Edi *edi, cchar *tableName, cchar *columnName, ccha
             return 0;
         }
         if (col->flags & EDI_INDEX && (op & OP_EQ)) {
-            if (lookupRow(table, value)) {
+            if ((r = lookupRow(table, value)) != 0) {
+                row = getRow(table, r);
                 grid->records[0] = createRecFromRow(edi, row);
             }
         } else {

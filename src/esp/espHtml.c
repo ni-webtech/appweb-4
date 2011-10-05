@@ -673,7 +673,7 @@ static void textInner(HttpConn *conn, cchar *field, MprHash *options)
 
 void espText(HttpConn *conn, cchar *field, cchar *optionString)
 {
-    return textInner(conn, field, httpGetOptions(optionString));
+    textInner(conn, field, httpGetOptions(optionString));
 }
 
 
@@ -1032,6 +1032,7 @@ EdiRec *createRec(cchar *tableName, MprHash *params)
 }
 
 
+//  MOB - should this work on the current record?
 MprList *getColumns(EdiRec *rec)
 {
     if (rec == 0) {
@@ -1077,18 +1078,30 @@ bool hasGrid()
         { id: '2', country: 'China' }, \
     ]");
  */
-EdiGrid *makeGrid(cchar *json)
+EdiGrid *makeGrid(cchar *contents)
 {
-    return ediMakeGrid(json);
+    return ediMakeGrid(contents);
+}
+
+
+MprHash *hash(cchar *fmt, ...)
+{
+    va_list     args;
+    cchar       *str;
+
+    va_start(args, fmt);
+    str = sfmtv(fmt, args);
+    va_end(args);
+    return mprDeserialize(str);
 }
 
 
 /*
     rec = makeRec("{ id: 1, title: 'Message One', body: 'Line one' }");
  */
-EdiRec *makeRec(cchar *json)
+EdiRec *makeRec(cchar *contents)
 {
-    return ediMakeRec(json);
+    return ediMakeRec(contents);
 }
 
 

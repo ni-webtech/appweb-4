@@ -471,7 +471,6 @@ extern int maStartLogging(HttpHost *host, cchar *logSpec);
  */
 extern void maStopAccessLogging(HttpHost *host);
 
-
 /**
     Stop error logging
     @ingroup Appweb

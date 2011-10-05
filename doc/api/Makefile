@@ -6,7 +6,7 @@
 
 include		.makedep
 
-gen: prep mpr.html ejs.html appweb.html
+gen: prep mpr.html ejs.html appweb.html esp.html edi.html
 
 prep:
 	rm -f prep mpr.html ejs.html appweb.html
@@ -29,6 +29,20 @@ appweb.html: Makefile appwebBare.html *.tem
 	$(call log) "[Generate]" "appweb.html"
 	cat appwebHeader.tem >appweb.html
 	cat appwebBare.html apiFooter.tem >>appweb.html
+
+esp.html: Makefile espBare.html *.tem
+	make -C esp gen
+	rm -f esp.html
+	$(call log) "[Generate]" "esp.html"
+	cat espHeader.tem >esp.html
+	cat espBare.html apiFooter.tem >>esp.html
+
+edi.html: Makefile ediBare.html *.tem
+	make -C edi gen
+	rm -f edi.html
+	$(call log) "[Generate]" "edi.html"
+	cat ediHeader.tem >edi.html
+	cat ediBare.html apiFooter.tem >>edi.html
 
 tidy:
 	$(call log) "[Tidy]" "*.html"

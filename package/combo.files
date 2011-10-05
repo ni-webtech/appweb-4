@@ -13,6 +13,7 @@ SRC="${DIR}/src/deps/appweb"
 DOC="${DIR}/doc"
 
 APPWEB_HEADERS="${BLD_INC_DIR}/appweb.h ${BLD_INC_DIR}/appwebMonitor.h"
+EDI_HEADERS="${BLD_INC_DIR}/edi.h"
 ESP_HEADERS="${BLD_INC_DIR}/esp.h"
 LIB_SOURCES=`find ${S} -name '*.c' | egrep -v 'deps|server/|test|utils|sav|angel|makerom'`
 DEP_SOURCES=`find ${S}/deps -name '*.c' | egrep -v 'angel|makerom|utils|test|http/http.c'`
@@ -52,6 +53,8 @@ cp ${S}/server/*.conf ${SRC}
 #
 echo '#include "buildConfig.h"' >${SRC}/esp.h
 combo ${ESP_HEADERS} | egrep -v '#include.*UNUSED' >>${SRC}/esp.h
+echo '#include "buildConfig.h"' >${SRC}/edi.h
+combo ${EDI_HEADERS} | egrep -v '#include.*UNUSED' >>${SRC}/edi.h
 
 #
 #	esp.c

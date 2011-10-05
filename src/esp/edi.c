@@ -124,7 +124,7 @@ int ediChangeCol(Edi *edi, cchar *tableName, cchar *columnName, int type, int fl
 
 void ediClose(Edi *edi)
 {
-    return edi->provider->close(edi);
+    edi->provider->close(edi);
 }
 
 
@@ -136,7 +136,7 @@ EdiRec *ediCreateRec(Edi *edi, cchar *tableName)
 
 int ediDelete(Edi *edi, cchar *path)
 {
-    return edi->provider->delete(edi, path);
+    return edi->provider->delete(path);
 }
 
 
@@ -357,9 +357,13 @@ int ediSave(Edi *edi)
 }
 
 
-bool ediValidateRec(Edi *edi, EdiRec *rec)
+bool ediValidateRec(EdiRec *rec)
 {
-    return edi->provider->validateRec(edi, rec);
+    mprAssert(rec->edi);
+    if (rec->edi == 0) {
+        return 0;
+    }
+    return rec->edi->provider->validateRec(rec->edi, rec);
 }
 
 
@@ -599,6 +603,18 @@ EdiRec *ediUpdateFields(EdiRec *rec, MprHash *params)
 }
 
 
+MprHash *ediMakeHash(cchar *fmt, ...)
+{
+    MprHash     *obj;
+    va_list     args;
+
+    va_start(args, fmt);
+    obj = mprDeserialize(sfmtv(fmt, args));
+    va_end(args);
+    return obj;
+}
+
+
 /********************************* Validations *****************************/
 
 static cchar *checkBoolean(EdiValidation *vp, EdiRec *rec, cchar *fieldName, cchar *value)
@@ -609,6 +625,19 @@ static cchar *checkBoolean(EdiValidation *vp, EdiRec *rec, cchar *fieldName, cch
         }
     }
     return "is not a number";
+}
+
+
+static cchar *checkDate(EdiValidation *vp, EdiRec *rec, cchar *fieldName, cchar *value)
+{
+    MprTime     time;
+
+    if (value && *value) {
+        if (mprParseTime(&time, value, MPR_LOCAL_TIMEZONE, NULL) < 0) {
+            return 0;
+        }
+    }
+    return "is not a date or time";
 }
 
 
@@ -689,6 +718,7 @@ static void addValidations()
     ediDefineValidation("integer", checkInteger);
     ediDefineValidation("number", checkNumber);
     ediDefineValidation("present", checkPresent);
+    ediDefineValidation("date", checkDate);
     ediDefineValidation("unique", checkUnique);
 }
 

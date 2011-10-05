@@ -23,11 +23,11 @@ gen:
 next:
 	$(call log) "[Transform]" "gendoc"
 	ejs $(BLD_TOOLS_DIR)/gendoc.es --title "ESP - Native API" --tags ../mpr.tags --tags ../http.tags --tags ../appweb.tags \
-		--out ../$(NAME).html xml/$(NAME)_8h.xml xml/group* xml/struct_*.xml
+		--out ../$(NAME).html xml/$(NAME)_8h.xml xml/edi_8h.xml xml/group* xml/struct_*.xml
 
 rest:
 	ejs $(BLD_TOOLS_DIR)/gendoc.es --bare --title "ESP - Native API" --tags ../mpr.tags --tags ../http.tags \
-		--tags ../appweb.tags --out ../$(NAME)Bare.html xml/$(NAME)_8h.xml xml/group* xml/struct_*.xml
+		--tags ../appweb.tags --out ../$(NAME)Bare.html xml/$(NAME)_8h.xml xml/edi_8h.xml xml/group* xml/struct_*.xml
 	rm -fr ./$(STAGING) xml html
 
 cleanExtra:

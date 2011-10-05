@@ -22,13 +22,66 @@ extern "C" {
 #if !DOXYGEN
 #endif
 
-/********************************** Tunables **********************************/
+/********************************** Defines ***********************************/
 
 struct Edi;
 struct EdiGrid;
 struct EdiProvider;
 struct EdiRec;
 struct EdiValidation;
+
+/**
+    Edi service control structure
+    @defgroup EdiService EdiService
+ */
+typedef struct EdiService {
+    MprHash    *providers;
+    MprHash    *validations;
+} EdiService;
+
+/**
+    Create the EDI service
+    @return EdiService object
+    @ingroup EdiService
+    @internal
+ */
+extern EdiService *ediCreateService();
+
+/**
+    Add a databse provider. 
+    @description This should only be called by database providers. 
+    @ingroup EdiService
+ */
+extern void ediAddProvider(struct EdiProvider *provider);
+
+/*
+    Field validation callback procedure
+    @param vp Validation structure reference
+    @param rec Record to validate
+    @param fieldName Field name to validate
+    @param value Field value to validate 
+    @ingroup EdiService
+ */
+typedef cchar *(*EdiValidationProc)(struct EdiValidation *vp, struct EdiRec *rec, cchar *fieldName, cchar *value);
+
+/**
+    Validation structure
+    @ingroup EdiService
+ */
+typedef struct EdiValidation {
+    cchar               *name;          /**< Validation name */
+    EdiValidationProc   vfn;            /**< Validation callback procedure */
+    cvoid               *mdata;         /**< Non-GC (malloc) data */
+    cvoid               *data;          /**< Allocated data that must be marked for GC */
+} EdiValidation;
+
+/**
+    Define a field validation procedure
+    @param name Validation name
+    @param vfn Validation callback to invoke when validating field data.
+    @ingroup EdiService
+ */
+extern void ediDefineValidation(cchar *name, EdiValidationProc vfn);
 
 /*
    Field data type hints
@@ -50,20 +103,24 @@ struct EdiValidation;
 #define EDI_INDEX           0x4         /**< Field flag -- Column is indexed */
  
 /**
-    Record field structure
-    @ingroup Edi
+    EDI Record field structure
+    @description The EdiField stores record field data and minimal schem information such as the data type and
+        source column name.
+    @defgroup EdiField EdiField
   */
 typedef struct EdiField {
-    cchar           *value;             /**< Field value */
-    cchar           *name;              /**< Field name */
-    int             type:  8;           /**< Field type */
+    cchar           *value;             /**< Field data value */
+    cchar           *name;              /**< Field name. Sourced from the database column name  */
+    int             type:  8;           /**< Field data type. Set to one of EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE
+                                             EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT  */
     int             valid: 8;           /**< Field validity. Set to true if valid */
-    int             flags: 8;           /**< Field flags */
+    int             flags: 8;           /**< Field flags. Flag mask set to EDI_AUTO_INC, EDI_KEY and/or EDI_INDEX */
 } EdiField;
 
 /**
     Database record structure
-    @ingroup Edi
+    @description Records may capture database row data, or may be free-standing without a backing database.
+    @defgroup EdiRec EdiRec
  */
 typedef struct EdiRec {
     struct Edi      *edi;               /**< Database handle */
@@ -76,7 +133,9 @@ typedef struct EdiRec {
 
 /**
     Grid structure
-    @ingroup Edi
+    @description A grid is a tabular (grid) of rows and records.
+        Grids may capture database table data, or may be free-standing without a backing database.
+    @defgroup EdiGrid EdiGrid
  */
 typedef struct EdiGrid {
     struct Edi      *edi;               /**< Database handle */
@@ -84,27 +143,6 @@ typedef struct EdiGrid {
     int             nrecords;           /**< Number of records in grid */
     EdiRec          *records[MPR_FLEX]; /**< Grid records */
 } EdiGrid;
-
-/*
-    Field validation callback procedure
-    @param vp Validation structure reference
-    @param rec Record to validate
-    @param fieldName Field name to validate
-    @param value Field value to validate 
-    @ingroup Edi
- */
-typedef cchar *(*EdiValidationProc)(struct EdiValidation *vp, EdiRec *rec, cchar *fieldName, cchar *value);
-
-/**
-    Validation structure
-    @ingroup Edi
- */
-typedef struct EdiValidation {
-    cchar               *name;          /**< Validation name */
-    EdiValidationProc   vfn;            /**< Validation callback procedure */
-    cvoid               *mdata;         /**< Non-GC (malloc) data */
-    cvoid               *data;          /**< Allocated data that must be marked for GC */
-} EdiValidation;
 
 /*
     Database flags
@@ -119,14 +157,16 @@ typedef struct EdiValidation {
 /*
     Database flags
  */
-#define EDI_NOSAVE      0x1             /* Don't save the database on modifications */
+#define EDI_NOSAVE      0x1             /**< ediOpen flag -- Don't save the database on modifications */
 
 /**
     Database structure
+    @description The Embedded Database Interface (EDI) defines an abstract interface atop various relational 
+    database providers. Providers are supplied for SQLite and for the ESP Memory Database (MDB).
     @defgroup Edi Edi
   */
 typedef struct Edi {
-    struct EdiProvider *provider;       /** Database provider */
+    struct EdiProvider *provider;       /**< Database provider */
     int             flags;              /**< Database flags */
 } Edi;
 
@@ -143,7 +183,7 @@ typedef struct EdiProvider {
     int       (*changeColumn)(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
     void      (*close)(Edi *edi);
     EdiRec    *(*createRec)(Edi *edi, cchar *tableName);
-    int       (*delete)(Edi *edi, cchar *path);
+    int       (*delete)(cchar *path);
     int       (*deleteRow)(Edi *edi, cchar *tableName, cchar *key);
     MprList   *(*getColumns)(Edi *edi, cchar *tableName);
     int       (*getColumnSchema)(Edi *edi, cchar *tableName, cchar *columnName, int *type, int *flags, int *cid);
@@ -167,88 +207,571 @@ typedef struct EdiProvider {
     int       (*writeRec)(Edi *edi, EdiRec *rec);
 } EdiProvider;
 
+/*************************** EDI Interface Wrappers **************************/
 /**
-    Edi service control structure
-    @internal
- */
-typedef struct EdiService {
-    MprHash    *providers;
-    MprHash    *validations;
-} EdiService;
-
-//  MOB DOC
-extern EdiService *ediCreateService();
-extern void ediAddProvider(EdiProvider *provider);
-
-
-/*
-    EDI user API
+    Add a column to a table
+    @param edi Database handle
+    @param tableName Database table name
+    @param columnName Database column name
+    @param type Column data type. Set to one of EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE
+        EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT 
+    @param flags Control column attributes. Set to a set of: EDI_AUTO_INC for auto incrementing columns, 
+        EDI_KEY if the column is the key column and/or EDI_INDEX to create an index on the column.
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
  */
 extern int ediAddColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
+
+/**
+    Add an index to a table
+    @param edi Database handle
+    @param tableName Database table name
+    @param columnName Database column name
+    @param indexName Ignored. Set to null.
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
+ */
 extern int ediAddIndex(Edi *edi, cchar *tableName, cchar *columnName, cchar *indexName);
+
+/**
+    Add a table to a datbase
+    @param edi Database handle
+    @param tableName Database table name
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
+ */
 extern int ediAddTable(Edi *edi, cchar *tableName);
+
+/**
+    Add a validation
+    @description Validations are run wihen caling ediWriteRec. A validation is used to validate field data
+        using builtin validators.
+    @param edi Database handle
+    @param name Validation name. Select from: 
+        @arg boolean -- to validate field data as "true" or "false"
+        @arg date -- to validate field data as a date or time.
+        @arg format -- to validate field data against a regular expression supplied in the "data" argument
+        @arg integer -- to validate field data as an integral value
+        @arg number -- to validate field data as a number. May be an integer or floating point number.
+        @arg present -- to validate field data as not null.
+        @arg unique -- to validate field data as being unique in the database table.
+    @param tableName Database table name
+    @param columnName Database column name
+    @param data Argument data for the validator. For example: the "format" validator requires a regular expression.
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
+ */
 extern int ediAddValidation(Edi *edi, cchar *name, cchar *tableName, cchar *columnName, cvoid *data);
+
+/**
+    Change a column schema definition
+    @param edi Database handle
+    @param tableName Database table name
+    @param columnName Database column name
+    @param type Column data type. Set to one of EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE
+        EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT 
+    @param flags Control column attributes. Set to a set of: EDI_AUTO_INC for auto incrementing columns, 
+        EDI_KEY if the column is the key column and/or EDI_INDEX to create an index on the column.
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
+ */
 extern int ediChangeColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
+
+/**
+    Close a database
+    @param edi Database handle
+    @ingroup Edi
+ */
 extern void ediClose(Edi *edi);
+
+/**
+    Create a record
+    @description This will create a record using the given database tableName to supply the record schema. Use
+        $ediCreateBareRec to create a free-standing record without requiring a database.
+        The record is allocated and room is reserved to store record values. No record field values are stored.
+    @param edi Database handle
+    @param tableName Database table name
+    @return Record instance.
+    @ingroup Edi
+ */
 extern EdiRec *ediCreateRec(Edi *edi, cchar *tableName);
-extern void ediDefineValidation(cchar *name, EdiValidationProc vfn);
+
+
+/**
+    Delete the database at the given path
+    @param edi Database handle. This is required to identify the database provider. The database should be closed before
+        deleting.
+    @param path Database path name.
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
+ */
 extern int ediDelete(Edi *edi, cchar *path);
+
+/**
+    Delete a row in a database table
+    @param edi Database handle
+    @param tableName Database table name
+    @param key Row key column value to delete.
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
+ */
 extern int ediDeleteRow(Edi *edi, cchar *tableName, cchar *key);
+
+/**
+    Get a list of column names.
+    @param edi Database handle
+    @param tableName Database table name
+    @return An MprList of column names in the given table.
+    @ingroup Edi
+ */
 extern MprList *ediGetColumns(Edi *edi, cchar *tableName);
-extern int ediGetColumnSchema(Edi *edi, cchar *tableName, cchar *columName, int *type, int *flags, int *cid);
+
+/**
+    Get the column schema
+    @param edi Database handle
+    @param tableName Database table name
+    @param columnName Database column name
+    @param type Output parameter to receive the column data type. Will be set to one of:
+        EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE, EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT.
+        Set to null if this data is not required.
+    @param flags Output parameter to receive the column control flags. Will be set one or more of:
+            EDI_AUTO_INC, EDI_KEY and/or EDI_INDEX 
+        Set to null if this data is not required.
+    @param cid Output parameter to receive the ordinal column index in the database table.
+        Set to null if this data is not required.
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
+ */
+extern int ediGetColumnSchema(Edi *edi, cchar *tableName, cchar *columnName, int *type, int *flags, int *cid);
+
+/**
+    Get a list of database tables
+    @param edi Database handle
+    @return An MprList of table names in the database.
+    @ingroup Edi
+ */
 extern MprList *ediGetTables(Edi *edi);
+
+/**
+    Load the database file
+    @param edi Database handle
+    @param path Database path name
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
+    @internal
+ */
 extern int ediLoad(Edi *edi, cchar *path);
+
+//  MOB - should this be LookupColumn?
+/**
+    Lookup a field by name
+    @param edi Database handle
+    @param tableName Database table name
+    @param fieldName Database column name
+    @return The ordinal field (column) index in the table.
+    @ingroup Edi
+ */
 extern int ediLookupField(Edi *edi, cchar *tableName, cchar *fieldName);
+
+/**
+    Open a database
+    @description This opens a database using the specified datbase provider.
+    @param provider Database provider. Set to "mdb" for the Memory Database or "sqlite" for the SQLite provider.
+    @param source Database path name. If using the "mdb" provider with the EDI_LITERAL flag, the source argument can
+        be set to a literal JSON database content string.
+    @param flags Set to:
+        @arg EDI_CREATE  -- Create database if not present.
+        @arg EDI_AUTO_SAVE -- Auto-save database if modified in memory. This option is only supported by the "mdb" provider.
+        @arg EDI_NO_SAVE  -- Prevent saving to disk. This option is only supported by the "mdb" provider.
+        @arg EDI_LITERAL -- Literal schema in ediOpen source parameter. This option is only supported by the "mdb" provider.
+    @return If successful, returns an EDI database instance object. Otherwise returns zero.
+    @ingroup Edi
+ */
 extern Edi *ediOpen(cchar *provider, cchar *source, int flags);
+
+//  MOB - how do you get query errors back?  Should have an cchar *err argument.
+/**
+    Run a query
+    @description This runs a provider dependant query. For the SQLite provider, this runs an SQL statement.
+    The "mdb" provider does not implement this API. To do queries using the "mdb" provider, use:
+        $ediReadRec, $ediReadOneWhere, $ediReadWhere, $ediReadField and $ediReadGrid.
+    @param edi Database handle
+    @param cmd Query command to execute.
+    @return If succesful, returns tabular data in the form of an EgiGrid structure. Returns NULL on errors.
+    @ingroup Edi
+ */
 extern EdiGrid *ediQuery(Edi *edi, cchar *cmd);
+
+/**
+    Read a field from the database and format the result.
+    @description This reads a field from the database and formats the result using an optional format string.
+        If the field has a null or empty value, the supplied defaultValue will be returned.
+    @param edi Database handle
+    @param fmt Printf style format string to use in formatting the result.
+    @param tableName Database table name
+    @param key Row key column value to read.
+    @param fieldName Column name to read
+    @param defaultValue Default value to return if the field is null or empty.
+    @return Field value or default value if field is null or empty. Returns null if no matching record is found.
+    @ingroup Edi
+ */
 extern cchar *ediReadField(Edi *edi, cchar *fmt, cchar *tableName, cchar *key, cchar *fieldName, cchar *defaultValue);
+
+//  MOB - rename ReadRecWhere
+/**
+    Read one record
+    @description This runs a simple query on the database and selects the first matching record. The query selects
+        a row that has a "field" that matches the given "value".
+    @param edi Database handle
+    @param tableName Database table name
+    @param fieldName Database field name to evaluate
+    @param operation Comparision operation. Set to "==", "!=", "<", ">", "<=" or ">=".
+    @param value Data value to compare with the field values.
+    @return First matching record. Returns NULL if no matching records.
+    @ingroup Edi
+ */
 extern EdiRec *ediReadOneWhere(Edi *edi, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
+
+/**
+    Read a field from the database
+    @description This reads a field from the database.
+    @param edi Database handle
+    @param tableName Database table name
+    @param key Row key column value to read.
+    @param fieldName Column name to read
+    @return Field value or null if the no record is found. May return null or empty if the field is null or empty.
+    @ingroup Edi
+ */
 extern EdiField ediReadRawField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName);
+
+/**
+    Read a record
+    @description Read a record from the given table as identified by the key value.
+    @param edi Database handle
+    @param tableName Database table name
+    @param key Key value of the record to read 
+    @return Record instance of EdiRec.
+    @ingroup Edi
+ */
 extern EdiRec *ediReadRec(Edi *edi, cchar *tableName, cchar *key);
+
+//  MOB - should this be ReadTable?
+/**
+    Read a table
+    @description This reads all the records in a table and returns a grid containing the results.
+    @param edi Database handle
+    @param tableName Database table name
+    @return A grid containing all records. Returns NULL if no matching records.
+    @ingroup Edi
+ */
 extern EdiGrid *ediReadGrid(Edi *edi, cchar *tableName);
+
+//  MOB - rename ReadGridWhere
+/**
+    Read matching records
+    @description This runs a simple query on the database and returns matching records in a grid. The query selects
+        all rows that have a "field" that matches the given "value".
+    @param edi Database handle
+    @param tableName Database table name
+    @param fieldName Database field name to evaluate
+    @param operation Comparision operation. Set to "==", "!=", "<", ">", "<=" or ">=".
+    @param value Data value to compare with the field values.
+    @return A grid containing all matching records. Returns NULL if no matching records.
+    @ingroup Edi
+ */
 extern EdiGrid *ediReadWhere(Edi *edi, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
+
+/**
+    Remove a column from a table
+    @param edi Database handle
+    @param tableName Database table name
+    @param columnName Database column name
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
+ */
 extern int edRemoveColumn(Edi *edi, cchar *tableName, cchar *columnName);
+
+/**
+    Remove an table index
+    @param edi Database handle
+    @param tableName Database table name
+    @param indexName Ignored. Set to null. This call will remove the table index.
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
+ */
 extern int ediRemoveIndex(Edi *edi, cchar *tableName, cchar *indexName);
+
+/**
+    Remove a table from the database
+    @param edi Database handle
+    @param tableName Database table name
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
+ */
 extern int ediRemoveTable(Edi *edi, cchar *tableName);
+
+/**
+    Rename a table
+    @param edi Database handle
+    @param tableName Database table name
+    @param newTableName New database table name
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
+ */
 extern int ediRenameTable(Edi *edi, cchar *tableName, cchar *newTableName);
+
+/**
+    Rename a column 
+    @param edi Database handle
+    @param tableName Database table name
+    @param columnName Database column name
+    @param newColumnName New column name
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
+ */
 extern int ediRenameColumn(Edi *edi, cchar *tableName, cchar *columnName, cchar *newColumnName);
+
+/**
+    Save in-memory database contents to disk
+    @description How this call behaves is provider dependant. If the provider is "mdb" and the database is not opened
+        with AutoSave, then this call will save the in-memory contents. If the "mdb" database is opened with AutoSave,
+        then this call will do nothing. For the "sdb" SQLite provider, this call does nothing.
+    @param edi Database handle
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
+ */
 extern int ediSave(Edi *edi);
+
+/**
+    Get table schema information
+    @param edi Database handle
+    @param tableName Database table name
+    @param numRows Output parameter to receive the number of rows in the table
+        Set to null if this data is not required.
+    @param numCols Output parameter to receive the number of columns in the table
+        Set to null if this data is not required.
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
+ */
 extern int ediGetTableSchema(Edi *edi, cchar *tableName, int *numRows, int *numCols);
+
+/**
+    Update a record field without writing to the database
+    @description This routine updates the record object with the given value. The record will not be written
+        to the database. To write to the database, use $ediWriteRec.
+    @param rec Record to update
+    @param fieldName Record field name to update
+    @param value Value to update
+    @return The record instance if successful, otherwise NULL.
+    @ingroup Edi
+ */
 extern EdiRec *ediUpdateField(EdiRec *rec, cchar *fieldName, cchar *value);
-extern EdiRec *ediUpdateFields(EdiRec *rec, MprHash *params);
-extern int ediValidate(Edi *edi, cchar *name, cchar *tableName, cchar *fieldName, cvoid *data);
-extern bool ediValidateRec(Edi *edi, EdiRec *rec);
+
+/**
+    Update record fields without writing to the database
+    @description This routine updates the record object with the given values. The "data' argument supplies 
+        a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually
+        created via #ediMakeHash to convert a JSON string into an options hash.
+        For example: ediUpdatefields(rec, ediMakeHash("{ name: '%s', address: '%s' }", name, address))
+        The record will not be written
+        to the database. To write to the database, use $ediWriteRec.
+    @param rec Record to update
+    @param data Hash of field names and values to use for the update
+    @return The record instance if successful, otherwise NULL.
+    @ingroup Edi
+ */
+extern EdiRec *ediUpdateFields(EdiRec *rec, MprHash *data);
+
+/**
+    Validate a record
+    @description Run defined field validations and return true if the record validates. Field validations are defined
+        via $ediAddValidation calls. If any validations fail, error messages will be added to the record and can be 
+        retrieved via $ediGetRecErrors.
+    @param rec Record to validate
+    @return True if all field valiations pass.
+    @ingroup Edi
+ */
+extern bool ediValidateRec(EdiRec *rec);
+
+/**
+    Write a value to a database table field
+    @description Update the value of a table field in the selected table row. Note: field validations are not run.
+    @param edi Database handle
+    @param tableName Database table name
+    @param key Key value for the table row to update.
+    @param fieldName Column name to update
+    @param value Value to write to the database field
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
+ */
 extern int ediWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
-extern int ediWriteFields(Edi *edi, cchar *tableName, MprHash *params);
+
+/**
+    Write field values to a database row
+    @description This routine updates a database row with the given values.  The "data' argument supplies 
+        a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually
+        created via #ediMakeHash to convert a JSON string into an options hash.
+        For example: ediWriteFields(rec, params());
+        Note: field validations are not run.
+    @param edi Database handle
+    @param tableName Database table name
+    @param data Hash of field names and values to use for the update
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
+ */
+extern int ediWriteFields(Edi *edi, cchar *tableName, MprHash *data);
+
+/**
+    Write a record to the database
+    @description If the record is a new record and the "id" column is EDI_AUTO_INC, then the "id" will be assigned
+        prior to saving the record.
+    @param edi Database handle
+    @param rec Record to write to the database.
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
+ */
 extern int ediWriteRec(Edi *edi, EdiRec *rec);
 
-/*
-    Convenience Routines
+/**************************** Convenience Routines ****************************/
+/**
+    Format a field value
+    @param fmt Printf style format string
+    @param value Field value
+    @return Formatted value string
+    @ingroup Edi
  */
 extern cchar *ediFormatField(cchar *fmt, EdiField value);
-extern EdiField ediGetRawRecField(EdiRec *rec, cchar *fieldName);
-extern MprList *ediGetRecErrors(EdiRec *rec);
-extern cchar *ediGetRecField(cchar *fmt, EdiRec *rec, cchar *fieldName);
-extern int ediGetRecFieldType(EdiRec *rec, cchar *fieldName);
-extern MprList *ediGetGridColumns(EdiGrid *grid);
-extern bool edValidateRecord(EdiRec *rec);
 
-
-/*
-    NO-DB API
+/**
+    Get a record field
+    @param rec Database record
+    @param fieldName Field in the record to extract
+    @return An EdiField structure containing the record field value and details.
+    @ingroup Edi
  */
-extern EdiGrid *ediMakeGrid(cchar *json);
-extern EdiRec *ediMakeRec(cchar *json);
+extern EdiField ediGetRawRecField(EdiRec *rec, cchar *fieldName);
 
-/*
-    Support routines for providers
+/**
+    Get record validation errors
+    @param rec Database record
+    @return A list of validation errors. If validation passed, this call returns NULL.
+    @ingroup Edi
+ */
+extern MprList *ediGetRecErrors(EdiRec *rec);
+
+/**
+    Get and format a record field value
+    @param fmt Record field value
+    @param rec Record to examine
+    @param fieldName Record field to examine
+    @return String value of the field
+    @ingroup Edi
+ */
+extern cchar *ediGetRecField(cchar *fmt, EdiRec *rec, cchar *fieldName);
+
+/**
+    Get the data type of a record field
+    @param rec Record to examine
+    @param fieldName Field to examine
+    @return The field type. Returns one of: EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE, EDI_TYPE_FLOAT, 
+        EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT. 
+    @ingroup Edi
+ */
+extern int ediGetRecFieldType(EdiRec *rec, cchar *fieldName);
+
+/**
+    Get a list of grid column names.
+    @param grid Database grid
+    @return An MprList of column names in the given grid.
+    @ingroup Edi
+ */
+extern MprList *ediGetGridColumns(EdiGrid *grid);
+
+/**
+    Make a hash container of property values.
+    @description This routine formats the given arguments, parses the result as a JSON string and returns an 
+        equivalent hash of property values. The result after formatting should be of the form:
+        ediMakeHash("{ key: 'value', key2: 'value', key3: 'value' }");
+    @param fmt Printf style format string
+    @param ... arguments
+    @return MprHash instance
+    @ingroup Edi
+ */
+extern MprHash *ediMakeHash(cchar *fmt, ...);
+
+/**
+    Make a grid
+    @description This call makes a free-standing data grid based on the JSON format content string.
+    @param content JSON format content string. The content should be an array of objects where each object is a
+        set of property names and values.
+    @return An EdiGrid instance
+    @example:
+grid = ediMakeGrid("[ \\ \n
+    { id: '1', country: 'Australia' }, \ \n
+    { id: '2', country: 'China' }, \ \n
+    ]");
+    @ingroup Edi
+ */
+extern EdiGrid *ediMakeGrid(cchar *content);
+
+/**
+    Make a record
+    @description This call makes a free-standing data record based on the JSON format content string.
+    @param content JSON format content string. The content should be a set of property names and values.
+    @return An EdiRec instance
+    @example: rec = ediMakeRec("{ id: 1, title: 'Message One', body: 'Line one' }");
+    @ingroup Edi
+ */
+extern EdiRec *ediMakeRec(cchar *content);
+
+/**
+    Create a bare grid
+    @description This creates an empty grid based on the given table's schema.
+    @param edi Database handle
+    @param tableName Database table name
+    @param nrows Number of rows to reserve in the grid
+    @return EdiGrid instance
+    @ingroup Edi
  */
 extern EdiGrid *ediCreateBareGrid(Edi *edi, cchar *tableName, int nrows);
+
+/**
+    Create a bare record
+    @description This creates an empty record based on the given table's schema.
+    @param edi Database handle
+    @param tableName Database table name
+    @param nfields Number of fields to reserve in the record
+    @return EdiGrid instance
+    @ingroup Edi
+ */
 extern EdiRec *ediCreateBareRec(Edi *edi, cchar *tableName, int nfields);
+
+/**
+    Convert an EDI type to a string
+    @param type Column data type. Set to one of EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE
+        EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT 
+    @return Type string. This will be set to one of: "blob", "bool", "date", "float", "int", "string" or "text".
+    @ingroup Edi
+ */
 extern char *ediGetTypeString(int type);
-extern void ediManageEdiRec(EdiRec *rec, int flags);
+
+/**
+    Parse an EDI type string
+    @param type Type string set to one of: "blob", "bool", "date", "float", "int", "string" or "text".
+    @return Type code. Set to one of EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE, EDI_TYPE_FLOAT, EDI_TYPE_INT, 
+        EDI_TYPE_STRING, EDI_TYPE_TEXT.
+    @ingroup Edi
+ */
 extern int ediParseTypeString(cchar *type);
-extern cchar *ediParseValue(cchar *value, int type);
+
+/**
+    Manage an EdiRec instance for garbage collection.
+    @param rec Record instance
+    @param flags GC management flag
+    @ingroup Edi
+    @internal
+ */
+extern void ediManageEdiRec(EdiRec *rec, int flags);
 
 #if BLD_FEATURE_MDB
 extern void mdbInit();

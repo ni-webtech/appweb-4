@@ -410,7 +410,7 @@ static void saveCachedResponse(HttpConn *conn)
     MprBuf      *buf;
     MprTime     modified;
     char        *key, *extraUri;
-    int         lifespan;
+    MprTime     lifespan;
 
     req = conn->data;
     rx = conn->rx;
@@ -1308,7 +1308,6 @@ int maEspHandlerInit(Http *http, MprModule *mp)
     maAddDirective(appweb, "EspShowErrors", espShowErrorsDirective);
     maAddDirective(appweb, "EspUpdate", espUpdateDirective);
 
-#if BLD_FEATURE_EDI
     if ((esp->ediService = ediCreateService()) == 0) {
         return 0;
     }
@@ -1317,7 +1316,6 @@ int maEspHandlerInit(Http *http, MprModule *mp)
 #endif
 #if BLD_FEATURE_SDB
     sdbInit();
-#endif
 #endif
     return 0;
 }
