@@ -79,13 +79,15 @@ div.apiDetail {
 }
 
 table.parameters {
-    border-collapse: separate;
-    padding: 5px;
+    margin: 0;
+    border: 0;
+    -webkit-box-shadow: 0px 0px 0px #000;
 }
 
 table.parameters td {
+    border: 0;
     padding-right: 10px;
-    padding-bottom: 10px;
+    padding-bottom: 5px;
     vertical-align: top;
 }
 

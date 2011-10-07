@@ -422,12 +422,22 @@ p.footnote a:hover {
 	color: #FFFFFF; 
 }
 
-img.screen {
+img.OLDscreen {
     margin: 8px 0 4px 0;
 	border: 1px solid #AAA;
 	-moz-border-radius: 7px;
 	-webkit-border-radius: 7px;
 	-webkit-box-shadow: 9px 9px 9px #AAA;
+}
+
+/*
+    Mac screen captures. Need to shift left because of drop shadow.
+ */
+img.screen {
+    width: 710px;
+    margin: -5px 0 -35px -37px;
+    padding: 0;
+    overflow: hidden;
 }
 
 td.pivot {
