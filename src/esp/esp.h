@@ -146,7 +146,7 @@ typedef struct EspRoute {
     char            *dir;                   /**< Base directory (alias for route->dir) */
     char            *cacheDir;              /**< Directory for cached compiled controllers and views */
     char            *controllersDir;        /**< Directory for controllers */
-    char            *databasesDir;          /**< Directory for databases */
+    char            *dbDir;                 /**< Directory for databases */
     char            *layoutsDir;            /**< Directory for layouts */
     char            *modelsDir;             /**< Directory for models */
     char            *staticDir;             /**< Directory for static web content */
@@ -619,15 +619,6 @@ extern cchar *espGetParam(HttpConn *conn, cchar *var, cchar *defaultValue);
 extern void espFinalize(HttpConn *conn);
 
 /**
-    Test if a http request is finalized.
-    @description This tests if #espFinalize or #httpFinalize has been called for a request.
-    @param conn HttpConn connection object
-    @return True if the request has been finalized.
-    @ingroup EspReq
- */
-extern bool espFinalized(HttpConn *conn);
-
-/**
     Flush transmit data. 
     @description This writes any buffered data.
     @param conn HttpConn connection object created via $httpCreateConn
@@ -644,6 +635,15 @@ extern void espFlush(HttpConn *conn);
     @ingroup EspReq
  */
 extern cchar *espGetFlashMessage(HttpConn *conn, cchar *type);
+
+/**
+    Test if a http request is finalized.
+    @description This tests if #espFinalize or #httpFinalize has been called for a request.
+    @param conn HttpConn connection object
+    @return True if the request has been finalized.
+    @ingroup EspReq
+ */
+extern bool espIsFinalized(HttpConn *conn);
 
 /**
     Match a request parameter with an expected value
@@ -1252,15 +1252,15 @@ extern void espTable(HttpConn *conn, EdiGrid *grid, cchar *options);
     other panes to be "-ejs-pane-hidden". The control's client side code will toggle these classes to make panes
     visible or hidden.
     @param conn Http connection object
-    @param grid Tab data for the control. Tab data can be be a single object where the tab text is the property 
-        key and the target to invoke is the property value. It can also be an an array of objects, one per tab. 
+    @param rec Tab data for the control. Tab data is be be a single object where the tab text is the property 
+        key and the target to invoke is the property value. 
     @param options Optional extra options. See $View for a list of the standard options.
     @arg click Set to true to invoke the selected pane via a foreground click.
     @arg remote Set to true to invoke the selected pane via a background click.
     @arg toggle Set to true to show the selected pane and hide other panes.
     @ingroup EspControl
  */
-extern void espTabs(HttpConn *conn, EdiGrid *grid, cchar *options);
+extern void espTabs(HttpConn *conn, EdiRec *rec, cchar *options);
 
 //MOB DB
 /**
@@ -1584,6 +1584,7 @@ extern void stylesheet(cchar *uri, cchar *options);
 */
 extern void table(EdiGrid *grid, cchar *options);
 
+//  MOB - need examples in each of these abbreviated controls -- see ejs.web
 /**
     Render a tab control. 
     The tab control can manage a set of panes and will selectively show and hide or invoke the selected panes. 
@@ -1593,15 +1594,15 @@ extern void table(EdiGrid *grid, cchar *options);
     If using show/hide tabs, define the initial visible pane to be of the class "-ejs-pane-visible" and define
     other panes to be "-ejs-pane-hidden". The control's client side code will toggle these classes to make panes
     visible or hidden.
-    @param grid Tab data for the control. Tab data can be be a single object where the tab text is the property 
-        key and the target to invoke is the property value. It can also be an an array of objects, one per tab. 
+    @param rec Tab data for the control. Tab data is a single object where the tab text is the property 
+        key and the target to invoke is the property value. 
     @param options Optional extra options. See $View for a list of the standard options.
     @arg click Set to true to invoke the selected pane via a foreground click.
     @arg remote Set to true to invoke the selected pane via a background click.
     @arg toggle Set to true to show the selected pane and hide other panes.
     @ingroup EspAbbrev
  */
-extern void tabs(EdiGrid *grid, cchar *options);
+extern void tabs(EdiRec *rec, cchar *options);
 
 /**
     Render a text input field as part of a form.

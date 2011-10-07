@@ -179,7 +179,8 @@ static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *mod
 		if (eroute->showErrors) {
 			httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't run command %s, error %s", req->commandLine, err);
 		} else {
-			httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't run command %s", req->commandLine);
+			mprError("ESP: Can't run command %s, error %s", req->commandLine, err);
+			httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't compile view");
 		}
         return MPR_ERR_CANT_COMPLETE;
     }

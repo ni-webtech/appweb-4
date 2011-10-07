@@ -36,7 +36,9 @@ static char *defaultScripts[] = {
     "/js/jquery", 
     "/js/jquery.tablesorter",
     "/js/jquery.simplemodal",
+#if UNUSED
     "/js/jquery.treeview",              //  MOB - treeview not yet supported
+#endif
     "/js/jquery.esp",
     0,
 };
@@ -44,7 +46,9 @@ static char *defaultScripts[] = {
 static char *defaultStylesheets[] = {
     "/layout.css", 
     "/themes/default.css", 
+#if UNUSED
     "/js/treeview.css", 
+#endif
     0,
 };
 
@@ -296,12 +300,12 @@ void espIcon(HttpConn *conn, cchar *uri, cchar *optionString)
 }
 
 
-void espImage(HttpConn *conn, cchar *src, cchar *optionString)
+void espImage(HttpConn *conn, cchar *uri, cchar *optionString)
 {
     MprHash     *options;
 
     options = httpGetOptions(optionString);
-    espWrite(conn, "<img src='%s'%s />", src, map(conn, options));
+    espWrite(conn, "<img src='%s'%s />", httpLink(conn, uri, NULL), map(conn, options));
 }
 
 
@@ -644,9 +648,25 @@ void espTable(HttpConn *conn, EdiGrid *grid, cchar *optionString)
 }
 
 
-void espTabs(HttpConn *conn, EdiGrid *grid, cchar *optionString)
+/*
+    tabs(makeRec("{ Status: 'pane-1', Edit: 'pane-2' }"))
+ */
+void espTabs(HttpConn *conn, EdiRec *rec, cchar *optionString)
 {
-    //MOB todo
+    MprHash     *options;
+    EdiField    *fp;
+    cchar       *toggle, *uri;
+
+    options = httpGetOptions(optionString);
+    httpAddOption(options, "class", "-esp-tabs");
+    toggle = httpGetOption(options, "data->toggle", "data-click");
+
+    espWrite(conn, "<div%s>\r\n    <ul>\r\n", map(conn, options));
+    for (fp = rec->fields; fp < &rec->fields[rec->nfields]; fp++) {
+        uri = smatch(toggle, "data-toggle") ? fp->value : httpLink(conn, fp->value, 0);
+        espWrite(conn, "      <li %s='%s'>%s</li>\r\n", toggle, uri, fp->name);
+    }
+    espWrite(conn, "    </ul>\r\n</div>\r\n");
 }
 
 
@@ -999,9 +1019,9 @@ void table(EdiGrid *grid, cchar *optionString)
 }
 
 
-void tabs(EdiGrid *grid, cchar *optionString)
+void tabs(EdiRec *rec, cchar *optionString)
 {
-    espTabs(espGetConn(), grid, optionString);
+    espTabs(espGetConn(), rec, optionString);
 }
 
 

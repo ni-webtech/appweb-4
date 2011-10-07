@@ -154,10 +154,12 @@ typedef struct EdiGrid {
 
 #define EDI_SUPPRESS_SAVE   0x10        /**< Temporarily suppress auto-save */
 
+#if UNUSED
 /*
     Database flags
  */
 #define EDI_NOSAVE      0x1             /**< ediOpen flag -- Don't save the database on modifications */
+#endif
 
 /**
     Database structure
@@ -376,9 +378,9 @@ extern int ediLookupField(Edi *edi, cchar *tableName, cchar *fieldName);
 /**
     Open a database
     @description This opens a database using the specified datbase provider.
-    @param provider Database provider. Set to "mdb" for the Memory Database or "sqlite" for the SQLite provider.
     @param source Database path name. If using the "mdb" provider with the EDI_LITERAL flag, the source argument can
         be set to a literal JSON database content string.
+    @param provider Database provider. Set to "mdb" for the Memory Database or "sqlite" for the SQLite provider.
     @param flags Set to:
         @arg EDI_CREATE  -- Create database if not present.
         @arg EDI_AUTO_SAVE -- Auto-save database if modified in memory. This option is only supported by the "mdb" provider.
@@ -387,7 +389,7 @@ extern int ediLookupField(Edi *edi, cchar *tableName, cchar *fieldName);
     @return If successful, returns an EDI database instance object. Otherwise returns zero.
     @ingroup Edi
  */
-extern Edi *ediOpen(cchar *provider, cchar *source, int flags);
+extern Edi *ediOpen(cchar *source, cchar *provider, int flags);
 
 //  MOB - how do you get query errors back?  Should have an cchar *err argument.
 /**

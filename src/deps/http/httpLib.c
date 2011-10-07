@@ -3200,7 +3200,7 @@ int httpStartEndpoint(HttpEndpoint *endpoint)
     }
     proto = mprIsSocketSecure(endpoint->sock) ? "HTTPS" : "HTTP ";
     ip = *endpoint->ip ? endpoint->ip : "*";
-    mprLog(MPR_CONFIG, "Started %s service on \"%s:%d\"", proto, ip, endpoint->port);
+    mprLog(1, "Started %s service on \"%s:%d\"", proto, ip, endpoint->port);
     return 0;
 }
 
@@ -8314,6 +8314,8 @@ static void finalizePattern(HttpRoute *route)
     if (route->prefix && sstarts(startPattern, route->prefix)) {
         mprAssert(route->prefixLen <= route->startWithLen);
         startPattern = sfmt("^%s", &startPattern[route->prefixLen]);
+    } else {
+        startPattern = sjoin("^", startPattern, NULL);
     }
     for (cp = startPattern; *cp; cp++) {
         /* Alias for optional, non-capturing pattern:  "(?: PAT )?" */
@@ -8688,8 +8690,10 @@ char *httpTemplate(HttpConn *conn, cchar *template, MprHash *options)
     }
     buf = mprCreateBuf(-1, -1);
     for (cp = template; *cp; cp++) {
-        if (*cp == '~' && (cp == template || cp[-1] != '\\') && route->prefix) {
-            mprPutStringToBuf(buf, route->prefix);
+        if (*cp == '~' && (cp == template || cp[-1] != '\\')) {
+            if (route->prefix) {
+                mprPutStringToBuf(buf, route->prefix);
+            }
 
         } else if (*cp == '$' && cp[1] == '{' && (cp == template || cp[-1] != '\\')) {
             cp += 2;
@@ -9184,7 +9188,7 @@ static void addRestful(HttpRoute *parent, cchar *action, cchar *methods, cchar *
         name = sfmt("%s/%s/%s", parent->prefix, nameResource, action);
         pattern = sfmt("^%s/%s%s", parent->prefix, resource, pattern);
     } else {
-        name = sfmt("%s/%s", nameResource, action);
+        name = sfmt("/%s/%s", nameResource, action);
         pattern = sfmt("^/%s%s", resource, pattern);
     }
     if (*resource == '{') {
@@ -9836,7 +9840,11 @@ MprHash *httpGetOptions(cchar *options)
     }
     if (*options == '@') {
         /* Allow embedded URIs as options */
-        options = sfmt("click: '%s'", options);
+        options = sfmt("{ data-click: '%s'}", options);
+    }
+    mprAssert(*options == '{');
+    if (*options != '{') {
+        options = sfmt("{%s}", options);
     }
     return mprDeserialize(options);
 }
@@ -10488,7 +10496,16 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
             break;
 
         case 'c':
-            if (strcmp(key, "content-length") == 0) {
+            if (strcmp(key, "connection") == 0) {
+                rx->connection = sclone(value);
+                if (scasecmp(value, "KEEP-ALIVE") == 0) {
+                    keepAlive = 1;
+                } else if (scasecmp(value, "CLOSE") == 0) {
+                    /*  Not really required, but set to 0 to be sure */
+                    conn->keepAliveCount = 0;
+                }
+
+            } else if (strcmp(key, "content-length") == 0) {
                 if (rx->length >= 0) {
                     httpError(conn, HTTP_CLOSE | HTTP_CODE_BAD_REQUEST, "Mulitple content length headers");
                     break;
@@ -10553,15 +10570,6 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                     rx->cookie = sjoin(rx->cookie, "; ", value, NULL);
                 } else {
                     rx->cookie = sclone(value);
-                }
-
-            } else if (strcmp(key, "connection") == 0) {
-                rx->connection = sclone(value);
-                if (scasecmp(value, "KEEP-ALIVE") == 0) {
-                    keepAlive = 1;
-                } else if (scasecmp(value, "CLOSE") == 0) {
-                    /*  Not really required, but set to 0 to be sure */
-                    conn->keepAliveCount = 0;
                 }
             }
             break;
@@ -13325,7 +13333,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
     }
     if ((level = httpShouldTrace(conn, HTTP_TRACE_TX, HTTP_TRACE_FIRST, tx->ext)) >= mprGetLogLevel(tx)) {
         mprAddNullToBuf(buf);
-        mprLog(level, "%s", mprGetBufStart(buf));
+        mprLog(level, "  %s", mprGetBufStart(buf));
     }
     mprPutStringToBuf(buf, "\r\n");
 

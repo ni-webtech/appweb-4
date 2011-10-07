@@ -116,7 +116,7 @@ int ediAddValidation(Edi *edi, cchar *name, cchar *tableName, cchar *columnName,
 }
 
 
-int ediChangeCol(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags)
+int ediChangeColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags)
 {
     return edi->provider->changeColumn(edi, tableName, columnName, type, flags);
 }
@@ -253,7 +253,7 @@ int ediLookupField(Edi *edi, cchar *tableName, cchar *fieldName)
 }
 
 
-Edi *ediOpen(cchar *providerName, cchar *path, int flags)
+Edi *ediOpen(cchar *path, cchar *providerName, int flags)
 {
     EdiProvider  *provider;
 
@@ -529,8 +529,10 @@ EdiGrid *ediMakeGrid(cchar *json)
 EdiRec *ediMakeRec(cchar *json)
 {
     MprHash     *obj;
+    MprKey      *kp;
     EdiRec      *rec;
-    int         nfields;
+    EdiField    *fp;
+    int         f, nfields;
 
     if ((obj = mprDeserialize(json)) == 0) {
         return 0;
@@ -539,7 +541,18 @@ EdiRec *ediMakeRec(cchar *json)
     if ((rec = ediCreateBareRec(NULL, "", nfields)) == 0) {
         return 0;
     }
-    return ediUpdateFields(rec, obj);
+    for (f = 0, ITERATE_KEYS(obj, kp)) {
+        if (kp->type == MPR_JSON_ARRAY || kp->type == MPR_JSON_OBJ) {
+            continue;
+        }
+        fp = &rec->fields[f++];
+        fp->valid = 1;
+        fp->name = kp->key;
+        fp->value = kp->data;
+        fp->type = EDI_TYPE_STRING;
+        fp->flags = 0;
+    }
+    return rec;
 }
 
 
@@ -559,6 +572,8 @@ int ediParseTypeString(cchar *type)
         return EDI_TYPE_STRING;
     } else if (smatch(type, "text")) {
         return EDI_TYPE_TEXT;
+    } else {
+        return MPR_ERR_BAD_ARGS;
     }
     return 0;
 }

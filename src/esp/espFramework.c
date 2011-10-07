@@ -381,19 +381,18 @@ void espFinalize(HttpConn *conn)
 }
 
 
-//MOB rename to isFinalized
-bool espFinalized(HttpConn *conn) 
+void espFlush(HttpConn *conn) 
+{
+    httpFlush(conn);
+}
+
+
+bool espIsFinalized(HttpConn *conn) 
 {
     EspReq      *req;
 
     req = conn->data;
     return req->finalized;
-}
-
-
-void espFlush(HttpConn *conn) 
-{
-    httpFlush(conn);
 }
 
 

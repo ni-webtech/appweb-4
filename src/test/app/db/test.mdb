@@ -9,13 +9,8 @@
             'body': { type: 'text' },
         },
         data: [
-            [ '1', 'Msg one', 'Line one
-Line two
-Line three
-', ],
-            [ '3', 'Msg one.2', 'a lazy dog', ],
-            [ '4', 'forth', 'third + 1 message dog
-', ],
+            [ '3', 'Third', 'bb dog', ],
+            [ '4', 'Fourth post', 'dog', ],
     ],
     },
 }

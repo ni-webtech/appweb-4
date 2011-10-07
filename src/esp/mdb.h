@@ -36,7 +36,7 @@ typedef struct MdbCol {
     int             type;               /* Column type */
     int             flags;              /* Column flags */
     int             cid;                /* Column index in MdbSchema.cols */
-    int64           nextValue;
+    int64           lastValue;          /* Last value if auto-inc */
 } MdbCol;
 
 /*
@@ -80,7 +80,7 @@ typedef struct MdbTable {
  */
 typedef struct Mdb {
     Edi             edi;                /**< EDI database interface structure */
-    int             flags;              /**< Database flags */
+    int             flags;              /**< MDB flags */
     char            *path;              /**< Currently open database */
     MprMutex        *mutex;             /**< Multithread lock for Schema modifications only */
     MprList         *tables;            /**< List of tables */

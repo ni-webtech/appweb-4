@@ -1038,7 +1038,7 @@ static int logRoutesDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "?S", &full)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    mprRawLog(0, "\nHTTP Routes for host '%s':\n\n", state->host->name);
+    mprRawLog(0, "\nHTTP Routes for the '%s' host:\n\n", state->host->name ? state->host->name : "default");
     httpLogRoutes(state->host, smatch(full, "full"));
     return 0;
 }
@@ -1262,6 +1262,7 @@ static int protocolDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+//  MOB - this should be renamed to be: FileModify on|off
 /*
     PutMethod on|off
  */

@@ -54,7 +54,6 @@ static void manageRow(MdbRow *row, int flags);
 static void manageSchema(MdbSchema *schema, int flags);
 static void manageTable(MdbTable *table, int flags);
 static int parseOperation(cchar *operation);
-static EdiField readField(MdbRow *row, int fid);
 static bool validateField(EdiRec *rec, MdbTable *table, MdbCol *col, cchar *value);
 static int writeField(MdbRow *row, MdbCol *col, cchar *value);
 
@@ -226,6 +225,10 @@ static int mdbAddColumn(Edi *edi, cchar *tableName, cchar *columnName, int type,
         unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
+    if ((col = lookupColumn(table, columnName)) != 0) {
+        unlock(mdb);
+        return MPR_ERR_ALREADY_EXISTS;
+    }
     if ((col = createCol(table, columnName)) == 0) {
         unlock(mdb);
         return MPR_ERR_CANT_FIND;
@@ -283,6 +286,10 @@ static int mdbAddTable(Edi *edi, cchar *tableName)
 
     mdb = (Mdb*) edi;
     lock(mdb);
+    if ((table = lookupTable(mdb, tableName)) != 0) {
+        unlock(mdb);
+        return MPR_ERR_ALREADY_EXISTS;
+    }
     if ((table = mprAllocObj(MdbTable, manageTable)) == 0) {
         unlock(mdb);
         return MPR_ERR_MEMORY;
@@ -385,6 +392,9 @@ static int mdbDeleteRow(Edi *edi, cchar *tableName, cchar *key)
         return MPR_ERR_CANT_FIND;
     }
     rc = mprRemoveItemAtPos(table->rows, r);
+    if (table->index) {
+        mprRemoveKey(table->index, key);
+    }
     autoSave(mdb, table);
     unlock(mdb);
     return rc;
@@ -1181,17 +1191,17 @@ static void autoSave(Mdb *mdb, MdbTable *table)
 static int mdbSave(Edi *edi)
 {
     Mdb         *mdb;
-    MdbSchema    *schema;
-    MdbTable     *table;
-    EdiField     field;
-    MdbRow       *row;
-    MdbCol       *col;
+    MdbSchema   *schema;
+    MdbTable    *table;
+    MdbRow      *row;
+    MdbCol      *col;
+    cchar       *value;
     char        *path, *npath, *bak, *type;
     MprFile     *out;
     int         cid, rid, tid, ntables, nrows;
 
     mdb = (Mdb*) edi;
-    if (mdb->flags & EDI_NO_SAVE) {
+    if (mdb->edi.flags & EDI_NO_SAVE) {
         return MPR_ERR_BAD_STATE;
     }
     path = mdb->path;
@@ -1241,16 +1251,21 @@ static int mdbSave(Edi *edi)
             row = getRow(table, rid);
             for (cid = 0; cid < schema->ncols; cid++) {
                 col = getCol(table, cid);
-                if (col->flags & EDI_AUTO_INC) {
-                    row->fields[col->cid] = itos(col->nextValue++, 10);
+                value = row->fields[col->cid];
+                if (value == 0 && col->flags & EDI_AUTO_INC) {
+                    row->fields[col->cid] = itos(++col->lastValue, 10);
                 }
+#if UNUSED
                 field = readField(row, cid);
                 //  MOB OPT - inline toString code here
                 mprWriteFileFmt(out, "'%s', ", ediFormatField(NULL, field));
+#else
+                mprWriteFileFmt(out, "'%s', ", value);
+#endif
             }
             mprWriteFileString(out, "],\n");
         }
-        mprWriteFileString(out, "    ],\n    },\n");
+        mprWriteFileString(out, "        ],\n    },\n");
     }
     mprWriteFileString(out, "}\n");
     mprCloseFile(out);
@@ -1475,7 +1490,7 @@ static MdbRow *getRow(MdbTable *table, int rid)
 }
 
 /********************************* Field Operations ************************/
-
+#if UNUSED && KEEP
 static EdiField readField(MdbRow *row, int fid)
 {
     EdiField    field;
@@ -1489,7 +1504,7 @@ static EdiField readField(MdbRow *row, int fid)
     field.name = col->name;
     return field;
 }
-
+#endif
 
 static int writeField(MdbRow *row, MdbCol *col, cchar *value)
 {
@@ -1510,11 +1525,11 @@ static int writeField(MdbRow *row, MdbCol *col, cchar *value)
     //  MOB - refactor
     if (col->flags & EDI_AUTO_INC) {
         if (value == 0) {
-            row->fields[col->cid] = itos(col->nextValue++, 10);
+            row->fields[col->cid] = value = itos(++col->lastValue, 10);
         } else {
             //  MOB - clone
             row->fields[col->cid] = sclone(value);
-            col->nextValue = max(col->nextValue, (int64) stoi(value, 10, NULL) + 1);
+            col->lastValue = max(col->lastValue, (int64) stoi(value, 10, NULL));
         }
     } else {
         //  MOB - clone

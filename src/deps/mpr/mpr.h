@@ -4366,6 +4366,15 @@ extern MprHash *mprCloneHash(MprHash *table);
 extern MprHash *mprCreateHash(int hashSize, int flags);
 
 /**
+    Create a hash of words
+    @description Create a hash table of words from the given string. The hash key entry is the same as the key.
+    @param str String containing white space or comma separated words
+    @return Returns a hash of words
+    @ingroup MprHash
+ */
+extern MprHash *mprCreateHashFromWords(cchar *str);
+
+/**
     Return the first symbol in a symbol entry
     @description Prepares for walking the contents of a symbol table by returning the first entry in the symbol table.
     @param table Symbol table returned via mprCreateSymbolTable.

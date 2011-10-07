@@ -150,6 +150,7 @@ td {
     padding: 4px 8px 4px 8px;
 }
 
+
 th {
     padding: 6px 10px 6px 6px;
 }
@@ -162,60 +163,53 @@ form td {
     padding: 2px;
 }
 
-tt {
-    font-weight: bold;
-    font-size: 110%;
-    color: #AA0000;
-	font-family: Consolas, Monaco, Courier, Monaco, Courier, Courier New, Courier, monospace; 
-}
-
 /*
-       Web controls layout style sheet
+ *     Ejscript web controls layout style sheet
  */
-div.-ejs-tabs {
+div.-esp-tabs {
     margin-left: 40px;
 }
 
-div.-ejs-tabs ul {
+div.-esp-tabs ul {
     margin: 0;
     padding: 0;
     white-space: nowrap;
 }
 
-div.-ejs-tabs li {
+div.-esp-tabs li {
     float: left;
     margin: 4px 4px 0 0;
     padding: 8px 6px 8px 4px;
 }
 
-div.-ejs-pane-visible {
+div.-esp-pane-visible {
     visibility: visible;
     display: block;
 }
 
-div.-ejs-pane-hidden {
+div.-esp-pane-hidden {
     visibility: hidden;
     display: none;
 }
 
-div.-ejs-form-error {
+div.-esp-form-error {
     width: 550px;
     margin-bottom: 20px;
     padding-bottom: 10px;
 }
 
-div.-ejs-flash {
+div.-esp-flash {
     width: 500px;
     margin: 20px;
     padding: 10px;
 }
 
-#-ejs-modal-background {
+#-esp-modal-background {
     background-color: #000; 
     cursor: wait;
 }
 
-#-ejs-modal-foreground {
+#-esp-modal-foreground {
     color: #bbb; 
     background-color: #333; 
     border: 4px solid #444; 

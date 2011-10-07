@@ -6,6 +6,8 @@
 
 include 	.makedep
 
+PRE_DIRS	= js
+
 ifeq	($(BLD_FEATURE_ESP),1)
 	TARGETS		+= $(BLD_BIN_DIR)/esp$(BLD_EXE)
 	TARGETS		+= $(BLD_LIB_DIR)/esp-www
@@ -20,11 +22,10 @@ $(BLD_BIN_DIR)/esp$(BLD_EXE): $(OBJECTS)
 	bld --exe $(BLD_BIN_DIR)/esp$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" --libs "$(BLD_APPWEB_LIBS) $(LIBS)" \
 		$(BLD_LIB_DIR)/mod_esp$(BLD_SHLIB) esp$(BLD_OBJ)
 
-$(BLD_LIB_DIR)/esp-www: www/*
+$(BLD_LIB_DIR)/esp-www: www/* www/files/*/*
 	$(call log) [Copy] "www to $(BLD_LIB_DIR)/esp-www"
 	rm -fr $(BLD_LIB_DIR)/esp-www
-	mkdir -p $(BLD_LIB_DIR)/esp-www/images
-	mkdir -p $(BLD_LIB_DIR)/esp-www/themes
+	mkdir -p $(BLD_LIB_DIR)/esp-www/
 	cp -r www/* $(BLD_LIB_DIR)/esp-www
 
 $(BLD_LIB_DIR)/esp.conf: esp.conf

@@ -105,6 +105,7 @@ static void setupFlash(HttpConn *conn)
         req->flash = espGetSessionObj(conn, ESP_FLASH_VAR);
         req->lastFlash = 0;
         if (req->flash) {
+            mprAssert(req->flash->fn);
             espSetSessionVar(conn, ESP_FLASH_VAR, "");
             req->lastFlash = mprCloneHash(req->flash);
         } else {
@@ -121,7 +122,9 @@ static void finalizeFlash(HttpConn *conn)
 
     req = conn->data;
     if (req->flash) {
+        mprAssert(req->flash->fn);
         if (req->lastFlash) {
+            mprAssert(req->lastFlash->fn);
             for (ITERATE_KEYS(req->flash, kp)) {
                 for (ITERATE_KEYS(req->lastFlash, lp)) {
                     if (smatch(kp->key, lp->key) && kp->data == lp->data) {
@@ -157,7 +160,7 @@ static void startEsp(HttpQueue *q)
             }
             espFinalize(conn);
         }
-        if (httpIsFinalized(conn)) {
+        if (espIsFinalized(conn)) {
             finalizeFlash(conn);
         }
         saveCachedResponse(conn);
@@ -245,8 +248,7 @@ static int runAction(HttpConn *conn)
     }
     req->action = action;
     
-    //  MOB - not right. What about action->lifespan
-    if (eroute->lifespan) {
+    if (action->lifespan) {
         /* Must stabilize form data prior to controllers injecting variables */
         httpGetFormData(conn);
         if (!updated && fetchCachedResponse(conn)) {
@@ -647,9 +649,9 @@ static EspRoute *allocEspRoute(HttpRoute *route)
 #else
     eroute->cacheDir = mprJoinPath(mprGetAppDir(), "../" BLD_LIB_NAME);
 #endif
+    eroute->dbDir = route->dir;
     eroute->dir = route->dir;
     eroute->controllersDir = eroute->dir;
-    eroute->databasesDir = eroute->dir;
     eroute->layoutsDir = eroute->dir;
     eroute->modelsDir = eroute->dir;
     eroute->viewsDir = eroute->dir;
@@ -659,7 +661,7 @@ static EspRoute *allocEspRoute(HttpRoute *route)
         Setup default parameters for $expansion of Http route paths
      */
     httpSetRoutePathVar(route, "CONTROLLERS_DIR", eroute->controllersDir);
-    httpSetRoutePathVar(route, "DATABASES_DIR", eroute->databasesDir);
+    httpSetRoutePathVar(route, "DB_DIR", eroute->dbDir);
     httpSetRoutePathVar(route, "LAYOUTS_DIR", eroute->layoutsDir);
     httpSetRoutePathVar(route, "MODELS_DIR", eroute->modelsDir);
     httpSetRoutePathVar(route, "STATIC_DIR", eroute->staticDir);
@@ -707,7 +709,7 @@ static EspRoute *cloneEspRoute(EspRoute *parent, HttpRoute *route)
     eroute->dir = parent->dir;
     eroute->cacheDir = parent->cacheDir;
     eroute->controllersDir = parent->controllersDir;
-    eroute->databasesDir = parent->databasesDir;
+    eroute->dbDir = parent->dbDir;
     eroute->layoutsDir = parent->layoutsDir;
     eroute->modelsDir = parent->modelsDir;
     eroute->viewsDir = parent->viewsDir;
@@ -723,7 +725,7 @@ static void setSimpleDirs(EspRoute *eroute)
     /* Don't set cache dir here - keep inherited value */
     dir = eroute->dir;
     eroute->controllersDir = dir;
-    eroute->databasesDir = dir;
+    eroute->dbDir = dir;
     eroute->layoutsDir = dir;
     eroute->modelsDir = dir;
     eroute->viewsDir = dir;
@@ -741,11 +743,11 @@ static void setMvcDirs(EspRoute *eroute, HttpRoute *route)
     eroute->cacheDir = mprJoinPath(dir, "cache");
     httpSetRoutePathVar(route, "CACHE_DIR", eroute->cacheDir);
 
+    eroute->dbDir = mprJoinPath(dir, "db");
+    httpSetRoutePathVar(route, "DB_DIR", eroute->dbDir);
+
     eroute->controllersDir = mprJoinPath(dir, "controllers");
     httpSetRoutePathVar(route, "CONTROLLERS_DIR", eroute->controllersDir);
-
-    eroute->databasesDir = mprJoinPath(dir, "databases");
-    httpSetRoutePathVar(route, "DATABASES_DIR", eroute->databasesDir);
 
     eroute->layoutsDir  = mprJoinPath(dir, "layouts");
     httpSetRoutePathVar(route, "LAYOUTS_DIR", eroute->layoutsDir);
@@ -769,8 +771,8 @@ void espManageEspRoute(EspRoute *eroute, int flags)
         mprMark(eroute->cacheDir);
         mprMark(eroute->compile);
         mprMark(eroute->controllersDir);
+        mprMark(eroute->dbDir);
         mprMark(eroute->edi);
-        mprMark(eroute->databasesDir);
         mprMark(eroute->dir);
         mprMark(eroute->env);
         mprMark(eroute->layoutsDir);
@@ -967,23 +969,23 @@ static int espCompileDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    EspDb provider connectionPath
+    EspDb path provider options
  */
 static int espDbDirective(MaState *state, cchar *key, cchar *value)
 {
     EspRoute    *eroute;
-    cchar       *provider, *path, *autoSave;
+    cchar       *provider, *path, *options;
     int         flags;
 
     if ((eroute = getEspRoute(state->route)) == 0) {
         return MPR_ERR_MEMORY;
     }
-    if (!maTokenize(state, value, "%S %S ?S", &provider, &path, &autoSave)) {
+    if (!maTokenize(state, value, "%S %S ?S", &path, &provider, &options)) {
         return MPR_ERR_BAD_SYNTAX;
     }
     flags = EDI_CREATE;
-    flags |= smatch(autoSave, "auto") ? EDI_AUTO_SAVE : 0;
-    if ((eroute->edi = ediOpen(provider, path, flags)) == 0) {
+    flags |= smatch(options, "auto") ? EDI_AUTO_SAVE : 0;
+    if ((eroute->edi = ediOpen(path, provider, flags)) == 0) {
         mprError("Can't open database %s", path);
         return MPR_ERR_CANT_OPEN;
     }
@@ -1012,10 +1014,10 @@ static int espDirDirective(MaState *state, cchar *key, cchar *value)
         path = stemplate(mprJoinPath(state->host->home, path), state->route->pathTokens);
         if (scmp(name, "cache") == 0) {
             eroute->cacheDir = path;
-        } if (scmp(name, "controllers") == 0) {
+        } else if (scmp(name, "controllers") == 0) {
             eroute->controllersDir = path;
-        } else if (scmp(name, "databases") == 0) {
-            eroute->databasesDir = path;
+        } else if (scmp(name, "db") == 0) {
+            eroute->dbDir = path;
         } else if (scmp(name, "layouts") == 0) {
             eroute->layoutsDir = path;
         } else if (scmp(name, "models") == 0) {

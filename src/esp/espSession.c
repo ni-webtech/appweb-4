@@ -90,7 +90,8 @@ MprHash *espGetSessionObj(HttpConn *conn, cchar *key)
 {
     cchar   *str;
 
-    if ((str = espGetSessionVar(conn, key, 0)) != 0) {
+    if ((str = espGetSessionVar(conn, key, 0)) != 0 && *str) {
+        mprAssert(*str == '{');
         return mprDeserialize(str);
     }
     return 0;

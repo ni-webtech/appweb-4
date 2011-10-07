@@ -22,6 +22,7 @@ typedef struct App {
     char        *serverRoot;
     char        *configFile;
     char        *pathEnv;
+    char        *provider;              /* Database provider "mdb" | "sqlite" */
     char        *listen;
 
     char        *currentDir;            /* Initial starting current directory */
@@ -48,6 +49,7 @@ typedef struct App {
 
     int         error;
     int         flat;
+    int         minified;
     int         overwrite;
     int         quiet;
 } App;
@@ -63,6 +65,141 @@ static MaAppweb  *appweb;
 #define ESP_VIEW        0x2
 #define ESP_PAGE        0x4
 
+/********************************* Templates **********************************/
+
+static cchar *ControllerTemplateHeader = "\
+/*\n\
+    ${NAME} controller\n\
+ */\n\
+#include \"esp.h\"\n\
+\n\
+";
+
+
+static cchar *ControllerTemplateFooter = "\
+ESP_EXPORT int esp_controller_${NAME}(EspRoute *eroute, MprModule *module) \n\
+{\n\
+${DEFINE_ACTIONS}    return 0;\n\
+}\n";
+
+
+static cchar *ScaffoldTemplateHeader = "\
+/*\n\
+    ${NAME} controller\n\
+ */\n\
+#include \"esp.h\"\n\
+\n\
+static void create() { \n\
+    if (writeRec(createRec(\"${NAME}\", params()))) {\n\
+        inform(\"New ${NAME} created\");\n\
+        redirect(\"@\");\n\
+    } else {\n\
+        renderView(\"${NAME}-edit\");\n\
+    }\n\
+}\n\
+\n\
+static void destroy() { \n\
+    if (removeRec(\"${NAME}\", param(\"id\"))) {\n\
+        inform(\"${TITLE} removed\");\n\
+    }\n\
+    redirect(\"@\");\n\
+}\n\
+\n\
+static void edit() { \n\
+    readRec(\"${NAME}\");\n\
+}\n\
+\n\
+static void list() { }\n\
+\n\
+static void init() { \n\
+    createRec(\"${NAME}\", 0);\n\
+    renderView(\"${NAME}-edit\");\n\
+}\n\
+\n\
+static void show() { \n\
+    readRec(\"${NAME}\");\n\
+    renderView(\"${NAME}-edit\");\n\
+}\n\
+\n\
+static void update() { \n\
+    if (writeFields(\"${NAME}\", params())) {\n\
+        inform(\"${TITLE} updated successfully.\");\n\
+        redirect(\"@\");\n\
+    } else {\n\
+        renderView(\"${NAME}-edit\");\n\
+    }\n\
+}\n\
+\n\
+";
+
+static cchar *ScaffoldTemplateFooter = "\
+ESP_EXPORT int esp_controller_${NAME}(EspRoute *eroute, MprModule *module) \n\
+{\n\
+    espDefineAction(eroute, \"${NAME}-create\", create);\n\
+    espDefineAction(eroute, \"${NAME}-destroy\", destroy);\n\
+    espDefineAction(eroute, \"${NAME}-edit\", edit);\n\
+    espDefineAction(eroute, \"${NAME}-init\", init);\n\
+    espDefineAction(eroute, \"${NAME}-list\", list);\n\
+    espDefineAction(eroute, \"${NAME}-show\", show);\n\
+    espDefineAction(eroute, \"${NAME}-update\", update);\n\
+${DEFINE_ACTIONS}    return 0;\n\
+}\n";
+
+
+static cchar *ScaffoldListView = "\
+<h1>${TITLE} List</h1>\n\
+\n\
+<% table(readGrid(\"${NAME}\"), \"{data-click: '@edit'}\"); %>\n\
+<% buttonLink(\"New ${TITLE}\", \"@init\", 0); %>\n\
+";
+
+
+static cchar *ScaffoldEditView =  "\
+<h1><%= hasRec() ? \"Edit\" : \"Create\" %> ${TITLE}</h1>\n\
+\n\
+<% form(0, 0); %>\n\
+    <table border=\"0\">\n\
+    <% {\n\
+        char    *name, *uname;\n\
+        int     next;\n\
+        MprList *cols = getColumns(0);\n\
+        for (ITERATE_ITEMS(cols, name, next)) {\n\
+            if (smatch(name, \"id\")) continue;\n\
+            uname = spascal(name);\n\
+    %>\n\
+            <tr><td><% render(uname); %></td><td><% input(name, 0); %></td></tr>\n\
+        <% } %>\n\
+    <% } %>\n\
+    </table>\n\
+    <% button(\"commit\", \"OK\", 0); %>\n\
+    <% buttonLink(\"Cancel\", \"@\", 0); %>\n\
+    <% if (hasRec()) buttonLink(\"Delete\", \"@destroy\", \"{data-method: 'DELETE'}\"); %>\n\
+<% endform(); %>\n\
+";
+
+
+
+#if UNUSED && KEEP
+static cchar *MigrationTemplate = "\
+/*\n\
+    ${COMMENT}\n\
+ */\n\
+#include \"esp.h\"\n\
+\n\
+static int forward(Edi *db) {\n\
+${FORWARD}}\n\
+\n\
+static int backward(Edi *db) {\n\
+${BACKWARD}}\n\
+\n\
+ESP_EXPORT int esp_migration_post(Esp *esp, MprModule *module)\n\
+{\n\
+    espDefineMigration(\"${NAME}\", forward, backward);\n\
+    return 0;\n\
+}\n\
+";
+#endif
+
 /***************************** Forward Declarations ***************************/
 
 static void clean(int argc, char **argv);
@@ -71,11 +208,13 @@ static void copyDir(cchar *fromDir, cchar *toDir);
 static void fail(cchar *fmt, ...);
 static void findConfigFile();
 static void generate(int argc, char **argv);
+static void generateAppDb();
 static void generateAppDirs();
 static void generateAppFiles();
 static void generateAppConfigFile();
 static void initialize();
 static void makeDir(cchar *dir);
+static void makeFile(cchar *path, cchar *data, cchar *msg);
 static void manageApp(App *app, int flags);
 static void process(int argc, char **argv);
 static void readConfig();
@@ -112,8 +251,9 @@ MAIN(espgen, int argc, char **argv)
     app->mpr = mpr;
     app->configFile = BLD_CONFIG_FILE;
     app->listen = sclone(ESP_LISTEN);
+    app->provider = sclone("mdb");
 
-    for (argind = 1; argind < argc; argind++) {
+    for (argind = 1; argind < argc && !app->error; argind++) {
         argp = argv[argind];
         if (*argp != '-') {
             break;
@@ -143,8 +283,22 @@ MAIN(espgen, int argc, char **argv)
                 mprSetCmdlineLogging(1);
             }
 
+        } else if (smatch(argp, "--min")) {
+            app->minified = 1;
+
         } else if (smatch(argp, "--overwrite")) {
             app->overwrite = 1;
+
+        } else if (smatch(argp, "--provider")) {
+            if (argind >= argc) {
+                usageError();
+            } else {
+                app->provider = sclone(argv[++argind]);
+                if (!smatch(app->provider, "mdb") && !smatch(app->provider, "sdb")) {
+                    fail("Unknown provider \"%s\"", app->provider);
+                    usageError();
+                }
+            }
 
         } else if (smatch(argp, "--quiet") || smatch(argp, "-q")) {
             app->quiet = 1;
@@ -215,6 +369,7 @@ static void manageApp(App *app, int flags)
         mprMark(app->module);
         mprMark(app->mpr);
         mprMark(app->pathEnv);
+        mprMark(app->provider);
         mprMark(app->routeName);
         mprMark(app->routePrefix);
         mprMark(app->server);
@@ -234,6 +389,7 @@ static void setDirs(cchar *path)
     eroute->dir = sclone(path);
     eroute->cacheDir = mprJoinPath(eroute->dir, "cache");
     eroute->controllersDir = mprJoinPath(eroute->dir, "controllers");
+    eroute->dbDir = mprJoinPath(eroute->dir, "db");
     eroute->layoutsDir = mprJoinPath(eroute->dir, "layouts");
     eroute->staticDir = mprJoinPath(eroute->dir, "static");
     eroute->viewsDir = mprJoinPath(eroute->dir, "views");
@@ -379,9 +535,10 @@ static void run(int argc, char **argv)
     MprCmd      *cmd;
 
     cmd = mprCreateCmd(0);
+    trace("RUN", "appweb -v");
     if (mprRunCmd(cmd, "appweb -v", NULL, NULL, MPR_CMD_DETACH) != 0) {
-        printf("HERE @@%s@@\n", app->command);
         fail("Can't run command: \n%s", app->command);
+        return;
     }
     mprWaitForCmd(cmd, -1);
 }
@@ -592,8 +749,7 @@ static void compile(int argc, char **argv)
                 compileFile(path, ESP_PAGE);
             }
         }
-        mprWriteFileFmt(app->flatFile, "\nESP_EXPORT int esp_app_%s(EspRoute *el, MprModule *module) {\n", 
-            app->appName);
+        mprWriteFileFmt(app->flatFile, "\nESP_EXPORT int esp_app_%s(EspRoute *el, MprModule *module) {\n", app->appName);
         for (next = 0; (line = mprGetNextItem(app->flatItems, &next)) != 0; ) {
             mprWriteFileFmt(app->flatFile, "    %s(el, module);\n", line);
         }
@@ -631,9 +787,218 @@ static void compile(int argc, char **argv)
 }
 
 
+static void generateApp(cchar *name)
+{
+    app->appName = sclone(name);
+    setDirs(name);
+    generateAppDirs();
+    generateAppFiles();
+    generateAppConfigFile();
+    generateAppDb();
+}
+
+
 /*
-    generate app path
+    esp generate controller name [action [, action] ...]
  */
+static void generateController(int argc, char **argv)
+{
+    MprHash     *tokens;
+    cchar       *defines, *name, *path, *data, *title, *action;
+    int         i;
+
+    if (argc < 1) {
+        usageError();
+        return;
+    }
+    name = sclone(argv[0]);
+    title = spascal(name);
+    path = mprJoinPathExt(mprJoinPath(eroute->controllersDir, name), ".c");
+    defines = sclone("");
+    for (i = 1; i < argc; i++) {
+        action = argv[i];
+        defines = sjoin(defines, sfmt("    espDefineAction(eroute, \"%s-%s\", %s);\n", name, action, action), NULL);
+    }
+    tokens = mprDeserialize(sfmt("{ NAME: %s, TITLE: %s, DEFINE_ACTIONS: '%s' }", name, title, defines));
+
+    data = stemplate(ControllerTemplateHeader, tokens);
+    for (i = 1; i < argc; i++) {
+        action = argv[i];
+        data = sjoin(data, sfmt("static void %s() {\n}\n\n", action), NULL);
+    }
+    data = sjoin(data, stemplate(ControllerTemplateFooter, tokens), NULL);
+    makeFile(path, data, "Controller");
+}
+
+
+static void generateScaffoldController(int argc, char **argv)
+{
+    MprHash     *tokens, *actions;
+    cchar       *defines, *name, *path, *data, *title, *action;
+    int         i;
+
+    name = sclone(argv[0]);
+    title = spascal(name);
+    actions = mprCreateHashFromWords("create destroy edit init list show update");
+
+    /*
+        Create controller
+     */
+    path = mprJoinPathExt(mprJoinPath(eroute->controllersDir, name), ".c");
+    defines = sclone("");
+    for (i = 1; i < argc; i++) {
+        action = argv[i];
+        if (mprLookupKey(actions, action)) {
+            continue;
+        }
+        defines = sjoin(defines, sfmt("    espDefineAction(eroute, \"%s-%s\", %s);\n", name, action, action), NULL);
+    }
+    tokens = mprDeserialize(sfmt("{ NAME: %s, TITLE: %s, DEFINE_ACTIONS: '%s' }", name, title, defines));
+
+    data = stemplate(ScaffoldTemplateHeader, tokens);
+    for (i = 1; i < argc; i++) {
+        action = argv[i];
+        if (mprLookupKey(actions, action)) {
+            continue;
+        }
+        data = sjoin(data, sfmt("static void %s() {\n}\n\n", action), NULL);
+    }
+    data = sjoin(data, stemplate(ScaffoldTemplateFooter, tokens), NULL);
+    makeFile(path, data, "Scaffold");
+}
+
+
+
+#if UNUSED && KEEP
+/*
+    esp generate migration description model [field:type [, field:type] ...]
+ */
+static void generateScaffoldMigration(int argc, char **argv)
+{
+    MprHash     *tokens;
+    cchar       *comment, *name, *title, *seq, *forward, *backward, *data, *path, *def, *field, *fileComment;
+    char        *typeString;
+    int         i, type, flags;
+
+    name = sclone(argv[0]);
+    title = spascal(name);
+    comment = sfmt("Create Scaffold %s", title);
+    seq = mprGetDate("%Y%m%d%H%M%S");
+
+    forward = sfmt("    ediAddTable(db, \"%s\");\n", name);
+    backward = sfmt("    ediRemoveTable(db, \"%s\");\n", name);
+
+    for (i = 1; i < argc; i++) {
+        field = stok(sclone(argv[i]), ":", &typeString);
+        if ((type = ediParseTypeString(typeString)) < 0) {
+            fail("Unknown type '%s' for field '%s'", typeString, field);
+            return;
+        }
+        //  MOB -- should support flags
+        flags = 0;
+        def = sfmt("    ediAddColumn(db, \"%s\", \"%s\", %d, %d);\n", name, field, type, flags);
+        forward = sjoin(forward, def, NULL);
+    }
+    dir = mprJoinPath(eroute->dbDir, "migrations");
+    makeDir(dir);
+
+    fileComment = sreplace(comment, " ", "_");
+    path = sfmt("%s/%s_%s.c", eroute->migrationsDir, seq, fileComment, ".c");
+
+    tokens = mprDeserialize(sfmt("{ NAME: %s, TITLE: %s, COMMENT: '%s', FORWARD: '%s', BACKWARD: '%s' }", 
+        name, title, comment, forward, backward));
+    data = stemplate(MigrationTemplate, tokens);
+    makeFile(path, data, "Migration");
+}
+#endif
+
+
+/*
+    esp generate model [field:type [, field:type] ...]
+ */
+static void generateScaffoldModel(int argc, char **argv)
+{
+    Edi     *edi;
+    cchar   *tableNaem, *title, *field;
+    char    *typeString;
+    int     rc, i, type;
+
+    tableNaem = sclone(argv[0]);
+    title = spascal(tableNaem);
+    edi = eroute->edi;
+
+    if (edi == 0) {
+        fail("Database not open. Check appweb.conf");
+        return;
+    }
+    edi->flags |= EDI_SUPPRESS_SAVE;
+    if ((rc = ediAddTable(edi, tableNaem)) < 0) {
+        if (rc != MPR_ERR_ALREADY_EXISTS) {
+            fail("Can't add table '%s'", tableNaem);
+        }
+    } else {
+        if ((rc = ediAddColumn(edi, tableNaem, "id", EDI_TYPE_INT, EDI_AUTO_INC | EDI_INDEX | EDI_KEY)) != 0) {
+            fail("Can't add column 'id'");
+        }
+    }
+    for (i = 1; i < argc && !app->error; i++) {
+        field = stok(sclone(argv[i]), ":", &typeString);
+        if ((type = ediParseTypeString(typeString)) < 0) {
+            fail("Unknown type '%s' for field '%s'", typeString, field);
+            break;
+        }
+        if ((rc = ediAddColumn(edi, tableNaem, field, type, 0)) != 0) {
+            if (rc != MPR_ERR_ALREADY_EXISTS) {
+                fail("Can't add column '%s'", field);
+                break;
+            } else {
+                ediChangeColumn(edi, tableNaem, field, type, 0);
+            }
+        }
+    }
+    edi->flags &= ~EDI_SUPPRESS_SAVE;
+    ediSave(edi);
+    trace("UPDATE", "Database schema");
+}
+
+
+static void generateScaffoldViews(int argc, char **argv)
+{
+    MprHash     *tokens;
+    cchar       *title, *name, *path, *data;
+
+    name = sclone(argv[0]);
+    title = spascal(name);
+
+    path = sfmt("%s/%s-list.esp", eroute->viewsDir, name);
+    tokens = mprDeserialize(sfmt("{ NAME: %s, TITLE: %s, }", name, title));
+    data = stemplate(ScaffoldListView, tokens);
+    makeFile(path, data, "Scaffold Index View");
+
+    path = sfmt("%s/%s-edit.esp", eroute->viewsDir, name);
+    tokens = mprDeserialize(sfmt("{ NAME: %s, TITLE: %s, }", name, title));
+    data = stemplate(ScaffoldEditView, tokens);
+    makeFile(path, data, "Scaffold Index View");
+}
+
+/*
+    esp generate scaffold model [field:type [, field:type] ...]
+ */
+static void generateScaffold(int argc, char **argv)
+{
+    cchar       *model;
+
+    if (argc < 1) {
+        usageError();
+        return;
+    }
+    model = sclone(argv[0]);
+    generateScaffoldController(1, argv);
+    generateScaffoldViews(argc, argv);
+    generateScaffoldModel(argc, argv);
+}
+
+
 static void generate(int argc, char **argv)
 {
     char    *kind;
@@ -645,17 +1010,33 @@ static void generate(int argc, char **argv)
     kind = argv[0];
 
     if (smatch(kind, "app")) {
-        setDirs(argv[1]);
-        generateAppDirs();
-        generateAppFiles();
-        generateAppConfigFile();
-        if (!app->error) {
-            trace("TASK", "Complete");
-        }
+        generateApp(argv[1]);
+
+    } else if (smatch(kind, "controller")) {
+        readConfig();
+        generateController(argc - 1, &argv[1]);
+
+    } else if (smatch(kind, "scaffold")) {
+        readConfig();
+        generateScaffold(argc - 1, &argv[1]);
+
+#if 0
+    } else if (smatch(kind, "migration")) {
+        readConfig();
+        generateMigration(argc - 1, argv[1]);
+
+    } else if (smatch(kind, "model")) {
+        readConfig();
+        generateModel(argc - 1, &argv[1]);
+#endif
 
     } else {
         mprError("Unknown generation kind %s", kind);
         usageError();
+        return;
+    }
+    if (!app->error) {
+        trace("TASK", "Complete");
     }
 }
 
@@ -665,6 +1046,7 @@ static void generateAppDirs()
     makeDir("");
     makeDir("cache");
     makeDir("controllers");
+    makeDir("db");
     makeDir("layouts");
     makeDir("static");
     makeDir("static/images");
@@ -685,6 +1067,8 @@ static void fixupFile(cchar *path)
         return;
     }
     data = sreplace(data, "${NAME}", app->appName);
+    data = sreplace(data, "${TITLE}", spascal(app->appName));
+    data = sreplace(data, "${PROVIDER}", app->provider);
     data = sreplace(data, "${DIR}", eroute->dir);
     data = sreplace(data, "${LISTEN}", app->listen);
     data = sreplace(data, "${LIBDIR}", app->libDir);
@@ -707,6 +1091,26 @@ static void generateAppFiles()
 }
 
 
+static bool checkPath(cchar *path)
+{
+    if (scontains(path, "jquery.", -1)) {
+        if (app->minified) {
+            if (!scontains(path, ".min.js", -1)) {
+                return 0;
+            }
+        } else {
+            if (scontains(path, ".min.js", -1)) {
+                return 0;
+            }
+        }
+    } else if (scontains(path, "treeview", -1)) {
+        return 0;
+    }
+    return 1;
+}
+
+
+
 static void copyDir(cchar *fromDir, cchar *toDir)
 {
     MprList     *files;
@@ -716,6 +1120,9 @@ static void copyDir(cchar *fromDir, cchar *toDir)
 
     files = mprGetPathFiles(fromDir, 1);
     for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
+        if (!checkPath(dp->name)) {
+            continue;
+        }
         from = mprJoinPath(fromDir, dp->name);
         to = mprJoinPath(toDir, dp->name);
         if (dp->isDir) {
@@ -733,14 +1140,14 @@ static void copyDir(cchar *fromDir, cchar *toDir)
                 fail("Can't make directory %s", mprGetPathDir(to));
                 return;
             }
-            if (mprCopyPath(from, to, 0644) < 0) {
-                fail("Can't copy file %s to %s", from, to);
-                return;
-            }
             if (mprPathExists(to, R_OK) && !app->overwrite) {
                 trace("EXISTS",  "File: %s", to);
             } else {
-                trace("CREATED",  "Static web file: %s", to);
+                trace("CREATE",  "File: %s", to);
+            }
+            if (mprCopyPath(from, to, 0644) < 0) {
+                fail("Can't copy file %s to %s", from, to);
+                return;
             }
         }
     }
@@ -771,7 +1178,7 @@ static void installAppConf()
         return;
     }
     fixupFile(to);
-    trace("CREATED",  "Config file: %s", to);
+    trace("CREATE",  "Config file: %s", to);
 }
 #endif
 
@@ -796,7 +1203,21 @@ static void generateAppConfigFile()
         return;
     }
     fixupFile("appweb.conf");
-    trace("CREATED",  "File: %s", to);
+    trace("CREATE",  "File: %s", to);
+}
+
+
+static void generateAppDb()
+{
+    char    *ext, *dbpath, buf[1];
+
+    ext = smatch(app->provider, "mdb") ? "mdb" : "sdb";
+    print("PROVIDER %s, ext %s", app->provider, ext);
+    dbpath = sfmt("%s/%s.%s", eroute->dbDir, app->appName, ext);
+    if (mprWritePath(dbpath, buf, 0, 0664) < 0) {
+        return;
+    }
+    trace("CREATE", "Database: %s", dbpath);
 }
 
 
@@ -841,6 +1262,27 @@ static void makeDir(cchar *dir)
 }
 
 
+static void makeFile(cchar *path, cchar *data, cchar *msg)
+{
+    bool    exists;
+
+    exists = mprPathExists(path, R_OK);
+    if (exists && !app->overwrite) {
+        trace("EXISTS", path);
+        return;
+    }
+    if (mprWritePath(path, data, slen(data), 0644) < 0) {
+        fail("Can't write %s", path);
+        return;
+    }
+    if (!exists) {
+        trace("CREATE", path);
+    } else {
+        trace("OVERWRITE", path);
+    }
+}
+
+
 static void usageError(Mpr *mpr)
 {
     cchar   *name;
@@ -855,6 +1297,7 @@ static void usageError(Mpr *mpr)
     "    --listen [ip:]port     # Listen on specified address \n"
     "    --log logFile:level    # Log to file file at verbosity level\n"
     "    --overwrite            # Overwrite existing files \n"
+    "    --provider name        # Database provider 'mdb|sqlite' \n"
     "    --quiet                # Don't emit trace \n"
     "    --routeName name       # Route name in appweb.conf to use \n"
     "    --routePrefix prefix   # Route prefix in appweb.conf to use \n"
@@ -862,11 +1305,16 @@ static void usageError(Mpr *mpr)
     "    --verbose              # Emit verbose trace \n"
     "\n"
     "  Commands:\n"
-    "    esp clean              # Clean cached files\n"
-    "    esp compile            # Compile all controllers, views and pages\n"
-    "    esp compile path/*.esp # Compile a single web page\n"
-    "    esp generate app name  # Generate a new application\n"
-    "    esp run                # Run appweb and the ESP app\n"
+    "    esp clean\n"
+    "    esp compile\n"
+    "    esp compile path/*.esp\n"
+    "    esp generate app name\n"
+    "    esp generate controller name [action [, action] ...\n"
+    "    esp generate migration description model [field:type [, field:type] ...]\n"
+    "    esp generate model name [field:type [, field:type] ...]\n"
+    "    esp generate scaffold model [field:type [, field:type] ...]\n"
+    "    esp migrate [forward|backward|NNN]\n"
+    "    esp run\n"
     "", name);
     app->error++;
 }
@@ -894,7 +1342,7 @@ static void trace(cchar *tag, cchar *fmt, ...)
         va_start(args, fmt);
         msg = sfmtv(fmt, args);
         tag = sfmt("[%s]", tag);
-        mprRawLog(0, "%12s %s\n", tag, msg);
+        mprRawLog(0, "%14s %s\n", tag, msg);
         va_end(args);
     }
 }
