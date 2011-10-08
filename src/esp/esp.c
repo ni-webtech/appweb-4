@@ -678,7 +678,7 @@ static void compile(int argc, char **argv)
 {
     MprList     *files;
     MprDirEntry *dp;
-    char        *path, *kind, *line;
+    char        *path, *kind, *line, *name;
     int         i, next;
 
     if (argc == 0) {
@@ -693,7 +693,17 @@ static void compile(int argc, char **argv)
             app->flat = 1;
         }
     }
-    if (smatch(kind, "*")) {
+    if (smatch(kind, "controller") || smatch(kind, "controllers")) {
+        if (argc == 1) {
+        } else {
+            for (i = 1; i < argc; i++) {
+                name = mprTrimPathExt(mprGetPathBase(argv[i]));
+                path = mprJoinPathExt(mprJoinPath(eroute->controllersDir, name), "c");
+                compileFile(path, ESP_CONTROLLER);
+            }
+        }
+
+    } else if (smatch(kind, "*")) {
         /*
             Build all items separately
          */
@@ -914,17 +924,17 @@ static void generateScaffoldMigration(int argc, char **argv)
 
 
 /*
-    esp generate model [field:type [, field:type] ...]
+    esp generate table name [field:type [, field:type] ...]
  */
-static void generateScaffoldModel(int argc, char **argv)
+static void generateTable(int argc, char **argv)
 {
     Edi     *edi;
-    cchar   *tableNaem, *title, *field;
+    cchar   *tableName, *title, *field;
     char    *typeString;
     int     rc, i, type;
 
-    tableNaem = sclone(argv[0]);
-    title = spascal(tableNaem);
+    tableName = sclone(argv[0]);
+    title = spascal(tableName);
     edi = eroute->edi;
 
     if (edi == 0) {
@@ -932,12 +942,12 @@ static void generateScaffoldModel(int argc, char **argv)
         return;
     }
     edi->flags |= EDI_SUPPRESS_SAVE;
-    if ((rc = ediAddTable(edi, tableNaem)) < 0) {
+    if ((rc = ediAddTable(edi, tableName)) < 0) {
         if (rc != MPR_ERR_ALREADY_EXISTS) {
-            fail("Can't add table '%s'", tableNaem);
+            fail("Can't add table '%s'", tableName);
         }
     } else {
-        if ((rc = ediAddColumn(edi, tableNaem, "id", EDI_TYPE_INT, EDI_AUTO_INC | EDI_INDEX | EDI_KEY)) != 0) {
+        if ((rc = ediAddColumn(edi, tableName, "id", EDI_TYPE_INT, EDI_AUTO_INC | EDI_INDEX | EDI_KEY)) != 0) {
             fail("Can't add column 'id'");
         }
     }
@@ -947,12 +957,12 @@ static void generateScaffoldModel(int argc, char **argv)
             fail("Unknown type '%s' for field '%s'", typeString, field);
             break;
         }
-        if ((rc = ediAddColumn(edi, tableNaem, field, type, 0)) != 0) {
+        if ((rc = ediAddColumn(edi, tableName, field, type, 0)) != 0) {
             if (rc != MPR_ERR_ALREADY_EXISTS) {
                 fail("Can't add column '%s'", field);
                 break;
             } else {
-                ediChangeColumn(edi, tableNaem, field, type, 0);
+                ediChangeColumn(edi, tableName, field, type, 0);
             }
         }
     }
@@ -982,7 +992,7 @@ static void generateScaffoldViews(int argc, char **argv)
 }
 
 /*
-    esp generate scaffold model [field:type [, field:type] ...]
+    esp generate scaffold NAME [field:type [, field:type] ...]
  */
 static void generateScaffold(int argc, char **argv)
 {
@@ -995,7 +1005,7 @@ static void generateScaffold(int argc, char **argv)
     model = sclone(argv[0]);
     generateScaffoldController(1, argv);
     generateScaffoldViews(argc, argv);
-    generateScaffoldModel(argc, argv);
+    generateTable(argc, argv);
 }
 
 
@@ -1020,15 +1030,15 @@ static void generate(int argc, char **argv)
         readConfig();
         generateScaffold(argc - 1, &argv[1]);
 
-#if 0
+#if UNUSED && KEEP
     } else if (smatch(kind, "migration")) {
         readConfig();
         generateMigration(argc - 1, argv[1]);
 
-    } else if (smatch(kind, "model")) {
-        readConfig();
-        generateModel(argc - 1, &argv[1]);
 #endif
+    } else if (smatch(kind, "table")) {
+        readConfig();
+        generateTable(argc - 1, &argv[1]);
 
     } else {
         mprError("Unknown generation kind %s", kind);
@@ -1212,7 +1222,6 @@ static void generateAppDb()
     char    *ext, *dbpath, buf[1];
 
     ext = smatch(app->provider, "mdb") ? "mdb" : "sdb";
-    print("PROVIDER %s, ext %s", app->provider, ext);
     dbpath = sfmt("%s/%s.%s", eroute->dbDir, app->appName, ext);
     if (mprWritePath(dbpath, buf, 0, 0664) < 0) {
         return;
@@ -1307,15 +1316,18 @@ static void usageError(Mpr *mpr)
     "  Commands:\n"
     "    esp clean\n"
     "    esp compile\n"
+    "    esp compile controller name ...\n"
     "    esp compile path/*.esp\n"
     "    esp generate app name\n"
     "    esp generate controller name [action [, action] ...\n"
-    "    esp generate migration description model [field:type [, field:type] ...]\n"
-    "    esp generate model name [field:type [, field:type] ...]\n"
     "    esp generate scaffold model [field:type [, field:type] ...]\n"
+    "    esp generate table name [field:type [, field:type] ...]\n"
     "    esp migrate [forward|backward|NNN]\n"
     "    esp run\n"
     "", name);
+#if UNUSED && KEEP
+    "    esp generate migration description model [field:type [, field:type] ...]\n"
+#endif
     app->error++;
 }
 
