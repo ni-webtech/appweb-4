@@ -92,7 +92,7 @@ static cchar *ScaffoldTemplateHeader = "\
 static void create() { \n\
     if (writeRec(createRec(\"${NAME}\", params()))) {\n\
         inform(\"New ${NAME} created\");\n\
-        redirect(\"@\");\n\
+        renderView(\"${NAME}-list\");\n\
     } else {\n\
         renderView(\"${NAME}-edit\");\n\
     }\n\
@@ -102,7 +102,7 @@ static void destroy() { \n\
     if (removeRec(\"${NAME}\", param(\"id\"))) {\n\
         inform(\"${TITLE} removed\");\n\
     }\n\
-    redirect(\"@\");\n\
+    renderView(\"${NAME}-list\");\n\
 }\n\
 \n\
 static void edit() { \n\
@@ -124,7 +124,7 @@ static void show() { \n\
 static void update() { \n\
     if (writeFields(\"${NAME}\", params())) {\n\
         inform(\"${TITLE} updated successfully.\");\n\
-        redirect(\"@\");\n\
+        renderView(\"${NAME}-list\");\n\
     } else {\n\
         renderView(\"${NAME}-edit\");\n\
     }\n\
@@ -1193,27 +1193,39 @@ static void installAppConf()
 #endif
 
 
-static void generateAppConfigFile()
+static void copyFile(cchar *from, cchar *to)
 {
-    char    *from, *to, *conf;
+    char    *data;
     ssize   len;
 
-    from = mprJoinPath(app->wwwDir, "appweb.conf");
-    if ((conf = mprReadPathContents(from, &len)) == 0) {
+    if ((data = mprReadPathContents(from, &len)) == 0) {
         fail("Can't read %s", from);
         return;
     }
-    to = mprJoinPath(eroute->dir, "appweb.conf");
     if (mprPathExists(to, R_OK) && !app->overwrite) {
         trace("EXISTS",  "Config file: %s", to);
         return;
 
-    } else if (mprWritePath(to, conf, slen(conf), 0644) < 0) {
+    } else if (mprWritePath(to, data, slen(data), 0644) < 0) {
         fail("Can't write %s", to);
         return;
     }
-    fixupFile("appweb.conf");
+    fixupFile(mprGetAbsPath(to));
     trace("CREATE",  "File: %s", to);
+}
+
+
+static void generateAppConfigFile()
+{
+    char    *from, *to;
+
+    from = mprJoinPath(app->wwwDir, "appweb.conf");
+    to = mprJoinPath(eroute->dir, "appweb.conf");
+    copyFile(from, to);
+
+    from = mprJoinPath(app->wwwDir, "app.conf");
+    to = mprJoinPath(eroute->dir, "app.conf");
+    copyFile(from, to);
 }
 
 
