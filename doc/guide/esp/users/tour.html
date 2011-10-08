@@ -60,14 +60,14 @@
 <!-- BeginDsi "dsi/espSeeAlso.html" -->
 		        <h2>See Also</h2>
 		        <ul>
-		          <li><a href="../../../../../../guide/appweb/esp/espTour.html">Web Framework Tour</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/tour.html">ESP Tour</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/template.html">Views and Layouts</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/controls.html">HTML Controls</a></li>
 		          <li><a href="../../../../../../guide/appweb/esp/mvc.html">Model-View-Controller</a></li>
 		          <li><a href="../../../../../../guide/appweb/esp/generator.html">Application Generator</a></li>
 		          <li><a href="../../../../../../guide/appweb/esp/controllers.html">Controllers and Actions</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/views.html">Views and Layouts</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/controls.html">Ajax View Controls</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/models.html">Database Models</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/hosting.html">Hosting in Web Servers</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/database.html">Database Interface</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/caching.html">Caching Responses</a></li>
 		        </ul>
 <!-- EndDsi -->
         </div>
@@ -211,7 +211,6 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
 </pre>
             <p>Then enter <b>localhost:4000</b> in your browser. You should see your first application home
             page.</p><img src="../../../images/esp/webtour-home.png" class="screen" alt="" />
-
             <a name="hello" id="hello"></a>
             <h2 class="section">Hello World</h2>
             <p>The next step is to create a simple "Hello World" web page. ESP web pages have an <b>.esp</b>
@@ -228,7 +227,6 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
             <p>To view the "Hello" web page in your browser, type in the following url:
             http://localhost:4000/static/hello.esp.</p>
             <img src="../../../images/esp/webtour-hello.png" alt="hello" class= "screen" /> 
-
             <a name="dynamic" id="dynamic"></a>
             <h2>Layouts</h2>
             <p>The ESP templating engine can apply a layout page to allow each page so that it inherits its layout and
@@ -256,7 +254,6 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
 </pre>
             <p>Now when you re-run the page, it will display the current date and time:</p><img src=
             "../../../images/esp/webtour-hello-dynamic.png" alt="hello" class="screen" />
-
             <h3>No Restart Require</h3>
             <p>Notice that you did not have to restart the web server, nor did you have to manually recompile the
             application. Rather, ESP transparently recompiled the web page in the background. ESP noticed that the hello.esp
@@ -276,7 +273,6 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
             statements in your web page. The <b>render</b> function allows you to write arbitrary data which is patched
             back where the directive was defined in the page. See the <a href="views.html">Views and Layouts</a>
             document for full details about all the ESP web page directives.</p><a name="views" id="views"></a>
-
             <a name="scaffolds" id="scaffolds"></a>
             <h2 class="scaffolds">Scaffolds</h2>
             <p>Scaffolding is a quick way to generate pieces of your application. The <tt>esp</tt> command can generate
@@ -293,29 +289,24 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
 </pre>
             <p>This command created a database table called "post" and a post controller with
             <tt>post-list</tt> and <tt>post-edit</tt> views. 
-
             <p>Now if you set your browser to the URI for the post controller, you will see your post listing screen.
             <img src="../../../images/esp/webtour-post-list.png" alt="postList" class="screen" /> <a name="newPosts" id=
             "newPosts"></a></p>
-
             <h2 class="section">Create New Posts</h2>
             <p>The new post button directs your browser to the <tt>/post/init</tt> URI. Behind the scenes, Appweb
             parses this URI and and selects the appropriate request route and handler for the request. It 
             then identifies "post" as the name of the controler and "init" as the name of an action to invoke. 
             The controller file <tt>controllers/post.c</tt> defines the controller action to respond to this
             request.</p>
-
             <p>The controller file defines functions called actions, that are bound to URIs of the same name. Actions
             are defined using the <b>espDefineAction</b> API in the initialization function of the controller. When 
             a request comes for a given action, the corresponding action method is invoked.</p>
             <p>A minimal controller file looks like this:
             <pre>
 #include "esp.h"
-
 static void hello() { 
     render("Hello World\n");
 }
-
 ESP_EXPORT int esp_controller_NAME(EspRoute *eroute, MprModule *module) 
 {
     espDefineAction(eroute, "hello", hello);
@@ -338,7 +329,6 @@ static void create() {
             <p>The <tt>create</tt> action above creates a new post record based on the request parameters and then 
             uses the <tt>views/post-edit.esp</tt> view to render a response to the client. ESP <tt>edit</tt> scaffolds 
             handle the work of both <tt>edit</tt> and <tt>create</tt> views because they are so similar.</p>
-
             <p>If an action does not call any of the <tt>render</tt> methods (as the <tt>list</tt> action does not),
             ESP will automatically invoke a view of the same name. In the case of the <tt>list</tt> action, the
             <tt>views/post-list.esp</tt> will be used to generate the response.</p>
@@ -355,14 +345,12 @@ static void create() {
             <p>The <tt>@post/</tt> link means redirect to the <tt>post</tt> controller if the label is clicked.</p>
             Reload the page and you will see:</p>
             <img src="../../../images/esp/webtour-home-link.png" alt="homeLink" class="screen" /> 
-
             <h2>Code Errors</h2>
             <p>What happens if you make a mistake entering the embedded "C" code in an ESP page. Say you forgot the 
             semicolon in the last example. You will see an error like this in your browser:</p>
             <img src="../../../images/esp/webtour-error.png" alt="homeLink" class="screen" /> 
             <p>You can suppress these errors by setting <tt>EspShowErrors</tt> to <tt>off</tt> in the appweb.conf
             configuration file.</p>
-
             <a name="layout" id="layout"></a>
             <h2>Changing the Layout</h2>
             <p>You may wish to add some tabs to navigate your blog app. ESP provides a layout
@@ -398,16 +386,13 @@ esp compile
 ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module) 
 {
     <b>Edi *edi;</b>
-
     /* Existing code */
-
     <b>edi = getDatabase();
     ediAddValidation(edi, "present", "post", "title", 0);
     ediAddValidation(edi, "present", "post", "body", 0);
     ediAddValidation(edi, "unique", "post", "title", 0);</b>
     return 0;
 }
-
 </pre>
             <p>This will cause the database to automatically validate that the <tt>title</tt> and <tt>body</tt> fields are
             not blank and that the <tt>title</tt> is unique in the database.</p>
@@ -422,7 +407,6 @@ ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module)
            
             <p>Other validation types include: checkNumber, checkBoolean, checkDate and checkFormat.
             You can also define new validation types by calling <tt>ejsDefineValidation</tt>.
-
             <a name="learn" id="learn"></a>
             <h2 class="section">Learn More ...</h2>
             <p>That concludes the a quick tour through some of the capabilities of the ESP web framework.</p>
@@ -436,7 +420,7 @@ ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module)
 	<div class="bottom">
 		<p class="footnote"> 
             <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2011. 
-            All rights reserved. Embedthis, ESP and Appweb are trademarks of Embedthis Software LLC.</a>
+            All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
 <!-- EndDsi -->

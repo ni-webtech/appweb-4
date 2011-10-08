@@ -58,14 +58,14 @@
 <!-- BeginDsi "dsi/espSeeAlso.html" -->
 		        <h2>See Also</h2>
 		        <ul>
-		          <li><a href="../../../../../../guide/appweb/esp/espTour.html">ESP Tour</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/tour.html">ESP Tour</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/template.html">Views and Layouts</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/controls.html">HTML Controls</a></li>
 		          <li><a href="../../../../../../guide/appweb/esp/mvc.html">Model-View-Controller</a></li>
 		          <li><a href="../../../../../../guide/appweb/esp/generator.html">Application Generator</a></li>
 		          <li><a href="../../../../../../guide/appweb/esp/controllers.html">Controllers and Actions</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/views.html">Views and Layouts</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/controls.html">Ajax View Controls</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/models.html">Database Models</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/hosting.html">Hosting in Web Servers</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/database.html">Database Interface</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/caching.html">Caching Responses</a></li>
 		        </ul>
 <!-- EndDsi -->
         </div>
@@ -75,7 +75,6 @@
             This tool makes it easy and quick to create and manage your web applications. The <tt>esp</tt> 
             command generates web applications, database schema, scaffolds and views. The <tt>esp</tt> command 
             can also be used to run your application by invoking a configured web server.</p>
-
             <a name="app" id="app"></a>
             <h2 class="section">Generating Applications</h2>
             <p>To start a new web application, run <b>esp</b> to create the application directory and generate the
@@ -139,7 +138,6 @@ esp generate app myApp
                     </tr>
                 </tbody>
             </table>
-
             <p>The <tt>esp</tt> command will also create some files which have the following meaning:</p>
             <table summary="Files" width="100%">
                 <thead>
@@ -189,19 +187,14 @@ esp generate controller admin edit login logout command
     admin controller
  */
 #include "esp.h"
-
 static void edit() {
 }
-
 static void login() {
 }
-
 static void logout() {
 }
-
 static void command() {
 }
-
 ESP_EXPORT int esp_controller_admin(EspRoute *eroute, MprModule *module) 
 {
     espDefineAction(eroute, "admin-edit", edit);
@@ -222,7 +215,6 @@ esp generate table NAME [field:type ...]
             the requested type. The valid database types are: binary, boolean, date,
             datetime, decimal, float, integer, number, string, text, time, timestamp. <a name="scaffolds" id=
             "scaffolds"></a></p>
-
             <h2 class="section">Generating Scaffolds</h2>
             <p>Scaffolds enable you to quickly create sections of your application. A scaffold provides CRUD 
             (create, read, update and delete) functionality for a database table. 
@@ -238,7 +230,6 @@ esp generate scaffold NAME [field:type ...]
                 float, int, string, text</tt>. The scaffold will include an edit action
             and view page that provides add and edit capability. The list action and view, provides the ability to list
             the database table rows and select an entry to edit.</p>
-
         <!--
             <a name="migrations" id="migrations"></a>
             <h2 class="section">Generating Migrations</h2>
@@ -268,12 +259,10 @@ esp generate migration description MODEL [field:type ...]
             <p>ESP compiles views and controllers into native machine code libraries. These are then loaded
             and run by ESP in response to incoming client requests. Code is compiled only once but can be run many
             times to service incoming requests.</p>
-
             <p>In development mode, ESP will automatically compile the relevant portions of the application if the
             source code is modified. It can intelligently recompile views and controllers as
             required. However, you can also explicilty recompile portions or the complete application via
             the <tt>esp</tt> command.</p>
-
             <h3>Compile Everything</h3>
             <p>The <tt>esp</tt> command can recompile the entire application via:</p>
             <pre>
@@ -281,7 +270,6 @@ esp compile
 </pre>
             <p>This will compile and link all controllers and views and place the generated shared libraries (DLLs)
             in the <tt>cache</tt> directory.
-
             <h3>Compile Views and Controllers</h3>
             <p>The <tt>esp</tt> command also provides options for you to individually compile controllers and views. To recompile named
             views or controllers. For example:</p>
@@ -388,7 +376,7 @@ esp run
 	<div class="bottom">
 		<p class="footnote"> 
             <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2011. 
-            All rights reserved. Embedthis, ESP and Appweb are trademarks of Embedthis Software LLC.</a>
+            All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
 <!-- EndDsi -->
