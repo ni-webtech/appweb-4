@@ -1,10 +1,9 @@
 /*
-    jquery.esp.js - Ejscript jQuery support
-    http://www.espcript.com/
+    jquery.esp.js - ESP jQuery support
   
     Copyright (c) 2011 Embedthis Software
     Dual licensed under GPL licenses and the Embedthis commercial license.
-    See http://www.embedthis.com/ for further licensing details.
+    See http://embedthis.com/ for further licensing details.
  */
 
 ;(function($) {
