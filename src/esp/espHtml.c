@@ -1264,6 +1264,7 @@ Edi *getDatabase()
 
     if ((eroute = getRoute()) == 0 || eroute->edi == 0) {
         httpError(getConn(), 0, "Can't get database instance");
+        return 0;
     }
     return eroute->edi;
 }

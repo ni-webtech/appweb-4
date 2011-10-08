@@ -21,6 +21,7 @@ static Esp *esp;
 /************************************ Forward *********************************/
 
 static EspRoute *allocEspRoute(HttpRoute *loc);
+static int espDbDirective(MaState *state, cchar *key, cchar *value);
 static bool fetchCachedResponse(HttpConn *conn);
 static char *getControllerEntry(cchar *controllerName);
 static EspRoute *getEspRoute(HttpRoute *route);
@@ -321,6 +322,7 @@ void espWriteView(HttpConn *conn, cchar *name)
                 return;
             }
             //  MOB - this should return an error msg
+            mprSetThreadData(esp->local, conn);
             if (mprLoadModule(mp) < 0) {
                 httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load compiled esp module for %s", req->source);
                 return;
@@ -544,6 +546,7 @@ static int loadApp(HttpConn *conn, int *updated)
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find module %s", eroute->appModulePath);
             return 0;
         }
+        mprSetThreadData(esp->local, conn);
         if (mprLoadModule(mp) < 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load compiled esp module for %s", eroute->appModuleName);
             return 0;
@@ -871,8 +874,9 @@ static void setRouteDirs(MaState *state, cchar *kind)
 
 /*********************************** Directives *******************************/
 /*
-    EspApp appName [path [routeSet]]
+    EspApp Prefix [Dir [RouteSet [Database]]]
 
+    This is the same as EspAppAlias but without creating a new route. 
     This should only be used inside dedicated ESP routes. This directive is equivalent to:
 
         Prefix       appName
@@ -885,13 +889,13 @@ static int espAppDirective(MaState *state, cchar *key, cchar *value)
 {
     HttpRoute   *route;
     EspRoute    *eroute;
-    char        *appName, *path, *routeSet;
+    char        *appName, *path, *routeSet, *database;
 
     route = state->route;
     if ((eroute = getEspRoute(route)) == 0) {
         return MPR_ERR_MEMORY;
     }
-    if (!maTokenize(state, value, "%S %S ?S", &appName, &path, &routeSet)) {
+    if (!maTokenize(state, value, "%S ?S ?S ?S", &appName, &path, &routeSet, &database)) {
         return MPR_ERR_BAD_SYNTAX;
     }
     if (*appName != '/') {
@@ -908,19 +912,32 @@ static int espAppDirective(MaState *state, cchar *key, cchar *value)
         httpSetRoutePattern(route, sjoin("/", appName, NULL), 0);
     }
     httpSetRouteSource(route, "");
+    if (path == 0) {
+        path = route->dir;
+    }
+    if (path == 0) {
+        path = sclone(".");
+    }
     httpSetRouteDir(route, path);
     eroute->dir = route->dir;
     httpAddRouteHandler(route, "espHandler", "");
     
     /* Must set dirs first before defining route set */
-    setRouteDirs(state, routeSet);
-    httpAddRouteSet(state->route, routeSet);
+    if (routeSet) {
+        setRouteDirs(state, routeSet);
+        httpAddRouteSet(state->route, routeSet);
+    }
+    if (database) {
+        if (espDbDirective(state, key, database) < 0) {
+            return MPR_ERR_BAD_STATE;
+        }
+    }
     return 0;
 }
 
 
 /*
-    EspAppAlias appName [path [routeSet]]
+    EspAppAlias Prefix [Dir [RouteSet [Database]]]
  */
 static int espAppAliasDirective(MaState *state, cchar *key, cchar *value)
 {
@@ -969,22 +986,27 @@ static int espCompileDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    EspDb path provider options
+    EspDb provider://database
  */
 static int espDbDirective(MaState *state, cchar *key, cchar *value)
 {
     EspRoute    *eroute;
-    cchar       *provider, *path, *options;
+    char        *provider, *path;
     int         flags;
 
     if ((eroute = getEspRoute(state->route)) == 0) {
         return MPR_ERR_MEMORY;
     }
-    if (!maTokenize(state, value, "%S %S ?S", &path, &provider, &options)) {
-        return MPR_ERR_BAD_SYNTAX;
-    }
-    flags = EDI_CREATE;
+    flags = EDI_CREATE | EDI_AUTO_SAVE;
+#if UNUSED
     flags |= smatch(options, "auto") ? EDI_AUTO_SAVE : 0;
+#endif
+    provider = stok(sclone(value), "://", &path);
+    if (provider == 0 || path == 0) {
+        mprError("Bad database spec '%s'. Use: provider://database", value);
+        return MPR_ERR_CANT_OPEN;
+    }
+    path = mprJoinPath(eroute->dbDir, path);
     if ((eroute->edi = ediOpen(path, provider, flags)) == 0) {
         mprError("Can't open database %s", path);
         return MPR_ERR_CANT_OPEN;

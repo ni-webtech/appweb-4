@@ -14431,7 +14431,7 @@ char *mprSearchForModule(cchar *filename)
 /************************************************************************/
 
 /**
-    iprPath.c - Path (filename) services.
+    mprPath.c - Path (filename) services.
 
     This modules provides cross platform path name services.
 

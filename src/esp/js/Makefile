@@ -11,7 +11,8 @@ TARGETS		+= $(DEST)/jquery.min.js
 TARGETS		+= $(DEST)/jquery.esp.min.js
 TARGETS		+= $(DEST)/jquery.simplemodal.min.js
 TARGETS		+= $(DEST)/jquery.tablesorter.min.js
-TARGETS		+= $(DEST)/jquery.treeview.min.js
+
+# TARGETS	+= $(DEST)/jquery.treeview.min.js
 
 gen: $(TARGETS)
 

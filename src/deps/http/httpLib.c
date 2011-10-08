@@ -7127,6 +7127,9 @@ HttpRoute *httpCreateRoute(HttpHost *host)
     route->expiresByType = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_STATIC_VALUES);
     route->extensions = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
     route->flags = HTTP_ROUTE_GZIP;
+#if UNUSED 
+    route->flags = HTTP_ROUTE_GZIP | HTTP_ROUTE_PUT_DELETE;
+#endif
     route->handlers = mprCreateList(-1, 0);
     route->host = host;
     route->http = MPR->httpService;
@@ -7136,6 +7139,7 @@ HttpRoute *httpCreateRoute(HttpHost *host)
     route->pathTokens = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
     route->pattern = MPR->emptyString;
     route->targetRule = sclone("run");
+    route->autoDelete = 1;
     route->workers = -1;
     definePathVars(route);
     return route;
