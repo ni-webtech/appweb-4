@@ -676,6 +676,9 @@ static void textInner(HttpConn *conn, cchar *field, MprHash *options)
 
     type = "text";
     value = getValue(conn, field, options);
+    if (value == 0 || *value == '\0') {
+        value = espGetParam(conn, field, "");
+    }
     if ((rows = httpGetOption(options, "rows", 0)) != 0) {
         cols = httpGetOption(options, "cols", "60");
         if (httpGetOption(options, "password", 0)) {
