@@ -189,13 +189,6 @@
       <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
-      <type>bool</type>
-      <name>espFinalized</name>
-      <anchorfile>group___esp_req.html</anchorfile>
-      <anchor>ga5a3491684933d6cb6fdf6774a7fbb083</anchor>
-      <arglist>(HttpConn *conn)</arglist>
-    </member>
-    <member kind="function">
       <type>void</type>
       <name>espFlush</name>
       <anchorfile>group___esp_req.html</anchorfile>
@@ -313,6 +306,13 @@
       <anchorfile>group___esp_req.html</anchorfile>
       <anchor>ga335bcd4fcf7ac6da263e415a892c08b9</anchor>
       <arglist>(HttpConn *conn, cchar *fmt,...)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>espIsFinalized</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga610467cde893472908e6c25bde472fc4</anchor>
+      <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
       <type>bool</type>
@@ -659,8 +659,8 @@
       <type>void</type>
       <name>espTabs</name>
       <anchorfile>group___esp_control.html</anchorfile>
-      <anchor>gae9bbcbf39a35c4a2d7de23ffc78eb938</anchor>
-      <arglist>(HttpConn *conn, EdiGrid *grid, cchar *options)</arglist>
+      <anchor>ga99318656d06ca7b87c39c88fda5839a6</anchor>
+      <arglist>(HttpConn *conn, EdiRec *rec, cchar *options)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -1021,8 +1021,8 @@
       <type>void</type>
       <name>tabs</name>
       <anchorfile>group___esp_abbrev.html</anchorfile>
-      <anchor>gab4a582d25dbcc2407a250c1ad4f2f34f</anchor>
-      <arglist>(EdiGrid *grid, cchar *options)</arglist>
+      <anchor>ga15bfb2c9cde23c908c659eb261901d01</anchor>
+      <arglist>(EdiRec *rec, cchar *options)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -1334,8 +1334,8 @@
       <type>Edi *</type>
       <name>ediOpen</name>
       <anchorfile>group___edi.html</anchorfile>
-      <anchor>ga6e1cc3f8f95dea6d77de4bfb35c413b1</anchor>
-      <arglist>(cchar *provider, cchar *source, int flags)</arglist>
+      <anchor>ga7c923cfc31d2c7d94c9338c7849b8da6</anchor>
+      <arglist>(cchar *source, cchar *provider, int flags)</arglist>
     </member>
     <member kind="function">
       <type>int</type>

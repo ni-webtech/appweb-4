@@ -46,7 +46,7 @@
             <ul>
                 <li><a href="#app">Generating Applications</a></li>
                 <li><a href="#controllers">Generating Controllers</a></li>
-                <li><a href="#models">Generating Models</a></li>
+                <li><a href="#database">Generating Database Tables</a></li>
                 <li><a href="#scaffolds">Generating Scaffolds</a></li>
                 <li><a href="#migrations">Generating Migrations</a></li>
                 <li><a href="#runMigrations">Running Migrations</a></li>
@@ -70,26 +70,29 @@
 <!-- EndDsi -->
         </div>
         <div class="contentLeft">
-            <h1>Application Generator &mdash; esp</h1>
-            <p>ESP provides an application generator and manager, called <b>esp</b>. This tool makes it easier
-            and quicker to create and manage your web applications. The <b>esp</b> command generates ESP web
-            applications, database migrations, database models, scaffolds and views.</p>
-            <p>Ejsweb will create directories and generate configuration and source code files which can then be
-            manually edited as required. Ejsweb is intelligent and will not overwrite existing files, so you can safely
-            edit and regenerate without losing your changes. You can overwrite your changes if you wish to by using the
-            <b>--overwrite</b> switch.</p>
-            <p>Ejsweb can also be used to run your application by invoking a configured web server.</p><a name="app"
-            id="app"></a>
+            <h1>Application Generator &mdash; <tt>esp</tt></h1>
+            <p>Embedded Server Pages provides an application generator and manager in the <tt>esp</tt> program. 
+            This tool makes it easy and quick to create and manage your web applications. The <tt>esp</tt> 
+            command generates web applications, database schema, scaffolds and views. The <tt>esp</tt> command 
+            can also be used to run your application by invoking a configured web server.</p>
+
+            <a name="app" id="app"></a>
             <h2 class="section">Generating Applications</h2>
             <p>To start a new web application, run <b>esp</b> to create the application directory and generate the
             essential application configuration and script files. For example:</p>
             <pre>
 esp generate app myApp
 </pre>
+            <p>The <tt>esp</tt> command will create directories and generate configuration and source code 
+            files which can then be manually edited as required. The <tt>esp</tt> command is intelligent and will 
+            not overwrite existing files, so you can safely edit and regenerate without losing your changes. 
+            You can overwrite your changes if you wish to by using the
+            <tt>--overwrite</tt> switch.</p>
+            
             <h3>Created Directories</h3>
-            <p>This will create the following directories. Most of these directories are initially empty, but may be
-            used over time. ESP follows conventions where specific files are stored. This greatly simplifies
-            configuring a web application.</p>
+            <p>The <tt>esp</tt> command will create some standard directories when generating an application.
+            Some of these directories are initially empty, but may be used over time. ESP follows conventions 
+            where specific files are stored. This greatly simplifies configuring and managing web applications.</p>
             <table summary="Directories" width="100%">
                 <thead>
                     <tr>
@@ -99,20 +102,8 @@ esp generate app myApp
                 </thead>
                 <tbody>
                     <tr>
-                        <td>.tmp</td>
-                        <td>Temporary working directory</td>
-                    </tr>
-                    <tr>
-                        <td>.ejs</td>
-                        <td>State files used by esp</td>
-                    </tr>
-                    <tr>
-                        <td>bin</td>
-                        <td>Programs and scripts</td>
-                    </tr>
-                    <tr>
-                        <td>config</td>
-                        <td>Configuration files</td>
+                        <td>cache</td>
+                        <td>Cached modules and views</td>
                     </tr>
                     <tr>
                         <td>controllers</td>
@@ -123,64 +114,33 @@ esp generate app myApp
                         <td>Databases and scripts</td>
                     </tr>
                     <tr>
-                        <td>db/migrations</td>
-                        <td>Database migration scripts</td>
-                    </tr>
-                    <tr>
-                        <td>doc</td>
-                        <td>Documentation for the application</td>
-                    </tr>
-                    <tr>
-                        <td>logs</td>
-                        <td>Log files</td>
-                    </tr>
-                    <tr>
-                        <td>models</td>
-                        <td>Database model code</td>
-                    </tr>
-                    <tr>
-                        <td>messages</td>
-                        <td>Internationalization messages</td>
-                    </tr>
-                    <tr>
-                        <td>test</td>
-                        <td>Unit tests</td>
-                    </tr>
-                    <tr>
-                        <td>src</td>
-                        <td>Extra application source code</td>
-                    </tr>
-                    <tr>
-                        <td>utils</td>
-                        <td>Program utilities</td>
+                        <td>layouts</td>
+                        <td>Layout template pages</td>
                     </tr>
                     <tr>
                         <td>views</td>
                         <td>View source files</td>
                     </tr>
                     <tr>
-                        <td>views/layouts</td>
-                        <td>View layout files</td>
+                        <td>static</td>
+                        <td>Static web conent</td>
                     </tr>
                     <tr>
-                        <td>web</td>
-                        <td>Public web directory</td>
-                    </tr>
-                    <tr>
-                        <td>web/images</td>
-                        <td>Public images</td>
-                    </tr>
-                    <tr>
-                        <td>web/js</td>
+                        <td>static/images</td>
                         <td>Client side JavaScripts</td>
                     </tr>
                     <tr>
-                        <td>web/themes</td>
+                        <td>static/js</td>
+                        <td>Client side JavaScripts</td>
+                    </tr>
+                    <tr>
+                        <td>static/themes</td>
                         <td>Application HTML themes</td>
                     </tr>
                 </tbody>
             </table>
-            <p>Ejsweb will also create some files which have the following meaning:</p>
+
+            <p>The <tt>esp</tt> command will also create some files which have the following meaning:</p>
             <table summary="Files" width="100%">
                 <thead>
                     <tr>
@@ -190,43 +150,25 @@ esp generate app myApp
                 </thead>
                 <tbody>
                     <tr>
-                        <td>config/config.ecf</td>
-                        <td>Application configuration file</td>
+                        <td>appweb.conf</td>
+                        <td>Appweb startup configuration file</td>
                     </tr>
                     <tr>
-                        <td>config/compiler.ecf</td>
-                        <td>Compiler configuration file</td>
-                    </tr>
-                    <tr>
-                        <td>config/database.ecf</td>
-                        <td>Database configuration file</td>
-                    </tr>
-                    <tr>
-                        <td>config/view.ecf</td>
-                        <td>View connector configuration file</td>
-                    </tr>
-                    <tr>
-                        <td>web/themes/default.css</td>
+                        <td>static/themes/default.css</td>
                         <td>Default theme CSS file</td>
                     </tr>
                     <tr>
-                        <td>web/layout.css</td>
+                        <td>static/layout.css</td>
                         <td>Default layout CSS file</td>
                     </tr>
                     <tr>
-                        <td>controllers/Application.es</td>
-                        <td>Application base controller class</td>
-                    </tr>
-                    <tr>
-                        <td>views/layouts/default.ejs</td>
-                        <td>Default layout web page</td>
-                    </tr>
-                    <tr>
-                        <td>README</td>
-                        <td>Documentation explaining these files and directories</td>
+                        <td>layouts/default.esp</td>
+                        <td>Default layout template page</td>
                     </tr>
                 </tbody>
-            </table><a name="controllers" id="controllers"></a>
+            </table>
+            
+            <a name="controllers" id="controllers"></a>
             <h2 class="section">Generating Controllers</h2>
             <p>Controllers are the primary mechanism for responding to client requests. To generate a controller:</p>
             <pre>
@@ -240,47 +182,65 @@ esp generate controller NAME [actions...]
             controller source to meet your needs.</p>
             <p>If you use the command:</p>
             <pre>
-esp generate controller Admin edit login logout command.
+esp generate controller admin edit login logout command
 </pre>The following controller code will be generated.
             <pre>
-public class AdminController extends BaseController {
-    function AdminController() { 
-    }
-    action function edit() {
-    }
-    action function login() {
-    }
-    action function logout() {
-    }
+/*
+    admin controller
+ */
+#include "esp.h"
+
+static void edit() {
 }
-</pre><a name="models" id="models"></a>
-            <h2 class="section">Generating Models</h2>
-            <p>Database models are ESP classes that encapsulate database data and provide access methods. They
-            provide a conduit to interact with the database. To generate a model:</p>
-            <pre>
-esp generate model MODEL [field:type ...]
+
+static void login() {
+}
+
+static void logout() {
+}
+
+static void command() {
+}
+
+ESP_EXPORT int esp_controller_admin(EspRoute *eroute, MprModule *module) 
+{
+    espDefineAction(eroute, "admin-edit", edit);
+    espDefineAction(eroute, "admin-login", login);
+    espDefineAction(eroute, "admin-logout", logout);
+    espDefineAction(eroute, "admin-command", command);
+    return 0;
+}
 </pre>
-            <p>This will create a database model and will generate a model class under the <tt>models</tt> directory.
-            It will also create a database migration to create a database table of the same name as the model.</p>
-            <p>If <tt>field:type</tt> values are supplied, the database migration will include code to create a column
-            for each specified field of the requested type. The valid database types are: binary, boolean, date,
+    <a name="database" id="database"></a>
+            <h2 class="section">Generating Database Tables</h2>
+            <p>Database schema can be created and modified via the <tt>esp</tt> command. 
+            This will create a database table with fields of the required types.</p>
+            <pre>
+esp generate table NAME [field:type ...]
+</pre>
+            <p>If <tt>field:type</tt> values are supplied, the database will be updated for each specified field of 
+            the requested type. The valid database types are: binary, boolean, date,
             datetime, decimal, float, integer, number, string, text, time, timestamp. <a name="scaffolds" id=
             "scaffolds"></a></p>
+
             <h2 class="section">Generating Scaffolds</h2>
-            <p>A scaffold is a generated database migration, database model, controller and a set of views that provide
-            add, edit and list functionality for a database model. Scaffolds are useful to quickly generate prototype
+            <p>Scaffolds enable you to quickly create sections of your application. A scaffold provides CRUD 
+            (create, read, update and delete) functionality for a database table. 
+            Generating a scaffold will create a database table, controller and a set of views that provide
+            add, edit and list functionality for a database table. Scaffolds are useful to quickly generate prototype
             web pages and actions for managing a datbase table. To generate a scaffold:</p>
             <pre>
-esp generate scaffold MODEL [field:type ...]
+esp generate scaffold NAME [field:type ...]
 </pre>
-            <p>This will create a scaffold for the database model and will generate a controller of the same name. If
-            field:type values are supplied, the database migration will include code to create a database column for
-            each specified field of the requested type. The valid database types are: binary, boolean, date, datetime,
-            decimal, float, integer, number, string, text, time, timestamp. The scaffold will include an edit action
+            <p>This will create a scaffold for the named database table and will generate a controller of the same name. 
+            If field:type values are supplied, the database will be updated with columns for
+            each specified field of the requested type. The valid database types are: <tt>binary, bool, date, 
+                float, int, string, text</tt>. The scaffold will include an edit action
             and view page that provides add and edit capability. The list action and view, provides the ability to list
             the database table rows and select an entry to edit.</p>
-            <p>You can use the --apply switch to apply the generated database migration and upgrade the
-            database.</p><a name="migrations" id="migrations"></a>
+
+        <!--
+            <a name="migrations" id="migrations"></a>
             <h2 class="section">Generating Migrations</h2>
             <p>Database migrations are scripts which modify the database schema or content. You can create database
             migrations by the "<tt>esp generate migration</tt>" command. This command generates a migration for a
@@ -300,27 +260,34 @@ esp generate migration description MODEL [field:type ...]
             "<tt>esp migrate forward</tt>" to apply the next unapplied migration. Similarly, "<tt>esp migrate
             backward</tt>" will reverse the last applied migration. You can also use "<tt>esp migrate NNN</tt>" to
             migrate forward or backward to a specific migration. NNN is the migration sequence number which is the
-            number at the start of the migration script file name.</p><a name="compiling" id="compiling"></a>
+            number at the start of the migration script file name.</p>
+        -->
+            
+            <a name="compiling" id="compiling"></a>
             <h2 class="section">Compiling</h2>
-            <p>ESP compiles models, views and controllers into ESP byte code modules. These are then loaded
+            <p>ESP compiles views and controllers into native machine code libraries. These are then loaded
             and run by ESP in response to incoming client requests. Code is compiled only once but can be run many
             times to service incoming requests.</p>
+
             <p>In development mode, ESP will automatically compile the relevant portions of the application if the
-            source code is modified. It can intelligently recompile views, actions, controllers and database models as
-            required. However, you can also explicilty recompile portions or the complete application.</p>
+            source code is modified. It can intelligently recompile views and controllers as
+            required. However, you can also explicilty recompile portions or the complete application via
+            the <tt>esp</tt> command.</p>
+
             <h3>Compile Everything</h3>
-            <p>Ejsweb can recompile everything via:</p>
+            <p>The <tt>esp</tt> command can recompile the entire application via:</p>
             <pre>
-esp compile ...
+esp compile 
 </pre>
-            <p>This will compile each controller and view and also recompile the application and module source code.
-            Module files for each component will be generated.</p>
+            <p>This will compile and link all controllers and views and place the generated shared libraries (DLLs)
+            in the <tt>cache</tt> directory.
+
             <h3>Compile Views and Controllers</h3>
-            <p>Ejsweb also provides options for you to individually compile controllers and views. To recompile named
-            views or controllers:</p>
+            <p>The <tt>esp</tt> command also provides options for you to individually compile controllers and views. To recompile named
+            views or controllers. For example:</p>
             <pre>
-esp compile view NAMES...
-esp compile controller NAMES...
+esp compile views/post-list.esp
+esp compile controller post
 </pre>
             <p>When compiling views, you can use the <tt>--keep</tt> switch to preserve the intermediate generated
             ESP source file. This can sometimes be helpful for debugging.</p>
@@ -353,7 +320,7 @@ esp run
 esp clean
 </pre><a name="options" id="options"></a>
             <h2 class="section">Command Options</h2>
-            <p>Ejsweb has the following command usage patterns:</p>
+            <p>The <tt>esp</tt> command has the following command usage patterns:</p>
             <pre>
 esp clean
 esp compile [all | app | controller names... | model names... | view names...]
@@ -396,7 +363,7 @@ esp run
                     </tr>
                     <tr>
                         <td>--overwrite</td>
-                        <td>Overwrite existing files. Ejsweb normally will not overwrite existing files. This is to
+                        <td>Overwrite existing files. The <tt>esp</tt> command normally will not overwrite existing files. This is to
                         preserve user changes to previously generated files.</td>
                     </tr>
                     <tr>
