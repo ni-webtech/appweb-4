@@ -13,7 +13,7 @@
 #include    "pcre.h"
 
 #if BLD_FEATURE_ESP && BLD_FEATURE_SDB
-#include    "sqlite3.h"
+ #include    "sqlite3.h"
 
 /************************************* Local **********************************/
 /*
