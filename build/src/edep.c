@@ -249,20 +249,20 @@ static int findDependencies(FILE *fp, char *fname)
         while (*cp == '\t' || *cp == ' ' || *cp == '\"') {
             cp++;
         }
-        
         /*
             Skip system headers
          */
         if (*cp == '<') {
             continue;
         }
-
         ep = cp;
         while (isalnum((int) *ep) || *ep == '_' || *ep == '.' || *ep == '/' || *ep == '-') {
             ep++;
         }
         *ep = '\0';
-
+        if (*cp == '\0' || !isalnum((int) *cp)) {
+            continue;
+        }
         strcpy(buf, cp);
         if (buf[0] == '/' || (buf[0] == '.' && buf[1] == '.')) {
             if (access(buf, R_OK) < 0) {
