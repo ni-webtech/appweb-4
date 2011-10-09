@@ -1,5 +1,3 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <!-- BeginDsi "dsi/head.html" -->
 <!DOCTYPE html>
 <html lang="en">
@@ -76,21 +74,34 @@
             </ul>
         </div>
         <div class="contentLeft">
+<p>Render data</p>
+<p>Async - don't finalize</p>
+<p>Auto finalize</p>
+<p>Caching</p>
+<p>espDefineAction</p>
+<p>Routes</p>
             <h1>Controllers and Actions</h1>
-            <p>ESP controllers manage the application and respond to client requests. They are the conductors of
-            the application and orchestrate the application's activities. <a name="flow" id="flow"></a></p>
+            <p>ESP controllers react to client requests and generate client responses. They are the conductors of
+            the application and orchestrate the application's activities.</p>
+            <a name="flow" id="flow"></a>
             <h3>Processing Flow</h3>
-            <p>ESP controllers process requests in stages:</p>
+            <p>Appweb processes requests in stages:</p>
             <ol>
-                <li>Decode the URL and web request</li>
+                <li>Decode the URI and web request</li>
                 <li>Route an incoming request to the appropriate controller</li>
                 <li>Invoke the requested action</li>
-                <li>Access and update the application state</li>
-                <li>Render a response view to the client</li>
-            </ol><a name="routing" id="routing"></a>
+                <li>Optionally render a response view to the client</li>
+            </ol>
+
+            <a name="routing" id="routing"></a>
             <h2 class="section">Routing Requests</h2>
-            <p>ESP receives client requests, and parses and decodes the HTTP request URL. ESP assumes, by
-            convention, a format for URLs that facilitates mapping requests to controllers and actions. URLs have the
+            <p>When Appweb receives a client request, it examines each of the configured routes in order, until it 
+            finds a matching route for the request URI. Routes will typically break the URI into tokens and save
+            the token values as request parameters.
+            
+            
+            ESP assumes, by
+            convention, a format for URIs that facilitates mapping requests to controllers and actions. URIs have the
             form:</p>
             <pre>
 http://embedthis.com/APP/CONTROLLER/ACTION/ID
@@ -142,7 +153,7 @@ http://embedthis.com/myApp/cart/create
             <p>Actions are where the controller does its work. In ESP, actions are simple JavaScript functions
             prefixed with an <tt>action</tt> qualifier. They don't need to be registered or otherwise configured before
             use. When ESP receives a request from the client, it will parse the request and invoke the request
-            action specified in the URL.</p>
+            action specified in the URI.</p>
             <p>When a request is received, the controller framework looks for an action method of the required name. If
             one is not found, it invokes the <tt>missing</tt> action method which renders a default error message back
             to the client.</p><a name="context" id="context"></a>
@@ -316,11 +327,11 @@ esp generate scaffold MODEL [field:type ...]
                     </tr>
                     <tr>
                         <td>makeUrl</td>
-                        <td>Make a URL suitable for invoking actions.</td>
+                        <td>Make a URI suitable for invoking actions.</td>
                     </tr>
                     <tr>
                         <td>redirect</td>
-                        <td>Redirect the client to a new URL.</td>
+                        <td>Redirect the client to a new URI.</td>
                     </tr>
                     <tr>
                         <td>render</td>
@@ -394,11 +405,11 @@ public class TaskController extends BaseController {
         <h2 class="section">Tips and Tricks</h2>
         <p>The following hits provide solutions for common tasks:</p>
         <h3>Redirect the Client</h3>
-        <p>To redirect the client to a new URL, use the redirect method. This will construct a redirection URL 
+        <p>To redirect the client to a new URI, use the redirect method. This will construct a redirection URI 
         using the requested <tt>action</tt> parameter. It appends this to the  application and controller names. If an
         <tt>id</tt> is provided (723 in this example below), this is appended after the action name.
         <pre>redirect("edit", 723, null)</pre>
-        <p>This will create a URL like:
+        <p>This will create a URI like:
         <pre>http://embedthis.com/myApp/currentController/<b>edit</b>/723</pre>
             Flash
             cookies

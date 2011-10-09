@@ -1,5 +1,3 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <!-- BeginDsi "dsi/head.html" -->
 <!DOCTYPE html>
 <html lang="en">
@@ -181,7 +179,10 @@ esp generate controller NAME [actions...]
             <p>If you use the command:</p>
             <pre>
 esp generate controller admin edit login logout command
-</pre>The following controller code will be generated.
+</pre>
+            <p>The following controller code will be generated. There is one function generated for each action 
+            and a call to <tt>espDefineAction</tt> is added to register the controller. The <tt>esp_controller_admin</tt>
+            initialization function is invoked once when the controller is first loaded.</p>
             <pre>
 /*
     admin controller
@@ -277,8 +278,9 @@ esp compile
 esp compile views/post-list.esp
 esp compile controller post
 </pre>
-            <p>When compiling views, you can use the <tt>--keep</tt> switch to preserve the intermediate generated
-            ESP source file. This can sometimes be helpful for debugging.</p>
+            <p>When compiling views, you can use the <tt>EspKeepSource</tt> configuration file directive
+            to preserve the intermediate generated ESP source file. This can sometimes be helpful for debugging.</p>
+
             <h3>Compile Models and Application Code</h3>
             <p>Models are compiled with application code into a single module file. To recompile the models and
             application source code:</p>
@@ -286,40 +288,56 @@ esp compile controller post
 esp compile app
 </pre>
             <h3>Compile Application as One Module</h3>
-            <p>To compile the entire application and produce a single module file:</p>
+            <p>For production deployment, it can be useful to compile the entire application and produce a single 
+            module file. Use the <tt>compile flat</tt> option to achieve this::</p>
             <pre>
-esp compile all
+esp compile flat
 </pre>
-            <h3>Compile Stand-Alone Web Pages</h3>
-            <p>To compile stand-alone ESP web pages:</p>
-            <pre>
-esp compile path/name.ejs...
-</pre><a name="running" id="running"></a>
+            <p>If you compile flat, you will need to add an <tt>EspLoad</tt> directive to the appweb.conf. This tells
+            ESP to pre-load the application and where to locate the module file.
+<pre>EspLoad NAME PATH</pre>
+
+            a name="running" id="running"></a>
             <h2 class="section">Running</h2>
             <p>To run your application:</p>
             <pre>
 esp run
 </pre>
-            <p>This requires that your config/config.ecf file be modified to define command to run your web
-            server.</p><a name="cleaning" id="cleaning"></a>
+            <a name="cleaning" id="cleaning"></a>
             <h2 class="section">Cleaning</h2>
-            <p>To clean all generated module files:</p>
+            <p>To clean all generated files under the cache directory:</p>
             <pre>
 esp clean
 </pre><a name="options" id="options"></a>
             <h2 class="section">Command Options</h2>
-            <p>The <tt>esp</tt> command has the following command usage patterns:</p>
+            <p>To see the <tt>esp</tt> command options, run <tt>esp</tt> with no options. This produces:
             <pre>
-esp clean
-esp compile [all | app | controller names... | model names... | view names...]
-esp compile path/name.ejs...
-esp generate app name
-esp generate controller name [actions...]
-esp generate migration description model [field:type...]
-esp generate model name
-esp generate scaffold model [field:type ...]
-esp migrate [forward|backward|NNN]
-esp run
+esp [options] [commands]
+
+Options:
+  --config configFile    # Use named config file instead appweb.conf
+  --database name        # Database provider 'mdb|sqlite' 
+  --flat                 # Compile into a single module
+  --listen [ip:]port     # Listen on specified address 
+  --log logFile:level    # Log to file file at verbosity level
+  --overwrite            # Overwrite existing files 
+  --quiet                # Don't emit trace 
+  --routeName name       # Route name in appweb.conf to use 
+  --routePrefix prefix   # Route prefix in appweb.conf to use 
+  --static               # Compile static content into C code
+  --verbose              # Emit verbose trace 
+
+Commands:
+  esp clean
+  esp compile
+  esp compile controller name ...
+  esp compile path/*.esp
+  esp generate app name
+  esp generate controller name [action [, action] ...
+  esp generate scaffold model [field:type [, field:type] ...]
+  esp generate table name [field:type [, field:type] ...]
+  esp migrate [forward|backward|NNN]
+  esp run
 </pre>
             <table summary="" width="100%">
                 <thead>
@@ -330,38 +348,35 @@ esp run
                 </thead>
                 <tbody>
                     <tr>
-                        <td nowrap="nowrap">--apply</td>
-                        <td>Apply the database migration when generating a scaffold. This is the same as running
-                        <tt>esp migrate</tt>.</td>
-                    </tr>
-                    <tr>
                         <td nowrap="nowrap">--database connector</td>
                         <td>Select a database connector to use. Currently, this switch is not implemented and sqlite is
                         the only connector supported.</td>
                     </tr>
                     <tr>
-                        <td>--keep</td>
-                        <td>Preserve generated intermediate ESP source files. These files are generated when
-                        blending views with layout pages.</td>
+                        <td>--flat</td>
+                        <td>Compile entire application into a single module. Same as "esp compile flat"</td>
                     </tr>
                     <tr>
-                        <td>--layout layoutPage</td>
-                        <td>Change the name of the default layout page if a view does not explicitly specify a layout
-                        page.</td>
+                        <td>--listen [ip:]port</td>
+                        <td>Listen on the specified address. Overrides the Listen directive in appweb.conf.</td>
+                    </tr>
+                    <tr>
+                        <td>--log logFile:level</td>
+                        <td>Log errors and trace to the log file at the given verbosity level. Levels are 0-9 with
+                            nine being the most verbose.</td>
                     </tr>
                     <tr>
                         <td>--overwrite</td>
-                        <td>Overwrite existing files. The <tt>esp</tt> command normally will not overwrite existing files. This is to
-                        preserve user changes to previously generated files.</td>
-                    </tr>
-                    <tr>
-                        <td>--reverse</td>
-                        <td>Reverse the operation when generating a migration. Instead of adding tables or columns,
-                        this switch will modify the migration to remove them.</td>
+                        <td>Overwrite existing files. The <tt>esp</tt> command normally will not overwrite 
+                            existing files. This is to preserve user changes to previously generated files.</td>
                     </tr>
                     <tr>
                         <td>--quiet or -q</td>
                         <td>Run quietly and don't trace actions to the console.</td>
+                    </tr>
+                    <tr>
+                        <td>--routeName name</td>
+                        <td>Route name in appweb.conf to use for ESP configuration.</td>
                     </tr>
                     <tr>
                         <td>--verbose or -v</td>

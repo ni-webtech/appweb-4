@@ -5,8 +5,6 @@
 #   This script creates ....
 #
 #   ${BLD_PRODUCT}-bin-{version}-{build}-{OS}-{ARCH}.{FMT}.tgz
-#   ${BLD_PRODUCT}-dev-{version}-{build}.{FMT}.tgz
-#   ${BLD_PRODUCT}-doc-{version}-{build}.{FMT}.tgz
 #   ${BLD_PRODUCT}-src-{version}-{build}.{FMT}.tgz
 #
 ################################################################################
@@ -153,7 +151,7 @@ createArchives() {
 
     [ $BLD_OS = LINUX -o $BLD_OS = WIN ] && owner="--owner 0 --group 0"
 
-    for suffix in bin dev src ; do
+    for suffix in bin src ; do
         name="${BLD_PRODUCT}-${suffix}"
         dir=`echo "${suffix}" | tr '[:lower:]' '[:upper:]'`
         log Generate Raw tar images for: ${ROOT_DIR}/${dir}
@@ -161,9 +159,6 @@ createArchives() {
         case $suffix in
         bin)
             listLoc="${BLD_VER_PREFIX}"
-            ;;
-        dev)
-            listLoc="${BLD_INC_PREFIX}"
             ;;
         src)
             listLoc="${BLD_SRC_PREFIX}"
@@ -435,7 +430,7 @@ while [ "${1#--}" != "$1" -o "${1#-}" != "$1" ] ; do
 done
 
 PACKS=$*
-PACKS=${PACKS:=binary dev}
+PACKS=${PACKS:=binary}
 
 setup
 

@@ -56,7 +56,7 @@ else
     cpy "$WITH_CONF" "${BLD_CFG_PREFIX}/appweb.conf"
 fi
 if [ "$BLD_FEATURE_ESP" = "1" ] ; then
-    cpy "src/server/esp.conf" "${BLD_CFG_PREFIX}"
+    cpy "src/server/esp.conf" "${BLD_LIB_PREFIX}"
 fi
 
 if [ "$BARE" = 0 ] ; then

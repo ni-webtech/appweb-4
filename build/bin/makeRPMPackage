@@ -48,32 +48,6 @@ createSpecFile() {
     cd ${HOME}
 
     #
-    #   Development files: headers and samples
-    #
-    if [ -d "${BLD_INC_PREFIX}" ] ; then
-        cd ${BLD_INC_PREFIX}
-        echo '%defattr(-,root,root)' >$RPM_DIR/BUILD/devFiles.txt
-        find . -type d -print | sed -e "s!.!%dir \"${ORIG_BLD_INC_PREFIX}!" | sed 's/.*/&\"/' >>$RPM_DIR/BUILD/devFiles.txt
-        find . -type f -print | sed -e "s!.!${ORIG_BLD_INC_PREFIX}!" | sed 's/.*/"&"/' >>$RPM_DIR/BUILD/devFiles.txt
-    fi
-    if [ -d "${BLD_SAM_PREFIX}" ] ; then
-        cd ${BLD_SAM_PREFIX}
-        find . -type d -print | sed -e "s!.!%dir \"${ORIG_BLD_SAM_PREFIX}!" | sed 's/.*/&\"/' >>$RPM_DIR/BUILD/devFiles.txt
-        find . -type f -print | sed -e "s!.!${ORIG_BLD_SAM_PREFIX}!" | sed 's/.*/"&"/' >>$RPM_DIR/BUILD/devFiles.txt
-    fi
-    if [ -d "${BLD_DOC_PREFIX}" ] ; then
-        cd ${BLD_DOC_PREFIX}
-        find . -type d -print | sed -e "s!.!%dir \"${ORIG_BLD_DOC_PREFIX}!" | sed 's/.*/&\"/' >>$RPM_DIR/BUILD/devFiles.txt
-        find . -type f -print | sed -e "s!.!${ORIG_BLD_DOC_PREFIX}!" | sed 's/.*/"&"/' >>$RPM_DIR/BUILD/devFiles.txt
-    fi
-    if [ -d "${BLD_MAN_PREFIX}" ] ; then
-        cd ${BLD_MAN_PREFIX}
-        find . -type d -print | sed -e "s!.!%dir \"${ORIG_BLD_MAN_PREFIX}!" | sed 's/.*/&\"/' >>$RPM_DIR/BUILD/devFiles.txt
-        find . -type f -print | sed -e "s!.!${ORIG_BLD_MAN_PREFIX}!" | sed 's/.*/"&"/' >>$RPM_DIR/BUILD/devFiles.txt
-    fi
-    cd ${HOME}
-
-    #
     #   Source code
     #
     cd ${BLD_SRC_PREFIX}
@@ -113,7 +87,7 @@ makeRPMPackage() {
     cd ${HOME}
 
     echo
-    for suffix in bin dev src ; do
+    for suffix in bin src ; do
         if [ "$suffix" = "src" ] ; then
             name=`echo ${BLD_PRODUCT}-$suffix-${BLD_VERSION}-${BLD_NUMBER}.rpm`
         else

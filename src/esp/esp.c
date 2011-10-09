@@ -22,7 +22,7 @@ typedef struct App {
     char        *serverRoot;
     char        *configFile;
     char        *pathEnv;
-    char        *provider;              /* Database provider "mdb" | "sqlite" */
+    char        *database;              /* Database provider "mdb" | "sqlite" */
     char        *listen;
 
     char        *currentDir;            /* Initial starting current directory */
@@ -251,7 +251,7 @@ MAIN(espgen, int argc, char **argv)
     app->mpr = mpr;
     app->configFile = BLD_CONFIG_FILE;
     app->listen = sclone(ESP_LISTEN);
-    app->provider = sclone("mdb");
+    app->database = sclone("mdb");
 
     for (argind = 1; argind < argc && !app->error; argind++) {
         argp = argv[argind];
@@ -263,6 +263,17 @@ MAIN(espgen, int argc, char **argv)
                 usageError();
             } else {
                 app->configFile = sclone(argv[++argind]);
+            }
+
+        } else if (smatch(argp, "--database")) {
+            if (argind >= argc) {
+                usageError();
+            } else {
+                app->database = sclone(argv[++argind]);
+                if (!smatch(app->database, "mdb") && !smatch(app->database, "sdb")) {
+                    fail("Unknown database \"%s\"", app->database);
+                    usageError();
+                }
             }
 
         } else if (smatch(argp, "--flat") || smatch(argp, "-f")) {
@@ -288,17 +299,6 @@ MAIN(espgen, int argc, char **argv)
 
         } else if (smatch(argp, "--overwrite")) {
             app->overwrite = 1;
-
-        } else if (smatch(argp, "--provider")) {
-            if (argind >= argc) {
-                usageError();
-            } else {
-                app->provider = sclone(argv[++argind]);
-                if (!smatch(app->provider, "mdb") && !smatch(app->provider, "sdb")) {
-                    fail("Unknown provider \"%s\"", app->provider);
-                    usageError();
-                }
-            }
 
         } else if (smatch(argp, "--quiet") || smatch(argp, "-q")) {
             app->quiet = 1;
@@ -369,7 +369,7 @@ static void manageApp(App *app, int flags)
         mprMark(app->module);
         mprMark(app->mpr);
         mprMark(app->pathEnv);
-        mprMark(app->provider);
+        mprMark(app->database);
         mprMark(app->routeName);
         mprMark(app->routePrefix);
         mprMark(app->server);
@@ -1078,7 +1078,7 @@ static void fixupFile(cchar *path)
     }
     data = sreplace(data, "${NAME}", app->appName);
     data = sreplace(data, "${TITLE}", spascal(app->appName));
-    data = sreplace(data, "${PROVIDER}", app->provider);
+    data = sreplace(data, "${DATABASE}", app->database);
     data = sreplace(data, "${DIR}", eroute->dir);
     data = sreplace(data, "${LISTEN}", app->listen);
     data = sreplace(data, "${LIBDIR}", app->libDir);
@@ -1233,7 +1233,7 @@ static void generateAppDb()
 {
     char    *ext, *dbpath, buf[1];
 
-    ext = smatch(app->provider, "mdb") ? "mdb" : "sdb";
+    ext = smatch(app->database, "mdb") ? "mdb" : "sdb";
     dbpath = sfmt("%s/%s.%s", eroute->dbDir, app->appName, ext);
     if (mprWritePath(dbpath, buf, 0, 0664) < 0) {
         return;
@@ -1314,15 +1314,14 @@ static void usageError(Mpr *mpr)
     "  %s [options] [commands]\n\n"
     "  Options:\n"
     "    --config configFile    # Use named config file instead appweb.conf\n"
+    "    --database name        # Database database 'mdb|sqlite' \n"
     "    --flat                 # Compile into a single module\n"
     "    --listen [ip:]port     # Listen on specified address \n"
     "    --log logFile:level    # Log to file file at verbosity level\n"
     "    --overwrite            # Overwrite existing files \n"
-    "    --provider name        # Database provider 'mdb|sqlite' \n"
     "    --quiet                # Don't emit trace \n"
     "    --routeName name       # Route name in appweb.conf to use \n"
     "    --routePrefix prefix   # Route prefix in appweb.conf to use \n"
-    "    --static               # Compile static content into C code\n"
     "    --verbose              # Emit verbose trace \n"
     "\n"
     "  Commands:\n"
@@ -1338,6 +1337,7 @@ static void usageError(Mpr *mpr)
     "    esp run\n"
     "", name);
 #if UNUSED && KEEP
+    "    --static               # Compile static content into C code\n"
     "    esp generate migration description model [field:type [, field:type] ...]\n"
 #endif
     app->error++;

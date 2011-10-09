@@ -51,13 +51,11 @@ updateScripts() {
 }
 
 updateSizes() {
-    local dir binSize devSize
+    local dir binSize
     binSize=`du -sk ${ROOT_DIR}/BIN | awk '{print $1}'`
-    devSize=`du -sk ${ROOT_DIR}/DEV | awk '{print $1}'`
     dir=${ROOT_DIR}/${BLD_PRODUCT}.mpkg/Contents
     cat $dir/distribution.dist >/tmp/dist$$.tmp
-    cat /tmp/dist$$.tmp | sed "s/bin.pkg\" /bin.pkg\" installKBytes=\"$binSize\" /" |
-    sed "s/dev.pkg\" /dev.pkg\" installKBytes=\"$devSize\" /" > $dir/distribution.dist
+    cat /tmp/dist$$.tmp | sed "s/bin.pkg\" /bin.pkg\" installKBytes=\"$binSize\" /" > $dir/distribution.dist
     rm -f /tmp/dist$$.tmp
 }
 
@@ -78,11 +76,13 @@ makeDmgPackage() {
     updateReadme
     updateSizes
 
-    for kind in bin dev
+    for kind in bin
     do
         updateScripts $kind
         upper=`echo $kind | tr '[:lower:]' '[:upper:]'`
 
+    ${PMAKER} --domain anywhere --root ${ROOT_DIR}/${upper} --id com.embedthis.${BLD_PRODUCT}.${BLD_PRODUCT}${kind}.pkg \
+    --scripts ${ROOT_DIR}/scripts --out ${dir}/Contents/Packages/${kind}.pkg >build.log 2>&1
         ${PMAKER} --domain anywhere --root ${ROOT_DIR}/${upper} --id com.embedthis.${BLD_PRODUCT}.${BLD_PRODUCT}${kind}.pkg \
             --scripts ${ROOT_DIR}/scripts --out ${dir}/Contents/Packages/${kind}.pkg >build.log 2>&1
         if [ $? != 0 ] 

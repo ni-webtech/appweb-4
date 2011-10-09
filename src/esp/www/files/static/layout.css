@@ -166,8 +166,12 @@ form td {
 /*
     ESP HTML controls layout style sheet
  */
+.-esp-tabs {
+    margin-left: 2px;
+}
+
 div.-esp-tabs {
-    margin-left: 40px;
+    margin-left: 22px;
 }
 
 div.-esp-tabs ul {

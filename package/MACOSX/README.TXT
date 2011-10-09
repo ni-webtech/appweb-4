@@ -17,7 +17,7 @@ System Requirements
 
     * MAC OS X 10.4 or later
     * 256MB RAM
-    * 10 MB free disk space
+    * 15 MB free disk space
     * TCP/IP network stack
 
 To rebuild Appweb from source code, you will need at least:
@@ -35,7 +35,7 @@ If you wish to embed Appweb in your application, build the samples or rebuild Em
 
 Installing Embedthis Appweb
 
-The installation distribution includes sub-packages containing pre-built binaries, development libraries, headers, documentation and samples. You can selectively install the sub-packages or you can install the complete distribution.
+The binary installation includes pre-built binaries, libraries, headers, documentation and samples. You can selectively install the sub-packages or you can install the complete distribution.
 
 
 To install the Appweb package:
