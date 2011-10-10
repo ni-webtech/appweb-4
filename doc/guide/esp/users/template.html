@@ -58,7 +58,7 @@
                 <li><a href="#themes">Themes and CSS</a></li>
                 <li><a href="#compilation">Compilation</a></li>
                 <li><a href="#debugging">Debugging</a></li>
-                <li><a href="#viewClass">View Class</a></li>
+                <li><a href="#controls">HTML Controls</a></li>
             </ul>
 <!-- BeginDsi "dsi/espSeeAlso.html" -->
 		        <h2>See Also</h2>
@@ -79,96 +79,98 @@
             </ul>
         </div>
         <div class="contentLeft">
-            <h1>ESP Template Web Pages</h1>
-            <p>ESP template pages are essentially HTML pages with embedded "C" code that are compiled into pure "C"
-            code for exceptionally fast execution.
+            <h1>ESP Templates</h1>
+            <p>ESP Templates are web pages that allow you to determine what goes into the web page at runtime. 
+            Whereas static HTML web pages must be fixed at development time, ESP template pages can embed HTML 
+            and data at runtime and on a per-user basis. While there are many different ways to render data at 
+            runtime, ESP provides one of the easiest and most powerful template frameworks without compromising 
+            speed or memory footprint.</p>
 
-- Overview
-    - What are templated pages
-        vs static web pages
-    - Processed transparently or precompiled
-    - Cached
-    - Fast execution
-
-- how it works
-    - Diagram
-    - Appweb.conf + route define how pages are processed
-    - layout pages (brief)
-    - Parsed => script
-    - Compiled => loadable module (library)
-    - Loaded 
-    - Reloaded if modified
-        - Recompiled if source modified
-    - esp Takes config from appweb.conf. Need route configured for ESP
-    - At runtime
-        - Compile once ... code cached and loaded
-        - Next request runs in-memory code
-        - Restart Appweb will load cached code
-- Compiling
-    - Compiled into cache dir => name converted into MD5 name
-        - Single directory for easy deployment
-    - Compile flat option for single file
-    - transparent compilation
-        * Is there a universal touch? or signal
-        - Unload when no active esp pages left
-    - Compilation errors
-        - EspShowErrors
-    - Cache file names
-- esp compile (brief)
-    - verbose mode
-    - Keep option: EspKeepSource
-    - MVC
-    - Stand along pages
-    Appweb.conf compilation directives in esp.conf
-        Tokens ARCH, CC DEBUG INC LIB OBJ OUT SHLIB SHOBJ SRC TMP
-- transparent reloading
-    - reload if new module
-    - Appweb directive EspUpdate
-- Various sections of code
-- How to access request state
-- Page Directives
-    - Discuss white space
-    <%@ include "file" >
-    <%@ layout "file" >
-    <%@ content
-    <%^ global
-    <%^ start
-    <%^ end
-    <%= expression
-    <%= [%fmt] expression
-         %S for safe HTML
-    -%> trim trailing newline
-    @@var => espGetParam (safe)
-        - What are params: query, form body, set params, route tokens
-- includes
-- controls (brief)
-
+<!-- MOB rethink -->
+            <p>The ESP templating solution provides powerful embedding of "C" code in web pages, transparent compilation,
+            caching of code and responses and a rich library of HTML controls to quickly generate dyanmic tables, 
+            tabs, lists, input forms and more. These are integrated with the jQuery client-side library for rich, 
+            client side processing and Ajax support.</p>
             
-            But they are much more than that, ESP
-            web pages are created by merging a content pages with one or more layout pages to create a composite page
-            which is what the user will actually see.
+            <h2 class="section">Embedded C Code </h2>
+            <p>ESP templates are essentially HTML pages with embedded "C" code that are parsed into pure "C"
+            code and then compiled into native machine code for exceptionally fast execution. </p>
             
-            The template pages are processed by ESP, the code
-            is run and a final HTML page sent to the client. 
-            <img src="../../../images/webComposite.jpg" alt="" /></p>
+            <pre>
+&lt;h1>Hello World&lt;/h1>
+&lt;h2>Today is <%= mprGetDate(0); %>&lt;/h2>
+</pre>
+            
+            <h3>Why "C"?</h3>
+            <p>Why "C" code, you may ask? Because we wanted ESP to provide the ultimate in speed and efficiency.
+            The "C" is the fastest, closest to the hardware, language available. By using "C", invoking device APIs 
+            and other system APIs are easy, fast and compact. There is no translation or coupling required getting 
+            into and out of another language.</p>
+            <p> To enhance the ESP development evironment, ESP adds a rich library of HTML controls, and garbage 
+            collection for managing memory. This makes working with "C" embedded web pages, expressive and productive.</p>
+            
+            <h3>Transparent Compiling</h3>
+            <p>ESP web pages are parsed and converted into "C" code include all HTML and embedded "C". The result is
+            then compiled and optimized into a native code shared library module.
+            Once compiled, the module is cached in-memory and saved on disk and when required, are loaded into 
+            memory for execution. Once loaded, subsequent requests will use the in-memory
+            code without any access to the original template web page. If the system is rebooted, the on-disk
+            cached module will be loaded without recompilation.</p>
+            
+            <p>The compilation of ESP pages happens 
+            automatically and quickly in the background when in development mode. If the original web page 
+            is modified, the page is transparently recompiled and re-cached. For production, pages can be pre-compiled,
+            and locked-down without recompiling in the field. This updating behavior can be controlled by the 
+            <tt><a href="../../appweb/users/dir/esp.html#espUpdate">EspUpdate</a></tt> configuration directive.</p>
 
-            <p>"C" code embedded in your web pages enables dynamic data to be inserted at runtime into what
-            would otherwise be static web pages. ESP provides a set of directives to make it easy to refer to
-            native "C" variables, expressions or code blocks in your web pages. A suite of <a href=
-            "controls.html">HTML Controls</a> provides high level components such as tables, charts, tabs, and
-            forms that are Ajax-enabled for a seamless dynamically updating user experience.</p>
+            <img src="../../../images/esp/template/compile.jpeg" alt="" />
 
-            <h2 class="section">Layouts &mdash; Creating a Consistent Look and Feel</h2>
-            <p>A web application typically consists of many web pages that share a common look and feel. Usable
-            applications have a consistent structure, menus and appearance so the user can easily navigate tha
-            application. However, designing and maintaining that consistent look and feel is frequently quite
-            difficult.</p><a name="layoutPages" id="layoutPages"></a>
-            <h3>Layout Pages</h3>
-            <p>The ESP web framework provides a templating layout engine so that each page can reuse a common
-            layout page and not have to repeat the common application UI elements in each page. ESP does this by
-            automatically merging <b>layout</b> pages and content pages to create a composite page that matches what
-            the user actually will see.</p>
-            <p>For example: this is a layout page called "views/layouts/default.ejs" which defines the top level HTML
+            <h2 class="section">Configuration</h2>
+            <p>The <tt>appweb.conf</tt> configuration file controls how ESP compiles and links template pages into 
+            modules. It does this by special ESP configuration directives.
+            <p>Each Appweb <a href="../../appweb/users/routing.html">Route</a> may contain a unique set of ESP 
+            directives, or it may inherit the configuration from the default or outer routes.</p>
+            
+            <p>The standard appweb.conf includes an ESP configuration file <tt>esp.conf</tt> that contains 
+            default ESP compilation and link command lines for each operating system. On Unix based systems, the
+            <tt>esp.conf</tt>  file is located at 
+            <tt>/usr/lib/appweb/lib/esp.conf</tt>. On windows systems, this will be located at 
+            <tt>/Program Files/Embedthis Appweb/lib/esp.conf</tt>. You may need to customize this file to suit your 
+            system or compilation environment.</p>
+
+            <h3>ESP Configuration Directives</h3>
+
+            <ul>
+                <li><a href="../../appweb/users/dir/esp.html#espDir">EspDir</a> &mdash; This defines the directories that
+                    ESP will search and use when compiling template pages. </li>
+                <li><a href="../../appweb/users/dir/esp.html#espCompile">EspCompile</a> &mdash; This defines the
+                    commandline used to compile template pages and controllers.</li>
+                <li><a href="../../appweb/users/dir/esp.html#espLink">EspLink</a> &mdash; This defines the
+                    commandline used to link template pages and controllers as shared libraries.</li>
+                <li><a href="../../appweb/users/dir/esp.html#espEnv">EspEnv</a> &mdash; This defines environment
+                    variables required when running the compile and link commands.</li>
+                <li><a href="../../appweb/users/dir/esp.html#espUpdate">EspUpdate</a> &mdash; This controls if ESP
+                    will automatically reload modified modules and transparently recompiled modified ESP source template
+                    pages.</li>
+            </ul>
+
+            <h2 class="section">Layouts &mdash; Creating a Consistent Look and Feel</h3>
+            Highly usable applications have a consistent structure, menus and appearance so the user can easily navigate tha
+            application. Such applications typically consist of many web pages that share a common look and feel. 
+            However, designing and maintaining that consistency is sometimes a challenge.</p>
+            
+            <p>ESP Templates provide a powerful and flexible solution for implementing a consistent UI.
+            ESP template pages use layout pages that define the look and feel of an application. Content pages are then
+            rendered by merging with one or more layout pages that define the look and feel of the application. 
+            This creates a composite page that is what the user will actually see. In this way, a web application 
+            can easily maintain a consistent look and feel without repeating boilerplate code from page to page. 
+            ESP believes stronly in the DRY principle: <tt>"Don't Repeat Yourself"</tt>. Web page parts that are 
+            repeated from page to page are centralized in ESP applications into layout pages and not repeated in 
+            each content page.</p>
+            
+            <img src="../../../images/esp/template/layout.jpeg" alt="" /></p>
+
+            <p>For example: this is a layout page called "<tt>layouts/default.ejs</tt>" that defines the top level HTML
             content for all content pages. It has a banner image and division tags that structure the page:</p>
             <pre>
 &lt;html&gt;
@@ -182,16 +184,17 @@
 &lt;/body&gt;
 &lt;/html&gt;
 </pre>
-            <p>Modifications to this page, will be reflected automatically in all content pages.</p><a name="content"
-            id="content"></a>
+            <p>Modifications to this page, will be reflected automatically in all content pages.</p>
+            
+            <a name="content" id="content"></a>
             <h3>Content Pages</h3>
-            <p>A content page defines only the HTML and code that is different for a specific page. It is merged with a
-            layout page by inserting the content and replacing the <b>&lt;%@ content %&gt;</b> tag in the master
+            <p>A content page defines only the HTML and code that is unique for a specific page. It is merged with a
+            layout page by inserting the content and replacing the <tt>&lt;%@ content %&gt;</tt> tag in the master
             page.</p>
-            <p>For example, consider the content page named "views/Demo/index.ejs":</p>
+            <p>For example, consider the content page named "<tt>views/demo-index.esp</tt>":</p>
             <pre>
-&lt;h1&gt;Content Page&lt;/h1&gt;
-&lt;p&gt;Hello World&lt;/p&gt;
+<b>&lt;h1&gt;Content Page&lt;/h1&gt;
+&lt;p&gt;Hello World&lt;/p&gt;</b>
 </pre>
             <p>This would render a composite web page back to the user:</p>
             <pre>
@@ -201,86 +204,93 @@
         &lt;img src="banner.jpg" /&gt;
     &lt;/div&gt;
     &lt;div class="content"&gt;
-        &lt;h1&gt;Content Page&lt;/h1&gt;
-        &lt;p&gt;Hello World&lt;/p&gt;
+        <b>&lt;h1&gt;Content Page&lt;/h1&gt;
+        &lt;p&gt;Hello World&lt;/p&gt;</b>
     &lt;/div&gt;
 &lt;/body&gt;
 &lt;/html&gt;
 </pre><a name="alternateLayout" id="alternateLayout"></a>
             <h3>Alternate Layout Pages</h3>
-            <p>A content page can request a specific layout page by using the <b>&lt;%@ layout "file"&gt;</b>
+            <p>A content page can request a specific layout page by using the <tt>&lt;%@ layout "file"&gt;</tt>
             directive.</p>
             <pre>
-<b>&lt;%@ layout "alternateLayout "&gt;</b>
+<b>&lt;%@ layout "alternateLayout.esp"&gt;</b>
 &lt;h1&gt;Content Page&lt;/h1&gt;
 &lt;p&gt;Hello World&lt;/p&gt;
 </pre>
-            <p>This instructs the templating engine to use the "alternateLayout.ejs" file rather than the default
-            layout. The default layout page is called "views/layouts/default.ejs". <a name="multiple" id=
-            "multiple"></a></p>
+            <p>This instructs the templating engine to use the "alternateLayout.esp" file rather than the default
+            layout. The default layout page is called "layouts/default.esp". 
+            
+            <a name="multiple" id="multiple"></a></p>
             <h3>Multiple Layout Pages</h3>
             <p>You are not restricted to a simple two level layout and content page scheme. A layout page can itself
             refer to another layout page to gradually build up the application's look and feel. To do this, the layout
-            page needs to include an explicit <b>&lt;%@ layout "file"&gt;</b> directive.</p><a name="dev" id="dev"></a>
-            <h3>Development Time</h3>
-            <p>The combining of layout and contents pages occurs at development time, as does the compilation of the
-            composite page into byte code. At run-time, all that remains to be done is actually execute the byte code
-            and substitute dynamic data into the page. This results in the fastest run-time execution because the
-            layout processing and page compilation occur only once and at development time.</p><img src=
-            "../../../images/webView.jpg" alt="" /> <a name="dir" id="dir"></a>
+            page needs to include an explicit <tt>&lt;%@ layout "file"&gt;</tt> directive.</p>
+            
+            <a name="dir" id="dir"></a>
+            <h2 class="section">Application Paradigms</h2>
+            <p>ESP supports two primary application paradigms:
+            <ul>
+                <li>Stand-alone Web Page</li>
+                <li>Model View Controller</li>
+            </ul>
+            <h3>Model View Controller Applications</h3>
+            <p>The Model View Controller (MVC) paradigm is characterized by Controller actions that are invoked
+            when client HTTP requests are received. The controller reponds to the request and determines what action
+            will be taken including what view (if any) will be rendered back to the client. The controller manages the
+            flow of execution for the application and are stored under the "<tt>controllers</tt>" directory. ESP 
+            templates in an MVC application are called Views and are stored under the "<tt>views</tt>" directory. These
+            views utilize template layout pages from the "<tt>layouts</tt>" directory. The <tt>esp</tt> utility 
+            command is typically used to generate and manage ESP MVC applications.</p>
+
+            <h3>Stand-Alone Page Applications</h3>
+            <p>The Stand-alone application paradigm is characterized by individual ESP template pages that do not 
+            have controllers. They may utilize template layout pages, but application controller logic is held 
+            within the page itself. These applications typically use a "Post-Back" paradigm where a form will post back
+            to the same page that was used to render the form.</p>
+
+            <a name="dir" id="dir"></a>
             <h2 class="section">Directory Structure</h2>
             <p>ESP follows the <a href="http://en.wikipedia.org/wiki/Convention_over_Configuration">Convention
             over Configuration</a> design paradigm where developers only need to specify the unusual parts of their
             application. This is exemplified by an expected directory structure for views and layouts.</p>
             <pre>
-views
++-- cache
   |
-  +-- layouts
-  |      |
-  |   Layout pages...
+  + Cached modules for controllers and template web pages
+
++-- controllers
   |
-  + ControllerName
-         |
-         + View pages...
+  + MVC Controller files
+
++-- db
+  |
+  + Database files
+
++-- layouts
+  |
+  + Layout pages...
+
++-- static
+  |
+  + Static web pages (and stand-alone ESP pages)
+
++--views
+  |
+  + MVC View pages...
 </pre>
-            <p>The <a href="generator.html"><b>esp</b></a> application generator program will create these directories
-            for you when you run</p>
+            <p>For ESP MVC applications, The <a href="generator.html"><b>esp</b></a> application generator 
+                program will create these directories for you when you run</p>
             <pre>
-esp generate appName
+esp generate app appName
 </pre>
-            <p>After creating the application, you should place all content views for a controller under the
-            "views/ControllerName" directory. The "ControllerName" directories should by convention begin with an upper
-            case letter. The "views" and "views/layouts" directories are lower case. <a name="static" id=
-            "static"></a></p>
-            <h2 class="section">Static Web Content</h2>
-            <p>Static web page content such as images, CSS pages and other similar content should be placed under the
-            <b>web</b> directory. While this content can be served by the ESP handler, it should ideally and
-            optimally be processed directly by the web server. The ESP module for Apache and Appweb will enable
-            this automatically. If you are using the CGI or FastCGI for hosting ESP, you may wish to configure
-            your web server to serve these pages directly.</p><a name="stand-alone" id="stand-alone"></a>
-            <h3>Stand-Alone ESP Web Pages</h3>
-            <p>Not all ESP web pages are views. You can create stand-alone ESP web pages. These do not use
-            layout pages and do not have access to Models, Controllers or View objects. Why create stand-alone ESP
-            pages you ask? Because it is sometimes convenient to have a little bit of scripting inside a mostly static
-            HTML page.</p>
-            <p>For example: This will insert a date into a web page footer:</p>
-            <pre>
-&lt;html&gt;
-&lt;body&gt;
-    &lt;div class="top"&gt;
-        &lt;img src="banner.jpg" /&gt;
-    &lt;/div&gt;
-    &lt;div class="content"&gt;
-        &lt;h1&gt;Content Page&lt;/h1&gt;
-        &lt;p&gt;Hello World&lt;/p&gt;
-    &lt;/div&gt;
-    <b>&lt;p&gt;Created on &lt;%= new Date %&gt;&lt;/p&gt;</b>
-&lt;/body&gt;
-&lt;/html&gt;
-</pre><a name="dynamic" id="dynamic"></a>
-            <h2 class="section">Dynamic Content</h2>
-            <p>One of the primary reasons for views is to make it easier to create web pages with dynamic data.</p>
-            <p>ESP provides a set of directives to easily embed "C" code in your web page.</p>
+            <p>After creating the application, you should name views using the form:
+<pre>
+views/CONTROLLER-VIEW.esp
+</pre>
+            The view name should all be lower case.
+
+            <h2 class="section">ESP Page Directives</h2>
             <p>The following directives are provided:</p>
             <table summary="directives" width="100%">
                 <thead>
@@ -291,122 +301,167 @@ esp generate appName
                 </thead>
                 <tbody>
                     <tr>
+                        <td>&lt;%@ include "file" %&gt;</td>
+                        <td>Include the named file at this location</td>
+                    </tr>
+                    <tr>
+                        <td>&lt;%@ layout "file" %&gt;</td>
+                        <td>Use the specified layout file for this page</td>
+                    </tr>
+                    <tr>
+                        <td>&lt;%@ content %&gt;</td>
+                        <td>Used in layout pages to specify where the content should be inserted </td>
+                    </tr>
+                    <tr>
+                        <td>&lt;%^ global ...</td>
+                        <td>Specify that the code from this block must be at a "global" C scope. This is useful
+                            for global declarations, extern statements and #include statements.</td>
+                    </tr>
+                    <tr>
+                        <td>&lt;%^ start ...</td>
+                        <td>Specify that the code from this block will be positioned at the start of the
+                            generated function for the template. This is useful for local variable declarations.</td>
+                    </tr>
+                    <tr>
+                        <td>&lt;%^ end ...</td>
+                        <td>Specify that the code from this block will be positioned at the end of the
+                            generated function for the template.</td>
+                    <tr>
                         <td>&lt;%= expression %&gt;</td>
                         <td>"C" expression</td>
+                    </tr>
+                    <tr>
+                        <td nowrap="nowrap">&lt;%= [%fmt] expression %&gt;</td>
+                        <td>Formatted "C" expression. The expression is passed through a "printf" style formatter.
+                            Use "%S" for HTML-escaped safe strings.</td>
                     </tr>
                     <tr>
                         <td>&lt;% statements %&gt;</td>
                         <td>"C" statements</td>
                     </tr>
                     <tr>
+                        <td>&lt;-%&gt;</td>
+                        <td>Trim the trailing newline for the generated block</td>
+                    </tr>
+                    <tr>
                         <td>@@variable</td>
-                        <td>"C" variable value</td>
+                        <td>Request parameter variable. This is equivalent to "<tt>param(variable)</tt>"</td>
                     </tr>
                 </tbody>
             </table>
+
+            <h3><td>&lt;%@ include "file" %&gt;</h3>
+            <p>This directive can be used to include other HTML or ESP files at this location. The included 
+                contents will be parsed as an ESP page and the results substituted at this location. ESP include
+                directives can be nested to an arbitrary depth.</p>
+
+            <h3>&lt;%@ layout "file" %&gt;</h3>
+            <p>The layout directive specifies the filename of the layout page to use. If set to the empty string <tt>""</tt>
+            then no layout page will be used. The default layout page is <tt>layouts/default.esp</tt></p>
+
+            <h3>&lt;%@ content %&gt;</h3>
+            <p>This directive is used only in layout pages to specify where the content page should be inserted. 
+            There should be only one such directive in a layout page.</p>
+
+            <h3>&lt;%^ global ....</h3>
+            <p>This directive specifies that the code from this block must be at a "global" C scope. This is useful
+                for global declarations, extern statements and #include statements.</p>
+
+            <h3>&lt;%^ start ...</h3>
+            <p>This directive specifies that the code from this block will be positioned at the start of the
+            generated function for the template. Some "C" compilers do not allow variable declarations to be place other
+            than at the start of a block. So this directive is useful local variable declarations.</td>
+
+            <h3>&lt;%^ end ...</h3>
+            <p>This directive specifies that the code from this block will be positioned at the end of the
+                generated function for the template.</p>
+
             <h3>&lt;%= expression %&gt;</h3>
-            <p>Use this directive to embed the result of a "C" expression. The result must be a null-terminated string.</p>
+            <p>Use this directive to embed the result of a "C" expression. The result must be a null-terminated string.
+            This example below calls the 
+            <a href="../../../api/mpr.html#mpr_8h_1a8ecdc6cb45d8758203e09764faaf5e2d">mprGetDate</a>
+            function which returns the local date and time as a string.</p>
             <pre>
-&lt;%= new Date().fullYear %&gt;
+Today is <%= mprGetDate(0); %>&lt;
 </pre>
+            <p>Note that the string returned from mprGetDate was not freed. This is because Appweb and ESP use a 
+            <a href="../../../ref/appweb/memory.html#collector">Garbage Collection</a> and so such returned data does
+            not need to be freed. This permits the use of a chaining style of programming where the outputs of one
+            function can be used as arguments to others. For example:
+<pre>Resource name: <%= mprJoinExt(mprJoinPath(dir, supper(name)), "jpg") %> </pre>
+
             <h3>&lt;% statements %&gt;</h3>
             <p>Use this directive to run "C" code statements. No value is substituted back into the page in
-            place of the directive.</p>
+            place of the directive. If you need to write data inside a statement block, use the 
+            <!--MOB-->
+            render API</p>
             <pre>
 &lt;% 
-    lines = File.getLines("test.txt")
-    for each (l in lines) {
-        write(l)
+    for (i = 0; i < 10; i++) {
+        render("I is %d &lt;br/>\n", i);
     }
 %&gt;
 </pre>
-            <p>The code defined via this directive is placed inside the view's <b>render</b> function. Any code that is
-            valid to put in a function, is valid in this directive. NOTE: you cannot use the <b>class</b> keyword. A
-            better place for such code is not in views, but in either the controller or application code.</p>
             <p>You can also iterate over regular HTML code. The following code will display <b>Hello World</b> ten
             times in the web page.</p>
             <pre>
-&lt;% for (i in 10) { %&gt;
+&lt;% for (i = 0; i < 10; i++) { %&gt;
     Hello World
 &lt;% } %&gt;
 </pre>
             <h3>@@variables</h3>
-            <p>ESP provides a shorthand for the <b>&lt;%= expression %&gt;</b> directive via the
-            <b>@@variable</b>. This directive is a compact way of referencing a simple "C" variable.</p>
+            <p>ESP provides a shorthand for accessing request parameters. Request parameters are a collection of
+            query variables, posted form fields, routing tokens, session variables and any explicitly set parameters. 
+            These are stored
+            in a params table and in session data stores and are accessible via the
+            <a href="../../../api/esp.html#group___esp_abbrev_1gad638c34898123293ebc120c1f9396a9c">param</a>,
+            <a href="../../../api/esp.html#group___esp_req_1ga98e63a9a924ec667a3c1b540e56792d3">espGetParam</a> and
+            <a href="../../../api/esp.html#group___esp_session_1ga60a5effb2a9ef53fdb02dbe865bf6093">espGetSession</a>
+            APIs. However,
+            the <tt>@@variable</tt> directive provides an easier way. With this directive, the params and session data
+            are examined (in that order) for the given variable name.
+            <p>In this example below if the URI: <tt>http://example.com/test.esp?name=John</tt> was used the following ESP
+            template could be used to access the "<tt>name</tt>" query value.
             <pre>
-&lt;% today = new Date %&gt;
-<b>&lt;h2&gt;Today is @@today&lt;/h2&gt;</b>
+&lt;h2&gt;My name is <b>@@name</b>&lt;/h2&gt;
 </pre>
-            <p>This directive is very useful for accessing any controller, model, application, session, request or form
-            data.</p>
-            <p>Public variables in the controller are visible to views, as is the Model class. The application object
-            is accessible via the <b>app</b> object and session data is accessible via the <b>session</b> object. Form
-            data is stored in the <b>params</b> object.</p>
-            <pre>
-&lt;%
-    &lt;h2&gt;Web Server Name: @@host.name running @@host.software&lt;/h2&gt;
-    &lt;p&gt;Application URL: @@app.url&lt;/p&gt;
-    table(Users.findAll())
-    dump(users)
-%&gt;
-</pre>
-            <p>See the <a href="../../../api/ejscript/index.html">ESP Library</a> for a full list of all the
-            properties and methods available to use in the various embedded ESP directives. Of particular
-            relevance are the classes in the ejs.web namespace which include the Application, Controller, Host,
-            Request, Response, Session and View classes.</p><a name="form" id="form"></a>
-            <h2 class="section">Accessing Form Data</h2>
-            <p>HTTP Form data is marshalled by ESP into the <b>params</b> object which is accessible in views and
-            controllers. Each HTML input element posted by the client will become a property of <b>params</b> and can
-            be accessed by embedded script code.</p><img src="../../../images/form.png" class="screen" alt="" />
-            <p>This form was generated by the view code below:</p>
-            <pre>
-&lt;form method="POST" action="@@request.uri"&gt;
-    &lt;p&gt;Name: &lt;input name="name" type="text"&gt;&lt;/p&gt;
-    &lt;p&gt;Address: &lt;input name="address" type="text"&gt;&lt;/p&gt;
-    &lt;input type="submit" name="ok" value="Ok"&gt;
-&lt;/form&gt;
-</pre>
-            <p>This view creates three HTML form inputs and will populate the <b>params</b> object when posted back to
-            the server with the properties: <b>params.name</b>, <b>params.address</b> and <b>params.ok</b>.</p><a name=
-            "structured" id="structured"></a>
-            <h3>Structured Form Data</h3>
-            <p>This simple mapping of input element names to params properties works fine for simple forms, but what
-            about more complex forms? ESP can organize form data into nested objects. If an input element name
-            contains a period, then ESP will create nested objects to match the input element name.</p>
-            <p>For example, consider the view:</p>
-            <pre>
-&lt;form method="POST" action="@@request.uri"&gt;
-    &lt;p&gt;Name: &lt;input name="user.name" type="text"&gt;&lt;/p&gt;
-    &lt;p&gt;Address: &lt;input name="user.address" type="text"&gt;&lt;/p&gt;
-    &lt;input type="submit" name="ok" value="Ok"&gt;
-&lt;/form&gt;
-</pre>
-            <p>This will create a <b>user</b> object in the params object. The user object will have properties
-            <b>user.name</b> and <b>user.address</b>. This form of structured form data makes handling form data much
-            simpler.</p><a name="database" id="database"></a>
-            <h3>Accessing Database Data</h3>
-            <p>ESP provides an Object Relational Mapping (ORM) layer for accessing database data via convenient
-            JavaScript objects. The ORM layer is represented by a collection of database Model classes for the
-            application. Views can read the database by using Model classes. A more typical pardigm is for controller
-            action routines to read a database record and store the record in a controller property. The view can then
-            simply access the database data by referencing that property.</p>
-            <p>For more details, see <a href="models.html">Database Models</a>.</p><a name="sessions" id=
-            "sessions"></a>
-            <h2 class="section">Session Data</h2>
-            <p>Data can be persistently stored between HTTP requests in the <b>sessions</b> object. Data stored to the
-            sessions object is serialized, so you cannot store object references. However, the session object is ideal
-            to store a request cookie or session key.</p><a name="themes" id="themes"></a>
-            <h2 class="section">Themes and CSS</h2>
-            <p>Well structured web applications divide HTML data and presentation style into two separate documents.
-            Namely: HTML pages and cascading style sheets. In this way, a style sheet can be reused and shared by all
-            pages.</p>
-            <p>It is better still to divide the style sheet into two: a layout structure style sheet and a theme style
-            sheet. The structure style sheet specifies the order and positioning of the various sections on of the web
-            page, whereas the theme style sheet specifies the fonts, font sizes, weights and foreground and background
-            colors.</p>
-            <p>ESP supports this organization by providing a providing a directory for theme style sheet. The
-            <b>esp</b> application will also generate a default theme style sheet for scaffolds and
-            views.</p><a name="compilation" id="compilation"></a>
+            <p>This directive is very useful for accessing any request, form, query or session data.</p>
+
+        <h2 class="section">Request Context </h2>
+            <p>The full HTTP request context is provided by a set of objects. These include:
+            <ul>
+                <li>Request Params &mdash; Request query and form data</li>
+                <li>Session Data &mdash; Persistent session data saved across requests</li>
+                <li><a href="../../../api/http.html#group___http_conn">Conn</a> &mdash; Connection object. Holds data pertaining to the socket connection.</li>
+                <li><a href="../../../api/http.html#group___http_rx">Rx</a> &mdash; Receive object. Holds data pertaining to this HTTP request.</li>
+                <li><a href="../../../api/http.html#group___http_tx">Tx</a> &mdash; Transmit object. Holds data pertaining to the response for this request.</li>
+                <li><a href="../../../api/http.html#group___http_host">Host</a> &mdash; Host object. Holds data for the host/virtual host serving the request.</li>
+                <li><a href="../../../api/http.html#group___http_route">Route</a> &mdash; Route object. Holds details regarding the route managing the request.</li>
+                <li>EspRoute &mdash; Additional ESP specific route state</li>
+                <li>EspReq &mdash; Additional ESP specific request state</li>
+            </ul>
+            <p>The Rx, Tx, Host, Route, EspRoute and EspReq objects are all addressible from the Conn object. 
+            <p>Here is a collection of especially useful context items:</p>
+            <table>
+                <tr><td>getConn()</td><td>Get the current connection object. Can be used inside controllers and 
+                    template web pages</td></td>
+                <tr><td>conn->rx</td><td>Request object</td>
+                <tr><td>conn->tx</td><td>Transmit object</td>
+                <tr><td>conn->host</td><td>Host object</td>
+                <tr><td>conn->route</td><td>Route object</td>
+                <tr><td>rx->method</td><td>HTTP method string</td>
+                <tr><td>rx->uri</td><td>Request URI</td>
+                <tr><td>rx->pathInfo</td><td>Request path information after the scriptName</td>
+                <tr><td>rx->scriptName</td><td>Script name portion of the request URI</td>
+                <tr><td>tx->filename</td><td>Resource filename being served</td>
+                <tr><td>tx->ext</td><td>Resource filename extension</td>
+                <tr><td>tx->finalized</td><td>Set if response output has been completed</td>
+                <tr><td>route->dir</td><td>Document root directory for the route</td>
+            </table>
+            <p>See the <a href="../../../api/native.html">Native APIs</a> document for more details about the available
+            APIs.</p>
+            
+            <a name="compilation" id="compilation"></a>
             <h2 class="section">Compilation</h2>
             <p>When developing, ESP will automatically detect changes made to the applications code and will
             intelligently recompile the necessary portions of the application. You can manually force a recompilation
@@ -414,34 +469,39 @@ esp generate appName
             <pre>
 esp compile
 </pre>
-            <p>See the <a href="generator.html">Application Generator</a> documentation for full details about compiling
-            views and applications.</p><!--
+            <p>See the <a href="generator.html">Application Generator</a> documentation for full details.</p>
+<!-- MOB
             <h2 class="section">Common Tasks</h2>
                 <h3>Managing Links</h3>
                 <h3>Writing Data</h3>
                 <h3>Redirecting</h3>
                 <h3>Setting the HTTP Resposne Code</h3>
                 <h3>Adding a HTTP Header</h3>
-        -->
+-->
             <a name="debugging" id="debugging"></a>
             <h2 class="section">Debugging</h2>
-            <p>You can inject debugging code into your views to trace data to the browser or to the console.</p>
-            <p>The <b>print</b> method will print its arguments to the console or web server log file. The <b>dump</b>
-            method will serialize objects and then send to the console or log.</p>
-            <p>To send trace to the browser, use the <b>write</b> method to write data back to the browser. The
-            <b>d</b> method will serialize and dump objects to the browser.</p><a name="viewClass" id="viewClass"></a>
-            <h2 class="section">View Class</h2>
-            <p>The View class has a large set of utility methods to assist you in creating your web views. See the
-            <a href="../../../api/ejscript/index.html">ESP Library</a> for details. Some of the important methods
-            are:</p>
-            <table summary="viewClass" width="100%">
+            <p>You can inject debugging code into your views to trace data to the appweb log file or back to the client's
+            browser.</p>
+            <p>The <a href="../../../api/mpr.html#group___mpr_log_1ga21fa2199e7f70707c1fb3b63daed6ecf">mprLog</a> 
+            function  will print its arguments to appweb log file. 
+            <p>To send trace to the browser, use the <tt>render</tt> method to write data back to the browser. 
+
+            <a name="controls" id="controls"></a>
+            <h2 class="section">HTML Controls</h2>
+            <p>ESP provides a rich set of HTML controls that can be used inside template pages  and controllers to
+            generate HTML components. Some of the important controls and functions are:</p>
+            <table summary="controls" width="100%">
                 <thead>
                     <tr>
-                        <td>Method Name</td>
+                        <td>Control Name</td>
                         <td>Description</td>
                     </tr>
                 </thead>
                 <tbody>
+                    <tr>
+                        <td>anchor</td>
+                        <td>Emit an anchor link</td>
+                    </tr>
                     <tr>
                         <td>chart</td>
                         <td>Emit a graphic chart</td>
@@ -463,12 +523,8 @@ esp compile
                         <td>Format data according to a format renderer function</td>
                     </tr>
                     <tr>
-                        <td>html</td>
-                        <td>HTML encode the arguments</td>
-                    </tr>
-                    <tr>
-                        <td>makeUrl</td>
-                        <td>Make a URL for an action and controller</td>
+                        <td>link</td>
+                        <td>Make a URI link for an action and controller</td>
                     </tr>
                     <tr>
                         <td>progress</td>
@@ -482,14 +538,17 @@ esp compile
                         <td>render</td>
                         <td>Render a data back to the client</td>
                     </tr>
+                <!-- MOB
                     <tr>
                         <td>renderFile</td>
                         <td>Render a file back to the client</td>
                     </tr>
+                -->
                     <tr>
                         <td>renderView</td>
                         <td>Render a specified view to the client</td>
                     </tr>
+                <!--
                     <tr>
                         <td>setCookie</td>
                         <td>Create a cookie to send to the client</td>
@@ -506,21 +565,14 @@ esp compile
                         <td>setMimeType</td>
                         <td>Set the response mime type</td>
                     </tr>
+                -->
                     <tr>
                         <td>table</td>
                         <td>Render a smart table</td>
                     </tr>
                     <tr>
-                        <td>textarea</td>
-                        <td>Render a text area</td>
-                    </tr>
-                    <tr>
-                        <td>write</td>
-                        <td>Write HTML data to the client</td>
-                    </tr>
-                    <tr>
-                        <td>write</td>
-                        <td>Write data to the client</td>
+                        <td>text</td>
+                        <td>Render a text input area</td>
                     </tr>
                 </tbody>
             </table>

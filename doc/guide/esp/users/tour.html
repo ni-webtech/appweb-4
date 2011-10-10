@@ -208,7 +208,7 @@ appweb: 1: HTTP services Started at Wed Oct 05 18:08:45 2011 PDT
 appweb: 1: Starting host named: "127.0.0.1:4000"</b>
 </pre>
             <p>Then enter <b>localhost:4000</b> in your browser. You should see your first application home
-            page.</p><img src="../../../images/esp/webtour-home.png" class="screen" alt="" />
+            page.</p><img src="../../../images/esp/tour/home.png" class="screen" alt="" />
             <a name="hello" id="hello"></a>
             <h2 class="section">Hello World</h2>
             <p>The next step is to create a simple "Hello World" web page. ESP web pages have an <b>.esp</b>
@@ -224,7 +224,7 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
             <p>Don't worry about the layout directive for now, that tells ESP not to use a layout page.</p>
             <p>To view the "Hello" web page in your browser, type in the following url:
             http://localhost:4000/static/hello.esp.</p>
-            <img src="../../../images/esp/webtour-hello.png" alt="hello" class= "screen" /> 
+            <img src="../../../images/esp/tour/hello.png" alt="hello" class= "screen" /> 
             <a name="dynamic" id="dynamic"></a>
             <h2>Layouts</h2>
             <p>The ESP templating engine can apply a layout page to allow each page so that it inherits its layout and
@@ -237,7 +237,7 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
 &lt;h1&gt;Hello Bright World&lt;/h1&gt;
 </pre>
             <p>And the web page now looks like this in your browser:
-            <img src="../../../images/esp/webtour-hello-layout.png" alt="hello" class= "screen" /> 
+            <img src="../../../images/esp/tour/hello-layout.png" alt="hello" class= "screen" /> 
             
             <a name="dynamic" id="dynamic"></a>
             <h2 class="section">Dynamic Content</h2>
@@ -251,7 +251,7 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
 &lt;h2&gt;<b>Generated on &lt;%= mprGetDate(0); %&gt;</b>&lt;/h2&gt;
 </pre>
             <p>Now when you re-run the page, it will display the current date and time:</p><img src=
-            "../../../images/esp/webtour-hello-dynamic.png" alt="hello" class="screen" />
+            "../../../images/esp/tour/hello-dynamic.png" alt="hello" class="screen" />
             <h3>No Restart Require</h3>
             <p>Notice that you did not have to restart the web server, nor did you have to manually recompile the
             application. Rather, ESP transparently recompiled the web page in the background. ESP noticed that the hello.esp
@@ -288,7 +288,7 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
             <p>This command created a database table called "post" and a post controller with
             <tt>post-list</tt> and <tt>post-edit</tt> views. 
             <p>Now if you set your browser to the URI for the post controller, you will see your post listing screen.
-            <img src="../../../images/esp/webtour-post-list.png" alt="postList" class="screen" /> <a name="newPosts" id=
+            <img src="../../../images/esp/tour/post-list.png" alt="postList" class="screen" /> <a name="newPosts" id=
             "newPosts"></a></p>
             <h2 class="section">Create New Posts</h2>
             <p>The new post button directs your browser to the <tt>/post/init</tt> URI. Behind the scenes, Appweb
@@ -331,7 +331,7 @@ static void create() {
             ESP will automatically invoke a view of the same name. In the case of the <tt>list</tt> action, the
             <tt>views/post-list.esp</tt> will be used to generate the response.</p>
             
-            <img src= "../../../images/esp/webtour-create.png" alt="createPost" class="screen" />
+            <img src= "../../../images/esp/tour/create.png" alt="createPost" class="screen" />
             <p>Click OK to add the new blog post.</p><a name="homePage" id="homePage"></a>
             <h2>Edit the Home Page</h2>
             <p>You can edit the application's home page to add a link to your post listing page. Change
@@ -342,11 +342,11 @@ static void create() {
 </pre>
             <p>The <tt>@post/</tt> link means redirect to the <tt>post</tt> controller if the label is clicked.</p>
             Reload the page and you will see:</p>
-            <img src="../../../images/esp/webtour-home-link.png" alt="homeLink" class="screen" /> 
+            <img src="../../../images/esp/tour/home-link.png" alt="homeLink" class="screen" /> 
             <h2>Code Errors</h2>
             <p>What happens if you make a mistake entering the embedded "C" code in an ESP page. Say you forgot the 
             semicolon in the last example. You will see an error like this in your browser:</p>
-            <img src="../../../images/esp/webtour-error.png" alt="homeLink" class="screen" /> 
+            <img src="../../../images/esp/tour/error.png" alt="homeLink" class="screen" /> 
             <p>You can suppress these errors by setting <tt>EspShowErrors</tt> to <tt>off</tt> in the appweb.conf
             configuration file.</p>
             <a name="layout" id="layout"></a>
@@ -372,7 +372,7 @@ static void create() {
             <pre>
 esp compile
 </pre>
-            <img src="../../../images/esp/webtour-tabs.png" alt="tabs" class="screen" /> 
+            <img src="../../../images/esp/tour/tabs.png" alt="tabs" class="screen" /> 
             
             <a name="validations" id="validations">
             </a>
@@ -398,7 +398,7 @@ ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module)
             <p>If you click OK in the Post <tt>edit</tt> web page without entering any data
             you will see the following:</p>
             
-            <img src="../../../images/esp/webtour-validate.png" alt="validate" class="screen" />
+            <img src="../../../images/esp/tour/validate.png" alt="validate" class="screen" />
             <p>This automatically identified the input fields in error and generated a summary of the errors above the
             form. Of course, this default error highlighting behavior can be overridden if desired by modifying the
             application style sheets.<p>

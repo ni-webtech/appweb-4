@@ -1,0 +1,473 @@
+<!-- BeginDsi "dsi/head.html" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Embedthis Appweb 4.0.0 Documentation</title>
+    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
+        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
+    <meta name="description" content="Embedthis Sofware provides commercial and open source embedded web servers for 
+        devices and applications." />
+	<meta name="robots" content="index,follow" />
+	<link href="../../../doc.css" rel="stylesheet" type="text/css" />
+	<link href="../../../print.css" rel="stylesheet" type="text/css" media="print"/>
+    <!--[if IE]>
+    <link href="../../../iehacks.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+</head>
+
+<body>
+    <div class="top">
+        <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
+        <div class="topRight">
+             <div class="search">
+                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="appwebserver.org" /> 
+                        <input type="hidden" name="sitesearch" value="appwebserver.org" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 4.0.0
+        </div>
+        <div class="crumbs">
+            <a href="../../../product/index.html">Home</a>
+<!-- EndDsi -->
+             &gt;<a href="index.html">ESP Guide</a>&gt; <b>Templated Pages and Layouts</b>
+        </div>
+    </div>
+    <div class="content">
+        <div class="contentRight">
+            <h2>Quick Nav</h2>
+            <ul>
+                <li><a href="#layoutPages">Layout Pages</a></li>
+                <li><a href="#content">Content Pages</a></li>
+                <li><a href="#alternateLayout">Alternate Layout Pages</a></li>
+                <li><a href="#multiple">Multiple Layout Pages</a></li>
+                <li><a href="#dev">Development Time</a></li>
+                <li><a href="#dir">Directory Structure</a></li>
+                <li><a href="#static">Static Web Content</a></li>
+                <li><a href="#stand-alone">Stand-Alone Web Pages</a></li>
+                <li><a href="#dynamic">Dynamic Content</a></li>
+                <li><a href="#form">Accessing Form Data</a></li>
+                <li><a href="#structured">Structured Form Data</a></li>
+                <li><a href="#database">Accessing Database Data</a></li>
+                <li><a href="#sessions">Session Data</a></li>
+                <li><a href="#themes">Themes and CSS</a></li>
+                <li><a href="#compilation">Compilation</a></li>
+                <li><a href="#debugging">Debugging</a></li>
+                <li><a href="#viewClass">View Class</a></li>
+            </ul>
+<!-- BeginDsi "dsi/espSeeAlso.html" -->
+		        <h2>See Also</h2>
+		        <ul>
+		          <li><a href="../../../../../../guide/appweb/esp/tour.html">ESP Tour</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/template.html">Views and Layouts</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/controls.html">HTML Controls</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/mvc.html">Model-View-Controller</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/generator.html">Application Generator</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/controllers.html">Controllers and Actions</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/database.html">Database Interface</a></li>
+		          <li><a href="../../../../../../guide/appweb/esp/caching.html">Caching Responses</a></li>
+		        </ul>
+<!-- EndDsi -->
+
+            <ul>
+                <li><a href="../../../api/ejscript/index.html">ESP Library</a></li>
+            </ul>
+        </div>
+        <div class="contentLeft">
+            <h1>Layout Pages</h1>
+            <p>ESP pages are essentially HTML pages with embedded "C" code. But they are much more than that, ESP
+            web pages are created by merging a content pages with one or more layout pages to create a composite page
+            which is what the user will actually see.
+            
+            The view pages are processed by ESP, the code
+            is run and a final HTML page sent to the client. <img src="../../../images/webComposite.jpg" alt="" /></p>
+            <p>"C" code embedded in your web pages enables dynamic data to be inserted at runtime into what
+            would otherwise be static web pages. ESP provides a set of directives to make it easy to refer to
+            native "C" variables, expressions or code blocks in your web pages. A suite of <a href=
+            "controls.html">HTML Controls</a> provides high level components such as tables, charts, tabs, and
+            forms that are Ajax-enabled for a seamless dynamically updating user experience.</p>
+
+            <h2 class="section">Layouts &mdash; Creating a Consistent Look and Feel</h2>
+            <p>A web application typically consists of many web pages that share a common look and feel. Usable
+            applications have a consistent structure, menus and appearance so the user can easily navigate tha
+            application. However, designing and maintaining that consistent look and feel is frequently quite
+            difficult.</p><a name="layoutPages" id="layoutPages"></a>
+            <h3>Layout Pages</h3>
+            <p>The ESP web framework provides a templating layout engine so that each page can reuse a common
+            layout page and not have to repeat the common application UI elements in each page. ESP does this by
+            automatically merging <b>layout</b> pages and content pages to create a composite page that matches what
+            the user actually will see.</p>
+            <p>For example: this is a layout page called "views/layouts/default.ejs" which defines the top level HTML
+            content for all content pages. It has a banner image and division tags that structure the page:</p>
+            <pre>
+&lt;html&gt;
+&lt;body&gt;
+    &lt;div class="top"&gt;
+        &lt;img src="banner.jpg" /&gt;
+    &lt;/div&gt;
+    &lt;div class="content"&gt;
+        <b>&lt;%@ content %&gt;</b>
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+            <p>Modifications to this page, will be reflected automatically in all content pages.</p><a name="content"
+            id="content"></a>
+            <h3>Content Pages</h3>
+            <p>A content page defines only the HTML and code that is different for a specific page. It is merged with a
+            layout page by inserting the content and replacing the <b>&lt;%@ content %&gt;</b> tag in the master
+            page.</p>
+            <p>For example, consider the content page named "views/Demo/index.ejs":</p>
+            <pre>
+&lt;h1&gt;Content Page&lt;/h1&gt;
+&lt;p&gt;Hello World&lt;/p&gt;
+</pre>
+            <p>This would render a composite web page back to the user:</p>
+            <pre>
+&lt;html&gt;
+&lt;body&gt;
+    &lt;div class="top"&gt;
+        &lt;img src="banner.jpg" /&gt;
+    &lt;/div&gt;
+    &lt;div class="content"&gt;
+        &lt;h1&gt;Content Page&lt;/h1&gt;
+        &lt;p&gt;Hello World&lt;/p&gt;
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</pre><a name="alternateLayout" id="alternateLayout"></a>
+            <h3>Alternate Layout Pages</h3>
+            <p>A content page can request a specific layout page by using the <b>&lt;%@ layout "file"&gt;</b>
+            directive.</p>
+            <pre>
+<b>&lt;%@ layout "alternateLayout "&gt;</b>
+&lt;h1&gt;Content Page&lt;/h1&gt;
+&lt;p&gt;Hello World&lt;/p&gt;
+</pre>
+            <p>This instructs the templating engine to use the "alternateLayout.ejs" file rather than the default
+            layout. The default layout page is called "views/layouts/default.ejs". <a name="multiple" id=
+            "multiple"></a></p>
+            <h3>Multiple Layout Pages</h3>
+            <p>You are not restricted to a simple two level layout and content page scheme. A layout page can itself
+            refer to another layout page to gradually build up the application's look and feel. To do this, the layout
+            page needs to include an explicit <b>&lt;%@ layout "file"&gt;</b> directive.</p><a name="dev" id="dev"></a>
+            <h3>Development Time</h3>
+            <p>The combining of layout and contents pages occurs at development time, as does the compilation of the
+            composite page into byte code. At run-time, all that remains to be done is actually execute the byte code
+            and substitute dynamic data into the page. This results in the fastest run-time execution because the
+            layout processing and page compilation occur only once and at development time.</p><img src=
+            "../../../images/webView.jpg" alt="" /> <a name="dir" id="dir"></a>
+            <h2 class="section">Directory Structure</h2>
+            <p>ESP follows the <a href="http://en.wikipedia.org/wiki/Convention_over_Configuration">Convention
+            over Configuration</a> design paradigm where developers only need to specify the unusual parts of their
+            application. This is exemplified by an expected directory structure for views and layouts.</p>
+            <pre>
+views
+  |
+  +-- layouts
+  |      |
+  |   Layout pages...
+  |
+  + ControllerName
+         |
+         + View pages...
+</pre>
+            <p>The <a href="generator.html"><b>esp</b></a> application generator program will create these directories
+            for you when you run</p>
+            <pre>
+esp generate appName
+</pre>
+            <p>After creating the application, you should place all content views for a controller under the
+            "views/ControllerName" directory. The "ControllerName" directories should by convention begin with an upper
+            case letter. The "views" and "views/layouts" directories are lower case. <a name="static" id=
+            "static"></a></p>
+            <h2 class="section">Static Web Content</h2>
+            <p>Static web page content such as images, CSS pages and other similar content should be placed under the
+            <b>web</b> directory. While this content can be served by the ESP handler, it should ideally and
+            optimally be processed directly by the web server. The ESP module for Apache and Appweb will enable
+            this automatically. If you are using the CGI or FastCGI for hosting ESP, you may wish to configure
+            your web server to serve these pages directly.</p><a name="stand-alone" id="stand-alone"></a>
+            <h3>Stand-Alone ESP Web Pages</h3>
+            <p>Not all ESP web pages are views. You can create stand-alone ESP web pages. These do not use
+            layout pages and do not have access to Models, Controllers or View objects. Why create stand-alone ESP
+            pages you ask? Because it is sometimes convenient to have a little bit of scripting inside a mostly static
+            HTML page.</p>
+            <p>For example: This will insert a date into a web page footer:</p>
+            <pre>
+&lt;html&gt;
+&lt;body&gt;
+    &lt;div class="top"&gt;
+        &lt;img src="banner.jpg" /&gt;
+    &lt;/div&gt;
+    &lt;div class="content"&gt;
+        &lt;h1&gt;Content Page&lt;/h1&gt;
+        &lt;p&gt;Hello World&lt;/p&gt;
+    &lt;/div&gt;
+    <b>&lt;p&gt;Created on &lt;%= new Date %&gt;&lt;/p&gt;</b>
+&lt;/body&gt;
+&lt;/html&gt;
+</pre><a name="dynamic" id="dynamic"></a>
+            <h2 class="section">Dynamic Content</h2>
+            <p>One of the primary reasons for views is to make it easier to create web pages with dynamic data.</p>
+            <p>ESP provides a set of directives to easily embed "C" code in your web page.</p>
+            <p>The following directives are provided:</p>
+            <table summary="directives" width="100%">
+                <thead>
+                    <tr>
+                        <td>Directive</td>
+                        <td>Purpose</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>&lt;%= expression %&gt;</td>
+                        <td>"C" expression</td>
+                    </tr>
+                    <tr>
+                        <td>&lt;% statements %&gt;</td>
+                        <td>"C" statements</td>
+                    </tr>
+                    <tr>
+                        <td>@@variable</td>
+                        <td>"C" variable value</td>
+                    </tr>
+                </tbody>
+            </table>
+            <h3>&lt;%= expression %&gt;</h3>
+            <p>Use this directive to embed the result of a "C" expression. The result must be a null-terminated string.</p>
+            <pre>
+&lt;%= new Date().fullYear %&gt;
+</pre>
+            <h3>&lt;% statements %&gt;</h3>
+            <p>Use this directive to run "C" code statements. No value is substituted back into the page in
+            place of the directive.</p>
+            <pre>
+&lt;% 
+    lines = File.getLines("test.txt")
+    for each (l in lines) {
+        write(l)
+    }
+%&gt;
+</pre>
+            <p>The code defined via this directive is placed inside the view's <b>render</b> function. Any code that is
+            valid to put in a function, is valid in this directive. NOTE: you cannot use the <b>class</b> keyword. A
+            better place for such code is not in views, but in either the controller or application code.</p>
+            <p>You can also iterate over regular HTML code. The following code will display <b>Hello World</b> ten
+            times in the web page.</p>
+            <pre>
+&lt;% for (i in 10) { %&gt;
+    Hello World
+&lt;% } %&gt;
+</pre>
+            <h3>@@variables</h3>
+            <p>ESP provides a shorthand for the <b>&lt;%= expression %&gt;</b> directive via the
+            <b>@@variable</b>. This directive is a compact way of referencing a simple "C" variable.</p>
+            <pre>
+&lt;% today = new Date %&gt;
+<b>&lt;h2&gt;Today is @@today&lt;/h2&gt;</b>
+</pre>
+            <p>This directive is very useful for accessing any controller, model, application, session, request or form
+            data.</p>
+            <p>Public variables in the controller are visible to views, as is the Model class. The application object
+            is accessible via the <b>app</b> object and session data is accessible via the <b>session</b> object. Form
+            data is stored in the <b>params</b> object.</p>
+            <pre>
+&lt;%
+    &lt;h2&gt;Web Server Name: @@host.name running @@host.software&lt;/h2&gt;
+    &lt;p&gt;Application URL: @@app.url&lt;/p&gt;
+    table(Users.findAll())
+    dump(users)
+%&gt;
+</pre>
+            <p>See the <a href="../../../api/ejscript/index.html">ESP Library</a> for a full list of all the
+            properties and methods available to use in the various embedded ESP directives. Of particular
+            relevance are the classes in the ejs.web namespace which include the Application, Controller, Host,
+            Request, Response, Session and View classes.</p><a name="form" id="form"></a>
+            <h2 class="section">Accessing Form Data</h2>
+            <p>HTTP Form data is marshalled by ESP into the <b>params</b> object which is accessible in views and
+            controllers. Each HTML input element posted by the client will become a property of <b>params</b> and can
+            be accessed by embedded script code.</p><img src="../../../images/form.png" class="screen" alt="" />
+            <p>This form was generated by the view code below:</p>
+            <pre>
+&lt;form method="POST" action="@@request.uri"&gt;
+    &lt;p&gt;Name: &lt;input name="name" type="text"&gt;&lt;/p&gt;
+    &lt;p&gt;Address: &lt;input name="address" type="text"&gt;&lt;/p&gt;
+    &lt;input type="submit" name="ok" value="Ok"&gt;
+&lt;/form&gt;
+</pre>
+            <p>This view creates three HTML form inputs and will populate the <b>params</b> object when posted back to
+            the server with the properties: <b>params.name</b>, <b>params.address</b> and <b>params.ok</b>.</p><a name=
+            "structured" id="structured"></a>
+            <h3>Structured Form Data</h3>
+            <p>This simple mapping of input element names to params properties works fine for simple forms, but what
+            about more complex forms? ESP can organize form data into nested objects. If an input element name
+            contains a period, then ESP will create nested objects to match the input element name.</p>
+            <p>For example, consider the view:</p>
+            <pre>
+&lt;form method="POST" action="@@request.uri"&gt;
+    &lt;p&gt;Name: &lt;input name="user.name" type="text"&gt;&lt;/p&gt;
+    &lt;p&gt;Address: &lt;input name="user.address" type="text"&gt;&lt;/p&gt;
+    &lt;input type="submit" name="ok" value="Ok"&gt;
+&lt;/form&gt;
+</pre>
+            <p>This will create a <b>user</b> object in the params object. The user object will have properties
+            <b>user.name</b> and <b>user.address</b>. This form of structured form data makes handling form data much
+            simpler.</p><a name="database" id="database"></a>
+            <h3>Accessing Database Data</h3>
+            <p>ESP provides an Object Relational Mapping (ORM) layer for accessing database data via convenient
+            JavaScript objects. The ORM layer is represented by a collection of database Model classes for the
+            application. Views can read the database by using Model classes. A more typical pardigm is for controller
+            action routines to read a database record and store the record in a controller property. The view can then
+            simply access the database data by referencing that property.</p>
+            <p>For more details, see <a href="models.html">Database Models</a>.</p><a name="sessions" id=
+            "sessions"></a>
+            <h2 class="section">Session Data</h2>
+            <p>Data can be persistently stored between HTTP requests in the <b>sessions</b> object. Data stored to the
+            sessions object is serialized, so you cannot store object references. However, the session object is ideal
+            to store a request cookie or session key.</p><a name="themes" id="themes"></a>
+            <h2 class="section">Themes and CSS</h2>
+            <p>Well structured web applications divide HTML data and presentation style into two separate documents.
+            Namely: HTML pages and cascading style sheets. In this way, a style sheet can be reused and shared by all
+            pages.</p>
+            <p>It is better still to divide the style sheet into two: a layout structure style sheet and a theme style
+            sheet. The structure style sheet specifies the order and positioning of the various sections on of the web
+            page, whereas the theme style sheet specifies the fonts, font sizes, weights and foreground and background
+            colors.</p>
+            <p>ESP supports this organization by providing a providing a directory for theme style sheet. The
+            <b>esp</b> application will also generate a default theme style sheet for scaffolds and
+            views.</p><a name="compilation" id="compilation"></a>
+            <h2 class="section">Compilation</h2>
+            <p>When developing, ESP will automatically detect changes made to the applications code and will
+            intelligently recompile the necessary portions of the application. You can manually force a recompilation
+            via the <b>esp</b> command.</p>
+            <pre>
+esp compile
+</pre>
+            <p>See the <a href="generator.html">Application Generator</a> documentation for full details about compiling
+            views and applications.</p><!--
+            <h2 class="section">Common Tasks</h2>
+                <h3>Managing Links</h3>
+                <h3>Writing Data</h3>
+                <h3>Redirecting</h3>
+                <h3>Setting the HTTP Resposne Code</h3>
+                <h3>Adding a HTTP Header</h3>
+        -->
+            <a name="debugging" id="debugging"></a>
+            <h2 class="section">Debugging</h2>
+            <p>You can inject debugging code into your views to trace data to the browser or to the console.</p>
+            <p>The <b>print</b> method will print its arguments to the console or web server log file. The <b>dump</b>
+            method will serialize objects and then send to the console or log.</p>
+            <p>To send trace to the browser, use the <b>write</b> method to write data back to the browser. The
+            <b>d</b> method will serialize and dump objects to the browser.</p><a name="viewClass" id="viewClass"></a>
+            <h2 class="section">View Class</h2>
+            <p>The View class has a large set of utility methods to assist you in creating your web views. See the
+            <a href="../../../api/ejscript/index.html">ESP Library</a> for details. Some of the important methods
+            are:</p>
+            <table summary="viewClass" width="100%">
+                <thead>
+                    <tr>
+                        <td>Method Name</td>
+                        <td>Description</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>chart</td>
+                        <td>Emit a graphic chart</td>
+                    </tr>
+                    <tr>
+                        <td>endform</td>
+                        <td>End an input form</td>
+                    </tr>
+                    <tr>
+                        <td>flash</td>
+                        <td>Emit a flash message area field</td>
+                    </tr>
+                    <tr>
+                        <td>form</td>
+                        <td>Emit a HTML form</td>
+                    </tr>
+                    <tr>
+                        <td>format</td>
+                        <td>Format data according to a format renderer function</td>
+                    </tr>
+                    <tr>
+                        <td>html</td>
+                        <td>HTML encode the arguments</td>
+                    </tr>
+                    <tr>
+                        <td>makeUrl</td>
+                        <td>Make a URL for an action and controller</td>
+                    </tr>
+                    <tr>
+                        <td>progress</td>
+                        <td>Emit a progress bar</td>
+                    </tr>
+                    <tr>
+                        <td>redirect</td>
+                        <td>Redirect the client to a new URL</td>
+                    </tr>
+                    <tr>
+                        <td>render</td>
+                        <td>Render a data back to the client</td>
+                    </tr>
+                    <tr>
+                        <td>renderFile</td>
+                        <td>Render a file back to the client</td>
+                    </tr>
+                    <tr>
+                        <td>renderView</td>
+                        <td>Render a specified view to the client</td>
+                    </tr>
+                    <tr>
+                        <td>setCookie</td>
+                        <td>Create a cookie to send to the client</td>
+                    </tr>
+                    <tr>
+                        <td>setHeader</td>
+                        <td>Set a HTTP response header</td>
+                    </tr>
+                    <tr>
+                        <td>setHttpCode</td>
+                        <td>Set the HTTP response code</td>
+                    </tr>
+                    <tr>
+                        <td>setMimeType</td>
+                        <td>Set the response mime type</td>
+                    </tr>
+                    <tr>
+                        <td>table</td>
+                        <td>Render a smart table</td>
+                    </tr>
+                    <tr>
+                        <td>textarea</td>
+                        <td>Render a text area</td>
+                    </tr>
+                    <tr>
+                        <td>write</td>
+                        <td>Write HTML data to the client</td>
+                    </tr>
+                    <tr>
+                        <td>write</td>
+                        <td>Write data to the client</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<!-- BeginDsi "dsi/bottom.html" -->
+
+	<div class="bottom">
+		<p class="footnote"> 
+            <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2011. 
+            All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
+		</p>
+	</div>
+<!-- EndDsi -->
+</body>
+</html>
