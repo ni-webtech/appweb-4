@@ -21,7 +21,6 @@ DEP_SOURCES=`find ${S}/deps -name '*.c' | egrep -v 'angel|makerom|utils|test|htt
 #
 #   Build files
 #
-mkdir -p ${SRC} ${DOC}/man ${DOC}/api
 cp ${BLD_TOP}/package/Makefile.combo "${SRC}/Makefile"
 cp ${BLD_INC_DIR}/buildConfig.h "${DIR}/buildConfig.h"
 
@@ -65,6 +64,7 @@ combo ${S}/esp/esp*.c | egrep -v '#include.*UNUSED' >>${SRC}/esp.c
 #
 #	Doc
 #
+mkdir -p ${SRC} ${DOC}/man ${DOC}/api
 cp ${BLD_TOP}/doc/api/appweb.html ${DOC}/api
 cp ${BLD_TOP}/doc/api/appwebBare.html ${DOC}/api
 cp ${BLD_TOP}/doc/api/appweb.tags ${DOC}/api
