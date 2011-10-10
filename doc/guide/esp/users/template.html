@@ -35,7 +35,7 @@
         <div class="crumbs">
             <a href="../../../product/index.html">Home</a>
 <!-- EndDsi -->
-             &gt;<a href="index.html">ESP Guide</a>&gt; <b>Views and Layouts</b>
+             &gt;<a href="index.html">ESP Guide</a>&gt; <b>Templated Pages and Layouts</b>
         </div>
     </div>
     <div class="content">
@@ -79,17 +79,19 @@
             </ul>
         </div>
         <div class="contentLeft">
-            <h1>Views and Layouts</h1>
-            <p>ESP views are HTML pages with embedded "C" code. Views are created by merging content pages
-            with a layout page to create composite pages that resemble what the user will actually see. The composite
-            pages are rendered by <a href="controllers.html">Controllers</a> after they have finished processing the
-            requested <a href="controllers.html#actions">Action</a>. The view pages are processed by ESP, the code
+            <h1>ESP Templated Pages</h1>
+            <p>ESP pages are essentially HTML pages with embedded "C" code. But they are much more than that, ESP
+            web pages are created by merging a content pages with one or more layout pages to create a composite page
+            which is what the user will actually see.
+            
+            The view pages are processed by ESP, the code
             is run and a final HTML page sent to the client. <img src="../../../images/webComposite.jpg" alt="" /></p>
             <p>"C" code embedded in your web pages enables dynamic data to be inserted at runtime into what
             would otherwise be static web pages. ESP provides a set of directives to make it easy to refer to
             native "C" variables, expressions or code blocks in your web pages. A suite of <a href=
-            "controls.html">Ajax View Controls</a> provides high level components such as tables, charts, tabs, and
+            "controls.html">HTML Controls</a> provides high level components such as tables, charts, tabs, and
             forms that are Ajax-enabled for a seamless dynamically updating user experience.</p>
+
             <h2 class="section">Layouts &mdash; Creating a Consistent Look and Feel</h2>
             <p>A web application typically consists of many web pages that share a common look and feel. Usable
             applications have a consistent structure, menus and appearance so the user can easily navigate tha

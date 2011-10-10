@@ -541,7 +541,11 @@ static int loadApp(HttpConn *conn, int *updated)
         }
     }
     if (mp == 0) {
+#if UNUSED
         entry = sfmt("esp_app_%s", mprGetPathBase(eroute->dir));
+#else
+        entry = sfmt("esp_app_%s", eroute->appModuleName);
+#endif
         if ((mp = mprCreateModule(eroute->appModuleName, eroute->appModulePath, entry, eroute)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find module %s", eroute->appModulePath);
             return 0;

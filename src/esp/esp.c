@@ -739,7 +739,7 @@ static void compile(int argc, char **argv)
             fail("Can't open %s", path);
             return;
         }
-        mprWriteFileFmt(app->flatFile, "/*\n *  Flat compilation of %s\n */\n\n", app->appName);
+        mprWriteFileFmt(app->flatFile, "/*\n    Flat compilation of %s\n */\n\n", app->appName);
 
         app->files = files = mprGetPathFiles(eroute->controllersDir, 1);
         for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
