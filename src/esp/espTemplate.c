@@ -215,7 +215,7 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
             return 0;
         }
         /*
-            Use layouts iff there is a controller provided on the route
+            Use layouts iff there is a source defined on the route. Only MVC/controllers based apps do this.
          */
         layout = (rx->route->sourceName) ? mprJoinPath(eroute->layoutsDir, "default.esp") : 0;
         if ((script = espBuildScript(eroute, page, source, cacheName, layout, &err)) == 0) {
@@ -357,8 +357,8 @@ char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheNam
         case ESP_TOK_VAR:
             /* @@var */
             token = strim(token, " \t\r\n;", MPR_TRIM_BOTH);
+            /* espWriteParam uses espWriteSafeString */
             body = sjoin(body, "  espWriteParam(conn, \"", token, "\");\n", NULL);
-            //MOB  body = sjoin(body, "  espWriteSafeString(conn, espGetParam(conn, \"", token, "\", \"\"));\n", NULL);
             break;
 
 

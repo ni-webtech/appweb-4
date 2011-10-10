@@ -39,7 +39,7 @@ int maOpenConfig(MaState *state, cchar *path)
 }
 
 
-int maParseConfig(MaServer *server, cchar *path)
+int maParseConfig(MaServer *server, cchar *path, int flags)
 {
     MaState     *state;
     HttpHost    *host;
@@ -59,6 +59,7 @@ int maParseConfig(MaServer *server, cchar *path)
     httpSetHostDefaultRoute(host, route);
 
     state = createState(server, host, route);
+    state->flags = flags;
     if (parseFile(state, path) < 0) {
         return MPR_ERR_BAD_SYNTAX;
     }
@@ -1038,8 +1039,10 @@ static int logRoutesDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "?S", &full)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    mprRawLog(0, "\nHTTP Routes for the '%s' host:\n\n", state->host->name ? state->host->name : "default");
-    httpLogRoutes(state->host, smatch(full, "full"));
+    if (!(state->flags & MA_PARSE_NON_SERVER)) {
+        mprRawLog(0, "\nHTTP Routes for the '%s' host:\n\n", state->host->name ? state->host->name : "default");
+        httpLogRoutes(state->host, smatch(full, "full"));
+    }
     return 0;
 }
 
@@ -1870,6 +1873,7 @@ MaState *maPushState(MaState *prev)
     }
     state->top = prev->top;
     state->prev = prev;
+    state->flags = prev->flags;
     state->appweb = prev->appweb;
     state->http = prev->http;
     state->server = prev->server;

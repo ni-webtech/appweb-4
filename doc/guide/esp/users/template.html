@@ -79,13 +79,79 @@
             </ul>
         </div>
         <div class="contentLeft">
-            <h1>ESP Templated Pages</h1>
-            <p>ESP pages are essentially HTML pages with embedded "C" code. But they are much more than that, ESP
+            <h1>ESP Template Web Pages</h1>
+            <p>ESP template pages are essentially HTML pages with embedded "C" code that are compiled into pure "C"
+            code for exceptionally fast execution.
+
+- Overview
+    - What are templated pages
+        vs static web pages
+    - Processed transparently or precompiled
+    - Cached
+    - Fast execution
+
+- how it works
+    - Diagram
+    - Appweb.conf + route define how pages are processed
+    - layout pages (brief)
+    - Parsed => script
+    - Compiled => loadable module (library)
+    - Loaded 
+    - Reloaded if modified
+        - Recompiled if source modified
+    - esp Takes config from appweb.conf. Need route configured for ESP
+    - At runtime
+        - Compile once ... code cached and loaded
+        - Next request runs in-memory code
+        - Restart Appweb will load cached code
+- Compiling
+    - Compiled into cache dir => name converted into MD5 name
+        - Single directory for easy deployment
+    - Compile flat option for single file
+    - transparent compilation
+        * Is there a universal touch? or signal
+        - Unload when no active esp pages left
+    - Compilation errors
+        - EspShowErrors
+    - Cache file names
+- esp compile (brief)
+    - verbose mode
+    - Keep option: EspKeepSource
+    - MVC
+    - Stand along pages
+    Appweb.conf compilation directives in esp.conf
+        Tokens ARCH, CC DEBUG INC LIB OBJ OUT SHLIB SHOBJ SRC TMP
+- transparent reloading
+    - reload if new module
+    - Appweb directive EspUpdate
+- Various sections of code
+- How to access request state
+- Page Directives
+    - Discuss white space
+    <%@ include "file" >
+    <%@ layout "file" >
+    <%@ content
+    <%^ global
+    <%^ start
+    <%^ end
+    <%= expression
+    <%= [%fmt] expression
+         %S for safe HTML
+    -%> trim trailing newline
+    @@var => espGetParam (safe)
+        - What are params: query, form body, set params, route tokens
+- includes
+- controls (brief)
+
+            
+            But they are much more than that, ESP
             web pages are created by merging a content pages with one or more layout pages to create a composite page
             which is what the user will actually see.
             
-            The view pages are processed by ESP, the code
-            is run and a final HTML page sent to the client. <img src="../../../images/webComposite.jpg" alt="" /></p>
+            The template pages are processed by ESP, the code
+            is run and a final HTML page sent to the client. 
+            <img src="../../../images/webComposite.jpg" alt="" /></p>
+
             <p>"C" code embedded in your web pages enables dynamic data to be inserted at runtime into what
             would otherwise be static web pages. ESP provides a set of directives to make it easy to refer to
             native "C" variables, expressions or code blocks in your web pages. A suite of <a href=

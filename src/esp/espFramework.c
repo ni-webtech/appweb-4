@@ -247,6 +247,26 @@ void espDefineView(EspRoute *eroute, cchar *path, void *view)
 }
 
 
+void espFinalize(HttpConn *conn) 
+{
+    EspReq     *req;
+    
+    req = conn->data;
+    if (req->cacheBuffer) {
+        httpSetResponded(conn);
+    } else {
+        httpFinalize(conn);
+    }
+    req->finalized = 1;
+}
+
+
+void espFlush(HttpConn *conn) 
+{
+    httpFlush(conn);
+}
+
+
 MprOff espGetContentLength(HttpConn *conn)
 {
     return httpGetContentLength(conn);
@@ -338,6 +358,12 @@ char *espGetHome(HttpConn *conn)
 }
 
 
+cchar *espGetParam(HttpConn *conn, cchar *var, cchar *defaultValue)
+{
+    return httpGetParam(conn, var, defaultValue);
+}
+
+
 cchar *espGetQueryString(HttpConn *conn)
 {
     return httpGetQueryString(conn);
@@ -353,6 +379,26 @@ char *espGetReferrer(HttpConn *conn)
 }
 
 
+/*
+    Get a security token. This will use and existing token or create if not present. It will store in the session store.
+ */
+cchar *espGetSecurityToken(HttpConn *conn)
+{
+    HttpRx      *rx;
+
+    rx = conn->rx;
+
+    if (rx->securityToken == 0) {
+        rx->securityToken = (char*) espGetSessionVar(conn, ESP_SECURITY_TOKEN_NAME, 0);
+        if (rx->securityToken == 0) {
+            rx->securityToken = mprGetMD5(sfmt("%d-%p", mprGetTicks(), conn->rx));
+            espSetSessionVar(conn, ESP_SECURITY_TOKEN_NAME, rx->securityToken);
+        }
+    }
+    return rx->securityToken;
+}
+
+
 //  MOB - is this only for clients?
 int espGetStatus(HttpConn *conn)
 {
@@ -364,26 +410,6 @@ int espGetStatus(HttpConn *conn)
 char *espGetStatusMessage(HttpConn *conn)
 {
     return httpGetStatusMessage(conn);
-}
-
-
-void espFinalize(HttpConn *conn) 
-{
-    EspReq     *req;
-    
-    req = conn->data;
-    if (req->cacheBuffer) {
-        httpSetResponded(conn);
-    } else {
-        httpFinalize(conn);
-    }
-    req->finalized = 1;
-}
-
-
-void espFlush(HttpConn *conn) 
-{
-    httpFlush(conn);
 }
 
 
@@ -455,36 +481,10 @@ void espSetContentType(HttpConn *conn, cchar *mimeType)
 }
 
 
+//  MOB - sort
 int espGetIntParam(HttpConn *conn, cchar *var, int defaultValue)
 {
     return httpGetIntParam(conn, var, defaultValue);
-}
-
-
-//  MOB - sort
-cchar *espGetParam(HttpConn *conn, cchar *var, cchar *defaultValue)
-{
-    return httpGetParam(conn, var, defaultValue);
-}
-
-
-/*
-    Get a security token. This will use and existing token or create if not present. It will store in the session store.
- */
-cchar *espGetSecurityToken(HttpConn *conn)
-{
-    HttpRx      *rx;
-
-    rx = conn->rx;
-
-    if (rx->securityToken == 0) {
-        rx->securityToken = (char*) espGetSessionVar(conn, ESP_SECURITY_TOKEN_NAME, 0);
-        if (rx->securityToken == 0) {
-            rx->securityToken = mprGetMD5(sfmt("%d-%p", mprGetTicks(), conn->rx));
-            espSetSessionVar(conn, ESP_SECURITY_TOKEN_NAME, rx->securityToken);
-        }
-    }
-    return rx->securityToken;
 }
 
 

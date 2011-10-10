@@ -71,6 +71,9 @@ static void openEsp(HttpQueue *q)
         req->eroute = eroute;
         req->autoFinalize = 1;
     }
+    /*
+        If unloading a module, this lock will cause a wait here while ESP applications are reloaded
+     */
     lock(esp);
     esp->inUse++;
     unlock(esp);
@@ -617,6 +620,7 @@ static bool unloadModule(cchar *module)
     MprModule   *mp;
     MprTime     mark;
 
+    /* MOB - should this suspend new requests */
     if ((mp = mprLookupModule(module)) != 0) {
         mark = mprGetTime();
         do {
@@ -629,6 +633,7 @@ static bool unloadModule(cchar *module)
             }
             unlock(esp);
             mprSleep(20);
+            /* Defaults to 10 secs */
         } while (mprGetRemainingTime(mark, ESP_UNLOAD_TIMEOUT));
     }
     return 0;

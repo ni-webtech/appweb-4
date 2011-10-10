@@ -185,7 +185,7 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *d
 
     if (configFile) {
         path = mprGetAbsPath(configFile);
-        if (maParseConfig(server, path) < 0) {
+        if (maParseConfig(server, path, 0) < 0) {
             /* mprUserError("Can't configure server using %s", path); */
             return MPR_ERR_CANT_INITIALIZE;
         }

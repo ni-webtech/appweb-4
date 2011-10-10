@@ -49,6 +49,7 @@ typedef struct App {
 
     int         error;
     int         flat;
+    int         isMvc;
     int         minified;
     int         overwrite;
     int         quiet;
@@ -258,7 +259,14 @@ MAIN(espgen, int argc, char **argv)
         if (*argp != '-') {
             break;
         }
-        if (smatch(argp, "--config")) {
+        if (smatch(argp, "--chdir")) {
+            if (argind >= argc) {
+                usageError();
+            } else {
+                chdir(argv[++argind]);
+            }
+
+        } else if (smatch(argp, "--config")) {
             if (argind >= argc) {
                 usageError();
             } else {
@@ -426,6 +434,9 @@ static void getAppDirs()
     routeName = app->routeName;
     routePrefix = app->routePrefix ? app->routePrefix : "/";
 
+    /*
+        Must find a route with ESP configuration
+     */
     for (next = 0; (rp = mprGetNextItem(host->routes, &next)) != 0; ) {
         if (routeName) {
             if (strcmp(routeName, rp->name) != 0) {
@@ -447,6 +458,7 @@ static void getAppDirs()
     eroute = app->eroute;
     eroute->dir = route->dir;
     app->appName = mprGetPathBase(eroute->dir);
+    app->isMvc = route->sourceName != 0;
 }
 
 
@@ -462,12 +474,14 @@ static void readConfig()
     http = app->appweb->http;
 
     findConfigFile();
-
+    if (app->error) {
+        return;
+    }
     if ((app->server = maCreateServer(appweb, "default")) == 0) {
         fail("Can't create HTTP server for %s", mprGetAppName());
         return;
     }
-    if (maParseConfig(app->server, app->configFile) < 0) {
+    if (maParseConfig(app->server, app->configFile, MA_PARSE_NON_SERVER) < 0) {
         fail("Can't configure the server, exiting.");
         return;
     }
@@ -520,6 +534,9 @@ static void clean(int argc, char **argv)
     char            *path;
     int             next;
 
+    if (app->error) {
+        return;
+    }
     files = mprGetPathFiles(eroute->cacheDir, 0);
     for (next = 0; (dp = mprGetNextItem(files, &next)) != 0; ) {
         path = mprJoinPath(eroute->cacheDir, dp->name);
@@ -534,6 +551,9 @@ static void run(int argc, char **argv)
 {
     MprCmd      *cmd;
 
+    if (app->error) {
+        return;
+    }
     cmd = mprCreateCmd(0);
     trace("RUN", "appweb -v");
     if (mprRunCmd(cmd, "appweb -v", NULL, NULL, MPR_CMD_DETACH) != 0) {
@@ -603,7 +623,11 @@ static void compileFile(cchar *source, int kind)
         }
     }
     if (kind & (ESP_PAGE | ESP_VIEW)) {
+#if UNUSED
         layout = mprJoinPath(mprJoinPath(eroute->dir, eroute->layoutsDir), "default.esp");
+#else
+        layout = app->isMvc ? mprJoinPath(eroute->layoutsDir, "default.esp") : 0;
+#endif
         if ((page = mprReadPathContents(source, &len)) == 0) {
             fail("Can't read %s", source);
             return;
@@ -677,10 +701,12 @@ static void compileFile(cchar *source, int kind)
 static void compile(int argc, char **argv)
 {
     MprList     *files;
-    MprDirEntry *dp;
     char        *path, *kind, *line, *name;
     int         i, next;
 
+    if (app->error) {
+        return;
+    }
     if (argc == 0) {
         if (app->flat) {
             kind = "flat";
@@ -707,25 +733,31 @@ static void compile(int argc, char **argv)
         /*
             Build all items separately
          */
-        app->files = files = mprGetPathFiles(eroute->controllersDir, 1);
-        for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
-            if (smatch(mprGetPathExt(dp->name), "c")) {
-                path = mprJoinPath(eroute->controllersDir, dp->name);
-                compileFile(path, ESP_CONTROLLER);
+        if (app->isMvc) {
+            app->files = files = mprGetPathTree(eroute->controllersDir, 0);
+            for (next = 0; (path = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
+                if (smatch(mprGetPathExt(path), "c")) {
+                    compileFile(path, ESP_CONTROLLER);
+                }
             }
-        }
-        app->files = files = mprGetPathFiles(eroute->viewsDir, 1);
-        for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
-            path = mprJoinPath(eroute->viewsDir, dp->name);
-            compileFile(path, ESP_VIEW);
-        }
-
-        //  MOB - Is the name right?
-        //  MOB - what about pattern matching?
-        app->files = files = mprGetPathTree(eroute->staticDir, 0);
-        for (next = 0; (path = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
-            if (smatch(mprGetPathExt(path), "esp")) {
-                compileFile(path, ESP_PAGE);
+            app->files = files = mprGetPathTree(eroute->viewsDir, 0);
+            for (next = 0; (path = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
+                if (smatch(mprGetPathExt(path), "esp")) {
+                    compileFile(path, ESP_VIEW);
+                }
+            }
+            app->files = files = mprGetPathTree(eroute->staticDir, MPR_PATH_ENUM_DIRS);
+            for (next = 0; (path = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
+                if (smatch(mprGetPathExt(path), "esp")) {
+                    compileFile(path, ESP_PAGE);
+                }
+            }
+        } else {
+            app->files = files = mprGetPathTree(eroute->dir, MPR_PATH_ENUM_DIRS);
+            for (next = 0; (path = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
+                if (smatch(mprGetPathExt(path), "esp")) {
+                    compileFile(path, ESP_PAGE);
+                }
             }
         }
 
@@ -741,22 +773,29 @@ static void compile(int argc, char **argv)
         }
         mprWriteFileFmt(app->flatFile, "/*\n    Flat compilation of %s\n */\n\n", app->appName);
 
-        app->files = files = mprGetPathFiles(eroute->controllersDir, 1);
-        for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
-            if (smatch(mprGetPathExt(dp->name), "c")) {
-                path = mprJoinPath(eroute->controllersDir, dp->name);
-                compileFile(path, ESP_CONTROLLER);
+        if (app->isMvc) {
+            app->files = files = mprGetPathTree(eroute->controllersDir, 0);
+            for (next = 0; (path = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
+                if (smatch(mprGetPathExt(path), "c")) {
+                    compileFile(path, ESP_CONTROLLER);
+                }
             }
-        }
-        app->files = files = mprGetPathFiles(eroute->viewsDir, 1);
-        for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
-            path = mprJoinPath(eroute->viewsDir, dp->name);
-            compileFile(path, ESP_VIEW);
-        }
-        app->files = files = mprGetPathTree(eroute->staticDir, 0);
-        for (next = 0; (path = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
-            if (smatch(mprGetPathExt(path), "esp")) {
-                compileFile(path, ESP_PAGE);
+            app->files = files = mprGetPathTree(eroute->viewsDir, 0);
+            for (next = 0; (path = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
+                compileFile(path, ESP_VIEW);
+            }
+            app->files = files = mprGetPathTree(eroute->staticDir, 0);
+            for (next = 0; (path = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
+                if (smatch(mprGetPathExt(path), "esp")) {
+                    compileFile(path, ESP_PAGE);
+                }
+            }
+        } else {
+            app->files = files = mprGetPathTree(eroute->dir, 0);
+            for (next = 0; (path = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
+                if (smatch(mprGetPathExt(path), "esp")) {
+                    compileFile(path, ESP_PAGE);
+                }
             }
         }
         mprWriteFileFmt(app->flatFile, "\nESP_EXPORT int esp_app_%s(EspRoute *el, MprModule *module) {\n", app->appName);
@@ -1242,6 +1281,11 @@ static void generateAppDb()
 }
 
 
+/*
+    Search strategy is:
+
+    [--config dir] : ./appweb.conf : /usr/lib/appweb/lib/appweb.conf
+ */
 static void findConfigFile()
 {
     cchar   *userPath;
@@ -1260,7 +1304,6 @@ static void findConfigFile()
             fail("Can't open config file %s", app->configFile);
             return;
         }
-        //  MOB -- should search up for config.
     }
     app->serverRoot = mprGetAbsPath(mprGetPathDir(app->configFile));
 }
@@ -1313,6 +1356,7 @@ static void usageError(Mpr *mpr)
     mprPrintfError("\nESP Usage:\n\n"
     "  %s [options] [commands]\n\n"
     "  Options:\n"
+    "    --chdir dir            # Change to the named directory first\n"
     "    --config configFile    # Use named config file instead appweb.conf\n"
     "    --database name        # Database database 'mdb|sqlite' \n"
     "    --flat                 # Compile into a single module\n"

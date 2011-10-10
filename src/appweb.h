@@ -18,7 +18,7 @@ extern "C" {
 
 #define MA_SERVER_NAME          "Embedthis-Appweb/" BLD_VERSION
 
-#define MA_UNLOAD_TIMEOUT       300             /**< Default module inactivity unload timeout */
+#define MA_UNLOAD_TIMEOUT       10000           /**< Default module inactivity unload timeout */
 #define MA_MAX_CONFIG_DEPTH     16              /**< Max nest of directives in config file */
 #define MA_MAX_ACCESS_LOG       20971520        /**< Access file size (20 MB) */
 #define MA_MAX_REWRITE          10              /**< Maximum recursive URI rewrites */
@@ -266,7 +266,7 @@ extern MaServer *maCreateServer(MaAppweb *appweb, cchar *name);
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
     @ingroup Appweb
  */
-extern int maParseConfig(MaServer *server, cchar *path);
+extern int maParseConfig(MaServer *server, cchar *path, int flags);
 
 /** 
     Create and run a simple web server listening on a single IP address.
@@ -333,6 +333,11 @@ extern void maStopServer(MaServer *server);
 extern bool maValidateServer(MaServer *server);
 
 /******************************************************************************/
+/*
+    State flags
+ */
+#define MA_PARSE_NON_SERVER     0x1     /**< Command file being parsed by a utility program */
+
 /**
     Current configuration parse state
     @stability Evolving
@@ -354,7 +359,8 @@ typedef struct MaState {
     char        *filename;              /**< Config file name */
     int         lineNumber;             /**< Current line number */
     int         enabled;                /**< True if the current block is enabled */
-    struct MaState *prev;
+    int         flags;                  /**< Parsing flags */
+    struct MaState *prev;               /**< Previous (inherited) state */
     struct MaState *top;                /**< Top level state */
     struct MaState *current;            /**< Current state */
 } MaState;

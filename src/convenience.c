@@ -33,7 +33,7 @@ int maRunWebServer(cchar *configFile)
                 if ((server = maCreateServer(appweb, 0)) == 0) {
                     mprError("Can't create the web server");
                 } else {
-                    if (maParseConfig(server, configFile) < 0) {
+                    if (maParseConfig(server, configFile, 0) < 0) {
                         mprError("Can't parse the config file %s", configFile);
                     } else {
                         if (maStartServer(server) < 0) {
