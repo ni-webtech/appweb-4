@@ -32,6 +32,7 @@
 #
 
 SHELL		= bash
+USER		?= root
 BUILD_DEPTH	?= 2
 BLD_TOP		= .
 FIRST		= first
