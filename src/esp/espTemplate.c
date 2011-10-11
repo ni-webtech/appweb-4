@@ -489,7 +489,7 @@ char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheNam
         
         body = sfmt(\
             "/*\n   Generated from %s\n */\n"\
-            "#include \"esp.h\"\n"\
+            "#include \"esp-app.h\"\n"\
             "%s\n"\
             "static void %s(HttpConn *conn) {\n"\
             "%s%s%s"\

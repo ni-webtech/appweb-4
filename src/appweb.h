@@ -263,6 +263,7 @@ extern MaServer *maCreateServer(MaAppweb *appweb, cchar *name);
         and then configures the server based on config file directives.
     @param server MaServer object created via #maCreateServer
     @param path Configuration file pathname.
+    @param flags Parse control flags. Reserved. Set to zero.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
     @ingroup Appweb
  */

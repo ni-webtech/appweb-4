@@ -66,11 +66,43 @@ static MaAppweb  *appweb;
 
 /********************************* Templates **********************************/
 
+static cchar *AppHeader = "\
+/*\n\
+    esp-app.h -- User header for ESP Applications and Pages\n\
+\n\
+    This file may be located in the DocumentRoot for a Route. All ESP requests using that Route will\n\
+    source this header.\n\
+ */\n\
+#ifndef _h_ESP_APP\n\
+#define _h_ESP_APP 1\n\
+\n\
+#include    \"esp.h\"\n\
+\n\
+#ifdef __cplusplus\n\
+extern \"C\" {\n\
+#endif\n\
+\n\
+/*\n\
+    Put your definitions here\n\
+\n\
+    If you need to remap an abbreviated API name that clashes with an API name of yours, you can rename the\n\
+    ESP APIs here. Change the \"xx_\" to any unique prefix you require. Then use that name in ESP pages and controllers.\n\
+\n\
+    #define script xx_script\n\
+*/\n\
+\n\
+#ifdef __cplusplus\n\
+} /* extern C */\n\
+#endif\n\
+#endif /* _h_ESP_APP */\n\
+";
+
+
 static cchar *ControllerTemplateHeader = "\
 /*\n\
     ${NAME} controller\n\
  */\n\
-#include \"esp.h\"\n\
+#include \"esp-app.h\"\n\
 \n\
 ";
 
@@ -86,7 +118,7 @@ static cchar *ScaffoldTemplateHeader = "\
 /*\n\
     ${NAME} controller\n\
  */\n\
-#include \"esp.h\"\n\
+#include \"esp-app.h\"\n\
 \n\
 static void create() { \n\
     if (writeRec(createRec(\"${NAME}\", params()))) {\n\
@@ -183,7 +215,7 @@ static cchar *MigrationTemplate = "\
 /*\n\
     ${COMMENT}\n\
  */\n\
-#include \"esp.h\"\n\
+#include \"esp-app.h\"\n\
 \n\
 static int forward(Edi *db) {\n\
 ${FORWARD}}\n\
@@ -211,6 +243,7 @@ static void generateAppDb();
 static void generateAppDirs();
 static void generateAppFiles();
 static void generateAppConfigFile();
+static void generateAppHeader();
 static void initialize();
 static void makeDir(cchar *dir);
 static void makeFile(cchar *path, cchar *data, cchar *msg);
@@ -841,6 +874,7 @@ static void generateApp(cchar *name)
     generateAppDirs();
     generateAppFiles();
     generateAppConfigFile();
+    generateAppHeader();
     generateAppDb();
 }
 
@@ -1266,6 +1300,18 @@ static void generateAppConfigFile()
 }
 
 
+static void generateAppHeader()
+{
+    MprHash *tokens;
+    char    *path, *data;
+
+    path = mprJoinPath(eroute->dir, mprJoinPathExt(app->appName, "h"));
+    tokens = mprDeserialize(sfmt("{ NAME: %s, TITLE: %s }", app->appName, spascal(app->appName)));
+    data = stemplate(AppHeader, tokens);
+    makeFile(path, data, "Header");
+}
+
+
 static void generateAppDb()
 {
     char    *ext, *dbpath, buf[1];
@@ -1337,6 +1383,7 @@ static void makeFile(cchar *path, cchar *data, cchar *msg)
         fail("Can't write %s", path);
         return;
     }
+    msg = sfmt("%s: %s", msg, path);
     if (!exists) {
         trace("CREATE", path);
     } else {
