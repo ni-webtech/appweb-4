@@ -2,8 +2,6 @@
     esp.c -- Embedded Server Pages (ESP) utility program
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
-
-    MOB - what about romming
  */
 
 /********************************* Includes ***********************************/

@@ -1,8 +1,6 @@
 /*
     edi.c -- Embedded Database Interface (EDI)
 
-    WARNING: This is prototype code
-
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
