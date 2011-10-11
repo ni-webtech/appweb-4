@@ -1022,6 +1022,19 @@ extern void espChart(HttpConn *conn, EdiGrid *grid, cchar *options);
 extern void espCheckbox(HttpConn *conn, cchar *name, cchar *checkedValue, cchar *options);
 
 /**
+    Check a security token.
+    @description Security tokens are used to help guard against CSRF threats. If a template web page includes the
+        securityToken() control, a security token will be added to the meta section of the generated HTML. When a 
+        form is posted from this page, the ESP jQuery script will add the security token to the form parameters.
+        This call validates the security token to ensure it matches the security token stored in session state.
+    @param conn Http connection object
+    @return False if the request is a POST request and the security token does not match the session held token.
+        Otherwise return True.
+    @ingroup EspControl
+ */
+extern bool espCheckSecurityToken(HttpConn *conn);
+
+/**
     Render an HTML division
     @description This creates an HTML element with the required options.It is useful to generate a dynamically 
         refreshing division.

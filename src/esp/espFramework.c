@@ -9,84 +9,7 @@
 #include    "esp.h"
 
 #if BLD_FEATURE_ESP
-/************************************* Local **********************************/
-
 /************************************* Code ***********************************/
-
-//  MOB - cleanup
-#if TODO
-    - Request.flash
-    - Request.cookies
-    - Request.contentType
-    - Request.dir
-    - Request.contentLength
-    - Request.files
-    - Request.home (home URI)
-    - Request.isSecure
-    - Request.method
-    - Request.originalMethod        (Need code to modify method based on header)
-    - Request.extension
-
-    - Request.checkSecurityToken()
-espClearFlash()     - Request.clearFlash
-
-espCreateSession()  - Request.createSession()
-#   - Request.dontAutoFinalize()
-    - Request.destroySession()
-    - Request.error(), inform(), notify(), warn()
-    - Request.finalizeFlash
-httpLink()    - Request.link
-    - Request.matchContent
-    - Request.read()                What about incoming content?
-    - Request.securityToken() 
-    - Request.setCookie() 
-#   - Request.setHeader() 
-    - Request.setHeaders() 
-    - Request.setupFlash() 
-    - Request.trace() 
-espWriteContent    - Request.writeContent() 
-espWriteError    - Request.writeError() 
-#   - Request.writeFile() 
-#   - Request.writeResponse() 
-#   - Request.writeSafe() 
-    - Request.written() 
-
-    - Controller.before(), after()
-espWriteView    - Controller.writeView()
-espWritePartialView    - Controller.writePartialTemplate()
-    - Controller.writeTemplate()
-    - Controller.writeTemplateLiteral()
-    - Controller.runCheckers()
-    - Controller.viewExists()
-
-    - Html.alert
-    - Html.anchor
-    - Html.button
-    - Html.buttonLink
-    - Html.chart
-    - Html.checkbox
-    - Html.div
-    - Html.endform
-    - Html.flash
-    - Html.form
-    - Html.icon
-    - Html.image
-    - Html.label
-    - Html.list
-    - Html.mail
-    - Html.progress
-    - Html.radio
-    - Html.refresh
-    - Html.script
-    - Html.securityToken
-    - Html.stylesheet
-    - Html.table
-    - Html.tabs
-    - Html.text
-    - Html.tree
-    - Html.emitFormErros
-#endif
-
 /*  
     Add a http header if not already defined
  */
@@ -185,7 +108,7 @@ void espCacheControl(EspRoute *eroute, cchar *target, int lifesecs, cchar *uri)
 }
 
 
-void espCheckSecurityToken(HttpConn *conn) 
+bool espCheckSecurityToken(HttpConn *conn) 
 {
     HttpRx  *rx;
     EspReq  *req;
@@ -194,6 +117,9 @@ void espCheckSecurityToken(HttpConn *conn)
     rx = conn->rx;
     req = conn->data;
 
+    if (!(rx->flags & HTTP_POST)) {
+        return 1;
+    }
     if (rx->securityToken == 0) {
         rx->securityToken = (char*) espGetSessionVar(conn, ESP_SECURITY_TOKEN_NAME, "");
         sessionToken = rx->securityToken;
@@ -201,8 +127,10 @@ void espCheckSecurityToken(HttpConn *conn)
         if (!smatch(sessionToken, securityToken)) {
             httpError(conn, HTTP_CODE_NOT_ACCEPTABLE, 
                 "Security token does not match. Potential CSRF attack. Denying request");
+            return 0;
         }
     }
+    return 1;
 }
 
 

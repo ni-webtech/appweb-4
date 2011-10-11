@@ -260,6 +260,11 @@ static int runAction(HttpConn *conn)
         }
         req->cacheBuffer = mprCreateBuf(-1, -1);
     }
+    if (rx->flags & HTTP_POST) {
+        if (!espCheckSecurityToken(conn)) {
+            return 1;
+        }
+    }
     if (action && action->actionProc) {
         //  MOB - does this need a lock
         mprSetThreadData(esp->local, conn);

@@ -135,6 +135,7 @@ static void textInner(HttpConn *conn, cchar *field, MprHash *options);
 
 /************************************* Code ***********************************/
 
+//  MOB - what is this really doing?
 void espAlert(HttpConn *conn, cchar *text, cchar *optionString)
 {
     MprHash     *options;
