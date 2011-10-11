@@ -85,8 +85,8 @@
       <type>int</type>
       <name>maParseConfig</name>
       <anchorfile>group___appweb.html</anchorfile>
-      <anchor>ga6739626fc5e5975c12057794df7fcd73</anchor>
-      <arglist>(MaServer *server, cchar *path)</arglist>
+      <anchor>gaaee49b7b7de456a272e476b9a1228bc8</anchor>
+      <arglist>(MaServer *server, cchar *path, int flags)</arglist>
     </member>
     <member kind="function">
       <type>int</type>

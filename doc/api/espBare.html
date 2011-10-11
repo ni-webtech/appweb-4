@@ -113,6 +113,7 @@
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1gae7c01afaa7ef62fce8c378a0864eee84" class="nameRef">espButtonLink</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *text, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *uri, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an HTML button to use outside a form.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_route_1ga455d09e910baab0aded9a57936dec886" class="nameRef">espCacheControl</a>(<a href="#group___esp_route" class="ref">EspRoute</a> *eroute, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *targetKey, int lifesecs, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *uri)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Control the caching of content for a given targetKey.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga11f59d518f29ecddd15cd6d970113d52" class="nameRef">espChart</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="#group___edi_grid" class="ref">EdiGrid</a> *grid, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an graphic chart.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a></td><td><a href="#group___esp_control_1gab1683170a07c0b0073ab8c1969680e9a" class="nameRef">espCheckSecurityToken</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Check a security token.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga4c0097201d128c40f451af90ceb5f674" class="nameRef">espCheckbox</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *checkedValue, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an input checkbox.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a></td><td><a href="#group___esp_route_1ga3b649e2be364263d078bb29ae3cbbb0a" class="nameRef">espCompile</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *source, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *module, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *cacheName, int isView)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Compile a view or controller.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___esp_session" class="ref">EspSession*</a></td><td><a href="#group___esp_session_1ga11e5e8371651e92dae33c1d778265e77" class="nameRef">espCreateSession</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create a session object.</td></tr>
@@ -188,6 +189,7 @@
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_req_1gab603a0ad6ae23ed357d18451d59afdf9" class="nameRef">espWarn</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Send an &quot;warn&quot; flash message.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___esp_req_1gafb783e22dfaf983aec46f1718dcec201" class="nameRef">espWrite</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Write a formatted string.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___esp_req_1gad9edd910735ba5ee653419ff6af8540b" class="nameRef">espWriteBlock</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *buf, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a> size)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Write a block of data to the client.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___esp_req_1ga2210c6785165827d0a89374dc62ddec5" class="nameRef">espWriteFile</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Write the contents of a file back to the client.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___esp_req_1gaffb24640eb7bd8101017733e44aebf17" class="nameRef">espWriteParam</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Write the value of a request parameter to the client.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___esp_req_1ga2d0caf2cb713312cd8875fcdb479d493" class="nameRef">espWriteSafeString</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *s)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Write a safe string of data to the client.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___esp_req_1ga265a6a50f12c3af1512aa4a30477665d" class="nameRef">espWriteString</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *s)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Write a string of data to the client.</td></tr>
@@ -230,6 +232,8 @@
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga6ddfd33e34cb0e8e442571979259a424" class="nameRef">refresh</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *on, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *off, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Control the refresh of web page dynamic elements.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a></td><td><a href="#esp_8h_1a09091b0bc981b74fdf0b197fbee8adab" class="nameRef">removeRec</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *key)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Remove a record from a database table.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___esp_abbrev_1gaf89154adc3cbf6d6a6a32c6b4457c593" class="nameRef">render</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a formatted string.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___esp_abbrev_1gaa1e37f244a0e0796df494dfb756472a8" class="nameRef">renderFile</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a file back to the client.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___esp_abbrev_1ga40445cbba9d5b3a5baec51e59e3d6340" class="nameRef">renderSafe</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a formatted string after HTML escaping.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1gaf0db430f850378bd83c514a0dda77fb9" class="nameRef">renderView</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *view)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a view template to the client.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga16aab7b1eeaafa67d40189ba9e3b9a88" class="nameRef">script</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *uri, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a script link.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1gab3444f174346e0d8e8d4d3a43d451c5e" class="nameRef">securityToken</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Generate a security token.</td></tr>
@@ -2214,6 +2218,46 @@ This creates a radio button suitable for use within an input form
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
   </div>
 </div>
+<a name="group___esp_abbrev_1gaa1e37f244a0e0796df494dfb756472a8"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a>
+    renderFile
+(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path)
+  </div>
+  <div class="apiDetail">
+<p>Render a file back to the client.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Render a formatted string of data and then HTML escape. Data packets will be created as required to store the write data. This call may block waiting for data to drain to the client.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">fmt</td><td>Printf style formatted string.</td>
+    <tr><td class="param">...</td><td>Arguments for fmt.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A count of the bytes actually written.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
+  </div>
+</div>
+<a name="group___esp_abbrev_1ga40445cbba9d5b3a5baec51e59e3d6340"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a>
+    renderSafe
+(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)
+  </div>
+  <div class="apiDetail">
+<p>Render a formatted string after HTML escaping.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Render a formatted string of data and then HTML escape. Data packets will be created as required to store the write data. This call may block waiting for data to drain to the client.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">fmt</td><td>Printf style formatted string.</td>
+    <tr><td class="param">...</td><td>Arguments for fmt.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A count of the bytes actually written.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
+  </div>
+</div>
 <a name="group___esp_abbrev_1gaf0db430f850378bd83c514a0dda77fb9"></a>
 <div class="api">
   <div class="prototype">
@@ -2721,6 +2765,25 @@ The tab control can manage a set of panes and will selectively show and hide or 
     <tr><td class="param">checkedValue</td><td>Value for which the checkbox will be checked.</td>
     <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options.</td>
     </table></dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
+  </div>
+</div>
+<a name="group___esp_control_1gab1683170a07c0b0073ab8c1969680e9a"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="appweb.html#http.html#mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a>
+    espCheckSecurityToken
+(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)
+  </div>
+  <div class="apiDetail">
+<p>Check a security token.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Check the request security token. If a required security token is defined in the session state, the request must supply the same token with all POST requests. This helps mitigate potential CSRF threats. Security tokens are used to help guard against CSRF threats. If a template web page includes the <a class="ref" BBB href="#group___esp_abbrev_1gab3444f174346e0d8e8d4d3a43d451c5e">securityToken()</a> control, a security token will be added to the meta section of the generated HTML. When a form is posted from this page, the ESP jQuery script will add the security token to the form parameters. This call validates the security token to ensure it matches the security token stored in session state.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>Http connection object.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>False if the request is a POST request and the security token does not match the session held token. Otherwise return True.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
   </div>
@@ -4100,6 +4163,25 @@ Path to view.
     </dd></dl>
   </div>
 </div>
+<a name="group___esp_req_1ga2210c6785165827d0a89374dc62ddec5"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a>
+    espWriteFile
+(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path)
+  </div>
+  <div class="apiDetail">
+<p>Write the contents of a file back to the client.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>HttpConn connection object.</td>
+    <tr><td class="param">path</td><td>File path name.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A count of the bytes actually written.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+  </div>
+</div>
 <a name="group___esp_req_1gaffb24640eb7bd8101017733e44aebf17"></a>
 <div class="api">
   <div class="prototype">
@@ -4230,9 +4312,6 @@ Default cache lifespan.
 </td>
     <tr><td class="param">char *</td><td><td>link</td><td>
 Link template.
-</td>
-    <tr><td class="param">char *</td><td><td>modelsDir</td><td>
-Directory for models.
 </td>
     <tr><td class="param">char *</td><td><td>searchPath</td><td>
 Search path to use when locating compiler / linker.

@@ -456,6 +456,13 @@
     </member>
     <member kind="function">
       <type>ssize</type>
+      <name>espWriteFile</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga2210c6785165827d0a89374dc62ddec5</anchor>
+      <arglist>(HttpConn *conn, cchar *path)</arglist>
+    </member>
+    <member kind="function">
+      <type>ssize</type>
       <name>espWriteParam</name>
       <anchorfile>group___esp_req.html</anchorfile>
       <anchor>gaffb24640eb7bd8101017733e44aebf17</anchor>
@@ -535,6 +542,13 @@
       <anchorfile>group___esp_control.html</anchorfile>
       <anchor>ga4c0097201d128c40f451af90ceb5f674</anchor>
       <arglist>(HttpConn *conn, cchar *name, cchar *checkedValue, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>espCheckSecurityToken</name>
+      <anchorfile>group___esp_control.html</anchorfile>
+      <anchor>gab1683170a07c0b0073ab8c1969680e9a</anchor>
+      <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -959,6 +973,20 @@
       <name>render</name>
       <anchorfile>group___esp_abbrev.html</anchorfile>
       <anchor>gaf89154adc3cbf6d6a6a32c6b4457c593</anchor>
+      <arglist>(cchar *fmt,...)</arglist>
+    </member>
+    <member kind="function">
+      <type>ssize</type>
+      <name>renderFile</name>
+      <anchorfile>group___esp_abbrev.html</anchorfile>
+      <anchor>gaa1e37f244a0e0796df494dfb756472a8</anchor>
+      <arglist>(cchar *path)</arglist>
+    </member>
+    <member kind="function">
+      <type>ssize</type>
+      <name>renderSafe</name>
+      <anchorfile>group___esp_abbrev.html</anchorfile>
+      <anchor>ga40445cbba9d5b3a5baec51e59e3d6340</anchor>
       <arglist>(cchar *fmt,...)</arglist>
     </member>
     <member kind="function">
