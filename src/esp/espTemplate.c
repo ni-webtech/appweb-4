@@ -44,12 +44,15 @@ static bool matchToken(cchar **str, cchar *token)
     DEBUG       Debug compilation options (-g, -Zi -Od)
     INC         Include directory out/inc
     LIB         Library directory (out/lib, xcode/VS: out/bin)
+    LIBS        Libraries required to link with ESP
     OBJ         Name of compiled source (out/lib/view-MD5.o)
     OUT         Output module (view_MD5.dylib)
     SHLIB       Shared library (.lib, .so)
     SHOBJ       Shared Object (.dll, .so)
     SRC         Source code for view or controller (already templated)
     TMP         Temp directory
+    VS          Visual Studio directory
+    WINSDK      Windows SDK directory
  */
 char *espExpandCommand(cchar *command, cchar *source, cchar *module)
 {

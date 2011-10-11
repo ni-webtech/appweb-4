@@ -148,7 +148,9 @@ typedef struct EspRoute {
     char            *controllersDir;        /**< Directory for controllers */
     char            *dbDir;                 /**< Directory for databases */
     char            *layoutsDir;            /**< Directory for layouts */
+#if UNUSED
     char            *modelsDir;             /**< Directory for models */
+#endif
     char            *staticDir;             /**< Directory for static web content */
     char            *viewsDir;              /**< Directory for views */
 

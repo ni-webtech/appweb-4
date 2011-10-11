@@ -665,7 +665,9 @@ static EspRoute *allocEspRoute(HttpRoute *route)
     eroute->dir = route->dir;
     eroute->controllersDir = eroute->dir;
     eroute->layoutsDir = eroute->dir;
+#if UNUSED
     eroute->modelsDir = eroute->dir;
+#endif
     eroute->viewsDir = eroute->dir;
     eroute->staticDir = eroute->dir;
 
@@ -675,7 +677,9 @@ static EspRoute *allocEspRoute(HttpRoute *route)
     httpSetRoutePathVar(route, "CONTROLLERS_DIR", eroute->controllersDir);
     httpSetRoutePathVar(route, "DB_DIR", eroute->dbDir);
     httpSetRoutePathVar(route, "LAYOUTS_DIR", eroute->layoutsDir);
+#if UNUSED
     httpSetRoutePathVar(route, "MODELS_DIR", eroute->modelsDir);
+#endif
     httpSetRoutePathVar(route, "STATIC_DIR", eroute->staticDir);
     httpSetRoutePathVar(route, "VIEWS_DIR", eroute->viewsDir);
 
@@ -723,7 +727,9 @@ static EspRoute *cloneEspRoute(EspRoute *parent, HttpRoute *route)
     eroute->controllersDir = parent->controllersDir;
     eroute->dbDir = parent->dbDir;
     eroute->layoutsDir = parent->layoutsDir;
+#if UNUSED
     eroute->modelsDir = parent->modelsDir;
+#endif
     eroute->viewsDir = parent->viewsDir;
     eroute->staticDir = parent->staticDir;
     return eroute;
@@ -739,7 +745,9 @@ static void setSimpleDirs(EspRoute *eroute)
     eroute->controllersDir = dir;
     eroute->dbDir = dir;
     eroute->layoutsDir = dir;
+#if UNUSED
     eroute->modelsDir = dir;
+#endif
     eroute->viewsDir = dir;
     eroute->staticDir = dir;
 }
@@ -763,9 +771,10 @@ static void setMvcDirs(EspRoute *eroute, HttpRoute *route)
 
     eroute->layoutsDir  = mprJoinPath(dir, "layouts");
     httpSetRoutePathVar(route, "LAYOUTS_DIR", eroute->layoutsDir);
-
+#if UNUSED
     eroute->modelsDir  = mprJoinPath(dir, "models");
     httpSetRoutePathVar(route, "MODELS_DIR", eroute->modelsDir);
+#endif
 
     eroute->staticDir = mprJoinPath(dir, "static");
     httpSetRoutePathVar(route, "STATIC_DIR", eroute->staticDir);
@@ -789,7 +798,9 @@ void espManageEspRoute(EspRoute *eroute, int flags)
         mprMark(eroute->env);
         mprMark(eroute->layoutsDir);
         mprMark(eroute->link);
+#if UNUSED
         mprMark(eroute->modelsDir);
+#endif
         mprMark(eroute->searchPath);
         mprMark(eroute->staticDir);
         mprMark(eroute->viewsDir);
@@ -866,16 +877,13 @@ static void setRouteDirs(MaState *state, cchar *kind)
     if ((eroute = getEspRoute(state->route)) == 0) {
         return;
     }
-    if (scmp(kind, "none") == 0) {
+    if (smatch(kind, "none")) {
         setSimpleDirs(eroute);
 
-    } else if (scmp(kind, "simple") == 0) {
+    } else if (smatch(kind, "simple")) {
         setSimpleDirs(eroute);
 
-    } else if (scmp(kind, "mvc") == 0) {
-        setMvcDirs(eroute, state->route);
-
-    } else if (scmp(kind, "restful") == 0) {
+    } else if (smatch(kind, "mvc") || smatch(kind, "restful")) {
         setMvcDirs(eroute, state->route);
     }
 }
@@ -883,10 +891,10 @@ static void setRouteDirs(MaState *state, cchar *kind)
 
 /*********************************** Directives *******************************/
 /*
-    EspApp Prefix [Dir [RouteSet [Database]]]
+    NOTE: This is not a public directive. Internal use only.
+    WARNING: this modifies the route prefix and pattern. Only suitable to be used by EspApp
 
-    This is the same as EspAppAlias but without creating a new route. 
-    This should only be used inside dedicated ESP routes. This directive is equivalent to:
+    EspApp Prefix [Dir [RouteSet [Database]]]
 
         Prefix       appName
         DocumentRoot path
@@ -894,7 +902,7 @@ static void setRouteDirs(MaState *state, cchar *kind)
         EspDir       routeSet
         EspRouteSet  routeSet
  */
-static int espAppDirective(MaState *state, cchar *key, cchar *value)
+static int appDirective(MaState *state, cchar *key, cchar *value)
 {
     HttpRoute   *route;
     EspRoute    *eroute;
@@ -946,9 +954,9 @@ static int espAppDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    EspAppAlias Prefix [Dir [RouteSet [Database]]]
+    EspApp Prefix [Dir [RouteSet [Database]]]
  */
-static int espAppAliasDirective(MaState *state, cchar *key, cchar *value)
+static int espAppDirective(MaState *state, cchar *key, cchar *value)
 {
     HttpRoute   *route;
     int         rc;
@@ -958,7 +966,7 @@ static int espAppAliasDirective(MaState *state, cchar *key, cchar *value)
     }
     state = maPushState(state);
     state->route = route;
-    rc = espAppDirective(state, key, value);
+    rc = appDirective(state, key, value);
     maPopState(state);
     return rc;
 }
@@ -1051,8 +1059,10 @@ static int espDirDirective(MaState *state, cchar *key, cchar *value)
             eroute->dbDir = path;
         } else if (scmp(name, "layouts") == 0) {
             eroute->layoutsDir = path;
+#if UNUSED
         } else if (scmp(name, "models") == 0) {
             eroute->modelsDir = path;
+#endif
         } else if (scmp(name, "static") == 0) {
             eroute->staticDir = path;
         } else if (scmp(name, "views") == 0) {
@@ -1324,7 +1334,6 @@ int maEspHandlerInit(Http *http, MprModule *mp)
     }
     appweb = httpGetContext(http);
     maAddDirective(appweb, "EspApp", espAppDirective);
-    maAddDirective(appweb, "EspAppAlias", espAppAliasDirective);
     maAddDirective(appweb, "EspCache", espCacheDirective);
     maAddDirective(appweb, "EspCompile", espCompileDirective);
     maAddDirective(appweb, "EspDb", espDbDirective);

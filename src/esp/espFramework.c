@@ -177,7 +177,7 @@ void espCacheControl(EspRoute *eroute, cchar *target, int lifesecs, cchar *uri)
     if (uri) {
         action->cacheUri = sclone(uri);
     }
-    if (lifesecs == 0) {
+    if (lifesecs <= 0) {
         action->lifespan = eroute->lifespan;
     } else {
         action->lifespan = lifesecs * MPR_TICKS_PER_SEC;

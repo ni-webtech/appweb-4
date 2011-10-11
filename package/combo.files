@@ -18,6 +18,8 @@ ESP_HEADERS="${BLD_INC_DIR}/esp.h"
 LIB_SOURCES=`find ${S} -name '*.c' | egrep -v 'deps|server/|test|utils|sav|angel|makerom'`
 DEP_SOURCES=`find ${S}/deps -name '*.c' | egrep -v 'angel|makerom|utils|test|http/http.c'`
 
+mkdir -p ${SRC} ${DOC}/man ${DOC}/api
+
 #
 #   Build files
 #
@@ -64,7 +66,6 @@ combo ${S}/esp/esp*.c | egrep -v '#include.*UNUSED' >>${SRC}/esp.c
 #
 #	Doc
 #
-mkdir -p ${SRC} ${DOC}/man ${DOC}/api
 cp ${BLD_TOP}/doc/api/appweb.html ${DOC}/api
 cp ${BLD_TOP}/doc/api/appwebBare.html ${DOC}/api
 cp ${BLD_TOP}/doc/api/appweb.tags ${DOC}/api

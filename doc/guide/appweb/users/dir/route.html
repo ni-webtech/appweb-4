@@ -58,13 +58,14 @@
                 <li><a href="#errorDocument">ErrorDocument</a></li>
                 <li><a href="#header">Header</a></li>
                 <li><a href="#logRoutes">LogRoutes</a></li>
+                <li><a href="#methods">Methods</a></li>
+                <li><a href="#name">Name</a></li>
                 <li><a href="#param">Param</a></li>
                 <li><a href="#prefix">Prefix</a></li>
                 <li><a href="#putMethod">PutMethod</a></li>
                 <li><a href="#redirect">Redirect</a></li>
                 <li><a href="#reset">Reset</a></li>
                 <li><a href="#route">Route</a></li>
-                <li><a href="#routeName">RouteName</a></li>
                 <li><a href="#scriptAlias">ScriptAlias</a></li>
                 <li><a href="#setConnector">SetConnector</a></li>
                 <li><a href="#setHandler">SetHandler</a></li>
@@ -601,6 +602,70 @@
                 </tbody>
             </table>
             
+            
+            <a name="methods" id="methods"></a>
+            <h2>Methods</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define the valid HTTP Methods for the route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Methods MethodSet</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Methods GET POST</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The Methods directive defines the valid HTTP methods for the route. The standard HTTP
+                            methods are: <tt>DELETE, GET, OPTIONS, POST, PUT and TRACE</tt>. The 
+                            MethodSet argument can also be set to "<tt>ALL</tt>" or "<tt>*</tt>" to indicate any
+                            possible HTTP method.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="name" id="name"></a>
+            <h2>Name</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define a name for the route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Name string</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Name web-service-login</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The Name directive defines a name for the route that will be used by the LogRoutes
+                            directive when displaying the route table in the error log. If no route name is defined,
+                            the route pattern is used instead.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
             <a name="param" id="param"></a>
             <h2>Param</h2>
             <table class="directive" summary="" width="100%">
@@ -817,38 +882,6 @@
                     </tr>
                 </tbody>
             </table>
-            
-            <a name="routeName" id="routeName"></a>
-            <h2>RouteName</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
-                    <tr>
-                        <td class="pivot">Description</td>
-                        <td>Define a name for the route</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Synopsis</td>
-                        <td>RouteName string</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Context</td>
-                        <td>Default server, VirtualHost, Route</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Example</td>
-                        <td>RouteName web-service-login</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Notes</td>
-                        <td>
-                            <p>The RouteName directive defines a name for the route that will be used by the LogRoutes
-                            directive when displaying the route table in the error log. If no route name is defined,
-                            the route pattern is used instead.</p>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            
             <a name="scriptAlias" id="scriptAlias"></a>
             <h2>ScriptAlias</h2>
             <table class="directive" summary="" width="100%">

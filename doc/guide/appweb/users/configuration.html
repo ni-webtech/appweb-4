@@ -130,7 +130,8 @@ AddHandler fileHandler html
     SetHandler esp
 &lt;/Route&gt;
 </pre>
-            <p>This will configure Appweb to pass requests that begin with the URL "/myapp" to the <b>esp</b> handler</p>
+            <p>This will configure Appweb to pass requests that begin with the URL "/myapp" to the 
+                <tt>esp</tt> handler.</p>
             <h3>Virtual Host Blocks</h3>
             <p>A Virtual host block defines a group of directives that apply to a virtual sub-server. A virtual server
             may be associated with a virtual server name or with an IP address. Virtual hosts enable you to segment the
@@ -303,7 +304,7 @@ Include conf/applications/*.conf
                         <td>Define the default index file to service for directory requests.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/server.html#documentRoot">DocumentRoot</a></td>
+                        <td><a href="dir/route.html#documentRoot">DocumentRoot</a></td>
                         <td>Directory containing web content.</td>
                     </tr>
                     <tr>
@@ -327,11 +328,11 @@ Include conf/applications/*.conf
                         <td>Define the location and format of the error log.</td>
                     </tr>
                     <tr><td><a href="dir/esp.html#espApp">EspApp</a></td>
-                        <td>Define an ESP application inside an existing Route.</td></tr>
-                    <tr><td><a href="dir/esp.html#espAppAlias">EspAppAlias</a></td>
-                        <td>Define a Route with an ESP application.</td></tr>
+                        <td>Define an ESP application with required Routes.</td></tr>
                     <tr><td><a href="dir/esp.html#espCompile">EspCompile</a></td>
                         <td>Define the compilation command.</td></tr>
+                    <tr><td><a href="dir/esp.html#espDb">EspDb</a></td>
+                        <td>ESP Database configuration.</td></tr>
                     <tr><td><a href="dir/esp.html#espDir">EspDir</a></td>
                         <td>Set the directory for ESP MVC components.</td></tr>
                     <tr><td><a href="dir/esp.html#espEnv">EspEnv</a></td>
@@ -344,9 +345,13 @@ Include conf/applications/*.conf
                         <td>Define the link command.</td></tr>
                     <tr><td><a href="dir/esp.html#espLoad">EspLoad</a></td>
                         <td>Load an application.</td></tr>
+                    <tr><td><a href="dir/esp.html#espResource">EspResource</a></td>
+                        <td>Create routes for a resource.</td></tr>
+                    <tr><td><a href="dir/esp.html#espResourceGroup">EspResourceGroup</a></td>
+                        <td>Create route for a group of resources.</td></tr>
                     <tr><td><a href="dir/esp.html#espRoute">EspRoute</a></td>
                         <td>Create a new route for ESP controllers and pages.</td></tr>
-                    <tr><td><a href="dir/esp.html#espRoutePack">EspRoutePack</a></td>
+                    <tr><td><a href="dir/esp.html#espRouteSet">EspRouteSet</a></td>
                         <td>Define a package of routes for ESP.</td></tr>
                     <tr><td><a href="dir/esp.html#espShowErrors">EspShowErrors</a></td>
                         <td>Show server side errors back to the client.</td></tr>
