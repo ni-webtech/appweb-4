@@ -9270,7 +9270,9 @@ void httpAddRouteSet(HttpRoute *parent, cchar *set)
 {
     if (scasematch(set, "simple")) {
         httpAddHomeRoute(parent);
+#if UNUSED
         httpAddStaticRoute(parent);
+#endif
 
     } else if (scasematch(set, "mvc")) {
         httpAddHomeRoute(parent);
@@ -14974,6 +14976,7 @@ MprHash *httpGetParams(HttpConn *conn)
 }
 
 
+//  MOB - sort
 int httpTestParam(HttpConn *conn, cchar *var)
 {
     MprHash    *vars;
