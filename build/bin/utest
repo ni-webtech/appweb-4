@@ -178,6 +178,7 @@ enumerable class Test {
     function initialize(): Void {
         if (logSpec) {
             App.log.redirect(logSpec)
+            App.mprLog.redirect(logSpec)
         }
         if (echo) {
             log.activity("Test", App.args.join(" "))
