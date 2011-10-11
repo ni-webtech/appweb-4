@@ -565,8 +565,21 @@ ssize espWriteBlock(HttpConn *conn, cchar *buf, ssize size)
 
 ssize espWriteFile(HttpConn *conn, cchar *path)
 {
-    //  MOB - TODO (must read in small chunks)
-    //  finalized = 1;
+    MprFile     *from;
+    ssize       count, written, nbytes;
+    char        buf[MPR_BUFSIZE];
+
+    if ((from = mprOpenFile(path, O_RDONLY | O_BINARY, 0)) == 0) {
+        return MPR_ERR_CANT_OPEN;
+    }
+    written = 0;
+    while ((count = mprReadFile(from, buf, sizeof(buf))) > 0) {
+        if ((nbytes = espWriteBlock(conn, buf, count)) < 0) {
+            return nbytes;
+        }
+        written += nbytes;
+    }
+    mprCloseFile(from);
     return 0;
 }
 

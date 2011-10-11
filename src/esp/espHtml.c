@@ -1355,6 +1355,26 @@ ssize render(cchar *fmt, ...)
 }
 
 
+ssize renderFile(cchar *path)
+{
+    return espWriteFile(espGetConn(), path);
+}
+
+
+ssize renderSafe(cchar *fmt, ...)
+{
+    va_list     args;
+    ssize       count;
+    cchar       *msg;
+
+    va_start(args, fmt);
+    msg = sfmtv(fmt, args);
+    count = espWriteSafeString(espGetConn(), msg);
+    va_end(args);
+    return count;
+}
+
+
 void renderView(cchar *view)
 {
     espWriteView(espGetConn(), view);

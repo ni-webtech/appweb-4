@@ -814,17 +814,24 @@ extern ssize espWrite(HttpConn *conn, cchar *fmt, ...);
  */
 extern ssize espWriteBlock(HttpConn *conn, cchar *buf, ssize size);
 
-//  MOB - should all these be render?
 /**
-    Write a string of data to the client
-    @description Write a string of data to the client. Data packets will be created
-        as required to store the write data. This call may block waiting for data to drain to the client.
+    Write the contents of a file back to the client
     @param conn HttpConn connection object
-    @param s String containing the data to write
+    @param path File path name
     @return A count of the bytes actually written
     @ingroup EspReq
  */
-extern ssize espWriteString(HttpConn *conn, cchar *s);
+extern ssize espWriteFile(HttpConn *conn, cchar *path);
+
+/**
+    Write the value of a request parameter to the client
+    @description This writes the value of request parameter after HTML escaping its value.
+    @param conn HttpConn connection object
+    @param name Form variable name
+    @return A count of the bytes actually written
+    @ingroup EspReq
+ */
+extern ssize espWriteParam(HttpConn *conn, cchar *name);
 
 /**
     Write a safe string of data to the client
@@ -838,15 +845,17 @@ extern ssize espWriteString(HttpConn *conn, cchar *s);
  */
 extern ssize espWriteSafeString(HttpConn *conn, cchar *s);
 
+//  MOB - should all these be render?
 /**
-    Write the value of a request parameter to the client
-    @description This writes the value of request parameter after HTML escaping its value.
+    Write a string of data to the client
+    @description Write a string of data to the client. Data packets will be created
+        as required to store the write data. This call may block waiting for data to drain to the client.
     @param conn HttpConn connection object
-    @param name Form variable name
+    @param s String containing the data to write
     @return A count of the bytes actually written
     @ingroup EspReq
  */
-extern ssize espWriteParam(HttpConn *conn, cchar *name);
+extern ssize espWriteString(HttpConn *conn, cchar *s);
 
 /**
     Write a view template to the client
@@ -1788,6 +1797,28 @@ extern cchar *referrer();
     @ingroup EspAbbrev
  */
 extern ssize render(cchar *fmt, ...);
+
+/**
+    Render a file back to the client
+    @description Render a formatted string of data and then HTML escape. Data packets will be created
+        as required to store the write data. This call may block waiting for data to drain to the client.
+    @param fmt Printf style formatted string
+    @param ... Arguments for fmt
+    @return A count of the bytes actually written
+    @ingroup EspAbbrev
+ */
+extern ssize renderFile(cchar *path);
+
+/**
+    Render a formatted string after HTML escaping
+    @description Render a formatted string of data and then HTML escape. Data packets will be created
+        as required to store the write data. This call may block waiting for data to drain to the client.
+    @param fmt Printf style formatted string
+    @param ... Arguments for fmt
+    @return A count of the bytes actually written
+    @ingroup EspAbbrev
+ */
+extern ssize renderSafe(cchar *fmt, ...);
 
 /**
     Render a view template to the client

@@ -219,14 +219,14 @@
 &lt;p&gt;Hello World&lt;/p&gt;
 </pre>
             <p>This instructs the templating engine to use the "alternateLayout.esp" file rather than the default
-            layout. The default layout page is called "layouts/default.esp". 
+            layout. The default layout page is called "layouts/default.esp". </p>
             
-            <a name="multiple" id="multiple"></a></p>
+            <a name="multiple" id="multiple"></a>
             <h3>Multiple Layout Pages</h3>
             <p>You are not restricted to a simple two level layout and content page scheme. A layout page can itself
             refer to another layout page to gradually build up the application's look and feel. To do this, the layout
             page needs to include an explicit <tt>&lt;%@ layout "file"&gt;</tt> directive.</p>
-            
+
             <a name="dir" id="dir"></a>
             <h2 class="section">Application Paradigms</h2>
             <p>ESP supports two primary application paradigms:
@@ -402,6 +402,11 @@ Today is <%= mprGetDate(0); %>&lt;
     }
 %&gt;
 </pre>
+            <!-- MOB links -->
+            <p><tt>Security Note</tt>: you should never use <tt>render</tt> to write back unvalidated user data. If you 
+            must render user input data, use <tt>renderSafe</tt> which will escape any HTML sequences. This is essential
+            to avoid XSS and other security issues.</p>
+
             <p>You can also iterate over regular HTML code. The following code will display <b>Hello World</b> ten
             times in the web page.</p>
             <pre>
@@ -452,7 +457,7 @@ Today is <%= mprGetDate(0); %>&lt;
                 <tr><td>rx->method</td><td>HTTP method string</td>
                 <tr><td>rx->uri</td><td>Request URI</td>
                 <tr><td>rx->pathInfo</td><td>Request path information after the scriptName</td>
-                <tr><td>rx->scriptName</td><td>Script name portion of the request URI</td>
+                <tr><td nowrap="nowrap">rx->scriptName</td><td>Script name portion of the request URI</td>
                 <tr><td>tx->filename</td><td>Resource filename being served</td>
                 <tr><td>tx->ext</td><td>Resource filename extension</td>
                 <tr><td>tx->finalized</td><td>Set if response output has been completed</td>
@@ -465,7 +470,7 @@ Today is <%= mprGetDate(0); %>&lt;
             <h2 class="section">Compilation</h2>
             <p>When developing, ESP will automatically detect changes made to the applications code and will
             intelligently recompile the necessary portions of the application. You can manually force a recompilation
-            via the <b>esp</b> command.</p>
+            via the <tt>esp</tt> command.</p>
             <pre>
 esp compile
 </pre>
@@ -482,6 +487,7 @@ esp compile
             <h2 class="section">Debugging</h2>
             <p>You can inject debugging code into your views to trace data to the appweb log file or back to the client's
             browser.</p>
+<!-- MOB links for render -->
             <p>The <a href="../../../api/mpr.html#group___mpr_log_1ga21fa2199e7f70707c1fb3b63daed6ecf">mprLog</a> 
             function  will print its arguments to appweb log file. 
             <p>To send trace to the browser, use the <tt>render</tt> method to write data back to the browser. 
@@ -534,6 +540,7 @@ esp compile
                         <td>redirect</td>
                         <td>Redirect the client to a new URL</td>
                     </tr>
+<!-- MOB renderSafe -->
                     <tr>
                         <td>render</td>
                         <td>Render a data back to the client</td>

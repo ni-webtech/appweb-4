@@ -145,7 +145,7 @@ public class CartController extends ApplicationController {
             qualifier makes a JavaScript function visible as a controller action method.</p>
             <p>If the client issues a request for:</p>
             <pre>
-http://embedthis.com/myApp/cart/create
+http://embedthis.com/app/cart/create
 </pre>
             <p>The <tt>create</tt> action will be invoked. It will create a new product and then render the
             <tt>edit.ejs</tt> view back to the client.</p><a name="actions" id="actions"></a>
@@ -410,7 +410,7 @@ public class TaskController extends BaseController {
         <tt>id</tt> is provided (723 in this example below), this is appended after the action name.
         <pre>redirect("edit", 723, null)</pre>
         <p>This will create a URI like:
-        <pre>http://embedthis.com/myApp/currentController/<b>edit</b>/723</pre>
+        <pre>http://embedthis.com/app/currentController/<b>edit</b>/723</pre>
             Flash
             cookies
             sessions

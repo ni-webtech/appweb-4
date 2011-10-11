@@ -289,23 +289,23 @@ uninstall-%:
 	
 combo packageCombo:
 	$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) --package combo && \
-			$(BLD_TOOLS_DIR)/makePackage --combo --root=$(PKG_DIR) combo ; \
+			$(BLD_TOOLS_DIR)/makePackage --combo --root=$(PKG_DIR) combo ; chown -R $$USER $(BLD_OUT_DIR)
 
 flat packageFlat:
 	$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) --package flat && \
-	$(BLD_TOOLS_DIR)/makePackage --combo --root=$(PKG_DIR) flat ; \
+	$(BLD_TOOLS_DIR)/makePackage --combo --root=$(PKG_DIR) flat ; chown -R $$USER $(BLD_OUT_DIR)
 
 packageRelease:
 	if [ "$(BUILD_DEPTH)" -ge 2 -a -f package/binary.files ] ; then \
 		export OPTIONS=$(OPTIONS) TRACE=$(TRACE) ; \
 		fakePriv "$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) $(INS_WITH) --package $(PACKS) && \
-			$(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)" ; \
+			$(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS) && chown -R $$USER $(BLD_OUT_DIR)" ; \
 	else \
 		$(call log) "[INFO]" "Packaging skipped at build depth $(BUILD_DEPTH)" ; \
 	fi
 
 package-only:
-	fakePriv $(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)
+	fakePriv "$(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS) && chown -R $$USER $(BLD_OUT_DIR)"
 
 upload:
 	if [ "$(BUILD_DEPTH)" -lt 2 ] ; then \
