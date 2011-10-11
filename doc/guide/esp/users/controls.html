@@ -62,7 +62,31 @@
 <!-- EndDsi -->
         </div>
         <div class="contentLeft">
-            <h1>Ajax View Controls</h1>
+<pre>
+- Abbreviated API
+- List of controls
+- How options are handled
+- Dynamic refresh
+- Using database integration
+- Using controls without a database
+- Common attributes
+- jQuery integration
+    - minified libraries
+- Accessing request state
+- SecurityTokens
+- Flash messages
+- Using @@params
+- input() for smart input typing
+- form errors
+- escaping data - escape option, renderSafe()
+
+
+*** Style sheets and theming
+    - Where should that go?
+</pre>
+            <h1>HTML Controls</h1>
+
+
             <p>Web applications split their processing between the server and the client. Increasingly, more processing
             is being done at the client to give a better user experience. <a href=
             "http://en.wikipedia.org/wiki/Ajax_(programming)">Ajax</a> programming has risen as one of the more popular
@@ -70,30 +94,11 @@
             "http://en.wikipedia.org/wiki/Ajax_framework">Ajax Frameworks</a> have been developed.</p>
             <p>Ajax translates as "Asynchronous JavaScript and XML", but what it typically means is doing background
             HTTP requests to get data and update the user interface without doing a complete browser refresh. This
-            gives a more immediate and natural feel to a web application. ESP supports Ajax and Ajax frameworks
-            via its ViewConnector which provides a pluggable interface for Ajax libraries.</p><a name="interface" id=
-            "interface"></a>
-            <h2>ViewConnector Interface</h2>
-            <p>The ViewConnector interface defines methods for common user interface controls such as: button and
-            checkbox, but it also provides high level controls such as chart and table. Application <a href=
-            "views.html">Views</a> can use these methods to render UI components with very little code or effort.</p>
-            <p>However the ViewConnector is just an interface. It contains no implementation. The actual implementation
-            is provided by the Ajax Framework libraries.</p><img src="../../../images/viewConnector.jpg" alt="" />
-            <a name="libraries" id="libraries"></a>
-            <h3>Ajax Libraries</h3>
-            <p>The purpose of the ViewConnector is to provide a modular way to add Ajax Framework libraries and to give
-            you choice which library you use. Individual ESP Views can select different libraries for each view
-            control in the web pages.</p>
-            <p>Each Ajax Framework offers a different set of capabilities and restrictions. However, these differences
-            impact mostly on the client side which is outside the scope of the View Connector Interface. The
-            ViewConnector adaptors transform the interface for the server-side of each Ajax library to be compatible
-            with the View Connector Interace.</p>
-            <p>ESP currently supports the ESP Ajax library and portions of the Google Visualization library.
-            Support for other frameworks will be available soon in future releases.</p><a name="dynamic" id=
-            "dynamic"></a>
+            gives a more immediate and natural feel to a web application. ESP controls support Ajax and Ajax frameworks.</p>
+            
+            <a name="dynamic" id="dynamic"></a>
             <h3>Dynamic Controls</h3>
-            <p>The View Control Interface is designed to support controls that can dynamically retrieve data from
-            databases and refresh their contents automatically.</p>
+            <p>ESP controls can dynamically retrieve data from databases and refresh their contents automatically.</p>
             <p>Here is an example of a table configured to display stock market data in a grid with the current price
             for each stock. The grid will refresh its data every 2 seconds without updating the entire web page.</p>
             <pre>
@@ -114,8 +119,7 @@
                <h2 class="section">Chart Control</h2>
            -->
             <a name="viewConnector" id="viewConnector"></a>
-            <h2>ViewConnector Methods</h2>
-            <p>The ViewConnector interface defines the following methods:</p>
+            <h2>HTML Controls</h2>
             <table summary="">
                 <thead>
                     <tr>
