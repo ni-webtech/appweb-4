@@ -10693,7 +10693,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
             break;
 
         case 'x':
-            if (strcmp(key, "x-http_method_override") == 0) {
+            if (strcmp(key, "x-http-method-override") == 0) {
                 rx->method = sclone(value);
                 parseMethod(conn);
 #if BLD_DEBUG

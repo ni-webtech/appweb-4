@@ -1023,7 +1023,9 @@ extern void espCheckbox(HttpConn *conn, cchar *name, cchar *checkedValue, cchar 
 
 /**
     Check a security token.
-    @description Security tokens are used to help guard against CSRF threats. If a template web page includes the
+    @description Check the request security token. If a required security token is defined in the session state, the
+    request must supply the same token with all POST requests. This helps mitigate potential CSRF threats.
+    Security tokens are used to help guard against CSRF threats. If a template web page includes the
         securityToken() control, a security token will be added to the meta section of the generated HTML. When a 
         form is posted from this page, the ESP jQuery script will add the security token to the form parameters.
         This call validates the security token to ensure it matches the security token stored in session state.
