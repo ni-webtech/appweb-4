@@ -311,7 +311,7 @@ static int writeToClient(HttpQueue *q, MprCmd *cmd, MprBuf *buf, int channel)
         Write to the browser. Write as much as we can. Service queues to get the filters and connectors pumping.
      */
     while (conn->tx && (len = mprGetBufLength(buf)) > 0) {
-        if (conn->tx && !conn->tx->finalized && conn->state < HTTP_STATE_COMPLETE) {
+        if (conn->tx && !conn->finalized && conn->state < HTTP_STATE_COMPLETE) {
             if ((q->count + len) > q->max) {
                 cmd->userFlags |= MA_CGI_FLOW_CONTROL;
                 mprLog(7, "CGI: @@@ client write queue full. Disable queue, enable conn events");
@@ -389,7 +389,7 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
             mprLog(7, "CGI: @@@ enable CGI events for channel %d", channel);
             mprEnableCmdEvents(cmd, channel);
         }
-        if (conn->connq->count > 0) {
+        if (conn->connectorq->count > 0) {
             httpEnableConnEvents(conn);
         }
     } else {

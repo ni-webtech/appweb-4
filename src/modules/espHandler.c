@@ -159,7 +159,7 @@ static void startEsp(HttpQueue *q)
             return;
         }
         if (req->autoFinalize) {
-            if (!conn->tx->responded) {
+            if (!conn->responded) {
                 espWriteView(conn, 0);
             }
             espFinalize(conn);
@@ -544,7 +544,8 @@ static int loadApp(HttpConn *conn, int *updated)
             mprGetPathInfo(mp->path, &minfo);
             if (minfo.valid && mp->modified < minfo.mtime) {
                 if (!unloadModule(eroute->appModuleName, 0)) {
-                    mprError("Can't unload old module, connections still open. Keep using old version.");
+                    mprError("Can't unload module %s. Connections still open. Continue using old version.", 
+                        eroute->appModuleName);
                     /* Can't unload - so keep using old module */
                     return 1;
                 }
@@ -588,7 +589,7 @@ static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *rec
     if (sinfo.valid && sinfo.mtime >= minfo.mtime) {
         if ((mp = mprLookupModule(source)) != 0) {
             if (!unloadModule(source, 0)) {
-                /* Can't unload - keep using old module */
+                mprError("Can't unload module %s. Connections still open. Continue using old version.", source);
                 return 0;
             }
         }
@@ -599,7 +600,7 @@ static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *rec
         if (minfo.mtime > mp->modified) {
             /* Module file has been updated */
             if (!unloadModule(source, 0)) {
-                /* Can't unload - keep using old module */
+                mprError("Can't unload module %s. Connections still open. Continue using old version.", source);
                 return 0;
             }
             return 1;
@@ -643,9 +644,9 @@ static bool unloadModule(cchar *module, MprTime timeout)
                 return 1;
             }
             unlock(esp);
-            mprSleep(20);
+            mprSleep(10);
             /* Defaults to 10 secs */
-        } while (mprGetRemainingTime(mark, timeout));
+        } while (mprGetRemainingTime(mark, timeout) > 0);
     }
     return 0;
 }

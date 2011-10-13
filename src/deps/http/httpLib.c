@@ -2441,7 +2441,7 @@ static void manageConn(HttpConn *conn, int flags)
         mprMark(conn->authType);
         mprMark(conn->authUser);
         mprMark(conn->boundary);
-        mprMark(conn->connq);
+        mprMark(conn->connectorq);
         mprMark(conn->context);
         mprMark(conn->currentq);
         mprMark(conn->data);
@@ -2510,9 +2510,7 @@ void httpConnTimeout(HttpConn *conn)
     mprAssert(limits);
 
     mprLog(6, "Inactive connection timed out");
-    if (conn->state < HTTP_STATE_PARSED) {
-        mprDisconnectSocket(conn->sock);
-    } else {
+    if (conn->state >= HTTP_STATE_PARSED) {
         if ((conn->lastActivity + limits->inactivityTimeout) < now) {
             httpError(conn, HTTP_CODE_REQUEST_TIMEOUT,
                 "Exceeded inactivity timeout of %Ld sec", limits->inactivityTimeout / 1000);
@@ -2521,8 +2519,10 @@ void httpConnTimeout(HttpConn *conn)
             httpError(conn, HTTP_CODE_REQUEST_TIMEOUT, "Exceeded timeout %d sec", limits->requestTimeout / 1000);
         }
         httpFinalize(conn);
-        httpDisconnect(conn);
     }
+    httpDisconnect(conn);
+    httpDiscardData(conn->writeq, 1);
+    httpEnableConnEvents(conn);
     conn->timeoutEvent = 0;
 }
 
@@ -2541,6 +2541,8 @@ static void commonPrep(HttpConn *conn)
     conn->error = 0;
     conn->errorMsg = 0;
     conn->state = 0;
+    conn->responded = 0;
+    conn->finalized = 0;
     conn->writeComplete = 0;
     conn->lastActivity = conn->http->now;
     httpSetState(conn, HTTP_STATE_BEGIN);
@@ -2665,6 +2667,7 @@ void httpEvent(HttpConn *conn, MprEvent *event)
     } else if (conn->state < HTTP_STATE_COMPLETE) {
         httpEnableConnEvents(conn);
     }
+    mprYield(0);
 }
 
 
@@ -2716,7 +2719,7 @@ static void writeEvent(HttpConn *conn)
 
     conn->writeBlocked = 0;
     if (conn->tx) {
-        httpEnableQueue(conn->connq);
+        httpEnableQueue(conn->connectorq);
         httpServiceQueues(conn);
         httpProcess(conn, NULL);
     }
@@ -2762,7 +2765,6 @@ void httpEnableConnEvents(HttpConn *conn)
 
     mprLog(7, "EnableConnEvents");
     mprAssert(conn->sock);
-    mprAssert(!mprIsSocketEof(conn->sock));
     mprAssert(conn->state < HTTP_STATE_COMPLETE);
 
     if (!conn->async || !conn->sock || mprIsSocketEof(conn->sock)) {
@@ -2778,47 +2780,39 @@ void httpEnableConnEvents(HttpConn *conn)
         mprQueueEvent(conn->dispatcher, event);
 
     } else {
-        //  MOB - remove
-        mprAssert(conn->state < HTTP_STATE_COMPLETE);
-        mprAssert(conn->sock);
-        mprAssert(!mprIsSocketEof(conn->sock));
-
-        //  MOB - remove this test
-        if (conn->state < HTTP_STATE_COMPLETE && !mprIsSocketEof(conn->sock)) {
-            //  MOB - why locking here?
-            lock(conn->http);
-            if (tx) {
-                /*
-                    Can be writeBlocked with data in the iovec and none in the queue
-                 */
-                if (conn->writeBlocked || (conn->connq && conn->connq->count > 0)) {
-                    eventMask |= MPR_WRITABLE;
-                }
-                /*
-                    Enable read events if the read queue is not full. 
-                 */
-                q = tx->queue[HTTP_QUEUE_RX]->nextQ;
-                if (q->count < q->max || conn->rx->form) {
-                    eventMask |= MPR_READABLE;
-                }
-            } else {
+        //  MOB - why locking here?
+        lock(conn->http);
+        if (tx) {
+            /*
+                Can be writeBlocked with data in the iovec and none in the queue
+             */
+            if (conn->writeBlocked || (conn->connectorq && conn->connectorq->count > 0)) {
+                eventMask |= MPR_WRITABLE;
+            }
+            /*
+                Enable read events if the read queue is not full. 
+             */
+            q = tx->queue[HTTP_QUEUE_RX]->nextQ;
+            if (q->count < q->max || conn->rx->form) {
                 eventMask |= MPR_READABLE;
             }
-            if (eventMask) {
-                if (conn->waitHandler == 0) {
-                    conn->waitHandler = mprCreateWaitHandler(conn->sock->fd, eventMask, conn->dispatcher, conn->ioCallback, 
-                        conn, 0);
-                } else {
-                    //  MOB API for this
-                    conn->waitHandler->dispatcher = conn->dispatcher;
-                    mprWaitOn(conn->waitHandler, eventMask);
-                }
-            } else if (conn->waitHandler) {
+        } else {
+            eventMask |= MPR_READABLE;
+        }
+        if (eventMask) {
+            if (conn->waitHandler == 0) {
+                conn->waitHandler = mprCreateWaitHandler(conn->sock->fd, eventMask, conn->dispatcher, conn->ioCallback, 
+                    conn, 0);
+            } else {
+                //  MOB API for this
+                conn->waitHandler->dispatcher = conn->dispatcher;
                 mprWaitOn(conn->waitHandler, eventMask);
             }
-            mprAssert(conn->dispatcher->enabled);
-            unlock(conn->http);
+        } else if (conn->waitHandler) {
+            mprWaitOn(conn->waitHandler, eventMask);
         }
+        mprAssert(conn->dispatcher->enabled);
+        unlock(conn->http);
     }
 }
 
@@ -2850,18 +2844,6 @@ static HttpPacket *getPacket(HttpConn *conn, ssize *size)
     *size = mprGetBufSpace(packet->content);
     mprAssert(*size > 0);
     return packet;
-}
-
-
-/*
-    Called by connectors when writing the transmission is complete
- */
-void httpCompleteWriting(HttpConn *conn)
-{
-    conn->writeComplete = 1;
-    if (conn->tx) {
-        conn->tx->finalized = 1;
-    }
 }
 
 
@@ -3712,20 +3694,19 @@ static void httpErrorV(HttpConn *conn, int flags, cchar *fmt, va_list args)
     int         status;
 
     mprAssert(fmt);
+    tx = conn->tx;
+
     if (conn == 0) {
         return;
     }
     if (flags & HTTP_ABORT) {
         conn->connError = 1;
     }
-    tx = conn->tx;
-    if (tx) {
-        tx->responded = 1;
-    }
     if (conn->rx) {
         conn->rx->eof = 1;
     }
     conn->error = 1;
+    conn->responded = 1;
     status = flags & HTTP_CODE_MASK;
     if (status == 0) {
         status = HTTP_CODE_INTERNAL_SERVER_ERROR;
@@ -4641,8 +4622,7 @@ static void httpTimer(Http *http, MprEvent *event)
        Check for any inactive connections or expired requests (inactivityTimeout and requestTimeout)
      */
     lock(http);
-    mprLog(8, "httpTimer: %d active connections", mprGetListLength(http->connections));
-mprRawLog(3, "Connections:  ");
+    mprLog(6, "httpTimer: %d active connections", mprGetListLength(http->connections));
     for (count = 0, next = 0; (conn = mprGetNextItem(http->connections, &next)) != 0; count++) {
         rx = conn->rx;
         limits = conn->limits;
@@ -4659,18 +4639,12 @@ mprRawLog(3, "Connections:  ");
             } else {
                 mprLog(6, "Idle connection timed out");
                 httpDisconnect(conn);
+                httpDiscardData(conn->writeq, 1);
                 httpEnableConnEvents(conn);
                 conn->lastActivity = conn->started = http->now;
             }
         }
-//  MOB - remove
-        if (conn->sock) {
-            mprRawLog(3, "%d ", conn->sock->fd);
-        }
     }
-//  MOB - remove
-    mprRawLog(3, "\n");
-    mprLog(6, "httpTimer: %d connections open", count);
 
     /*
         Check for unloadable modules
@@ -4968,6 +4942,7 @@ static void addPacketForNet(HttpQueue *q, HttpPacket *packet);
 static void adjustNetVec(HttpQueue *q, ssize written);
 static MprOff buildNetVec(HttpQueue *q);
 static void freeNetPackets(HttpQueue *q, ssize written);
+static void netClose(HttpQueue *q);
 static void netOutgoingService(HttpQueue *q);
 
 /*  
@@ -4981,9 +4956,22 @@ int httpOpenNetConnector(Http *http)
     if ((stage = httpCreateConnector(http, "netConnector", HTTP_STAGE_ALL, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
+    stage->close = netClose;
     stage->outgoingService = netOutgoingService;
     http->netConnector = stage;
     return 0;
+}
+
+
+static void netClose(HttpQueue *q)
+{
+    HttpTx      *tx;
+
+    tx = q->conn->tx;
+    if (tx->file) {
+        mprCloseFile(tx->file);
+        tx->file = 0;
+    }
 }
 
 
@@ -5929,7 +5917,7 @@ void httpCreateTxPipeline(HttpConn *conn, HttpRoute *route)
         q = httpCreateQueue(conn, stage, HTTP_QUEUE_TX, q);
     }
     conn->writeq = tx->queue[HTTP_QUEUE_TX]->nextQ;
-    conn->connq = tx->queue[HTTP_QUEUE_TX]->prevQ;
+    conn->connectorq = tx->queue[HTTP_QUEUE_TX]->prevQ;
 
     pairQueues(conn);
     /*
@@ -6353,6 +6341,9 @@ void httpDiscardData(HttpQueue *q, bool removePackets)
     HttpPacket  *packet, *prev, *next;
     ssize       len;
 
+    if (q == 0) {
+        return;
+    }
     for (prev = 0, packet = q->first; packet; packet = next) {
         next = packet->next;
         if (packet->flags & (HTTP_PACKET_RANGE | HTTP_PACKET_DATA)) {
@@ -6732,10 +6723,10 @@ ssize httpWriteBlock(HttpQueue *q, cchar *buf, ssize size)
                
     conn = q->conn;
     tx = conn->tx;
-    if (tx->finalized) {
+    if (conn->finalized || tx == 0) {
         return MPR_ERR_CANT_WRITE;
     }
-    tx->responded = 1;
+    conn->responded = 1;
 
     for (written = 0; size > 0; ) {
         LOG(7, "httpWriteBlock q_count %d, q_max %d", q->count, q->max);
@@ -11040,7 +11031,6 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
     q = tx->queue[HTTP_QUEUE_RX];
 
     LOG(7, "processContent: packet of %d bytes, remaining %d", mprGetBufLength(content), rx->remainingContent);
-
     if ((nbytes = httpFilterChunkData(q, packet)) < 0) {
         return 0;
     }
@@ -11050,7 +11040,7 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
         rx->remainingContent -= nbytes;
         rx->bytesRead += nbytes;
         if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_BODY, tx->ext) >= 0) {
-            httpTraceContent(conn, HTTP_TRACE_RX, HTTP_TRACE_BODY, packet, nbytes, 0);
+            httpTraceContent(conn, HTTP_TRACE_RX, HTTP_TRACE_BODY, packet, nbytes, rx->bytesRead);
         }
         if (rx->bytesRead >= conn->limits->receiveBodySize) {
             httpError(conn, HTTP_CLOSE | HTTP_CODE_REQUEST_TOO_LARGE, 
@@ -11076,10 +11066,12 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
     if (rx->remainingContent == 0 && !(rx->flags & HTTP_CHUNKED)) {
         rx->eof = 1;
     }
-    if (rx->form) {
-        httpPutForService(q, packet, HTTP_DELAY_SERVICE);
-    } else {
-        httpPutPacketToNext(q, packet);
+    if (!(conn->finalized && conn->endpoint)) {
+        if (rx->form) {
+            httpPutForService(q, packet, HTTP_DELAY_SERVICE);
+        } else {
+            httpPutPacketToNext(q, packet);
+        }
     }
     return 1;
 }
@@ -12000,6 +11992,7 @@ int httpOpenSendConnector(Http *http)
         return MPR_ERR_CANT_CREATE;
     }
     stage->open = httpSendOpen;
+    stage->close = httpSendClose;
     stage->outgoingService = httpSendOutgoingService; 
     http->sendConnector = stage;
     return 0;
@@ -12031,8 +12024,20 @@ void httpSendOpen(HttpQueue *q)
         }
         tx->file = mprOpenFile(tx->filename, O_RDONLY | O_BINARY, 0);
         if (tx->file == 0) {
-            httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", tx->filename);
+            httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s, err %d", tx->filename, mprGetError());
         }
+    }
+}
+
+
+void httpSendClose(HttpQueue *q)
+{
+    HttpTx  *tx;
+
+    tx = q->conn->tx;
+    if (tx->file) {
+        mprCloseFile(tx->file);
+        tx->file = 0;
     }
 }
 
@@ -12591,6 +12596,7 @@ void httpInitTrace(HttpTrace *trace)
         trace[dir].levels[HTTP_TRACE_FIRST] = 2;
         trace[dir].levels[HTTP_TRACE_HEADER] = 3;
         trace[dir].levels[HTTP_TRACE_BODY] = 4;
+        //  MOB - should be initialized from host->traceMaxLength
         trace[dir].size = -1;
     }
 }
@@ -12686,6 +12692,11 @@ void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssi
     level = trace->levels[item];
 
     if (trace->size >= 0 && total >= trace->size) {
+        mprLog(level, "Abbreviating response trace for conn %d", conn->seqno);
+        trace->disable = 1;
+        return;
+    }
+    if (conn->host && conn->host->traceMaxLength >= 0 && total >= conn->host->traceMaxLength) {
         mprLog(level, "Abbreviating response trace for conn %d", conn->seqno);
         trace->disable = 1;
         return;
@@ -12799,7 +12810,10 @@ HttpTx *httpCreateTx(HttpConn *conn, MprHash *headers)
 
 void httpDestroyTx(HttpTx *tx)
 {
-    mprCloseFile(tx->file);
+    if (tx->file) {
+        mprCloseFile(tx->file);
+        tx->file = 0;
+    }
     if (tx->conn) {
         tx->conn->tx = 0;
         tx->conn = 0;
@@ -12966,6 +12980,8 @@ void httpSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
 }
 
 
+//  MOB - sort
+
 void httpSetHeaderString(HttpConn *conn, cchar *key, cchar *value)
 {
     mprAssert(key && *key);
@@ -12975,16 +12991,23 @@ void httpSetHeaderString(HttpConn *conn, cchar *key, cchar *value)
 }
 
 
+/*
+    Called by connectors (ONLY) when writing the transmission is complete
+ */
+void httpCompleteWriting(HttpConn *conn)
+{
+    conn->writeComplete = 1;
+    conn->finalized = 1;
+}
+
+
 void httpFinalize(HttpConn *conn)
 {
-    HttpTx      *tx;
-
-    tx = conn->tx;
-    if (tx->finalized || conn->state < HTTP_STATE_CONNECTED || conn->writeq == 0 || conn->sock == 0) {
+    if (conn->finalized || conn->state < HTTP_STATE_CONNECTED || conn->writeq == 0 || conn->sock == 0) {
         return;
     }
-    tx->finalized = 1;
-    tx->responded = 1;
+    conn->finalized = 1;
+    conn->responded = 1;
     httpPutForService(conn->writeq, httpCreateEndPacket(), HTTP_SERVICE_NOW);
     httpServiceQueues(conn);
     if (conn->state == HTTP_STATE_RUNNING && conn->writeComplete && !conn->advancing) {
@@ -12995,7 +13018,7 @@ void httpFinalize(HttpConn *conn)
 
 int httpIsFinalized(HttpConn *conn)
 {
-    return conn->tx && conn->tx->finalized;
+    return conn->finalized;
 }
 
 
@@ -13018,9 +13041,9 @@ ssize httpFormatResponsev(HttpConn *conn, cchar *fmt, va_list args)
     char        *body;
 
     tx = conn->tx;
+    conn->responded = 1;
     body = sfmtv(fmt, args);
     tx->altBody = body;
-    tx->responded = 1;
     httpOmitBody(conn);
     return slen(tx->altBody);
 }
@@ -13177,7 +13200,7 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
         "<html><head><title>%s</title></head>\r\n"
         "<body><h1>%s</h1>\r\n<p>The document has moved <a href=\"%s\">here</a>.</p></body></html>\r\n",
         msg, msg, targetUri);
-    tx->responded = 1;
+    conn->responded = 1;
     tx->redirected = 1;
     httpOmitBody(conn);
 }
@@ -13375,14 +13398,14 @@ void httpSetEntityLength(HttpConn *conn, int64 len)
 
 void httpSetResponded(HttpConn *conn)
 {
-    conn->tx->responded = 1;
+    conn->responded = 1;
 }
 
 
 void httpSetStatus(HttpConn *conn, int status)
 {
     conn->tx->status = status;
-    conn->tx->responded = 1;
+    conn->responded = 1;
 }
 
 
@@ -13410,7 +13433,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
     if (tx->flags & HTTP_TX_HEADERS_CREATED) {
         return;
     }    
-    tx->responded = 1;
+    conn->responded = 1;
     if (conn->headersCallback) {
         /* Must be before headers below */
         (conn->headersCallback)(conn->headersCallbackArg);

@@ -27,6 +27,7 @@ typedef struct App {
     Mpr         *mpr;
     MaAppweb    *appweb;
     MaServer    *server;
+    MprSignal   *traceToggle;
     char        *documents;
     char        *home;
     char        *configFile;
@@ -43,6 +44,7 @@ static int  checkEnvironment(cchar *program);
 static int  findConfigFile();
 static void manageApp(App *app, int flags);
 static int  initialize(cchar *ip, int port);
+static void traceHandler(void *ignored, MprSignal *sp);
 static void usageError();
 
 #if BLD_UNIX_LIKE
@@ -81,7 +83,8 @@ MAIN(appweb, int argc, char **argv)
     }
     mprAddRoot(app);
     mprAddStandardSignals();
-    
+    app->traceToggle = mprAddSignalHandler(SIGUSR1, traceHandler, 0, 0, MPR_SIGNAL_AFTER);
+
     argc = mpr->argc;
     argv = mpr->argv;
     app->mpr = mpr;
@@ -212,6 +215,7 @@ static void manageApp(App *app, int flags)
         mprMark(app->pathVar);
         mprMark(app->server);
         mprMark(app->home);
+        mprMark(app->traceToggle);
     }
 }
 
@@ -324,6 +328,19 @@ static int checkEnvironment(cchar *program)
     putenv(app->pathVar);
 #endif
     return 0;
+}
+
+
+static void traceHandler(void *ignored, MprSignal *sp)
+{
+    int     level;
+
+    level = 6;
+    if (mprGetLogLevel() > 2) {
+        level = 2;
+    }
+    mprLog(0, "Change log level to %d", level);
+    mprSetLogLevel(level);
 }
 
 

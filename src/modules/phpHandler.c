@@ -153,7 +153,7 @@ static void openPhp(HttpQueue *q)
 
 
 /*
-    Process the request. Run once all the input data has been received
+    Process the request. Run once all the input data has been received and buffered.
  */
 static void processPhp(HttpQueue *q)
 {
@@ -172,9 +172,7 @@ static void processPhp(HttpQueue *q)
     conn = q->conn;
     rx = conn->rx;
     tx = conn->tx;
-    php = q->queueData;
-
-    if (!php) {
+    if ((php = q->queueData) == 0) {
         return;
     }
 
@@ -277,6 +275,7 @@ static void processPhp(HttpQueue *q)
     zend_try {
         php_request_shutdown(0);
     } zend_end_try();
+
     httpFinalize(conn);
 }
 

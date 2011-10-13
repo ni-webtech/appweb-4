@@ -127,15 +127,7 @@ static void openFile(HttpQueue *q)
     route = rx->route;
 
     mprLog(5, "Open file handler");
-#if UNUSED
-    httpMapFile(conn, route);
-#endif
     if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST)) {
-#if UNUSED
-        if (!findFile(q)) {
-            return;
-        }
-#endif
         if (tx->fileInfo.valid && tx->fileInfo.mtime) {
             //  TODO - OPT could cache this
             date = httpGetDateString(&tx->fileInfo);

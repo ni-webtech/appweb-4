@@ -1590,6 +1590,7 @@ extern int httpOpenPassHandler(Http *http);
 extern int httpOpenRangeFilter(Http *http);
 extern int httpOpenUploadFilter(Http *http);
 extern void httpSendOpen(HttpQueue *q);
+extern void httpSendClose(HttpQueue *q);
 extern void httpSendOutgoingService(HttpQueue *q);
 extern ssize httpFilterChunkData(HttpQueue *q, HttpPacket *packet);
 
@@ -1728,10 +1729,12 @@ typedef struct HttpConn {
     struct HttpHost *host;                  /**< Host object (if releveant) */
 
     int             state;                  /**< Connection state */
-    int             advancing;              /**< In httpProcess (reentrancy prevention) */
-    int             writeComplete;          /**< All write data has been sent (set by connectors) */
     int             error;                  /**< A request error has occurred */
     int             connError;              /**< A connection error has occurred */
+    int             finalized;              /**< Request complete */
+    int             responded;              /**< The request has responded (endpoint). Some output has been initiated */
+    int             writeComplete;          /**< All write data has been sent (set by connectors) */
+    int             advancing;              /**< In httpProcess (reentrancy prevention) */
 
     HttpLimits      *limits;                /**< Service limits */
     Http            *http;                  /**< Http service object  */
@@ -1744,12 +1747,12 @@ typedef struct HttpConn {
     MprSocket       *sock;                  /**< Underlying socket handle */
 
     struct HttpQueue *serviceq;             /**< List of queues that require service for request pipeline */
-    struct HttpQueue *currentq;             /**< Current queue being serviced */
+    struct HttpQueue *currentq;             /**< Current queue being serviced (just for GC) */
 
     HttpPacket      *input;                 /**< Header packet */
     HttpQueue       *readq;                 /**< End of the read pipeline */
     HttpQueue       *writeq;                /**< Start of the write pipeline */
-    HttpQueue       *connq;                 /**< Connector write queue */
+    HttpQueue       *connectorq;            /**< Connector write queue */
     MprTime         started;                /**< When the connection started */
     MprTime         lastActivity;           /**< Last activity on the connection */
     MprEvent        *timeoutEvent;          /**< Connection or request timeout event */
@@ -1832,6 +1835,7 @@ extern void httpCompleteRequest(HttpConn *conn);
     Signal writing transmission body is complete. This is called by connectors when writing data is complete.
     @param conn HttpConn object created via $httpCreateConn
     @ingroup HttpConn
+    @internal
  */ 
 extern void httpCompleteWriting(HttpConn *conn);
 
@@ -4256,12 +4260,10 @@ typedef struct HttpTx {
     cchar           *ext;                   /**< Filename extension */
     char            *etag;                  /**< Unique identifier tag */
     char            *filename;              /**< Name of a real file being served (typically pathInfo mapped) */
-    int             finalized;              /**< Finalization done */
     int             flags;                  /**< Response flags */
     HttpStage       *handler;               /**< Server-side request handler stage */
     MprOff          length;                 /**< Transmission content length */
     int             started;                /**< Handler has started */
-    int             responded;              /**< The request has responded (endpoint). Some output has been initiated */
     int             redirected;             /**< The request has been redirected to a new URI */
     int             status;                 /**< HTTP request status */
 
