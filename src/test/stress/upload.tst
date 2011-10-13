@@ -21,7 +21,6 @@ if (!test || test.config["ejscript"] == 1) {
         buf.writeByte("\n".charCodeAt(0))
     }
 
-
     //  Create test data file
     f = File(TESTFILE).open({mode: "w"})
     for (i in (sizes[test.depth] * 1024)) {
@@ -34,6 +33,7 @@ if (!test || test.config["ejscript"] == 1) {
 
         http.upload(HTTP + "/upload.ejs", { file: TESTFILE })
         assert(http.status == 200)
+        http.close()
 
         let uploaded = Path("../web/tmp").join(Path(TESTFILE).basename)
         assert(uploaded.size == size)

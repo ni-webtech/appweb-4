@@ -232,7 +232,7 @@ static ssize readFileData(HttpQueue *q, HttpPacket *packet, MprOff pos, ssize si
     conn = q->conn;
     tx = conn->tx;
 
-    if (packet->content == 0 && (packet->content = mprCreateBuf(size, size)) == 0) {
+    if (packet->content == 0 && (packet->content = mprCreateBuf(size, -1)) == 0) {
         return MPR_ERR_MEMORY;
     }
     mprAssert(size <= mprGetBufSpace(packet->content));    

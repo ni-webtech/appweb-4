@@ -28,7 +28,7 @@ extern "C" {
 
 #define ESP_TOK_INCR        1024                        /**< Growth increment for ESP tokens */
 #define ESP_LISTEN          "4000"                      /**< Default listening endpoint for the esp program */
-#define ESP_UNLOAD_TIMEOUT  (30 * 1000)                 /**< Timeout for ESP requests to complete when reloading modules */
+#define ESP_UNLOAD_TIMEOUT  (10)                        /**< Very short timeout for reloading */
 #define ESP_LIFESPAN        (3600 * MPR_TICKS_PER_SEC)  /**< Default generated content cache lifespan */
 
 /*

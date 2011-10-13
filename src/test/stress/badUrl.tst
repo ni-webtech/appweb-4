@@ -9,3 +9,4 @@ let http: Http = new Http
 http.get(HTTP + "/index\x01.html")
 assert(http.status == 404)
 assert(http.response.contains("Not Found"))
+http.close()

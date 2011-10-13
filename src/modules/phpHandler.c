@@ -126,6 +126,10 @@ static void openPhp(HttpQueue *q)
 
     rx = q->conn->rx;
 
+    /*
+        PHP will buffer all input. i.e. does not stream. The normal Limits still apply.
+     */
+    q->max = q->pair->max = MAXINT;
     mprLog(5, "Open php handler");
     httpTrimExtraPath(q->conn);
     if (rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {

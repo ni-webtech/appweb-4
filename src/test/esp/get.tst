@@ -17,4 +17,5 @@ http.close()
 if (global.test && test.os == "WIN") {
     http.get(HTTP + "/teST.eSP")
     assert(http.status == 200)
+    http.close()
 }

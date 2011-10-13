@@ -33,7 +33,7 @@ static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *rec
 static int  runAction(HttpConn *conn);
 static void saveCachedResponse(HttpConn *conn);
 static void setRouteDirs(MaState *state, cchar *kind);
-static bool unloadModule(cchar *module);
+static bool unloadModule(cchar *module, MprTime timeout);
 static bool viewExists(HttpConn *conn);
 
 /************************************* Code ***********************************/
@@ -543,17 +543,17 @@ static int loadApp(HttpConn *conn, int *updated)
         if (eroute->update) {
             mprGetPathInfo(mp->path, &minfo);
             if (minfo.valid && mp->modified < minfo.mtime) {
-                unloadModule(eroute->appModuleName);
+                if (!unloadModule(eroute->appModuleName, 0)) {
+                    mprError("Can't unload old module, connections still open. Keep using old version.");
+                    /* Can't unload - so keep using old module */
+                    return 1;
+                }
                 mp = 0;
             }
         }
     }
     if (mp == 0) {
-#if UNUSED
-        entry = sfmt("esp_app_%s", mprGetPathBase(eroute->dir));
-#else
         entry = sfmt("esp_app_%s", eroute->appModuleName);
-#endif
         if ((mp = mprCreateModule(eroute->appModuleName, eroute->appModulePath, entry, eroute)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find module %s", eroute->appModulePath);
             return 0;
@@ -586,16 +586,22 @@ static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *rec
         Use >= to ensure we reload. This may cause redundant reloads as mtime has a 1 sec granularity.
      */
     if (sinfo.valid && sinfo.mtime >= minfo.mtime) {
-        *recompile = 1;
         if ((mp = mprLookupModule(source)) != 0) {
-            unloadModule(source);
+            if (!unloadModule(source, 0)) {
+                /* Can't unload - keep using old module */
+                return 0;
+            }
         }
+        *recompile = 1;
         return 1;
     }
     if ((mp = mprLookupModule(source)) != 0) {
         if (minfo.mtime > mp->modified) {
             /* Module file has been updated */
-            unloadModule(source);
+            if (!unloadModule(source, 0)) {
+                /* Can't unload - keep using old module */
+                return 0;
+            }
             return 1;
         }
     }
@@ -620,7 +626,7 @@ static bool viewExists(HttpConn *conn)
 }
 
 
-static bool unloadModule(cchar *module)
+static bool unloadModule(cchar *module, MprTime timeout)
 {
     MprModule   *mp;
     MprTime     mark;
@@ -639,7 +645,7 @@ static bool unloadModule(cchar *module)
             unlock(esp);
             mprSleep(20);
             /* Defaults to 10 secs */
-        } while (mprGetRemainingTime(mark, ESP_UNLOAD_TIMEOUT));
+        } while (mprGetRemainingTime(mark, timeout));
     }
     return 0;
 }

@@ -32,5 +32,6 @@ for (iter in test.depth) {
     assert(http.status == 200)
     assert(http.response.contains("Hello /index.ejs"))
 
-    //  TODO - egi, cgi, php
+    //  TODO - esp, cgi, php
 }
+http.close()

@@ -51,9 +51,6 @@ if (test.config["cgi"] == 1) {
     postTest("/cgi-bin/cgiProgram")
 }
 
-/*  
-    The testEgi modules doesn't currently handle post data
-    if (test.config["debug"] == 1) {
-        postTest("/egiProgram.egi")
-    }
-*/
+if (test.config["esp"] == 1) {
+    postTest("/test.esp")
+}
