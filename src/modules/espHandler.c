@@ -57,6 +57,7 @@ static void openEsp(HttpQueue *q)
             httpMemoryError(conn);
             return;
         }
+        eroute = 0;
         for (route = rx->route; route; route = route->parent) {
             if ((eroute = httpGetRouteData(route, ESP_NAME)) != 0) {
                 break;
@@ -440,6 +441,7 @@ static void saveCachedResponse(HttpConn *conn)
         } else {
             eroute = req->eroute;
             lifespan = eroute->lifespan;
+            extraUri = 0;
         }
         key = makeCacheKey(conn, rx->target, extraUri);
         /*

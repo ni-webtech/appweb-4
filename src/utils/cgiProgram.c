@@ -447,7 +447,7 @@ static void printPost(char *buf, size_t len)
 
     } else if (buf) {
         if (len < (50 * 1000)) {
-            write(1, buf, len);
+            (void) write(1, buf, len);
         } else {
             printf("<H2>Post Data %d bytes found</H2>\r\n", (int) len);
         }

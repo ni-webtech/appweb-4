@@ -2406,18 +2406,19 @@ void httpDestroyConn(HttpConn *conn)
             HTTP_NOTIFY(conn, HTTP_STATE_COMPLETE, 0);
         }
         HTTP_NOTIFY(conn, HTTP_EVENT_CLOSE, 0);
-        mprAssert(conn->http);
-        httpRemoveConn(conn->http, conn);
-        httpCloseConn(conn);
         conn->input = 0;
+        if (conn->tx) {
+            httpDestroyPipeline(conn);
+            conn->tx->conn = 0;
+            conn->tx = 0;
+        }
         if (conn->rx) {
             conn->rx->conn = 0;
             conn->rx = 0;
         }
-        if (conn->tx) {
-            conn->tx->conn = 0;
-            conn->tx = 0;
-        }
+        mprAssert(conn->http);
+        httpRemoveConn(conn->http, conn);
+        httpCloseConn(conn);
         conn->http = 0;
     }
 }
@@ -3292,6 +3293,7 @@ bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn)
     int             count;
 
     limits = endpoint->limits;
+    action = "unknown";
     mprAssert(conn->endpoint == endpoint);
     lock(endpoint->http);
 
@@ -6037,8 +6039,8 @@ void httpDestroyPipeline(HttpConn *conn)
     HttpQueue   *q, *qhead;
     int         i;
 
-    if (conn->tx) {
-        tx = conn->tx;
+    tx = conn->tx;
+    if (tx) {
         for (i = 0; i < HTTP_MAX_QUEUE; i++) {
             qhead = tx->queue[i];
             for (q = qhead->nextQ; q != qhead; q = q->nextQ) {
@@ -7480,6 +7482,7 @@ int httpMatchRoute(HttpConn *conn, HttpRoute *route)
     mprAssert(route);
 
     rx = conn->rx;
+    savePathInfo = 0;
 
     /*
         Remove the route prefix. Restore after matching.
@@ -8673,6 +8676,8 @@ char *httpLink(HttpConn *conn, cchar *target, MprHash *options)
 
     rx = conn->rx;
     route = rx->route;
+    controller = 0;
+
     if (target == 0) {
         target = "";
     }
@@ -8695,7 +8700,6 @@ char *httpLink(HttpConn *conn, cchar *target, MprHash *options)
          */
         if ((action = httpGetOption(options, "action", 0)) != 0) {
             originalAction = action;
-            controller = 0;
             if (*action == '@') {
                 action = &action[1];
             }
@@ -14499,7 +14503,8 @@ char *httpFormatUri(cchar *scheme, cchar *host, int port, cchar *path, cchar *re
         Hosts with integral port specifiers override
      */
     if (host && schr(host, ':')) {
-        portDelim = 0;
+        portDelim = "";
+        portStr = "";
     } else {
         if (port != 0 && port != getDefaultPort(scheme)) {
             portStr = itos(port, 10);

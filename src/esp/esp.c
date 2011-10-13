@@ -294,7 +294,10 @@ MAIN(espgen, int argc, char **argv)
             if (argind >= argc) {
                 usageError();
             } else {
-                chdir(argv[++argind]);
+                argp = argv[++argind];
+                if (chdir(argp) < 0) {
+                    fail("Can't change directory to %s", argp);
+                }
             }
 
         } else if (smatch(argp, "--config")) {

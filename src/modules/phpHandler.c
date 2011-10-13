@@ -255,7 +255,7 @@ static void processPhp(HttpQueue *q)
      */
     file_handle.handle.fp = fp;
     shebang[0] = '\0';
-    fgets(shebang, sizeof(shebang), file_handle.handle.fp);
+    (void) fgets(shebang, sizeof(shebang), file_handle.handle.fp);
     if (shebang[0] != '#' || shebang[1] != '!') {
         fseek(fp, 0L, SEEK_SET);
     }

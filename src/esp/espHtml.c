@@ -1461,6 +1461,7 @@ void renderError(int status, cchar *fmt, ...)
     cchar       *msg;
 
     va_start(args, fmt);
+    msg = sfmtv(fmt, args);
     espWriteError(getConn(), status, "%s", msg);
     va_end(args);
 }
