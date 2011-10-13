@@ -8,13 +8,13 @@ if (test.depth >= 4) {
     let command = Cmd.locate("testAppweb").portable + " --host " + HOST + 
         " --name mpr.api.c --iterations 400 " + test.mapVerbosity(-2)
 
-    testCmd(command)
+    Cmd.sh(command)
     if (test.multithread) {
-        Cmd.sh(command + "--threads " + 2)
+        Cmd.sh(command + " --threads " + 2)
     }
     if (test.multithread) {
         for each (count in [2, 4, 8, 16]) {
-            Cmd.sh(command + "--threads " + count)
+            Cmd.sh(command + " --threads " + count)
         }
     }
 } else {

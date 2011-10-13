@@ -1112,6 +1112,10 @@ extern int httpOpenQueue(HttpQueue *q, ssize chunkSize);
  */
 extern void httpPutBackPacket(struct HttpQueue *q, HttpPacket *packet);
 
+//  MOB DOC
+#define HTTP_DELAY_SERVICE 0
+#define HTTP_SERVICE_NOW 1
+
 /** 
     Put a packet onto the service queue
     @description Add a packet to the service queue. If serviceQ is true, the queue will be scheduled for service.
@@ -1587,6 +1591,7 @@ extern int httpOpenRangeFilter(Http *http);
 extern int httpOpenUploadFilter(Http *http);
 extern void httpSendOpen(HttpQueue *q);
 extern void httpSendOutgoingService(HttpQueue *q);
+extern ssize httpFilterChunkData(HttpQueue *q, HttpPacket *packet);
 
 /** 
     Notification flags
@@ -3843,6 +3848,7 @@ extern void httpRemoveUploadFile(HttpConn *conn, cchar *id);
 /*  
     Incoming chunk encoding states
  */
+#define HTTP_CHUNK_UNCHUNKED  0             /**< Data is not transfer-chunk encoded */
 #define HTTP_CHUNK_START      1             /**< Start of a new chunk */
 #define HTTP_CHUNK_DATA       2             /**< Start of chunk data */
 #define HTTP_CHUNK_EOF        3             /**< End of last chunk */
@@ -3882,13 +3888,16 @@ typedef struct HttpRx {
     MprHash         *requestData;           /**< General request data storage. Users must create hash table if required */
     MprTime         since;                  /**< If-Modified date */
 
+#if UNUSED
+    ssize           chunkSize;              /**< Size of the next chunk */
+#endif
+
     int             chunkState;             /**< Chunk encoding state */
     int             flags;                  /**< Rx modifiers */
     int             form;                   /**< Using mime-type application/x-www-form-urlencoded */
+    int             streamInput;            /**< Streaming read data. Means !form */
     int             needInputPipeline;      /**< Input pipeline required to process received data */
     int             upload;                 /**< Request is using file upload */
-
-    ssize           chunkSize;              /**< Size of the next chunk */
 
     bool            ifModified;             /**< If-Modified processing requested */
     bool            ifMatch;                /**< If-Match processing requested */
@@ -3913,6 +3922,7 @@ typedef struct HttpRx {
 
     char            *pragma;                /**< Pragma header */
     char            *mimeType;              /**< Mime type of the request payload (ENV: CONTENT_TYPE) */
+    char            *originalMethod;        /**< Original method from the client */
     char            *originalUri;           /**< Original URI passed by the client */
     char            *redirect;              /**< Redirect route header */
     char            *referrer;              /**< Refering URL */
@@ -4156,6 +4166,16 @@ extern void httpSetParam(HttpConn *conn, cchar *var, cchar *value);
 extern void httpSetIntParam(HttpConn *conn, cchar *var, int value);
 
 /**
+    Set a new HTTP method for processing
+    @description This modifies the request method to alter request processing. The original method is preserved in
+        the HttpRx.originalMethod field. This is only useful to do before request routing has matched a route.
+    @param conn HttpConn connection object
+    @param method New method to use. 
+    @ingroup HttpRx
+ */
+extern void httpSetMethod(HttpConn *conn, cchar *method);
+
+/**
     Set a new URI for processing
     @description This modifies the request URI to alter request processing. The original URI is preserved in
         the HttpRx.originalUri field. This is only useful to do before request routing has matched a route.
@@ -4167,7 +4187,7 @@ extern void httpSetIntParam(HttpConn *conn, cchar *var, int value);
         The request script name will be reset and the pathInfo will be set to the path portion of the URI.
     @param query Optional query string to define with the new URI. If query is null, any query string defined
         with the previous URI will be used. If query is set to the empty string, a previous query will be discarded.
-    @return True if the content is current and has not been modified.
+    @return Zero if successful, otherwise a negative MPR error code.
     @ingroup HttpRx
  */
 extern int httpSetUri(HttpConn *conn, cchar *uri, cchar *query);

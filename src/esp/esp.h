@@ -532,6 +532,7 @@ extern MprHash *espGetHeaderHash(HttpConn *conn);
  */
 extern char *espGetHeaders(HttpConn *conn);
 
+//  MOB - rename GetTop
 /**
     Get a relative URI to the home ("/") of the application.
     @param conn HttpConn connection object created via $httpCreateConn
@@ -712,12 +713,14 @@ extern void espSetContentLength(HttpConn *conn, MprOff length);
     @param name Cookie name
     @param value Cookie value
     @param path URI path to which the cookie applies
-    @param cookieDomain Domain in which the cookie applies. Must have 2-3 dots.
+    @param domain String Domain in which the cookie applies. Must have 2-3 "." and begin with a leading ".". 
+        For example: domain: .example.com
+    Some browsers will accept cookies without the initial ".", but the spec: (RFC 2109) requires it.
     @param lifespan Duration for the cookie to persist in msec
     @param isSecure Set to true if the cookie only applies for SSL based connections
     @ingroup EspReq
  */
-extern void espSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *cookieDomain, MprTime lifespan,
+extern void espSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *domain, MprTime lifespan,
         bool isSecure);
 
 /**
@@ -1729,12 +1732,14 @@ extern cchar *getQuery();
  */
 extern cchar *getUri();
 
+//  MOB - confusing vs home directory. Perhaps top() would be a better API name. Can use "~" instead.
 /**
     Get the home URI
     @description This returns a relative URI to the top of the application.
         Alternatively, this can be constructed via uri("~")
     @return A relative URI to the top level home URI for the web application.
     @ingroup EspAbbrev
+    @internal
  */
 extern cchar *home();
 
@@ -1871,6 +1876,7 @@ extern cchar *session(cchar *name);
  */
 extern void setSession(cchar *name, cchar *value);
 
+//  MOB - should httpLink be renamed to httpUri and espLink to httpUri
 /**
     Create a URI. 
     @description Create a URI link by expansions tokens based on the current request and route state.
@@ -2187,6 +2193,45 @@ extern EdiRec *updateField(EdiRec *rec, cchar *fieldName, cchar *value);
     @ingroup EspAbbrev
  */
 extern EdiRec *updateFields(EdiRec *rec, MprHash *data);
+
+//  MOB DOC
+/** 
+    Define a cookie header to send with the response. The Path, domain and expires properties can be set to null for 
+    default values.
+    @param name Cookie name
+    @param value Cookie value
+    @param path Uri path to which the cookie applies
+    @param domain String Domain in which the cookie applies. Must have 2-3 "." and begin with a leading ".". 
+        For example: domain: .example.com
+    Some browsers will accept cookies without the initial ".", but the spec: (RFC 2109) requires it.
+    @param expires Date When the cookie expires
+    @param secure Boolean Set to true if the cookie only applies for SSL based connections
+*/
+
+extern void setCookie(cchar *name, cchar *value, cchar *path, cchar *domain, MprTime lifespan, int flags);
+extern void addHeader(cchar *key, cchar *fmt, ...);
+extern cchar *cookies();
+extern void destroySession();
+extern void dontAutoFinalize();     //espSetAutoFinalizing
+extern cchar *documentRoot();
+extern MprOff getContentLength();
+extern cchar *getContentType();
+extern bool isSecure();
+
+
+extern ssize espWriteError(HttpConn *conn, int status, cchar *fmt, ...);
+
+extern void renderError(int status, cchar *fmt, ...); //   espWriteError  Request.writeError() 
+extern void setHeader(cchar *key, cchar *fmt, ...);
+extern void setStatus(int status);
+extern void setContentType(cchar *mimeType);
+extern cchar *top();
+extern MprHash *uploadedFiles();
+
+//  MOB - what should the name be => httpRead. Must signal eof too.
+extern ssize qread(char *buf, ssize len);
+extern bool qeof();
+
 
 #ifdef __cplusplus
 } /* extern C */

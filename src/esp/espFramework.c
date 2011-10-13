@@ -491,6 +491,47 @@ ssize espWriteBlock(HttpConn *conn, cchar *buf, ssize size)
 }
 
 
+ssize espWriteError(HttpConn *conn, int status, cchar *fmt, ...)
+{
+    va_list     args;
+    HttpRx      *rx;
+    EspReq      *req;
+    EspRoute    *eroute;
+    ssize       written;
+    cchar       *msg, *title, *text;
+
+    va_start(args, fmt);    
+
+    rx = conn->rx;
+    req = conn->data;
+    eroute = req->eroute;
+    written = 0;
+
+    if (!req->finalized) {
+        if (status == 0) {
+            status = HTTP_CODE_INTERNAL_SERVER_ERROR;
+        }
+        title = sfmt("Request Error for \"%s\"", rx->pathInfo);
+        msg = mprEscapeHtml(sfmtv(fmt, args));
+        if (eroute->showErrors) {
+            text = sfmt(\
+                "<!DOCTYPE html>\r\n<html>\r\n<head><title>%s</title></head>\r\n" \
+                "<body>\r\n<h1>%s</h1>\r\n" \
+                "    <pre>%s</pre>\r\n" \
+                "    <p>To prevent errors being displayed in the browser, " \
+                "       set <b>log.showErrors</b> to false in the ejsrc file.</p>\r\n", \
+                "</body>\r\n</html>\r\n", title, title, msg);
+            httpSetHeader(conn, "Content-Type", "text/html");
+            written += espWriteString(conn, text);
+            espFinalize(conn);
+            mprLog(4, "Request error (%d) for: \"%s\"", status, rx->pathInfo);
+        }
+    }
+    va_end(args);    
+    return written;
+}
+
+
 ssize espWriteFile(HttpConn *conn, cchar *path)
 {
     MprFile     *from;
@@ -508,7 +549,7 @@ ssize espWriteFile(HttpConn *conn, cchar *path)
         written += nbytes;
     }
     mprCloseFile(from);
-    return 0;
+    return written;
 }
 
 

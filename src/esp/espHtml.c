@@ -12,26 +12,6 @@
 #if BLD_FEATURE_ESP
 /************************************* Local **********************************/
 
-#if TODO
-    MOB - review and document somewhere
-    -http-method-
-    -esp- prefixes all internal styles
-    -esp-alert
-    -esp-flash
-    -esp-flash-inform
-    -esp-flash-warn
-    -esp-flash-error
-    -esp-hidden
-    -esp-tabs
-    -esp-field-error
-    -esp-progress
-    -esp-progress-inner
-    -esp-table
-    -esp-table-download
-    -esp-even-row
-    -esp-form-error
-#endif
-
 static char *defaultScripts[] = {
     "/js/jquery", 
     "/js/jquery.tablesorter",
@@ -87,12 +67,6 @@ static char *internalOptions[] = {
     "value",
     0
 };
-
-#if MOB
-    what about these
-        params          - Params to add to click
-        query           - To add to click - MOB - why is this needed
-#endif
 
 #if DOC_ONLY
 static char *htmlOptions[] = {
@@ -1416,6 +1390,136 @@ void warn(cchar *fmt, ...)
     va_end(args);
 }
 
+
+///////////////////////////////////////////////
+
+void addHeader(cchar *key, cchar *fmt, ...)
+{
+    va_list     args;
+    cchar       *value;
+
+    va_start(args, fmt);
+    value = sfmtv(fmt, args);
+    espAddHeaderString(getConn(), key, value);
+    va_end(args);
+}
+
+
+cchar *cookies()
+{
+    //  MOB - should these be parsed into a hash table
+    return httpGetCookies(getConn());
+}
+
+
+//  MOB - should have a parsed MprHash
+void destroySession()
+{
+    EspSession  *sp;
+    HttpConn    *conn;
+
+    conn = getConn();
+    if ((sp = espGetSession(conn, 0)) != 0) {
+        espDestroySession(sp);
+    }
+}
+
+
+void dontAutoFinalize()
+{
+    espSetAutoFinalizing(getConn(), 0);
+}
+
+
+cchar *documentRoot()
+{
+    return getConn()->rx->route->dir;
+}
+
+
+MprOff getContentLength()
+{
+    return espGetContentLength(getConn());
+}
+
+
+cchar *getContentType()
+{
+    return getConn()->rx->mimeType;
+}
+
+
+bool isSecure()
+{
+    return getConn()->secure;
+}
+
+
+void renderError(int status, cchar *fmt, ...)
+{
+    va_list     args;
+    cchar       *msg;
+
+    va_start(args, fmt);
+    espWriteError(getConn(), status, "%s", msg);
+    va_end(args);
+}
+
+
+//  MOB -should this be abbreviated? -- cookie()?
+void setCookie(cchar *name, cchar *value, cchar *path, cchar *cookieDomain, MprTime lifespan, int flags)
+{
+    espSetCookie(getConn(), name, value, path, cookieDomain, lifespan, flags);
+}
+
+
+void setHeader(cchar *key, cchar *fmt, ...)
+{
+    va_list     args;
+    cchar       *value;
+
+    va_start(args, fmt);
+    value = sfmtv(fmt, args);
+    espSetHeaderString(getConn(), key, value);
+    va_end(args);
+}
+
+
+void setStatus(int status)
+{
+    espSetStatus(getConn(), status);
+}
+
+
+void setContentType(cchar *mimeType)
+{
+    espSetContentType(getConn(), mimeType);
+}
+
+
+cchar *top()
+{
+    return espGetHome(getConn());
+}
+
+
+MprHash *uploadedFiles()
+{
+    return getConn()->rx->files;
+}
+
+
+
+//  MOB - what should the name be => httpRead. Must signal eof too.
+bool qeof()
+{
+    return httpIsEof(getConn());
+}
+
+ssize qread(char *buf, ssize len)
+{
+    return httpRead(getConn(), buf, len);
+}
 
 
 #endif /* BLD_FEATURE_ESP */
