@@ -12,7 +12,7 @@ TARGETS			+= $(BLD_BIN_DIR)/$(NAME)$(BLD_EXE)
 compileExtra: 	$(TARGETS)
 
 $(BLD_BIN_DIR)/$(NAME)$(BLD_EXE): $(OBJECTS)
-	bld --exe $(BLD_BIN_DIR)/$(NAME)$(BLD_EXE) --libs "$(BLD_MPR_LIBS) http" $(OBJECTS)
+	bld --exe $(BLD_BIN_DIR)/$(NAME)$(BLD_EXE) --libs "$(BLD_APPWEB_LIBS)" $(OBJECTS)
 
 run:
 	./$(NAME)$(BLD_EXE)
