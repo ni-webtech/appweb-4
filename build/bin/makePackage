@@ -286,13 +286,21 @@ sum() {
 }
 
 cleanup() {
-    log Complete "Package Complete"
+    local   user
 
+    log Complete "Package Complete"
     if [ $BLD_BUILD_OS = LINUX -a `id -u` != 0 -a "$COMBO" != 1 ] ; then
         echo -e "\nWARNING: Non-root package. Installed files will be owned by `id -nu`\n"
     fi
     [ "$KEEP" != "1" ] && ${RM} -rf ${ROOT_DIR}
     rm -f install.log
+    user=${USER}
+    if [ "${user}" = "" ] ; then
+        user=root
+    fi
+    if [ $BLD_OS != WIN ] ; then
+        chown -R $user ${BLD_OUT_DIR}/releases
+    fi
 }
 
 createPlatformPackages() {
