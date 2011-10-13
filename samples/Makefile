@@ -8,7 +8,11 @@
 
 include 		.makedep 
 
-PRE_DIRS		+= c c++
+PRE_DIRS		+= c
+
+ifneq	($(BLD_OS,VXWORKS),)
+	PRE_DIRS	+= c++
+endif
 
 #
 #   Local variables:
