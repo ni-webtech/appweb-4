@@ -8,12 +8,12 @@ NAME			:= simpleServer
 
 include 		.makedep
 
-TARGETS			+= $(NAME)$(BLD_EXE)
+TARGETS			+= $(BLD_BIN_DIR)/$(NAME)$(BLD_EXE)
 
 compileExtra: 	$(TARGETS)
 
-$(NAME)$(BLD_EXE): $(OBJECTS)
-	@bld --exe $(NAME)$(BLD_EXE) --libs "$(BLD_APPWEB_LIBS)" $(OBJECTS)
+$(BLD_BIN_DIR)/$(NAME)$(BLD_EXE): $(OBJECTS)
+	@bld --exe $(BLD_BIN_DIR)/$(NAME)$(BLD_EXE) --libs "$(BLD_APPWEB_LIBS)" $(OBJECTS)
 
 run:
 	./$(NAME)$(BLD_EXE)

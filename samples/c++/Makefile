@@ -1,14 +1,13 @@
 #
-#	Makefile for the Appweb samples
+#	Makefile for the AppWeb C++ samples 
 #
 #	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
-#	This makefile is for use on development systems only and is not part of the released product.
-# 
 
-include 		.makedep 
+include 		.makedep
 
-PRE_DIRS		+= c c++
+PRE_DIRS 		+= simpleHandler
+PRE_DIRS 		+= simpleModule
 
 #
 #   Local variables:

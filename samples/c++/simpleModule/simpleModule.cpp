@@ -36,7 +36,7 @@ int maSimpleModuleInit(Http *http, MprModule *mp)
     if ((stage = httpCreateStage(http, "simpleModule", HTTP_STAGE_MODULE, mp)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
-    appweb = httpGetContext(http);
+    appweb = (MaAppweb*) httpGetContext(http);
     maAddDirective(appweb, "CustomConfigKey", customConfigKey);
     return 0;
 }

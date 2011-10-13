@@ -5,6 +5,8 @@
 #
 
 NAME			:= simpleModule
+BLD_CXX         := g++
+COMPILE         += *.cpp
 
 include 		.makedep
 

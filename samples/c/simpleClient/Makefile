@@ -7,13 +7,12 @@
 include 		.makedep
 
 NAME			= simpleClient
-TARGETS			+= $(NAME)$(BLD_EXE)
-MAKE_IFLAGS     += $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
+TARGETS			+= $(BLD_BIN_DIR)/$(NAME)$(BLD_EXE)
 
 compileExtra: 	$(TARGETS)
 
-$(NAME)$(BLD_EXE): $(OBJECTS)
-	bld --exe $(NAME)$(BLD_EXE) --libs "$(BLD_MPR_LIBS) http" $(OBJECTS)
+$(BLD_BIN_DIR)/$(NAME)$(BLD_EXE): $(OBJECTS)
+	bld --exe $(BLD_BIN_DIR)/$(NAME)$(BLD_EXE) --libs "$(BLD_MPR_LIBS) http" $(OBJECTS)
 
 run:
 	./$(NAME)$(BLD_EXE)
@@ -27,4 +26,4 @@ projectExtra:
 #   c-basic-offset: 4
 #   End:
 #   vim: sw=4 ts=4 noexpandtab
-#
+

@@ -1,5 +1,7 @@
 /*
-    simpleModule.c - Create a simple AppWeb dynamically loadable module
+    simpleHandler.cpp - Create a simple AppWeb request handler
+  
+    This sample demonstrates creating a request handler to process requests.
   
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
@@ -9,35 +11,59 @@
 #include    "appweb.h"
 
 /********************************* Code *******************************/
-/* 
-    Parse any module specific configuration directives from the appweb.conf config file.
+/*
+    Run the handler. This is called when all input data has been received.
  */
+static void processSimple(HttpQueue *q)
+{
+    HttpConn    *conn;
+    HttpRx      *rx;
 
-static int customConfigKey(MaState *state, cchar *key, cchar *value)
+    conn = q->conn;
+    rx = conn->rx;
+    
+    httpSetHeader(conn, 0, "Last-Modified", conn->http->currentDate);
+
+    /*
+        Create the empty header packet. This will be filled in by the downstream network connector stage.
+     */
+    httpPutForService(q, httpCreateHeaderPacket(), 0);
+
+    /*
+        Generate some dynamic data. If you generate a lot, this will buffer up to a configured maximum. 
+        If that limit is exceeded, the packet will be sent downstream and the response headers will be created.
+     */
+    httpWrite(q, "Hello World");
+
+    /*
+        Send an end of data packet
+     */
+    httpPutForService(q, httpCreateEndPacket(), 1);
+}
+
+
+
+static void incomingSimpleData(HttpQueue *q, HttpPacket *packet)
 {
     /*
-        Do something with value.
+        Do something with the incoming data in packet and then free the packet.
      */
-    return 0;
+    mprLog(0, "Data in packet is %s", mprGetBufStart(packet->content));
 }
 
 
 /*
-    Module load initialization. This is called when the module is first loaded.
+    Module load initialization. This is called when the module is first loaded. The module name is "Simple".
  */
-int maSimpleModuleInit(Http *http, MprModule *mp)
+int maSimpleHandlerInit(Http *http, MprModule *module)
 {
     HttpStage   *stage;
-    MaAppweb    *appweb;
 
-    /*
-        Create a stage so we can process configuration file data
-     */
-    if ((stage = httpCreateStage(http, "simpleModule", HTTP_STAGE_MODULE, mp)) == 0) {
+    if ((stage = httpCreateHandler(http, "simpleHandler", 0, module)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
-    appweb = httpGetContext(http);
-    maAddDirective(appweb, "CustomConfigKey", customConfigKey);
+    stage->process = processSimple;
+    stage->incomingData = incomingSimpleData;
     return 0;
 }
 
