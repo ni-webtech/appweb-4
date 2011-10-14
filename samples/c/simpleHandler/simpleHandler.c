@@ -17,11 +17,8 @@
 static void processSimple(HttpQueue *q)
 {
     HttpConn    *conn;
-    HttpRx      *rx;
 
     conn = q->conn;
-    rx = conn->rx;
-    
     httpSetHeader(conn, 0, "Last-Modified", conn->http->currentDate);
 
     /*

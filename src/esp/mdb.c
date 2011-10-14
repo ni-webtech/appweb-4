@@ -596,7 +596,7 @@ static EdiRec *mdbReadRec(Edi *edi, cchar *tableName, cchar *key)
     MdbTable    *table;
     MdbRow      *row;
     EdiRec      *rec;
-    int         r, nrows;
+    int         r;
 
     mdb = (Mdb*) edi;
     lock(mdb);
@@ -604,7 +604,6 @@ static EdiRec *mdbReadRec(Edi *edi, cchar *tableName, cchar *key)
         unlock(mdb);
         return 0;
     }
-    nrows = mprGetListLength(table->rows);
     if ((r = lookupRow(table, key)) < 0) {
         unlock(mdb);
         return 0;
@@ -1450,7 +1449,6 @@ static MdbCol *lookupColumn(MdbTable *table, cchar *columnName)
 static MdbRow *createRow(Mdb *mdb, MdbTable *table)
 {
     MdbRow      *row;
-    MdbCol      *col;
     int         ncols;
 
     ncols = max(table->schema->ncols, 1);
@@ -1460,7 +1458,6 @@ static MdbRow *createRow(Mdb *mdb, MdbTable *table)
     mprSetManager(row, manageRow);
     row->table = table;
     row->nfields = ncols;
-    col = getCol(table, 0);
     row->rid = mprAddItem(table->rows, row);
     return row;
 }

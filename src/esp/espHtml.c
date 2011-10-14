@@ -435,10 +435,8 @@ void espScript(HttpConn *conn, cchar *uri, cchar *optionString)
  */
 void espSecurityToken(HttpConn *conn) 
 {
-    HttpRx      *rx;
-    cchar       *securityToken;
+    cchar   *securityToken;
 
-    rx = conn->rx;
     securityToken = espGetSecurityToken(conn);
     espAddHeaderString(conn, "X-SECURITY-TOKEN", securityToken);
     espWrite(conn, "<meta name='SecurityTokenName' content='%s' />\r\n", ESP_SECURITY_TOKEN_NAME);

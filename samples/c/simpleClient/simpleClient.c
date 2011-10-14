@@ -27,7 +27,6 @@ MAIN(simpleClient, int argc, char** argv)
     Mpr     *mpr;
     App     *app;
     cchar   *content;
-    ssize   contentLen;
     int     code;
 
     /* 
@@ -76,7 +75,6 @@ MAIN(simpleClient, int argc, char** argv)
        Get the actual response content
      */
     content = httpReadString(app->conn);
-    contentLen = httpGetContentLength(app->conn);
     if (content) {
         mprPrintf("Server responded with: %s\n", content);
     }

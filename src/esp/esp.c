@@ -1003,12 +1003,15 @@ static void generateScaffoldMigration(int argc, char **argv)
 static void generateTable(int argc, char **argv)
 {
     Edi     *edi;
-    cchar   *tableName, *title, *field;
+    cchar   *tableName, *field;
     char    *typeString;
     int     rc, i, type;
 
     tableName = sclone(argv[0]);
+//  MOB - implement title
+#if UNUSED
     title = spascal(tableName);
+#endif
     edi = eroute->edi;
 
     if (edi == 0) {
@@ -1070,13 +1073,10 @@ static void generateScaffoldViews(int argc, char **argv)
  */
 static void generateScaffold(int argc, char **argv)
 {
-    cchar       *model;
-
     if (argc < 1) {
         usageError();
         return;
     }
-    model = sclone(argv[0]);
     generateScaffoldController(1, argv);
     generateScaffoldViews(argc, argv);
     generateTable(argc, argv);

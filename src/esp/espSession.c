@@ -123,14 +123,12 @@ int espSetSessionObj(HttpConn *conn, cchar *key, MprHash *obj)
 
 int espSetSessionVar(HttpConn *conn, cchar *key, cchar *value)
 {
-    EspReq      *req;
     EspSession  *sp;
 
     mprAssert(conn);
     mprAssert(key && *key);
     mprAssert(value);
 
-    req = conn->data;
     if ((sp = espGetSession(conn, 1)) == 0) {
         return 0;
     }

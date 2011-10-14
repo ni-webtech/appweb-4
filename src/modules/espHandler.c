@@ -483,14 +483,14 @@ static char *makeCacheKey(HttpConn *conn, cchar *target, cchar *uri)
 {
     EspReq      *req;
     EspRoute    *eroute;
-    HttpQueue   *q;
-    char        *path, *form, *key;
+    char        *form, *key;
 
     req = conn->data;
     eroute = req->eroute;
-    q = conn->readq;
 
+#if UNUSED
     path = mprJoinPath(eroute->controllersDir, target);
+#endif
     if (uri) {
         form = httpGetFormData(conn);
         key = sfmt("content-%s:%s?%s", eroute->controllersDir, uri, form);

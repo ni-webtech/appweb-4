@@ -293,14 +293,12 @@ static int prepPacket(HttpQueue *q, HttpPacket *packet)
 static void outgoingFileService(HttpQueue *q)
 {
     HttpConn    *conn;
-    HttpRx      *rx;
     HttpTx      *tx;
     HttpPacket  *packet;
     bool        usingSend;
     int         rc;
 
     conn = q->conn;
-    rx = conn->rx;
     tx = conn->tx;
     usingSend = tx->connector == conn->http->sendConnector;
 
@@ -369,7 +367,6 @@ static void incomingFileData(HttpQueue *q, HttpPacket *packet)
 static void handlePutRequest(HttpQueue *q)
 {
     HttpConn    *conn;
-    HttpRx      *rx;
     HttpTx      *tx;
     MprFile     *file;
     char        *path;
@@ -377,7 +374,6 @@ static void handlePutRequest(HttpQueue *q)
     mprAssert(q->pair->queueData == 0);
 
     conn = q->conn;
-    rx = conn->rx;
     tx = conn->tx;
     mprAssert(tx->filename);
     mprAssert(tx->fileInfo.checked);

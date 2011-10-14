@@ -57,15 +57,19 @@ static bool matchToken(cchar **str, cchar *token)
 char *espExpandCommand(cchar *command, cchar *source, cchar *module)
 {
     MprBuf  *buf;
-    cchar   *cp, *out, *path;
+    cchar   *cp, *out;
     char    *tmp;
     
+#if BLD_WIN_LIKE
+    cchar   *path;
+    path = 0;
+#endif
+
     if (command == 0) {
         return 0;
     }
     out = mprTrimPathExt(module);
     buf = mprCreateBuf(-1, -1);
-    path = 0;
 
     for (cp = command; *cp; ) {
 		if (*cp == '$') {

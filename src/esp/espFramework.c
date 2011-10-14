@@ -111,12 +111,9 @@ void espCacheControl(EspRoute *eroute, cchar *target, int lifesecs, cchar *uri)
 bool espCheckSecurityToken(HttpConn *conn) 
 {
     HttpRx  *rx;
-    EspReq  *req;
     cchar   *securityToken, *sessionToken;
 
     rx = conn->rx;
-    req = conn->data;
-
     if (!(rx->flags & HTTP_POST)) {
         return 1;
     }
@@ -352,9 +349,6 @@ bool espIsFinalized(HttpConn *conn)
 
 void espRedirect(HttpConn *conn, int status, cchar *target)
 {
-    EspReq  *req;
-    
-    req = conn->data;
     //  MOB - should this httpLink be pushed into httpRedirect?
     httpRedirect(conn, status, httpLink(conn, target, NULL));
 }
@@ -458,9 +452,6 @@ void espSetHeaderString(HttpConn *conn, cchar *key, cchar *value)
 
 void espSetStatus(HttpConn *conn, int status)
 {
-    EspReq      *req;
-
-    req = conn->data;
     httpSetStatus(conn, status);
 }
 

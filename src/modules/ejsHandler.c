@@ -31,11 +31,9 @@ static void openEjs(HttpQueue *q)
     HttpRoute   *route;
     Ejs         *ejs;
     EjsPool     *pool;
-    char        *uri;
     
     conn = q->conn;
     rx = conn->rx;
-    uri = rx->pathInfo;
     route = rx->route;
 
     mprLog(5, "Open EJS handler");
@@ -70,13 +68,10 @@ static void openEjs(HttpQueue *q)
 static int ejsAliasDirective(MaState *state, cchar *key, cchar *value)
 {
     HttpRoute   *route;
-    HttpHost    *host;
     char        *prefix, *path, *script;
     int         workers;
     
     route = state->route;
-    host = state->host;
-
     if (!maTokenize(state, value, "%P ?P ?S ?N", &prefix, &path, &script, &workers)) {
         return MPR_ERR_BAD_SYNTAX;
     }
