@@ -102,7 +102,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2)
     /*
         Parse command line arguments
      */
-    if (mprMakeArgv(command, &argc, &argv, 0) < 0) {
+    if ((argc = mprMakeArgv(command, &argv, 0)) < 0) {
         return FALSE;
     }
     for (nextArg = 1; nextArg < argc; nextArg++) {

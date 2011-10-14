@@ -83,7 +83,6 @@ MAIN(appweb, int argc, char **argv)
     }
     mprAddRoot(app);
     mprAddStandardSignals();
-    app->traceToggle = mprAddSignalHandler(SIGUSR1, traceHandler, 0, 0, MPR_SIGNAL_AFTER);
 
     argc = mpr->argc;
     argv = mpr->argv;
@@ -264,6 +263,8 @@ static int initialize(cchar *ip, int port)
     }
 #if BLD_WIN_LIKE
     writePort(app->server);
+#else
+    app->traceToggle = mprAddSignalHandler(SIGUSR1, traceHandler, 0, 0, MPR_SIGNAL_AFTER);
 #endif
     return 0;
 }
