@@ -1830,7 +1830,7 @@ extern ssize render(cchar *fmt, ...);
     Render a file back to the client
     @description Render a formatted string of data and then HTML escape. Data packets will be created
         as required to store the write data. This call may block waiting for data to drain to the client.
-    @param fmt Printf style formatted string
+    @param path Filename of the file to send to the client.
     @param ... Arguments for fmt
     @return A count of the bytes actually written
     @ingroup EspAbbrev
@@ -2144,11 +2144,12 @@ extern EdiRec *setRec(EdiRec *rec);
     @param path Uri path to which the cookie applies
     @param domain String Domain in which the cookie applies. Must have 2-3 "." and begin with a leading ".". 
         For example: domain: .example.com
-    Some browsers will accept cookies without the initial ".", but the spec: (RFC 2109) requires it.
-    @param expires Date When the cookie expires
-    @param secure Boolean Set to true if the cookie only applies for SSL based connections
+        Some browsers will accept cookies without the initial ".", but the spec: (RFC 2109) requires it.
+    @param lifespan Lifespan of the cookie. (MOB units?)
+    @param isSecure Boolean Set to true if the cookie only applies for SSL based connections
 */
-extern void setCookie(cchar *name, cchar *value, cchar *path, cchar *domain, MprTime lifespan, int flags);
+extern void setCookie(cchar *name, cchar *value, cchar *path, cchar *domain, MprTime lifespan, bool isSecure);
+
 /**
     Update a record field without writing to the database
     @description This routine updates the record object with the given value. The record will not be written

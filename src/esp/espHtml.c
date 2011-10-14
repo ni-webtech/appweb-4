@@ -1476,9 +1476,9 @@ void renderError(int status, cchar *fmt, ...)
 
 //  MOB TEST
 //  MOB -should this be abbreviated? -- cookie()?
-void setCookie(cchar *name, cchar *value, cchar *path, cchar *cookieDomain, MprTime lifespan, int flags)
+void setCookie(cchar *name, cchar *value, cchar *path, cchar *cookieDomain, MprTime lifespan, bool isSecure)
 {
-    espSetCookie(getConn(), name, value, path, cookieDomain, lifespan, flags);
+    espSetCookie(getConn(), name, value, path, cookieDomain, lifespan, isSecure);
 }
 
 

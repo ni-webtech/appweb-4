@@ -357,6 +357,62 @@
       <arglist>(HttpConn *conn, cchar *key)</arglist>
     </member>
     <member kind="function">
+      <type>ssize</type>
+      <name>espRender</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gaa833750f16375fa479d0fcc22dfc2169</anchor>
+      <arglist>(HttpConn *conn, cchar *fmt,...)</arglist>
+    </member>
+    <member kind="function">
+      <type>ssize</type>
+      <name>espRenderBlock</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gae1fa564a4b89afb64df3d9681973e1bf</anchor>
+      <arglist>(HttpConn *conn, cchar *buf, ssize size)</arglist>
+    </member>
+    <member kind="function">
+      <type>ssize</type>
+      <name>espRenderError</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gaf5951884b79343ba98eb53b8c2d28a4f</anchor>
+      <arglist>(HttpConn *conn, int status, cchar *fmt,...)</arglist>
+    </member>
+    <member kind="function">
+      <type>ssize</type>
+      <name>espRenderFile</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga543bb9b12ee3f064a730a47164feac0d</anchor>
+      <arglist>(HttpConn *conn, cchar *path)</arglist>
+    </member>
+    <member kind="function">
+      <type>ssize</type>
+      <name>espRenderParam</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gaf3bc7904c49db358937584129928579f</anchor>
+      <arglist>(HttpConn *conn, cchar *name)</arglist>
+    </member>
+    <member kind="function">
+      <type>ssize</type>
+      <name>espRenderSafeString</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga743eec6372aeb305a939bc9b0026281e</anchor>
+      <arglist>(HttpConn *conn, cchar *s)</arglist>
+    </member>
+    <member kind="function">
+      <type>ssize</type>
+      <name>espRenderString</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga2bc125ce68d2a8a8992228f0232c9b6f</anchor>
+      <arglist>(HttpConn *conn, cchar *s)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espRenderView</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga492e5353599306baaf769d1b8636260e</anchor>
+      <arglist>(HttpConn *conn, cchar *name)</arglist>
+    </member>
+    <member kind="function">
       <type>bool</type>
       <name>espSetAutoFinalizing</name>
       <anchorfile>group___esp_req.html</anchorfile>
@@ -388,8 +444,8 @@
       <type>void</type>
       <name>espSetCookie</name>
       <anchorfile>group___esp_req.html</anchorfile>
-      <anchor>ga1e261501c2546b6b3b9ddf98a84b0646</anchor>
-      <arglist>(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *cookieDomain, MprTime lifespan, bool isSecure)</arglist>
+      <anchor>gab3fa02a25383898985307c8c12ab9147</anchor>
+      <arglist>(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *domain, MprTime lifespan, bool isSecure)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -439,55 +495,6 @@
       <anchorfile>group___esp_req.html</anchorfile>
       <anchor>gab603a0ad6ae23ed357d18451d59afdf9</anchor>
       <arglist>(HttpConn *conn, cchar *fmt,...)</arglist>
-    </member>
-    <member kind="function">
-      <type>ssize</type>
-      <name>espWrite</name>
-      <anchorfile>group___esp_req.html</anchorfile>
-      <anchor>gafb783e22dfaf983aec46f1718dcec201</anchor>
-      <arglist>(HttpConn *conn, cchar *fmt,...)</arglist>
-    </member>
-    <member kind="function">
-      <type>ssize</type>
-      <name>espWriteBlock</name>
-      <anchorfile>group___esp_req.html</anchorfile>
-      <anchor>gad9edd910735ba5ee653419ff6af8540b</anchor>
-      <arglist>(HttpConn *conn, cchar *buf, ssize size)</arglist>
-    </member>
-    <member kind="function">
-      <type>ssize</type>
-      <name>espWriteFile</name>
-      <anchorfile>group___esp_req.html</anchorfile>
-      <anchor>ga2210c6785165827d0a89374dc62ddec5</anchor>
-      <arglist>(HttpConn *conn, cchar *path)</arglist>
-    </member>
-    <member kind="function">
-      <type>ssize</type>
-      <name>espWriteParam</name>
-      <anchorfile>group___esp_req.html</anchorfile>
-      <anchor>gaffb24640eb7bd8101017733e44aebf17</anchor>
-      <arglist>(HttpConn *conn, cchar *name)</arglist>
-    </member>
-    <member kind="function">
-      <type>ssize</type>
-      <name>espWriteSafeString</name>
-      <anchorfile>group___esp_req.html</anchorfile>
-      <anchor>ga2d0caf2cb713312cd8875fcdb479d493</anchor>
-      <arglist>(HttpConn *conn, cchar *s)</arglist>
-    </member>
-    <member kind="function">
-      <type>ssize</type>
-      <name>espWriteString</name>
-      <anchorfile>group___esp_req.html</anchorfile>
-      <anchor>ga265a6a50f12c3af1512aa4a30477665d</anchor>
-      <arglist>(HttpConn *conn, cchar *s)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>espWriteView</name>
-      <anchorfile>group___esp_req.html</anchorfile>
-      <anchor>ga70933a9bf4793667887a9f7938b5d695</anchor>
-      <arglist>(HttpConn *conn, cchar *name)</arglist>
     </member>
   </compound>
   <compound kind="group">
