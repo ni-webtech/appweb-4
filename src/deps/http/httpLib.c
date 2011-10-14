@@ -1602,9 +1602,6 @@ int httpOpenChunkFilter(Http *http)
     filter->match = matchChunk; 
     filter->open = openChunk; 
     filter->outgoingService = outgoingChunkService; 
-#if UNUSED
-    filter->incomingData = httpIncomingChunkData; 
-#endif
     return 0;
 }
 
@@ -1798,8 +1795,7 @@ ssize httpFilterChunkData(HttpQueue *q, HttpPacket *packet)
         bad = (start[0] != '\r' || start[1] != '\n');
         for (cp = &start[2]; cp < buf->end && *cp != '\n'; cp++) {}
         if (*cp != '\n' && (cp - start) < 80) {
-            httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Bad chunk specification");
-            return 0;
+            return MPR_ERR_NOT_READY;
         }
         bad += (cp[-1] != '\r' || cp[0] != '\n');
         if (bad) {
