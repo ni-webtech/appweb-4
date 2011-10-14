@@ -1886,6 +1886,10 @@ emitComponents() {
     set | grep "^CFG_WITHOUT" | while read v
     do
         v=${v%=*}
+        eval with=\$${v/WITHOUT/${kind}}
+        if [ "${with}" = 1 ] ; then
+            continue
+        fi
         v=${v/CFG/BLD}
         v=${v/WITHOUT/FEATURE}
         echo -e "${t}${v#_}=0"

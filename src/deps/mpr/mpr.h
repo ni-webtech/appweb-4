@@ -4501,6 +4501,7 @@ typedef struct MprFileSystem {
     char                *newline;       /**< Newline for text files */
     cchar               *root;          /**< Root file path */
 #if BLD_WIN_LIKE
+    char                *cygwin;        /**< Cygwin install directory */
     char                *cygdrive;      /**< Cygwin drive root */
 #endif
 } MprFileSystem;

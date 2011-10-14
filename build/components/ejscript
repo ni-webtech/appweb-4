@@ -30,6 +30,9 @@ defineComponent() {
     if [ "$builtin" = "" ] ; then
         search="$path/out/lib:$path/out/inc:$path"
         if [ "${path}" = "." ] ; then
+            #
+            #   Search for an adjacent ejscript source tree
+            #
             search="${search}:../ejs/out/lib:../ejs/out/inc:../ejs/out/bin"
             if [ "$BLD_DEBUG" = 1 ] ; then
                 type=standard
