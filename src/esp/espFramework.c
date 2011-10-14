@@ -347,6 +347,12 @@ bool espIsFinalized(HttpConn *conn)
 }
 
 
+bool espMatchParam(HttpConn *conn, cchar *var, cchar *value)
+{
+    return httpMatchParam(conn, var, value);
+}
+
+
 void espRedirect(HttpConn *conn, int status, cchar *target)
 {
     //  MOB - should this httpLink be pushed into httpRedirect?
@@ -361,6 +367,118 @@ void espRedirectBack(HttpConn *conn)
     }
 }
 
+ssize espRender(HttpConn *conn, cchar *fmt, ...)
+{
+    va_list     vargs;
+    char        *buf;
+
+    va_start(vargs, fmt);
+    buf = sfmtv(fmt, vargs);
+    va_end(vargs);
+    return espRenderString(conn, buf);
+}
+    
+
+ssize espRenderBlock(HttpConn *conn, cchar *buf, ssize size)
+{
+    EspReq      *req;
+    
+    req = conn->data;
+    if (req->cacheBuffer) {
+        httpSetResponded(conn);
+        return mprPutBlockToBuf(req->cacheBuffer, buf, size);
+    } else {
+        return httpWriteBlock(conn->writeq, buf, size);
+    }
+}
+
+
+ssize espRenderError(HttpConn *conn, int status, cchar *fmt, ...)
+{
+    va_list     args;
+    HttpRx      *rx;
+    EspReq      *req;
+    EspRoute    *eroute;
+    ssize       written;
+    cchar       *msg, *title, *text;
+
+    va_start(args, fmt);    
+
+    rx = conn->rx;
+    req = conn->data;
+    eroute = req->eroute;
+    written = 0;
+
+    if (!req->finalized) {
+        if (status == 0) {
+            status = HTTP_CODE_INTERNAL_SERVER_ERROR;
+        }
+        title = sfmt("Request Error for \"%s\"", rx->pathInfo);
+        msg = mprEscapeHtml(sfmtv(fmt, args));
+        if (eroute->showErrors) {
+            text = sfmt(\
+                "<!DOCTYPE html>\r\n<html>\r\n<head><title>%s</title></head>\r\n" \
+                "<body>\r\n<h1>%s</h1>\r\n" \
+                "    <pre>%s</pre>\r\n" \
+                "    <p>To prevent errors being displayed in the browser, " \
+                "       set <b>log.showErrors</b> to false in the ejsrc file.</p>\r\n", \
+                "</body>\r\n</html>\r\n", title, title, msg);
+            httpSetHeader(conn, "Content-Type", "text/html");
+            written += espRenderString(conn, text);
+            espFinalize(conn);
+            mprLog(4, "Request error (%d) for: \"%s\"", status, rx->pathInfo);
+        }
+    }
+    va_end(args);    
+    return written;
+}
+
+
+ssize espRenderFile(HttpConn *conn, cchar *path)
+{
+    MprFile     *from;
+    ssize       count, written, nbytes;
+    char        buf[MPR_BUFSIZE];
+
+    if ((from = mprOpenFile(path, O_RDONLY | O_BINARY, 0)) == 0) {
+        return MPR_ERR_CANT_OPEN;
+    }
+    written = 0;
+    while ((count = mprReadFile(from, buf, sizeof(buf))) > 0) {
+        if ((nbytes = espRenderBlock(conn, buf, count)) < 0) {
+            return nbytes;
+        }
+        written += nbytes;
+    }
+    mprCloseFile(from);
+    return written;
+}
+
+
+ssize espRenderParam(HttpConn *conn, cchar *name)
+{
+    cchar   *value;
+
+    if ((value = espGetParam(conn, name, 0)) == 0) {
+        value = espGetSessionVar(conn, name, "");
+    }
+    return espRenderSafeString(conn, value);
+}
+
+
+ssize espRenderSafeString(HttpConn *conn, cchar *s)
+{
+    s = mprEscapeHtml(s);
+    return espRenderBlock(conn, s, slen(s));
+}
+
+
+ssize espRenderString(HttpConn *conn, cchar *s)
+{
+    return espRenderBlock(conn, s, slen(s));
+}
+
+//  MOB - missing RenderView
 
 int espRemoveHeader(HttpConn *conn, cchar *key)
 {
@@ -422,12 +540,6 @@ void espSetParam(HttpConn *conn, cchar *var, cchar *value)
 }
 
 
-bool espMatchParam(HttpConn *conn, cchar *var, cchar *value)
-{
-    return httpMatchParam(conn, var, value);
-}
-
-
 /*  
     Set a http header. Overwrite if present.
  */
@@ -455,120 +567,6 @@ void espSetStatus(HttpConn *conn, int status)
     httpSetStatus(conn, status);
 }
 
-
-ssize espWrite(HttpConn *conn, cchar *fmt, ...)
-{
-    va_list     vargs;
-    char        *buf;
-
-    va_start(vargs, fmt);
-    buf = sfmtv(fmt, vargs);
-    va_end(vargs);
-    return espWriteString(conn, buf);
-}
-    
-
-ssize espWriteBlock(HttpConn *conn, cchar *buf, ssize size)
-{
-    EspReq      *req;
-    
-    req = conn->data;
-    if (req->cacheBuffer) {
-        httpSetResponded(conn);
-        return mprPutBlockToBuf(req->cacheBuffer, buf, size);
-    } else {
-        return httpWriteBlock(conn->writeq, buf, size);
-    }
-}
-
-
-ssize espWriteError(HttpConn *conn, int status, cchar *fmt, ...)
-{
-    va_list     args;
-    HttpRx      *rx;
-    EspReq      *req;
-    EspRoute    *eroute;
-    ssize       written;
-    cchar       *msg, *title, *text;
-
-    va_start(args, fmt);    
-
-    rx = conn->rx;
-    req = conn->data;
-    eroute = req->eroute;
-    written = 0;
-
-    if (!req->finalized) {
-        if (status == 0) {
-            status = HTTP_CODE_INTERNAL_SERVER_ERROR;
-        }
-        title = sfmt("Request Error for \"%s\"", rx->pathInfo);
-        msg = mprEscapeHtml(sfmtv(fmt, args));
-        if (eroute->showErrors) {
-            text = sfmt(\
-                "<!DOCTYPE html>\r\n<html>\r\n<head><title>%s</title></head>\r\n" \
-                "<body>\r\n<h1>%s</h1>\r\n" \
-                "    <pre>%s</pre>\r\n" \
-                "    <p>To prevent errors being displayed in the browser, " \
-                "       set <b>log.showErrors</b> to false in the ejsrc file.</p>\r\n", \
-                "</body>\r\n</html>\r\n", title, title, msg);
-            httpSetHeader(conn, "Content-Type", "text/html");
-            written += espWriteString(conn, text);
-            espFinalize(conn);
-            mprLog(4, "Request error (%d) for: \"%s\"", status, rx->pathInfo);
-        }
-    }
-    va_end(args);    
-    return written;
-}
-
-
-ssize espWriteFile(HttpConn *conn, cchar *path)
-{
-    MprFile     *from;
-    ssize       count, written, nbytes;
-    char        buf[MPR_BUFSIZE];
-
-    if ((from = mprOpenFile(path, O_RDONLY | O_BINARY, 0)) == 0) {
-        return MPR_ERR_CANT_OPEN;
-    }
-    written = 0;
-    while ((count = mprReadFile(from, buf, sizeof(buf))) > 0) {
-        if ((nbytes = espWriteBlock(conn, buf, count)) < 0) {
-            return nbytes;
-        }
-        written += nbytes;
-    }
-    mprCloseFile(from);
-    return written;
-}
-
-
-ssize espWriteParam(HttpConn *conn, cchar *name)
-{
-    cchar   *value;
-
-    if ((value = espGetParam(conn, name, 0)) == 0) {
-        value = espGetSessionVar(conn, name, "");
-    }
-    return espWriteSafeString(conn, value);
-}
-
-
-ssize espWriteSafeString(HttpConn *conn, cchar *s)
-{
-    s = mprEscapeHtml(s);
-    return espWriteBlock(conn, s, slen(s));
-}
-
-
-ssize espWriteString(HttpConn *conn, cchar *s)
-{
-    return espWriteBlock(conn, s, slen(s));
-}
-
-
-//  MOB - missing WriteView
 
 /*
     Convert queue data in key / value pairs
@@ -635,7 +633,7 @@ void espShowRequest(HttpConn *conn)
 
     rx = conn->rx;
     httpSetHeaderString(conn, "Cache-Control", "no-cache");
-    espWrite(conn, "\r\n");
+    espRender(conn, "\r\n");
 
     /*
         Query
@@ -645,10 +643,10 @@ void espShowRequest(HttpConn *conn)
         if ((numKeys = getParams(&keys, qbuf, (int) strlen(qbuf))) > 0) {
             for (i = 0; i < (numKeys * 2); i += 2) {
                 value = keys[i+1];
-                espWrite(conn, "QUERY %s=%s\r\n", keys[i], value ? value: "null");
+                espRender(conn, "QUERY %s=%s\r\n", keys[i], value ? value: "null");
             }
         }
-        espWrite(conn, "\r\n");
+        espRender(conn, "\r\n");
     }
 
     /*
@@ -656,18 +654,18 @@ void espShowRequest(HttpConn *conn)
      */
     env = espGetHeaderHash(conn);
     for (kp = 0; (kp = mprGetNextKey(env, kp)) != 0; ) {
-        espWrite(conn, "HEADER %s=%s\r\n", kp->key, kp->data ? kp->data: "null");
+        espRender(conn, "HEADER %s=%s\r\n", kp->key, kp->data ? kp->data: "null");
     }
-    espWrite(conn, "\r\n");
+    espRender(conn, "\r\n");
 
     /*
         Form vars
      */
     if ((env = espGetParams(conn)) != 0) {
         for (kp = 0; (kp = mprGetNextKey(env, kp)) != 0; ) {
-            espWrite(conn, "FORM %s=%s\r\n", kp->key, kp->data ? kp->data: "null");
+            espRender(conn, "FORM %s=%s\r\n", kp->key, kp->data ? kp->data: "null");
         }
-        espWrite(conn, "\r\n");
+        espRender(conn, "\r\n");
     }
 
     /*
@@ -680,10 +678,10 @@ void espShowRequest(HttpConn *conn)
         if ((numKeys = getParams(&keys, mprGetBufStart(buf), (int) mprGetBufLength(buf))) > 0) {
             for (i = 0; i < (numKeys * 2); i += 2) {
                 value = keys[i+1];
-                espWrite(conn, "BODY %s=%s\r\n", keys[i], value ? value: "null");
+                espRender(conn, "BODY %s=%s\r\n", keys[i], value ? value: "null");
             }
         }
-        espWrite(conn, "\r\n");
+        espRender(conn, "\r\n");
     }
 }
 

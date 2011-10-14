@@ -792,10 +792,9 @@ extern void espSetParam(HttpConn *conn, cchar *var, cchar *value);
  */
 extern void espShowRequest(HttpConn *conn);
 
-//  MOB - should all these be render?
 /**
-    Write a formatted string
-    @description Write a formatted string of data into packets to the client. Data packets will be created
+    Render a formatted string
+    @description Render a formatted string of data into packets to the client. Data packets will be created
         as required to store the write data. This call may block waiting for data to drain to the client.
     @param conn HttpConn connection object
     @param fmt Printf style formatted string
@@ -803,41 +802,51 @@ extern void espShowRequest(HttpConn *conn);
     @return A count of the bytes actually written
     @ingroup EspReq
  */
-extern ssize espWrite(HttpConn *conn, cchar *fmt, ...);
+extern ssize espRender(HttpConn *conn, cchar *fmt, ...);
 
 //  MOB - can this return short?
 /**
-    Write a block of data to the client
-    @description Write a block of data to the client. Data packets will be created as required to store the write data.
+    Render a block of data to the client
+    @description Render a block of data to the client. Data packets will be created as required to store the write data.
     @param conn HttpConn connection object
     @param buf Buffer containing the write data
     @param size of the data in buf
     @return A count of the bytes actually written
     @ingroup EspReq
  */
-extern ssize espWriteBlock(HttpConn *conn, cchar *buf, ssize size);
+extern ssize espRenderBlock(HttpConn *conn, cchar *buf, ssize size);
 
 /**
-    Write the contents of a file back to the client
+    Render an error message back to the client and finalize the request. The output is Html escaped for security.
+    @param conn HttpConn connection object
+    @param status Http status code
+    @param fmt Printf style message format
+    @return A count of the bytes actually written
+    @ingroup EspReq
+ */
+extern ssize espRenderError(HttpConn *conn, int status, cchar *fmt, ...);
+
+/**
+    Render the contents of a file back to the client
     @param conn HttpConn connection object
     @param path File path name
     @return A count of the bytes actually written
     @ingroup EspReq
  */
-extern ssize espWriteFile(HttpConn *conn, cchar *path);
+extern ssize espRenderFile(HttpConn *conn, cchar *path);
 
 /**
-    Write the value of a request parameter to the client
+    Render the value of a request parameter to the client
     @description This writes the value of request parameter after HTML escaping its value.
     @param conn HttpConn connection object
     @param name Form variable name
     @return A count of the bytes actually written
     @ingroup EspReq
  */
-extern ssize espWriteParam(HttpConn *conn, cchar *name);
+extern ssize espRenderParam(HttpConn *conn, cchar *name);
 
 /**
-    Write a safe string of data to the client
+    Render a safe string of data to the client
     @description HTML escape a string and then write the string of data to the client.
         Data packets will be created as required to store the write data. This call may block waiting for the data to
         the client to drain.
@@ -846,28 +855,27 @@ extern ssize espWriteParam(HttpConn *conn, cchar *name);
     @return A count of the bytes actually written
     @ingroup EspReq
  */
-extern ssize espWriteSafeString(HttpConn *conn, cchar *s);
+extern ssize espRenderSafeString(HttpConn *conn, cchar *s);
 
-//  MOB - should all these be render?
 /**
-    Write a string of data to the client
-    @description Write a string of data to the client. Data packets will be created
+    Render a string of data to the client
+    @description Render a string of data to the client. Data packets will be created
         as required to store the write data. This call may block waiting for data to drain to the client.
     @param conn HttpConn connection object
     @param s String containing the data to write
     @return A count of the bytes actually written
     @ingroup EspReq
  */
-extern ssize espWriteString(HttpConn *conn, cchar *s);
+extern ssize espRenderString(HttpConn *conn, cchar *s);
 
 /**
-    Write a view template to the client
+    Render a view template to the client
     @description Actions are C procedures that are invoked when specific URIs are routed to the controller/action pair.
     @param conn Http connection object
     @param name view name
     @ingroup EspReq
  */
-extern void espWriteView(HttpConn *conn, cchar *name);
+extern void espRenderView(HttpConn *conn, cchar *name);
 
 /**
     Get the current request connection.
@@ -2017,6 +2025,33 @@ extern MprHash *hash(cchar *fmt, ...);
  */
 extern bool hasRec();
 
+/**
+    Make a record
+    @description This call makes a free-standing data record based on the JSON format content string.
+        The record is not saved to the database.
+    @param content JSON format content string. The content should be a set of property names and values.
+    @return An EdiRec instance
+    @example: rec = ediMakeRec("{ id: 1, title: 'Message One', body: 'Line one' }");
+    @ingroup EspAbbrev
+ */
+extern EdiRec *makeRec(cchar *content);
+
+/**
+    Make a grid
+    @description This call makes a free-standing data grid based on the JSON format content string.
+        The record is not saved to the database.
+    @param content JSON format content string. The content should be an array of objects where each object is a
+        set of property names and values.
+    @return An EdiGrid instance
+    @example:
+grid = ediMakeGrid("[ \\ \n
+    { id: '1', country: 'Australia' }, \ \n
+    { id: '2', country: 'China' }, \ \n
+    ]");
+    @ingroup EspAbbrev
+ */
+extern EdiGrid *makeGrid(cchar *content);
+
 //  MOB - rename to readWhere?
 /**
     Read a table from the database
@@ -2101,6 +2136,46 @@ extern EdiGrid *setGrid(EdiGrid *grid);
  */
 extern EdiRec *setRec(EdiRec *rec);
 
+/** 
+    Define a cookie header to send with the response. The Path, domain and expires properties can be set to null for 
+    default values.
+    @param name Cookie name
+    @param value Cookie value
+    @param path Uri path to which the cookie applies
+    @param domain String Domain in which the cookie applies. Must have 2-3 "." and begin with a leading ".". 
+        For example: domain: .example.com
+    Some browsers will accept cookies without the initial ".", but the spec: (RFC 2109) requires it.
+    @param expires Date When the cookie expires
+    @param secure Boolean Set to true if the cookie only applies for SSL based connections
+*/
+extern void setCookie(cchar *name, cchar *value, cchar *path, cchar *domain, MprTime lifespan, int flags);
+/**
+    Update a record field without writing to the database
+    @description This routine updates the record object with the given value. The record will not be written
+        to the database. To write to the database, use $writeRec.
+    @param rec Record to update
+    @param fieldName Record field name to update
+    @param value Value to update
+    @return The record instance if successful, otherwise NULL.
+    @ingroup EspAbbrev
+ */
+extern EdiRec *updateField(EdiRec *rec, cchar *fieldName, cchar *value);
+
+/**
+    Update record fields without writing to the database
+    @description This routine updates the record object with the given values. The "data' argument supplies 
+        a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually
+        created via #ediMakeHash to convert a JSON string into an options hash.
+        For example: updateFields(rec, hash("{ name: '%s', address: '%s' }", name, address))
+        The record will not be written
+        to the database. To write to the database, use $ediWriteRec.
+    @param rec Record to update
+    @param data Hash of field names and values to use for the update
+    @return The record instance if successful, otherwise NULL.
+    @ingroup EspAbbrev
+ */
+extern EdiRec *updateFields(EdiRec *rec, MprHash *data);
+
 /**
     Write a record to the database
     @description The record will be saved to the database after running any field validations. If any field validations
@@ -2140,89 +2215,19 @@ extern bool writeField(cchar *tableName, cchar *key, cchar *fieldName, cchar *va
  */
 extern bool writeFields(cchar *tableName, MprHash *data);
 
-/**
-    Make a record
-    @description This call makes a free-standing data record based on the JSON format content string.
-        The record is not saved to the database.
-    @param content JSON format content string. The content should be a set of property names and values.
-    @return An EdiRec instance
-    @example: rec = ediMakeRec("{ id: 1, title: 'Message One', body: 'Line one' }");
-    @ingroup EspAbbrev
- */
-extern EdiRec *makeRec(cchar *content);
-
-/**
-    Make a grid
-    @description This call makes a free-standing data grid based on the JSON format content string.
-        The record is not saved to the database.
-    @param content JSON format content string. The content should be an array of objects where each object is a
-        set of property names and values.
-    @return An EdiGrid instance
-    @example:
-grid = ediMakeGrid("[ \\ \n
-    { id: '1', country: 'Australia' }, \ \n
-    { id: '2', country: 'China' }, \ \n
-    ]");
-    @ingroup EspAbbrev
- */
-extern EdiGrid *makeGrid(cchar *content);
-
-/**
-    Update a record field without writing to the database
-    @description This routine updates the record object with the given value. The record will not be written
-        to the database. To write to the database, use $writeRec.
-    @param rec Record to update
-    @param fieldName Record field name to update
-    @param value Value to update
-    @return The record instance if successful, otherwise NULL.
-    @ingroup EspAbbrev
- */
-extern EdiRec *updateField(EdiRec *rec, cchar *fieldName, cchar *value);
-
-/**
-    Update record fields without writing to the database
-    @description This routine updates the record object with the given values. The "data' argument supplies 
-        a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually
-        created via #ediMakeHash to convert a JSON string into an options hash.
-        For example: updateFields(rec, hash("{ name: '%s', address: '%s' }", name, address))
-        The record will not be written
-        to the database. To write to the database, use $ediWriteRec.
-    @param rec Record to update
-    @param data Hash of field names and values to use for the update
-    @return The record instance if successful, otherwise NULL.
-    @ingroup EspAbbrev
- */
-extern EdiRec *updateFields(EdiRec *rec, MprHash *data);
-
 //  MOB DOC
-/** 
-    Define a cookie header to send with the response. The Path, domain and expires properties can be set to null for 
-    default values.
-    @param name Cookie name
-    @param value Cookie value
-    @param path Uri path to which the cookie applies
-    @param domain String Domain in which the cookie applies. Must have 2-3 "." and begin with a leading ".". 
-        For example: domain: .example.com
-    Some browsers will accept cookies without the initial ".", but the spec: (RFC 2109) requires it.
-    @param expires Date When the cookie expires
-    @param secure Boolean Set to true if the cookie only applies for SSL based connections
-*/
-
-extern ssize espWriteError(HttpConn *conn, int status, cchar *fmt, ...);
-
 extern void addHeader(cchar *key, cchar *fmt, ...);
 extern cchar *cookies();
 extern void destroySession();
-extern void dontAutoFinalize();     //espSetAutoFinalizing
+extern void dontAutoFinalize();
 extern cchar *documentRoot();
 extern MprOff getContentLength();
 extern cchar *getContentType();
 extern bool isSecure();
-extern void renderError(int status, cchar *fmt, ...); //   espWriteError  Request.writeError() 
-extern void setCookie(cchar *name, cchar *value, cchar *path, cchar *domain, MprTime lifespan, int flags);
+extern void renderError(int status, cchar *fmt, ...);
 extern void setHeader(cchar *key, cchar *fmt, ...);
-extern void setStatus(int status);
 extern void setContentType(cchar *mimeType);
+extern void setStatus(int status);
 extern cchar *top();
 extern MprHash *uploadedFiles();
 

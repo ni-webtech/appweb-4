@@ -358,14 +358,14 @@ char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheNam
         switch (tid) {
         case ESP_TOK_LITERAL:
             line = joinLine(token, &len);
-            body = sfmt("%s  espWriteBlock(conn, \"%s\", %d);\n", body, line, len);
+            body = sfmt("%s  espRenderBlock(conn, \"%s\", %d);\n", body, line, len);
             break;
 
         case ESP_TOK_VAR:
             /* @@var */
             token = strim(token, " \t\r\n;", MPR_TRIM_BOTH);
-            /* espWriteParam uses espWriteSafeString */
-            body = sjoin(body, "  espWriteParam(conn, \"", token, "\");\n", NULL);
+            /* espRenderParam uses espRenderSafeString */
+            body = sjoin(body, "  espRenderParam(conn, \"", token, "\");\n", NULL);
             break;
 
 
@@ -380,7 +380,7 @@ char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheNam
                 fmt = "%s";
             }
             token = strim(token, " \t\r\n;", MPR_TRIM_BOTH);
-            body = sjoin(body, "  espWrite(conn, \"", fmt, "\", ", token, ");\n", NULL);
+            body = sjoin(body, "  espRender(conn, \"", fmt, "\", ", token, ");\n", NULL);
             break;
 
         case ESP_TOK_CODE:

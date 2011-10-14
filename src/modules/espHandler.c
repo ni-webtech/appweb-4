@@ -161,7 +161,7 @@ static void startEsp(HttpQueue *q)
         }
         if (req->autoFinalize) {
             if (!conn->responded) {
-                espWriteView(conn, 0);
+                espRenderView(conn, 0);
             }
             espFinalize(conn);
         }
@@ -278,7 +278,7 @@ static int runAction(HttpConn *conn)
 }
 
 
-void espWriteView(HttpConn *conn, cchar *name)
+void espRenderView(HttpConn *conn, cchar *name)
 {
     MprModule   *mp;
     HttpRx      *rx;
@@ -403,7 +403,7 @@ static bool fetchCachedResponse(HttpConn *conn)
             httpSetHeader(conn, "Etag", mprGetMD5(key));
             httpSetHeader(conn, "Last-Modified", mprFormatUniversalTime(MPR_HTTP_DATE, modified));
             if (status == HTTP_CODE_OK) {
-                espWriteString(conn, content);
+                espRenderString(conn, content);
             }
             return 1;
         } else {
@@ -451,13 +451,13 @@ static void saveCachedResponse(HttpConn *conn)
         mprWriteCache(esp->cache, key, mprGetBufStart(buf), modified, lifespan, 0, 0);
         httpAddHeader(conn, "Etag", mprGetMD5(key));
         httpAddHeader(conn, "Last-Modified", mprFormatUniversalTime(MPR_HTTP_DATE, modified));
-        espWriteBlock(conn, mprGetBufStart(buf), mprGetBufLength(buf));
+        espRenderBlock(conn, mprGetBufStart(buf), mprGetBufLength(buf));
         espFinalize(conn);
     }
 }
 
 
-bool espWriteCached(HttpConn *conn, cchar *target, cchar *uri)
+bool espRenderCached(HttpConn *conn, cchar *target, cchar *uri)
 {
     EspReq      *req;
     MprTime     modified;
@@ -473,7 +473,7 @@ bool espWriteCached(HttpConn *conn, cchar *target, cchar *uri)
     req->cacheBuffer = 0;
     espSetHeader(conn, "Etag", mprGetMD5(key));
     espSetHeader(conn, "Last-Modified", mprFormatUniversalTime(MPR_HTTP_DATE, modified));
-    espWriteString(conn, content);
+    espRenderString(conn, content);
     espFinalize(conn);
     return 1;
 }

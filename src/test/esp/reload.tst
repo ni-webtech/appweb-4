@@ -8,7 +8,7 @@ let http: Http = new Http
 if (!global.test || test.config.debug == "1") {
     //  First get
     let path = new Path("../web/reload.esp")
-    path.write('<html><body><% espWrite(conn, "First", -1); %></body></html>')
+    path.write('<html><body><% espRender(conn, "First", -1); %></body></html>')
     http.get(HTTP + "/reload.esp")
     assert(http.status == 200)
     assert(http.response.contains("First"))
@@ -18,7 +18,7 @@ if (!global.test || test.config.debug == "1") {
     App.sleep(1000);
 
     //  Create a new file and do a second get
-    path.write('<html><body><% espWrite(conn, "Second", -1); %></body></html>')
+    path.write('<html><body><% espRender(conn, "Second", -1); %></body></html>')
     http.get(HTTP + "/reload.esp")
     assert(http.status == 200)
     assert(http.response.contains("Second"))

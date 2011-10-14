@@ -1,1 +1,1 @@
-<% espWrite(conn, "Hello from inner text"); -%>
+<% espRender(conn, "Hello from inner text"); -%>

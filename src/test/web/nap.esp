@@ -3,10 +3,10 @@
 <body>
 <% 	
     //  This is used by some esp tests
-    espWrite(conn, "Napping 2 seconds .. " );
+    espRender(conn, "Napping 2 seconds .. " );
     espFlush(conn);
     mprSleep(2 * 1000);
-    espWrite(conn, "Awake");
+    espRender(conn, "Awake");
 %>
 </body>
 </html>
