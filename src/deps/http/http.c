@@ -821,7 +821,7 @@ static void readBody(HttpConn *conn)
 
 static int doRequest(HttpConn *conn, cchar *url, MprList *files)
 {
-    MprTime         mark;
+    MprTime         mark, remaining;
     HttpLimits      *limits;
 
     mprAssert(url && *url);
@@ -833,8 +833,10 @@ static int doRequest(HttpConn *conn, cchar *url, MprList *files)
     if (issueRequest(conn, url, files) < 0) {
         return MPR_ERR_CANT_CONNECT;
     }
-    while (!conn->error && conn->state < HTTP_STATE_COMPLETE && mprGetElapsedTime(mark) <= limits->requestTimeout) {
-        httpWait(conn, HTTP_STATE_CONTENT, 10);
+    remaining = limits->requestTimeout;
+    while (!conn->error && conn->state < HTTP_STATE_COMPLETE && remaining > 0) {
+        remaining = mprGetRemainingTime(mark, limits->requestTimeout);
+        httpWait(conn, 0, remaining);
         readBody(conn);
     }
     if (conn->state < HTTP_STATE_COMPLETE && !conn->error) {

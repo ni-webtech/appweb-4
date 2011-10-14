@@ -11438,7 +11438,7 @@ static void waitHandler(HttpConn *conn, struct MprEvent *event)
 int httpWait(HttpConn *conn, int state, MprTime timeout)
 {
     MprTime     mark, remaining, inactivityTimeout;
-    int         eventMask, addedHandler, saveAsync, justOne, workDone;
+    int         eventMask, saveAsync, justOne, workDone;
 
     if (state == 0) {
         state = HTTP_STATE_COMPLETE;
@@ -11463,18 +11463,19 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
         }
     }
     saveAsync = conn->async;
-    addedHandler = 0;
-
+    conn->async = 1;
     remaining = timeout;
-    while (!conn->error && conn->state < state) {
+
+    if (!conn->error && conn->state >= state) {
+        mprWaitForEvent(conn->dispatcher, min(inactivityTimeout, remaining));
+
+    } else while (!conn->error && conn->state < state) {
         if (conn->waitHandler == 0) {
-            conn->async = 1;
             eventMask = MPR_READABLE;
             if (!conn->writeComplete) {
                 eventMask |= MPR_WRITABLE;
             }
             conn->waitHandler = mprCreateWaitHandler(conn->sock->fd, eventMask, conn->dispatcher, waitHandler, conn, 0);
-            addedHandler = 1;
         }
         workDone = httpServiceQueues(conn);
         mprWaitForEvent(conn->dispatcher, min(inactivityTimeout, remaining));
@@ -11485,11 +11486,13 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
             break;
         }
     }
+#if UNUSED
     if (addedHandler && conn->waitHandler) {
         mprRemoveWaitHandler(conn->waitHandler);
         conn->waitHandler = 0;
-        conn->async = saveAsync;
     }
+#endif
+    conn->async = saveAsync;
     if (conn->sock == 0 || conn->error) {
         return MPR_ERR_CANT_CONNECT;
     }

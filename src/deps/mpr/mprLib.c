@@ -25624,6 +25624,9 @@ void mprWaitOn(MprWaitHandler *wp, int mask)
 {
     lock(wp->service);
     if (mask != wp->desiredMask) {
+        if (wp->flags & MPR_WAIT_RECALL_HANDLER) {
+            wp->service->needRecall = 1;
+        }
         mprNotifyOn(wp->service, wp, mask);
         mprWakeNotifier();
     }
