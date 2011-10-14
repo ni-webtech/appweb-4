@@ -1486,18 +1486,19 @@ void setHeader(cchar *key, cchar *fmt, ...)
 }
 
 
-void setStatus(int status)
-{
-    espSetStatus(getConn(), status);
-}
-
-
 void setContentType(cchar *mimeType)
 {
     espSetContentType(getConn(), mimeType);
 }
 
 
+void setStatus(int status)
+{
+    espSetStatus(getConn(), status);
+}
+
+
+//  MOB - change home to top
 cchar *top()
 {
     return espGetHome(getConn());
@@ -1508,7 +1509,6 @@ MprHash *uploadedFiles()
 {
     return getConn()->rx->files;
 }
-
 
 
 //  MOB - what should the name be => httpRead. Must signal eof too.

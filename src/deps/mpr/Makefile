@@ -14,8 +14,8 @@ MPRSSL_LIB			+= $(BLD_LIB_DIR)/libmprssl$(BLD_LIB)
 
 TARGETS				+= $(MPR_LIB)
 MPR_OBJECTS			+= mprLib
-IMPORTS 			+= $(BLD_OPENSSL_IMPORTS) $(BLD_MATRIXSSL_IMPORTS) $(BLD_MPR_IMPORTS)
-IMPORTED			+= $(patsubst %,$(BLD_LIB_DIR)/%, $(notdir $(IMPORTS)))
+## IMPORTS 			+= $(BLD_OPENSSL_IMPORTS) $(BLD_MATRIXSSL_IMPORTS) $(BLD_MPR_IMPORTS)
+## IMPORTED			+= $(patsubst %,$(BLD_LIB_DIR)/%, $(notdir $(IMPORTS)))
 
 ifeq ($(BLD_FEATURE_OPENSSL),1)
 	MAKE_IFLAGS		+= $(BLD_OPENSSL_IFLAGS)
@@ -34,7 +34,7 @@ ifeq ($(MACOSX),1)
 	mprSsl_IFLAGS   +=  -Wno-deprecated-declarations
 endif
 
-compileTargets: imports $(TARGETS)
+compileTargets: $(TARGETS)
 
 $(MPR_LIB): $(OBJECTS)
 	bld --library $(MPR_LIB) $(MPR_OBJECTS)
@@ -57,14 +57,14 @@ endif
 #
 #	Import required libraries
 #
-imports: $(IMPORTED)
-
-$(IMPORTED): $(IMPORTS)
-	getlib $^
-ifeq ($(BLD_FEATURE_MATRIXSSL),1)
-	[ -x $(BLD_TOP)/projects/MACOSX ] && find $(BLD_TOP)/projects/MACOSX -name Debug | \
-		while read d ; do cp $(BLD_MATRIXSSL_IMPORTS) $$d ; done
-endif
+## imports: $(IMPORTED)
+## 
+## $(IMPORTED): $(IMPORTS)
+## 	getlib $^
+## ifeq ($(BLD_FEATURE_MATRIXSSL),1)
+## 	[ -x $(BLD_TOP)/projects/MACOSX ] && find $(BLD_TOP)/projects/MACOSX -name Debug | \
+## 		while read d ; do cp $(BLD_MATRIXSSL_IMPORTS) $$d ; done
+## endif
 
 cleanExtra:
 	rm -f $(IMPORTED)

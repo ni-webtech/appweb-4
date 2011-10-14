@@ -2208,7 +2208,8 @@ extern EdiRec *updateFields(EdiRec *rec, MprHash *data);
     @param secure Boolean Set to true if the cookie only applies for SSL based connections
 */
 
-extern void setCookie(cchar *name, cchar *value, cchar *path, cchar *domain, MprTime lifespan, int flags);
+extern ssize espWriteError(HttpConn *conn, int status, cchar *fmt, ...);
+
 extern void addHeader(cchar *key, cchar *fmt, ...);
 extern cchar *cookies();
 extern void destroySession();
@@ -2217,11 +2218,8 @@ extern cchar *documentRoot();
 extern MprOff getContentLength();
 extern cchar *getContentType();
 extern bool isSecure();
-
-
-extern ssize espWriteError(HttpConn *conn, int status, cchar *fmt, ...);
-
 extern void renderError(int status, cchar *fmt, ...); //   espWriteError  Request.writeError() 
+extern void setCookie(cchar *name, cchar *value, cchar *path, cchar *domain, MprTime lifespan, int flags);
 extern void setHeader(cchar *key, cchar *fmt, ...);
 extern void setStatus(int status);
 extern void setContentType(cchar *mimeType);

@@ -316,7 +316,6 @@ int httpCheckAuth(HttpConn *conn)
 {
     Http        *http;
     HttpRx      *rx;
-    HttpTx      *tx;
     HttpAuth    *auth;
     HttpRoute   *route;
     AuthData    *ad;
@@ -327,7 +326,6 @@ int httpCheckAuth(HttpConn *conn)
     int         actualAuthType;
 
     rx = conn->rx;
-    tx = conn->tx;
     http = conn->http;
     route = rx->route;
     auth = route->auth;
@@ -580,10 +578,8 @@ static int decodeDigestDetails(HttpConn *conn, AuthData *ad)
  */
 static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *msg, char *logMsg)
 {
-    HttpTx  *tx;
     char    *qopClass, *nonce;
 
-    tx = conn->tx;
     if (logMsg == 0) {
         logMsg = msg;
     }
@@ -635,7 +631,7 @@ static char *createDigestNonce(HttpConn *conn, cchar *secret, cchar *realm)
 
 static int parseDigestNonce(char *nonce, cchar **secret, cchar **realm, MprTime *when)
 {
-    char    *tok, *decoded, *whenStr, *junk;
+    char    *tok, *decoded, *whenStr;
 
     if ((decoded = mprDecode64(nonce)) == 0) {
         return MPR_ERR_CANT_READ;
@@ -644,7 +640,6 @@ static int parseDigestNonce(char *nonce, cchar **secret, cchar **realm, MprTime 
     *realm = stok(NULL, ":", &tok);
     whenStr = stok(NULL, ":", &tok);
     *when = (MprTime) stoi(whenStr, 16, NULL); 
-    junk = stok(NULL, ":", &tok);
     return 0;
 }
 
@@ -1640,11 +1635,8 @@ static int matchChunk(HttpConn *conn, HttpRoute *route, int dir)
 static void openChunk(HttpQueue *q)
 {
     HttpConn    *conn;
-    HttpRx      *rx;
 
     conn = q->conn;
-    rx = conn->rx;
-
     q->packetSize = min(conn->limits->chunkSize, q->max);
 }
 
@@ -1788,7 +1780,7 @@ ssize httpFilterChunkData(HttpQueue *q, HttpPacket *packet)
     case HTTP_CHUNK_DATA:
         mprLog(7, "chunkFilter: data %d bytes, rx->remainingContent %d", httpGetPacketLength(packet), rx->remainingContent);
         if (rx->remainingContent > 0) {
-            return min(rx->remainingContent, mprGetBufLength(buf));
+            return (ssize) min(rx->remainingContent, mprGetBufLength(buf));
         }
         /* End of chunk - prep for the next chunk */
         rx->remainingContent = HTTP_BUFSIZE;
@@ -5930,7 +5922,6 @@ void httpCreateTxPipeline(HttpConn *conn, HttpRoute *route)
 
 void httpCreateRxPipeline(HttpConn *conn, HttpRoute *route)
 {
-    Http        *http;
     HttpTx      *tx;
     HttpRx      *rx;
     HttpQueue   *q;
@@ -5940,10 +5931,8 @@ void httpCreateRxPipeline(HttpConn *conn, HttpRoute *route)
     mprAssert(conn);
     mprAssert(route);
 
-    http = conn->http;
     rx = conn->rx;
     tx = conn->tx;
-
     rx->inputPipeline = mprCreateList(-1, 0);
     if (route) {
         for (next = 0; (filter = mprGetNextItem(route->inputStages, &next)) != 0; ) {
@@ -6886,11 +6875,9 @@ static void startRange(HttpQueue *q)
 {
     HttpConn    *conn;
     HttpTx      *tx;
-    HttpRx      *rx;
 
     conn = q->conn;
     tx = conn->tx;
-    rx = conn->rx;
     mprAssert(tx->outputRanges);
 
     if (tx->status != HTTP_CODE_OK || !fixRangeLength(conn)) {
@@ -7063,12 +7050,10 @@ static void createRangeBoundary(HttpConn *conn)
  */
 static bool fixRangeLength(HttpConn *conn)
 {
-    HttpRx      *rx;
     HttpTx      *tx;
     HttpRange   *range;
     MprOff      length;
 
-    rx = conn->rx;
     tx = conn->tx;
     length = tx->entityLength ? tx->entityLength : tx->length;
 
@@ -8988,12 +8973,9 @@ static int allowDenyCondition(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 
 static int authCondition(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 {
-    HttpRx      *rx;
-
     mprAssert(conn);
     mprAssert(route);
 
-    rx = conn->rx;
     if (route->auth == 0 || route->auth->type == 0) {
         return HTTP_ROUTE_OK;
     }
@@ -9055,15 +9037,13 @@ static int existsCondition(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 
 static int matchCondition(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 {
-    HttpRx      *rx;
-    char        *str;
-    int         matched[HTTP_MAX_ROUTE_MATCHES * 2], count;
+    char    *str;
+    int     matched[HTTP_MAX_ROUTE_MATCHES * 2], count;
 
     mprAssert(conn);
     mprAssert(route);
     mprAssert(op);
 
-    rx = conn->rx;
     str = expandTokens(conn, op->details);
     count = pcre_exec(op->mdata, NULL, str, (int) slen(str), 0, 0, matched, sizeof(matched) / sizeof(int)); 
     if (count > 0) {
@@ -9093,7 +9073,6 @@ static int updateRequest(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 
 static int cmdUpdate(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 {
-    HttpRx  *rx;
     MprCmd  *cmd;
     char    *command, *out, *err;
     int     status;
@@ -9102,7 +9081,6 @@ static int cmdUpdate(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
     mprAssert(route);
     mprAssert(op);
 
-    rx = conn->rx;
     command = expandTokens(conn, op->details);
     cmd = mprCreateCmd(conn->dispatcher);
     if ((status = mprRunCmd(cmd, command, &out, &err, 0)) != 0) {
@@ -9117,13 +9095,10 @@ static int cmdUpdate(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 
 static int paramUpdate(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 {
-    HttpRx  *rx;
-
     mprAssert(conn);
     mprAssert(route);
     mprAssert(op);
 
-    rx = conn->rx;
     httpSetParam(conn, op->var, expandTokens(conn, op->value));
     return HTTP_ROUTE_OK;
 }
@@ -10242,7 +10217,6 @@ void httpProcess(HttpConn *conn, HttpPacket *packet)
 static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
 {
     HttpRx      *rx;
-    HttpTx      *tx;
     ssize       len;
     char        *start, *end;
 
@@ -10254,8 +10228,6 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
         conn->tx = httpCreateTx(conn, NULL);
     }
     rx = conn->rx;
-    tx = conn->tx;
-    
     if ((len = httpGetPacketLength(packet)) == 0) {
         return 0;
     }
@@ -11418,11 +11390,9 @@ int httpSetUri(HttpConn *conn, cchar *uri, cchar *query)
     HttpRx      *rx;
     HttpTx      *tx;
     HttpUri     *prior;
-    HttpHost    *host;
 
     rx = conn->rx;
     tx = conn->tx;
-    host = conn->host;
     prior = rx->parsedUri;
 
     if ((rx->parsedUri = httpCreateUri(uri, 0)) == 0) {
@@ -11467,11 +11437,9 @@ static void waitHandler(HttpConn *conn, struct MprEvent *event)
  */
 int httpWait(HttpConn *conn, int state, MprTime timeout)
 {
-    Http        *http;
     MprTime     mark, remaining, inactivityTimeout;
     int         eventMask, addedHandler, saveAsync, justOne, workDone;
 
-    http = conn->http;
     if (state == 0) {
         state = HTTP_STATE_COMPLETE;
         justOne = 1;
@@ -11645,19 +11613,15 @@ bool httpMatchModified(HttpConn *conn, MprTime time)
  */
 static bool parseRange(HttpConn *conn, char *value)
 {
-    HttpRx      *rx;
     HttpTx      *tx;
     HttpRange   *range, *last, *next;
     char        *tok, *ep;
 
-    rx = conn->rx;
     tx = conn->tx;
-
     value = sclone(value);
     if (value == 0) {
         return 0;
     }
-
     /*  
         Step over the "bytes="
      */
@@ -11889,14 +11853,11 @@ HttpLang *httpGetLanguage(HttpConn *conn, MprHash *spoken, cchar *defaultLang)
  */
 void httpTrimExtraPath(HttpConn *conn)
 {
-    HttpTx      *tx;
     HttpRx      *rx;
     char        *cp, *extra;
     ssize       len;
 
     rx = conn->rx;
-    tx = conn->tx;
-
     if (!(rx->flags & (HTTP_OPTIONS | HTTP_TRACE))) { 
         if ((cp = strchr(rx->pathInfo, '.')) != 0 && (extra = strchr(cp, '/')) != 0) {
             len = extra - rx->pathInfo;
@@ -13071,13 +13032,10 @@ ssize httpFormatResponse(HttpConn *conn, cchar *fmt, ...)
  */
 ssize httpFormatResponseBody(HttpConn *conn, cchar *title, cchar *fmt, ...)
 {
-    HttpTx      *tx;
     va_list     args;
     char        *msg, *body;
 
-    tx = conn->tx;
     va_start(args, fmt);
-
     body = sfmtv(fmt, args);
     if (scmp(conn->rx->accept, "text/plain") == 0) {
         msg = body;
@@ -15162,9 +15120,6 @@ void httpSetIntParam(HttpConn *conn, cchar *var, int value)
 
 bool httpMatchParam(HttpConn *conn, cchar *var, cchar *value)
 {
-    MprHash     *vars;
-    
-    vars = httpGetParams(conn);
     if (strcmp(value, httpGetParam(conn, var, " __UNDEF__ ")) == 0) {
         return 1;
     }

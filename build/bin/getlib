@@ -12,13 +12,18 @@ files="$*"
 
 for path in $files
 do
-    if [ "${BLD_HOST_OS}" = "WIN" ] ; then
+    file=`basename $path`
+    ext=".${path##*.}"
+    if [ "${ext}" = ".h" ] ; then
+        rm -f $BLD_OUT_DIR/inc/$file
+        cp $path $BLD_OUT_DIR/inc
+        [ "$QUIET" != 1 ] && printf "%12s %s\n" "[Import]" $BLD_OUT_DIR/inc/$file
+    elif [ "${BLD_HOST_OS}" = "WIN" ] ; then
         #
         #   For windows, we must also copy the manifest and library .lib files.
         #   First, strip the extension.
         #
         path="${path%.*}"
-        file=`basename $path`
         cp "${path}"* "${BLD_LIB_DIR}"
         chmod 755 ${BLD_LIB_DIR}/${file}*
         file=${file/.dll/.lib}
