@@ -88,7 +88,7 @@ static bool mdbValidateRec(Edi *edi, EdiRec *rec);
 static int mdbWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
 static int mdbWriteRec(Edi *edi, EdiRec *rec);
 
-EdiProvider MdbProvider = {
+static EdiProvider MdbProvider = {
     "mdb",
     mdbAddColumn, mdbAddIndex, mdbAddTable, mdbAddValidation, mdbChangeColumn, mdbClose, mdbCreateRec, mdbDelete, 
     mdbDeleteRow, mdbGetColumns, mdbGetColumnSchema, mdbGetTables, mdbGetTableSchema, mdbLoad, mdbLookupField, 
@@ -616,7 +616,7 @@ static EdiRec *mdbReadRec(Edi *edi, cchar *tableName, cchar *key)
 
 
 
-bool matchRow(MdbCol *col, cchar *existing, int op, cchar *value)
+static bool matchRow(MdbCol *col, cchar *existing, int op, cchar *value)
 {
     if (value == 0 || *value == '\0') {
         return 0;
@@ -1358,7 +1358,7 @@ static int lookupRow(MdbTable *table, cchar *key)
 
 /********************************* Schema / Col ****************************/
 
-MdbSchema *growSchema(MdbTable *table)
+static MdbSchema *growSchema(MdbTable *table)
 {
     if (table->schema == 0) {
         if ((table->schema = mprAllocMem(sizeof(MdbSchema) + 

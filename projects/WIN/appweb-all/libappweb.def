@@ -1,42 +1,44 @@
 LIBRARY libappweb.dll
 EXPORTS
-  maAddMeta
+  maAddDirective
+  maAddEndpoint
   maAddServer
   maApplyChangedGroup
   maApplyChangedUser
-  maConfigureMeta
+  maArchiveLog
+  maConfigureServer
   maCreateAppweb
-  maCreateLocationAlias
-  maCreateMeta
-  maCreateWebServer
-  maGetConfigValue
+  maCreateServer
   maGetUserGroup
   maLoadModule
   maLogRequest
-  maLookupMeta
+  maLookupServer
+  maMatchDir
+  maOpenConfig
   maOpenDirHandler
   maOpenFileHandler
   maParseConfig
-  maRemoveServer
-  maRotateLog
+  maParseInit
+  maPopState
+  maPushState
+  maRemoveEndpoint
+  maRestartServer
   maRunSimpleWebServer
   maRunWebServer
-  maServiceWebServer
   maSetAccessLog
-  maSetDefaultMeta
+  maSetDefaultServer
   maSetHttpGroup
   maSetHttpUser
-  maSetMetaAddress
-  maSetMetaDefaultHost
-  maSetMetaRoot
-  maSplitConfigValue
+  maSetServerAddress
+  maSetServerHome
   maStartAccessLogging
   maStartAppweb
   maStartLogging
-  maStartMeta
+  maStartServer
   maStopAccessLogging
   maStopAppweb
   maStopLogging
-  maStopMeta
-  maValidateConfiguration
+  maStopServer
+  maTokenize
+  maValidateServer
   maWriteAccessLogEntry

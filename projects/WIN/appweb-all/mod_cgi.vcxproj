@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{D082DE9B-62AC-452B-9D24-161B3B84FD47}</ProjectGuid>
+    <ProjectGuid>{CD6ACA77-9AFA-4028-B71F-B350AD0975BD}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -54,13 +54,13 @@
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\bin\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\obj\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\obj\mod_cgi\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\bin\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\mod_cgi\</IntDir>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(BLD_FEATURE_CGI)' == '1'">
-    <ClCompile Include="..\..\..\src\handlers\cgiHandler.c" />
+    <ClCompile Include="..\..\..\src\modules\cgiHandler.c" />
   </ItemGroup>
 
   <ItemDefinitionGroup>
@@ -77,7 +77,7 @@
 
   <ItemGroup>
     <ProjectReference Include="libappweb.vcxproj">
-      <Project>{B5F25E9B-108A-4CA7-AB34-7BAD152FF35F}</Project>
+      <Project>{9966EBF9-3B00-4BAA-BF6E-4196F3B7C749}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

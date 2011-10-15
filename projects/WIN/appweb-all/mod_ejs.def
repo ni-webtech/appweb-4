@@ -1,3 +1,0 @@
-LIBRARY mod_ejs.dll
-EXPORTS
-  maEjsHandlerInit

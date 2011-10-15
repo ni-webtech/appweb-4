@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{1D98FBA7-BE52-46FB-900E-FE184B84A5AC}</ProjectGuid>
+    <ProjectGuid>{A5BE60B0-85FF-4530-9917-41EAC1E8BFA2}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -54,32 +54,13 @@
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\bin\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\obj\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\obj\mod_ejs\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\bin\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\mod_ejs\</IntDir>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ClInclude Include="..\..\..\out\inc\ejs.cache.local.slots.h" />
-    <ClInclude Include="..\..\..\out\inc\ejs.db.mapper.slots.h" />
-    <ClInclude Include="..\..\..\out\inc\ejs.db.slots.h" />
-    <ClInclude Include="..\..\..\out\inc\ejs.db.sqlite.slots.h" />
-    <ClInclude Include="..\..\..\out\inc\ejs.h" />
-    <ClInclude Include="..\..\..\out\inc\ejs.slots.h" />
-    <ClInclude Include="..\..\..\out\inc\ejs.tar.slots.h" />
-    <ClInclude Include="..\..\..\out\inc\ejs.template.slots.h" />
-    <ClInclude Include="..\..\..\out\inc\ejs.unix.slots.h" />
-    <ClInclude Include="..\..\..\out\inc\ejs.web.slots.h" />
-    <ClInclude Include="..\..\..\out\inc\ejsByteCode.h" />
-    <ClInclude Include="..\..\..\out\inc\ejsByteCodeTable.h" />
-    <ClInclude Include="..\..\..\out\inc\ejsByteGoto.h" />
-    <ClInclude Include="..\..\..\out\inc\ejsCompiler.h" />
-    <ClInclude Include="..\..\..\out\inc\ejsmod.h" />
-    <ClInclude Include="..\..\..\out\inc\ejsWeb.h" />
-  </ItemGroup>
-
   <ItemGroup Condition="'$(BLD_FEATURE_EJS)' == '1'">
-    <ClCompile Include="..\..\..\src\handlers\ejsHandler.c" />
+    <ClCompile Include="..\..\..\src\modules\ejsHandler.c" />
   </ItemGroup>
 
   <ItemDefinitionGroup>
@@ -96,7 +77,7 @@
 
   <ItemGroup>
     <ProjectReference Include="libappweb.vcxproj">
-      <Project>{B5F25E9B-108A-4CA7-AB34-7BAD152FF35F}</Project>
+      <Project>{9966EBF9-3B00-4BAA-BF6E-4196F3B7C749}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

@@ -19,8 +19,9 @@ EJS_HDR 	= $(shell find $(OUT)/inc -name 'ejs*.h')
 HTTP_HDR 	= $(shell find $(OUT)/inc -name 'http*.h')
 APPWEB_HDR 	= $(OUT)/inc/appweb.h
 MPR_SRC		= $(SRC)/deps/mpr/mprLib.c
-APPWEB_SRC	= $(shell find $(SRC) -name '*.c' | egrep -v 'deps|test|utils' | egrep -v 'server/|filters|handlers|modules') \
-              $(SRC)/handlers/dirHandler.c $(SRC)/handlers/fileHandler.c
+APPWEB_SRC	= $(shell find $(SRC) -name '*.c' | egrep -v 'deps|test|utils' | \
+			  egrep -v 'server/|filters|handlers|modules|esp') \
+              $(SRC)/modules/dirHandler.c $(SRC)/modules/fileHandler.c
 LIBS		= ws2_32.lib
 SSL_IFLAGS	+= $(BLD_OPENSSL_IFLAGS)
 PHP_IFLAGS	+= $(BLD_PHP_IFLAGS)
@@ -28,7 +29,7 @@ PHP_IFLAGS	+= $(BLD_PHP_IFLAGS)
 PROJECTS	= setup.vcxproj libmpr.vcxproj libmprssl.vcxproj libpcre.vcxproj libhttp.vcxproj \
               libappweb.vcxproj appweb.vcxproj angel.vcxproj appwebMonitor.vcxproj \
 			  http.vcxproj auth.vcxproj mod_cgi.vcxproj mod_ejs.vcxproj mod_esp.vcxproj mod_php.vcxproj mod_ssl.vcxproj
-OTHER_PROJECTS= libejs.vcxproj libsqlite3.vcxproj ejsmod.vcxproj ejsc.vcxproj ejs.vcxproj ejssql.vcxproj mvc.vcxproj 
+OTHER_PROJECTS= libejs.vcxproj ejsmod.vcxproj ejsc.vcxproj ejs.vcxproj sqlite.vcxproj mvc.vcxproj libsqlite3.vcxproj
 SOLUTIONS	= appweb-all.sln
 
 PROPS		+= product.props
@@ -77,9 +78,15 @@ libpcre.vcxproj: libpcre.custom Makefile $(CONFIG)
 	
 libhttp.vcxproj: libhttp.custom Makefile $(CONFIG)
 	$(VSP) --project libhttp.vcxproj --library http --dflags "$(DFLAGS)" \
-		--props "$(PROPS)" --deps "libmpr libmprssl" \
+		--props "$(PROPS)" --deps "libmpr libmprssl libpcre" \
 		--custom libhttp.custom \
 		--def libhttp.def --libs "libmpr.lib libmprssl.lib $(LIBS)" $(HTTP_HDR) $(SRC)/deps/http/httpLib.c
+	
+libsqlite3.vcxproj: libsqlite3.custom Makefile $(CONFIG)
+	$(VSP) --project libsqlite3.vcxproj --library sqlite --dflags "$(DFLAGS)" \
+		--props "$(PROPS)" \
+		--custom libsqlite3.custom \
+		--def libsqlite3.def --libs "$(LIBS)" $(SRC)/deps/sqlite/sqlite3.c
 	
 libappweb.vcxproj: libappweb.custom Makefile $(CONFIG)
 	$(VSP) --project libappweb.vcxproj --library appweb --dflags "$(DFLAGS)" \
@@ -95,27 +102,28 @@ mod_cgi.vcxproj: Makefile $(CONFIG)
 		--props "$(PROPS)" --deps libappweb \
 		--condition "'$$\(BLD_FEATURE_CGI)' == '1'" \
 		--def mod_cgi.def --libs "libmpr.lib libhttp.lib libappweb.lib $(LIBS)" \
-		$(SRC)/handlers/cgiHandler.c
+		$(SRC)/modules/cgiHandler.c
 
 mod_ejs.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project mod_ejs.vcxproj --library ejs --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps libappweb \
 		--condition "'$$\(BLD_FEATURE_EJS)' == '1'" \
 		--def mod_ejs.def --libs "libmpr.lib libhttp.lib libsqlite3.lib libejs.lib libappweb.lib $(LIBS)" \
-		$(EJS_HDR) $(SRC)/handlers/ejsHandler.c
+		$(EJS_HDR) $(SRC)/modules/ejsHandler.c
 
 mod_esp.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project mod_esp.vcxproj --library esp --dflags "$(DFLAGS)" \
-		--props "$(PROPS)" --deps libappweb \
+		--props "$(PROPS)" --deps "libappweb libpcre" \
 		--def mod_esp.def --libs "libmpr.lib libhttp.lib libpcre.lib libappweb.lib $(LIBS)" \
-		$(SRC)/handlers/esp/espHandler.c $(SRC)/handlers/esp/espFramework.c $(SRC)/handlers/esp/espTemplate.c
+		$(SRC)/modules/espHandler.c $(SRC)/esp/espFramework.c $(SRC)/esp/espSession.c $(SRC)/esp/espTemplate.c \
+		$(SRC)/esp/espHtml.c $(SRC)/esp/edi.c $(SRC)/esp/mdb.c $(SRC)/esp/sdb.c
 
 mod_php.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project mod_php.vcxproj --library php --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps libappweb \
 		--condition "'$$\(BLD_FEATURE_PHP)' == '1'" \
 		--iflags "$(PHP_IFLAGS)" --def mod_php.def --libs "libmpr.lib libhttp.lib libappweb.lib $(LIBS)" \
-        $(SRC)/handlers/phpHandler.c
+        $(SRC)/modules/phpHandler.c
 
 mod_ssl.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project mod_ssl.vcxproj --library ssl --dflags "$(DFLAGS)" \
@@ -158,11 +166,6 @@ http.vcxproj: Makefile $(CONFIG)
 #
 #	Unused
 #
-libsqlite3.vcxproj: Makefile $(CONFIG)
-	$(VSP) --project libsqlite3.vcxproj --library sqlite3 --dflags "$(DFLAGS)" \
-		--props "$(PROPS)" --deps libmpr \
-		--def libsqlite3.def --libs "libmpr.lib $(LIBS)" $(SRC)/deps/ejs/sqlite3.c
-	
 ejspage.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project ejspage.vcxproj --exe ejspage.exe --search "$(BLD_MPR_LIBPATHS)" --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps setup \

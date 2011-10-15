@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{C9FB915B-F6C8-4D23-BBC9-59B0BE9FE0BA}</ProjectGuid>
+    <ProjectGuid>{3B0CBC29-437A-418F-9177-9F0390D0E53D}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -54,13 +54,13 @@
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\bin\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\obj\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\obj\mod_php\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\bin\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\mod_php\</IntDir>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(BLD_FEATURE_PHP)' == '1'">
-    <ClCompile Include="..\..\..\src\handlers\phpHandler.c" />
+    <ClCompile Include="..\..\..\src\modules\phpHandler.c" />
   </ItemGroup>
 
   <ItemDefinitionGroup>
@@ -77,7 +77,7 @@
 
   <ItemGroup>
     <ProjectReference Include="libappweb.vcxproj">
-      <Project>{B5F25E9B-108A-4CA7-AB34-7BAD152FF35F}</Project>
+      <Project>{9966EBF9-3B00-4BAA-BF6E-4196F3B7C749}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

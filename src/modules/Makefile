@@ -90,7 +90,7 @@ $(BLD_LIB_DIR)/$(ESP)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/espHandler$(BLD_OBJ) $(BLD_LIB
 		$(BLD_OBJ_DIR)/mdb$(BLD_OBJ)
 	bld --shared --library $(BLD_LIB_DIR)/$(ESP) --search "$(BLD_ESP_LIBPATHS)" --libs "$(LIBS) $(BLD_ESP_LIBS)" \
 		espHandler$(BLD_OBJ) espFramework$(BLD_OBJ) espSession$(BLD_OBJ) espTemplate$(BLD_OBJ) espHtml$(BLD_OBJ) \
-		edi$(BLD_OBJ) mdb$(BLD_OBJ)
+		edi$(BLD_OBJ) mdb$(BLD_OBJ) sdb$(BLD_OBJ)
 
 $(BLD_LIB_DIR)/$(PHP)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/phpHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
 	bld --shared --library $(BLD_LIB_DIR)/$(PHP) --rpath "$(BLD_LIB_PREFIX)" \

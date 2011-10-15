@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{F97DB85A-B985-4B5D-B562-7B39EDF4358F}</ProjectGuid>
+    <ProjectGuid>{A6AEFA57-7DC2-499E-BDDC-8A4D7F2206BC}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -54,15 +54,20 @@
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\bin\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\obj\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\obj\mod_esp\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\bin\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\mod_esp\</IntDir>
   </PropertyGroup>
 
   <ItemGroup >
-    <ClCompile Include="..\..\..\src\handlers\esp\espHandler.c" />
-    <ClCompile Include="..\..\..\src\handlers\esp\espFramework.c" />
-    <ClCompile Include="..\..\..\src\handlers\esp\espTemplate.c" />
+    <ClCompile Include="..\..\..\src\modules\espHandler.c" />
+    <ClCompile Include="..\..\..\src\esp\espFramework.c" />
+    <ClCompile Include="..\..\..\src\esp\espSession.c" />
+    <ClCompile Include="..\..\..\src\esp\espTemplate.c" />
+    <ClCompile Include="..\..\..\src\esp\espHtml.c" />
+    <ClCompile Include="..\..\..\src\esp\edi.c" />
+    <ClCompile Include="..\..\..\src\esp\mdb.c" />
+    <ClCompile Include="..\..\..\src\esp\sdb.c" />
   </ItemGroup>
 
   <ItemDefinitionGroup>
@@ -79,7 +84,14 @@
 
   <ItemGroup>
     <ProjectReference Include="libappweb.vcxproj">
-      <Project>{B5F25E9B-108A-4CA7-AB34-7BAD152FF35F}</Project>
+      <Project>{9966EBF9-3B00-4BAA-BF6E-4196F3B7C749}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="libpcre.vcxproj">
+      <Project>{E36A3931-8C34-49FF-9B3C-E8CB37322CF2}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
