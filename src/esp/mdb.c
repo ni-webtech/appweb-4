@@ -44,7 +44,7 @@ static MdbRow *createRow(Mdb *mdb, MdbTable *table);
 static MdbCol *getCol(MdbTable *table, int col);
 static MdbRow *getRow(MdbTable *table, int rid);
 static MdbTable *getTable(Mdb *mdb, int tid);
-MdbSchema *growSchema(MdbTable *table);
+static MdbSchema *growSchema(MdbTable *table);
 static MdbCol *lookupColumn(MdbTable *table, cchar *columnName);
 static int lookupRow(MdbTable *table, cchar *key);
 static MdbTable *lookupTable(Mdb *mdb, cchar *tableName);
