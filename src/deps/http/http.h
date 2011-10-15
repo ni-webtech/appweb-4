@@ -1198,6 +1198,14 @@ extern void httpSendPackets(HttpQueue *q);
  */
 extern void httpServiceQueue(HttpQueue *q);
 
+/**
+    Verify a queue 
+    @param q Queue reference
+    @return True if the queue verifies
+    @internal
+ */
+extern bool httpVerifyQueue(HttpQueue *q);
+
 /** 
     Determine if the downstream queue will accept this packet.
     @description Test if the downstream queue will accept a packet. The packet will be resized if required in an

@@ -1382,7 +1382,7 @@ createBuildConfig() {
     rm -f /tmp/config$$.tmp 
 
     cat $CONFIG_SRC >>$CONFIG_H
-    chmod 444 $CONFIG_H
+    chmod 664 $CONFIG_H
     rm -f "${BLD_OUT_DIR}/inc/${CONFIG_CACHE}"
 
     >$CONFIG_ARGS

@@ -427,7 +427,9 @@ static int readBodyData(char *buffer, uint bufsize TSRMLS_DC)
     if (q->first == 0) {
         return 0;
     }
-    content = q->first->content;
+    if ((content = q->first->content) == 0) {
+        return 0;
+    }
     len = (ssize) min(mprGetBufLength(content), (ssize) bufsize);
     if (len > 0) {
         nbytes = mprMemcpy(buffer, len, mprGetBufStart(content), len);

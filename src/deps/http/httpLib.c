@@ -5455,7 +5455,6 @@ void httpJoinPacketForService(HttpQueue *q, HttpPacket *packet, bool serviceQ)
         httpPutForService(q, packet, HTTP_DELAY_SERVICE);
 
     } else {
-        q->count += httpGetPacketLength(packet);
         /* Skip over the header packet */
         if (q->first && q->first->flags & HTTP_PACKET_HEADER) {
             packet = q->first->next;
@@ -5464,7 +5463,9 @@ void httpJoinPacketForService(HttpQueue *q, HttpPacket *packet, bool serviceQ)
             /* Aggregate all data into one packet and free the packet.  */
             httpJoinPacket(q->first, packet);
         }
+        q->count += httpGetPacketLength(packet);
     }
+    mprAssert(httpVerifyQueue(q));
     if (serviceQ && !(q->flags & HTTP_QUEUE_DISABLED))  {
         httpScheduleQueue(q);
     }
@@ -5473,7 +5474,7 @@ void httpJoinPacketForService(HttpQueue *q, HttpPacket *packet, bool serviceQ)
 
 /*  
     Join two packets by pulling the content from the second into the first.
-    WARNING: this will not update the queue count.
+    WARNING: this will not update the queue count. Assumes the either both are on the queue or neither. 
  */
 int httpJoinPacket(HttpPacket *packet, HttpPacket *p)
 {
@@ -6508,7 +6509,11 @@ ssize httpRead(HttpConn *conn, char *buf, ssize size)
     ssize       nbytes, len;
 
     q = conn->readq;
-    while (q->count == 0 && !conn->async && conn->sock && (conn->state <= HTTP_STATE_CONTENT)) {
+    mprAssert(q->count >= 0);
+    mprAssert(size >= 0);
+    mprAssert(httpVerifyQueue(q));
+
+    while (q->count <= 0 && !conn->async && conn->sock && (conn->state <= HTTP_STATE_CONTENT)) {
         httpServiceQueues(conn);
         if (conn->sock) {
             httpWait(conn, 0, MPR_TIMEOUT_SOCKETS);
@@ -6516,6 +6521,7 @@ ssize httpRead(HttpConn *conn, char *buf, ssize size)
     }
     //  TODO - better place for this?
     conn->lastActivity = conn->http->now;
+    mprAssert(httpVerifyQueue(q));
 
     for (nbytes = 0; size > 0 && q->count > 0; ) {
         if ((packet = q->first) == 0) {
@@ -6524,17 +6530,22 @@ ssize httpRead(HttpConn *conn, char *buf, ssize size)
         content = packet->content;
         len = mprGetBufLength(content);
         len = min(len, size);
+        mprAssert(len <= q->count);
         if (len > 0) {
             len = mprGetBlockFromBuf(content, buf, len);
+            mprAssert(len <= q->count);
         }
         buf += len;
         size -= len;
         q->count -= len;
+        mprAssert(q->count >= 0);
         nbytes += len;
         if (mprGetBufLength(content) == 0) {
             httpGetPacket(q);
         }
     }
+    mprAssert(q->count >= 0);
+    mprAssert(httpVerifyQueue(q));
     return nbytes;
 }
 
@@ -6772,6 +6783,19 @@ ssize httpWrite(HttpQueue *q, cchar *fmt, ...)
     return httpWriteString(q, buf);
 }
 
+
+bool httpVerifyQueue(HttpQueue *q)
+{
+    HttpPacket  *packet;
+    ssize       count;
+
+    count = 0;
+    for (packet = q->first; packet; packet = packet->next) {
+        count += httpGetPacketLength(packet);
+    }
+    mprAssert(count <= q->count);
+    return count <= q->count;
+}
 
 /*
     @copy   default
@@ -10998,6 +11022,7 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
     tx = conn->tx;
     content = packet->content;
     q = tx->queue[HTTP_QUEUE_RX];
+    mprAssert(httpVerifyQueue(q));
 
     LOG(7, "processContent: packet of %d bytes, remaining %d", mprGetBufLength(content), rx->remainingContent);
     if ((nbytes = httpFilterChunkData(q, packet)) < 0) {
@@ -11031,16 +11056,17 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
         } else {
             conn->input = 0;
         }
+        if (!(conn->finalized && conn->endpoint)) {
+            if (rx->form) {
+                httpPutForService(q, packet, HTTP_DELAY_SERVICE);
+            } else {
+                httpPutPacketToNext(q, packet);
+            }
+            mprAssert(httpVerifyQueue(q));
+        }
     }
     if (rx->remainingContent == 0 && !(rx->flags & HTTP_CHUNKED)) {
         rx->eof = 1;
-    }
-    if (!(conn->finalized && conn->endpoint)) {
-        if (rx->form) {
-            httpPutForService(q, packet, HTTP_DELAY_SERVICE);
-        } else {
-            httpPutPacketToNext(q, packet);
-        }
     }
     return 1;
 }
@@ -11054,10 +11080,9 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
     HttpRx      *rx;
     HttpQueue   *q;
 
-    mprAssert(packet);
     rx = conn->rx;
 
-    if (!analyseContent(conn, packet)) {
+    if (packet == 0 || !analyseContent(conn, packet)) {
         return 0;
     }
     if (rx->eof) {
@@ -12368,8 +12393,10 @@ static void outgoingData(HttpQueue *q, HttpPacket *packet)
     /*  
         Handlers service routines must only be auto-enabled if in the running state.
      */
+    mprAssert(httpVerifyQueue(q));
     enableService = !(q->stage->flags & HTTP_STAGE_HANDLER) || (q->conn->state == HTTP_STATE_RUNNING) ? 1 : 0;
     httpPutForService(q, packet, enableService);
+    mprAssert(httpVerifyQueue(q));
 }
 
 
@@ -12380,6 +12407,7 @@ static void incomingData(HttpQueue *q, HttpPacket *packet)
 {
     mprAssert(q);
     mprAssert(packet);
+    mprAssert(httpVerifyQueue(q));
     
     if (q->nextQ->put) {
         httpPutPacketToNext(q, packet);
@@ -12395,6 +12423,7 @@ static void incomingData(HttpQueue *q, HttpPacket *packet)
             HTTP_NOTIFY(q->conn, 0, HTTP_NOTIFY_READABLE);
         }
     }
+    mprAssert(httpVerifyQueue(q));
 }
 
 

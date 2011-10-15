@@ -5449,13 +5449,18 @@ static void waitForWinEvent(MprCmd *cmd, MprTime timeout)
     }
     if (cmd->process) {
         delay = (cmd->eofCount == cmd->requiredEof && cmd->files[MPR_CMD_STDIN].handle == 0) ? timeout : 0;
+        mprYield(MPR_YIELD_STICKY);
         if (WaitForSingleObject(cmd->process, (DWORD) delay) == WAIT_OBJECT_0) {
+            mprResetYield();
             reapCmd(cmd);
             return;
         }
+        mprResetYield();
         if (cmd->eofCount == cmd->requiredEof) {
             remaining = mprGetRemainingTime(mark, timeout);
+            mprYield(MPR_YIELD_STICKY);
             rc = WaitForSingleObject(cmd->process, (DWORD) remaining);
+            mprResetYield();
             if (rc == WAIT_OBJECT_0) {
                 reapCmd(cmd);
                 return;
