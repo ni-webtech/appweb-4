@@ -1181,7 +1181,7 @@
 		C9AFCC4A0FC521150080E908 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0410;
+				LastUpgradeCheck = 0420;
 			};
 			buildConfigurationList = C9AFCC4D0FC521150080E908 /* Build configuration list for PBXProject "appweb-all" */;
 			compatibilityVersion = "Xcode 3.2";
