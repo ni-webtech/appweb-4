@@ -403,7 +403,7 @@ outputHeader() {
 #   Emit a block per configuration
 #
 outputConfiguration() {
-    local guid ptype CTOK PTOK OTOK UTOK VTOK STOK cfg
+    local guid ptype CTOK PTOK OTOK UTOK VTOK STOK cfg idir
 
     guid=`uuidgen | tr '[a-z]' '[A-Z]'`
     echo $guid >$NAME.guid
@@ -432,6 +432,8 @@ outputConfiguration() {
         PROP_FILES="${PROP_FILES}
     <Import Project=\"${cfg}\" />"
     done
+
+    idir=${PROJECT/.vcxproj/}
 
     cat >>$PROJECT <<!EOF_CONFIGURATION_A
 
@@ -486,9 +488,9 @@ outputConfiguration() {
   <PropertyGroup>
     <_ProjectFileVersion>${PROJECT_FILE_VERSION}</_ProjectFileVersion>
     <OutDir Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'">${WIN_OUT_DIR//\//\\}\\bin\\</OutDir>
-    <IntDir Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'">${WIN_OUT_DIR}\\obj\\</IntDir>
+    <IntDir Condition="'${CTOK}|${PTOK}'=='Release|${PLATFORM}'">${WIN_OUT_DIR}\\obj\\${idir}\\</IntDir>
     <OutDir Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'">${WIN_OUT_DIR}\\bin\\</OutDir>
-    <IntDir Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'">${WIN_OUT_DIR}\\obj\\</IntDir>
+    <IntDir Condition="'${CTOK}|${PTOK}'=='Debug|${PLATFORM}'">${WIN_OUT_DIR}\\obj\\${idir}\\</IntDir>
   </PropertyGroup>
 !EOF_CONFIGURATION_A
 }
