@@ -65,7 +65,7 @@ if (!bare) {
     let cmdFilter = (Config.OS == "WIN") ? /undefined/ : /\.cmd/
     copy("*", bin, {
         from: sbin,
-        include: /angel*|esp*|http*|sqlite*|auth*|makerom*/
+        include: /angel|esp|http|sqlite|auth|makerom/
         exclude: cmdFilter,
         permissions: 0755,
     })

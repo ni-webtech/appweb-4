@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <IncludeFiles Include="$(SRC)/deps/mpr\mpr.h" />
+    <IncludeFiles Include="$(SRC)/deps/mpr/mpr.h" />
     <ExportFiles  Include="$(BLD_INC_DIR)/mpr.h" />
   </ItemGroup>
 

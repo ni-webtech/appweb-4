@@ -4,11 +4,11 @@ This software is licensed according to the provisions of GNU GENERAL PUBLIC LICE
 
 Commercial license are also available for those who require them.  The Embedthis Commercial License, allows you to provide commercial software licenses for products containing Embedthis software. This is for individuals or organizations that do not want to release their source code as open source / free software as governed by the GPL license below. For more information on licensing, please see:
 
-    http://www.embedthis.com/downloads/licensing.html
+    http://embedthis.com/downloads/licensing.html
 
 Some components of the sofware are licensed from third parties. See the end of this document for a list of licensed third party software.
 
----------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 GNU GENERAL PUBLIC LICENSE
 Version 2, June 1991
@@ -36,7 +36,7 @@ Finally, any free program is threatened constantly by software patents.  We wish
 The precise terms and conditions for copying, distribution and modification follow.
 
 
---------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 GNU GENERAL PUBLIC LICENSE TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
 
