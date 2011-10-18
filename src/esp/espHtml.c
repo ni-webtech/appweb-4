@@ -848,6 +848,7 @@ HttpConn *espGetConn()
 
 void espSetConn(HttpConn *conn)
 {
+    //  MOB LOCKING?
     mprSetThreadData(((Esp*) MPR->espService)->local, conn);
 }
 
