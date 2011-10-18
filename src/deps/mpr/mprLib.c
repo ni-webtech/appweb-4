@@ -22301,6 +22301,12 @@ MprThreadService *mprCreateThreadService()
     MPR->threadService = ts;
     ts->stackSize = MPR_DEFAULT_STACK;
 
+#if !BLD_UNIX_LIKE && !BLD_WIN_LIKE
+    if ((ts->local = mprCreateHash(0, MPR_HASH_STATIC_VALUES)) == 0) {
+        return 0;
+    }
+#endif
+
     /*
         Don't actually create the thread. Just create a thread object for this main thread.
      */
@@ -22335,6 +22341,9 @@ static void manageThreadService(MprThreadService *ts, int flags)
         mprMark(ts->mainThread);
         mprMark(ts->mutex);
         mprMark(ts->cond);
+#if !BLD_UNIX_LIKE && !BLD_WIN_LIKE
+        mprMark(ts->local);
+#endif
 
     } else if (flags & MPR_MANAGE_FREE) {
         mprStopThreadService();
@@ -22600,7 +22609,9 @@ void mprSetThreadPriority(MprThread *tp, int newPriority)
 static void manageThreadLocal(MprThreadLocal *tls, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        ;
+#if !BLD_UNIX_LIKE && !BLD_WIN_LIKE
+        mprMark(tls->key);
+#endif
     } else if (flags & MPR_MANAGE_FREE) {
 #if BLD_UNIX_LIKE
         if (tls->key) {
@@ -22610,6 +22621,8 @@ static void manageThreadLocal(MprThreadLocal *tls, int flags)
         if (tls->key >= 0) {
             TlsFree(tls->key);
         }
+#else
+        mprRemoveKey(tls->ts->local, tls->key);
 #endif
     }
 }
@@ -22622,6 +22635,7 @@ MprThreadLocal *mprCreateThreadLocal()
     if ((tls = mprAllocObj(MprThreadLocal, manageThreadLocal)) == 0) {
         return 0;
     }
+    tls->ts = MPR->threadService;
 #if BLD_UNIX_LIKE
     if (pthread_key_create(&tls->key, NULL) != 0) {
         tls->key = 0;
@@ -22632,7 +22646,9 @@ MprThreadLocal *mprCreateThreadLocal()
         return 0;
     }
 #else
-    /* TODO - Thread local for vxworks */
+    lock(tls->ts);
+    tls->key = itos(tls->ts->nextLocal++, 10);
+    unlock(tls->ts);
 #endif
     return tls;
 }
@@ -22647,7 +22663,7 @@ int mprSetThreadData(MprThreadLocal *tls, void *value)
 #elif BLD_WIN_LIKE
     err = TlsSetValue(tls->key, value) != 0;
 #else
-    err = 1;
+    err = mprAddKey(tls->ts->local, tls->key, value) != 0;
 #endif
     return (err) ? MPR_ERR_CANT_WRITE: 0;
 }
@@ -22659,9 +22675,8 @@ void *mprGetThreadData(MprThreadLocal *tls)
     return pthread_getspecific(tls->key);
 #elif BLD_WIN_LIKE
     return TlsGetValue(tls->key);
-#elif VXWORKS
-    /* Not supported */
-    return 0;
+#else
+    return mprLookupKey(tls->ts->local, tls->key);
 #endif
 }
 

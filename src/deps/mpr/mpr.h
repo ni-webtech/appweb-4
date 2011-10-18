@@ -6080,6 +6080,10 @@ typedef struct MprThreadService {
     struct MprThread *mainThread;       /**< Main application Mpr thread id */
     MprMutex        *mutex;             /**< Multi-thread lock */
     MprCond         *cond;              /**< Multi-thread sync */
+#if !BLD_UNIX_LIKE && !BLD_WIN_LIKE
+    MprHash         *local;             /**< Thread local storage */
+    int             nextLocal;          /**< Next key to use */
+#endif
     int             stackSize;          /**< Default thread stack size */
 } MprThreadService;
 
@@ -6133,12 +6137,13 @@ typedef struct MprThread {
     @internal
  */
 typedef struct MprThreadLocal {
+    MprThreadService *ts;
 #if BLD_UNIX_LIKE
     pthread_key_t   key;                /**< Data key */
 #elif BLD_WIN_LIKE
     DWORD           key;
 #else
-    int             dummy;              /**< Prevents asserts in memory allocation */
+    char            *key;
 #endif
 } MprThreadLocal;
 
