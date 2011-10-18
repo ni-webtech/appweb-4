@@ -4,7 +4,7 @@
 
 var masterOptions
 
-const StandardFilter = /\.makedep$|\.o$|\.pdb$|\.tmp$|\.save$|\.sav$|OLD|\/Archive\/|\/sav\/|\/save\/|oldFiles|\.libs\/|\.nc|\.orig|\.svn|\.git|^\.|\.swp$|\.new$|\.nc$|.DS_Store/
+const StandardFilter = /\.makedep$|\.o$|\.pdb$|\.tmp$|\.save$|\.sav$|OLD|\/Archive\/|\/sav\/|\/save\/|oldFiles|\.libs\/|\.nc|\.orig|\.svn|\.git|^\.[a-zA-Z_]|\.swp$|\.new$|\.nc$|.DS_Store/
 
 /*
     copy files
@@ -59,9 +59,6 @@ public function copy(src: Path, target: Path = Dir, options = {})
             continue
         }
         if (options.include && !file.match(options.include)) {
-            continue
-        }
-        if (file.startsWith(".")) {
             continue
         }
         let dest: Path
@@ -177,6 +174,7 @@ public function preparePrefixes(options)
     build.ABS_BLD_OUT_DIR = Path(build.BLD_OUT_DIR).absolute.portable
     build.ABS_BLD_BIN_DIR = Path(build.BLD_BIN_DIR).absolute.portable
     build.ABS_BLD_TOOLS_DIR = Path(build.BLD_TOOLS_DIR).absolute.portable
+    build.BLD_VS = Path(build.BLD_VS).absolute.portable
 }
 
 /*
