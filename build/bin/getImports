@@ -24,15 +24,33 @@ for f in $IMPORTS ; do
         echo "Can't find ${f} to import"
         exit 255
     elif [ "${ext}" = ".h" ] ; then
-        rm -f $BLD_OUT_DIR/inc/$base
-        cp $f $BLD_OUT_DIR/inc
+        if [ $f -nt $BLD_OUT_DIR/inc/$base ] ; then
+            rm -f $BLD_OUT_DIR/inc/$base
+            echo cp $f $BLD_OUT_DIR/inc
+            cp $f $BLD_OUT_DIR/inc
+        else
+            echo File $DEST/$base is up to date
+        fi
     elif [ "${ext}" = "${SHOBJ}" ] ; then
-        QUIET=1 ${BLD_TOOLS_DIR}/getlib $f
+        if [ $f -nt $DEST/$base ] ; then
+            echo QUIET=1 ${BLD_TOOLS_DIR}/getlib $f
+            QUIET=1 ${BLD_TOOLS_DIR}/getlib $f
+        else
+            echo File $DEST/$base is up to date
+        fi
     elif [ "${ext}" = ".mod" -o "${ext}" = ".a" ] ; then
-        # cp $f $BLD_OUT_DIR/lib
-        cp $f $DEST
+        if [ $f -nt $DEST/$base ] ; then
+            echo cp $f $DEST
+            cp $f $DEST
+        else
+            echo File $DEST/$base is up to date
+        fi
     else
-        # cp $f $BLD_OUT_DIR/bin
-        cp $f $DEST
+        if [ $f -nt $DEST/$base ] ; then
+            echo cp $f $DEST
+            cp $f $DEST
+        else
+            echo File $DEST/$base is up to date
+        fi
     fi
 done
