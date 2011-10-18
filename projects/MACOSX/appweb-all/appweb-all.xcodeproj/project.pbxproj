@@ -1235,7 +1235,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#\n#   Prepare for build - This imports required libraries, headers and executables\n#\nmkdir -p $OUT/inc $OUT/bin\nif [ ! -f $OUT/inc/buildConfig.h -o buildConfig.default -nt $OUT/inc/buildConfig.h ] ; then\n    [ -f $OUT/inc/buildConfig.h ] && chmod +w $OUT/inc/buildConfig.h\n    cp buildConfig.default $OUT/inc/buildConfig.h\n    export BLD_TOP=$TOP\n    export BLD_OUT_DIR=$BLD_TOP/out\n    . `${BLD_TOP}/build/bin/cacheConfig $OUT/inc/buildConfig.h`\nfi\ntouch $OUT/bin/.ideBuild\nexit 0";
+			shellScript = "#\n#   Prepare for build. Import required libraries, headers and executables.\n#\nmkdir -p $OUT/inc $OUT/bin\nif [ ! -f $OUT/inc/buildConfig.h -o buildConfig.default -nt $OUT/inc/buildConfig.h ] ; then\n    [ -f $OUT/inc/buildConfig.h ] && chmod +w $OUT/inc/buildConfig.h\n    cp buildConfig.default $OUT/inc/buildConfig.h\n    export BLD_TOP=$TOP\n    export BLD_OUT_DIR=$BLD_TOP/out\n    . `${BLD_TOP}/build/bin/cacheConfig $OUT/inc/buildConfig.h`\nfi\ntouch $OUT/bin/.ideBuild\nexit 0";
 		};
 		C94E96071404178700A1797C /* Export Scripts */ = {
 			isa = PBXShellScriptBuildPhase;
