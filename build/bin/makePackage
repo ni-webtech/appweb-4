@@ -95,7 +95,7 @@ setup() {
         cd ${ROOT_DIR}
         for i in $(ls -Rl@ | grep '^	' | awk '{print $1}' | sort -u); do \
             find . | xargs xattr -d $i 2>/dev/null ; done
-        cd ${BLD_TOP}
+        cd $HOME >/dev/null
     fi
 
     for n in md5 md5sum ; do
@@ -142,7 +142,7 @@ patchSource() {
                 ${ABS_BLD_TOOLS_DIR}/defeature ${ABS_BLD_TOP}/out/inc/.buildConfig.sh $f
             done
         fi
-        cd ${HOME}
+        cd $HOME >/dev/null
     fi
 }
 

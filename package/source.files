@@ -15,7 +15,6 @@ makeDir "${DIR}/build/bin" "${DIR}/obj" "${DIR}/bin" "${DIR}/lib" "${DIR}/module
 cpy -e Makefile "${DIR}"
 cpy -w -e "*.TXT" "${DIR}"
 cpy -m 0755 configure "${DIR}"
-# cpy -p obj/Makefile lib/Makefile modules/Makefile bin/Makefile "${DIR}"
 cpy -p -d build -c "Makefile|Makefile.top|configure.${BLD_PRODUCT}|*.defaults|config.*|*.make" "*" "${DIR}"
 cpy -m 0755 -p -d build/bin bld getlib makedep priv fakePriv mkdmg utest utest.worker "${DIR}"
 cpy -m 0755 -p -d build/bin "make*Package*" makeInstall "${DIR}"

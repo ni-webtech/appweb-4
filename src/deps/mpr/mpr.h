@@ -4905,6 +4905,8 @@ typedef struct MprPath {
     bool            isReg;              /**< Set if a regular file */
     bool            caseMatters;        /**< Case comparisons matter */
     int             perms;              /**< Permission mask */
+    int             owner;              /**< Owner ID */
+    int             group;              /**< Group ID */
     int             valid;              /**< Valid data bit */
     int             checked;            /**< Path has been checked */
 } MprPath;

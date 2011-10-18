@@ -17,7 +17,7 @@ ifeq ($(BLD_FEATURE_ESP),1)
 	PRE_DIRS	+= esp
 endif
 PRE_DIRS		+= modules
-POST_DIRS		+= utils server test
+POST_DIRS		+= utils server test samples
 TARGETS			+= $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
 SOURCES			+= $(shell ls *.c | egrep -v 'deps')
 OBJECTS			+= $(BLD_OBJ_DIR)/fileHandler$(BLD_OBJ)

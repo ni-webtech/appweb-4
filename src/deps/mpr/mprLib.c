@@ -7341,6 +7341,26 @@ static void manageDiskFile(MprFile *file, int flags);
 static int getPathInfo(MprDiskFileSystem *fs, cchar *path, MprPath *info);
 
 
+/*
+    Open a file with support for cygwin paths. Tries windows path first then under /cygwin.
+ */
+static int cygOpen(MprFileSystem *fs, cchar *path, int omode, int perms)
+{
+    int     fd;
+
+    fd = open(path, omode, perms);
+#if WIN
+    if (fd < 0) {
+        if (*path == '/') {
+            path = sjoin(fs->cygwin, path, NULL);
+        }
+        fd = open(path, omode, perms);
+    }
+#endif
+    return fd;
+}
+
+
 static MprFile *openFile(MprFileSystem *fs, cchar *path, int omode, int perms)
 {
     MprFile     *file;
@@ -7352,35 +7372,26 @@ static MprFile *openFile(MprFileSystem *fs, cchar *path, int omode, int perms)
         return NULL;
     }
     file->path = sclone(path);
-    file->fd = open(path, omode, perms);
+    file->fd = cygOpen(fs, path, omode, perms);
     if (file->fd < 0) {
 #if WIN
         /*
-            Try under /cygwin
+            Windows opens can fail of immediately following a delete. Windows uses pending deletes which prevent opens.
          */
-        if (*path == '/') {
-            path = sjoin(fs->cygwin, path, NULL);
-        }
-        file->fd = open(path, omode, perms);
-        if (file->fd < 0) {
-            /*
-                Opens can fail of immediately following a delete. Windows uses pending deletes which prevent opens.
-             */
-            int i, err = GetLastError();
-            if (err == ERROR_ACCESS_DENIED) {
-                for (i = 0; i < RETRIES; i++) {
-                    file->fd = open(path, omode, perms);
-                    if (file->fd >= 0) {
-                        break;
-                    }
-                    mprSleep(10);
+        int i, err = GetLastError();
+        if (err == ERROR_ACCESS_DENIED) {
+            for (i = 0; i < RETRIES; i++) {
+                file->fd = open(path, omode, perms);
+                if (file->fd >= 0) {
+                    break;
                 }
-                if (file->fd < 0) {
-                    file = NULL;
-                }
-            } else {
+                mprSleep(10);
+            }
+            if (file->fd < 0) {
                 file = NULL;
             }
+        } else {
+            file = NULL;
         }
 #else
         file = NULL;
@@ -7633,6 +7644,8 @@ static int getPathInfo(MprDiskFileSystem *fs, cchar *path, MprPath *info)
     info->isDir = S_ISDIR(s.st_mode);
     info->isReg = S_ISREG(s.st_mode);
     info->perms = s.st_mode & 07777;
+    info->owner = s.st_uid;
+    info->group = s.st_gid;
 #else
     struct stat s;
     info->valid = 0;
@@ -7657,6 +7670,8 @@ static int getPathInfo(MprDiskFileSystem *fs, cchar *path, MprPath *info)
     info->isDir = S_ISDIR(s.st_mode);
     info->isReg = S_ISREG(s.st_mode);
     info->perms = s.st_mode & 07777;
+    info->owner = s.st_uid;
+    info->group = s.st_gid;
     if (strcmp(path, "/dev/null") == 0) {
         info->isReg = 0;
     }
@@ -15210,7 +15225,9 @@ char *mprGetRelPath(cchar *pathArg)
                 break;
             }
         } else {
-            if (*hp != *cp) {
+            if (*hp == *cp) {
+                ;
+            } else if (tolower((int) *hp) != tolower((int) *cp)) {
                 break;
             }
         }

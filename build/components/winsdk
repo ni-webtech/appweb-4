@@ -68,6 +68,7 @@ setWinEnv()
 
     eval ${KIND}_MSCL_VERSION="$version"
     eval ${KIND}_HAS_MSCL=1
+    eval ${KIND}_VS=\"$VSLIB\"
 
     if [ "$KIND" = HOST ] ; then
         CFG_HOST_PATH="/bin:/usr/bin:$bldPath"
@@ -86,5 +87,6 @@ emitWinOptions() {
     [ $BLD_CROSS = 1 ] && t="\t"
     eval v=\$${KIND}_HAS_MSCL ;     echo -e "${t}BLD_CC_MSCL=$v"
     eval v=\$${KIND}_MSCL_VERSION ; echo -e "${t}BLD_CC_CL_VERSION=$v"
+    eval v=\$${KIND}_VS ; echo -e "${t}BLD_VS='$v'"
 }
 

@@ -44,13 +44,16 @@ TASK=${TASK:-Install}
 processPackage() {
     local fileList
     
-    fileList="package/$1"
-    if [ ! -f "$fileList" ] ; then
+    if [ -f package/$1.es ] ; then
+        [ "$QUIET" = 0 ] && log ${VERB} package/$1.es ...
+        ejs package/$1.es $TASK $ROOT_DIR $BARE
+    elif [ -f package/$1.files ] ; then
+        [ "$QUIET" = 0 ] && log ${VERB} package/$1.files ...
+        . "package/$1.files"
+    else
         echo -e "\nCan't open $fileList. Exiting" 1>&2
         exit 255
-    fi
-    [ "$QUIET" = 0 ] && log ${VERB} ${fileList} ...
-    . "${fileList}"
+    fi 
 }
 
 cleanupSystem() {
@@ -189,10 +192,9 @@ copyRemoveFiles() {
 
     for packName in $PACKS
     do
-        processPackage ${packName}.files
+        processPackage ${packName}
         installRemoveLog ${packName}
     done
-
     configureProduct --quiet copy
 
     #

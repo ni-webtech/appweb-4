@@ -138,9 +138,6 @@ getDefaultMode() {
     exe|lib|so|dylib|sh|ksh)
         mode=0755
         ;;
-    exe|lib|so|dylib|sh|ksh)
-        mode=0755
-        ;;
     a|gif|jpg|jpeg|pdf|o)
         mode=0644
         ;;
@@ -257,7 +254,7 @@ cpy() {
         optind=$((optind + 1))
     done
 
-    [ $v -gt 0 ] && echo -e "\ncpy $*"
+    [ $v -gt 0 ] && echo -e "\n# cpy $*"
 
     argc=$((argc - 1))
     if [ $optind -le $argc ] ; then
@@ -276,7 +273,7 @@ cpy() {
         pattern="*"
 
         files=${files##./}
-        [ $v -gt 0 ] && echo find ${files} -name "$pattern"
+        [ $v -gt 0 ] && echo "\# " find ${files} -name "$pattern"
         find ${files} -name "$pattern" | egrep -v "$stndFilter" | egrep -v "$filter" | egrep "$check" | while read src 
         do
             [ -d "${src#}" ] && continue
