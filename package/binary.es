@@ -55,13 +55,14 @@ if (options.task == "Remove" && bin.join("linkup").exists) {
 
 cfg.makeDir()
 
-copy("appweb*", bin, {from: sbin, permissions: 0755, strip: true})
+// copy("appweb*", bin, {from: sbin, permissions: 0755, strip: true})
 
 if (!bare) {
     copy("LICENSE.TXT", ver, { from: "doc/licenses", fold: true, expand: true })
     copy("*.TXT", ver, { from: "doc/product", fold: true, expand: true })
     copy("uninstall.sh", bin.join("uninstall"), {from: "package", permissions: 0755, expand: true})
     copy("linkup", bin.join("linkup"), {from: "package", permissions: 0755, expand: true})
+
     let cmdFilter = (Config.OS == "WIN") ? /undefined/ : /\.cmd/
     copy("*", bin, {
         from: sbin,
@@ -78,13 +79,7 @@ if (!bare) {
         from: "src/server/web",
         exclude: /mgmt\//,
     })
-    if (options.task != "Remove") {
-        files = web.find(/\.cgi|\.pl|\.py/)
-        print(files)
-        for each (file in files) {
-            file.attributes({permissions: 0755})
-        }
-    }
+
 } else {
     copy("src/server/web/min-index.html", web.join("appweb.html"))
 }
@@ -109,7 +104,7 @@ if (options.task != "Remove") {
         Patch appweb.conf
      */
     Cmd.sh("BLD_HTTP_PORT=" + build.BLD_HTTP_PORT + " BLD_SSL_PORT=" + build.BLD_SSL_PORT + " " +
-        "patchAppwebConf " + cfg.join("appweb.conf"))
+        "patchAppwebConf \"" + cfg.join("appweb.conf") + "\"")
 }
 
 if (build.BLD_FEATURE_EJSCRIPT == 1) {

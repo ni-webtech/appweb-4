@@ -145,8 +145,8 @@ public function preparePrefixes(options)
     let build = options.build
     build.BLD_TOP = options.top
 
-    build.BUILD_BIN_DIR = Path(build.BLD_TOP).join("bin")
-    build.BUILD_LIB_DIR = Path(build.BLD_TOP).join("lib")
+    build.BUILD_BIN_DIR = Path(build.BLD_TOP).join("bin").portable
+    build.BUILD_LIB_DIR = Path(build.BLD_TOP).join("lib").portable
 
     for each (prefix in ["BLD_PREFIX", "BLD_ROOT_PREFIX", "BLD_BIN_PREFIX", "BLD_CFG_PREFIX", "BLD_DOC_PREFIX", "BLD_JEM_PREFIX", 
             "BLD_INC_PREFIX", "BLD_LIB_PREFIX", "BLD_LOG_PREFIX", "BLD_MAN_PREFIX", "BLD_PRD_PREFIX", "BLD_SAM_PREFIX", 
@@ -167,7 +167,7 @@ public function preparePrefixes(options)
             build[key] = value
         }
         if (key.contains("DIR")) {
-            build[key] = Path(build[key])
+            build[key] = Path(build[key]).portable
         }
     }
     build.ABS_BLD_TOP = Path(build.BLD_TOP).absolute.portable
