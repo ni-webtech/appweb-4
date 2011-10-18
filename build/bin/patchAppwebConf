@@ -6,13 +6,11 @@
 #   usage: $BLD_TOOLS_DIR/patchAppwebConf file 
 #
 #   Must set the env vars:
-#
 #       BLD_CFG_PREFIX, BLD_WEB_PREFIX, BLD_HTTP_PORT, BLD_SSL_PORT
 #
 ###############################################################################
 
 setup() {
-
     local g u
 
     #
@@ -28,8 +26,7 @@ setup() {
         fi
     done
 
-    if [ "$username" = "" ]
-    then
+    if [ "$username" = "" ] ; then
         echo "Can't find a suitable username in /etc/passwd for $PRODUCT" 1>&2
         exit 255
     fi
@@ -47,10 +44,15 @@ setup() {
         fi
     done
     
-    if [ "$groupname" = "" ]
-    then
+    if [ "$groupname" = "" ] ; then
         echo "Can't find a suitable group in /etc/group for $PRODUCT" 1>&2
         exit 255
+    fi
+
+    if [ "$ORIG_BLD_CFG_PREFIX" != "" ] ; then
+        for v in BLD_CFG_PREFIX BLD_WEB_PREFIX BLD_DOC_PREFIX BLD_LIB_PREFIX BLD_LOG_PREFIX ; do
+            eval export $v=$`echo ORIG_${v}`
+        done
     fi
 }
 
