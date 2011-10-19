@@ -10585,6 +10585,7 @@ MprKey *mprAddKey(MprHash *hash, cvoid *key, cvoid *ptr)
     int         index;
 
     if (hash == 0) {
+        mprAssert(hash);
         return 0;
     }
     lock(hash);
@@ -22300,13 +22301,6 @@ MprThreadService *mprCreateThreadService()
     MPR->mainOsThread = mprGetCurrentOsThread();
     MPR->threadService = ts;
     ts->stackSize = MPR_DEFAULT_STACK;
-
-#if !BLD_UNIX_LIKE && !BLD_WIN_LIKE
-    if ((ts->local = mprCreateHash(0, MPR_HASH_STATIC_VALUES)) == 0) {
-        return 0;
-    }
-#endif
-
     /*
         Don't actually create the thread. Just create a thread object for this main thread.
      */
@@ -22341,9 +22335,6 @@ static void manageThreadService(MprThreadService *ts, int flags)
         mprMark(ts->mainThread);
         mprMark(ts->mutex);
         mprMark(ts->cond);
-#if !BLD_UNIX_LIKE && !BLD_WIN_LIKE
-        mprMark(ts->local);
-#endif
 
     } else if (flags & MPR_MANAGE_FREE) {
         mprStopThreadService();
@@ -22610,7 +22601,7 @@ static void manageThreadLocal(MprThreadLocal *tls, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
 #if !BLD_UNIX_LIKE && !BLD_WIN_LIKE
-        mprMark(tls->key);
+        mprMark(tls->store);
 #endif
     } else if (flags & MPR_MANAGE_FREE) {
 #if BLD_UNIX_LIKE
@@ -22621,8 +22612,6 @@ static void manageThreadLocal(MprThreadLocal *tls, int flags)
         if (tls->key >= 0) {
             TlsFree(tls->key);
         }
-#else
-        mprRemoveKey(tls->ts->local, tls->key);
 #endif
     }
 }
@@ -22635,7 +22624,6 @@ MprThreadLocal *mprCreateThreadLocal()
     if ((tls = mprAllocObj(MprThreadLocal, manageThreadLocal)) == 0) {
         return 0;
     }
-    tls->ts = MPR->threadService;
 #if BLD_UNIX_LIKE
     if (pthread_key_create(&tls->key, NULL) != 0) {
         tls->key = 0;
@@ -22646,9 +22634,9 @@ MprThreadLocal *mprCreateThreadLocal()
         return 0;
     }
 #else
-    lock(tls->ts);
-    tls->key = itos(tls->ts->nextLocal++, 10);
-    unlock(tls->ts);
+    if ((tls->store = mprCreateHash(0, MPR_HASH_STATIC_VALUES)) == 0) {
+        return 0;
+    }
 #endif
     return tls;
 }
@@ -22663,7 +22651,11 @@ int mprSetThreadData(MprThreadLocal *tls, void *value)
 #elif BLD_WIN_LIKE
     err = TlsSetValue(tls->key, value) != 0;
 #else
-    err = mprAddKey(tls->ts->local, tls->key, value) != 0;
+    {
+        char    key[32];
+        itosbuf(key, sizeof(key), (int64) mprGetCurrentOsThread(), 10);
+        err = mprAddKey(tls->store, key, value) == 0;
+    }
 #endif
     return (err) ? MPR_ERR_CANT_WRITE: 0;
 }
@@ -22676,7 +22668,11 @@ void *mprGetThreadData(MprThreadLocal *tls)
 #elif BLD_WIN_LIKE
     return TlsGetValue(tls->key);
 #else
-    return mprLookupKey(tls->ts->local, tls->key);
+    {
+        char    key[32];
+        itosbuf(key, sizeof(key), (int64) mprGetCurrentOsThread(), 10);
+        return mprLookupKey(tls->store, key);
+    }
 #endif
 }
 
