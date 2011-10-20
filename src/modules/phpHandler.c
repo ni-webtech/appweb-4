@@ -27,6 +27,9 @@
     #undef pclose
     #define PHP_WIN32 1
     #define ZEND_WIN32 1
+    #if BLD_PHP_DEBUG
+    #define ZEND_DEBUG 1
+    #endif
 #endif
 
     #define ZTS 1
@@ -61,6 +64,13 @@
 typedef struct MaPhp {
     zval    *var_array;             /* Track var array */
 } MaPhp;
+
+static void                    ***tsrm_ls;
+static php_core_globals        *core_globals;
+static sapi_globals_struct     *sapi_globals;
+static zend_llist              global_vars;
+static zend_compiler_globals   *compiler_globals;
+static zend_executor_globals   *executor_globals;
 
 /****************************** Forward Declarations **********************/
 
@@ -111,14 +121,6 @@ static sapi_module_struct phpSapiBlock = {
 };
 
 /********************************** Code ***************************/
-#if UNUSED
-static int matchPhp(HttpConn *conn, HttpRoute *route, int direction)
-{
-    httpTrimExtraPath(conn);
-    return HTTP_ROUTE_OK;
-}
-#endif
-
 
 static void openPhp(HttpQueue *q)
 {
@@ -212,28 +214,27 @@ static void processPhp(HttpQueue *q)
         return;
     } zend_end_try();
 
-    zend_try {
-        kp = mprGetFirstKey(rx->headers);
+
+    kp = mprGetFirstKey(rx->headers);
+    while (kp) {
+        if (kp->data) {
+            key = mapHyphen(sjoin("HTTP_", supper(kp->key), NULL));
+            php_register_variable(key, (char*) kp->data, php->var_array TSRMLS_CC);
+            mprLog(4, "php: header %s = %s", key, kp->data);
+
+        }
+        kp = mprGetNextKey(rx->headers, kp);
+    }
+    if (rx->params) {
+        kp = mprGetFirstKey(rx->params);
         while (kp) {
             if (kp->data) {
-                key = mapHyphen(sjoin("HTTP_", supper(kp->key), NULL));
-                php_register_variable(key, (char*) kp->data, php->var_array TSRMLS_CC);
-                mprLog(4, "php: header %s = %s", key, kp->data);
-
+                php_register_variable(supper(kp->key), (char*) kp->data, php->var_array TSRMLS_CC);
+                mprLog(4, "php: form var %s = %s", kp->key, kp->data);
             }
-            kp = mprGetNextKey(rx->headers, kp);
+            kp = mprGetNextKey(rx->params, kp);
         }
-        if (rx->params) {
-            kp = mprGetFirstKey(rx->params);
-            while (kp) {
-                if (kp->data) {
-                    php_register_variable(supper(kp->key), (char*) kp->data, php->var_array TSRMLS_CC);
-                    mprLog(4, "php: form var %s = %s", kp->key, kp->data);
-                }
-                kp = mprGetNextKey(rx->params, kp);
-            }
-        }
-    } zend_end_try();
+    }
 
     /*
         Execute the script file
@@ -449,15 +450,9 @@ static int startup(sapi_module_struct *sapi_module)
 
 static int initializePhp(Http *http)
 {
-    MaAppweb                *appweb;
-    void                    ***tsrm_ls;
-    php_core_globals        *core_globals;
-    sapi_globals_struct     *sapi_globals;
-    zend_llist              global_vars;
-    zend_compiler_globals   *compiler_globals;
-    zend_executor_globals   *executor_globals;
+    MaAppweb    *appweb;
 
-    tsrm_startup(128, 1, 0, 0);
+    tsrm_startup(64, 1, 0, NULL);
     compiler_globals = (zend_compiler_globals*)  ts_resource(compiler_globals_id);
     executor_globals = (zend_executor_globals*)  ts_resource(executor_globals_id);
     core_globals = (php_core_globals*) ts_resource(core_globals_id);
