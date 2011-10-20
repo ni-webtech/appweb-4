@@ -10,6 +10,8 @@ defineComponent() {
     else
         path="${1:-.}"
     fi
+    eval ${KIND}_PHP_DEBUG=0
+
     if [ "$PHP_LIBS" != "" ] ; then
         libs="${PHP_LIBS}"
     else
@@ -20,6 +22,13 @@ defineComponent() {
             phplib=`probe --name php --search "$path:extensions/php/$ver" "Release_TS/php5ts" `
             if [ "$phplib" = "" ] ; then
                 phplib=`probe --name php --search "$path:extensions/php/$ver" "Release/php5" `
+                if [ "$phplib" = "" ] ; then
+                    phplib=`probe --name php --search "$path:extensions/php/$ver" "Debug_TS/php5ts_debug" `
+                    if [ "$phplib" = "" ] ; then
+                        phplib=`probe --name php --search "$path:extensions/php/$ver" "Debug/php5" `
+                    fi
+                    eval ${KIND}_PHP_DEBUG=1
+                fi
             fi
         else
             phplib=`probe --name php --search "$path:extensions/php/$ver/libs" "libphp5" `
@@ -47,5 +56,15 @@ defineComponent() {
     fi
     configureComponent --libs "$libs" --libpaths "$libpaths" --dependencies "mpr" \
         --cflags "$PHP_CLFAGS" --dflags "$PHP_DFLAGS" --ldflags "$PHP_LDFLAGS" \
-        --iflags "$iflags" --imports "$imports" php
+        --iflags "$iflags" --imports "$imports" --emitter emitPhpOptions php 
 }
+
+emitPhpOptions() {
+    local t
+
+    if [ $BLD_HOST_OS = WIN ] ; then
+        [ $BLD_CROSS = 1 ] && t="\t"
+        eval v=\$${KIND}_PHP_DEBUG ; echo -e "${t}BLD_PHP_DEBUG=$v"
+    fi
+}
+
