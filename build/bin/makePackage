@@ -316,12 +316,16 @@ createPlatformPackages() {
     elif [ $BLD_HOST_OS = LINUX ] ; then
         if type dpkg-buildpackage >/dev/null 2>&1 ; then
             . ${BLD_TOOLS_DIR}/makeDebPackage
-        fi
-
-        if type rpmbuild >/dev/null 2>&1 ; then
+        elif type rpmbuild >/dev/null 2>&1 ; then
             if [ -f /etc/redhat-release -o -f /etc/SuSE-release ] ; then
                 . ${BLD_TOOLS_DIR}/makeRPMPackage
+            else
+                echo Unknown system release. Could not find /etc/redhat-release or /etc/SuSE-release 
+                exit 255
             fi
+        else
+            echo Unknown packaging. Could not find dpgk-buildpackage or rpmbuild
+            exit 255
         fi
     fi
 }
