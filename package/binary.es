@@ -55,7 +55,7 @@ if (options.task == "Remove" && bin.join("linkup").exists) {
 
 cfg.makeDir()
 
-// copy("appweb*", bin, {from: sbin, permissions: 0755, strip: true})
+copy("appweb*", bin, {from: sbin, permissions: 0755, strip: true})
 
 if (!bare) {
     copy("LICENSE.TXT", ver, { from: "doc/licenses", fold: true, expand: true })

@@ -33,6 +33,7 @@ public function copy(src: Path, target: Path = Dir, options = {})
     let zip = options.zip || false
     let build = options.build
     let log = App.log
+    options.root ||= "/tmp"
 
     if (verbose > 0) log.activity("Process", "cpy: " + src + " " + target)
 
@@ -45,7 +46,7 @@ public function copy(src: Path, target: Path = Dir, options = {})
         dir = src.dirname
         from = ""
     }
-    let files = options.top.join(dir).find(pat, options.recurse)
+    let files = options.top.join(dir).find(pat, options)
 
     for each (let file: Path in files) {
         file = file.relative.portable
