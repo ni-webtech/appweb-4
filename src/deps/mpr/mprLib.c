@@ -15064,8 +15064,11 @@ MprList *mprGetPathFiles(cchar *path, bool enumDirs)
             continue;
         }
         fileName = mprJoinPath(path, dirent->d_name);
+        //  MOB - workaround for if target of symlink does not exist
+        fileInfo.isLink = 0;
+        fileInfo.isDir = 0;
         rc = mprGetPathInfo(fileName, &fileInfo);
-        if (enumDirs || (rc == 0 && !fileInfo.isDir)) { 
+        if (enumDirs || fileInfo.isLink || !fileInfo.isDir) { 
             if ((dp = mprAllocObj(MprDirEntry, manageDirEntry)) == 0) {
                 return 0;
             }
@@ -15073,7 +15076,7 @@ MprList *mprGetPathFiles(cchar *path, bool enumDirs)
             if (dp->name == 0) {
                 return 0;
             }
-            if (rc == 0) {
+            if (rc == 0 || fileInfo.isLink) {
                 dp->lastModified = fileInfo.mtime;
                 dp->size = fileInfo.size;
                 dp->isDir = fileInfo.isDir;

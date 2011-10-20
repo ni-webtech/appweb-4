@@ -15,7 +15,6 @@ BLD_DATE=`date '+%c'`
 
 setupRPM() {
     echo -e "\n#\n# Create the RPM package ...\n#"
-
     #
     #   Setup the RPM directory and create the spec file
     #
