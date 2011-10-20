@@ -49,9 +49,6 @@ public function copy(src: Path, target: Path = Dir, options = {})
 
     for each (let file: Path in files) {
         file = file.relative.portable
-        if (file.isDir) {
-            continue
-        }
         if (options.exclude && file.match(options.exclude)) {
             continue
         }
@@ -63,16 +60,13 @@ public function copy(src: Path, target: Path = Dir, options = {})
         }
         let dest: Path
         if (target.isDir) {
-
-/*
-print("FROM " + from)
-print("DIR  " + dir)
-print("FILE " + file)
-print("TARG " + target)
-*/
             dest = Path("" + target + "/" + file.trimStart(from)).normalize.portable
         } else {
             dest = target
+        }
+        if (file.isDir) {
+            dest.makeDir()
+            continue
         }
         copied++
         if (task == "Remove") {
@@ -89,14 +83,17 @@ print("TARG " + target)
             }
             if (verbose) log.activity("Copy", dest.relative)
             permissions ||= file.extension.match(/exe|lib|so|dylib|sh|ksh/) ? 0755 : 0644
-            file.copy(dest, { permissions: permissions, owner: owner, group: group})
+            let attributes = { permissions: permissions, owner: owner, group: group}
+            file.copy(dest, attributes)
 
             if (options.expand) {
                 if (verbose) log.activity("Patch", dest)
                 expand(dest, options)
+                dest.attributes = attributes
             }
             if (options.fold && Config.OS == "WIN") {
                 fold(dest, options)
+                dest.attributes = attributes
             }
             if (options.strip && build.BLD_STRIP != "" && build.BLD_UNIX_LIKE == 1 && build.BLD_BUILD_OS != "MACOSX") {
                 log.activity("Strip", dest)
@@ -111,6 +108,7 @@ print("TARG " + target)
                 log.activity("Ldconfig", dest)
                 Cmd.sh("ldconfig " + dest)
             }
+            Path("install.log").append(dest + "\n")
         }
     }
     if (options.task != "Remove" && copied == 0) {
@@ -165,6 +163,8 @@ public function preparePrefixes(options)
         let tree: Path
         if (options.task == "Package") {
             tree = (prefix == "BLD_SRC_PREFIX") ? "/SRC" : "/BIN"
+        } else {
+            tree = ""
         }
         build[prefix] = Path("" + options.root + tree + build[prefix]).portable
     }
