@@ -104,6 +104,7 @@ public function copy(src: Path, target: Path = Dir, options = {})
                 dest.joinExt(".gz").remove
                 log.activity("Compress", dest)
                 Cmd.sh("gzip --best " + dest)
+                dest = dest.joinExt(".gz")
             }
             if (App.uid == 0 && dest.extension == "so" && Config.OS == "LINUX" && options.task == "Install") {
                 log.activity("Ldconfig", dest)
