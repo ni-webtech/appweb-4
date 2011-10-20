@@ -30,7 +30,7 @@ public function copy(src: Path, target: Path = Dir, options = {})
     let permissions = options.permissions
     let task = options.task 
     let verbose = options.trace
-    let zip = options.zip || false
+    let compress = options.compress || false
     let build = options.build
     let log = App.log
     options.root ||= "/tmp"
@@ -71,7 +71,7 @@ public function copy(src: Path, target: Path = Dir, options = {})
         }
         copied++
         if (task == "Remove") {
-            if (zip) {
+            if (compress) {
                 dest = dest.joinExt("gz")
             }
             if (verbose) log.activity("Remove", dest)
@@ -100,10 +100,11 @@ public function copy(src: Path, target: Path = Dir, options = {})
                 log.activity("Strip", dest)
                 Cmd.sh(build.BLD_STRIP + " " + dest)
             }
-            if (zip) {
+            if (compress) {
                 dest.joinExt(".gz").remove
                 log.activity("Compress", dest)
                 Cmd.sh("gzip --best " + dest)
+                dest = dest.joinExt(".gz")
             }
             if (App.uid == 0 && dest.extension == "so" && Config.OS == "LINUX" && options.task == "Install") {
                 log.activity("Ldconfig", dest)
