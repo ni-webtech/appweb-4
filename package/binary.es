@@ -108,7 +108,7 @@ if (options.task != "Remove") {
 }
 
 if (build.BLD_FEATURE_EJSCRIPT == 1) {
-    copy("ejs*", bin, {from: sbin, permissions: 0755, strip: true})
+    copy("ejs*", bin, {from: sbin, permissions: 0755, strip: true, exclude: /ejspage/})
     copy("ejs*.mod", lib, {from: slib})
 }
 

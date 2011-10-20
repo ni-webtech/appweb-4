@@ -99,8 +99,8 @@ print("TARG " + target)
                 fold(dest, options)
             }
             if (options.strip && build.BLD_STRIP != "" && build.BLD_UNIX_LIKE == 1 && build.BLD_BUILD_OS != "MACOSX") {
+                log.activity("Strip", dest)
                 Cmd.sh(build.BLD_STRIP + " " + dest)
-                Cmd.sh(". " + App.dir.parent.join("inc/buildConfig.sh") + " ; " + build.BLD_STRIP + " " + dest)
             }
             if (zip) {
                 dest.joinExt(".gz").remove
