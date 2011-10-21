@@ -6,7 +6,7 @@ defineComponent() {
 
     ver="latest"
     eval SHOBJ=\$BLD_${kind}_SHOBJ
-    if [ "$BLD_HOST_OS" = LINUX -o "$BLD_HOST_OS" = MACOSX ] ; then
+    if [ "$BLD_HOST_OS" = LINUX -o "$BLD_HOST_OS" = MACOSX -o "$BLD_HOST_OS" = CYGWIN ] ; then
         path=${1:-/usr/include:/usr/lib}
     else
         path="${1:-.}"
@@ -22,12 +22,15 @@ defineComponent() {
         #
         #   Use system libraries
         #
-        # libpaths="/usr/lib"
         imports="/usr/lib/libssl.a /usr/lib/libcrypto.a"
-        libs="ssl crypto"
         iflags="-I/usr/lib/include"
+        libs="ssl crypto"
+        libpaths=`probe --name openssl --search "$path:/usr/lib" --dir "libcrypto" `
 
     elif [ $OS = MACOSX ] ; then
+#       
+#       Use native OpenSSL - dont do this as Apple is deprecating it
+#
 #       libpaths=`probe --name openssl --search "$path:extensions/openssl/$ver" --dir "libcrypto" `
 #       iflags=-I`probe --name openssl --search "$path:extensions/openssl/$ver/include" --dir "openssl/ssl.h"`
 #       libs="ssl crypto"
