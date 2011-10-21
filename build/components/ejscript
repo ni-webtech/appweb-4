@@ -45,14 +45,13 @@ defineComponent() {
 
         libdir=`probe --name libejs --dir --search "$search" "libejs" `
         if [ "$libdir" = "" -a "$path" != "." ] ; then
-            warnComponent ejs "Can't locate libejs"
+            warnComponent ejscript "Can't locate libejs"
             return
         fi
         for lib in `echo $libdir/libejs* $libdir/libmpr* $libdir/libhttp* $libdir/libpcre* $libdir/ejs*${SHOBJ} \
                 $libdir/libsqlite3*` ; do
             if [ ! -f "$lib" ] ; then
-                warnComponent ejs "Ejs is not correctly built. Missing $lib"
-                echo "Can't use ejs. Ejs is not correctly built. Missing $lib"
+                warnComponent ejscript "Ejscript is not correctly built. Missing $lib"
                 return
             fi
             libraries="$lib $libraries"
@@ -76,10 +75,10 @@ defineComponent() {
             if [ "$makerom" != "" ] ; then
                 imports="$imports $makerom"
             fi
-            ejspage=`probe --exe --name ejspage --search "$search" ejspage`
-            if [ "$ejspage" != "" ] ; then
-                imports="$imports $ejspage"
-            fi
+#           ejspage=`probe --exe --name ejspage --search "$search" ejspage`
+#           if [ "$ejspage" != "" ] ; then
+#               imports="$imports $ejspage"
+#           fi
             libs="$libs ejs.web"
             if [ "${ejsbin}" != "" ] ; then
                 imports="$imports $ejsbin"
