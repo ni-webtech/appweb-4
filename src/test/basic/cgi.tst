@@ -81,16 +81,8 @@ if (!global.test || test.config["cgi"] == 1) {
         http.get(HTTP + "/cgiProgram.cgi/extra/path")
         match("PATH_INFO", "/extra/path")
         let scriptFilename = keyword("SCRIPT_FILENAME")
-print("SSS " + scriptFilename)
-print("PPP " + Path(scriptFilename))
-print("111 " + Path(scriptFilename).absolute)
-print("222 " + Path(scriptFilename).absolute.dirname)
-print("AAA " + Path(scriptFilename).dirname)
-print("BBB " + Path(scriptFilename).dirname.join("extra/path"))
         let path = Path(scriptFilename).dirname.join("extra/path")
         let translated = keyword("PATH_TRANSLATED")
-print("PATH " + path)
-print("TRANS " + translated)
         assert(path == translated)
     }
 
