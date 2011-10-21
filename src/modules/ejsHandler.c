@@ -90,6 +90,9 @@ static int ejsAliasDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    EjsStartup script
+ */
 static int ejsStartupDirective(MaState *state, cchar *key, cchar *value)
 {
     httpSetRouteScript(state->route, 0, strim(value, "\"", MPR_TRIM_BOTH));
