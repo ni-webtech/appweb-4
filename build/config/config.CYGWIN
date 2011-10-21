@@ -16,7 +16,7 @@ eval BLD_${KIND}_ARCH=.a
 eval BLD_${KIND}_EXE=.exe
 eval BLD_${KIND}_OBJ=.obj
 eval BLD_${KIND}_PIOBJ=.obj
-eval BLD_${KIND}_SHLIB=.lib
+eval BLD_${KIND}_SHLIB=.dll
 eval BLD_${KIND}_SHOBJ=.dll
 
 #
@@ -28,3 +28,4 @@ else
     system=
 fi
 eval BLD_${KIND}_LIB_DIR='\${BLD_OUT_DIR}/'${system}bin
+BLD_LIB_PREFIX="${BLD_BIN_PREFIX}/bin"
