@@ -5351,6 +5351,7 @@ int mprStopCmd(MprCmd *cmd, int signal)
         return kill(cmd->pid, signal);
 #endif
     }
+    cmd->stopped = 1;
     return 0;
 }
 
@@ -5431,6 +5432,9 @@ static void waitForWinEvent(MprCmd *cmd, MprTime timeout)
     int         i, rc, nbytes;
 
     mark = mprGetTime();
+    if (cmd->stopped) {
+        timeout = 0;
+    }
     for (i = MPR_CMD_STDOUT; i < MPR_CMD_MAX_PIPE; i++) {
         if (cmd->files[i].handle) {
             rc = PeekNamedPipe(cmd->files[i].handle, NULL, 0, NULL, &nbytes, NULL);
@@ -5488,6 +5492,9 @@ int mprWaitForCmd(MprCmd *cmd, MprTime timeout)
     }
     if (mprGetDebugMode()) {
         timeout = MAXINT;
+    }
+    if (cmd->stopped) {
+        timeout = 0;
     }
     expires = mprGetTime() + timeout;
     remaining = timeout;
