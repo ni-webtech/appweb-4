@@ -72,15 +72,15 @@ static int ejsAliasDirective(MaState *state, cchar *key, cchar *value)
     int         workers;
     
     route = state->route;
-    if (!maTokenize(state, value, "%P ?P ?S ?N", &prefix, &path, &script, &workers)) {
+    if (!maTokenize(state, value, "%S ?P ?S ?N", &prefix, &path, &script, &workers)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if (script) {
-        script = strim(script, "\"", MPR_TRIM_BOTH);
-    }
     route = httpCreateInheritedRoute(state->route);
-    httpSetRoutePrefix(route, sjoin("/", prefix, 0));
+    httpSetRoutePattern(route, prefix, 0);
+    httpSetRoutePrefix(route, prefix);
     httpSetRouteScript(route, 0, script);
+    httpSetRouteSource(route, "");
+    httpSetRouteDir(route, path);
     if (workers) {
         httpSetRouteWorkers(route, workers);
     }

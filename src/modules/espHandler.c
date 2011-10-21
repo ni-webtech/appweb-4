@@ -963,6 +963,7 @@ static int appDirective(MaState *state, cchar *key, cchar *value)
             return MPR_ERR_BAD_STATE;
         }
     }
+    /* NOTE: this route is not finalized */
     return 0;
 }
 
