@@ -1381,6 +1381,10 @@ createBuildConfig() {
     fi
     rm -f /tmp/config$$.tmp 
 
+    if [ "$BLD_HOST_OS" = MACOSX ] ; then
+        # Xcode work-around
+        echo -e "    /* Xcode work-around */\n    #undef BLD_LIB_PREFIX\n" >>$CONFIG_H
+    fi
     cat $CONFIG_SRC >>$CONFIG_H
     chmod 664 $CONFIG_H
     rm -f "${BLD_OUT_DIR}/inc/${CONFIG_CACHE}"
