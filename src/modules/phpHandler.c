@@ -184,12 +184,18 @@ static void processPhp(HttpQueue *q)
     zend_first_try {
         php->var_array = 0;
         SG(server_context) = conn;
-        SG(request_info).auth_user = conn->authUser;
-        SG(request_info).auth_password = conn->authPassword;
+
+        if (conn->authUser) {
+            SG(request_info).auth_user = estrdup(conn->authUser);
+        }
+        if (conn->authPassword) {
+            SG(request_info).auth_password = estrdup(conn->authPassword);
+        }
+        SG(request_info).auth_digest = estrdup(httpGetHeader(conn, "Authorization"));
         SG(request_info).content_type = rx->mimeType;
+        SG(request_info).path_translated = tx->filename;
         SG(request_info).content_length = (ssize) rx->length;
         SG(sapi_headers).http_response_code = HTTP_CODE_OK;
-        SG(request_info).path_translated = tx->filename;
         SG(request_info).query_string = rx->parsedUri->query;
         SG(request_info).request_method = rx->method;
         SG(request_info).request_uri = rx->uri;
