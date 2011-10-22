@@ -7772,7 +7772,7 @@ static void manageDiskFileSystem(MprDiskFileSystem *dfs, int flags)
         mprMark(dfs->separators);
         mprMark(dfs->newline);
         mprMark(dfs->root);
-#if BLD_WIN_LIKE
+#if BLD_WIN_LIKE || CYGWIN
         mprMark(dfs->cygdrive);
         mprMark(dfs->cygwin);
 #endif
@@ -10359,7 +10359,7 @@ MprFileSystem *mprCreateFileSystem(cchar *path)
     fs = (MprFileSystem*) mprCreateDiskFileSystem(path);
 #endif
 
-#if BLD_WIN_LIKE
+#if BLD_WIN_LIKE || CYGWIN
     fs->separators = sclone("\\/");
     fs->newline = sclone("\r\n");
 #else
@@ -10367,13 +10367,13 @@ MprFileSystem *mprCreateFileSystem(cchar *path)
     fs->newline = sclone("\n");
 #endif
 
-#if BLD_WIN_LIKE || MACOSX
+#if BLD_WIN_LIKE || MACOSX || CYGWIN
     fs->caseSensitive = 0;
 #else
     fs->caseSensitive = 1;
 #endif
 
-#if BLD_WIN_LIKE || VXWORKS
+#if BLD_WIN_LIKE || VXWORKS || CYGWIN
     fs->hasDriveSpecs = 1;
 #endif
 
@@ -10384,7 +10384,7 @@ MprFileSystem *mprCreateFileSystem(cchar *path)
     if ((cp = strpbrk(fs->root, fs->separators)) != 0) {
         *++cp = '\0';
     }
-#if BLD_WIN_LIKE
+#if BLD_WIN_LIKE || CYGWIN
     fs->cygwin = mprReadRegistry("HKEY_LOCAL_MACHINE\\SOFTWARE\\Cygwin\\setup", "rootdir");
     fs->cygdrive = sclone("/cygdrive");
 #endif
@@ -14512,12 +14512,13 @@ char *mprSearchForModule(cchar *filename)
     Find the first separator in the path
  */
 #if BLD_UNIX_LIKE
-    #define firstSep(fs, path)      strchr(path, fs->separators[0])
+    #define firstSep(fs, path)  strchr(path, fs->separators[0])
 #else
-    #define firstSep(fs, path)      strpbrk(path, fs->separators)
+    #define firstSep(fs, path)  strpbrk(path, fs->separators)
 #endif
 
-#define defaultSep(fs)              (fs->separators[0])
+#define defaultSep(fs)          (fs->separators[0])
+
 
 static MPR_INLINE bool isSep(MprFileSystem *fs, int c) 
 {
@@ -15352,6 +15353,7 @@ char *mprGetTempPath(cchar *tempDir)
 }
 
 
+//  MOB - rename mprTransformPath
 /*
     This normalizes a path. Returns a normalized path according to flags. Default is absolute. 
     if MPR_PATH_NATIVE_SEP is specified in the flags, map separators to the native format.
@@ -15364,10 +15366,7 @@ char *mprGetTransformedPath(cchar *path, int flags)
     if (flags & MPR_PATH_CYGWIN) {
         result = toCygPath(path, flags);
     } else {
-        /*
-            Issues here. "/" is ambiguous. Is this "c:/" or is it "c:/cygdrive/c" which may map to c:/cygwin/...
-         */
-        result = fromCygPath(path);
+        result = toWinPath(path);
     }
 #endif
 
@@ -15503,7 +15502,7 @@ int mprMakeLink(cchar *path, cchar *target, bool hard)
 
 #if BLD_WIN_LIKE && FUTURE
 /*
-    Normalize to a cygwin path without a drive spec
+    Normalize to an absolute cygwin path without a drive spec
  */
 static char *toCygPath(cchar *path)
 {
@@ -15547,9 +15546,9 @@ static char *toCygPath(cchar *path)
 
 
 /*
-    Convert from a cygwin path
+    Convert to an absolute windows path
  */
-static char *fromCygPath(cchar *path)
+static char *toWinPath(cchar *path)
 {
     char    *buf, *result;
     int     len;
@@ -17826,7 +17825,7 @@ void manageRomFileSystem(MprRomFileSystem *rfs, int flags)
         mprMark(fs->separators);
         mprMark(fs->newline);
         mprMark(fs->root);
-#if BLD_WIN_LIKE
+#if BLD_WIN_LIKE || CYGWIN
         mprMark(fs->cygdrive);
         mprMark(fs->cygwin);
 #endif
@@ -26939,17 +26938,18 @@ char *awtom(MprChar *src, ssize *len)
 /************************************************************************/
 
 /**
-    mprWin.c - Windows specific adaptions
+    mprWin.c - Windows specific adaptions. Used by BLD_WIN_LIKE and CYGWIN
 
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
 
 
+#if CYGWIN
+ #include "w32api/windows.h"
+#endif
+
 #if BLD_WIN_LIKE && !WINCE
-
-static cchar    *getHive(cchar *key, HKEY *root);
-
 /*
     Initialize the O/S platform layer
  */ 
@@ -27047,48 +27047,6 @@ int mprUnloadNativeModule(MprModule *mp)
 }
 
 
-char *mprReadRegistry(cchar *key, cchar *name)
-{
-    HKEY        top, h;
-    char        *value;
-    ulong       type, size;
-
-    mprAssert(key && *key);
-
-    /*
-        Get the registry hive
-     */
-    if ((key = getHive(key, &top)) == 0) {
-        return 0;
-    }
-    if (RegOpenKeyEx(top, key, 0, KEY_READ, &h) != ERROR_SUCCESS) {
-        return 0;
-    }
-
-    /*
-        Get the type
-     */
-    if (RegQueryValueEx(h, name, 0, &type, 0, &size) != ERROR_SUCCESS) {
-        RegCloseKey(h);
-        return 0;
-    }
-    if (type != REG_SZ && type != REG_EXPAND_SZ) {
-        RegCloseKey(h);
-        return 0;
-    }
-    if ((value = mprAlloc(size + 1)) == 0) {
-        return 0;
-    }
-    if (RegQueryValueEx(h, name, 0, &type, (uchar*) value, &size) != ERROR_SUCCESS) {
-        RegCloseKey(h);
-        return 0;
-    }
-    RegCloseKey(h);
-    value[size] = '\0';
-    return value;
-}
-
-
 void mprSetInst(long inst)
 {
     MPR->appInstance = inst;
@@ -27169,51 +27127,10 @@ void mprWriteToOsLog(cchar *message, int flags, int level)
 }
 
 
-int mprWriteRegistry(cchar *key, cchar *name, cchar *value)
-{
-    HKEY    top, h, subHandle;
-    ulong   disposition;
-
-    mprAssert(key && *key);
-    mprAssert(name && *name);
-    mprAssert(value && *value);
-
-    /*
-        Get the registry hive
-     */
-    if ((key = getHive(key, &top)) == 0) {
-        return MPR_ERR_CANT_ACCESS;
-    }
-    if (name) {
-        /*
-            Write a registry string value
-         */
-        if (RegOpenKeyEx(top, key, 0, KEY_ALL_ACCESS, &h) != ERROR_SUCCESS) {
-            return MPR_ERR_CANT_ACCESS;
-        }
-        if (RegSetValueEx(h, name, 0, REG_SZ, value, (int) slen(value) + 1) != ERROR_SUCCESS) {
-            RegCloseKey(h);
-            return MPR_ERR_CANT_READ;
-        }
-
-    } else {
-        /*
-            Create a new sub key
-         */
-        if (RegOpenKeyEx(top, key, 0, KEY_CREATE_SUB_KEY, &h) != ERROR_SUCCESS){
-            return MPR_ERR_CANT_ACCESS;
-        }
-        if (RegCreateKeyEx(h, name, 0, NULL, REG_OPTION_NON_VOLATILE,
-            KEY_ALL_ACCESS, NULL, &subHandle, &disposition) != ERROR_SUCCESS) {
-            return MPR_ERR_CANT_ACCESS;
-        }
-        RegCloseKey(subHandle);
-    }
-    RegCloseKey(h);
-    return 0;
-}
+#endif /* BLD_WIN_LIKE */
 
 
+#if (BLD_WIN_LIKE && !WINCE) || CYGWIN
 /*
     Determine the registry hive by the first portion of the path. Return 
     a pointer to the rest of key path after the hive portion.
@@ -27230,7 +27147,7 @@ static cchar *getHive(cchar *keyPath, HKEY *hive)
     scopy(key, sizeof(key), keyPath);
     key[sizeof(key) - 1] = '\0';
 
-    if (cp = schr(key, '\\')) {
+    if ((cp = schr(key, '\\')) != 0) {
         *cp++ = '\0';
     }
     if (cp == 0 || *cp == '\0') {
@@ -27254,9 +27171,94 @@ static cchar *getHive(cchar *keyPath, HKEY *hive)
     return keyPath + len;
 }
 
-#else
-void stubMprWin() {}
-#endif /* BLD_WIN_LIKE */
+
+char *mprReadRegistry(cchar *key, cchar *name)
+{
+    HKEY        top, h;
+    char        *value;
+    ulong       type, size;
+
+    mprAssert(key && *key);
+
+    /*
+        Get the registry hive
+     */
+    if ((key = getHive(key, &top)) == 0) {
+        return 0;
+    }
+    if (RegOpenKeyEx(top, key, 0, KEY_READ, &h) != ERROR_SUCCESS) {
+        return 0;
+    }
+
+    /*
+        Get the type
+     */
+    if (RegQueryValueEx(h, name, 0, &type, 0, &size) != ERROR_SUCCESS) {
+        RegCloseKey(h);
+        return 0;
+    }
+    if (type != REG_SZ && type != REG_EXPAND_SZ) {
+        RegCloseKey(h);
+        return 0;
+    }
+    if ((value = mprAlloc(size + 1)) == 0) {
+        return 0;
+    }
+    if (RegQueryValueEx(h, name, 0, &type, (uchar*) value, &size) != ERROR_SUCCESS) {
+        RegCloseKey(h);
+        return 0;
+    }
+    RegCloseKey(h);
+    value[size] = '\0';
+    return value;
+}
+
+int mprWriteRegistry(cchar *key, cchar *name, cchar *value)
+{
+    HKEY    top, h, subHandle;
+    ulong   disposition;
+
+    mprAssert(key && *key);
+    mprAssert(name && *name);
+    mprAssert(value && *value);
+
+    /*
+        Get the registry hive
+     */
+    if ((key = getHive(key, &top)) == 0) {
+        return MPR_ERR_CANT_ACCESS;
+    }
+    if (name) {
+        /*
+            Write a registry string value
+         */
+        if (RegOpenKeyEx(top, key, 0, KEY_ALL_ACCESS, &h) != ERROR_SUCCESS) {
+            return MPR_ERR_CANT_ACCESS;
+        }
+        if (RegSetValueEx(h, name, 0, REG_SZ, (uchar*) value, (int) slen(value) + 1) != ERROR_SUCCESS) {
+            RegCloseKey(h);
+            return MPR_ERR_CANT_READ;
+        }
+
+    } else {
+        /*
+            Create a new sub key
+         */
+        if (RegOpenKeyEx(top, key, 0, KEY_CREATE_SUB_KEY, &h) != ERROR_SUCCESS){
+            return MPR_ERR_CANT_ACCESS;
+        }
+        if (RegCreateKeyEx(h, name, 0, NULL, REG_OPTION_NON_VOLATILE,
+            KEY_ALL_ACCESS, NULL, &subHandle, &disposition) != ERROR_SUCCESS) {
+            return MPR_ERR_CANT_ACCESS;
+        }
+        RegCloseKey(subHandle);
+    }
+    RegCloseKey(h);
+    return 0;
+}
+
+
+#endif /* (BLD_WIN_LIKE && !WINCE) || CYGWIN */
 
 /*
     @copy   default

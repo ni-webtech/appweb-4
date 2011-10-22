@@ -4502,7 +4502,7 @@ typedef struct MprFileSystem {
     char                *separators;    /**< Filename path separators. First separator is the preferred separator. */
     char                *newline;       /**< Newline for text files */
     cchar               *root;          /**< Root file path */
-#if BLD_WIN_LIKE
+#if BLD_WIN_LIKE || CYGWIN
     char                *cygwin;        /**< Cygwin install directory */
     char                *cygdrive;      /**< Cygwin drive root */
 #endif
@@ -8469,14 +8469,6 @@ extern HWND mprGetHwnd();
 extern long mprGetInst();
 
 /**
-    Read a key from the Windows registry
-    @param key Windows registry key to read
-    @param name Windows registry name to read.
-    @return The key/name setting
-  */
-extern char *mprReadRegistry(cchar *key, cchar *name);
-
-/**
     Set the MPR windows handle
     @param handle Set the MPR default windows handle
  */
@@ -8494,6 +8486,17 @@ extern void mprSetInst(long inst);
     @param message Message number to use.
   */
 extern void mprSetSocketMessage(int message);
+#endif
+
+#if (BLD_WIN_LIKE && !WINCE) || CYGWIN
+/**
+    Read a key from the Windows registry
+    @param key Windows registry key to read
+    @param name Windows registry name to read.
+    @return The key/name setting
+  */
+extern char *mprReadRegistry(cchar *key, cchar *name);
+
 /**
     Write a key value the Windows registry
     @param key Windows registry key to write
@@ -8502,7 +8505,7 @@ extern void mprSetSocketMessage(int message);
     @return Zero if successful. Otherwise return a negative MPR error code.
   */
 extern int mprWriteRegistry(cchar *key, cchar *name, cchar *value);
-#endif
+#endif /* (BLD_WIN_LIKE && !WINCE) || CYGWIN */
 
 /*
     Internal
