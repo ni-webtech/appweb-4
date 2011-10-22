@@ -16,7 +16,7 @@ eval BLD_${KIND}_ARCH=.a
 eval BLD_${KIND}_EXE=.exe
 eval BLD_${KIND}_OBJ=.obj
 eval BLD_${KIND}_PIOBJ=.obj
-eval BLD_${KIND}_SHLIB=.lib
+eval BLD_${KIND}_SHLIB=.dll
 eval BLD_${KIND}_SHOBJ=.dll
 
 #
