@@ -1,4 +1,4 @@
-#!env ejs
+#!/usr/bin/env ejs
 /*
     utest -- Embedthis Unit Test Framework
  */
