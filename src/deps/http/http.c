@@ -744,7 +744,8 @@ static int issueRequest(HttpConn *conn, cchar *url, MprList *files)
         }
         mprLog(MPR_DEBUG, "retry %d of %d for: %s %s", count, conn->retries, app->method, url);
     }
-    if (conn->error || conn->errorMsg) {
+    //  MOB - comment out errorMsg as auth errors were returning errors here.
+    if (conn->error /* || conn->errorMsg */) {
         msg = (conn->errorMsg) ? conn->errorMsg : "";
         sep = (msg && *msg) ? "\n" : "";
         mprError("http: failed \"%s\" request for %s after %d attempt(s).%s%s", app->method, url, count, sep, msg);
@@ -773,7 +774,7 @@ static int reportResponse(HttpConn *conn, cchar *url, MprTime elapsed)
     if (conn->error) {
         app->success = 0;
     }
-    if (conn->rx && app->success) {
+    if (conn->rx && bytesRead > 0) {
         if (app->showStatus) {
             mprPrintf("%d\n", status);
         }
