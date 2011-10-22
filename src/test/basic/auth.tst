@@ -33,7 +33,7 @@ http.get(HTTP + "/basic/user/user.html")
 assert(http.status == 401)
 
 //  Access to cgi
-if (test.global && test.config.cgi) {
+if (!global.test && test.config.cgi) {
     http.setCredentials(null, null)
     http.get(HTTP + "/basic/basic.cgi")
     assert(http.status == 401)
