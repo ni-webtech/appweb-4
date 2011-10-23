@@ -683,7 +683,7 @@ static void compileFile(cchar *source, int kind)
         } else {
             trace("BUILD", "%s", source);
             app->csource = mprJoinPathExt(mprTrimPathExt(app->module), ".c");
-            if (mprWritePath(app->csource, script, len, 0664) < 0) {
+            if (mprWritePathContents(app->csource, script, len, 0664) < 0) {
                 fail("Can't write compiled script file %s", app->csource);
                 return;
             }
@@ -1158,7 +1158,7 @@ static void fixupFile(cchar *path)
     data = sreplace(data, "${LIBDIR}", app->libDir);
 
     tmp = mprGetTempPath(0);
-    if (mprWritePath(tmp, data, slen(data), 0644) < 0) {
+    if (mprWritePathContents(tmp, data, slen(data), 0644) < 0) {
         fail("Can't write %s", path);
         return;
     }
@@ -1257,7 +1257,7 @@ static void installAppConf()
         trace("EXISTS",  "Config file: %s", to);
         return;
 
-    } else if (mprWritePath(to, conf, slen(conf), 0644) < 0) {
+    } else if (mprWritePathContents(to, conf, slen(conf), 0644) < 0) {
         fail("Can't write %s", to);
         return;
     }
@@ -1280,7 +1280,7 @@ static void copyFile(cchar *from, cchar *to)
         trace("EXISTS",  "Config file: %s", to);
         return;
 
-    } else if (mprWritePath(to, data, slen(data), 0644) < 0) {
+    } else if (mprWritePathContents(to, data, slen(data), 0644) < 0) {
         fail("Can't write %s", to);
         return;
     }
@@ -1321,7 +1321,7 @@ static void generateAppDb()
 
     ext = smatch(app->database, "mdb") ? "mdb" : "sdb";
     dbpath = sfmt("%s/%s.%s", eroute->dbDir, app->appName, ext);
-    if (mprWritePath(dbpath, buf, 0, 0664) < 0) {
+    if (mprWritePathContents(dbpath, buf, 0, 0664) < 0) {
         return;
     }
     trace("CREATE", "Database: %s", dbpath);
@@ -1382,7 +1382,7 @@ static void makeFile(cchar *path, cchar *data, cchar *msg)
         trace("EXISTS", path);
         return;
     }
-    if (mprWritePath(path, data, slen(data), 0644) < 0) {
+    if (mprWritePathContents(path, data, slen(data), 0644) < 0) {
         fail("Can't write %s", path);
         return;
     }

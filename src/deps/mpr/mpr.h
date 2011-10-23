@@ -225,6 +225,11 @@
 /*
     Extra includes per O/S
  */
+#if CYGWIN
+    #include    "w32api/windows.h"
+    #include    "sys/cygwin.h"
+#endif
+
 #if LINUX && !__UCLIBC__
     #include    <sys/sendfile.h>
 #endif
@@ -4890,10 +4895,10 @@ extern ssize mprWriteFileString(MprFile *file, cchar *str);
     @see MprDirEntry MprFile MprPath mprCopyPath mprDeletePath mprFindFiles mprGetAbsPath mprGetCurrentPath 
         mprGetFirstPathSeparator mprGetLastPathSeparator mprGetNativePath mprGetPathBase 
         mprGetPathDir mprGetPathExt mprGetPathFiles mprGetPathLink mprGetPathNewline mprGetPathParent 
-        mprGetPathSeparators mprGetPortablePath mprGetRelPath mprGetTempPath mprGetTransformedPath mprIsAbsPath 
+        mprGetPathSeparators mprGetPortablePath mprGetRelPath mprGetTempPath mprGetWinPath mprIsAbsPath 
         mprIsRelPath mprJoinPath mprJoinPathExt mprMakeDir mprMakeLink mprMapSeparators mprNormalizePath
         mprPathExists mprReadPathContents mprReplacePathExt mprResolvePath mprSamePath mprSamePathCount mprSearchPath 
-        mprTrimPathExt mprTruncatePath 
+        mprTransformPath mprTrimPathExt mprTruncatePath 
     @defgroup MprPath MprPath
  */
 typedef struct MprPath {
@@ -4962,7 +4967,11 @@ extern int mprDeletePath(cchar *path);
 
 /**
     Convert a path to an absolute path
-    @description Get an absolute (canonical) equivalent representation of a path. 
+    @description Get an absolute (canonical) equivalent representation of a path. On windows this path will have
+        back-slash directory separators and will have a drive specifier. On Cygwin, the path will be a Cygwin style 
+        path with forward-slash directory specifiers and without a drive specifier. If the path is outside the
+        cygwin filesystem (outside c:/cygwin), the path will have a /cygdrive/DRIVE prefix. To get a windows style 
+        path, use mprGetWinPath.
     @param path Path to examine
     @returns An absolute path.
     @ingroup MprPath
@@ -5096,7 +5105,7 @@ extern MprList *mprGetPathTree(cchar *path, int flags);
 /**
     Get a portable path 
     @description Get an equivalent absolute path that is somewhat portable. 
-        This means it will use forward slashes ("/") as the directory separator.
+        This means it will use forward slashes ("/") as the directory separator. This call will not remove drive specifiers.
     @param path Path name to examine
     @returns An allocated string containing the new path.
     @ingroup MprPath
@@ -5121,23 +5130,16 @@ extern char *mprGetRelPath(cchar *path);
  */
 extern char *mprGetTempPath(cchar *tmpDir);
 
-/*
-    Flags for mprGetTransformedPath
- */
-#define MPR_PATH_ABS            0x1     /* Normalize to an absolute path */
-#define MPR_PATH_REL            0x2     /* Normalize to an relative path */
-#define MPR_PATH_CYGWIN         0x4     /* Normalize to a cygwin path */
-#define MPR_PATH_NATIVE_SEP     0x8     /* Use native path separators */
-
 /**
-    Transform a path
-    @description A path is transformed by cleaning and then transforming according to the flags.
-    @param path First path to compare
-    @param flags Flags to modify the path representation.
-    @returns A newly allocated, clean path.
+    Convert a path to an absolute windows path
+    @description Get a windows style, absolute (canonical) equivalent representation of a path. This path will 
+        have back-slash delimiters and a drive specifier. On non-windows systems, this returns an absolute path using
+        mprGetAbsPath.
+    @param path Path to examine
+    @returns A windows-style absolute path.
     @ingroup MprPath
  */
-extern char *mprGetTransformedPath(cchar *path, int flags);
+extern char *mprGetWinPath(cchar *path);
 
 /**
     Determine if a path is absolute
@@ -5320,6 +5322,24 @@ extern int mprSamePathCount(cchar *path1, cchar *path2, ssize len);
  */
 extern char *mprSearchPath(cchar *path, int flags, cchar *search, ...);
 
+/*
+    Flags for mprTransformPath
+ */
+#define MPR_PATH_ABS            0x1     /* Normalize to an absolute path */
+#define MPR_PATH_REL            0x2     /* Normalize to an relative path */
+#define MPR_PATH_WIN            0x4     /* Normalize to a windows path */
+#define MPR_PATH_NATIVE_SEP     0x8     /* Use native path separators */
+
+/**
+    Transform a path
+    @description A path is transformed by cleaning and then transforming according to the flags.
+    @param path First path to compare
+    @param flags Flags to modify the path representation.
+    @returns A newly allocated, clean path.
+    @ingroup MprPath
+ */
+extern char *mprTransformPath(cchar *path, int flags);
+
 /**
     Trim an extension from a path
     @description Trim a file extension (".ext") from a path name.
@@ -5338,7 +5358,7 @@ extern char *mprTrimPathExt(cchar *path);
     @param mode File permissions with which to create the file. E.g. 0644.
     @return The number of bytes written. Should equal len. Otherwise return a negative MPR error code.
  */
-extern ssize mprWritePath(cchar *path, cchar *buf, ssize len, int mode);
+extern ssize mprWritePathContents(cchar *path, cchar *buf, ssize len, int mode);
 
 /**
     Create and initialze the O/S dependent subsystem

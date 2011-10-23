@@ -10359,9 +10359,12 @@ MprFileSystem *mprCreateFileSystem(cchar *path)
     fs = (MprFileSystem*) mprCreateDiskFileSystem(path);
 #endif
 
-#if BLD_WIN_LIKE || CYGWIN
+#if BLD_WIN_LIKE
     fs->separators = sclone("\\/");
     fs->newline = sclone("\r\n");
+#elif CYGWIN
+    fs->separators = sclone("/\\");
+    fs->newline = sclone("\n");
 #else
     fs->separators = sclone("/");
     fs->newline = sclone("\n");
@@ -14698,49 +14701,73 @@ static MprList *findFiles(MprList *list, cchar *dir, int flags)
 
 /*
     Return an absolute (normalized) path.
+    On CYGWIN, this is a cygwin path with forward-slashes and without drive specs. 
+    Use mprGetWinPath for a windows style path with a drive specifier and back-slashes.
  */
-char *mprGetAbsPath(cchar *pathArg)
+char *mprGetAbsPath(cchar *path)
 {
     MprFileSystem   *fs;
-    char            *path;
+    char            *result;
 
-    if (pathArg == 0 || *pathArg == '\0') {
-        pathArg = ".";
+    if (path == 0 || *path == '\0') {
+        path = ".";
     }
-
 #if BLD_FEATURE_ROMFS
-    return mprNormalizePath(pathArg);
+    return mprNormalizePath(path);
+#elif CYGWIN
+    {
+        ssize   len;
+        /*
+            cygwin_conf_path has a bug for paths that attempt to address a directory above the root. ie. "../../../.."
+            So must convert to a windows path first.
+         */
+        if (strncmp(path, "../", 3) == 0) {
+            path = mprGetWinPath(path);
+        }
+        if ((len = cygwin_conv_path(CCP_WIN_A_TO_POSIX | CCP_ABSOLUTE, path, NULL, 0)) >= 0) {
+            /* Len includes room for the null */
+            if ((result = mprAlloc(len)) == 0) {
+                return 0;
+            }
+            cygwin_conv_path(CCP_WIN_A_TO_POSIX | CCP_ABSOLUTE, path, result, len);
+            if (len > 3 && result[len - 2] == '/' && result[len - 3] != ':') {
+                /* Trim trailing "/" */
+                result[len - 2] = '\0';
+            }
+            return result;
+        }
+    }
 #endif
-
-    fs = mprLookupFileSystem(pathArg);
-    if (isFullPath(fs, pathArg)) {
-        return mprNormalizePath(pathArg);
+    fs = mprLookupFileSystem(path);
+    if (isFullPath(fs, path)) {
+        return mprNormalizePath(path);
     }
 
+//  MOB - what does WINCE require?
 #if BLD_WIN_LIKE && !WINCE
 {
     char    buf[MPR_MAX_PATH];
-    GetFullPathName(pathArg, sizeof(buf) - 1, buf, NULL);
+    GetFullPathName(path, sizeof(buf) - 1, buf, NULL);
     buf[sizeof(buf) - 1] = '\0';
-    path = mprNormalizePath(buf);
+    result = mprNormalizePath(buf);
 }
 #elif VXWORKS
 {
     char    *dir;
-    if (hasDrive(fs, pathArg)) {
+    if (hasDrive(fs, path)) {
         dir = mprGetCurrentPath();
-        path = mprJoinPath(dir, &strchr(pathArg, ':')[1]);
+        result = mprJoinPath(dir, &strchr(path, ':')[1]);
 
     } else {
-        if (isAbsPath(fs, pathArg)) {
+        if (isAbsPath(fs, path)) {
             /*
                 Path is absolute, but without a drive. Use the current drive.
              */
             dir = mprGetCurrentPath();
-            path = mprJoinPath(dir, pathArg);
+            result = mprJoinPath(dir, path);
         } else {
             dir = mprGetCurrentPath();
-            path = mprJoinPath(dir, pathArg);
+            result = mprJoinPath(dir, path);
         }
     }
 }
@@ -14748,10 +14775,10 @@ char *mprGetAbsPath(cchar *pathArg)
 {
     char   *dir;
     dir = mprGetCurrentPath();
-    path = mprJoinPath(dir, pathArg);
+    result = mprJoinPath(dir, path);
 }
 #endif
-    return path;
+    return result;
 }
 
 
@@ -14865,7 +14892,7 @@ char *mprGetCurrentPath()
         return sjoin(dir, sep, NULL);
     }
 }
-#elif BLD_WIN_LIKE
+#elif BLD_WIN_LIKE || CYGWIN
 {
     MprFileSystem   *fs;
     fs = mprLookupFileSystem(dir);
@@ -14876,9 +14903,33 @@ char *mprGetCurrentPath()
 }
 
 
+cchar *mprGetFirstPathSeparator(cchar *path) 
+{
+    MprFileSystem   *fs;
+
+    fs = mprLookupFileSystem(path);
+    return firstSep(fs, path);
+}
+
+
+/*
+    Return a pointer into the path at the last path separator or null if none found
+ */
+cchar *mprGetLastPathSeparator(cchar *path) 
+{
+    MprFileSystem   *fs;
+
+    fs = mprLookupFileSystem(path);
+    return lastSep(fs, path);
+}
+
+
+/*
+    Return a path with native separators. This means "\\" on windows and cygwin
+ */
 char *mprGetNativePath(cchar *path)
 {
-    return mprGetTransformedPath(path, MPR_PATH_NATIVE_SEP);
+    return mprTransformPath(path, MPR_PATH_NATIVE_SEP);
 }
 
 
@@ -15172,7 +15223,7 @@ char *mprGetPortablePath(cchar *path)
 {
     char    *result, *cp;
 
-    result = mprGetTransformedPath(path, 0);
+    result = mprTransformPath(path, 0);
     for (cp = result; *cp; cp++) {
         if (*cp == '\\') {
             *cp = '/';
@@ -15208,22 +15259,22 @@ char *mprGetRelPath(cchar *pathArg)
     }
     sep = (cp = firstSep(fs, path)) ? *cp : defaultSep(fs);
     
-#if BLD_WIN_LIKE && !WINCE
-{
-    char    apath[MPR_MAX_FNAME];
-    GetFullPathName(path, sizeof(apath) - 1, apath, NULL);
-    apath[sizeof(apath) - 1] = '\0';
-    path = apath;
-    mprMapSeparators(path, sep);
-}
-#endif
     /*
         Get the working directory. Ensure it is null terminated and leave room to append a trailing separators
+        On cygwin, this will be a cygwin style path (starts with "/" and no drive specifier).
      */
     if (getcwd(home, sizeof(home)) == 0) {
         strcpy(home, ".");
     }
     home[sizeof(home) - 2] = '\0';
+
+#if (BLD_WIN_LIKE && !WINCE)
+    path = mprGetAbsPath(path);
+#elif CYGWIN
+    if (hasDrive(fs, path)) {
+        path = mprGetAbsPath(path);
+    }
+#endif
 
     /*
         Count segments in home working directory. Ignore trailing separators.
@@ -15244,15 +15295,11 @@ char *mprGetRelPath(cchar *pathArg)
                 commonSegments++;
             }
         } else if (fs->caseSensitive) {
-            if (tolower((int) *hp) != tolower((int) *cp)) {
+            if (*hp != *cp) {
                 break;
             }
-        } else {
-            if (*hp == *cp) {
-                ;
-            } else if (tolower((int) *hp) != tolower((int) *cp)) {
-                break;
-            }
+        } else if (*hp != *cp && tolower((int) *hp) != tolower((int) *cp)) {
+            break;
         }
     }
     mprAssert(commonSegments >= 0);
@@ -15285,27 +15332,6 @@ char *mprGetRelPath(cchar *pathArg)
     }
     mprMapSeparators(result, sep);
     return result;
-}
-
-
-/*
-    Return a pointer into the path at the last path separator or null if none found
- */
-cchar *mprGetLastPathSeparator(cchar *path) 
-{
-    MprFileSystem   *fs;
-
-    fs = mprLookupFileSystem(path);
-    return lastSep(fs, path);
-}
-
-
-cchar *mprGetFirstPathSeparator(cchar *path) 
-{
-    MprFileSystem   *fs;
-
-    fs = mprLookupFileSystem(path);
-    return firstSep(fs, path);
 }
 
 
@@ -15353,26 +15379,59 @@ char *mprGetTempPath(cchar *tempDir)
 }
 
 
-//  MOB - rename mprTransformPath
+/*
+    Return an absolute (normalized) path.
+    On CYGWIN, this is a cygwin path without drive specs.
+ */
+char *mprGetWinPath(cchar *path)
+{
+    char            *result;
+
+    if (path == 0 || *path == '\0') {
+        path = ".";
+    }
+#if BLD_FEATURE_ROMFS
+    result = mprNormalizePath(path);
+#elif CYGWIN
+{
+    ssize   len;
+    if ((len = cygwin_conv_path(CCP_POSIX_TO_WIN_A | CCP_ABSOLUTE, path, NULL, 0)) >= 0) {
+        if ((result = mprAlloc(len)) == 0) {
+            return 0;
+        }
+        cygwin_conv_path(CCP_POSIX_TO_WIN_A | CCP_ABSOLUTE, path, result, len);
+        return result;
+    } else {
+        result = mprGetAbsPath(path);
+    }
+}
+#else
+    result = mprGetAbsPath(path);
+#endif
+    return result;
+}
+
+
 /*
     This normalizes a path. Returns a normalized path according to flags. Default is absolute. 
     if MPR_PATH_NATIVE_SEP is specified in the flags, map separators to the native format.
  */
-char *mprGetTransformedPath(cchar *path, int flags)
+char *mprTransformPath(cchar *path, int flags)
 {
     char    *result;
 
-#if BLD_WIN_LIKE && FUTURE
-    if (flags & MPR_PATH_CYGWIN) {
-        result = toCygPath(path, flags);
-    } else {
-        result = toWinPath(path);
-    }
-#endif
-
+#if CYGWIN
+    if (flags & MPR_PATH_ABS) {
+        if (flags & MPR_PATH_WIN) {
+            result = mprGetWinPath(path);
+        } else {
+            result = mprGetAbsPath(path);
+        }
+#else
     if (flags & MPR_PATH_ABS) {
         result = mprGetAbsPath(path);
 
+#endif
     } else if (flags & MPR_PATH_REL) {
         result = mprGetRelPath(path);
 
@@ -15380,7 +15439,7 @@ char *mprGetTransformedPath(cchar *path, int flags)
         result = mprNormalizePath(path);
     }
 
-#if BLD_WIN_LIKE
+#if BLD_WIN_LIKE || CYGWIN
     if (flags & MPR_PATH_NATIVE_SEP) {
         mprMapSeparators(result, '\\');
     }
@@ -15500,91 +15559,9 @@ int mprMakeLink(cchar *path, cchar *target, bool hard)
 }
 
 
-#if BLD_WIN_LIKE && FUTURE
-/*
-    Normalize to an absolute cygwin path without a drive spec
- */
-static char *toCygPath(cchar *path)
-{
-    char    *absPath, *result;
-    int     len;
-
-    absPath = NULL;
-    if (!isFullPath(path)) {
-        absPath = mprGetAbsPath(path);
-        path = (cchar*) absPath;
-    }
-    mprAssert(isFullPath(path);
-        
-    if (fs->cygdrive) {
-        len = slen(fs->cygdrive);
-        if (sncasecmp(fs->cygdrive, &path[2], len) == 0 && isSep(path[len+2])) {
-            /*
-                If path is like: "c:/cygdrive/c/..."
-                Just strip the "c:" portion. Still validly qualified.
-             */
-            result = sclone(&path[len + 2]);
-
-        } else {
-            /*
-                Path is like: "c:/some/other/path". Prepend "/cygdrive/c/"
-             */
-            result = sfmt("%s/%c%s", fs->cygdrive, path[0], &path[2]);
-            len = slen(result);
-            if (isSep(result[len-1])) {
-                result[len-1] = '\0';
-            }
-        }
-    } else {
-        /*
-            Best we can do is get a relative path
-         */
-        result = mprGetRelPath(pathArg);
-    }
-    return result;
-}
-
-
-/*
-    Convert to an absolute windows path
- */
-static char *toWinPath(cchar *path)
-{
-    char    *buf, *result;
-    int     len;
-
-    if (isFullPath(path)) {
-        return sclone(path);
-    }
-    if (fs->cygdrive) {
-        len = slen(fs->cygdrive);
-        if (mprComparePath(fs->cygdrive, path, len) == 0 && isSep(path[len]) && 
-                isalpha(path[len+1]) && isSep(path[len+2])) {
-            /*
-                Has a "/cygdrive/c/" style prefix
-             */
-            buf = sfmt("%c:", path[len+1], &path[len + 2]);
-
-        } else {
-            /*
-                Cygwin path. Prepend "c:/cygdrive"
-             */
-            buf = sfmt("%s/%s", fs->cygdrive, path);
-        }
-        result = mprGetAbsPath(buf);
-
-    } else {
-        result = mprGetAbsPath(path);
-    }
-    mprMapSeparators(result, defaultSep(fs));
-    return result;
-}
-#endif
-
-
 /*
     Normalize a path to remove redundant "./" and cleanup "../" and make separator uniform. Does not make an abs path.
-    It does not map separators nor change case. 
+    It does not map separators, change case, nor add drive specifiers.
  */
 char *mprNormalizePath(cchar *pathArg)
 {
@@ -15927,7 +15904,6 @@ int mprSamePath(cchar *path1, cchar *path2)
 }
 
 
-//  MOB - not a great name
 /*
     Compare two file path to determine if they point to the same file.
  */
@@ -16009,8 +15985,7 @@ char *mprSearchPath(cchar *file, int flags, cchar *search, ...)
 }
 
 
-//  MOB - should be writePathContents
-ssize mprWritePath(cchar *path, cchar *buf, ssize len, int mode)
+ssize mprWritePathContents(cchar *path, cchar *buf, ssize len, int mode)
 {
     MprFile     *file;
 
