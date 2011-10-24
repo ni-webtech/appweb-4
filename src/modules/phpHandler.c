@@ -165,6 +165,7 @@ static void processPhp(HttpQueue *q)
     MprKey              *kp;
     MaPhp               *php;
     FILE                *fp;
+    cchar               *value;
     char                shebang[MPR_MAX_STRING], *key;
     zend_file_handle    file_handle;
 
@@ -191,7 +192,9 @@ static void processPhp(HttpQueue *q)
         if (conn->authPassword) {
             SG(request_info).auth_password = estrdup(conn->authPassword);
         }
-        SG(request_info).auth_digest = estrdup(httpGetHeader(conn, "Authorization"));
+        if ((value = httpGetHeader(conn, "Authorization")) != 0) {
+            SG(request_info).auth_digest = estrdup(value);
+        }
         SG(request_info).content_type = rx->mimeType;
         SG(request_info).path_translated = tx->filename;
         SG(request_info).content_length = (ssize) rx->length;
