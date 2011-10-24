@@ -20,8 +20,10 @@ if (!global.test || test.config["cgi"] == 1) {
 
     function match(key: String, value: String): Void {
         if (keyword(key) != value) {
-            print("\nKey \"" + keyword(key) + "\" not equal to expected: \"" + value + "\"\n")
             print(http.response)
+            print("\nKey \"" + key + "\"")
+            print("Expected: " + value)
+            // print("Actual  : " + keyword(value))
         }
         assert(keyword(key) == value)
     }
@@ -82,7 +84,7 @@ if (!global.test || test.config["cgi"] == 1) {
         match("PATH_INFO", "/extra/path")
         let scriptFilename = keyword("SCRIPT_FILENAME")
         let path = Path(scriptFilename).dirname.join("extra/path")
-        let translated = keyword("PATH_TRANSLATED")
+        let translated = Path(keyword("PATH_TRANSLATED"))
         assert(path == translated)
     }
 
@@ -153,7 +155,7 @@ if (!global.test || test.config["cgi"] == 1) {
 
         let scriptFilename = keyword("SCRIPT_FILENAME")
         let path = Path(scriptFilename).dirname.join("extra long/path|")
-        let translated = keyword("PATH_TRANSLATED")
+        let translated = Path(keyword("PATH_TRANSLATED"))
         assert(path == translated)
 
         http.get(HTTP + "/cgi-bin/cgi%20Program?var%201=value%201")
@@ -216,7 +218,7 @@ if (!global.test || test.config["cgi"] == 1) {
         match("ARG.5.", "g\\>h")
         match("ARG.6.", "i\\'j")
 
-        if (global.test && test.os == "WIN") {
+        if (Config.OS == "WIN" || Config.OS == "CYGWIN") {
             //  TODO - fix. Windows is eating a backslash
             match("ARG.7.", "k\"l")
         } else {

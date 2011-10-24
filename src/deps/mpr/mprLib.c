@@ -14554,6 +14554,11 @@ static MPR_INLINE bool hasDrive(MprFileSystem *fs, cchar *path)
 }
 
 
+/*
+    Return true if the path is absolute.
+    This means the path portion after an optional drive specifier must begin with a directory speparator charcter.
+    Cygwin returns true for "/abc" and "C:/abc".
+ */
 static MPR_INLINE bool isAbsPath(MprFileSystem *fs, cchar *path) 
 {
     char    *cp, *endDrive;
@@ -14584,12 +14589,19 @@ static MPR_INLINE bool isAbsPath(MprFileSystem *fs, cchar *path)
 }
 
 
+/*
+    Return true if the path is a fully qualified absolute path.
+    On windows, this means it must have a drive specifier.
+    On cygwin, this means it must not have a drive specifier.
+ */
 static MPR_INLINE bool isFullPath(MprFileSystem *fs, cchar *path) 
 {
-    char    *cp, *endDrive;
-
     mprAssert(fs);
     mprAssert(path);
+
+#if BLD_WIN_LIKE && !WINCE
+{
+    char    *cp, *endDrive;
 
     if (fs->hasDriveSpecs) {
         cp = firstSep(fs, path);
@@ -14597,20 +14609,25 @@ static MPR_INLINE bool isFullPath(MprFileSystem *fs, cchar *path)
         if (endDrive && cp && &endDrive[1] == cp) {
             return 1;
         }
-    } else {
-        if (isSep(fs, path[0])) {
-            return 1;
-        }
+        return 0;
+    }
+}
+#endif
+    if (isSep(fs, path[0])) {
+        return 1;
     }
     return 0;
 }
 
 
+/*
+    Return true if the directory is the root directory on a file system
+ */
 static MPR_INLINE bool isRoot(MprFileSystem *fs, cchar *path) 
 {
     char    *cp;
 
-    if (isFullPath(fs, path)) {
+    if (isAbsPath(fs, path)) {
         cp = firstSep(fs, path);
         if (cp && cp[1] == '\0') {
             return 1;
@@ -14740,6 +14757,7 @@ char *mprGetAbsPath(cchar *path)
 #endif
     fs = mprLookupFileSystem(path);
     if (isFullPath(fs, path)) {
+        /* Already absolute. On windows, must contain a drive specifier */
         return mprNormalizePath(path);
     }
 
@@ -15439,11 +15457,13 @@ char *mprTransformPath(cchar *path, int flags)
         result = mprNormalizePath(path);
     }
 
-#if BLD_WIN_LIKE || CYGWIN
     if (flags & MPR_PATH_NATIVE_SEP) {
+#if BLD_WIN_LIKE
         mprMapSeparators(result, '\\');
-    }
+#elif CYGWIN
+        mprMapSeparators(result, '/');
 #endif
+    }
     return result;
 }
 
