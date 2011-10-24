@@ -2222,6 +2222,13 @@
       <arglist>(int hashSize, int flags)</arglist>
     </member>
     <member kind="function">
+      <type>MprHash *</type>
+      <name>mprCreateHashFromWords</name>
+      <anchorfile>group___mpr_hash.html</anchorfile>
+      <anchor>ga6925d347168958f1e488ca4054a6d7d9</anchor>
+      <arglist>(cchar *str)</arglist>
+    </member>
+    <member kind="function">
       <type>MprKeyValue *</type>
       <name>mprCreateKeyPair</name>
       <anchorfile>group___mpr_list.html</anchorfile>
@@ -3266,10 +3273,10 @@
     </member>
     <member kind="function">
       <type>char *</type>
-      <name>mprGetTransformedPath</name>
+      <name>mprGetWinPath</name>
       <anchorfile>group___mpr_path.html</anchorfile>
-      <anchor>ga1a2fa58c096b505329046c0385a06aee</anchor>
-      <arglist>(cchar *path, int flags)</arglist>
+      <anchor>ga9bd48520260bb07575ca7899da34c0a2</anchor>
+      <arglist>(cchar *path)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -4764,6 +4771,13 @@
     </member>
     <member kind="function">
       <type>char *</type>
+      <name>mprTransformPath</name>
+      <anchorfile>group___mpr_path.html</anchorfile>
+      <anchor>ga7e21012e1efb9cd5b62fbcce55728deb</anchor>
+      <arglist>(cchar *path, int flags)</arglist>
+    </member>
+    <member kind="function">
+      <type>char *</type>
       <name>mprTrimPathExt</name>
       <anchorfile>group___mpr_path.html</anchorfile>
       <anchor>gada66ac05bfc058e1de68ebcc58e68642</anchor>
@@ -4995,9 +5009,9 @@
     </member>
     <member kind="function">
       <type>ssize</type>
-      <name>mprWritePath</name>
+      <name>mprWritePathContents</name>
       <anchorfile>mpr_8h.html</anchorfile>
-      <anchor>aba66f381b5ea316f910fd45cc8354787</anchor>
+      <anchor>a493014d6c3a406207003a3f40eb06843</anchor>
       <arglist>(cchar *path, cchar *buf, ssize len, int mode)</arglist>
     </member>
     <member kind="function">
@@ -6709,6 +6723,13 @@
       <arglist>(int hashSize, int flags)</arglist>
     </member>
     <member kind="function">
+      <type>MprHash *</type>
+      <name>mprCreateHashFromWords</name>
+      <anchorfile>group___mpr_hash.html</anchorfile>
+      <anchor>ga6925d347168958f1e488ca4054a6d7d9</anchor>
+      <arglist>(cchar *str)</arglist>
+    </member>
+    <member kind="function">
       <type>MprKey *</type>
       <name>mprGetFirstKey</name>
       <anchorfile>group___mpr_hash.html</anchorfile>
@@ -7090,10 +7111,10 @@
     </member>
     <member kind="function">
       <type>char *</type>
-      <name>mprGetTransformedPath</name>
+      <name>mprGetWinPath</name>
       <anchorfile>group___mpr_path.html</anchorfile>
-      <anchor>ga1a2fa58c096b505329046c0385a06aee</anchor>
-      <arglist>(cchar *path, int flags)</arglist>
+      <anchor>ga9bd48520260bb07575ca7899da34c0a2</anchor>
+      <arglist>(cchar *path)</arglist>
     </member>
     <member kind="function">
       <type>bool</type>
@@ -7192,6 +7213,13 @@
       <anchorfile>group___mpr_path.html</anchorfile>
       <anchor>ga38fb4d9b61ce3309125fae25538dc18d</anchor>
       <arglist>(cchar *path, int flags, cchar *search,...)</arglist>
+    </member>
+    <member kind="function">
+      <type>char *</type>
+      <name>mprTransformPath</name>
+      <anchorfile>group___mpr_path.html</anchorfile>
+      <anchor>ga7e21012e1efb9cd5b62fbcce55728deb</anchor>
+      <arglist>(cchar *path, int flags)</arglist>
     </member>
     <member kind="function">
       <type>char *</type>

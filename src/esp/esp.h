@@ -52,6 +52,10 @@ extern "C" {
 #else
     #define ESP_CORE_LIBS "${LIB}/mod_esp${SHOBJ} -lappweb -lpcre -lhttp -lmpr -lpthread -lm"
 #endif
+
+/*
+    Default SSL library switches
+ */
 #if BLD_FEATURE_SSL
     #if WIN
         #define ESP_SSL_LIBS " ${LIB}\\libmprssl.lib"
@@ -148,9 +152,6 @@ typedef struct EspRoute {
     char            *controllersDir;        /**< Directory for controllers */
     char            *dbDir;                 /**< Directory for databases */
     char            *layoutsDir;            /**< Directory for layouts */
-#if UNUSED
-    char            *modelsDir;             /**< Directory for models */
-#endif
     char            *staticDir;             /**< Directory for static web content */
     char            *viewsDir;              /**< Directory for views */
 
@@ -420,7 +421,7 @@ typedef struct EspReq {
 /**
     Add a header to the transmission using a format string.
     @description Add a header if it does not already exits.
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @param key Http response header key
     @param fmt Printf style formatted string to use as the header key value
     @param ... Arguments for fmt
@@ -433,7 +434,7 @@ extern void espAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 /**
     Add a header to the transmission
     @description Add a header if it does not already exits.
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @param key Http response header key
     @param value Value to set for the header
     @return Zero if successful, otherwise a negative MPR error code. Returns MPR_ERR_ALREADY_EXISTS if the header already
@@ -445,7 +446,7 @@ extern void espAddHeaderString(HttpConn *conn, cchar *key, cchar *value);
 /**
     Append a transmission header
     @description Set the header if it does not already exists. Append with a ", " separator if the header already exists.
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @param key Http response header key
     @param fmt Printf style formatted string to use as the header key value
     @param ... Arguments for fmt
@@ -456,7 +457,7 @@ extern void espAppendHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 /**
     Append a transmission header string
     @description Set the header if it does not already exists. Append with a ", " separator if the header already exists.
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @param key Http response header key
     @param value Value to set for the header
     @ingroup EspReq
@@ -500,18 +501,6 @@ extern bool espCheckSecurityToken(HttpConn *conn);
  */
 extern EdiRec *espCreateRec(HttpConn *conn, cchar *tableName, MprHash *data);
 
-#if UNUSED && KEEP
-/**
-    Send an "error" flash message
-    @description Flash messages are passed to the next request (only) for display. Use the flash() control to
-        display.
-    @param conn Http connection object
-    @param fmt Printf style formatted string to use as the message
-    @ingroup EspReq
- */
-void espError(HttpConn *conn, cchar *fmt, ...);
-#endif
-
 /**
     Finalize transmission of the http request
     @description Finalize writing HTTP data by writing the final chunk trailer if required. If using chunked transfers,
@@ -525,13 +514,14 @@ extern void espFinalize(HttpConn *conn);
 /**
     Flush transmit data. 
     @description This writes any buffered data.
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @ingroup EspReq
  */
 extern void espFlush(HttpConn *conn);
 
 /**
     Get a list of column names.
+    @param conn HttpConn connection object
     @param rec Database record. If set to NULL, the current database record defined via $form() is used.
     @return An MprList of column names in the given table. If there is no record defined, an empty list is returned.
     @ingroup EspReq
@@ -549,18 +539,25 @@ extern HttpConn *espGetConn();
     Get the receive body content length
     @description Get the length of the receive body content (if any). This is used in servers to get the length of posted
         data and in clients to get the response body length.
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @return A count of the response content data in bytes.
     @ingroup EspReq
  */
 extern MprOff espGetContentLength(HttpConn *conn);
 
-extern cchar *eGetContentType();
+/**
+    Get the receive body content type
+    @description Get the content mime type of the receive body content (if any).
+    @param conn HttpConn connection object
+    @return Mime type of any receive content. Set to NULL if not posted data.
+    @ingroup EspReq
+ */
+extern cchar *espGetContentType(HttpConn *conn);
 
 /**
     Get the request cookies
     @description Get the cookies defined in the current requeset
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @return Return a string containing the cookies sent in the Http header of the last request
     @ingroup EspReq
  */
@@ -575,13 +572,19 @@ extern cchar *espGetCookies(HttpConn *conn);
  */
 extern Edi *espGetDatabase(HttpConn *conn);
 
+/**
+    Get the default document root directory for the request route.
+    @param conn HttpConn connection object
+    @return A directory path name 
+    @ingroup EspReq
+ */
 extern cchar *espGetDir(HttpConn *conn);
 
 /**
     Get a flash message
     @description This retrieves a flash message of a specified type.
         Flash messages are special session state message that are passed to the next request (only). 
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @param type Type of flash message to retrieve. Possible types include: "error", "inform", "warning", "all".
     @ingroup EspReq
  */
@@ -599,7 +602,7 @@ extern EdiGrid *espGetGrid(HttpConn *conn);
 /**
     Get an rx http header.
     @description Get a http response header for a given header key.
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @param key Name of the header to retrieve. This should be a lower case header name. For example: "Connection"
     @return Value associated with the header key or null if the key did not exist in the response.
     @ingroup EspReq
@@ -609,7 +612,7 @@ extern cchar *espGetHeader(HttpConn *conn, cchar *key);
 /**
     Get the hash table of rx Http headers
     @description Get the internal hash table of rx headers
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @return Hash table. See MprHash for how to access the hash table.
     @ingroup EspReq
  */
@@ -619,7 +622,7 @@ extern MprHash *espGetHeaderHash(HttpConn *conn);
     Get all the requeset http headers.
     @description Get all the rx headers. The returned string formats all the headers in the form:
         key: value\\nkey2: value2\\n...
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @return String containing all the headers. The caller must free this returned string.
     @ingroup EspReq
  */
@@ -682,7 +685,7 @@ extern cchar *espGetQueryString(HttpConn *conn);
     @description This returns the referring URI as described in the HTTP "referer" (yes the HTTP specification does
         spell it incorrectly) header. If this header is not defined, this routine will return the home URI as retured
         by $espGetHome.
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @return String URI back to the referring URI. If no referrer is defined, refers to the home URI.
     @ingroup EspReq
  */
@@ -699,7 +702,7 @@ extern cchar *espGetSecurityToken(HttpConn *conn);
 
 /**
     Get the response status
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @return An integer Http response code. Typically 200 is success.
     @ingroup EspReq
  */
@@ -708,7 +711,7 @@ extern int espGetStatus(HttpConn *conn);
 /**
     Get the Http response status message. 
     @description The HTTP status message is supplied on the first line of the HTTP response.
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @returns A Http status message.
     @ingroup EspReq
  */
@@ -718,12 +721,21 @@ extern char *espGetStatusMessage(HttpConn *conn);
     Get a relative URI to the top of the application.
     @description This will return an absolute URI for the top of the application. This will be "/" if there is no
         application script name. Otherwise, it will return a URI for the script name for the application.
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @return String Absolute URI to the top of the application
     @ingroup EspReq
  */
 char *espGetTop(HttpConn *conn);
 
+/**
+    Get the uploaded files
+    @description Get the hash table defining the uploaded files.
+        This hash is indexed by the file identifier supplied in the upload form. The hash entries are HttpUploadFile
+        objects.
+    @param conn HttpConn connection object
+    @return A hash of HttpUploadFile objects.
+    @ingroup EspReq
+ */
 extern MprHash *espGetUploads(HttpConn *conn);
 
 /**
@@ -751,19 +763,20 @@ extern bool espHasGrid(HttpConn *conn);
  */
 extern bool espHasRec(HttpConn *conn);
 
-#if UNUSED && KEEP
 /**
-    Send an "inform" flash message
-    @description Flash messages are passed to the next request (only) for display. Use the flash() control to
-        display.
-    @param conn Http connection object
-    @param fmt Printf style formatted string to use as the message
+    Test if the receive input stream is at end-of-file
+    @param conn HttpConn connection object
+    @return True if there is no more receive data to read
     @ingroup EspReq
  */
-void espInform(HttpConn *conn, cchar *fmt, ...);
-#endif
-
 extern bool espIsEof(HttpConn *conn);
+
+/**
+    Test if the connection is using SSL and is secure
+    @param conn HttpConn connection object
+    @return True if the connection is using SSL.
+    @ingroup EspReq
+ */
 extern bool espIsSecure(HttpConn *conn);
 
 /**
@@ -883,12 +896,21 @@ extern EdiRec *espReadRecWhere(HttpConn *conn, cchar *tableName, cchar *fieldNam
  */
 extern EdiRec *eReadRecByKey(cchar *tableName, cchar *key);
 
-extern ssize espReceive(HttpConn *conn, char *buf, ssize len);
+/**
+    Read receive body content
+    @description Read body content from the client
+    @param conn HttpConn connection object
+    @param buf Buffer to accept content data
+    @param size Size of the buffer
+    @return A count of bytes read into the buffer
+    @ingroup EspReq
+ */
+extern ssize espReceive(HttpConn *conn, char *buf, ssize size);
 
 /**
     Redirect the client
     @description Redirect the client to a new uri.
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @param status Http status code to send with the response
     @param target New target uri for the client
     @ingroup EspReq
@@ -898,7 +920,7 @@ extern void espRedirect(HttpConn *conn, int status, cchar *target);
 /**
     Redirect the client back to the referrer
     @description Redirect the client to the referring URI.
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @ingroup EspReq
  */
 extern void espRedirectBack(HttpConn *conn);
@@ -906,7 +928,7 @@ extern void espRedirectBack(HttpConn *conn);
 /**
     Remove a header from the transmission
     @description Remove a header if present.
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @param key Http response header key
     @return Zero if successful, otherwise a negative MPR error code.
     @ingroup EspReq
@@ -916,6 +938,7 @@ extern int espRemoveHeader(HttpConn *conn, cchar *key);
 /**
     Remove a record from a database table
     @description Remove the record identified by the key value from the given table.
+    @param conn HttpConn connection object
     @param tableName Database table name
     @param key Key value of the record to remove 
     @return Record instance of EdiRec.
@@ -935,7 +958,6 @@ extern bool espRemoveRec(HttpConn *conn, cchar *tableName, cchar *key);
  */
 extern ssize espRender(HttpConn *conn, cchar *fmt, ...);
 
-//  MOB - can this return short?
 /**
     Render a block of data to the client
     @description Render a block of data to the client. Data packets will be created as required to store the write data.
@@ -1010,8 +1032,7 @@ extern void espRenderView(HttpConn *conn, cchar *name);
 
 /**
     Enable auto-finalizing for this request
-    @description Remove a header if present.
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @param on Set to true to enable auto-finalizing.
     @return True if auto-finalizing was enabled prior to this call
     @ingroup EspReq
@@ -1028,7 +1049,7 @@ extern void espSetConn(HttpConn *conn);
 /**
     Define a content length header in the transmission. 
     @description This will define a "Content-Length: NNN" request header.
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @param length Numeric value for the content length header.
     @ingroup EspReq
  */
@@ -1037,7 +1058,7 @@ extern void espSetContentLength(HttpConn *conn, MprOff length);
 /**
     Set a cookie in the transmission
     @description Define a cookie to send in the transmission Http header
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @param name Cookie name
     @param value Cookie value
     @param path URI path to which the cookie applies
@@ -1054,7 +1075,7 @@ extern void espSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path,
 /**
     Set the transmission (response) content mime type
     @description Set the mime type Http header in the transmission
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @param mimeType Mime type string
     @ingroup EspReq
  */
@@ -1150,7 +1171,7 @@ extern void espSetIntParam(HttpConn *conn, cchar *var, int value);
 /**
     Set a Http response status.
     @description Set the Http response status for the request. This defaults to 200 (OK).
-    @param conn HttpConn connection object created via $httpCreateConn
+    @param conn HttpConn connection object
     @param status Http status code.
     @ingroup EspReq
  */
@@ -1172,6 +1193,7 @@ extern void espSetParam(HttpConn *conn, cchar *var, cchar *value);
     @description The current record is used to supply data to various abbreviated controls, such as: text(), input(), 
         checkbox and dropdown()
     @param conn HttpConn connection object
+    @param rec Record object to define as the current record.
     @return The grid instance. This permits chaining.
     @ingroup EspReq
     @internal
@@ -1293,18 +1315,6 @@ extern bool espUpdateRec(HttpConn *conn, EdiRec *rec);
     @ingroup EspReq
  */
 extern cchar *espUri(HttpConn *conn, cchar *target);
-
-#if UNUSED && KEEP
-/**
-    Send an "warn" flash message
-    @description Flash messages are passed to the next request (only) for display. Use the flash() control to
-        display.
-    @param conn Http connection object
-    @param fmt Printf style formatted string to use as the message
-    @ingroup EspReq
- */
-void espWarn(HttpConn *conn, cchar *fmt, ...);
-#endif
 
 /********************************** Controls **********************************/
 /**
@@ -2020,6 +2030,16 @@ extern void tree(EdiGrid *grid, cchar *options);
 
 /******************************* Abbreviated API ******************************/
 
+/**
+    Add a header to the transmission using a format string.
+    @description Add a header if it does not already exits.
+    @param key Http response header key
+    @param fmt Printf style formatted string to use as the header key value
+    @param ... Arguments for fmt
+    @return Zero if successful, otherwise a negative MPR error code. Returns MPR_ERR_ALREADY_EXISTS if the header already
+        exists.
+    @ingroup EspAbbrev
+ */
 extern void addHeader(cchar *key, cchar *fmt, ...);
 
 /**
@@ -2044,11 +2064,19 @@ extern EdiRec *createRec(cchar *tableName, MprHash *data);
  */
 extern void createSession();
 
+/**
+    Destroy a session state object
+    @description
+    @ingroup EspAbbrev
+ */
 extern void destroySession();
 
+/**
+    Dont auto-finalize this request
+    @ingroup EspAbbrev
+ */
 extern void dontAutoFinalize();
 
-#if UNUSED
 /**
     Set an error flash notification message.
     @description Flash messages persist for only one request and are a convenient way to pass state information or 
@@ -2057,7 +2085,6 @@ extern void dontAutoFinalize();
     @ingroup EspAbbrev
  */
 extern void error(cchar *fmt, ...);
-#endif
 
 /**
     Finalize the response.
@@ -2076,6 +2103,12 @@ extern void finalize();
  */
 extern MprList *getColumns(EdiRec *rec);
 
+/**
+    Get the request cookies
+    @description Get the cookies defined in the current requeset
+    @return Return a string containing the cookies sent in the Http header of the last request
+    @ingroup EspAbbrev
+ */
 extern cchar *getCookies();
 
 /**
@@ -2087,7 +2120,21 @@ extern cchar *getCookies();
  */
 extern HttpConn *getConn();
 
+/**
+    Get the receive body content length
+    @description Get the length of the receive body content (if any). This is used in servers to get the length of posted
+        data and in clients to get the response body length.
+    @return A count of the response content data in bytes.
+    @ingroup EspAbbrev
+ */
 extern MprOff getContentLength();
+
+/**
+    Get the receive body content type
+    @description Get the content mime type of the receive body content (if any).
+    @return Mime type of any receive content. Set to NULL if not posted data.
+    @ingroup EspAbbrev
+ */
 extern cchar *getContentType();
 
 /**
@@ -2099,6 +2146,11 @@ extern cchar *getContentType();
  */
 extern Edi *getDatabase();
 
+/**
+    Get the default document root directory for the request route.
+    @return A directory path name 
+    @ingroup EspAbbrev
+ */
 extern cchar *getDir();
 
 /**
@@ -2113,7 +2165,6 @@ extern EdiGrid *getGrid();
 /**
     Get an rx http header.
     @description Get a http response header for a given header key.
-    @param conn HttpConn connection object created via $httpCreateConn
     @param key Name of the header to retrieve. This should be a lower case header name. For example: "Connection"
     @return Value associated with the header key or null if the key did not exist in the response.
     @ingroup EspAbbrev
@@ -2173,6 +2224,14 @@ extern cchar *getSessionVar(cchar *name);
  */
 cchar *getTop();
 
+/**
+    Get the uploaded files
+    @description Get the hash table defining the uploaded files.
+        This hash is indexed by the file identifier supplied in the upload form. The hash entries are HttpUploadFile
+        objects.
+    @return A hash of HttpUploadFile objects.
+    @ingroup EspAbbrev
+ */
 extern MprHash *getUploads();
 
 /**
@@ -2200,8 +2259,36 @@ extern bool hasGrid();
  */
 extern bool hasRec();
 
+/**
+    Test if the receive input stream is at end-of-file
+    @return True if there is no more receive data to read
+    @ingroup EspAbbrev
+ */
 extern bool isEof();
+
+/**
+    Test if a http request is finalized.
+    @description This tests if #espFinalize or #httpFinalize has been called for a request.
+    @return True if the request has been finalized.
+    @ingroup EspAbbrev
+ */
 extern bool isFinalized();
+
+/**
+    Set an informational flash notification message.
+    @description Flash messages persist for only one request and are a convenient way to pass state information or 
+    feedback messages to the next request. 
+    This routine calls $espInform.
+    @param fmt Printf style message format
+    @ingroup EspAbbrev
+ */
+extern void inform(cchar *fmt, ...);
+
+/**
+    Test if the connection is using SSL and is secure
+    @return True if the connection is using SSL.
+    @ingroup EspAbbrev
+ */
 extern bool isSecure();
 
 /**
@@ -2319,7 +2406,15 @@ extern EdiRec *readRecWhere(cchar *tableName, cchar *fieldName, cchar *operation
  */
 extern EdiRec *readRecByKey(cchar *tableName, cchar *key);
 
-extern ssize receive(char *buf, ssize len);
+/**
+    Read receive body content
+    @description Read body content from the client
+    @param buf Buffer to accept content data
+    @param size Size of the buffer
+    @return A count of bytes read into the buffer
+    @ingroup EspAbbrev
+ */
+extern ssize receive(char *buf, ssize size);
 
 /**
     Redirect the client
@@ -2330,6 +2425,11 @@ extern ssize receive(char *buf, ssize len);
  */
 extern void redirect(cchar *target);
 
+/**
+    Redirect the client back to the referrer
+    @description Redirect the client to the referring URI.
+    @ingroup EspAbbrev
+ */
 extern void redirectBack();
 
 /**
@@ -2353,6 +2453,13 @@ extern bool removeRec(cchar *tableName, cchar *key);
  */
 extern ssize render(cchar *fmt, ...);
 
+/**
+    Render an error message back to the client and finalize the request. The output is Html escaped for security.
+    @param status Http status code
+    @param fmt Printf style message format
+    @return A count of the bytes actually written
+    @ingroup EspAbbrev
+ */
 extern void renderError(int status, cchar *fmt, ...);
 
 /**
@@ -2399,6 +2506,12 @@ extern void renderView(cchar *view);
 */
 extern void setCookie(cchar *name, cchar *value, cchar *path, cchar *domain, MprTime lifespan, bool isSecure);
 
+/**
+    Set the transmission (response) content mime type
+    @description Set the mime type Http header in the transmission
+    @param mimeType Mime type string
+    @ingroup EspAbbrev
+ */
 extern void setContentType(cchar *mimeType);
 
 /**
@@ -2428,7 +2541,6 @@ extern EdiRec *setField(EdiRec *rec, cchar *fieldName, cchar *value);
  */
 extern EdiRec *setFields(EdiRec *rec, MprHash *data);
 
-//  MOB - confusing vs espSetFlash
 /**
     Set a flash notification message.
     @description Flash messages persist for only one request and are a convenient way to pass state information or 
@@ -2450,6 +2562,14 @@ extern void setFlash(cchar *kind, cchar *fmt, ...);
  */
 extern EdiGrid *setGrid(EdiGrid *grid);
 
+/**
+    Set a transmission header
+    @description Set a Http header to send with the request. If the header already exists, it its value is overwritten.
+    @param key Http response header key
+    @param fmt Printf style formatted string to use as the header key value
+    @param ... Arguments for fmt
+    @ingroup EspAbbrev
+ */
 extern void setHeader(cchar *key, cchar *fmt, ...);
 
 /**
@@ -2481,6 +2601,12 @@ extern EdiRec *setRec(EdiRec *rec);
  */
 extern void setSessionVar(cchar *name, cchar *value);
 
+/**
+    Set a Http response status.
+    @description Set the Http response status for the request. This defaults to 200 (OK).
+    @param status Http status code.
+    @ingroup EspAbbrev
+ */
 extern void setStatus(int status);
 
 /**
@@ -2587,7 +2713,6 @@ extern bool updateRec(EdiRec *rec);
  */
 extern cchar *uri(cchar *target);
 
-#if UNUSED
 /**
     Set an arning flash notification message.
     @description Flash messages persist for only one request and are a convenient way to pass state information or 
@@ -2597,17 +2722,6 @@ extern cchar *uri(cchar *target);
     @ingroup EspAbbrev
  */
 extern void warn(cchar *fmt, ...);
-
-/**
-    Set an informational flash notification message.
-    @description Flash messages persist for only one request and are a convenient way to pass state information or 
-    feedback messages to the next request. 
-    This routine calls $espInform.
-    @param fmt Printf style message format
-    @ingroup EspAbbrev
- */
-extern void inform(cchar *fmt, ...);
-#endif
 
 #ifdef __cplusplus
 } /* extern C */

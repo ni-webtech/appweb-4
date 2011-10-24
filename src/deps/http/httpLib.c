@@ -3736,6 +3736,7 @@ void httpFormatErrorV(HttpConn *conn, int status, cchar *fmt, va_list args)
 {
     if (conn->errorMsg == 0) {
         conn->errorMsg = sfmtv(fmt, args);
+        //  MOB - need an escape option in status
         if (status) {
             if (status < 0) {
                 status = HTTP_CODE_INTERNAL_SERVER_ERROR;
@@ -6705,7 +6706,7 @@ bool httpWillNextQueueAcceptSize(HttpQueue *q, ssize size)
 
 /*  
     Write a block of data. This is the lowest level write routine for data. This will buffer the data and flush if
-    the queue buffer is full. This will always accept the data but may return with a "short" write.
+    the queue buffer is full. This will always accept the data.
  */
 ssize httpWriteBlock(HttpQueue *q, cchar *buf, ssize size)
 {

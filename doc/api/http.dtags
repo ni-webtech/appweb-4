@@ -1306,13 +1306,6 @@
     <filename>group___http_route.html</filename>
     <class kind="struct">HttpLang</class>
     <member kind="function">
-      <type>HttpRoute *</type>
-      <name>httpAddConfiguredRoute</name>
-      <anchorfile>group___http_route.html</anchorfile>
-      <anchor>ga6a8242668f543c855e6c96b36b5ac0a1</anchor>
-      <arglist>(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, cchar *source)</arglist>
-    </member>
-    <member kind="function">
       <type>void</type>
       <name>httpAddHomeRoute</name>
       <anchorfile>group___http_route.html</anchorfile>
@@ -1344,8 +1337,8 @@
       <type>void</type>
       <name>httpAddRouteErrorDocument</name>
       <anchorfile>group___http_route.html</anchorfile>
-      <anchor>gadb618424d01ede2beeff95ef83898025</anchor>
-      <arglist>(HttpRoute *route, int status, cchar *url)</arglist>
+      <anchor>ga88589290f2ddbebfdf376b86d171c9b9</anchor>
+      <arglist>(HttpRoute *route, int status, cchar *uri)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -1472,6 +1465,13 @@
       <anchorfile>group___http_route.html</anchorfile>
       <anchor>gadd8a97406d8776677dddf8107d570a69</anchor>
       <arglist>(struct HttpHost *host)</arglist>
+    </member>
+    <member kind="function">
+      <type>HttpRoute *</type>
+      <name>httpDefineRoute</name>
+      <anchorfile>group___http_route.html</anchorfile>
+      <anchor>ga20b7156a3cfb5527c8f03ff6a197ec96</anchor>
+      <arglist>(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, cchar *source)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -1722,8 +1722,8 @@
       <type>void</type>
       <name>httpSetRouteTemplate</name>
       <anchorfile>group___http_route.html</anchorfile>
-      <anchor>gaece79ff5a2253f29a0fa4b9c9880b4ac</anchor>
-      <arglist>(HttpRoute *route, cchar *template)</arglist>
+      <anchor>gaa330ec51c47806576240547ab3f06c7c</anchor>
+      <arglist>(HttpRoute *route, cchar *tplate)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -1743,8 +1743,8 @@
       <type>char *</type>
       <name>httpTemplate</name>
       <anchorfile>group___http_route.html</anchorfile>
-      <anchor>gaf03908c0b4e712f537dce44d6e8ecedd</anchor>
-      <arglist>(HttpConn *conn, cchar *template, MprHash *options)</arglist>
+      <anchor>gae4b6d8eea6fd3315c15b353a1fd71753</anchor>
+      <arglist>(HttpConn *conn, cchar *tplate, MprHash *options)</arglist>
     </member>
     <member kind="function">
       <type>bool</type>
@@ -1937,6 +1937,13 @@
       <anchorfile>group___http_rx.html</anchorfile>
       <anchor>ga65544de95f88799ed0390fe6d468b2eb</anchor>
       <arglist>(HttpConn *conn, cchar *var, int value)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>httpSetMethod</name>
+      <anchorfile>group___http_rx.html</anchorfile>
+      <anchor>ga246c59aa7888e4eabb40b09d3420f4fe</anchor>
+      <arglist>(HttpConn *conn, cchar *method)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
