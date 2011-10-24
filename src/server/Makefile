@@ -73,7 +73,7 @@ cgi-bin/cgiProgram$(BLD_EXE): $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
 	chmod +x cgi-bin/*
 
 run:
-	$(call setlibpath) ; $(BLD_BIN_DIR)/$(BLD_PRODUCT) --log stdout:2 --config appweb.conf
+	$(call setlibpath) ; sudo $(BLD_BIN_DIR)/$(BLD_PRODUCT) --log stdout:2 --config appweb.conf
 
 cleanExtra:
 	rm -f $(TARGETS) $(BLD_PRODUCT)$(BLD_EXE) $(EXTRA_TARGETS)

@@ -6,7 +6,7 @@
     SECRET: @@secret
 
     <% alert("<html>", "{escape: true}"); %>
-    <% anchor("Hello <b> World", espGetReferrer(conn), "{escape: true}"); %>
+    <% anchor("Hello <b> World", getReferrer(conn), "{escape: true}"); %>
 
     <% button("commit", "OK", NULL); %>
     <% button("commit", "Cancel", NULL); %>

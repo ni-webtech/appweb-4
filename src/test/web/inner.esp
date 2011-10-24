@@ -1,1 +1,1 @@
-<% espRender(conn, "Hello from inner text"); -%>
+<% render("Hello from inner text"); -%>

@@ -4,6 +4,6 @@
 </head>
 <body>
     <h1>ESP Home Page</h1>
-    <h3>Greetings: <% espRender(conn, "Hello Home Page"); %></h3>
+    <h3>Greetings: <% render("Hello Home Page"); %></h3>
 </body>
 </html>

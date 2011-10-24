@@ -224,7 +224,7 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
         /*
             Use layouts iff there is a source defined on the route. Only MVC/controllers based apps do this.
          */
-        layout = (rx->route->sourceName) ? mprJoinPath(eroute->layoutsDir, "default.esp") : 0;
+        layout = (eroute->layoutsDir != eroute->dir) ? mprJoinPath(eroute->layoutsDir, "default.esp") : 0;
         if ((script = espBuildScript(eroute, page, source, cacheName, layout, &err)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't build %s, error %s", source, err);
             return 0;

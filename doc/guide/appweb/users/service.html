@@ -96,25 +96,25 @@ Start -&gt; Control Panel -&gt; Administrative Tools -&gt; Services
 </pre>
             <p>Then select and double click on the <b>Embedthis Appweb</b> service. A dialog panel will be displayed
             from which you can start and stop the AppwebAngel process.</p><img src="../../../images/services.jpg" alt=
-            "" class="screen" />
+            "" class="bare-screen" />
             <p>When started or stopped, the Angel will first do the same operation on the real Appweb instance. Pausing
             the Angel will have no effect on Appweb, but will pause the Angel itself.</p>
             <h3>Removing Appweb as a Service</h3>
             <p>To permanently stop Appweb running as a Windows Service either remove the software or uninstall the
             Angel via the following command:</p>
             <pre>
-appwebAngel --uninstall
+angel --uninstall
 </pre>
             <p>To re-instate the Angel as a Windows Service, run the following command:</p>
             <pre>
-appwebAngel --install
+angel --install
 </pre>
             <p>Once installed, you will need to start the service via the Services control applet.</p><a name="monitor"
             id="monitor"></a>
             <h3>Appweb Monitor</h3>
             <p>The Windows Appweb Monitor is launched when you log in. It a quick and easy way to start, stop and
             restart Appweb. You can also launch a browser to display the documentation or the Appweb management console
-            (future feature).</p><img src="../../../images/tray.jpg" alt="" class="screen" />
+            (future feature).</p><img src="../../../images/tray.jpg" alt="" class="bare-screen" />
             <p>When you select stop Appweb, you actually stop the Angel process which in turn stops Appweb. Similarly,
             when you select start Appweb, you are really starting the Angel which detects that Appweb is not running
             and automatically launches it. <a name="linux" id="linux"></a></p>
