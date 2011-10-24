@@ -1,7 +1,7 @@
 <h1>Post List</h1>
 
 <% 
-    EdiGrid *grid = readGrid("post");
+    EdiGrid *grid = readAllRecs("post");
     table(grid, "{ \
     data-click: '@edit', \
     columns: { \

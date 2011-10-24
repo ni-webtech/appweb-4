@@ -60,6 +60,7 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		C90DFAD61455E8E300C0CC7F /* espAbbrev.c in Sources */ = {isa = PBXBuildFile; fileRef = C90DFAD51455E8E300C0CC7F /* espAbbrev.c */; };
 		C9120B84142CE2B5006826A9 /* edi.c in Sources */ = {isa = PBXBuildFile; fileRef = C9120B81142CE2B5006826A9 /* edi.c */; };
 		C9120B85142CE2B5006826A9 /* mdb.c in Sources */ = {isa = PBXBuildFile; fileRef = C9120B82142CE2B5006826A9 /* mdb.c */; };
 		C9120B86142CE2B5006826A9 /* sdb.c in Sources */ = {isa = PBXBuildFile; fileRef = C9120B83142CE2B5006826A9 /* sdb.c */; };
@@ -479,6 +480,7 @@
 
 /* Begin PBXFileReference section */
 		C9081AA513D899CE00FE7376 /* Product.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Product.xcconfig; sourceTree = "<group>"; };
+		C90DFAD51455E8E300C0CC7F /* espAbbrev.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espAbbrev.c; path = ../../../src/esp/espAbbrev.c; sourceTree = "<group>"; };
 		C9120B81142CE2B5006826A9 /* edi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = edi.c; path = ../../../src/esp/edi.c; sourceTree = "<group>"; };
 		C9120B82142CE2B5006826A9 /* mdb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mdb.c; path = ../../../src/esp/mdb.c; sourceTree = "<group>"; };
 		C9120B83142CE2B5006826A9 /* sdb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sdb.c; path = ../../../src/esp/sdb.c; sourceTree = "<group>"; };
@@ -705,6 +707,7 @@
 				C9120B81142CE2B5006826A9 /* edi.c */,
 				C913687D14041CBA0024EB0A /* esp.c */,
 				C93ACAB214206B17006FF043 /* espHtml.c */,
+				C90DFAD51455E8E300C0CC7F /* espAbbrev.c */,
 				C913687E14041CBA0024EB0A /* espFramework.c */,
 				C913687F14041CBA0024EB0A /* espSession.c */,
 				C913688014041CBA0024EB0A /* espTemplate.c */,
@@ -1546,6 +1549,7 @@
 				C9120B84142CE2B5006826A9 /* edi.c in Sources */,
 				C9120B85142CE2B5006826A9 /* mdb.c in Sources */,
 				C9120B86142CE2B5006826A9 /* sdb.c in Sources */,
+				C90DFAD61455E8E300C0CC7F /* espAbbrev.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

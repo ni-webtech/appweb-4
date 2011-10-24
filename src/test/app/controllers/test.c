@@ -26,14 +26,14 @@ static void cached() {
 }
 
 static void login() { 
-    if (session("id")[0]) {
+    if (getSessionVar("id")[0]) {
         render("Logged in");
         finalize();
 
     } else if (smatch(param("username"), "admin") && smatch(param("password"), "secret")) {
         render("Valid Login");
         finalize();
-        setSession("id", "admin");
+        setSessionVar("id", "admin");
 
     } else if (smatch(getMethod(), "POST")) {
         render("Invalid login, please retry.");
@@ -45,7 +45,7 @@ static void login() {
 }
 
 static void missing() {
-    httpError(getConn(), HTTP_CODE_INTERNAL_SERVER_ERROR, "Missing action");
+    renderError(HTTP_CODE_INTERNAL_SERVER_ERROR, "Missing action");
 }
 
 ESP_EXPORT int esp_controller_test(EspRoute *eroute, MprModule *module) {

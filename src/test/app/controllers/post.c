@@ -7,7 +7,7 @@ static void common() {
 }
 
 static void create() { 
-    if (writeRec(createRec("post", params()))) {
+    if (updateRec(createRec("post", params()))) {
         inform("New post created");
         redirect("@");
     } else {
@@ -40,7 +40,7 @@ static void show() {
 }
 
 static void update() { 
-    if (writeFields("post", params())) {
+    if (updateFields("post", params())) {
         inform("Post updated successfully.");
         redirect("@");
     } else {
@@ -64,7 +64,7 @@ ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module)
     /*
         Add model validations
      */
-    edi = getDatabase();
+    edi = eroute->edi;
     ediAddValidation(edi, "present", "post", "title", 0);
     ediAddValidation(edi, "unique", "post", "title", 0);
     ediAddValidation(edi, "format", "post", "body", "(fox|dog)");

@@ -411,8 +411,6 @@ void espScript(HttpConn *conn, cchar *uri, cchar *optionString)
     MprHash     *options;
    
     options = httpGetOptions(optionString);
-
-
     if (uri) {
         espRender(conn, "<script src='%s' type='text/javascript'></script>", httpLink(conn, uri, NULL));
     } else {
@@ -431,6 +429,26 @@ void espScript(HttpConn *conn, cchar *uri, cchar *optionString)
 
 
 /*
+    Get a security token. This will use and existing token or create if not present. It will store in the session store.
+ */
+cchar *espGetSecurityToken(HttpConn *conn)
+{
+    HttpRx      *rx;
+
+    rx = conn->rx;
+
+    if (rx->securityToken == 0) {
+        rx->securityToken = (char*) espGetSessionVar(conn, ESP_SECURITY_TOKEN_NAME, 0);
+        if (rx->securityToken == 0) {
+            rx->securityToken = mprGetMD5(sfmt("%d-%p", mprGetTicks(), conn->rx));
+            espSetSessionVar(conn, ESP_SECURITY_TOKEN_NAME, rx->securityToken);
+        }
+    }
+    return rx->securityToken;
+}
+
+
+/*
     Generate a security token
  */
 void espSecurityToken(HttpConn *conn) 
@@ -441,6 +459,12 @@ void espSecurityToken(HttpConn *conn)
     espAddHeaderString(conn, "X-SECURITY-TOKEN", securityToken);
     espRender(conn, "<meta name='SecurityTokenName' content='%s' />\r\n", ESP_SECURITY_TOKEN_NAME);
     espRender(conn, "    <meta name='%s' content='%s' />", ESP_SECURITY_TOKEN_NAME, securityToken);
+}
+
+
+void espSetConn(HttpConn *conn)
+{
+    mprSetThreadData(((Esp*) MPR->espService)->local, conn);
 }
 
 
@@ -681,6 +705,216 @@ void espTree(HttpConn *conn, EdiGrid *grid, cchar *optionString)
 
 //  MOB - render a partial view
 
+/************************************ Abbreviated Controls ****************************/ 
+#if MOVED 
+void alert(cchar *text, cchar *optionString)
+{
+    espAlert(eGetConn(), text, optionString);
+}
+
+
+void anchor(cchar *text, cchar *uri, cchar *optionString) 
+{
+    espAnchor(eGetConn(), text, uri, optionString);
+}
+
+
+void button(cchar *name, cchar *value, cchar *optionString)
+{
+    espButton(eGetConn(), name, value, optionString);
+}
+
+
+void buttonLink(cchar *text, cchar *uri, cchar *optionString)
+{
+    espButtonLink(eGetConn(), text, uri, optionString);
+}
+
+
+void chart(EdiGrid *grid, cchar *optionString)
+{
+    espChart(eGetConn(), grid, optionString);
+}
+
+
+void checkbox(cchar *field, cchar *checkedValue, cchar *optionString) 
+{
+    espCheckbox(eGetConn(), field, checkedValue, optionString);
+}
+
+
+void division(cchar *body, cchar *optionString) 
+{
+    espDivision(eGetConn(), body, optionString);
+}
+
+
+void endform() 
+{
+    espEndform(eGetConn());
+}
+
+
+void flash(cchar *kind, cchar *optionString)
+{
+    espFlash(eGetConn(), kind, optionString);
+}
+
+
+void form(void *record, cchar *optionString)
+{
+    HttpConn    *conn;
+
+    conn = eGetConn();
+    if (record == 0) {
+        record = conn->record;
+    }
+    espForm(conn, record, optionString); 
+}
+
+
+void icon(cchar *uri, cchar *optionString)
+{
+    espIcon(eGetConn(), uri, optionString);
+}
+
+
+void image(cchar *src, cchar *optionString)
+{
+    espImage(eGetConn(), src, optionString);
+}
+
+
+void input(cchar *name, cchar *optionString)
+{
+    espInput(eGetConn(), name, optionString);
+}
+
+
+void label(cchar *text, cchar *optionString)
+{
+    espLabel(eGetConn(), text, optionString);
+}
+
+
+void dropdown(cchar *name, cchar *choices, cchar *optionString) 
+{
+    espDropdown(eGetConn(), name, choices, optionString);
+}
+
+
+void mail(cchar *name, cchar *address, cchar *optionString) 
+{
+    espMail(eGetConn(), name, address, optionString);
+}
+
+
+void progress(cchar *data, cchar *optionString)
+{
+    espProgress(eGetConn(), data, optionString);
+}
+
+
+void radio(cchar *name, void *choices, cchar *optionString)
+{
+    espRadio(eGetConn(), name, choices, optionString);
+}
+
+
+void refresh(cchar *on, cchar *off, cchar *optionString)
+{
+    espRefresh(eGetConn(), on, off, optionString);
+}
+
+
+void script(cchar *uri, cchar *optionString)
+{
+    espScript(eGetConn(), uri, optionString);
+}
+
+
+void securityToken()
+{
+    espSecurityToken(eGetConn());
+}
+
+
+void stylesheet(cchar *uri, cchar *optionString) 
+{
+    espStylesheet(eGetConn(), uri, optionString);
+}
+
+
+void table(EdiGrid *grid, cchar *optionString)
+{
+    espTable(eGetConn(), grid, optionString);
+}
+
+
+void tabs(EdiRec *rec, cchar *optionString)
+{
+    espTabs(eGetConn(), rec, optionString);
+}
+
+
+void text(cchar *field, cchar *optionString)
+{
+    espText(eGetConn(), field, optionString);
+}
+
+
+void tree(EdiGrid *grid, cchar *optionString)
+{
+    espTree(eGetConn(), grid, optionString);
+}
+
+#endif
+/************************************ Misc ***********************************/
+
+#if UNUSED
+void error(cchar *fmt, ...)
+{
+    va_list     args;
+
+    va_start(args, fmt);
+    espNoticev(eGetConn(), "error", fmt, args);
+    va_end(args);
+}
+
+
+HttpConn *eGetConn()
+{
+    return espGetConn();
+}
+
+
+cchar *home()
+{
+    return espGetHome(eGetConn());
+}
+
+
+void inform(cchar *fmt, ...)
+{
+    va_list     args;
+
+    va_start(args, fmt);
+    espNoticev(eGetConn(), "inform", fmt, args);
+    va_end(args);
+}
+
+
+void warn(cchar *fmt, ...)
+{
+    va_list     args;
+
+    va_start(args, fmt);
+    espNoticev(eGetConn(), "warn", fmt, args);
+    va_end(args);
+}
+#endif
+
+
 /**************************************** Support *************************************/ 
 
 static void emitFormErrors(HttpConn *conn, EdiRec *rec, MprHash *options)
@@ -723,19 +957,6 @@ static cchar *formatValue(EdiField value, MprHash *options)
 }
 
 
-static EspRoute *getRoute()
-{
-    HttpConn    *conn;
-    EspReq      *req;
-
-    if ((conn = espGetConn()) == 0 || conn->data == 0) {
-        return 0;
-    }
-    req = conn->data;
-    return req->eroute;
-}
-
-
 static cchar *getValue(HttpConn *conn, cchar *fieldName, MprHash *options)
 {
     EspReq      *req;
@@ -765,6 +986,18 @@ static cchar *getValue(HttpConn *conn, cchar *fieldName, MprHash *options)
         value = mprEscapeHtml(value);
     }
     return value;
+}
+
+
+MprHash *makeParams(cchar *fmt, ...)
+{
+    va_list     args;
+    MprObj      *obj;
+
+    va_start(args, fmt);
+    obj = mprDeserialize(sfmtv(fmt, args));
+    va_end(args);
+    return obj;
 }
 
 
@@ -835,705 +1068,6 @@ void espInitHtmlOptions(Esp *esp)
     for (op = internalOptions; *op; op++) {
         mprAddKey(esp->internalOptions, *op, op);
     }
-}
-
-
-/************************************ Abbreviated Controls ****************************/ 
-
-HttpConn *espGetConn()
-{
-    return mprGetThreadData(((Esp*) MPR->espService)->local);
-}
-
-
-void espSetConn(HttpConn *conn)
-{
-    mprSetThreadData(((Esp*) MPR->espService)->local, conn);
-}
-
-
-void alert(cchar *text, cchar *optionString)
-{
-    espAlert(espGetConn(), text, optionString);
-}
-
-
-void anchor(cchar *text, cchar *uri, cchar *optionString) 
-{
-    espAnchor(espGetConn(), text, uri, optionString);
-}
-
-
-void button(cchar *name, cchar *value, cchar *optionString)
-{
-    espButton(espGetConn(), name, value, optionString);
-}
-
-
-void buttonLink(cchar *text, cchar *uri, cchar *optionString)
-{
-    espButtonLink(espGetConn(), text, uri, optionString);
-}
-
-
-void chart(EdiGrid *grid, cchar *optionString)
-{
-    espChart(espGetConn(), grid, optionString);
-}
-
-
-void checkbox(cchar *field, cchar *checkedValue, cchar *optionString) 
-{
-    espCheckbox(espGetConn(), field, checkedValue, optionString);
-}
-
-
-void division(cchar *body, cchar *optionString) 
-{
-    espDivision(espGetConn(), body, optionString);
-}
-
-
-void endform() 
-{
-    espEndform(espGetConn());
-}
-
-
-void flash(cchar *kind, cchar *optionString)
-{
-    espFlash(espGetConn(), kind, optionString);
-}
-
-
-void form(void *record, cchar *optionString)
-{
-    HttpConn    *conn;
-
-    conn = espGetConn();
-    if (record == 0) {
-        record = conn->record;
-    }
-    espForm(conn, record, optionString); 
-}
-
-
-void icon(cchar *uri, cchar *optionString)
-{
-    espIcon(espGetConn(), uri, optionString);
-}
-
-
-void image(cchar *src, cchar *optionString)
-{
-    espImage(espGetConn(), src, optionString);
-}
-
-
-void input(cchar *name, cchar *optionString)
-{
-    espInput(espGetConn(), name, optionString);
-}
-
-
-void label(cchar *text, cchar *optionString)
-{
-    espLabel(espGetConn(), text, optionString);
-}
-
-
-void dropdown(cchar *name, cchar *choices, cchar *optionString) 
-{
-    espDropdown(espGetConn(), name, choices, optionString);
-}
-
-
-void mail(cchar *name, cchar *address, cchar *optionString) 
-{
-    espMail(espGetConn(), name, address, optionString);
-}
-
-
-void progress(cchar *data, cchar *optionString)
-{
-    espProgress(espGetConn(), data, optionString);
-}
-
-
-void radio(cchar *name, void *choices, cchar *optionString)
-{
-    espRadio(espGetConn(), name, choices, optionString);
-}
-
-
-void refresh(cchar *on, cchar *off, cchar *optionString)
-{
-    espRefresh(espGetConn(), on, off, optionString);
-}
-
-
-void script(cchar *uri, cchar *optionString)
-{
-    espScript(espGetConn(), uri, optionString);
-}
-
-
-void securityToken()
-{
-    espSecurityToken(espGetConn());
-}
-
-
-void stylesheet(cchar *uri, cchar *optionString) 
-{
-    espStylesheet(espGetConn(), uri, optionString);
-}
-
-
-void table(EdiGrid *grid, cchar *optionString)
-{
-    espTable(espGetConn(), grid, optionString);
-}
-
-
-void tabs(EdiRec *rec, cchar *optionString)
-{
-    espTabs(espGetConn(), rec, optionString);
-}
-
-
-void text(cchar *field, cchar *optionString)
-{
-    espText(espGetConn(), field, optionString);
-}
-
-
-void tree(EdiGrid *grid, cchar *optionString)
-{
-    espTree(espGetConn(), grid, optionString);
-}
-
-/************************************ Database *******************************/
-
-EdiRec *createRec(cchar *tableName, MprHash *params)
-{
-    Edi         *edi;
-    EdiRec      *rec;
-
-    edi = getDatabase();
-    if ((rec = ediCreateRec(edi, tableName)) == 0) {
-        return 0;
-    }
-    ediUpdateFields(rec, params);
-    return setRec(rec);
-}
-
-
-//  MOB - should this work on the current record?
-MprList *getColumns(EdiRec *rec)
-{
-    if (rec == 0) {
-        rec = getRec();
-    }
-    if (rec) {
-        return ediGetColumns(getDatabase(), rec->tableName);
-    }
-    return mprCreateList(0, 0);
-}
-
-
-EdiGrid *getGrid()
-{
-    return espGetConn()->grid;
-}
-
-
-EdiRec *getRec()
-{
-    return espGetConn()->record;
-}
-
-
-bool hasRec()
-{
-    EdiRec  *rec;
-
-    rec = espGetConn()->record;
-    return (rec && rec->id) ? 1 : 0;
-}
-
-
-bool hasGrid()
-{
-    return espGetConn()->grid != 0;
-}
-
-
-/*
-    grid = makeGrid("[ \
-        { id: '1', country: 'Australia' }, \
-        { id: '2', country: 'China' }, \
-    ]");
- */
-EdiGrid *makeGrid(cchar *contents)
-{
-    return ediMakeGrid(contents);
-}
-
-
-MprHash *hash(cchar *fmt, ...)
-{
-    va_list     args;
-    cchar       *str;
-
-    va_start(args, fmt);
-    str = sfmtv(fmt, args);
-    va_end(args);
-    return mprDeserialize(str);
-}
-
-
-/*
-    rec = makeRec("{ id: 1, title: 'Message One', body: 'Line one' }");
- */
-EdiRec *makeRec(cchar *contents)
-{
-    return ediMakeRec(contents);
-}
-
-
-MprHash *makeParams(cchar *fmt, ...)
-{
-    va_list     args;
-    MprObj      *obj;
-
-    va_start(args, fmt);
-    obj = mprDeserialize(sfmtv(fmt, args));
-    va_end(args);
-    return obj;
-}
-
-
-EdiGrid *readGrid(cchar *tableName)
-{
-    EdiGrid *grid;
-    
-    grid = ediReadWhere(getDatabase(), tableName, 0, 0, 0);
-    setGrid(grid);
-    return grid;
-}
-
-
-EdiRec *readOneWhere(cchar *tableName, cchar *fieldName, cchar *operation, cchar *value)
-{
-    return setRec(ediReadOneWhere(getDatabase(), tableName, fieldName, operation, value));
-}
-
-
-EdiRec *readRec(cchar *tableName)
-{
-    return setRec(ediReadRec(getDatabase(), tableName, param("id")));
-}
-
-
-EdiRec *readRecByKey(cchar *tableName, cchar *key)
-{
-    return setRec(ediReadRec(getDatabase(), tableName, key));
-}
-
-
-EdiGrid *readWhere(cchar *tableName, cchar *fieldName, cchar *operation, cchar *value)
-{
-    return setGrid(ediReadWhere(getDatabase(), tableName, fieldName, operation, value));
-}
-
-
-bool removeRec(cchar *tableName, cchar *key)
-{
-    if (ediDeleteRow(getDatabase(), tableName, key) < 0) {
-        return 0;
-    }
-    return 1;
-}
-
-
-EdiGrid *setGrid(EdiGrid *grid)
-{
-    espGetConn()->grid = grid;
-    return grid;
-}
-
-
-EdiRec *setRec(EdiRec *rec)
-{
-    return espGetConn()->record = rec;
-}
-
-
-EdiRec *updateField(EdiRec *rec, cchar *fieldName, cchar *value)
-{
-    return ediUpdateField(rec, fieldName, value);
-}
-
-
-EdiRec *updateFields(EdiRec *rec, MprHash *params)
-{
-    return ediUpdateFields(rec, params);
-}
-
-
-bool writeField(cchar *tableName, cchar *key, cchar *fieldName, cchar *value)
-{
-    return ediWriteField(getDatabase(), tableName, key, fieldName, value) == 0;
-}
-
-
-bool writeFields(cchar *tableName, MprHash *params)
-{
-    EdiRec  *rec;
-
-    if ((rec = updateFields(readRec(tableName), params)) == 0) {
-        return 0;
-    }
-    return ediWriteRec(getDatabase(), rec) == 0;
-}
-
-
-bool writeRec(EdiRec *rec)
-{
-    return ediWriteRec(rec->edi, rec) == 0;
-}
-
-
-/************************************ Misc ***********************************/
-
-EspSession *createSession()
-{
-    return espCreateSession(espGetConn());
-}
-
-
-void error(cchar *fmt, ...)
-{
-    va_list     args;
-
-    va_start(args, fmt);
-    espNoticev(espGetConn(), "error", fmt, args);
-    va_end(args);
-}
-
-
-void finalize()
-{
-    espFinalize(espGetConn());
-}
-
-
-HttpConn *getConn()
-{
-    return espGetConn();
-}
-
-
-Edi *getDatabase()
-{
-    EspRoute    *eroute;
-
-    if ((eroute = getRoute()) == 0 || eroute->edi == 0) {
-        httpError(getConn(), 0, "Can't get database instance");
-        return 0;
-    }
-    return eroute->edi;
-}
-
-
-cchar *getMethod()
-{
-    return espGetConn()->rx->method;
-}
-
-
-cchar *getQuery()
-{
-    return espGetConn()->rx->parsedUri->query;
-}
-
-
-cchar *getUri()
-{
-    return espGetConn()->rx->uri;
-}
-
-
-cchar *home()
-{
-    return espGetHome(espGetConn());
-}
-
-
-void inform(cchar *fmt, ...)
-{
-    va_list     args;
-
-    va_start(args, fmt);
-    espNoticev(espGetConn(), "inform", fmt, args);
-    va_end(args);
-}
-
-
-void notice(cchar *kind, cchar *fmt, ...)
-{
-    va_list     args;
-
-    va_start(args, fmt);
-    espNoticev(espGetConn(), kind, fmt, args);
-    va_end(args);
-}
-
-
-MprHash *params()
-{
-    return espGetParams(espGetConn());
-}
-
-
-cchar *param(cchar *key)
-{
-    return espGetParam(espGetConn(), key, NULL);
-}
-
-
-void redirect(cchar *target)
-{
-    espRedirect(espGetConn(), 302, target);
-}
-
-
-cchar *referrer()
-{
-    return espGetReferrer(espGetConn());
-}
-
-
-ssize render(cchar *fmt, ...)
-{
-    va_list     args;
-    ssize       count;
-    cchar       *msg;
-
-    va_start(args, fmt);
-    msg = sfmtv(fmt, args);
-    count = espRenderString(espGetConn(), msg);
-    va_end(args);
-    return count;
-}
-
-
-ssize renderFile(cchar *path)
-{
-    return espRenderFile(espGetConn(), path);
-}
-
-
-ssize renderSafe(cchar *fmt, ...)
-{
-    va_list     args;
-    ssize       count;
-    cchar       *msg;
-
-    va_start(args, fmt);
-    msg = sfmtv(fmt, args);
-    count = espRenderSafeString(espGetConn(), msg);
-    va_end(args);
-    return count;
-}
-
-
-void renderView(cchar *view)
-{
-    espRenderView(espGetConn(), view);
-}
-
-
-cchar *session(cchar *key)
-{
-    return espGetSessionVar(espGetConn(), key, "");
-}
-
-
-void setParam(cchar *key, cchar *value)
-{
-    espSetParam(espGetConn(), key, value);
-}
-
-
-void setSession(cchar *key, cchar *value)
-{
-    espSetSessionVar(espGetConn(), key, value);
-}
-
-
-cchar *uri(cchar *target)
-{
-    return httpLink(espGetConn(), target, 0);
-}
-
-
-void warn(cchar *fmt, ...)
-{
-    va_list     args;
-
-    va_start(args, fmt);
-    espNoticev(espGetConn(), "warn", fmt, args);
-    va_end(args);
-}
-
-
-///////////////////////////////////////////////
-
-//  MOB TEST
-void addHeader(cchar *key, cchar *fmt, ...)
-{
-    va_list     args;
-    cchar       *value;
-
-    va_start(args, fmt);
-    value = sfmtv(fmt, args);
-    espAddHeaderString(getConn(), key, value);
-    va_end(args);
-}
-
-
-//  MOB TEST
-cchar *cookies()
-{
-    //  MOB - should these be parsed into a hash table
-    return httpGetCookies(getConn());
-}
-
-
-//  MOB TEST
-//  MOB - should have a parsed MprHash
-void destroySession()
-{
-    EspSession  *sp;
-    HttpConn    *conn;
-
-    conn = getConn();
-    if ((sp = espGetSession(conn, 0)) != 0) {
-        espDestroySession(sp);
-    }
-}
-
-
-//  MOB TEST
-void dontAutoFinalize()
-{
-    espSetAutoFinalizing(getConn(), 0);
-}
-
-
-//  MOB TEST
-cchar *documentRoot()
-{
-    return getConn()->rx->route->dir;
-}
-
-
-//  MOB TEST
-MprOff getContentLength()
-{
-    return espGetContentLength(getConn());
-}
-
-
-//  MOB TEST
-cchar *getContentType()
-{
-    return getConn()->rx->mimeType;
-}
-
-
-//  MOB TEST
-bool isSecure()
-{
-    return getConn()->secure;
-}
-
-
-//  MOB TEST
-void renderError(int status, cchar *fmt, ...)
-{
-    va_list     args;
-    cchar       *msg;
-
-    va_start(args, fmt);
-    msg = sfmtv(fmt, args);
-    espRenderError(getConn(), status, "%s", msg);
-    va_end(args);
-}
-
-
-//  MOB TEST
-//  MOB -should this be abbreviated? -- cookie()?
-void setCookie(cchar *name, cchar *value, cchar *path, cchar *cookieDomain, MprTime lifespan, bool isSecure)
-{
-    espSetCookie(getConn(), name, value, path, cookieDomain, lifespan, isSecure);
-}
-
-
-//  MOB TEST
-void setHeader(cchar *key, cchar *fmt, ...)
-{
-    va_list     args;
-    cchar       *value;
-
-    va_start(args, fmt);
-    value = sfmtv(fmt, args);
-    espSetHeaderString(getConn(), key, value);
-    va_end(args);
-}
-
-
-//  MOB TEST
-void setContentType(cchar *mimeType)
-{
-    espSetContentType(getConn(), mimeType);
-}
-
-
-//  MOB TEST
-void setStatus(int status)
-{
-    espSetStatus(getConn(), status);
-}
-
-
-//  MOB TEST
-//  MOB - change home to top
-cchar *top()
-{
-    return espGetHome(getConn());
-}
-
-
-//  MOB TEST
-MprHash *uploadedFiles()
-{
-    return getConn()->rx->files;
-}
-
-
-//  MOB TEST
-//  MOB - what should the name be => httpRead. Must signal eof too.
-bool qeof()
-{
-    return httpIsEof(getConn());
-}
-
-ssize qread(char *buf, ssize len)
-{
-    return httpRead(getConn(), buf, len);
 }
 
 

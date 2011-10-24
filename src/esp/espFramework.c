@@ -9,6 +9,7 @@
 #include    "esp.h"
 
 #if BLD_FEATURE_ESP
+
 /************************************* Code ***********************************/
 /*  
     Add a http header if not already defined
@@ -86,6 +87,7 @@ static void manageAction(EspAction *ap, int flags)
 }
 
 
+//  MOB - part of route?
 void espCacheControl(EspRoute *eroute, cchar *target, int lifesecs, cchar *uri)
 {
     EspAction  *action;
@@ -128,6 +130,20 @@ bool espCheckSecurityToken(HttpConn *conn)
         }
     }
     return 1;
+}
+
+
+EdiRec *espCreateRec(HttpConn *conn, cchar *tableName, MprHash *params)
+{
+    Edi         *edi;
+    EdiRec      *rec;
+
+    edi = espGetDatabase(conn);
+    if ((rec = ediCreateRec(edi, tableName)) == 0) {
+        return 0;
+    }
+    ediUpdateFields(rec, params);
+    return espSetRec(conn, rec);
 }
 
 
@@ -192,15 +208,58 @@ void espFlush(HttpConn *conn)
 }
 
 
+MprList *espGetColumns(HttpConn *conn, EdiRec *rec)
+{
+    if (rec == 0) {
+        rec = conn->record;
+    }
+    if (rec) {
+        return ediGetColumns(espGetDatabase(conn), rec->tableName);
+    }
+    return mprCreateList(0, 0);
+}
+
+
 MprOff espGetContentLength(HttpConn *conn)
 {
     return httpGetContentLength(conn);
 }
 
 
+cchar *espGetContentType(HttpConn *conn)
+{
+    return conn->rx->mimeType;
+}
+
+
+//  MOB - need an API to parse these into a hash
 cchar *espGetCookies(HttpConn *conn) 
 {
     return httpGetCookies(conn);
+}
+
+
+Edi *espGetDatabase(HttpConn *conn)
+{
+    EspRoute    *eroute;
+    EspReq      *req;
+
+    req = conn->data;
+    if (req == 0) {
+        return 0;
+    }
+    eroute = req->eroute;
+    if (eroute == 0 || eroute->edi == 0) {
+        httpError(conn, 0, "Can't get database instance");
+        return 0;
+    }
+    return eroute->edi;
+}
+
+
+cchar *espGetDir(HttpConn *conn)
+{   
+    return conn->rx->route->dir;
 }
 
 
@@ -224,12 +283,12 @@ cchar *espGetFlashMessage(HttpConn *conn, cchar *kind)
 }
 
 
-MprHash *espGetParams(HttpConn *conn)
-{
-    return httpGetParams(conn);
+EdiGrid *espGetGrid(HttpConn *conn)
+{           
+    return conn->grid;
 }
 
-
+    
 cchar *espGetHeader(HttpConn *conn, cchar *key)
 {
     return httpGetHeader(conn, key);
@@ -247,9 +306,64 @@ char *espGetHeaders(HttpConn *conn)
     return httpGetHeaders(conn);
 }
 
+            
+cchar *espGetMethod(HttpConn *conn)
+{   
+    return conn->rx->method;
+} 
 
-char *espGetHome(HttpConn *conn)
+
+cchar *espGetParam(HttpConn *conn, cchar *var, cchar *defaultValue)
 {
+    return httpGetParam(conn, var, defaultValue);
+}
+
+
+MprHash *espGetParams(HttpConn *conn)
+{
+    return httpGetParams(conn);
+}
+
+
+int espGetIntParam(HttpConn *conn, cchar *var, int defaultValue)
+{
+    return httpGetIntParam(conn, var, defaultValue);
+}
+
+
+cchar *espGetQueryString(HttpConn *conn)
+{
+    return httpGetQueryString(conn);
+}
+
+
+char *espGetReferrer(HttpConn *conn)
+{
+    if (conn->rx->referrer) {
+        return conn->rx->referrer;
+    }
+    return espGetTop(conn);
+}
+
+
+//  MOB - is this only for clients?
+int espGetStatus(HttpConn *conn)
+{
+    return httpGetStatus(conn);
+}
+
+
+//  MOB - is this only for clients?
+char *espGetStatusMessage(HttpConn *conn)
+{
+    return httpGetStatusMessage(conn);
+}
+
+
+char *espGetTop(HttpConn *conn)
+{
+    return httpLink(conn, "~", NULL);
+#if UNUSED
     HttpRx      *rx;
     cchar       *path, *end, *sp;
     char        *home, *cp;
@@ -280,61 +394,40 @@ char *espGetHome(HttpConn *conn)
         strcpy(home, "./");
     }
     return home;
+#endif
 }
 
 
-cchar *espGetParam(HttpConn *conn, cchar *var, cchar *defaultValue)
+MprHash *espGetUploads(HttpConn *conn)
 {
-    return httpGetParam(conn, var, defaultValue);
+    return conn->rx->files;
 }
 
 
-cchar *espGetQueryString(HttpConn *conn)
+cchar *espGetUri(HttpConn *conn)
 {
-    return httpGetQueryString(conn);
+    return conn->rx->uri;
 }
 
 
-char *espGetReferrer(HttpConn *conn)
+bool espHasGrid(HttpConn *conn)
 {
-    if (conn->rx->referrer) {
-        return conn->rx->referrer;
-    }
-    return espGetHome(conn);
+    return conn->grid != 0;
 }
 
 
-/*
-    Get a security token. This will use and existing token or create if not present. It will store in the session store.
- */
-cchar *espGetSecurityToken(HttpConn *conn)
+bool espHasRec(HttpConn *conn)
 {
-    HttpRx      *rx;
+    EdiRec  *rec;
 
-    rx = conn->rx;
-
-    if (rx->securityToken == 0) {
-        rx->securityToken = (char*) espGetSessionVar(conn, ESP_SECURITY_TOKEN_NAME, 0);
-        if (rx->securityToken == 0) {
-            rx->securityToken = mprGetMD5(sfmt("%d-%p", mprGetTicks(), conn->rx));
-            espSetSessionVar(conn, ESP_SECURITY_TOKEN_NAME, rx->securityToken);
-        }
-    }
-    return rx->securityToken;
+    rec = conn->record;
+    return (rec && rec->id) ? 1 : 0;
 }
 
 
-//  MOB - is this only for clients?
-int espGetStatus(HttpConn *conn)
+bool espIsEof(HttpConn *conn)
 {
-    return httpGetStatus(conn);
-}
-
-
-//  MOB - is this only for clients?
-char *espGetStatusMessage(HttpConn *conn)
-{
-    return httpGetStatusMessage(conn);
+    return httpIsEof(conn);
 }
 
 
@@ -347,9 +440,88 @@ bool espIsFinalized(HttpConn *conn)
 }
 
 
+bool espIsSecure(HttpConn *conn)
+{
+    return conn->secure;
+}
+
+
+/*
+    grid = makeGrid("[ \
+        { id: '1', country: 'Australia' }, \
+        { id: '2', country: 'China' }, \
+    ]");
+ */
+EdiGrid *espMakeGrid(cchar *contents)
+{
+    return ediMakeGrid(contents);
+}
+
+
+MprHash *espMakeHash(cchar *fmt, ...)
+{
+    va_list     args;
+    cchar       *str;
+
+    va_start(args, fmt);
+    str = sfmtv(fmt, args);
+    va_end(args);
+    return mprDeserialize(str);
+}
+
+
+/*
+    rec = makeRec("{ id: 1, title: 'Message One', body: 'Line one' }");
+ */
+EdiRec *espMakeRec(cchar *contents)
+{
+    return ediMakeRec(contents);
+}
+
+
 bool espMatchParam(HttpConn *conn, cchar *var, cchar *value)
 {
     return httpMatchParam(conn, var, value);
+}
+
+
+ssize espReceive(HttpConn *conn, char *buf, ssize len)
+{
+    return httpRead(conn, buf, len);
+}
+
+
+EdiGrid *espReadAllRecs(HttpConn *conn, cchar *tableName)
+{
+    EdiGrid *grid;
+    
+    grid = ediReadWhere(espGetDatabase(conn), tableName, 0, 0, 0);
+    espSetGrid(conn, grid);
+    return grid;
+}
+
+
+EdiRec *espReadRecWhere(HttpConn *conn, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value)
+{
+    return espSetRec(conn, ediReadOneWhere(espGetDatabase(conn), tableName, fieldName, operation, value));
+}
+
+
+EdiRec *espReadRec(HttpConn *conn, cchar *tableName)
+{
+    return espSetRec(conn, ediReadRec(espGetDatabase(conn), tableName, espGetParam(conn, "id", NULL)));
+}
+
+
+EdiRec *espReadRecByKey(HttpConn *conn, cchar *tableName, cchar *key)
+{
+    return espSetRec(conn, ediReadRec(espGetDatabase(conn), tableName, key));
+}
+
+
+EdiGrid *espReadRecsWhere(HttpConn *conn, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value)
+{
+    return espSetGrid(conn, ediReadWhere(espGetDatabase(conn), tableName, fieldName, operation, value));
 }
 
 
@@ -365,6 +537,15 @@ void espRedirectBack(HttpConn *conn)
     if (conn->rx->referrer) {
         espRedirect(conn, HTTP_CODE_MOVED_TEMPORARILY, conn->rx->referrer); 
     }
+}
+
+
+bool espRemoveRec(HttpConn *conn, cchar *tableName, cchar *key)
+{
+    if (ediDeleteRow(espGetDatabase(conn), tableName, key) < 0) {
+        return 0;
+    }
+    return 1;
 }
 
 ssize espRender(HttpConn *conn, cchar *fmt, ...)
@@ -478,7 +659,6 @@ ssize espRenderString(HttpConn *conn, cchar *s)
     return espRenderBlock(conn, s, slen(s));
 }
 
-//  MOB - missing RenderView
 
 int espRemoveHeader(HttpConn *conn, cchar *key)
 {
@@ -521,22 +701,56 @@ void espSetContentType(HttpConn *conn, cchar *mimeType)
 }
 
 
-//  MOB - sort
-int espGetIntParam(HttpConn *conn, cchar *var, int defaultValue)
+EdiRec *espSetField(EdiRec *rec, cchar *fieldName, cchar *value)
 {
-    return httpGetIntParam(conn, var, defaultValue);
+    return ediUpdateField(rec, fieldName, value);
 }
 
 
-void espSetIntParam(HttpConn *conn, cchar *var, int value) 
+EdiRec *espSetFields(EdiRec *rec, MprHash *params)
 {
-    httpSetIntParam(conn, var, value);
+    return ediUpdateFields(rec, params);
 }
 
 
-void espSetParam(HttpConn *conn, cchar *var, cchar *value) 
+void espSetFlash(HttpConn *conn, cchar *kind, cchar *fmt, ...)
 {
-    httpSetParam(conn, var, value);
+    va_list     args;
+
+    va_start(args, fmt);
+    espSetFlashv(conn, kind, fmt, args);
+    va_end(args);
+}
+
+
+void espSetFlashv(HttpConn *conn, cchar *kind, cchar *fmt, va_list args)
+{
+    EspReq      *req;
+    MprKey      *kp;
+    cchar       *prior, *msg;
+
+    req = conn->data;
+    msg = sfmtv(fmt, args);
+
+    if (req->flash == 0) {
+        req->flash = mprCreateHash(0, 0);
+        espGetSession(conn, 1);
+    }
+    if ((prior = mprLookupKey(req->flash, kind)) != 0) {
+        kp = mprAddKey(req->flash, kind, sjoin(prior, "\n", msg, NULL));
+    } else {
+        kp = mprAddKey(req->flash, kind, sclone(msg));
+    }
+    if (kp) {
+        kp->type = MPR_JSON_STRING;
+    }
+}
+
+
+EdiGrid *espSetGrid(HttpConn *conn, EdiGrid *grid)
+{
+    conn->grid = grid;
+    return grid;
 }
 
 
@@ -559,6 +773,24 @@ void espSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
 void espSetHeaderString(HttpConn *conn, cchar *key, cchar *value)
 {
     httpSetHeaderString(conn, key, value);
+}
+
+
+void espSetIntParam(HttpConn *conn, cchar *var, int value) 
+{
+    httpSetIntParam(conn, var, value);
+}
+
+
+void espSetParam(HttpConn *conn, cchar *var, cchar *value) 
+{
+    httpSetParam(conn, var, value);
+}
+
+
+EdiRec *espSetRec(HttpConn *conn, EdiRec *rec)
+{
+    return conn->record = rec;
 }
 
 
@@ -686,92 +918,36 @@ void espShowRequest(HttpConn *conn)
 }
 
 
-void espNoticev(HttpConn *conn, cchar *kind, cchar *fmt, va_list args)
+bool espUpdateField(HttpConn *conn, cchar *tableName, cchar *key, cchar *fieldName, cchar *value)
 {
-    EspReq      *req;
-    MprKey      *kp;
-    cchar       *prior, *msg;
+    //  MOB - rename edi to use Update
+    return ediWriteField(espGetDatabase(conn), tableName, key, fieldName, value) == 0;
+}
 
-    req = conn->data;
-    msg = sfmtv(fmt, args);
 
-    if (req->flash == 0) {
-        req->flash = mprCreateHash(0, 0);
-        espGetSession(conn, 1);
+bool espUpdateFields(HttpConn *conn, cchar *tableName, MprHash *params)
+{
+    EdiRec  *rec;
+
+    if ((rec = espSetFields(espReadRec(conn, tableName), params)) == 0) {
+        return 0;
     }
-    if ((prior = mprLookupKey(req->flash, kind)) != 0) {
-        kp = mprAddKey(req->flash, kind, sjoin(prior, "\n", msg, NULL));
-    } else {
-        kp = mprAddKey(req->flash, kind, sclone(msg));
-    }
-    if (kp) {
-        kp->type = MPR_JSON_STRING;
-    }
+    //  MOB - rename edi to use Update
+    return ediWriteRec(espGetDatabase(conn), rec) == 0;
 }
 
 
-void espNotice(HttpConn *conn, cchar *kind, cchar *fmt, ...)
+bool espUpdateRec(HttpConn *conn, EdiRec *rec)
 {
-    va_list     args;
-
-    va_start(args, fmt);
-    espNoticev(conn, kind, fmt, args);
-    va_end(args);
+    //  MOB - rename edi to use Update
+    return ediWriteRec(rec->edi, rec) == 0;
 }
 
 
-void espWarn(HttpConn *conn, cchar *fmt, ...)
+cchar *espUri(HttpConn *conn, cchar *target)
 {
-    va_list     args;
-
-    va_start(args, fmt);
-    espNoticev(conn, "warn", fmt, args);
-    va_end(args);
+    return httpLink(conn, target, 0);
 }
-
-
-void espError(HttpConn *conn, cchar *fmt, ...)
-{
-    va_list     args;
-
-    va_start(args, fmt);
-    espNoticev(conn, "error", fmt, args);
-    va_end(args);
-}
-
-
-void espInform(HttpConn *conn, cchar *fmt, ...)
-{
-    va_list     args;
-
-    va_start(args, fmt);
-    espNoticev(conn, "inform", fmt, args);
-    va_end(args);
-}
-
-
-#if FUTURE
-#if MACOSX
-    static MprThreadLocal *tls;
-
-    HttpConn *espGetCurrentConn() {
-        return mprGetThreadData(tls);
-    }
-#elif __GCC__ && (LINUX || VXWORKS)
-    static __thread currentConn;
-    HttpConn *espGetCurrentConn() {
-        return currentConn;
-    }
-#endif
-//  MOB - move to espSession.c
-
-char *session(cchar *key)
-{
-    HttpConn    *conn;
-
-    conn = espGetCurrentConn();
-}
-#endif
 
 
 #endif /* BLD_FEATURE_ESP */

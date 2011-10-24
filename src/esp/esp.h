@@ -474,6 +474,78 @@ extern void espAppendHeaderString(HttpConn *conn, cchar *key, cchar *value);
 extern void espAutoFinalize(HttpConn *conn);
 
 /**
+    Check a security token.
+    @description Check the request security token. If a required security token is defined in the session state, the
+    request must supply the same token with all POST requests. This helps mitigate potential CSRF threats.
+    Security tokens are used to help guard against CSRF threats. If a template web page includes the
+        securityToken() control, a security token will be added to the meta section of the generated HTML. When a 
+        form is posted from this page, the ESP jQuery script will add the security token to the form parameters.
+        This call validates the security token to ensure it matches the security token stored in session state.
+    @param conn Http connection object
+    @return False if the request is a POST request and the security token does not match the session held token.
+        Otherwise return True.
+    @ingroup EspReq
+ */
+extern bool espCheckSecurityToken(HttpConn *conn);
+
+/**
+    Create a record and initialize field values 
+    @description This will call $ediCreateRec to create a record based on the given table's schema. It will then
+        call $ediUpdateFields to update the record with the given data.
+    @param conn Http connection object
+    @param tableName Database table name
+    @param data Hash of field values
+    @return EdRec instance
+    @ingroup EspReq
+ */
+extern EdiRec *espCreateRec(HttpConn *conn, cchar *tableName, MprHash *data);
+
+#if UNUSED && KEEP
+/**
+    Send an "error" flash message
+    @description Flash messages are passed to the next request (only) for display. Use the flash() control to
+        display.
+    @param conn Http connection object
+    @param fmt Printf style formatted string to use as the message
+    @ingroup EspReq
+ */
+void espError(HttpConn *conn, cchar *fmt, ...);
+#endif
+
+/**
+    Finalize transmission of the http request
+    @description Finalize writing HTTP data by writing the final chunk trailer if required. If using chunked transfers,
+    a null chunk trailer is required to signify the end of write data.
+    If the request is already finalized, this call does nothing.
+    @param conn HttpConn connection object
+    @ingroup EspReq
+ */
+extern void espFinalize(HttpConn *conn);
+
+/**
+    Flush transmit data. 
+    @description This writes any buffered data.
+    @param conn HttpConn connection object created via $httpCreateConn
+    @ingroup EspReq
+ */
+extern void espFlush(HttpConn *conn);
+
+/**
+    Get a list of column names.
+    @param rec Database record. If set to NULL, the current database record defined via $form() is used.
+    @return An MprList of column names in the given table. If there is no record defined, an empty list is returned.
+    @ingroup EspReq
+ */
+extern MprList *espGetColumns(HttpConn *conn, EdiRec *rec);
+
+/**
+    Get the current request connection.
+    @return The HttpConn connection object
+    @ingroup EspReq
+ */
+extern HttpConn *espGetConn();
+
+/**
     Get the receive body content length
     @description Get the length of the receive body content (if any). This is used in servers to get the length of posted
         data and in clients to get the response body length.
@@ -482,6 +554,8 @@ extern void espAutoFinalize(HttpConn *conn);
     @ingroup EspReq
  */
 extern MprOff espGetContentLength(HttpConn *conn);
+
+extern cchar *eGetContentType();
 
 /**
     Get the request cookies
@@ -493,15 +567,34 @@ extern MprOff espGetContentLength(HttpConn *conn);
 extern cchar *espGetCookies(HttpConn *conn);
 
 /**
-    Get the request parameter hash table
-    @description This call gets the params hash table for the current request.
-        Route tokens, request query data and www-url encoded form data are all entered into the params table after decoding.
-        Use #mprLookupKey to retrieve data from the table.
-    @param conn HttpConn connection object
-    @return #MprHash instance containing the request parameters
+    Get the current database instance
+    @description A route may have a default database configured via the EspDb Appweb.conf configuration directive. 
+    The database will be opened when the web server initializes and will be shared between all requests using the route. 
+    @return Edi EDI database handle
     @ingroup EspReq
  */
-extern MprHash *espGetParams(HttpConn *conn);
+extern Edi *espGetDatabase(HttpConn *conn);
+
+extern cchar *espGetDir(HttpConn *conn);
+
+/**
+    Get a flash message
+    @description This retrieves a flash message of a specified type.
+        Flash messages are special session state message that are passed to the next request (only). 
+    @param conn HttpConn connection object created via $httpCreateConn
+    @param type Type of flash message to retrieve. Possible types include: "error", "inform", "warning", "all".
+    @ingroup EspReq
+ */
+extern cchar *espGetFlashMessage(HttpConn *conn, cchar *type);
+
+/**
+    Get the current database grid
+    @description The current grid is defined via $setGrid
+    @return EdiGrid instance
+    @ingroup EdiReq
+    @internal
+ */
+extern EdiGrid *espGetGrid(HttpConn *conn);
 
 /**
     Get an rx http header.
@@ -532,15 +625,6 @@ extern MprHash *espGetHeaderHash(HttpConn *conn);
  */
 extern char *espGetHeaders(HttpConn *conn);
 
-//  MOB - rename GetTop
-/**
-    Get a relative URI to the home ("/") of the application.
-    @param conn HttpConn connection object created via $httpCreateConn
-    @return String Relative URI to the pathInfo of "/"
-    @ingroup EspReq
- */
-char *espGetHome(HttpConn *conn);
-
 /**
     Get a request pararmeter as an integer
     @description Get the value of a named request parameter as an integer. Form variables are define via
@@ -552,6 +636,37 @@ char *espGetHome(HttpConn *conn);
     @ingroup EspReq
  */
 extern int espGetIntParam(HttpConn *conn, cchar *var, int defaultValue);
+
+/**
+    Get the HTTP method
+    @description This is a convenience API to return the Http method 
+    @return The HttpConn.rx.method property
+    @ingroup EspReq
+ */
+extern cchar *espGetMethod(HttpConn *conn);
+
+/**
+    Get a request parameter
+    @description Get the value of a named request parameter. Form variables are define via www-urlencoded query or post
+        data contained in the request.
+    @param conn HttpConn connection object
+    @param var Name of the request parameter to retrieve
+    @param defaultValue Default value to return if the variable is not defined. Can be null.
+    @return String containing the request parameter's value. Caller should not free.
+    @ingroup EspReq
+ */
+extern cchar *espGetParam(HttpConn *conn, cchar *var, cchar *defaultValue);
+
+/**
+    Get the request parameter hash table
+    @description This call gets the params hash table for the current request.
+        Route tokens, request query data and www-url encoded form data are all entered into the params table after decoding.
+        Use #mprLookupKey to retrieve data from the table.
+    @param conn HttpConn connection object
+    @return #MprHash instance containing the request parameters
+    @ingroup EspReq
+ */
+extern MprHash *espGetParams(HttpConn *conn);
 
 /**
     Get the request query string
@@ -600,44 +715,56 @@ extern int espGetStatus(HttpConn *conn);
 extern char *espGetStatusMessage(HttpConn *conn);
 
 /**
-    Get a request parameter
-    @description Get the value of a named request parameter. Form variables are define via www-urlencoded query or post
-        data contained in the request.
-    @param conn HttpConn connection object
-    @param var Name of the request parameter to retrieve
-    @param defaultValue Default value to return if the variable is not defined. Can be null.
-    @return String containing the request parameter's value. Caller should not free.
-    @ingroup EspReq
- */
-extern cchar *espGetParam(HttpConn *conn, cchar *var, cchar *defaultValue);
-
-/**
-    Finalize transmission of the http request
-    @description Finalize writing HTTP data by writing the final chunk trailer if required. If using chunked transfers,
-    a null chunk trailer is required to signify the end of write data.
-    If the request is already finalized, this call does nothing.
-    @param conn HttpConn connection object
-    @ingroup EspReq
- */
-extern void espFinalize(HttpConn *conn);
-
-/**
-    Flush transmit data. 
-    @description This writes any buffered data.
+    Get a relative URI to the top of the application.
+    @description This will return an absolute URI for the top of the application. This will be "/" if there is no
+        application script name. Otherwise, it will return a URI for the script name for the application.
     @param conn HttpConn connection object created via $httpCreateConn
+    @return String Absolute URI to the top of the application
     @ingroup EspReq
  */
-extern void espFlush(HttpConn *conn);
+char *espGetTop(HttpConn *conn);
+
+extern MprHash *espGetUploads(HttpConn *conn);
 
 /**
-    Get a flash message
-    @description This retrieves a flash message of a specified type.
-        Flash messages are special session state message that are passed to the next request (only). 
-    @param conn HttpConn connection object created via $httpCreateConn
-    @param type Type of flash message to retrieve. Possible types include: "error", "inform", "warning", "all".
+    Get the request URI string
+    @description This is a convenience API to return the request URI.
+    @return The espGetConn()->rx->uri
     @ingroup EspReq
  */
-extern cchar *espGetFlashMessage(HttpConn *conn, cchar *type);
+extern cchar *espGetUri(HttpConn *conn);
+
+/**
+    Test is a current grid has been defined
+    @description The current grid is defined via $setRec
+    @return True if a current grid has been defined
+    @ingroup EspReq
+ */
+extern bool espHasGrid(HttpConn *conn);
+
+/**
+    Test is a current record has been defined and save to the database
+    @description This call returns true if a current record is defined and has been saved to the database with a 
+        valid "id" field.
+    @return True if a current record with a valid "id" is defined.
+    @ingroup EspReq
+ */
+extern bool espHasRec(HttpConn *conn);
+
+#if UNUSED && KEEP
+/**
+    Send an "inform" flash message
+    @description Flash messages are passed to the next request (only) for display. Use the flash() control to
+        display.
+    @param conn Http connection object
+    @param fmt Printf style formatted string to use as the message
+    @ingroup EspReq
+ */
+void espInform(HttpConn *conn, cchar *fmt, ...);
+#endif
+
+extern bool espIsEof(HttpConn *conn);
+extern bool espIsSecure(HttpConn *conn);
 
 /**
     Test if a http request is finalized.
@@ -649,6 +776,45 @@ extern cchar *espGetFlashMessage(HttpConn *conn, cchar *type);
 extern bool espIsFinalized(HttpConn *conn);
 
 /**
+    Make a grid
+    @description This call makes a free-standing data grid based on the JSON format content string.
+        The record is not saved to the database.
+    @param content JSON format content string. The content should be an array of objects where each object is a
+        set of property names and values.
+    @return An EdiGrid instance
+    @example:
+grid = ediMakeGrid("[ \\ \n
+    { id: '1', country: 'Australia' }, \ \n
+    { id: '2', country: 'China' }, \ \n
+    ]");
+    @ingroup EspReq
+ */
+extern EdiGrid *espMakeGrid(cchar *content);
+
+/**
+    Make a hash table container of property values
+    @description This routine formats the given arguments, parses the result as a JSON string and returns an 
+        equivalent hash of property values. The result after formatting should be of the form:
+        hash("{ key: 'value', key2: 'value', key3: 'value' }");
+    @param fmt Printf style format string
+    @param ... arguments
+    @return MprHash instance
+    @ingroup EspReq
+ */
+extern MprHash *espMakeHash(cchar *fmt, ...);
+
+/**
+    Make a record
+    @description This call makes a free-standing data record based on the JSON format content string.
+        The record is not saved to the database.
+    @param content JSON format content string. The content should be a set of property names and values.
+    @return An EdiRec instance
+    @example: rec = ediMakeRec("{ id: 1, title: 'Message One', body: 'Line one' }");
+    @ingroup EspReq
+ */
+extern EdiRec *espMakeRec(cchar *content);
+
+/**
     Match a request parameter with an expected value
     @description Compare a request parameter and return true if it exists and its value matches.
     @param conn HttpConn connection object
@@ -658,6 +824,66 @@ extern bool espIsFinalized(HttpConn *conn);
     @ingroup EspReq
  */
 extern bool espMatchParam(HttpConn *conn, cchar *var, cchar *value);
+
+/**
+    Read all the records in table from the database
+    @description This reads a table and returns a grid containing the table data.
+    @param conn HttpConn connection object
+    @param tableName Database table name
+    @return A grid containing all table rows. Returns NULL if the table cannot be found.
+    @ingroup EspReq
+ */
+extern EdiGrid *espReadAllRecs(HttpConn *conn, cchar *tableName);
+
+/**
+    Read the identified record 
+    @description Read the record identified by the request params("id") from the nominated table.
+    @param conn HttpConn connection object
+    @param tableName Database table name
+    @return The identified record. Returns NULL if the table or record cannot be found.
+    @ingroup EspReq
+ */
+extern EdiRec *espReadRec(HttpConn *conn, cchar *tableName);
+
+/**
+    Read matching records
+    @description This runs a simple query on the database and returns matching records in a grid. The query selects
+        all rows that have a "field" that matches the given "value".
+    @param conn HttpConn connection object
+    @param tableName Database table name
+    @param fieldName Database field name to evaluate
+    @param operation Comparision operation. Set to "==", "!=", "<", ">", "<=" or ">=".
+    @param value Data value to compare with the field values.
+    @return A grid containing all matching records. Returns NULL if no matching records.
+    @ingroup EspReq
+ */
+extern EdiGrid *espReadRecsWhere(HttpConn *conn, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
+
+/**
+    Read one record
+    @description This runs a simple query on the database and selects the first matching record. The query selects
+        a row that has a "field" that matches the given "value".
+    @param conn HttpConn connection object
+    @param tableName Database table name
+    @param fieldName Database field name to evaluate
+    @param operation Comparision operation. Set to "==", "!=", "<", ">", "<=" or ">=".
+    @param value Data value to compare with the field values.
+    @return First matching record. Returns NULL if no matching records.
+    @ingroup EspReq
+ */
+extern EdiRec *espReadRecWhere(HttpConn *conn, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
+
+/**
+    Read a record identified by key value
+    @description Read a record from the given table as identified by the key value.
+    @param tableName Database table name
+    @param key Key value of the record to read 
+    @return Record instance of EdiRec.
+    @ingroup EspReq
+ */
+extern EdiRec *eReadRecByKey(cchar *tableName, cchar *key);
+
+extern ssize espReceive(HttpConn *conn, char *buf, ssize len);
 
 /**
     Redirect the client
@@ -688,109 +914,14 @@ extern void espRedirectBack(HttpConn *conn);
 extern int espRemoveHeader(HttpConn *conn, cchar *key);
 
 /**
-    Enable auto-finalizing for this request
-    @description Remove a header if present.
-    @param conn HttpConn connection object created via $httpCreateConn
-    @param on Set to true to enable auto-finalizing.
-    @return True if auto-finalizing was enabled prior to this call
-    @ingroup EspReq
+    Remove a record from a database table
+    @description Remove the record identified by the key value from the given table.
+    @param tableName Database table name
+    @param key Key value of the record to remove 
+    @return Record instance of EdiRec.
+    @ingroup EdiReq
  */
-extern bool espSetAutoFinalizing(HttpConn *conn, bool on);
-
-/**
-    Define a content length header in the transmission. 
-    @description This will define a "Content-Length: NNN" request header.
-    @param conn HttpConn connection object created via $httpCreateConn
-    @param length Numeric value for the content length header.
-    @ingroup EspReq
- */
-extern void espSetContentLength(HttpConn *conn, MprOff length);
-
-/**
-    Set a cookie in the transmission
-    @description Define a cookie to send in the transmission Http header
-    @param conn HttpConn connection object created via $httpCreateConn
-    @param name Cookie name
-    @param value Cookie value
-    @param path URI path to which the cookie applies
-    @param domain String Domain in which the cookie applies. Must have 2-3 "." and begin with a leading ".". 
-        For example: domain: .example.com
-    Some browsers will accept cookies without the initial ".", but the spec: (RFC 2109) requires it.
-    @param lifespan Duration for the cookie to persist in msec
-    @param isSecure Set to true if the cookie only applies for SSL based connections
-    @ingroup EspReq
- */
-extern void espSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *domain, MprTime lifespan,
-        bool isSecure);
-
-/**
-    Set the transmission (response) content mime type
-    @description Set the mime type Http header in the transmission
-    @param conn HttpConn connection object created via $httpCreateConn
-    @param mimeType Mime type string
-    @ingroup EspReq
- */
-extern void espSetContentType(HttpConn *conn, cchar *mimeType);
-
-/**
-    Set a transmission header
-    @description Set a Http header to send with the request. If the header already exists, it its value is overwritten.
-    @param conn HttpConn connection object created via $httpCreateConn
-    @param key Http response header key
-    @param fmt Printf style formatted string to use as the header key value
-    @param ... Arguments for fmt
-    @ingroup EspReq
- */
-extern void espSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
-
-/**
-    Set a simple key/value transmission header
-    @description Set a Http header to send with the request. If the header already exists, it its value is overwritten.
-    @param conn HttpConn connection object created via $httpCreateConn
-    @param key Http response header key
-    @param value String value for the key
-    @ingroup EspReq
- */
-extern void espSetHeaderString(HttpConn *conn, cchar *key, cchar *value);
-
-/**
-    Set an integer request parameter value
-    @description Set the value of a named request parameter to an integer value. Form variables are define via
-        www-urlencoded query or post data contained in the request.
-    @param conn HttpConn connection object
-    @param var Name of the request parameter to set
-    @param value value to set.
-    @ingroup EspReq
- */
-extern void espSetIntParam(HttpConn *conn, cchar *var, int value);
-
-/**
-    Set a Http response status.
-    @description Set the Http response status for the request. This defaults to 200 (OK).
-    @param conn HttpConn connection object created via $httpCreateConn
-    @param status Http status code.
-    @ingroup EspReq
- */
-extern void espSetStatus(HttpConn *conn, int status);
-
-/**
-    Set a request parameter value
-    @description Set the value of a named request parameter to a string value. Form variables are define via
-        www-urlencoded query or post data contained in the request.
-    @param conn HttpConn connection object
-    @param var Name of the request parameter to set
-    @param value Value to set.
-    @ingroup EspReq
- */
-extern void espSetParam(HttpConn *conn, cchar *var, cchar *value);
-
-/**
-    Show request details
-    @description This echos request details back to the client. This is useful as a debugging tool.
-    @param conn HttpConn connection object
-    @ingroup EspReq
- */
-extern void espShowRequest(HttpConn *conn);
+extern bool espRemoveRec(HttpConn *conn, cchar *tableName, cchar *key);
 
 /**
     Render a formatted string
@@ -878,41 +1009,83 @@ extern ssize espRenderString(HttpConn *conn, cchar *s);
 extern void espRenderView(HttpConn *conn, cchar *name);
 
 /**
-    Get the current request connection.
-    @return The HttpConn connection object
+    Enable auto-finalizing for this request
+    @description Remove a header if present.
+    @param conn HttpConn connection object created via $httpCreateConn
+    @param on Set to true to enable auto-finalizing.
+    @return True if auto-finalizing was enabled prior to this call
     @ingroup EspReq
  */
-extern HttpConn *espGetConn();
+extern bool espSetAutoFinalizing(HttpConn *conn, bool on);
 
 /**
-    Send an "inform" flash message
-    @description Flash messages are passed to the next request (only) for display. Use the flash() control to
-        display.
-    @param conn Http connection object
-    @param fmt Printf style formatted string to use as the message
+    Set the current request connection.
+    @param conn The HttpConn connection object to define
     @ingroup EspReq
  */
-void espInform(HttpConn *conn, cchar *fmt, ...);
+extern void espSetConn(HttpConn *conn);
 
 /**
-    Send an "error" flash message
-    @description Flash messages are passed to the next request (only) for display. Use the flash() control to
-        display.
-    @param conn Http connection object
-    @param fmt Printf style formatted string to use as the message
+    Define a content length header in the transmission. 
+    @description This will define a "Content-Length: NNN" request header.
+    @param conn HttpConn connection object created via $httpCreateConn
+    @param length Numeric value for the content length header.
     @ingroup EspReq
  */
-void espError(HttpConn *conn, cchar *fmt, ...);
+extern void espSetContentLength(HttpConn *conn, MprOff length);
 
 /**
-    Send an "warn" flash message
-    @description Flash messages are passed to the next request (only) for display. Use the flash() control to
-        display.
-    @param conn Http connection object
-    @param fmt Printf style formatted string to use as the message
+    Set a cookie in the transmission
+    @description Define a cookie to send in the transmission Http header
+    @param conn HttpConn connection object created via $httpCreateConn
+    @param name Cookie name
+    @param value Cookie value
+    @param path URI path to which the cookie applies
+    @param domain String Domain in which the cookie applies. Must have 2-3 "." and begin with a leading ".". 
+        For example: domain: .example.com
+    Some browsers will accept cookies without the initial ".", but the spec: (RFC 2109) requires it.
+    @param lifespan Duration for the cookie to persist in msec
+    @param isSecure Set to true if the cookie only applies for SSL based connections
     @ingroup EspReq
  */
-void espWarn(HttpConn *conn, cchar *fmt, ...);
+extern void espSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *domain, MprTime lifespan,
+        bool isSecure);
+
+/**
+    Set the transmission (response) content mime type
+    @description Set the mime type Http header in the transmission
+    @param conn HttpConn connection object created via $httpCreateConn
+    @param mimeType Mime type string
+    @ingroup EspReq
+ */
+extern void espSetContentType(HttpConn *conn, cchar *mimeType);
+
+/**
+    Update a record field without writing to the database
+    @description This routine updates the record object with the given value. The record will not be written
+        to the database. To write to the database, use $writeRec.
+    @param rec Record to update
+    @param fieldName Record field name to update
+    @param value Value to update
+    @return The record instance if successful, otherwise NULL.
+    @ingroup EspReq
+ */
+extern EdiRec *espSetField(EdiRec *rec, cchar *fieldName, cchar *value);
+
+/**
+    Update record fields without writing to the database
+    @description This routine updates the record object with the given values. The "data' argument supplies 
+        a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually
+        created via #ediMakeHash to convert a JSON string into an options hash.
+        For example: updateFields(rec, hash("{ name: '%s', address: '%s' }", name, address))
+        The record will not be written
+        to the database. To write to the database, use $ediWriteRec.
+    @param rec Record to update
+    @param data Hash of field names and values to use for the update
+    @return The record instance if successful, otherwise NULL.
+    @ingroup EspReq
+ */
+extern EdiRec *espSetFields(EdiRec *rec, MprHash *data);
 
 /**
     Send a flash message
@@ -921,7 +1094,7 @@ void espWarn(HttpConn *conn, cchar *fmt, ...);
     @param fmt Printf style formatted string to use as the message
     @ingroup EspReq
  */
-void espNotice(HttpConn *conn, cchar *kind, cchar *fmt, ...);
+void espSetFlash(HttpConn *conn, cchar *kind, cchar *fmt, ...);
 
 /**
     Send a flash message
@@ -932,14 +1105,206 @@ void espNotice(HttpConn *conn, cchar *kind, cchar *fmt, ...);
     @ingroup EspReq
     @internal
  */
-void espNoticev(HttpConn *conn, cchar *kind, cchar *fmt, va_list args);
+void espSetFlashv(HttpConn *conn, cchar *kind, cchar *fmt, va_list args);
 
 /**
-    Set the current request connection.
-    @param conn The HttpConn connection object to define
+    Set the current database grid
+    @return The grid instance. This permits chaining.
+    @ingroup EspReq
+    @internal
+ */
+extern EdiGrid *espSetGrid(HttpConn *conn, EdiGrid *grid);
+
+/**
+    Set a transmission header
+    @description Set a Http header to send with the request. If the header already exists, it its value is overwritten.
+    @param conn HttpConn connection object
+    @param key Http response header key
+    @param fmt Printf style formatted string to use as the header key value
+    @param ... Arguments for fmt
     @ingroup EspReq
  */
-extern void espSetConn(HttpConn *conn);
+extern void espSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
+
+/**
+    Set a simple key/value transmission header
+    @description Set a Http header to send with the request. If the header already exists, it its value is overwritten.
+    @param conn HttpConn connection object
+    @param key Http response header key
+    @param value String value for the key
+    @ingroup EspReq
+ */
+extern void espSetHeaderString(HttpConn *conn, cchar *key, cchar *value);
+
+/**
+    Set an integer request parameter value
+    @description Set the value of a named request parameter to an integer value. Form variables are define via
+        www-urlencoded query or post data contained in the request.
+    @param conn HttpConn connection object
+    @param var Name of the request parameter to set
+    @param value value to set.
+    @ingroup EspReq
+ */
+extern void espSetIntParam(HttpConn *conn, cchar *var, int value);
+
+/**
+    Set a Http response status.
+    @description Set the Http response status for the request. This defaults to 200 (OK).
+    @param conn HttpConn connection object created via $httpCreateConn
+    @param status Http status code.
+    @ingroup EspReq
+ */
+extern void espSetStatus(HttpConn *conn, int status);
+
+/**
+    Set a request parameter value
+    @description Set the value of a named request parameter to a string value. Form variables are define via
+        www-urlencoded query or post data contained in the request.
+    @param conn HttpConn connection object
+    @param var Name of the request parameter to set
+    @param value Value to set.
+    @ingroup EspReq
+ */
+extern void espSetParam(HttpConn *conn, cchar *var, cchar *value);
+
+/**
+    Set the current database record
+    @description The current record is used to supply data to various abbreviated controls, such as: text(), input(), 
+        checkbox and dropdown()
+    @param conn HttpConn connection object
+    @return The grid instance. This permits chaining.
+    @ingroup EspReq
+    @internal
+ */
+extern EdiRec *espSetRec(HttpConn *conn, EdiRec *rec);
+
+/**
+    Show request details
+    @description This echos request details back to the client. This is useful as a debugging tool.
+    @param conn HttpConn connection object
+    @ingroup EspReq
+ */
+extern void espShowRequest(HttpConn *conn);
+
+/**
+    Write a value to a database table field
+    @description Update the value of a table field in the selected table row. Note: validations are not run.
+    @param conn HttpConn connection object
+    @param tableName Database table name
+    @param key Key value for the table row to update.
+    @param fieldName Column name to update
+    @param value Value to write to the database field
+    @return True if the field  can be successfully written.
+    @ingroup EspReq
+ */
+extern bool espUpdateField(HttpConn *conn, cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
+
+/**
+    Write field values to a database row
+    @description This routine updates the current record with the given data and then saves the record to
+        the database. The "data' argument supplies 
+        a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually
+        created via #ediMakeHash to convert a JSON string into an options hash.
+        For example: ediWriteFields(rec, params());
+        The record runs field validations before saving to the database.
+    @param conn HttpConn connection object
+    @param tableName Database table name
+    @param data Hash of field names and values to use for the update
+    @return True if the field  can be successfully written. Returns false if field validations fail.
+    @ingroup EspReq
+ */
+extern bool espUpdateFields(HttpConn *conn, cchar *tableName, MprHash *data);
+
+/**
+    Write a record to the database
+    @description The record will be saved to the database after running any field validations. If any field validations
+        fail to pass, the record will not be written and error details can be retrieved via $ediGetRecErrors.
+        If the record is a new record and the "id" column is EDI_AUTO_INC, then the "id" will be assigned
+        prior to saving the record.
+    @param conn HttpConn connection object
+    @param rec Record to write to the database.
+    @return True if the record can be successfully written.
+    @ingroup EspReq
+ */
+extern bool espUpdateRec(HttpConn *conn, EdiRec *rec);
+
+//  MOB - should httpLink be renamed to httpUri and espLink to httpUri
+/**
+    Create a URI. 
+    @description Create a URI link by expansions tokens based on the current request and route state.
+    The target parameter may contain partial or complete URI information. The missing parts 
+    are supplied using the current request and route tables. The resulting URI is a normalized, server-local 
+    URI (that begins with "/"). The URI will include any defined route prefix, but will not include scheme, host or 
+    port components.
+    @param conn HttpConn connection object
+    @param target The URI target. The target parameter can be a URI string or JSON style set of options. 
+        The target will have any embedded "{tokens}" expanded by using token values from the request parameters.
+        If the target has an absolute URI path, that path is used directly after tokenization. If the target begins with
+        "~", that character will be replaced with the route prefix. This is a very convenient way to create application 
+        top-level relative links.
+        \n\n
+        If the target is a string that begins with "{AT}" it will be interpreted as a controller/action pair of the 
+        form "{AT}Controller/action". If the "controller/" portion is absent, the current controller is used. If 
+        the action component is missing, the "list" action is used. A bare "{AT}" refers to the "list" action 
+        of the current controller.
+        \n\n
+        If the target starts with "{" it is interpreted as being a JSON style set of options that describe the link.
+        If the target is a relative URI path, it is appended to the current request URI path.  
+        \n\n
+        If the is a JSON style of options, it can specify the URI components: scheme, host, port, path, reference and
+        query. If these component properties are supplied, these will be combined to create a URI.
+        \n\n
+        If the target specifies either a controller/action or a JSON set of options, The URI will be created according 
+        to the route URI template. The template may be explicitly specified
+        via a "route" target property. Otherwise, if an "action" property is specified, the route of the same
+        name will be used. If these don't result in a usable route, the "default" route will be used. 
+        \n\n
+        These are the properties supported in a JSON style "{ ... }" target:
+        <ul>
+            <li>scheme String URI scheme portion</li>
+            <li>host String URI host portion</li>
+            <li>port Number URI port number</li>
+            <li>path String URI path portion</li>
+            <li>reference String URI path reference. Does not include "#"</li>
+            <li>query String URI query parameters. Does not include "?"</li>
+            <li>controller String Controller name if using a Controller-based route. This can also be specified via
+                the action option.</li>
+            <li>action String Action to invoke. This can be a URI string or a Controller action of the form
+                {AT}Controller/action.</li>
+            <li>route String Route name to use for the URI template</li>
+        </ul>
+    @return A normalized, server-local Uri string.
+    @example espUri(conn, "http://example.com/index.html", 0); \n
+    espUri(conn, "/path/to/index.html", 0); \n
+    espUri(conn, "../images/splash.png", 0); \n
+    espUri(conn, "~/static/images/splash.png", 0); \n
+    espUri(conn, "${app}/static/images/splash.png", 0); \n
+    espUri(conn, "@controller/checkout", 0); \n
+    espUri(conn, "@controller/") \n
+    espUri(conn, "@init") \n
+    espUri(conn, "@") \n
+    espUri(conn, "{ action: '@post/create' }", 0); \n
+    espUri(conn, "{ action: 'checkout' }", 0); \n
+    espUri(conn, "{ action: 'logout', controller: 'admin' }", 0); \n
+    espUri(conn, "{ action: 'admin/logout'", 0); \n
+    espUri(conn, "{ product: 'candy', quantity: '10', template: '/cart/${product}/${quantity}' }", 0); \n
+    espUri(conn, "{ route: '~/STAR/edit', action: 'checkout', id: '99' }", 0); \n
+    espUri(conn, "{ template: '~/static/images/${theme}/background.jpg', theme: 'blue' }", 0); 
+    @ingroup EspReq
+ */
+extern cchar *espUri(HttpConn *conn, cchar *target);
+
+#if UNUSED && KEEP
+/**
+    Send an "warn" flash message
+    @description Flash messages are passed to the next request (only) for display. Use the flash() control to
+        display.
+    @param conn Http connection object
+    @param fmt Printf style formatted string to use as the message
+    @ingroup EspReq
+ */
+void espWarn(HttpConn *conn, cchar *fmt, ...);
+#endif
 
 /********************************** Controls **********************************/
 /**
@@ -1033,21 +1398,6 @@ extern void espChart(HttpConn *conn, EdiGrid *grid, cchar *options);
 extern void espCheckbox(HttpConn *conn, cchar *name, cchar *checkedValue, cchar *options);
 
 /**
-    Check a security token.
-    @description Check the request security token. If a required security token is defined in the session state, the
-    request must supply the same token with all POST requests. This helps mitigate potential CSRF threats.
-    Security tokens are used to help guard against CSRF threats. If a template web page includes the
-        securityToken() control, a security token will be added to the meta section of the generated HTML. When a 
-        form is posted from this page, the ESP jQuery script will add the security token to the form parameters.
-        This call validates the security token to ensure it matches the security token stored in session state.
-    @param conn Http connection object
-    @return False if the request is a POST request and the security token does not match the session held token.
-        Otherwise return True.
-    @ingroup EspControl
- */
-extern bool espCheckSecurityToken(HttpConn *conn);
-
-/**
     Render an HTML division
     @description This creates an HTML element with the required options.It is useful to generate a dynamically 
         refreshing division.
@@ -1070,7 +1420,7 @@ extern void espEndform(HttpConn *conn);
     Render flash messages.
     @description Flash messages are one-time messages that are displayed to the client on the next request (only).
     Flash messages use the session state store, but persist only for one request.
-        See $espNotice for how to display flash messages. 
+        See $espSetFlash for how to define flash messages. 
     @param conn Http connection object
     @param kinds Space separated list of flash messages types. Typical types are: "error", "inform", "warning".
     @param options Extra options. See $EspControl for a list of the standard options.
@@ -1432,7 +1782,7 @@ extern void endform();
 /**
     Render flash messages.
     @description Flash messages are one-time messages that are displayed to the client on the next request (only).
-        See $espNotice for how to display flash messages. 
+        See $espSetFlash for how to define flash messages. 
     @param kinds Space separated list of flash messages types. Typical types are: "error", "inform", "warning".
     @param options Extra options. See $EspControl for a list of the standard options.
     @arg retain -- Number of seconds to retain the message. If <= 0, the message is retained until another
@@ -1668,7 +2018,21 @@ extern void text(cchar *field, cchar *options);
  */
 extern void tree(EdiGrid *grid, cchar *options);
 
-/******************************* Misc Abbreviated *****************************/
+/******************************* Abbreviated API ******************************/
+
+extern void addHeader(cchar *key, cchar *fmt, ...);
+
+/**
+    Create a record and initialize field values 
+    @description This will call $ediCreateRec to create a record based on the given table's schema. It will then
+        call $ediUpdateFields to update the record with the given data.
+    @param tableName Database table name
+    @param data Hash of field values
+    @return EdRec instance
+    @ingroup EspAbbrev
+ */
+extern EdiRec *createRec(cchar *tableName, MprHash *data);
+
 /**
     Create a session state object. 
     @description The session state object can be used to share state between requests.
@@ -1678,8 +2042,13 @@ extern void tree(EdiGrid *grid, cchar *options);
     This routine calls $espCreateSession.
     @ingroup EspAbbrev
  */
-extern EspSession *createSession();
+extern void createSession();
 
+extern void destroySession();
+
+extern void dontAutoFinalize();
+
+#if UNUSED
 /**
     Set an error flash notification message.
     @description Flash messages persist for only one request and are a convenient way to pass state information or 
@@ -1688,6 +2057,7 @@ extern EspSession *createSession();
     @ingroup EspAbbrev
  */
 extern void error(cchar *fmt, ...);
+#endif
 
 /**
     Finalize the response.
@@ -1699,6 +2069,16 @@ extern void error(cchar *fmt, ...);
 extern void finalize();
 
 /**
+    Get a list of column names.
+    @param rec Database record. If set to NULL, the current database record defined via $form() is used.
+    @return An MprList of column names in the given table. If there is no record defined, an empty list is returned.
+    @ingroup EdiAbbrev
+ */
+extern MprList *getColumns(EdiRec *rec);
+
+extern cchar *getCookies();
+
+/**
     Get the connection object
     @description Before a view or controller is run, the current connection object for the request is saved in thread
     local data. Most EspControl APIs take an HttpConn object as an argument.
@@ -1706,6 +2086,9 @@ extern void finalize();
     @ingroup EspAbbrev
  */
 extern HttpConn *getConn();
+
+extern MprOff getContentLength();
+extern cchar *getContentType();
 
 /**
     Get the current database instance
@@ -1716,11 +2099,32 @@ extern HttpConn *getConn();
  */
 extern Edi *getDatabase();
 
+extern cchar *getDir();
+
+/**
+    Get the current database grid
+    @description The current grid is defined via $setGrid
+    @return EdiGrid instance
+    @ingroup EdiAbbrev
+    @internal
+ */
+extern EdiGrid *getGrid();
+
+/**
+    Get an rx http header.
+    @description Get a http response header for a given header key.
+    @param conn HttpConn connection object created via $httpCreateConn
+    @param key Name of the header to retrieve. This should be a lower case header name. For example: "Connection"
+    @return Value associated with the header key or null if the key did not exist in the response.
+    @ingroup EspAbbrev
+ */
+extern cchar *getHeader(cchar *key);
+
 /**
     Get the HTTP method
     @description This is a convenience API to return the Http method 
-    @return The getConn()->rx->method property
-    @ingroup EspAbbrev
+    @return The HttpConn.rx.method property
+    @ingroup EspReq
  */
 extern cchar *getMethod();
 
@@ -1733,6 +2137,45 @@ extern cchar *getMethod();
 extern cchar *getQuery();
 
 /**
+    Get the current database record
+    @description The current grid is defined via $setRec
+    @return EdiRec instance
+    @ingroup EdiAbbrev
+ */
+extern EdiRec *getRec();
+
+/**
+    Get the referring URI
+    @description This returns the referring URI as described in the HTTP "referer" (yes the HTTP specification does
+        spell it incorrectly) header. If this header is not defined, this routine will return the home URI as retured
+        by $home.
+    @return String URI back to the referring URI. If no referrer is defined, refers to the home URI.
+    @ingroup EspAbbrev
+ */
+extern cchar *getReferrer();
+
+/**
+    Get a session state variable
+    @description See also $espGetSessionVar and $espGetSessionObj for alternate ways to retrieve session data.
+    @param name Variable name to get
+    @return The session variable value. Returns NULL if not set.
+    @ingroup EspAbbrev
+ */
+extern cchar *getSessionVar(cchar *name);
+
+/**
+    Get a relative URI to the top of the application.
+    @description This will return an absolute URI for the top of the application. This will be "/" if there is no
+        application script name. Otherwise, it will return a URI for the script name for the application.
+        Alternatively, this can be constructed via uri("~")
+    @return String Absolute URI to the top of the application
+    @ingroup EspAbbrev
+ */
+cchar *getTop();
+
+extern MprHash *getUploads();
+
+/**
     Get the request URI string
     @description This is a convenience API to return the request URI.
     @return The espGetConn()->rx->uri
@@ -1740,50 +2183,65 @@ extern cchar *getQuery();
  */
 extern cchar *getUri();
 
-//  MOB - confusing vs home directory. Perhaps top() would be a better API name. Can use "~" instead.
 /**
-    Get the home URI
-    @description This returns a relative URI to the top of the application.
-        Alternatively, this can be constructed via uri("~")
-    @return A relative URI to the top level home URI for the web application.
-    @ingroup EspAbbrev
-    @internal
+    Test is a current grid has been defined
+    @description The current grid is defined via $setRec
+    @return True if a current grid has been defined
+    @ingroup EdiAbbrev
  */
-extern cchar *home();
+extern bool hasGrid();
 
 /**
-    Set an informational flash notification message.
-    @description Flash messages persist for only one request and are a convenient way to pass state information or 
-    feedback messages to the next request. 
-    This routine calls $espInform.
-    @param fmt Printf style message format
-    @ingroup EspAbbrev
+    Test is a current record has been defined and save to the database
+    @description This call returns true if a current record is defined and has been saved to the database with a 
+        valid "id" field.
+    @return True if a current record with a valid "id" is defined.
+    @ingroup EdiAbbrev
  */
-extern void inform(cchar *fmt, ...);
+extern bool hasRec();
+
+extern bool isEof();
+extern bool isFinalized();
+extern bool isSecure();
 
 /**
-    Set a flash notification message.
-    @description Flash messages persist for only one request and are a convenient way to pass state information or 
-    feedback messages to the next request. 
-    Flash messages use the session state store, but persist only for one request.
-    The $inform, $error and $warn convenience methods invoke $notice.
-    This routine calls $espNotice.
-    @param kind Kind of flash message.
-    @param fmt Printf style message format
+    Make a grid
+    @description This call makes a free-standing data grid based on the JSON format content string.
+        The record is not saved to the database.
+    @param content JSON format content string. The content should be an array of objects where each object is a
+        set of property names and values.
+    @return An EdiGrid instance
+    @example:
+grid = ediMakeGrid("[ \\ \n
+    { id: '1', country: 'Australia' }, \ \n
+    { id: '2', country: 'China' }, \ \n
+    ]");
     @ingroup EspAbbrev
  */
-extern void notice(cchar *kind, cchar *fmt, ...);
+extern EdiGrid *makeGrid(cchar *content);
 
 /**
-    Get the request parameter hash table
-    @description This call gets the params hash table for the current request.
-        Route tokens, request query data and www-url encoded form data are all entered into the params table after decoding.
-        Use #mprLookupKey to retrieve data from the table.
-        This routine calls $espGetParams
-    @return #MprHash instance containing the request parameters
+    Make a hash table container of property values
+    @description This routine formats the given arguments, parses the result as a JSON string and returns an 
+        equivalent hash of property values. The result after formatting should be of the form:
+        hash("{ key: 'value', key2: 'value', key3: 'value' }");
+    @param fmt Printf style format string
+    @param ... arguments
+    @return MprHash instance
     @ingroup EspAbbrev
  */
-extern MprHash *params();
+extern MprHash *makeHash(cchar *fmt, ...);
+
+/**
+    Make a record
+    @description This call makes a free-standing data record based on the JSON format content string.
+        The record is not saved to the database.
+    @param content JSON format content string. The content should be a set of property names and values.
+    @return An EdiRec instance
+    @example: rec = ediMakeRec("{ id: 1, title: 'Message One', body: 'Line one' }");
+    @ingroup EspAbbrev
+ */
+extern EdiRec *makeRec(cchar *content);
 
 /**
     Get a request parameter
@@ -1797,6 +2255,73 @@ extern MprHash *params();
 extern cchar *param(cchar *name);
 
 /**
+    Get the request parameter hash table
+    @description This call gets the params hash table for the current request.
+        Route tokens, request query data and www-url encoded form data are all entered into the params table after decoding.
+        Use #mprLookupKey to retrieve data from the table.
+        This routine calls $espGetParams
+    @return #MprHash instance containing the request parameters
+    @ingroup EspAbbrev
+ */
+extern MprHash *params();
+
+/**
+    Read all the records in table from the database
+    @description This reads a table and returns a grid containing the table data.
+    @param tableName Database table name
+    @return A grid containing all table rows. Returns NULL if the table cannot be found.
+    @ingroup EdiAbbrev
+ */
+extern EdiGrid *readAllRecs(cchar *tableName);
+
+/**
+    Read the identified record 
+    @description Read the record identified by the request params("id") from the nominated table.
+    @param tableName Database table name
+    @return The identified record. Returns NULL if the table or record cannot be found.
+    @ingroup EdiAbbrev
+ */
+extern EdiRec *readRec(cchar *tableName);
+
+/**
+    Read matching records
+    @description This runs a simple query on the database and returns matching records in a grid. The query selects
+        all rows that have a "field" that matches the given "value".
+    @param tableName Database table name
+    @param fieldName Database field name to evaluate
+    @param operation Comparision operation. Set to "==", "!=", "<", ">", "<=" or ">=".
+    @param value Data value to compare with the field values.
+    @return A grid containing all matching records. Returns NULL if no matching records.
+    @ingroup EdiAbbrev
+ */
+extern EdiGrid *readRecsWhere(cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
+
+/**
+    Read one record
+    @description This runs a simple query on the database and selects the first matching record. The query selects
+        a row that has a "field" that matches the given "value".
+    @param tableName Database table name
+    @param fieldName Database field name to evaluate
+    @param operation Comparision operation. Set to "==", "!=", "<", ">", "<=" or ">=".
+    @param value Data value to compare with the field values.
+    @return First matching record. Returns NULL if no matching records.
+    @ingroup EspAbbrev
+ */
+extern EdiRec *readRecWhere(cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
+
+/**
+    Read a record identified by key value
+    @description Read a record from the given table as identified by the key value.
+    @param tableName Database table name
+    @param key Key value of the record to read 
+    @return Record instance of EdiRec.
+    @ingroup EspAbbrev
+ */
+extern EdiRec *readRecByKey(cchar *tableName, cchar *key);
+
+extern ssize receive(char *buf, ssize len);
+
+/**
     Redirect the client
     @description Redirect the client to a new uri. This will redirect with an HTTP 302 status. If a different HTTP status
     code is required, use $espRedirect.
@@ -1805,15 +2330,17 @@ extern cchar *param(cchar *name);
  */
 extern void redirect(cchar *target);
 
+extern void redirectBack();
+
 /**
-    Get the referring URI
-    @description This returns the referring URI as described in the HTTP "referer" (yes the HTTP specification does
-        spell it incorrectly) header. If this header is not defined, this routine will return the home URI as retured
-        by $home.
-    @return String URI back to the referring URI. If no referrer is defined, refers to the home URI.
-    @ingroup EspAbbrev
+    Remove a record from a database table
+    @description Remove the record identified by the key value from the given table.
+    @param tableName Database table name
+    @param key Key value of the record to remove 
+    @return Record instance of EdiRec.
+    @ingroup EdiAbbrev
  */
-extern cchar *referrer();
+extern bool removeRec(cchar *tableName, cchar *key);
 
 /**
     Render a formatted string
@@ -1825,6 +2352,8 @@ extern cchar *referrer();
     @ingroup EspAbbrev
  */
 extern ssize render(cchar *fmt, ...);
+
+extern void renderError(int status, cchar *fmt, ...);
 
 /**
     Render a file back to the client
@@ -1856,6 +2385,73 @@ extern ssize renderSafe(cchar *fmt, ...);
  */
 extern void renderView(cchar *view);
 
+/** 
+    Define a cookie header to send with the response. The Path, domain and expires properties can be set to null for 
+    default values.
+    @param name Cookie name
+    @param value Cookie value
+    @param path Uri path to which the cookie applies
+    @param domain String Domain in which the cookie applies. Must have 2-3 "." and begin with a leading ".". 
+        For example: domain: .example.com
+        Some browsers will accept cookies without the initial ".", but the spec: (RFC 2109) requires it.
+    @param lifespan Lifespan of the cookie. (MOB units?)
+    @param isSecure Boolean Set to true if the cookie only applies for SSL based connections
+*/
+extern void setCookie(cchar *name, cchar *value, cchar *path, cchar *domain, MprTime lifespan, bool isSecure);
+
+extern void setContentType(cchar *mimeType);
+
+/**
+    Update a record field without writing to the database
+    @description This routine updates the record object with the given value. The record will not be written
+        to the database. To write to the database, use $writeRec.
+    @param rec Record to update
+    @param fieldName Record field name to update
+    @param value Value to update
+    @return The record instance if successful, otherwise NULL.
+    @ingroup EspAbbrev
+ */
+extern EdiRec *setField(EdiRec *rec, cchar *fieldName, cchar *value);
+
+/**
+    Update record fields without writing to the database
+    @description This routine updates the record object with the given values. The "data' argument supplies 
+        a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually
+        created via #ediMakeHash to convert a JSON string into an options hash.
+        For example: updateFields(rec, hash("{ name: '%s', address: '%s' }", name, address))
+        The record will not be written
+        to the database. To write to the database, use $ediWriteRec.
+    @param rec Record to update
+    @param data Hash of field names and values to use for the update
+    @return The record instance if successful, otherwise NULL.
+    @ingroup EspAbbrev
+ */
+extern EdiRec *setFields(EdiRec *rec, MprHash *data);
+
+//  MOB - confusing vs espSetFlash
+/**
+    Set a flash notification message.
+    @description Flash messages persist for only one request and are a convenient way to pass state information or 
+    feedback messages to the next request. 
+    Flash messages use the session state store, but persist only for one request.
+    The $inform, $error and $warn convenience methods invoke $notice.
+    This routine calls $espSetFlash.
+    @param kind Kind of flash message.
+    @param fmt Printf style message format
+    @ingroup EspAbbrev
+ */
+extern void setFlash(cchar *kind, cchar *fmt, ...);
+
+/**
+    Set the current database grid
+    @return The grid instance. This permits chaining.
+    @ingroup EdiAbbrev
+    @internal
+ */
+extern EdiGrid *setGrid(EdiGrid *grid);
+
+extern void setHeader(cchar *key, cchar *fmt, ...);
+
 /**
     Set a request parameter value
     @description Set the value of a named request parameter to a string value. Form variables are define via
@@ -1867,13 +2463,14 @@ extern void renderView(cchar *view);
 extern void setParam(cchar *name, cchar *value);
 
 /**
-    Get a session state variable
-    @description See also $espGetSessionVar and $espGetSessionObj for alternate ways to retrieve session data.
-    @param name Variable name to get
-    @return The session variable value. Returns NULL if not set.
-    @ingroup EspAbbrev
+    Set the current database record
+    @description The current record is used to supply data to various abbreviated controls, such as: text(), input(), 
+        checkbox and dropdown()
+    @return The grid instance. This permits chaining.
+    @ingroup EdiAbbrev
+    @internal
  */
-extern cchar *session(cchar *name);
+extern EdiRec *setRec(EdiRec *rec);
 
 /**
     Set a session state variable
@@ -1882,7 +2479,48 @@ extern cchar *session(cchar *name);
     @param value Value to set
     @ingroup EspAbbrev
  */
-extern void setSession(cchar *name, cchar *value);
+extern void setSessionVar(cchar *name, cchar *value);
+
+extern void setStatus(int status);
+
+/**
+    Write a value to a database table field
+    @description Update the value of a table field in the selected table row. Note: validations are not run.
+    @param tableName Database table name
+    @param key Key value for the table row to update.
+    @param fieldName Column name to update
+    @param value Value to write to the database field
+    @return True if the field  can be successfully written.
+    @ingroup EspAbbrev
+ */
+extern bool updateField(cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
+
+/**
+    Write field values to a database row
+    @description This routine updates the current record with the given data and then saves the record to
+        the database. The "data' argument supplies 
+        a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually
+        created via #ediMakeHash to convert a JSON string into an options hash.
+        For example: ediWriteFields(rec, params());
+        The record runs field validations before saving to the database.
+    @param tableName Database table name
+    @param data Hash of field names and values to use for the update
+    @return True if the field  can be successfully written. Returns false if field validations fail.
+    @ingroup EspAbbrev
+ */
+extern bool updateFields(cchar *tableName, MprHash *data);
+
+/**
+    Write a record to the database
+    @description The record will be saved to the database after running any field validations. If any field validations
+        fail to pass, the record will not be written and error details can be retrieved via $ediGetRecErrors.
+        If the record is a new record and the "id" column is EDI_AUTO_INC, then the "id" will be assigned
+        prior to saving the record.
+    @param rec Record to write to the database.
+    @return True if the record can be successfully written.
+    @ingroup EspAbbrev
+ */
+extern bool updateRec(EdiRec *rec);
 
 //  MOB - should httpLink be renamed to httpUri and espLink to httpUri
 /**
@@ -1949,6 +2587,7 @@ extern void setSession(cchar *name, cchar *value);
  */
 extern cchar *uri(cchar *target);
 
+#if UNUSED
 /**
     Set an arning flash notification message.
     @description Flash messages persist for only one request and are a convenient way to pass state information or 
@@ -1959,283 +2598,16 @@ extern cchar *uri(cchar *target);
  */
 extern void warn(cchar *fmt, ...);
 
-/*************************** Database Abbreviated *****************************/
 /**
-    Create a record and initialize field values 
-    @description This will call $ediCreateRec to create a record based on the given table's schema. It will then
-        call $ediUpdateFields to update the record with the given data.
-    @param tableName Database table name
-    @param data Hash of field values
-    @return EdRec instance
+    Set an informational flash notification message.
+    @description Flash messages persist for only one request and are a convenient way to pass state information or 
+    feedback messages to the next request. 
+    This routine calls $espInform.
+    @param fmt Printf style message format
     @ingroup EspAbbrev
  */
-extern EdiRec *createRec(cchar *tableName, MprHash *data);
-
-/**
-    Get a list of column names.
-    @param rec Database record. If set to NULL, the current database record defined via $form() is used.
-    @return An MprList of column names in the given table. If there is no record defined, an empty list is returned.
-    @ingroup EdiAbbrev
- */
-extern MprList *getColumns(EdiRec *rec);
-
-/**
-    Get the current database grid
-    @description The current grid is defined via $setGrid
-    @return EdiGrid instance
-    @ingroup EdiAbbrev
-    @internal
- */
-extern EdiGrid *getGrid();
-
-/**
-    Get the current database record
-    @description The current grid is defined via $setRec
-    @return EdiRec instance
-    @ingroup EdiAbbrev
- */
-extern EdiRec *getRec();
-
-/**
-    Test is a current grid has been defined
-    @description The current grid is defined via $setRec
-    @return True if a current grid has been defined
-    @ingroup EdiAbbrev
- */
-extern bool hasGrid();
-
-/**
-    Make a hash table container of property values
-    @description This routine formats the given arguments, parses the result as a JSON string and returns an 
-        equivalent hash of property values. The result after formatting should be of the form:
-        hash("{ key: 'value', key2: 'value', key3: 'value' }");
-    @param fmt Printf style format string
-    @param ... arguments
-    @return MprHash instance
-    @ingroup EspAbbrev
- */
-extern MprHash *hash(cchar *fmt, ...);
-
-/**
-    Test is a current record has been defined and save to the database
-    @description This call returns true if a current record is defined and has been saved to the database with a 
-        valid "id" field.
-    @return True if a current record with a valid "id" is defined.
-    @ingroup EdiAbbrev
- */
-extern bool hasRec();
-
-/**
-    Make a record
-    @description This call makes a free-standing data record based on the JSON format content string.
-        The record is not saved to the database.
-    @param content JSON format content string. The content should be a set of property names and values.
-    @return An EdiRec instance
-    @example: rec = ediMakeRec("{ id: 1, title: 'Message One', body: 'Line one' }");
-    @ingroup EspAbbrev
- */
-extern EdiRec *makeRec(cchar *content);
-
-/**
-    Make a grid
-    @description This call makes a free-standing data grid based on the JSON format content string.
-        The record is not saved to the database.
-    @param content JSON format content string. The content should be an array of objects where each object is a
-        set of property names and values.
-    @return An EdiGrid instance
-    @example:
-grid = ediMakeGrid("[ \\ \n
-    { id: '1', country: 'Australia' }, \ \n
-    { id: '2', country: 'China' }, \ \n
-    ]");
-    @ingroup EspAbbrev
- */
-extern EdiGrid *makeGrid(cchar *content);
-
-//  MOB - rename to readWhere?
-/**
-    Read a table from the database
-    @description This reads a table and returns a grid containing the table data.
-    @param tableName Database table name
-    @return A grid containing all table rows. Returns NULL if the table cannot be found.
-    @ingroup EdiAbbrev
- */
-extern EdiGrid *readGrid(cchar *tableName);
-
-/**
-    Read the identified record 
-    @description Read the record identified by the request params("id") from the nominated table.
-    @param tableName Database table name
-    @return The identified record. Returns NULL if the table or record cannot be found.
-    @ingroup EdiAbbrev
- */
-extern EdiRec *readRec(cchar *tableName);
-
-/**
-    Read matching records
-    @description This runs a simple query on the database and returns matching records in a grid. The query selects
-        all rows that have a "field" that matches the given "value".
-    @param tableName Database table name
-    @param fieldName Database field name to evaluate
-    @param operation Comparision operation. Set to "==", "!=", "<", ">", "<=" or ">=".
-    @param value Data value to compare with the field values.
-    @return A grid containing all matching records. Returns NULL if no matching records.
-    @ingroup EdiAbbrev
- */
-extern EdiGrid *readWhere(cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
-
-//  MOB - rename readRecWhere
-/**
-    Read one record
-    @description This runs a simple query on the database and selects the first matching record. The query selects
-        a row that has a "field" that matches the given "value".
-    @param tableName Database table name
-    @param fieldName Database field name to evaluate
-    @param operation Comparision operation. Set to "==", "!=", "<", ">", "<=" or ">=".
-    @param value Data value to compare with the field values.
-    @return First matching record. Returns NULL if no matching records.
-    @ingroup EspAbbrev
- */
-extern EdiRec *readOneWhere(cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
-
-/**
-    Read a record identified by key value
-    @description Read a record from the given table as identified by the key value.
-    @param tableName Database table name
-    @param key Key value of the record to read 
-    @return Record instance of EdiRec.
-    @ingroup EspAbbrev
- */
-extern EdiRec *readRecByKey(cchar *tableName, cchar *key);
-
-/**
-    Remove a record from a database table
-    @description Remove the record identified by the key value from the given table.
-    @param tableName Database table name
-    @param key Key value of the record to remove 
-    @return Record instance of EdiRec.
-    @ingroup EdiAbbrev
- */
-extern bool removeRec(cchar *tableName, cchar *key);
-
-/**
-    Set the current database grid
-    @return The grid instance. This permits chaining.
-    @ingroup EdiAbbrev
-    @internal
- */
-extern EdiGrid *setGrid(EdiGrid *grid);
-
-/**
-    Set the current database record
-    @description The current record is used to supply data to various abbreviated controls, such as: text(), input(), 
-        checkbox and dropdown()
-    @return The grid instance. This permits chaining.
-    @ingroup EdiAbbrev
-    @internal
- */
-extern EdiRec *setRec(EdiRec *rec);
-
-/** 
-    Define a cookie header to send with the response. The Path, domain and expires properties can be set to null for 
-    default values.
-    @param name Cookie name
-    @param value Cookie value
-    @param path Uri path to which the cookie applies
-    @param domain String Domain in which the cookie applies. Must have 2-3 "." and begin with a leading ".". 
-        For example: domain: .example.com
-        Some browsers will accept cookies without the initial ".", but the spec: (RFC 2109) requires it.
-    @param lifespan Lifespan of the cookie. (MOB units?)
-    @param isSecure Boolean Set to true if the cookie only applies for SSL based connections
-*/
-extern void setCookie(cchar *name, cchar *value, cchar *path, cchar *domain, MprTime lifespan, bool isSecure);
-
-/**
-    Update a record field without writing to the database
-    @description This routine updates the record object with the given value. The record will not be written
-        to the database. To write to the database, use $writeRec.
-    @param rec Record to update
-    @param fieldName Record field name to update
-    @param value Value to update
-    @return The record instance if successful, otherwise NULL.
-    @ingroup EspAbbrev
- */
-extern EdiRec *updateField(EdiRec *rec, cchar *fieldName, cchar *value);
-
-/**
-    Update record fields without writing to the database
-    @description This routine updates the record object with the given values. The "data' argument supplies 
-        a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually
-        created via #ediMakeHash to convert a JSON string into an options hash.
-        For example: updateFields(rec, hash("{ name: '%s', address: '%s' }", name, address))
-        The record will not be written
-        to the database. To write to the database, use $ediWriteRec.
-    @param rec Record to update
-    @param data Hash of field names and values to use for the update
-    @return The record instance if successful, otherwise NULL.
-    @ingroup EspAbbrev
- */
-extern EdiRec *updateFields(EdiRec *rec, MprHash *data);
-
-/**
-    Write a record to the database
-    @description The record will be saved to the database after running any field validations. If any field validations
-        fail to pass, the record will not be written and error details can be retrieved via $ediGetRecErrors.
-        If the record is a new record and the "id" column is EDI_AUTO_INC, then the "id" will be assigned
-        prior to saving the record.
-    @param rec Record to write to the database.
-    @return True if the record can be successfully written.
-    @ingroup EspAbbrev
- */
-extern bool writeRec(EdiRec *rec);
-
-/**
-    Write a value to a database table field
-    @description Update the value of a table field in the selected table row. Note: validations are not run.
-    @param tableName Database table name
-    @param key Key value for the table row to update.
-    @param fieldName Column name to update
-    @param value Value to write to the database field
-    @return True if the field  can be successfully written.
-    @ingroup EspAbbrev
- */
-extern bool writeField(cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
-
-/**
-    Write field values to a database row
-    @description This routine updates the current record with the given data and then saves the record to
-        the database. The "data' argument supplies 
-        a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually
-        created via #ediMakeHash to convert a JSON string into an options hash.
-        For example: ediWriteFields(rec, params());
-        The record runs field validations before saving to the database.
-    @param tableName Database table name
-    @param data Hash of field names and values to use for the update
-    @return True if the field  can be successfully written. Returns false if field validations fail.
-    @ingroup EspAbbrev
- */
-extern bool writeFields(cchar *tableName, MprHash *data);
-
-//  MOB DOC
-extern void addHeader(cchar *key, cchar *fmt, ...);
-extern cchar *cookies();
-extern void destroySession();
-extern void dontAutoFinalize();
-extern cchar *documentRoot();
-extern MprOff getContentLength();
-extern cchar *getContentType();
-extern bool isSecure();
-extern void renderError(int status, cchar *fmt, ...);
-extern void setHeader(cchar *key, cchar *fmt, ...);
-extern void setContentType(cchar *mimeType);
-extern void setStatus(int status);
-extern cchar *top();
-extern MprHash *uploadedFiles();
-
-//  MOB - what should the name be => httpRead. Must signal eof too.
-extern ssize qread(char *buf, ssize len);
-extern bool qeof();
-
+extern void inform(cchar *fmt, ...);
+#endif
 
 #ifdef __cplusplus
 } /* extern C */

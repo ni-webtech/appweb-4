@@ -121,7 +121,7 @@ static cchar *ScaffoldTemplateHeader = "\
 #include \"esp-app.h\"\n\
 \n\
 static void create() { \n\
-    if (writeRec(createRec(\"${NAME}\", params()))) {\n\
+    if (updateRec(createRec(\"${NAME}\", params()))) {\n\
         inform(\"New ${NAME} created\");\n\
         renderView(\"${NAME}-list\");\n\
     } else {\n\
@@ -193,7 +193,7 @@ static cchar *ScaffoldEditView =  "\
     <% {\n\
         char    *name, *uname;\n\
         int     next;\n\
-        MprList *cols = getColumns(0);\n\
+        MprList *cols = getColumns(NULL);\n\
         for (ITERATE_ITEMS(cols, name, next)) {\n\
             if (smatch(name, \"id\")) continue;\n\
             uname = spascal(name);\n\

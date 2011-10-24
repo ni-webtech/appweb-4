@@ -1,7 +1,7 @@
 
 <!-- need conn-less version -->
 
-<% espWarn(conn, "Big warning"); %>
+<% warn(conn, "Big warning"); %>
     <h1>Edit</h1>
     SECRET: @@secret
 

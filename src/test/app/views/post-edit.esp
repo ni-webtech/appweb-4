@@ -5,7 +5,7 @@
         <% {
                 char    *name, *uname;
                 int     next;
-                MprList *cols = getColumns(0);
+                MprList *cols = getColumns(NULL);
                 for (ITERATE_ITEMS(cols, name, next)) {
                     if (smatch(name, "id")) continue;
                     uname = spascal(name);
