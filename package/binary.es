@@ -165,7 +165,8 @@ if (!bare) {
                     /*
                      	Daemon start / stop scripts
                      */
-                    copy("appweb.init", init.join(product), {from: "package/LINUX", permissions: 0755, expand: true, trace: true})
+                    copy("appweb.init", init.join(product), 
+                        {from: "package/LINUX", permissions: 0755, expand: true, trace: true})
 
                     for each (i in [2, 3, 4, 5]) {
                         let level = ".d/S81"

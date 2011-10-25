@@ -197,17 +197,17 @@ copyRemoveFiles() {
     done
     configureProduct --quiet copy
 
-    #
-    #   Don't remove empty directories if installing to "/"
-    #
-    root=/
-    [ $BLD_BUILD_OS = WIN ] && root=`cygpath -m "/"`
-    if [ "$ORIGINAL_ROOT_DIR" != "" -o "$TASK" = Package -a "$ROOT_DIR" != "$root" ] ; then
-        #
-        #   Do it this way as the path may have spaces. find --exec has problems in cygwin
-        #
-        find "$ROOT_DIR" -depth -type d -empty | while read f ; do rmdir "$f" ; done
-    fi
+#    #
+#    #   Don't remove empty directories if installing to "/"
+#    #
+#    root=/
+#    [ $BLD_BUILD_OS = WIN ] && root=`cygpath -m "/"`
+#    if [ "$ORIGINAL_ROOT_DIR" != "" -o "$TASK" = Package -a "$ROOT_DIR" != "$root" ] ; then
+#        #
+#        #   Do it this way as the path may have spaces. find --exec has problems in cygwin
+#        #
+#        find "$ROOT_DIR" -depth -type d -empty | while read f ; do rmdir "$f" ; done
+#    fi
 }
 
 #
@@ -489,3 +489,4 @@ if [ "$BARE" = 1 ] ; then
 	rmdir ${ROOT_DIR}/usr/lib
 	rmdir ${ROOT_DIR}/usr
 fi
+
