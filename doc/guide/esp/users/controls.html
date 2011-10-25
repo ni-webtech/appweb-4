@@ -64,8 +64,10 @@
         </div>
         <div class="contentLeft">
 <pre>
-- ESP and Abbreviated API
+- Overview 
+    - why controls
 - List of controls
+    - Links to per-control discussions
 - How options are handled
     - Standard options
 - jQuery / Ajax support
@@ -75,32 +77,40 @@
     - current record
     - Open databases in appweb.conf
 - Using controls without a database
-- Accessing request state and session data
-    - Using @@params
-- Flash messages
-- SecurityTokens
-- Per control examples
-    - input() for smart input typing
+- Per controls 
     - form errors
     - Style sheets and theming
-- escaping data - escape option, renderSafe()
+    - text and escaping data - escape option, renderSafe()
+- MOB 
+    - ESP and Abbreviated API (where should this be)?
 </pre>
-            <h1>HTML Controls</h1>
+            <h1>ESP Web Controls</h1>
+            <p>ESP provides a rich library of web control functions. The purpose of these controls is to provide
+            a higher-level of interacting with the elements of a web page. Controls are provided to generate tables, 
+            tabbed property sheets and manage input forms and fields. Furthermore, these controls are pre-integrated with the
+            jQuery client-side JavasCript library and bind with server-side databases data.</p>
+
+            <h2 class="section">AJAX and Client JavaScript Libraries</h1>
             <p>Web applications split their processing between the server and the client. Increasingly, more processing
-            is being done at the client to give a better user experience. <a href=
+            is being done at the client to give a better overall user experience. <a href=
             "http://en.wikipedia.org/wiki/Ajax_(programming)">Ajax</a> programming has risen as one of the more popular
-            means of achieving responsive client user interfaces and a wide variety of <a href=
-            "http://en.wikipedia.org/wiki/Ajax_framework">Ajax Frameworks</a> have been developed.</p>
-            <p>Ajax translates as "Asynchronous JavaScript and XML", but what it typically means is doing background
+            means of achieving responsive client user interfaces and <a href="http://jquery.com/">jQuery</a> has emerged as 
+            the leading and one of the best client-side Ajax libraries. However, it is important that the server-side 
+            web framework integrate well with the client-side JavaScript library. ESP is thoroughly integrated with
+            with jQuery and provides a jQuery client-side adapter and automatically generates the necessary HTML
+
+            with the  Ajax translates as "Asynchronous JavaScript and XML", but what it typically means is doing background
             HTTP requests to get data and update the user interface without doing a complete browser refresh. This
             gives a more immediate and natural feel to a web application. ESP controls support Ajax and Ajax frameworks.</p>
             
+            <h2 class="section">Database Integration</h1>
             <a name="dynamic" id="dynamic"></a>
             <h3>Dynamic Controls</h3>
             <p>ESP controls can dynamically retrieve data from databases and refresh their contents automatically.</p>
             <p>Here is an example of a table configured to display stock market data in a grid with the current price
             for each stock. The grid will refresh its data every 2 seconds without updating the entire web page.</p>
             <pre>
+            MOB - is this refresh or data-refresh?
 &lt;%
     table(Stock.findAll(), {
         refresh: 2,
@@ -128,12 +138,12 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>aform</td>
-                        <td>Render an async (ajax) form</td>
+                        <td>alert</td>
+                        <td></td>
                     </tr>
                     <tr>
-                        <td>alink</td>
-                        <td>Render an async (ajax) link</td>
+                        <td>anchor</td>
+                        <td></td>
                     </tr>
                     <tr>
                         <td>button</td>
@@ -152,8 +162,28 @@
                         <td>Render an input checkbox</td>
                     </tr>
                     <tr>
-                        <td>extlink</td>
-                        <td>Render an external link</td>
+                        <td>div</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>dropdown</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>endform</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>flash</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>form</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>icon</td>
+                        <td>Render an image</td>
                     </tr>
                     <tr>
                         <td>image</td>
@@ -168,14 +198,6 @@
                         <td>Render a text label</td>
                     </tr>
                     <tr>
-                        <td>link</td>
-                        <td>Render an internal link</td>
-                    </tr>
-                    <tr>
-                        <td>list</td>
-                        <td>Render a selection list (drop-down)</td>
-                    </tr>
-                    <tr>
                         <td>mail</td>
                         <td>Render a mail link</td>
                     </tr>
@@ -188,12 +210,16 @@
                         <td>Render an input radio button</td>
                     </tr>
                     <tr>
-                        <td>status</td>
-                        <td>Render a status control area</td>
+                        <td>refresh</td>
+                        <td></td>
                     </tr>
                     <tr>
                         <td>script</td>
                         <td>Render a script tag</td>
+                    </tr>
+                    <tr>
+                        <td>securityToken</td>
+                        <td></td>
                     </tr>
                     <tr>
                         <td>stylesheet</td>
@@ -210,10 +236,6 @@
                     <tr>
                         <td>text</td>
                         <td>Render an input text field</td>
-                    </tr>
-                    <tr>
-                        <td>textarea</td>
-                        <td>Render an input textarea field</td>
                     </tr>
                     <tr>
                         <td>tree</td>

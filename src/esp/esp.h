@@ -1784,6 +1784,19 @@ extern void checkbox(cchar *field, cchar *checkedValue, cchar *options);
 extern void division(cchar *body, cchar *options);
 
 /**
+    Render a dropdown selection list
+    @param field Record field name to provide the default value for the list. The field should be a property of the 
+        form current record.  The field name is used to create the HTML input control name.
+        If this call is used without a form control record, the actual data value should be supplied via the 
+        options.value property.
+    @param choices Choices to select from. This is a JSON style set of properties. For example:
+        espDropdown(conn, "priority", "{ low: 0, med: 1, high: 2 }", NULL)
+    @param options Extra options. See $EspControl for a list of the standard options.
+    @ingroup EspAbbrev
+ */
+extern void dropdown(cchar *field, cchar *choices, cchar *options);
+
+/**
     Signify the end of an HTML form. 
     @description This emits a HTML closing form tag.
     @ingroup EspControl
@@ -1858,19 +1871,6 @@ extern void input(cchar *field, cchar *options);
     @ingroup EspAbbrev
  */
 extern void label(cchar *text, cchar *options);
-
-/**
-    Render a dropdown selection list
-    @param field Record field name to provide the default value for the list. The field should be a property of the 
-        form current record.  The field name is used to create the HTML input control name.
-        If this call is used without a form control record, the actual data value should be supplied via the 
-        options.value property.
-    @param choices Choices to select from. This is a JSON style set of properties. For example:
-        espDropdown(conn, "priority", "{ low: 0, med: 1, high: 2 }", NULL)
-    @param options Extra options. See $EspControl for a list of the standard options.
-    @ingroup EspAbbrev
- */
-extern void dropdown(cchar *field, cchar *choices, cchar *options);
 
 /**
     Render a mail link
