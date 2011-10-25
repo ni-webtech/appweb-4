@@ -88,21 +88,61 @@
             <p>ESP provides a rich library of web control functions. The purpose of these controls is to provide
             a higher-level of interacting with the elements of a web page. Controls are provided to generate tables, 
             tabbed property sheets and manage input forms and fields. Furthermore, these controls are pre-integrated with the
-            jQuery client-side JavasCript library and bind with server-side databases data.</p>
+            jQuery client-side JavasCript library and may optionally bind with server-side databases data.</p>
+
+            <p>ESP web controls are just "C" language functions that emit HTML according to their arguments. 
+            Here is a quick sample of some of the ESP controls in action:</p>
+<pre>
+buttonLink("New Post", "@init", 0);
+table(data, "{ \
+    columns: { \
+        id: { header: 'ID' }, \
+        title: { header: 'TITLE' }, \
+        body: { header: 'BODY' }, \
+    }");
+</pre>
+            <h2 class="section">Control Families</h2>
+
+            <p>ESP Controls are grouped into two families: 
+            <ul>
+                <li>Form-based controls that do input
+                <li>Non form-based that do output and other tasks
+            </ul>
+            <p>Form-based controls are typically located inside a <tt>form</tt>/<tt>endform</tt> control 
+            pair that defines a current database record from which data will be utilized. Non form-based controls 
+            can be used anywhere on a page outside a form/endform group.</p>
+
+            <h3>Control Options</h3>
+            <p>ESP controls are generally of the form: function(args ..., options). The options argument is an optional 
+            set of properties to modify the behaviour of the control. It is in the form of a 
+            <a href="http://en.wikipedia.org/wiki/JSON">JSON</a> string where a set of properties are enclosed in 
+            braces. Each property keyword is followed by a colon. It helps to use single quotes around property values
+            and use double quotes around the entire option string. 
+            </p>
+<pre>
+label("Hello World", "{ effects: 'fadein' }");
+</pre>
+            <p>ESP supports a large suite of options, but there is a common set that are applicable to most ESP controls.</p>
+            <table>
+                <thead>
+                </thead>
+                <tbody>
+                    <tr></tr>
+                </tbody>
+            </table>
 
             <h2 class="section">AJAX and Client JavaScript Libraries</h1>
             <p>Web applications split their processing between the server and the client. Increasingly, more processing
             is being done at the client to give a better overall user experience. <a href=
             "http://en.wikipedia.org/wiki/Ajax_(programming)">Ajax</a> programming has risen as one of the more popular
             means of achieving responsive client user interfaces and <a href="http://jquery.com/">jQuery</a> has emerged as 
-            the leading and one of the best client-side Ajax libraries. However, it is important that the server-side 
-            web framework integrate well with the client-side JavaScript library. ESP is thoroughly integrated with
-            with jQuery and provides a jQuery client-side adapter and automatically generates the necessary HTML
-
-            with the  Ajax translates as "Asynchronous JavaScript and XML", but what it typically means is doing background
-            HTTP requests to get data and update the user interface without doing a complete browser refresh. This
-            gives a more immediate and natural feel to a web application. ESP controls support Ajax and Ajax frameworks.</p>
+            the leading and one of the best client-side Ajax libraries.</p>
             
+            <p>Consequently, it is very important that the server-side 
+            web framework integrate well with the client-side JavaScript library. ESP is thoroughly integrated with
+            with jQuery and provides a jQuery client-side adapter and automatically generates the necessary HTML for
+            dynamic and background requests.</p>
+
             <h2 class="section">Database Integration</h1>
             <a name="dynamic" id="dynamic"></a>
             <h3>Dynamic Controls</h3>
@@ -124,6 +164,18 @@
         width: "80%",
 }) %&gt;
 </pre><!-- TODO more on charts and tables
+            <p>ESP input controls are generally of the form: function(field, options) where <tt>field</tt> is the 
+            name of a field in the current database record that contains the data to display. 
+            The <tt>form</tt> control defines a current database record up to the next <tt>endform</tt> control. 
+            In between, controls can access data in the current record by field name.
+<pre>
+form(readRecByKey("users", "John Smith"), 0);
+    text("username", 0);
+    text("password", "{ password: 'true' }");
+endform(0, 0);
+</pre>
+            <p>This will display the <tt>username</tt> field in the current database record.
+
                <h2 class="section">Table Control</h2>
                <h2 class="section">Chart Control</h2>
            -->

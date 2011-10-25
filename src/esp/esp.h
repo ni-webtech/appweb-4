@@ -1318,10 +1318,77 @@ extern cchar *espUri(HttpConn *conn, cchar *target);
 
 /********************************** Controls **********************************/
 /**
-    ESP Controls
-    MOB - Overview needed
-    MOB - Talk about abbreviated forms
-    MOB - list all general options here - see ejs
+    There are two groups of  ESP Control APIs. The "full" form and the "abbreviated" form. The "full" form API takes a
+    HttpConn request connection object as the first parameter and the function names are prefixed with "esp". 
+    The "abbreviated" form APIs are shorter and more convenient. They do not have a connection argument and 
+    determine the request connection using Thread-Local storage. They do not have any function prefix. Ocassionally,
+    an ESP control name may clash with a function name in another library. If this happens, rename the ESP function
+    in the esp-app.h header.
+    \n\n
+    ESP Controls are grouped into two families: input form controls and general output controls. Input controls
+    are typically located inside a form/endform control pair that defines a current database record from which data
+    will be utilized. Output controls can be used anywhere on a page outside a form/endform group.
+    \n\n
+    Input controls are generally of the form: function(field, options) where field is the name of the property
+    in the current record that contains the data to display. The options is an object hash that controls and modifies
+    how the control will render. The options hash is a JSON string, which is interpreted as a set of property values.
+    \n\n
+    Various controls have custom options, but most share the following common set of option properties:
+    @option action String Action to invoke. This can be a URI string or a Controller action of the form
+        \@Controller/action.
+    @option apply String Client JQuery selector identifying the element to apply the remote update.
+        Typically "div.ID" where ID is the DOM ID for the element.
+    @option background String Background color. This is a CSS RGB color specification. For example "FF0000" for red.
+    @option click (Boolean|Uri|String) URI to invoke if the control is clicked.
+    @option color String Foreground color. This is a CSS RGB color specification. For example "FF0000" for red.
+    @option confirm String Message to prompt the user to requeset confirmation before submitting a form or request.
+    @option controller Controller owning the action to invoke when clicked. Defaults to the current controller.
+    @option data-* All data-* names are passed through to the HTML unmodified.
+    @option domid String Client-side DOM-ID to use for the control
+    @option effects String Transition effects to apply when updating a control. Select from: "fadein", "fadeout",
+        "highlight".
+    @option escape Boolean Escape the text before rendering. This converts HTML reserved tags and delimiters into
+        an encoded form.
+    @option height (Number|String) Height of the control. Can be a number of pixels or a percentage string. 
+        Defaults to unlimited.
+    @option key Array List of fields to set as the key values to uniquely identify the clicked or edited element. 
+        The key will be rendered as a "data-key" HTML attribute and will be passed to the receiving controller 
+        when the entry is clicked or edited. Each entry of the key option can be a simple
+        string field name or it can be an Object with a single property, where the property name is a simple
+        string field name and the property value is the mapped field name to use as the actual key name. This 
+        supports using custom key names. NOTE: this option cannot be used if using cell clicks or edits. In that
+        case, set click/edit to a callback function and explicitly construct the required URI and parameters.
+    @option keyFormat String Define how the keys will be handled for click and edit URIs. 
+        Set to one of the set: ["params", "path", "query"]. Default is "path".
+        Set to "query" to add the key/value pairs to the request URI. Each pair is separated using "&" and the
+            key and value are formatted as "key=value".
+        Set to "params" to add the key/value pair to the request body parameters. 
+        Set to "path" to add the key values in order to the request URI. Each value is separated using "/". This
+            provides "pretty" URIs that can be easily tokenized by router templates.
+        If you require more complex key management, set click or edit to a callback function and format the 
+        URI and params manually.
+    @option id Number Numeric database ID for the record that originated the data for the view element.
+    @option method String HTTP method to invoke.
+    @option pass String attributes to pass through unaltered to the client
+    @option params Request parameters to include with a click or remote request
+    @option period Number Period in milliseconds to invoke the $refresh URI to update the control data. If period
+        is zero (or undefined), then refresh will be done using a perisistent connection.
+    @option query URI query string to add to click URIs.
+    @option rel String HTML rel attribute. Can be used to generate "rel=nofollow" on links.
+    @option remote (String|URI|Object) Perform the request in the background without changing the browser location.
+    @option refresh (String|URI|Object) URI to invoke in the background to refresh the control's data every $period.
+        milliseconds. If period is undefined or zero, a persistent connection may be used to refresh data.
+        The refresh option may use the "\@Controller/action" form.
+    @option size (Number|String) Size of the element.
+    @option style String CSS Style to use for the element.
+    @option value Object Override value to display if used without a form control record.
+    @option width (Number|String) Width of the control. Can be a number of pixels or a percentage string. Defaults to
+        unlimited.
+
+    <h4>Dynamic Data</h4>
+    Most controls can perform background updates of their data after the initial presentation. This is done via
+    the refresh and period options.
+
     @stability Prototype
     @see espAlert
     @defgroup EspControl EspControl

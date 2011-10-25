@@ -20,7 +20,7 @@ extern "C" {
     If you need to remap an abbreviated API name that clashes with an API name of yours, you can rename the
     ESP APIs here. Change the "xx_" to any unique prefix you require. Then use that name in ESP pages and controllers.
 
-    #define script xx_script
+    #define table xx_table
 */
 
 #ifdef __cplusplus
