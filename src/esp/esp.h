@@ -1321,6 +1321,7 @@ extern cchar *espUri(HttpConn *conn, cchar *target);
     ESP Controls
     MOB - Overview needed
     MOB - Talk about abbreviated forms
+    MOB - list all general options here - see ejs
     @stability Prototype
     @see espAlert
     @defgroup EspControl EspControl

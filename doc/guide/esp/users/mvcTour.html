@@ -82,10 +82,8 @@
             generator.</p>
             
             <a name="blog" id="blog"></a>
-            <h2 class="section">A Demonstration Blog Application</h2>
-            <p>Command sessions are presented in blue boxes. Output from the system is highlighted in yellow. Bold
-            yellow is used to highlight some output of specific interest.</p>
-            <h2 class="section"><a name="create" id="create"></a>Creating a New Application</h2>
+            <a name="create" id="create"></a>
+            <h2 class="section">Creating a New Application</h2>
             <p>To create a new ESP application, you will use <tt>esp</tt>, the ESP application generator
             program. Type the following esp command in a command terminal window:</p>
             <pre>
@@ -263,13 +261,13 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
             execution.</p>
             <p>You can also embed more complex ESP into our page, like:</p>
             <pre>
-<b>&lt;h3&gt;&lt;% render("Request method is %s", getMethod()); %&gt;&lt;/h3&gt;</b>
-<b>&lt;% 
+&lt;h3&gt;&lt;% render("Request method is %s", getMethod()); %&gt;&lt;/h3&gt;
+&lt;% 
     int i;
     for (int i = 0; i < 10; i++) {
         render(" Line: %d&lt;/br&gt;\r\n", i);
     } 
-%&gt;</b>
+%&gt;
 </pre>
             <p>By using the ESP statement directive <b>&lt;% code %&gt;</b>, you can embed arbitrary "C" language
             statements in your web page. The <b>render</b> function allows you to write arbitrary data which is patched
@@ -412,9 +410,14 @@ ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module)
             <a name="learn" id="learn"></a>
             <h2 class="section">Learn More ...</h2>
             <p>That concludes the a quick tour through some of the capabilities of the ESP web framework.</p>
-            <p>To learn more, please read the rest of the <a href="../../../index.html">ESP Documentation</a> and
-            the <a href="../../../ref/esp/webArchitecture.html">ESP Web Framework Architecture</a>. You may also
-            like to ask questions at the <a href="http://www.ejscript.org/forum/">ESP Support Forum</a>.</p>
+            <p>To learn more, please read:
+            <ul>
+                <li><a href="../../../index.html">ESP Documentation</a></li>
+                <li><a href="tour.html">ESP Web Framework Tour</a></li>
+                <li><a href="../../../ref/esp/webArchitecture.html">ESP Web Framework Architecture</a></li>
+            </ul>
+            <p>You may also like to ask questions at the <a href="http://www.ejscript.org/forum/">ESP Support Forum</a>.</p>
+        </ul>
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->

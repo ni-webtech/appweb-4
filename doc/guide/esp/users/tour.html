@@ -159,7 +159,7 @@ sudo appweb -v
             back where the directive was defined in the page. See the <a href="views.html">Views and Layouts</a>
             document for full details about all the ESP web page directives.</p><a name="views" id="views"></a>
 
-            <h2>Declarations</h2>
+            <h2 class="section">Declarations</h2>
             <p>Some compilers (Microsoft CL) do not permit "C" declarations except at the start of a block. When ESP
             compiles an ESP web page, it converts it to "C" code and wraps it inside a function that will be invoked
             at run-time in response to client requests. ESP supports MSCL, by controlling where ESP code will be
@@ -167,50 +167,126 @@ sudo appweb -v
             use the <tt>^start</tt> directive.</p>
 <pre>&lt;%<b>^start</b>
     char *msg = "hello world";
-    int     x = 42;
+    int  x = 42;
 &lt/%>
-
 &lt;%  render("%s, the answer is %d", msg, x); %>
 </pre>
 
-            <h2>Forms and Request Params</h2>
-            <p>When an HTML form is submitted, ESP converts form data into ESP request parameters. These can be
-            accessed via the <tt>param()</tt> function or more conveniently via the literal <tt>@@variable</tt> 
+            <a name="params" id="params"></a>
+            <h2 class="section">Forms and Request Params</h2>
+            <p>When an HTML form is submitted, ESP converts form data and query parameters into ESP request parameters. 
+            These can be accessed via the <tt>param()</tt> function or more conveniently via the literal <tt>@@variable</tt> 
             directive. By prefixing a variable with <tt>@@</tt> ESP will automatically lookup the request parameters,
             and if not found, the session data store for the variable and then substitute its value.</p>
+            <p>If an HTTP request has the URI: <tt>http://example.com/submit.esp?name=julie</tt>, then the following
+            ESP code could access the user name directly.</p>
+<pre>&lt;p>User Name: <b>@@name</b>&lt;/p></pre>
+            <h3>XSS Security</h3>
+            <p>Normally, echoing user input back to the client in a web page is bad practice and can invite XSS security
+            attacks. Fortunately, ESP HTML escapes the variable value to prevent such attacks. </p>
+            <p>General ESP output can also be escaped by using a "safe" "%S" format specifier. The renderSafe function
+            can also be used.</p>
+<pre>&lt;p>User Name: <b>&lt;%=%S param("name"); %></b>&lt;/p>
+&lt;p>User Name: <b>&lt;%= renderSafe(param("name")); %></b>&lt;/p>
+</pre>
 
-            safe params / 
-            safe string <% =%S
-            <h2>Web Controls</h2>
-                form
-                input
-                text
-                uri
+            <a name="controls" id="controls"></a>
+            <h2 class="section">Web Controls</h2>
+            <p>ESP includes a rich library of web control funtions that easily generate HTML. These web controls
+            are integrated with the <a href="http://jquery.com/">jQuery</a> client-side JavaScript library.
+            <p>Controls are provided to create forms, buttons, input lists, checkboxes, selectable tabs, and tables.
+
+            <p>To the following control will emit a text label that will dynamically update using background AJAX requests.
+            This control will create the appropriate HTML to invoke the <tt>data.esp</tt> page every 1 second to
+            get the current time. The web page will transparently update with the data returned by <tt>data.esp</tt>.</p>
+
+<pre>&lt;% Time: label("", "{ data-refresh: "data.esp", data-period: 1000 }"); %></pre>
+
+            <a name="binding" id="binding"></a>
+            <h3>Database Binding</h3>
+            <p>To make it easy to display and update database data, ESP supports "data binding" where a database 
+            record can be bound to a request form. Thereafter, the ESP web controls will take data from the record.
+<pre>
+<% 
+    form(userRecord, 0); 
+        input("name", 0);
+        input("address", 0);
+        button("commit", "OK", 0);
+        buttonLink("Cancel", "../index.esp",  0);
+        buttonLink("Delete", "destroy.esp");
+    endform();
+%>
+</pre>
+            <p>In this example, the <tt>form</tt> control <i>binds</i> the <tt>userRecord</tt>. The input controls
+            then retrieve the "name", and "address" fields from the database record and emit the appropriate HTML
+            input elements. 
+
+            <a name="session" id="session"></a>
             <h2>Sessions and Flash</h2>
-            <h2>Database Access</h2>c
+            <p>ESP provides an integrated session store so that state can be shared across requests. Session variables
+            can be accessed using the <tt>@@variable</tt> directive in ESP pages or via the
+            <tt>getSessionVar()</tt> API.</p>
+            <p>Flash storage is a portion of the session storage used to pass messages and state to the next request 
+            only. This is useful after a form, to add feedback messsages to the next web page. Messages can be added
+            to flash storage via the <tt>error</tt>, <tt>inform</tt>, or <tt>warn</tt> APIs. </p>
+<pre>&lt;% <b>inform</b>("Record updated"); %></pre>
+            
+            <p>The <tt>flash</tt> web
+            control is used in the next web page to extract flash messages for display.</p>
+<pre>&lt;% <b>flash</b>("all", NULL); %></pre>
 
             <a name="layouts" id="layouts"></a>
             <h2>Layouts</h2>
-            <p>The ESP templating engine can apply a layout page to allow each page so that it inherits its layout and
-            look and feel from a master layout page. The ESP layout directive allows you to control what layout
-            page (if any) is used. In the previous example, we set the layout page to "" which means &mdash; 
-            "don't use a layout page". If we remove that directive, the page will use the default layout. In this case
-            we remove the html and body elements as well as the layout page has been defined with those. The new page 
-            now has a single line.</p>
-            <pre>
+            <p>ESP Layouts provide a powerful and flexible solution for implementing a consistent UI. 
+            ESP pages use Layout pages that define the look and feel of an application. Content pages are 
+            then rendered by merging with one or more layout pages that define the look and feel of the 
+            application to create a composite page that the user will actually see. In this way, a web 
+            application can easily maintain a consistent look and feel without repeating boilerplate code 
+            from page to page. </p>
+            
+            <p>A layout page provides template for the page and defines the location for the content via a
+                <tt>&lt;%@ content %></tt> directive.</p>
+<pre>
+&lt;html&gt;
+&lt;body&gt;
+    &lt;div class="top"&gt;
+        &lt;img src="banner.jpg" /&gt;
+    &lt;/div&gt;
+    &lt;div class="content"&gt;
+        <b>&lt;%@ content %&gt;</b>
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+
+            <p>A content page defines only the HTML and code that is unique for a specific page. 
+            It is merged with a layout page by inserting the content and replacing the <tt>&lt;%@ content %></tt> tag 
+            in the layout page.</p>
+
+            <p>To use a layout page, a layout directory must be defined in the <tt>appweb.conf</tt> configuration file
+            using the EspDir directive. With this directive, pages will by default use the 
+            "<tt>./layouts/default.esp</tt>" layout page.
+<pre>EspDir layout "./layouts"</pre>
+
+            <p>The ESP <tt>&lt;%@ layout</tt> directive may be used in web pages to control what layout page (if any) 
+            is used for the page. </p>
+<pre>
+&lt;%@ layout "custom-layout.esp" %&gt;
 &lt;h1&gt;Hello Bright World&lt;/h1&gt;
 </pre>
-            <p>And the web page now looks like this in your browser:
-            <img src="../../../images/esp/tour/hello-layout.png" alt="hello" class= "screen" /> 
-            
 
             <a name="learn" id="learn"></a>
             <h2 class="section">Learn More ...</h2>
             <p>That concludes the a quick tour through some of the capabilities of the ESP web framework.</p>
-            <p>To learn more, please read the rest of the <a href="../../../index.html">ESP Documentation</a>,
-            the <a href="../../../ref/esp/webArchitecture.html">ESP Web Framework Architecture</a>, the 
-            <a href="mvc.html">ESP MVC Framework</a> and the <a href="mvcTour.html">MVC Tour</a>. You may also
-            like to ask questions at the <a href="http://www.ejscript.org/forum/">ESP Support Forum</a>.</p>
+            <p>To learn more, please read:</p>
+            <ul>
+                <li><a href="../../../index.html">ESP Documentation</a></li>
+                <li><a href="../../../ref/esp/webArchitecture.html">ESP Web Framework Architecture</a></li>
+                <li><a href="mvc.html">ESP MVC Framework</a></li>
+                <li><a href="mvcTour.html">MVC Tour</a>.
+            </ul>
+            <p>You may also like to ask questions at the 
+            <a href="http://www.ejscript.org/forum/">ESP Support Forum</a>.</p>
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->
