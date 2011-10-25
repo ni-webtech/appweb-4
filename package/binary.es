@@ -102,7 +102,19 @@ if (!bare) {
     copy("src/server/web/min-index.html", web.join("appweb.html"))
 }
 
+/*
+    Copy libraries and symlink to sonames
+ */
 copy("*" + build.BLD_SHOBJ, lib, {from: slib, permissions: 0755, strip: true})
+if (options.task != "Remove" && build.BLD_FEATURE_SSL == 1 && os == "LINUX") {
+    copy("*" + build.BLD_SHOBJ + ".*", lib, {from: slib, permissions: 0755, strip: true})
+    for each (f in slib.find("*.so.*")) {
+        let withver = f.basename
+        let nover = withver.name.replace(/\.[0-9]*.*/, ".so")
+        Cmd.sh("rm -f " + lib.join(nover))
+        Cmd.sh("ln -s " + withver + " " + lib.join(nover))
+    }
+}
 
 copy("*", cfg, {
     from: "src/server",
@@ -121,12 +133,12 @@ if (options.task != "Remove") {
     /*
         Patch appweb.conf
      */
-    Cmd.sh("BLD_HTTP_PORT=" + build.BLD_HTTP_PORT + " BLD_SSL_PORT=" + build.BLD_SSL_PORT + " " +
+    Cmd.sh("BLD_HTTP_PORT=" + build.BLD_HTTP_PORT + " BLD_SSL_PORT=" + build.BLD_SSL_PORT + " BLD_SPL_PREFIX=" + build.BLD_SPL_PREFIX + " " +
         "patchAppwebConf \"" + cfg.join("appweb.conf") + "\"")
 }
 
 if (build.BLD_FEATURE_EJSCRIPT == 1) {
-    copy("ejs*", bin, {from: sbin, permissions: 0755, strip: true})
+    // copy("ejs*", bin, {from: sbin, permissions: 0755, strip: true})
     copy("ejs*.mod", lib, {from: slib})
 }
 
@@ -153,21 +165,24 @@ if (!bare) {
                     /*
                      	Daemon start / stop scripts
                      */
-                    copy("appweb.init", etc.join("rc.d", product), {from: "package/LINUX", permissions: 0755, expand: true})
-                    copy("appwebinit", init.join(product), {from: "package/LINUX", permissions: 0755, expand: true})
+                    copy("appweb.init", init.join(product), {from: "package/LINUX", permissions: 0755, expand: true, trace: true})
 
                     for each (i in [2, 3, 4, 5]) {
-                        etc.join("rc" + i + ".d/S81" + product).remove()
+                        let level = ".d/S81"
+                        etc.join("rc" + i + level + product).remove()
                         if (options.task != "Remove") {
-                            etc.join("rc" + i + ".d/S81").makeDir()
-                            Cmd.sh("ln -s " + init.join(product) + " " + etc.join("rc" + i + ".dS81" + product))
+                            etc.join("rc" + i + level).makeDir()
+                            Cmd.sh("rm -f " + etc.join("rc" + i + level + product))
+                            Cmd.sh("ln -s " + init.join(product) + " " + etc.join("rc" + i + level + product))
                         }
                     }
                     for each (i in [0, 1, 6]) {
-                        etc.join("rc" + i + ".d/K15" + product).remove()
+                        let level = ".d/K15"
+                        etc.join("rc" + i + level + product).remove()
                         if (options.task != "Remove") {
-                            etc.join("rc" + i + ".d/S81").makeDir()
-                            Cmd.sh("ln -s " + init.join(product) + " " + etc.join("rc" + i + ".dK15" + product))
+                            etc.join("rc" + i + level).makeDir()
+                            Cmd.sh("rm -f " + etc.join("rc" + i + level + product))
+                            Cmd.sh("ln -s " + init.join(product) + " " + etc.join("rc" + i + level + product))
                         }
                     }
                 }
