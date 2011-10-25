@@ -30,7 +30,7 @@ fi
 
 if [ "${TASK}" != Remove ] ; then
     (
-        export BLD_CFG_PREFIX=. BLD_WEB_PREFIX=web BLD_DOC_PREFIX=. BLD_LIB_PREFIX=. BLD_LOG_PREFIX=.
+        export BLD_CFG_PREFIX=. BLD_WEB_PREFIX=web BLD_DOC_PREFIX=. BLD_LIB_PREFIX=. BLD_LOG_PREFIX=. BLD_SPL_PREFIX=.
         export BLD_HTTP_PORT BLD_SSL_PORT 
         patchAppwebConf "${ROOT_DIR}/appweb.conf" >/dev/null 2>&1
     )

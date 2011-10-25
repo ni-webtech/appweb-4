@@ -53,6 +53,7 @@ BLD_LIB_PREFIX="!!ORIG_BLD_LIB_PREFIX!!"
 BLD_MAN_PREFIX="!!ORIG_BLD_MAN_PREFIX!!"
 BLD_PRD_PREFIX="!!ORIG_BLD_PRD_PREFIX!!"
 BLD_SAM_PREFIX="!!ORIG_BLD_SAM_PREFIX!!"
+BLD_SPL_PREFIX="!!ORIG_BLD_SPL_PREFIX!!"
 BLD_SRC_PREFIX="!!ORIG_BLD_SRC_PREFIX!!"
 BLD_WEB_PREFIX="!!ORIG_BLD_WEB_PREFIX!!"
 
@@ -288,6 +289,7 @@ postClean() {
 		cleanDir "$BLD_CFG_PREFIX"
 		cleanDir "$BLD_LIB_PREFIX"
 		cleanDir "$BLD_WEB_PREFIX"
+		cleanDir "$BLD_SPL_PREFIX"
 	fi
 	if [ $BLD_HOST_OS != WIN ] ; then
         if [ -x /usr/share/$BLD_PRODUCT ] ; then
@@ -303,6 +305,7 @@ postClean() {
         rmdir $BLD_INC_PREFIX >/dev/null 2>&1
         rmdir $BLD_PRD_PREFIX >/dev/null 2>&1
         rmdir $BLD_CFG_PREFIX >/dev/null 2>&1
+        rmdir $BLD_SPL_PREFIX >/dev/null 2>&1
     fi
     /tmp/linkup$$ Remove /
     rm -f /tmp/linkup$$

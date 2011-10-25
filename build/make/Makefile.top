@@ -300,6 +300,7 @@ packageRelease:
 		export OPTIONS=$(OPTIONS) TRACE=$(TRACE) ; \
 		fakePriv "$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) $(INS_WITH) --package $(PACKS) && \
 			$(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)" ; \
+		rm -fr out/staging ; \
 	else \
 		$(call log) "[INFO]" "Packaging skipped at build depth $(BUILD_DEPTH)" ; \
 	fi

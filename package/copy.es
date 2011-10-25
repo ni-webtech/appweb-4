@@ -101,10 +101,11 @@ public function copy(src: Path, target: Path = Dir, options = {})
                 Cmd.sh(build.BLD_STRIP + " " + dest)
             }
             if (compress) {
-                dest.joinExt(".gz").remove
+                let destZip: Path = Path("" + dest.name + ".gz")
+                destZip.remove()
                 log.activity("Compress", dest)
                 Cmd.sh("gzip --best " + dest)
-                dest = dest.joinExt(".gz")
+                dest = destZip
             }
             if (App.uid == 0 && dest.extension == "so" && Config.OS == "LINUX" && options.task == "Install") {
                 log.activity("Ldconfig", dest)
@@ -158,9 +159,9 @@ public function preparePrefixes(options)
     build.BUILD_BIN_DIR = Path(build.BLD_TOP).join("bin").portable
     build.BUILD_LIB_DIR = Path(build.BLD_TOP).join("lib").portable
 
-    for each (prefix in ["BLD_PREFIX", "BLD_ROOT_PREFIX", "BLD_BIN_PREFIX", "BLD_CFG_PREFIX", "BLD_DOC_PREFIX", "BLD_JEM_PREFIX", 
-            "BLD_INC_PREFIX", "BLD_LIB_PREFIX", "BLD_LOG_PREFIX", "BLD_MAN_PREFIX", "BLD_PRD_PREFIX", "BLD_SAM_PREFIX", 
-            "BLD_SRC_PREFIX", "BLD_VER_PREFIX", "BLD_WEB_PREFIX"]) {
+    for each (prefix in ["BLD_PREFIX", "BLD_ROOT_PREFIX", "BLD_BIN_PREFIX", "BLD_CFG_PREFIX", "BLD_DOC_PREFIX", 
+            "BLD_JEM_PREFIX", "BLD_INC_PREFIX", "BLD_LIB_PREFIX", "BLD_LOG_PREFIX", "BLD_MAN_PREFIX", "BLD_PRD_PREFIX", 
+            "BLD_SAM_PREFIX", "BLD_SPL_PREFIX", "BLD_SRC_PREFIX", "BLD_VER_PREFIX", "BLD_WEB_PREFIX"]) {
         build["ORIG_" + prefix] = Path(build[prefix]).absolute.portable
         let tree: Path
         if (options.task == "Package") {

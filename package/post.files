@@ -7,7 +7,7 @@
 if [ $TASK = Install -a "${PACKS}" != "${PACKS/binary}" ] ; then
     configureProduct configure
     if [ "$ORIGINAL_ROOT_DIR" = "" ] ; then
-        if [ "$BLD_FEATURE_RUN_AS_SERVICE" = "1" -a $user = 0 ] ; then
+        if [ `id -u` = 0 ] ; then
             configureProduct --quiet stop
             configureProduct install
             configureProduct start
@@ -20,7 +20,6 @@ if [ $TASK = Install -a "${PACKS}" != "${PACKS/binary}" ] ; then
     fi
 
 elif [ $TASK = Remove ] ; then
-    # Legacy
     ${RM} -f "${BLD_CFG_PREFIX}/${BLD_PRODUCT}Install.conf"
     ${RM} -f "${BLD_PRD_PREFIX}/install.conf"
 fi

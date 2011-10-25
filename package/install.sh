@@ -333,6 +333,7 @@ patchAppwebConf()
 configureService() {
     local action=$1
 
+echo CFS $action
     case $action in
     start|stop)
         if [ $BLD_HOST_OS = WIN ] ; then
@@ -355,6 +356,7 @@ configureService() {
         elif which launchctl >/dev/null 2>&1 ; then
             local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
             if [ $action = start ] ; then
+echo launchctl start com.${company}.${BLD_PRODUCT}
                 launchctl start com.${company}.${BLD_PRODUCT}
             else
                 launchctl stop com.${company}.${BLD_PRODUCT} 2>/dev/null
@@ -373,6 +375,8 @@ configureService() {
             fi
         elif which launchctl >/dev/null 2>&1 ; then
             local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
+echo launchctl unload /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist
+echo launchctl load -w /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist
             launchctl unload /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist 2>/dev/null
             launchctl load -w /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist
         elif which chkconfig >/dev/null 2>&1 ; then
@@ -518,6 +522,7 @@ startBrowser() {
 setup $*
 askUser
 
+echo HERE $installbin
 if [ "$installbin" = "Y" ] ; then
     configureService stop >/dev/null 2>&1
     configureService remove >/dev/null 2>&1

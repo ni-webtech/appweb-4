@@ -20,13 +20,18 @@ configureProduct() {
 	cleanup)
 		rm -f "${BLD_CFG_PREFIX}/".${BLD_PRODUCT}_pid.log
 		rm -f "${BLD_CFG_PREFIX}/${BLD_PRODUCT}Install.conf"
+		rm -rf "${BLD_CFG_PREFIX}/ssl"
+		rm -rf "${BLD_CFG_PREFIX}/config"
+		rm -rf "${BLD_CFG_PREFIX}/apps"
 		rm -f "${BLD_PRD_PREFIX}/install.conf"
 		rm -f "${BLD_PRD_PREFIX}/fileList.txt"
 		rm -fr "/var/${BLD_PRODUCT}"
+		rm -fr "/var/spool/${BLD_PRODUCT}"
 		rm -f "${BLD_LIB_PREFIX}/libcrypto"*
 		rm -f "${BLD_LIB_PREFIX}/libssl"*
 		rm -f "${BLD_LOG_PREFIX}"/access.log*
 		rm -f "${BLD_LOG_PREFIX}"/error.log*
+		rm -rf "${BLD_SPL_PREFIX}/cache"
 		;;
 
     complete)
@@ -39,7 +44,7 @@ configureProduct() {
 			BLD_CFG_PREFIX="$ORIG_BLD_CFG_PREFIX" BLD_WEB_PREFIX="$ORIG_BLD_WEB_PREFIX" \
 			BLD_DOC_PREFIX="$ORIG_BLD_DOC_PREFIX" BLD_LIB_PREFIX="$ORIG_BLD_LIB_PREFIX" \
 			BLD_MAN_PREFIX="$ORIG_BLD_MAN_PREFIX" BLD_SAM_PREFIX="$ORIG_BLD_SAM_PREFIX" \
-            BLD_LOG_PREFIX="$ORIGBLD_LOG_PREFIX" \
+            BLD_LOG_PREFIX="$ORIG_BLD_LOG_PREFIX" BLD_SPL_PREFIX="$ORIG_BLD_SPL_PREFIX" \
             BLD_HTTP_PORT=$BLD_HTTP_PORT BLD_SSL_PORT=$BLD_SSL_PORT BLD_SERVER=`hostname` \
                 patchAppwebConf "${BLD_CFG_PREFIX}/appweb.conf" \
                     "${BLD_CFG_PREFIX}/conf/hosts/ssl-default.conf" \

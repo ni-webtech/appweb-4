@@ -450,7 +450,7 @@ done
 PACKS=${*:-binary}
 
 setup
-configureProduct --quiet initialize
+configureProduct initialize
 
 if [ $TASK = Remove ] ; then
     #

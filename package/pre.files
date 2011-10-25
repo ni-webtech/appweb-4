@@ -4,7 +4,9 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
 
-if [ "$BLD_FEATURE_RUN_AS_SERVICE" = "1" -a "$ORIGINAL_ROOT_DIR" = "" ] ; then
+usePrefixes CFG BIN LIB LOG PRD VER WEB SPL
+
+if [ "$ORIGINAL_ROOT_DIR" = "" ] ; then
     configureProduct stop
     configureProduct uninstall
 fi

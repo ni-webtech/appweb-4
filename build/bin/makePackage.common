@@ -429,7 +429,7 @@ preparePrefixes() {
     #   Update prefixes
     #
     for name in PREFIX ROOT_PREFIX BIN_PREFIX CFG_PREFIX DOC_PREFIX JEM_PREFIX INC_PREFIX LIB_PREFIX LOG_PREFIX MAN_PREFIX \
-        MOD_PREFIX PRD_PREFIX SAM_PREFIX SRC_PREFIX VER_PREFIX WEB_PREFIX
+        MOD_PREFIX PRD_PREFIX SAM_PREFIX SPL_PREFIX SRC_PREFIX VER_PREFIX WEB_PREFIX
     do
         eval path="\${BLD_${name}}"
         path=`getpath -a "${path}"`

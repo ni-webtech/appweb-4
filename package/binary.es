@@ -30,6 +30,7 @@ var ver: Path = build.BLD_VER_PREFIX
 var cfg: Path = build.BLD_CFG_PREFIX
 var log: Path = build.BLD_LOG_PREFIX
 var man: Path = build.BLD_MAN_PREFIX
+var spl: Path = build.BLD_SPL_PREFIX
 var web: Path = build.BLD_WEB_PREFIX
 var ssl: Path = cfg.join("ssl")
 var etc: Path = root.join("etc")
@@ -49,8 +50,9 @@ if (!bare) {
 
 var saveLink 
 if (options.task == "Remove" && bin.join("linkup").exists) {
-    saveLink = Path.temp()
+    saveLink = Path(".").temp()
     bin.join("linkup").copy(saveLink)
+    saveLink.attributes = {permissions: 0755}
 }
 
 cfg.makeDir()
@@ -63,7 +65,14 @@ if (!bare) {
     copy("uninstall.sh", bin.join("uninstall"), {from: "package", permissions: 0755, expand: true})
     copy("linkup", bin.join("linkup"), {from: "package", permissions: 0755, expand: true})
 
-    let cmdFilter = (Config.OS == "WIN") ? /undefined/ : /\.cmd/
+    let cmdFilter
+    if (Config.OS == "WIN") {
+        cmdFilter = /\.cmd/
+    } else if (Config.OS == "MACOSX") {
+        cmdFilter = /angel/
+    } else {
+        cmdFilter = /undefined/
+    }
     copy("*", bin, {
         from: sbin,
         include: /angel|esp|http|sqlite|auth|makerom/

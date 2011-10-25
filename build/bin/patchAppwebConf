@@ -71,6 +71,7 @@ editAppwebConf()
             s!^ServerRoot.*\".*!ServerRoot \"${BLD_CFG_PREFIX}\"!
             s!^DocumentRoot.*\".*!DocumentRoot \"${BLD_WEB_PREFIX}\"!
             s!^LoadModulePath.*\".*!LoadModulePath \"${BLD_LIB_PREFIX}\"!
+            s!EspDir cache.*!EspDir cache \"${BLD_SPL_PREFIX}/cache\"!
             s!^Listen.*!Listen ${BLD_HTTP_PORT}!
             s!^User .*!User ${username}!
             s!^Group .*!Group ${groupname}!" <"$conf" >"$conf.new"

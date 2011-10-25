@@ -72,7 +72,7 @@ if [ "${TASK}" != Remove ] ; then
     (
         # MOB - if using BARE - should be using flat config
         dir=$BLD_CFG_PREFIX
-        for v in BLD_CFG_PREFIX BLD_WEB_PREFIX BLD_DOC_PREFIX BLD_LIB_PREFIX BLD_LOG_PREFIX ; do
+        for v in BLD_CFG_PREFIX BLD_WEB_PREFIX BLD_DOC_PREFIX BLD_LIB_PREFIX BLD_LOG_PREFIX BLD_SPL_PREFIX ; do
             eval export $v=$`echo ORIG_${v}`
         done
         export BLD_HTTP_PORT BLD_SSL_PORT 
