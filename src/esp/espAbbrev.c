@@ -602,6 +602,11 @@ void setStatus(int status)
     espSetStatus(getConn(), status);
 }
 
+void show()
+{
+    espShow(getConn());
+}
+
 
 bool updateField(cchar *tableName, cchar *key, cchar *fieldName, cchar *value)
 {

@@ -852,7 +852,7 @@ static int getParams(char ***keys, char *buf, int len)
 }
 
 
-void espShowRequest(HttpConn *conn)
+void espShow(HttpConn *conn)
 {
     MprHash     *env;
     MprKey      *kp;
@@ -865,6 +865,7 @@ void espShowRequest(HttpConn *conn)
 
     rx = conn->rx;
     httpSetHeaderString(conn, "Cache-Control", "no-cache");
+    httpCreateCGIParams(conn);
     espRender(conn, "\r\n");
 
     /*
