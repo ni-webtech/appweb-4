@@ -475,7 +475,9 @@ static int initializePhp(Http *http)
 #else
     phpSapiBlock.php_ini_path_override = appweb->defaultServer->home;
 #endif
-    mprLog(2, "Look for php.ini at %s", phpSapiBlock.php_ini_path_override);
+    if (phpSapiBlock.php_ini_path_override) {
+        mprLog(2, "Look for php.ini at %s", phpSapiBlock.php_ini_path_override);
+    }
     sapi_startup(&phpSapiBlock);
     if (php_module_startup(&phpSapiBlock, 0, 0) == FAILURE) {
         mprError("PHP did not initialize");
