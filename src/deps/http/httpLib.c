@@ -14970,7 +14970,8 @@ void httpCreateCGIParams(HttpConn *conn)
     mprAddKey(vars, "SERVER_PROTOCOL", conn->protocol);
     mprAddKey(vars, "SERVER_ROOT", host->home);
     mprAddKey(vars, "SERVER_SOFTWARE", conn->http->software);
-    mprAddKey(vars, "REQUEST_URI", rx->originalUri);
+    mprAddKey(vars, "REQUEST_URI", rx->uri);
+    mprAddKey(vars, "REQUEST_ORIGINAL_URI", rx->originalUri);
     /*  
         URIs are broken into the following: http://{SERVER_NAME}:{SERVER_PORT}{SCRIPT_NAME}{PATH_INFO} 
         NOTE: Appweb refers to pathInfo as the app relative URI and scriptName as the app address before the pathInfo.
