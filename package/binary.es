@@ -18,6 +18,7 @@ var product = build.BLD_PRODUCT
  */
 var sout: Path = build.BLD_OUT_DIR
 var sbin: Path = build.BLD_BIN_DIR
+var sinc: Path = build.BLD_INC_DIR
 var slib: Path = build.BLD_LIB_DIR
 
 /*
@@ -25,6 +26,7 @@ var slib: Path = build.BLD_LIB_DIR
  */
 var root: Path = build.BLD_ROOT_PREFIX
 var bin: Path = build.BLD_BIN_PREFIX
+var inc: Path = build.BLD_INC_PREFIX
 var lib: Path = build.BLD_LIB_PREFIX
 var ver: Path = build.BLD_VER_PREFIX
 var cfg: Path = build.BLD_CFG_PREFIX
@@ -37,10 +39,12 @@ var etc: Path = root.join("etc")
 var init: Path = etc.join("init.d")
 
 bin.makeDir()
+inc.makeDir()
 lib.makeDir()
 ver.makeDir()
 cfg.makeDir()
 cfg.join("config").makeDir()
+spl.makeDir()
 web.makeDir()
 if (!bare) {
     man.join("man1").makeDir()
@@ -87,6 +91,11 @@ if (!bare) {
     copy("*", web, {
         from: "src/server/web",
         exclude: /mgmt\//,
+    })
+
+    copy("*", inc, {
+        from: sinc,
+        exclude: /appwebMonitor.h|buildConfig.h|testAppweb.h/,
     })
 
 } else {

@@ -462,6 +462,8 @@ installFiles() {
         find "$BLD_WEB_PREFIX" -type f -exec chmod g+r,o+r "{}" \;
         mkdir -p "$BLD_CFG_PREFIX/logs"
         chmod 777 "$BLD_CFG_PREFIX/logs"
+        mkdir -p "$BLD_SPL_PREFIX"
+        chmod 777 "$BLD_SPL_PREFIX"
         chmod 755 "$BLD_WEB_PREFIX"
         find "$BLD_BIN_PREFIX" -name '*.dll' -exec chmod 755 "{}" \;
         find "$BLD_BIN_PREFIX" -name '*.exe' -exec chmod 755 "{}" \;

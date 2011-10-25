@@ -31,7 +31,8 @@ configureProduct() {
 		rm -f "${BLD_LIB_PREFIX}/libssl"*
 		rm -f "${BLD_LOG_PREFIX}"/access.log*
 		rm -f "${BLD_LOG_PREFIX}"/error.log*
-		rm -rf "${BLD_SPL_PREFIX}/cache"
+		rm -rf "${BLD_SPL_PREFIX}"
+		rm -rf "${BLD_INC_PREFIX}"
 		;;
 
     complete)
