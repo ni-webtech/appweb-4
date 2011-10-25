@@ -7534,9 +7534,11 @@ static int makeDir(MprDiskFileSystem *fs, cchar *path, int perms, int owner, int
     if (rc < 0) {
         return MPR_ERR_CANT_CREATE;
     }
+#if BLD_UNIX_LIKE
     if ((owner >= 0 || group >= 0) && chown(path, owner, group) < 0) {
         return MPR_ERR_CANT_CREATE;
     }
+#endif
     return 0;
 }
 
