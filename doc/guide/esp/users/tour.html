@@ -159,6 +159,35 @@ sudo appweb -v
             back where the directive was defined in the page. See the <a href="views.html">Views and Layouts</a>
             document for full details about all the ESP web page directives.</p><a name="views" id="views"></a>
 
+            <h2>Declarations</h2>
+            <p>Some compilers (Microsoft CL) do not permit "C" declarations except at the start of a block. When ESP
+            compiles an ESP web page, it converts it to "C" code and wraps it inside a function that will be invoked
+            at run-time in response to client requests. ESP supports MSCL, by controlling where ESP code will be
+            placed in the web page function. To ensure that declarations are emitted at the start of the function block, 
+            use the <tt>^start</tt> directive.</p>
+<pre>&lt;%<b>^start</b>
+    char *msg = "hello world";
+    int     x = 42;
+&lt/%>
+
+&lt;%  render("%s, the answer is %d", msg, x); %>
+</pre>
+
+            <h2>Forms and Request Params</h2>
+            <p>When an HTML form is submitted, ESP converts form data into ESP request parameters. These can be
+            accessed via the <tt>param()</tt> function or more conveniently via the literal <tt>@@variable</tt> 
+            directive. By prefixing a variable with <tt>@@</tt> ESP will automatically lookup the request parameters,
+            and if not found, the session data store for the variable and then substitute its value.</p>
+
+            safe params / 
+            safe string <% =%S
+            <h2>Web Controls</h2>
+                form
+                input
+                text
+                uri
+            <h2>Sessions and Flash</h2>
+            <h2>Database Access</h2>c
 
             <a name="layouts" id="layouts"></a>
             <h2>Layouts</h2>

@@ -8,8 +8,8 @@ let http: Http = new Http
 //  This will not follow redirects
 http.get(HTTP + "/redirect.esp")
 http.followRedirects = false
-assert(http.status == 301)
-assert(http.response.contains("<h1>Moved Permanently</h1>"))
+assert(http.status == 302)
+assert(http.response.contains("<h1>Moved Temporarily</h1>"))
 http.close()
 
 //  This will do a transparent redirect to index.esp

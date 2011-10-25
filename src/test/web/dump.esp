@@ -1,6 +1,6 @@
 <% 
     // This will emit a plain-text dump of the request details
     httpCreateCGIParams(conn);
-    setContentType(conn, "text/plain");
+    setContentType("text/plain");
     espShowRequest(conn); 
 -%>

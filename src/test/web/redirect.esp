@@ -1,4 +1,4 @@
 <body>
-<% redirect(301, "/index.esp"); %>
+<% redirect("/index.esp"); %>
 
 
