@@ -44,7 +44,7 @@ lib.makeDir()
 ver.makeDir()
 cfg.makeDir()
 cfg.join("config").makeDir()
-spl.makeDir()
+spl.join("cache").makeDir()
 web.makeDir()
 if (!bare) {
     man.join("man1").makeDir()
