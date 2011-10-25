@@ -314,7 +314,7 @@ void espRenderView(HttpConn *conn, cchar *name)
         req->module = mprNormalizePath(sfmt("%s/%s%s", eroute->cacheDir, req->cacheName, BLD_SHOBJ));
 
         if (!mprPathExists(req->source, R_OK)) {
-            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find view %s", req->source);
+            httpError(conn, HTTP_CODE_NOT_FOUND, "Can't find view %s", req->source);
             return;
         }
         if (moduleIsStale(conn, req->source, req->module, &recompile)) {
@@ -339,7 +339,7 @@ void espRenderView(HttpConn *conn, cchar *name)
         }
     }
     if ((view = mprLookupKey(esp->views, mprGetPortablePath(req->source))) == 0) {
-        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find defined view for %s", req->view);
+        httpError(conn, HTTP_CODE_NOT_FOUND, "Can't find defined view for %s", req->view);
         return;
     }
 	httpAddHeaderString(conn, "Content-Type", "text/html");
