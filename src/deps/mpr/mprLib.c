@@ -7522,13 +7522,22 @@ static int deletePath(MprDiskFileSystem *fs, cchar *path)
 }
  
 
-static int makeDir(MprDiskFileSystem *fs, cchar *path, int perms)
+static int makeDir(MprDiskFileSystem *fs, cchar *path, int perms, int owner, int group)
 {
+    int     rc;
+
 #if VXWORKS
-    return mkdir((char*) path);
+    rc = mkdir((char*) path);
 #else
-    return mkdir(path, perms);
+    rc = mkdir(path, perms);
 #endif
+    if (rc < 0) {
+        return MPR_ERR_CANT_CREATE;
+    }
+    if ((owner >= 0 || group >= 0) && chown(path, owner, group) < 0) {
+        return MPR_ERR_CANT_CREATE;
+    }
+    return 0;
 }
 
 
@@ -15542,7 +15551,7 @@ char *mprJoinPathExt(cchar *path, cchar *ext)
 /*
     Make a directory with all necessary intervening directories.
  */
-int mprMakeDir(cchar *path, int perms, bool makeMissing)
+int mprMakeDir(cchar *path, int perms, int owner, int group, bool makeMissing)
 {
     MprFileSystem   *fs;
     char            *parent;
@@ -15553,15 +15562,15 @@ int mprMakeDir(cchar *path, int perms, bool makeMissing)
     if (mprPathExists(path, X_OK)) {
         return 0;
     }
-    if (fs->makeDir(fs, path, perms) == 0) {
+    if (fs->makeDir(fs, path, perms, owner, group) == 0) {
         return 0;
     }
     if (makeMissing && !isRoot(fs, path)) {
         parent = mprGetPathParent(path);
-        if ((rc = mprMakeDir(parent, perms, makeMissing)) < 0) {
+        if ((rc = mprMakeDir(parent, perms, owner, group, makeMissing)) < 0) {
             return rc;
         }
-        return fs->makeDir(fs, path, perms);
+        return fs->makeDir(fs, path, perms, owner, group);
     }
     return MPR_ERR_CANT_CREATE;
 }
@@ -17713,7 +17722,7 @@ static int deletePath(MprRomFileSystem *fileSystem, cchar *path)
 }
  
 
-static int makeDir(MprRomFileSystem *fileSystem, cchar *path, int perms)
+static int makeDir(MprRomFileSystem *fileSystem, cchar *path, int perms, int owner, int group)
 {
     return MPR_ERR_CANT_WRITE;
 }

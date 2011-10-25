@@ -1211,7 +1211,7 @@ static void copyDir(cchar *fromDir, cchar *toDir)
         to = mprJoinPath(toDir, dp->name);
         if (dp->isDir) {
             if (!mprPathExists(to, R_OK)) {
-                if (mprMakeDir(to, 0755, 1) < 0) {
+                if (mprMakeDir(to, 0755, -1, -1, 1) < 0) {
                     fail("Can't make directory %s", to);
                     return;
                 }
@@ -1220,7 +1220,7 @@ static void copyDir(cchar *fromDir, cchar *toDir)
             copyDir(from, to);
         
         } else {
-            if (mprMakeDir(mprGetPathDir(to), 0755, 1) < 0) {
+            if (mprMakeDir(mprGetPathDir(to), 0755, -1, -1, 1) < 0) {
                 fail("Can't make directory %s", mprGetPathDir(to));
                 return;
             }
@@ -1364,7 +1364,7 @@ static void makeDir(cchar *dir)
     if (mprPathExists(path, X_OK)) {
         trace("EXISTS",  "Directory: %s", path);
     } else {
-        if (mprMakeDir(path, 0755, 1) < 0) {
+        if (mprMakeDir(path, 0755, -1, -1, 1) < 0) {
             app->error++;
         } else {
             trace("CREATE",  "Directory: %s", path);

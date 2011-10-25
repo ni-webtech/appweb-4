@@ -244,7 +244,7 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
     } else {
         csource = source;
     }
-    mprMakeDir(eroute->cacheDir, 0775, 1);
+    mprMakeDir(eroute->cacheDir, 0775, -1, -1, 1);
     /*
         WARNING: GC yield here
      */

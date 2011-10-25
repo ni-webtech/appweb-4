@@ -29,7 +29,7 @@ public function copy(src: Path, target: Path = Dir, options = {})
     let owner = options.owner || -1
     let permissions = options.permissions
     let task = options.task 
-    let verbose: Number = options.trace
+    let verbose = options.trace
     let compress = options.compress || false
     let build = options.build
     let log = App.log

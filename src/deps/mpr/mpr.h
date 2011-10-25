@@ -4462,7 +4462,7 @@ typedef int     (*MprDeleteFileProc)(struct MprFileSystem *fs, cchar *path);
 typedef int     (*MprDeleteDirProc)(struct MprFileSystem *fs, cchar *path);
 typedef int     (*MprGetPathInfoProc)(struct MprFileSystem *fs, cchar *path, struct MprPath *info);
 typedef char   *(*MprGetPathLinkProc)(struct MprFileSystem *fs, cchar *path);
-typedef int     (*MprMakeDirProc)(struct MprFileSystem *fs, cchar *path, int perms);
+typedef int     (*MprMakeDirProc)(struct MprFileSystem *fs, cchar *path, int perms, int owner, int group);
 typedef int     (*MprMakeLinkProc)(struct MprFileSystem *fs, cchar *path, cchar *target, int hard);
 typedef int     (*MprCloseFileProc)(struct MprFile *file);
 typedef ssize   (*MprReadFileProc)(struct MprFile *file, void *buf, ssize size);
@@ -5191,10 +5191,12 @@ extern char *mprJoinPathExt(cchar *path, cchar *ext);
     @param path String containing the directory pathname to create.
     @param makeMissing If true make all required intervening directory segments.
     @param perms Posix style file permissions mask.
+    @param owner User to own the directory. Set to -1 not change the owner.
+    @param group Group to own the directory. Set to -1 not change the group.
     @return Returns zero if successful, otherwise a negative MPR error code is returned.
     @ingroup MprPath
  */
-extern int mprMakeDir(cchar *path, int perms, bool makeMissing);
+extern int mprMakeDir(cchar *path, int perms, int owner, int group, bool makeMissing);
 
 /**
     Make a link
