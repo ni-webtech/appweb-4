@@ -10,7 +10,7 @@ PRODUCT=appweb
 EXE=
 INC="${ROOT_DIR}/usr/include"
 MAN="${ROOT_DIR}/usr/share/man"
-PROGRAMS="appweb http auth sqlite"
+PROGRAMS="appweb http auth sqlite esp"
 
 if [ -x "${ROOT_DIR}/usr/local/bin" ] ; then
     BIN="${ROOT_DIR}/usr/local/bin"
