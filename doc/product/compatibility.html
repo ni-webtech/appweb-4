@@ -75,22 +75,22 @@
                 side JavaScript if using Ejscript</a></li>
             </ul><a name="api" id="api"></a>
             <h2 class="section">API Compatibility</h2>
-            <p>The Appweb APIs are evolving and are thus subject to change between minor releases. The documentation
+            <p>The Appweb APIs are evolving, and are thus subject to change between minor releases. The documentation
             provides a <a href="../api/stability.html">Stability Classification</a> for each API group that reflects
-            the stability with regard to backwards compatibility.</p>
+            their stability with regard to backwards compatibility.</p>
             <p>We do <b>not</b> provide a blanket commitment to backward compatibility. Rather, we adopt a more
             surgical approach on an API by API basis.</p><a name="r2" id="r2"></a>
             <a name="r4" id="r4"></a>
             <h2>Appweb 4</h2>
-            <p>Appweb 4 is an evolutionary release relative to Appweb 3. Some APIs have changed and APIs have
-            been added for new functionality. Appweb 4 uses a new memory allocator that does not require a memory context
+            <p>Appweb 4 is an evolutionary release relative to Appweb 3. Some APIs have changed and new APIs have
+            been added for increased functionality. Appweb 4 uses a new memory allocator that does not require a memory context
             as the first argument to most APIs. The allocator uses garbage collection and this eliminates
-            the need to manually free memory.
+            the need to manually free up memory.
             You can migrate code from Appweb 3 to Appweb 4 with some refactoring.</p>
             <h2>Appweb 3</h2>
             <p>Appweb 3 is a major change relative to Appweb 2. Most of the APIs have changed in some capacity and you
             should regard Appweb 3.X as a next generation web server. You can migrate code from Appweb 2 to Appweb 3,
-            however you should expect to have significant refactoring work when transitioning.</p>
+            however, you should anticipate significant refactoring work throughout the transition.</p>
             <h2>Appweb 2</h2>
             <p>Appweb 2 is a stable release that in now in maintenance mode. The core programming APIs are relatively
             stable and are not expected to change significantly. Appweb 2 will be maintained until the end of
