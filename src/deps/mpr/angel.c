@@ -19,7 +19,6 @@ typedef struct App {
     cchar   *appName;                   /* Angel name */
     int     exiting;                    /* Program should exit */
     int     retries;                    /* Number of times to retry staring app */
-    char    *homeDir;                   /* Home directory for service */
     char    *logSpec;                   /* Log directive for service */
     char    *pidDir;                    /* Location for pid file */
     char    *pidPath;                   /* Path to the angel pid for this service */
@@ -28,6 +27,7 @@ typedef struct App {
     int     runAsDaemon;                /* Run as a daemon */
     int     servicePid;                 /* Process ID for the service */
     char    *serviceArgs;               /* Args to pass to service */
+    char    *serviceHome;               /* Service home */
     char    *serviceName;               /* Basename of service program */
     char    *serviceProgram;            /* Program to start */
     int     verbose;                    /* Run in verbose mode */
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
             if (nextArg >= argc) {
                 err++;
             } else {
-                app->homeDir = sclone(argv[++nextArg]);
+                app->serviceHome = sclone(argv[++nextArg]);
             }
 
         } else if (strcmp(argp, "--log") == 0) {
@@ -198,11 +198,11 @@ static void manageApp(void *ptr, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(app->appName);
-        mprMark(app->homeDir);
         mprMark(app->logSpec);
         mprMark(app->pidDir);
         mprMark(app->pidPath);
         mprMark(app->serviceArgs);
+        mprMark(app->serviceHome);
         mprMark(app->serviceName);
         mprMark(app->serviceProgram);
     }
@@ -212,11 +212,7 @@ static void manageApp(void *ptr, int flags)
 static void setAppDefaults(Mpr *mpr)
 {
     app->appName = mprGetAppName();
-    app->homeDir = sclone(".");
-#if UNUSED
-    app->serviceProgram = mprJoinPath(app->homeDir, BLD_PRODUCT);
-    app->serviceName = mprGetPathBase(app->serviceProgram);
-#endif
+    app->serviceHome = sclone(".");
     app->retries = RESTART_MAX;
 
     if (mprPathExists("/var/run", X_OK) && getuid() == 0) {
@@ -286,9 +282,9 @@ static void angel()
                 setsid();
 
                 if (app->verbose) {
-                    mprPrintf("%s: Change dir to %s\n", app->appName, app->homeDir);
+                    mprPrintf("%s: Change dir to %s\n", app->appName, app->serviceHome);
                 }
-                if (chdir(app->homeDir) < 0) {}
+                if (chdir(app->serviceHome) < 0) {}
 
                 for (i = 3; i < 128; i++) {
                     close(i);
@@ -299,7 +295,7 @@ static void angel()
                     ac = 0;
                 }
                 argv = mprAlloc(sizeof(char*) * (6 + ac));
-                env[0] = sjoin("LD_LIBRARY_PATH=", app->homeDir, NULL);
+                env[0] = sjoin("LD_LIBRARY_PATH=", app->serviceHome, NULL);
                 env[1] = sjoin("PATH=", getenv("PATH"), NULL);
                 env[2] = 0;
 
@@ -324,7 +320,7 @@ static void angel()
 
                 /* Should not get here */
                 err = errno;
-                mprError("%s: Can't exec %s, err %d, cwd %s", app->appName, app->serviceProgram, err, app->homeDir);
+                mprError("%s: Can't exec %s, err %d, cwd %s", app->appName, app->serviceProgram, err, app->serviceHome);
                 exit(MPR_ERR_CANT_INITIALIZE);
             }
 
@@ -540,7 +536,6 @@ typedef struct App {
     int          exiting;            /* Program should exit */
     int          heartBeatPeriod;    /* Service heart beat interval */
     HANDLE       heartBeatEvent;     /* Heart beat event event to sleep on */
-    char         *homeDir;           /* Home directory for service */
     HWND         otherHwnd;          /* Existing instance window handle */
     int          restartCount;       /* Service restart count */
     int          restartWarned;      /* Has user been notified */
@@ -602,7 +597,6 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
     err = 0;
     installFlag = 0;
     app->appInst = inst;
-	app->hwnd = MPR->waitService->hwnd;		
     app->heartBeatPeriod = HEART_BEAT_PERIOD;
 
     initService();
@@ -612,16 +606,6 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
     app->appTitle = mprGetAppTitle(mpr);
     mprSetLogHandler(logHandler);
     mprSetWinMsgCallback(msgProc);
-
-#if UNUSED
-    /*
-        Create the window 
-     */
-    if (initWindow() < 0) {
-        mprError("Can't initialize application Window");
-        return FALSE;
-    }
-#endif
 
     if ((argc = mprMakeArgv(args, &argv, MPR_ARGV_ARGS_ONLY)) < 0) {
         return FALSE;
@@ -667,7 +651,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
             if (nextArg >= argc) {
                 err++;
             } else {
-                app->homeDir = sclone(argv[++nextArg]);
+                app->serviceHome = sclone(argv[++nextArg]);
             }
 
         } else if (strcmp(argp, "--program") == 0) {
@@ -752,7 +736,6 @@ static void manageApp(void *ptr, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(app->appName);
         mprMark(app->appTitle);
-        mprMark(app->homeDir);
         mprMark(app->serviceHome);
         mprMark(app->serviceName);
         mprMark(app->serviceProgram);
@@ -819,8 +802,7 @@ static void angel()
     STARTUPINFO         startInfo;
     MprTime             mark;
     ulong               status;
-    char                *dir;
-    char                key[MPR_MAX_FNAME], path[MPR_MAX_FNAME], cmd[MPR_MAX_FNAME];
+    char                *path, *cmd, *key;
     int                 createFlags;
 
     createFlags = 0;
@@ -832,24 +814,22 @@ static void angel()
     /*
         Read the service home directory and args. Default to the current dir if none specified.
      */
-    mprSprintf(key, sizeof(key), "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\%s", app->serviceName);
-    app->homeDir = mprReadRegistry(key, "HomeDir");
+    key = sfmt("HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\%s", app->serviceName);
+    app->serviceHome = mprReadRegistry(key, "HomeDir");
     app->serviceArgs = mprReadRegistry(key, "Args");
 
     /*
         Expect to find the service executable in the same directory as this angel program.
      */
     if (app->serviceProgram == 0) {
-        GetModuleFileName(0, path, sizeof(path));
-        dir = mprGetPathDir(path);
-        mprSprintf(path, sizeof(path), "\"%s\\%s.exe\"", dir, BLD_PRODUCT);
+        path = sfmt("\"%s\\%s.exe\"", mprGetAppDir(), BLD_PRODUCT);
     } else {
-        mprSprintf(path, sizeof(path), "\"%s\"", app->serviceProgram);
+        path = sfmt("\"%s\"", app->serviceProgram);
     }
     if (app->serviceArgs && *app->serviceArgs) {
-        mprSprintf(cmd, sizeof(cmd), "%s %s", path, app->serviceArgs);
+        cmd = sfmt("%s %s", path, app->serviceArgs);
     } else {
-        mprSprintf(cmd, sizeof(cmd), "%s", path);
+        cmd = path;
     }
     if (app->createConsole) {
         createFlags |= CREATE_NEW_CONSOLE;
@@ -880,7 +860,7 @@ static void angel()
             /*
                 Launch the process
              */
-            if (! CreateProcess(0, cmd, 0, 0, FALSE, createFlags, 0, app->homeDir, &startInfo, &procInfo)) {
+            if (! CreateProcess(0, cmd, 0, 0, FALSE, createFlags, 0, app->serviceHome, &startInfo, &procInfo)) {
                 mprError("Can't create process: %s, %d", cmd, mprGetOsError());
             } else {
                 app->servicePid = (int) procInfo.hProcess;
@@ -1050,10 +1030,10 @@ static int installService()
     /*
         Write the home directory
      */
-    if (app->homeDir == 0) {
-        app->homeDir = mprGetPathParent(mprGetAppDir(mpr));
+    if (app->serviceHome == 0) {
+        app->serviceHome = mprGetPathParent(mprGetAppDir());
     }
-    if (mprWriteRegistry(key, "HomeDir", app->homeDir) < 0) {
+    if (mprWriteRegistry(key, "HomeDir", app->serviceHome) < 0) {
         return MPR_ERR_CANT_WRITE;
     }
 
@@ -1070,7 +1050,7 @@ static int installService()
 
 
 /*
-    Remove the application service.
+    Remove the application service
  */ 
 static int removeService(int removeFromScmDb)
 {
@@ -1157,7 +1137,6 @@ static int stopService(int cmd)
     app->serviceStopped = 1;
 
     gracefulShutdown(10 * 1000);
-
     if (cmd == SERVICE_CONTROL_SHUTDOWN) {
         return 0;
     }
@@ -1219,43 +1198,8 @@ static void initService()
     app->serviceName = BLD_COMPANY "-" BLD_PRODUCT;
     app->serviceTitle = BLD_NAME;
     app->serviceStopped = 0;
-    app->serviceProgram = sjoin(mprGetAppDir(mpr), "/", BLD_PRODUCT, ".exe", NULL);
+    app->serviceProgram = sjoin(mprGetAppDir(), "/", BLD_PRODUCT, ".exe", NULL);
 }
-
-#if UNUSED
-/*
-    Initialize the applications's window
- */ 
-static int initWindow()
-{
-    WNDCLASS    wc;
-    int         rc;
-
-    wc.style            = CS_HREDRAW | CS_VREDRAW;
-    wc.hbrBackground    = (HBRUSH)(COLOR_WINDOW+1);
-    wc.hCursor          = LoadCursor(NULL, IDC_ARROW);
-    wc.cbClsExtra       = 0;
-    wc.cbWndExtra       = 0;
-    wc.hInstance        = (HINSTANCE) app->appInst;
-    wc.hIcon            = NULL;
-    wc.lpfnWndProc      = (WNDPROC) msgProc;
-    wc.lpszMenuName     = wc.lpszClassName = app->appName;
-
-    rc = RegisterClass(&wc);
-    if (rc == 0) {
-        mprError("Can't register windows class");
-        return -1;
-    }
-    app->hwnd = CreateWindow(app->appName, app->appTitle, WS_OVERLAPPED, CW_USEDEFAULT, 0, 0, 0, NULL, NULL, 
-        app->appInst, NULL);
-    if (! app->hwnd) {
-        mprError("Can't create window. Error: %d", GetLastError());
-        return -1;
-    }
-    return 0;
-}
-#endif
-
 
 /*
     Windows message processing loop
