@@ -646,6 +646,7 @@ extern bool ediValidateRec(EdiRec *rec);
  */
 extern cchar *ediFormatField(cchar *fmt, EdiField value);
 
+//  MOB - rename ediGetField
 /**
     Get a record field
     @param rec Database record
@@ -663,6 +664,7 @@ extern EdiField ediGetRawRecField(EdiRec *rec, cchar *fieldName);
  */
 extern MprList *ediGetRecErrors(EdiRec *rec);
 
+//  MOB - rename ediGetFieldFmt
 /**
     Get and format a record field value
     @param fmt Record field value
@@ -673,6 +675,7 @@ extern MprList *ediGetRecErrors(EdiRec *rec);
  */
 extern cchar *ediGetRecField(cchar *fmt, EdiRec *rec, cchar *fieldName);
 
+//  MOB - rename ediGetFieldType
 /**
     Get the data type of a record field
     @param rec Record to examine

@@ -301,15 +301,18 @@ ediSetField(product, "description", "458 Spider");
                 <li>Controller facilitated model access</li>
             </ul>
             <h4>Direct API Access</h4>
-            <p>In <tt>direct model</tt> access, controllers or views query the model using a <tt>find</tt> method to
-            return a record object instance. They then directly access the model via object properties. Views can
-            directly insert these values into web pages and controllers can use them just like any JavaScript
-            property.</p>
+            <p>In <tt>direct model</tt> access, ESP web pages or controllers, query the database using 
+            EDI APIs which returns EdiRec instances. They then directly access field values using <tt>ediGetField</tt>.</p>
             <pre>
-&lt;p&gt;Price: @@Product.find(1).price &lt;/p&gt;
+&lt;p&gt;Price: &lt%= ediGetField(product, "price"); &lt;/p&gt;
 </pre>
             <p>This is a fragment from a View that directly accesses the model to extract the price for the first
-            product. The <tt>@@</tt> is the way Views can substitue dynamic data from JavaScript variables at
+            product. This example can be further simplified by using the <tt>@@</tt> ESP template directive.
+           
+            The <tt>@@</tt> is the way Views can substitue dynamic data from JavaScript variables at
+<pre>
+&lt;p&gt;Price: @*price&lt;/p&gt;
+</pre>
             run-time.</p>
             <h4>Bound Access</h4>
             <p>ESP models can also be <tt>bound</tt> to View Controls for easy display. Many of the View Controls
