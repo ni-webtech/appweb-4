@@ -6389,7 +6389,7 @@ extern int  mprInitWindow();
     extern void mprManageSelect(MprWaitService *ws, int flags);
 #endif
 #if BLD_WIN_LIKE
-    extern void mprSetWinMsgCallback(MprWaitService *ws, MprMsgCallback callback);
+    extern void mprSetWinMsgCallback(MprMsgCallback callback);
     extern void mprServiceWinIO(MprWaitService *ws, int sockFd, int winMask);
 #endif
 
