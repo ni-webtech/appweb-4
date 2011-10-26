@@ -172,7 +172,7 @@ ejspage.vcxproj: Makefile $(CONFIG)
 		--libs "libmpr.lib libejs.lib $(LIBS)" $(SRC)/deps/ejs/ejspage.c
 
 cleanExtra:
-	rm -fr Upgrade* _Upgrade* x64 Win32 *.suo *.sdf *.filters *.vcxproj*
+	rm -fr Upgrade* _Upgrade* x64 Win32 *.suo *.sdf *.filters
 
 #
 #   Local variables:
