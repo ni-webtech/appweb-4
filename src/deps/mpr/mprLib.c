@@ -3494,7 +3494,7 @@ static LRESULT msgProc(HWND hwnd, uint msg, uint wp, long lp)
         mprServiceWinIO(MPR->waitService, sock, winMask);
 
     } else if (ws->msgCallback) {
-        ws->msgCallback(hwnd, msg, wp, lp);
+        return ws->msgCallback(hwnd, msg, wp, lp);
 
     } else {
         return DefWindowProc(hwnd, msg, wp, lp);

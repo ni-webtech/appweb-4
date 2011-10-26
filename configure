@@ -2253,6 +2253,14 @@ while [ "${1#--}" != "$1" -o "${1#-}" != "$1" ] ; do
         emitHelp
         exit 0
         ;;
+    64)
+        echo WAS BLD_HOST_SYSTEM $BLD_HOST_SYSTEM
+        echo WAS BLD_BUILD_SYSTEM $BLD_BUILD_SYSTEM
+        BLD_HOST_SYSTEM=x86_64-${BLD_HOST_SYSTEM#*-}
+        BLD_BUILD_SYSTEM=x86_64-${BLD_BUILD_SYSTEM#*-}
+        echo NOW BLD_HOST_SYSTEM $BLD_HOST_SYSTEM
+        echo NOW BLD_BUILD_SYSTEM $BLD_BUILD_SYSTEM
+        ;;
     host=*|target=*|host|target)
         ARG="${1#*=}"
         if [ "${ARG}" = "--host" ] ; then
