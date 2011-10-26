@@ -9,6 +9,7 @@ var top = App.dir.findAbove("configure").dirname
 load(top.join("package/copy.es"))
 var bare: Boolean = App.args[3] == "1"
 var options = copySetup({task: App.args[1], root: Path(App.args[2])})
+print("ROOT " + options.root)
 var build = options.build
 var os = build.BLD_HOST_OS
 var product = build.BLD_PRODUCT
@@ -121,7 +122,7 @@ if (options.task != "Remove" && build.BLD_FEATURE_SSL == 1 && os == "LINUX") {
 
 copy("*", cfg, {
     from: "src/server",
-    include: /mime.types|\.db$|appweb.conf|php.ini/,
+    include: /mime.types|\.db$|php.ini/,
     permissions: 0644
 })
 
@@ -138,7 +139,7 @@ if (options.task != "Remove") {
         Patch appweb.conf
      */
     Cmd.sh("BLD_HTTP_PORT=" + build.BLD_HTTP_PORT + " BLD_SSL_PORT=" + build.BLD_SSL_PORT + 
-        " BLD_SPL_PREFIX=" + build.BLD_SPL_PREFIX + " " + "patchAppwebConf \"" + cfg.join("appweb.conf") + "\"")
+        " BLD_SPL_PREFIX=\"" + build.BLD_SPL_PREFIX + "\" " + "patchAppwebConf \"" + cfg.join("appweb.conf") + "\"")
 }
 
 if (build.BLD_FEATURE_EJSCRIPT == 1) {
@@ -211,10 +212,11 @@ if (build.BLD_UNIX_LIKE == 1) {
 
 if (options.task == "Install") {
     if (!bare) {
-        Cmd.sh(bin.join("linkup") + " " + options.task + " " + options.root)
+        print("\"" + bin.join("linkup") + "\" " + options.task + " \"" + options.root + "\"")
+        Cmd.sh("\"" + bin.join("linkup") + "\" " + options.task + " \"" + options.root + "\"")
     }
 } else if (saveLink && saveLink.exists) {
-    Cmd.sh(saveLink + " " + options.task + " " + options.root)
+    Cmd.sh(saveLink + " " + options.task + " \"" + options.root + "\"")
     saveLink.remove()
 }
 

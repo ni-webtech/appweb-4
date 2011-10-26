@@ -90,6 +90,8 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2)
     stop = 0;
     manage = 0;
     app->appInst = inst;
+//  MOB - API
+    app->appHwnd = MPR->waitService->hwnd;
     app->serviceName = sclone(BLD_COMPANY "-" BLD_PRODUCT);
     app->serviceTitle = sclone(BLD_NAME);
     app->serviceWindowName = sclone(BLD_PRODUCT "Angel");
@@ -112,14 +114,11 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2)
         }
         if (strcmp(argp, "--manage") == 0) {
             manage++;
-
         } else if (strcmp(argp, "--stop") == 0) {
             stop++;
-
         } else {
             err++;
         }
-
         if (err) {
             mprUserError("Bad command line: %s\n"
                 "  Usage: %s [options]\n"
@@ -130,23 +129,27 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2)
             return -1;
         }
     }
-
     if (stop) {
         stopMonitor();
         return 0;
     }
-
     if (findInstance()) {
         mprUserError("Application %s is already active.", mprGetAppTitle());
         return MPR_ERR_BUSY;
     }
-
+#if UNUSED
     /*
         Create the window
      */ 
     if (initWindow() < 0) {
         mprUserError("Can't initialize application Window");
         return MPR_ERR_CANT_INITIALIZE;
+    }
+#endif
+    mprSetWinMsgCallback(msgProc);
+    if (app->taskBarIcon > 0) {
+        ShowWindow(app->appHwnd, SW_MINIMIZE);
+        UpdateWindow(app->appHwnd);
     }
     if (manage) {
         /*
@@ -155,10 +158,8 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2)
         runBrowser("/index.html");
 
     } else {
-
         if (openMonitorIcon() < 0) {
             mprUserError("Can't open %s tray", mprGetAppName());
-
         } else {
             eventLoop();
             closeMonitorIcon();
@@ -193,7 +194,6 @@ void eventLoop()
         should code an event loop similar to that below:
      */
     while (!mprIsStopping()) {
-        // SetTimer(app->appHwnd, 0, till, NULL);
         /*
             Socket events will be serviced in the msgProc
          */
@@ -215,7 +215,6 @@ static int findInstance()
     HWND    hwnd;
 
     hwnd = FindWindow(mprGetAppName(), mprGetAppTitle());
-
     if (hwnd) {
         if (IsIconic(hwnd)) {
             ShowWindow(hwnd, SW_RESTORE);
@@ -227,6 +226,7 @@ static int findInstance()
 }
 
 
+#if UNUSED
 /*
     Initialize the applications's window
  */ 
@@ -247,7 +247,7 @@ static int initWindow()
 
     rc = RegisterClass(&wc);
     if (rc == 0) {
-        mprError("Can't register windows class");
+        mprError("Can't register windows class: %d", GetLastError());
         return -1;
     }
     app->appHwnd = CreateWindow(mprGetAppName(), mprGetAppTitle(), 
@@ -262,6 +262,7 @@ static int initWindow()
     }
     return 0;
 }
+#endif
 
 
 static void stopMonitor()
@@ -277,7 +278,8 @@ static void stopMonitor()
 
 /*
     Windows message processing loop
- */ BOOL CALLBACK dialogProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
+ */ 
+BOOL CALLBACK dialogProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     switch(Message) {
     default:
@@ -331,8 +333,7 @@ static long msgProc(HWND hwnd, uint msg, uint wp, long lp)
 
         case MA_MENU_EXIT:
             /* 
-                FUTURE
-             *
+                MOB
                 h = CreateDialog(app->appInst, MAKEINTRESOURCE(IDD_EXIT), app->appHwnd, dialogProc);
                 ShowWindow(h, SW_SHOW);
              */
@@ -376,13 +377,11 @@ static int openMonitorIcon()
         stop = LoadBitmap(app->appInst, MAKEINTRESOURCE(IDB_STOP));
         SetMenuItemBitmaps(app->subMenu, MA_MENU_STATUS, MF_BYCOMMAND, stop, go);
     }
-
     iconHandle = (HICON) LoadImage(app->appInst, APPWEB_ICON, IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE);
     if (iconHandle == 0) {
         mprError("Can't load icon %s", APPWEB_ICON);
         return MPR_ERR_CANT_INITIALIZE;
     }
-
     data.uID = APPWEB_MONITOR_ID;
     data.hWnd = app->appHwnd;
     data.hIcon = iconHandle;
@@ -400,7 +399,7 @@ static int openMonitorIcon()
 
 
 /*
-    Can be caleld multiple times
+    Can be called multiple times
  */
 static void closeMonitorIcon()
 {
@@ -592,18 +591,15 @@ static int runBrowser(char *page)
         mprError("Can't get Appweb listening port");
         return -1;
     }
-
     path = getBrowserPath(MPR_MAX_STRING);
     if (path == 0) {
         mprError("Can't get browser startup command");
         return -1;
     }
-
     pathArg = strstr(path, "\"%1\"");
     if (*page == '/') {
         page++;
     }
-
     if (pathArg == 0) {
         mprSprintf(cmdBuf, MPR_MAX_STRING, "%s http://localhost:%d/%s", path, port, page);
 
@@ -616,7 +612,6 @@ static int runBrowser(char *page)
     }
 
     mprLog(4, "Running %s\n", cmdBuf);
-
     memset(&startInfo, 0, sizeof(startInfo));
     startInfo.cb = sizeof(startInfo);
 
