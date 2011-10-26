@@ -498,21 +498,21 @@ static int finalizePhp(MprModule *mp)
     Http        *http;
     HttpStage   *stage;
 
-    TSRMLS_FETCH();
-
     if ((stage = httpLookupStage(MPR->httpService, "phpHandler")) == 0) {
         return 0;
     }
     if (stage->stageData == 0) {
         return 0;
     }
-
-    mprLog(4, "php: Finalize library before unloading");
-    php_module_shutdown(TSRMLS_C);
-    sapi_shutdown();
-    tsrm_shutdown();
-    http = MPR->httpService;
-    stage->stageData = 0;
+    {
+        TSRMLS_FETCH();
+        mprLog(4, "php: Finalize library before unloading");
+        php_module_shutdown(TSRMLS_C);
+        sapi_shutdown();
+        tsrm_shutdown();
+        http = MPR->httpService;
+        stage->stageData = 0;
+    }
     return 0;
 }
 
