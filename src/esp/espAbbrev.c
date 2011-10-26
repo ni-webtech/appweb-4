@@ -422,16 +422,6 @@ ssize receive(char *buf, ssize len)
 }
 
 
-EdiGrid *readAllRecs(cchar *tableName)
-{
-    EdiGrid *grid;
-    
-    grid = ediReadWhere(getDatabase(), tableName, 0, 0, 0);
-    setGrid(grid);
-    return grid;
-}
-
-
 EdiRec *readRecWhere(cchar *tableName, cchar *fieldName, cchar *operation, cchar *value)
 {
     return setRec(ediReadOneWhere(getDatabase(), tableName, fieldName, operation, value));
@@ -453,6 +443,16 @@ EdiRec *readRecByKey(cchar *tableName, cchar *key)
 EdiGrid *readRecsWhere(cchar *tableName, cchar *fieldName, cchar *operation, cchar *value)
 {
     return setGrid(ediReadWhere(getDatabase(), tableName, fieldName, operation, value));
+}
+
+
+EdiGrid *readTable(cchar *tableName)
+{
+    EdiGrid *grid;
+    
+    grid = ediReadWhere(getDatabase(), tableName, 0, 0, 0);
+    setGrid(grid);
+    return grid;
 }
 
 

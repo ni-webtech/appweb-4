@@ -153,7 +153,7 @@ static void show() { \n\
 }\n\
 \n\
 static void update() { \n\
-    if (writeFields(\"${NAME}\", params())) {\n\
+    if (updateFields(\"${NAME}\", params())) {\n\
         inform(\"${TITLE} updated successfully.\");\n\
         renderView(\"${NAME}-list\");\n\
     } else {\n\
@@ -180,7 +180,7 @@ ${DEFINE_ACTIONS}    return 0;\n\
 static cchar *ScaffoldListView = "\
 <h1>${TITLE} List</h1>\n\
 \n\
-<% table(readGrid(\"${NAME}\"), \"{data-click: '@edit'}\"); %>\n\
+<% table(readTable(\"${NAME}\"), \"{data-click: '@edit'}\"); %>\n\
 <% buttonLink(\"New ${TITLE}\", \"@init\", 0); %>\n\
 ";
 
@@ -1308,7 +1308,7 @@ static void generateAppHeader()
     MprHash *tokens;
     char    *path, *data;
 
-    path = mprJoinPath(eroute->dir, mprJoinPathExt(app->appName, "h"));
+    path = mprJoinPath(eroute->dir, mprJoinPathExt("esp-app", "h"));
     tokens = mprDeserialize(sfmt("{ NAME: %s, TITLE: %s }", app->appName, spascal(app->appName)));
     data = stemplate(AppHeader, tokens);
     makeFile(path, data, "Header");

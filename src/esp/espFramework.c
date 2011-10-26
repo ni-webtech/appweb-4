@@ -491,16 +491,6 @@ ssize espReceive(HttpConn *conn, char *buf, ssize len)
 }
 
 
-EdiGrid *espReadAllRecs(HttpConn *conn, cchar *tableName)
-{
-    EdiGrid *grid;
-    
-    grid = ediReadWhere(espGetDatabase(conn), tableName, 0, 0, 0);
-    espSetGrid(conn, grid);
-    return grid;
-}
-
-
 EdiRec *espReadRecWhere(HttpConn *conn, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value)
 {
     return espSetRec(conn, ediReadOneWhere(espGetDatabase(conn), tableName, fieldName, operation, value));
@@ -522,6 +512,16 @@ EdiRec *espReadRecByKey(HttpConn *conn, cchar *tableName, cchar *key)
 EdiGrid *espReadRecsWhere(HttpConn *conn, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value)
 {
     return espSetGrid(conn, ediReadWhere(espGetDatabase(conn), tableName, fieldName, operation, value));
+}
+
+
+EdiGrid *espReadTable(HttpConn *conn, cchar *tableName)
+{
+    EdiGrid *grid;
+    
+    grid = ediReadWhere(espGetDatabase(conn), tableName, 0, 0, 0);
+    espSetGrid(conn, grid);
+    return grid;
 }
 
 

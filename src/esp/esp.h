@@ -2421,15 +2421,6 @@ extern cchar *param(cchar *name);
 extern MprHash *params();
 
 /**
-    Read all the records in table from the database
-    @description This reads a table and returns a grid containing the table data.
-    @param tableName Database table name
-    @return A grid containing all table rows. Returns NULL if the table cannot be found.
-    @ingroup EdiAbbrev
- */
-extern EdiGrid *readAllRecs(cchar *tableName);
-
-/**
     Read the identified record 
     @description Read the record identified by the request params("id") from the nominated table.
     @param tableName Database table name
@@ -2473,6 +2464,15 @@ extern EdiRec *readRecWhere(cchar *tableName, cchar *fieldName, cchar *operation
     @ingroup EspAbbrev
  */
 extern EdiRec *readRecByKey(cchar *tableName, cchar *key);
+
+/**
+    Read all the records in table from the database
+    @description This reads a table and returns a grid containing the table data.
+    @param tableName Database table name
+    @return A grid containing all table rows. Returns NULL if the table cannot be found.
+    @ingroup EdiAbbrev
+ */
+extern EdiGrid *readTable(cchar *tableName);
 
 /**
     Read receive body content
