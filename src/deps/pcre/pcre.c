@@ -7116,7 +7116,7 @@ auto_callout(uschar *code, const uschar *ptr, compile_data *cd)
 {
 *code++ = OP_CALLOUT;
 *code++ = 255;
-PUT(code, 0, ptr - cd->start_pattern);  /* Pattern offset */
+PUT(code, 0, (int) (ptr - cd->start_pattern));  /* Pattern offset */
 PUT(code, LINK_SIZE, 0);                /* Default length */
 return code + 2*LINK_SIZE;
 }
@@ -8642,7 +8642,7 @@ we set the flag only if there is a literal "\r" or "\n" in the class. */
 
       /* Now fill in the complete length of the item */
 
-      PUT(previous, 1, code - previous);
+      PUT(previous, 1, (int) (code - previous));
       break;   /* End of class handling */
       }
 #endif
@@ -9707,7 +9707,7 @@ we set the flag only if there is a literal "\r" or "\n" in the class. */
             goto FAILED;
             }
           *code++ = n;
-          PUT(code, 0, ptr - cd->start_pattern + 1);  /* Pattern offset */
+          PUT(code, 0, (int) (ptr - cd->start_pattern + 1));  /* Pattern offset */
           PUT(code, LINK_SIZE, 0);                    /* Default length */
           code += 2 * LINK_SIZE;
           }
@@ -9986,7 +9986,7 @@ we set the flag only if there is a literal "\r" or "\n" in the class. */
                 goto FAILED;
                 }
               called = cd->start_code + recno;
-              PUTINC(cd->hwm, 0, code + 2 + LINK_SIZE - cd->start_code);
+              PUTINC(cd->hwm, 0, (int) (code + 2 + LINK_SIZE - cd->start_code));
               }
 
             /* If not a forward reference, and the subpattern is still open,
@@ -10010,7 +10010,7 @@ we set the flag only if there is a literal "\r" or "\n" in the class. */
           code += 1 + LINK_SIZE;
 
           *code = OP_RECURSE;
-          PUT(code, 1, called - cd->start_code);
+          PUT(code, 1, (int) (called - cd->start_code));
           code += 1 + LINK_SIZE;
 
           *code = OP_KET;
@@ -10780,7 +10780,7 @@ for (;;)
     /* Fill in the ket */
 
     *code = OP_KET;
-    PUT(code, 1, code - start_bracket);
+    PUT(code, 1, (int) (code - start_bracket));
     code += 1 + LINK_SIZE;
 
     /* Resetting option if needed */
@@ -10831,7 +10831,7 @@ for (;;)
   else
     {
     *code = OP_ALT;
-    PUT(code, 1, code - last_branch);
+    PUT(code, 1, (int) (code - last_branch));
     bc.current = last_branch = code;
     code += 1 + LINK_SIZE;
     }
@@ -11424,7 +11424,7 @@ while (errorcode == 0 && cd->hwm > cworkspace)
   recno = GET(codestart, offset);
   groupptr = find_bracket(codestart, (re->options & PCRE_UTF8) != 0, recno);
   if (groupptr == NULL) errorcode = ERR53;
-    else PUT(((uschar *)codestart), offset, groupptr - codestart);
+    else PUT(((uschar *)codestart), offset, (int) (groupptr - codestart));
   }
 
 /* Give an error if there's back reference to a non-existent capturing

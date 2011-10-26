@@ -308,6 +308,7 @@ extern EdiRec *ediCreateRec(Edi *edi, cchar *tableName);
  */
 extern int ediDelete(Edi *edi, cchar *path);
 
+//  MOB - should this be DeleteRec?
 /**
     Delete a row in a database table
     @param edi Database handle

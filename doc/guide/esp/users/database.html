@@ -89,21 +89,30 @@
             remains valid and consistent.</p>
 
             <a name="record" id="record"></a>
-            <h2 class="section">Records and Grids</h2>
-            <p>Programs interact with the EDI using EDI Records and Grids. When a record is read from the
-            database, EDI copies the data into an EdiRec structure. This efficiently stores the data and contains 
-            links to the database and table schema for data formatting and display. When multiple records are read,
-            EDI returns an EdiGrid structure.
+            <h2 class="section">Fields, Records and Grids</h2>
+            <p>Programs interact with the EDI using EDI Records. When a record is read from the
+            database, EDI extracts the database data and copies it into an EdiRec structure. This structure
+            efficiently store data with necessary database schem information necessary for data formatting and display. </p>
 
-            These representations wrap database records and allows you to use object-oriented programming (<a href=
+            <p>The EdiRec representation wraps a database record and allows you to use object-oriented programming (<a href=
             "http://en.wikipedia.org/wiki/Object-oriented_programming">OOP</a>) when dealing with tabular database
-            data. While not a full Object Relational Mapper (ORM), the EDI Record/Grid representation is an effective,
-            compact and highly efficient representation. In the Model-View-Controller (MVC) parlance, you can consider
-            these representations the "<tt>Model</tt>" in MVC.</p>
+            data. While not a full Object Relational Mapper (ORM), the EdiRec representation is an effective and
+            compact representation that is well suited for use in web applications where you are rendering database 
+            tables in web pages. In the Model-View-Controller (MVC) parlance, you can consider the EdiRec representation 
+            as the "<tt>Model</tt>" in <tt>M</tt>VC.</p>
+
+            <pAn EdiRec structure has an array of fields (EdiField), one for each column in the corresponding database table.
+            EdiFields stored data as strings to make it easy to display and render in web pages. All EDI APIs that
+            get/set field data always operating on strings. The underlying database backend may store data in more
+            compact forms using native data types.</p>
+
+            <p>When an EDI API needs to return multiple records, an EdiGrid structure is used which contains one or more
+            EdiRec structures.</p>
         
             <h3>Columns to Properties</h3>
-            <p>EDI dynamically determines the column names in database tables and creates EDI record and grid fields at
-            run-time corresponding to each column. You do not need to configure or specify the fields in your code.</p>
+            <p>EDI dynamically determines the column names in database tables and creates fields in the EdiRec
+            structure at run-time that correspond to each database column. You do not need to configure or specify the 
+            fields in your code.</p>
             
             <a name="tour" id="tour"></a>
             <h2>Quick Tour of EDI</h2>
@@ -134,31 +143,32 @@
                 </tbody>
             </table>
             <p>By convention, the database table and columns should be lower case. 
-            The following code demonstrates some typical uses:</p>
+            EDI assumes and requires that database tables will have a primary key column named 
+            <tt>id</tt>. </p>
+            
+            <p>The following code demonstrates some typical uses:</p>
             <pre>
-/* Read the first product */
-<b>
-EdiRec *product = readRecByKey("product", "1");
-//MOB printf("Name %s, price %s\n", product->name + " price is " + product.price)</b>
+/* Open the database */
+<b>Edi *db = ediOpen("store.mdb", "mdb", EDI_AUTO_SAVE);</b>
 
-/* Increase the price by $1.00 and save back to the database */
-<b>product.price += 1
-product.save()</b>
+/* Read the first product */
+<b>EdiRec *product = ediRec(db, "product", "1");</b>
+
+/* Set the price to $7.00 and save back to the database */
+<b>ediSetField(product, "price", "7.00");
+ediUpdateRec(db, product);</b>
 
 /* Find products costing over $10.00 */
-<b>products = readRecsWhere("product", "price", ">", "10.00");
-//MOBprint(products)</b>
+<b>EdiGrid *products = ediReadWhere(db, "product", "price", ">", "10.00");</b>
 
 /*  Read all products */
-<b>EdiGrid *products = ediReadTable(edi, "product");</b>
+<b>EdiGrid *products = ediReadTable(db, "product");</b>
 
 /* Get the number of rows and columns in the table */
-<b>ediGetTableSchema(edi, "product", &numRows, &numCols);</b>
+<b>ediGetTableSchema(db, "product", &numRows, &numCols);</b>
 
 /* Remove the product with id == 1 */ 
-<b>ediDeleteRow(edi, "product", "1");</b>
-
-ediSetFields(rec, ediMakeHash("{ name: '%s', address: '%s' }", name, address))
+<b>ediDeleteRow(db, "product", "1");</b>
 </pre>
             
             <a name="types" id="types"></a>
@@ -220,11 +230,6 @@ ediSetFields(rec, ediMakeHash("{ name: '%s', address: '%s' }", name, address))
                 </tbody>
             </table>
             
-            <a name="keys" id="keys"></a>
-            <h2 class="section">Table Keys</h2>
-            <p>EDI assumes and requires that database tables will have a primary key column named 
-            <tt>id</tt>. 
-            
             <a name="connections" id="connections"></a>
             <h2 class="section">Database Connections</h2>
             <p>Database connections are one of the few items that are setup by configuration files. The Appweb 
@@ -234,7 +239,7 @@ ediSetFields(rec, ediMakeHash("{ name: '%s', address: '%s' }", name, address))
 
             <a name="tables" id="tables"></a>
             <h2 class="section">Creating Database Tables</h2>
-            <p>The <tt>esp</tt> command can be used to create database tables and database migrations.</p>
+            <p>If creating an MVC application, The <tt>esp</tt> command can be used to create database tables for you:</p>
             <pre>
 esp generate table [field:type ...]
 </pre>
@@ -243,85 +248,59 @@ esp generate table [field:type ...]
             <tt>string</tt> and <tt>text</tt>.</p>
             
             <a name="crud" id="crud"></a>
-            <h2 class="section">Create, Read, Update and Delete</h2>
+            <h2 class="section">Create, Read, Update and Delete (CRUD)</h2>
             <p>It should be easy to do simple things like implementing the basic database operations: create, read,
-            update and delete. ESPs Models make this easy. <a name="create" id="create"></a></p>
+            update and delete. EDI make this easy. 
+            
+            <a name="create" id="create"></a></p>
             <h3>Create a new Record</h3>
             <p>To create a new table record:</p>
             <pre>
-<b>product = new Product</b>
-product.name = "Race Car"
-product.description = "Bright red race car"
-product.price = 19.99
-<b>product.save()</b>
+<b>product = ediCreateRec(db, "product");</b>
+ediSetFields(product, ediMakeHash("{ \
+    name: 'Race Car', \
+    description: 'Bright red race car', \
+    price: '19.99',
+});
+ediUpdateRec(db, product);
 </pre>
-            <p>That will create a new product, initialize its properties, and save it to the database.</p><a name=
-            "read" id="read"></a>
+            <p>That will create a new product, initialize its properties, and save it to the database.</p>
+            
+            <a name="read" id="read"></a>
             <h3>Reading a Record</h3>
-            <p>Reading a record from the database is done with the <tt>find</tt> family of Record static methods. The
-            basic <tt>find</tt> method will return a record with a given <tt>id</tt> field. Other find methods include:
-            findAll, findWhere and findOneWhere. These provide powerful query capabilities and are able to do
-            conditional queries and table joins.</p>
+            <p>Reading a record from the database is done with the <tt>ediRead</tt> family of Record static methods. The
+            basic <tt>ediReadRec</tt> method will return a record with a given <tt>id</tt> field. Other read methods include:
+            ediReadRecWhere, ediReadTable and ediReadField.</p>
             <pre>
-product = Product.find(2)
-product = Product.find(null, {conditions: ["price &gt; 5.0"]})
-</pre><!--
-            <p>See the <a href="#samples">Samples</a> below for more examples.</p>
-            -->
+product = ediReadRec(db, "product", "2");
+product = ediReadRecWhere(db, "product", "price", "<", "5.0");
+</pre>
             <a name="update" id="update"></a>
             <h3>Updating a Record</h3>
             <p>To update a record, first read it using one of the <tt>find</tt> methods. Then update any of the object
             properties. Finally, call the <tt>save</tt> method to save the changes to the database.</p>
             <pre>
-product = Product.find(3)
-product.name = "Stock Car"
-<b>product.save()</b>
-</pre><a name="delete" id="delete"></a>
+product = ediReadRecWhere(db, "product", "name", "==", "Ferarri");
+ediSetField(product, "description", "458 Spider");
+<b>ediUpdateRec(db, product);</b>
+</pre>
+            
+            <a name="delete" id="delete"></a>
             <h3>Deleting a Record</h3>
             <p>Records have a static method <tt>remove</tt> which will remove the record with the given primary key
             id.</p>
             <pre>
-<b>Product.remove(1)</b>
-/* Search, then remove */
-id = Product.findWhere('name == "Stock Car"')
-Product.remove(id)
-</pre><a name="manual" id="manual"></a>
-            <h2 class="section">Manual SQL Statements</h2>
-            <p>ESP supports the execution of manual SQL statements and provides routines to assist the creation of
-            SQL statements. The <tt>getDb</tt> method will return a Database object on which, manual SQL queries can be
-            performed</p>
-            <pre>
-db = Product.getDb()
-db.query("SELECT * FROM Products WHERE id &gt;= 1;")
+<b>ediDeleteRow(db, "product", "1");</b>
 </pre>
-            <h3>Assisted SQL</h3>
-            <p>The <tt>find</tt> methods can assist to create SQL statements via an options parameter that takes a set
-            of SQL-like modifiers. ESP Records use these when building the SQL statements to implement a query.
-            For example:</p>
-            <pre>
-Product.findAll({order: "price DESC", limit: 2})
-</pre>
-            <p>This will find up to two products, and will sort the result grid by descending price. Other options
-            include: group, limit, offset and joins.</p><!--
-            <a name="relationships"></a>
-            <h2 class="section">Table Relationships</h2>
-                <h3>Foreign Keys</h3>
-                <h3>One to One</h3>
-                <h3>One to Many</h3>
-                <h3>Many to Many</h3>
-                - belongsTo, hasOne, hasMany, hasAndBelongsToMany
-            -->
             <a name="accessing" id="accessing"></a>
-            <h2 class="section">Accessing Models</h2>
-            <p>ESP Controllers and Views are the primary users of model data. Controllers will typically interact
-            to create, read, update, and delete model data. Views will typically (or should) use read-only access.</p>
-            <p>There are several means by which model data can be provided:</p>
+            <h2 class="section">Accessing Data from Web Pages</h2>
+            <p>ESP web pages can access database data via three methods:
             <ul>
-                <li>Direct model access</li>
-                <li>Binding a model to a View Control</li>
+                <li>Direct EDI API calls</li>
+                <li>Binding database table to an ESP control</li>
                 <li>Controller facilitated model access</li>
             </ul>
-            <h4>Direct Model Access</h4>
+            <h4>Direct API Access</h4>
             <p>In <tt>direct model</tt> access, controllers or views query the model using a <tt>find</tt> method to
             return a record object instance. They then directly access the model via object properties. Views can
             directly insert these values into web pages and controllers can use them just like any JavaScript
