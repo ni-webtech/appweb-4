@@ -8672,6 +8672,7 @@ void httpFinalizeRoute(HttpRoute *route)
 /*
     MOB - doc
     what does this return. Does it return an absolute URI?
+    MOB - rename httpUri() and move to uri.c
  */
 char *httpLink(HttpConn *conn, cchar *target, MprHash *options)
 {
