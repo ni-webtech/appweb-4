@@ -54,7 +54,7 @@ extern EdiService *ediCreateService();
  */
 extern void ediAddProvider(struct EdiProvider *provider);
 
-/*
+/**
     Field validation callback procedure
     @param vp Validation structure reference
     @param rec Record to validate

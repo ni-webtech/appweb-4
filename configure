@@ -163,13 +163,15 @@ linkFile()
 
 setSystemConfiguration() {
 
-    [ "$BLD_HOST_SYSTEM" = "" ] && BLD_HOST_SYSTEM=`bash build/bin/config.guess`
-    [ "$BLD_BUILD_SYSTEM" = "" ] && BLD_BUILD_SYSTEM=`bash build/bin/config.guess`
-
-    #   Temp to switch back to win-32 builds
-    [ "$BLD_HOST_SYSTEM" = "x86_64-pc-cygwin" ] && BLD_HOST_SYSTEM="i686-pc-cygwin"
-    [ "$BLD_BUILD_SYSTEM" = "x86_64-pc-cygwin" ] && BLD_BUILD_SYSTEM="i686-pc-cygwin"
-
+    if [ "$BLD_HOST_SYSTEM" = "" ] ; then
+        BLD_HOST_SYSTEM=`bash build/bin/config.guess`
+        #   Temp to switch back to win-32 builds
+        [ "$BLD_HOST_SYSTEM" = "x86_64-pc-cygwin" ] && BLD_HOST_SYSTEM="i686-pc-cygwin"
+    fi
+    if [ "$BLD_BUILD_SYSTEM" = "" ] ; then
+        BLD_BUILD_SYSTEM=`bash build/bin/config.guess`
+        [ "$BLD_BUILD_SYSTEM" = "x86_64-pc-cygwin" ] && BLD_BUILD_SYSTEM="i686-pc-cygwin"
+    fi
     parseSystemConfiguration HOST 
     parseSystemConfiguration BUILD 
 

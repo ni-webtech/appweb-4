@@ -1206,7 +1206,7 @@ extern EdiRec *espSetRec(HttpConn *conn, EdiRec *rec);
     @param conn HttpConn connection object
     @ingroup EspReq
  */
-extern void espShow(HttpConn *conn);
+extern void espShowRequest(HttpConn *conn);
 
 /**
     Write a value to a database table field
@@ -2682,7 +2682,7 @@ extern void setStatus(int status);
     @description This echos request details back to the client. This is useful as a debugging tool.
     @ingroup EspAbbrev
  */
-extern void show();
+extern void showRequest();
 
 /**
     Write a value to a database table field

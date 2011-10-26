@@ -376,7 +376,7 @@ int httpCheckAuth(HttpConn *conn)
             formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied. Protection quality does not match", 0);
             return HTTP_ROUTE_OK;
         }
-        calcDigest(&requiredDigest, 0, requiredPassword, ad->realm, rx->pathInfo, ad->nonce, ad->qop, ad->nc, 
+        calcDigest(&requiredDigest, 0, requiredPassword, ad->realm, ad->uri, ad->nonce, ad->qop, ad->nc, 
             ad->cnonce, rx->method);
         requiredPassword = requiredDigest;
 
@@ -607,6 +607,7 @@ static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *m
             httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", nonce=\"%s\"", auth->requiredRealm, nonce);
         }
     }
+    httpSetContentType(conn, "text/plain");
     httpError(conn, code, "Authentication Error: %s", msg);
     httpSetPipelineHandler(conn, conn->http->passHandler);
 }

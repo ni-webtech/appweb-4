@@ -34,6 +34,7 @@ static char *defaultStylesheets[] = {
 
 #if 0
     Actions
+        - P
         - Have internal mappings san-data to add "data-"
         - Define all options and document
         - Rename "app" into "mapp" and have test pages

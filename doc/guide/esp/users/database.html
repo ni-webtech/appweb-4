@@ -35,7 +35,7 @@
         <div class="crumbs">
             <a href="../../../product/index.html">Home</a>
 <!-- EndDsi -->
-             &gt;<a href="index.html">ESP Guide</a>&gt; <b>Database Models</b>
+             &gt;<a href="index.html">ESP Guide</a>&gt; <b>Embedded Database Interface</b>
         </div>
     </div>
     <div class="content">
@@ -75,39 +75,39 @@
 <!-- EndDsi -->
         </div>
         <div class="contentLeft">
-            <h1>Database Models</h1>
-            <p>ESP Models are responsible for managing access to application data and for ensuring the data
+            <h1>Embedded Database Interface</h1>
+            <p>ESP includes powerful relational database support. The Embedded Database Interface (EID) is an 
+            Appweb database interface above configurable database backends. ESP supports a variety of database
+            backends including: SQLite, MySQL and MDB to cover various scale requirements. 
+            The MDB database is a tiny, in-memory database &mdash; great for embedded applications. SQLite is a 
+            full SQL implementation for embedded applications, while MySQL is an enterprise class SQL server.
+            MDB is the smallest and fastest, but has the least features.</p>
+
+            <pThe EDI interface provides a consistent way to interface with database data, without worrying about
+            the specifics of the chosen database backend. EDI provides functions for the typical Create, Read, 
+            Update and Delete (CRUD) semantics. It also provides functions to manage man manipulate database schema.</p>
             remains valid and consistent.</p>
-            <p>ESP Models are the Object Relational Mapper (ORM) layer provided with ESP. This layer wraps
-            database records in JavaScript objects and allows you to use object-oriented programming (<a href=
+
+            <a name="record" id="record"></a>
+            <h2 class="section">Records and Grids</h2>
+            <p>Programs interact with the EDI using EDI Records and Grids. When a record is read from the
+            database, EDI copies the data into an EdiRec structure. This efficiently stores the data and contains 
+            links to the database and table schema for data formatting and display. When multiple records are read,
+            EDI returns an EdiGrid structure.
+
+            These representations wrap database records and allows you to use object-oriented programming (<a href=
             "http://en.wikipedia.org/wiki/Object-oriented_programming">OOP</a>) when dealing with tabular database
-            data.</p><a name="record" id="record"></a>
-            <h2 class="section">Record Class</h2>
-            <p>ESP Models map database tables to classes, rows to objects, and columns to object properties. The
-            foundation for Models is the <tt>Record</tt> class. Record instances represent database records. New models
-            are created by implementing the Record class.</p>
-            <pre>
-public dynamic class Product implements Record {
-    setup()
-    function Product() {
-    }
-}
-</pre>
-            <p>This creates a new Product model for accessing the Products table. Note: we did not have to specify the
-            table, column or primary key names names. ESP follows the <a href=
-            "http://en.wikipedia.org/wiki/Convention_over_Configuration">Convention over Configuration</a> design
-            paradigm where developers need only specify the unusual parts of their application. In this example,
-            ESP will look for a database table named <tt>Products</tt> and will map that to the <tt>Product</tt>
-            class. By convention, ESP assumes that database table names are plural and Record classes are
-            singluar. You can override this if you need to by calling the <tt>setTableName</tt> Record method. However,
-            it is best to work with the ESP conventions and defaults &mdash; life is much easier this
-            way.</p><a name="columnMap" id="columnMap"></a>
+            data. While not a full Object Relational Mapper (ORM), the EDI Record/Grid representation is an effective,
+            compact and highly efficient representation. In the Model-View-Controller (MVC) parlance, you can consider
+            these representations the "<tt>Model</tt>" in MVC.</p>
+        
             <h3>Columns to Properties</h3>
-            <p>ESP dynamically determines the column names in the database table and creates object properties at
-            run-time corresponding to each column. You do not need to create or specify the columns in your Record
-            class. ESP will determine the appropriate column type for you.</p><a name="tour" id="tour"></a>
-            <h2>Quick Tour of Record</h2>
-            <p>Assume we have a database with a Products table that has columns for id, name, description and
+            <p>EDI dynamically determines the column names in database tables and creates EDI record and grid fields at
+            run-time corresponding to each column. You do not need to configure or specify the fields in your code.</p>
+            
+            <a name="tour" id="tour"></a>
+            <h2>Quick Tour of EDI</h2>
+            <p>Assume we have a database with a <tt>product</tt> table that has columns for id, name, description and
             price.</p>
             <table summary="" width="75%">
                 <thead>
@@ -133,13 +133,13 @@ public dynamic class Product implements Record {
                     </tr>
                 </tbody>
             </table>
-            <p>By convention (again), columns are lower case. Table names should be plural with the first letter
-            capitalized. The following code demonstrates some typical uses:</p>
+            <p>By convention, the database table and columns should be lower case. 
+            The following code demonstrates some typical uses:</p>
             <pre>
 /* Read the first product */
 <b>
-product = Product.find(1)
-print(product.name + " price is " + product.price)</b>
+EdiRec *product = readRecByKey("product", "1");
+printf("Name %s, price %s\n", product->name + " price is " + product.price)</b>
 /* Increase the price by $1.00 and save back to the database */
 <b>product.price += 1
 product.save()</b>
@@ -153,69 +153,78 @@ print(products)</b>
 /* Remove the product with id == 1 */ 
 <b>Product.remove(1)</b>
 </pre><a name="types" id="types"></a>
+
             <h2 class="section">Data Types</h2>
-            <p>JavaScript is a loosely typed language which is ideal for a dynamic ORM framework like ESP. When
-            reading database data, ESP will select the best JavaScript type to hold the database data. The
-            following type conversions will occur when reading and writing data to and from the database. Note: Mysql
-            is not yet fully supported.</p>
+            <p>EDI maps database types to the corresponding "C" language data types. The
+            following type conversions will occur when reading and writing data to and from the database.</p>
             <table summary="" width="75%">
                 <thead>
                     <tr>
-                        <td>ESP Type</td>
+                        <td>EDI Type</td>
+                        <td>MDB Type</td>
                         <td>SQLite Type</td>
-                        <td>Mysql</td>
+                        <td>MySQL</td>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
+                        <td>Blob</td>
+                        <td>Blob</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
                         <td>Boolean</td>
-                        <td>ByteArray</td>
+                        <td>Boolean</td>
+                        <td>Tinyint</td>
                         <td>Tinyint</td>
                     </tr>
                     <tr>
-                        <td>ByteArray</td>
-                        <td>Blob</td>
-                        <td>Blob</td>
-                    </tr>
-                    <tr>
+                        <td>Date</td>
                         <td>Date</td>
                         <td>Date</td>
                         <td>Date</td>
                     </tr>
                     <tr>
-                        <td>Number</td>
+                        <td>Float</td>
+                        <td>Float</td>
+                        <td>Float</td>
+                        <td>Float</td>
+                    </tr>
+                    <tr>
+                        <td>Integer</td>
+                        <td>Integer</td>
                         <td>Real</td>
                         <td>Decimal, Real</td>
                     </tr>
                     <tr>
                         <td>String</td>
+                        <td>String</td>
+                        <td>Text</td>
+                        <td>Text</td>
+                    </tr>
+                    <tr>
+                        <td>Text</td>
+                        <td>Text</td>
                         <td>Text</td>
                         <td>Text</td>
                     </tr>
                 </tbody>
-            </table><a name="keys" id="keys"></a>
+            </table>
+            
+            <a name="keys" id="keys"></a>
             <h2 class="section">Table Keys</h2>
-            <p>ESP assumes that database tables will have a primary key column named <tt>id</tt>. If you need the
-            primary key column to be some other name, use the <tt>setKeyName</tt> method.</p><a name="connections" id=
-            "connections"></a>
+            <p>EDI assumes and requires that database tables will have a primary key column named 
+            <tt>id</tt>. 
+            
+            <a name="connections" id="connections"></a>
             <h2 class="section">Database Connections</h2>
-            <p>Database connections are one of the few items that are setup by configuration files. The application
-            configuration file: "config/database.ecf" defines the database name, username, password and other
-            configuration parameters.</p>
-            <pre>
-debug: {
-    adapter: "sqlite3",
-    database: "db/carmen.sdb",
-    username: "",
-    password: "",
-    timeout: 5000,
-    trace: true,
-},
-</pre>
-            <p>This is an excerpt from the debug database configuration. Currently, ESP only supports the SQLite
-            database. The <tt>database</tt> option is set to the filename of the database. Setting <tt>trace</tt> to
-            true will trace all SQL statements that are executed against the database to the application
-            log.</p><a name="modelClasses" id="modelClasses"></a>
+            <p>Database connections are one of the few items that are setup by configuration files. The Appweb 
+            configuration file: "appweb.conf" defines the database name, username, password and other
+            configuration parameters via the <tt>EspDb</tt> configuration directive.</p>
+            <pre>EspDb mdb://test.mdb</pre>
+
+            <a name="modelClasses" id="modelClasses"></a>
             <h2 class="section">Creating Model Classes</h2>
             <p>The ESP <tt>esp</tt> command can be used to generate models and database migrations.</p>
             <pre>
@@ -398,6 +407,23 @@ public function validate() {
                 Locking
                 magic column names
             -->
+
+            <MOB>
+            Database Binding
+            To make it easy to display and update database data, ESP supports "data binding" where a database record can be bound to a request form. Thereafter, the ESP web controls will take data from the record.
+
+
+            <% 
+                form(userRecord, 0); 
+                        input("name", 0);
+                                input("address", 0);
+                                        button("commit", "OK", 0);
+                                                buttonLink("Cancel", "../index.esp",  0);
+                                                        buttonLink("Delete", "destroy.esp");
+                                                            endform();
+                                                            %>
+                                                            In this example, the form control binds the userRecord. The input controls then retrieve the "name", and "address" fields from the database record and emit the appropriate HTML input elements.
+
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->

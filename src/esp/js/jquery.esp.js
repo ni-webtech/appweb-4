@@ -285,6 +285,7 @@
             var o = $.extend({}, options, elt.data("esp-options") || {}, getDataAttributes(elt));
             elt.data("esp-options", o);
             if (o.updating) {
+                //  MOB - should this be data-refresh-method
                 var method = o["refresh-method"] || "GET";
 
                 //  MOB - consider firing events - elt.trigger('http:complete', http);

@@ -1425,12 +1425,12 @@ static void usageError(Mpr *mpr)
     "    esp generate controller name [action [, action] ...\n"
     "    esp generate scaffold model [field:type [, field:type] ...]\n"
     "    esp generate table name [field:type [, field:type] ...]\n"
-    "    esp migrate [forward|backward|NNN]\n"
     "    esp run\n"
     "", name);
 #if UNUSED && KEEP
     "    --static               # Compile static content into C code\n"
     "    esp generate migration description model [field:type [, field:type] ...]\n"
+    "    esp migrate [forward|backward|NNN]\n"
 #endif
     app->error++;
 }

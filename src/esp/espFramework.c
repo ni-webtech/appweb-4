@@ -852,7 +852,7 @@ static int getParams(char ***keys, char *buf, int len)
 }
 
 
-void espShow(HttpConn *conn)
+void espShowRequest(HttpConn *conn)
 {
     MprHash     *env;
     MprKey      *kp;

@@ -602,9 +602,9 @@ void setStatus(int status)
     espSetStatus(getConn(), status);
 }
 
-void show()
+void showRequest()
 {
-    espShow(getConn());
+    espShowRequest(getConn());
 }
 
 
