@@ -447,7 +447,7 @@ static void printPost(char *buf, size_t len)
 
     } else if (buf) {
         if (len < (50 * 1000)) {
-            (void) write(1, buf, len);
+            (void) write(1, buf, (int) len);
         } else {
             printf("<H2>Post Data %d bytes found</H2>\r\n", (int) len);
         }
@@ -502,7 +502,7 @@ static int getPostData(char **bufp, size_t *lenp)
             }
             bufsize = len + size + 1;
         }
-        bytes = read(0, &buf[len], size);
+        bytes = read(0, &buf[len], (int) size);
         if (bytes < 0) {
             error("Couldn't read CGI input %d", errno);
             return -1;

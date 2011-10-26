@@ -197,7 +197,7 @@ static void processPhp(HttpQueue *q)
         }
         SG(request_info).content_type = rx->mimeType;
         SG(request_info).path_translated = tx->filename;
-        SG(request_info).content_length = (ssize) rx->length;
+        SG(request_info).content_length = (long) (ssize) rx->length;
         SG(sapi_headers).http_response_code = HTTP_CODE_OK;
         SG(request_info).query_string = rx->parsedUri->query;
         SG(request_info).request_method = rx->method;
