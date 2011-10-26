@@ -193,7 +193,7 @@ void eventLoop()
         If single threaded or if you desire control over the event loop, you 
         should code an event loop similar to that below:
      */
-    while (!mprIsStopping()) {
+    while (!mprIsStopping()) {		
         /*
             Socket events will be serviced in the msgProc
          */
@@ -291,7 +291,8 @@ BOOL CALLBACK dialogProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 
 static long msgProc(HWND hwnd, uint msg, uint wp, long lp)
 {
-    char    buf[MPR_MAX_FNAME];
+    MprThread   *tp;
+    char        buf[MPR_MAX_FNAME];
 
     switch (msg) {
     case WM_DESTROY:
@@ -316,11 +317,13 @@ static long msgProc(HWND hwnd, uint msg, uint wp, long lp)
             break;
 
         case MA_MENU_START:
-            startService();
+            tp = mprCreateThread("startService", startService, 0, 0);
+            mprStartThread(tp);
             break;
 
         case MA_MENU_STOP:
-            stopService();
+            tp = mprCreateThread("stopService", stopService, 0, 0);
+            mprStartThread(tp);
             break;
 
         case MA_MENU_ABOUT:
@@ -328,15 +331,10 @@ static long msgProc(HWND hwnd, uint msg, uint wp, long lp)
                 Single-threaded users beware. This blocks !!
              */
             mprSprintf(buf, sizeof(buf), "%s %s-%s", BLD_NAME, BLD_VERSION, BLD_NUMBER);
-            MessageBoxEx(NULL, buf, mprGetAppTitle(), MB_OK, 0);
+            MessageBoxEx(hwnd, buf, mprGetAppTitle(), MB_OK, 0);
             break;
 
         case MA_MENU_EXIT:
-            /* 
-                MOB
-                h = CreateDialog(app->appInst, MAKEINTRESOURCE(IDD_EXIT), app->appHwnd, dialogProc);
-                ShowWindow(h, SW_SHOW);
-             */
             PostMessage(hwnd, WM_QUIT, 0, 0L);
             break;
 

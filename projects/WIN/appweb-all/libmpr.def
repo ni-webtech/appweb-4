@@ -236,7 +236,7 @@ EXPORTS
   mprGetTicks
   mprGetTime
   mprGetTimeZoneOffset
-  mprGetTransformedPath
+  mprGetWinPath
   mprGetWorkerServiceStats
   mprGlobalLock
   mprGlobalUnlock
@@ -466,6 +466,7 @@ EXPORTS
   mprStopSignalService
   mprStopThreadService
   mprTerminate
+  mprTransformPath
   mprTrimPathExt
   mprTruncateFile
   mprTryLock
@@ -499,7 +500,7 @@ EXPORTS
   mprWriteFile
   mprWriteFileFmt
   mprWriteFileString
-  mprWritePath
+  mprWritePathContents
   mprWriteRegistry
   mprWriteSocket
   mprWriteSocketString

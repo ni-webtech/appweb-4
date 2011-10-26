@@ -602,6 +602,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
     err = 0;
     installFlag = 0;
     app->appInst = inst;
+	app->hwnd = MPR->waitService->hwnd;		
     app->heartBeatPeriod = HEART_BEAT_PERIOD;
 
     initService();

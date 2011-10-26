@@ -1,7 +1,10 @@
 #if IGNORE_IN_C_CODE
 
 #
-#   out/inc/buildConfig.h -- Universal Build Configuration File.
+#   VISUAL STUDIO CONFIGURATION
+#
+#   out/inc/buildConfig.h -- Appweb Build Configuration File for building with
+#   Microsoft Visual Studio
 #
 #   This file is included by Makefiles and by C source code. Shell scripts will
 #   also parse this file.

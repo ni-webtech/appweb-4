@@ -7,12 +7,10 @@ EXPORTS
   buttonLink
   chart
   checkbox
-  cookies
   createRec
   createSession
   destroySession
   division
-  documentRoot
   dontAutoFinalize
   dropdown
   edRemoveColumn
@@ -85,6 +83,7 @@ EXPORTS
   espCheckbox
   espClearFlash
   espCompile
+  espCreateRec
   espCreateSession
   espDefineAction
   espDefineBase
@@ -93,21 +92,24 @@ EXPORTS
   espDivision
   espDropdown
   espEndform
-  espError
   espExpandCommand
   espFinalize
   espFlash
   espFlush
   espForm
-  espGetConn
+  espGetColumns
   espGetContentLength
+  espGetContentType
   espGetCookies
+  espGetDatabase
+  espGetDir
   espGetFlashMessage
+  espGetGrid
   espGetHeader
   espGetHeaderHash
   espGetHeaders
-  espGetHome
   espGetIntParam
+  espGetMethod
   espGetParam
   espGetParams
   espGetQueryString
@@ -119,24 +121,38 @@ EXPORTS
   espGetSessionVar
   espGetStatus
   espGetStatusMessage
+  espGetTop
+  espGetUploads
+  espGetUri
+  espHasGrid
+  espHasRec
   espIcon
   espImage
-  espInform
   espInitHtmlOptions
   espInput
+  espIsEof
   espIsFinalized
+  espIsSecure
   espLabel
   espMail
+  espMakeGrid
+  espMakeHash
+  espMakeRec
   espManageEspRoute
   espMatchParam
-  espNotice
-  espNoticev
   espProgress
   espRadio
+  espReadAllRecs
+  espReadRec
+  espReadRecByKey
+  espReadRecWhere
+  espReadRecsWhere
+  espReceive
   espRedirect
   espRedirectBack
   espRefresh
   espRemoveHeader
+  espRemoveRec
   espRender
   espRenderBlock
   espRenderCached
@@ -153,21 +169,30 @@ EXPORTS
   espSetContentLength
   espSetContentType
   espSetCookie
+  espSetField
+  espSetFields
+  espSetFlash
+  espSetFlashv
+  espSetGrid
   espSetHeader
   espSetHeaderString
   espSetIntParam
   espSetParam
+  espSetRec
   espSetSessionObj
   espSetSessionVar
   espSetStatus
-  espShowRequest
+  espShow
   espStylesheet
   espTable
   espTabs
   espText
   espTree
   espUpdateCache
-  espWarn
+  espUpdateField
+  espUpdateFields
+  espUpdateRec
+  espUri
   finalize
   flash
   form
@@ -175,41 +200,49 @@ EXPORTS
   getConn
   getContentLength
   getContentType
+  getCookies
   getDatabase
+  getDir
   getGrid
+  getHeader
   getMethod
   getQuery
   getRec
+  getReferrer
+  getSessionVar
+  getTop
+  getUploads
   getUri
   hasGrid
   hasRec
-  hash
-  home
   icon
   image
   inform
   input
+  isEof
+  isFinalized
   isSecure
   label
   maEspHandlerInit
   mail
   makeGrid
+  makeHash
   makeParams
   makeRec
-  notice
+  makeUri
+  mdbInit
   param
   params
   progress
-  qeof
-  qread
   radio
-  readGrid
-  readOneWhere
+  readAllRecs
   readRec
   readRecByKey
-  readWhere
+  readRecWhere
+  readRecsWhere
+  receive
   redirect
-  referrer
+  redirectBack
   refresh
   removeRec
   render
@@ -219,26 +252,24 @@ EXPORTS
   renderView
   script
   securityToken
-  session
   setContentType
   setCookie
+  setField
+  setFields
+  setFlash
   setGrid
   setHeader
   setParam
   setRec
-  setSession
+  setSessionVar
   setStatus
+  show
   stylesheet
   table
   tabs
   text
-  top
   tree
   updateField
   updateFields
-  uploadedFiles
-  uri
+  updateRec
   warn
-  writeField
-  writeFields
-  writeRec
