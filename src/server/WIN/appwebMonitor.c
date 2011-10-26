@@ -251,7 +251,7 @@ static int initWindow()
         return -1;
     }
     app->appHwnd = CreateWindow(mprGetAppName(), mprGetAppTitle(), 
-        WS_OVERLAPPED, CW_USEDEFAULT, 0, 0, 0, NULL, NULL, 0, NULL);
+        WS_OVERLAPPED, CW_USEDEFAULT, 0, 0, 0, NULL, NULL, app->appInst, NULL);
     if (! app->appHwnd) {
         mprError("Can't create window");
         return -1;
