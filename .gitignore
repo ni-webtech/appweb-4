@@ -131,3 +131,5 @@ simpleEjs
 src/test/apps
 build/bin/appman
 src/server/cache
+projects/WIN/appweb-all/php5ts_debug.dll.def
+projects/WIN/appweb-all/simpleHandler.def
