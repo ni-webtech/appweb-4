@@ -142,7 +142,7 @@ EdiRec *espCreateRec(HttpConn *conn, cchar *tableName, MprHash *params)
     if ((rec = ediCreateRec(edi, tableName)) == 0) {
         return 0;
     }
-    ediUpdateFields(rec, params);
+    ediSetFields(rec, params);
     return espSetRec(conn, rec);
 }
 
@@ -703,13 +703,13 @@ void espSetContentType(HttpConn *conn, cchar *mimeType)
 
 EdiRec *espSetField(EdiRec *rec, cchar *fieldName, cchar *value)
 {
-    return ediUpdateField(rec, fieldName, value);
+    return ediSetField(rec, fieldName, value);
 }
 
 
 EdiRec *espSetFields(EdiRec *rec, MprHash *params)
 {
-    return ediUpdateFields(rec, params);
+    return ediSetFields(rec, params);
 }
 
 
@@ -921,8 +921,7 @@ void espShowRequest(HttpConn *conn)
 
 bool espUpdateField(HttpConn *conn, cchar *tableName, cchar *key, cchar *fieldName, cchar *value)
 {
-    //  MOB - rename edi to use Update
-    return ediWriteField(espGetDatabase(conn), tableName, key, fieldName, value) == 0;
+    return ediUpdateField(espGetDatabase(conn), tableName, key, fieldName, value) == 0;
 }
 
 
@@ -933,15 +932,13 @@ bool espUpdateFields(HttpConn *conn, cchar *tableName, MprHash *params)
     if ((rec = espSetFields(espReadRec(conn, tableName), params)) == 0) {
         return 0;
     }
-    //  MOB - rename edi to use Update
-    return ediWriteRec(espGetDatabase(conn), rec) == 0;
+    return ediUpdateRec(espGetDatabase(conn), rec) == 0;
 }
 
 
 bool espUpdateRec(HttpConn *conn, EdiRec *rec)
 {
-    //  MOB - rename edi to use Update
-    return ediWriteRec(rec->edi, rec) == 0;
+    return ediUpdateRec(rec->edi, rec) == 0;
 }
 
 

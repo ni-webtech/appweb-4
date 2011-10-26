@@ -54,8 +54,8 @@ static void manageRow(MdbRow *row, int flags);
 static void manageSchema(MdbSchema *schema, int flags);
 static void manageTable(MdbTable *table, int flags);
 static int parseOperation(cchar *operation);
+static int updateField(MdbRow *row, MdbCol *col, cchar *value);
 static bool validateField(EdiRec *rec, MdbTable *table, MdbCol *col, cchar *value);
-static int writeField(MdbRow *row, MdbCol *col, cchar *value);
 
 static int mdbAddColumn(Edi *edi, cchar *tableName, cchar *columnName, int type, int flags);
 static int mdbAddIndex(Edi *edi, cchar *tableName, cchar *columnName, cchar *indexName);
@@ -84,16 +84,16 @@ static int mdbRemoveTable(Edi *edi, cchar *tableName);
 static int mdbRenameTable(Edi *edi, cchar *tableName, cchar *newTableName);
 static int mdbRenameColumn(Edi *edi, cchar *tableName, cchar *columnName, cchar *newColumnName);
 static int mdbSave(Edi *edi);
+static int mdbUpdateField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
+static int mdbUpdateRec(Edi *edi, EdiRec *rec);
 static bool mdbValidateRec(Edi *edi, EdiRec *rec);
-static int mdbWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
-static int mdbWriteRec(Edi *edi, EdiRec *rec);
 
 static EdiProvider MdbProvider = {
     "mdb",
     mdbAddColumn, mdbAddIndex, mdbAddTable, mdbAddValidation, mdbChangeColumn, mdbClose, mdbCreateRec, mdbDelete, 
     mdbDeleteRow, mdbGetColumns, mdbGetColumnSchema, mdbGetTables, mdbGetTableSchema, mdbLoad, mdbLookupField, 
     mdbOpen, mdbQuery, mdbReadField, mdbReadRec, mdbReadWhere, mdbRemoveColumn, mdbRemoveIndex, mdbRemoveTable, 
-    mdbRenameTable, mdbRenameColumn, mdbSave, mdbValidateRec, mdbWriteField, mdbWriteRec,
+    mdbRenameTable, mdbRenameColumn, mdbSave, mdbUpdateField, mdbUpdateRec, mdbValidateRec, 
 };
 
 /************************************* Code ***********************************/
@@ -855,7 +855,7 @@ bool mdbValidateRec(Edi *edi, EdiRec *rec)
 }
 
 
-static int mdbWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value)
+static int mdbUpdateField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value)
 {
     Mdb         *mdb;
     MdbTable    *table;
@@ -880,14 +880,14 @@ static int mdbWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldNam
         unlock(mdb);
         return MPR_ERR_CANT_FIND;
     }
-    writeField(row, col, value);
+    updateField(row, col, value);
     unlock(mdb);
     return 0;
 }
 
 
 #if UNUSED
-static int mdbWriteFields(Edi *edi, cchar *tableName, MprHash *params)
+static int mdbUpdateFields(Edi *edi, cchar *tableName, MprHash *params)
 {
     Mdb         *mdb;
     MdbTable    *table;
@@ -924,14 +924,14 @@ static int mdbWriteFields(Edi *edi, cchar *tableName, MprHash *params)
     }
     for (ITERATE_KEYS(params, kp)) {
         if ((col = lookupColumn(table, kp->key)) != 0) {
-            writeField(row, col, kp->data);
+            updateField(row, col, kp->data);
             if (col->cid == 0) {
                 setID++;
             }
         }
     }
     if (!setID) {
-        writeField(row, getCol(table, 0), 0);
+        updateField(row, getCol(table, 0), 0);
     }
     autoSave(mdb, table);
     return 0;
@@ -939,7 +939,7 @@ static int mdbWriteFields(Edi *edi, cchar *tableName, MprHash *params)
 #endif
 
 
-static int mdbWriteRec(Edi *edi, EdiRec *rec)
+static int mdbUpdateRec(Edi *edi, EdiRec *rec)
 {
     Mdb         *mdb;
     MdbTable    *table;
@@ -967,7 +967,7 @@ static int mdbWriteRec(Edi *edi, EdiRec *rec)
     }
     for (f = 0; f < rec->nfields; f++) {
         if ((col = getCol(table, f)) != 0) {
-            writeField(row, col, rec->fields[f].value);
+            updateField(row, col, rec->fields[f].value);
         }
     }
     autoSave(mdb, table);
@@ -1120,7 +1120,7 @@ static int setMdbValue(MprJson *jp, MprObj *obj, int cid, cchar *name, cchar *va
         col = getCol(mdb->loadTable, cid);
         mprAssert(col);
         if (col) {
-            writeField(mdb->loadRow, col, value);
+            updateField(mdb->loadRow, col, value);
         }
         break;
 
@@ -1503,7 +1503,7 @@ static EdiField readField(MdbRow *row, int fid)
 }
 #endif
 
-static int writeField(MdbRow *row, MdbCol *col, cchar *value)
+static int updateField(MdbRow *row, MdbCol *col, cchar *value)
 {
     MdbTable    *table;
     cchar       *key;

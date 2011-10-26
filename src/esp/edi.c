@@ -220,8 +220,8 @@ int ediGetTableSchema(Edi *edi, cchar *tableName, int *numRows, int *numCols)
 char *ediGetTypeString(int type)
 {
     switch (type) {
-    case EDI_TYPE_BLOB:
-        return "blob";
+    case EDI_TYPE_BINARY:
+        return "binary";
     case EDI_TYPE_BOOL:
         return "bool";
     case EDI_TYPE_DATE:
@@ -281,12 +281,6 @@ cchar *ediReadField(Edi *edi, cchar *fmt, cchar *tableName, cchar *key, cchar *c
 }
 
 
-EdiGrid *ediReadGrid(Edi *edi, cchar *tableName)
-{
-    return edi->provider->readWhere(edi, tableName, 0, 0, 0);
-}
-
-
 EdiRec *ediReadOneWhere(Edi *edi, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value)
 {
     EdiGrid *grid;
@@ -316,6 +310,12 @@ EdiRec *ediReadRec(Edi *edi, cchar *tableName, cchar *key)
 EdiGrid *ediReadWhere(Edi *edi, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value)
 {
     return edi->provider->readWhere(edi, tableName, fieldName, operation, value);
+}
+
+
+EdiGrid *ediReadTable(Edi *edi, cchar *tableName)
+{
+    return edi->provider->readWhere(edi, tableName, 0, 0, 0);
 }
 
 
@@ -355,6 +355,18 @@ int ediSave(Edi *edi)
 }
 
 
+int ediUpdateField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value)
+{
+    return edi->provider->updateField(edi, tableName, key, fieldName, value);
+}
+
+
+int ediUpdateRec(Edi *edi, EdiRec *rec)
+{
+    return edi->provider->updateRec(edi, rec);
+}
+
+
 bool ediValidateRec(EdiRec *rec)
 {
     mprAssert(rec->edi);
@@ -362,18 +374,6 @@ bool ediValidateRec(EdiRec *rec)
         return 0;
     }
     return rec->edi->provider->validateRec(rec->edi, rec);
-}
-
-
-int ediWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value)
-{
-    return edi->provider->writeField(edi, tableName, key, fieldName, value);
-}
-
-
-int ediWriteRec(Edi *edi, EdiRec *rec)
-{
-    return edi->provider->writeRec(edi, rec);
 }
 
 
@@ -424,7 +424,7 @@ cchar *ediFormatField(cchar *fmt, EdiField field)
         return field.value;
     }
     switch (field.type) {
-    case EDI_TYPE_BLOB:
+    case EDI_TYPE_BINARY:
     case EDI_TYPE_BOOL:
         return field.value;
 
@@ -512,7 +512,7 @@ EdiGrid *ediMakeGrid(cchar *json)
         if ((rec = ediCreateBareRec(NULL, "", nfields)) == 0) {
             return 0;
         }
-        if (ediUpdateFields(rec, row) == 0) {
+        if (ediSetFields(rec, row) == 0) {
             return 0;
         }
         grid->records[r++] = rec;
@@ -556,15 +556,15 @@ EdiRec *ediMakeRec(cchar *json)
 
 int ediParseTypeString(cchar *type)
 {
-    if (smatch(type, "blob")) {
-        return EDI_TYPE_BLOB;
-    } else if (smatch(type, "bool")) {
+    if (smatch(type, "binary")) {
+        return EDI_TYPE_BINARY;
+    } else if (smatch(type, "bool") || smatch(type, "boolean")) {
         return EDI_TYPE_BOOL;
     } else if (smatch(type, "date")) {
         return EDI_TYPE_DATE;
-    } else if (smatch(type, "float")) {
+    } else if (smatch(type, "float") || smatch(type, "double") || smatch(type, "number")) {
         return EDI_TYPE_FLOAT;
-    } else if (smatch(type, "int")) {
+    } else if (smatch(type, "int") || smatch(type, "integer") || smatch(type, "fixed")) {
         return EDI_TYPE_INT;
     } else if (smatch(type, "string")) {
         return EDI_TYPE_STRING;
@@ -577,7 +577,7 @@ int ediParseTypeString(cchar *type)
 }
 
 
-EdiRec *ediUpdateField(EdiRec *rec, cchar *fieldName, cchar *value)
+EdiRec *ediSetField(EdiRec *rec, cchar *fieldName, cchar *value)
 {
     EdiField    *fp;
 
@@ -597,7 +597,7 @@ EdiRec *ediUpdateField(EdiRec *rec, cchar *fieldName, cchar *value)
 }
 
 
-EdiRec *ediUpdateFields(EdiRec *rec, MprHash *params)
+EdiRec *ediSetFields(EdiRec *rec, MprHash *params)
 {
     MprKey  *kp;
 
@@ -608,7 +608,7 @@ EdiRec *ediUpdateFields(EdiRec *rec, MprHash *params)
         if (kp->type == MPR_JSON_ARRAY || kp->type == MPR_JSON_OBJ) {
             continue;
         }
-        if (!ediUpdateField(rec, kp->key, kp->data)) {
+        if (!ediSetField(rec, kp->key, kp->data)) {
             return 0;
         }
     }

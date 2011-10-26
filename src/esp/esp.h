@@ -492,7 +492,7 @@ extern bool espCheckSecurityToken(HttpConn *conn);
 /**
     Create a record and initialize field values 
     @description This will call $ediCreateRec to create a record based on the given table's schema. It will then
-        call $ediUpdateFields to update the record with the given data.
+        call $ediSetFields to update the record with the given data.
     @param conn Http connection object
     @param tableName Database table name
     @param data Hash of field values
@@ -2113,7 +2113,7 @@ extern void addHeader(cchar *key, cchar *fmt, ...);
 /**
     Create a record and initialize field values 
     @description This will call $ediCreateRec to create a record based on the given table's schema. It will then
-        call $ediUpdateFields to update the record with the given data.
+        call $ediSetFields to update the record with the given data.
     @param tableName Database table name
     @param data Hash of field values
     @return EdRec instance

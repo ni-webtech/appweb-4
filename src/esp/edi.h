@@ -86,8 +86,7 @@ extern void ediDefineValidation(cchar *name, EdiValidationProc vfn);
 /*
    Field data type hints
  */
-//  MOB DOC
-#define EDI_TYPE_BLOB       1           /**< Arbitrary binary data */
+#define EDI_TYPE_BINARY     1           /**< Arbitrary binary data */
 #define EDI_TYPE_BOOL       2           /**< Boolean true|false value */
 #define EDI_TYPE_DATE       3           /**< Date type */
 #define EDI_TYPE_FLOAT      4           /**< Floating point number */
@@ -111,7 +110,7 @@ extern void ediDefineValidation(cchar *name, EdiValidationProc vfn);
 typedef struct EdiField {
     cchar           *value;             /**< Field data value */
     cchar           *name;              /**< Field name. Sourced from the database column name  */
-    int             type:  8;           /**< Field data type. Set to one of EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE
+    int             type:  8;           /**< Field data type. Set to one of EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE
                                              EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT  */
     int             valid: 8;           /**< Field validity. Set to true if valid */
     int             flags: 8;           /**< Field flags. Flag mask set to EDI_AUTO_INC, EDI_KEY and/or EDI_INDEX */
@@ -204,9 +203,9 @@ typedef struct EdiProvider {
     int       (*renameTable)(Edi *edi, cchar *tableName, cchar *newTableName);
     int       (*renameColumn)(Edi *edi, cchar *tableName, cchar *columnName, cchar *newColumnName);
     int       (*save)(Edi *edi);
+    int       (*updateField)(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
+    int       (*updateRec)(Edi *edi, EdiRec *rec);
     bool      (*validateRec)(Edi *edi, EdiRec *rec);
-    int       (*writeField)(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
-    int       (*writeRec)(Edi *edi, EdiRec *rec);
 } EdiProvider;
 
 /*************************** EDI Interface Wrappers **************************/
@@ -215,7 +214,7 @@ typedef struct EdiProvider {
     @param edi Database handle
     @param tableName Database table name
     @param columnName Database column name
-    @param type Column data type. Set to one of EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE
+    @param type Column data type. Set to one of EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE
         EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT 
     @param flags Control column attributes. Set to a set of: EDI_AUTO_INC for auto incrementing columns, 
         EDI_KEY if the column is the key column and/or EDI_INDEX to create an index on the column.
@@ -246,7 +245,7 @@ extern int ediAddTable(Edi *edi, cchar *tableName);
 
 /**
     Add a validation
-    @description Validations are run wihen caling ediWriteRec. A validation is used to validate field data
+    @description Validations are run wihen caling ediUpdateRec. A validation is used to validate field data
         using builtin validators.
     @param edi Database handle
     @param name Validation name. Select from: 
@@ -270,7 +269,7 @@ extern int ediAddValidation(Edi *edi, cchar *name, cchar *tableName, cchar *colu
     @param edi Database handle
     @param tableName Database table name
     @param columnName Database column name
-    @param type Column data type. Set to one of EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE
+    @param type Column data type. Set to one of EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE
         EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT 
     @param flags Control column attributes. Set to a set of: EDI_AUTO_INC for auto incrementing columns, 
         EDI_KEY if the column is the key column and/or EDI_INDEX to create an index on the column.
@@ -334,7 +333,7 @@ extern MprList *ediGetColumns(Edi *edi, cchar *tableName);
     @param tableName Database table name
     @param columnName Database column name
     @param type Output parameter to receive the column data type. Will be set to one of:
-        EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE, EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT.
+        EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE, EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT.
         Set to null if this data is not required.
     @param flags Output parameter to receive the column control flags. Will be set one or more of:
             EDI_AUTO_INC, EDI_KEY and/or EDI_INDEX 
@@ -396,7 +395,7 @@ extern Edi *ediOpen(cchar *source, cchar *provider, int flags);
     Run a query
     @description This runs a provider dependant query. For the SQLite provider, this runs an SQL statement.
     The "mdb" provider does not implement this API. To do queries using the "mdb" provider, use:
-        $ediReadRec, $ediReadOneWhere, $ediReadWhere, $ediReadField and $ediReadGrid.
+        $ediReadRec, $ediReadOneWhere, $ediReadWhere, $ediReadField and $ediReadTable.
     @param edi Database handle
     @param cmd Query command to execute.
     @return If succesful, returns tabular data in the form of an EgiGrid structure. Returns NULL on errors.
@@ -457,17 +456,6 @@ extern EdiField ediReadRawField(Edi *edi, cchar *tableName, cchar *key, cchar *f
  */
 extern EdiRec *ediReadRec(Edi *edi, cchar *tableName, cchar *key);
 
-//  MOB - should this be ReadTable?
-/**
-    Read a table
-    @description This reads all the records in a table and returns a grid containing the results.
-    @param edi Database handle
-    @param tableName Database table name
-    @return A grid containing all records. Returns NULL if no matching records.
-    @ingroup Edi
- */
-extern EdiGrid *ediReadGrid(Edi *edi, cchar *tableName);
-
 //  MOB - rename ReadGridWhere
 /**
     Read matching records
@@ -482,6 +470,16 @@ extern EdiGrid *ediReadGrid(Edi *edi, cchar *tableName);
     @ingroup Edi
  */
 extern EdiGrid *ediReadWhere(Edi *edi, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
+
+/**
+    Read a table
+    @description This reads all the records in a table and returns a grid containing the results.
+    @param edi Database handle
+    @param tableName Database table name
+    @return A grid containing all records. Returns NULL if no matching records.
+    @ingroup Edi
+ */
+extern EdiGrid *ediReadTable(Edi *edi, cchar *tableName);
 
 /**
     Remove a column from a table
@@ -545,6 +543,33 @@ extern int ediRenameColumn(Edi *edi, cchar *tableName, cchar *columnName, cchar 
 extern int ediSave(Edi *edi);
 
 /**
+    Set a record field without writing to the database
+    @description This routine updates the record object with the given value. The record will not be written
+        to the database. To write to the database, use $ediUpdateRec.
+    @param rec Record to update
+    @param fieldName Record field name to update
+    @param value Value to update
+    @return The record instance if successful, otherwise NULL.
+    @ingroup Edi
+ */
+extern EdiRec *ediSetField(EdiRec *rec, cchar *fieldName, cchar *value);
+
+/**
+    Set record fields without writing to the database
+    @description This routine updates the record object with the given values. The "data' argument supplies 
+        a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually
+        created via #ediMakeHash to convert a JSON string into an options hash.
+        For example: ediSetFields(rec, ediMakeHash("{ name: '%s', address: '%s' }", name, address))
+        The record will not be written
+        to the database. To write to the database, use $ediUpdateRec.
+    @param rec Record to update
+    @param data Hash of field names and values to use for the update
+    @return The record instance if successful, otherwise NULL.
+    @ingroup Edi
+ */
+extern EdiRec *ediSetFields(EdiRec *rec, MprHash *data);
+
+/**
     Get table schema information
     @param edi Database handle
     @param tableName Database table name
@@ -558,31 +583,46 @@ extern int ediSave(Edi *edi);
 extern int ediGetTableSchema(Edi *edi, cchar *tableName, int *numRows, int *numCols);
 
 /**
-    Update a record field without writing to the database
-    @description This routine updates the record object with the given value. The record will not be written
-        to the database. To write to the database, use $ediWriteRec.
-    @param rec Record to update
-    @param fieldName Record field name to update
-    @param value Value to update
-    @return The record instance if successful, otherwise NULL.
+    Write a value to a database table field
+    @description Update the value of a table field in the selected table row. Note: field validations are not run.
+    @param edi Database handle
+    @param tableName Database table name
+    @param key Key value for the table row to update.
+    @param fieldName Column name to update
+    @param value Value to write to the database field
+    @return Zero if successful. Otherwise a negative MPR error code.
     @ingroup Edi
  */
-extern EdiRec *ediUpdateField(EdiRec *rec, cchar *fieldName, cchar *value);
+extern int ediUpdateField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
 
+#if UNUSED
 /**
-    Update record fields without writing to the database
-    @description This routine updates the record object with the given values. The "data' argument supplies 
+    Write field values to a database row
+    @description This routine updates a database row with the given values.  The "data' argument supplies 
         a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually
         created via #ediMakeHash to convert a JSON string into an options hash.
-        For example: ediUpdatefields(rec, ediMakeHash("{ name: '%s', address: '%s' }", name, address))
-        The record will not be written
-        to the database. To write to the database, use $ediWriteRec.
-    @param rec Record to update
+        For example: ediUpdateFields(rec, params());
+        Note: field validations are not run.
+    @param edi Database handle
+    @param tableName Database table name
     @param data Hash of field names and values to use for the update
-    @return The record instance if successful, otherwise NULL.
+    @return Zero if successful. Otherwise a negative MPR error code.
     @ingroup Edi
  */
-extern EdiRec *ediUpdateFields(EdiRec *rec, MprHash *data);
+extern int ediUpdateFields(Edi *edi, cchar *tableName, MprHash *data);
+#endif
+
+//  MOB - change Write to Update
+/**
+    Write a record to the database
+    @description If the record is a new record and the "id" column is EDI_AUTO_INC, then the "id" will be assigned
+        prior to saving the record.
+    @param edi Database handle
+    @param rec Record to write to the database.
+    @return Zero if successful. Otherwise a negative MPR error code.
+    @ingroup Edi
+ */
+extern int ediUpdateRec(Edi *edi, EdiRec *rec);
 
 /**
     Validate a record
@@ -594,47 +634,6 @@ extern EdiRec *ediUpdateFields(EdiRec *rec, MprHash *data);
     @ingroup Edi
  */
 extern bool ediValidateRec(EdiRec *rec);
-
-/**
-    Write a value to a database table field
-    @description Update the value of a table field in the selected table row. Note: field validations are not run.
-    @param edi Database handle
-    @param tableName Database table name
-    @param key Key value for the table row to update.
-    @param fieldName Column name to update
-    @param value Value to write to the database field
-    @return Zero if successful. Otherwise a negative MPR error code.
-    @ingroup Edi
- */
-extern int ediWriteField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
-
-#if UNUSED
-/**
-    Write field values to a database row
-    @description This routine updates a database row with the given values.  The "data' argument supplies 
-        a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually
-        created via #ediMakeHash to convert a JSON string into an options hash.
-        For example: ediWriteFields(rec, params());
-        Note: field validations are not run.
-    @param edi Database handle
-    @param tableName Database table name
-    @param data Hash of field names and values to use for the update
-    @return Zero if successful. Otherwise a negative MPR error code.
-    @ingroup Edi
- */
-extern int ediWriteFields(Edi *edi, cchar *tableName, MprHash *data);
-#endif
-
-/**
-    Write a record to the database
-    @description If the record is a new record and the "id" column is EDI_AUTO_INC, then the "id" will be assigned
-        prior to saving the record.
-    @param edi Database handle
-    @param rec Record to write to the database.
-    @return Zero if successful. Otherwise a negative MPR error code.
-    @ingroup Edi
- */
-extern int ediWriteRec(Edi *edi, EdiRec *rec);
 
 /**************************** Convenience Routines ****************************/
 /**
@@ -677,7 +676,7 @@ extern cchar *ediGetRecField(cchar *fmt, EdiRec *rec, cchar *fieldName);
     Get the data type of a record field
     @param rec Record to examine
     @param fieldName Field to examine
-    @return The field type. Returns one of: EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE, EDI_TYPE_FLOAT, 
+    @return The field type. Returns one of: EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE, EDI_TYPE_FLOAT, 
         EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT. 
     @ingroup Edi
  */
@@ -752,17 +751,17 @@ extern EdiRec *ediCreateBareRec(Edi *edi, cchar *tableName, int nfields);
 
 /**
     Convert an EDI type to a string
-    @param type Column data type. Set to one of EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE
+    @param type Column data type. Set to one of EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE
         EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT 
-    @return Type string. This will be set to one of: "blob", "bool", "date", "float", "int", "string" or "text".
+    @return Type string. This will be set to one of: "binary", "bool", "date", "float", "int", "string" or "text".
     @ingroup Edi
  */
 extern char *ediGetTypeString(int type);
 
 /**
     Parse an EDI type string
-    @param type Type string set to one of: "blob", "bool", "date", "float", "int", "string" or "text".
-    @return Type code. Set to one of EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE, EDI_TYPE_FLOAT, EDI_TYPE_INT, 
+    @param type Type string set to one of: "binary", "bool", "date", "float", "int", "string" or "text".
+    @return Type code. Set to one of EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE, EDI_TYPE_FLOAT, EDI_TYPE_INT, 
         EDI_TYPE_STRING, EDI_TYPE_TEXT.
     @ingroup Edi
  */

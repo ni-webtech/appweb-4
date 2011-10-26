@@ -624,29 +624,6 @@ static EdiField sdbReadField(Edi *edi, cchar *tableName, cchar *key, cchar *fiel
 }
 
 
-#if UNUSED
-static EdiGrid *sdbReadGrid(Edi *edi, cchar *tableName)
-{
-    EdiGrid     *grid;
-    SdbTable    *table;
-    SdbRow      *row;
-    int         nrows, next;
-
-    if ((table = lookupTable(sdb, tableName)) == 0) {
-        return 0;
-    }
-    nrows = mprGetListLength(table->rows);
-    if ((grid = ediCreateBareGrid(nrows)) == 0) {
-        return 0;
-    }
-    for (ITERATE_ITEMS(table->rows, row, next)) {
-        grid->records[next - 1] = createRec(row);
-    }
-    return grid;
-}
-#endif
-
-
 static EdiRec *sdbReadRec(Edi *edi, cchar *tableName, cchar *key)
 {
 #if CONVERT
@@ -729,6 +706,29 @@ static EdiGrid *sdbReadWhere(Edi *edi, cchar *tableName, cchar *columnName, ccha
     return 0;
 #endif
 }
+
+
+#if UNUSED
+static EdiGrid *sdbReadTable(Edi *edi, cchar *tableName)
+{
+    EdiGrid     *grid;
+    SdbTable    *table;
+    SdbRow      *row;
+    int         nrows, next;
+
+    if ((table = lookupTable(sdb, tableName)) == 0) {
+        return 0;
+    }
+    nrows = mprGetListLength(table->rows);
+    if ((grid = ediCreateBareGrid(nrows)) == 0) {
+        return 0;
+    }
+    for (ITERATE_ITEMS(table->rows, row, next)) {
+        grid->records[next - 1] = createRec(row);
+    }
+    return grid;
+}
+#endif
 
 
 static int sdbRemoveColumn(Edi *edi, cchar *tableName, cchar *columnName)

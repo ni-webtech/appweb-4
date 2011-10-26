@@ -356,7 +356,7 @@ void espInput(HttpConn *conn, cchar *fieldName, cchar *optionString)
     type = ediGetRecFieldType(rec, fieldName);
 
     switch (type) {
-    case EDI_TYPE_BLOB:
+    case EDI_TYPE_BINARY:
     case EDI_TYPE_BOOL:
     case EDI_TYPE_DATE:
     case EDI_TYPE_FLOAT:
