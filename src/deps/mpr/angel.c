@@ -571,7 +571,7 @@ static int      installService();
 static void     logHandler(int flags, int level, cchar *msg);
 static int      registerService();
 static int      removeService(int removeFromScmDb);
-static void     shutdownAppweb(MprTime timeout);
+static void     gracefulShutdown(MprTime timeout);
 static int      startDispatcher(LPSERVICE_MAIN_FUNCTION svcMain);
 static int      startService();
 static int      stopService(int cmd);
@@ -582,9 +582,7 @@ static void     angel();
 
 /***************************** Forward Declarations ***************************/
 
-static int      initWindow();
 static void     manageApp(void *unused, int flags);
-static void     mapPathDelim(char *s);
 static LRESULT  msgProc(HWND hwnd, uint msg, uint wp, long lp);
 
 static void     serviceThread(void *data);
@@ -612,7 +610,9 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
     app->appName = mprGetAppName();
     app->appTitle = mprGetAppTitle(mpr);
     mprSetLogHandler(logHandler);
+    mprSetWinMsgCallback(msgProc);
 
+#if UNUSED
     /*
         Create the window 
      */
@@ -620,6 +620,8 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
         mprError("Can't initialize application Window");
         return FALSE;
     }
+#endif
+
     if ((argc = mprMakeArgv(args, &argv, MPR_ARGV_ARGS_ONLY)) < 0) {
         return FALSE;
     }
@@ -628,7 +630,6 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
         if (*argp != '-' || strcmp(argp, "--") == 0) {
             break;
         }
-
         if (strcmp(argp, "--args") == 0) {
             /*
                 Args to pass to service when it starts
@@ -1004,16 +1005,11 @@ static void WINAPI serviceCallback(ulong cmd)
 }
 
 
-/*
-    Install the window's service
- */ 
 static int installService()
 {
     SC_HANDLE   svc, mgr;
     char        cmd[MPR_MAX_FNAME], key[MPR_MAX_FNAME];
     int         serviceType;
-
-    GetModuleFileName(0, cmd, sizeof(cmd));
 
     mgr = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
     if (! mgr) {
@@ -1029,6 +1025,7 @@ static int installService()
         if (app->createConsole) {
             serviceType |= SERVICE_INTERACTIVE_PROCESS;
         }
+        GetModuleFileName(0, cmd, sizeof(cmd));
         svc = CreateService(mgr, app->serviceName, app->serviceTitle, SERVICE_ALL_ACCESS, serviceType, SERVICE_AUTO_START, 
             SERVICE_ERROR_NORMAL, cmd, NULL, NULL, "", NULL, NULL);
         if (! svc) {
@@ -1091,11 +1088,7 @@ static int removeService(int removeFromScmDb)
         mprError("Can't open service");
         return MPR_ERR_CANT_OPEN;
     }
-
-    /*
-        Gracefull shutdown 
-     */
-    shutdownAppweb(0);
+    gracefulShutdown(0);
 
     if (ControlService(svc, SERVICE_CONTROL_STOP, &svcStatus)) {
         mprSleep(500);
@@ -1135,14 +1128,12 @@ static int startService()
         mprError("Can't open service manager");
         return MPR_ERR_CANT_ACCESS;
     }
-
     svc = OpenService(mgr, app->serviceName, SERVICE_ALL_ACCESS);
     if (! svc) {
         mprError("Can't open service");
         CloseServiceHandle(mgr);
         return MPR_ERR_CANT_OPEN;
     }
-
     rc = StartService(svc, 0, NULL);
     if (rc == 0) {
         mprError("Can't start %s service: %d", app->serviceName, GetLastError());
@@ -1164,10 +1155,7 @@ static int stopService(int cmd)
     app->exiting = 1;
     app->serviceStopped = 1;
 
-    /*
-        Gracefull shutdown 
-     */
-    shutdownAppweb(10 * 1000);
+    gracefulShutdown(10 * 1000);
 
     if (cmd == SERVICE_CONTROL_SHUTDOWN) {
         return 0;
@@ -1211,7 +1199,6 @@ static int tellSCM(long state, long exitCode, long wait)
     } else {
         svcStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_PAUSE_CONTINUE | SERVICE_ACCEPT_SHUTDOWN;
     }
-
     if ((state == SERVICE_RUNNING) || (state == SERVICE_STOPPED)) {
         svcStatus.dwCheckPoint = 0;
     } else {
@@ -1231,10 +1218,10 @@ static void initService()
     app->serviceName = BLD_COMPANY "-" BLD_PRODUCT;
     app->serviceTitle = BLD_NAME;
     app->serviceStopped = 0;
-
     app->serviceProgram = sjoin(mprGetAppDir(mpr), "/", BLD_PRODUCT, ".exe", NULL);
 }
 
+#if UNUSED
 /*
     Initialize the applications's window
  */ 
@@ -1266,6 +1253,7 @@ static int initWindow()
     }
     return 0;
 }
+#endif
 
 
 /*
@@ -1278,7 +1266,7 @@ static LRESULT msgProc(HWND hwnd, uint msg, uint wp, long lp)
         break;
 
     case WM_QUIT:
-        shutdownAppweb(0);
+        gracefulShutdown(0);
         break;
     
     default:
@@ -1300,10 +1288,7 @@ static void logHandler(int flags, int level, cchar *msg)
 }
 
 
-/*
-    Gracefull shutdown for Appweb
- */
-static void shutdownAppweb(MprTime timeout)
+static void gracefulShutdown(MprTime timeout)
 {
     HWND    hwnd;
 
@@ -1329,17 +1314,6 @@ static void shutdownAppweb(MprTime timeout)
     }
 }
 
-
-/* TODO - replace with mprGetNativePath */
-static void mapPathDelim(char *s)
-{
-    while (*s) {
-        if (*s == '\\') {
-            *s = '/';
-        }
-        s++;
-    }
-}
 
 #else
 void stubAngel() {

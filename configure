@@ -2066,6 +2066,8 @@ System Type Options:
                              system, and they call the host system, the target.
   --device=DEVICE          Device or emulator. On CE set to PocketPC2003 or 
                              Smartphone2003.
+  --32                     Select a 32-bit build
+  --64                     Select a 64-bit build
 
 General Options:
   --help                   Display this message.
@@ -2218,6 +2220,18 @@ while [ "${1#--}" != "$1" -o "${1#-}" != "$1" ] ; do
 
     SW=`echo ${1#--} | tr '[A-Z]' '[a-z]'`
     case ${SW} in
+    32)
+        BLD_HOST_SYSTEM=`bash build/bin/config.guess`
+        BLD_BUILD_SYSTEM=$BLD_HOST_SYSTEM
+        BLD_HOST_SYSTEM=i686-${BLD_HOST_SYSTEM#*-}
+        BLD_BUILD_SYSTEM=i686-${BLD_BUILD_SYSTEM#*-}
+        ;;
+    64)
+        BLD_HOST_SYSTEM=`bash build/bin/config.guess`
+        BLD_BUILD_SYSTEM=$BLD_HOST_SYSTEM
+        BLD_HOST_SYSTEM=x86_64-${BLD_HOST_SYSTEM#*-}
+        BLD_BUILD_SYSTEM=x86_64-${BLD_BUILD_SYSTEM#*-}
+        ;;
     build=*|build)
         if [ "${ARG}" = "--host" ] ; then
             shift

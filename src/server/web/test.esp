@@ -1,0 +1,5 @@
+<html>
+<body>
+	<p><% render("Hello World"); %></p>
+</body>
+</html>
