@@ -20,7 +20,7 @@ HTTP_HDR 	= $(shell find $(OUT)/inc -name 'http*.h')
 APPWEB_HDR 	= $(OUT)/inc/appweb.h
 MPR_SRC		= $(SRC)/deps/mpr/mprLib.c
 APPWEB_SRC	= $(shell find $(SRC) -name '*.c' | egrep -v 'deps|test|utils' | \
-			  egrep -v 'server/|filters|handlers|modules|esp') \
+			  egrep -v 'server/|filters|handlers|modules|esp|samples') \
               $(SRC)/modules/dirHandler.c $(SRC)/modules/fileHandler.c
 LIBS		= ws2_32.lib
 SSL_IFLAGS	+= $(BLD_OPENSSL_IFLAGS)
@@ -116,7 +116,7 @@ mod_esp.vcxproj: Makefile $(CONFIG)
 		--props "$(PROPS)" --deps "libappweb libpcre" \
 		--def mod_esp.def --libs "libmpr.lib libhttp.lib libpcre.lib libappweb.lib $(LIBS)" \
 		$(SRC)/modules/espHandler.c $(SRC)/esp/espFramework.c $(SRC)/esp/espSession.c $(SRC)/esp/espTemplate.c \
-		$(SRC)/esp/espHtml.c $(SRC)/esp/edi.c $(SRC)/esp/mdb.c $(SRC)/esp/sdb.c
+		$(SRC)/esp/espAbbrev.c $(SRC)/esp/espHtml.c $(SRC)/esp/edi.c $(SRC)/esp/mdb.c $(SRC)/esp/sdb.c
 
 mod_php.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project mod_php.vcxproj --library php --dflags "$(DFLAGS)" \
