@@ -129,3 +129,5 @@ src/test/app/db/test.bak
 src/modules/proxyHandler.nc
 simpleEjs
 src/test/apps
+build/bin/appman
+src/server/cache
