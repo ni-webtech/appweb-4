@@ -48,7 +48,7 @@
                 <li><a href="#types">Data Types</a></li>
                 <li><a href="#keys">Table Keys</a></li>
                 <li><a href="#connections">Database Connections</a></li>
-                <li><a href="#modelClasses">Creating Models</a></li>
+                <li><a href="#tables">Creating Tables</a></li>
                 <li><a href="#crud">Create, Read, Update...</a></li>
                 <li><a href="#create">Create</a></li>
                 <li><a href="#read">Read</a></li>
@@ -139,21 +139,29 @@
 /* Read the first product */
 <b>
 EdiRec *product = readRecByKey("product", "1");
-printf("Name %s, price %s\n", product->name + " price is " + product.price)</b>
+//MOB printf("Name %s, price %s\n", product->name + " price is " + product.price)</b>
+
 /* Increase the price by $1.00 and save back to the database */
 <b>product.price += 1
 product.save()</b>
-/* Find products costing over $10.00 */
-<b>products = Product.findWhere("price &gt; 10.00")
-print(products)</b>
-/*  Read all products */
-<b>products = Product.findAll()</b>
-/* Print the number of rows in the database */
-<b>print(Product.getNumRows())</b>
-/* Remove the product with id == 1 */ 
-<b>Product.remove(1)</b>
-</pre><a name="types" id="types"></a>
 
+/* Find products costing over $10.00 */
+<b>products = readRecsWhere("product", "price", ">", "10.00");
+//MOBprint(products)</b>
+
+/*  Read all products */
+<b>EdiGrid *products = ediReadTable(edi, "product");</b>
+
+/* Get the number of rows and columns in the table */
+<b>ediGetTableSchema(edi, "product", &numRows, &numCols);</b>
+
+/* Remove the product with id == 1 */ 
+<b>ediDeleteRow(edi, "product", "1");</b>
+
+ediSetFields(rec, ediMakeHash("{ name: '%s', address: '%s' }", name, address))
+</pre>
+            
+            <a name="types" id="types"></a>
             <h2 class="section">Data Types</h2>
             <p>EDI maps database types to the corresponding "C" language data types. The
             following type conversions will occur when reading and writing data to and from the database.</p>
@@ -224,20 +232,17 @@ print(products)</b>
             configuration parameters via the <tt>EspDb</tt> configuration directive.</p>
             <pre>EspDb mdb://test.mdb</pre>
 
-            <a name="modelClasses" id="modelClasses"></a>
-            <h2 class="section">Creating Model Classes</h2>
-            <p>The ESP <tt>esp</tt> command can be used to generate models and database migrations.</p>
+            <a name="tables" id="tables"></a>
+            <h2 class="section">Creating Database Tables</h2>
+            <p>The <tt>esp</tt> command can be used to create database tables and database migrations.</p>
             <pre>
-esp generate model [field:type ...]
+esp generate table [field:type ...]
 </pre>
-            <p>When generating a model, <tt>esp</tt> will create a database model class and a database migration
-            script.</p>
-            <p>If field:type pairs are supplied, the database migration will include code to create a column for each
-            specified field of the requested type. The valid database types are: <tt>binary, boolean, date, datetime,
-            decimal, float, integer, number, string, text, time, timestamp</tt>.</p>
-            <p>Once the model is generated, you can add methods to implement logic to manage updates and validate model
-            data. Models typically provide a suite of methods for controllers and views to access.</p><a name="crud"
-            id="crud"></a>
+            <p>If field:type pairs are supplied, columns will be created for of the specified type. The valid 
+            EDI database types are: <tt>binary</tt>, <tt>bool</tt>, <tt>date</tt>, <tt>float</tt>, <tt>int</tt>, 
+            <tt>string</tt> and <tt>text</tt>.</p>
+            
+            <a name="crud" id="crud"></a>
             <h2 class="section">Create, Read, Update and Delete</h2>
             <p>It should be easy to do simple things like implementing the basic database operations: create, read,
             update and delete. ESPs Models make this easy. <a name="create" id="create"></a></p>

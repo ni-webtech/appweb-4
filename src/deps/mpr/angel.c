@@ -605,7 +605,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
     app->appName = mprGetAppName();
     app->appTitle = mprGetAppTitle(mpr);
     mprSetLogHandler(logHandler);
-    mprSetWinMsgCallback(msgProc);
+    mprSetWinMsgCallback((MprMsgCallback) msgProc);
 
     if ((argc = mprMakeArgv(args, &argv, MPR_ARGV_ARGS_ONLY)) < 0) {
         return FALSE;

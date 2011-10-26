@@ -380,6 +380,15 @@
     #endif
 #endif
 
+/*
+    Windows uses uint for write/read counts (Ugh!)
+ */
+#if BLD_WIN_LIKE
+    typedef uint wsize;
+#else
+    typedef ssize wsize;
+#endif
+
 #ifndef HAS_INT64
     #if BLD_UNIX_LIKE
         __extension__ typedef long long int int64;
