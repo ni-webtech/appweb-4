@@ -16,7 +16,7 @@ static char *defaultScripts[] = {
     "/js/jquery", 
     "/js/jquery.tablesorter",
     "/js/jquery.simplemodal",
-#if UNUSED
+#if UNUSED && KEEP
     "/js/jquery.treeview",              //  MOB - treeview not yet supported
 #endif
     "/js/jquery.esp",
@@ -26,49 +26,100 @@ static char *defaultScripts[] = {
 static char *defaultStylesheets[] = {
     "/layout.css", 
     "/themes/default.css", 
-#if UNUSED
+#if UNUSED && KEEP
     "/js/treeview.css", 
 #endif
     0,
 };
 
+#if 0
+    Actions
+        - Have internal mappings san-data to add "data-"
+        - Define all options and document
+        - Rename "app" into "mapp" and have test pages
+        - Create unit tests
 
-//  MOB - add comments for each
+    Principles
+        - All unknown options are passed through to the client
+        - Internal options are filtered or mapped to data-*
+        - Remote only takes a "true" value
+    - Support flash as modal, transparent box. See "sales" app.
+    - Support "feedback" transparent overlay
 
+    Kinds of click requests:
+        - Click   (remote: true|false)  data-click-*
+        - Refresh                       data-refresh-*
+        - Both take
+            URI:        data-click
+            Method:     data-click-method
+            Params:     Data to pass to Uri construction. Or is this just general options.
+                            (Should not pass all options as names could clash:
+                                 scheme, host, port, path, ref, query
+                                 route, action, controller, uri, template,
+            KeyFormat   How to apply keys: "params" | "path" | "query"
+            keys        Set of keys to pass with the request
+
+    - Action/Controller are they needed?
+        => But they must be needed for click|refresh
+#endif
+
+/*
+    MOB - must document styles and themes with "esp" prefix
+    MOB - document the various click, refresh, remote events
+    MOB - How is data for click, remote, refresh etc handled
+    MOB - which of these should be data-*
+    MOB - could make these pairs and map from one to the other
+*/
 static char *internalOptions[] = {
-    "action",
-    "cell",
-    "click",
-    "columns",
-    "controller",
-    "escape",
-    "field",
-    "formatter",
-    "hidden",
-    "hideErrors",
-    "key",
-    "keyFormat",
-    "kind",
-    "minified",
-    "nosecurity",
-    "params",
-    "pass",
-    "password",
-    "pivot",
-    "retain",
-    "securityToken",
-    "showHeader",
-    "showId",
-    "styleCells",
-    "styleColumns",
-    "styleRows",
-    "title",
-    "toggle",
-    "value",
+    "action",                       /* Controller/Action to invoke */
+    "cell",                         /* table(): If set, table clicks apply to the cell and not to the row */
+
+//  MOB data-click
+    "click",                        /* general: URI to invoke if the control is clicked */
+
+    "columns",                      /* table(): Column options */
+    "controller",                   /* general: Controller to use for click events */
+    "escape",                       /* general: Html escape the data */
+    "feedback",                     /* general: User feedback overlay after a clickable event */
+//  MOB
+"field",
+
+//  MOB - not implemented. Change to format
+    "formatter",                    /* general: Printf style format string to apply to data */
+
+    "hidden",                       /* text(): Field should be hidden */
+    "hideErrors",                   /* form(): Hide record validation errors */
+    "insecure",                     /* form(): Don't generate a CSRF security token */
+
+//  MOB - rename keys
+    "key",                          /* general: key property/value data to provide for clickable events */
+//  MOB - not implemented yet
+    "keyFormat",                    /* General: How keys are handled for click events: "params" | "path" | "query" */
+"kind",
+    "minified",                     /* script(): Use minified script variants */
+"params",                           /* general: Parms to pass on click events */
+"pass",
+    "password",                     /* text(): Text input is a password */
+    "pivot",                        /* table(): Pivot the table data */
+    "remote",                       /* general: Set to true to make click event operate in the background */
+"retain",
+    "securityToken",                /* form(): Name of security token to use */
+    "showHeader",                   /* table(): Show table column names header  */
+    "showId",                       /* table(): Show the ID column */
+    "sort",                         /* table(): Column to sort rows by */
+    "sortOrder",                    /* table(): Row sort order */
+    "styleCells",                   /* table(): Styles to use for table cells */
+    "styleColumns",                 /* table(): Styles to use for table columns */
+    "styleRows",                    /* table(): Styles to use for table rows */
+    "title",                        /* table(): Table title to display */
+//  MOB - is data-toggle
+    "toggle",                       /* tabs(): Toggle tabbed panes */
+    "value",                        /* general: Value to use instead of record-bound data */
     0
 };
 
 #if DOC_ONLY
+//  MOB - what are these
 static char *htmlOptions[] = {
     "background",
     "class",
@@ -83,10 +134,17 @@ static char *htmlOptions[] = {
     0
 };
 
+//  MOB - what are thse
+//  MOB -check against jquery.ejs.js
 static char *dataOptions[] = {
     "data-apply",
+    "data-click",
+    "data-click-method",
+    "data-click-params",
     "data-confirm",
+//  MOB - what is this "edit"?
     "data-edit",
+//  MOB - jquery uses esp-pptions
     "data-effects",
     "data-method",
     "data-modal",
@@ -94,8 +152,9 @@ static char *dataOptions[] = {
     "data-pivot",
     "data-refresh",
     "data-remote",
+    "data-remote-method",
     "data-sort",
-    "data-sortOrder",
+    "data-sort-order",
     0
 };
 #endif
@@ -942,6 +1001,7 @@ static void emitFormErrors(HttpConn *conn, EdiRec *rec, MprHash *options)
 }
 
 
+//  MOB - who should use this?
 static cchar *escapeValue(cchar *value, MprHash *options)
 {
     if (httpGetOption(options, "escape", 0)) {
@@ -1002,7 +1062,7 @@ MprHash *makeParams(cchar *fmt, ...)
 
 
 /*
-    Map options to an attribute string. Remove all internal control specific options and transparently handle 
+    Map options to an attribute string. Remove all internal control specific options and transparently handles
     URI link options.
 
     WARNING: this returns a non-cloned reference and relies on no GC yield until the returned value is used or cloned.

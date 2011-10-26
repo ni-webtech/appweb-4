@@ -232,30 +232,6 @@ test-removed:
 	[ $$partial = 1 ] && exit 255 ; \
 	echo Removed
 
-checkInstalled: installedFiles
-
-installedFiles:
-	( \
-	for d in $(BLD_CFG_PREFIX) $(BLD_BIN_PREFIX) $(BLD_DOC_PREFIX) $(BLD_INC_PREFIX) $(BLD_JEM_PREFIX) \
-		$(BLD_LIB_PREFIX) $(BLD_LOG_PREFIX) $(BLD_MAN_PREFIX) $(BLD_PRD_PREFIX) \
-		$(BLD_VER_PREFIX) $(BLD_WEB_PREFIX) /var/log /var/www /usr/share /usr/share/doc /usr/include /var/lib /var/spool ; \
-		do \
-			if [ "`echo $$d/$(BLD_PRODUCT)*`" != $$d/$(BLD_PRODUCT)'*' ] ; then \
-				eval echo "$$d/$(BLD_PRODUCT)*" ; \
-				continue ; \
-			fi ; \
-			if [ -x "$$d/$(BLD_PRODUCT)" ] ; then \
-				echo "$$d/$(BLD_PRODUCT)" ; \
-				continue ; \
-			fi ; \
-		done ; \
-		for d in "$(BLD_CFG_PREFIX)" "$(BLD_DOC_PREFIX)" "$(BLD_INC_PREFIX)" "$(BLD_LIB_PREFIX)" "$(BLD_LOG_PREFIX)" \
-			"$(BLD_SAM_PREFIX)" "$(BLD_SRC_PREFIX)" ; \
-		do \
-			[ -x "$$d" ] && echo "$$d" || true; \
-		done ; \
-	) | sort | uniq
-
 cleanExtra:
 	[ "$(_RECURSIVE_)" = "" ] && \
 		$(MAKE) -S --no-print-directory BUILDING_NATIVE=1 TRACE=$(TRACE) _RECURSIVE_=1 -C . clean ; true

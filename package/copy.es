@@ -72,7 +72,7 @@ public function copy(src: Path, target: Path = Dir, options = {})
         copied++
         if (task == "Remove") {
             if (compress) {
-                dest = dest.joinExt("gz")
+                dest = Path("" + dest.name + ".gz")
             }
             if (verbose) log.activity("Remove", dest)
             dest.remove()

@@ -478,7 +478,7 @@ if [ "$BARE" = 1 ] ; then
         echo "WARNING: Can't do bare deploy to the root directory"
         exit 255
     fi
-    mkdir -p ${ROOT_DIR}/bin ${ROOT_DIR}/lib ${ROOT_DIR}/mod
+    mkdir -p ${ROOT_DIR}/bin ${ROOT_DIR}/lib 
 	mv ${BLD_BIN_PREFIX}/* ${ROOT_DIR}/bin
 	mv ${BLD_LIB_PREFIX}/* ${ROOT_DIR}/lib
 	rm -f ${BLD_LIB_PREFIX}/fileList.txt

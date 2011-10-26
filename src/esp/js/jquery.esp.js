@@ -193,6 +193,7 @@
     function refresh(options) {
         function anim() {
             var e = $(this);
+            //  MOB - this should be data-effects, not esp-options
             var o = e.data("esp-options")
             var effects = o.effects;
             if (effects == "highlight") {

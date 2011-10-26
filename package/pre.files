@@ -6,10 +6,14 @@
 
 usePrefixes CFG BIN LIB LOG PRD VER WEB SPL
 
+
 if [ "$ORIGINAL_ROOT_DIR" = "" ] ; then
     configureProduct stop
     configureProduct uninstall
 
     # Incase product executing, necessary to overwrite appweb
-    rm -f $BLD_BIN_PREFIX/* $BLD_LIB_PREFIX/* 2>/dev/null
+    for p in angel appweb auth esp http ; do
+        rm -f $BLD_BIN_PREFIX/$p 2>/dev/null
+    done
+    rm -f $BLD_LIB_PREFIX/*.so* 2>/dev/null
 fi

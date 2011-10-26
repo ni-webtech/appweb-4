@@ -54,7 +54,7 @@ if (!bare) {
     cfg.join("ssl").makeDir(dperms)
 }
 
-var saveLink 
+var saveLink : Path
 if (options.task == "Remove" && bin.join("linkup").exists) {
     saveLink = Path(".").temp()
     bin.join("linkup").copy(saveLink)
@@ -128,6 +128,7 @@ copy("*", cfg, {
 copy("*", lib, {
     from: slib,
     include: /esp.conf|esp-www/,
+    exclude: /files.save/,
     permissions: 0644,
     recurse: true,
 })
@@ -136,12 +137,11 @@ if (options.task != "Remove") {
     /*
         Patch appweb.conf
      */
-    Cmd.sh("BLD_HTTP_PORT=" + build.BLD_HTTP_PORT + " BLD_SSL_PORT=" + build.BLD_SSL_PORT + " BLD_SPL_PREFIX=" + build.BLD_SPL_PREFIX + " " +
-        "patchAppwebConf \"" + cfg.join("appweb.conf") + "\"")
+    Cmd.sh("BLD_HTTP_PORT=" + build.BLD_HTTP_PORT + " BLD_SSL_PORT=" + build.BLD_SSL_PORT + 
+        " BLD_SPL_PREFIX=" + build.BLD_SPL_PREFIX + " " + "patchAppwebConf \"" + cfg.join("appweb.conf") + "\"")
 }
 
 if (build.BLD_FEATURE_EJSCRIPT == 1) {
-    // copy("ejs*", bin, {from: sbin, permissions: 0755, strip: true})
     copy("ejs*.mod", lib, {from: slib})
 }
 

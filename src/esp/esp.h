@@ -1334,31 +1334,31 @@ extern cchar *espUri(HttpConn *conn, cchar *target);
     how the control will render. The options hash is a JSON string, which is interpreted as a set of property values.
     \n\n
     Various controls have custom options, but most share the following common set of option properties:
-    @option action String Action to invoke. This can be a URI string or a Controller action of the form
-        \@Controller/action.
-    @option apply String Client JQuery selector identifying the element to apply the remote update.
+    @arg action String Action to invoke. This can be a URI string or a Controller/Action pair of the form
+        \@Controller/action. If only the controller is provided (\@Controller/), the "list" action assumed.
+    @arg apply String Client JQuery selector identifying the element to apply the remote update.
         Typically "div.ID" where ID is the DOM ID for the element.
-    @option background String Background color. This is a CSS RGB color specification. For example "FF0000" for red.
-    @option click (Boolean|Uri|String) URI to invoke if the control is clicked.
-    @option color String Foreground color. This is a CSS RGB color specification. For example "FF0000" for red.
-    @option confirm String Message to prompt the user to requeset confirmation before submitting a form or request.
-    @option controller Controller owning the action to invoke when clicked. Defaults to the current controller.
-    @option data-* All data-* names are passed through to the HTML unmodified.
-    @option domid String Client-side DOM-ID to use for the control
-    @option effects String Transition effects to apply when updating a control. Select from: "fadein", "fadeout",
+    @arg background String Background color. This is a CSS RGB color specification. For example "FF0000" for red.
+    @arg click (Boolean|Uri|String) URI to invoke if the control is clicked.
+    @arg color String Foreground color. This is a CSS RGB color specification. For example "FF0000" for red.
+    @arg confirm String Message to prompt the user to requeset confirmation before submitting a form or request.
+    @arg controller Controller owning the action to invoke when clicked. Defaults to the current controller.
+    @arg data-* All data-* names are passed through to the HTML unmodified.
+    @arg domid String Client-side DOM-ID to use for the control
+    @arg effects String Transition effects to apply when updating a control. Select from: "fadein", "fadeout",
         "highlight".
-    @option escape Boolean Escape the text before rendering. This converts HTML reserved tags and delimiters into
+    @arg escape Boolean Escape the text before rendering. This converts HTML reserved tags and delimiters into
         an encoded form.
-    @option height (Number|String) Height of the control. Can be a number of pixels or a percentage string. 
+    @arg height (Number|String) Height of the control. Can be a number of pixels or a percentage string. 
         Defaults to unlimited.
-    @option key Array List of fields to set as the key values to uniquely identify the clicked or edited element. 
+    @arg key Array List of fields to set as the key values to uniquely identify the clicked or edited element. 
         The key will be rendered as a "data-key" HTML attribute and will be passed to the receiving controller 
         when the entry is clicked or edited. Each entry of the key option can be a simple
         string field name or it can be an Object with a single property, where the property name is a simple
         string field name and the property value is the mapped field name to use as the actual key name. This 
         supports using custom key names. NOTE: this option cannot be used if using cell clicks or edits. In that
         case, set click/edit to a callback function and explicitly construct the required URI and parameters.
-    @option keyFormat String Define how the keys will be handled for click and edit URIs. 
+    @arg keyFormat String Define how the keys will be handled for click and edit URIs. 
         Set to one of the set: ["params", "path", "query"]. Default is "path".
         Set to "query" to add the key/value pairs to the request URI. Each pair is separated using "&" and the
             key and value are formatted as "key=value".
@@ -1367,22 +1367,22 @@ extern cchar *espUri(HttpConn *conn, cchar *target);
             provides "pretty" URIs that can be easily tokenized by router templates.
         If you require more complex key management, set click or edit to a callback function and format the 
         URI and params manually.
-    @option id Number Numeric database ID for the record that originated the data for the view element.
-    @option method String HTTP method to invoke.
-    @option pass String attributes to pass through unaltered to the client
-    @option params Request parameters to include with a click or remote request
-    @option period Number Period in milliseconds to invoke the $refresh URI to update the control data. If period
+    @arg id Number Numeric database ID for the record that originated the data for the view element.
+    @arg method String HTTP method to invoke.
+    @arg pass String attributes to pass through unaltered to the client
+    @arg params Request parameters to include with a click or remote request
+    @arg period Number Period in milliseconds to invoke the $refresh URI to update the control data. If period
         is zero (or undefined), then refresh will be done using a perisistent connection.
-    @option query URI query string to add to click URIs.
-    @option rel String HTML rel attribute. Can be used to generate "rel=nofollow" on links.
-    @option remote (String|URI|Object) Perform the request in the background without changing the browser location.
-    @option refresh (String|URI|Object) URI to invoke in the background to refresh the control's data every $period.
+    @arg query URI query string to add to click URIs.
+    @arg rel String HTML rel attribute. Can be used to generate "rel=nofollow" on links.
+    @arg remote (String|URI|Object) Perform the request in the background without changing the browser location.
+    @arg refresh (String|URI|Object) URI to invoke in the background to refresh the control's data every $period.
         milliseconds. If period is undefined or zero, a persistent connection may be used to refresh data.
         The refresh option may use the "\@Controller/action" form.
-    @option size (Number|String) Size of the element.
-    @option style String CSS Style to use for the element.
-    @option value Object Override value to display if used without a form control record.
-    @option width (Number|String) Width of the control. Can be a number of pixels or a percentage string. Defaults to
+    @arg size (Number|String) Size of the element.
+    @arg style String CSS Style to use for the element.
+    @arg value Object Override value to display if used without a form control record.
+    @arg width (Number|String) Width of the control. Can be a number of pixels or a percentage string. Defaults to
         unlimited.
 
     <h4>Dynamic Data</h4>
@@ -1895,9 +1895,9 @@ extern void flash(cchar *kinds, cchar *options);
     @arg hideErrors -- Don't display database record errors. Records retain error diagnostics from the previous
         failed write. Setting this option will prevent the display of such errors.
     @arg modal -- Make the form a modal dialog. This will block all other HTML controls except the form.
-    @arg nosecurity -- Don't generate a security token for the form.
+    @arg insecure -- Don't generate a security token for the form.
     @arg securityToken -- String Override CSRF security token to include when the form is submitted. A default 
-        security token will always be generated unless options.nosecurity is defined to be true.
+        security token will always be generated unless options.insecure is defined to be true.
         Security tokens are used by ESP to mitigate cross site scripting errors.
     @ingroup EspAbbrev
  */
