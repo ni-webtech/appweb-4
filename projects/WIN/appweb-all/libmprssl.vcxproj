@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{D57392FA-A0C6-4116-B712-CE61062D07F0}</ProjectGuid>
+    <RootNamespace />
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    
+    <Import Project="product.props" />
+    <Import Project="debug.props" />
+  </ImportGroup>
+
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    
+    <Import Project="product.props" />
+    <Import Project="release.props" />
+  </ImportGroup>
+
+  <PropertyGroup Label="UserMacros" />
+
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\bin\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\obj\libmprssl\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\bin\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\libmprssl\</IntDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ClInclude Include="..\..\..\out\inc\buildConfig.h" />
+    <ClInclude Include="..\..\..\out\inc\mpr.h" />
+    <ClInclude Include="..\..\..\out\inc\mprSsl.h" />
+  </ItemGroup>
+
+  <ItemGroup >
+    <ClCompile Include="..\..\..\src\deps\mpr\mprSsl.c" />
+  </ItemGroup>
+
+  <ItemDefinitionGroup>
+    <Link>
+      <ModuleDefinitionFile>libmprssl.def</ModuleDefinitionFile>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup >
+    <Link>
+      <AdditionalDependencies>libmpr.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="libmpr.vcxproj">
+      <Project>{CE4A5AE1-4290-42D1-81BD-AE03A57F045F}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+
+
+  <PropertyGroup>
+    <BuildDependsOn>
+        Setup;
+        $(BuildDependsOn);
+    </BuildDependsOn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <IncludeFiles Include="$(SRC)/deps/mpr/mprSsl.h" />
+    <ExportFiles  Include="$(BLD_INC_DIR)/mprSsl.h" />
+  </ItemGroup>
+
+  <Target Name="Setup" Inputs="@(IncludeFiles)" Outputs="@(ExportFiles)">
+    <Copy SkipUnchangedFiles="true" SourceFiles="@(IncludeFiles)" DestinationFolder="$(BLD_INC_DIR)" />
+  </Target>
+
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
