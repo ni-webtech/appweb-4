@@ -168,21 +168,20 @@ MprList *ediGetGridColumns(EdiGrid *grid)
 }
 
 
-EdiField ediGetRawRecField(EdiRec *rec, cchar *fieldName)
+cchar *ediGetField(EdiRec *rec, cchar *fieldName)
 {
-    EdiField    err, *fp;
+    EdiField    *fp;
 
     for (fp = rec->fields; fp < &rec->fields[rec->nfields]; fp++) {
         if (smatch(fp->name, fieldName)) {
-            return *fp;
+            return fp->value;
         }
     }
-    err.valid = 0;
-    return err;
+    return 0;
 }
 
 
-int ediGetRecFieldType(EdiRec *rec, cchar *fieldName)
+int ediGetFieldType(EdiRec *rec, cchar *fieldName)
 {
     int     type;
     
@@ -193,15 +192,29 @@ int ediGetRecFieldType(EdiRec *rec, cchar *fieldName)
 }
 
 
-cchar *ediGetRecField(cchar *fmt, EdiRec *rec, cchar *fieldName)
+cchar *ediGetFieldFmt(cchar *fmt, EdiRec *rec, cchar *fieldName)
 {
     EdiField    field;
 
-    field = ediGetRawRecField(rec, fieldName);
+    field = ediGetFieldSchema(rec, fieldName);
     if (!field.valid) {
         return "";
     }
     return ediFormatField(fmt, field);
+}
+
+
+EdiField ediGetFieldSchema(EdiRec *rec, cchar *fieldName)
+{
+    EdiField    err, *fp;
+
+    for (fp = rec->fields; fp < &rec->fields[rec->nfields]; fp++) {
+        if (smatch(fp->name, fieldName)) {
+            return *fp;
+        }
+    }
+    err.valid = 0;
+    return err;
 }
 
 

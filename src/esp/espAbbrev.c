@@ -274,6 +274,12 @@ cchar *getDir()
 }
 
 
+cchar *getField(cchar *field)
+{
+    return ediGetField(getRec(), field);
+}
+
+
 EdiGrid *getGrid()
 {
     return getConn()->grid;

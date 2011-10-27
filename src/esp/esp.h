@@ -85,17 +85,6 @@ typedef void (*EspProc)(HttpConn *conn);
 #endif
     #define ESP_EXPORT_STRING MPR_STRINGIFY(ESP_EXPORT)
 
-/*
-      ESP lexical analyser tokens
- */
-#define ESP_TOK_ERR            -1            /* Any input error */
-#define ESP_TOK_EOF             0            /* End of file */
-#define ESP_TOK_CODE            1            /* <% text %> */
-#define ESP_TOK_VAR             2            /* @@var */
-#define ESP_TOK_LITERAL         3            /* literal HTML */
-#define ESP_TOK_EXPR            4            /* <%= expression %> */
-#define ESP_TOK_CONTROL         5            /* <%@ control */
-
 #define ESP_SECURITY_TOKEN_NAME "__esp_security_token__"
 #define ESP_FLASH_VAR           "__flash__"
 
@@ -2222,6 +2211,15 @@ extern Edi *getDatabase();
 extern cchar *getDir();
 
 /**
+    Get a field from the current database record
+    @description The current grid is defined via $setRec
+    @param field Field name to return
+    @return String value for "field" in the current record.
+    @ingroup EdiAbbrev
+ */
+extern cchar *getField(cchar *field);
+
+/**
     Get the current database grid
     @description The current grid is defined via $setGrid
     @return EdiGrid instance
@@ -2257,7 +2255,7 @@ extern cchar *getQuery();
 
 /**
     Get the current database record
-    @description The current grid is defined via $setRec
+    @description The current record is defined via $setRec
     @return EdiRec instance
     @ingroup EdiAbbrev
  */

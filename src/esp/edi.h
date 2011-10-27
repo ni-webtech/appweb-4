@@ -646,7 +646,6 @@ extern bool ediValidateRec(EdiRec *rec);
  */
 extern cchar *ediFormatField(cchar *fmt, EdiField value);
 
-//  MOB - rename ediGetField
 /**
     Get a record field
     @param rec Database record
@@ -654,17 +653,8 @@ extern cchar *ediFormatField(cchar *fmt, EdiField value);
     @return An EdiField structure containing the record field value and details.
     @ingroup Edi
  */
-extern EdiField ediGetRawRecField(EdiRec *rec, cchar *fieldName);
+extern cchar *ediGetField(EdiRec *rec, cchar *fieldName);
 
-/**
-    Get record validation errors
-    @param rec Database record
-    @return A list of validation errors. If validation passed, this call returns NULL.
-    @ingroup Edi
- */
-extern MprList *ediGetRecErrors(EdiRec *rec);
-
-//  MOB - rename ediGetFieldFmt
 /**
     Get and format a record field value
     @param fmt Record field value
@@ -673,9 +663,18 @@ extern MprList *ediGetRecErrors(EdiRec *rec);
     @return String value of the field
     @ingroup Edi
  */
-extern cchar *ediGetRecField(cchar *fmt, EdiRec *rec, cchar *fieldName);
+extern cchar *ediGetFieldFmt(cchar *fmt, EdiRec *rec, cchar *fieldName);
 
-//  MOB - rename ediGetFieldType
+/**
+    Get the record field schema
+    @description This returns the actual EdiField which contains the field name, type, value and flags.
+    @param rec Database record
+    @param fieldName Field in the record to extract
+    @return An EdiField structure containing the record field value and details.
+    @ingroup Edi
+ */
+extern EdiField ediGetFieldSchema(EdiRec *rec, cchar *fieldName);
+
 /**
     Get the data type of a record field
     @param rec Record to examine
@@ -684,7 +683,15 @@ extern cchar *ediGetRecField(cchar *fmt, EdiRec *rec, cchar *fieldName);
         EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT. 
     @ingroup Edi
  */
-extern int ediGetRecFieldType(EdiRec *rec, cchar *fieldName);
+extern int ediGetFieldType(EdiRec *rec, cchar *fieldName);
+
+/**
+    Get record validation errors
+    @param rec Database record
+    @return A list of validation errors. If validation passed, this call returns NULL.
+    @ingroup Edi
+ */
+extern MprList *ediGetRecErrors(EdiRec *rec);
 
 /**
     Get a list of grid column names.

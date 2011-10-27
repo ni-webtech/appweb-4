@@ -353,7 +353,7 @@ void espInput(HttpConn *conn, cchar *fieldName, cchar *optionString)
 
     req = conn->data;
     rec = req->record;
-    type = ediGetRecFieldType(rec, fieldName);
+    type = ediGetFieldType(rec, fieldName);
 
     switch (type) {
     case EDI_TYPE_BINARY:
@@ -1031,7 +1031,7 @@ static cchar *getValue(HttpConn *conn, cchar *fieldName, MprHash *options)
     value = 0;
 
     if (record) {
-        value = ediGetRecField(NULL, record, fieldName);
+        value = ediGetField(record, fieldName);
         if (record->errors) {
             for (next = 0; (error = mprGetNextItem(record->errors, &next)) != 0; ) {
                 if (smatch(error->key, fieldName)) {

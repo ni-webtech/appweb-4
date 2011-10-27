@@ -42,20 +42,20 @@
         <div class="contentRight">
             <h2>Quick Nav</h2>
             <ul>
-                <li><a href="#record">Record Class</a></li>
-                <li><a href="#columnMap">Columns to Properties</a></li>
-                <li><a href="#tour">Quick Tour of Record</a></li>
+                <li><a href="#record">Fields, Records and Grids</a></li>
+                <li><a href="#column">Columns to Properties</a></li>
+                <li><a href="#tour">Quick Tour of EDI</a></li>
                 <li><a href="#types">Data Types</a></li>
-                <li><a href="#keys">Table Keys</a></li>
                 <li><a href="#connections">Database Connections</a></li>
                 <li><a href="#tables">Creating Tables</a></li>
-                <li><a href="#crud">Create, Read, Update...</a></li>
+                <li><a href="#crud">CRUD</a></li>
                 <li><a href="#create">Create</a></li>
                 <li><a href="#read">Read</a></li>
                 <li><a href="#update">Update</a></li>
                 <li><a href="#delete">Delete</a></li>
                 <li><a href="#manual">Manual SQL</a></li>
-                <li><a href="#accessing">Accessing Models</a></li>
+                <li><a href="#accessing">Accessing Records</a></li>
+                <li><a href="#validation">Record Validation</a></li>
             </ul>
 <!-- BeginDsi "dsi/espSeeAlso.html" -->
 		        <h2>See Also</h2>
@@ -109,6 +109,7 @@
             <p>When an EDI API needs to return multiple records, an EdiGrid structure is used which contains one or more
             EdiRec structures.</p>
         
+            <a name="columns" id="columns"></a>
             <h3>Columns to Properties</h3>
             <p>EDI dynamically determines the column names in database tables and creates fields in the EdiRec
             structure at run-time that correspond to each database column. You do not need to configure or specify the 
@@ -293,124 +294,109 @@ ediSetField(product, "description", "458 Spider");
 <b>ediDeleteRow(db, "product", "1");</b>
 </pre>
             <a name="accessing" id="accessing"></a>
-            <h2 class="section">Accessing Data from Web Pages</h2>
+            <h2 class="section">Accessing Records from Web Pages</h2>
             <p>ESP web pages can access database data via three methods:
             <ul>
-                <li>Direct EDI API calls</li>
-                <li>Binding database table to an ESP control</li>
-                <li>Controller facilitated model access</li>
+                <li>Direct API calls</li>
+                <li>Database Record Binding</li>
+                <li>Controller Directed Access</li>
             </ul>
-            <h4>Direct API Access</h4>
+
+            <h3>Direct API Access</h3>
             <p>In <tt>direct model</tt> access, ESP web pages or controllers, query the database using 
             EDI APIs which returns EdiRec instances. They then directly access field values using <tt>ediGetField</tt>.</p>
             <pre>
 &lt;p&gt;Price: &lt%= ediGetField(product, "price"); &lt;/p&gt;
 </pre>
-            <p>This is a fragment from a View that directly accesses the model to extract the price for the first
-            product. This example can be further simplified by using the <tt>@@</tt> ESP template directive.
-           
-            The <tt>@@</tt> is the way Views can substitue dynamic data from JavaScript variables at
+            <h3>Database Record Binding</h3>
+            <p>To make it easy to display and update database data, ESP supports "data binding" where a EDI 
+            database record can be bound to a request form. Thereafter, the ESP web controls will take data 
+            from that record.</p>
+            <p>A record is bound by passing a record instance to the <tt>form</tt> ESP control. ESP then defines
+            it as the current record until the next <tt>endform</tt> is encountered. ESP controls can then
+            use the current record as a data source.</p>
 <pre>
-&lt;p&gt;Price: @*price&lt;/p&gt;
+&lt% 
+    <b>form(userRecord, 0);</b>
+        input("name", 0);
+        input("address", 0);
+        button("commit", "OK", 0);
+        buttonLink("Cancel", "../index.esp",  0);
+        buttonLink("Delete", "destroy.esp");
+    <b>endform();</b>
+%>
 </pre>
-            run-time.</p>
-            <h4>Bound Access</h4>
-            <p>ESP models can also be <tt>bound</tt> to View Controls for easy display. Many of the View Controls
-            can take a model instance as a parameter with options to select the properties to display. The
-            <tt>table</tt> View Control method is a good example. It can bind to a model and, via a one-line statement,
-            display the table. It has options to sort, filter, and select columns and dynamically refresh the table
-            contents as the underlying database data changes.</p>
-            <pre>
-&lt;% table(Products.findAll(), {
-    click: "edit",
-    columns: {
-        name:         { },
-        description:  { },
-        price:        { render: currency("$$%,d") },
-    },
-    width: "80%",
-}) %&gt;
+            <p>In this example, the form control binds the userRecord. The input controls then retrieve the 
+            "<tt>name</tt>", and "<tt>address</tt>" fields from the database record and emit the appropriate 
+            HTML input elements.</p>
+
+            <h3>Controller Directed Access</h3>
+            <p>When using the ESP MVC application support, controllers will frequently read a record, prepare
+            some data for viewing and then invoke a view to render a response. In this pattern, the controller
+            defines a "current" database record which can then be used by views to conveniently display field data.</p>
+
+            <p>To make this easy, ESP supports an inline "<tt>@*</tt>" directive. If the controller defined a
+            current product record, this example would render the product price.</p>
+<pre>
+&lt;p&gt;Price: <b>@*price</b>&lt;/p&gt;
 </pre>
-            <p>This will display a View containing a table of the products.</p>
-            <h4>Controller Facilitated Access</h4>
-            <p>Controller facilitated access is perhaps the most powerful access methodology whereby the controller
-            creates a suite of methods to manage and control access to the model. These methods can then validate and
-            enforce consistency checks on the data.</p>
-            <h2 class="section">Validation</h2>
-            <p>ESP provides a validation mechanism that is invoked prior to saving a model to the database. It
-            also provides a set of pre-defined validation methods that you can use in your model. These cover the most
-            common validation needs such as ensuring a field is unique or numeric, or conforms to a specific
-            format.</p>
-            <p>When a validation check fails, an error message is added to the model for the field that failed
-            validation. Validation checks continue and (potentially) a set of error messages for the model are
-            accumulated. Views can access these messages for display and highlighting to the user. The standard
-            ESP view controls intelligently use these error messages to highlight errors in input
-            forms.</p><img src="../../../images/webtour-validate.png" class="screen" alt="" />
-            <p>ESP will also automatically verify and convert model data to ensure it is of the appropriate data
-            type and will escape data to prevent SQL insertion exploits.</p>
+            <a name="validation"></a>
+            <h2 class="section">Record Validation</h2>
+            <p>EDI can validate fields before saving records to the database. It provides a set of pre-defined 
+            validation routines that cover the most common validation needs such as ensuring a field is unique 
+            or numeric, or conforms to a specific format.</p>
+
+            <p>When a validation check fails, an error message is added to the record for the field that failed
+            validation. Validation checks continue and (potentially) a set of error messages for the record are
+            accumulated. ESP pages can access these messages for display and highlighting input fields bound to
+            that field. The standard ESP view controls intelligently use these error messages to highlight errors 
+            in input forms.</p>
+            
+            <img src="../../../images/esp/tour/validate.png" class="screen" alt="" />
             <h3>Validation Methods</h3>
-            <p>The following validation methods are available for use inside a model. Define these in the class
-            initialization section of your class so they run when the class is first created.</p>
+            <p>Validations are typically defined by the 
+            <a href="../../../api/esp.html#group___edi_1ga64cb0410a70843250c9826e8d12e3944"><tt>ediAddValidation</tt></a> 
+            call in the load initialization routine for a controller. This happens one when the controller is 
+            first loaded and after that database has been opened. 
             <pre>
-public dynamic class Task implements Record {
-    setup()
-<b>    validatePresence(["name", "description"])
-    validateUnique("name")
-    validateNumber("priority", { message: "Priority must be a number"})
-    validateFormat("fax", { message: "Bad format", format: /\d{3}-\d{7}/})
-</b>
-</pre>
-            <p>The validation methods take either a field name or array of field names as the first parameter. The
-            second parameter is an options hash which can contain a <tt>message</tt> option to override the standard
-            validation failure message.</p>
-            <h4>validatePresence</h4>
-            <p>This validates that the field is defined with a non-empty value.</p>
-            <h4>validateNumber</h4>
-            <p>This validates that the field is a number and only contains numeric digits.</p>
-            <h4>validateUnique</h4>
-            <p>This validates that the field's value is unique in the database.</p>
-            <h4>validateFormat</h4>
-            <p>This validates that the field's value conforms to the regular expression format supplied via the
-            <tt>format</tt> option.</p>
-            <h3>Custom Validation</h3>
-            <p>In addition to the standard validation methods, a model can do custom validation by defining a
-            <tt>validation</tt> method. This will be called along with the standard validation methods before saving
-            database data or when the <tt>validateModel</tt> method is called. A validation method should call the
-            <tt>error</tt> method for each invalid field and supply a suitable message.</p>
-            <pre>
-public function validate() {
-    if (user.phone.length &gt; 10) {
-        error("phone", "Phone number too long")
-    }
-    if (someGeneralError) {
-        error("", "General validation failure")
-    }
+ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module) 
+{
+    Edi     *edi = eroute->edi;
+<b>
+    ediAddValidation(edi, "present", "user", "name", 0);
+    ediAddValidation(edi, "number", "user", "account", 0);
+    ediAddValidation(edi, "unique", "user", "account", 0);
+    ediAddValidation(edi, "format", "user", "phone", "/\d{3}-\d{7}/");</b>
+    return 0;
 }
 </pre>
-            <p>To set an error that is not associated with any specific field, supply the empty string as the field
-            argument.</p><!-- Not documented
-                hasMany etc.
-                Transactions
-                Locking
-                magic column names
-            -->
+            <p>The following validation methods are available for use:</p>
+            <ul>
+                <li>boolean&mdash;tests if the field has a valid boolean value</li>
+                <li>format&mdash;tests if the field matches a supplied regular expression</li>
+                <li>integer&mdash;tests if the field has a valid integer value</li>
+                <li>number&mdash;tests if the field has a valid numeric value</li>
+                <li>present&mdash;tests if the field is defined with a non-empty value</li>
+                <li>date&mdash;tests if the field has a valid date/time value</li>
+                <li>unique&mdash;tests if the field is unique in the database</li>
+            </ul>
+</pre>
+            <h3>Custom Validation</h3>
+            <p>You can define new validation routines via the 
+            <a href="../../../api/esp.html#group___edi_service_1ga889df64bdd239f71c66b4fa920be8f46">
+                <tt>ediDefineValidation</tt></a> call.
 
-            <MOB>
-            Database Binding
-            To make it easy to display and update database data, ESP supports "data binding" where a database record can be bound to a request form. Thereafter, the ESP web controls will take data from the record.
-
-
-            <% 
-                form(userRecord, 0); 
-                        input("name", 0);
-                                input("address", 0);
-                                        button("commit", "OK", 0);
-                                                buttonLink("Cancel", "../index.esp",  0);
-                                                        buttonLink("Delete", "destroy.esp");
-                                                            endform();
-                                                            %>
-                                                            In this example, the form control binds the userRecord. The input controls then retrieve the "name", and "address" fields from the database record and emit the appropriate HTML input elements.
-
+            <h2 class="section">Learn More ...</h2>
+            <p>To learn more, please read:</p>
+            <ul>
+                <li><a href="../../../api/esp.html#group___edi">EDI Documentation</a></li>
+                <li><a href="../../../index.html">Appweb Documentation</a></li>
+                <li><a href="../../../ref/esp/webArchitecture.html">ESP Web Framework Architecture</a></li>
+                <li><a href="mvc.html">ESP MVC Framework</a></li>
+                <li><a href="mvcTour.html">MVC Tour</a>.
+            </ul>
+            <p>You may also like to ask questions at the 
+            <a href="http://appwebserver.org/forum/">Appweb Support Forum</a>.</p>
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->

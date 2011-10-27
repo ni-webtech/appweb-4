@@ -9,6 +9,20 @@
 #include    "esp.h"
 
 #if BLD_FEATURE_ESP
+
+/************************************ Defines *********************************/
+/*
+      ESP lexical analyser tokens
+ */
+#define ESP_TOK_ERR            -1            /* Any input error */
+#define ESP_TOK_EOF             0            /* End of file */
+#define ESP_TOK_CODE            1            /* <% text %> */
+#define ESP_TOK_VAR             2            /* @@var */
+#define ESP_TOK_FIELD           3            /* @*field */
+#define ESP_TOK_LITERAL         4            /* literal HTML */
+#define ESP_TOK_EXPR            5            /* <%= expression %> */
+#define ESP_TOK_CONTROL         6            /* <%@ control */
+
 /************************************ Forwards ********************************/
 
 static int getEspToken(EspParse *parse);
@@ -325,6 +339,7 @@ static char *joinLine(cchar *str, ssize *lenp)
         -%>                 End esp section and trim trailing newline
 
         @@var               Substitue the value of a variable. Var can also be simple expressions (without spaces)
+        @*field             Lookup the current record for the value of the field.
 
  */
 char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheName, cchar *layout, char **err)
@@ -356,33 +371,6 @@ char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheNam
         }
 #endif
         switch (tid) {
-        case ESP_TOK_LITERAL:
-            line = joinLine(token, &len);
-            body = sfmt("%s  espRenderBlock(conn, \"%s\", %d);\n", body, line, len);
-            break;
-
-        case ESP_TOK_VAR:
-            /* @@var */
-            token = strim(token, " \t\r\n;", MPR_TRIM_BOTH);
-            /* espRenderParam uses espRenderSafeString */
-            body = sjoin(body, "  espRenderParam(conn, \"", token, "\");\n", NULL);
-            break;
-
-
-        case ESP_TOK_EXPR:
-            /* <%= expr %> */
-            if (*token == '%') {
-                fmt = stok(token, ": \t\r\n", &token);
-                if (token == 0) { 
-                    token = "";
-                }
-            } else {
-                fmt = "%s";
-            }
-            token = strim(token, " \t\r\n;", MPR_TRIM_BOTH);
-            body = sjoin(body, "  espRender(conn, \"", fmt, "\", ", token, ");\n", NULL);
-            break;
-
         case ESP_TOK_CODE:
             if (*token == '^') {
                 for (token++; *token && isspace((int) *token); token++) ;
@@ -461,6 +449,40 @@ char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheNam
             break;
 
         case ESP_TOK_ERR:
+            return 0;
+
+        case ESP_TOK_EXPR:
+            /* <%= expr %> */
+            if (*token == '%') {
+                fmt = stok(token, ": \t\r\n", &token);
+                if (token == 0) { 
+                    token = "";
+                }
+            } else {
+                fmt = "%s";
+            }
+            token = strim(token, " \t\r\n;", MPR_TRIM_BOTH);
+            body = sjoin(body, "  espRender(conn, \"", fmt, "\", ", token, ");\n", NULL);
+            break;
+
+        case ESP_TOK_FIELD:
+            /* @*field */
+            token = strim(token, " \t\r\n;", MPR_TRIM_BOTH);
+            body = sjoin(body, "  espRender(conn, getField(\"", token, "\"));\n", NULL);
+            break;
+
+        case ESP_TOK_LITERAL:
+            line = joinLine(token, &len);
+            body = sfmt("%s  espRenderBlock(conn, \"%s\", %d);\n", body, line, len);
+            break;
+
+        case ESP_TOK_VAR:
+            /* @@var */
+            token = strim(token, " \t\r\n;", MPR_TRIM_BOTH);
+            /* espRenderParam uses espRenderSafeString */
+            body = sjoin(body, "  espRenderParam(conn, \"", token, "\");\n", NULL);
+            break;
+
         default:
             return 0;
         }
@@ -617,28 +639,31 @@ static int getEspToken(EspParse *parse)
             break;
 
         case '@':
-            if (next[1] == '@' && ((next == start) || next[-1] != '\\')) {
-                next += 2;
-                if (mprGetBufLength(parse->token) > 0) {
-                    next -= 3;
-                } else {
-                    tid = ESP_TOK_VAR;
-                    next = eatSpace(parse, next);
-                    /* Format is:  @@[%5.2f],var */
-                    while (isalnum((int) *next) || *next == '_') {
-                        if (*next == '\n') parse->lineNumber++;
-                        if (!addChar(parse, *next++)) {
-                            return ESP_TOK_ERR;
+            if ((next == start) || next[-1] != '\\') {
+                if (next[1] == '@' || next[1] == '*') {
+                    next += 2;
+                    if (mprGetBufLength(parse->token) > 0) {
+                        next -= 3;
+                    } else {
+                        tid = next[-1] == '@' ? ESP_TOK_VAR : ESP_TOK_FIELD;
+                        next = eatSpace(parse, next);
+                        while (isalnum((int) *next) || *next == '_') {
+                            if (*next == '\n') parse->lineNumber++;
+                            if (!addChar(parse, *next++)) {
+                                return ESP_TOK_ERR;
+                            }
                         }
+                        next--;
                     }
-                    next--;
+                    done++;
                 }
-                done++;
             }
             break;
 
-        case '\n':  //  MOB - line number must be tracked in other sections above. Same in ejs.template
+        case '\n':
             parse->lineNumber++;
+            /* Fall through */
+
         case '\r':
         default:
             if (c == '\"' || c == '\\') {
