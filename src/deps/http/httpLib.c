@@ -125,14 +125,6 @@ void httpSetAuthDeny(HttpAuth *auth, cchar *client)
 }
 
 
-#if UNUSED && KEEP
-void httpSetAuthGroup(HttpConn *conn, cchar *group)
-{
-    conn->authGroup = sclone(group);
-}
-#endif
-
-
 void httpSetAuthOrder(HttpAuth *auth, int order)
 {
     auth->order = order;
@@ -1975,23 +1967,6 @@ void httpAddCache(HttpRoute *route, cchar *methods, cchar *uris, cchar *extensio
     if (uris) {
         cache->uris = mprCreateHash(0, 0);
         for (item = stok(sclone(uris), " \t,", &tok); item; item = stok(0, " \t,", &tok)) {
-#if UNUSED
-            if (flags & HTTP_CACHE_IGNORE_PARAMS) {
-                if ((cp = schr(item, '?')) != 0) {
-                    mprError("URI has params and ignore parms requested");
-                    *cp = '\0';
-                }
-            } else {
-                /*
-                    For usability, auto-add ?prefix=ROUTE_NAME
-                 */
-                if (route->prefix && !scontains(item, sfmt("prefix=%s", route->prefix), -1)) {
-                    if (!schr(item, '?')) {
-                        item = sfmt("%s?prefix=%s", item, route->prefix); 
-                    }
-                }
-            }
-#else
             if (flags & HTTP_CACHE_ONLY && route->prefix && !scontains(item, sfmt("prefix=%s", route->prefix), -1)) {
                 /*
                     Auto-add ?prefix=ROUTE_NAME if there is no query
@@ -2000,7 +1975,6 @@ void httpAddCache(HttpRoute *route, cchar *methods, cchar *uris, cchar *extensio
                     item = sfmt("%s?prefix=%s", item, route->prefix); 
                 }
             }
-#endif
             mprAddKey(cache->uris, item, cache);
         }
     }
@@ -2277,6 +2251,7 @@ static void outgoingChunkService(HttpQueue *q)
             }
         }
     }
+    //  MOB - refactor to setting altBody also sets tx->length
     if (tx->chunkSize <= 0 || tx->altBody) {
         httpDefaultOutgoingServiceStage(q);
     } else {
@@ -2946,6 +2921,7 @@ static void commonPrep(HttpConn *conn)
     conn->state = 0;
     conn->responded = 0;
     conn->finalized = 0;
+    conn->refinalize = 0;
     conn->connectorComplete = 0;
     conn->lastActivity = conn->http->now;
     httpSetState(conn, HTTP_STATE_BEGIN);
@@ -5393,11 +5369,12 @@ static void netOutgoingService(HttpQueue *q)
     tx = conn->tx;
     conn->lastActivity = conn->http->now;
     mprAssert(conn->sock);
+    mprAssert(!conn->connectorComplete);
     
-    if (!conn->sock) {
+    if (!conn->sock || conn->connectorComplete) {
         return;
     }
-    if (tx->flags & HTTP_TX_NO_BODY || conn->connectorComplete) {
+    if (tx->flags & HTTP_TX_NO_BODY) {
         httpDiscardData(q, 1);
     }
     if ((tx->bytesWritten + q->count) > conn->limits->transmissionBodySize) {
@@ -6181,7 +6158,9 @@ void httpHandleOptionsTrace(HttpConn *conn)
             (flags & HTTP_STAGE_DELETE) ? ",DELETE" : "");
         httpOmitBody(conn);
         httpFinalize(conn);
+#if UNUSED
         tx->length = 0;
+#endif
     }
 }
 
@@ -6197,6 +6176,7 @@ static void openPass(HttpQueue *q)
 
 static void processPass(HttpQueue *q)
 {
+    mprAssert(q->conn->finalized);
     httpFinalize(q->conn);
 }
 
@@ -6336,6 +6316,14 @@ void httpCreateTxPipeline(HttpConn *conn, HttpRoute *route)
      */
     httpPutForService(conn->writeq, httpCreateHeaderPacket(), HTTP_DELAY_SERVICE);
     openQueues(conn);
+
+    /*
+        Refinalize if httpFinalize was called before the Tx pipeline was created
+     */
+    if (conn->refinalize) {
+        conn->finalized = 0;
+        httpFinalize(conn);
+    }
 }
 
 
@@ -6742,7 +6730,8 @@ void httpDisableQueue(HttpQueue *q)
 
 
 /*  
-    Remove all data from non-header, non-eof packets in the queue. If removePackets is true, actually remove the packet too.
+    Remove all data in the queue. If removePackets is true, actually remove the packet too.
+    This preserves the header and EOT packets.
  */
 void httpDiscardData(HttpQueue *q, bool removePackets)
 {
@@ -7882,7 +7871,7 @@ void httpRouteRequest(HttpConn *conn)
     }
     rx->route = route;
 
-    if (conn->finalized /* UNUSED MOB || tx->redirected || tx->altBody || tx->cache */) {
+    if (conn->finalized) {
         tx->handler = conn->http->passHandler;
         if (rewrites >= HTTP_MAX_REWRITE) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Too many request rewrites");
@@ -8054,11 +8043,8 @@ static int testRoute(HttpConn *conn, HttpRoute *route)
     if ((rc = (*proc)(conn, route, 0)) != HTTP_ROUTE_OK) {
         return rc;
     }
-    //  MOB - be good to have one flag for this test
-    if (!conn->error && !tx->redirected && !tx->altBody) {
-        if (tx->handler->check) {
-            rc = tx->handler->check(conn, route);
-        }
+    if (!conn->finalized && tx->handler->check) {
+        rc = tx->handler->check(conn, route);
     }
     return rc;
 }
@@ -8094,14 +8080,6 @@ static int selectHandler(HttpConn *conn, HttpRoute *route)
             tx->handler = mprLookupKey(route->extensions, "");
         }
     }
-#if UNUSED && MOB
-    if (tx->handler && tx->handler->match) {
-        if ((rc = tx->handler->match(conn, route, 0)) != HTTP_ROUTE_OK) {
-            tx->handler = 0;
-        }
-        return rc;
-    }
-#endif
     return tx->handler ? HTTP_ROUTE_OK : HTTP_ROUTE_REJECT;
 }
 
@@ -9642,6 +9620,7 @@ static int writeTarget(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
     }
     httpSetStatus(conn, route->responseStatus);
     httpFormatResponse(conn, "%s", str);
+    httpFinalize(conn);
     return HTTP_ROUTE_OK;
 }
 
@@ -12354,10 +12333,10 @@ void httpSendOutgoingService(HttpQueue *q)
     conn->lastActivity = conn->http->now;
     mprAssert(conn->sock);
 
-    if (!conn->sock) {
+    if (!conn->sock || conn->connectorComplete) {
         return;
     }
-    if (tx->flags & HTTP_TX_NO_BODY || conn->connectorComplete) {
+    if (tx->flags & HTTP_TX_NO_BODY) {
         httpDiscardData(q, 1);
     }
     if ((tx->bytesWritten + q->ioCount) > conn->limits->transmissionBodySize) {
@@ -13302,29 +13281,27 @@ void httpSetHeaderString(HttpConn *conn, cchar *key, cchar *value)
 void httpConnectorComplete(HttpConn *conn)
 {
     conn->connectorComplete = 1;
-#if UNUSED
-    conn->handlerComplete = 1;
-#endif
     conn->finalized = 1;
 }
 
 
 void httpFinalize(HttpConn *conn)
 {
-    if (conn->finalized || conn->state < HTTP_STATE_CONNECTED || conn->writeq == 0 || conn->sock == 0) {
+    if (conn->finalized) {
         return;
     }
     conn->responded = 1;
     conn->finalized = 1;
-#if UNUSED
-    if (!conn->tx->cacheBuffer) {
-        conn->handlerComplete = 1;
-    }
-#endif
-    httpPutForService(conn->writeq, httpCreateEndPacket(), HTTP_SERVICE_NOW);
-    httpServiceQueues(conn);
-    if (conn->state == HTTP_STATE_RUNNING && conn->connectorComplete && !conn->advancing) {
-        httpProcess(conn, NULL);
+    if (conn->state >= HTTP_STATE_CONNECTED && conn->writeq && conn->sock) {
+        httpPutForService(conn->writeq, httpCreateEndPacket(), HTTP_SERVICE_NOW);
+        httpServiceQueues(conn);
+        if (conn->state == HTTP_STATE_RUNNING && conn->connectorComplete && !conn->advancing) {
+            httpProcess(conn, NULL);
+        }
+        conn->refinalize = 0;
+    } else {
+        /* Pipeline has not been setup yet */
+        conn->refinalize = 1;
     }
 }
 
@@ -13356,9 +13333,10 @@ ssize httpFormatResponsev(HttpConn *conn, cchar *fmt, va_list args)
     tx = conn->tx;
     conn->responded = 1;
     body = sfmtv(fmt, args);
-    tx->altBody = body;
     httpOmitBody(conn);
-    return slen(tx->altBody);
+    tx->altBody = body;
+    tx->length = slen(tx->altBody);
+    return tx->length;
 }
 
 
@@ -13505,18 +13483,15 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
         targetUri = uri;
     }
     httpSetHeader(conn, "Location", "%s", targetUri);
-    mprAssert(tx->altBody == 0);
     msg = httpLookupStatus(conn->http, status);
-    tx->altBody = sfmt(
+    httpFormatResponse(conn, 
         "<!DOCTYPE html>\r\n"
         "<html><head><title>%s</title></head>\r\n"
         "<body><h1>%s</h1>\r\n<p>The document has moved <a href=\"%s\">here</a>.</p></body></html>\r\n",
         msg, msg, targetUri);
-
-    //  MOB - can remove this because finalizing below
-    conn->responded = 1;
+#if UNUSED
     tx->redirected = 1;
-    httpOmitBody(conn);
+#endif
     httpFinalize(conn);
 }
 
@@ -13667,9 +13642,13 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
     if (tx->etag) {
         httpAddHeader(conn, "ETag", "%s", tx->etag);
     }
+    //MOB REMOVE
+#if UNUSED || 1
     if (tx->altBody) {
+        mprAssert(tx->length > 0);
         tx->length = (int) strlen(tx->altBody);
     }
+#endif
     if (tx->chunkSize > 0 && !tx->altBody) {
         if (!(rx->flags & HTTP_HEAD)) {
             httpSetHeaderString(conn, "Transfer-Encoding", "chunked");

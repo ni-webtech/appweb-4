@@ -1746,9 +1746,9 @@ typedef struct HttpConn {
 
     int             responded;              /**< The request has started to respond. Some output has been initiated. */
     int             finalized;              /**< End of response has been signified (set at handler level) */
-
     int             connectorComplete;      /**< Connector has finished sending the response */
     int             advancing;              /**< In httpProcess (reentrancy prevention) */
+    int             refinalize;             /**< Finalize required once the Tx pipeline is created */
 
     HttpLimits      *limits;                /**< Service limits */
     Http            *http;                  /**< Http service object  */
@@ -2896,7 +2896,7 @@ typedef struct HttpRoute {
     ssize           startSegmentLen;        /**< Prefix length */
 
     MprList         *caching;               /**< Items to cache */
-    int             lifespan;               /**< Default lifespan for all cache items in route */
+    MprTime         lifespan;               /**< Default lifespan for all cache items in route */
     HttpAuth        *auth;                  /**< Per route block authentication */
     Http            *http;                  /**< Http service object (copy of appweb->http) */
     struct HttpHost *host;                  /**< Owning host */
@@ -4293,7 +4293,9 @@ typedef struct HttpTx {
     HttpStage       *handler;               /**< Server-side request handler stage */
     MprOff          length;                 /**< Transmission content length */
     int             started;                /**< Handler has started */
+#if UNUSED
     int             redirected;             /**< The request has been redirected to a new URI */
+#endif
     int             status;                 /**< HTTP request status */
 
     HttpUri         *parsedUri;             /**< Client request uri */

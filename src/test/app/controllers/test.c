@@ -64,8 +64,8 @@ ESP_EXPORT int esp_controller_test(EspRoute *eroute, MprModule *module) {
     espDefineAction(eroute, "test-cmd-transparent", transparent);
 
 #if 0
-        HttpRoute *route = httpLookupRoute(eroute->route->host, "/app/*/default");
-        espCache(eroute->route->host, "/test/transparent", 0, 0);
+    HttpRoute *route = httpLookupRoute(eroute->route->host, "/app/*/default");
+    espCache(eroute->route->host, "/test/transparent", 0, 0);
 #endif
     return 0;
 }
