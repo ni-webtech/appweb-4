@@ -18,11 +18,15 @@ static void details() {
     /* View will be rendered */
 }
 
-static void cached() { 
-    render("When: %s\r\n", mprGetDate(0));
-    render("URI: %s\r\n", getUri());
-    render("QUERY: %s\r\n", getQuery());
-    finalize();
+static void transparent() { 
+    render("{ when: %Ld, uri: '%s', query: '%s'\r\n", mprGetTicks(), getUri(), getQuery());
+}
+
+static void manual() { 
+    if (!espRenderCached(getConn())) {
+        render("{ when: %Ld, uri: '%s', query: '%s'\r\n", mprGetTicks(), getUri(), getQuery());
+    }
+    // void espUpdateCache(getConn(), "Hello World");
 }
 
 static void login() { 
@@ -49,13 +53,19 @@ static void missing() {
 }
 
 ESP_EXPORT int esp_controller_test(EspRoute *eroute, MprModule *module) {
+
+    //  MOB - should actions be more like URIs:    /test/
     espDefineAction(eroute, "test-missing", missing);
     espDefineAction(eroute, "test-cmd-check", check);
-    espDefineAction(eroute, "test-cmd-cached", cached);
     espDefineAction(eroute, "test-cmd-details", details);
     espDefineAction(eroute, "test-cmd-login", login);
 
-    //  MOB - test this
-    espCacheControl(eroute, "test-cached", 0, "*");
+    espDefineAction(eroute, "test-cmd-manual", manual);
+    espDefineAction(eroute, "test-cmd-transparent", transparent);
+
+#if 0
+        HttpRoute *route = httpLookupRoute(eroute->route->host, "/app/*/default");
+        espCache(eroute->route->host, "/test/transparent", 0, 0);
+#endif
     return 0;
 }

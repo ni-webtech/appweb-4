@@ -241,6 +241,9 @@ static ssize readFileData(HttpQueue *q, HttpPacket *packet, MprOff pos, ssize si
         httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, "Can't read file %s", tx->filename);
         return MPR_ERR_CANT_READ;
     }
+    if (tx->cacheBuffer) {
+        mprPutBlockToBuf(tx->cacheBuffer, mprGetBufStart(packet->content), nbytes);
+    }
     mprAdjustBufEnd(packet->content, nbytes);
     packet->esize -= nbytes;
     mprAssert(packet->esize == 0);

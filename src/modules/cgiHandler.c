@@ -44,14 +44,6 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
 #endif
 
 /************************************* Code ***********************************/
-#if UNUSED
-static int matchCgi(HttpConn *conn, HttpRoute *route, int direction)
-{
-    httpTrimExtraPath(conn);
-    return HTTP_ROUTE_OK;
-}
-#endif
-
 
 static void openCgi(HttpQueue *q)
 {
@@ -1054,9 +1046,6 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     handler->close = closeCgi; 
     handler->outgoingService = outgoingCgiService;
     handler->incomingData = incomingCgiData; 
-#if UNUSED
-    handler->match = matchCgi; 
-#endif
     handler->open = openCgi; 
     handler->start = startCgi; 
     handler->process = processCgi; 

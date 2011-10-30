@@ -18,7 +18,7 @@
 #define ESP_TOK_EOF             0            /* End of file */
 #define ESP_TOK_CODE            1            /* <% text %> */
 #define ESP_TOK_VAR             2            /* @@var */
-#define ESP_TOK_FIELD           3            /* @*field */
+#define ESP_TOK_FIELD           3            /* @#field */
 #define ESP_TOK_LITERAL         4            /* literal HTML */
 #define ESP_TOK_EXPR            5            /* <%= expression %> */
 #define ESP_TOK_CONTROL         6            /* <%@ control */
@@ -339,7 +339,7 @@ static char *joinLine(cchar *str, ssize *lenp)
         -%>                 End esp section and trim trailing newline
 
         @@var               Substitue the value of a variable. Var can also be simple expressions (without spaces)
-        @*field             Lookup the current record for the value of the field.
+        @#field             Lookup the current record for the value of the field.
 
  */
 char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheName, cchar *layout, char **err)
@@ -466,7 +466,7 @@ char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheNam
             break;
 
         case ESP_TOK_FIELD:
-            /* @*field */
+            /* @#field */
             token = strim(token, " \t\r\n;", MPR_TRIM_BOTH);
             body = sjoin(body, "  espRender(conn, getField(\"", token, "\"));\n", NULL);
             break;

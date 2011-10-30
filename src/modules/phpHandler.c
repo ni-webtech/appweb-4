@@ -543,9 +543,6 @@ int maPhpHandlerInit(Http *http, MprModule *module)
     if (handler == 0) {
         return MPR_ERR_CANT_CREATE;
     }
-#if UNUSED
-    handler->match = matchPhp;
-#endif
     handler->open = openPhp;
     handler->process = processPhp;
     http->phpHandler = handler;

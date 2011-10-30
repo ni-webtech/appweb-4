@@ -22,16 +22,13 @@ static Esp *esp;
 
 static EspRoute *allocEspRoute(HttpRoute *loc);
 static int espDbDirective(MaState *state, cchar *key, cchar *value);
-static bool fetchCachedResponse(HttpConn *conn);
 static char *getControllerEntry(cchar *controllerName);
 static EspRoute *getEspRoute(HttpRoute *route);
 static int loadApp(HttpConn *conn, int *updated);
 static void manageEsp(Esp *esp, int flags);
 static void manageReq(EspReq *req, int flags);
-static char *makeCacheKey(HttpConn *conn, cchar *target, cchar *uri);
 static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *recompile);
 static int  runAction(HttpConn *conn);
-static void saveCachedResponse(HttpConn *conn);
 static void setRouteDirs(MaState *state, cchar *kind);
 static bool unloadModule(cchar *module, MprTime timeout);
 static bool viewExists(HttpConn *conn);
@@ -168,7 +165,6 @@ static void startEsp(HttpQueue *q)
         if (espIsFinalized(conn)) {
             finalizeFlash(conn);
         }
-        saveCachedResponse(conn);
     }
 }
 
@@ -253,14 +249,24 @@ static int runAction(HttpConn *conn)
     }
     req->action = action;
     
+#if UNUSED
     if (action->lifespan) {
+//  MOB - still need to invoke action if in "manual" mode
         /* Must stabilize form data prior to controllers injecting variables */
-        httpGetFormData(conn);
+        httpGetParamsString(conn);
         if (!updated && fetchCachedResponse(conn)) {
             return 1;
         }
         req->cacheBuffer = mprCreateBuf(-1, -1);
     }
+#endif
+    
+#if MOB
+    //  NEED THIS
+    if (updated) {
+        httpSetupRequestCaching(conn);
+    }
+#endif
     if (rx->flags & HTTP_POST) {
         if (!espCheckSecurityToken(conn)) {
             return 1;
@@ -352,19 +358,48 @@ void espRenderView(HttpConn *conn, cchar *name)
 
 /************************************ Caching *********************************/
 
+#if UNUSED
+void espCacheControl(EspRoute *eroute, cchar *target, int lifesecs, cchar *uri, int flags)
+{
+    EspAction  *action;
+    Esp         *esp;
+
+    esp = MPR->espService;
+    if ((action = mprLookupKey(esp->actions, mprJoinPath(eroute->controllersDir, target))) == 0) {
+        /*
+            May be just caching a web page without an action, so action won't exist
+         */
+        if ((action = mprAllocObj(EspAction, espManageAction)) == 0) {
+            return;
+        }
+    }
+    if (uri) {
+        action->cacheUri = sclone(uri);
+    }
+    if (lifesecs <= 0) {
+        action->lifespan = eroute->lifespan;
+    } else {
+        action->lifespan = lifesecs * MPR_TICKS_PER_SEC;
+    }
+    action->flags = flags;
+}
+
+
 static bool fetchCachedResponse(HttpConn *conn)
 {
     HttpRx      *rx;
     EspReq      *req;
+    EspAction   *action;
     MprTime     modified, when;
     cchar       *value, *extraUri, *content, *key, *tag;
     int         status, cacheOk, canUseClientCache;
 
     req = conn->data;
     rx = conn->rx;
+    action = req->action;
 
-    if (req->action && req->action->lifespan) {
-        extraUri = req->action ? req->action->cacheUri : 0;
+    if (action && action->lifespan && !(action->flags & ESP_CACHE_MANUAL)) {
+        extraUri = action ? action->cacheUri : 0;
         if (extraUri && scmp(extraUri, "*") == 0) {
             extraUri = conn->rx->pathInfo;
         }
@@ -457,13 +492,22 @@ static void saveCachedResponse(HttpConn *conn)
 }
 
 
-bool espRenderCached(HttpConn *conn, cchar *target, cchar *uri)
+ssize espRenderCached(HttpConn *conn, cchar *target, cchar *uri)
 {
     EspReq      *req;
+    EspAction   *action;
     MprTime     modified;
-    cchar       *key, *content;
+    cchar       *key, *content, *extraUri;
 
     req = conn->data;
+    if ((action = req->action) != 0) {
+        extraUri = req->action->cacheUri;
+        if (action->cacheUri && scmp(action->cacheUri, "*") == 0) {
+            extraUri = uri;
+        }
+    } else {
+        extraUri = 0;
+    }
     key = makeCacheKey(conn, target, uri);
     if ((content = mprReadCache(esp->cache, key, &modified, 0)) == 0) {
         mprLog(5, "No cached data for ", key);
@@ -475,7 +519,7 @@ bool espRenderCached(HttpConn *conn, cchar *target, cchar *uri)
     espSetHeader(conn, "Last-Modified", mprFormatUniversalTime(MPR_HTTP_DATE, modified));
     espRenderString(conn, content);
     espFinalize(conn);
-    return 1;
+    return slen(content);
 }
 
 
@@ -487,14 +531,10 @@ static char *makeCacheKey(HttpConn *conn, cchar *target, cchar *uri)
 
     req = conn->data;
     eroute = req->eroute;
-
-#if UNUSED
-    path = mprJoinPath(eroute->controllersDir, target);
-#endif
     if (uri) {
-        form = httpGetFormData(conn);
+        form = httpGetParamsString(conn);
+        //  MOB - should this be a more unique key
         key = sfmt("content-%s:%s?%s", eroute->controllersDir, uri, form);
-        
     } else {
         key = sfmt("content-%s", mprJoinPath(eroute->controllersDir, target));
     }
@@ -502,12 +542,13 @@ static char *makeCacheKey(HttpConn *conn, cchar *target, cchar *uri)
 }
 
 
-void espUpdateCache(HttpConn *conn, cchar *target, cchar *data, int lifesecs, cchar *uri)
+void espd(HttpConn *conn, cchar *target, int lifesecs, cchar *uri, cchar *data)
 {
     mprWriteCache(esp->cache, makeCacheKey(conn, target, uri), data, 0, lifesecs * MPR_TICKS_PER_SEC, 0, 0);
 }
 
 
+#endif
 /************************************ Support *********************************/
 
 static char *getControllerEntry(cchar *controllerName)
@@ -664,6 +705,8 @@ static EspRoute *allocEspRoute(HttpRoute *route)
         return 0;
     }
     httpSetRouteData(route, ESP_NAME, eroute);
+    eroute->route = route;
+
     if ((esp->actions = mprCreateHash(-1, 0)) == 0) {
         return 0;
     }
@@ -679,9 +722,6 @@ static EspRoute *allocEspRoute(HttpRoute *route)
     eroute->dir = route->dir;
     eroute->controllersDir = eroute->dir;
     eroute->layoutsDir = eroute->dir;
-#if UNUSED
-    eroute->modelsDir = eroute->dir;
-#endif
     eroute->viewsDir = eroute->dir;
     eroute->staticDir = eroute->dir;
 
@@ -691,9 +731,6 @@ static EspRoute *allocEspRoute(HttpRoute *route)
     httpSetRoutePathVar(route, "CONTROLLERS_DIR", eroute->controllersDir);
     httpSetRoutePathVar(route, "DB_DIR", eroute->dbDir);
     httpSetRoutePathVar(route, "LAYOUTS_DIR", eroute->layoutsDir);
-#if UNUSED
-    httpSetRoutePathVar(route, "MODELS_DIR", eroute->modelsDir);
-#endif
     httpSetRoutePathVar(route, "STATIC_DIR", eroute->staticDir);
     httpSetRoutePathVar(route, "VIEWS_DIR", eroute->viewsDir);
 
@@ -718,6 +755,7 @@ static EspRoute *cloneEspRoute(EspRoute *parent, HttpRoute *route)
         return 0;
     }
     httpSetRouteData(route, ESP_NAME, eroute);
+    eroute->route = parent->route;
     eroute->searchPath = parent->searchPath;
     eroute->edi = parent->edi;
     eroute->controllerBase = parent->controllerBase;
@@ -741,9 +779,6 @@ static EspRoute *cloneEspRoute(EspRoute *parent, HttpRoute *route)
     eroute->controllersDir = parent->controllersDir;
     eroute->dbDir = parent->dbDir;
     eroute->layoutsDir = parent->layoutsDir;
-#if UNUSED
-    eroute->modelsDir = parent->modelsDir;
-#endif
     eroute->viewsDir = parent->viewsDir;
     eroute->staticDir = parent->staticDir;
     return eroute;
@@ -759,9 +794,6 @@ static void setSimpleDirs(EspRoute *eroute)
     eroute->controllersDir = dir;
     eroute->dbDir = dir;
     eroute->layoutsDir = dir;
-#if UNUSED
-    eroute->modelsDir = dir;
-#endif
     eroute->viewsDir = dir;
     eroute->staticDir = dir;
 }
@@ -785,10 +817,6 @@ static void setMvcDirs(EspRoute *eroute, HttpRoute *route)
 
     eroute->layoutsDir  = mprJoinPath(dir, "layouts");
     httpSetRoutePathVar(route, "LAYOUTS_DIR", eroute->layoutsDir);
-#if UNUSED
-    eroute->modelsDir  = mprJoinPath(dir, "models");
-    httpSetRoutePathVar(route, "MODELS_DIR", eroute->modelsDir);
-#endif
 
     eroute->staticDir = mprJoinPath(dir, "static");
     httpSetRoutePathVar(route, "STATIC_DIR", eroute->staticDir);
@@ -812,9 +840,6 @@ void espManageEspRoute(EspRoute *eroute, int flags)
         mprMark(eroute->env);
         mprMark(eroute->layoutsDir);
         mprMark(eroute->link);
-#if UNUSED
-        mprMark(eroute->modelsDir);
-#endif
         mprMark(eroute->searchPath);
         mprMark(eroute->staticDir);
         mprMark(eroute->viewsDir);
@@ -826,7 +851,6 @@ static void manageReq(EspReq *req, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(req->action);
-        mprMark(req->cacheBuffer);
         mprMark(req->cacheName);
         mprMark(req->commandLine);
         mprMark(req->controllerName);
@@ -1074,10 +1098,6 @@ static int espDirDirective(MaState *state, cchar *key, cchar *value)
             eroute->dbDir = path;
         } else if (scmp(name, "layouts") == 0) {
             eroute->layoutsDir = path;
-#if UNUSED
-        } else if (scmp(name, "models") == 0) {
-            eroute->modelsDir = path;
-#endif
         } else if (scmp(name, "static") == 0) {
             eroute->staticDir = path;
         } else if (scmp(name, "views") == 0) {
@@ -1195,14 +1215,6 @@ static int espLoadDirective(MaState *state, cchar *key, cchar *value)
     return 0;
 }
 
-
-#if UNUSED
-static cchar *inheritPrefix(MaState *state, cchar *prefix)
-{
-    return state->route->prefix ? sjoin(state->route->prefix, "/", prefix, NULL) : prefix;
-}
-#endif
-    
 
 /*
     EspResource [resource ...]

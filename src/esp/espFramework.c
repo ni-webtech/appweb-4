@@ -68,6 +68,7 @@ void espAutoFinalize(HttpConn *conn)
     EspReq  *req;
 
     req = conn->data;
+#if UNUSED
     if (req->autoFinalize && !req->finalized) {
         req->finalized = 1;
         if (req->cacheBuffer) {
@@ -76,37 +77,38 @@ void espAutoFinalize(HttpConn *conn)
             httpFinalize(conn);
         }
     }
+#else
+    if (req->autoFinalize) {
+        httpFinalize(conn);
+    }
+#endif
 }
 
 
-static void manageAction(EspAction *ap, int flags)
+void espManageAction(EspAction *ap, int flags)
 {
+#if UNUSED
     if (flags & MPR_MANAGE_MARK) {
         mprMark(ap->cacheUri);
     }
+#endif
 }
 
 
-//  MOB - part of route?
-void espCacheControl(EspRoute *eroute, cchar *target, int lifesecs, cchar *uri)
+int espCache(cchar *routeName, cchar *uri, int lifesecs, int flags)
 {
-    EspAction  *action;
-    Esp         *esp;
+    //  MOB - REMOVE
+#if UNUSED
+    HttpRoute   *route;
 
-    esp = MPR->espService;
-    if ((action = mprLookupKey(esp->actions, mprJoinPath(eroute->controllersDir, target))) == 0) {
-        if ((action = mprAllocObj(EspAction, manageAction)) == 0) {
-            return;
-        }
+    //  MOB - could auto-add prefix
+    if ((route = httpLookupRoute(routeName)) == 0) {
+        mprError("espCache: Can't find route %s", routeName);
+        return MPR_ERR_CANT_FIND);
     }
-    if (uri) {
-        action->cacheUri = sclone(uri);
-    }
-    if (lifesecs <= 0) {
-        action->lifespan = eroute->lifespan;
-    } else {
-        action->lifespan = lifesecs * MPR_TICKS_PER_SEC;
-    }
+    httpAddCache(route, NULL, uri, NULL, NULL, lifesecs * MPR_TICKS_PER_SEC, flags);
+#endif
+    return 0;
 }
 
 
@@ -157,11 +159,13 @@ void espDefineAction(EspRoute *eroute, cchar *target, void *actionProc)
     mprAssert(actionProc);
 
     esp = MPR->espService;
-    if ((action = mprAllocObj(EspAction, manageAction)) == 0) {
+    if ((action = mprAllocObj(EspAction, espManageAction)) == 0) {
         return;
     }
     action->actionProc = actionProc;
-    mprAddKey(esp->actions, mprJoinPath(eroute->controllersDir, target), action);
+    if (target) {
+        mprAddKey(esp->actions, mprJoinPath(eroute->controllersDir, target), action);
+    }
 }
 
 
@@ -190,6 +194,7 @@ void espDefineView(EspRoute *eroute, cchar *path, void *view)
 
 void espFinalize(HttpConn *conn) 
 {
+#if UNUSED
     EspReq     *req;
     
     req = conn->data;
@@ -199,6 +204,9 @@ void espFinalize(HttpConn *conn)
         httpFinalize(conn);
     }
     req->finalized = 1;
+#else
+    httpFinalize(conn);
+#endif
 }
 
 
@@ -433,10 +441,14 @@ bool espIsEof(HttpConn *conn)
 
 bool espIsFinalized(HttpConn *conn) 
 {
+#if UNUSED
     EspReq      *req;
 
     req = conn->data;
     return req->finalized;
+#else
+    return httpIsFinalized(conn);
+#endif
 }
 
 
@@ -565,12 +577,23 @@ ssize espRenderBlock(HttpConn *conn, cchar *buf, ssize size)
     EspReq      *req;
     
     req = conn->data;
+#if UNUSED
     if (req->cacheBuffer) {
         httpSetResponded(conn);
         return mprPutBlockToBuf(req->cacheBuffer, buf, size);
     } else {
         return httpWriteBlock(conn->writeq, buf, size);
     }
+#else
+    return httpWriteBlock(conn->writeq, buf, size);
+#endif
+}
+
+
+//  MOB - need a renderCached(), updateCache()
+ssize espRenderCached(HttpConn *conn)
+{
+    return httpWriteCached(conn);
 }
 
 
@@ -590,7 +613,7 @@ ssize espRenderError(HttpConn *conn, int status, cchar *fmt, ...)
     eroute = req->eroute;
     written = 0;
 
-    if (!req->finalized) {
+    if (!httpIsFinalized(conn)) {
         if (status == 0) {
             status = HTTP_CODE_INTERNAL_SERVER_ERROR;
         }
@@ -916,6 +939,12 @@ void espShowRequest(HttpConn *conn)
         }
         espRender(conn, "\r\n");
     }
+}
+
+
+void espUpdateCache(HttpConn *conn, cchar *data)
+{
+    httpUpdateCache(conn, data);
 }
 
 

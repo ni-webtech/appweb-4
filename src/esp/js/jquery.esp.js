@@ -187,6 +187,25 @@
         return this;
     }
 
+    function anim(effects) {
+        e = $(this);
+        if (effects == "highlight") {
+            e.fadeTo(0, 0.5);
+            e.fadeTo(500, 1);
+        } else if (effects == "fadein") {
+            e.fadeTo(0, 0);
+            e.fadeTo(1000, 1);
+        } else if (effects == "fadeout") {
+            e.fadeTo(0, 1);
+            e.fadeTo(1000, 0);
+        } else if (effects == "bold") {
+            /* MOB Broken */
+            e.css("font-weight", 100);
+            // e.animate({"opacity": 0.1, "font-weight": 900}, 1000);
+            e.animate({"font-weight": 900}, 1000);
+        }
+    }
+
     /*
         Refresh dynamic elements using a data-refresh attributes
      */
@@ -476,6 +495,21 @@
             toggleUpdating.call(this);
         });
         toggleRefreshControl();
+        return false;
+    });
+
+    /*
+        Rounded corners, shadow
+
+        data-feedback="message"
+        data-feedback-style="override-style""
+        data-feedback-effect="highlight"
+        
+     */
+    $('[data-feedback] a').live('click', function (e) {
+        e = $('<div><p>' + msg + '</p></div>').addClass('esp-feedback');
+        e.center();
+        e.anim("highlight");
         return false;
     });
 

@@ -109,7 +109,7 @@ typedef struct Esp {
     MprHash         *views;                 /**< Table of views */
     MprHash         *internalOptions;       /**< Table of internal HTML control options  */
     MprThreadLocal  *local;                 /**< Thread local data */
-    MprCache        *cache;                 /**< Session and content cache */
+    MprCache        *cache;                 /**< Session cache */
     MprMutex        *mutex;                 /**< Multithread lock */
     EdiService      *ediService;            /**< Database service */
     int             inUse;                  /**< Active ESP request counter */
@@ -127,6 +127,7 @@ extern void espInitHtmlOptions(Esp *esp);
     @see
  */
 typedef struct EspRoute {
+    HttpRoute       *route;                 /**< Back link to the owning route */
     MprList         *env;                   /**< Environment for compiler */
     char            *compile;               /**< Compile template */
     char            *link;                  /**< Link template */
@@ -152,17 +153,81 @@ typedef struct EspRoute {
     Edi             *edi;                   /**< Default database for this route */
 } EspRoute;
 
+#define ESP_CACHE_MANUAL         HTTP_ROUTE_CACHE_MANUAL  /**< Cache manually. User must call espRenderCache */
+#define ESP_CACHE_IGNORE_PARAMS  HTTP_ROUTE_IGNORE_PARAMS /**< Cache uniquely for different request params */
+#define ESP_CACHE_CLIENT         HTTP_ROUTE_CLIENT_CACHE  /**< Cache on the client side */
+
+extern int espCache(cchar *routeName, cchar *uri, int lifesecs, int flags);
+
+#if UNUSED && MOVE_TO_HTTP
 /**
-    Control the caching of content for a given targetKey
-    @description This routine the response data content caching.
+    Control the caching of response content
+    @description This call configures caching for request responses. Caching may be used for any HTTP method, 
+    though typically it is most useful for state-less GET requests. Output data may be uniquely cached for requests 
+    with different URI query, post and route parameters.
     @param eroute EspRoute object
-    @param targetKey The HttpRoute target key to cache.
+    @param action Name of the Controller action or MOB -- what is it for just a POV.
     @param lifesecs Lifespan of cache items in seconds.
     @param uri Optional cache URI when using per-URI caching. Set to "*" to cache all matching URIs on a per-URI basis.
+        If the URI is set to "*" all URIs for that action are uniquely cached. If the request has POST data, 
+        the URI may include such post data in a sorted query format. E.g. {uri: /buy?item=scarf&quantity=1}.
+
+ISSUES
+    - Can't cache web pages without actions
+    - Not generic for CGI or non-esp data (PHP, CGI and even file could really benefit)
+QUESTIONS
+    - What does URI mean
+        - Without: cache on action. Should this be caching on the URI instead
+    - ESP_CACHE_VERY_ON_PARAMS. Is this implied if 
+
+SOLN
+    - Cache on URI+Params by default
+    - Option to ignore params
+    - Push into http
+    - Optionally have extra filters by extension and by method
+    - Convert Expiry/Client cache to use this mechanism
+    - Remove EspLifespan directive
+    - Call should auto-add the prefix
+
+    @param flags Cache mode flags. Select from ESP_CACHE_MANUAL and ESP_CACHE_VARY_ON_PARAMS. The ESP_CACHE_MANUAL 
+        flag enables manual mode caching. In this mode, responses will be cached, but you must manually call 
+        $espRenderCache to write cached data to the client. For MVC applications in manual cache mode, the action
+        routine will still be called.
+        The ESP_CACHE_VARY_ON_PARAMS flag causes responses to be cached uniquely for different request parameters.
+        Request parameters include the request URI, query string, request POST body data and route parameters.
+        If ESP_CACHE_CLIENT is set, "Cache-Control" Http header will be sent to the client with the caching "max-age" 
+        set to the lifesecs argument value. This causes the client to serve client-cached content and to not contact 
+        the server at all until the max-age expires. Alternatively, you can use $espSetHeader to explicitly set a
+        "Cache-Control header. For your reference, here are some keywords that can be used in the Cache-Control Http header.
+        \n\n
+            "max-age" Max time in seconds the resource is considered fresh.
+            "s-maxage" Max time in seconds the resource is considered fresh from a shared cache.
+            "public" marks authenticated responses as cacheable.
+            "private" shared caches may not store the response.
+            "no-cache" cache must re-submit request for validation before using cached copy.
+            "no-store" response may not be stored in a cache.
+            "must-revalidate" forces clients to revalidate the request with the server.
+            "proxy-revalidate" similar to must-revalidate except only for proxy caches.
+        \n\n
+        If the ESP_CACHE_TRANSPARENT flag is set, the request response will be automatically cached. Subsequent client 
+        requests will revalidate the cached content with the server. If the server-side cached content has not expired, 
+        a HTTP Not-Modified (304) response will be sent and the client will use its client-side cached content. 
+        This results in a very fast transaction with the client as no response data is sent.
+        \n\n
+        The ESP_CACHE_MANUAL and ESP_CACHE_TRANSPARENT are mutually exclusive -- you must choose one or the other. If 
+        neither flag is specified, the call defaults to use ESP_CACHE_TRANSPARENT.
+        \n\n
+        Use ESP_CACHE_CLIENT for static content that will rarely change or for content for which using "reload" in 
+        the browser is an adequate solution to force a refresh. Use ESP_CACHE_MANUAL for situations where you need to
+        explicitly control when and how cached data is returned to the client. For most other situations, use 
+        ESP_CACHE_TRANSPARENT.
     @return A count of the bytes actually written
     @ingroup EspRoute
  */
-extern void espCacheControl(EspRoute *eroute, cchar *targetKey, int lifesecs, cchar *uri);
+//  MOB - remove "Control"
+extern void espCacheControl(EspRoute *eroute, cchar *action, int lifesecs, cchar *uri, int flags);
+#endif
+
 
 /**
     Compile a view or controller
@@ -365,6 +430,16 @@ extern MprHash *espGetSessionObj(HttpConn *conn, cchar *key);
  */
 typedef void (*EspViewProc)(HttpConn *conn);
 
+#if UNUSED
+/*
+    EspAction flags (also used in espCacheControl)
+ */
+#define ESP_CACHE_TRANSPARENT       0x1     /**< Cache transparently */
+#define ESP_CACHE_MANUAL            0x2     /**< Cache manually. User must call espRenderCache */
+#define ESP_CACHE_VARY_ON_PARAMS    0x4     /**< Cache uniquely for different request params (query, post data) */
+#define ESP_CACHE_CLIENT            0x8     /**< Cache on the client side */
+#endif
+
 /**
     ESP Action
     @description Actions are run after a request URI is routed to a controller.
@@ -373,9 +448,14 @@ typedef void (*EspViewProc)(HttpConn *conn);
  */
 typedef struct EspAction {
     EspProc         actionProc;             /**< Action procedure to run to respond to the request */
+#if UNUSED
     MprTime         lifespan;               /**< Lifespan for cached action content */
     char            *cacheUri;              /**< Per-URI caching details */
+    int             flags;                  /**< Cache control flags */
+#endif
 } EspAction;
+
+void espManageAction(EspAction *ap, int flags);
 
 /**
     ESP request
@@ -388,7 +468,9 @@ typedef struct EspReq {
     EspSession      *session;               /**< Session data object */
     EspAction       *action;                /**< Action to invoke */
     Esp             *esp;                   /**< Convenient esp reference */
+#if UNUSED
     MprBuf          *cacheBuffer;           /**< HTML output caching */
+#endif
     MprHash         *flash;                 /**< New flash messages */
     MprHash         *lastFlash;             /**< Flash messages from the last request */
     char            *cacheName;             /**< Base name of intermediate compiled file */
@@ -400,7 +482,9 @@ typedef struct EspReq {
     char            *entry;                 /**< Module entry point */
     char            *commandLine;           /**< Command line for compile/link */
     int             autoFinalize;           /**< Request is/will-be auto-finalized */
+#if UNUSED
     int             finalized;              /**< Request has been finalized */
+#endif
     int             sessionProbed;          /**< Already probed for session store */
     int             appLoaded;              /**< App module already probed */
     int             lastDomID;              /**< Last generated DOM ID */
@@ -959,6 +1043,16 @@ extern ssize espRender(HttpConn *conn, cchar *fmt, ...);
 extern ssize espRenderBlock(HttpConn *conn, cchar *buf, ssize size);
 
 /**
+    Render cached content
+    @description Render the saved, cached response from a prior request to this URI. This is useful if the caching
+        mode has been set to "manual".
+    @param conn HttpConn connection object
+    @return A count of the bytes actually written
+    @ingroup EspReq
+ */
+ssize espRenderCached(HttpConn *conn);
+
+/**
     Render an error message back to the client and finalize the request. The output is Html escaped for security.
     @param conn HttpConn connection object
     @param status Http status code
@@ -1196,6 +1290,15 @@ extern EdiRec *espSetRec(HttpConn *conn, EdiRec *rec);
     @ingroup EspReq
  */
 extern void espShowRequest(HttpConn *conn);
+
+/**
+    Update the cached content for a request
+    @description Save the given content for future requests. This is useful if the caching mode has been set to "manual". 
+    @param conn HttpConn connection object
+    @param data Data to cache
+    @ingroup EspReq
+ */
+void espUpdateCache(HttpConn *conn, cchar *data);
 
 /**
     Write a value to a database table field

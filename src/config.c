@@ -106,7 +106,7 @@ static int parseFileInner(MaState *state, cchar *path)
     if (maOpenConfig(state, path) < 0) {
         return MPR_ERR_CANT_OPEN;
     }
-    for (state->lineNumber = 1; (line = mprReadLine(state->file, 0, NULL)) != 0; state->lineNumber++) {
+    for (state->lineNumber = 1; state->file && (line = mprReadLine(state->file, 0, NULL)) != 0; state->lineNumber++) {
         for (tok = line; isspace((int) *tok); tok++) ;
         if (*tok == '\0' || *tok == '#') {
             continue;
@@ -438,31 +438,81 @@ static int authDigestQopDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    ClientCache timeout ext ...
+    Cache [client|server] options
+    Options:
+        Lifespan-Number
+        extensions="html,gif,..."
+        methods="GET,PUT,*,..."
+        types="GET,PUT,*,..."
+        combined | only | unique
  */
-static int clientCacheDirective(MaState *state, cchar *key, cchar *value)
+static int cacheDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *when, *extensions;
+    MprTime     lifespan;
+    char        *kind, *args, *option, *ovalue, *tok;
+    char        *methods, *extensions, *types, *uris;
+    int         flags;
 
-    if (!maTokenize(state, value, "%S %*", &when, &extensions)) {
+    if (!maTokenize(state, value, "%S ?*", &kind, &args)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    httpAddRouteExpiry(state->route, (MprTime) stoi(when, 10, NULL), extensions);
-    return 0;
-}
-
-
-/*
-    ClientCacheByType timeout mimeTypes ...
- */
-static int clientCacheByTypeDirective(MaState *state, cchar *key, cchar *value)
-{
-    char    *when, *mimeTypes;
-
-    if (!maTokenize(state, value, "%S %S", &when, &mimeTypes)) {
-        return MPR_ERR_BAD_SYNTAX;
+    flags = 0;
+    if (scasematch(kind, "client")) {
+        flags |= HTTP_CACHE_CLIENT;
     }
-    httpAddRouteExpiryByType(state->route, (MprTime) stoi(when, 10, NULL), mimeTypes);
+    lifespan = -1;
+    methods = uris = extensions = types = 0;
+    for (option = stok(sclone(args), " \t", &tok); option; option = stok(0, " \t", &tok)) {
+        if (*option == '/') {
+            uris = option;
+            if (tok) {
+                /* Join the rest of the options back into one list of URIs */
+                tok[-1] = ',';
+            }
+            break;
+        }
+        option = stok(option, " =\t,", &ovalue);
+        ovalue = strim(ovalue, "\"'", MPR_TRIM_BOTH);
+        if ((int) isdigit(*option)) {
+            lifespan = (MprTime) stoi(option, 10, NULL) * MPR_TICKS_PER_SEC;
+
+        } else if (smatch(option, "extensions")) {
+            extensions = ovalue;
+
+        } else if (smatch(option, "types")) {
+            types = ovalue;
+
+        } else if (smatch(option, "combined")) {
+            flags |= HTTP_CACHE_COMBINED;
+            flags &= ~(HTTP_CACHE_ONLY | HTTP_CACHE_UNIQUE);
+
+        } else if (smatch(option, "only")) {
+            flags |= HTTP_CACHE_ONLY;
+            flags &= ~(HTTP_CACHE_COMBINED | HTTP_CACHE_UNIQUE);
+
+        } else if (smatch(option, "unique")) {
+            flags |= HTTP_CACHE_UNIQUE;
+            flags &= ~(HTTP_CACHE_COMBINED | HTTP_CACHE_ONLY);
+
+        } else if (smatch(option, "manual")) {
+            flags |= HTTP_CACHE_MANUAL;
+
+        } else if (smatch(option, "methods")) {
+            methods = ovalue;
+
+        } else {
+            mprError("Unknown Cache option '%s'", option);
+            return MPR_ERR_BAD_SYNTAX;
+        }
+    }
+    if (flags & !(HTTP_CACHE_ONLY | HTTP_CACHE_UNIQUE)) {
+        flags |= HTTP_CACHE_COMBINED;
+    }
+    if (lifespan > 0 && !uris && !extensions && !types && !methods) {
+        state->route->lifespan = lifespan;
+    } else {
+        httpAddCache(state->route, methods, uris, extensions, types, lifespan, flags);
+    }
     return 0;
 }
 
@@ -1402,7 +1452,7 @@ static int resetPipelineDirective(MaState *state, cchar *key, cchar *value)
 static int routeDirective(MaState *state, cchar *key, cchar *value)
 {
     HttpRoute   *route;
-    char        *pattern;
+    char        *pattern, *name;
     int         not;
 
     state = maPushState(state);
@@ -1413,7 +1463,9 @@ static int routeDirective(MaState *state, cchar *key, cchar *value)
         if (strstr(pattern, "${")) {
             pattern = sreplace(pattern, "${inherit}", state->route->pattern);
         }
-        if ((route = httpLookupRoute(state->host, pattern)) != 0) {
+        name = (*pattern == '^') ? &pattern[1] : pattern;
+        
+        if ((route = httpLookupRoute(state->host, name)) != 0) {
             state->route = route;
         } else {
             state->route = httpCreateInheritedRoute(state->route);
@@ -1799,6 +1851,7 @@ bool maTokenize(MaState *state, cchar *line, cchar *fmt, ...)
     if (!httpTokenizev(state->route, line, fmt, ap)) {
         mprError("Bad \"%s\" directive at line %d in %s\nLine: %s %s\n", 
                 state->key, state->lineNumber, state->filename, state->key, line);
+        return 0;
     }
     va_end(ap);
     return 1;
@@ -1925,7 +1978,7 @@ static void manageState(MaState *state, int flags)
 
 static int configError(MaState *state, cchar *key)
 {
-    mprError("Bad directive \"%s\"\nAt line %d in %s\n\n", key, state->lineNumber, state->filename);
+    mprError("Error in directive \"%s\"\nAt line %d in %s\n\n", key, state->lineNumber, state->filename);
     return MPR_ERR_BAD_SYNTAX;
 }
 
@@ -1986,8 +2039,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "AuthType", authTypeDirective);
     maAddDirective(appweb, "AuthUserFile", authUserFileDirective);
     maAddDirective(appweb, "AuthDigestQop", authDigestQopDirective);
-    maAddDirective(appweb, "ClientCache", clientCacheDirective);
-    maAddDirective(appweb, "ClientCacheByType", clientCacheByTypeDirective);
+    maAddDirective(appweb, "Cache", cacheDirective);
     maAddDirective(appweb, "Chroot", chrootDirective);
     maAddDirective(appweb, "Compress", compressDirective);
     maAddDirective(appweb, "Condition", conditionDirective);

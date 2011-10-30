@@ -102,6 +102,7 @@ int maRunSimpleWebServer(cchar *ip, int port, cchar *home, cchar *documents)
 }
 
 
+//  BLOG
 /*
     This will restart the default server on a new IP:PORT. It will stop listening on the default endpoint on the default
     server, optionally modify the IP:PORT and resume listening. NOTE: running requests will be unaffected.
@@ -123,7 +124,7 @@ void maRestartServer(cchar *ip, int port)
         endpoint->port = port;
     }
     if (ip) {
-        endpoint->ip = sclone(ip);;
+        endpoint->ip = sclone(ip);
     }
     httpStartEndpoint(endpoint);
     unlock(appweb->servers);

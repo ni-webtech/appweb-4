@@ -134,6 +134,7 @@ struct HttpUri;
 
 #define HTTP_INACTIVITY_TIMEOUT   (60  * 1000)      /**< Keep connection alive timeout */
 #define HTTP_SESSION_TIMEOUT      (3600 * 1000)     /**< One hour */
+#define HTTP_CACHE_LIFESPAN       86400             /**< Default cache lifespan to 1 day */
 
 #define HTTP_DATE_FORMAT          "%a, %d %b %Y %T GMT"
 
@@ -292,7 +293,9 @@ typedef struct Http {
     struct HttpStage *netConnector;         /**< Default network connector */
     struct HttpStage *sendConnector;        /**< Optimized sendfile connector */
     struct HttpStage *rangeFilter;          /**< Ranged requests filter */
+    struct HttpStage *cacheFilter;          /**< Cache filter */
     struct HttpStage *chunkFilter;          /**< Chunked transfer encoding filter */
+    struct HttpStage *cacheHandler;         /**< Cache filter */
     struct HttpStage *cgiHandler;           /**< CGI listing handler */
     struct HttpStage *dirHandler;           /**< Directory listing handler */
     struct HttpStage *egiHandler;           /**< Embedded Gateway Interface (EGI) handler */
@@ -1594,6 +1597,7 @@ extern void httpAddStage(Http *http, HttpStage *stage);
 extern int httpOpenNetConnector(Http *http);
 extern int httpOpenSendConnector(Http *http);
 extern int httpOpenChunkFilter(Http *http);
+extern int httpOpenCacheHandler(Http *http);
 extern int httpOpenPassHandler(Http *http);
 extern int httpOpenRangeFilter(Http *http);
 extern int httpOpenUploadFilter(Http *http);
@@ -1718,8 +1722,8 @@ extern void httpSetIOCallback(struct HttpConn *conn, HttpIOCallback fn);
     @stability Evolving
     @defgroup HttpConn HttpConn
     @see HttpConn HttpEnvCallback HttpGetPassword HttpListenCallback HttpNotifier HttpQueue HttpRedirectCallback 
-        HttpRx HttpStage HttpTx HtttpListenCallback httpCallEvent httpCloseConn httpCompleteRequest 
-        httpCompleteWriting httpConnTimeout httpConsumeLastRequest httpCreateConn httpCreateRxPipeline 
+        HttpRx HttpStage HttpTx HtttpListenCallback httpCallEvent httpCloseConn 
+        httpConnectorComplete httpConnTimeout httpConsumeLastRequest httpCreateConn httpCreateRxPipeline 
         httpCreateTxPipeline httpDestroyConn httpDestroyPipeline httpDiscardTransmitData httpDisconnect 
         httpEnableUpload httpError httpEvent httpGetAsync httpGetChunkSize httpGetConnContext httpGetConnHost 
         httpGetError httpGetExt httpGetKeepAliveCount httpMatchHost httpMemoryError httpPrepClientConn 
@@ -1739,9 +1743,11 @@ typedef struct HttpConn {
     int             state;                  /**< Connection state */
     int             error;                  /**< A request error has occurred */
     int             connError;              /**< A connection error has occurred */
-    int             finalized;              /**< Request complete */
-    int             responded;              /**< The request has responded (endpoint). Some output has been initiated */
-    int             writeComplete;          /**< All write data has been sent (set by connectors) */
+
+    int             responded;              /**< The request has started to respond. Some output has been initiated. */
+    int             finalized;              /**< End of response has been signified (set at handler level) */
+
+    int             connectorComplete;      /**< Connector has finished sending the response */
     int             advancing;              /**< In httpProcess (reentrancy prevention) */
 
     HttpLimits      *limits;                /**< Service limits */
@@ -1833,19 +1839,12 @@ extern void httpCallEvent(HttpConn *conn, int mask);
 extern void httpCloseConn(HttpConn *conn);
 
 /**
-    Signal the request is complete. This is called by connectors when the request is complete
-    @param conn HttpConn object created via $httpCreateConn
-    @ingroup HttpConn
- */ 
-extern void httpCompleteRequest(HttpConn *conn);
-
-/**
-    Signal writing transmission body is complete. This is called by connectors when writing data is complete.
+    Connector has completed sending the response.
     @param conn HttpConn object created via $httpCreateConn
     @ingroup HttpConn
     @internal
  */ 
-extern void httpCompleteWriting(HttpConn *conn);
+extern void httpConnectorComplete(HttpConn *conn);
 
 /**
     Signal a connection timeout on a connection
@@ -2826,18 +2825,37 @@ typedef struct HttpLang {
     int         flags;                      /**< Control suffix position */
 } HttpLang;
 
+
+#define HTTP_CACHE_MANUAL           0x1     /**< Cache manually. User must call httpWriteCache */
+#define HTTP_CACHE_CLIENT           0x2     /**< Cache on the client side */
+#define HTTP_CACHE_RESET            0x4     /**< Don't inherit cache config from outer routes */
+#define HTTP_CACHE_COMBINED         0x8     /**< Combine the caching of requests with different params */
+#define HTTP_CACHE_ONLY             0x10    /**< Cache exactly the specified URI with params */
+#define HTTP_CACHE_UNIQUE           0x20    /**< Uniquely cache request with different params */
+
+typedef struct HttpCache {
+    MprHash     *extensions;                /**< Extensions to cache */
+    MprHash     *methods;                   /**< Methods to cache */
+    MprHash     *types;                     /**< MimeTypes to cache */
+    MprHash     *uris;                      /**< URIs to cache */
+    MprTime     lifespan;                   /**< Lifespan for cached content */
+    int         flags;                      /**< Cache control flags */
+} HttpCache;
+
+extern void httpAddCache(struct HttpRoute *route, cchar *methods, cchar *uris, cchar *extensions, cchar *types, 
+        MprTime lifespan, int flags);
+extern int httpUpdateCache(HttpConn *conn, cchar *data);
+extern ssize httpWriteCached(HttpConn *conn);
+extern bool httpSetupRequestCaching(HttpConn *conn);
+
 /*
     Misc route API flags
  */
 #define HTTP_ROUTE_NOT            0x1       /**< Negate the route pattern test result */
 #define HTTP_ROUTE_FREE           0x2       /**< Free Route.mdata back to malloc when route is freed */
 #define HTTP_ROUTE_RAW            0x4       /**< Don't html encode the write data */
-
-/*
-    Route flags (set above the API flasg)
- */
-#define HTTP_ROUTE_PUT_DELETE     0x100     /**< Support PUT|DELETE */
-#define HTTP_ROUTE_GZIP           0x1000    /**< Support gzipped conent */
+#define HTTP_ROUTE_PUT_DELETE     0x1000    /**< Support PUT|DELETE */
+#define HTTP_ROUTE_GZIP           0x2000    /**< Support gzipped conent */
 
 /**
     Route Control
@@ -2877,7 +2895,8 @@ typedef struct HttpRoute {
     ssize           startWithLen;           /**< Length of startWith */
     ssize           startSegmentLen;        /**< Prefix length */
 
-
+    MprList         *caching;               /**< Items to cache */
+    int             lifespan;               /**< Default lifespan for all cache items in route */
     HttpAuth        *auth;                  /**< Per route block authentication */
     Http            *http;                  /**< Http service object (copy of appweb->http) */
     struct HttpHost *host;                  /**< Owning host */
@@ -2887,10 +2906,9 @@ typedef struct HttpRoute {
     char            *defaultLanguage;       /**< Default language */
     MprHash         *extensions;            /**< Hash of handlers by extensions */
     MprList         *handlers;              /**< List of handlers for this route */
+    MprList         *handlersWithMatch;     /**< List of handlers with match routines */
     HttpStage       *connector;             /**< Network connector to use */
     MprHash         *data;                  /**< Hash of extra data configuration */
-    MprHash         *expires;               /**< Expiry of content by extension */
-    MprHash         *expiresByType;         /**< Expiry of content by mime type */
     MprHash         *pathTokens;            /**< Path $token refrerences */
     MprHash         *languages;             /**< Languages supported */
     MprList         *inputStages;           /**< Input stages */
@@ -3900,10 +3918,6 @@ typedef struct HttpRx {
     MprHash         *requestData;           /**< General request data storage. Users must create hash table if required */
     MprTime         since;                  /**< If-Modified date */
 
-#if UNUSED
-    ssize           chunkSize;              /**< Size of the next chunk */
-#endif
-
     int             chunkState;             /**< Chunk encoding state */
     int             flags;                  /**< Rx modifiers */
     int             form;                   /**< Using mime-type application/x-www-form-urlencoded */
@@ -3960,10 +3974,7 @@ typedef struct HttpRx {
     char            *uploadDir;             /**< Upload directory */
     int             autoDelete;             /**< Auto delete uploaded files */
 
-    /*
-        Misc
-     */
-    char            *formData;              /**< Cached form data as a string*/
+    char            *paramString;           /**< Cached param data as a string */
     HttpLang        *lang;                  /**< Selected language */
 
     /*
@@ -4045,6 +4056,17 @@ extern cchar *httpGetParam(HttpConn *conn, cchar *var, cchar *defaultValue);
     @ingroup HttpRx
  */
 extern MprHash *httpGetParams(HttpConn *conn);
+
+/**
+    Get the request params table as a string
+    @description This call gets the request params encoded as a string. The params are always in the same order 
+        regardless of the form parameter order. Request parameters include query parameters, form data and routing 
+        parameters.
+    @param conn HttpConn connection object
+    @return A string representation in www-urlencoded format.
+    @ingroup HttpRx
+ */
+extern char *httpGetParamsString(HttpConn *conn);
 
 /** 
     Get an rx http header.
@@ -4230,7 +4252,6 @@ extern void httpCloseRx(struct HttpConn *conn);
 extern HttpRange *httpCreateRange(HttpConn *conn, MprOff start, MprOff end);
 extern HttpRx *httpCreateRx(HttpConn *conn);
 extern void httpDestroyRx(HttpRx *rx);
-extern char *httpGetFormData(HttpConn *conn);
 extern bool httpMatchEtag(HttpConn *conn, char *requestedEtag);
 extern bool httpMatchModified(HttpConn *conn, MprTime time);
 extern void httpProcess(HttpConn *conn, HttpPacket *packet);
@@ -4284,6 +4305,9 @@ typedef struct HttpTx {
     HttpQueue       *queue[2];              /**< Dummy head for the queues */
 
     MprHash         *headers;               /**< Transmission headers */
+    HttpCache       *cache;                 /**< Cache control entry (only set if this request is being cached) */
+    MprBuf          *cacheBuffer;           /**< Response caching buffer */
+    cchar           *cachedContent;         /**< Retrieved cached response to send */
 
     HttpRange       *outputRanges;          /**< Data ranges for tx data */
     HttpRange       *currentRange;          /**< Current range being fullfilled */
@@ -4417,6 +4441,7 @@ extern void httpFollowRedirects(HttpConn *conn, bool follow);
  */
 extern void httpFormatError(HttpConn *conn, int status, cchar *fmt, ...);
 
+#if UNUSED
 /** 
     Format an error transmission using a va_list
     @description Format an error message to use instead of data generated by the request processing pipeline.
@@ -4430,6 +4455,7 @@ extern void httpFormatError(HttpConn *conn, int status, cchar *fmt, ...);
     @ingroup HttpTx
  */
 extern void httpFormatErrorV(HttpConn *conn, int status, cchar *fmt, va_list args);
+#endif
 
 /** 
     Format an alternate response
@@ -4929,6 +4955,7 @@ typedef struct HttpHost {
     int             port;                   /**< Port address portion parsed from name */
 
     struct HttpHost *parent;                /**< Parent host to inherit aliases, dirs, routes */
+    MprCache        *cache;                 /**< Response content caching store */
     MprList         *dirs;                  /**< List of Directory definitions */
     MprList         *routes;                /**< List of Route defintions */
     HttpRoute       *defaultRoute;          /**< Default route for the host */

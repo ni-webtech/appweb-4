@@ -218,3 +218,29 @@ div.-esp-flash {
     -moz-border-radius: 14px;
     -webkit-box-shadow: 9px 9px 9px #888;
 }
+
+div.-esp-feedback {
+    xheight: 50px;
+    xwidth: 200px;
+    opacity: .9;
+    text-align: center;
+    vertical-align: middle;
+    position: absolute;
+    left: 300px;
+    top: 300px;
+
+
+    font-size: 140%;
+    line-height: 140%; 
+    font-family: Consolas, Monaco, Courier, Courier New, Courier, monospace; 
+    padding: 5px 20px 10px 20px;
+    xmargin: 10px;
+    color: #FFFFFF;
+    -moz-border-radius: 7px;
+    -webkit-border-radius: 7px;
+    -webkit-box-shadow: 5px 5px 9px #888;
+
+    xbackground-color: #20344D;
+    background: -webkit-gradient(linear, left top, left bottom, from(rgba(28,46,67,.99)), color-stop(1, #386080));
+    border: 1px solid #224;
+}
