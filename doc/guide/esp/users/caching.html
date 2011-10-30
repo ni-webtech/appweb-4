@@ -81,6 +81,47 @@
         </div>
         <div class="contentLeft">
             <h1>HEADER</h1>
+<pre>
+MOB - is caching done differently for different post data?
+    - This should be optional and configurable
+MOB - how to cache web pages when not using MVC
+MOB - can it be pushed into http and be used for static content (do design)
+. Why caching
+    - Performance comparisons
+        - Uncached
+        - Client side
+        - Server side
+            - Server side - no generation
+            - Server side - no transmission (if-modified)
+    - How it works (server side)
+    - Client If-Modified and etags
+    - Reloading
+. Modes of caching
+    - client
+    - server transparent
+    - manual
+. Client side caching
+    . EspCache directive
+. Caching controller output
+. Caching web pages
+. Cache Lifespans
+. Cache backend - local
+    - In-memory
+    - Single process
+. espCacheControl(eroute, target, lifesecs, uri)
+    - Varying by URI
+    - Query
+bool espRenderCached(HttpConn *conn, cchar *target, cchar *uri)
+void espUpdateCache(HttpConn *conn, cchar *target, cchar *data, int lifesecs, cchar *uri)
+
+
+. espUpdateCache - Update cached data
+. espWriteCached - manually write cached data (mprWriteCache)
+    ssize mprWriteCache(MprCache *cache, cchar *key, cchar *value, MprTime modified, MprTime lifespan, 
+        int64 version, int options)
+    bool mprRemoveCache(MprCache *cache, cchar *key)
+
+</pre>
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->

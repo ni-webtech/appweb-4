@@ -335,10 +335,10 @@ ediSetField(product, "description", "458 Spider");
             some data for viewing and then invoke a view to render a response. In this pattern, the controller
             defines a "current" database record which can then be used by views to conveniently display field data.</p>
 
-            <p>To make this easy, ESP supports an inline "<tt>@*</tt>" directive. If the controller defined a
+            <p>To make this easy, ESP supports an inline "<tt>@#</tt>" directive. If the controller defined a
             current product record, this example would render the product price.</p>
 <pre>
-&lt;p&gt;Price: <b>@*price</b>&lt;/p&gt;
+&lt;p&gt;Price: <b>@#price</b>&lt;/p&gt;
 </pre>
             <a name="validation"></a>
             <h2 class="section">Record Validation</h2>

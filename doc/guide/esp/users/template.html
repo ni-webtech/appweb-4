@@ -334,6 +334,10 @@ views/CONTROLLER-VIEW.esp
                         <td>@@variable</td>
                         <td>Request parameter variable. This is equivalent to "<tt>param(variable)</tt>"</td>
                     </tr>
+                    <tr>
+                        <td>@#field</td>
+                        <td>Record field variable. This is equivalent to "<tt>ediGetField(getRec(), field))</tt>"</td>
+                    </tr>
                 </tbody>
             </table>
             <h3><td>&lt;%@ include "file" %&gt;</h3>
@@ -409,6 +413,17 @@ Today is <%= mprGetDate(0); %>&lt;
 &lt;h2&gt;My name is <b>@@name</b>&lt;/h2&gt;
 </pre>
             <p>This directive is very useful for accessing any request, form, query or session data.</p>
+
+            <h3>@#field</h3>
+            <p>ESP provides a shorthand for accessing field data in the current database record. Controllers will
+            often setup the environment for a view by defining a "current" database record.
+            The <tt>@#field</tt> directive provides an easiy way to access any field in the current record. 
+            <p>If a controller defined a current "<tt>user</tt>" record, this example below would extract the 
+            "<tt>name</tt>" field for dsiplay.
+            <pre>
+&lt;h2&gt;My name is <b>@#name</b>&lt;/h2&gt;
+</pre>
+
         <h2 class="section">Request Context </h2>
             <p>The full HTTP request context is provided by a set of objects. These include:
             <ul>
