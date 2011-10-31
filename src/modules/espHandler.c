@@ -707,12 +707,14 @@ static EspRoute *allocEspRoute(HttpRoute *route)
     httpSetRouteData(route, ESP_NAME, eroute);
     eroute->route = route;
 
+#if UNUSED
     if ((esp->actions = mprCreateHash(-1, 0)) == 0) {
         return 0;
     }
     if ((esp->views = mprCreateHash(-1, MPR_HASH_STATIC_VALUES)) == 0) {
         return 0;
     }
+#endif
 #if DEBUG_IDE
     eroute->cacheDir = mprGetAppDir();
 #else

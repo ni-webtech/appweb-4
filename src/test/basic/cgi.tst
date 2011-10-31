@@ -89,11 +89,13 @@ if (!global.test || test.config["cgi"] == 1) {
     }
 
     function query() {
+/*
         http.get(HTTP + "/cgiProgram.cgi/extra/path?a=b&c=d&e=f")
         match("SCRIPT_NAME", "/cgiProgram.cgi")
         match("PATH_INFO", "/extra/path")
         contains("QVAR a=b")
         contains("QVAR c=d")
+*/
 
         http.get(HTTP + "/cgiProgram.cgi?a+b+c")
         match("QUERY_STRING", "a+b+c")
@@ -228,9 +230,11 @@ if (!global.test || test.config["cgi"] == 1) {
         match("QUERY_STRING", "a|b+c>d+e?f+g>h+i'j+k\"l+m%20n")
         assert(http.response.contains("QVAR a|b c>d e?f g>h i'j k\"l m n"))
     }
+/*
     forms()
     alias()
     extraPath()
+*/
     query()
     args()
     encoding()
