@@ -1657,6 +1657,7 @@ static void processCacheHandler(HttpQueue *q)
     tx = conn->tx;
     if (tx->cachedContent) {
         mprLog(3, "cacheHandler: write cached content for '%s'", conn->rx->uri);
+        tx->length = slen(tx->cachedContent);
         httpWriteString(q, tx->cachedContent);
     }
     httpFinalize(conn);
@@ -1700,7 +1701,7 @@ static void outgoingCacheFilterService(HttpQueue *q)
             return;
         }
         if (packet->flags & HTTP_PACKET_HEADER) {
-            if (useCache && tx->length >= 0) {
+            if (useCache) {
                 tx->length = slen(tx->cachedContent);
             }
 
@@ -2239,29 +2240,37 @@ static void outgoingChunkService(HttpQueue *q)
     HttpConn    *conn;
     HttpPacket  *packet;
     HttpTx      *tx;
+    cchar       *value;
 
     conn = q->conn;
     tx = conn->tx;
 
     if (!(q->flags & HTTP_QUEUE_SERVICED)) {
         /*  
-            If the last packet is the end packet, we have all the data. Thus we know the actual content length 
-            and can bypass the chunk handler.
+            If we don't know the content length (tx->length < 0) and if the last packet is the end packet. Then
+            we have all the data. Thus we can determine the actual content length and can bypass the chunk handler.
          */
-        if (q->last->flags & HTTP_PACKET_END) {
-            if (tx->chunkSize < 0 && tx->length <= 0) {
-                /*  
-                    Set the response content length and thus disable chunking -- not needed as we know the entity length.
-                 */
-                tx->length = (int) q->count;
-            }
-        } else {
-            if (tx->chunkSize < 0) {
-                tx->chunkSize = min(conn->limits->chunkSize, q->max);
+        if (tx->length < 0 && (value = mprLookupKey(tx->headers, "Content-Length")) != 0) {
+            tx->length = stoi(value, 10, 0);
+        }
+        if (tx->length < 0) {
+            if (q->last->flags & HTTP_PACKET_END) {
+                if (tx->chunkSize < 0 && tx->length <= 0) {
+                    /*  
+                        Set the response content length and thus disable chunking -- not needed as we know the entity length.
+                     */
+                    tx->length = (int) q->count;
+                }
+            } else {
+                if (tx->chunkSize < 0) {
+                    tx->chunkSize = min(conn->limits->chunkSize, q->max);
+                }
             }
         }
     }
+    //  MOB - change altBody test to length
     //  MOB - refactor to setting altBody also sets tx->length
+    mprAssert(tx->altBody == 0 || tx->length);
     if (tx->chunkSize <= 0 || tx->altBody) {
         httpDefaultOutgoingServiceStage(q);
     } else {
@@ -8180,6 +8189,7 @@ int httpAddRouteFilter(HttpRoute *route, cchar *name, cchar *extensions, int dir
     HttpStage   *stage;
     HttpStage   *filter;
     char        *extlist, *word, *tok;
+    int         pos;
 
     mprAssert(route);
     
@@ -8215,7 +8225,13 @@ int httpAddRouteFilter(HttpRoute *route, cchar *name, cchar *extensions, int dir
     }
     if (direction & HTTP_STAGE_TX && filter->outgoingData) {
         GRADUATE_LIST(route, outputStages);
-        mprAddItem(route->outputStages, filter);
+        if (smatch(name, "cacheFilter") && 
+                (pos = mprGetListLength(route->outputStages) - 1) >= 0 &&
+                smatch(((HttpStage*) mprGetLastItem(route->outputStages))->name, "chunkFilter")) {
+            mprInsertItemAtPos(route->outputStages, pos, filter);
+        } else {
+            mprAddItem(route->outputStages, filter);
+        }
     }
     return 0;
 }

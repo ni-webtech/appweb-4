@@ -68,30 +68,14 @@ void espAutoFinalize(HttpConn *conn)
     EspReq  *req;
 
     req = conn->data;
-#if UNUSED
-    if (req->autoFinalize && !req->finalized) {
-        req->finalized = 1;
-        if (req->cacheBuffer) {
-            httpSetResponded(conn);
-        } else  {
-            httpFinalize(conn);
-        }
-    }
-#else
     if (req->autoFinalize) {
         httpFinalize(conn);
     }
-#endif
 }
 
 
 void espManageAction(EspAction *ap, int flags)
 {
-#if UNUSED
-    if (flags & MPR_MANAGE_MARK) {
-        mprMark(ap->cacheUri);
-    }
-#endif
 }
 
 
@@ -194,19 +178,7 @@ void espDefineView(EspRoute *eroute, cchar *path, void *view)
 
 void espFinalize(HttpConn *conn) 
 {
-#if UNUSED
-    EspReq     *req;
-    
-    req = conn->data;
-    if (req->cacheBuffer) {
-        httpSetResponded(conn);
-    } else {
-        httpFinalize(conn);
-    }
-    req->finalized = 1;
-#else
     httpFinalize(conn);
-#endif
 }
 
 
@@ -371,38 +343,6 @@ char *espGetStatusMessage(HttpConn *conn)
 char *espGetTop(HttpConn *conn)
 {
     return httpLink(conn, "~", NULL);
-#if UNUSED
-    HttpRx      *rx;
-    cchar       *path, *end, *sp;
-    char        *home, *cp;
-    int         levels;
-
-    //  MOB - should this just use the route.home.  ie. httpLink(conn, "~", NULL);
-    if (conn == NULL) {
-        return sclone("/");
-    }
-    rx = conn->rx;
-    mprAssert(rx->pathInfo);
-
-    path = rx->pathInfo;
-    end = &path[strlen(path)];
-    for (levels = 1, sp = &path[1]; sp < end; sp++) {
-        if (*sp == '/' && sp[-1] != '/') {
-            levels++;
-        }
-    }
-    home = mprAlloc(levels * 3 + 2);
-    if (levels) {
-        for (cp = home; levels > 0; levels--) {
-            strcpy(cp, "../");
-            cp += 3;
-        }
-        *cp = '\0';
-    } else {
-        strcpy(home, "./");
-    }
-    return home;
-#endif
 }
 
 
@@ -441,14 +381,7 @@ bool espIsEof(HttpConn *conn)
 
 bool espIsFinalized(HttpConn *conn) 
 {
-#if UNUSED
-    EspReq      *req;
-
-    req = conn->data;
-    return req->finalized;
-#else
     return httpIsFinalized(conn);
-#endif
 }
 
 
@@ -574,19 +507,7 @@ ssize espRender(HttpConn *conn, cchar *fmt, ...)
 
 ssize espRenderBlock(HttpConn *conn, cchar *buf, ssize size)
 {
-    EspReq      *req;
-    
-    req = conn->data;
-#if UNUSED
-    if (req->cacheBuffer) {
-        httpSetResponded(conn);
-        return mprPutBlockToBuf(req->cacheBuffer, buf, size);
-    } else {
-        return httpWriteBlock(conn->writeq, buf, size);
-    }
-#else
     return httpWriteBlock(conn->writeq, buf, size);
-#endif
 }
 
 
