@@ -18,17 +18,6 @@ static void details() {
     /* View will be rendered */
 }
 
-static void transparent() { 
-    render("{ when: %Ld, uri: '%s', query: '%s'\r\n", mprGetTicks(), getUri(), getQuery());
-}
-
-static void manual() { 
-    if (!espRenderCached(getConn())) {
-        render("{ when: %Ld, uri: '%s', query: '%s'\r\n", mprGetTicks(), getUri(), getQuery());
-    }
-    // void espUpdateCache(getConn(), "Hello World");
-}
-
 static void login() { 
     if (getSessionVar("id")[0]) {
         render("Logged in");
@@ -59,13 +48,5 @@ ESP_EXPORT int esp_controller_test(EspRoute *eroute, MprModule *module) {
     espDefineAction(eroute, "test-cmd-check", check);
     espDefineAction(eroute, "test-cmd-details", details);
     espDefineAction(eroute, "test-cmd-login", login);
-
-    espDefineAction(eroute, "test-cmd-manual", manual);
-    espDefineAction(eroute, "test-cmd-transparent", transparent);
-
-#if 0
-    HttpRoute *route = httpLookupRoute(eroute->route->host, "/app/*/default");
-    espCache(eroute->route->host, "/test/transparent", 0, 0);
-#endif
     return 0;
 }

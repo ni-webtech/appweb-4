@@ -1295,10 +1295,12 @@ extern void espShowRequest(HttpConn *conn);
     Update the cached content for a request
     @description Save the given content for future requests. This is useful if the caching mode has been set to "manual". 
     @param conn HttpConn connection object
+    @param uri Request URI to cache for
     @param data Data to cache
+    @param lifesecs Time in seconds to cache the data
     @ingroup EspReq
  */
-void espUpdateCache(HttpConn *conn, cchar *data);
+extern void espUpdateCache(HttpConn *conn, cchar *uri, cchar *data, int lifesecs);
 
 /**
     Write a value to a database table field

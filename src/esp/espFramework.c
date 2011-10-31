@@ -942,9 +942,9 @@ void espShowRequest(HttpConn *conn)
 }
 
 
-void espUpdateCache(HttpConn *conn, cchar *data)
+void espUpdateCache(HttpConn *conn, cchar *uri, cchar *data, int lifesecs)
 {
-    httpUpdateCache(conn, data);
+    httpUpdateCache(conn, uri, data, lifesecs * MPR_TICKS_PER_SEC);
 }
 
 

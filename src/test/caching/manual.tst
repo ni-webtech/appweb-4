@@ -1,0 +1,38 @@
+/*
+    manual.tst - Test manual caching mode
+ */
+
+const HTTP = (global.tsession && tsession["http"]) || ":4100"
+let http: Http = new Http
+
+//  1. Test that content is being cached
+//  Initial get
+http.get(HTTP + "/app/cache/manual")
+assert(http.status == 200)
+let resp = deserialize(http.response)
+let first = resp.when
+assert(resp.uri == "/app/cache/manual")
+assert(resp.query == "null")
+
+//  Second get, should get the same content (when must not change)
+//  This is being done manually by the "manual" method in the cache controller
+http.get(HTTP + "/app/cache/manual")
+assert(http.status == 200)
+resp = deserialize(http.response)
+assert(resp.when == first)
+assert(resp.uri == "/app/cache/manual")
+assert(resp.query == "null")
+
+
+//  Update the cache
+http.get(HTTP + "/app/cache/update?updated=true")
+assert(http.status == 200)
+assert(http.response == "done")
+
+//  Get again, should get updated cached data
+http.get(HTTP + "/app/cache/manual")
+assert(http.status == 200)
+resp = deserialize(http.response)
+assert(resp.query == "updated=true") 
+
+http.close()

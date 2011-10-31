@@ -1,0 +1,1 @@
+<% render("{ when: %Ld, uri: '%s', query: '%s' }\r\n", mprGetTicks(), getUri(), getQuery()); %>

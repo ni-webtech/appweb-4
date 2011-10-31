@@ -1873,7 +1873,8 @@ static void saveCachedResponse(HttpConn *conn)
         Truncate modified time to get a 1 sec resolution. This is the resolution for If-Modified headers.  
      */
     modified = mprGetTime() / MPR_TICKS_PER_SEC * MPR_TICKS_PER_SEC;
-    mprWriteCache(conn->host->cache, makeCacheKey(conn), mprGetBufStart(buf), modified, tx->cache->lifespan, 0, 0);
+    mprWriteCache(conn->host->cache, makeCacheKey(conn), mprGetBufStart(buf), modified, 
+        tx->cache->lifespan, 0, 0);
 }
 
 
@@ -1902,15 +1903,18 @@ ssize httpWriteCached(HttpConn *conn)
 }
 
 
-int httpUpdateCache(HttpConn *conn, cchar *data)
+ssize httpUpdateCache(HttpConn *conn, cchar *uri, cchar *data, MprTime lifespan)
 {
-    HttpCache   *cache;
+    cchar   *key;
 
-    if ((cache = conn->tx->cache) == 0) {
-        return MPR_ERR_CANT_FIND;
+    key = sfmt("http::response-%s", uri);
+    if (lifespan <= 0) {
+        lifespan = conn->rx->route->lifespan;
     }
-    mprWriteCache(conn->host->cache, makeCacheKey(conn), data, 0, cache->lifespan, 0, 0);
-    return 0;
+    if (lifespan <= 0) {
+        return 0;
+    }
+    return mprWriteCache(conn->host->cache, key, data, 0, lifespan, 0, 0);
 }
 
 

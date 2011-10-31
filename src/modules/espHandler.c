@@ -320,7 +320,7 @@ void espRenderView(HttpConn *conn, cchar *name)
         req->module = mprNormalizePath(sfmt("%s/%s%s", eroute->cacheDir, req->cacheName, BLD_SHOBJ));
 
         if (!mprPathExists(req->source, R_OK)) {
-            httpError(conn, HTTP_CODE_NOT_FOUND, "Can't find view %s", req->source);
+            httpError(conn, HTTP_CODE_NOT_FOUND, "Can't find web page %s", req->source);
             return;
         }
         if (moduleIsStale(conn, req->source, req->module, &recompile)) {
