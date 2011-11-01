@@ -13752,12 +13752,13 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
         tx->length = (int) strlen(tx->altBody);
     }
 #endif
+    //  MOB - remove altBody
     if (tx->chunkSize > 0 && !tx->altBody) {
         if (!(rx->flags & HTTP_HEAD)) {
             httpSetHeaderString(conn, "Transfer-Encoding", "chunked");
         }
     } else if (tx->length > 0 || conn->endpoint) {
-        httpSetHeader(conn, "Content-Length", "%Ld", tx->length);
+        httpAddHeader(conn, "Content-Length", "%Ld", tx->length);
     }
     if (tx->outputRanges) {
         if (tx->outputRanges->next == 0) {
@@ -13774,11 +13775,11 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
     }
     if (conn->endpoint) {
         if (--conn->keepAliveCount > 0) {
-            httpSetHeaderString(conn, "Connection", "keep-alive");
-            httpSetHeader(conn, "Keep-Alive", "timeout=%Ld, max=%d", conn->limits->inactivityTimeout / 1000,
+            httpAddHeaderString(conn, "Connection", "keep-alive");
+            httpAddHeader(conn, "Keep-Alive", "timeout=%Ld, max=%d", conn->limits->inactivityTimeout / 1000,
                 conn->keepAliveCount);
         } else {
-            httpSetHeaderString(conn, "Connection", "close");
+            httpAddHeaderString(conn, "Connection", "close");
         }
     }
 }
