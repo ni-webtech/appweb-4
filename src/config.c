@@ -834,6 +834,16 @@ static int keepAliveTimeoutDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
+    LimitCache bytes
+ */
+static int limitCacheDirective(MaState *state, cchar *key, cchar *value)
+{
+    mprSetCacheLimits(state->host->responseCache, 0, 0, stoi(value, 10, 0), 0);
+    return 0;
+}
+
+
+/*
     LimitChunkSize bytes
  */
 static int limitChunkSizeDirective(MaState *state, cchar *key, cchar *value)
@@ -915,7 +925,7 @@ static int limitRequestHeaderSizeDirective(MaState *state, cchar *key, cchar *va
 
 
 /*
-    LimitResponsebody bytes
+    LimitResponseBody bytes
  */
 static int limitResponseBodyDirective(MaState *state, cchar *key, cchar *value)
 {
@@ -2061,10 +2071,11 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "KeepAlive", keepAliveDirective);
     maAddDirective(appweb, "KeepAliveTimeout", keepAliveTimeoutDirective);
 
-    /* TODO Deprecated */
+    /* Deprecated: Location - use <Route> instead */
     maAddDirective(appweb, "<Location", routeDirective);
     maAddDirective(appweb, "</Location", closeDirective);
 
+    maAddDirective(appweb, "LimitCache", limitCacheDirective);
     maAddDirective(appweb, "LimitChunkSize", limitChunkSizeDirective);
     maAddDirective(appweb, "LimitClients", limitClientsDirective);
     maAddDirective(appweb, "LimitMemoryMax", limitMemoryMaxDirective);
@@ -2072,25 +2083,25 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "LimitRequestBody", limitRequestBodyDirective);
     maAddDirective(appweb, "LimitRequestForm", limitRequestFormDirective);
 
-    /* Deprecated */
+    /* Deprecated: LimitRequestFields - use LimitRequestHeaderCount instead */
     maAddDirective(appweb, "LimitRequestFields", limitRequestHeaderCountDirective);
+    /* Deprecated: LimitRequestFieldSize - use LimitRequestHeaderSize instead */
     maAddDirective(appweb, "LimitRequestFieldSize", limitRequestHeaderSizeDirective);
 
     maAddDirective(appweb, "LimitRequestHeaderCount", limitRequestHeaderCountDirective);
     maAddDirective(appweb, "LimitRequestHeaderSize", limitRequestHeaderSizeDirective);
 
-
-    /* Deprecated */
     maAddDirective(appweb, "LimitResponseBody", limitResponseBodyDirective);
     maAddDirective(appweb, "LimitStageBuffer", limitStageBufferDirective);
     maAddDirective(appweb, "LimitUri", limitUriDirective);
 
-    /* Deprecated */
+    /* Deprecated: LimitUrl - use LimitUri instead  */
     maAddDirective(appweb, "LimitUrl", limitUriDirective);
+
     maAddDirective(appweb, "LimitUploadSize", limitUploadSizeDirective);
     maAddDirective(appweb, "Listen", listenDirective);
 
-//  MOB - not a great name "Load"
+    //  MOB - not a great name "Load"
     maAddDirective(appweb, "Load", loadDirective);
     maAddDirective(appweb, "LogLevel", logLevelDirective);
     maAddDirective(appweb, "LogRotation", logRotationDirective);
@@ -2113,7 +2124,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "Require", requireDirective);
     maAddDirective(appweb, "Reset", resetDirective);
 
-    /* Deprecated */
+    /* Deprecated: ResetPipeline - use Reset instead */
     maAddDirective(appweb, "ResetPipeline", resetPipelineDirective);
     maAddDirective(appweb, "<Route", routeDirective);
     maAddDirective(appweb, "</Route", closeDirective);

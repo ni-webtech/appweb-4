@@ -109,7 +109,7 @@ typedef struct Esp {
     MprHash         *views;                 /**< Table of views */
     MprHash         *internalOptions;       /**< Table of internal HTML control options  */
     MprThreadLocal  *local;                 /**< Thread local data */
-    MprCache        *cache;                 /**< Session cache */
+    MprCache        *sessionCache;          /**< Session state cache */
     MprMutex        *mutex;                 /**< Multithread lock */
     EdiService      *ediService;            /**< Database service */
     int             inUse;                  /**< Active ESP request counter */
@@ -2594,6 +2594,15 @@ extern bool removeRec(cchar *tableName, cchar *key);
 extern ssize render(cchar *fmt, ...);
 
 /**
+    Render cached content
+    @description Render the saved, cached response from a prior request to this URI. This is useful if the caching
+        mode has been set to "manual".
+    @return A count of the bytes actually written
+    @ingroup EspAbbrev
+ */
+ssize renderCached();
+
+/**
     Render an error message back to the client and finalize the request. The output is Html escaped for security.
     @param status Http status code
     @param fmt Printf style message format
@@ -2755,6 +2764,16 @@ extern void setStatus(int status);
     @ingroup EspAbbrev
  */
 extern void showRequest();
+
+/**
+    Update the cached content for a request
+    @description Save the given content for future requests. This is useful if the caching mode has been set to "manual". 
+    @param uri Request URI to cache for
+    @param data Data to cache
+    @param lifesecs Time in seconds to cache the data
+    @ingroup EspAbbrev
+ */
+extern void updateCache(cchar *uri, cchar *data, int lifesecs);
 
 /**
     Write a value to a database table field

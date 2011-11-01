@@ -494,6 +494,12 @@ ssize render(cchar *fmt, ...)
 }
 
 
+ssize renderCached()
+{
+    return espRenderCached(getConn());;
+}
+
+
 void renderError(int status, cchar *fmt, ...)
 {
     va_list     args;
@@ -611,6 +617,12 @@ void setStatus(int status)
 void showRequest()
 {
     espShowRequest(getConn());
+}
+
+
+void updateCache(cchar *uri, cchar *data, int lifesecs)
+{
+    return espUpdateCache(getConn(), uri, data, lifesecs);
 }
 
 

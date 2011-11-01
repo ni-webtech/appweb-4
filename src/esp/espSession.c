@@ -35,7 +35,7 @@ EspSession *espAllocSession(HttpConn *conn, cchar *id, MprTime lifespan)
         id = makeSessionID(conn);
     }
     sp->id = sclone(id);
-    sp->cache = req->esp->cache;
+    sp->cache = req->esp->sessionCache;
     return sp;
 }
 

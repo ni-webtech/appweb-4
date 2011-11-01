@@ -4596,22 +4596,22 @@ void mprSetCacheLimits(MprCache *cache, int64 keys, MprTime lifespan, int64 memo
         cache = cache->shared;
         mprAssert(cache == shared);
     }
-    if (keys) {
+    if (keys > 0) {
         cache->maxKeys = (ssize) keys;
         if (cache->maxKeys <= 0) {
             cache->maxKeys = MAXSSIZE;
         }
     }
-    if (lifespan) {
+    if (lifespan > 0) {
         cache->lifespan = lifespan;
     }
-    if (memory) {
+    if (memory > 0) {
         cache->maxMem = (ssize) memory;
         if (cache->maxMem <= 0) {
             cache->maxMem = MAXSSIZE;
         }
     }
-    if (resolution) {
+    if (resolution > 0) {
         cache->resolution = resolution;
         if (cache->resolution <= 0) {
             cache->resolution = CACHE_TIMER_PERIOD;
@@ -4725,6 +4725,9 @@ static void localPruner(MprCache *cache, MprEvent *event)
 
     if (mprTryLock(cache->mutex)) {
         when = mprGetTime();
+        /*
+            Check for expired items
+         */
         for (kp = 0; (kp = mprGetNextKey(cache->store, kp)) != 0; ) {
             item = (CacheItem*) kp->data;
             mprLog(6, "Cache: \"%@\" lifespan %d, expires in %d secs", item->key, 
@@ -4737,22 +4740,26 @@ static void localPruner(MprCache *cache, MprEvent *event)
         mprAssert(cache->usedMem >= 0);
 
         /*
-            If too many keys or too much memory used, prune keys expiring first.
+            If too many keys or too much memory used, prune keys that expire soonest.
          */
         if (cache->maxKeys < MAXSSIZE || cache->maxMem < MAXSSIZE) {
+            /*
+                Look for those expiring in the next 5 minutes, then 20 mins, then 80 ...
+             */
             excessKeys = mprGetHashLength(cache->store) - cache->maxKeys;
+            factor = 5 * 60 * MPR_TICKS_PER_SEC; 
+            when += factor;
             while (excessKeys > 0 || cache->usedMem > cache->maxMem) {
-                for (factor = 3600; excessKeys > 0 && factor < (86400 * 1000); factor *= 4) {
-                    for (kp = 0; (kp = mprGetNextKey(cache->store, kp)) != 0; ) {
-                        item = (CacheItem*) kp->data;
-                        if (item->expires && item->expires <= when) {
-                            mprLog(5, "Cache too big execess keys %Ld, mem %Ld, prune key %s", 
-                                    excessKeys, (cache->maxMem - cache->usedMem), kp->key);
-                            removeItem(cache, item);
-                        }
+                for (kp = 0; (kp = mprGetNextKey(cache->store, kp)) != 0; ) {
+                    item = (CacheItem*) kp->data;
+                    if (item->expires && item->expires <= when) {
+                        mprLog(5, "Cache too big execess keys %Ld, mem %Ld, prune key %s", 
+                                excessKeys, (cache->maxMem - cache->usedMem), kp->key);
+                        removeItem(cache, item);
                     }
-                    when += factor;
                 }
+                factor *= 4;
+                when += factor;
             }
         }
         mprAssert(cache->usedMem >= 0);

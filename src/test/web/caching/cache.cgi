@@ -1,6 +1,6 @@
-#!C:/cygwin/bin/sh
+#!/bin/sh
 
 echo 'HTTP/1.0 200 OK'
 echo 'Content-Type: text/plain'
 echo ''
-echo '{ number: ' 3988 ' }'
+echo '{ number: ' 31343 ' }'

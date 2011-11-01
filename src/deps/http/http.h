@@ -5039,7 +5039,7 @@ typedef struct HttpHost {
     int             port;                   /**< Port address portion parsed from name */
 
     struct HttpHost *parent;                /**< Parent host to inherit aliases, dirs, routes */
-    MprCache        *cache;                 /**< Response content caching store */
+    MprCache        *responseCache;         /**< Response content caching store */
     MprList         *dirs;                  /**< List of Directory definitions */
     MprList         *routes;                /**< List of Route defintions */
     HttpRoute       *defaultRoute;          /**< Default route for the host */

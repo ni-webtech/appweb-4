@@ -1866,7 +1866,7 @@ static bool fetchCachedResponse(HttpConn *conn)
             (scontains(value, "max-age=0", -1) == 0 || scontains(value, "no-cache", -1) == 0)) {
         mprLog(3, "Client reload. Cache-control header '%s' rejects use of cached content.", value);
 
-    } else if ((tx->cachedContent = mprReadCache(conn->host->cache, key, &modified, 0)) != 0) {
+    } else if ((tx->cachedContent = mprReadCache(conn->host->responseCache, key, &modified, 0)) != 0) {
         /*
             See if a NotModified response can be served. This is much faster than sending the response.
             Observe headers:
@@ -1918,7 +1918,7 @@ static void saveCachedResponse(HttpConn *conn)
         Truncate modified time to get a 1 sec resolution. This is the resolution for If-Modified headers.  
      */
     modified = mprGetTime() / MPR_TICKS_PER_SEC * MPR_TICKS_PER_SEC;
-    mprWriteCache(conn->host->cache, makeCacheKey(conn), mprGetBufStart(buf), modified, 
+    mprWriteCache(conn->host->responseCache, makeCacheKey(conn), mprGetBufStart(buf), modified, 
         tx->cache->lifespan, 0, 0);
 }
 
@@ -1934,7 +1934,7 @@ ssize httpWriteCached(HttpConn *conn)
         return MPR_ERR_CANT_FIND;
     }
     cacheKey = makeCacheKey(conn);
-    if ((content = mprReadCache(conn->host->cache, cacheKey, &modified, 0)) == 0) {
+    if ((content = mprReadCache(conn->host->responseCache, cacheKey, &modified, 0)) == 0) {
         mprLog(3, "No cached data for ", cacheKey);
         return 0;
     }
@@ -1958,10 +1958,10 @@ ssize httpUpdateCache(HttpConn *conn, cchar *uri, cchar *data, MprTime lifespan)
         lifespan = conn->rx->route->lifespan;
     }
     if (data == 0 || lifespan <= 0) {
-        mprRemoveCache(conn->host->cache, key);
+        mprRemoveCache(conn->host->responseCache, key);
         return 0;
     }
-    return mprWriteCache(conn->host->cache, key, data, 0, lifespan, 0, 0);
+    return mprWriteCache(conn->host->responseCache, key, data, 0, lifespan, 0, 0);
 }
 
 
@@ -4341,9 +4341,11 @@ HttpHost *httpCreateHost()
     if ((host = mprAllocObj(HttpHost, manageHost)) == 0) {
         return 0;
     }
-    if ((host->cache = mprCreateCache(MPR_CACHE_SHARED)) == 0) {
+    if ((host->responseCache = mprCreateCache(MPR_CACHE_SHARED)) == 0) {
         return 0;
     }
+    mprSetCacheLimits(host->responseCache, 0, HTTP_CACHE_LIFESPAN, 0, 0);
+
     host->mutex = mprCreateLock();
     host->dirs = mprCreateList(-1, 0);
     host->routes = mprCreateList(-1, 0);
@@ -4402,7 +4404,7 @@ HttpHost *httpCloneHost(HttpHost *parent)
 static void manageHost(HttpHost *host, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(host->cache);
+        mprMark(host->responseCache);
         mprMark(host->name);
         mprMark(host->ip);
         mprMark(host->parent);

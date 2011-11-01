@@ -663,13 +663,13 @@ static void manageReq(EspReq *req, int flags)
 static void manageEsp(Esp *esp, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(esp->mutex);
         mprMark(esp->actions);
-        mprMark(esp->views);
-        mprMark(esp->cache);
-        mprMark(esp->local);
-        mprMark(esp->internalOptions);
         mprMark(esp->ediService);
+        mprMark(esp->internalOptions);
+        mprMark(esp->local);
+        mprMark(esp->mutex);
+        mprMark(esp->sessionCache);
+        mprMark(esp->views);
     }
 }
 
@@ -803,6 +803,7 @@ static int espAppDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+#if UNUSED
 /*
     EspCache lifespan
  */
@@ -816,6 +817,7 @@ static int espCacheDirective(MaState *state, cchar *key, cchar *value)
     eroute->lifespan = (MprTime) stoi(value, 10, NULL);
     return 0;
 }
+#endif
 
 
 /*
@@ -958,6 +960,7 @@ static int espKeepSourceDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+#if UNUSED
 /*
     EspLifespan secs
  */
@@ -971,6 +974,18 @@ static int espLifespanDirective(MaState *state, cchar *key, cchar *value)
     eroute->lifespan = ((MprTime) atoi(value)) * MPR_TICKS_PER_SEC;
     return 0;
 }
+
+
+/*
+    EspLimitSessionCache bytes
+ */
+static int espLimitSessionCacheDirective(MaState *state, cchar *key, cchar *value)
+{
+    state->limits->sessionCacheSize = stoi(value, 10, 0);
+    mprSetCacheLimits(esp->sessionCache, 0, 0, state->limits->sessionCacheSize, 0);
+    return 0;
+}
+#endif
 
 
 /*
@@ -1148,18 +1163,21 @@ int maEspHandlerInit(Http *http, MprModule *mp)
     if ((esp->actions = mprCreateHash(-1, 0)) == 0) {
         return 0;
     }
-    if ((esp->cache = mprCreateCache(MPR_CACHE_SHARED)) == 0) {
+    if ((esp->sessionCache = mprCreateCache(MPR_CACHE_SHARED)) == 0) {
         return MPR_ERR_MEMORY;
     }
     appweb = httpGetContext(http);
     maAddDirective(appweb, "EspApp", espAppDirective);
-    maAddDirective(appweb, "EspCache", espCacheDirective);
     maAddDirective(appweb, "EspCompile", espCompileDirective);
     maAddDirective(appweb, "EspDb", espDbDirective);
     maAddDirective(appweb, "EspDir", espDirDirective);
     maAddDirective(appweb, "EspEnv", espEnvDirective);
     maAddDirective(appweb, "EspKeepSource", espKeepSourceDirective);
+#if UNUSED
     maAddDirective(appweb, "EspLifespan", espLifespanDirective);
+    maAddDirective(appweb, "EspCache", espCacheDirective);
+    maAddDirective(appweb, "EspLimitSessionCache", espLimitSessionCacheDirective);
+#endif
     maAddDirective(appweb, "EspLink", espLinkDirective);
     maAddDirective(appweb, "EspLoad", espLoadDirective);
     maAddDirective(appweb, "EspResource", espResourceDirective);
