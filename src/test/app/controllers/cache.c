@@ -43,6 +43,7 @@ static void update() {
 }
 
 ESP_EXPORT int esp_controller_cache(EspRoute *eroute, MprModule *module) {
+    HttpRoute *route;
     espDefineAction(eroute, "cache-cmd-api", api);
     espDefineAction(eroute, "cache-cmd-big", big);
     espDefineAction(eroute, "cache-cmd-clear", clear);
@@ -51,7 +52,7 @@ ESP_EXPORT int esp_controller_cache(EspRoute *eroute, MprModule *module) {
     espDefineAction(eroute, "cache-cmd-update", update);
 
     //  This will cache the next request after the first one that triggered the loading of this controller
-    HttpRoute *route = httpLookupRoute(eroute->route->host, "/app/*/default");
+    route = httpLookupRoute(eroute->route->host, "/app/*/default");
     espCache(route, "/cache/api", 0, 0);
     return 0;
 }

@@ -15,6 +15,9 @@ TARGETS			+= $(BLD_BIN_DIR)/testAppweb$(BLD_EXE)
 ifeq ($(BLD_FEATURE_CGI),1)
 	CGIP		:= $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
 	TARGETS		+= cgi-bin/testScript web/cgiProgram.cgi
+ifeq ($(BLD_WIN_LIKE),1)
+	TARGETS		+= web/caching/cache.cgi
+endif
 endif
 
 compileExtra: 	$(TARGETS) $(MODULES)
@@ -33,6 +36,12 @@ cgi-bin/testScript: $(CGIP) Makefile $(BLD_INC_DIR)/buildConfig.h
 	dir=`getpath -a "$(BLD_BIN_DIR)"` ; \
 	echo "#!$$dir/cgiProgram$(BLD_EXE)" >cgi-bin/testScript
 	chmod +x cgi-bin/testScript
+
+web/caching/cache.cgi: $(CGIP) Makefile $(BLD_INC_DIR)/buildConfig.h
+	path=`cygpath -m "/bin/sh"` ; \
+	sed -e "s|^#!.*|#!$$path|" < web/caching/cache.cgi >.caching.tmp ; \
+	mv .caching.tmp  web/caching/cache.cgi ; \
+	chmod +x web/caching/cache.cgi
 
 #
 #	cgiProgram
