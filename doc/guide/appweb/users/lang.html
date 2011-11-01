@@ -82,7 +82,7 @@
             <p>There are two organization models supported by Appweb for multi-language applications:</p>
             <ul>
                 <li>Separate directories for each language content, and </li>
-                <li>Unified storage for content with a language suffix integrated into the each document filename.</li>
+                <li>Unified storage for content with a language suffix integrated into each document filename.</li>
             </ul>
             <p>Appweb manages these models via the <tt>AddLanguageDir</tt> and <tt>AddLanguageSuffix</tt>
             directives.</p>
@@ -114,7 +114,7 @@
             <p>The AddLanguageSuffix directive defines a supported language 
             <a href="#isotag">tag</a> with an associated filename suffix. When
             a client request is received, the appropriate language will be selected using the language
-            specified by the client's <tt>Accept-Language</tt> HTTP header. Then, the document filename will be constructed
+            specified by the client's <tt>Accept-Language</tt> HTTP header. Then the document filename will be constructed
             using the language suffix. The suffix can be positioned either before or after the document
             extension via the directives "position" argument.</p>
 <pre>
