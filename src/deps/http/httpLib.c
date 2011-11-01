@@ -2334,10 +2334,7 @@ static void outgoingChunkService(HttpQueue *q)
             }
         }
     }
-    //  MOB - change altBody test to length
-    //  MOB - refactor to setting altBody also sets tx->length
-    mprAssert(tx->altBody == 0 || tx->length);
-    if (tx->chunkSize <= 0 || tx->altBody) {
+    if (tx->chunkSize <= 0) {
         httpDefaultOutgoingServiceStage(q);
     } else {
         for (packet = httpGetPacket(q); packet; packet = httpGetPacket(q)) {
@@ -6245,9 +6242,6 @@ void httpHandleOptionsTrace(HttpConn *conn)
             (flags & HTTP_STAGE_DELETE) ? ",DELETE" : "");
         httpOmitBody(conn);
         httpFinalize(conn);
-#if UNUSED
-        tx->length = 0;
-#endif
     }
 }
 
@@ -6845,6 +6839,7 @@ void httpDiscardData(HttpQueue *q, bool removePackets)
                 continue;
             } else {
                 len = httpGetPacketLength(packet);
+                //  MOB - should this be done? Why not in the removePackets case?
                 q->conn->tx->length -= len;
                 q->count -= len;
                 mprAssert(q->count >= 0);
@@ -13745,15 +13740,7 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
     if (tx->etag) {
         httpAddHeader(conn, "ETag", "%s", tx->etag);
     }
-    //MOB REMOVE
-#if UNUSED || 1
-    if (tx->altBody) {
-        mprAssert(tx->length > 0);
-        tx->length = (int) strlen(tx->altBody);
-    }
-#endif
-    //  MOB - remove altBody
-    if (tx->chunkSize > 0 && !tx->altBody) {
+    if (tx->chunkSize > 0) {
         if (!(rx->flags & HTTP_HEAD)) {
             httpSetHeaderString(conn, "Transfer-Encoding", "chunked");
         }
@@ -13892,7 +13879,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
     /* 
        By omitting the "\r\n" delimiter after the headers, chunks can emit "\r\nSize\r\n" as a single chunk delimiter
      */
-    if (tx->chunkSize <= 0 || tx->altBody) {
+    if (tx->chunkSize <= 0) {
         mprPutStringToBuf(buf, "\r\n");
     }
     if (tx->altBody) {

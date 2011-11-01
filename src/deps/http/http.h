@@ -4582,7 +4582,8 @@ extern void httpRedirect(HttpConn *conn, int status, cchar *uri);
 extern int httpRemoveHeader(HttpConn *conn, cchar *key);
 
 /** 
-    Define a content length header in the transmission. This will define a "Content-Length: NNN" request header.
+    Define a content length header in the transmission. This will define a "Content-Length: NNN" request header and
+        set Tx.length.
     @param conn HttpConn connection object created via $httpCreateConn
     @param length Numeric value for the content length header.
     @ingroup HttpTx
