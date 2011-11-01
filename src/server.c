@@ -205,6 +205,7 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *d
         searchPath = getSearchPath(dir);
         mprSetModuleSearchPath(searchPath);
 
+#if BLD_FEATURE_CGI
         maLoadModule(appweb, "cgiHandler", "mod_cgi");
         if (httpLookupStage(http, "cgiHandler")) {
             httpAddRouteHandler(route, "cgiHandler", "cgi cgi-nph bat cmd pl py");
@@ -219,18 +220,25 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *d
                 httpFinalizeRoute(cgiRoute);
             }
         }
+#endif
+#if BLD_FEATURE_ESP
         maLoadModule(appweb, "espHandler", "mod_esp");
         if (httpLookupStage(http, "espHandler")) {
             httpAddRouteHandler(route, "espHandler", "esp");
         }
+#endif
+#if BLD_FEATURE_EJSCRIPT
         maLoadModule(appweb, "ejsHandler", "mod_ejs");
         if (httpLookupStage(http, "ejsHandler")) {
             httpAddRouteHandler(route, "ejsHandler", "ejs");
         }
+#endif
+#if BLD_FEATURE_PHP
         maLoadModule(appweb, "phpHandler", "mod_php");
         if (httpLookupStage(http, "phpHandler")) {
             httpAddRouteHandler(route, "phpHandler", "php");
         }
+#endif
         httpAddRouteHandler(route, "fileHandler", "");
         httpFinalizeRoute(route);
     }
