@@ -460,7 +460,7 @@ static int cacheDirective(MaState *state, cchar *key, cchar *value)
     if (scasematch(kind, "client")) {
         flags |= HTTP_CACHE_CLIENT;
     } else if (snumber(kind)) {
-        state->route->lifespan = lifespan;
+        state->route->lifespan = (MprTime) stoi(kind, 10, NULL);
         return 0;
     }
     lifespan = -1;
