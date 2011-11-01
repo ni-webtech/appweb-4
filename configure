@@ -1352,7 +1352,7 @@ createBuildConfig() {
     [ $quiet = 0 ] && echo "  #"
     mkdir -p "${BLD_OUT_DIR}/bin" "${BLD_OUT_DIR}/inc"
     
-    CONFIG_ARGS="${BLD_OUT_DIR}/${CONFIG_ARGS}"
+    CONFIG_ARGS="${BLD_OUT_DIR}/bin/${CONFIG_ARGS}"
     CONFIG_H="${BLD_OUT_DIR}/inc/${CONFIG_H}"
 
     [ $quiet = 0 ] && echo "  # Creating $CONFIG_H ..."
@@ -1537,6 +1537,7 @@ BLD_DEFAULTS="$BLD_DEFAULTS"
 BLD_COMPONENTS="$BLD_COMPONENTS"
 BLD_EMBEDTHIS=$BLD_EMBEDTHIS
 BLD_DEBUG=$BLD_DEBUG
+BLD_CONFIG_CMD="$CMD_LINE"
 
 #
 #   Version information
