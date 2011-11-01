@@ -14,10 +14,7 @@ TARGETS			+= $(BLD_BIN_DIR)/testAppweb$(BLD_EXE)
 
 ifeq ($(BLD_FEATURE_CGI),1)
 	CGIP		:= $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
-	TARGETS		+= cgi-bin/testScript web/cgiProgram.cgi
-ifeq ($(BLD_WIN_LIKE),1)
-	TARGETS		+= web/caching/cache.cgi
-endif
+	TARGETS		+= cgi-bin/testScript web/cgiProgram.cgi web/caching/cache.cgi
 endif
 
 compileExtra: 	$(TARGETS) $(MODULES)
@@ -38,9 +35,14 @@ cgi-bin/testScript: $(CGIP) Makefile $(BLD_INC_DIR)/buildConfig.h
 	chmod +x cgi-bin/testScript
 
 web/caching/cache.cgi: $(CGIP) Makefile $(BLD_INC_DIR)/buildConfig.h
-	path=`cygpath -m "/bin/sh"` ; \
-	sed -e "s|^#!.*|#!$$path|" < web/caching/cache.cgi >.caching.tmp ; \
-	mv .caching.tmp  web/caching/cache.cgi ; \
+ifeq ($(BLD_WIN_LIKE),1)
+	path=`type sh` ; path=`cygpath -m "$$path"` ; \
+	echo -e "#!`type -p sh`\n" >web/caching/cache.cgi
+else
+	echo -e "#!`type -p sh`\n" >web/caching/cache.cgi
+endif
+	echo -e "echo 'HTTP/1.0 200 OK'\necho 'Content-Type: text/plain'\necho ''\necho '{ number: ' $$$$ ' }'" \
+		>>web/caching/cache.cgi
 	chmod +x web/caching/cache.cgi
 
 #

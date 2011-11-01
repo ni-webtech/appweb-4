@@ -1,9 +1,6 @@
-#!C:/cygwin/bin/sh
+#!/bin/sh
 
-echo "HTTP/1.0 200 OK"
-echo "Content-type: text/plain"
-echo ""
-
-# Use the PID as a unique number value
-
-echo "{ number: " $$ " }"
+echo 'HTTP/1.0 200 OK'
+echo 'Content-Type: text/plain'
+echo ''
+echo '{ number: ' 98234 ' }'
