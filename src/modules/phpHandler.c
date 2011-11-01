@@ -538,9 +538,7 @@ int maPhpHandlerInit(Http *http, MprModule *module)
     HttpStage     *handler;
 
     mprSetModuleFinalizer(module, finalizePhp); 
-
-    handler = httpCreateHandler(http, module->name, /* UNUSED HTTP_STAGE_CGI_PARAMS | HTTP_STAGE_EXTRA_PATH */ 0, module);
-    if (handler == 0) {
+    if ((handler = httpCreateHandler(http, module->name, 0, module)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     handler->open = openPhp;
@@ -548,6 +546,7 @@ int maPhpHandlerInit(Http *http, MprModule *module)
     http->phpHandler = handler;
     return 0;
 }
+
 #else /* BLD_FEATURE_PHP */
 
 int maPhpHandlerInit(Http *http, MprModule *module)

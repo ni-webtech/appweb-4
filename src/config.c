@@ -1689,9 +1689,6 @@ static int unloadModuleDirective(MaState *state, cchar *key, cchar *value)
 static int uploadDirDirective(MaState *state, cchar *key, cchar *value)
 {
     state->route->uploadDir = httpMakePath(state->route, value);
-#if UNUSED
-    mprLog(MPR_CONFIG, "Upload directory: %s", state->route->uploadDir);
-#endif
     return 0;
 }
 
@@ -1793,9 +1790,6 @@ bool maValidateServer(MaServer *server)
                 httpAddRouteHandler(route, "fileHandler", "");
             }
         }
-#if UNUSED
-        mprLog(MPR_CONFIG, "Configured host \"%s\" at \"%s\"", host->name, host->home);
-#endif
     }
     return 1;
 }

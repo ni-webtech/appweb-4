@@ -750,6 +750,8 @@ typedef int64 MprTime;
     #define unlink      _unlink
     #define write       _write
     #endif
+    #define strcasecmp scasecmp
+    #define strncasecmp sncasecmp
 #endif /* WIN_LIKE */
 
 #if WINCE

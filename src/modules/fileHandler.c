@@ -71,11 +71,7 @@ static int findFile(HttpConn *conn)
                 /*  
                     Index file exists, so do an internal redirect to it. Client will not be aware of this happening.
                  */
-#if UNUSED
-                pathInfo = mprJoinPath(rx->pathInfo, route->index);
-#else
                 pathInfo = sjoin(rx->scriptName, rx->pathInfo, route->index, NULL);
-#endif
                 uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
                 httpSetUri(conn, uri, 0);
                 tx->filename = path;
@@ -87,9 +83,6 @@ static int findFile(HttpConn *conn)
         if (info->isDir && maMatchDir(conn, route, HTTP_STAGE_TX) == HTTP_ROUTE_OK) {
             tx->handler = conn->http->dirHandler;
             tx->connector = conn->http->netConnector;
-#if UNUSED
-            httpAssignQueue(q, conn->http->dirHandler, HTTP_QUEUE_TX);
-#endif
             return HTTP_ROUTE_OK;
         }
     }
@@ -241,11 +234,6 @@ static ssize readFileData(HttpQueue *q, HttpPacket *packet, MprOff pos, ssize si
         httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, "Can't read file %s", tx->filename);
         return MPR_ERR_CANT_READ;
     }
-#if UNUSED
-    if (tx->cacheBuffer) {
-        mprPutBlockToBuf(tx->cacheBuffer, mprGetBufStart(packet->content), nbytes);
-    }
-#endif
     mprAdjustBufEnd(packet->content, nbytes);
     packet->esize -= nbytes;
     mprAssert(packet->esize == 0);

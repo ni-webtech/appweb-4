@@ -1730,7 +1730,7 @@ static void outgoingCacheFilterService(HttpQueue *q)
                     Using X-SendCache. Replace the data with the cached response
                  */
                 mprFlushBuf(packet->content);
-                mprPutBlockToBuf(packet->content, cachedData, tx->length);
+                mprPutBlockToBuf(packet->content, cachedData, (ssize) tx->length);
 
             } else if (tx->cacheBuffer) {
                 /*
@@ -1745,8 +1745,8 @@ static void outgoingCacheFilterService(HttpQueue *q)
                 /*
                     Using X-SendCache but there was no data packet to replace. So do the write here
                  */
-                data = httpCreateDataPacket(tx->length);
-                mprPutBlockToBuf(data->content, cachedData, tx->length);
+                data = httpCreateDataPacket((ssize) tx->length);
+                mprPutBlockToBuf(data->content, cachedData, (ssize) tx->length);
                 httpPutPacketToNext(q, data);
 
             } else if (tx->cacheBuffer) {
