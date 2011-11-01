@@ -91,7 +91,7 @@ if (test.depth > 1) {
 
     //  Show headers
     data = run("--showHeaders /index.html")
-    assert(data.contains('content-type'))
+    assert(data.contains('Content-Type'))
 
     //  Upload
     if (!test || test.config["ejscript"] == 1) {

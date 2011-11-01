@@ -9,9 +9,9 @@ let http: Http = new Http
 http.get(HTTP + "/dump.esp")
 assert(http.status == 200)
 let r = http.response
-assert(r.contains("HEADER user-agent=Embedthis-http/"))
-assert(r.contains("HEADER date="))
-assert(r.contains("HEADER host="))
+assert(r.contains("HEADER User-Agent=Embedthis-http/"))
+assert(r.contains("HEADER Date="))
+assert(r.contains("HEADER Host="))
 
 assert(r.contains("FORM REMOTE_ADDR="))
 assert(r.contains("FORM DOCUMENT_ROOT="))
