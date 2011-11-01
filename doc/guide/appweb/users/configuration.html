@@ -155,7 +155,7 @@ NameVirtualHost 206.148.96.56
             <p>See <a href="vhosts.html">Virtual Hosting</a> for more details.</p><a name="include" id="include"></a>
             <h2 class="section">Include Directives</h2>
             <p>The <b>include</b> directive allows other files to be included in the configuration file. The include
-            directive can be a single filename or filename with wildcards</p>
+            directive can be a single filename or filename with wildcards.</p>
             <pre>
 Include myconfig.conf
 Include conf/applications/*.conf
@@ -191,8 +191,8 @@ Include conf/applications/*.conf
                 </tbody>
             </table><a name="order" id="order"></a>
             <h2 class="section">Order of Processing</h2>
-            <p>The configuration file is parsed in a single top-to-bottom pass. Because certain directives depend on
-            others, the order of directives is important. For example, you must define the ServerRoot before using the
+            <p>The configuration file is parsed in a single top-to-bottom pass. The order of directives is important
+            as certain directives depend on others. For example, you must define the ServerRoot before using the
             LoadModule directive. Also, block level directives inherit their configuration from the outer block. 
             For example: a Route block will inherit the outer configuration and may modify that inside the Route block.</p>
             
