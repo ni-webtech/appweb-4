@@ -1,1 +1,1 @@
-<? print_r("{ number: \"" . uniqid() . "\"}\n"); ?>
+<? print_r("{ number: \"" . rand() . uniqid() . "\"}\n"); ?>
