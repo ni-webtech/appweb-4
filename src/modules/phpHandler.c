@@ -25,6 +25,8 @@
     #undef chdir
     #undef popen
     #undef pclose
+    #undef strcasecmp
+    #undef strncasecmp
     #define PHP_WIN32 1
     #define ZEND_WIN32 1
     #if BLD_PHP_DEBUG
