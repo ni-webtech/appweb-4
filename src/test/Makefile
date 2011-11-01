@@ -36,8 +36,8 @@ cgi-bin/testScript: $(CGIP) Makefile $(BLD_INC_DIR)/buildConfig.h
 
 web/caching/cache.cgi: $(CGIP) Makefile $(BLD_INC_DIR)/buildConfig.h
 ifeq ($(BLD_WIN_LIKE),1)
-	path=`type sh` ; path=`cygpath -m "$$path"` ; \
-	echo -e "#!`type -p sh`\n" >web/caching/cache.cgi
+	path=`type -p sh` ; path=`cygpath -m "$$path"` ; \
+	echo -e "#!$${path}\n" >web/caching/cache.cgi
 else
 	echo -e "#!`type -p sh`\n" >web/caching/cache.cgi
 endif
