@@ -13403,7 +13403,7 @@ ssize httpFormatResponsev(HttpConn *conn, cchar *fmt, va_list args)
     httpOmitBody(conn);
     tx->altBody = body;
     tx->length = slen(tx->altBody);
-    return tx->length;
+    return (ssize) tx->length;
 }
 
 
