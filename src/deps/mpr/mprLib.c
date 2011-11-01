@@ -4676,9 +4676,11 @@ ssize mprWriteCache(MprCache *cache, cchar *key, cchar *value, MprTime modified,
     } else if (prepend) {
         item->data = sjoin(value, item->data, NULL);
     }
-    item->lifespan = lifespan;
+    if (lifespan >= 0) {
+        item->lifespan = lifespan;
+    }
     item->lastModified = modified ? modified : mprGetTime();
-    item->expires = item->lastModified + lifespan;
+    item->expires = item->lastModified + item->lifespan;
     item->version++;
     len = slen(item->key) + slen(item->data);
     cache->usedMem += (len - oldLen);

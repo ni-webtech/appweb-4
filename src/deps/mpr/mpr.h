@@ -652,6 +652,8 @@ typedef int64 MprTime;
     #endif
     #define closesocket(x)  close(x)
     #define va_copy(d, s) ((d) = (s))
+    #define strcasecmp scasecmp
+    #define strncasecmp sncasecmp
 #endif
 
 #if BLD_WIN_LIKE

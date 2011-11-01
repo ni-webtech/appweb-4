@@ -1244,15 +1244,15 @@ extern bool httpWillNextQueueAcceptSize(HttpQueue *q, ssize size);
  */
 extern ssize httpWrite(HttpQueue *q, cchar *fmt, ...);
 
-//  MOB - will this return short?
 /** 
     Write a block of data to the queue
     @description Write a block of data into packets onto the end of the queue. Data packets will be created
-        as required to store the write data.
+        as required to store the write data. This call will either accept and write all the data or it will fail.
+        It will never return "short", i.e. with a partial write.
     @param q Queue reference
     @param buf Buffer containing the write data
     @param size of the data in buf
-    @return A count of the bytes actually written
+    @return The size value if successful or a negative MPR error code.
     @ingroup HttpQueue
  */
 extern ssize httpWriteBlock(HttpQueue *q, cchar *buf, ssize size);
@@ -2833,6 +2833,12 @@ typedef struct HttpLang {
 #define HTTP_CACHE_ONLY             0x10    /**< Cache exactly the specified URI with params */
 #define HTTP_CACHE_UNIQUE           0x20    /**< Uniquely cache request with different params */
 
+/**
+    Cache Control
+    @stability Evolving
+    @defgroup HttpCache HttpCache
+    @see HttpCache httpAddCache httpUpdateCache httpWriteCache
+*/
 typedef struct HttpCache {
     MprHash     *extensions;                /**< Extensions to cache */
     MprHash     *methods;                   /**< Methods to cache */
@@ -2842,11 +2848,102 @@ typedef struct HttpCache {
     int         flags;                      /**< Cache control flags */
 } HttpCache;
 
+/**
+    Add caching for response content
+    @description This call configures caching for request responses. Caching may be used for any HTTP method, 
+    though typically it is most useful for state-less GET requests. Output data may be uniquely cached for requests 
+    with different request parameters (query, post and route parameters).
+    \n\n
+    When server-side caching is requested and manual-mode is not enabled, the request response will be automatically 
+    cached. Subsequent client requests will revalidate the cached content with the server. If the server-side cached 
+    content has not expired, a HTTP Not-Modified (304) response will be sent and the client will use its client-side 
+    cached content.  This results in a very fast transaction with the client as no response data is sent.
+    Server-side caching will cache both the response headers and content.
+    \n\n
+    If manual server-side caching is requested, the response will be automatically cached, but subsequent requests will
+    require the handler to explicitly send cached content by calling $httpWriteCached.
+    \n\n
+    If client-side caching is requested, a "Cache-Control" Http header will be sent to the client with the caching 
+    "max-age" set to the lifespan argument value (converted to seconds). This causes the client to serve client-cached 
+    content and to not contact the server at all until the max-age expires. 
+    Alternatively, you can use $httpSetHeader to explicitly set a "Cache-Control header. For your reference, here are 
+    some keywords that can be used in the Cache-Control Http header.
+    \n\n
+        "max-age" Max time in seconds the resource is considered fresh.
+        "s-maxage" Max time in seconds the resource is considered fresh from a shared cache.
+        "public" marks authenticated responses as cacheable.
+        "private" shared caches may not store the response.
+        "no-cache" cache must re-submit request for validation before using cached copy.
+        "no-store" response may not be stored in a cache.
+        "must-revalidate" forces clients to revalidate the request with the server.
+        "proxy-revalidate" similar to must-revalidate except only for proxy caches.
+    \n\n
+    Use client-side caching for static content that will rarely change or for content for which using "reload" in 
+    the browser is an adequate solution to force a refresh. Use manual server-side caching for situations where you need to
+    explicitly control when and how cached data is returned to the client. For most other situations, use server-side
+    caching.
+    @param route HttpRoute object
+    @param methods List of methods for which caching should be enabled. Set to a comma or space separated list
+        of method names. Method names can be any case. Set to null or "*" for all methods. Example:
+        "GET, POST".
+    @param uris Set of URIs to cache. 
+        If the URI is set to "*" all URIs for that action are uniquely cached. If the request has POST data, 
+        the URI may include such post data in a sorted query format. E.g. {uri: /buy?item=scarf&quantity=1}.
+    @param extensions List of document extensions for which caching should be enabled. Set to a comma or space 
+        separated list of extensions. Extensions should not have a period prefix. Set to null or "*" for all extensions.
+        Example: "html, css, js".
+    @param types List of document mime types for which caching should be enabled. Set to a comma or space 
+        separated list of types. The mime types are those that correspond to the document extension and NOT the
+        content type defined by the handler serving the document. Set to null or "*" for all types.
+        Example: "image/gif, application/x-php".
+    @param lifespan Lifespan of cache items in milliseconds. If not set to positive integer, the lifespan will
+        default to the route lifespan.
+    @param flags Cache control flags. Select ESP_CACHE_MANUAL to enable manual mode. In manual mode, cached content
+        will not be automatically sent. Use $httpWriteCached in the request handler to write previously cached content.
+        \n\n
+        Select ESP_CACHE_CLIENT to enable client-side caching. In this mode a "Cache-Control" Http header will be 
+        sent to the client with the caching "max-age". WARNING: the client will not send any request for this URI
+        until the max-age timeout has expired.
+        \n\n
+        Select HTTP_CACHE_RESET to first reset existing caching configuration for this route.
+        \n\n
+        Select HTTP_CACHE_COMBINED, HTTP_CACHE_ONLY or HTTP_CACHE_UNIQUE to define the server-side caching mode. Only
+        one of these three mode flags should be specified.
+        \n\n
+        If the HTTP_CACHE_COMBINED flag is set, the request params (query, post data and route parameters) will be
+        ignored and all request for a given URI path will cache to the same cache record.
+        \n\n
+        Select HTTP_CACHE_UNIQUE to uniquely cache requests with different request parameters. The URIs specified in 
+        $uris should not contain any request parameters.
+        \n\n
+        Select HTTP_CACHE_ONLY to cache only the exact URI with parameters specified in $uris. The parameters must be 
+        in sorted www-urlencoded format. For example: /example.esp?hobby=sailing&name=john.
+    @return A count of the bytes actually written
+    @ingroup HttpCache
+ */
 extern void httpAddCache(struct HttpRoute *route, cchar *methods, cchar *uris, cchar *extensions, cchar *types, 
         MprTime lifespan, int flags);
+
+/**
+    Update the cached content for a URI
+    @param conn HttpConn connection object 
+    @param uri The request URI for which to update the cache. If using the HTTP_CACHE_ONLY flag when configuring 
+        the cached item, then the URI should contain the request parameters in sorted www-urlencoded format.
+    @param data Data to cache for the URI. If you wish to cache response headers, include those at the start of the
+    data followed by an additional new line. For example: "Content-Type: text/plain\n\nHello World\n".
+    @param lifespan Lifespan in milliseconds for the cached content
+    @ingroup HttpCache
+  */
 extern ssize httpUpdateCache(HttpConn *conn, cchar *uri, cchar *data, MprTime lifespan);
+
+/**
+    Write the cached content for a URI to the client
+    @description This call explicitly writes cached content to the client. It is useful when the caching is 
+        configured in manual mode via the HTTP_CACHE_MANUAL flag to $httpAddCache.
+    @param conn HttpConn connection object 
+    @ingroup HttpCache
+  */
 extern ssize httpWriteCached(HttpConn *conn);
-extern bool httpSetupRequestCaching(HttpConn *conn);
 
 /*
     Misc route API flags
@@ -4442,22 +4539,6 @@ extern void httpFollowRedirects(HttpConn *conn, bool follow);
     @ingroup HttpTx
  */
 extern void httpFormatError(HttpConn *conn, int status, cchar *fmt, ...);
-
-#if UNUSED
-/** 
-    Format an error transmission using a va_list
-    @description Format an error message to use instead of data generated by the request processing pipeline.
-        This is typically used to send errors and redirections. The message is also sent to the error log.
-    @param conn HttpConn connection object created via $httpCreateConn
-    @param status Http response status code
-    @param fmt Printf style formatted string. This string may contain HTML tags and is not HTML encoded before
-        sending to the user. NOTE: Do not send user input back to the client using this method. Otherwise you open
-        large security holes.
-    @param args Arguments for fmt
-    @ingroup HttpTx
- */
-extern void httpFormatErrorV(HttpConn *conn, int status, cchar *fmt, va_list args);
-#endif
 
 /** 
     Format an alternate response

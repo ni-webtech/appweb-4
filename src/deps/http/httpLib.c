@@ -1890,8 +1890,8 @@ static bool fetchCachedResponse(HttpConn *conn)
                 cacheOk = 0;
             }
         }
-        mprLog(3, "cacheHandler: Use cached content for %s, status %d", key, status);
         status = (canUseClientCache && cacheOk) ? HTTP_CODE_NOT_MODIFIED : HTTP_CODE_OK;
+        mprLog(3, "cacheHandler: Use cached content for %s, status %d", key, status);
         httpSetStatus(conn, status);
         httpSetHeader(conn, "Etag", mprGetMD5(key));
         httpSetHeader(conn, "Last-Modified", mprFormatUniversalTime(MPR_HTTP_DATE, modified));
@@ -1997,12 +1997,20 @@ void httpAddCache(HttpRoute *route, cchar *methods, cchar *uris, cchar *extensio
     if (extensions) {
         cache->extensions = mprCreateHash(0, 0);
         for (item = stok(sclone(extensions), " \t,", &tok); item; item = stok(0, " \t,", &tok)) {
-            mprAddKey(cache->extensions, item, cache);
+            if (smatch(item, "*")) {
+                extensions = 0;
+            } else {
+                mprAddKey(cache->extensions, item, cache);
+            }
         }
     } else if (types) {
         cache->types = mprCreateHash(0, 0);
         for (item = stok(sclone(types), " \t,", &tok); item; item = stok(0, " \t,", &tok)) {
-            mprAddKey(cache->types, item, cache);
+            if (smatch(item, "*")) {
+                extensions = 0;
+            } else {
+                mprAddKey(cache->types, item, cache);
+            }
         }
     }
     if (methods) {
@@ -3106,7 +3114,6 @@ void httpEvent(HttpConn *conn, MprEvent *event)
     mprAssert(conn->sock);
 
     if (conn->endpoint) {
-        //  MOB - aggregate
         if (conn->error) {
             httpDestroyConn(conn);
 
@@ -4118,8 +4125,8 @@ int httpConfigureNamedVirtualEndpoints(Http *http, cchar *ip, int port)
 
 
 
-static void httpErrorV(HttpConn *conn, int flags, cchar *fmt, va_list args);
-static void httpFormatErrorV(HttpConn *conn, int status, cchar *fmt, va_list args);
+static void errorv(HttpConn *conn, int flags, cchar *fmt, va_list args);
+static void formatErrorv(HttpConn *conn, int status, cchar *fmt, va_list args);
 
 
 void httpDisconnect(HttpConn *conn)
@@ -4140,7 +4147,7 @@ void httpError(HttpConn *conn, int flags, cchar *fmt, ...)
     va_list     args;
 
     va_start(args, fmt);
-    httpErrorV(conn, flags, fmt, args);
+    errorv(conn, flags, fmt, args);
     va_end(args);
 }
 
@@ -4150,8 +4157,7 @@ void httpError(HttpConn *conn, int flags, cchar *fmt, ...)
     overrides the normal output with an alternate error message. If the output has alread started (headers sent), then
     the connection MUST be closed so the client can get some indication the request failed.
  */
-//  MOB - remove the http prefix. Make V lower case
-static void httpErrorV(HttpConn *conn, int flags, cchar *fmt, va_list args)
+static void errorv(HttpConn *conn, int flags, cchar *fmt, va_list args)
 {
     HttpTx      *tx;
     int         status;
@@ -4173,7 +4179,7 @@ static void httpErrorV(HttpConn *conn, int flags, cchar *fmt, va_list args)
     if (status == 0) {
         status = HTTP_CODE_INTERNAL_SERVER_ERROR;
     }
-    httpFormatErrorV(conn, status, fmt, args);
+    formatErrorv(conn, status, fmt, args);
 
     if (flags & (HTTP_ABORT | HTTP_CLOSE)) {
         conn->keepAliveCount = -1;
@@ -4205,8 +4211,7 @@ static void httpErrorV(HttpConn *conn, int flags, cchar *fmt, va_list args)
     Just format conn->errorMsg and set status - nothing more
     NOTE: this is an internal API. Users should use httpError()
  */
-//  MOB - rename to remove the http prefix
-static void httpFormatErrorV(HttpConn *conn, int status, cchar *fmt, va_list args)
+static void formatErrorv(HttpConn *conn, int status, cchar *fmt, va_list args)
 {
     if (conn->errorMsg == 0) {
         conn->errorMsg = sfmtv(fmt, args);
@@ -4240,7 +4245,7 @@ void httpFormatError(HttpConn *conn, int status, cchar *fmt, ...)
     va_list     args;
 
     va_start(args, fmt); 
-    httpFormatErrorV(conn, status, fmt, args);
+    formatErrorv(conn, status, fmt, args);
     va_end(args); 
 }
 
@@ -6370,7 +6375,6 @@ void httpCreateTxPipeline(HttpConn *conn, HttpRoute *route)
         }
     }
     if (tx->connector == 0) {
-        //  MOB - must disable send connector if there are output filters
         if (tx->handler == http->fileHandler && (rx->flags & HTTP_GET) && !hasOutputFilters && 
                 !conn->secure && httpShouldTrace(conn, HTTP_TRACE_TX, HTTP_TRACE_BODY, tx->ext) < 0) {
             tx->connector = http->sendConnector;
@@ -6972,9 +6976,6 @@ int httpOpenQueue(HttpQueue *q, ssize chunkSize)
     }
     if (stage->flags & HTTP_STAGE_UNLOADED && stage->module) {
         module = stage->module;
-#if UNUSED
-        mprLog(2, "Loading module for %s", stage->name);
-#endif
         module = mprCreateModule(module->name, module->path, module->entry, http);
         if (mprLoadModule(module) < 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load module %s", module->name);
@@ -8314,14 +8315,6 @@ int httpAddRouteHandler(HttpRoute *route, cchar *name, cchar *extensions)
         return MPR_ERR_CANT_FIND;
     }
     hostName = route->host->name ? route->host->name : "default"; 
-#if UNUSED
-    if (extensions && *extensions) {
-        mprLog(MPR_CONFIG, "Add handler \"%s\" on host \"%s\" for extensions: %s", name, hostName, extensions);
-    } else {
-        mprLog(MPR_CONFIG, "Add handler \"%s\" on host \"%s\" for route: \"%s\"", name, hostName, 
-            mprJoinPath(route->prefix, route->pattern));
-    }
-#endif
     GRADUATE_HASH(route, extensions);
 
     if (extensions && *extensions) {
@@ -8592,9 +8585,6 @@ int httpSetRouteConnector(HttpRoute *route, cchar *name)
         return MPR_ERR_CANT_FIND;
     }
     route->connector = stage;
-#if UNUSED
-    mprLog(MPR_CONFIG, "Set connector \"%s\"", name);
-#endif
     return 0;
 }
 
@@ -9148,7 +9138,7 @@ void httpFinalizeRoute(HttpRoute *route)
 
 
 /*
-    MOB - doc
+    MOB - some description here
     what does this return. Does it return an absolute URI?
     MOB - rename httpUri() and move to uri.c
  */
@@ -9281,7 +9271,6 @@ char *httpTemplate(HttpConn *conn, cchar *tplate, MprHash *options)
 
     route = conn->rx->route;
     if (tplate == 0 || *tplate == '\0') {
-        //  MOB - what action should be taken here
         return MPR->emptyString;
     }
     buf = mprCreateBuf(-1, -1);
@@ -11042,10 +11031,6 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
         while (isspace((int) *value)) {
             value++;
         }
-#if UNUSED
-        //  MOB - change headers to be a caseless hash
-        key = slower(key);
-#endif
         LOG(8, "Key %s, value %s", key, value);
         if (strspn(key, "%<>/\\") > 0) {
             httpError(conn, HTTP_CODE_BAD_REQUEST, "Bad header key value");
@@ -11324,12 +11309,6 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
             mprAdjustBufStart(content, 2);
         }
     }
-#if UNUSED
-    //MOB - why here
-    if (rx->remainingContent == 0) {
-        rx->eof = 1;
-    }
-#endif
 }
 
 
@@ -11603,7 +11582,6 @@ static bool processRunning(HttpConn *conn)
     int     canProceed;
 
     //  MOB - refactor
-
     canProceed = 1;
     if (conn->connError) {
         httpSetState(conn, HTTP_STATE_COMPLETE);
@@ -11801,39 +11779,6 @@ char *httpGetHeaders(HttpConn *conn)
 }
 
 
-#if UNUSED &&KEEP
-char *httpGetHeaders(HttpConn *conn)
-{
-    HttpRx      *rx;
-    MprKey      *kp;
-    char        *headers, *key, *cp;
-    ssize       len;
-
-    if (conn->rx == 0) {
-        mprAssert(conn->rx);
-        return 0;
-    }
-    rx = conn->rx;
-    headers = 0;
-    //  MOB OPT - faster to compute length first and then do one allocation
-    for (len = 0, kp = mprGetFirstKey(rx->headers); kp; ) {
-        headers = srejoin(headers, kp->key, NULL);
-        key = &headers[len];
-        for (cp = &key[1]; *cp; cp++) {
-            *cp = tolower((int) *cp);
-            if (*cp == '-') {
-                cp++;
-            }
-        }
-        headers = srejoin(headers, ": ", kp->data, "\n", NULL);
-        len = strlen(headers);
-        kp = mprGetNextKey(rx->headers, kp);
-    }
-    return headers;
-}
-#endif
-
-
 MprHash *httpGetHeaderHash(HttpConn *conn)
 {
     if (conn->rx == 0) {
@@ -11963,12 +11908,6 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
     } else {
         mprWaitOn(conn->waitHandler, eventMask);
     }
-#if UNUSED
-    if (!conn->error && conn->state >= state) {
-        mprWaitForEvent(conn->dispatcher, min(inactivityTimeout, remaining));
-    }
-#endif
-
     remaining = timeout;
     do {
         workDone = httpServiceQueues(conn);
@@ -11981,12 +11920,6 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
         remaining = mprGetRemainingTime(mark, timeout);
     } while (!justOne && !conn->error && conn->state < state && remaining > 0);
 
-#if UNUSED
-    if (addedHandler && conn->waitHandler) {
-        mprRemoveWaitHandler(conn->waitHandler);
-        conn->waitHandler = 0;
-    }
-#endif
     conn->async = saveAsync;
     if (conn->sock == 0 || conn->error) {
         return MPR_ERR_CANT_CONNECT;
@@ -13398,7 +13331,7 @@ void httpSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
 }
 
 
-//  MOB - sort
+//  MOB - sort file
 
 void httpSetHeaderString(HttpConn *conn, cchar *key, cchar *value)
 {
@@ -13549,11 +13482,9 @@ void *httpGetQueueData(HttpConn *conn)
 }
 
 
-//  MOB - refactor and remove this
 void httpOmitBody(HttpConn *conn)
 {
     if (conn->tx) {
-        //  MOB - refactor and remove this flag
         conn->tx->flags |= HTTP_TX_NO_BODY;
     }
     if (conn->tx->flags & HTTP_TX_HEADERS_CREATED) {
@@ -13623,9 +13554,6 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
         "<html><head><title>%s</title></head>\r\n"
         "<body><h1>%s</h1>\r\n<p>The document has moved <a href=\"%s\">here</a>.</p></body></html>\r\n",
         msg, msg, targetUri);
-#if UNUSED
-    tx->redirected = 1;
-#endif
     httpFinalize(conn);
 }
 
@@ -15505,7 +15433,7 @@ MprHash *httpGetParams(HttpConn *conn)
 }
 
 
-//  MOB - sort
+//  MOB - sort file
 int httpTestParam(HttpConn *conn, cchar *var)
 {
     MprHash    *vars;

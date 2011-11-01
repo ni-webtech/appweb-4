@@ -657,16 +657,9 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>httpCompleteRequest</name>
+      <name>httpConnectorComplete</name>
       <anchorfile>group___http_conn.html</anchorfile>
-      <anchor>ga896df993abcb869baf1650e2e3c1014a</anchor>
-      <arglist>(HttpConn *conn)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>httpCompleteWriting</name>
-      <anchorfile>group___http_conn.html</anchorfile>
-      <anchor>gae16e0c22553b4ae418823f3a8b324078</anchor>
+      <anchor>ga9f0f73273ca89c8aff0cc7b249f2d34e</anchor>
       <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
@@ -1301,6 +1294,32 @@
     </member>
   </compound>
   <compound kind="group">
+    <name>HttpCache</name>
+    <title>HttpCache</title>
+    <filename>group___http_cache.html</filename>
+    <member kind="function">
+      <type>void</type>
+      <name>httpAddCache</name>
+      <anchorfile>group___http_cache.html</anchorfile>
+      <anchor>gacd90c4a1aa02dd7516dcbe872061f09b</anchor>
+      <arglist>(struct HttpRoute *route, cchar *methods, cchar *uris, cchar *extensions, cchar *types, MprTime lifespan, int flags)</arglist>
+    </member>
+    <member kind="function">
+      <type>ssize</type>
+      <name>httpUpdateCache</name>
+      <anchorfile>group___http_cache.html</anchorfile>
+      <anchor>gaa8e188110223d9b4e3503e7d3ae34b98</anchor>
+      <arglist>(HttpConn *conn, cchar *uri, cchar *data, MprTime lifespan)</arglist>
+    </member>
+    <member kind="function">
+      <type>ssize</type>
+      <name>httpWriteCached</name>
+      <anchorfile>group___http_cache.html</anchorfile>
+      <anchor>ga59f76623bdccce81465d4a4246d9be87</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+  </compound>
+  <compound kind="group">
     <name>HttpRoute</name>
     <title>HttpRoute</title>
     <filename>group___http_route.html</filename>
@@ -1876,6 +1895,13 @@
       <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
+      <type>char *</type>
+      <name>httpGetParamsString</name>
+      <anchorfile>group___http_rx.html</anchorfile>
+      <anchor>ga792bb74969da2e9f5e53adef69e9b311</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
       <type>cchar *</type>
       <name>httpGetQueryString</name>
       <anchorfile>group___http_rx.html</anchorfile>
@@ -2061,13 +2087,6 @@
       <anchorfile>group___http_tx.html</anchorfile>
       <anchor>gadd185b67da26c5ffdc76a755b89fe0d7</anchor>
       <arglist>(HttpConn *conn, int status, cchar *fmt,...)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>httpFormatErrorV</name>
-      <anchorfile>group___http_tx.html</anchorfile>
-      <anchor>ga719f916ed81e3dace223f1ba914edb70</anchor>
-      <arglist>(HttpConn *conn, int status, cchar *fmt, va_list args)</arglist>
     </member>
     <member kind="function">
       <type>ssize</type>

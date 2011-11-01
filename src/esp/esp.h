@@ -153,78 +153,69 @@ typedef struct EspRoute {
     Edi             *edi;                   /**< Default database for this route */
 } EspRoute;
 
-#define ESP_CACHE_MANUAL         HTTP_ROUTE_CACHE_MANUAL  /**< Cache manually. User must call espRenderCache */
-#define ESP_CACHE_IGNORE_PARAMS  HTTP_ROUTE_IGNORE_PARAMS /**< Cache uniquely for different request params */
-#define ESP_CACHE_CLIENT         HTTP_ROUTE_CLIENT_CACHE  /**< Cache on the client side */
-
-#if UNUSED && MOVE_TO_HTTP
 /**
-    Control the caching of response content
+    Add caching for response content
     @description This call configures caching for request responses. Caching may be used for any HTTP method, 
     though typically it is most useful for state-less GET requests. Output data may be uniquely cached for requests 
-    with different URI query, post and route parameters.
-    @param eroute EspRoute object
-    @param action Name of the Controller action or MOB -- what is it for just a POV.
-    @param lifesecs Lifespan of cache items in seconds.
-    @param uri Optional cache URI when using per-URI caching. Set to "*" to cache all matching URIs on a per-URI basis.
+    with different request parameters (query, post and route parameters).
+    \n\n
+    When server-side caching is requested and manual-mode is not enabled, the request response will be automatically 
+    cached. Subsequent client requests will revalidate the cached content with the server. If the server-side cached 
+    content has not expired, a HTTP Not-Modified (304) response will be sent and the client will use its client-side 
+    cached content.  This results in a very fast transaction with the client as no response data is sent.
+    Server-side caching will cache both the response headers and content.
+    \n\n
+    If manual server-side caching is requested, the response will be automatically cached, but subsequent requests will
+    require the handler to explicitly send cached content by calling $httpWriteCached.
+    \n\n
+    If client-side caching is requested, a "Cache-Control" Http header will be sent to the client with the caching 
+    "max-age" set to the lifespan argument value (converted to seconds). This causes the client to serve client-cached 
+    content and to not contact the server at all until the max-age expires. 
+    Alternatively, you can use $httpSetHeader to explicitly set a "Cache-Control header. For your reference, here are 
+    some keywords that can be used in the Cache-Control Http header.
+    \n\n
+        "max-age" Max time in seconds the resource is considered fresh.
+        "s-maxage" Max time in seconds the resource is considered fresh from a shared cache.
+        "public" marks authenticated responses as cacheable.
+        "private" shared caches may not store the response.
+        "no-cache" cache must re-submit request for validation before using cached copy.
+        "no-store" response may not be stored in a cache.
+        "must-revalidate" forces clients to revalidate the request with the server.
+        "proxy-revalidate" similar to must-revalidate except only for proxy caches.
+    \n\n
+    Use client-side caching for static content that will rarely change or for content for which using "reload" in 
+    the browser is an adequate solution to force a refresh. Use manual server-side caching for situations where you need to
+    explicitly control when and how cached data is returned to the client. For most other situations, use server-side
+    caching.
+    @param route HttpRoute object
+    @param uris Set of URIs to cache. 
         If the URI is set to "*" all URIs for that action are uniquely cached. If the request has POST data, 
         the URI may include such post data in a sorted query format. E.g. {uri: /buy?item=scarf&quantity=1}.
-
-ISSUES
-    - Can't cache web pages without actions
-    - Not generic for CGI or non-esp data (PHP, CGI and even file could really benefit)
-QUESTIONS
-    - What does URI mean
-        - Without: cache on action. Should this be caching on the URI instead
-    - ESP_CACHE_VERY_ON_PARAMS. Is this implied if 
-
-SOLN
-    - Cache on URI+Params by default
-    - Option to ignore params
-    - Push into http
-    - Optionally have extra filters by extension and by method
-    - Convert Expiry/Client cache to use this mechanism
-    - Remove EspLifespan directive
-    - Call should auto-add the prefix
-
-    @param flags Cache mode flags. Select from ESP_CACHE_MANUAL and ESP_CACHE_VARY_ON_PARAMS. The ESP_CACHE_MANUAL 
-        flag enables manual mode caching. In this mode, responses will be cached, but you must manually call 
-        $espRenderCache to write cached data to the client. For MVC applications in manual cache mode, the action
-        routine will still be called.
-        The ESP_CACHE_VARY_ON_PARAMS flag causes responses to be cached uniquely for different request parameters.
-        Request parameters include the request URI, query string, request POST body data and route parameters.
-        If ESP_CACHE_CLIENT is set, "Cache-Control" Http header will be sent to the client with the caching "max-age" 
-        set to the lifesecs argument value. This causes the client to serve client-cached content and to not contact 
-        the server at all until the max-age expires. Alternatively, you can use $espSetHeader to explicitly set a
-        "Cache-Control header. For your reference, here are some keywords that can be used in the Cache-Control Http header.
+    @param lifespan Lifespan of cache items in milliseconds. If not set to positive integer, the lifespan will
+        default to the route lifespan.
+    @param flags Cache control flags. Select ESP_CACHE_MANUAL to enable manual mode. In manual mode, cached content
+        will not be automatically sent. Use $httpWriteCached in the request handler to write previously cached content.
         \n\n
-            "max-age" Max time in seconds the resource is considered fresh.
-            "s-maxage" Max time in seconds the resource is considered fresh from a shared cache.
-            "public" marks authenticated responses as cacheable.
-            "private" shared caches may not store the response.
-            "no-cache" cache must re-submit request for validation before using cached copy.
-            "no-store" response may not be stored in a cache.
-            "must-revalidate" forces clients to revalidate the request with the server.
-            "proxy-revalidate" similar to must-revalidate except only for proxy caches.
+        Select ESP_CACHE_CLIENT to enable client-side caching. In this mode a "Cache-Control" Http header will be 
+        sent to the client with the caching "max-age". WARNING: the client will not send any request for this URI
+        until the max-age timeout has expired.
         \n\n
-        If the ESP_CACHE_TRANSPARENT flag is set, the request response will be automatically cached. Subsequent client 
-        requests will revalidate the cached content with the server. If the server-side cached content has not expired, 
-        a HTTP Not-Modified (304) response will be sent and the client will use its client-side cached content. 
-        This results in a very fast transaction with the client as no response data is sent.
+        Select HTTP_CACHE_RESET to first reset existing caching configuration for this route.
         \n\n
-        The ESP_CACHE_MANUAL and ESP_CACHE_TRANSPARENT are mutually exclusive -- you must choose one or the other. If 
-        neither flag is specified, the call defaults to use ESP_CACHE_TRANSPARENT.
+        Select HTTP_CACHE_COMBINED, HTTP_CACHE_ONLY or HTTP_CACHE_UNIQUE to define the server-side caching mode. Only
+        one of these three mode flags should be specified.
         \n\n
-        Use ESP_CACHE_CLIENT for static content that will rarely change or for content for which using "reload" in 
-        the browser is an adequate solution to force a refresh. Use ESP_CACHE_MANUAL for situations where you need to
-        explicitly control when and how cached data is returned to the client. For most other situations, use 
-        ESP_CACHE_TRANSPARENT.
+        If the HTTP_CACHE_COMBINED flag is set, the request params (query, post data and route parameters) will be
+        ignored and all request for a given URI path will cache to the same cache record.
+        \n\n
+        Select HTTP_CACHE_UNIQUE to uniquely cache requests with different request parameters. The URIs specified in 
+        $uris should not contain any request parameters.
+        \n\n
+        Select HTTP_CACHE_ONLY to cache only the exact URI with parameters specified in $uris. The parameters must be 
+        in sorted www-urlencoded format. For example: /example.esp?hobby=sailing&name=john.
     @return A count of the bytes actually written
     @ingroup EspRoute
  */
-//  MOB - remove "Control"
-extern void espCacheControl(EspRoute *eroute, cchar *action, int lifesecs, cchar *uri, int flags);
-#endif
 extern int espCache(HttpRoute *route, cchar *uri, int lifesecs, int flags);
 
 /**

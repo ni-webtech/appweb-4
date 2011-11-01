@@ -17,13 +17,6 @@
       <arglist>(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheName, cchar *layout, char **err)</arglist>
     </member>
     <member kind="function">
-      <type>void</type>
-      <name>espCacheControl</name>
-      <anchorfile>group___esp_route.html</anchorfile>
-      <anchor>ga455d09e910baab0aded9a57936dec886</anchor>
-      <arglist>(EspRoute *eroute, cchar *targetKey, int lifesecs, cchar *uri)</arglist>
-    </member>
-    <member kind="function">
       <type>bool</type>
       <name>espCompile</name>
       <anchorfile>group___esp_route.html</anchorfile>
@@ -498,6 +491,13 @@
     </member>
     <member kind="function">
       <type>ssize</type>
+      <name>espRenderCached</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga94594750521ce6621691dcec43a2d670</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>ssize</type>
       <name>espRenderError</name>
       <anchorfile>group___esp_req.html</anchorfile>
       <anchor>gaf5951884b79343ba98eb53b8c2d28a4f</anchor>
@@ -656,6 +656,13 @@
       <anchorfile>group___esp_req.html</anchorfile>
       <anchor>ga4ed2f95cccb206fc9069c0a77c5c1e62</anchor>
       <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>espUpdateCache</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga2d10fdd68ab00d306d344c815f7655e7</anchor>
+      <arglist>(HttpConn *conn, cchar *uri, cchar *data, int lifesecs)</arglist>
     </member>
     <member kind="function">
       <type>bool</type>
@@ -1362,6 +1369,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>showRequest</name>
+      <anchorfile>group___esp_abbrev.html</anchorfile>
+      <anchor>ga70074b92c4e5b0381a6a61f9e0f8e2cc</anchor>
+      <arglist>()</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>stylesheet</name>
       <anchorfile>group___esp_abbrev.html</anchorfile>
       <anchor>ga50471de30febcd31bae044ec7627e67d</anchor>
@@ -1436,6 +1450,13 @@
     <title>EdiService</title>
     <filename>group___edi_service.html</filename>
     <class kind="struct">EdiValidation</class>
+    <member kind="typedef">
+      <type>cchar *(*</type>
+      <name>EdiValidationProc</name>
+      <anchorfile>group___edi_service.html</anchorfile>
+      <anchor>ga3cf21d57a02f250570e2beafc05befd9</anchor>
+      <arglist>)(struct EdiValidation *vp, struct EdiRec *rec, cchar *fieldName, cchar *value)</arglist>
+    </member>
     <member kind="function">
       <type>void</type>
       <name>ediAddProvider</name>
@@ -1576,6 +1597,34 @@
       <arglist>(Edi *edi, cchar *tableName, cchar *columnName, int *type, int *flags, int *cid)</arglist>
     </member>
     <member kind="function">
+      <type>cchar *</type>
+      <name>ediGetField</name>
+      <anchorfile>group___edi.html</anchorfile>
+      <anchor>gaf725c63758094eb5425fe30beaa3f4df</anchor>
+      <arglist>(EdiRec *rec, cchar *fieldName)</arglist>
+    </member>
+    <member kind="function">
+      <type>cchar *</type>
+      <name>ediGetFieldFmt</name>
+      <anchorfile>group___edi.html</anchorfile>
+      <anchor>gaa0a1e1ea039237f9e082ad63a17e64f1</anchor>
+      <arglist>(cchar *fmt, EdiRec *rec, cchar *fieldName)</arglist>
+    </member>
+    <member kind="function">
+      <type>EdiField</type>
+      <name>ediGetFieldSchema</name>
+      <anchorfile>group___edi.html</anchorfile>
+      <anchor>ga3720c685a8c4def59b12bccd26c03a40</anchor>
+      <arglist>(EdiRec *rec, cchar *fieldName)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>ediGetFieldType</name>
+      <anchorfile>group___edi.html</anchorfile>
+      <anchor>ga1f563dfa6f4ad87a227f0470b2a9838e</anchor>
+      <arglist>(EdiRec *rec, cchar *fieldName)</arglist>
+    </member>
+    <member kind="function">
       <type>MprList *</type>
       <name>ediGetGridColumns</name>
       <anchorfile>group___edi.html</anchorfile>
@@ -1583,32 +1632,11 @@
       <arglist>(EdiGrid *grid)</arglist>
     </member>
     <member kind="function">
-      <type>EdiField</type>
-      <name>ediGetRawRecField</name>
-      <anchorfile>group___edi.html</anchorfile>
-      <anchor>gaf9c26979fbcd28747b78a550c63351c2</anchor>
-      <arglist>(EdiRec *rec, cchar *fieldName)</arglist>
-    </member>
-    <member kind="function">
       <type>MprList *</type>
       <name>ediGetRecErrors</name>
       <anchorfile>group___edi.html</anchorfile>
       <anchor>gaeffb65c159bee67b941ed8b335796c9e</anchor>
       <arglist>(EdiRec *rec)</arglist>
-    </member>
-    <member kind="function">
-      <type>cchar *</type>
-      <name>ediGetRecField</name>
-      <anchorfile>group___edi.html</anchorfile>
-      <anchor>ga93aa0c0c6d0e83f42b676febfd92c456</anchor>
-      <arglist>(cchar *fmt, EdiRec *rec, cchar *fieldName)</arglist>
-    </member>
-    <member kind="function">
-      <type>int</type>
-      <name>ediGetRecFieldType</name>
-      <anchorfile>group___edi.html</anchorfile>
-      <anchor>gaefb6f609a41919404378d163ea8924ca</anchor>
-      <arglist>(EdiRec *rec, cchar *fieldName)</arglist>
     </member>
     <member kind="function">
       <type>MprList *</type>
@@ -1702,13 +1730,6 @@
       <arglist>(Edi *edi, cchar *fmt, cchar *tableName, cchar *key, cchar *fieldName, cchar *defaultValue)</arglist>
     </member>
     <member kind="function">
-      <type>EdiGrid *</type>
-      <name>ediReadGrid</name>
-      <anchorfile>group___edi.html</anchorfile>
-      <anchor>ga240d5c51008d7f9bcbac974401690e59</anchor>
-      <arglist>(Edi *edi, cchar *tableName)</arglist>
-    </member>
-    <member kind="function">
       <type>EdiRec *</type>
       <name>ediReadOneWhere</name>
       <anchorfile>group___edi.html</anchorfile>
@@ -1728,6 +1749,13 @@
       <anchorfile>group___edi.html</anchorfile>
       <anchor>ga9da339eccd0e7dddfea03640bfa30e7f</anchor>
       <arglist>(Edi *edi, cchar *tableName, cchar *key)</arglist>
+    </member>
+    <member kind="function">
+      <type>EdiGrid *</type>
+      <name>ediReadTable</name>
+      <anchorfile>group___edi.html</anchorfile>
+      <anchor>ga05bd6c0bc6cb6d7bd01550de2843b099</anchor>
+      <arglist>(Edi *edi, cchar *tableName)</arglist>
     </member>
     <member kind="function">
       <type>EdiGrid *</type>
@@ -1773,17 +1801,31 @@
     </member>
     <member kind="function">
       <type>EdiRec *</type>
-      <name>ediUpdateField</name>
+      <name>ediSetField</name>
       <anchorfile>group___edi.html</anchorfile>
-      <anchor>ga91340851060d1615b47d53e6bc775956</anchor>
+      <anchor>ga649f5d198bed950955c34c05d8b59777</anchor>
       <arglist>(EdiRec *rec, cchar *fieldName, cchar *value)</arglist>
     </member>
     <member kind="function">
       <type>EdiRec *</type>
-      <name>ediUpdateFields</name>
+      <name>ediSetFields</name>
       <anchorfile>group___edi.html</anchorfile>
-      <anchor>ga0fe919a68d27c2f279858bda8935ea71</anchor>
+      <anchor>ga6399c9e05317bf82c49d1336b21b2f17</anchor>
       <arglist>(EdiRec *rec, MprHash *data)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>ediUpdateField</name>
+      <anchorfile>group___edi.html</anchorfile>
+      <anchor>ga14dfc03675a9312facb1be7dd48f73d6</anchor>
+      <arglist>(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>ediUpdateRec</name>
+      <anchorfile>group___edi.html</anchorfile>
+      <anchor>ga9b65a775c4ddc081e49b1a55cabc06aa</anchor>
+      <arglist>(Edi *edi, EdiRec *rec)</arglist>
     </member>
     <member kind="function">
       <type>bool</type>
@@ -1791,20 +1833,6 @@
       <anchorfile>group___edi.html</anchorfile>
       <anchor>ga7525ab6e695b51abc1bb342b8f35022b</anchor>
       <arglist>(EdiRec *rec)</arglist>
-    </member>
-    <member kind="function">
-      <type>int</type>
-      <name>ediWriteField</name>
-      <anchorfile>group___edi.html</anchorfile>
-      <anchor>ga56c462e7401774404b863be140dbf683</anchor>
-      <arglist>(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName, cchar *value)</arglist>
-    </member>
-    <member kind="function">
-      <type>int</type>
-      <name>ediWriteRec</name>
-      <anchorfile>group___edi.html</anchorfile>
-      <anchor>gaaa43a06a62872758084f26a2f33d64af</anchor>
-      <arglist>(Edi *edi, EdiRec *rec)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
@@ -1918,20 +1946,6 @@
       <name>actionProc</name>
       <anchorfile>struct_esp_action.html</anchorfile>
       <anchor>a075f4267e47ee8b869370325a22fa274</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="variable">
-      <type>char *</type>
-      <name>cacheUri</name>
-      <anchorfile>struct_esp_action.html</anchorfile>
-      <anchor>af852004159946e32e2230e04a7091a1e</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="variable">
-      <type>MprTime</type>
-      <name>lifespan</name>
-      <anchorfile>struct_esp_action.html</anchorfile>
-      <anchor>a26b7d2efa31ea0016d317cc907934eb0</anchor>
       <arglist></arglist>
     </member>
   </compound>

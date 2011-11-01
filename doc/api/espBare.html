@@ -21,7 +21,7 @@
 <td class="apiBrief">Abbreviated ESP Controls.</td></tr>
 <tr class="apiDef">
 <td class="apiName"><a href="#group___esp_control" class="nameRef">EspControl</a></td>
-<td class="apiBrief">ESP Controls MOB - Overview needed MOB - Talk about abbreviated forms.</td></tr>
+<td class="apiBrief">There are two groups of ESP Control APIs.</td></tr>
 <tr class="apiDef">
 <td class="apiName"><a href="#group___esp_parse" class="nameRef">EspParse</a></td>
 <td class="apiBrief">ESP page parser structure.</td></tr>
@@ -63,17 +63,18 @@
 <tr class="apiDef"><td class="apiType"><a href="#group___edi_rec" class="ref">EdiRec*</a></td><td><a href="#group___edi_1ga15bf63cd0ba27fd41ffcd2556552bc9c" class="nameRef">ediCreateBareRec</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, int nfields)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create a bare record.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___edi_rec" class="ref">EdiRec*</a></td><td><a href="#group___edi_1gad4e706a1a2d9ff527c9d42612ebeeae1" class="nameRef">ediCreateRec</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create a record.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___edi_service" class="ref">EdiService*</a></td><td><a href="#group___edi_service_1ga52bb6b4d64beebfacefa8cc7cfeab50f" class="nameRef">ediCreateService</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create the EDI service.</td></tr>
-<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___edi_service_1ga889df64bdd239f71c66b4fa920be8f46" class="nameRef">ediDefineValidation</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, <a href="#edi_8h_1a3cf21d57a02f250570e2beafc05befd9" class="ref">EdiValidationProc</a> vfn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Define a field validation procedure.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___edi_service_1ga889df64bdd239f71c66b4fa920be8f46" class="nameRef">ediDefineValidation</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, <a href="#group___edi_service_1ga3cf21d57a02f250570e2beafc05befd9" class="ref">EdiValidationProc</a> vfn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Define a field validation procedure.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1gaec3079929130e2f517f56d8c322e2468" class="nameRef">ediDelete</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Delete the database at the given path.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1ga1b8e8a569123ef71e5b341cb3f1329f9" class="nameRef">ediDeleteRow</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *key)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Delete a row in a database table.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar*</a></td><td><a href="#group___edi_1gaa5e7ed50f7256c03c82778c1b681ea87" class="nameRef">ediFormatField</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, <a href="#group___edi_field" class="ref">EdiField</a> value)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Format a field value.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1gac764d3271d738b2e6d284e4d49e8b90e" class="nameRef">ediGetColumnSchema</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *columnName, int *type, int *flags, int *cid)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get the column schema.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#group___mpr_list" class="ref">MprList*</a></td><td><a href="#group___edi_1gab5db5e05416c9998e8b3f3a2e700c2a2" class="nameRef">ediGetColumns</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get a list of column names.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar*</a></td><td><a href="#group___edi_1gaf725c63758094eb5425fe30beaa3f4df" class="nameRef">ediGetField</a>(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get a record field.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar*</a></td><td><a href="#group___edi_1gaa0a1e1ea039237f9e082ad63a17e64f1" class="nameRef">ediGetFieldFmt</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, <a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get and format a record field value.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="#group___edi_field" class="ref">EdiField</a></td><td><a href="#group___edi_1ga3720c685a8c4def59b12bccd26c03a40" class="nameRef">ediGetFieldSchema</a>(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get the record field schema.</td></tr>
+<tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1ga1f563dfa6f4ad87a227f0470b2a9838e" class="nameRef">ediGetFieldType</a>(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get the data type of a record field.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#group___mpr_list" class="ref">MprList*</a></td><td><a href="#group___edi_1ga573eb5891e0dfbe37febd3fa93c469ad" class="nameRef">ediGetGridColumns</a>(<a href="#group___edi_grid" class="ref">EdiGrid</a> *grid)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get a list of grid column names.</td></tr>
-<tr class="apiDef"><td class="apiType"><a href="#group___edi_field" class="ref">EdiField</a></td><td><a href="#group___edi_1gaf9c26979fbcd28747b78a550c63351c2" class="nameRef">ediGetRawRecField</a>(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get a record field.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#group___mpr_list" class="ref">MprList*</a></td><td><a href="#group___edi_1gaeffb65c159bee67b941ed8b335796c9e" class="nameRef">ediGetRecErrors</a>(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get record validation errors.</td></tr>
-<tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar*</a></td><td><a href="#group___edi_1ga93aa0c0c6d0e83f42b676febfd92c456" class="nameRef">ediGetRecField</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, <a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get and format a record field value.</td></tr>
-<tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1gaefb6f609a41919404378d163ea8924ca" class="nameRef">ediGetRecFieldType</a>(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get the data type of a record field.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1ga0b179dce91f770f00b31fd7f009e7c89" class="nameRef">ediGetTableSchema</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, int *numRows, int *numCols)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get table schema information.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#group___mpr_list" class="ref">MprList*</a></td><td><a href="#group___edi_1gafe0368e00f99402ec33a3058fb8aec00" class="nameRef">ediGetTables</a>(<a href="#group___edi" class="ref">Edi</a> *edi)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get a list of database tables.</td></tr>
 <tr class="apiDef"><td class="apiType">char*</td><td><a href="#group___edi_1ga39664fad5ac6b8e8d4392e1b6196c668" class="nameRef">ediGetTypeString</a>(int type)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Convert an EDI type to a string.</td></tr>
@@ -87,21 +88,21 @@
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1ga9e890e5216c6c01220e6ba150197a0e1" class="nameRef">ediParseTypeString</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *type)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Parse an EDI type string.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___edi_grid" class="ref">EdiGrid*</a></td><td><a href="#group___edi_1gaecc4d8a08a88424aec01aec08a9da73b" class="nameRef">ediQuery</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *cmd)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Run a query.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar*</a></td><td><a href="#group___edi_1ga8ec0078c860b71c0271d5628f6633447" class="nameRef">ediReadField</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *key, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *defaultValue)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Read a field from the database and format the result.</td></tr>
-<tr class="apiDef"><td class="apiType"><a href="#group___edi_grid" class="ref">EdiGrid*</a></td><td><a href="#group___edi_1ga240d5c51008d7f9bcbac974401690e59" class="nameRef">ediReadGrid</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Read a table.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___edi_rec" class="ref">EdiRec*</a></td><td><a href="#group___edi_1ga4d7cca45297f343faa89a36bb6b14b65" class="nameRef">ediReadOneWhere</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *operation, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Read one record.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___edi_field" class="ref">EdiField</a></td><td><a href="#group___edi_1ga00759cb1f734d60434e9fe308176767c" class="nameRef">ediReadRawField</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *key, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Read a field from the database.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___edi_rec" class="ref">EdiRec*</a></td><td><a href="#group___edi_1ga9da339eccd0e7dddfea03640bfa30e7f" class="nameRef">ediReadRec</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *key)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Read a record.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="#group___edi_grid" class="ref">EdiGrid*</a></td><td><a href="#group___edi_1ga05bd6c0bc6cb6d7bd01550de2843b099" class="nameRef">ediReadTable</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Read a table.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___edi_grid" class="ref">EdiGrid*</a></td><td><a href="#group___edi_1gaff88b5fa67778c33a447fbb231a928c1" class="nameRef">ediReadWhere</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *operation, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Read matching records.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1ga2e0e7c2d3e5c286a51bdc7c1d18cc34b" class="nameRef">ediRemoveIndex</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *indexName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Remove an table index.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1gae965f0739fa618a75fdc0455453dec14" class="nameRef">ediRemoveTable</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Remove a table from the database.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1ga6725ef26c5e502c45ed03f42c2f75051" class="nameRef">ediRenameColumn</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *columnName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *newColumnName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Rename a column.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1ga42ebae84b96f934005926c25cb568f24" class="nameRef">ediRenameTable</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *newTableName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Rename a table.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1ga77d616667577833662154d65ef794519" class="nameRef">ediSave</a>(<a href="#group___edi" class="ref">Edi</a> *edi)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Save in-memory database contents to disk.</td></tr>
-<tr class="apiDef"><td class="apiType"><a href="#group___edi_rec" class="ref">EdiRec*</a></td><td><a href="#group___edi_1ga91340851060d1615b47d53e6bc775956" class="nameRef">ediUpdateField</a>(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Update a record field without writing to the database.</td></tr>
-<tr class="apiDef"><td class="apiType"><a href="#group___edi_rec" class="ref">EdiRec*</a></td><td><a href="#group___edi_1ga0fe919a68d27c2f279858bda8935ea71" class="nameRef">ediUpdateFields</a>(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#struct_mpr_hash" class="ref">MprHash</a> *data)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Update record fields without writing to the database.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="#group___edi_rec" class="ref">EdiRec*</a></td><td><a href="#group___edi_1ga649f5d198bed950955c34c05d8b59777" class="nameRef">ediSetField</a>(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set a record field without writing to the database.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="#group___edi_rec" class="ref">EdiRec*</a></td><td><a href="#group___edi_1ga6399c9e05317bf82c49d1336b21b2f17" class="nameRef">ediSetFields</a>(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#struct_mpr_hash" class="ref">MprHash</a> *data)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set record fields without writing to the database.</td></tr>
+<tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1ga14dfc03675a9312facb1be7dd48f73d6" class="nameRef">ediUpdateField</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *key, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Write a value to a database table field.</td></tr>
+<tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1ga9b65a775c4ddc081e49b1a55cabc06aa" class="nameRef">ediUpdateRec</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="#group___edi_rec" class="ref">EdiRec</a> *rec)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Write a record to the database.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a></td><td><a href="#group___edi_1ga7525ab6e695b51abc1bb342b8f35022b" class="nameRef">ediValidateRec</a>(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Validate a record.</td></tr>
-<tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1ga56c462e7401774404b863be140dbf683" class="nameRef">ediWriteField</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *key, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Write a value to a database table field.</td></tr>
-<tr class="apiDef"><td class="apiType">int</td><td><a href="#group___edi_1gaaa43a06a62872758084f26a2f33d64af" class="nameRef">ediWriteRec</a>(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="#group___edi_rec" class="ref">EdiRec</a> *rec)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Write a record to the database.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga2400f88754f6e5556efd76ef3ddeed93" class="nameRef">endform</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Signify the end of an HTML form.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga03544bf56dde3a257391d07e1d6f6a3a" class="nameRef">error</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set an error flash notification message.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_req_1gaae88740666af5ee9b21ad39648857db8" class="nameRef">espAddHeader</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *key, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Add a header to the transmission using a format string.</td></tr>
@@ -115,7 +116,6 @@
 <tr class="apiDef"><td class="apiType">char*</td><td><a href="#group___esp_route_1ga2fe633ebe5e6a9dd266e1da8863f55b0" class="nameRef">espBuildScript</a>(<a href="#group___esp_route" class="ref">EspRoute</a> *eroute, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *page, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *cacheName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *layout, char **err)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Convert an ESP web page into compilable C code.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga5bf9787cd0cd13684a7e8ffa55aba884" class="nameRef">espButton</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *text, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an HTML button to use inside a form.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1gae7c01afaa7ef62fce8c378a0864eee84" class="nameRef">espButtonLink</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *text, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *uri, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an HTML button to use outside a form.</td></tr>
-<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_route_1ga455d09e910baab0aded9a57936dec886" class="nameRef">espCacheControl</a>(<a href="#group___esp_route" class="ref">EspRoute</a> *eroute, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *targetKey, int lifesecs, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *uri)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Control the caching of content for a given targetKey.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga11f59d518f29ecddd15cd6d970113d52" class="nameRef">espChart</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="#group___edi_grid" class="ref">EdiGrid</a> *grid, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an graphic chart.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a></td><td><a href="#group___esp_req_1gab1683170a07c0b0073ab8c1969680e9a" class="nameRef">espCheckSecurityToken</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Check a security token.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga4c0097201d128c40f451af90ceb5f674" class="nameRef">espCheckbox</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *checkedValue, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an input checkbox.</td></tr>
@@ -190,6 +190,7 @@
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a></td><td><a href="#esp_8h_1a366ed657abe537c8b22930f69273707b" class="nameRef">espRemoveRec</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *key)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Remove a record from a database table.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___esp_req_1gaa833750f16375fa479d0fcc22dfc2169" class="nameRef">espRender</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a formatted string.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___esp_req_1gae1fa564a4b89afb64df3d9681973e1bf" class="nameRef">espRenderBlock</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *buf, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a> size)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a block of data to the client.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___esp_req_1ga94594750521ce6621691dcec43a2d670" class="nameRef">espRenderCached</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render cached content.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___esp_req_1gaf5951884b79343ba98eb53b8c2d28a4f" class="nameRef">espRenderError</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, int status, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an error message back to the client and finalize the request.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___esp_req_1ga543bb9b12ee3f064a730a47164feac0d" class="nameRef">espRenderFile</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render the contents of a file back to the client.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___esp_req_1gaf3bc7904c49db358937584129928579f" class="nameRef">espRenderParam</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render the value of a request parameter to the client.</td></tr>
@@ -222,6 +223,7 @@
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga99318656d06ca7b87c39c88fda5839a6" class="nameRef">espTabs</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a tab control.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga884c56db7cf61601b19f5cd748415cd5" class="nameRef">espText</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *field, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a text input field as part of a form.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga462a61759aaca9af06e66e99f8de323c" class="nameRef">espTree</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="#group___edi_grid" class="ref">EdiGrid</a> *grid, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a tree control.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_req_1ga2d10fdd68ab00d306d344c815f7655e7" class="nameRef">espUpdateCache</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *uri, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *data, int lifesecs)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Update the cached content for a request.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a></td><td><a href="#group___esp_req_1ga1dda75c993af2b593ff9a14b37db9532" class="nameRef">espUpdateField</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *key, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Write a value to a database table field.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a></td><td><a href="#group___esp_req_1gab39fd8b2a794223bfbe46e06b1498264" class="nameRef">espUpdateFields</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#struct_mpr_hash" class="ref">MprHash</a> *data)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Write field values to a database row.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a></td><td><a href="#group___esp_req_1ga585c648e2d4b3b6183bf22cc976b7d4b" class="nameRef">espUpdateRec</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="#group___edi_rec" class="ref">EdiRec</a> *rec)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Write a record to the database.</td></tr>
@@ -236,6 +238,7 @@
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar*</a></td><td><a href="#group___esp_abbrev_1ga9e29353c73f7482f1b04657c044804a9" class="nameRef">getCookies</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get the request cookies.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___edi" class="ref">Edi*</a></td><td><a href="#group___esp_abbrev_1ga9aa7c416a3ac3b6d732c1325e3f2ef15" class="nameRef">getDatabase</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get the current database instance.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar*</a></td><td><a href="#group___esp_abbrev_1gae3849eeed48f781401eb601594566bf8" class="nameRef">getDir</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get the default document root directory for the request route.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar*</a></td><td><a href="#esp_8h_1aae0c48e803f796f2549974ceaccc4f12" class="nameRef">getField</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *field)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get a field from the current database record.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___edi_grid" class="ref">EdiGrid*</a></td><td><a href="#esp_8h_1a2e60477a5b4168f59758c93507b4b899" class="nameRef">getGrid</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get the current database grid.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar*</a></td><td><a href="#group___esp_abbrev_1ga3a9e6969b5beb4c554ec9032b322c0fe" class="nameRef">getHeader</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *key)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get an rx http header.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar*</a></td><td><a href="#group___esp_req_1ga6cb98a81fac3b68ef772a6cc7a37a156" class="nameRef">getMethod</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get the HTTP method.</td></tr>
@@ -264,11 +267,11 @@
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#struct_mpr_hash" class="ref">MprHash*</a></td><td><a href="#group___esp_abbrev_1ga3c8e01edebd0020f20411085635cca69" class="nameRef">params</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get the request parameter hash table.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga0322e295428bbb6e59beb7a0a4854f6e" class="nameRef">progress</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *progress, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Emit a progress bar.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1gad51f892a429286884a4ca4e52169914f" class="nameRef">radio</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *field, void *choices, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a radio button.</td></tr>
-<tr class="apiDef"><td class="apiType"><a href="#group___edi_grid" class="ref">EdiGrid*</a></td><td><a href="#esp_8h_1aa35c0401756e8f3c527d68c0c3afffb4" class="nameRef">readAllRecs</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Read all the records in table from the database.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___edi_rec" class="ref">EdiRec*</a></td><td><a href="#esp_8h_1a34ab6b0e4c677e26dde41a749c6ebc1c" class="nameRef">readRec</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Read the identified record.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___edi_rec" class="ref">EdiRec*</a></td><td><a href="#group___esp_abbrev_1gaa26e4e1c0388326035e93a9334f6e0ba" class="nameRef">readRecByKey</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *key)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Read a record identified by key value.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___edi_rec" class="ref">EdiRec*</a></td><td><a href="#group___esp_abbrev_1ga36f33afdfe9bdd2a583f43d2af4ed060" class="nameRef">readRecWhere</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *operation, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Read one record.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___edi_grid" class="ref">EdiGrid*</a></td><td><a href="#esp_8h_1a0709c70065cc9048a1a7a5ac6e294d16" class="nameRef">readRecsWhere</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *operation, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Read matching records.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="#group___edi_grid" class="ref">EdiGrid*</a></td><td><a href="#esp_8h_1a550c1016448c47c8ef7b78612a67ccd2" class="nameRef">readTable</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Read all the records in table from the database.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a></td><td><a href="#group___esp_abbrev_1ga3a7af8bca824b7941d058eeb598194ca" class="nameRef">receive</a>(char *buf, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a> size)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Read receive body content.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga79cf206805a9595395af14e7c35f289d" class="nameRef">redirect</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *target)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Redirect the client.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1gad75c0fe1f7da45beaec75d3cddf7bdb4" class="nameRef">redirectBack</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Redirect the client back to the referrer.</td></tr>
@@ -292,6 +295,7 @@
 <tr class="apiDef"><td class="apiType"><a href="#group___edi_rec" class="ref">EdiRec*</a></td><td><a href="#esp_8h_1afef8aa52aab6f3d8a3eebfe7eeb0edf4" class="nameRef">setRec</a>(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set the current database record.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1gadb4f7bc3020ab9c481f1ebcaf1ed3f2a" class="nameRef">setSessionVar</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set a session state variable.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga63470999d986c7d2d064dc44cdc2fcac" class="nameRef">setStatus</a>(int status)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set a Http response status.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga70074b92c4e5b0381a6a61f9e0f8e2cc" class="nameRef">showRequest</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Show request details.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga50471de30febcd31bae044ec7627e67d" class="nameRef">stylesheet</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *uri, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a stylesheet link.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga6c8039aca717c38fc7b0629cee7e6fdd" class="nameRef">table</a>(<a href="#group___edi_grid" class="ref">EdiGrid</a> *grid, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a table.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga15bfb2c9cde23c908c659eb261901d01" class="nameRef">tabs</a>(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a tab control.</td></tr>
@@ -307,6 +311,7 @@
 <table class="apiIndex" summary="typedefs">
 <tr class="apiDef"><td class="apiName"><a href="#struct_edi_provider" class="nameRef">EdiProvider</a></td><td class="apiBrief">Database provider interface.</td></tr>
 <tr class="apiDef"><td class="apiName"><a href="#struct_edi_validation" class="nameRef">EdiValidation</a></td><td class="apiBrief">Validation structure.</td></tr>
+<tr class="apiDef"><td class="apiName"><a href="#group___edi_service_1ga3cf21d57a02f250570e2beafc05befd9" class="nameRef">EdiValidationProc</a></td><td class="apiBrief">Field validation callback procedure.</td></tr>
 <tr class="apiDef"><td class="apiName"><a href="#struct_esp" class="nameRef">Esp</a></td><td class="apiBrief">Top level ESP structure.</td></tr>
 <tr class="apiDef"><td class="apiName"><a href="#struct_esp_action" class="nameRef">EspAction</a></td><td class="apiBrief">ESP Action.</td></tr>
 <tr class="apiDef"><td class="apiName"><a href="#esp_8h_1aa0c56d9f50902eb9cf16889d3d95c129" class="nameRef">EspProc</a></td><td class="apiBrief">Procedure callback.</td></tr>
@@ -363,7 +368,7 @@
 </tr>
 <tr class="apiBrief"><td>&nbsp;</td><td>Temporarily suppress auto-save.</td></tr>
 <tr class="apiDef">
-<td>#define</td><td><a href="#edi_8h_1aed4e19e390b7ee80b57edbc2f308538d" class="nameRef">EDI_TYPE_BLOB</a>&nbsp;&nbsp;&nbsp;1</td>
+<td>#define</td><td><a href="#edi_8h_1a746df6a6802b08fe4947b35244dba71c" class="nameRef">EDI_TYPE_BINARY</a>&nbsp;&nbsp;&nbsp;1</td>
 </tr>
 <tr class="apiBrief"><td>&nbsp;</td><td>Arbitrary binary data.</td></tr>
 <tr class="apiDef">
@@ -423,7 +428,7 @@ Database provider.
     <tr><td class="param">edi</td><td>Database handle.</td>
     <tr><td class="param">tableName</td><td>Database table name.</td>
     <tr><td class="param">columnName</td><td>Database column name.</td>
-    <tr><td class="param">type</td><td>Column data type. Set to one of EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT.</td>
+    <tr><td class="param">type</td><td>Column data type. Set to one of EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT.</td>
     <tr><td class="param">flags</td><td>Control column attributes. Set to a set of: EDI_AUTO_INC for auto incrementing columns, EDI_KEY if the column is the key column and/or EDI_INDEX to create an index on the column.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Zero if successful. Otherwise a negative MPR error code.</dd></dl>
@@ -480,7 +485,7 @@ Database provider.
   </div>
   <div class="apiDetail">
 <p>Add a validation.</p>
-    <dl><dt><b>Description</b>:</dt><dd>Validations are run wihen caling ediWriteRec. A validation is used to validate field data using builtin validators.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>Validations are run wihen caling ediUpdateRec. A validation is used to validate field data using builtin validators.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">edi</td><td>Database handle.</td>
@@ -508,7 +513,7 @@ Database provider.
     <tr><td class="param">edi</td><td>Database handle.</td>
     <tr><td class="param">tableName</td><td>Database table name.</td>
     <tr><td class="param">columnName</td><td>Database column name.</td>
-    <tr><td class="param">type</td><td>Column data type. Set to one of EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT.</td>
+    <tr><td class="param">type</td><td>Column data type. Set to one of EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT.</td>
     <tr><td class="param">flags</td><td>Control column attributes. Set to a set of: EDI_AUTO_INC for auto incrementing columns, EDI_KEY if the column is the key column and/or EDI_INDEX to create an index on the column.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Zero if successful. Otherwise a negative MPR error code.</dd></dl>
@@ -686,11 +691,89 @@ Database provider.
     <tr><td class="param">edi</td><td>Database handle.</td>
     <tr><td class="param">tableName</td><td>Database table name.</td>
     <tr><td class="param">columnName</td><td>Database column name.</td>
-    <tr><td class="param">type</td><td>Output parameter to receive the column data type. Will be set to one of: EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE, EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT. Set to null if this data is not required.</td>
+    <tr><td class="param">type</td><td>Output parameter to receive the column data type. Will be set to one of: EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE, EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT. Set to null if this data is not required.</td>
     <tr><td class="param">flags</td><td>Output parameter to receive the column control flags. Will be set one or more of: EDI_AUTO_INC, EDI_KEY and/or EDI_INDEX Set to null if this data is not required.</td>
     <tr><td class="param">cid</td><td>Output parameter to receive the ordinal column index in the database table. Set to null if this data is not required.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Zero if successful. Otherwise a negative MPR error code.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+  </div>
+</div>
+<a name="group___edi_1gaf725c63758094eb5425fe30beaa3f4df"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *
+    ediGetField
+(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName)
+  </div>
+  <div class="apiDetail">
+<p>Get a record field.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">rec</td><td>Database record.</td>
+    <tr><td class="param">fieldName</td><td>Field in the record to extract.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>An EdiField structure containing the record field value and details.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+  </div>
+</div>
+<a name="group___edi_1gaa0a1e1ea039237f9e082ad63a17e64f1"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *
+    ediGetFieldFmt
+(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, <a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName)
+  </div>
+  <div class="apiDetail">
+<p>Get and format a record field value.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">fmt</td><td>Record field value.</td>
+    <tr><td class="param">rec</td><td>Record to examine.</td>
+    <tr><td class="param">fieldName</td><td>Record field to examine.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>String value of the field.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+  </div>
+</div>
+<a name="group___edi_1ga3720c685a8c4def59b12bccd26c03a40"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___edi_field" class="ref">EdiField</a>
+    ediGetFieldSchema
+(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName)
+  </div>
+  <div class="apiDetail">
+<p>Get the record field schema.</p>
+    <dl><dt><b>Description</b>:</dt><dd>This returns the actual EdiField which contains the field name, type, value and flags.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">rec</td><td>Database record.</td>
+    <tr><td class="param">fieldName</td><td>Field in the record to extract.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>An EdiField structure containing the record field value and details.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+  </div>
+</div>
+<a name="group___edi_1ga1f563dfa6f4ad87a227f0470b2a9838e"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ediGetFieldType
+(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName)
+  </div>
+  <div class="apiDetail">
+<p>Get the data type of a record field.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">rec</td><td>Record to examine.</td>
+    <tr><td class="param">fieldName</td><td>Field to examine.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>The field type. Returns one of: EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE, EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
   </div>
@@ -713,25 +796,6 @@ Database provider.
     </dd></dl>
   </div>
 </div>
-<a name="group___edi_1gaf9c26979fbcd28747b78a550c63351c2"></a>
-<div class="api">
-  <div class="prototype">
-    <a href="#group___edi_field" class="ref">EdiField</a>
-    ediGetRawRecField
-(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName)
-  </div>
-  <div class="apiDetail">
-<p>Get a record field.</p>
-    <dl><dt>Parameters:</dt><dd>
-    <table class="parameters" summary="Parameters">
-    <tr><td class="param">rec</td><td>Database record.</td>
-    <tr><td class="param">fieldName</td><td>Field in the record to extract.</td>
-    </table></dd></dl>
-    <dl><dt>Returns:</dt><dd>An EdiField structure containing the record field value and details.</dd></dl>
-    <dl><dt>See Also:</dt><dd>
-    </dd></dl>
-  </div>
-</div>
 <a name="group___edi_1gaeffb65c159bee67b941ed8b335796c9e"></a>
 <div class="api">
   <div class="prototype">
@@ -746,45 +810,6 @@ Database provider.
     <tr><td class="param">rec</td><td>Database record.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>A list of validation errors. If validation passed, this call returns NULL.</dd></dl>
-    <dl><dt>See Also:</dt><dd>
-    </dd></dl>
-  </div>
-</div>
-<a name="group___edi_1ga93aa0c0c6d0e83f42b676febfd92c456"></a>
-<div class="api">
-  <div class="prototype">
-    <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *
-    ediGetRecField
-(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, <a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName)
-  </div>
-  <div class="apiDetail">
-<p>Get and format a record field value.</p>
-    <dl><dt>Parameters:</dt><dd>
-    <table class="parameters" summary="Parameters">
-    <tr><td class="param">fmt</td><td>Record field value.</td>
-    <tr><td class="param">rec</td><td>Record to examine.</td>
-    <tr><td class="param">fieldName</td><td>Record field to examine.</td>
-    </table></dd></dl>
-    <dl><dt>Returns:</dt><dd>String value of the field.</dd></dl>
-    <dl><dt>See Also:</dt><dd>
-    </dd></dl>
-  </div>
-</div>
-<a name="group___edi_1gaefb6f609a41919404378d163ea8924ca"></a>
-<div class="api">
-  <div class="prototype">
-    int
-    ediGetRecFieldType
-(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName)
-  </div>
-  <div class="apiDetail">
-<p>Get the data type of a record field.</p>
-    <dl><dt>Parameters:</dt><dd>
-    <table class="parameters" summary="Parameters">
-    <tr><td class="param">rec</td><td>Record to examine.</td>
-    <tr><td class="param">fieldName</td><td>Field to examine.</td>
-    </table></dd></dl>
-    <dl><dt>Returns:</dt><dd>The field type. Returns one of: EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE, EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
   </div>
@@ -839,9 +864,9 @@ Database provider.
 <p>Convert an EDI type to a string.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
-    <tr><td class="param">type</td><td>Column data type. Set to one of EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT.</td>
+    <tr><td class="param">type</td><td>Column data type. Set to one of EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT.</td>
     </table></dd></dl>
-    <dl><dt>Returns:</dt><dd>Type string. This will be set to one of: &quot;blob&quot;, &quot;bool&quot;, &quot;date&quot;, &quot;float&quot;, &quot;int&quot;, &quot;string&quot; or &quot;text&quot;.</dd></dl>
+    <dl><dt>Returns:</dt><dd>Type string. This will be set to one of: &quot;binary&quot;, &quot;bool&quot;, &quot;date&quot;, &quot;float&quot;, &quot;int&quot;, &quot;string&quot; or &quot;text&quot;.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
   </div>
@@ -998,9 +1023,9 @@ Database provider.
 <p>Parse an EDI type string.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
-    <tr><td class="param">type</td><td>Type string set to one of: &quot;blob&quot;, &quot;bool&quot;, &quot;date&quot;, &quot;float&quot;, &quot;int&quot;, &quot;string&quot; or &quot;text&quot;.</td>
+    <tr><td class="param">type</td><td>Type string set to one of: &quot;binary&quot;, &quot;bool&quot;, &quot;date&quot;, &quot;float&quot;, &quot;int&quot;, &quot;string&quot; or &quot;text&quot;.</td>
     </table></dd></dl>
-    <dl><dt>Returns:</dt><dd>Type code. Set to one of EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE, EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT.</dd></dl>
+    <dl><dt>Returns:</dt><dd>Type code. Set to one of EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE, EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
   </div>
@@ -1014,7 +1039,7 @@ Database provider.
   </div>
   <div class="apiDetail">
 <p>Run a query.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This runs a provider dependant query. For the SQLite provider, this runs an SQL statement. The &quot;mdb&quot; provider does not implement this API. To do queries using the &quot;mdb&quot; provider, use: $ediReadRec, $ediReadOneWhere, $ediReadWhere, $ediReadField and $ediReadGrid.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This runs a provider dependant query. For the SQLite provider, this runs an SQL statement. The &quot;mdb&quot; provider does not implement this API. To do queries using the &quot;mdb&quot; provider, use: $ediReadRec, $ediReadOneWhere, $ediReadWhere, $ediReadField and $ediReadTable.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">edi</td><td>Database handle.</td>
@@ -1045,26 +1070,6 @@ Database provider.
     <tr><td class="param">defaultValue</td><td>Default value to return if the field is null or empty.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Field value or default value if field is null or empty. Returns null if no matching record is found.</dd></dl>
-    <dl><dt>See Also:</dt><dd>
-    </dd></dl>
-  </div>
-</div>
-<a name="group___edi_1ga240d5c51008d7f9bcbac974401690e59"></a>
-<div class="api">
-  <div class="prototype">
-    <a href="#group___edi_grid" class="ref">EdiGrid</a> *
-    ediReadGrid
-(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName)
-  </div>
-  <div class="apiDetail">
-<p>Read a table.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This reads all the records in a table and returns a grid containing the results.</dd></dl>
-    <dl><dt>Parameters:</dt><dd>
-    <table class="parameters" summary="Parameters">
-    <tr><td class="param">edi</td><td>Database handle.</td>
-    <tr><td class="param">tableName</td><td>Database table name.</td>
-    </table></dd></dl>
-    <dl><dt>Returns:</dt><dd>A grid containing all records. Returns NULL if no matching records.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
   </div>
@@ -1131,6 +1136,26 @@ Database provider.
     <tr><td class="param">key</td><td>Key value of the record to read.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Record instance of EdiRec.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+  </div>
+</div>
+<a name="group___edi_1ga05bd6c0bc6cb6d7bd01550de2843b099"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___edi_grid" class="ref">EdiGrid</a> *
+    ediReadTable
+(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName)
+  </div>
+  <div class="apiDetail">
+<p>Read a table.</p>
+    <dl><dt><b>Description</b>:</dt><dd>This reads all the records in a table and returns a grid containing the results.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">edi</td><td>Database handle.</td>
+    <tr><td class="param">tableName</td><td>Database table name.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A grid containing all records. Returns NULL if no matching records.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
   </div>
@@ -1257,16 +1282,16 @@ Database provider.
     </dd></dl>
   </div>
 </div>
-<a name="group___edi_1ga91340851060d1615b47d53e6bc775956"></a>
+<a name="group___edi_1ga649f5d198bed950955c34c05d8b59777"></a>
 <div class="api">
   <div class="prototype">
     <a href="#group___edi_rec" class="ref">EdiRec</a> *
-    ediUpdateField
+    ediSetField
 (<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value)
   </div>
   <div class="apiDetail">
-<p>Update a record field without writing to the database.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This routine updates the record object with the given value. The record will not be written to the database. To write to the database, use $ediWriteRec.</dd></dl>
+<p>Set a record field without writing to the database.</p>
+    <dl><dt><b>Description</b>:</dt><dd>This routine updates the record object with the given value. The record will not be written to the database. To write to the database, use $ediUpdateRec.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">rec</td><td>Record to update.</td>
@@ -1278,22 +1303,65 @@ Database provider.
     </dd></dl>
   </div>
 </div>
-<a name="group___edi_1ga0fe919a68d27c2f279858bda8935ea71"></a>
+<a name="group___edi_1ga6399c9e05317bf82c49d1336b21b2f17"></a>
 <div class="api">
   <div class="prototype">
     <a href="#group___edi_rec" class="ref">EdiRec</a> *
-    ediUpdateFields
+    ediSetFields
 (<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#struct_mpr_hash" class="ref">MprHash</a> *data)
   </div>
   <div class="apiDetail">
-<p>Update record fields without writing to the database.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This routine updates the record object with the given values. The "data&apos; argument supplies a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually created via <a class="ref" BBB href="#group___edi_1gac8ba9b4a0cdc2d2f30de7d915a4c51c1">ediMakeHash</a> to convert a JSON string into an options hash. For example: ediUpdatefields(rec, ediMakeHash(&quot;{ name: &apos;%s&apos;, address: &apos;%s&apos; }&quot;, name, address)) The record will not be written to the database. To write to the database, use $ediWriteRec.</dd></dl>
+<p>Set record fields without writing to the database.</p>
+    <dl><dt><b>Description</b>:</dt><dd>This routine updates the record object with the given values. The "data&apos; argument supplies a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually created via <a class="ref" BBB href="#group___edi_1gac8ba9b4a0cdc2d2f30de7d915a4c51c1">ediMakeHash</a> to convert a JSON string into an options hash. For example: ediSetFields(rec, ediMakeHash(&quot;{ name: &apos;%s&apos;, address: &apos;%s&apos; }&quot;, name, address)) The record will not be written to the database. To write to the database, use $ediUpdateRec.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">rec</td><td>Record to update.</td>
     <tr><td class="param">data</td><td>Hash of field names and values to use for the update.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>The record instance if successful, otherwise NULL.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+  </div>
+</div>
+<a name="group___edi_1ga14dfc03675a9312facb1be7dd48f73d6"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ediUpdateField
+(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *key, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value)
+  </div>
+  <div class="apiDetail">
+<p>Write a value to a database table field.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Update the value of a table field in the selected table row. Note: field validations are not run.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">edi</td><td>Database handle.</td>
+    <tr><td class="param">tableName</td><td>Database table name.</td>
+    <tr><td class="param">key</td><td>Key value for the table row to update.</td>
+    <tr><td class="param">fieldName</td><td>Column name to update.</td>
+    <tr><td class="param">value</td><td>Value to write to the database field.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>Zero if successful. Otherwise a negative MPR error code.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+  </div>
+</div>
+<a name="group___edi_1ga9b65a775c4ddc081e49b1a55cabc06aa"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    ediUpdateRec
+(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="#group___edi_rec" class="ref">EdiRec</a> *rec)
+  </div>
+  <div class="apiDetail">
+<p>Write a record to the database.</p>
+    <dl><dt><b>Description</b>:</dt><dd>If the record is a new record and the &quot;id&quot; column is EDI_AUTO_INC, then the &quot;id&quot; will be assigned prior to saving the record.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">edi</td><td>Database handle.</td>
+    <tr><td class="param">rec</td><td>Record to write to the database.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>Zero if successful. Otherwise a negative MPR error code.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
   </div>
@@ -1313,49 +1381,6 @@ Database provider.
     <tr><td class="param">rec</td><td>Record to validate.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>True if all field valiations pass.</dd></dl>
-    <dl><dt>See Also:</dt><dd>
-    </dd></dl>
-  </div>
-</div>
-<a name="group___edi_1ga56c462e7401774404b863be140dbf683"></a>
-<div class="api">
-  <div class="prototype">
-    int
-    ediWriteField
-(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *key, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value)
-  </div>
-  <div class="apiDetail">
-<p>Write a value to a database table field.</p>
-    <dl><dt><b>Description</b>:</dt><dd>Update the value of a table field in the selected table row. Note: field validations are not run.</dd></dl>
-    <dl><dt>Parameters:</dt><dd>
-    <table class="parameters" summary="Parameters">
-    <tr><td class="param">edi</td><td>Database handle.</td>
-    <tr><td class="param">tableName</td><td>Database table name.</td>
-    <tr><td class="param">key</td><td>Key value for the table row to update.</td>
-    <tr><td class="param">fieldName</td><td>Column name to update.</td>
-    <tr><td class="param">value</td><td>Value to write to the database field.</td>
-    </table></dd></dl>
-    <dl><dt>Returns:</dt><dd>Zero if successful. Otherwise a negative MPR error code.</dd></dl>
-    <dl><dt>See Also:</dt><dd>
-    </dd></dl>
-  </div>
-</div>
-<a name="group___edi_1gaaa43a06a62872758084f26a2f33d64af"></a>
-<div class="api">
-  <div class="prototype">
-    int
-    ediWriteRec
-(<a href="#group___edi" class="ref">Edi</a> *edi, <a href="#group___edi_rec" class="ref">EdiRec</a> *rec)
-  </div>
-  <div class="apiDetail">
-<p>Write a record to the database.</p>
-    <dl><dt><b>Description</b>:</dt><dd>If the record is a new record and the &quot;id&quot; column is EDI_AUTO_INC, then the &quot;id&quot; will be assigned prior to saving the record.</dd></dl>
-    <dl><dt>Parameters:</dt><dd>
-    <table class="parameters" summary="Parameters">
-    <tr><td class="param">edi</td><td>Database handle.</td>
-    <tr><td class="param">rec</td><td>Record to write to the database.</td>
-    </table></dd></dl>
-    <dl><dt>Returns:</dt><dd>Zero if successful. Otherwise a negative MPR error code.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
   </div>
@@ -1399,7 +1424,7 @@ Sourced from the database column name.
 </td>
     <tr><td class="param">int</td><td><td>type</td><td>
 Field data type. 
-Set to one of EDI_TYPE_BLOB, EDI_TYPE_BOOL, EDI_TYPE_DATE EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT.
+Set to one of EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT.
 </td>
     <tr><td class="param">int</td><td><td>valid</td><td>
 Field validity. 
@@ -1509,7 +1534,7 @@ Base table name for record.
   <div class="prototype">
     void
     ediDefineValidation
-(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, <a href="#edi_8h_1a3cf21d57a02f250570e2beafc05befd9" class="ref">EdiValidationProc</a> vfn)
+(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, <a href="#group___edi_service_1ga3cf21d57a02f250570e2beafc05befd9" class="ref">EdiValidationProc</a> vfn)
   </div>
   <div class="apiDetail">
 <p>Define a field validation procedure.</p>
@@ -1683,7 +1708,7 @@ Base table name for record.
   </div>
   <div class="apiDetail">
 <p>Create a record and initialize field values.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This will call $ediCreateRec to create a record based on the given table&apos;s schema. It will then call $ediUpdateFields to update the record with the given data.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This will call $ediCreateRec to create a record based on the given table&apos;s schema. It will then call $ediSetFields to update the record with the given data.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">tableName</td><td>Database table name.</td>
@@ -1837,7 +1862,7 @@ Base table name for record.
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">record</td><td>Record to use by default to supply form field names and values.</td>
-    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options. <ul><li>hideErrors &mdash; Don&apos;t display database record errors. Records retain error diagnostics from the previous failed write. Setting this option will prevent the display of such errors. </li><li>modal &mdash; Make the form a modal dialog. This will block all other HTML controls except the form. </li><li>nosecurity &mdash; Don&apos;t generate a security token for the form. </li><li>securityToken &mdash; String Override CSRF security token to include when the form is submitted. A default security token will always be generated unless options.nosecurity is defined to be true. Security tokens are used by ESP to mitigate cross site scripting errors. </li></ul></td>
+    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options. <ul><li>hideErrors &mdash; Don&apos;t display database record errors. Records retain error diagnostics from the previous failed write. Setting this option will prevent the display of such errors. </li><li>modal &mdash; Make the form a modal dialog. This will block all other HTML controls except the form. </li><li>insecure &mdash; Don&apos;t generate a security token for the form. </li><li>securityToken &mdash; String Override CSRF security token to include when the form is submitted. A default security token will always be generated unless options.insecure is defined to be true. Security tokens are used by ESP to mitigate cross site scripting errors. </li></ul></td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
@@ -2733,6 +2758,20 @@ The output is Html escaped for security
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
   </div>
 </div>
+<a name="group___esp_abbrev_1ga70074b92c4e5b0381a6a61f9e0f8e2cc"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    showRequest
+()
+  </div>
+  <div class="apiDetail">
+<p>Show request details.</p>
+    <dl><dt><b>Description</b>:</dt><dd>This echos request details back to the client. This is useful as a debugging tool.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
+  </div>
+</div>
 <a name="group___esp_abbrev_1ga50471de30febcd31bae044ec7627e67d"></a>
 <div class="api">
   <div class="prototype">
@@ -2951,7 +2990,7 @@ The tab control can manage a set of panes and will selectively show and hide or 
 <div class="api">
   <div class="prototype">EspControl</div>
   <div class="apiDetail">
-<p>ESP Controls MOB - Overview needed MOB - Talk about abbreviated forms.</p>
+<p>There are two groups of ESP Control APIs.</p>
     <dl><dt><b>API</b> Stability:</dt><dd>Prototype.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
@@ -3537,9 +3576,6 @@ App module already probed.
     <tr><td class="param">int</td><td><td>autoFinalize</td><td>
 Request is/will-be auto-finalized.
 </td>
-    <tr><td class="param">MprBuf *</td><td><td>cacheBuffer</td><td>
-HTML output caching.
-</td>
     <tr><td class="param">char *</td><td><td>cacheName</td><td>
 Base name of intermediate compiled file.
 </td>
@@ -3560,9 +3596,6 @@ Extended route info.
 </td>
     <tr><td class="param"><a class="ref" BBB href="#struct_esp">Esp</a> *</td><td><td>esp</td><td>
 Convenient esp reference.
-</td>
-    <tr><td class="param">int</td><td><td>finalized</td><td>
-Request has been finalized.
 </td>
     <tr><td class="param"><a class="ref" BBB href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>flash</td><td>
 New flash messages.
@@ -3747,7 +3780,7 @@ Path to view.
   </div>
   <div class="apiDetail">
 <p>Create a record and initialize field values.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This will call $ediCreateRec to create a record based on the given table&apos;s schema. It will then call $ediUpdateFields to update the record with the given data.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This will call $ediCreateRec to create a record based on the given table&apos;s schema. It will then call $ediSetFields to update the record with the given data.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">conn</td><td>Http connection object.</td>
@@ -4575,6 +4608,25 @@ Path to view.
     </dd></dl>
   </div>
 </div>
+<a name="group___esp_req_1ga94594750521ce6621691dcec43a2d670"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="appweb.html#http.html#mpr.html#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a>
+    espRenderCached
+(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)
+  </div>
+  <div class="apiDetail">
+<p>Render cached content.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Render the saved, cached response from a prior request to this URI. This is useful if the caching mode has been set to &quot;manual&quot;.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>HttpConn connection object.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A count of the bytes actually written.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+  </div>
+</div>
 <a name="group___esp_req_1gaf5951884b79343ba98eb53b8c2d28a4f"></a>
 <div class="api">
   <div class="prototype">
@@ -5024,6 +5076,27 @@ The output is Html escaped for security
     </dd></dl>
   </div>
 </div>
+<a name="group___esp_req_1ga2d10fdd68ab00d306d344c815f7655e7"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    espUpdateCache
+(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *uri, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *data, int lifesecs)
+  </div>
+  <div class="apiDetail">
+<p>Update the cached content for a request.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Save the given content for future requests. This is useful if the caching mode has been set to &quot;manual&quot;.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>HttpConn connection object.</td>
+    <tr><td class="param">uri</td><td>Request URI to cache for.</td>
+    <tr><td class="param">data</td><td>Data to cache.</td>
+    <tr><td class="param">lifesecs</td><td>Time in seconds to cache the data.</td>
+    </table></dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+  </div>
+</div>
 <a name="group___esp_req_1ga1dda75c993af2b593ff9a14b37db9532"></a>
 <div class="api">
   <div class="prototype">
@@ -5196,6 +5269,9 @@ Default cache lifespan.
     <tr><td class="param">char *</td><td><td>link</td><td>
 Link template.
 </td>
+    <tr><td class="param">HttpRoute *</td><td><td>route</td><td>
+Back link to the owning route.
+</td>
     <tr><td class="param">char *</td><td><td>searchPath</td><td>
 Search path to use when locating compiler / linker.
 </td>
@@ -5234,28 +5310,6 @@ Directory for views.
     <tr><td class="param">err</td><td>Output parameter to hold any relevant error message.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>C language code string for the web page.</dd></dl>
-    <dl><dt>See Also:</dt><dd>
-    </dd></dl>
-  </div>
-</div>
-<a name="group___esp_route_1ga455d09e910baab0aded9a57936dec886"></a>
-<div class="api">
-  <div class="prototype">
-    void
-    espCacheControl
-(<a href="#group___esp_route" class="ref">EspRoute</a> *eroute, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *targetKey, int lifesecs, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *uri)
-  </div>
-  <div class="apiDetail">
-<p>Control the caching of content for a given targetKey.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This routine the response data content caching.</dd></dl>
-    <dl><dt>Parameters:</dt><dd>
-    <table class="parameters" summary="Parameters">
-    <tr><td class="param">eroute</td><td>EspRoute object.</td>
-    <tr><td class="param">targetKey</td><td>The HttpRoute target key to cache.</td>
-    <tr><td class="param">lifesecs</td><td>Lifespan of cache items in seconds.</td>
-    <tr><td class="param">uri</td><td>Optional cache URI when using per-URI caching. Set to &quot;*&quot; to cache all matching URIs on a per-URI basis.</td>
-    </table></dd></dl>
-    <dl><dt>Returns:</dt><dd>A count of the bytes actually written.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
   </div>
@@ -5629,6 +5683,23 @@ Session inactivity timeout (msecs).
     <dl><dt>Returns:</dt><dd>An MprList of column names in the given table. If there is no record defined, an empty list is returned.</dd></dl>
   </div>
 </div>
+<a name="esp_8h_1aae0c48e803f796f2549974ceaccc4f12"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *
+    getField
+(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *field)
+  </div>
+  <div class="apiDetail">
+<p>Get a field from the current database record.</p>
+    <dl><dt><b>Description</b>:</dt><dd>The current grid is defined via $setRec.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">field</td><td>Field name to return.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>String value for &quot;field&quot; in the current record.</dd></dl>
+  </div>
+</div>
 <a name="esp_8h_1a2e60477a5b4168f59758c93507b4b899"></a>
 <div class="api">
   <div class="prototype">
@@ -5651,7 +5722,7 @@ Session inactivity timeout (msecs).
   </div>
   <div class="apiDetail">
 <p>Get the current database record.</p>
-    <dl><dt><b>Description</b>:</dt><dd>The current grid is defined via $setRec.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>The current record is defined via $setRec.</dd></dl>
     <dl><dt>Returns:</dt><dd>EdiRec instance.</dd></dl>
   </div>
 </div>
@@ -5679,23 +5750,6 @@ Session inactivity timeout (msecs).
 <p>Test is a current record has been defined and save to the database.</p>
     <dl><dt><b>Description</b>:</dt><dd>This call returns true if a current record is defined and has been saved to the database with a valid &quot;id&quot; field.</dd></dl>
     <dl><dt>Returns:</dt><dd>True if a current record with a valid &quot;id&quot; is defined.</dd></dl>
-  </div>
-</div>
-<a name="esp_8h_1aa35c0401756e8f3c527d68c0c3afffb4"></a>
-<div class="api">
-  <div class="prototype">
-    <a href="#group___edi_grid" class="ref">EdiGrid</a> *
-    readAllRecs
-(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName)
-  </div>
-  <div class="apiDetail">
-<p>Read all the records in table from the database.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This reads a table and returns a grid containing the table data.</dd></dl>
-    <dl><dt>Parameters:</dt><dd>
-    <table class="parameters" summary="Parameters">
-    <tr><td class="param">tableName</td><td>Database table name.</td>
-    </table></dd></dl>
-    <dl><dt>Returns:</dt><dd>A grid containing all table rows. Returns NULL if the table cannot be found.</dd></dl>
   </div>
 </div>
 <a name="esp_8h_1a34ab6b0e4c677e26dde41a749c6ebc1c"></a>
@@ -5733,6 +5787,23 @@ Session inactivity timeout (msecs).
     <tr><td class="param">value</td><td>Data value to compare with the field values.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>A grid containing all matching records. Returns NULL if no matching records.</dd></dl>
+  </div>
+</div>
+<a name="esp_8h_1a550c1016448c47c8ef7b78612a67ccd2"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="#group___edi_grid" class="ref">EdiGrid</a> *
+    readTable
+(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *tableName)
+  </div>
+  <div class="apiDetail">
+<p>Read all the records in table from the database.</p>
+    <dl><dt><b>Description</b>:</dt><dd>This reads a table and returns a grid containing the table data.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">tableName</td><td>Database table name.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>A grid containing all table rows. Returns NULL if the table cannot be found.</dd></dl>
   </div>
 </div>
 <a name="esp_8h_1a09091b0bc981b74fdf0b197fbee8adab"></a>
@@ -5809,6 +5880,24 @@ The Path, domain and expires properties can be set to null for default values
 <p>Procedure callback.</p>
   </div>
 </div>
+<a name="group___edi_service_1ga3cf21d57a02f250570e2beafc05befd9"></a>
+<div class="api">
+  <div class="prototype">
+    typedef cchar*(* EdiValidationProc)(struct EdiValidation *vp, struct EdiRec *rec, cchar *fieldName, cchar *value).
+  </div>
+  <div class="apiDetail">
+<p>Field validation callback procedure.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">vp</td><td>Validation structure reference.</td>
+    <tr><td class="param">rec</td><td>Record to validate.</td>
+    <tr><td class="param">fieldName</td><td>Field name to validate.</td>
+    <tr><td class="param">value</td><td>Field value to validate.</td>
+    </table></dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    </dd></dl>
+  </div>
+</div>
 <a name="group___esp_req_1ga4645d40178e3548fd0e6ad13fec1b5ed"></a>
 <div class="api">
   <div class="prototype">
@@ -5850,7 +5939,7 @@ Non-GC (malloc) data.
     <tr><td class="param"><a class="ref" BBB href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" external="mpr.dtags">cchar</a> *</td><td><td>name</td><td>
 Validation name.
 </td>
-    <tr><td class="param">EdiValidationProc</td><td><td>vfn</td><td>
+    <tr><td class="param"><a class="ref" BBB href="#group___edi_service_1ga3cf21d57a02f250570e2beafc05befd9">EdiValidationProc</a></td><td><td>vfn</td><td>
 Validation callback procedure.
 </td>
     </table></dd></dl>
@@ -5867,7 +5956,7 @@ Validation callback procedure.
 Table of actions.
 </td>
     <tr><td class="param">MprCache *</td><td><td>cache</td><td>
-Session and content cache.
+Session cache.
 </td>
     <tr><td class="param">EdiService *</td><td><td>ediService</td><td>
 Database service.
@@ -5900,12 +5989,6 @@ Table of views.
     <table class="parameters" summary="Parameters">
     <tr><td class="param">EspProc</td><td><td>actionProc</td><td>
 Action procedure to run to respond to the request.
-</td>
-    <tr><td class="param">char *</td><td><td>cacheUri</td><td>
-Per-URI caching details.
-</td>
-    <tr><td class="param">MprTime</td><td><td>lifespan</td><td>
-Lifespan for cached action content.
 </td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
