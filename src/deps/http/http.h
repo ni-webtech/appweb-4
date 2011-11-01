@@ -4097,6 +4097,9 @@ extern MprHash *httpGetHeaderHash(HttpConn *conn);
  */
 extern char *httpGetHeaders(HttpConn *conn);
 
+//  MOB DOC
+extern char *httpGetHeadersFromHash(MprHash *hash);
+
 /**
     Get a form variable as an integer
     @description Get the value of a named form variable as an integer. Form variables are define via 

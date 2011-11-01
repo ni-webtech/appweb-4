@@ -213,26 +213,31 @@ static int runAction(HttpConn *conn)
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find controller %s", req->controllerPath);
             return 0;
         }
+        lock(req->esp);
         if (moduleIsStale(conn, req->controllerPath, req->module, &recompile)) {
             /*  WARNING: GC yield here */
             if (recompile && !espCompile(conn, req->controllerPath, req->module, req->cacheName, 0)) {
+                unlock(req->esp);
                 return 0;
             }
         }
         if (mprLookupModule(req->controllerPath) == 0) {
             req->entry = getControllerEntry(req->controllerName);
             if ((mp = mprCreateModule(req->controllerPath, req->module, req->entry, eroute)) == 0) {
+                unlock(req->esp);
                 httpMemoryError(conn);
                 return 0;
             }
             mprSetThreadData(esp->local, conn);
             if (mprLoadModule(mp) < 0) {
+                unlock(req->esp);
                 httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, 
                     "Can't load compiled esp module for %s", req->controllerPath);
                 return 0;
             }
             updated = 1;
         }
+        unlock(req->esp);
     }
     key = mprJoinPath(eroute->controllersDir, rx->target);
     if ((action = mprLookupKey(esp->actions, key)) == 0) {
@@ -249,24 +254,6 @@ static int runAction(HttpConn *conn)
     }
     req->action = action;
     
-#if UNUSED
-    if (action->lifespan) {
-//  MOB - still need to invoke action if in "manual" mode
-        /* Must stabilize form data prior to controllers injecting variables */
-        httpGetParamsString(conn);
-        if (!updated && fetchCachedResponse(conn)) {
-            return 1;
-        }
-        req->cacheBuffer = mprCreateBuf(-1, -1);
-    }
-#endif
-    
-#if MOB
-    //  NEED THIS
-    if (updated) {
-        httpSetupRequestCaching(conn);
-    }
-#endif
     if (rx->flags & HTTP_POST) {
         if (!espCheckSecurityToken(conn)) {
             return 1;
@@ -323,9 +310,11 @@ void espRenderView(HttpConn *conn, cchar *name)
             httpError(conn, HTTP_CODE_NOT_FOUND, "Can't find web page %s", req->source);
             return;
         }
+        lock(req->esp);
         if (moduleIsStale(conn, req->source, req->module, &recompile)) {
             /* WARNING: this will allow GC */
             if (recompile && !espCompile(conn, req->source, req->module, req->cacheName, 1)) {
+                unlock(req->esp);
                 return;
             }
         }
@@ -333,16 +322,19 @@ void espRenderView(HttpConn *conn, cchar *name)
             req->entry = sfmt("esp_%s", req->cacheName);
             //  MOB - who keeps reference to module?
             if ((mp = mprCreateModule(req->source, req->module, req->entry, eroute)) == 0) {
+                unlock(req->esp);
                 httpMemoryError(conn);
                 return;
             }
             //  MOB - this should return an error msg
             mprSetThreadData(esp->local, conn);
             if (mprLoadModule(mp) < 0) {
+                unlock(req->esp);
                 httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load compiled esp module for %s", req->source);
                 return;
             }
         }
+        unlock(req->esp);
     }
     if ((view = mprLookupKey(esp->views, mprGetPortablePath(req->source))) == 0) {
         httpError(conn, HTTP_CODE_NOT_FOUND, "Can't find defined view for %s", req->view);

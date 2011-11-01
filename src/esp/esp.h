@@ -428,29 +428,15 @@ extern MprHash *espGetSessionObj(HttpConn *conn, cchar *key);
  */
 typedef void (*EspViewProc)(HttpConn *conn);
 
-#if UNUSED
-/*
-    EspAction flags (also used in espCacheControl)
- */
-#define ESP_CACHE_TRANSPARENT       0x1     /**< Cache transparently */
-#define ESP_CACHE_MANUAL            0x2     /**< Cache manually. User must call espRenderCache */
-#define ESP_CACHE_VARY_ON_PARAMS    0x4     /**< Cache uniquely for different request params (query, post data) */
-#define ESP_CACHE_CLIENT            0x8     /**< Cache on the client side */
-#endif
-
 /**
     ESP Action
     @description Actions are run after a request URI is routed to a controller.
     @ingroup EspReq
     @see
  */
+//  MOB - simplify EspAction to just EspProc
 typedef struct EspAction {
     EspProc         actionProc;             /**< Action procedure to run to respond to the request */
-#if UNUSED
-    MprTime         lifespan;               /**< Lifespan for cached action content */
-    char            *cacheUri;              /**< Per-URI caching details */
-    int             flags;                  /**< Cache control flags */
-#endif
 } EspAction;
 
 void espManageAction(EspAction *ap, int flags);
@@ -466,9 +452,6 @@ typedef struct EspReq {
     EspSession      *session;               /**< Session data object */
     EspAction       *action;                /**< Action to invoke */
     Esp             *esp;                   /**< Convenient esp reference */
-#if UNUSED
-    MprBuf          *cacheBuffer;           /**< HTML output caching */
-#endif
     MprHash         *flash;                 /**< New flash messages */
     MprHash         *lastFlash;             /**< Flash messages from the last request */
     char            *cacheName;             /**< Base name of intermediate compiled file */
@@ -480,9 +463,6 @@ typedef struct EspReq {
     char            *entry;                 /**< Module entry point */
     char            *commandLine;           /**< Command line for compile/link */
     int             autoFinalize;           /**< Request is/will-be auto-finalized */
-#if UNUSED
-    int             finalized;              /**< Request has been finalized */
-#endif
     int             sessionProbed;          /**< Already probed for session store */
     int             appLoaded;              /**< App module already probed */
     int             lastDomID;              /**< Last generated DOM ID */

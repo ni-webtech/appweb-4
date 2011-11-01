@@ -13,18 +13,17 @@ assert(http.status == 200)
 //  Initial get
 http.get(HTTP + "/app/cache/manual")
 assert(http.status == 200)
-
 let resp = deserialize(http.response)
-let first = resp.when
+let first = resp.number
 assert(resp.uri == "/app/cache/manual")
 assert(resp.query == "null")
 
-//  Second get, should get the same content (when must not change)
+//  Second get, should get the same content (number must not change)
 //  This is being done manually by the "manual" method in the cache controller
 http.get(HTTP + "/app/cache/manual")
 assert(http.status == 200)
 resp = deserialize(http.response)
-assert(resp.when == first)
+assert(resp.number == first)
 assert(resp.uri == "/app/cache/manual")
 assert(resp.query == "null")
 

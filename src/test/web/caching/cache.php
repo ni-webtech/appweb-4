@@ -1,1 +1,1 @@
-<? print_r("{ time: " . time() . "}"); ?>
+<? print_r("{ number: \"" . uniqid() . "\"}\n"); ?>

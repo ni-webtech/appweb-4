@@ -11,13 +11,13 @@ function testCache(uri) {
     http.get(HTTP + uri)
     assert(http.status == 200)
     let resp = deserialize(http.response)
-    let first = resp.time
+    let first = resp.number
 
-    //  Second get, should get the same content (when must not change)
+    //  Second get, should get the same content (number must not change)
     http.get(HTTP + uri)
     assert(http.status == 200)
     resp = deserialize(http.response)
-    assert(resp.time == first)
+    assert(resp.number == first)
     http.close()
 }
 

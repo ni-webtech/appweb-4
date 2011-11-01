@@ -10,15 +10,15 @@ let http: Http = new Http
 http.get(HTTP + "/combined/cache.esp")
 assert(http.status == 200)
 let resp = deserialize(http.response)
-let first = resp.when
+let first = resp.number
 assert(resp.uri == "/combined/cache.esp")
 assert(resp.query == "null")
 
-//  Second get, should get the same content (when must not change)
+//  Second get, should get the same content (number must not change)
 http.get(HTTP + "/combined/cache.esp")
 assert(http.status == 200)
 resp = deserialize(http.response)
-assert(resp.when == first)
+assert(resp.number == first)
 assert(resp.uri == "/combined/cache.esp")
 assert(resp.query == "null")
 
@@ -27,8 +27,8 @@ assert(resp.query == "null")
 http.get(HTTP + "/combined/cache.esp?a=b&c=d")
 assert(http.status == 200)
 resp = deserialize(http.response)
-let firstQuery = resp.when
-assert(resp.when == first)
+let firstQuery = resp.number
+assert(resp.number == first)
 assert(resp.uri == "/combined/cache.esp")
 assert(resp.query == "null")
 

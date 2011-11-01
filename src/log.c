@@ -25,8 +25,9 @@ static void logHandler(int flags, int level, cchar *msg)
     }
     prefix = mpr->name;
 
+    lock(mpr);
     while (*msg == '\n') {
-        mprFprintf(file, "\n");
+        mprWriteFile(file, "\n", 1);
         msg++;
     }
     if (flags & MPR_LOG_SRC) {
@@ -58,8 +59,9 @@ static void logHandler(int flags, int level, cchar *msg)
         mprWriteToOsLog(buf, flags, level);
         
     } else if (flags & MPR_RAW) {
-        mprFprintf(file, "%s", msg);
+        mprWriteFile(file, msg, slen(msg));
     }
+    unlock(mpr);
 }
 
 

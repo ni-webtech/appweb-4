@@ -10,15 +10,15 @@ let http: Http = new Http
 http.get(HTTP + "/unique/cache.esp")
 assert(http.status == 200)
 let resp = deserialize(http.response)
-let first = resp.when
+let first = resp.number
 assert(resp.uri == "/unique/cache.esp")
 assert(resp.query == "null")
 
-//  Second get, should get the same content (when must not change)
+//  Second get, should get the same content (number must not change)
 http.get(HTTP + "/unique/cache.esp")
 assert(http.status == 200)
 resp = deserialize(http.response)
-assert(resp.when == first)
+assert(resp.number == first)
 assert(resp.uri == "/unique/cache.esp")
 assert(resp.query == "null")
 
@@ -28,8 +28,8 @@ assert(resp.query == "null")
 http.get(HTTP + "/unique/cache.esp?a=b&c=d")
 assert(http.status == 200)
 resp = deserialize(http.response)
-let firstQuery = resp.when
-assert(resp.when != first)
+let firstQuery = resp.number
+assert(resp.number != first)
 assert(resp.uri == "/unique/cache.esp")
 assert(resp.query == "a=b&c=d")
 
@@ -37,9 +37,9 @@ assert(resp.query == "a=b&c=d")
 http.get(HTTP + "/unique/cache.esp?a=b&c=d")
 assert(http.status == 200)
 resp = deserialize(http.response)
-let firstQuery = resp.when
-assert(resp.when != first)
-assert(resp.when == firstQuery)
+let firstQuery = resp.number
+assert(resp.number != first)
+assert(resp.number == firstQuery)
 assert(resp.uri == "/unique/cache.esp")
 assert(resp.query == "a=b&c=d")
 
@@ -47,9 +47,9 @@ assert(resp.query == "a=b&c=d")
 http.get(HTTP + "/unique/cache.esp?w=x&y=z")
 assert(http.status == 200)
 resp = deserialize(http.response)
-assert(resp.when != first)
-assert(resp.when != firstQuery)
-let secondQuery = resp.when
+assert(resp.number != first)
+assert(resp.number != firstQuery)
+let secondQuery = resp.number
 assert(resp.uri == "/unique/cache.esp")
 assert(resp.query == "w=x&y=z")
 
@@ -57,9 +57,9 @@ assert(resp.query == "w=x&y=z")
 http.get(HTTP + "/unique/cache.esp?w=x&y=z")
 assert(http.status == 200)
 resp = deserialize(http.response)
-assert(resp.when != first)
-assert(resp.when != firstQuery)
-assert(resp.when == secondQuery)
+assert(resp.number != first)
+assert(resp.number != firstQuery)
+assert(resp.number == secondQuery)
 assert(resp.uri == "/unique/cache.esp")
 assert(resp.query == "w=x&y=z")
 
