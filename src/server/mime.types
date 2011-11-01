@@ -16,9 +16,6 @@ application/vnd.rn-realmedia rm
 application/vnd.wap.wbxml wbxml
 application/vnd.wap.wmlc wmlc
 application/vnd.wap.wmlscriptc wmlsc
-application/x-appweb-php php
-application/x-appweb-perl pl
-application/x-appweb-python py
 application/x-bcpio bcpio
 application/x-bzip2 bz2
 application/x-cdlink vcd
@@ -27,11 +24,12 @@ application/x-cpio cpio
 application/x-csh csh
 application/x-director dcr dir dxr
 application/x-dvi dvi
+application/x-ejs ejs
+application/x-esp esp
 application/x-futuresplash spl
 application/x-gtar gtar
 application/x-gzip gz tgz
 application/x-hdf hdf
-application/xhtml+xml xhtml xht
 application/x-kchart chrt
 application/x-killustrator kil
 application/x-koan skp skd skt skm
@@ -41,23 +39,26 @@ application/x-kword kwd kwt
 application/x-latex latex
 application/x-netcdf nc cdf
 application/x-ogg ogg
+application/x-perl pl
+application/x-python py
 application/x-rpm rpm
+application/x-sh sh
 application/x-shar shar
 application/x-shockwave-flash swf
-application/x-sh sh
 application/x-stuffit sit
 application/x-sv4cpio sv4cpio
 application/x-sv4crc sv4crc
 application/x-tar tar
 application/x-tcl tcl
-application/x-texinfo texinfo texi
 application/x-tex tex
+application/x-texinfo texinfo texi
+application/x-troff t tr roff
 application/x-troff-man man
 application/x-troff-me me
 application/x-troff-ms ms
-application/x-troff t tr roff
 application/x-ustar ustar
 application/x-wais-source src
+application/xhtml+xml xhtml xht
 application/zip zip
 audio/basic au
 audio/midi mid midi kar
@@ -99,10 +100,10 @@ text/rtf rtf
 text/sgml sgml sgm
 text/tab-separated-values tsv
 text/vnd.rn-realtext rt
-text/vnd.wap.wmlscript wmls
 text/vnd.wap.wml wml
-text/xml xml xsl
+text/vnd.wap.wmlscript wmls
 text/x-setext etx
+text/xml xml xsl
 video/mpeg mpeg mpg mpe
 video/quicktime qt mov
 video/vnd.mpegurl mxu
