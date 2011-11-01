@@ -157,8 +157,6 @@ typedef struct EspRoute {
 #define ESP_CACHE_IGNORE_PARAMS  HTTP_ROUTE_IGNORE_PARAMS /**< Cache uniquely for different request params */
 #define ESP_CACHE_CLIENT         HTTP_ROUTE_CLIENT_CACHE  /**< Cache on the client side */
 
-extern int espCache(cchar *routeName, cchar *uri, int lifesecs, int flags);
-
 #if UNUSED && MOVE_TO_HTTP
 /**
     Control the caching of response content
@@ -227,7 +225,7 @@ SOLN
 //  MOB - remove "Control"
 extern void espCacheControl(EspRoute *eroute, cchar *action, int lifesecs, cchar *uri, int flags);
 #endif
-
+extern int espCache(HttpRoute *route, cchar *uri, int lifesecs, int flags);
 
 /**
     Compile a view or controller

@@ -134,7 +134,7 @@ struct HttpUri;
 
 #define HTTP_INACTIVITY_TIMEOUT   (60  * 1000)      /**< Keep connection alive timeout */
 #define HTTP_SESSION_TIMEOUT      (3600 * 1000)     /**< One hour */
-#define HTTP_CACHE_LIFESPAN       86400             /**< Default cache lifespan to 1 day */
+#define HTTP_CACHE_LIFESPAN       (86400 * 1000)    /**< Default cache lifespan to 1 day */
 
 #define HTTP_DATE_FORMAT          "%a, %d %b %Y %T GMT"
 

@@ -79,19 +79,9 @@ void espManageAction(EspAction *ap, int flags)
 }
 
 
-int espCache(cchar *routeName, cchar *uri, int lifesecs, int flags)
+int espCache(HttpRoute *route, cchar *uri, int lifesecs, int flags)
 {
-    //  MOB - REMOVE
-#if UNUSED
-    HttpRoute   *route;
-
-    //  MOB - could auto-add prefix
-    if ((route = httpLookupRoute(routeName)) == 0) {
-        mprError("espCache: Can't find route %s", routeName);
-        return MPR_ERR_CANT_FIND);
-    }
     httpAddCache(route, NULL, uri, NULL, NULL, lifesecs * MPR_TICKS_PER_SEC, flags);
-#endif
     return 0;
 }
 

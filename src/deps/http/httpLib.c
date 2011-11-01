@@ -1680,7 +1680,7 @@ static int matchCacheFilter(HttpConn *conn, HttpRoute *route, int dir)
  */
 static void outgoingCacheFilterService(HttpQueue *q)
 {
-    HttpPacket  *packet;
+    HttpPacket  *packet, *data;
     HttpConn    *conn;
     HttpTx      *tx;
     int         useCache;
@@ -1714,8 +1714,16 @@ static void outgoingCacheFilterService(HttpQueue *q)
                 mprPutBlockToBuf(tx->cacheBuffer, mprGetBufStart(packet->content), mprGetBufLength(packet->content));
             }
 
-        } else if (packet->flags & HTTP_PACKET_END && !useCache && tx->cacheBuffer) {
-            saveCachedResponse(conn);
+        } else if (packet->flags & HTTP_PACKET_END) {
+            if (useCache) {
+                data = httpCreateDataPacket(tx->length);
+                /* Did not find any data packets so write here */
+                mprPutBlockToBuf(data->content, tx->cachedContent, tx->length);
+                httpPutPacketToNext(q, data);
+
+            } else if (tx->cacheBuffer) {
+                saveCachedResponse(conn);
+            }
         }
         httpPutPacketToNext(q, packet);
     }
@@ -1991,6 +1999,9 @@ void httpAddCache(HttpRoute *route, cchar *methods, cchar *uris, cchar *extensio
     }
     if (lifespan <= 0) {
         lifespan = route->lifespan;
+    }
+    if (lifespan <= 0) {
+        lifespan = HTTP_CACHE_LIFESPAN;
     }
     cache->lifespan = lifespan;
     cache->flags = flags;
