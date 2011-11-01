@@ -146,16 +146,16 @@
             <p>The condition directive can define condition test that must be true for the route to be selected. 
             Conditions have three test rules: <tt>exists</tt>, <tt>directory</tt> and <tt>match</tt>. The 
             <tt>exists</tt> rule evaluates if the condition filename argument exists in the file system. 
-            The <tt>directory</tt> rules evaluates if the filename is a directory. The <tt>match</tt> rules
+            The <tt>directory</tt> rule evaluates if the filename is a directory. The <tt>match</tt> rule
             tests the string argument against a regular expression pattern.
             A route may have any number of condition directives.</p>
             <h3><a href="dir/route.html#documentRoot">DocumentRoot</a></h3>
             <p>The directory containing documents can be defined via the <tt>DocumentRoot</tt> directive. If the client
-            is requesting a physical document, the request URI are appended to the DocumentRoot directory to locate the 
+            is requesting a physical document, the request URI is appended to the DocumentRoot directory to locate the 
             file to serve.</p>
             <h3><a href="dir/route.html#Header">Header</a></h3>
             <p>Header directives can define a required header and value that must be present for the route to be selected. 
-            The header value
+            The header value 
             can also be negated by prefixing the name with "!". This negating also works for the Condition directive.
             A route may have any number of header directives.</p>
             <h3><a href="dir/route.html#logRoutes">LogRoutes</a></h3>
@@ -167,25 +167,25 @@
             to select all possible methods for the route.</p>
             <h3><a href="dir/route.html#prefix">Prefix</a></h3>
             <p>The prefix directive removes a prefix string from the request URI. This is often used to remove 
-            the an initial application name from the URI.</p>
+            an initial application name from the URI.</p>
             <h3><a href="dir/route.html#reset">Reset</a></h3>
             <p>If a route needs a completely clean configuration, the <tt>Reset routes</tt> directive can be used to
             remove all inherited configuration.</p>
             <h3>RouteName</h3>
             <p>Routes may be given a symbolic name that is used when displaying routes in the log file via
-            the <tt>LogRoutes</tt> directive. The symbolic name is also used by some APIs to lookup routes by name.</p>
+            the <tt>LogRoutes</tt> directive. The symbolic name is also used by some APIs to look up routes by name.</p>
             <h3><a href="dir/route.html#target">Target</a></h3>
             <p>The target directive specifies what action the route will take to respond to the request. The target
             directive has four rules: <tt>close</tt>, <tt>redirect</tt>, <tt>run</tt>, and <tt>write</tt>. 
-            The <tt>close</tt> rules is used to immedately close a connection without responding to the client. This 
-            can be used to mitigage denial of service attacks.  The <tt>redirect</tt> rule is used to redirect the 
+            The <tt>close</tt> rule is used to immediately close a connection without responding to the client. This 
+            can be used to mitigate denial of service attacks.  The <tt>redirect</tt> rule is used to redirect the 
             request to another URI. 
             The <tt>run</tt> rule is used to run the select handler to respond to the request.
             The <tt>write</tt> rule is used to respond to the client with literal text and is useful for 
             debug responses.</p>
             <h3><a href="dir/route.html#update">Update</a></h3>
             <p>The update directive modifies the request or environment. Updates have two rules: <tt>param</tt> and
-            <tt>cmd</tt>. The <tt>param</tt> rule can be used to set request <a href="#params">params</a> 
+            <tt>cmd</tt>. The <tt>param</tt> rule can be used to set the request <a href="#params">params</a> 
             to a specific value. 
             The <tt>cmd</tt> rule can be used to run external commands.</p>
             <a name="params"></a>
@@ -203,7 +203,7 @@
             the Request.params[] collection.</p>
             <a name="tokens"></a>
             <h2 class="section"><a href="dir/route.html#tokens">Tokens</a></h2>
-            <p>Target, Condition and Update directives directives can reference tokenized values that are expanded
+            <p>Target, Condition and Update directives can reference tokenized values that are expanded
             when evaluated at run-time. There are three classes of tokens:
             <ul>  
                 <li>System varibles &mdash; DOCUMENT_ROOT, LIBDIR, PRODUCT, OS, SERVER_ROOT, VERSION.</li>
@@ -289,7 +289,7 @@
             or any portion in between. Regular expressions are ideal for route patterns as they can express a wide 
             variety of URI formats and can also extract sub-expressions for later evaluation.</p>
             <h4>URI Tokenization</h4>
-            <p>Often the request URI will not only provide a path to a resource, but it will contains tokens of 
+            <p>Often the request URI will not only provide a path to a resource, but it will contain tokens of 
             information that must be isolated and extracted from the URI. Appweb route patterns provide an easy and
             efficient means to extract such tokens and define as request <a href="#params">params</a> 
             to pass to the request.  
@@ -313,7 +313,7 @@ will match the URI:
                 that uses braces: {m,n} needs to be back-quoted. i.e. \{m,n}.
             <h4>Sub-Expressions</h4>
             <p>In addition to route tokens, standard regular expression sub-patterns can be defined by wrapping a 
-            sub-expression in parenthesis. For example:
+            sub-expression in parentheses. For example:
 <pre>
 &lt;Route /(user|admin)/{cmd}>
 </pre>
@@ -395,13 +395,13 @@ will match any of the URIs:
             If a route has an explicit handler defined via <tt>SetHandler</tt> then that handler will be used.
             If a set of handlers have been defined via <tt>AddHandler</tt> directives, then the handler defined with 
             the corresponding URI extension will be selected.</p>
-            The target target has four possible rules: <tt>close</tt>, <tt>redirect</tt>, <tt>run</tt> and
+            The target has four possible rules: <tt>close</tt>, <tt>redirect</tt>, <tt>run</tt> and
             <tt>write</tt>.  Of these, all except for the <tt>close</tt> rule take parameters that are 
-            expanded using the matching sub-expressions and/or route tokens derrived when matching the route pattern.
+            expanded using the matching sub-expressions and/or route tokens derived when matching the route pattern.
             <p>Target rule parameters can use <tt>"${token}"</tt> to be replaced with the value of the token.
             Target rule parameters can also use <tt>"$N"</tt> to be replaced with the Nth matching sub-expression, 
             <tt>"$&"</tt> to be replaced with the entire
-            matched pattern, <tt>"$`"</tt> to be replaced with the portion that preceeds the matched pattern and 
+            matched pattern, <tt>"$`"</tt> to be replaced with the portion that precedes the matched pattern and 
             <tt>"$'"</tt> to be replaced with the portion that follows the matched pattern. 
             <p>Route tokens can also access 
             
@@ -497,7 +497,7 @@ Target write 200 "Running controller ${controller} action ${action}\n\n"
 &lt;/Route>
 </pre>
             <h3>Denial of Service Protection</h3>
-            <p>To immediately close a connection without responding, use the <tt>Target close</tt> directive.
+            <p>To immediately close a connection without responding use the <tt>Target close</tt> directive.
 <pre>
 &lt;Route /hacked-url/>
     target close
