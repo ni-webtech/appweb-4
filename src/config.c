@@ -438,9 +438,11 @@ static int authDigestQopDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    Cache [client|server] options
+    Cache options
     Options:
-        Lifespan-Number
+        lifespan
+        server=lifespan
+        client=lifespan
         extensions="html,gif,..."
         methods="GET,PUT,*,..."
         types="GET,PUT,*,..."
@@ -448,24 +450,25 @@ static int authDigestQopDirective(MaState *state, cchar *key, cchar *value)
  */
 static int cacheDirective(MaState *state, cchar *key, cchar *value)
 {
-    MprTime     lifespan;
-    char        *kind, *args, *option, *ovalue, *tok;
+    MprTime     lifespan, clientLifespan, serverLifespan;
+    char        *option, *ovalue, *tok;
     char        *methods, *extensions, *types, *uris;
     int         flags;
 
+#if UNUSED
     if (!maTokenize(state, value, "%S ?*", &kind, &args)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    flags = 0;
-    if (scasematch(kind, "client")) {
-        flags |= HTTP_CACHE_CLIENT;
-    } else if (snumber(kind)) {
-        state->route->lifespan = (MprTime) stoi(kind, 10, NULL);
+    if (snumber(value)) {
+        state->route->lifespan = (MprTime) stoi(kind);
         return 0;
     }
-    lifespan = -1;
+#endif
+    flags = 0;
+    lifespan = clientLifespan = serverLifespan = 0;
     methods = uris = extensions = types = 0;
-    for (option = stok(sclone(args), " \t", &tok); option; option = stok(0, " \t", &tok)) {
+
+    for (option = stok(sclone(value), " \t", &tok); option; option = stok(0, " \t", &tok)) {
         if (*option == '/') {
             uris = option;
             if (tok) {
@@ -477,7 +480,18 @@ static int cacheDirective(MaState *state, cchar *key, cchar *value)
         option = stok(option, " =\t,", &ovalue);
         ovalue = strim(ovalue, "\"'", MPR_TRIM_BOTH);
         if ((int) isdigit(*option)) {
-            lifespan = (MprTime) stoi(option, 10, NULL) * MPR_TICKS_PER_SEC;
+            lifespan = (MprTime) stoi(option) * MPR_TICKS_PER_SEC;
+
+        } else if (smatch(option, "client")) {
+            flags |= HTTP_CACHE_CLIENT;
+            if (snumber(ovalue)) {
+                clientLifespan = (MprTime) stoi(ovalue) * MPR_TICKS_PER_SEC;
+            }
+
+        } else if (smatch(option, "server")) {
+            if (snumber(ovalue)) {
+                serverLifespan = (MprTime) stoi(ovalue) * MPR_TICKS_PER_SEC;
+            }
 
         } else if (smatch(option, "extensions")) {
             extensions = ovalue;
@@ -514,7 +528,7 @@ static int cacheDirective(MaState *state, cchar *key, cchar *value)
     if (lifespan > 0 && !uris && !extensions && !types && !methods) {
         state->route->lifespan = lifespan;
     } else {
-        httpAddCache(state->route, methods, uris, extensions, types, lifespan, flags);
+        httpAddCache(state->route, methods, uris, extensions, types, clientLifespan, serverLifespan, flags);
     }
     return 0;
 }
@@ -838,7 +852,17 @@ static int keepAliveTimeoutDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitCacheDirective(MaState *state, cchar *key, cchar *value)
 {
-    mprSetCacheLimits(state->host->responseCache, 0, 0, stoi(value, 10, 0), 0);
+    mprSetCacheLimits(state->host->responseCache, 0, 0, stoi(value), 0);
+    return 0;
+}
+
+
+/*
+    LimitCacheItem bytes
+ */
+static int limitCacheItemDirective(MaState *state, cchar *key, cchar *value)
+{
+    state->host->limits->cacheItemSize = (int) stoi(value);
     return 0;
 }
 
@@ -869,7 +893,7 @@ static int limitClientsDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitMemoryMaxDirective(MaState *state, cchar *key, cchar *value)
 {
-    mprSetMemLimits(-1, (ssize) stoi(value, 10, 0));
+    mprSetMemLimits(-1, (ssize) stoi(value));
     return 0;
 }
 
@@ -879,7 +903,7 @@ static int limitMemoryMaxDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitMemoryRedlineDirective(MaState *state, cchar *key, cchar *value)
 {
-    mprSetMemLimits((ssize) stoi(value, 10, 0), -1);
+    mprSetMemLimits((ssize) stoi(value), -1);
     return 0;
 }
 
@@ -889,7 +913,7 @@ static int limitMemoryRedlineDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitRequestBodyDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->host->limits->receiveBodySize = stoi(value, 10, 0);
+    state->host->limits->receiveBodySize = stoi(value);
     return 0;
 }
 
@@ -899,7 +923,7 @@ static int limitRequestBodyDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitRequestFormDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->host->limits->receiveFormSize = stoi(value, 10, 0);
+    state->host->limits->receiveFormSize = stoi(value);
     return 0;
 }
 
@@ -929,7 +953,7 @@ static int limitRequestHeaderSizeDirective(MaState *state, cchar *key, cchar *va
  */
 static int limitResponseBodyDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->limits->transmissionBodySize = stoi(value, 10, 0);
+    state->limits->transmissionBodySize = stoi(value);
     return 0;
 }
 
@@ -959,7 +983,7 @@ static int limitUriDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitUploadSizeDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->limits->uploadSize = stoi(value, 10, 0);
+    state->limits->uploadSize = stoi(value);
     return 0;
 }
 
@@ -1688,7 +1712,7 @@ static int unloadModuleDirective(MaState *state, cchar *key, cchar *value)
         mprError("Can't find module stage %s", name);
         return MPR_ERR_BAD_SYNTAX;
     }
-    module->timeout = (int) stoi(value, 10, NULL) * MPR_TICKS_PER_SEC;
+    module->timeout = (int) stoi(value) * MPR_TICKS_PER_SEC;
     return 0;
 }
 
@@ -2076,6 +2100,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "</Location", closeDirective);
 
     maAddDirective(appweb, "LimitCache", limitCacheDirective);
+    maAddDirective(appweb, "LimitCacheItem", limitCacheItemDirective);
     maAddDirective(appweb, "LimitChunkSize", limitChunkSizeDirective);
     maAddDirective(appweb, "LimitClients", limitClientsDirective);
     maAddDirective(appweb, "LimitMemoryMax", limitMemoryMaxDirective);

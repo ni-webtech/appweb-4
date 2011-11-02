@@ -2476,14 +2476,22 @@ extern int  mprSyncThreads(MprTime timeout);
     @description The MPR provides a suite of safe ascii string manipulation routines to help prevent buffer overflows
         and other potential security traps.
     @defgroup MprString MprString
-    @see MprString itos mprPrintf mprPrintfError mprSprintf scamel scasecmp scasematch schr sclone scmp scontains 
-        scopy sends sfmt sfmtv shash shashlower sjoin sjoinv slen slower smatch sncasecmp snclone sncmp sncopy 
-        snumber spascal spbrk srchr srejoin srejoinv sreplace sspn sstarts ssub stemplate stoi stok strim supper 
+    @see MprString itos itosradix itosbuf mprPrintf mprPrintfError mprSprintf scamel scasecmp scasematch schr sclone scmp
+        scontains scopy sends sfmt sfmtv shash shashlower sjoin sjoinv slen slower smatch sncasecmp snclone sncmp sncopy 
+        snumber spascal spbrk srchr srejoin srejoinv sreplace sspn sstarts ssub stemplate stoi stoiradix stok strim supper 
         mprFprintf mprSprintfv
  */
 typedef struct MprString { void *dummy; } MprString;
 
-//  MOB - remove radix and have itosRadix version
+/**
+    Convert an integer to a string.
+    @description This call converts the supplied 64 bit integer to a string using base 10.
+    @param value Integer value to convert
+    @return An allocated string with the converted number.
+    @ingroup MprString
+ */
+extern char *itos(int64 value);
+
 /**
     Convert an integer to a string.
     @description This call converts the supplied 64 bit integer to a string according to the specified radix.
@@ -2492,9 +2500,8 @@ typedef struct MprString { void *dummy; } MprString;
     @return An allocated string with the converted number.
     @ingroup MprString
  */
-extern char *itos(int64 value, int radix);
+extern char *itosradix(int64 value, int radix);
 
-//  MOB - remove radix and have itosBufRadix version
 /**
     Convert an integer to a string buffer.
     @description This call converts the supplied 64 bit integer into a string formatted into the supplied buffer according
@@ -2842,6 +2849,15 @@ extern char *stemplate(cchar *str, struct MprHash *tokens);
 
 /**
     Convert a string to an integer.
+    @description This call converts the supplied string to an integer using base 10.
+    @param str Pointer to the string to parse.
+    @return Returns the integer equivalent value of the string. 
+    @ingroup MprString
+ */
+extern int64 stoi(cchar *str);
+
+/**
+    Convert a string to an integer.
     @description This call converts the supplied string to an integer using the specified radix (base).
     @param str Pointer to the string to parse.
     @param radix Base to use when parsing the string
@@ -2849,7 +2865,7 @@ extern char *stemplate(cchar *str, struct MprHash *tokens);
     @return Returns the integer equivalent value of the string. 
     @ingroup MprString
  */
-extern int64 stoi(cchar *str, int radix, int *err);
+extern int64 stoiradix(cchar *str, int radix, int *err);
 
 /**
     Tokenize a string
@@ -2939,7 +2955,8 @@ extern MprChar  *wrejoinv(MprChar *buf, MprChar *sep, va_list args);
 extern ssize    wspn(MprChar *str, MprChar *set);
 extern int      wstarts(MprChar *str, MprChar *prefix);
 extern MprChar  *wsub(MprChar *str, ssize offset, ssize len);
-extern int64    wtoi(MprChar *str, int radix, int *err);
+extern int64    wtoi(MprChar *str);
+extern int64    wtoiradix(MprChar *str, int radix, int *err);
 extern MprChar  *wtok(MprChar *str, MprChar *delim, MprChar **last);
 extern MprChar  *wtrim(MprChar *str, MprChar *set, int where);
 extern MprChar  *wupper(MprChar *s);
@@ -2948,7 +2965,7 @@ extern MprChar  *wupper(MprChar *s);
 /* CHAR_LEN == 1 */
 #define wtom(dest, count, src, len)         sncopy(dest, count, src, len)
 #define mtow(dest, count, src, len)         sncopy(dest, count, src, len)
-#define itow(buf, bufCount, value, radix)   itos(buf, bufCount, value, radix)
+#define itowbuf(buf, bufCount, value, radix) itosbuf(buf, bufCount, value, radix)
 #define wchr(str, c)                        schr(str, c)
 #define wclone(str)                         sclone(str)
 #define wcasecmp(s1, s2)                    scasecmp(s1, s2)
@@ -2974,7 +2991,8 @@ extern MprChar  *wupper(MprChar *s);
 #define wspn(str, set)                      sspn(str, set)
 #define wstarts(str, prefix)                sstarts(str, prefix)
 #define wsub(str, offset, len)              ssub(str, offset, len)
-#define wtoi(str, radix, err)               stoi(str, radix, err)
+#define wtoi(str)                           stoi(str)
+#define wtoiradix(str, radix, err)          stoiradix(str, radix, err)
 #define wtok(str, delim, last)              stok(str, delim, last)
 #define wtrim(str, set, where)              strim(str, set, where)
 #define wupper(str)                         supper(str)

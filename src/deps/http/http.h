@@ -65,6 +65,7 @@ struct HttpUri;
         Tune for size
      */
     #define HTTP_BUFSIZE               (8 * 1024)           /**< Default I/O buffer size */
+    #define HTTP_MAX_CACHE_ITEM        (64 * 1024)          /**< Max cachable item size */
     #define HTTP_MAX_CHUNK             (8 * 1024)           /**< Max chunk size for transfer chunk encoding */
     #define HTTP_MAX_HEADERS           4096                 /**< Max size of the headers */
     #define HTTP_MAX_IOVEC             16                   /**< Number of fragments in a single socket write */
@@ -83,6 +84,7 @@ struct HttpUri;
         Tune balancing speed and size
      */
     #define HTTP_BUFSIZE               (16 * 1024)
+    #define HTTP_MAX_CACHE_ITEM        (64 * 1024)
     #define HTTP_MAX_CHUNK             (8 * 1024)
     #define HTTP_MAX_HEADERS           (8 * 1024)
     #define HTTP_MAX_IOVEC             24
@@ -101,6 +103,7 @@ struct HttpUri;
         Tune for speed
      */
     #define HTTP_BUFSIZE               (32 * 1024)
+    #define HTTP_MAX_CACHE_ITEM        (128 * 1024)
     #define HTTP_MAX_CHUNK             (16 * 1024) 
     #define HTTP_MAX_HEADERS           (8 * 1024)
     #define HTTP_MAX_IOVEC             32
@@ -491,6 +494,7 @@ typedef struct HttpLimits {
     ssize   headerSize;             /**< Max size of the total header */
     ssize   stageBufferSize;        /**< Max buffering by any pipeline stage */
     ssize   uriSize;                /**< Max size of a uri */
+    ssize   cacheItemSize;          /**< Max size of a cachable item */
 
     MprOff  receiveFormSize;        /**< Max size of form data */
     MprOff  receiveBodySize;        /**< Max size of receive body data */
@@ -2844,7 +2848,8 @@ typedef struct HttpCache {
     MprHash     *methods;                   /**< Methods to cache */
     MprHash     *types;                     /**< MimeTypes to cache */
     MprHash     *uris;                      /**< URIs to cache */
-    MprTime     lifespan;                   /**< Lifespan for cached content */
+    MprTime     clientLifespan;             /**< Lifespan for client cached content */
+    MprTime     serverLifespan;             /**< Lifespan for server cached content */
     int         flags;                      /**< Cache control flags */
 } HttpCache;
 
@@ -2896,7 +2901,9 @@ typedef struct HttpCache {
         separated list of types. The mime types are those that correspond to the document extension and NOT the
         content type defined by the handler serving the document. Set to null or "*" for all types.
         Example: "image/gif, application/x-php".
-    @param lifespan Lifespan of cache items in milliseconds. If not set to positive integer, the lifespan will
+    @param lifespan Lifespan of client cache items in milliseconds. If not set to positive integer, the lifespan will
+        default to the route lifespan.
+    @param lifespan Lifespan of server cache items in milliseconds. If not set to positive integer, the lifespan will
         default to the route lifespan.
     @param flags Cache control flags. Select ESP_CACHE_MANUAL to enable manual mode. In manual mode, cached content
         will not be automatically sent. Use $httpWriteCached in the request handler to write previously cached content.
@@ -2922,7 +2929,7 @@ typedef struct HttpCache {
     @ingroup HttpCache
  */
 extern void httpAddCache(struct HttpRoute *route, cchar *methods, cchar *uris, cchar *extensions, cchar *types, 
-        MprTime lifespan, int flags);
+        MprTime clientLifespan, MprTime serverLifespan, int flags);
 
 /**
     Update the cached content for a URI
@@ -4406,6 +4413,7 @@ typedef struct HttpTx {
     MprHash         *headers;               /**< Transmission headers */
     HttpCache       *cache;                 /**< Cache control entry (only set if this request is being cached) */
     MprBuf          *cacheBuffer;           /**< Response caching buffer */
+    ssize           cacheBufferLength;      /**< Current size of the cache buffer data */
     cchar           *cachedContent;         /**< Retrieved cached response to send */
 
     HttpRange       *outputRanges;          /**< Data ranges for tx data */

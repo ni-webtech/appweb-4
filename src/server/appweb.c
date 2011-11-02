@@ -196,8 +196,9 @@ MAIN(appweb, int argc, char **argv)
     /*
         Service I/O events until instructed to exit
      */
-    mprServiceEvents(-1, 0);
-
+    while (!mprIsStopping()) {
+        mprServiceEvents(-1, 0);
+    }
     mprLog(1, "Exiting ...");
     maStopAppweb(app->appweb);
     mprLog(1, "Exit complete");

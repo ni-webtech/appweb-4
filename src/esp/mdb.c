@@ -1252,7 +1252,7 @@ static int mdbSave(Edi *edi)
                 col = getCol(table, cid);
                 value = row->fields[col->cid];
                 if (value == 0 && col->flags & EDI_AUTO_INC) {
-                    row->fields[col->cid] = itos(++col->lastValue, 10);
+                    row->fields[col->cid] = itos(++col->lastValue);
                 }
 #if UNUSED
                 field = readField(row, cid);
@@ -1522,11 +1522,11 @@ static int updateField(MdbRow *row, MdbCol *col, cchar *value)
     //  MOB - refactor
     if (col->flags & EDI_AUTO_INC) {
         if (value == 0) {
-            row->fields[col->cid] = value = itos(++col->lastValue, 10);
+            row->fields[col->cid] = value = itos(++col->lastValue);
         } else {
             //  MOB - clone
             row->fields[col->cid] = sclone(value);
-            col->lastValue = max(col->lastValue, (int64) stoi(value, 10, NULL));
+            col->lastValue = max(col->lastValue, (int64) stoi(value));
         }
     } else {
         //  MOB - clone

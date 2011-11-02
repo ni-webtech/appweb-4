@@ -622,7 +622,7 @@ void showRequest()
 
 void updateCache(cchar *uri, cchar *data, int lifesecs)
 {
-    return espUpdateCache(getConn(), uri, data, lifesecs);
+    espUpdateCache(getConn(), uri, data, lifesecs);
 }
 
 

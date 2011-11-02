@@ -654,7 +654,7 @@ static int prepRequest(HttpConn *conn, MprList *files, int retry)
     }
     if (app->sequence) {
         static int next = 0;
-        seq = itos(next++, 10);
+        seq = itos(next++);
         httpSetHeader(conn, "X-Http-Seq", seq);
     }
     if (app->ranges) {

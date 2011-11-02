@@ -176,7 +176,7 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *d
     Http            *http;
     HttpEndpoint    *endpoint;
     HttpHost        *host;
-    HttpRoute       *route, *cgiRoute;
+    HttpRoute       *route;
     char            *path, *searchPath, *dir;
 
     appweb = server->appweb;
@@ -214,6 +214,7 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *d
              */
             path = "cgi-bin";
             if (mprPathExists(path, X_OK)) {
+                HttpRoute *cgiRoute;
                 cgiRoute = httpCreateAliasRoute(route, "/cgi-bin/", path, 0);
                 mprLog(4, "ScriptAlias \"/cgi-bin/\":\"%s\"", path);
                 httpSetRouteHandler(cgiRoute, "cgiHandler");

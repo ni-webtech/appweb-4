@@ -2236,7 +2236,7 @@ ssize mprGetMem()
             buf[nbytes] = '\0';
             if ((tok = strstr(buf, "VmRSS:")) != 0) {
                 for (tok += 6; tok && isspace((int) *tok); tok++) {}
-                size = stoi(tok, 10, 0) * 1024;
+                size = stoi(tok) * 1024;
             }
         }
     }
@@ -4213,7 +4213,7 @@ ssize mprPutIntToBuf(MprBuf *bp, int64 i)
 {
     ssize       rc;
 
-    rc = mprPutStringToBuf(bp, itos(i, 10));
+    rc = mprPutStringToBuf(bp, itos(i));
     if (bp->end < bp->endbuf) {
         *((char*) bp->end) = (char) '\0';
     }
@@ -4509,12 +4509,12 @@ int64 mprIncCache(MprCache *cache, cchar *key, int64 amount)
             return 0;
         }
     } else {
-        value += stoi(item->data, 10, 0);
+        value += stoi(item->data);
     }
     if (item->data) {
         cache->usedMem -= slen(item->data);
     }
-    item->data = itos(value, 10);
+    item->data = itos(value);
     cache->usedMem += slen(item->data);
     item->version++;
     unlock(cache);
@@ -8132,7 +8132,10 @@ int mprServiceEvents(MprTime timeout, int flags)
     beginEventCount = eventCount = es->eventCount;
 
     es->now = mprGetTime();
-    expires = timeout < 0 ? (es->now + MPR_MAX_TIMEOUT) : (es->now + timeout);
+    expires = timeout < 0 ? MAXINT64 : (es->now + timeout);
+    if (expires < 0) {
+        expires = MAXINT64;
+    }
     justOne = (flags & MPR_SERVICE_ONE_THING) ? 1 : 0;
 
     while (es->now < expires && !mprIsStoppingCore()) {
@@ -19889,7 +19892,7 @@ int mprGetSocketInfo(cchar *ip, int port, int *family, int *protocol, struct soc
     } else {
         hints.ai_family = AF_UNSPEC;
     }
-    portStr = itos(port, 10);
+    portStr = itos(port);
 
     /*  
         Try to sleuth the address to avoid duplicate address lookups. Then try IPv4 first then IPv6.
@@ -20217,10 +20220,16 @@ void mprSetSocketPrebindCallback(MprSocketPrebind callback)
 
 
 
+
+char *itos(int64 value)
+{
+    return itosradix(value, 10);
+}
+
 /*
     Format a number as a string. Support radix 10 and 16.
  */
-char *itos(int64 value, int radix)
+char *itosradix(int64 value, int radix)
 {
     char    numBuf[32];
     char    *cp;
@@ -20915,6 +20924,12 @@ int sstarts(cchar *str, cchar *prefix)
 }
 
 
+int64 stoi(cchar *str)
+{
+    return stoiradix(str, 10, NULL);
+}
+
+
 /*
     Parse a number and check for parse errors. Supports radix 8, 10 or 16. 
     If radix is <= 0, then the radix is sleuthed from the input.
@@ -20924,7 +20939,7 @@ int sstarts(cchar *str, cchar *prefix)
         [(+|-)][DIGITS]
 
  */
-int64 stoi(cchar *str, int radix, int *err)
+int64 stoiradix(cchar *str, int radix, int *err)
 {
     cchar   *start;
     int64   val;
@@ -23759,7 +23774,7 @@ static int getTimeZoneOffsetFromTm(struct tm *tp)
     if ((tze = getenv("TIMEZONE")) != 0) {
         if ((p = strchr(tze, ':')) != 0) {
             if ((p = strchr(tze, ':')) != 0) {
-                offset = - stoi(++p, 10, NULL) * MS_PER_MIN;
+                offset = - stoi(++p) * MS_PER_MIN;
             }
         }
         if (tp->tm_isdst) {
@@ -24682,7 +24697,7 @@ int mprParseTime(MprTime *time, cchar *dateString, int zoneFlags, struct tm *def
             /*
                 Parse either day of month or year. Priority to day of month. Format: <29> Jan <15> <2011>
              */ 
-            value = stoi(token, 10, NULL);
+            value = stoi(token);
             if (value > 3000) {
                 *time = value;
                 return 0;
@@ -24974,7 +24989,7 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
             if ((tze = getenv("TIMEZONE")) != 0) {
                 if ((p = strchr(tze, ':')) != 0) {
                     if ((p = strchr(tze, ':')) != 0) {
-                        tz->tz_minuteswest = stoi(++p, 10, NULL);
+                        tz->tz_minuteswest = stoi(++p);
                     }
                 }
                 t = tickGet();
@@ -26390,7 +26405,13 @@ int wstarts(MprChar *str, MprChar *prefix)
 }
 
 
-int64 wtoi(MprChar *str, int radix, int *err)
+int64 wtoi(MprChar *str)
+{
+    return wtoiradix(str, 10, NULL);
+}
+
+
+int64 wtoiradix(MprChar *str, int radix, int *err)
 {
     char    *bp, buf[32];
 
@@ -26398,7 +26419,7 @@ int64 wtoi(MprChar *str, int radix, int *err)
         *bp++ = *str++;
     }
     buf[sizeof(buf) - 1] = 0;
-    return stoi(buf, radix, err);
+    return stoiradix(buf, radix, err);
 }
 
 

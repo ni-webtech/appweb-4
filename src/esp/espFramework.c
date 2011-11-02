@@ -81,7 +81,7 @@ void espManageAction(EspAction *ap, int flags)
 
 int espCache(HttpRoute *route, cchar *uri, int lifesecs, int flags)
 {
-    httpAddCache(route, NULL, uri, NULL, NULL, lifesecs * MPR_TICKS_PER_SEC, flags);
+    httpAddCache(route, NULL, uri, NULL, NULL, 0, lifesecs * MPR_TICKS_PER_SEC, flags);
     return 0;
 }
 

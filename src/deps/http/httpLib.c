@@ -632,7 +632,7 @@ static int parseDigestNonce(char *nonce, cchar **secret, cchar **realm, MprTime 
     *secret = stok(decoded, ":", &tok);
     *realm = stok(NULL, ":", &tok);
     whenStr = stok(NULL, ":", &tok);
-    *when = (MprTime) stoi(whenStr, 16, NULL); 
+    *when = (MprTime) stoiradix(whenStr, 16, NULL); 
     return 0;
 }
 
@@ -1579,7 +1579,7 @@ void __pamAuth() {}
 
 
 
-static void clientCache(HttpConn *conn);
+static void cacheAtClient(HttpConn *conn);
 static bool fetchCachedResponse(HttpConn *conn);
 static HttpCache *lookupCacheControl(HttpConn *conn);
 static char *makeCacheKey(HttpConn *conn);
@@ -1633,11 +1633,9 @@ static int matchCacheHandler(HttpConn *conn, HttpRoute *route, int dir)
         return HTTP_ROUTE_REJECT;
     }
     if (cache->flags & HTTP_CACHE_CLIENT) {
-        clientCache(conn);
-        /* Doing client side caching and so don't need the cacheHandler */
-        return HTTP_ROUTE_REJECT;
-
-    } else if (!(cache->flags & HTTP_CACHE_MANUAL) && fetchCachedResponse(conn)) {
+        cacheAtClient(conn);
+    }
+    if (!(cache->flags & HTTP_CACHE_MANUAL) && fetchCachedResponse(conn)) {
         /* Found cached content */
         return HTTP_ROUTE_OK;
     }
@@ -1690,12 +1688,17 @@ static void outgoingCacheFilterService(HttpQueue *q)
     HttpTx      *tx;
     MprKey      *kp;
     cchar       *cachedData;
+    ssize       size;
     int         foundDataPacket;
 
     conn = q->conn;
     tx = conn->tx;
     foundDataPacket = 0;
     cachedData = 0;
+
+    if (tx->status < 200 || tx->status > 299) {
+        tx->cacheBuffer = 0;
+    }
 
     /*
         This routine will save cached responses to tx->cacheBuffer.
@@ -1718,6 +1721,7 @@ static void outgoingCacheFilterService(HttpQueue *q)
                 /*
                     Add defined headers to the start of the cache buffer. Separate with a double newline.
                  */
+                mprPutFmtToBuf(tx->cacheBuffer, "X-Status: %d\n", tx->status);
                 for (kp = 0; (kp = mprGetNextKey(tx->headers, kp)) != 0; ) {
                     mprPutFmtToBuf(tx->cacheBuffer, "%s: %s\n", kp->key, kp->data);
                 }
@@ -1727,16 +1731,22 @@ static void outgoingCacheFilterService(HttpQueue *q)
         } else if (packet->flags & HTTP_PACKET_DATA) {
             if (cachedData) {
                 /*
-                    Using X-SendCache. Replace the data with the cached response
+                    Using X-SendCache. Replace the data with the cached response.
                  */
                 mprFlushBuf(packet->content);
                 mprPutBlockToBuf(packet->content, cachedData, (ssize) tx->length);
 
             } else if (tx->cacheBuffer) {
                 /*
-                    Save the response packet to the cache buffer. Will write below in saveCachedResponse
+                    Save the response packet to the cache buffer. Will write below in saveCachedResponse.
                  */
-                mprPutBlockToBuf(tx->cacheBuffer, mprGetBufStart(packet->content), mprGetBufLength(packet->content));
+                size = mprGetBufLength(packet->content);
+                if ((tx->cacheBufferLength + size) < conn->limits->cacheItemSize) {
+                    mprPutBlockToBuf(tx->cacheBuffer, mprGetBufStart(packet->content), mprGetBufLength(packet->content));
+                    tx->cacheBufferLength += size;
+                } else {
+                    tx->cacheBuffer = 0;
+                }
             }
             foundDataPacket = 1;
 
@@ -1809,7 +1819,7 @@ static HttpCache *lookupCacheControl(HttpConn *conn)
 }
 
 
-static void clientCache(HttpConn *conn)
+static void cacheAtClient(HttpConn *conn)
 {
     HttpTx      *tx;
     HttpCache   *cache;
@@ -1821,10 +1831,10 @@ static void clientCache(HttpConn *conn)
     if (!mprLookupKey(tx->headers, "Cache-Control")) {
         if ((value = mprLookupKey(conn->tx->headers, "Cache-Control")) != 0) {
             if (strstr(value, "max-age") == 0) {
-                httpAppendHeader(conn, "Cache-Control", "max-age=%d", cache->lifespan / MPR_TICKS_PER_SEC);
+                httpAppendHeader(conn, "Cache-Control", "max-age=%d", cache->clientLifespan / MPR_TICKS_PER_SEC);
             }
         } else {
-            httpAddHeader(conn, "Cache-Control", "max-age=%d", cache->lifespan / MPR_TICKS_PER_SEC);
+            httpAddHeader(conn, "Cache-Control", "max-age=%d", cache->clientLifespan / MPR_TICKS_PER_SEC);
         }
 #if UNUSED && KEEP
         {
@@ -1919,7 +1929,7 @@ static void saveCachedResponse(HttpConn *conn)
      */
     modified = mprGetTime() / MPR_TICKS_PER_SEC * MPR_TICKS_PER_SEC;
     mprWriteCache(conn->host->responseCache, makeCacheKey(conn), mprGetBufStart(buf), modified, 
-        tx->cache->lifespan, 0, 0);
+        tx->cache->serverLifespan, 0, 0);
 }
 
 
@@ -1952,11 +1962,16 @@ ssize httpWriteCached(HttpConn *conn)
 ssize httpUpdateCache(HttpConn *conn, cchar *uri, cchar *data, MprTime lifespan)
 {
     cchar   *key;
+    ssize   len;
 
-    key = sfmt("http::response-%s", uri);
+    len = slen(data);
+    if (len > conn->limits->cacheItemSize) {
+        return MPR_ERR_WONT_FIT;
+    }
     if (lifespan <= 0) {
         lifespan = conn->rx->route->lifespan;
     }
+    key = sfmt("http::response-%s", uri);
     if (data == 0 || lifespan <= 0) {
         mprRemoveCache(conn->host->responseCache, key);
         return 0;
@@ -1973,8 +1988,8 @@ ssize httpUpdateCache(HttpConn *conn, cchar *uri, cchar *data, MprTime lifespan)
     Note: the URI should not include the route prefix (scriptName)
     The extensions should not contain ".". The methods may contain "*" for all methods.
  */
-void httpAddCache(HttpRoute *route, cchar *methods, cchar *uris, cchar *extensions, cchar *types, MprTime lifespan, 
-        int flags)
+void httpAddCache(HttpRoute *route, cchar *methods, cchar *uris, cchar *extensions, cchar *types, MprTime clientLifespan, 
+        MprTime serverLifespan, int flags)
 {
     HttpCache   *cache;
     char        *item, *tok;
@@ -2037,23 +2052,26 @@ void httpAddCache(HttpRoute *route, cchar *methods, cchar *uris, cchar *extensio
             mprAddKey(cache->uris, item, cache);
         }
     }
-    if (lifespan <= 0) {
-        lifespan = route->lifespan;
+    if (clientLifespan <= 0) {
+        clientLifespan = route->lifespan;
     }
-    if (lifespan <= 0) {
-        lifespan = HTTP_CACHE_LIFESPAN;
+    cache->clientLifespan = clientLifespan;
+    if (serverLifespan <= 0) {
+        serverLifespan = route->lifespan;
     }
-    cache->lifespan = lifespan;
+    cache->serverLifespan = serverLifespan;
     cache->flags = flags;
     mprAddItem(route->caching, cache);
-
-    mprLog(3, "Caching route %s for methods %s, URIs %s, extensions %s, types %s, lifespan %d", 
+#if UNUSED
+    mprLog(3, "Caching route %s for methods %s, URIs %s, extensions %s, types %s, client lifespan %d, server lifespan %d", 
         route->name,
         (methods) ? methods: "*",
         (uris) ? uris: "*",
         (extensions) ? extensions: "*",
         (types) ? types: "*",
-        cache->lifespan / MPR_TICKS_PER_SEC);
+        cache->clientLifespan / MPR_TICKS_PER_SEC);
+        cache->serverLifespan / MPR_TICKS_PER_SEC);
+#endif
 }
 
 
@@ -2099,7 +2117,11 @@ static cchar *setHeadersFromCache(HttpConn *conn, cchar *content)
         data += 2;
         for (header = stok(headers, "\n", &tok); header; header = stok(NULL, "\n", &tok)) {
             key = stok(header, ": ", &value);
-            httpAddHeader(conn, key, value);
+            if (smatch(key, "X-Status")) {
+                conn->tx->status = (int) stoi(value);
+            } else {
+                httpAddHeader(conn, key, value);
+            }
         }
     }
     return data;
@@ -2278,7 +2300,7 @@ ssize httpFilterChunkData(HttpQueue *q, HttpPacket *packet)
             httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Bad chunk specification");
             return 0;
         }
-        chunkSize = (int) stoi(&start[2], 16, NULL);
+        chunkSize = (int) stoiradix(&start[2], 16, NULL);
         if (!isxdigit((int) start[2]) || chunkSize < 0) {
             httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Bad chunk specification");
             return 0;
@@ -2325,7 +2347,7 @@ static void outgoingChunkService(HttpQueue *q)
             we have all the data. Thus we can determine the actual content length and can bypass the chunk handler.
          */
         if (tx->length < 0 && (value = mprLookupKey(tx->headers, "Content-Length")) != 0) {
-            tx->length = stoi(value, 10, 0);
+            tx->length = stoi(value);
         }
         if (tx->length < 0) {
             if (q->last->flags & HTTP_PACKET_END) {
@@ -4954,6 +4976,7 @@ HttpHost *httpLookupHost(Http *http, cchar *name)
 void httpInitLimits(HttpLimits *limits, bool serverSide)
 {
     memset(limits, 0, sizeof(HttpLimits));
+    limits->cacheItemSize = HTTP_MAX_CHUNK;
     limits->chunkSize = HTTP_MAX_CHUNK;
     limits->headerCount = HTTP_MAX_NUM_HEADERS;
     limits->headerSize = HTTP_MAX_HEADERS;
@@ -5039,7 +5062,7 @@ cchar *httpLookupStatus(Http *http, int status)
     HttpStatusCode  *ep;
     char            *key;
     
-    key = itos(status, 10);
+    key = itos(status);
     ep = (HttpStatusCode*) mprLookupKey(http->statusCodes, key);
     if (ep == 0) {
         return "Custom error";
@@ -7012,7 +7035,7 @@ ssize httpRead(HttpConn *conn, char *buf, ssize size)
     mprAssert(size >= 0);
     mprAssert(httpVerifyQueue(q));
 
-    while (q->count <= 0 && !conn->async && conn->sock && (conn->state <= HTTP_STATE_CONTENT)) {
+    while (q->count <= 0 && !conn->async && !conn->error && conn->sock && (conn->state <= HTTP_STATE_CONTENT)) {
         httpServiceQueues(conn);
         if (conn->sock) {
             httpWait(conn, 0, MPR_TIMEOUT_SOCKETS);
@@ -7521,7 +7544,7 @@ static HttpPacket *createRangePacket(HttpConn *conn, HttpRange *range)
 
     tx = conn->tx;
 
-    length = (tx->entityLength >= 0) ? itos(tx->entityLength, 10) : "*";
+    length = (tx->entityLength >= 0) ? itos(tx->entityLength) : "*";
     packet = httpCreatePacket(HTTP_RANGE_BUFSIZE);
     packet->flags |= HTTP_PACKET_RANGE;
     mprPutFmtToBuf(packet->content, 
@@ -8803,7 +8826,7 @@ void httpAddRouteErrorDocument(HttpRoute *route, int status, cchar *url)
 
     mprAssert(route);
     GRADUATE_HASH(route, errorDocuments);
-    code = itos(status, 10);
+    code = itos(status);
     mprAddKey(route->errorDocuments, code, sclone(url));
 }
 
@@ -8816,7 +8839,7 @@ cchar *httpLookupRouteErrorDocument(HttpRoute *route, int code)
     if (route->errorDocuments == 0) {
         return 0;
     }
-    num = itos(code, 10);
+    num = itos(code);
     return (cchar*) mprLookupKey(route->errorDocuments, num);
 }
 
@@ -10172,7 +10195,7 @@ static char *expandPatternTokens(cchar *str, cchar *replacement, int *matches, i
             default:
                 /* Insert the nth submatch */
                 if (isdigit((int) *cp)) {
-                    submatch = (int) wtoi(cp, 10, NULL);
+                    submatch = (int) wtoi(cp);
                     while (isdigit((int) *++cp))
                         ;
                     cp--;
@@ -10319,7 +10342,7 @@ bool httpTokenizev(HttpRoute *route, cchar *line, cchar *fmt, va_list args)
                 }
                 break;
             case 'N':
-                *va_arg(args, int*) = (int) stoi(tok, 10, 0);
+                *va_arg(args, int*) = (int) stoi(tok);
                 break;
             case 'P':
                 *va_arg(args, char**) = httpMakePath(route, strim(tok, "\"", MPR_TRIM_BOTH));
@@ -11080,7 +11103,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                     httpError(conn, HTTP_CLOSE | HTTP_CODE_BAD_REQUEST, "Mulitple content length headers");
                     break;
                 }
-                rx->length = stoi(value, 10, 0);
+                rx->length = stoi(value);
                 if (rx->length < 0) {
                     httpError(conn, HTTP_CLOSE | HTTP_CODE_BAD_REQUEST, "Bad content length");
                     break;
@@ -11112,16 +11135,16 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                     sp++;
                 }
                 if (*sp) {
-                    start = stoi(sp, 10, NULL);
+                    start = stoi(sp);
                     if ((sp = strchr(sp, '-')) != 0) {
-                        end = stoi(++sp, 10, NULL);
+                        end = stoi(++sp);
                     }
                     if ((sp = strchr(sp, '/')) != 0) {
                         /*
                             Note this is not the content length transmitted, but the original size of the input of which
                             the client is transmitting only a portion.
                          */
-                        size = stoi(++sp, 10, NULL);
+                        size = stoi(++sp);
                     }
                 }
                 if (start < 0 || end < 0 || size < 0 || end <= start) {
@@ -12069,7 +12092,7 @@ static bool parseRange(HttpConn *conn, char *value)
          */
         tok = stok(value, ",", &value);
         if (*tok != '-') {
-            range->start = (ssize) stoi(tok, 10, NULL);
+            range->start = (ssize) stoi(tok);
         } else {
             range->start = -1;
         }
@@ -12080,7 +12103,7 @@ static bool parseRange(HttpConn *conn, char *value)
                 /*
                     End is one beyond the range. Makes the math easier.
                  */
-                range->end = (ssize) stoi(ep, 10, NULL) + 1;
+                range->end = (ssize) stoi(ep) + 1;
             }
         }
         if (range->start >= 0 && range->end >= 0) {
@@ -14683,7 +14706,7 @@ HttpUri *httpCreateUriFromParts(cchar *scheme, cchar *host, int port, cchar *pat
     if (host) {
         up->host = sclone(host);
         if ((cp = schr(host, ':')) && port == 0) {
-            port = (int) stoi(++cp, 10, NULL);
+            port = (int) stoi(++cp);
         }
     } else if (complete) {
         up->host = sclone("localhost");
@@ -14739,7 +14762,7 @@ HttpUri *httpCloneUri(HttpUri *base, int complete)
     if (base->host) {
         up->host = sclone(base->host);
         if ((cp = schr(base->host, ':')) && port == 0) {
-            port = (int) stoi(++cp, 10, NULL);
+            port = (int) stoi(++cp);
         }
     } else if (complete) {
         base->host = sclone("localhost");
@@ -14828,7 +14851,7 @@ char *httpFormatUri(cchar *scheme, cchar *host, int port, cchar *path, cchar *re
         portStr = "";
     } else {
         if (port != 0 && port != getDefaultPort(scheme)) {
-            portStr = itos(port, 10);
+            portStr = itos(port);
             portDelim = ":";
         } else {
             portStr = "";
@@ -15463,7 +15486,7 @@ int httpGetIntParam(HttpConn *conn, cchar *var, int defaultValue)
     
     vars = httpGetParams(conn);
     value = mprLookupKey(vars, var);
-    return (value) ? (int) stoi(value, 10, NULL) : defaultValue;
+    return (value) ? (int) stoi(value) : defaultValue;
 }
 
 

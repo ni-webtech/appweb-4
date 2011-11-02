@@ -10,7 +10,16 @@ static void api() {
 
 static void big() { 
     int     i;
+    //  This will emit ~76K (under the item limit)
     for (i = 0; i < 1000; i++) {
+        render("Line: %05d %s", i, "aaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbccccccccccccccccccddddddd<br/>\r\n");
+    }
+}
+
+static void huge() { 
+    int     i;
+    //  This will emit ~762K (over the item limit)
+    for (i = 0; i < 10000; i++) {
         render("Line: %05d %s", i, "aaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbccccccccccccccccccddddddd<br/>\r\n");
     }
 }
@@ -48,6 +57,7 @@ ESP_EXPORT int esp_controller_cache(EspRoute *eroute, MprModule *module) {
     espDefineAction(eroute, "cache-cmd-big", big);
     espDefineAction(eroute, "cache-cmd-clear", clear);
     espDefineAction(eroute, "cache-cmd-client", client);
+    espDefineAction(eroute, "cache-cmd-huge", huge);
     espDefineAction(eroute, "cache-cmd-manual", manual);
     espDefineAction(eroute, "cache-cmd-update", update);
 

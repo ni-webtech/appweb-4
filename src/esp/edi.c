@@ -451,7 +451,7 @@ cchar *ediFormatField(cchar *fmt, EdiField field)
         return sfmt(fmt, atof(field.value));
 
     case EDI_TYPE_INT:
-        return sfmt("%Ld", stoi(field.value, 10, 0));
+        return sfmt("%Ld", stoi(field.value));
 
     case EDI_TYPE_STRING:
     case EDI_TYPE_TEXT:

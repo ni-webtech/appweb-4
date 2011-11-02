@@ -627,7 +627,7 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
                 httpSetHeaderString(conn, "Content-Type", value);
 
             } else if (strcmp(key, "content-length") == 0) {
-                httpSetContentLength(conn, (MprOff) stoi(value, 10, 0));
+                httpSetContentLength(conn, (MprOff) stoi(value));
                 httpSetChunkSize(conn, 0);
 
             } else {
@@ -684,7 +684,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
         /*
             This is an Apache compatible hack for PHP 5.3
          */
-        mprAddKey(rx->headers, "REDIRECT_STATUS", itos(HTTP_CODE_MOVED_TEMPORARILY, 10));
+        mprAddKey(rx->headers, "REDIRECT_STATUS", itos(HTTP_CODE_MOVED_TEMPORARILY));
     }
 
     /*
