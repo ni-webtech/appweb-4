@@ -76,7 +76,7 @@
             Digest authorization schemes prevalent in most browsers. It employs a unified user account and user group
             database for easy configuration.</p>
             <p>Appweb also supports HTML web based authentication schemes via the ESP and Ejscript web frameworks. These
-            both provide access to sessions, cookies and provide assistance in creating login dialogs.</p>
+            both provide access to sessions and cookies, and provide assistance in creating login dialogs.</p>
             
             
             </p><a name="basicAuthentication" id="basicAuthentication"></a>
@@ -94,7 +94,7 @@
             <p>Basic authentication was the original HTTP/1.0 authentication scheme. It transmits user names and
             passwords using a trivial encoding that is no better than using plain text.</p>
             <p><b>SECURITY WARNING</b>: You should not use Basic Authentication if at all possible. Use Digest
-            authentication instead if it is supported by your clients.</p>
+            Authentication instead if it is supported by your clients.</p>
             <h3>Basic Authentication Directives</h3>
             <p>Appweb basic authorization is controlled by configuration file directives that may be used inside a
             Route or VirtualHost block, or within the Default server configuration.</p>
@@ -106,7 +106,7 @@
     Require valid-user
 &lt;/Route&gt;
 </pre>
-            <p>This example restricts access to the "/acme" directory and all sub-directories to users whose username
+            <p>This example restricts access to the "/acme" directory and all subdirectories to users whose username
             and password are validated against the user.db password file.</p>
             <p>The <a href="dir/auth.html#authType">AuthType</a> directive specifies that basic authorization is being
             used. The <a href="dir/auth.html#authName">AuthName</a> directive specifies the realm of access to Appweb.
@@ -116,7 +116,7 @@
             <p>User passwords are defined for a user account / realm combination. To create passwords, see the section
             below that describes the <a href="#httpPassword">httpPassword</a> utility.</p>
             <p>The <a href="dir/auth.html#require">Require</a> directive controls how users are validated. There are
-            three possibilities for validating users: by group name, by user id or by any valid user name. The
+            three possibilities for validating users: by group name, by user id, or by any valid user name. The
             associated directives are:</p>
             <ul>
                 <li>Require group groupName ...</li>
@@ -142,7 +142,7 @@
 </pre>
             <p>This example restricts access to the "/acme" directory and all sub-directories to users whose username
             and password are validated against the designated user.db password file. The essential differences between
-            this example and the Basic authorization example is the AuthType directive.</p><a name="httpPassword" id=
+            this example and the Basic Authorization example is the AuthType directive.</p><a name="httpPassword" id=
             "httpPassword"></a>
             <h2 class="section">httpPassword</h2>
             <p>The httpPassword program is used to create user passwords in a nominated password file. Appweb uses the
@@ -153,7 +153,7 @@ coyote:Realm:EncryptedPassword
 </pre>
             <p>The httpPassword will create and modify such entries in the password file.</p>
             <p>The Realm is the name used in the AuthName directive. The EncryptedPassword is an MD5 secure hash of the
-            user name, realm and password.</p>
+            user name, realm, and password.</p>
             <p>The command line syntax for httpPassword is:</p>
             <pre>
 httpPassword [-c] [-p passWord] userFile realm userName
