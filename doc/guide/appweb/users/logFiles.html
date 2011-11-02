@@ -68,7 +68,7 @@
         </div>
         <div class="contentLeft">
             <h1>Log Files</h1>
-            <p>Appweb provides detailed logging regarding client accesses and operation of Appweb. This is done via two
+            <p>Appweb provides detailed logging regarding client accesses and the operation of Appweb. This is done via two
             log files:</p>
             <ul>
                 <li>Error Log</li>
@@ -77,14 +77,14 @@
             <p>This document describes the two logs and the information available in each log.</p><a name="errorLog"
             id="errorLog"></a>
             <h2 class="section">Error Log</h2>
-            <p>The Error Log records the essential Appweb configuration, details of denied requests and other trace
-            information. The location of the error log file is specified by the 
+            <p>The Error Log records the essential Appweb configuration, details of denied requests, and other trace
+            information. The location of the Error Log file is specified by the 
             <a href="dir/log.html#errorLog">ErrorLog</a> 
             configuration file directive and the level of logging is specified by
             the <a href="dir/log.html#logLevel">LogLevel</a> directive.</p>
             <p>The verbosity of the messages written to the error log can be specified by the 
             <a href="dir/log.html#logLevel">LogLevel</a> directive. The log level is a digit ranging from 0, the least
-            verbose to 9 being the most verbose. For example, If you set the log level to 2, messages at levels 0 and 1
+            verbose to 9 being the most verbose. For example, if you set the log level to 2, messages at levels 0 and 1
             will be output to the log. Level 0 will only record errors. Level 2 is the default and will record denied
             accesses. Levels 3-9 will record various internal Appweb activities. You should be very careful with levels
             above 4 as the error log can grow very large with high log levels.</p>
@@ -135,7 +135,7 @@ program:logLevel
 </pre>
             <p>The log level is the verbosity level assigned to the trace information by Appweb.</p>
             <p>The error log always contains a header detailing the high level Appweb configuration. It specifies what
-            version of Appweb is being run, what handlers and modules are loaded and what IP addresses are being
+            version of Appweb is being run, what handlers and modules are loaded, and what IP addresses are being
             listened to.</p>
             <p>You may also specify the error log file and log level via the Appweb command line "-l" option. If you
             invoke Appweb with a "-l logSpec" command line option, it will override the ErrorLog and LogLevel
@@ -146,7 +146,7 @@ program:logLevel
             Combined Log File Format that is used by the Apache web server. The location of the access log file and its
             format is specified via the <a href="dir/log.html#customLog">CustomLog</a> configuration file
             directive.</p>
-            <p>The access log file is parseable by many open source and commercial log file analyzers. Here is a sample
+            <p>The access log file is parsable by many open source and commercial log file analyzers. Here is a sample
             access log. Some lines have been manually wrapped to fit on the page.</p>
             <pre>
 localhost - - [Fri Dec 19 16:08:13 2003] "GET / 
