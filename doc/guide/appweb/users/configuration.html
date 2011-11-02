@@ -268,12 +268,8 @@ Include conf/applications/*.conf
                         <td>Defines the file of user names.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/route.html#cache">ClientCache</a></td>
-                        <td>Control client-side caching by document extension.</td>
-                    </tr>
-                    <tr>
-                        <td><a href="dir/route.html#cacheByType">ClientCacheByType</a></td>
-                        <td>Control client-side caching by document mime type.</td>
+                        <td><a href="dir/route.html#cache">Cache</a></td>
+                        <td>Configure client and server side caching.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/server.html#chroot">Chroot</a></td>
@@ -339,8 +335,6 @@ Include conf/applications/*.conf
                         <td>Set an environment variable for ESP compilation commands.</td></tr>
                     <tr><td><a href="dir/esp.html#espKeepSource">EspKeepSource</a></td>
                         <td>Control the preservation of intermediate source code.</td></tr>
-                    <tr><td><a href="dir/esp.html#espLifespan">EspLifespan</a></td>
-                        <td>Set the default cached content lifespan.</td></tr>
                     <tr><td><a href="dir/esp.html#espLink">EspLink</a></td>
                         <td>Define the link command.</td></tr>
                     <tr><td><a href="dir/esp.html#espLoad">EspLoad</a></td>
@@ -380,6 +374,10 @@ Include conf/applications/*.conf
                     <tr>
                         <td><a href="dir/perf.html#keepAliveTimeout">KeepAliveTimeout</a></td>
                         <td>Define the time period to reuse a TCP/IP connection.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/sandbox.html#limitCache">LimitCache</a></td>
+                        <td>Set the maximum size of the response and session cache.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/sandbox.html#limitChunkSize">LimitChunkSize</a></td>

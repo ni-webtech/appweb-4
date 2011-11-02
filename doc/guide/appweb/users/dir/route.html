@@ -49,8 +49,7 @@
                 <li><a href="#addLanguageSuffix">AddLanguageSuffix</a></li>
                 <li><a href="#addOutputFilter">AddOutputFilter</a></li>
                 <li><a href="#alias">Alias</a></li>
-                <li><a href="#clientCache">ClientCache</a></li>
-                <li><a href="#clientCacheByType">ClientCacheByType</a></li>
+                <li><a href="#cache">Cache</a></li>
                 <li><a href="#compress">Compress</a></li>
                 <li><a href="#condition">Condition</a></li>
                 <li><a href="#defaultLanguage">DefaultLanguage</a></li>
@@ -296,17 +295,21 @@
                     </tr>
                 </tbody>
             </table>
-            <a name="clientCache" id="clientCache"></a>
-            <h2>ClientCache</h2>
+            <a name="cache" id="cache"></a>
+            <h2>Cache</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
-                        <td>Control client-side caching by document extension</td>
+                        <td>Control content caching</td>
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>ClientCache lifespan extensions ...</td>
+                        <td>Cache lifespan<br/>
+                            Cache [client=secs] [methods="set"] [extensions="set"] <br/>
+                                &nbsp; &nbsp; &rarr; &nbsp; &nbsp; [types="set"] [URI ..]<br/>
+                            Cache [server=secs] [manual] [methods="set"] [ext="set"] <br/>
+                                &nbsp; &nbsp; &rarr; &nbsp; &nbsp; [types="set"] [URI ..]<br/>
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
@@ -314,20 +317,79 @@
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>ClientCache 86400 html gif jpeg jpg png pdf ico js<br/>
-                            ClientCache 86400 ""</td>
+                        <td>Cache client=86400 ext="gif,jpeg,jpg,png,pdf,ico,js"<br/>
+                            Cache server=86400 methods="GET,POST" /status.esp<br/>
+                            Cache client=1800 server=86400 methods="GET,POST" /status.esp<br/>
+                            Cache server manual /inventory.esp<br/>
+                            Cache 86400</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The ClientCache directive enables the generation of "Cache-Control" and "Expires" HTTP 
-                            headers for matching documents. The Cache-Control and Expires HTTP headers instruct
-                            clients to cache response content for a specified duration. If the document is subsequently
-                            required by the client before the response content has expired, the document will be served
-                            from the client cache without contacting the server. </p>
-                            <p>The ClientCache directive specifies a lifespan in seconds to be used for any document that
-                            matches one of the set of given extensions. An empty extension "" may be given to match
-                            all documents regardless of extension.</p>
+                            <p>This directive controls client and server-side caching for response content. Each Cache
+                            directive selects a set of requests to be cached for the current route. The selected
+                            requests are determined by specifying qualifying HTTP methods, document extensions, extension
+                            Mime types and/or URI paths. All such parameters must match for the response to be
+                            cached.  A route may have multiple Cache directives. Cache directives, similar to most
+                            directives are inherited from outer routes.</p>
+
+                            <p>Caching may be used for any HTTP method, though typically it is most useful for state-less
+                            GET requests. Response data may be uniquely cached for requests with different request parameters
+                            (query, post and route parameters). Alternatively, the URI may specify request parameters in
+                            sorted www-urlencoded form to select a specific URI/parameter combination.  When responses are
+                            cached, the response data and response headers are cached.</p>
+
+                            <h4>Client-Side Caching</h4>
+                            <p>If client caching is requested by specifying "client" with an optional lifespan in seconds,
+                            a "Cache-Control: max-age=lifespan" HTTP header will be added to the response.  This header will
+                            define a client-side cache lifespan that instructs clients to cache response content for a
+                            specified duration. If the document is subsequently requested by the client before the
+                            cached response has expired in the clientcache, the document will be served from the client
+                            cache without contacting the server.</p> 
+                            
+                            <h4>Server-Side Caching Modes</h4>
+                            <p>When using Server-Side caching, there are three possible modes:
+                            <ul>
+                                <li>Combined &mdash; All qualifying requests for a cache definition will be combined onto a
+                                single cached response. the request params (query, post data and route parameters) will be
+                                ignored and all requests for a given URI path will cache to the same cache record.</li>
+
+                                <li>Unique &mdash; All qualifying requests will cache uniquely depending on the requeset
+                                parameters. i.e. Requests with different query, post data, or route parameters will be
+                                separately cached. Any URIs specified in the directive should not contain any request
+                                parameters.</li>
+
+                                <li>Only &mdash; Only the exact URIs specified in the directive will be cached. The URIs
+                                specified must contain request parameters in a sorted www-urlencoded format. <br/> 
+                                E.g.: /example.esp?hobby=sailing&name=john.</li>
+
+                                <li>Manual &mdash; In manual-mode the response will still be automatically cached.  However,
+                                it will not be automatically written to the client.  The request handler must call the
+                                espWriteCached API or must set the X-SendCache HTTP header to manuall write the cached
+                                response content. </li>
+                            </ul>
+
+                            <h4>Server-Side Caching</h4>
+                            <p>When a request is generated, the response is automatically cached and also sent to the 
+                            client. The response is sent with an HTTP ETag header and a last-modified timestamp. Together
+                            thse uniquely identify the response data. Subsequent client requests will submit these header
+                            values so that they can then be validated by the server. If the server-side cached content has
+                            not expired and has not been modified, then an HTTP Not-Modified (304) response will be sent 
+                            to the client and then the client can use its client-side cached content.  This results in a
+                            very fast transaction with the client as no response data is sent.  </p>
+
+                            <p>Note: Server-side caching will cache both the response headers and content.</p>
+
+                            <h4>Cache Lifespans</h4>
+                            <p>The Cache directive may specify a lifespan in seconds using the "client=secs" or
+                            "server=secs" options.  If the lifespan is not specified, the default route lifespan will be
+                            used. To set the default lifespan for the route, just include a lifespan with no other
+                            arguments. E.g. Cache 8600.</p> 
+                            <h3>Summary</h3>
+                            <p>    Use client-side caching for static content that will rarely change or for content for
+                            which using "reload" in the browser is an adequate solution to force a refresh. Use 
+                            server-side manual caching in situations where you need explicit control of when the page
+                            is updated. Otherwise, use standard server-side caching.</p>
                         </td>
                     </tr>
                 </tbody>
