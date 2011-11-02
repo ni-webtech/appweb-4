@@ -145,7 +145,7 @@ appweb --ejs /carmen/:/var/www/apps/carmen/
             </table><a name="noconfig" id="noconfig"></a>
             <h2 class="section">No Config File</h2>
             <p>Appweb normally reads the "appweb.conf" file for configuration directives. However, if appweb is invoked
-            with an IP address or port number on the command line, Appweb will not read the configuration file. Rather
+            with an IP address or port number on the command line, Appweb will not read the configuration file. Rather, 
             it will listen for requests on the specified IP:PORT address. Usage:</p>
             <pre>
 appweb [IP]:[PORT] [documentRoot]
@@ -153,10 +153,10 @@ appweb [IP]:[PORT] [documentRoot]
             <pre>
 appweb localhost
 </pre>If the PORT component is omitted, Appweb will listen on port 80. If the IP address is omitted and a port is
-supplied, Appweb will listen on all network interfaces. An optional document root directory can be supplied for where
-the web pages are located.
-            <p>When Appweb is run without a configuration file, it performs minimal configuration. It will do the
-            following configuration. This configuration cannot be altered. If you need a different setup, use a
+supplied, Appweb will listen on all network interfaces. An optional document root directory can be supplied for the location 
+of the web pages.
+            <p>When Appweb is run without a configuration file, it performs minimal configuration. 
+             This configuration cannot be altered. If you need a different setup, use a
             configuration file.</p>
             <ul>
                 <li>Load the auth filter and the cgi, ejs and file handlers.</li>
