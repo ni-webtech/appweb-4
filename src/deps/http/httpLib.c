@@ -8044,7 +8044,8 @@ int httpMatchRoute(HttpConn *conn, HttpRoute *route)
     if ((rc = matchRequestUri(conn, route)) == HTTP_ROUTE_OK) {
         rc = testRoute(conn, route);
     }
-    if (rc != HTTP_ROUTE_OK && route->prefix) {
+    if (rc == HTTP_ROUTE_REJECT && route->prefix) {
+        /* Keep the modified pathInfo if OK or REWRITE */
         rx->pathInfo = savePathInfo;
         rx->scriptName = 0;
     }
