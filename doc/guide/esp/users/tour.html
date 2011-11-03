@@ -139,10 +139,10 @@ sudo appweb -v
             
             <img src=
             "../../../images/esp/tour/hello-dynamic.png" alt="hello" class="screen" />
-            <h4>No Restart Require</h4>
+            <h4>No Restart Required</h4>
             <p>Notice that you did not have to restart the web server, nor did you have to manually recompile the
             ESP code. Rather, ESP transparently recompiled the web page in the background. ESP noticed that the hello.esp
-            web page has been modified and it re-parsed and compiled it into a loadable module, ready for
+            web page had been modified and it re-parsed and compiled it into a loadable module ready for
             execution. This web module is then cached in-memory and on-disk for fast execution.</p>
             <p>You can also embed more complex ESP into our page, like:</p>
             <pre>
@@ -162,8 +162,8 @@ sudo appweb -v
             <h2 class="section">Declarations</h2>
             <p>Some compilers (Microsoft CL) do not permit "C" declarations except at the start of a block. When ESP
             compiles an ESP web page, it converts it to "C" code and wraps it inside a function that will be invoked
-            at run-time in response to client requests. ESP supports MSCL, by controlling where ESP code will be
-            placed in the web page function. To ensure that declarations are emitted at the start of the function block, 
+            at run-time in response to client requests. ESP supports MSCL by controlling where ESP code will be
+            placed in the web page function. To ensure that declarations are emitted at the start of the function block 
             use the <tt>^start</tt> directive.</p>
 <pre>&lt;%<b>^start</b>
     char *msg = "hello world";
@@ -176,8 +176,8 @@ sudo appweb -v
             <h2 class="section">Forms and Request Params</h2>
             <p>When an HTML form is submitted, ESP converts form data and query parameters into ESP request parameters. 
             These can be accessed via the <tt>param()</tt> function or more conveniently via the literal <tt>@@variable</tt> 
-            directive. By prefixing a variable with <tt>@@</tt> ESP will automatically lookup the request parameters,
-            and if not found, the session data store for the variable and then substitute its value.</p>
+            directive. By prefixing a variable with <tt>@@</tt> ESP will automatically look up the request parameters,
+            and if not found, the session data store for the variable, and then substitute its value.</p>
             <p>If an HTTP request has the URI: <tt>http://example.com/submit.esp?name=julie</tt>, then the following
             ESP code could access the user name directly.</p>
 <pre>&lt;p>User Name: <b>@@name</b>&lt;/p></pre>
@@ -264,8 +264,8 @@ sudo appweb -v
             in the layout page.</p>
 
             <p>To use a layout page, a layout directory must be defined in the <tt>appweb.conf</tt> configuration file
-            using the EspDir directive. With this directive, pages will by default use the 
-            "<tt>./layouts/default.esp</tt>" layout page.
+            using the EspDir directive. With this directive, pages will use the 
+            "<tt>./layouts/default.esp</tt>" layout page by default.
 <pre>EspDir layout "./layouts"</pre>
 
             <p>The ESP <tt>&lt;%@ layout</tt> directive may be used in web pages to control what layout page (if any) 
@@ -277,7 +277,7 @@ sudo appweb -v
 
             <a name="learn" id="learn"></a>
             <h2 class="section">Learn More ...</h2>
-            <p>That concludes the a quick tour through some of the capabilities of the ESP web framework.</p>
+            <p>That concludes a quick tour through some of the capabilities of the ESP web framework.</p>
             <p>To learn more, please read:</p>
             <ul>
                 <li><a href="../../../index.html">ESP Documentation</a></li>
