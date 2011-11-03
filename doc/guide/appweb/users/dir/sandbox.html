@@ -504,23 +504,22 @@
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
+                            <p>Appweb manages memory proactively and ensures reliable operation by preventing memory
+                            before they occur. It does this by defining a memory limit and enforcing a memory policy
+                            for how to react when memory is depleted.</p>
                             <p>The MemoryPolicy directive defines how Appweb will response to low memory conditions.
-                            The LimitMemory directive defines a maximum amount of memory that Appweb is permitted to
-                            use. Appweb also institutes a memory redline that is 85% of this limit. When memory utilization
-                            exceeds the redline value, Appweb will attempt to free non-essential memory such as data
-                            for request caching. If memory utilization exceeds the maximum, Appweb will invoke the memory
-                            depletion policy defined by this directive.</p>
-                            <p>If the policy is set to <tt>prune</tt>, Appweb will prune all non-essential memory, but will
-                            continue to run. i.e. the limit becomes a soft limit and can be exceeded. If the policy is set
-                            to restart, then Appweb will do a graceful restart if the maximum is exceeded. A graceful
-                            restart will allow existing requests to complete.
-                            cach
-                            the maximum amount of memory that Appweb can use.
-                            On Linux and MacOSX, where a fast memory size API exists, this is the amount of memory currently
-                            used by the application. On other platforms, it is the amount of Appweb heap memory and 
-                            does not include thread stack or code allocations.
-                            If the memory limit is exceeded, Appweb will invoke the policy specified by the
-                            MemoryPolicy directive. </p>
+                            While the LimitMemory directive defines a maximum amount of memory that Appweb is permitted to
+                            use, the MemoryPolicy directive defines how Appweb will respond when the limit is
+                            approached and exceeded.</p>
+                            <p>Appweb also institutes a memory redline that is 85% of the memory limit. When memory
+                            utilization exceeds the redline value, Appweb will attempt to free non-essential memory such 
+                            as the data for request caching. If memory utilization exceeds the maximum memory limit, Appweb
+                            will invoke the memory depletion policy defined by this directive.</p> 
+                            <p>If the memory policy is set to <tt>prune</tt>, Appweb will prune all non-essential memory,
+                            but will continue to run. i.e. the limit becomes a soft limit and can be exceeded. If the policy
+                            is set to restart, then Appweb will do a graceful restart if the maximum is exceeded. A graceful
+                            restart will allow up to 30 seconds for existing requests to complete. If the policy is set to
+                            exit, then Appweb will immediately exit if the maximum is exceeded.</p>
                         </td>
                     </tr>
                 </tbody>
