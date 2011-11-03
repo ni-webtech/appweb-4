@@ -2834,7 +2834,7 @@ typedef struct HttpLang {
 #define HTTP_CACHE_SERVER           0x2     /**< Cache on the server side */
 #define HTTP_CACHE_MANUAL           0x4     /**< Cache manually. User must call httpWriteCache */
 #define HTTP_CACHE_RESET            0x8     /**< Don't inherit cache config from outer routes */
-#define HTTP_CACHE_COMBINED         0x10    /**< Combine the caching of requests with different params */
+#define HTTP_CACHE_ALL              0x10    /**< Cache the same pathInfo together regardless of the request params */
 #define HTTP_CACHE_ONLY             0x20    /**< Cache exactly the specified URI with params */
 #define HTTP_CACHE_UNIQUE           0x40    /**< Uniquely cache request with different params */
 
@@ -2915,11 +2915,11 @@ typedef struct HttpCache {
         \n\n
         Select HTTP_CACHE_RESET to first reset existing caching configuration for this route.
         \n\n
-        Select HTTP_CACHE_COMBINED, HTTP_CACHE_ONLY or HTTP_CACHE_UNIQUE to define the server-side caching mode. Only
+        Select HTTP_CACHE_ALL, HTTP_CACHE_ONLY or HTTP_CACHE_UNIQUE to define the server-side caching mode. Only
         one of these three mode flags should be specified.
         \n\n
-        If the HTTP_CACHE_COMBINED flag is set, the request params (query, post data and route parameters) will be
-        ignored and all request for a given URI path will cache to the same cache record.
+        If the HTTP_CACHE_ALL flag is set, the request params (query, post data and route parameters) will be
+        ignored and all requests for a given URI path will cache to the same cache record.
         \n\n
         Select HTTP_CACHE_UNIQUE to uniquely cache requests with different request parameters. The URIs specified in 
         $uris should not contain any request parameters.

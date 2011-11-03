@@ -134,18 +134,18 @@ div.content ul li {
 	font-size: 100%;
 	line-height: 140%; 
 	margin: 0;
+	padding: 4px 0 0 0;
 }
 
 div.content ol li {
 	font-size: 100%;
 	line-height: 140%; 
 	margin: 0;
-	padding: 10px 0 0 0;
+	padding: 4px 0 0 0;
 }
 
-
 /*
- *  Home page
+    Home page
  */
 div.homeLeft {
 	width: 33%;

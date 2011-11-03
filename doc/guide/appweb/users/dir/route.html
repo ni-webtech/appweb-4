@@ -365,7 +365,7 @@
 
                                 <li>Manual &mdash; In manual-mode the response will still be automatically cached.  However,
                                 it will not be automatically written to the client.  The request handler must call the
-                                espWriteCached API or must set the X-SendCache HTTP header to manuall write the cached
+                                espWriteCached API or must set the X-SendCache HTTP header to manually write the cached
                                 response content. </li>
                             </ul>
 
@@ -634,6 +634,46 @@
                 </tbody>
             </table>
             
+            <a name="inactivityTimeout" id="inactivityTimeout"></a>
+            <h2>InactivityTimeout</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Control the timeout period for TCP/IP connections</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>InactivityTimeout seconds</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual Host</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>InactivityTimeout 120</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>This directive defines the maximum time that requests and connections can be inactive
+                            before Appweb will forcibly terminate the request and close the connection.
+                            If further requests arrive on an idle connection, the timeout period is restarted.</p>
+                            <p>Setting the timeout period too high may impact performance on high-traffic servers
+                            because the number of open, idle TCP/IP connections can grow.</p>
+
+                            <p>Appweb supports HTTP KeepAlive where a single TCP/IP connection may be
+                            reused for multiple requests. This can significantly speed up overall performance.
+                            Keep-Alive is supported by Appweb with both HTTP/1.0 and HTTP/1.1 protocols. With
+                            HTTP/1.1, Keep-Alive is the default. With HTTP/1.0, clients may optionally request
+                            Keep-Alive via the <b>Keep-Alive</b> HTTP request header.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+
             <a name="logRoutes" id="logRoutes"></a>
             <h2>LogRoutes</h2>
             <table class="directive" summary="" width="100%">
@@ -874,6 +914,39 @@
                 </tbody>
             </table>
             
+            <a name="requestTimeout" id="requestTimeout"></a>
+            <h2>RequestTimeout</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Defines the maximum request duration</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>RequestTimeout seconds</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual Host</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>RequestTimeout 600</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>This directive defines the maximum duration for a request. If the maximum is excceded,
+                            Appweb will forcibly terminate the request and close the connection.
+                            <p>Some web user interfaces with monitoring applets open HTTP connections and keep them
+                            open to stream response data back to the applet. To prevent Appweb from closing the
+                            connection, you may need to increase the timeout value for the Route managing the request.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
             <a name="reset" id="reset"></a>
             <h2>Reset [routes|pipeline]</h2>
             <table class="directive" summary="" width="100%">

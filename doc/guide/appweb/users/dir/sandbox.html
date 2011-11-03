@@ -46,8 +46,8 @@
                 <li><a href="#limitCache">LimitCache</a></li>
                 <li><a href="#limitChunk">LimitChunk</a></li>
                 <li><a href="#limitClients">LimitClients</a></li>
+                <li><a href="#limitKeepAlive">LimitKeepAlive</a></li>
                 <li><a href="#limitMemory">LimitMemory</a></li>
-                <li><a href="#limitMemoryRedline">LimitMemoryRedline</a></li>
                 <li><a href="#limitRequestBody">LimitRequestBody</a></li>
                 <li><a href="#limitRequestForm">LimitRequestForm</a></li>
                 <li><a href="#limitRequestHeader">LimitRequestHeader</a></li>
@@ -161,6 +161,43 @@
                             limit of 0 means unlimited.</p>
                             <p>NOTE that many browsers can and will initiate multiple connections when requesting a
                             page.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="limitKeepAlive" id="limitKeepAlive"></a>
+            <h2>LimitKeepAlive</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define the maximum number of requests for a connection.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>LimitKeepAlive number</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual Host</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>LimitKeepAlive 50</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>This directive defines the maximum number of requests that may be serviced using a
+                            single TCP/IP connection.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="security">Security</td>
+                        <td>
+                            <p>Limiting the number to a reasonable maximum can help reduce the impact of some denial of
+                            service attacks.</p>
                         </td>
                     </tr>
                 </tbody>
@@ -404,7 +441,9 @@
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="limitStageBuffer" id="limitStageBuffer"></a>
+            </table>
+            
+            <a name="limitStageBuffer" id="limitStageBuffer"></a>
             <h2>LimitStageBuffer</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>
@@ -614,7 +653,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>ThreadStack 65536</td>
+                        <td>ThreadStack 64K</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>

@@ -44,7 +44,6 @@
             <h2>Quick Nav</h2>
             <ul>
                 <li><a href="#inactivityTimeout">InactivityTimeout</a></li>
-                <li><a href="#limitKeepAlive">LimitKeepAlive</a></li>
                 <li><a href="#sendBufferSize">SendBufferSize</a></li>
                 <li><a href="#requestTimeout">RequestTimeout</a></li>
             </ul>
@@ -58,6 +57,7 @@
         <div class="contentLeft">
             <a href="../configuration.html#directives"></a>
             <h1>Performance Directives</h1>
+
             <a name="inactivityTimeout" id="inactivityTimeout"></a>
             <h2>InactivityTimeout</h2>
             <table class="directive" summary="" width="100%">
@@ -92,43 +92,6 @@
                             Keep-Alive is supported by Appweb with both HTTP/1.0 and HTTP/1.1 protocols. With
                             HTTP/1.1, Keep-Alive is the default. With HTTP/1.0, clients may optionally request
                             Keep-Alive via the <b>Keep-Alive</b> HTTP request header.</p>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <a name="limitKeepAlive" id="limitKeepAlive"></a>
-            <h2>LimitKeepAlive</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
-                    <tr>
-                        <td class="pivot">Description</td>
-                        <td>Define the maximum number of requests for a connection.</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Synopsis</td>
-                        <td>LimitKeepAlive number</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Context</td>
-                        <td>Default Server, Virtual Host</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Example</td>
-                        <td>LimitKeepAlive 50</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Notes</td>
-                        <td>
-                            <p>This directive defines the maximum number of requests that may be serviced using a
-                            single TCP/IP connection.</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="security">Security</td>
-                        <td>
-                            <p>Limiting the number to a reasonable maximum can help reduce the impact of some denial of
-                            service attacks.</p>
                         </td>
                     </tr>
                 </tbody>
