@@ -159,7 +159,7 @@
                             <p>The LimitClient directive defines the maximum number of simultaneous client connections
                             that are permitted. Client connection requests in excess of this count will be rejected. A
                             limit of 0 means unlimited.</p>
-                            <p>NOTE that many browsers can and will initiate multiple connections when requesting a
+                            <p>NOTE: that many browsers can and will initiate multiple connections when requesting a
                             page.</p>
                         </td>
                     </tr>
@@ -504,7 +504,8 @@
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>Appweb manages memory proactively and ensures reliable operation by preventing memory
+                            <p>Appweb manages memory proactively and ensures reliable operation by preventing memory 
+                            allocation errors 
                             before they occur. It does this by defining a memory limit and enforcing a memory policy
                             for how to react when memory is depleted.</p>
                             <p>The MemoryPolicy directive defines how Appweb will response to low memory conditions.
