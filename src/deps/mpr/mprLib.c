@@ -2058,17 +2058,17 @@ static void allocException(int cause, ssize size)
     mprStaticError("%s: Consider increasing memory limit.", MPR->name);
     
     if (heap->notifier) {
-        (heap->notifier)(cause, size, used);
+        (heap->notifier)(cause, heap->allocPolicy,  size, used);
     }
     if (cause & (MPR_MEM_TOO_BIG | MPR_MEM_FAIL)) {
         mprError("Application exiting immediately due to memory depletion.");
         mprTerminate(MPR_EXIT_IMMEDIATE, 2);
 
     } else if (cause & (MPR_MEM_REDLINE | MPR_MEM_LIMIT)) {
+        /* Prune policy must be implemented by applications in their heap notifier */
         if (heap->allocPolicy == MPR_ALLOC_POLICY_RESTART) {
             mprError("Application restarting due to low memory condition.");
-            MPR->restart = 1;
-            mprTerminate(MPR_EXIT_GRACEFUL, 1);
+            mprTerminate(MPR_EXIT_GRACEFUL | MPR_EXIT_RESTART, 1);
 
         } else if (heap->allocPolicy == MPR_ALLOC_POLICY_EXIT) {
             mprError("Application exiting immediately due to memory depletion.");
@@ -2602,7 +2602,6 @@ static void checkYielded()
 
 static void getArgs(Mpr *mpr, int argc, char **argv);
 static void manageMpr(Mpr *mpr, int flags);
-static void restartProgram();
 static void serviceEventsThread(void *data, MprThread *tp);
 static void startThreads(int flags);
 
@@ -2627,6 +2626,7 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     mpr->version = sclone(BLD_VERSION);
     mpr->idleCallback = mprServicesAreIdle;
     mpr->mimeTypes = mprCreateMimeTypes(NULL);
+    mpr->terminators = mprCreateList(0, MPR_LIST_STATIC_VALUES);
 
     if (mpr->argv && mpr->argv[0] && *mpr->argv[0]) {
         name = mpr->argv[0];
@@ -2708,6 +2708,7 @@ static void manageMpr(Mpr *mpr, int flags)
         mprMark(mpr->emptyString);
         mprMark(mpr->pathEnv);
         mprMark(mpr->heap.markerCond);
+        mprMark(mpr->terminators);
     }
 }
 
@@ -2719,11 +2720,16 @@ void mprDestroy(int how)
 {
     int         gmode;
 
-    if (how != MPR_EXIT_DEFAULT) {
+    if (!(how & MPR_EXIT_DEFAULT)) {
         MPR->exitStrategy = how;
     }
     how = MPR->exitStrategy;
-    if (how == MPR_EXIT_IMMEDIATE) {
+    if (how & MPR_EXIT_IMMEDIATE) {
+        if (how & MPR_EXIT_RESTART) {
+            mprRestart();
+            /* No return */
+            return;
+        }
         exit(0);
     }
     mprYield(MPR_YIELD_STICKY);
@@ -2733,11 +2739,12 @@ void mprDestroy(int how)
     gmode = MPR_FORCE_GC | MPR_COMPLETE_GC | MPR_WAIT_GC;
     mprRequestGC(gmode);
 
-    if (how == MPR_EXIT_GRACEFUL) {
+    if (how & MPR_EXIT_GRACEFUL) {
         mprWaitTillIdle(MPR_TIMEOUT_STOP);
     }
     MPR->state = MPR_STOPPING_CORE;
-    MPR->exitStrategy = MPR_EXIT_IMMEDIATE;
+    MPR->exitStrategy &= MPR_EXIT_GRACEFUL;
+    MPR->exitStrategy |= MPR_EXIT_IMMEDIATE;
 
     mprWakeWorkers();
     mprStopCmdService();
@@ -2748,13 +2755,19 @@ void mprDestroy(int how)
     /* Final GC to run all finalizers */
     mprRequestGC(gmode);
 
+    if (how & MPR_EXIT_RESTART) {
+        mprLog(2, "Restarting\n\n");
+    } else {
+        mprLog(2, "Exiting");
+    }
     MPR->state = MPR_FINISHED;
     mprStopGCService();
     mprStopThreadService();
     mprStopOsService();
     mprDestroyMemService();
-    if (MPR->restart) {
-        restartProgram();
+
+    if (how & MPR_EXIT_RESTART) {
+        mprRestart();
     }
 }
 
@@ -2765,19 +2778,22 @@ void mprDestroy(int how)
  */
 void mprTerminate(int how, int status)
 {
+    MprTerminator   terminator;
+    int             next;
+
     MPR->exitStatus = status;
-    if (how != MPR_EXIT_DEFAULT) {
+    if (!(how & MPR_EXIT_DEFAULT)) {
         MPR->exitStrategy = how;
     }
     how = MPR->exitStrategy;
-    if (how == MPR_EXIT_IMMEDIATE) {
+    if (how & MPR_EXIT_IMMEDIATE) {
         mprLog(2, "Immediate exit. Aborting all requests and services.");
         exit(status);
 
-    } else if (how == MPR_EXIT_NORMAL) {
+    } else if (how & MPR_EXIT_NORMAL) {
         mprLog(2, "Normal exit. Flush buffers, close files and aborting existing requests.");
 
-    } else if (how == MPR_EXIT_GRACEFUL) {
+    } else if (how & MPR_EXIT_GRACEFUL) {
         mprLog(2, "Graceful exit. Waiting for existing requests to complete.");
 
     } else {
@@ -2789,20 +2805,33 @@ void mprTerminate(int how, int status)
         complete if graceful exit strategy.
      */
     if (MPR->state >= MPR_STOPPING) {
+        /* Already stopping and done the code below */
         return;
     }
+
     /*
-        Set stopping state and wake up everybody
+        Invoke terminators, set stopping state and wake up everybody
+        Must invoke terminators before setting stopping state. Otherwise, the main app event loop will return from
+        mprServiceEvents and starting calling destroy before we have completed this routine.
      */
+    for (ITERATE_ITEMS(MPR->terminators, terminator, next)) {
+        (terminator)(how, status);
+    }
     MPR->state = MPR_STOPPING;
-    mprWakeDispatchers();
     mprWakeWorkers();
     mprWakeGCService();
+    mprWakeDispatchers();
     mprWakeNotifier();
 }
 
 
-static void restartProgram()
+void mprAddTerminator(MprTerminator terminator)
+{
+    mprAddItem(MPR->terminators, terminator);
+}
+
+
+void mprRestart()
 {
     //  MOB TODO - Other systems
 #if BLD_UNIX_LIKE
@@ -2813,7 +2842,7 @@ static void restartProgram()
     execv(MPR->argv[0], MPR->argv);
 
     /*
-        Should not reach here
+        Last-ditch trace. Can only use stdout. Logging may be closed.
      */
     printf("Failed to exec errno %d: ", errno);
     for (i = 0; MPR->argv[i]; i++) {
@@ -2901,7 +2930,7 @@ static void serviceEventsThread(void *data, MprThread *tp)
  */
 bool mprShouldAbortRequests()
 {
-    return (mprIsStopping() && MPR->exitStrategy != MPR_EXIT_GRACEFUL);
+    return (mprIsStopping() && !(MPR->exitStrategy & MPR_EXIT_GRACEFUL));
 }
 
 
@@ -9271,7 +9300,7 @@ void mprWaitForIO(MprWaitService *ws, MprTime timeout)
 
     if (rc < 0) {
         if (errno != EINTR) {
-            mprLog(2, "Kevent returned %d, errno %d", mprGetOsError());
+            mprLog(7, "epoll returned %d, errno %d", mprGetOsError());
         }
     } else if (rc > 0) {
         serviceIO(ws, rc);
@@ -11685,7 +11714,7 @@ int mprWaitForSingleIO(int fd, int mask, MprTime timeout)
     rc = kevent(kq, interest, interestCount, events, 1, &ts);
     close(kq);
     if (rc < 0) {
-        mprLog(6, "Kevent returned %d, errno %d", rc, errno);
+        mprLog(7, "Kevent returned %d, errno %d", rc, errno);
     } else if (rc > 0) {
         if (rc > 0) {
             if (events[0].filter == EVFILT_READ) {
@@ -18341,6 +18370,7 @@ static void manageSignal(MprSignal *sp, int flags);
 static void manageSignalService(MprSignalService *ssp, int flags);
 static void signalEvent(MprSignal *sp, MprEvent *event);
 static void signalHandler(int signo, siginfo_t *info, void *arg);
+static void standardSignalHandler(void *ignored, MprSignal *sp);
 static void unhookSignal(int signo);
 
 
@@ -18617,36 +18647,14 @@ static void signalEvent(MprSignal *sp, MprEvent *event)
 
 
 /*
-    Standard signal handler.  Ignore signals SIGPIPE and SIGXFSZ. 
-    Do graceful shutdown for SIGTERM, immediate exit for SIGINT.  All other signals do normal exit.
+    Standard signal handler. The following signals are handled:
+        SIGINT - immediate exit
+        SIGTERM - graceful shutdown
+        SIGPIPE - ignore
+        SIGXFZ - ignore
+        SIGUSR1 - restart
+        All others - default exit
  */
-static void standardSignalHandler(void *ignored, MprSignal *sp)
-{
-    mprLog(6, "standardSignalHandler signo %d, flags %x", sp->signo, sp->flags);
-#if DEBUG_IDE && UNUSED
-    if (sp->signo == SIGINT) return;
-#endif
-    if (sp->signo == SIGTERM) {
-        mprTerminate(MPR_EXIT_GRACEFUL, -1);
-
-    } else if (sp->signo == SIGINT) {
-#if BLD_UNIX_LIKE
-        /*  Ensure shells are on a new line */
-        if (isatty(1)) {
-            if (write(1, "\n", 1) < 0) {}
-        }
-#endif
-        mprTerminate(MPR_EXIT_IMMEDIATE, -1);
-
-    } else if (sp->signo == SIGPIPE || sp->signo == SIGXFSZ) {
-        /* Ignore */
-
-    } else {
-        mprTerminate(MPR_EXIT_DEFAULT, -1);
-    }
-}
-
-
 void mprAddStandardSignals()
 {
     MprSignalService    *ssp;
@@ -18655,13 +18663,38 @@ void mprAddStandardSignals()
     mprAddItem(ssp->standard, mprAddSignalHandler(SIGINT,  standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
     mprAddItem(ssp->standard, mprAddSignalHandler(SIGQUIT, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
     mprAddItem(ssp->standard, mprAddSignalHandler(SIGTERM, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
-#if UNUSED && KEEP
-    mprAddItem(ssp->standard, mprAddSignalHandler(SIGUSR1, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
-#endif
     mprAddItem(ssp->standard, mprAddSignalHandler(SIGPIPE, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
+    mprAddItem(ssp->standard, mprAddSignalHandler(SIGUSR1, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
 #if SIGXFSZ
     mprAddItem(ssp->standard, mprAddSignalHandler(SIGXFSZ, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
 #endif
+}
+
+
+static void standardSignalHandler(void *ignored, MprSignal *sp)
+{
+    mprLog(6, "standardSignalHandler signo %d, flags %x", sp->signo, sp->flags);
+    if (sp->signo == SIGTERM) {
+        mprTerminate(MPR_EXIT_GRACEFUL, -1);
+
+    } else if (sp->signo == SIGINT) {
+#if BLD_UNIX_LIKE
+        /*  Ensure shell input goes to a new line */
+        if (isatty(1)) {
+            if (write(1, "\n", 1) < 0) {}
+        }
+#endif
+        mprTerminate(MPR_EXIT_IMMEDIATE, -1);
+
+    } else if (sp->signo == SIGUSR1) {
+        mprTerminate(MPR_EXIT_GRACEFUL | MPR_EXIT_RESTART, 0);
+
+    } else if (sp->signo == SIGPIPE || sp->signo == SIGXFSZ) {
+        /* Ignore */
+
+    } else {
+        mprTerminate(MPR_EXIT_DEFAULT, -1);
+    }
 }
 
 

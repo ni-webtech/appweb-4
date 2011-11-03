@@ -487,11 +487,11 @@
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
-                        <td>Set the maximum heap memory that Appweb can allocate.</td>
+                        <td>Define the policy for memory depletion situations.</td>
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>Memory Policy [restart] [exit]</td>
+                        <td>MemoryPolicy prune|restart|exit</td>
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
@@ -499,12 +499,23 @@
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>LimitSize 1000000</td>
+                        <td>MemoryPolicy restart</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The Memory Policy directive defines the maximum amount of memory that Appweb can use.
+                            <p>The MemoryPolicy directive defines how Appweb will response to low memory conditions.
+                            The LimitMemory directive defines a maximum amount of memory that Appweb is permitted to
+                            use. Appweb also institutes a memory redline that is 85% of this limit. When memory utilization
+                            exceeds the redline value, Appweb will attempt to free non-essential memory such as data
+                            for request caching. If memory utilization exceeds the maximum, Appweb will invoke the memory
+                            depletion policy defined by this directive.</p>
+                            <p>If the policy is set to <tt>prune</tt>, Appweb will prune all non-essential memory, but will
+                            continue to run. i.e. the limit becomes a soft limit and can be exceeded. If the policy is set
+                            to restart, then Appweb will do a graceful restart if the maximum is exceeded. A graceful
+                            restart will allow existing requests to complete.
+                            cach
+                            the maximum amount of memory that Appweb can use.
                             On Linux and MacOSX, where a fast memory size API exists, this is the amount of memory currently
                             used by the application. On other platforms, it is the amount of Appweb heap memory and 
                             does not include thread stack or code allocations.

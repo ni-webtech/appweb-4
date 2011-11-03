@@ -2227,6 +2227,13 @@ extern void error(cchar *fmt, ...);
 extern void finalize();
 
 /**
+    Flush transmit data. 
+    @description This writes any buffered data.
+    @ingroup EspAbbrev
+ */
+extern void finalize();
+
+/**
     Get a list of column names.
     @param rec Database record. If set to NULL, the current database record defined via $form() is used.
     @return An MprList of column names in the given table. If there is no record defined, an empty list is returned.

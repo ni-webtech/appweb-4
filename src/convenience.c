@@ -120,6 +120,16 @@ void maRestartServer(cchar *ip, int port)
     endpoint = mprGetFirstItem(server->endpoints);
     httpStopEndpoint(endpoint);
 
+    /* 
+        Alternatively, iterate over all endpoints by
+
+        Http *http = MPR->httpService;
+        int  next;
+        for (ITERATE_ITEMS(http->endpoints, endpoint, next)) {
+            ...
+        }
+     */
+
     if (port) {
         endpoint->port = port;
     }

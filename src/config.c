@@ -1243,36 +1243,19 @@ static int memoryPolicyDirective(MaState *state, cchar *key, cchar *value)
 {
     int     policy;
 
-    policy = 0;
-#if UNUSED
-    value = slower(value);
-    for (option = stok(sclone(value), " \t,", &tok); option; option = stok(0, " \t", &tok)) {
-        if (scmp(option, "exit") == 0) {
-            policy |= MPR_ALLOC_POLICY_EXIT;
-
-        } else if (scmp(option, "restart") == 0) {
-            policy |= MPR_ALLOC_POLICY_RESTART;
-
-        } else {
-            mprError("Unknown memory depletion policy '%s'", option);
-            return MPR_ERR_BAD_SYNTAX;
-        }
-    }
-#else
     if (scmp(value, "exit") == 0) {
-        policy |= MPR_ALLOC_POLICY_EXIT;
+        policy = MPR_ALLOC_POLICY_EXIT;
 
     } else if (scmp(value, "prune") == 0) {
-        policy |= MPR_ALLOC_POLICY_PRUNE;
+        policy = MPR_ALLOC_POLICY_PRUNE;
 
     } else if (scmp(value, "restart") == 0) {
-        policy |= MPR_ALLOC_POLICY_RESTART;
+        policy = MPR_ALLOC_POLICY_RESTART;
 
     } else {
         mprError("Unknown memory depletion policy '%s'", value);
         return MPR_ERR_BAD_SYNTAX;
     }
-#endif
     mprSetMemPolicy(policy);
     return 0;
 }

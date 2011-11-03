@@ -232,6 +232,12 @@ void finalize()
 }
 
 
+void flush()
+{
+    espFlush(getConn());
+}
+
+
 MprList *getColumns(EdiRec *rec)
 {
     return espGetColumns(getConn(), rec);

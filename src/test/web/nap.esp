@@ -2,12 +2,10 @@
 <head><title>ESP Nap Page</title></head>
 <body>
 <% 	
-    //  This is used by some esp tests
-    render(, "Napping 2 seconds .. " );
+    render("Napping 15 seconds .. " );
     flush();
-    mprSleep(2 * 1000);
+    mprSleep(15 * 1000);
     render("Awake");
 %>
 </body>
 </html>
-

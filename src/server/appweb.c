@@ -38,7 +38,7 @@ static App *app;
 
 /***************************** Forward Declarations ***************************/
 
-static void allocNotifier(int flags, ssize size, ssize total);
+static void allocNotifier(int cause, int policy, ssize size, ssize total);
 static int changeRoot(cchar *jail);
 static int checkEnvironment(cchar *program);
 static int findConfigFile();
@@ -202,9 +202,8 @@ MAIN(appweb, int argc, char **argv)
     while (!mprIsStopping()) {
         mprServiceEvents(-1, 0);
     }
-    mprLog(1, "Exiting ...");
+    mprLog(1, "Stopping Appweb ...");
     maStopAppweb(app->appweb);
-    mprLog(1, "Appweb stopping");
     mprDestroy(MPR_EXIT_DEFAULT);
     return 0;
 }
@@ -268,7 +267,7 @@ static int initialize(cchar *ip, int port)
 #if BLD_WIN_LIKE
     writePort(app->server);
 #else
-    app->traceToggle = mprAddSignalHandler(SIGUSR1, traceHandler, 0, 0, MPR_SIGNAL_AFTER);
+    app->traceToggle = mprAddSignalHandler(SIGUSR2, traceHandler, 0, 0, MPR_SIGNAL_AFTER);
 #endif
     return 0;
 }
@@ -318,9 +317,9 @@ static void usageError(Mpr *mpr)
 }
 
 
-static void allocNotifier(int cause, ssize size, ssize total)
+static void allocNotifier(int cause, int policy, ssize size, ssize total)
 {
-    if (cause & MPR_MEM_REDLINE) {
+    if (policy == MPR_ALLOC_POLICY_PRUNE) {
         mprPruneCache(NULL);
     }
 }
@@ -343,14 +342,14 @@ static int checkEnvironment(cchar *program)
 }
 
 
+/*
+    SIGUSR2 will toggle trace from level 2 to 6
+ */
 static void traceHandler(void *ignored, MprSignal *sp)
 {
     int     level;
 
-    level = 6;
-    if (mprGetLogLevel() > 2) {
-        level = 2;
-    }
+    level = mprGetLogLevel() > 2 ? 2 : 6;
     mprLog(0, "Change log level to %d", level);
     mprSetLogLevel(level);
 }

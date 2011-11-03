@@ -4801,6 +4801,7 @@ HttpStatusCode HttpStatusCodes[] = {
 static void httpTimer(Http *http, MprEvent *event);
 static bool isIdle();
 static void manageHttp(Http *http, int flags);
+static void terminateHttp(int how, int status);
 static void updateCurrentDate(Http *http);
 
 
@@ -4849,6 +4850,7 @@ Http *httpCreate()
     http->clientRoute = httpCreateConfiguredRoute(0, 0);
 
     mprSetIdleCallback(isIdle);
+    mprAddTerminator(terminateHttp);
     httpDefineRouteBuiltins();
     return http;
 }
@@ -5177,6 +5179,22 @@ static void httpTimer(Http *http, MprEvent *event)
 }
 
 
+static void terminateHttp(int how, int status)
+{
+    Http            *http;
+    HttpEndpoint    *endpoint;
+    int             next;
+
+    /*
+        Stop listening for new requests
+     */
+    http = (Http*) mprGetMpr()->httpService;
+    for (next = 0; (endpoint = mprGetNextItem(http->endpoints, &next)) != 0; ) {
+        httpStopEndpoint(endpoint);
+    }
+}
+
+
 static bool isIdle()
 {
     HttpConn        *conn;
@@ -5192,7 +5210,7 @@ static bool isIdle()
     for (next = 0; (conn = mprGetNextItem(http->connections, &next)) != 0; ) {
         if (conn->state != HTTP_STATE_BEGIN) {
             if (lastTrace < now) {
-                mprLog(4, "Waiting for request %s to complete", conn->rx->uri ? conn->rx->uri : conn->rx->pathInfo);
+                mprLog(1, "Waiting for request %s to complete", conn->rx->uri ? conn->rx->uri : conn->rx->pathInfo);
                 lastTrace = now;
             }
             unlock(http);

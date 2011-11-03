@@ -1747,6 +1747,10 @@ extern void *mprAtomicExchange(void * volatile *target, cvoid *value);
     #define MPR_ALIGN               8
     #define MPR_ALIGN_SHIFT         3
 #endif
+
+/*
+    Maximum bits available for expressing a memory size. On 32-bit systems, this is 0.5GB or 0x20000000.
+ */
 #define MPR_SIZE_BITS               (MPR_BITS - 3)
 
 /*
@@ -1891,6 +1895,14 @@ typedef struct MprMem {
 #endif
 
 /*
+    Memory depletion policy (mprSetAllocPolicy)
+ */
+#define MPR_ALLOC_POLICY_NOTHING    0       /**< Do nothing */
+#define MPR_ALLOC_POLICY_PRUNE      1       /**< Prune all non-essential memory and continue */
+#define MPR_ALLOC_POLICY_RESTART    2       /**< Gracefully restart the app if redline is exceeded */
+#define MPR_ALLOC_POLICY_EXIT       3       /**< Exit the app if max exceeded with a MPR_EXIT_NORMAL exit */
+
+/*
     MprMemNotifier cause argument
  */
 #define MPR_MEM_REDLINE             0x1         /**< Memory use exceeds redline limit */
@@ -1904,13 +1916,15 @@ typedef struct MprMem {
 
 /**
     Memory allocation error callback. Notifiers are called if a low memory condition exists.
-    @param cause Cause of the memory allocation condition. If flags is set to MPR_MEM_LOW, the memory pool is low, but
-        the allocation succeeded. If flags contain MPR_MEM_DEPLETED, the allocation failed.
+    @param policy Memory depletion policy. Set to one of MPR_ALLOC_POLICY_NOTHING, MPR_ALLOC_POLICY_PRUNE,
+    MPR_ALLOC_POLICY_RESTART or MPR_ALLOC_POLICY_EXIT.  @param cause Cause of the memory allocation condition. If flags is
+    set to MPR_MEM_LOW, the memory pool is low, but the allocation succeeded. If flags contain MPR_MEM_DEPLETED, the
+    allocation failed.
     @param size Size of the allocation that triggered the low memory condition.
     @param total Total memory currently in use
     @ingroup MprMem
  */
-typedef void (*MprMemNotifier)(int cause, ssize size, ssize total);
+typedef void (*MprMemNotifier)(int cause, int policy, ssize size, ssize total);
 
 /**
     Mpr memory block manager prototype
@@ -8041,30 +8055,23 @@ extern int mprSetMimeProgram(MprHash *table, cchar *mimeType, cchar *program);
  */
 #define MPR_SSL_PROVIDER_LOADED     0x20    /**< SSL provider loaded */
 
-/*
-    Memory depletion policy (mprSetAllocPolicy)
- */
-#define MPR_ALLOC_POLICY_NOTHING    0       /**< Do nothing */
-#define MPR_ALLOC_POLICY_PRUNE      1       /**< Prune all non-essential memory and continue */
-#define MPR_ALLOC_POLICY_RESTART    2       /**< Gracefully restart the app if redline is exceeded */
-#define MPR_ALLOC_POLICY_EXIT       3       /**< Exit the app if max exceeded with a MPR_EXIT_NORMAL exit */
-
 typedef bool (*MprIdleCallback)();
+typedef void (*MprTerminator)(int how, int status);
 
 /**
     Primary MPR application control structure
     @description The Mpr structure stores critical application state information.
     @stability Evolving.
-    @see mprBreakpoint mprCreate mprCreateOsService mprDecode64 mprDestroy mprEmptyString mprEncode64 mprEscapeCmd 
-        mprEscapseHtml mprGetApp mprGetAppDir mprGetAppName mprGetAppPath mprGetAppTitle mprGetAppVersion 
-        mprGetCmdlineLogging mprGetDebugMode mprGetDomainName mprGetEndian mprGetError mprGetErrorMsg mprGetHostName 
-        mprGetHwnd mprGetInst mprGetIpAddr mprGetKeyValue mprGetLogLevel mprGetMD5 mprGetMD5WithPrefix mprGetOsError 
-        mprGetRandomBytes mprGetServerName mprIsExiting mprIsFinished mprIsIdle mprIsStopping mprIsStoppingCore 
-        mprMakeArgv mprRandom mprReadRegistry mprRemoveKeyValue mprServicesAreIdle mprSetAppName mprSetCmdlineLogging 
-        mprSetDebugMode mprSetDomainName mprSetExitStrategy mprSetHostName mprSetHwnd mprSetIdleCallback mprSetInst 
-        mprSetIpAddr mprSetLogLevel mprSetServerName mprSetSocketMessage mprShouldAbortRequests 
-        mprShouldDenyNewRequests mprSignalExit mprSleep mprStart mprStartEventsThread mprStartOsService 
-        mprStopOsService mprTerminate mprUriDecode mprUriEncode mprWaitTillIdle mprWriteRegistry 
+    @see mprAddTerminator mprBreakpoint mprCreate mprCreateOsService mprDecode64 mprDestroy mprEmptyString mprEncode64
+    mprEscapeCmd mprEscapseHtml mprGetApp mprGetAppDir mprGetAppName mprGetAppPath mprGetAppTitle mprGetAppVersion
+    mprGetCmdlineLogging mprGetDebugMode mprGetDomainName mprGetEndian mprGetError mprGetErrorMsg mprGetHostName
+    mprGetHwnd mprGetInst mprGetIpAddr mprGetKeyValue mprGetLogLevel mprGetMD5 mprGetMD5WithPrefix mprGetOsError
+    mprGetRandomBytes mprGetServerName mprIsExiting mprIsFinished mprIsIdle mprIsStopping mprIsStoppingCore mprMakeArgv
+    mprRandom mprReadRegistry mprRemoveKeyValue mprRestart mprServicesAreIdle mprSetAppName mprSetCmdlineLogging
+    mprSetDebugMode mprSetDomainName mprSetExitStrategy mprSetHostName mprSetHwnd mprSetIdleCallback mprSetInst
+    mprSetIpAddr mprSetLogLevel mprSetServerName mprSetSocketMessage mprShouldAbortRequests mprShouldDenyNewRequests
+    mprSignalExit mprSleep mprStart mprStartEventsThread mprStartOsService mprStopOsService mprTerminate mprUriDecode
+    mprUriEncode mprWaitTillIdle mprWriteRegistry 
     @defgroup Mpr Mpr
  */
 typedef struct Mpr {
@@ -8094,7 +8101,6 @@ typedef struct Mpr {
     int             hasError;               /**< Mpr has an initialization error */
     int             marker;                 /**< Marker thread is active */
     int             marking;                /**< Actually marking objects now */
-    int             restart;                /**< Application restart requested */
     int             state;                  /**< Processing state */
     int             sweeper;                /**< Sweeper thread is active */
 
@@ -8127,6 +8133,7 @@ typedef struct Mpr {
     void            *httpService;           /**< Http service object */
     void            *testService;           /**< Test service object */
 
+    MprList         *terminators;           /**< Termination callbacks */
     MprIdleCallback idleCallback;           /**< Invoked to determine if the process is idle */
     MprOsThread     mainOsThread;           /**< Main OS thread ID */
     MprMutex        *mutex;                 /**< Thread synchronization */
@@ -8168,6 +8175,15 @@ extern Mpr *mprGetMpr();
 #else
     #define MPR_THREAD_PATTERN (MPR_MARK_THREAD)
 #endif
+
+/**
+    Add a terminator callback
+    @description When the MPR terminates, all terminator callbacks are invoked to give the application notice of
+    impending exit.
+    @param terminator MprTerminator callback function
+    @ingroup Mpr
+  */
+extern void mprAddTerminator(MprTerminator terminator);
 
 /**
     Create an instance of the MPR.
@@ -8386,6 +8402,14 @@ extern int mprMakeArgv(cchar *command, char ***argv, int flags);
 extern void mprNap(MprTime msec);
 
 /**
+    Restart the application
+    @description This call immediately restarts the application. The standard input, output and error I/O channels are
+    preserved. All other open file descriptors are closed.
+    @ingroup Mpr
+ */
+extern void mprRestart();
+
+/**
     Determine if the MPR services.
     @description This is the default routine invoked by mprIsIdle().
     @return True if the MPR services are idle.
@@ -8515,15 +8539,16 @@ extern int mprStartEventsThread();
 /*
     Terminate and Destroy flags
  */
-#define MPR_EXIT_DEFAULT    0           /**< Exit as per MPR->defaultStrategy */
-#define MPR_EXIT_IMMEDIATE  1           /**< Immediate exit */
-#define MPR_EXIT_NORMAL     2           /**< Normal shutdown without waiting for requests to complete  */
-#define MPR_EXIT_GRACEFUL   3           /**< Graceful shutdown waiting for requests to complete */
+#define MPR_EXIT_DEFAULT    0x1         /**< Exit as per MPR->defaultStrategy */
+#define MPR_EXIT_IMMEDIATE  0x2         /**< Immediate exit */
+#define MPR_EXIT_NORMAL     0x4         /**< Normal shutdown without waiting for requests to complete  */
+#define MPR_EXIT_GRACEFUL   0x8         /**< Graceful shutdown waiting for requests to complete */
+#define MPR_EXIT_RESTART    0x10        /**< Restart after exiting */
 
 /**
-    Terminate the MPR.
-    @description Terminates the MPR and disposes of all allocated resources. The mprTerminate
-        function will recursively free all memory allocated by the MPR.
+    Terminate the application.
+    @description Terminates the application and disposes of all allocated resources. The mprTerminate function will
+    recursively free all memory allocated by the MPR.
     @param flags Termination control flags. Use MPR_EXIT_IMMEDIATE for an immediate abortive shutdown. Finalizers will
         not be run. Use MPR_EXIT_NORMAL to allow garbage collection and finalizers to run. Use MPR_EXIT_GRACEFUL to
         allow all current requests and commands to complete before exiting.
