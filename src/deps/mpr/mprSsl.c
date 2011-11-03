@@ -571,7 +571,7 @@ static int blockingWrite(MprSocket *sp, sslBuf_t *out)
             return -1;
             
         } else if (bytes == 0) {
-            mprSleep(10);
+            mprNap(10);
         }
         out->start += bytes;
     }
@@ -1764,7 +1764,7 @@ static ssize readOss(MprSocket *sp, void *buf, ssize len)
         if (error == SSL_ERROR_WANT_READ) {
             rc = 0;
         } else if (error == SSL_ERROR_WANT_WRITE) {
-            mprSleep(10);
+            mprNap(10);
             rc = 0;
         } else if (error == SSL_ERROR_ZERO_RETURN) {
             sp->flags |= MPR_SOCKET_EOF;
@@ -1811,7 +1811,7 @@ static ssize writeOss(MprSocket *sp, cvoid *buf, ssize len)
         if (rc <= 0) {
             rc = SSL_get_error(osp->osslStruct, rc);
             if (rc == SSL_ERROR_WANT_WRITE) {
-                mprSleep(10);
+                mprNap(10);
                 continue;
                 
             } else if (rc == SSL_ERROR_WANT_READ) {

@@ -16,6 +16,8 @@ static bool conditionalDefinition(cchar *key);
 static int configError(MaState *state, cchar *key);
 static MaState *createState(MaServer *server, HttpHost *host, HttpRoute *route);
 static char *getDirective(char *line, char **valuep);
+static int64 getnum(cchar *value);
+static MprTime gettime(cchar *value);
 static void manageState(MaState *state, int flags);
 static int parseFile(MaState *state, cchar *path);
 static int parseFileInner(MaState *state, cchar *path);
@@ -480,17 +482,18 @@ static int cacheDirective(MaState *state, cchar *key, cchar *value)
         option = stok(option, " =\t,", &ovalue);
         ovalue = strim(ovalue, "\"'", MPR_TRIM_BOTH);
         if ((int) isdigit(*option)) {
-            lifespan = (MprTime) stoi(option) * MPR_TICKS_PER_SEC;
+            lifespan = gettime(option);
 
         } else if (smatch(option, "client")) {
             flags |= HTTP_CACHE_CLIENT;
             if (snumber(ovalue)) {
-                clientLifespan = (MprTime) stoi(ovalue) * MPR_TICKS_PER_SEC;
+                clientLifespan = gettime(ovalue);
             }
 
         } else if (smatch(option, "server")) {
+            flags |= HTTP_CACHE_SERVER;
             if (snumber(ovalue)) {
-                serverLifespan = (MprTime) stoi(ovalue) * MPR_TICKS_PER_SEC;
+                serverLifespan = gettime(ovalue);
             }
 
         } else if (smatch(option, "extensions")) {
@@ -821,6 +824,19 @@ static int ifDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
+    InactivityTimeout secs
+ */
+static int inactivityTimeoutDirective(MaState *state, cchar *key, cchar *value)
+{
+    if (! mprGetDebugMode()) {
+        state->host->limits->inactivityTimeout = gettime(value);
+    }
+    return 0;
+}
+
+
+#if UNUSED
+/*
     KeepAlive on|off
  */
 static int keepAliveDirective(MaState *state, cchar *key, cchar *value)
@@ -833,18 +849,7 @@ static int keepAliveDirective(MaState *state, cchar *key, cchar *value)
     state->host->limits->keepAliveCount = on;
     return 0;
 }
-
-
-/*
-    KeepAliveTimeout secs
- */
-static int keepAliveTimeoutDirective(MaState *state, cchar *key, cchar *value)
-{
-    if (! mprGetDebugMode()) {
-        state->host->limits->inactivityTimeout = atoi(value) * MPR_TICKS_PER_SEC;
-    }
-    return 0;
-}
+#endif
 
 
 /*
@@ -852,7 +857,7 @@ static int keepAliveTimeoutDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitCacheDirective(MaState *state, cchar *key, cchar *value)
 {
-    mprSetCacheLimits(state->host->responseCache, 0, 0, stoi(value), 0);
+    mprSetCacheLimits(state->host->responseCache, 0, 0, getnum(value), 0);
     return 0;
 }
 
@@ -862,18 +867,18 @@ static int limitCacheDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitCacheItemDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->host->limits->cacheItemSize = (int) stoi(value);
+    state->host->limits->cacheItemSize = (int) getnum(value);
     return 0;
 }
 
 
 /*
-    LimitChunkSize bytes
+    LimitChunk bytes
  */
-static int limitChunkSizeDirective(MaState *state, cchar *key, cchar *value)
+static int limitChunkDirective(MaState *state, cchar *key, cchar *value)
 {
     //  MOB - API for this
-    state->host->limits->chunkSize = atoi(value);
+    state->host->limits->chunkSize = (int) getnum(value);
     return 0;
 }
 
@@ -883,27 +888,22 @@ static int limitChunkSizeDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitClientsDirective(MaState *state, cchar *key, cchar *value)
 {
-    mprSetMaxSocketClients(atoi(value));
+    mprSetMaxSocketClients((int) stoi(value));
     return 0;
 }
 
 
 /*
-    LimitMemoryMax bytes
- */
-static int limitMemoryMaxDirective(MaState *state, cchar *key, cchar *value)
-{
-    mprSetMemLimits(-1, (ssize) stoi(value));
-    return 0;
-}
+    LimitMemory size
 
-
-/*
-    LimitMemoryRedline bytes
+    Redline set to 85%
  */
-static int limitMemoryRedlineDirective(MaState *state, cchar *key, cchar *value)
+static int limitMemoryDirective(MaState *state, cchar *key, cchar *value)
 {
-    mprSetMemLimits((ssize) stoi(value), -1);
+    ssize   maxMem;
+
+    maxMem = (ssize) getnum(value);
+    mprSetMemLimits(maxMem / 100 * 85, maxMem);
     return 0;
 }
 
@@ -913,7 +913,7 @@ static int limitMemoryRedlineDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitRequestBodyDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->host->limits->receiveBodySize = stoi(value);
+    state->host->limits->receiveBodySize = getnum(value);
     return 0;
 }
 
@@ -923,27 +923,27 @@ static int limitRequestBodyDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitRequestFormDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->host->limits->receiveFormSize = stoi(value);
+    state->host->limits->receiveFormSize = getnum(value);
     return 0;
 }
 
 
 /*
-    LimitRequestHeaderCount count
+    LimitRequestHeaderLines count
  */
-static int limitRequestHeaderCountDirective(MaState *state, cchar *key, cchar *value)
+static int limitRequestHeaderLinesDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->host->limits->headerCount = atoi(value);
+    state->host->limits->headerCount = (int) getnum(value);
     return 0;
 }
 
 
 /*
-    LimitRequestHeaderSize bytes
+    LimitRequestHeader bytes
  */
-static int limitRequestHeaderSizeDirective(MaState *state, cchar *key, cchar *value)
+static int limitRequestHeaderDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->host->limits->headerSize = atoi(value);
+    state->host->limits->headerSize = (int) getnum(value);
     return 0;
 }
 
@@ -953,7 +953,7 @@ static int limitRequestHeaderSizeDirective(MaState *state, cchar *key, cchar *va
  */
 static int limitResponseBodyDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->limits->transmissionBodySize = stoi(value);
+    state->limits->transmissionBodySize = getnum(value);
     return 0;
 }
 
@@ -963,7 +963,7 @@ static int limitResponseBodyDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitStageBufferDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->limits->stageBufferSize = atoi(value);
+    state->limits->stageBufferSize = (int) getnum(value);
     return 0;
 }
 
@@ -973,17 +973,17 @@ static int limitStageBufferDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitUriDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->limits->uriSize = atoi(value);
+    state->limits->uriSize = (int) getnum(value);
     return 0;
 }
 
 
 /*
-    LimitUploadSize bytes
+    LimitUpload bytes
  */
-static int limitUploadSizeDirective(MaState *state, cchar *key, cchar *value)
+static int limitUploadDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->limits->uploadSize = stoi(value);
+    state->limits->uploadSize = getnum(value);
     return 0;
 }
 
@@ -1007,7 +1007,7 @@ static int listenDirective(MaState *state, cchar *key, cchar *value)
         /*
             Port only, listen on all interfaces (ipv4 + ipv6)
          */
-        port = atoi(vp);
+        port = (int) stoi(vp);
         if (port <= 0 || port > 65535) {
             mprError("Bad listen port number %d", port);
             return MPR_ERR_BAD_SYNTAX;
@@ -1029,7 +1029,7 @@ static int listenDirective(MaState *state, cchar *key, cchar *value)
             ip = vp;
             if (*vp == '[' && (cp = strrchr(cp, ':')) != 0) {
                 *cp++ = '\0';
-                port = atoi(cp);
+                port = (int) stoi(cp);
             } else {
                 port = HTTP_DEFAULT_PORT;
             }
@@ -1039,7 +1039,7 @@ static int listenDirective(MaState *state, cchar *key, cchar *value)
             ip = vp;
             if ((cp = strrchr(vp, ':')) != 0) {
                 *cp++ = '\0';
-                port = atoi(cp);
+                port = (int) stoi(cp);
 
             } else {
                 port = HTTP_DEFAULT_PORT;
@@ -1092,7 +1092,7 @@ static int logLevelDirective(MaState *state, cchar *key, cchar *value)
     if (state->server->alreadyLogging) {
         mprLog(4, "Already logging. Ignoring LogLevel directive");
     } else {
-        mprSetLogLevel(atoi(value));
+        mprSetLogLevel((int) stoi(value));
     }
     return 0;
 }
@@ -1227,27 +1227,53 @@ static int loadModuleDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    MaxKeepAliveRequests count
+    LimitKeepAlive count
  */
-static int maxKeepAliveRequestsDirective(MaState *state, cchar *key, cchar *value)
+static int limitKeepAliveDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->host->limits->keepAliveCount = atoi(value);
+    state->host->limits->keepAliveCount = (int) stoi(value);
     return 0;
 }
 
 
 /*
-    MemoryDepletionPolicy exit|restart
+    MemoryPolicy prune|restart|exit
  */
-static int memoryDepletionPolicyDirective(MaState *state, cchar *key, cchar *value)
+static int memoryPolicyDirective(MaState *state, cchar *key, cchar *value)
 {
+    int     policy;
+
+    policy = 0;
+#if UNUSED
     value = slower(value);
-    if (scmp(value, "exit") == 0) {
-        mprSetMemPolicy(MPR_ALLOC_POLICY_EXIT);
-    } else if (scmp(value, "restart") == 0) {
-        mprSetMemPolicy(MPR_ALLOC_POLICY_RESTART);
+    for (option = stok(sclone(value), " \t,", &tok); option; option = stok(0, " \t", &tok)) {
+        if (scmp(option, "exit") == 0) {
+            policy |= MPR_ALLOC_POLICY_EXIT;
+
+        } else if (scmp(option, "restart") == 0) {
+            policy |= MPR_ALLOC_POLICY_RESTART;
+
+        } else {
+            mprError("Unknown memory depletion policy '%s'", option);
+            return MPR_ERR_BAD_SYNTAX;
+        }
     }
-    mprSetMemLimits(atoi(value), -1);
+#else
+    if (scmp(value, "exit") == 0) {
+        policy |= MPR_ALLOC_POLICY_EXIT;
+
+    } else if (scmp(value, "prune") == 0) {
+        policy |= MPR_ALLOC_POLICY_PRUNE;
+
+    } else if (scmp(value, "restart") == 0) {
+        policy |= MPR_ALLOC_POLICY_RESTART;
+
+    } else {
+        mprError("Unknown memory depletion policy '%s'", value);
+        return MPR_ERR_BAD_SYNTAX;
+    }
+#endif
+    mprSetMemPolicy(policy);
     return 0;
 }
 
@@ -1414,6 +1440,16 @@ static int redirectDirective(MaState *state, cchar *key, cchar *value)
     }
     alias = httpCreateAliasRoute(state->route, uri, path, status);
     httpFinalizeRoute(alias);
+    return 0;
+}
+
+
+/*
+    RequestTimeout secs
+ */
+static int requestTimeoutDirective(MaState *state, cchar *key, cchar *value)
+{
+    state->limits->requestTimeout = gettime(value);
     return 0;
 }
 
@@ -1600,7 +1636,7 @@ static int sourceDirective(MaState *state, cchar *key, cchar *value)
  */
 static int startThreadsDirective(MaState *state, cchar *key, cchar *value)
 {
-    mprSetMinWorkers(atoi(value));
+    mprSetMinWorkers((int) stoi(value));
     return 0;
 }
 
@@ -1638,27 +1674,17 @@ static int templateDirective(MaState *state, cchar *key, cchar *value)
  */
 static int threadLimitDirective(MaState *state, cchar *key, cchar *value)
 {
-    mprSetMaxWorkers(atoi(value));
+    mprSetMaxWorkers((int) stoi(value));
     return 0;
 }
 
 
 /*
-    ThreadStackSize bytes
+    ThreadStack bytes
  */
-static int threadStackSizeDirective(MaState *state, cchar *key, cchar *value)
+static int threadStackDirective(MaState *state, cchar *key, cchar *value)
 {
-    mprSetThreadStackSize(atoi(value));
-    return 0;
-}
-
-
-/*
-    Timeout secs
- */
-static int timeoutDirective(MaState *state, cchar *key, cchar *value)
-{
-    state->limits->requestTimeout = atoi(value) * MPR_TICKS_PER_SEC;
+    mprSetThreadStackSize((int) getnum(value));
     return 0;
 }
 
@@ -1712,7 +1738,7 @@ static int unloadModuleDirective(MaState *state, cchar *key, cchar *value)
         mprError("Can't find module stage %s", name);
         return MPR_ERR_BAD_SYNTAX;
     }
-    module->timeout = (int) stoi(value) * MPR_TICKS_PER_SEC;
+    module->timeout = gettime(value);
     return 0;
 }
 
@@ -2018,6 +2044,42 @@ static int configError(MaState *state, cchar *key)
 }
 
 
+static int64 getnum(cchar *value)
+{
+    int64   num;
+
+    value = strim(slower(value), " \t", MPR_TRIM_BOTH);
+    if (sends(value, "k")) {
+        num = stoi(value) * 1000;
+    } else if (sends(value, "mb")) {
+        num = stoi(value) * 1000 * 1000;
+    } else if (sends(value, "gb")) {
+        num = stoi(value) * 1000 * 1000 * 1000;
+    } else {
+        num = stoi(value);
+    }
+    return num;
+}
+
+
+static MprTime gettime(cchar *value)
+{
+    MprTime     when;
+
+    value = strim(slower(value), " \t", MPR_TRIM_BOTH);
+    if (sends(value, "min") || sends(value, "mins")) {
+        when = stoi(value) * 60;
+    } else if (sends(value, "hr") || sends(value, "hrs")) {
+        when = stoi(value) * 60 * 60;
+    } else if (sends(value, "day") || sends(value, "days")) {
+        when = stoi(value) * 60 * 60 * 24;
+    } else {
+        when = stoi(value);
+    }
+    return when * MPR_TICKS_PER_SEC;
+}
+
+
 /*
     Get the directive and value details. Return key and *valuep.
  */
@@ -2091,30 +2153,32 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "Header", headerDirective);
     maAddDirective(appweb, "<If", ifDirective);
     maAddDirective(appweb, "</If", closeDirective);
+    maAddDirective(appweb, "InactivityTimeout", inactivityTimeoutDirective);
     maAddDirective(appweb, "Include", includeDirective);
-    maAddDirective(appweb, "KeepAlive", keepAliveDirective);
-    maAddDirective(appweb, "KeepAliveTimeout", keepAliveTimeoutDirective);
 
-    /* Deprecated: Location - use <Route> instead */
+    /* Deprecated use InactivityTimeout instead */
+    maAddDirective(appweb, "KeepAliveTimeout", inactivityTimeoutDirective);
+
+    /* Deprecated: use <Route> instead */
     maAddDirective(appweb, "<Location", routeDirective);
     maAddDirective(appweb, "</Location", closeDirective);
 
     maAddDirective(appweb, "LimitCache", limitCacheDirective);
     maAddDirective(appweb, "LimitCacheItem", limitCacheItemDirective);
-    maAddDirective(appweb, "LimitChunkSize", limitChunkSizeDirective);
+    maAddDirective(appweb, "LimitChunk", limitChunkDirective);
     maAddDirective(appweb, "LimitClients", limitClientsDirective);
-    maAddDirective(appweb, "LimitMemoryMax", limitMemoryMaxDirective);
-    maAddDirective(appweb, "LimitMemoryRedline", limitMemoryRedlineDirective);
+    maAddDirective(appweb, "LimitKeepAlive", limitKeepAliveDirective);
+    maAddDirective(appweb, "LimitMemory", limitMemoryDirective);
     maAddDirective(appweb, "LimitRequestBody", limitRequestBodyDirective);
     maAddDirective(appweb, "LimitRequestForm", limitRequestFormDirective);
 
-    /* Deprecated: LimitRequestFields - use LimitRequestHeaderCount instead */
-    maAddDirective(appweb, "LimitRequestFields", limitRequestHeaderCountDirective);
-    /* Deprecated: LimitRequestFieldSize - use LimitRequestHeaderSize instead */
-    maAddDirective(appweb, "LimitRequestFieldSize", limitRequestHeaderSizeDirective);
+    /* Deprecated use LimitRequestHeaderLines instead */
+    maAddDirective(appweb, "LimitRequestFields", limitRequestHeaderLinesDirective);
+    /* Deprecated use LimitRequestHeader instead */
+    maAddDirective(appweb, "LimitRequestFieldSize", limitRequestHeaderDirective);
 
-    maAddDirective(appweb, "LimitRequestHeaderCount", limitRequestHeaderCountDirective);
-    maAddDirective(appweb, "LimitRequestHeaderSize", limitRequestHeaderSizeDirective);
+    maAddDirective(appweb, "LimitRequestHeaderLines", limitRequestHeaderLinesDirective);
+    maAddDirective(appweb, "LimitRequestHeader", limitRequestHeaderDirective);
 
     maAddDirective(appweb, "LimitResponseBody", limitResponseBodyDirective);
     maAddDirective(appweb, "LimitStageBuffer", limitStageBufferDirective);
@@ -2123,7 +2187,7 @@ int maParseInit(MaAppweb *appweb)
     /* Deprecated: LimitUrl - use LimitUri instead  */
     maAddDirective(appweb, "LimitUrl", limitUriDirective);
 
-    maAddDirective(appweb, "LimitUploadSize", limitUploadSizeDirective);
+    maAddDirective(appweb, "LimitUpload", limitUploadDirective);
     maAddDirective(appweb, "Listen", listenDirective);
 
     //  MOB - not a great name "Load"
@@ -2135,8 +2199,10 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "LogTraceFilter", logTraceFilterDirective);
     maAddDirective(appweb, "LoadModulePath", loadModulePathDirective);
     maAddDirective(appweb, "LoadModule", loadModuleDirective);
-    maAddDirective(appweb, "MaxKeepAliveRequests", maxKeepAliveRequestsDirective);
-    maAddDirective(appweb, "MemoryDepletionPolicy", memoryDepletionPolicyDirective);
+
+    /* Deprecated use LimitKeepAlive instead */
+    maAddDirective(appweb, "MaxKeepAliveRequests", limitKeepAliveDirective);
+    maAddDirective(appweb, "MemoryPolicy", memoryPolicyDirective);
     maAddDirective(appweb, "Methods", methodsDirective);
     maAddDirective(appweb, "Name", nameDirective);
     maAddDirective(appweb, "NameVirtualHost", nameVirtualHostDirective);
@@ -2146,6 +2212,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "Protocol", protocolDirective);
     maAddDirective(appweb, "PutMethod", putMethodDirective);
     maAddDirective(appweb, "Redirect", redirectDirective);
+    maAddDirective(appweb, "RequestTimeout", requestTimeoutDirective);
     maAddDirective(appweb, "Require", requireDirective);
     maAddDirective(appweb, "Reset", resetDirective);
 
@@ -2161,9 +2228,11 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "StartThreads", startThreadsDirective);
     maAddDirective(appweb, "Target", targetDirective);
     maAddDirective(appweb, "Template", templateDirective);
-    maAddDirective(appweb, "Timeout", timeoutDirective);
+
+    /* Deprecated: Use requestTimeout instead */
+    maAddDirective(appweb, "Timeout", requestTimeoutDirective);
     maAddDirective(appweb, "ThreadLimit", threadLimitDirective);
-    maAddDirective(appweb, "ThreadStackSize", threadStackSizeDirective);
+    maAddDirective(appweb, "ThreadStack", threadStackDirective);
     maAddDirective(appweb, "TraceMethod", traceMethodDirective);
     maAddDirective(appweb, "TypesConfig", typesConfigDirective);
     maAddDirective(appweb, "Update", updateDirective);

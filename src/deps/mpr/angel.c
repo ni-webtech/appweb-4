@@ -446,7 +446,7 @@ static int writeAngelPid(int pid)
 
 
 /*
-    Conver this Angel to a Deaemon
+    Convert this Angel to a Deaemon
  */
 static int makeDaemon()
 {

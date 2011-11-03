@@ -229,7 +229,7 @@ AddType application/x-httpd-php .web
             <table summary="">
                 <tbody>
                     <tr>
-                        <td class="pivot">LimitChunkSize</td>
+                        <td class="pivot">LimitChunk</td>
                         <td>Maximum size of chunks when using Transfer Chunk Encoding</td>
                     </tr>
                     <tr>
@@ -241,11 +241,11 @@ AddType application/x-httpd-php .web
                         <td>Maximum size of the incoming request body</td>
                     </tr>
                     <tr>
-                        <td class="pivot">LimitRequestFields</td>
-                        <td>Maximum number of headers in the request</td>
+                        <td class="pivot">LimitRequestHeaderLines</td>
+                        <td>Maximum number of header linjes in the request</td>
                     </tr>
                     <tr>
-                        <td class="pivot">LimitRequestFieldSize</td>
+                        <td class="pivot">LimitRequestHeader</td>
                         <td>Maximum size of the request header</td>
                     </tr>
                     <tr>
@@ -253,23 +253,19 @@ AddType application/x-httpd-php .web
                         <td>Pipeline stage buffer size</td>
                     </tr>
                     <tr>
-                        <td class="pivot">LimitUrl</td>
-                        <td>Maximum size of a URL</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">SendBufferSize</td>
-                        <td>Size of the TCP/IP buffer to use for requests</td>
+                        <td class="pivot">LimitUri</td>
+                        <td>Maximum size of a URI</td>
                     </tr>
                     <tr>
                         <td class="pivot">StartThreads</td>
                         <td>Number of threads to preallocate in the thread pool</td>
                     </tr>
                     <tr>
-                        <td class="pivot">ThreadLimit</td>
+                        <td class="pivot">TThreads</td>
                         <td>Maximum number of threads to allocate on demand for the thread pool</td>
                     </tr>
                     <tr>
-                        <td class="pivot">ThreadStackSize</td>
+                        <td class="pivot">ThreadStack</td>
                         <td>Size of the per-thread stack</td>
                     </tr>
                 </tbody>

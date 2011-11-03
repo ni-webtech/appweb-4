@@ -1141,9 +1141,9 @@ struct  MprXml;
 #define MPR_TIMEOUT_PRUNER      600000      /**< Time between worker thread pruner runs (10 min) */
 #define MPR_TIMEOUT_WORKER      300000      /**< Prune worker that has been idle for 5 minutes */
 #define MPR_TIMEOUT_START_TASK  10000       /**< Time to start tasks running */
+#define MPR_TIMEOUT_STOP        30000       /**< Wait when stopping resources (30 sec) */
 #define MPR_TIMEOUT_STOP_TASK   10000       /**< Time to stop or reap tasks */
 #define MPR_TIMEOUT_STOP_THREAD 10000       /**< Time to stop running threads */
-#define MPR_TIMEOUT_STOP        5000        /**< Wait when stopping resources */
 #define MPR_TIMEOUT_LINGER      2000        /**< Close socket linger timeout */
 #define MPR_TIMEOUT_HANDLER     10000       /**< Wait period when removing a wait handler */
 #define MPR_TIMEOUT_GC_SYNC     10000       /**< Wait period for threads to synchronize */
@@ -1891,24 +1891,26 @@ typedef struct MprMem {
 #endif
 
 /*
-    Flags for MprMemNotifier
+    MprMemNotifier cause argument
  */
-#define MPR_MEM_ATTENTION           0x2         /**< GC needs attention, threads should yield */
-#define MPR_MEM_LOW                 0x4         /**< Memory is low, no errors yet */
-#define MPR_MEM_DEPLETED            0x8         /**< Memory depleted. Cannot satisfy current request */
+#define MPR_MEM_REDLINE             0x1         /**< Memory use exceeds redline limit */
+#define MPR_MEM_LIMIT               0x2         /**< Memory use exceeds memory limit - invoking policy */
+#define MPR_MEM_FAIL                0x4         /**< Memory allocation failed - immediate exit */
+#define MPR_MEM_TOO_BIG             0x4         /**< Memory allocation request is too big - immediate exit */
+
+#if UNUSED && KEEP
+#define MPR_MEM_ATTENTION           0x8         /**< GC needs attention, threads should yield */
+#endif
 
 /**
-    Memory allocation error callback. Notifiers are called if mprSetNotifier has been called on a context and a 
-    memory allocation fails. All notifiers up the parent context chain are called in order.
-    @param size Size of memory allocation request that failed
-    @param total Total bytes allocated.
-    @param granted Set to true if the request was actually granted, but the application is now exceeding its redline
-        memory limit.
-    @return Return MPR_DELAY_GC if the notification is MPR_MEM_GC and delayed garbage collection is required. Otherwise,
-        return zero.
+    Memory allocation error callback. Notifiers are called if a low memory condition exists.
+    @param cause Cause of the memory allocation condition. If flags is set to MPR_MEM_LOW, the memory pool is low, but
+        the allocation succeeded. If flags contain MPR_MEM_DEPLETED, the allocation failed.
+    @param size Size of the allocation that triggered the low memory condition.
+    @param total Total memory currently in use
     @ingroup MprMem
  */
-typedef int (*MprMemNotifier)(int flags, ssize size);
+typedef void (*MprMemNotifier)(int cause, ssize size, ssize total);
 
 /**
     Mpr memory block manager prototype
@@ -2452,15 +2454,19 @@ extern void mprRemoveRoot(void *ptr);
 #endif
 
 #if FUTURE
-#define void mprMark(cvoid *ptr) if (ptr) { \
-    MprMem *mp = MPR_GET_MEM(ptr);
-    if (mp->mark != HEAP->active) {
-        mp->gen = mp->mark = HEAP->active;
-        if (mp->hasManager) {
-            ((MprManager)(((char*) (mp)) + mp->size - sizeof(void*)))(ptr, MPR_MANAGE_MARK);
-        }
-    }
-} else {
+//  MOB - keep inline version for debug mode
+
+#define void mprMark(cvoid *ptr) \
+    if (ptr) { \
+        MprMem *mp = MPR_GET_MEM(ptr); \
+        if (mp->mark != heapActive) { \
+            mp->gen = mp->mark = heapActive; \
+            if (mp->hasManager) { \
+                //  MOB - use GET_MANAGER()
+                ((MprManager)(((char*) (mp)) + mp->size - sizeof(void*)))(ptr, MPR_MANAGE_MARK); \
+            } \
+        } \
+    } else 
 #endif
 
 /*
@@ -3601,6 +3607,15 @@ extern int mprPutFmtToWideBuf(MprBuf *buf, cchar *fmt, ...);
 #define mprPutFmtToWideBuf      mprPutFmtToBuf
 #endif
 
+#if MPR_BUF_MACROS || 1
+#define mprGetBufLength(bp) ((bp)->end - (bp)->start)
+#define mprGetBufSize(bp) ((bp)->buflen)
+#define mprGetBufSpace(bp) ((bp)->endbuf - (bp)->end)
+#define mprGetBuf(bp) ((bp)->data)
+#define mprGetBufStart(bp) ((bp)->start)
+#define mprGetBufEnd(bp) ((bp)->end)
+#endif
+
 /**
     Format a date according to RFC822: (Fri, 07 Jan 2003 12:12:21 PDT)
  */
@@ -3819,12 +3834,6 @@ typedef struct MprList {
     int         maxSize;                /**< Maximum capacity */
     int         flags;                  /**< Control flags */
 } MprList;
-
-/*
-    Macros
- */
-#define MPR_GET_ITEM(list, index) list->items[index]
-#define ITERATE_ITEMS(list, item, next) next = 0; (item = mprGetNextItem(list, &next)) != 0; 
 
 /**
     List comparison procedure for sorting
@@ -4116,6 +4125,12 @@ extern void *mprPopItem(MprList *list);
         to a memory allocation failure, -1 is returned
   */
 extern int mprPushItem(MprList *list, cvoid *item);
+
+#if MPR_LIST_MACROS || 1
+#define MPR_GET_ITEM(list, index) list->items[index]
+#define ITERATE_ITEMS(list, item, next) next = 0; (item = mprGetNextItem(list, &next)) != 0; 
+#define mprGetListLength(lp) ((lp) ? (lp)->length : 0)
+#endif
 
 /**
     Logging Services
@@ -6141,7 +6156,7 @@ typedef struct MprThreadService {
     int             nextLocal;          /**< Next key to use */
 #endif
 #endif
-    int             stackSize;          /**< Default thread stack size */
+    ssize           stackSize;          /**< Default thread stack size */
 } MprThreadService;
 
 /**
@@ -6183,7 +6198,7 @@ typedef struct MprThread {
     ulong           pid;                /**< Owning process id */
     int             isMain;             /**< Is the main thread */
     int             priority;           /**< Current priority */
-    int             stackSize;          /**< Only VxWorks implements */
+    ssize           stackSize;          /**< Only VxWorks implements */
     int             stickyYield;        /**< Yielded does not auto-clear after GC */
     int             yielded;            /**< Thread has yielded to GC */
 } MprThread;
@@ -6216,7 +6231,7 @@ typedef struct MprThreadLocal {
     @returns A MprThread object
     @ingroup MprThread
  */
-extern MprThread *mprCreateThread(cchar *name, void *proc, void *data, int stackSize);
+extern MprThread *mprCreateThread(cchar *name, void *proc, void *data, ssize stackSize);
 
 /**
     Get the O/S thread
@@ -6322,7 +6337,7 @@ extern void mprResetYield();
  */
 extern int mprMapMprPriorityToOs(int mprPriority);
 extern int mprMapOsPriorityToMpr(int nativePriority);
-extern void mprSetThreadStackSize(int size);
+extern void mprSetThreadStackSize(ssize size);
 extern int mprSetThreadData(MprThreadLocal *tls, void *value);
 extern void *mprGetThreadData(MprThreadLocal *tls);
 extern MprThreadLocal *mprCreateThreadLocal();
@@ -7143,7 +7158,7 @@ typedef struct MprWorkerService {
     int             minThreads;         /**< Max # threads in worker pool */
     int             nextThreadNum;      /**< Unique next thread number */
     int             numThreads;         /**< Current number of threads in worker pool */
-    int             stackSize;          /**< Stack size for worker threads */
+    ssize           stackSize;          /**< Stack size for worker threads */
     MprMutex        *mutex;             /**< Per task synchronization */
     struct MprEvent *pruneTimer;        /**< Timer for excess threads pruner */
     MprWorkerProc   startWorker;        /**< Worker thread startup hook */
@@ -7838,8 +7853,7 @@ extern ssize mprWriteCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize);
     @see mprCreateCache mprDestroyCache mprExpireCache mprIncCache mprReadCache mprRemoveCache mprSetCacheLimits 
         mprWriteCache 
  */
-typedef struct MprCache
-{
+typedef struct MprCache {
     MprHash         *store;             /**< Key/value store */
     MprMutex        *mutex;             /**< Cache lock*/
     MprEvent        *timer;             /**< Pruning timer */
@@ -7886,6 +7900,14 @@ extern int mprExpireCache(MprCache *cache, cchar *key, MprTime expires);
     @ingroup MprCache
  */
 extern int64 mprIncCache(MprCache *cache, cchar *key, int64 amount);
+
+/**
+    Prune the cache
+    @description Prune the cache and discard all cached items
+    @param cache The cache instance object returned from #mprCreateCache.
+    @ingroup MprCache
+ */
+extern void mprPruneCache(MprCache *cache);
 
 /**
     Read an item from the cache.
@@ -8009,23 +8031,23 @@ extern int mprSetMimeProgram(MprHash *table, cchar *mimeType, cchar *program);
 /*
     Mpr state
  */
-#define MPR_STARTED                 0x1      /**< Mpr services started */
-#define MPR_STOPPING                0x2      /**< App is stopping. Services should not take new requests */
-#define MPR_STOPPING_CORE           0x4      /**< Stopping core services: GC and event dispatch */
-#define MPR_FINISHED                0x8      /**< Mpr object destroyed  */
+#define MPR_STARTED                 0x1     /**< Mpr services started */
+#define MPR_STOPPING                0x2     /**< App is stopping. Services should not take new requests */
+#define MPR_STOPPING_CORE           0x4     /**< Stopping core services: GC and event dispatch */
+#define MPR_FINISHED                0x8     /**< Mpr object destroyed  */
 
 /*
     MPR flags
  */
-#define MPR_SSL_PROVIDER_LOADED     0x20     /**< SSL provider loaded */
+#define MPR_SSL_PROVIDER_LOADED     0x20    /**< SSL provider loaded */
 
 /*
     Memory depletion policy (mprSetAllocPolicy)
  */
-#define MPR_ALLOC_POLICY_EXIT       0x1     /**< Exit the app */
-#define MPR_ALLOC_POLICY_RESTART    0x2     /**< Restart the app */
-#define MPR_ALLOC_POLICY_NULL       0x4     /**< Do nothing */
-#define MPR_ALLOC_POLICY_WARN       0x8     /**< Warn to log */
+#define MPR_ALLOC_POLICY_NOTHING    0       /**< Do nothing */
+#define MPR_ALLOC_POLICY_PRUNE      1       /**< Prune all non-essential memory and continue */
+#define MPR_ALLOC_POLICY_RESTART    2       /**< Gracefully restart the app if redline is exceeded */
+#define MPR_ALLOC_POLICY_EXIT       3       /**< Exit the app if max exceeded with a MPR_EXIT_NORMAL exit */
 
 typedef bool (*MprIdleCallback)();
 
@@ -8072,6 +8094,7 @@ typedef struct Mpr {
     int             hasError;               /**< Mpr has an initialization error */
     int             marker;                 /**< Marker thread is active */
     int             marking;                /**< Actually marking objects now */
+    int             restart;                /**< Application restart requested */
     int             state;                  /**< Processing state */
     int             sweeper;                /**< Sweeper thread is active */
 
@@ -8355,6 +8378,14 @@ extern bool mprIsStoppingCore();
 extern int mprMakeArgv(cchar *command, char ***argv, int flags);
 
 /**
+    Nap for a while
+    @description This routine blocks and does not yield for GC. Only use it for very short naps.
+    @param msec Number of milliseconds to sleep
+    @ingroup Mpr
+*/
+extern void mprNap(MprTime msec);
+
+/**
     Determine if the MPR services.
     @description This is the default routine invoked by mprIsIdle().
     @return True if the MPR services are idle.
@@ -8463,6 +8494,8 @@ extern bool mprShouldDenyNewRequests();
 
 /**
     Sleep for a while
+    @description This routine blocks for the given time and yields for GC during that time. Ensure all memory
+        is held before the sleep.
     @param msec Number of milliseconds to sleep
     @ingroup Mpr
 */
@@ -8483,9 +8516,9 @@ extern int mprStartEventsThread();
     Terminate and Destroy flags
  */
 #define MPR_EXIT_DEFAULT    0           /**< Exit as per MPR->defaultStrategy */
-#define MPR_EXIT_IMMEDIATE  1           /**< Do an immediate exit - finalizers will not run */
-#define MPR_EXIT_NORMAL     2           /**< Do a normal shutdown - run GC for all finalizers to run */
-#define MPR_EXIT_GRACEFUL   3           /**< Do a graceful shutdown */
+#define MPR_EXIT_IMMEDIATE  1           /**< Immediate exit */
+#define MPR_EXIT_NORMAL     2           /**< Normal shutdown without waiting for requests to complete  */
+#define MPR_EXIT_GRACEFUL   3           /**< Graceful shutdown waiting for requests to complete */
 
 /**
     Terminate the MPR.

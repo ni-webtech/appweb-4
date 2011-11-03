@@ -103,7 +103,7 @@ server.listen()
                             when serving requests for this ejs application. Worker threads are retained in a pool for 
                             rapid reuse once requests complete. Set to zero for single-threaded operation. Defaults to 
                             any previously defined worker limit via EjsWorkers or the number of Appweb theads set via 
-                            ThreadLimit (defaults to 10).</p>
+                            Threads (defaults to 10).</p>
                             <p>It is convenient to define applications using this directive in a separate configuration
                             file for each application. If the application config file is stored under the Appweb
                             "conf/apps" directory, then Appweb will read it automatically when it starts. This makes it
@@ -188,7 +188,7 @@ server.listen()
                             <p>This directive specifies the maximum number of worker threads to use when serving
                             requests for the ejs handler. Worker threads are retained in a pool for rapid reuse once
                             requests complete. Set to zero for single-threaded operation. Defaults to the number
-                            of Appweb theads set via ThreadLimit (defaults to 10).</p>
+                            of Appweb theads set via the Threads directive (defaults to 10).</p>
                         </td>
                     </tr>
                 </tbody>

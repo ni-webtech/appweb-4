@@ -43,17 +43,20 @@
         <div class="contentRight">
             <h2>Quick Nav</h2>
             <ul>
-                <li><a href="#limitChunkSize">LimitChunkSize</a></li>
+                <li><a href="#limitCache">LimitCache</a></li>
+                <li><a href="#limitChunk">LimitChunk</a></li>
                 <li><a href="#limitClients">LimitClients</a></li>
+                <li><a href="#limitMemory">LimitMemory</a></li>
+                <li><a href="#limitMemoryRedline">LimitMemoryRedline</a></li>
                 <li><a href="#limitRequestBody">LimitRequestBody</a></li>
                 <li><a href="#limitRequestForm">LimitRequestForm</a></li>
-                <li><a href="#limitRequestFields">LimitRequestFields</a></li>
-                <li><a href="#limitRequestFieldSize">LimitRequestFieldSize</a></li>
+                <li><a href="#limitRequestHeader">LimitRequestHeader</a></li>
+                <li><a href="#limitRequestHeaderLines">LimitRequestHeaderLines</a></li>
                 <li><a href="#limitResponseBody">LimitResponseBody</a></li>
-                <li><a href="#limitUrl">LimitUrl</a></li>
+                <li><a href="#limitUri">LimitUri</a></li>
                 <li><a href="#startThreads">StartThreads</a></li>
-                <li><a href="#threadLimit">ThreadLimit</a></li>
-                <li><a href="#threadStackSize">ThreadStackSize</a></li>
+                <li><a href="#threads">Threads</a></li>
+                <li><a href="#threadStack">ThreadStack</a></li>
             </ul>
             <h2>See Also</h2>
             <ul>
@@ -67,8 +70,41 @@
             <h1>Sandbox Directives</h1>
             <p>Appweb supports directives that limit its use of system resources such as memory and threads. This
             technique is know as "sandboxing" because it creates a limited / safer area in which Appweb
-            executes.</p><a name="limitChunkSize" id="limitChunkSize"></a>
-            <h2>LimitChunkSize</h2>
+            executes.</p>
+            
+            <a name="limitCache" id="limitCache"></a>
+            <h2>LimitCache</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define the maximum size of the Appweb cache for response data and session state.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>LimitCache size</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>LimitCache 8192</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>This directive defines the maximum size of the Appweb data cache. This cache store is used
+                            for caching responses and for session state date for ESP applications. If the maximum size
+                            is exceeded, Appweb will prune the oldest data in the cache to make room for newer items.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="limitChunk" id="limitChunk"></a>
+            <h2>LimitChunk</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>
                     <tr>
@@ -77,15 +113,15 @@
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>LimitChunkSize size</td>
+                        <td>LimitChunk size</td>
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
-                        <td>Default Server</td>
+                        <td>Default server, VirtualHost</td>
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>LimitChunkSize 8192</td>
+                        <td>LimitChunk 8192</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
@@ -94,7 +130,10 @@
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="limitClients" id="limitClients"></a>
+            </table>
+            
+            
+            <a name="limitClients" id="limitClients"></a>
             <h2>LimitClients</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>
@@ -108,7 +147,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
-                        <td>Default Server</td>
+                        <td>Default server, VirtualHost</td>
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
@@ -122,6 +161,40 @@
                             limit of 0 means unlimited.</p>
                             <p>NOTE that many browsers can and will initiate multiple connections when requesting a
                             page.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="limitMemory" id="limitMemory"></a>
+            <h2>LimitMemory</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Set the maximum heap memory that Appweb can allocate.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>LimitMemory size</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>LimitSize 1000000</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The LimitMemory directive defines the maximum amount of memory that Appweb can use.
+                            On Linux and MacOSX, where a fast memory size API exists, this is the amount of memory currently
+                            used by the application. On other platforms, it is the amount of Appweb heap memory and 
+                            does not include thread stack or code allocations.
+                            If the memory limit is exceeded, Appweb will invoke the policy specified by the
+                            MemoryPolicy directive. </p>
                         </td>
                     </tr>
                 </tbody>
@@ -141,7 +214,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
-                        <td>Default Server</td>
+                        <td>Default server, VirtualHost</td>
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
@@ -183,7 +256,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
-                        <td>Default Server</td>
+                        <td>Default server, VirtualHost</td>
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
@@ -216,49 +289,8 @@
             </table>
             
             
-            <a name="limitRequestFields" id="limitRequestFields"></a>
-            <h2>LimitRequestFields</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
-                    <tr>
-                        <td class="pivot">Description</td>
-                        <td>Maximum number of header lines in the request body from the client.</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Synopsis</td>
-                        <td>LimitRequestFields limit</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Context</td>
-                        <td>Default Server</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Example</td>
-                        <td>LimitRequestFields 64</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Notes</td>
-                        <td>
-                            <p>The LimitRequestFields directive defines a maximum number of header lines that may be in
-                            a request from a client. For embedded applications, it is useful to limit the number of
-                            header lines to the expected maximum. This ensures that rogue or malicious requests will
-                            not cause the server to allocate unwanted memory to servicing the request. Typically, HTTP
-                            requests will not have more than 15-20 header lines.</p>
-                            <p>The limit is an integer between zero and 4096, where zero means unlimited. If a request
-                            is received that has more header lines than the limit, it will be rejected and the client
-                            will receive an error. The default limit is 40.</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="security">Security</td>
-                        <td>
-                            <p>This directive can be quite useful in certain denial-of-service attacks where the
-                            attacker sends requests with many spurious header lines.</p>
-                        </td>
-                    </tr>
-                </tbody>
-            </table><a name="limitRequestFieldSize" id="limitRequestFieldSize"></a>
-            <h2>LimitRequestFieldSize</h2>
+            <a name="limitRequestHeader" id="limitRequestHeader"></a>
+            <h2>LimitRequestHeader</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>
                     <tr>
@@ -267,20 +299,20 @@
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>LimitRequestFieldSize limit</td>
+                        <td>LimitRequestHeader limit</td>
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
-                        <td>Default Server</td>
+                        <td>Default server, VirtualHost</td>
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>LimitRequestFieldSize 65536</td>
+                        <td>LimitRequestHeader 65536</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The LimitRequestFieldSize directive defines the maximum size of the request header from
+                            <p>The LimitRequestHeader directive defines the maximum size of the request header from
                             the client. For embedded applications, it is useful to limit the size of the header to the
                             expected maximum. This ensures that rogue or malicious requests will not cause the server
                             to allocate unwanted memory to servicing the request. Typically, HTTP requests will not
@@ -298,7 +330,53 @@
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="limitResponseBody" id="limitResponseBody"></a>
+            </table>
+            
+            <a name="limitRequestHeaderLines" id="limitRequestHeaderLines"></a>
+            <h2>LimitRequestHeaderLines</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Maximum number of header lines in the request body from the client.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>LimitRequestHeaderLines limit</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>LimitRequestHeaderLines 64</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The LimitRequestHeaderLines directive defines a maximum number of header lines that may be in
+                            a request from a client. For embedded applications, it is useful to limit the number of
+                            header lines to the expected maximum. This ensures that rogue or malicious requests will
+                            not cause the server to allocate unwanted memory to servicing the request. Typically, HTTP
+                            requests will not have more than 15-20 header lines.</p>
+                            <p>The limit is an integer between zero and 4096, where zero means unlimited. If a request
+                            is received that has more header lines than the limit, it will be rejected and the client
+                            will receive an error. The default limit is 40.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="security">Security</td>
+                        <td>
+                            <p>This directive can be quite useful in certain denial-of-service attacks where the
+                            attacker sends requests with many spurious header lines.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            
+            <a name="limitResponseBody" id="limitResponseBody"></a>
             <h2>LimitResponseBody</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>
@@ -312,7 +390,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
-                        <td>Default Server</td>
+                        <td>Default server, VirtualHost</td>
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
@@ -340,7 +418,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
-                        <td>Default Server</td>
+                        <td>Default server, VirtualHost</td>
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
@@ -359,8 +437,8 @@
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="limitUrl" id="limitUrl"></a>
-            <h2>LimitUrl</h2>
+            </table><a name="limitUri" id="limitUri"></a>
+            <h2>LimitUri</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>
                     <tr>
@@ -369,20 +447,20 @@
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>LimitUrl limit</td>
+                        <td>LimitUri limit</td>
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
-                        <td>Default Server</td>
+                        <td>Default server, VirtualHost</td>
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>LimitUrl 4096</td>
+                        <td>LimitUri 4096</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The LimitUrl directive defines the maximum size of a URL in Appweb. IFor embedded
+                            <p>The LimitUri directive defines the maximum size of a URL in Appweb. IFor embedded
                             applications, it is useful to limit the number of header lines to the expected maximum.
                             This ensures that rogue or malicious requests will not cause the server to allocate
                             unwanted memory to servicing the request.</p>
@@ -400,7 +478,45 @@
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="startThreads" id="startThreads"></a>
+            </table>
+            
+            
+            <a name="memoryPolicy" id="memoryPolicy"></a>
+            <h2>Memory Policy</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Set the maximum heap memory that Appweb can allocate.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Memory Policy [restart] [exit]</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>LimitSize 1000000</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The Memory Policy directive defines the maximum amount of memory that Appweb can use.
+                            On Linux and MacOSX, where a fast memory size API exists, this is the amount of memory currently
+                            used by the application. On other platforms, it is the amount of Appweb heap memory and 
+                            does not include thread stack or code allocations.
+                            If the memory limit is exceeded, Appweb will invoke the policy specified by the
+                            MemoryPolicy directive. </p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            
+            <a name="startThreads" id="startThreads"></a>
             <h2>StartThreads</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>
@@ -426,14 +542,14 @@
                             <p>The StartThreads directive will preallocate the specified number of threads on startup
                             and then ensure that the thread pool always has at least this number of threads.</p>
                             <p>Appweb will automatically adjust the number of pool thread between the minimum specified
-                            by this directive and the maximum specified by the ThreadLimit directive or via the Appweb
+                            by this directive and the maximum specified by the Threads directive or via the Appweb
                             command line. Appweb will prune idle threads to reduce resource consumption as
                             required.</p>
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="threadLimit" id="threadLimit"></a>
-            <h2>ThreadLimit</h2>
+            </table><a name="threads" id="threads"></a>
+            <h2>Threads</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>
                     <tr>
@@ -442,7 +558,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>ThreadLimit number</td>
+                        <td>Threads number</td>
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
@@ -450,12 +566,12 @@
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>ThreadLimit 8</td>
+                        <td>Threads 8</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The ThreadLimit directive defines a maximum number of threads for the Appweb thread
+                            <p>The Threads directive defines a maximum number of threads for the Appweb thread
                             pool. When running in multithreaded mode, Appweb will use a pool thread to service each
                             request and then will return the thread to the pool. This results in a highly responsive
                             and scalable architecture with excellent throughput characteristics. Each thread requires a
@@ -470,8 +586,8 @@
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="threadStackSize" id="threadStackSize"></a>
-            <h2>ThreadStackSize</h2><br />
+            </table><a name="threadStack" id="threadStack"></a>
+            <h2>ThreadStack</h2><br />
             <table class="directive" summary="" width="100%">
                 <tbody>
                     <tr>
@@ -480,7 +596,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>ThreadStackSize limit</td>
+                        <td>ThreadStack limit</td>
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
@@ -488,12 +604,12 @@
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>ThreadStackSize 65536</td>
+                        <td>ThreadStack 65536</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The ThreadStackSize directive defines the size of the thread stack to allocate for each
+                            <p>The ThreadStack directive defines the size of the thread stack to allocate for each
                             thread. The limit is an integer between zero and an operating system defined maximum&nbsp;
                             where zero means use the system default. The default limit is 0 which implies the system
                             default.</p>

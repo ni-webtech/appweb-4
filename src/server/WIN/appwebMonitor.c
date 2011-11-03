@@ -533,7 +533,6 @@ static void shutdownAppweb()
     hwnd = FindWindow(app->serviceWindowName, app->serviceWindowTitle);
     if (hwnd) {
         PostMessage(hwnd, WM_QUIT, 0, 0L);
-
         /*
             Wait for up to ten seconds while the service exits
          */

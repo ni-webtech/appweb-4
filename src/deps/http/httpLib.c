@@ -1635,14 +1635,16 @@ static int matchCacheHandler(HttpConn *conn, HttpRoute *route, int dir)
     if (cache->flags & HTTP_CACHE_CLIENT) {
         cacheAtClient(conn);
     }
-    if (!(cache->flags & HTTP_CACHE_MANUAL) && fetchCachedResponse(conn)) {
-        /* Found cached content */
-        return HTTP_ROUTE_OK;
+    if (cache->flags & HTTP_CACHE_SERVER) {
+        if (!(cache->flags & HTTP_CACHE_MANUAL) && fetchCachedResponse(conn)) {
+            /* Found cached content */
+            return HTTP_ROUTE_OK;
+        }
+        /*
+            Caching is configured but no acceptable cached content. Create a capture buffer for the cacheFilter.
+         */
+        conn->tx->cacheBuffer = mprCreateBuf(-1, -1);
     }
-    /*
-        Caching is configured but no acceptable cached content. Create a capture buffer for the cacheFilter.
-     */
-    conn->tx->cacheBuffer = mprCreateBuf(-1, -1);
     return HTTP_ROUTE_REJECT;
 }
 
@@ -3611,7 +3613,6 @@ HttpEndpoint *httpCreateEndpoint(cchar *ip, int port, MprDispatcher *dispatcher)
 
 void httpDestroyEndpoint(HttpEndpoint *endpoint)
 {
-    mprLog(4, "Destroy endpoint %s", endpoint->ip);
     if (endpoint->waitHandler) {
         mprRemoveWaitHandler(endpoint->waitHandler);
         endpoint->waitHandler = 0;
@@ -5191,7 +5192,7 @@ static bool isIdle()
     for (next = 0; (conn = mprGetNextItem(http->connections, &next)) != 0; ) {
         if (conn->state != HTTP_STATE_BEGIN) {
             if (lastTrace < now) {
-                mprLog(0, "Waiting for request %s to complete", conn->rx->uri ? conn->rx->uri : conn->rx->pathInfo);
+                mprLog(4, "Waiting for request %s to complete", conn->rx->uri ? conn->rx->uri : conn->rx->pathInfo);
                 lastTrace = now;
             }
             unlock(http);
@@ -7803,6 +7804,7 @@ HttpRoute *httpCreateInheritedRoute(HttpRoute *parent)
     route->inputStages = parent->inputStages;
     route->index = parent->index;
     route->languages = parent->languages;
+    route->lifespan = parent->lifespan;
     route->methods = parent->methods;
     route->methodSpec = parent->methodSpec;
     route->outputStages = parent->outputStages;

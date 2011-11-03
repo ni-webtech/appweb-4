@@ -2830,12 +2830,13 @@ typedef struct HttpLang {
 } HttpLang;
 
 
-#define HTTP_CACHE_MANUAL           0x1     /**< Cache manually. User must call httpWriteCache */
-#define HTTP_CACHE_CLIENT           0x2     /**< Cache on the client side */
-#define HTTP_CACHE_RESET            0x4     /**< Don't inherit cache config from outer routes */
-#define HTTP_CACHE_COMBINED         0x8     /**< Combine the caching of requests with different params */
-#define HTTP_CACHE_ONLY             0x10    /**< Cache exactly the specified URI with params */
-#define HTTP_CACHE_UNIQUE           0x20    /**< Uniquely cache request with different params */
+#define HTTP_CACHE_CLIENT           0x1     /**< Cache on the client side */
+#define HTTP_CACHE_SERVER           0x2     /**< Cache on the server side */
+#define HTTP_CACHE_MANUAL           0x4     /**< Cache manually. User must call httpWriteCache */
+#define HTTP_CACHE_RESET            0x8     /**< Don't inherit cache config from outer routes */
+#define HTTP_CACHE_COMBINED         0x10    /**< Combine the caching of requests with different params */
+#define HTTP_CACHE_ONLY             0x20    /**< Cache exactly the specified URI with params */
+#define HTTP_CACHE_UNIQUE           0x40    /**< Uniquely cache request with different params */
 
 /**
     Cache Control

@@ -368,40 +368,48 @@ Include conf/applications/*.conf
                         <td>Define the order of processing directory index options.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/perf.html#keepAlive">KeepAlive</a></td>
-                        <td>Enable HTTP Keep-Alive</td>
-                    </tr>
-                    <tr>
-                        <td><a href="dir/perf.html#keepAliveTimeout">KeepAliveTimeout</a></td>
-                        <td>Define the time period to reuse a TCP/IP connection.</td>
+                        <td><a href="dir/perf.html#inactivityTimeout">InactivityTimeout</a></td>
+                        <td>Maximum request and connection inactivity duration.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/sandbox.html#limitCache">LimitCache</a></td>
-                        <td>Set the maximum size of the response and session cache.</td>
+                        <td>Set the maximum size of the Appweb cache for responses and sessions.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/sandbox.html#limitChunkSize">LimitChunkSize</a></td>
-                        <td>Set the transfer chunk encoding size.</td>
+                        <td><a href="dir/sandbox.html#limitChunk">LimitChunk</a></td>
+                        <td>Set the maximum transfer chunk encoding size.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/sandbox.html#limitClients">LimitClients</a></td>
                         <td>Set the limit of simultaneous clients.</td>
                     </tr>
                     <tr>
+                        <td><a href="dir/perf.html#limitKeepAlive">LimitKeepAlive</a></td>
+                        <td>Define the re-use count for a connection.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/sandbox.html#limitMemory">LimitMemory</a></td>
+                        <td>Limit the total memory usage of Appweb. This is a hard limit.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/sandbox.html#limitMemoryRedline">LimitMemoryRedline</a></td>
+                        <td>Set the memory redline limit, above which Appweb will gracefully exit.</td>
+                    </tr>
+                    <tr>
                         <td><a href="dir/sandbox.html#limitRequestBody">LimitRequestBody</a></td>
                         <td>Set the maximum size of the incoming request body.</td>
                     </tr>
                     <tr>
+                        <td><a href="dir/sandbox.html#limitRequestHeader">LimitRequestHeader</a></td>
+                        <td>Set the maximum total request header size.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/sandbox.html#limitRequestHeaderLines">LimitRequestHeaderLines</a></td>
+                        <td>Set the maximum number of request header lines.</td>
+                    </tr>
+                    <tr>
                         <td><a href="dir/sandbox.html#limitRequestForm">LimitRequestForm</a></td>
                         <td>Set the maximum size of the incoming request form data.</td>
-                    </tr>
-                    <tr>
-                        <td><a href="dir/sandbox.html#limitRequestFieldSize">LimitRequestFieldSize</a></td>
-                        <td>Set the maximum request header size.</td>
-                    </tr>
-                    <tr>
-                        <td><a href="dir/sandbox.html#limitRequestFields">LimitRequestFields</a></td>
-                        <td>Set the maximum number of request header lines.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/sandbox.html#limitResponseBody">LimitResponseBody</a></td>
@@ -412,8 +420,12 @@ Include conf/applications/*.conf
                         <td>Set the maximum buffer size for pipeline stages.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/sandbox.html#limitUrl">LimitUrl</a></td>
-                        <td>Set the maximum size of a URL.</td>
+                        <td><a href="dir/sandbox.html#limitUpload">LimitUpload</a></td>
+                        <td>Set the maximum file upload size.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/sandbox.html#limitUri">LimitUri</a></td>
+                        <td>Set the maximum size of a request URI.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/server.html#listen">Listen</a></td>
@@ -444,11 +456,7 @@ Include conf/applications/*.conf
                         <td>Filter the tracing of HTTP messages.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/perf.html#maxKeepAliveRequests">MaxKeepAliveRequests</a></td>
-                        <td>Define the re-use count for a connection.</td>
-                    </tr>
-                    <tr>
-                        <td><a href="dir/perf.html#memoryDepletionPolicy">MemoryDepletionPolicy</a></td>
+                        <td><a href="dir/sandbox.html#memoryPolicy">MemoryPolicy</a></td>
                         <td>Define the action to take when memory is depleted.</td>
                     </tr>
                     <tr>
@@ -504,10 +512,6 @@ Include conf/applications/*.conf
                         <td>Map a URL to a directory for CGI processing.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/perf.html#sendBufferSize">SendBufferSize</a></td>
-                        <td>Set the TCP/IP internal buffer size.</td>
-                    </tr>
-                    <tr>
                         <td><a href="dir/route.html#setConnector">SetConnector</a></td>
                         <td>Set the connector stage for a block.</td>
                     </tr>
@@ -524,16 +528,16 @@ Include conf/applications/*.conf
                         <td>Define the target action to take for a route to serve a response to the client.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/sandbox.html#threadLimit">ThreadLimit</a></td>
+                        <td><a href="dir/sandbox.html#thread">Threads</a></td>
                         <td>Maximum number of threads.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/sandbox.html#threadStackSize">ThreadStackSize</a></td>
+                        <td><a href="dir/sandbox.html#threadStack">ThreadStack</a></td>
                         <td>Stack size for each thread.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/perf.html#timeout">Timeout</a></td>
-                        <td>Define the request timeout limit.</td>
+                        <td><a href="dir/perf.html#requestTimeout">RequestTimeout</a></td>
+                        <td>Maximum request duration.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/server.html#serverName">ServerName</a></td>

@@ -256,8 +256,7 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *d
 int maStartServer(MaServer *server)
 {
     HttpEndpoint    *endpoint;
-    HttpHost        *host;
-    int             next, nextHost, count, warned;
+    int             next, count, warned;
 
     warned = 0;
     count = 0;
@@ -268,9 +267,11 @@ int maStartServer(MaServer *server)
         } else {
             count++;
         }
+#if UNUSED
         for (nextHost = 0; (host = mprGetNextItem(endpoint->hosts, &nextHost)) != 0; ) {
             mprLog(3, "Serving %s", host->name);
         }
+#endif
     }
     if (count == 0) {
         if (!warned) {

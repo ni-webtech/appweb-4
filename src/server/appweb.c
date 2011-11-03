@@ -6,7 +6,6 @@
     usage: appweb [options] [IpAddr][:port] [documents]
             --config configFile     # Use given config file instead 
             --debugger              # Disable timeouts to make debugging easier
-            --ejs name:path         # Create an ejs application at the path
             --home path             # Set the home working directory
             --log logFile:level     # Log to file file at verbosity level
             --name uniqueName       # Name for this instance
@@ -39,11 +38,12 @@ static App *app;
 
 /***************************** Forward Declarations ***************************/
 
-static int  changeRoot(cchar *jail);
-static int  checkEnvironment(cchar *program);
-static int  findConfigFile();
+static void allocNotifier(int flags, ssize size, ssize total);
+static int changeRoot(cchar *jail);
+static int checkEnvironment(cchar *program);
+static int findConfigFile();
 static void manageApp(App *app, int flags);
-static int  initialize(cchar *ip, int port);
+static int initialize(cchar *ip, int port);
 static void traceHandler(void *ignored, MprSignal *sp);
 static void usageError();
 
@@ -74,10 +74,12 @@ MAIN(appweb, int argc, char **argv)
     ip = 0;
     jail = 0;
     port = -1;
+    argv[0] = "appweb";
 
     if ((mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD)) == NULL) {
         exit(1);
     }
+    mprSetMemNotifier((MprMemNotifier) allocNotifier);
     if ((app = mprAllocObj(App, manageApp)) == NULL) {
         exit(2);
     }
@@ -162,6 +164,7 @@ MAIN(appweb, int argc, char **argv)
             exit(5);
         }
     }
+
     if (mprStart() < 0) {
         mprUserError("Can't start MPR for %s", mprGetAppName());
         mprDestroy(MPR_EXIT_DEFAULT);
@@ -201,7 +204,7 @@ MAIN(appweb, int argc, char **argv)
     }
     mprLog(1, "Exiting ...");
     maStopAppweb(app->appweb);
-    mprLog(1, "Exit complete");
+    mprLog(1, "Appweb stopping");
     mprDestroy(MPR_EXIT_DEFAULT);
     return 0;
 }
@@ -314,6 +317,13 @@ static void usageError(Mpr *mpr)
     exit(10);
 }
 
+
+static void allocNotifier(int cause, ssize size, ssize total)
+{
+    if (cause & MPR_MEM_REDLINE) {
+        mprPruneCache(NULL);
+    }
+}
 
 /*
     Security checks. Make sure we are staring with a safe environment
