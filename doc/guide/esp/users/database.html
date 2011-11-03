@@ -86,13 +86,13 @@
             <pThe EDI interface provides a consistent way to interface with database data, without worrying about
             the specifics of the chosen database backend. EDI provides functions for the typical Create, Read, 
             Update and Delete (CRUD) semantics. It also provides functions to manage man manipulate database schema.</p>
-            remains valid and consistent.</p>
+ 
 
             <a name="record" id="record"></a>
             <h2 class="section">Fields, Records and Grids</h2>
             <p>Programs interact with the EDI using EDI Records. When a record is read from the
             database, EDI extracts the database data and copies it into an EdiRec structure. This structure
-            efficiently store data with necessary database schem information necessary for data formatting and display. </p>
+            efficiently stores data with database scheme information necessary for data formatting and display. </p>
 
             <p>The EdiRec representation wraps a database record and allows you to use object-oriented programming (<a href=
             "http://en.wikipedia.org/wiki/Object-oriented_programming">OOP</a>) when dealing with tabular database
@@ -102,11 +102,11 @@
             as the "<tt>Model</tt>" in <tt>M</tt>VC.</p>
 
             <pAn EdiRec structure has an array of fields (EdiField), one for each column in the corresponding database table.
-            EdiFields stored data as strings to make it easy to display and render in web pages. All EDI APIs that
-            get/set field data always operating on strings. The underlying database backend may store data in more
+            EdiFields stores data as strings to make it easy to display and render in web pages. All EDI APIs that
+            get or set field data always operate on strings. The underlying database backend may store data in more
             compact forms using native data types.</p>
 
-            <p>When an EDI API needs to return multiple records, an EdiGrid structure is used which contains one or more
+            <p>When an EDI API needs to return multiple records an EdiGrid structure is used which contains one or more
             EdiRec structures.</p>
         
             <a name="columns" id="columns"></a>
@@ -117,7 +117,7 @@
             
             <a name="tour" id="tour"></a>
             <h2>Quick Tour of EDI</h2>
-            <p>Assume we have a database with a <tt>product</tt> table that has columns for id, name, description and
+            <p>Assume we have a database with a <tt>product</tt> table that has columns for id, name, description, and
             price.</p>
             <table summary="" width="75%">
                 <thead>
@@ -234,7 +234,7 @@ ediUpdateRec(db, product);</b>
             <a name="connections" id="connections"></a>
             <h2 class="section">Database Connections</h2>
             <p>Database connections are one of the few items that are setup by configuration files. The Appweb 
-            configuration file: "appweb.conf" defines the database name, username, password and other
+            configuration file: "appweb.conf" defines the database name, username, password, and other
             configuration parameters via the <tt>EspDb</tt> configuration directive.</p>
             <pre>EspDb mdb://test.mdb</pre>
 
@@ -244,14 +244,14 @@ ediUpdateRec(db, product);</b>
             <pre>
 esp generate table [field:type ...]
 </pre>
-            <p>If field:type pairs are supplied, columns will be created for of the specified type. The valid 
+            <p>If field:type pairs are supplied, columns will be created for the specified type. The valid 
             EDI database types are: <tt>binary</tt>, <tt>bool</tt>, <tt>date</tt>, <tt>float</tt>, <tt>int</tt>, 
             <tt>string</tt> and <tt>text</tt>.</p>
             
             <a name="crud" id="crud"></a>
             <h2 class="section">Create, Read, Update and Delete (CRUD)</h2>
             <p>It should be easy to do simple things like implementing the basic database operations: create, read,
-            update and delete. EDI make this easy. 
+            update and delete. EDI makes this easy. 
             
             <a name="create" id="create"></a></p>
             <h3>Create a new Record</h3>
@@ -303,13 +303,13 @@ ediSetField(product, "description", "458 Spider");
             </ul>
 
             <h3>Direct API Access</h3>
-            <p>In <tt>direct model</tt> access, ESP web pages or controllers, query the database using 
-            EDI APIs which returns EdiRec instances. They then directly access field values using <tt>ediGetField</tt>.</p>
+            <p>In <tt>direct model</tt> access, ESP web pages or controllers query the database using 
+            EDI APIs which return EdiRec instances. They then directly access field values using <tt>ediGetField</tt>.</p>
             <pre>
 &lt;p&gt;Price: &lt%= ediGetField(product, "price"); &lt;/p&gt;
 </pre>
             <h3>Database Record Binding</h3>
-            <p>To make it easy to display and update database data, ESP supports "data binding" where a EDI 
+            <p>To make it easy to display and update database data, ESP supports "data binding" where an EDI 
             database record can be bound to a request form. Thereafter, the ESP web controls will take data 
             from that record.</p>
             <p>A record is bound by passing a record instance to the <tt>form</tt> ESP control. ESP then defines
@@ -332,7 +332,7 @@ ediSetField(product, "description", "458 Spider");
 
             <h3>Controller Directed Access</h3>
             <p>When using the ESP MVC application support, controllers will frequently read a record, prepare
-            some data for viewing and then invoke a view to render a response. In this pattern, the controller
+            some data for viewing, and then invoke a view to render a response. In this pattern, the controller
             defines a "current" database record which can then be used by views to conveniently display field data.</p>
 
             <p>To make this easy, ESP supports an inline "<tt>@#</tt>" directive. If the controller defined a

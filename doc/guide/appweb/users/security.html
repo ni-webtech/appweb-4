@@ -74,7 +74,7 @@
         <div class="contentLeft">
             <h1>Security Considerations</h1>
             <p>Securing applications that are accessible to the Internet is not a trivial task. This page outlines some
-            of the issues and offers tips to help you secure your application using the Embedthis Appweb
+            of the issues, and offers tips to help you secure your application using the Embedthis Appweb
             product.</p><a name="updates" id="updates"></a>
             <h2 class="section">Updates</h2>
             <p>Even the best application or HTTP server can experience some security vulnerabilities that are
@@ -93,7 +93,7 @@
             Appweb will be configured to run in the <b>nobody</b> account on Unix. You may modify the user and group
             account for Appweb by changing the Appweb <a href="configuration.html">configuration file</a>.</p>
             <h3>Windows Account</h3>
-            <p>On Windows when running as a system service, Appweb will run using the LocalSystem account. This account
+            <p>On Windows, when running as a system service, Appweb will run using the LocalSystem account. This account
             has no privileges to access the network using network drives, named pipes, RPC or DCOM. However, it has
             considerable privileges locally. It is suggested that you create a dedicated account for Appweb to minimize
             the priviliges available should Appweb be compromised.</p>
@@ -107,9 +107,9 @@
                 <li>Give the account read and execute rights to the appweb.exe and the DLLs in the libs directory.</li>
             </ul><a name="directoryPermissions" id="directoryPermissions"></a>
             <h2 class="section">Directory and File Permissions</h2>
-            <p>When Appweb is installed, it is configured for maximum security. This section explains the policy used,
+            <p>When Appweb is installed, it is configured for maximum security. This section explains the policy 
             should you need to move or modify files and directories.</p>
-            <p>To enhance security, you need to consider the directory and file permissions for three classes of
+            <p>To enhance security you need to consider the directory and file permissions for three classes of
             content:</p>
             <ul>
                 <li>Pages served by the HTTP server</li>
@@ -126,8 +126,8 @@
             user account.</p>
             <h3>ServerRoot Permissions</h3>
             <p>The root directory for Appweb is called the ServerRoot directory and is defined by the ServerRoot
-            directive in the configuration file. The ServerRoot directory and the logs and lib directory below it
-            should be owned by <b>root</b> (or admin), and should be in the group <b>root</b> (or administrators), and
+            directive in the configuration file. The ServerRoot directory, and the logs and lib directory below it,
+            should be owned by <b>root</b> (or admin), and should be in the group <b>root</b> (or administrators). They
             should only be writable by this specific user and group.</p>
             <p>For Linux, these commands will ensure the privileges are correctly set up:</p>
             <pre>
@@ -258,7 +258,7 @@ AddType application/x-httpd-php .web
                     </tr>
                     <tr>
                         <td class="pivot">StartThreads</td>
-                        <td>Number of threads to preallocate in the thread pool</td>
+                        <td>Number of threads to pre-allocate in the thread pool</td>
                     </tr>
                     <tr>
                         <td class="pivot">TThreads</td>

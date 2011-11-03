@@ -69,7 +69,7 @@
         </div>
         <div class="contentLeft">
             <h1>Appweb&trade; FAQ</h1>
-            <p>If your question is not answered here FAQ, please submit your question to the online community support
+            <p>If you don't find the answers you need here, please submit your question to the online community support
             <a href="http://appwebserver.org/forum/">Forum</a>.</p>
             <h2 class="section">Questions</h2>
             <h3>General Questions</h3>
@@ -98,7 +98,7 @@
             </ul>
             <h2 class="section">Answers</h2>
             <p class="question"><a name="XSP" id="XSP"></a>What web framework should I use for my dynamic web
-            appliation?</p>
+            application?</p>
             <div class="answer">
                 See the detailed <a href="frameworks.html">Web Framework Comparision</a>
             </div>
@@ -113,12 +113,12 @@
             <p class="question"><a name="upload" id="upload"></a>How can I upload large files?</p>
             <div class="answer">
                 <p>You need to increase the LimitRequestBody limit in the appweb.conf file. This imposes a maximum
-                upload file size. Some samples have a MAX_FILE_SIZE input field in the HTML form. This however, is an
-                just a hint to the browser and is only processed by some browsers.</p>
+                upload file size. Some samples have a MAX_FILE_SIZE input field in the HTML form. This however, is 
+                just a hint to the browser, and is only processed by some browsers.</p>
             </div>
             <p class="question"><a name="replacePHP" id="replacePHP"></a>Can I replace the PHP library?</p>
             <div class="answer">
-                <p>Yes, you can replace the Appweb supplied PHP library with either the library from the standard PHP
+                <p>Yes, you can replace the Appweb-supplied PHP library with either the library from the standard PHP
                 distribution or a custom PHP library of your own building. The Appweb PHP library is not special. It is
                 a PHP configuration that omits features to create a small PHP library. To replace the PHP library 
                 replace the the file named either: libphp.so, libphp.dylib or php5ts.dll</p>
@@ -128,7 +128,7 @@
                 <p>Building PHP can sometimes be tricky, especially on Windows. We provide snapshots of various
                 packages at https://github.com/embedthis/packages. This URL is a Git repository for PHP, OpenSSL and
                 MatrixSSL with Makefiles to assist those wanting to rebuild these packages.</p>
-                <p><b>NOTE:</b>These packages are not supported. They are provides as a service only.</p>
+                <p><b>NOTE:</b>These packages are not supported. They are provided as a service only.</p>
                 <p>If you are building Ubuntu Linux, you will need to run the following command to get the necessary
                 tools and pre-requisites.</p>
                 <pre>
@@ -173,7 +173,7 @@ cscript /nologo configure.js \
   --with-db --with-regex=system --with-pear --with-xml --with-xmlrpc \
   --with-zlib
 </pre>
-                <p>Once we have a new PHP library, you can reconfigure and build Appweb to use this PHP library. Here
+                <p>Once you have a new PHP library, you can reconfigure and build Appweb to use this PHP library. Here
                 is a typical Appweb configure command to use PHP:</p>
                 <pre>
 ./configure -with-php=/dir/to/php
@@ -183,7 +183,7 @@ cscript /nologo configure.js \
             disable features at compile time?</p>
             <div class="answer">
                 <p>Yes. When Appweb is built from source, a single bld.h header controls exactly what features and
-                modules are built into the server. For example, if you don't require HTTP Keep-Alive support and you
+                modules are built into the server. For example, if you don't require HTTP Keep-Alive support, and you
                 wish to minimize memory footprint, you can modify the MPR_FEATURE_HTTP_KEEP_ALIVE definition to be
                 0.</p>
             </div><a name="trace" id="trace"></a>
@@ -208,7 +208,7 @@ appweb -l logName[:logLevel][.maxSize]
 AddHandler cgiHandler .cgi .bat .cmd .pl
 </pre>
                 <p>This instructs Appweb to run the CGI handler for specified file extensions. You can also have CGI be
-                used for URLs that begin with a given prefix. By default there is already a Location block defined for
+                used for URLs that begin with a given prefix. By default, there is already a Location block defined for
                 /cgi-bin in the default appweb.conf. Any files under this URL (http://host/cgi-bin/scriptName) will
                 also run as CGI scripts. To run a given interpreter (for example Perl), you can either just include</p>
                 <pre>
@@ -248,14 +248,14 @@ SERVER_URL
             <p class="question"><a name="handlers" id="handlers"></a>What is the difference between handlers and
             modules?</p>
             <div class="answer">
-                <p><b>Modules</b> are just for the basic loading mechanism of shared objects (DLLs). However they also
+                <p><b>Modules</b> are just for the basic loading mechanism of shared objects (DLLs). However, they also
                 provide a consistent way to handle modules that are statically loaded without much effort on the part
                 of the developers.</p><b>Handlers</b> are the work-horses for the HTTP server. They actually process
-                the HTTP requests and have full access to the request and they own its processing.
+                the HTTP requests and have full access to the request. They also own its processing.
             </div>
             <p class="question"><a name="minimalFootprint" id="minimalFootprint"></a>How small can I make Appweb?</p>
             <div class="answer">
-                <p>Appweb 2 has about 800K of code and on a VxWorks or uClibc based Linux system, you should be able to
+                <p>Appweb 2 has about 800K of code. On a VxWorks or uClibc based Linux system, you should be able to
                 build Appweb for a 1MB memory footprint. It will be larger if you use OpenSSL and much larger if
                 you use PHP (which is +5MB).</p>
                 <p>For a minimal footprint on Appweb, use:</p>
@@ -282,7 +282,7 @@ SERVER_URL
 ./configure --host powerpc-wrs-vxworks --build pentium-pc-windows
 </pre>
                 <p>When cross compiling, you also need to tell configure about your cross-compilation tool chain. This
-                means the names of your compiler, library archiver and other utilities and flags. The configure program
+                means the names of your compiler, library archiver, and other utilities and flags. The configure program
                 listens to the settings of the AR, CC, NM, RANLIB, STRIP, CFLAGS, IFLAGS and LDFLAGS environment
                 variables and will pass their values into the build system. These will be used to define the
                 cross-compilation tool chain. You can also specify an alternate build tool chain by using the same

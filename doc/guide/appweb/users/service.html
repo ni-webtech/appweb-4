@@ -90,7 +90,7 @@
             accessible from the windows system tray (taskbar notification area). You can start and stop Appweb using
             either the Angel or Monitor programs.</p>
             <h3>Appweb Angel Service</h3>
-            <p>You can interface with the Angel via the Windows Services Applet. To invoke the applet, select:</p>
+            <p>You can interface with the Angel via the Windows Services Applet. To invoke the applet select:</p>
             <pre>
 Start -&gt; Control Panel -&gt; Administrative Tools -&gt; Services
 </pre>
@@ -105,14 +105,14 @@ Start -&gt; Control Panel -&gt; Administrative Tools -&gt; Services
             <pre>
 angel --uninstall
 </pre>
-            <p>To re-instate the Angel as a Windows Service, run the following command:</p>
+            <p>To re-instate the Angel as a Windows Service run the following command:</p>
             <pre>
 angel --install
 </pre>
             <p>Once installed, you will need to start the service via the Services control applet.</p><a name="monitor"
             id="monitor"></a>
             <h3>Appweb Monitor</h3>
-            <p>The Windows Appweb Monitor is launched when you log in. It a quick and easy way to start, stop and
+            <p>The Windows Appweb Monitor is launched when you log in. It a quick and easy way to start, stop, and
             restart Appweb. You can also launch a browser to display the documentation or the Appweb management console
             (future feature).</p><img src="../../../images/tray.jpg" alt="" class="bare-screen" />
             <p>When you select stop Appweb, you actually stop the Angel process which in turn stops Appweb. Similarly,
@@ -138,18 +138,18 @@ angel --install
             <pre>
 /sbin/chkconfig --del appweb 
 </pre>
-            <p>To reinstall Appweb to run as a daemon, run the following command:</p>
+            <p>To reinstall Appweb to run as a daemon run the following command:</p>
             <pre>
 /sbin/chkconfig --add appweb
 /sbin/chkconfig --level 5 appweb on
 /sbin/service appweb start
 </pre>
-            <p>To permanently remove Appweb from running as a Daemon on a Debian (Ubuntu) based system, run the
+            <p>To permanently remove Appweb from running as a Daemon on a Debian (Ubuntu) based system run the
             following command:</p>
             <pre>
 update-rc.d appweb remove
 </pre>
-            <p>To reinstall Appweb to run as a daemon, run the following command:</p>
+            <p>To reinstall Appweb to run as a daemon run the following command:</p>
             <pre>
 update-rc.d appweb defaults
 </pre><a name="mac" id="mac"></a>
