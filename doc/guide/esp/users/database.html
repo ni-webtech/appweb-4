@@ -41,7 +41,7 @@
     <div class="content">
         <div class="contentRight">
             <h2>Quick Nav</h2>
-            <ul>
+            <ul class="nav">
                 <li><a href="#record">Fields, Records and Grids</a></li>
                 <li><a href="#column">Columns to Properties</a></li>
                 <li><a href="#tour">Quick Tour of EDI</a></li>
@@ -59,7 +59,7 @@
             </ul>
 <!-- BeginDsi "dsi/espSeeAlso.html" -->
 		        <h2>See Also</h2>
-		        <ul>
+		        <ul class="nav">
 		          <li><a href="../../../../../../guide/appweb/esp/using.html">ESP Overview</a></li>
 		          <li><a href="../../../../../../guide/appweb/esp/tour.html">ESP Tour</a></li>
 		          <li><a href="../../../../../../guide/appweb/esp/template.html">Templates and Layouts</a></li>
@@ -82,30 +82,25 @@
             The MDB database is a tiny, in-memory database &mdash; great for embedded applications. SQLite is a 
             full SQL implementation for embedded applications, while MySQL is an enterprise class SQL server.
             MDB is the smallest and fastest, but has the least features.</p>
-
             <pThe EDI interface provides a consistent way to interface with database data, without worrying about
             the specifics of the chosen database backend. EDI provides functions for the typical Create, Read, 
             Update and Delete (CRUD) semantics. It also provides functions to manage man manipulate database schema.</p>
  
-
             <a name="record" id="record"></a>
             <h2 class="section">Fields, Records and Grids</h2>
             <p>Programs interact with the EDI using EDI Records. When a record is read from the
             database, EDI extracts the database data and copies it into an EdiRec structure. This structure
             efficiently stores data with database scheme information necessary for data formatting and display. </p>
-
             <p>The EdiRec representation wraps a database record and allows you to use object-oriented programming (<a href=
             "http://en.wikipedia.org/wiki/Object-oriented_programming">OOP</a>) when dealing with tabular database
             data. While not a full Object Relational Mapper (ORM), the EdiRec representation is an effective and
             compact representation that is well suited for use in web applications where you are rendering database 
             tables in web pages. In the Model-View-Controller (MVC) parlance, you can consider the EdiRec representation 
             as the "<tt>Model</tt>" in <tt>M</tt>VC.</p>
-
             <pAn EdiRec structure has an array of fields (EdiField), one for each column in the corresponding database table.
             EdiFields stores data as strings to make it easy to display and render in web pages. All EDI APIs that
             get or set field data always operate on strings. The underlying database backend may store data in more
             compact forms using native data types.</p>
-
             <p>When an EDI API needs to return multiple records an EdiGrid structure is used which contains one or more
             EdiRec structures.</p>
         
@@ -151,23 +146,17 @@
             <pre>
 /* Open the database */
 <b>Edi *db = ediOpen("store.mdb", "mdb", EDI_AUTO_SAVE);</b>
-
 /* Read the first product */
 <b>EdiRec *product = ediRec(db, "product", "1");</b>
-
 /* Set the price to $7.00 and save back to the database */
 <b>ediSetField(product, "price", "7.00");
 ediUpdateRec(db, product);</b>
-
 /* Find products costing over $10.00 */
 <b>EdiGrid *products = ediReadWhere(db, "product", "price", ">", "10.00");</b>
-
 /*  Read all products */
 <b>EdiGrid *products = ediReadTable(db, "product");</b>
-
 /* Get the number of rows and columns in the table */
 <b>ediGetTableSchema(db, "product", &numRows, &numCols);</b>
-
 /* Remove the product with id == 1 */ 
 <b>ediDeleteRow(db, "product", "1");</b>
 </pre>
@@ -237,7 +226,6 @@ ediUpdateRec(db, product);</b>
             configuration file: "appweb.conf" defines the database name, username, password, and other
             configuration parameters via the <tt>EspDb</tt> configuration directive.</p>
             <pre>EspDb mdb://test.mdb</pre>
-
             <a name="tables" id="tables"></a>
             <h2 class="section">Creating Database Tables</h2>
             <p>If creating an MVC application, The <tt>esp</tt> command can be used to create database tables for you:</p>
@@ -301,7 +289,6 @@ ediSetField(product, "description", "458 Spider");
                 <li>Database Record Binding</li>
                 <li>Controller Directed Access</li>
             </ul>
-
             <h3>Direct API Access</h3>
             <p>In <tt>direct model</tt> access, ESP web pages or controllers query the database using 
             EDI APIs which return EdiRec instances. They then directly access field values using <tt>ediGetField</tt>.</p>
@@ -329,12 +316,10 @@ ediSetField(product, "description", "458 Spider");
             <p>In this example, the form control binds the userRecord. The input controls then retrieve the 
             "<tt>name</tt>", and "<tt>address</tt>" fields from the database record and emit the appropriate 
             HTML input elements.</p>
-
             <h3>Controller Directed Access</h3>
             <p>When using the ESP MVC application support, controllers will frequently read a record, prepare
             some data for viewing, and then invoke a view to render a response. In this pattern, the controller
             defines a "current" database record which can then be used by views to conveniently display field data.</p>
-
             <p>To make this easy, ESP supports an inline "<tt>@#</tt>" directive. If the controller defined a
             current product record, this example would render the product price.</p>
 <pre>
@@ -345,7 +330,6 @@ ediSetField(product, "description", "458 Spider");
             <p>EDI can validate fields before saving records to the database. It provides a set of pre-defined 
             validation routines that cover the most common validation needs such as ensuring a field is unique 
             or numeric, or conforms to a specific format.</p>
-
             <p>When a validation check fails, an error message is added to the record for the field that failed
             validation. Validation checks continue and (potentially) a set of error messages for the record are
             accumulated. ESP pages can access these messages for display and highlighting input fields bound to
@@ -385,7 +369,6 @@ ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module)
             <p>You can define new validation routines via the 
             <a href="../../../api/esp.html#group___edi_service_1ga889df64bdd239f71c66b4fa920be8f46">
                 <tt>ediDefineValidation</tt></a> call.
-
             <h2 class="section">Learn More ...</h2>
             <p>To learn more, please read:</p>
             <ul>

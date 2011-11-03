@@ -144,10 +144,11 @@ div.content ol li {
 	padding: 4px 0 0 0;
 }
 
-ul.nav li {
+div.content ul.nav li {
 	font-size: 100%;
 	line-height: 140%; 
 	margin: 0;
+    padding: 0;
 }
 
 /*

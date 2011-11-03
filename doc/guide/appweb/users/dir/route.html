@@ -332,13 +332,11 @@
                             Mime types and/or URI paths. All such parameters must match for the response to be
                             cached.  A route may have multiple Cache directives. Cache directives, similar to most
                             directives are inherited from outer routes.</p>
-
                             <p>Caching may be used for any HTTP method, though typically it is most useful for state-less
                             GET requests. Response data may be uniquely cached for requests with different request parameters
                             (query, post and route parameters). Alternatively, the URI may specify request parameters in
                             sorted www-urlencoded form to select a specific URI/parameter combination.  When responses are
                             cached, the response data and response headers are cached.</p>
-
                             <h4>Client-Side Caching</h4>
                             <p>If client caching is requested by specifying "client" with an optional lifespan in seconds,
                             a "Cache-Control: max-age=lifespan" HTTP header will be added to the response.  This header will
@@ -353,22 +351,18 @@
                                 <li>Combined &mdash; All qualifying requests for a cache definition will be combined onto a
                                 single cached response. the request params (query, post data and route parameters) will be
                                 ignored and all requests for a given URI path will cache to the same cache record.</li>
-
                                 <li>Unique &mdash; All qualifying requests will cache uniquely depending on the requeset
                                 parameters. i.e. Requests with different query, post data, or route parameters will be
                                 separately cached. Any URIs specified in the directive should not contain any request
                                 parameters.</li>
-
                                 <li>Only &mdash; Only the exact URIs specified in the directive will be cached. The URIs
                                 specified must contain request parameters in a sorted www-urlencoded format. <br/> 
                                 E.g.: /example.esp?hobby=sailing&name=john.</li>
-
                                 <li>Manual &mdash; In manual-mode the response will still be automatically cached.  However,
                                 it will not be automatically written to the client.  The request handler must call the
                                 espWriteCached API or must set the X-SendCache HTTP header to manually write the cached
                                 response content. </li>
                             </ul>
-
                             <h4>Server-Side Caching</h4>
                             <p>When a request is generated, the response is automatically cached and also sent to the 
                             client. The response is sent with an HTTP ETag header and a last-modified timestamp. Together
@@ -377,9 +371,7 @@
                             not expired and has not been modified, then an HTTP Not-Modified (304) response will be sent 
                             to the client and then the client can use its client-side cached content.  This results in a
                             very fast transaction with the client as no response data is sent.  </p>
-
                             <p>Note: Server-side caching will cache both the response headers and content.</p>
-
                             <h4>Cache Lifespans</h4>
                             <p>The Cache directive may specify a lifespan in seconds using the "client=secs" or
                             "server=secs" options.  If the lifespan is not specified, the default route lifespan will be
@@ -662,7 +654,6 @@
                             If further requests arrive on an idle connection, the timeout period is restarted.</p>
                             <p>Setting the timeout period too high may impact performance on high-traffic servers
                             because the number of open, idle TCP/IP connections can grow.</p>
-
                             <p>Appweb supports HTTP KeepAlive where a single TCP/IP connection may be
                             reused for multiple requests. This can significantly speed up overall performance.
                             Keep-Alive is supported by Appweb with both HTTP/1.0 and HTTP/1.1 protocols. With
@@ -673,7 +664,6 @@
                 </tbody>
             </table>
             
-
             <a name="logRoutes" id="logRoutes"></a>
             <h2>LogRoutes</h2>
             <table class="directive" summary="" width="100%">
@@ -946,7 +936,6 @@
                     </tr>
                 </tbody>
             </table>
-
             <a name="reset" id="reset"></a>
             <h2>Reset [routes|pipeline]</h2>
             <table class="directive" summary="" width="100%">

@@ -41,7 +41,7 @@
     <div class="content">
         <div class="contentRight">
             <h2>Quick Nav</h2>
-            <ul>
+            <ul class="nav">
                 <li><a href="#layoutPages">Layout Pages</a></li>
                 <li><a href="#content">Content Pages</a></li>
                 <li><a href="#alternateLayout">Alternate Layout Pages</a></li>
@@ -62,7 +62,7 @@
             </ul>
 <!-- BeginDsi "dsi/espSeeAlso.html" -->
 		        <h2>See Also</h2>
-		        <ul>
+		        <ul class="nav">
 		          <li><a href="../../../../../../guide/appweb/esp/using.html">ESP Overview</a></li>
 		          <li><a href="../../../../../../guide/appweb/esp/tour.html">ESP Tour</a></li>
 		          <li><a href="../../../../../../guide/appweb/esp/template.html">Templates and Layouts</a></li>
@@ -413,7 +413,6 @@ Today is <%= mprGetDate(0); %>&lt;
 &lt;h2&gt;My name is <b>@@name</b>&lt;/h2&gt;
 </pre>
             <p>This directive is very useful for accessing any request, form, query or session data.</p>
-
             <h3>@#field</h3>
             <p>ESP provides a shorthand for accessing field data in the current database record. Controllers will
             often setup the environment for a view by defining a "current" database record.
@@ -423,7 +422,6 @@ Today is <%= mprGetDate(0); %>&lt;
             <pre>
 &lt;h2&gt;My name is <b>@#name</b>&lt;/h2&gt;
 </pre>
-
         <h2 class="section">Request Context </h2>
             <p>The full HTTP request context is provided by a set of objects. These include:
             <ul>

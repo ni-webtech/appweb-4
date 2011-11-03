@@ -41,7 +41,7 @@
     <div class="content">
         <div class="contentRight">
             <h2>Quick Nav</h2>
-            <ul>
+            <ul class="nav">
                 <li><a href="#app">Generating Applications</a></li>
                 <li><a href="#controllers">Generating Controllers</a></li>
                 <li><a href="#database">Generating Database Tables</a></li>
@@ -55,7 +55,7 @@
             </ul>
 <!-- BeginDsi "dsi/espSeeAlso.html" -->
 		        <h2>See Also</h2>
-		        <ul>
+		        <ul class="nav">
 		          <li><a href="../../../../../../guide/appweb/esp/using.html">ESP Overview</a></li>
 		          <li><a href="../../../../../../guide/appweb/esp/tour.html">ESP Tour</a></li>
 		          <li><a href="../../../../../../guide/appweb/esp/template.html">Templates and Layouts</a></li>
@@ -191,12 +191,10 @@ esp generate controller admin edit login logout command
     admin controller
  */
 #include "esp.h"
-
 static void edit() {}
 static void login() {}
 static void logout() {}
 static void command() {}
-
 ESP_EXPORT int esp_controller_admin(EspRoute *eroute, MprModule *module) 
 {
     espDefineAction(eroute, "admin-edit", edit);

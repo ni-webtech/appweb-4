@@ -41,7 +41,7 @@
     <div class="content">
         <div class="contentRight">
             <h2>Quick Nav</h2>
-            <ul>
+            <ul class="nav">
                 <li><a href="#blog">Blog App</a></li>
                 <li><a href="#create">Creating a New App</a></li>
                 <li><a href="#run">Run the App</a></li>
@@ -57,7 +57,7 @@
             </ul>
 <!-- BeginDsi "dsi/espSeeAlso.html" -->
 		        <h2>See Also</h2>
-		        <ul>
+		        <ul class="nav">
 		          <li><a href="../../../../../../guide/appweb/esp/using.html">ESP Overview</a></li>
 		          <li><a href="../../../../../../guide/appweb/esp/tour.html">ESP Tour</a></li>
 		          <li><a href="../../../../../../guide/appweb/esp/template.html">Templates and Layouts</a></li>
@@ -102,8 +102,6 @@ sudo appweb -v
             <tt>localhost/test.esp</tt> in your browser. You should see the following page:</p>
             
             <img src="../../../images/esp/tour/home.png" class="screen" alt="" />
-
-
             <a name="hello" id="hello"></a>
             <h2 class="section">Hello World</h2>
             <p>The first step in any tour is to create a simple "Hello World" web page. ESP web pages have an <b>.esp</b>
@@ -120,7 +118,6 @@ sudo appweb -v
             <p>To view the "Hello" web page in your browser, type in the following url:
             http://localhost/hello.esp.</p>
             <img src="../../../images/esp/tour/hello.png" alt="hello" class= "screen" /> 
-
             <a name="dynamic" id="dynamic"></a>
             <h2 class="section">Dynamic Content</h2>
             <p>While that was fun, the output is static and boring, so let's add some dynamic content. You can embed
@@ -158,7 +155,6 @@ sudo appweb -v
             statements in your web page. The <b>render</b> function allows you to write arbitrary data which is patched
             back where the directive was defined in the page. See the <a href="views.html">Views and Layouts</a>
             document for full details about all the ESP web page directives.</p><a name="views" id="views"></a>
-
             <h2 class="section">Declarations</h2>
             <p>Some compilers (Microsoft CL) do not permit "C" declarations except at the start of a block. When ESP
             compiles an ESP web page, it converts it to "C" code and wraps it inside a function that will be invoked
@@ -171,7 +167,6 @@ sudo appweb -v
 &lt/%>
 &lt;%  render("%s, the answer is %d", msg, x); %>
 </pre>
-
             <a name="params" id="params"></a>
             <h2 class="section">Forms and Request Params</h2>
             <p>When an HTML form is submitted, ESP converts form data and query parameters into ESP request parameters. 
@@ -189,19 +184,15 @@ sudo appweb -v
 <pre>&lt;p>User Name: <b>&lt;%=%S param("name"); %></b>&lt;/p>
 &lt;p>User Name: <b>&lt;%= renderSafe(param("name")); %></b>&lt;/p>
 </pre>
-
             <a name="controls" id="controls"></a>
             <h2 class="section">Web Controls</h2>
             <p>ESP includes a rich library of web control funtions that easily generate HTML. These web controls
             are integrated with the <a href="http://jquery.com/">jQuery</a> client-side JavaScript library.
             <p>Controls are provided to create forms, buttons, input lists, checkboxes, selectable tabs, and tables.
-
             <p>To the following control will emit a text label that will dynamically update using background AJAX requests.
             This control will create the appropriate HTML to invoke the <tt>data.esp</tt> page every 1 second to
             get the current time. The web page will transparently update with the data returned by <tt>data.esp</tt>.</p>
-
 <pre>&lt;% Time: label("", "{ data-refresh: "data.esp", data-period: 1000 }"); %></pre>
-
             <a name="binding" id="binding"></a>
             <h3>Database Binding</h3>
             <p>To make it easy to display and update database data, ESP supports "data binding" where a database 
@@ -220,7 +211,6 @@ sudo appweb -v
             <p>In this example, the <tt>form</tt> control <i>binds</i> the <tt>userRecord</tt>. The input controls
             then retrieve the "name", and "address" fields from the database record and emit the appropriate HTML
             input elements. 
-
             <a name="session" id="session"></a>
             <h2>Sessions and Flash</h2>
             <p>ESP provides an integrated session store so that state can be shared across requests. Session variables
@@ -234,7 +224,6 @@ sudo appweb -v
             <p>The <tt>flash</tt> web
             control is used in the next web page to extract flash messages for display.</p>
 <pre>&lt;% <b>flash</b>("all", NULL); %></pre>
-
             <a name="layouts" id="layouts"></a>
             <h2>Layouts</h2>
             <p>ESP Layouts provide a powerful and flexible solution for implementing a consistent UI. 
@@ -258,23 +247,19 @@ sudo appweb -v
 &lt;/body&gt;
 &lt;/html&gt;
 </pre>
-
             <p>A content page defines only the HTML and code that is unique for a specific page. 
             It is merged with a layout page by inserting the content and replacing the <tt>&lt;%@ content %></tt> tag 
             in the layout page.</p>
-
             <p>To use a layout page, a layout directory must be defined in the <tt>appweb.conf</tt> configuration file
             using the EspDir directive. With this directive, pages will use the 
             "<tt>./layouts/default.esp</tt>" layout page by default.
 <pre>EspDir layout "./layouts"</pre>
-
             <p>The ESP <tt>&lt;%@ layout</tt> directive may be used in web pages to control what layout page (if any) 
             is used for the page. </p>
 <pre>
 &lt;%@ layout "custom-layout.esp" %&gt;
 &lt;h1&gt;Hello Bright World&lt;/h1&gt;
 </pre>
-
             <a name="learn" id="learn"></a>
             <h2 class="section">Learn More ...</h2>
             <p>That concludes a quick tour through some of the capabilities of the ESP web framework.</p>

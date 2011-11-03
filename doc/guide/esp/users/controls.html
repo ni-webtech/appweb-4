@@ -41,13 +41,13 @@
     <div class="content">
         <div class="contentRight">
             <h2>Quick Nav</h2>
-            <ul>
+            <ul class="nav">
                 <li><a href="#libraries">Ajax Libraries</a></li>
                 <li><a href="#dynamic">Dynamic Controls</a></li>
             </ul>
 <!-- BeginDsi "dsi/espSeeAlso.html" -->
 		        <h2>See Also</h2>
-		        <ul>
+		        <ul class="nav">
 		          <li><a href="../../../../../../guide/appweb/esp/using.html">ESP Overview</a></li>
 		          <li><a href="../../../../../../guide/appweb/esp/tour.html">ESP Tour</a></li>
 		          <li><a href="../../../../../../guide/appweb/esp/template.html">Templates and Layouts</a></li>
@@ -89,7 +89,6 @@
             a higher level of interacting with the elements of a web page. Controls are provided to generate tables and
             tabbed property sheets, and manage input forms and fields. Furthermore, these controls are pre-integrated with the
             jQuery client-side JavasCript library and may optionally bind with server-side databases data.</p>
-
             <p>ESP web controls are just "C" language functions that emit HTML according to their arguments. 
             Here is a quick sample of some of the ESP controls in action:</p>
 <pre>
@@ -102,7 +101,6 @@ table(data, "{ \
     }");
 </pre>
             <h2 class="section">Control Families</h2>
-
             <p>ESP Controls are grouped into two families: 
             <ul>
                 <li>Form-based controls that do input
@@ -111,7 +109,6 @@ table(data, "{ \
             <p>Form-based controls are typically located inside a <tt>form</tt>/<tt>endform</tt> control 
             pair that defines a current database record from which data will be utilized. Non form-based controls 
             can be used anywhere on a page outside a form or endform group.</p>
-
             <h3>Control Options</h3>
             <p>ESP controls are generally of the form: function(args ..., options). The options argument is an optional 
             set of properties to modify the behaviour of the control. It is in the form of a 
@@ -130,7 +127,6 @@ label("Hello World", "{ effects: 'fadein' }");
                     <tr></tr>
                 </tbody>
             </table>
-
             <h2 class="section">AJAX and Client JavaScript Libraries</h1>
             <p>Web applications split their processing between the server and the client. Increasingly, more processing
             is being done at the client to give a better overall user experience. <a href=
@@ -142,7 +138,6 @@ label("Hello World", "{ effects: 'fadein' }");
             web framework integrate well with the client-side JavaScript library. ESP is thoroughly integrated 
             with jQuery and provides a jQuery client-side adapter and automatically generates the necessary HTML for
             dynamic and background requests.</p>
-
             <h2 class="section">Database Integration</h1>
             <a name="dynamic" id="dynamic"></a>
             <h3>Dynamic Controls</h3>
@@ -175,7 +170,6 @@ form(readRecByKey("users", "John Smith"), 0);
 endform(0, 0);
 </pre>
             <p>This will display the <tt>username</tt> field in the current database record.
-
                <h2 class="section">Table Control</h2>
                <h2 class="section">Chart Control</h2>
            -->

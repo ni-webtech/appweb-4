@@ -57,7 +57,6 @@
         <div class="contentLeft">
             <a href="../configuration.html#directives"></a>
             <h1>Performance Directives</h1>
-
             <a name="inactivityTimeout" id="inactivityTimeout"></a>
             <h2>InactivityTimeout</h2>
             <table class="directive" summary="" width="100%">
@@ -86,7 +85,6 @@
                             If further requests arrive on an idle connection, the timeout period is restarted.</p>
                             <p>Setting the timeout period too high may impact performance on high-traffic servers
                             because the number of open, idle TCP/IP connections can grow.</p>
-
                             <p>Appweb supports HTTP KeepAlive where a single TCP/IP connection may be
                             reused for multiple requests. This can significantly speed up overall performance.
                             Keep-Alive is supported by Appweb with both HTTP/1.0 and HTTP/1.1 protocols. With
