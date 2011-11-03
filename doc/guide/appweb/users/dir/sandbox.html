@@ -69,7 +69,7 @@
             <a href="../configuration.html#directives"></a>
             <h1>Sandbox Directives</h1>
             <p>Appweb supports directives that limit its use of system resources such as memory and threads. This
-            technique is know as "sandboxing" because it creates a limited / safer area in which Appweb
+            technique is know as "sandboxing" because it creates a limited or safer area in which Appweb
             executes.</p>
             
             <a name="limitCache" id="limitCache"></a>
@@ -78,7 +78,7 @@
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
-                        <td>Define the maximum size of the Appweb cache for response data and session state.</td>
+                        <td>Defines the maximum size of the Appweb cache for response data and session state.</td>
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
@@ -96,7 +96,7 @@
                         <td class="pivot">Notes</td>
                         <td>
                             <p>This directive defines the maximum size of the Appweb data cache. This cache store is used
-                            for caching responses and for session state date for ESP applications. If the maximum size
+                            for caching responses and for the session state date for ESP applications. If the maximum size
                             is exceeded, Appweb will prune the oldest data in the cache to make room for newer items.</p>
                         </td>
                     </tr>
@@ -109,7 +109,7 @@
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
-                        <td>Define the maximum chunk size</td>
+                        <td>Defines the maximum chunk size</td>
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
@@ -139,7 +139,7 @@
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
-                        <td>Set the maximum number of simultaneous clients</td>
+                        <td>Sets the maximum number of simultaneous clients</td>
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
@@ -159,7 +159,7 @@
                             <p>The LimitClient directive defines the maximum number of simultaneous client connections
                             that are permitted. Client connection requests in excess of this count will be rejected. A
                             limit of 0 means unlimited.</p>
-                            <p>NOTE that many browsers can and will initiate multiple connections when requesting a
+                            <p>NOTE: that many browsers can and will initiate multiple connections when requesting a
                             page.</p>
                         </td>
                     </tr>
@@ -209,7 +209,7 @@
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
-                        <td>Set the maximum heap memory that Appweb can allocate.</td>
+                        <td>Sets the maximum heap memory that Appweb can allocate.</td>
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
@@ -243,7 +243,7 @@
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
-                        <td>Set the maximum size of the request body from the client.</td>
+                        <td>Sets the maximum size of the request body from the client.</td>
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
@@ -285,7 +285,7 @@
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
-                        <td>Set the maximum size of the request form from the client.</td>
+                        <td>Sets the maximum size of the request form from the client.</td>
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
@@ -449,7 +449,7 @@
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
-                        <td>Defines the pipline stage buffer size</td>
+                        <td>Defines the pipeline stage buffer size</td>
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
@@ -499,7 +499,7 @@
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The LimitUri directive defines the maximum size of a URL in Appweb. IFor embedded
+                            <p>The LimitUri directive defines the maximum size of a URL in Appweb. In embedded
                             applications, it is useful to limit the number of header lines to the expected maximum.
                             This ensures that rogue or malicious requests will not cause the server to allocate
                             unwanted memory to servicing the request.</p>
@@ -526,7 +526,7 @@
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
-                        <td>Define the policy for memory depletion situations.</td>
+                        <td>Defines the policy for memory depletion situations.</td>
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
@@ -543,7 +543,8 @@
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>Appweb manages memory proactively and ensures reliable operation by preventing memory
+                            <p>Appweb manages memory proactively and ensures reliable operation by preventing memory 
+                            allocation errors 
                             before they occur. It does this by defining a memory limit and enforcing a memory policy
                             for how to react when memory is depleted.</p>
                             <p>The MemoryPolicy directive defines how Appweb will response to low memory conditions.
@@ -571,7 +572,7 @@
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
-                        <td>Number of threads to preallocate in the Appweb thread pool</td>
+                        <td>Number of threads to pre-allocate in the Appweb thread pool</td>
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
@@ -588,9 +589,9 @@
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The StartThreads directive will preallocate the specified number of threads on startup
+                            <p>The StartThreads directive will pre-allocate the specified number of threads on startup
                             and then ensure that the thread pool always has at least this number of threads.</p>
-                            <p>Appweb will automatically adjust the number of pool thread between the minimum specified
+                            <p>Appweb will automatically adjust the number of pool threads between the minimum specified
                             by this directive and the maximum specified by the Threads directive or via the Appweb
                             command line. Appweb will prune idle threads to reduce resource consumption as
                             required.</p>
@@ -629,7 +630,7 @@
                             <p>If the maximum number of threads is also specified via the <a href=
                             "../starting.html#appwebOptions">Appweb command line</a>, the command line value will take
                             precedence.</p>
-                            <p>Appweb will automatically adjust the number of pool thread between the minimum specified
+                            <p>Appweb will automatically adjust the number of pool threads between the minimum specified
                             by the StartThreads directive and the maximum specified by this directive. Appweb will
                             prune idle threads to reduce resource consumption as required.</p>
                         </td>
@@ -662,7 +663,7 @@
                             thread. The limit is an integer between zero and an operating system defined maximum&nbsp;
                             where zero means use the system default. The default limit is 0 which implies the system
                             default.</p>
-                            <p>If you are experiencing crashes when running multi-threaded and Appweb runs without
+                            <p>If you are experiencing crashes when running multi-threaded, and Appweb runs without
                             error when running single-threaded, you may need to increase this value. See the <a href=
                             "../starting.html#appwebOptions">Appweb command line</a> for details on running single user
                             by setting the "-p 0" option.</p>
