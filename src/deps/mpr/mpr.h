@@ -4142,7 +4142,7 @@ extern int mprPushItem(MprList *list, cvoid *item);
 
 #if MPR_LIST_MACROS || 1
 #define MPR_GET_ITEM(list, index) list->items[index]
-#define ITERATE_ITEMS(list, item, next) next = 0; (item = mprGetNextItem(list, &next)) != 0; 
+#define ITERATE_ITEMS(list, item, next) next = 0; list && (item = mprGetNextItem(list, &next)) != 0; 
 #define mprGetListLength(lp) ((lp) ? (lp)->length : 0)
 #endif
 
@@ -4367,7 +4367,7 @@ typedef struct MprHash {
 /*
     Macros
  */
-#define ITERATE_KEYS(table, item) item = 0; (item = mprGetNextKey(table, item)) != 0; 
+#define ITERATE_KEYS(table, item) item = 0; table && (item = mprGetNextKey(table, item)) != 0; 
 
 /**
     Add a duplicate symbol value into the hash table
