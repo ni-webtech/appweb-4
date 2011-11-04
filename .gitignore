@@ -135,3 +135,5 @@ projects/WIN/appweb-all/php5ts_debug.dll.def
 projects/WIN/appweb-all/simpleHandler.def
 src/esp/js.save
 src/esp/www/files.save
+*.tdat
+trace.log
