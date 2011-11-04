@@ -229,25 +229,45 @@ Cache server manual /dashboard.esp
             <p>Caching records, like most other configuration file settings, are inherited by inner routes. Consequently if
             you define a caching record at the default server level, all subsequent routes will inherit that caching
             definition.</p>
+
             <h2 class="section">Performance Considerations</h2>
-            Trace Logs
-            LimitMemory
-            Cache Lifespans
-                Different client and server
-            Caching Post requests
-            API usage for manual mode
-<pre>
-    - ESP manual caching
-. Examples
-- Questions to ask
-    - Can I serve stale content. If yes, how stale. Use client-caching.
-    - How frequently is this content accessed. If frequent, consider server caching.
-    - Is the content updated more than viewed, then use pull-through
-    - If viewed more than much more than updated
-        - use event driven updates to generate page
-    - If views more than updated, but cost of checking in handler is acceptable
-        - then use manual cache updates in handler
-</pre>
+            <h3>Cache Lifespans</h3>
+            <p>When selecting a lifespan for a resource, ask the questions:
+            <ul>
+                <li>How stale is it acceptable for this resource to be?</li>
+                <li>How often is this resource updated?</li>
+                <li>How often is this resource viewed?</li> 
+            </ul>
+            <p>If it is acceptable to display a stale resource, then select a client-side lifespan that is set toward the
+            maximum acceptable staleness. If a resource is present on every page, such as a logo or banner, it is very
+            beneficial to use client-side caching, even if the lifespan is set to as little as 60 seconds.
+
+            <h3>LimitMemory</h3>
+            <p>Server-side caching consumes memory for every request that is cached. As memory is a limited resource,
+            you may wish to limit the memory that Appweb may consume via the
+            
+            <a href="dir/sandbox.html#limitMemory">LimitMemory</a> configuration file directive. This will put an upper
+            limit on the amount of memory that can be used for caching. When Appweb exceeds 85% of this memory limit, it
+            will start to prune cached resources from the cache. Setting a higher memory limit, will enable more
+            resources to be cached and Appweb to run faster.</p>
+          
+            <h3>Debugging and Trace Logs</h3>
+            <p>If the caching is not operating as expected, run Appweb with trace at level 4. This will trace critical
+            details about how Appweb is processing the request. It will display the selected route and also trace 
+            information about whether cached responses have been found and are suitable for use.</p>
+            <pre>appweb --log stdout:4</pre>
+
+            <h2 class="section">Deciding Criteria</h2>
+            <p>In summary, here are some rules of thumb to assist in designing your caching strategy.</p>
+            <ul>
+                <li>If a resource is accessed frequently, use server-side caching.</li>
+                <li>If it is acceptable to serve stale content and the content is rarely updated, 
+                    use client-side caching.</li>
+                <li>If it is not acceptable to serve stale content, use manual server-side caching.</li>
+                <li>If the web page is very expensive to generate, consider event-driven pre-rendering.</li>
+            </ul>
+            <p>Appweb caching can deliver great performance gains, even if using slower page rendering
+            technologies like PHP or CGI.</p>
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->
