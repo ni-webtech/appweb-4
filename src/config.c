@@ -1574,6 +1574,16 @@ static int serverRootDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
+    SessionTimeout secs
+ */
+static int sessionTimeoutDirective(MaState *state, cchar *key, cchar *value)
+{
+    state->limits->sessionTimeout = gettime(value);
+    return 0;
+}
+
+
+/*
     SetConnector connector
  */
 static int setConnectorDirective(MaState *state, cchar *key, cchar *value)
@@ -2205,6 +2215,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "</Route", closeDirective);
     maAddDirective(appweb, "ServerName", serverNameDirective);
     maAddDirective(appweb, "ServerRoot", serverRootDirective);
+    maAddDirective(appweb, "SessionTimeout", sessionTimeoutDirective);
     maAddDirective(appweb, "SetConnector", setConnectorDirective);
     maAddDirective(appweb, "SetHandler", setHandlerDirective);
     maAddDirective(appweb, "Source", sourceDirective);

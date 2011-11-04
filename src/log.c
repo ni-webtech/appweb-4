@@ -121,13 +121,13 @@ int maStartLogging(HttpHost *host, cchar *logSpec)
             mprLog(MPR_CONFIG, "---------------------------------------------");
             mprLog(MPR_CONFIG, "Version:            %s-%s", BLD_VERSION, BLD_NUMBER);
             mprLog(MPR_CONFIG, "BuildType:          %s", BLD_TYPE);
-            mprLog(MPR_CONFIG, "Configure command:  %s", BLD_CONFIG_CMD);
             mprLog(MPR_CONFIG, "CPU:                %s", BLD_CPU);
             mprLog(MPR_CONFIG, "OS:                 %s", BLD_OS);
             if (strcmp(BLD_DIST, "Unknown") != 0) {
                 mprLog(MPR_CONFIG, "Distribution:       %s %s", BLD_DIST, BLD_DIST_VER);
             }
             mprLog(MPR_CONFIG, "Host:               %s", mprGetHostName(mpr));
+            mprLog(MPR_CONFIG, "Configure:          %s", BLD_CONFIG_CMD);
             mprLog(MPR_CONFIG, "---------------------------------------------");
         }
     }

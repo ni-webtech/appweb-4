@@ -636,7 +636,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>InactivityTimeout seconds</td>
+                        <td>InactivityTimeout time</td>
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
@@ -644,7 +644,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>InactivityTimeout 120</td>
+                        <td>InactivityTimeout 2mins</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
@@ -914,7 +914,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>RequestTimeout seconds</td>
+                        <td>RequestTimeout time</td>
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
@@ -922,7 +922,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>RequestTimeout 600</td>
+                        <td>RequestTimeout 10mins</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
@@ -936,6 +936,7 @@
                     </tr>
                 </tbody>
             </table>
+
             <a name="reset" id="reset"></a>
             <h2>Reset [routes|pipeline]</h2>
             <table class="directive" summary="" width="100%">
@@ -1048,6 +1049,37 @@
                 </tbody>
             </table>
             
+            <a name="sessionTimeout" id="sessionTimeout"></a>
+            <h2>SessionTimeout</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Defines the maximum session state duration</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>SessionTimeout seconds</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server, Virtual Host, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>SessionTimeout 30mins</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>This directive defines the maximum duration for session state data. When this
+                            time period expires, Appweb will prune inactive session state data from its session
+                            cache.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
             <a name="setConnector" id="setConnector"></a>
             <h2>SetConnector</h2>
             <table class="directive" summary="" width="100%">
