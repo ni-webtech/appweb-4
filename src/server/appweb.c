@@ -38,7 +38,6 @@ static App *app;
 
 /***************************** Forward Declarations ***************************/
 
-static void allocNotifier(int cause, int policy, ssize size, ssize total);
 static int changeRoot(cchar *jail);
 static int checkEnvironment(cchar *program);
 static int findConfigFile();
@@ -79,7 +78,6 @@ MAIN(appweb, int argc, char **argv)
     if ((mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD)) == NULL) {
         exit(1);
     }
-    mprSetMemNotifier((MprMemNotifier) allocNotifier);
     if ((app = mprAllocObj(App, manageApp)) == NULL) {
         exit(2);
     }
@@ -317,13 +315,6 @@ static void usageError(Mpr *mpr)
     exit(10);
 }
 
-
-static void allocNotifier(int cause, int policy, ssize size, ssize total)
-{
-    if (policy == MPR_ALLOC_POLICY_PRUNE) {
-        mprPruneCache(NULL);
-    }
-}
 
 /*
     Security checks. Make sure we are staring with a safe environment

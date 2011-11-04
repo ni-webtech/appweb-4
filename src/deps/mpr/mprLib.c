@@ -2032,8 +2032,6 @@ static void allocException(int cause, ssize size)
 {
     ssize   used;
 
-    heap->hasError = 1;
-
     lockHeap();
     INC(errors);
     if (heap->stats.inMemException || mprIsStopping()) {
@@ -2045,13 +2043,16 @@ static void allocException(int cause, ssize size)
     unlockHeap();
 
     if (cause == MPR_MEM_FAIL) {
+        heap->hasError = 1;
         mprStaticError("%s: Can't allocate memory block of size %,d bytes.", MPR->name, size);
 
     } else if (cause == MPR_MEM_TOO_BIG) {
+        heap->hasError = 1;
         mprStaticError("%s: Can't allocate memory block of size %,d bytes.", MPR->name, size);
 
     } else if (cause == MPR_MEM_REDLINE) {
         mprStaticError("%s: Memory request for %,d bytes exceeds memory red-line.", MPR->name, size);
+        mprPruneCache(NULL);
 
     } else if (cause == MPR_MEM_LIMIT) {
         mprStaticError("%s: Memory request for %,d bytes exceeds memory limit.", MPR->name, size);
@@ -2064,11 +2065,13 @@ static void allocException(int cause, ssize size)
         (heap->notifier)(cause, heap->allocPolicy,  size, used);
     }
     if (cause & (MPR_MEM_TOO_BIG | MPR_MEM_FAIL)) {
+        /*
+            Allocation failed
+         */
         mprError("Application exiting immediately due to memory depletion.");
         mprTerminate(MPR_EXIT_IMMEDIATE, 2);
 
-    } else if (cause & (MPR_MEM_REDLINE | MPR_MEM_LIMIT)) {
-        /* Prune policy must be implemented by applications in their heap notifier */
+    } else if (cause & MPR_MEM_LIMIT) {
         if (heap->allocPolicy == MPR_ALLOC_POLICY_RESTART) {
             mprError("Application restarting due to low memory condition.");
             mprTerminate(MPR_EXIT_GRACEFUL | MPR_EXIT_RESTART, 1);

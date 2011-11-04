@@ -2290,6 +2290,9 @@ while [ "${1#--}" != "$1" -o "${1#-}" != "$1" ] ; do
     quiet|-q)
         quiet=1
         ;;
+    release)
+        BLD_DEFAULTS=release
+        ;;
     host-search=*)
         HOST_SEARCH_PATH="${ARG}"
         ;;
@@ -2462,7 +2465,6 @@ while [ "${1#--}" != "$1" ] ; do
         ;;
     release)
         BLD_TYPE=RELEASE
-        BLD_DEBUG=0
         ;;
     setVersion=*)
         BLD_VERSION="${ARG}"
