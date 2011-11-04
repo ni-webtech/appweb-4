@@ -8,7 +8,7 @@ static void api() {
     render("{ when: %Ld, uri: '%s', query: '%s' }\r\n", mprGetTicks(), getUri(), getQuery());
 }
 
-static void small() {
+static void medium() {
     int     i;
     //  This will emit ~8K (under the item limit)
     for (i = 0; i < 100; i++) {
@@ -38,7 +38,7 @@ static void huge() {
 static void clear() { 
     espUpdateCache(getConn(), "/cache/manual", 0, 0);
     espUpdateCache(getConn(), "/cache/big", 0, 0);
-    espUpdateCache(getConn(), "/cache/small", 0, 0);
+    espUpdateCache(getConn(), "/cache/medium", 0, 0);
     espUpdateCache(getConn(), "/cache/api", 0, 0);
     render("done");
 }
@@ -67,7 +67,7 @@ ESP_EXPORT int esp_controller_cache(EspRoute *eroute, MprModule *module) {
     HttpRoute *route;
     espDefineAction(eroute, "cache-cmd-api", api);
     espDefineAction(eroute, "cache-cmd-big", big);
-    espDefineAction(eroute, "cache-cmd-small", small);
+    espDefineAction(eroute, "cache-cmd-medium", medium);
     espDefineAction(eroute, "cache-cmd-clear", clear);
     espDefineAction(eroute, "cache-cmd-client", client);
     espDefineAction(eroute, "cache-cmd-huge", huge);
