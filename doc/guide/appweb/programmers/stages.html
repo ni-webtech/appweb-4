@@ -165,7 +165,7 @@ int maTurboConnectorInit(Http *http, MprModule *module)
             <p>The run callback is invoked periodically after I/O events to allow the stage to pump data through the
                 request pipeline.</p>
             <h3>incomingData</h3>
-            <p>This callback is invoked to receive any incoming client data (typically POST or PUT data). It is is
+            <p>This callback is invoked to receive any incoming client data (typically POST or PUT data). It is 
             called after the "open" callback and before the "run" callback.</p>
             <h3>outgoingData</h3>
             <p>The outgoingData callback is never called for handlers. Handlers generate data and send it downstream.
