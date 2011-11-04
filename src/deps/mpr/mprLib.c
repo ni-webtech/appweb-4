@@ -13676,7 +13676,11 @@ cchar *mprLookupMime(MprHash *table, cchar *ext)
         table = MPR->mimeTypes;
     }
     if ((mt = mprLookupKey(table, ext)) == 0) {;
+#if UNUSED
         return "application/octet-stream";
+#else
+        return "text/html";
+#endif
     }
     return mt->type;
 }
