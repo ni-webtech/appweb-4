@@ -44,10 +44,10 @@ static void manageAppweb(MaAppweb *appweb, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(appweb->defaultServer);
         mprMark(appweb->servers);
+        mprMark(appweb->directives);
         mprMark(appweb->http);
         mprMark(appweb->user);
         mprMark(appweb->group);
-        mprMark(appweb->directives);
 
     } else if (flags & MPR_MANAGE_FREE) {
         maStopAppweb(appweb);
@@ -123,11 +123,12 @@ int maStopAppweb(MaAppweb *appweb)
 static void manageServer(MaServer *server, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
+        mprMark(server->name);
         mprMark(server->appweb);
         mprMark(server->http);
-        mprMark(server->name);
-        mprMark(server->home);
+        mprMark(server->limits);
         mprMark(server->endpoints);
+        mprMark(server->home);
 
     } else if (flags & MPR_MANAGE_FREE) {
         maStopServer(server);

@@ -212,12 +212,13 @@ MAIN(appweb, int argc, char **argv)
 static void manageApp(App *app, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(app->configFile);
-        mprMark(app->documents);
-        mprMark(app->pathVar);
+        mprMark(app->appweb);
         mprMark(app->server);
-        mprMark(app->home);
         mprMark(app->traceToggle);
+        mprMark(app->documents);
+        mprMark(app->configFile);
+        mprMark(app->pathVar);
+        mprMark(app->home);
     }
 }
 

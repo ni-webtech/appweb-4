@@ -2013,19 +2013,19 @@ static void manageState(MaState *state, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
 		mprMark(state->appweb);
-		mprMark(state->auth);
-		mprMark(state->configDir);
-		mprMark(state->current);
-		mprMark(state->file);
-		mprMark(state->filename);
-		mprMark(state->host);
 		mprMark(state->http);
-		mprMark(state->key);
-		mprMark(state->limits);
-		mprMark(state->prev);
-		mprMark(state->route);
 		mprMark(state->server);
+		mprMark(state->host);
+		mprMark(state->auth);
+		mprMark(state->route);
+		mprMark(state->file);
+		mprMark(state->limits);
+		mprMark(state->key);
+		mprMark(state->configDir);
+		mprMark(state->filename);
+		mprMark(state->prev);
 		mprMark(state->top);
+		mprMark(state->current);
     }
 }
 

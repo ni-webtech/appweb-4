@@ -2635,6 +2635,8 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     mprCreateOsService();
     mpr->mutex = mprCreateLock();
     mpr->spin = mprCreateSpinLock();
+    mpr->dtoaSpin[0] = mprCreateSpinLock();
+    mpr->dtoaSpin[1] = mprCreateSpinLock();
 
     fs = mprCreateFileSystem("/");
     mprAddFileSystem(fs);
@@ -2711,6 +2713,8 @@ static void manageMpr(Mpr *mpr, int flags)
         mprMark(mpr->terminators);
         mprMark(mpr->mutex);
         mprMark(mpr->spin);
+        mprMark(mpr->dtoaSpin[0]);
+        mprMark(mpr->dtoaSpin[1]);
         mprMark(mpr->cond);
         mprMark(mpr->emptyString);
         mprMark(mpr->heap.markerCond);
@@ -3277,6 +3281,18 @@ char *mprEmptyString()
 void mprSetExitStrategy(int strategy)
 {
     MPR->exitStrategy = strategy;
+}
+
+
+void mprLockDtoa(int n)
+{
+    mprSpinLock(MPR->dtoaSpin[n]);
+}
+
+
+void mprUnlockDtoa(int n)
+{
+    mprSpinUnlock(MPR->dtoaSpin[n]);
 }
 
 
@@ -29265,6 +29281,9 @@ int mprXmlGetLineNumber(MprXml *xp)
 #if BLD_FEATURE_FLOAT
 
 #if EMBEDTHIS || 1
+    #define MULTIPLE_THREADS 1
+    extern void mprLockDtoa(int n);
+    extern void mprUnlockDtoa(int n);
     #if WIN || WINCE
         typedef int int32_t;
         typedef unsigned int uint32_t;
@@ -29624,6 +29643,9 @@ BCinfo { int dp0, dp1, dplen, dsign, e0, inexact, nd, nd0, rounding, scale, uflc
 #ifndef MULTIPLE_THREADS
 #define ACQUIRE_DTOA_LOCK(n)    /*nothing*/
 #define FREE_DTOA_LOCK(n)   /*nothing*/
+#else
+#define ACQUIRE_DTOA_LOCK(n) mprLockDtoa(n);
+#define FREE_DTOA_LOCK(n) mprUnlockDtoa(n);
 #endif
 
 #define Kmax 7
