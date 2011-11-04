@@ -2923,46 +2923,50 @@ static void manageConn(HttpConn *conn, int flags)
     mprAssert(conn);
 
     if (flags & MPR_MANAGE_MARK) {
+        mprMark(conn->rx);
+        mprMark(conn->tx);
+        mprMark(conn->endpoint);
+        mprMark(conn->host);
+        mprMark(conn->limits);
+        mprMark(conn->http);
+        mprMark(conn->stages);
+        mprMark(conn->dispatcher);
+        mprMark(conn->newDispatcher);
+        mprMark(conn->oldDispatcher);
+        mprMark(conn->waitHandler);
+        mprMark(conn->sock);
+        mprMark(conn->serviceq);
+        mprMark(conn->currentq);
+        mprMark(conn->input);
+        mprMark(conn->readq);
+        mprMark(conn->writeq);
+        mprMark(conn->connectorq);
+        mprMark(conn->timeoutEvent);
+        mprMark(conn->workerEvent);
+        mprMark(conn->context);
+        mprMark(conn->ejs);
+        mprMark(conn->pool);
+        mprMark(conn->mark);
+        mprMark(conn->data);
+        mprMark(conn->grid);
+        mprMark(conn->record);
+        mprMark(conn->boundary);
+        mprMark(conn->errorMsg);
+        mprMark(conn->ip);
+        mprMark(conn->protocol);
+        httpManageTrace(&conn->trace[0], flags);
+        httpManageTrace(&conn->trace[1], flags);
+
         mprMark(conn->authCnonce);
         mprMark(conn->authDomain);
         mprMark(conn->authNonce);
         mprMark(conn->authOpaque);
-        mprMark(conn->authPassword);
-        mprMark(conn->authQop);
         mprMark(conn->authRealm);
+        mprMark(conn->authQop);
         mprMark(conn->authType);
         mprMark(conn->authUser);
-        mprMark(conn->boundary);
-        mprMark(conn->connectorq);
-        mprMark(conn->context);
-        mprMark(conn->currentq);
-        mprMark(conn->data);
-        mprMark(conn->dispatcher);
-        mprMark(conn->ejs);
-        mprMark(conn->endpoint);
-        mprMark(conn->errorMsg);
+        mprMark(conn->authPassword);
         mprMark(conn->headersCallbackArg);
-        mprMark(conn->host);
-        mprMark(conn->http);
-        mprMark(conn->input);
-        mprMark(conn->ip);
-        mprMark(conn->limits);
-        mprMark(conn->mark);
-        mprMark(conn->oldDispatcher);
-        mprMark(conn->pool);
-        mprMark(conn->protocol);
-        mprMark(conn->readq);
-        mprMark(conn->rx);
-        mprMark(conn->serviceq);
-        mprMark(conn->sock);
-        mprMark(conn->stages);
-        mprMark(conn->timeoutEvent);
-        mprMark(conn->tx);
-        mprMark(conn->waitHandler);
-        mprMark(conn->workerEvent);
-        mprMark(conn->writeq);
-        httpManageTrace(&conn->trace[0], flags);
-        httpManageTrace(&conn->trace[1], flags);
 
     } else if (flags & MPR_MANAGE_FREE) {
         httpDestroyConn(conn);
@@ -3629,15 +3633,16 @@ void httpDestroyEndpoint(HttpEndpoint *endpoint)
 static int manageEndpoint(HttpEndpoint *endpoint, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(endpoint->clientLoad);
-        mprMark(endpoint->dispatcher);
-        mprMark(endpoint->hosts);
         mprMark(endpoint->http);
-        mprMark(endpoint->ip);
+        mprMark(endpoint->hosts);
         mprMark(endpoint->limits);
-        mprMark(endpoint->sock);
-        mprMark(endpoint->ssl);
         mprMark(endpoint->waitHandler);
+        mprMark(endpoint->clientLoad);
+        mprMark(endpoint->ip);
+        mprMark(endpoint->context);
+        mprMark(endpoint->sock);
+        mprMark(endpoint->dispatcher);
+        mprMark(endpoint->ssl);
 
     } else if (flags & MPR_MANAGE_FREE) {
         httpDestroyEndpoint(endpoint);
@@ -4427,23 +4432,23 @@ HttpHost *httpCloneHost(HttpHost *parent)
 static void manageHost(HttpHost *host, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(host->responseCache);
         mprMark(host->name);
         mprMark(host->ip);
         mprMark(host->parent);
+        mprMark(host->responseCache);
         mprMark(host->dirs);
         mprMark(host->routes);
         mprMark(host->defaultRoute);
+        mprMark(host->limits);
         mprMark(host->mimeTypes);
         mprMark(host->home);
         mprMark(host->traceInclude);
         mprMark(host->traceExclude);
         mprMark(host->protocol);
-        mprMark(host->mutex);
         mprMark(host->log);
         mprMark(host->logFormat);
         mprMark(host->logPath);
-        mprMark(host->limits);
+        mprMark(host->mutex);
 
     } else if (flags & MPR_MANAGE_FREE) {
         /* The http->hosts list is static. ie. The hosts won't be marked via http->hosts */
@@ -4862,29 +4867,30 @@ static void manageHttp(Http *http, int flags)
     int         next;
 
     if (flags & MPR_MANAGE_MARK) {
-        /* Note endpoints and hosts are static values - contents are not marked so they can be collected */
-        mprMark(http->clientLimits);
-        mprMark(http->clientRoute);
-        mprMark(http->connections);
-        mprMark(http->context);
-        mprMark(http->currentDate);
-        mprMark(http->defaultClientHost);
         mprMark(http->endpoints);
-        mprMark(http->expiresDate);
-        mprMark(http->forkData);
         mprMark(http->hosts);
-        mprMark(http->mutex);
-        mprMark(http->protocol);
-        mprMark(http->proxyHost);
-        mprMark(http->routeConditions);
-        mprMark(http->routeTargets);
-        mprMark(http->routeUpdates);
-        mprMark(http->secret);
-        mprMark(http->serverLimits);
-        mprMark(http->software);
+        mprMark(http->connections);
         mprMark(http->stages);
         mprMark(http->statusCodes);
+        mprMark(http->routeTargets);
+        mprMark(http->routeConditions);
+        mprMark(http->routeUpdates);
+        /* Don't mark convenience stage references as they will be in http->stages */
+        
+        mprMark(http->clientLimits);
+        mprMark(http->serverLimits);
+        mprMark(http->clientRoute);
         mprMark(http->timer);
+        mprMark(http->mutex);
+        mprMark(http->software);
+        mprMark(http->forkData);
+        mprMark(http->context);
+        mprMark(http->currentDate);
+        mprMark(http->expiresDate);
+        mprMark(http->secret);
+        mprMark(http->defaultClientHost);
+        mprMark(http->protocol);
+        mprMark(http->proxyHost);
 
         /*
             Endpoints keep connections alive until a timeout. Keep marking even if no other references.
@@ -5839,6 +5845,7 @@ static void managePacket(HttpPacket *packet, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(packet->prefix);
         mprMark(packet->content);
+        /* Don't mark next packet. List owner will mark */
     }
 }
 
@@ -6794,18 +6801,18 @@ static void manageQueue(HttpQueue *q, int flags)
 
     if (flags & MPR_MANAGE_MARK) {
         mprMark(q->owner);
-        mprMark(q->stage);
-        mprMark(q->conn);
-        mprMark(q->nextQ);
-        mprMark(q->prevQ);
-        mprMark(q->scheduleNext);
-        mprMark(q->schedulePrev);
-        mprMark(q->pair);
-        mprMark(q->last);
-        mprMark(q->queueData);
         for (packet = q->first; packet; packet = packet->next) {
             mprMark(packet);
         }
+        mprMark(q->last);
+        mprMark(q->nextQ);
+        mprMark(q->prevQ);
+        mprMark(q->stage);
+        mprMark(q->conn);
+        mprMark(q->scheduleNext);
+        mprMark(q->schedulePrev);
+        mprMark(q->pair);
+        mprMark(q->queueData);
         mprMark(q->queueData);
         if (q->nextQ && q->nextQ->stage) {
             /* Not a queue head */
@@ -7858,47 +7865,48 @@ HttpRoute *httpCreateInheritedRoute(HttpRoute *parent)
 static void manageRoute(HttpRoute *route, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(route->auth);
-        mprMark(route->caching);
-        mprMark(route->conditions);
-        mprMark(route->connector);
-        mprMark(route->context);
-        mprMark(route->data);
-        mprMark(route->defaultLanguage);
+        mprMark(route->name);
+        mprMark(route->pattern);
+        mprMark(route->startSegment);
+        mprMark(route->startWith);
+        mprMark(route->optimizedPattern);
+        mprMark(route->prefix);
+        mprMark(route->tplate);
+        mprMark(route->targetRule);
+        mprMark(route->target);
         mprMark(route->dir);
-        mprMark(route->errorDocuments);
-        mprMark(route->extensions);
+        mprMark(route->index);
+        mprMark(route->methodSpec);
         mprMark(route->handler);
+        mprMark(route->caching);
+        mprMark(route->auth);
+        mprMark(route->http);
+        mprMark(route->host);
+        mprMark(route->parent);
+        mprMark(route->defaultLanguage);
+        mprMark(route->extensions);
         mprMark(route->handlers);
         mprMark(route->handlersWithMatch);
-        mprMark(route->headers);
-        mprMark(route->http);
-        mprMark(route->index);
-        mprMark(route->inputStages);
-        mprMark(route->languages);
-        mprMark(route->startWith);
-        mprMark(route->startSegment);
-        mprMark(route->methods);
-        mprMark(route->methodSpec);
-        mprMark(route->name);
-        mprMark(route->outputStages);
-        mprMark(route->params);
-        mprMark(route->parent);
+        mprMark(route->connector);
+        mprMark(route->data);
         mprMark(route->pathTokens);
-        mprMark(route->pattern);
-        mprMark(route->optimizedPattern);
+        mprMark(route->languages);
+        mprMark(route->inputStages);
+        mprMark(route->outputStages);
+        mprMark(route->errorDocuments);
+        mprMark(route->context);
+        mprMark(route->uploadDir);
         mprMark(route->script);
-        mprMark(route->prefix);
         mprMark(route->scriptPath);
+        mprMark(route->methods);
+        mprMark(route->params);
+        mprMark(route->headers);
+        mprMark(route->conditions);
+        mprMark(route->updates);
         mprMark(route->sourceName);
         mprMark(route->sourcePath);
-        mprMark(route->ssl);
-        mprMark(route->target);
-        mprMark(route->targetRule);
-        mprMark(route->tplate);
         mprMark(route->tokens);
-        mprMark(route->updates);
-        mprMark(route->uploadDir);
+        mprMark(route->ssl);
 
     } else if (flags & MPR_MANAGE_FREE) {
         if (route->patternCompiled) {
@@ -10651,47 +10659,47 @@ HttpRx *httpCreateRx(HttpConn *conn)
 static void manageRx(HttpRx *rx, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
+        mprMark(rx->method);
+        mprMark(rx->uri);
+        mprMark(rx->pathInfo);
+        mprMark(rx->scriptName);
+        mprMark(rx->extraPath);
+        mprMark(rx->conn);
+        mprMark(rx->route);
+        mprMark(rx->etags);
+        mprMark(rx->headerPacket);
+        mprMark(rx->headers);
+        mprMark(rx->inputPipeline);
+        mprMark(rx->parsedUri);
+        mprMark(rx->requestData);
+        mprMark(rx->statusMessage);
         mprMark(rx->accept);
         mprMark(rx->acceptCharset);
         mprMark(rx->acceptEncoding);
         mprMark(rx->acceptLanguage);
+        mprMark(rx->cookie);
+        mprMark(rx->connection);
+        mprMark(rx->contentLength);
+        mprMark(rx->hostHeader);
+        mprMark(rx->pragma);
+        mprMark(rx->mimeType);
+        mprMark(rx->originalMethod);
+        mprMark(rx->originalUri);
+        mprMark(rx->redirect);
+        mprMark(rx->referrer);
+        mprMark(rx->securityToken);
+        mprMark(rx->userAgent);
+        mprMark(rx->params);
+        mprMark(rx->inputRange);
         mprMark(rx->authAlgorithm);
         mprMark(rx->authDetails);
         mprMark(rx->authStale);
         mprMark(rx->authType);
-        mprMark(rx->conn);
-        mprMark(rx->connection);
-        mprMark(rx->contentLength);
-        mprMark(rx->cookie);
-        mprMark(rx->etags);
-        mprMark(rx->extraPath);
         mprMark(rx->files);
-        mprMark(rx->paramString);
-        mprMark(rx->headerPacket);
-        mprMark(rx->headers);
-        mprMark(rx->hostHeader);
-        mprMark(rx->inputPipeline);
-        mprMark(rx->inputRange);
-        mprMark(rx->lang);
-        mprMark(rx->method);
-        mprMark(rx->mimeType);
-        mprMark(rx->originalMethod);
-        mprMark(rx->originalUri);
-        mprMark(rx->params);
-        mprMark(rx->parsedUri);
-        mprMark(rx->pathInfo);
-        mprMark(rx->pragma);
-        mprMark(rx->redirect);
-        mprMark(rx->referrer);
-        mprMark(rx->requestData);
-        mprMark(rx->route);
-        mprMark(rx->scriptName);
-        mprMark(rx->securityToken);
-        mprMark(rx->statusMessage);
-        mprMark(rx->target);
         mprMark(rx->uploadDir);
-        mprMark(rx->uri);
-        mprMark(rx->userAgent);
+        mprMark(rx->paramString);
+        mprMark(rx->lang);
+        mprMark(rx->target);
 
     } else if (flags & MPR_MANAGE_FREE) {
         if (rx->conn) {
@@ -12880,8 +12888,8 @@ static void manageStage(HttpStage *stage, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(stage->name);
         mprMark(stage->path);
-        mprMark(stage->module);
         mprMark(stage->stageData);
+        mprMark(stage->module);
         mprMark(stage->extensions);
     }
 }
@@ -13223,26 +13231,26 @@ void httpDestroyTx(HttpTx *tx)
 static void manageTx(HttpTx *tx, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(tx->cache);
-        mprMark(tx->cacheBuffer);
-        mprMark(tx->cachedContent);
+        mprMark(tx->ext);
+        mprMark(tx->etag);
+        mprMark(tx->filename);
+        mprMark(tx->handler);
+        mprMark(tx->parsedUri);
+        mprMark(tx->method);
         mprMark(tx->conn);
         mprMark(tx->outputPipeline);
-        mprMark(tx->handler);
         mprMark(tx->connector);
         mprMark(tx->queue[0]);
         mprMark(tx->queue[1]);
-        mprMark(tx->parsedUri);
+        mprMark(tx->headers);
+        mprMark(tx->cache);
+        mprMark(tx->cacheBuffer);
+        mprMark(tx->cachedContent);
         mprMark(tx->outputRanges);
         mprMark(tx->currentRange);
-        mprMark(tx->headers);
         mprMark(tx->rangeBoundary);
-        mprMark(tx->etag);
-        mprMark(tx->method);
         mprMark(tx->altBody);
         mprMark(tx->file);
-        mprMark(tx->filename);
-        mprMark(tx->ext);
 
     } else if (flags & MPR_MANAGE_FREE) {
         httpDestroyTx(tx);

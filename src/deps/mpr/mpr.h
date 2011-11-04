@@ -3249,7 +3249,7 @@ typedef struct MprBuf {
     ssize           maxsize;            /**< Max size the buffer can ever grow */
     ssize           growBy;             /**< Next growth increment to use */
     MprBufProc      refillProc;         /**< Auto-refill procedure */
-    void            *refillArg;         /**< Refill arg */
+    void            *refillArg;         /**< Refill arg - must be alloced memory */
 } MprBuf;
 
 /**
@@ -4335,7 +4335,7 @@ extern int print(cchar *fmt, ...);
     @defgroup MprHash MprHash
  */
 typedef struct MprKey {
-    struct MprKey *next;                /**< Next symbol in hash chain */
+    struct MprKey   *next;              /**< Next symbol in hash chain */
     char            *key;               /**< Hash key */
     cvoid           *data;              /**< Pointer to symbol data */
     int             type: 4;            /**< Data type */
@@ -5502,7 +5502,7 @@ typedef struct MprModule {
     char            *name;              /**< Unique module name */
     char            *path;              /**< Module library filename */
     char            *entry;             /**< Module library init entry point */
-    void            *moduleData;        /**< Module specific data */
+    void            *moduleData;        /**< Module specific data - must be alloced data */
     void            *handle;            /**< O/S shared library load handle */
     MprTime         modified;           /**< When the module file was last modified */
     MprTime         lastActivity;       /**< When the module was last used */
@@ -6164,12 +6164,6 @@ typedef struct MprThreadService {
     struct MprThread *mainThread;       /**< Main application Mpr thread id */
     MprMutex        *mutex;             /**< Multi-thread lock */
     MprCond         *cond;              /**< Multi-thread sync */
-#if !BLD_UNIX_LIKE && !BLD_WIN_LIKE
-#if UNUSED
-    MprHash         *local;             /**< Thread local storage */
-    int             nextLocal;          /**< Next key to use */
-#endif
-#endif
     ssize           stackSize;          /**< Default thread stack size */
 } MprThreadService;
 
@@ -8087,7 +8081,7 @@ typedef struct Mpr {
     char            *title;                 /**< Product title */
     char            *version;               /**< Product version */
     int             argc;                   /**< Count of command line args */
-    char            **argv;                 /**< Application command line args */
+    char            **argv;                 /**< Application command line args (not alloced) */
     char            *domainName;            /**< Domain portion */
     char            *hostName;              /**< Host name (fully qualified name) */
     char            *ip;                    /**< Public IP Address */
@@ -8679,7 +8673,7 @@ typedef struct MprTestDef {
  */
 typedef struct MprTestService {
     int             argc;                   /**< Count of arguments */
-    char            **argv;                 /**< Arguments for test */
+    char            **argv;                 /**< Arguments for test (not alloced) */
     int             activeThreadCount;      /**< Currently active test threads */
     char            *commandLine;
     bool            continueOnFailures;     /**< Keep testing on failures */

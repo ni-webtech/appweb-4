@@ -1434,6 +1434,9 @@ static void marker(void *unused, MprThread *tp)
     while (!mprIsFinished()) {
         if (!heap->mustYield) {
             mprWaitForCond(heap->markerCond, -1);
+            if (mprIsFinished()) {
+                break;
+            }
         }
         MPR_MEASURE(7, "GC", "mark", mark());
     }
@@ -1562,7 +1565,7 @@ static int syncThreads()
 
 
 /*
-    Resume all yielded threads. Called by the GC marker only.
+    Resume all yielded threads. Called by the GC marker only and when destroying the app.
  */
 void mprResumeThreads()
 {
@@ -2677,6 +2680,7 @@ static void manageMpr(Mpr *mpr, int flags)
         mprMark(mpr->logFile);
         mprMark(mpr->mimeTypes);
         mprMark(mpr->timeTokens);
+        mprMark(mpr->pathEnv);
         mprMark(mpr->name);
         mprMark(mpr->title);
         mprMark(mpr->version);
@@ -2684,11 +2688,11 @@ static void manageMpr(Mpr *mpr, int flags)
         mprMark(mpr->hostName);
         mprMark(mpr->ip);
         mprMark(mpr->serverName);
-        mprMark(mpr->appDir);
         mprMark(mpr->appPath);
+        mprMark(mpr->appDir);
         mprMark(mpr->cmdService);
-        mprMark(mpr->fileSystem);
         mprMark(mpr->eventService);
+        mprMark(mpr->fileSystem);
         mprMark(mpr->moduleService);
         mprMark(mpr->osService);
         mprMark(mpr->signalService);
@@ -2698,17 +2702,18 @@ static void manageMpr(Mpr *mpr, int flags)
         mprMark(mpr->waitService);
         mprMark(mpr->dispatcher);
         mprMark(mpr->nonBlock);
-        mprMark(mpr->ejsService);
-        mprMark(mpr->httpService);
         mprMark(mpr->appwebService);
-        mprMark(mpr->testService);
+        mprMark(mpr->ediService);
+        mprMark(mpr->ejsService);
         mprMark(mpr->espService);
+        mprMark(mpr->httpService);
+        mprMark(mpr->testService);
+        mprMark(mpr->terminators);
         mprMark(mpr->mutex);
         mprMark(mpr->spin);
+        mprMark(mpr->cond);
         mprMark(mpr->emptyString);
-        mprMark(mpr->pathEnv);
         mprMark(mpr->heap.markerCond);
-        mprMark(mpr->terminators);
     }
 }
 
@@ -7504,8 +7509,10 @@ static MprFile *openFile(MprFileSystem *fs, cchar *path, int omode, int perms)
 static void manageDiskFile(MprFile *file, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(file->buf);
         mprMark(file->path);
+        mprMark(file->fileSystem);
+        mprMark(file->buf);
+        //  MOB - mark inode?
 
     } else if (flags & MPR_MANAGE_FREE) {
         closeFile(file);
@@ -8047,12 +8054,12 @@ MprEventService *mprCreateEventService()
 static void manageEventService(MprEventService *es, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(es->waitCond);
-        mprMark(es->mutex);
         mprMark(es->runQ);
         mprMark(es->readyQ);
-        mprMark(es->idleQ);
         mprMark(es->waitQ);
+        mprMark(es->idleQ);
+        mprMark(es->waitCond);
+        mprMark(es->mutex);
 
     } else if (flags & MPR_MANAGE_FREE) {
         /* Needed for race with manageDispatcher */
@@ -8134,7 +8141,9 @@ static void manageDispatcher(MprDispatcher *dispatcher, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(dispatcher->name);
         mprMark(dispatcher->eventQ);
+        mprMark(dispatcher->current);
         mprMark(dispatcher->cond);
+        mprMark(dispatcher->parent);
         mprMark(dispatcher->service);
         mprMark(dispatcher->requiredWorker);
 
@@ -8144,8 +8153,6 @@ static void manageDispatcher(MprDispatcher *dispatcher, int flags)
             mprAssert(event->magic == MPR_EVENT_MAGIC);
             mprMark(event);
         }
-        mprMark(dispatcher->current);
-        mprMark(dispatcher->eventQ);
         unlock(es);
         
     } else if (flags & MPR_MANAGE_FREE) {
@@ -12615,15 +12622,12 @@ static void manageLock(MprMutex *lock, int flags);
 static void manageSpinLock(MprSpin *lock, int flags);
 
 
-static int mcount = 0;
-
 MprMutex *mprCreateLock()
 {
     MprMutex    *lock;
 #if BLD_UNIX_LIKE
     pthread_mutexattr_t attr;
 #endif
-    mcount++;
     if ((lock = mprAllocObj(MprMutex, manageLock)) == 0) {
         return 0;
     }
@@ -12651,7 +12655,6 @@ MprMutex *mprCreateLock()
 static void manageLock(MprMutex *lock, int flags)
 {
     if (flags & MPR_MANAGE_FREE) {
-        mcount--;
         mprAssert(lock);
 #if BLD_UNIX_LIKE
         pthread_mutex_destroy(&lock->cs);
@@ -14318,7 +14321,7 @@ static void manageModule(MprModule *mp, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(mp->name);
         mprMark(mp->path);
-        mprMark(mp->entry);
+        mprMark(mp->moduleData);
     }
 }
 
@@ -18803,6 +18806,7 @@ static int getSocketIpAddr(struct sockaddr *addr, int addrlen, char *ip, int siz
 static int ipv6(cchar *ip);
 static int listenSocket(MprSocket *sp, cchar *ip, int port, int initialFlags);
 static void manageSocket(MprSocket *sp, int flags);
+static void manageSocketProvider(MprSocketProvider *provider, int flags);
 static void manageSocketService(MprSocketService *ss, int flags);
 static ssize readSocket(MprSocket *sp, void *buf, ssize bufsize);
 static ssize writeSocket(MprSocket *sp, cvoid *buf, ssize bufsize);
@@ -18868,11 +18872,10 @@ static MprSocketProvider *createStandardProvider(MprSocketService *ss)
 {
     MprSocketProvider   *provider;
 
-    provider = mprAlloc(sizeof(MprSocketProvider));
-    if (provider == 0) {
+    if ((provider = mprAllocObj(MprSocketProvider, manageSocketProvider)) == 0) {
         return 0;
     }
-    provider->name = "standard";
+    provider->name = sclone("standard");
     provider->acceptSocket = acceptSocket;
     provider->closeSocket = closeSocket;
     provider->connectSocket = connectSocket;
@@ -18883,6 +18886,16 @@ static MprSocketProvider *createStandardProvider(MprSocketService *ss)
     provider->readSocket = readSocket;
     provider->writeSocket = writeSocket;
     return provider;
+}
+
+
+static void manageSocketProvider(MprSocketProvider *provider, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(provider->name);
+        mprMark(provider->data);
+        mprMark(provider->defaultSsl);
+    }
 }
 
 
@@ -23233,8 +23246,7 @@ static MprWorker *createWorker(MprWorkerService *ws, ssize stackSize)
 
     char    name[16];
 
-    worker = mprAllocObj(MprWorker, manageWorker);
-    if (worker == 0) {
+    if ((worker = mprAllocObj(MprWorker, manageWorker)) == 0) {
         return 0;
     }
     worker->flags = 0;

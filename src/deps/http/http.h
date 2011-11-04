@@ -3036,7 +3036,7 @@ typedef struct HttpRoute {
     MprList         *conditions;            /**< Route conditions */
     MprList         *updates;               /**< Route and request updates */
 
-    void            *patternCompiled;       /**< Compiled pattern regular expression */
+    void            *patternCompiled;       /**< Compiled pattern regular expression (not alloced) */
     char            *sourceName;            /**< Source name for route target */
     char            *sourcePath;            /**< Source path for route target */
     MprList         *tokens;                /**< Tokens in pattern, {name} */
