@@ -70,11 +70,11 @@
             Appweb to respond to relevant requests.</p>
             <p>Appweb has a virtual file system interface that allows the run-time switching between serving web pages
             on a disk-based file system and a compiled ROM based store of web pages.</p>
-            <p>This ROM facility may also be used to enhance security by preventing the modification of web documents
+            <p>This ROM facility may also be used to enhance security by preventing the modification of web documents,
             or in performance critical situations were the serving of web pages from memory may be an effective
             optimization.</p><a name="compilingWebPages" id="compilingWebPages"></a>
             <h2 class="section">Compiling Web Pages</h2>
-            <p>The Appweb <b>makerom</b> program is used to compile web documents, configuration files and any other
+            <p>The Appweb <b>makerom</b> program is used to compile web documents, configuration files, and any other
             files that you would like to be compiled into C code. The makerom program will parse the files and convert
             them into C data structures which can then be compiled by your C/C++ compiler and linked into your
             application.</p>
@@ -102,13 +102,13 @@ cc -o romFiles.o romFiles.c
                     <tr>
                         <td nowrap="nowrap">-- name</td>
                         <td>Specifies the name of top level C structure. Appweb allows multiple ROM directories to be
-                        included in a single application. This is necessary if using Virtual Hosts to allow each host
+                        included in a single application. This is necessary if using virtual hosts to allow each host
                         to have its own web directory.</td>
                     </tr>
                 </tbody>
             </table>
-            <p>It is important to also put into the ROM the essential Appweb configuration files. These include the
-            Appweb configuration file, the mime.types file and any authorization database files. The following script
+            <p>It is important to include some essential Appweb configuration files into the ROM. These include the
+            Appweb configuration file, the mime.types file, and any authorization database files. The following script
             is used to compile the web pages in three web directories ("sslWeb", "vhostWeb", and "web") and to also
             compile the essential configuration files.</p>
             <pre>
