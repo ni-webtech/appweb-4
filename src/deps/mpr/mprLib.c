@@ -4801,7 +4801,7 @@ static void pruneCache(MprCache *cache, MprEvent *event)
          */
         for (kp = 0; (kp = mprGetNextKey(cache->store, kp)) != 0; ) {
             item = (CacheItem*) kp->data;
-            mprLog(6, "Cache: \"%@\" lifespan %d, expires in %d secs", item->key, 
+            mprLog(6, "Cache: \"%s\" lifespan %d, expires in %d secs", item->key, 
                     item->lifespan / 1000, (item->expires - when) / 1000);
             if (item->expires && item->expires <= when) {
                 mprLog(5, "Cache prune expired key %s", kp->key);
@@ -11768,7 +11768,7 @@ void mprWaitForIO(MprWaitService *ws, MprTime timeout)
     LOG(8, "kevent wakes rc %d", rc);
 
     if (rc < 0) {
-        mprLog(6, "Kevent returned %d, errno %d", rc, mprGetOsError());
+        mprLog(7, "Kevent returned %d, errno %d", rc, mprGetOsError());
     } else if (rc > 0) {
         serviceIO(ws, rc);
     }
