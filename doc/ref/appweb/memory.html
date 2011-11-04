@@ -71,7 +71,7 @@
             <h1>MPR Memory Allocator</h1>
             <a name="overview"></a>
             <h2>Overview</h2>
-            <p>Appweb provides an application specific memory allocator to use instead of malloc. This allocator is 
+            <p>Appweb provides an application-specific memory allocator to use instead of malloc. This allocator is 
             part of the Multithreaded Portable Runtime (MPR) and is tailored to the needs of embedded applications.
             It is faster than most general purpose malloc allocators for these workloads. It is deterministic and 
             allocates and frees memory in constant time O(1). It exhibits very low fragmentation and accurate 
@@ -87,7 +87,7 @@
             <h2>Allocator</h2>
             <p>The allocator is optimized for frequent allocations of small blocks (< 4K). It 
             uses a scheme of free queues for fast allocation. Memory allocations are aligned on 16 byte boundaries on 64-bit 
-            systems and otherwise on 8 byte boundaries. It will return chunks unused memory back to the O/S.</p>
+            systems and otherwise on 8 byte boundaries. It will return chunks of unused memory back to the O/S.</p>
             <h4>Appweb 3 Allocator</h4>
             <p>Appweb 3 used memory contexts for all memory allocations. This required many APIs to have a memory context
             as the first parameter. Appweb 4 does not require this and these APIs have removed the memory context 
@@ -117,7 +117,7 @@
             calling <tt>mprYield</tt>.
             <p>To prevent collection of a memory block and retain the block over a yield point, the application must 
             hold a managed reference for the block. A managed reference, is a reference to an allocated block that 
-            will be marked as active during a collection cycle by the owning blocks manager function. Manager functions
+            will be marked as active during a collection cycle by the Owning Blocks manager function. Manager functions
             are defined when allocating blocks that will hold managed references.</p>
             <a name="phases"></a>
             <h3>Collection Phases</h3>
