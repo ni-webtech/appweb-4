@@ -73,9 +73,9 @@
             <h2>Overview</h2>
             <p>Programmming in a multithreaded environment can be hard. Sometimes programming errors are timing related 
             as multiple threads interact. Multithread locks can become tangled and bugs can be difficult to reproduce. 
-            To aleviate these problems and
+            To alleviate these problems and
             enable the benefits of a multi-threaded core, Appweb provides a suite of facilities to make multithreaded
-            programming easier, more reliable and efficient.</p>
+            programming easier, more reliable, and more efficient.</p>
             <h3>The Problem of Multithreaded I/O Events</h3>
             <p>A particular thorny issue in multithreaded servers, is how to handle I/O without consuming a thread for
             each request. It is not practical to dedicate a thread to each HTTP request. A single browser will often
@@ -90,21 +90,21 @@
             and the original request can continue. For this to work, an efficient network event service is 
             essential. Appweb uses such a thread pool and event service to efficiently manage thread resources. </p>
             
-            <p>However using such an event service and thread pool, this raises another problem: races between the 
+            <p>However, this use of such an event service and thread pool raises another problem: races between the 
             foreground request thread and the background async I/O event thread. It is easy for these two threads to 
             simultaneously interact and corrupt critical data structures. A typical solution is to use multithread
             locks to serialize access to such data, but this is a crude solution and often leads to brittle applications.
             Appweb has a better solution that effectively serializes all activity for a request: per-request 
             event dispatchers.</p>
             <h3>Event Dispatchers</h3>
-            <p>The Multithreaded Portable Runtime (MPR) that Appweb  uses, has a facility called Event Dispatchers. These
+            <p>The Multithreaded Portable Runtime (MPR) used by Appweb has a facility called Event Dispatchers. These
             are event queues on which all I/O and other event activity for a request can be queued and serviced. 
             Each request has its own dispatcher and so events for a request are serialized.  When a network I/O event
             is received by Appweb for a request, an event is queued on the request's dispatcher. If the request is 
             currently active (using a thread from the thread pool), the event is queued and no further action is taken. 
             When the request has finished its current activity, it will service events on its dispatcher queue and 
             eventually service the I/O event. If the request is currently idle, a thread is assigned from the thread 
-            pool for the request and the thread is resumed to service the request's dispatcher queue. This greatly 
+            pool for the request, and the thread is resumed to service the request's dispatcher queue. This greatly 
             simplifies Appweb as all activity for a request is thus serialized via the dispatcher queue.</p>
             <h3>Multithreaded Appweb</h3>
             <p>By using request dispatchers, Appweb serializes all request activity, yet it can support many 
