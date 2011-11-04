@@ -2857,7 +2857,7 @@ extern ssize sspn(cchar *str, cchar *set);
     @param prefix Pattern to search for
     @return Returns TRUE if the pattern was found. Otherwise returns zero.
  */
-extern int sstarts(cchar *str, cchar *prefix);
+extern bool sstarts(cchar *str, cchar *prefix);
 
 /**
     Replace template tokens in a string with values from a lookup table. Tokens are ${variable} references. 

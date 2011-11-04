@@ -2628,6 +2628,15 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     mpr->mimeTypes = mprCreateMimeTypes(NULL);
     mpr->terminators = mprCreateList(0, MPR_LIST_STATIC_VALUES);
 
+    mprCreateTimeService();
+    mprCreateOsService();
+    mpr->mutex = mprCreateLock();
+    mpr->spin = mprCreateSpinLock();
+
+    fs = mprCreateFileSystem("/");
+    mprAddFileSystem(fs);
+    getArgs(mpr, argc, argv);
+
     if (mpr->argv && mpr->argv[0] && *mpr->argv[0]) {
         name = mpr->argv[0];
         if ((cp = strrchr(name, '/')) != 0 || (cp = strrchr(name, '\\')) != 0) {
@@ -2640,15 +2649,6 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     } else {
         mpr->name = sclone(BLD_PRODUCT);
     }
-    mprCreateTimeService();
-    mprCreateOsService();
-    mpr->mutex = mprCreateLock();
-    mpr->spin = mprCreateSpinLock();
-
-    fs = mprCreateFileSystem("/");
-    mprAddFileSystem(fs);
-    getArgs(mpr, argc, argv);
-
     mpr->signalService = mprCreateSignalService();
     mpr->threadService = mprCreateThreadService();
     mpr->moduleService = mprCreateModuleService();
@@ -15324,7 +15324,7 @@ char *mprGetPortablePath(cchar *path)
 char *mprGetRelPath(cchar *pathArg)
 {
     MprFileSystem   *fs;
-    char            home[MPR_MAX_FNAME], *hp, *cp, *result, *path;
+    char            home[MPR_MAX_FNAME], *hp, *cp, *result, *path, *lasthp, *lastcp;
     int             homeSegments, i, commonSegments, sep;
 
     fs = mprLookupFileSystem(pathArg);
@@ -15375,7 +15375,9 @@ char *mprGetRelPath(cchar *pathArg)
     commonSegments = -1;
     for (hp = home, cp = path; *hp && *cp; hp++, cp++) {
         if (isSep(fs, *hp)) {
+            lasthp = hp + 1;
             if (isSep(fs, *cp)) {
+                lastcp = cp + 1;
                 commonSegments++;
             }
         } else if (fs->caseSensitive) {
@@ -15387,6 +15389,11 @@ char *mprGetRelPath(cchar *pathArg)
         }
     }
     mprAssert(commonSegments >= 0);
+
+    if (*cp && *hp) {
+        hp = lasthp;
+        cp = lastcp;
+    }
 
     /*
         Add one more segment if the last segment matches. Handle trailing separators
@@ -20999,8 +21006,7 @@ ssize sspn(cchar *str, cchar *set)
 }
  
 
-//  MOB should return bool
-int sstarts(cchar *str, cchar *prefix)
+bool sstarts(cchar *str, cchar *prefix)
 {
     if (str == 0 || prefix == 0) {
         return 0;
