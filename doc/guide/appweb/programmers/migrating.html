@@ -107,25 +107,25 @@
                 <li>Appweb 4 supports the Ejscript 2.X Web Framework.</li>
                 <li>The stand-alone Appweb command line program is upgraded with new switches and options.</li>
                 <li>The build system is upgraded and simplified. New configure options and cross compiling capabilities
-                    are added.</li>
+                    have been added.</li>
             </ul>
             <h3>Removed Capabilities</h3>
             <ul>
-                <li>The EGI handler is removed and deprecated in favor of the ESP handler which has equivalent and
+                <li>The EGI handler has been removed and deprecated in favor of the ESP handler which has equivalent and
                     extended functionality.</li>
             </ul>
             <h3>Changed APIs</h3>
-            <p>Many of the internal APIs in Appweb 4 have been changed. This is due to utilizing a common Http library
+            <p>Many of the internal APIs in Appweb 4 have been changed. This is due to the utilization of a common Http library
             between Appweb and Ejscript.  Appweb 3 APIs have been renamed/converted on a function by function basis to
             equivalent APIs in Appweb 4. The APIs have very similar names to the previous counterpart.</p>
             <h3>Memory Allocator</h3>
             <p>Appweb 4 includes a high performance memory allocator and generational garbage collector. The allocator 
-            is a fast, immediate coalescing allocator. It is optimized for frequent allocations of small blocks and 
+            is a fast and immediate coalescing allocator. It is optimized for frequent allocations of small blocks and 
             uses a background collector for freeing unused memory.</p>
             <p>The garbage collector is somewhat unusual in a C program. However, garbage collection 
-            it is especially well suited for long running applications like a web server as it virtually eliminates
+            is especially well suited for long running applications like a web server since it virtually eliminates
             memory leaks. Unlike traditional memory allocation where <tt>free</tt> must be called, Appweb 4 uses the
-            opposite approach where memory that must be retained, needs to be actively managed to prevent garbage 
+            opposite approach where memory that must be retained needs to be actively managed to prevent garbage 
             collection. This means that a <tt>managed reference</tt> must be held for all active memory.
             See <a href="../../../ref/appweb/mem.html">Memory Allocation</a> for more details.</p>
             <a name="config" id="config"></a>
@@ -147,11 +147,11 @@
             See the <a href="modules.html">Creating Modules</a> document for more details. </p>
             <p>In many cases, the new Embedded Server Pages (ESP) web framework provides a simpler and more flexible
             way to add functionality to Appweb compared with custom handlers and modules. ESP allows the easy binding
-            of "C" language functions to request URIs via a powerful Controllers and the Appweb routing engine.
+            of "C" language functions to request URIs via powerful Controllers and the Appweb routing engine.
             See the <a href="../users/esp.html">Using ESP</a> document for more details. </p>
             
             <h2 class="section">Embedded Server Pages</h2>
-            <p>ESP is the single biggest change in Appweb 4. ESP is a powerful Model / View / Controller web framework
+            <p>ESP is the single biggest change in Appweb 4. ESP is a powerful Model/View/Controller web framework
             that offers:
             <ul>
                 <li>Transparent compilation of ESP programs and web pages</li>
@@ -159,7 +159,7 @@
                 <li>Templated web pages with layout pages</li>
                 <li>Caching of compiled ESP and web pages</li>
                 <li>Caching of generated request responses</li>
-                <li>Model / View / Controller framework</li>
+                <li>Model/View/Controller framework</li>
                 <li>Ajax jQuery integration and support</li>
                 <li>Native code level performance</li>
                 <li>Compact memory footprint</li>
