@@ -137,3 +137,4 @@ src/esp/js.save
 src/esp/www/files.save
 *.tdat
 trace.log
+web/caching/cache.cgi
