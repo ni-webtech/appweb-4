@@ -132,18 +132,17 @@
                 </tbody>
             </table>
             
-            
             <a name="limitClients" id="limitClients"></a>
             <h2>LimitClients</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
-                        <td>Sets the maximum number of simultaneous clients</td>
+                        <td>Sets the maximum number of simultaneous client systems</td>
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>LimitClient count</td>
+                        <td>LimitClients count</td>
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
@@ -151,16 +150,16 @@
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>LimitClient 10</td>
+                        <td>LimitClients 10</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The LimitClient directive defines the maximum number of simultaneous client connections
-                            that are permitted. Client connection requests in excess of this count will be rejected. A
-                            limit of 0 means unlimited.</p>
-                            <p>NOTE: that many browsers can and will initiate multiple connections when requesting a
-                            page.</p>
+                            <p>The LimitClients directive defines the maximum number of simultaneous 
+                            client systems that can connect to the server. Connections in excess of this count will 
+                            be rejected. A limit of 0 means unlimited.</p>
+                            <p>This directive counts the number of client systems. A system with many users all using
+                            the same IP address will be counted as one client.</p>
                         </td>
                     </tr>
                 </tbody>
@@ -232,6 +231,41 @@
                             does not include thread stack or code allocations.
                             If the memory limit is exceeded, Appweb will invoke the policy specified by the
                             MemoryPolicy directive. </p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="limitRequests" id="limitRequests"></a>
+            <h2>LimitRequests</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Sets the maximum number of simultaneous HTTP requests</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>LimitRequests count</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>LimitRequests 10</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The LimitRequests directive defines the maximum number of simultaneous 
+                            incoming HTTP requests that are permitted. Requests in excess of this count will 
+                            be rejected. A limit of 0 means unlimited.</p>
+                            <p>This directive limits the number of HTTP requests, whereas the LimitClients directive
+                            limits the number of connected client systems.</p>
+                            <p>NOTE: that many browsers can and will initiate multiple requests when requesting a
+                            page. Some browsers will initiate up to six requests at a time for a single tab.</p>
                         </td>
                     </tr>
                 </tbody>

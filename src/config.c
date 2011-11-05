@@ -888,7 +888,7 @@ static int limitChunkDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitClientsDirective(MaState *state, cchar *key, cchar *value)
 {
-    mprSetMaxSocketClients((int) stoi(value));
+    state->host->limits->clientCount = atoi(value);
     return 0;
 }
 
@@ -904,6 +904,16 @@ static int limitMemoryDirective(MaState *state, cchar *key, cchar *value)
 
     maxMem = (ssize) getnum(value);
     mprSetMemLimits(maxMem / 100 * 85, maxMem);
+    return 0;
+}
+
+
+/*
+    LimitRequests count
+ */
+static int limitRequestsDirective(MaState *state, cchar *key, cchar *value)
+{
+    state->host->limits->requestCount = atoi(value);
     return 0;
 }
 
@@ -2162,6 +2172,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "LimitClients", limitClientsDirective);
     maAddDirective(appweb, "LimitKeepAlive", limitKeepAliveDirective);
     maAddDirective(appweb, "LimitMemory", limitMemoryDirective);
+    maAddDirective(appweb, "LimitRequests", limitRequestsDirective);
     maAddDirective(appweb, "LimitRequestBody", limitRequestBodyDirective);
     maAddDirective(appweb, "LimitRequestForm", limitRequestFormDirective);
 

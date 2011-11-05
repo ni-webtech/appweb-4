@@ -12,7 +12,7 @@ http.put(HTTP + "/tmp/test.dat", data)
 assert(http.status == 201 || http.status == 204)
 */
 
-//  This request should hang because we don't write any data. Wait with a timeout
+//  This request should hang because we don't write any data and finalize. Wait with a timeout.
 http.setHeader("Content-Length", 1000)
 http.put(HTTP + "/a.tmp")
 assert(http.wait(250) == false)

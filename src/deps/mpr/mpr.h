@@ -6619,8 +6619,8 @@ typedef int (*MprSocketPrebind)(struct MprSocket *sock);
     @ingroup MprSocket
  */
 typedef struct MprSocketService {
-    int             maxClients;                 /**< Maximum client side sockets */
-    int             numClients;                 /**< Count of client side sockets */
+    int             maxAccept;                  /**< Maximum number of accepted client socket connections */
+    int             numAccept;                  /**< Count of client socket connections */
     MprSocketProvider *standardProvider;        /**< Socket provider for non-SSL connections */
     MprSocketProvider *secureProvider;          /**< Socket provider for SSL connections */
     MprSocketPrebind  prebind;                  /**< Prebind callback */
@@ -6641,11 +6641,11 @@ extern MprSocketService *mprCreateSocketService();
 extern bool mprHasSecureSockets();
 
 /**
-    Set the maximum number of client sockets that are permissable
-    @param max New maximum number of client sockets.
+    Set the maximum number of accepted client connections that are permissable
+    @param max New maximum number of accepted client connections.
     @ingroup MprSocket
  */
-extern int mprSetMaxSocketClients(int max);
+extern int mprSetMaxSocketAccept(int max);
 
 /**
     Set the provider to be the default secure socket provider
