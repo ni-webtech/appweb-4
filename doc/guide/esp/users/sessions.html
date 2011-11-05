@@ -131,8 +131,8 @@ setSessionVar("Name", "John");
                 <li>Informational &mdash; The operation succeeded and this is just for feedback.</li>
                 <li>Other &mdash; Any other kind of message.</li>
             </ul>
-            <p>When ESP generates flash messages in a web page, it emits a CSS style corresponding the message type.
-                This permits all errors to be flagged to the user using an "error" style. Similarly for warnings and
+            <p>When ESP generates flash messages in a web page, it emits a CSS style corresponding to the message type.
+                This permits all errors to be flagged to the user using an "error" style. Similarly, for warnings and
                 informational errors.
 
             <h3>Defining Flash Messages</h3>
@@ -168,10 +168,10 @@ setFlash("custom", "Could not save document %s", myDocument);
             <h2 class="section">Performance Considerations</h2>
             <h3>Minimize Session Data Size</h3>
             <p>To maximize the performance of your application, try to minimize the size of data stored in the session
-            state store. Session data is copied to and from the store and unnecessary copies will slow your
+            state store. Session data is copied to and from the store. Unnecessary copies will slow your
             application.</p>
             <h3>Minimize Session Data Reads and Writes</h3>
-            <p>It is important to not to read from the session store repeatedly. During one request, try to read 
+            <p>It is important not to read from the session store repeatedly. During one request, try to read 
             session data once and keep a reference to the data for the duration of that request.</p>
         </div>
     </div>
