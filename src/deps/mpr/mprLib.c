@@ -15405,7 +15405,7 @@ char *mprGetRelPath(cchar *pathArg)
         Find portion of path that matches the home directory, if any. Start at -1 because matching root doesn't count.
      */
     commonSegments = -1;
-    for (hp = home, cp = path; *hp && *cp; hp++, cp++) {
+    for (lasthp = hp = home, lastcp = cp = path; *hp && *cp; hp++, cp++) {
         if (isSep(fs, *hp)) {
             lasthp = hp + 1;
             if (isSep(fs, *cp)) {
