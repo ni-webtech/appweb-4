@@ -129,24 +129,24 @@ EjsAppAlias /myAppName/ "/Directory/to/myApp"
             <h3>Form Data</h3>
             <p>The web interface converts incoming post and form data into a format suitable for easy processing by
             ESP applications. Traditionally, form data is passed to web applications by environment variables. But
-            this format is often clumsy, doesn't scale and does not map well onto an object-oriented language such as
+            this format is often clumsy, doesn't scale, and does not map well onto an object-oriented language such as
             Javscript.</p>
             <p>ESP replaces environment variables with a params[] collection object and it transparently converts
             form data into a nested collection of objects. It automatically converts dot separated form names into
-            objects that are addressible by dot notation.</p><a name="requestState" id="requestState"></a>
+            objects that are addressable by dot notation.</p><a name="requestState" id="requestState"></a>
             <h3>Request State</h3>
-            <p>The web interface will construct request, response and host objects that store request state. ESP
+            <p>The web interface will construct request, response, and host objects that store request state. ESP
             avoids the normal overhead in creating and populating these objects by using virtual, lazy construction.
             Consequently, ESP applications incur minimal overhead when accessing request state.</p><a name=
             "hosting" id="hosting"></a>
             <h3>Interpreter Hosting</h3>A high performance web server must accept incoming requests, route to the
             appropriate request handler, initialize the handler including necessary interpreters, gather response data,
-            transmit to the client and then tear down the handler. And this must be done many times per second, ideally
+            transmit to the client, and then tear down the handler. And this must be done many times per second, ideally
             hundreds of times per second for dynamic content.
             <p>To do this effectively, ESP pre-creates a master interpreter instance replete with all the
             requisite system classes and web framework. When incoming requests arrive, the web interface quickly clones
             this master interpreter to create a light-weight copy that is dedicated to the new request. The clone
-            leverages the system types and web framework in the master and so needs minimal initialization before it
+            leverages the system types and web framework in the master, and so needs minimal initialization before it
             can start servicing the web request.</p>
             <p>Clone interpreters are not completely isolated. Controlled session state sharing is accomplished by
             sharing session[] and application[] objects.</p>
@@ -190,12 +190,12 @@ ejsweb -v generate app test
                 <li>test/README</li>
             </ul>
             <p>The ejsweb program can also generate controllers. It is currently being enhanced to generate models,
-            views and entire scaffolds. To compile your application, use the ejsweb program:</p>
+            views, and entire scaffolds. To compile your application, use the ejsweb program:</p>
             <pre>
 ejsweb -v compile
 </pre>
             <p>During development time, the web framework uses <b>ejsweb</b> behind the scenes to transparently
-            recompile all or portions of the application if the developer modifies any model, view or
+            recompile all or portions of the application if the developer modifies any model, view, or
             controller.</p><a name="mvc" id="mvc"></a>
             <h2 class="section">Model, View, Controller Framework</h2>
             <p>A Model View Controller framework, also known as MVC, is a proven paradigm for organizing web
@@ -207,15 +207,15 @@ ejsweb -v compile
             <h2 class="section">Models</h2>
             <p>For object-oriented languages such as ESP, there is sometimes a mismatch between relational
             database data and the JavaScript objects that are used to represent and manage that data. To solve this
-            problem, ESP provides an Object Relational Mapping (ORM) layer to make it easy to read, modify and
-            write database data. ORM layers map database tables to classes, rows to object instances and columns to
+            problem, ESP provides an Object Relational Mapping (ORM) layer to make it easy to read, modify, and
+            write database data. ORM layers map database tables to classes, rows to object instances, and columns to
             properties of the classes and objects. If a database has a table named Users, then there would be a model
             class named User.</p>
             <p>When ESP reads records from a database table it constructs an instance of the model class and
             dynamically creates properties for each of the columns in the table. It also maps the SQL data types into
             equivalent JavaScript types. This allows a natural access and update paradigm where the application can
             deal with JavaScript objects while the ORM takes care of reading, querying and updating the database.</p>
-            <p>The web framework provides a powerful set of access methods to query, join, update and deal with SQL
+            <p>The web framework provides a powerful set of access methods to query, join, update, and deal with SQL
             tables. You can use higher level functions where the ORM generates appropriate SQL statements or you can
             construct and issue your own SQL.</p>
             <p>The ORM Methods include: belongsTo, find, findAll, findOneWhere, findWhere, getColumnNames,
@@ -238,7 +238,7 @@ ejsweb -v compile
             <h3>View Pipeline</h3>
             <p>The View mechanism consists of a processing pipeline that progressively transforms the web page. Views
             start with a partial HTML view page which typically contains embedded ESP. This is parsed by the Web
-            Page Parser and combined with layout views to create a composite web page. This is then parsed and
+            Page Parser and combined with layout views to create a composite web page. It is then parsed and
             converted to pure ESP code which is compiled and cached in a module file (.mod). The module file can
             be run repeatedly by the VM to generate the required HTML for the user view. <img src=
             "../../images/ejsWebView.jpg" alt="View Pipeline" /></p>
@@ -253,9 +253,9 @@ ejsweb -v compile
             <p>A <b>templating engine</b> is an important part of a view framework. It allows you to specify the "look
             and feel" and standard components of a web application in one place, and then resuse the "look and feel" in
             content pages by simply referencing a layout page. The layout page typically contains the top level HTML
-            structure, style sheets and graphic content that is standard on every page. It also specifies the location
-            to insert content from content pages. The content pages focus on the content and data unique to that page
-            and they do not replicate the standard content specified in the master page. In this way, changing the
+            structure, style sheets, and graphic content that is standard on every page. It also specifies the location
+            to insert content from content pages. The content pages focus on the content and data unique to that page.
+            They do not replicate the standard content specified in the master page. In this way, changing the
             layout page in one place will automatically change every web page in the application.</p>
             <p>The web page parser reads the content view pages that contain embedded ejscript code (with .ejs
             extension). It blends the content page with the layout pages and converts it to a pure ESP program
@@ -296,7 +296,7 @@ ejsweb -v compile
             <p>The &lt;% ejscript code %&gt; directive will invoke the given code. No automatic substitution of output
             occurs. However, the code can call "write()" to generate output in the place of the directive.</p>
             <p>The &lt;% include "filename" %&gt; directive will include the given file name at the location of the
-            directive when parsing the web page. Include directives can be nested.</p>
+            directive when parsing the web page. The Include directives can be nested.</p>
             <p>The &lt;%@ layout "file" %&gt; directive specifies the name of the layout page. By using this directive
             in layout pages, you can build up the web page layout by nesting layout pages. If omitted in content pages,
             which is usually the case, the default layout is views/layouts/default.ejs. If omitted in layout pages, it
@@ -349,7 +349,7 @@ ejsweb -v compile
                 <li>Respond to the request</li>
                 <li>Render a response view back to the client</li>
             </ol>
-            <p>The action reponds to the request by examining the request form parameters, query string and other Http
+            <p>The action reponds to the request by examining the request form parameters, query string, and other Http
             and application state information.</p>
             <p>Here is a sample action method that updates a database table based on user submitted form data in
             "params".</p>
