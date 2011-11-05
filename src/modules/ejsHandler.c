@@ -49,7 +49,7 @@ static void openEjs(HttpQueue *q)
                 route->workers = mprGetMaxWorkers();
             }
             route->context = ejsCreatePool(route->workers, "require ejs.web", route->script, route->scriptPath, route->dir);
-            mprLog(5, "ejs: Demand load Ejscript web framework");
+            mprLog(5, "ejs: Create ejs pool for route %s", route->name);
         }
         pool = conn->pool = route->context;
         if ((ejs = ejsAllocPoolVM(pool, EJS_FLAG_HOSTED)) == 0) {
