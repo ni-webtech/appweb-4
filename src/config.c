@@ -704,7 +704,7 @@ static int errorDocumentDirective(MaState *state, cchar *key, cchar *value)
     char    *uri;
     int     status;
 
-    if (!maTokenize(state, value, "%D %S", &status, &uri)) {
+    if (!maTokenize(state, value, "%N %S", &status, &uri)) {
         return MPR_ERR_BAD_SYNTAX;
     }
     httpAddRouteErrorDocument(state->route, status, uri);
