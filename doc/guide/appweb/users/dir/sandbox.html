@@ -157,7 +157,7 @@
                         <td>
                             <p>The LimitClients directive defines the maximum number of simultaneous 
                             client systems that can connect to the server. Connections in excess of this count will 
-                            be rejected. A limit of 0 means unlimited.</p>
+                            be rejected. A limit of '0' means unlimited.</p>
                             <p>This directive counts the number of client systems. A system with many users all using
                             the same IP address will be counted as one client.</p>
                         </td>
@@ -261,7 +261,7 @@
                         <td>
                             <p>The LimitRequests directive defines the maximum number of simultaneous 
                             incoming HTTP requests that are permitted. Requests in excess of this count will 
-                            be rejected. A limit of 0 means unlimited.</p>
+                            be rejected. A limit of '0' means unlimited.</p>
                             <p>This directive limits the number of HTTP requests, whereas the LimitClients directive
                             limits the number of connected client systems.</p>
                             <p>NOTE: that many browsers can and will initiate multiple requests when requesting a
