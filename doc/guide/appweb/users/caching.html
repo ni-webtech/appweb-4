@@ -81,21 +81,21 @@
         </div>
         <div class="contentLeft">
             <h1>Appweb Response Caching</h1>
-            <p>Appweb Response caching is an ideal technique for speeding up a wide variety of web applications. By 
-            caching frequently used pages, those pages can be served faster than the normal approach of generating
+            <p>Appweb Response caching is an ideal technique for speeding up a wide variety of web applications. 
+            Frequently used pages are cached and therefore served faster than the normal approach of generating
             the web page each and every time the user visits the page. However, caching can be a complex topic
-            as there are several places to locate the cached content and many ways to configure the overal caching
+            as there are several places to locate the cached content and many ways to configure the overall caching
             architecture. This document provides a basic overview of Appweb
             caching and how to configure its caching capabilities.</p> 
             <h2>Why Cache?</h2>
-            <p>When a browser issues an HTTP request to a server, the request must be transmitted, received, the 
-            response computed, delivered and finally be rendered in the browser. This can may take from fractions of a 
+            <p>When a browser issues an HTTP request to a server, that request must be transmitted and received. Then the 
+            response must be computed, delivered and finally rendered in the browser. This process may take from fractions of a 
             second up to many seconds to complete. The delays are comprised of the many steps the request and 
             response must traverse from the browser to the server and back. These steps all impart delay. The key
             delays are:
             <ul>
                 <li>Network travel time for the request to travel from the browser to the server</li>
-                <li>Processing time for run the request and prepare a response</li>
+                <li>Processing time to run the request and to prepare a response</li>
                 <li>Network travel time for the response to travel from the server to the browser</li>
             </ul>
             <p>Network travel time for the request and response can be highly variable depending on network congestion. 
@@ -106,12 +106,12 @@
             to generate the response can be eliminated.</p>
             
             <h2 class="section">Caching Options</h2>
-            <p>When responding to a client request, there are four alternatives for how to utilize Appweb caching:</p>
+            <p>When responding to a client request, there are four alternative ways to utilize Appweb caching:</p>
             <p><img class="xbare-screen" src="../../../images/caching/caching-steps.jpg" /></p>
             <h3>Options</h3>
             <ol>
                 <li>Use the client cache and don't contact the server at all.</li>
-                <li>Use the client cache but first check with the server if the client cache is acceptable.</li>
+                <li>Use the client cache but first check with the server to determine whether the client cache is acceptable.</li>
                 <li>Use the server cache because the client doesn't have a usable response.</li> 
                 <li>Don't use any cache and generate a new response</li>
             </ol>
@@ -123,7 +123,7 @@
             the consequences of serving stale content are non-critical.</p>
             <h3>Client Cache With Server Verification</h3>
             <p>The downside of client caching without server contact can be offset by contacting the server and
-            verifying that the client cached data is current. In this mode, both the client and server retain cached 
+            verifying that the client-cached data is current. In this mode, both the client and server retain cached 
             copies of the response. When the client makes a request, it submits the unique Etag and modification date
             of the response. The server checks these two fields against its cached copy and if they match, the server
             responds to the client immediately without regenerating the response. This eliminates the delay in
@@ -134,13 +134,13 @@
             <p>The advantage of this mode, is that the server keeps control and can immediately update cached content. It 
             eliminates the delay in generating the response and can greatly reduce network traffic. The downside is that
             the server must be contacted by the client with the associated network latency. </p>
-            <p>If the client cache either does not contain a response or the client cache has a stale response, the
-            server must transmit the full response data back to the client. In this case, that the cost of generating
+            <p>If the client cache either does not contain a response, or the client cache has a stale response, the
+            server must transmit the full response data back to the client. In this case, the cost of generating
             the response is eliminated, but the full response data must be sent over the network to the client. </p>
             <P>This kind of caching is best for dynamic web pages that are viewed more often than the data on which they
             depend is updated.</p>
             <h2 class="section">Caching on the Server</h2>
-            <p>On the server, there are there paradigms for how and when to update cached responses.</p>
+            <p>On the server, there are three paradigms for how and when to update cached responses.</p>
             <ol>
                 <li>Pull-Through</li>
                 <li>Manual Verification</li>
@@ -172,7 +172,7 @@
             <a href="../../../api/esp.html#group___esp_req_1ga2d10fdd68ab00d306d344c815f7655e7"><tt>espUpdateCache</tt></a>
             API.  When the client request is subsequently received, the response is retrieved from the cache without
             running a request handler. This paradigm is effective if the delay in creating a response web page is large.
-            In that case, pre-computing the web page in the background means that client request can be serviced very
+            In that case, pre-computing the web page in the background means that the client request can be serviced very
             quickly without waiting for the page to be generated.</p>
             <h2 class="section">Configuring Caching</h2>
             <p>Appweb caching is configured via the <a href="dir/route.html#cache"><tt>Cache</tt></a> configuration
@@ -206,7 +206,7 @@ Cache server manual /dashboard.esp
                 directive will cache the /status.esp and /inventory.esp URIs if the requests use the GET or POST HTTP
                 methods.</p>
             <p>The <tt>Cache server all /user/login.esp</tt> directive will cache all requests that have the given URI
-            regardless of any additional query, POST data or route parameters. i.e. This means the request
+            regardless of any additional query, POST data or route parameters. i.e. this means the request
             "/users/login.esp?fast" will use the same cached response as "/users/login.esp".
             <p>The <tt>Cache server only /user/login.esp?first=1</tt> directive will cache "only" this exact request.
             When matching a request with this cache record, the request parameters (query, POST data and route
@@ -226,7 +226,7 @@ Cache server manual /dashboard.esp
             configuration file. Requests that match the current route will consider the caching records in the order in
             which they are defined in the configuration file. The first matching cache record will be used for the
             request.</p>
-            <p>Caching records, like most other configuration file settings, are inherited by inner routes. Consequently if
+            <p>Caching records, like most other configuration file settings, are inherited by inner routes. Consequently, if
             you define a caching record at the default server level, all subsequent routes will inherit that caching
             definition.</p>
 
