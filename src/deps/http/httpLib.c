@@ -3843,7 +3843,7 @@ bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn)
         break;
     }
     if (event == HTTP_VALIDATE_CLOSE_CONN || event == HTTP_VALIDATE_CLOSE_REQUEST) {
-        LOG(2, "Validate request for %s. Active connections %d, active requests: %d/%d, active client IP addresses %d/%d", 
+        LOG(4, "Validate request for %s. Active connections %d, active requests: %d/%d, active client IP addresses %d/%d", 
             action, mprGetListLength(endpoint->http->connections), endpoint->requestCount, limits->requestCount, 
             endpoint->clientCount, limits->clientCount);
     }

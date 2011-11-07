@@ -1,5 +1,5 @@
 /*
- *	Ejscript documentation style sheet
+    Documentation style sheet
  */
 
 html {
@@ -19,9 +19,6 @@ body {
 }
 
 
-/*
- * 	Top banner section
- */
 div.top {
 	height: 125px;
 	width: 900px;
@@ -44,9 +41,6 @@ a.logo {
 	text-decoration: none;
 }
 
-/*
- * 	Search and version
- */
 div.topRight {
 	float: right;
 	padding: 23px 18px 0 0;
@@ -87,9 +81,6 @@ div.search form #q:hover, div.search form #q:focus {
 	background: #FFFFFF;
 }
 
-/*
- *	Navigation history line (crumbs)
- */
 div.crumbs { 
 	float: left;
 	margin: 74px 0 0 20px;
@@ -107,9 +98,6 @@ div.crumbs a:hover {
 	color: #FFFFFF;
 }
 
-/*
- *	Body content
- */
 div.content {
 	width: 850px;
 	min-height: 400px;
@@ -176,9 +164,6 @@ div.homeRight {
 }
 
 
-/*
- *  Content pages (everything else)
- */
 div.contentLeft {
 	width: 75%;
 	margin: 0;
@@ -217,10 +202,6 @@ div.contentRight h2 {
 	background-color: #f2f2f2;
 }
 
-
-/*
- * 	Generic styles
- */
 p { 
 	line-height: 130%; 
 	margin-bottom: 5px;
