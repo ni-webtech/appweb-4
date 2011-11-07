@@ -263,6 +263,7 @@ static void angel()
                     mprError("Suspending restarts for one hour");
                     app->restartWarned++;
                 }
+                mprSleep(60 * 1000);
                 continue;
             }
 
