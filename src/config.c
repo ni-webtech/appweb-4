@@ -1790,6 +1790,10 @@ static int virtualHostDirective(MaState *state, cchar *key, cchar *value)
     state = maPushState(state);
     if (state->enabled) {
         mprParseSocketAddress(value, &ip, &port, -1);
+        /*
+            Inherit the current default route configuration (only)
+            Other routes are not inherited due to the reset routes below
+         */
         state->route = httpCreateInheritedRoute(httpGetHostDefaultRoute(state->host));
         state->host = httpCloneHost(state->host);
         httpResetRoutes(state->host);

@@ -179,6 +179,12 @@ static void processPhp(HttpQueue *q)
         return;
     }
 
+printf("FILENAME %s\n", tx->filename);
+printf("URI %s\n", rx->uri);
+printf("OURI %s\n", rx->originalUri);
+printf("PATH_INFO %s\n", rx->pathInfo);
+printf("SCRIPT %s\n", rx->scriptName);
+
     /*
         Set the request context
      */

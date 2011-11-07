@@ -102,7 +102,7 @@ MAIN(appweb, int argc, char **argv)
         if (*argp != '-') {
             break;
         }
-        if (strcmp(argp, "--config") == 0) {
+        if (strcmp(argp, "--config") == 0 || strcmp(argp, "--conf") == 0) {
             if (argind >= argc) {
                 usageError();
             }
