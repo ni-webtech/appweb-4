@@ -96,7 +96,7 @@
                     possible.</p>
                     <p>Use <tt>./configure --disable-all</tt> to select the minimal feature set.</p>
                     See also the <a href="building.html">Building from Source</a> document for definitions
-                    of the various the build variables used in the out/inc/buildConfig.h file.</p>
+                    of the various build variables used in the out/inc/buildConfig.h file.</p>
                 </li>
                 <li>
                     <h3>Define your O/S configuration string</h3>
@@ -104,7 +104,7 @@
                     build/bin/config.guess and build/bin/config.sub. Most probably, your O/S and CPU architecture are
                     already in this file, but if you are porting to a new operating system, these script programs may
                     not recognize your --host settings.</p>
-                    <p>The --host and --build switches take a system architecture specifications in the form:
+                    <p>The --host and --build switches take a system architecture specification in the form:
                     CPU-VENDOR-OS. For example: i386-pc-linux, or, powerpc-wrs-vxworks. The host system is the target
                     system that will eventually run Appweb. The build system is the system being used to compile and
                     build Appweb. The config.sub program takes an abbreviated system string and emits a fully qualified
@@ -131,15 +131,15 @@
                     <pre>
 ./configure --disable-all --host=powerpc-wrs-vxworks
 </pre>
-                    <p>After running configure, check the output in build/buildConfig.make. If your system is UNIX like
-                    or windows like, you may need to edit the parseSystemConfiguration function in the configure script
+                    <p>After running configure, check the output in build/buildConfig.make. If your system is UNIX-like
+                    or windows-like, you may need to edit the parseSystemConfiguration function in the configure script
                     and add a new definition for your O/S. This function controls the UNIX_LIKE and WIN_LIKE
                     defines.</p>
                 </li>
                 <li>
                     <h3>Pick a Name for the Operating System Port</h3>
                     <p>If you are doing a port for a new operating system, you need to pick a symbolic name that will
-                    be used in Makefiles, build scripts and for operating system specific directories. Use all CAPS for
+                    be used in Makefiles, build scripts, and operating system specific directories. Use all CAPS for
                     your OS name without any "_" or "-" characters. For example: "LINUX" is the Appweb name for the
                     Linux specific portions. For the rest of this document, we will use the name <b>NEWOS</b> for the
                     O/S symbolic name.</p>
@@ -198,7 +198,7 @@
                     <p>The make subsystem requires GNU make and a fairly compliant bash shell implementation. If you
                     are using windows, the CYGWIN package will provide the GNU environment. If you are porting to an
                     O/S that uses the GNU development tools, you probably have little to do in this step. If not, you
-                    may require more modifications required to your make.rules file.</p>
+                    may require more modifications to your make.rules file.</p>
                 </li>
                 <li>
                     <h3>Compile the Tools</h3>
@@ -242,7 +242,7 @@ make test
             <p>Once you have a basic port running, you should send it back for the team to look over. They can provide
             advice and suggestions. At the first opportunity, your changes may be merged back into the development tree
             so others can benefit from your work.</p>
-            <p>Good luck and all the best. Please give feedback to the development team at <a href=
+            <p>Good luck and have fun. Please give feedback to the development team at <a href=
             "mailto:dev@embedthis.com">dev@embedthis.com</a>.</p>
         </div>
     </div>

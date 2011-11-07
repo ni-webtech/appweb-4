@@ -157,7 +157,7 @@
                         <td>
                             <p>The LimitClients directive defines the maximum number of simultaneous 
                             client systems that can connect to the server. Connections in excess of this count will 
-                            be rejected. A limit of 0 means unlimited.</p>
+                            be rejected. A limit of '0' means unlimited.</p>
                             <p>This directive counts the number of client systems. A system with many users all using
                             the same IP address will be counted as one client.</p>
                         </td>
@@ -261,7 +261,7 @@
                         <td>
                             <p>The LimitRequests directive defines the maximum number of simultaneous 
                             incoming HTTP requests that are permitted. Requests in excess of this count will 
-                            be rejected. A limit of 0 means unlimited.</p>
+                            be rejected. A limit of '0' means unlimited.</p>
                             <p>This directive limits the number of HTTP requests, whereas the LimitClients directive
                             limits the number of connected client systems.</p>
                             <p>NOTE: that many browsers can and will initiate multiple requests when requesting a
@@ -581,7 +581,7 @@
                             allocation errors 
                             before they occur. It does this by defining a memory limit and enforcing a memory policy
                             for how to react when memory is depleted.</p>
-                            <p>The MemoryPolicy directive defines how Appweb will response to low memory conditions.
+                            <p>The MemoryPolicy directive defines how Appweb will respond to low memory conditions.
                             While the LimitMemory directive defines a maximum amount of memory that Appweb is permitted to
                             use, the MemoryPolicy directive defines how Appweb will respond when the limit is
                             approached and exceeded.</p>
@@ -695,7 +695,7 @@
                         <td>
                             <p>The ThreadStack directive defines the size of the thread stack to allocate for each
                             thread. The limit is an integer between zero and an operating system defined maximum&nbsp;
-                            where zero means use the system default. The default limit is 0 which implies the system
+                            where zero means use the system default. The default limit is zero which implies the system
                             default.</p>
                             <p>If you are experiencing crashes when running multi-threaded, and Appweb runs without
                             error when running single-threaded, you may need to increase this value. See the <a href=
