@@ -13049,14 +13049,18 @@ int httpShouldTrace(HttpConn *conn, int dir, int item, cchar *ext)
 //  MOB OPT
 static void traceBuf(HttpConn *conn, int dir, int level, cchar *msg, cchar *buf, ssize len)
 {
-    cchar       *cp, *tag, *digits;
+    cchar       *start, *cp, *tag, *digits;
     char        *data, *dp;
     static int  txSeq = 0;
     static int  rxSeq = 0;
     int         seqno, i, printable;
 
+    start = buf;
+    if (len > 3 && start[0] == (char) 0xef && start[1] == (char) 0xbb && start[2] == (char) 0xbf) {
+        start += 3;
+    }
     for (printable = 1, i = 0; i < len; i++) {
-        if (!isascii(buf[i])) {
+        if (!isascii(start[i])) {
             printable = 0;
         }
     }
@@ -13069,7 +13073,7 @@ static void traceBuf(HttpConn *conn, int dir, int level, cchar *msg, cchar *buf,
     }
     if (printable) {
         data = mprAlloc(len + 1);
-        memcpy(data, buf, len);
+        memcpy(data, start, len);
         data[len] = '\0';
         mprRawLog(level, "\n>>>>>>>>>> %s %s packet %d, len %d (conn %d) >>>>>>>>>>\n%s", tag, msg, seqno, 
             len, conn->seqno, data);
@@ -13078,7 +13082,7 @@ static void traceBuf(HttpConn *conn, int dir, int level, cchar *msg, cchar *buf,
             len, conn->seqno);
         data = mprAlloc(len * 3 + ((len / 16) + 1) + 1);
         digits = "0123456789ABCDEF";
-        for (i = 0, cp = buf, dp = data; cp < &buf[len]; cp++) {
+        for (i = 0, cp = start, dp = data; cp < &start[len]; cp++) {
             *dp++ = digits[(*cp >> 4) & 0x0f];
             *dp++ = digits[*cp++ & 0x0f];
             *dp++ = ' ';

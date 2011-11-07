@@ -62,6 +62,7 @@ int maMatchDir(HttpConn *conn, HttpRoute *route, int direction)
             return HTTP_ROUTE_REJECT;
         }
         if (dir->enabled && tx->fileInfo.isDir && sends(rx->pathInfo, "/")) {
+            conn->data = dir;
             return HTTP_ROUTE_OK;
         }
     }
@@ -83,7 +84,7 @@ static void processDir(HttpQueue *q)
     conn = q->conn;
     rx = conn->rx;
     tx = conn->tx;
-    dir = q->stage->stageData;
+    dir = conn->data;
 
     mprLog(5, "processDir");
     mprAssert(tx->filename);
@@ -130,7 +131,7 @@ static void parseQuery(HttpConn *conn)
 
     rx = conn->rx;
     tx = conn->tx;
-    dir = tx->handler->stageData;
+    dir = conn->data;
     
     query = sclone(rx->parsedUri->query);
     if (query == 0) {
@@ -184,12 +185,11 @@ static void sortList(HttpConn *conn, MprList *list)
     int         count, i, j, rc;
 
     tx = conn->tx;
-    dir = tx->handler->stageData;
+    dir = conn->data;
     
     if (dir->sortField == 0) {
         return;
     }
-
     count = mprGetListLength(list);
     items = (MprDirEntry**) list->items;
     if (scasematch(dir->sortField, "Name")) {
@@ -261,8 +261,7 @@ static void outputHeader(HttpQueue *q, cchar *path, int nameSize)
     char    *parent, *parentSuffix;
     int     reverseOrder, fancy, isRootDir;
 
-    dir = q->stage->stageData;
-    
+    dir = q->conn->data;
     fancy = 1;
 
     httpWrite(q, "<!DOCTYPE HTML PUBLIC \"-/*W3C//DTD HTML 3.2 Final//EN\">\r\n");
@@ -365,11 +364,11 @@ static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *path, int nameSize)
                     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" 
                 };
 
-    dir = q->stage->stageData;
-    if (ep->size >= (1024*1024*1024)) {
+    dir = q->conn->data;
+    if (ep->size >= (1024 * 1024 * 1024)) {
         fmtNum(sizeBuf, sizeof(sizeBuf), (int) ep->size, 1024 * 1024 * 1024, "G");
 
-    } else if (ep->size >= (1024*1024)) {
+    } else if (ep->size >= (1024 * 1024)) {
         fmtNum(sizeBuf, sizeof(sizeBuf), (int) ep->size, 1024 * 1024, "M");
 
     } else if (ep->size >= 1024) {
@@ -436,7 +435,7 @@ static void outputFooter(HttpQueue *q)
     Dir         *dir;
     
     conn = q->conn;
-    dir = q->stage->stageData;
+    dir = conn->data;
     
     if (dir->fancyIndexing == 2) {
         httpWrite(q, "<tr><th colspan=\"5\"><hr /></th></tr>\r\n</table>\r\n");
@@ -458,7 +457,7 @@ static void filterDirList(HttpConn *conn, MprList *list)
     MprDirEntry     *dp;
     int             next;
 
-    dir = conn->tx->handler->stageData;
+    dir = conn->data;
     
     /*
         Do pattern matching. Entries that don't match, free the name to mark
