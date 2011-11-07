@@ -138,3 +138,5 @@ src/esp/www/files.save
 *.tdat
 trace.log
 web/caching/cache.cgi
+web/caching/cache.cgi
+src/test/web/caching/cache.cgi
