@@ -10695,6 +10695,7 @@ static void manageRx(HttpRx *rx, int flags)
         mprMark(rx->securityToken);
         mprMark(rx->userAgent);
         mprMark(rx->params);
+        mprMark(rx->svars);
         mprMark(rx->inputRange);
         mprMark(rx->authAlgorithm);
         mprMark(rx->authDetails);
@@ -15323,54 +15324,62 @@ void httpCreateCGIParams(HttpConn *conn)
     HttpHost        *host;
     HttpUploadFile  *up;
     MprSocket       *sock;
-    MprHash         *vars;
+    MprHash         *vars, *svars;
     MprKey          *kp;
     int             index;
 
     rx = conn->rx;
+    if ((svars = rx->svars) != 0) {
+        /* Do only once */
+        return;
+    }
+    svars = rx->svars = mprCreateHash(HTTP_MED_HASH_SIZE, 0);
     tx = conn->tx;
     host = conn->host;
     sock = conn->sock;
-    vars = httpGetParams(conn);
-    mprAssert(vars);
 
-    mprAddKey(vars, "AUTH_TYPE", rx->authType);
-    mprAddKey(vars, "AUTH_USER", conn->authUser);
-    mprAddKey(vars, "AUTH_ACL", MPR->emptyString);
-    mprAddKey(vars, "CONTENT_LENGTH", rx->contentLength);
-    mprAddKey(vars, "CONTENT_TYPE", rx->mimeType);
-    mprAddKey(vars, "DOCUMENT_ROOT", rx->route->dir);
-    mprAddKey(vars, "GATEWAY_INTERFACE", sclone("CGI/1.1"));
-    mprAddKey(vars, "QUERY_STRING", rx->parsedUri->query);
-    mprAddKey(vars, "REMOTE_ADDR", conn->ip);
-    mprAddKeyFmt(vars, "REMOTE_PORT", "%d", conn->port);
-    mprAddKey(vars, "REMOTE_USER", conn->authUser);
-    mprAddKey(vars, "REQUEST_METHOD", rx->method);
-    mprAddKey(vars, "REQUEST_TRANSPORT", sclone((char*) ((conn->secure) ? "https" : "http")));
-    mprAddKey(vars, "SERVER_ADDR", sock->acceptIp);
-    mprAddKey(vars, "SERVER_NAME", host->name);
-    mprAddKeyFmt(vars, "SERVER_PORT", "%d", sock->acceptPort);
-    mprAddKey(vars, "SERVER_PROTOCOL", conn->protocol);
-    mprAddKey(vars, "SERVER_ROOT", host->home);
-    mprAddKey(vars, "SERVER_SOFTWARE", conn->http->software);
-    mprAddKey(vars, "REQUEST_URI", rx->uri);
-    mprAddKey(vars, "REQUEST_ORIGINAL_URI", rx->originalUri);
+    mprAddKey(svars, "AUTH_TYPE", rx->authType);
+    mprAddKey(svars, "AUTH_USER", conn->authUser);
+    mprAddKey(svars, "AUTH_ACL", MPR->emptyString);
+    mprAddKey(svars, "CONTENT_LENGTH", rx->contentLength);
+    mprAddKey(svars, "CONTENT_TYPE", rx->mimeType);
+    mprAddKey(svars, "DOCUMENT_ROOT", rx->route->dir);
+    mprAddKey(svars, "GATEWAY_INTERFACE", sclone("CGI/1.1"));
+    mprAddKey(svars, "QUERY_STRING", rx->parsedUri->query);
+    mprAddKey(svars, "REMOTE_ADDR", conn->ip);
+    mprAddKeyFmt(svars, "REMOTE_PORT", "%d", conn->port);
+    mprAddKey(svars, "REMOTE_USER", conn->authUser);
+    mprAddKey(svars, "REQUEST_METHOD", rx->method);
+    mprAddKey(svars, "REQUEST_TRANSPORT", sclone((char*) ((conn->secure) ? "https" : "http")));
+    mprAddKey(svars, "SERVER_ADDR", sock->acceptIp);
+    mprAddKey(svars, "SERVER_NAME", host->name);
+    mprAddKeyFmt(svars, "SERVER_PORT", "%d", sock->acceptPort);
+    mprAddKey(svars, "SERVER_PROTOCOL", conn->protocol);
+    mprAddKey(svars, "SERVER_ROOT", host->home);
+    mprAddKey(svars, "SERVER_SOFTWARE", conn->http->software);
+    /*
+        For PHP, REQUEST_URI must be the original URI. The SCRIPT_NAME will refer to the new pathInfo
+     */
+    mprAddKey(svars, "REQUEST_URI", rx->originalUri);
     /*  
         URIs are broken into the following: http://{SERVER_NAME}:{SERVER_PORT}{SCRIPT_NAME}{PATH_INFO} 
         NOTE: Appweb refers to pathInfo as the app relative URI and scriptName as the app address before the pathInfo.
         In CGI|PHP terms, the scriptName is the appweb rx->pathInfo and the PATH_INFO is the extraPath. 
      */
-    mprAddKey(vars, "PATH_INFO", rx->extraPath);
-    mprAddKeyFmt(vars, "SCRIPT_NAME", "%s%s", rx->scriptName, rx->pathInfo);
-    mprAddKey(vars, "SCRIPT_FILENAME", tx->filename);
+    mprAddKey(svars, "PATH_INFO", rx->extraPath);
+    mprAddKeyFmt(svars, "SCRIPT_NAME", "%s%s", rx->scriptName, rx->pathInfo);
+    mprAddKey(svars, "SCRIPT_FILENAME", tx->filename);
     if (rx->extraPath) {
         /*  
             Only set PATH_TRANSLATED if extraPath is set (CGI spec) 
          */
         mprAssert(rx->extraPath[0] == '/');
-        mprAddKey(vars, "PATH_TRANSLATED", mprNormalizePath(sfmt("%s%s", rx->route->dir, rx->extraPath)));
+        mprAddKey(svars, "PATH_TRANSLATED", mprNormalizePath(sfmt("%s%s", rx->route->dir, rx->extraPath)));
     }
+
     if (rx->files) {
+        vars = httpGetParams(conn);
+        mprAssert(vars);
         for (index = 0, kp = 0; (kp = mprGetNextKey(conn->rx->files, kp)) != 0; index++) {
             up = (HttpUploadFile*) kp->data;
             mprAddKey(vars, sfmt("FILE_%d_FILENAME", index), up->filename);

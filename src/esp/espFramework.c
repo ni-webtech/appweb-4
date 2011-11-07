@@ -820,8 +820,16 @@ void espShowRequest(HttpConn *conn)
         Http Headers
      */
     env = espGetHeaderHash(conn);
-    for (kp = 0; (kp = mprGetNextKey(env, kp)) != 0; ) {
+    for (ITERATE_KEYS(env, kp)) {
         espRender(conn, "HEADER %s=%s\r\n", kp->key, kp->data ? kp->data: "null");
+    }
+    espRender(conn, "\r\n");
+
+    /*
+        Server vars
+     */
+    for (ITERATE_KEYS(conn->rx->svars, kp)) {
+        espRender(conn, "SERVER %s=%s\r\n", kp->key, kp->data ? kp->data: "null");
     }
     espRender(conn, "\r\n");
 
@@ -829,7 +837,7 @@ void espShowRequest(HttpConn *conn)
         Form vars
      */
     if ((env = espGetParams(conn)) != 0) {
-        for (kp = 0; (kp = mprGetNextKey(env, kp)) != 0; ) {
+        for (ITERATE_KEYS(env, kp)) {
             espRender(conn, "FORM %s=%s\r\n", kp->key, kp->data ? kp->data: "null");
         }
         espRender(conn, "\r\n");

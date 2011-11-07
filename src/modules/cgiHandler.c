@@ -122,9 +122,13 @@ static void startCgi(HttpQueue *q)
     /*  
         Build environment variables
      */
-    varCount = mprGetHashLength(rx->params) + mprGetHashLength(rx->headers);
+    varCount = mprGetHashLength(rx->headers) + mprGetHashLength(rx->svars);
+    if (rx->params) {
+        varCount += mprGetHashLength(rx->params);
+    }
     if ((envv = mprAlloc((varCount + 1) * sizeof(char*))) != 0) {
         count = copyVars(envv, 0, rx->params, "");
+        count = copyVars(envv, 0, rx->svars, "");
         count = copyVars(envv, count, rx->headers, "HTTP_");
         mprAssert(count <= varCount);
     }
@@ -977,7 +981,7 @@ static int copyVars(char **envv, int index, MprHash *vars, cchar *prefix)
     MprKey  *kp;
     char    *cp;
 
-    for (kp = 0; (kp = mprGetNextKey(vars, kp)) != 0; ) {
+    for (ITERATE_KEYS(vars, kp)) {
         if (kp->data) {
             if (prefix) {
                 cp = sjoin(prefix, kp->key, "=", (char*) kp->data, NULL);

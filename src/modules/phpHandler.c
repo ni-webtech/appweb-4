@@ -141,7 +141,6 @@ static void openPhp(HttpQueue *q)
 
     } else if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST | HTTP_PUT)) {
         httpMapFile(q->conn, rx->route);
-        httpCreateCGIParams(q->conn);
         if (!q->stage->stageData) {
             if (initializePhp(q->conn->http) < 0) {
                 httpError(q->conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "PHP initialization failed");
@@ -164,11 +163,10 @@ static void processPhp(HttpQueue *q)
     HttpConn            *conn;
     HttpRx              *rx;
     HttpTx              *tx;
-    MprKey              *kp;
     MaPhp               *php;
     FILE                *fp;
     cchar               *value;
-    char                shebang[MPR_MAX_STRING], *key;
+    char                shebang[MPR_MAX_STRING];
     zend_file_handle    file_handle;
 
     TSRMLS_FETCH();
@@ -212,7 +210,7 @@ static void processPhp(HttpQueue *q)
         PG(max_input_time) = -1;
         EG(timeout_seconds) = 0;
 
-        /* The readPostData callback may be invoked during startup */
+        /* The readBodyData callback may be invoked during startup */
         php_request_startup(TSRMLS_C);
         CG(zend_lineno) = 0;
 
@@ -224,28 +222,6 @@ static void processPhp(HttpQueue *q)
         httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "PHP initialization failed");
         return;
     } zend_end_try();
-
-
-    kp = mprGetFirstKey(rx->headers);
-    while (kp) {
-        if (kp->data) {
-            key = mapHyphen(sjoin("HTTP_", supper(kp->key), NULL));
-            php_register_variable(key, (char*) kp->data, php->var_array TSRMLS_CC);
-            mprLog(4, "php: header %s = %s", key, kp->data);
-
-        }
-        kp = mprGetNextKey(rx->headers, kp);
-    }
-    if (rx->params) {
-        kp = mprGetFirstKey(rx->params);
-        while (kp) {
-            if (kp->data) {
-                php_register_variable(supper(kp->key), (char*) kp->data, php->var_array TSRMLS_CC);
-                mprLog(4, "php: form var %s = %s", kp->key, kp->data);
-            }
-            kp = mprGetNextKey(rx->params, kp);
-        }
-    }
 
     /*
         Execute the script file
@@ -267,7 +243,7 @@ static void processPhp(HttpQueue *q)
      */
     file_handle.handle.fp = fp;
     shebang[0] = '\0';
-    (void) fgets(shebang, sizeof(shebang), file_handle.handle.fp);
+    if (fgets(shebang, sizeof(shebang), file_handle.handle.fp)) {}
     if (shebang[0] != '#' || shebang[1] != '!') {
         fseek(fp, 0L, SEEK_SET);
     }
@@ -327,20 +303,57 @@ static int writeBlock(cchar *str, uint len TSRMLS_DC)
 static void registerServerVars(zval *track_vars_array TSRMLS_DC)
 {
     HttpConn    *conn;
+    HttpRx      *rx;
     MaPhp       *php;
+    MprKey      *kp;
+    char        *key;
 
     conn = (HttpConn*) SG(server_context);
     if (conn == 0) {
         return;
     }
+    rx = conn->rx;
+
     php_import_environment_variables(track_vars_array TSRMLS_CC);
 
-    if (SG(request_info).request_uri) {
-        php_register_variable("PHP_SELF", SG(request_info).request_uri,  track_vars_array TSRMLS_CC);
-    }
     php = httpGetQueueData(conn);
     mprAssert(php);
     php->var_array = track_vars_array;
+
+    httpCreateCGIParams(conn);
+
+    /*
+        Set from three collections: HTTP Headers, Server Vars and Form Params
+     */
+    if (rx->headers) {
+        for (ITERATE_KEYS(rx->headers, kp)) {
+            if (kp->data) {
+                key = mapHyphen(sjoin("HTTP_", supper(kp->key), NULL));
+                php_register_variable(key, (char*) kp->data, php->var_array TSRMLS_CC);
+                mprLog(4, "php: header %s = %s", key, kp->data);
+            }
+        }
+    }
+    if (rx->svars) {
+        for (ITERATE_KEYS(rx->svars, kp)) {
+            if (kp->data) {
+                php_register_variable(kp->key, (char*) kp->data, php->var_array TSRMLS_CC);
+                mprLog(4, "php: server var %s = %s", kp->key, kp->data);
+            }
+        }
+    }
+    if (rx->params) {
+        for (ITERATE_KEYS(rx->params, kp)) {
+            if (kp->data) {
+                php_register_variable(supper(kp->key), (char*) kp->data, php->var_array TSRMLS_CC);
+                mprLog(4, "php: form var %s = %s", kp->key, kp->data);
+            }
+        }
+    }
+    if (SG(request_info).request_uri) {
+        php_register_variable("PHP_SELF", SG(request_info).request_uri,  track_vars_array TSRMLS_CC);
+    }
+    php_register_variable("HTTPS", (conn->secure) ? "on" : "",  track_vars_array TSRMLS_CC);
 }
 
 

@@ -4061,6 +4061,7 @@ typedef struct HttpRx {
     char            *userAgent;             /**< User-Agent header */
 
     MprHash         *params;                /**< Request params (Query and post data variables) */
+    MprHash         *svars;                 /**< Server variables */
     HttpRange       *inputRange;            /**< Specified range for rx (post) data */
 
     /*  
