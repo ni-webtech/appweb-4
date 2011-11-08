@@ -4413,6 +4413,7 @@ HttpHost *httpCloneHost(HttpHost *parent)
         Don't clone ip, port and name
      */
     host->parent = parent;
+    host->responseCache = parent->responseCache;
     host->dirs = parent->dirs;
     host->routes = parent->routes;
     host->flags = parent->flags | HTTP_HOST_VHOST;

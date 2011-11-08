@@ -57,6 +57,7 @@ int maParseConfig(MaServer *server, cchar *path, int flags)
         NOTE: the route is not added to the host until the finalization below
      */
     host = httpCreateHost();
+    httpSetHostName(host, "default-server");
     route = httpCreateRoute(host);
     httpSetHostDefaultRoute(host, route);
 
