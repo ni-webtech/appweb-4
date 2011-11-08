@@ -432,12 +432,12 @@
   </div>
   <div class="apiDetail">
 <p>Define the access log.</p>
-    <dl><dt><b>Description</b>:</dt><dd>The access log is used to log detailes about requests to the web server. Errors are logged in the error log.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>The access log is used to log details about requests to the web server. Errors are logged in the error log.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">host</td><td>HttpHost object for which to define the logging characteristics.</td>
     <tr><td class="param">path</td><td>Pathname for the log file.</td>
-    <tr><td class="param">format</td><td>Log file format. The format string argument defines how Appweb will record HTTP accesses to the access log. The following log format specifiers are supported: <ul><li>%% - Percent sign </li><li>a - Remote IP address </li><li>b - Response bytes written to the client include headers. If zero, &quot;-&quot; is written. </li><li>B - Response bytes written excluding headers </li><li>h - Rmote hostname </li><li>O - Bytes written include headers. If zero bytes, &quot;0&quot; is written. </li><li>r - First line of the request </li><li>s - HTTP response status code </li><li>t - Time the request was completed </li><li>u - Authenticated username </li><li>%{header}i -  </li></ul></td>
+    <tr><td class="param">format</td><td>Log file format. The format string argument defines how Appweb will record HTTP accesses to the access log. The following log format specifiers are supported: <ul><li>%% - Percent sign </li><li>a - Remote IP address </li><li>b - Response bytes written to the client include headers. If zero, &quot;-&quot; is written. </li><li>B - Response bytes written excluding headers </li><li>h - Remote hostname </li><li>O - Bytes written include headers. If zero bytes, &quot;0&quot; is written. </li><li>r - First line of the request </li><li>s - HTTP response status code </li><li>t - Time the request was completed </li><li>u - Authenticated username </li><li>%{header}i -  </li></ul></td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="http.html#group___http" class="ref">Http</a>, <a href="#group___appweb_1ga6dddb0f76c4bb135ee006f2fb48f38ae" class="ref">maAddServer</a>, <a href="#group___appweb_1gaf558e80479e238939e4c4edf16a16ec0" class="ref">maApplyChangedGroup</a>, <a href="#group___appweb_1ga04b040307aaccc46eaf6fef1dd61d024" class="ref">maApplyChangedUser</a>, <a href="#group___appweb_1ga3c5d11ffcda01cb1d75ae24faa39cdee" class="ref">maCreateAppweb</a>, <a href="#group___appweb_1gaeea4a201c9a8cca9521cd006436b8570" class="ref">maGetUserGroup</a>, <a href="#group___appweb_1gaba2d0d4cfa73dbc028719098908eaa89" class="ref">maLoadModule</a>, <a href="#group___appweb_1gaf5f955fddd686c69147a13fe34f57a9b" class="ref">maLookupServer</a>, <a href="#group___appweb_1ga0595cfc8aa7064cd3b26f4bd2c5748ba" class="ref">maMatchDir</a>, <a href="#group___appweb_1gaf72ae42c5d6c767a221d6d84f4f0b83b" class="ref">maParseInit</a>, <a href="#group___appweb_1ga30109915ae5446c9299173528c2c880e" class="ref">maSetDefaultServer</a>, <a href="#group___appweb_1ga29500f7d8b117921cf5c68beb7ef40ad" class="ref">maSetHttpGroup</a>, <a href="#group___appweb_1gaf824d096f9596ebf8840d7e8d005baad" class="ref">maSetHttpUser</a>, <a href="#group___appweb_1gaad2b501a1eef1b0210189ef055c4f158" class="ref">maStartAppweb</a>, <a href="#group___appweb_1gae98b753968134ec1c2bc50d5d63b2a1f" class="ref">maStopAppweb</a></dd></dl>
@@ -590,7 +590,7 @@
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">host</td><td>HttpHost object. This should be the default Appweb host.</td>
-    <tr><td class="param">logSpec</td><td>Set the log file name and level. The format is &quot;pathName[:level]&quot;. The following levels are generally observed: <ul><li>0 -Essential messages, fatal errors and critical warnings </li><li>1 -Hard errors </li><li>2 -Configuration setup and soft warnings </li><li>3 -Useful informational messages </li><li>4 -Debug information </li><li>5-9 - Increasing levels of internal Appweb trace useful for debugging </li></ul></td>
+    <tr><td class="param">logSpec</td><td>Set the log file name and level. The format is &quot;pathName[:level]&quot;. The following levels are generally observed: <ul><li>0 - Essential messages, fatal errors and critical warnings </li><li>1 - Hard errors </li><li>2 - Configuration setup and soft warnings </li><li>3 - Useful informational messages </li><li>4 - Debug information </li><li>5-9 - Increasing levels of internal Appweb trace useful for debugging </li></ul></td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.</dd></dl>
     <dl><dt>See Also:</dt><dd>
@@ -732,7 +732,7 @@ Unique name for this server.
 (<a href="#struct_ma_appweb" class="ref">MaAppweb</a> *appweb, <a href="http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name)
   </div>
   <div class="apiDetail">
-<p>Create an MaServer object.</p>
+<p>Create a MaServer object.</p>
     <dl><dt><b>Description</b>:</dt><dd>Create new MaServer object. This routine creates a bare MaServer object, loads any required static modules and performs minimal configuration. To use the server object created, more configuration will be required before starting Http services. If you want a one-line embedding of Appweb, use <a class="ref" BBB href="#group___ma_server_1ga4994c273e87409b094418dd7bd370ee4">maRunWebServer</a> or <a class="ref" BBB href="#group___ma_server_1ga88a2bd1d0f26f024e6cb2d693c13e4f7">maRunSimpleWebServer</a></dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
@@ -753,7 +753,7 @@ Unique name for this server.
   </div>
   <div class="apiDetail">
 <p>Create and run a simple web server listening on a single IP address.</p>
-    <dl><dt><b>Description</b>:</dt><dd>Create a simple web server without using a configuration file. The server is created to listen on the specified IP addresss and port. This routine provides is a one-line embedding of Appweb. If you want to use a config file, try the <a class="ref" BBB href="#group___ma_server_1ga4994c273e87409b094418dd7bd370ee4">maRunWebServer</a> instead.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>Create a simple web server without using a configuration file. The server is created to listen on the specified IP addresss and port. This routine provides a one-line embedding of Appweb. If you want to use a config file, try the <a class="ref" BBB href="#group___ma_server_1ga4994c273e87409b094418dd7bd370ee4">maRunWebServer</a> instead.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">ip</td><td>IP address on which to listen. Set to &quot;0.0.0.0&quot; to listen on all interfaces.</td>
@@ -775,7 +775,7 @@ Unique name for this server.
   </div>
   <div class="apiDetail">
 <p>Create and run a web server based on a configuration file.</p>
-    <dl><dt><b>Description</b>:</dt><dd>Create a web server configuration based on the supplied config file. This routine provides is a one-line embedding of Appweb. If you don&apos;t want to use a config file, try the <a class="ref" BBB href="#group___ma_server_1ga88a2bd1d0f26f024e6cb2d693c13e4f7">maRunSimpleWebServer</a> instead.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>Create a web server configuration based on the supplied config file. This routine provides a one-line embedding of Appweb. If you don&apos;t want to use a config file, try the <a class="ref" BBB href="#group___ma_server_1ga88a2bd1d0f26f024e6cb2d693c13e4f7">maRunSimpleWebServer</a> instead.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">configFile</td><td>File name of the Appweb configuration file (appweb.conf) that defines the web server configuration.</td>
