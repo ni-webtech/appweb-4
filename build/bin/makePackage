@@ -101,6 +101,8 @@ setup() {
     for n in md5 md5sum ; do
         if type $n >/dev/null 2>&1 ; then
             MD5=$n
+            [ "$n" = md5 ] && MD5="$n -q"
+            [ "$n" = md5sum ] && MD5="$n -b"
             break
         fi
     done
