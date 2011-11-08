@@ -123,16 +123,18 @@ EdiRec *espCreateRec(HttpConn *conn, cchar *tableName, MprHash *params)
 }
 
 
-void espDefineAction(EspRoute *eroute, cchar *target, void *actionProc)
+void espDefineAction(HttpRoute *route, cchar *target, void *actionProc)
 {
     EspAction   *action;
+    EspRoute    *eroute;
     Esp         *esp;
 
-    mprAssert(eroute);
+    mprAssert(route);
     mprAssert(target && *target);
     mprAssert(actionProc);
 
     esp = MPR->espService;
+    eroute = route->eroute;
     if ((action = mprAllocObj(EspAction, espManageAction)) == 0) {
         return;
     }
@@ -143,25 +145,25 @@ void espDefineAction(EspRoute *eroute, cchar *target, void *actionProc)
 }
 
 
-void espDefineBase(EspRoute *eroute, EspProc baseProc)
+void espDefineBase(HttpRoute *route, EspProc baseProc)
 {
-    eroute->controllerBase = baseProc;
+    ((EspRoute*) route->eroute)->controllerBase = baseProc;
 }
 
 
 /*
     Path should be an app-relative path to the view file (relative-path.esp)
  */
-void espDefineView(EspRoute *eroute, cchar *path, void *view)
+void espDefineView(HttpRoute *route, cchar *path, void *view)
 {
     Esp         *esp;
 
-    mprAssert(eroute);
+    mprAssert(route);
     mprAssert(path && *path);
     mprAssert(view);
 
     esp = MPR->espService;
-	path = mprGetPortablePath(mprJoinPath(eroute->dir, path));
+	path = mprGetPortablePath(mprJoinPath(route->dir, path));
     mprAddKey(esp->views, path, view);
 }
 
@@ -224,6 +226,17 @@ Edi *espGetDatabase(HttpConn *conn)
         return 0;
     }
     return eroute->edi;
+}
+
+
+EspRoute *espGetEspRoute(HttpConn *conn)
+{
+    EspReq      *req;
+
+    if ((req = conn->data) == 0) {
+        return 0;
+    }
+    return req->eroute;
 }
 
 
@@ -313,6 +326,18 @@ char *espGetReferrer(HttpConn *conn)
         return conn->rx->referrer;
     }
     return espGetTop(conn);
+}
+
+
+Edi *espGetRouteDatabase(HttpRoute *route)
+{
+    EspRoute    *eroute;
+
+    eroute = route->eroute;
+    if (eroute == 0 || eroute->edi == 0) {
+        return 0;
+    }
+    return eroute->edi;
 }
 
 

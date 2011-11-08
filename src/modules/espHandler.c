@@ -23,7 +23,7 @@ static Esp *esp;
 static EspRoute *allocEspRoute(HttpRoute *loc);
 static int espDbDirective(MaState *state, cchar *key, cchar *value);
 static char *getControllerEntry(cchar *controllerName);
-static EspRoute *getEspRoute(HttpRoute *route);
+static EspRoute *getEroute(HttpRoute *route);
 static int loadApp(HttpConn *conn, int *updated);
 static void manageEsp(Esp *esp, int flags);
 static void manageReq(EspReq *req, int flags);
@@ -54,18 +54,19 @@ static void openEsp(HttpQueue *q)
             httpMemoryError(conn);
             return;
         }
-        eroute = 0;
-        for (route = rx->route; route; route = route->parent) {
-            if ((eroute = httpGetRouteData(route, ESP_NAME)) != 0) {
+        for (eroute = 0, route = rx->route; route; route = route->parent) {
+            if (route->eroute) {
+                eroute = route->eroute;
                 break;
             }
         }
-        if (eroute == 0) {
+        if (!eroute) {
             eroute = allocEspRoute(route);
             return;
         }
         conn->data = req;
         req->esp = esp;
+        req->route = route;
         req->eroute = eroute;
         req->autoFinalize = 1;
     }
@@ -223,7 +224,7 @@ static int runAction(HttpConn *conn)
         }
         if (mprLookupModule(req->controllerPath) == 0) {
             req->entry = getControllerEntry(req->controllerName);
-            if ((mp = mprCreateModule(req->controllerPath, req->module, req->entry, eroute)) == 0) {
+            if ((mp = mprCreateModule(req->controllerPath, req->module, req->entry, route)) == 0) {
                 unlock(req->esp);
                 httpMemoryError(conn);
                 return 0;
@@ -321,7 +322,7 @@ void espRenderView(HttpConn *conn, cchar *name)
         if (mprLookupModule(req->source) == 0) {
             req->entry = sfmt("esp_%s", req->cacheName);
             //  MOB - who keeps reference to module?
-            if ((mp = mprCreateModule(req->source, req->module, req->entry, eroute)) == 0) {
+            if ((mp = mprCreateModule(req->source, req->module, req->entry, req->route)) == 0) {
                 unlock(req->esp);
                 httpMemoryError(conn);
                 return;
@@ -397,7 +398,7 @@ static int loadApp(HttpConn *conn, int *updated)
     }
     if (mp == 0) {
         entry = sfmt("esp_app_%s", eroute->appModuleName);
-        if ((mp = mprCreateModule(eroute->appModuleName, eroute->appModulePath, entry, eroute)) == 0) {
+        if ((mp = mprCreateModule(eroute->appModuleName, eroute->appModulePath, entry, req->route)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find module %s", eroute->appModulePath);
             return 0;
         }
@@ -503,19 +504,16 @@ static EspRoute *allocEspRoute(HttpRoute *route)
     if ((eroute = mprAllocObj(EspRoute, espManageEspRoute)) == 0) {
         return 0;
     }
-    httpSetRouteData(route, ESP_NAME, eroute);
-    eroute->route = route;
 #if DEBUG_IDE
     eroute->cacheDir = mprGetAppDir();
 #else
     eroute->cacheDir = mprJoinPath(mprGetAppDir(), "../" BLD_LIB_NAME);
 #endif
     eroute->dbDir = route->dir;
-    eroute->dir = route->dir;
-    eroute->controllersDir = eroute->dir;
-    eroute->layoutsDir = eroute->dir;
-    eroute->viewsDir = eroute->dir;
-    eroute->staticDir = eroute->dir;
+    eroute->controllersDir = route->dir;
+    eroute->layoutsDir = route->dir;
+    eroute->viewsDir = route->dir;
+    eroute->staticDir = route->dir;
 
     /*
         Setup default parameters for $expansion of Http route paths
@@ -526,17 +524,19 @@ static EspRoute *allocEspRoute(HttpRoute *route)
     httpSetRoutePathVar(route, "STATIC_DIR", eroute->staticDir);
     httpSetRoutePathVar(route, "VIEWS_DIR", eroute->viewsDir);
 
-    eroute->lifespan = 0;
-    eroute->keepSource = BLD_DEBUG;
 #if BLD_DEBUG
 	eroute->update = 1;
 	eroute->showErrors = 1;
 #endif
+    eroute->lifespan = 0;
+    eroute->keepSource = BLD_DEBUG;
+    eroute->route = route;
+    route->eroute = eroute;
     return eroute;
 }
 
 
-static EspRoute *cloneEspRoute(EspRoute *parent, HttpRoute *route)
+static EspRoute *cloneEspRoute(HttpRoute *route, EspRoute *parent)
 {
     EspRoute      *eroute;
     
@@ -546,8 +546,6 @@ static EspRoute *cloneEspRoute(EspRoute *parent, HttpRoute *route)
     if ((eroute = mprAllocObj(EspRoute, espManageEspRoute)) == 0) {
         return 0;
     }
-    httpSetRouteData(route, ESP_NAME, eroute);
-    eroute->route = parent->route;
     eroute->searchPath = parent->searchPath;
     eroute->edi = parent->edi;
     eroute->controllerBase = parent->controllerBase;
@@ -566,23 +564,24 @@ static EspRoute *cloneEspRoute(EspRoute *parent, HttpRoute *route)
     if (parent->env) {
         eroute->env = mprCloneList(parent->env);
     }
-    eroute->dir = parent->dir;
     eroute->cacheDir = parent->cacheDir;
     eroute->controllersDir = parent->controllersDir;
     eroute->dbDir = parent->dbDir;
     eroute->layoutsDir = parent->layoutsDir;
     eroute->viewsDir = parent->viewsDir;
     eroute->staticDir = parent->staticDir;
+    eroute->route = route;
+    route->eroute = eroute;
     return eroute;
 }
 
 
-static void setSimpleDirs(EspRoute *eroute)
+static void setSimpleDirs(EspRoute *eroute, HttpRoute *route)
 {
     char    *dir;
 
     /* Don't set cache dir here - keep inherited value */
-    dir = eroute->dir;
+    dir = route->dir;
     eroute->controllersDir = dir;
     eroute->dbDir = dir;
     eroute->layoutsDir = dir;
@@ -596,7 +595,6 @@ static void setMvcDirs(EspRoute *eroute, HttpRoute *route)
     char    *dir;
 
     dir = route->dir;
-    eroute->dir = route->dir;
 
     eroute->cacheDir = mprJoinPath(dir, "cache");
     httpSetRoutePathVar(route, "CACHE_DIR", eroute->cacheDir);
@@ -628,7 +626,6 @@ void espManageEspRoute(EspRoute *eroute, int flags)
         mprMark(eroute->controllersDir);
         mprMark(eroute->dbDir);
         mprMark(eroute->edi);
-        mprMark(eroute->dir);
         mprMark(eroute->env);
         mprMark(eroute->layoutsDir);
         mprMark(eroute->link);
@@ -674,29 +671,26 @@ static void manageEsp(Esp *esp, int flags)
 }
 
 
-static EspRoute *getEspRoute(HttpRoute *route)
+/*
+    Get an EspRoute structure for a given route. Allocate or clone if required. It is expected that the caller will
+    modify the EspRoute.
+ */
+static EspRoute *getEroute(HttpRoute *route)
 {
-    EspRoute    *eroute, *parent;
+    HttpRoute   *rp;
 
-    eroute = httpGetRouteData(route, ESP_NAME);
-    if (route->parent) {
-        /*
-            If the parent route has the same route data, then force a clone so the parent route does not get modified
-         */ 
-        parent = httpGetRouteData(route->parent, ESP_NAME);
-        if (eroute == parent) {
-            eroute = 0;
+    if (route->eroute && ((EspRoute*) route->eroute)->route == route) {
+        return route->eroute;
+    }
+    /*
+        Lookup up the route chain for any configured EspRoutes
+     */
+    for (rp = route; rp; rp = rp->parent) {
+        if (rp->eroute) {
+            return cloneEspRoute(route, rp->eroute);
         }
     }
-    if (eroute == 0) {
-        if (route->parent && (parent = httpGetRouteData(route->parent, ESP_NAME)) != 0) {
-            eroute = cloneEspRoute(parent, route);
-        } else {
-            eroute = allocEspRoute(route);
-        }
-    }
-    mprAssert(eroute);
-    return eroute;
+    return allocEspRoute(route);
 }
 
 
@@ -704,14 +698,14 @@ static void setRouteDirs(MaState *state, cchar *kind)
 {
     EspRoute    *eroute;
 
-    if ((eroute = getEspRoute(state->route)) == 0) {
+    if ((eroute = getEroute(state->route)) == 0) {
         return;
     }
     if (smatch(kind, "none")) {
-        setSimpleDirs(eroute);
+        setSimpleDirs(eroute, state->route);
 
     } else if (smatch(kind, "simple")) {
-        setSimpleDirs(eroute);
+        setSimpleDirs(eroute, state->route);
 
     } else if (smatch(kind, "mvc") || smatch(kind, "restful")) {
         setMvcDirs(eroute, state->route);
@@ -739,7 +733,7 @@ static int appDirective(MaState *state, cchar *key, cchar *value)
     char        *appName, *path, *routeSet, *database;
 
     route = state->route;
-    if ((eroute = getEspRoute(route)) == 0) {
+    if ((eroute = getEroute(route)) == 0) {
         return MPR_ERR_MEMORY;
     }
     if (!maTokenize(state, value, "%S ?S ?S ?S", &appName, &path, &routeSet, &database)) {
@@ -766,7 +760,6 @@ static int appDirective(MaState *state, cchar *key, cchar *value)
         path = sclone(".");
     }
     httpSetRouteDir(route, path);
-    eroute->dir = route->dir;
     httpAddRouteHandler(route, "espHandler", "");
     
     /* Must set dirs first before defining route set */
@@ -803,23 +796,6 @@ static int espAppDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
-#if UNUSED
-/*
-    EspCache lifespan
- */
-static int espCacheDirective(MaState *state, cchar *key, cchar *value)
-{
-    EspRoute    *eroute;
-
-    if ((eroute = getEspRoute(state->route)) == 0) {
-        return MPR_ERR_MEMORY;
-    }
-    eroute->lifespan = (MprTime) stoi(value, 10, NULL);
-    return 0;
-}
-#endif
-
-
 /*
     EspCompile template
  */
@@ -827,7 +803,7 @@ static int espCompileDirective(MaState *state, cchar *key, cchar *value)
 {
     EspRoute    *eroute;
 
-    if ((eroute = getEspRoute(state->route)) == 0) {
+    if ((eroute = getEroute(state->route)) == 0) {
         return MPR_ERR_MEMORY;
     }
     eroute->compile = sclone(value);
@@ -844,7 +820,7 @@ static int espDbDirective(MaState *state, cchar *key, cchar *value)
     char        *provider, *path;
     int         flags;
 
-    if ((eroute = getEspRoute(state->route)) == 0) {
+    if ((eroute = getEroute(state->route)) == 0) {
         return MPR_ERR_MEMORY;
     }
     flags = EDI_CREATE | EDI_AUTO_SAVE;
@@ -874,7 +850,7 @@ static int espDirDirective(MaState *state, cchar *key, cchar *value)
     EspRoute    *eroute;
     char        *name, *path;
 
-    if ((eroute = getEspRoute(state->route)) == 0) {
+    if ((eroute = getEroute(state->route)) == 0) {
         return MPR_ERR_MEMORY;
     }
     if (!maTokenize(state, value, "%S ?S", &name, &path)) {
@@ -911,7 +887,7 @@ static int espEnvDirective(MaState *state, cchar *key, cchar *value)
     EspRoute    *eroute;
     char        *ekey, *evalue;
 
-    if ((eroute = getEspRoute(state->route)) == 0) {
+    if ((eroute = getEroute(state->route)) == 0) {
         return MPR_ERR_MEMORY;
     }
     if (!maTokenize(state, value, "%S %S", &ekey, &evalue)) {
@@ -949,7 +925,7 @@ static int espKeepSourceDirective(MaState *state, cchar *key, cchar *value)
     EspRoute    *eroute;
     bool        on;
 
-    if ((eroute = getEspRoute(state->route)) == 0) {
+    if ((eroute = getEroute(state->route)) == 0) {
         return MPR_ERR_MEMORY;
     }
     if (!maTokenize(state, value, "%B", &on)) {
@@ -968,7 +944,7 @@ static int espLifespanDirective(MaState *state, cchar *key, cchar *value)
 {
     EspRoute    *eroute;
 
-    if ((eroute = getEspRoute(state->route)) == 0) {
+    if ((eroute = getEroute(state->route)) == 0) {
         return MPR_ERR_MEMORY;
     }
     eroute->lifespan = ((MprTime) atoi(value)) * MPR_TICKS_PER_SEC;
@@ -995,7 +971,7 @@ static int espLinkDirective(MaState *state, cchar *key, cchar *value)
 {
     EspRoute    *eroute;
 
-    if ((eroute = getEspRoute(state->route)) == 0) {
+    if ((eroute = getEroute(state->route)) == 0) {
         return MPR_ERR_MEMORY;
     }
     eroute->link = sclone(value);
@@ -1011,7 +987,7 @@ static int espLoadDirective(MaState *state, cchar *key, cchar *value)
     EspRoute    *eroute;
     char        *name, *path;
 
-    if ((eroute = getEspRoute(state->route)) == 0) {
+    if ((eroute = getEroute(state->route)) == 0) {
         return MPR_ERR_MEMORY;
     }
     if (!maTokenize(state, value, "%S %P", &name, &path)) {
@@ -1086,7 +1062,7 @@ static int espRouteSetDirective(MaState *state, cchar *key, cchar *value)
     EspRoute    *eroute;
     char        *kind;
 
-    if ((eroute = getEspRoute(state->route)) == 0) {
+    if ((eroute = getEroute(state->route)) == 0) {
         return MPR_ERR_MEMORY;
     }
     if (!maTokenize(state, value, "%S", &kind)) {
@@ -1105,7 +1081,7 @@ static int espShowErrorsDirective(MaState *state, cchar *key, cchar *value)
     EspRoute    *eroute;
     bool        on;
 
-    if ((eroute = getEspRoute(state->route)) == 0) {
+    if ((eroute = getEroute(state->route)) == 0) {
         return MPR_ERR_MEMORY;
     }
     if (!maTokenize(state, value, "%B", &on)) {
@@ -1124,7 +1100,7 @@ static int espUpdateDirective(MaState *state, cchar *key, cchar *value)
     EspRoute    *eroute;
     bool        on;
 
-    if ((eroute = getEspRoute(state->route)) == 0) {
+    if ((eroute = getEroute(state->route)) == 0) {
         return MPR_ERR_MEMORY;
     }
     if (!maTokenize(state, value, "%B", &on)) {

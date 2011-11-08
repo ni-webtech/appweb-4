@@ -35,6 +35,7 @@ typedef struct App {
     /*
         GC retention
      */
+    HttpRoute   *route;
     EspRoute    *eroute;
     MprList     *files;                 /* List of files to process */
     char        *routeName;             /* Name of route to use for ESP configuration */
@@ -401,6 +402,7 @@ static void manageApp(App *app, int flags)
         mprMark(app->configFile);
         mprMark(app->csource);
         mprMark(app->currentDir);
+        mprMark(app->route);
         mprMark(app->eroute);
         mprMark(app->files);
         mprMark(app->flatFile);
@@ -424,17 +426,21 @@ static void manageApp(App *app, int flags)
 
 static void setDirs(cchar *path)
 {
+    if ((app->route = httpCreateRoute(NULL)) == 0) {
+        return;
+    }
     if ((app->eroute = mprAllocObj(EspRoute, espManageEspRoute)) == 0) {
         return;
     }
+    route = app->route;
     eroute = app->eroute;
-    eroute->dir = sclone(path);
-    eroute->cacheDir = mprJoinPath(eroute->dir, "cache");
-    eroute->controllersDir = mprJoinPath(eroute->dir, "controllers");
-    eroute->dbDir = mprJoinPath(eroute->dir, "db");
-    eroute->layoutsDir = mprJoinPath(eroute->dir, "layouts");
-    eroute->staticDir = mprJoinPath(eroute->dir, "static");
-    eroute->viewsDir = mprJoinPath(eroute->dir, "views");
+    httpSetRouteDir(route, path);
+    eroute->cacheDir = mprJoinPath(path, "cache");
+    eroute->controllersDir = mprJoinPath(path, "controllers");
+    eroute->dbDir = mprJoinPath(path, "db");
+    eroute->layoutsDir = mprJoinPath(path, "layouts");
+    eroute->staticDir = mprJoinPath(path, "static");
+    eroute->viewsDir = mprJoinPath(path, "views");
 }
 
 
@@ -480,7 +486,7 @@ static void getAppDirs()
         if (rp->startWith && strcmp(routePrefix, rp->startWith) != 0) {
             continue;
         }
-        if ((app->eroute = httpGetRouteData(rp, ESP_NAME)) != 0 && app->eroute->compile) {
+        if ((app->eroute = rp->eroute) != 0 && app->eroute->compile) {
             break;
         }
     }
@@ -490,8 +496,7 @@ static void getAppDirs()
     }
     route = rp;
     eroute = app->eroute;
-    eroute->dir = route->dir;
-    app->appName = mprGetPathBase(eroute->dir);
+    app->appName = mprGetPathBase(route->dir);
     app->isMvc = route->sourceName != 0;
 }
 
@@ -658,7 +663,7 @@ static void compileFile(cchar *source, int kind)
     }
     if (kind & (ESP_PAGE | ESP_VIEW)) {
 #if UNUSED
-        layout = mprJoinPath(mprJoinPath(eroute->dir, eroute->layoutsDir), "default.esp");
+        layout = mprJoinPath(mprJoinPath(route->dir, eroute->layoutsDir), "default.esp");
 #else
         layout = app->isMvc ? mprJoinPath(eroute->layoutsDir, "default.esp") : 0;
 #endif
@@ -667,7 +672,7 @@ static void compileFile(cchar *source, int kind)
             return;
         }
         /* No yield here */
-        if ((script = espBuildScript(eroute, page, source, app->cacheName, layout, &err)) == 0) {
+        if ((script = espBuildScript(route, page, source, app->cacheName, layout, &err)) == 0) {
             fail("Can't build %s, error %s", source, err);
             return;
         }
@@ -787,7 +792,7 @@ static void compile(int argc, char **argv)
                 }
             }
         } else {
-            app->files = files = mprGetPathTree(eroute->dir, MPR_PATH_ENUM_DIRS);
+            app->files = files = mprGetPathTree(route->dir, MPR_PATH_ENUM_DIRS);
             for (next = 0; (path = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
                 if (smatch(mprGetPathExt(path), "esp")) {
                     compileFile(path, ESP_PAGE);
@@ -825,7 +830,7 @@ static void compile(int argc, char **argv)
                 }
             }
         } else {
-            app->files = files = mprGetPathTree(eroute->dir, 0);
+            app->files = files = mprGetPathTree(route->dir, 0);
             for (next = 0; (path = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
                 if (smatch(mprGetPathExt(path), "esp")) {
                     compileFile(path, ESP_PAGE);
@@ -860,7 +865,7 @@ static void compile(int argc, char **argv)
                 fail("Command arguments must be files with a \".esp\" extension");
                 return;
             }
-            path = mprJoinPath(eroute->dir, argv[i]);
+            path = mprJoinPath(route->dir, argv[i]);
             compileFile(path, ESP_PAGE);
         }
     }
@@ -1145,7 +1150,7 @@ static void fixupFile(cchar *path)
     ssize   len;
     char    *data, *tmp;
 
-    path = mprJoinPath(eroute->dir, path);
+    path = mprJoinPath(route->dir, path);
     if ((data = mprReadPathContents(path, &len)) == 0) {
         fail("Can't read %s", path);
         return;
@@ -1153,7 +1158,7 @@ static void fixupFile(cchar *path)
     data = sreplace(data, "${NAME}", app->appName);
     data = sreplace(data, "${TITLE}", spascal(app->appName));
     data = sreplace(data, "${DATABASE}", app->database);
-    data = sreplace(data, "${DIR}", eroute->dir);
+    data = sreplace(data, "${DIR}", route->dir);
     data = sreplace(data, "${LISTEN}", app->listen);
     data = sreplace(data, "${LIBDIR}", app->libDir);
 
@@ -1170,7 +1175,7 @@ static void fixupFile(cchar *path)
 
 static void generateAppFiles()
 {
-    copyDir(mprJoinPath(app->wwwDir, "files"), eroute->dir);
+    copyDir(mprJoinPath(app->wwwDir, "files"), route->dir);
     fixupFile("layouts/default.esp");
 }
 
@@ -1294,11 +1299,11 @@ static void generateAppConfigFile()
     char    *from, *to;
 
     from = mprJoinPath(app->wwwDir, "appweb.conf");
-    to = mprJoinPath(eroute->dir, "appweb.conf");
+    to = mprJoinPath(route->dir, "appweb.conf");
     copyFile(from, to);
 
     from = mprJoinPath(app->wwwDir, "app.conf");
-    to = mprJoinPath(eroute->dir, "app.conf");
+    to = mprJoinPath(route->dir, "app.conf");
     copyFile(from, to);
 }
 
@@ -1308,7 +1313,7 @@ static void generateAppHeader()
     MprHash *tokens;
     char    *path, *data;
 
-    path = mprJoinPath(eroute->dir, mprJoinPathExt("esp-app", "h"));
+    path = mprJoinPath(route->dir, mprJoinPathExt("esp-app", "h"));
     tokens = mprDeserialize(sfmt("{ NAME: %s, TITLE: %s }", app->appName, spascal(app->appName)));
     data = stemplate(AppHeader, tokens);
     makeFile(path, data, "Header");
@@ -1360,7 +1365,7 @@ static void makeDir(cchar *dir)
 {
     char    *path;
 
-    path = mprJoinPath(eroute->dir, dir);
+    path = mprJoinPath(route->dir, dir);
     if (mprPathExists(path, X_OK)) {
         trace("EXISTS",  "Directory: %s", path);
     } else {

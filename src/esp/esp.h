@@ -75,7 +75,6 @@ extern "C" {
 typedef void (*EspProc)(HttpConn *conn);
 
 #define CONTENT_MARKER  "${_ESP_CONTENT_MARKER_}"       /* Layout content marker */
-#define ESP_NAME        "espHandler"                    /* Name of the ESP handler */
 #define ESP_SESSION     "-esp-session-"                 /* ESP session cookie name */
 
 #if BLD_WIN_LIKE
@@ -128,6 +127,9 @@ extern void espInitHtmlOptions(Esp *esp);
  */
 typedef struct EspRoute {
     HttpRoute       *route;                 /**< Back link to the owning route */
+#if UNUSED
+    char            *dir;                   /**< Base directory (alias for route->dir) */
+#endif
     MprList         *env;                   /**< Environment for compiler */
     char            *compile;               /**< Compile template */
     char            *link;                  /**< Link template */
@@ -137,7 +139,6 @@ typedef struct EspRoute {
     char            *appModuleName;         /**< App module name when compiled flat */
     char            *appModulePath;         /**< App module path when compiled flat */
 
-    char            *dir;                   /**< Base directory (alias for route->dir) */
     char            *cacheDir;              /**< Directory for cached compiled controllers and views */
     char            *controllersDir;        /**< Directory for controllers */
     char            *dbDir;                 /**< Directory for databases */
@@ -245,37 +246,37 @@ extern bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cach
     @return C language code string for the web page
     @ingroup EspRoute
  */
-extern char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheName, cchar *layout, char **err);
+extern char *espBuildScript(HttpRoute *route, cchar *page, cchar *path, cchar *cacheName, cchar *layout, char **err);
 
 /**
     Define an action
     @description Actions are C procedures that are invoked when specific URIs are routed to the controller/action pair.
-    @param eroute ESP route object
+    @param route Route object
     @param targetKey Target key used to select the action in a HttpRoute target. This is typically a URI prefix.
     @param actionProc EspProc callback procedure to invoke when the action is requested.
     @ingroup EspRoute
  */
-extern void espDefineAction(EspRoute *eroute, cchar *targetKey, void *actionProc);
+extern void espDefineAction(HttpRoute *route, cchar *targetKey, void *actionProc);
 
 /**
     Define a base function to invoke for all controller actions.
     @description A base function can be defined that will be called before calling any controller action. This
         emulates a super class constructor.
-    @param eroute ESP route object
+    @param route Route object
     @param baseProc Function to call just prior to invoking a controller action.
     @ingroup EspRoute
  */
-extern void espDefineBase(EspRoute *eroute, EspProc baseProc);
+extern void espDefineBase(HttpRoute *route, EspProc baseProc);
 
 /**
     Define a view
     @description Views are ESP web pages that are executed to return presentation data back to the client.
-    @param eroute ESP route object
+    @param route Http route object
     @param path Path to the ESP view source code.
     @param viewProc EspViewPrococ callback procedure to invoke when the view is requested.
     @ingroup EspRoute
  */
-extern void espDefineView(EspRoute *eroute, cchar *path, void *viewProc);
+extern void espDefineView(HttpRoute *route, cchar *path, void *viewProc);
 
 /**
     Expand a compile or link command template
@@ -615,6 +616,13 @@ extern cchar *espGetCookies(HttpConn *conn);
 extern Edi *espGetDatabase(HttpConn *conn);
 
 /**
+    Get the current extended route information.
+    @return EspRoute instance
+    @ingroup EspReq
+ */
+extern EspRoute *espGetEspRoute(HttpConn *conn);
+
+/**
     Get the default document root directory for the request route.
     @param conn HttpConn connection object
     @return A directory path name 
@@ -732,6 +740,14 @@ extern cchar *espGetQueryString(HttpConn *conn);
     @ingroup EspReq
  */
 char *espGetReferrer(HttpConn *conn);
+
+/**
+    Get the default database defined on a route
+    @param route HttpRoute object
+    @return Database instance object
+    @ingroup EspReq
+ */
+Edi *espGetRouteDatabase(HttpRoute *route);
 
 /**
     Get a unique security token
@@ -2283,6 +2299,13 @@ extern cchar *getContentType();
     @ingroup EspAbbrev
  */
 extern Edi *getDatabase();
+
+/**
+    Get the extended route EspRoute structure
+    @return EspRoute instance
+    @ingroup EspAbbrev
+ */
+extern EspRoute *getEspRoute();
 
 /**
     Get the default document root directory for the request route.

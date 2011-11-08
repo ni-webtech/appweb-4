@@ -274,6 +274,12 @@ Edi *getDatabase()
 }
 
 
+EspRoute *getEspRoute()
+{
+    return espGetEspRoute(getConn());
+}
+
+
 cchar *getDir()
 {
     return getConn()->rx->route->dir;

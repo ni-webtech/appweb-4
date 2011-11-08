@@ -35,7 +35,6 @@ static void init() {
 
 static void show() { 
     readRec("post");
-    //  MOB - is this the best view?
     renderView("post-edit");
 }
 
@@ -48,23 +47,23 @@ static void update() {
     }
 }
 
-ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module) 
+ESP_EXPORT int esp_controller_post(HttpRoute *route, MprModule *module) 
 {
-    Edi *edi;
+    Edi     *edi;
 
-    espDefineBase(eroute, common);
-    espDefineAction(eroute, "post-create", create);
-    espDefineAction(eroute, "post-destroy", destroy);
-    espDefineAction(eroute, "post-edit", edit);
-    espDefineAction(eroute, "post-init", init);
-    espDefineAction(eroute, "post-list", list);
-    espDefineAction(eroute, "post-show", show);
-    espDefineAction(eroute, "post-update", update);
+    espDefineBase(route, common);
+    espDefineAction(route, "post-create", create);
+    espDefineAction(route, "post-destroy", destroy);
+    espDefineAction(route, "post-edit", edit);
+    espDefineAction(route, "post-init", init);
+    espDefineAction(route, "post-list", list);
+    espDefineAction(route, "post-show", show);
+    espDefineAction(route, "post-update", update);
 
     /*
         Add model validations
      */
-    edi = eroute->edi;
+    edi = espGetRouteDatabase(route);
     ediAddValidation(edi, "present", "post", "title", 0);
     ediAddValidation(edi, "unique", "post", "title", 0);
     ediAddValidation(edi, "format", "post", "body", "(fox|dog)");

@@ -681,7 +681,7 @@ static int directoryDirective(MaState *state, cchar *key, cchar *value)
  */
 static int directoryIndexDirective(MaState *state, cchar *key, cchar *value)
 {
-    httpSetRouteIndex(state->route, value);
+    httpAddRouteIndex(state->route, value);
     return 0;
 }
 

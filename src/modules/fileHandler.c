@@ -41,7 +41,9 @@ static int findFile(HttpConn *conn)
     HttpUri     *prior;
     HttpRoute   *route;
     MprPath     *info, zipInfo;
+    cchar       *index;
     char        *path, *pathInfo, *uri, *zipfile;
+    int         next;
 
     tx = conn->tx;
     rx = conn->rx;
@@ -49,7 +51,6 @@ static int findFile(HttpConn *conn)
     prior = rx->parsedUri;
     info = &tx->fileInfo;
 
-    mprAssert(route->index);
     mprAssert(info->checked);
 
     if (info->isDir) {
@@ -62,22 +63,21 @@ static int findFile(HttpConn *conn)
             httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, uri);
             return HTTP_ROUTE_OK;
         } 
-        if (route->index && *route->index) {
-            /*  
-                Internal directory redirections. Transparently append index.
-             */
-            path = mprJoinPath(tx->filename, route->index);
-            if (mprPathExists(path, R_OK)) {
+        if (route->indicies) {
+            for (ITERATE_ITEMS(route->indicies, index, next)) {
                 /*  
-                    Index file exists, so do an internal redirect to it. Client will not be aware of this happening.
+                    Internal directory redirections. Transparently append index.
                  */
-                pathInfo = sjoin(rx->scriptName, rx->pathInfo, route->index, NULL);
-                uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query, 0);
-                httpSetUri(conn, uri, 0);
-                tx->filename = path;
-                tx->ext = httpGetExt(conn);
-                mprGetPathInfo(tx->filename, info);
-                return HTTP_ROUTE_REROUTE;
+                path = mprJoinPath(tx->filename, index);
+                if (mprPathExists(path, R_OK)) {
+                    pathInfo = sjoin(rx->scriptName, rx->pathInfo, index, NULL);
+                    uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query,0);
+                    httpSetUri(conn, uri, 0);
+                    tx->filename = path;
+                    tx->ext = httpGetExt(conn);
+                    mprGetPathInfo(tx->filename, info);
+                    return HTTP_ROUTE_REROUTE;
+                }
             }
         }
         if (info->isDir && maMatchDir(conn, route, HTTP_STAGE_TX) == HTTP_ROUTE_OK) {

@@ -176,7 +176,7 @@ static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *mod
     char        *err, *out;
 
     req = conn->data;
-    eroute = req->eroute;
+    eroute = req->route->eroute;
 
     cmd = mprCreateCmd(conn->dispatcher);
     if ((req->commandLine = espExpandCommand(command, csource, module)) == 0) {
@@ -220,6 +220,7 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
 {
     MprFile     *fp;
     HttpRx      *rx;
+    HttpRoute   *route;
     EspReq      *req;
     EspRoute    *eroute;
     cchar       *csource;
@@ -228,7 +229,8 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
 
     rx = conn->rx;
     req = conn->data;
-    eroute = req->eroute;
+    route = rx->route;
+    eroute = route->eroute;
 
     if (isView) {
         if ((page = mprReadPathContents(source, &len)) == 0) {
@@ -238,8 +240,8 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
         /*
             Use layouts iff there is a source defined on the route. Only MVC/controllers based apps do this.
          */
-        layout = (eroute->layoutsDir != eroute->dir) ? mprJoinPath(eroute->layoutsDir, "default.esp") : 0;
-        if ((script = espBuildScript(eroute, page, source, cacheName, layout, &err)) == 0) {
+        layout = mprSamePath(eroute->layoutsDir, route->dir) ? 0 : mprJoinPath(eroute->layoutsDir, "default.esp");
+        if ((script = espBuildScript(route, page, source, cacheName, layout, &err)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't build %s, error %s", source, err);
             return 0;
         }
@@ -342,7 +344,7 @@ static char *joinLine(cchar *str, ssize *lenp)
         @#field             Lookup the current record for the value of the field.
 
  */
-char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheName, cchar *layout, char **err)
+char *espBuildScript(HttpRoute *route, cchar *page, cchar *path, cchar *cacheName, cchar *layout, char **err)
 {
     EspParse    parse;
     char        *control, *incBuf, *incText, *global, *token, *body, *where;
@@ -420,7 +422,7 @@ char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheNam
                 }
                 /* Recurse and process the include script */
                 incBuf = 0;
-                if ((incBuf = espBuildScript(eroute, incText, include, NULL, NULL, err)) == 0) {
+                if ((incBuf = espBuildScript(route, incText, include, NULL, NULL, err)) == 0) {
                     return 0;
                 }
                 body = sjoin(body, incBuf, NULL);
@@ -492,13 +494,13 @@ char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheNam
         /*
             CacheName will only be set for the outermost invocation
          */
-        if (layout) {
+        if (layout && mprPathExists(layout, R_OK)) {
             if ((layoutPage = mprReadPathContents(layout, &len)) == 0) {
                 *err = sfmt("Can't read layout page: %s", layout);
                 return 0;
             }
             layoutBuf = 0;
-            if ((layoutBuf = espBuildScript(eroute, layoutPage, layout, NULL, NULL, err)) == 0) {
+            if ((layoutBuf = espBuildScript(route, layoutPage, layout, NULL, NULL, err)) == 0) {
                 return 0;
             }
             body = sreplace(layoutBuf, CONTENT_MARKER, body);
@@ -509,10 +511,11 @@ char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheNam
         if (end && end[slen(end) - 1] != '\n') {
             end = sjoin(end, "\n", NULL);
         }
-        mprAssert(slen(path) > slen(eroute->dir));
-        mprAssert(sncmp(path, eroute->dir, slen(eroute->dir)) == 0);
-        path = &path[slen(eroute->dir) + 1];
-        
+        mprAssert(slen(path) > slen(route->dir));
+        mprAssert(sncmp(path, route->dir, slen(route->dir)) == 0);
+        if (sncmp(path, route->dir, slen(route->dir)) == 0) {
+            path = &path[slen(route->dir) + 1];
+        }
         body = sfmt(\
             "/*\n   Generated from %s\n */\n"\
             "#include \"esp-app.h\"\n"\
@@ -520,8 +523,8 @@ char *espBuildScript(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheNam
             "static void %s(HttpConn *conn) {\n"\
             "%s%s%s"\
             "}\n\n"\
-            "%s int esp_%s(EspRoute *eroute, MprModule *module) {\n"\
-            "   espDefineView(eroute, \"%s\", %s);\n"\
+            "%s int esp_%s(HttpRoute *route, MprModule *module) {\n"\
+            "   espDefineView(route, \"%s\", %s);\n"\
             "   return 0;\n"\
             "}\n",
             path, global, cacheName, start, body, end, ESP_EXPORT_STRING, cacheName, mprGetPortablePath(path), cacheName);

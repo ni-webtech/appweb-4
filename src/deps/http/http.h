@@ -2990,7 +2990,7 @@ typedef struct HttpRoute {
     char            *targetRule;            /**< Target rule */
     char            *target;                /**< Route target details */
     char            *dir;                   /**< Directory filename */
-    char            *index;                 /**< Default index document name */
+    MprList         *indicies;              /**< Directory index documents */
     char            *methodSpec;            /**< Supported HTTP methods */
     HttpStage       *handler;               /**< Fixed handler */
 
@@ -3020,6 +3020,7 @@ typedef struct HttpRoute {
     MprList         *outputStages;          /**< Output stages */
     MprHash         *errorDocuments;        /**< Set of error documents to use on errors */
     void            *context;               /**< Hosting context (Appweb == EjsPool) */
+    void            *eroute;                /**< Extended route information for handler (only) */
     char            *uploadDir;             /**< Upload directory */
     int             autoDelete;             /**< Auto delete uploaded files */
 
@@ -3696,7 +3697,7 @@ extern void httpSetRouteHost(HttpRoute *route, struct HttpHost *host);
     @return A reference to the route data. Otherwise return null if the route data for the given key was not found.
     @ingroup HttpRoute
  */
-extern void httpSetRouteIndex(HttpRoute *route, cchar *path);
+extern void httpAddRouteIndex(HttpRoute *route, cchar *path);
 
 /**
     Define the methods for the route

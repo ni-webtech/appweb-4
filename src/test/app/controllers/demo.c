@@ -1,5 +1,7 @@
 /*
     Demo controller
+
+    Not used for test
  */
 #include "esp.h"
 
@@ -12,16 +14,21 @@ static void restart() {
     MaServer        *server;
     HttpEndpoint    *endpoint;
     
+    render("Restarting");
+    flush();
+    finalize();
     appweb = MPR->appwebService;
     server = mprGetFirstItem(appweb->servers);
     endpoint = mprGetFirstItem(server->endpoints);
     httpStopEndpoint(endpoint);
     endpoint->port = 5555;
     httpStartEndpoint(endpoint);
+    print("RESTARTING ON PORT 5555");
 }
 
-ESP_EXPORT int esp_controller_demo(EspRoute *eroute, MprModule *module) {
-    cchar   *schema;
+ESP_EXPORT int esp_controller_demo(HttpRoute *route, MprModule *module) {
+    EspRoute    *eroute;
+    cchar       *schema;
 
     schema = "{ \
         post: { \
@@ -35,7 +42,8 @@ ESP_EXPORT int esp_controller_demo(EspRoute *eroute, MprModule *module) {
             ], \
         }, \
     ";
-    eroute->edi = ediOpen("mdb", schema, EDI_LITERAL);
+    eroute = route->eroute;
+    eroute->edi = ediOpen(schema, "mdb", EDI_LITERAL);
 
     EdiGrid *grid = makeGrid("[ \
         { id: '1', country: 'Australia' }, \
@@ -44,7 +52,7 @@ ESP_EXPORT int esp_controller_demo(EspRoute *eroute, MprModule *module) {
 
     EdiRec *rec = makeRec("{ id: 1, title: 'Message One', body: 'Line one' }");
 
-    espDefineAction(eroute, "demo-list", list);
-    espDefineAction(eroute, "demo-cmd-restart", restart);
+    espDefineAction(route, "demo-list", list);
+    espDefineAction(route, "demo-cmd-restart", restart);
     return 0;
 }

@@ -10,6 +10,8 @@
         },
         data: [
             [ '4', 'Fourth post', 'dog', ],
+            [ '5', 'Yet another', 'more text
+dog', ],
         ],
     },
 }
