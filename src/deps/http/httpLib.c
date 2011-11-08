@@ -1748,6 +1748,8 @@ static void outgoingCacheFilterService(HttpQueue *q)
                     tx->cacheBufferLength += size;
                 } else {
                     tx->cacheBuffer = 0;
+                    mprLog(3, "cacheFilter: Item too big to cache %d bytes, limit %d", tx->cacheBufferLength + size,
+                        conn->limits->cacheItemSize);
                 }
             }
             foundDataPacket = 1;
