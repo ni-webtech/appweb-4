@@ -245,7 +245,7 @@ extern int ediAddTable(Edi *edi, cchar *tableName);
 
 /**
     Add a validation
-    @description Validations are run wihen caling ediUpdateRec. A validation is used to validate field data
+    @description Validations are run when calling ediUpdateRec. A validation is used to validate field data
         using builtin validators.
     @param edi Database handle
     @param name Validation name. Select from: 
@@ -253,7 +253,7 @@ extern int ediAddTable(Edi *edi, cchar *tableName);
         @arg date -- to validate field data as a date or time.
         @arg format -- to validate field data against a regular expression supplied in the "data" argument
         @arg integer -- to validate field data as an integral value
-        @arg number -- to validate field data as a number. May be an integer or floating point number.
+        @arg number -- to validate field data as a number. It may be an integer or floating point number.
         @arg present -- to validate field data as not null.
         @arg unique -- to validate field data as being unique in the database table.
     @param tableName Database table name
@@ -299,7 +299,7 @@ extern EdiRec *ediCreateRec(Edi *edi, cchar *tableName);
 
 
 /**
-    Delete the database at the given path
+    Delete the database at the given path.
     @param edi Database handle. This is required to identify the database provider. The database should be closed before
         deleting.
     @param path Database path name.
@@ -336,7 +336,7 @@ extern MprList *ediGetColumns(Edi *edi, cchar *tableName);
     @param type Output parameter to receive the column data type. Will be set to one of:
         EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE, EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT.
         Set to null if this data is not required.
-    @param flags Output parameter to receive the column control flags. Will be set one or more of:
+    @param flags Output parameter to receive the column control flags. Will be set to one or more of:
             EDI_AUTO_INC, EDI_KEY and/or EDI_INDEX 
         Set to null if this data is not required.
     @param cid Output parameter to receive the ordinal column index in the database table.
@@ -347,7 +347,7 @@ extern MprList *ediGetColumns(Edi *edi, cchar *tableName);
 extern int ediGetColumnSchema(Edi *edi, cchar *tableName, cchar *columnName, int *type, int *flags, int *cid);
 
 /**
-    Get a list of database tables
+    Get a list of database tables.
     @param edi Database handle
     @return An MprList of table names in the database.
     @ingroup Edi
@@ -355,7 +355,7 @@ extern int ediGetColumnSchema(Edi *edi, cchar *tableName, cchar *columnName, int
 extern MprList *ediGetTables(Edi *edi);
 
 /**
-    Load the database file
+    Load the database file.
     @param edi Database handle
     @param path Database path name
     @return Zero if successful. Otherwise a negative MPR error code.
@@ -366,7 +366,7 @@ extern int ediLoad(Edi *edi, cchar *path);
 
 //  MOB - should this be LookupColumn?
 /**
-    Lookup a field by name
+    Lookup a field by name.
     @param edi Database handle
     @param tableName Database table name
     @param fieldName Database column name
@@ -376,9 +376,9 @@ extern int ediLoad(Edi *edi, cchar *path);
 extern int ediLookupField(Edi *edi, cchar *tableName, cchar *fieldName);
 
 /**
-    Open a database
-    @description This opens a database using the specified datbase provider.
-    @param source Database path name. If using the "mdb" provider with the EDI_LITERAL flag, the source argument can
+    Open a database.
+    @description This opens a database using the specified database provider.
+    @param source Database path name. If using the "mdb" provider with the EDI_LITERAL flag, then the source argument can
         be set to a literal JSON database content string.
     @param provider Database provider. Set to "mdb" for the Memory Database or "sqlite" for the SQLite provider.
     @param flags Set to:
@@ -393,7 +393,7 @@ extern Edi *ediOpen(cchar *source, cchar *provider, int flags);
 
 //  MOB - how do you get query errors back?  Should have an cchar *err argument.
 /**
-    Run a query
+    Run a query.
     @description This runs a provider dependant query. For the SQLite provider, this runs an SQL statement.
     The "mdb" provider does not implement this API. To do queries using the "mdb" provider, use:
         $ediReadRec, $ediReadOneWhere, $ediReadWhere, $ediReadField and $ediReadTable.
@@ -421,7 +421,7 @@ extern cchar *ediReadField(Edi *edi, cchar *fmt, cchar *tableName, cchar *key, c
 
 //  MOB - rename ReadRecWhere
 /**
-    Read one record
+    Read one record.
     @description This runs a simple query on the database and selects the first matching record. The query selects
         a row that has a "field" that matches the given "value".
     @param edi Database handle
@@ -435,7 +435,7 @@ extern cchar *ediReadField(Edi *edi, cchar *fmt, cchar *tableName, cchar *key, c
 extern EdiRec *ediReadOneWhere(Edi *edi, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
 
 /**
-    Read a field from the database
+    Read a field from the database.
     @description This reads a field from the database.
     @param edi Database handle
     @param tableName Database table name
@@ -447,7 +447,7 @@ extern EdiRec *ediReadOneWhere(Edi *edi, cchar *tableName, cchar *fieldName, cch
 extern EdiField ediReadRawField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldName);
 
 /**
-    Read a record
+    Read a record.
     @description Read a record from the given table as identified by the key value.
     @param edi Database handle
     @param tableName Database table name
@@ -459,7 +459,7 @@ extern EdiRec *ediReadRec(Edi *edi, cchar *tableName, cchar *key);
 
 //  MOB - rename ReadGridWhere
 /**
-    Read matching records
+    Read matching records.
     @description This runs a simple query on the database and returns matching records in a grid. The query selects
         all rows that have a "field" that matches the given "value".
     @param edi Database handle
@@ -473,7 +473,7 @@ extern EdiRec *ediReadRec(Edi *edi, cchar *tableName, cchar *key);
 extern EdiGrid *ediReadWhere(Edi *edi, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
 
 /**
-    Read a table
+    Read a table.
     @description This reads all the records in a table and returns a grid containing the results.
     @param edi Database handle
     @param tableName Database table name
@@ -483,7 +483,7 @@ extern EdiGrid *ediReadWhere(Edi *edi, cchar *tableName, cchar *fieldName, cchar
 extern EdiGrid *ediReadTable(Edi *edi, cchar *tableName);
 
 /**
-    Remove a column from a table
+    Remove a column from a table.
     @param edi Database handle
     @param tableName Database table name
     @param columnName Database column name
@@ -493,7 +493,7 @@ extern EdiGrid *ediReadTable(Edi *edi, cchar *tableName);
 extern int edRemoveColumn(Edi *edi, cchar *tableName, cchar *columnName);
 
 /**
-    Remove an table index
+    Remove a table index.
     @param edi Database handle
     @param tableName Database table name
     @param indexName Ignored. Set to null. This call will remove the table index.
@@ -503,7 +503,7 @@ extern int edRemoveColumn(Edi *edi, cchar *tableName, cchar *columnName);
 extern int ediRemoveIndex(Edi *edi, cchar *tableName, cchar *indexName);
 
 /**
-    Remove a table from the database
+    Remove a table from the database.
     @param edi Database handle
     @param tableName Database table name
     @return Zero if successful. Otherwise a negative MPR error code.
@@ -512,7 +512,7 @@ extern int ediRemoveIndex(Edi *edi, cchar *tableName, cchar *indexName);
 extern int ediRemoveTable(Edi *edi, cchar *tableName);
 
 /**
-    Rename a table
+    Rename a table.
     @param edi Database handle
     @param tableName Database table name
     @param newTableName New database table name
@@ -522,7 +522,7 @@ extern int ediRemoveTable(Edi *edi, cchar *tableName);
 extern int ediRenameTable(Edi *edi, cchar *tableName, cchar *newTableName);
 
 /**
-    Rename a column 
+    Rename a column. 
     @param edi Database handle
     @param tableName Database table name
     @param columnName Database column name
@@ -533,7 +533,7 @@ extern int ediRenameTable(Edi *edi, cchar *tableName, cchar *newTableName);
 extern int ediRenameColumn(Edi *edi, cchar *tableName, cchar *columnName, cchar *newColumnName);
 
 /**
-    Save in-memory database contents to disk
+    Save in-memory database contents to disk.
     @description How this call behaves is provider dependant. If the provider is "mdb" and the database is not opened
         with AutoSave, then this call will save the in-memory contents. If the "mdb" database is opened with AutoSave,
         then this call will do nothing. For the "sdb" SQLite provider, this call does nothing.
@@ -544,7 +544,7 @@ extern int ediRenameColumn(Edi *edi, cchar *tableName, cchar *columnName, cchar 
 extern int ediSave(Edi *edi);
 
 /**
-    Set a record field without writing to the database
+    Set a record field without writing to the database.
     @description This routine updates the record object with the given value. The record will not be written
         to the database. To write to the database, use $ediUpdateRec.
     @param rec Record to update
@@ -556,7 +556,7 @@ extern int ediSave(Edi *edi);
 extern EdiRec *ediSetField(EdiRec *rec, cchar *fieldName, cchar *value);
 
 /**
-    Set record fields without writing to the database
+    Set record fields without writing to the database.
     @description This routine updates the record object with the given values. The "data' argument supplies 
         a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually
         created via #ediMakeHash to convert a JSON string into an options hash.
@@ -571,7 +571,7 @@ extern EdiRec *ediSetField(EdiRec *rec, cchar *fieldName, cchar *value);
 extern EdiRec *ediSetFields(EdiRec *rec, MprHash *data);
 
 /**
-    Get table schema information
+    Get table schema information.
     @param edi Database handle
     @param tableName Database table name
     @param numRows Output parameter to receive the number of rows in the table
@@ -598,7 +598,7 @@ extern int ediUpdateField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldNa
 
 #if UNUSED
 /**
-    Write field values to a database row
+    Write field values to a database row.
     @description This routine updates a database row with the given values.  The "data' argument supplies 
         a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually
         created via #ediMakeHash to convert a JSON string into an options hash.
@@ -615,7 +615,7 @@ extern int ediUpdateFields(Edi *edi, cchar *tableName, MprHash *data);
 
 //  MOB - change Write to Update
 /**
-    Write a record to the database
+    Write a record to the database.
     @description If the record is a new record and the "id" column is EDI_AUTO_INC, then the "id" will be assigned
         prior to saving the record.
     @param edi Database handle
@@ -626,7 +626,7 @@ extern int ediUpdateFields(Edi *edi, cchar *tableName, MprHash *data);
 extern int ediUpdateRec(Edi *edi, EdiRec *rec);
 
 /**
-    Validate a record
+    Validate a record.
     @description Run defined field validations and return true if the record validates. Field validations are defined
         via $ediAddValidation calls. If any validations fail, error messages will be added to the record and can be 
         retrieved via $ediGetRecErrors.
@@ -638,7 +638,7 @@ extern bool ediValidateRec(EdiRec *rec);
 
 /**************************** Convenience Routines ****************************/
 /**
-    Format a field value
+    Format a field value.
     @param fmt Printf style format string
     @param value Field value
     @return Formatted value string
@@ -656,7 +656,7 @@ extern cchar *ediFormatField(cchar *fmt, EdiField value);
 extern cchar *ediGetField(EdiRec *rec, cchar *fieldName);
 
 /**
-    Get and format a record field value
+    Get and format a record field value.
     @param fmt Record field value
     @param rec Record to examine
     @param fieldName Record field to examine
@@ -666,7 +666,7 @@ extern cchar *ediGetField(EdiRec *rec, cchar *fieldName);
 extern cchar *ediGetFieldFmt(cchar *fmt, EdiRec *rec, cchar *fieldName);
 
 /**
-    Get the record field schema
+    Get the record field schema.
     @description This returns the actual EdiField which contains the field name, type, value and flags.
     @param rec Database record
     @param fieldName Field in the record to extract
@@ -676,7 +676,7 @@ extern cchar *ediGetFieldFmt(cchar *fmt, EdiRec *rec, cchar *fieldName);
 extern EdiField ediGetFieldSchema(EdiRec *rec, cchar *fieldName);
 
 /**
-    Get the data type of a record field
+    Get the data type of a record field.
     @param rec Record to examine
     @param fieldName Field to examine
     @return The field type. Returns one of: EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE, EDI_TYPE_FLOAT, 
@@ -686,9 +686,9 @@ extern EdiField ediGetFieldSchema(EdiRec *rec, cchar *fieldName);
 extern int ediGetFieldType(EdiRec *rec, cchar *fieldName);
 
 /**
-    Get record validation errors
+    Get record validation errors.
     @param rec Database record
-    @return A list of validation errors. If validation passed, this call returns NULL.
+    @return A list of validation errors. If validation passed, then this call returns NULL.
     @ingroup Edi
  */
 extern MprList *ediGetRecErrors(EdiRec *rec);
@@ -714,7 +714,7 @@ extern MprList *ediGetGridColumns(EdiGrid *grid);
 extern MprHash *ediMakeHash(cchar *fmt, ...);
 
 /**
-    Make a grid
+    Make a grid.
     @description This call makes a free-standing data grid based on the JSON format content string.
     @param content JSON format content string. The content should be an array of objects where each object is a
         set of property names and values.
@@ -729,7 +729,7 @@ grid = ediMakeGrid("[ \\ \n
 extern EdiGrid *ediMakeGrid(cchar *content);
 
 /**
-    Make a record
+    Make a record.
     @description This call makes a free-standing data record based on the JSON format content string.
     @param content JSON format content string. The content should be a set of property names and values.
     @return An EdiRec instance
@@ -739,7 +739,7 @@ extern EdiGrid *ediMakeGrid(cchar *content);
 extern EdiRec *ediMakeRec(cchar *content);
 
 /**
-    Create a bare grid
+    Create a bare grid.
     @description This creates an empty grid based on the given table's schema.
     @param edi Database handle
     @param tableName Database table name
@@ -750,7 +750,7 @@ extern EdiRec *ediMakeRec(cchar *content);
 extern EdiGrid *ediCreateBareGrid(Edi *edi, cchar *tableName, int nrows);
 
 /**
-    Create a bare record
+    Create a bare record.
     @description This creates an empty record based on the given table's schema.
     @param edi Database handle
     @param tableName Database table name
@@ -761,7 +761,7 @@ extern EdiGrid *ediCreateBareGrid(Edi *edi, cchar *tableName, int nrows);
 extern EdiRec *ediCreateBareRec(Edi *edi, cchar *tableName, int nfields);
 
 /**
-    Convert an EDI type to a string
+    Convert an EDI type to a string.
     @param type Column data type. Set to one of EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE
         EDI_TYPE_FLOAT, EDI_TYPE_INT, EDI_TYPE_STRING, EDI_TYPE_TEXT 
     @return Type string. This will be set to one of: "binary", "bool", "date", "float", "int", "string" or "text".
@@ -770,7 +770,7 @@ extern EdiRec *ediCreateBareRec(Edi *edi, cchar *tableName, int nfields);
 extern char *ediGetTypeString(int type);
 
 /**
-    Parse an EDI type string
+    Parse an EDI type string.
     @param type Type string set to one of: "binary", "bool", "date", "float", "int", "string" or "text".
     @return Type code. Set to one of EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE, EDI_TYPE_FLOAT, EDI_TYPE_INT, 
         EDI_TYPE_STRING, EDI_TYPE_TEXT.
@@ -808,7 +808,7 @@ extern void sdbInit();
     Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
+    You may use the GPL open source license described below, or you may acquire
     a commercial license from Embedthis Software. You agree to be fully bound
     by the terms of either license. Consult the LICENSE.TXT distributed with
     this software for full details.
