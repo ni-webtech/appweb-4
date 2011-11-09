@@ -27,14 +27,10 @@ DEPS		= tools mpr pcre http sqlite
 
 include		build/make/Makefile.top
 include		build/make/Makefile.appweb
+include		out/bin/Makefile.import
 
 testCleanup:
 	killall testAppweb >/dev/null 2>&1 ; true
-
-
-$(IMPORTED): $(IMPORTS)
-	getlib $^
-	$(call log) "[Import]" "$(IMPORTS)"
 
 #
 #   Local variables:

@@ -2,10 +2,11 @@
 #   Mpr
 #
 defineComponent() {
-    local libpaths path builtin incdir
+    local libpaths path builtin incdir ejscript
 
     path="${1:-.}"
     builtin=`[ $path = "." ] && echo --builtin`
+    eval ejscript=\$CFG_${kind}_EJSCRIPT
 
     if [ "$path" != "." ] ; then
         import_libmpr=`probe --name mpr --search "$path:$path/out/lib" "libmpr"`
@@ -26,6 +27,9 @@ defineComponent() {
     if [ "$builtin" = "" ] ; then
         imports="$imports $import_libmpr $import_libmprssl"
         libpaths="${import_libmpr%/*}"
+    fi
+    if [ "$ejscript" = "1" ] ; then
+        imports=
     fi
     configureComponent --libs "mpr" --libpaths "$libpaths" $builtin --imports "$imports" mpr
 }

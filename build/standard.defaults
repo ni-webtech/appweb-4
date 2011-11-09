@@ -49,14 +49,15 @@ with --optional ejs
 with --build --optional doxygen
 with --os=win --build --optional pkg
 
+with --optional ejscript
+# without ejscript
+
 with mpr 
 with http
 with --host --optional openssl ssl
 with --host --optional php
 # with --host --optional sqlite
 
-with --optional ejscript
-# without ejscript
 with --optional dir
 with --optional cgi
 
