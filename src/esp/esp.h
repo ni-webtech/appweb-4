@@ -805,7 +805,7 @@ extern MprHash *espGetUploads(HttpConn *conn);
 extern cchar *espGetUri(HttpConn *conn);
 
 /**
-    Test is a current grid has been defined
+    Test if a current grid has been defined
     @description The current grid is defined via $setRec
     @return True if a current grid has been defined
     @ingroup EspReq
@@ -813,7 +813,7 @@ extern cchar *espGetUri(HttpConn *conn);
 extern bool espHasGrid(HttpConn *conn);
 
 /**
-    Test is a current record has been defined and save to the database
+    Test if a current record has been defined and save to the database
     @description This call returns true if a current record is defined and has been saved to the database with a 
         valid "id" field.
     @return True if a current record with a valid "id" is defined.
@@ -1476,7 +1476,7 @@ typedef struct EspControl { int dummy; } EspControl;
 
 // MOB - does this do an alert popup or is this a console status widget?
 /**
-    Display a popup alert message in the clients browser when the web page is displayed.
+    Display a popup alert message in the client's browser when the web page is displayed.
     @param conn Http connection object
     @param text Alert text to display
     @param options Extra options. See $EspControl for a list of the standard options.
@@ -1522,7 +1522,7 @@ extern void espButton(HttpConn *conn, cchar *text, cchar *value, cchar *options)
 extern void espButtonLink(HttpConn *conn, cchar *text, cchar *uri, cchar *options);
 
 /**
-    Render an graphic chart
+    Render a graphic chart
     @description The chart control can display static or dynamic tabular data. The client chart control manages
         sorting by column, dynamic data refreshes, pagination and clicking on rows.
     TODO. This is incomplete.
@@ -1890,7 +1890,7 @@ extern void button(cchar *text, cchar *value, cchar *options);
 extern void buttonLink(cchar *text, cchar *uri, cchar *options);
 
 /**
-    Render an graphic chart
+    Render a graphic chart
     @description The chart control can display static or dynamic tabular data. The client chart control manages
         sorting by column, dynamic data refreshes, pagination and clicking on rows.
     TODO. This is incomplete.
@@ -2219,7 +2219,7 @@ extern void createSession();
 extern void destroySession();
 
 /**
-    Dont auto-finalize this request
+    Don't auto-finalize this request
     @ingroup EspAbbrev
  */
 extern void dontAutoFinalize();
@@ -2259,8 +2259,8 @@ extern MprList *getColumns(EdiRec *rec);
 
 /**
     Get the request cookies
-    @description Get the cookies defined in the current requeset
-    @return Return a string containing the cookies sent in the Http header of the last request
+    @description Get the cookies defined in the current request.
+    @return Return a string containing the cookies sent in the Http header of the last request.
     @ingroup EspAbbrev
  */
 extern cchar *getCookies();
@@ -2413,7 +2413,7 @@ extern MprHash *getUploads();
 extern cchar *getUri();
 
 /**
-    Test is a current grid has been defined
+    Test if a current grid has been defined
     @description The current grid is defined via $setRec
     @return True if a current grid has been defined
     @ingroup EdiAbbrev
@@ -2421,7 +2421,7 @@ extern cchar *getUri();
 extern bool hasGrid();
 
 /**
-    Test is a current record has been defined and save to the database
+    Test if a current record has been defined and save to the database
     @description This call returns true if a current record is defined and has been saved to the database with a 
         valid "id" field.
     @return True if a current record with a valid "id" is defined.
@@ -2910,7 +2910,7 @@ extern bool updateRec(EdiRec *rec);
 extern cchar *uri(cchar *target);
 
 /**
-    Set an arning flash notification message.
+    Set a flash notification message.
     @description Flash messages persist for only one request and are a convenient way to pass state information or 
         feedback messages to the next request. 
     This routine calls $espWarn.
