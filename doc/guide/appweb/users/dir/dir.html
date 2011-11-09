@@ -70,7 +70,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
-                        <td>Default Server, Virtual host, Directory</td>
+                        <td>Default Server, Virtual host, Route</td>
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
@@ -79,14 +79,15 @@
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The DirectoryIndex directive specifies the document that will be served when a HTTP
-                            request is made for the index of a directory. A browser requests a directory index by
-                            issuing a request with a trailing "/" in the URL.</p>
+                            <p>The DirectoryIndex directive specifies a document that may be served when a HTTP
+                            request is made for a directory. Multiple directory index files may be specified and they
+                            will be tested in order. The first index that exists will be served.</p>
+                            <p>If a client requests a directory, but without a trailing "/" in the URI, the 
+                            client will be redirected to the URI with a trailing "/". When the clien then uses that URI,
+                            the directory index file will be used for the response.</p>
                             <p>For example: if a DirectoryIndex of "index.php" is specified and a user requestes
                             http://www.acme.com/products/. Then the document /products/index.php will be returned to
                             the user.</p>
-                            <p>NOTE: Unlike Apache, only one document may be specified in the DirectoryIndex directive.
-                            Also, only one DirectoryIndex directive may appear per context.</p>
                         </td>
                     </tr>
                 </tbody>
@@ -104,7 +105,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
-                        <td>Default server, Virtual host, Directory</td>
+                        <td>Default server, Virtual host, Route</td>
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
@@ -136,7 +137,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
-                        <td>Default server, Virtual host, Directory</td>
+                        <td>Default server, Virtual host, Route</td>
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>

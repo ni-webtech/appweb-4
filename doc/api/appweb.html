@@ -13,6 +13,7 @@
     <link href="../iehacks.css" rel="stylesheet" type="text/css" />
     <![endif]-->
 </head>
+
 <body>
     <div class="top">
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
@@ -37,17 +38,17 @@
             &gt; <b>Appweb</b> 
         </div>
     </div>
+
     <div class="content">
         <div class="contentRight">
             
-            
-<!-- BeginDsi "dsi/see.html" -->
-				<h2>See Also</h2>
-				<ul class="nav">
-					<li><a href="../ref/appweb/index.html">Programmers Reference</a></li>
-					<li><a href="../api/native.html">Native APIs</a></li>
-				</ul>
-<!-- EndDsi -->
+            <!-- BeginDsi "dsi/see.html" -->
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../ref/ejs/index.html">Programmers Reference</a></li>
+                <li><a href="../api/ejs/native.html">Native APIs</a></li>
+            </ul>
+            <!-- EndDsi -->
             <h2>Quick Nav</h2>
             <ul>
                 <li><a href="#Modules">Modules</a></li>
@@ -80,7 +81,7 @@
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#appweb_8h_1a454f6a859fd29e3c76e136420fdfc3c4" class="nameRef">maArchiveLog</a>(<a href="http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path, int count, int maxSize)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Archive a log file.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___ma_server_1ga95cc0d8c3f161d0a9d4a2a4925e50158" class="nameRef">maConfigureServer</a>(<a href="#group___ma_server" class="ref">MaServer</a> *server, <a href="http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *configFile, <a href="http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *home, <a href="http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *documents, <a href="http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *ip, int port)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Configure a web server.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#struct_ma_appweb" class="ref">MaAppweb*</a></td><td><a href="#group___appweb_1ga3c5d11ffcda01cb1d75ae24faa39cdee" class="nameRef">maCreateAppweb</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create the Appweb object.</td></tr>
-<tr class="apiDef"><td class="apiType"><a href="#group___ma_server" class="ref">MaServer*</a></td><td><a href="#group___ma_server_1gad21a5a81aa006217ecc220da1198ff7f" class="nameRef">maCreateServer</a>(<a href="#struct_ma_appweb" class="ref">MaAppweb</a> *appweb, <a href="http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create an MaServer object.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="#group___ma_server" class="ref">MaServer*</a></td><td><a href="#group___ma_server_1gad21a5a81aa006217ecc220da1198ff7f" class="nameRef">maCreateServer</a>(<a href="#struct_ma_appweb" class="ref">MaAppweb</a> *appweb, <a href="http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create a MaServer object.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___appweb_1gaeea4a201c9a8cca9521cd006436b8570" class="nameRef">maGetUserGroup</a>(<a href="#struct_ma_appweb" class="ref">MaAppweb</a> *appweb)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get the user group.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___appweb_1gaba2d0d4cfa73dbc028719098908eaa89" class="nameRef">maLoadModule</a>(<a href="#struct_ma_appweb" class="ref">MaAppweb</a> *appweb, <a href="http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, <a href="http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *libname)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Load an appweb module.</td></tr>
 <tr class="apiDef"><td class="apiType">struct MaServer*</td><td><a href="#group___appweb_1gaf5f955fddd686c69147a13fe34f57a9b" class="nameRef">maLookupServer</a>(<a href="#struct_ma_appweb" class="ref">MaAppweb</a> *appweb, <a href="http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Lookup a server.</td></tr>
@@ -88,7 +89,7 @@
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___appweb_1gaaee49b7b7de456a272e476b9a1228bc8" class="nameRef">maParseConfig</a>(<a href="#group___ma_server" class="ref">MaServer</a> *server, <a href="http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path, int flags)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Parse an Appweb configuration file.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___appweb_1gaf72ae42c5d6c767a221d6d84f4f0b83b" class="nameRef">maParseInit</a>(<a href="#struct_ma_appweb" class="ref">MaAppweb</a> *appweb)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Initialize the config file parser.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___ma_state" class="ref">MaState*</a></td><td><a href="#group___appweb_1ga2ff0312d66ba2c173b2ff6882e1f4ce9" class="nameRef">maPopState</a>(<a href="#group___ma_state" class="ref">MaState</a> *state)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Pop the state.</td></tr>
-<tr class="apiDef"><td class="apiType"><a href="#group___ma_state" class="ref">MaState*</a></td><td><a href="#group___appweb_1gad960c7ab5089293e33a0cf221f41072d" class="nameRef">maPushState</a>(<a href="#group___ma_state" class="ref">MaState</a> *state)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Pop the state.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="#group___ma_state" class="ref">MaState*</a></td><td><a href="#group___appweb_1gad960c7ab5089293e33a0cf221f41072d" class="nameRef">maPushState</a>(<a href="#group___ma_state" class="ref">MaState</a> *state)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Push the state.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___ma_server_1ga88a2bd1d0f26f024e6cb2d693c13e4f7" class="nameRef">maRunSimpleWebServer</a>(<a href="http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *ip, int port, <a href="http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *home, <a href="http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *documents)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create and run a simple web server listening on a single IP address.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___ma_server_1ga4994c273e87409b094418dd7bd370ee4" class="nameRef">maRunWebServer</a>(<a href="http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *configFile)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create and run a web server based on a configuration file.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___appweb_1ga7168a722ecf30b5caf8e0c9f29acdc5c" class="nameRef">maSetAccessLog</a>(<a href="http.html#group___http_host" class="ref">HttpHost</a> *host, <a href="http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path, <a href="http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *format)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Define the access log.</td></tr>
@@ -412,7 +413,7 @@
 (<a href="#group___ma_state" class="ref">MaState</a> *state)
   </div>
   <div class="apiDetail">
-<p>Pop the state.</p>
+<p>Push the state.</p>
     <dl><dt><b>Description</b>:</dt><dd>This is used when parsing config files to handle nested include files and block level directives.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
@@ -670,7 +671,7 @@
   <div class="prototype">MaServer</div>
   <div class="apiDetail">
 <p>The MaServer object.</p>
-    <dl><dt><b>Description</b>:</dt><dd>An application may have any number of HTTP servers, each managed by an MaServer instance.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>An application may have any number of HTTP servers, each managed by a MaServer instance.</dd></dl>
     <dl><dt><b>API</b> Stability:</dt><dd>Evolving.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___appweb_1ga4f98dc51b9f96f3636ba16d4075d2550" class="ref">maAddEndpoint</a>, <a href="#group___ma_server_1ga95cc0d8c3f161d0a9d4a2a4925e50158" class="ref">maConfigureServer</a>, <a href="#group___ma_server_1gad21a5a81aa006217ecc220da1198ff7f" class="ref">maCreateServer</a>, <a href="#group___appweb_1gaaee49b7b7de456a272e476b9a1228bc8" class="ref">maParseConfig</a>, <a href="#group___ma_server_1ga88a2bd1d0f26f024e6cb2d693c13e4f7" class="ref">maRunSimpleWebServer</a>, <a href="#group___ma_server_1ga4994c273e87409b094418dd7bd370ee4" class="ref">maRunWebServer</a>, <a href="#group___appweb_1ga8c95d4a11a227962df2feaddf98c4151" class="ref">maSetServerAddress</a>, <a href="#group___appweb_1ga8e99d32507bca4e743bd52fb9175c6f3" class="ref">maSetServerHome</a>, <a href="#group___appweb_1gabd0d6aff18d184020e8ed1f0a388c3fc" class="ref">maValidateServer</a></dd></dl>
@@ -918,12 +919,10 @@ Top level state.
             </div>
         </div>
 <!-- BeginDsi "dsi/bottom.html" -->
-
+	</div>
 	<div class="bottom">
-		<p class="footnote"> 
-            <a href="../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2011. 
-            All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
-		</p>
+		<p class="footnote"><a href="../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2011. All rights 
+                reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a></p>
 	</div>
 <!-- EndDsi -->
 </body>

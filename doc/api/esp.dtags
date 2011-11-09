@@ -13,8 +13,15 @@
       <type>char *</type>
       <name>espBuildScript</name>
       <anchorfile>group___esp_route.html</anchorfile>
-      <anchor>ga2fe633ebe5e6a9dd266e1da8863f55b0</anchor>
-      <arglist>(EspRoute *eroute, cchar *page, cchar *path, cchar *cacheName, cchar *layout, char **err)</arglist>
+      <anchor>gac9c9e0843eba723790fa16c8fd508a8b</anchor>
+      <arglist>(HttpRoute *route, cchar *page, cchar *path, cchar *cacheName, cchar *layout, char **err)</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>espCache</name>
+      <anchorfile>group___esp_route.html</anchorfile>
+      <anchor>ga01d07d3db11f99c0d1b93b068ec56c67</anchor>
+      <arglist>(HttpRoute *route, cchar *uri, int lifesecs, int flags)</arglist>
     </member>
     <member kind="function">
       <type>bool</type>
@@ -27,22 +34,22 @@
       <type>void</type>
       <name>espDefineAction</name>
       <anchorfile>group___esp_route.html</anchorfile>
-      <anchor>gaea173dc388d5badd02f2cd17743b479c</anchor>
-      <arglist>(EspRoute *eroute, cchar *targetKey, void *actionProc)</arglist>
+      <anchor>ga321abe89cc91246b2a44f40493988670</anchor>
+      <arglist>(HttpRoute *route, cchar *targetKey, void *actionProc)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>espDefineBase</name>
       <anchorfile>group___esp_route.html</anchorfile>
-      <anchor>ga8dba5d871d8cca23d33839ce7e25d6c1</anchor>
-      <arglist>(EspRoute *eroute, EspProc baseProc)</arglist>
+      <anchor>gae250d071bb458546c8ed5fad3aba5e84</anchor>
+      <arglist>(HttpRoute *route, EspProc baseProc)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
       <name>espDefineView</name>
       <anchorfile>group___esp_route.html</anchorfile>
-      <anchor>ga7cec7c28d284376b7670bf0065159870</anchor>
-      <arglist>(EspRoute *eroute, cchar *path, void *viewProc)</arglist>
+      <anchor>gab7ebccfe31eb1e07f3f40db700d18bd9</anchor>
+      <arglist>(HttpRoute *route, cchar *path, void *viewProc)</arglist>
     </member>
     <member kind="function">
       <type>char *</type>
@@ -252,6 +259,13 @@
       <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
+      <type>EspRoute *</type>
+      <name>espGetEspRoute</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>gaefe462fb7ee0c6fa6a0c7842b973de3c</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
       <type>cchar *</type>
       <name>espGetFlashMessage</name>
       <anchorfile>group___esp_req.html</anchorfile>
@@ -320,6 +334,13 @@
       <anchorfile>group___esp_req.html</anchorfile>
       <anchor>ga400095fc3f1743660baedac7c95ff53c</anchor>
       <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>Edi *</type>
+      <name>espGetRouteDatabase</name>
+      <anchorfile>group___esp_req.html</anchorfile>
+      <anchor>ga72246c1dc89e871ec596ae0959077af2</anchor>
+      <arglist>(HttpRoute *route)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
@@ -1060,6 +1081,13 @@
       <arglist>()</arglist>
     </member>
     <member kind="function">
+      <type>EspRoute *</type>
+      <name>getEspRoute</name>
+      <anchorfile>group___esp_abbrev.html</anchorfile>
+      <anchor>ga29c40a3c98f7e8b07c4bab47a29d8ade</anchor>
+      <arglist>()</arglist>
+    </member>
+    <member kind="function">
       <type>cchar *</type>
       <name>getHeader</name>
       <anchorfile>group___esp_abbrev.html</anchorfile>
@@ -1270,6 +1298,13 @@
       <arglist>(cchar *fmt,...)</arglist>
     </member>
     <member kind="function">
+      <type>ssize</type>
+      <name>renderCached</name>
+      <anchorfile>group___esp_abbrev.html</anchorfile>
+      <anchor>gaa3ab885ce858d809f47571c64681b96d</anchor>
+      <arglist>()</arglist>
+    </member>
+    <member kind="function">
       <type>void</type>
       <name>renderError</name>
       <anchorfile>group___esp_abbrev.html</anchorfile>
@@ -1408,6 +1443,13 @@
       <anchorfile>group___esp_abbrev.html</anchorfile>
       <anchor>ga8d88083825d334fa044a6536cfc8caf8</anchor>
       <arglist>(EdiGrid *grid, cchar *options)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>updateCache</name>
+      <anchorfile>group___esp_abbrev.html</anchorfile>
+      <anchor>ga71ab6f699454ab16232f98c28a47935c</anchor>
+      <arglist>(cchar *uri, cchar *data, int lifesecs)</arglist>
     </member>
     <member kind="function">
       <type>bool</type>
@@ -1889,13 +1931,6 @@
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>MprCache *</type>
-      <name>cache</name>
-      <anchorfile>struct_esp.html</anchorfile>
-      <anchor>a16a000f17fb7a06a8754988a341a3b8d</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="variable">
       <type>EdiService *</type>
       <name>ediService</name>
       <anchorfile>struct_esp.html</anchorfile>
@@ -1928,6 +1963,13 @@
       <name>mutex</name>
       <anchorfile>struct_esp.html</anchorfile>
       <anchor>a71156c2af5c1018ffa495d97fc21c6ec</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
+      <type>MprCache *</type>
+      <name>sessionCache</name>
+      <anchorfile>struct_esp.html</anchorfile>
+      <anchor>a48a345ed5471d8ed026c5440417ae0f6</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
