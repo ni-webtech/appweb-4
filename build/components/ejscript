@@ -95,6 +95,13 @@ defineComponent() {
         headers="`echo $incdir/ejs*.h $incdir/http.h $incdir/mpr*.h $incdir/pcre.h`"
         imports="$imports $headers"
     fi
+    BLD_MPR_BUILTIN=0
+    BLD_HTTP_BUILTIN=0
+    BLD_PCRE_BUILTIN=0
+eval CFG_${kind}_MPR_BUILTIN=0
+eval CFG_${kind}_HTTP_BUILTIN=0
+eval CFG_${kind}_PCRE_BUILTIN=0
+
     configureComponent --libs "$libs" --iflags "$iflags" --libpaths "$libdir" --withlibs "$withlibs" \
         $builtin $present --dependencies "$deps" --optional-dependencies "$optional" --imports "$imports" \
         --path "$ejslib" ejscript
