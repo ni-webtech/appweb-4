@@ -82,6 +82,7 @@
                             <p>The DirectoryIndex directive specifies a document that may be served when a HTTP
                             request is made for a directory. Multiple directory index files may be specified and they
                             will be tested in order. The first index that exists will be served.</p>
+                            <p>The DirectoryIndex argument must be a simple filename without any directory portion.</p>
                             <p>If a client requests a directory, but without a trailing "/" in the URI, the 
                             client will be redirected to the URI with a trailing "/". When the clien then uses that URI,
                             the directory index file will be used for the response.</p>

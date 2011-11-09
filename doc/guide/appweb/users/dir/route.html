@@ -291,6 +291,15 @@
                             destinationPath which may be a file or a directory anywhere on the system.</p>
                             <p>It is an easy mistake to have mismatched trailing slashes. If you have a trailing slash
                             on the urlPortion ensure you also have one on the destinationPath.</p>
+                            <p>The Alias directive:
+                            <pre>Alias /manual/ /home/john/doc/</pre>
+                            is equivalent to:
+                            <pre>
+&lt;Route /manual/&gt;
+    DocumentRoot /home/john/doc/
+    Prefix /manual
+&lt;/Route&gt;
+</pre>
                         </td>
                     </tr>
                 </tbody>
@@ -816,9 +825,10 @@
                         <td class="pivot">Notes</td>
                         <td>
                             <p>The Prefix directive defines a URI-prefix that will be stripped from the request URI
-                            if the route is selected to handle the request. Once stripped, the Request.scriptName will
-                            be set to the prefix. This is useful for an application to be able to be installed with 
-                            various URI application prefixes without having to modify the application.</p>
+                            Request.pathInfo if the route is selected to handle the request. Once stripped, the 
+                            Request.scriptName will be set to the prefix. This is useful for an application to be 
+                            able to be installed with various URI application prefixes without having to modify 
+                            the application.</p>
                         </td>
                     </tr>
                 </tbody>
@@ -1002,7 +1012,10 @@
                         <td class="pivot">Notes</td>
                         <td>
                             <p>The Route directive defines a block of directives that apply to URIs 
-                            that match specified URI pattern.</p>
+                            that match specified URI pattern. Routes may be nested where inner routes inherit the
+                            outer routes configuration at that point in the configuration file. If a Route directive
+                            specifies a URI pattern that has been previously defined, the prior route is re-opened and
+                            modified. i.e. A new route is not created.</p>
                         </td>
                     </tr>
                 </tbody>

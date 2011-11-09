@@ -1355,7 +1355,7 @@ createBuildConfig() {
     
     CONFIG_ARGS="${BLD_OUT_DIR}/bin/${CONFIG_ARGS}"
     CONFIG_H="${BLD_OUT_DIR}/inc/${CONFIG_H}"
-    CONFIG_IMP="${BLD_OUT_DIR}/bin/${CONFIG_IMP}"
+    CONFIG_IMP="${BLD_OUT_DIR}/inc/${CONFIG_IMP}"
 
     [ $quiet = 0 ] && echo "  # Creating $CONFIG_H ..."
     rm -f "$CONFIG_H"
@@ -1445,7 +1445,7 @@ createBuildConfig() {
         echo -e "\${BLD_TOP}/out/${dir}/${item##*/}: ${item}\n\tcp ${item} ${BLD_TOP}/out/${dir}/${item##*/}\n" >>$CONFIG_IMP
         echo -e "\t\${BLD_TOP}/out/${dir}/${item##*/} \\" >>/tmp/$$targets
     done
-    echo -e "\ncompileExtra: \\" >>$CONFIG_IMP
+    echo -e "compileExtra: \\" >>$CONFIG_IMP
     cat /tmp/$$targets >>$CONFIG_IMP
     echo -e "" >>$CONFIG_IMP
     rm -f /tmp/$$targets

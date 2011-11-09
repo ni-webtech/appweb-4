@@ -30,7 +30,6 @@ defineComponent() {
     fi
     if [ "$ejscript" = "1" ] ; then
         imports=
-        builtin=
     fi
     configureComponent --libs "mpr" --libpaths "$libpaths" $builtin --imports "$imports" mpr
 }

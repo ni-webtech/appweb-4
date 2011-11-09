@@ -31,7 +31,6 @@ defineComponent() {
     fi
     if [ "$ejscript" = "1" ] ; then
         imports=
-        builtin=
     fi
     configureComponent --libs "$libs" --withlibs "$withlibs" --libpaths "$libpaths" --iflags "$iflags" $builtin \
         --imports "$imports" http
