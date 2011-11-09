@@ -1845,10 +1845,10 @@ extern void espTree(HttpConn *conn, EdiGrid *grid, cchar *options);
 typedef struct EspAbbrev { int dummy; } EspAbbrev;
 
 /**
-    Display a popup alert message in the clients browser when the web page is displayed.
+    Display a popup alert message in the client's browser when the web page is displayed.
     @param text Alert text to display
     @param options Extra options. See $EspControl for a list of the standard options.
-    @arg period Polling period in milliseconds for the client to check the server for status message 
+    @arg Polling period in milliseconds for the client to check the server for status message 
     updates. If this is not specifed, the connection to the server will be kept open. This permits the 
     server to "push" alerts to the console, but will consume a connection at the server for each client.
     @ingroup EspAbbrev
