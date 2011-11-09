@@ -410,7 +410,7 @@ extern int maArchiveLog(cchar *path, int count, int maxSize);
 extern MaState *maPopState(MaState *state);
 
 /**
-    Pop the state 
+    Push the state 
     @description This is used when parsing config files to handle nested include files and block level directives
     @param state Current state
     @return The state passed as a parameter which becomes the new top level state
