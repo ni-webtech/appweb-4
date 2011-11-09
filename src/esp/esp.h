@@ -152,7 +152,7 @@ typedef struct EspRoute {
 } EspRoute;
 
 /**
-    Add caching for response content
+    Add caching for response content.
     @description This call configures caching for request responses. Caching may be used for any HTTP method, 
     though typically it is most useful for state-less GET requests. Output data may be uniquely cached for requests 
     with different request parameters (query, post and route parameters).
