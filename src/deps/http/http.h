@@ -65,7 +65,7 @@ struct HttpUri;
         Tune for size
      */
     #define HTTP_BUFSIZE               (8 * 1024)           /**< Default I/O buffer size */
-    #define HTTP_MAX_CACHE_ITEM        (64 * 1024)          /**< Max cachable item size */
+    #define HTTP_MAX_CACHE_ITEM        (256 * 1024)         /**< Max cachable item size */
     #define HTTP_MAX_CHUNK             (8 * 1024)           /**< Max chunk size for transfer chunk encoding */
     #define HTTP_MAX_HEADERS           4096                 /**< Max size of the headers */
     #define HTTP_MAX_IOVEC             16                   /**< Number of fragments in a single socket write */
@@ -84,7 +84,7 @@ struct HttpUri;
         Tune balancing speed and size
      */
     #define HTTP_BUFSIZE               (16 * 1024)
-    #define HTTP_MAX_CACHE_ITEM        (64 * 1024)
+    #define HTTP_MAX_CACHE_ITEM        (512 * 1024)
     #define HTTP_MAX_CHUNK             (8 * 1024)
     #define HTTP_MAX_HEADERS           (8 * 1024)
     #define HTTP_MAX_IOVEC             24
@@ -103,7 +103,7 @@ struct HttpUri;
         Tune for speed
      */
     #define HTTP_BUFSIZE               (32 * 1024)
-    #define HTTP_MAX_CACHE_ITEM        (128 * 1024)
+    #define HTTP_MAX_CACHE_ITEM        (1024 * 1024)
     #define HTTP_MAX_CHUNK             (16 * 1024) 
     #define HTTP_MAX_HEADERS           (8 * 1024)
     #define HTTP_MAX_IOVEC             32
