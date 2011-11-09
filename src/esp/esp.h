@@ -1486,8 +1486,8 @@ typedef struct EspControl { int dummy; } EspControl;
 extern void espAlert(HttpConn *conn, cchar *text, cchar *options);
 
 /**
-    Render an HTML anchor link
-    @description. This is emits a label inside an anchor reference. i.e. a clickable link.
+    Render an HTML anchor link.
+    @description. This emits a label inside an anchor reference. i.e. a clickable link.
     @param conn Http connection object
     @param text Anchor text to display for the link
     @param uri URI link for the anchor
@@ -1519,18 +1519,18 @@ extern void espButton(HttpConn *conn, cchar *text, cchar *value, cchar *options)
 extern void espButtonLink(HttpConn *conn, cchar *text, cchar *uri, cchar *options);
 
 /**
-    Render a graphic chart
+    Render a graphic chart.
     @description The chart control can display static or dynamic tabular data. The client chart control manages
-        sorting by column, dynamic data refreshes, pagination and clicking on rows.
+        sorting by column, dynamic data refreshes, pagination, and clicking on rows.
     TODO. This is incomplete.
     @param conn Http connection object
     @param grid Data to display. The data is a grid of data. Use ediCreateGrid or ediReadGrid.
     @param options Extra options. See $EspControl for a list of the standard options.
-    @arg columns Object hash of column entries. Each column entry is in-turn an object hash of options. If unset, 
+    @arg columns Object hash of column entries. Each column entry is (in turn) an object hash of options. If unset, 
         all columns are displayed using defaults.
     @arg kind String Type of chart. Select from: piechart, table, linechart, annotatedtimeline, guage, map, 
         motionchart, areachart, intensitymap, imageareachart, barchart, imagebarchart, bioheatmap, columnchart, 
-        linechart, imagelinechart, imagepiechart, scatterchart (and more)
+        linechart, imagelinechart, imagepiechart, scatterchart (and more).
     @ingroup EspControl
     @internal
  */
@@ -1541,7 +1541,7 @@ extern void espChart(HttpConn *conn, EdiGrid *grid, cchar *options);
     Render an input checkbox. 
     @description This creates a checkbox suitable for use within an input form. 
     @param conn Http connection object
-    @param name Name for the input checkbox. This defines the HTML element name and provides the source of the
+    @param name Name for the input checkbox. This defines the HTML element name, and provides the source of the
         initial value for the checkbox. The field should be a property of the $espForm current record. 
         If this call is used without a form control record, the actual data value should be supplied via the 
         options.value property.
@@ -1553,7 +1553,7 @@ extern void espCheckbox(HttpConn *conn, cchar *name, cchar *checkedValue, cchar 
 
 /**
     Render an HTML division
-    @description This creates an HTML element with the required options.It is useful to generate a dynamically 
+    @description This creates an HTML element with the required options. It is useful to generate a dynamically 
         refreshing division.
     @param conn Http connection object
     @param body HTML body to render
@@ -1573,7 +1573,7 @@ extern void espEndform(HttpConn *conn);
 /**
     Render flash messages.
     @description Flash messages are one-time messages that are displayed to the client on the next request (only).
-    Flash messages use the session state store, but persist only for one request.
+    Flash messages use the session state store but persist for only one request.
         See $espSetFlash for how to define flash messages. 
     @param conn Http connection object
     @param kinds Space separated list of flash messages types. Typical types are: "error", "inform", "warning".
@@ -1586,7 +1586,7 @@ extern void espEndform(HttpConn *conn);
 extern void espFlash(HttpConn *conn, cchar *kinds, cchar *options);
 
 /**
-    Render an HTML form 
+    Render an HTML form .
     @description This will render an HTML form tag and optionally associate the given record as the current record for
         the request. Abbreviated controls (see $EspAbbrev) use the current record to supply form data fields and values.
         The espForm control can be used without a record. In this case, nested ESP controls may have to provide 
@@ -1600,13 +1600,13 @@ extern void espFlash(HttpConn *conn, cchar *kinds, cchar *options);
     @arg nosecurity -- Don't generate a security token for the form.
     @arg securityToken -- String Override CSRF security token to include when the form is submitted. A default 
         security token will always be generated unless options.nosecurity is defined to be true.
-        Security tokens are used by ESP to mitigate cross site scripting errors.
+        Security tokens are used by ESP to mitigate cross-site scripting errors.
     @ingroup EspControl
  */
 extern void espForm(HttpConn *conn, EdiRec *record, cchar *options);
 
 /**
-    Render an HTML icon
+    Render an HTML icon.
     @param conn Http connection object
     @param uri URI reference for the icon resource
     @param options Extra options. See $EspControl for a list of the standard options.
@@ -1615,7 +1615,7 @@ extern void espForm(HttpConn *conn, EdiRec *record, cchar *options);
 extern void espIcon(HttpConn *conn, cchar *uri, cchar *options);
 
 /**
-    Render an HTML image
+    Render an HTML image.
     @param conn Http connection object
     @param uri URI reference for the image resource
     @param options Extra options. See $EspControl for a list of the standard options.
@@ -1650,7 +1650,7 @@ extern void espLabel(HttpConn *conn, cchar *text, cchar *options);
 //  MOB DB
 //  MOB - how to get a choices list from a database
 /**
-    Render a dropdown selection list
+    Render a dropdown selection list.
     @param conn Http connection object
     @param field Record field name to provide the default value for the list. The field should be a property of the 
         form current record.  The field name is used to create the HTML input control name.
