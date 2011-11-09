@@ -78,17 +78,15 @@
         </div>
         <div class="contentLeft">
 <pre>
-Overview
-    - What is MVC
-    - What are controllers
-    - Bind a URI to an action
-    - Provide framework for REST
-Quick Look
-    - Example
 Configuring Actions
     - Defining Actions
         - espDefineAction
     - Routing
+- Process
+    - Transparent compilation
+    - Cache into cache directory
+    - Can compile whole app
+- Generator
 - Rendering Data
     - Render data
         - finalize
@@ -101,79 +99,160 @@ Context
 API
     - Abbreviated API
 </pre>
-            <h1>Controllers and Actions</h1>
-            <p>ESP controllers react to client requests and generate client responses. They are the conductors of
-            the application and orchestrate the application's activities.</p>
-            <a name="flow" id="flow"></a>
-            <h3>Processing Flow</h3>
-            <p>Appweb processes requests in stages:</p>
-            <ol>
-                <li>Decode the URI and web request</li>
-                <li>Route an incoming request to the appropriate controller</li>
-                <li>Invoke the requested action</li>
-                <li>Optionally render a response view to the client</li>
-            </ol>
+        <p>The ESP Model-view-controller (MVC) architecture is a pattern for designing well structured applications. 
+        It separates the logic ("controller"), from the presentation ("view") and the application's data ("model"). 
+        MVC applications have proven to be an effective organization for web applications. </p>
+
+        <p>ESP <tt>controllers</tt> are the conductors of the application and they orchestrate the application's 
+        activities. Via <tt>action</tt> functions, they receive client requests and generate appropriate responses, 
+        mutating the applications data ("model") in the process.</p>
+        <p>While controllers are most often used as part of an MVC application, they may also be used stand-alone.</p>
+
             <a name="routing" id="routing"></a>
             <h2 class="section">Routing Requests</h2>
-            <p>When Appweb receives a client request, it examines each of the configured routes in order, until it 
-            finds a matching route for the request URI. Routes will typically break the URI into tokens and save
-            the token values as request parameters.
-            
-            
-            ESP assumes, by
-            convention, a format for URIs that facilitates mapping requests to controllers and actions. URIs have the
-            form:</p>
+            <p>When Appweb receives a client request, it examines each of the request routes configured in the appweb.conf
+            configuration file, until it finds a matching route for the request URI. Routes will typically break 
+            the URI into tokens and save the token values as request parameters. For request that will be serviced
+            by a controller, one of these tokens will be the controller name.</p>
+
+            <p>For example: one possible request URI format is:</p>
             <pre>
 http://embedthis.com/APP/CONTROLLER/ACTION/ID
 </pre>
             <p>Where <tt>APP</tt> is the (optional) name of the application, <tt>CONTROLLER</tt> is the controller
             name, <tt>ACTION</tt> is the name of the action method to run and <tt>ID</tt> is a selector for an element
-            in the Model.</p>
-            <p>When a request is received, ESP will create an instance of the controller and invoke the requested
-            action method.</p><a name="anatomy" id="anatomy"></a>
+            in the Model. When the request URI is parsed, the Appweb router will extract the controller name.</p>
+
+            <h3>RESTful Routes</h3>
+            <p>A RESTful approach to designing URI routes is also often used where different controller 
+            actions are linked to specific routes. The end result being simple, readable URIs.</p>
+<table>
+    <thead>
+<tr><td>Name</td><td>Method</td><td>Pattern</td><td>Action</td></tr>
+    </thead>
+    <tbody>
+<tr><td>init</td><td>GET</td><td>/CONTROLLER/init$</td><td>init</td></tr>
+<tr><td>create</td><td>POST</td><td>/CONTROLLER(/)*$</td><td>create</td></tr>
+<tr><td>edit</td><td>GET</td><td>/CONTROLLER/edit$</td><td>edit</td></tr>
+<tr><td>show</td><td>GET</td><td>/CONTROLLER$</td><td>show</td></tr>
+<tr><td>update</td><td>PUT</td><td>/CONTROLLER$</td><td>update</td></tr>
+<tr><td>destroy</td><td>DELETE</td><td>/CONTROLLER$</td><td>destroy</td></tr>
+<tr><td>default</td><td>*</td><td>/CONTROLLER/{action}$</td><td>cmd-${action}</td></tr>
+    </tbody>
+</table>
+            <p>In either case, RESTFul or not, the request URI is broken into tokens that specify the controller and 
+            action to invoke to service the request. When a request is received, ESP will create an instance of the
+            controller and invoke the requested action method.</p>
+
+            <a name="flow" id="flow"></a>
+            <h3>Processing Flow</h3>
+            <p>Appweb processes requests in stages:</p>
+            <ol>
+                <li>Decode the URI and web request</li>
+                <li>Route an incoming request to the request handler (ESP)</li>
+                <li>If the request is for a web page, run that and render a response</li>
+                <li>Otherwise if the request is routed to a controller, load the controller</li>
+                <li>Run the specified controller action determined by the request route pattern</li>
+                <li>Optionally render a response view to the client</li>
+            </ol>
+
+            
+            <a name="anatomy" id="anatomy"></a>
             <h2 class="section">Anatomy of a Controller</h2>
-            <p>So what does a controller look like?</p><a name="example" id="example"></a>
+            <p>So what does a controller look like? Here is a partial example that has four actions:</p>
+            <a name="example" id="example"></a>
             <pre>
-public class CartController extends ApplicationController {
-    public var product: Product
-    action function index() { 
-        renderView("list")
-    }
-    action function create() {
-        product = new Product
-        renderView("edit")
-    }
-    action function edit() {
-        /* Read a product from the database */
-        product = Product.find(params.id)
-    }
-    action function list() { 
-        /* Will render list.ejs by default */
-    }
-    action function update() {
-        product = Product.find(params.id)
-        /*  Update the product based on user input */
-        if (product.saveUpdate(params.product)) {
-            inform("Product updated successfully.")
-            redirect("list")
-        }
-    }
+#include "esp.h"
+
+static void create() { 
+    /* Create post here */
+    redirect("list")
+}
+static void list() { }
+}
+static void edit() { 
+    /* Create post here */
+}
+static void update() { 
+    /* Update post here */
+    renderView("post-edit");
+}
+ESP_EXPORT int esp_controller_post(HttpRoute *route, MprModule *module) 
+{
+    Edi     *edi;
+    espDefineAction(route, "post-create", create);
+    espDefineAction(route, "post-edit", edit);
+    espDefineAction(route, "post-list", list);
+    espDefineAction(route, "post-update", update);
+    return 0;
 }
 </pre>
-            <p>This is a simplified controller &mdash; definitely not production code as it does not validate user
-            input. This controller provides five actions which are decorated by an <tt>action</tt> qualifier. This
-            qualifier makes a JavaScript function visible as a controller action method.</p>
-            <p>If the client issues a request for:</p>
+            <p>Now, say the client issues a request for:</p>
             <pre>
-http://embedthis.com/app/cart/create
+http://embedthis.com/app/post/create
 </pre>
-            <p>The <tt>create</tt> action will be invoked. It will create a new product and then render the
-            <tt>edit.ejs</tt> view back to the client.</p><a name="actions" id="actions"></a>
+            <p>Assuming a correctly configured request route, the <tt>create</tt> action, in the <tt>post</tt>
+            controller will be run. This will create a new blog post and then render the <tt>post-list.esp</tt> 
+            view of posts back to the client.</p>
+            <a name="config" id="config"></a>
+            <h2 class="section">Configuring Controllers</h2>
+            <p>Controllers may be configured two ways:
+            <ul>
+                <li>As part of an MVC application</li>
+                <li>As a stand-alone controller function.</li>
+            </ul>
+
+            <h3>MVC Configuration</h3>
+            <p>MVC applications are typically created via the <a href="generator.html><tt>esp</tt></a> generator command.
+            This command will create a bare MVC application with a directory for controllers, views and databases. It
+            will also generate an <tt>appweb.conf</tt> configuration file to use when you run Appweb to host your
+            application. By default, this configuration file will have an <tt>EspApp</tt> directive configured for your
+            application. This directive creates a top level route for the MVC application and then a set of routes for
+            each of the RESTful verbs: create, destroy, edit, list, show and update.</p>
+
+            <pre>EspApp Prefix Dir RouteSet Database</pre>
+            <p>The EspApp directive will create a set of routes that intercepts request URIs that begin with the given prefix
+            and directs them toward the MVC application in the specified Directory. The RouteSet is typically 
+            "<tt>restful</tt>" and lastly, an optional database may be pre-opened for the MVC application. For example:</p>
+<pre>EspApp /store ./applications/store restful mdb://app/db/store.mdb</pre>
+
+            <h3>Stand-Alone Controllers</h3>
+            <p>Sometimes, you may wish to have a controller without a full MVC application. You can do this by using a
+            set of Appweb directives.
+            <pre>
+&lt;Route ^/app/{controller}(/)*$>
+    Name /app/*/list
+    AddHandler espHandler
+    EspDir controllers ./controllers
+    Source test.c
+    Target run $1-list
+&lt;/Route>
+</pre>
+            <p>This set of directives will create a route that will invoke a controller in <tt>controllers/test.c</tt>.
+            If the URI <tt>/app/test/</tt> is invoked, the <tt>list</tt> action function will be invoked in test.c.
+            The EspDir directive nominates the directory to contain the controllers. By default this is configured to be
+            DocumentRoot/controllers. The Target directive defines how the controller action function to invoke is
+            determined<tt>. Note: This usage is less typical than using the MVC pattern.</p>
+
+            <h2 class="section">
+
+Creating Routes
+    - Cache Directory
+    - EspDir
+        EspDir controllers ./conductor
+    - EspKeepSource
+    - EspUpdate
+    - Databases
+    - URI links
+        EspApp /app app restful mdb://app/db/test.mdb
+
+            <a name="actions" id="actions"></a>
             <h2 class="section">Actions</h2>
-            <p>Actions are where the controller does its work. In ESP, actions are simple JavaScript functions
-            prefixed with an <tt>action</tt> qualifier. They don't need to be registered or otherwise configured before
-            use. When ESP receives a request from the client, it will parse the request and invoke the request
-            action specified in the URI.</p>
+            <p>Actions are where the controller does its work. In ESP, actions are simple "C" functions.
+            They need to be registered before use. This is done in the controller initialization function. This is the
+            "<tt>esp_controller_post</tt>" function above. On the first time the controller is invoked, the controller
+            library will be loaded and the initialization function will be run to define the various actions.</p>
+
             <p>When a request is received, the controller framework looks for an action method of the required name. If
             one is not found, it invokes the <tt>missing</tt> action method which renders a default error message back
             to the client.</p><a name="context" id="context"></a>
