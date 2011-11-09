@@ -31,6 +31,11 @@ include		build/make/Makefile.appweb
 testCleanup:
 	killall testAppweb >/dev/null 2>&1 ; true
 
+
+$(IMPORTED): $(IMPORTS)
+	getlib $^
+	$(call log) "[Import]" "$(IMPORTS)"
+
 #
 #   Local variables:
 #   tab-width: 4

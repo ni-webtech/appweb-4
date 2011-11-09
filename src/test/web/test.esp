@@ -6,5 +6,11 @@
     <h1>ESP Test Program</h1>
     <h3>Server Time: <%= mprGetDate(0) %></h3>
     <h3>Product Name: <%= mprGetAppName() %></h3>
+    <h3>Since Boot: <% 
+        { 
+            MprTime elapsed = (mprGetTime() - conn->http->booted) / 1000;
+            render("%02d:%02d:%02d", elapsed / 3600, (elapsed / 60) % 60, elapsed % 60);
+        }
+    %></h3>
 </body>
 </html>

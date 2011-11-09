@@ -1511,6 +1511,19 @@ createConfig()
     BLD_BUILD_CPU_UPPER=`upper $BLD_BUILD_CPU`
     local upper=`upper $BLD_PRODUCT`
 
+    SHOBJ=$BLD_HOST_SHOBJ
+    BLD_IMPORTED=
+    for item in ${BLD_IMPORTS} 
+    do
+        if [ ${item%.h} != ${item} ] ; then
+            BLD_IMPORTED="${BLD_IMPORTED} ${BLD_TOP}/out/inc/${item##*/}"
+        elif [ ${item%.${SHOBJ}} != ${item} ] ; then
+            BLD_IMPORTED="${BLD_IMPORTED} ${BLD_TOP}/out/lib/${item##*/}"
+        else
+            BLD_IMPORTED="${BLD_IMPORTED} ${BLD_TOP}/out/bin/${item##*/}"
+        fi
+    done
+
     cat >>$FILE <<!EOF_CONFIG1
 #
 #   Key Product Settigns

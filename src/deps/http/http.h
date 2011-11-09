@@ -313,6 +313,7 @@ typedef struct Http {
     struct HttpRoute *clientRoute;          /**< Default route for clients */
 
     MprEvent        *timer;                 /**< Admin service timer */
+    MprTime         booted;                 /**< Time the server started */
     MprTime         now;                    /**< When was the currentDate last computed */
     MprMutex        *mutex;
     HttpGetPassword getPassword;            /**< Lookup password callback */

@@ -127,9 +127,6 @@ extern void espInitHtmlOptions(Esp *esp);
  */
 typedef struct EspRoute {
     HttpRoute       *route;                 /**< Back link to the owning route */
-#if UNUSED
-    char            *dir;                   /**< Base directory (alias for route->dir) */
-#endif
     MprList         *env;                   /**< Environment for compiler */
     char            *compile;               /**< Compile template */
     char            *link;                  /**< Link template */

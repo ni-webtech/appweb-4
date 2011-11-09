@@ -4855,6 +4855,7 @@ Http *httpCreate()
     http->connections = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
     http->defaultClientHost = sclone("127.0.0.1");
     http->defaultClientPort = 80;
+    http->booted = mprGetTime();
 
     updateCurrentDate(http);
     http->statusCodes = mprCreateHash(41, MPR_HASH_STATIC_VALUES | MPR_HASH_STATIC_KEYS);
