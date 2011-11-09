@@ -460,7 +460,7 @@ typedef struct EspReq {
 
 /**
     Add a header to the transmission using a format string.
-    @description Add a header if it does not already exits.
+    @description Add a header if it does not already exist.
     @param conn HttpConn connection object
     @param key Http response header key
     @param fmt Printf style formatted string to use as the header key value
@@ -473,7 +473,7 @@ extern void espAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 
 /**
     Add a header to the transmission
-    @description Add a header if it does not already exits.
+    @description Add a header if it does not already exist.
     @param conn HttpConn connection object
     @param key Http response header key
     @param value Value to set for the header
@@ -2176,7 +2176,7 @@ extern void tree(EdiGrid *grid, cchar *options);
 
 /**
     Add a header to the transmission using a format string.
-    @description Add a header if it does not already exits.
+    @description Add a header if it does not already exist.
     @param key Http response header key
     @param fmt Printf style formatted string to use as the header key value
     @param ... Arguments for fmt
