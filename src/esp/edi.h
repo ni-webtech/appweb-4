@@ -48,7 +48,7 @@ typedef struct EdiService {
 extern EdiService *ediCreateService();
 
 /**
-    Add a databse provider. 
+    Add a database provider. 
     @description This should only be called by database providers. 
     @ingroup EdiService
  */
