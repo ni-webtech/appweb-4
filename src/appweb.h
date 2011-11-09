@@ -204,7 +204,7 @@ extern int maOpenFileHandler(Http *http);
 /********************************** MaServer **********************************/
 /**
     The MaServer object.
-    @description An application may have any number of HTTP servers, each managed by an MaServer instance.
+    @description An application may have any number of HTTP servers, each managed by a MaServer instance.
     @stability Evolving
     @defgroup MaServer MaServer
     @see MaServer maAddEndpoint maConfigureServer maCreateServer maParseConfig maRunSimpleWebServer 
@@ -245,7 +245,7 @@ extern void maAddEndpoint(MaServer *server, HttpEndpoint *endpoint);
 extern int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *documents, cchar *ip, int port);
 
 /** 
-    Create an MaServer object
+    Create a MaServer object
     @description Create new MaServer object. This routine creates a bare MaServer object, loads any required static
         modules  and performs minimal configuration. To use the server object created, more configuration will be 
         required before starting Http services.
@@ -272,7 +272,7 @@ extern int maParseConfig(MaServer *server, cchar *path, int flags);
 /** 
     Create and run a simple web server listening on a single IP address.
     @description Create a simple web server without using a configuration file. The server is created to listen on
-        the specified IP addresss and port. This routine provides is a one-line embedding of Appweb. If you want to 
+        the specified IP addresss and port. This routine provides a one-line embedding of Appweb. If you want to 
         use a config file, try the #maRunWebServer instead. 
     @param ip IP address on which to listen. Set to "0.0.0.0" to listen on all interfaces.
     @param port Port number to listen to
@@ -286,7 +286,7 @@ extern int maRunSimpleWebServer(cchar *ip, int port, cchar *home, cchar *documen
 /** 
     Create and run a web server based on a configuration file
     @description Create a web server configuration based on the supplied config file. This routine provides 
-        is a one-line embedding of Appweb. If you don't want to use a config file, try the #maRunSimpleWebServer 
+        a one-line embedding of Appweb. If you don't want to use a config file, try the #maRunSimpleWebServer 
         instead. 
     @param configFile File name of the Appweb configuration file (appweb.conf) that defines the web server configuration.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
@@ -420,7 +420,7 @@ extern MaState *maPushState(MaState *state);
 
 /**
     Define the access log
-    @description The access log is used to log detailes about requests to the web server. Errors are logged in the
+    @description The access log is used to log details about requests to the web server. Errors are logged in the
         error log.
     @param host HttpHost object for which to define the logging characteristics.
     @param path Pathname for the log file
@@ -431,7 +431,7 @@ extern MaState *maPushState(MaState *state);
             <li>%a - Remote IP address</li>
             <li>%b - Response bytes written to the client include headers. If zero, "-" is written.</li>
             <li>%B - Response bytes written excluding headers</li>
-            <li>%h - Rmote hostname</li>
+            <li>%h - Remote hostname</li>
             <li>%O - Bytes written include headers. If zero bytes, "0" is written.</li>
             <li>%r - First line of the request</li>
             <li>%s - HTTP response status code</li>
@@ -459,11 +459,11 @@ extern int maStartAccessLogging(HttpHost *host);
     @param logSpec Set the log file name and level. The format is "pathName[:level]".
         The following levels are generally observed:
         <ul>
-        <li>0 -Essential messages, fatal errors and critical warnings</li>
-        <li>1 -Hard errors</li>
-        <li>2 -Configuration setup and soft warnings</li>
-        <li>3 -Useful informational messages</li>
-        <li>4 -Debug information</li>
+        <li>0 - Essential messages, fatal errors and critical warnings</li>
+        <li>1 - Hard errors</li>
+        <li>2 - Configuration setup and soft warnings</li>
+        <li>3 - Useful informational messages</li>
+        <li>4 - Debug information</li>
         <li>5-9 - Increasing levels of internal Appweb trace useful for debugging</li>
         </ul>
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
