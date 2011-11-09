@@ -235,7 +235,7 @@ extern int ediAddColumn(Edi *edi, cchar *tableName, cchar *columnName, int type,
 extern int ediAddIndex(Edi *edi, cchar *tableName, cchar *columnName, cchar *indexName);
 
 /**
-    Add a table to a datbase
+    Add a table to a database
     @param edi Database handle
     @param tableName Database table name
     @return Zero if successful. Otherwise a negative MPR error code.
