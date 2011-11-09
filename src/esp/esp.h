@@ -167,7 +167,7 @@ typedef struct EspRoute {
     require the handler to explicitly send cached content by calling $httpWriteCached.
     \n\n
     If client-side caching is requested, a "Cache-Control" Http header will be sent to the client with the caching 
-    "max-age" set to the lifespan argument value (converted to seconds). This causes the client to serve client-cached 
+    "max-age" set to the lifesecs argument value. This causes the client to serve client-cached 
     content and to not contact the server at all until the max-age expires. 
     Alternatively, you can use $httpSetHeader to explicitly set a "Cache-Control header. For your reference, here are 
     some keywords that can be used in the Cache-Control Http header.
@@ -186,10 +186,10 @@ typedef struct EspRoute {
     explicitly control when and how cached data is returned to the client. For most other situations, use server-side
     caching.
     @param route HttpRoute object
-    @param uris Set of URIs to cache. 
+    @param uri URI to cache. 
         If the URI is set to "*" all URIs for that action are uniquely cached. If the request has POST data, 
         the URI may include such post data in a sorted query format. E.g. {uri: /buy?item=scarf&quantity=1}.
-    @param lifespan Lifespan of cache items in milliseconds. If not set to positive integer, the lifespan will
+    @param lifesecs Lifespan of cache items in seconds. If not set to positive integer, the lifesecs will
         default to the route lifespan.
     @param flags Cache control flags. Select ESP_CACHE_MANUAL to enable manual mode. In manual mode, cached content
         will not be automatically sent. Use $httpWriteCached in the request handler to write previously cached content.
@@ -233,7 +233,7 @@ extern bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cach
 /**
     Convert an ESP web page into compilable C code
     @description This parses an ESP web page into a equivalent C source view.
-    @param eroute EspRoute object
+    @param route EspRoute object
     @param page ESP web page script.
     @param path Pathname for the ESP web page. This is used to process include directives which are resolved relative
         to this path.
