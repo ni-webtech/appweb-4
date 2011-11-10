@@ -1703,7 +1703,7 @@ extern void espRadio(HttpConn *conn, cchar *field, void *choices, cchar *options
     @param on URI to invoke when turning "on" refresh
     @param off URI to invoke when turning "off" refresh
     @param options Extra options. See $EspControl for a list of the standard options.
-    @arg minified Set to true to select a minified (compressed) version of the script.
+    @arg minified -- Set to true to select a minified (compressed) version of the script.
     @ingroup EspControl
     @internal
  */
