@@ -578,7 +578,7 @@ extern HttpConn *espGetConn();
 /**
     Get the receive body content length.
     @description Get the length of the receive body content (if any). This is used in servers to get the length of posted
-        data and in clients to get the response body length.
+        data and, in clients, to get the response body length.
     @param conn HttpConn connection object
     @return A count of the response content data in bytes.
     @ingroup EspReq
