@@ -1220,7 +1220,7 @@ static void copyDir(cchar *fromDir, cchar *toDir)
                     fail("Can't make directory %s", to);
                     return;
                 }
-                trace("CREATE",  "Directory: %s", to);
+                trace("CREATE",  "Directory: %s", mprGetRelPath(to));
             }
             copyDir(from, to);
         
@@ -1230,12 +1230,12 @@ static void copyDir(cchar *fromDir, cchar *toDir)
                 return;
             }
             if (mprPathExists(to, R_OK) && !app->overwrite) {
-                trace("EXISTS",  "File: %s", to);
+                trace("EXISTS",  "File: %s", mprGetRelPath(to));
             } else {
-                trace("CREATE",  "File: %s", to);
+                trace("CREATE",  "File: %s", mprGetRelPath(to));
             }
             if (mprCopyPath(from, to, 0644) < 0) {
-                fail("Can't copy file %s to %s", from, to);
+                fail("Can't copy file %s to %s", from, mprGetRelPath(to));
                 return;
             }
         }
@@ -1290,7 +1290,7 @@ static void copyFile(cchar *from, cchar *to)
         return;
     }
     fixupFile(mprGetAbsPath(to));
-    trace("CREATE",  "File: %s", to);
+    trace("CREATE",  "File: %s", mprGetRelPath(to));
 }
 
 
@@ -1329,7 +1329,7 @@ static void generateAppDb()
     if (mprWritePathContents(dbpath, buf, 0, 0664) < 0) {
         return;
     }
-    trace("CREATE", "Database: %s", dbpath);
+    trace("CREATE", "Database: %s", mprGetRelPath(dbpath));
 }
 
 
@@ -1372,7 +1372,7 @@ static void makeDir(cchar *dir)
         if (mprMakeDir(path, 0755, -1, -1, 1) < 0) {
             app->error++;
         } else {
-            trace("CREATE",  "Directory: %s", path);
+            trace("CREATE",  "Directory: %s", mprGetRelPath(path));
         }
     }
 }
@@ -1393,7 +1393,7 @@ static void makeFile(cchar *path, cchar *data, cchar *msg)
     }
     msg = sfmt("%s: %s", msg, path);
     if (!exists) {
-        trace("CREATE", path);
+        trace("CREATE", mprGetRelPath(path));
     } else {
         trace("OVERWRITE", path);
     }
