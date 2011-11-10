@@ -1,63 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Embedthis Appweb 4.0.0 Documentation</title>
-    <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
-        embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
-    <meta name="description" content="Embedthis Appweb - embedded web servers for devices and applications." />
-    <meta charset="utf-8"/>
-	<link href="../doc.css" rel="stylesheet" type="text/css" />
-	<link href="api.css" rel="stylesheet" type="text/css" />
-	<link href="../print.css" rel="stylesheet" type="text/css" media="print"/>
-    <!--[if IE]>
-    <link href="../iehacks.css" rel="stylesheet" type="text/css" />
-    <![endif]-->
+<meta charset="utf-8"/>
+<title>ESP - Native API Documentation</title>
+<link href="api.css" rel="stylesheet" type="text/css" />
 </head>
-
 <body>
-    <div class="top">
-        <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
-        <div class="topRight">
-             <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search embedthis.com">
-                     <p>
-                        <label title="Search">Search</label> 
-                        <input type="text" id="q" name="q" size="15" maxlength="255" />
-                        <input type="submit" id="submit" value="Go" /> 
-                        <input type="hidden" name="domains" value="embedthis.com" /> 
-                        <input type="hidden" name="sitesearch" value="embedthis.com" />
-                    </p>
-                 </form>
-              </div>
-            <!--TITLE-->Embedthis Appweb 4.0.0
-        </div>
-        <div class="crumbs">
-            <a href="../product/index.html">Home</a>
-            &gt; <a href="../ref/appweb/index.html">Programmers Reference</a> 
-            &gt; <a href="native.html">Native APIs</a> 
-            &gt; <b>ESP</b> 
-        </div>
-    </div>
 
-    <div class="content">
-        <div class="contentRight">
-            
-            <!-- BeginDsi "dsi/see.html" -->
-            <h2>See Also</h2>
-            <ul>
-                <li><a href="../ref/ejs/index.html">Programmers Reference</a></li>
-                <li><a href="../api/ejs/native.html">Native APIs</a></li>
-            </ul>
-            <!-- EndDsi -->
-            <h2>Quick Nav</h2>
-            <ul>
-                <li><a href="#Modules">Modules</a></li>
-                <li><a href="#Typedefs">Typedefs</a></li>
-                <li><a href="#Functions">Functions</a></li>
-                <li><a href="#Defines">Defines</a></li>
-            </ul>
-        </div>
-        <div class="contentLeft">
+  <div class="contents">
+<div>
+<a href="#Components">Components</a> | <a href="#Typedefs">Typedefs</a> | <a href="#Functions">Functions</a> | <a href="#Defines">Defines</a>
+</div>
 <h1>ESP - Native API</h1>
 <a name="Components"></a><h1>Components</h1>
   <table class="apiIndex" summary="Components">
@@ -350,8 +303,9 @@
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1gaf0db430f850378bd83c514a0dda77fb9" class="nameRef">renderView</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *view)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a view template to the client.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga16aab7b1eeaafa67d40189ba9e3b9a88" class="nameRef">script</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *uri, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a script link.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1gab3444f174346e0d8e8d4d3a43d451c5e" class="nameRef">securityToken</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Generate a security token.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga3a877e198637c1ec75ff2a53dc8d7ebd" class="nameRef">setConn</a>(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set the current request connection.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1gafe8d897ff436eabc6fc275f76222a5c3" class="nameRef">setContentType</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *mimeType)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set the transmission (response) content mime type.</td></tr>
-<tr class="apiDef"><td class="apiType">void</td><td><a href="#esp_8h_1a85b884db9ea1993efaa01dbe686f601c" class="nameRef">setCookie</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *domain, <a href="appweb.html#http.html#mpr.html#group___mpr_time" class="ref">MprTime</a> lifespan, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a> isSecure)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Define a cookie header to send with the response.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga85b884db9ea1993efaa01dbe686f601c" class="nameRef">setCookie</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *domain, <a href="appweb.html#http.html#mpr.html#group___mpr_time" class="ref">MprTime</a> lifespan, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a> isSecure)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Define a cookie header to send with the response.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___edi_rec" class="ref">EdiRec*</a></td><td><a href="#group___esp_abbrev_1ga6c39fec614ae333bcc5448930ab2dc8d" class="nameRef">setField</a>(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fieldName, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Update a record field without writing to the database.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___edi_rec" class="ref">EdiRec*</a></td><td><a href="#group___esp_abbrev_1gaa3b523e44e0dab2a6b1fc320e600a4fd" class="nameRef">setFields</a>(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec, <a href="appweb.html#http.html#mpr.html#struct_mpr_hash" class="ref">MprHash</a> *data)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Update record fields without writing to the database.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga7e1e6bad27a140a5f8f92d7cb3c3b6d9" class="nameRef">setFlash</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *kind, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *fmt, ...)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set a flash notification message.</td></tr>
@@ -361,6 +315,7 @@
 <tr class="apiDef"><td class="apiType"><a href="#group___edi_rec" class="ref">EdiRec*</a></td><td><a href="#esp_8h_1afef8aa52aab6f3d8a3eebfe7eeb0edf4" class="nameRef">setRec</a>(<a href="#group___edi_rec" class="ref">EdiRec</a> *rec)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set the current database record.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1gadb4f7bc3020ab9c481f1ebcaf1ed3f2a" class="nameRef">setSessionVar</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set a session state variable.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga63470999d986c7d2d064dc44cdc2fcac" class="nameRef">setStatus</a>(int status)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set a Http response status.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1gadeaed6401e64556c1a6ed364b47704aa" class="nameRef">setTimeout</a>(void *proc, <a href="appweb.html#http.html#mpr.html#group___mpr_time" class="ref">MprTime</a> timeout, void *data)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create a timeout event.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga70074b92c4e5b0381a6a61f9e0f8e2cc" class="nameRef">showRequest</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Show request details.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga50471de30febcd31bae044ec7627e67d" class="nameRef">stylesheet</a>(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *uri, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a stylesheet link.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_abbrev_1ga6c8039aca717c38fc7b0629cee7e6fdd" class="nameRef">table</a>(<a href="#group___edi_grid" class="ref">EdiGrid</a> *grid, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a table.</td></tr>
@@ -2714,6 +2669,23 @@ The output is Html escaped for security
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
   </div>
 </div>
+<a name="group___esp_abbrev_1ga3a877e198637c1ec75ff2a53dc8d7ebd"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    setConn
+(<a href="appweb.html#http.html#group___http_conn" class="ref">HttpConn</a> *conn)
+  </div>
+  <div class="apiDetail">
+<p>Set the current request connection.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">conn</td><td>The HttpConn connection object to define.</td>
+    </table></dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
+  </div>
+</div>
 <a name="group___esp_abbrev_1gafe8d897ff436eabc6fc275f76222a5c3"></a>
 <div class="api">
   <div class="prototype">
@@ -2727,6 +2699,29 @@ The output is Html escaped for security
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">mimeType</td><td>Mime type string.</td>
+    </table></dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
+  </div>
+</div>
+<a name="group___esp_abbrev_1ga85b884db9ea1993efaa01dbe686f601c"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    setCookie
+(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *domain, <a href="appweb.html#http.html#mpr.html#group___mpr_time" class="ref">MprTime</a> lifespan, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a> isSecure)
+  </div>
+  <div class="apiDetail">
+<p>Define a cookie header to send with the response.</p>
+The Path, domain and expires properties can be set to null for default values
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">name</td><td>Cookie name.</td>
+    <tr><td class="param">value</td><td>Cookie value.</td>
+    <tr><td class="param">path</td><td>Uri path to which the cookie applies.</td>
+    <tr><td class="param">domain</td><td>String Domain in which the cookie applies. Must have 2-3 &quot;.&quot; and begin with a leading &quot;.&quot;. For example: domain: .example.com Some browsers will accept cookies without the initial &quot;.&quot;, but the spec: (RFC 2109) requires it.</td>
+    <tr><td class="param">lifespan</td><td>Lifespan of the cookie. (MOB units?).</td>
+    <tr><td class="param">isSecure</td><td>Boolean Set to true if the cookie only applies for SSL based connections.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
@@ -2863,6 +2858,26 @@ The output is Html escaped for security
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" summary="Parameters">
     <tr><td class="param">status</td><td>Http status code.</td>
+    </table></dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
+  </div>
+</div>
+<a name="group___esp_abbrev_1gadeaed6401e64556c1a6ed364b47704aa"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    setTimeout
+(void *proc, <a href="appweb.html#http.html#mpr.html#group___mpr_time" class="ref">MprTime</a> timeout, void *data)
+  </div>
+  <div class="apiDetail">
+<p>Create a timeout event.</p>
+    <dl><dt><b>Description</b>:</dt><dd>Invoke the given procedure after the timeout.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">proc</td><td>Function to invoke.</td>
+    <tr><td class="param">timeout</td><td>Time in milliseconds to elapse before invoking the timeout.</td>
+    <tr><td class="param">data</td><td>Argument to pass to proc.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
@@ -3156,7 +3171,7 @@ The tab control can manage a set of panes and will selectively show and hide or 
     <table class="parameters" summary="Parameters">
     <tr><td class="param">conn</td><td>Http connection object.</td>
     <tr><td class="param">text</td><td>Alert text to display.</td>
-    <tr><td class="param">options</td><td>Extra options. See $EspControl for a list of the standard options. <ul><li>period Polling period in milliseconds for the client to check the server for status message updates. If this is not specifed, the connection to the server will be kept open. This permits the server to &quot;push&quot; alerts to the console, but will consume a connection at the server for each client. </li></ul></td>
+    <tr><td class="param">options</td><td>Extra options. See #EspControl for a list of the standard options. <ul><li>period &mdash; xPolling period in milliseconds for the client to check the server for status message updates. If this is not specifed, the connection to the server will be kept open. This permits the server to &quot;push&quot; alerts to the console, but will consume a connection at the server for each client. </li></ul></td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
@@ -6016,27 +6031,6 @@ Session inactivity timeout (msecs).
     <dl><dt>Returns:</dt><dd>Record instance of EdiRec.</dd></dl>
   </div>
 </div>
-<a name="esp_8h_1a85b884db9ea1993efaa01dbe686f601c"></a>
-<div class="api">
-  <div class="prototype">
-    void
-    setCookie
-(<a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *domain, <a href="appweb.html#http.html#mpr.html#group___mpr_time" class="ref">MprTime</a> lifespan, <a href="appweb.html#http.html#mpr.html#mpr_8h_1a1062901a7428fdd9c7f180f5e01ea056" class="ref">bool</a> isSecure)
-  </div>
-  <div class="apiDetail">
-<p>Define a cookie header to send with the response.</p>
-The Path, domain and expires properties can be set to null for default values
-    <dl><dt>Parameters:</dt><dd>
-    <table class="parameters" summary="Parameters">
-    <tr><td class="param">name</td><td>Cookie name.</td>
-    <tr><td class="param">value</td><td>Cookie value.</td>
-    <tr><td class="param">path</td><td>Uri path to which the cookie applies.</td>
-    <tr><td class="param">domain</td><td>String Domain in which the cookie applies. Must have 2-3 &quot;.&quot; and begin with a leading &quot;.&quot;. For example: domain: .example.com Some browsers will accept cookies without the initial &quot;.&quot;, but the spec: (RFC 2109) requires it.</td>
-    <tr><td class="param">lifespan</td><td>Lifespan of the cookie. (MOB units?).</td>
-    <tr><td class="param">isSecure</td><td>Boolean Set to true if the cookie only applies for SSL based connections.</td>
-    </table></dd></dl>
-  </div>
-</div>
 <a name="esp_8h_1aeed08cdbf64becc6ea822e9208831f63"></a>
 <div class="api">
   <div class="prototype">
@@ -6187,14 +6181,6 @@ Action procedure to run to respond to the request.
     </dd></dl>
   </div>
 </div>
-            </div>
-        </div>
-<!-- BeginDsi "dsi/bottom.html" -->
-	</div>
-	<div class="bottom">
-		<p class="footnote"><a href="../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2011. All rights 
-                reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a></p>
-	</div>
-<!-- EndDsi -->
-</body>
-</html>
+<div class="footnote">Generated on Thu Nov 10 2011 10:48:10 GMT-0800 (PST)<br/>
+  Copyright &copy; <a href="http://www.embedthis.com">Embedthis Software</a> 2011.
+</div></div></body></html>
