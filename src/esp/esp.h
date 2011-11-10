@@ -677,7 +677,7 @@ extern char *espGetHeaders(HttpConn *conn);
 
 /**
     Get a request pararmeter as an integer.
-    @description Get the value of a named request parameter as an integer. Form variables are define via
+    @description Get the value of a named request parameter as an integer. Form variables are defined via
         www-urlencoded query or post data contained in the request.
     @param conn HttpConn connection object
     @param var Name of the request parameter to retrieve
@@ -697,7 +697,7 @@ extern cchar *espGetMethod(HttpConn *conn);
 
 /**
     Get a request parameter.
-    @description Get the value of a named request parameter. Form variables are define via www-urlencoded query or post
+    @description Get the value of a named request parameter. Form variables are defined via www-urlencoded query or post
         data contained in the request.
     @param conn HttpConn connection object
     @param var Name of the request parameter to retrieve
@@ -1224,7 +1224,7 @@ extern void espSetHeaderString(HttpConn *conn, cchar *key, cchar *value);
 
 /**
     Set an integer request parameter value
-    @description Set the value of a named request parameter to an integer value. Form variables are define via
+    @description Set the value of a named request parameter to an integer value. Form variables are defined via
         www-urlencoded query or post data contained in the request.
     @param conn HttpConn connection object
     @param var Name of the request parameter to set
@@ -1244,7 +1244,7 @@ extern void espSetStatus(HttpConn *conn, int status);
 
 /**
     Set a request parameter value
-    @description Set the value of a named request parameter to a string value. Form variables are define via
+    @description Set the value of a named request parameter to a string value. Form variables are defined via
         www-urlencoded query or post data contained in the request.
     @param conn HttpConn connection object
     @param var Name of the request parameter to set
@@ -2499,7 +2499,7 @@ extern EdiRec *makeRec(cchar *content);
 
 /**
     Get a request parameter
-    @description Get the value of a named request parameter. Form variables are define via www-urlencoded query or post
+    @description Get the value of a named request parameter. Form variables are defined via www-urlencoded query or post
         data contained in the request.
         This routine calls $espGetParam
     @param name Name of the request parameter to retrieve
@@ -2758,7 +2758,7 @@ extern void setHeader(cchar *key, cchar *fmt, ...);
 
 /**
     Set a request parameter value
-    @description Set the value of a named request parameter to a string value. Form variables are define via
+    @description Set the value of a named request parameter to a string value. Form variables are defined via
         www-urlencoded query or post data contained in the request.
     @param name Name of the request parameter to set
     @param value Value to set.
