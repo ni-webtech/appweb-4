@@ -321,7 +321,7 @@ typedef struct EspSession {
 } EspSession;
 
 /**
-    Allocate a new session state object
+    Allocate a new session state object.
     @description
     @param conn Http connection object
     @param id Unique session state ID
@@ -332,7 +332,7 @@ typedef struct EspSession {
 extern EspSession *espAllocSession(HttpConn *conn, cchar *id, MprTime lifespan);
 
 /**
-    Create a session object
+    Create a session object.
     @description This call creates a session object if one does not already exist.
         Session state stores persist across individual HTTP requests.
     @param conn Http connection object
@@ -342,7 +342,7 @@ extern EspSession *espAllocSession(HttpConn *conn, cchar *id, MprTime lifespan);
 extern EspSession *espCreateSession(HttpConn *conn);
 
 /**
-    Destroy a session state object
+    Destroy a session state object.
     @description
     @param sp Session state object allocated with #espAllocSession
     @ingroup EspSession
@@ -350,7 +350,7 @@ extern EspSession *espCreateSession(HttpConn *conn);
 extern void espDestroySession(EspSession *sp);
 
 /**
-    Get a session state object
+    Get a session state object.
     @description
     @param conn Http connection object
     @param create Set to true to create a session state object if one does not already exist for this client
@@ -360,7 +360,7 @@ extern void espDestroySession(EspSession *sp);
 extern EspSession *espGetSession(HttpConn *conn, int create);
 
 /**
-    Get a session state variable
+    Get a session state variable.
     @description
     @param conn Http connection object
     @param name Variable name to get
@@ -371,7 +371,7 @@ extern EspSession *espGetSession(HttpConn *conn, int create);
 extern cchar *espGetSessionVar(HttpConn *conn, cchar *name, cchar *defaultValue);
 
 /**
-    Set a session variable
+    Set a session variable.
     @description
     @param conn Http connection object
     @param name Variable name to set
@@ -382,7 +382,7 @@ extern cchar *espGetSessionVar(HttpConn *conn, cchar *name, cchar *defaultValue)
 extern int espSetSessionVar(HttpConn *conn, cchar *name, cchar *value);
 
 /**
-    Get the session ID
+    Get the session ID.
     @description
     @param conn Http connection object
     @return The session ID string
@@ -391,7 +391,7 @@ extern int espSetSessionVar(HttpConn *conn, cchar *name, cchar *value);
 extern char *espGetSessionID(HttpConn *conn);
 
 /**
-    Set an object into the session state store
+    Set an object into the session state store.
     @description Store an object into the session state store by serialing all properties.
     @param conn Http connection object
     @param key Session state key
@@ -401,7 +401,7 @@ extern char *espGetSessionID(HttpConn *conn);
 extern int espSetSessionObj(HttpConn *conn, cchar *key, MprHash *value);
 
 /**
-    Get an object from the session state store
+    Get an object from the session state store.
     @description Retrieve an object from the session state store by deserializing all properties.
     @param conn Http connection object
     @param key Session state key
@@ -411,7 +411,7 @@ extern MprHash *espGetSessionObj(HttpConn *conn, cchar *key);
 
 /********************************** Requests **********************************/
 /**
-    View procedure callback
+    View procedure callback.
     @param conn Http connection object
     @ingroup EspReq
  */
@@ -472,7 +472,7 @@ typedef struct EspReq {
 extern void espAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 
 /**
-    Add a header to the transmission
+    Add a header to the transmission.
     @description Add a header if it does not already exist.
     @param conn HttpConn connection object
     @param key Http response header key
@@ -484,7 +484,7 @@ extern void espAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 extern void espAddHeaderString(HttpConn *conn, cchar *key, cchar *value);
 
 /**
-    Append a transmission header
+    Append a transmission header.
     @description Set the header if it does not already exists. Append with a ", " separator if the header already exists.
     @param conn HttpConn connection object
     @param key Http response header key
@@ -495,7 +495,7 @@ extern void espAddHeaderString(HttpConn *conn, cchar *key, cchar *value);
 extern void espAppendHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 
 /**
-    Append a transmission header string
+    Append a transmission header string.
     @description Set the header if it does not already exists. Append with a ", " separator if the header already exists.
     @param conn HttpConn connection object
     @param key Http response header key
@@ -505,7 +505,7 @@ extern void espAppendHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 extern void espAppendHeaderString(HttpConn *conn, cchar *key, cchar *value);
 
 /**
-    Auto finalize transmission of the http request
+    Auto finalize transmission of the http request.
     @description If auto-finalization is enabled via #espSetAutoFinalizing, this call will finalize writing Http response
     data by writing the final chunk trailer if required. If using chunked transfers, a null chunk trailer is required
     to signify the end of write data.  If the request is already finalized, this call does nothing.
@@ -530,7 +530,7 @@ extern void espAutoFinalize(HttpConn *conn);
 extern bool espCheckSecurityToken(HttpConn *conn);
 
 /**
-    Create a record and initialize field values 
+    Create a record and initialize field values.
     @description This will call $ediCreateRec to create a record based on the given table's schema. It will then
         call $ediSetFields to update the record with the given data.
     @param conn Http connection object
@@ -542,7 +542,7 @@ extern bool espCheckSecurityToken(HttpConn *conn);
 extern EdiRec *espCreateRec(HttpConn *conn, cchar *tableName, MprHash *data);
 
 /**
-    Finalize transmission of the http request
+    Finalize transmission of the http request.
     @description Finalize writing HTTP data by writing the final chunk trailer if required. If using chunked transfers,
     a null chunk trailer is required to signify the end of write data.
     If the request is already finalized, this call does nothing.
@@ -576,7 +576,7 @@ extern MprList *espGetColumns(HttpConn *conn, EdiRec *rec);
 extern HttpConn *espGetConn();
 
 /**
-    Get the receive body content length
+    Get the receive body content length.
     @description Get the length of the receive body content (if any). This is used in servers to get the length of posted
         data and in clients to get the response body length.
     @param conn HttpConn connection object
@@ -586,7 +586,7 @@ extern HttpConn *espGetConn();
 extern MprOff espGetContentLength(HttpConn *conn);
 
 /**
-    Get the receive body content type
+    Get the receive body content type.
     @description Get the content mime type of the receive body content (if any).
     @param conn HttpConn connection object
     @return Mime type of any receive content. Set to NULL if not posted data.
@@ -595,7 +595,7 @@ extern MprOff espGetContentLength(HttpConn *conn);
 extern cchar *espGetContentType(HttpConn *conn);
 
 /**
-    Get the request cookies
+    Get the request cookies.
     @description Get the cookies defined in the current requeset
     @param conn HttpConn connection object
     @return Return a string containing the cookies sent in the Http header of the last request
@@ -604,7 +604,7 @@ extern cchar *espGetContentType(HttpConn *conn);
 extern cchar *espGetCookies(HttpConn *conn);
 
 /**
-    Get the current database instance
+    Get the current database instance.
     @description A route may have a default database configured via the EspDb Appweb.conf configuration directive. 
     The database will be opened when the web server initializes and will be shared between all requests using the route. 
     @return Edi EDI database handle
@@ -628,7 +628,7 @@ extern EspRoute *espGetEspRoute(HttpConn *conn);
 extern cchar *espGetDir(HttpConn *conn);
 
 /**
-    Get a flash message
+    Get a flash message.
     @description This retrieves a flash message of a specified type.
         Flash messages are special session state message that are passed to the next request (only). 
     @param conn HttpConn connection object
@@ -638,7 +638,7 @@ extern cchar *espGetDir(HttpConn *conn);
 extern cchar *espGetFlashMessage(HttpConn *conn, cchar *type);
 
 /**
-    Get the current database grid
+    Get the current database grid.
     @description The current grid is defined via $setGrid
     @return EdiGrid instance
     @ingroup EdiReq
@@ -657,7 +657,7 @@ extern EdiGrid *espGetGrid(HttpConn *conn);
 extern cchar *espGetHeader(HttpConn *conn, cchar *key);
 
 /**
-    Get the hash table of rx Http headers
+    Get the hash table of rx Http headers.
     @description Get the internal hash table of rx headers
     @param conn HttpConn connection object
     @return Hash table. See MprHash for how to access the hash table.
@@ -676,7 +676,7 @@ extern MprHash *espGetHeaderHash(HttpConn *conn);
 extern char *espGetHeaders(HttpConn *conn);
 
 /**
-    Get a request pararmeter as an integer
+    Get a request pararmeter as an integer.
     @description Get the value of a named request parameter as an integer. Form variables are define via
         www-urlencoded query or post data contained in the request.
     @param conn HttpConn connection object
@@ -688,7 +688,7 @@ extern char *espGetHeaders(HttpConn *conn);
 extern int espGetIntParam(HttpConn *conn, cchar *var, int defaultValue);
 
 /**
-    Get the HTTP method
+    Get the HTTP method.
     @description This is a convenience API to return the Http method 
     @return The HttpConn.rx.method property
     @ingroup EspReq
@@ -696,7 +696,7 @@ extern int espGetIntParam(HttpConn *conn, cchar *var, int defaultValue);
 extern cchar *espGetMethod(HttpConn *conn);
 
 /**
-    Get a request parameter
+    Get a request parameter.
     @description Get the value of a named request parameter. Form variables are define via www-urlencoded query or post
         data contained in the request.
     @param conn HttpConn connection object
@@ -708,7 +708,7 @@ extern cchar *espGetMethod(HttpConn *conn);
 extern cchar *espGetParam(HttpConn *conn, cchar *var, cchar *defaultValue);
 
 /**
-    Get the request parameter hash table
+    Get the request parameter hash table.
     @description This call gets the params hash table for the current request.
         Route tokens, request query data and www-url encoded form data are all entered into the params table after decoding.
         Use #mprLookupKey to retrieve data from the table.
@@ -719,7 +719,7 @@ extern cchar *espGetParam(HttpConn *conn, cchar *var, cchar *defaultValue);
 extern MprHash *espGetParams(HttpConn *conn);
 
 /**
-    Get the request query string
+    Get the request query string.
     @description Get query string sent with the current request.
     @param conn HttpConn connection object
     @return String containing the request query string. Caller should not free.
@@ -728,7 +728,7 @@ extern MprHash *espGetParams(HttpConn *conn);
 extern cchar *espGetQueryString(HttpConn *conn);
 
 /**
-    Get the referring URI
+    Get the referring URI.
     @description This returns the referring URI as described in the HTTP "referer" (yes the HTTP specification does
         spell it incorrectly) header. If this header is not defined, this routine will return the home URI as retured
         by $espGetHome.
@@ -739,7 +739,7 @@ extern cchar *espGetQueryString(HttpConn *conn);
 char *espGetReferrer(HttpConn *conn);
 
 /**
-    Get the default database defined on a route
+    Get the default database defined on a route.
     @param route HttpRoute object
     @return Database instance object
     @ingroup EspReq
@@ -747,7 +747,7 @@ char *espGetReferrer(HttpConn *conn);
 Edi *espGetRouteDatabase(HttpRoute *route);
 
 /**
-    Get a unique security token
+    Get a unique security token.
     @description Security tokens help mitigate against replay attacks. The security token is stored in HttpRx.securityToken
         and in the session store.
     @param conn HttpConn connection object
@@ -756,7 +756,7 @@ Edi *espGetRouteDatabase(HttpRoute *route);
 extern cchar *espGetSecurityToken(HttpConn *conn);
 
 /**
-    Get the response status
+    Get the response status.
     @param conn HttpConn connection object
     @return An integer Http response code. Typically 200 is success.
     @ingroup EspReq
@@ -783,7 +783,7 @@ extern char *espGetStatusMessage(HttpConn *conn);
 char *espGetTop(HttpConn *conn);
 
 /**
-    Get the uploaded files
+    Get the uploaded files.
     @description Get the hash table defining the uploaded files.
         This hash is indexed by the file identifier supplied in the upload form. The hash entries are HttpUploadFile
         objects.
@@ -794,7 +794,7 @@ char *espGetTop(HttpConn *conn);
 extern MprHash *espGetUploads(HttpConn *conn);
 
 /**
-    Get the request URI string
+    Get the request URI string.
     @description This is a convenience API to return the request URI.
     @return The espGetConn()->rx->uri
     @ingroup EspReq
@@ -802,7 +802,7 @@ extern MprHash *espGetUploads(HttpConn *conn);
 extern cchar *espGetUri(HttpConn *conn);
 
 /**
-    Test if a current grid has been defined
+    Test if a current grid has been defined.
     @description The current grid is defined via $setRec
     @return True if a current grid has been defined
     @ingroup EspReq
@@ -810,7 +810,7 @@ extern cchar *espGetUri(HttpConn *conn);
 extern bool espHasGrid(HttpConn *conn);
 
 /**
-    Test if a current record has been defined and save to the database
+    Test if a current record has been defined and save to the database.
     @description This call returns true if a current record is defined and has been saved to the database with a 
         valid "id" field.
     @return True if a current record with a valid "id" is defined.
@@ -819,7 +819,7 @@ extern bool espHasGrid(HttpConn *conn);
 extern bool espHasRec(HttpConn *conn);
 
 /**
-    Test if the receive input stream is at end-of-file
+    Test if the receive input stream is at end-of-file.
     @param conn HttpConn connection object
     @return True if there is no more receive data to read
     @ingroup EspReq
@@ -827,7 +827,7 @@ extern bool espHasRec(HttpConn *conn);
 extern bool espIsEof(HttpConn *conn);
 
 /**
-    Test if the connection is using SSL and is secure
+    Test if the connection is using SSL and is secure.
     @param conn HttpConn connection object
     @return True if the connection is using SSL.
     @ingroup EspReq
@@ -844,7 +844,7 @@ extern bool espIsSecure(HttpConn *conn);
 extern bool espIsFinalized(HttpConn *conn);
 
 /**
-    Make a grid
+    Make a grid.
     @description This call makes a free-standing data grid based on the JSON format content string.
         The record is not saved to the database.
     @param content JSON format content string. The content should be an array of objects where each object is a
@@ -860,7 +860,7 @@ grid = ediMakeGrid("[ \\ \n
 extern EdiGrid *espMakeGrid(cchar *content);
 
 /**
-    Make a hash table container of property values
+    Make a hash table container of property values.
     @description This routine formats the given arguments, parses the result as a JSON string and returns an 
         equivalent hash of property values. The result after formatting should be of the form:
         hash("{ key: 'value', key2: 'value', key3: 'value' }");
@@ -872,7 +872,7 @@ extern EdiGrid *espMakeGrid(cchar *content);
 extern MprHash *espMakeHash(cchar *fmt, ...);
 
 /**
-    Make a record
+    Make a record.
     @description This call makes a free-standing data record based on the JSON format content string.
         The record is not saved to the database.
     @param content JSON format content string. The content should be a set of property names and values.
@@ -883,7 +883,7 @@ extern MprHash *espMakeHash(cchar *fmt, ...);
 extern EdiRec *espMakeRec(cchar *content);
 
 /**
-    Match a request parameter with an expected value
+    Match a request parameter with an expected value.
     @description Compare a request parameter and return true if it exists and its value matches.
     @param conn HttpConn connection object
     @param var Name of the request parameter
@@ -894,7 +894,7 @@ extern EdiRec *espMakeRec(cchar *content);
 extern bool espMatchParam(HttpConn *conn, cchar *var, cchar *value);
 
 /**
-    Read all the records in table from the database
+    Read all the records in table from the database.
     @description This reads a table and returns a grid containing the table data.
     @param conn HttpConn connection object
     @param tableName Database table name
@@ -904,7 +904,7 @@ extern bool espMatchParam(HttpConn *conn, cchar *var, cchar *value);
 extern EdiGrid *espReadAllRecs(HttpConn *conn, cchar *tableName);
 
 /**
-    Read the identified record 
+    Read the identified record. 
     @description Read the record identified by the request params("id") from the nominated table.
     @param conn HttpConn connection object
     @param tableName Database table name
@@ -928,7 +928,7 @@ extern EdiRec *espReadRec(HttpConn *conn, cchar *tableName);
 extern EdiGrid *espReadRecsWhere(HttpConn *conn, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
 
 /**
-    Read one record
+    Read one record.
     @description This runs a simple query on the database and selects the first matching record. The query selects
         a row that has a "field" that matches the given "value".
     @param conn HttpConn connection object
@@ -942,7 +942,7 @@ extern EdiGrid *espReadRecsWhere(HttpConn *conn, cchar *tableName, cchar *fieldN
 extern EdiRec *espReadRecWhere(HttpConn *conn, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value);
 
 /**
-    Read a record identified by key value
+    Read a record identified by the key value.
     @description Read a record from the given table as identified by the key value.
     @param tableName Database table name
     @param key Key value of the record to read 
@@ -952,7 +952,7 @@ extern EdiRec *espReadRecWhere(HttpConn *conn, cchar *tableName, cchar *fieldNam
 extern EdiRec *eReadRecByKey(cchar *tableName, cchar *key);
 
 /**
-    Read receive body content
+    Read receive body content.
     @description Read body content from the client
     @param conn HttpConn connection object
     @param buf Buffer to accept content data
@@ -963,7 +963,7 @@ extern EdiRec *eReadRecByKey(cchar *tableName, cchar *key);
 extern ssize espReceive(HttpConn *conn, char *buf, ssize size);
 
 /**
-    Redirect the client
+    Redirect the client.
     @description Redirect the client to a new uri.
     @param conn HttpConn connection object
     @param status Http status code to send with the response
