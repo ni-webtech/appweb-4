@@ -710,7 +710,7 @@ extern cchar *espGetParam(HttpConn *conn, cchar *var, cchar *defaultValue);
 /**
     Get the request parameter hash table.
     @description This call gets the params hash table for the current request.
-        Route tokens, request query data and www-url encoded form data are all entered into the params table after decoding.
+        Route tokens, request query data, and www-url encoded form data are all entered into the params table after decoding.
         Use #mprLookupKey to retrieve data from the table.
     @param conn HttpConn connection object
     @return #MprHash instance containing the request parameters
@@ -2511,7 +2511,7 @@ extern cchar *param(cchar *name);
 /**
     Get the request parameter hash table
     @description This call gets the params hash table for the current request.
-        Route tokens, request query data and www-url encoded form data are all entered into the params table after decoding.
+        Route tokens, request query data, and www-url encoded form data are all entered into the params table after decoding.
         Use #mprLookupKey to retrieve data from the table.
         This routine calls $espGetParams
     @return #MprHash instance containing the request parameters
