@@ -505,7 +505,7 @@ extern void espAppendHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 extern void espAppendHeaderString(HttpConn *conn, cchar *key, cchar *value);
 
 /**
-    Auto finalize transmission of the http request.
+    Auto-finalize transmission of the http request.
     @description If auto-finalization is enabled via #espSetAutoFinalizing, this call will finalize writing Http response
     data by writing the final chunk trailer if required. If using chunked transfers, a null chunk trailer is required
     to signify the end of write data.  If the request is already finalized, this call does nothing.
