@@ -229,7 +229,6 @@ Cache server manual /dashboard.esp
             <p>Caching records, like most other configuration file settings, are inherited by inner routes. Consequently, if
             you define a caching record at the default server level, all subsequent routes will inherit that caching
             definition.</p>
-
             <h2 class="section">Performance Considerations</h2>
             <h3>Cache Lifespans</h3>
             <p>When selecting a lifespan for a resource, ask the questions:
@@ -241,7 +240,6 @@ Cache server manual /dashboard.esp
             <p>If it is acceptable to display a stale resource, then select a client-side lifespan that is set toward the
             maximum acceptable staleness. If a resource is present on every page, such as a logo or banner, it is very
             beneficial to use client-side caching, even if the lifespan is set to as little as 60 seconds.
-
             <h3>LimitMemory</h3>
             <p>Server-side caching consumes memory for every request that is cached. As memory is a limited resource,
             you may wish to limit the memory that Appweb may consume via the
@@ -256,7 +254,6 @@ Cache server manual /dashboard.esp
             details about how Appweb is processing the request. It will display the selected route and also trace 
             information about whether cached responses have been found and are suitable for use.</p>
             <pre>appweb --log stdout:4</pre>
-
             <h2 class="section">Deciding Criteria</h2>
             <p>In summary, here are some rules of thumb to assist in designing your caching strategy.</p>
             <ul>

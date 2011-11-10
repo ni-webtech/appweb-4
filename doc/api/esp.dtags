@@ -1033,6 +1033,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>flush</name>
+      <anchorfile>group___esp_abbrev.html</anchorfile>
+      <anchor>gadac116554b543b7c4228c018a85882f5</anchor>
+      <arglist>()</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>form</name>
       <anchorfile>group___esp_abbrev.html</anchorfile>
       <anchor>ga76b5e43ce8e841141744d0bb35a14079</anchor>
