@@ -550,6 +550,12 @@ void renderView(cchar *view)
 }
 
 
+void setConn(HttpConn *conn)
+{
+    espSetConn(conn);
+}
+
+
 void setContentType(cchar *mimeType)
 {
     espSetContentType(getConn(), mimeType);

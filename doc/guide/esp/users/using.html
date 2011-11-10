@@ -79,26 +79,30 @@
 <!-- EndDsi -->
         </div>
         <div class="contentLeft">
-            <h1>Using Embedded Server Pages</h1>
-            <p>The Embedded Server Pages (ESP) web framework makes it dramatically easier to create blazingly fast dynamic web
-            applications. The web framework provides an application generator, templating engine, a powerful
-            Model/View/Controller framework and a library of Ajax view controls to take the tedium out of creating web
+            <h1>Embedded Server Pages</h1>
+            <p>The Embedded Server Pages (ESP) web framework makes it dramatically easier to create blazingly fast
+            dynamic web applications. The web framework provides an application generator, templating engine, a powerful
+            Model-View-Controller framework and a library of HTML controls to take the tedium out of creating web
             applications. Via this framework, ESP drastically reduces the number of lines of code you need to
             write for a compelling, dynamic web application.</p>
+
             <p>This document describes the ESP web framework and how ESP is embedded in Appweb to run
             web applications and respond to web requests. It describes the flow of execution and the main processing
             components.</p>
             
             <p><b>NOTE:</b> ESP is integrated into Appweb and is not a separate product. Appweb includes the ESP
-            web framework and esp handler.
+            web framework and esp handler.</p>
+
             <p>See also the <a href="../../../ref/appweb/espArchitecture.html">ESP Architecture</a>,
             and the <a href="../../../guide/appweb/espTour.html">ESP Tour</a>.</p>
-            <h3>ESP Web Framework Architecture</h3>
+
+            <h2 class="section">ESP Web Framework Architecture</h2>
             <p>ESP uses JavaScript for server-side web programming. Using the same language in the client and 
             server makes web programming that much easier.</p>
             <p>The ESP web framework builds upon the ESP core language and provides a web request handler, a
-            Model/View/Controller application framework and an edit-and-continue development model.</p><img src=
-            "../../../images/ejsArchitecture.jpg" alt="ESP Web Framework Architecture" />
+            Model/View/Controller application framework and an edit-and-continue development model.</p>
+            
+            <img src="../../../images/ejsArchitecture.jpg" alt="ESP Web Framework Architecture" />
             <p>The main components of the ESP Web Framework:</p>
             <ul>
                 <li><a href="#webServerInterface">Web Server Interface</a> - Framework hosting and request handler</li>
@@ -108,7 +112,9 @@
                 <li><a href="#mvc">Framework Classes</a> - MVC, Http Request and Ajax view classes</li>
                 <li>ESP compiler - Creates and caches application byte code</li>
                 <li>ESP Virtual Machine - executes the byte code and formats the response</li>
-            </ul><a name="webServerInterface" id="webServerInterface"></a>
+            </ul>
+            
+            <a name="webServerInterface" id="webServerInterface"></a>
             <h2 class="section">Web Server Interface</h2>
             <p>The ESP Web Server Interface (or web interface) provides the interface and coupling between
             ESP and the web server. It accepts incoming web requests from the web server, routes the request to
@@ -259,8 +265,9 @@ mvc -v compile
             start with a partial HTML view page which typically contains embedded ESP. This is parsed by the Web
             Page Parser and combined with layout views to create a composite web page. This is then parsed and
             converted to pure ESP code which is compiled and cached in a module file (.mod). The module file can
-            be run repeatedly by the VM to generate the required HTML for the user view. <img src=
-            "../../../images/espWebView.jpg" alt="View Pipeline" /></p>
+            be run repeatedly by the VM to generate the required HTML for the user view. 
+            
+            <img src="../../../images/ejsWebView.jpg" alt="View Pipeline" /></p>
             <p>The time intensive part of this pipeline processing occurs once at development time. This is comprised
             of the pipeline stages up to and including compilation. The often less costly run-time processing for each
             request consists of reading the module file and executing it in the VM.</p>

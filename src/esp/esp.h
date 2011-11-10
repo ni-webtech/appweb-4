@@ -2679,8 +2679,16 @@ extern void renderView(cchar *view);
         Some browsers will accept cookies without the initial ".", but the spec: (RFC 2109) requires it.
     @param lifespan Lifespan of the cookie. (MOB units?)
     @param isSecure Boolean Set to true if the cookie only applies for SSL based connections
+    @ingroup EspAbbrev
 */
 extern void setCookie(cchar *name, cchar *value, cchar *path, cchar *domain, MprTime lifespan, bool isSecure);
+
+/**
+    Set the current request connection.
+    @param conn The HttpConn connection object to define
+    @ingroup EspAbbrev
+ */
+extern void setConn(HttpConn *conn);
 
 /**
     Set the transmission (response) content mime type
