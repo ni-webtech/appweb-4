@@ -1664,7 +1664,7 @@ extern void espLabel(HttpConn *conn, cchar *text, cchar *options);
 extern void espDropdown(HttpConn *conn, cchar *field, cchar *choices, cchar *options);
 
 /**
-    Render a mail link
+    Render a mail link.
     @param conn Http connection object
     @param name Recipient name to display
     @param address Mail recipient address link
@@ -1698,7 +1698,7 @@ extern void espProgress(HttpConn *conn, cchar *progress, cchar *options);
 extern void espRadio(HttpConn *conn, cchar *field, void *choices, cchar *options);
 
 /**
-    Control the refresh of web page dynamic elements
+    Control the refresh of web page dynamic elements.
     @param conn Http connection object
     @param on URI to invoke when turning "on" refresh
     @param off URI to invoke when turning "off" refresh
@@ -1710,7 +1710,7 @@ extern void espRadio(HttpConn *conn, cchar *field, void *choices, cchar *options
 extern void espRefresh(HttpConn *conn, cchar *on, cchar *off, cchar *options);
 
 /**
-    Render a script link
+    Render a script link.
     @param uri Script URI to load. Set to null to get a default set of scripts. See $httpLink for a list of possible
         URI formats.
     @param conn Http connection object
@@ -1722,10 +1722,10 @@ extern void espScript(HttpConn *conn, cchar *uri, cchar *options);
 /**
     Generate a security token.
     @description Security tokens are used to help guard against CSRF threats.
-    This call will generate a security token for the page and emit an HTML meta element for the security token.
-    The token will automatically be included whenever forms are submitted and the token be validated by the 
-    receiving Controller. Forms will normally automatically generate the security token and that explicitly
-    calling this routine is not required unless a security token is required for non-form requests such as AJAX
+    This call will generate a security token for the page, and emit an HTML meta element for the security token.
+    The token will automatically be included whenever forms are submitted and the token is validated by the 
+    receiving Controller. Typically, forms will automatically generate the security token. Note that explicitly
+    calling this routine is not necessary unless a security token is required for non-form requests such as AJAX
     requests. The $securityToken control should be called inside the &lt;head section of the web page.
     @param conn Http connection object
     @ingroup EspControl
