@@ -2244,7 +2244,7 @@ extern void finalize();
     @description This writes any buffered data.
     @ingroup EspAbbrev
  */
-extern void finalize();
+extern void flush();
 
 /**
     Get a list of column names.

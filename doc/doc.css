@@ -287,6 +287,20 @@ pre {
 	-webkit-box-shadow: 5px 5px 9px #888;
 }
 
+pre.light { 
+	font-size: 110%;
+	line-height: 140%; 
+	font-family: Consolas, Monaco, Courier, Courier New, Courier, monospace; 
+	padding: 10px 15px 10px 15px;
+	margin: 16px 0 20px 0;
+	background-color: #F4F4F4;
+	border: 1px solid #CCCCF0;
+	color: #112233;
+	-moz-border-radius: 7px;
+	-webkit-border-radius: 7px;
+	-webkit-box-shadow: 5px 5px 9px #888;
+}
+
 pre a {
 	color: #FFFFFF;
 }

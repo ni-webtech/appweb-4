@@ -78,10 +78,6 @@
         </div>
         <div class="contentLeft">
 <pre>
-Configuring Actions
-    - Defining Actions
-        - espDefineAction
-    - Routing
 - Process
     - Transparent compilation
     - Cache into cache directory
@@ -94,10 +90,12 @@ Configuring Actions
 Async 
     - don't finalize
     - Auto finalize
-Context
-    - ThreadLocal conn
 API
-    - Abbreviated API
+Creating Routes
+    - Cache Directory
+    - EspKeepSource
+    - Databases
+    - URI links
 </pre>
         <p>The ESP Model-view-controller (MVC) architecture is a pattern for designing well structured applications. 
         It separates the logic ("controller"), from the presentation ("view") and the application's data ("model"). 
@@ -161,7 +159,7 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
             <h2 class="section">Anatomy of a Controller</h2>
             <p>So what does a controller look like? Here is a partial example that has four actions:</p>
             <a name="example" id="example"></a>
-            <pre>
+            <pre class="light">
 #include "esp.h"
 
 static void create() { 
@@ -203,7 +201,7 @@ http://embedthis.com/app/post/create
             </ul>
 
             <h3>MVC Configuration</h3>
-            <p>MVC applications are typically created via the <a href="generator.html><tt>esp</tt></a> generator command.
+            <p>MVC applications are typically created via the <a href="generator.html"><tt>esp</tt></a> generator command.
             This command will create a bare MVC application with a directory for controllers, views and databases. It
             will also generate an <tt>appweb.conf</tt> configuration file to use when you run Appweb to host your
             application. By default, this configuration file will have an <tt>EspApp</tt> directive configured for your
@@ -232,18 +230,10 @@ http://embedthis.com/app/post/create
             If the URI <tt>/app/test/</tt> is invoked, the <tt>list</tt> action function will be invoked in test.c.
             The EspDir directive nominates the directory to contain the controllers. By default this is configured to be
             DocumentRoot/controllers. The Target directive defines how the controller action function to invoke is
-            determined<tt>. Note: This usage is less typical than using the MVC pattern.</p>
+            determined. Note: This usage is less typical than using the MVC pattern.</p>
 
             <h2 class="section">
 
-Creating Routes
-    - Cache Directory
-    - EspDir
-        EspDir controllers ./conductor
-    - EspKeepSource
-    - EspUpdate
-    - Databases
-    - URI links
         EspApp /app app restful mdb://app/db/test.mdb
 
             <a name="actions" id="actions"></a>
@@ -251,32 +241,241 @@ Creating Routes
             <p>Actions are where the controller does its work. In ESP, actions are simple "C" functions.
             They need to be registered before use. This is done in the controller initialization function. This is the
             "<tt>esp_controller_post</tt>" function above. On the first time the controller is invoked, the controller
-            library will be loaded and the initialization function will be run to define the various actions.</p>
+            library will be loaded and the initialization function will be run. Typically, this will then call
+            <a href="../../../api/esp.html#group___esp_route_1ga321abe89cc91246b2a44f40493988670">espDefineAction</a> 
+            to bind action functions to route actions.</p>
 
-            <p>When a request is received, the controller framework looks for an action method of the required name. If
-            one is not found, it invokes the <tt>missing</tt> action method which renders a default error message back
-            to the client.</p><a name="context" id="context"></a>
-            <h3>Controller Context</h3>
-            <p>ESP establishes a request context for the controller before invoking the action. This consists of
-            the following objects which are visible to actions:</p>
+            <h3>Missing Actions</h3>
+            <p>If the required action is not found, ESP will look for an action called "<tt>missing</tt>". If that is 
+            not defined in the controller, it will look for a global "missing" function. Otherwise it will respond with
+            a HTTP 404 error indicating that the required action could not be found.</p>
+            
+            <a name="processing" id="processing"></a>
+            <h3>Processing the Request</h3>
+            <p>The controller action can perform any processing it desires. There are no real restrictions except you don't
+            want to block for too long without giving the client some feedback. Because Appweb is multithreaded, you can
+            block. In that case, the server will continue to run and serve other requests. However, note that threads
+            are a limited resource. It may be better to not block in the action, and use async programming techniques.</p>
+
+            <h3>Async Processsing</h3>
+            <p>An action function may return without completing the request. Normally, ESP will automatically finalize
+            the request when the action returns. To prevent this, all 
+            <a href="../../../api/esp.html#group___esp_abbrev_1ga9db9b8b7e2c750f6f942da0478866de2">
+            <tt>dontAutoFinalize<tt></a> to tell ESP not to finalize the request and to keep the connection and
+                response open. At anytime and from any other code, you may then call 
+                <a href="../../../api/esp.html#group___esp_abbrev_1ga32d626626eee0bc4ade146973f6abb1c"><tt>finalize</tt></a>
+                to complete the request.</p>
+                <p>To force output to the client, without finalizing, use 
+                <a href="../../../api/esp.html#group___esp_abbrev_1ga32d626626eee0bc4ade146973f6abb1c"><tt>finalize</tt></a>
+                    
+
+
+            <h2>Loading and Caching Controllers</h2>
+            <p>For Appweb to use an ESP controller, it must first be compiled and linked into a loadable library.
+            On Windows, this will be a DLL, on Unix, it will be a shared library with a ".so" extension. On VxWorks it
+            will be a loadable task module.</p>
+
+            <p>The compilation of controllers into libraries happens automatically if a compiler is installed on the
+            system and if the "<tt>EspUpdate</tt> directive is enabled. If so, when a request is received, ESP will
+            compile and link the controller in to a library and save the result into the ESP Cache directory for future
+            use. After servicing the first request for the controller, the controller code is retained in memory and the
+            controller will not be reloaded unless the source code is modified. If Appweb is rebooted, the cached
+            library will be reloaded without recompiling. This provides a two-level caching: in-memory and on-disk as a
+            shared library.</p>
+
+            <h3>Development and Production Modes</h3>
+            <p>When a request for a controller is received, ESP will test if the source code has been updated to
+            determine if the controller must be recompiled. If the source has been changed, Appweb will wait for all
+            requests using that controller to gracefully complete. When no requests are using the old controller
+            version, Appweb will unload the controller, and ESP will recompile it into a new loadable module which will
+            then be loaded and the request servicing resumed.</p>
+
+            <p>If Appweb was configured and built in debug mode, the default value for EspUpdate will be enabled. If
+            Appweb was built in release mode, the default value is off. In release mode is it common practice to lock
+            down the compiled controllers and not auto-recompile in the field.</p>
+
+            <a name="context" id="context"></a>
+
+            <h2 class="section">Controller Context</h2>
+            <p>ESP establishes a request context for the controller before invoking the action. The top level 
+            of the context is represented by the <a href="../../../api/http.html#group___http_conn">HttpConn</a> 
+            connection object. From this, all other request information can be reached, including:</p>
             <ul>
-                <li>application object &mdash; represents your application.</li>
-                <li>host &mdash; describes the web server hosting the application.</li>
-                <li>request object &mdash; describes the client HTTP request.</li>
-                <li>response object &mdash; describes the client HTTP response.</li>
-                <li>params &mdash; request form data</li>
-                <li>flash &mdash; informational messages to pass to the next action (and view)</li>
-                <li>session object &mdash; session state information.</li>
+                <li>receive object &mdash; describes the client HTTP request.</li>
+                <li>transmit object &mdash; describes the client HTTP response.</li>
+                <li>host object &mdash; describes the web server hosting the application.</li>
+                <li>params &mdash; request query, form, and routing parameters</li>
+                <li>session state object &mdash; session state information.</li>
+                <li>flash messages &mdash; informational messages to pass to the next action (and view)</li>
             </ul>
+
+            <h3>ESP Short-Form API</h3>
+            <p>When ESP invokes a controller action or a ESP web page, ESP defines the current HttpConn connection 
+            object in Thread Local storage.  ESP also defines a terse, short-form, 
+            <a href="../../../api/esp.html#group___esp_abbrev">API</a> that uses the current connection object to
+            provide context for the API. When using this API, explicit access to the connection object should not be
+            required. The ESP short-form API should cover 95% of requirements for action processing.</p>
+
+            <h3>Explict Connection Access</h3>
+            <p>If explicit access to the connection object is required, action functions may
+            define a connection argument as <tt>action(HttpConn *conn)</tt> which is passed into all actions.
+            Alternatively, the connection object can can be retrieved using the <a
+                href="../../../api/esp.html#group___esp_abbrev_1gabe448b3542b4d1391e80e74192a09cb3>getConn">API</a>.</p>
+
+            <h3>Navigating the Connection Object</h3>
+            <p>The <a href="../../../api/http.html#group___http_conn">HttpConn</a> object represents the current
+            TCP/IP connection. By using HTTP KeepAlive, the connection may be utilized for multiple requests. The fields
+            of the HttpConn object are public and can be accessed and
+            navigated.</p> 
+            <table>
+                <thead>
+                    <tr><td>HttpConn Property</td><td>Purpose</td></tr>
+                </thead>
+                <tbody>
+                    <tr><td>rx</td><td>Reference to the HttpRx receive object</td></tr>
+                    <tr><td>tx</td><td>Reference to the HttpTx transmit object</td></tr>
+                    <tr><td>host</td><td>Reference to the HttpHost object</td></tr>
+                    <tr><td>http</td><td>Reference to the Http object</td></tr>
+                    <tr><td>endpoint</td><td>Reference to the HttpEndpoint transmit object</td></tr>
+                    <tr><td>limits</td><td>Reference to the HttpLimits object</td></tr>
+                    <tr><td>ip</td><td>Remote client IP address</td></tr>
+                    <tr><td>port</td><td>Remote client port</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Navigating the Receive Object</h3>
+            <p>The <a href="../../../api/http.html#group___http_rx">HttpRx</a> object represents the receive side of the
+            HTTP protocol. On the server, it holds state regarding the client HTTP request. The fields of the HttpRx
+            object are public and can be accessed and navigated.</p> 
+            <table>
+                <thead>
+                    <tr><td>HttpRx Property</td><td>Purpose</td></tr>
+                </thead>
+                <tbody>
+                    <tr><td>method</td><td>HTTP request method</td></tr>
+                    <tr><td>uri</td><td>Current URI (may be rewritten)</td></tr>
+                    <tr><td>pathInfo</td><td>Path portion of the URI after the scriptName</td></tr>
+                    <tr><td>scriptName</td><td>ScriptName portion of the URI</td></tr>
+                    <tr><td>length</td><td>Content length</td></tr>
+                    <tr><td>route</td><td>Reference to current HttpRoute object</td></tr>
+                    <tr><td>params</td><td>Request params (query, form and route parameters)</td></tr>
+                    <tr><td>files</td><td>Uploaded files</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Navigating the Tx Object</h3>
+            <p>The <a href="../../../api/http.html#group___http_tx">HttpTx</a> object represents the transmit side of the
+            HTTP protocol. On the server, it holds state regarding the response to the clientThe fields of the HttpTx
+            object are public and can be accessed and navigated.</p> 
+            <table>
+                <thead>
+                    <tr><td>HttpTx Property</td><td>Purpose</td></tr>
+                </thead>
+                <tbody>
+                    <tr><td>filename</td><td>Name of the real file being served</td></tr>
+                    <tr><td>ext</td><td>Filename extension</td></tr>
+                    <tr><td>handler</td><td>Request handler object</td></tr>
+                    <tr><td>length</td><td>Response content length</td></tr>
+                    <tr><td>status</td><td>Response HTTP status</td></tr>
+                    <tr><td>headers</td><td>Response HTTP headers</td></tr>
+                </tbody>
+            </table>
+
+            
+            <a name="models" id="models"></a>
+
+            <h3>Sample of ESP API</h3>
+            <p>Here are a few of the ESP APIs that may be used inside controller actions:</p>
+            <table summary="viewClass" width="100%">
+                <thead>
+                    <tr>
+                        <td nowrap="nowrap">Method / Property</td>
+                        <td>Description</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><a href="../../../api/esp.html#group___esp_abbrev_1gadba1deb080e78b4517119a0294489b44">
+                                addHeader</a></td> <td>Add a response HTTP header.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="../../../api/esp.html#group___esp_abbrev_1gab7b4049b554576b57f8cc49efc9e3a95">
+                                createSession</a>
+                        </td>
+                        <td>Enable session control.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="../../../api/esp.html#group___esp_abbrev_1ga35677b9aa8d61543db5ea80377e823a6">
+                            destroySession</a>
+                        </td>
+                        <td>Destroy a session.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="../../../api/esp.html#group___esp_abbrev_1ga9db9b8b7e2c750f6f942da0478866de2">
+                                dontAutoFinalize</a>
+                        </td>
+                        <td>Don't automatically finalize output when the action returns. Useful for async actions.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="../../../api/esp.html#group___esp_abbrev_1ga03544bf56dde3a257391d07e1d6f6a3a">
+                                error</a>
+                        </td>
+                        <td>Send an error flash message to the next web page.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="../../../api/esp.html#group___esp_abbrev_1ga8e8c0dccb4ded8a2fecec11d389cf8c8">
+                                inform</a>
+                        </td>
+                        <td>Send an informational flash message to the next web page.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="../../../api/esp.html#group___esp_abbrev_1gad638c34898123293ebc120c1f9396a9c">
+                            param</a>
+                        </td>
+                        <td>Get a request parameter value.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="../../../api/esp.html#group___esp_abbrev_1ga79cf206805a9595395af14e7c35f289d">
+                                redirect</a></td>
+                        <td>Redirect the client to a new URI.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="../../../api/esp.html#group___esp_abbrev_1gaf89154adc3cbf6d6a6a32c6b4457c593">
+                                render</a></td>
+                        <td>Render the text data back to the client.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="../../../api/esp.html#group___esp_abbrev_1gaa1e37f244a0e0796df494dfb756472a8">
+                                renderFile</a></td>
+                        <td>Render a file's contents back to the client.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="../../../api/esp.html#group___esp_abbrev_1gafe8d897ff436eabc6fc275f76222a5c3">
+                                setContentType</a></td>
+                        <td>Set the response content type.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="../../../api/esp.html#esp_8h_1a85b884db9ea1993efaa01dbe686f601c">
+                                setCookie</a></td>
+                        <td>Define a cookie to include in the response.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="../../../api/esp.html#group___esp_abbrev_1gadb4f7bc3020ab9c481f1ebcaf1ed3f2a">
+                                setSessionVar</a></td>
+                        <td>Set a variable in session state storage.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="../../../api/esp.html#group___esp_abbrev_1ga56d17d8860dc351f63feaa55891cdf21">
+                                uri</a></td>
+                        <td>Make a URI from parameters.</td>
+                    </tr>
+                </tbody>
+            </table>
+
             <p>The controller can add to this context by declaring public variables in the controller class or the
             ApplicationController which is the base class for all controllers. Views can automatically access any such
-            public controller variables.</p><a name="processing" id="processing"></a>
-            <h3>Processing the Request</h3>
-            <p>The action method can perform any processing it desires. There are no real restrictions except you don't
-            want to block for too long without giving the client some feedback.</p>
-            <p>Actions often retrieve a database record via the Model and store an object representing the model in a
-            public variable for easy access by the view. NOTE: the controller is not peristent across client
-            requests.</p><a name="models" id="models"></a>
+            public controller variables.</p>
+            
             <h2 class="section">Model Data</h2>
             <p>ESP provides an Object Relational Mapping (ORM) layer for accessing database data via convenient
             JavaScript objects. The ORM layer is a collection of database Model classes for the application.
@@ -383,137 +582,6 @@ esp generate scaffold MODEL [field:type ...]
                     </tr>
                 </tbody>
             </table>
-            <p>The controller class provides the following methods:</p>
-            <table summary="viewClass" width="100%">
-                <thead>
-                    <tr>
-                        <td>Method / Property</td>
-                        <td>Description</td>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>cache</td>
-                        <td>Add a cache-control HTTP header.</td>
-                    </tr>
-                    <tr>
-                        <td>createSession</td>
-                        <td>Enable session control.</td>
-                    </tr>
-                    <tr>
-                        <td>destroySession</td>
-                        <td>Destroy a session.</td>
-                    </tr>
-                    <tr>
-                        <td>discardOutput</td>
-                        <td>Discard all prior buffered output.</td>
-                    </tr>
-                    <tr>
-                        <td>error</td>
-                        <td>Send an error response back to the client.</td>
-                    </tr>
-                    <tr>
-                        <td>escapeHtml</td>
-                        <td>Transform a string to be safe for output in a HTML web page.</td>
-                    </tr>
-                    <tr>
-                        <td>html</td>
-                        <td>HTML encode the arguments.</td>
-                    </tr>
-                    <tr>
-                        <td>inform</td>
-                        <td>Send a positive notification to the client in the flash area.</td>
-                    </tr>
-                    <tr>
-                        <td>makeUrl</td>
-                        <td>Make a URI suitable for invoking actions.</td>
-                    </tr>
-                    <tr>
-                        <td>redirect</td>
-                        <td>Redirect the client to a new URI.</td>
-                    </tr>
-                    <tr>
-                        <td>render</td>
-                        <td>Render the raw arguments back to the client.</td>
-                    </tr>
-                    <tr>
-                        <td>renderFile</td>
-                        <td>Render a file's contents back to the client.</td>
-                    </tr>
-                    <tr>
-                        <td>renderRaw</td>
-                        <td>Render raw data.</td>
-                    </tr>
-                    <tr>
-                        <td>setCookie</td>
-                        <td>Define a cookie to include in the response.</td>
-                    </tr>
-                    <tr>
-                        <td>statusMessage</td>
-                        <td>Send a status message to any registered view controls.</td>
-                    </tr>
-                    <tr>
-                        <td>unescapeHtml</td>
-                        <td>Transform an escaped string back to its original contents.</td>
-                    </tr>
-                    <tr>
-                        <td>warn</td>
-                        <td>Send a warning message to the client in the flash area.</td>
-                    </tr>
-                    <tr>
-                        <td>write</td>
-                        <td>Write text back to the client.</td>
-                    </tr>
-                    <tr>
-                        <td>writeHtml</td>
-                        <td>Write HTML escaped data back to the client.</td>
-                    </tr>
-                </tbody>
-            </table>
-            <h2 class="section">Filters</h2>
-            <p>Filters enable a controller to perform processing before and after actions are run. Filters are useful
-            to do authentication and logging. Filters run in the same context as an action method and can access the
-            controller instance and the Request, Response, Http, session and flash objects.</p>
-            <p>To run a filter before the action method, use the <tt>beforeFilter</tt> method. This should be run in
-            the constructor for the controller. For example:</p>
-            <pre>
-public class TaskController extends BaseController {
-    function TaskController() {
-<b>        beforeFilter(authorize, { except: "login"})</b>
-    }
-<b>    private function authorize() {
-        if (params.username != "goodname" &amp;&amp; params.password != "abracadabra") {
-            error("Invalid Login")
-            redirect("login")
-        }
-    }</b>
-</pre>
-            <p>This will cause the <tt>authorize</tt> to run before any action method except for the <tt>login</tt>
-            action. The <tt>authorize</tt> function can test the user name and password and if not authorized, it can
-            fail the request and redirect the user back to the login page. Filters can be run after the request by
-            using the <tt>afterFilter</tt> method.</p>
-            <p>The filter methods take an options object as the second parameter. Two option properties are
-            defined:</p>
-            <ul>
-                <li><b>except</b> &mdash; Run filter for all actions except the nominated action.</li>
-                <li><b>only</b> &mdash; Run filter only for the specified actions.</li>
-            </ul>
-            <p>When specifying the argument to <tt>except</tt> and <tt>only</tt>, you can provide either a single
-            action name as a string or an array of action names.</p><!--
-        <a name="tips"></a>
-        <h2 class="section">Tips and Tricks</h2>
-        <p>The following hits provide solutions for common tasks:</p>
-        <h3>Redirect the Client</h3>
-        <p>To redirect the client to a new URI, use the redirect method. This will construct a redirection URI 
-        using the requested <tt>action</tt> parameter. It appends this to the  application and controller names. If an
-        <tt>id</tt> is provided (723 in this example below), this is appended after the action name.
-        <pre>redirect("edit", 723, null)</pre>
-        <p>This will create a URI like:
-        <pre>http://embedthis.com/app/currentController/<b>edit</b>/723</pre>
-            Flash
-            cookies
-            sessions
-            -->
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->
