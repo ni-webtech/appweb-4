@@ -626,6 +626,13 @@ void setStatus(int status)
     espSetStatus(getConn(), status);
 }
 
+
+void setTimeout(void *proc, MprTime timeout, void *data)
+{
+    mprCreateEvent(getConn()->dispatcher, "setTimeout", (int) timeout, proc, data, 0);
+}
+
+
 void showRequest()
 {
     espShowRequest(getConn());

@@ -65,36 +65,40 @@
         </div>
         <div class="contentLeft">
             <h1>Model View Controller Framework</h1>
-            <p>The Model-View-Controller (MVC) paradigm is a design pattern used for creating applications. It
+            <p>The Model-View-Controller (MVC) paradigm is a design pattern for creating applications. It
             partitions the separate concerns of application data, user interface and application logic into three
             discrete components. It has proven highly successful in simplifying application design and
-            maintenance.</p><img src="../../../images/mvc.jpg" alt="" />
+            maintenance.</p>
+            
+            <img src="../../../images/mvc.jpg" alt="" />
             <p>The ESP Web Framework is a Model-View-Controller environment that provides a structure and
             assistance for your MVC application. It provides the basis and connections between your models, views and
             controllers and routes messages between the various components.</p>
-            <p>ESP makes MVC programming easy by providing base classes that implement most of the plumbing for an
-            MVC application.</p><a name="models" id="models"></a>
+            
+            <a name="models" id="models"></a>
             <h3>Models</h3>
             <p>The model is responsible for managing access to application data and state. It is also responsible for
             ensuring the data remains valid and consistent.</p>
-            <p>ESP provides an Object Relational Mapper (ORM) via the the <b>Model</b> class. This wraps database
-            data in JavaScript objects and allows you to use object-oriented programming (OOP) when dealing with
-            database data stored in rows and columns. The model class makes SQL programming more natural in OOP
-            programs.</p><a name="views" id="views"></a>
+            <p>ESP provides an basic Object Relational Mapper (ORM) via the Embedded Database Interface (EDI).
+            This wraps database data in a "C" language Record and Grid data structure. It then allows you to use
+            object-oriented programming (OOP) when dealing with database data stored in rows and columns. </p>
+            
+            <a name="views" id="views"></a>
             <h3>Views</h3>
             <p>The view is responsible for rendering the user interface and presenting the application to the user.
             Views should not manage incoming requests &mdash; that is the job of Controllers.</p>
-            <p>ESP provides the <b>View</b> class and a powerful embedded scripting environment. HTML pages with
-            embedded JavaScript code are compiled and run to render the user interace. The view mechanism also provides
-            a templating engine so you can deal separately with layout pages and content pages.</p><a name=
-            "controllers" id="controllers"></a>
+            <p>ESP provides the ESP web pages to assist in creating view web pages. ESP web pages are HTML
+            pages with embedded "C" code. They are compiled and run to render the user interace. The ESP view 
+            mechanism also provides a templating engine so you can deal separately with layout pages and content pages.</p>
+            
+            <a name="controllers" id="controllers"></a>
             <h3>Controllers</h3>
             <p>Controllers manage the application and respond to client requests. They orchestrate the application's
-            response, access and update model data, and display views back to the client. Incoming requests invoke
+            response, they access and update model data, and display views back to the client. Incoming requests invoke
             <b>Actions</b> in the controller which modify the application state and ultimately render a view.</p>
-            <p>ESP routes requests by parsing and decoding request URLs and matching them with the appropriate
-            Controller and Action function. ESP provides the <b>Controller</b> class that provides methods for
-            interacting with models and rendering views.</p>
+
+            <p>ESP routes requests by parsing and decoding request URIs and matching them with the appropriate
+            Controller and Action function.</p>
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->

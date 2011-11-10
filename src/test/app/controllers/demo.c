@@ -26,6 +26,19 @@ static void restart() {
     print("RESTARTING ON PORT 5555");
 }
 
+static void second(HttpConn *conn) {
+    setConn(conn);
+    render("World\n");
+    finalize();
+}
+
+static void first() {
+    dontAutoFinalize();
+    render("Hello ");
+    setTimeout(second, 5000, getConn());
+    flush();
+}
+
 ESP_EXPORT int esp_controller_demo(HttpRoute *route, MprModule *module) {
     EspRoute    *eroute;
     cchar       *schema;
@@ -54,5 +67,6 @@ ESP_EXPORT int esp_controller_demo(HttpRoute *route, MprModule *module) {
 
     espDefineAction(route, "demo-list", list);
     espDefineAction(route, "demo-cmd-restart", restart);
+    espDefineAction(route, "demo-cmd-first", first);
     return 0;
 }

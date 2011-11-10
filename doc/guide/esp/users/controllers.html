@@ -212,39 +212,39 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
     Target run $1-list
 &lt;/Route>
 </pre>
-            <p>This set of directives will create a route that will invoke a controller in <tt>controllers/test.c</tt>.
-            If the URI <tt>/app/test/</tt> is invoked, the <tt>list</tt> action function will be invoked in test.c.
+            <p>This set of directives will create a route that will invoke the controller <tt>controllers/test.c</tt>.
+            If the <tt>/app/test/</tt> URI is invoked, the <tt>list</tt> action function will be invoked.
             The EspDir directive nominates the directory to contain the controllers. By default this is configured to be
-            DocumentRoot/controllers. The Target directive defines how the controller action function to invoke is
-            determined. Note: This usage is less typical than using the MVC pattern.</p>
-
-            <h2 class="section">
-
-        EspApp /app app restful mdb://app/db/test.mdb
+            DocumentRoot/controllers. The Target directive defines how the action function name to invoke. 
+            Note: This usage is less typical than using the MVC pattern.</p>
 
             <a name="actions" id="actions"></a>
             <h2 class="section">Actions</h2>
-            <p>Actions are where the controller does its work. In ESP, actions are simple "C" functions.
-            They need to be registered before use. This is done in the controller initialization function. This is the
-            "<tt>esp_controller_post</tt>" function above. On the first time the controller is invoked, the controller
-            library will be loaded and the initialization function will be run. Typically, this will then call
+            <p>Actions are where the controller does its work. In ESP, actions are simple "C" functions and thus
+            they need to be registered before use. This is done in the controller initialization function. 
+            The initialization function should be named: "<tt>esp_controller_NAME</tt>", where NAME is the unique 
+            name of the controller. The first time the controller is invoked, the controller
+            library will be loaded and the initialization function will be run. Typically, the initialization function 
+            will then call
             <a href="../../../api/esp.html#group___esp_route_1ga321abe89cc91246b2a44f40493988670">espDefineAction</a> 
             to bind action functions to route actions.</p>
 
             <h3>Missing Actions</h3>
-            <p>If the required action is not found, ESP will look for an action called "<tt>missing</tt>". If that is 
-            not defined in the controller, it will look for a global "missing" function. Otherwise it will respond with
-            a HTTP 404 error indicating that the required action could not be found.</p>
+            <p>When responding to a request, if the required action is not found, ESP will look for an action called
+            "<tt>CONTROLLER-missing</tt>". If that is not defined in the controller, it will look for a global 
+            "missing" function.  Otherwise it will respond with a HTTP 404 error indicating that the required 
+            action could not be found.</p>
             
             <a name="processing" id="processing"></a>
             <h3>Processing the Request</h3>
             <p>The controller action can perform any processing it desires. There are no real restrictions except you don't
             want to block for too long without giving the client some feedback. Because Appweb is multithreaded, you can
             block. In that case, the server will continue to run and serve other requests. However, note that threads
-            are a limited resource. It may be better to not block in the action, and use async programming techniques.</p>
+            are a limited resource. It may be better to use non-blocking techniques such as async processing.</p>
 
             <h3>Async Processsing</h3>
-            <p>An action function may return without completing the request. Normally, ESP will automatically finalize
+            <p>An action may service a long-running request without blocking, by responding in pieces. 
+            An action function may return without completing the request. Normally, ESP will automatically finalize
             the request when the action returns. To prevent this, call 
             <a href="../../../api/esp.html#group___esp_abbrev_1ga9db9b8b7e2c750f6f942da0478866de2">
             dontAutoFinalize</a> to tell ESP not to finalize the request and to keep the connection and
@@ -252,58 +252,81 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
                 <a href="../../../api/esp.html#group___esp_abbrev_1ga32d626626eee0bc4ade146973f6abb1c">finalize</a>
                 to complete the request. To force output to the client, without finalizing, use 
                 <a href="../../../api/esp.html#group___esp_abbrev_1ga32d626626eee0bc4ade146973f6abb1c">flush</a>.
+                <p>For example:</p>
+<pre>
+static void second(HttpConn *conn) {
+    setConn(conn);
+    render("World\n");
+    finalize();
+}
+
+static void first() {
+    dontAutoFinalize();
+    render("Hello ");
+    flush();
+    <b>setTimeout(second, 5000, getConn());</b>
+}
+</pre>
+            <p>This example will print "Hello ", then wait five seconds and then print "World". Note that the request
+            is held open, but Appweb is not blocked in any thread. The call to <tt>setTimeout</tt> will arrange to have
+            the Appweb event loop invoke <tt>second</tt> after five seconds have elapsed. This pattern is a 
+            highly efficient in its use of system resources and scales very well.</p>
 
             <h2>Loading and Caching Controllers</h2>
-            <p>For Appweb to use an ESP controller, it must first be compiled and linked into a loadable library.
+            <p>Before a controller can run, it must first be compiled and linked into a loadable library.
             On Windows, this will be a DLL, on Unix, it will be a shared library with a ".so" extension. On VxWorks it
             will be a loadable task module.</p>
 
             <p>The compilation of controllers into libraries happens automatically if a compiler is installed on the
-            system and if the "<tt>EspUpdate</tt> directive is enabled. If so, when a request is received, ESP will
-            compile and link the controller in to a library and save the result into the ESP Cache directory for future
-            use. After servicing the first request for the controller, the controller code is retained in memory and the
-            controller will not be reloaded unless the source code is modified. If Appweb is rebooted, the cached
-            library will be reloaded without recompiling. This provides a two-level caching: in-memory and on-disk as a
-            shared library.</p>
+            system and if the <tt>EspUpdate</tt> directive is enabled. If so, when a request is received, ESP will
+            compile and link the controller in to a library and save the result into the ESP <tt>cache</tt> directory
+            for future use. After servicing the first request for the controller, the controller code is retained in
+            memory and the controller will not be reloaded unless the source code is modified. If Appweb is rebooted,
+            the cached library will be reloaded without recompiling. This provides two levels of caching: in-memory and
+            on-disk as a shared library.</p>
 
             <h3>Development and Production Modes</h3>
             <p>When a request for a controller is received, ESP will test if the source code has been updated to
             determine if the controller must be recompiled. If the source has been changed, Appweb will wait for all
-            requests using that controller to gracefully complete. When no requests are using the old controller
-            version, Appweb will unload the controller, and ESP will recompile it into a new loadable module which will
-            then be loaded and the request servicing resumed.</p>
+            requests that are using the already loaded controller, to gracefully complete. When no requests are using
+            the old controller version, Appweb will unload the controller, and ESP will recompile the updated controller
+            source and create a new shared library that will then be loaded and the request servicing resumed.</p>
 
-            <p>If Appweb was configured and built in debug mode, the default value for EspUpdate will be enabled. If
-            Appweb was built in release mode, the default value is off. In release mode is it common practice to lock
-            down the compiled controllers and not auto-recompile in the field.</p>
+            <p>If Appweb was configured and built in debug mode, the default value for <tt>EspUpdate</tt> will be
+            <tt>on</tt>. If Appweb was built in release mode, the default value is <tt>off</tt>. In release mode is it
+            common practice to lock down the compiled controllers and not auto-recompile once deployed.</p>
 
             <a name="context" id="context"></a>
-
             <h2 class="section">Controller Context</h2>
-            <p>ESP establishes a request context for the controller before invoking the action. The top level 
+            <p>ESP establishes a request context for the controller before invoking the controller action. The top level 
             of the context is represented by the <a href="../../../api/http.html#group___http_conn">HttpConn</a> 
-            connection object. From this, all other request information can be reached, including:</p>
+            connection object. From this, all other request information can be reached, including the:</p>
             <ul>
                 <li>receive object &mdash; describes the client HTTP request.</li>
                 <li>transmit object &mdash; describes the client HTTP response.</li>
                 <li>host object &mdash; describes the web server hosting the application.</li>
-                <li>params &mdash; request query, form, and routing parameters</li>
+                <li>params &mdash; request query, form, and routing parameters.</li>
                 <li>session state object &mdash; session state information.</li>
-                <li>flash messages &mdash; informational messages to pass to the next action (and view)</li>
+                <li>flash messages &mdash; informational messages to pass to the next action (and view).</li>
             </ul>
 
             <h3>ESP Short-Form API</h3>
             <p>When ESP invokes a controller action or a ESP web page, ESP defines the current HttpConn connection 
-            object in Thread Local storage.  ESP also defines a terse, short-form, 
+            object in Thread-Local storage.  ESP also defines a terse, short-form, 
             <a href="../../../api/esp.html#group___esp_abbrev">API</a> that uses the current connection object to
-            provide context for the API. When using this API, explicit access to the connection object should not be
-            required. The ESP short-form API should cover 95% of requirements for action processing.</p>
+            provide context for the API. When using this API, explicit access to the connection object should not 
+            typically be required. The ESP short-form API should cover 95% of requirements for action processing.</p>
 
             <h3>Explict Connection Access</h3>
             <p>If explicit access to the connection object is required, action functions may
-            define a connection argument as <tt>action(HttpConn *conn)</tt> which is passed into all actions.
+            define a connection argument as 
+            which is passed into all actions.
+<pre>static void ACTION(HttpConn *conn) {
+    /* Use the conn reference here */
+}</pre> 
             Alternatively, the connection object can can be retrieved using the <a
-                href="../../../api/esp.html#group___esp_abbrev_1gabe448b3542b4d1391e80e74192a09cb3>getConn">API</a>.</p>
+                href="../../../api/esp.html#group___esp_abbrev_1gabe448b3542b4d1391e80e74192a09cb3">
+                getConn</a> API.</p>
 
             <h3>Navigating the Connection Object</h3>
             <p>The <a href="../../../api/http.html#group___http_conn">HttpConn</a> object represents the current
@@ -457,7 +480,8 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
 
             <h2 class="section">Request Parameters</h2>
             <p>ESP will collect request query, form data and route parameters into one
-            <tt>params</tt> object which is accessible to actions. Each query key/value pair and all
+            <tt>params</tt> object which is accessible to actions via the 
+            <a href="../../../api/esp.html#group___esp_abbrev_1gad638c34898123293ebc120c1f9396a9c">param</a> API. Each query key/value pair and all
             request form elements posted by the client will become a properties of the <tt>params</tt> object.
             When routing the request, Appweb will tokenize the URI and create parameters for each positional token in
             the URI. The Controller name and Action are defined as the parameters: <tt>controller</tt> and 
@@ -466,13 +490,13 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
             <a name="views" id="views"></a>
             <h3>Rendering Views</h3>
             <p>After processing the request, the controller is responsible for rendering a response back to the client. 
-            The controller can choose how to response. It may explicitly create the response body by calling
-            <a href="api/esp.html#group___esp_abbrev_1gaf89154adc3cbf6d6a6a32c6b4457c593">render</a> to generate HTML.
+            The controller can choose how to respond. It may explicitly create the response body by calling
+            <a href=" ../../../api/esp.html#group___esp_abbrev_1gaf89154adc3cbf6d6a6a32c6b4457c593">render</a> to generate HTML.
             Alternatively, the action may call 
-            <a href="api/esp.html#group___esp_abbrev_1gaf0db430f850378bd83c514a0dda77fb9">renderView</a> to 
+            <a href="../../../api/esp.html#group___esp_abbrev_1gaf0db430f850378bd83c514a0dda77fb9">renderView</a> to 
             response with a view web page.
             
-            If the action method does not explicitly generate any response, ESP will look for a view with the same name as
+            If the action method does not explicitly generate any response, ESP will invoke a view with the same name as
             the action method.</p>
 
             <a name="generating" id="generating"></a>

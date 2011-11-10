@@ -2786,6 +2786,16 @@ extern void setSessionVar(cchar *name, cchar *value);
 extern void setStatus(int status);
 
 /**
+    Create a timeout event 
+    @description invoke the given procedure after the timeout
+    @param proc Function to invoke
+    @param timeout Time in milliseconds to elapse before invoking the timeout
+    @param data Argument to pass to proc
+    @ingroup EspAbbrev
+ */
+void setTimeout(void *proc, MprTime timeout, void *data);
+
+/**
     Show request details
     @description This echos request details back to the client. This is useful as a debugging tool.
     @ingroup EspAbbrev
