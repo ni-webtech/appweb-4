@@ -596,7 +596,7 @@ extern cchar *espGetContentType(HttpConn *conn);
 
 /**
     Get the request cookies.
-    @description Get the cookies defined in the current requeset
+    @description Get the cookies defined in the current request
     @param conn HttpConn connection object
     @return Return a string containing the cookies sent in the Http header of the last request
     @ingroup EspReq
@@ -666,7 +666,7 @@ extern cchar *espGetHeader(HttpConn *conn, cchar *key);
 extern MprHash *espGetHeaderHash(HttpConn *conn);
 
 /**
-    Get all the requeset http headers.
+    Get all the request http headers.
     @description Get all the rx headers. The returned string formats all the headers in the form:
         key: value\\nkey2: value2\\n...
     @param conn HttpConn connection object
@@ -1417,7 +1417,7 @@ extern cchar *espUri(HttpConn *conn, cchar *target);
     @arg background String Background color. This is a CSS RGB color specification. For example "FF0000" for red.
     @arg click (Boolean|Uri|String) URI to invoke if the control is clicked.
     @arg color String Foreground color. This is a CSS RGB color specification. For example "FF0000" for red.
-    @arg confirm String Message to prompt the user to requeset confirmation before submitting a form or request.
+    @arg confirm String Message to prompt the user to request confirmation before submitting a form or request.
     @arg controller Controller owning the action to invoke when clicked. Defaults to the current controller.
     @arg data-* All data-* names are passed through to the HTML unmodified.
     @arg domid String Client-side DOM-ID to use for the control
