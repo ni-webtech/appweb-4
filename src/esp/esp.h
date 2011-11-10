@@ -804,16 +804,16 @@ extern cchar *espGetUri(HttpConn *conn);
 /**
     Test if a current grid has been defined.
     @description The current grid is defined via $setRec
-    @return True if a current grid has been defined
+    @return "True" if a current grid has been defined
     @ingroup EspReq
  */
 extern bool espHasGrid(HttpConn *conn);
 
 /**
     Test if a current record has been defined and save to the database.
-    @description This call returns true if a current record is defined and has been saved to the database with a 
+    @description This call returns "true" if a current record is defined and has been saved to the database with a 
         valid "id" field.
-    @return True if a current record with a valid "id" is defined.
+    @return "True" if a current record with a valid "id" is defined.
     @ingroup EspReq
  */
 extern bool espHasRec(HttpConn *conn);
@@ -821,7 +821,7 @@ extern bool espHasRec(HttpConn *conn);
 /**
     Test if the receive input stream is at end-of-file.
     @param conn HttpConn connection object
-    @return True if there is no more receive data to read
+    @return "True" if there is no more receive data to read
     @ingroup EspReq
  */
 extern bool espIsEof(HttpConn *conn);
@@ -829,7 +829,7 @@ extern bool espIsEof(HttpConn *conn);
 /**
     Test if the connection is using SSL and is secure.
     @param conn HttpConn connection object
-    @return True if the connection is using SSL.
+    @return "True" if the connection is using SSL.
     @ingroup EspReq
  */
 extern bool espIsSecure(HttpConn *conn);
@@ -838,7 +838,7 @@ extern bool espIsSecure(HttpConn *conn);
     Test if a http request is finalized.
     @description This tests if #espFinalize or #httpFinalize has been called for a request.
     @param conn HttpConn connection object
-    @return True if the request has been finalized.
+    @return "True" if the request has been finalized.
     @ingroup EspReq
  */
 extern bool espIsFinalized(HttpConn *conn);
