@@ -730,7 +730,7 @@ extern cchar *espGetQueryString(HttpConn *conn);
 /**
     Get the referring URI.
     @description This returns the referring URI as described in the HTTP "referer" (yes the HTTP specification does
-        spell it incorrectly) header. If this header is not defined, this routine will return the home URI as retured
+        spell it incorrectly) header. If this header is not defined, this routine will return the home URI as returned
         by $espGetHome.
     @param conn HttpConn connection object
     @return String URI back to the referring URI. If no referrer is defined, refers to the home URI.
@@ -2365,7 +2365,7 @@ extern EdiRec *getRec();
 /**
     Get the referring URI
     @description This returns the referring URI as described in the HTTP "referer" (yes the HTTP specification does
-        spell it incorrectly) header. If this header is not defined, this routine will return the home URI as retured
+        spell it incorrectly) header. If this header is not defined, this routine will return the home URI as returned
         by $home.
     @return String URI back to the referring URI. If no referrer is defined, refers to the home URI.
     @ingroup EspAbbrev
