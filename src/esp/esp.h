@@ -630,7 +630,7 @@ extern cchar *espGetDir(HttpConn *conn);
 /**
     Get a flash message.
     @description This retrieves a flash message of a specified type.
-        Flash messages are special session state message that are passed to the next request (only). 
+        Flash messages are special session state messages that are passed to the next request (only). 
     @param conn HttpConn connection object
     @param type Type of flash message to retrieve. Possible types include: "error", "inform", "warning", "all".
     @ingroup EspReq
