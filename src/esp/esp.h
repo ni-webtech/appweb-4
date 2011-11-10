@@ -485,7 +485,7 @@ extern void espAddHeaderString(HttpConn *conn, cchar *key, cchar *value);
 
 /**
     Append a transmission header.
-    @description Set the header if it does not already exists. Append with a ", " separator if the header already exists.
+    @description Set the header if it does not already exist. Append with a ", " separator if the header already exists.
     @param conn HttpConn connection object
     @param key Http response header key
     @param fmt Printf style formatted string to use as the header key value
@@ -496,7 +496,7 @@ extern void espAppendHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 
 /**
     Append a transmission header string.
-    @description Set the header if it does not already exists. Append with a ", " separator if the header already exists.
+    @description Set the header if it does not already exist. Append with a ", " separator if the header already exists.
     @param conn HttpConn connection object
     @param key Http response header key
     @param value Value to set for the header
