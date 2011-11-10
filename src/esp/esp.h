@@ -1746,14 +1746,14 @@ extern void espStylesheet(HttpConn *conn, cchar *uri, cchar *options);
 /**
     Render a table.
     @description The table control can display static or dynamic tabular data. The client table control 
-        manages sorting by column, dynamic data refreshes and clicking on rows or cells.
+        manages sorting by column, dynamic data refreshes, and clicking on rows or cells.
     @param conn Http connection object
     @param grid Data to display. The data is a grid of data. Use ediCreateGrid or ediReadGrid.
     @param options Extra options. See $EspControl for a list of the standard options.
     @param options Optional extra options. See $View for a list of the standard options.
     @arg cell Boolean Set to true to make click or edit links apply per cell instead of per row. 
         The default is false.
-    @arg columns (Array|Object) The columns list is anobject hash of column objects where each column entry is 
+    @arg columns (Array|Object) The columns list is an object hash of column objects where each column entry is a
         hash of column options.  Column options:
     <ul>
         <li>align - Will right-align numbers by default</li>
@@ -1765,14 +1765,14 @@ extern void espStylesheet(HttpConn *conn, cchar *uri, cchar *options);
         <li>width - Column width. Can be a string percentage or numeric pixel width</li>
     </ul>
     @arg params Object Hash of post parameters to include in the request. This is a hash of key/value items.
-    @arg pivot Boolean Pivot the table by swaping rows for columns and vice-versa
+    @arg pivot Boolean Pivot the table by swapping rows for columns and vice-versa
     @arg showHeader Boolean Control if column headings are displayed.
-    @arg showId Boolean If a columns option is not provided, the id column is normally hidden. 
-        To display, set showId to be true.
+    @arg showId Boolean If a column's option is not provided, the id column is normally hidden. 
+        To display, set showId to be 'true'.
     @arg sort String Enable row sorting and define the column to sort by. Defaults to the first column.
-    @arg sortOrder String Default sort order. Set to "ascending" or "descending".Defaults to ascending.
+    @arg sortOrder String Default sort order. Set to "ascending" or "descending". Defaults to ascending.
     @arg style String CSS class to use for the table. The ultimate style to use for a table cell is the 
-        combination of style, styleCells, styleColumns and style Rows.
+        combination of style, styleCells, styleColumns, and style Rows.
     @arg styleCells 2D Array of styles to use for the table body cells. Can also provide an array to the 
         column.style property.
     @arg styleColumns Array of styles to use for the table body columns. Can also use the style option in the
