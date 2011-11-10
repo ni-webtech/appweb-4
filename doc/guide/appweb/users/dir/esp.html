@@ -68,7 +68,7 @@
             <h1>ESP Directives</h1>
             <p>The ESP directives control the ESP Web Framework and configure and control ESP web applications.</p>
             <a name="espApp" id="espApp"></a>
-            <h2>EspAppAlias</h2>
+            <h2>EspApp</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>
                     <tr>
@@ -77,7 +77,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>EspAppAlias UriPrefix [Directory [RouteSet [Database]]]</td>
+                        <td>EspApp UriPrefix [Directory [RouteSet [Database]]]</td>
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
@@ -85,26 +85,28 @@
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>EspAppAlias /myapp/ &nbsp;/var/www/myapp/ start.es 10</td>
+                        <td>EspApp /myapp/ /var/www/myapp restful mdb://myapp.mdb</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The EspAppAlias directive defines an ESP application at the given directory which
+                            <p>The EspApp directive defines an ESP application at the given directory that
                             will receive all requests that begin with specified URI prefix. It defines a new Route
                             block, inheriting the existing configuration and then tailors it for the ESP application.
                             This one-line directive 
                             is typically all you need to do to define an ESP application. It is loosely equivalent to the
                             following directive sequence:</p>
                             <pre>
-<a href="route.html#prefix">Prefix</a> UriPrefix
-<a href="route.html#documentRoot">DocumentRoot</a> Directory
-<a href="route.html#addHandler">AddHandler</a> espHandler
-<a href="#espDir">EspDir</a> RouteSet
-<a href="#espRouteSet">EspRouteSet</a> RouteSet
-<a href="#espDb">EspDb</a> Database
+&lt;Route UriPrefix>
+    <a href="route.html#prefix">Prefix</a> UriPrefix
+    <a href="route.html#documentRoot">DocumentRoot</a> Directory
+    <a href="route.html#addHandler">AddHandler</a> espHandler
+    <a href="#espDir">EspDir</a> RouteSet
+    <a href="#espRouteSet">EspRouteSet</a> RouteSet
+    <a href="#espDb">EspDb</a> Database
+&lt;/Route>
 </pre>
-                            <p>The EspAppAlias directive will create a route for the given URI prefix and will create 
+                            <p>The EspApp directive will create a route for the given URI prefix and will create 
                                 sub-routes if required by the RouteSet argument.</p>
                             <p>The UriPrefix argument is mandatory, all others are optional.
                             The Directory argument is used to define the DocumentRoot for the defined route.</p>
@@ -124,7 +126,7 @@
                             "conf/apps" directory, then Appweb will read it automatically when it starts. This makes it
                             very easy to install or remove applications by simply adding or removing an application
                             configuration file to or from this directory.</p>
-                            <p>The EspAppAlias directive does the following actions:</p>
+                            <p>The EspApp directive does the following actions:</p>
                             <ul>
                                 <li>Creates a new Route block for the URI prefix</li>
                                 <li>Creates a new directory block if required for the directory</li>
@@ -664,16 +666,16 @@ Name            Method  Pattern                      Target
                             <p>The EspRouteSet directive defines a pre-prepared set of routes according to the 
                             route set argument. Valid sets are: 
                             <ul>
-                                <li>simple &mdash; This defines a route to the application home URI at "/" which
+                                <li>simple &mdash; This defines a route to the application home URI at "/" that
                                     serves an "<tt>index.esp</tt> page.</li>
-                                <li>mvc &mdash; This defines a route to the application home URI at "/" which
+                                <li>mvc &mdash; This defines a route to the application home URI at "/" that
                                 serves an "<tt>index.esp</tt> page. It also defines a route for URIs beginning with
                                 "<tt>/static</tt>" that serves content from the <tt>static</tt> directory. Lastly, it
                                 defines a non-RESTful route for URIs that match 
                                 "<tt>/{controller}(~/{action}~)</tt>". This matches URIs with a controller and
                                 optional action.
                                 </li>
-                                <li>restful &mdash; This defines a route to the application home URI at "/" which
+                                <li>restful &mdash; This defines a route to the application home URI at "/" that
                                 serves an "<tt>index.esp</tt> page. It also defines a route for URIs beginning with
                                 "<tt>/static</tt>" that serves content from the <tt>static</tt> directory. Lastly, it
                                 defines a Resource Group of routes for any controller name.</p>

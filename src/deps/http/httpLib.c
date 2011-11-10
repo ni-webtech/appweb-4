@@ -9428,7 +9428,7 @@ char *httpMakePath(HttpRoute *route, cchar *file)
     if ((path = stemplate(file, route->pathTokens)) == 0) {
         return 0;
     }
-    if (mprIsPathRel(path)) {
+    if (mprIsPathRel(path) && route->host) {
         path = mprJoinPath(route->host->home, path);
     }
     return mprGetAbsPath(path);
