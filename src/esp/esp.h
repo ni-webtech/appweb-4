@@ -451,7 +451,7 @@ typedef struct EspReq {
     char            *view;                  /**< Path to view */
     char            *entry;                 /**< Module entry point */
     char            *commandLine;           /**< Command line for compile/link */
-    int             autoFinalize;           /**< Request is/will-be auto-finalized */
+    int             autoFinalize;           /**< Request is/will be auto-finalized */
     int             sessionProbed;          /**< Already probed for session store */
     int             appLoaded;              /**< App module already probed */
     int             lastDomID;              /**< Last generated DOM ID */
