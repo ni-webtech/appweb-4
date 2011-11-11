@@ -2669,7 +2669,7 @@ extern ssize renderSafe(cchar *fmt, ...);
 extern void renderView(cchar *view);
 
 /** 
-    Define a cookie header to send with the response. The Path, domain and expires properties can be set to null for 
+    Define a cookie header to send with the response. The Path, Domain, and Expires properties can be set to null for 
     default values.
     @param name Cookie name
     @param value Cookie value
