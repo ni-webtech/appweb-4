@@ -184,7 +184,6 @@ static void processPhp(HttpQueue *q)
     zend_first_try {
         php->var_array = 0;
         SG(server_context) = conn;
-
         if (conn->authUser) {
             SG(request_info).auth_user = estrdup(conn->authUser);
         }
@@ -204,7 +203,7 @@ static void processPhp(HttpQueue *q)
 
         /*
             Workaround on MAC OS X where the SIGPROF is given to the wrong thread
-            TODO - need to implement a local timeout here via the host timeout. Then invoke zend_bailout.
+            MOB - need to implement a local timeout here via the host timeout. Then invoke zend_bailout.
          */
         PG(max_input_time) = -1;
         EG(timeout_seconds) = 0;
@@ -312,7 +311,6 @@ static void registerServerVars(zval *track_vars_array TSRMLS_DC)
         return;
     }
     rx = conn->rx;
-
     php_import_environment_variables(track_vars_array TSRMLS_CC);
 
     php = httpGetQueueData(conn);
@@ -454,11 +452,12 @@ static int readBodyData(char *buffer, uint bufsize TSRMLS_DC)
     if ((content = q->first->content) == 0) {
         return 0;
     }
-    len = (ssize) min(mprGetBufLength(content), (ssize) bufsize);
+    len = (ssize) min(mprGetBufLength(content), (ssize) bufsize - 1);
     if (len > 0) {
         nbytes = mprMemcpy(buffer, len, mprGetBufStart(content), len);
         mprAssert(nbytes == len);
         mprAdjustBufStart(content, len);
+        buffer[len] = '\0';
     }
     mprLog(5, "php: read post data %d remaining %d, data %s", len, mprGetBufLength(content), buffer);
     return (int) len;
@@ -475,7 +474,7 @@ static int initializePhp(Http *http)
 {
     MaAppweb    *appweb;
 
-    tsrm_startup(64, 1, 0, NULL);
+    tsrm_startup(128, 1, 0, NULL);
     compiler_globals = (zend_compiler_globals*)  ts_resource(compiler_globals_id);
     executor_globals = (zend_executor_globals*)  ts_resource(executor_globals_id);
     core_globals = (php_core_globals*) ts_resource(core_globals_id);
@@ -499,7 +498,12 @@ static int initializePhp(Http *http)
     }
     zend_llist_init(&global_vars, sizeof(char *), 0, 0);
 
+#if UNUSED
+    /*
+        Must remove this for include files to work
+     */
     SG(options) |= SAPI_OPTION_NO_CHDIR;
+#endif
     zend_alter_ini_entry("register_argc_argv", 19, "0", 1, PHP_INI_SYSTEM, PHP_INI_STAGE_ACTIVATE);
     zend_alter_ini_entry("html_errors", 12, "0", 1, PHP_INI_SYSTEM, PHP_INI_STAGE_ACTIVATE);
     zend_alter_ini_entry("implicit_flush", 15, "0", 1, PHP_INI_SYSTEM, PHP_INI_STAGE_ACTIVATE);
