@@ -1,8 +1,8 @@
-<? header('Location: http://embedthis.com/index.html'); ?>
+<?php header('Location: http://embedthis.com/index.html'); ?>
 <html>
 <head>
 </head>
 <body>
-    <? echo "hello world\n"; ?>
+    <?php echo "hello world\n"; ?>
 </body>
 </html>
