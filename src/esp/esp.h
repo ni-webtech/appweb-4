@@ -281,7 +281,7 @@ extern void espDefineView(HttpRoute *route, cchar *path, void *viewProc);
         tokens are:
         <ul>
             <li>ARCH - Build architecture (i386, x86_64)</li>
-            <li>CC - Compiler pathame</li>
+            <li>CC - Compiler pathname</li>
             <li>DEBUG - Compiler debug options (-g, -Zi, -Od)</li>
             <li>INC - Include directory (out/inc)</li>
             <li>LIB - Library directory (out/lib, out/bin)</li>
