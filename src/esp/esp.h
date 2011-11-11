@@ -1228,7 +1228,7 @@ extern void espSetHeaderString(HttpConn *conn, cchar *key, cchar *value);
         www-urlencoded query or post data contained in the request.
     @param conn HttpConn connection object
     @param var Name of the request parameter to set
-    @param value value to set.
+    @param value Value to set.
     @ingroup EspReq
  */
 extern void espSetIntParam(HttpConn *conn, cchar *var, int value);
