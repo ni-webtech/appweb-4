@@ -1002,7 +1002,7 @@ extern int espRemoveHeader(HttpConn *conn, cchar *key);
 extern bool espRemoveRec(HttpConn *conn, cchar *tableName, cchar *key);
 
 /**
-    Render a formatted string
+    Render a formatted string.
     @description Render a formatted string of data into packets to the client. Data packets will be created
         as required to store the write data. This call may block waiting for data to drain to the client.
     @param conn HttpConn connection object
@@ -1014,7 +1014,7 @@ extern bool espRemoveRec(HttpConn *conn, cchar *tableName, cchar *key);
 extern ssize espRender(HttpConn *conn, cchar *fmt, ...);
 
 /**
-    Render a block of data to the client
+    Render a block of data to the client.
     @description Render a block of data to the client. Data packets will be created as required to store the write data.
     @param conn HttpConn connection object
     @param buf Buffer containing the write data
@@ -1025,7 +1025,7 @@ extern ssize espRender(HttpConn *conn, cchar *fmt, ...);
 extern ssize espRenderBlock(HttpConn *conn, cchar *buf, ssize size);
 
 /**
-    Render cached content
+    Render cached content.
     @description Render the saved, cached response from a prior request to this URI. This is useful if the caching
         mode has been set to "manual".
     @param conn HttpConn connection object
@@ -1045,7 +1045,7 @@ ssize espRenderCached(HttpConn *conn);
 extern ssize espRenderError(HttpConn *conn, int status, cchar *fmt, ...);
 
 /**
-    Render the contents of a file back to the client
+    Render the contents of a file back to the client.
     @param conn HttpConn connection object
     @param path File path name
     @return A count of the bytes actually written
@@ -1054,8 +1054,8 @@ extern ssize espRenderError(HttpConn *conn, int status, cchar *fmt, ...);
 extern ssize espRenderFile(HttpConn *conn, cchar *path);
 
 /**
-    Render the value of a request parameter to the client
-    @description This writes the value of request parameter after HTML escaping its value.
+    Render the value of a request parameter to the client.
+    @description This writes the value of a request parameter after HTML escaping its value.
     @param conn HttpConn connection object
     @param name Form variable name
     @return A count of the bytes actually written
@@ -1064,7 +1064,7 @@ extern ssize espRenderFile(HttpConn *conn, cchar *path);
 extern ssize espRenderParam(HttpConn *conn, cchar *name);
 
 /**
-    Render a safe string of data to the client
+    Render a safe string of data to the client.
     @description HTML escape a string and then write the string of data to the client.
         Data packets will be created as required to store the write data. This call may block waiting for the data to
         the client to drain.
