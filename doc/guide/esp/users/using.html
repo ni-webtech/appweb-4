@@ -46,10 +46,9 @@
                 <li><a href="#caching">Response Caching</a></li>
                 <li><a href="#handler">ESP Handler</a></li>
                 <li><a href="#mvc">Model-View-Controller</a></li>
-                <li><a href="#view">ESP Views</a></li>
-                <li><a href="#controllers">ESP Controllers</a></li>
+                <li><a href="#views">Views</a></li>
+                <li><a href="#controllers">Controllers</a></li>
                 <li><a href="#api">ESP API</a></li>
-                <li><a href="#compiler">C Cmopiler</a></li>
                 <li><a href="#generator">ESP Generator</a></li>
 <!-- MOB -->
                 <li><a href="#routing">Routing</a></li>
@@ -112,20 +111,10 @@
                 <li><a href="#controllers">ESP Controllers</a> &mdash; ESP Controllers and Actions</li>
                 <li><a href="#api">ESP API</a> &mdash; Extensive control API</li>
                 <li><a href="#compiler">"C" compiler</a> &mdash; Compile ESP pages, controllers and applications</li>
-                <li><a href="#compiler">ESP Generator</a> &mdash; Generate applications, controllers and scaffolds</li>
+                <li><a href="#generator">ESP Generator</a> &mdash; Generate applications, controllers and scaffolds</li>
             </ul>
             
-            <h2 class="section">Appweb Hosting</h2>
-            <p>Appweb hosts the ESP web framework via a loadable module <tt>mod_esp</tt>. This is an optional Appweb
-            module that is configured by directives in the <tt>appweb.conf</tt> configuration file.  ESP applications
-            will typically define an Appweb route for the application via the EspApp directive. For
-            example:</p> <pre>
-EspApp /store/ /Directory/to/storeApp  restful sqlite://app/db/store.sdb
-</pre>
-            <p>This instructs Appweb to send all requests with the URI prefix "myAppName" to ESP for
-            routing and processing.</p>
-            
-            <a name="routing" id="routing"></a>
+            <a name="router" id="router"></a>
             <h2 class="section">Request Routing</h2>
             <p>Appweb includes a powerful request routing engine that processes client HTTP requests. The engine is
             configured with a set of routes and when a request is received, it examines various routes and selects the best
@@ -140,8 +129,27 @@ EspApp /store/ /Directory/to/storeApp  restful sqlite://app/db/store.sdb
             <a name="caching" id="caching"></a>
             <h2 class="section">Response Caching</h2>
 
+            <p>Pages that are slow to render and genernal slow network transmission can have large detrimental
+            effect on the usability of a web application. Caching client response data is an ideal and simple technique 
+            for speeding up slow web pages. </p>
+
+            <p>Web pages that are frequently used, but slow to render are ideal candidates to be cached. 
+            Images that rarely change are also good to cache. When such resources are cached at the server, 
+            client responses are served directly from the cache without invoking the handler to render the page. This
+            often results in dramatic performance gains. Further, if the Appweb caching is configured to also cache at the
+            client, the Appweb cache cooperates with the client-side cache so the content itself may not need
+            to be resent to the client. See the <a href="">Appweb Response Caching</a> for more details.</p>
+
             <a name="handler" id="handler"></a>
             <h2 class="section">ESP Handler</h2>
+            <p>Appweb hosts the ESP handler via a loadable module called <tt>mod_esp</tt>.  This is an optional 
+            Appweb module that includes the ESP web framework. The module is configured by directives in the
+            <tt>appweb.conf</tt> configuration file.  ESP applications will typically define an Appweb route 
+            for the application via the EspApp directive. For example:</p> <pre>
+EspApp /store/ /Directory/to/storeApp  restful sqlite://app/db/store.sdb
+</pre>
+            <p>This instructs Appweb to send all requests with the URI prefix "myAppName" to ESP for
+            routing and processing.</p>
 
             <a name="mvc" id="mvc"></a>
             <h2 class="section">Model-View-Controller</h2>
@@ -170,7 +178,7 @@ EspApp /store/ /Directory/to/storeApp  restful sqlite://app/db/store.sdb
             more structure to support the application by providing database models, controllers and actions. They combine
             these with ESP templates and ESP pages for a complete web framework.</p>
 
-            <a name="template" id="template"></a>
+            <a name="views" id="views"></a>
             <h2 class="section">ESP Views</h2>
             <p>The View part of the ESP web framework is responsible for generating the user interface. Views are
             typically created via ESP web pages. However, they can also be generated by controllers without an ESP
@@ -194,7 +202,7 @@ EspApp /store/ /Directory/to/storeApp  restful sqlite://app/db/store.sdb
             
             <img src="../../../images/esp/template/layout.jpeg" alt="View Pipeline" /></p>
             
-            <a name="template" id= "template"></a>
+            <a name="layouts" id= "layouts"></a>
             <h3>Layout Pages</h3>
             <p>Layout pages are an important part of a view framework. They allow you to specify the UI "look
             and feel" and standard components of a web application in one place. Content pages can then resuse the 
@@ -312,7 +320,23 @@ static void update() {
 
             <a name="compiler" id="compiler"></a>
             <h2 class="section">C Compiler</h2>
-<!-- MOB -->
+            <p>To compile ESP pages and controllers into native code for execution, a "C" language compiler is required. 
+            When developing, the compiler is used to transparently compile and recompile ESP pages and controllers as
+            they are modified on disk. This results in a set of shared-library files that represent the ESP application. </p>
+
+            <h3>Deployment</h3>
+            To deploy this application, only the library files are required. The source code for the ESP pages and 
+            controllers is typically not deployed. Of course, if you wish to continue to provide transparent compilation once
+            deployed, then include the source and set <tt>EspUpdate on</tt> in the appweb.conf configuration file.</p>
+            <p>The <tt>esp</tt> generator program can also be used to compile an ESP application including all ESP 
+            pages and controllers into a single shared library file. This is an ideal and simple way to deploy an ESP
+            application.</p>
+
+            <h3>Cross Compilation</h3>
+            <p>When cross-compiling, prepare a version of the appweb.conf and esp.conf configuration files for your 
+            target. This means editing the <tt>esp.conf</tt> file to define the appropriate compilation command line
+            for your target. Then invoke <tt>esp --config cross.conf compile ...</tt> to cross compile the ESP pages 
+            and controllers.</p>
 
             <a name="generator" id="generator"></a>
             <h2 class="section">ESP Generator</h2>
