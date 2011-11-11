@@ -2,7 +2,7 @@
     php.tst - PHP tests
  */
 
-if (!test || test.config["php"] == 1) {
+if (!global.test || test.config["php"] == 1) {
     const HTTP = (global.tsession && tsession["http"]) || ":4100"
     let http: Http = new Http
 
