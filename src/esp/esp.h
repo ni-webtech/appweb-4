@@ -353,7 +353,7 @@ extern void espDestroySession(EspSession *sp);
     Get a session state object.
     @description
     @param conn Http connection object
-    @param create Set to true to create a session state object if one does not already exist for this client
+    @param create Set to "true" to create a session state object if one does not already exist for this client
     @return A session state object
     @ingroup EspSession
  */
@@ -524,7 +524,7 @@ extern void espAutoFinalize(HttpConn *conn);
         This call validates the security token to ensure it matches the security token stored in session state.
     @param conn Http connection object
     @return False if the request is a POST request and the security token does not match the session held token.
-        Otherwise return True.
+        Otherwise return "true".
     @ingroup EspReq
  */
 extern bool espCheckSecurityToken(HttpConn *conn);
@@ -1098,8 +1098,8 @@ extern void espRenderView(HttpConn *conn, cchar *name);
 /**
     Enable auto-finalizing for this request
     @param conn HttpConn connection object
-    @param on Set to true to enable auto-finalizing.
-    @return True if auto-finalizing was enabled prior to this call
+    @param on Set to "true" to enable auto-finalizing.
+    @return "True" if auto-finalizing was enabled prior to this call
     @ingroup EspReq
  */
 extern bool espSetAutoFinalizing(HttpConn *conn, bool on);
@@ -1131,7 +1131,7 @@ extern void espSetContentLength(HttpConn *conn, MprOff length);
         For example: domain: .example.com
     Some browsers will accept cookies without the initial ".", but the spec: (RFC 2109) requires it.
     @param lifespan Duration for the cookie to persist in msec
-    @param isSecure Set to true if the cookie only applies for SSL based connections
+    @param isSecure Set to "true" if the cookie only applies for SSL based connections
     @ingroup EspReq
  */
 extern void espSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *domain, MprTime lifespan,
@@ -1292,7 +1292,7 @@ extern void espUpdateCache(HttpConn *conn, cchar *uri, cchar *data, int lifesecs
     @param key Key value for the table row to update.
     @param fieldName Column name to update
     @param value Value to write to the database field
-    @return True if the field  can be successfully written.
+    @return "true" if the field  can be successfully written.
     @ingroup EspReq
  */
 extern bool espUpdateField(HttpConn *conn, cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
@@ -1308,7 +1308,7 @@ extern bool espUpdateField(HttpConn *conn, cchar *tableName, cchar *key, cchar *
     @param conn HttpConn connection object
     @param tableName Database table name
     @param data Hash of field names and values to use for the update
-    @return True if the field  can be successfully written. Returns false if field validations fail.
+    @return "true" if the field  can be successfully written. Returns false if field validations fail.
     @ingroup EspReq
  */
 extern bool espUpdateFields(HttpConn *conn, cchar *tableName, MprHash *data);
@@ -1321,7 +1321,7 @@ extern bool espUpdateFields(HttpConn *conn, cchar *tableName, MprHash *data);
         prior to saving the record.
     @param conn HttpConn connection object
     @param rec Record to write to the database.
-    @return True if the record can be successfully written.
+    @return "true" if the record can be successfully written.
     @ingroup EspReq
  */
 extern bool espUpdateRec(HttpConn *conn, EdiRec *rec);
@@ -1703,7 +1703,7 @@ extern void espRadio(HttpConn *conn, cchar *field, void *choices, cchar *options
     @param on URI to invoke when turning "on" refresh
     @param off URI to invoke when turning "off" refresh
     @param options Extra options. See $EspControl for a list of the standard options.
-    @arg minified -- Set to true to select a minified (compressed) version of the script.
+    @arg minified -- Set to "true" to select a minified (compressed) version of the script.
     @ingroup EspControl
     @internal
  */
@@ -1751,7 +1751,7 @@ extern void espStylesheet(HttpConn *conn, cchar *uri, cchar *options);
     @param grid Data to display. The data is a grid of data. Use ediCreateGrid or ediReadGrid.
     @param options Extra options. See $EspControl for a list of the standard options.
     @param options Optional extra options. See $View for a list of the standard options.
-    @arg cell Boolean Set to true to make click or edit links apply per cell instead of per row. 
+    @arg cell Boolean Set to "true" to make click or edit links apply per cell instead of per row. 
         The default is false.
     @arg columns (Array|Object) The columns list is an object hash of column objects where each column entry is a
         hash of column options.  Column options:
@@ -1796,9 +1796,9 @@ extern void espTable(HttpConn *conn, EdiGrid *grid, cchar *options);
     @param rec Tab data for the control. Tab data is be be a single object where the tab text is the property 
         key and the target to invoke is the property value. 
     @param options Optional extra options. See $View for a list of the standard options.
-    @arg click Set to true to invoke the selected pane via a foreground click.
-    @arg remote Set to true to invoke the selected pane via a background click.
-    @arg toggle Set to true to show the selected pane and hide other panes.
+    @arg click Set to "true" to invoke the selected pane via a foreground click.
+    @arg remote Set to "true" to invoke the selected pane via a background click.
+    @arg toggle Set to "true" to show the selected pane and hide other panes.
     @ingroup EspControl
  */
 extern void espTabs(HttpConn *conn, EdiRec *rec, cchar *options);
@@ -2050,7 +2050,7 @@ extern void radio(cchar *field, void *choices, cchar *options);
     @param on URI to invoke when turning "on" refresh
     @param off URI to invoke when turning "off" refresh
     @param options Extra options. See $EspControl for a list of the standard options.
-    @arg minified Set to true to select a minified (compressed) version of the script.
+    @arg minified Set to "ture" to select a minified (compressed) version of the script.
     @ingroup EspAbbrev
     @internal
  */
@@ -2093,7 +2093,7 @@ extern void stylesheet(cchar *uri, cchar *options);
     @param grid Data to display. The data is a grid of data. Use ediCreateGrid or ediReadGrid.
     @param options Extra options. See $EspControl for a list of the standard options.
     @param options Optional extra options. See $View for a list of the standard options.
-    @arg cell Boolean Set to true to make click or edit links apply per cell instead of per row. 
+    @arg cell Boolean Set to "true" to make click or edit links apply per cell instead of per row. 
         The default is false.
     @arg columns (Array|Object) The columns list is anobject hash of column objects where each column entry is 
         hash of column options.  Column options:
@@ -2110,7 +2110,7 @@ extern void stylesheet(cchar *uri, cchar *options);
     @arg pivot Boolean Pivot the table by swaping rows for columns and vice-versa
     @arg showHeader Boolean Control if column headings are displayed.
     @arg showId Boolean If a columns option is not provided, the id column is normally hidden. 
-        To display, set showId to be true.
+        To display, set showId to be "true".
     @arg sort String Enable row sorting and define the column to sort by. Defaults to the first column.
     @arg sortOrder String Default sort order. Set to "ascending" or "descending".Defaults to ascending.
     @arg style String CSS class to use for the table. The ultimate style to use for a table cell is the 
@@ -2138,9 +2138,9 @@ extern void table(EdiGrid *grid, cchar *options);
     @param rec Tab data for the control. Tab data is a single object where the tab text is the property 
         key and the target to invoke is the property value. 
     @param options Optional extra options. See $View for a list of the standard options.
-    @arg click Set to true to invoke the selected pane via a foreground click.
-    @arg remote Set to true to invoke the selected pane via a background click.
-    @arg toggle Set to true to show the selected pane and hide other panes.
+    @arg click Set to "true" to invoke the selected pane via a foreground click.
+    @arg remote Set to "true" to invoke the selected pane via a background click.
+    @arg toggle Set to "true" to show the selected pane and hide other panes.
     @ingroup EspAbbrev
  */
 extern void tabs(EdiRec *rec, cchar *options);
@@ -2412,23 +2412,23 @@ extern cchar *getUri();
 /**
     Test if a current grid has been defined
     @description The current grid is defined via $setRec
-    @return True if a current grid has been defined
+    @return "true" if a current grid has been defined
     @ingroup EdiAbbrev
  */
 extern bool hasGrid();
 
 /**
     Test if a current record has been defined and save to the database
-    @description This call returns true if a current record is defined and has been saved to the database with a 
+    @description This call returns "true" if a current record is defined and has been saved to the database with a 
         valid "id" field.
-    @return True if a current record with a valid "id" is defined.
+    @return "true" if a current record with a valid "id" is defined.
     @ingroup EdiAbbrev
  */
 extern bool hasRec();
 
 /**
     Test if the receive input stream is at end-of-file
-    @return True if there is no more receive data to read
+    @return "true" if there is no more receive data to read
     @ingroup EspAbbrev
  */
 extern bool isEof();
@@ -2436,7 +2436,7 @@ extern bool isEof();
 /**
     Test if a http request is finalized.
     @description This tests if #espFinalize or #httpFinalize has been called for a request.
-    @return True if the request has been finalized.
+    @return "true" if the request has been finalized.
     @ingroup EspAbbrev
  */
 extern bool isFinalized();
@@ -2453,7 +2453,7 @@ extern void inform(cchar *fmt, ...);
 
 /**
     Test if the connection is using SSL and is secure
-    @return True if the connection is using SSL.
+    @return "true" if the connection is using SSL.
     @ingroup EspAbbrev
  */
 extern bool isSecure();
@@ -2678,7 +2678,7 @@ extern void renderView(cchar *view);
         For example: domain: .example.com
         Some browsers will accept cookies without the initial ".", but the spec: (RFC 2109) requires it.
     @param lifespan Lifespan of the cookie. (MOB units?)
-    @param isSecure Boolean Set to true if the cookie only applies for SSL based connections
+    @param isSecure Boolean Set to "true" if the cookie only applies for SSL based connections
     @ingroup EspAbbrev
 */
 extern void setCookie(cchar *name, cchar *value, cchar *path, cchar *domain, MprTime lifespan, bool isSecure);
@@ -2827,7 +2827,7 @@ extern void updateCache(cchar *uri, cchar *data, int lifesecs);
     @param key Key value for the table row to update.
     @param fieldName Column name to update
     @param value Value to write to the database field
-    @return True if the field  can be successfully written.
+    @return "true" if the field  can be successfully written.
     @ingroup EspAbbrev
  */
 extern bool updateField(cchar *tableName, cchar *key, cchar *fieldName, cchar *value);
@@ -2842,7 +2842,7 @@ extern bool updateField(cchar *tableName, cchar *key, cchar *fieldName, cchar *v
         The record runs field validations before saving to the database.
     @param tableName Database table name
     @param data Hash of field names and values to use for the update
-    @return True if the field  can be successfully written. Returns false if field validations fail.
+    @return "true" if the field  can be successfully written. Returns false if field validations fail.
     @ingroup EspAbbrev
  */
 extern bool updateFields(cchar *tableName, MprHash *data);
@@ -2854,7 +2854,7 @@ extern bool updateFields(cchar *tableName, MprHash *data);
         If the record is a new record and the "id" column is EDI_AUTO_INC, then the "id" will be assigned
         prior to saving the record.
     @param rec Record to write to the database.
-    @return True if the record can be successfully written.
+    @return "true" if the record can be successfully written.
     @ingroup EspAbbrev
  */
 extern bool updateRec(EdiRec *rec);
