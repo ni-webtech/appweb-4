@@ -130,7 +130,7 @@ typedef struct EspRoute {
     MprList         *env;                   /**< Environment for compiler */
     char            *compile;               /**< Compile template */
     char            *link;                  /**< Link template */
-    char            *searchPath;            /**< Search path to use when locating compiler / linker */
+    char            *searchPath;            /**< Search path to use when locating compiler/linker */
     EspProc         controllerBase;         /**< Initialize base for a controller */
 
     char            *appModuleName;         /**< App module name when compiled flat */
