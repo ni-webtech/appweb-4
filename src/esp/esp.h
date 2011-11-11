@@ -223,8 +223,8 @@ extern int espCache(HttpRoute *route, cchar *uri, int lifesecs, int flags);
     @param source ESP source file name
     @param module Output module file name
     @param cacheName MD5 cache name. Not a full path
-    @param isView Set to true if the source is a view
-    @return True if the compilation is successful. Errors are logged and sent back to the client if EspRoute.showErrors
+    @param isView Set to "true" if the source is a view
+    @return "True" if the compilation is successful. Errors are logged and sent back to the client if EspRoute.showErrors
         is true.
     @ingroup EspRoute
  */
@@ -884,11 +884,11 @@ extern EdiRec *espMakeRec(cchar *content);
 
 /**
     Match a request parameter with an expected value.
-    @description Compare a request parameter and return true if it exists and its value matches.
+    @description Compare a request parameter and return "true" if it exists and its value matches.
     @param conn HttpConn connection object
     @param var Name of the request parameter
     @param value Expected value to match
-    @return True if the value matches
+    @return "True" if the value matches
     @ingroup EspReq
  */
 extern bool espMatchParam(HttpConn *conn, cchar *var, cchar *value);
