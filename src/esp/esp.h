@@ -392,7 +392,7 @@ extern char *espGetSessionID(HttpConn *conn);
 
 /**
     Set an object into the session state store.
-    @description Store an object in the session state store by serialing all properties.
+    @description Store an object in the session state store by serializing all properties.
     @param conn Http connection object
     @param key Session state key
     @param value Object to serialize
