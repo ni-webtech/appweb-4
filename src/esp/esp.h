@@ -920,7 +920,7 @@ extern EdiRec *espReadRec(HttpConn *conn, cchar *tableName);
     @param conn HttpConn connection object
     @param tableName Database table name
     @param fieldName Database field name to evaluate
-    @param operation Comparision operation. Set to "==", "!=", "<", ">", "<=" or ">=".
+    @param operation Comparison operation. Set to "==", "!=", "<", ">", "<=" or ">=".
     @param value Data value to compare with the field values.
     @return A grid containing all matching records. Returns NULL if no matching records.
     @ingroup EspReq
@@ -934,7 +934,7 @@ extern EdiGrid *espReadRecsWhere(HttpConn *conn, cchar *tableName, cchar *fieldN
     @param conn HttpConn connection object
     @param tableName Database table name
     @param fieldName Database field name to evaluate
-    @param operation Comparision operation. Set to "==", "!=", "<", ">", "<=" or ">=".
+    @param operation Comparison operation. Set to "==", "!=", "<", ">", "<=" or ">=".
     @param value Data value to compare with the field values.
     @return First matching record. Returns NULL if no matching records.
     @ingroup EspReq
@@ -2534,7 +2534,7 @@ extern EdiRec *readRec(cchar *tableName);
         all rows that have a "field" that matches the given "value".
     @param tableName Database table name
     @param fieldName Database field name to evaluate
-    @param operation Comparision operation. Set to "==", "!=", "<", ">", "<=" or ">=".
+    @param operation Comparison operation. Set to "==", "!=", "<", ">", "<=" or ">=".
     @param value Data value to compare with the field values.
     @return A grid containing all matching records. Returns NULL if no matching records.
     @ingroup EdiAbbrev
@@ -2547,7 +2547,7 @@ extern EdiGrid *readRecsWhere(cchar *tableName, cchar *fieldName, cchar *operati
         a row that has a "field" that matches the given "value".
     @param tableName Database table name
     @param fieldName Database field name to evaluate
-    @param operation Comparision operation. Set to "==", "!=", "<", ">", "<=" or ">=".
+    @param operation Comparison operation. Set to "==", "!=", "<", ">", "<=" or ">=".
     @param value Data value to compare with the field values.
     @return First matching record. Returns NULL if no matching records.
     @ingroup EspAbbrev
