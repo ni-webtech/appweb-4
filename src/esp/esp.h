@@ -1332,7 +1332,7 @@ extern bool espUpdateRec(HttpConn *conn, EdiRec *rec);
     @description Create a URI link by expansions tokens based on the current request and route state.
     The target parameter may contain partial or complete URI information. The missing parts 
     are supplied using the current request and route tables. The resulting URI is a normalized, server-local 
-    URI (that begins with "/"). The URI will include any defined route prefix, but will not include scheme, host or 
+    URI (that begins with "/"). The URI will include any defined route prefix, but will not include schema, host or 
     port components.
     @param conn HttpConn connection object
     @param target The URI target. The target parameter can be a URI string or JSON style set of options. 
@@ -1349,7 +1349,7 @@ extern bool espUpdateRec(HttpConn *conn, EdiRec *rec);
         If the target starts with "{" it is interpreted as being a JSON style set of options that describe the link.
         If the target is a relative URI path, it is appended to the current request URI path.  
         \n\n
-        If the is a JSON style of options, it can specify the URI components: scheme, host, port, path, reference and
+        If the target is a JSON style of options, it can specify the URI components: schema, host, port, path, reference and
         query. If these component properties are supplied, these will be combined to create a URI.
         \n\n
         If the target specifies either a controller/action or a JSON set of options, The URI will be created according 
@@ -2881,7 +2881,7 @@ extern bool updateRec(EdiRec *rec);
         If the target starts with "{" it is interpreted as being a JSON style set of options that describe the link.
         If the target is a relative URI path, it is appended to the current request URI path.  
         \n\n
-        If the is a JSON style of options, it can specify the URI components: scheme, host, port, path, reference and
+        If the target is a JSON style of options, it can specify the URI components: scheme, host, port, path, reference and
         query. If these component properties are supplied, these will be combined to create a URI.
         \n\n
         If the target specifies either a controller/action or a JSON set of options, The URI will be created according 
