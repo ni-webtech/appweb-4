@@ -296,7 +296,7 @@ extern void espDefineView(HttpRoute *route, cchar *path, void *viewProc);
             <li>VS - Path to Visual Studio</li>
         </ul>
     @param command Http connection object
-    @param source ESP web page soure pathname
+    @param source ESP web page source pathname
     @param module Output module pathname
     @return An expanded command line
     @ingroup EspRoute
