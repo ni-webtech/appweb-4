@@ -1203,7 +1203,7 @@ extern EdiGrid *espSetGrid(HttpConn *conn, EdiGrid *grid);
 
 /**
     Set a transmission header
-    @description Set a Http header to send with the request. If the header already exists, it its value is overwritten.
+    @description Set a Http header to send with the request. If the header already exists, its value is overwritten.
     @param conn HttpConn connection object
     @param key Http response header key
     @param fmt Printf style formatted string to use as the header key value
@@ -1214,7 +1214,7 @@ extern void espSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...);
 
 /**
     Set a simple key/value transmission header
-    @description Set a Http header to send with the request. If the header already exists, it its value is overwritten.
+    @description Set a Http header to send with the request. If the header already exists, its value is overwritten.
     @param conn HttpConn connection object
     @param key Http response header key
     @param value String value for the key
@@ -2748,7 +2748,7 @@ extern EdiGrid *setGrid(EdiGrid *grid);
 
 /**
     Set a transmission header
-    @description Set a Http header to send with the request. If the header already exists, it its value is overwritten.
+    @description Set a Http header to send with the request. If the header already exists, its value is overwritten.
     @param key Http response header key
     @param fmt Printf style formatted string to use as the header key value
     @param ... Arguments for fmt
