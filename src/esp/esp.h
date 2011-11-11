@@ -232,7 +232,7 @@ extern bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cach
 
 /**
     Convert an ESP web page into compilable C code
-    @description This parses an ESP web page into a equivalent C source view.
+    @description This parses an ESP web page into an equivalent C source view.
     @param route EspRoute object
     @param page ESP web page script.
     @param path Pathname for the ESP web page. This is used to process include directives which are resolved relative
