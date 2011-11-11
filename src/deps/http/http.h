@@ -1,3 +1,4 @@
+
 /******************************************************************************/
 /* 
     This file is an amalgamation of all the individual source code files for the
@@ -194,7 +195,7 @@ struct HttpUri;
     Proprietary HTTP status codes
  */
 #define HTTP_CODE_START_LOCAL_ERRORS        550
-#define HTTP_CODE_COMMS_ERROR               550     /**< The server had a communications error responding to the client */
+#define HTTP_CODE_COMMS_ERROR               550     /**< The server had a communicationss error responding to the client */
 
 /*
     Flags that can be ored into the status code
@@ -236,7 +237,7 @@ typedef bool (*HttpValidateCred)(struct HttpAuth *auth, cchar *realm, char *user
 typedef void (*HttpNotifier)(struct HttpConn *conn, int state, int flags);
 
 /** 
-    Define a callback for IO events on this connection.
+    Define an callback for IO events on this connection.
     @description The event callback will be invoked in response to I/O events.
     @param conn HttpConn connection object created via $httpCreateConn
     @param fn Callback function. 
@@ -270,7 +271,7 @@ extern void httpSetForkCallback(struct Http *http, MprForkCallback proc, void *a
 
 /** 
     Http service object
-    The Http service is managed by a single service object.
+    @description The Http service is managed by a single service object.
     @stability Evolving
     @defgroup Http Http
     @see Http HttpConn HttpEndpoint gettGetDateString httpConfigurenamedVirtualEndpoint httpCreate httpCreateSecret 
@@ -362,7 +363,7 @@ extern int httpConfigureNamedVirtualEndpoints(Http *http, cchar *ip, int port);
 
 /**  
     Create the Http secret data for crypto
-    @description Create http secret data that is used to seed SSL based communications.
+    @description Create http secret data that is used to seed SSL-based communications.
     @param http Http service object.
     @return Zero if successful, otherwise a negative MPR error code
     @ingroup Http
@@ -503,7 +504,7 @@ typedef struct HttpLimits {
 
     int     clientCount;            /**< Max number of simultaneous clients endpoints */
     int     headerCount;            /**< Max number of header lines */
-    int     keepAliveCount;         /**< Max number of keep alive requests to perform per socket */
+    int     keepAliveCount;         /**< Max number of Keep-Alive requests to perform per socket */
     int     requestCount;           /**< Max number of simultaneous concurrent requests */
 
     MprTime inactivityTimeout;      /**< Default timeout for keep-alive and idle requests (msec) */
@@ -787,8 +788,8 @@ typedef struct HttpPacket {
 } HttpPacket;
 
 /**
-    Adjust the packet starting position
-    This adds adjusts the packet content by the given size. The packet position is incremented by start and the packet
+    Adjust the packet starting position.
+    This adjusts the packet content by the given size. The packet position is incremented by start and the packet
     length (size) is decremented. If the packet describes entity data, the given size amount to the Packet.epos and 
     decrements the Packet.esize fields. If the packet has actual data buffered in Packet.content, the content buffer
     start is incremeneted by the size amount.
@@ -798,8 +799,8 @@ typedef struct HttpPacket {
 extern void httpAdjustPacketStart(HttpPacket *packet, MprOff size);
 
 /**
-    Adjust the packet end position
-    This adds adjusts the packet content by the given size. The packet length (size) is decremented by the requested 
+    Adjust the packet end position.
+    This adjusts the packet content by the given size. The packet length (size) is decremented by the requested 
     amount. If the packet describes entity data, the Packet.esize field is reduced by the requested size amount. If the 
     packet has actual data buffered in Packet.content, the content buffer end position is reduced by
     by the size amount.
@@ -1050,7 +1051,7 @@ extern bool httpFlushQueue(HttpQueue *q, bool block);
 extern ssize httpGetQueueRoom(HttpQueue *q);
 
 /**
-    Test is the connection has received all incoming content
+    Test if the connection has received all incoming content
     @description This tests if the connection is at an "End of File condition.
     @param conn HttpConn object created via $httpCreateConn
     @return True if all receive content has been received 
@@ -1742,7 +1743,7 @@ typedef struct HttpConn {
     struct HttpRx *rx;                      /**< Rx object */
     struct HttpTx *tx;                      /**< Tx object */
     struct HttpEndpoint *endpoint;          /**< Endpoint object (if set - indicates server-side) */
-    struct HttpHost *host;                  /**< Host object (if releveant) */
+    struct HttpHost *host;                  /**< Host object (if relevant) */
 
     int             state;                  /**< Connection state */
     int             error;                  /**< A request error has occurred */
@@ -1751,7 +1752,7 @@ typedef struct HttpConn {
     int             responded;              /**< The request has started to respond. Some output has been initiated. */
     int             finalized;              /**< End of response has been signified (set at handler level) */
     int             connectorComplete;      /**< Connector has finished sending the response */
-    int             advancing;              /**< In httpProcess (reentrancy prevention) */
+    int             advancing;              /**< In httpProcess (re-entrancy prevention) */
     int             refinalize;             /**< Finalize required once the Tx pipeline is created */
 
     HttpLimits      *limits;                /**< Service limits */
@@ -1789,7 +1790,7 @@ typedef struct HttpConn {
     int             async;                  /**< Connection is in async mode (non-blocking) */
     int             canProceed;             /**< State machine should continue to process the request */
     int             followRedirects;        /**< Follow redirects for client requests */
-    int             keepAliveCount;         /**< Count of remaining keep alive requests for this connection */
+    int             keepAliveCount;         /**< Count of remaining Keep-Alive requests for this connection */
     int             http10;                 /**< Using legacy HTTP/1.0 */
 
     int             port;                   /**< Remote port */
@@ -1862,7 +1863,7 @@ extern void httpConnectorComplete(HttpConn *conn);
 extern void httpConnTimeout(HttpConn *conn);
 
 /**
-    Consume left over data from the last request
+    Consume leftover data from the last request
     @param conn HttpConn object created via $httpCreateConn
     @ingroup HttpConn
     @internal
@@ -1870,8 +1871,8 @@ extern void httpConnTimeout(HttpConn *conn);
 extern void httpConsumeLastRequest(HttpConn *conn);
 
 /** 
-    Create a connection object
-    Most interactions with the Http library are via a connection object. It is used for server-side communications when
+    Create a connection object.
+    @description Most interactions with the Http library are via a connection object. It is used for server-side communications when
     responding to client requests and it is used to initiate outbound client requests.
     @param http Http object created via #httpCreate
     @param endpoint Endpoint object owning the connection.
@@ -1978,7 +1979,7 @@ extern int httpGetAsync(HttpConn *conn);
 /**
     Get the preferred chunked size for transfer chunk encoding.
     @param conn HttpConn connection object created via $httpCreateConn
-    @return Chunk size. Returns zero if not yet defined.
+    @return Chunk size. Returns "zero" if not yet defined.
     @ingroup HttpConn
  */
 extern ssize httpGetChunkSize(HttpConn *conn);
@@ -2010,7 +2011,7 @@ extern cchar *httpGetError(HttpConn *conn);
 
 /**
     Get a URI extension 
-    @description If the URI has not extension and the response content filename (HttpTx.filename) has been calculated,
+    @description If the URI has no extension and the response content filename (HttpTx.filename) has been calculated,
         it will be tested for an extension.
     @param conn HttpConn connection object created via $httpCreateConn
     @return The URI extension sans "."
@@ -2020,18 +2021,18 @@ extern char *httpGetExt(HttpConn *conn);
 
 /** 
     Get the count of Keep-Alive requests that will be used for this connection object.
-    @description Http keep alive means that the TCP/IP connection is preserved accross multiple requests. This
-        typically means much higher performance and better response. Http keep alive is enabled by default 
-        for Http/1.1 (the default). Disable keep alive when talking to old, broken HTTP servers.
+    @description Http Keep-Alive means that the TCP/IP connection is preserved accross multiple requests. This
+        typically means much higher performance and better response. Http Keep-Alive is enabled by default 
+        for Http/1.1 (the default). Disable Keep-Alive when talking to old, broken HTTP servers.
     @param conn HttpConn connection object created via $httpCreateConn
-    @return The maximum count of keep alive requests. 
+    @return The maximum count of Keep-Alive requests. 
     @ingroup HttpConn
  */
 extern int httpGetKeepAliveCount(HttpConn *conn);
 
 /**
     Match the HttpHost object that should serve this request
-    @description This sets the conn->host field to the appropriate host. If not suitable host can be found, #httpError
+    @description This sets the conn->host field to the appropriate host. If no suitable host can be found, #httpError
         will be called and conn->error will be set
     @param conn HttpConn connection object created via $httpCreateConn
     @ingroup HttpConn
@@ -2099,8 +2100,8 @@ extern bool httpServiceQueues(HttpConn *conn);
 extern void httpSetAsync(HttpConn *conn, int enable);
 
 /** 
-    Set the chunk size for transfer chunked encoding. When set a "Transfer-Encoding: Chunked" header will
-    be added to the request and all write data will be broken into chunks of the requested size.
+    Set the chunk size for transfer chunked encoding. When set, a "Transfer-Encoding: Chunked" header will
+    be added to the request, and all write data will be broken into chunks of the requested size.
     @param conn HttpConn connection object created via $httpCreateConn
     @param size Requested chunk size.
     @ingroup HttpConn
@@ -2145,11 +2146,11 @@ extern void httpSetCredentials(HttpConn *conn, cchar *user, cchar *password);
 
 /** 
     Control Http Keep-Alive for the connection.
-    @description Http keep alive means that the TCP/IP connection is preserved accross multiple requests. This
-        typically means much higher performance and better response. Http keep alive is enabled by default 
-        for Http/1.1 (the default). Disable keep alive when talking to old, broken HTTP servers.
+    @description Http Keep-Alive means that the TCP/IP connection is preserved accross multiple requests. This
+        typically means much higher performance and better response. Http Keep-Alive is enabled by default 
+        for Http/1.1 (the default). Disable Keep-Alive when talking to old, broken HTTP servers.
     @param conn HttpConn connection object created via $httpCreateConn
-    @param count Count of keep alive transactions to use before closing the connection. Set to zero to disable keep-alive.
+    @param count Count of Keep-Alive transactions to use before closing the connection. Set to zero to disable keep-alive.
     @ingroup HttpConn
  */
 extern void httpSetKeepAliveCount(HttpConn *conn, int count);
@@ -2272,14 +2273,14 @@ extern void httpUseWorker(HttpConn *conn, MprDispatcher *dispatcher, MprEvent *e
 /*  
     Authentication methods
  */
-#define HTTP_AUTH_METHOD_FILE     1         /**< httpPassword file based authentication */
+#define HTTP_AUTH_METHOD_FILE     1         /**< httpPassword file-based authentication */
 #define HTTP_AUTH_METHOD_PAM      2         /**< Plugable authentication module scheme (Unix) */
 
 typedef long HttpAcl;                       /**< Authentication Access control mask */
 
 /** 
     Authorization
-    HttpAuth is the foundation authorization object and is used by HttpRoute.
+    @description HttpAuth is the foundation authorization object and is used by HttpRoute.
     It stores the authorization configuration information required to determine if a client request should be permitted 
     access to a given resource.
     @stability Evolving
@@ -2300,20 +2301,20 @@ typedef struct HttpAuth {
     MprHash         *allow;                 /**< Clients to allow */
     MprHash         *deny;                  /**< Clients to deny */
     char            *requiredRealm;         /**< Realm to use for access */
-    char            *requiredGroups;        /**< Auth group for access */
+    char            *requiredGroups;        /**< Authorization group for access */
     char            *requiredUsers;         /**< User name for access */
     HttpAcl         requiredAcl;            /**< ACL for access */
 
     int             backend;                /**< Authorization method (PAM | FILE) */
-    int             flags;                  /**< Auth flags */
+    int             flags;                  /**< Authorization flags */
     int             order;                  /**< Order deny/allow, allow/deny */
     char            *qop;                   /**< Digest Qop */
 
     /*  
-        State for file based authorization
+        State for file-based authorization
      */
-    char            *userFile;              /**< User name auth file */
-    char            *groupFile;             /**< Group auth file  */
+    char            *userFile;              /**< User name authorization file */
+    char            *groupFile;             /**< Group authorization file  */
     MprHash         *users;                 /**< Hash of user file  */
     MprHash         *groups;                /**< Hash of group file  */
 } HttpAuth;
@@ -2329,7 +2330,7 @@ extern HttpAuth *httpCreateAuth();
 
 /**
     Allow access by a client
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
+    @param auth Authorization object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
         auth object.
     @param allow Client to allow access. This must be an IP address string.
     @ingroup HttpAuth
@@ -2339,8 +2340,8 @@ extern void httpSetAuthAllow(HttpAuth *auth, cchar *allow);
 
 /**
     Allow access by any valid user
-    @description This configures the basic or digest authentication for the auth object
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
+    @description This configures the basic or digest authentication for the authorization object
+    @param auth Authorization object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
         auth object.
     @ingroup HttpAuth
     @internal
@@ -2349,7 +2350,7 @@ extern void httpSetAuthAnyValidUser(HttpAuth *auth);
 
 /**
     Deny access by a client
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
+    @param auth Authorization object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
         auth object.
     @param deny Client to deny access. This must be an IP address string.
     @ingroup HttpAuth
@@ -2433,7 +2434,7 @@ extern HttpAuth *httpCreateInheritedAuth(HttpAuth *parent);
 #if BLD_FEATURE_AUTH_FILE
 /** 
     User Authorization
-    File based authorization backend
+    File-based authorization backend
     @stability Evolving
     @ingroup HttpAuth
     @see HttpAuth
@@ -2600,7 +2601,7 @@ extern int httpEnableUser(HttpAuth *auth, cchar *realm, cchar *user);
 extern HttpAcl httpGetGroupAcl(HttpAuth *auth, char *group);
 
 /**
-    Get the password for a user from a file based authentication database
+    Get the password for a user from a file-based authentication database
     @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
         auth object.
     @param realm Authentication realm for user
@@ -2768,7 +2769,7 @@ extern int httpWriteGroupFile(HttpAuth *auth, char *path);
 extern int httpWriteUserFile(HttpAuth *auth, char *path);
 
 /**
-    Validate credentials using a file based authentication database
+    Validate credentials using a file-based authentication database
     @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
         auth object.
     @param realm Authentication realm
@@ -2858,7 +2859,7 @@ typedef struct HttpCache {
     Add caching for response content
     @description This call configures caching for request responses. Caching may be used for any HTTP method, 
     though typically it is most useful for state-less GET requests. Output data may be uniquely cached for requests 
-    with different request parameters (query, post and route parameters).
+    with different request parameters (query, post, and route parameters).
     \n\n
     When server-side caching is requested and manual-mode is not enabled, the request response will be automatically 
     cached. Subsequent client requests will revalidate the cached content with the server. If the server-side cached 
@@ -2902,9 +2903,9 @@ typedef struct HttpCache {
         separated list of types. The mime types are those that correspond to the document extension and NOT the
         content type defined by the handler serving the document. Set to null or "*" for all types.
         Example: "image/gif, application/x-php".
-    @param lifespan Lifespan of client cache items in milliseconds. If not set to positive integer, the lifespan will
+    @param clientLifespan Lifespan of client cache items in milliseconds. If not set to positive integer, the lifespan will
         default to the route lifespan.
-    @param lifespan Lifespan of server cache items in milliseconds. If not set to positive integer, the lifespan will
+    @param serverLifespan Lifespan of server cache items in milliseconds. If not set to positive integer, the lifespan will
         default to the route lifespan.
     @param flags Cache control flags. Select ESP_CACHE_MANUAL to enable manual mode. In manual mode, cached content
         will not be automatically sent. Use $httpWriteCached in the request handler to write previously cached content.
@@ -2918,7 +2919,7 @@ typedef struct HttpCache {
         Select HTTP_CACHE_ALL, HTTP_CACHE_ONLY or HTTP_CACHE_UNIQUE to define the server-side caching mode. Only
         one of these three mode flags should be specified.
         \n\n
-        If the HTTP_CACHE_ALL flag is set, the request params (query, post data and route parameters) will be
+        If the HTTP_CACHE_ALL flag is set, the request params (query, post data, and route parameters) will be
         ignored and all requests for a given URI path will cache to the same cache record.
         \n\n
         Select HTTP_CACHE_UNIQUE to uniquely cache requests with different request parameters. The URIs specified in 
@@ -2960,7 +2961,7 @@ extern ssize httpWriteCached(HttpConn *conn);
 #define HTTP_ROUTE_FREE           0x2       /**< Free Route.mdata back to malloc when route is freed */
 #define HTTP_ROUTE_RAW            0x4       /**< Don't html encode the write data */
 #define HTTP_ROUTE_PUT_DELETE     0x1000    /**< Support PUT|DELETE */
-#define HTTP_ROUTE_GZIP           0x2000    /**< Support gzipped conent */
+#define HTTP_ROUTE_GZIP           0x2000    /**< Support gzipped content */
 
 /**
     Route Control
@@ -3071,7 +3072,7 @@ typedef struct HttpRouteOp {
 typedef int (HttpRouteProc)(HttpConn *conn, HttpRoute *route, HttpRouteOp *item);
 
 /**
-    Add a routes for a resource
+    Add routes for a resource
     @description This routing add a set of RESTful routes for a resource. This will add the following routes:
     <table>
         <tr><td>Name</td><td>Method</td><td>Pattern</td><td>Action</td></tr>
@@ -3091,7 +3092,7 @@ typedef int (HttpRouteProc)(HttpConn *conn, HttpRoute *route, HttpRouteOp *item)
 extern void httpAddResource(HttpRoute *parent, cchar *resource);
 
 /**
-    Add a routes for a group of resources
+    Add routes for a group of resources
     @description This routing add a set of RESTful routes for a resource group. This will add the following routes:
     <table>
         <tr><td>Name</td><td>Method</td><td>Pattern</td><td>Action</td></tr>
@@ -3335,7 +3336,7 @@ extern int httpAddRouteUpdate(HttpRoute *route, cchar *name, cchar *details, int
 extern void httpAddStaticRoute(HttpRoute *parent);
 
 /**
-    Clear the pipline stages for the route
+    Clear the pipeline stages for the route
     @description This resets the configured pipeline stages for the route.
     @param route Route to modify
     @param direction Set to HTTP_STAGE_TX for transmit direction and HTTP_STAGE_RX for receive data flow.
@@ -3920,7 +3921,7 @@ extern bool httpTokenizev(HttpRoute *route, cchar *str, cchar *fmt, va_list args
 
 /**
     Upload File
-    Each uploaded file has an HttpUploadedFile entry. This is managed by the upload handler.
+    @description Each uploaded file has an HttpUploadedFile entry. This is managed by the upload handler.
     @stability Evolving
     @defgroup HttpUploadFile HttpUploadFile
     @see httpAddUploadFile httpRemoveAllUploadedFiles httpRemoveUploadFile
@@ -4427,7 +4428,7 @@ typedef struct HttpTx {
     char            *altBody;               /**< Alternate transmission for errors */
     int             traceMethods;           /**< Handler methods supported */
 
-    /* File information for file based handlers */
+    /* File information for file-based handlers */
     MprFile         *file;                  /**< File to be served */
     MprPath         fileInfo;               /**< File information if there is a real file to serve */
     ssize           headerSize;             /**< Size of the header written */
@@ -4887,7 +4888,7 @@ extern HttpEndpoint *httpCreateEndpoint(cchar *ip, int port, MprDispatcher *disp
 
 /**
     Destroy the endpoint
-    @description This destroys the endpoint created by #httpCreateEndpoint. Calling this routein should not
+    @description This destroys the endpoint created by #httpCreateEndpoint. Calling this routine should not
         normally be necessary as the garbage collector will invoke as required.
     @param endpoint HttpEndpoint object returned from #httpCreateEndpoint.
     @ingroup HttpEndpoint
@@ -5033,7 +5034,7 @@ extern bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn
 
 /**
     Host Object
-    A Host object represents a logical host. Several logical hosts may share a single HttpEndpoint.
+    @description A Host object represents a logical host. Several logical hosts may share a single HttpEndpoint.
     @stability Evolving
     @defgroup HttpHost HttpHost
     @see HttpHost httpAddRoute httpCloneHost httpCreateHost httpResetRoutes httpSetHostHome httpSetHostIpAddr 
@@ -5171,7 +5172,7 @@ extern void httpSetHostDefaultRoute(HttpHost *host, HttpRoute *route);
 
 /**
     Set the home directory for a host
-    @description The home directory is used by some host and route components to location configuration files.
+    @description The home directory is used by some host and route components to locate configuration files.
     @param host HttpHost object
     @param dir Directory path for the host home
     @ingroup HttpHost

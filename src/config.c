@@ -313,7 +313,12 @@ static int aliasDirective(MaState *state, cchar *key, cchar *value)
     mprGetPathInfo(path, &info);
     if (info.isDir) {
         alias = httpCreateAliasRoute(state->route, prefix, path, 0);
-        httpSetRoutePattern(alias, sfmt("^%s(.*)$", prefix), 0);
+        if (sends(prefix, "/")) {
+            httpSetRoutePattern(alias, sfmt("^%s(.*)$", prefix), 0);
+        } else {
+            /* Add a non-capturing optional trailing "/" */
+            httpSetRoutePattern(alias, sfmt("^%s(?:/)*(.*)$", prefix), 0);
+        }
         httpSetRouteTarget(alias, "run", "$1");
     } else {
         alias = httpCreateAliasRoute(state->route, sjoin("^", prefix, NULL), 0, 0);

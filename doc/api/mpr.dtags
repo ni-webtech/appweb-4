@@ -60,9 +60,16 @@
     </member>
     <member kind="define">
       <type>#define</type>
-      <name>MPR_ALLOC_POLICY_NULL</name>
+      <name>MPR_ALLOC_POLICY_NOTHING</name>
       <anchorfile>mpr_8h.html</anchorfile>
-      <anchor>afb08573a7d7cebf4168ed9901445618c</anchor>
+      <anchor>ada97b225f9f382f841a548fe2a752fbf</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>MPR_ALLOC_POLICY_PRUNE</name>
+      <anchorfile>mpr_8h.html</anchorfile>
+      <anchor>a4986b34cbf20314d3871050732b0757f</anchor>
       <arglist></arglist>
     </member>
     <member kind="define">
@@ -70,13 +77,6 @@
       <name>MPR_ALLOC_POLICY_RESTART</name>
       <anchorfile>mpr_8h.html</anchorfile>
       <anchor>ae398692bd035c07c68e2942523239154</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="define">
-      <type>#define</type>
-      <name>MPR_ALLOC_POLICY_WARN</name>
-      <anchorfile>mpr_8h.html</anchorfile>
-      <anchor>a3660082bd0894004a995d9e632253706</anchor>
       <arglist></arglist>
     </member>
     <member kind="define">
@@ -676,6 +676,13 @@
     </member>
     <member kind="define">
       <type>#define</type>
+      <name>MPR_EXIT_RESTART</name>
+      <anchorfile>mpr_8h.html</anchorfile>
+      <anchor>a2328bae311be87e903b6d9df39d607b4</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
       <name>MPR_FATAL_SRC</name>
       <anchorfile>mpr_8h.html</anchorfile>
       <anchor>a1ccc5bdcb4b81d863bc34c82156ac02e</anchor>
@@ -914,23 +921,23 @@
     </member>
     <member kind="define">
       <type>#define</type>
-      <name>MPR_MEM_ATTENTION</name>
+      <name>MPR_MEM_FAIL</name>
       <anchorfile>mpr_8h.html</anchorfile>
-      <anchor>ad885c9ad61c287a3a7d91edf61ead032</anchor>
+      <anchor>a80cba2f2518b3cbbfdc6537d9e4a40d9</anchor>
       <arglist></arglist>
     </member>
     <member kind="define">
       <type>#define</type>
-      <name>MPR_MEM_DEPLETED</name>
+      <name>MPR_MEM_LIMIT</name>
       <anchorfile>mpr_8h.html</anchorfile>
-      <anchor>a1fe9abaea94389c929e2a4fd49ec5bcb</anchor>
+      <anchor>a32c694e15c93073531649ca79332bc9b</anchor>
       <arglist></arglist>
     </member>
     <member kind="define">
       <type>#define</type>
-      <name>MPR_MEM_LOW</name>
+      <name>MPR_MEM_REDLINE</name>
       <anchorfile>mpr_8h.html</anchorfile>
-      <anchor>a40db8183fa018e335683024345163223</anchor>
+      <anchor>a9f384178e8b45aad36b392df2e8c8e62</anchor>
       <arglist></arglist>
     </member>
     <member kind="define">
@@ -938,6 +945,13 @@
       <name>MPR_MEM_REGION_SIZE</name>
       <anchorfile>mpr_8h.html</anchorfile>
       <anchor>a8329e3360f8ca0c065721ab27b736ce0</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>MPR_MEM_TOO_BIG</name>
+      <anchorfile>mpr_8h.html</anchorfile>
+      <anchor>a4fcb58aae6632033517d940deb1c3f2a</anchor>
       <arglist></arglist>
     </member>
     <member kind="define">
@@ -1662,11 +1676,11 @@
       <arglist>)(void *ptr, int flags)</arglist>
     </member>
     <member kind="typedef">
-      <type>int(*</type>
+      <type>void(*</type>
       <name>MprMemNotifier</name>
       <anchorfile>group___mpr_mem.html</anchorfile>
-      <anchor>ga5e8b84bc2d6719052270acf7afca8194</anchor>
-      <arglist>)(int flags, ssize size)</arglist>
+      <anchor>ga9ff64b5b3c9c596d6a16d3bb361a0273</anchor>
+      <arglist>)(int cause, int policy, ssize size, ssize total)</arglist>
     </member>
     <member kind="typedef">
       <type>int(*</type>
@@ -1819,8 +1833,8 @@
       <type>char *</type>
       <name>itos</name>
       <anchorfile>group___mpr_string.html</anchorfile>
-      <anchor>ga04734f078f19e47fa4e7087586f243e2</anchor>
-      <arglist>(int64 value, int radix)</arglist>
+      <anchor>ga3274fba2fee514f336703ded246885f4</anchor>
+      <arglist>(int64 value)</arglist>
     </member>
     <member kind="function">
       <type>char *</type>
@@ -1828,6 +1842,13 @@
       <anchorfile>group___mpr_string.html</anchorfile>
       <anchor>gabe1fb7ce5588a9f2ccc311f1dad44780</anchor>
       <arglist>(char *buf, ssize size, int64 value, int radix)</arglist>
+    </member>
+    <member kind="function">
+      <type>char *</type>
+      <name>itosradix</name>
+      <anchorfile>group___mpr_string.html</anchorfile>
+      <anchor>ga3fdd7eab89b37f294f6181f352d7b1bb</anchor>
+      <arglist>(int64 value, int radix)</arglist>
     </member>
     <member kind="function">
       <type>MprSocket *</type>
@@ -1926,6 +1947,13 @@
       <anchorfile>mpr_8h.html</anchorfile>
       <anchor>a107d9cacb23e9cddb7fcd1e6244638b7</anchor>
       <arglist>()</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>mprAddTerminator</name>
+      <anchorfile>group___mpr.html</anchorfile>
+      <anchor>ga34490595fe86683f06e8d6e9abc72aa3</anchor>
+      <arglist>(MprTerminator terminator)</arglist>
     </member>
     <member kind="function">
       <type>MprTestGroup *</type>
@@ -2323,8 +2351,8 @@
       <type>MprThread *</type>
       <name>mprCreateThread</name>
       <anchorfile>group___mpr_thread.html</anchorfile>
-      <anchor>ga436880871af2a6ee9ef56bc7a9e0b265</anchor>
-      <arglist>(cchar *name, void *proc, void *data, int stackSize)</arglist>
+      <anchor>ga442393787e4c3a1afc2cefac951c56c1</anchor>
+      <arglist>(cchar *name, void *proc, void *data, ssize stackSize)</arglist>
     </member>
     <member kind="function">
       <type>MprEvent *</type>
@@ -3618,8 +3646,8 @@
       <type>int</type>
       <name>mprMakeDir</name>
       <anchorfile>group___mpr_path.html</anchorfile>
-      <anchor>gad65f69f19cff92642af0e42016b65829</anchor>
-      <arglist>(cchar *path, int perms, bool makeMissing)</arglist>
+      <anchor>ga8b825c9125a21012024b9b76f2683edb</anchor>
+      <arglist>(cchar *path, int perms, int owner, int group, bool makeMissing)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
@@ -3676,6 +3704,13 @@
       <anchorfile>group___mpr_log.html</anchorfile>
       <anchor>ga72e962cc814afc5fc437010979f2ecb9</anchor>
       <arglist>(cchar *fmt,...)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>mprNap</name>
+      <anchorfile>group___mpr.html</anchorfile>
+      <anchor>gaa85d07a3657f56f58dc45f4e45743648</anchor>
+      <arglist>(MprTime msec)</arglist>
     </member>
     <member kind="function">
       <type>char *</type>
@@ -3753,6 +3788,13 @@
       <anchorfile>group___mpr_mem.html</anchorfile>
       <anchor>ga9fb704d3d46cef513c50545b1e602370</anchor>
       <arglist>(cchar *msg, int detail)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>mprPruneCache</name>
+      <anchorfile>group___mpr_cache.html</anchorfile>
+      <anchor>ga5abf88b56ea534c0cb36b0969f56d274</anchor>
+      <arglist>(MprCache *cache)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
@@ -4106,6 +4148,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>mprRestart</name>
+      <anchorfile>group___mpr.html</anchorfile>
+      <anchor>gaa9ff9a812130215272eca40d5deb53d5</anchor>
+      <arglist>()</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>mprRestartContinuousEvent</name>
       <anchorfile>group___mpr_event.html</anchorfile>
       <anchor>ga6fa51ab06c56baaad50f1b4df7efc1d4</anchor>
@@ -4372,9 +4421,9 @@
     </member>
     <member kind="function">
       <type>int</type>
-      <name>mprSetMaxSocketClients</name>
+      <name>mprSetMaxSocketAccept</name>
       <anchorfile>group___mpr_socket.html</anchorfile>
-      <anchor>gaf1e65af3cd8488c9f2085e4165014440</anchor>
+      <anchor>gad69af558283f6f1f3277ae9e77029017</anchor>
       <arglist>(int max)</arglist>
     </member>
     <member kind="function">
@@ -5302,10 +5351,10 @@
       <arglist>(cchar *str, cchar *set)</arglist>
     </member>
     <member kind="function">
-      <type>int</type>
+      <type>bool</type>
       <name>sstarts</name>
       <anchorfile>mpr_8h.html</anchorfile>
-      <anchor>a828cfe1e406941c4ad054ea15c1727b0</anchor>
+      <anchor>a5eec22bfd3a58a8c344d30175849f2ee</anchor>
       <arglist>(cchar *str, cchar *prefix)</arglist>
     </member>
     <member kind="function">
@@ -5326,7 +5375,14 @@
       <type>int64</type>
       <name>stoi</name>
       <anchorfile>group___mpr_string.html</anchorfile>
-      <anchor>ga1ec10833f9ccd2c30f5954aaebaeac0f</anchor>
+      <anchor>gab24da0fe30b572a18321fa16e3dbfa19</anchor>
+      <arglist>(cchar *str)</arglist>
+    </member>
+    <member kind="function">
+      <type>int64</type>
+      <name>stoiradix</name>
+      <anchorfile>group___mpr_string.html</anchorfile>
+      <anchor>ga851760bd4787be87c785d158892eaf82</anchor>
       <arglist>(cchar *str, int radix, int *err)</arglist>
     </member>
     <member kind="function">
@@ -5607,11 +5663,11 @@
       <arglist>)(void *ptr, int flags)</arglist>
     </member>
     <member kind="typedef">
-      <type>int(*</type>
+      <type>void(*</type>
       <name>MprMemNotifier</name>
       <anchorfile>group___mpr_mem.html</anchorfile>
-      <anchor>ga5e8b84bc2d6719052270acf7afca8194</anchor>
-      <arglist>)(int flags, ssize size)</arglist>
+      <anchor>ga9ff64b5b3c9c596d6a16d3bb361a0273</anchor>
+      <arglist>)(int cause, int policy, ssize size, ssize total)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -5874,8 +5930,8 @@
       <type>char *</type>
       <name>itos</name>
       <anchorfile>group___mpr_string.html</anchorfile>
-      <anchor>ga04734f078f19e47fa4e7087586f243e2</anchor>
-      <arglist>(int64 value, int radix)</arglist>
+      <anchor>ga3274fba2fee514f336703ded246885f4</anchor>
+      <arglist>(int64 value)</arglist>
     </member>
     <member kind="function">
       <type>char *</type>
@@ -5883,6 +5939,13 @@
       <anchorfile>group___mpr_string.html</anchorfile>
       <anchor>gabe1fb7ce5588a9f2ccc311f1dad44780</anchor>
       <arglist>(char *buf, ssize size, int64 value, int radix)</arglist>
+    </member>
+    <member kind="function">
+      <type>char *</type>
+      <name>itosradix</name>
+      <anchorfile>group___mpr_string.html</anchorfile>
+      <anchor>ga3fdd7eab89b37f294f6181f352d7b1bb</anchor>
+      <arglist>(int64 value, int radix)</arglist>
     </member>
     <member kind="function">
       <type>char *</type>
@@ -6112,7 +6175,14 @@
       <type>int64</type>
       <name>stoi</name>
       <anchorfile>group___mpr_string.html</anchorfile>
-      <anchor>ga1ec10833f9ccd2c30f5954aaebaeac0f</anchor>
+      <anchor>gab24da0fe30b572a18321fa16e3dbfa19</anchor>
+      <arglist>(cchar *str)</arglist>
+    </member>
+    <member kind="function">
+      <type>int64</type>
+      <name>stoiradix</name>
+      <anchorfile>group___mpr_string.html</anchorfile>
+      <anchor>ga851760bd4787be87c785d158892eaf82</anchor>
       <arglist>(cchar *str, int radix, int *err)</arglist>
     </member>
     <member kind="function">
@@ -7148,8 +7218,8 @@
       <type>int</type>
       <name>mprMakeDir</name>
       <anchorfile>group___mpr_path.html</anchorfile>
-      <anchor>gad65f69f19cff92642af0e42016b65829</anchor>
-      <arglist>(cchar *path, int perms, bool makeMissing)</arglist>
+      <anchor>ga8b825c9125a21012024b9b76f2683edb</anchor>
+      <arglist>(cchar *path, int perms, int owner, int group, bool makeMissing)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
@@ -7502,8 +7572,8 @@
       <type>MprThread *</type>
       <name>mprCreateThread</name>
       <anchorfile>group___mpr_thread.html</anchorfile>
-      <anchor>ga436880871af2a6ee9ef56bc7a9e0b265</anchor>
-      <arglist>(cchar *name, void *proc, void *data, int stackSize)</arglist>
+      <anchor>ga442393787e4c3a1afc2cefac951c56c1</anchor>
+      <arglist>(cchar *name, void *proc, void *data, ssize stackSize)</arglist>
     </member>
     <member kind="function">
       <type>MprOsThread</type>
@@ -7786,9 +7856,9 @@
     </member>
     <member kind="function">
       <type>int</type>
-      <name>mprSetMaxSocketClients</name>
+      <name>mprSetMaxSocketAccept</name>
       <anchorfile>group___mpr_socket.html</anchorfile>
-      <anchor>gaf1e65af3cd8488c9f2085e4165014440</anchor>
+      <anchor>gad69af558283f6f1f3277ae9e77029017</anchor>
       <arglist>(int max)</arglist>
     </member>
     <member kind="function">
@@ -8152,6 +8222,13 @@
       <arglist>(MprCache *cache, cchar *key, int64 amount)</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>mprPruneCache</name>
+      <anchorfile>group___mpr_cache.html</anchorfile>
+      <anchor>ga5abf88b56ea534c0cb36b0969f56d274</anchor>
+      <arglist>(MprCache *cache)</arglist>
+    </member>
+    <member kind="function">
       <type>char *</type>
       <name>mprReadCache</name>
       <anchorfile>group___mpr_cache.html</anchorfile>
@@ -8224,6 +8301,13 @@
     <name>Mpr</name>
     <title>Mpr</title>
     <filename>group___mpr.html</filename>
+    <member kind="function">
+      <type>void</type>
+      <name>mprAddTerminator</name>
+      <anchorfile>group___mpr.html</anchorfile>
+      <anchor>ga34490595fe86683f06e8d6e9abc72aa3</anchor>
+      <arglist>(MprTerminator terminator)</arglist>
+    </member>
     <member kind="function">
       <type>void</type>
       <name>mprBreakpoint</name>
@@ -8435,10 +8519,24 @@
       <arglist>()</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>mprNap</name>
+      <anchorfile>group___mpr.html</anchorfile>
+      <anchor>gaa85d07a3657f56f58dc45f4e45743648</anchor>
+      <arglist>(MprTime msec)</arglist>
+    </member>
+    <member kind="function">
       <type>int</type>
       <name>mprRandom</name>
       <anchorfile>group___mpr.html</anchorfile>
       <anchor>ga1ca968c92371da9a84a0152dfd0603cc</anchor>
+      <arglist>()</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>mprRestart</name>
+      <anchorfile>group___mpr.html</anchorfile>
+      <anchor>gaa9ff9a812130215272eca40d5deb53d5</anchor>
       <arglist>()</arglist>
     </member>
     <member kind="function">
@@ -9383,9 +9481,9 @@
     <filename>struct_mpr_socket_service.html</filename>
     <member kind="variable">
       <type>int</type>
-      <name>maxClients</name>
+      <name>maxAccept</name>
       <anchorfile>struct_mpr_socket_service.html</anchorfile>
-      <anchor>a0233f5fb0e56e62a1adb73cb5b547ac2</anchor>
+      <anchor>a38a1751dbc471112df246f1371026af4</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
@@ -9397,9 +9495,9 @@
     </member>
     <member kind="variable">
       <type>int</type>
-      <name>numClients</name>
+      <name>numAccept</name>
       <anchorfile>struct_mpr_socket_service.html</anchorfile>
-      <anchor>a3c22c0c57ee015973c2b527475eea91a</anchor>
+      <anchor>a888b9ef1ddd221a3df199028af205a52</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
@@ -9669,10 +9767,10 @@
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>int</type>
+      <type>ssize</type>
       <name>stackSize</name>
       <anchorfile>struct_mpr_thread_service.html</anchorfile>
-      <anchor>a40107f177176ea3c35d69b6bc7729a7c</anchor>
+      <anchor>ade131a6904f3a41e47d6c2a48d788d83</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
@@ -9754,10 +9852,10 @@
       <arglist></arglist>
     </member>
     <member kind="variable">
-      <type>int</type>
+      <type>ssize</type>
       <name>stackSize</name>
       <anchorfile>struct_mpr_worker_service.html</anchorfile>
-      <anchor>a4d6430a1116609b723ac8d2afcd58af2</anchor>
+      <anchor>a5b056d438dc3e513928fa842c1afdf65</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">

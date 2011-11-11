@@ -1301,8 +1301,8 @@
       <type>void</type>
       <name>httpAddCache</name>
       <anchorfile>group___http_cache.html</anchorfile>
-      <anchor>gacd90c4a1aa02dd7516dcbe872061f09b</anchor>
-      <arglist>(struct HttpRoute *route, cchar *methods, cchar *uris, cchar *extensions, cchar *types, MprTime lifespan, int flags)</arglist>
+      <anchor>ga4ad093cda475dbb84ed4681753604d3a</anchor>
+      <arglist>(struct HttpRoute *route, cchar *methods, cchar *uris, cchar *extensions, cchar *types, MprTime clientLifespan, MprTime serverLifespan, int flags)</arglist>
     </member>
     <member kind="function">
       <type>ssize</type>
@@ -1393,6 +1393,13 @@
       <anchorfile>group___http_route.html</anchorfile>
       <anchor>ga664691aa4ee19502e4c4506442361856</anchor>
       <arglist>(HttpRoute *route, cchar *header, cchar *value, int flags)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>httpAddRouteIndex</name>
+      <anchorfile>group___http_route.html</anchorfile>
+      <anchor>ga72267ab0661f6536dd1ce5ea64a12dd0</anchor>
+      <arglist>(HttpRoute *route, cchar *path)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
@@ -1673,13 +1680,6 @@
       <anchorfile>group___http_route.html</anchorfile>
       <anchor>ga7f7b642a70a41a659ce3094881b872b6</anchor>
       <arglist>(HttpRoute *route, cchar *name)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>httpSetRouteIndex</name>
-      <anchorfile>group___http_route.html</anchorfile>
-      <anchor>ga49f0509b8b5e2ba35d614831ab64ccce</anchor>
-      <arglist>(HttpRoute *route, cchar *path)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
