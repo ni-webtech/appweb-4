@@ -1267,7 +1267,7 @@ extern EdiRec *espSetRec(HttpConn *conn, EdiRec *rec);
 
 /**
     Show request details
-    @description This echos request details back to the client. This is useful as a debugging tool.
+    @description This e request details back to the client. This is useful as a debugging tool.
     @param conn HttpConn connection object
     @ingroup EspReq
  */
@@ -2805,7 +2805,7 @@ void setTimeout(void *proc, MprTime timeout, void *data);
 
 /**
     Show request details
-    @description This echos request details back to the client. This is useful as a debugging tool.
+    @description This echoes request details back to the client. This is useful as a debugging tool.
     @ingroup EspAbbrev
  */
 extern void showRequest();
