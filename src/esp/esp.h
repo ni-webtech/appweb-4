@@ -1018,7 +1018,7 @@ extern ssize espRender(HttpConn *conn, cchar *fmt, ...);
     @description Render a block of data to the client. Data packets will be created as required to store the write data.
     @param conn HttpConn connection object
     @param buf Buffer containing the write data
-    @param size of the data in buf
+    @param size Size of the data in buf
     @return A count of the bytes actually written
     @ingroup EspReq
  */
