@@ -1,4 +1,3 @@
-
 /******************************************************************************/
 /* 
     This file is an amalgamation of all the individual source code files for the
@@ -195,7 +194,7 @@ struct HttpUri;
     Proprietary HTTP status codes
  */
 #define HTTP_CODE_START_LOCAL_ERRORS        550
-#define HTTP_CODE_COMMS_ERROR               550     /**< The server had a communicationss error responding to the client */
+#define HTTP_CODE_COMMS_ERROR               550     /**< The server had a communications error responding to the client */
 
 /*
     Flags that can be ored into the status code
@@ -237,7 +236,7 @@ typedef bool (*HttpValidateCred)(struct HttpAuth *auth, cchar *realm, char *user
 typedef void (*HttpNotifier)(struct HttpConn *conn, int state, int flags);
 
 /** 
-    Define an callback for IO events on this connection.
+    Define a callback for IO events on this connection.
     @description The event callback will be invoked in response to I/O events.
     @param conn HttpConn connection object created via $httpCreateConn
     @param fn Callback function. 
