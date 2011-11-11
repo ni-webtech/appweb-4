@@ -1128,7 +1128,7 @@ extern void espSetContentLength(HttpConn *conn, MprOff length);
     @param value Cookie value
     @param path URI path to which the cookie applies
     @param domain String Domain in which the cookie applies. Must have 2-3 "." and begin with a leading ".". 
-        For example: domain: .example.com
+        For example: domain: .example.com.
     Some browsers will accept cookies without the initial ".", but the spec: (RFC 2109) requires it.
     @param lifespan Duration for the cookie to persist in msec
     @param isSecure Set to "true" if the cookie only applies for SSL based connections
