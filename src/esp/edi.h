@@ -97,13 +97,13 @@ extern void ediDefineValidation(cchar *name, EdiValidationProc vfn);
 /*
     Field flags
  */
-#define EDI_AUTO_INC        0x1         /**< Field flag -- auto increments on new row */
+#define EDI_AUTO_INC        0x1         /**< Field flag -- Automatic increments on new row */
 #define EDI_KEY             0x2         /**< Field flag -- Column is the key */
 #define EDI_INDEX           0x4         /**< Field flag -- Column is indexed */
  
 /**
     EDI Record field structure
-    @description The EdiField stores record field data and minimal schem information such as the data type and
+    @description The EdiField stores record field data and minimal schema information such as the data type and
         source column name.
     @defgroup EdiField EdiField
   */
