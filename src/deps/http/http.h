@@ -255,7 +255,7 @@ typedef void (*HttpEnvCallback)(struct HttpConn *conn);
 
 /**
     Listen callback. Invoked after listening on a socket endpoint
-    @return Zero if the listening endpoint can be opened for service. Otherwise, return a negative MPR error code.
+    @return "Zero" if the listening endpoint can be opened for service. Otherwise, return a negative MPR error code.
     @ingroup HttpConn
  */
 typedef int (*HttpListenCallback)(struct HttpEndpoint *endpoint);
@@ -365,7 +365,7 @@ extern int httpConfigureNamedVirtualEndpoints(Http *http, cchar *ip, int port);
     Create the Http secret data for crypto
     @description Create http secret data that is used to seed SSL-based communications.
     @param http Http service object.
-    @return Zero if successful, otherwise a negative MPR error code
+    @return "Zero" if successful, otherwise a negative MPR error code
     @ingroup Http
  */
 extern int httpCreateSecret(Http *http);
@@ -399,7 +399,7 @@ extern char *httpGetDateString(MprPath *sbuf);
     @description This loads the configured SSL provider. SSL providers are configured when the product is built
         from source.
     @param http Http object created via #httpCreate
-    @return Zero if SSL can be successfully loaded. Otherwise return a negative MPR error code.
+    @return "Zero" if SSL can be successfully loaded. Otherwise return a negative MPR error code.
     @ingroup Http
  */
 extern int httpLoadSsl(Http *http);
@@ -898,7 +898,7 @@ extern ssize httpGetPacketLength(HttpPacket *packet);
         the first packet. 
     @param packet Destination packet
     @param other Other packet to copy data from.
-    @return Zero if successful, otherwise a negative Mpr error code
+    @return "Zero" if successful, otherwise a negative Mpr error code
     @ingroup HttpPacket
  */
 extern int httpJoinPacket(HttpPacket *packet, HttpPacket *other);
@@ -1106,7 +1106,7 @@ extern void httpJoinPacketForService(struct HttpQueue *q, HttpPacket *packet, bo
     Open the queue. Call the queue open entry point.
     @param q Queue reference
     @param chunkSize Preferred chunk size
-    @return Zero if successful.
+    @return "Zero" if successful.
  */
 extern int httpOpenQueue(HttpQueue *q, ssize chunkSize);
 
@@ -2469,7 +2469,7 @@ typedef struct  HttpGroup {
     @param group Group name to add
     @param acl Group access control list mask
     @param enabled Set to true to enable the group
-    @return Zero if successful, otherwise a negative MPR error code
+    @return "Zero" if successful, otherwise a negative MPR error code
     @ingroup HttpAuth
     @internal
  */
@@ -2497,7 +2497,7 @@ extern int httpAddUser(HttpAuth *auth, cchar *realm, cchar *user, cchar *passwor
         auth object.
     @param gp Group object
     @param user User name string
-    @return Zero if successful, otherwise a negative MPR error code
+    @return "Zero" if successful, otherwise a negative MPR error code
     @ingroup HttpAuth
     @internal
  */
@@ -2523,7 +2523,7 @@ extern int httpAddUsersToGroup(HttpAuth *auth, cchar *group, cchar *users);
     @param name Group name to add
     @param acl Group access control list mask
     @param enabled Set to true to enable the group
-    @return Zero if successful, otherwise a negative MPR error code
+    @return "Zero" if successful, otherwise a negative MPR error code
     @ingroup HttpAuth
     @internal
  */
@@ -2549,7 +2549,7 @@ extern HttpUser *httpCreateUser(HttpAuth *auth, cchar *name, cchar *password, cc
     @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
         auth object.
     @param group Group name to disable
-    @return Zero if successful, otherwise a negative MPR error code
+    @return "Zero" if successful, otherwise a negative MPR error code
     @ingroup HttpAuth
     @internal
  */
@@ -2571,7 +2571,7 @@ extern int httpDisableUser(HttpAuth *auth, cchar *realm, cchar *user);
     @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
         auth object.
     @param group User name to enable
-    @return Zero if successful, otherwise a negative MPR error code
+    @return "Zero" if successful, otherwise a negative MPR error code
     @ingroup HttpAuth
     @internal
  */
@@ -2651,7 +2651,7 @@ extern HttpAcl httpParseAcl(HttpAuth *auth, cchar *acl);
     @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
         auth object.
     @param group Group name to remove
-    @return Zero if successful, otherwise a negative MPR error code
+    @return "Zero" if successful, otherwise a negative MPR error code
     @ingroup HttpAuth
     @internal 
  */
@@ -2673,7 +2673,7 @@ extern int httpReadGroupFile(HttpAuth *auth, char *path);
     @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
         auth object.
     @param path Path name of user file
-    @return Zero if successful, otherwise a negative MPR error code
+    @return "Zero" if successful, otherwise a negative MPR error code
     @ingroup HttpAuth
     @internal 
  */
@@ -2695,7 +2695,7 @@ extern int httpRemoveUser(HttpAuth *auth, cchar *realm, cchar *user);
     Remove user from a group
     @param gp Group object
     @param user User name to remove from the group
-    @return Zero if successful, otherwise a negative MPR error code
+    @return "Zero" if successful, otherwise a negative MPR error code
     @ingroup HttpAuth
     @internal 
  */
@@ -2719,7 +2719,7 @@ extern int httpRemoveUsersFromGroup(HttpAuth *auth, cchar *group, cchar *users);
         auth object.
     @param group Group name to remove
     @param acl Group access control list mask
-    @return Zero if successful, otherwise a negative MPR error code
+    @return "Zero" if successful, otherwise a negative MPR error code
     @ingroup HttpAuth
     @internal 
  */
@@ -2740,7 +2740,7 @@ extern void httpSetRequiredAcl(HttpAuth *auth, HttpAcl acl);
     @description After modifying the required ACL for the auth object, the ACLs for each user must be updated.
     @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
         auth object.
-    @return Zero if successful, otherwise a negative MPR error code
+    @return "Zero" if successful, otherwise a negative MPR error code
     @ingroup HttpAuth
     @internal 
  */
@@ -2762,7 +2762,7 @@ extern int httpWriteGroupFile(HttpAuth *auth, char *path);
     @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
         auth object.
     @param path Path name for the user file
-    @return Zero if successful, otherwise a negative MPR error code
+    @return "Zero" if successful, otherwise a negative MPR error code
     @ingroup HttpAuth
     @internal 
  */
@@ -3169,9 +3169,9 @@ extern void httpAddRouteSet(HttpRoute *parent, cchar *set);
         The match directory tests a regular expression pattern against the rest of the condition arguments. The form of 
         the match rule is: "match RegExp string". For example: "match https ${request.scheme}".
     @param details Condition parameters. 
-        The See #httpSetRouteTarget for a list of the token values that can be included in the condition rule details.
+        See #httpSetRouteTarget for a list of the token values that can be included in the condition rule details.
     @param flags Set to HTTP_ROUTE_NOT to negate the condition test
-    @return Zero if successful, otherwise a negative MPR error code.
+    @return "Zero" if successful, otherwise a negative MPR error code.
     @ingroup HttpRoute
  */
 extern int httpAddRouteCondition(HttpRoute *route, cchar *name, cchar *details, int flags);
@@ -3195,7 +3195,7 @@ extern void httpAddRouteErrorDocument(HttpRoute *route, int status, cchar *uri);
         httpAddRouteExpiry(route, when, "png");
     @param route Route to modify
     @param when Time to expire the item. Use mprGetTime() + milliseconds.
-    @param extensions Space or comman separated list of request extensions for which the content should be 
+    @param extensions Space or comma separated list of request extensions for which the content should be 
         cached in the client.
     @ingroup HttpRoute
  */
@@ -3225,7 +3225,7 @@ extern void httpAddRouteExpiryByType(HttpRoute *route, MprTime when, cchar *mime
     @param extensions Request extensions for which the filter will be run. A request extension may come from the URI
         if present or from the corresponding filename.
     @param direction Set to HTTP_STAGE_TX for transmit direction and HTTP_STAGE_RX for receive data flow.
-    @return Zero if successful, otherwise a negative MPR error code.
+    @return "Zero" if successful, otherwise a negative MPR error code.
     @ingroup HttpRoute
  */
 extern int httpAddRouteFilter(HttpRoute *route, cchar *name, cchar *extensions, int direction);
@@ -3263,7 +3263,7 @@ extern void httpAddRouteHeader(HttpRoute *route, cchar *header, cchar *value, in
         could produce: "index.fr.html".
     @param flags Set to HTTP_LANG_BEFORE to insert the suffix before the filename extension. Set to HTTP_LANG_AFTER to 
         append after the extension. For example: HTTP_LANG_AFTER would produce "index.html.fr".
-    @return Zero if successful, otherwise a negative MPR error code.
+    @return "Zero" if successful, otherwise a negative MPR error code.
     @ingroup HttpRoute
  */
 extern int httpAddRouteLanguageSuffix(HttpRoute *route, cchar *language, cchar *suffix, int flags);
@@ -3314,10 +3314,10 @@ extern void httpAddRouteParam(HttpRoute *route, cchar *field, cchar *value, int 
         The "param" rule is used to set values in the request param fields. For example: "param priority high". 
         \n\n
         The "lang" update rule is uses internally to implement the various language options.
-        The See #httpSetRouteTarget for a list of the token values that can be included in the condition rule details.
+        See #httpSetRouteTarget for a list of the token values that can be included in the condition rule details.
     @param details Update rule parameters.
     @param flags Reserved.
-    @return Zero if successful, otherwise a negative MPR error code.
+    @return "Zero" if successful, otherwise a negative MPR error code.
     @ingroup HttpRoute
  */
 extern int httpAddRouteUpdate(HttpRoute *route, cchar *name, cchar *details, int flags);
@@ -3621,7 +3621,7 @@ extern void httpSetRouteCompression(HttpRoute *route, int flags);
     Set the connector to use for a route
     @param route Route to modify
     @param name Connector name to use for this route
-    @return Zero if successful, otherwise a negative MPR error code.
+    @return "Zero" if successful, otherwise a negative MPR error code.
     @ingroup HttpRoute
  */
 extern int httpSetRouteConnector(HttpRoute *route, cchar *name);
@@ -3674,7 +3674,7 @@ extern void httpSetRouteFlags(HttpRoute *route, int flags);
         Note that you can also use httpAddRouteHandler which configures a set of handlers that will match by extension.
     @param route Route to modify
     @param name Handler name to define
-    @return Zero if successful, otherwise a negative MPR error code.
+    @return "Zero" if successful, otherwise a negative MPR error code.
     @ingroup HttpRoute
  */
 extern int httpSetRouteHandler(HttpRoute *route, cchar *name);
@@ -3850,7 +3850,7 @@ extern void httpSetRouteSource(HttpRoute *route, cchar *source);
         raw data to the client can cause XSS and other security issues.
         The status field defines the HTTP status code to use in the response.
     @param details Update rule parameters.
-    @return Zero if successful, otherwise a negative MPR error code.
+    @return "Zero" if successful, otherwise a negative MPR error code.
     @ingroup HttpRoute
  */
 extern int httpSetRouteTarget(HttpRoute *route, cchar *name, cchar *details);
@@ -4332,7 +4332,7 @@ extern void httpSetMethod(HttpConn *conn, cchar *method);
         The request script name will be reset and the pathInfo will be set to the path portion of the URI.
     @param query Optional query string to define with the new URI. If query is null, any query string defined
         with the previous URI will be used. If query is set to the empty string, a previous query will be discarded.
-    @return Zero if successful, otherwise a negative MPR error code.
+    @return "Zero" if successful, otherwise a negative MPR error code.
     @ingroup HttpRx
  */
 extern int httpSetUri(HttpConn *conn, cchar *uri, cchar *query);
@@ -4441,7 +4441,7 @@ typedef struct HttpTx {
     @param key Http response header key
     @param fmt Printf style formatted string to use as the header key value
     @param ... Arguments for fmt
-    @return Zero if successful, otherwise a negative MPR error code. Returns MPR_ERR_ALREADY_EXISTS if the header already
+    @return "Zero" if successful, otherwise a negative MPR error code. Returns MPR_ERR_ALREADY_EXISTS if the header already
         exists.
     @ingroup HttpTx
  */
@@ -4488,7 +4488,7 @@ extern void httpAppendHeaderString(HttpConn *conn, cchar *key, cchar *value);
     @param conn HttpConn connection object created via $httpCreateConn
     @param method Http method to use. Valid methods include: "GET", "POST", "PUT", "DELETE", "OPTIONS" and "TRACE" 
     @param uri URI to fetch
-    @return Zero if the request was successfully sent to the server. Otherwise a negative MPR error code is returned.
+    @return "Zero" if the request was successfully sent to the server. Otherwise a negative MPR error code is returned.
     @ingroup HttpTx
  */
 extern int httpConnect(HttpConn *conn, cchar *method, cchar *uri);
@@ -4669,7 +4669,7 @@ extern void httpRedirect(HttpConn *conn, int status, cchar *uri);
     @description Remove a header if present.
     @param conn HttpConn connection object created via $httpCreateConn
     @param key Http response header key
-    @return Zero if successful, otherwise a negative MPR error code.
+    @return "Zero" if successful, otherwise a negative MPR error code.
     @ingroup HttpTx
  */
 extern int httpRemoveHeader(HttpConn *conn, cchar *key);
@@ -4770,7 +4770,7 @@ extern void httpSetWriteBlocked(HttpConn *conn);
     @param conn HttpConn connection object created via $httpCreateConn
     @param state HTTP_STATE_XXX to wait for.
     @param timeout Timeout in milliseconds to wait 
-    @return Zero if successful. Otherwise return a negative MPR error code. Specific returns include:
+    @return "Zero" if successful. Otherwise return a negative MPR error code. Specific returns include:
         MPR_ERR_TIMEOUT and MPR_ERR_BAD_STATE.
     @ingroup HttpTx
  */
@@ -4858,7 +4858,7 @@ extern HttpConn *httpAcceptConn(HttpEndpoint *endpoint, MprEvent *event);
         virutal hosts.
     @param endpoint Endpoint to which the host will be added.
     @param host HttpHost object to add.
-    @return Zero if the host can be added.
+    @return "Zero" if the host can be added.
     @ingroup HttpEndpoint
  */
 extern void httpAddHostToEndpoint(HttpEndpoint *endpoint, struct HttpHost *host);
@@ -4932,7 +4932,7 @@ extern struct HttpHost *httpLookupHostOnEndpoint(HttpEndpoint *endpoint, cchar *
         the endpoint via #httpStartEndpoint.
     @param endpoint HttpEndpoint object created via #httpCreateEndpoint
     @param ssl MprSsl object
-    @returns Zero if successful, otherwise a negative MPR error code.
+    @returns "Zero" if successful, otherwise a negative MPR error code.
  */
 extern int httpSecureEndpoint(HttpEndpoint *endpoint, struct MprSsl *ssl);
 
@@ -4993,7 +4993,7 @@ extern void httpSetHasNamedVirtualHosts(HttpEndpoint *endpoint, bool on);
     Start listening for client connections.
     @description Opens the endpoint socket and starts listening for connections.
     @param endpoint HttpEndpoint object created via #httpCreateEndpoint
-    @returns Zero if successful, otherwise a negative MPR error code.
+    @returns "Zero" if successful, otherwise a negative MPR error code.
     @ingroup HttpEndpoint
  */
 extern int httpStartEndpoint(HttpEndpoint *endpoint);
@@ -5085,7 +5085,7 @@ typedef struct HttpHost {
     in order, so it is important to define routes in the order in which you wish to match them.
     @param host HttpHost object
     @param route Route to add
-    @return Zero if the route can be added.
+    @return "Zero" if the route can be added.
     @ingroup HttpHost
  */
 extern int httpAddRoute(HttpHost *host, HttpRoute *route);
@@ -5185,7 +5185,7 @@ extern void httpSetHostHome(HttpHost *host, cchar *dir);
     @param host HttpHost object
     @param ip Internet address. This can be an IP address or a symbolic domain and host name.
     @param port Port number 
-    @return Zero if the route can be added.
+    @return "Zero" if the route can be added.
     @ingroup HttpHost
  */
 extern void httpSetHostIpAddr(HttpHost *host, cchar *ip, int port);
@@ -5242,7 +5242,7 @@ extern void httpSetHostTraceFilter(HttpHost *host, ssize len, cchar *include, cc
     in order, so it is important to define routes in the order in which you wish to match them.
     @param host HttpHost object
     @param route Route to add
-    @return Zero if the route can be added.
+    @return "Zero" if the route can be added.
     @ingroup HttpHost
  */
 extern int  httpSetupTrace(HttpHost *host, cchar *ext);
