@@ -10,7 +10,6 @@ appweb\- Embedded HTTP Web Server
 [\fI--config configFile\fR]
 [\fI--chroot directory\fR]
 [\fI--debugger\fR]
-[\fI--ejs appSpec\fR]
 [\fI--log logSpec\fR]
 [\fI--home directory\fR] 
 [\fI--threads threads\fR]
@@ -41,15 +40,6 @@ any files outside the given directory.
 \fB\--debugger\fR
 Run Appweb in debug mode and disable all timeouts. This disables request and session timeouts.
 The \fB-d\fR option is an alias for --debug.
-.TP
-\fB\--ejs name:directory\fR
-Define an Ejscript application by name at the specified directory. The \fBname\fR is the application name and is
-used as a URL prefix. When a request arrives which matches this URL prefix, it is routed to the application to
-service. For example:
-.PP
-.RS 6
- appweb --ejs /carmen/:/var/www/apps/carmen/
-.RE
 .TP
 \fB\--log logSpec\fR
 Name the Appweb log file. This will override the ErrorLog directive 

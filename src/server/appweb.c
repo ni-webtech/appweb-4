@@ -306,8 +306,8 @@ static void usageError(Mpr *mpr)
     "    --chroot directory     # Change root directory to run more securely (Unix)\n"
     "    --debugger             # Disable timeouts to make debugging easier\n"
     "    --home directory       # Change to directory to run\n"
-    "    --name uniqueName      # Unique name for this instance\n"
     "    --log logFile:level    # Log to file file at verbosity level\n"
+    "    --name uniqueName      # Unique name for this instance\n"
     "    --threads maxThreads   # Set maximum worker threads\n"
     "    --version              # Output version information\n\n"
     "  Without IPaddress, %s will read the appweb.conf configuration file.\n\n",

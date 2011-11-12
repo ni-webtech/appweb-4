@@ -9,9 +9,8 @@ SYNOPSIS
        appweb [options]
        appweb [options] [IP][:port] [documentRoot]
 
-       appweb  [--config  configFile] [--chroot directory] [--debugger] [--ejs
-       appSpec] [--log logSpec] [--home directory] [--threads threads] [--ver-
-       sion] [--verbose]
+       appweb  [--config  configFile] [--chroot directory] [--debugger] [--log
+       logSpec] [--home directory] [--threads threads] [--version] [--verbose]
 
 DESCRIPTION
        Appweb  is  a  compact  embedded HTTP web server.  It is a fast, small-
@@ -47,19 +46,11 @@ OPTIONS
               request and session timeouts.  The -d option  is  an  alias  for
               --debug.
 
-       --ejs name:directory
-              Define  an  Ejscript application by name at the specified direc-
-              tory. The name is the application name and is used as a URL pre-
-              fix. When a request arrives which matches this URL prefix, it is
-              routed to the application to service. For example:
-
-              appweb --ejs /carmen/:/var/www/apps/carmen/
-
        --log logSpec
               Name the Appweb log file. This will override the ErrorLog direc-
-              tive  in  the  configuration  file.   When  the  maximum size is
-              exceeded, the log file will be rotated to logName.old and a  new
-              log  file  will be started. The -l option is an alias for --log.
+              tive in the  configuration  file.   When  the  maximum  size  is
+              exceeded,  the log file will be rotated to logName.old and a new
+              log file will be started. The -l option is an alias  for  --log.
               The syntax is:
 
               --log logName[:logLevel][.maxSize]
@@ -68,12 +59,12 @@ OPTIONS
               Define the server home directory for Appweb.
 
        --threads numThreads
-              Specify the maximum number of threads  to  use  for  the  appweb
-              thread  pool.  This overrides the ThreadLimit configuration file
+              Specify  the  maximum  number  of  threads to use for the appweb
+              thread pool. This overrides the ThreadLimit  configuration  file
               directive.
 
        --verbose
-              Shorthand for --log stdout:4. The -v  option  is  an  alias  for
+              Shorthand  for  --log  stdout:4.  The  -v option is an alias for
               --verbose.
 
        --version

@@ -63,12 +63,13 @@
 <!-- EndDsi -->
         </div>
         <div class="contentLeft">
+<!--
 <pre>
 - Overview 
-    - why controls
-    - Rolve of client-side JavaScript and libraries
-    - Dynamic updating
+    - Why controls
     - Eliminate the page refresh
+    - Dynamic updating
+    - Role of client-side JavaScript and libraries
 - List of controls
     - Links to per-control discussions
 - How options are handled
@@ -81,6 +82,7 @@
 - URIs
     How to use uri()
     @controller/action
+    - redirecting to "@"
 - Dynamic refresh
 - Using database integration
     - current record
@@ -91,25 +93,23 @@
     - Style sheets and theming
     - text and escaping data - escape option, renderSafe()
 </pre>
+-->
             <h1>ESP HTML Controls</h1>
             <p>Generating HTML directly to create a dynamic web user interface can be tedious, slow and prone to 
             inconsistencies and errors. Client-side JavaScript libraries can help, but increasingly, the task of 
             extensive integration with such libraries can also become burdensome. What is needed is a higher level of
             abstraction that can automatically generate most HTML including integration with client-side libraries.</p>
-
             <p>ESP provides such a higher level via its rich library of HTML control functions.  ESP Controls are
             provided to generate tables and tabbed property sheets, and manage input forms and fields. Furthermore,
-            these controls are pre-integrated with the jQuery client-side JavasCript library and may optionally bind
-            with server-side databases data. ESP controls make it easy to create dynamically updating tables, background
-            updates to the page and automatic user feedback and form validation.</p>
-
+            these controls are pre-integrated with the jQuery client-side JavaScript library and may optionally bind
+            with server-side databases. ESP controls make it easy to create dynamically updating tables, perform background
+            page updates and do automatic user feedback and form validation.</p>
             <h3>Sample</h3>
             <p>In essence, ESP HTML controls are functions that can be called anywhere in an ESP page or ESP
             controller. Based on their arguments, they emit HTML and jQuery calls into the client response.
             Here is a quick sample of some of the ESP controls in action:</p>
 <pre>
 buttonLink("New Post", "@init", 0);
-
 table(data, "{ \
     columns: { \
         id: { header: 'ID' }, \
@@ -117,7 +117,6 @@ table(data, "{ \
         body: { header: 'BODY' }, \
     }");
 </pre>
-
             <h2 class="section">ESP Control Families</h2>
             <p>ESP Controls are grouped into two families: 
             <ul>
@@ -127,7 +126,6 @@ table(data, "{ \
             <p>Form-based controls are typically located inside a <tt>form</tt>/<tt>endform</tt> control 
             pair that defines a current database record from which data will be utilized. Non form-based controls 
             can be used anywhere on a page outside a form/endform pair.</p>
-
             <h3>HTML Controls</h3>
             <table summary="">
                 <thead>
@@ -270,15 +268,12 @@ table(data, "{ \
                     </tr>
                 </tbody>
             </table>
-
-
             <h3>ESP Control Options</h3>
             <p>ESP controls are generally of the form: function(args ..., options). The options argument is an optional 
-            set of properties to modify the behaviour of the control. It is in the form of a 
+            set of properties to modify the behaviour of the control. It is expressed as a 
             <a href="http://en.wikipedia.org/wiki/JSON">JSON</a> string where a set of properties are enclosed in 
-            braces. Each property keyword is followed by a colon. It helps to use single quotes around property values
-            and use double quotes around the entire option string. 
-            </p>
+            braces. Each keyword is followed by a colon. It helps to use single quotes around property values
+            and use double quotes around the entire option string. For example: </p>
 <pre>
 label("Hello World", "{ effects: 'fadein' }");
 </pre>
@@ -297,7 +292,7 @@ label("Hello World", "{ effects: 'fadein' }");
                     <tr><td>controller</td><td>Controller owning the action to invoke</td></tr>
                     <tr><td>data-*</td><td>Attributes to pass through to the generated HTML</td></tr>
                     <tr><td>domid</td><td>Client-side DOM ID for the control</td></tr>
-                    <tr><td>effects</td><td>Transition effects: "fadein", "fadehout", "highlight"</td></tr>
+                    <tr><td>effects</td><td>Transition effects: "fadein", "fadeout", "highlight"</td></tr>
                     <tr><td>escape</td><td>HTML escape text before rendering</td></tr>
                     <tr><td>height</td><td>Height of the HTML control</td></tr>
                     <tr><td>key</td><td>Key values to add to the click URI</td></tr>
@@ -317,7 +312,6 @@ label("Hello World", "{ effects: 'fadein' }");
                     <tr><td>width</td><td>HTML width of the control</td></tr>
                 </tbody>
             </table>
-
             <h2 class="section">AJAX and Client JavaScript Libraries</h1>
             <p>Web applications split their processing between the server and the client. Increasingly, more processing
             is being done at the client to give a better overall user experience. <a href=
@@ -336,150 +330,12 @@ label("Hello World", "{ effects: 'fadein' }");
             Here is an example of a table configured to display stock market data in a grid with the current price
             for each stock. The grid will refresh its data every 2 seconds without updating the entire web page.</p>
             <pre>
-            MOB - is this refresh or data-refresh?
 &lt;%
-    table(Stock.findAll(), {
+    table(readTable("stock"), {
         refresh: 2,
-        click: "edit",
-        columns: {
-            ticker:         { },
-            stockName:      { },
-            price:          { render: currency("$$%,d") },
-        },
-        connector: "google",
-        width: "80%",
-}) %&gt;
-</pre><!-- TODO more on charts and tables
-            <p>ESP input controls are generally of the form: function(field, options) where <tt>field</tt> is the 
-            name of a field in the current database record that contains the data to display. 
-            The <tt>form</tt> control defines a current database record up to the next <tt>endform</tt> control. 
-            In between, controls can access data in the current record by field name.
-<pre>
-form(readRecByKey("users", "John Smith"), 0);
-    text("username", 0);
-    text("password", "{ password: 'true' }");
-endform(0, 0);
+    }) 
+%&gt;
 </pre>
-            <p>This will display the <tt>username</tt> field in the current database record.
-               <h2 class="section">Table Control</h2>
-               <h2 class="section">Chart Control</h2>
-           -->
-            <a name="viewConnector" id="viewConnector"></a>
-            <h2>HTML Controls</h2>
-            <table summary="">
-                <thead>
-                    <tr>
-                        <td>Name</td>
-                        <td>Description</td>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>alert</td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td>anchor</td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td>button</td>
-                        <td>Render a form button</td>
-                    </tr>
-                    <tr>
-                        <td>buttonLink</td>
-                        <td>Render a link button</td>
-                    </tr>
-                    <tr>
-                        <td>chart</td>
-                        <td>Render a graphical chart</td>
-                    </tr>
-                    <tr>
-                        <td>checkbox</td>
-                        <td>Render an input checkbox</td>
-                    </tr>
-                    <tr>
-                        <td>div</td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td>dropdown</td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td>endform</td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td>flash</td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td>form</td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td>icon</td>
-                        <td>Render an image</td>
-                    </tr>
-                    <tr>
-                        <td>image</td>
-                        <td>Render an image</td>
-                    </tr>
-                    <tr>
-                        <td>input</td>
-                        <td>Smart input control. Delegates depending on the data type.</td>
-                    </tr>
-                    <tr>
-                        <td>label</td>
-                        <td>Render a text label</td>
-                    </tr>
-                    <tr>
-                        <td>mail</td>
-                        <td>Render a mail link</td>
-                    </tr>
-                    <tr>
-                        <td>progress</td>
-                        <td>Render a progress bar</td>
-                    </tr>
-                    <tr>
-                        <td>radio</td>
-                        <td>Render an input radio button</td>
-                    </tr>
-                    <tr>
-                        <td>refresh</td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td>script</td>
-                        <td>Render a script tag</td>
-                    </tr>
-                    <tr>
-                        <td>securityToken</td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td>stylesheet</td>
-                        <td>Render a stylesheet tag</td>
-                    </tr>
-                    <tr>
-                        <td>table</td>
-                        <td>Render a table</td>
-                    </tr>
-                    <tr>
-                        <td>tabs</td>
-                        <td>Render a tab selection control</td>
-                    </tr>
-                    <tr>
-                        <td>text</td>
-                        <td>Render an input text field</td>
-                    </tr>
-                    <tr>
-                        <td>tree</td>
-                        <td>Render a tree control</td>
-                    </tr>
-                </tbody>
-            </table>
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->

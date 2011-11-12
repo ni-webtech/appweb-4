@@ -128,7 +128,7 @@ static int parseFileInner(MaState *state, cchar *path)
         state->key = key;
         mprLog(8, "Line %d, Parse %s %s", state->lineNumber, key, value ? value : "");
         if ((*directive)(state, key, value) < 0) {
-            mprError("Bad directive \"%s\"\nAt line %d in %s\n\n", key, state->lineNumber, state->filename);
+            mprError("Error with directive \"%s\"\nAt line %d in %s\n\n", key, state->lineNumber, state->filename);
             return MPR_ERR_BAD_SYNTAX;
         }
         state = state->top->current;

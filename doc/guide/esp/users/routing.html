@@ -83,18 +83,15 @@
         separate the logic (<tt>controller</tt>), from the presentation (<tt>view</tt>) and the application's 
         data (<tt>model</tt>). This clear partition of responsibilites, scales well and helps to create maintainable 
         applications.</p>
-
         <p>MVC <tt>controllers</tt> are the conductors of the application and they orchestrate the application's 
         activities. Via <tt>action</tt> functions, they receive client requests and generate appropriate responses, 
         mutating the applications data model in the process.</p>
-
             <a name="anatomy" id="anatomy"></a>
             <h2 class="section">Anatomy of a Controller</h2>
             <p>So what does a controller look like? Here is a partial example that has four actions:</p>
             <a name="example" id="example"></a>
             <pre class="light">
 #include "esp.h"
-
 static void create() { 
     /* Create post here */
     redirect("list")
@@ -125,15 +122,12 @@ http://embedthis.com/app/post/create
             <p>assuming a correctly configured request route, the <tt>create</tt> action, in the <tt>post</tt>
             controller will be run. This will create a new blog post and then render the <tt>post-list.esp</tt> 
             view of posts back to the client.</p>
-
-
         <a name="routing" id="routing"></a>
         <h2 class="section">Routing Requests</h2>
         <p>At the heart of understanding how controllers are loaded and actions are run, is understanding Appweb
         routing. When Appweb receives a client request, it examines each of the request routes configured in the 
         <tt>appweb.conf</tt> configuration file, until it finds a matching route for the request URI. The selected
         route will then break the URI into tokens and save the token values as request parameters.</p>
-
         <p>For example: consider the URI format:</p>
         <pre>
 http://embedthis.com/APP/CONTROLLER/ACTION/ID
@@ -142,7 +136,6 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
         name, <tt>ACTION</tt> is the name of the action method to run and <tt>ID</tt> is a selector for an element
         in the Model. When the request URI is tokenized, the Appweb router will extract the controller name and then
         use this name to load the appropriate controller to service the request.</p>
-
         <h3>RESTful Routes</h3>
         <p>A RESTful approach to designing URI routes is also often used where different controller 
         actions are linked to specific routes. The benefit being being simple, readable, RESTful URIs.</p>
@@ -163,7 +156,6 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
             <p>In either case, RESTFul or not, the request URI is broken into tokens that specify the controller and 
             action to invoke to service the request. When a request is received, ESP will create an instance of the
             controller and invoke the requested action method.</p>
-
             <a name="flow" id="flow"></a>
             <h3>Processing Flow</h3>
             <p>Appweb processes requests in stages:</p>
@@ -175,7 +167,6 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
                 <li>Run the specified controller action determined by the request route pattern</li>
                 <li>Optionally render a response view to the client</li>
             </ol>
-
             <a name="config" id="config"></a>
             <h2 class="section">Configuring Controllers</h2>
             <p>Controllers may be configured two ways:
@@ -183,7 +174,6 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
                 <li>As part of an MVC application</li>
                 <li>As a stand-alone controller function.</li>
             </ul>
-
             <h3>MVC Configuration</h3>
             <p>MVC applications are typically created via the <a href="generator.html">esp</a> generator command.
             The <tt>esp</tt> command is used to create a bare MVC application with a directory for controllers, 
@@ -192,14 +182,12 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
             <tt>EspApp</tt> directive configured for your application. This directive creates a top level route for the
             MVC application and then a set of routes for each of the RESTful verbs: create, destroy, edit, list, show
             and update.</p>
-
             <pre>EspApp Prefix Dir RouteSet Database</pre>
             <p>The 
             <a href="../../appweb/users/dir/esp.html#espApp">EspApp</a> directive creates routes that intercept request URIs that begin with the given prefix
             and directs them toward the MVC application in the specified Directory. The RouteSet is typically 
             "<tt>restful</tt>". Lastly, an optional database may be pre-opened for the MVC application. For example:</p>
 <pre>EspApp /store ./applications/store restful mdb://app/db/store.mdb</pre>
-
             <h3>Stand-Alone Controllers</h3>
             <p>Sometimes, you may wish to have a controller without a full MVC application. You can do this by using a
             set of Appweb directives.
@@ -217,7 +205,6 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
             The EspDir directive nominates the directory to contain the controllers. By default this is configured to be
             DocumentRoot/controllers. The Target directive defines how the action function name to invoke. 
             Note: This usage is less typical than using the MVC pattern.</p>
-
             <a name="actions" id="actions"></a>
             <h2 class="section">Actions</h2>
             <p>Actions are where the controller does its work. In ESP, actions are simple "C" functions and thus
@@ -228,7 +215,6 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
             will then call
             <a href="../../../api/esp.html#group___esp_route_1ga321abe89cc91246b2a44f40493988670">espDefineAction</a> 
             to bind action functions to route actions.</p>
-
             <h3>Missing Actions</h3>
             <p>When responding to a request, if the required action is not found, ESP will look for an action called
             "<tt>CONTROLLER-missing</tt>". If that is not defined in the controller, it will look for a global 
@@ -241,7 +227,6 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
             want to block for too long without giving the client some feedback. Because Appweb is multithreaded, you can
             block. In that case, the server will continue to run and serve other requests. However, note that threads
             are a limited resource. It may be better to use non-blocking techniques such as async processing.</p>
-
             <h3>Async Processsing</h3>
             <p>An action may service a long-running request without blocking, by responding in pieces. 
             An action function may return without completing the request. Normally, ESP will automatically finalize
@@ -259,7 +244,6 @@ static void second(HttpConn *conn) {
     render("World\n");
     finalize();
 }
-
 static void first() {
     dontAutoFinalize();
     render("Hello ");
@@ -271,12 +255,10 @@ static void first() {
             is held open, but Appweb is not blocked in any thread. The call to <tt>setTimeout</tt> will arrange to have
             the Appweb event loop invoke <tt>second</tt> after five seconds have elapsed. This pattern is a 
             highly efficient in its use of system resources and scales very well.</p>
-
             <h2>Loading and Caching Controllers</h2>
             <p>Before a controller can run, it must first be compiled and linked into a loadable library.
             On Windows, this will be a DLL, on Unix, it will be a shared library with a ".so" extension. On VxWorks it
             will be a loadable task module.</p>
-
             <p>The compilation of controllers into libraries happens automatically if a compiler is installed on the
             system and if the <tt>EspUpdate</tt> directive is enabled. If so, when a request is received, ESP will
             compile and link the controller in to a library and save the result into the ESP <tt>cache</tt> directory
@@ -284,18 +266,15 @@ static void first() {
             memory and the controller will not be reloaded unless the source code is modified. If Appweb is rebooted,
             the cached library will be reloaded without recompiling. This provides two levels of caching: in-memory and
             on-disk as a shared library.</p>
-
             <h3>Development and Production Modes</h3>
             <p>When a request for a controller is received, ESP will test if the source code has been updated to
             determine if the controller must be recompiled. If the source has been changed, Appweb will wait for all
             requests that are using the already loaded controller, to gracefully complete. When no requests are using
             the old controller version, Appweb will unload the controller, and ESP will recompile the updated controller
             source and create a new shared library that will then be loaded and the request servicing resumed.</p>
-
             <p>If Appweb was configured and built in debug mode, the default value for <tt>EspUpdate</tt> will be
             <tt>on</tt>. If Appweb was built in release mode, the default value is <tt>off</tt>. In release mode is it
             common practice to lock down the compiled controllers and not auto-recompile once deployed.</p>
-
             <a name="context" id="context"></a>
             <h2 class="section">Controller Context</h2>
             <p>ESP establishes a request context for the controller before invoking the controller action. The top level 
@@ -309,14 +288,12 @@ static void first() {
                 <li>session state object &mdash; session state information.</li>
                 <li>flash messages &mdash; informational messages to pass to the next action (and view).</li>
             </ul>
-
             <h3>ESP Short-Form API</h3>
             <p>When ESP invokes a controller action or a ESP web page, ESP defines the current HttpConn connection 
             object in Thread-Local storage.  ESP also defines a terse, short-form, 
             <a href="../../../api/esp.html#group___esp_abbrev">API</a> that uses the current connection object to
             provide context for the API. When using this API, explicit access to the connection object should not 
             typically be required. The ESP short-form API should cover 95% of requirements for action processing.</p>
-
             <h3>Explict Connection Access</h3>
             <p>If explicit access to the connection object is required, action functions may
             define a connection argument as 
@@ -327,7 +304,6 @@ static void first() {
             Alternatively, the connection object can can be retrieved using the <a
                 href="../../../api/esp.html#group___esp_abbrev_1gabe448b3542b4d1391e80e74192a09cb3">
                 getConn</a> API.</p>
-
             <h3>Navigating the Connection Object</h3>
             <p>The <a href="../../../api/http.html#group___http_conn">HttpConn</a> object represents the current
             TCP/IP connection. By using HTTP KeepAlive, the connection may be utilized for multiple requests. The fields
@@ -348,7 +324,6 @@ static void first() {
                     <tr><td>port</td><td>Remote client port</td></tr>
                 </tbody>
             </table>
-
             <h3>Navigating the Receive Object</h3>
             <p>The <a href="../../../api/http.html#group___http_rx">HttpRx</a> object represents the receive side of the
             HTTP protocol. On the server, it holds state regarding the client HTTP request. The fields of the HttpRx
@@ -368,7 +343,6 @@ static void first() {
                     <tr><td>files</td><td>Uploaded files</td></tr>
                 </tbody>
             </table>
-
             <h3>Navigating the Tx Object</h3>
             <p>The <a href="../../../api/http.html#group___http_tx">HttpTx</a> object represents the transmit side of the
             HTTP protocol. On the server, it holds state regarding the response to the clientThe fields of the HttpTx
@@ -386,10 +360,8 @@ static void first() {
                     <tr><td>headers</td><td>Response HTTP headers</td></tr>
                 </tbody>
             </table>
-
             
             <a name="models" id="models"></a>
-
             <h3>Sample of ESP API</h3>
             <p>Here are a few of the ESP APIs that may be used inside controller actions:</p>
             <table summary="viewClass" width="100%">
@@ -477,7 +449,6 @@ static void first() {
                     </tr>
                 </tbody>
             </table>
-
             <h2 class="section">Request Parameters</h2>
             <p>ESP will collect request query, form data and route parameters into one
             <tt>params</tt> object which is accessible to actions via the 
@@ -486,7 +457,6 @@ static void first() {
             When routing the request, Appweb will tokenize the URI and create parameters for each positional token in
             the URI. The Controller name and Action are defined as the parameters: <tt>controller</tt> and 
             <tt>token</tt>.</p>
-
             <a name="views" id="views"></a>
             <h3>Rendering Views</h3>
             <p>After processing the request, the controller is responsible for rendering a response back to the client. 
@@ -498,7 +468,6 @@ static void first() {
             
             If the action method does not explicitly generate any response, ESP will invoke a view with the same name as
             the action method.</p>
-
             <a name="generating" id="generating"></a>
             <h2 class="section">Generating Controllers and Actions</h2>
             <p>If you are creating an MVC application, you may use the ESP application generator, called <tt>esp</tt> to
@@ -511,7 +480,6 @@ esp generate CONTROLLER ACTIONS...
             generate. This command will create the controller source file under the <tt>controllers</tt> directory. The
             controller source will contain empty functions for each of the requested actions.
             You can edit the controller source to meet your needs.</p>
-
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->
