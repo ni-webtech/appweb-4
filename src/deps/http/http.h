@@ -838,7 +838,7 @@ extern HttpPacket *httpCreateEndPacket();
 
 /** 
     Create an entity data packet
-    @description Create an entity packet and set the HTTP_PACKET_DATA flag
+    @description Create an entity packet and set the HTTP_PACKET_DATA flag.
         Entity packets describe the resource (entity) to send to the client and provide a #HttpFillProc procedure
         used to fill packets with data from the entity.
     @param pos Position within the entity for packet data 
@@ -870,7 +870,7 @@ extern HttpPacket *httpCreatePacket(ssize size);
 /** 
     Get the next packet from a queue
     @description Get the next packet. This will remove the packet from the queue and adjust the queue counts
-        accordingly. If the queue was full and upstream queues were blocked, they will be enabled.
+        accordingly. If the queue is full and upstream queues are blocked, they will be enabled.
     @param q Queue reference
     @return The packet removed from the queue.
     @ingroup HttpQueue
@@ -949,14 +949,14 @@ typedef void (*HttpQueueService)(struct HttpQueue *q);
     Queue object
     @description The request pipeline consists of a full-duplex pipeline of stages. Each stage has two queues,
         one for outgoing data and one for incoming. A HttpQueue object manages the data flow for a request stage
-        and has the ability to queue and process data, manage flow control and schedule packets for service.
+        and has the ability to queue and process data, manage flow control, and schedule packets for service.
         \n\n
-        Queue's provide open, close, put and service methods. These methods manage and respond to incoming packets.
+        Queue's provide open, close, put, and service methods. These methods manage and respond to incoming packets.
         A queue can respond immediately to an incoming packet by processing or dispatching a packet in its put() method.
         Alternatively, the queue can defer processing by queueing the packet on it's service queue and then waiting for
         it's service() method to be invoked. 
         \n\n
-        If a queue does not define a put() method, the default put method will 
+        If a queue does not define a put() method, the default put() method will 
         be used which queues data onto the service queue. The default incoming put() method joins incoming packets
         into a single packet on the service queue.
     @stability Evolving
@@ -979,7 +979,7 @@ typedef struct HttpQueue {
     struct HttpQueue    *nextQ;                 /**< Downstream queue for next stage */
     struct HttpQueue    *prevQ;                 /**< Upstream queue for prior stage */
     struct HttpStage    *stage;                 /**< Stage owning this queue */
-    struct HttpConn     *conn;                  /**< Connection ownning this queue */
+    struct HttpConn     *conn;                  /**< Connection owning this queue */
     HttpQueueOpen       open;                   /**< Open the queue */
     HttpQueueClose      close;                  /**< Close the queue */
     HttpQueueStart      start;                  /**< Start the queue */
@@ -1005,7 +1005,7 @@ typedef struct HttpQueue {
 
 /** 
     Disable a queue
-    @description Mark a queue as disabled so that it will not be scheduled for service.
+    @description Mark a queue as disabled, so that it will not be scheduled for service.
     @param q Queue reference
     @ingroup HttpQueue
  */
@@ -1013,10 +1013,10 @@ extern void httpDisableQueue(HttpQueue *q);
 
 /** 
     Discard all data from the queue
-    @description Discard data from the queue. If removePackets (not yet implemented) is true, then remove the packets
-        otherwise, just discard the data and preserve the packets.
+    @description Discard data from the queue. If removePackets (not yet implemented) is "true", then remove the packets.
+        Oherwise, just discard the data and preserve the packets.
     @param q Queue reference
-    @param removePackets If true, the data packets will be removed from the queue
+    @param removePackets If "true", the data packets will be removed from the queue.
     @ingroup HttpQueue
  */
 extern void httpDiscardData(HttpQueue *q, bool removePackets);
@@ -1036,8 +1036,8 @@ extern void httpEnableQueue(HttpQueue *q);
     If blocking is requested, the call will block until the queue count falls below the queue maximum.
     WARNING: Be very careful when using blocking == true. Should only be used by end applications and not by middleware.
     @param q Queue to flush
-    @param block If set to true, this call will block until the data has drained below the queue maximum.
-    @return True if there is room for more data in the queue after flushing.
+    @param block If set to "true", this call will block until the data has drained below the queue maximum.
+    @return "True" if there is room for more data in the queue after flushing.
  */
 extern bool httpFlushQueue(HttpQueue *q, bool block);
 
@@ -1054,7 +1054,7 @@ extern ssize httpGetQueueRoom(HttpQueue *q);
     Test if the connection has received all incoming content
     @description This tests if the connection is at an "End of File condition.
     @param conn HttpConn object created via $httpCreateConn
-    @return True if all receive content has been received 
+    @return "True" if all Receive content has been received 
     @ingroup HttpQueue
  */
 extern bool httpIsEof(struct HttpConn *conn);
@@ -1062,10 +1062,10 @@ extern bool httpIsEof(struct HttpConn *conn);
 /** 
     Test if a packet is too big 
     @description Test if a packet is too big to fit downstream. If the packet content exceeds the downstream queue's 
-        maximum or exceeds the downstream queue's requested packet size -- then this routine will return true.
+        maximum or exceeds the downstream queue's requested packet size -- then this routine will return "true".
     @param q Queue reference
     @param packet Packet to test
-    @return True if the packet is too big for the downstream queue
+    @return "True" if the packet is too big for the downstream queue
     @ingroup HttpQueue
  */
 extern bool httpIsPacketTooBig(struct HttpQueue *q, HttpPacket *packet);
@@ -1074,17 +1074,17 @@ extern bool httpIsPacketTooBig(struct HttpQueue *q, HttpPacket *packet);
     Determine if the queue is empty
     @description Determine if the queue has no packets queued. This does not test if the queue has no data content.
     @param q Queue reference
-    @return True if there are no packets queued.
+    @return "True" if there are no packets queued.
     @ingroup HttpQueue
  */
 extern bool httpIsQueueEmpty(HttpQueue *q);
 
 /**
     Join the packets together
-    @description This call joins data packets on the given queue up together up to the given maximum size.
+    @description This call joins data packets (on the given queue) together - up to the designated maximum size.
         The maximum size is also limited by the downstream queue maximum packet size.
     @param q Queue to examine
-    @param size The maximum sized packet that will be created by joining queue packets is the minimum of the given size
+    @param size The maximum-sized packet that will be created by joining queue packets is the minimum of the given size
         and the downstream queues maximum packet size.
     @ingroup HttpQueue
  */
@@ -1145,7 +1145,7 @@ extern void httpPutPacket(struct HttpQueue *q, HttpPacket *packet);
 
 /** 
     Put a packet onto the next queue
-    @description Put a packet onto the next downstream queue by calling the downstreams queue's put() method. 
+    @description Put a packet onto the next downstream queue by calling the downstream queue's put() method. 
     @param q Queue reference. The packet will not be queued on this queue, but rather on the queue downstream.
     @param packet Packet to put
     @ingroup HttpQueue
@@ -1164,12 +1164,12 @@ extern void httpRemoveQueue(HttpQueue *q);
 
 /** 
     Resize a packet
-    @description Resize a packet if required so that it fits in the downstream queue. This may split the packet
+    @description Resize a packet, if required, so that it fits in the downstream queue. This may split the packet
         if it is too big to fit in the downstream queue. If it is split, the tail portion is put back on the queue.
     @param q Queue reference
     @param packet Packet to put
     @param size If size is > 0, then also ensure the packet is not larger than this size.
-    @return Zero if successful, otherwise a negative Mpr error code
+    @return "Zero" if successful, otherwise a negative Mpr error code
     @ingroup HttpQueue
  */
 extern int httpResizePacket(struct HttpQueue *q, HttpPacket *packet, ssize size);
@@ -1209,29 +1209,29 @@ extern void httpServiceQueue(HttpQueue *q);
 /**
     Verify a queue 
     @param q Queue reference
-    @return True if the queue verifies
+    @return "True" if the queue verifies
     @internal
  */
 extern bool httpVerifyQueue(HttpQueue *q);
 
 /** 
     Determine if the downstream queue will accept this packet.
-    @description Test if the downstream queue will accept a packet. The packet will be resized if required in an
+    @description Test if the downstream queue will accept a packet. The packet will be resized, if required, in an
         attempt to get the downstream queue to accept it. If the downstream queue is full, disable this queue
-        and mark the downstream queue as full and service it immediately to try to relieve the congestion.
+        and mark the downstream queue as full, and service it immediately to try to relieve the congestion.
     @param q Queue reference
     @param packet Packet to put
-    @return True if the downstream queue will accept the packet. Use $httpSendPacketToNext to send the packet downstream
+    @return "True" if the downstream queue will accept the packet. Use $httpSendPacketToNext to send the packet downstream
     @ingroup HttpQueue
  */
 extern bool httpWillNextQueueAcceptPacket(HttpQueue *q, HttpPacket *packet);
 
 /** 
     Determine if the downstream queue will accept a certain amount of data.
-    @description Test if the downstream queue will data of a given size.
+    @description Test if the downstream queue will accept data of a given size.
     @param q Queue reference
     @param size Size of data to test for
-    @return True if the downstream queue will accept the given sized data.
+    @return "True" if the downstream queue will accept the given sized data.
     @ingroup HttpQueue
  */
 extern bool httpWillNextQueueAcceptSize(HttpQueue *q, ssize size);
@@ -3023,7 +3023,7 @@ typedef struct HttpRoute {
     void            *context;               /**< Hosting context (Appweb == EjsPool) */
     void            *eroute;                /**< Extended route information for handler (only) */
     char            *uploadDir;             /**< Upload directory */
-    int             autoDelete;             /**< Auto delete uploaded files */
+    int             autoDelete;             /**< Automatically delete uploaded files */
 
     /*
         Used by Ejscript
@@ -3073,7 +3073,7 @@ typedef int (HttpRouteProc)(HttpConn *conn, HttpRoute *route, HttpRouteOp *item)
 
 /**
     Add routes for a resource
-    @description This routing add a set of RESTful routes for a resource. This will add the following routes:
+    @description This routing adds a set of RESTful routes for a resource. It will add the following routes:
     <table>
         <tr><td>Name</td><td>Method</td><td>Pattern</td><td>Action</td></tr>
         <tr><td>init</td><td>GET</td><td>/NAME/init$</td><td>init</td></tr>
@@ -3093,7 +3093,7 @@ extern void httpAddResource(HttpRoute *parent, cchar *resource);
 
 /**
     Add routes for a group of resources
-    @description This routing add a set of RESTful routes for a resource group. This will add the following routes:
+    @description This routing adds a set of RESTful routes for a resource group. It will add the following routes:
     <table>
         <tr><td>Name</td><td>Method</td><td>Pattern</td><td>Action</td></tr>
         <tr><td>list</td><td>GET</td><td>/NAME(/)*$</td><td>list</td></tr>
@@ -3115,7 +3115,7 @@ extern void httpAddResourceGroup(HttpRoute *parent, cchar *resource);
 
 /**
     Add a route for the home page.
-    @description This will add a home page route ESP applications. This will add the following route:
+    @description This will add a home page to route ESP applications. This will add the following route:
     <table>
         <tr><td>Name</td><td>Method</td><td>Pattern</td><td>Target</td></tr>
         <tr><td>home</td><td>GET,POST,PUT</td><td>^/$</td><td>index.esp</td></tr>
@@ -3153,10 +3153,10 @@ extern void httpAddRouteSet(HttpRoute *parent, cchar *set);
 /**
     Add a route condition
     @description A route condition is run after matching the route pattern. For a route to be accepted, all conditions
-        must match. Route conditions are builtin rules that can be applied to routes.
+        must match. Route conditions are built-in rules that can be applied to routes.
     @param route Route to modify
     @param name Condition rule to add. Supported conditions are: "auth", "missing", "directory", "exists", and "match".
-        The auth rule is used internally to implement basic and digest authentication. 
+        The "auth" rule is used internally to implement basic and digest authentication. 
         \n\n
         The "missing" rule tests if the target filename is missing. The "missing" rule takes no arguments. 
         \n\n
@@ -3219,7 +3219,7 @@ extern void httpAddRouteExpiryByType(HttpRoute *route, MprTime when, cchar *mime
 /**
     Add a route filter
     @description This configures the route pipeline by adding processing filters for a request.
-        must match. Route conditions are builtin rules that can be applied to routes.
+        must match. Route conditions are built-in rules that can be applied to routes.
     @param route Route to modify
     @param name Filter name to add
     @param extensions Request extensions for which the filter will be run. A request extension may come from the URI
@@ -3305,7 +3305,7 @@ extern void httpAddRouteParam(HttpRoute *route, cchar *field, cchar *value, int 
 /**
     Add a route update rule
     @description This configures the route pipeline by adding processing update rules for a request.
-        Updates are builtin rules that can be applied to routes.
+        Updates are built-in rules that can be applied to routes.
     @param route Route to modify
     @param name Update rule to add. Supported update rules include: "cmd", "field" and "lang". 
         \n\n
@@ -4080,7 +4080,7 @@ typedef struct HttpRx {
      */
     MprHash         *files;                 /**< Uploaded files. Managed by the upload filter */
     char            *uploadDir;             /**< Upload directory */
-    int             autoDelete;             /**< Auto delete uploaded files */
+    int             autoDelete;             /**< Automatically delete uploaded files */
 
     char            *paramString;           /**< Cached param data as a string */
     HttpLang        *lang;                  /**< Selected language */

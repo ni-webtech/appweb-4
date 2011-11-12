@@ -856,6 +856,7 @@ static int espDirDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S ?S", &name, &path)) {
         return MPR_ERR_BAD_SYNTAX;
     }
+    //  MOB restful is deprecated
     if (scmp(name, "mvc") == 0 || scmp(name, "restful") == 0) {
         setMvcDirs(eroute, state->route);
     } else {
