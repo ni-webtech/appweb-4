@@ -68,6 +68,7 @@
                 <li><a href="#scriptAlias">ScriptAlias</a></li>
                 <li><a href="#setConnector">SetConnector</a></li>
                 <li><a href="#setHandler">SetHandler</a></li>
+                <li><a href="#source">Source</a></li>
                 <li><a href="#target">Target</a></li>
                 <li><a href="#traceMethod">TraceMethod</a></li>
                 <li><a href="#update">Update</a></li>
@@ -1150,6 +1151,38 @@
                     </tr>
                 </tbody>
             </table>
+
+            <a name="source" id="source"></a>
+            <h2>Source</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Define source code for the handler to use when servicing the request.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>Source path</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>Source blog.c</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>Some load scripts or source when servicing a request. This directive configures
+                            the file path to a source script or code file to be used by the handler when servicing the
+                            request. For example: ESP uses this to specify the name of the controller to load 
+                            when invoking an action.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
             <a name="target" id="target"></a>
             <h2>Target</h2>
             <table class="directive" summary="" width="100%">
