@@ -10,12 +10,12 @@ SYNOPSIS
 
        [--benchmark  ]  [--chunk  size  ] [--continue] [--cookie cookieString]
        [--data]  [--debugger]  [--delete]  [--form  string]  [--header   'key:
-       value']  [--host hostName] [--http version] [--iterations count] [--log
-       logSpec]  [--method  HTTP_METHOD]  [--nofollow]  [--noout]  [--password
-       pass]  [--post]  [--printable]  [--put] [--range byteRanges] [--retries
-       count] [--sequence] [--showCode] [--showHeaders] [--single]  [--timeout
-       seconds]   [--threads   count]  [--upload]  [--user  name]  [--verbose]
-       [--workers count]
+       value']   [--host   hostName]   [--iterations  count]  [--log  logSpec]
+       [--method HTTP_METHOD] [--nofollow] [--noout] [--out file]  [--password
+       pass]  [--post]  [--printable]  [--protocol  version]  [--put] [--range
+       byteRanges] [--retries count] [--sequence] [--showHeaders]  [--showSta-
+       tus]   [--single]  [--threads  count]  [--timeout  seconds]  [--upload]
+       [--user name] [--verbose] [--workers count]
 
 DESCRIPTION
        The http command issues HTTP commands to  retrieve  files  from  a  web
@@ -63,41 +63,44 @@ OPTIONS
               www.myHost.com:8888" were used with the URL "/index.html",  then
               http will retrieve http://www.myHost.com:8888.
 
-       --http HTTP_VERSION
-              Use  the  specified  HTTP protocol. httpVersion should be either
-              '0' for HTTP/1.0 or 1 for HTTP/1.1.
-
        --iterations count
-              Retrieve the URLs iterations times.  Useful  for  load  testing.
+              Retrieve  the  URLs  iterations  times. Useful for load testing.
               This switch can also be abbreviated as -i.
 
        --log logSpec
-              Specify  a  file  to  log  messages.  The syntax is: "--log log-
-              Name[,moduleName][:logLevel]".  Level 3 will trace  the  request
+              Specify a file to log messages.   The  syntax  is:  "--log  log-
+              Name[,moduleName][:logLevel]".   Level  3 will trace the request
               and response headers.
 
        --method method
-              Set  the  HTTP  method.  Values  may be "GET", "PUT", "OPTIONS",
+              Set the HTTP method. Values  may  be  "GET",  "PUT",  "OPTIONS",
               "TRACE".
 
        --nofollow
-              Don't automatically follow redirects.  Normal  behaviour  is  to
-              follow  redirects and reissue the request if the server responds
+              Don't  automatically  follow  redirects.  Normal behaviour is to
+              follow redirects and reissue the request if the server  responds
               with a redirection response (30X response).
 
        --noout
-              Run in quiet mode and do no output. Suppress  tracing  requests.
+              Run  in  quiet mode and do no output. Suppress tracing requests.
               This switch can also be abbreviated as -n or as --quiet or -q.
 
+       --out file
+              Save response output to the given file.
+
        --password passPhrase
-              Specify  a  password  to  send with the request. Requires a user
+              Specify a password to send with the  request.  Requires  a  user
               name to be also specified via --user.
 
        --post Issue a POST request. This is an alias for --method POST.
 
        --printable
-              Make binary output printable by printing  hex  digits  for  each
+              Make  binary  output  printable  by printing hex digits for each
               character.
+
+       --protocol HTTP_VERSION
+              Use the specified HTTP protocol. httpVersion  should  be  either
+              '0' for HTTP/1.0 or 1 for HTTP/1.1.
 
        --put  Issue a PUT request. This is an alias for --method PUT.
 
@@ -117,12 +120,12 @@ OPTIONS
        --retries retryCount
               Retry failed requests this number of times.
 
-       --showCode
-              Output  the HTTP response code. If this switch is used, the com-
-              mand will always exit with zero status.
-
        --showHeaders
               Output HTTP headers. Useful for debugging.
+
+       --showStatus
+              Output  the HTTP response code. If this switch is used, the com-
+              mand will always exit with zero status.
 
        --single
               Single step between requests by pausing for  user  input  before

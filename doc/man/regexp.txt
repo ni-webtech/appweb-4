@@ -3,9 +3,9 @@ PCREPATTERN(3)                                                  PCREPATTERN(3)
 
 
 NAME
-       PCRE - Perl-compatible regular expressions
+       REGEXP - Perl-compatible regular expressions
 
-PCRE REGULAR EXPRESSION DETAILS
+REGEXP REGULAR EXPRESSION DETAILS
 
        The  syntax and semantics of the regular expressions that are supported
        by PCRE are described in detail below. There is a quick-reference  syn-

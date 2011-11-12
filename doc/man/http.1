@@ -14,24 +14,25 @@ http \- HTTP Client program
 [\fI--form string\fR]
 [\fI--header 'key: value'\fR]
 [\fI--host hostName\fR]
-[\fI--http version\fR]
 [\fI--iterations count\fR]
 [\fI--log logSpec\fR]
 [\fI--method HTTP_METHOD\fR]
 [\fI--nofollow\fR]
 [\fI--noout\fR]
+[\fI--out file\fR]
 [\fI--password pass\fR]
 [\fI--post\fR]
 [\fI--printable\fR]
+[\fI--protocol version\fR]
 [\fI--put\fR]
 [\fI--range byteRanges\fR]
 [\fI--retries count\fR]
 [\fI--sequence\fR]
-[\fI--showCode\fR]
 [\fI--showHeaders\fR]
+[\fI--showStatus\fR]
 [\fI--single\fR]
-[\fI--timeout seconds\fR]
 [\fI--threads count\fR]
+[\fI--timeout seconds\fR]
 [\fI--upload\fR]
 [\fI--user name\fR]
 [\fI--verbose\fR]
@@ -75,9 +76,6 @@ Add a custom header to send with the request. Multiple --header switches can be 
 Prepend all URLs with the specified host. For example if '-h www.myHost.com:8888" were used with the URL "/index.html", 
 then http will retrieve http://www.myHost.com:8888.
 .TP
-\fB\--http HTTP_VERSION\fR 
-Use the specified HTTP protocol. httpVersion should be either '0' for HTTP/1.0 or 1 for HTTP/1.1.
-.TP
 \fB\--iterations count\fR 
 Retrieve the URLs iterations times. Useful for load testing. This switch can also be abbreviated as \fB\-i\fR.
 .TP
@@ -96,6 +94,9 @@ responds with a redirection response (30X response).
 Run in quiet mode and do no output. Suppress tracing requests.
 This switch can also be abbreviated as \fB\-n\fR or as \fB--quiet\fR or \fB-q\fR.
 .TP
+\fB\--out file \fR 
+Save response output to the given file.
+.TP
 \fB\--password passPhrase\fR 
 Specify a password to send with the request. Requires a user name to be also specified via --user.
 .TP
@@ -104,6 +105,9 @@ Issue a POST request. This is an alias for --method POST.
 .TP
 \fB\--printable\fR 
 Make binary output printable by printing hex digits for each character.
+.TP
+\fB\--protocol HTTP_VERSION\fR 
+Use the specified HTTP protocol. httpVersion should be either '0' for HTTP/1.0 or 1 for HTTP/1.1.
 .TP
 \fB\--put\fR 
 Issue a PUT request. This is an alias for --method PUT.
@@ -128,11 +132,11 @@ Examples:
 \fB\--retries retryCount\fR 
 Retry failed requests this number of times.
 .TP
-\fB\--showCode \fR 
-Output the HTTP response code. If this switch is used, the command will always exit with zero status.
-.TP
 \fB\--showHeaders \fR 
 Output HTTP headers. Useful for debugging.
+.TP
+\fB\--showStatus \fR 
+Output the HTTP response code. If this switch is used, the command will always exit with zero status.
 .TP
 \fB\--single \fR 
 Single step between requests by pausing for user input before proceeding.

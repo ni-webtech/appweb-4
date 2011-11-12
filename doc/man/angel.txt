@@ -62,11 +62,11 @@ REPORTING BUGS
        Report bugs to <dev@embedthis.com>.
 
 COPYRIGHT
-       Copyright (C) 2003-2010 Embedthis Software.
+       Copyright (C) 2003-2011 Embedthis Software.
 
 SEE ALSO
        appweb
 
 
 
-angel                             March 2010                          ANGEL(1)
+angel                            November 2011                        ANGEL(1)

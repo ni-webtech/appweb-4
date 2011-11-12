@@ -1411,7 +1411,7 @@ static void usageError(Mpr *mpr)
     "  Options:\n"
     "    --chdir dir            # Change to the named directory first\n"
     "    --config configFile    # Use named config file instead appweb.conf\n"
-    "    --database name        # Database database 'mdb|sqlite' \n"
+    "    --database name        # Database provider 'mdb|sqlite' \n"
     "    --flat                 # Compile into a single module\n"
     "    --listen [ip:]port     # Listen on specified address \n"
     "    --log logFile:level    # Log to file file at verbosity level\n"
