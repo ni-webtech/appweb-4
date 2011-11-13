@@ -78,7 +78,7 @@ int maStartLogging(HttpHost *host, cchar *logSpec)
     int         level, mode;
     static int  once = 0;
 
-    level = 0;
+    level = -1;
     mpr = mprGetMpr();
 
     if (logSpec == 0) {
@@ -99,7 +99,6 @@ int maStartLogging(HttpHost *host, cchar *logSpec)
             if (host && host->logCount) {
                 mode |= O_APPEND;
                 mprGetPathInfo(spec, &info);
-                //  MOB - is this access logging or error logging details?
                 if (host->logSize <= 0 || (info.valid && info.size > host->logSize)) {
                     maArchiveLog(spec, host->logCount, host->logSize);
                 }
@@ -112,7 +111,9 @@ int maStartLogging(HttpHost *host, cchar *logSpec)
             }
             once = 0;
         }
-        mprSetLogLevel(level);
+        if (level >= 0) {
+            mprSetLogLevel(level);
+        }
         mprSetLogHandler(logHandler);
         mprSetLogFile(file);
 
@@ -213,14 +214,18 @@ int maArchiveLog(cchar *path, int count, int maxSize)
     char    *from, *to;
     int     i;
 
-    //  MOB - not right. Not handling to level log file
     for (i = count - 1; i > 0; i--) {
-        from = sfmt("%s.%d", path, i);
-        to = sfmt("%s.%d", path, i - 1);
+        from = sfmt("%s.%d", path, i - 1);
+        to = sfmt("%s.%d", path, i);
         //  MOB RC
         unlink(to);
         rename(from, to);
     }
+    from = sfmt("%s", path);
+    to = sfmt("%s.0", path);
+    //  MOB RC
+    unlink(to);
+    rename(from, to);
     return 0;
 }
 
