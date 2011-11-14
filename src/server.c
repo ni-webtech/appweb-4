@@ -268,11 +268,6 @@ int maStartServer(MaServer *server)
         } else {
             count++;
         }
-#if UNUSED
-        for (nextHost = 0; (host = mprGetNextItem(endpoint->hosts, &nextHost)) != 0; ) {
-            mprLog(3, "Serving %s", host->name);
-        }
-#endif
     }
     if (count == 0) {
         if (!warned) {

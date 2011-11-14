@@ -10715,6 +10715,9 @@ static void manageHashTable(MprHash *hash, int flags)
                 mprAssert(mprIsValid(sp));
                 mprMark(sp);
                 if (!(hash->flags & MPR_HASH_STATIC_VALUES)) {
+                    if (sp->data && !mprIsValid(sp->data)) {
+                        mprLog(0, "Data in key %s is not valid", sp->key);
+                    }
                     mprAssert(sp->data == 0 || mprIsValid(sp->data));
                     mprMark(sp->data);
                 }

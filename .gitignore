@@ -142,3 +142,4 @@ web/caching/cache.cgi
 src/test/web/caching/cache.cgi
 src/test/servers.conf
 test/error.log*
+src/test/error.log*
