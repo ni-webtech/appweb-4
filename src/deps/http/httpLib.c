@@ -13403,12 +13403,12 @@ void httpAppendHeaderString(HttpConn *conn, cchar *key, cchar *value)
     oldValue = mprLookupKey(conn->tx->headers, key);
     if (oldValue) {
         if (scasematch(key, "Set-Cookie")) {
-            mprAddDuplicateKey(conn->tx->headers, key, value);
+            mprAddDuplicateKey(conn->tx->headers, key, sclone(value));
         } else {
             addHeader(conn, key, sfmt("%s, %s", oldValue, value));
         }
     } else {
-        addHeader(conn, key, value);
+        addHeader(conn, key, sclone(value));
     }
 }
 
