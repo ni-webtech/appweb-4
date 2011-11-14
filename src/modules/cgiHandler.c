@@ -663,7 +663,6 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
 {
     HttpRx      *rx;
     HttpTx      *tx;
-    HttpHost    *host;
     char        *fileName, **argv, *indexQuery, *cp, *tok;
     cchar       *actionProgram;
     size_t      len;
@@ -671,7 +670,6 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
 
     rx = conn->rx;
     tx = conn->tx;
-    host = httpGetConnHost(conn);
 
     fileName = tx->filename;
     mprAssert(fileName);
@@ -681,7 +679,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
     argc = *argcp;
 
     if (tx->ext) {
-        actionProgram = mprGetMimeProgram(host->mimeTypes, tx->ext);
+        actionProgram = mprGetMimeProgram(rx->route->mimeTypes, tx->ext);
         if (actionProgram != 0) {
             argc++;
         }
@@ -1011,7 +1009,7 @@ static int actionDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S %S", &mimeType, &program)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    mprSetMimeProgram(state->host->mimeTypes, mimeType, program);
+    mprSetMimeProgram(state->route->mimeTypes, mimeType, program);
     return 0;
 }
 

@@ -1810,7 +1810,7 @@ static HttpCache *lookupCacheControl(HttpConn *conn)
             continue;
         }
         if (cache->types) {
-            if ((mimeType = (char*) mprLookupMime(conn->host->mimeTypes, tx->ext)) != 0) {
+            if ((mimeType = (char*) mprLookupMime(rx->route->mimeTypes, tx->ext)) != 0) {
                 if (!mprLookupKey(cache->types, mimeType)) {
                     continue;
                 }
@@ -2868,7 +2868,7 @@ HttpConn *httpCreateConn(Http *http, HttpEndpoint *endpoint, MprDispatcher *disp
     if (endpoint) {
         conn->notifier = endpoint->notifier;
         host = mprGetFirstItem(endpoint->hosts);
-        conn->limits = (host) ? host->limits : http->serverLimits;
+        conn->limits = (host && host->defaultRoute) ? host->defaultRoute->limits : http->serverLimits;
     } else {
         conn->limits = http->clientLimits;
     }
@@ -3698,9 +3698,11 @@ HttpEndpoint *httpCreateConfiguredEndpoint(cchar *home, cchar *documents, cchar 
     httpSetHostIpAddr(host, ip, port);
     httpAddHostToEndpoint(endpoint, host);
     httpSetHostHome(host, home);
+#if UNUSED
     if ((host->mimeTypes = mprCreateMimeTypes("mime.types")) == 0) {
         host->mimeTypes = MPR->mimeTypes;
     }
+#endif
     httpSetRouteDir(route, documents);
     httpFinalizeRoute(route);
     return endpoint;
@@ -3742,10 +3744,15 @@ static bool validateEndpoint(HttpEndpoint *endpoint)
 
 int httpStartEndpoint(HttpEndpoint *endpoint)
 {
-    cchar   *proto, *ip;
+    HttpHost    *host;
+    cchar       *proto, *ip;
+    int         next;
 
     if (!validateEndpoint(endpoint)) {
         return MPR_ERR_BAD_ARGS;
+    }
+    for (ITERATE_ITEMS(endpoint->hosts, host, next)) {
+        httpStartHost(host);
     }
     if ((endpoint->sock = mprCreateSocket(endpoint->ssl)) == 0) {
         return MPR_ERR_MEMORY;
@@ -3773,6 +3780,12 @@ int httpStartEndpoint(HttpEndpoint *endpoint)
 
 void httpStopEndpoint(HttpEndpoint *endpoint)
 {
+    HttpHost    *host;
+    int         next;
+
+    for (ITERATE_ITEMS(endpoint->hosts, host, next)) {
+        httpStopHost(host);
+    }
     if (endpoint->waitHandler) {
         mprRemoveWaitHandler(endpoint->waitHandler);
         endpoint->waitHandler = 0;
@@ -3791,7 +3804,7 @@ bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn)
     cchar           *action;
     int             count;
 
-    limits = endpoint->limits;
+    limits = conn->limits;
     action = "unknown";
     mprAssert(conn->endpoint == endpoint);
     lock(endpoint->http);
@@ -4043,7 +4056,7 @@ void httpAddHostToEndpoint(HttpEndpoint *endpoint, HttpHost *host)
 {
     mprAddItem(endpoint->hosts, host);
     if (endpoint->limits == 0) {
-        endpoint->limits = host->limits;
+        endpoint->limits = host->defaultRoute->limits;
     }
 }
 
@@ -4389,17 +4402,21 @@ HttpHost *httpCreateHost()
     mprSetCacheLimits(host->responseCache, 0, HTTP_CACHE_LIFESPAN, 0, 0);
 
     host->mutex = mprCreateLock();
-    host->dirs = mprCreateList(-1, 0);
     host->routes = mprCreateList(-1, 0);
+#if UNUSED
+    host->dirs = mprCreateList(-1, 0);
     host->limits = mprMemdup(http->serverLimits, sizeof(HttpLimits));
+#endif
     host->flags = HTTP_HOST_NO_TRACE;
     host->protocol = sclone("HTTP/1.1");
-    host->mimeTypes = MPR->mimeTypes;
     host->home = sclone(".");
 
+#if UNUSED
+    host->mimeTypes = MPR->mimeTypes;
     host->traceMask = HTTP_TRACE_TX | HTTP_TRACE_RX | HTTP_TRACE_FIRST | HTTP_TRACE_HEADER;
     host->traceLevel = 3;
     host->traceMaxLength = MAXINT;
+#endif
     httpAddHost(http, host);
     return host;
 }
@@ -4423,13 +4440,16 @@ HttpHost *httpCloneHost(HttpHost *parent)
      */
     host->parent = parent;
     host->responseCache = parent->responseCache;
+    host->home = parent->home;
+#if UNUSED
     host->dirs = parent->dirs;
+#endif
     host->routes = parent->routes;
     host->flags = parent->flags | HTTP_HOST_VHOST;
     host->protocol = parent->protocol;
+#if UNUSED
     host->mimeTypes = parent->mimeTypes;
     host->limits = mprMemdup(parent->limits, sizeof(HttpLimits));
-    host->home = parent->home;
     host->traceMask = parent->traceMask;
     host->traceLevel = parent->traceLevel;
     host->traceMaxLength = parent->traceMaxLength;
@@ -4439,6 +4459,7 @@ HttpHost *httpCloneHost(HttpHost *parent)
     if (parent->traceExclude) {
         host->traceExclude = mprCloneHash(parent->traceExclude);
     }
+#endif
     httpAddHost(http, host);
     return host;
 }
@@ -4451,23 +4472,46 @@ static void manageHost(HttpHost *host, int flags)
         mprMark(host->ip);
         mprMark(host->parent);
         mprMark(host->responseCache);
-        mprMark(host->dirs);
         mprMark(host->routes);
         mprMark(host->defaultRoute);
-        mprMark(host->limits);
-        mprMark(host->mimeTypes);
-        mprMark(host->home);
-        mprMark(host->traceInclude);
-        mprMark(host->traceExclude);
         mprMark(host->protocol);
-        mprMark(host->log);
-        mprMark(host->logFormat);
-        mprMark(host->logPath);
         mprMark(host->mutex);
+        mprMark(host->home);
+#if UNUSED
+        mprMark(host->dirs);
+#endif
 
     } else if (flags & MPR_MANAGE_FREE) {
         /* The http->hosts list is static. ie. The hosts won't be marked via http->hosts */
         httpRemoveHost(MPR->httpService, host);
+    }
+}
+
+
+int httpStartHost(HttpHost *host)
+{
+    HttpRoute   *route;
+    int         next;
+
+    for (ITERATE_ITEMS(host->routes, route, next)) {
+        httpStartRoute(route);
+    }
+    for (ITERATE_ITEMS(host->routes, route, next)) {
+        if (!route->log && route->parent && route->parent->log) {
+            route->log = route->parent->log;
+        }
+    }
+    return 0;
+}
+
+
+void httpStopHost(HttpHost *host)
+{
+    HttpRoute   *route;
+    int         next;
+
+    for (ITERATE_ITEMS(host->routes, route, next)) {
+        httpStopRoute(route);
     }
 }
 
@@ -4538,11 +4582,13 @@ void httpLogRoutes(HttpHost *host, bool full)
 }
 
 
+#if UNUSED
 void httpSetHostLogRotation(HttpHost *host, int logCount, int logSize)
 {
     host->logCount = logCount;
     host->logSize = logSize;
 }
+#endif
 
 
 void httpSetHostHome(HttpHost *host, cchar *home)
@@ -4655,6 +4701,7 @@ void httpSetHostDefaultRoute(HttpHost *host, HttpRoute *route)
 }
 
 
+#if UNUSED
 void httpSetHostTrace(HttpHost *host, int level, int mask)
 {
     host->traceMask = mask;
@@ -4695,7 +4742,6 @@ void httpSetHostTraceFilter(HttpHost *host, ssize len, cchar *include, cchar *ex
 }
 
 
-#if UNUSED && KEEP
 int httpSetupTrace(HttpHost *host, cchar *ext)
 {
     if (ext) {
@@ -5464,6 +5510,228 @@ static void updateCurrentDate(Http *http)
 /************************************************************************/
 /*
  *  End of file "./src/httpService.c"
+ */
+/************************************************************************/
+
+
+
+/************************************************************************/
+/*
+ *  Start of file "./src/log.c"
+ */
+/************************************************************************/
+
+/*
+    log.c -- Http request access logging
+
+    Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
+ */
+
+
+
+
+void httpSetRouteLogFormat(HttpRoute *route, cchar *path, cchar *format)
+{
+    char    *src, *dest;
+
+    mprAssert(route);
+    mprAssert(path && *path);
+    mprAssert(format);
+    
+    if (format == NULL || *format == '\0') {
+        format = HTTP_LOG_FORMAT;
+    }
+    route->logPath = sclone(path);
+    route->logFormat = sclone(format);
+
+    for (src = dest = route->logFormat; *src; src++) {
+        if (*src == '\\' && src[1] != '\\') {
+            continue;
+        }
+        *dest++ = *src;
+    }
+    *dest = '\0';
+}
+
+
+void httpWriteRouteLog(HttpRoute *route, cchar *buf, int len)
+{
+    static int once = 0;
+
+    if (mprWriteFile(route->log, (char*) buf, len) != len && once++ == 0) {
+        mprError("Can't write to access log %s", route->logPath);
+    }
+}
+
+
+void httpLogRequest(HttpConn *conn)
+{
+    HttpHost    *host;
+    HttpRx      *rx;
+    HttpTx      *tx;
+    HttpRoute   *route;
+    MprBuf      *buf;
+    char        keyBuf[80], *timeText, *fmt, *cp, *qualifier, *value, c;
+    int         len;
+
+    rx = conn->rx;
+    tx = conn->tx;
+    route = rx->route;
+    if (!route->log) {
+        return;
+    }
+    host = httpGetConnContext(conn);
+    fmt = route->logFormat;
+    if (fmt == 0) {
+        fmt = HTTP_LOG_FORMAT;
+    }
+    len = MPR_MAX_URL + 256;
+    buf = mprCreateBuf(len, len);
+
+    while ((c = *fmt++) != '\0') {
+        if (c != '%' || (c = *fmt++) == '%') {
+            mprPutCharToBuf(buf, c);
+            continue;
+        }
+        switch (c) {
+        case 'a':                           /* Remote IP */
+            mprPutStringToBuf(buf, conn->ip);
+            break;
+
+        case 'A':                           /* Local IP */
+            mprPutStringToBuf(buf, conn->sock->listenSock->ip);
+            break;
+
+        case 'b':
+            if (tx->bytesWritten == 0) {
+                mprPutCharToBuf(buf, '-');
+            } else {
+                mprPutIntToBuf(buf, tx->bytesWritten);
+            } 
+            break;
+
+        case 'B':                           /* Bytes written (minus headers) */
+            mprPutIntToBuf(buf, (tx->bytesWritten - tx->headerSize));
+            break;
+
+        case 'h':                           /* Remote host */
+            //  TODO - Should this trigger a reverse DNS?
+            mprPutStringToBuf(buf, conn->ip);
+            break;
+
+        case 'n':                           /* Local host */
+            mprPutStringToBuf(buf, rx->parsedUri->host);
+            break;
+
+#if UNUSED
+        case 'l':                           /* Supplied in authorization */
+            mprPutStringToBuf(buf, conn->authUser ? conn->authUser : "-");
+            break;
+#endif
+
+        case 'O':                           /* Bytes written (including headers) */
+            mprPutIntToBuf(buf, tx->bytesWritten);
+            break;
+
+        case 'r':                           /* First line of request */
+            mprPutFmtToBuf(buf, "%s %s %s", rx->method, rx->uri, conn->protocol);
+            break;
+
+        case 's':                           /* Response code */
+            mprPutIntToBuf(buf, tx->status);
+            break;
+
+        case 't':                           /* Time */
+            mprPutCharToBuf(buf, '[');
+            timeText = mprFormatLocalTime(MPR_DEFAULT_DATE, mprGetTime());
+            mprPutStringToBuf(buf, timeText);
+            mprPutCharToBuf(buf, ']');
+            break;
+
+        case 'u':                           /* Remote username */
+            mprPutStringToBuf(buf, conn->authUser ? conn->authUser : "-");
+            break;
+
+        case '{':                           /* Header line */
+            qualifier = fmt;
+            if ((cp = strchr(qualifier, '}')) != 0) {
+                fmt = &cp[1];
+                *cp = '\0';
+                c = *fmt++;
+                scopy(keyBuf, sizeof(keyBuf), "HTTP_");
+                scopy(&keyBuf[5], sizeof(keyBuf) - 5, qualifier);
+                switch (c) {
+                case 'i':
+                    value = (char*) mprLookupKey(rx->headers, supper(keyBuf));
+                    mprPutStringToBuf(buf, value ? value : "-");
+                    break;
+                default:
+                    mprPutStringToBuf(buf, qualifier);
+                }
+                *cp = '}';
+
+            } else {
+                mprPutCharToBuf(buf, c);
+            }
+            break;
+
+        case '>':
+            if (*fmt == 's') {
+                fmt++;
+                mprPutIntToBuf(buf, tx->status);
+            }
+            break;
+
+        default:
+            mprPutCharToBuf(buf, c);
+            break;
+        }
+    }
+    mprPutCharToBuf(buf, '\n');
+    mprAddNullToBuf(buf);
+    mprWriteFile(route->log, mprGetBufStart(buf), mprGetBufLength(buf));
+}
+
+
+
+/*
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://embedthis.com 
+    
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+/************************************************************************/
+/*
+ *  End of file "./src/log.c"
  */
 /************************************************************************/
 
@@ -7818,7 +8086,18 @@ HttpRoute *httpCreateRoute(HttpHost *host)
     route->pattern = MPR->emptyString;
     route->targetRule = sclone("run");
     route->autoDelete = 1;
+
+    //  MOB
     route->workers = -1;
+    route->limits = mprMemdup(((Http*) MPR->httpService)->serverLimits, sizeof(HttpLimits));
+    route->traceMask = HTTP_TRACE_TX | HTTP_TRACE_RX | HTTP_TRACE_FIRST | HTTP_TRACE_HEADER;
+    route->traceLevel = 3;
+    route->traceMaxLength = MAXINT;
+    route->mimeTypes = MPR->mimeTypes;
+
+    if ((route->mimeTypes = mprCreateMimeTypes("mime.types")) == 0) {
+        route->mimeTypes = MPR->mimeTypes;                                                                  
+    }  
     definePathVars(route);
     return route;
 }
@@ -7881,6 +8160,18 @@ HttpRoute *httpCreateInheritedRoute(HttpRoute *parent)
     route->updates = parent->updates;
     route->uploadDir = parent->uploadDir;
     route->workers = parent->workers;
+
+    route->limits = parent->limits;
+    route->mimeTypes = parent->mimeTypes;
+    route->traceInclude = parent->traceInclude;
+    route->traceExclude = parent->traceExclude;
+    route->traceLevel = parent->traceLevel;
+    route->traceMaxLength = parent->traceMaxLength;
+    route->traceMask = parent->traceMask;
+    route->log = parent->log;
+    route->logFormat = parent->logFormat;
+    route->logPath = parent->logPath;
+
     return route;
 }
 
@@ -7931,6 +8222,14 @@ static void manageRoute(HttpRoute *route, int flags)
         mprMark(route->sourcePath);
         mprMark(route->tokens);
         mprMark(route->ssl);
+
+        mprMark(route->limits);
+        mprMark(route->mimeTypes);
+        mprMark(route->traceInclude);
+        mprMark(route->traceExclude);
+        mprMark(route->log);
+        mprMark(route->logFormat);
+        mprMark(route->logPath);
 
     } else if (flags & MPR_MANAGE_FREE) {
         if (route->patternCompiled) {
@@ -7995,6 +8294,28 @@ HttpRoute *httpCreateAliasRoute(HttpRoute *parent, cchar *pattern, cchar *path, 
     return route;
 }
 
+
+int httpStartRoute(HttpRoute *route)
+{
+#if !BLD_FEATURE_ROMFS
+    if (route->logPath && (!route->parent || route->logPath != route->parent->logPath)) {
+        route->log = mprOpenFile(route->logPath, O_CREAT | O_APPEND | O_WRONLY | O_TEXT, 0664);
+        if (route->log == 0) {
+            mprError("Can't open log file %s", route->logPath);
+            return MPR_ERR_CANT_OPEN;
+        }
+    }
+#endif
+    return 0;
+}
+
+
+void httpStopRoute(HttpRoute *route)
+{
+    route->log = 0;
+}
+
+
 /*
     Find the matching route and handler for a request. If any errors occur, the pass handler is used to 
     pass errors via the net/sendfile connectors onto the client. This process may rewrite the request 
@@ -8037,6 +8358,7 @@ void httpRouteRequest(HttpConn *conn)
         return;
     }
     rx->route = route;
+    conn->limits = route->limits;
 
     if (conn->finalized) {
         tx->handler = conn->http->passHandler;
@@ -10598,6 +10920,71 @@ void httpSetOption(MprHash *options, cchar *field, cchar *value)
 }
 
 
+HttpLimits *httpGraduateLimits(HttpRoute *route)
+{
+    if (route->parent && route->limits == route->parent->limits) {
+        route->limits = mprMemdup(((Http*) MPR->httpService)->serverLimits, sizeof(HttpLimits));
+    }
+    return route->limits;
+}
+
+
+//  MOB - create trace.
+void httpSetRouteTrace(HttpRoute *route, int level, int mask)
+{
+    route->traceMask = mask;
+    route->traceLevel = level;
+}
+
+
+void httpSetRouteTraceFilter(HttpRoute *route, ssize len, cchar *include, cchar *exclude)
+{
+    char    *word, *tok, *line;
+
+    route->traceMaxLength = (int) len;
+    if (include && strcmp(include, "*") != 0) {
+        route->traceInclude = mprCreateHash(0, 0);
+        line = sclone(include);
+        word = stok(line, ", \t\r\n", &tok);
+        while (word) {
+            if (word[0] == '*' && word[1] == '.') {
+                word += 2;
+            }
+            mprAddKey(route->traceInclude, word, route);
+            word = stok(NULL, ", \t\r\n", &tok);
+        }
+    }
+    if (exclude) {
+        route->traceExclude = mprCreateHash(0, 0);
+        line = sclone(exclude);
+        word = stok(line, ", \t\r\n", &tok);
+        while (word) {
+            if (word[0] == '*' && word[1] == '.') {
+                word += 2;
+            }
+            mprAddKey(route->traceExclude, word, route);
+            word = stok(NULL, ", \t\r\n", &tok);
+        }
+    }
+}
+
+
+#if UNUSED && KEEP
+int httpSetupRouteTrace(HttpHost *route, cchar *ext)
+{
+    if (ext) {
+        if (route->traceInclude && !mprLookupKey(route->traceInclude, ext)) {
+            return 0;
+        }
+        if (route->traceExclude && mprLookupKey(route->traceExclude, ext)) {
+            return 0;
+        }
+    }
+    return route->traceMask;
+}
+#endif
+
+
 /*
     @copy   default
     
@@ -11731,14 +12118,19 @@ static void measure(HttpConn *conn)
 static bool processCompletion(HttpConn *conn)
 {
     HttpPacket  *packet;
+    HttpRx      *rx;
     bool        more;
 
+    rx = conn->rx;
     mprAssert(conn->state == HTTP_STATE_COMPLETE);
 
     httpDestroyPipeline(conn);
     measure(conn);
-    if (conn->endpoint && conn->rx) {
-        conn->rx->conn = 0;
+    if (conn->endpoint && rx) {
+        if (rx->route->log) {
+            httpLogRequest(conn);
+        }
+        rx->conn = 0;
         conn->tx->conn = 0;
         conn->rx = 0;
         conn->tx = 0;
@@ -13133,18 +13525,21 @@ static void traceBuf(HttpConn *conn, int dir, int level, cchar *msg, cchar *buf,
 void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssize len, MprOff total)
 {
     HttpTrace   *trace;
+    HttpRoute   *route;
     ssize       size;
     int         level;
 
     trace = &conn->trace[dir];
     level = trace->levels[item];
+    route = conn->rx->route;
+    mprAssert(route);
 
     if (trace->size >= 0 && total >= trace->size) {
         mprLog(level, "Abbreviating response trace for conn %d", conn->seqno);
         trace->disable = 1;
         return;
     }
-    if (conn->host && conn->host->traceMaxLength >= 0 && total >= conn->host->traceMaxLength) {
+    if (route && route->traceMaxLength >= 0 && total >= route->traceMaxLength) {
         mprLog(level, "Abbreviating response trace for conn %d", conn->seqno);
         trace->disable = 1;
         return;
@@ -13764,7 +14159,7 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
     httpAddHeaderString(conn, "Date", conn->http->currentDate);
 
     if (tx->ext) {
-        if ((mimeType = (char*) mprLookupMime(conn->host->mimeTypes, tx->ext)) != 0) {
+        if ((mimeType = (char*) mprLookupMime(route->mimeTypes, tx->ext)) != 0) {
             if (conn->error) {
                 httpAddHeaderString(conn, "Content-Type", "text/html");
             } else {

@@ -333,7 +333,7 @@ MAIN(espgen, int argc, char **argv)
             if (argind >= argc) {
                 usageError();
             } else {
-                maStartLogging(NULL, argv[++argind]);
+                mprStartLogging(argv[++argind], 0);
                 mprSetCmdlineLogging(1);
             }
 
@@ -361,7 +361,7 @@ MAIN(espgen, int argc, char **argv)
             }
 
         } else if (smatch(argp, "--verbose") || smatch(argp, "-v")) {
-            maStartLogging(NULL, "stderr:2");
+            mprStartLogging("stderr:2", 0);
             mprSetCmdlineLogging(1);
 
         } else if (smatch(argp, "--version") || smatch(argp, "-V")) {

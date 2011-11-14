@@ -2178,18 +2178,19 @@ static MprModule *loadSsl(bool lazy)
     if (MPR->flags & MPR_SSL_PROVIDER_LOADED) {
         return mprLookupModule("sslModule");
     }
-
+#if UNUSED
     mprLog(MPR_CONFIG, "Activating the SSL provider");
+#endif
 #if BLD_FEATURE_OPENSSL
     /*
         NOTE: preference given to open ssl if both are enabled
      */
-    mprLog(2, "Loading OpenSSL module");
+    mprLog(4, "Loading OpenSSL module");
     if (mprCreateOpenSslModule(lazy) < 0) {
         return 0;
     }
 #elif BLD_FEATURE_MATRIXSSL
-    mprLog(2, "Loading MatrixSSL module");
+    mprLog(4, "Loading MatrixSSL module");
     if (mprCreateMatrixSslModule(lazy) < 0) {
         return 0;
     }

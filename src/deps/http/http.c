@@ -85,7 +85,6 @@ static char     *resolveUrl(HttpConn *conn, cchar *url);
 static int      setContentLength(HttpConn *conn, MprList *files);
 static void     showOutput(HttpConn *conn, cchar *content, ssize contentLen);
 static void     showUsage();
-static int      startLogging(char *logSpec);
 static void     trace(HttpConn *conn, cchar *url, int fetchCount, cchar *method, int status, MprOff contentLen);
 static void     waitForUser();
 static ssize    writeBody(HttpConn *conn, MprList *files);
@@ -304,7 +303,7 @@ static bool parseArgs(int argc, char **argv)
             if (nextArg >= argc) {
                 return 0;
             } else {
-                startLogging(argv[++nextArg]);
+                mprStartLogging(argv[++nextArg], 0);
             }
 
         } else if (strcmp(argp, "--method") == 0 || strcmp(argp, "-m") == 0) {
@@ -1122,6 +1121,7 @@ static void trace(HttpConn *conn, cchar *url, int fetchCount, cchar *method, int
 }
 
 
+#if UNUSED
 static void logHandler(int flags, int level, const char *msg)
 {
     Mpr         *mpr;
@@ -1168,7 +1168,7 @@ static int startLogging(char *logSpec)
         level = atoi(levelSpec);
     }
     if (strcmp(logSpec, "stdout") == 0) {
-        file = MPR->fileSystem->stdOutput;
+        file = MPR->stdOutput;
     } else {
         if ((file = mprOpenFile(logSpec, O_CREAT | O_WRONLY | O_TRUNC | O_TEXT, 0664)) == 0) {
             mprPrintfError("Can't open log file %s\n", logSpec);
@@ -1180,6 +1180,7 @@ static int startLogging(char *logSpec)
     mprSetLogFile(file);
     return 0;
 }
+#endif
 
 
 #if (BLD_WIN_LIKE && !WINCE) || VXWORKS

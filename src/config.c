@@ -156,7 +156,7 @@ static int accessLogDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S", &path)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    maSetAccessLog(state->host, httpMakePath(state->route, path), "%h %l %u %t \"%r\" %>s %b");
+    httpSetRouteLogFormat(state->route, httpMakePath(state->route, path), "%h %l %u %t \"%r\" %>s %b");
     return 0;
 #else
     configError("AccessLog not supported when using ROM FS");
@@ -293,7 +293,7 @@ static int addTypeDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S %S", &mimeType, &ext)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    mprAddMime(state->host->mimeTypes, mimeType, ext);
+    mprAddMime(state->route->mimeTypes, mimeType, ext);
     return 0;
 }
 
@@ -641,7 +641,7 @@ static int customLogDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_BAD_SYNTAX;
     }
     path = httpMakePath(state->route, path);
-    maSetAccessLog(state->host, path, format);
+    httpSetRouteLogFormat(state->route, path, format);
     return 0;
 #else
     configError("CustomLog not supported when using ROM FS");
@@ -723,15 +723,17 @@ static int errorDocumentDirective(MaState *state, cchar *key, cchar *value)
  */
 static int errorLogDirective(MaState *state, cchar *key, cchar *value)
 {
-    if (state->server->alreadyLogging) {
+    if (mprGetCmdlineLogging()) {
         mprLog(4, "Already logging. Ignoring ErrorLog directive");
         return 0;
     }
+#if UNUSED
     maStopLogging(state->server);
+#endif
     if (sncmp(value, "stdout", 6) != 0 && sncmp(value, "stderr", 6) != 0) {
         value = httpMakePath(state->route, value);
     }
-    if (maStartLogging(state->host, value) < 0) {
+    if (mprStartLogging(value, 1) < 0) {
         mprError("Can't write to ErrorLog: %s", value);
         return MPR_ERR_BAD_SYNTAX;
     }
@@ -835,7 +837,8 @@ static int ifDirective(MaState *state, cchar *key, cchar *value)
 static int inactivityTimeoutDirective(MaState *state, cchar *key, cchar *value)
 {
     if (! mprGetDebugMode()) {
-        state->host->limits->inactivityTimeout = gettime(value);
+        state->limits = httpGraduateLimits(state->route);
+        state->limits->inactivityTimeout = gettime(value);
     }
     return 0;
 }
@@ -852,7 +855,8 @@ static int keepAliveDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%B", &on)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    state->host->limits->keepAliveCount = on;
+    state->limits = httpGraduateLimits(state->route);
+    state->limits->keepAliveCount = on;
     return 0;
 }
 #endif
@@ -873,7 +877,8 @@ static int limitCacheDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitCacheItemDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->host->limits->cacheItemSize = (int) getnum(value);
+    state->limits = httpGraduateLimits(state->route);
+    state->limits->cacheItemSize = (int) getnum(value);
     return 0;
 }
 
@@ -883,8 +888,8 @@ static int limitCacheItemDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitChunkDirective(MaState *state, cchar *key, cchar *value)
 {
-    //  MOB - API for this
-    state->host->limits->chunkSize = (int) getnum(value);
+    state->limits = httpGraduateLimits(state->route);
+    state->limits->chunkSize = (int) getnum(value);
     return 0;
 }
 
@@ -894,7 +899,8 @@ static int limitChunkDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitClientsDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->host->limits->clientCount = atoi(value);
+    state->limits = httpGraduateLimits(state->route);
+    state->limits->clientCount = atoi(value);
     return 0;
 }
 
@@ -919,7 +925,8 @@ static int limitMemoryDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitRequestsDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->host->limits->requestCount = atoi(value);
+    state->limits = httpGraduateLimits(state->route);
+    state->limits->requestCount = atoi(value);
     return 0;
 }
 
@@ -929,7 +936,8 @@ static int limitRequestsDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitRequestBodyDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->host->limits->receiveBodySize = getnum(value);
+    state->limits = httpGraduateLimits(state->route);
+    state->limits->receiveBodySize = getnum(value);
     return 0;
 }
 
@@ -939,7 +947,8 @@ static int limitRequestBodyDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitRequestFormDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->host->limits->receiveFormSize = getnum(value);
+    state->limits = httpGraduateLimits(state->route);
+    state->limits->receiveFormSize = getnum(value);
     return 0;
 }
 
@@ -949,7 +958,8 @@ static int limitRequestFormDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitRequestHeaderLinesDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->host->limits->headerCount = (int) getnum(value);
+    state->limits = httpGraduateLimits(state->route);
+    state->limits->headerCount = (int) getnum(value);
     return 0;
 }
 
@@ -959,7 +969,8 @@ static int limitRequestHeaderLinesDirective(MaState *state, cchar *key, cchar *v
  */
 static int limitRequestHeaderDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->host->limits->headerSize = (int) getnum(value);
+    state->limits = httpGraduateLimits(state->route);
+    state->limits->headerSize = (int) getnum(value);
     return 0;
 }
 
@@ -969,6 +980,7 @@ static int limitRequestHeaderDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitResponseBodyDirective(MaState *state, cchar *key, cchar *value)
 {
+    state->limits = httpGraduateLimits(state->route);
     state->limits->transmissionBodySize = getnum(value);
     return 0;
 }
@@ -979,6 +991,7 @@ static int limitResponseBodyDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitStageBufferDirective(MaState *state, cchar *key, cchar *value)
 {
+    state->limits = httpGraduateLimits(state->route);
     state->limits->stageBufferSize = (int) getnum(value);
     return 0;
 }
@@ -989,6 +1002,7 @@ static int limitStageBufferDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitUriDirective(MaState *state, cchar *key, cchar *value)
 {
+    state->limits = httpGraduateLimits(state->route);
     state->limits->uriSize = (int) getnum(value);
     return 0;
 }
@@ -999,6 +1013,7 @@ static int limitUriDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitUploadDirective(MaState *state, cchar *key, cchar *value)
 {
+    state->limits = httpGraduateLimits(state->route);
     state->limits->uploadSize = getnum(value);
     return 0;
 }
@@ -1077,7 +1092,9 @@ static int listenDirective(MaState *state, cchar *key, cchar *value)
         return -1;
     }
     endpoint = httpCreateEndpoint(ip, port, NULL);
+#if UNUSED
     endpoint->limits = state->limits;
+#endif
     mprAddItem(state->server->endpoints, endpoint);
     return 0;
 }
@@ -1105,7 +1122,7 @@ static int loadDirective(MaState *state, cchar *key, cchar *value)
  */
 static int logLevelDirective(MaState *state, cchar *key, cchar *value)
 {
-    if (state->server->alreadyLogging) {
+    if (mprGetCmdlineLogging()) {
         mprLog(4, "Already logging. Ignoring LogLevel directive");
     } else {
         mprSetLogLevel((int) stoi(value));
@@ -1125,8 +1142,11 @@ static int logRotationDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%N %N", &count, &size)) {
         return MPR_ERR_BAD_SYNTAX;
     }
+    mprSetLogRotation(count, size * 1024 * 1024);
+#if UNUSED
     state->host->logCount = count;
     state->host->logSize = size * (1024 * 1024);
+#endif
     return 0;
 }
 
@@ -1188,7 +1208,7 @@ static int logTraceDirective(MaState *state, cchar *key, cchar *value)
     if (strstr(items, "time")) {
         mask |= HTTP_TRACE_TIME;
     }
-    httpSetHostTrace(state->host, level, mask);
+    httpSetRouteTrace(state->route, level, mask);
     return 0;
 }
 
@@ -1204,7 +1224,7 @@ static int logTraceFilterDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%N %S %S", &size, &include, &exclude)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    httpSetHostTraceFilter(state->host, size, include, exclude);
+    httpSetRouteTraceFilter(state->route, size, include, exclude);
     return 0;
 }
 
@@ -1247,7 +1267,8 @@ static int loadModuleDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitKeepAliveDirective(MaState *state, cchar *key, cchar *value)
 {
-    state->host->limits->keepAliveCount = (int) stoi(value);
+    state->limits = httpGraduateLimits(state->route);
+    state->limits->keepAliveCount = (int) stoi(value);
     return 0;
 }
 
@@ -1721,9 +1742,9 @@ static int typesConfigDirective(MaState *state, cchar *key, cchar *value)
     char    *path;
 
     path = httpMakePath(state->route, value);
-    if ((state->host->mimeTypes = mprCreateMimeTypes(path)) == 0) {
+    if ((state->route->mimeTypes = mprCreateMimeTypes(path)) == 0) {
         mprError("Can't open TypesConfig mime file %s", path);
-        state->host->mimeTypes = mprCreateMimeTypes(NULL);
+        state->route->mimeTypes = mprCreateMimeTypes(NULL);
         return MPR_ERR_BAD_SYNTAX;
     }
     return 0;
@@ -1853,9 +1874,11 @@ bool maValidateServer(MaServer *server)
         if (host->home == 0) {
             httpSetHostHome(host, defaultHost->home);
         }
+#if UNUSED
         if (host->mimeTypes == 0) {
             host->mimeTypes = defaultHost->mimeTypes;
         }
+#endif
         for (nextRoute = 0; (route = mprGetNextItem(host->routes, &nextRoute)) != 0; ) {
             if (!mprLookupKey(route->extensions, "")) {
                 mprError("Route %s in host %s is missing a catch-all handler\n"
@@ -1981,8 +2004,8 @@ static MaState *createState(MaServer *server, HttpHost *host, HttpRoute *route)
     state->appweb = server->appweb;
     state->http = server->http;
     state->host = host;
-    state->limits = state->host->limits;
     state->route = route;
+    state->limits = state->route->limits;
     state->enabled = 1;
     state->lineNumber = 0;
     state->auth = state->route->auth;

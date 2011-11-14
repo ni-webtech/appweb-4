@@ -350,9 +350,8 @@ static void fmtNum(char *buf, int bufsize, int num, int divisor, char *suffix)
 static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *path, int nameSize)
 {
     MprPath     info;
-    Dir         *dir;
     MprTime     when;
-    HttpHost      *host;
+    Dir         *dir;
     char        *newPath, sizeBuf[16], timeBuf[48], *icon;
     struct tm   tm;
     bool        isDir;
@@ -390,9 +389,8 @@ static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *path, int nameSize)
         icon = "folder";
         dirSuffix = "/";
     } else {
-        host = httpGetConnHost(q->conn);
         ext = mprGetPathExt(ep->name);
-        if (ext && (mimeType = mprLookupMime(host->mimeTypes, ext)) != 0) {
+        if (ext && (mimeType = mprLookupMime(q->conn->rx->route->mimeTypes, ext)) != 0) {
             if (strcmp(ext, "es") == 0 || strcmp(ext, "ejs") == 0 || strcmp(ext, "php") == 0) {
                 icon = "text";
             } else if (strstr(mimeType, "text") != 0) {

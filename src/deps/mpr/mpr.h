@@ -1024,7 +1024,6 @@ struct  MprXml;
     #define MPR_DEFAULT_ALLOC       64            /**< Default small alloc size */
     #define MPR_DEFAULT_HASH_SIZE   23            /**< Default size of hash table */ 
     #define MPR_MAX_ARGC            128           /**< Reasonable max of args */
-    #define MPR_MAX_LOG_STRING      512           /**< Maximum log message */
     #define MPR_BUFSIZE             4096          /**< Reasonable size for buffers */
     #define MPR_BUF_INCR            4096          /**< Default buffer growth inc */
     #define MPR_EPOLL_SIZE          32            /**< Epoll backlog */
@@ -1052,7 +1051,6 @@ struct  MprXml;
     #define MPR_DEFAULT_ALLOC       256
     #define MPR_DEFAULT_HASH_SIZE   43
     #define MPR_MAX_ARGC            256
-    #define MPR_MAX_LOG_STRING      8192
     #define MPR_BUFSIZE             4096
     #define MPR_BUF_INCR            4096
     #define MPR_MAX_BUF             -1
@@ -1079,7 +1077,6 @@ struct  MprXml;
     #define MPR_DEFAULT_ALLOC       512
     #define MPR_DEFAULT_HASH_SIZE   97
     #define MPR_MAX_ARGC            512
-    #define MPR_MAX_LOG_STRING      8192
     #define MPR_BUFSIZE             8192
     #define MPR_MAX_BUF             -1
     #define MPR_EPOLL_SIZE          128
@@ -4170,6 +4167,45 @@ typedef struct MprLog { int dummy; } MprLog;
 typedef void (*MprLogHandler)(int flags, int level, cchar *msg);
 
 /**
+    Initialize the log service
+    @ingroup MprLog
+ */
+extern void mprCreateLogService();
+
+/**
+    Start logging 
+    @param logSpec Set the log file name and level. The format is "pathName[:level]".
+    The following levels are generally observed:
+    <ul>
+        <li>0 - Essential messages, fatal errors and critical warnings</li>
+        <li>1 - Hard errors</li>
+        <li>2 - Configuration setup and soft warnings</li>
+        <li>3 - Useful informational messages</li>
+        <li>4 - Debug information</li>
+        <li>5-9 - Increasing levels of internal Appweb trace useful for debugging</li>
+    </ul>
+    @param showConfig Set to true to log an initial system configuration.
+    @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
+*/
+extern int mprStartLogging(cchar *logSpec, int showConfig);
+
+/**
+    Archive a log
+    @param path Base log filename
+    @param count Count of archived logs to keep
+ */
+extern int mprArchiveLog(cchar *path, int count);
+
+/**
+    Set the log rotation parameters
+    @param logCount Count of the number of archived log files to keep
+    @param logSize If the size is zero, then the log file will be rotated on each application boot. Otherwise,
+        the log file will be rotated if on application boot, the log file is larger than this size.
+    @param Max size of a log file before it will be archived.
+ */
+extern void mprSetLogRotation(int logCount, int logSize);
+
+/**
     Output an assertion failed message.
     @description This will emit an assertion failed message to the standard error output. It will bypass the logging
         system.
@@ -4559,9 +4595,6 @@ typedef struct MprFileSystem {
     MprSetBufferedProc  setBuffered;    /**< Virtual set buffered I/O routine */
     MprWriteFileProc    writeFile;      /**< Virtual write file routine */
     MprTruncateFileProc truncateFile;   /**< Virtual truncate file routine */
-    struct MprFile      *stdError;      /**< Standard error file */
-    struct MprFile      *stdInput;      /**< Standard input file */
-    struct MprFile      *stdOutput;     /**< Standard output file */
     bool                caseSensitive;  /**< Path comparisons are case sensitive */
     bool                hasDriveSpecs;  /**< Paths can have drive specifications */
     char                *separators;    /**< Filename path separators. First separator is the preferred separator. */
@@ -8077,6 +8110,9 @@ typedef struct Mpr {
     MprFile         *logFile;               /**< Log file */
     MprHash         *mimeTypes;             /**< Table of mime types */
     MprHash         *timeTokens;            /**< Date/Time parsing tokens */
+    MprFile         *stdError;              /**< Standard error file */
+    MprFile         *stdInput;              /**< Standard input file */
+    MprFile         *stdOutput;             /**< Standard output file */
     char            *pathEnv;               /**< Cached PATH env var. Used by MprCmd */
     char            *name;                  /**< Product name */
     char            *title;                 /**< Product title */
@@ -8093,6 +8129,8 @@ typedef struct Mpr {
     int             exitStrategy;           /**< How to exit the app (normal, immediate, graceful) */
     int             exitStatus;             /**< Proposed program exit status */
     int             flags;                  /**< Misc flags */
+    int             logCount;               /**< Number of log files to preserve */
+    int             logSize;                /**< Maximum log size */
     int             hasError;               /**< Mpr has an initialization error */
     int             marker;                 /**< Marker thread is active */
     int             marking;                /**< Actually marking objects now */

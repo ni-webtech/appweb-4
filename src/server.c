@@ -158,8 +158,9 @@ MaServer *maCreateServer(MaAppweb *appweb, cchar *name)
     server->limits = httpCreateLimits(1);
     server->appweb = appweb;
     server->http = appweb->http;
+#if UNUSED
     server->alreadyLogging = mprGetLogHandler() ? 1 : 0;
-
+#endif
     maAddServer(appweb, server);
     if (appweb->defaultServer == 0) {
         maSetDefaultServer(appweb, server);

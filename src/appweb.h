@@ -218,7 +218,9 @@ typedef struct MaServer {
     HttpLimits      *limits;                /**< Limits for this server */
     MprList         *endpoints;             /**< List of HttpEndpoints */
     char            *home;                  /**< Server root */
+#if UNUSED
     bool            alreadyLogging;         /**< Already logging */
+#endif
 } MaServer;
 
 /**
@@ -422,7 +424,7 @@ extern MaState *maPushState(MaState *state);
     Define the access log
     @description The access log is used to log details about requests to the web server. Errors are logged in the
         error log.
-    @param host HttpHost object for which to define the logging characteristics.
+    @param route HttpRoute object for which to define the logging characteristics.
     @param path Pathname for the log file
     @param format Log file format. The format string argument defines how Appweb will record HTTP accesses to the 
         access log. The following log format specifiers are supported:
@@ -441,17 +443,18 @@ extern MaState *maPushState(MaState *state);
         </ul>
     @ingroup Appweb
  */
-extern void maSetAccessLog(HttpHost *host, cchar *path, cchar *format);
+extern void maSetAccessLog(HttpRoute *route, cchar *path, cchar *format);
 
 /**
     Start access logging
     @description Start access logging for a host
-    @param host HttpHost object
+    @param route HttpRoute object
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
     @ingroup Appweb
  */
-extern int maStartAccessLogging(HttpHost *host);
+extern int maStartAccessLogging(HttpRoute *route);
 
+#if UNUSED
 /**
     Start error logging
     @description Start error logging. Currently error logging is global over all hosts.
@@ -470,19 +473,22 @@ extern int maStartAccessLogging(HttpHost *host);
     @ingroup Appweb
  */
 extern int maStartLogging(HttpHost *host, cchar *logSpec);
+#endif
 
 /**
     Stop access logging
-    @param host HttpHost object
+    @param route HttpRoute object
     @ingroup Appweb
  */
-extern void maStopAccessLogging(HttpHost *host);
+extern void maStopAccessLogging(HttpRoute *route);
 
+#if UNUSED
 /**
     Stop error logging
     @ingroup Appweb
  */
 extern void maStopLogging();
+#endif
 
 /**
     Tokenize a string based on route data

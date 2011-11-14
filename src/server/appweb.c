@@ -133,7 +133,7 @@ MAIN(appweb, int argc, char **argv)
             if (argind >= argc) {
                 usageError();
             }
-            maStartLogging(NULL, argv[++argind]);
+            mprStartLogging(argv[++argind], 1);
             mprSetCmdlineLogging(1);
 
         } else if (strcmp(argp, "--name") == 0 || strcmp(argp, "-n") == 0) {
@@ -149,7 +149,7 @@ MAIN(appweb, int argc, char **argv)
             app->workers = atoi(argv[++argind]);
 
         } else if (strcmp(argp, "--verbose") == 0 || strcmp(argp, "-v") == 0) {
-            maStartLogging(NULL, "stderr:2");
+            mprStartLogging("stderr:2", 1);
             mprSetCmdlineLogging(1);
 
         } else if (strcmp(argp, "--version") == 0 || strcmp(argp, "-V") == 0) {

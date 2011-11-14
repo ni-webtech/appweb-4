@@ -140,6 +140,7 @@ struct HttpUri;
 #define HTTP_CACHE_LIFESPAN       (86400 * 1000)    /**< Default cache lifespan to 1 day */
 
 #define HTTP_DATE_FORMAT          "%a, %d %b %Y %T GMT"
+#define HTTP_LOG_FORMAT           "%h %l %u %t \"%r\" %>s %b"
 
 /*  
     Hash sizes (primes work best)
@@ -2977,7 +2978,7 @@ extern ssize httpWriteCached(HttpConn *conn);
         httpSetRouteDefaultLanguage httpSetRouteDir httpSetRouteFlags httpSetRouteHandler httpSetRouteHost 
         httpSetRouteIndex httpSetRouteMethods httpSetRouteName httpSetRoutePathVar httpSetRoutePattern 
         httpSetRoutePrefix httpSetRouteScript httpSetRouteSource httpSetRouteTarget httpSetRouteWorkers httpTemplate 
-        httpTokenize httpTokenizev 
+        httpSetTrace httpSetTraceFilter httpTokenize httpTokenizev 
  */
 typedef struct HttpRoute {
     /* Ordered for debugging */
@@ -3024,6 +3025,17 @@ typedef struct HttpRoute {
     void            *eroute;                /**< Extended route information for handler (only) */
     char            *uploadDir;             /**< Upload directory */
     int             autoDelete;             /**< Automatically delete uploaded files */
+
+    HttpLimits      *limits;                /**< Host resource limits */
+    MprHash         *mimeTypes;             /**< Hash table of mime types (key is extension) */
+    int             traceLevel;             /**< Trace activation level */
+    int             traceMaxLength;         /**< Maximum trace file length (if known) */
+    int             traceMask;              /**< Request/response trace mask */
+    MprHash         *traceInclude;          /**< Extensions to include in trace */
+    MprHash         *traceExclude;          /**< Extensions to exclude from trace */
+    MprFile         *log;                   /**< File object for access logging */
+    char            *logFormat;             /**< Access log format */
+    char            *logPath;               /**< Access log filename */
 
     /*
         Used by Ejscript
@@ -3254,6 +3266,18 @@ extern int httpAddRouteHandler(HttpRoute *route, cchar *name, cchar *extensions)
 extern void httpAddRouteHeader(HttpRoute *route, cchar *header, cchar *value, int flags);
 
 /**
+    Set the route index document
+    @description Set the name of the index document to serve. Index documents may be served when the request corresponds
+        to a directory on the file system.
+    @param route Route to modify
+    @param path Path name to the index document. If the path is a relative path, it may be joined to the route 
+        directory to create an absolute path.
+    @return A reference to the route data. Otherwise return null if the route data for the given key was not found.
+    @ingroup HttpRoute
+ */
+extern void httpAddRouteIndex(HttpRoute *route, cchar *path);
+
+/**
     Add a route language suffix
     @description This configures the route pipeline by adding the given language for request processing.
         The language definition includes a suffix which will be added to the request filename.
@@ -3459,6 +3483,14 @@ extern cchar *httpGetRouteDir(HttpRoute *route);
     @ingroup HttpRoute
  */
 extern cchar *httpGetRouteMethods(HttpRoute *route);
+
+/**
+    Graduate the limits from the parent route.
+    @description This creates a unique limit structure for the route if it is currently inheriting its parents limits.
+    @param route Route to modify
+    @ingroup HttpRoute
+ */
+extern HttpLimits *httpGraduateLimits(HttpRoute *route);
 
 /** 
     Create a URI link. 
@@ -3689,18 +3721,6 @@ extern int httpSetRouteHandler(HttpRoute *route, cchar *name);
 extern void httpSetRouteHost(HttpRoute *route, struct HttpHost *host);
 
 /**
-    Set the route index document
-    @description Set the name of the index document to serve. Index documents may be served when the request corresponds
-        to a directory on the file system.
-    @param route Route to modify
-    @param path Path name to the index document. If the path is a relative path, it may be joined to the route 
-        directory to create an absolute path.
-    @return A reference to the route data. Otherwise return null if the route data for the given key was not found.
-    @ingroup HttpRoute
- */
-extern void httpAddRouteIndex(HttpRoute *route, cchar *path);
-
-/**
     Define the methods for the route
     @description This defines the set of valid HTTP methods for requests to match this route
     @param route Route to modify
@@ -3866,6 +3886,41 @@ extern int httpSetRouteTarget(HttpRoute *route, cchar *name, cchar *details);
 extern void httpSetRouteTemplate(HttpRoute *route, cchar *tplate);
 
 /**
+    Set the route trace level and mask
+    @param route HttpRoute object
+    @param level Trace level (0-9)
+    @param mask Trace mask. Choose from HTTP_TRACE_TX and HTTP_TRACE_RX to select the trace direction.
+        Also choose any set from among the following to trace options: HTTP_TRACE_CONN,
+        HTTP_TRACE_FIRST, HTTP_TRACE_HEADER, HTTP_TRACE_BODY, HTTP_TRACE_TIME.
+    @ingroup HttpRoute
+ */
+extern void httpSetRouteTrace(HttpRoute *route, int level, int mask);
+
+/**
+    Set the route trace filter
+    @description Trace filters include or exclude trace items based on the request filename extension.
+    @param route HttpRoute object
+    @param len Maximum content length eligible for tracing.
+    @param include Comma or space separated list of extensions to include in tracing
+    @param exclude Comma or space separated list of extensions to exclude from tracing
+    @ingroup HttpRoute
+ */
+extern void httpSetRouteTraceFilter(HttpRoute *route, ssize len, cchar *include, cchar *exclude);
+
+#if UNUSED
+/**
+    Setup trace for expedited processing
+    @description A request should call 
+    in order, so it is important to define routes in the order in which you wish to match them.
+    @param route HttpRoute object
+    @param route Route to add
+    @return "Zero" if the route can be added.
+    @ingroup HttpRoute
+ */
+extern int  httpSetupTrace(HttpRoute *route, cchar *ext);
+#endif
+
+/**
     Define the maximum number of workers for a route
     @param route Route to modify
     @param workers Maximum number of workers for this route
@@ -3873,6 +3928,9 @@ extern void httpSetRouteTemplate(HttpRoute *route, cchar *tplate);
     @internal
  */
 extern void httpSetRouteWorkers(HttpRoute *route, int workers);
+
+extern int httpStartRoute(HttpRoute *route);
+extern void httpStopRoute(HttpRoute *route);
 
 /**
     Expand a template string using given options
@@ -3918,6 +3976,11 @@ extern bool httpTokenize(HttpRoute *route, cchar *str, cchar *fmt, ...);
     @ingroup HttpRoute
  */
 extern bool httpTokenizev(HttpRoute *route, cchar *str, cchar *fmt, va_list args);
+
+//  MOB
+extern void httpSetRouteLogFormat(HttpRoute *route, cchar *path, cchar *format);
+extern void httpWriteRouteLog(HttpRoute *route, cchar *buf, int len);
+extern void httpLogRequest(HttpConn *conn);
 
 /**
     Upload File
@@ -4818,7 +4881,7 @@ extern ssize httpWriteUploadData(HttpConn *conn, MprList *formData, MprList *fil
 typedef struct HttpEndpoint {
     Http            *http;                  /**< Http service object */
     MprList         *hosts;                 /**< List of host objects */
-    HttpLimits      *limits;                /**< Alias for first host resource limits */
+    HttpLimits      *limits;                /**< Alias for first host, default route resource limits */
     MprWaitHandler  *waitHandler;           /**< I/O wait handler */
     MprHash         *clientLoad;            /**< Table of active client IPs and connection counts */
     char            *ip;                    /**< Listen IP address. May be null if listening on all interfaces. */
@@ -5038,7 +5101,7 @@ extern bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn
     @stability Evolving
     @defgroup HttpHost HttpHost
     @see HttpHost httpAddRoute httpCloneHost httpCreateHost httpResetRoutes httpSetHostHome httpSetHostIpAddr 
-        httpSetHostName httpSetHostProtocol httpSetHostTrace httpSetHostTraceFilter 
+        httpSetHostName httpSetHostProtocol
 */
 typedef struct HttpHost {
     /*
@@ -5052,32 +5115,27 @@ typedef struct HttpHost {
 
     struct HttpHost *parent;                /**< Parent host to inherit aliases, dirs, routes */
     MprCache        *responseCache;         /**< Response content caching store */
+#if UNUSED
     MprList         *dirs;                  /**< List of Directory definitions */
+#endif
     MprList         *routes;                /**< List of Route defintions */
     HttpRoute       *defaultRoute;          /**< Default route for the host */
-    HttpLimits      *limits;                /**< Host resource limits */
-    MprHash         *mimeTypes;             /**< Hash table of mime types (key is extension) */
 
     char            *home;                  /**< Directory for configuration files */
-
-    int             traceLevel;             /**< Trace activation level */
-    int             traceMaxLength;         /**< Maximum trace file length (if known) */
-    int             traceMask;              /**< Request/response trace mask */
-    MprHash         *traceInclude;          /**< Extensions to include in trace */
-    MprHash         *traceExclude;          /**< Extensions to exclude from trace */
 
     char            *protocol;              /**< Defaults to "HTTP/1.1" */
     int             flags;                  /**< Host flags */
 
-    MprFile         *log;                   /**< File object for access logging */
-    char            *logFormat;             /**< Access log format */
-    char            *logPath;               /**< Access log filename */
-
-    int             logCount;               /**< Number of log files to preserve */
-    int             logSize;                /**< Maximum log size */
-
     MprMutex        *mutex;                 /**< Multithread sync */
 } HttpHost;
+
+/**
+    Add an option to the options table
+    @param options Option table returned from httpGetOptions
+    @param field Field key name
+    @param value Value to use for the field
+ */
+extern void httpAddOption(MprHash *options, cchar *field, cchar *value);
 
 /**
     Add a route to a host
@@ -5135,6 +5193,41 @@ HttpRoute *httpDefineRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar
 extern HttpRoute *httpGetHostDefaultRoute(HttpHost *host);
 
 /**
+    Extract a field value from an option string. 
+    @param options Option string of the form: "field='value' field='value'..."
+    @param field Field key name
+    @param defaultValue Value to use if "field" is not found in options
+    @return Allocated value string.
+ */
+extern cchar *httpGetOption(MprHash *options, cchar *field, cchar *defaultValue);
+
+/**
+    Get an option value that is itself an object (hash)
+    @description This returns an option value that is an instance of MprHash. When deserializing a JSON option string which
+    contains multiple levels, this routine can be used to extract lower option container values. 
+    @param options Options object to examine.
+    @param field Property to return.
+    @return An MprHash instance for the given field. This will contain option sub-properties.
+    @ingroup HttpRoute
+ */
+extern MprHash *httpGetOptionHash(MprHash *options, cchar *field);
+
+/**
+    Convert an options string into an options table
+    @param options Option string of the form: "{field:'value', field:'value'}"
+        This is a sub-set of the JSON syntax. Arrays are not supported.
+    @return Options table
+ */
+extern MprHash *httpGetOptions(cchar *options);
+
+/**
+    Get a path extension 
+    @param path File pathname to examine
+    @return The path extension sans "."
+  */
+extern char *httpGetPathExt(cchar *path);
+
+/**
     Show the current route table to the error log.
     @description This emits the currently defined route table for a host to the route table. If the "full" argument is true,
         a more-complete, multi-line output format will be used. Othewise, a one-line, abbreviated route description will
@@ -5151,6 +5244,15 @@ extern void httpLogRoutes(HttpHost *host, bool full);
     @param name Route name to find. If null or empty, look for "default"
  */
 extern HttpRoute *httpLookupRoute(HttpHost *host, cchar *name);
+
+/**
+    Remove an option
+    @description Remove a property from an options hash
+    @param options Options table returned from httpGetOptions
+    @param field Property field to remove
+    @ingroup HttpRoute
+ */
+extern void httpRemoveOption(MprHash *options, cchar *field);
 
 /**
     Reset the list of routes for the host
@@ -5212,86 +5314,6 @@ extern void httpSetHostName(HttpHost *host, cchar *name);
 extern void httpSetHostProtocol(HttpHost *host, cchar *protocol);
 
 /**
-    Set the host trace level and mask
-    @description Add the route to the host list of routes. During request route matching, routes are processed 
-    in order, so it is important to define routes in the order in which you wish to match them.
-    @param host HttpHost object
-    @param level Trace level (0-9)
-    @param mask Trace mask. Choose from HTTP_TRACE_TX and HTTP_TRACE_RX to select the trace direction.
-        Also choose any set from among the following to trace options: HTTP_TRACE_CONN,
-        HTTP_TRACE_FIRST, HTTP_TRACE_HEADER, HTTP_TRACE_BODY, HTTP_TRACE_TIME.
-    @ingroup HttpHost
- */
-extern void httpSetHostTrace(HttpHost *host, int level, int mask);
-
-/**
-    Set the trace host filter
-    @description Trace filters include or exclude trace items based on the request filename extension.
-    @param host HttpHost object
-    @param len Maximum content length eligible for tracing.
-    @param include Comma or space separated list of extensions to include in tracing
-    @param exclude Comma or space separated list of extensions to exclude from tracing
-    @ingroup HttpHost
- */
-extern void httpSetHostTraceFilter(HttpHost *host, ssize len, cchar *include, cchar *exclude);
-
-#if UNUSED
-/**
-    Setup trace for expedited processing
-    @description A request should call 
-    in order, so it is important to define routes in the order in which you wish to match them.
-    @param host HttpHost object
-    @param route Route to add
-    @return "Zero" if the route can be added.
-    @ingroup HttpHost
- */
-extern int  httpSetupTrace(HttpHost *host, cchar *ext);
-#endif
-
-/**
-    Get a path extension 
-    @param path File pathname to examine
-    @return The path extension sans "."
-  */
-extern char *httpGetPathExt(cchar *path);
-
-/**
-    Extract a field value from an option string. 
-    @param options Option string of the form: "field='value' field='value'..."
-    @param field Field key name
-    @param defaultValue Value to use if "field" is not found in options
-    @return Allocated value string.
- */
-extern cchar *httpGetOption(MprHash *options, cchar *field, cchar *defaultValue);
-
-/**
-    Get an option value that is itself an object (hash)
-    @description This returns an option value that is an instance of MprHash. When deserializing a JSON option string which
-    contains multiple levels, this routine can be used to extract lower option container values. 
-    @param options Options object to examine.
-    @param field Property to return.
-    @return An MprHash instance for the given field. This will contain option sub-properties.
-    @ingroup HttpRoute
- */
-extern MprHash *httpGetOptionHash(MprHash *options, cchar *field);
-
-/**
-    Convert an options string into an options table
-    @param options Option string of the form: "{field:'value', field:'value'}"
-        This is a sub-set of the JSON syntax. Arrays are not supported.
-    @return Options table
- */
-extern MprHash *httpGetOptions(cchar *options);
-
-/**
-    Add an option to the options table
-    @param options Option table returned from httpGetOptions
-    @param field Field key name
-    @param value Value to use for the field
- */
-extern void httpAddOption(MprHash *options, cchar *field, cchar *value);
-
-/**
     Set an option
     @description Set a property in an options hash
     @param options Options table returned from httpGetOptions
@@ -5301,14 +5323,9 @@ extern void httpAddOption(MprHash *options, cchar *field, cchar *value);
  */
 extern void httpSetOption(MprHash *options, cchar *field, cchar *value);
 
-/**
-    Remove an option
-    @description Remove a property from an options hash
-    @param options Options table returned from httpGetOptions
-    @param field Property field to remove
-    @ingroup HttpRoute
- */
-extern void httpRemoveOption(MprHash *options, cchar *field);
+//  MOB
+extern int httpStartHost(HttpHost *host);
+extern void httpStopHost(HttpHost *host);
 
 #ifdef __cplusplus
 } /* extern C */

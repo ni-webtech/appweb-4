@@ -1437,7 +1437,7 @@ createBuildConfig() {
     do
         if [ ${item%.h} != ${item} ] ; then
             dir=inc
-        elif [ ${item%.${SHOBJ}} != ${item} ] ; then
+        elif [ ${item%${SHOBJ}} != ${item} ] ; then
             dir=lib
         else
             dir=bin
@@ -1445,7 +1445,7 @@ createBuildConfig() {
         echo -e "\${BLD_TOP}/out/${dir}/${item##*/}: ${item}\n\tcp ${item} ${BLD_TOP}/out/${dir}/${item##*/}\n" >>$CONFIG_IMP
         echo -e "\t\${BLD_TOP}/out/${dir}/${item##*/} \\" >>/tmp/$$targets
     done
-    echo -e "compileExtra: \\" >>$CONFIG_IMP
+    echo -e "compileFirst: \\" >>$CONFIG_IMP
     cat /tmp/$$targets >>$CONFIG_IMP
     echo -e "" >>$CONFIG_IMP
     rm -f /tmp/$$targets
