@@ -22,7 +22,7 @@
 HOME=`pwd`
 FMT=
 SITE=localhost
-PAGE=/index.esp
+PAGE=/index.html
 
 HOSTNAME=`hostname`
 BLD_COMPANY="!!BLD_COMPANY!!"
@@ -100,7 +100,7 @@ getAccountDetails() {
     #
     #   Select default username
     #
-    for u in nobody www-data Administrator 
+    for u in www-data _www nobody Administrator 
     do
         grep "$u" /etc/passwd >/dev/null
         if [ $? = 0 ] ; then
@@ -117,7 +117,7 @@ getAccountDetails() {
     #
     #   Select default group name
     #
-    for g in nobody nogroup www-data Administrators
+    for g in www-data _www nogroup nobody Administrators
     do
         grep "$g" /etc/group >/dev/null
         if [ $? = 0 ] ; then
@@ -273,36 +273,22 @@ patchAppwebConf()
     docPrefix="${BLD_DOC_PREFIX}"
     
     if [ -f "$conf" ] ; then
-        sed -e "
+        sed -e <"$conf" >"$conf.new" "\
             s!^ServerRoot.*\".*!ServerRoot \"${BLD_CFG_PREFIX}\"!
             s!^DocumentRoot.*\".*!DocumentRoot \"${BLD_WEB_PREFIX}\"!
             s!^LoadModulePath.*\".*!LoadModulePath \"${BLD_LIB_PREFIX}\"!
             s!EspDir cache.*!EspDir cache \"${BLD_SPL_PREFIX}/cache\"!
             s!^Listen.*!Listen ${BLD_HTTP_PORT}!
             s!^User .*!User ${username}!
-            s!^Group .*!Group ${groupname}!" <"$conf" >"$conf.new"
-        [ $? = 0 ] && mv "$conf.new" "$conf"
-    fi
-
-    if [ -f "$ssl" ] ; then
-        sed -e "
-            s![     ][  ]*Listen.*!    Listen ${BLD_SSL_PORT}!
+            s!^Group .*!Group ${groupname}!
             s!DocumentRoot.*!DocumentRoot \"${BLD_WEB_PREFIX}\"!
-            s!<VirtualHost .*!<VirtualHost *:${BLD_SSL_PORT}>!" <"$ssl" >"$ssl.new"
-        [ $? = 0 ] && mv "$ssl.new" "$ssl"
-    fi
-    
-    if [ -f "$log" ] ; then
-        sed -e "
-            s!ErrorLog.*error.log\"!ErrorLog \"${BLD_LOG_PREFIX}/error.log\"!
-            s!CustomLog.*access.log\"!CustomLog \"${BLD_LOG_PREFIX}/access.log\"!" "$log" >"$log.new"
-        [ $? = 0 ] && mv "$log.new" "$log"
-    fi
-
-    if [ -f "$doc" ] ; then
-        sed -e "
-            s![     ][  ]*Alias /doc/.*!    Alias /doc/ \"${docPrefix}\/\"!" <"$doc" >"$doc.new"
-        [ $? = 0 ] && mv "$doc.new" "$doc"
+            s!<VirtualHost .*!<VirtualHost *:${BLD_SSL_PORT}>!
+            s!ErrorLog.*error.log!ErrorLog \"${BLD_LOG_PREFIX}/error.log\"!
+            s!CustomLog.*access.log!CustomLog \"${BLD_LOG_PREFIX}/access.log\"!
+            s!Alias /doc/.*!Alias /doc/ \"${docPrefix}\/\"!
+            s![     ][  ]*Listen.*!    Listen ${BLD_SSL_PORT}!
+        "
+        [ $? = 0 ] && mv "$conf.new" "$conf"
     fi
 
     if [ `uname | sed 's/CYGWIN.*/CYGWIN/'` = CYGWIN ] ; then

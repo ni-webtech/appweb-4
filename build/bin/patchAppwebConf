@@ -74,13 +74,14 @@ editAppwebConf()
             s!EspDir cache.*!EspDir cache \"${BLD_SPL_PREFIX}/cache\"!
             s!^Listen.*!Listen ${BLD_HTTP_PORT}!
             s!^User .*!User ${username}!
+            s!^Group .*!Group ${groupname}!
+            s!DocumentRoot.*!DocumentRoot \"${BLD_WEB_PREFIX}\"!
+            s!<VirtualHost .*!<VirtualHost *:${BLD_SSL_PORT}>!
             s!ErrorLog.*error.log!ErrorLog \"${BLD_LOG_PREFIX}/error.log\"!
             s!AccessLog.*access.log!AccessLog \"${BLD_LOG_PREFIX}/access.log\"!
             s!Alias /doc/.*!Alias /doc/ \"${docPrefix}\/\"!
             s![ 	][ 	]*Listen.*!    Listen ${BLD_SSL_PORT}!
-            s!DocumentRoot.*!DocumentRoot \"${BLD_WEB_PREFIX}\"!
-            s!<VirtualHost .*!<VirtualHost *:${BLD_SSL_PORT}>!
-            s!^Group .*!Group ${groupname}!"
+        "
         [ $? = 0 ] && mv "$conf.new" "$conf"
     fi
 
