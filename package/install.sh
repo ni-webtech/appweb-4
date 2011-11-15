@@ -267,9 +267,6 @@ saveSetup() {
 patchAppwebConf()
 {
     conf="$1"
-    ssl="$2"
-    log="$3"
-    doc="$4"
     docPrefix="${BLD_DOC_PREFIX}"
     
     if [ -f "$conf" ] ; then
@@ -294,9 +291,6 @@ patchAppwebConf()
     if [ `uname | sed 's/CYGWIN.*/CYGWIN/'` = CYGWIN ] ; then
         if which unix2dos >/dev/null 2>&1 ; then
             unix2dos "$conf" >/dev/null 2>&1
-            unix2dos "$ssl" >/dev/null 2>&1
-            unix2dos "$log" >/dev/null 2>&1
-            unix2dos "$doc" >/dev/null 2>&1
         fi
     else
         for f in "$conf" "$ssl" "$log" "$doc" ; do
