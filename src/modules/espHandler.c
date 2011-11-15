@@ -320,7 +320,6 @@ void espRenderView(HttpConn *conn, cchar *name)
             }
         }
         if (mprLookupModule(req->source) == 0) {
-mprLog(0, "MODULE NOT FOUND %s", req->source);
             req->entry = sfmt("esp_%s", req->cacheName);
             //  MOB - who keeps reference to module?
             if ((mp = mprCreateModule(req->source, req->module, req->entry, req->route)) == 0) {
@@ -336,7 +335,6 @@ mprLog(0, "MODULE NOT FOUND %s", req->source);
                 return;
             }
         } else {
-mprLog(0, "MODULE FOUND - did not get unloaded %s", req->source);
         }
         unlock(req->esp);
     }
