@@ -13360,6 +13360,7 @@ static void defaultLogHandler(int flags, int level, cchar *msg)
     if (MPR->logBackup > 0 && MPR->logSize) {
         mprGetPathInfo(MPR->logPath, &info);
         if (info.valid && info.size > MPR->logSize) {
+            mprSetLogFile(0);
             mprBackupLog(MPR->logPath, MPR->logBackup);
             mode = O_CREAT | O_WRONLY | O_TEXT;
             if ((file = mprOpenFile(MPR->logPath, mode, 0664)) == 0) {

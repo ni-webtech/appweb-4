@@ -43,11 +43,9 @@
         <div class="contentRight">
             <h2>Quick Nav</h2>
             <ul>
-                <li><a href="#customLog">CustomLog</a></li>
+                <li><a href="#accessLog">AccessLog</a></li>
                 <li><a href="#errorLog">ErrorLog</a></li>
-                <li><a href="#logLevel">LogLevel</a></li>
-                <li><a href="#logTrace">LogTrace</a></li>
-                <li><a href="#logTraceFilter">LogTraceFilter</a></li>
+                <li><a href="#log">Log</a></li>
             </ul>
             <h2>See Also</h2>
             <ul>
@@ -57,107 +55,65 @@
             </ul>
         </div>
         <div class="contentLeft">
-            <h1>Logging Directives</h1><a name="customLog" id="customLog"></a>
-            <h2>CustomLog</h2>
+            <h1>Logging Directives</h1><a name="accessLog" id="accessLog"></a>
+            <h2>AccessLog</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
-                        <td>Define the location of the access log and its format.</td>
+                        <td>Configure a request access log.</td>
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>CustomLog path format</td>
+                        <td>AccessLog path <br/>
+                            &nbsp; &rarr; [size=bytes] <br/>
+                            &nbsp; &rarr; [backup=count] <br/>
+                            &nbsp; &rarr; [append] <br/>
+                            &nbsp; &rarr; [anew]</td>
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
-                        <td>Default Server</td>
+                        <td>Default Server, Virtual Host, Route</td>
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>CustomLog access.log "%h %l %u %t \"%r\" %&gt;s %b"</td>
+                        <td>AccessLog access.log size=1MB backup=5 append anew</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The CustomLog directive configures an access log that Appweb uses to log all successful
-                            HTTP requests. The path may be an absolute filename or it may be relative to the
-                            ServerRoot. The CustomLog directive is inherited from outer hosts in the config file.</p>
-                            <p>The format string argument defines how Appweb will record HTTP accesses to the access
-                            log. The following log format specifiers are supported:</p>
-                            <table summary="">
-                                <thead>
-                                    <tr>
-                                        <td>Format Specifier</td>
-                                        <td>Description</td>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>%%</td>
-                                        <td>Percent sign</td>
-                                    </tr>
-                                    <tr>
-                                        <td>%a</td>
-                                        <td>Remote IP address</td>
-                                    </tr>
-                                    <tr>
-                                        <td>%b</td>
-                                        <td>Bytes written back to the browser including HTTP headers. If zero bytes, a
-                                        '-' is written.</td>
-                                    </tr>
-                                    <tr>
-                                        <td>%B</td>
-                                        <td>Bytes written excluding HTTP headers.</td>
-                                    </tr>
-                                    <tr>
-                                        <td>%h</td>
-                                        <td>Remote host</td>
-                                    </tr>
-                                    <tr>
-                                        <td>%O</td>
-                                        <td>Bytes written including headers. If zero bytes, '0' is written.</td>
-                                    </tr>
-                                    <tr>
-                                        <td>%r</td>
-                                        <td>First line of the request</td>
-                                    </tr>
-                                    <tr>
-                                        <td>%s</td>
-                                        <td>Request HTTP status code.</td>
-                                    </tr>
-                                    <tr>
-                                        <td>%t</td>
-                                        <td>Time</td>
-                                    </tr>
-                                    <tr>
-                                        <td>%u</td>
-                                        <td>Remote user name</td>
-                                    </tr>
-                                    <tr>
-                                        <td>%{header}i</td>
-                                        <td>Content of request header called "header"</td>
-                                    </tr>
-                                    <tr>
-                                        <td>%&gt;s</td>
-                                        <td>Response code. Same as %s.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <p>The AccessLog directive configures an access log that Appweb uses to log completed
+                            HTTP requests for the current route. The given path may be an absolute filename or it may be
+                            relative to the ServerRoot. The AccessLog directive is inherited from outer routes in the
+                            config file.</p>
+                            <p>The <tt>size</tt> parameter specifies a maximum size to write to a single log file.
+                            The <tt>backup</tt> parameter indicates how many backup log files to preserve. When the
+                            maximum size is exceeded, the log files will be renamed by appending a sequential number
+                            from zero up to the given path name. The highest number will be the oldest log file.</p>
+                            <p>The <tt>append</tt> option means that new content will be appended to an existing log
+                            file, whereas, <tt>anew</tt> specifies that the log file will be created anew whenever
+                            Appweb is restarted.</p>
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="errorLog" id="errorLog"></a>
+            </table>
+            
+            <a name="errorLog" id="errorLog"></a>
             <h2>ErrorLog</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
-                        <td>Defines the path of the Appweb error and trace log</td>
+                        <td>Configure the Appweb diagnostic error log</td>
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>ErrorLog logSpec</td>
+                        <td>ErrorLog path <br/>
+                            &nbsp; &rarr; [size=bytes] <br/>
+                            &nbsp; &rarr; [level=0-9] <br/>
+                            &nbsp; &rarr; [backup=count] <br/>
+                            &nbsp; &rarr; [append] <br/>
+                            &nbsp; &rarr; [anew]</td>
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
@@ -165,19 +121,24 @@
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>ErrorLog error.log:2</td>
+                        <td>ErrorLog error.log size=1MB level=2 backup=5 append anew</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The ErrorLog directive defines the path to the Appweb error log and controls what is
-                            written to the log. A general overview of using log files is discussed in the Adminstration
-                            section on <a href="../logFiles.html">Log Files</a>.</p>
-                            <p>The logSpec argument has the following format:</p>
-                            <pre>
-pathName[:level][.maxSize]
-</pre>
-                            <p>The pathName is an absolute or ServerRoot relative path. The level argument defines a
+                            <p>The ErrorLog directive configures the diagnostic error log for Appweb. There is one
+                            such error log and all error messages and trace will be written to this log.</p>
+                            The given <tt>path</tt> may be an absolute filename or it may be
+                            relative to the ServerRoot. 
+                            <p>The <tt>size</tt> parameter specifies a maximum size to write to a single log file.
+                            The <tt>backup</tt> parameter indicates how many backup log files to preserve. When the
+                            maximum size is exceeded, the log files will be renamed by appending a sequential number
+                            from zero up to the given path name. The highest number will be the oldest log file.</p>
+                            <p>The <tt>append</tt> option means that new content will be appended to an existing log
+                            file, whereas, <tt>anew</tt> specifies that the log file will be created anew whenever
+                            Appweb is restarted.</p>
+
+                            <p>The <tt>level</tt> argument defines a
                             logging verbosity level between 0 and 9 with 9 being the most verbose.</p>
                             <p>The following levels are generally observed:</p>
                             <table summary="">
@@ -214,54 +175,17 @@ pathName[:level][.maxSize]
                                     </tr>
                                 </tbody>
                             </table>
-                            <p>The maxSize argument defines how large the log may grow in MB before it is rotated. When
-                            rotated, the old log will be renamed with ".old" appended to the pathName. The default size
-                            is 5 MB.</p>
-                            <p>If the LogLevel directive is used, it will override the level specified via the ErrorLog
-                            directive for general logging.</p>
-                            <h3>Examples</h3>
-                            <p>To log trace at the level specified by the LogLevel directive to the file named
-                            error.log:</p>
-                            <pre>
-ErrorLog error.log
-</pre>
-                        </td>
-                    </tr>
-                </tbody>
-            </table><a name="logLevel" id="logLevel"></a>
-            <h2>LogLevel</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
-                    <tr>
-                        <td class="pivot">Description</td>
-                        <td>Defines the verbosity of messages to the error log</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Synopsis</td>
-                        <td>LogLevel errorLevel</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Context</td>
-                        <td>Default Server</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Example</td>
-                        <td>LogLevel 2</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Notes</td>
-                        <td>
-                            <p>The LogLevel directive defines the amount of information logged to the error log. The
-                            errorLevel argument must be a digit between 0 and 9 (inclusive) with 9 being the most
-                            verbose level.</p>
-                            <p>Normally a level of 2 is best as it will record the Appweb configuration, denied
-                            requests and general errors.</p>
+                            <p>If Appweb is invoked with a <tt>--log</tt> or <tt>--verbose</tt> argument, it will
+                            override the ErrorLog directive which will be ignored.</tt>
+                            <p>A general overview of using log files is discussed in the Adminstration
+                            section on <a href="../logFiles.html">Log Files</a>.</p>
                         </td>
                     </tr>
                 </tbody>
             </table>
-            <a name="logTrace" id="logTrace"></a>
-            <h2>LogTrace</h2>
+            
+            <a name="log" id="log"></a>
+            <h2>Log</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>
                     <tr>
@@ -270,67 +194,46 @@ ErrorLog error.log
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>LogTrace level SET</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Context</td>
-                        <td>Default Server</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Example</td>
-                        <td>LogTrace 3 headers,request,response</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Notes</td>
-                        <td>
-                            <p>The LogTrace directive controls how HTTP messages are traced to the log file.
-                            When tracing is enabled for a HTTP message, the headers and/or body of the message
-                            will be written to the log file. Binary messages will be encoded into printable hex characters.
-                            The level defines the log level at which tracing will be enabled.</p>
-                            <p>The "SET" option defines what parts of the HTTP message will be traced. SET is a comma 
-                            separated (without spaces) list of keywords. Valid keywords are: headers, body, request, 
-                            and response.</p>
-                            <p>For example: to trace the headers and body of requests but not responses, 
-                            use: "headers,body,request".</p>
-                            <p>The default configuration is to trace at level 3 request and response headers and request
-                            bodies.</p>
+                        <td>Log [rx|tx] <br/>
+                            &nbsp; &rarr; conn=level <br/>
+                            &nbsp; &rarr; first=level <br/>
+                            &nbsp; &rarr; headers=level <br/>
+                            &nbsp; &rarr; body=level <br/>
+                            &nbsp; &rarr; limits=level <br/>
+                            &nbsp; &rarr; time=level <br/>
+                            &nbsp; &rarr; size=bytes <br/>
+                            &nbsp; &rarr; exclude=extensions <br/>
+                            &nbsp; &rarr; include=extensions
                         </td>
                     </tr>
-                </tbody>
-            </table>
-            <a name="logTraceFilter" id="logTraceFilter"></a>
-            <h2>LogTraceFilter</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
-                    <tr>
-                        <td class="pivot">Description</td>
-                        <td>Control the filtering of HTTP message tracing</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Synopsis</td>
-                        <td>LogTraceFilter size INCLUDE EXCLUDE</td>
-                    </tr>
                     <tr>
                         <td class="pivot">Context</td>
                         <td>Default Server</td>
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>LogTraceFilter 4096 "*" "git,jpg,png,ico"</td>
+                        <td>Log rx conn=5 first=2 headers=3 body=5 limits=5 size=10K <br/>
+                            &nbsp; &rarr; exclude="jpg,gif,png,ico,css,js"</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The LogTraceFilter directive applies a filter criteria to the tracing of HTTP messages.
-                            The size option specifies a maximum number of bytes to trace for any message. This is useful
-                            to prevent the entire tracing of very large files. </p>
-                            <p>The INCLUDE option specifies a comma
-                            separated (without spaces) list of file extensions to trace. Use "*" to specify tracing all
-                            request extensions. The EXCLUDE option specifies a comma separated list of file extensions
-                            to exclude from tracing. The include option is applied first, then the exclude option.</p>
-                            <p>For example: to trace only html and text files, use an include option of "html,txt". To trace 
-                            all files except graphics, use include "*" and exclude "gif,jpg,png,ico".
-                            <p>The default configuration is to trace all files, i.e. no filtering.</p>
+                            <p>The Log directive controls how HTTP messages are traced to the log file.
+                            The following classes of information can be traces. 
+                            <ul>
+                                <li>Conn &mdash; connection oriented events</li>
+                                <li>First &mdash; first line of the HTTP header</li>
+                                <li>Headers &mdash; full HTTP header</li>
+                                <li>Body &mdash; HTTP body content</li>
+                                <li>Limits &mdash; Resource limit validation</li>
+                                <li>Time &mdash; Request elapsed time (tx only)</li>
+                            </ul>
+                            <p>For each class, the level defines the log level at which tracing will occur.</p>
+                            <p>When tracing is enabled for a HTTP message, the headers and/or body of the message
+                            will be written to the log file. Binary body content will be encoded into printable hex
+                            characters. Tracing will be limited to at most <tt>size</tt> bytes per request.</p>
+                            <p>The <tt>include</tt> and <tt>exclude</tt> define a set of file extensions that will be
+                            included or excluded in the trace.</p>
                         </td>
                     </tr>
                 </tbody>
