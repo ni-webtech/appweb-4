@@ -838,7 +838,7 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
     *program = 0;
     path = 0;
 
-    actionProgram = mprGetMimeProgram(conn->host->mimeTypes, rx->mimeType);
+    actionProgram = mprGetMimeProgram(rx->route->mimeTypes, rx->mimeType);
     ext = tx->ext;
 
     /*
