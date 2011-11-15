@@ -1436,14 +1436,16 @@ createBuildConfig() {
     for item in ${BLD_IMPORTS} 
     do
         if [ ${item%.h} != ${item} ] ; then
-            dir=inc
+            eval dir=$BLD_HOST_INC_DIR
+        elif [ ${item%.mod} != ${item} ] ; then
+            eval dir=$BLD_HOST_LIB_DIR
         elif [ ${item%${SHOBJ}} != ${item} -a "${SHOBJ}" != ".dll" ] ; then
-            dir=lib
+            eval dir=$BLD_HOST_LIB_DIR
         else
-            dir=bin
+            eval dir=$BLD_HOST_BIN_DIR
         fi
-        echo -e "\${BLD_TOP}/out/${dir}/${item##*/}: ${item}\n\tcp ${item} ${BLD_TOP}/out/${dir}/${item##*/}\n" >>$CONFIG_IMP
-        echo -e "\t\${BLD_TOP}/out/${dir}/${item##*/} \\" >>/tmp/$$targets
+        echo -e "\${BLD_TOP}/${dir}/${item##*/}: ${item}\n\tcp ${item} ${BLD_TOP}/${dir}/${item##*/}\n" >>$CONFIG_IMP
+        echo -e "\t\${BLD_TOP}/${dir}/${item##*/} \\" >>/tmp/$$targets
     done
     echo -e "compileFirst: \\" >>$CONFIG_IMP
     cat /tmp/$$targets >>$CONFIG_IMP
