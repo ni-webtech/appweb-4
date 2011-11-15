@@ -39,19 +39,10 @@ var etc: Path = root.join("etc")
 var init: Path = etc.join("init.d")
 var cache: Path = spl.join("cache")
 
-var group = 0
-var owner = 0
 let config = Path("src/server/appweb.conf").readString()
-let matches = config.match(/^Group[ \t]+([\w]+)/m)
-if (matches) {
-    group = matches[1]
-    print("GROUP " + group)
-}
-matches = config.match(/^User[ \t]+([\w]+)/m)
-if (matches) {
-    owner = matches[1]
-    print("OWNER " + owner)
-}
+let group = config.match(/^Group[ \t]+([\w]+)/m)[1]
+let owner = config.match(/^User[ \t]+([\w]+)/m)[1]
+
 var lowperms = {permissions: 0755, owner: owner, group: group }
 var dperms = {permissions: 0755, owner: 0, group: 0 }
 bin.makeDir(dperms)
