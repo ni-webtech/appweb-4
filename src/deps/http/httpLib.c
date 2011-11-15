@@ -3813,6 +3813,7 @@ bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn)
     int             count, level, dir;
 
     limits = conn->limits;
+    dir = HTTP_TRACE_RX;
     action = "unknown";
     mprAssert(conn->endpoint == endpoint);
     lock(endpoint->http);
