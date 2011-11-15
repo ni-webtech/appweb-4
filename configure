@@ -990,7 +990,9 @@ configureComponent() {
     imports="$newImports"
 
     if [ "$imports" != "" ] ; then
-        BLD_IMPORTS="$imports $BLD_IMPORTS"
+        if [ "${BLD_IMPORTS/$imports/}" = "${BLD_IMPORTS}" ] ; then
+            BLD_IMPORTS="$imports $BLD_IMPORTS"
+        fi
     fi
 
     #

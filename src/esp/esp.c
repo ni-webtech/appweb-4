@@ -296,7 +296,7 @@ MAIN(espgen, int argc, char **argv)
                 usageError();
             } else {
                 argp = argv[++argind];
-                if (chdir(argp) < 0) {
+                if (chdir((char*) argp) < 0) {
                     fail("Can't change directory to %s", argp);
                 }
             }

@@ -22,7 +22,7 @@ config32:
 	./configure --32 --without-matrixssl --without-php --without-ejscript --release 
 
 cross32:
-	./configure --host=i386-apple-darwin --without-matrixssl --without-php
+	./configure --host=i386-apple-darwin --without-matrixssl --without-php --without-ejscript
 
 cross64:
 	./configure --shared --build=i386-apple-darwin --host=x86_64-apple-darwin --without-ssl --without-php

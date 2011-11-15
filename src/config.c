@@ -163,6 +163,7 @@ static int accessLogDirective(MaState *state, cchar *key, cchar *value)
     size = INT_MAX;
     backup = 0;
     flags = 0;
+    path = 0;
     
     for (option = stok(sclone(value), " \t,", &tok); option; option = stok(0, " \t,", &tok)) {
         option = stok(option, " =\t,", &ovalue);
@@ -185,6 +186,10 @@ static int accessLogDirective(MaState *state, cchar *key, cchar *value)
     }
     if (size < (10 * 1024)) {
         mprError("Size is too small. Must be larger than 10K");
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    if (path == 0) {
+        mprError("Missing filename");
         return MPR_ERR_BAD_SYNTAX;
     }
     httpSetRouteLogFormat(state->route, httpMakePath(state->route, path), size, backup, HTTP_LOG_FORMAT, flags);
@@ -733,6 +738,7 @@ static int errorLogDirective(MaState *state, cchar *key, cchar *value)
     size = INT_MAX;
     level = 0;
     backup = 0;
+    path = 0;
     flags = 0;
     
     for (option = stok(sclone(value), " \t,", &tok); option; option = stok(0, " \t,", &tok)) {
@@ -759,6 +765,10 @@ static int errorLogDirective(MaState *state, cchar *key, cchar *value)
     }
     if (size < (10 * 1000)) {
         mprError("Size is too small. Must be larger than 10K");
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    if (path == 0) {
+        mprError("Missing filename");
         return MPR_ERR_BAD_SYNTAX;
     }
     mprSetLogBackup(size, backup, flags);
