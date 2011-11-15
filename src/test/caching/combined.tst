@@ -5,6 +5,11 @@
 const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
+//  Clear cache
+http.setHeader("Cache-Control", "no-cache")
+http.get(HTTP + "/combined/cache.esp")
+http.wait()
+
 //  1. Test that content is being cached
 //  Initial get
 http.get(HTTP + "/combined/cache.esp")

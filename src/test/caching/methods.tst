@@ -3,17 +3,25 @@
  */
 
 const HTTP = (global.tsession && tsession["http"]) || ":4100"
-let http: Http = new Http
 
 /*
     Fetch twice and test if caching is working
  */
 function cached(method, uri): Boolean {
+    let http: Http = new Http
+
+    //  Clear cache
+    http.setHeader("Cache-Control", "no-cache")
+    http.connect(method, HTTP + uri)
+    http.wait()
+
+    //  First fetch
     http.connect(method, HTTP + uri)
     assert(http.status == 200)
     let resp = deserialize(http.response)
     let first = resp.number
 
+    //  Second fetch
     http.connect(method, HTTP + uri)
     assert(http.status == 200)
     resp = deserialize(http.response)
