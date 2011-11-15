@@ -129,6 +129,7 @@
 <tr class="apiDef"><td class="apiType">void*</td><td><a href="#group___mpr_synch_1gaf31f12f66dadcc39b4b5d393737afdc7" class="nameRef">mprAtomicExchange</a>(void *volatile *target, <a href="#mpr_8h_1a5272042f7e0f5c53e2fd4b49ff47d92d" class="ref">cvoid</a> *value)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Exchange the target and a value.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___mpr_synch_1ga6b59ddeb275360c3c428f66c649fc5cd" class="nameRef">mprAtomicListInsert</a>(void *volatile *head, volatile void **link, void *item)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Atomic list insertion.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___mpr_file" class="ref">MprFile*</a></td><td><a href="#group___mpr_file_1ga0d6eabedf8da002bf9d12d2a3336f3b8" class="nameRef">mprAttachFileFd</a>(int fd, <a href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, int omode)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Attach to an existing file descriptor.</td></tr>
+<tr class="apiDef"><td class="apiType">int</td><td><a href="#mpr_8h_1a5f95e2768c6f5e77ebec25bc471d55cb" class="nameRef">mprBackupLog</a>(<a href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path, int count)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Backup a log.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___mpr_hash" class="ref">MprHash*</a></td><td><a href="#group___mpr_hash_1gae8a8db569fba8c21a10976dd6f2ba3bc" class="nameRef">mprBlendHash</a>(<a href="#group___mpr_hash" class="ref">MprHash</a> *target, <a href="#group___mpr_hash" class="ref">MprHash</a> *other)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Blend two hash tables.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___mpr_1gac5203b2138474e781207b39ac4726c1b" class="nameRef">mprBreakpoint</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Trigger a breakpoint.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___mpr_list_1gacf49292693e22c7bdc43fbb41a83817d" class="nameRef">mprClearList</a>(<a href="#group___mpr_list" class="ref">MprList</a> *list)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Clears the list of all items.</td></tr>
@@ -157,6 +158,7 @@
 <tr class="apiDef"><td class="apiType"><a href="#struct_mpr_key_value" class="ref">MprKeyValue*</a></td><td><a href="#group___mpr_list_1ga64de8dd4049d256f9cbb931b640711ee" class="nameRef">mprCreateKeyPair</a>(<a href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *key, <a href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *value)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create a key / value pair.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___mpr_list" class="ref">MprList*</a></td><td><a href="#group___mpr_list_1gacc8d55930e99375f2220ffabfb2fec65" class="nameRef">mprCreateList</a>(int size, int flags)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create a list.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#struct_mpr_mutex" class="ref">MprMutex*</a></td><td><a href="#group___mpr_synch_1ga68fe682a34151374ac03be971192a54d" class="nameRef">mprCreateLock</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create a Mutex lock object.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#group___mpr_log_1ga45fccdc0d6da1387ae53c9b2fd385c10" class="nameRef">mprCreateLogService</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Initialize the log service.</td></tr>
 <tr class="apiDef"><td class="apiType">struct Mpr*</td><td><a href="#group___mpr_mem_1ga68aa995754d9494d3df0f7877a71aba4" class="nameRef">mprCreateMemService</a>(<a href="#group___mpr_mem_1gaacdb6d1a5cec32a0758f636353fff782" class="ref">MprManager</a> manager, int flags)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create and initialize the Memory service.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___mpr_hash" class="ref">MprHash*</a></td><td><a href="#group___mpr_mime_1ga6a3d1d998854ba4779ad2b6615d9819d" class="nameRef">mprCreateMimeTypes</a>(<a href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create the mime types.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___mpr_module" class="ref">MprModule*</a></td><td><a href="#group___mpr_module_1ga126d18e60c799eaee488841f25bef39c" class="nameRef">mprCreateModule</a>(<a href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, <a href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path, <a href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *entry, void *data)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create a module.</td></tr>
@@ -459,6 +461,7 @@
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___mpr_1ga1fa92eb8cb9bf4f023f4f60f57001abc" class="nameRef">mprSetIpAddr</a>(<a href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *ip)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Sete the application IP address string.</td></tr>
 <tr class="apiDef"><td class="apiType">void*</td><td><a href="#group___mpr_list_1ga20dffb6f04ddb568db844dd1a83025f7" class="nameRef">mprSetItem</a>(<a href="#group___mpr_list" class="ref">MprList</a> *list, int index, <a href="#mpr_8h_1a5272042f7e0f5c53e2fd4b49ff47d92d" class="ref">cvoid</a> *item)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set a list item.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___mpr_list_1ga38bd862a8bc3076d86b0185d5bd81aa6" class="nameRef">mprSetListLimits</a>(<a href="#group___mpr_list" class="ref">MprList</a> *list, int initialSize, int maxSize)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Define the list size limits.</td></tr>
+<tr class="apiDef"><td class="apiType">void</td><td><a href="#mpr_8h_1ad1c46a00821497d3146925dde1980791" class="nameRef">mprSetLogBackup</a>(<a href="#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a> logSize, int backupCount, int flags)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set the log rotation parameters.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#mpr_8h_1a02941fa13af43f80adda4840d94f215b" class="nameRef">mprSetLogFile</a>(struct MprFile *file)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set a file to be used for logging.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#mpr_8h_1adbb663d5ed88e1b5f47032a244953b9c" class="nameRef">mprSetLogHandler</a>(<a href="#group___mpr_log_1ga95e033ad5fa41baa87cb3fefdb782951" class="ref">MprLogHandler</a> handler)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set an MPR debug log handler.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___mpr_log_1ga5072dbfb7278b3247096146ead8b7162" class="nameRef">mprSetLogLevel</a>(int level)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Set the current logging level.</td></tr>
@@ -508,6 +511,7 @@
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#mpr_8h_1a3d488881e616f7cff999dc214d1ff7d8" class="nameRef">mprStart</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Start the Mpr services.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___mpr_cmd_1ga63558463aa20f047dbd03cae5b6dab7b" class="nameRef">mprStartCmd</a>(<a href="#group___mpr_cmd" class="ref">MprCmd</a> *cmd, int argc, char **argv, char **envp, int flags)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Start the command.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#mpr_8h_1a201d701e07e26e2ec458d4f5be81bf17" class="nameRef">mprStartEventsThread</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Start an thread dedicated to servicing events.</td></tr>
+<tr class="apiDef"><td class="apiType">int</td><td><a href="#mpr_8h_1aaa6773428f23b0a3cede171550bb4abc" class="nameRef">mprStartLogging</a>(<a href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *logSpec, int showConfig)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Start logging.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___mpr_module_1gada93a8c2366fe16efc767791d81793bd" class="nameRef">mprStartModule</a>(<a href="#group___mpr_module" class="ref">MprModule</a> *mp)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Start a module.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#mpr_8h_1abab36952856d0d468adaffd764d00a3e" class="nameRef">mprStartModuleService</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Start the module service.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___mpr_1ga4141529427d59501d97564428a3b346e" class="nameRef">mprStartOsService</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Start the O/S dependent subsystem.</td></tr>
@@ -1127,6 +1131,14 @@
 </tr>
 <tr class="apiBrief"><td>&nbsp;</td><td>Constants for mprParseTime.</td></tr>
 <tr class="apiDef">
+<td>#define</td><td><a href="#mpr_8h_1a6673edd70b7227b524b05ad21e753be0" class="nameRef">MPR_LOG_ANEW</a>&nbsp;&nbsp;&nbsp;0x80</td>
+</tr>
+<tr class="apiBrief"><td>&nbsp;</td><td>Start anew on boot (rotate).</td></tr>
+<tr class="apiDef">
+<td>#define</td><td><a href="#mpr_8h_1afd43d0547948ba7242fb957454c794b2" class="nameRef">MPR_LOG_APPEND</a>&nbsp;&nbsp;&nbsp;0x40</td>
+</tr>
+<tr class="apiBrief"><td>&nbsp;</td><td>Append to existing log files.</td></tr>
+<tr class="apiDef">
 <td>#define</td><td><a href="#mpr_8h_1a33bdbe3fb8480fd5629000097f92e441" class="nameRef">MPR_LOG_SRC</a>&nbsp;&nbsp;&nbsp;0x40</td>
 </tr>
 <tr class="apiBrief"><td>&nbsp;</td><td>Originated from mprLog.</td></tr>
@@ -1162,10 +1174,6 @@
 <td>#define</td><td><a href="#mpr_8h_1aab4c09572a9569f196d15c1b7f6627ed" class="nameRef">MPR_MAX_LOG</a>&nbsp;&nbsp;&nbsp;(8 * 1024)</td>
 </tr>
 <tr class="apiBrief"><td>&nbsp;</td><td>Maximum log message size (impacts stack).</td></tr>
-<tr class="apiDef">
-<td>#define</td><td><a href="#mpr_8h_1a9f0705ef414c63b94c34a8a4e0bb239a" class="nameRef">MPR_MAX_LOG_STRING</a>&nbsp;&nbsp;&nbsp;512</td>
-</tr>
-<tr class="apiBrief"><td>&nbsp;</td><td>Maximum log message.</td></tr>
 <tr class="apiDef">
 <td>#define</td><td><a href="#mpr_8h_1a06e26ea0168fbb293255ffdc62b288e0" class="nameRef">MPR_MAX_PATH</a>&nbsp;&nbsp;&nbsp;512</td>
 </tr>
@@ -1662,6 +1670,9 @@ Invoked to determine if the process is idle.
     <tr><td class="param">char *</td><td><td>ip</td><td>
 Public IP Address.
 </td>
+    <tr><td class="param">int</td><td><td>logBackup</td><td>
+Number of log files preserved when backing up.
+</td>
     <tr><td class="param">MprFile *</td><td><td>logFile</td><td>
 Log file.
 </td>
@@ -1670,6 +1681,12 @@ Current log handler callback.
 </td>
     <tr><td class="param">int</td><td><td>logLevel</td><td>
 Log trace level.
+</td>
+    <tr><td class="param"><a class="ref" BBB href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e">cchar</a> *</td><td><td>logPath</td><td>
+Log path name.
+</td>
+    <tr><td class="param"><a class="ref" BBB href="#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1">ssize</a></td><td><td>logSize</td><td>
+Maximum log size.
 </td>
     <tr><td class="param">MprOsThread</td><td><td>mainOsThread</td><td>
 Main OS thread ID.
@@ -1716,6 +1733,15 @@ Quick thread synchronization.
 </td>
     <tr><td class="param">int</td><td><td>state</td><td>
 Processing state.
+</td>
+    <tr><td class="param">MprFile *</td><td><td>stdError</td><td>
+Standard error file.
+</td>
+    <tr><td class="param">MprFile *</td><td><td>stdInput</td><td>
+Standard input file.
+</td>
+    <tr><td class="param">MprFile *</td><td><td>stdOutput</td><td>
+Standard output file.
 </td>
     <tr><td class="param">int</td><td><td>sweeper</td><td>
 Sweeper thread is active.
@@ -4797,15 +4823,6 @@ First separator is the preferred separator.
     <tr><td class="param">MprSetBufferedProc</td><td><td>setBuffered</td><td>
 Virtual set buffered I/O routine.
 </td>
-    <tr><td class="param">struct MprFile *</td><td><td>stdError</td><td>
-Standard error file.
-</td>
-    <tr><td class="param">struct MprFile *</td><td><td>stdInput</td><td>
-Standard input file.
-</td>
-    <tr><td class="param">struct MprFile *</td><td><td>stdOutput</td><td>
-Standard output file.
-</td>
     <tr><td class="param">MprTruncateFileProc</td><td><td>truncateFile</td><td>
 Virtual truncate file routine.
 </td>
@@ -5867,6 +5884,19 @@ Multithread lock.
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___mpr_log_1ga95e033ad5fa41baa87cb3fefdb782951" class="ref">MprLogHandler</a>, <a href="#group___mpr_log_1ga33ca1cbd4c7573013253873dab76f209" class="ref">mprError</a>, <a href="#group___mpr_log_1ga28e1a846a7476fce715f950ec090d61c" class="ref">mprFatalError</a>, <a href="#group___mpr_log_1ga485a83d46f63f5ce07b489b2e77a338c" class="ref">mprGetLogFile</a>, <a href="#group___mpr_log_1gafa26d272b51c301c2e5c3630d6a8493e" class="ref">mprGetLogHandler</a>, <a href="#group___mpr_log_1ga21fa2199e7f70707c1fb3b63daed6ecf" class="ref">mprLog</a>, <a href="#group___mpr_log_1ga72e962cc814afc5fc437010979f2ecb9" class="ref">mprMemoryError</a>, <a href="#group___mpr_log_1ga0ab29654e80cbd645e24a4125b1883a7" class="ref">mprRawLog</a>, <a href="#mpr_8h_1a02941fa13af43f80adda4840d94f215b" class="ref">mprSetLogFile</a>, <a href="#mpr_8h_1adbb663d5ed88e1b5f47032a244953b9c" class="ref">mprSetLogHandler</a>, <a href="#group___mpr_log_1ga5072dbfb7278b3247096146ead8b7162" class="ref">mprSetLogLevel</a>, <a href="#group___mpr_log_1ga49ec4a7be1f8f932545e0b5b80c14a32" class="ref">mprStaticError</a>, <a href="#group___mpr_log_1ga44152d23b55bcd9f428deabc7e68a933" class="ref">mprUserError</a>, <a href="#group___mpr_log_1ga3c9f9a0bcfdf44dc68118f97a82ed13f" class="ref">mprUsingDefaultLogHandler</a>, <a href="#group___mpr_log_1ga522d10dbc7691186cf7c90c50c2dc929" class="ref">mprWarn</a></dd></dl>
+  </div>
+</div>
+<a name="group___mpr_log_1ga45fccdc0d6da1387ae53c9b2fd385c10"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    mprCreateLogService
+()
+  </div>
+  <div class="apiDetail">
+<p>Initialize the log service.</p>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___mpr_log_1ga95e033ad5fa41baa87cb3fefdb782951" class="ref">MprLogHandler</a>, <a href="#group___mpr_log_1ga42ef49743936729111e89ae45ad8a752" class="ref">mprAssertError</a>, <a href="#group___mpr_log_1ga33ca1cbd4c7573013253873dab76f209" class="ref">mprError</a>, <a href="#group___mpr_log_1ga28e1a846a7476fce715f950ec090d61c" class="ref">mprFatalError</a>, <a href="#group___mpr_log_1ga485a83d46f63f5ce07b489b2e77a338c" class="ref">mprGetLogFile</a>, <a href="#group___mpr_log_1gafa26d272b51c301c2e5c3630d6a8493e" class="ref">mprGetLogHandler</a>, <a href="#group___mpr_log_1ga21fa2199e7f70707c1fb3b63daed6ecf" class="ref">mprLog</a>, <a href="#group___mpr_log_1ga72e962cc814afc5fc437010979f2ecb9" class="ref">mprMemoryError</a>, <a href="#group___mpr_log_1ga0ab29654e80cbd645e24a4125b1883a7" class="ref">mprRawLog</a>, <a href="#mpr_8h_1a02941fa13af43f80adda4840d94f215b" class="ref">mprSetLogFile</a>, <a href="#mpr_8h_1adbb663d5ed88e1b5f47032a244953b9c" class="ref">mprSetLogHandler</a>, <a href="#group___mpr_log_1ga5072dbfb7278b3247096146ead8b7162" class="ref">mprSetLogLevel</a>, <a href="#group___mpr_log_1ga49ec4a7be1f8f932545e0b5b80c14a32" class="ref">mprStaticError</a>, <a href="#group___mpr_log_1ga44152d23b55bcd9f428deabc7e68a933" class="ref">mprUserError</a>, <a href="#group___mpr_log_1ga3c9f9a0bcfdf44dc68118f97a82ed13f" class="ref">mprUsingDefaultLogHandler</a>, <a href="#group___mpr_log_1ga522d10dbc7691186cf7c90c50c2dc929" class="ref">mprWarn</a></dd></dl>
   </div>
 </div>
 <a name="group___mpr_log_1ga33ca1cbd4c7573013253873dab76f209"></a>
@@ -11052,6 +11082,22 @@ The signal handling mechanism will trap the specified signal if issued and creat
 The trapped signals are SIGINT, SIGQUIT, SIGTERM, SIGPIPE and SIGXFSZ. SIGPIPE and SIGXFSZ are ignored. A graceful shutdown is initiated for SIGTERM whereas SIGINT and SIGQUIT will do an immediate exit
   </div>
 </div>
+<a name="mpr_8h_1a5f95e2768c6f5e77ebec25bc471d55cb"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    mprBackupLog
+(<a href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *path, int count)
+  </div>
+  <div class="apiDetail">
+<p>Backup a log.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">path</td><td>Base log filename.</td>
+    <tr><td class="param">count</td><td>Count of archived logs to keep.</td>
+    </table></dd></dl>
+  </div>
+</div>
 <a name="mpr_8h_1a3855fd262d4f3003b3d4f53288a6ace7"></a>
 <div class="api">
   <div class="prototype">
@@ -11807,6 +11853,23 @@ This sets the condition variable to the unsignalled condition
     </table></dd></dl>
   </div>
 </div>
+<a name="mpr_8h_1ad1c46a00821497d3146925dde1980791"></a>
+<div class="api">
+  <div class="prototype">
+    void
+    mprSetLogBackup
+(<a href="#mpr_8h_1a7d08ccc1e981eb4d5a238641ac4ccfc1" class="ref">ssize</a> logSize, int backupCount, int flags)
+  </div>
+  <div class="apiDetail">
+<p>Set the log rotation parameters.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">logSize</td><td>If the size is zero, then the log file will be rotated on each application boot. Otherwise, the log file will be rotated if on application boot, the log file is larger than this size.</td>
+    <tr><td class="param">backupCount</td><td>Count of the number of log files to keep.</td>
+    <tr><td class="param">flags</td><td>Set to MPR_LOG_APPEND to append to existing log files. Set to MPR_LOG_TRUNCATE to truncate log files on application restart.</td>
+    </table></dd></dl>
+  </div>
+</div>
 <a name="mpr_8h_1a02941fa13af43f80adda4840d94f215b"></a>
 <div class="api">
   <div class="prototype">
@@ -11953,6 +12016,23 @@ This sets the condition variable to the unsignalled condition
 <p>Start an thread dedicated to servicing events.</p>
 This will create a new thread and invoke mprServiceEvents
     <dl><dt>Returns:</dt><dd>Zero if successful.</dd></dl>
+  </div>
+</div>
+<a name="mpr_8h_1aaa6773428f23b0a3cede171550bb4abc"></a>
+<div class="api">
+  <div class="prototype">
+    int
+    mprStartLogging
+(<a href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *logSpec, int showConfig)
+  </div>
+  <div class="apiDetail">
+<p>Start logging.</p>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" summary="Parameters">
+    <tr><td class="param">logSpec</td><td>Set the log file name and level. The format is &quot;pathName[:level]&quot;. The following levels are generally observed: <ul><li>0 - Essential messages, fatal errors and critical warnings </li><li>1 - Hard errors </li><li>2 - Configuration setup and soft warnings </li><li>3 - Useful informational messages </li><li>4 - Debug information </li><li>5-9 - Increasing levels of internal Appweb trace useful for debugging </li></ul></td>
+    <tr><td class="param">showConfig</td><td>Set to true to log an initial system configuration.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.</dd></dl>
   </div>
 </div>
 <a name="mpr_8h_1abab36952856d0d468adaffd764d00a3e"></a>
