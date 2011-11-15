@@ -473,8 +473,7 @@ patchConfiguration() {
     BLD_CFG_PREFIX="$BLD_CFG_PREFIX" BLD_WEB_PREFIX="$BLD_WEB_PREFIX" BLD_DOC_PREFIX="$BLD_DOC_PREFIX" \
         BLD_LIB_PREFIX="$BLD_LIB_PREFIX" BLD_LOG_PREFIX="$BLD_LOG_PREFIX" \
         BLD_SERVER=$HOSTNAME BLD_HTTP_PORT=$HTTP_PORT BLD_SSL_PORT=$SSL_PORT \
-        patchAppwebConf "${BLD_CFG_PREFIX}/appweb.conf" "${BLD_CFG_PREFIX}/conf/hosts/ssl-default.conf" \
-        "${BLD_CFG_PREFIX}/conf/log.conf" "${BLD_CFG_PREFIX}/conf/doc.conf"
+        patchAppwebConf "${BLD_CFG_PREFIX}/appweb.conf" 
 }
 
 startService() {
