@@ -4190,20 +4190,21 @@ extern void mprCreateLogService();
 extern int mprStartLogging(cchar *logSpec, int showConfig);
 
 /**
-    Archive a log
+    Backup a log
     @param path Base log filename
     @param count Count of archived logs to keep
  */
-extern int mprArchiveLog(cchar *path, int count);
+extern int mprBackupLog(cchar *path, int count);
 
 /**
     Set the log rotation parameters
-    @param logCount Count of the number of archived log files to keep
     @param logSize If the size is zero, then the log file will be rotated on each application boot. Otherwise,
         the log file will be rotated if on application boot, the log file is larger than this size.
-    @param Max size of a log file before it will be archived.
+    @param backupCount Count of the number of log files to keep
+    @param flags Set to MPR_LOG_APPEND to append to existing log files. Set to MPR_LOG_TRUNCATE to truncate log files
+        on application restart.
  */
-extern void mprSetLogRotation(int logCount, int logSize);
+extern void mprSetLogBackup(ssize logSize, int backupCount, int flags);
 
 /**
     Output an assertion failed message.
@@ -8082,6 +8083,8 @@ extern int mprSetMimeProgram(MprHash *table, cchar *mimeType, cchar *program);
     MPR flags
  */
 #define MPR_SSL_PROVIDER_LOADED     0x20    /**< SSL provider loaded */
+#define MPR_LOG_APPEND              0x40    /**< Append to existing log files */
+#define MPR_LOG_ANEW                0x80    /**< Start anew on boot (rotate) */
 
 typedef bool (*MprIdleCallback)();
 typedef void (*MprTerminator)(int how, int status);
@@ -8106,6 +8109,9 @@ typedef struct Mpr {
     MprHeap         heap;                   /**< Memory heap control */
     bool            debugMode;              /**< Run in debug mode (no timers) */
     int             logLevel;               /**< Log trace level */
+    int             logBackup;              /**< Number of log files preserved when backing up */
+    ssize           logSize;                /**< Maximum log size */
+    cchar           *logPath;               /**< Log path name */
     MprLogHandler   logHandler;             /**< Current log handler callback */
     MprFile         *logFile;               /**< Log file */
     MprHash         *mimeTypes;             /**< Table of mime types */
@@ -8129,8 +8135,6 @@ typedef struct Mpr {
     int             exitStrategy;           /**< How to exit the app (normal, immediate, graceful) */
     int             exitStatus;             /**< Proposed program exit status */
     int             flags;                  /**< Misc flags */
-    int             logCount;               /**< Number of log files to preserve */
-    int             logSize;                /**< Maximum log size */
     int             hasError;               /**< Mpr has an initialization error */
     int             marker;                 /**< Marker thread is active */
     int             marking;                /**< Actually marking objects now */

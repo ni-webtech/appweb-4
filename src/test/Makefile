@@ -125,6 +125,7 @@ cleanExtra: testPrep
 	rm -f cgi-bin/*cgi* ../cgi-bin/testScript
 	rm -f web/cgiProgram.cgi
 	rm -f cache/* app/cache/*
+	rm -f error.log* access.log*
 
 #
 #	Don't copy this. Ensure you set minimal permissions on upload and temp directories

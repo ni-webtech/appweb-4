@@ -145,24 +145,52 @@ static int parseFileInner(MaState *state, cchar *path)
 }
 
 
+#if !BLD_FEATURE_ROMFS
 /*
     AccessLog path
-    TODO MOB: AccessLog conf/log.conf append,rotate,limit=10K
+    AccessLog conf/log.conf size=10K, backup=5, append, anew, format=""
  */
 static int accessLogDirective(MaState *state, cchar *key, cchar *value)
 {
-#if !BLD_FEATURE_ROMFS
-    char    *path;
-    if (!maTokenize(state, value, "%S", &path)) {
+    char        *option, *ovalue, *tok, *path;
+    ssize       size;
+    int         flags, backup;
+
+    if (mprGetCmdlineLogging()) {
+        mprLog(4, "Already logging. Ignoring ErrorLog directive");
+        return 0;
+    }
+    size = INT_MAX;
+    backup = 0;
+    flags = 0;
+    
+    for (option = stok(sclone(value), " \t,", &tok); option; option = stok(0, " \t,", &tok)) {
+        option = stok(option, " =\t,", &ovalue);
+        ovalue = strim(ovalue, "\"'", MPR_TRIM_BOTH);
+        if (smatch(option, "size")) {
+            size = getnum(ovalue);
+
+        } else if (smatch(option, "backup")) {
+            backup = atoi(ovalue);
+
+        } else if (smatch(option, "append")) {
+            flags |= MPR_LOG_APPEND;
+
+        } else if (smatch(option, "anew")) {
+            flags |= MPR_LOG_ANEW;
+
+        } else {
+            path = strim(option, "\"'", MPR_TRIM_BOTH);
+        }
+    }
+    if (size < (10 * 1024)) {
+        mprError("Size is too small. Must be larger than 10K");
         return MPR_ERR_BAD_SYNTAX;
     }
-    httpSetRouteLogFormat(state->route, httpMakePath(state->route, path), "%h %l %u %t \"%r\" %>s %b");
+    httpSetRouteLogFormat(state->route, httpMakePath(state->route, path), size, backup, HTTP_LOG_FORMAT, flags);
     return 0;
-#else
-    configError("AccessLog not supported when using ROM FS");
-    return MPR_ERR_BAD_SYNTAX;
-#endif
 }
+#endif
 
 
 /*
@@ -463,15 +491,6 @@ static int cacheDirective(MaState *state, cchar *key, cchar *value)
     char        *methods, *extensions, *types, *uris;
     int         flags;
 
-#if UNUSED
-    if (!maTokenize(state, value, "%S ?*", &kind, &args)) {
-        return MPR_ERR_BAD_SYNTAX;
-    }
-    if (snumber(value)) {
-        state->route->lifespan = (MprTime) stoi(kind);
-        return 0;
-    }
-#endif
     flags = 0;
     lifespan = clientLifespan = serverLifespan = 0;
     methods = uris = extensions = types = 0;
@@ -630,26 +649,6 @@ static int conditionDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
-/*
-    CustomLog path format
- */
-static int customLogDirective(MaState *state, cchar *key, cchar *value)
-{
-#if !BLD_FEATURE_ROMFS
-    char    *path, *format;
-    if (!maTokenize(state, value, "%S %*", &path, &format)) {
-        return MPR_ERR_BAD_SYNTAX;
-    }
-    path = httpMakePath(state->route, path);
-    httpSetRouteLogFormat(state->route, path, format);
-    return 0;
-#else
-    configError("CustomLog not supported when using ROM FS");
-    return MPR_ERR_BAD_SYNTAX;
-#endif
-}
-
-
 static int defaultLanguageDirective(MaState *state, cchar *key, cchar *value)
 {
     httpSetRouteDefaultLanguage(state->route, value);
@@ -723,20 +722,55 @@ static int errorDocumentDirective(MaState *state, cchar *key, cchar *value)
  */
 static int errorLogDirective(MaState *state, cchar *key, cchar *value)
 {
+    char        *option, *ovalue, *tok, *path;
+    ssize       size;
+    int         level, flags, backup;
+
     if (mprGetCmdlineLogging()) {
         mprLog(4, "Already logging. Ignoring ErrorLog directive");
         return 0;
     }
-#if UNUSED
-    maStopLogging(state->server);
-#endif
-    if (sncmp(value, "stdout", 6) != 0 && sncmp(value, "stderr", 6) != 0) {
-        value = httpMakePath(state->route, value);
+    size = INT_MAX;
+    level = 0;
+    backup = 0;
+    flags = 0;
+    
+    for (option = stok(sclone(value), " \t,", &tok); option; option = stok(0, " \t,", &tok)) {
+        option = stok(option, " =\t,", &ovalue);
+        ovalue = strim(ovalue, "\"'", MPR_TRIM_BOTH);
+        if (smatch(option, "size")) {
+            size = getnum(ovalue);
+
+        } else if (smatch(option, "level")) {
+            level = atoi(ovalue);
+
+        } else if (smatch(option, "backup")) {
+            backup = atoi(ovalue);
+
+        } else if (smatch(option, "append")) {
+            flags |= MPR_LOG_APPEND;
+
+        } else if (smatch(option, "anew")) {
+            flags |= MPR_LOG_ANEW;
+
+        } else {
+            path = strim(option, "\"'", MPR_TRIM_BOTH);
+        }
     }
-    if (mprStartLogging(value, 1) < 0) {
-        mprError("Can't write to ErrorLog: %s", value);
+    if (size < (10 * 1000)) {
+        mprError("Size is too small. Must be larger than 10K");
         return MPR_ERR_BAD_SYNTAX;
     }
+    mprSetLogBackup(size, backup, flags);
+
+    if (sncmp(path, "stdout", 6) != 0 && sncmp(path, "stderr", 6) != 0) {
+        path = httpMakePath(state->route, path);
+    }
+    if (mprStartLogging(path, 1) < 0) {
+        mprError("Can't write to ErrorLog: %s", path);
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    mprSetLogLevel(level);
     return 0;
 }
 
@@ -1118,6 +1152,80 @@ static int loadDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
+    Log options
+    Options:
+        tx|rx
+        conn=NN
+        first=NN
+        header=NN
+        body=NN
+        time=NN
+        size=NN
+        include="ext,ext,ext..."
+        exclude="ext,ext,ext..."
+ */
+static int logDirective(MaState *state, cchar *key, cchar *value)
+{
+    char        *option, *ovalue, *tok, *include, *exclude;
+    ssize       size;
+    int         i, flags, dir, levels[HTTP_TRACE_MAX_ITEM];
+
+    flags = 0;
+    include = exclude = 0;
+    dir = HTTP_TRACE_RX;
+    size = INT_MAX;
+    
+    for (i = 0; i < HTTP_TRACE_MAX_ITEM; i++) {
+        levels[i] = 0;
+    }
+    for (option = stok(sclone(value), " \t", &tok); option; option = stok(0, " \t", &tok)) {
+        option = stok(option, " =\t,", &ovalue);
+        ovalue = strim(ovalue, "\"'", MPR_TRIM_BOTH);
+        if (smatch(option, "tx")) {
+            dir = HTTP_TRACE_TX;
+
+        } else if (smatch(option, "rx")) {
+            dir = HTTP_TRACE_RX;
+
+        } else if (smatch(option, "conn")) {
+            levels[HTTP_TRACE_CONN] = atoi(ovalue);
+
+        } else if (smatch(option, "first")) {
+            levels[HTTP_TRACE_FIRST] = atoi(ovalue);
+
+        } else if (smatch(option, "headers")) {
+            levels[HTTP_TRACE_HEADER] = atoi(ovalue);
+
+        } else if (smatch(option, "body")) {
+            levels[HTTP_TRACE_BODY] = atoi(ovalue);
+
+        } else if (smatch(option, "limits")) {
+            levels[HTTP_TRACE_LIMITS] = atoi(ovalue);
+
+        } else if (smatch(option, "time")) {
+            levels[HTTP_TRACE_TIME] = atoi(ovalue);
+
+        } else if (smatch(option, "size")) {
+            size = getnum(ovalue);
+
+        } else if (smatch(option, "include")) {
+            include = ovalue;
+
+        } else if (smatch(option, "exclude")) {
+            exclude = ovalue;
+
+        } else {
+            mprError("Unknown Cache option '%s'", option);
+            return MPR_ERR_BAD_SYNTAX;
+        }
+    }
+    httpSetRouteTraceFilter(state->route, dir, levels, size, include, exclude);
+    return 0;
+}
+
+
+#if UNUSED
+/*
     LogLevel 0-9
  */
 static int logLevelDirective(MaState *state, cchar *key, cchar *value)
@@ -1149,6 +1257,7 @@ static int logRotationDirective(MaState *state, cchar *key, cchar *value)
 #endif
     return 0;
 }
+#endif
 
 
 /*
@@ -1166,65 +1275,6 @@ static int logRoutesDirective(MaState *state, cchar *key, cchar *value)
         mprRawLog(0, "\nHTTP Routes for the '%s' host:\n\n", state->host->name ? state->host->name : "default");
         httpLogRoutes(state->host, smatch(full, "full"));
     }
-    return 0;
-}
-
-
-/*
-    LogTrace level items
- */
-static int logTraceDirective(MaState *state, cchar *key, cchar *value)
-{
-    char    *items;
-    int     level, mask;
-
-    if (!maTokenize(state, value, "%N %*", &level, &items)) {
-        return MPR_ERR_BAD_SYNTAX;
-    }
-    if (level < 0 || level > 9) {
-        mprError("Bad LogTrace level %d, must be 0-9", level);
-        return MPR_ERR_BAD_SYNTAX;
-    }
-    items = slower(items);
-    mask = 0;
-    if (strstr(items, "conn")) {
-        mask |= HTTP_TRACE_CONN;
-    }
-    if (strstr(items, "first")) {
-        mask |= HTTP_TRACE_FIRST;
-    }
-    if (strstr(items, "headers")) {
-        mask |= HTTP_TRACE_HEADER;
-    }
-    if (strstr(items, "body")) {
-        mask |= HTTP_TRACE_BODY;
-    }
-    if (strstr(items, "request") || strstr(items, "transmit")) {
-        mask |= HTTP_TRACE_TX;
-    }
-    if (strstr(items, "response") || strstr(items, "receive")) {
-        mask |= HTTP_TRACE_RX;
-    }
-    if (strstr(items, "time")) {
-        mask |= HTTP_TRACE_TIME;
-    }
-    httpSetRouteTrace(state->route, level, mask);
-    return 0;
-}
-
-
-/*
-    LogTraceFilter size include exclude
- */
-static int logTraceFilterDirective(MaState *state, cchar *key, cchar *value)
-{
-    char    *include, *exclude;
-    int     size;
-
-    if (!maTokenize(state, value, "%N %S %S", &size, &include, &exclude)) {
-        return MPR_ERR_BAD_SYNTAX;
-    }
-    httpSetRouteTraceFilter(state->route, size, include, exclude);
     return 0;
 }
 
@@ -2085,12 +2135,12 @@ static int64 getnum(cchar *value)
     int64   num;
 
     value = strim(slower(value), " \t", MPR_TRIM_BOTH);
-    if (sends(value, "k")) {
-        num = stoi(value) * 1000;
-    } else if (sends(value, "mb")) {
-        num = stoi(value) * 1000 * 1000;
-    } else if (sends(value, "gb")) {
-        num = stoi(value) * 1000 * 1000 * 1000;
+    if (sends(value, "k") || sends(value, "KB")) {
+        num = stoi(value) * 1024;
+    } else if (sends(value, "mb") || sends(value, "M")) {
+        num = stoi(value) * 1024 * 1024;
+    } else if (sends(value, "gb") || sends(value, "G")) {
+        num = stoi(value) * 1024 * 1024 * 1024;
     } else {
         num = stoi(value);
     }
@@ -2156,7 +2206,6 @@ int maParseInit(MaAppweb *appweb)
     if ((appweb->directives = mprCreateHash(-1, MPR_HASH_STATIC_VALUES | MPR_HASH_CASELESS)) == 0) {
         return MPR_ERR_MEMORY;
     }
-    maAddDirective(appweb, "AccessLog", accessLogDirective);
     maAddDirective(appweb, "AddLanguageSuffix", addLanguageSuffixDirective);
     maAddDirective(appweb, "AddLanguageDir", addLanguageDirDirective);
     maAddDirective(appweb, "AddFilter", addFilterDirective);
@@ -2176,7 +2225,6 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "Chroot", chrootDirective);
     maAddDirective(appweb, "Compress", compressDirective);
     maAddDirective(appweb, "Condition", conditionDirective);
-    maAddDirective(appweb, "CustomLog", customLogDirective);
     maAddDirective(appweb, "DefaultLanguage", defaultLanguageDirective);
     maAddDirective(appweb, "Deny", denyDirective);
     maAddDirective(appweb, "DirectoryIndex", directoryIndexDirective);
@@ -2229,11 +2277,16 @@ int maParseInit(MaAppweb *appweb)
 
     //  MOB - not a great name "Load"
     maAddDirective(appweb, "Load", loadDirective);
+    maAddDirective(appweb, "Log", logDirective);
+#if UNUSED
     maAddDirective(appweb, "LogLevel", logLevelDirective);
     maAddDirective(appweb, "LogRotation", logRotationDirective);
+#endif
     maAddDirective(appweb, "LogRoutes", logRoutesDirective);
+#if UNUSED
     maAddDirective(appweb, "LogTrace", logTraceDirective);
     maAddDirective(appweb, "LogTraceFilter", logTraceFilterDirective);
+#endif
     maAddDirective(appweb, "LoadModulePath", loadModulePathDirective);
     maAddDirective(appweb, "LoadModule", loadModuleDirective);
 
@@ -2272,6 +2325,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "ThreadLimit", threadLimitDirective);
     maAddDirective(appweb, "ThreadStack", threadStackDirective);
     maAddDirective(appweb, "TraceMethod", traceMethodDirective);
+    maAddDirective(appweb, "TraceMethod", traceMethodDirective);
     maAddDirective(appweb, "TypesConfig", typesConfigDirective);
     maAddDirective(appweb, "Update", updateDirective);
     maAddDirective(appweb, "UnloadModule", unloadModuleDirective);
@@ -2281,6 +2335,10 @@ int maParseInit(MaAppweb *appweb)
 
     maAddDirective(appweb, "<VirtualHost", virtualHostDirective);
     maAddDirective(appweb, "</VirtualHost", closeDirective);
+
+#if !BLD_FEATURE_ROMFS
+    maAddDirective(appweb, "AccessLog", accessLogDirective);
+#endif
     return 0;
 }
 

@@ -62,10 +62,9 @@ $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE): $(OBJECTS) $(call lib, $(LIBDEP)) $(cal
 #
 appweb.conf: $(BLD_INC_DIR)/buildConfig.h Makefile master/appweb.conf
 	$(call log) "[Patch]" "appweb.conf"
-	(dir=`pwd` ; cd master ; find . -type f | \
-		egrep -v 'CVS/|RCS/|SCCS/|.svn/' | cpio -pdum $$dir >/dev/null 2>&1)
+	cp master/appweb.conf .
 	BLD_CFG_PREFIX=. BLD_WEB_PREFIX=./web BLD_LIB_PREFIX=$(BLD_LIB_DIR) BLD_DOC_PREFIX=../../doc \
-	BLD_SERVER=`hostname` BLD_LOG_PREFIX=./logs BLD_HTTP_PORT=$(BLD_HTTP_PORT) BLD_SSL_PORT=$(BLD_SSL_PORT) \
+	BLD_SERVER=`hostname` BLD_LOG_PREFIX=. BLD_HTTP_PORT=$(BLD_HTTP_PORT) BLD_SSL_PORT=$(BLD_SSL_PORT) \
 	BLD_SPL_PREFIX="$(BLD_SPL_PREFIX)" \
 	patchAppwebConf appweb.conf
 
@@ -80,7 +79,7 @@ cleanExtra:
 	rm -f $(TARGETS) $(BLD_PRODUCT)$(BLD_EXE) $(EXTRA_TARGETS)
 	rm -f trace.txt access.log error.log leak.log
 	rm -f *.obj *.pdb
-	rm -f logs/*.log logs/*.old
+	rm -f error.log* access.log*
 	rm -fr target
 	rm -f web/*.mod web/*.es
 

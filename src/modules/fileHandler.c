@@ -120,7 +120,6 @@ static void openFile(HttpQueue *q)
     rx = conn->rx;
     route = rx->route;
 
-    mprLog(5, "Open file handler");
     if (rx->flags & (HTTP_GET | HTTP_HEAD | HTTP_POST)) {
         if (tx->fileInfo.valid && tx->fileInfo.mtime) {
             //  TODO - OPT could cache this
@@ -177,7 +176,6 @@ static void startFile(HttpQueue *q)
     rx = conn->rx;
     tx = conn->tx;
     
-    mprLog(5, "startFile");
     if (tx->flags & HTTP_TX_NO_BODY) {
         if (rx->flags & HTTP_PUT) {
             handlePutRequest(q);

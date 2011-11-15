@@ -2683,6 +2683,7 @@ Mpr *mprCreate(int argc, char **argv, int flags)
 static void manageMpr(Mpr *mpr, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
+        mprMark(mpr->logPath);
         mprMark(mpr->logFile);
         mprMark(mpr->mimeTypes);
         mprMark(mpr->timeTokens);
@@ -13091,7 +13092,7 @@ int mprStartLogging(cchar *logSpec, int showConfig)
 {
     MprFile     *file;
     MprPath     info;
-    char        *levelSpec, *spec;
+    char        *levelSpec, *path;
     int         level, mode;
 
     level = -1;
@@ -13099,28 +13100,26 @@ int mprStartLogging(cchar *logSpec, int showConfig)
         logSpec = "stderr:0";
     }
     if (*logSpec && strcmp(logSpec, "none") != 0) {
-        spec = sclone(logSpec);
-        if ((levelSpec = strrchr(spec, ':')) != 0 && isdigit((int) levelSpec[1])) {
+        MPR->logPath = path = sclone(logSpec);
+        if ((levelSpec = strrchr(path, ':')) != 0 && isdigit((int) levelSpec[1])) {
             *levelSpec++ = '\0';
             level = atoi(levelSpec);
         }
-        if (strcmp(spec, "stdout") == 0) {
+        if (strcmp(path, "stdout") == 0) {
             file = MPR->stdOutput;
-        } else if (strcmp(spec, "stderr") == 0) {
+        } else if (strcmp(path, "stderr") == 0) {
             file = MPR->stdError;
         } else {
-            mode = O_CREAT | O_WRONLY | O_TEXT;
-            if (MPR->logCount) {
-                mode |= O_APPEND;
-                mprGetPathInfo(spec, &info);
-                if (MPR->logSize <= 0 || (info.valid && info.size > MPR->logSize)) {
-                    mprArchiveLog(spec, MPR->logCount);
+            mode = (MPR->flags & MPR_LOG_APPEND)  ? O_APPEND : O_TRUNC;
+            mode |= O_CREAT | O_WRONLY | O_TEXT;
+            if (MPR->logBackup > 0) {
+                mprGetPathInfo(path, &info);
+                if (MPR->logSize <= 0 || (info.valid && info.size > MPR->logSize) || (MPR->flags & MPR_LOG_ANEW)) {
+                    mprBackupLog(path, MPR->logBackup);
                 }
-            } else {
-                mode |= O_TRUNC;
             }
-            if ((file = mprOpenFile(spec, mode, 0664)) == 0) {
-                mprError("Can't open log file %s", spec);
+            if ((file = mprOpenFile(path, mode, 0664)) == 0) {
+                mprError("Can't open log file %s", path);
                 return -1;
             }
         }
@@ -13148,7 +13147,7 @@ int mprStartLogging(cchar *logSpec, int showConfig)
 }
 
 
-int mprArchiveLog(cchar *path, int count)
+int mprBackupLog(cchar *path, int count)
 {
     char    *from, *to;
     int     i;
@@ -13169,10 +13168,11 @@ int mprArchiveLog(cchar *path, int count)
 }
 
 
-void mprSetLogRotation(int logCount, int logSize)
+void mprSetLogBackup(ssize size, int backup, int flags)
 {
-    MPR->logCount = logCount;
-    MPR->logSize = logSize;
+    MPR->logBackup = backup;
+    MPR->logSize = size;
+    MPR->flags |= (flags & (MPR_LOG_APPEND | MPR_LOG_ANEW));
 }
 
 
@@ -13328,71 +13328,6 @@ void mprAssertError(cchar *loc, cchar *msg)
 }
 
 
-int mprGetLogLevel()
-{
-    Mpr     *mpr;
-
-    /* Leave the code like this so debuggers can patch logLevel before returning */
-    mpr = MPR;
-    return mpr->logLevel;
-}
-
-
-MprLogHandler mprGetLogHandler()
-{
-    return MPR->logHandler;
-}
-
-
-int mprUsingDefaultLogHandler()
-{
-    return MPR->logHandler == defaultLogHandler;
-}
-
-
-MprFile *mprGetLogFile()
-{
-    return MPR->logFile;
-}
-
-
-void mprSetLogHandler(MprLogHandler handler)
-{
-    MPR->logHandler = handler;
-}
-
-
-void mprSetLogFile(MprFile *file)
-{
-    if (file != MPR->logFile && MPR->logFile != MPR->stdOutput && MPR->logFile != MPR->stdError) {
-        mprCloseFile(MPR->logFile);
-    }
-    MPR->logFile = file;
-}
-
-
-void mprSetLogLevel(int level)
-{
-    MPR->logLevel = level;
-}
-
-
-bool mprSetCmdlineLogging(bool on)
-{
-    bool    wasLogging;
-
-    wasLogging = MPR->cmdlineLogging;
-    MPR->cmdlineLogging = on;
-    return wasLogging;
-}
-
-
-bool mprGetCmdlineLogging()
-{
-    return MPR->cmdlineLogging;
-}
-
-
 /*
     Output a log message to the log handler
  */
@@ -13412,14 +13347,29 @@ static void logOutput(int flags, int level, cchar *msg)
 static void defaultLogHandler(int flags, int level, cchar *msg)
 {
     MprFile     *file;
+    MprPath     info;
     char        *prefix, buf[MPR_MAX_LOG];
+    int         mode;
 
     if ((file = MPR->logFile) == 0) {
         return;
     }
     prefix = MPR->name;
-
     lock(MPR);
+
+    if (MPR->logBackup > 0 && MPR->logSize) {
+        mprGetPathInfo(MPR->logPath, &info);
+        if (info.valid && info.size > MPR->logSize) {
+            mprBackupLog(MPR->logPath, MPR->logBackup);
+            mode = O_CREAT | O_WRONLY | O_TEXT;
+            if ((file = mprOpenFile(MPR->logPath, mode, 0664)) == 0) {
+                mprError("Can't open log file %s", MPR->logPath);
+                unlock(MPR);
+                return;
+            }
+            mprSetLogFile(file);
+        }
+    }
     while (*msg == '\n') {
         mprWriteFile(file, "\n", 1);
         msg++;
@@ -13541,6 +13491,71 @@ int mprGetError()
     }
     return MPR_ERR;
 #endif
+}
+
+
+int mprGetLogLevel()
+{
+    Mpr     *mpr;
+
+    /* Leave the code like this so debuggers can patch logLevel before returning */
+    mpr = MPR;
+    return mpr->logLevel;
+}
+
+
+MprLogHandler mprGetLogHandler()
+{
+    return MPR->logHandler;
+}
+
+
+int mprUsingDefaultLogHandler()
+{
+    return MPR->logHandler == defaultLogHandler;
+}
+
+
+MprFile *mprGetLogFile()
+{
+    return MPR->logFile;
+}
+
+
+void mprSetLogHandler(MprLogHandler handler)
+{
+    MPR->logHandler = handler;
+}
+
+
+void mprSetLogFile(MprFile *file)
+{
+    if (file != MPR->logFile && MPR->logFile != MPR->stdOutput && MPR->logFile != MPR->stdError) {
+        mprCloseFile(MPR->logFile);
+    }
+    MPR->logFile = file;
+}
+
+
+void mprSetLogLevel(int level)
+{
+    MPR->logLevel = level;
+}
+
+
+bool mprSetCmdlineLogging(bool on)
+{
+    bool    wasLogging;
+
+    wasLogging = MPR->cmdlineLogging;
+    MPR->cmdlineLogging = on;
+    return wasLogging;
+}
+
+
+bool mprGetCmdlineLogging()
+{
+    return MPR->cmdlineLogging;
 }
 
 

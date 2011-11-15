@@ -67,36 +67,21 @@ editAppwebConf()
     docPrefix="${BLD_DOC_PREFIX}"
     
     if [ -f "$conf" ] ; then
-        sed -e "
+        sed -e <"$conf" >"$conf.new" "
             s!^ServerRoot.*\".*!ServerRoot \"${BLD_CFG_PREFIX}\"!
             s!^DocumentRoot.*\".*!DocumentRoot \"${BLD_WEB_PREFIX}\"!
             s!^LoadModulePath.*\".*!LoadModulePath \"${BLD_LIB_PREFIX}\"!
             s!EspDir cache.*!EspDir cache \"${BLD_SPL_PREFIX}/cache\"!
             s!^Listen.*!Listen ${BLD_HTTP_PORT}!
             s!^User .*!User ${username}!
-            s!^Group .*!Group ${groupname}!" <"$conf" >"$conf.new"
-        [ $? = 0 ] && mv "$conf.new" "$conf"
-    fi
-
-    if [ -f "$ssl" ] ; then
-        sed -e "
+            s!ErrorLog.*error.log!ErrorLog \"${BLD_LOG_PREFIX}/error.log\"!
+            s!AccessLog.*access.log!AccessLog \"${BLD_LOG_PREFIX}/access.log\"!
+            s!Alias /doc/.*!Alias /doc/ \"${docPrefix}\/\"!
             s![ 	][ 	]*Listen.*!    Listen ${BLD_SSL_PORT}!
             s!DocumentRoot.*!DocumentRoot \"${BLD_WEB_PREFIX}\"!
-            s!<VirtualHost .*!<VirtualHost *:${BLD_SSL_PORT}>!" <"$ssl" >"$ssl.new"
-        [ $? = 0 ] && mv "$ssl.new" "$ssl"
-    fi
-    
-    if [ -f "$log" ] ; then
-        sed -e "
-            s!ErrorLog.*error.log\"!ErrorLog \"${BLD_LOG_PREFIX}/error.log\"!
-            s!CustomLog.*access.log\"!CustomLog \"${BLD_LOG_PREFIX}/access.log\"!" "$log" >"$log.new"
-        [ $? = 0 ] && mv "$log.new" "$log"
-    fi
-
-    if [ -f "$doc" ] ; then
-        sed -e "
-            s!Alias /doc/.*!Alias /doc/ \"${docPrefix}\/\"!" <"$doc" >"$doc.new"
-        [ $? = 0 ] && mv "$doc.new" "$doc"
+            s!<VirtualHost .*!<VirtualHost *:${BLD_SSL_PORT}>!
+            s!^Group .*!Group ${groupname}!"
+        [ $? = 0 ] && mv "$conf.new" "$conf"
     fi
 
     if [ `uname | sed 's/CYGWIN.*/CYGWIN/'` = CYGWIN ] ; then
@@ -125,7 +110,7 @@ editAppwebConf()
 setup
 
 if [ $# = 1 ] ; then
-    editAppwebConf "$1" "$1" "$1" "$1"
+    editAppwebConf "$1"
 else
-    editAppwebConf "$1" "$2" "$3" "$4"
+    editAppwebConf "$1"
 fi

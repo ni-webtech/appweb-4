@@ -144,3 +144,5 @@ src/test/servers.conf
 test/error.log*
 src/test/error.log*
 access.log
+src/server/error.log*
+src/test/access.log*
