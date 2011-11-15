@@ -516,7 +516,10 @@ void espSecurityToken(HttpConn *conn)
     cchar   *securityToken;
 
     securityToken = espGetSecurityToken(conn);
-    espAddHeaderString(conn, "X-SECURITY-TOKEN", securityToken);
+    /*
+        Add the token to headers for an alternative easy access via header APIs
+     */
+    espAddHeaderString(conn, "X-Security-Token", securityToken);
     espRender(conn, "<meta name='SecurityTokenName' content='%s' />\r\n", ESP_SECURITY_TOKEN_NAME);
     espRender(conn, "    <meta name='%s' content='%s' />", ESP_SECURITY_TOKEN_NAME, securityToken);
 }

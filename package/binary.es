@@ -39,7 +39,21 @@ var etc: Path = root.join("etc")
 var init: Path = etc.join("init.d")
 var cache: Path = spl.join("cache")
 
-var dperms = {permissions: 0755, owner: '0', group: '0' }
+var group = 0
+var owner = 0
+let config = Path("src/server/appweb.conf").readString()
+let matches = config.match(/^Group[ \t]+([\w]+)/m)
+if (matches) {
+    group = matches[1]
+    print("GROUP " + group)
+}
+matches = config.match(/^User[ \t]+([\w]+)/m)
+if (matches) {
+    owner = matches[1]
+    print("OWNER " + owner)
+}
+var lowperms = {permissions: 0755, owner: owner, group: group }
+var dperms = {permissions: 0755, owner: 0, group: 0 }
 bin.makeDir(dperms)
 inc.makeDir(dperms)
 lib.makeDir(dperms)
@@ -83,7 +97,7 @@ if (!bare) {
         exclude: cmdFilter,
         permissions: 0755,
     })
-    log.makeDir(dperms)
+    log.makeDir(lowperms)
     log.join("error.log").write("")
     cache.makeDir(dperms)
     cache.join(".dummy").write("")

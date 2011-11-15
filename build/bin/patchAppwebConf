@@ -16,7 +16,7 @@ setup() {
     #
     #   Select default username
     #
-    for u in nobody www-data Administrator
+    for u in www-data _www nobody Administrator
     do
         grep "$u" /etc/passwd >/dev/null
         if [ $? = 0 ]
@@ -34,7 +34,7 @@ setup() {
     #
     #   Select default group name
     #
-    for g in nogroup nobody www-data Administrators
+    for g in www-data _www nogroup nobody Administrators
     do
         grep "$g" /etc/group >/dev/null
         if [ $? = 0 ]
