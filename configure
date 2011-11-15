@@ -1437,7 +1437,7 @@ createBuildConfig() {
     do
         if [ ${item%.h} != ${item} ] ; then
             dir=inc
-        elif [ ${item%${SHOBJ}} != ${item} ] ; then
+        elif [ ${item%${SHOBJ}} != ${item} -a "${SHOBJ}" != ".dll" ] ; then
             dir=lib
         else
             dir=bin
