@@ -830,6 +830,20 @@
     </member>
     <member kind="define">
       <type>#define</type>
+      <name>MPR_LOG_ANEW</name>
+      <anchorfile>mpr_8h.html</anchorfile>
+      <anchor>a6673edd70b7227b524b05ad21e753be0</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>MPR_LOG_APPEND</name>
+      <anchorfile>mpr_8h.html</anchorfile>
+      <anchor>afd43d0547948ba7242fb957454c794b2</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
       <name>MPR_LOG_SRC</name>
       <anchorfile>mpr_8h.html</anchorfile>
       <anchor>a33bdbe3fb8480fd5629000097f92e441</anchor>
@@ -889,13 +903,6 @@
       <name>MPR_MAX_LOG</name>
       <anchorfile>mpr_8h.html</anchorfile>
       <anchor>aab4c09572a9569f196d15c1b7f6627ed</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="define">
-      <type>#define</type>
-      <name>MPR_MAX_LOG_STRING</name>
-      <anchorfile>mpr_8h.html</anchorfile>
-      <anchor>a9f0705ef414c63b94c34a8a4e0bb239a</anchor>
       <arglist></arglist>
     </member>
     <member kind="define">
@@ -2082,6 +2089,13 @@
       <arglist>(int fd, cchar *name, int omode)</arglist>
     </member>
     <member kind="function">
+      <type>int</type>
+      <name>mprBackupLog</name>
+      <anchorfile>mpr_8h.html</anchorfile>
+      <anchor>a5f95e2768c6f5e77ebec25bc471d55cb</anchor>
+      <arglist>(cchar *path, int count)</arglist>
+    </member>
+    <member kind="function">
       <type>MprHash *</type>
       <name>mprBlendHash</name>
       <anchorfile>group___mpr_hash.html</anchorfile>
@@ -2275,6 +2289,13 @@
       <name>mprCreateLock</name>
       <anchorfile>group___mpr_synch.html</anchorfile>
       <anchor>ga68fe682a34151374ac03be971192a54d</anchor>
+      <arglist>()</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>mprCreateLogService</name>
+      <anchorfile>group___mpr_log.html</anchorfile>
+      <anchor>ga45fccdc0d6da1387ae53c9b2fd385c10</anchor>
       <arglist>()</arglist>
     </member>
     <member kind="function">
@@ -4393,6 +4414,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>mprSetLogBackup</name>
+      <anchorfile>mpr_8h.html</anchorfile>
+      <anchor>ad1c46a00821497d3146925dde1980791</anchor>
+      <arglist>(ssize logSize, int backupCount, int flags)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>mprSetLogFile</name>
       <anchorfile>mpr_8h.html</anchorfile>
       <anchor>a02941fa13af43f80adda4840d94f215b</anchor>
@@ -4733,6 +4761,13 @@
       <anchorfile>mpr_8h.html</anchorfile>
       <anchor>a201d701e07e26e2ec458d4f5be81bf17</anchor>
       <arglist>()</arglist>
+    </member>
+    <member kind="function">
+      <type>int</type>
+      <name>mprStartLogging</name>
+      <anchorfile>mpr_8h.html</anchorfile>
+      <anchor>aaa6773428f23b0a3cede171550bb4abc</anchor>
+      <arglist>(cchar *logSpec, int showConfig)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
@@ -6660,6 +6695,13 @@
       <anchorfile>group___mpr_log.html</anchorfile>
       <anchor>ga42ef49743936729111e89ae45ad8a752</anchor>
       <arglist>(cchar *loc, cchar *msg)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>mprCreateLogService</name>
+      <anchorfile>group___mpr_log.html</anchorfile>
+      <anchor>ga45fccdc0d6da1387ae53c9b2fd385c10</anchor>
+      <arglist>()</arglist>
     </member>
     <member kind="function">
       <type>void</type>

@@ -1563,6 +1563,13 @@
       <arglist>(HttpRoute *route)</arglist>
     </member>
     <member kind="function">
+      <type>HttpLimits *</type>
+      <name>httpGraduateLimits</name>
+      <anchorfile>group___http_route.html</anchorfile>
+      <anchor>ga07b625bb7737f6f7017c77d6bf631933</anchor>
+      <arglist>(HttpRoute *route)</arglist>
+    </member>
+    <member kind="function">
       <type>void</type>
       <name>httpLogRoutes</name>
       <anchorfile>group___http_route.html</anchorfile>
@@ -1743,6 +1750,13 @@
       <anchorfile>group___http_route.html</anchorfile>
       <anchor>gaa330ec51c47806576240547ab3f06c7c</anchor>
       <arglist>(HttpRoute *route, cchar *tplate)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>httpSetRouteTraceFilter</name>
+      <anchorfile>group___http_route.html</anchorfile>
+      <anchor>ga0fca8cb1a2151bde37febf28638f8f6c</anchor>
+      <arglist>(HttpRoute *route, int dir, int levels[HTTP_TRACE_MAX_ITEM], ssize len, cchar *include, cchar *exclude)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -2342,20 +2356,6 @@
       <anchorfile>group___http_host.html</anchorfile>
       <anchor>ga0f04d9504cb2005ef7f0f4ba2d653581</anchor>
       <arglist>(HttpHost *host, cchar *protocol)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>httpSetHostTrace</name>
-      <anchorfile>group___http_host.html</anchorfile>
-      <anchor>ga87c460f0bb39abc80692557a40f3d609</anchor>
-      <arglist>(HttpHost *host, int level, int mask)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>httpSetHostTraceFilter</name>
-      <anchorfile>group___http_host.html</anchorfile>
-      <anchor>gaf8325a959b007f8f77068bbee90682b0</anchor>
-      <arglist>(HttpHost *host, ssize len, cchar *include, cchar *exclude)</arglist>
     </member>
   </compound>
   <compound kind="struct">

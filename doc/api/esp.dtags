@@ -1012,13 +1012,6 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>error</name>
-      <anchorfile>group___esp_abbrev.html</anchorfile>
-      <anchor>ga03544bf56dde3a257391d07e1d6f6a3a</anchor>
-      <arglist>(cchar *fmt,...)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
       <name>finalize</name>
       <anchorfile>group___esp_abbrev.html</anchorfile>
       <anchor>ga32d626626eee0bc4ade146973f6abb1c</anchor>
@@ -1226,6 +1219,13 @@
       <anchorfile>group___esp_abbrev.html</anchorfile>
       <anchor>ga0292bb1e6965cb8befad09d4ce7a2839</anchor>
       <arglist>(cchar *content)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>notice</name>
+      <anchorfile>group___esp_abbrev.html</anchorfile>
+      <anchor>ga93fd87500bb0783792cc96f12ed250ac</anchor>
+      <arglist>(cchar *fmt,...)</arglist>
     </member>
     <member kind="function">
       <type>cchar *</type>
@@ -1506,13 +1506,6 @@
       <anchorfile>group___esp_abbrev.html</anchorfile>
       <anchor>ga56d17d8860dc351f63feaa55891cdf21</anchor>
       <arglist>(cchar *target)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>warn</name>
-      <anchorfile>group___esp_abbrev.html</anchorfile>
-      <anchor>ga7e164bcd453d5631de51fb680a5ed502</anchor>
-      <arglist>(cchar *fmt,...)</arglist>
     </member>
   </compound>
   <compound kind="group">

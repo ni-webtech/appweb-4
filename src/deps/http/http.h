@@ -3905,6 +3905,9 @@ extern void httpSetRouteTrace(HttpRoute *route, int level, int mask);
     Set the route trace filter
     @description Trace filters include or exclude trace items based on the request filename extension.
     @param route HttpRoute object
+    @param dir Trace direction. Set to HTTP_TRACE_TX or HTTP_TRACE_RX
+    @param levels Trace class levels. Indicies are: HTTP_TRACE_CONN, HTTP_TRACE_FIRST, HTTP_TRACE_HEADER, HTTP_TRACE_BODY,
+        HTTP_TRACE_LIMITS, HTTP_TRACE_TIME.
     @param len Maximum content length eligible for tracing.
     @param include Comma or space separated list of extensions to include in tracing
     @param exclude Comma or space separated list of extensions to exclude from tracing
