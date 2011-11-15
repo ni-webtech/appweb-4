@@ -15,7 +15,7 @@ if (!global.test || test.config.debug == "1") {
     http.close()
 
     //  To ensure all file system record a different mtime for the file
-    App.sleep(1000);
+    App.sleep(1100);
 
     //  Create a new file and do a second get
     path.write('<html><body><% espRender(conn, "Second", -1); %></body></html>')

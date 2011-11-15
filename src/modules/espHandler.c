@@ -320,6 +320,7 @@ void espRenderView(HttpConn *conn, cchar *name)
             }
         }
         if (mprLookupModule(req->source) == 0) {
+mprLog(0, "MODULE NOT FOUND %s", req->source);
             req->entry = sfmt("esp_%s", req->cacheName);
             //  MOB - who keeps reference to module?
             if ((mp = mprCreateModule(req->source, req->module, req->entry, req->route)) == 0) {
@@ -334,6 +335,8 @@ void espRenderView(HttpConn *conn, cchar *name)
                 httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load compiled esp module for %s", req->source);
                 return;
             }
+        } else {
+mprLog(0, "MODULE FOUND - did not get unloaded %s", req->source);
         }
         unlock(req->esp);
     }
@@ -414,6 +417,10 @@ static int loadApp(HttpConn *conn, int *updated)
 }
 
 
+/*
+    Test if a module has been updated (is stale).
+    This will unload the module if it is stale and loaded 
+ */
 static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *recompile)
 {
     MprModule   *mp;
@@ -423,6 +430,12 @@ static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *rec
     mprGetPathInfo(module, &minfo);
     if (!minfo.valid) {
         *recompile = 1;
+        if ((mp = mprLookupModule(source)) != 0) {
+            if (!unloadModule(source, 0)) {
+                mprError("Can't unload module %s. Connections still open. Continue using old version.", source);
+                return 0;
+            }
+        }
         return 1;
     }
     mprGetPathInfo(source, &sinfo);
