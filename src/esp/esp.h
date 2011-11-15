@@ -1173,6 +1173,7 @@ extern EdiRec *espSetField(EdiRec *rec, cchar *fieldName, cchar *value);
  */
 extern EdiRec *espSetFields(EdiRec *rec, MprHash *data);
 
+//  MOB - improve doc. Should be set not send
 /**
     Send a flash message
     @param conn Http connection object
@@ -1182,6 +1183,7 @@ extern EdiRec *espSetFields(EdiRec *rec, MprHash *data);
  */
 void espSetFlash(HttpConn *conn, cchar *kind, cchar *fmt, ...);
 
+//  MOB - improve doc. Should be set not send
 /**
     Send a flash message
     @param conn Http connection object
@@ -1947,8 +1949,8 @@ extern void dropdown(cchar *field, cchar *choices, cchar *options);
 extern void endform();
 
 /**
-    Render flash messages.
-    @description Flash messages are one-time messages that are displayed to the client on the next request (only).
+    Render flash notices.
+    @description Flash notices are one-time messages that are displayed to the client on the next request (only).
         See $espSetFlash for how to define flash messages. 
     @param kinds Space separated list of flash messages types. Typical types are: "error", "inform", "warning".
     @param options Extra options. See $EspControl for a list of the standard options.
@@ -2221,6 +2223,7 @@ extern void destroySession();
  */
 extern void dontAutoFinalize();
 
+#if UNUSED
 /**
     Set an error flash notification message.
     @description Flash messages persist for only one request and are a convenient way to pass state information or 
@@ -2229,6 +2232,7 @@ extern void dontAutoFinalize();
     @ingroup EspAbbrev
  */
 extern void error(cchar *fmt, ...);
+#endif
 
 /**
     Finalize the response.
@@ -2496,6 +2500,15 @@ extern MprHash *makeHash(cchar *fmt, ...);
     @ingroup EspAbbrev
  */
 extern EdiRec *makeRec(cchar *content);
+
+/**
+    Set an error flash notification message.
+    @description Flash messages persist for only one request and are a convenient way to pass state information or 
+    feedback messages to the next request. 
+    @param fmt Printf style message format
+    @ingroup EspAbbrev
+ */
+extern void notice(cchar *fmt, ...);
 
 /**
     Get a request parameter
@@ -2924,6 +2937,7 @@ extern bool updateRec(EdiRec *rec);
  */
 extern cchar *uri(cchar *target);
 
+#if UNUSED
 /**
     Set a flash notification message.
     @description Flash messages persist for only one request and are a convenient way to pass state information or 
@@ -2933,6 +2947,7 @@ extern cchar *uri(cchar *target);
     @ingroup EspAbbrev
  */
 extern void warn(cchar *fmt, ...);
+#endif
 
 #ifdef __cplusplus
 } /* extern C */

@@ -168,7 +168,7 @@ static int accessLogDirective(MaState *state, cchar *key, cchar *value)
         option = stok(option, " =\t,", &ovalue);
         ovalue = strim(ovalue, "\"'", MPR_TRIM_BOTH);
         if (smatch(option, "size")) {
-            size = getnum(ovalue);
+            size = (ssize) getnum(ovalue);
 
         } else if (smatch(option, "backup")) {
             backup = atoi(ovalue);
@@ -739,7 +739,7 @@ static int errorLogDirective(MaState *state, cchar *key, cchar *value)
         option = stok(option, " =\t,", &ovalue);
         ovalue = strim(ovalue, "\"'", MPR_TRIM_BOTH);
         if (smatch(option, "size")) {
-            size = getnum(ovalue);
+            size = (ssize) getnum(ovalue);
 
         } else if (smatch(option, "level")) {
             level = atoi(ovalue);
@@ -1206,7 +1206,7 @@ static int logDirective(MaState *state, cchar *key, cchar *value)
             levels[HTTP_TRACE_TIME] = atoi(ovalue);
 
         } else if (smatch(option, "size")) {
-            size = getnum(ovalue);
+            size = (ssize) getnum(ovalue);
 
         } else if (smatch(option, "include")) {
             include = ovalue;

@@ -1,7 +1,7 @@
 
 <!-- need conn-less version -->
 
-<% warn(conn, "Big warning"); %>
+<% setFlash("warn", "Test warning"); %>
     <h1>Edit</h1>
     SECRET: @@secret
 

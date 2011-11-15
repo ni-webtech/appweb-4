@@ -95,8 +95,11 @@ static int findFile(HttpConn *conn)
         }
     }
     if (!(info->valid || info->isDir) && !(conn->rx->flags & HTTP_PUT)) {
-        httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s from %s", tx->filename, 
-                rx->referrer ? rx->referrer : "");
+        if (rx->referrer) {
+            httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s from %s", tx->filename, rx->referrer);
+        } else {
+            httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", tx->filename);
+        }
     } else if (tx->etag == 0 && info->valid) {
         tx->etag = sfmt("\"%x-%Lx-%Lx\"", info->inode, info->size, info->mtime);
     }
@@ -147,8 +150,11 @@ static void openFile(HttpQueue *q)
             if (!(tx->flags & HTTP_TX_NO_BODY)) {
                 tx->file = mprOpenFile(tx->filename, O_RDONLY | O_BINARY, 0);
                 if (tx->file == 0) {
-                    httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s from %s", tx->filename, 
-                            rx->referrer ? rx->referrer : "");
+                    if (rx->referrer) {
+                        httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s from %s", tx->filename, rx->referrer);
+                    } else {
+                        httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s from %s", tx->filename);
+                    }
                 }
             }
         }

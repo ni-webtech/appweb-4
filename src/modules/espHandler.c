@@ -341,7 +341,7 @@ void espRenderView(HttpConn *conn, cchar *name)
         httpError(conn, HTTP_CODE_NOT_FOUND, "Can't find defined view for %s", req->view);
         return;
     }
-	httpAddHeaderString(conn, "Content-Type", "text/html");
+    httpAddHeaderString(conn, "Content-Type", "text/html");
 
     //  MOB - does this need a lock
     mprSetThreadData(esp->local, conn);
@@ -525,8 +525,8 @@ static EspRoute *allocEspRoute(HttpRoute *route)
     httpSetRoutePathVar(route, "VIEWS_DIR", eroute->viewsDir);
 
 #if BLD_DEBUG
-	eroute->update = 1;
-	eroute->showErrors = 1;
+    eroute->update = 1;
+    eroute->showErrors = 1;
 #endif
     eroute->lifespan = 0;
     eroute->keepSource = BLD_DEBUG;

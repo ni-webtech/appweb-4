@@ -216,6 +216,7 @@ void dontAutoFinalize()
 }
 
 
+#if UNUSED
 void error(cchar *fmt, ...)
 {
     va_list     args;
@@ -224,6 +225,7 @@ void error(cchar *fmt, ...)
     espSetFlashv(getConn(), "error", fmt, args);
     va_end(args);
 }
+#endif
 
 
 void finalize()
@@ -669,6 +671,7 @@ bool updateRec(EdiRec *rec)
 }
 
 
+#if UNUSED
 void warn(cchar *fmt, ...)
 {
     va_list     args;
@@ -677,6 +680,7 @@ void warn(cchar *fmt, ...)
     espSetFlashv(getConn(), "warn", fmt, args);
     va_end(args);
 }
+#endif
 
 #endif /* BLD_FEATURE_ESP */
 /*

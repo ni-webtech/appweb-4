@@ -8,7 +8,6 @@ static void common() {
 }
 
 static void check() { 
-    mprAssert(1 == 2);
     render("Check: OK\r\n");
     finalize();
     /* No view used */
