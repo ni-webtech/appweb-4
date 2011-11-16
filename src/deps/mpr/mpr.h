@@ -1253,7 +1253,7 @@ struct  MprXml;
 #define MPR_ERR_MAX                     -34
 
 /**
-    Standard logging trace levels are 0 to 9 with 0 being the most verbose. These are ored with the error source
+    Standard logging trace levels are 0 to 9 with 0 being the most verbose. These are bitwise ored with the error source
     and type flags. The MPR_LOG_MASK is used to extract the trace level from a flags word. We expect most apps
     to run with level 2 trace enabled.
  */
@@ -1553,25 +1553,25 @@ extern MprMutex *mprInitLock(MprMutex *mutex);
 extern bool mprTryLock(MprMutex *lock);
 
 /**
-    Create a Spinlock lock object.
+    Create a Spinlock object.
     @description This call creates a spinlock object that can be used in #mprSpinLock, and #mprSpinUnlock calls. Spinlocks
-        using MprSpin are much faster than MprMutex based locks on some systems.
+        using MprSpin are much faster than MprMutex-based locks on some systems.
     @ingroup MprSynch
  */
 extern MprSpin *mprCreateSpinLock();
 
 /**
-    Initialize a statically allocated spinlock object.
-    @description This call initialized a spinlock lock object without allocation. The object can then be used 
+    Initialize a statically allocated Spinlock object.
+    @description This call initialized a spinlock object without allocation. The object can then be used 
         in #mprSpinLock and #mprSpinUnlock calls.
     @param lock Reference to a static #MprSpin  object.
-    @returns A reference to the MprSpin object. Returns null on errors.
+    @returns A reference to the MprSpin object. Returns 'null' on errors.
     @ingroup MprSynch
  */
 extern MprSpin *mprInitSpinLock(MprSpin *lock);
 
 /**
-    Attempt to lock access on a spinlock.
+    Attempt to lock access on a Spinlock.
     @description This call attempts to assert a lock on the given \a spinlock so that other threads calling 
         mprSpinLock or mprTrySpinLock will block until the current thread calls mprSpinUnlock.
     @returns Returns 'zero' if successful in locking the spinlock. Returns a negative MPR error code if unsuccessful.
@@ -1580,14 +1580,14 @@ extern MprSpin *mprInitSpinLock(MprSpin *lock);
 extern bool mprTrySpinLock(MprSpin *lock);
 
 /*
-    For maximum performance, use the spin lock/unlock routines macros
+    For maximum performance, use the Spinlock/unlock routines macros.
  */
 #if !BLD_DEBUG
 #define BLD_USE_LOCK_MACROS 1
 #endif
 #if BLD_USE_LOCK_MACROS && !DOXYGEN
     /*
-        Spin lock macros
+        Spinlock macros
      */
     #if MACOSX
         #define mprSpinLock(lock)   if (lock) OSSpinLockLock(&((lock)->cs))
@@ -1637,15 +1637,15 @@ extern bool mprTrySpinLock(MprSpin *lock);
     extern void mprUnlock(MprMutex *lock);
 
     /**
-        Lock a spinlock.
+        Lock a Spinlock.
         @description This call asserts a lock on the given \a spinlock so that other threads calling mprSpinLock will
-            block until the curren thread calls mprSpinUnlock.
+            block until the current thread calls mprSpinUnlock.
         @ingroup MprSynch
      */
     extern void mprSpinLock(MprSpin *lock);
 
     /**
-        Unlock a spinlock.
+        Unlock a Spinlock.
         @description This call unlocks a spinlock previously locked via mprSpinLock or mprTrySpinLock.
         @ingroup MprSynch
      */
@@ -1668,18 +1668,18 @@ extern void mprGlobalLock();
 extern void mprGlobalUnlock();
 
 /*
-    Lock free primitives
+    Lock free primitives.
  */
 
 /**
-    Apply a full (read+write) memory barrier
+    Apply a full (read+write) memory barrier.
     @ingroup MprSynch
  */ 
 extern void mprAtomicBarrier();
 
 /**
     Atomic list insertion. Inserts "item" at the "head" of the list. The "link" field is the next field in item.
-    This is a lock-free function
+    This is a lock-free function.
     @param head list head
     @param link Reference to the list head link field
     @param item Item to insert
@@ -1688,17 +1688,17 @@ extern void mprAtomicBarrier();
 extern void mprAtomicListInsert(void * volatile *head, volatile void **link, void *item);
 
 /**
-    Atomic Compare and Swap. This is a lock free function.
+    Atomic Compare and Swap. This is a lock-free function.
     @param target Address of the target word to swap
     @param expected Expected value of the target
     @param value New value to store at the target
-    @return TRUE if the swap was successful
+    @return 'true' if the swap was successful
     @ingroup MprSynch
  */
 extern int mprAtomicCas(void * volatile * target, void *expected, cvoid *value);
 
 /**
-    Atomic Add. This is a lock free function.
+    Atomic Add. This is a lock-free function.
     @param target Address of the target word to add to.
     @param value Value to add to the target
     @ingroup MprSynch
@@ -1706,7 +1706,7 @@ extern int mprAtomicCas(void * volatile * target, void *expected, cvoid *value);
 extern void mprAtomicAdd(volatile int *target, int value);
 
 /**
-    Atomic 64 bit Add. This is a lock free function.
+    Atomic 64 bit Add. This is a lock-free function.
     @param target Address of the target word to add to.
     @param value Value to add to the target
     @ingroup MprSynch
@@ -1714,7 +1714,7 @@ extern void mprAtomicAdd(volatile int *target, int value);
 extern void mprAtomicAdd64(volatile int64 *target, int value);
 
 /**
-    Exchange the target and a value
+    Exchange the target and a value.
     @param target Address of the target word to exchange
     @param value Value to store to the target
     @ingroup MprSynch
@@ -1722,7 +1722,7 @@ extern void mprAtomicAdd64(volatile int64 *target, int value);
 extern void *mprAtomicExchange(void * volatile *target, cvoid *value);
 
 /*
-    Allocator debug and stats selection
+    Allocator debug and stats selection.
  */
 #if BLD_DEBUG
     #define BLD_MEMORY_DEBUG        1                   /**< Fill blocks, verifies block integrity. */
@@ -1733,7 +1733,7 @@ extern void *mprAtomicExchange(void * volatile *target, cvoid *value);
 #endif
 
 /*
-    Alignment bit sizes for the allocator. Blocks are aligned on 4 byte boundaries for 32 bits systems and 8 byte 
+    Alignment bit sizes for the allocator. Blocks are aligned on 4 byte boundaries for 32 bit systems and 8 byte 
     boundaries for 64 bit systems and those systems that require doubles to be 8 byte aligned.
  */
 #if !MPR_64_BIT && !(MPR_CPU_MIPS)
@@ -1751,7 +1751,7 @@ extern void *mprAtomicExchange(void * volatile *target, cvoid *value);
 
 /*
     MprMem.prior field bits. Layout for 32 bits. This field must only be accessed (read|write) while locked.
-        prior | last/1 << 1 | hasManager/1
+        prior|last/1 << 1|hasManager/1
  */
 #define MPR_SHIFT_HAS_MANAGER   0
 #define MPR_SHIFT_LAST          1
@@ -1783,7 +1783,7 @@ extern void *mprAtomicExchange(void * volatile *target, cvoid *value);
     The allocator uses a garbage collector for freeing unused memory. The collector is a generational, cooperative,
     non-compacting, parallel collector.  The allocator is optimized for frequent allocations of small blocks (< 4K) 
     and uses a scheme of free queues for fast allocation. Allocations are aligned on 16 byte boundaries on 64-bit 
-    systems and otherwise on 8 byte boundaries.  It will return chunks unused memory back to the O/S. 
+    systems and otherwise on 8 byte boundaries.  It will return chunks of unused memory back to the O/S. 
     \n\n
     The allocator handles memory allocation errors globally. The application may configure a memory limit so that 
     memory depletion can be proactively detected and handled before memory allocations actually fail.
@@ -1809,9 +1809,9 @@ extern void *mprAtomicExchange(void * volatile *target, cvoid *value);
  */
 typedef struct MprMem {
     /*
-        Accesses to field1 must only be done while locked. This includes read access as concurrent writes may leave 
-        field1 in a partially updated state. Access to field2 may be done while unlocked as only the marker updates 
-        active blocks and it does so, in a lock-free manner.
+        Accesses to field1 must only be done while locked. This includes read access since concurrent writes may leave 
+        field1 in a partially updated state. Access to field2 may be done while unlocked since only the marker updates 
+        active blocks, and it does so, in a lock-free manner.
 
             field1: prior | last << 1 | hasManager
             field2: gen/2 << 30 | isFree << 29 | size/29 | mark/2
@@ -1913,8 +1913,9 @@ typedef struct MprMem {
 /**
     Memory allocation error callback. Notifiers are called if a low memory condition exists.
     @param policy Memory depletion policy. Set to one of MPR_ALLOC_POLICY_NOTHING, MPR_ALLOC_POLICY_PRUNE,
-    MPR_ALLOC_POLICY_RESTART or MPR_ALLOC_POLICY_EXIT.  @param cause Cause of the memory allocation condition. If flags is
-    set to MPR_MEM_LOW, the memory pool is low, but the allocation succeeded. If flags contain MPR_MEM_DEPLETED, the
+    MPR_ALLOC_POLICY_RESTART or MPR_ALLOC_POLICY_EXIT.  @param cause Cause of the memory allocation condition. If
+    Flags is
+    set to MPR_MEM_LOW, the memory pool is low, but the allocation succeeded. If Flags contains MPR_MEM_DEPLETED, the
     allocation failed.
     @param size Size of the allocation that triggered the low memory condition.
     @param total Total memory currently in use
@@ -1971,7 +1972,7 @@ typedef struct MprMemStats {
     ssize           bytesFree;              /**< Bytes currently free */
     ssize           freed;                  /**< Bytes freed in last sweep */
     ssize           redLine;                /**< Warn if allocation exceeds this level */
-    ssize           maxMemory;              /**< Max memory that can be allocated */
+    ssize           maxMemory;              /**< Maximum memory that can be allocated */
     ssize           rss;                    /**< OS calculated resident stack size in bytes */
     int64           user;                   /**< System user RAM size in bytes (excludes kernel) */
     int64           ram;                    /**< System RAM size in bytes */
@@ -2084,7 +2085,7 @@ extern void mprDestroyMemService();
 /**
     Allocate a block of memory.
     @description This is the lowest level of memory allocation routine. Memory is freed via the garbage collector. 
-    To protect an active memory block memory block from being reclaimed, it must have a reference to it. Memory blocks 
+    To protect an active memory block from being reclaimed, it must have a reference to it. Memory blocks 
     can specify a manager routine via #mprAllocObj. The manager is is invoked by the garbage collector to "mark" 
     dependant active blocks. Marked blocks will not be reclaimed by the garbage collector.
     @param size Size of the memory block to allocate.
@@ -2098,7 +2099,7 @@ extern void mprDestroyMemService();
 extern void *mprAllocMem(ssize size, int flags);
 
 /**
-    Return the current allocation memory statistics block
+    Return the current allocation memory statistics block.
     @returns a reference to the allocation memory statistics. Do not modify its contents.
     @ingroup MprMem
  */
@@ -2130,10 +2131,10 @@ extern ssize mprGetBlockSize(cvoid *ptr);
 
 /**
     Determine if the MPR has encountered memory allocation errors.
-    @description Returns true if the MPR has had a memory allocation error. Allocation errors occur if any
+    @description Returns 'true' if the MPR has had a memory allocation error. Allocation errors occur if any
         memory allocation would cause the application to exceed the configured redline limit, or if any O/S memory
         allocation request fails.
-    @return TRUE if a memory allocation error has occurred. Otherwise returns FALSE.
+    @return 'true' if a memory allocation error has occurred. Otherwise returns 'false'.
     @ingroup MprMem
  */
 extern bool mprHasMemError();
@@ -2141,14 +2142,14 @@ extern bool mprHasMemError();
 /*
     Test if a memory block is unreferenced by the last garbage collection sweep.
     @param ptr Reference to an allocated memory block.
-    @return TRUE if the given memory block is unreferenced and ready for collection.
+    @return 'true' if the given memory block is unreferenced and ready for collection.
     @internal
     @ingroup MprMem
  */
 extern int mprIsDead(cvoid* ptr);
 
 /**
-    Test is a pointer is a valid memory context. This is used to test if a block has been dynamically allocated.
+    Test if a pointer is a valid memory context. This is used to test if a block has been dynamically allocated.
     @param ptr Any memory context allocated by mprAlloc or mprCreate.
     @ingroup MprMem
  */
@@ -2161,8 +2162,8 @@ extern int mprIsValid(cvoid *ptr);
     @param b1Len Length of the first byte string.
     @param b2 Pointer to the second byte string.
     @param b2Len Length of the second byte string.
-    @return Returns zero if the byte strings are identical. Otherwise returns -1 if the first string is less than the 
-        second. Returns 1 if the first is greater than the first.
+    @return Returns 'zero' if the byte strings are identical. Otherwise returns '-1' if the first string is less than the 
+        second. Returns '1' if the first is greater than the second.
     @ingroup MprMem
  */
 extern int mprMemcmp(cvoid *b1, ssize b1Len, cvoid *b2, ssize b2Len);
@@ -2205,7 +2206,7 @@ extern void mprPrintMem(cchar *msg, int detail);
         the call will ignore the request and simply return the existing block. The memory is not zeroed.
     @param ptr Memory to reallocate. If NULL, call malloc.
     @param size New size of the required memory block.
-    @return Returns a pointer to the allocated block. If memory is not available the memory exhaustion handler 
+    @return Returns a pointer to the allocated block. If memory is not available, the memory exhaustion handler 
         specified via mprCreate will be called to allow global recovery.
     @remarks Do not mix calls to realloc and mprRealloc.
     @ingroup MprMem
@@ -2235,7 +2236,7 @@ extern void mprRevive(cvoid* ptr);
 extern void mprVerifyMem();
 
 /**
-    Define a memory notifier
+    Define a memory notifier.
     @description A notifier callback will be invoked for memory allocation errors for the given memory context.
     @param cback Notifier callback function
     @ingroup MprMem
@@ -2243,7 +2244,7 @@ extern void mprVerifyMem();
 extern void mprSetMemNotifier(MprMemNotifier cback);
 
 /**
-    Set an memory allocation error condition on a memory context. This will set an allocation error condition on the
+    Set a memory allocation error condition on a memory context. This will set an allocation error condition on the
     given context and all its parents. This way, you can test the ultimate parent and detect if any memory allocation
     errors have occurred.
     @ingroup MprMem
@@ -2251,9 +2252,9 @@ extern void mprSetMemNotifier(MprMemNotifier cback);
 extern void mprSetMemError();
 
 /**
-    Configure the application memory limits
+    Configure the application memory limits.
     @description Configure memory limits to constrain memory usage by the application. The memory allocation subsystem
-        will check these limits before granting memory allocation requrests. The redLine is a soft limit that if exceeded
+        will check these limits before granting memory allocation requests. The redLine is a soft limit that if exceeded
         will invoke the memory allocation callback, but will still honor the request. The maxMemory limit is a hard limit.
         The MPR will prevent allocations which exceed this maximum. The memory callback handler is defined via 
         the #mprCreate call.
@@ -2288,7 +2289,8 @@ extern void *mprSetManager(void *ptr, void *manager);
 extern void mprValidateBlock(void *ptr);
 
 /**
-    Memory virtual memory into the applications address space.
+    Memory 
+    @description virtual memory into the applications address space.
     @param size of virtual memory to map. This size will be rounded up to the nearest page boundary.
     @param mode Mask set to MPR_MAP_READ | MPR_MAP_WRITE
     @ingroup MprMem
@@ -2297,7 +2299,7 @@ extern void *mprVirtAlloc(ssize size, int mode);
 
 /**
     Free (unpin) a mapped section of virtual memory
-    @param ptr Virtual address to free. Should be page aligned
+    @param ptr Virtual address to free. Should be page aligned.
     @param size Size of memory to free in bytes
     @ingroup MprMem
  */
@@ -2307,7 +2309,7 @@ extern void mprVirtFree(void *ptr, ssize size);
     Macros. When building documentation (DOXYGEN), define pretend function defintions for the documentation.
  */
 /*
-    In debug mode, all memory blocks can have a debug name
+    In debug mode, all memory blocks can have a debug name.
  */
 #if BLD_MEMORY_DEBUG
     extern void *mprSetName(void *ptr, cchar *name);
