@@ -2350,15 +2350,15 @@ extern void *mprAlloc(ssize size);
 /**
     Allocate an object of a given type.
     @description Allocates a zeroed block of memory large enough to hold an instance of the specified type with a 
-        manager callback.  this call associates a manager function with an object that will be invoked when the 
+        manager callback.  This call associates a manager function with an object that will be invoked when the 
         object is freed or the garbage collector needs the object to mark internal properties as being used.  
         This call is implemented as a macro.
     @param type Type of the object to allocate
     @param manager Manager function to invoke when the allocation is managed.
-    @return Returns a pointer to the allocated block. If memory is not available the memory exhaustion handler 
+    @return Returns a pointer to the allocated block. If memory is not available, the memory exhaustion handler 
         specified via mprCreate will be called to allow global recovery.
     @remarks Do not mix calls to malloc and mprAlloc.
-    @stability Evolving. This function names are highly likely to be refactored.
+    @stability Evolving. These function names are highly likely to be refactored.
     @ingroup MprMem
  */
 extern void *mprAllocObj(Type type, MprManager manager) { return 0;}
@@ -2367,7 +2367,7 @@ extern void *mprAllocObj(Type type, MprManager manager) { return 0;}
     Allocate a zeroed block of memory
     @description Allocates a zeroed block of memory.
     @param size Size of the memory block to allocate.
-    @return Returns a pointer to the allocated block. If memory is not available the memory exhaustion handler 
+    @return Returns a pointer to the allocated block. If memory is not available, the memory exhaustion handler 
         specified via mprCreate will be called to allow global recovery.
     @remarks Do not mix calls to malloc and mprAlloc.
     @ingroup MprMem
@@ -2413,8 +2413,8 @@ extern void mprRequestGC(int flags);
 
 /**
     Enable or disable the garbage collector
-    @param on Set to one to enable and zero to disable.
-    @return Returns one if the collector was previously enabled. Otherwise returns zero.
+    @param on Set to 'one' to enable and 'zero' to disable.
+    @return Returns 'one' if the collector was previously enabled. Otherwise returns zero.
     @ingroup MprMem
  */
 extern bool mprEnableGC(bool on);
@@ -2439,7 +2439,7 @@ extern void mprMarkBlock(cvoid *ptr);
 
 /**
     Release a memory block
-    @description This call is used to allow a memory block to be freed freed by the garbage collector after calling
+    @description This call is used to allow a memory block to be freed by the garbage collector after calling
         mprHold.
     @param ptr Any memory block
     @ingroup MprMem
@@ -2447,7 +2447,7 @@ extern void mprMarkBlock(cvoid *ptr);
 extern void mprRelease(void *ptr);
 
 /**
-    remove a memory block as a root for garbage collection
+    Remove a memory block as a root for garbage collection
     @param ptr Any memory pointer
     @ingroup MprMem
   */
