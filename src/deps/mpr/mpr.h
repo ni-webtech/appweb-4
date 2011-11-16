@@ -1,4 +1,3 @@
-
 /******************************************************************************/
 /* 
     This file is an amalgamation of all the individual source code files for the
@@ -30,15 +29,15 @@
     The Multithreaded Portable Runtime (MPR) is a portable runtime library for embedded applications.
     \n\n
     The MPR provides management for logging, error handling, events, files, http, memory, ssl, sockets, strings, 
-    xml parsing, and date/time functions. It also provides a foundation of safe routines for secure programming, 
+    xml parsing, and date/time functions. It also provides a foundation of safe routines for secure programming 
     that help to prevent buffer overflows and other security threats. The MPR is a library and a C API that can 
     be used in both C and C++ programs.
     \n\n
-    The MPR uses a set extended typedefs for common types. These include: bool, cchar, cvoid, uchar, short, ushort, 
+    The MPR uses a set of extended typedefs for common types. These include: bool, cchar, cvoid, uchar, short, ushort, 
     int, uint, long, ulong, int32, uint32, int64, uint64, float, and double. The cchar type is a const char, cvoid is 
     const void. Several types have "u" prefixes to denote unsigned qualifiers.
     \n\n
-    The MPR includes a memory allocator and generational garbage collector. The allocator is a fast, immediate 
+    The MPR includes a memory allocator and generational garbage collector. The allocator is a fast, immediate,  
     coalescing allocator that will return memory back to the O/S if not required. It is optimized for frequent 
     allocations of small blocks (< 4K) and uses a scheme of free queues for fast allocation. 
     \n\n
@@ -69,7 +68,7 @@
 #define MPR_CPU_SH4         12
 
 /*
-    Out-of-order definitions and includes. Order really matters in this section
+    Out-of-order definitions and includes. Note: Order really matters in this section
  */
 #if WIN
     #undef      _CRT_SECURE_NO_DEPRECATE
@@ -355,7 +354,7 @@
 #ifndef HAS_UINT
     #define HAS_UINT 1
     /**
-        Unsigned integer (machine dependent bit size) data type.
+        Unsigned integer (machine-dependent bit size) data type.
      */
     typedef unsigned int uint;
 #endif
@@ -535,7 +534,7 @@ typedef int64 MprTime;
     #if (__GNUC__ >= 3) && !DOXYGEN && BLD_DEBUG && UNUSED && KEEP
         /** 
             Use gcc attribute to check printf fns.  a1 is the 1-based index of the parameter containing the format, 
-            and a2 the index of the first argument. Note that some gcc 2.x versions don't handle this properly 
+            and a2 the index of the first argument. Note that some gcc 2.x versions don't handle this properly. 
          */     
         #define PRINTF_ATTRIBUTE(a1, a2) __attribute__ ((format (__printf__, a1, a2)))
     #else
@@ -544,7 +543,7 @@ typedef int64 MprTime;
 #endif
 
 /*
-    Optimize expression evaluation code depending if the value is likely or not
+    Optimize expression evaluation code depending on whether the value is likely or not.
  */
 #undef likely
 #undef unlikely
@@ -835,7 +834,7 @@ extern "C" {
         };
     #else
         /*
-            This may or may not be necessary - let us know dev@embedthis.com if your system needs this (and why).
+            This may or may not be necessary - please let us know at dev@embedthis.com if your system needs this (and why).
          */
         #if _DIAB_TOOL
             #if BLD_HOST_CPU_ARCH == MPR_CPU_PPC
@@ -1001,7 +1000,7 @@ struct  MprXml;
 #if BLD_CC_MMU
     /* 
         If the system supports virtual memory, then stack size should use system default. Only used pages will
-        actually consume memory 
+        actually consume memory. 
      */
     #define MPR_DEFAULT_STACK       (0)           /**< Default thread stack size (0 means use system default) */
 #else
