@@ -1348,7 +1348,7 @@ void mprMarkBlock(cvoid *ptr)
     mp = MPR_GET_MEM(ptr);
 #if BLD_DEBUG
     if (!mprIsValid(ptr)) {
-        mprStaticError("Memory block is either not dynamically allocated, or is corrupted");
+        mprError("Memory block is either not dynamically allocated, or is corrupted");
         return;
     }
     mprAssert(!IS_FREE(mp));
@@ -1624,7 +1624,7 @@ void mprVerifyMem()
                 }
                 for (i = 0; i < usize; i++) {
                     if (ptr[i] != 0xFE) {
-                        mprStaticError("Free memory block %x has been modified at offset %d (MprBlk %x, seqno %d)\n"
+                        mprError("Free memory block %x has been modified at offset %d (MprBlk %x, seqno %d)\n"
                                        "Memory was last allocated by %s", GET_PTR(mp), i, mp, mp->seqno, mp->name);
                     }
                 }
@@ -1908,7 +1908,7 @@ void mprCheckBlock(MprMem *mp)
 
     size = GET_SIZE(mp);
     if (mp->magic != MPR_ALLOC_MAGIC || size <= 0) {
-        mprStaticError("Memory corruption in memory block %x (MprBlk %x, seqno %d)\n"
+        mprError("Memory corruption in memory block %x (MprBlk %x, seqno %d)\n"
             "This most likely happend earlier in the program execution", GET_PTR(mp), mp, mp->seqno);
     }
 }
@@ -1928,7 +1928,7 @@ static void checkFreeMem(MprMem *mp)
         }
         for (i = 0; i < usize; i++) {
             if (ptr[i] != 0xFE) {
-                mprStaticError("Free memory block %x has been modified at offset %d (MprBlk %x, seqno %d)\n"
+                mprError("Free memory block %x has been modified at offset %d (MprBlk %x, seqno %d)\n"
                     "Memory was last allocated by %s", GET_PTR(mp), i, mp, mp->seqno, mp->name);
                 break;
             }
@@ -2044,22 +2044,22 @@ static void allocException(int cause, ssize size)
 
     if (cause == MPR_MEM_FAIL) {
         heap->hasError = 1;
-        mprStaticError("%s: Can't allocate memory block of size %,d bytes.", MPR->name, size);
+        mprLog(0, "%s: Can't allocate memory block of size %,d bytes.", MPR->name, size);
 
     } else if (cause == MPR_MEM_TOO_BIG) {
         heap->hasError = 1;
-        mprStaticError("%s: Can't allocate memory block of size %,d bytes.", MPR->name, size);
+        mprLog(0, "%s: Can't allocate memory block of size %,d bytes.", MPR->name, size);
 
     } else if (cause == MPR_MEM_REDLINE) {
-        mprStaticError("%s: Memory request for %,d bytes exceeds memory red-line.", MPR->name, size);
+        mprLog(0, "%s: Memory request for %,d bytes exceeds memory red-line.", MPR->name, size);
         mprPruneCache(NULL);
 
     } else if (cause == MPR_MEM_LIMIT) {
-        mprStaticError("%s: Memory request for %,d bytes exceeds memory limit.", MPR->name, size);
+        mprLog(0, "%s: Memory request for %,d bytes exceeds memory limit.", MPR->name, size);
     }
-    mprStaticError("%s: Memory used %,d, redline %,d, limit %,d.", MPR->name, (int) used, (int) MPR->heap.stats.redLine,
+    mprLog(0, "%s: Memory used %,d, redline %,d, limit %,d.", MPR->name, (int) used, (int) MPR->heap.stats.redLine,
         (int) MPR->heap.stats.maxMemory);
-    mprStaticError("%s: Consider increasing memory limit.", MPR->name);
+    mprLog(0, "%s: Consider increasing memory limit.", MPR->name);
     
     if (heap->notifier) {
         (heap->notifier)(cause, heap->allocPolicy,  size, used);
@@ -5000,7 +5000,7 @@ static void cmdTaskEntry(char *program, MprCmdTaskFn entry, int cmdArg);
 #endif
 
 
-MprCmdService *mprCreateCmdService(Mpr *mpr)
+MprCmdService *mprCreateCmdService()
 {
     MprCmdService   *cs;
 
@@ -13318,14 +13318,6 @@ void mprAssertError(cchar *loc, cchar *msg)
         msg = buf;
     }
     mprLog(1, "%s", buf);
-#if UNUSED
-#if BLD_UNIX_LIKE || VXWORKS
-    if (write(2, (char*) msg, slen(msg)) < 0) {}
-#elif BLD_WIN_LIKE
-    if (fprintf(stderr, "%s\n", msg) < 0) {}
-#endif
-    mprBreakpoint();
-#endif
 #endif
 }
 

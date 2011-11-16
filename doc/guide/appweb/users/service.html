@@ -79,34 +79,34 @@
             <h2 class="section">Windows Instructions</h2>
             <p>On Windows, Appweb is managed by two programs:</p>
             <ul>
-                <li><a href="#angel">The Appweb Angel</a></li>
+                <li><a href="#appman">The Appweb Manager</a></li>
                 <li><a href="#monitor">The Appweb Monitor</a></li>
-            </ul><a name="angel" id="angel"></a>
-            <p>The Appweb Angel is a guardian over Appweb. It is a windows service that starts, manages and restarts
-            Appweb. If Appweb fails, the Angel will automatically restart it.</p>
+            </ul><a name="appman" id="appman"></a>
+            <p>The Appweb manager is a management program for Appweb. It is a windows service that starts, 
+            manages and restarts Appweb. If Appweb fails, the manager will automatically restart it.</p>
             <p>Windows services run in the background with little interaction with the user. So to provide more
             convenient access to manage Appweb, the <a href="#monitor">Appweb Monitor</a> program runs and is
             accessible from the windows system tray (taskbar notification area). You can start and stop Appweb using
-            either the Angel or Monitor programs.</p>
-            <h3>Appweb Angel Service</h3>
-            <p>You can interface with the Angel via the Windows Services Applet. To invoke the applet select:</p>
+            either the manager or Monitor programs.</p>
+            <h3>Appweb Manager Service</h3>
+            <p>You can interface with the Appweb manager via the Windows Services Applet. To invoke the applet select:</p>
             <pre>
 Start -&gt; Control Panel -&gt; Administrative Tools -&gt; Services
 </pre>
             <p>Then select and double click on the <b>Embedthis Appweb</b> service. A dialog panel will be displayed
-            from which you can start and stop the AppwebAngel process.</p><img src="../../../images/services.jpg" alt=
+            from which you can start and stop the manager (appman) process.</p><img src="../../../images/services.jpg" alt=
             "" class="bare-screen" />
-            <p>When started or stopped, the Angel will first do the same operation on the real Appweb instance. Pausing
-            the Angel will have no effect on Appweb, but will pause the Angel itself.</p>
+            <p>When started or stopped, the manager will first do the same operation on the real Appweb instance. Pausing
+            the manager will have no effect on Appweb, but will pause the manager itself.</p>
             <h3>Removing Appweb as a Service</h3>
             <p>To permanently stop Appweb running as a Windows Service either remove the software or uninstall the
-            Angel via the following command:</p>
+            manager via the following command:</p>
             <pre>
-angel --uninstall
+appman --uninstall
 </pre>
-            <p>To re-instate the Angel as a Windows Service run the following command:</p>
+            <p>To re-instate the manager as a Windows Service run the following command:</p>
             <pre>
-angel --install
+appman --install
 </pre>
             <p>Once installed, you will need to start the service via the Services control applet.</p><a name="monitor"
             id="monitor"></a>
@@ -114,8 +114,8 @@ angel --install
             <p>The Windows Appweb Monitor is launched when you log in. It a quick and easy way to start, stop, and
             restart Appweb. You can also launch a browser to display the documentation or the Appweb management console
             (future feature).</p><img src="../../../images/tray.jpg" alt="" class="bare-screen" />
-            <p>When you select stop Appweb, you actually stop the Angel process which in turn stops Appweb. Similarly,
-            when you select start Appweb, you are really starting the Angel which detects that Appweb is not running
+            <p>When you select stop Appweb, you actually stop the manager process which in turn stops Appweb. Similarly,
+            when you select start Appweb, you are really starting the manager which detects that Appweb is not running
             and automatically launches it. <a name="linux" id="linux"></a></p>
             <h2 class="section">Linux Instructions</h2>
             <p>To stop Appweb running as a Daemon, on a Red Hat / Fedora system run the following command:</p>
@@ -153,9 +153,9 @@ update-rc.d appweb remove
 update-rc.d appweb defaults
 </pre><a name="mac" id="mac"></a>
             <h2 class="section">Mac Instructions</h2>
-            <p>When Appweb runs on MAC OS X 10.5 (Leopard) it does not use the Appweb Angel or Appweb Monitor programs.
+            <p>When Appweb runs on MAC OS X 10.5 (Leopard) it does not use the Appweb manager or Appweb Monitor programs.
             Rather it uses the MAC <b>launchd</b> service. Launchd offers similar capabilities to that of the Appweb
-            Angel. It starts, manages and restarts Appweb. If Appweb fails, launchd will automatically restart it.
+            manager. It starts, manages and restarts Appweb. If Appweb fails, launchd will automatically restart it.
             Launchd is the preferred way to manage Daemons on a MAC.</p>
             <p>To stop Appweb running as a Daemon on a Mac, run the following command:</p>
             <pre>

@@ -13,7 +13,7 @@ else
     if type sudo >/dev/null 2>&1 ; then
         echo
         PASS_PROMPT="Root privilege required, please enter the root password: "
-        sudo -S -p "$PASS_PROMPT" sh -c "$*"
+        sudo "PATH=$PATH" -S -p "$PASS_PROMPT" sh -c "$*"
     else
         sh -c "$*"
     fi

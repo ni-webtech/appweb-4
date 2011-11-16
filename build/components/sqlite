@@ -16,6 +16,7 @@ defineComponent() {
     fi
     if [ "$incdir" != "" ] ; then
         imports="$incdir/sqlite3.h"
+        builtin=
     fi
     configureComponent --libs "sqlite3" --libpaths "$libpaths" $builtin --imports "$imports" sqlite
 }

@@ -309,6 +309,7 @@ static void usageError(Mpr *mpr)
     "    --log logFile:level    # Log to file file at verbosity level\n"
     "    --name uniqueName      # Unique name for this instance\n"
     "    --threads maxThreads   # Set maximum worker threads\n"
+    "    --verbose              # Same as --log stderr:2\n\n"
     "    --version              # Output version information\n\n"
     "  Without IPaddress, %s will read the appweb.conf configuration file.\n\n",
         mprGetAppTitle(), name, name, name, name);

@@ -8,6 +8,9 @@
 
 include 			.makedep
 
+ifeq ($(BLD_PCRE_BUILTIN),1)
+	PCRE_LIB		+= $(BLD_LIB_DIR)/libpcre$(BLD_LIB)
+endif
 CHAR				= char
 ifeq ($(BLD_CHAR_LEN),2)
 	CHAR			= short
@@ -16,7 +19,7 @@ ifeq ($(BLD_CHAR_LEN),4)
 	CHAR			= int32
 endif
 MAKE_DFLAGS			+= -DPCRE_CHAR=$(CHAR)
-PCRE_LIB			+= $(BLD_LIB_DIR)/libpcre$(BLD_LIB)
+
 ifeq ($(BLD_FEATURE_PCRE),1)
 	TARGETS			+= $(PCRE_LIB)
 endif

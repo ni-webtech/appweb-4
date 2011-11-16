@@ -78,19 +78,19 @@ if (!bare) {
     if (Config.OS == "WIN") {
         cmdFilter = /\.cmd/
     } else if (Config.OS == "MACOSX") {
-        cmdFilter = /angel/
+        cmdFilter = /appman/
     } else {
         cmdFilter = /undefined/
     }
     copy("*", bin, {
         from: sbin,
-        include: /angel|esp|http|sqlite|auth|makerom/
+        include: /appman|esp|http|auth|makerom/
         exclude: cmdFilter,
         permissions: 0755,
     })
     log.makeDir(lowperms)
     log.join("error.log").write("")
-    spl.attributes = lowperms
+    spl.makeDir(lowperms)
     cache.makeDir(lowperms)
     cache.join(".dummy").write("")
 

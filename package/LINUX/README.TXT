@@ -7,7 +7,7 @@ This document contains describes the procedure for installing Appweb. This packa
 
 Once installed, you may read the Appweb online documentation and samples for further information. You can also read the documentation for the latest release online at:
 
-    http://www.embedthis.com/products/appweb/doc/index.html
+    http://embedthis.com/products/appweb/doc/index.html
 
 
 This software is copyrighted and distributed under license. Please read the LICENSE.TXT for details.
@@ -168,5 +168,5 @@ Embedthis Software, LLC.
 #733
 Seattle, WA 98105.
 +1 (425) 329-3490
-www.embedthis.com
+embedthis.com
 info@embedthis.com

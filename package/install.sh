@@ -312,16 +312,16 @@ configureService() {
     start|stop)
         if [ $BLD_HOST_OS = WIN ] ; then
             if [ $action = start ] ; then
-                if [ -x "$BLD_BIN_PREFIX/angel.exe" ] ; then
-                    "$BLD_BIN_PREFIX/angel" --start $BLD_BIN_PREFIX/$BLD_PRODUCT
+                if [ -x "$BLD_BIN_PREFIX/appman.exe" ] ; then
+                    "$BLD_BIN_PREFIX/appman" --start $BLD_BIN_PREFIX/$BLD_PRODUCT
                 fi
                 if [ -x "$BLD_BIN_PREFIX/${BLD_PRODUCT}Monitor.exe" ] ; then
                     sleep 5
                     "$BLD_BIN_PREFIX/${BLD_PRODUCT}Monitor" &
                 fi
             else
-                if [ -x "$BLD_BIN_PREFIX/angel.exe" ] ; then
-                    "$BLD_BIN_PREFIX/angel" --stop $BLD_BIN_PREFIX/$BLD_PRODUCT
+                if [ -x "$BLD_BIN_PREFIX/appman.exe" ] ; then
+                    "$BLD_BIN_PREFIX/appman" --stop $BLD_BIN_PREFIX/$BLD_PRODUCT
                 fi
                 if [ -x "$BLD_BIN_PREFIX/${BLD_PRODUCT}Monitor.exe" ] ; then
                     "$BLD_BIN_PREFIX/${BLD_PRODUCT}Monitor" --stop
@@ -343,8 +343,8 @@ configureService() {
 
     install)
         if [ $BLD_HOST_OS = WIN ] ; then
-            if [ -x "$BLD_BIN_PREFIX/angel.exe" ] ; then
-                "$BLD_BIN_PREFIX/angel" --install $BLD_BIN_PREFIX/$BLD_PRODUCT
+            if [ -x "$BLD_BIN_PREFIX/appman.exe" ] ; then
+                "$BLD_BIN_PREFIX/appman" --install $BLD_BIN_PREFIX/$BLD_PRODUCT
             fi
         elif which launchctl >/dev/null 2>&1 ; then
             local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
@@ -361,8 +361,8 @@ configureService() {
 
     remove)
         if [ $BLD_HOST_OS = WIN ] ; then
-            if [ -x "$BLD_BIN_PREFIX/angel.exe" ] ; then
-                "$BLD_BIN_PREFIX/angel" --uninstall $BLD_BIN_PREFIX/$BLD_PRODUCT
+            if [ -x "$BLD_BIN_PREFIX/appman.exe" ] ; then
+                "$BLD_BIN_PREFIX/appman" --uninstall $BLD_BIN_PREFIX/$BLD_PRODUCT
             fi
         elif which launchctl >/dev/null 2>&1 ; then
             local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`

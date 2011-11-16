@@ -1,12 +1,12 @@
 /** 
- *  remove.c - Remove files safely on Windows
- *
- *  Copyright (c) All Rights Reserved. See details at the end of the file.
+    remove.c - Remove files safely on Windows
+  
+    Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
 /********************************* Includes ***********************************/
 /*
- *  Suppress MS VS warnings
+    Suppress MS VS warnings
  */
 #define _CRT_SECURE_NO_WARNINGS
 
@@ -65,7 +65,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
     removeOk = 0;
 
 	/*
-	 *	Get the directory above bin
+	  	Get the directory above bin
  	 */
     GetModuleFileName(0, moduleBuf, sizeof(moduleBuf) - 1);
     mprGetDirName(tmp, sizeof(tmp), moduleBuf);
@@ -85,8 +85,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
     }
 
     /*
-     *  We use removeOk to ensure that someone just running the program won't 
-     *  do anything bad.
+        We use removeOk to ensure that someone just running the program won't do anything bad.
      */
     if (errflg || !removeOk) {
         fprintf(stderr, "Bad Usage");
@@ -96,8 +95,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
     cleanup();
 
     /*
-     *  Some products (services) take a while to exit. This is a convenient
-     *  way to pause before removing
+        Some products (services) take a while to exit. This is a convenient way to pause before removing
      */
     if (sleepMsecs) {
         printf("sleeping for %d msec\n", sleepMsecs);
@@ -109,7 +107,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
 
 
 /*
- *  Cleanup temporary files
+    Cleanup temporary files
  */
 static void cleanup()
 {
@@ -127,7 +125,7 @@ static void cleanup()
 
 
 /*
- *  Remove a file
+    Remove a file
  */
 static void recursiveRemove(char *dir, char *pattern)
 {
@@ -149,7 +147,7 @@ static void recursiveRemove(char *dir, char *pattern)
         if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
             recursiveRemove(data.cFileName, pattern);
             /*
-             *  This will fail if there are files remaining in the directory.
+                This will fail if there are files remaining in the directory.
              */
             printf("Removing directory %s\n", data.cFileName);
             RemoveDirectory(data.cFileName);
@@ -166,7 +164,7 @@ static void recursiveRemove(char *dir, char *pattern)
 
 
 /*
- *  Simple wild-card matching
+    Simple wild-card matching
  */
 static int match(char *file, char *pat)
 {
@@ -202,7 +200,7 @@ static int match(char *file, char *pat)
 
 
 /*
- *  Return the directory portion of a pathname into the users buffer.
+    Return the directory portion of a pathname into the users buffer.
  */
 static char *mprGetDirName(char *buf, int bufsize, const char *path)
 {
@@ -261,33 +259,33 @@ static int mprStrcpy(char *dest, int destMax, const char *src)
 #endif /* BLD_WIN_LIKE */
 
 /*
- *  @copy   default
- *  
- *  Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
- *  Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
- *  
- *  This software is distributed under commercial and open source licenses.
- *  You may use the GPL open source license described below or you may acquire 
- *  a commercial license from Embedthis Software. You agree to be fully bound 
- *  by the terms of either license. Consult the LICENSE.TXT distributed with 
- *  this software for full details.
- *  
- *  This software is open source; you can redistribute it and/or modify it 
- *  under the terms of the GNU General Public License as published by the 
- *  Free Software Foundation; either version 2 of the License, or (at your 
- *  option) any later version. See the GNU General Public License for more 
- *  details at: http://www.embedthis.com/downloads/gplLicense.html
- *  
- *  This program is distributed WITHOUT ANY WARRANTY; without even the 
- *  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
- *  
- *  This GPL license does NOT permit incorporating this software into 
- *  proprietary programs. If you are unable to comply with the GPL, you must
- *  acquire a commercial license to use this software. Commercial licenses 
- *  for this software and support services are available from Embedthis 
- *  Software at http://www.embedthis.com 
- *  
- *  Local variables:
+    @copy   default
+    
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+    
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire 
+    a commercial license from Embedthis Software. You agree to be fully bound 
+    by the terms of either license. Consult the LICENSE.TXT distributed with 
+    this software for full details.
+    
+    This software is open source; you can redistribute it and/or modify it 
+    under the terms of the GNU General Public License as published by the 
+    Free Software Foundation; either version 2 of the License, or (at your 
+    option) any later version. See the GNU General Public License for more 
+    details at: http://embedthis.com/downloads/gplLicense.html
+    
+    This program is distributed WITHOUT ANY WARRANTY; without even the 
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+    
+    This GPL license does NOT permit incorporating this software into 
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses 
+    for this software and support services are available from Embedthis 
+    Software at http://embedthis.com 
+    
+    Local variables:
     tab-width: 4
     c-basic-offset: 4
     End:

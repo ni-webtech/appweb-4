@@ -24,6 +24,7 @@ defineComponent() {
     builtin=`[ $path = . ] && echo --builtin`
     if [ "$ejscript" = "1" ] ; then
         imports=
+        builtin=
     fi
     configureComponent --libs "pcre" --libpaths "$libpaths" --imports "$imports" $builtin pcre
 }

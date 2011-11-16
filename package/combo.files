@@ -15,8 +15,8 @@ DOC="${DIR}/doc"
 APPWEB_HEADERS="${BLD_INC_DIR}/appweb.h ${BLD_INC_DIR}/appwebMonitor.h"
 EDI_HEADERS="${BLD_INC_DIR}/edi.h"
 ESP_HEADERS="${BLD_INC_DIR}/esp.h"
-LIB_SOURCES=`find ${S} -name '*.c' | egrep -v 'deps|server/|test|utils|sav|angel|makerom'`
-DEP_SOURCES=`find ${S}/deps -name '*.c' | egrep -v 'angel|makerom|utils|test|http/http.c'`
+LIB_SOURCES=`find ${S} -name '*.c' | egrep -v 'deps|server/|test|utils|sav|appman|makerom'`
+DEP_SOURCES=`find ${S}/deps -name '*.c' | egrep -v 'appman|makerom|utils|test|http/http.c'`
 
 mkdir -p ${SRC} ${DOC}/man ${DOC}/api
 

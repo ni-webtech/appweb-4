@@ -9,7 +9,7 @@
 ################################################################################
 #
 #	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
-#	The latest version of this code is available at http://www.embedthis.com
+#	The latest version of this code is available at http://embedthis.com
 #
 #	This software is open source; you can redistribute it and/or modify it 
 #	under the terms of the GNU General Public License as published by the 
@@ -19,12 +19,12 @@
 #	This program is distributed WITHOUT ANY WARRANTY; without even the 
 #	implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
 #	See the GNU General Public License for more details at:
-#	http://www.embedthis.com/downloads/gplLicense.html
+#	http://embedthis.com/downloads/gplLicense.html
 #	
 #	This General Public License does NOT permit incorporating this software 
 #	into proprietary programs. If you are unable to comply with the GPL, a 
 #	commercial license for this software and support services are available
-#	from Embedthis Software at http://www.embedthis.com
+#	from Embedthis Software at http://embedthis.com
 #
 ################################################################################
 #
@@ -101,13 +101,13 @@ configureService() {
 	start|stop)
 		if [ $BLD_HOST_OS = WIN ] ; then
             if [ $action = start ] ; then
-                if [ -x "$BLD_BIN_PREFIX/angel.exe" ] ; then
-                    "$BLD_BIN_PREFIX/angel" --start $BLD_BIN_PREFIX/$BLD_PRODUCT
+                if [ -x "$BLD_BIN_PREFIX/appman.exe" ] ; then
+                    "$BLD_BIN_PREFIX/appman" --start $BLD_BIN_PREFIX/$BLD_PRODUCT
                     "$BLD_BIN_PREFIX/${BLD_PRODUCT}Monitor" &
                 fi
             else
-                if [ -x "$BLD_BIN_PREFIX/angel.exe" ] ; then
-                    "$BLD_BIN_PREFIX/angel" --stop $BLD_BIN_PREFIX/$BLD_PRODUCT
+                if [ -x "$BLD_BIN_PREFIX/appman.exe" ] ; then
+                    "$BLD_BIN_PREFIX/appman" --stop $BLD_BIN_PREFIX/$BLD_PRODUCT
                     "$BLD_BIN_PREFIX/${BLD_PRODUCT}Monitor" --stop
                 fi
             fi
@@ -129,8 +129,8 @@ configureService() {
 
 	install)
 		if [ $BLD_HOST_OS = WIN ] ; then
-			if [ -x "$BLD_BIN_PREFIX/angel.exe" ] ; then
-				"$BLD_BIN_PREFIX/angel" --install $BLD_BIN_PREFIX/$BLD_PRODUCT
+			if [ -x "$BLD_BIN_PREFIX/appman.exe" ] ; then
+				"$BLD_BIN_PREFIX/appman" --install $BLD_BIN_PREFIX/$BLD_PRODUCT
 			fi
 		elif which launchctl >/dev/null 2>&1 ; then
             local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
@@ -146,8 +146,8 @@ configureService() {
 
 	uninstall)
 		if [ $BLD_HOST_OS = WIN ] ; then
-			if [ -x "$BLD_BIN_PREFIX/angel" ] ; then
-				"$BLD_BIN_PREFIX/angel" --uninstall $BLD_BIN_PREFIX/$BLD_PRODUCT
+			if [ -x "$BLD_BIN_PREFIX/appman" ] ; then
+				"$BLD_BIN_PREFIX/appman" --uninstall $BLD_BIN_PREFIX/$BLD_PRODUCT
 			fi
 		elif which launchctl >/dev/null 2>&1 ; then
             local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
@@ -170,8 +170,8 @@ deconfigureService() {
 		echo -e "\nRemoving $BLD_NAME service"
 		configureService uninstall
 	fi
-	if [ -f $BLD_BIN_PREFIX/angel ] ; then
-        $BLD_BIN_PREFIX/angel --stop $BLD_BIN_PREFIX/$BLD_PRODUCT 2>&1 >/dev/null
+	if [ -f $BLD_BIN_PREFIX/appman ] ; then
+        $BLD_BIN_PREFIX/appman --stop $BLD_BIN_PREFIX/$BLD_PRODUCT 2>&1 >/dev/null
     fi
     if [ -f $BLD_BIN_PREFIX/$BLD_PRODUCT ] ; then
 		if which pidof >/dev/null 2>&1 ; then

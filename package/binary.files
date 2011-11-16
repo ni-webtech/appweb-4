@@ -20,8 +20,8 @@ if [ "$BARE" = 0 ] ; then
         cpy -e -m 0755 package/uninstall.sh "${BLD_BIN_PREFIX}/uninstall"
     fi
     cpy -e -m 0755 package/linkup "${BLD_BIN_PREFIX}/linkup"
-    if [ -x $BLD_BIN_DIR/angel${BLD_EXE} ] ; then
-        cpy -s -m 755 "${BLD_BIN_DIR}/angel${BLD_EXE}" "${BLD_BIN_PREFIX}"
+    if [ -x $BLD_BIN_DIR/appman${BLD_EXE} ] ; then
+        cpy -s -m 755 "${BLD_BIN_DIR}/appman${BLD_EXE}" "${BLD_BIN_PREFIX}"
     fi
     cpy -s -m 755 -d ${BLD_BIN_DIR} auth${BLD_EXE} makerom${BLD_EXE} "${BLD_BIN_PREFIX}"
     cpy -s -m 755 ${BLD_BIN_DIR}/http${BLD_EXE} "${BLD_BIN_PREFIX}"
@@ -169,6 +169,6 @@ fi
 
 if [ $BLD_UNIX_LIKE ] ; then
     makeDir "${BLD_MAN_PREFIX}/man1"
-    cpy -z -d doc/man appweb.1 angel.1 appwebMonitor.1 http.1 auth.1 makerom.1 "${BLD_MAN_PREFIX}/man1"
+    cpy -z -d doc/man appweb.1 appman.1 appwebMonitor.1 http.1 auth.1 makerom.1 "${BLD_MAN_PREFIX}/man1"
 fi
 

@@ -197,7 +197,7 @@ createArchives() {
             find $dir -type f -print > $fromFiles
             find $dir -type l -print >>$fromFiles
 
-            ${RM} -f ${file} ${file}.gz
+            ${RM} -f ${file}
 
             log Run tar $owner -czf ${file} --files-from=$fromFiles
             tar $owner -czf ${file} --files-from=$fromFiles
@@ -387,7 +387,7 @@ createEnvelopes() {
 copyImages() {
     local ext file zip
 
-    for ext in dmg deb rpm gz zip ; do
+    for ext in dmg deb rpm tgz zip ; do
         if ls ${ROOT_DIR}/${BLD_PRODUCT}*${ext} >/dev/null 2>&1 ; then
             cp ${ROOT_DIR}/${BLD_PRODUCT}*${ext} ${ABS_BLD_REL_DIR}
         fi

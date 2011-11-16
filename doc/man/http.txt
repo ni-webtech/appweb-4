@@ -69,8 +69,8 @@ OPTIONS
 
        --log logSpec
               Specify a file to log messages.   The  syntax  is:  "--log  log-
-              Name[,moduleName][:logLevel]".   Level  3 will trace the request
-              and response headers.
+              File[:logLevel]".   Level  3 will trace the request and response
+              headers.
 
        --method method
               Set the HTTP method. Values  may  be  "GET",  "PUT",  "OPTIONS",

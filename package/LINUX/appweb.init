@@ -25,7 +25,7 @@ APPWEB_BIN=!!ORIG_BLD_BIN_PREFIX!!
 INITLOG_ARGS=""
 RETVAL=0
 
-APPWEB_CMD=$APPWEB_BIN/angel
+APPWEB_CMD=$APPWEB_BIN/appman
 APPWEB_SWITCHES="--daemon --home "$APPWEB_DIR" $APPWEB_BIN/$APPWEB"
 SWITCHES=
 
@@ -122,7 +122,7 @@ exit $RETVAL
 ################################################################################
 #
 #   Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
-#   The latest version of this code is available at http://www.embedthis.com
+#   The latest version of this code is available at http://embedthis.com
 #
 #   This software is open source; you can redistribute it and/or modify it 
 #   under the terms of the GNU General Public License as published by the 
@@ -132,10 +132,10 @@ exit $RETVAL
 #   This program is distributed WITHOUT ANY WARRANTY; without even the 
 #   implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
 #   See the GNU General Public License for more details at:
-#   http://www.embedthis.com/downloads/gplLicense.html
+#   http://embedthis.com/downloads/gplLicense.html
 #   
 #   This General Public License does NOT permit incorporating this software 
 #   into proprietary programs. If you are unable to comply with the GPL, a 
 #   commercial license for this software and support services are available
-#   from Embedthis Software at http://www.embedthis.com
+#   from Embedthis Software at http://embedthis.com
 #

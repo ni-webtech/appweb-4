@@ -35,17 +35,21 @@ typedef struct App {
 
 static App *app;
 
+#define ANGEL_DISABLE   1
+#define ANGEL_ENABLE    2
+#define ANGEL_START     3
+#define ANGEL_STOP      4
+#define ANGEL_RUN       5
+
 /***************************** Forward Declarations ***************************/
 
 static void angel();
-static void catchSignal(int signo, siginfo_t *info, void *arg);
 static void cleanup();
 static int  makeDaemon();
 static void manageApp(void *unused, int flags);
 static int  readAngelPid();
+static int  service(int operation);
 static void setAppDefaults(Mpr *mpr);
-static int  setupUnixSignals();
-static void stopService(MprTime timeout);
 static int  writeAngelPid(int pid);
 
 /*********************************** Code *************************************/
@@ -55,10 +59,12 @@ int main(int argc, char *argv[])
     Mpr     *mpr;
     char    *argp;
     ssize   len;
-    int     err, nextArg, i;
+    int     err, nextArg, i, operation;
 
     err = 0;
-    mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD);
+    operation = ANGEL_RUN;
+
+    mpr = mprCreate(argc, argv, 0);
     app = mprAllocObj(App, manageApp);
     mprAddRoot(app);
     setAppDefaults(mpr);
@@ -68,7 +74,6 @@ int main(int argc, char *argv[])
         if (*argp != '-') {
             break;
         }
-
         if (strcmp(argp, "--args") == 0) {
             /*
                 Args to pass to service
@@ -84,6 +89,12 @@ int main(int argc, char *argv[])
 
         } else if (strcmp(argp, "--daemon") == 0) {
             app->runAsDaemon++;
+
+        } else if (strcmp(argp, "--disable") == 0) {
+            operation = ANGEL_DISABLE;
+
+        } else if (strcmp(argp, "--enable") == 0) {
+            operation = ANGEL_ENABLE;
 
 #if FUTURE
         } else if (strcmp(argp, "--heartBeat") == 0) {
@@ -134,12 +145,11 @@ int main(int argc, char *argv[])
                 app->retries = atoi(argv[++nextArg]);
             }
 
+        } else if (strcmp(argp, "--start") == 0) {
+            operation = ANGEL_START;
+
         } else if (strcmp(argp, "--stop") == 0) {
-            /*
-                Stop a currently running angel
-             */
-            stopService(10 * 1000);
-            return 0;
+            operation = ANGEL_STOP;
 
         } else if (strcmp(argp, "--verbose") == 0 || strcmp(argp, "-v") == 0) {
             app->verbose++;
@@ -158,15 +168,18 @@ int main(int argc, char *argv[])
             "  Switches:\n"
             "    --args               # Args to pass to service\n"
             "    --daemon             # Run as a daemon\n"
+            "    --disable            # Stop and disable the service\n"
+            "    --enable             # Enable and start the service\n"
+            "    --home path          # Home directory for service\n"
+            "    --log logFile:level  # Log directive for service\n"
+            "    --retries count      # Max count of app restarts\n"
+            "    --start              # Start the service\n"
+            "    --stop               # Stop the service\n"
 #if FUTURE
             "    --heartBeat interval # Heart beat interval period (secs) \n"
             "    --program path       # Service program to start\n"
 #endif
-            "    --home path          # Home directory for service\n"
-            "    --log logFile:level  # Log directive for service\n"
-            "    --retries count      # Max count of app restarts\n"
-            "    --stop               # Stop the service",
-            app->appName);
+            , app->appName);
         return -1;
     }
     if (nextArg < argc) {
@@ -184,13 +197,20 @@ int main(int argc, char *argv[])
         }
         app->serviceArgs[len] = '\0';
     }
+#if UNUSED
     setupUnixSignals();
+#endif
+    if (getuid() != 0) {
+        mprUserError("Must run with administrator privilege. Use sudo.");
 
-    if (app->runAsDaemon) {
-        makeDaemon();
+    } else if (mprStart() < 0) {
+        mprUserError("Can't start MPR for %s", mprGetAppName());                                           
+
+    } else {
+        return service(operation);
     }
-    angel();
-    return 0;
+    mprDestroy(MPR_EXIT_DEFAULT);                                                                      
+    return MPR_ERR_CANT_INITIALIZE;                                                                    
 }
 
 
@@ -228,6 +248,71 @@ static void setAppDefaults(Mpr *mpr)
 }
 
 
+static int service(int operation)
+{
+    MprCmd  *cmd;
+    cchar   *name, *command;
+    char    *out, *err;
+    int     pid;
+
+    cmd = mprCreateCmd(NULL);
+    name = mprGetPathBase(app->serviceProgram);
+    switch (operation) {
+    case ANGEL_DISABLE:
+#if MACOSX
+        command = sfmt("launchctl unload -w /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
+#else
+        command = sfmt("update-rc.d %s disable 2345", name);
+#endif
+        break;
+
+    case ANGEL_ENABLE:
+#if MACOSX
+        command = sfmt("launchctl load -w /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
+#else
+        command = sfmt("update-rc.d %s enable 2345", name);
+#endif
+        break;
+
+    case ANGEL_START:
+#if MACOSX
+        command = sfmt("launchctl load /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
+#else
+        command = sfmt("invoke-rc.d --quiet %s start", name);
+#endif
+        break;
+
+    case ANGEL_STOP:
+#if MACOSX
+        command = sfmt("launchctl unload /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
+#else
+        command = sfmt("invoke-rc.d --quiet %s start", name);
+#endif
+        break;
+
+    case ANGEL_RUN:
+        if (app->runAsDaemon) {
+            makeDaemon();
+        }
+        angel();
+        return 0;
+    }
+    if (app->verbose) {
+        mprPrintf("%s: Run: %s\n", app->appName, command);
+    }
+    if (mprRunCmd(cmd, command, &out, &err, 0) != 0) {
+        mprError("Can't run command %s\n%s\n", command, err);
+        if (operation == ANGEL_STOP) {
+            if ((pid = readAngelPid()) > 1) {
+                kill(pid, SIGTERM);
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
+
+
 static void angel()
 {
     MprTime     mark;
@@ -235,7 +320,6 @@ static void angel()
     int         err, i, status, ac, next;
 
     app->servicePid = 0;
-
     atexit(cleanup);
 
     if (app->verbose) {
@@ -344,20 +428,7 @@ static void angel()
 }
 
 
-/*
-    Stop an another instance of the angel
- */
-static void stopService(MprTime timeout)
-{
-    int     pid;
-
-    pid = readAngelPid();
-    if (pid > 1) {
-        kill(pid, SIGTERM);
-    }
-}
-
-
+#if UNUSED
 static int setupUnixSignals()
 {
     struct sigaction    act;
@@ -393,6 +464,7 @@ static void catchSignal(int signo, siginfo_t *info, void *arg)
     cleanup();
     mprTerminate(0, -1);
 }
+#endif
 
 
 static void cleanup()
@@ -594,6 +666,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
     mpr = mprCreate(0, NULL, 0);
     app = mprAllocObj(App, manageApp);
     mprAddRoot(app);
+    mprAddStandardSignals();
 
     err = 0;
     installFlag = 0;
@@ -666,6 +739,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
             installFlag++;
 
         } else if (strcmp(argp, "--start") == 0) {
+//  MOB - use same operation style 
             /*
                 Start the angel
              */

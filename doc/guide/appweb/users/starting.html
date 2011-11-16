@@ -99,20 +99,8 @@ appweb [options]
                         process cannot access any files outside the given directory.</td>
                     </tr>
                     <tr>
-                        <td>--debug</td>
-                        <td>Set DEBUG mode on. This will disable all timeouts and is useful for single-step
-                        debugging.</td>
-                    </tr>
-                    <tr>
-                        <td nowrap="nowrap">--ejs name:directory</td>
-                        <td>
-                            <p>Define an Ejscript application by name at the specified directory. The given name is the
-                            application name and is used as a URL prefix. When a request arrives which matches this URL
-                            prefix, it is routed to the application to service. For example:</p>
-                            <pre>
-appweb --ejs /carmen/:/var/www/apps/carmen/
-</pre>
-                        </td>
+                        <td>--debugger</td>
+                        <td>Disable timeouts to make it easier to debug.</td>
                     </tr>
                     <tr>
                         <td>--log logSpec</td>
@@ -128,13 +116,18 @@ appweb --ejs /carmen/:/var/www/apps/carmen/
                         configuration file.</td>
                     </tr>
                     <tr>
+                        <td>--name uniqueName</td>
+                        <td>Set the program name. Useful to have unique command line names for multiple appweb
+                            instances.</td>
+                    </tr>
+                    <tr>
                         <td>--threads</td>
                         <td>Specify the number of threads to allocate for the appweb thread pool. This overrides the
                         threads configuration file directive.</td>
                     </tr>
                     <tr>
                         <td>--verbose</td>
-                        <td>Shorthand for --log stdout:4. The -v option is an alias for --verbose.</td>
+                        <td>Shorthand for --log stderr:2. The -v option is an alias for --verbose.</td>
                     </tr>
                     <tr>
                         <td>--version</td>
@@ -147,7 +140,7 @@ appweb --ejs /carmen/:/var/www/apps/carmen/
             with an IP address or port number on the command line, Appweb will not read the configuration file. Rather, 
             it will listen for requests on the specified IP:PORT address. Usage:</p>
             <pre>
-appweb [IP]:[PORT] [documentRoot]
+appweb [IP]:[PORT] [documents]
 </pre>For example:
             <pre>
 appweb localhost

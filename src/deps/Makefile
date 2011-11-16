@@ -6,18 +6,14 @@
 
 include 		.makedep
 
-ifeq ($(BLD_MPR_BUILTIN),1)
-	PRE_DIRS	+= mpr
-endif
-ifeq ($(BLD_PCRE_BUILTIN),1)
-	PRE_DIRS	+= pcre
-endif
-ifeq ($(BLD_HTTP_BUILTIN),1)
-	PRE_DIRS	+= http
-endif
-ifeq ($(BLD_SQLITE_BUILTIN),1)
-	PRE_DIRS	+= sqlite
-endif
+PRE_DIRS		+= mpr pcre http sqlite
+APPMAN			:= $(BLD_BIN_DIR)/appman$(BLD_EXE)
+TARGETS			+= $(APPMAN)
+
+compileExtra: 	$(TARGETS)
+
+$(APPMAN): $(BLD_BIN_DIR)/angel$(BLD_EXE)
+	cp $(BLD_BIN_DIR)/angel$(BLD_EXE) $(APPMAN)
 
 #
 #   Local variables:
