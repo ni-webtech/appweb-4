@@ -276,9 +276,19 @@ int maStartServer(MaServer *server)
         }
         return MPR_ERR_CANT_OPEN;
     }
-    if (maApplyChangedGroup(server->appweb) < 0 || maApplyChangedUser(server->appweb) < 0) {
+#if BLD_UNIX_LIKE
+    MaAppweb    *appweb = server->appweb;
+    if (appweb->userChanged || appweb->groupChanged) {
+        if (!smatch(MPR->logPath, "stdout") && !smatch(MPR->logPath, "stderr")) {
+            if (chown(MPR->logPath, appweb->uid, appweb->gid) < 0) {
+                mprError("Can't change ownership on %s", MPR->logPath);
+            }
+        }
+    }
+    if (maApplyChangedGroup(appweb) < 0 || maApplyChangedUser(appweb) < 0) {
         return MPR_ERR_CANT_COMPLETE;
     }
+#endif
     return 0;
 }
 
