@@ -1275,7 +1275,7 @@ struct  MprXml;
 #define MPR_FATAL_SRC       0x100       /**< Fatal error. Log and exit */
 
 /*
-    Log message type flags. Specify what kind of log / error message it is. Listener handlers examine this flag
+    Log message type flags. Specify what kind of log/error message it is. Listener handlers examine this flag
     to determine if they should process the message. Assert messages are trapped when in DEV mode. Otherwise ignored.
  */
 #define MPR_LOG_MSG         0x1000      /* Log trace message - not an error */
@@ -1319,7 +1319,7 @@ typedef struct MprArgs {
 } MprArgs;
 
 /*
-    Convenience define to declare a main program entry point that works for Windows, VxWorks and Posix
+    Convenience Define to declare a main program entry point that works for Windows, VxWorks and Posix.
  */
 #if VXWORKS
     #define MAIN(name, _argc, _argv)  \
@@ -1392,8 +1392,8 @@ typedef struct MprSynch { int dummy; } MprSynch;
 
 /**
     Condition variable for single and multi-thread synchronization. Condition variables can be used to coordinate 
-    activities. These variables are level triggered in that a condition can be signalled prior to another thread 
-    waiting. Condition variables can be used when single threaded but mprServiceEvents should be called to  pump events
+    activities. These variables are level-triggered in that a condition can be signalled prior to another thread 
+    waiting. Condition variables can be used when single threaded but mprServiceEvents should be called to pump events
     until another callback invokes mprWaitForCond.
     @ingroup MprSynch
  */
@@ -1441,7 +1441,7 @@ extern int mprWaitForCond(MprCond *cond, MprTime timeout);
     Signal a condition lock variable.
     @description Signal a condition variable and set it to the \a triggered status. Existing or future caller of
         #mprWaitForCond will be awakened. The condition variable will be automatically reset when the waiter awakes.
-        Should only be used for single waiters. Use mprSignalMultiCond for use with multiple waiters.
+        Should only be used for single waiters. Use mprSignalMultiCond with multiple waiters.
     @param cond Condition variable object created via #mprCreateCond
     @ingroup MprSynch
  */
@@ -1460,7 +1460,7 @@ extern void mprSignalMultiCond(MprCond *cond);
 /**
     Wait for a condition lock variable for use with multiple waiters.
     @description Wait for a condition lock variable to be signaled. Multiple waiters are supported and the 
-        condition variable must be manually reset via mprResetCond. The condition may signaled before calling 
+        condition variable must be manually reset via mprResetCond. The condition may be signaled before calling 
         mprWaitForMultiCond.
     @param cond Condition variable object created via #mprCreateCond
     @param timeout Time in milliseconds to wait for the condition variable to be signaled.
@@ -1470,7 +1470,7 @@ extern void mprSignalMultiCond(MprCond *cond);
 extern int mprWaitForMultiCond(MprCond *cond, MprTime timeout);
 
 /**
-    Multithreading lock control structure
+    Multithreading lock control structure.
     @description MprMutex is used for multithread locking in multithreaded applications.
     @ingroup MprSynch
  */
@@ -1491,7 +1491,7 @@ typedef struct MprMutex {
 
 
 /**
-    Multithreading spin lock control structure
+    Multithreading spin lock control structure.
     @description    MprSpin is used for multithread locking in multithreaded applications.
     @ingroup MprSynch
  */
@@ -1535,7 +1535,7 @@ extern MprMutex *mprCreateLock();
 
 /**
     Initialize a statically allocated Mutex lock object.
-    @description This call initialized a Mutex lock object without allocation. The object can then be used used 
+    @description This call initialized a Mutex lock object without allocation. The object can then be used 
         in #mprLock, #mprTryLock and #mprUnlock calls.
     @param mutex Reference to an MprMutex structure to initialize
     @returns A reference to the supplied mutex. Returns null on errors.
@@ -1547,14 +1547,14 @@ extern MprMutex *mprInitLock(MprMutex *mutex);
     Attempt to lock access.
     @description This call attempts to assert a lock on the given \a lock mutex so that other threads calling 
         mprLock or mprTryLock will block until the current thread calls mprUnlock.
-    @returns Returns zero if the successful in locking the mutex. Returns a negative MPR error code if unsuccessful.
+    @returns Returns 'zero' if successful in locking the mutex. Returns a negative MPR error code if unsuccessful.
     @ingroup MprSynch
  */
 extern bool mprTryLock(MprMutex *lock);
 
 /**
-    Create a spin lock lock object.
-    @description This call creates a spinlock object that can be used in #mprSpinLock, and #mprSpinUnlock calls. Spin locks
+    Create a Spinlock lock object.
+    @description This call creates a spinlock object that can be used in #mprSpinLock, and #mprSpinUnlock calls. Spinlocks
         using MprSpin are much faster than MprMutex based locks on some systems.
     @ingroup MprSynch
  */
@@ -1562,7 +1562,7 @@ extern MprSpin *mprCreateSpinLock();
 
 /**
     Initialize a statically allocated spinlock object.
-    @description This call initialized a spinlock lock object without allocation. The object can then be used used 
+    @description This call initialized a spinlock lock object without allocation. The object can then be used 
         in #mprSpinLock and #mprSpinUnlock calls.
     @param lock Reference to a static #MprSpin  object.
     @returns A reference to the MprSpin object. Returns null on errors.
@@ -1571,10 +1571,10 @@ extern MprSpin *mprCreateSpinLock();
 extern MprSpin *mprInitSpinLock(MprSpin *lock);
 
 /**
-    Attempt to lock access on a spin lock
-    @description This call attempts to assert a lock on the given \a spin lock so that other threads calling 
+    Attempt to lock access on a spinlock.
+    @description This call attempts to assert a lock on the given \a spinlock so that other threads calling 
         mprSpinLock or mprTrySpinLock will block until the current thread calls mprSpinUnlock.
-    @returns Returns zero if the successful in locking the spinlock. Returns a negative MPR error code if unsuccessful.
+    @returns Returns 'zero' if successful in locking the spinlock. Returns a negative MPR error code if unsuccessful.
     @ingroup MprSynch
  */
 extern bool mprTrySpinLock(MprSpin *lock);
