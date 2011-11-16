@@ -90,7 +90,8 @@ if (!bare) {
     })
     log.makeDir(lowperms)
     log.join("error.log").write("")
-    cache.makeDir(dperms)
+    spl.attributes = lowperms
+    cache.makeDir(lowperms)
     cache.join(".dummy").write("")
 
     copy("server.*", ssl, {from: "src/server/ssl"})
@@ -211,7 +212,6 @@ if (!bare) {
 
 if (build.BLD_UNIX_LIKE == 1) {
     copy("*.1", man.join("man1"), {from: "doc/man", compress: true })
-    Cmd.sh("chown nobody " + cache + " ; chgrp nogroup " + cache)
 }
 
 if (options.task == "Install") {

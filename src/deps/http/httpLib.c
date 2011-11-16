@@ -5585,7 +5585,7 @@ void httpBackupRouteLog(HttpRoute *route)
     mprAssert(route->logBackup);
     mprAssert(route->logSize > 100);
     mprGetPathInfo(route->logPath, &info);
-    if (info.valid && info.size > route->logSize) {
+    if (info.valid && ((route->logFlags & MPR_LOG_ANEW) || info.size > route->logSize || route->logSize <= 0)) {
         if (route->log) {
             mprCloseFile(route->log);
             route->log = 0;

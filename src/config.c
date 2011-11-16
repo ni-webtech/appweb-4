@@ -156,10 +156,6 @@ static int accessLogDirective(MaState *state, cchar *key, cchar *value)
     ssize       size;
     int         flags, backup;
 
-    if (mprGetCmdlineLogging()) {
-        mprLog(4, "Already logging. Ignoring ErrorLog directive");
-        return 0;
-    }
     size = INT_MAX;
     backup = 0;
     flags = 0;
