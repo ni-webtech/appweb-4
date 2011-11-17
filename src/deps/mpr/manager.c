@@ -274,7 +274,7 @@ static int process(cchar *operation)
         launch++;
     } else if (exists("/sbin/start") && (exists(sfmt("/etc/init/%s.conf")) || exists(sfmt("/etc/init/%s.disable")))) {
         upstart++;
-    } else if (exists("/usr/bin/update-rc.d") && exists(sfmt("/etc/init.d/%s"))) {
+    } else if (exists("/usr/sbin/update-rc.d") && exists(sfmt("/etc/init.d/%s"))) {
         update++;
     } else if (exists("/sbin/service") && exists(sfmt("/etc/init.d/%s"))) {
         service++;
