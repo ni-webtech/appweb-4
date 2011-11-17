@@ -7810,6 +7810,11 @@ static void startRange(HttpQueue *q)
     conn = q->conn;
     tx = conn->tx;
     mprAssert(tx->outputRanges);
+    if (tx->outputRanges == 0) {
+        mprError("WARNING: outputRanges is null");
+        mprError("rx %x %x", conn->rx, conn->tx);
+        mprError("WARNING: outputRanges is null for %s", conn->rx->uri);
+    }
 
     if (tx->status != HTTP_CODE_OK || !fixRangeLength(conn)) {
         httpRemoveQueue(q);

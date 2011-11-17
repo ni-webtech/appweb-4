@@ -86,7 +86,6 @@ configureService() {
 }
 
 install() {
-
 	configureService install
 	configureService start
 }

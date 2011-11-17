@@ -15,6 +15,7 @@ packageFinal:
 	$(MAKE) -C .. packageRelease
 	priv $(MAKE) -C .. packageCombo
 	priv $(MAKE) -C .. packageFlat
+	id=`logname` ; priv chown -R $$id $(BLD_OUT_DIR)
 
 #
 #   Local variables:

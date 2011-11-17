@@ -12,8 +12,8 @@ TARGETS			+= $(APPMAN)
 
 compileExtra: 	$(TARGETS)
 
-$(APPMAN): $(BLD_BIN_DIR)/angel$(BLD_EXE)
-	cp $(BLD_BIN_DIR)/angel$(BLD_EXE) $(APPMAN)
+$(APPMAN): $(BLD_BIN_DIR)/manager$(BLD_EXE)
+	cp $(BLD_BIN_DIR)/manager$(BLD_EXE) $(APPMAN)
 
 #
 #   Local variables:

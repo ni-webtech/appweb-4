@@ -1,3 +1,4 @@
+
 /******************************************************************************/
 /* 
     This file is an amalgamation of all the individual source code files for the
@@ -29,15 +30,15 @@
     The Multithreaded Portable Runtime (MPR) is a portable runtime library for embedded applications.
     \n\n
     The MPR provides management for logging, error handling, events, files, http, memory, ssl, sockets, strings, 
-    xml parsing, and date/time functions. It also provides a foundation of safe routines for secure programming 
+    xml parsing, and date/time functions. It also provides a foundation of safe routines for secure programming, 
     that help to prevent buffer overflows and other security threats. The MPR is a library and a C API that can 
     be used in both C and C++ programs.
     \n\n
-    The MPR uses a set of extended typedefs for common types. These include: bool, cchar, cvoid, uchar, short, ushort, 
+    The MPR uses a set extended typedefs for common types. These include: bool, cchar, cvoid, uchar, short, ushort, 
     int, uint, long, ulong, int32, uint32, int64, uint64, float, and double. The cchar type is a const char, cvoid is 
     const void. Several types have "u" prefixes to denote unsigned qualifiers.
     \n\n
-    The MPR includes a memory allocator and generational garbage collector. The allocator is a fast, immediate,  
+    The MPR includes a memory allocator and generational garbage collector. The allocator is a fast, immediate 
     coalescing allocator that will return memory back to the O/S if not required. It is optimized for frequent 
     allocations of small blocks (< 4K) and uses a scheme of free queues for fast allocation. 
     \n\n
@@ -68,7 +69,7 @@
 #define MPR_CPU_SH4         12
 
 /*
-    Out-of-order definitions and includes. Note: Order really matters in this section
+    Out-of-order definitions and includes. Order really matters in this section
  */
 #if WIN
     #undef      _CRT_SECURE_NO_DEPRECATE
@@ -354,7 +355,7 @@
 #ifndef HAS_UINT
     #define HAS_UINT 1
     /**
-        Unsigned integer (machine-dependent bit size) data type.
+        Unsigned integer (machine dependent bit size) data type.
      */
     typedef unsigned int uint;
 #endif
@@ -534,7 +535,7 @@ typedef int64 MprTime;
     #if (__GNUC__ >= 3) && !DOXYGEN && BLD_DEBUG && UNUSED && KEEP
         /** 
             Use gcc attribute to check printf fns.  a1 is the 1-based index of the parameter containing the format, 
-            and a2 the index of the first argument. Note that some gcc 2.x versions don't handle this properly. 
+            and a2 the index of the first argument. Note that some gcc 2.x versions don't handle this properly 
          */     
         #define PRINTF_ATTRIBUTE(a1, a2) __attribute__ ((format (__printf__, a1, a2)))
     #else
@@ -543,7 +544,7 @@ typedef int64 MprTime;
 #endif
 
 /*
-    Optimize expression evaluation code depending on whether the value is likely or not.
+    Optimize expression evaluation code depending if the value is likely or not
  */
 #undef likely
 #undef unlikely
@@ -834,7 +835,7 @@ extern "C" {
         };
     #else
         /*
-            This may or may not be necessary - please let us know at dev@embedthis.com if your system needs this (and why).
+            This may or may not be necessary - let us know dev@embedthis.com if your system needs this (and why).
          */
         #if _DIAB_TOOL
             #if BLD_HOST_CPU_ARCH == MPR_CPU_PPC
@@ -1000,7 +1001,7 @@ struct  MprXml;
 #if BLD_CC_MMU
     /* 
         If the system supports virtual memory, then stack size should use system default. Only used pages will
-        actually consume memory. 
+        actually consume memory 
      */
     #define MPR_DEFAULT_STACK       (0)           /**< Default thread stack size (0 means use system default) */
 #else
@@ -1253,7 +1254,7 @@ struct  MprXml;
 #define MPR_ERR_MAX                     -34
 
 /**
-    Standard logging trace levels are 0 to 9 with 0 being the most verbose. These are bitwise ored with the error source
+    Standard logging trace levels are 0 to 9 with 0 being the most verbose. These are ored with the error source
     and type flags. The MPR_LOG_MASK is used to extract the trace level from a flags word. We expect most apps
     to run with level 2 trace enabled.
  */
@@ -1275,7 +1276,7 @@ struct  MprXml;
 #define MPR_FATAL_SRC       0x100       /**< Fatal error. Log and exit */
 
 /*
-    Log message type flags. Specify what kind of log/error message it is. Listener handlers examine this flag
+    Log message type flags. Specify what kind of log / error message it is. Listener handlers examine this flag
     to determine if they should process the message. Assert messages are trapped when in DEV mode. Otherwise ignored.
  */
 #define MPR_LOG_MSG         0x1000      /* Log trace message - not an error */
@@ -1319,7 +1320,7 @@ typedef struct MprArgs {
 } MprArgs;
 
 /*
-    Convenience Define to declare a main program entry point that works for Windows, VxWorks and Posix.
+    Convenience define to declare a main program entry point that works for Windows, VxWorks and Posix
  */
 #if VXWORKS
     #define MAIN(name, _argc, _argv)  \
@@ -1392,8 +1393,8 @@ typedef struct MprSynch { int dummy; } MprSynch;
 
 /**
     Condition variable for single and multi-thread synchronization. Condition variables can be used to coordinate 
-    activities. These variables are level-triggered in that a condition can be signalled prior to another thread 
-    waiting. Condition variables can be used when single threaded but mprServiceEvents should be called to pump events
+    activities. These variables are level triggered in that a condition can be signalled prior to another thread 
+    waiting. Condition variables can be used when single threaded but mprServiceEvents should be called to  pump events
     until another callback invokes mprWaitForCond.
     @ingroup MprSynch
  */
@@ -1441,7 +1442,7 @@ extern int mprWaitForCond(MprCond *cond, MprTime timeout);
     Signal a condition lock variable.
     @description Signal a condition variable and set it to the \a triggered status. Existing or future caller of
         #mprWaitForCond will be awakened. The condition variable will be automatically reset when the waiter awakes.
-        Should only be used for single waiters. Use mprSignalMultiCond with multiple waiters.
+        Should only be used for single waiters. Use mprSignalMultiCond for use with multiple waiters.
     @param cond Condition variable object created via #mprCreateCond
     @ingroup MprSynch
  */
@@ -1460,7 +1461,7 @@ extern void mprSignalMultiCond(MprCond *cond);
 /**
     Wait for a condition lock variable for use with multiple waiters.
     @description Wait for a condition lock variable to be signaled. Multiple waiters are supported and the 
-        condition variable must be manually reset via mprResetCond. The condition may be signaled before calling 
+        condition variable must be manually reset via mprResetCond. The condition may signaled before calling 
         mprWaitForMultiCond.
     @param cond Condition variable object created via #mprCreateCond
     @param timeout Time in milliseconds to wait for the condition variable to be signaled.
@@ -1470,7 +1471,7 @@ extern void mprSignalMultiCond(MprCond *cond);
 extern int mprWaitForMultiCond(MprCond *cond, MprTime timeout);
 
 /**
-    Multithreading lock control structure.
+    Multithreading lock control structure
     @description MprMutex is used for multithread locking in multithreaded applications.
     @ingroup MprSynch
  */
@@ -1491,7 +1492,7 @@ typedef struct MprMutex {
 
 
 /**
-    Multithreading spin lock control structure.
+    Multithreading spin lock control structure
     @description    MprSpin is used for multithread locking in multithreaded applications.
     @ingroup MprSynch
  */
@@ -1535,7 +1536,7 @@ extern MprMutex *mprCreateLock();
 
 /**
     Initialize a statically allocated Mutex lock object.
-    @description This call initialized a Mutex lock object without allocation. The object can then be used 
+    @description This call initialized a Mutex lock object without allocation. The object can then be used used 
         in #mprLock, #mprTryLock and #mprUnlock calls.
     @param mutex Reference to an MprMutex structure to initialize
     @returns A reference to the supplied mutex. Returns null on errors.
@@ -1547,47 +1548,47 @@ extern MprMutex *mprInitLock(MprMutex *mutex);
     Attempt to lock access.
     @description This call attempts to assert a lock on the given \a lock mutex so that other threads calling 
         mprLock or mprTryLock will block until the current thread calls mprUnlock.
-    @returns Returns 'zero' if successful in locking the mutex. Returns a negative MPR error code if unsuccessful.
+    @returns Returns zero if the successful in locking the mutex. Returns a negative MPR error code if unsuccessful.
     @ingroup MprSynch
  */
 extern bool mprTryLock(MprMutex *lock);
 
 /**
-    Create a Spinlock object.
-    @description This call creates a spinlock object that can be used in #mprSpinLock, and #mprSpinUnlock calls. Spinlocks
-        using MprSpin are much faster than MprMutex-based locks on some systems.
+    Create a spin lock lock object.
+    @description This call creates a spinlock object that can be used in #mprSpinLock, and #mprSpinUnlock calls. Spin locks
+        using MprSpin are much faster than MprMutex based locks on some systems.
     @ingroup MprSynch
  */
 extern MprSpin *mprCreateSpinLock();
 
 /**
-    Initialize a statically allocated Spinlock object.
-    @description This call initialized a spinlock object without allocation. The object can then be used 
+    Initialize a statically allocated spinlock object.
+    @description This call initialized a spinlock lock object without allocation. The object can then be used used 
         in #mprSpinLock and #mprSpinUnlock calls.
     @param lock Reference to a static #MprSpin  object.
-    @returns A reference to the MprSpin object. Returns 'null' on errors.
+    @returns A reference to the MprSpin object. Returns null on errors.
     @ingroup MprSynch
  */
 extern MprSpin *mprInitSpinLock(MprSpin *lock);
 
 /**
-    Attempt to lock access on a Spinlock.
-    @description This call attempts to assert a lock on the given \a spinlock so that other threads calling 
+    Attempt to lock access on a spin lock
+    @description This call attempts to assert a lock on the given \a spin lock so that other threads calling 
         mprSpinLock or mprTrySpinLock will block until the current thread calls mprSpinUnlock.
-    @returns Returns 'zero' if successful in locking the spinlock. Returns a negative MPR error code if unsuccessful.
+    @returns Returns zero if the successful in locking the spinlock. Returns a negative MPR error code if unsuccessful.
     @ingroup MprSynch
  */
 extern bool mprTrySpinLock(MprSpin *lock);
 
 /*
-    For maximum performance, use the Spinlock/unlock routines macros.
+    For maximum performance, use the spin lock/unlock routines macros
  */
 #if !BLD_DEBUG
 #define BLD_USE_LOCK_MACROS 1
 #endif
 #if BLD_USE_LOCK_MACROS && !DOXYGEN
     /*
-        Spinlock macros
+        Spin lock macros
      */
     #if MACOSX
         #define mprSpinLock(lock)   if (lock) OSSpinLockLock(&((lock)->cs))
@@ -1637,15 +1638,15 @@ extern bool mprTrySpinLock(MprSpin *lock);
     extern void mprUnlock(MprMutex *lock);
 
     /**
-        Lock a Spinlock.
+        Lock a spinlock.
         @description This call asserts a lock on the given \a spinlock so that other threads calling mprSpinLock will
-            block until the current thread calls mprSpinUnlock.
+            block until the curren thread calls mprSpinUnlock.
         @ingroup MprSynch
      */
     extern void mprSpinLock(MprSpin *lock);
 
     /**
-        Unlock a Spinlock.
+        Unlock a spinlock.
         @description This call unlocks a spinlock previously locked via mprSpinLock or mprTrySpinLock.
         @ingroup MprSynch
      */
@@ -1668,18 +1669,18 @@ extern void mprGlobalLock();
 extern void mprGlobalUnlock();
 
 /*
-    Lock free primitives.
+    Lock free primitives
  */
 
 /**
-    Apply a full (read+write) memory barrier.
+    Apply a full (read+write) memory barrier
     @ingroup MprSynch
  */ 
 extern void mprAtomicBarrier();
 
 /**
     Atomic list insertion. Inserts "item" at the "head" of the list. The "link" field is the next field in item.
-    This is a lock-free function.
+    This is a lock-free function
     @param head list head
     @param link Reference to the list head link field
     @param item Item to insert
@@ -1688,17 +1689,17 @@ extern void mprAtomicBarrier();
 extern void mprAtomicListInsert(void * volatile *head, volatile void **link, void *item);
 
 /**
-    Atomic Compare and Swap. This is a lock-free function.
+    Atomic Compare and Swap. This is a lock free function.
     @param target Address of the target word to swap
     @param expected Expected value of the target
     @param value New value to store at the target
-    @return 'true' if the swap was successful
+    @return TRUE if the swap was successful
     @ingroup MprSynch
  */
 extern int mprAtomicCas(void * volatile * target, void *expected, cvoid *value);
 
 /**
-    Atomic Add. This is a lock-free function.
+    Atomic Add. This is a lock free function.
     @param target Address of the target word to add to.
     @param value Value to add to the target
     @ingroup MprSynch
@@ -1706,7 +1707,7 @@ extern int mprAtomicCas(void * volatile * target, void *expected, cvoid *value);
 extern void mprAtomicAdd(volatile int *target, int value);
 
 /**
-    Atomic 64 bit Add. This is a lock-free function.
+    Atomic 64 bit Add. This is a lock free function.
     @param target Address of the target word to add to.
     @param value Value to add to the target
     @ingroup MprSynch
@@ -1714,7 +1715,7 @@ extern void mprAtomicAdd(volatile int *target, int value);
 extern void mprAtomicAdd64(volatile int64 *target, int value);
 
 /**
-    Exchange the target and a value.
+    Exchange the target and a value
     @param target Address of the target word to exchange
     @param value Value to store to the target
     @ingroup MprSynch
@@ -1722,7 +1723,7 @@ extern void mprAtomicAdd64(volatile int64 *target, int value);
 extern void *mprAtomicExchange(void * volatile *target, cvoid *value);
 
 /*
-    Allocator debug and stats selection.
+    Allocator debug and stats selection
  */
 #if BLD_DEBUG
     #define BLD_MEMORY_DEBUG        1                   /**< Fill blocks, verifies block integrity. */
@@ -1733,7 +1734,7 @@ extern void *mprAtomicExchange(void * volatile *target, cvoid *value);
 #endif
 
 /*
-    Alignment bit sizes for the allocator. Blocks are aligned on 4 byte boundaries for 32 bit systems and 8 byte 
+    Alignment bit sizes for the allocator. Blocks are aligned on 4 byte boundaries for 32 bits systems and 8 byte 
     boundaries for 64 bit systems and those systems that require doubles to be 8 byte aligned.
  */
 #if !MPR_64_BIT && !(MPR_CPU_MIPS)
@@ -1751,7 +1752,7 @@ extern void *mprAtomicExchange(void * volatile *target, cvoid *value);
 
 /*
     MprMem.prior field bits. Layout for 32 bits. This field must only be accessed (read|write) while locked.
-        prior|last/1 << 1|hasManager/1
+        prior | last/1 << 1 | hasManager/1
  */
 #define MPR_SHIFT_HAS_MANAGER   0
 #define MPR_SHIFT_LAST          1
@@ -1783,7 +1784,7 @@ extern void *mprAtomicExchange(void * volatile *target, cvoid *value);
     The allocator uses a garbage collector for freeing unused memory. The collector is a generational, cooperative,
     non-compacting, parallel collector.  The allocator is optimized for frequent allocations of small blocks (< 4K) 
     and uses a scheme of free queues for fast allocation. Allocations are aligned on 16 byte boundaries on 64-bit 
-    systems and otherwise on 8 byte boundaries.  It will return chunks of unused memory back to the O/S. 
+    systems and otherwise on 8 byte boundaries.  It will return chunks unused memory back to the O/S. 
     \n\n
     The allocator handles memory allocation errors globally. The application may configure a memory limit so that 
     memory depletion can be proactively detected and handled before memory allocations actually fail.
@@ -1809,9 +1810,9 @@ extern void *mprAtomicExchange(void * volatile *target, cvoid *value);
  */
 typedef struct MprMem {
     /*
-        Accesses to field1 must only be done while locked. This includes read access since concurrent writes may leave 
-        field1 in a partially updated state. Access to field2 may be done while unlocked since only the marker updates 
-        active blocks, and it does so, in a lock-free manner.
+        Accesses to field1 must only be done while locked. This includes read access as concurrent writes may leave 
+        field1 in a partially updated state. Access to field2 may be done while unlocked as only the marker updates 
+        active blocks and it does so, in a lock-free manner.
 
             field1: prior | last << 1 | hasManager
             field2: gen/2 << 30 | isFree << 29 | size/29 | mark/2
@@ -1913,9 +1914,8 @@ typedef struct MprMem {
 /**
     Memory allocation error callback. Notifiers are called if a low memory condition exists.
     @param policy Memory depletion policy. Set to one of MPR_ALLOC_POLICY_NOTHING, MPR_ALLOC_POLICY_PRUNE,
-    MPR_ALLOC_POLICY_RESTART or MPR_ALLOC_POLICY_EXIT.  @param cause Cause of the memory allocation condition. If
-    Flags is
-    set to MPR_MEM_LOW, the memory pool is low, but the allocation succeeded. If Flags contains MPR_MEM_DEPLETED, the
+    MPR_ALLOC_POLICY_RESTART or MPR_ALLOC_POLICY_EXIT.  @param cause Cause of the memory allocation condition. If flags is
+    set to MPR_MEM_LOW, the memory pool is low, but the allocation succeeded. If flags contain MPR_MEM_DEPLETED, the
     allocation failed.
     @param size Size of the allocation that triggered the low memory condition.
     @param total Total memory currently in use
@@ -1972,7 +1972,7 @@ typedef struct MprMemStats {
     ssize           bytesFree;              /**< Bytes currently free */
     ssize           freed;                  /**< Bytes freed in last sweep */
     ssize           redLine;                /**< Warn if allocation exceeds this level */
-    ssize           maxMemory;              /**< Maximum memory that can be allocated */
+    ssize           maxMemory;              /**< Max memory that can be allocated */
     ssize           rss;                    /**< OS calculated resident stack size in bytes */
     int64           user;                   /**< System user RAM size in bytes (excludes kernel) */
     int64           ram;                    /**< System RAM size in bytes */
@@ -2085,7 +2085,7 @@ extern void mprDestroyMemService();
 /**
     Allocate a block of memory.
     @description This is the lowest level of memory allocation routine. Memory is freed via the garbage collector. 
-    To protect an active memory block from being reclaimed, it must have a reference to it. Memory blocks 
+    To protect an active memory block memory block from being reclaimed, it must have a reference to it. Memory blocks 
     can specify a manager routine via #mprAllocObj. The manager is is invoked by the garbage collector to "mark" 
     dependant active blocks. Marked blocks will not be reclaimed by the garbage collector.
     @param size Size of the memory block to allocate.
@@ -2099,7 +2099,7 @@ extern void mprDestroyMemService();
 extern void *mprAllocMem(ssize size, int flags);
 
 /**
-    Return the current allocation memory statistics block.
+    Return the current allocation memory statistics block
     @returns a reference to the allocation memory statistics. Do not modify its contents.
     @ingroup MprMem
  */
@@ -2131,10 +2131,10 @@ extern ssize mprGetBlockSize(cvoid *ptr);
 
 /**
     Determine if the MPR has encountered memory allocation errors.
-    @description Returns 'true' if the MPR has had a memory allocation error. Allocation errors occur if any
+    @description Returns true if the MPR has had a memory allocation error. Allocation errors occur if any
         memory allocation would cause the application to exceed the configured redline limit, or if any O/S memory
         allocation request fails.
-    @return 'true' if a memory allocation error has occurred. Otherwise returns 'false'.
+    @return TRUE if a memory allocation error has occurred. Otherwise returns FALSE.
     @ingroup MprMem
  */
 extern bool mprHasMemError();
@@ -2142,14 +2142,14 @@ extern bool mprHasMemError();
 /*
     Test if a memory block is unreferenced by the last garbage collection sweep.
     @param ptr Reference to an allocated memory block.
-    @return 'true' if the given memory block is unreferenced and ready for collection.
+    @return TRUE if the given memory block is unreferenced and ready for collection.
     @internal
     @ingroup MprMem
  */
 extern int mprIsDead(cvoid* ptr);
 
 /**
-    Test if a pointer is a valid memory context. This is used to test if a block has been dynamically allocated.
+    Test is a pointer is a valid memory context. This is used to test if a block has been dynamically allocated.
     @param ptr Any memory context allocated by mprAlloc or mprCreate.
     @ingroup MprMem
  */
@@ -2162,8 +2162,8 @@ extern int mprIsValid(cvoid *ptr);
     @param b1Len Length of the first byte string.
     @param b2 Pointer to the second byte string.
     @param b2Len Length of the second byte string.
-    @return Returns 'zero' if the byte strings are identical. Otherwise returns '-1' if the first string is less than the 
-        second. Returns '1' if the first is greater than the second.
+    @return Returns zero if the byte strings are identical. Otherwise returns -1 if the first string is less than the 
+        second. Returns 1 if the first is greater than the first.
     @ingroup MprMem
  */
 extern int mprMemcmp(cvoid *b1, ssize b1Len, cvoid *b2, ssize b2Len);
@@ -2206,7 +2206,7 @@ extern void mprPrintMem(cchar *msg, int detail);
         the call will ignore the request and simply return the existing block. The memory is not zeroed.
     @param ptr Memory to reallocate. If NULL, call malloc.
     @param size New size of the required memory block.
-    @return Returns a pointer to the allocated block. If memory is not available, the memory exhaustion handler 
+    @return Returns a pointer to the allocated block. If memory is not available the memory exhaustion handler 
         specified via mprCreate will be called to allow global recovery.
     @remarks Do not mix calls to realloc and mprRealloc.
     @ingroup MprMem
@@ -2236,7 +2236,7 @@ extern void mprRevive(cvoid* ptr);
 extern void mprVerifyMem();
 
 /**
-    Define a memory notifier.
+    Define a memory notifier
     @description A notifier callback will be invoked for memory allocation errors for the given memory context.
     @param cback Notifier callback function
     @ingroup MprMem
@@ -2244,7 +2244,7 @@ extern void mprVerifyMem();
 extern void mprSetMemNotifier(MprMemNotifier cback);
 
 /**
-    Set a memory allocation error condition on a memory context. This will set an allocation error condition on the
+    Set an memory allocation error condition on a memory context. This will set an allocation error condition on the
     given context and all its parents. This way, you can test the ultimate parent and detect if any memory allocation
     errors have occurred.
     @ingroup MprMem
@@ -2252,9 +2252,9 @@ extern void mprSetMemNotifier(MprMemNotifier cback);
 extern void mprSetMemError();
 
 /**
-    Configure the application memory limits.
+    Configure the application memory limits
     @description Configure memory limits to constrain memory usage by the application. The memory allocation subsystem
-        will check these limits before granting memory allocation requests. The redLine is a soft limit that if exceeded
+        will check these limits before granting memory allocation requrests. The redLine is a soft limit that if exceeded
         will invoke the memory allocation callback, but will still honor the request. The maxMemory limit is a hard limit.
         The MPR will prevent allocations which exceed this maximum. The memory callback handler is defined via 
         the #mprCreate call.
@@ -2289,8 +2289,7 @@ extern void *mprSetManager(void *ptr, void *manager);
 extern void mprValidateBlock(void *ptr);
 
 /**
-    Memory 
-    @description virtual memory into the applications address space.
+    Memory virtual memory into the applications address space.
     @param size of virtual memory to map. This size will be rounded up to the nearest page boundary.
     @param mode Mask set to MPR_MAP_READ | MPR_MAP_WRITE
     @ingroup MprMem
@@ -2299,7 +2298,7 @@ extern void *mprVirtAlloc(ssize size, int mode);
 
 /**
     Free (unpin) a mapped section of virtual memory
-    @param ptr Virtual address to free. Should be page aligned.
+    @param ptr Virtual address to free. Should be page aligned
     @param size Size of memory to free in bytes
     @ingroup MprMem
  */
@@ -2309,7 +2308,7 @@ extern void mprVirtFree(void *ptr, ssize size);
     Macros. When building documentation (DOXYGEN), define pretend function defintions for the documentation.
  */
 /*
-    In debug mode, all memory blocks can have a debug name.
+    In debug mode, all memory blocks can have a debug name
  */
 #if BLD_MEMORY_DEBUG
     extern void *mprSetName(void *ptr, cchar *name);
@@ -2350,15 +2349,15 @@ extern void *mprAlloc(ssize size);
 /**
     Allocate an object of a given type.
     @description Allocates a zeroed block of memory large enough to hold an instance of the specified type with a 
-        manager callback.  This call associates a manager function with an object that will be invoked when the 
+        manager callback.  this call associates a manager function with an object that will be invoked when the 
         object is freed or the garbage collector needs the object to mark internal properties as being used.  
         This call is implemented as a macro.
     @param type Type of the object to allocate
     @param manager Manager function to invoke when the allocation is managed.
-    @return Returns a pointer to the allocated block. If memory is not available, the memory exhaustion handler 
+    @return Returns a pointer to the allocated block. If memory is not available the memory exhaustion handler 
         specified via mprCreate will be called to allow global recovery.
     @remarks Do not mix calls to malloc and mprAlloc.
-    @stability Evolving. These function names are highly likely to be refactored.
+    @stability Evolving. This function names are highly likely to be refactored.
     @ingroup MprMem
  */
 extern void *mprAllocObj(Type type, MprManager manager) { return 0;}
@@ -2367,7 +2366,7 @@ extern void *mprAllocObj(Type type, MprManager manager) { return 0;}
     Allocate a zeroed block of memory
     @description Allocates a zeroed block of memory.
     @param size Size of the memory block to allocate.
-    @return Returns a pointer to the allocated block. If memory is not available, the memory exhaustion handler 
+    @return Returns a pointer to the allocated block. If memory is not available the memory exhaustion handler 
         specified via mprCreate will be called to allow global recovery.
     @remarks Do not mix calls to malloc and mprAlloc.
     @ingroup MprMem
@@ -2413,8 +2412,8 @@ extern void mprRequestGC(int flags);
 
 /**
     Enable or disable the garbage collector
-    @param on Set to 'one' to enable and 'zero' to disable.
-    @return Returns 'one' if the collector was previously enabled. Otherwise returns zero.
+    @param on Set to one to enable and zero to disable.
+    @return Returns one if the collector was previously enabled. Otherwise returns zero.
     @ingroup MprMem
  */
 extern bool mprEnableGC(bool on);
@@ -2439,7 +2438,7 @@ extern void mprMarkBlock(cvoid *ptr);
 
 /**
     Release a memory block
-    @description This call is used to allow a memory block to be freed by the garbage collector after calling
+    @description This call is used to allow a memory block to be freed freed by the garbage collector after calling
         mprHold.
     @param ptr Any memory block
     @ingroup MprMem
@@ -2447,7 +2446,7 @@ extern void mprMarkBlock(cvoid *ptr);
 extern void mprRelease(void *ptr);
 
 /**
-    Remove a memory block as a root for garbage collection
+    remove a memory block as a root for garbage collection
     @param ptr Any memory pointer
     @ingroup MprMem
   */

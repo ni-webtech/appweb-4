@@ -308,72 +308,76 @@ patchAppwebConf()
 configureService() {
     local action=$1
 
-    case $action in
-    start|stop)
-        if [ $BLD_HOST_OS = WIN ] ; then
-            if [ $action = start ] ; then
-                if [ -x "$BLD_BIN_PREFIX/appman.exe" ] ; then
-                    "$BLD_BIN_PREFIX/appman" --start $BLD_BIN_PREFIX/$BLD_PRODUCT
-                fi
-                if [ -x "$BLD_BIN_PREFIX/${BLD_PRODUCT}Monitor.exe" ] ; then
-                    sleep 5
-                    "$BLD_BIN_PREFIX/${BLD_PRODUCT}Monitor" &
-                fi
-            else
-                if [ -x "$BLD_BIN_PREFIX/appman.exe" ] ; then
-                    "$BLD_BIN_PREFIX/appman" --stop $BLD_BIN_PREFIX/$BLD_PRODUCT
-                fi
-                if [ -x "$BLD_BIN_PREFIX/${BLD_PRODUCT}Monitor.exe" ] ; then
-                    "$BLD_BIN_PREFIX/${BLD_PRODUCT}Monitor" --stop
-                fi
-            fi
-        elif which launchctl >/dev/null 2>&1 ; then
-            local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
-            if [ $action = start ] ; then
-                launchctl start com.${company}.${BLD_PRODUCT}
-            else
-                launchctl stop com.${company}.${BLD_PRODUCT} 2>/dev/null
-            fi
-        elif which service >/dev/null 2>&1 ; then
-            service $BLD_PRODUCT $action >/dev/null 2>&1
-        elif which invoke-rc.d >/dev/null 2>&1 ; then
-            invoke-rc.d $BLD_PRODUCT $action
-        fi
-        ;;
+    appman $action
 
-    install)
-        if [ $BLD_HOST_OS = WIN ] ; then
-            if [ -x "$BLD_BIN_PREFIX/appman.exe" ] ; then
-                "$BLD_BIN_PREFIX/appman" --install $BLD_BIN_PREFIX/$BLD_PRODUCT
-            fi
-        elif which launchctl >/dev/null 2>&1 ; then
-            local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
-            launchctl unload /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist 2>/dev/null
-            launchctl load -w /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist
-        elif which chkconfig >/dev/null 2>&1 ; then
-            chkconfig --add $BLD_PRODUCT >/dev/null
-            chkconfig --level 5 $BLD_PRODUCT on >/dev/null
-
-        elif which update-rc.d >/dev/null 2>&1 ; then
-            update-rc.d $BLD_PRODUCT defaults 90 10 >/dev/null
-        fi
-        ;;
-
-    remove)
-        if [ $BLD_HOST_OS = WIN ] ; then
-            if [ -x "$BLD_BIN_PREFIX/appman.exe" ] ; then
-                "$BLD_BIN_PREFIX/appman" --uninstall $BLD_BIN_PREFIX/$BLD_PRODUCT
-            fi
-        elif which launchctl >/dev/null 2>&1 ; then
-            local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
-            launchctl unload -w /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist 2>/dev/null
-        elif which chkconfig >/dev/null 2>&1 ; then
-            chkconfig --del $BLD_PRODUCT >/dev/null
-        elif which update-rc.d >/dev/null 2>&1 ; then
-            update-rc.d -f $BLD_PRODUCT remove >/dev/null
-        fi
-        ;;
-    esac
+#    case $action in
+#    start|stop)
+#        if [ $BLD_HOST_OS = WIN ] ; then
+#            if [ $action = start ] ; then
+#                if [ -x "$BLD_BIN_PREFIX/appman.exe" ] ; then
+#                    "$BLD_BIN_PREFIX/appman" --start $BLD_BIN_PREFIX/$BLD_PRODUCT
+#                fi
+#                if [ -x "$BLD_BIN_PREFIX/${BLD_PRODUCT}Monitor.exe" ] ; then
+#                    sleep 5
+#                    "$BLD_BIN_PREFIX/${BLD_PRODUCT}Monitor" &
+#                fi
+#            else
+#                if [ -x "$BLD_BIN_PREFIX/appman.exe" ] ; then
+#                    "$BLD_BIN_PREFIX/appman" --stop $BLD_BIN_PREFIX/$BLD_PRODUCT
+#                fi
+#                if [ -x "$BLD_BIN_PREFIX/${BLD_PRODUCT}Monitor.exe" ] ; then
+#                    "$BLD_BIN_PREFIX/${BLD_PRODUCT}Monitor" --stop
+#                fi
+#            fi
+#        elif which launchctl >/dev/null 2>&1 ; then
+#            local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
+#            if [ $action = start ] ; then
+#                launchctl start com.${company}.${BLD_PRODUCT}
+#            else
+#                launchctl stop com.${company}.${BLD_PRODUCT} 2>/dev/null
+#            fi
+#        elif which service >/dev/null 2>&1 ; then
+#            service $BLD_PRODUCT $action >/dev/null 2>&1
+#        elif which invoke-rc.d >/dev/null 2>&1 ; then
+#            invoke-rc.d $BLD_PRODUCT $action
+#        fi
+#        ;;
+#
+#    install)
+#        if [ $BLD_HOST_OS = WIN ] ; then
+#            if [ -x "$BLD_BIN_PREFIX/appman.exe" ] ; then
+#                "$BLD_BIN_PREFIX/appman" --install $BLD_BIN_PREFIX/$BLD_PRODUCT
+#            fi
+#            # MOB - missing monitor
+#        elif which launchctl >/dev/null 2>&1 ; then
+#            local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
+#            launchctl unload /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist 2>/dev/null
+#            launchctl load -w /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist
+#        elif which chkconfig >/dev/null 2>&1 ; then
+#            chkconfig --add $BLD_PRODUCT >/dev/null
+#            chkconfig --level 5 $BLD_PRODUCT on >/dev/null
+#
+#        elif which update-rc.d >/dev/null 2>&1 ; then
+#            update-rc.d $BLD_PRODUCT defaults 90 10 >/dev/null
+#        fi
+#        ;;
+#
+#    remove)
+#        if [ $BLD_HOST_OS = WIN ] ; then
+#            if [ -x "$BLD_BIN_PREFIX/appman.exe" ] ; then
+#                "$BLD_BIN_PREFIX/appman" --uninstall $BLD_BIN_PREFIX/$BLD_PRODUCT
+#            # MOB - missing monitor
+#            fi
+#        elif which launchctl >/dev/null 2>&1 ; then
+#            local company=`echo $BLD_COMPANY | tr '[:upper:]' '[:lower:']`
+#            launchctl unload -w /Library/LaunchDaemons/com.${company}.${BLD_PRODUCT}.plist 2>/dev/null
+#        elif which chkconfig >/dev/null 2>&1 ; then
+#            chkconfig --del $BLD_PRODUCT >/dev/null
+#        elif which update-rc.d >/dev/null 2>&1 ; then
+#            update-rc.d -f $BLD_PRODUCT remove >/dev/null
+#        fi
+#        ;;
+#    esac
 }
 
 installFiles() {
