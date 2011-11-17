@@ -877,7 +877,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
                 "    --start              # Start the service\n"
                 "    --stop               # Stop the service\n"
                 "    --uninstall          # Uninstall the service\n",
-                "    --verbose            # Show command feedback\n"
+                "    --verbose            # Show command feedback\n",
                 args, app->appName);
             return -1;
         }
