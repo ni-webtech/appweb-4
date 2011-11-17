@@ -268,6 +268,8 @@ static int process(cchar *operation)
         No systemd support yet
      */
     name = app->serviceName;
+    launch = upstart = update = service = 0;
+
     if (exists("/bin/launchctl") && exists(sfmt("/Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name))) {
         launch++;
     } else if (exists("/sbin/start") && (exists(sfmt("/etc/init/%s.conf")) || exists(sfmt("/etc/init/%s.disable")))) {
@@ -337,7 +339,8 @@ static int process(cchar *operation)
             }
             return process("enable");
         } else if (service) {
-            if (!run("/sbin/chkconfig --add %s ; /sbin/chkconfig --level 5 %s", name, name)) {
+            if (!run("/sbin/chkconfig --del %s ; /sbin/chkconfig --add %s ; /sbin/chkconfig --level 5 %s", 
+                    name, name, name)) {
                 return MPR_ERR_CANT_COMPLETE;
             }
             return process("enable");
