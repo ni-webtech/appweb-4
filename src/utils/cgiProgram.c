@@ -324,6 +324,8 @@ int main(int argc, char *argv[], char *envp[])
     write(1, MPR_CMD_VXWORKS_EOF, MPR_CMD_VXWORKS_EOF_LEN);
     write(2, MPR_CMD_VXWORKS_EOF, MPR_CMD_VXWORKS_EOF_LEN);
 #endif
+    fflush(stderr);
+    fflush(stdout);
     return 0;
 }
 
