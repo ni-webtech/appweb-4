@@ -227,9 +227,17 @@ static void setAppDefaults(Mpr *mpr)
 }
 
 
-static bool exists(cchar *path)
+static bool exists(cchar *fmt, ...)
 {
-    return mprPathExists(path, F_OK);
+    va_list     args;
+    cchar       *path;
+    bool        rc;
+
+    va_start(args, fmt);
+    path = sfmtv(fmt, args);
+    rc = mprPathExists(path, F_OK);
+    va_end(args);
+    return rc;
 }
 
 
@@ -270,13 +278,13 @@ static int process(cchar *operation)
     name = app->serviceName;
     launch = upstart = update = service = 0;
 
-    if (exists("/bin/launchctl") && exists(sfmt("/Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name))) {
+    if (exists("/bin/launchctl") && exists("/Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name)) {
         launch++;
-    } else if (exists("/sbin/start") && (exists(sfmt("/etc/init/%s.conf")) || exists(sfmt("/etc/init/%s.disable")))) {
+    } else if (exists("/sbin/start") && (exists("/etc/init/%s.conf", name) || exists("/etc/init/%s.disable", name))) {
         upstart++;
-    } else if (exists("/usr/sbin/update-rc.d") && exists(sfmt("/etc/init.d/%s"))) {
+    } else if (exists("/usr/sbin/update-rc.d") && exists("/etc/init.d/%s", name)) {
         update++;
-    } else if (exists("/sbin/service") && exists(sfmt("/etc/init.d/%s"))) {
+    } else if (exists("/sbin/service") && exists("/etc/init.d/%s", name)) {
         service++;
     } else {
         mprError("Can't locate system tool to manage service");
@@ -301,7 +309,7 @@ static int process(cchar *operation)
         } else if (service) {
             return run("/sbin/chkconfig %s off", name);
         } else if (upstart) {
-            if (exists(sfmt("/etc/init/%s.conf", name))) {
+            if (exists("/etc/init/%s.conf", name)) {
                 return run("mv /etc/init/%s.conf /etc/init/%s.off", name, name);
             }
         }
@@ -321,7 +329,7 @@ static int process(cchar *operation)
             }
             return process("start");
         } else if (upstart) {
-            if (exists(sfmt("/etc/init/%s.off", name))) {
+            if (exists("/etc/init/%s.off", name)) {
                 if (!run("mv /etc/init/%s.off /etc/init/%s.conf", name, name)) {
                     return MPR_ERR_CANT_COMPLETE;
                 }
