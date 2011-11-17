@@ -280,8 +280,10 @@ static int process(cchar *operation)
 
     if (exists("/bin/launchctl") && exists("/Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name)) {
         launch++;
+#if UNUSED
     } else if (exists("/sbin/start") && (exists("/etc/init/%s.conf", name) || exists("/etc/init/%s.disable", name))) {
         upstart++;
+#endif
     } else if (exists("/usr/sbin/update-rc.d") && exists("/etc/init.d/%s", name)) {
         update++;
     } else if (exists("/sbin/service") && exists("/etc/init.d/%s", name)) {
