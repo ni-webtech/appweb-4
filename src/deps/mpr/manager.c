@@ -40,6 +40,7 @@ typedef struct App {
     char    *logSpec;                   /* Log directive for service */
     char    *pidDir;                    /* Location for pid file */
     char    *pidPath;                   /* Path to the manager pid for this service */
+    int     quiet;                      /* Suppress errors */
     int     restartCount;               /* Service restart count */
     int     restartWarned;              /* Has user been notified */
     int     runAsDaemon;                /* Run as a daemon */
@@ -60,7 +61,7 @@ static bool killPid();
 static int  makeDaemon();
 static void manageApp(void *unused, int flags);
 static int  readPid();
-static int  process(cchar *operation);
+static bool  process(cchar *operation, bool quiet);
 static void runService();
 static void setAppDefaults(Mpr *mpr);
 static void terminating(int how, int status);
@@ -202,7 +203,7 @@ int main(int argc, char *argv[])
     } else {
         mprStartEventsThread();
         for (; nextArg < argc; nextArg++) {
-            if (!process(argv[nextArg])) {
+            if (!process(argv[nextArg], 0)) {
                 status = MPR_ERR_CANT_COMPLETE;                                                                    
                 break;
             }
@@ -284,25 +285,28 @@ static bool run(cchar *fmt, ...)
         mprError("Can't run command %s\n%s\n", command, err);
         return 0;
     }
-    if (err && *err) {
-        mprLog(1, "Error: %s", err); 
-    }
-    if (out && *out) {
-        mprLog(1, "Output: %s", out); 
+    if (!app->quiet) {
+        if (err && *err) {
+            mprLog(1, "Error: %s", err); 
+        }
+        if (out && *out) {
+            mprLog(1, "Output: %s", out); 
+        }
     }
     va_end(args);
     return 1;
 }
 
 
-static int process(cchar *operation)
+static bool process(cchar *operation, bool quiet)
 {
     cchar   *name, *off, *path;
-    int     launch, update, service, upstart;
+    int     rc, launch, update, service, upstart, priorQuiet;
 
     /*
         No systemd support yet
      */
+    rc = 1;
     name = app->serviceName;
     launch = upstart = update = service = 0;
 
@@ -320,8 +324,11 @@ static int process(cchar *operation)
 
     } else {
         mprError("Can't locate system tool to manage service");
-        return MPR_ERR_CANT_OPEN;
+        return 0;
     }
+
+    priorQuiet = app->quiet;
+    app->quiet = quiet;
 
     /*
         Operations
@@ -332,35 +339,31 @@ static int process(cchar *operation)
 
         } else if (service) {
             if (!run("/sbin/chkconfig --del %s", name)) {
-                return MPR_ERR_CANT_COMPLETE;
-            }
-            if (!run("/sbin/chkconfig --add %s", name)) {
-                return MPR_ERR_CANT_COMPLETE;
-            }
-            if (!run("/sbin/chkconfig --level 5 %s", name)) {
-                return MPR_ERR_CANT_COMPLETE;
+                rc = 0;
+            } else if (!run("/sbin/chkconfig --add %s", name)) {
+                rc = 0;
+            } else if (!run("/sbin/chkconfig --level 5 %s", name)) {
+                rc = 0;
             }
 
         } else if (update) {
-            if (!run("/usr/sbin/update-rc.d %s defaults 90 10", name)) {
-                return MPR_ERR_CANT_COMPLETE;
-            }
+            rc = run("/usr/sbin/update-rc.d %s defaults 90 10", name);
 
         } else if (upstart) {
             ;
         }
 
     } else if (smatch(operation, "uninstall")) {
-        process("disable");
+        process("disable", 1);
 
         if (launch) {
             ;
 
         } else if (service) {
-            return run("/sbin/chkconfig --del %s", name);
+            rc = run("/sbin/chkconfig --del %s", name);
 
         } else if (update) {
-            return run("/usr/sbin/update-rc.d -f %s remove", name);
+            rc = run("/usr/sbin/update-rc.d -f %s remove", name);
 
         } else if (upstart) {
             ;
@@ -376,90 +379,87 @@ static int process(cchar *operation)
                 Unfortunately, there is no launchctl command to do an enable without starting. So must do a stop below.
              */
             if (!run("/bin/launchctl load -w %s", path)) {
-                return MPR_ERR_CANT_COMPLETE;
+                rc = 0;
+            } else {
+                rc = process("stop", 1);
             }
-            return process("stop");
 
         } else if (update) {
-            if (!run("/usr/sbin/update-rc.d %s enable", name)) {
-                return MPR_ERR_CANT_COMPLETE;
-            }
+            rc = run("/usr/sbin/update-rc.d %s enable", name);
 
         } else if (service) {
-            if (!run("/sbin/chkconfig %s on", name)) {
-                return MPR_ERR_CANT_COMPLETE;
-            }
+            rc = run("/sbin/chkconfig %s on", name);
 
         } else if (upstart) {
             off = sfmt("/etc/init/%s.off", name);
             if (exists(off) && !run("mv %s /etc/init/%s.conf", off, name)) {
-                return MPR_ERR_CANT_COMPLETE;
+                rc = 0;
             }
         }
 
     } else if (smatch(operation, "disable")) {
-        /* Don't test return code here. Some platforms will return errors for stop if already stopped */
-        process("stop");
+        process("stop", 1);
         if (launch) {
-            return run("/bin/launchctl unload -w /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
+            rc = run("/bin/launchctl unload -w /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
 
         } else if (update) {
-            return run("/usr/sbin/update-rc.d %s disable", name);
+            rc = run("/usr/sbin/update-rc.d %s disable", name);
 
         } else if (service) {
-            return run("/sbin/chkconfig %s off", name);
+            rc = run("/sbin/chkconfig %s off", name);
 
         } else if (upstart) {
             if (exists("/etc/init/%s.conf", name)) {
-                return run("mv /etc/init/%s.conf /etc/init/%s.off", name, name);
+                rc = run("mv /etc/init/%s.conf /etc/init/%s.off", name, name);
             }
         }
 
     } else if (smatch(operation, "start")) {
         if (launch) {
-            return run("/bin/launchctl load /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
+            rc = run("/bin/launchctl load /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
 
         } else if (service) {
-            return run("/sbin/service %s start", name);
+            rc = run("/sbin/service %s start", name);
 
         } else if (update) {
-            return run("/usr/sbin/invoke-rc.d --quiet %s start", name);
+            rc = run("/usr/sbin/invoke-rc.d --quiet %s start", name);
 
         } else if (upstart) {
-            return run("/sbin/start %s", name);
+            rc = run("/sbin/start %s", name);
         }
 
     } else if (smatch(operation, "stop")) {
         if (launch) {
-            return run("/bin/launchctl unload /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
+            rc = run("/bin/launchctl unload /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
 
         } else if (service) {
             if (!run("/sbin/service %s stop", name)) {
-                return killPid();
+                rc = killPid();
             }
-            return 1;
 
         } else if (update) {
             if (!run("/usr/sbin/invoke-rc.d --quiet %s stop", name)) {
-                return killPid();
+                rc = killPid();
             }
-            return 1;
 
         } else if (upstart) {
-            return run("/sbin/stop %s", name);
+            if (exists("/etc/init/%s.conf", name)) {
+                rc = run("/sbin/stop %s", name);
+            }
         }
 
     } else if (smatch(operation, "reload")) {
-        return process("restart");
+        rc = process("restart", 0);
 
     } else if (smatch(operation, "restart")) {
-        /* Don't test return code here. Some platforms will return errors for stop if already stopped */
-        process("stop");
-        return process("start");
+        process("stop", 1);
+        rc = process("start", 0);
 
     } else if (smatch(operation, "run")) {
         runService();
     }
+
+    app->quiet = priorQuiet;
     return 1;
 }
 
