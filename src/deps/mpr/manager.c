@@ -40,10 +40,12 @@ typedef struct App {
     cchar   *appName;                   /* Manager name */
     int     exiting;                    /* Program should exit */
     int     retries;                    /* Number of times to retry staring app */
+    char    *command;                   /* Last command */
+    char    *error;                     /* Command error message */
+    char    *output;                    /* Command output message */
     char    *logSpec;                   /* Log directive for service */
     char    *pidDir;                    /* Location for pid file */
     char    *pidPath;                   /* Path to the manager pid for this service */
-    int     quiet;                      /* Suppress errors */
     int     restartCount;               /* Service restart count */
     int     restartWarned;              /* Has user been notified */
     int     runAsDaemon;                /* Run as a daemon */
@@ -197,17 +199,17 @@ int main(int argc, char *argv[])
     }
     if (getuid() != 0) {
         mprUserError("Must run with administrator privilege. Use sudo.");
-        status = MPR_ERR_BAD_STATE;                                                                    
+        status = 1;                                                                    
 
     } else if (mprStart() < 0) {
         mprUserError("Can't start MPR for %s", mprGetAppName());                                           
-        status = MPR_ERR_CANT_INITIALIZE;                                                                    
+        status = 2;                                                                    
 
     } else {
         mprStartEventsThread();
         for (; nextArg < argc; nextArg++) {
             if (!process(argv[nextArg], 0)) {
-                status = MPR_ERR_CANT_COMPLETE;                                                                    
+                status = 3;                                                                    
                 break;
             }
         }
@@ -221,6 +223,8 @@ static void manageApp(void *ptr, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(app->appName);
+        mprMark(app->error);
+        mprMark(app->output);
         mprMark(app->logSpec);
         mprMark(app->pidDir);
         mprMark(app->pidPath);
@@ -277,34 +281,26 @@ static bool run(cchar *fmt, ...)
 {
     va_list     args;
     MprCmd      *cmd;
-    char        *out, *err, *command;
+    char        *out, *err;
+    int         rc;
 
     va_start(args, fmt);
-    command = sfmtv(fmt, args);
-    mprLog(1, "Run: %s", command);
+    app->command = sfmtv(fmt, args);
+    mprLog(1, "Run: %s", app->command);
 
     cmd = mprCreateCmd(NULL);
-    if (mprRunCmd(cmd, command, &out, &err, 0) != 0) {
-        mprError("Can't run command %s\n%s\n", command, err);
-        return 0;
-    }
-    if (!app->quiet) {
-        if (err && *err) {
-            mprLog(1, "Error: %s", err); 
-        }
-        if (out && *out) {
-            mprLog(1, "Output: %s", out); 
-        }
-    }
+    rc = mprRunCmd(cmd, app->command, &out, &err, 0);
+    app->error = sclone(err);
+    app->output = sclone(out);
     va_end(args);
-    return 1;
+    return (rc != 0) ? 0 : 1;
 }
 
 
 static bool process(cchar *operation, bool quiet)
 {
     cchar   *name, *off, *path;
-    int     rc, launch, update, service, upstart, priorQuiet;
+    int     rc, launch, update, service, upstart;
 
     /*
         No systemd support yet
@@ -329,9 +325,6 @@ static bool process(cchar *operation, bool quiet)
         mprError("Can't locate system tool to manage service");
         return 0;
     }
-
-    priorQuiet = app->quiet;
-    app->quiet = quiet;
 
     /*
         Operations
@@ -429,6 +422,11 @@ static bool process(cchar *operation, bool quiet)
 
         } else if (upstart) {
             rc = run("/sbin/start %s", name);
+            if (!rc) {
+                if (scontains(app->error, "start: Job is already running", -1)) {
+                    rc = 0;
+                }
+            }
         }
 
     } else if (smatch(operation, "stop")) {
@@ -462,8 +460,21 @@ static bool process(cchar *operation, bool quiet)
         runService();
     }
 
-    app->quiet = priorQuiet;
-    return 1;
+    if (!rc) {
+        if (app->error && *app->error) {
+            mprError("Can't run command: %s\nCommand output: %s\n", app->command, app->error);
+        }
+    }
+    if (!quiet) {
+        /* Logging at level one will be visible if appman -v is used */
+        if (app->error && *app->error) {
+            mprLog(1, "Error: %s", app->error); 
+        }
+        if (app->output && *app->output) {
+            mprLog(1, "Output: %s", app->output); 
+        }
+    }
+    return rc;
 }
 
 

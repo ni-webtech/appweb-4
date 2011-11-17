@@ -30,11 +30,10 @@ configureService() {
         elif [ -f /etc/init.d/$BLD_PRODUCT ] ; then
             /etc/init.d/$BLD_PRODUCT stop
 		fi
-		pid=`/bin/pidof !!ORIG_BLD_BIN_PREFIX!!/$BLD_PRODUCT; true`
-		[ "$pid" != "" ] && kill -9 $pid
-		rm -f /var/lock/subsys/$BLD_PRODUCT /var/lock/$BLD_PRODUCT
-		rm -fr /var/log/$BLD_PRODUCT
-		rm -rf /var/run/$BLD_PRODUCT
+		if [ "`/bin/pidof !!ORIG_BLD_BIN_PREFIX!!/$BLD_PRODUCT`" != "" ] ; then
+            kill -9 `/bin/pidof !!ORIG_BLD_BIN_PREFIX!!/$BLD_PRODUCT`
+        fi
+		rm -rf /var/lock/subsys/$BLD_PRODUCT /var/lock/$BLD_PRODUCT /var/log/$BLD_PRODUCT /var/run/$BLD_PRODUCT
 		;;
 
 	remove)

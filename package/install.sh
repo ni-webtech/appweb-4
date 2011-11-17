@@ -76,10 +76,11 @@ setup() {
             installFiles $FMT
             
             if [ "$installbin" = "Y" ] ; then
+                appman stop disable uninstall >/dev/null 2>&1
                 patchConfiguration
+                appman install
                 if [ "$runDaemon" = "Y" ] ; then
-                    startService
-                    startBrowser
+                    appman enable start
                 fi
             fi
 
@@ -302,13 +303,6 @@ patchAppwebConf()
     fi
 }
 
-#
-#   Modify service. Usage: configureService [start|stop|install|remove]
-#
-configureService() {
-    appman $1
-}
-
 installFiles() {
     local dir pkg doins NAME upper
 
@@ -324,6 +318,9 @@ installFiles() {
             #   keep going. 
             #
             NAME=`createPackageName ${BLD_PRODUCT}${suffix}`.$FMT
+            if [ "$runDaemon" != "Y" ] ; then
+                export APPWEB_DONT_START=1
+            fi
             if [ "$FMT" = "rpm" ] ; then
                 echo -e "rpm -Uhv $NAME"
                 rpm -Uhv $HOME/$NAME
@@ -379,7 +376,6 @@ installFiles() {
 }
 
 patchConfiguration() {
-    configureService stop >/dev/null 2>&1
     if [ ! -f $BLD_PRODUCT.conf -a -f "$BLD_CFG_PREFIX/new.conf" ] ; then
         cp "$BLD_CFG_PREFIX/new.conf" "$BLD_CFG_PREFIX/$BLD_PRODUCT.conf"
     fi
@@ -387,11 +383,6 @@ patchConfiguration() {
         BLD_LIB_PREFIX="$BLD_LIB_PREFIX" BLD_LOG_PREFIX="$BLD_LOG_PREFIX" \
         BLD_SERVER=$HOSTNAME BLD_HTTP_PORT=$HTTP_PORT BLD_SSL_PORT=$SSL_PORT \
         patchAppwebConf "${BLD_CFG_PREFIX}/appweb.conf" 
-}
-
-startService() {
-    configureService install
-    configureService start
 }
 
 startBrowser() {
@@ -426,14 +417,18 @@ setup $*
 askUser
 
 if [ "$installbin" = "Y" ] ; then
-    configureService stop >/dev/null 2>&1
-    configureService remove >/dev/null 2>&1
+    appman stop disable uninstall >/dev/null 2>&1
 fi
 installFiles $FMT
 if [ "$installbin" = "Y" ] ; then
     patchConfiguration
+    if [ "$FMT" = "tar" ] ; then
+        appman install
+    fi
     if [ "$runDaemon" = "Y" ] ; then
-        startService
+        if [ "$FMT" = "tar" ] ; then
+            appman start
+        fi
         startBrowser
     fi
 fi

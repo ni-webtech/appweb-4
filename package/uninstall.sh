@@ -90,26 +90,11 @@ yesno() {
 }
 
 
-#
-#	Modify service
-#	Usage:	configureService start|stop|install
-#
-configureService() {
-    appman $1
-}
-
-
 deconfigureService() {
-
-	if [ "$removebin" = "Y" ] ; then
-		echo -e "\nStopping $BLD_NAME service"
-		configureService stop
-		echo -e "\nRemoving $BLD_NAME service"
-		configureService uninstall
-	fi
-	if [ -f $BLD_BIN_PREFIX/appman ] ; then
-        $BLD_BIN_PREFIX/appman --stop $BLD_BIN_PREFIX/$BLD_PRODUCT 2>&1 >/dev/null
-    fi
+    echo -e "\nStopping $BLD_NAME service"
+    appman stop
+    echo -e "\nRemoving $BLD_NAME service"
+    appman disable uninstall
     if [ -f $BLD_BIN_PREFIX/$BLD_PRODUCT ] ; then
 		if which pidof >/dev/null 2>&1 ; then
             pid=`pidof $BLD_BIN_PREFIX/$BLD_PRODUCT`
@@ -125,8 +110,6 @@ removeFiles() {
 	local pkg doins name
 
 	echo
-	# for pkg in dev doc bin ; do
-
 	for pkg in bin ; do
 		doins=`eval echo \\$install${pkg}`
 		if [ "$doins" = Y ] ; then
@@ -157,11 +140,7 @@ removeTarFiles() {
 	local cdir=`pwd`
 
 	pkg=$1
-
 	[ $pkg = bin ] && prefix="$BLD_PRD_PREFIX"
-#   [ $pkg = dev ] && prefix="$BLD_INC_PREFIX"
-#   [ $pkg = doc ] && prefix="$BLD_DOC_PREFIX"
-
 	if [ "$prefix/fileList.txt" ] ; then
         cd /
         removeFileList "$prefix/fileList.txt"
@@ -183,24 +162,20 @@ preClean() {
         rm -rf /var/run/$BLD_PRODUCT
     fi
 
-	if [ "$removebin" = "Y" ] ; then
-		cd "$BLD_PRD_PREFIX"
-		removeIntermediateFiles access.log error.log '*.log.old' .dummy $BLD_PRODUCT.conf make.log
-		cd "$BLD_CFG_PREFIX"
-		removeIntermediateFiles access.log error.log '*.log.old' .dummy $BLD_PRODUCT.conf make.log
-		cd "$BLD_LIB_PREFIX"
-		removeIntermediateFiles access.log error.log '*.log.old' .dummy $BLD_PRODUCT.conf make.log
-		cd "$cdir"
-	fi
+    cd "$BLD_PRD_PREFIX"
+    removeIntermediateFiles access.log error.log '*.log.old' .dummy $BLD_PRODUCT.conf make.log
+    cd "$BLD_CFG_PREFIX"
+    removeIntermediateFiles access.log error.log '*.log.old' .dummy $BLD_PRODUCT.conf make.log
+    cd "$BLD_LIB_PREFIX"
+    removeIntermediateFiles access.log error.log '*.log.old' .dummy $BLD_PRODUCT.conf make.log
+    cd "$cdir"
 
-#	if [ "$removedev" = "Y" ] ; then
-		if [ -d "$BLD_INC_PREFIX" ] ; then
-			cd "$BLD_INC_PREFIX"
-			make clean >/dev/null 2>&1 || true
-			removeIntermediateFiles '*.o' '*.lo' '*.so' '*.a' make.rules .config.h.sav make.log .changes
-			cd "$cdir"
-		fi
-#	fi
+    if [ -d "$BLD_INC_PREFIX" ] ; then
+        cd "$BLD_INC_PREFIX"
+        make clean >/dev/null 2>&1 || true
+        removeIntermediateFiles '*.o' '*.lo' '*.so' '*.a' make.rules .config.h.sav make.log .changes
+        cd "$cdir"
+    fi
 }
 
 
@@ -213,15 +188,14 @@ postClean() {
 	rm -f "${BLD_CFG_PREFIX}/${BLD_PRODUCT}Install.conf"
 	rm -f "${BLD_PRD_PREFIX}/install.conf"
 
-#	if [ "$removedev" = "Y" ] ; then
-		if [ -d "$BLD_MAN_PREFIX" ] ; then
-			rm -rf "$BLD_MAN_PREFIX"/man*
-		fi
-		cleanDir "$BLD_MAN_PREFIX"
-		cleanDir "$BLD_SAM_PREFIX"
-		cleanDir "$BLD_INC_PREFIX"
-		cleanDir "$BLD_DOC_PREFIX"
-#	fi
+    if [ -d "$BLD_MAN_PREFIX" ] ; then
+        rm -rf "$BLD_MAN_PREFIX"/man*
+    fi
+    cleanDir "$BLD_MAN_PREFIX"
+    cleanDir "$BLD_SAM_PREFIX"
+    cleanDir "$BLD_INC_PREFIX"
+    cleanDir "$BLD_DOC_PREFIX"
+
 	if [ "$removebin" = "Y" ] ; then
 		cleanDir "$BLD_PRD_PREFIX"
 		cleanDir "$BLD_CFG_PREFIX"
@@ -325,12 +299,10 @@ removeIntermediateFiles() {
 
 
 setup() {
-
     if [ `id -u` != "0" -a $BLD_HOST_OS != WIN ] ; then
 		echo "You must be root to remove this product."
 		exit 255
 	fi
-	
 	#
 	#	Headless removal. Expect an argument that supplies a config file.
 	#
@@ -344,7 +316,6 @@ setup() {
 		fi
 		exit 0
 	fi
-	
 	#
 	#	Get defaults from the installation configuration file
 	#
@@ -353,9 +324,6 @@ setup() {
 	fi
 	
 	binDir=${binDir:-$BLD_PRD_PREFIX}
-	devDir=${devDir:-$BLD_INC_PREFIX}
-	srcDir=${srcDir:-$BLD_SRC_PREFIX}
-
 	echo -e "\n$BLD_NAME !!BLD_VERSION!!-!!BLD_NUMBER!! Removal\n"
 }
 
@@ -377,19 +345,11 @@ askUser() {
 		else
 			removebin=N
 		fi
-#		if [ -d "$devDir" ] ; then
-#			removedev=`yesno "Remove development headers and samples package" "$removedev"`
-#		else
-#			removedev=N
-#		fi
-
 		echo -e "\nProceed removing with these instructions:" 
 		[ $removebin = Y ] && echo -e "  Remove binary package: $removebin"
-#		[ $removedev = Y ] && echo -e "  Remove development package: $removedev"
 
 		echo
 		finished=`yesno "Accept these instructions" "Y"`
-
 		if [ "$finished" != "Y" ] ; then
 			exit 0
 		fi
@@ -403,12 +363,10 @@ askUser() {
 setup $*
 askUser
 
-if [ $BLD_PRODUCT = appweb ] ; then
+if [ "$removebin" = "Y" ] ; then
     deconfigureService
+    preClean
+    removeFiles $FMT
+    postClean
+    echo -e "\n$BLD_NAME removal successful.\n"
 fi
-
-preClean
-removeFiles $FMT
-postClean
-
-echo -e "\n$BLD_NAME removal successful.\n"
