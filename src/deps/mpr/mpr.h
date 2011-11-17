@@ -7553,7 +7553,7 @@ typedef struct MprCmdChild {
     Handler for command output and completion
     Cmd procs must return the number of bytes read or -1 for errors.
  */
-typedef void (*MprCmdProc)(struct MprCmd *cmd, int channel, void *data);
+typedef ssize (*MprCmdProc)(struct MprCmd *cmd, int channel, void *data);
 
 /*
     Flags for mprRunCmd

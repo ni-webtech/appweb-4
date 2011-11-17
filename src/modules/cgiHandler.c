@@ -20,14 +20,14 @@
 /*********************************** Forwards *********************************/
 
 static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp);
-static void cgiCallback(MprCmd *cmd, int channel, void *data);
+static ssize cgiCallback(MprCmd *cmd, int channel, void *data);
 static int copyVars(char **envv, int index, MprHash *vars, cchar *prefix);
 static char *getCgiToken(MprBuf *buf, cchar *delim);
 static bool parseFirstCgiResponse(HttpConn *conn, MprCmd *cmd);
 static bool parseHeader(HttpConn *conn, MprCmd *cmd);
 static int processCgiData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf);
 static void writeToCGI(HttpQueue *q);
-static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf);
+static ssize readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf);
 
 #if BLD_DEBUG
     static void traceCGIData(MprCmd *cmd, char *src, ssize size);
@@ -339,16 +339,18 @@ static int writeToClient(HttpQueue *q, MprCmd *cmd, MprBuf *buf, int channel)
     the CGI script and for EOF from the CGI's stdin.
     This event runs on the connections dispatcher. (ie. single threaded and safe)
  */
-static void cgiCallback(MprCmd *cmd, int channel, void *data)
+static ssize cgiCallback(MprCmd *cmd, int channel, void *data)
 {
     HttpQueue   *q;
     HttpConn    *conn;
     HttpTx      *tx;
+    ssize       nbytes;
 
     tx = (HttpTx*) data;
     conn = tx->conn;
+    nbytes = 0;
     if (conn == 0) {
-        return;
+        return 0;
     }
     mprAssert(conn->tx);
     mprAssert(conn->rx);
@@ -367,11 +369,11 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
         break;
 
     case MPR_CMD_STDOUT:
-        readCgiResponseData(q, cmd, channel, cmd->stdoutBuf);
+        nbytes = readCgiResponseData(q, cmd, channel, cmd->stdoutBuf);
         break;
 
     case MPR_CMD_STDERR:
-        readCgiResponseData(q, cmd, channel, cmd->stderrBuf);
+        nbytes = readCgiResponseData(q, cmd, channel, cmd->stderrBuf);
         break;
             
     default:
@@ -391,17 +393,18 @@ static void cgiCallback(MprCmd *cmd, int channel, void *data)
     } else {
         httpProcess(conn, NULL);
     }
+    return nbytes;
 }
 
 
 /*
     Come here for CGI stdout, stderr events. ie. reading data from the CGI program.
  */
-static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
+static ssize readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
 {
     HttpConn    *conn;
     HttpTx      *tx;
-    ssize       space, nbytes;
+    ssize       space, nbytes, total;
     int         err;
 
     conn = q->conn;
@@ -409,8 +412,8 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
     mprAssert(tx);
     mprAssert(!cmd->disconnected);
     mprAssert(conn->state > HTTP_STATE_BEGIN);
-
     mprResetBufIfEmpty(buf);
+    total = 0;
 
     //  MOB - refactor
 
@@ -462,12 +465,13 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
                 mprAdjustBufEnd(buf, nbytes);
                 traceData(cmd, mprGetBufStart(buf), nbytes);
                 mprAddNullToBuf(buf);
+                total += nbytes;
             }
             conn->lastActivity = conn->http->now;
         } while ((space = mprGetBufSpace(buf)) > 0 && conn->state > HTTP_STATE_BEGIN);
 
         if (conn->state == HTTP_STATE_BEGIN) {
-            return;
+            return total;
         }
         if (mprGetBufLength(buf) == 0) {
             break;
@@ -480,6 +484,7 @@ static void readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *
         mprAssert(conn->tx);
         httpFinalize(conn);
     }
+    return total;
 }
 
 

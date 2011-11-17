@@ -3703,6 +3703,7 @@ HttpEndpoint *httpCreateConfiguredEndpoint(cchar *home, cchar *documents, cchar 
     if ((route = httpCreateRoute(host)) == 0) {
         return 0;
     }
+    httpSetHostDefaultRoute(host, route);
     httpSetHostIpAddr(host, ip, port);
     httpAddHostToEndpoint(endpoint, host);
     httpSetHostHome(host, home);
@@ -5585,7 +5586,7 @@ void httpBackupRouteLog(HttpRoute *route)
     mprAssert(route->logBackup);
     mprAssert(route->logSize > 100);
     mprGetPathInfo(route->logPath, &info);
-    if (info.valid && ((route->logFlags & MPR_LOG_ANEW) || info.size > route->logSize || route->logSize <= 0)) {
+    if (info.valid && info.size > route->logSize) {
         if (route->log) {
             mprCloseFile(route->log);
             route->log = 0;
@@ -7810,11 +7811,6 @@ static void startRange(HttpQueue *q)
     conn = q->conn;
     tx = conn->tx;
     mprAssert(tx->outputRanges);
-    if (tx->outputRanges == 0) {
-        mprError("WARNING: outputRanges is null");
-        mprError("rx %x %x", conn->rx, conn->tx);
-        mprError("WARNING: outputRanges is null for %s", conn->rx->uri);
-    }
 
     if (tx->status != HTTP_CODE_OK || !fixRangeLength(conn)) {
         httpRemoveQueue(q);

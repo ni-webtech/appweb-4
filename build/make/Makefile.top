@@ -272,7 +272,7 @@ flat packageFlat:
 	$(BLD_TOOLS_DIR)/makePackage --combo --root=$(PKG_DIR) flat
 
 packageRelease:
-	if [ "$(BUILD_DEPTH)" -ge 2 -a -f package/binary.files ] ; then \
+	if [ "$(BUILD_DEPTH)" -ge 2 -a -f package/binary.es ] ; then \
 		export OPTIONS=$(OPTIONS) TRACE=$(TRACE) ; \
 		fakePriv "$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) $(INS_WITH) --package $(PACKS) && \
 			$(BLD_TOOLS_DIR)/makePackage --root=$(PKG_DIR) $(PACKS)" ; \

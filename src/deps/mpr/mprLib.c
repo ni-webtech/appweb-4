@@ -2609,7 +2609,6 @@ static void checkYielded()
 static void getArgs(Mpr *mpr, int argc, char **argv);
 static void manageMpr(Mpr *mpr, int flags);
 static void serviceEventsThread(void *data, MprThread *tp);
-static void startThreads(int flags);
 
 /*
     Create and initialize the MPR service.
@@ -2671,7 +2670,12 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     mpr->nonBlock = mprCreateDispatcher("nonblock", 1);
     mpr->pathEnv = sclone(getenv("PATH"));
 
-    startThreads(flags);
+    if (flags & MPR_USER_EVENTS_THREAD) {
+        mprInitWindow();
+    } else {
+        mprStartEventsThread(flags);
+    }
+    mprStartGCService();
 
     if (MPR->hasError || mprHasMemError()) {
         return 0;
@@ -2914,22 +2918,18 @@ int mprStart()
 }
 
 
-static void startThreads(int flags)
+int mprStartEventsThread()
 {
     MprThread   *tp;
 
-    if (flags & MPR_USER_EVENTS_THREAD) {
-        mprInitWindow();
+    if ((tp = mprCreateThread("events", serviceEventsThread, NULL, 0)) == 0) {
+        MPR->hasError = 1;
     } else {
-        if ((tp = mprCreateThread("events", serviceEventsThread, NULL, 0)) == 0) {
-            MPR->hasError = 1;
-        } else {
-            MPR->cond = mprCreateCond();
-            mprStartThread(tp);
-            mprWaitForCond(MPR->cond, MPR_TIMEOUT_START_TASK);
-        }
+        MPR->cond = mprCreateCond();
+        mprStartThread(tp);
+        mprWaitForCond(MPR->cond, MPR_TIMEOUT_START_TASK);
     }
-    mprStartGCService();
+    return 0;
 }
 
 
@@ -4965,7 +4965,7 @@ static void manageCacheItem(CacheItem *item, int flags)
 
 
 static void closeFiles(MprCmd *cmd);
-static void cmdCallback(MprCmd *cmd, int channel, void *data);
+static ssize cmdCallback(MprCmd *cmd, int channel, void *data);
 static int makeChannel(MprCmd *cmd, int index);
 static int makeCmdIO(MprCmd *cmd);
 static void manageCmdService(MprCmdService *cmd, int flags);
@@ -5651,6 +5651,7 @@ int mprWaitForCmd(MprCmd *cmd, MprTime timeout)
  */
 static void reapCmd(MprCmd *cmd)
 {
+    ssize   got, nbytes;
     int     status, rc;
 
     mprLog(6, "reapCmd pid %d, eof %d, required %d\n", cmd->pid, cmd->eofCount, cmd->requiredEof);
@@ -5724,6 +5725,36 @@ static void reapCmd(MprCmd *cmd)
         }
     }
     mprLog(6, "Cmd reaped: status %d, pid %d, eof %d / %d\n", cmd->status, cmd->pid, cmd->eofCount, cmd->requiredEof);
+
+    if (cmd->callback) {
+        /*
+            Read outstanding data
+         */  
+        while (cmd->eofCount < cmd->requiredEof) {
+            got = 0;
+            if (cmd->files[MPR_CMD_STDERR].fd >= 0) {
+                if ((nbytes = (cmd->callback)(cmd, MPR_CMD_STDERR, cmd->callbackData)) > 0) {
+                    got += nbytes;
+                }
+            }
+            if (cmd->files[MPR_CMD_STDOUT].fd >= 0) {
+                if ((nbytes = (cmd->callback)(cmd, MPR_CMD_STDOUT, cmd->callbackData)) > 0) {
+                    got += nbytes;
+                }
+            }
+            if (got <= 0) {
+                break;
+            }
+        }
+        if (cmd->files[MPR_CMD_STDERR].fd >= 0) {
+            mprCloseCmdFd(cmd, MPR_CMD_STDERR);
+        }
+        if (cmd->files[MPR_CMD_STDOUT].fd >= 0) {
+            mprCloseCmdFd(cmd, MPR_CMD_STDOUT);
+        }
+        mprAssert(cmd->eofCount == cmd->requiredEof);
+        mprAssert(cmd->complete);
+    }
 }
 
 
@@ -5731,7 +5762,7 @@ static void reapCmd(MprCmd *cmd)
     Default callback routine for the mprRunCmd routines. Uses may supply their own callback instead of this routine. 
     The callback is run whenever there is I/O to read/write to the CGI gateway.
  */
-static void cmdCallback(MprCmd *cmd, int channel, void *data)
+static ssize cmdCallback(MprCmd *cmd, int channel, void *data)
 {
     MprBuf      *buf;
     ssize       len, space;
@@ -5742,7 +5773,7 @@ static void cmdCallback(MprCmd *cmd, int channel, void *data)
     buf = 0;
     switch (channel) {
     case MPR_CMD_STDIN:
-        return;
+        return 0;
     case MPR_CMD_STDOUT:
         buf = cmd->stdoutBuf;
         break;
@@ -5751,7 +5782,7 @@ static void cmdCallback(MprCmd *cmd, int channel, void *data)
         break;
     default:
         /* Child death notification */
-        return;
+        return 0;
     }
     /*
         Read and aggregate the result into a single string
@@ -5760,7 +5791,7 @@ static void cmdCallback(MprCmd *cmd, int channel, void *data)
     if (space < (MPR_BUFSIZE / 4)) {
         if (mprGrowBuf(buf, MPR_BUFSIZE) < 0) {
             mprCloseCmdFd(cmd, channel);
-            return;
+            return 0;
         }
         space = mprGetBufSpace(buf);
     }
@@ -5770,13 +5801,14 @@ static void cmdCallback(MprCmd *cmd, int channel, void *data)
     if (len <= 0) {
         if (len == 0 || (len < 0 && !(errno == EAGAIN || errno == EWOULDBLOCK))) {
             mprCloseCmdFd(cmd, channel);
-            return;
+            return len;
         }
     } else {
         mprAdjustBufEnd(buf, len);
     }
     mprAddNullToBuf(buf);
     mprEnableCmdEvents(cmd, channel);
+    return len;
 }
 
 

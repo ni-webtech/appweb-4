@@ -9,15 +9,9 @@
 
 include 			.makedep
 
-ifeq ($(BLD_HTTP_BUILTIN),1)
-	HTTP_LIB		+= $(BLD_LIB_DIR)/libhttp$(BLD_LIB)
-	HTTP_OBJECTS	+= httpLib
-	TARGETS			+= $(HTTP_LIB)
-else
-	COMPILE			:= http.c
-endif
-
-TARGETS				+= $(BLD_BIN_DIR)/http$(BLD_EXE)
+HTTP_LIB			+= $(BLD_LIB_DIR)/libhttp$(BLD_LIB)
+HTTP_OBJECTS		+= httpLib
+TARGETS				+= $(HTTP_LIB) $(BLD_BIN_DIR)/http$(BLD_EXE)
 
 compileTargets: $(TARGETS)
 

@@ -36,7 +36,8 @@ var spl: Path = build.BLD_SPL_PREFIX
 var web: Path = build.BLD_WEB_PREFIX
 var ssl: Path = cfg.join("ssl")
 var etc: Path = root.join("etc")
-var init: Path = etc.join("init.d")
+var init: Path = etc.join("init")
+var initd: Path = etc.join("init.d")
 var cache: Path = spl.join("cache")
 
 let config = Path("src/server/appweb.conf").readString()
@@ -161,40 +162,48 @@ if (!bare) {
         copy("com.embedthis.appweb.plist", daemons, {from: "package/MACOSX", permissions: 0644, expand: true})
 
     } else if (os == "LINUX") {
-        init.makeDir(dperms)
         if (options.task == "Package") {
-            copy("package/LINUX/" + product + ".init", init.join(product), {permissions: 0755, expand: true})
+            init.makeDir(dperms)
+            initd.makeDir(dperms)
+        }
+        copy("package/LINUX/" + product + ".init", initd.join(product), {permissions: 0755, expand: true})
+        copy("package/LINUX/" + product + ".upstart", init.join(product).joinExt("conf"), {permissions: 0644, expand: true})
+        if (options.task == "Package") {
+            //  MOB - cleanup
+            ;
         } else {
             if (App.uid == 0 && options.root != "") {
                 if (options.openwrt) {
                     root.join("CONTROL").makeDir(dperms)
                     copy("p*", root.join("CONTROL"), {from: "package/LINUX/deb.bin", permissions: 0755, expand: true})
-                    copy("appweb.openwrt", init.join(product), {from: "package/LINUX", permissions: 0755, expand: true})
+                    copy("appweb.openwrt", initd.join(product), {from: "package/LINUX", permissions: 0755, expand: true})
                 } else {
-                    /*
-                     	Daemon start / stop scripts
-                     */
-                    copy("appweb.init", init.join(product), 
-                        {from: "package/LINUX", permissions: 0755, expand: true})
+                    //MOB - cleanup
+                    ;
+/*
+                    //  Daemon start / stop scripts
+                    copy("appweb.init", initd.join(product), {from: "package/LINUX", permissions: 0755, expand: true})
+                    copy("appweb.upstart", init.join(product), {from: "package/LINUX", permissions: 0755, expand: true})
 
                     for each (i in [2, 3, 4, 5]) {
-                        let level = ".d/S81"
+                        let level = ".d/S90"
                         etc.join("rc" + i + level + product).remove()
                         if (options.task != "Remove") {
                             etc.join("rc" + i + level).makeDir(dperms)
                             Cmd.sh("rm -f " + etc.join("rc" + i + level + product))
-                            Cmd.sh("ln -s " + init.join(product) + " " + etc.join("rc" + i + level + product))
+                            Cmd.sh("ln -s " + initd.join(product) + " " + etc.join("rc" + i + level + product))
                         }
                     }
                     for each (i in [0, 1, 6]) {
-                        let level = ".d/K15"
+                        let level = ".d/K10"
                         etc.join("rc" + i + level + product).remove()
                         if (options.task != "Remove") {
                             etc.join("rc" + i + level).makeDir(dperms)
                             Cmd.sh("rm -f " + etc.join("rc" + i + level + product))
-                            Cmd.sh("ln -s " + init.join(product) + " " + etc.join("rc" + i + level + product))
+                            Cmd.sh("ln -s " + initd.join(product) + " " + etc.join("rc" + i + level + product))
                         }
                     }
+*/
                 }
             }
         }

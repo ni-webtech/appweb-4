@@ -13,7 +13,7 @@
 #define SERVICE_PROGRAM BLD_BIN_PREFIX BLD_PRODUCT
 #define SERVICE_NAME BLD_PRODUCT
 #else
-#define SERVICE_PROGRAM "/Users/mob/git/appweb/out/bin/appweb"
+#define SERVICE_PROGRAM "/home/mob/git/appweb/out/bin/appweb"
 #define SERVICE_NAME "appweb"
 #endif
 
@@ -38,6 +38,7 @@ typedef struct App {
     char    *serviceHome;               /* Service home */
     char    *serviceName;               /* Basename of service program */
     char    *serviceProgram;            /* Program to start */
+    MprSignal *sigchld;                 /* Child death signal handler */
 } App;
 
 static App *app;
@@ -52,6 +53,7 @@ static int  readPid();
 static int  process(cchar *operation);
 static void runService();
 static void setAppDefaults(Mpr *mpr);
+static void terminating(int how, int status);
 static int  writePid(int pid);
 
 /*********************************** Code *************************************/
@@ -59,15 +61,15 @@ static int  writePid(int pid);
 int main(int argc, char *argv[])
 {
     Mpr     *mpr;
-    char    *argp, *operation;
+    char    *argp;
     int     err, nextArg, status;
 
     err = 0;
-    mpr = mprCreate(argc, argv, 0);
-//MOB
-mprSetAppName("appman", "Appman", "1.0");
+    mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD);
     app = mprAllocObj(App, manageApp);
     mprAddRoot(app);
+    mprAddTerminator(terminating);
+    mprAddStandardSignals();
     setAppDefaults(mpr);
 
     for (nextArg = 1; nextArg < argc && !err; nextArg++) {
@@ -121,6 +123,8 @@ mprSetAppName("appman", "Appman", "1.0");
                 err++;
             } else {
                 app->logSpec = sclone(argv[++nextArg]);
+                mprStartLogging(app->logSpec, 0);
+                mprSetCmdlineLogging(1);
             }
 
         } else if (strcmp(argp, "--program") == 0) {
@@ -158,6 +162,7 @@ mprSetAppName("appman", "Appman", "1.0");
             "    --home path          # Home directory for service\n"
             "    --log logFile:level  # Log directive for service\n"
             "    --retries count      # Max count of app restarts\n"
+            "    --verbose            # Show command feedback\n"
 #if FUTURE
             "    --heartBeat interval # Heart beat interval period (secs) \n"
             "    --program path       # Service program to start\n"
@@ -171,11 +176,12 @@ mprSetAppName("appman", "Appman", "1.0");
             , app->appName);
         return -1;
     }
-    operation = sclone(argv[nextArg++]);
-    status = 0;;                                                                    
+    status = 0;
 
-//MOB
-    if (0 && getuid() != 0) {
+    if (app->runAsDaemon) {
+        makeDaemon();
+    }
+    if (getuid() != 0) {
         mprUserError("Must run with administrator privilege. Use sudo.");
         status = MPR_ERR_BAD_STATE;                                                                    
 
@@ -183,8 +189,14 @@ mprSetAppName("appman", "Appman", "1.0");
         mprUserError("Can't start MPR for %s", mprGetAppName());                                           
         status = MPR_ERR_CANT_INITIALIZE;                                                                    
 
-    } else if (!process(operation)) {
-        status = MPR_ERR_CANT_COMPLETE;                                                                    
+    } else {
+        mprStartEventsThread();
+        for (; nextArg < argc; nextArg++) {
+            if (!process(argv[nextArg])) {
+                status = MPR_ERR_CANT_COMPLETE;                                                                    
+                break;
+            }
+        }
     }
     mprDestroy(MPR_EXIT_DEFAULT);                                                                      
     return status;                                                                    
@@ -227,6 +239,12 @@ static void setAppDefaults(Mpr *mpr)
 }
 
 
+static void terminating(int how, int status)
+{
+    cleanup();
+}
+
+
 static bool exists(cchar *fmt, ...)
 {
     va_list     args;
@@ -260,7 +278,7 @@ static bool run(cchar *fmt, ...)
         mprLog(1, "Error: %s", err); 
     }
     if (out && *out) {
-        mprLog(1, "Output: %s", err); 
+        mprLog(1, "Output: %s", out); 
     }
     va_end(args);
     return 1;
@@ -269,7 +287,7 @@ static bool run(cchar *fmt, ...)
 
 static int process(cchar *operation)
 {
-    cchar   *name, *command;
+    cchar   *name;
     int     launch, update, service, upstart;
 
     /*
@@ -280,82 +298,134 @@ static int process(cchar *operation)
 
     if (exists("/bin/launchctl") && exists("/Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name)) {
         launch++;
-#if UNUSED
-    } else if (exists("/sbin/start") && (exists("/etc/init/%s.conf", name) || exists("/etc/init/%s.disable", name))) {
+
+    } else if (exists("/sbin/start") && (exists("/etc/init/%s.conf", name) || exists("/etc/init/%s.off", name))) {
         upstart++;
-#endif
+
     } else if (exists("/usr/sbin/update-rc.d") && exists("/etc/init.d/%s", name)) {
         update++;
+
     } else if (exists("/sbin/service") && exists("/etc/init.d/%s", name)) {
         service++;
+
     } else {
         mprError("Can't locate system tool to manage service");
         return MPR_ERR_CANT_OPEN;
     }
 
-    if (smatch(operation, "run")) {
-        if (app->runAsDaemon) {
-            makeDaemon();
-        }
-        runService();
-        return 0;
-    }
-    command = 0;
-
-    if (smatch(operation, "disable")) {
-        /* Stop service and leave in disabled state (won't start on reboot) */
+    /*
+        Operations
+     */
+    if (smatch(operation, "install")) {
         if (launch) {
-            return run("/bin/launchctl unload -w /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
-        } else if (update) {
-            return run("/usr/sbin/update-rc.d %s disable 2345", name);
+            ;
+
         } else if (service) {
-            return run("/sbin/chkconfig %s off", name);
-        } else if (upstart) {
-            if (exists("/etc/init/%s.conf", name)) {
-                return run("mv /etc/init/%s.conf /etc/init/%s.off", name, name);
+            if (!run("/sbin/chkconfig --del %s ; /sbin/chkconfig --add %s ; /sbin/chkconfig --level 5 %s", 
+                    name, name, name)) {
+                return MPR_ERR_CANT_COMPLETE;
             }
+
+        } else if (update) {
+            if (!run("/usr/sbin/update-rc.d %s defaults 90 10", name)) {
+                return MPR_ERR_CANT_COMPLETE;
+            }
+
+        } else if (upstart) {
+            ;
+        }
+
+    } else if (smatch(operation, "uninstall")) {
+        process("disable");
+
+        if (launch) {
+            ;
+
+        } else if (service) {
+            return run("/sbin/chkconfig --del %s", name);
+
+        } else if (update) {
+            return run("/usr/sbin/update-rc.d -f %s remove", name);
+
+        } else if (upstart) {
+            ;
         }
 
     } else if (smatch(operation, "enable")) {
-        /* Enable service (will start on reboot), and start service */
+        /* 
+            Enable service (will start on reboot), and start service 
+         */
         if (launch) {
+            //  MOB - FIX MUST NOT START
             return run("/bin/launchctl load -w /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
+
         } else if (update) {
-            if (!run("/usr/sbin/update-rc.d %s enable 2345", name)) {
+            if (!run("/usr/sbin/update-rc.d %s enable", name)) {
                 return MPR_ERR_CANT_COMPLETE;
             }
-            return process("start");
+
         } else if (service) {
             if (!run("/sbin/chkconfig %s on", name)) {
                 return MPR_ERR_CANT_COMPLETE;
             }
-            return process("start");
+
         } else if (upstart) {
             if (exists("/etc/init/%s.off", name)) {
                 if (!run("mv /etc/init/%s.off /etc/init/%s.conf", name, name)) {
                     return MPR_ERR_CANT_COMPLETE;
                 }
             }
-            return process("start");
         }
 
-    } else if (smatch(operation, "install")) {
-        //  MOB - define install. Does it do enable and start
+    } else if (smatch(operation, "disable")) {
+        /* Stop service and leave in disabled state (won't start on reboot) */
         if (launch) {
-            return process("enable");
+            return run("/bin/launchctl unload -w /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
+
         } else if (update) {
-            if (!run("/usr/sbin/update-rc.d %s defaults 90 10", name)) {
-                return MPR_ERR_CANT_COMPLETE;
-            }
-            return process("enable");
+            return run("/usr/sbin/update-rc.d %s disable", name);
+
         } else if (service) {
-            if (!run("/sbin/chkconfig --del %s ; /sbin/chkconfig --add %s ; /sbin/chkconfig --level 5 %s", 
-                    name, name, name)) {
-                return MPR_ERR_CANT_COMPLETE;
-            }
-            return process("enable");
+            return run("/sbin/chkconfig %s off", name);
+
         } else if (upstart) {
-            return process("enable");
+            if (exists("/etc/init/%s.conf", name)) {
+                return run("mv /etc/init/%s.conf /etc/init/%s.off", name, name);
+            }
+        }
+
+    } else if (smatch(operation, "start")) {
+        if (launch) {
+            return run("/bin/launchctl load /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
+
+        } else if (service) {
+            return run("/sbin/service %s start");
+
+        } else if (update) {
+            return run("/usr/sbin/invoke-rc.d --quiet %s start", name);
+
+        } else if (upstart) {
+            return run("/sbin/start %s", name);
+        }
+
+    } else if (smatch(operation, "stop")) {
+        if (launch) {
+            return run("/bin/launchctl unload /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
+
+        } else if (service) {
+            if (!run("/sbin/service %s stop")) {
+                return killPid();
+            }
+            return 1;
+
+        } else if (update) {
+            if (!run("/usr/sbin/invoke-rc.d --quiet %s stop", name)) {
+                return killPid();
+            }
+            return 1;
+
+        } else if (upstart) {
+            return run("/sbin/stop %s", name);
         }
 
     } else if (smatch(operation, "reload")) {
@@ -367,44 +437,8 @@ static int process(cchar *operation)
         }
         return process("start");
 
-    } else if (smatch(operation, "start")) {
-        if (launch) {
-            return run("/bin/launchctl load /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
-        } else if (service) {
-            return run("/sbin/service %s start");
-        } else if (update) {
-            return run("/usr/sbin/invoke-rc.d --quiet %s start", name);
-        } else if (upstart) {
-            return run("/sbin/start %s", name);
-        }
-
-    } else if (smatch(operation, "stop")) {
-        if (launch) {
-            return run("/bin/launchctl unload /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
-        } else if (service) {
-            if (!run("/sbin/service %s stop")) {
-                return killPid();
-            }
-            return 1;
-        } else if (update) {
-            if (!run("/usr/sbin/invoke-rc.d --quiet %s start", name)) {
-                return killPid();
-            }
-            return 1;
-        } else if (upstart) {
-            return run("/sbin/stop %s", name);
-        }
-
-    } else if (smatch(operation, "uninstall")) {
-        if (launch) {
-            process("unload");
-        } else if (service) {
-            return run("/sbin/chkconfig --del %s", name);
-        } else if (update) {
-            return run("/usr/sbin/update-rc.d -f %s remove", name);
-        } else if (upstart) {
-            return process("disable");
-        }
+    } else if (smatch(operation, "run")) {
+        runService();
     }
     return 1;
 }
@@ -508,51 +542,15 @@ static void runService()
             app->restartCount++;
 
             waitpid(app->servicePid, &status, 0);
-            mprLog(1, "%s: %s has exited with status %d, restarting (%d/%d)...", 
-                app->appName, app->serviceProgram, WEXITSTATUS(status), app->restartCount, app->retries);
+            mprLog(1, "%s: %s has exited with status %d", app->appName, app->serviceProgram, WEXITSTATUS(status));
+            if (!mprIsStopping()) {
+                mprLog(1, "%s: Restarting %s (%d/%d)...", 
+                    app->appName, app->serviceProgram, app->restartCount, app->retries);
+            }
             app->servicePid = 0;
         }
     }
 }
-
-
-#if UNUSED
-static int setupUnixSignals()
-{
-    struct sigaction    act;
-
-    memset(&act, 0, sizeof(act));
-    act.sa_sigaction = catchSignal;
-    act.sa_flags = 0;
-
-    sigemptyset(&act.sa_mask);
-    sigaddset(&act.sa_mask, SIGCHLD);
-    sigaddset(&act.sa_mask, SIGALRM);
-    sigaddset(&act.sa_mask, SIGINT);
-    sigaddset(&act.sa_mask, SIGPIPE);
-    sigaddset(&act.sa_mask, SIGTERM);
-    sigaddset(&act.sa_mask, SIGUSR1);
-    sigaddset(&act.sa_mask, SIGUSR2);
-    sigaddset(&act.sa_mask, SIGTERM);
-
-    sigaction(SIGINT, &act, 0);
-    sigaction(SIGQUIT, &act, 0);
-    sigaction(SIGTERM, &act, 0);
-
-    signal(SIGPIPE, SIG_IGN);
-    return 0;
-}
-
-
-/*
-    Catch signals and kill the service
- */
-static void catchSignal(int signo, siginfo_t *info, void *arg)
-{
-    cleanup();
-    mprTerminate(0, -1);
-}
-#endif
 
 
 static void cleanup()
@@ -624,12 +622,12 @@ static int makeDaemon()
     int                 pid, status;
 
     /*
-        Handle child death
+        Ignore child death signals
      */
     memset(&act, 0, sizeof(act));
     act.sa_sigaction = (void (*)(int, siginfo_t*, void*)) SIG_DFL;
     sigemptyset(&act.sa_mask);
-    act.sa_flags = SA_NOCLDSTOP | SA_RESTART | SA_SIGINFO /* | SA_NOMASK */;
+    act.sa_flags = SA_NOCLDSTOP | SA_RESTART | SA_SIGINFO;
 
     if (sigaction(SIGCHLD, &act, &old) < 0) {
         mprError("Can't initialize signals");
@@ -878,7 +876,8 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
                 "    --program            # Service program to start\n"
                 "    --start              # Start the service\n"
                 "    --stop               # Stop the service\n"
-                "    --uninstall          # Uninstall the service",
+                "    --uninstall          # Uninstall the service\n",
+                "    --verbose            # Show command feedback\n"
                 args, app->appName);
             return -1;
         }
