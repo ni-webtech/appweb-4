@@ -15,6 +15,8 @@
 #   Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
 #
 #   chkconfig: - 81 15
+#   description: Embedthis Appweb Embeddable Web Server
+#   processname: appman
 #
 ###############################################################################
 
@@ -33,6 +35,7 @@ SWITCHES=
 #
 #   Source utility functions
 #
+# SYSTEMCTL_SKIP_REDIRECT=1
 if [ -f /etc/init.d/functions ] ; then
     #   Red-Hat
     . /etc/init.d/functions
