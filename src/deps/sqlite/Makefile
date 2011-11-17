@@ -6,6 +6,13 @@
 
 include 			.makedep
 
+ifeq ($(BLD_FEATURE_SQLITE),1)
+ifeq ($(BLD_SQLITE_BUILTIN),1)
+	TARGETS		+= $(BLD_LIB_DIR)/libsqlite3$(BLD_LIB)
+	TARGETS		+= $(BLD_BIN_DIR)/sqlite$(BLD_EXE)
+endif
+endif
+
 MAKE_IFLAGS		+= $(BLD_SQLITE_IFLAGS) $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
 ifeq ($(BLD_HOST_WIN),1)
 	MAKE_DFLAGS	+= -D_CRT_SECURE_NO_WARNINGS
@@ -14,11 +21,6 @@ ifeq ($(BLD_HOST_OS),CYGWIN)
 	_CFLAGS 	:= $(shell echo $(_CFLAGS) | sed 's/-W3/-W1/;s/-Wall/-w/;s/-g3//')
 else
 	_CFLAGS 	:= $(shell echo $(_CFLAGS) | sed 's/-W3/-W1/;s/-Wall/-w/')
-endif
-
-ifeq ($(BLD_FEATURE_SQLITE),1)
-	TARGETS		+= $(BLD_LIB_DIR)/libsqlite3$(BLD_LIB)
-	TARGETS		+= $(BLD_BIN_DIR)/sqlite$(BLD_EXE)
 endif
 
 compileExtra:   $(TARGETS)
