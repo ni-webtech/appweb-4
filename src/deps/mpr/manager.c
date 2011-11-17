@@ -1270,7 +1270,7 @@ static bool installService()
             serviceType |= SERVICE_INTERACTIVE_PROCESS;
         }
         GetModuleFileName(0, cmd, sizeof(cmd));
-        svc = CreateService(mgr, app->serviceName, app->serviceTitle, SERVICE_ALL_ACCESS, serviceType, SERVICE_AUTO_START, 
+        svc = CreateService(mgr, app->serviceName, app->serviceTitle, SERVICE_ALL_ACCESS, serviceType, SERVICE_DISABLED, 
             SERVICE_ERROR_NORMAL, cmd, NULL, NULL, "", NULL, NULL);
         if (! svc) {
             mprUserError("Can't create service: 0x%x == %d", GetLastError(), GetLastError());
