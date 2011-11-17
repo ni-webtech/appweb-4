@@ -221,14 +221,12 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
     MprFile     *fp;
     HttpRx      *rx;
     HttpRoute   *route;
-    EspReq      *req;
     EspRoute    *eroute;
     cchar       *csource;
     char        *layout, *script, *page, *err;
     ssize       len;
 
     rx = conn->rx;
-    req = conn->data;
     route = rx->route;
     eroute = route->eroute;
 

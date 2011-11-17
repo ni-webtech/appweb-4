@@ -125,12 +125,10 @@ static void processDir(HttpQueue *q)
 static void parseQuery(HttpConn *conn)
 {
     HttpRx      *rx;
-    HttpTx      *tx;
     Dir         *dir;
     char        *value, *query, *next, *tok;
 
     rx = conn->rx;
-    tx = conn->tx;
     dir = conn->data;
     
     query = sclone(rx->parsedUri->query);
@@ -179,12 +177,10 @@ static void parseQuery(HttpConn *conn)
 
 static void sortList(HttpConn *conn, MprList *list)
 {
-    HttpTx      *tx;
     MprDirEntry *tmp, **items;
     Dir         *dir;
     int         count, i, j, rc;
 
-    tx = conn->tx;
     dir = conn->data;
     
     if (dir->sortField == 0) {

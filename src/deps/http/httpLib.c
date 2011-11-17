@@ -1858,17 +1858,13 @@ static void cacheAtClient(HttpConn *conn)
  */
 static bool fetchCachedResponse(HttpConn *conn)
 {
-    HttpRx      *rx;
     HttpTx      *tx;
-    HttpRoute   *route;
     MprTime     modified, when;
     HttpCache   *cache;
     cchar       *value, *key, *tag;
     int         status, cacheOk, canUseClientCache;
 
-    rx = conn->rx;
     tx = conn->tx;
-    route = rx->route;
     cache = tx->cache;
     mprAssert(cache);
 
@@ -1939,11 +1935,9 @@ static void saveCachedResponse(HttpConn *conn)
 
 ssize httpWriteCached(HttpConn *conn)
 {
-    HttpRoute   *route;
     MprTime     modified;
     cchar       *cacheKey, *data, *content;
 
-    route = conn->rx->route;
     if (!conn->tx->cache) {
         return MPR_ERR_CANT_FIND;
     }
@@ -2093,10 +2087,8 @@ static void manageHttpCache(HttpCache *cache, int flags)
 static char *makeCacheKey(HttpConn *conn)
 {
     HttpRx      *rx;
-    HttpRoute   *route;
 
     rx = conn->rx;
-    route = rx->route;
     if (conn->tx->cache->flags & (HTTP_CACHE_ONLY | HTTP_CACHE_UNIQUE)) {
         return sfmt("http::response-%s?%s", rx->pathInfo, httpGetParamsString(conn));
     } else {
@@ -5586,7 +5578,7 @@ void httpBackupRouteLog(HttpRoute *route)
     mprAssert(route->logBackup);
     mprAssert(route->logSize > 100);
     mprGetPathInfo(route->logPath, &info);
-    if (info.valid && info.size > route->logSize) {
+    if (info.valid && ((route->logFlags & MPR_LOG_ANEW) || info.size > route->logSize || route->logSize <= 0)) {
         if (route->log) {
             mprCloseFile(route->log);
             route->log = 0;
@@ -5635,7 +5627,6 @@ void httpWriteRouteLog(HttpRoute *route, cchar *buf, ssize len)
 
 void httpLogRequest(HttpConn *conn)
 {
-    HttpHost    *host;
     HttpRx      *rx;
     HttpTx      *tx;
     HttpRoute   *route;
@@ -5649,7 +5640,6 @@ void httpLogRequest(HttpConn *conn)
     if (!route->log) {
         return;
     }
-    host = httpGetConnContext(conn);
     fmt = route->logFormat;
     if (fmt == 0) {
         fmt = HTTP_LOG_FORMAT;
@@ -7811,6 +7801,11 @@ static void startRange(HttpQueue *q)
     conn = q->conn;
     tx = conn->tx;
     mprAssert(tx->outputRanges);
+    if (tx->outputRanges == 0) {
+        mprError("WARNING: outputRanges is null");
+        mprError("rx %x %x", conn->rx, conn->tx);
+        mprError("WARNING: outputRanges is null for %s", conn->rx->uri);
+    }
 
     if (tx->status != HTTP_CODE_OK || !fixRangeLength(conn)) {
         httpRemoveQueue(q);
@@ -8783,7 +8778,7 @@ int httpAddRouteHandler(HttpRoute *route, cchar *name, cchar *extensions)
 {
     Http            *http;
     HttpStage       *handler;
-    char            *extlist, *word, *tok, *hostName;
+    char            *extlist, *word, *tok;
 
     mprAssert(route);
 
@@ -8792,7 +8787,6 @@ int httpAddRouteHandler(HttpRoute *route, cchar *name, cchar *extensions)
         mprError("Can't find stage %s", name); 
         return MPR_ERR_CANT_FIND;
     }
-    hostName = route->host->name ? route->host->name : "default"; 
     GRADUATE_HASH(route, extensions);
 
     if (extensions && *extensions) {

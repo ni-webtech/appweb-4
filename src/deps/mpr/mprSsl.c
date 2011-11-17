@@ -1141,12 +1141,10 @@ static DH       *get_dh1024();
  */
 int mprCreateOpenSslModule(bool lazy)
 {
-    MprSocketService    *ss;
     MprSocketProvider   *provider;
     RandBuf             randBuf;
     int                 i;
 
-    ss = MPR->socketService;
     if ((osl = mprAllocObj(MprOpenssl, manageOpenssl)) == 0) {
         return MPR_ERR_MEMORY;
     }
@@ -1278,14 +1276,11 @@ static void manageOpenProvider(MprSocketProvider *provider, int flags)
  */
 static int configureOss(MprSsl *ssl)
 {
-    MprSocketService    *ss;
     MprSsl              *defaultSsl;
     SSL_CTX             *context;
     uchar               resume[16];
 
-    ss = MPR->socketService;
     mprSetManager(ssl, manageSslStruct);
-
     context = SSL_CTX_new(SSLv23_method());
     if (context == 0) {
         mprError("OpenSSL: Unable to create SSL context"); 

@@ -1174,9 +1174,8 @@ static int logDirective(MaState *state, cchar *key, cchar *value)
 {
     char        *option, *ovalue, *tok, *include, *exclude;
     ssize       size;
-    int         i, flags, dir, levels[HTTP_TRACE_MAX_ITEM];
+    int         i, dir, levels[HTTP_TRACE_MAX_ITEM];
 
-    flags = 0;
     include = exclude = 0;
     dir = HTTP_TRACE_RX;
     size = INT_MAX;

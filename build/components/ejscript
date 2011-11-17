@@ -65,11 +65,11 @@ defineComponent() {
             modules=`echo $libdir/*.mod`
             imports="$imports $modules"
             #
-            #   Import angel, http and makerom as they come from the MPR and Http libraries which Ejscript supplies
+            #   Import manager, http and makerom as they come from the MPR and Http libraries which Ejscript supplies
             #
-            angel=`probe --exe --name angel --search "$search" angel`
-            if [ "$angel" != "" ] ; then
-                imports="$imports $angel"
+            manager=`probe --exe --name manager --search "$search" manager`
+            if [ "$manager" != "" ] ; then
+                imports="$imports $manager"
             fi
             http=`probe --exe --name http --search "$search" http`
             if [ "$http" != "" ] ; then

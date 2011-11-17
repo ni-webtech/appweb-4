@@ -388,13 +388,9 @@ static int writeHeader(sapi_header_struct *sapiHeader, sapi_headers_struct *sapi
 #endif
 {
     HttpConn    *conn;
-    HttpTx      *tx;
-    bool        allowMultiple;
     char        *key, *value;
 
     conn = (HttpConn*) SG(server_context);
-    tx = conn->tx;
-    allowMultiple = 1;
 
     key = sclone(sapiHeader->header);
     if ((value = strchr(key, ':')) == 0) {
@@ -426,6 +422,7 @@ static int writeHeader(sapi_header_struct *sapiHeader, sapi_headers_struct *sapi
             return 0;
     }
 #else
+    bool allowMultiple;
     allowMultiple = !sapiHeader->replace;
     if (allowMultiple) {
         httpAppendHeaderString(conn, key, value);
@@ -513,7 +510,6 @@ static int initializePhp(Http *http)
 
 static int finalizePhp(MprModule *mp)
 {
-    Http        *http;
     HttpStage   *stage;
 
     if ((stage = httpLookupStage(MPR->httpService, "phpHandler")) == 0) {
@@ -528,7 +524,6 @@ static int finalizePhp(MprModule *mp)
         php_module_shutdown(TSRMLS_C);
         sapi_shutdown();
         tsrm_shutdown();
-        http = MPR->httpService;
         stage->stageData = 0;
     }
     return 0;
