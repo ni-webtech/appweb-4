@@ -372,7 +372,9 @@ static int process(cchar *operation)
          */
         if (launch) {
             path = sfmt("/Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
-            /* This will start the service, for compatibility, must stop below */
+            /* 
+                Unfortunately, there is no launchctl command to do an enable without starting. So must do a stop below.
+             */
             if (!run("/bin/launchctl load -w %s", path)) {
                 return MPR_ERR_CANT_COMPLETE;
             }
@@ -396,9 +398,8 @@ static int process(cchar *operation)
         }
 
     } else if (smatch(operation, "disable")) {
-        if (!process("stop")) {
-            return MPR_ERR_CANT_COMPLETE;
-        }
+        /* Don't test return code here. Some platforms will return errors for stop if already stopped */
+        process("stop");
         if (launch) {
             return run("/bin/launchctl unload -w /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
 
@@ -452,9 +453,8 @@ static int process(cchar *operation)
         return process("restart");
 
     } else if (smatch(operation, "restart")) {
-        if (!process("stop")) {
-            return MPR_ERR_CANT_COMPLETE;
-        }
+        /* Don't test return code here. Some platforms will return errors for stop if already stopped */
+        process("stop");
         return process("start");
 
     } else if (smatch(operation, "run")) {

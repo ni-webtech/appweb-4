@@ -41,8 +41,8 @@ var initd: Path = etc.join("init.d")
 var cache: Path = spl.join("cache")
 
 let config = Path("src/server/appweb.conf").readString()
-let group = config.match(/^Group[ \t]+([\w]+)/m)[1]
-let owner = config.match(/^User[ \t]+([\w]+)/m)[1]
+let group = config.match(/^Group[ \t]+([\w_-]+)/m)[1]
+let owner = config.match(/^User[ \t]+([\w_-]+)/m)[1]
 
 var lowperms = {permissions: 0755, owner: owner, group: group }
 var dperms = {permissions: 0755, owner: 0, group: 0 }
