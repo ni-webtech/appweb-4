@@ -5060,9 +5060,6 @@ MprCmd *mprCreateCmd(MprDispatcher *dispatcher)
         files[i].clientFd = -1;
         files[i].fd = -1;
     }
-#if BLD_UNIX_LIKE
-    cmd->signal = mprAddSignalHandler(SIGCHLD, reapCmd, cmd, dispatcher, MPR_SIGNAL_BEFORE);
-#endif
     cmd->mutex = mprCreateLock();
     mprAddItem(MPR->cmdService->cmds, cmd);
     return cmd;
@@ -5671,7 +5668,7 @@ static void reapCmd(MprCmd *cmd, MprSignal *sp)
     }
 #if BLD_UNIX_LIKE
     if (sp && sp->info.siginfo.si_pid != cmd->pid) {
-        mprLog(0, "reapCmd signal for pid %d, not for this cmd pid %d", sp->info.arg, cmd->pid);
+        mprLog(0, "reapCmd signal for pid %d, not for this cmd pid %d", sp->info.siginfo.si_pid, cmd->pid);
         return;
     }
     if ((rc = waitpid(cmd->pid, &status, WNOHANG | __WALL)) < 0) {
@@ -6335,7 +6332,9 @@ static int startProcess(MprCmd *cmd)
     int             rc, i, err;
 
     files = cmd->files;
-
+    if (!cmd->signal) {
+        cmd->signal = mprAddSignalHandler(SIGCHLD, reapCmd, cmd, cmd->dispatcher, MPR_SIGNAL_BEFORE);
+    }
     /*
         Create the child
      */
@@ -18708,6 +18707,12 @@ static void signalHandler(int signo, siginfo_t *info, void *arg)
     ip->arg = arg;
     ip->triggered = 1;
     ssp->hasSignals = 1;
+#if UNUSED
+    if (signo == SIGCHLD) {
+        mprAssert(info->si_pid);
+        printf("\nSIG %d for %d\n", signo, info->si_pid); 
+    }
+#endif
     mprWakeNotifier();
 }
 
@@ -18849,6 +18854,7 @@ static void signalEvent(MprSignal *sp, MprEvent *event)
     }
     if (np) {
         /* Create new event for each handler so we get the right dispatcher */
+        np->info = sp->info;
         mprCreateEvent(np->dispatcher, "signalEvent", 0, signalEvent, np, 0);
     }
 }
