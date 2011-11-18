@@ -107,8 +107,8 @@ int main(int argc, char **argv) {
         contents = replace(contents, "ServerRoot", "ServerRoot \"%s\"", home);
     }
     if (logs) {
-        contents = replace(contents, "ErrorLog", "ErrorLog \"%s\"", mprJoinPath(logs, "logs/error.log"));
-        contents = replace(contents, "AccessLog", "AccessLog \"%s\"", mprJoinPath(logs, "logs/access.log"));
+        contents = replace(contents, "ErrorLog", "ErrorLog \"%s\"", mprJoinPath(logs, "error.log"));
+        contents = replace(contents, "AccessLog", "AccessLog \"%s\"", mprJoinPath(logs, "access.log"));
     }
     if (user) {
         contents = replace(contents, "User", "User %s", user);

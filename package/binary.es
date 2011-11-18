@@ -133,7 +133,11 @@ if (options.task != "Remove" && build.BLD_FEATURE_SSL == 1 && os == "LINUX") {
 
 copy("*", cfg, {
     from: "src/server",
-    include: /mime.types|\.db$|php.ini|appweb.conf/,
+    include: /mime.types|\.db$|php.ini/,
+    permissions: 0644
+})
+copy("appweb.conf", cfg, {
+    from: "src/server/master",
     permissions: 0644
 })
 
@@ -146,7 +150,10 @@ copy("*", lib, {
 })
 
 if (options.task != "Remove") {
-    Cmd(["setConfig", "--port", build.BLD_HTTP_PORT, "--ssl", build.BLD_SSL_PORT, "--cache", build.BLD_SPL_PREFIX.join("cache"), "--modules", build.BLD_LIB_PREFIX, cfg.join("appweb.conf")])
+    print(["setConfig", "--home", cfg, "--documents", web, "--logs", log, "--port", build.BLD_HTTP_PORT, "--ssl", 
+        build.BLD_SSL_PORT, "--cache", spl.join("cache"), "--modules", build.BLD_LIB_PREFIX, cfg.join("appweb.conf")].join(" "))
+    Cmd(["setConfig", "--home", cfg, "--documents", web, "--logs", log, "--port", build.BLD_HTTP_PORT, "--ssl", 
+        build.BLD_SSL_PORT, "--cache", spl.join("cache"), "--modules", build.BLD_LIB_PREFIX, cfg.join("appweb.conf")])
 }
 
 if (build.BLD_FEATURE_EJSCRIPT == 1) {
@@ -216,7 +223,7 @@ if (!bare) {
             copy("msvcr100.dll", bin, {from: build.BLD_VS.parent.join("redist/x86/Microsoft.VC100.CRT")})
         }
         copy("removeFiles*", bin, {from: sbin, permissions: 0755})
-        copy("patchConf*", bin, {from: sbin, permissions: 0755})
+        copy("setConf*", bin, {from: sbin, permissions: 0755})
     }
 }
 

@@ -20,6 +20,7 @@ configureProduct() {
 	cleanup)
 		rm -f "${BLD_CFG_PREFIX}/".${BLD_PRODUCT}_pid.log
 		rm -f "${BLD_CFG_PREFIX}/${BLD_PRODUCT}Install.conf"
+		rm -f "${BLD_CFG_PREFIX}/${BLD_PRODUCT}.conf.bak"
 		rm -rf "${BLD_CFG_PREFIX}/ssl"
 		rm -rf "${BLD_CFG_PREFIX}/config"
 		rm -rf "${BLD_CFG_PREFIX}/apps"
