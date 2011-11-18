@@ -27,6 +27,7 @@ compileFirst: prep tools
 
 tools:
 	$(MAKE) -S --no-print-directory BUILDING_NATIVE=1 TRACE=$(TRACE) DIR=$(DIR)/deps -C deps compile
+	$(MAKE) -S --no-print-directory BUILDING_NATIVE=1 TRACE=$(TRACE) DIR=$(DIR)/utils -C utils compile
 ifeq ($(BLD_CROSS),1)
 	echo
 	$(call log) [Notice] "Building $(BLD_NAME) for ($(BLD_HOST_SYSTEM))"

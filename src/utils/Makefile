@@ -15,7 +15,11 @@ endif
 TARGETS			+= $(BLD_BIN_DIR)/auth$(BLD_EXE)
 OBJECTS			+= $(BLD_OBJ_DIR)/auth$(BLD_OBJ)
 
-compileExtra: $(TARGETS)
+ifeq ($(BUILDING_NATIVE),1)
+compileExtra: $(BLD_BIN_DIR)/auth$(BLD_EXE)
+else
+compileExtra: $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
+endif
 
 $(BLD_BIN_DIR)/auth$(BLD_EXE): $(OBJECTS)
 	bld --exe $(BLD_BIN_DIR)/auth$(BLD_EXE) --search "$(BLD_MPR_LIBPATHS)" --libs "$(BLD_MPR_LIBS)" \
