@@ -42,9 +42,8 @@
         <div class="contentRight">
             <h2>Quick Nav</h2>
             <ul class="nav">
+                <li><a href="#generic">Generic Instructions</a></li>
                 <li><a href="#windows">Windows Instructions</a></li>
-                <li><a href="#linux">Linux Instructions</a></li>
-                <li><a href="#mac">Mac Instructions</a></li>
             </ul>
 <!-- BeginDsi "dsi/gettingSeeAlso.html" -->
             <h2>See Also</h2>
@@ -70,26 +69,59 @@
             <h1>Running as a System Service or Daemon</h1>
             <p>After installation, Appweb is started automatically as a system service or daemon. You can change this
             behavior and only start Appweb manually if you wish.</p>
-            <p>This page gives platform-specific information about starting and stopping the Appweb service.</p>
+            <p>This page gives generic and windows -specific information about starting and stopping the Appweb service.</p>
             <ul>
+                <li><a href="#generic">Generic Instructions</a></li>
                 <li><a href="#windows">Windows Instructions</a></li>
-                <li><a href="#linux">Linux Instructions</a></li>
-                <li><a href="#mac">Mac Instructions</a></li>
-            </ul><a name="windows" id="windows"></a>
+            </ul>
+            
+            <a name="generic" id="generic"></a>
+            <h2 class="section">Generic Instructions</h2>
+            <p>Appweb includes a manager program called <tt>appman</tt>. This program is used to configure the running 
+            of Appweb as service. Appman provides a generic way to install/uninstall, enable/disable, start/stop, and
+            run the Appweb service, regardless of the Operating System.</p>
+            <p>The Appman command takes the form:</p>
+            <pre>appman commands...</pre>
+            <p>Where commands can be:</p>
+            <table>
+                <thead><tr><td>Command</td><td>Details</td></tr></thead>
+                <tbody>
+                    <tr><td>install</td><td>Install Appweb service</td></tr>
+                    <tr><td>uninstall</td><td>Uninstall Appweb service</td></tr>
+                    <tr><td>enable</td><td>Enable Appweb to start automatically on system boot</td></tr>
+                    <tr><td>disable</td><td>Disable Appweb from automatically starting</td></tr>
+                    <tr><td>start</td><td>Start Appweb manually</td></tr>
+                    <tr><td>stop</td><td>Stop Appweb</td></tr>
+                    <tr><td>run</td><td>Run Appweb and monitor its execution. Restart if it fails.</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Stopping Appweb as a Service</h3>
+            <p>To permanently stop Appweb running as a Service, use the the following command:</p>
+            <pre>
+appman disable
+</pre>
+            <p>To restore running Appweb as a service run the following commands:</p>
+            <pre>
+appman enable
+appman start
+</pre>
+            <a name="windows" id="windows"></a>
             <h2 class="section">Windows Instructions</h2>
             <p>On Windows, Appweb is managed by two programs:</p>
             <ul>
                 <li><a href="#appman">The Appweb Manager</a></li>
                 <li><a href="#monitor">The Appweb Monitor</a></li>
             </ul><a name="appman" id="appman"></a>
-            <p>The Appweb manager is a management program for Appweb. It is a windows service that starts, 
-            manages and restarts Appweb. If Appweb fails, the manager will automatically restart it.</p>
+            <p>The Appman manager program is installed as a windows service that starts, 
+            manages and restarts Appweb. If Appweb fails, Appman will automatically restart it.</p>
             <p>Windows services run in the background with little interaction with the user. So to provide more
             convenient access to manage Appweb, the <a href="#monitor">Appweb Monitor</a> program runs and is
             accessible from the windows system tray (taskbar notification area). You can start and stop Appweb using
             either the manager or Monitor programs.</p>
-            <h3>Appweb Manager Service</h3>
-            <p>You can interface with the Appweb manager via the Windows Services Applet. To invoke the applet select:</p>
+
+            <h3>Appman &mdash; Appweb Manager Service</h3>
+            <p>You can interface with the Appman program via the Windows Services Applet. To invoke the applet select:</p>
             <pre>
 Start -&gt; Control Panel -&gt; Administrative Tools -&gt; Services
 </pre>
@@ -98,17 +130,9 @@ Start -&gt; Control Panel -&gt; Administrative Tools -&gt; Services
             "" class="bare-screen" />
             <p>When started or stopped, the manager will first do the same operation on the real Appweb instance. Pausing
             the manager will have no effect on Appweb, but will pause the manager itself.</p>
-            <h3>Removing Appweb as a Service</h3>
-            <p>To permanently stop Appweb running as a Windows Service either remove the software or uninstall the
-            manager via the following command:</p>
-            <pre>
-appman --uninstall
-</pre>
-            <p>To re-instate the manager as a Windows Service run the following command:</p>
-            <pre>
-appman --install
-</pre>
-            <p>Once installed, you will need to start the service via the Services control applet.</p><a name="monitor"
+
+            <p>Once installed, you will need to start the service via the Services control applet.</p>
+            <a name="monitor"
             id="monitor"></a>
             <h3>Appweb Monitor</h3>
             <p>The Windows Appweb Monitor is launched when you log in. It a quick and easy way to start, stop, and
@@ -116,55 +140,8 @@ appman --install
             (future feature).</p><img src="../../../images/tray.jpg" alt="" class="bare-screen" />
             <p>When you select stop Appweb, you actually stop the manager process which in turn stops Appweb. Similarly,
             when you select start Appweb, you are really starting the manager which detects that Appweb is not running
-            and automatically launches it. <a name="linux" id="linux"></a></p>
-            <h2 class="section">Linux Instructions</h2>
-            <p>To stop Appweb running as a Daemon, on a Red Hat / Fedora system run the following command:</p>
-            <pre>
-/sbin/service appweb stop
-</pre>
-            <p>To re-start Appweb to run as a daemon, run the following command:</p>
-            <pre>
-/sbin/service appweb start
-</pre>
-            <p>On a Debian (Ubuntu) based system, run the following commands</p>
-            <pre>
-/sbin/invoke-rc.d appweb start
-/sbin/invoke-rc.d appweb stop
-</pre>
-            <h3>Removing Appweb as a Daemon</h3>
-            <p>To permanently remove Appweb from running as a Daemon on a Red Hat / Fedora system, run the following
-            command:</p>
-            <pre>
-/sbin/chkconfig --del appweb 
-</pre>
-            <p>To reinstall Appweb to run as a daemon run the following command:</p>
-            <pre>
-/sbin/chkconfig --add appweb
-/sbin/chkconfig --level 5 appweb on
-/sbin/service appweb start
-</pre>
-            <p>To permanently remove Appweb from running as a Daemon on a Debian (Ubuntu) based system run the
-            following command:</p>
-            <pre>
-update-rc.d appweb remove
-</pre>
-            <p>To reinstall Appweb to run as a daemon run the following command:</p>
-            <pre>
-update-rc.d appweb defaults
-</pre><a name="mac" id="mac"></a>
-            <h2 class="section">Mac Instructions</h2>
-            <p>When Appweb runs on MAC OS X 10.5 (Leopard) it does not use the Appweb manager or Appweb Monitor programs.
-            Rather it uses the MAC <b>launchd</b> service. Launchd offers similar capabilities to that of the Appweb
-            manager. It starts, manages and restarts Appweb. If Appweb fails, launchd will automatically restart it.
-            Launchd is the preferred way to manage Daemons on a MAC.</p>
-            <p>To stop Appweb running as a Daemon on a Mac, run the following command:</p>
-            <pre>
-launchctl unload -w /Library/LaunchDaemons/com.embedthis.appweb
-</pre>
-            <p>To restart Appweb as a daemon, run the following command:</p>
-            <pre>
-launchctl load -w /Library/LaunchDaemons/com.embedthis.appweb
-</pre>
+            and automatically launches it. </p>
+            
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->

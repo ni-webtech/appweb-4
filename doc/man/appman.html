@@ -5,19 +5,43 @@ ANGEL(1)                         User Commands                        ANGEL(1)
        appman - Appweb manager
 
 <B>SYNOPSIS</B>
-       <B>appman [options] [program args]</B>
+       <B>appman [options] [commands]</B>
               [<I>--args arguments</I>] [<I>--console</I>] [<I>--daemon</I>] [<I>--heartBeat interval</I>]
-              [<I>--home directory</I>] [<I>--install</I>] [<I>--log  logFile:level</I>]  [<I>--start</I>]
-              [<I>--stop</I>] [<I>--uninstall</I>]
+              [<I>--home directory</I>] [<I>--log logFile:level</I>]
 
 <B>DESCRIPTION</B>
-       The  appman program is the Appweb manager program. It starts appweb and
-       then watches over it to restart it should it fail.   It  also  provides
-       general management commands to enable, disable, start, and stop appweb.
+       The appman program is used to configure the running of Appweb as a sys-
+       tem  service  (daemon).  Appman provides a generic way to install/unin-
+       stall, enable/disable, start/stop, and run the Appweb service,  regard-
+       less of the Operating System. When used to run Appweb, it starts Appweb
+       and then watches over Appweb, to restart it should Appweb fail.  Appman
+       also  provides  general  management commands to enable, disable, start,
+       and stop appweb.
+
+<B>COMMANDS</B>
+       <B>disable</B>
+              Disable Appweb from automatically starting when  the  system  is
+              booted.
+
+       <B>enable </B>Enable Appweb to start automatically on system boot.
+
+       <B>install</B>
+              Install Appweb as a service.
+
+       <B>run    </B>Run  Appweb and monitor its execution. Appman will automatically
+              restart Appweb should it fail. Appman will block  unless  it  is
+              invoked with --daemon.
+
+       <B>start  </B>Start Appweb manually.
+
+       <B>stop   </B>Stop Appweb.
+
+       <B>uninstall</B>
+              Uninstall Appweb as a service.
 
 <B>OPTIONS</B>
        <B>--args arguments</B>
-              Arguments to use for the service program command  line  when  it
+              Arguments  to  use  for the service program command line when it
               starts.
 
        <B>--console</B>
@@ -25,33 +49,27 @@ ANGEL(1)                         User Commands                        ANGEL(1)
               with the users desktop.
 
        <B>--daemon</B>
-              Run the manager as a daemon process. This causes the manager  to
+              Run  the manager as a daemon process. This causes the manager to
               detach from the current shell and run in the background.
 
        <B>--heartBeat interval</B>
-              Windows  specific option to set the frequency in seconds for the
+              Windows specific option to set the frequency in seconds for  the
               manager to check on service.  This period should be short enough
-              that  the  service will be quickly restarted should it fail, but
-              not so short that the manager process consumes  significant  CPU
+              that the service will be quickly restarted should it  fail,  but
+              not  so  short that the manager process consumes significant CPU
               resources.  If the service dies more than 30 times per hour, the
               manager will suspend restarting the service.
 
        <B>--home directory</B>
               Set the home directory in which to start the service.
 
-       <B>--install</B>
-              Windows specific option to install the manager as a windows ser-
-              vice.
-
        <B>--log logFile:level</B>
               Specify  a  file  to  use  for  log messages. The level argument
               defines the message verbosity. Zero is the least and  9  is  the
               most verbose.
 
-       <B>--stop </B>Windows specific option to stop the manager service.
-
-       <B>--start</B>
-              Windows specific option to start the manager service.
+       <B>--retries count</B>
+              Number of times to restart Appweb per hour.
 
        <B>-v     </B>Output the product version number.
 

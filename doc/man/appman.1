@@ -3,20 +3,41 @@
 appman - Appweb manager
 .SH SYNOPSIS
 .TP
-.B appman [options] [program args]
+.B appman [options] [commands]
 [\fI--args arguments\fR] 
 [\fI--console\fR] 
 [\fI--daemon\fR]
 [\fI--heartBeat interval\fR]
 [\fI--home directory\fR]
-[\fI--install\fR]
 [\fI--log logFile:level\fR]
-[\fI--start\fR]
-[\fI--stop\fR]
-[\fI--uninstall\fR]
 .SH DESCRIPTION
-The appman program is the Appweb manager program. It starts appweb and then watches over it to restart it should it fail.
-It also provides general management commands to enable, disable, start, and stop appweb. 
+The appman program is used to configure the running of Appweb as a system service (daemon).
+Appman provides a generic way to install/uninstall, enable/disable, start/stop, and run the Appweb service, regardless
+of the Operating System. When used to run Appweb, it starts Appweb and then watches over Appweb, to restart it 
+should Appweb fail. Appman also provides general management commands to enable, disable, start, and stop appweb. 
+.SH COMMANDS
+.TP
+\fBdisable\fR
+Disable Appweb from automatically starting when the system is booted.
+.TP
+\fBenable\fR
+Enable Appweb to start automatically on system boot.
+.TP
+\fBinstall\fR
+Install Appweb as a service.
+.TP
+\fBrun\fR
+Run Appweb and monitor its execution. Appman will automatically restart Appweb should it fail. Appman will block unless
+it is invoked with --daemon.
+.TP
+\fBstart\fR
+Start Appweb manually.
+.TP
+\fBstop\fR
+Stop Appweb.
+.TP
+\fBuninstall\fR
+Uninstall Appweb as a service.
 .SH OPTIONS
 .TP
 \fB\--args arguments\fR
@@ -37,18 +58,12 @@ If the service dies more than 30 times per hour, the manager will suspend restar
 \fB\--home directory\fR
 Set the home directory in which to start the service.
 .TP
-\fB\--install\fR
-Windows specific option to install the manager as a windows service.
-.TP
 \fB\--log logFile:level\fR
 Specify a file to use for log messages. The level argument defines the message verbosity. Zero is the least and 9 is the 
 most verbose.
 .TP
-\fB\--stop\fR
-Windows specific option to stop the manager service.
-.TP
-\fB\--start\fR
-Windows specific option to start the manager service.
+\fB\--retries count\fR
+Number of times to restart Appweb per hour.
 .TP
 \fB\-v\fR
 Output the product version number.
