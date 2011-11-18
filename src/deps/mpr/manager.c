@@ -76,12 +76,11 @@ static int  writePid(int pid);
 
 int main(int argc, char *argv[])
 {
-    Mpr     *mpr;
     char    *argp;
     int     err, nextArg, status;
 
     err = 0;
-    mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD);
+    mprCreate(argc, argv, MPR_USER_EVENTS_THREAD);
     app = mprAllocObj(App, manageApp);
     mprAddRoot(app);
     mprAddTerminator(terminating);
@@ -222,10 +221,10 @@ int main(int argc, char *argv[])
 static void manageApp(void *ptr, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(app->command);
         mprMark(app->appName);
         mprMark(app->error);
         mprMark(app->output);
+        mprMark(app->command);
         mprMark(app->logSpec);
         mprMark(app->pidDir);
         mprMark(app->pidPath);
