@@ -97,7 +97,7 @@ makeRPMPackage() {
         else
             rpm="$RPM_DIR/RPMS/$BLD_HOST_CPU/${BLD_PRODUCT}-$suffix-${BLD_VERSION}-${BLD_NUMBER_ONLY}.${BLD_HOST_CPU}.rpm"
         fi
-        echo "# Creating `basename $name`"
+        # echo "# Creating `basename $name`"
         mv $rpm $ROOT_DIR/$name
     done
 }

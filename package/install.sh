@@ -42,6 +42,7 @@ BLD_INC_PREFIX="!!ORIG_BLD_INC_PREFIX!!"
 BLD_LIB_PREFIX="!!ORIG_BLD_LIB_PREFIX!!"
 BLD_LOG_PREFIX="!!ORIG_BLD_LOG_PREFIX!!"
 BLD_MAN_PREFIX="!!ORIG_BLD_MAN_PREFIX!!"
+BLD_PRD_PREFIX="!!ORIG_BLD_PRD_PREFIX!!"
 BLD_SPL_PREFIX="!!ORIG_BLD_SPL_PREFIX!!"
 BLD_SRC_PREFIX="!!ORIG_BLD_SRC_PREFIX!!"
 BLD_WEB_PREFIX="!!ORIG_BLD_WEB_PREFIX!!"
@@ -257,9 +258,8 @@ ask() {
 saveSetup() {
     local firstChar
 
-    mkdir -p "$BLD_CFG_PREFIX"
-    echo -e "FMT=$FMT\nbinDir=\"${BLD_PRD_PREFIX}\"\ninstallbin=$installbin\nrunDaemon=$runDaemon\nhttpPort=$HTTP_PORT\nsslPort=$SSL_PORT\nusername=$username\ngroupname=$groupname\nhostname=$HOSTNAME" \
-        >"$BLD_PRD_PREFIX/install.conf"
+    mkdir -p "$BLD_PRD_PREFIX"
+    echo -e "FMT=$FMT\nbinDir=\"${BLD_PRD_PREFIX}\"\ninstallbin=$installbin\nrunDaemon=$runDaemon\nhttpPort=$HTTP_PORT\nsslPort=$SSL_PORT\nusername=$username\ngroupname=$groupname\nhostname=$HOSTNAME" >"$BLD_PRD_PREFIX/install.conf"
 }
 
 #
@@ -422,11 +422,11 @@ fi
 installFiles $FMT
 if [ "$installbin" = "Y" ] ; then
     patchConfiguration
-    if [ "$FMT" = "tar" ] ; then
+    if [ "$FMT" != "deb" ] ; then
         appman install
     fi
     if [ "$runDaemon" = "Y" ] ; then
-        if [ "$FMT" = "tar" ] ; then
+        if [ "$FMT" != "deb" ] ; then
             appman start
         fi
         startBrowser

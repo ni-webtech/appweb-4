@@ -92,9 +92,12 @@ yesno() {
 
 deconfigureService() {
     echo -e "\nStopping $BLD_NAME service"
-    appman stop
+    # Fedora will indiscriminately kill appman here too
+    # Need this ( ; true) to suppress the Killed message
+    (appman -v stop ; true) >/dev/null 2>&1
     echo -e "\nRemoving $BLD_NAME service"
-    appman disable uninstall
+    appman disable 
+    appman uninstall
     if [ -f $BLD_BIN_PREFIX/$BLD_PRODUCT ] ; then
 		if which pidof >/dev/null 2>&1 ; then
             pid=`pidof $BLD_BIN_PREFIX/$BLD_PRODUCT`

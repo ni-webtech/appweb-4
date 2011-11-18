@@ -222,6 +222,7 @@ int main(int argc, char *argv[])
 static void manageApp(void *ptr, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
+        mprMark(app->command);
         mprMark(app->appName);
         mprMark(app->error);
         mprMark(app->output);
