@@ -286,6 +286,7 @@ static bool run(cchar *fmt, ...)
     rc = mprRunCmd(cmd, app->command, &out, &err, MANAGE_TIMEOUT, 0);
     app->error = sclone(err);
     app->output = sclone(out);
+    mprDestroyCmd(cmd);
     va_end(args);
     return (rc != 0) ? 0 : 1;
 }

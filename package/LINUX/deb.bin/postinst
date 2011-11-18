@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh
 #
 # 	postinst -- Post installation script for appweb
 #
@@ -66,7 +66,8 @@ case $action in
             appman enable
             appman start
         fi
-		echo -e "\n$BLD_NAME installation successful."
+        echo
+		echo "$BLD_NAME installation successful."
 		;;
 	abort-upgrade)						# when old
 		;;
