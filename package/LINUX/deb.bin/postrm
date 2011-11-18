@@ -38,10 +38,10 @@ remove() {
 		rmdir $BLD_LIB_PREFIX 2>/dev/null || true
 	fi
 
-	if which update-rc.d >/dev/null 2>&1  ; then
-		rm -f /etc/init.d/appweb
-		update-rc.d appweb remove >/dev/null
-	fi
+#	if which update-rc.d >/dev/null 2>&1  ; then
+#		rm -f /etc/init.d/appweb
+#		update-rc.d appweb remove >/dev/null
+#	fi
 }
 
 purge() {

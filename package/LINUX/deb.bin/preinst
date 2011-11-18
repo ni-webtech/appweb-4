@@ -17,6 +17,10 @@ configureService() {
 
 	case $action in
 	stop)
+        if [ -x /usr/local/bin/appman ] ; then
+            appman stop
+        fi
+        #   Keep this for earlier versions without appman
 		if [ -f /etc/rc.d/init.d/$BLD_PRODUCT ] ; then
 			if which service >/dev/null 2>&1 ; then
 				service $BLD_PRODUCT $action
@@ -34,6 +38,10 @@ configureService() {
 		;;
 
 	remove)
+        if [ -x /usr/local/bin/appman ] ; then
+            appman uninstall
+        fi
+        #   Keep this for earlier versions without appman
 		if which chkconfig >/dev/null 2>&1 ; then
 			chkconfig --del $BLD_PRODUCT
 			rm /etc/rc.d/init.d/$BLD_PRODUCT

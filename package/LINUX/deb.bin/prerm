@@ -17,15 +17,16 @@ configureService() {
 
 	case $action in
 	stop)
-		if [ -f /etc/rc.d/init.d/$BLD_PRODUCT ] ; then
-			if which service >/dev/null 2>&1 ; then
-				service $BLD_PRODUCT $action
-			elif which invoke-rc.d >/dev/null 2>&1 ; then
-				invoke-rc.d $BLD_PRODUCT $action || true
-            fi
-        elif [ -f /etc/init.d/$BLD_PRODUCT ] ; then
-            /etc/init.d/$BLD_PRODUCT stop
-		fi
+        appman stop
+#		if [ -f /etc/rc.d/init.d/$BLD_PRODUCT ] ; then
+#			if which service >/dev/null 2>&1 ; then
+#				service $BLD_PRODUCT $action
+#			elif which invoke-rc.d >/dev/null 2>&1 ; then
+#				invoke-rc.d $BLD_PRODUCT $action || true
+#            fi
+#        elif [ -f /etc/init.d/$BLD_PRODUCT ] ; then
+#            /etc/init.d/$BLD_PRODUCT stop
+#		fi
 		pid=`/bin/pidof !!ORIG_BLD_BIN_PREFIX!!/$BLD_PRODUCT; true`
 		[ "$pid" != "" ] && kill -9 $pid
 		rm -f /var/lock/subsys/$BLD_PRODUCT /var/lock/$BLD_PRODUCT
@@ -34,17 +35,18 @@ configureService() {
 		;;
 
 	remove)
-		if which chkconfig >/dev/null 2>&1 ; then
-			chkconfig --del $BLD_PRODUCT
-			rm /etc/rc.d/init.d/$BLD_PRODUCT
-
-		elif which update-rc.d >/dev/null 2>&1 ; then
-			rm -f /etc/init.d/$BLD_PRODUCT
-			update-rc.d $BLD_PRODUCT remove >/dev/null || true
-
-        elif [ -f /etc/init.d/$BLD_PRODUCT ] ; then
-            ( cd /etc/init.d ; /etc/init.d/$BLD_PRODUCT disable )
-		fi
+        appman uninstall
+#		if which chkconfig >/dev/null 2>&1 ; then
+#			chkconfig --del $BLD_PRODUCT
+#			rm /etc/rc.d/init.d/$BLD_PRODUCT
+#
+#		elif which update-rc.d >/dev/null 2>&1 ; then
+#			rm -f /etc/init.d/$BLD_PRODUCT
+#			update-rc.d $BLD_PRODUCT remove >/dev/null || true
+#
+#        elif [ -f /etc/init.d/$BLD_PRODUCT ] ; then
+#            ( cd /etc/init.d ; /etc/init.d/$BLD_PRODUCT disable )
+#		fi
 		;;
 	esac
 }
