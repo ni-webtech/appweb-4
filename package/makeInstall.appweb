@@ -83,10 +83,10 @@ configureProduct() {
 	start|stop)
 		if [ $action = start ] ; then
             [ $QUIET = 0 ] && log Starting $BLD_PRODUCT
-            appman start
+            appman enable start
 		else
             [ $TASK = Remove -a $QUIET = 0 ] && log Stopping $BLD_PRODUCT
-            appman stop 2>/dev/null
+            appman stop disable 2>/dev/null
 		fi
 		;;
 	esac

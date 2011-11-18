@@ -2,6 +2,16 @@
     manager.c -- Manager program 
 
     The manager watches over daemon programs.
+    Key commands:
+        uninstall   - Do one time removal of configuration. 
+        install     - Do one time installation configuration. Post-state: disabled.
+        enable      - Enable service to run on reboot and start. Post-state: stared.
+        disable     - Disable service to run on reboot and stop. Post-state: disabled.
+        stop        - Stop service. Post-state: stopped.
+        start       - Start service. Post-state: running.
+        run         - Run and watch over. Blocks.
+
+    Idempotent. "appweb start" returns 0 if already started.
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
@@ -384,6 +394,9 @@ static int process(cchar *operation)
 
     } else if (smatch(operation, "disable")) {
         /* Stop service and leave in disabled state (won't start on reboot) */
+        if (!process("stop")) {
+            return MPR_ERR_CANT_COMPLETE;
+        }
         if (launch) {
             return run("/bin/launchctl unload -w /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
 
