@@ -268,11 +268,11 @@ uninstall-%:
 	
 combo packageCombo:
 	$(BLD_TOP)/build/bin/makeInstall --root=$(COMBO_DIR) --package combo && \
-			$(BLD_TOOLS_DIR)/makePackage --combo --root=$(COMBO_DIR) combo
+			$(BLD_TOOLS_DIR)/makePackage --combo $(KEEP) --root=$(COMBO_DIR) combo
 
 flat packageFlat:
 	$(BLD_TOP)/build/bin/makeInstall --root=$(FLAT_DIR) --package flat && \
-	$(BLD_TOOLS_DIR)/makePackage --combo --root=$(FLAT_DIR) flat
+	$(BLD_TOOLS_DIR)/makePackage --combo $(KEEP) --root=$(FLAT_DIR) flat
 
 #
 #	Use makePackage --keep to preserve the out/staging area

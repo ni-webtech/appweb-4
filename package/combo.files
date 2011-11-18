@@ -5,12 +5,8 @@
 #
 S=${BLD_TOP}/src
 
-echo one $1
-echo two $2
-#
-#   Output directories. Note: these are in the staging directory.
-#
-DIR="${BLD_OUT_DIR}/staging/${BLD_PRODUCT}-${BLD_VERSION}"
+WHERE="$1"
+DIR="${BLD_OUT_DIR}/${WHERE}/${BLD_PRODUCT}-${BLD_VERSION}"
 SRC="${DIR}/src/deps/appweb"
 DOC="${DIR}/doc"
 
