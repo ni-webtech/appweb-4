@@ -11,12 +11,12 @@ PRE_DIRS	= js
 ifeq	($(BLD_FEATURE_ESP),1)
 	TARGETS		+= $(BLD_BIN_DIR)/esp$(BLD_EXE)
 	TARGETS		+= $(BLD_LIB_DIR)/esp-www
-	TARGETS		+= $(BLD_LIB_DIR)/esp.conf
+	ESP_CMD		+= $(BLD_LIB_DIR)/esp.conf
 endif
 
 compileExtra: $(OBJECTS) 
 	
-modules: $(TARGETS)
+modules: $(ESP_CMD)
 
 $(BLD_BIN_DIR)/esp$(BLD_EXE): $(OBJECTS)
 	bld --exe $(BLD_BIN_DIR)/esp$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" --libs "$(BLD_APPWEB_LIBS) $(LIBS)" \
@@ -34,6 +34,8 @@ $(BLD_LIB_DIR)/esp.conf: esp.conf
 
 cleanExtra:
 	rm -rf $(BLD_LIB_DIR)/esp-www 
+	rm -rf $(TARGETS)
+	rm -rf $(ESP_CMD)
 
 #
 #   Local variables:

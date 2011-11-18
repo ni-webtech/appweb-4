@@ -29,7 +29,9 @@ else
 	COMPILE				:= manager.c
 endif
 
-TARGETS				+= $(BLD_BIN_DIR)/manager$(BLD_EXE)
+ifneq ($(BLD_HOST_VXWORKS),1)
+	TARGETS				+= $(BLD_BIN_DIR)/manager$(BLD_EXE)
+endif
 
 ifeq ($(MACOSX),1)
 	mprSsl_IFLAGS   +=  -Wno-deprecated-declarations

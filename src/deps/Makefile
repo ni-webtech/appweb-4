@@ -8,7 +8,10 @@ include 		.makedep
 
 PRE_DIRS		+= mpr pcre http sqlite
 APPMAN			:= $(BLD_BIN_DIR)/appman$(BLD_EXE)
-TARGETS			+= $(APPMAN)
+
+ifneq ($(BLD_OS),VXWORKS)
+	TARGETS		+= $(APPMAN)
+endif
 
 compileExtra: 	$(TARGETS)
 
