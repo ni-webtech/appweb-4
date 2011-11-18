@@ -111,13 +111,13 @@ begin
 
    path := app + '/bin/appman.exe';
    if FileExists(path) then
-     Exec(path, '--stop appweb', app, 0, ewWaitUntilTerminated, rc);
-  end;
-  if CurStep = ssPostInstall then
-    if IsTaskSelected('addpath') then begin
-      bin := ExpandConstant('{app}\bin');      
-      // AddPath('EJSPATH', bin);
-      AddPath('Path', bin);
+     Exec(path, 'stop', app, 0, ewWaitUntilTerminated, rc);
+   end;
+   if CurStep = ssPostInstall then
+     if IsTaskSelected('addpath') then begin
+       bin := ExpandConstant('{app}\bin');      
+       // AddPath('EJSPATH', bin);
+       AddPath('Path', bin);
     end;
 end;
 
@@ -242,14 +242,16 @@ Name: addpath; Description: Add !!BLD_NAME!! to the system PATH variable;
 [Run]
 Filename: "{app}/bin/!!BLD_PRODUCT!!Monitor.exe"; Parameters: "--stop"; WorkingDir: "{app}/bin"; Check: IsPresent('{app}/bin/!!BLD_PRODUCT!!Monitor.exe'); StatusMsg: "Stopping the Appweb Monitor"; Flags: waituntilterminated;
 
-Filename: "{app}/bin/appman.exe"; Parameters: "--uninstall appweb"; WorkingDir: "{app}"; Check:
-IsPresent('{app}/bin/appman.exe'); StatusMsg: "Stopping Appweb"; Flags: waituntilterminated; Components: bin
+Filename: "{app}/bin/appman.exe"; Parameters: "uninstall"; WorkingDir: "{app}"; Check: IsPresent('{app}/bin/appman.exe'); StatusMsg: "Stopping Appweb"; Flags: waituntilterminated; Components: bin
 
-Filename: "{app}/bin/ajs.exe"; Parameters: "bin/patchConfig.es install.log"; WorkingDir: "{app}"; StatusMsg: "Updating Appweb configuration"; Flags: runhidden waituntilterminated; 
+; MOB
+;  settings := '{ port: ' + PortPage.Values[0] + ', ssl: ' + SSLPortPage.Values[0] + 
+;	', web: "' + WebDirPage.Values[0] + '", root: "' + ExpandConstant('{app}') + '", }' + #13#10;
+; Filename: "{app}/bin/setConfig.exe"; Parameters: ""; WorkingDir: "{app}"; StatusMsg: "Updating Appweb configuration"; Flags: runhidden waituntilterminated; 
 
-Filename: "{app}/bin/appman.exe"; Parameters: "--install appweb"; WorkingDir: "{app}"; StatusMsg: "Installing Appweb as a Windows Service"; Flags: waituntilterminated;
+Filename: "{app}/bin/appman.exe"; Parameters: "install enable"; WorkingDir: "{app}"; StatusMsg: "Installing Appweb as a Windows Service"; Flags: waituntilterminated;
 
-Filename: "{app}/bin/appman.exe"; Parameters: "--start appweb"; WorkingDir: "{app}"; StatusMsg: "Starting the Appweb Server"; Flags: waituntilterminated;
+Filename: "{app}/bin/appman.exe"; Parameters: "start"; WorkingDir: "{app}"; StatusMsg: "Starting the Appweb Server"; Flags: waituntilterminated;
 
 Filename: "{app}/bin/!!BLD_PRODUCT!!Monitor.exe"; Parameters: ""; WorkingDir: "{app}/bin"; StatusMsg: "Starting the Appweb Monitor"; Flags: waituntilidle;
 
@@ -257,7 +259,7 @@ Filename: "http://127.0.0.1:{code:GetPort}/index.html"; Description: "View the D
 
 [UninstallRun]
 Filename: "{app}/bin/!!BLD_PRODUCT!!Monitor.exe"; Parameters: "--stop"; WorkingDir: "{app}"; StatusMsg: "Stopping the Appweb Monitor"; Flags: waituntilterminated;
-Filename: "{app}/bin/appman.exe"; Parameters: "--uninstall appweb"; WorkingDir: "{app}"; Check: IsPresent('{app}/bin/appman.exe'); Components: bin
+Filename: "{app}/bin/appman.exe"; Parameters: "uninstall"; WorkingDir: "{app}"; Check: IsPresent('{app}/bin/appman.exe'); Components: bin
 Filename: "{app}/bin/removeFiles.exe"; Parameters: "-r -s 5"; WorkingDir: "{app}"; Flags:
 
 [Files]

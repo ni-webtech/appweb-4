@@ -3040,6 +3040,7 @@ static void commonPrep(HttpConn *conn)
     }
     conn->canProceed = 1;
     conn->error = 0;
+    conn->connError = 0;
     conn->errorMsg = 0;
     conn->state = 0;
     conn->responded = 0;
@@ -4207,6 +4208,7 @@ void httpDisconnect(HttpConn *conn)
         mprDisconnectSocket(conn->sock);
     }
     conn->connError = 1;
+    conn->error = 1;
     conn->keepAliveCount = -1;
     if (conn->rx) {
         conn->rx->eof = 1;
@@ -4267,7 +4269,7 @@ static void errorv(HttpConn *conn, int flags, cchar *fmt, va_list args)
              */
             httpDisconnect(conn);
         } else {
-            httpFormatResponseError(conn, status, conn->errorMsg);
+            httpFormatResponseError(conn, status, "%s", conn->errorMsg);
         }
     } else {
         if (flags & HTTP_ABORT || (tx && tx->flags & HTTP_TX_HEADERS_CREATED)) {
@@ -10712,6 +10714,7 @@ void httpDefineRouteBuiltins()
         %B - Boolean. Parses: on/off, true/false, yes/no.
         %N - Number. Parses numbers in base 10.
         %S - String. Removes quotes.
+        %T - Template String. Removes quotes and expand ${PathVars}.
         %P - Path string. Removes quotes and expands ${PathVars}. Resolved relative to host->dir (ServerRoot).
         %W - Parse words into a list
         %! - Optional negate. Set value to HTTP_ROUTE_NOT present, otherwise zero.

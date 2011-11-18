@@ -306,7 +306,6 @@ cleanup() {
 }
 
 createPlatformPackages() {
-    
     . ${BLD_TOOLS_DIR}/makeTarPackage
 
     if [ -x "$BLD_PKG" ] ; then

@@ -2673,7 +2673,9 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     mpr->pathEnv = sclone(getenv("PATH"));
 
     if (flags & MPR_USER_EVENTS_THREAD) {
-        mprInitWindow();
+        if (!(flags & MPR_NO_WINDOW)) {
+            mprInitWindow();
+        }
     } else {
         mprStartEventsThread();
     }
@@ -2940,7 +2942,9 @@ int mprStartEventsThread()
 static void serviceEventsThread(void *data, MprThread *tp)
 {
     mprLog(MPR_CONFIG, "Service thread started");
-    mprInitWindow();
+    if (!(MPR->flags & MPR_NO_WINDOW)) {
+        mprInitWindow();
+    }
     mprSignalCond(MPR->cond);
     mprServiceEvents(-1, 0);
 }
@@ -3088,6 +3092,9 @@ static int parseArgs(char *args, char **argv)
 
 /*
     Make an argv array. All args are in a single memory block of which argv points to the start.
+    Set MPR_ARGV_ARGS_ONLY if not passing in a program name. 
+    Always returns and argv[0] reserved for the program name or empty string.
+    First arg starts at argv[1]
  */
 int mprMakeArgv(cchar *command, char ***argvp, int flags)
 {
@@ -14946,6 +14953,7 @@ int mprCopyPath(cchar *fromName, cchar *toName, int mode)
 }
 
 
+//  MOB - need a rename too
 //  MOB - should this be called remove?
 int mprDeletePath(cchar *path)
 {
@@ -16089,19 +16097,23 @@ char *mprReadPathContents(cchar *path, ssize *lenp)
         return 0;
     }
     if (mprGetPathInfo(path, &info) < 0) {
+        mprCloseFile(file);
         return 0;
     }
     len = (ssize) info.size;
     if ((buf = mprAlloc(len + 1)) == 0) {
+        mprCloseFile(file);
         return 0;
     }
     if (mprReadFile(file, buf, len) != len) {
+        mprCloseFile(file);
         return 0;
     }
     buf[len] = '\0';
     if (lenp) {
         *lenp = len;
     }
+    mprCloseFile(file);
     return buf;
 }
 
@@ -16291,12 +16303,16 @@ ssize mprWritePathContents(cchar *path, cchar *buf, ssize len, int mode)
     if (mode == 0) {
         mode = 0644;
     }
+    if (len < 0) {
+        len = slen(buf);
+    }
     if ((file = mprOpenFile(path, O_WRONLY | O_TRUNC | O_CREAT | O_BINARY, mode)) == 0) {
         mprError("Can't open %s", path);
         return MPR_ERR_CANT_OPEN;
     }
     if (mprWriteFile(file, buf, len) != len) {
         mprError("Can't write %s", path);
+        mprCloseFile(file);
         return MPR_ERR_CANT_WRITE;
     }
     mprCloseFile(file);

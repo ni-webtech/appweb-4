@@ -216,9 +216,6 @@ public function fold(path: Path, options)
         }
         out.writeLine(lines[l])
     }
-    for each (line in lines) {
-        out.writeLine(line)
-    }
     out.close()
 }
 

@@ -262,47 +262,6 @@ saveSetup() {
     echo -e "FMT=$FMT\nbinDir=\"${BLD_PRD_PREFIX}\"\ninstallbin=$installbin\nrunDaemon=$runDaemon\nhttpPort=$HTTP_PORT\nsslPort=$SSL_PORT\nusername=$username\ngroupname=$groupname\nhostname=$HOSTNAME" >"$BLD_PRD_PREFIX/install.conf"
 }
 
-#
-#   Copy of the script in build/bin/patchAppwebConf
-#
-patchAppwebConf()
-{
-    conf="$1"
-    docPrefix="${BLD_DOC_PREFIX}"
-    
-    if [ -f "$conf" ] ; then
-        sed -e <"$conf" >"$conf.new" "\
-            s!^ServerRoot.*\".*!ServerRoot \"${BLD_CFG_PREFIX}\"!
-            s!^DocumentRoot.*\".*!DocumentRoot \"${BLD_WEB_PREFIX}\"!
-            s!^LoadModulePath.*\".*!LoadModulePath \"${BLD_LIB_PREFIX}\"!
-            s!EspDir cache.*!EspDir cache \"${BLD_SPL_PREFIX}/cache\"!
-            s!^Listen.*!Listen ${BLD_HTTP_PORT}!
-            s!^User .*!User ${username}!
-            s!^Group .*!Group ${groupname}!
-            s!DocumentRoot.*!DocumentRoot \"${BLD_WEB_PREFIX}\"!
-            s!<VirtualHost .*!<VirtualHost *:${BLD_SSL_PORT}>!
-            s!ErrorLog.*error.log!ErrorLog \"${BLD_LOG_PREFIX}/error.log\"!
-            s!CustomLog.*access.log!CustomLog \"${BLD_LOG_PREFIX}/access.log\"!
-            s!Alias /doc/.*!Alias /doc/ \"${docPrefix}\/\"!
-            s![     ][  ]*Listen.*!    Listen ${BLD_SSL_PORT}!
-        "
-        [ $? = 0 ] && mv "$conf.new" "$conf"
-    fi
-
-    if [ `uname | sed 's/CYGWIN.*/CYGWIN/'` = CYGWIN ] ; then
-        if which unix2dos >/dev/null 2>&1 ; then
-            unix2dos "$conf" >/dev/null 2>&1
-        fi
-    else
-        for f in "$conf" "$ssl" "$log" "$doc" ; do
-            if [ -f "$f" ] ; then
-                sed -e "s/$//" <"$f" >"$f".new
-                [ $? = 0 ] && mv "$f.new" "$f"
-            fi
-        done
-    fi
-}
-
 installFiles() {
     local dir pkg doins NAME upper
 
@@ -379,10 +338,8 @@ patchConfiguration() {
     if [ ! -f $BLD_PRODUCT.conf -a -f "$BLD_CFG_PREFIX/new.conf" ] ; then
         cp "$BLD_CFG_PREFIX/new.conf" "$BLD_CFG_PREFIX/$BLD_PRODUCT.conf"
     fi
-    BLD_CFG_PREFIX="$BLD_CFG_PREFIX" BLD_WEB_PREFIX="$BLD_WEB_PREFIX" BLD_DOC_PREFIX="$BLD_DOC_PREFIX" \
-        BLD_LIB_PREFIX="$BLD_LIB_PREFIX" BLD_LOG_PREFIX="$BLD_LOG_PREFIX" \
-        BLD_SERVER=$HOSTNAME BLD_HTTP_PORT=$HTTP_PORT BLD_SSL_PORT=$SSL_PORT \
-        patchAppwebConf "${BLD_CFG_PREFIX}/appweb.conf" 
+    setConfig --port ${BLD_HTTP_PORT} --ssl ${BLD_SSL_PORT} --home "${BLD_CFG_PREFIX}" --logs "${BLD_LOG_PREFIX}" \
+        --documents "${BLD_WEB_PREFIX}" --modules "${BLD_LIB_PREFIX}" --cache "${BLD_SPL_PREFIX}/cache" "${BLD_CFG_PREFIX}/appweb.conf"
 }
 
 startBrowser() {

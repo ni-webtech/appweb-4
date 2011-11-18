@@ -63,10 +63,9 @@ $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE): $(OBJECTS) $(call lib, $(LIBDEP)) $(cal
 appweb.conf: $(BLD_INC_DIR)/buildConfig.h Makefile master/appweb.conf
 	$(call log) "[Patch]" "appweb.conf"
 	cp master/appweb.conf .
-	BLD_CFG_PREFIX=. BLD_WEB_PREFIX=./web BLD_LIB_PREFIX=$(BLD_LIB_DIR) BLD_DOC_PREFIX=../../doc \
-	BLD_SERVER=`hostname` BLD_LOG_PREFIX=. BLD_HTTP_PORT=$(BLD_HTTP_PORT) BLD_SSL_PORT=$(BLD_SSL_PORT) \
-	BLD_SPL_PREFIX="$(BLD_SPL_PREFIX)" \
-	patchAppwebConf appweb.conf
+	setConfig --port $(BLD_HTTP_PORT) --ssl $(BLD_SSL_PORT) --home . --logs . --documents web \
+		--modules "$(BLD_LIB_DIR)" --cache cache appweb.conf
+	rm -f appweb.conf.bak
 
 cgi-bin/cgiProgram$(BLD_EXE): $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
 	cp $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE) cgi-bin

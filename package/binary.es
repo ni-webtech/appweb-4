@@ -146,11 +146,7 @@ copy("*", lib, {
 })
 
 if (options.task != "Remove") {
-    /*
-        Patch appweb.conf
-     */
-    Cmd.sh("BLD_HTTP_PORT=" + build.BLD_HTTP_PORT + " BLD_SSL_PORT=" + build.BLD_SSL_PORT + 
-        " BLD_SPL_PREFIX=\"" + build.BLD_SPL_PREFIX + "\" " + "patchAppwebConf \"" + cfg.join("appweb.conf") + "\"")
+    Cmd(["setConfig", "--port", build.BLD_HTTP_PORT, "--ssl", build.BLD_SSL_PORT, "--cache", build.BLD_SPL_PREFIX.join("cache"), "--modules", build.BLD_LIB_PREFIX, cfg.join("appweb.conf")])
 }
 
 if (build.BLD_FEATURE_EJSCRIPT == 1) {
@@ -220,7 +216,7 @@ if (!bare) {
             copy("msvcr100.dll", bin, {from: build.BLD_VS.parent.join("redist/x86/Microsoft.VC100.CRT")})
         }
         copy("removeFiles*", bin, {from: sbin, permissions: 0755})
-        copy("patchConfig.es", bin, {from: "package/wIN"})
+        copy("patchConf*", bin, {from: sbin, permissions: 0755})
     }
 }
 

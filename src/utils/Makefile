@@ -4,32 +4,34 @@
 # 	opyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
 
-OBJECTS			=
-
 include 		.makedep
 
-ifeq	($(BLD_FEATURE_CGI),1)
-	TARGETS		+= $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
-	OBJECTS		+= $(BLD_OBJ_DIR)/cgiProgram$(BLD_OBJ)
-endif
-TARGETS			+= $(BLD_BIN_DIR)/auth$(BLD_EXE)
-OBJECTS			+= $(BLD_OBJ_DIR)/auth$(BLD_OBJ)
-
-ifeq ($(BUILDING_NATIVE),1)
-compileExtra: $(BLD_BIN_DIR)/auth$(BLD_EXE)
+## MOB FIX
+ifneq ($(BUILDING_NATIVE),0)
+	TARGETS		+= $(BLD_BIN_DIR)/auth$(BLD_EXE)
+	TARGETS		+= $(BLD_BIN_DIR)/setConfig$(BLD_EXE)
 else
-compileExtra: $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
+	ifeq	($(BLD_FEATURE_CGI),1)
+		TARGETS	+= $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
+	endif
 endif
+	TARGETS		+= $(BLD_BIN_DIR)/setConfig$(BLD_EXE)
 
-$(BLD_BIN_DIR)/auth$(BLD_EXE): $(OBJECTS)
+compileExtra: $(TARGETS)
+
+$(BLD_BIN_DIR)/auth$(BLD_EXE): $(BLD_OBJ_DIR)/auth$(BLD_OBJ)
 	bld --exe $(BLD_BIN_DIR)/auth$(BLD_EXE) --search "$(BLD_MPR_LIBPATHS)" --libs "$(BLD_MPR_LIBS)" \
 		$(BLD_OBJ_DIR)/auth$(BLD_OBJ)
 
-$(BLD_BIN_DIR)/cgiProgram$(BLD_EXE): $(OBJECTS)
+$(BLD_BIN_DIR)/cgiProgram$(BLD_EXE): $(BLD_OBJ_DIR)/cgiProgram$(BLD_OBJ)
 	bld --exe $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE) $(BLD_OBJ_DIR)/cgiProgram$(BLD_OBJ)
 	cp $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE) ../server/cgi-bin
 	cp $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE) ../test/cgi-bin
 	chmod +x ../server/cgi-bin/cgiProgram$(BLD_EXE) ../test/cgi-bin/cgiProgram$(BLD_EXE)
+
+$(BLD_BIN_DIR)/setConfig$(BLD_EXE): $(BLD_OBJ_DIR)/setConfig$(BLD_OBJ)
+	bld --graphical --exe $(BLD_BIN_DIR)/setConfig$(BLD_EXE) --search "$(BLD_MPR_LIBPATHS)" --libs "$(BLD_MPR_LIBS)" \
+		$(BLD_OBJ_DIR)/setConfig$(BLD_OBJ)
 
 #
 #   Local variables:

@@ -29,6 +29,11 @@
     #undef strncasecmp
     #define PHP_WIN32 1
     #define ZEND_WIN32 1
+
+    /*
+        WARNING: If you compile PHP with --debug, then you MUST re-run appweb configure which will set BLD_PHP_DEBUG
+        Unfortunately, PHP does not set ZEND_DEBUG in any of their headers (Ugh!)
+     */
     #if BLD_PHP_DEBUG
     #define ZEND_DEBUG 1
     #endif
@@ -246,7 +251,7 @@ static void processPhp(HttpQueue *q)
         fseek(fp, 0L, SEEK_SET);
     }
 #endif
-    mprYield(0);
+    // mprYield(0);
     zend_try {
         php_execute_script(&file_handle TSRMLS_CC);
         if (!SG(headers_sent)) {
