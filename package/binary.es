@@ -115,7 +115,12 @@ if (!bare) {
 /*
     Copy libraries and symlink to sonames
  */
-copy("*" + build.BLD_SHOBJ, lib, {from: slib, permissions: 0755, strip: true})
+copy("*" + build.BLD_SHOBJ, lib, {
+    from: slib, 
+    exclude: /simple|sample/,
+    permissions: 0755, 
+    strip: true
+})
 if (options.task != "Remove" && build.BLD_FEATURE_SSL == 1 && os == "LINUX") {
     copy("*" + build.BLD_SHOBJ + ".*", lib, {from: slib, permissions: 0755, strip: true})
     for each (f in slib.find("*.so.*")) {
