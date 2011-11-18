@@ -31,9 +31,11 @@ else
 	COMPILE				:= manager.c
 endif
 
+ifneq ($(BLD_MANAGER),)
 ifneq ($(BUILDING_NATIVE),1)
 ifneq ($(BLD_HOST_VXWORKS),1)
 	TARGETS				+= $(BLD_BIN_DIR)/$(BLD_MANAGER)$(BLD_EXE)
+endif
 endif
 endif
 
