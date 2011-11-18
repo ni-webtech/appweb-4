@@ -2,10 +2,11 @@
 #   SQLite
 #
 defineComponent() {
-    local libpaths incdir path builtin 
+    local libpaths incdir path builtin ejscript
 
     path="${1:-.}"
     builtin=`[ "$path" = . ] && echo --builtin`
+    eval ejscript=\$CFG_${kind}_EJSCRIPT
 
     incdir=`probe --name sqlite --dir --warn \
         --search "$path:$path/src/deps/sqlite:$path/src/deps/ejs:$path/src/jems/ejs.db.sqlite/src" "sqlite3.h"`
@@ -16,6 +17,9 @@ defineComponent() {
     fi
     if [ "$incdir" != "" ] ; then
         imports="$incdir/sqlite3.h"
+    fi
+    if [ "$ejscript" = "1" ] ; then
+        imports=
         builtin=
     fi
     configureComponent --libs "sqlite3" --libpaths "$libpaths" $builtin --imports "$imports" sqlite

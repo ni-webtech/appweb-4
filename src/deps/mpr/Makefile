@@ -24,12 +24,12 @@ ifeq ($(BLD_MPR_BUILTIN),1)
 		TARGETS			+= $(MPRSSL_LIB)
 		SSL_OBJECTS		+= mprSsl
 	endif
+	TARGETS				+= $(BLD_BIN_DIR)/makerom$(BLD_EXE)
 else
 	COMPILE				:= manager.c
 endif
 
 TARGETS				+= $(BLD_BIN_DIR)/manager$(BLD_EXE)
-TARGETS				+= $(BLD_BIN_DIR)/makerom$(BLD_EXE)
 
 ifeq ($(MACOSX),1)
 	mprSsl_IFLAGS   +=  -Wno-deprecated-declarations
