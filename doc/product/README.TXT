@@ -1,13 +1,11 @@
-Embedthis Appweb README
------------------------
+Embedthis Appweb(TM)
+--------------------
 
 Welcome to the Embedthis Appweb distribution. Appweb is a compact, fast, modular and powerful embedded web server. 
 
-This document contains details regarding the installation procedure for the binary Embedthis Appweb package.  This package contains pre-built stand-alone web server and an embeddable HTTP library with headers.
+This document contains details regarding the installation procedure for the binary Embedthis Appweb package.  This package contains pre-built stand-alone web server and an embeddable HTTP library with headers. You can read the documentation for the latest release online at:
 
-You can read the documentation for the latest release online at:
-
-    http://embedthis.com/products/appweb/doc/product/index.html
+http://embedthis.com/products/appweb/doc/appweb-4/product/index.html
 
 This software is copyrighted and distributed under license. Please read the LICENSE.TXT for details.
 
@@ -33,25 +31,24 @@ System Requirements
 Operating System Support
 
     * Windows XP, Vista, Windows-7 (x86,x86_64)
-    * Mac OS X 10.4, 10.5 (ppc,x86,x86_64)
+    * Mac OS X 10.4, 10.5 (x86,x86_64)
     * Linux 2.4, 2.6 (x86,,x86_64arm,ppc,sparc,xscale,mips)
     * VxWorks (x86,arm,ppc,sparc,xscale,mips)
     * Solaris (sparc,x86,x86_64)
 
-To install Appweb, your system will need at least the following:
+To install Appweb, your development system will need at least the following:
 
     * 40 MB Disk
-    * 32 MB RAM
+    * 512 MB RAM
 
-To deploy Appweb in an embedded environment, you will need at least the 
-following:
+To deploy Appweb in an embedded environment, you will need at least the following:
 
-    * 800 KB Disk / ROM space
-    * 1MB RAM
+    * 2 MB Disk / ROM space
+    * 2 MB RAM
 
-To rebuild Appweb from source code, you will need at least:
+To rebuild Appweb from source code on your development system, you will need at least:
 
-    * 50 MB disk space
+    * 80 MB disk space
 
 
 Installation Package Formats
@@ -96,7 +93,7 @@ This is the procedure to to install the self-install Tar format image:
 
    1. Uncompress and extract the image by typing
 
-      tar xvf appweb-VERSION-BUILD-DIST-OS-ARCH.FMT.tar.gz
+      tar xvzf appweb-VERSION-BUILD-DIST-OS-ARCH.FMT.tgz
 
       where FMT is "tar".
 
@@ -104,18 +101,6 @@ This is the procedure to to install the self-install Tar format image:
 
       sudo ./install
 
-
-Removing Embedthis Appweb
----------------------------
-
-This is the procedure to remove Appweb on all systems except Windows.
-
-   1. Change directory to the installation directory for Appweb. This is 
-      usually /etc/appweb
-
-   2. Run the uninstall script in the install directory for Appweb by typing 
-
-      sudo ./uninstall
 
 
 Apple Mac OS X Release Details
@@ -142,7 +127,7 @@ To install a Linux image:
 
    1. Uncompress and extract the image by typing:
 
-      tar xvfz appweb-VERSION-BUILD-DIST-LINUX-ARCH.FMT.tar.gz
+      tar xvfz appweb-VERSION-BUILD-DIST-LINUX-ARCH.FMT.tgz
 
       Where FMT is "rpm" or "deb".
 
@@ -170,7 +155,17 @@ To install the Windows Installer image:
 Removing Appweb on Windows
 ----------------------------
 
-If you installed the Appweb Windows Installer image, follow these steps to remove Appweb. If you installed the Tar self-install image, you will need to remove Appweb manually. 
+This is the procedure to remove Appweb on all systems except Windows.
+
+   1. Change directory to the installation directory for Appweb. This is 
+      usually /etc/appweb
+
+   2. Run the uninstall script in the install directory for Appweb by typing 
+
+      sudo ./uninstall
+
+If you installed the Appweb Windows Installer image, follow these steps to remove Appweb. If you installed the Tar
+self-install image, you will need to remove Appweb using the procedure described above. 
 
    1. Login with administrator privileges
 
@@ -184,11 +179,11 @@ Running Appweb
 
 Appweb will start when the Appweb installation procedure completes and on some systems, will launch your browser directed at the Appweb local home page.  Thereafter, Appweb will automatically start if the system is rebooted. If you wish to manually stop Appweb, type:
 
-    /etc/init.d/appweb stop
+    appman stop
 
 To restart Appweb:
 
-    /etc/init.d/appweb start
+    appman start
 
 Alternatively, you can run appweb manually:
 

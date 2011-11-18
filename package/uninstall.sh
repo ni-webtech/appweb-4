@@ -125,8 +125,9 @@ removeFiles() {
 	local pkg doins name
 
 	echo
-	for pkg in dev doc bin ; do
-		
+	# for pkg in dev doc bin ; do
+
+	for pkg in bin ; do
 		doins=`eval echo \\$install${pkg}`
 		if [ "$doins" = Y ] ; then
 			suffix="-${pkg}"
@@ -158,8 +159,8 @@ removeTarFiles() {
 	pkg=$1
 
 	[ $pkg = bin ] && prefix="$BLD_PRD_PREFIX"
-	[ $pkg = dev ] && prefix="$BLD_INC_PREFIX"
-	[ $pkg = doc ] && prefix="$BLD_DOC_PREFIX"
+#   [ $pkg = dev ] && prefix="$BLD_INC_PREFIX"
+#   [ $pkg = doc ] && prefix="$BLD_DOC_PREFIX"
 
 	if [ "$prefix/fileList.txt" ] ; then
         cd /
@@ -192,14 +193,14 @@ preClean() {
 		cd "$cdir"
 	fi
 
-	if [ "$removedev" = "Y" ] ; then
+#	if [ "$removedev" = "Y" ] ; then
 		if [ -d "$BLD_INC_PREFIX" ] ; then
 			cd "$BLD_INC_PREFIX"
 			make clean >/dev/null 2>&1 || true
 			removeIntermediateFiles '*.o' '*.lo' '*.so' '*.a' make.rules .config.h.sav make.log .changes
 			cd "$cdir"
 		fi
-	fi
+#	fi
 }
 
 
@@ -212,7 +213,7 @@ postClean() {
 	rm -f "${BLD_CFG_PREFIX}/${BLD_PRODUCT}Install.conf"
 	rm -f "${BLD_PRD_PREFIX}/install.conf"
 
-	if [ "$removedev" = "Y" ] ; then
+#	if [ "$removedev" = "Y" ] ; then
 		if [ -d "$BLD_MAN_PREFIX" ] ; then
 			rm -rf "$BLD_MAN_PREFIX"/man*
 		fi
@@ -220,7 +221,7 @@ postClean() {
 		cleanDir "$BLD_SAM_PREFIX"
 		cleanDir "$BLD_INC_PREFIX"
 		cleanDir "$BLD_DOC_PREFIX"
-	fi
+#	fi
 	if [ "$removebin" = "Y" ] ; then
 		cleanDir "$BLD_PRD_PREFIX"
 		cleanDir "$BLD_CFG_PREFIX"
@@ -376,15 +377,15 @@ askUser() {
 		else
 			removebin=N
 		fi
-		if [ -d "$devDir" ] ; then
-			removedev=`yesno "Remove development headers and samples package" "$removedev"`
-		else
-			removedev=N
-		fi
+#		if [ -d "$devDir" ] ; then
+#			removedev=`yesno "Remove development headers and samples package" "$removedev"`
+#		else
+#			removedev=N
+#		fi
 
 		echo -e "\nProceed removing with these instructions:" 
 		[ $removebin = Y ] && echo -e "  Remove binary package: $removebin"
-		[ $removedev = Y ] && echo -e "  Remove development package: $removedev"
+#		[ $removedev = Y ] && echo -e "  Remove development package: $removedev"
 
 		echo
 		finished=`yesno "Accept these instructions" "Y"`
