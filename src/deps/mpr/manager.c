@@ -19,7 +19,7 @@
 
 #include    "mpr.h"
 
-#if 0
+#if 1
 #define SERVICE_PROGRAM BLD_BIN_PREFIX "/" BLD_PRODUCT
 #define SERVICE_NAME BLD_PRODUCT
 #define SERVICE_HOME BLD_BIN_PREFIX

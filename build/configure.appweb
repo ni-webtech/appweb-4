@@ -96,6 +96,16 @@ BLD_SSL_PORT=$BLD_SSL_PORT
 BLD_FEATURE_MDB=$BLD_FEATURE_MDB
 BLD_FEATURE_SDB=$BLD_FEATURE_SDB
 
+#
+#   Manager name
+#
+BLD_MANAGER="appman"
+
+#
+#   Http program name
+#
+BLD_HTTP="http"
+
 !EOF_FEATURE_CONFIG1
 }
 

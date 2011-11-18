@@ -30,7 +30,7 @@ else
 endif
 
 ifneq ($(BLD_HOST_VXWORKS),1)
-	TARGETS				+= $(BLD_BIN_DIR)/manager$(BLD_EXE)
+	TARGETS				+= $(BLD_BIN_DIR)/$(BLD_MANAGER)$(BLD_EXE)
 endif
 
 ifeq ($(MACOSX),1)
@@ -48,12 +48,13 @@ $(MPRSSL_LIB): $(OBJECTS)
 $(BLD_BIN_DIR)/makerom$(BLD_EXE): $(OBJECTS) $(MPR_LIB)
 	bld --exe $(BLD_BIN_DIR)/makerom$(BLD_EXE) --search "$(BLD_SSL_LIBPATHS)" --libs "mpr $(BLD_SSL_LIBS)" makerom
 
-$(BLD_BIN_DIR)/manager$(BLD_EXE): $(BLD_LIB_DIR)/libmpr$(BLD_LIB) $(OBJECTS)
+$(BLD_BIN_DIR)/$(BLD_MANAGER)$(BLD_EXE): $(BLD_LIB_DIR)/libmpr$(BLD_LIB) $(OBJECTS)
 ifeq ($(BLD_HOST_UNIX),1)
-	bld --exe $(BLD_BIN_DIR)/manager$(BLD_EXE) --search "$(BLD_MPR_LIBPATHS)" --libs "$(BLD_MPR_LIBS)" manager$(BLD_OBJ)
+	bld --exe $(BLD_BIN_DIR)/$(BLD_MANAGER)$(BLD_EXE) --search "$(BLD_MPR_LIBPATHS)" --libs "$(BLD_MPR_LIBS)" \
+		manager$(BLD_OBJ)
 endif
 ifeq ($(BLD_HOST_WIN),1)
-	bld --graphical --exe $(BLD_BIN_DIR)/manager$(BLD_EXE) --rpath "$(BLD_LIB_PREFIX)" --rpath "../bin" \
+	bld --graphical --exe $(BLD_BIN_DIR)/$(BLD_MANAGER)$(BLD_EXE) --rpath "$(BLD_LIB_PREFIX)" --rpath "../bin" \
 		--search "$(LIBPATH)" $(MODE) --libs "mpr" --syslibs "$(SYSLIBS)" manager$(BLD_OBJ) 
 endif
 

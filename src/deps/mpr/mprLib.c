@@ -2675,7 +2675,7 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     if (flags & MPR_USER_EVENTS_THREAD) {
         mprInitWindow();
     } else {
-        mprStartEventsThread(flags);
+        mprStartEventsThread();
     }
     mprStartGCService();
 
