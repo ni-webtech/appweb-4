@@ -338,7 +338,7 @@ patchConfiguration() {
     if [ ! -f $BLD_PRODUCT.conf -a -f "$BLD_CFG_PREFIX/new.conf" ] ; then
         cp "$BLD_CFG_PREFIX/new.conf" "$BLD_CFG_PREFIX/$BLD_PRODUCT.conf"
     fi
-    setConfig --port ${BLD_HTTP_PORT} --ssl ${BLD_SSL_PORT} --home "${BLD_CFG_PREFIX}" --logs "${BLD_LOG_PREFIX}" \
+    setConfig --port ${HTTP_PORT} --ssl ${SSL_PORT} --home "${BLD_CFG_PREFIX}" --logs "${BLD_LOG_PREFIX}" \
         --documents "${BLD_WEB_PREFIX}" --modules "${BLD_LIB_PREFIX}" --cache "${BLD_SPL_PREFIX}/cache" "${BLD_CFG_PREFIX}/appweb.conf"
 }
 
@@ -378,14 +378,12 @@ if [ "$installbin" = "Y" ] ; then
 fi
 installFiles $FMT
 if [ "$installbin" = "Y" ] ; then
+    appman stop disable uninstall >/dev/null 2>&1
     patchConfiguration
-    if [ "$FMT" != "deb" ] ; then
-        appman install
-    fi
+    appman install
     if [ "$runDaemon" = "Y" ] ; then
-        if [ "$FMT" != "deb" ] ; then
-            appman start
-        fi
+        appman enable
+        appman start
         startBrowser
     fi
 fi

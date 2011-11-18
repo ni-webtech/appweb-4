@@ -149,7 +149,7 @@ copy("*", lib, {
     recurse: true,
 })
 
-if (options.task != "Remove") {
+if (options.task == "Install") {
     if (build.BLD_HOST_OS == "WIN") {
         Cmd(["setConfig", "--home", ".", "--documents", "web", "--logs", "logs", "--port", build.BLD_HTTP_PORT, "--ssl", 
             build.BLD_SSL_PORT, "--cache", "tmp/cache", "--modules", "bin", cfg.join("appweb.conf")])

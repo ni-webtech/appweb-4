@@ -39,7 +39,10 @@ IMG_NAME	= $(BLD_PRODUCT)-$(BLD_VERSION)-$(BLD_NUMBER)
 SRC_NAME	= $(BLD_PRODUCT)-src-$(BLD_VERSION)-$(BLD_NUMBER)
 BASE_NAME	= $(BLD_PRODUCT)-$(BLD_VERSION)-$(BLD_NUMBER)-$(BLD_HOST_DIST)-$(BLD_HOST_OS)-$(BLD_HOST_CPU)
 PACKS		= binary source
-PKG_DIR		= $(BLD_TOP)/out/staging
+STAGE_DIR	= $(BLD_TOP)/out/staging
+COMBO_DIR	= $(BLD_TOP)/out/combo
+FLAT_DIR	= $(BLD_TOP)/out/flat
+PKG_DIR		= $(BLD_TOP)/out/pkg
 INS_WITH	= --with-conf="$(CONF)" --with-testweb 
 
 #
@@ -166,11 +169,11 @@ test-uninstall-package:
 
 test-install-native-package:
 	if [ $(BLD_HOST_OS) = WIN ] ; then \
-		rm -fr "$(PKG_DIR)/*" ; \
+		rm -fr "$(STAGE_DIR)/*" ; \
 		name="$(BASE_NAME).exe.zip" ; \
-		cp WIN/unattended.ans $(BLD_OUT_DIR)/releases/$$name "$(PKG_DIR)" ; cd "$(PKG_DIR)" ; \
+		cp WIN/unattended.ans $(BLD_OUT_DIR)/releases/$$name "$(STAGE_DIR)" ; cd "$(STAGE_DIR)" ; \
 		unzip -q -o $$name ; \
-		echo "Dir=$(PKG_DIR)" >>unattended.ans ; \
+		echo "Dir=$(STAGE_DIR)" >>unattended.ans ; \
 		./$(BASE_NAME).exe /loadinf=/tmp/unattended.ans /silent ; \
 	elif [ $(BLD_HOST_OS) = MACOSX ] ; then \
 		hdiutil eject /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION) >/dev/null 2>&1 ; \
@@ -185,12 +188,12 @@ test-install-native-package:
 
 test-uninstall-native-package:
 	if [ $(BLD_HOST_OS) = WIN ] ; then \
-		if [ ! -x "$(PKG_DIR)/unins000.exe" ] ; then \
-			echo "Can't find $(PKG_DIR)/unins000.exe to uninstall" ; \
+		if [ ! -x "$(STAGE_DIR)/unins000.exe" ] ; then \
+			echo "Can't find $(STAGE_DIR)/unins000.exe to uninstall" ; \
 			exit 255 ; \
 		fi ; \
-		"$(PKG_DIR)/unins000.exe" /silent ; \
-		rm -fr "$(PKG_DIR)/*" ; \
+		"$(STAGE_DIR)/unins000.exe" /silent ; \
+		rm -fr "$(STAGE_DIR)/*" ; \
 	else \
 		name="$(BASE_NAME).tar.tar.gz" ; \
 		tar -C xvfz $(BLD_OUT_DIR)/releases/$$name ; \
@@ -264,12 +267,12 @@ uninstall-%:
 		--root=$(ROOT_DIR) --remove $(INS_WITH) pre $$packs post
 	
 combo packageCombo:
-	$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) --package combo && \
-			$(BLD_TOOLS_DIR)/makePackage --combo --root=$(PKG_DIR) combo
+	$(BLD_TOP)/build/bin/makeInstall --root=$(COMBO_DIR) --package combo && \
+			$(BLD_TOOLS_DIR)/makePackage --combo --root=$(COMBO_DIR) combo
 
 flat packageFlat:
-	$(BLD_TOP)/build/bin/makeInstall --root=$(PKG_DIR) --package flat && \
-	$(BLD_TOOLS_DIR)/makePackage --combo --root=$(PKG_DIR) flat
+	$(BLD_TOP)/build/bin/makeInstall --root=$(FLAT_DIR) --package flat && \
+	$(BLD_TOOLS_DIR)/makePackage --combo --root=$(FLAT_DIR) flat
 
 #
 #	Use makePackage --keep to preserve the out/staging area

@@ -5,6 +5,8 @@
 #
 S=${BLD_TOP}/src
 
+echo one $1
+echo two $2
 #
 #   Output directories. Note: these are in the staging directory.
 #

@@ -18,7 +18,7 @@ configureService() {
 	case $action in
 	stop)
         if [ -x /usr/local/bin/appman ] ; then
-            appman stop
+            appman stop >/dev/null 2>&1 ; true
         fi
         #   Keep this for earlier versions without appman
 		if [ -f /etc/rc.d/init.d/$BLD_PRODUCT ] ; then
@@ -28,7 +28,7 @@ configureService() {
 				invoke-rc.d $BLD_PRODUCT $action || true
 			fi
         elif [ -f /etc/init.d/$BLD_PRODUCT ] ; then
-            /etc/init.d/$BLD_PRODUCT stop
+            /etc/init.d/$BLD_PRODUCT stop >/dev/null 2>&1
 		fi
 		if [ "`/bin/pidof !!ORIG_BLD_BIN_PREFIX!!/$BLD_PRODUCT`" != "" ] ; then
             kill -9 `/bin/pidof !!ORIG_BLD_BIN_PREFIX!!/$BLD_PRODUCT`

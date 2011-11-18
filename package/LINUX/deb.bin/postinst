@@ -61,7 +61,7 @@ action=$1
 case $action in
 	configure)							# when new
 		oldVersion=$2
-        appman install
+        appman -v install
         if [ "$APPWEB_DONT_START" != 1 ] ; then
             appman enable
             appman start

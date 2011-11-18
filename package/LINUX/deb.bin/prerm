@@ -19,7 +19,7 @@ case $action in
 	remove)					# when new
 		# or conflictor's prerm remove in-favor package new-version
 		oldVersion=$2
-		appman stop disable uninstall
+		appman stop disable uninstall >/dev/null 2>&1 ; true
 		pid=`/bin/pidof !!ORIG_BLD_BIN_PREFIX!!/$BLD_PRODUCT; true`
 		[ "$pid" != "" ] && kill -9 $pid
 		rm -rf /var/lock/subsys/$BLD_PRODUCT /var/lock/$BLD_PRODUCT /var/log/$BLD_PRODUCT /var/run/$BLD_PRODUCT
