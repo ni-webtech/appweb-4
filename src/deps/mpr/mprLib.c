@@ -4974,7 +4974,7 @@ static int makeChannel(MprCmd *cmd, int index);
 static int makeCmdIO(MprCmd *cmd);
 static void manageCmdService(MprCmdService *cmd, int flags);
 static void manageCmd(MprCmd *cmd, int flags);
-static void reapCmd(MprCmd *cmd);
+static void reapCmd(MprCmd *cmd, MprSignal *sp);
 static void resetCmd(MprCmd *cmd);
 static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env);
 static int startProcess(MprCmd *cmd);
@@ -5186,7 +5186,7 @@ static void resetCmd(MprCmd *cmd)
 
     if (cmd->pid && !(cmd->flags & MPR_CMD_DETACH)) {
         mprStopCmd(cmd, -1);
-        reapCmd(cmd);
+        reapCmd(cmd, 0);
         cmd->pid = 0;
     }
 }
@@ -5204,7 +5204,9 @@ void mprDisconnectCmd(MprCmd *cmd)
             cmd->handlers[i] = 0;
         }
     }
+#if UNUSED
     cmd->disconnected = 1;
+#endif
 }
 
 
@@ -5230,7 +5232,9 @@ void mprCloseCmdFd(MprCmd *cmd, int channel)
             cmd->eofCount++;
             if (cmd->eofCount >= cmd->requiredEof && cmd->pid == 0) {
                 cmd->complete = 1;
+#if UNUSED
                 cmd->disconnected = 1;
+#endif
             }
         }
     }
@@ -5582,7 +5586,7 @@ static void waitForWinEvent(MprCmd *cmd, MprTime timeout)
         mprYield(MPR_YIELD_STICKY);
         if (WaitForSingleObject(cmd->process, (DWORD) delay) == WAIT_OBJECT_0) {
             mprResetYield();
-            reapCmd(cmd);
+            reapCmd(cmd, 0);
             return;
         }
         mprResetYield();
@@ -5592,7 +5596,7 @@ static void waitForWinEvent(MprCmd *cmd, MprTime timeout)
             rc = WaitForSingleObject(cmd->process, (DWORD) remaining);
             mprResetYield();
             if (rc == WAIT_OBJECT_0) {
-                reapCmd(cmd);
+                reapCmd(cmd, 0);
                 return;
             }
             mprError("Error waiting CGI I/O, error %d", mprGetOsError());
@@ -5649,12 +5653,13 @@ int mprWaitForCmd(MprCmd *cmd, MprTime timeout)
 
 
 /*
-    Gather the child's exit status. This routine is idempotent.
+    Gather the child's exit status. 
     WARNING: this may be called with a false-positive, ie. SIGCHLD will get invoked for all process deaths and not just
     when this cmd has completed.
  */
-static void reapCmd(MprCmd *cmd)
+static void reapCmd(MprCmd *cmd, MprSignal *sp)
 {
+//  sp->signo
     ssize   got, nbytes;
     int     status, rc;
 
@@ -5665,6 +5670,10 @@ static void reapCmd(MprCmd *cmd)
         return;
     }
 #if BLD_UNIX_LIKE
+    if (sp && sp->info.siginfo.si_pid != cmd->pid) {
+        mprLog(0, "reapCmd signal for pid %d, not for this cmd pid %d", sp->info.arg, cmd->pid);
+        return;
+    }
     if ((rc = waitpid(cmd->pid, &status, WNOHANG | __WALL)) < 0) {
         mprLog(0, "waitpid failed for pid %d, errno %d", cmd->pid, errno);
 
@@ -5724,40 +5733,42 @@ static void reapCmd(MprCmd *cmd)
         if (cmd->callback) {
             (cmd->callback)(cmd, -1, cmd->callbackData);
         }
+#if UNUSED
         if (cmd->complete) {
             cmd->disconnected = 1;
         }
-    }
-    mprLog(6, "Cmd reaped: status %d, pid %d, eof %d / %d\n", cmd->status, cmd->pid, cmd->eofCount, cmd->requiredEof);
+#endif
+        mprLog(6, "Cmd reaped: status %d, pid %d, eof %d / %d\n", cmd->status, cmd->pid, cmd->eofCount, cmd->requiredEof);
 
-    if (cmd->callback) {
-        /*
-            Read outstanding data
-         */  
-        while (cmd->eofCount < cmd->requiredEof) {
-            got = 0;
-            if (cmd->files[MPR_CMD_STDERR].fd >= 0) {
-                if ((nbytes = (cmd->callback)(cmd, MPR_CMD_STDERR, cmd->callbackData)) > 0) {
-                    got += nbytes;
+        if (cmd->callback) {
+            /*
+                Read outstanding data
+             */  
+            while (cmd->eofCount < cmd->requiredEof) {
+                got = 0;
+                if (cmd->files[MPR_CMD_STDERR].fd >= 0) {
+                    if ((nbytes = (cmd->callback)(cmd, MPR_CMD_STDERR, cmd->callbackData)) > 0) {
+                        got += nbytes;
+                    }
                 }
+                if (cmd->files[MPR_CMD_STDOUT].fd >= 0) {
+                    if ((nbytes = (cmd->callback)(cmd, MPR_CMD_STDOUT, cmd->callbackData)) > 0) {
+                        got += nbytes;
+                    }
+                }
+                if (got <= 0) {
+                    break;
+                }
+            }
+            if (cmd->files[MPR_CMD_STDERR].fd >= 0) {
+                mprCloseCmdFd(cmd, MPR_CMD_STDERR);
             }
             if (cmd->files[MPR_CMD_STDOUT].fd >= 0) {
-                if ((nbytes = (cmd->callback)(cmd, MPR_CMD_STDOUT, cmd->callbackData)) > 0) {
-                    got += nbytes;
-                }
+                mprCloseCmdFd(cmd, MPR_CMD_STDOUT);
             }
-            if (got <= 0) {
-                break;
-            }
+            mprAssert(cmd->eofCount == cmd->requiredEof);
+            mprAssert(cmd->complete);
         }
-        if (cmd->files[MPR_CMD_STDERR].fd >= 0) {
-            mprCloseCmdFd(cmd, MPR_CMD_STDERR);
-        }
-        if (cmd->files[MPR_CMD_STDOUT].fd >= 0) {
-            mprCloseCmdFd(cmd, MPR_CMD_STDOUT);
-        }
-        mprAssert(cmd->eofCount == cmd->requiredEof);
-        mprAssert(cmd->complete);
     }
 }
 

@@ -3180,9 +3180,8 @@ void httpEvent(HttpConn *conn, MprEvent *event)
 static void readEvent(HttpConn *conn)
 {
     HttpPacket  *packet;
-    ssize       nbytes, size, count;
+    ssize       nbytes, size;
 
-    count = 0;
     while (!conn->connError && (packet = getPacket(conn, &size)) != 0) {
         nbytes = mprReadSocket(conn->sock, mprGetBufEnd(packet->content), size);
         LOG(8, "http: read event. Got %d", nbytes);
@@ -3214,10 +3213,8 @@ static void readEvent(HttpConn *conn)
             break;
         }
         if (mprDispatcherHasEvents(conn->dispatcher)) {
-            mprLog(0, "HAS EVENTS");
             break;
         }
-        count++;
     }
 }
 

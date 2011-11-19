@@ -354,7 +354,9 @@ static ssize cgiCallback(MprCmd *cmd, int channel, void *data)
     }
     mprAssert(conn->tx);
     mprAssert(conn->rx);
+#if UNUSED
     mprAssert(!cmd->disconnected);
+#endif
 
     tx = conn->tx;
     mprAssert(tx);
@@ -410,7 +412,9 @@ static ssize readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf 
     conn = q->conn;
     tx = conn->tx;
     mprAssert(tx);
+#if UNUSED
     mprAssert(!cmd->disconnected);
+#endif
     mprAssert(conn->state > HTTP_STATE_BEGIN);
     mprResetBufIfEmpty(buf);
     total = 0;
