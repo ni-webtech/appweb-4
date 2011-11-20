@@ -69,6 +69,7 @@
 		C913688414041CBA0024EB0A /* espTemplate.c in Sources */ = {isa = PBXBuildFile; fileRef = C913688014041CBA0024EB0A /* espTemplate.c */; };
 		C913688614041CD70024EB0A /* espHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C913688514041CD70024EB0A /* espHandler.c */; };
 		C913689114041D7A0024EB0A /* esp.c in Sources */ = {isa = PBXBuildFile; fileRef = C913687D14041CBA0024EB0A /* esp.c */; };
+		C9206BC11477391400A0C012 /* manager.c in Sources */ = {isa = PBXBuildFile; fileRef = C9206BC01477391400A0C012 /* manager.c */; };
 		C93ACAB414206B17006FF043 /* espHtml.c in Sources */ = {isa = PBXBuildFile; fileRef = C93ACAB214206B17006FF043 /* espHtml.c */; };
 		C94086AF101A665B0019809C /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C94086D8101A672F0019809C /* testAppweb.c in Sources */ = {isa = PBXBuildFile; fileRef = C94086CB101A672F0019809C /* testAppweb.c */; };
@@ -124,7 +125,6 @@
 		C9B12BD513D1765900470A96 /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C9C2BEEC100EF66D009B160F /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C9D7A7C313D4F28D000428C7 /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
-		C9D7A7CD13D4F2D7000428C7 /* angel.c in Sources */ = {isa = PBXBuildFile; fileRef = C9D7A7CB13D4F2CD000428C7 /* angel.c */; };
 		C9D8167E101D35090039DD9D /* libmprssl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DAE0FD03FBA009C78E1 /* libmprssl.dylib */; };
 		C9D817A8101D4C2A0039DD9D /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C9D817A9101D4C2A0039DD9D /* libappweb.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DC30FD03FD9009C78E1 /* libappweb.dylib */; };
@@ -492,6 +492,7 @@
 		C913687F14041CBA0024EB0A /* espSession.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espSession.c; path = ../../../src/esp/espSession.c; sourceTree = "<group>"; };
 		C913688014041CBA0024EB0A /* espTemplate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espTemplate.c; path = ../../../src/esp/espTemplate.c; sourceTree = "<group>"; };
 		C913688514041CD70024EB0A /* espHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = espHandler.c; sourceTree = "<group>"; };
+		C9206BC01477391400A0C012 /* manager.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = manager.c; path = ../../../src/deps/mpr/manager.c; sourceTree = "<group>"; };
 		C938480E1123BD80002AD34B /* ejsHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ejsHandler.c; sourceTree = "<group>"; };
 		C93ACAB214206B17006FF043 /* espHtml.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espHtml.c; path = ../../../src/esp/espHtml.c; sourceTree = "<group>"; };
 		C94086B3101A665B0019809C /* testAppweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testAppweb; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -530,7 +531,7 @@
 		C9A44E9913D74BAC009BF64B /* customize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = customize.h; path = ../../../src/customize.h; sourceTree = "<group>"; };
 		C9AFCC560FC521440080E908 /* appweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = appweb; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9B12BCA13D175C300470A96 /* libpcre.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libpcre.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
-		C9D7A7C913D4F28D000428C7 /* angel */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = angel; sourceTree = BUILT_PRODUCTS_DIR; };
+		C9D7A7C913D4F28D000428C7 /* appman */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = appman; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9D7A7CB13D4F2CD000428C7 /* angel.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = angel.c; path = ../../../src/deps/mpr/angel.c; sourceTree = "<group>"; };
 		C9D817AD101D4C2A0039DD9D /* mod_php.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_php.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9E4B73D13C7F4F3005345FA /* mod_esp.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_esp.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -805,7 +806,7 @@
 				C97DCABB101D4FE7008EB048 /* mod_ssl.dylib */,
 				C9E4B73D13C7F4F3005345FA /* mod_esp.dylib */,
 				C9A26CED13D1787B007A3D7C /* mod_ejs.dylib */,
-				C9D7A7C913D4F28D000428C7 /* angel */,
+				C9D7A7C913D4F28D000428C7 /* appman */,
 				C9E6CC9713F0402F0090CCA8 /* esp */,
 			);
 			name = Products;
@@ -829,6 +830,7 @@
 		C9AFCC6A0FC522600080E908 /* mpr */ = {
 			isa = PBXGroup;
 			children = (
+				C9206BC01477391400A0C012 /* manager.c */,
 				C9817CF0110D234800F241EF /* makerom.c */,
 				C9817C11110D157800F241EF /* mprLib.c */,
 				C9817C12110D157800F241EF /* mprSsl.c */,
@@ -1101,9 +1103,9 @@
 			productReference = C9B12BCA13D175C300470A96 /* libpcre.dylib */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
-		C9D7A7B613D4F28D000428C7 /* angel */ = {
+		C9D7A7B613D4F28D000428C7 /* appman */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C9D7A7C613D4F28D000428C7 /* Build configuration list for PBXNativeTarget "angel" */;
+			buildConfigurationList = C9D7A7C613D4F28D000428C7 /* Build configuration list for PBXNativeTarget "appman" */;
 			buildPhases = (
 				C9D7A7BF13D4F28D000428C7 /* Sources */,
 				C9D7A7C113D4F28D000428C7 /* Frameworks */,
@@ -1114,9 +1116,9 @@
 				C9D7A7CF13D4F332000428C7 /* PBXTargetDependency */,
 				C9D7A7D113D4F332000428C7 /* PBXTargetDependency */,
 			);
-			name = angel;
+			name = appman;
 			productName = appweb;
-			productReference = C9D7A7C913D4F28D000428C7 /* angel */;
+			productReference = C9D7A7C913D4F28D000428C7 /* appman */;
 			productType = "com.apple.product-type.tool";
 		};
 		C9D817A1101D4C2A0039DD9D /* mod_php */ = {
@@ -1218,7 +1220,7 @@
 				C9761E020FD04150009C78E1 /* http */,
 				C9761E090FD0415A009C78E1 /* auth */,
 				C9408698101A665B0019809C /* testAppweb */,
-				C9D7A7B613D4F28D000428C7 /* angel */,
+				C9D7A7B613D4F28D000428C7 /* appman */,
 				C9D7B35513D8C030006C3A9B /* test */,
 			);
 		};
@@ -1525,7 +1527,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C9D7A7CD13D4F2D7000428C7 /* angel.c in Sources */,
+				C9206BC11477391400A0C012 /* manager.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1751,7 +1753,7 @@
 		};
 		C9D7A82613D4F3BA000428C7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C9D7A7B613D4F28D000428C7 /* angel */;
+			target = C9D7A7B613D4F28D000428C7 /* appman */;
 			targetProxy = C9D7A82513D4F3BA000428C7 /* PBXContainerItemProxy */;
 		};
 		C9D817B3101D4CC70039DD9D /* PBXTargetDependency */ = {
@@ -2111,7 +2113,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				INSTALL_PATH = "/usr/lib/$(BLD_PRODUCT_NAME)/bin";
-				PRODUCT_NAME = angel;
+				PRODUCT_NAME = appman;
 			};
 			name = Debug;
 		};
@@ -2119,7 +2121,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				INSTALL_PATH = "/usr/lib/$(BLD_PRODUCT_NAME)/bin";
-				PRODUCT_NAME = angel;
+				PRODUCT_NAME = appman;
 			};
 			name = Release;
 		};
@@ -2352,7 +2354,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C9D7A7C613D4F28D000428C7 /* Build configuration list for PBXNativeTarget "angel" */ = {
+		C9D7A7C613D4F28D000428C7 /* Build configuration list for PBXNativeTarget "appman" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C9D7A7C713D4F28D000428C7 /* Debug */,

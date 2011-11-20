@@ -5936,6 +5936,7 @@ extern void mprScheduleDispatcher(MprDispatcher *dispatcher);
 extern void mprQueueTimerEvent(MprDispatcher *dispatcher, MprEvent *event);
 extern void mprDedicateWorkerToDispatcher(MprDispatcher *dispatcher, struct MprWorker *worker);
 extern void mprReleaseWorkerFromDispatcher(MprDispatcher *dispatcher, struct MprWorker *worker);
+extern bool mprDispatcherHasEvents(MprDispatcher *dispatcher);
 
 /*
     XML parser states. The states that are passed to the user handler have "U" appended to the comment.
@@ -7594,8 +7595,13 @@ typedef struct MprCmd {
     int             flags;              /**< Control flags (userFlags not here) */
     int             eofCount;           /**< Count of end-of-files */
     int             requiredEof;        /**< Number of EOFs required for an exit */
+
+//  MOB - set only when pid reaped
     int             complete;           /**< All channels EOF and status gathered */
+#if UNUSED
+//  MOB - who uses this? - never used?
     int             disconnected;       /**< Command not connected, may not yet have exit status */
+#endif
     int             stopped;            /**< Command stopped */
 
     char            **makeArgv;         /**< Allocated argv */ 
