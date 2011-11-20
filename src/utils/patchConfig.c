@@ -124,11 +124,11 @@ int main(int argc, char **argv) {
     }
 	bak = sfmt("%s.bak", path);
 	if (rename(path, bak) < 0) {
-        mprUserError("Can't save %s to %s: %x", path, bak, GetLastError());
+        mprUserError("Can't save %s to %s: %x", path, bak, mprGetError());
 	}
 	mprDeletePath(path);
     if (rename(revised, path) < 0) {
-        mprUserError("Can't rename %s to %s: %x", revised, path, GetLastError());
+        mprUserError("Can't rename %s to %s: %x", revised, path, mprGetError());
 		rename(bak, path);
     }
     return 0;
