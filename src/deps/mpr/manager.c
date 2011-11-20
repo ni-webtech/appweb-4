@@ -21,7 +21,7 @@
 
 #define SERVICE_PROGRAM BLD_BIN_PREFIX "/" BLD_PRODUCT
 #define SERVICE_NAME BLD_PRODUCT
-#define SERVICE_HOME BLD_BIN_PREFIX
+#define SERVICE_HOME BLD_PREFIX
 
 #if BLD_UNIX_LIKE
 /*********************************** Locals ***********************************/

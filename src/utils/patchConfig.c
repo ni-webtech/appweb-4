@@ -1,0 +1,191 @@
+/**
+    appwebMonitor.c  -- Windows Appweb Monitor program
+  
+    The Appweb Monitor is a windows monitor program that interacts with the Appweb angel program.
+
+    Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
+ */
+
+/********************************* Includes ***********************************/
+
+#include    "mpr.h"
+
+/***************************** Forward Declarations ***************************/
+
+static char *replace(cchar *str, cchar *pattern, cchar *fmt, ...);
+
+/*********************************** Code *************************************/
+#if BLD_WIN_LIKE
+int WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2) {
+    cchar   *documents, *home, *logs, *port, *ssl, *argp, **argv, *path, *contents, *revised;
+    cchar   *user, *group, *cache, *modules;
+    int     argc, err, nextArg;
+
+    if ((argc = mprMakeArgv(command, &argv, 0)) < 0) {
+        return FALSE;
+    }
+#else
+int main(int argc, char **argv) {
+    cchar   *documents, *home, *logs, *port, *ssl, *argp, *path, *contents, *revised;
+    cchar   *user, *group, *cache, *modules;
+    int     err, nextArg;
+#endif
+    if (mprCreate(argc, argv, MPR_USER_EVENTS_THREAD) == NULL) {
+        exit(1);
+    }
+    documents = home = port = ssl = logs = user = group = cache = modules = 0;
+    for (err = 0, nextArg = 1; nextArg < argc; nextArg++) {
+        argp = argv[nextArg];
+        if (*argp != '-') {
+            break;
+        }
+        if (smatch(argp, "--documents") && nextArg < argc) {
+            documents = argv[++nextArg];
+        } else if (smatch(argp, "--home") && nextArg < argc) {
+            home = argv[++nextArg];
+        } else if (smatch(argp, "--logs") && nextArg < argc) {
+            logs = argv[++nextArg];
+        } else if (smatch(argp, "--port") && nextArg < argc) {
+            port = argv[++nextArg];
+        } else if (smatch(argp, "--ssl") && nextArg < argc) {
+            ssl = argv[++nextArg];
+        } else if (smatch(argp, "--user") && nextArg < argc) {
+            user = argv[++nextArg];
+        } else if (smatch(argp, "--group") && nextArg < argc) {
+            group = argv[++nextArg];
+        } else if (smatch(argp, "--cache") && nextArg < argc) {
+            cache = argv[++nextArg];
+        } else if (smatch(argp, "--modules") && nextArg < argc) {
+            modules = argv[++nextArg];
+        } else {
+            err++;
+        }
+    }
+    if (nextArg != (argc - 1)) {
+        err++;
+    }
+    if (err) {
+        mprUserError("Bad command line:\n"
+            "  Usage: pathConfig [options]\n"
+            "  Switches:\n"
+            "    --cache dir          # Cache dir"
+            "    --documents dir      # Static documents directory"
+            "    --group groupname    # Group name"
+            "    --home dir           # Server home directory"
+            "    --logs dir           # Log directory"
+            "    --modules dir        # moduels dir"
+            "    --port number        # HTTP port number"
+            "    --user username      # User name");
+        return 1;
+    }
+    path = argv[nextArg++];
+
+    if ((contents = mprReadPathContents(path, NULL)) == 0) {
+        mprUserError("Can't read %s", path);
+        return 1;
+    }
+    contents = replace(contents, "Listen 80", "Listen %s", port);
+    contents = replace(contents, "443", ssl);
+    if (documents) {
+        contents = replace(contents, "DocumentRoot \"/var/www/appweb-default\"", "DocumentRoot \"%s\"", documents);
+    }
+    if (home) {
+        contents = replace(contents, "ServerRoot", "ServerRoot \"%s\"", home);
+    }
+    if (logs) {
+        contents = replace(contents, "ErrorLog", "ErrorLog \"%s\"", mprJoinPath(logs, "logs/error.log"));
+        contents = replace(contents, "AccessLog", "AccessLog \"%s\"", mprJoinPath(logs, "logs/access.log"));
+    }
+    if (user) {
+        contents = replace(contents, "User", "User %s", user);
+    }
+    if (group) {
+        contents = replace(contents, "Group", "Group %s", group);
+    }
+    if (cache) {
+        contents = replace(contents, "Esp cache", "Esp cache \"%s\"", cache);
+    }
+    if (modules) {
+        contents = replace(contents, "LoadModulePath", "LoadModulePath \"%s\"", modules);
+    }
+
+    revised = mprGetTempPath(mprGetPathParent(path));
+    if (mprWritePathContents(revised, contents, -1, 0644) < 0) {
+        mprUserError("Can't write %s", revised);
+    }
+    if (rename(revised, path) < 0) {
+        mprUserError("Can't rename %s to %s", revised, path);
+    }
+    return 0;
+}
+
+
+/*
+    This replace will replace the given pattern and the next word on the same line with the given replacement.
+ */
+static char *replace(cchar *str, cchar *pattern, cchar *fmt, ...)
+{
+    va_list     args;
+    MprBuf      *buf;
+    cchar       *s, *replacement;
+    ssize       plen;
+
+    va_start(args, fmt);
+    replacement = sfmtv(fmt, args);
+    buf = mprCreateBuf(-1, -1);
+    plen = slen(pattern);
+    for (s = str; *s; s++) {
+        if (*s == *pattern && sncmp(s, pattern, plen) == 0) {
+            mprPutStringToBuf(buf, replacement);
+            for (s += plen; *s && isspace((int) *s) && *s != '\n'; s++) ;
+            for (; *s && !isspace((int) *s) && *s != '\n' && *s != '>'; s++) ;
+         
+        }
+#if BLD_WIN_LIKE
+        if (*s == '\n' && s[-1] != '\r') {
+            mprPutCharToBuf(buf, '\r');
+        }
+#endif
+        mprPutCharToBuf(buf, *s);
+    }
+    va_end(args);
+    mprAddNullToBuf(buf);
+    return sclone(mprGetBufStart(buf));
+}
+
+
+/*
+    @copy   default
+  
+    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+  
+    This software is distributed under commercial and open source licenses.
+    You may use the GPL open source license described below or you may acquire
+    a commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.TXT distributed with
+    this software for full details.
+  
+    This software is open source; you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by the
+    Free Software Foundation; either version 2 of the License, or (at your
+    option) any later version. See the GNU General Public License for more
+    details at: http://embedthis.com/downloads/gplLicense.html
+  
+    This program is distributed WITHOUT ANY WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  
+    This GPL license does NOT permit incorporating this software into
+    proprietary programs. If you are unable to comply with the GPL, you must
+    acquire a commercial license to use this software. Commercial licenses
+    for this software and support services are available from Embedthis
+    Software at http://embedthis.com
+  
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */

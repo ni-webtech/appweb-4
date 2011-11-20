@@ -124,6 +124,9 @@
 		C9B12BD413D1763500470A96 /* libpcre.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9B12BCA13D175C300470A96 /* libpcre.dylib */; };
 		C9B12BD513D1765900470A96 /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C9C2BEEC100EF66D009B160F /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
+		C9D7054F1478D5B100CAD063 /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
+		C9D705561478D5E400CAD063 /* patchConfig.c in Sources */ = {isa = PBXBuildFile; fileRef = C9D705551478D5E400CAD063 /* patchConfig.c */; };
+		C9D705571478D5E400CAD063 /* patchConfig.c in Sources */ = {isa = PBXBuildFile; fileRef = C9D705551478D5E400CAD063 /* patchConfig.c */; };
 		C9D7A7C313D4F28D000428C7 /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C9D8167E101D35090039DD9D /* libmprssl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DAE0FD03FBA009C78E1 /* libmprssl.dylib */; };
 		C9D817A8101D4C2A0039DD9D /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
@@ -392,6 +395,27 @@
 			remoteGlobalIDString = C9E6CC8D13F0402F0090CCA8;
 			remoteInfo = esp;
 		};
+		C9D705471478D5B100CAD063 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C93E6EFE11E83A3B00248470;
+			remoteInfo = prep;
+		};
+		C9D705491478D5B100CAD063 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9761D9F0FD03F94009C78E1;
+			remoteInfo = libmpr;
+		};
+		C9D7054B1478D5B100CAD063 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C9817C49110D183800F241EF;
+			remoteInfo = libhttp;
+		};
 		C9D7A7CE13D4F332000428C7 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = C9AFCC4A0FC521150080E908 /* Project object */;
@@ -531,8 +555,9 @@
 		C9A44E9913D74BAC009BF64B /* customize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = customize.h; path = ../../../src/customize.h; sourceTree = "<group>"; };
 		C9AFCC560FC521440080E908 /* appweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = appweb; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9B12BCA13D175C300470A96 /* libpcre.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libpcre.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		C9D705531478D5B100CAD063 /* patchConfig */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = patchConfig; sourceTree = BUILT_PRODUCTS_DIR; };
+		C9D705551478D5E400CAD063 /* patchConfig.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = patchConfig.c; path = ../../../src/utils/patchConfig.c; sourceTree = "<group>"; };
 		C9D7A7C913D4F28D000428C7 /* appman */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = appman; sourceTree = BUILT_PRODUCTS_DIR; };
-		C9D7A7CB13D4F2CD000428C7 /* angel.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = angel.c; path = ../../../src/deps/mpr/angel.c; sourceTree = "<group>"; };
 		C9D817AD101D4C2A0039DD9D /* mod_php.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_php.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9E4B73D13C7F4F3005345FA /* mod_esp.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_esp.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9E6CC9713F0402F0090CCA8 /* esp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = esp; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -654,6 +679,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C9D7054E1478D5B100CAD063 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C9D7054F1478D5B100CAD063 /* libmpr.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C9D7A7C113D4F28D000428C7 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -745,9 +778,10 @@
 		C9761E870FD04412009C78E1 /* utils */ = {
 			isa = PBXGroup;
 			children = (
-				C9D7A7CB13D4F2CD000428C7 /* angel.c */,
 				C96176F312DCE345002702E0 /* auth.c */,
 				C9761E880FD0442C009C78E1 /* cgiProgram.c */,
+				C9206BC01477391400A0C012 /* manager.c */,
+				C9D705551478D5E400CAD063 /* patchConfig.c */,
 			);
 			name = utils;
 			sourceTree = "<group>";
@@ -808,6 +842,7 @@
 				C9A26CED13D1787B007A3D7C /* mod_ejs.dylib */,
 				C9D7A7C913D4F28D000428C7 /* appman */,
 				C9E6CC9713F0402F0090CCA8 /* esp */,
+				C9D705531478D5B100CAD063 /* patchConfig */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -830,7 +865,6 @@
 		C9AFCC6A0FC522600080E908 /* mpr */ = {
 			isa = PBXGroup;
 			children = (
-				C9206BC01477391400A0C012 /* manager.c */,
 				C9817CF0110D234800F241EF /* makerom.c */,
 				C9817C11110D157800F241EF /* mprLib.c */,
 				C9817C12110D157800F241EF /* mprSsl.c */,
@@ -1103,6 +1137,25 @@
 			productReference = C9B12BCA13D175C300470A96 /* libpcre.dylib */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
+		C9D705451478D5B100CAD063 /* patchConfig */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C9D705501478D5B100CAD063 /* Build configuration list for PBXNativeTarget "patchConfig" */;
+			buildPhases = (
+				C9D7054C1478D5B100CAD063 /* Sources */,
+				C9D7054E1478D5B100CAD063 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C9D705461478D5B100CAD063 /* PBXTargetDependency */,
+				C9D705481478D5B100CAD063 /* PBXTargetDependency */,
+				C9D7054A1478D5B100CAD063 /* PBXTargetDependency */,
+			);
+			name = patchConfig;
+			productName = httpPassword;
+			productReference = C9D705531478D5B100CAD063 /* patchConfig */;
+			productType = "com.apple.product-type.tool";
+		};
 		C9D7A7B613D4F28D000428C7 /* appman */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C9D7A7C613D4F28D000428C7 /* Build configuration list for PBXNativeTarget "appman" */;
@@ -1222,6 +1275,7 @@
 				C9408698101A665B0019809C /* testAppweb */,
 				C9D7A7B613D4F28D000428C7 /* appman */,
 				C9D7B35513D8C030006C3A9B /* test */,
+				C9D705451478D5B100CAD063 /* patchConfig */,
 			);
 		};
 /* End PBXProject section */
@@ -1456,6 +1510,7 @@
 				C9F2260213EB34AD00AD8F7C /* dirHandler.c in Sources */,
 				C9F2260313EB34AD00AD8F7C /* fileHandler.c in Sources */,
 				C976CD0A1405906C00D21AFA /* server.c in Sources */,
+				C9D705561478D5E400CAD063 /* patchConfig.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1520,6 +1575,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				C9B12BCB13D175E100470A96 /* pcre.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C9D7054C1478D5B100CAD063 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C9D705571478D5E400CAD063 /* patchConfig.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1740,6 +1803,21 @@
 			isa = PBXTargetDependency;
 			target = C9E6CC8D13F0402F0090CCA8 /* esp */;
 			targetProxy = C9D25906140409A0003F675B /* PBXContainerItemProxy */;
+		};
+		C9D705461478D5B100CAD063 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C93E6EFE11E83A3B00248470 /* prep */;
+			targetProxy = C9D705471478D5B100CAD063 /* PBXContainerItemProxy */;
+		};
+		C9D705481478D5B100CAD063 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9761D9F0FD03F94009C78E1 /* libmpr */;
+			targetProxy = C9D705491478D5B100CAD063 /* PBXContainerItemProxy */;
+		};
+		C9D7054A1478D5B100CAD063 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C9817C49110D183800F241EF /* libhttp */;
+			targetProxy = C9D7054B1478D5B100CAD063 /* PBXContainerItemProxy */;
 		};
 		C9D7A7CF13D4F332000428C7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -2109,6 +2187,22 @@
 			};
 			name = Release;
 		};
+		C9D705511478D5B100CAD063 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INSTALL_PATH = "/usr/lib/$(BLD_PRODUCT_NAME)/bin";
+				PRODUCT_NAME = patchConfig;
+			};
+			name = Debug;
+		};
+		C9D705521478D5B100CAD063 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INSTALL_PATH = "/usr/lib/$(BLD_PRODUCT_NAME)/bin";
+				PRODUCT_NAME = patchConfig;
+			};
+			name = Release;
+		};
 		C9D7A7C713D4F28D000428C7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -2350,6 +2444,15 @@
 			buildConfigurations = (
 				C9B12BC813D175C300470A96 /* Debug */,
 				C9B12BC913D175C300470A96 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C9D705501478D5B100CAD063 /* Build configuration list for PBXNativeTarget "patchConfig" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C9D705511478D5B100CAD063 /* Debug */,
+				C9D705521478D5B100CAD063 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

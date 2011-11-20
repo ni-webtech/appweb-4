@@ -3088,6 +3088,9 @@ static int parseArgs(char *args, char **argv)
 
 /*
     Make an argv array. All args are in a single memory block of which argv points to the start.
+    Set MPR_ARGV_ARGS_ONLY if not passing in a program name. 
+    Always returns and argv[0] reserved for the program name or empty string.
+    First arg starts at argv[1]
  */
 int mprMakeArgv(cchar *command, char ***argvp, int flags)
 {
@@ -16290,6 +16293,9 @@ ssize mprWritePathContents(cchar *path, cchar *buf, ssize len, int mode)
 
     if (mode == 0) {
         mode = 0644;
+    }
+    if (len < 0) {
+        len = slen(buf);
     }
     if ((file = mprOpenFile(path, O_WRONLY | O_TRUNC | O_CREAT | O_BINARY, mode)) == 0) {
         mprError("Can't open %s", path);
