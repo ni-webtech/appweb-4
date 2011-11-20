@@ -2673,7 +2673,9 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     mpr->pathEnv = sclone(getenv("PATH"));
 
     if (flags & MPR_USER_EVENTS_THREAD) {
-        mprInitWindow();
+        if (flags & MPR_CREATE_WINDOW) {
+            mprInitWindow();
+        }
     } else {
         mprStartEventsThread();
     }
@@ -2940,7 +2942,9 @@ int mprStartEventsThread()
 static void serviceEventsThread(void *data, MprThread *tp)
 {
     mprLog(MPR_CONFIG, "Service thread started");
-    mprInitWindow();
+    if (MPR->flags & MPR_CREATE_WINDOW) {
+        mprInitWindow();
+    }
     mprSignalCond(MPR->cond);
     mprServiceEvents(-1, 0);
 }
@@ -3088,6 +3092,9 @@ static int parseArgs(char *args, char **argv)
 
 /*
     Make an argv array. All args are in a single memory block of which argv points to the start.
+    Set MPR_ARGV_ARGS_ONLY if not passing in a program name. 
+    Always returns and argv[0] reserved for the program name or empty string.
+    First arg starts at argv[1]
  */
 int mprMakeArgv(cchar *command, char ***argvp, int flags)
 {

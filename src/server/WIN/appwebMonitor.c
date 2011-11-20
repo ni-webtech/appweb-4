@@ -90,8 +90,6 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2)
     stop = 0;
     manage = 0;
     app->appInst = inst;
-//  MOB - API
-    app->appHwnd = MPR->waitService->hwnd;
     app->serviceName = sclone(BLD_COMPANY "-" BLD_PRODUCT);
     app->serviceTitle = sclone(BLD_NAME);
     app->serviceWindowName = sclone(BLD_PRODUCT "Angel");
@@ -104,7 +102,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2)
     /*
         Parse command line arguments
      */
-    if ((argc = mprMakeArgv(command, &argv, 0)) < 0) {
+    if ((argc = mprMakeArgv(command, &argv, MPR_ARGV_ARGS_ONLY)) < 0) {
         return FALSE;
     }
     for (nextArg = 1; nextArg < argc; nextArg++) {
@@ -137,15 +135,11 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2)
         mprUserError("Application %s is already active.", mprGetAppTitle());
         return MPR_ERR_BUSY;
     }
-#if UNUSED
-    /*
-        Create the window
-     */ 
-    if (initWindow() < 0) {
+    if (mprInitWindow() < 0) {
         mprUserError("Can't initialize application Window");
         return MPR_ERR_CANT_INITIALIZE;
     }
-#endif
+    app->appHwnd = mprGetHwnd();
     mprSetWinMsgCallback(msgProc);
     if (app->taskBarIcon > 0) {
         ShowWindow(app->appHwnd, SW_MINIMIZE);

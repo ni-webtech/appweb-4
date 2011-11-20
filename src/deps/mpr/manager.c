@@ -21,7 +21,7 @@
 
 #define SERVICE_PROGRAM BLD_BIN_PREFIX "/" BLD_PRODUCT
 #define SERVICE_NAME BLD_PRODUCT
-#define SERVICE_HOME BLD_BIN_PREFIX
+#define SERVICE_HOME BLD_PREFIX
 
 #if BLD_UNIX_LIKE
 /*********************************** Locals ***********************************/
@@ -788,7 +788,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
     char    **argv, *argp;
     int     argc, err, nextArg;
 
-    mpr = mprCreate(0, NULL, MPR_USER_EVENTS_THREAD);
+    mpr = mprCreate(0, NULL, MPR_USER_EVENTS_THREAD | MPR_CREATE_WINDOW);
     app = mprAllocObj(App, manageApp);
     mprAddRoot(app);
     mprAddTerminator(terminating);

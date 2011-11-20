@@ -8211,6 +8211,7 @@ extern Mpr *mprGetMpr();
 #define MPR_MARK_THREAD         0x4         /**< Start a dedicated marker thread for garbage collection */
 #define MPR_SWEEP_THREAD        0x8         /**< Start a dedicated sweeper thread for garbage collection */
 #define MPR_USER_EVENTS_THREAD  0x10        /**< User will explicitly manage own mprServiceEvents calls */
+#define MPR_CREATE_WINDOW       0x20        /**< Create a windows Window */
 
 #if BLD_TUNE == MPR_TUNE_SPEED
     // #define MPR_THREAD_PATTERN (MPR_MARK_THREAD | MPR_SWEEP_THREAD)

@@ -10712,6 +10712,7 @@ void httpDefineRouteBuiltins()
         %B - Boolean. Parses: on/off, true/false, yes/no.
         %N - Number. Parses numbers in base 10.
         %S - String. Removes quotes.
+        %T - Template String. Removes quotes and expand ${PathVars}.
         %P - Path string. Removes quotes and expands ${PathVars}. Resolved relative to host->dir (ServerRoot).
         %W - Parse words into a list
         %! - Optional negate. Set value to HTTP_ROUTE_NOT present, otherwise zero.

@@ -13,8 +13,6 @@ dependExtra:
 
 packageFinal:
 	$(MAKE) -C .. packageRelease
-
-x:
 	id=`logname || id -u` ; priv chown -R $$id $(BLD_OUT_DIR)
 	$(MAKE) -C .. packageCombo
 	$(MAKE) -C .. packageFlat
