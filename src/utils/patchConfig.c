@@ -16,23 +16,29 @@ static char *replace(cchar *str, cchar *pattern, cchar *fmt, ...);
 
 /*********************************** Code *************************************/
 #if BLD_WIN_LIKE
-int WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2) {
-    cchar   *documents, *home, *logs, *port, *ssl, *argp, **argv, *path, *contents, *revised;
-    cchar   *user, *group, *cache, *modules;
+int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2) {
+    char    **argv;
+    cchar   *documents, *home, *logs, *port, *ssl, *argp, *path, *contents, *revised;
+    cchar   *user, *group, *cache, *modules, *bak;
     int     argc, err, nextArg;
+    static void logHandler(int flags, int level, cchar *msg);
 
-    if ((argc = mprMakeArgv(command, &argv, 0)) < 0) {
+    if (mprCreate(0, NULL, MPR_USER_EVENTS_THREAD) == NULL) {
+        exit(1);
+    }
+    if ((argc = mprMakeArgv(command, &argv, MPR_ARGV_ARGS_ONLY)) < 0) {
         return FALSE;
     }
+    mprSetLogHandler(logHandler);
 #else
 int main(int argc, char **argv) {
     cchar   *documents, *home, *logs, *port, *ssl, *argp, *path, *contents, *revised;
-    cchar   *user, *group, *cache, *modules;
+    cchar   *user, *group, *cache, *modules, *bak;
     int     err, nextArg;
-#endif
     if (mprCreate(argc, argv, MPR_USER_EVENTS_THREAD) == NULL) {
         exit(1);
     }
+#endif
     documents = home = port = ssl = logs = user = group = cache = modules = 0;
     for (err = 0, nextArg = 1; nextArg < argc; nextArg++) {
         argp = argv[nextArg];
@@ -84,8 +90,12 @@ int main(int argc, char **argv) {
         mprUserError("Can't read %s", path);
         return 1;
     }
-    contents = replace(contents, "Listen 80", "Listen %s", port);
-    contents = replace(contents, "443", ssl);
+	if (port) {
+	    contents = replace(contents, "Listen 80", "Listen %s", port);
+	}
+	if (ssl) {
+	    contents = replace(contents, "443", ssl);
+	}
     if (documents) {
         contents = replace(contents, "DocumentRoot \"/var/www/appweb-default\"", "DocumentRoot \"%s\"", documents);
     }
@@ -108,13 +118,18 @@ int main(int argc, char **argv) {
     if (modules) {
         contents = replace(contents, "LoadModulePath", "LoadModulePath \"%s\"", modules);
     }
-
-    revised = mprGetTempPath(mprGetPathParent(path));
+    revised = mprGetTempPath(".");
     if (mprWritePathContents(revised, contents, -1, 0644) < 0) {
         mprUserError("Can't write %s", revised);
     }
+	bak = sfmt("%s.bak", path);
+	if (rename(path, bak) < 0) {
+        mprUserError("Can't save %s to %s: %x", path, bak, GetLastError());
+	}
+	mprDeletePath(path);
     if (rename(revised, path) < 0) {
-        mprUserError("Can't rename %s to %s", revised, path);
+        mprUserError("Can't rename %s to %s: %x", revised, path, GetLastError());
+		rename(bak, path);
     }
     return 0;
 }
@@ -152,6 +167,22 @@ static char *replace(cchar *str, cchar *pattern, cchar *fmt, ...)
     mprAddNullToBuf(buf);
     return sclone(mprGetBufStart(buf));
 }
+
+
+
+#if BLD_WIN_LIKE
+/*
+    Default log output is just to the console
+ */
+static void logHandler(int flags, int level, cchar *msg)
+{
+    if (flags & MPR_USER_MSG) {
+        MessageBoxEx(NULL, msg, mprGetAppTitle(), MB_OK, 0);
+    }
+    mprWriteToOsLog(msg, 0, 0);
+    mprPrintfError("%s\n", msg);
+}
+#endif
 
 
 /*
