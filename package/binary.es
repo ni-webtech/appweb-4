@@ -146,11 +146,7 @@ copy("*", lib, {
 })
 
 if (options.task != "Remove") {
-    /*
-        Patch appweb.conf
-     */
-    Cmd.sh("BLD_HTTP_PORT=" + build.BLD_HTTP_PORT + " BLD_SSL_PORT=" + build.BLD_SSL_PORT + 
-        " BLD_SPL_PREFIX=\"" + build.BLD_SPL_PREFIX + "\" " + "patchAppwebConf \"" + cfg.join("appweb.conf") + "\"")
+    Cmd(["patchConfig", "--port", build.BLD_HTTP_PORT, "--ssl", build.BLD_SSL_PORT, "--cache", build.BLD_SPL_PREFIX.join("cache"), "--modules", build.BLD_LIB_PREFIX, cfg.join("appweb.conf")])
 }
 
 if (build.BLD_FEATURE_EJSCRIPT == 1) {
