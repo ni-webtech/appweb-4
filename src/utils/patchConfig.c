@@ -39,7 +39,6 @@ int main(int argc, char **argv) {
         exit(1);
     }
 #endif
-DebugBreak();
     documents = home = port = ssl = logs = user = group = cache = modules = 0;
     for (err = 0, nextArg = 1; nextArg < argc; nextArg++) {
         argp = argv[nextArg];
@@ -126,11 +125,11 @@ DebugBreak();
 	bak = sfmt("%s.bak", path);
 	mprDeletePath(bak);
 	if (rename(path, bak) < 0) {
-        mprUserError("Can't save %s to %s: %x, %d", path, bak, GetLastError(), GetLastError());
+        mprUserError("Can't save %s to %s: 0x%x", path, bak, mprGetError());
 	}
 	mprDeletePath(path);
     if (rename(revised, path) < 0) {
-        mprUserError("Can't rename %s to %s: %x", revised, path, mprGetError());
+        mprUserError("Can't rename %s to %s: 0x%x", revised, path, mprGetError());
 		rename(bak, path);
     }
     return 0;
