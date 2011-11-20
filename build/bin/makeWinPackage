@@ -81,7 +81,6 @@ createInnoSetupFile() {
     cat "${ROOT_DIR}/install.new" | sed -e "/LicenseFile/s^.*^LicenseFile=${BLD_PREFIX}/LICENSE.TXT^g" | \
         sed -e 's/={sd}.:/={sd}/' > "${ROOT_DIR}/install.iss" 
     rm -f cp "${ROOT_DIR}/install.new"
-
     unix2dos -D ${ROOT_DIR}/install.iss 2>/dev/null
 }
 
