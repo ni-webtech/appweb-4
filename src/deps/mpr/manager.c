@@ -19,16 +19,9 @@
 
 #include    "mpr.h"
 
-#if 1
 #define SERVICE_PROGRAM BLD_BIN_PREFIX "/" BLD_PRODUCT
 #define SERVICE_NAME BLD_PRODUCT
 #define SERVICE_HOME BLD_BIN_PREFIX
-
-#else
-#define SERVICE_PROGRAM "C:/cygwin/home/mob/appweb/out/bin/appweb"
-#define SERVICE_NAME "appweb"
-#define SERVICE_HOME "C:/cygwin/home/mob/appweb/src/server"
-#endif
 
 #if BLD_UNIX_LIKE
 /*********************************** Locals ***********************************/
@@ -1072,7 +1065,10 @@ static void run()
 
     createFlags = 0;
 
-#if USEFUL_FOR_DEBUG || 1
+#if USEFUL_FOR_DEBUG
+    /* 
+        This is useful to debug manager as a windows service.
+     */
     DebugBreak();
 #endif
 
