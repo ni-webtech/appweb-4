@@ -39,6 +39,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 #endif
+DebugBreak();
     documents = home = port = ssl = logs = user = group = cache = modules = 0;
     for (err = 0, nextArg = 1; nextArg < argc; nextArg++) {
         argp = argv[nextArg];
@@ -113,7 +114,7 @@ int main(int argc, char **argv) {
         contents = replace(contents, "Group", "Group %s", group);
     }
     if (cache) {
-        contents = replace(contents, "Esp cache", "Esp cache \"%s\"", cache);
+        contents = replace(contents, "EspDir cache", "Esp cache \"%s\"", cache);
     }
     if (modules) {
         contents = replace(contents, "LoadModulePath", "LoadModulePath \"%s\"", modules);
@@ -123,8 +124,9 @@ int main(int argc, char **argv) {
         mprUserError("Can't write %s", revised);
     }
 	bak = sfmt("%s.bak", path);
+	mprDeletePath(bak);
 	if (rename(path, bak) < 0) {
-        mprUserError("Can't save %s to %s: %x", path, bak, mprGetError());
+        mprUserError("Can't save %s to %s: %x, %d", path, bak, GetLastError(), GetLastError());
 	}
 	mprDeletePath(path);
     if (rename(revised, path) < 0) {
