@@ -65,6 +65,7 @@ appweb.conf: $(BLD_INC_DIR)/buildConfig.h Makefile master/appweb.conf
 	cp master/appweb.conf .
 	patchConfig --port $(BLD_HTTP_PORT) --ssl $(BLD_SSL_PORT) --home . --logs . --documents web \
 		--modules "$(BLD_LIB_DIR)" --cache cache appweb.conf
+	rm -f appweb.conf.bak
 
 cgi-bin/cgiProgram$(BLD_EXE): $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
 	cp $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE) cgi-bin
