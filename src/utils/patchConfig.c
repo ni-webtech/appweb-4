@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
         contents = replace(contents, "Group", "Group %s", group);
     }
     if (cache) {
-        contents = replace(contents, "EspDir cache", "Esp cache \"%s\"", cache);
+        contents = replace(contents, "EspDir cache", "EspDir cache \"%s\"", cache);
     }
     if (modules) {
         contents = replace(contents, "LoadModulePath", "LoadModulePath \"%s\"", modules);

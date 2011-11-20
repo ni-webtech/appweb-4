@@ -33,10 +33,6 @@ $(BLD_BIN_DIR)/patchConfig$(BLD_EXE): $(BLD_OBJ_DIR)/patchConfig$(BLD_OBJ)
 	bld --graphical --exe $(BLD_BIN_DIR)/patchConfig$(BLD_EXE) --search "$(BLD_MPR_LIBPATHS)" --libs "$(BLD_MPR_LIBS)" \
 		$(BLD_OBJ_DIR)/patchConfig$(BLD_OBJ)
 
-test:
-	patchConfig --port $(BLD_HTTP_PORT) --ssl $(BLD_SSL_PORT) --home . --logs . --documents web \
-		--modules "$(BLD_LIB_DIR)" --cache cache appweb.conf
-
 #
 #   Local variables:
 #   tab-width: 4
