@@ -18,6 +18,7 @@ static MaState *createState(MaServer *server, HttpHost *host, HttpRoute *route);
 static char *getDirective(char *line, char **valuep);
 static int64 getnum(cchar *value);
 static MprTime gettime(cchar *value);
+static char *gettok(char *s, char **tok);
 static void manageState(MaState *state, int flags);
 static int parseFile(MaState *state, cchar *path);
 static int parseFileInner(MaState *state, cchar *path);
@@ -161,23 +162,30 @@ static int accessLogDirective(MaState *state, cchar *key, cchar *value)
     flags = 0;
     path = 0;
     
+    for (option = gettok(sclone(value), &tok); option; option = gettok(tok, &tok)) {
+#if UNUSED
     for (option = stok(sclone(value), " \t,", &tok); option; option = stok(0, " \t,", &tok)) {
-        option = stok(option, " =\t,", &ovalue);
-        ovalue = strim(ovalue, "\"'", MPR_TRIM_BOTH);
-        if (smatch(option, "size")) {
-            size = (ssize) getnum(ovalue);
-
-        } else if (smatch(option, "backup")) {
-            backup = atoi(ovalue);
-
-        } else if (smatch(option, "append")) {
-            flags |= MPR_LOG_APPEND;
-
-        } else if (smatch(option, "anew")) {
-            flags |= MPR_LOG_ANEW;
-
+#endif
+        if (!path) {
+            path = sclone(option);
         } else {
-            path = strim(option, "\"'", MPR_TRIM_BOTH);
+            option = stok(option, " =\t,", &ovalue);
+            ovalue = strim(ovalue, "\"'", MPR_TRIM_BOTH);
+            if (smatch(option, "size")) {
+                size = (ssize) getnum(ovalue);
+
+            } else if (smatch(option, "backup")) {
+                backup = atoi(ovalue);
+
+            } else if (smatch(option, "append")) {
+                flags |= MPR_LOG_APPEND;
+
+            } else if (smatch(option, "anew")) {
+                flags |= MPR_LOG_ANEW;
+
+            } else {
+                mprError("Unknown option %s", option);
+            }
         }
     }
     if (size < (10 * 1024)) {
@@ -697,7 +705,11 @@ static int directoryIndexDirective(MaState *state, cchar *key, cchar *value)
  */
 static int documentRootDirective(MaState *state, cchar *key, cchar *value)
 {
-    httpSetRouteDir(state->route, value);
+    cchar   *path;
+    if (!maTokenize(state, value, "%T", &path)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    httpSetRouteDir(state->route, path);
     return 0;
 }
 
@@ -737,26 +749,34 @@ static int errorLogDirective(MaState *state, cchar *key, cchar *value)
     path = 0;
     flags = 0;
     
+#if UNUSED
     for (option = stok(sclone(value), " \t,", &tok); option; option = stok(0, " \t,", &tok)) {
-        option = stok(option, " =\t,", &ovalue);
-        ovalue = strim(ovalue, "\"'", MPR_TRIM_BOTH);
-        if (smatch(option, "size")) {
-            size = (ssize) getnum(ovalue);
-
-        } else if (smatch(option, "level")) {
-            level = atoi(ovalue);
-
-        } else if (smatch(option, "backup")) {
-            backup = atoi(ovalue);
-
-        } else if (smatch(option, "append")) {
-            flags |= MPR_LOG_APPEND;
-
-        } else if (smatch(option, "anew")) {
-            flags |= MPR_LOG_ANEW;
-
+#else
+    for (option = gettok(sclone(value), &tok); option; option = gettok(tok, &tok)) {
+#endif
+        if (!path) {
+            path = sclone(option);
         } else {
-            path = strim(option, "\"'", MPR_TRIM_BOTH);
+            option = stok(option, " =\t,", &ovalue);
+            ovalue = strim(ovalue, "\"'", MPR_TRIM_BOTH);
+            if (smatch(option, "size")) {
+                size = (ssize) getnum(ovalue);
+
+            } else if (smatch(option, "level")) {
+                level = atoi(ovalue);
+
+            } else if (smatch(option, "backup")) {
+                backup = atoi(ovalue);
+
+            } else if (smatch(option, "append")) {
+                flags |= MPR_LOG_APPEND;
+
+            } else if (smatch(option, "anew")) {
+                flags |= MPR_LOG_ANEW;
+
+            } else {
+                mprError("Unknown option %s", option);
+            }
         }
     }
     if (size < (10 * 1000)) {
@@ -1291,6 +1311,9 @@ static int loadModulePathDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *sep, *lib, *path;
 
+    if (!maTokenize(state, value, "%T", &value)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
     sep = MPR_SEARCH_SEP;
     lib = mprJoinPath(mprGetPathParent(mprGetAppDir()), BLD_LIB_NAME);
     path = sjoin(value, sep, mprGetAppDir(), sep, lib, sep, BLD_LIB_PREFIX, NULL);
@@ -1991,6 +2014,7 @@ static bool conditionalDefinition(cchar *key)
         %B - Boolean. Parses: on/off, true/false, yes/no.
         %N - Number. Parses numbers in base 10.
         %S - String. Removes quotes.
+        %T - Template String. Removes quotes and expand ${PathVars}
         %P - Path string. Removes quotes and expands ${PathVars}. Resolved relative to host->dir (ServerRoot).
         %W - Parse words into a list
         %! - Optional negate. Set value to HTTP_ROUTE_NOT present, otherwise zero.
@@ -2188,15 +2212,45 @@ static char *getDirective(char *line, char **valuep)
     if (value) {
         value = strim(value, " \t\r\n>", MPR_TRIM_END);
         /*
-            Trim quotes if wrapping the entire value. Preserve embedded quotes and leading/trailing "" etc.
+            Trim quotes if wrapping the entire value and no spaces. Preserve embedded quotes and leading/trailing "" etc.
          */
         len = slen(value);
-        if (*value == '\"' && value[len - 1] == '\"' && len > 2 && value[1] != '\"') {
+        if (*value == '\"' && value[len - 1] == '\"' && len > 2 && value[1] != '\"' && !schr(value, ' ')) {
             value = snclone(&value[1], len - 2);
         }
         *valuep = value;
     }
     return key;
+}
+
+
+/*
+    Break into tokens separated by spaces or commas. Supports quoted args and backquotes.
+ */
+static char *gettok(char *s, char **tok)
+{
+    char    *etok;
+    int     quote;
+
+    if (s == 0) {
+        return 0;
+    }
+    for (; isspace((int) *s); s++);  
+    if (*s == '\'' || *s == '"') {
+        quote = *s++;
+        for (etok = s; *etok && !(*etok == quote && etok[-1] != '\\'); etok++) ;
+    } else {
+        for (etok = s; *etok && !(isspace((int) *etok) || *etok == ','); etok++) ;
+    }
+    if (*etok == '\0') {
+        *tok = NULL;
+        etok = NULL;
+    } else {
+        *etok++ = '\0';
+	    for (; isspace((int) *etok); etok++);  
+    }
+    *tok = etok;
+    return s;
 }
 
 
