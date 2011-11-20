@@ -78,7 +78,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2)
     args.program = "AppwebMonitor";
     args.args = (char*) command;
 
-    if (mprCreate(0, (char**) &args, MPR_USER_EVENTS_THREAD) == NULL) {
+    if (mprCreate(0, (char**) &args, MPR_USER_EVENTS_THREAD | MPR_NO_WINDOW) == NULL) {
         exit(1);
     }
     if ((app = mprAllocObj(App, manageApp)) == NULL) {
