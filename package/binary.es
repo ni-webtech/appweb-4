@@ -220,6 +220,7 @@ if (!bare) {
             copy("msvcr100.dll", bin, {from: build.BLD_VS.parent.join("redist/x86/Microsoft.VC100.CRT")})
         }
         copy("removeFiles*", bin, {from: sbin, permissions: 0755})
+        copy("patchConf*", bin, {from: sbin, permissions: 0755})
     }
 }
 

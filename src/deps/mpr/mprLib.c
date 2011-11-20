@@ -16298,6 +16298,9 @@ ssize mprWritePathContents(cchar *path, cchar *buf, ssize len, int mode)
     if (mode == 0) {
         mode = 0644;
     }
+    if (len < 0) {
+        len = slen(buf);
+    }
     if ((file = mprOpenFile(path, O_WRONLY | O_TRUNC | O_CREAT | O_BINARY, mode)) == 0) {
         mprError("Can't open %s", path);
         return MPR_ERR_CANT_OPEN;

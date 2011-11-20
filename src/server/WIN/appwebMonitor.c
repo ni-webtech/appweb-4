@@ -85,6 +85,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2)
         exit(2);
     }
     mprAddRoot(app);
+    mprInitWindow();
 
     err = 0;
     stop = 0;
