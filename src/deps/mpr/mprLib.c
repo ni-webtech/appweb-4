@@ -2673,7 +2673,9 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     mpr->pathEnv = sclone(getenv("PATH"));
 
     if (flags & MPR_USER_EVENTS_THREAD) {
-        mprInitWindow();
+        if (flags & MPR_CREATE_WINDOW) {
+            mprInitWindow();
+        }
     } else {
         mprStartEventsThread();
     }
@@ -2940,7 +2942,9 @@ int mprStartEventsThread()
 static void serviceEventsThread(void *data, MprThread *tp)
 {
     mprLog(MPR_CONFIG, "Service thread started");
-    mprInitWindow();
+    if (MPR->flags & MPR_CREATE_WINDOW) {
+        mprInitWindow();
+    }
     mprSignalCond(MPR->cond);
     mprServiceEvents(-1, 0);
 }
@@ -16092,19 +16096,23 @@ char *mprReadPathContents(cchar *path, ssize *lenp)
         return 0;
     }
     if (mprGetPathInfo(path, &info) < 0) {
+        mprCloseFile(file);
         return 0;
     }
     len = (ssize) info.size;
     if ((buf = mprAlloc(len + 1)) == 0) {
+        mprCloseFile(file);
         return 0;
     }
     if (mprReadFile(file, buf, len) != len) {
+        mprCloseFile(file);
         return 0;
     }
     buf[len] = '\0';
     if (lenp) {
         *lenp = len;
     }
+    mprCloseFile(file);
     return buf;
 }
 
