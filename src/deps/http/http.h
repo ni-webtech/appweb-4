@@ -890,7 +890,6 @@ extern ssize httpGetPacketLength(HttpPacket *packet);
 #else
 #define httpGetPacketLength(p) (p->content ? mprGetBufLength(p->content) : 0)
 #endif
-#define httpGetPacketEntityLength(p) (p->content ? mprGetBufLength(p->content) : packet->esize)
 
 /** 
     Join two packets
@@ -916,6 +915,11 @@ extern int httpJoinPacket(HttpPacket *packet, HttpPacket *other);
     @ingroup HttpPacket
  */
 extern HttpPacket *httpSplitPacket(HttpPacket *packet, ssize offset);
+
+/*
+    Internal
+ */
+#define httpGetPacketEntityLength(p) (p->content ? mprGetBufLength(p->content) : packet->esize)
 
 /*  
     Queue directions
@@ -1120,9 +1124,11 @@ extern int httpOpenQueue(HttpQueue *q, ssize chunkSize);
  */
 extern void httpPutBackPacket(struct HttpQueue *q, HttpPacket *packet);
 
-//  MOB DOC
-#define HTTP_DELAY_SERVICE 0
-#define HTTP_SERVICE_NOW 1
+/*
+    Convenience flags for httpPutForService in the serviceQ argument
+ */
+#define HTTP_DELAY_SERVICE  0           /**< Delay servicing the queue */
+#define HTTP_SERVICE_NOW    1           /* Service the queue now */
 
 /** 
     Put a packet onto the service queue
@@ -1672,17 +1678,6 @@ typedef struct HttpTrace {
 
 extern void httpManageTrace(HttpTrace *trace, int flags);
 
-#if UNUSED
-#if BLD_DEBUG
-#define HTTP_TIME(conn, tag1, tag2, op) \
-    if (httpShouldTrace(conn, 0, HTTP_TRACE_TIME, NULL) >= 0) { \
-        MPR_MEASURE(HTTP_TIME_LEVEL, tag1, tag2, op); \
-    } else op
-#else
-#define HTTP_TIME(conn, tag1, tag2, op) op
-#endif
-#endif
-
 /**
     Callback to fill headers 
     @description If defined, the headers callback will run before the standard response headers are generated. This gives an 
@@ -1875,8 +1870,8 @@ extern void httpConsumeLastRequest(HttpConn *conn);
 
 /** 
     Create a connection object.
-    @description Most interactions with the Http library are via a connection object. It is used for server-side communications when
-    responding to client requests and it is used to initiate outbound client requests.
+    @description Most interactions with the Http library are via a connection object. It is used for server-side 
+        communications when responding to client requests and it is used to initiate outbound client requests.
     @param http Http object created via #httpCreate
     @param endpoint Endpoint object owning the connection.
     @param dispatcher Disptacher to use for I/O events on the connection
@@ -2434,6 +2429,7 @@ extern void httpInitAuth(Http *http);
 extern int httpCheckAuth(HttpConn *conn);
 extern HttpAuth *httpCreateInheritedAuth(HttpAuth *parent);
 
+
 #if BLD_FEATURE_AUTH_FILE
 /** 
     User Authorization
@@ -2449,7 +2445,6 @@ typedef struct HttpUser {
     char            *realm;                 /**< Authentication realm */
     char            *name;                  /**< User name */
 } HttpUser;
-
 
 /** 
     Group Authorization
@@ -2816,7 +2811,7 @@ extern cchar *httpGetPamPassword(HttpAuth *auth, cchar *realm, cchar *user);
     @internal 
  */
 extern bool httpValidatePamCredentials(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, 
-                    cchar *requiredPass, char **msg);
+    cchar *requiredPass, char **msg);
 #endif /* AUTH_PAM */
 
 
@@ -3888,19 +3883,6 @@ extern int httpSetRouteTarget(HttpRoute *route, cchar *name, cchar *details);
  */
 extern void httpSetRouteTemplate(HttpRoute *route, cchar *tplate);
 
-#if UNUSED
-/**
-    Set the route trace level and mask
-    @param route HttpRoute object
-    @param level Trace level (0-9)
-    @param mask Trace mask. Choose from HTTP_TRACE_TX and HTTP_TRACE_RX to select the trace direction.
-        Also choose any set from among the following to trace options: HTTP_TRACE_CONN,
-        HTTP_TRACE_FIRST, HTTP_TRACE_HEADER, HTTP_TRACE_BODY, HTTP_TRACE_TIME.
-    @ingroup HttpRoute
- */
-extern void httpSetRouteTrace(HttpRoute *route, int level, int mask);
-#endif
-
 /**
     Set the route trace filter
     @description Trace filters include or exclude trace items based on the request filename extension.
@@ -3916,19 +3898,6 @@ extern void httpSetRouteTrace(HttpRoute *route, int level, int mask);
 extern void httpSetRouteTraceFilter(HttpRoute *route, int dir, int levels[HTTP_TRACE_MAX_ITEM], 
         ssize len, cchar *include, cchar *exclude);
 
-#if UNUSED
-/**
-    Setup trace for expedited processing
-    @description A request should call 
-    in order, so it is important to define routes in the order in which you wish to match them.
-    @param route HttpRoute object
-    @param route Route to add
-    @return "Zero" if the route can be added.
-    @ingroup HttpRoute
- */
-extern int  httpSetupTrace(HttpRoute *route, cchar *ext);
-#endif
-
 /**
     Define the maximum number of workers for a route
     @param route Route to modify
@@ -3938,6 +3907,7 @@ extern int  httpSetupTrace(HttpRoute *route, cchar *ext);
  */
 extern void httpSetRouteWorkers(HttpRoute *route, int workers);
 
+//  MOB
 extern int httpStartRoute(HttpRoute *route);
 extern void httpStopRoute(HttpRoute *route);
 
@@ -4767,6 +4737,9 @@ extern void httpSetContentLength(HttpConn *conn, MprOff length);
  */
 extern void httpSetContentType(HttpConn *conn, cchar *mimeType);
 
+/*
+    Flags for httpSetCookie
+ */
 #define HTTP_COOKIE_SECURE   0x1         /**< Flag for httpSetCookie for secure cookies (https only) */
 #define HTTP_COOKIE_HTTP     0x2         /**< Flag for httpSetCookie for http cookies (http only) */
 
@@ -5102,11 +5075,6 @@ extern bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn
 #define HTTP_HOST_NAMED_VHOST   0x2         /**< Host flag for a named virtual host */
 #define HTTP_HOST_NO_TRACE      0x10        /**< Host flag to disable the of TRACE HTTP method */
 
-#if UNUSED && KEEP
-#define HTTP_LOG_ROTATE         0x1         /* Rotate log on startup */
-#define HTTP_LOG_TRUNCATE       0x2         /* Truncate log on startup */
-#endif
-
 /**
     Host Object
     @description A Host object represents a logical host. Several logical hosts may share a single HttpEndpoint.
@@ -5124,20 +5092,13 @@ typedef struct HttpHost {
     char            *name;                  /**< Host name */
     char            *ip;                    /**< Hostname/ip portion parsed from name */
     int             port;                   /**< Port address portion parsed from name */
-
     struct HttpHost *parent;                /**< Parent host to inherit aliases, dirs, routes */
     MprCache        *responseCache;         /**< Response content caching store */
-#if UNUSED
-    MprList         *dirs;                  /**< List of Directory definitions */
-#endif
     MprList         *routes;                /**< List of Route defintions */
     HttpRoute       *defaultRoute;          /**< Default route for the host */
-
     char            *home;                  /**< Directory for configuration files */
-
     char            *protocol;              /**< Defaults to "HTTP/1.1" */
     int             flags;                  /**< Host flags */
-
     MprMutex        *mutex;                 /**< Multithread sync */
 } HttpHost;
 

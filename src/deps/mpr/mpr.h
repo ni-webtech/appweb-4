@@ -2465,15 +2465,12 @@ extern void mprRemoveRoot(void *ptr);
 #endif
 
 #if FUTURE
-//  MOB - keep inline version for debug mode
-
 #define void mprMark(cvoid *ptr) \
     if (ptr) { \
         MprMem *mp = MPR_GET_MEM(ptr); \
         if (mp->mark != heapActive) { \
             mp->gen = mp->mark = heapActive; \
             if (mp->hasManager) { \
-                //  MOB - use GET_MANAGER()
                 ((MprManager)(((char*) (mp)) + mp->size - sizeof(void*)))(ptr, MPR_MANAGE_MARK); \
             } \
         } \
@@ -5725,7 +5722,7 @@ typedef struct MprEvent {
     int                 continuous;     /**< Event runs continuously */
     int                 flags;          /**< Event flags */
     int                 mask;           /**< I/O mask of events */
-    int                 period;         /**< Reschedule period */
+    MprTime             period;         /**< Reschedule period */
     struct MprEvent     *next;          /**< Next event linkage */
     struct MprEvent     *prev;          /**< Previous event linkage */
     struct MprDispatcher *dispatcher;   /**< Event dispatcher service */
@@ -5827,7 +5824,6 @@ extern int mprWaitForEvent(MprDispatcher *dispatcher, MprTime timeout);
  */
 extern void mprSignalDispatcher(MprDispatcher *dispatcher);
 
-//  MOB - period should be MprTime
 /**
     Create a new event
     @description Create a new event for service
@@ -5841,7 +5837,7 @@ extern void mprSignalDispatcher(MprDispatcher *dispatcher);
     @return Returns the event object if successful.
     @ingroup MprEvent
  */
-extern MprEvent *mprCreateEvent(MprDispatcher *dispatcher, cchar *name, int period, void *proc, void *data, int flags);
+extern MprEvent *mprCreateEvent(MprDispatcher *dispatcher, cchar *name, MprTime period, void *proc, void *data, int flags);
 
 /*
     Queue a new event for service.
@@ -5899,7 +5895,7 @@ extern void mprEnableContinuousEvent(MprEvent *event, int enable);
     @param flags Not used.
     @ingroup MprEvent
  */
-extern MprEvent *mprCreateTimerEvent(MprDispatcher *dispatcher, cchar *name, int period, void *proc, void *data, 
+extern MprEvent *mprCreateTimerEvent(MprDispatcher *dispatcher, cchar *name, MprTime period, void *proc, void *data, 
     int flags);
 
 /**
@@ -5909,7 +5905,7 @@ extern MprEvent *mprCreateTimerEvent(MprDispatcher *dispatcher, cchar *name, int
     @param period Time in milliseconds used by continuous events between firing of the event.
     @ingroup MprEvent
  */
-extern void mprRescheduleEvent(MprEvent *event, int period);
+extern void mprRescheduleEvent(MprEvent *event, MprTime period);
 
 /**
     Relay an event to a dispatcher. This invokes the callback proc as though it was invoked from the given dispatcher. 
@@ -7595,15 +7591,8 @@ typedef struct MprCmd {
     int             flags;              /**< Control flags (userFlags not here) */
     int             eofCount;           /**< Count of end-of-files */
     int             requiredEof;        /**< Number of EOFs required for an exit */
-
-//  MOB - set only when pid reaped
     int             complete;           /**< All channels EOF and status gathered */
-#if UNUSED
-//  MOB - who uses this? - never used?
-    int             disconnected;       /**< Command not connected, may not yet have exit status */
-#endif
     int             stopped;            /**< Command stopped */
-
     char            **makeArgv;         /**< Allocated argv */ 
     char            **argv;             /**< List of args. Null terminated */
     char            **env;              /**< List of environment variables. Null terminated */

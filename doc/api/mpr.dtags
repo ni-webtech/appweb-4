@@ -2253,8 +2253,8 @@
       <type>MprEvent *</type>
       <name>mprCreateEvent</name>
       <anchorfile>group___mpr_event.html</anchorfile>
-      <anchor>ga566d45b0b9efb0a4b81c2ce3e9077e7c</anchor>
-      <arglist>(MprDispatcher *dispatcher, cchar *name, int period, void *proc, void *data, int flags)</arglist>
+      <anchor>ga6154e34c582e39cd64b4505a6afb39c4</anchor>
+      <arglist>(MprDispatcher *dispatcher, cchar *name, MprTime period, void *proc, void *data, int flags)</arglist>
     </member>
     <member kind="function">
       <type>MprFileSystem *</type>
@@ -2386,8 +2386,8 @@
       <type>MprEvent *</type>
       <name>mprCreateTimerEvent</name>
       <anchorfile>group___mpr_event.html</anchorfile>
-      <anchor>gae0e117daf2aacc3233be2c7e80202ad6</anchor>
-      <arglist>(MprDispatcher *dispatcher, cchar *name, int period, void *proc, void *data, int flags)</arglist>
+      <anchor>ga38397c1964339e66e0251995bb91408c</anchor>
+      <arglist>(MprDispatcher *dispatcher, cchar *name, MprTime period, void *proc, void *data, int flags)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
@@ -4129,8 +4129,8 @@
       <type>void</type>
       <name>mprRescheduleEvent</name>
       <anchorfile>group___mpr_event.html</anchorfile>
-      <anchor>gaf33d646f5cdb5e2e798b22e1b941e79b</anchor>
-      <arglist>(MprEvent *event, int period)</arglist>
+      <anchor>ga7abedbcca593ebcc1e021bdfd927b3db</anchor>
+      <arglist>(MprEvent *event, MprTime period)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -7450,15 +7450,15 @@
       <type>MprEvent *</type>
       <name>mprCreateEvent</name>
       <anchorfile>group___mpr_event.html</anchorfile>
-      <anchor>ga566d45b0b9efb0a4b81c2ce3e9077e7c</anchor>
-      <arglist>(MprDispatcher *dispatcher, cchar *name, int period, void *proc, void *data, int flags)</arglist>
+      <anchor>ga6154e34c582e39cd64b4505a6afb39c4</anchor>
+      <arglist>(MprDispatcher *dispatcher, cchar *name, MprTime period, void *proc, void *data, int flags)</arglist>
     </member>
     <member kind="function">
       <type>MprEvent *</type>
       <name>mprCreateTimerEvent</name>
       <anchorfile>group___mpr_event.html</anchorfile>
-      <anchor>gae0e117daf2aacc3233be2c7e80202ad6</anchor>
-      <arglist>(MprDispatcher *dispatcher, cchar *name, int period, void *proc, void *data, int flags)</arglist>
+      <anchor>ga38397c1964339e66e0251995bb91408c</anchor>
+      <arglist>(MprDispatcher *dispatcher, cchar *name, MprTime period, void *proc, void *data, int flags)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -7478,8 +7478,8 @@
       <type>void</type>
       <name>mprRescheduleEvent</name>
       <anchorfile>group___mpr_event.html</anchorfile>
-      <anchor>gaf33d646f5cdb5e2e798b22e1b941e79b</anchor>
-      <arglist>(MprEvent *event, int period)</arglist>
+      <anchor>ga7abedbcca593ebcc1e021bdfd927b3db</anchor>
+      <arglist>(MprEvent *event, MprTime period)</arglist>
     </member>
     <member kind="function">
       <type>void</type>

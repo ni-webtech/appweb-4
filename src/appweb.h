@@ -26,14 +26,13 @@ extern "C" {
 #undef HTTP_NAME
 #define HTTP_NAME               MA_SERVER_NAME  /**< Default web server software identification */
 
-/****************************** Forward Declarations **************************/
+/********************************** Defines ***********************************/
 
 #if !DOXYGEN
 struct MaSsl;
 struct MaServer;
 #endif
 
-/********************************** Defines ***********************************/
 /**
     Appweb Service
     @description There is one instance of MaAppweb per application. It manages a list of HTTP servers running in
@@ -484,7 +483,7 @@ extern bool maTokenize(MaState *state, cchar *str, cchar *fmt, ...);
 /*
     Permit overrides
  */
-#include    "customize.h"
+#include "customize.h"
 
 #endif /* _h_APPWEB */
 
