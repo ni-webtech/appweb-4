@@ -305,7 +305,8 @@ static bool process(cchar *operation, bool quiet)
     if (exists("/bin/launchctl") && exists("/Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name)) {
         launch++;
 
-    } else if (exists("/sbin/start") && (exists("/etc/init/%s.conf", name) || exists("/etc/init/%s.off", name))) {
+    } else if (exists("/sbin/start") && exists("/etc/init/rc.conf") &&
+            (exists("/etc/init/%s.conf", name) || exists("/etc/init/%s.off", name))) {
         upstart++;
 
     } else if (exists("/usr/sbin/update-rc.d") && exists("/etc/init.d/%s", name)) {
@@ -336,7 +337,7 @@ static bool process(cchar *operation, bool quiet)
             }
 
         } else if (update) {
-            rc = run("/usr/sbin/update-rc.d %s defaults 90 10", name);
+            ;
 
         } else if (upstart) {
             ;
@@ -352,7 +353,7 @@ static bool process(cchar *operation, bool quiet)
             rc = run("/sbin/chkconfig --del %s", name);
 
         } else if (update) {
-            rc = run("/usr/sbin/update-rc.d -f %s remove", name);
+            ;
 
         } else if (upstart) {
             ;
@@ -374,7 +375,11 @@ static bool process(cchar *operation, bool quiet)
             }
 
         } else if (update) {
-            rc = run("/usr/sbin/update-rc.d %s enable", name);
+            rc = run("/usr/sbin/update-rc.d %s defaults 90 10", name);
+            /*
+                Not supported on older versions
+                rc = run("/usr/sbin/update-rc.d %s enable", name);
+             */
 
         } else if (service) {
             rc = run("/sbin/chkconfig %s on", name);
@@ -392,7 +397,11 @@ static bool process(cchar *operation, bool quiet)
             rc = run("/bin/launchctl unload -w /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
 
         } else if (update) {
-            rc = run("/usr/sbin/update-rc.d %s disable", name);
+            /*  
+                Not supported on older versions
+                rc = run("/usr/sbin/update-rc.d %s disable", name);
+             */
+            rc = run("/usr/sbin/update-rc.d -f %s remove", name);
 
         } else if (service) {
             rc = run("/sbin/chkconfig %s off", name);

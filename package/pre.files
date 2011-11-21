@@ -6,7 +6,6 @@
 
 usePrefixes CFG BIN LIB LOG PRD VER WEB SPL
 
-
 if [ "$ORIGINAL_ROOT_DIR" = "" ] ; then
     configureProduct stop
     configureProduct uninstall
