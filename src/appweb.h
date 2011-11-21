@@ -50,7 +50,6 @@ typedef struct MaAppweb {
     Http                *http;              /**< Http service object */
     char                *user;              /**< O/S application user name */
     char                *group;             /**< O/S application group name */
-    //  MOB - should this be in http?
     int                 uid;                /**< User Id */
     int                 gid;                /**< Group Id */
     int                 userChanged;        /**< User name changed */
@@ -132,8 +131,6 @@ extern struct MaServer *maLookupServer(MaAppweb *appweb, cchar *name);
  */
 extern int maMatchDir(HttpConn *conn, HttpRoute *route, int direction);
 
-//  MOB - sort
-//  MOB - rename
 /**
     Initialize the config file parser.
     @param appweb Appweb object created via #maCreateAppweb
@@ -218,9 +215,6 @@ typedef struct MaServer {
     HttpLimits      *limits;                /**< Limits for this server */
     MprList         *endpoints;             /**< List of HttpEndpoints */
     char            *home;                  /**< Server root */
-#if UNUSED
-    bool            alreadyLogging;         /**< Already logging */
-#endif
 } MaServer;
 
 /**
@@ -454,41 +448,12 @@ extern void maSetAccessLog(HttpRoute *route, cchar *path, cchar *format);
  */
 extern int maStartAccessLogging(HttpRoute *route);
 
-#if UNUSED
-/**
-    Start error logging
-    @description Start error logging. Currently error logging is global over all hosts.
-    @param host HttpHost object. This should be the default Appweb host.
-    @param logSpec Set the log file name and level. The format is "pathName[:level]".
-        The following levels are generally observed:
-        <ul>
-        <li>0 - Essential messages, fatal errors and critical warnings</li>
-        <li>1 - Hard errors</li>
-        <li>2 - Configuration setup and soft warnings</li>
-        <li>3 - Useful informational messages</li>
-        <li>4 - Debug information</li>
-        <li>5-9 - Increasing levels of internal Appweb trace useful for debugging</li>
-        </ul>
-    @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
-    @ingroup Appweb
- */
-extern int maStartLogging(HttpHost *host, cchar *logSpec);
-#endif
-
 /**
     Stop access logging
     @param route HttpRoute object
     @ingroup Appweb
  */
 extern void maStopAccessLogging(HttpRoute *route);
-
-#if UNUSED
-/**
-    Stop error logging
-    @ingroup Appweb
- */
-extern void maStopLogging();
-#endif
 
 /**
     Tokenize a string based on route data

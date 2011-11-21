@@ -163,9 +163,6 @@ static int accessLogDirective(MaState *state, cchar *key, cchar *value)
     path = 0;
     
     for (option = gettok(sclone(value), &tok); option; option = gettok(tok, &tok)) {
-#if UNUSED
-    for (option = stok(sclone(value), " \t,", &tok); option; option = stok(0, " \t,", &tok)) {
-#endif
         if (!path) {
             path = sclone(option);
         } else {
@@ -749,11 +746,7 @@ static int errorLogDirective(MaState *state, cchar *key, cchar *value)
     path = 0;
     flags = 0;
     
-#if UNUSED
-    for (option = stok(sclone(value), " \t,", &tok); option; option = stok(0, " \t,", &tok)) {
-#else
     for (option = gettok(sclone(value), &tok); option; option = gettok(tok, &tok)) {
-#endif
         if (!path) {
             path = sclone(option);
         } else {
@@ -902,24 +895,6 @@ static int inactivityTimeoutDirective(MaState *state, cchar *key, cchar *value)
     }
     return 0;
 }
-
-
-#if UNUSED
-/*
-    KeepAlive on|off
- */
-static int keepAliveDirective(MaState *state, cchar *key, cchar *value)
-{
-    bool    on;
-
-    if (!maTokenize(state, value, "%B", &on)) {
-        return MPR_ERR_BAD_SYNTAX;
-    }
-    state->limits = httpGraduateLimits(state->route);
-    state->limits->keepAliveCount = on;
-    return 0;
-}
-#endif
 
 
 /*
@@ -1152,9 +1127,6 @@ static int listenDirective(MaState *state, cchar *key, cchar *value)
         return -1;
     }
     endpoint = httpCreateEndpoint(ip, port, NULL);
-#if UNUSED
-    endpoint->limits = state->limits;
-#endif
     mprAddItem(state->server->endpoints, endpoint);
     return 0;
 }
@@ -1249,45 +1221,9 @@ static int logDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
-#if UNUSED
-/*
-    LogLevel 0-9
- */
-static int logLevelDirective(MaState *state, cchar *key, cchar *value)
-{
-    if (mprGetCmdlineLogging()) {
-        mprLog(4, "Already logging. Ignoring LogLevel directive");
-    } else {
-        mprSetLogLevel((int) stoi(value));
-    }
-    return 0;
-}
-
-
-/*
-    LogRotation count size
- */
-//  MOB - redesign
-static int logRotationDirective(MaState *state, cchar *key, cchar *value)
-{
-    int     count, size;
-
-    if (!maTokenize(state, value, "%N %N", &count, &size)) {
-        return MPR_ERR_BAD_SYNTAX;
-    }
-    mprSetLogRotation(count, size * 1024 * 1024);
-#if UNUSED
-    state->host->logCount = count;
-    state->host->logSize = size * (1024 * 1024);
-#endif
-    return 0;
-}
-#endif
-
-
 /*
     LogRoutes [full]
-    MOB - support two formats line for one line, and multiline with more fields
+    Support two formats line for one line, and multiline with more fields
  */
 static int logRoutesDirective(MaState *state, cchar *key, cchar *value)
 {
@@ -1952,11 +1888,6 @@ bool maValidateServer(MaServer *server)
         if (host->home == 0) {
             httpSetHostHome(host, defaultHost->home);
         }
-#if UNUSED
-        if (host->mimeTypes == 0) {
-            host->mimeTypes = defaultHost->mimeTypes;
-        }
-#endif
         for (nextRoute = 0; (route = mprGetNextItem(host->routes, &nextRoute)) != 0; ) {
             if (!mprLookupKey(route->extensions, "")) {
                 mprError("Route %s in host %s is missing a catch-all handler\n"
@@ -2342,15 +2273,7 @@ int maParseInit(MaAppweb *appweb)
     //  MOB - not a great name "Load"
     maAddDirective(appweb, "Load", loadDirective);
     maAddDirective(appweb, "Log", logDirective);
-#if UNUSED
-    maAddDirective(appweb, "LogLevel", logLevelDirective);
-    maAddDirective(appweb, "LogRotation", logRotationDirective);
-#endif
     maAddDirective(appweb, "LogRoutes", logRoutesDirective);
-#if UNUSED
-    maAddDirective(appweb, "LogTrace", logTraceDirective);
-    maAddDirective(appweb, "LogTraceFilter", logTraceFilterDirective);
-#endif
     maAddDirective(appweb, "LoadModulePath", loadModulePathDirective);
     maAddDirective(appweb, "LoadModule", loadModuleDirective);
 
