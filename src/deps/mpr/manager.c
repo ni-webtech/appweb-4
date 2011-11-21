@@ -247,7 +247,7 @@ static void setAppDefaults()
     } else {
         app->pidDir = sclone(".");
     }
-    app->pidPath = sjoin(app->pidDir, app->serviceName, ".pid", NULL);
+    app->pidPath = sjoin(app->pidDir, "/", app->appName, ".pid", NULL);
 }
 
 
