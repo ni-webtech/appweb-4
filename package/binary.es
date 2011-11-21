@@ -219,7 +219,6 @@ if (!bare) {
             }
         }
     }
-
     if (build.BLD_HOST_OS == "WIN") {
         if (build.BLD_CC_CL_VERSION == 16) {
             copy("msvcrt.lib", bin, {from: build.BLD_VS})
@@ -236,10 +235,14 @@ if (build.BLD_UNIX_LIKE == 1) {
 
 if (options.task == "Install") {
     if (!bare) {
-        Cmd.sh("\"" + bin.join("linkup") + "\" " + options.task + " \"" + options.root + "\"")
+        if (build.BLD_HOST_OS != "WIN") {
+            Cmd.sh([bin.join("linkup"), options.task, options.root])
+        }
     }
 } else if (saveLink && saveLink.exists) {
-    Cmd.sh(saveLink + " " + options.task + " \"" + options.root + "\"")
+    if (build.BLD_HOST_OS != "WIN") {
+        Cmd.sh([saveLink, options.task, options.root])
+    }
     saveLink.remove()
 }
 
