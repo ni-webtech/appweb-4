@@ -645,7 +645,6 @@ static int writePid(int pid)
     }
     pbuf = sfmt("%d\n", pid);
     len = slen(pbuf);
-printf("CREATE %s PID %d\n", app->pidPath, pid);
     if (write(fd, pbuf, len) != len) {
         mprError("Write to file %s failed\n", app->pidPath);
         return MPR_ERR_CANT_WRITE;
