@@ -33,7 +33,7 @@ APPMAN_CMD=$APPWEB_BIN/appman
 APPMAN_SWITCHES="--daemon --home $APPWEB_DIR run"
 APPMAN_TIMEOUT=10
 PIDFILE=${PIDFILE-/var/run/appman.pid}
-LOCKFILE=${LOCKFILE-/var/lock/subsys/appman}
+LOCKFILE=${LOCKFILE-/var/lock/appman}
 SWITCHES=
 
 #
