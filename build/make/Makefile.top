@@ -275,7 +275,7 @@ flat packageFlat:
 	$(BLD_TOOLS_DIR)/makePackage --combo $(KEEP) --root=$(FLAT_DIR) flat
 
 #
-#	Use makePackage --keep to preserve the out/staging area
+#	Use makePackage --keep to preserve the out/pkg
 #
 packageRelease:
 	if [ "$(BUILD_DEPTH)" -ge 2 -a -f package/binary.es ] ; then \

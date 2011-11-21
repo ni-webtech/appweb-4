@@ -69,7 +69,7 @@ fi
 #
 #   Create .makedep files from here and below
 #
-find . -name Makefile -print | egrep -v "/staging/|/pkgtmp/|.tmp/" | sed 's/Makefile/.makedep/' | while read file
+find . -name Makefile -print | egrep -v "/out/|/staging/|/pkgtmp/|.tmp/" | sed 's/Makefile/.makedep/' | while read file
 do
     makeDep $file $TOP
 done
