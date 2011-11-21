@@ -63,8 +63,14 @@ $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE): $(OBJECTS) $(call lib, $(LIBDEP)) $(cal
 appweb.conf: $(BLD_INC_DIR)/buildConfig.h Makefile master/appweb.conf
 	$(call log) "[Patch]" "appweb.conf"
 	cp master/appweb.conf .
+	for user in www-data _www nobody Administrator ; do \
+		if grep "$$user" /etc/passwd >/dev/null ; then break ; fi ; \
+	done ; \
+	for group in www-data _www nogroup nobody Administrator ; do \
+		if grep "$$group" /etc/passwd >/dev/null ; then break ; fi ; \
+	done ; \
 	setConfig --port $(BLD_HTTP_PORT) --ssl $(BLD_SSL_PORT) --home . --logs . --documents web \
-		--modules "$(BLD_LIB_DIR)" --cache cache appweb.conf
+		--user $$user --group $$group --modules "$(BLD_LIB_DIR)" --cache cache appweb.conf
 	rm -f appweb.conf.bak
 
 cgi-bin/cgiProgram$(BLD_EXE): $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
