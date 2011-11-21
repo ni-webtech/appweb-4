@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
     if (modules) {
         contents = replace(contents, "LoadModulePath", "LoadModulePath \"%s\"", modules);
     }
-    revised = mprGetTempPath(".");
+    revised = mprGetTempPath(mprGetPathDir(path));
     if (mprWritePathContents(revised, contents, -1, 0644) < 0) {
         mprUserError("Can't write %s", revised);
     }
