@@ -604,17 +604,18 @@ static void cleanup()
  */
 static int readPid()
 {
+    char    pbuf[32];
     int     pid, fd;
 
     if ((fd = open(app->pidPath, O_RDONLY, 0666)) < 0) {
         return -1;
     }
-    if (read(fd, &pid, sizeof(pid)) != sizeof(pid)) {
+    if (read(fd, pbuf, sizeof(pid)) <= 0) {
         close(fd);
         return -1;
     }
     close(fd);
-    return pid;
+    return (int) stoi(pbuf);
 }
 
 
@@ -634,13 +635,18 @@ static bool killPid()
  */ 
 static int writePid(int pid)
 {
+    char    *pbuf;
+    ssize   len;
     int     fd;
 
     if ((fd = open(app->pidPath, O_CREAT | O_RDWR | O_TRUNC, 0666)) < 0) {
         mprError("Could not create pid file %s\n", app->pidPath);
         return MPR_ERR_CANT_CREATE;
     }
-    if (write(fd, &pid, sizeof(pid)) != sizeof(pid)) {
+    pbuf = sfmt("%d\n", pid);
+    len = slen(pbuf);
+printf("CREATE %s PID %d\n", app->pidPath, pid);
+    if (write(fd, pbuf, len) != len) {
         mprError("Write to file %s failed\n", app->pidPath);
         return MPR_ERR_CANT_WRITE;
     }

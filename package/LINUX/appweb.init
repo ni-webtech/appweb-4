@@ -34,7 +34,6 @@ APPMAN_SWITCHES="--daemon --home $APPWEB_DIR run"
 APPMAN_TIMEOUT=10
 PIDFILE=${PIDFILE-/var/run/appman.pid}
 LOCKFILE=${LOCKFILE-/var/lock/appman}
-SWITCHES=
 
 #
 #   Source utility functions
@@ -54,11 +53,11 @@ start() {
     local RETVAL=0
     echo -n "Starting ${APPWEB_NAME}: "
     if type daemon >/dev/null 2>&1 ; then
-        eval daemon --pidfile=${PIDFILE} $SWITCHES $APPMAN_CMD ${APPMAN_SWITCHES} 
+        eval daemon --pidfile=${PIDFILE} ${APPMAN_CMD} ${APPMAN_SWITCHES} 
         RETVAL=$?
         [ ${RETVAL} = 0 ] && touch $LOCKFILE
     elif type start-stop-daemon >/dev/null 2>&1 ; then
-        eval start-stop-daemon $SWITCHES --oknodo --start --quiet --exec "${APPMAN_CMD}" -- ${APPMAN_SWITCHES}
+        eval start-stop-daemon --pidfile ${PIDFILE} --oknodo --start --quiet --exec "${APPMAN_CMD}" -- ${APPMAN_SWITCHES}
         RETVAL=$?
         [ ${RETVAL} = 0 ] && touch $LOCKFILE
     fi
@@ -74,16 +73,16 @@ stop() {
     if type start-stop-daemon >/dev/null 2>&1 ; then
         echo -n "Stopping ${APPWEB_NAME}: "
         if [ -f /etc/SuSE-release ] ; then
-            start-stop-daemon --stop --quiet --oknodo --exec "${APPMAN_CMD}"
+            start-stop-daemon --stop --pidfile ${PIDFILE} --quiet --oknodo --exec "${APPMAN_CMD}"
         else 
-            start-stop-daemon --stop --retry=2 --quiet --oknodo --exec "${APPMAN_CMD}"
+            start-stop-daemon --stop --retry=2 --pidfile ${PIDFILE} --quiet --oknodo --exec "${APPMAN_CMD}"
         fi
         RETVAL=$?
         [ ${RETVAL} = 0 ] && rm -f $LOCKFILE
     elif type killproc >/dev/null 2>&1 ; then
         # Note: killproc exists on debian also.
         echo -n $"Stopping ${APPWEB_NAME}: "
-        killproc -p ${PIDFILE} -d ${APPMAN_TIMEOUT} $APPMAN_CMD
+        killproc -p ${PIDFILE} -d ${APPMAN_TIMEOUT} ${APPMAN_CMD}
         RETVAL=$?
         [ ${RETVAL} = 0 ] && rm -f $LOCKFILE $PIDFILE
     fi
@@ -106,7 +105,7 @@ case "$1" in
         stop
         ;;
     status)
-        status $APPMAN_CMD
+        status ${APPMAN_CMD}
         RETVAL=$?
         ;;
     restart|reload|force-reload)

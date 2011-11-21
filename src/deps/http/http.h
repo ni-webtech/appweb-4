@@ -3138,7 +3138,6 @@ extern void httpAddHomeRoute(HttpRoute *parent);
 /**
     Add a route set package
     @description This will add a set of routes suitable for some application paradigms.
-    MOB - Not coming through correctly.
     <table>
         <tr><td>Name</td><td>Method</td><td>Pattern</td><td>Target</td></tr>
         <tr><td>home</td><td>GET,POST,PUT</td><td>^/$</td><td>index.esp</td></tr>
