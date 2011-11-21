@@ -17,6 +17,7 @@
 #   chkconfig: - 81 15
 #   description: Embedthis Appweb Embeddable Web Server
 #   processname: appman
+#   pidfile: /var/run/appman.pid
 #
 ###############################################################################
 
@@ -30,6 +31,9 @@ RETVAL=0
 
 APPMAN_CMD=$APPWEB_BIN/appman
 APPMAN_SWITCHES="--daemon --home $APPWEB_DIR run"
+APPMAN_TIMEOUT=10
+PIDFILE=${PIDFILE-/var/run/appman.pid}
+LOCKFILE=${LOCKFILE-/var/lock/subsys/appman}
 SWITCHES=
 
 #
@@ -50,13 +54,13 @@ start() {
     local RETVAL=0
     echo -n "Starting ${APPWEB_NAME}: "
     if type daemon >/dev/null 2>&1 ; then
-        eval daemon $SWITCHES $APPMAN_CMD ${APPMAN_SWITCHES} 
+        eval daemon --pidfile=${PIDFILE} $SWITCHES $APPMAN_CMD ${APPMAN_SWITCHES} 
         RETVAL=$?
-        [ ${RETVAL} = 0 ] && touch /var/lock/subsys/$APPWEB
+        [ ${RETVAL} = 0 ] && touch $LOCKFILE
     elif type start-stop-daemon >/dev/null 2>&1 ; then
         eval start-stop-daemon $SWITCHES --oknodo --start --quiet --exec "${APPMAN_CMD}" -- ${APPMAN_SWITCHES}
         RETVAL=$?
-        [ ${RETVAL} = 0 ] && touch /var/lock/$APPWEB
+        [ ${RETVAL} = 0 ] && touch $LOCKFILE
     fi
     if [ ${RETVAL} = 0 ] ; then
         echo "OK"
@@ -75,13 +79,13 @@ stop() {
             start-stop-daemon --stop --retry=2 --quiet --oknodo --exec "${APPMAN_CMD}"
         fi
         RETVAL=$?
-        [ ${RETVAL} = 0 ] && rm -f /var/lock/$APPWEB
+        [ ${RETVAL} = 0 ] && rm -f $LOCKFILE
     elif type killproc >/dev/null 2>&1 ; then
         # Note: killproc exists on debian also.
         echo -n $"Stopping ${APPWEB_NAME}: "
-        killproc $APPMAN_CMD
+        killproc -p "${PIDFILE} -d ${APPMAN_TIMEOUT} $APPMAN_CMD
         RETVAL=$?
-        [ ${RETVAL} = 0 ] && rm -f /var/lock/subsys/$APPWEB
+        [ ${RETVAL} = 0 ] && rm -f $LOCKFILE $PIDFILE
     fi
     if [ ${RETVAL} = 0 ] ; then
         echo "OK"
@@ -110,7 +114,7 @@ case "$1" in
         start
         ;;
     condrestart)
-        if [ -f /var/lock/subsys/$APPWEB -o -f /var/lock/$APPWEB ]; then
+        if [ -f $LOCKFILE ]; then
             stop
             start
         fi
