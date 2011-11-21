@@ -150,8 +150,6 @@ copy("*", lib, {
 })
 
 if (options.task != "Remove") {
-    print(["setConfig", "--home", cfg, "--documents", web, "--logs", log, "--port", build.BLD_HTTP_PORT, "--ssl", 
-        build.BLD_SSL_PORT, "--cache", spl.join("cache"), "--modules", build.BLD_LIB_PREFIX, cfg.join("appweb.conf")].join(" "))
     Cmd(["setConfig", "--home", cfg, "--documents", web, "--logs", log, "--port", build.BLD_HTTP_PORT, "--ssl", 
         build.BLD_SSL_PORT, "--cache", spl.join("cache"), "--modules", build.BLD_LIB_PREFIX, cfg.join("appweb.conf")])
 }
