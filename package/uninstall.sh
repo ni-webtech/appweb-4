@@ -166,11 +166,11 @@ preClean() {
     fi
 
     cd "$BLD_PRD_PREFIX"
-    removeIntermediateFiles access.log error.log '*.log.old' .dummy $BLD_PRODUCT.conf make.log
+    removeIntermediateFiles access.log* error.log* '*.log.old' .dummy $BLD_PRODUCT.conf make.log
     cd "$BLD_CFG_PREFIX"
-    removeIntermediateFiles access.log error.log '*.log.old' .dummy $BLD_PRODUCT.conf make.log $BLD_PRODUCT.conf.bak
+    removeIntermediateFiles access.log* error.log* '*.log.old' .dummy $BLD_PRODUCT.conf make.log $BLD_PRODUCT.conf.bak
     cd "$BLD_LIB_PREFIX"
-    removeIntermediateFiles access.log error.log '*.log.old' .dummy $BLD_PRODUCT.conf make.log
+    removeIntermediateFiles access.log* error.log* '*.log.old' .dummy $BLD_PRODUCT.conf make.log
     cd "$cdir"
 
     if [ -d "$BLD_INC_PREFIX" ] ; then
