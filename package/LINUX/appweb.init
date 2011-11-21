@@ -83,7 +83,7 @@ stop() {
     elif type killproc >/dev/null 2>&1 ; then
         # Note: killproc exists on debian also.
         echo -n $"Stopping ${APPWEB_NAME}: "
-        killproc -p "${PIDFILE} -d ${APPMAN_TIMEOUT} $APPMAN_CMD
+        killproc -p ${PIDFILE} -d ${APPMAN_TIMEOUT} $APPMAN_CMD
         RETVAL=$?
         [ ${RETVAL} = 0 ] && rm -f $LOCKFILE $PIDFILE
     fi

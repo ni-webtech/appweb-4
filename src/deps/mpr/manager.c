@@ -880,33 +880,6 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
                 app->serviceProgram = sclone(argv[++nextArg]);
             }
 
-#if UNUSED
-        } else if (strcmp(argp, "--start") == 0) {
-            /*
-                Start the manager
-             */
-            if (startService() < 0) {
-                return FALSE;
-            }
-            mprSleep(2000);    /* Time for service to really start */
-
-        } else if (strcmp(argp, "--stop") == 0) {
-            /*
-                Stop the  manager
-             */
-            if (removeService(0) < 0) {
-                return FALSE;
-            }
-
-        } else if (strcmp(argp, "--uninstall") == 0) {
-            /*
-                Remove the  manager
-             */
-            if (removeService(1) < 0) {
-                return FALSE;
-            }
-#endif
-
         } else if (strcmp(argp, "--verbose") == 0 || strcmp(argp, "-v") == 0) {
             mprSetLogLevel(1);
 

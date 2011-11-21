@@ -5208,9 +5208,6 @@ void mprDisconnectCmd(MprCmd *cmd)
             cmd->handlers[i] = 0;
         }
     }
-#if UNUSED
-    cmd->disconnected = 1;
-#endif
 }
 
 
@@ -5236,9 +5233,6 @@ void mprCloseCmdFd(MprCmd *cmd, int channel)
             cmd->eofCount++;
             if (cmd->eofCount >= cmd->requiredEof && cmd->pid == 0) {
                 cmd->complete = 1;
-#if UNUSED
-                cmd->disconnected = 1;
-#endif
             }
         }
     }
@@ -5737,11 +5731,6 @@ static void reapCmd(MprCmd *cmd, MprSignal *sp)
         if (cmd->callback) {
             (cmd->callback)(cmd, -1, cmd->callbackData);
         }
-#if UNUSED
-        if (cmd->complete) {
-            cmd->disconnected = 1;
-        }
-#endif
         mprLog(6, "Cmd reaped: status %d, pid %d, eof %d / %d\n", cmd->status, cmd->pid, cmd->eofCount, cmd->requiredEof);
 
         if (cmd->callback) {
@@ -13697,16 +13686,8 @@ static char *standardMimeTypes[] = {
     "css",   "text/css",
     "dll",   "application/octet-stream",
     "doc",   "application/msword",
-#if UNUSED
-    /* ESP files should never be rendered to users */
-    "ejs",   "application/x-ejs",
-#endif
     "eps",   "application/postscript",
     "es",    "application/x-javascript",
-#if UNSUED
-    /* ESP files should never be rendered to users */
-    "esp",   "application/x-esp",
-#endif
     "exe",   "application/octet-stream",
     "gif",   "image/gif",
     "gz",    "application/x-gzip",
@@ -13879,11 +13860,7 @@ cchar *mprLookupMime(MprHash *table, cchar *ext)
         table = MPR->mimeTypes;
     }
     if ((mt = mprLookupKey(table, ext)) == 0) {;
-#if UNUSED
-        return "application/octet-stream";
-#else
         return "text/html";
-#endif
     }
     return mt->type;
 }
@@ -18724,12 +18701,6 @@ static void signalHandler(int signo, siginfo_t *info, void *arg)
     ip->arg = arg;
     ip->triggered = 1;
     ssp->hasSignals = 1;
-#if UNUSED
-    if (signo == SIGCHLD) {
-        mprAssert(info->si_pid);
-        printf("\nSIG %d for %d\n", signo, info->si_pid); 
-    }
-#endif
     mprWakeNotifier();
 }
 
