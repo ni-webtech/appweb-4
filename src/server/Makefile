@@ -63,7 +63,7 @@ $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE): $(OBJECTS) $(call lib, $(LIBDEP)) $(cal
 appweb.conf: $(BLD_INC_DIR)/buildConfig.h Makefile master/appweb.conf
 	$(call log) "[Patch]" "appweb.conf"
 	cp master/appweb.conf .
-	patchConfig --port $(BLD_HTTP_PORT) --ssl $(BLD_SSL_PORT) --home . --logs . --documents web \
+	setConfig --port $(BLD_HTTP_PORT) --ssl $(BLD_SSL_PORT) --home . --logs . --documents web \
 		--modules "$(BLD_LIB_DIR)" --cache cache appweb.conf
 	rm -f appweb.conf.bak
 

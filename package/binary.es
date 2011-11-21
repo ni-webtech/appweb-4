@@ -146,7 +146,7 @@ copy("*", lib, {
 })
 
 if (options.task != "Remove") {
-    Cmd(["patchConfig", "--port", build.BLD_HTTP_PORT, "--ssl", build.BLD_SSL_PORT, "--cache", build.BLD_SPL_PREFIX.join("cache"), "--modules", build.BLD_LIB_PREFIX, cfg.join("appweb.conf")])
+    Cmd(["setConfig", "--port", build.BLD_HTTP_PORT, "--ssl", build.BLD_SSL_PORT, "--cache", build.BLD_SPL_PREFIX.join("cache"), "--modules", build.BLD_LIB_PREFIX, cfg.join("appweb.conf")])
 }
 
 if (build.BLD_FEATURE_EJSCRIPT == 1) {

@@ -71,6 +71,9 @@ int main(int argc, char **argv) {
         err++;
     }
     if (err) {
+#if BLD_WIN_LIKE
+        mprUserError("Bad command line:");
+#else
         mprUserError("Bad command line:\n"
             "  Usage: pathConfig [options]\n"
             "  Switches:\n"
@@ -82,6 +85,7 @@ int main(int argc, char **argv) {
             "    --modules dir        # moduels dir"
             "    --port number        # HTTP port number"
             "    --user username      # User name");
+#endif
         return 1;
     }
     path = argv[nextArg++];

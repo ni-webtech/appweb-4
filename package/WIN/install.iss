@@ -245,7 +245,9 @@ Filename: "{app}/bin/!!BLD_PRODUCT!!Monitor.exe"; Parameters: "--stop"; WorkingD
 Filename: "{app}/bin/appman.exe"; Parameters: "uninstall"; WorkingDir: "{app}"; Check: IsPresent('{app}/bin/appman.exe'); StatusMsg: "Stopping Appweb"; Flags: waituntilterminated; Components: bin
 
 ; MOB
-; Filename: "{app}/bin/patchFiles.exe"; Parameters: ""; WorkingDir: "{app}"; StatusMsg: "Updating Appweb configuration"; Flags: runhidden waituntilterminated; 
+;  settings := '{ port: ' + PortPage.Values[0] + ', ssl: ' + SSLPortPage.Values[0] + 
+;	', web: "' + WebDirPage.Values[0] + '", root: "' + ExpandConstant('{app}') + '", }' + #13#10;
+; Filename: "{app}/bin/setConfig.exe"; Parameters: ""; WorkingDir: "{app}"; StatusMsg: "Updating Appweb configuration"; Flags: runhidden waituntilterminated; 
 
 Filename: "{app}/bin/appman.exe"; Parameters: "install enable"; WorkingDir: "{app}"; StatusMsg: "Installing Appweb as a Windows Service"; Flags: waituntilterminated;
 

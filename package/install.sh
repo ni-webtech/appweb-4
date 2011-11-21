@@ -338,7 +338,7 @@ patchConfiguration() {
     if [ ! -f $BLD_PRODUCT.conf -a -f "$BLD_CFG_PREFIX/new.conf" ] ; then
         cp "$BLD_CFG_PREFIX/new.conf" "$BLD_CFG_PREFIX/$BLD_PRODUCT.conf"
     fi
-    patchConfig --port ${BLD_HTTP_PORT} --ssl ${BLD_SSL_PORT} --home "${BLD_CFG_PREFIX}" --logs "${BLD_LOG_PREFIX}" \
+    setConfig --port ${BLD_HTTP_PORT} --ssl ${BLD_SSL_PORT} --home "${BLD_CFG_PREFIX}" --logs "${BLD_LOG_PREFIX}" \
         --documents "${BLD_WEB_PREFIX}" --modules "${BLD_LIB_PREFIX}" --cache "${BLD_SPL_PREFIX}/cache" "${BLD_CFG_PREFIX}/appweb.conf"
 }
 
