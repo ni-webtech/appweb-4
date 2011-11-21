@@ -10066,7 +10066,7 @@ static int cmdUpdate(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 
     command = expandTokens(conn, op->details);
     cmd = mprCreateCmd(conn->dispatcher);
-    if ((status = mprRunCmd(cmd, command, &out, &err, 0)) != 0) {
+    if ((status = mprRunCmd(cmd, command, &out, &err, -1, 0)) != 0) {
         /* Don't call httpError, just set errorMsg which can be retrieved via: ${request:error} */
         conn->errorMsg = sfmt("Command failed: %s\nStatus: %d\n%s\n%s", command, status, out, err);
         mprError("%s", conn->errorMsg);

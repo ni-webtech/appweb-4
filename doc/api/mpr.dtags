@@ -991,6 +991,13 @@
     </member>
     <member kind="define">
       <type>#define</type>
+      <name>MPR_NO_WINDOW</name>
+      <anchorfile>mpr_8h.html</anchorfile>
+      <anchor>a8ffe8c24f95b6d8cf62b935108d8681d</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
       <name>MPR_NORMAL_PRIORITY</name>
       <anchorfile>mpr_8h.html</anchorfile>
       <anchor>a00253cececc72225524d098e29d552a9</anchor>
@@ -4185,15 +4192,15 @@
       <type>int</type>
       <name>mprRunCmd</name>
       <anchorfile>group___mpr_cmd.html</anchorfile>
-      <anchor>ga7f80cf889cf937a284d78552298667b3</anchor>
-      <arglist>(MprCmd *cmd, cchar *command, char **out, char **err, int flags)</arglist>
+      <anchor>gab2adf833816e9c66b4241a94bd2cc191</anchor>
+      <arglist>(MprCmd *cmd, cchar *command, char **out, char **err, MprTime timeout, int flags)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
       <name>mprRunCmdV</name>
       <anchorfile>group___mpr_cmd.html</anchorfile>
-      <anchor>gafcea6f14d60761368a0644eb0c0de2aa</anchor>
-      <arglist>(MprCmd *cmd, int argc, char **argv, char **out, char **err, int flags)</arglist>
+      <anchor>ga9e874422bf7de24be39711c56b708036</anchor>
+      <arglist>(MprCmd *cmd, int argc, char **argv, char **out, char **err, MprTime timeout, int flags)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
@@ -8178,15 +8185,15 @@
       <type>int</type>
       <name>mprRunCmd</name>
       <anchorfile>group___mpr_cmd.html</anchorfile>
-      <anchor>ga7f80cf889cf937a284d78552298667b3</anchor>
-      <arglist>(MprCmd *cmd, cchar *command, char **out, char **err, int flags)</arglist>
+      <anchor>gab2adf833816e9c66b4241a94bd2cc191</anchor>
+      <arglist>(MprCmd *cmd, cchar *command, char **out, char **err, MprTime timeout, int flags)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
       <name>mprRunCmdV</name>
       <anchorfile>group___mpr_cmd.html</anchorfile>
-      <anchor>gafcea6f14d60761368a0644eb0c0de2aa</anchor>
-      <arglist>(MprCmd *cmd, int argc, char **argv, char **out, char **err, int flags)</arglist>
+      <anchor>ga9e874422bf7de24be39711c56b708036</anchor>
+      <arglist>(MprCmd *cmd, int argc, char **argv, char **out, char **err, MprTime timeout, int flags)</arglist>
     </member>
     <member kind="function">
       <type>void</type>

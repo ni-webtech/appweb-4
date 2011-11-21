@@ -192,7 +192,7 @@ static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *mod
         mprSetCmdSearchPath(cmd, eroute->searchPath);
     }
     //  WARNING: GC will run here
-	if (mprRunCmd(cmd, req->commandLine, &out, &err, 0) != 0) {
+	if (mprRunCmd(cmd, req->commandLine, &out, &err, -1, 0) != 0) {
 		if (err == 0 || *err == '\0') {
 			/* Windows puts errors to stdout Ugh! */
 			err = out;

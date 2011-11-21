@@ -5263,7 +5263,7 @@ int mprIsCmdComplete(MprCmd *cmd)
 /*
     Run a simple blocking command. See arg usage below in mprRunCmdV.
  */
-int mprRunCmd(MprCmd *cmd, cchar *command, char **out, char **err, int flags)
+int mprRunCmd(MprCmd *cmd, cchar *command, char **out, char **err, MprTime timeout, int flags)
 {
     char    **argv;
     int     argc;
@@ -5273,7 +5273,7 @@ int mprRunCmd(MprCmd *cmd, cchar *command, char **out, char **err, int flags)
         return 0;
     }
     cmd->makeArgv = argv;
-    return mprRunCmdV(cmd, argc, argv, out, err, flags);
+    return mprRunCmdV(cmd, argc, argv, out, err, timeout, flags);
 }
 
 
@@ -5301,7 +5301,7 @@ void mprSetCmdSearchPath(MprCmd *cmd, cchar *search)
         MPR_CMD_SHOW            Show the commands window on Windows
         MPR_CMD_IN              Connect to stdin
  */
-int mprRunCmdV(MprCmd *cmd, int argc, char **argv, char **out, char **err, int flags)
+int mprRunCmdV(MprCmd *cmd, int argc, char **argv, char **out, char **err, MprTime timeout, int flags)
 {
     int     rc, status;
 
@@ -5348,7 +5348,7 @@ int mprRunCmdV(MprCmd *cmd, int argc, char **argv, char **out, char **err, int f
     if (cmd->flags & MPR_CMD_DETACH) {
         return 0;
     }
-    if (mprWaitForCmd(cmd, -1) < 0) {
+    if (mprWaitForCmd(cmd, timeout) < 0) {
         return MPR_ERR_NOT_READY;
     }
     if ((status = mprGetCmdExitStatus(cmd)) < 0) {

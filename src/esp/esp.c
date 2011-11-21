@@ -595,7 +595,7 @@ static void run(int argc, char **argv)
     }
     cmd = mprCreateCmd(0);
     trace("RUN", "appweb -v");
-    if (mprRunCmd(cmd, "appweb -v", NULL, NULL, MPR_CMD_DETACH) != 0) {
+    if (mprRunCmd(cmd, "appweb -v", NULL, NULL, -1, MPR_CMD_DETACH) != 0) {
         fail("Can't run command: \n%s", app->command);
         return;
     }
@@ -624,7 +624,7 @@ static int runCommand(cchar *command, cchar *csource, cchar *module)
     mprLog(1, "Run: %s", app->command);
 
     //  WARNING: GC will run here
-	if (mprRunCmd(cmd, app->command, &out, &err, 0) != 0) {
+	if (mprRunCmd(cmd, app->command, &out, &err, -1, 0) != 0) {
 		if (err == 0 || *err == '\0') {
 			/* Windows puts errors to stdout Ugh! */
 			err = out;
