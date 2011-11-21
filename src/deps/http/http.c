@@ -1121,68 +1121,6 @@ static void trace(HttpConn *conn, cchar *url, int fetchCount, cchar *method, int
 }
 
 
-#if UNUSED
-static void logHandler(int flags, int level, const char *msg)
-{
-    Mpr         *mpr;
-    MprFile     *file;
-    char        *prefix;
-
-    mpr = mprGetMpr();
-    file = mpr->logFile;
-    prefix = mpr->name;
-
-    while (*msg == '\n') {
-        mprFprintf(file, "\n");
-        msg++;
-    }
-    if (flags & MPR_LOG_SRC) {
-        mprFprintf(file, "%s: %d: %s\n", prefix, level, msg);
-    } else if (flags & MPR_ERROR_SRC) {
-        mprFprintf(file, "%s: Error: %s\n", prefix, msg);
-    } else if (flags & MPR_FATAL_SRC) {
-        mprFprintf(file, "%s: Fatal: %s\n", prefix, msg);
-    } else if (flags & MPR_ASSERT_SRC) {
-        mprFprintf(file, "%s: Assertion %s, failed\n", prefix, msg);
-    } else if (flags & MPR_RAW) {
-        mprFprintf(file, "%s", msg);
-    }
-    if (flags & (MPR_ERROR_SRC | MPR_FATAL_SRC | MPR_ASSERT_SRC)) {
-        mprBreakpoint();
-    }
-}
-
-
-
-static int startLogging(char *logSpec)
-{
-    MprFile     *file;
-    char        *levelSpec;
-    int         level;
-
-    level = 0;
-    logSpec = sclone(logSpec);
-
-    if ((levelSpec = strchr(logSpec, ':')) != 0) {
-        *levelSpec++ = '\0';
-        level = atoi(levelSpec);
-    }
-    if (strcmp(logSpec, "stdout") == 0) {
-        file = MPR->stdOutput;
-    } else {
-        if ((file = mprOpenFile(logSpec, O_CREAT | O_WRONLY | O_TRUNC | O_TEXT, 0664)) == 0) {
-            mprPrintfError("Can't open log file %s\n", logSpec);
-            return -1;
-        }
-    }
-    mprSetLogLevel(level);
-    mprSetLogHandler(logHandler);
-    mprSetLogFile(file);
-    return 0;
-}
-#endif
-
-
 #if (BLD_WIN_LIKE && !WINCE) || VXWORKS
 static char *getpass(char *prompt)
 {

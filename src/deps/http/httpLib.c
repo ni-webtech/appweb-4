@@ -2060,7 +2060,8 @@ void httpAddCache(HttpRoute *route, cchar *methods, cchar *uris, cchar *extensio
     cache->serverLifespan = serverLifespan;
     cache->flags = flags;
     mprAddItem(route->caching, cache);
-#if UNUSED
+
+#if UNUSED && KEEP
     mprLog(3, "Caching route %s for methods %s, URIs %s, extensions %s, types %s, client lifespan %d, server lifespan %d", 
         route->name,
         (methods) ? methods: "*",
@@ -5441,7 +5442,7 @@ static void updateCurrentDate(Http *http)
 
 
 
-void httpSetRouteLogFormat(HttpRoute *route, cchar *path, ssize size, int backup, cchar *format, int flags)
+void httpSetRouteLog(HttpRoute *route, cchar *path, ssize size, int backup, cchar *format, int flags)
 {
     char    *src, *dest;
 
@@ -5491,7 +5492,6 @@ MprFile *httpOpenRouteLog(HttpRoute *route)
     int         mode;
 
     mprAssert(route->log == 0);
-
     mode = O_CREAT | O_WRONLY | O_TEXT;
     if ((file = mprOpenFile(route->logPath, mode, 0664)) == 0) {
         mprError("Can't open log file %s", route->logPath);

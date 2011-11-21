@@ -193,7 +193,7 @@ static int accessLogDirective(MaState *state, cchar *key, cchar *value)
         mprError("Missing filename");
         return MPR_ERR_BAD_SYNTAX;
     }
-    httpSetRouteLogFormat(state->route, httpMakePath(state->route, path), size, backup, HTTP_LOG_FORMAT, flags);
+    httpSetRouteLog(state->route, httpMakePath(state->route, path), size, backup, HTTP_LOG_FORMAT, flags);
     return 0;
 }
 #endif

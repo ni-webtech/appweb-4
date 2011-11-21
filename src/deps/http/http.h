@@ -3302,17 +3302,6 @@ extern int httpAddRouteLanguageSuffix(HttpRoute *route, cchar *language, cchar *
 extern int httpAddRouteLanguageDir(HttpRoute *route, cchar *language, cchar *path);
 
 /**
-    FUTURE MOB - complete
-    @description 
-    @param route Route to modify
-    @param name 
-    @param path 
-    @ingroup HttpRoute
-    @internal
- */
-extern void httpAddRouteLoad(HttpRoute *route, cchar *name, cchar *path);
-
-/**
     Add a route param check
     @description This configures the route to match a request only if the specified param field matches a specific value.
     @param route Route to modify
@@ -3355,6 +3344,15 @@ extern int httpAddRouteUpdate(HttpRoute *route, cchar *name, cchar *details, int
     @ingroup HttpRoute
  */
 extern void httpAddStaticRoute(HttpRoute *parent);
+
+/**
+    Backup the route log if required
+    @description If the log file is greater than the maximum configured, or MPR_ANEW was set via httpSetRouteLog, then 
+    archive the log.
+    @param route Route to modify
+    @ingroup HttpRoute
+ */
+extern void httpBackupRouteLog(HttpRoute *route);
 
 /**
     Clear the pipeline stages for the route
@@ -3774,11 +3772,12 @@ extern void httpSetRoutePattern(HttpRoute *route, cchar *pattern, int flags);
 extern void httpSetRoutePrefix(HttpRoute *route, cchar *prefix);
 
 /**
-    MOB - todo
-    @description 
+    Set the script to service the route.
+    @description This is used by handlers to add a per-route script for processing. Ejscript uses this to specify
+        the server script. Either a literal script or a path to a script filename can be provided.
     @param route Route to modify
-    @param script 
-    @param scriptPath
+    @param script Literal script to execute.
+    @param scriptPath Pathname to the script file to execute
     @ingroup HttpRoute
     @internal
  */
@@ -3906,10 +3905,6 @@ extern void httpSetRouteTraceFilter(HttpRoute *route, int dir, int levels[HTTP_T
  */
 extern void httpSetRouteWorkers(HttpRoute *route, int workers);
 
-//  MOB
-extern int httpStartRoute(HttpRoute *route);
-extern void httpStopRoute(HttpRoute *route);
-
 /**
     Expand a template string using given options
     @description This expands a string with embedded tokens of the form "${token}" using values from the given options.
@@ -3955,12 +3950,35 @@ extern bool httpTokenize(HttpRoute *route, cchar *str, cchar *fmt, ...);
  */
 extern bool httpTokenizev(HttpRoute *route, cchar *str, cchar *fmt, va_list args);
 
-//  MOB
-extern void httpSetRouteLogFormat(HttpRoute *route, cchar *path, ssize size, int backup, cchar *format, int flags);
+/**
+    Configure the route access log
+    @param route Route to modify
+    @param path Path for route access log file.
+    @param size Maximum size of the log file before archiving
+    @param backup Set to true to create a backup of the log file if archiving.
+    @param format Log file format
+    @param flags Set to MPR_LOG_ANEW to archive the log when the application reboots.
+    @ingroup HttpRoute
+ */
+extern void httpSetRouteLog(HttpRoute *route, cchar *path, ssize size, int backup, cchar *format, int flags);
+
+/**
+    Write data to the route access log
+    @description Write data after archiving if required.
+    @param route Route to modify
+    @param buf Data buffer to write
+    @param len Size of the data buffer.
+    @ingroup HttpRoute
+ */
 extern void httpWriteRouteLog(HttpRoute *route, cchar *buf, ssize len);
+
+/*
+    Internal
+ */
 extern void httpLogRequest(HttpConn *conn);
-extern void httpBackupRouteLog(HttpRoute *route);
 extern MprFile *httpOpenRouteLog(HttpRoute *route);
+extern int httpStartRoute(HttpRoute *route);
+extern void httpStopRoute(HttpRoute *route);
 
 /**
     Upload File
@@ -4249,7 +4267,13 @@ extern MprHash *httpGetHeaderHash(HttpConn *conn);
  */
 extern char *httpGetHeaders(HttpConn *conn);
 
-//  MOB DOC
+/**
+    Get a header string from the given hash.
+    @description This returns a set of "key: value" lines in HTTP header format.
+    @param hash Hash table to examine
+    @ingroup HttpRx
+    @internal
+ */
 extern char *httpGetHeadersFromHash(MprHash *hash);
 
 /**
@@ -5295,7 +5319,9 @@ extern void httpSetHostProtocol(HttpHost *host, cchar *protocol);
  */
 extern void httpSetOption(MprHash *options, cchar *field, cchar *value);
 
-//  MOB
+/*
+    Internal
+ */
 extern int httpStartHost(HttpHost *host);
 extern void httpStopHost(HttpHost *host);
 
