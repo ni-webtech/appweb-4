@@ -417,13 +417,13 @@ extern MprHash *espGetSessionObj(HttpConn *conn, cchar *key);
  */
 typedef void (*EspViewProc)(HttpConn *conn);
 
+//  MOB - simplify EspAction to just EspProc
 /**
     ESP Action
     @description Actions are run after a request URI is routed to a controller.
     @ingroup EspReq
     @see
  */
-//  MOB - simplify EspAction to just EspProc
 typedef struct EspAction {
     EspProc         actionProc;             /**< Action procedure to run to respond to the request */
 } EspAction;

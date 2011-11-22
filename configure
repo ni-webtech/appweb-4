@@ -804,9 +804,22 @@ findComponents() {
             eval os=\$BLD_${kind}_OS
             OS=$os NAME=$name KIND=$kind defineComponent "$path"
         done
+
+        eval dependencies=\$CFG_${kind}_${upperName}_DEPENDENCIES
+        for dep in $dependencies 
+        do
+            if ! isdefined "$dep" ; then
+                if [ "$mandatory" = 1 ] ; then
+                    echo "configureComponent: Missing dependency \"${dep}\" for mandatory component: ${name}" 1>&2
+                    exit 255
+                fi
+            fi
+        done
+
         [ $BLD_CROSS = 0 ] && break
     done
     [ "$verbose" -gt 0 ] && echo
+
 }
 
 
@@ -926,16 +939,19 @@ configureComponent() {
     fi
     eval unset "CFG_${kind}_${upper}"
 
-    for dep in $dependencies 
-    do
-        upperDep=`upper ${dep}`
-        if ! isdefined "$dep" ; then
-            if [ "$mandatory" = 1 ] ; then
-                echo "configureComponent: Missing dependency \"${dep}\" for mandatory component: ${name}" 1>&2
-                exit 255
-            fi
-        fi
-    done
+    #
+    #   MOB - this should be done after all have been scanned.
+    #
+#    for dep in $dependencies 
+#    do
+#        upperDep=`upper ${dep}`
+#        if ! isdefined "$dep" ; then
+#            if [ "$mandatory" = 1 ] ; then
+#                echo "configureComponent: Missing dependency \"${dep}\" for mandatory component: ${name}" 1>&2
+#                exit 255
+#            fi
+#        fi
+#    done
 
     for dep in $optional $dependencies
     do
@@ -943,7 +959,6 @@ configureComponent() {
         eval needed=\$CFG_${kind}_${udep}
 
         if [ "$needed" != "" ] ; then
-
             eval v=\$CFG_${kind}_${udep}_LIBS
             [ "$v" != "" ] && libs="$libs $v"
             [ "$v" != "" ] && withlibs="$withlibs $v"

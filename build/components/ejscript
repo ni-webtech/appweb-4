@@ -24,22 +24,43 @@ defineComponent() {
         fi
     fi
 
+    #
+    #   If building via the build farm, do an on-demand build of ejs
+    #
+    : ${BUILD_DEPTH:=0}
+    if [ "$BUILD_KEY" != "" -a "$BUILD_DEPTH" -ge 2 ] ; then
+        if [ "${CMD_LINE/--with-ejscript}" != "${CMD_LINE}" ] ; then
+            if [ ! -x imports/ejs/out/lib ] ; then
+                echo "Downloading ..."
+                rm -fr imports/ejs
+                git clone git@github.com:embedthis/ejs-2.git imports/ejs
+                (cd imports/ejs >/dev/null ; ./configure ; make; echo)
+            fi
+        fi
+    fi
+
     if [ "$builtin" = "" ] ; then
         search="$path/out/lib:$path/out/inc:$path"
         if [ "${path}" = "." ] ; then
-            #
-            #   Search for an adjacent ejscript source tree
-            #
-            search="${search}:../ejs/out/lib:../ejs/out/inc:../ejs/out/bin"
-            if [ "$BLD_DEBUG" = 1 ] ; then
-                type=standard
-            else
-                type=release
+            if [ -x imports/ejs/out/lib ] ; then
+                search="${search}:imports/ejs/out/lib"
+                search="${search}:imports/ejs/out/inc"
+                search="${search}:imports/ejs/out/bin"
+#            else
+#               #
+#               #   Search for an adjacent ejscript source tree
+#               #
+#               search="${search}:../ejs/out/lib:../ejs/out/inc:../ejs/out/bin"
+#               if [ "$BLD_DEBUG" = 1 ] ; then
+#                   type=standard
+#               else
+#                   type=release
+#               fi
+#               search="${search}:../ejs-master-${type}/out/lib"
+#               search="${search}:../ejs-master-${type}/out/bin"
+#               search="${search}:../ejs-master-${type}/out/inc"
             fi
-            search="${search}:../ejs-master-${type}/out/lib:../ejs-master-${type}/out/bin"
-            search="${search}:../ejs-master-${type}/out/inc"
         fi
-
         libdir=`probe --name libejs --dir --search "$search" "libejs" `
         if [ "$libdir" = "" -a "$path" != "." ] ; then
             warnComponent ejscript "Can't locate libejs"
