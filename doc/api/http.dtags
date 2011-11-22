@@ -1417,13 +1417,6 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>httpAddRouteLoad</name>
-      <anchorfile>group___http_route.html</anchorfile>
-      <anchor>ga3132df6f3085967ffde6a481fef155bd</anchor>
-      <arglist>(HttpRoute *route, cchar *name, cchar *path)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
       <name>httpAddRouteParam</name>
       <anchorfile>group___http_route.html</anchorfile>
       <anchor>ga04f240925c339ab35010e013bfa62c7a</anchor>
@@ -1449,6 +1442,13 @@
       <anchorfile>group___http_route.html</anchorfile>
       <anchor>ga4d72eb7b413175ed98b5726f4f0ad165</anchor>
       <arglist>(HttpRoute *parent)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>httpBackupRouteLog</name>
+      <anchorfile>group___http_route.html</anchorfile>
+      <anchor>ga59e692e11ae01760285fb12ed39e2042</anchor>
+      <arglist>(HttpRoute *route)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -1690,6 +1690,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>httpSetRouteLog</name>
+      <anchorfile>group___http_route.html</anchorfile>
+      <anchor>ga0be94600d3fa3ed933b13a79572bc9be</anchor>
+      <arglist>(HttpRoute *route, cchar *path, ssize size, int backup, cchar *format, int flags)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>httpSetRouteMethods</name>
       <anchorfile>group___http_route.html</anchorfile>
       <anchor>gaf72c2d2934d0a63780dfb97b4cf2ad3c</anchor>
@@ -1793,6 +1800,13 @@
       <anchor>gacb87f172e58f3fdb1158eac01f3b4622</anchor>
       <arglist>(HttpRoute *route, cchar *str, cchar *fmt, va_list args)</arglist>
     </member>
+    <member kind="function">
+      <type>void</type>
+      <name>httpWriteRouteLog</name>
+      <anchorfile>group___http_route.html</anchorfile>
+      <anchor>gad0242da72f0bd7cc5e200a85adae2e7b</anchor>
+      <arglist>(HttpRoute *route, cchar *buf, ssize len)</arglist>
+    </member>
   </compound>
   <compound kind="group">
     <name>HttpUploadFile</name>
@@ -1879,6 +1893,13 @@
       <anchorfile>group___http_rx.html</anchorfile>
       <anchor>ga2bfb4c582aa38c8a34c028b5f4547ef1</anchor>
       <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>char *</type>
+      <name>httpGetHeadersFromHash</name>
+      <anchorfile>group___http_rx.html</anchorfile>
+      <anchor>ga6c8ec95383e146c74f7ec0c1580147d8</anchor>
+      <arglist>(MprHash *hash)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
