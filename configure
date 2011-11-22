@@ -1447,7 +1447,9 @@ createBuildConfig() {
         else
             eval dir=$BLD_HOST_BIN_DIR
         fi
-        echo -e "\${BLD_TOP}/${dir}/${item##*/}: ${item}\n\tcp ${item} ${BLD_TOP}/${dir}/${item##*/}\n" >>$CONFIG_IMP
+		#
+		#	MOB - temporarily allow overrides.
+        echo -e "\${BLD_TOP}/${dir}/${item##*/}:: ${item}\n\tcp ${item} ${BLD_TOP}/${dir}/${item##*/}\n" >>$CONFIG_IMP
         echo -e "\t\${BLD_TOP}/${dir}/${item##*/} \\" >>/tmp/$$targets
     done
     echo -e "compileFirst: \\" >>$CONFIG_IMP
