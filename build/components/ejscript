@@ -34,7 +34,11 @@ defineComponent() {
                 echo "Downloading ..."
                 rm -fr imports/ejs
                 git clone git@github.com:embedthis/ejs-2.git imports/ejs
-                (cd imports/ejs >/dev/null ; ./configure ; make; echo)
+                if [ "$BLD_DEBUG" = 1 ] ; then
+                    (cd imports/ejs >/dev/null ; ./configure --debug ; make; echo)
+                else
+                    (cd imports/ejs >/dev/null ; ./configure --release ; make; echo)
+                fi]
             fi
         fi
     fi
