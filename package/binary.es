@@ -149,11 +149,13 @@ copy("*", lib, {
     recurse: true,
 })
 
-if (options.task == "Install") {
-    if (build.BLD_HOST_OS == "WIN") {
+if (build.BLD_HOST_OS == "WIN") {
+    if (options.task != "Remove") {
         Cmd(["setConfig", "--home", ".", "--documents", "web", "--logs", "logs", "--port", build.BLD_HTTP_PORT, "--ssl", 
             build.BLD_SSL_PORT, "--cache", "tmp/cache", "--modules", "bin", cfg.join("appweb.conf")])
-    } else {
+    }
+} else {
+    if (options.task == "Install") {
         Cmd(["setConfig", "--home", cfg, "--documents", web, "--logs", log, "--port", build.BLD_HTTP_PORT, "--ssl", 
             build.BLD_SSL_PORT, "--cache", spl.join("cache"), "--modules", build.BLD_LIB_PREFIX, cfg.join("appweb.conf")])
     }
