@@ -1435,6 +1435,7 @@ createBuildConfig() {
     SHOBJ=$BLD_HOST_SHOBJ
     echo -e "#\n#   Makefile.import -- Import dependent files\n#\n" >$CONFIG_IMP
     > /tmp/$$targets
+    BLD_IMPORTS=`echo ${BLD_IMPORTS}| tr ' ' '\n' | sort | uniq | tr '\n' ' '`
     for item in ${BLD_IMPORTS} 
     do
         if [ ${item%.h} != ${item} ] ; then
