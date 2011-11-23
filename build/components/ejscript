@@ -33,9 +33,9 @@ defineComponent() {
             if [ ! -x imports/ejs/out/lib ] ; then
                 echo "Downloading ..."
                 rm -fr imports/ejs
-                rm -f imports/extensions
+                rm -f imports/packages
                 mkdir -p imports
-                ln -s ../extensions imports/extensions
+                ln -s ../extensions imports/packages
                 git clone git@github.com:embedthis/ejs-2.git imports/ejs
                 if [ "$BLD_DEBUG" = 1 ] ; then
                     (cd imports/ejs >/dev/null ; ./configure --debug ; make; echo)
