@@ -30,7 +30,7 @@ defineComponent() {
     : ${BUILD_DEPTH:=0}
     if [ "$BUILD_KEY" != "" -a "$BUILD_DEPTH" -ge 2 ] ; then
         if [ "${CMD_LINE/--with-ejscript}" != "${CMD_LINE}" ] ; then
-            if [ ! -x imports/ejs/out/lib ] ; then
+            if [ ! -x imports/ejs/out/bin ] ; then
                 echo "Downloading ..."
                 rm -fr imports/ejs
                 rm -f imports/packages
@@ -47,9 +47,9 @@ defineComponent() {
     fi
 
     if [ "$builtin" = "" ] ; then
-        search="$path/out/lib:$path/out/inc:$path"
+        search="$path/out/lib:$path/out/bin:$path/out/inc:$path"
         if [ "${path}" = "." ] ; then
-            if [ -x "imports/ejs/out/lib" ] ; then
+            if [ -x "imports/ejs/out/bin" ] ; then
                 search="${search}:imports/ejs/out/lib"
                 search="${search}:imports/ejs/out/inc"
                 search="${search}:imports/ejs/out/bin"
