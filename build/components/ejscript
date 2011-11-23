@@ -38,7 +38,7 @@ defineComponent() {
                     (cd imports/ejs >/dev/null ; ./configure --debug ; make; echo)
                 else
                     (cd imports/ejs >/dev/null ; ./configure --release ; make; echo)
-                fi]
+                fi
             fi
         fi
     fi
@@ -46,26 +46,13 @@ defineComponent() {
     if [ "$builtin" = "" ] ; then
         search="$path/out/lib:$path/out/inc:$path"
         if [ "${path}" = "." ] ; then
-            if [ -x imports/ejs/out/lib ] ; then
+            if [ -x "imports/ejs/out/lib" ] ; then
                 search="${search}:imports/ejs/out/lib"
                 search="${search}:imports/ejs/out/inc"
                 search="${search}:imports/ejs/out/bin"
-#            else
-#               #
-#               #   Search for an adjacent ejscript source tree
-#               #
-#               search="${search}:../ejs/out/lib:../ejs/out/inc:../ejs/out/bin"
-#               if [ "$BLD_DEBUG" = 1 ] ; then
-#                   type=standard
-#               else
-#                   type=release
-#               fi
-#               search="${search}:../ejs-master-${type}/out/lib"
-#               search="${search}:../ejs-master-${type}/out/bin"
-#               search="${search}:../ejs-master-${type}/out/inc"
             fi
         fi
-        libdir=`probe --name libejs --dir --search "$search" "libejs" `
+        libdir=`probe --name libejs --dir --search "$search" "libejs"`
         if [ "$libdir" = "" -a "$path" != "." ] ; then
             warnComponent ejscript "Can't locate libejs"
             return
