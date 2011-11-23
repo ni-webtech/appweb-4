@@ -1579,7 +1579,7 @@ void mprResumeThreads()
     mprLock(ts->mutex);
     for (i = 0; i < ts->threads->length; i++) {
         tp = (MprThread*) mprGetItem(ts->threads, i);
-        if (tp->yielded) {
+        if (tp && tp->yielded) {
             if (!tp->stickyYield) {
                 tp->yielded = 0;
             }
