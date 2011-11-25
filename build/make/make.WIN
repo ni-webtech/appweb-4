@@ -51,11 +51,8 @@ _LDPATH			    = $(BLD_LIB_DIR)
 _LIBS          	    += ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib
 
 ifeq ($(BLD_DEBUG),1)
-    ifeq ($(BLD_EMBEDTHIS),1)
-        _LIBS       += msvcrtd.lib
-    else
-        _LIBS       += msvcrt.lib
-    endif
+    # Not using msvcrtd.lib. If you do, you must ensure all packages/extensions use it as well
+    _LIBS           += msvcrt.lib
 else
     _LIBS           += msvcrt.lib
 endif
