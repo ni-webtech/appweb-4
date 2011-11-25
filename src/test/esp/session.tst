@@ -33,7 +33,7 @@ assert(http.status == 200)
 assert(http.response.contains("Valid Login"))
 assert(!http.sessionCookie)
 print("STATUS", http.status)
-dump("\nPRIOR HEADERS", http.headers)
+dump("\nXX PRIOR HEADERS", http.headers)
 print("PRIOR RESPONSE: \"" + http.response + "\"")
 http.close()
 
