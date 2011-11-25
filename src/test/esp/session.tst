@@ -29,6 +29,8 @@ http.form(HTTP + "/app/test/login", {
 assert(http.status == 200)
 assert(http.response.contains("Valid Login"))
 assert(!http.sessionCookie)
+dump("PRIOR", http.headers)
+print("PRIOR RESPONSE:" + http.response)
 http.close()
 
 
@@ -36,5 +38,7 @@ http.close()
 http.setCookie(cookie)
 http.get(HTTP + "/app/test/login")
 assert(http.status == 200)
+print("RESPONSE: " + http.response)
+dump("HEADERS", http.headers)
 assert(http.response.contains("Logged in"))
 http.close()
