@@ -62,9 +62,9 @@ configureProduct() {
 			find "${BLD_WEB_PREFIX}" -type d | while read f ; do
                 chmod 755 "$f"
             done
-			find "${BLD_WEB_PREFIX}" -type f | while read f ; do
-				chmod 644 "$f"
-			done
+#		find "${BLD_WEB_PREFIX}" -type f | while read f ; do
+#			chmod 644 "$f"
+#		done
 		fi
 		;;
 

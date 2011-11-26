@@ -103,7 +103,12 @@ if (!bare) {
         exclude: /mgmt\//,
         recurse: true,
     })
-
+    copy("*", web.join("test"), {
+        from: "src/server/web/test",
+        include: /.cgi|test.pl|test.py/,
+        recurse: true,
+        permissions: 0755,
+    })
     copy("*", inc, {
         from: sinc,
         exclude: /appwebMonitor.h|testAppweb.h/,
@@ -122,16 +127,7 @@ copy("*" + build.BLD_SHOBJ, lib, {
     permissions: 0755, 
     strip: true
 })
-/* UNUSED
-if (build.BLD_HOST_OS == "WIN") {
-    copy("*" + build.BLD_SHLIB, lib, {
-        from: slib, 
-        exclude: /simple|sample/,
-        permissions: 0755, 
-        strip: true
-    })
-}
-*/
+
 if (options.task != "Remove" && build.BLD_FEATURE_SSL == 1 && os == "LINUX") {
     /* 
         Symlink to sonames for openssl
@@ -211,10 +207,7 @@ if (!bare) {
         }
         copy("package/LINUX/" + product + ".init", initd.join(product), {permissions: 0755, expand: true})
         copy("package/LINUX/" + product + ".upstart", init.join(product).joinExt("conf"), {permissions: 0644, expand: true})
-        if (options.task == "Package") {
-            //  MOB - cleanup
-            ;
-        } else {
+        if (options.task != "Package") {
             if (App.uid == 0 && options.root != "") {
                 if (options.openwrt) {
                     root.join("CONTROL").makeDir(dperms)
