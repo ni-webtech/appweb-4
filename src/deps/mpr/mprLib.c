@@ -13686,6 +13686,7 @@ static char *standardMimeTypes[] = {
     "class", "application/octet-stream",
     "css",   "text/css",
     "dll",   "application/octet-stream",
+    "dmg",   "application/octet-stream",
     "doc",   "application/msword",
     "eps",   "application/postscript",
     "es",    "application/x-javascript",
