@@ -48,7 +48,8 @@ extern "C" {
     #endif
 #endif
 #if WIN
-    #define ESP_CORE_LIBS "${LIB}\\mod_esp${SHLIB} ${LIB}\\libappweb.lib ${LIB}\\libhttp.lib ${LIB}\\libmpr.lib"
+    #define ESP_CORE_LIBS "\"${LIB}\\mod_esp${SHLIB}\" \"${LIB}\\libappweb.lib\" \
+        \"${LIB}\\libhttp.lib\" \"${LIB}\\libmpr.lib\""
 #else
     #define ESP_CORE_LIBS "${LIB}/mod_esp${SHOBJ} -lappweb -lpcre -lhttp -lmpr -lpthread -lm"
 #endif
@@ -58,7 +59,7 @@ extern "C" {
  */
 #if BLD_FEATURE_SSL
     #if WIN
-        #define ESP_SSL_LIBS " ${LIB}\\libmprssl.lib"
+        #define ESP_SSL_LIBS " \"${LIB}\\libmprssl.lib\""
     #else
         #define ESP_SSL_LIBS " -lmprssl"
     #endif
