@@ -204,33 +204,6 @@ if (!bare) {
                     root.join("CONTROL").makeDir(dperms)
                     copy("p*", root.join("CONTROL"), {from: "package/LINUX/deb.bin", permissions: 0755, expand: true})
                     copy("appweb.openwrt", initd.join(product), {from: "package/LINUX", permissions: 0755, expand: true})
-                } else {
-                    //MOB - cleanup
-                    ;
-/* UNUSED
-                    //  Daemon start / stop scripts
-                    copy("appweb.init", initd.join(product), {from: "package/LINUX", permissions: 0755, expand: true})
-                    copy("appweb.upstart", init.join(product), {from: "package/LINUX", permissions: 0755, expand: true})
-
-                    for each (i in [2, 3, 4, 5]) {
-                        let level = ".d/S90"
-                        etc.join("rc" + i + level + product).remove()
-                        if (options.task != "Remove") {
-                            etc.join("rc" + i + level).makeDir(dperms)
-                            Cmd.sh("rm -f " + etc.join("rc" + i + level + product))
-                            Cmd.sh("ln -s " + initd.join(product) + " " + etc.join("rc" + i + level + product))
-                        }
-                    }
-                    for each (i in [0, 1, 6]) {
-                        let level = ".d/K10"
-                        etc.join("rc" + i + level + product).remove()
-                        if (options.task != "Remove") {
-                            etc.join("rc" + i + level).makeDir(dperms)
-                            Cmd.sh("rm -f " + etc.join("rc" + i + level + product))
-                            Cmd.sh("ln -s " + initd.join(product) + " " + etc.join("rc" + i + level + product))
-                        }
-                    }
-*/
                 }
             }
         }

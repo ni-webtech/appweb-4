@@ -225,14 +225,13 @@ setup() {
 
     cd ${BLD_TOP}
     BLD_TOP=.
+    ORIGINAL_ROOT_DIR="$ROOT_DIR"
 
     . `cacheConfig ${BLD_TOP}/out/inc/buildConfig.h`
 
     if [ "$ROOT_DIR" = "" ] ; then
         ROOT_DIR=$BLD_ROOT_PREFIX
     fi
-    ORIGINAL_ROOT_DIR="$ROOT_DIR"
-    ROOT_DIR=${ROOT_DIR:-/}
     export ROOT_DIR ORIGINAL_ROOT_DIR
 
     . ${BLD_TOP}/build/bin/makePackage.common
