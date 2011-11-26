@@ -58,6 +58,11 @@ static void openEjs(HttpQueue *q)
         }
         conn->ejs = ejs;
         ejs->hosted = 1;
+        /*
+            Because we are using on-demand loading of ejs, the ejsHandler stage callbacks may not have been set when
+            the Http pipeline needed them (first time). The loading of ejs.web above will have fully initialized them.
+         */
+        httpAssignQueue(q, conn->http->ejsHandler, HTTP_QUEUE_TX);
     }
 }
 
@@ -115,14 +120,15 @@ static int ejsWorkersDirective(MaState *state, cchar *key, cchar *value)
 
 int maEjsHandlerInit(Http *http, MprModule *module)
 {
-    HttpStage   *stage;
     MaAppweb    *appweb;
+    HttpStage   *stage;
 
-    /*
-        Most of the Ejs handler is in ejsLib.c. Augment the handler with match, open and parse callbacks.
-     */
-    if ((stage = ejsAddWebHandler(http, module)) != 0) {
+    if ((stage = httpCreateHandler(http, "ejsHandler", HTTP_STAGE_ALL, module)) != 0) {
+        http->ejsHandler = stage;
         stage->open = openEjs;
+        /*
+            The rest of the stage callbacks will be defined by ejsAddWebHandler when ejs.web is loaded from openEjs
+         */
     }
     appweb = httpGetContext(http);
     maAddDirective(appweb, "EjsAlias", ejsAliasDirective);
