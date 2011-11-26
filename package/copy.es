@@ -29,7 +29,7 @@ public function copy(src: Path, target: Path = Dir, options = {})
     let owner = options.owner || -1
     let permissions = options.permissions
     let task = options.task 
-    let verbose = options.trace
+    let verbose: Number = options.trace
     let compress = options.compress || false
     let build = options.build
     let log = App.log
@@ -103,7 +103,9 @@ public function copy(src: Path, target: Path = Dir, options = {})
             if (compress) {
                 let destZip: Path = Path("" + dest.name + ".gz")
                 destZip.remove()
-                log.activity("Compress", dest)
+                if (verbose) {
+                    log.activity("Compress", dest)
+                }
                 Cmd.sh("gzip --best " + dest)
                 dest = destZip
             }

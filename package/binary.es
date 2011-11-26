@@ -193,7 +193,7 @@ if (!bare) {
                 } else {
                     //MOB - cleanup
                     ;
-/*
+/* UNUSED
                     //  Daemon start / stop scripts
                     copy("appweb.init", initd.join(product), {from: "package/LINUX", permissions: 0755, expand: true})
                     copy("appweb.upstart", init.join(product), {from: "package/LINUX", permissions: 0755, expand: true})
