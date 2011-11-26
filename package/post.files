@@ -7,7 +7,7 @@
 if [ $TASK = Install -a "${PACKS}" != "${PACKS/binary}" ] ; then
     configureProduct configure
     if [ "$ORIGINAL_ROOT_DIR" = "" ] ; then
-        if [ `id -u` = 0 ] ; then
+        if [ `id -u` = 0 -o "$BLD_OS" = "WIN" ] ; then
             configureProduct --quiet stop
             configureProduct install
             configureProduct start
