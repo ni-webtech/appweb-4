@@ -27,7 +27,6 @@
 #
 ################################################################################
 
-PACKS=
 BARE=0
 BROWSER=
 BLD_DATE=`date '+%c'`
@@ -196,18 +195,6 @@ copyRemoveFiles() {
         installRemoveLog ${packName}
     done
     configureProduct copy
-
-#    #
-#    #   Don't remove empty directories if installing to "/"
-#    #
-#    root=/
-#    [ $BLD_BUILD_OS = WIN ] && root=`cygpath -m "/"`
-#    if [ "$ORIGINAL_ROOT_DIR" != "" -o "$TASK" = Package -a "$ROOT_DIR" != "$root" ] ; then
-#        #
-#        #   Do it this way as the path may have spaces. find --exec has problems in cygwin
-#        #
-#        find "$ROOT_DIR" -depth -type d -empty | while read f ; do rmdir "$f" ; done
-#    fi
 }
 
 #
@@ -236,17 +223,17 @@ setup() {
 
     umask 022
 
-    #
-    #   If ROOT_DIR is set, it defines a ROOT directory under which the installation will occurr.
-    #
-    ORIGINAL_ROOT_DIR="$ROOT_DIR"
-    ROOT_DIR=${ROOT_DIR:-/}
-    export ROOT_DIR ORIGINAL_ROOT_DIR
-
     cd ${BLD_TOP}
     BLD_TOP=.
 
     . `cacheConfig ${BLD_TOP}/out/inc/buildConfig.h`
+
+    if [ "$ROOT_DIR" = "" ] ; then
+        ROOT_DIR=$BLD_ROOT_PREFIX
+    fi
+    ORIGINAL_ROOT_DIR="$ROOT_DIR"
+    ROOT_DIR=${ROOT_DIR:-/}
+    export ROOT_DIR ORIGINAL_ROOT_DIR
 
     . ${BLD_TOP}/build/bin/makePackage.common
     . package/makeInstall.${BLD_PRODUCT}
@@ -259,7 +246,7 @@ setup() {
         echo "Must compile first before $VERB"
         exit 255
     fi
-    ROOT_DIR=`${BLD_OUT_DIR}/bin/getpath -a "${ROOT_DIR}"`
+#   ROOT_DIR=`${BLD_OUT_DIR}/bin/getpath -a "${ROOT_DIR}"`
 
     if [ "$DRY_RUN" = 1 ] ; then
         CHGRP="true chgrp"
@@ -278,7 +265,6 @@ setup() {
         ROOT_DIR=`cygpath -u $ROOT_DIR`
         ROOT_DIR=`cygpath -am $ROOT_DIR`
     fi
-
     if [ $TASK = Package ] ; then
         dir=$ROOT_DIR
         if type cygpath >/dev/null 2>&1 ; then
@@ -448,8 +434,8 @@ while [ "${1#--}" != "$1" -o "${1#-}" != "$1" ] ; do
 done
 
 PACKS=${*:-binary}
-
 setup
+
 configureProduct initialize
 
 if [ $TASK = Remove ] ; then

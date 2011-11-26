@@ -77,15 +77,16 @@ if (!bare) {
 
     let cmdFilter
     if (Config.OS == "WIN") {
-        cmdFilter = /\.cmd/
+        cmdFilter = /\.cmd|\.sln|\.suo/
     } else if (Config.OS == "MACOSX") {
         cmdFilter = /appman/
     } else {
         cmdFilter = /undefined/
     }
+    //  This will pickup .lib files on windows
     copy("*", bin, {
         from: sbin,
-        include: /appman|esp|http|auth|makerom/
+        include: /appman|esp|http|auth|makerom|libappweb|libmpr/
         exclude: cmdFilter,
         permissions: 0755,
     })
@@ -113,7 +114,7 @@ if (!bare) {
 }
 
 /*
-    Copy libraries and symlink to sonames
+    Copy libraries 
  */
 copy("*" + build.BLD_SHOBJ, lib, {
     from: slib, 
@@ -121,7 +122,20 @@ copy("*" + build.BLD_SHOBJ, lib, {
     permissions: 0755, 
     strip: true
 })
+/* UNUSED
+if (build.BLD_HOST_OS == "WIN") {
+    copy("*" + build.BLD_SHLIB, lib, {
+        from: slib, 
+        exclude: /simple|sample/,
+        permissions: 0755, 
+        strip: true
+    })
+}
+*/
 if (options.task != "Remove" && build.BLD_FEATURE_SSL == 1 && os == "LINUX") {
+    /* 
+        Symlink to sonames for openssl
+     */
     copy("*" + build.BLD_SHOBJ + ".*", lib, {from: slib, permissions: 0755, strip: true})
     for each (f in slib.find("*.so.*")) {
         let withver = f.basename
@@ -152,7 +166,7 @@ copy("*", lib, {
 if (build.BLD_HOST_OS == "WIN") {
     if (options.task != "Remove") {
         Cmd(["setConfig", "--home", ".", "--documents", "web", "--logs", "logs", "--port", build.BLD_HTTP_PORT, "--ssl", 
-            build.BLD_SSL_PORT, "--cache", "tmp/cache", "--modules", "bin", cfg.join("appweb.conf")])
+            build.BLD_SSL_PORT, "--cache", "cache", "--modules", "bin", cfg.join("appweb.conf")])
     }
 } else {
     if (options.task == "Install") {
