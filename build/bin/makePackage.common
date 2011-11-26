@@ -436,6 +436,8 @@ preparePrefixes() {
         eval export ORIG_BLD_${name}=\"${path}\"
         d=BLD_${name}
         eval dir=\$BLD_${name}
+        dir=${dir/C:/}
+        dir=${dir/c:/}
 
         subdir=
         if [ "$TASK" = Package ] ; then
