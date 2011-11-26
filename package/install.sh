@@ -339,7 +339,8 @@ patchConfiguration() {
         cp "$BLD_CFG_PREFIX/new.conf" "$BLD_CFG_PREFIX/$BLD_PRODUCT.conf"
     fi
     setConfig --port ${HTTP_PORT} --ssl ${SSL_PORT} --home "${BLD_CFG_PREFIX}" --logs "${BLD_LOG_PREFIX}" \
-        --documents "${BLD_WEB_PREFIX}" --modules "${BLD_LIB_PREFIX}" --cache "${BLD_SPL_PREFIX}/cache" "${BLD_CFG_PREFIX}/appweb.conf"
+        --documents "${BLD_WEB_PREFIX}" --modules "${BLD_LIB_PREFIX}" --cache "${BLD_SPL_PREFIX}/cache" \
+        --user $username --group $groupname "${BLD_CFG_PREFIX}/appweb.conf"
 }
 
 startBrowser() {

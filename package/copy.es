@@ -97,9 +97,7 @@ public function copy(src: Path, target: Path = Dir, options = {})
                 dest.attributes = attributes
             }
             if (options.strip && build.BLD_STRIP != "" && build.BLD_UNIX_LIKE == 1 && build.BLD_BUILD_OS != "MACOSX") {
-                if (verbose) {
-                    log.activity("Strip", dest)
-                }
+                log.activity("Strip", dest)
                 Cmd.sh(build.BLD_STRIP + " " + dest)
             }
             if (compress) {
@@ -112,9 +110,7 @@ public function copy(src: Path, target: Path = Dir, options = {})
                 dest = destZip
             }
             if (App.uid == 0 && dest.extension == "so" && Config.OS == "LINUX" && options.task == "Install") {
-                if (verbose) {
-                    log.activity("Ldconfig", dest)
-                }
+                log.activity("Ldconfig", dest)
                 Cmd.sh("ldconfig " + dest)
             }
             Path("install.log").append(dest + "\n")
