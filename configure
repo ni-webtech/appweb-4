@@ -116,7 +116,6 @@ checkSetup() {
     export BLD_TOP=`canonPath .`
     export BLD_TOOLS_DIR=${BLD_TOP}/build/bin
     export BLD_OUT_DIR=out
-    rm -rf $BLD_OUT_DIR
 
     #
     #   Sleuth the product. By convention products put a configure.PRODUCT file under the build directory.
@@ -2363,6 +2362,7 @@ if [ $quiet = 0 ] ; then
     echo -e "  # "
     echo -e "  # Initializing configure ..."
 fi
+rm -rf $BLD_OUT_DIR
 
 #
 #   Set the system configuration
