@@ -103,7 +103,9 @@ public function copy(src: Path, target: Path = Dir, options = {})
             if (compress) {
                 let destZip: Path = Path("" + dest.name + ".gz")
                 destZip.remove()
-                log.activity("Compress", dest)
+                if (verbose) {
+                    log.activity("Compress", dest)
+                }
                 Cmd.sh("gzip --best " + dest)
                 dest = destZip
             }

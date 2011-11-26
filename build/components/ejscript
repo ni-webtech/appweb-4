@@ -94,7 +94,8 @@ defineComponent() {
             if [ "$makerom" != "" ] ; then
                 imports="$imports $makerom"
             fi
-            libs="$libs ejs.web"
+            # UNUSED - Don't hard link to ejs.web
+            # libs="$libs ejs.web"
         else
             optional=
             libs=

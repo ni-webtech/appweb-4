@@ -75,6 +75,7 @@
 		C94086D8101A672F0019809C /* testAppweb.c in Sources */ = {isa = PBXBuildFile; fileRef = C94086CB101A672F0019809C /* testAppweb.c */; };
 		C94086DE101A672F0019809C /* testHttp.c in Sources */ = {isa = PBXBuildFile; fileRef = C94086D2101A672F0019809C /* testHttp.c */; };
 		C96176F412DCE345002702E0 /* auth.c in Sources */ = {isa = PBXBuildFile; fileRef = C96176F312DCE345002702E0 /* auth.c */; };
+		C96A9A2B147F5C40000E589D /* setConfig.c in Sources */ = {isa = PBXBuildFile; fileRef = C96A9A2A147F5C40000E589D /* setConfig.c */; };
 		C970D6F313F5F3FD00775043 /* libpcre.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9B12BCA13D175C300470A96 /* libpcre.dylib */; };
 		C9761EF60FD046EF009C78E1 /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C9761EF80FD046FA009C78E1 /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
@@ -125,8 +126,6 @@
 		C9B12BD513D1765900470A96 /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C9C2BEEC100EF66D009B160F /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C9D7054F1478D5B100CAD063 /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
-		C9D705561478D5E400CAD063 /* patchConfig.c in Sources */ = {isa = PBXBuildFile; fileRef = C9D705551478D5E400CAD063 /* patchConfig.c */; };
-		C9D705571478D5E400CAD063 /* patchConfig.c in Sources */ = {isa = PBXBuildFile; fileRef = C9D705551478D5E400CAD063 /* patchConfig.c */; };
 		C9D7A7C313D4F28D000428C7 /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C9D8167E101D35090039DD9D /* libmprssl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DAE0FD03FBA009C78E1 /* libmprssl.dylib */; };
 		C9D817A8101D4C2A0039DD9D /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
@@ -526,6 +525,7 @@
 		C96176F312DCE345002702E0 /* auth.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = auth.c; path = ../../../src/utils/auth.c; sourceTree = SOURCE_ROOT; };
 		C969664713D8A11000B16C66 /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		C969664813D8A11900B16C66 /* Release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+		C96A9A2A147F5C40000E589D /* setConfig.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = setConfig.c; path = ../../../src/utils/setConfig.c; sourceTree = "<group>"; };
 		C972B80113D402B800A33EB9 /* buildConfig.default */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = buildConfig.default; sourceTree = "<group>"; };
 		C9761DA00FD03F94009C78E1 /* libmpr.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libmpr.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9761DAE0FD03FBA009C78E1 /* libmprssl.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libmprssl.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -555,8 +555,7 @@
 		C9A44E9913D74BAC009BF64B /* customize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = customize.h; path = ../../../src/customize.h; sourceTree = "<group>"; };
 		C9AFCC560FC521440080E908 /* appweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = appweb; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9B12BCA13D175C300470A96 /* libpcre.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libpcre.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
-		C9D705531478D5B100CAD063 /* patchConfig */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = patchConfig; sourceTree = BUILT_PRODUCTS_DIR; };
-		C9D705551478D5E400CAD063 /* patchConfig.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = patchConfig.c; path = ../../../src/utils/patchConfig.c; sourceTree = "<group>"; };
+		C9D705531478D5B100CAD063 /* setConfig */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = setConfig; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9D7A7C913D4F28D000428C7 /* appman */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = appman; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9D817AD101D4C2A0039DD9D /* mod_php.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_php.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9E4B73D13C7F4F3005345FA /* mod_esp.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_esp.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -778,10 +777,10 @@
 		C9761E870FD04412009C78E1 /* utils */ = {
 			isa = PBXGroup;
 			children = (
+				C96A9A2A147F5C40000E589D /* setConfig.c */,
 				C96176F312DCE345002702E0 /* auth.c */,
 				C9761E880FD0442C009C78E1 /* cgiProgram.c */,
 				C9206BC01477391400A0C012 /* manager.c */,
-				C9D705551478D5E400CAD063 /* patchConfig.c */,
 			);
 			name = utils;
 			sourceTree = "<group>";
@@ -842,7 +841,7 @@
 				C9A26CED13D1787B007A3D7C /* mod_ejs.dylib */,
 				C9D7A7C913D4F28D000428C7 /* appman */,
 				C9E6CC9713F0402F0090CCA8 /* esp */,
-				C9D705531478D5B100CAD063 /* patchConfig */,
+				C9D705531478D5B100CAD063 /* setConfig */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1137,9 +1136,9 @@
 			productReference = C9B12BCA13D175C300470A96 /* libpcre.dylib */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
-		C9D705451478D5B100CAD063 /* patchConfig */ = {
+		C9D705451478D5B100CAD063 /* setConfig */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C9D705501478D5B100CAD063 /* Build configuration list for PBXNativeTarget "patchConfig" */;
+			buildConfigurationList = C9D705501478D5B100CAD063 /* Build configuration list for PBXNativeTarget "setConfig" */;
 			buildPhases = (
 				C9D7054C1478D5B100CAD063 /* Sources */,
 				C9D7054E1478D5B100CAD063 /* Frameworks */,
@@ -1151,9 +1150,9 @@
 				C9D705481478D5B100CAD063 /* PBXTargetDependency */,
 				C9D7054A1478D5B100CAD063 /* PBXTargetDependency */,
 			);
-			name = patchConfig;
+			name = setConfig;
 			productName = httpPassword;
-			productReference = C9D705531478D5B100CAD063 /* patchConfig */;
+			productReference = C9D705531478D5B100CAD063 /* setConfig */;
 			productType = "com.apple.product-type.tool";
 		};
 		C9D7A7B613D4F28D000428C7 /* appman */ = {
@@ -1268,14 +1267,14 @@
 				C9E4B72F13C7F4F3005345FA /* mod_esp */,
 				C9D817A1101D4C2A0039DD9D /* mod_php */,
 				C97DCAAF101D4FE7008EB048 /* mod_ssl */,
+				C9D7A7B613D4F28D000428C7 /* appman */,
 				C9AFCC550FC521440080E908 /* appweb */,
+				C9761E090FD0415A009C78E1 /* auth */,
 				C9E6CC8D13F0402F0090CCA8 /* esp */,
 				C9761E020FD04150009C78E1 /* http */,
-				C9761E090FD0415A009C78E1 /* auth */,
+				C9D705451478D5B100CAD063 /* setConfig */,
 				C9408698101A665B0019809C /* testAppweb */,
-				C9D7A7B613D4F28D000428C7 /* appman */,
 				C9D7B35513D8C030006C3A9B /* test */,
-				C9D705451478D5B100CAD063 /* patchConfig */,
 			);
 		};
 /* End PBXProject section */
@@ -1510,7 +1509,6 @@
 				C9F2260213EB34AD00AD8F7C /* dirHandler.c in Sources */,
 				C9F2260313EB34AD00AD8F7C /* fileHandler.c in Sources */,
 				C976CD0A1405906C00D21AFA /* server.c in Sources */,
-				C9D705561478D5E400CAD063 /* patchConfig.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1582,7 +1580,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C9D705571478D5E400CAD063 /* patchConfig.c in Sources */,
+				C96A9A2B147F5C40000E589D /* setConfig.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2191,7 +2189,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				INSTALL_PATH = "/usr/lib/$(BLD_PRODUCT_NAME)/bin";
-				PRODUCT_NAME = patchConfig;
+				PRODUCT_NAME = setConfig;
 			};
 			name = Debug;
 		};
@@ -2199,7 +2197,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				INSTALL_PATH = "/usr/lib/$(BLD_PRODUCT_NAME)/bin";
-				PRODUCT_NAME = patchConfig;
+				PRODUCT_NAME = setConfig;
 			};
 			name = Release;
 		};
@@ -2448,7 +2446,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C9D705501478D5B100CAD063 /* Build configuration list for PBXNativeTarget "patchConfig" */ = {
+		C9D705501478D5B100CAD063 /* Build configuration list for PBXNativeTarget "setConfig" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C9D705511478D5B100CAD063 /* Debug */,
