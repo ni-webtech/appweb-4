@@ -5,15 +5,18 @@
 #   Currently supports Visual Studio, MSBuild and XCode
 #   This is an internal-script used when testing only
 #
+VS="/Program Files/Microsoft Visual Studio 10/Common7/IDE/devenv.exe"
+MB="c:/Windows/Microsoft.NET/Framework/v4.0.30319/msbuild.exe"
+BLD_TOP=`pwd`
 
 if [ -f out/inc/buildConfig.h ] ; then
     . `cacheConfig out/inc/buildConfig.h`
-else
+elif [ -f build/bin/buildConfig.sh ] ; then
     . build/bin/buildConfig.sh
+else
+    echo "Can't find buildConfig Must run from top of tree"
+    exit 255
 fi
-
-VS="/Program Files/Microsoft Visual Studio 10/Common7/IDE/devenv.exe"
-MB="c:/Windows/Microsoft.NET/Framework/v4.0.30319/msbuild.exe"
 
 log() {
     tag=$1
@@ -54,14 +57,13 @@ vsBuild() {
         rm -fr projects/WIN/*/Win32
 
         status=0
-        for f in appweb cgiProgram ejs ejsc ejsmod ejssql http httpPassword makerom testAppweb
+        for f in appweb cgiProgram http httpPassword makerom testAppweb
         do
             if [ ! -x "$BLD_BIN_DIR/${f}${BLD_EXE}" ] ; then
                 echo Missing target $BLD_BIN_DIR/${f}${BLD_EXE} >&2
                 status=255
             fi
         done
-        echo STATUS $status
     fi
     exit $status
 }
@@ -71,28 +73,27 @@ msBuild() {
     local status=0
 
     touch projects/WIN/${BLD_PRODUCT}-all/buildConfig.default
-    log "[Test]" "Building ${BLD_PRODUCT}-all VS project"
+    log "[Test]" "Building ${BLD_PRODUCT}-all project"
     rm -fr projects/WIN/*/Win32
-    "${VS}" projects/WIN/${BLD_PRODUCT}-all/*.sln /clean
+    "${MB}" /t:clean projects/WIN/${BLD_PRODUCT}-all/*.sln
     if [ $? != 0 ] ; then
-        echo Failed to clean: "${VS}" projects/WIN/${BLD_PRODUCT}-all/*.sln /clean
+        echo Failed to clean: "${MB}" projects/WIN/${BLD_PRODUCT}-all/*.sln /clean
         exit 255
     fi
-    "${VS}" projects/WIN/${BLD_PRODUCT}-all/*.sln /build
+    "${MB}" /t:rebuild projects/WIN/${BLD_PRODUCT}-all/*.sln
     if [ $? != 0 ] ; then
-        echo Failed to build: "${VS}" projects/WIN/${BLD_PRODUCT}-all/*.sln /build
+        echo Failed to build: "${MB}" projects/WIN/${BLD_PRODUCT}-all/*.sln /build
         exit 255
     fi
     rm -fr projects/WIN/*/Win32
     status=0
-    for f in appweb cgiProgram ejs ejsc ejsmod ejssql http httpPassword makerom testAppweb
+    for f in appweb cgiProgram http httpPassword makerom testAppweb
     do
         if [ ! -x "$BLD_BIN_DIR/${f}${BLD_EXE}" ] ; then
             echo Missing target $BLD_BIN_DIR/${f}${BLD_EXE} >&2
             status=255
         fi
     done
-    echo STATUS $status
     exit $status
 }
 
