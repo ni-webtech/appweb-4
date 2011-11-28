@@ -163,6 +163,7 @@ preClean() {
         rm -f /var/lock/subsys/$BLD_PRODUCT /var/lock/$BLD_PRODUCT
         rm -fr /var/log/$BLD_PRODUCT
         rm -rf /var/run/$BLD_PRODUCT
+        rm -rf /var/spool/$BLD_PRODUCT
     fi
 
     cd "$BLD_PRD_PREFIX"
