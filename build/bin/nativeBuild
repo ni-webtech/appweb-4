@@ -10,7 +10,7 @@ MB="c:/Windows/Microsoft.NET/Framework/v4.0.30319/msbuild.exe"
 BLD_TOP=`pwd`
 if [ `uname` = Darwin ] ; then
     BLD_OS=MACOSX
-elif [ -x /wiondows ] ; then
+elif [ -x c:/windows ] ; then
     BLD_OS=WIN
 else
     echo Unsupported OS for native build
