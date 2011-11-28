@@ -60,15 +60,6 @@ vsBuild() {
             exit 255
         fi
         rm -fr projects/WIN/*/Win32
-
-        status=0
-        for f in appweb cgiProgram http httpPassword makerom testAppweb
-        do
-            if [ ! -x "$BLD_BIN_DIR/${f}${BLD_EXE}" ] ; then
-                echo Missing target $BLD_BIN_DIR/${f}${BLD_EXE} >&2
-                status=255
-            fi
-        done
     fi
     exit $status
 }
@@ -91,15 +82,6 @@ msBuild() {
         exit 255
     fi
     rm -fr projects/WIN/*/Win32
-    status=0
-    for f in appweb cgiProgram http httpPassword makerom testAppweb
-    do
-        if [ ! -x "$BLD_BIN_DIR/${f}${BLD_EXE}" ] ; then
-            echo Missing target $BLD_BIN_DIR/${f}${BLD_EXE} >&2
-            status=255
-        fi
-    done
-    exit $status
 }
 
 winBuild() {
@@ -149,3 +131,18 @@ MACOSX)
 *)
     ;;
 esac
+
+PROGRAMS="appman appweb auth http"
+if [ "$BLD_OS" = WIN ] ; then
+    PROGRAMS="$PROGRAMS appwebMonitor"
+else
+    PROGRAMS="$PROGRAMS cgiProgram"
+fi
+for f in $PROGRAMS
+do
+    if [ ! -x "$BLD_BIN_DIR/${f}${BLD_EXE}" ] ; then
+        echo Missing target $BLD_BIN_DIR/${f}${BLD_EXE} >&2
+        exit 255
+    fi
+done
+exit 0
