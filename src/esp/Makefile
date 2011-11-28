@@ -19,7 +19,7 @@ compileExtra: $(OBJECTS)
 modules: $(ESP_CMD)
 
 $(BLD_BIN_DIR)/esp$(BLD_EXE): $(OBJECTS)
-	bld --exe $(BLD_BIN_DIR)/esp$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" --libs "$(BLD_APPWEB_LIBS) $(LIBS)" \
+	bld --exe $(BLD_BIN_DIR)/esp$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" --libs "$(BLD_APPWEB_LIBS)" \
 		$(BLD_LIB_DIR)/mod_esp$(BLD_SHLIB) esp$(BLD_OBJ)
 
 $(BLD_LIB_DIR)/esp-www: www/* www/files/*/*

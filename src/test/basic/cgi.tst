@@ -5,7 +5,7 @@
 const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
-if (!global.test || test.config["cgi"] == 1) {
+if ((!global.test || test.config["cgi"] == 1) && Path(test.top + "src/test/web/cgiProgram.cgi").exists) {
     /* Suport routines */
 
     function contains(pat): Void {
@@ -231,6 +231,7 @@ if (!global.test || test.config["cgi"] == 1) {
         assert(http.response.contains("QVAR a|b c>d e?f g>h i'j k\"l m n"))
     }
 /*
+    MOB?
     forms()
     alias()
     extraPath()

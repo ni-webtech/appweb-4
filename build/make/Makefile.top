@@ -214,12 +214,13 @@ test-installed:
 	[ $$complete = 0 ] && exit 255 ; \
 	port=$(BLD_HTTP_PORT) ; \
 	http -q $$port/index.html ; \
+	http -q $$port/test/test.ejs ; \
+	http -q $$port/test/test.esp ; \
 	http -q $$port/test/test.php ; \
 	http -q $$port/test/test.cgi ; \
 	http -q $$port/test/test.pl ; \
 	http -q $$port/test/test.py ; \
 	echo Installed
-	#http -q $$port/test/test.ejs
 
 test-removed:
 	partial=0 ; \

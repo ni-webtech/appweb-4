@@ -64,7 +64,6 @@
     #include <main/php_ini.h>
     #include <main/php_globals.h>
     #include <main/php_main.h>
-    #include <TSRM/TSRM.h>
 
 /********************************** Defines ***********************************/
 
