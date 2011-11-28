@@ -241,12 +241,10 @@ ask() {
     local ans
 
     default=$2
-
     if [ "$!!BLD_PRODUCT!!_HEADLESS" = 1 ] ; then
         echo "$default"
         return
     fi
-
     echo -n "$1 [$default] : " 1>&2
     read ans
     if [ "$ans" = "" ] ; then
@@ -344,7 +342,6 @@ patchConfiguration() {
 }
 
 startBrowser() {
-
     if [ "$!!BLD_PRODUCT!!_HEADLESS" = 1 ] ; then
         return
     fi
