@@ -219,6 +219,10 @@ parseSystemConfiguration() {
         eval BLD_${kind}_UNIX=1
         eval BLD_${kind}_WIN=0
         ;;
+    MINGW)
+        eval BLD_${kind}_UNIX=0
+        eval BLD_${kind}_WIN=1
+        ;;
     SOLARIS*)
         eval BLD_${kind}_UNIX=1
         eval ${os}=SOLARIS
@@ -343,7 +347,7 @@ parseSystemConfiguration() {
     dist="unspecified"
     version="unspecified"
 
-    if [ $os = WIN -o $os = CYGWIN ] ; then
+    if [ $os = WIN -o $os = CYGWIN -o $os = MINGW ] ; then
 
         # Microsoft Windows XP [Version 5.1.2600]
         # Microsoft Windows [Version 6.0.6000]
@@ -521,13 +525,27 @@ parseSystem() {
             os=WIN
         elif [ "$CL_SEARCHED" != 1 ] ; then
             if [ ! -x /bin/cc.exe -o "$BLD_CC_CYGWIN" != 1 ] ; then
-               [ $quiet = 0 ] && echo -e "  # Search for MS compiler ..."
-               vsdirs=`ls -d /cygdrive/*/Program?Files*/Microsoft?Visual?Studio?{10*,9*}/VC/Bin 2>/dev/null`
-               if [ "$vsdirs" != "" ] ; then
+                [ $quiet = 0 ] && echo -e "  # Search for MS compiler ..."
+                vsdirs=`ls -d /cygdrive/*/Program?Files*/Microsoft?Visual?Studio?{10*,9*}/VC/Bin 2>/dev/null`
+                if [ "$vsdirs" != "" ] ; then
                    os=WIN
                    CL_FOUND=1
                    CL_SEARCHED=1
-               fi
+                fi
+            fi
+        fi
+        ;;
+    MINGW*)
+        os=CYGWIN
+        if [ "$CL_FOUND" = 1 ] ; then
+            os=WIN
+        elif [ "$CL_SEARCHED" != 1 ] ; then
+            [ $quiet = 0 ] && echo -e "  # Search for MS compiler ..."
+            vsdirs=`ls -d /cygdrive/*/Program?Files*/Microsoft?Visual?Studio?{10*,9*}/VC/Bin 2>/dev/null`
+            if [ "$vsdirs" != "" ] ; then
+               os=WIN
+               CL_FOUND=1
+               CL_SEARCHED=1
             fi
         fi
         ;;
