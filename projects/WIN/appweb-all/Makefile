@@ -4,7 +4,7 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2009. All Rights Reserved.
 #
 
-CONFIG		= buildConfig.master
+CONFIG		= buildConfig.default
 
 include     .makedep
 include     $(CONFIG)
@@ -27,8 +27,9 @@ SSL_IFLAGS	+= $(BLD_OPENSSL_IFLAGS)
 PHP_IFLAGS	+= $(BLD_PHP_IFLAGS)
 
 PROJECTS	= setup.vcxproj libmpr.vcxproj libmprssl.vcxproj libpcre.vcxproj libhttp.vcxproj \
-              libappweb.vcxproj appweb.vcxproj angel.vcxproj appwebMonitor.vcxproj \
-			  http.vcxproj auth.vcxproj mod_cgi.vcxproj mod_ejs.vcxproj mod_esp.vcxproj mod_php.vcxproj mod_ssl.vcxproj
+              libappweb.vcxproj appweb.vcxproj appman.vcxproj appwebMonitor.vcxproj \
+			  http.vcxproj auth.vcxproj mod_cgi.vcxproj mod_ejs.vcxproj mod_esp.vcxproj mod_php.vcxproj mod_ssl.vcxproj \
+			  esp.vcxproj
 OTHER_PROJECTS= libejs.vcxproj ejsmod.vcxproj ejsc.vcxproj ejs.vcxproj sqlite.vcxproj mvc.vcxproj libsqlite3.vcxproj
 SOLUTIONS	= appweb-all.sln
 
@@ -140,10 +141,10 @@ appweb.vcxproj: Makefile $(CONFIG)
 		--props "$(PROPS)" --deps libappweb \
 		--libs "libmpr.lib libhttp.lib libappweb.lib $(LIBS)" $(APPWEB_HDR) $(SRC)/server/appweb.c
 
-angel.vcxproj: Makefile $(CONFIG)
-	$(VSP) --project angel.vcxproj --graphical --exe angel.exe \
+appman.vcxproj: Makefile $(CONFIG)
+	$(VSP) --project appman.vcxproj --graphical --exe appman.exe \
 		--props "$(PROPS)" --deps libmpr \
-		--dflags "$(DFLAGS)" --libs "libmpr.lib $(LIBS)" $(APPWEB_HDR) $(SRC)/deps/mpr/angel.c
+		--dflags "$(DFLAGS)" --libs "libmpr.lib $(LIBS)" $(APPWEB_HDR) $(SRC)/deps/mpr/manager.c
 
 appwebMonitor.vcxproj: appwebMonitor.custom Makefile $(CONFIG)
 	$(VSP) --project appwebMonitor.vcxproj --graphical --exe appwebMonitor.exe \
@@ -157,6 +158,12 @@ auth.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project auth.vcxproj --exe auth.exe --search "$(BLD_MPR_LIBPATHS)" \
 		--props "$(PROPS)" --deps libmpr \
         --dflags "$(DFLAGS)" --libs "libmpr.lib $(LIBS)" $(SRC)/utils/auth.c
+
+esp.vcxproj: Makefile $(CONFIG)
+	$(VSP) --project esp.vcxproj --exe esp.exe --search "$(BLD_MPR_LIBPATHS)" \
+		--props "$(PROPS)" --deps "libmpr mod_esp" \
+		--libs "libmpr.lib libhttp.lib libpcre.lib libappweb.lib $(LIBS)" \
+        --dflags "$(DFLAGS)" --libs "mod_esp.lib libmpr.lib $(LIBS)" $(SRC)/esp/esp.c
 
 http.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project http.vcxproj --exe http.exe --search "$(BLD_MPR_LIBPATHS)" --dflags "$(DFLAGS)" \

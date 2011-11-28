@@ -31,11 +31,12 @@ EXPORTS
   ediFormatField
   ediGetColumnSchema
   ediGetColumns
+  ediGetField
+  ediGetFieldFmt
+  ediGetFieldSchema
+  ediGetFieldType
   ediGetGridColumns
-  ediGetRawRecField
   ediGetRecErrors
-  ediGetRecField
-  ediGetRecFieldType
   ediGetTableSchema
   ediGetTables
   ediGetTypeString
@@ -49,23 +50,22 @@ EXPORTS
   ediParseTypeString
   ediQuery
   ediReadField
-  ediReadGrid
   ediReadOneWhere
   ediReadRawField
   ediReadRec
+  ediReadTable
   ediReadWhere
   ediRemoveIndex
   ediRemoveTable
   ediRenameColumn
   ediRenameTable
   ediSave
+  ediSetField
+  ediSetFields
   ediUpdateField
-  ediUpdateFields
+  ediUpdateRec
   ediValidateRec
-  ediWriteField
-  ediWriteRec
   endform
-  error
   espAddHeader
   espAddHeaderString
   espAlert
@@ -77,7 +77,7 @@ EXPORTS
   espBuildScript
   espButton
   espButtonLink
-  espCacheControl
+  espCache
   espChart
   espCheckSecurityToken
   espCheckbox
@@ -103,6 +103,7 @@ EXPORTS
   espGetCookies
   espGetDatabase
   espGetDir
+  espGetEspRoute
   espGetFlashMessage
   espGetGrid
   espGetHeader
@@ -114,6 +115,7 @@ EXPORTS
   espGetParams
   espGetQueryString
   espGetReferrer
+  espGetRouteDatabase
   espGetSecurityToken
   espGetSession
   espGetSessionID
@@ -138,15 +140,16 @@ EXPORTS
   espMakeGrid
   espMakeHash
   espMakeRec
+  espManageAction
   espManageEspRoute
   espMatchParam
   espProgress
   espRadio
-  espReadAllRecs
   espReadRec
   espReadRecByKey
   espReadRecWhere
   espReadRecsWhere
+  espReadTable
   espReceive
   espRedirect
   espRedirectBack
@@ -182,7 +185,7 @@ EXPORTS
   espSetSessionObj
   espSetSessionVar
   espSetStatus
-  espShow
+  espShowRequest
   espStylesheet
   espTable
   espTabs
@@ -195,6 +198,7 @@ EXPORTS
   espUri
   finalize
   flash
+  flush
   form
   getColumns
   getConn
@@ -203,6 +207,8 @@ EXPORTS
   getCookies
   getDatabase
   getDir
+  getEspRoute
+  getField
   getGrid
   getHeader
   getMethod
@@ -235,23 +241,25 @@ EXPORTS
   params
   progress
   radio
-  readAllRecs
   readRec
   readRecByKey
   readRecWhere
   readRecsWhere
+  readTable
   receive
   redirect
   redirectBack
   refresh
   removeRec
   render
+  renderCached
   renderError
   renderFile
   renderSafe
   renderView
   script
   securityToken
+  setConn
   setContentType
   setCookie
   setField
@@ -263,13 +271,14 @@ EXPORTS
   setRec
   setSessionVar
   setStatus
-  show
+  setTimeout
+  showRequest
   stylesheet
   table
   tabs
   text
   tree
+  updateCache
   updateField
   updateFields
   updateRec
-  warn

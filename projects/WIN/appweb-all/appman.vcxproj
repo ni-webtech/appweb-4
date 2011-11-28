@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{81C95C24-E509-40BF-8F26-A1D26CF8E53B}</ProjectGuid>
+    <ProjectGuid>{DADCA066-2973-4D88-863A-F5B44625EE97}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -21,12 +21,12 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
 
@@ -54,39 +54,38 @@
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\bin\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\obj\mod_ssl\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\obj\appman\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\bin\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\mod_ssl\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\appman\</IntDir>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(BLD_FEATURE_SSL)' == '1'">
-    <ClCompile Include="..\..\..\src\modules\sslModule.c" />
+  <ItemGroup>
+    <ClInclude Include="..\..\..\out\inc\appweb.h" />
   </ItemGroup>
 
-  <ItemDefinitionGroup>
+  <ItemGroup >
+    <ClCompile Include="..\..\..\src\deps\mpr\manager.c" />
+  </ItemGroup>
+
+  <ItemDefinitionGroup >
     <Link>
-      <ModuleDefinitionFile>mod_ssl.def</ModuleDefinitionFile>
+      <AdditionalDependencies>libmpr.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
 
-  <ItemDefinitionGroup Condition="'$(BLD_FEATURE_SSL)' == '1'">
+  <ItemDefinitionGroup>
     <Link>
-      <AdditionalDependencies>libmpr.lib;libmprssl.lib;libhttp.lib;libappweb.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
 
   <ItemGroup>
-    <ProjectReference Include="libappweb.vcxproj">
-      <Project>{16F27F4D-AB88-40B9-A344-711EB18ED3FC}</Project>
+    <ProjectReference Include="libmpr.vcxproj">
+      <Project>{1D60A65E-7727-4A67-AC61-F8CA70E2322B}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-
-  <PropertyGroup Condition="'$(BLD_FEATURE_SSL)' != '1'">
-    <BuildDependsOn>
-    </BuildDependsOn>
-  </PropertyGroup>
 
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
