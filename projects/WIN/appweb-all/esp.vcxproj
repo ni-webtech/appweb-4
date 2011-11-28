@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{D7C765EF-A3FE-479E-8A60-16F2E4A8F5F2}</ProjectGuid>
+    <ProjectGuid>{0CF9B710-8B06-4346-9082-BBB78D137940}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -54,34 +54,31 @@
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\bin\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\obj\angel\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\..\out\obj\esp\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\bin\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\angel\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\esp\</IntDir>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ClInclude Include="..\..\..\out\inc\appweb.h" />
-  </ItemGroup>
-
   <ItemGroup >
-    <ClCompile Include="..\..\..\src\deps\mpr\angel.c" />
+    <ClCompile Include="..\..\..\src\esp\esp.c" />
   </ItemGroup>
 
   <ItemDefinitionGroup >
     <Link>
-      <AdditionalDependencies>libmpr.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-  </ItemDefinitionGroup>
-
-  <ItemDefinitionGroup>
-    <Link>
-      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>libmpr.lib;libhttp.lib;libpcre.lib;libappweb.lib;ws2_32.lib;mod_esp.lib;libmpr.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
 
   <ItemGroup>
     <ProjectReference Include="libmpr.vcxproj">
-      <Project>{0AA8F723-AAFF-4C95-89E9-8167FAC83B50}</Project>
+      <Project>{1D60A65E-7727-4A67-AC61-F8CA70E2322B}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="mod_esp.vcxproj">
+      <Project>{84B80A2D-1540-4612-90BD-8EB3AE5003BE}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

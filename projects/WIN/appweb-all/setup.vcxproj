@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{E98CC4B5-3B1F-44F3-B350-C23AC12DACB0}</ProjectGuid>
+    <ProjectGuid>{88C0500B-4F31-4442-9CF5-135C9F5E63D2}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -68,7 +68,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <IncludeFiles Include="$(ProjectDir)buildConfig.master" />
+    <IncludeFiles Include="$(ProjectDir)buildConfig.default" />
     <ExportFiles Include="$(BLD_INC_DIR)/buildConfig.h" />
   </ItemGroup>
 

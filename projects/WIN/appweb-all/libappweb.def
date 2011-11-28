@@ -5,7 +5,6 @@ EXPORTS
   maAddServer
   maApplyChangedGroup
   maApplyChangedUser
-  maArchiveLog
   maConfigureServer
   maCreateAppweb
   maCreateServer
@@ -25,19 +24,14 @@ EXPORTS
   maRestartServer
   maRunSimpleWebServer
   maRunWebServer
-  maSetAccessLog
   maSetDefaultServer
   maSetHttpGroup
   maSetHttpUser
   maSetServerAddress
   maSetServerHome
-  maStartAccessLogging
   maStartAppweb
-  maStartLogging
   maStartServer
-  maStopAccessLogging
   maStopAppweb
-  maStopLogging
   maStopServer
   maTokenize
   maValidateServer
