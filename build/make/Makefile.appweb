@@ -8,7 +8,7 @@
 #	Top level test targets to test installing and removing packages
 #
 testExtra::
-	if [ "$(BUILD_DEPTH)" -ge 3 ] ; then \
+	if [ "$(BUILD_DEPTH)" -ge 3 -a "$(BLD_TYPE)" = RELEASE ] ; then \
 		$(MAKE) uninstall ; \
 		$(MAKE) test-uninstalled ; \
 		$(MAKE) test-install-package ; \
