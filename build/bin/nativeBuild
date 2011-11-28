@@ -9,13 +9,17 @@ VS="/Program Files/Microsoft Visual Studio 10/Common7/IDE/devenv.exe"
 MB="c:/Windows/Microsoft.NET/Framework/v4.0.30319/msbuild.exe"
 BLD_TOP=`pwd`
 
-if [ -f out/inc/buildConfig.h ] ; then
-    . `cacheConfig out/inc/buildConfig.h`
-elif [ -f build/bin/buildConfig.sh ] ; then
-    . build/bin/buildConfig.sh
-else
+if [ ! -f ./configure ] ; then
     echo "Can't find buildConfig Must run from top of tree"
     exit 255
+fi
+if [ -x src/include ] ; then
+    cp src/include/master/buildConfig.h src/include
+    . build/bin/buildConfig.sh
+else
+    mkdir -p out/inc out/bin
+    cp projects/WIN/*-all/buildConfig.default out/inc/buildConfig.h
+    . `cacheConfig out/inc/buildConfig.h`
 fi
 
 log() {
@@ -27,10 +31,6 @@ log() {
 vsBuild() {
     local status=0
     if [ -x "${VS}" ] ; then
-        if [ ! -f src/include/buildConfig.save ] ; then
-            mv src/include/buildConfig.h src/include/buildConfig.save
-        fi
-        cp src/include/master/buildConfig.h src/include
 
         log "[Test]" "Building ${BLD_PRODUCT}-static VS project"
         rm -fr projects/WIN/*/Win32
@@ -50,10 +50,6 @@ vsBuild() {
             echo Failed to build: "${VS}" projects/WIN/${BLD_PRODUCT}-dynamic/*.sln /build
             exit 255
         fi
-
-        if [ -f src/include/buildConfig.save ] ; then
-            mv src/include/buildConfig.save src/include/buildConfig.h
-        fi
         rm -fr projects/WIN/*/Win32
 
         status=0
@@ -72,7 +68,7 @@ vsBuild() {
 msBuild() {
     local status=0
 
-    touch projects/WIN/${BLD_PRODUCT}-all/buildConfig.default
+
     log "[Test]" "Building ${BLD_PRODUCT}-all project"
     rm -fr projects/WIN/*/Win32
     "${MB}" /t:clean projects/WIN/${BLD_PRODUCT}-all/*.sln
@@ -99,7 +95,7 @@ msBuild() {
 
 winBuild() {
     local status=0
-    if [ -f buildConfig.make ] ; then
+    if [ -x src/include ] ; then
         if [ ! -x "${VS}" ] ; then
             echo "Can't find $VS" >&2
             exit 255
