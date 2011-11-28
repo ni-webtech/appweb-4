@@ -29,7 +29,7 @@ else
     cp projects/${BLD_OS}/*-all/buildConfig.default out/inc/buildConfig.h
     . `cacheConfig out/inc/buildConfig.h`
 fi
-touch projects/*/*-all/buildConfig.default
+touch projects/${BLD_OS}/${BLD_PRODUCT}-all/buildConfig.default
 
 log() {
     tag=$1
@@ -67,7 +67,6 @@ vsBuild() {
 
 msBuild() {
     local status=0
-
 
     log "[Test]" "Building ${BLD_PRODUCT}-all project"
     rm -fr projects/WIN/*/Win32
@@ -138,11 +137,13 @@ if [ "$BLD_OS" = WIN ] ; then
 else
     PROGRAMS="$PROGRAMS cgiProgram"
 fi
+
+status=0
 for f in $PROGRAMS
 do
     if [ ! -x "$BLD_BIN_DIR/${f}${BLD_EXE}" ] ; then
         echo Missing target $BLD_BIN_DIR/${f}${BLD_EXE} >&2
-        exit 255
+        status=255
     fi
 done
 exit 0
