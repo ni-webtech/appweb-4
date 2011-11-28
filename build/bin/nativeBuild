@@ -8,6 +8,14 @@
 VS="/Program Files/Microsoft Visual Studio 10/Common7/IDE/devenv.exe"
 MB="c:/Windows/Microsoft.NET/Framework/v4.0.30319/msbuild.exe"
 BLD_TOP=`pwd`
+if [ `uname` = Darwin ] ; then
+    BLD_OS=MACOSX
+elif [ -x /wiondows ] ; then
+    BLD_OS=WIN
+else
+    echo Unsupported OS for native build
+    exit 255
+fi
 
 if [ ! -f ./configure ] ; then
     echo "Can't find buildConfig Must run from top of tree"
@@ -18,9 +26,10 @@ if [ -x src/include ] ; then
     . build/bin/buildConfig.sh
 else
     mkdir -p out/inc out/bin
-    cp projects/WIN/*-all/buildConfig.default out/inc/buildConfig.h
+    cp projects/${BLD_OS}/*-all/buildConfig.default out/inc/buildConfig.h
     . `cacheConfig out/inc/buildConfig.h`
 fi
+touch projects/*/*-all/buildConfig.default
 
 log() {
     tag=$1

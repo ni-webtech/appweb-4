@@ -34,6 +34,7 @@ BLD_DEFAULTS=standard
 BLD_COMPONENTS=   ar cc make nm strip ranlib doxygen mpr http openssl ssl pcre dir cgi esp appweb  
 BLD_EMBEDTHIS=0
 BLD_DEBUG=1
+BLD_CONFIG_CMD=
 
 #
 #   Version information
@@ -373,6 +374,7 @@ else
     #define BLD_COMPONENTS "   ar cc make nm strip ranlib doxygen mpr http openssl ssl pcre dir cgi esp appweb  "
     #define BLD_EMBEDTHIS 0
     #define BLD_DEBUG 1
+    #define BLD_CONFIG_CMD ""
     #define BLD_NUMBER_ONLY "B0"
     #define BLD_MAJOR_VERSION 4
     #define BLD_MINOR_VERSION 0

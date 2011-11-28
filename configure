@@ -515,7 +515,6 @@ parseSystem() {
     if [ "$kernel" != "" ] ; then
         os=$kernel
     fi
-
     os=`upper $os`
 
     case "${os}" in
