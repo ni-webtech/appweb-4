@@ -129,6 +129,7 @@ test-uninstalled:
 	done ; \
 	[ $$partial = 1 ] && exit 255 ; \
 	echo Uninstalled
+
 #
 #	Convenient configure targets
 #
