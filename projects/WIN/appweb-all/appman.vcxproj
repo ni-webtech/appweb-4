@@ -59,10 +59,6 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\appman\</IntDir>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ClInclude Include="..\..\..\out\inc\appweb.h" />
-  </ItemGroup>
-
   <ItemGroup >
     <ClCompile Include="..\..\..\src\deps\mpr\manager.c" />
   </ItemGroup>

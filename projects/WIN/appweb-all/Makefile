@@ -115,6 +115,7 @@ mod_ejs.vcxproj: Makefile $(CONFIG)
 mod_esp.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project mod_esp.vcxproj --library esp --dflags "$(DFLAGS)" \
 		--props "$(PROPS)" --deps "libappweb libpcre" \
+		--custom mod_esp.custom \
 		--def mod_esp.def --libs "libmpr.lib libhttp.lib libpcre.lib libappweb.lib $(LIBS)" \
 		$(SRC)/modules/espHandler.c $(SRC)/esp/espFramework.c $(SRC)/esp/espSession.c $(SRC)/esp/espTemplate.c \
 		$(SRC)/esp/espAbbrev.c $(SRC)/esp/espHtml.c $(SRC)/esp/edi.c $(SRC)/esp/mdb.c $(SRC)/esp/sdb.c
