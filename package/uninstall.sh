@@ -187,7 +187,6 @@ postClean() {
 	local cdir=`pwd`
 
 	echo
-
     # Legacy
 	rm -f "${BLD_CFG_PREFIX}/${BLD_PRODUCT}Install.conf"
 	rm -f "${BLD_PRD_PREFIX}/install.conf"
@@ -259,7 +258,7 @@ cleanDir() {
 	[ ! -d "$dir" ] && return
 
 	cd "$dir"
-	echo "Cleaning `pwd` ..."
+	# echo "Cleaning `pwd` ..."
 	if [ "`pwd`" = "/" ] ; then
 		echo "Configuration error: clean directory was '/'"
 		cd "$cdir"
