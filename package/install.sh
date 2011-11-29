@@ -49,6 +49,7 @@ BLD_WEB_PREFIX="!!ORIG_BLD_WEB_PREFIX!!"
 
 installbin=Y
 runDaemon=Y
+headless=${!!BLD_PRODUCT!!_HEADLESS:-0}
 HTTP_PORT=80
 SSL_PORT=443
 
@@ -57,14 +58,11 @@ PATH=$PATH:/sbin:/usr/sbin
 ###############################################################################
 
 setup() {
-
     umask 022
-
     if [ $BLD_HOST_OS != WIN -a `id -u` != "0" ] ; then
         echo "You must be root to install this product."
         exit 255
     fi
-
     #
     #   Headless install
     #
@@ -88,10 +86,9 @@ setup() {
         fi
         exit 0
     fi
-
     sleuthPackageFormat
     getAccountDetails
-    echo -e "\n$BLD_NAME !!BLD_VERSION!!-!!BLD_NUMBER!! Installation\n"
+    [ "$headless" != 1 ] && echo -e "\n$BLD_NAME !!BLD_VERSION!!-!!BLD_NUMBER!! Installation\n"
 
 }
 
@@ -158,15 +155,15 @@ sleuthPackageFormat() {
 askUser() {
     local finished
 
-    echo "Enter requested information or press <ENTER> to accept the default. "
-    
+    [ "$headless" != 1 ] && echo "Enter requested information or press <ENTER> to accept the default. "
+
     #
     #   Confirm the configuration
     #
     finished=N
     while [ "$finished" = "N" ]
     do
-        echo
+        [ "$headless" != 1 ] && echo
         installbin=`yesno "Install binary package" "$installbin"`
         if [ "$installbin" = "Y" ] ; then
             runDaemon=`yesno "Start $BLD_PRODUCT automatically at system boot" $runDaemon`
@@ -178,17 +175,19 @@ askUser() {
             runDaemon=N
         fi
     
-        echo -e "\nInstalling with this configuration:" 
-        echo -e "    Install binary package: $installbin"
-    
-        if [ "$installbin" = "Y" ] ; then
-            echo -e "    Start automatically at system boot: $runDaemon"
-            echo -e "    HTTP port number: $HTTP_PORT"
-            echo -e "    SSL port number: $SSL_PORT"
-            echo -e "    Username: $username"
-            echo -e "    Groupname: $groupname"
+        if [ "$headless" != 1 ] ; then
+            echo -e "\nInstalling with this configuration:" 
+            echo -e "    Install binary package: $installbin"
+        
+            if [ "$installbin" = "Y" ] ; then
+                echo -e "    Start automatically at system boot: $runDaemon"
+                echo -e "    HTTP port number: $HTTP_PORT"
+                echo -e "    SSL port number: $SSL_PORT"
+                echo -e "    Username: $username"
+                echo -e "    Groupname: $groupname"
+            fi
+            echo
         fi
-        echo
         finished=`yesno "Accept this configuration" "Y"`
     done
     
@@ -196,7 +195,6 @@ askUser() {
         echo -e "\nNothing to install, exiting. "
         exit 0
     fi
-    
     #
     #   Save the install settings. Remove.sh will need this
     #
@@ -214,7 +212,7 @@ createPackageName() {
 yesno() {
     local ans
 
-    if [ "$!!BLD_PRODUCT!!_HEADLESS" = 1 ] ; then
+    if [ "$headless" = 1 ] ; then
         echo "Y"
         return
     fi
@@ -241,7 +239,7 @@ ask() {
     local ans
 
     default=$2
-    if [ "$!!BLD_PRODUCT!!_HEADLESS" = 1 ] ; then
+    if [ "$headless" = 1 ] ; then
         echo "$default"
         return
     fi
@@ -263,7 +261,7 @@ saveSetup() {
 installFiles() {
     local dir pkg doins NAME upper
 
-    echo -e "\nExtracting files ...\n"
+    [ "$headless" != 1 ] && echo -e "\nExtracting files ...\n"
 
     for pkg in bin ; do
         doins=`eval echo \\$install${pkg}`
@@ -279,13 +277,13 @@ installFiles() {
                 export APPWEB_DONT_START=1
             fi
             if [ "$FMT" = "rpm" ] ; then
-                echo -e "rpm -Uhv $NAME"
+                [ "$headless" != 1 ] && echo -e "rpm -Uhv $NAME"
                 rpm -Uhv $HOME/$NAME
             elif [ "$FMT" = "deb" ] ; then
-                echo -e "dpkg -i $NAME"
+                [ "$headless" != 1 ] && echo -e "dpkg -i $NAME"
                 dpkg -i $HOME/$NAME >/dev/null
             else
-                echo tar xzf "$HOME/${NAME}" --strip-components 1 -P -C /
+                [ "$headless" != 1 ] && echo tar xzf "$HOME/${NAME}" --strip-components 1 -P -C /
                 tar xzf "$HOME/${NAME}" --strip-components 1 -P -C /
             fi
         fi
@@ -312,7 +310,7 @@ installFiles() {
     "$BLD_BIN_PREFIX/linkup" Install /
 
     if [ $BLD_HOST_OS = WIN ] ; then
-        echo -e "\nSetting file permissions ..."
+        [ "$headless" != 1 ] && echo -e "\nSetting file permissions ..."
         find "$BLD_CFG_PREFIX" -type d -exec chmod 755 "{}" \;
         find "$BLD_CFG_PREFIX" -type f -exec chmod g+r,o+r "{}" \; 
         find "$BLD_WEB_PREFIX" -type d -exec chmod 755 "{}" \;
@@ -329,7 +327,7 @@ installFiles() {
     chown $username "$BLD_SPL_PREFIX" "$BLD_SPL_PREFIX/cache" "$BLD_LOG_PREFIX"
     chgrp $groupname "$BLD_SPL_PREFIX" "$BLD_SPL_PREFIX/cache" "$BLD_LOG_PREFIX"
     chmod 755 "$BLD_SPL_PREFIX" "$BLD_SPL_PREFIX/cache" "$BLD_LOG_PREFIX"
-    echo
+    [ "$headless" != 1 ] && echo
 }
 
 patchConfiguration() {
@@ -342,14 +340,14 @@ patchConfiguration() {
 }
 
 startBrowser() {
-    if [ "$!!BLD_PRODUCT!!_HEADLESS" = 1 ] ; then
+    if [ "$headless" = 1 ] ; then
         return
     fi
     #
     #   Conservative delay to allow appweb to start and initialize
     #
     sleep 5
-    echo -e "\nStarting browser to view the $BLD_NAME Home Page."
+    [ "$headless" != 1 ] && echo -e "\nStarting browser to view the $BLD_NAME Home Page."
     if [ $BLD_HOST_OS = WIN ] ; then
         cygstart --shownormal http://$SITE:$HTTP_PORT$PAGE 
     elif [ $BLD_HOST_OS = MACOSX ] ; then
@@ -385,4 +383,6 @@ if [ "$installbin" = "Y" ] ; then
         startBrowser
     fi
 fi
-echo -e "\n$BLD_NAME installation successful.\n"
+[ "$headless" != 1 ] && echo
+echo -e "$BLD_NAME installation successful."
+exit 0
