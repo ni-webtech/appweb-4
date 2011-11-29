@@ -2,21 +2,12 @@
 #   ejs shell
 #
 defineComponent() {
-    local file path builtin
+    local file path builtin search
 
     path="${1:-.}"
     builtin=`[ "$path" = "." -a -f src/ejs.h ] && echo --builtin`
     if [ "$builtin" = "" ] ; then
-        search="$path/out/bin"
-        if [ "${path}" = "." ] ; then
-            search="${search}:../ejs/out/bin"
-            if [ "$BLD_DEBUG" = 1 ] ; then
-                type=standard
-            else
-                type=release
-            fi
-            # search="${search}:../ejs-master-${type}/out/bin"
-        fi
+        search="$path/out/bin:../ejs/out/bin:$SEARCH_PATH"
         path=`probe --exe --name ejs --search "$search" ejs`
         if [ "$path" = "" ] ; then
             warnComponent ejs

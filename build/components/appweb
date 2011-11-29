@@ -2,7 +2,7 @@
 #   Appweb
 #
 defineComponent() {
-    local deps libs optional path libdir builtin imports moddir incdir SHOBJ pcre appweb present
+    local deps libs optional path libdir builtin imports moddir incdir SHOBJ pcre appweb present search
 
     path="${1:-.}"
     eval SHOBJ=\$BLD_${kind}_SHOBJ

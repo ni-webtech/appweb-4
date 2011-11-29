@@ -18632,7 +18632,7 @@ static void hookSignal(int signo, MprSignal *sp)
         ssp->prior[signo] = old;
         memset(&act, 0, sizeof(act));
         act.sa_sigaction = signalHandler;
-        act.sa_flags |= SA_SIGINFO | SA_RESTART;
+        act.sa_flags |= SA_SIGINFO | SA_RESTART | SA_NOCLDSTOP;
         act.sa_flags &= ~SA_NODEFER;
         sigemptyset(&act.sa_mask);
         if (sigaction(signo, &act, 0) != 0) {
@@ -18686,9 +18686,9 @@ static void signalHandler(int signo, siginfo_t *info, void *arg)
     }
     ssp = MPR->signalService;
     ip = &ssp->info[signo];
-    saveErrno = errno;
     ip->triggered = 1;
     ssp->hasSignals = 1;
+    saveErrno = errno;
     mprWakeNotifier();
     errno = saveErrno;
 }

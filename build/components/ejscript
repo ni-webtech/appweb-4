@@ -2,7 +2,7 @@
 #   ejscript - Ejscript language
 #
 defineComponent() {
-    local deps libs optional path libdir builtin imports incdir iflags present SHOBJ type n allinone
+    local deps libs optional path libdir builtin imports incdir iflags present SHOBJ type n allinone search
 
     path="${1}"
     eval SHOBJ=\$BLD_${kind}_SHOBJ
