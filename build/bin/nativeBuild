@@ -146,4 +146,4 @@ do
         status=255
     fi
 done
-exit 0
+exit $status
