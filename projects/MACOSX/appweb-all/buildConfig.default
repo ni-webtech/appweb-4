@@ -340,14 +340,7 @@ BLD_APPWEB_WITHLIBS=pcre mprssl ssl crypto mpr http
 BLD_FEATURE_EJS=0
 BLD_FEATURE_EJSCRIPT=0
 BLD_FEATURE_MATRIXSSL=0
-
-BLD_FEATURE_PHP=1
-BLD_PHP_BUILTIN=0
-BLD_PHP_DEPENDENCIES=mpr
-BLD_PHP_IFLAGS=-I/Users/mob/git/appweb/extensions/php/latest -I/Users/mob/git/appweb/extensions/php/latest/main -I/Users/mob/git/appweb/extensions/php/latest/Zend -I/Users/mob/git/appweb/extensions/php/latest/TSRM
-BLD_PHP_IMPORTS=${BLD_TOP}/extensions/php/latest/libs/libphp5.dylib 
-BLD_PHP_LIBPATHS=/Users/mob/git/appweb/extensions/php/latest/libs
-BLD_PHP_LIBS=php5 mpr
+BLD_FEATURE_PHP=0
 
 EXPORT_OBJECTS ?= 1
 ifeq ($(EXPORT_OBJECTS),0)
@@ -545,13 +538,7 @@ else
     #define BLD_APPWEB_WITHLIBS "pcre mprssl ssl crypto mpr http"
     #define BLD_FEATURE_EJS 0
     #define BLD_FEATURE_EJSCRIPT 0
-    #define BLD_FEATURE_PHP 1
-    #define BLD_PHP_BUILTIN 0
-    #define BLD_PHP_DEPENDENCIES "mpr"
-    #define BLD_PHP_IFLAGS "-I/Users/mob/git/appweb/extensions/php/latest -I/Users/mob/git/appweb/extensions/php/latest/main -I/Users/mob/git/appweb/extensions/php/latest/Zend -I/Users/mob/git/appweb/extensions/php/latest/TSRM"
-    #define BLD_PHP_IMPORTS "${BLD_TOP}/extensions/php/latest/libs/libphp5.dylib "
-    #define BLD_PHP_LIBPATHS "/Users/mob/git/appweb/extensions/php/latest/libs"
-    #define BLD_PHP_LIBS "php5 mpr"
+    #define BLD_FEATURE_PHP 0
     #define BLD_FEATURE_MATRIXSSL 0
 #endif /* IGNORE_IN_C_CODE */
 #if IGNORE_IN_C_CODE
