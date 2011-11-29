@@ -1,43 +1,46 @@
-.TH APPMAN "1" "November 2011" "appman" "User Commands"
+.TH MANAGER "1" "November 2011" "manager" "User Commands"
 .SH NAME
-appman - Appweb manager
+manager - Manager program for services
 .SH SYNOPSIS
 .TP
-.B appman [options] [commands]
+.B manager [options] [commands]
 [\fI--args arguments\fR] 
 [\fI--console\fR] 
 [\fI--daemon\fR]
 [\fI--heartBeat interval\fR]
 [\fI--home directory\fR]
 [\fI--log logFile:level\fR]
+[\fI--name Service name\fR]
+[\fI--pidfile path\fR]
+[\fI--program Service program\fR]
 .SH DESCRIPTION
-The appman program is used to configure the running of Appweb as a system service (daemon).
-Appman provides a generic way to install/uninstall, enable/disable, start/stop, and run the Appweb service, regardless
-of the operating system. When used to run Appweb, it starts Appweb and then watches over Appweb, to restart it 
-should Appweb fail. Appman also provides general management commands to enable, disable, start, and stop appweb. 
+The manager program is used to configure the running of system services (daemons).
+Manager provides a generic way to install/uninstall, enable/disable, start/stop, and run a service, regardless
+of the operating system. When used to run a service, it starts the service and then watches over it, to restart it 
+should it fail. Manager also provides general management commands to enable, disable, start, and stop appweb. 
 .SH COMMANDS
 .TP
 \fBdisable\fR
-Disable Appweb from automatically starting when the system is booted.
+Disable the service from automatically starting when the system is booted.
 .TP
 \fBenable\fR
-Enable Appweb to start automatically on system boot.
+Enable the service to start automatically on system boot.
 .TP
 \fBinstall\fR
-Install Appweb as a service.
+Install the service.
 .TP
 \fBrun\fR
-Run Appweb and monitor its execution. Appman will automatically restart Appweb should it fail. Appman will block unless
-it is invoked with --daemon.
+Run the service and monitor its execution. Manager will automatically restart the service should it fail. 
+Manager will block unless it is invoked with --daemon.
 .TP
 \fBstart\fR
-Start Appweb manually.
+Start the service.
 .TP
 \fBstop\fR
-Stop Appweb.
+Stop the service.
 .TP
 \fBuninstall\fR
-Uninstall Appweb as a service.
+Uninstall the service.
 .SH OPTIONS
 .TP
 \fB\--args arguments\fR
@@ -63,7 +66,7 @@ Specify a file to use for log messages. The level argument defines the message v
 most verbose.
 .TP
 \fB\--retries count\fR
-Number of times to restart Appweb per hour.
+Number of times to restart the service per hour.
 .TP
 \fB\-v\fR
 Output the product version number.

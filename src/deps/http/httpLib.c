@@ -3902,6 +3902,10 @@ HttpConn *httpAcceptConn(HttpEndpoint *endpoint, MprEvent *event)
     }
     dispatcher = event->dispatcher;
 
+    if (mprShouldDenyNewRequests()) {
+        mprCloseSocket(sock, 0);
+        return 0;
+    }
     if ((conn = httpCreateConn(endpoint->http, endpoint, dispatcher)) == 0) {
         mprCloseSocket(sock, 0);
         return 0;
@@ -11095,6 +11099,10 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
     char        *start, *end;
 
     if (packet == NULL) {
+        return 0;
+    }
+    if (mprShouldDenyNewRequests()) {
+        httpError(conn, HTTP_CLOSE | HTTP_CODE_NOT_ACCEPTABLE, "Server terminating");
         return 0;
     }
     if (conn->rx == NULL) {
