@@ -49,23 +49,23 @@ with --optional ejs
 with --build --optional doxygen
 with --os=win --build --optional pkg
 
-with --optional ejscript
-# without ejscript
-
 with mpr 
 with http
 with --host --optional openssl ssl
 with --host --optional php
 # with --host --optional sqlite
 
-with --optional dir
-with --optional cgi
-
 if [ "$CFG_ESP_MANDATORY" = 1 ] ; then
     with --optional pcre
 else
     with --mandatory pcre
 fi
+with --optional ejscript
+# without ejscript
+
+with --optional dir
+with --optional cgi
+
 with --optional esp
 with appweb
 
@@ -83,7 +83,7 @@ if [ "$BLD_FEATURE_DEVICE" = "" ] ; then
 fi
 
 #
-#   Floating point support (required for Ejscript)
+#   Floating point support
 #
 BLD_FEATURE_FLOAT=1
 
@@ -96,6 +96,13 @@ BLD_FEATURE_LEGACY_API=0
 #	Disable the ability to run from a ROM file system. Only use this for deeply embedded projects without a file system.
 #
 BLD_FEATURE_ROMFS=0
+
+#
+#   Ejscript defaults
+#
+BLD_FEATURE_SQLITE=0
+BLD_SQLITE_BUILTIN=0
+BLD_FEATURE_EJSCRIPT_ALL_IN_ONE=0
 
 ################################################################################
 #

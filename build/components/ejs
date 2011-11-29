@@ -15,7 +15,7 @@ defineComponent() {
             else
                 type=release
             fi
-            search="${search}:../ejs-master-${type}/out/bin"
+            # search="${search}:../ejs-master-${type}/out/bin"
         fi
         path=`probe --exe --name ejs --search "$search" ejs`
         if [ "$path" = "" ] ; then

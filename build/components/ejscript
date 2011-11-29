@@ -2,59 +2,53 @@
 #   ejscript - Ejscript language
 #
 defineComponent() {
-    local deps libs optional path libdir builtin imports incdir iflags present SHOBJ type
+    local deps libs optional path libdir builtin imports incdir iflags present SHOBJ type n allinone
 
-    path="${1:-.}"
+    path="${1}"
     eval SHOBJ=\$BLD_${kind}_SHOBJ
-    builtin=`[ "$path" = "." -a -f src/ejs.h ] && echo --builtin`
+    builtin=`[ "$path" = "" -a -f src/ejs.h ] && echo --builtin`
     eval sqlite=\$CFG_${kind}_SQLITE
+
+    #
+    #   Download flat distribution if requested. Currently just for build-farm use.
+    #
+    if [ "${path/http:}" != "${path}" ] ; then
+        echo -n "Downloading $path ... "
+        # http http://farm.embedthis.com/software/ejs-2.0.0-B0-flat.tgz >src/deps/ejs.tgz
+        http $path >src/deps/ejs.tgz
+        if [ $? != 0 ] ; then
+            warnComponent ejscript "Can't download Ejscript from $path"
+            return
+        fi
+        mkdir -p src/deps/ejs 
+        tar -C src/deps/ejs --strip-components 2 -zxf src/deps/ejs.tgz
+        rm src/deps/ejs.tgz
+        builtin="--builtin"
+    fi
 
     optional="ssl"
     deps="mpr http"
     libs="ejs pcre"
     withlibs="pcre"
+    allinone=0
+    allinone=
 
+    if [ "$builtin" != "" -a -f src/deps/ejs/ejsLib.c ] ; then
+        optional="$optional sqlite3"
+        sqlite=1
+        allinone=1
+        BLD_FEATURE_EJSCRIPT_ALL_IN_ONE=1
+    fi
     if [ "$sqlite" = 1 ] ; then
         withlibs="sqlite3"
         libs="$libs sqlite3"
     fi
-    if [ "$BLD_FEATURE_EJSCRIPT_ALL_IN_ONE" = 1 ] ; then
-        if isdefined SQLITE ; then
-            optional="$optional sqlite3"
-        fi
-    fi
-
-    #
-    #   If building via the build farm, do an on-demand build of ejs
-    #
-    : ${BUILD_DEPTH:=0}
-    if [ "$BUILD_KEY" != "" -a "$BUILD_DEPTH" -ge 2 ] ; then
-        if [ "${CMD_LINE/--with-ejscript}" != "${CMD_LINE}" ] ; then
-            if [ ! -x imports/ejs/out/bin ] ; then
-                echo "Downloading ..."
-                rm -fr imports/ejs
-                rm -f imports/packages
-                mkdir -p imports
-                ln -s ../extensions imports/packages
-                git clone git@github.com:embedthis/ejs-2.git imports/ejs
-                if [ "$BLD_DEBUG" = 1 ] ; then
-                    (cd imports/ejs >/dev/null ; ./configure --debug ; make; echo)
-                else
-                    (cd imports/ejs >/dev/null ; ./configure --release ; make; echo)
-                fi
-            fi
-        fi
-    fi
 
     if [ "$builtin" = "" ] ; then
+        #
+        #   Building with an external ejscript source tree
+        #
         search="$path/out/lib:$path/out/bin:$path/out/inc:$path"
-        if [ "${path}" = "." ] ; then
-            if [ -x "imports/ejs/out/bin" ] ; then
-                search="${search}:imports/ejs/out/lib"
-                search="${search}:imports/ejs/out/inc"
-                search="${search}:imports/ejs/out/bin"
-            fi
-        fi
         libdir=`probe --name libejs --dir --search "$search" "libejs"`
         if [ "$libdir" = "" -a "$path" != "." ] ; then
             warnComponent ejscript "Can't locate libejs"
@@ -68,10 +62,8 @@ defineComponent() {
             fi
             libraries="$lib $libraries"
         done
-        if [ "$BLD_FEATURE_EJSCRIPT_ALL_IN_ONE" = 1 ] ; then
-            if isdefined SQLITE ; then
-                libraries="$libraries `echo $libdir/libsqlite3*`"
-            fi
+        if [ "$allinone" = 1 -a "$sqlite" = 1 ] ; then
+            libraries="$libraries `echo $libdir/libsqlite3*`"
         fi
         ejsbin=`probe --exe --name ejs --search "$search" ejs`
 
@@ -80,7 +72,7 @@ defineComponent() {
             modules=`echo $libdir/*.mod`
             imports="$imports $modules"
             #
-            #   Import manager, http and makerom as they come from the MPR and Http libraries which Ejscript supplies
+            #   Import manager, http and makerom as they come from the MPR and Http libraries which Ejscript supplies.
             #
             manager=`probe --exe --name manager --search "$search" manager`
             if [ "$manager" != "" ] ; then
@@ -94,17 +86,19 @@ defineComponent() {
             if [ "$makerom" != "" ] ; then
                 imports="$imports $makerom"
             fi
-            # UNUSED - Don't hard link to ejs.web
-            # libs="$libs ejs.web"
+            for n in MPR HTTP PCRE ; do
+                eval CFG_${kind}_${n}_IMPORTS=
+                eval CFG_${kind}_${n}_BUILTIN=
+            done
         else
-            optional=
-            libs=
-            withlibs=
-            deps=
-            present="--present 0"
+            #
+            #   Could not find (optional) ejscript component. Mark as not present.
+            #
+            optional= libs= withlibs= deps= present="--present 0"
         fi
     else
         ejsbin=`canonPath ${BLD_OUT_DIR}/bin/ejs`
+        search="src:src/deps/ejs"
     fi
     incdir=`probe --name ejs.h --dir --search "$search" "ejs.h" `
     if [ "$incdir" != "" ] ; then

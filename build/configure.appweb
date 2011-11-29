@@ -35,6 +35,8 @@ manageFeatures()
             echo "Enabling the floating point support."
             BLD_FEATURE_FLOAT=1
         fi
+        BLD_FEATURE_SQLITE=1
+        BLD_SQLITE_BUILTIN=1
     fi
     if [ "$BLD_FEATURE_ESP" = 1 ] ; then
         if [ "$BLD_FEATURE_PCRE" != 1 ] ; then
@@ -107,6 +109,19 @@ BLD_MANAGER="appman"
 BLD_HTTP="http"
 
 !EOF_FEATURE_CONFIG1
+
+    if [ "$BLD_FEATURE_EJSCRIPT" = 1 ] ; then
+        cat >>$NAME <<!EOF_FEATURE_CONFIG2
+#
+#   Ejscript configuration
+#
+BLD_FEATURE_SQLITE=$BLD_FEATURE_SQLITE
+BLD_SQLITE_BUILTIN=$BLD_SQLITE_BUILTIN
+BLD_SQLITE_PRODUCT=0
+BLD_FEATURE_EJSCRIPT_ALL_IN_ONE=$BLD_FEATURE_EJSCRIPT_ALL_IN_ONE
+
+!EOF_FEATURE_CONFIG2
+    fi
 }
 
 

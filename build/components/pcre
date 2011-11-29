@@ -2,9 +2,8 @@
 #   Pcre
 #
 defineComponent() {
-	local builtin incdir libpaths libraries imports path name headers ejscript
+	local builtin incdir libpaths libraries imports path name headers
 
-    eval ejscript=\$CFG_${kind}_EJSCRIPT
     path=${1:-.}
     if [ "$path" != "." ] ; then
         libraries=`probe --name pcre --search "$path:$path/src/deps/pcre:$path/out/lib" "libpcre" `
@@ -22,9 +21,9 @@ defineComponent() {
         imports="$imports $headers"
     fi
     builtin=`[ $path = . ] && echo --builtin`
-    if [ "$ejscript" = "1" ] ; then
-        imports=
-        builtin=
-    fi
+#   if [ "${CMD_LINE/--with-ejscript}" != "${CMD_LINE}" ] ; then
+#       imports=
+#       builtin=
+#   fi
     configureComponent --libs "pcre" --libpaths "$libpaths" --imports "$imports" $builtin pcre
 }

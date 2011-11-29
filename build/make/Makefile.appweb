@@ -76,7 +76,7 @@ test-install-native-package:
 		hdiutil eject /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION) >/dev/null 2>&1 ; \
 	else \
 		name="$(BASE_NAME).tgz" ; \
-		tar -C /tmp xvfz $(BLD_OUT_DIR)/releases/$$name ; \
+		tar -C /tmp -zxf $(BLD_OUT_DIR)/releases/$$name ; \
 		priv $(BLD_PRODUCT)_HEADLESS=1 ./install ; \
 	fi
 

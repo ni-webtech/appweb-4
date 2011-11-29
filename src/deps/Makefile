@@ -6,7 +6,10 @@
 
 include 		.makedep
 
-PRE_DIRS		+= mpr pcre http sqlite
+#
+#	The ejs dir is here when downloaded and added to the tree
+#
+PRE_DIRS		+= mpr pcre http sqlite ejs
 
 #
 #   Local variables:

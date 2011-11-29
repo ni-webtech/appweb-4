@@ -820,19 +820,27 @@ findComponents() {
             unset MSG
             eval os=\$BLD_${kind}_OS
             OS=$os NAME=$name KIND=$kind defineComponent "$path"
-        done
 
-        eval dependencies=\$CFG_${kind}_${upperName}_DEPENDENCIES
-        for dep in $dependencies 
-        do
-            if ! isdefined "$dep" ; then
-                if [ "$mandatory" = 1 ] ; then
-                    echo "configureComponent: Missing dependency \"${dep}\" for mandatory component: ${name}" 1>&2
-                    exit 255
+            eval dependencies=\$CFG_${kind}_${upperName}_DEPENDENCIES
+            for dep in $dependencies 
+            do
+                if ! isdefined "$dep" ; then
+                    if [ "$mandatory" = 1 ] ; then
+                        echo "configureComponent: Missing dependency \"${dep}\" for mandatory component: ${name}" 1>&2
+                        exit 255
+                    fi
+                fi
+            done
+
+            eval imports=\$CFG_${kind}_${upperName}_IMPORTS
+            if [ "$imports" != "" ] ; then
+                if [ "${BLD_IMPORTS/$imports/}" = "${BLD_IMPORTS}" ] ; then
+                    BLD_IMPORTS="$imports $BLD_IMPORTS"
                 fi
             fi
         done
 
+        # MOB - why break
         [ $BLD_CROSS = 0 ] && break
     done
     [ "$verbose" -gt 0 ] && echo
@@ -1021,11 +1029,11 @@ configureComponent() {
     done
     imports="$newImports"
 
-    if [ "$imports" != "" ] ; then
-        if [ "${BLD_IMPORTS/$imports/}" = "${BLD_IMPORTS}" ] ; then
-            BLD_IMPORTS="$imports $BLD_IMPORTS"
-        fi
-    fi
+#    if [ "$imports" != "" ] ; then
+#        if [ "${BLD_IMPORTS/$imports/}" = "${BLD_IMPORTS}" ] ; then
+#            BLD_IMPORTS="$imports $BLD_IMPORTS"
+#        fi
+#    fi
 
     #
     #   Don't make libraries unique on Linux. ld does not rescan.

@@ -2,11 +2,10 @@
 #   Http
 #
 defineComponent() {
-    local iflags libpaths builtin libraries imports headers libs withlibs ejscript
+    local iflags libpaths builtin libraries imports headers libs withlibs
 
     path="${1:-.}"
     builtin=`[ $path = "." ] && echo --builtin`
-    eval ejscript=\$CFG_${kind}_EJSCRIPT
 
     if [ "$path" != "." ] ; then
         libraries=`probe --name libhttp --search "$path:$path/out/lib" "libhttp" `
@@ -29,10 +28,10 @@ defineComponent() {
         libs="$libs pam"
         withlibs="$withlibs pam"
     fi
-    if [ "$ejscript" = "1" ] ; then
-        imports=
-        builtin=
-    fi
+#   if [ "${CMD_LINE/--with-ejscript}" != "${CMD_LINE}" ] ; then
+#       imports=
+#       builtin=
+#   fi
     configureComponent --libs "$libs" --withlibs "$withlibs" --libpaths "$libpaths" --iflags "$iflags" $builtin \
         --imports "$imports" http
 }
