@@ -17,7 +17,7 @@ makeFlatPackage() {
     log Create Flat package
     cd ${ROOT_DIR}/${BLD_PRODUCT}-${BLD_VERSION}
     find src -type f | xargs -I % mv % .
-    rm -fr doc src Makefile
+    rm -fr doc src
     cd ..
     rm -f ${FLAT}
     log Run "tar -cfz ${FLAT} ."
