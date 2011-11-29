@@ -24,6 +24,7 @@ typedef struct App {
     int      benchmark;          /* Output benchmarks */
     int      chunkSize;          /* Ask for response data to be chunked in this quanta */
     int      continueOnErrors;   /* Continue testing even if an error occurs. Default is to stop */
+    int      exitOnErrors;       /* Exit on non-200 errors */
     int      success;            /* Total success flag */
     int      fetchCount;         /* Total count of fetches */
     MprFile  *inFile;            /* Input file for post/put data */
@@ -50,6 +51,7 @@ typedef struct App {
     MprList  *requestFiles;      /* Request files */
     int      retries;            /* Times to retry a failed request */
     int      sequence;           /* Sequence requests with a custom header */
+    int      status;             /* Status for single requests */
     int      showStatus;         /* Output the Http response status */
     int      showHeaders;        /* Output the response headers */
     int      singleStep;         /* Pause between requests */
@@ -175,6 +177,7 @@ static void initSettings()
     app->method = 0;
     app->verbose = 0;
     app->continueOnErrors = 0;
+    app->exitOnErrors = 0;
     app->showHeaders = 0;
 
     app->host = sclone("localhost");
@@ -250,6 +253,9 @@ static bool parseArgs(int argc, char **argv)
 
         } else if (strcmp(argp, "--delete") == 0) {
             app->method = "DELETE";
+
+        } else if (strcmp(argp, "--exit") == 0) {
+            app->exitOnErrors++;
 
         } else if (strcmp(argp, "--form") == 0 || strcmp(argp, "-f") == 0) {
             if (nextArg >= argc) {
@@ -483,6 +489,7 @@ static void showUsage()
         "  --data bodyData       # Body data to send with PUT or POST.\n"
         "  --debugger            # Disable timeouts to make running in a debugger easier.\n"
         "  --delete              # Use the DELETE method. Shortcut for --method DELETE..\n"
+        "  --exit                # Exit with error status on non-200 HTTP results.\n"
         "  --form string         # Form data. Must already be form-www-urlencoded.\n"
         "  --header 'key: value' # Add a custom request header.\n"
         "  --host hostName       # Host name or IP address for unqualified URLs.\n"
@@ -764,7 +771,7 @@ static int reportResponse(HttpConn *conn, cchar *url, MprTime elapsed)
     if (mprShouldAbortRequests(conn)) {
         return 0;
     }
-    status = httpGetStatus(conn);
+    app->status = status = httpGetStatus(conn);
     bytesRead = httpGetContentLength(conn);
     if (bytesRead < 0 && conn->rx) {
         bytesRead = conn->rx->bytesRead;
@@ -794,6 +801,9 @@ static int reportResponse(HttpConn *conn, cchar *url, MprTime elapsed)
         /* Ignore */;
 
     } else if (!(200 <= status && status <= 206) && !(301 <= status && status <= 304)) {
+        if (app->exitOnErrors) {
+            app->success = 0;
+        }
         if (!app->showStatus) {
             mprError("Can't process request for \"%s\" (%d) %s", url, status, httpGetError(conn));
             return MPR_ERR_CANT_READ;

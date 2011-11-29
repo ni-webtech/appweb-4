@@ -11,6 +11,7 @@ http \- HTTP Client program
 [\fI--data\fR] 
 [\fI--debugger\fR] 
 [\fI--delete\fR] 
+[\fI--exit\fR] 
 [\fI--form string\fR]
 [\fI--header 'key: value'\fR]
 [\fI--host hostName\fR]
@@ -64,6 +65,9 @@ String of raw body data to send with the request.
 .TP
 \fB\--delete\fR 
 Issue a DELETE request. This is an alias for --method DELETE.
+.TP
+\fB\--exit\fR 
+Exit with a error status for non-200 HTTP results.
 .TP
 \fB\--form formData\fR 
 String of body data to send with the request. Assumed to be URL encoded. ie. "name=paul&address=uk".
