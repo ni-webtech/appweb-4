@@ -134,8 +134,6 @@ esac
 PROGRAMS="appman appweb auth http"
 if [ "$BLD_OS" = WIN ] ; then
     PROGRAMS="$PROGRAMS appwebMonitor"
-else
-    PROGRAMS="$PROGRAMS cgiProgram"
 fi
 
 status=0
