@@ -227,7 +227,7 @@ testExtra::
     fi
 
 test-utest:
-	[ "$(BLD_EMBEDTHIS)" = 1 ] && ulimit -c unlimited ; \
+	ulimit -c unlimited ; \
 	$(BLD_EJS) $(BLD_TOOLS_DIR)/utest -v -d $(BUILD_DEPTH) ; \
 
 #
