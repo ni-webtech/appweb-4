@@ -1571,7 +1571,6 @@ static void logHandler(int flags, int level, cchar *msg)
 
 static void terminating(int how, int status)
 {
-    cleanup();
 }
 
 
