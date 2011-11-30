@@ -27,11 +27,12 @@ for (iter in test.depth) {
     assert(http.status == 200)
     assert(http.response.contains("Hello /index.html"))
 
-    //  Test /index.ejs
-    http.get(HTTP + "/index.ejs?" + query)
-    assert(http.status == 200)
-    assert(http.response.contains("Hello /index.ejs"))
-
+    if (!test || test.config["ejscript"] == 1) {
+        //  Test /index.ejs
+        http.get(HTTP + "/index.ejs?" + query)
+        assert(http.status == 200)
+        assert(http.response.contains("Hello /index.ejs"))
+    }
     //  TODO - esp, cgi, php
 }
 http.close()

@@ -781,16 +781,18 @@ static int reportResponse(HttpConn *conn, cchar *url, MprTime elapsed)
         app->success = 0;
     }
     if (conn->rx && bytesRead > 0) {
-        if (app->showStatus) {
-            mprPrintf("%d\n", status);
+        if (!app->noout) {
+            mprPrintf("\n");
         }
         if (app->showHeaders) {
             responseHeaders = httpGetHeaders(conn);
             rx = conn->rx;
-            mprPrintf("%s %d %s\n", conn->protocol, rx->status, rx->statusMessage);
+            mprPrintf("%s %d %s\n", conn->protocol, status, rx->statusMessage);
             if (responseHeaders) {
                 mprPrintf("%s\n", responseHeaders);
             }
+        } else if (app->showStatus) {
+            mprPrintf("%d\n", status);
         }
     }
     if (status < 0) {

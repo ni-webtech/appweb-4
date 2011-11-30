@@ -4472,7 +4472,7 @@ typedef struct HttpTx {
     HttpStage       *handler;               /**< Server-side request handler stage */
     MprOff          length;                 /**< Transmission content length */
     int             started;                /**< Handler has started */
-    int             status;                 /**< HTTP request status */
+    int             status;                 /**< HTTP response status */
 
     HttpUri         *parsedUri;             /**< Client request uri */
     char            *method;                /**< Client request method GET, HEAD, POST, DELETE, OPTIONS, PUT, TRACE */

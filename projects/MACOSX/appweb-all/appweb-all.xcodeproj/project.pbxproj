@@ -1555,7 +1555,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cp -r $SRC/server/master/* $SRC/server\n\nif [ \"$SKIP_INSTALL\" != YES ] ; then\n    mkdir -p $DSTROOT/etc/appweb/conf\n    cp $SRC/server/appweb.conf $DSTROOT/etc/appweb\n    cp $SRC/server/mime.types $DSTROOT/etc/appweb\n    cp -r $SRC/server/*.conf  $DSTROOT/etc/appweb\n    cp $SRC/server/groups.db $SRC/server/users.db $DSTROOT/etc/appweb\n    cp $SRC/server/php.ini $DSTROOT/etc/appweb\n    cp -r $SRC/server/ssl $DSTROOT/etc/appweb\nfi\nexit 0";
+			shellScript = "if [ \"$SKIP_INSTALL\" != YES ] ; then\n    mkdir -p $DSTROOT/etc/appweb/conf\n    cp $SRC/server/appweb.conf $DSTROOT/etc/appweb\n    cp $SRC/server/mime.types $DSTROOT/etc/appweb\n    cp -r $SRC/server/*.conf  $DSTROOT/etc/appweb\n    cp $SRC/server/groups.db $SRC/server/users.db $DSTROOT/etc/appweb\n    cp $SRC/server/php.ini $DSTROOT/etc/appweb\n    cp -r $SRC/server/ssl $DSTROOT/etc/appweb\nfi\nexit 0";
 			showEnvVarsInLog = 0;
 		};
 		C9D7B35613D8C030006C3A9B /* Test */ = {

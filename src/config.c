@@ -1449,20 +1449,22 @@ static int putMethodDirective(MaState *state, cchar *key, cchar *value)
 static int redirectDirective(MaState *state, cchar *key, cchar *value)
 {
     HttpRoute   *alias;
-    char        *code, *uri, *path;
+    char        *code, *uri, *path, *target;
     int         status;
 
     if (value[0] == '/' || sncmp(value, "http://", 6) == 0) {
         if (!maTokenize(state, value, "%S %S", &uri, &path)) {
             return MPR_ERR_BAD_SYNTAX;
         }
-        status = 302;
+        status = HTTP_CODE_MOVED_TEMPORARILY;
+#if UNUSED
     } else if (isdigit((int) value[0])) {
         if (!maTokenize(state, value, "%N %S %S", &status, &uri, &path)) {
             return MPR_ERR_BAD_SYNTAX;
         }
+#endif
     } else {
-        if (!maTokenize(state, value, "%S %S %S", &code, &uri, &path)) {
+        if (!maTokenize(state, value, "%S %S ?S", &code, &uri, &path)) {
             return MPR_ERR_BAD_SYNTAX;
         }
         if (scasematch(code, "permanent")) {
@@ -1473,17 +1475,21 @@ static int redirectDirective(MaState *state, cchar *key, cchar *value)
             status = 303;
         } else if (scasematch(code, "gone")) {
             status = 410;
+        } else if (snumber(code)) {
+            status = atoi(code);
         } else {
             return configError(state, key);
         }
     }
-    if (status < 300 || status > 399) {
-        path = "";
-    }
-    if (status <= 0 || uri == 0 || path == 0) {
+    if (300 <= status && status <= 399 && (!path || *path == '\0')) {
         return configError(state, key);
     }
-    alias = httpCreateAliasRoute(state->route, uri, path, status);
+    if (status <= 0 || uri == 0) {
+        return configError(state, key);
+    }
+    alias = httpCreateAliasRoute(state->route, uri, 0, status);
+    target = (path) ? sfmt("%d %s", status, path) : code;
+    httpSetRouteTarget(alias, "redirect", target);
     httpFinalizeRoute(alias);
     return 0;
 }

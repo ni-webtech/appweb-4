@@ -3761,7 +3761,7 @@ int httpStartEndpoint(HttpEndpoint *endpoint)
         return MPR_ERR_MEMORY;
     }
     if (mprListenOnSocket(endpoint->sock, endpoint->ip, endpoint->port, MPR_SOCKET_NODELAY | MPR_SOCKET_THREAD) < 0) {
-        mprError("Can't open a socket on %s, port %d", endpoint->ip, endpoint->port);
+        mprError("Can't open a socket on %s:%d", *endpoint->ip ? endpoint->ip : "*", endpoint->port);
         return MPR_ERR_CANT_OPEN;
     }
     if (endpoint->http->listenCallback && (endpoint->http->listenCallback)(endpoint) < 0) {
@@ -4228,10 +4228,13 @@ void httpError(HttpConn *conn, int flags, cchar *fmt, ...)
  */
 static void errorv(HttpConn *conn, int flags, cchar *fmt, va_list args)
 {
+    HttpRx      *rx;
     HttpTx      *tx;
+    cchar       *uri;
     int         status;
 
     mprAssert(fmt);
+    rx = conn->rx;
     tx = conn->tx;
 
     if (conn == 0) {
@@ -4240,8 +4243,8 @@ static void errorv(HttpConn *conn, int flags, cchar *fmt, va_list args)
     if (flags & HTTP_ABORT) {
         conn->connError = 1;
     }
-    if (conn->rx) {
-        conn->rx->eof = 1;
+    if (rx) {
+        rx->eof = 1;
     }
     conn->error = 1;
     status = flags & HTTP_CODE_MASK;
@@ -4264,7 +4267,11 @@ static void errorv(HttpConn *conn, int flags, cchar *fmt, va_list args)
              */
             httpDisconnect(conn);
         } else {
-            httpFormatResponseError(conn, status, "%s", conn->errorMsg);
+            if (rx && tx && (uri = httpLookupRouteErrorDocument(rx->route, tx->status))) {
+                httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, uri);
+            } else {
+                httpFormatResponseError(conn, status, "%s", conn->errorMsg);
+            }
         }
     } else {
         if (flags & HTTP_ABORT || (tx && tx->flags & HTTP_TX_HEADERS_CREATED)) {
@@ -6567,8 +6574,13 @@ static void openPass(HttpQueue *q)
 
 static void processPass(HttpQueue *q)
 {
-    mprAssert(q->conn->finalized);
-    httpFinalize(q->conn);
+    HttpConn    *conn;
+
+    conn = q->conn;
+    if (!conn->finalized) {
+        httpError(conn, HTTP_CODE_NOT_FOUND, "Can't serve request: %s", conn->rx->uri);
+    }
+    httpFinalize(conn);
 }
 
 
@@ -6580,6 +6592,15 @@ int httpOpenPassHandler(Http *http)
         return MPR_ERR_CANT_CREATE;
     }
     http->passHandler = stage;
+    stage->open = openPass;
+    stage->process = processPass;
+
+    /*
+        PassHandler has an alias as the ErrorHandler too
+     */
+    if ((stage = httpCreateHandler(http, "errorHandler", HTTP_STAGE_ALL, NULL)) == 0) {
+        return MPR_ERR_CANT_CREATE;
+    }
     stage->open = openPass;
     stage->process = processPass;
     return 0;
@@ -9109,7 +9130,7 @@ void httpSetRouteScript(HttpRoute *route, cchar *script, cchar *scriptPath)
     Target names are extensible and hashed in http->routeTargets. 
 
         Target close
-        Target redirect status URI 
+        Target redirect status [URI]
         Target run ${DOCUMENT_ROOT}/${request:uri}.gz
         Target run ${controller}-${name} 
         Target write [-r] status "Hello World\r\n"
@@ -9128,7 +9149,7 @@ int httpSetRouteTarget(HttpRoute *route, cchar *rule, cchar *details)
         route->target = sclone(details);
 
     } else if (scasematch(rule, "redirect")) {
-        if (!httpTokenize(route, details, "%N %S", &route->responseStatus, &redirect)) {
+        if (!httpTokenize(route, details, "%N ?S", &route->responseStatus, &redirect)) {
             return MPR_ERR_BAD_SYNTAX;
         }
         route->target = finalizeReplacement(route, redirect);
@@ -10037,10 +10058,11 @@ static int redirectTarget(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 
     mprAssert(conn);
     mprAssert(route);
-    mprAssert(route->target && *route->target);
+    mprAssert(route->target);
 
     rx = conn->rx;
 
+    /* Note: target may be empty */
     target = expandTokens(conn, route->target);
     if (route->responseStatus) {
         httpRedirect(conn, route->responseStatus, target);
@@ -13950,45 +13972,53 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
     rx = conn->rx;
     tx = conn->tx;
     tx->status = status;
-    prev = rx->parsedUri;
-    uri = 0;
-
-    if (targetUri == 0) {
-        targetUri = "/";
-    }
-    target = httpCreateUri(targetUri, 0);
-
-    if (conn->http->redirectCallback) {
-        targetUri = (conn->http->redirectCallback)(conn, &status, target);
-    }
-    if (strstr(targetUri, "://") == 0) {
-        port = strchr(targetUri, ':') ? prev->port : conn->endpoint->port;
-        if (target->path[0] == '/') {
-            /*
-                Absolute URL. If hostName has a port specifier, it overrides prev->port.
-             */
-            uri = httpFormatUri(prev->scheme, rx->hostHeader, port, target->path, target->reference, target->query, 1);
-        } else {
-            /*
-                Relative file redirection to a file in the same directory as the previous request.
-             */
-            dir = sclone(rx->pathInfo);
-            if ((cp = strrchr(dir, '/')) != 0) {
-                /* Remove basename */
-                *cp = '\0';
-            }
-            path = sjoin(dir, "/", target->path, NULL);
-            uri = httpFormatUri(prev->scheme, rx->hostHeader, port, path, target->reference, target->query, 1);
-        }
-        targetUri = uri;
-    }
-    httpSetHeader(conn, "Location", "%s", targetUri);
     msg = httpLookupStatus(conn->http, status);
-    httpFormatResponse(conn, 
-        "<!DOCTYPE html>\r\n"
-        "<html><head><title>%s</title></head>\r\n"
-        "<body><h1>%s</h1>\r\n<p>The document has moved <a href=\"%s\">here</a>.</p></body></html>\r\n",
-        msg, msg, targetUri);
+
+    if (300 <= status && status <= 399) {
+        if (targetUri == 0) {
+            targetUri = "/";
+        }
+        target = httpCreateUri(targetUri, 0);
+
+        if (conn->http->redirectCallback) {
+            targetUri = (conn->http->redirectCallback)(conn, &status, target);
+        }
+        if (strstr(targetUri, "://") == 0) {
+            prev = rx->parsedUri;
+            port = strchr(targetUri, ':') ? prev->port : conn->endpoint->port;
+            uri = 0;
+            if (target->path[0] == '/') {
+                /*
+                    Absolute URL. If hostName has a port specifier, it overrides prev->port.
+                 */
+                uri = httpFormatUri(prev->scheme, rx->hostHeader, port, target->path, target->reference, target->query, 1);
+            } else {
+                /*
+                    Relative file redirection to a file in the same directory as the previous request.
+                 */
+                dir = sclone(rx->pathInfo);
+                if ((cp = strrchr(dir, '/')) != 0) {
+                    /* Remove basename */
+                    *cp = '\0';
+                }
+                path = sjoin(dir, "/", target->path, NULL);
+                uri = httpFormatUri(prev->scheme, rx->hostHeader, port, path, target->reference, target->query, 1);
+            }
+            targetUri = uri;
+        }
+        httpSetHeader(conn, "Location", "%s", targetUri);
+        httpFormatResponse(conn, 
+            "<!DOCTYPE html>\r\n"
+            "<html><head><title>%s</title></head>\r\n"
+            "<body><h1>%s</h1>\r\n<p>The document has moved <a href=\"%s\">here</a>.</p></body></html>\r\n",
+            msg, msg, targetUri);
+    } else {
+        httpFormatResponse(conn, 
+            "<!DOCTYPE html>\r\n"
+            "<html><head><title>%s</title></head>\r\n"
+            "<body><h1>%s</h1>\r\n</body></html>\r\n",
+            msg, msg);
+    }
     httpFinalize(conn);
 }
 
