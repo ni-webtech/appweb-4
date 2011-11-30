@@ -8,7 +8,9 @@ BASE_NAME	= $(BLD_PRODUCT)-$(BLD_VERSION)-$(BLD_NUMBER)-$(BLD_HOST_DIST)-$(BLD_H
 #
 #	Top level test targets to test installing and removing packages
 #
-testExtra::
+testExtra:: testPackages
+
+testPackages:
 	if [ "$(BUILD_DEPTH)" -ge 3 -a "$(BLD_TYPE)" = RELEASE ] ; then \
 		if [ ! -f $(BLD_OUT_DIR)/releases/$(BASE_NAME).tgz ] ; then \
 			$(call log) "[Test]" "Make package to test" ; \
@@ -46,25 +48,27 @@ ifeq    ($(NATIVE_BUILD),1)
 endif
 
 test-install-package:
-	$(call log) "[Test]" "test-install-package"
+	printf "%12s " "[Test]" "test-install-package ..."
 	set -e ; name="$(BASE_NAME).tgz" ; \
 	dir=/tmp/$(BLD_PRODUCT)-$$$$ ; rm -rf $$dir ; mkdir -p $$dir ; \
 	tar -C $$dir -zxf $(BLD_OUT_DIR)/releases/$$name ; \
 	cd $$dir >/dev/null 2>&1 ; \
-	priv "$(BLD_PRODUCT)_HEADLESS=1 ./install" ; \
+	priv "$(BLD_PRODUCT)_HEADLESS=1 ./install" || exit 255 ; \
 	rm -rf $$dir
+	echo PASSED
 
 test-uninstall-package:
-	$(call log) "[Test]" "test-uninstall-package"
+	printf "%12s " "[Test]" "test-uninstall-package ..."
 	set -e ; name="$(BASE_NAME).tgz" ; \
 	dir=/tmp/$(BLD_PRODUCT)-$$$$ ; rm -rf $$dir ; mkdir -p $$dir ; \
 	tar -C $$dir -zxf $(BLD_OUT_DIR)/releases/$$name ; \
 	cd $$dir >/dev/null 2>&1 ; \
-	priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
+	priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" || exit 255 ; \
 	rm -rf $$dir
+	echo PASSED
 
 test-install-native-package:
-	$(call log) "[Test]" "test-install-native-package"
+	printf "%12s " "[Test]" "test-install-native-package ..."
 	set -e ; \
 	if [ $(BLD_HOST_OS) = WIN ] ; then \
 		dir=/tmp/$(BLD_PRODUCT)-$$$$ ; rm -rf $$dir ; mkdir -p $$dir ; \
@@ -76,18 +80,19 @@ test-install-native-package:
 	elif [ $(BLD_HOST_OS) = MACOSX ] ; then \
 		hdiutil eject /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION) >/dev/null 2>&1 || true ; \
 		hdid $(BLD_OUT_DIR)/releases/$(BASE_NAME).dmg >/dev/null ; \
-		priv installer -package /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION)/$(BLD_PRODUCT).mpkg -target /; \
+		priv installer -package /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION)/$(BLD_PRODUCT).mpkg -target / >/dev/null; \
 		hdiutil eject /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION) >/dev/null 2>&1 ; \
 	else \
 		name="$(BASE_NAME).tgz" ; \
 		tar -C /tmp -zxf $(BLD_OUT_DIR)/releases/$$name ; \
 		priv $(BLD_PRODUCT)_HEADLESS=1 ./install ; \
 	fi
+	echo PASSED
 
 STAGE_DIR=/tmp/appweb-win
 
 test-uninstall-native-package:
-	$(call log) "[Test]" "test-uninstall-native-package"
+	printf "%12s " "[Test]" "test-uninstall-native-package ..."
 	set -e ; \
 	if [ $(BLD_HOST_OS) = WIN ] ; then \
 		if [ ! -x "$(STAGE_DIR)/unins000.exe" ] ; then \
@@ -101,12 +106,13 @@ test-uninstall-native-package:
 		dir=/tmp/$(BLD_PRODUCT)-$$$$ ; rm -rf $$dir ; mkdir -p $$dir ; \
 		tar -C $$dir -zxf $(BLD_OUT_DIR)/releases/$$name ; \
 		cd $$dir >/dev/null 2>&1 ; \
-		priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
+		priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" || exit 255; \
 		rm -rf $$dir ; \
 	fi
+	echo PASSED
 
 test-installed:
-	$(call log) "[Test]" "test-installed"
+	printf "%12s " "[Test]" "test-installed ..."
 	set -e ; \
 	complete=1 ; \
 	for dir in $(BLD_CFG_PREFIX) $(BLD_BIN_PREFIX) $(BLD_INC_PREFIX) \
@@ -128,11 +134,10 @@ test-installed:
 	http -q $$port/test/test.cgi ; \
 	http -q $$port/test/test.pl ; \
 	http -q $$port/test/test.py ; \
-	$(call log) "[Status]" "$(BLD_PRODUCT) is installed"
+	echo "PASSED"
 
-#MOB - temporarily change to not fail if files left behind
 test-uninstalled:
-	$(call log) "[Test]" "test-uninstalled"
+	printf "%12s " "[Test]" "test-uninstalled ..."
 	partial=0 ; \
 	for dir in $(BLD_CFG_PREFIX) $(BLD_BIN_PREFIX) $(BLD_INC_PREFIX) $(BLD_LIB_PREFIX) $(BLD_LOG_PREFIX) \
 		$(BLD_MAN_PREFIX) $(BLD_PRD_PREFIX) $(BLD_SPL_PREFIX) $(BLD_VER_PREFIX) $(BLD_WEB_PREFIX) ; do \
@@ -144,7 +149,7 @@ test-uninstalled:
 		fi ; \
 	done ; \
 	[ $$partial = 1 ] && exit 0 ; \
-	$(call log) "[Status]" "$(BLD_PRODUCT) is uninstalled"
+	echo "PASSED"
 
 #
 #	Convenient configure targets

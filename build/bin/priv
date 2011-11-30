@@ -11,7 +11,7 @@ if [ "$HEADLESS" = 1 -o "$OPENWRTVERSION" != "" ] ; then
 
 else
     if type sudo >/dev/null 2>&1 ; then
-        echo
+        [ `id -u` != 0 ] && echo
         PASS_PROMPT="Root privilege required, please enter the root password: "
         sudo "PATH=$PATH" -S -p "$PASS_PROMPT" sh -c "$*"
     else

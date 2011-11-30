@@ -363,3 +363,4 @@ if [ "$removebin" = "Y" ] ; then
     postClean
     [ "$headless" != 1 ] && echo -e "$BLD_NAME uninstall successful"
 fi
+exit 0
