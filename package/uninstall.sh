@@ -58,7 +58,7 @@ BLD_SRC_PREFIX="!!ORIG_BLD_SRC_PREFIX!!"
 BLD_WEB_PREFIX="!!ORIG_BLD_WEB_PREFIX!!"
 
 removebin=Y
-removedev=Y
+headless=${!!BLD_PRODUCT!!_HEADLESS:-0}
 
 PATH=$PATH:/sbin:/usr/sbin
 unset CDPATH
@@ -70,7 +70,7 @@ unset CDPATH
 #
 
 yesno() {
-	if [ "$!!BLD_PRODUCT!!_HEADLESS" = 1 ] ; then
+	if [ "$headless" = 1 ] ; then
 		echo "Y"
 		return
 	fi
@@ -91,11 +91,11 @@ yesno() {
 
 
 deconfigureService() {
-    echo -e "\nStopping $BLD_NAME service"
+    [ "$headless" != 1 ] && echo -e "Stopping $BLD_NAME service"
     # Fedora will indiscriminately kill appman here too
     # Need this ( ; true) to suppress the Killed message
     (appman -v stop ; true) >/dev/null 2>&1
-    echo -e "\nRemoving $BLD_NAME service"
+    [ "$headless" != 1 ] && echo -e "Removing $BLD_NAME service"
     appman disable 
     appman uninstall
     if [ -f $BLD_BIN_PREFIX/$BLD_PRODUCT ] ; then
@@ -112,7 +112,7 @@ deconfigureService() {
 removeFiles() {
 	local pkg doins name
 
-	echo
+	[ "$headless" != 1 ] && echo
 	for pkg in bin ; do
 		doins=`eval echo \\$install${pkg}`
 		if [ "$doins" = Y ] ; then
@@ -123,10 +123,10 @@ removeFiles() {
 				name="${BLD_PRODUCT}${suffix}"
 			fi
 			if [ "$FMT" = "rpm" ] ; then
-				echo -e "Running \"rpm -e $name\""
+				[ "$headless" != 1 ] && echo -e "Running \"rpm -e $name\""
 				rpm -e $name
 			elif [ "$FMT" = "deb" ] ; then
-				echo -e "Running \"dpkg -r $name\""
+				[ "$headless" != 1 ] && echo -e "Running \"dpkg -r $name\""
 				dpkg -r $name >/dev/null
 			else
 				removeTarFiles $pkg
@@ -172,6 +172,8 @@ preClean() {
     removeIntermediateFiles access.log* error.log* '*.log.old' .dummy $BLD_PRODUCT.conf make.log $BLD_PRODUCT.conf.bak
     cd "$BLD_LIB_PREFIX"
     removeIntermediateFiles access.log* error.log* '*.log.old' .dummy $BLD_PRODUCT.conf make.log
+    cd "$BLD_WEB_PREFIX"
+    removeIntermediateFiles *.mod 
     cd "$cdir"
 
     if [ -d "$BLD_INC_PREFIX" ] ; then
@@ -186,7 +188,7 @@ preClean() {
 postClean() {
 	local cdir=`pwd`
 
-	echo
+	[ "$headless" != 1 ] && echo
     # Legacy
 	rm -f "${BLD_CFG_PREFIX}/${BLD_PRODUCT}Install.conf"
 	rm -f "${BLD_PRD_PREFIX}/install.conf"
@@ -199,13 +201,12 @@ postClean() {
     cleanDir "$BLD_INC_PREFIX"
     cleanDir "$BLD_DOC_PREFIX"
 
-	if [ "$removebin" = "Y" ] ; then
-		cleanDir "$BLD_PRD_PREFIX"
-		cleanDir "$BLD_CFG_PREFIX"
-		cleanDir "$BLD_LIB_PREFIX"
-		cleanDir "$BLD_WEB_PREFIX"
-		cleanDir "$BLD_SPL_PREFIX"
-	fi
+    cleanDir "$BLD_PRD_PREFIX"
+    cleanDir "$BLD_CFG_PREFIX"
+    cleanDir "$BLD_LIB_PREFIX"
+    cleanDir "$BLD_WEB_PREFIX"
+    cleanDir "$BLD_SPL_PREFIX"
+
 	if [ $BLD_HOST_OS != WIN ] ; then
         if [ -x /usr/share/$BLD_PRODUCT ] ; then
             cleanDir /usr/share/$BLD_PRODUCT
@@ -233,7 +234,7 @@ postClean() {
 removeFileList() {
 
     if [ -f "$1" ] ; then
-        echo -e "Removing files in file list \"$1\" ..."
+        [ "$headless" != 1 ] && echo -e "Removing files in file list \"$1\" ..."
         cat "$1" | while read f
         do
             rm -f "$f"
@@ -251,14 +252,13 @@ cleanDir() {
 
 	dir="$1"
 
-	if [ "$dir" = "" ] ; then
-		echo "WARNING: clean directory is empty"
-	fi
+#	if [ "$dir" = "" ] ; then
+#		echo "WARNING: clean directory is empty"
+#	fi
 
 	[ ! -d "$dir" ] && return
 
 	cd "$dir"
-	# echo "Cleaning `pwd` ..."
 	if [ "`pwd`" = "/" ] ; then
 		echo "Configuration error: clean directory was '/'"
 		cd "$cdir"
@@ -270,7 +270,7 @@ cleanDir() {
 		[ "$count" = "0" ] && rmdir "$d"
 		if [ "$count" != "0" ] ; then
 			f=`echo "$d" | sed -e 's/\.\///'`
-			echo "Directory `pwd`/${f}, still has user data"
+			# echo "Directory `pwd`/${f}, still has user data"
 		fi
 	done 
 
@@ -279,7 +279,7 @@ cleanDir() {
         count=`ls "$dir" 2>/dev/null | wc -l | sed -e 's/ *//'`
         [ "$count" = "0" ] && rmdir "$dir"
         if [ "$count" != "0" ] ; then
-            echo "Directory ${dir}, still has user data"
+            # echo "Directory ${dir}, still has user data"
         fi
         rmdir "$dir" 2>/dev/null || true
     fi
@@ -327,14 +327,14 @@ setup() {
 	fi
 	
 	binDir=${binDir:-$BLD_PRD_PREFIX}
-	echo -e "\n$BLD_NAME !!BLD_VERSION!!-!!BLD_NUMBER!! Removal\n"
+	[ "$headless" != 1 ] && echo -e "\n$BLD_NAME !!BLD_VERSION!!-!!BLD_NUMBER!! Removal\n"
 }
 
 
 askUser() {
 	local finished
 
-	echo "Enter requested information or press <ENTER> to accept the defaults. "
+	[ "$headless" != 1 ] && echo "Enter requested information or press <ENTER> to accept the defaults. "
 
 	#
 	#	Confirm the configuration
@@ -342,16 +342,17 @@ askUser() {
 	finished=N
 	while [ "$finished" = "N" ]
 	do
-		echo
+		[ "$headless" != 1 ] && echo
 		if [ -d "$binDir" ] ; then
 			removebin=`yesno "Remove binary package" "$removebin"`
 		else
 			removebin=N
 		fi
-		echo -e "\nProceed removing with these instructions:" 
-		[ $removebin = Y ] && echo -e "  Remove binary package: $removebin"
-
-		echo
+		if [ "$headless" != 1 ] ; then
+            echo -e "\nProceed removing with these instructions:" 
+            [ $removebin = Y ] && echo -e "  Remove binary package: $removebin"
+        fi
+		[ "$headless" != 1 ] && echo
 		finished=`yesno "Accept these instructions" "Y"`
 		if [ "$finished" != "Y" ] ; then
 			exit 0
@@ -371,5 +372,5 @@ if [ "$removebin" = "Y" ] ; then
     preClean
     removeFiles $FMT
     postClean
-    echo -e "\n$BLD_NAME removal successful.\n"
+    echo -e "$BLD_NAME uninstall successful"
 fi

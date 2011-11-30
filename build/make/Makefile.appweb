@@ -23,7 +23,7 @@ testExtra::
 		$(MAKE) test-uninstalled ; \
 	fi
 
-NATIVE_BUILD	=0
+NATIVE_BUILD = 0
 ifeq    ($(BLD_HOST_OS),WIN)
 	NATIVE_BUILD=1
 endif
@@ -42,8 +42,7 @@ endif
 test-install-package:
 	$(call log) "[Test]" "test-install-package"
 	set -e ; name="$(BASE_NAME).tgz" ; \
-	dir=/tmp/$(BLD_PRODUCT)-$$$$ ; \
-	rm -rf $$dir ; mkdir -p $$dir ; \
+	dir=/tmp/$(BLD_PRODUCT)-$$$$ ; rm -rf $$dir ; mkdir -p $$dir ; \
 	tar -C $$dir -zxf $(BLD_OUT_DIR)/releases/$$name ; \
 	cd $$dir >/dev/null 2>&1 ; \
 	priv "$(BLD_PRODUCT)_HEADLESS=1 ./install" ; \
@@ -52,8 +51,7 @@ test-install-package:
 test-uninstall-package:
 	$(call log) "[Test]" "test-uninstall-package"
 	set -e ; name="$(BASE_NAME).tgz" ; \
-	dir=/tmp/$(BLD_PRODUCT)-$$$$ ; \
-	rm -rf $$dir ; mkdir -p $$dir ; \
+	dir=/tmp/$(BLD_PRODUCT)-$$$$ ; rm -rf $$dir ; mkdir -p $$dir ; \
 	tar -C $$dir -zxf $(BLD_OUT_DIR)/releases/$$name ; \
 	cd $$dir >/dev/null 2>&1 ; \
 	priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
@@ -63,11 +61,11 @@ test-install-native-package:
 	$(call log) "[Test]" "test-install-native-package"
 	set -e ; \
 	if [ $(BLD_HOST_OS) = WIN ] ; then \
-		rm -fr "$(STAGE_DIR)/*" ; \
+		dir=/tmp/$(BLD_PRODUCT)-$$$$ ; rm -rf $$dir ; mkdir -p $$dir ; \
 		name="$(BASE_NAME).exe.zip" ; \
-		cp WIN/unattended.ans $(BLD_OUT_DIR)/releases/$$name "$(STAGE_DIR)" ; cd "$(STAGE_DIR)" ; \
+		cp WIN/unattended.ans $(BLD_OUT_DIR)/releases/$$name "$$dir" ; cd "$$dir" ; \
 		unzip -q -o $$name ; \
-		echo "Dir=$(STAGE_DIR)" >>unattended.ans ; \
+		echo "Dir=$$dir" >>unattended.ans ; \
 		./$(BASE_NAME).exe /loadinf=/tmp/unattended.ans /silent ; \
 	elif [ $(BLD_HOST_OS) = MACOSX ] ; then \
 		hdiutil eject /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION) >/dev/null 2>&1 || true ; \
@@ -79,6 +77,8 @@ test-install-native-package:
 		tar -C /tmp -zxf $(BLD_OUT_DIR)/releases/$$name ; \
 		priv $(BLD_PRODUCT)_HEADLESS=1 ./install ; \
 	fi
+
+STAGE_DIR=/tmp/appweb-win
 
 test-uninstall-native-package:
 	$(call log) "[Test]" "test-uninstall-native-package"
@@ -92,8 +92,7 @@ test-uninstall-native-package:
 		rm -fr "$(STAGE_DIR)/*" ; \
 	else \
 		name="$(BASE_NAME).tgz" ; \
-		dir=/tmp/$(BLD_PRODUCT)-$$$$ ; \
-		rm -rf $$dir ; mkdir -p $$dir ; \
+		dir=/tmp/$(BLD_PRODUCT)-$$$$ ; rm -rf $$dir ; mkdir -p $$dir ; \
 		tar -C $$dir -zxf $(BLD_OUT_DIR)/releases/$$name ; \
 		cd $$dir >/dev/null 2>&1 ; \
 		priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" ; \
@@ -133,8 +132,9 @@ test-uninstalled:
 		$(BLD_MAN_PREFIX) $(BLD_PRD_PREFIX) $(BLD_VER_PREFIX) $(BLD_WEB_PREFIX) ; do \
 		if [ -x $$dir ] ; then \
 			partial=1 ; \
-			echo Directory present: $$dir, Contents: ; \
+			echo WARNING: Directory present: $$dir, Contents: ; \
 			find $$dir -print ; \
+			echo ; \
 		fi ; \
 	done ; \
 	[ $$partial = 1 ] && exit 0 ; \
