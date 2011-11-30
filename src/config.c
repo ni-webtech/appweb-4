@@ -117,10 +117,11 @@ static int parseFileInner(MaState *state, cchar *path)
         }
         state->key = 0;
         key = getDirective(line, &value);
-        if (!state->enabled && key[0] != '<') {
-            //MOB 8
-            mprLog(8, "Skip: %s %s", key, value);
-            continue;
+        if (!state->enabled) {
+            if (key[0] != '<') {
+                mprLog(8, "Skip: %s %s", key, value);
+                continue;
+            }
         }
         if ((directive = mprLookupKey(state->appweb->directives, key)) == 0) {
             mprError("Unknown directive \"%s\"\nAt line %d in %s\n\n", key, state->lineNumber, state->filename);
@@ -707,6 +708,16 @@ static int documentRootDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_BAD_SYNTAX;
     }
     httpSetRouteDir(state->route, path);
+    return 0;
+}
+
+
+/*
+    <else>
+ */
+static int elseDirective(MaState *state, cchar *key, cchar *value)
+{
+    state->enabled = !state->enabled;
     return 0;
 }
 
@@ -1902,11 +1913,10 @@ bool maValidateServer(MaServer *server)
 
 static bool conditionalDefinition(cchar *key)
 {
-    //  TODO - should always create a conditional directive when a module is loaded. Even for user modules.
     if (scasematch(key, "BLD_COMMERCIAL")) {
         return strcmp(BLD_COMMERCIAL, "0");
 
-#ifdef BLD_DEBUG
+#if BLD_DEBUG
     } else if (scasematch(key, "BLD_DEBUG")) {
         return BLD_DEBUG;
 #endif
@@ -2226,6 +2236,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "DocumentRoot", documentRootDirective);
     maAddDirective(appweb, "<Directory", directoryDirective);
     maAddDirective(appweb, "</Directory", closeDirective);
+    maAddDirective(appweb, "<else", elseDirective);
     maAddDirective(appweb, "ErrorDocument", errorDocumentDirective);
     maAddDirective(appweb, "ErrorLog", errorLogDirective);
     maAddDirective(appweb, "Group", groupDirective);
