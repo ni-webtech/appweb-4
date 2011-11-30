@@ -5769,7 +5769,7 @@ static void netOutgoingService(HttpQueue *q)
     }
     if ((tx->bytesWritten + q->count) > conn->limits->transmissionBodySize) {
         httpError(conn, HTTP_CODE_REQUEST_TOO_LARGE | ((tx->bytesWritten) ? HTTP_ABORT : 0),
-            "Http transmission aborted. Exceeded transmission max body of %d bytes", conn->limits->transmissionBodySize);
+            "Http transmission aborted. Exceeded transmission max body of %,Ld bytes", conn->limits->transmissionBodySize);
         if (tx->bytesWritten) {
             httpConnectorComplete(conn);
             return;
@@ -11479,7 +11479,8 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                 }
                 if (rx->length >= conn->limits->receiveBodySize) {
                     httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE,
-                        "Request content length %Ld bytes is too big. Limit %Ld", rx->length, conn->limits->receiveBodySize);
+                        "Request content length %,Ld bytes is too big. Limit %,Ld", 
+                        rx->length, conn->limits->receiveBodySize);
                     break;
                 }
                 rx->contentLength = sclone(value);
@@ -11897,12 +11898,12 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
         }
         if (rx->bytesRead >= conn->limits->receiveBodySize) {
             httpError(conn, HTTP_CLOSE | HTTP_CODE_REQUEST_TOO_LARGE, 
-                "Request body of %Ld bytes is too big. Limit %Ld", rx->bytesRead, conn->limits->receiveBodySize);
+                "Request body of %,Ld bytes is too big. Limit %,Ld", rx->bytesRead, conn->limits->receiveBodySize);
             return 1;
         }
         if (rx->form && rx->length >= conn->limits->receiveFormSize) {
             httpError(conn, HTTP_CLOSE | HTTP_CODE_REQUEST_TOO_LARGE, 
-                "Request form of %Ld bytes is too big. Limit %Ld", rx->bytesRead, conn->limits->receiveFormSize);
+                "Request form of %,Ld bytes is too big. Limit %,Ld", rx->bytesRead, conn->limits->receiveFormSize);
             return 1;
         }
         if (packet == rx->headerPacket && nbytes > 0) {
@@ -12762,7 +12763,7 @@ void httpSendOpen(HttpQueue *q)
         mprAssert(tx->fileInfo.valid);
         if (tx->fileInfo.size > conn->limits->transmissionBodySize) {
             httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE,
-                "Http transmission aborted. File size exceeds max body of %d bytes", conn->limits->transmissionBodySize);
+                "Http transmission aborted. File size exceeds max body of %,Ld bytes", conn->limits->transmissionBodySize);
             return;
         }
         tx->file = mprOpenFile(tx->filename, O_RDONLY | O_BINARY, 0);
@@ -12806,7 +12807,7 @@ void httpSendOutgoingService(HttpQueue *q)
     }
     if ((tx->bytesWritten + q->ioCount) > conn->limits->transmissionBodySize) {
         httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE | ((tx->bytesWritten) ? HTTP_ABORT : 0),
-            "Http transmission aborted. Exceeded max body of %d bytes", conn->limits->transmissionBodySize);
+            "Http transmission aborted. Exceeded max body of %,Ld bytes", conn->limits->transmissionBodySize);
         if (tx->bytesWritten) {
             httpConnectorComplete(conn);
             return;
@@ -14771,7 +14772,7 @@ static int writeToFile(HttpQueue *q, char *data, ssize len)
     file = up->currentFile;
 
     if ((file->size + len) > limits->uploadSize) {
-        httpError(conn, HTTP_CODE_REQUEST_TOO_LARGE, "Uploaded file exceeds maximum %Ld", limits->uploadSize);
+        httpError(conn, HTTP_CODE_REQUEST_TOO_LARGE, "Uploaded file exceeds maximum %,Ld", limits->uploadSize);
         return MPR_ERR_CANT_WRITE;
     }
     if (len > 0) {

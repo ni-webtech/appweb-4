@@ -140,7 +140,7 @@ static void openFile(HttpQueue *q)
             
         } else if (tx->fileInfo.size > conn->limits->transmissionBodySize) {
             httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE,
-                "Http transmission aborted. File size exceeds max body of %d bytes", conn->limits->transmissionBodySize);
+                "Http transmission aborted. File size exceeds max body of %,Ld bytes", conn->limits->transmissionBodySize);
             
         } else if (!(tx->connector == conn->http->sendConnector)) {
             /*
