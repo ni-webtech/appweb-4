@@ -106,7 +106,7 @@ mem:
 
 dependExtra:
 	mkdir -p logs
-	find web -name .DS_Store | xargs rm
+	find web -name .DS_Store | xargs rm -f
 
 #
 #   Local variables:
