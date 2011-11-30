@@ -25,9 +25,8 @@ $(BLD_BIN_DIR)/auth$(BLD_EXE): $(BLD_OBJ_DIR)/auth$(BLD_OBJ)
 
 $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE): $(BLD_OBJ_DIR)/cgiProgram$(BLD_OBJ)
 	bld --exe $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE) $(BLD_OBJ_DIR)/cgiProgram$(BLD_OBJ)
-	cp $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE) ../server/cgi-bin
 	cp $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE) ../test/cgi-bin
-	chmod +x ../server/cgi-bin/cgiProgram$(BLD_EXE) ../test/cgi-bin/cgiProgram$(BLD_EXE)
+	chmod +x ../test/cgi-bin/cgiProgram$(BLD_EXE)
 
 $(BLD_BIN_DIR)/setConfig$(BLD_EXE): $(BLD_OBJ_DIR)/setConfig$(BLD_OBJ)
 	bld --graphical --exe $(BLD_BIN_DIR)/setConfig$(BLD_EXE) --search "$(BLD_MPR_LIBPATHS)" --libs "$(BLD_MPR_LIBS)" \
