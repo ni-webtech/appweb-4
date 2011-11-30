@@ -15,9 +15,9 @@ if (cookie) {
     cookie = cookie.match(/(-esp-session-=.*);/)[1]
 }
 assert(cookie && cookie.contains("-esp-session-="))
-print("STATUS", http.status)
-dump("\nPRIOR HEADERS", http.headers)
-print("PRIOR RESPONSE: \"" + http.response + "\"")
+// print("STATUS", http.status)
+// dump("\nPRIOR HEADERS", http.headers)
+// print("PRIOR RESPONSE: \"" + http.response + "\"")
 http.close()
 
 //  POST /app/test/login
@@ -32,9 +32,9 @@ http.form(HTTP + "/app/test/login", {
 assert(http.status == 200)
 assert(http.response.contains("Valid Login"))
 assert(!http.sessionCookie)
-print("STATUS", http.status)
-dump("\nXX PRIOR HEADERS", http.headers)
-print("PRIOR RESPONSE: \"" + http.response + "\"")
+// print("STATUS", http.status)
+// dump("\nXX PRIOR HEADERS", http.headers)
+// print("PRIOR RESPONSE: \"" + http.response + "\"")
 http.close()
 
 
@@ -42,8 +42,8 @@ http.close()
 http.setCookie(cookie)
 http.get(HTTP + "/app/test/login")
 assert(http.status == 200)
-print("STATUS", http.status)
-dump("HEADERS", http.headers)
-print("RESPONSE: \"" + http.response + "\"")
+// print("STATUS", http.status)
+// dump("HEADERS", http.headers)
+// print("RESPONSE: \"" + http.response + "\"")
 assert(http.response.contains("Logged in"))
 http.close()
