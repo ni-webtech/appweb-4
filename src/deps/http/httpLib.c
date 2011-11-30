@@ -5923,7 +5923,7 @@ static void freeNetPackets(HttpQueue *q, ssize bytes)
     mprAssert(q->count >= 0);
     mprAssert(bytes >= 0);
 
-    while ((packet = q->first) != 0) {
+    while (bytes > 0 && (packet = q->first) != 0) {
         if (packet->prefix) {
             len = mprGetBufLength(packet->prefix);
             len = min(len, bytes);
@@ -5948,10 +5948,12 @@ static void freeNetPackets(HttpQueue *q, ssize bytes)
              */
             httpGetPacket(q);
         }
+#if UNUSED
         mprAssert(bytes >= 0);
         if (bytes == 0 && (q->first == NULL || !(q->first->flags & HTTP_PACKET_END))) {
             break;
         }
+#endif
     }
 }
 
@@ -6299,6 +6301,7 @@ void httpJoinPackets(HttpQueue *q, ssize size)
             if (packet->content == 0 || (len = httpGetPacketLength(packet)) == 0) {
                 break;
             }
+            mprAssert(!(packet->flags & HTTP_PACKET_END));
             httpJoinPacket(first, packet);
             /* Unlink the packet */
             first->next = packet->next;
