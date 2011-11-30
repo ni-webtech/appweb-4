@@ -3122,9 +3122,11 @@ void httpCallEvent(HttpConn *conn, int mask)
 {
     MprEvent    e;
 
-    e.mask = mask;
-    e.timestamp = conn->http->now;
-    httpEvent(conn, &e);
+    if (conn->http) {
+        e.mask = mask;
+        e.timestamp = conn->http->now;
+        httpEvent(conn, &e);
+    }
 }
 
 
