@@ -33,10 +33,10 @@ version=
 
 if [ "$TASK" = "Remove" ] ; then
     for name in $PROGRAMS ; do
-        echo rm -f "${BIN}/$name"
+        # echo rm -f "${BIN}/$name"
         rm -f "${BIN}/$name"
     done
-    echo rm -fr "${INC}/${PRODUCT}"
+    # echo rm -fr "${INC}/${PRODUCT}"
     rm -fr "${INC}/${PRODUCT}"
 else
     if [ "$version" = "" ] ; then

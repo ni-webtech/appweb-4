@@ -3,15 +3,21 @@
 #
 #	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
 #
+BASE_NAME	= $(BLD_PRODUCT)-$(BLD_VERSION)-$(BLD_NUMBER)-$(BLD_HOST_DIST)-$(BLD_HOST_OS)-$(BLD_HOST_CPU)
 
 #
 #	Top level test targets to test installing and removing packages
 #
 testExtra::
 	if [ "$(BUILD_DEPTH)" -ge 3 -a "$(BLD_TYPE)" = RELEASE ] ; then \
-		$(call log) "[Test]" "Make package to test" ; \
-		$(MAKE) package ; \
-		$(MAKE) uninstall ; \
+		if [ ! -f $(BLD_OUT_DIR)/releases/$(BASE_NAME).tgz ] ; then \
+			$(call log) "[Test]" "Make package to test" ; \
+			$(MAKE) package ; \
+		fi ; \
+		if [ -x "$(BLD_CFG_PREFIX)" ] ; then \
+			$(call log) "[Test]" "Clean existing installation" ; \
+			$(MAKE) uninstall ; \
+		fi ; \
 		$(MAKE) test-uninstalled ; \
 		$(MAKE) test-install-package ; \
 		$(MAKE) test-installed ; \
@@ -122,23 +128,23 @@ test-installed:
 	http -q $$port/test/test.cgi ; \
 	http -q $$port/test/test.pl ; \
 	http -q $$port/test/test.py ; \
-	echo Installed
+	$(call log) "[Status]" "$(BLD_PRODUCT) is installed"
 
 #MOB - temporarily change to not fail if files left behind
 test-uninstalled:
 	$(call log) "[Test]" "test-uninstalled"
 	partial=0 ; \
 	for dir in $(BLD_CFG_PREFIX) $(BLD_BIN_PREFIX) $(BLD_INC_PREFIX) $(BLD_LIB_PREFIX) $(BLD_LOG_PREFIX) \
-		$(BLD_MAN_PREFIX) $(BLD_PRD_PREFIX) $(BLD_VER_PREFIX) $(BLD_WEB_PREFIX) ; do \
+		$(BLD_MAN_PREFIX) $(BLD_PRD_PREFIX) $(BLD_SPL_PREFIX) $(BLD_VER_PREFIX) $(BLD_WEB_PREFIX) ; do \
 		if [ -x $$dir ] ; then \
 			partial=1 ; \
-			echo WARNING: Directory present: $$dir, Contents: ; \
+			echo WARNING: Directory present: $$dir: ; \
 			find $$dir -print ; \
 			echo ; \
 		fi ; \
 	done ; \
 	[ $$partial = 1 ] && exit 0 ; \
-	echo Uninstalled
+	$(call log) "[Status]" "$(BLD_PRODUCT) is uninstalled"
 
 #
 #	Convenient configure targets

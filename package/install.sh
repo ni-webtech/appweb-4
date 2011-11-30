@@ -383,6 +383,8 @@ if [ "$installbin" = "Y" ] ; then
         startBrowser
     fi
 fi
-[ "$headless" != 1 ] && echo
-echo -e "$BLD_NAME installation successful."
+if [ "$headless" != 1 ] ; then
+    echo
+    echo -e "$BLD_NAME installation successful."
+fi
 exit 0

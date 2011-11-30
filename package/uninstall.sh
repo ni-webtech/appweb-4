@@ -252,10 +252,6 @@ cleanDir() {
 
 	dir="$1"
 
-#	if [ "$dir" = "" ] ; then
-#		echo "WARNING: clean directory is empty"
-#	fi
-
 	[ ! -d "$dir" ] && return
 
 	cd "$dir"
@@ -268,20 +264,13 @@ cleanDir() {
 	do
 		count=`ls "$d" 2>/dev/null | wc -l | sed -e 's/ *//'`
 		[ "$count" = "0" ] && rmdir "$d"
-		if [ "$count" != "0" ] ; then
-			f=`echo "$d" | sed -e 's/\.\///'`
-			# echo "Directory `pwd`/${f}, still has user data"
-		fi
 	done 
 
     if [ -d $cdir ] ; then
         cd $cdir
         count=`ls "$dir" 2>/dev/null | wc -l | sed -e 's/ *//'`
         [ "$count" = "0" ] && rmdir "$dir"
-        if [ "$count" != "0" ] ; then
-            # echo "Directory ${dir}, still has user data"
-        fi
-        rmdir "$dir" 2>/dev/null || true
+        rmdir "$dir" 2>/dev/null
     fi
 }
 
@@ -372,5 +361,5 @@ if [ "$removebin" = "Y" ] ; then
     preClean
     removeFiles $FMT
     postClean
-    echo -e "$BLD_NAME uninstall successful"
+    [ "$headless" != 1 ] && echo -e "$BLD_NAME uninstall successful"
 fi
