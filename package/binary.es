@@ -42,11 +42,27 @@ var init: Path = etc.join("init")
 var initd: Path = etc.join("init.d")
 var cache: Path = spl.join("cache")
 
-let config = Path("src/server/appweb.conf").readString()
-let group = config.match(/^Group[ \t]+([\w_-]+)/m)[1]
-let owner = config.match(/^User[ \t]+([\w_-]+)/m)[1]
+let user, group
+let passwords = Path("/etc/passwd").readString()
+for each (u in ["www-data", "_www", "nobody", "Administrator"]) {
+    if (passwords.contains(u + ":")) {
+        user = u
+        break
+    }
+}
+let groups = Path("/etc/group").readString()
+for each (g in ["www-data", "_www", "nobody", "Administrator"]) {
+    if (groups.contains(g + ":")) {
+        group = g
+        break
+    }
+}
+if (!user || !group) {
+    App.log.error("Can't find acceptable user or group for files")
+    App.exit(1)
+}
 
-var lowperms = {permissions: 0755, owner: owner, group: group }
+var lowperms = {permissions: 0755, owner: user, group: group }
 var dperms = {permissions: 0755, owner: 0, group: 0 }
 bin.makeDir(dperms)
 inc.makeDir(dperms)
@@ -59,7 +75,6 @@ web.makeDir(dperms)
 if (!bare) {
     man.join("man1").makeDir(dperms)
     lib.join("www").makeDir(dperms)
-    cfg.join("ssl").makeDir(dperms)
 }
 
 var saveLink : Path
@@ -97,8 +112,6 @@ if (!bare) {
     spl.makeDir(lowperms)
     cache.makeDir(lowperms)
     cache.join(".dummy").write("")
-
-    copy("server.*", ssl, {from: "src/server/ssl"})
 
     copy("*", web, {
         from: "src/server/web",
@@ -148,10 +161,6 @@ copy("*", cfg, {
     include: /mime.types|\.db$|php.ini/,
     permissions: 0644
 })
-copy("appweb.conf", cfg, {
-    from: "src/server/master",
-    permissions: 0644
-})
 
 copy("*", lib, {
     from: slib,
@@ -181,7 +190,7 @@ if (build.BLD_HOST_OS == "WIN") {
             "--logs", log, 
             "--port", build.BLD_HTTP_PORT, 
             "--ssl", build.BLD_SSL_PORT, 
-            "--user", owner,
+            "--user", user,
             "--group", group,
             "--cache", spl.join("cache"), 
             "--modules", build.BLD_LIB_PREFIX, 
