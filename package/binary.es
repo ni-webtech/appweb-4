@@ -171,8 +171,8 @@ copy("*", lib, {
     recurse: true,
 })
 
-if (build.BLD_HOST_OS == "WIN") {
-    if (options.task != "Remove") {
+if (options.task != "Remove") {
+    if (build.BLD_HOST_OS == "WIN") {
         Cmd(["setConfig", 
             "--home", ".", 
             "--documents", "web", 
@@ -182,9 +182,7 @@ if (build.BLD_HOST_OS == "WIN") {
             "--cache", "cache", 
             "--modules", "bin", 
             cfg.join("appweb.conf")])
-    }
-} else {
-    if (options.task == "Install") {
+    } else {
         Cmd(["setConfig", 
             "--home", cfg, 
             "--documents", web, 
