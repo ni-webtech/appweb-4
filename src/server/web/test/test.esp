@@ -1,5 +1,5 @@
 <html>
 <body>
-	<p><% render("Hello World"); %></p>
+	<p><% render("Hello ESP World"); %></p>
 </body>
 </html>

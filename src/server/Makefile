@@ -28,9 +28,6 @@ ifeq	($(BLD_FEATURE_SSL),1)
 endif
 
 TARGETS				+= $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE)
-ifeq	($(BLD_FEATURE_CGI),1)
-	EXTRA_TARGETS 	+= cgi-bin/cgiProgram$(BLD_EXE)
-endif
 TARGETS				+= appweb.conf
 
 compileExtra: $(TARGETS) $(EXTRA_TARGETS)
@@ -72,10 +69,6 @@ appweb.conf: $(BLD_INC_DIR)/buildConfig.h Makefile master/appweb.conf
 	setConfig --port $(BLD_HTTP_PORT) --ssl $(BLD_SSL_PORT) --home . --logs . --documents web \
 		--user $$user --group $$group --modules "$(BLD_LIB_DIR)" --cache cache appweb.conf
 	rm -f appweb.conf.bak
-
-cgi-bin/cgiProgram$(BLD_EXE): $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
-	cp $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE) cgi-bin
-	chmod +x cgi-bin/*
 
 run:
 	$(call setlibpath) ; sudo $(BLD_BIN_DIR)/$(BLD_PRODUCT) --log stdout:2 --config appweb.conf

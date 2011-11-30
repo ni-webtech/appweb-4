@@ -2,6 +2,6 @@
 <head>
 </head>
 <body>
-    <?php phpinfo(); ?>
+    <?php echo "Hello PHP World"; ?>
 </body>
 </html>
