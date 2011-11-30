@@ -49,7 +49,7 @@ copy("package/*", src, {
 copy("src/*", src, {
     recurse: true,
     include: /^src\/Makefile|^src\/deps|^src\/utils|^src\/server|^src\/test|^src\/modules|^src\/samples|\.h$/,
-    exclude: /\.log$|fcgi|ejs.debugger|ejs.cgi|\.lst$|ejs.zip|\.stackdump$|\/cache\/view_/
+    exclude: /\.log$|fcgi|ejs.debugger|ejs.cgi|\.lst$|ejs.zip|\.stackdump$|\/cache\/view_|huge.txt|\.swp$/
 })
 
 copy("doc/*", src, {
