@@ -28,7 +28,6 @@ ifeq	($(BLD_FEATURE_SSL),1)
 endif
 
 TARGETS				+= $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE)
-TARGETS				+= appweb.conf
 
 compileExtra: $(TARGETS) $(EXTRA_TARGETS)
 
@@ -54,24 +53,8 @@ $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE): $(OBJECTS) $(call lib, $(LIBDEP)) $(cal
 	bld --exe $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" \
 		--libs "$(BLD_APPWEB_LIBS) $(LIBS)" --syslibs "$(SYSLIBS)" $(RES) $(OBJECTS) $(EXTRA_OBJECTS)
 
-#
-#	Patch the appweb.conf configuration file based on the configure --config=dir setting
-#
-appweb.conf: $(BLD_INC_DIR)/buildConfig.h Makefile master/appweb.conf
-	$(call log) "[Patch]" "appweb.conf"
-	cp master/appweb.conf .
-	for user in www-data _www nobody Administrator ; do \
-		if grep "$$user" /etc/passwd >/dev/null ; then break ; fi ; \
-	done ; \
-	for group in www-data _www nogroup nobody Administrator ; do \
-		if grep "$$group" /etc/passwd >/dev/null ; then break ; fi ; \
-	done ; \
-	setConfig --port $(BLD_HTTP_PORT) --ssl $(BLD_SSL_PORT) --home . --logs . --documents web \
-		--user $$user --group $$group --modules "$(BLD_LIB_DIR)" --cache cache appweb.conf
-	rm -f appweb.conf.bak
-
 run:
-	$(call setlibpath) ; sudo $(BLD_BIN_DIR)/$(BLD_PRODUCT) --log stdout:2 --config appweb.conf
+	$(call setlibpath) ; sudo $(BLD_BIN_DIR)/$(BLD_PRODUCT) -v
 
 cleanExtra:
 	rm -f $(TARGETS) $(BLD_PRODUCT)$(BLD_EXE) $(EXTRA_TARGETS)
@@ -94,7 +77,7 @@ curl:
 
 val:
 	(valgrind -v --tool=memcheck --suppressions=d.supp --leak-check=yes --num-callers=12 --leak-resolution=high \
-		--show-reachable=yes --track-fds=yes ../bin/appweb -r . -f appweb.conf -l stdout:1  2>&1) | tee val.out
+		--show-reachable=yes --track-fds=yes ../out/bin/appweb -v 2>&1) | tee val.out
 
 mem:
 	echo -e "\nImage and code sizes:"

@@ -158,8 +158,9 @@ if (options.task != "Remove" && build.BLD_FEATURE_SSL == 1 && os == "LINUX") {
 
 copy("*", cfg, {
     from: "src/server",
-    include: /mime.types|\.db$|php.ini/,
-    permissions: 0644
+    include: /mime.types|\.db$|php.ini|appweb.conf/,
+    permissions: 0644,
+    verbose: true,
 })
 
 copy("*", lib, {

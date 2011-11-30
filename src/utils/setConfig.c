@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
 	    contents = replace(contents, "443", ssl);
 	}
     if (documents) {
-        contents = replace(contents, "DocumentRoot \"/var/www/appweb-default\"", "DocumentRoot \"%s\"", documents);
+        contents = replace(contents, "DocumentRoot", "DocumentRoot \"%s\"", documents);
     }
     if (home) {
         contents = replace(contents, "ServerRoot", "ServerRoot \"%s\"", home);
