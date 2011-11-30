@@ -171,8 +171,8 @@ copy("*", lib, {
     recurse: true,
 })
 
-if (options.task != "Remove") {
-    if (build.BLD_HOST_OS == "WIN") {
+if (build.BLD_HOST_OS == "WIN") {
+    if (options.task != "Remove") {
         Cmd(["setConfig", 
             "--home", ".", 
             "--documents", "web", 
@@ -182,17 +182,19 @@ if (options.task != "Remove") {
             "--cache", "cache", 
             "--modules", "bin", 
             cfg.join("appweb.conf")])
-    } else {
+    }
+} else {
+    if (options.task != "Remove") {
         Cmd(["setConfig", 
-            "--home", cfg, 
-            "--documents", web, 
-            "--logs", log, 
+            "--home", build.ORIG_BLD_CFG_PREFIX, 
+            "--documents", build.ORIG_BLD_WEB_PREFIX, 
+            "--logs", build.ORIG_BLD_LOG_PREFIX, 
             "--port", build.BLD_HTTP_PORT, 
             "--ssl", build.BLD_SSL_PORT, 
             "--user", user,
             "--group", group,
-            "--cache", spl.join("cache"), 
-            "--modules", build.BLD_LIB_PREFIX, 
+            "--cache", Path(build.ORIG_BLD_SPL_PREFIX).join("cache"), 
+            "--modules", build.ORIG_BLD_LIB_PREFIX, 
             cfg.join("appweb.conf")])
     }
 }
