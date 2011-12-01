@@ -11125,7 +11125,7 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
         return 0;
     }
     if (mprShouldDenyNewRequests()) {
-        httpError(conn, HTTP_CLOSE | HTTP_CODE_NOT_ACCEPTABLE, "Server terminating");
+        httpError(conn, HTTP_ABORT | HTTP_CODE_NOT_ACCEPTABLE, "Server terminating");
         return 0;
     }
     if (conn->rx == NULL) {
@@ -11161,7 +11161,7 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
     if (conn->endpoint) {
         httpMatchHost(conn);
         if (httpSetUri(conn, rx->uri, "") < 0) {
-            httpError(conn, HTTP_CLOSE | HTTP_CODE_BAD_REQUEST, "Bad URL format");
+            httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Bad URL format");
         }
         if (conn->secure) {
             rx->parsedUri->scheme = sclone("https");
@@ -11341,11 +11341,9 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
 
     uri = getToken(conn, " ");
     if (*uri == '\0') {
-        httpError(conn, HTTP_CLOSE | HTTP_CODE_BAD_REQUEST, "Bad HTTP request. Empty URI");
-        return;
+        httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Bad HTTP request. Empty URI");
     } else if ((int) strlen(uri) >= conn->limits->uriSize) {
-        httpError(conn, HTTP_CODE_REQUEST_URL_TOO_LARGE, "Bad request. URI too long");
-        return;
+        httpError(conn, HTTP_CLOSE | HTTP_CODE_REQUEST_URL_TOO_LARGE, "Bad request. URI too long");
     }
     protocol = conn->protocol = supper(getToken(conn, "\r\n"));
     if (strcmp(protocol, "HTTP/1.0") == 0) {
@@ -11360,7 +11358,6 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     } else {
         conn->protocol = sclone("HTTP/1.1");
         httpError(conn, HTTP_CLOSE | HTTP_CODE_NOT_ACCEPTABLE, "Unsupported HTTP protocol");
-        return;
     }
     rx->originalUri = rx->uri = sclone(uri);
     httpSetState(conn, HTTP_STATE_FIRST);
@@ -11405,7 +11402,7 @@ static void parseResponseLine(HttpConn *conn, HttpPacket *packet)
     rx->statusMessage = sclone(getToken(conn, "\r\n"));
 
     if (slen(rx->statusMessage) >= conn->limits->uriSize) {
-        httpError(conn, HTTP_CODE_REQUEST_URL_TOO_LARGE, "Bad response. Status message too long");
+        httpError(conn, HTTP_CLOSE | HTTP_CODE_REQUEST_URL_TOO_LARGE, "Bad response. Status message too long");
     }
     if (!traced && (level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, tx->ext)) >= 0) {
         mprLog(level, "%s %d %s", protocol, rx->status, rx->statusMessage);
@@ -11439,7 +11436,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
             break;
         }
         if ((key = getToken(conn, ":")) == 0 || *key == '\0') {
-            httpError(conn, HTTP_CLOSE | HTTP_CODE_BAD_REQUEST, "Bad header format");
+            httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Bad header format");
             break;
         }
         value = getToken(conn, "\r\n");
@@ -11448,7 +11445,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
         }
         LOG(8, "Key %s, value %s", key, value);
         if (strspn(key, "%<>/\\") > 0) {
-            httpError(conn, HTTP_CODE_BAD_REQUEST, "Bad header key value");
+            httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Bad header key value");
         }
         if ((oldValue = mprLookupKey(rx->headers, key)) != 0) {
             hvalue = sfmt("%s, %s", oldValue, value);
@@ -11495,7 +11492,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                 }
                 rx->length = stoi(value);
                 if (rx->length < 0) {
-                    httpError(conn, HTTP_CLOSE | HTTP_CODE_BAD_REQUEST, "Bad content length");
+                    httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Bad content length");
                     break;
                 }
                 if (rx->length >= conn->limits->receiveBodySize) {
@@ -11539,7 +11536,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                     }
                 }
                 if (start < 0 || end < 0 || size < 0 || end <= start) {
-                    httpError(conn, HTTP_CODE_RANGE_NOT_SATISFIABLE, "Bad content range");
+                    httpError(conn, HTTP_CLOSE | HTTP_CODE_RANGE_NOT_SATISFIABLE, "Bad content range");
                     break;
                 }
                 rx->inputRange = httpCreateRange(conn, start, end);
@@ -11648,7 +11645,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
         case 'r':
             if (strcasecmp(key, "range") == 0) {
                 if (!parseRange(conn, value)) {
-                    httpError(conn, HTTP_CODE_RANGE_NOT_SATISFIABLE, "Bad range");
+                    httpError(conn, HTTP_CLOSE | HTTP_CODE_RANGE_NOT_SATISFIABLE, "Bad range");
                 }
             } else if (strcasecmp(key, "referer") == 0) {
                 /* NOTE: yes the header is misspelt in the spec */
