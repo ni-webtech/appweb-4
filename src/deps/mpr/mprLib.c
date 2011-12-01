@@ -7629,7 +7629,7 @@ static MprOff seekFile(MprFile *file, int seekType, MprOff distance)
 #if BLD_WIN_LIKE
     return (MprOff) _lseeki64(file->fd, (int64) distance, seekType);
 #elif HAS_OFF64
-    return (MprOff) _lseeki64(file->fd, (off64_t) distance, seekType);
+    return (MprOff) lseek64(file->fd, (off64_t) distance, seekType);
 #else
     return (MprOff) lseek(file->fd, (off_t) distance, seekType);
 #endif
@@ -19927,7 +19927,7 @@ MprOff mprSendFileToSocket(MprSocket *sock, MprFile *file, MprOff offset, MprOff
                 nbytes = (ssize) min(MAXSSIZE, toWriteFile);
 #if LINUX && !__UCLIBC__
     #if HAS_OFF64
-                rc = sendfile64(sock->fd, file->fd, (off64_t) &offset, nbytes);
+                rc = sendfile64(sock->fd, file->fd, &offset, nbytes);
     #else
                 rc = sendfile(sock->fd, file->fd, &off, nbytes);
     #endif

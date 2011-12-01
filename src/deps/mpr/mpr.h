@@ -70,10 +70,11 @@
 
 
 #if LINUX
-    #ifdef _G_LSEEK64
+    #if __WORDSIZE == 64 || __amd64 || __x86_64 || __x86_64__ || _WIN64
+    #else
+        /* Linux-32 */
         #define _LARGEFILE64_SOURCE 1
         #define _FILE_OFFSET_BITS 64
-        #define HAS_OFF64
     #endif
 #endif
 
@@ -387,6 +388,12 @@
     #else
         typedef SSIZE_T ssize;
     #endif
+#endif
+
+#ifdef __USE_FILE_OFFSET64
+    #define HAS_OFF64 1
+#else
+    #define HAS_OFF64 0
 #endif
 
 /*
