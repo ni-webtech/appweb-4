@@ -8,33 +8,22 @@
 BLD_PRODUCT=!!BLD_PRODUCT!!
 BLD_NAME="!!BLD_NAME!!"
 BLD_LIB_PREFIX="!!ORIG_BLD_LIB_PREFIX!!"
+BLD_LOG_PREFIX="!!ORIG_BLD_LOG_PREFIX!!"
+BLD_SPL_PREFIX="!!ORIG_BLD_SPL_PREFIX!!"
 
 ###############################################################################
 
-setup() {
+setPerms() {
 	local g u
 
-	#
-	#	Select default username
-	#
-	for u in nobody www-data 
-	do
+	for u in www-data _www nobody Administrator ; do
 		grep "$u" /etc/passwd >/dev/null
 		if [ $? = 0 ] ; then
 			username=$u
 			break
 		fi
 	done
-
-	if [ "$username" = "" ] ; then
-		echo "Can't find a suitable username in /etc/passwd for $BLD_PRODUCT" 1>&2
-		exit 255
-	fi
-	
-	#
-	#	Select default group name
-	#
-	for g in nobody nogroup www-data 
+	for g in www-data _www nobody nogroup Administrator ; do
 	do
 		grep "$g" /etc/group >/dev/null
 		if [ $? = 0 ] ; then
@@ -42,13 +31,15 @@ setup() {
 			break
 		fi
 	done
-	
-	if [ "$groupname" = "" ] ; then
-		echo "Can't find a suitable group in /etc/group for $BLD_PRODUCT" 1>&2
+	if [ "$username" = "" -o "$groupname" = "" ] ; then
+		echo "Can't find a suitable user/group for $BLD_PRODUCT" 1>&2
 		exit 255
 	fi
+    mkdir -p "$BLD_SPL_PREFIX" "$BLD_SPL_PREFIX/cache" "$BLD_LOG_PREFIX"
+    chown $username "$BLD_SPL_PREFIX" "$BLD_SPL_PREFIX/cache" "$BLD_LOG_PREFIX"
+    chgrp $groupname "$BLD_SPL_PREFIX" "$BLD_SPL_PREFIX/cache" "$BLD_LOG_PREFIX"
+    chmod 755 "$BLD_SPL_PREFIX" "$BLD_SPL_PREFIX/cache" "$BLD_LOG_PREFIX"
 }
-
 
 ###############################################################################
 #
@@ -60,6 +51,7 @@ action=$1
 
 case $action in
 	configure)							# when new
+        setPerms
 		oldVersion=$2
         appman -v install
         if [ "$APPWEB_DONT_START" != 1 ] ; then

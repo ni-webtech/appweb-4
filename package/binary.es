@@ -51,7 +51,7 @@ for each (u in ["www-data", "_www", "nobody", "Administrator"]) {
     }
 }
 let groups = Path("/etc/group").readString()
-for each (g in ["www-data", "_www", "nobody", "Administrator"]) {
+for each (g in ["www-data", "_www", "nobody", "nogroup", "Administrator"]) {
     if (groups.contains(g + ":")) {
         group = g
         break
@@ -95,8 +95,6 @@ if (!bare) {
     let cmdFilter
     if (Config.OS == "WIN") {
         cmdFilter = /\.cmd|\.sln|\.suo/
-    } else if (Config.OS == "MACOSX") {
-        cmdFilter = /appman/
     } else {
         cmdFilter = /undefined/
     }
@@ -108,10 +106,14 @@ if (!bare) {
         permissions: 0755,
     })
     log.makeDir(lowperms)
-    log.join("error.log").write("")
+    let dummy = log.join("error.log")
+    dummy.write("")
+    dummy.attributes = dperms
     spl.makeDir(lowperms)
     cache.makeDir(lowperms)
-    cache.join(".dummy").write("")
+    dummy = cache.join(".dummy")
+    dummy.write("")
+    dummy.attributes = dperms
 
     copy("*", web, {
         from: "src/server/web",

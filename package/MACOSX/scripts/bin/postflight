@@ -6,15 +6,70 @@
 #
 ###############################################################################
 
+set -x
+
 PKG_DIR="$1"
 INS_DIR="$2"
-BIN="!!ORIG_BLD_BIN_PREFIX!!"
-NAME="!!ORIG_BLD_PREFIX!!"
-path="${INS_DIR}${NAME}"
+path="${INS_DIR}!!ORIG_BLD_PREFIX!!"
 
+BLD_PRODUCT=!!BLD_PRODUCT!!
+BLD_NAME=!!BLD_NAME!!
+BLD_LIB_PREFIX="!!ORIG_BLD_LIB_PREFIX!!"
+BLD_LOG_PREFIX="!!ORIG_BLD_LOG_PREFIX!!"
+BLD_SPL_PREFIX="!!ORIG_BLD_SPL_PREFIX!!"
+BIN="!!ORIG_BLD_BIN_PREFIX!!"
+
+###############################################################################
+
+setPerms() {
+	local g u
+
+	for u in www-data _www nobody Administrator ; do
+		grep "$u" /etc/passwd >/dev/null
+		if [ $? = 0 ] ; then
+			username=$u
+			break
+		fi
+	done
+	for g in www-data _www nobody nogroup Administrator ; do
+		grep "$g" /etc/group >/dev/null
+		if [ $? = 0 ] ; then
+			groupname=$g
+			break
+		fi
+	done
+	if [ "$username" = "" -o "$groupname" = "" ] ; then
+		echo "Can't find a suitable user/group for $BLD_NAME" 1>&2
+		exit 255
+	fi
+set -x
+    mkdir -p "$BLD_SPL_PREFIX" "$BLD_SPL_PREFIX/cache" "$BLD_LOG_PREFIX"
+    chown $username "$BLD_SPL_PREFIX" "$BLD_SPL_PREFIX/cache" "$BLD_LOG_PREFIX"
+    chgrp $groupname "$BLD_SPL_PREFIX" "$BLD_SPL_PREFIX/cache" "$BLD_LOG_PREFIX"
+    chmod 755 "$BLD_SPL_PREFIX" "$BLD_SPL_PREFIX/cache" "$BLD_LOG_PREFIX"
+
+    chmod 644 /Library/LaunchDaemons/com.!!BLD_COMPANY!!.!!BLD_PRODUCT!!.plist
+set +x
+}
+
+###############################################################################
+#
+#	Main
+#
+
+#
+#   Link current versions to /usr/local/bin
+#
 ${BIN}/linkup Install
 
-chmod 644 /Library/LaunchDaemons/com.!!BLD_COMPANY!!.!!BLD_PRODUCT!!.plist
-launchctl load -w /Library/LaunchDaemons/com.!!BLD_COMPANY!!.!!BLD_PRODUCT!!.plist
+setPerms
+
+#
+#   Install, enable and start launch daemon
+#
+$BIN/appman install
+$BIN/appman enable
+$BIN/appman start
+# launchctl load -w /Library/LaunchDaemons/com.!!BLD_COMPANY!!.!!BLD_PRODUCT!!.plist
 
 exit 0

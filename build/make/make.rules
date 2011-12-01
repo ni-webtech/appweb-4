@@ -214,15 +214,14 @@ testPrep testFinal testCleanup:
 
 #
 #   TestExtra is overridable
+#   This rule handles "make test" in the top directory and avoids stepping into extensions.
 #
 testExtra::
-	if [ "$(DIR)" = "." ] ; then \
-        if [ "$(BLD_EJS)" = "" ] ; then \
-			$(call log) "[Warn]" "The ejs command is not available - skip some unit tests" ; \
-        elif [ -x "$(BLD_EJS)" -a "$(BLD_CROSS)" != 1 ] ; then \
-            if [ -d src -a -f configure ] ; then \
-                $(MAKE) -C src -S --no-print-directory "DIR=." PRE=$(PRE) TRACE=$(TRACE) test-utest ; \
-            fi ; \
+	if [ -x "$(BLD_EJS)" -a "$(DIR)" = "." -a "$(BLD_CROSS)" != 1 ] ; then \
+        if [ -f configure -a -d src ] ; then \
+            $(MAKE) -C src -S --no-print-directory "DIR=." PRE=$(PRE) TRACE=$(TRACE) test-utest ; \
+        else \
+            $(MAKE) -S --no-print-directory "DIR=." PRE=$(PRE) TRACE=$(TRACE) test-utest ; \
         fi ; \
     fi
 
