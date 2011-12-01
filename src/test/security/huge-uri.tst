@@ -33,7 +33,7 @@ try {
 response = new ByteArray
 while ((n = s.read(response, -1)) > 0) { }
 if (!response.toString().contains("HTTP/1.1 414 Request-URI Too Large")) {
-    print(response)
+    print("RESPONSE IS " + response)
 }
 assert(response.toString().contains("HTTP/1.1 414 Request-URI Too Large"))
 s.close()
