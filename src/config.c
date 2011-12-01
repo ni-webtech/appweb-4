@@ -599,7 +599,7 @@ static int chrootDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    </Route>, </Directory>, </VirtualHost>, </If>
+    </Route>, </Location>, </Directory>, </VirtualHost>, </If>
  */
 static int closeDirective(MaState *state, cchar *key, cchar *value)
 {
@@ -683,6 +683,11 @@ static int denyDirective(MaState *state, cchar *key, cchar *value)
  */
 static int directoryDirective(MaState *state, cchar *key, cchar *value)
 {
+    /*
+        Directory must be deprecated because Auth directives inside a directory block applied to physical filenames.
+        The router and Route directives can't emulate this. The user needs to migrate such configurations to apply
+        Auth directives to route URIs instead.
+     */
     mprError("The <Directory> directive is deprecated. Use <Route> with a DocumentRoot instead.");
     return MPR_ERR_BAD_SYNTAX;
 }
