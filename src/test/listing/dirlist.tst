@@ -1,12 +1,11 @@
 /*
-    dirlist.tst - Test mod_dir
+    dirlist.tst - Directory listings
  */
 
 const HTTP = (global.tsession && tsession["http"]) || ":4100"
 let http: Http = new Http
 
-http.get(HTTP + "/listing/")
-assert(http.status == 200)
-
-
-//  MOB - more here
+if (!global.test || test.config["dir"] == 1) {
+    http.get(HTTP + "/listing/")
+    assert(http.status == 200)
+}
