@@ -4267,7 +4267,7 @@ static void errorv(HttpConn *conn, int flags, cchar *fmt, va_list args)
              */
             httpDisconnect(conn);
         } else {
-            if (rx && tx && (uri = httpLookupRouteErrorDocument(rx->route, tx->status))) {
+            if (rx && rx->route && (uri = httpLookupRouteErrorDocument(rx->route, tx->status))) {
                 httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, uri);
             } else {
                 httpFormatResponseError(conn, status, "%s", conn->errorMsg);
