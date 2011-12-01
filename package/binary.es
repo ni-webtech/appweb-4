@@ -42,24 +42,26 @@ var init: Path = etc.join("init")
 var initd: Path = etc.join("init.d")
 var cache: Path = spl.join("cache")
 
-let user, group
-let passwords = Path("/etc/passwd").readString()
-for each (u in ["www-data", "_www", "nobody", "Administrator"]) {
-    if (passwords.contains(u + ":")) {
-        user = u
-        break
+let user = 0, group = 0
+if (Config.OS != "WIN") {
+    let passwords = Path("/etc/passwd").readString()
+    for each (u in ["www-data", "_www", "nobody", "Administrator"]) {
+        if (passwords.contains(u + ":")) {
+            user = u
+            break
+        }
     }
-}
-let groups = Path("/etc/group").readString()
-for each (g in ["www-data", "_www", "nobody", "nogroup", "Administrator"]) {
-    if (groups.contains(g + ":")) {
-        group = g
-        break
+    let groups = Path("/etc/group").readString()
+    for each (g in ["www-data", "_www", "nobody", "nogroup", "Administrator"]) {
+        if (groups.contains(g + ":")) {
+            group = g
+            break
+        }
     }
-}
-if (!user || !group) {
-    App.log.error("Can't find acceptable user or group for files")
-    App.exit(1)
+    if (!user || !group) {
+        App.log.error("Can't find acceptable user or group for files")
+        App.exit(1)
+    }
 }
 
 var lowperms = {permissions: 0755, owner: user, group: group }
