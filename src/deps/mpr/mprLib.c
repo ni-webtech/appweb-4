@@ -6447,7 +6447,7 @@ int startProcess(MprCmd *cmd)
     /*
         Pass the server output file to become the client stdin.
      */
-    cmd->pid = taskSpawn(entryPoint, pri, 0, MPR_DEFAULT_STACK, (FUNCPTR) cmdTaskEntry, 
+    cmd->pid = taskSpawn(entryPoint, pri, VX_FP_TASK, MPR_DEFAULT_STACK, (FUNCPTR) cmdTaskEntry, 
         (int) cmd->program, (int) entryFn, (int) cmd, 0, 0, 0, 0, 0, 0, 0);
 
     if (cmd->pid < 0) {
@@ -22834,7 +22834,7 @@ int mprStartThread(MprThread *tp)
     int     taskHandle, pri;
 
     taskPriorityGet(taskIdSelf(), &pri);
-    taskHandle = taskSpawn(tp->name, pri, 0, tp->stackSize, (FUNCPTR) threadProcWrapper, (int) tp, 
+    taskHandle = taskSpawn(tp->name, pri, VX_FP_TASK, tp->stackSize, (FUNCPTR) threadProcWrapper, (int) tp, 
         0, 0, 0, 0, 0, 0, 0, 0, 0);
     if (taskHandle < 0) {
         mprError("Can't create thread %s\n", tp->name);

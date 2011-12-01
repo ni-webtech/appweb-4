@@ -1,0 +1,3 @@
+if (global.test && test.config["esp"] != 1) {
+    test.skip("ESP not enabled")
+}

@@ -4243,6 +4243,19 @@ static void errorv(HttpConn *conn, int flags, cchar *fmt, va_list args)
     if (flags & HTTP_ABORT) {
         conn->connError = 1;
     }
+    if (flags & (HTTP_ABORT | HTTP_CLOSE)) {
+        conn->keepAliveCount = -1;
+    }
+    if (flags & HTTP_ABORT || (tx && tx->flags & HTTP_TX_HEADERS_CREATED)) {
+        /* 
+            If headers have been sent, must let the other side of the failure - abort is the only way.
+            Disconnect will cause a readable (EOF) event
+         */
+        httpDisconnect(conn);
+    }
+    if (conn->error) {
+        return;
+    }
     if (rx) {
         rx->eof = 1;
     }
@@ -4253,29 +4266,13 @@ static void errorv(HttpConn *conn, int flags, cchar *fmt, va_list args)
     }
     formatErrorv(conn, status, fmt, args);
 
-    if (flags & (HTTP_ABORT | HTTP_CLOSE)) {
-        conn->keepAliveCount = -1;
-    }
-    if (conn->endpoint) {
-        /*
-            Server side must not call httpCloseConn() as it will remove wait handlers.
-         */
-        if (flags & HTTP_ABORT || (tx && tx->flags & HTTP_TX_HEADERS_CREATED)) {
-            /* 
-                If headers have been sent, must let the client know the request has failed - abort is the only way.
-                Disconnect will cause a readable (EOF) event
-             */
-            httpDisconnect(conn);
-        } else {
-            if (rx && rx->route && (uri = httpLookupRouteErrorDocument(rx->route, tx->status))) {
+    if (conn->endpoint && tx && rx) {
+        if (!(tx->flags & HTTP_TX_HEADERS_CREATED)) {
+            if (rx->route && (uri = httpLookupRouteErrorDocument(rx->route, tx->status))) {
                 httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, uri);
             } else {
                 httpFormatResponseError(conn, status, "%s", conn->errorMsg);
             }
-        }
-    } else {
-        if (flags & HTTP_ABORT || (tx && tx->flags & HTTP_TX_HEADERS_CREATED)) {
-            httpDisconnect(conn);
         }
     }
     conn->responded = 1;
@@ -4291,7 +4288,6 @@ static void formatErrorv(HttpConn *conn, int status, cchar *fmt, va_list args)
 {
     if (conn->errorMsg == 0) {
         conn->errorMsg = sfmtv(fmt, args);
-        //  MOB - need an escape option in status
         if (status) {
             if (status < 0) {
                 status = HTTP_CODE_INTERNAL_SERVER_ERROR;
@@ -11159,13 +11155,13 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
     } else {
         parseResponseLine(conn, packet);
     }
-    parseHeaders(conn, packet);
-
+    if (!conn->error) {
+        parseHeaders(conn, packet);
+    }
     if (conn->endpoint) {
         httpMatchHost(conn);
         if (httpSetUri(conn, rx->uri, "") < 0) {
             httpError(conn, HTTP_CLOSE | HTTP_CODE_BAD_REQUEST, "Bad URL format");
-            return 0;
         }
         if (conn->secure) {
             rx->parsedUri->scheme = sclone("https");
@@ -11346,8 +11342,10 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     uri = getToken(conn, " ");
     if (*uri == '\0') {
         httpError(conn, HTTP_CLOSE | HTTP_CODE_BAD_REQUEST, "Bad HTTP request. Empty URI");
+        return;
     } else if ((int) strlen(uri) >= conn->limits->uriSize) {
         httpError(conn, HTTP_CODE_REQUEST_URL_TOO_LARGE, "Bad request. URI too long");
+        return;
     }
     protocol = conn->protocol = supper(getToken(conn, "\r\n"));
     if (strcmp(protocol, "HTTP/1.0") == 0) {
@@ -11362,6 +11360,7 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     } else {
         conn->protocol = sclone("HTTP/1.1");
         httpError(conn, HTTP_CLOSE | HTTP_CODE_NOT_ACCEPTABLE, "Unsupported HTTP protocol");
+        return;
     }
     rx->originalUri = rx->uri = sclone(uri);
     httpSetState(conn, HTTP_STATE_FIRST);
@@ -11661,8 +11660,8 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
             if (strcasecmp(key, "transfer-encoding") == 0) {
                 if (scasecmp(value, "chunked") == 0) {
                     /*  
-                        remainingContent will be revised by the chunk filter as chunks are processed and will be set to zero when the
-                        last chunk has been received.
+                        remainingContent will be revised by the chunk filter as chunks are processed and will 
+                        be set to zero when the last chunk has been received.
                      */
                     rx->flags |= HTTP_CHUNKED;
                     rx->chunkState = HTTP_CHUNK_START;
