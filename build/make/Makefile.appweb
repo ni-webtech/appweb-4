@@ -49,6 +49,9 @@ endif
 
 test-install-package:
 	printf "%12s " "[Test]" "test-install-package ..."
+	if [ ! -f $(BLD_OUT_DIR)/releases/$(BASE_NAME).tgz ] ; then \
+		echo "Can't find $(BLD_OUT_DIR)/releases/$(BASE_NAME).tgz to install" ; \
+	fi ; \
 	set -e ; name="$(BASE_NAME).tgz" ; \
 	dir=/tmp/$(BLD_PRODUCT)-$$$$ ; rm -rf $$dir ; mkdir -p $$dir ; \
 	tar -C $$dir -zxf $(BLD_OUT_DIR)/releases/$$name ; \

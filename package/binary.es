@@ -259,4 +259,3 @@ if (options.task == "Install") {
     }
     saveLink.remove()
 }
-

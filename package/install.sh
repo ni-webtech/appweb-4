@@ -390,7 +390,9 @@ if [ "$installbin" = "Y" ] ; then
     if [ "$runDaemon" = "Y" ] ; then
         appman enable
         appman start
-        startBrowser
+        #
+        #   Don't start browser anymore. Many systems can't determine the logged in user's keychain when run privileged
+        # startBrowser
     fi
 fi
 if [ "$headless" != 1 ] ; then

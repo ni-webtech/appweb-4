@@ -443,7 +443,6 @@ if [ $TASK = Remove ] ; then
     #
     copyRemoveFiles
     cleanupSystem
-
 else 
     #
     #   Installing and Packaging
