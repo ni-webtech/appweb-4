@@ -1417,7 +1417,9 @@ static bool enableService(int enable)
     }
     svc = OpenService(mgr, app->serviceName, SERVICE_ALL_ACCESS);
     if (svc == NULL) {
-        mprUserError("Can't access service");
+        if (enable) {
+            mprUserError("Can't access service");
+        }
         CloseServiceHandle(mgr);
         return 0;
     }

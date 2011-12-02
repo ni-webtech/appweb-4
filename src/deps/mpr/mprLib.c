@@ -2737,6 +2737,10 @@ static void manageMpr(Mpr *mpr, int flags)
     }
 }
 
+static void wgc(int mode)
+{
+    mprRequestGC(mode);
+}
 
 /*
     Destroy the Mpr and all services
@@ -2778,7 +2782,7 @@ void mprDestroy(int how)
     mprStopSignalService();
 
     /* Final GC to run all finalizers */
-    mprRequestGC(gmode);
+    wgc(gmode);
 
     if (how & MPR_EXIT_RESTART) {
         mprLog(2, "Restarting\n\n");
@@ -18857,6 +18861,10 @@ void mprAddStandardSignals()
 #if SIGXFSZ
     mprAddItem(ssp->standard, mprAddSignalHandler(SIGXFSZ, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
 #endif
+#if MACOSX && BLD_DEBUG && 1
+    mprAddItem(ssp->standard, mprAddSignalHandler(SIGBUS, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
+    mprAddItem(ssp->standard, mprAddSignalHandler(SIGSEGV, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
+#endif
 }
 
 
@@ -18880,6 +18888,12 @@ static void standardSignalHandler(void *ignored, MprSignal *sp)
 
     } else if (sp->signo == SIGPIPE || sp->signo == SIGXFSZ) {
         /* Ignore */
+
+#if MACOSX && BLD_DEBUG && 1
+    } else if (sp->signo == SIGSEGV || sp->signo == SIGBUS) {
+        printf("PAUSED for watson to debug\n");
+        sleep(86400 * 7);
+#endif
 
     } else {
         mprTerminate(MPR_EXIT_DEFAULT, -1);
