@@ -78,6 +78,8 @@ MAIN(appweb, int argc, char **argv)
     if ((mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD)) == NULL) {
         exit(1);
     }
+    mprSetAppName(BLD_PRODUCT, BLD_NAME, BLD_VERSION);
+
     if ((app = mprAllocObj(App, manageApp)) == NULL) {
         exit(2);
     }

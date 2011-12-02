@@ -8385,6 +8385,7 @@ int mprWaitForEvent(MprDispatcher *dispatcher, MprTime timeout)
         unlock(es);
         
         mprYield(MPR_YIELD_STICKY);
+//  ADD TEST if dispatcher valid or freed
         if (mprWaitForCond(dispatcher->cond, (int) delay) == 0) {
             mprResetYield();
             dispatcher->waitingOnCond = 0;
