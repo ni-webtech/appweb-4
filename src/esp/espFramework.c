@@ -89,17 +89,16 @@ int espCache(HttpRoute *route, cchar *uri, int lifesecs, int flags)
 bool espCheckSecurityToken(HttpConn *conn) 
 {
     HttpRx  *rx;
-    cchar   *securityToken, *sessionToken;
+    cchar   *securityTokenName, *sessionToken;
 
     rx = conn->rx;
     if (!(rx->flags & HTTP_POST)) {
         return 1;
     }
     if (rx->securityToken == 0) {
-        rx->securityToken = (char*) espGetSessionVar(conn, ESP_SECURITY_TOKEN_NAME, "");
-        sessionToken = rx->securityToken;
-        securityToken = espGetParam(conn, ESP_SECURITY_TOKEN_NAME, "");
-        if (!smatch(sessionToken, securityToken)) {
+        sessionToken = rx->securityToken = sclone(espGetSessionVar(conn, ESP_SECURITY_TOKEN_NAME, ""));
+        securityTokenName = espGetParam(conn, ESP_SECURITY_TOKEN_NAME, "");
+        if (!smatch(sessionToken, securityTokenName)) {
             httpError(conn, HTTP_CODE_NOT_ACCEPTABLE, 
                 "Security token does not match. Potential CSRF attack. Denying request");
             return 0;
