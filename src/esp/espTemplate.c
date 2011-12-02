@@ -279,6 +279,18 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
         mprDeletePath(mprJoinPathExt(mprTrimPathExt(module), BLD_OBJ));
 #endif
     }
+#if BLD_WIN_LIKE
+    {
+        /*
+            Windows leaves intermediate object in the current directory
+         */
+        cchar   *obj;
+        obj = mprReplacePathExt(mprGetPathBase(csource), BLD_OBJ);
+        if (mprPathExists(obj, F_OK)) {
+            mprDeletePath(obj);
+        }
+    }
+#endif
     if (!eroute->keepSource && isView) {
         mprDeletePath(csource);
     }
