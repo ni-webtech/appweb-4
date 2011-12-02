@@ -879,6 +879,7 @@ static int includeDirective(MaState *state, cchar *key, cchar *value)
                     }
                 }
             }
+            free(compiled);
         }
     }
     return 0;

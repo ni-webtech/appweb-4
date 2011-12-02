@@ -1,7 +1,6 @@
 #!/bin/sh
 
-/usr/local/bin/valgrind --tool=memcheck -v --num-callers=12 --leak-check=yes --leak-resolution=high --show-reachable=yes --track-fds=yes $* 2>&1 | cat >val.log
-
-vi val.log
+echo valgrind --tool=memcheck -v --num-callers=12 --leak-check=yes --leak-resolution=high --show-reachable=yes --track-fds=yes $*
+valgrind --tool=memcheck -v --num-callers=12 --leak-check=yes --leak-resolution=high --show-reachable=yes --track-fds=yes $* 2>&1 | tee val.log
 
 echo Results in val.log
