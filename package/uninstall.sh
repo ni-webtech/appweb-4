@@ -149,6 +149,7 @@ removeTarFiles() {
             cd ${prefix%%:*}:/
         else
             cd /
+        fi
         removeFileList "$prefix/fileList.txt"
         cd "$cdir"
         rm -f "$prefix/fileList.txt"
@@ -375,3 +376,4 @@ if [ "$removebin" = "Y" ] ; then
     [ "$headless" != 1 ] && echo -e "$BLD_NAME uninstall successful"
 fi
 exit 0
+
