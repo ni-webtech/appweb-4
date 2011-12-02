@@ -144,12 +144,11 @@ removeTarFiles() {
 
 	pkg=$1
 	[ $pkg = bin ] && prefix="$BLD_PRD_PREFIX"
-	if [ "$prefix/fileList.txt" ] ; then
+	if [ -f "$prefix/fileList.txt" ] ; then
         if [ $BLD_HOST_OS = WIN ] ; then
             cd ${prefix%%:*}:/
         else
             cd /
-        fi
         removeFileList "$prefix/fileList.txt"
         cd "$cdir"
         rm -f "$prefix/fileList.txt"
@@ -162,30 +161,38 @@ preClean() {
 	local cdir=`pwd`
 
     cp "$BLD_BIN_PREFIX/linkup" /tmp/linkup$$
-
 	if [ $BLD_HOST_OS != WIN ] ; then
         rm -f /var/lock/subsys/$BLD_PRODUCT /var/lock/$BLD_PRODUCT
         rm -fr /var/log/$BLD_PRODUCT
         rm -rf /var/run/$BLD_PRODUCT
         rm -rf /var/spool/$BLD_PRODUCT
     fi
-
-    cd "$BLD_PRD_PREFIX"
-    removeIntermediateFiles access.log* error.log* '*.log.old' .dummy $BLD_PRODUCT.conf make.log
-    cd "$BLD_CFG_PREFIX"
-    removeIntermediateFiles access.log* error.log* '*.log.old' .dummy $BLD_PRODUCT.conf make.log $BLD_PRODUCT.conf.bak
-    cd "$BLD_LIB_PREFIX"
-    removeIntermediateFiles access.log* error.log* '*.log.old' .dummy $BLD_PRODUCT.conf make.log
-    cd "$BLD_WEB_PREFIX"
-    removeIntermediateFiles *.mod 
-    cd "$cdir"
-
+    if [ -x "$BLD_PRD_PREFIX" ] ; then
+        cd "$BLD_PRD_PREFIX"
+        removeIntermediateFiles access.log* error.log* '*.log.old' .dummy $BLD_PRODUCT.conf make.log
+    fi
+    if [ -x "$BLD_CFG_PREFIX" ] ; then
+        cd "$BLD_CFG_PREFIX"
+        removeIntermediateFiles access.log* error.log* '*.log.old' .dummy $BLD_PRODUCT.conf make.log $BLD_PRODUCT.conf.bak
+    fi
+    if [ -x "$BLD_LIB_PREFIX" ] ; then
+        cd "$BLD_LIB_PREFIX"
+        removeIntermediateFiles access.log* error.log* '*.log.old' .dummy $BLD_PRODUCT.conf make.log
+    fi
+    if [ -x "$BLD_WEB_PREFIX" ] ; then
+        cd "$BLD_WEB_PREFIX"
+        removeIntermediateFiles *.mod 
+    fi
+    if [ -x "$BLD_SPL_PREFIX/cache" ] ; then
+        cd "$BLD_SPL_PREFIX/cache"
+        removeIntermediateFiles *.mod *.c *.dll *.exp *.lib *.obj *.o *.dylib *.so
+    fi
     if [ -d "$BLD_INC_PREFIX" ] ; then
         cd "$BLD_INC_PREFIX"
         make clean >/dev/null 2>&1 || true
         removeIntermediateFiles '*.o' '*.lo' '*.so' '*.a' make.rules .config.h.sav make.log .changes
-        cd "$cdir"
     fi
+    cd "$cdir"
 }
 
 
