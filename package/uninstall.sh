@@ -70,23 +70,23 @@ unset CDPATH
 #
 
 yesno() {
-	if [ "$headless" = 1 ] ; then
-		echo "Y"
-		return
-	fi
-	echo -n "$1 [$2] : " 1>&2
-	while [ 1 ] 
-	do
-		read ans
-		if [ "$ans" = "" ] ; then
-			echo $2 ; break
-		elif [ "$ans" = "Y" -o "$ans" = "y" ] ; then
-			echo "Y" ; break
-		elif [ "$ans" = "N" -o "$ans" = "n" ] ; then
-			echo "N" ; break
-		fi
-		echo -e "\nMust enter a 'y' or 'n'\n " 1>&1
-	done
+    if [ "$headless" = 1 ] ; then
+        echo "Y"
+        return
+    fi
+    echo -n "$1 [$2] : " 1>&2
+    while [ 1 ] 
+    do
+        read ans
+        if [ "$ans" = "" ] ; then
+            echo $2 ; break
+        elif [ "$ans" = "Y" -o "$ans" = "y" ] ; then
+            echo "Y" ; break
+        elif [ "$ans" = "N" -o "$ans" = "n" ] ; then
+            echo "N" ; break
+        fi
+        echo -e "\nMust enter a 'y' or 'n'\n " 1>&1
+    done
 }
 
 
@@ -99,52 +99,52 @@ deconfigureService() {
     appman disable 
     appman uninstall
     if [ -f "$BLD_BIN_PREFIX/$BLD_PRODUCT" ] ; then
-		if which pidof >/dev/null 2>&1 ; then
+        if which pidof >/dev/null 2>&1 ; then
             pid=`pidof $BLD_BIN_PREFIX/$BLD_PRODUCT`
         else
             pid=`ps -ef | grep $BLD_BIN_PREFIX/$BLD_PRODUCT | grep -v 'grep' | awk '{print $2}'`
         fi
-		[ "$pid" != "" ] && kill -9 $pid >/dev/null 2>&1
-	fi
+        [ "$pid" != "" ] && kill -9 $pid >/dev/null 2>&1
+    fi
 } 
 
 
 removeFiles() {
-	local pkg doins name
+    local pkg doins name
 
-	[ "$headless" != 1 ] && echo
-	for pkg in bin ; do
-		doins=`eval echo \\$install${pkg}`
-		if [ "$doins" = Y ] ; then
-			suffix="-${pkg}"
-			if [ "$pkg" = bin ] ; then
-				name="${BLD_PRODUCT}"
-			else 
-				name="${BLD_PRODUCT}${suffix}"
-			fi
-			if [ "$FMT" = "rpm" ] ; then
-				[ "$headless" != 1 ] && echo -e "Running \"rpm -e $name\""
-				rpm -e $name
-			elif [ "$FMT" = "deb" ] ; then
-				[ "$headless" != 1 ] && echo -e "Running \"dpkg -r $name\""
-				dpkg -r $name >/dev/null
-			else
-				removeTarFiles $pkg
-			fi
+    [ "$headless" != 1 ] && echo
+    for pkg in bin ; do
+        doins=`eval echo \\$install${pkg}`
+        if [ "$doins" = Y ] ; then
+            suffix="-${pkg}"
+            if [ "$pkg" = bin ] ; then
+            	name="${BLD_PRODUCT}"
+            else 
+            	name="${BLD_PRODUCT}${suffix}"
+            fi
+            if [ "$FMT" = "rpm" ] ; then
+            	[ "$headless" != 1 ] && echo -e "Running \"rpm -e $name\""
+            	rpm -e $name
+            elif [ "$FMT" = "deb" ] ; then
+            	[ "$headless" != 1 ] && echo -e "Running \"dpkg -r $name\""
+            	dpkg -r $name >/dev/null
+            else
+            	removeTarFiles $pkg
+            fi
         elif [ "$doins" = "" ] ; then
             removeTarFiles $pkg
-		fi
-	done
+        fi
+    done
 }
 
 
 removeTarFiles() {
-	local pkg prefix
-	local cdir=`pwd`
+    local pkg prefix
+    local cdir=`pwd`
 
-	pkg=$1
-	[ $pkg = bin ] && prefix="$BLD_PRD_PREFIX"
-	if [ -f "$prefix/fileList.txt" ] ; then
+    pkg=$1
+    [ $pkg = bin ] && prefix="$BLD_PRD_PREFIX"
+    if [ -f "$prefix/fileList.txt" ] ; then
         if [ $BLD_HOST_OS = WIN ] ; then
             cd ${prefix%%:*}:/
         else
@@ -152,16 +152,16 @@ removeTarFiles() {
         removeFileList "$prefix/fileList.txt"
         cd "$cdir"
         rm -f "$prefix/fileList.txt"
-	fi
+    fi
 }
 
 
 preClean() {
-	local f
-	local cdir=`pwd`
+    local f
+    local cdir=`pwd`
 
     cp "$BLD_BIN_PREFIX/linkup" /tmp/linkup$$
-	if [ $BLD_HOST_OS != WIN ] ; then
+    if [ $BLD_HOST_OS != WIN ] ; then
         rm -f /var/lock/subsys/$BLD_PRODUCT /var/lock/$BLD_PRODUCT
         rm -fr /var/log/$BLD_PRODUCT
         rm -rf /var/run/$BLD_PRODUCT
@@ -197,11 +197,11 @@ preClean() {
 
 
 postClean() {
-	local cdir=`pwd`
+    local cdir=`pwd`
 
     # Legacy
-	rm -f "${BLD_CFG_PREFIX}/${BLD_PRODUCT}Install.conf"
-	rm -f "${BLD_PRD_PREFIX}/install.conf"
+    rm -f "${BLD_CFG_PREFIX}/${BLD_PRODUCT}Install.conf"
+    rm -f "${BLD_PRD_PREFIX}/install.conf"
 
     if [ -d "$BLD_MAN_PREFIX" ] ; then
         rm -rf "$BLD_MAN_PREFIX"/man*
@@ -217,7 +217,7 @@ postClean() {
     cleanDir "$BLD_WEB_PREFIX"
     cleanDir "$BLD_SPL_PREFIX"
 
-	if [ $BLD_HOST_OS != WIN ] ; then
+    if [ $BLD_HOST_OS != WIN ] ; then
         if [ -x /usr/share/$BLD_PRODUCT ] ; then
             cleanDir /usr/share/$BLD_PRODUCT
         fi
@@ -257,24 +257,24 @@ removeFileList() {
 #	Cleanup empty directories. Usage: cleanDir directory
 #
 cleanDir() {
-	local dir
-	local cdir=`pwd`
+    local dir
+    local cdir=`pwd`
 
-	dir="$1"
+    dir="$1"
 
-	[ ! -d "$dir" ] && return
+    [ ! -d "$dir" ] && return
 
-	cd "$dir"
-	if [ "`pwd`" = "/" ] ; then
-		echo "Configuration error: clean directory was '/'"
-		cd "$cdir"
-		return
-	fi
-	find . -type d -print | sort -r | grep -v '^\.$' | while read d
-	do
-		count=`ls "$d" 2>/dev/null | wc -l | sed -e 's/ *//'`
-		[ "$count" = "0" ] && rmdir "$d"
-	done 
+    cd "$dir"
+    if [ "`pwd`" = "/" ] ; then
+        echo "Configuration error: clean directory was '/'"
+        cd "$cdir"
+        return
+    fi
+    find . -type d -print | sort -r | grep -v '^\.$' | while read d
+    do
+        count=`ls "$d" 2>/dev/null | wc -l | sed -e 's/ *//'`
+        [ "$count" = "0" ] && rmdir "$d"
+    done 
 
     if [ -d $cdir ] ; then
         cd $cdir
@@ -289,74 +289,74 @@ cleanDir() {
 #	Cleanup intermediate files
 #
 removeIntermediateFiles() {
-	local cdir=`pwd`
+    local cdir=`pwd`
 
-	find "`pwd`" -type d -print | while read d
-	do
-		cd "${d}"
-		eval rm -f "$*"
-		cd "${cdir}"
-	done
+    find "`pwd`" -type d -print | while read d
+    do
+        cd "${d}"
+        eval rm -f "$*"
+        cd "${cdir}"
+    done
 }
 
 
 setup() {
     if [ `id -u` != "0" -a $BLD_HOST_OS != WIN ] ; then
-		echo "You must be root to remove this product."
-		exit 255
-	fi
-	#
-	#	Headless removal. Expect an argument that supplies a config file.
-	#
+        echo "You must be root to remove this product."
+        exit 255
+    fi
+    #
+    #	Headless removal. Expect an argument that supplies a config file.
+    #
     if [ $# -ge 1 ] ; then
         if [ ! -f $1 ] ; then
-			echo "Could not find config file \"$1\""
-			exit 255
-		else
-			. $1 
-			removeFiles $FMT
-		fi
-		exit 0
-	fi
-	#
-	#	Get defaults from the installation configuration file
-	#
+            echo "Could not find config file \"$1\""
+            exit 255
+        else
+            . $1 
+            removeFiles $FMT
+        fi
+        exit 0
+    fi
+    #
+    #	Get defaults from the installation configuration file
+    #
     if [ -f "${BLD_PRD_PREFIX}/install.conf" ] ; then
-		.  "${BLD_PRD_PREFIX}/install.conf"
-	fi
-	
-	binDir=${binDir:-$BLD_PRD_PREFIX}
-	[ "$headless" != 1 ] && echo -e "\n$BLD_NAME !!BLD_VERSION!!-!!BLD_NUMBER!! Removal\n"
+        .  "${BLD_PRD_PREFIX}/install.conf"
+    fi
+    
+    binDir=${binDir:-$BLD_PRD_PREFIX}
+    [ "$headless" != 1 ] && echo -e "\n$BLD_NAME !!BLD_VERSION!!-!!BLD_NUMBER!! Removal\n"
 }
 
 
 askUser() {
-	local finished
+    local finished
 
-	[ "$headless" != 1 ] && echo "Enter requested information or press <ENTER> to accept the defaults. "
+    [ "$headless" != 1 ] && echo "Enter requested information or press <ENTER> to accept the defaults. "
 
-	#
-	#	Confirm the configuration
-	#
-	finished=N
-	while [ "$finished" = "N" ]
-	do
-		[ "$headless" != 1 ] && echo
-		if [ -d "$binDir" ] ; then
-			removebin=`yesno "Remove binary package" "$removebin"`
-		else
-			removebin=N
-		fi
-		if [ "$headless" != 1 ] ; then
+    #
+    #	Confirm the configuration
+    #
+    finished=N
+    while [ "$finished" = "N" ]
+    do
+        [ "$headless" != 1 ] && echo
+        if [ -d "$binDir" ] ; then
+            removebin=`yesno "Remove binary package" "$removebin"`
+        else
+            removebin=N
+        fi
+        if [ "$headless" != 1 ] ; then
             echo -e "\nProceed removing with these instructions:" 
             [ $removebin = Y ] && echo -e "  Remove binary package: $removebin"
         fi
-		[ "$headless" != 1 ] && echo
-		finished=`yesno "Accept these instructions" "Y"`
-		if [ "$finished" != "Y" ] ; then
-			exit 0
-		fi
-	done
+        [ "$headless" != 1 ] && echo
+        finished=`yesno "Accept these instructions" "Y"`
+        if [ "$finished" != "Y" ] ; then
+            exit 0
+        fi
+    done
     [ "$headless" != 1 ] && echo
 }
 
