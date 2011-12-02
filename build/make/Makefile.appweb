@@ -73,10 +73,11 @@ test-install-native-package:
 	if [ $(BLD_HOST_OS) = WIN ] ; then \
 		dir=/tmp/$(BLD_PRODUCT)-$$$$ ; rm -rf $$dir ; mkdir -p $$dir ; \
 		name="$(BASE_NAME).exe.zip" ; \
-		cp WIN/unattended.ans $(BLD_OUT_DIR)/releases/$$name "$$dir" ; cd "$$dir" ; \
+		cp package/WIN/unattended.ans $(BLD_OUT_DIR)/releases/$$name "$$dir" ; cd "$$dir" ; \
 		unzip -q -o $$name ; \
 		echo "Dir=$$dir" >>unattended.ans ; \
 		./$(BASE_NAME).exe /loadinf=/tmp/unattended.ans /silent ; \
+		rm -rf $$dir ; \
 	elif [ $(BLD_HOST_OS) = MACOSX ] ; then \
 		hdiutil eject /Volumes/$(BLD_PRODUCT)-$(BLD_VERSION) >/dev/null 2>&1 || true ; \
 		hdid $(BLD_OUT_DIR)/releases/$(BASE_NAME).dmg >/dev/null ; \
@@ -95,31 +96,30 @@ test-uninstall-native-package:
 	printf "%12s " "[Test]" "test-uninstall-native-package ..."
 	set -e ; \
 	if [ $(BLD_HOST_OS) = WIN ] ; then \
-		if [ ! -x "$(STAGE_DIR)/unins000.exe" ] ; then \
-			echo "Can't find $(STAGE_DIR)/unins000.exe to uninstall" ; \
+		if [ ! -x "$(BLD_PREFIX)/unins000.exe" ] ; then \
+			echo "Can't find unins000.exe to uninstall" ; \
 			exit 255 ; \
 		fi ; \
-		"$(STAGE_DIR)/unins000.exe" /silent ; \
-		rm -fr "$(STAGE_DIR)/*" ; \
+		"$(BLD_PREFIX)/unins000.exe" /silent ; \
 	else \
 		name="$(BASE_NAME).tgz" ; \
 		dir=/tmp/$(BLD_PRODUCT)-$$$$ ; rm -rf $$dir ; mkdir -p $$dir ; \
 		tar -C $$dir -zxf $(BLD_OUT_DIR)/releases/$$name ; \
 		cd $$dir >/dev/null 2>&1 ; \
 		priv "$(BLD_PRODUCT)_HEADLESS=1 ./uninstall" || exit 255; \
-		rm -rf $$dir ; \
-	fi
+	fi ; \
+	rm -rf $$dir
 	echo PASSED
 
 test-installed:
 	printf "%12s " "[Test]" "test-installed ..."
 	set -e ; \
 	complete=1 ; \
-	for dir in $(BLD_CFG_PREFIX) $(BLD_BIN_PREFIX) $(BLD_INC_PREFIX) \
-		$(BLD_LIB_PREFIX) $(BLD_LOG_PREFIX) $(BLD_MAN_PREFIX) $(BLD_PRD_PREFIX) \
-		$(BLD_VER_PREFIX) $(BLD_WEB_PREFIX) ; \
+	for dir in "$(BLD_CFG_PREFIX)" "$(BLD_BIN_PREFIX)" "$(BLD_INC_PREFIX)" \
+		"$(BLD_LIB_PREFIX)" "$(BLD_LOG_PREFIX)" "$(BLD_MAN_PREFIX)" "$(BLD_PRD_PREFIX)" \
+		"$(BLD_VER_PREFIX)" "$(BLD_WEB_PREFIX)" ; \
 	do \
-		if [ ! -x $$dir ] ; then \
+		if [ ! -x "$$dir" ] ; then \
 			echo Missing directory: $$dir ; \
 			complete=0 ; \
 		fi ; \
@@ -128,23 +128,27 @@ test-installed:
 	sleep 5 ; \
 	port=$(BLD_HTTP_PORT) ; \
 	http -q $$port/index.html ; \
-	http -q $$port/test/test.ejs ; \
+	if [ "$(BLD_FEATURE_EJSCRIPT)" = 1 ] ; then \
+		http -q $$port/test/test.ejs ; \
+	fi ; \
 	http -q $$port/test/test.esp ; \
 	http -q $$port/test/test.php ; \
-	http -q $$port/test/test.cgi ; \
-	http -q $$port/test/test.pl ; \
-	http -q $$port/test/test.py ; \
+	if [ -x "$(HOMEDRIVE)/bin/sh" ] ; then \
+		http -q $$port/test/test.cgi ; \
+		http -q $$port/test/test.pl ; \
+		http -q $$port/test/test.py ; \
+	fi ; \
 	echo "PASSED"
 
 test-uninstalled:
 	printf "%12s " "[Test]" "test-uninstalled ..."
 	partial=0 ; \
-	for dir in $(BLD_CFG_PREFIX) $(BLD_BIN_PREFIX) $(BLD_INC_PREFIX) $(BLD_LIB_PREFIX) $(BLD_LOG_PREFIX) \
-		$(BLD_MAN_PREFIX) $(BLD_PRD_PREFIX) $(BLD_SPL_PREFIX) $(BLD_VER_PREFIX) $(BLD_WEB_PREFIX) ; do \
-		if [ -x $$dir ] ; then \
+	for dir in "$(BLD_CFG_PREFIX)" "$(BLD_BIN_PREFIX)" "$(BLD_INC_PREFIX)" "$(BLD_LIB_PREFIX)" "$(BLD_LOG_PREFIX)" \
+		"$(BLD_MAN_PREFIX)" "$(BLD_PRD_PREFIX)" "$(BLD_SPL_PREFIX)" "$(BLD_VER_PREFIX)" "$(BLD_WEB_PREFIX)" ; do \
+		if [ -x "$$dir" ] ; then \
 			partial=1 ; \
 			echo WARNING: Directory present: $$dir: ; \
-			find $$dir -print ; \
+			find "$$dir" -print ; \
 			echo ; \
 		fi ; \
 	done ; \

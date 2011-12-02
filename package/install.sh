@@ -190,9 +190,10 @@ askUser() {
         fi
         finished=`yesno "Accept this configuration" "Y"`
     done
+    [ "$headless" != 1 ] && echo
     
     if [ "$installbin" = "N" ] ; then
-        echo -e "\nNothing to install, exiting. "
+        echo -e "Nothing to install, exiting. "
         exit 0
     fi
     #
@@ -259,7 +260,7 @@ saveSetup() {
 }
 
 installFiles() {
-    local dir pkg doins NAME upper
+    local dir pkg doins NAME upper target
 
     [ "$headless" != 1 ] && echo -e "\nExtracting files ...\n"
 
@@ -283,8 +284,10 @@ installFiles() {
                 [ "$headless" != 1 ] && echo -e "dpkg -i $NAME"
                 dpkg -i $HOME/$NAME >/dev/null
             else
-                [ "$headless" != 1 ] && echo tar xzf "$HOME/${NAME}" --strip-components 1 -P -C /
-                tar xzf "$HOME/${NAME}" --strip-components 1 -P -C /
+                target=/
+                [ $BLD_HOST_OS = WIN ] && target=`cygpath ${HOMEDRIVE}/`
+                [ "$headless" != 1 ] && echo tar xzf "$HOME/${NAME}" --strip-components 1 -P -C ${target}
+                tar xzf "$HOME/${NAME}" --strip-components 1 -P -C ${target}
             fi
         fi
     done
@@ -334,9 +337,15 @@ patchConfiguration() {
     if [ ! -f $BLD_PRODUCT.conf -a -f "$BLD_CFG_PREFIX/new.conf" ] ; then
         cp "$BLD_CFG_PREFIX/new.conf" "$BLD_CFG_PREFIX/$BLD_PRODUCT.conf"
     fi
-    setConfig --port ${HTTP_PORT} --ssl ${SSL_PORT} --home "${BLD_CFG_PREFIX}" --logs "${BLD_LOG_PREFIX}" \
-        --documents "${BLD_WEB_PREFIX}" --modules "${BLD_LIB_PREFIX}" --cache "${BLD_SPL_PREFIX}/cache" \
-        --user $username --group $groupname "${BLD_CFG_PREFIX}/appweb.conf"
+    if [ $BLD_HOST_OS = WIN ] ; then
+        setConfig --port ${HTTP_PORT} --ssl ${SSL_PORT} --home "." --logs "logs" \
+            --documents "web" --modules "bin" --cache "cache" \
+            --user $username --group $groupname "${BLD_CFG_PREFIX}/appweb.conf"
+    else
+        setConfig --port ${HTTP_PORT} --ssl ${SSL_PORT} --home "${BLD_CFG_PREFIX}" --logs "${BLD_LOG_PREFIX}" \
+            --documents "${BLD_WEB_PREFIX}" --modules "${BLD_LIB_PREFIX}" --cache "${BLD_SPL_PREFIX}/cache" \
+            --user $username --group $groupname "${BLD_CFG_PREFIX}/appweb.conf"
+    fi
 }
 
 startBrowser() {
@@ -347,7 +356,7 @@ startBrowser() {
     #   Conservative delay to allow appweb to start and initialize
     #
     sleep 5
-    [ "$headless" != 1 ] && echo -e "\nStarting browser to view the $BLD_NAME Home Page."
+    [ "$headless" != 1 ] && echo -e "Starting browser to view the $BLD_NAME Home Page."
     if [ $BLD_HOST_OS = WIN ] ; then
         cygstart --shownormal http://$SITE:$HTTP_PORT$PAGE 
     elif [ $BLD_HOST_OS = MACOSX ] ; then
@@ -370,6 +379,7 @@ setup $*
 askUser
 
 if [ "$installbin" = "Y" ] ; then
+    [ "$headless" != 1 ] && echo "Disable existing service"
     appman stop disable uninstall >/dev/null 2>&1
 fi
 installFiles $FMT

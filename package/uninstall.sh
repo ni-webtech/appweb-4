@@ -98,7 +98,7 @@ deconfigureService() {
     [ "$headless" != 1 ] && echo -e "Removing $BLD_NAME service"
     appman disable 
     appman uninstall
-    if [ -f $BLD_BIN_PREFIX/$BLD_PRODUCT ] ; then
+    if [ -f "$BLD_BIN_PREFIX/$BLD_PRODUCT" ] ; then
 		if which pidof >/dev/null 2>&1 ; then
             pid=`pidof $BLD_BIN_PREFIX/$BLD_PRODUCT`
         else
@@ -145,7 +145,11 @@ removeTarFiles() {
 	pkg=$1
 	[ $pkg = bin ] && prefix="$BLD_PRD_PREFIX"
 	if [ "$prefix/fileList.txt" ] ; then
-        cd /
+        if [ $BLD_HOST_OS = WIN ] ; then
+            cd ${prefix%%:*}:/
+        else
+            cd /
+        fi
         removeFileList "$prefix/fileList.txt"
         cd "$cdir"
         rm -f "$prefix/fileList.txt"
@@ -157,7 +161,7 @@ preClean() {
 	local f
 	local cdir=`pwd`
 
-    cp $BLD_BIN_PREFIX/linkup /tmp/linkup$$
+    cp "$BLD_BIN_PREFIX/linkup" /tmp/linkup$$
 
 	if [ $BLD_HOST_OS != WIN ] ; then
         rm -f /var/lock/subsys/$BLD_PRODUCT /var/lock/$BLD_PRODUCT
@@ -188,7 +192,6 @@ preClean() {
 postClean() {
 	local cdir=`pwd`
 
-	[ "$headless" != 1 ] && echo
     # Legacy
 	rm -f "${BLD_CFG_PREFIX}/${BLD_PRODUCT}Install.conf"
 	rm -f "${BLD_PRD_PREFIX}/install.conf"
@@ -347,6 +350,7 @@ askUser() {
 			exit 0
 		fi
 	done
+    [ "$headless" != 1 ] && echo
 }
 
 
