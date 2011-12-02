@@ -170,7 +170,8 @@ preClean() {
     fi
     if [ -x "$BLD_PRD_PREFIX" ] ; then
         cd "$BLD_PRD_PREFIX"
-        removeIntermediateFiles access.log* error.log* '*.log.old' .dummy $BLD_PRODUCT.conf make.log
+        removeIntermediateFiles access.log* error.log* '*.log.old' .dummy $BLD_PRODUCT.conf make.log *.obj *.oC
+        removeIntermediateFiles *.dylib *.dll *.exp *.lib
     fi
     if [ -x "$BLD_CFG_PREFIX" ] ; then
         cd "$BLD_CFG_PREFIX"

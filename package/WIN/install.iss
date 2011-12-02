@@ -60,7 +60,6 @@ begin
   end;
 
 	i := 0;
-
 	if RegValueExists(regHive, key, keyName) then begin
 		RegQueryStringValue(regHive, key, keyName, oldPath);
 		oldPath := oldPath + ';';
@@ -146,43 +145,6 @@ begin
   Result := true;
 end;
 
-function SaveSettings(junk: String): Boolean;
-var
-  app: String;
-  path: String;
-  settings: String;
-begin
-  app := ExpandConstant('{app}');
-  CreateDir(app);
-  path := app + '/install.log';
-  settings := '{ port: ' + PortPage.Values[0] + ', ssl: ' + SSLPortPage.Values[0] + 
-	', web: "' + WebDirPage.Values[0] + '", root: "' + ExpandConstant('{app}') + '", }' + #13#10;
-  StringChangeEx(settings, '\', '/', True);
-  Result := SaveStringToFile(path, settings, False);
-end;
-
-
-function UpdateReadyMemo(Space, NewLine, MemoUserInfoInfo, MemoDirInfo, MemoTypeInfo,
-  MemoComponentsInfo, MemoGroupInfo, MemoTasksInfo: String): String;
-var
-  S: String;
-begin
-
-  S := '';
-  S := S + MemoDirInfo + NewLine;
-  S := S + 'Web Documents Directory:' + NewLine + Space + WebDirPage.Values[0] + NewLine;
-  S := S + MemoComponentsInfo + NewLine;
-  S := S + MemoGroupInfo + NewLine;
-  S := S + 'HTTP Port:' + NewLine + Space + PortPage.Values[0] + NewLine;
-  S := S + 'SSL  Port:' + NewLine + Space + SSLPortPage.Values[0] + NewLine;
-  S := S + NewLine + NewLine;
-
-  SaveSettings('');
-
-  Result := S;
-end;
-
-
 function GetWebDir(Param: String): String;
 begin
   Result := WebDirPage.Values[0];
@@ -192,6 +154,11 @@ end;
 function GetPort(Param: String): String;
 begin
   Result := PortPage.Values[0];
+end;
+
+function GetSSL(Param: String): String;
+begin
+  Result := SSLPortPage.Values[0];
 end;
 
 
@@ -208,7 +175,7 @@ end;
 
 [Icons]
 Name: "{group}\!!BLD_NAME!!Monitor"; Filename: "{app}/bin/!!BLD_PRODUCT!!Monitor.exe"; Components: bin
-Name: "{group}\Documentation"; Filename: "http://127.0.0.1:{code:GetPort}/doc/index.html"; Components: dev
+Name: "{group}\Documentation"; Filename: "http://appwebserver.org/products/appweb/doc/appweb-4/product/index.html"; Components: dev
 Name: "{group}\ReadMe"; Filename: "{app}/README.TXT"
 ;Name: "{group}\Manage"; Filename: "http://127.0.0.1:{code:GetPort}/index.html"; Components: bin
 
@@ -232,8 +199,11 @@ Name: "{app}/bin"
 Type: files; Name: "{app}/appweb.conf";
 Type: files; Name: "{app}/logs/access.log";
 Type: files; Name: "{app}/logs/access.log.old";
+Type: files; Name: "{app}/logs/access.log.*";
 Type: files; Name: "{app}/logs/error.log";
 Type: files; Name: "{app}/logs/error.log.old";
+Type: files; Name: "{app}/logs/error.log.*";
+Type: files; Name: "{app}/cache/*.*";
 Type: filesandordirs; Name: "{app}/*.obj";
 
 [Tasks]
@@ -244,10 +214,7 @@ Filename: "{app}/bin/!!BLD_PRODUCT!!Monitor.exe"; Parameters: "--stop"; WorkingD
 
 Filename: "{app}/bin/appman.exe"; Parameters: "uninstall"; WorkingDir: "{app}"; Check: IsPresent('{app}/bin/appman.exe'); StatusMsg: "Stopping Appweb"; Flags: waituntilterminated; Components: bin
 
-; MOB
-;  settings := '{ port: ' + PortPage.Values[0] + ', ssl: ' + SSLPortPage.Values[0] + 
-;	', web: "' + WebDirPage.Values[0] + '", root: "' + ExpandConstant('{app}') + '", }' + #13#10;
-; Filename: "{app}/bin/setConfig.exe"; Parameters: ""; WorkingDir: "{app}"; StatusMsg: "Updating Appweb configuration"; Flags: runhidden waituntilterminated; 
+Filename: "{app}/bin/setConfig.exe"; Parameters: "--home . --documents ""{code:GetWebDir}"" --logs logs --port {code:GetPort} --ssl {code:GetSSL} --cache cache --modules bin appweb.conf"; WorkingDir: "{app}"; StatusMsg: "Updating Appweb configuration"; Flags: runhidden waituntilterminated; 
 
 Filename: "{app}/bin/appman.exe"; Parameters: "install enable"; WorkingDir: "{app}"; StatusMsg: "Installing Appweb as a Windows Service"; Flags: waituntilterminated;
 

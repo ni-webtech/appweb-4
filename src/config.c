@@ -2167,7 +2167,7 @@ static char *getDirective(char *line, char **valuep)
             Trim quotes if wrapping the entire value and no spaces. Preserve embedded quotes and leading/trailing "" etc.
          */
         len = slen(value);
-        if (*value == '\"' && value[len - 1] == '"' && len > 2 && value[1] != '\"') {
+        if (*value == '\"' && value[len - 1] == '"' && len > 2 && value[1] != '\"' && !strpbrk(value, " \t")) {
             /*
                 Can't strip quotes if multiple args are quoted, only if one single arg is quoted
              */
