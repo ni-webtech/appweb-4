@@ -422,6 +422,7 @@ static int authMethodDirective(MaState *state, cchar *key, cchar *value)
  */
 static int authNameDirective(MaState *state, cchar *key, cchar *value)
 {
+    value = strim(value, "\"'", MPR_TRIM_BOTH);
     httpSetAuthRealm(state->auth, value);
     return 0;
 }
