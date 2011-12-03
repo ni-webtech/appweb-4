@@ -3005,6 +3005,9 @@ void httpConnTimeout(HttpConn *conn)
     HttpLimits  *limits;
     MprTime     now;
 
+    if (!conn->http) {
+        return;
+    }
     rx = conn->rx;
     now = conn->http->now;
     mprAssert(rx);
