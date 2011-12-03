@@ -334,7 +334,6 @@ void espRenderView(HttpConn *conn, cchar *name)
                 httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't load compiled esp module for %s", req->source);
                 return;
             }
-        } else {
         }
         unlock(req->esp);
     }

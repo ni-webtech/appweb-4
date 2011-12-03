@@ -113,8 +113,8 @@
       <type>void</type>
       <name>maSetAccessLog</name>
       <anchorfile>group___appweb.html</anchorfile>
-      <anchor>ga7168a722ecf30b5caf8e0c9f29acdc5c</anchor>
-      <arglist>(HttpHost *host, cchar *path, cchar *format)</arglist>
+      <anchor>ga9b68eb868e420bafc8b6fde4a5c3d15c</anchor>
+      <arglist>(HttpRoute *route, cchar *path, cchar *format)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -155,8 +155,8 @@
       <type>int</type>
       <name>maStartAccessLogging</name>
       <anchorfile>group___appweb.html</anchorfile>
-      <anchor>gadac92b232e7f075ba35c660ca1bbd3ed</anchor>
-      <arglist>(HttpHost *host)</arglist>
+      <anchor>ga4b758efae1918f0bd5704fdd79ca674a</anchor>
+      <arglist>(HttpRoute *route)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
@@ -166,18 +166,11 @@
       <arglist>(MaAppweb *appweb)</arglist>
     </member>
     <member kind="function">
-      <type>int</type>
-      <name>maStartLogging</name>
-      <anchorfile>group___appweb.html</anchorfile>
-      <anchor>ga7a5b52ceee1b22f1d40a8cea80d44d2c</anchor>
-      <arglist>(HttpHost *host, cchar *logSpec)</arglist>
-    </member>
-    <member kind="function">
       <type>void</type>
       <name>maStopAccessLogging</name>
       <anchorfile>group___appweb.html</anchorfile>
-      <anchor>ga1a9f476cc950658d26cedddcfe6f72bb</anchor>
-      <arglist>(HttpHost *host)</arglist>
+      <anchor>ga2a09e8fd4be12b6f3488e64afc09c3d6</anchor>
+      <arglist>(HttpRoute *route)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
@@ -185,13 +178,6 @@
       <anchorfile>group___appweb.html</anchorfile>
       <anchor>gae98b753968134ec1c2bc50d5d63b2a1f</anchor>
       <arglist>(MaAppweb *appweb)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>maStopLogging</name>
-      <anchorfile>group___appweb.html</anchorfile>
-      <anchor>ga0230e2295d47feb959701eb07478354b</anchor>
-      <arglist>()</arglist>
     </member>
     <member kind="function">
       <type>bool</type>
