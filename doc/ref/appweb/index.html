@@ -20,9 +20,9 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
-                        <label title="Search">Search</label> 
+                        <label for="q" title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
                         <input type="hidden" name="domains" value="appwebserver.org" /> 
@@ -42,7 +42,7 @@
         <div class="contentRight">
             
 <!-- BeginDsi "dsi/progRefSeeAlso.html" -->
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul class="nav">
                 <li><a href="../../ref/appweb/index.html">Programmers Reference</a></li>
                 <li><a href="../../ref/appweb/architecture.html">Appweb Architecture</a></li>
@@ -66,22 +66,23 @@
             <h1>Programmers Reference</h1>
             <p>The programmers reference describes the Appweb programming APIs and provides architectural overviews
                 and background programming materials.</p>
-            <h2>Architectural Overviews</h2>
+            <h1>Architectural Overviews</h1>
             <ul>
                 <li><a href="architecture.html">Appweb Architecture</a></li>
                 <li><a href="memory.html">Appweb Memory Allocation</a></li>
                 <li><a href="multithread.html">Multithreaded Programming</a></li>
             </ul>
-            <h2>Programming APIs</h2>
+            <h1>Programming APIs</h1>
             <p>The Appweb Native APIs consist of C language headers, function prototypes, structure definitions and
                 defines. They are divided into one of these areas.</p>
-            <table summary="" width="100%">
+            <table title="APIs" class="full">
                 <thead>
                     <tr>
-                        <td>Area</td>
-                        <td>Description</td>
+                        <th>Area</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
+                <tbody>
                 <tr>
                     <td><a href="../../api/appweb.html">Appweb</a></td>
                     <td>Appweb Http API</td>
@@ -95,11 +96,12 @@
                     <td>Http Client and Server Library API</td>
                 </tr>
                 <tr>
-                    <td nowrap="nowrap"><a href="../../api/mpr.html">MPR</a></td>
+                    <td class="nowrap"><a href="../../api/mpr.html">MPR</a></td>
                     <td>Multithreaded Platform Runtime API</td>
                 </tr>
+                </tbody>
             </table>
-            <h3>Stability Classifications</h3>
+            <h2>Stability Classifications</h2>
             <p>Rather than providing a blanket <a href="../../product/compatibility.html">backwards compatibility</a>
             guarantee, APIs are classified according to their stability. These <a href=
             "../../api/stability.html">Stability Classifications</a> should assist developers in migrating to new

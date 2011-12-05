@@ -20,9 +20,9 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
-                        <label title="Search">Search</label> 
+                        <label for="q" title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
                         <input type="hidden" name="domains" value="appwebserver.org" /> 
@@ -40,18 +40,15 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
                 <li><a href="#overview">Overview</a></li>
-                <li><a href="#allocator">Allocator</a></li>
-                <li><a href="#errors">Error Handling</a></li>
-                <li><a href="#collector">Garbage Collector</a></li>
-                <li><a href="#phases">Collection Phases</a></li>
-                <li><a href="#marking">Marking Blocks</a></li>
-                <li><a href="#alloc">Allocating Memory</a></li>
-                <li><a href="#managers">Managers</a></li>
+                <li><a href="#dispatchers">Dispatchers</a></li>
+                <li><a href="#multithreaded">Multithreaded</a></li>
+                <li><a href="#modules">Modules</a></li>
+                <li><a href="#locking">Locking</a></li>
             </ul>
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul>
                 <li><a href="architecture.html">Appweb Architecture</a></li>
                 <li><a href="memory.html">MPR Memory Allocator</a></li>
@@ -71,7 +68,7 @@
             <h1>Multithreaded Programming</h1>
             <a name="overview"></a>
             <h2>Overview</h2>
-            <p>Programmming in a multithreaded environment can be difficult. Sometimes programming errors are timing related 
+            <p>Programming in a multithreaded environment can be difficult. Sometimes programming errors are timing related 
             as multiple threads interact. Multithread locks can become tangled and bugs can be difficult to reproduce. 
             To alleviate these problems and
             enable the benefits of a multi-threaded core, Appweb provides a suite of facilities to make multithreaded
@@ -79,7 +76,7 @@
             <h3>The Problem of Multithreaded I/O Events</h3>
             <p>A particular thorny issue in multithreaded servers, is how to handle I/O without consuming a thread for
             each request. It is not practical to dedicate a thread to each HTTP request. A single browser will often
-            send 6-10 simulaneous requests. If each request consumed a thread for the duration, the web server would
+            send 6-10 simultaneous requests. If each request consumed a thread for the duration, the web server would
             quickly consume too many threads and system performance would greatly suffer. </p>
             <p>One solution is to use a thread pool. This allows a request to borrow a thread from a thread pool while 
             the request is active and return the thread when it cannot immediately continue with servicing the request. 
@@ -96,6 +93,8 @@
             locks to serialize access to such data, but this is a crude solution and often leads to brittle applications.
             Appweb has a better solution that effectively serializes all activity for a request: per-request 
             event dispatchers.</p>
+
+            <a name="dispatchers"></a>
             <h3>Event Dispatchers</h3>
             <p>The Multithreaded Portable Runtime (MPR) used by Appweb has a facility called Event Dispatchers. These
             are event queues on which all I/O and other event activity for a request can be queued and serviced. 
@@ -106,20 +105,26 @@
             eventually service the I/O event. If the request is currently idle, a thread is assigned from the thread 
             pool for the request, and the thread is resumed to service the request's dispatcher queue. This greatly 
             simplifies Appweb as all activity for a request is thus serialized via the dispatcher queue.</p>
+
+            <a name="multithreaded"></a>
             <h3>Multithreaded Appweb</h3>
             <p>By using request dispatchers, Appweb serializes all request activity, yet it can support many 
             simultaneous requests due to its multithreaded core. Appweb efficiently utilizes thread resources by using
             a thread pool and not dedicating threads permanently to requests. Threads are temporarily assigned
             only as required by active requests.</p>
-            <h3>Simplified Modules</h3>
+
+            <a name="modules"></a>
+            <h3>Modules</h3>
             <p>Appweb can be extended by writing loadable modules. Modules can add request handlers, pipeline filters,
             or network connectors. All module code can rely on the fact that request activity will be serialized and
-            no locking is required to serilize I/O activity. Consequently, most module code can be effectively 
+            no locking is required to serialize I/O activity. Consequently, most module code can be effectively 
             single-threaded.</p>
             <p>Appweb can also be extended via Embedded Server Pages applications. These are loadable ESP web pages,
             and ESP Model-View-Controller applications. These too can rely on the fact that request activity is serialized
             and locking primitives are typically not required. ESP code can thus be simple, 
             single-threaded application code.</p>
+            
+            <a name="locking"></a>
             <h3>Locking</h3>
             <p>If you have a requirement for a data structure that will be accessed and manipulated simultaneously
             by multiple threads, the MPR provides a suite of locking primitives. See

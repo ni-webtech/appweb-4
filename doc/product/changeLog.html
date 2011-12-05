@@ -20,9 +20,9 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
-                        <label title="Search">Search</label> 
+                        <label for="q" title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
                         <input type="hidden" name="domains" value="appwebserver.org" /> 
@@ -40,7 +40,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
                 <li><a href="#r4.0.0">Release 4.0.0</a></li>
                 <li><a href="#r3.3.2">Release 3.3.2</a></li>
@@ -55,7 +55,7 @@
                 <li><a href="#r2.4.2">Release 2.4.2</a></li>
             </ul>
 <!-- BeginDsi "dsi/genSeeAlso.html" -->
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul class="nav">
                 <li><a href="../guide/appweb/overview.html">Appweb Overview</a></li>
                 <li><a href="../guide/appweb/features.html">Appweb Features</a></li>
@@ -121,7 +121,7 @@
                 <li>Optimize output of large static files</li>
                 <li>Samples not compiling</li>
                 <li>Windows 64-bit file stat</li>
-                <li>Add huge file support (>2GB)</li>
+                <li>Add huge file support (&gt; 2GB)</li>
             </ul>
             <!--
             <h3><strong>API Changes</strong></h3>
@@ -160,7 +160,7 @@
                 <li>Ensure handlers match() routine is always invoked if required</li>
                 <li>FreeBSD linking fixes</li>
                 <li>CGI for long running requests and requests with large post data</li>
-                <li>Bad reference for req->pathInfo</li>
+                <li>Bad reference for req-&gt;pathInfo</li>
                 <li>ActionProgram directive for CGI</li>
                 <li>REDIRECT_STATIC compat env var for PHP</li>
                 <li>Inheriting AuthName, Require and CustomLog directives</li>
@@ -168,7 +168,7 @@
                 <li>Ejscript: Windows 7 support and VS 10.0</li>
                 <li>Add missing msvcrt version 10 DLL</li>
                 <li>Update Ejscript documentation</li>
-                <li>Premature exit with large forwad time changes</li>
+                <li>Premature exit with large forward time changes</li>
                 <li>CGI with file upload</li>
                 <li>Return status of 401 instead of 404 when missing file and authentication</li>
                 <li>Rewriting the request URI. Now updates filename, alias, location, extension etc.</li>
@@ -181,7 +181,7 @@
                 <li>Ejscript: Allow JSON encoded arrays in Http form data</li>
                 <li>Ejscript: memory fragmentation</li>
                 <li>Ejscript: exception stack handling</li>
-                <li>Ejscript: parsing XML characters > 127</li>
+                <li>Ejscript: parsing XML characters &gt; 127</li>
                 <li>Ejscript: GC issue with new Function()</li>
                 <li>Ejscript: XSS issue with embedded script in URLs - thanks Gjoko Krstic at Zero Science Lab</li>
                 <li>Ejscript: Compiler spin with }; construct</li>
@@ -216,7 +216,7 @@
             <h3>Key Fixes</h3>
             <ul>
                 <li>Missing linkup script for packaging</li>
-                <li>Timedout requests</li>
+                <li>Timed out requests</li>
                 <li>Building with va_list on some systems</li>
                 <li>Parsing IPv6 addresses in the config file</li>
                 <li>Ejscript loading modules fix for ARM</li>
@@ -401,7 +401,7 @@
                 <li>Windows CE support</li>
                 <li>FreeBSD support</li>
                 <li>MAC OSX support</li>
-                <li>Windows 7 and Vista suport</li>
+                <li>Windows 7 and Vista support</li>
                 <li>OpenWrt platform support</li>
                 <li>IPv6 network support</li>
                 <li>Project files for MAC OS Xcode and Microsoft Visual Studio</li>
@@ -479,7 +479,7 @@
             <h3>Minor</h3>
             <ul>
                 <li>Enhanced MAC OS X support. Builds and runs from svn tree. No installation, source only.</li>
-                <li>Cross development configuration simpilified. Simplified tools.config configuration.</li>
+                <li>Cross development configuration simplified. Simplified tools.config configuration.</li>
                 <li>Improved tool searching algorithms in configure.</li>
                 <li>Update to use latest doxygen for documentation generation.</li>
                 <li>Fix C++ compiler warnings for a cleaner build.</li>
@@ -493,7 +493,7 @@
                 <li>SuSE linux support. Packaged releases provided, make install/uninstall operational.</li>
                 <li>Update uclibc support.</li>
                 <li>Remove requirement to have doxygen during the installation.</li>
-                <li>Increase default input buffer alloction to 1K to include most request headers without having to
+                <li>Increase default input buffer allocation to 1K to include most request headers without having to
                 reallocate memory.</li>
                 <li>Improved documentation on building from source.</li>
             </ul>
@@ -568,7 +568,7 @@
                 <li>SuSE linux support. Packaged releases provided, make install/uninstall operational.</li>
                 <li>Update uclibc support.</li>
                 <li>Remove requirement to have doxygen during the installation.</li>
-                <li>Increase default input buffer alloction to 1K to include most request headers without having to
+                <li>Increase default input buffer alloctaion to 1K to include most request headers without having to
                 reallocate memory.</li>
                 <li>Improved documentation on building from source.</li>
             </ul>
@@ -590,7 +590,7 @@
             <h3>Minor</h3>
             <ul>
                 <li>Enhanced MAC OS X support. Builds and runs from svn tree. No installation, source only.</li>
-                <li>Cross development configuration simpilified. Simplified tools.config configuration.</li>
+                <li>Cross development configuration simplified. Simplified tools.config configuration.</li>
                 <li>Improved tool searching algorithms in configure.</li>
                 <li>Update to use latest doxygen for documentation generation.</li>
                 <li>Fix C++ compiler warnings for a cleaner build.</li>
@@ -902,13 +902,13 @@
                 <li>Fix for browser not refreshing content correctly. Change to copyHandler. Thanks Axialdev,
                 Mediatrix</li>
                 <li>Fix for single threaded compilation. Thanks Pauli.</li>
-                <li>Fix for copmiling samples when using --disable-static</li>
+                <li>Fix for compiling samples when using --disable-static</li>
                 <li>Fix for running configure on linux. Changes to bin/bld. Thanks Vinvagh.</li>
                 <li>Fix for uClinux building. Changes to bin/bld to use BLD_CFLAGS instead of BLD_LDFLAGS. Thanks
                 Ben.</li>
                 <li>Fix for building on Linux. Was not testing for existence of cygpath correctly. Thanks Barry Stone,
                 et al.</li>
-                <li>Fixed bugs in EJS for comparisions with non-boolean operands. Thanks Martin Brochu.</li>
+                <li>Fixed bugs in EJS for comparisons with non-boolean operands. Thanks Martin Brochu.</li>
                 <li>Fix EJS issue with unary minus calculations.</li>
             </ul>
             <h2 class="section">Changes in 1.3.4-5</h2>
@@ -945,7 +945,7 @@
                 <li>Fix including of ESP include files to look for the included file in the same directory as the base
                 ESP page.</li>
                 <li>Fix for "make uninstall" to not to change permissions of any standard directories</li>
-                <li>Fix seg fault on large ESP pages. This occurred when the page exceeded the maximum configured via
+                <li>Fix segfault on large ESP pages. This occurred when the page exceeded the maximum configured via
                 the LimitResponseBody directive. (Thanks Mediatrix). Use LimitScriptSize in future to specify or modify
                 the default maximum size (128K) of a script.</li>
                 <li>Added clearer error messages when the maximum script size is exceeded.</li>
@@ -1067,7 +1067,7 @@
                 <li>Simplify the build system by removing the need for template files.</li>
                 <li>Aliases are now per host instead of being per server.</li>
                 <li>Allow Aliases to come before or after directory blocks that describe the alias destination.</li>
-                <li>Build system improvements for building external packges</li>
+                <li>Build system improvements for building external packages</li>
                 <li>Improved 64-bit and Solaris support.</li>
             </ul>
             <h3>Fixes</h3>
@@ -1445,7 +1445,7 @@
                 <li>Fixed bug handling empty password and group authorization files.</li>
                 <li>Fix windows link errors 4217, 4049</li>
                 <li>Fix windows bug where aliases without drive specs were not handled correctly.</li>
-                <li>Fix bug escaping and descaping URLs.</li>
+                <li>Fix bug escaping and de-escaping URLs.</li>
                 <li>Fix bug with windows event processing under heavy load where an event could get lost.</li>
                 <li>Lots of minor fixes.</li>
             </ul>

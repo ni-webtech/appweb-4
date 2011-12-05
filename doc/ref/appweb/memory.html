@@ -20,9 +20,9 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
-                        <label title="Search">Search</label> 
+                        <label for="q" title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
                         <input type="hidden" name="domains" value="appwebserver.org" /> 
@@ -40,7 +40,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
                 <li><a href="#overview">Overview</a></li>
                 <li><a href="#allocator">Allocator</a></li>
@@ -51,7 +51,7 @@
                 <li><a href="#alloc">Allocating Memory</a></li>
                 <li><a href="#managers">Managers</a></li>
             </ul>
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul>
                 <li><a href="multithread.html">Multithreaded</a></li>
                 <li><a href="architecture.html">Appweb Architecture</a></li>
@@ -79,16 +79,16 @@
             <p>The allocator uses a garbage collector for locating unused memory. The collector is a generational, 
             cooperative and non-compacting collector.  The use of a garbage collector is somewhat unusual in a C program. 
             However, garbage collection it is especially well suited for long running applications like a web server,
-            as it eliminates most memory leaks. Unlike traditional memory allocation where <tt>free</tt> must be called
+            as it eliminates most memory leaks. Unlike traditional memory allocation where <em>free</em> must be called
             to release memory, Appweb uses the opposite approach where memory that must be retained, needs 
             to be actively managed to 
-            prevent garbage collection. This means that a <tt>managed reference</tt> must be held for all active memory.</p>
+            prevent garbage collection. This means that a <em>managed reference</em> must be held for all active memory.</p>
             <a name="allocator"></a>
             <h2>Allocator</h2>
-            <p>The allocator is optimized for frequent allocations of small blocks (< 4K). It 
+            <p>The allocator is optimized for frequent allocations of small blocks (&lt; 4K). It 
             uses a scheme of free queues for fast allocation. Memory allocations are aligned on 16 byte boundaries on 64-bit 
             systems and otherwise on 8 byte boundaries. It will return chunks of unused memory back to the O/S.</p>
-            <h4>Appweb 3 Allocator</h4>
+            <h3>Appweb 3 Allocator</h3>
             <p>Appweb 3 used memory contexts for all memory allocations. This required many APIs to have a memory context
             as the first parameter. Appweb 4 does not require this and these APIs have removed the memory context 
             parameter.</p>
@@ -111,10 +111,10 @@
             that memory to the
             Operating System. The collector runs in its own thread, but is cooperative, in that each other thread must 
             yield to the collector before memory can be reclaimed. Worker threads yield to the collector
-            by calling the <tt>mprYield</tt> API.
+            by calling the <em>mprYield</em> API.
             This strategy permits worker threads to allocate temporary memory without fear. The memory will not be 
-            prematurely collected until the worker explicitly acknowleges and yields to the collector by 
-            calling <tt>mprYield</tt>.
+            prematurely collected until the worker explicitly acknowledges and yields to the collector by 
+            calling <em>mprYield</em>.
             <p>To prevent collection of a memory block and retain the block over a yield point, the application must 
             hold a managed reference for the block. A managed reference, is a reference to an allocated block that 
             will be marked as active during a collection cycle by the Owning Blocks manager function. Manager functions
@@ -130,17 +130,17 @@
             <a name="marking"></a>
             <h3>Marking Blocks</h3>
             <p>The Mark phase beings with a set of known root memory blocks. The ultimate root is the Mpr object 
-            returned from the <tt>mprCreate</tt> API. However, other roots can be added at any time 
-            via <tt>mprAddRoot</tt>. For each root,
-            the collector invokes the manager function defined when the block was allocated. It is the responsibilty of
-            that manager function to call <tt>mprMark</tt> on every managed reference owned by the block. 
+            returned from the <em>mprCreate</em> API. However, other roots can be added at any time 
+            via <em>mprAddRoot</em>. For each root,
+            the collector invokes the manager function defined when the block was allocated. It is the responsibility of
+            that manager function to call <em>mprMark</em> on every managed reference owned by the block. 
             The mprMark function will then invoke the manager for these managed references and so on.
             In this manner, managed memory forms a tree from the roots to the leaves and the mark phase visits every 
             managed block currently in use.</p>
             <a name="alloc"></a>
             <h3>Allocating Memory</h3>
             <p>Managers are defined when allocating a block of memory. For example, this code will allocate a block
-            that will contain a managed reference to an allocated string:
+            that will contain a managed reference to an allocated string:</p>
 <pre>
 char **block = mprAllocObj(char*, manageBlock);
 *block = sclone("Hello World");

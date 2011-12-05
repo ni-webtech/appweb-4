@@ -20,9 +20,9 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
-                        <label title="Search">Search</label> 
+                        <label for="q" title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
                         <input type="hidden" name="domains" value="appwebserver.org" /> 
@@ -42,7 +42,7 @@
         <div class="contentRight">
             
 <!-- BeginDsi "dsi/progGuideSeeAlso.html" -->
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul class="nav">
                 <li><a href="../../../guide/appweb/programmers/index.html">Programmers Guide</a></li>
                 <li><a href="../../../guide/appweb/programmers/embedding.html">Embedding Appweb</a></li>
@@ -59,15 +59,16 @@
 <!-- EndDsi -->
         </div>
         <h1>Manual Pages</h1>
-        <p>This Appweb distribution provides manual pages that can be viewed (on Unix-like sytems) using the systems
+        <p>This Appweb distribution provides manual pages that can be viewed (on Unix-like systems) using the systems
         <strong>man</strong> command. Text copies of the pages are included below:</p>
-        <table summary="" width="75%">
+        <table title="Man Pages" class="full">
             <thead>
                 <tr>
-                    <td>Topic</td>
-                    <td>Description</td>
+                    <th>Topic</th>
+                    <th>Description</th>
                 </tr>
             </thead>
+            <tbody>
             <tr>
                 <td><a href="../../../man/appweb.html">appweb</a></td>
                 <td>Appweb web server program</td>
@@ -100,6 +101,7 @@
                 <td><a href="../../../man/regexp.html">regexp</a></td>
                 <td>Regular expressions &mdash; Used in routes.</td>
             </tr>
+            </tbody>
         </table>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->

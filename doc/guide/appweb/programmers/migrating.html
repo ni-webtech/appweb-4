@@ -20,9 +20,9 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
-                        <label title="Search">Search</label> 
+                        <label for="q" title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
                         <input type="hidden" name="domains" value="appwebserver.org" /> 
@@ -40,7 +40,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
                 <li><a href="#compatibility">Appweb 3 Compatibility</a></li>
                 <li><a href="#support">Legacy Support</a></li>
@@ -51,7 +51,7 @@
                 <li><a href="#egi">Migrating EGI Programs</a></li>
             </ul>
 <!-- BeginDsi "dsi/progGuideSeeAlso.html" -->
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul class="nav">
                 <li><a href="../../../guide/appweb/programmers/index.html">Programmers Guide</a></li>
                 <li><a href="../../../guide/appweb/programmers/embedding.html">Embedding Appweb</a></li>
@@ -83,7 +83,7 @@
             <h3>Legacy Appweb Support</h3>
             <p>To address the needs of users for whom upgrading to Appweb 3 will take some time, we intend to support
             Appweb 3 till the end of 2012 and to continue to issue updates and upgrades for Appweb 3 during that
-            period. Appweb 2 is now offically "end-of-life".</p>
+            period. Appweb 2 is now officially "end-of-life".</p>
             
             <a name="changes" id="changes"></a>
             <h2 class="section">Changes in Appweb 4</h2>
@@ -123,15 +123,15 @@
             uses a background collector for freeing unused memory.</p>
             <p>The garbage collector is somewhat unusual in a C program. However, garbage collection 
             is especially well suited for long running applications like a web server since it virtually eliminates
-            memory leaks. Unlike traditional memory allocation where <tt>free</tt> must be called, Appweb 4 uses the
+            memory leaks. Unlike traditional memory allocation where <em>free</em> must be called, Appweb 4 uses the
             opposite approach where memory that must be retained needs to be actively managed to prevent garbage 
-            collection. This means that a <tt>managed reference</tt> must be held for all active memory.
+            collection. This means that a <em>managed reference</em> must be held for all active memory.
             See <a href="../../../ref/appweb/memory.html">Memory Allocation</a> for more details.</p>
             <a name="config" id="config"></a>
             <h2 class="section">Migrating Appweb Configuration Files</h2>
             <p>The Appweb 4 configuration file is substantially the same as the Appweb 3. Include directives can now
             contain wild cards and there are several new directives supporting Routing, Multi-language support and the
-            Embededed Server Pages web framework. The big change is that Route directives replace the Directory and Location
+            Embedded Server Pages web framework. The big change is that Route directives replace the Directory and Location
             directives. </p>
             <h3>Routes vs Directory/Location Directives</h3>
             <p>Appweb 4 uses a more flexible Route directive instead of the Appweb 2/3 Directory and Location directives.
@@ -147,7 +147,7 @@
             <p>In many cases, the new Embedded Server Pages (ESP) web framework provides a simpler and more flexible
             way to add functionality to Appweb compared with custom handlers and modules. ESP allows the easy binding
             of "C" language functions to request URIs via powerful Controllers and the Appweb routing engine.
-            See the <a href="../../esp/users/esp.html">Using ESP</a> document for more details. </p>
+            See the <a href="../../esp/users/index.html">Using ESP</a> document for more details. </p>
             
             <h2 class="section">Embedded Server Pages</h2>
             <p>ESP is the single biggest change in Appweb 4. ESP is a powerful Model/View/Controller web framework
@@ -155,7 +155,7 @@
             <ul>
                 <li>Transparent compilation of ESP programs and web pages</li>
                 <li>Embedded C code directly in web pages</li>
-                <li>Templated web pages with layout pages</li>
+                <li>Template web pages with layout pages</li>
                 <li>Caching of compiled ESP and web pages</li>
                 <li>Caching of generated request responses</li>
                 <li>Model/View/Controller framework</li>

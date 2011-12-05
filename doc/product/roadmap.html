@@ -20,9 +20,9 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
-                        <label title="Search">Search</label> 
+                        <label for="q" title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
                         <input type="hidden" name="domains" value="appwebserver.org" /> 
@@ -40,14 +40,13 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
-                <li><a href="#tasks">Current Roadmap Tasks</a></li>
                 <li><a href="#whatsIn">Next Release</a></li>
                 <li><a href="#schedule">Release Schedule</a></li>
             </ul>
 <!-- BeginDsi "dsi/genSeeAlso.html" -->
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul class="nav">
                 <li><a href="../guide/appweb/overview.html">Appweb Overview</a></li>
                 <li><a href="../guide/appweb/features.html">Appweb Features</a></li>
@@ -94,48 +93,48 @@
             <h2>Release Schedule</h2>
             <p>As with all good open source, our release schedule is driven by software readiness rather
             than by commercial needs. Nevertheless, here is an outline of our current best estimate.</p>
-            <table summary="schedule" width="100%">
+            <table title="schedule" class="width">
                 <thead>
                     <tr>
-                        <td>Release</td>
-                        <td>Date</td>
+                        <th>Release</th>
+                        <th>Date</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td nowrap="nowrap">Embedthis Appweb 4.0.0 Beta (dev)</td>
+                        <td class="nowrap">Embedthis Appweb 4.0.0 Beta (dev)</td>
                         <td>Nov 2011</td>
                     </tr>
                     <tr>
-                        <td nowrap="nowrap">Embedthis Appweb 3.3.2 (stable)</td>
+                        <td class="nowrap">Embedthis Appweb 3.3.2 (stable)</td>
                         <td>Nov 2011</td>
                     </tr>
                     <tr>
-                        <td nowrap="nowrap">Embedthis Appweb 3.3.1 (stable)</td>
+                        <td class="nowrap">Embedthis Appweb 3.3.1 (stable)</td>
                         <td>April 2011</td>
                     </tr>
                     <tr>
-                        <td nowrap="nowrap">Embedthis Appweb 3.3.0 (stable)</td>
+                        <td class="nowrap">Embedthis Appweb 3.3.0 (stable)</td>
                         <td>February 2011</td>
                     </tr>
                     <tr>
-                        <td nowrap="nowrap">Embedthis Appweb 3.2.2 (stable)</td>
+                        <td class="nowrap">Embedthis Appweb 3.2.2 (stable)</td>
                         <td>June 2010</td>
                     </tr>
                     <tr>
-                        <td nowrap="nowrap">Embedthis Appweb 3.2.1 (stable)</td>
+                        <td class="nowrap">Embedthis Appweb 3.2.1 (stable)</td>
                         <td>April 2010</td>
                     </tr>
                     <tr>
-                        <td nowrap="nowrap">Embedthis Appweb 3.2.0 (stable)</td>
+                        <td class="nowrap">Embedthis Appweb 3.2.0 (stable)</td>
                         <td>March 2010</td>
                     </tr>
                     <tr>
-                        <td nowrap="nowrap">Embedthis Appweb 3.1.2 (stable)</td>
+                        <td class="nowrap">Embedthis Appweb 3.1.2 (stable)</td>
                         <td>December 2009</td>
                     </tr>
                     <tr>
-                        <td nowrap="nowrap">Embedthis Appweb 3.1.1 (stable)</td>
+                        <td class="nowrap">Embedthis Appweb 3.1.1 (stable)</td>
                         <td>November 2009</td>
                     </tr>
                     <tr>
@@ -208,7 +207,7 @@
                     </tr>
                     <tr>
                         <td>Embedthis Appweb 1.3.3 (development)</td>
-                        <td>Feb 2005</td>
+                        <td>February 2005</td>
                     </tr>
                     <tr>
                         <td>Embedthis Appweb 1.3.2 (development)</td>

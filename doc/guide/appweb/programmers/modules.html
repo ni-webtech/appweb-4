@@ -20,9 +20,9 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
-                        <label title="Search">Search</label> 
+                        <label for="q" title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
                         <input type="hidden" name="domains" value="appwebserver.org" /> 
@@ -42,7 +42,7 @@
         <div class="contentRight">
             
 <!-- BeginDsi "dsi/progGuideSeeAlso.html" -->
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul class="nav">
                 <li><a href="../../../guide/appweb/programmers/index.html">Programmers Guide</a></li>
                 <li><a href="../../../guide/appweb/programmers/embedding.html">Embedding Appweb</a></li>
@@ -74,7 +74,7 @@
             <pre>
 ma<b>Name</b>Init(Http *http, MprModule *module)
 </pre>
-            <p>where <b>Name</b> is the name of your module. For example: <tt>maCgiHandlerInit</tt> is the 
+            <p>where <b>Name</b> is the name of your module. For example: <em>maCgiHandlerInit</em> is the 
             library initialization entry point for the cgiHandler. 
             Note: The first letter must be upper case. This function will be
             called immediately after loading the module code.</p>

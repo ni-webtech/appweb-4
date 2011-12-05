@@ -20,9 +20,9 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
-                        <label title="Search">Search</label> 
+                        <label for="q" title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
                         <input type="hidden" name="domains" value="appwebserver.org" /> 
@@ -49,20 +49,16 @@
         <div class="contentLeft">
             <h1>Standards</h1>
             <p>The Standards guide contains references to the specifications that govern the HTTP protocol.</p>
-            <table summary="" width="100%">
+            <table title="standards" width="100%">
                 <thead>
                     <tr>
-                        <td>Section</td>
-                        <td>Description</td>
+                        <th>Section</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
                 <tr>
                     <td><a href="http.html">HTTP</a></td>
                     <td>References and links to HTTP standards.</td>
-                </tr>
-                <tr>
-                    <td><a href="ecmascript.html">ECMAScript</a></td>
-                    <td>References and links to ECMAScript standards and background information.</td>
                 </tr>
             </table>
         </div>

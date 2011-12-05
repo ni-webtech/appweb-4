@@ -20,9 +20,9 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
-                        <label title="Search">Search</label> 
+                        <label for="q" title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
                         <input type="hidden" name="domains" value="appwebserver.org" /> 
@@ -37,9 +37,9 @@
 <!-- EndDsi -->
         </div>
     </div>
-    <div class="content">
+    <div class="content contentHome">
         <div class="homeRight">
-            <h2><a href="../guide/appweb/programmers/index.html">Programmers Guide</a></h2>
+            <h1><a href="../guide/appweb/programmers/index.html">Programmers Guide</a></h1>
             <ul class="bare">
                 <li><a href="../guide/appweb/programmers/embedding.html">Embedding Appweb</a></li>
                 <li><a href="../guide/appweb/programmers/modules.html">Extending via Custom Modules</a></li>
@@ -48,7 +48,7 @@
                 <li><a href="../guide/appweb/programmers/rom.html">Serving Pages from ROM</a></li>
                 <li><a href="../guide/appweb/programmers/man.html">Man Pages</a></li>
             </ul>
-            <h2><a href="../ref/appweb/index.html">Programmers Reference</a></h2>
+            <h1><a href="../ref/appweb/index.html">Programmers Reference</a></h1>
             <ul class="bare">
                 <li><a href="../api/native.html">API Library</a></li>
                 <li><a href="../ref/appweb/memory.html">Appweb Memory Allocation</a></li>
@@ -56,12 +56,12 @@
                 <li><a href="../ref/appweb/architecture.html">Appweb Architecture</a></li>
                 <li><a href="../guide/appweb/standards/http.html">HTTP References</a></li>
             </ul>
-            <h2><a href="../guide/appweb/source/index.html">Source Code</a></h2>
+            <h1><a href="../guide/appweb/source/index.html">Source Code</a></h1>
             <ul class="bare">
                 <li><a href="../guide/appweb/source/building.html">Building Appweb from Source</a></li>
                 <li><a href="../guide/appweb/source/porting.html">Porting Appweb to New Platforms</a></li>
             </ul>
-            <h2><a href="project.html">Project Resources</a></h2>
+            <h1><a href="project.html">Project Resources</a></h1>
             <ul class="bare">
                 <li><a href="https://github.com/embedthis/appweb-4">Source Code Repository</a></li>
                 <li><a href="https://github.com/embedthis/appweb-4/issues">Project Issue Database</a></li>
@@ -70,20 +70,20 @@
             </ul>
         </div>
         <div class="homeLeft">
-            <h2>General</h2>
+            <h1>General</h1>
             <ul class="bare">
                 <li><a href="../guide/appweb/overview.html">Embedthis Appweb&trade; Overview</a></li>
                 <li><a href="../guide/appweb/features.html">Appweb Features</a></li>
                 <li><a href="releaseNotes.html">Release Notes</a></li>
                 <li><a href="changeLog.html">Change Log</a></li>
-                <li><a href="http://appwebserver.org/downloads/appweb/download.ejs">Latest Release</a> <iframe src=
-                "http://appwebserver.org/products/appweb/doc/product/version.html" frameborder="0" scrolling="no"
-                marginheight="0" marginwidth="0" width="60" height="14"></iframe></li>
+                <li><a href="http://appwebserver.org/downloads/appweb/download.ejs">Latest Release</a> 
+                <iframe id="latestVersion" src="http://appwebserver.org/products/appweb/doc/product/version.html" 
+                    title="Latest Version"></iframe></li>
                 <li><a href="roadmap.html">Roadmap</a></li>
                 <li><a href="compatibility.html">Compatibility</a></li>
                 <li><a href="../licenses/index.html">Licensing</a></li>
             </ul>
-            <h2><a href="../guide/appweb/users/gettingStarted.html">Getting Started</a></h2>
+            <h1><a href="../guide/appweb/users/gettingStarted.html">Getting Started</a></h1>
             <ul class="bare">
                 <li><a href="../guide/appweb/users/quickStart.html">Quick Start</a></li>
                 <li><a href="install/index.html">Installation</a></li>
@@ -91,7 +91,7 @@
                 <li><a href="../guide/appweb/users/starting.html">Starting and Stopping</a></li>
                 <li><a href="../guide/appweb/users/service.html">Running as a Service</a></li>
             </ul>
-            <h2>Links</h2>
+            <h1>Links</h1>
             <ul class="bare">
                 <li><a href="http://appwebserver.org/forum/">Appweb Support Forum</a></li>
                 <li><a href="http://embedthis.com/blog/">Embedthis Blog</a></li>
@@ -101,7 +101,7 @@
             <p>&nbsp;</p>
         </div>
         <div class="homeMiddle">
-            <h2><a href="../guide/appweb/users/index.html">Users Guide</a></h2>
+            <h1><a href="../guide/appweb/users/index.html">Users Guide</a></h1>
             <ul class="bare">
                 <li><a href="../guide/appweb/users/configuration.html">Configuring Appweb</a></li>
                 <li><a href="../guide/appweb/users/configuration.html#directives">Configuration Directives</a></li>
@@ -119,7 +119,7 @@
                 <li><a href="../guide/appweb/users/client.html">Http Client</a></li>
                 <li><a href="../guide/appweb/users/security.html">Security Considerations</a></li>
             </ul>
-            <h2><a href="../guide/esp/users/index.html">Embedded Server Pages</a></h2>
+            <h1><a href="../guide/esp/users/index.html">Embedded Server Pages</a></h1>
             <ul class="bare">
                 <li><a href="../guide/esp/users/tour.html">ESP Framework Tour</a></li>
                 <li><a href="../guide/esp/users/config.html">Configuring ESP</a></li>

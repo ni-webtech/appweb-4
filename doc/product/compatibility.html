@@ -20,9 +20,9 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
-                        <label title="Search">Search</label> 
+                        <label for="q" title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
                         <input type="hidden" name="domains" value="appwebserver.org" /> 
@@ -40,7 +40,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
                 <li><a href="#api">API Compatibility</a></li>
                 <li><a href="#r4">Appweb 4</a></li>
@@ -48,7 +48,7 @@
                 <li><a href="#r2">Appweb 2</a></li>
             </ul>
 <!-- BeginDsi "dsi/genSeeAlso.html" -->
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul class="nav">
                 <li><a href="../guide/appweb/overview.html">Appweb Overview</a></li>
                 <li><a href="../guide/appweb/features.html">Appweb Features</a></li>
@@ -80,21 +80,22 @@
             their stability with regard to backwards compatibility.</p>
             <p>We do <b>not</b> provide a blanket commitment to backward compatibility. Rather, we adopt a more
             surgical approach on an API by API basis.</p><a name="r2" id="r2"></a>
+
             <a name="r4" id="r4"></a>
-            <h2>Appweb 4</h2>
+            <h2>Migrating to Appweb 4</h2>
             <p>Appweb 4 is an evolutionary release relative to Appweb 3. Some APIs have changed and new APIs have
-            been added for increased functionality. Appweb 4 uses a new memory allocator that does not require a memory context
-            as the first argument to most APIs. The allocator uses garbage collection and this eliminates
-            the need to manually free up memory.
-            You can migrate code from Appweb 3 to Appweb 4 with some refactoring.</p>
-            <h2>Appweb 3</h2>
-            <p>Appweb 3 is a major change relative to Appweb 2. Most of the APIs have changed in some capacity and you
-            should regard Appweb 3.X as a next generation web server. You can migrate code from Appweb 2 to Appweb 3,
-            however, you should anticipate significant refactoring work throughout the transition.</p>
+            been added for increased functionality. Appweb 4 uses a new memory allocator that does not require a 
+            memory context as the first argument to most APIs. So many APIs have changed signature, while the underlying
+            functionality remains largely similar. The memory allocator uses garbage collection and this eliminates
+            the need to manually free up memory. You can migrate code from Appweb 3 to Appweb 4 with refactoring.</p>
+
+            <p>If you are migrating from Appweb 2, you should regard Appweb 4.X as a next generation web server. 
+            You can migrate code from Appweb 2 to Appweb 4, however, you should anticipate significant refactoring 
+            work throughout the transition.</p>
+
+            <a name="r2" id="r2"></a>
             <h2>Appweb 2</h2>
-            <p>Appweb 2 is a stable release that in now in maintenance mode. The core programming APIs are relatively
-            stable and are not expected to change significantly. Appweb 2 will be maintained until the end of
-            2011.</p>
+            <p>Appweb 2 is now officially deprecated. </p>
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->

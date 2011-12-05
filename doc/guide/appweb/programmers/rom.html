@@ -20,9 +20,9 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
-                        <label title="Search">Search</label> 
+                        <label for="q" title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
                         <input type="hidden" name="domains" value="appwebserver.org" /> 
@@ -40,13 +40,13 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
                 <li><a href="#compilingWebPages">Compiling Web Pages</a></li>
                 <li><a href="#php">Using ROM with PHP</a></li>
             </ul>
 <!-- BeginDsi "dsi/progGuideSeeAlso.html" -->
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul class="nav">
                 <li><a href="../../../guide/appweb/programmers/index.html">Programmers Guide</a></li>
                 <li><a href="../../../guide/appweb/programmers/embedding.html">Embedding Appweb</a></li>
@@ -86,11 +86,11 @@ cc -o romFiles.o romFiles.c
             <p>This will create a list of all the web files and then convert these files into C structures in the file
             romFiles.cpp.</p>
             <p>The <b>makerom</b> program takes two options:</p>
-            <table summary="" width="100%">
+            <table title="Switches" class="width">
                 <thead>
                     <tr>
-                        <td>Switch</td>
-                        <td>Description</td>
+                        <th>Switch</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -99,7 +99,7 @@ cc -o romFiles.o romFiles.c
                         <td>Specifies a prefix to remove from each of the compiled file names.</td>
                     </tr>
                     <tr>
-                        <td nowrap="nowrap">-- name</td>
+                        <td class="nowrap">-- name</td>
                         <td>Specifies the name of top level C structure. Appweb allows multiple ROM directories to be
                         included in a single application. This is necessary if using virtual hosts to allow each host
                         to have its own web directory.</td>

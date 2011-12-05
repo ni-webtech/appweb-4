@@ -20,9 +20,9 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
-                        <label title="Search">Search</label> 
+                        <label for="q" title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
                         <input type="hidden" name="domains" value="appwebserver.org" /> 
@@ -40,7 +40,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
                 <li><a href="#deployment">Deployment Models</a></li>
                 <li><a href="#processing">Processing Architecture</a></li>
@@ -52,7 +52,7 @@
                 <li><a href="#security">Security</a></li>
                 <li><a href="#mpr">Portable Runtime</a></li>
             </ul>
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul>
                 <li><a href="../../guide/appweb/overview.html">User Guide Overview</a></li>
                 <li><a href="../../guide/appweb/users/authorization.html">Authorization</a></li>
@@ -81,9 +81,9 @@
             <p>Appweb supports dynamic web application frameworks like ESP, Ejscript and PHP. It also supports older
             web creation strategies like CGI.</p>
             <p>Appweb is an event-driven, multi-threaded web server and is able to support many
-            thousands of requests per second but it does not try to scale out like an enterprise-class server for 
+            thousands of requests per second but it does not try to scale out like an enterprise class server for 
             top-tier web sites.
-            Rather, it aims to be robust, secure and blazingly fast with low and predictable memory utilization.</p>
+            Rather, it aims to be robust, secure and blazing fast with low and predictable memory utilization.</p>
             <a name= "deployment" id="deployment"></a>
             <h2 class="section">Deployment Models</h2>
             <p>Appweb can be deployed in several ways:</p>
@@ -136,15 +136,16 @@
             <p>Appweb has a modular architecture where modules are dynamically loaded at runtime depending on the
             desired configuration. The key components of Appweb are:</p>
             <p><img src="../../images/modules.jpg" alt="Appweb Architecture" /></p>
-            <table summary="">
+            <table title="Components">
                 <thead>
                     <tr>
-                        <td>Component</td>
-                        <td>Description</td>
+                        <th>Component</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
+                <tbody>
                 <tr>
-                    <td nowrap="nowrap">Embedthis Portable Runtime</td>
+                    <td class="nowrap">Embedthis Portable Runtime</td>
                     <td>Cross-platform, multi-threaded portable runtime. Includes services for memory allocation,
                     dynamic module loading, safe string handling, lists, hashing, command execution, socket
                     communications, threads, thread synchronization, thread-pool, events, timers, debug trace and
@@ -185,7 +186,7 @@
                     <td>Chunk Filter</td>
                     <td>The Chunk applies Transfer Chunk Encoding to outgoing data. Chunk encoding enables the HTTP
                     connection to be reused for subsequent requests without having to establish a new TCP/IP
-                    connection. This can significantly improve network and application perfomance.</td>
+                    connection. This can significantly improve network and application performance.</td>
                 </tr>
                 <tr>
                     <td>Range Filter</td>
@@ -210,6 +211,7 @@
                     <td>Secure Socket Layer protocol stack. This is a virtual interface that can selectively support a
                     variety of SSL providers including: the Peersec MatrixSSL and OpenSSL stacks.</td>
                 </tr>
+                </tbody>
             </table>
             
             <a name="httpServer" id="httpServer"></a>
@@ -234,7 +236,7 @@
             modules to load, where to find the web pages, and how to log requests.</p>
             <p>The configuration file supports a wide variety of directives such as virtual hosting, directory
             authentication, port binding, aliasing, logging, and request pipeline configuration. It has conditional
-            declarations and supports the inclusion of sub-configuation files. Appweb uses a one-pass traversal of the
+            declarations and supports the inclusion of other configuration files. Appweb uses a one-pass traversal of the
             configuration file which means that the order of directives matters.</p>
             
             <a name="requests" id="requests"></a>
@@ -272,13 +274,14 @@ GET /index.html HTTP/1.1
 HeaderName: value
 </pre>
             <p>Some typical headers are:</p>
-            <table summary="">
+            <table title="Headers">
                 <thead>
                     <tr>
-                        <td>Header</td>
-                        <td>Description</td>
+                        <th>Header</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
+                <tbody>
                 <tr>
                     <td>AUTHORIZATION</td>
                     <td>Authorization details including user name, realm, password digest and other authorization
@@ -316,6 +319,7 @@ HeaderName: value
                     <td>Request the server to keep the connection alive so that subsequent requests can reuse the
                     connection.</td>
                 </tr>
+                </tbody>
             </table>
             <p>For example:</p>
             <pre>
@@ -350,7 +354,7 @@ Connection: keep-alive
 <pre>
 AddHandler espHandler myDoc
 </pre>
-            <p>This will cause the ejsHandler to respond to any URI that has a "<tt>.myDoc</tt>" extension.</p>
+            <p>This will cause the ejsHandler to respond to any URI that has a "<em>.myDoc</em>" extension.</p>
             <p>Multiple routes may match a URI. In this case they are applied in the order they are specified in the
             Appweb configuration file. 
             <p>Once the route has been selected, the request pipeline is constructed and the request handler is started
@@ -358,7 +362,7 @@ AddHandler espHandler myDoc
             
             <a name="pipeline" id="pipeline"></a>
             <h2 class="section">Request Pipeline</h2>
-            <p>The Appweb core uses a bi-direction pipeline to process requests and generate responses. This consists
+            <p>The Appweb core uses a bidirectional pipeline to process requests and generate responses. This consists
             of a mechanism of queues, packets, buffering and event scheduling. The pipeline architecture is highly
             optimized and supports the efficient transmission of data without copying. It uses vectored, scatter/gather
             writes to the network to avoid the costly aggregation of data and headers in a single buffer before writing
@@ -434,7 +438,7 @@ AddHandler espHandler myDoc
             <p>The ESP web framework is a high performance, Model/View/Controller web framework. 
             It uses the "C" language embedded in HTML web pages and for Controllers. It provides 
             an application generator, templating and layout engine, a Model/View/Controller framework, extensive caching,
-            and a library of Ajax view controls. It is blazingly fast via the use of "C" and caching of 
+            and a library of Ajax view controls. It is blazing fast via the use of "C" and caching of 
             compiled web pages and rendered HTML.
             <h3>Ejscript Web Framework</h3>
             <p>The Ejscript Web Framework was designed to make it easier to create dynamic web applications. It uses
@@ -496,8 +500,8 @@ AddHandler espHandler myDoc
             <p>Appweb fully supports both IPv4 and IPv6 for both server and client operations. You can configure Appweb
             to listen on both IPv4 and IPv6 addresses.</p>
             <h2 class="section">Embedding APIs</h2>
-            <p>The Appweb HTTP server library can be embedded in an application to web-enable that app. Appweb provides
-            two levels of embedding:</p>
+            <p>The Appweb HTTP server library can be embedded in an application to web-enable that application. 
+            Appweb provides two levels of embedding:</p>
             <h3>One Line Embedding</h3>
             <p>Appweb can be embedded in one C statement. This will create a web server instance based on the given
             configuration file.:</p>

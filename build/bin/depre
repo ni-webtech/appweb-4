@@ -1,0 +1,5 @@
+/*
+    Remove <pre>...</pre> code blocks from html for validation
+ */
+var data = Path(App.args[1]).readString().replace(/<pre>[\s\S]*?<\/pre>/mg, "<pre>DELETED</pre>")
+Path(App.args[1]).write(data)

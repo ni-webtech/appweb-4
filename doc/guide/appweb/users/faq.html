@@ -20,9 +20,9 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
-                        <label title="Search">Search</label> 
+                        <label for="q" title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
                         <input type="hidden" name="domains" value="appwebserver.org" /> 
@@ -40,13 +40,13 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul class="nav">
                 <li><a href="#questions">Questions</a></li>
                 <li><a href="#answers">Answers</a></li>
             </ul>
 <!-- BeginDsi "dsi/gettingSeeAlso.html" -->
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul class="nav">
                 <li><a href="../../../guide/appweb/overview.html">Appweb Overview</a></li>
                 <li><a href="../../../guide/appweb/features.html">Appweb Features</a></li>
@@ -70,6 +70,8 @@
             <h1>Appweb&trade; FAQ</h1>
             <p>If you don't find the answers you need here, please submit your question to the online community support
             <a href="http://appwebserver.org/forum/">Forum</a>.</p>
+
+            <a name="questions"></a>
             <h2 class="section">Questions</h2>
             <h3>General Questions</h3>
             <ul class="questions">
@@ -90,11 +92,13 @@
                 <li><a href="#trace">How can I trouble-shoot with trace?</a></li>
                 <li><a href="#cgi">How can I use CGI?</a></li>
             </ul>
-            <h3>Embeddded Questions</h3>
+            <h3>Embedded Questions</h3>
             <ul class="questions">
                 <li><a href="#minimalFootprint">How small can I make Appweb?</a></li>
                 <li><a href="#cross">How can I cross compile?</a></li>
             </ul>
+
+            <a name="answers"></a>
             <h2 class="section">Answers</h2>
             <p class="question"><a name="XSP" id="XSP"></a>What web framework should I use for my dynamic web
             application?</p>
@@ -106,7 +110,7 @@
             <div class="answer">
                 <p>Yes. Appweb loads request handlers, scripting engines and other functionality via a run-time module
                 loading mechanism. Via the Appweb configuration file, you can selectively enable the loading of
-                function modules. For example, if you don't require CGI, comment out the <tt>LoadModule cgiHandler</tt> 
+                function modules. For example, if you don't require CGI, comment out the <em>LoadModule cgiHandler</em> 
                 directive.</p>
             </div>
             <p class="question"><a name="upload" id="upload"></a>How can I upload large files?</p>
@@ -262,13 +266,13 @@ SERVER_URL
 ./configure --disable-all ... more options ...
 </pre>
                 <p>This will disable all possible features but still provide a running web server. Then add various
-                <tt>--enable-option</tt> and <tt>--with-component</tt> switches as required.</p>
+                <em>--enable-option</em> and <em>--with-component</em> switches as required.</p>
                 <p>Things to consider when building small:</p>
                 <ul>
                     <li>Don't use PHP</li>
-                    <li>Disable all possible features. In particular, disable the PHP, CGI and Esjcript modules</li>
-                    <li>Don't build DEBUG. Use: <tt>./configure --type=release</tt></li>
-                    <li>Use <tt>./configure --tune=size</tt></li>
+                    <li>Disable all possible features. In particular, disable the PHP, CGI and Ejscript modules</li>
+                    <li>Don't build DEBUG. Use: <em>./configure --type=release</em></li>
+                    <li>Use <em>./configure --tune=size</em></li>
                     <li>Use the ESP web framework</li>
                     <li>Use a small C-Library such as uClibc on embedded Linux systems</li>
                 </ul>

@@ -147,3 +147,4 @@ src/server/error.log*
 src/test/access.log*
 imports
 src/deps/ejs
+dtmp

@@ -20,9 +20,9 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
-                        <label title="Search">Search</label> 
+                        <label for="q" title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
                         <input type="hidden" name="domains" value="appwebserver.org" /> 
@@ -40,12 +40,12 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
                 <li><a href="#createHandler">Creating a Handler</a></li>
             </ul>
 <!-- BeginDsi "dsi/progGuideSeeAlso.html" -->
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul class="nav">
                 <li><a href="../../../guide/appweb/programmers/index.html">Programmers Guide</a></li>
                 <li><a href="../../../guide/appweb/programmers/embedding.html">Embedding Appweb</a></li>
@@ -177,17 +177,17 @@ int maTurboConnectorInit(Http *http, MprModule *module)
             <h3>Stage flags</h3>
             <p>The create handler, filter and connector APIs take a flags word which modified the behavior of the
             stage. The flags can take the following values OR'd together</p>
-            <table summary="" width="100%">
+            <table title="Stage Flags" class="full">
                 <thead>
                     <tr>
-                        <td>Flag</td>
-                        <td>Description</td>
+                        <th>Flag</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td>HTTP_STAGE_ALL</td>
-                        <td>All the HTTP methods are suppported.</td>
+                        <td>All the HTTP methods are supported.</td>
                     </tr>
                     <tr>
                         <td>HTTP_STAGE_DELETE</td>

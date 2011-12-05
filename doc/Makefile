@@ -31,6 +31,13 @@ tidy:
 		tidy -q -config tidy.conf "$$f" ; \
 	done
 
+check:
+	find . -type f -name '*.html' | while read f ; do \
+		echo ejs depre $$f ; \
+		chmod +w $$f ; \
+		ejs depre $$f ; \
+	done
+
 #
 #   Local variables:
 #   tab-width: 4

@@ -20,9 +20,9 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
-                        <label title="Search">Search</label> 
+                        <label for="q" title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
                         <input type="hidden" name="domains" value="appwebserver.org" /> 
@@ -40,7 +40,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
                 <li><a href="#get">Getting the Source</a></li>
                 <li><a href="#repository">Repository</a></li>
@@ -49,7 +49,7 @@
                 <li><a href="#porting">Porting</a></li>
             </ul>
 <!-- BeginDsi "dsi/sourceSeeAlso.html" -->
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul class="nav">
                 <li><a href="../../../guide/appweb/source/index.html">Working with Source</a></li>
                 <li><a href="../../../guide/appweb/source/building.html">Building From Source</a></li>
@@ -92,19 +92,24 @@
             <pre>
 $ git clone http://github.com/embedthis/appweb-4
 </pre>
-            <p>You can also view the repository at <a href="https://github.com/embedthis/appweb-4">https://github.com/embedthis/appweb-4</a>. This is also a convenient way to get the source code. 
+            <p>You can also view the repository at <a
+                href="https://github.com/embedthis/appweb-4">https://github.com/embedthis/appweb-4</a>. This is also a
+            convenient way to get the source code. </p>
+
             <h3>Repository Branches</h3>
             The repository has three branches for various phases of development and release: Master, Dev and Stable. 
             <h4>Master Branch</h4>
             The Master branch in the repository source code is the code base for the next minor and major release. It 
             will contain the latest features and fixes, but it will also contain bugs and issues that have not been 
-            resolved. For this reason use of the respository source code is not recommended for production or development use.  
+            resolved. For this reason use of the repository source code is not recommended for production or development use.  
             <h4>Dev Branch</h4>
-            The Dev branch is updated when the Master branch is relatively steady and usable, but prior to release. The Dev 
-            branch is used to create Beta releases. It is not as bug-free as the Stable branch and yet has most of the 
-            features in the master branch. 
+            <p>The Dev branch is updated when the Master branch is relatively steady and usable, but prior to release.
+            The Dev branch is used to create Beta releases. It is not as bug-free as the Stable branch and yet has most
+            of the features in the master branch.</p>
+
             <h4>Stable Branch</h4>
-            The stable branch is for ongoing maintenance of the current stable release.</p>
+            <p>The stable branch is for ongoing maintenance of the current stable release.</p>
+
             <a name="building" id="building"></a>
             <h2>Building Appweb from Source</h2>
             <p>The Appweb source distribution contains all the required source files, headers, tools, and test framework
@@ -112,7 +117,7 @@ $ git clone http://github.com/embedthis/appweb-4
             source</a> instructions.</p><a name="testing" id="testing"></a>
             <h2>Running Unit Tests</h2>
             <p>The Appweb source code uses a large test suite to verify correct operation and trap regression errors.
-            Run <tt>make test</tt> to exercise the unit tests.</p>
+            Run <em>make test</em> to exercise the unit tests.</p>
             
             <a name="porting" id="porting"></a>
             <h2>Porting the Source to a New Platform</h2>

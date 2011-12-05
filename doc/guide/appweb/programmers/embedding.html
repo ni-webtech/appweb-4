@@ -20,9 +20,9 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
-                        <label title="Search">Search</label> 
+                        <label for="q" title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
                         <input type="hidden" name="domains" value="appwebserver.org" /> 
@@ -40,7 +40,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
                 <li><a href="#loadable">Loadable Modules</a></li>
                 <li><a href="#appwebProgram">Appweb Program</a></li>
@@ -48,7 +48,7 @@
                 <li><a href="#library">Embed Appweb Library</a></li>
             </ul>
 <!-- BeginDsi "dsi/progGuideSeeAlso.html" -->
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul class="nav">
                 <li><a href="../../../guide/appweb/programmers/index.html">Programmers Guide</a></li>
                 <li><a href="../../../guide/appweb/programmers/embedding.html">Embedding Appweb</a></li>
@@ -65,24 +65,24 @@
 <!-- EndDsi -->
         </div>
         <div class="contentLeft">
-            <h1>Embedding Appweb</h1>
+            <h1 class="title">Embedding Appweb</h1>
             <p>When extending and embedding Appweb in your application or system, you have three options:</p>
             <ol>
                 <li>Use the existing Appweb main program and extend Appweb via a loadable module.</li>
                 <li>Use the existing Appweb main program and extend Appweb via the ESP web framework.</li>
                 <li>Link the Appweb HTTP library with your application main program.</li>
             </ol><a name="loadable" id="loadable"></a>
-            <h3>Extending via a Loadable Module</h3>
+            <h2>Extending via a Loadable Module</h2>
             <p>You can extend the Appweb server program by creating an Appweb loadable module. You do this by creating
             a shared library that contains your application and some Appweb module interface code. This module is then
             specified in the Appweb configuration file so that the Appweb program will load it. It requires about 10
             lines of code to create an Appweb module.</p>
-            <h3>Extending via ESP</h3>
+            <h2>Extending via ESP</h2>
             <p>The Embedded Server Pages (ESP) web framework allows the direct embedding of "C" language code in
             HTML web pages. This is the easiest way to invoke "C" APIs in your program. ESP also supports the loading
             of Model/View/Controller (MVC-based) applications. ESP will compile and load controller source code. Controllers
             provide an easy and efficient way to invoke "C" code when requests are made to certain URIs.</p>
-            <h3>Embed the Appweb Library</h3>
+            <h2>Embed the Appweb Library</h2>
             <p>You can link the Appweb library with your application to enable it to listen for HTTP requests and thus
             become a HTTP server itself. Embedding the Appweb library is easy and can be done with as little as one
             line of code.</p>

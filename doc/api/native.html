@@ -1,5 +1,3 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <!-- BeginDsi "dsi/head.html" -->
 <!DOCTYPE html>
 <html lang="en">
@@ -22,9 +20,9 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search appwebserver.org">
+                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
                      <p>
-                        <label title="Search">Search</label> 
+                        <label for="q" title="Search">Search</label> 
                         <input type="text" id="q" name="q" size="15" maxlength="255" />
                         <input type="submit" id="submit" value="Go" /> 
                         <input type="hidden" name="domains" value="appwebserver.org" /> 
@@ -44,7 +42,7 @@
         <div class="contentRight">
             
 <!-- BeginDsi "dsi/progRefSeeAlso.html" -->
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul class="nav">
                 <li><a href="../ref/appweb/index.html">Programmers Reference</a></li>
                 <li><a href="../ref/appweb/architecture.html">Appweb Architecture</a></li>
@@ -72,13 +70,14 @@
             <h1>Native APIs</h1>
             <p>The Appweb Native APIs consist of C language headers, function prototypes, structure definitions and
             defines. They are divided into one of these areas.</p>
-            <table summary="" width="100%">
+            <table title="APIs" class="full">
                 <thead>
                     <tr>
-                        <td>Area</td>
-                        <td>Description</td>
+                        <th>Area</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
+                <tbody>
                 <tr>
                     <td><a href="appweb.html">Appweb</a></td>
                     <td>Appweb Http API</td>
@@ -92,9 +91,10 @@
                     <td>Http Client and Server Library API</td>
                 </tr>
                 <tr>
-                    <td nowrap="nowrap"><a href="mpr.html">MPR</a></td>
+                    <td class="nowrap"><a href="mpr.html">MPR</a></td>
                     <td>Multithreaded Platform Runtime API</td>
                 </tr>
+                </tbody>
             </table>
         </div>
     </div>
