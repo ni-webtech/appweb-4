@@ -267,7 +267,7 @@ extern int maParseConfig(MaServer *server, cchar *path, int flags);
 /** 
     Create and run a simple web server listening on a single IP address.
     @description Create a simple web server without using a configuration file. The server is created to listen on
-        the specified IP addresss and port. This routine provides a one-line embedding of Appweb. If you want to 
+        the specified IP address and port. This routine provides a one-line embedding of Appweb. If you want to 
         use a config file, try the #maRunWebServer instead. 
     @param ip IP address on which to listen. Set to "0.0.0.0" to listen on all interfaces.
     @param port Port number to listen to

@@ -227,7 +227,6 @@
     #include    <unistd.h>
 #endif
 
-
 #if !VXWORKS
     #include    <wchar.h>
 #endif
@@ -6723,7 +6722,7 @@ extern void mprSetSecureProvider(MprSocketProvider *provider);
 #define MPR_SOCKET_DATAGRAM     0x10        /**< Use datagrams */
 #define MPR_SOCKET_EOF          0x20        /**< Seen end of file */
 #define MPR_SOCKET_LISTENER     0x40        /**< MprSocket is server listener */
-#define MPR_SOCKET_NOREUSE      0x80        /**< Dont set SO_REUSEADDR option */
+#define MPR_SOCKET_NOREUSE      0x80        /**< Don't set SO_REUSEADDR option */
 #define MPR_SOCKET_NODELAY      0x100       /**< Disable Nagle algorithm */
 #define MPR_SOCKET_THREAD       0x400       /**< Process callbacks on a worker thread */
 #define MPR_SOCKET_CLIENT       0x800       /**< Socket is a client */

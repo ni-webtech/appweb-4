@@ -1860,13 +1860,10 @@ static bool fetchCachedResponse(HttpConn *conn)
 {
     HttpTx      *tx;
     MprTime     modified, when;
-    HttpCache   *cache;
     cchar       *value, *key, *tag;
     int         status, cacheOk, canUseClientCache;
 
     tx = conn->tx;
-    cache = tx->cache;
-    mprAssert(cache);
 
     /*
         Transparent caching. Manual caching must manually call httpWriteCached()
@@ -3001,16 +2998,13 @@ void httpCloseConn(HttpConn *conn)
 
 void httpConnTimeout(HttpConn *conn)
 {
-    HttpRx      *rx;
     HttpLimits  *limits;
     MprTime     now;
 
     if (!conn->http) {
         return;
     }
-    rx = conn->rx;
     now = conn->http->now;
-    mprAssert(rx);
     limits = conn->limits;
     mprAssert(limits);
 

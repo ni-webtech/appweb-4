@@ -20314,7 +20314,7 @@ static int getSocketIpAddr(struct sockaddr *addr, int addrlen, char *ip, int ipL
 
 #ifdef IN6_IS_ADDR_V4MAPPED
     if (addr->sa_family == AF_INET6) {
-        struct sockaddr_in6* addr6= (struct sockaddr_in6*) addr;
+        struct sockaddr_in6* addr6 = (struct sockaddr_in6*) addr;
         if (IN6_IS_ADDR_V4MAPPED(&addr6->sin6_addr)) {
             struct sockaddr_in addr4;
             memset(&addr4, 0, sizeof(addr4));
@@ -22638,18 +22638,6 @@ MprThreadService *mprCreateThreadService()
 
 void mprStopThreadService()
 {
-    MprThreadService    *ts;
-
-    mprAssert(MPR);
-    ts = MPR->threadService;
-    mprAssert(ts);
-    mprAssert(ts->mainThread);
-
-#if UNUSED
-    ts->threads->mutex = 0;
-    ts->mutex = 0;
-    mprRemoveItem(ts->threads, ts->mainThread);
-#endif
 }
 
 
