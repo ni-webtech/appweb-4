@@ -443,7 +443,7 @@ static int readBodyData(char *buffer, uint bufsize TSRMLS_DC)
     HttpConn    *conn;
     HttpQueue   *q;
     MprBuf      *content;
-    ssize       len, nbytes;
+    ssize       len;
 
     conn = (HttpConn*) SG(server_context);
     q = conn->tx->queue[HTTP_QUEUE_RX]->prevQ;
@@ -455,8 +455,7 @@ static int readBodyData(char *buffer, uint bufsize TSRMLS_DC)
     }
     len = (ssize) min(mprGetBufLength(content), (ssize) bufsize - 1);
     if (len > 0) {
-        nbytes = mprMemcpy(buffer, len, mprGetBufStart(content), len);
-        mprAssert(nbytes == len);
+        mprMemcpy(buffer, len, mprGetBufStart(content), len);
         mprAdjustBufStart(content, len);
         buffer[len] = '\0';
     }

@@ -405,13 +405,10 @@ static ssize cgiCallback(MprCmd *cmd, int channel, void *data)
 static ssize readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
 {
     HttpConn    *conn;
-    HttpTx      *tx;
     ssize       space, nbytes, total;
     int         err;
 
     conn = q->conn;
-    tx = conn->tx;
-    mprAssert(tx);
 #if UNUSED
     mprAssert(!cmd->disconnected);
 #endif
