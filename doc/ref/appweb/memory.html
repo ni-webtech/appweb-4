@@ -114,7 +114,8 @@
             by calling the <em>mprYield</em> API.
             This strategy permits worker threads to allocate temporary memory without fear. The memory will not be 
             prematurely collected until the worker explicitly acknowledges and yields to the collector by 
-            calling <em>mprYield</em>.
+            calling <em>mprYield</em>.</p>
+
             <p>To prevent collection of a memory block and retain the block over a yield point, the application must 
             hold a managed reference for the block. A managed reference, is a reference to an allocated block that 
             will be marked as active during a collection cycle by the Owning Blocks manager function. Manager functions
@@ -137,6 +138,7 @@
             The mprMark function will then invoke the manager for these managed references and so on.
             In this manner, managed memory forms a tree from the roots to the leaves and the mark phase visits every 
             managed block currently in use.</p>
+
             <a name="alloc"></a>
             <h3>Allocating Memory</h3>
             <p>Managers are defined when allocating a block of memory. For example, this code will allocate a block
@@ -145,7 +147,7 @@
 char **block = mprAllocObj(char*, manageBlock);
 *block = sclone("Hello World");
 </pre>
-            This will allocate a block sufficient to store one character pointer and will define the manageBlock 
+            <p>This will allocate a block sufficient to store one character pointer and will define the manageBlock 
             function as the manager for managed references in that block. The sclone function allocates a string block
             and copies the string argument. The mprAllocObj function is used to allocate structures with managers. Use
             mprAllocMem to allocate a block of memory and reserve room for a manager function. Then use mprSetManager to

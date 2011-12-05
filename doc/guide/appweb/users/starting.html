@@ -40,7 +40,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul class="nav">
                 <li><a href="#commandLine">Appweb Command Line</a></li>
                 <li><a href="#appwebOptions">Appweb Options</a></li>
@@ -83,18 +83,20 @@
 appweb [options]
 </pre><a name="appwebOptions" id="appwebOptions"></a>
             <h2>Appweb Command Options</h2>
-            <table summary="">
-                <tbody>
+            <table title="options">
+                <thread>
                     <tr>
-                        <td>Option</td>
-                        <td>Description</td>
+                        <th>Option</th>
+                        <th>Description</th>
                     </tr>
+                </thread>
+                <tbody>
                     <tr>
                         <td>--config filename</td>
                         <td>Specify an alternative configuration file instead of appweb.conf.</td>
                     </tr>
                     <tr>
-                        <td nowrap="nowrap">--chroot directory</td>
+                        <td class="nowrap">--chroot directory</td>
                         <td>Change the system root directory for Appweb. This creates a chroot jail so that the Appweb
                         process cannot access any files outside the given directory.</td>
                     </tr>
@@ -116,7 +118,7 @@ appweb [options]
                         configuration file.</td>
                     </tr>
                     <tr>
-                        <td nowrap="nowrap">--name uniqueName</td>
+                        <td class="nowrap">--name uniqueName</td>
                         <td>Set the program name. Useful to have unique command line names for multiple appweb
                             instances.</td>
                     </tr>

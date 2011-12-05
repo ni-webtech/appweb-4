@@ -40,14 +40,14 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul class="nav">
                 <li><a href="#comparison">Comparison</a></li>
+                <li><a href="#esp">ESP</a></li>
                 <li><a href="#ejs">Ejscript</a></li>
                 <li><a href="#php">PHP</a></li>
                 <li><a href="#cgi">CGI</a></li>
-                <li><a href="#esp">ESP</a></li>
-                <li><a href="#custom">Custom Handlers</a></li>
+                <li><a href="#summary">Summary</a></li>
             </ul>
 <!-- BeginDsi "dsi/usersGuideSeeAlso.html" -->
             <h1>See Also</h1>
@@ -75,19 +75,23 @@
             slow and difficult to create a functional and appealing dynamic web application using the legacy <a href=
             "cgi.html">CGI</a> protocol. Its interface is too low level and it provides little assistance to
             manipulate server-side data, render UI elements, and manage Ajax interactions.</p>
-            <p>In contrast, environments such as <a href="../../esp/index.html">ESP</a>, <a href="ejs.html">Ejscript</a>, 
+            <p>In contrast, environments such as <a href="../../esp/users/index.html">ESP</a>, 
+            <a href="ejs.html">Ejscript</a>, 
                 or <a href="#php">PHP</a> provide much more support for dynamic web content.</p>
             <p>Appweb provides a rich set of options to use when creating web pages or web applications. This document
             compares the alternatives and suggests where each option is best deployed.</p>
+
             <a name="comparison" id="comparison"></a>
             <h2 class="section">Comparison</h2>
             
+            <a name="esp" id="esp"></a>
             <h3><a href="../../esp/users/index.html">Embedded Server Pages</a></h3>
             <p>ESP is a new web framework that provides templates, caching, Model-View-Controller paradigm, 
             and a set of web controls that are pre-integrated with jQuery. ESP uses "C" language code
             embedded in web pages for native-speed execution. It is fast, compact and uses "C".
             For more information, please read <a href="../../esp/users/index.html">Using ESP</a>.</p>
-            <a name="ejs" id="ejs"></a></p>
+
+            <a name="ejs" id="ejs"></a>
             <h3><a href="ejs.html">Ejscript</a></h3>
             <p>The <a href="http://ejscript.org">Ejscript</a> Web Framework is a web application environment that
             uses server-side JavaScript. It provides an application generator, templating engine, 
@@ -96,14 +100,16 @@
             <p>Ejscript is not as small as ESP, nor as fast, but is is a very powerful web framework. It is good for 
             embedded web interfaces and async communications services where sufficient memory is available.
             For more information, please read <a href="ejs.html">Using Ejscript</a>.</p>
+
             <a name="php" id="php"></a>
             <h3><a href="php.html">PHP</a></h3>
-            <p><acronym title="recursive acronym for PHP: Hypertext Preprocessor">PHP</acronym> is a widely-used
+            <p>PHP is a widely-used
             general-purpose scripting language that is especially suited for enterprise Web development. It provides an
             object-oriented programming language, numerous extensions and a broad developer community. The power of PHP
             comes at a price, it typically has a memory footprint of more than 5 MB for the PHP code alone. For embedded
             systems, this is often too big and so we recommend using ESP instead for such systems.
             For more information, please read <a href="php.html">Using PHP</a>.</p>
+
             <a name="cgi" id= "cgi"></a>
             <h3><a href="cgi.html">CGI</a></h3>
             <p>CGI stands for the Common Gateway Interface and it is the legacy extension interface for running
@@ -111,6 +117,7 @@
             need to run a scripting language via CGI, you are better served by using either ESP or Ejscript.
             For more information, please read <a href="cgi.html">Using CGI</a>.</p>
             
+            <a name="summary" id= "summary"></a>
             <h2>Summary</h2>
             <p>For embedded devices and applications: we recommend using <b>ESP</b>. It provides the fastest, most
             compact web framework without compromising on functionality. Use <b>Ejscript</b> for large applications
@@ -120,20 +127,20 @@
                 <li><a href="#esp">Embedded Server Pages</a></li>
                 <li><a href="#ejs">Ejscript</a></li>
                 <li><a href="#php">PHP</a></li>
-                <li><a href="#custom">Custom Modules and Handlers</a></li>
             </ul>
             
             <p>The following table may help summarize the differences:</p>
-            <table width="100%" border="1" summary="">
+            <table title="summary">
                 <thead>
                     <tr>
-                        <td></td>
-                        <td><b>CGI</b></td>
-                        <td><b>ESP</b></td>
-                        <td><b>Ejscript</b></td>
-                        <td><b>PHP</b></td>
+                        <th></th>
+                        <th><b>CGI</b></th>
+                        <th><b>ESP</b></th>
+                        <th><b>Ejscript</b></th>
+                        <th><b>PHP</b></th>
                     </tr>
                 </thead>
+                <tbody>
                 <tr>
                     <td><b>Target Use</b></td>
                     <td>Have existing CGI program</td>
@@ -169,6 +176,7 @@
                     <td>Open source, but still specific to Appweb</td>
                     <td>Large memory footprint</td>
                 </tr>
+                </tbody>
             </table>
         </div>
     </div>

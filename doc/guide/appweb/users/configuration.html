@@ -40,7 +40,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul class="nav">
                 <li><a href="#syntax">File Syntax</a></li>
                 <li><a href="#blocks">Configuration Blocks</a></li>
@@ -74,7 +74,7 @@
             <p>The Appweb operation is typically controlled by an Appweb configuration file. This configuration file is
             read when Appweb starts up, and it manages every aspect of Appweb's configuration including what ports and
             addresses to listen to, what modules to load, where to find the web pages and how to log requests.</p>
-            <p>Appweb can also be configured programatically. For details, please read the <a href=
+            <p>Appweb can also be configured programmatically. For details, please read the <a href=
             "../../../api/appweb.html">Appweb API</a>.</p>
             <p>The top-level configuration file is usually called <b>appweb.conf</b> and is read once when appweb is
             started. Changes to the configuration file will require Appweb to be restarted.</p>
@@ -130,7 +130,7 @@ AddHandler fileHandler html
 &lt;/Route&gt;
 </pre>
             <p>This will configure Appweb to pass requests that begin with the URL "/myapp" to the 
-                <tt>esp</tt> handler.</p>
+                <em>esp</em> handler.</p>
             <h3>Virtual Host Blocks</h3>
             <p>A Virtual host block defines a group of directives that apply to a virtual sub-server. A virtual server
             may be associated with a virtual server name or with an IP address. Virtual hosts enable you to segment the
@@ -159,7 +159,7 @@ NameVirtualHost 206.148.96.56
 Include myconfig.conf
 Include conf/applications/*.conf
 </pre>
-            </p><a name="conditional" id="conditional"></a>
+            <a name="conditional" id="conditional"></a>
             <h2 class="section">Conditional Directives</h2>
             <p>The configuration file supports conditional processing via the <b>&lt;if&gt;</b> directive. The
             <b>if</b> directive tests a symbolic value and if true, it enables parsing the nested directives. If the
@@ -171,11 +171,11 @@ Include conf/applications/*.conf
 </pre>
             <p>This will load the file handler if it has been enabled via the <b>configure</b> command.</p>
             <h3>Supported Conditional Values</h3>
-            <table summary="" width="100%">
+            <table title="values" class="full">
                 <thead>
                     <tr>
-                        <td>Value</td>
-                        <td>Description</td>
+                        <th>Value</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -198,11 +198,11 @@ Include conf/applications/*.conf
             <a name="directives" id="directives"></a>
             <h2 class="section">Configuration File Directives</h2>
             <p>This is the list of Appweb supported configuration directives.</p>
-            <table summary="" width="100%">
+            <table title="directives" class="full">
                 <thead>
                     <tr>
-                        <td>Name</td>
-                        <td>Purpose</td>
+                        <th>Name</th>
+                        <th>Purpose</th>
                     </tr>
                 </thead>
                 <tbody>
