@@ -84,7 +84,7 @@
 appweb --config myConfigFile.conf
 </pre>The configuration file may include other configuration files and it is normal practice to partition the
 configuration file into sections &mdash; especially application definitions.
-            <h3>Apache Compatible</h3>
+            <h2>Apache Compatible</h2>
             <p>The Appweb configuration file closely matches that used by the Apache web server. Compatibility with the
             <a href="http://httpd.apache.org/docs/2.2/configuring.html">Apache</a> configuration file has been a goal
             to minimize learning time and switching costs. While the level of compatibility is high, there are a few
@@ -99,7 +99,7 @@ configuration file into sections &mdash; especially application definitions.
             <h2 class="section">Configuration File Syntax</h2>
             <p>Configuration directives are one per line and are case-insensitive for the directive names. Lines
             beginning with a "#" character are comments and are ignored.</p>
-            <h3>Sample configuration file</h3>
+            <h2>Sample configuration file</h2>
             <pre>
 ServerRoot "."
 ErrorLog error.log
@@ -118,10 +118,10 @@ AddHandler fileHandler html
             </ul>
             <p>When a new block is defined, it inherits the settings of the outer block. New directives defined inside
             a block are local to that block.</p>
-            <h3>Global Directives</h3>
+            <h2>Global Directives</h2>
             <p>A directive is regarded as global if it is not enclosed in a block. You cannot nest blocks of a like
             kind. i.e. you cannot nest a directory block inside a directory block.</p>
-            <h3>Route Blocks</h3>
+            <h2>Route Blocks</h2>
             <p>A Route block defines a group of directives that apply to a specific URL. The block is created by the
             <b>Route</b> directive.</p>
             <pre>
@@ -131,7 +131,7 @@ AddHandler fileHandler html
 </pre>
             <p>This will configure Appweb to pass requests that begin with the URL "/myapp" to the 
                 <em>esp</em> handler.</p>
-            <h3>Virtual Host Blocks</h3>
+            <h2>Virtual Host Blocks</h2>
             <p>A Virtual host block defines a group of directives that apply to a virtual sub-server. A virtual server
             may be associated with a virtual server name or with an IP address. Virtual hosts enable you to segment the
             web server to serve unique content for different domains or IP addresses.</p>
@@ -170,7 +170,7 @@ Include conf/applications/*.conf
 &lt;/if&gt;
 </pre>
             <p>This will load the file handler if it has been enabled via the <b>configure</b> command.</p>
-            <h3>Supported Conditional Values</h3>
+            <h2>Supported Conditional Values</h2>
             <table title="values" class="full">
                 <thead>
                     <tr>

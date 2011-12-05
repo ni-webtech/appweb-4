@@ -40,8 +40,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul class="nav">
                 <li><a href="#overview">Overview</a></li>
                 <li><a href="#configuration">Route Configuration</a></li>
@@ -78,7 +77,7 @@
             is configured with a set of routes and when a request is received, it tests various routes and selects
             the best route to handle the request.  In the process, routes may redirect or rewrite the request 
             as required.</p>
-            <img src="../../../images/routing.jpg" />
+            <img src="../../../images/routing.jpg" alt="routing"/>
             <p>An Appweb configuration will typically have many routes. The configured routes 
             are tested in-order by matching the route pattern against the request URI. 
             A route may require that further preconditions be met before it is suitable to process the
@@ -96,8 +95,8 @@
 &lt;Route /info/>
 &lt;/Route>
 </pre>
-            <p>This example defines a route pattern <tt>/info/</tt> that will match request URIs that begin with 
-            <tt>"/info/"</tt>.  The route pattern is a regular expression pattern that is used to match against the 
+            <p>This example defines a route pattern <em>/info/</em> that will match request URIs that begin with 
+            <em>"/info/"</em>.  The route pattern is a regular expression pattern that is used to match against the 
             client request URI. If the route pattern matches the URI, the route is selected to process 
             the request.</p>
             <h3>Route Ordering</h3>
@@ -123,14 +122,14 @@
 &lt;/Route>
 </pre>
             <p>This example assigns different physical directories for public and private information and secures
-            the private information with digest authentication. The inner <tt>/info/private</tt> route will be 
-            defined before the <tt>/info</tt> route and will be matched against the request URI before the
-            <tt>/info</tt> route.</p>
+            the private information with digest authentication. The inner <em>/info/private</em> route will be 
+            defined before the <em>/info</em> route and will be matched against the request URI before the
+            <em>/info</em> route.</p>
             <h3>Default Route and Virtual Hosts</h3>
             <p>A hidden route is defined at the very top of the appweb.conf configuration file. This is the default
             route and all routes ultimately inherit from it. Route related directives outside a route block will 
             configure and modify the default route. </p>
-            <p><tt>VirtualHost</tt> directives also define implicit route blocks. In this way, they inherit the route
+            <p><em>VirtualHost</em> directives also define implicit route blocks. In this way, they inherit the route
             configuration that existed at the point in the configuration file where the VirtualHost is defined, but they
             can override this to create a unique route configuration for the virtual host.</p>
             <a name="directives"></a>
@@ -138,18 +137,18 @@
             <p>Other route related configuration directives include:
             <h3><a href="dir/route.html#addHandler">AddHandler</a> and 
                 <a href="dir/route.html#setHandler">SetHandler</a></h3>
-            <p>The <tt>AddHandler</tt> directive defines an Appweb handler for the route which will be used when the
-            request extension matches one of the AddHandler extension arguments.  The <tt>SetHandler</tt> directive
+            <p>The <em>AddHandler</em> directive defines an Appweb handler for the route which will be used when the
+            request extension matches one of the AddHandler extension arguments.  The <em>SetHandler</em> directive
             defines the Appweb handler to be used for the route regardless of the URI extension.</p>
             <h3><a href="dir/route.html#condition">Condition</a></h3>
             <p>The condition directive can define condition test that must be true for the route to be selected. 
-            Conditions have three test rules: <tt>exists</tt>, <tt>directory</tt> and <tt>match</tt>. The 
-            <tt>exists</tt> rule evaluates if the condition filename argument exists in the file system. 
-            The <tt>directory</tt> rule evaluates if the filename is a directory. The <tt>match</tt> rule
+            Conditions have three test rules: <em>exists</em>, <em>directory</em> and <em>match</em>. The 
+            <em>exists</em> rule evaluates if the condition filename argument exists in the file system. 
+            The <em>directory</em> rule evaluates if the filename is a directory. The <em>match</em> rule
             tests the string argument against a regular expression pattern.
             A route may have any number of condition directives.</p>
             <h3><a href="dir/route.html#documentRoot">DocumentRoot</a></h3>
-            <p>The directory containing documents can be defined via the <tt>DocumentRoot</tt> directive. If the client
+            <p>The directory containing documents can be defined via the <em>DocumentRoot</em> directive. If the client
             is requesting a physical document, the request URI is appended to the DocumentRoot directory to locate the 
             file to serve.</p>
             <h3><a href="dir/route.html#Header">Header</a></h3>
@@ -158,9 +157,9 @@
             can also be negated by prefixing the name with "!". This negating also works for the Condition directive.
             A route may have any number of header directives.</p>
             <h3><a href="dir/route.html#logRoutes">LogRoutes</a></h3>
-            <p>The <tt>LogRoute</tt> directive will display the route table to the error log.</p> 
+            <p>The <em>LogRoute</em> directive will display the route table to the error log.</p> 
             <h3><a href="dir/route.html#methods">Methods</a></h3>
-            <p>A route can define the set of valid HTTP methods via the <tt>Methods</tt> directive. The standard 
+            <p>A route can define the set of valid HTTP methods via the <em>Methods</em> directive. The standard 
             HTTP methods are:
             DELETE, GET, OPTIONS, POST, PUT and TRACE. The Methods directive can also take an argument of "ALL" or "*"
             to select all possible methods for the route.</p>
@@ -168,25 +167,25 @@
             <p>The prefix directive removes a prefix string from the request URI. This is often used to remove 
             an initial application name from the URI.</p>
             <h3><a href="dir/route.html#reset">Reset</a></h3>
-            <p>If a route needs a completely clean configuration, the <tt>Reset routes</tt> directive can be used to
+            <p>If a route needs a completely clean configuration, the <em>Reset routes</em> directive can be used to
             remove all inherited configuration.</p>
             <h3>RouteName</h3>
             <p>Routes may be given a symbolic name that is used when displaying routes in the log file via
-            the <tt>LogRoutes</tt> directive. The symbolic name is also used by some APIs to look up routes by name.</p>
+            the <em>LogRoutes</em> directive. The symbolic name is also used by some APIs to look up routes by name.</p>
             <h3><a href="dir/route.html#target">Target</a></h3>
             <p>The target directive specifies what action the route will take to respond to the request. The target
-            directive has four rules: <tt>close</tt>, <tt>redirect</tt>, <tt>run</tt>, and <tt>write</tt>. 
-            The <tt>close</tt> rule is used to immediately close a connection without responding to the client. This 
-            can be used to mitigate denial of service attacks.  The <tt>redirect</tt> rule is used to redirect the 
+            directive has four rules: <em>close</em>, <em>redirect</em>, <em>run</em>, and <em>write</em>. 
+            The <em>close</em> rule is used to immediately close a connection without responding to the client. This 
+            can be used to mitigate denial of service attacks.  The <em>redirect</em> rule is used to redirect the 
             request to another URI. 
-            The <tt>run</tt> rule is used to run the select handler to respond to the request.
-            The <tt>write</tt> rule is used to respond to the client with literal text and is useful for 
+            The <em>run</em> rule is used to run the select handler to respond to the request.
+            The <em>write</em> rule is used to respond to the client with literal text and is useful for 
             debug responses.</p>
             <h3><a href="dir/route.html#update">Update</a></h3>
-            <p>The update directive modifies the request or environment. Updates have two rules: <tt>param</tt> and
-            <tt>cmd</tt>. The <tt>param</tt> rule can be used to set the request <a href="#params">params</a> 
+            <p>The update directive modifies the request or environment. Updates have two rules: <em>param</em> and
+            <em>cmd</em>. The <em>param</em> rule can be used to set the request <a href="#params">params</a> 
             to a specific value. 
-            The <tt>cmd</tt> rule can be used to run external commands.</p>
+            The <em>cmd</em> rule can be used to run external commands.</p>
             <a name="params"></a>
             <h4>Request Params</h4>
             <p>Request parameters are comprised of a set of request state information. This includes:
@@ -198,7 +197,7 @@
             </ul>
             <p>Different web frameworks expose request parameters in different ways. CGI provides access to
             request parameters via environment variables. In PHP, they are mapped to PHP server variables. In ESP 
-            they are accessed via the <tt>espGetParam</tt> API, and in Ejscript, request parameters are exposed via
+            they are accessed via the <em>espGetParam</em> API, and in Ejscript, request parameters are exposed via
             the Request.params[] collection.</p>
             <a name="tokens"></a>
             <h2 class="section"><a href="dir/route.html#tokens">Tokens</a></h2>
@@ -210,10 +209,10 @@
                 <li>Request tokens &mdash; these are request state and property values.</li>
             </ul>
             <h4>System and URI Tokens</h4>
-            <p>System and URI tokens are of the form: <tt>"${token}"</tt> where "token" is the name of the variable or 
+            <p>System and URI tokens are of the form: <em>"${token}"</em> where "token" is the name of the variable or 
             URI token to substitute.</p>
             <h4>Request Tokens</h4>
-            <p>Request tokens are of the form: <tt>"${family:name=defaultValue}"</tt> where the family 
+            <p>Request tokens are of the form: <em>"${family:name=defaultValue}"</em> where the family 
             defines a set of values. 
             If the named tokens is not present, an optional default value "=defaultValue" will be used instead.
             These supported request token families are:</p>
@@ -247,8 +246,8 @@
             </ul>
             For example, to select the client's browser string passed in the HTTP headers:
 <pre>Target run ${header:User-Agent}</pre>
-            To select a form field value, consider if the URI <tt>/info/Mary</tt> matched the pattern: 
-            <tt>^/info/{name}</tt>. Then the <tt>${name}</tt> token could be used in a Target run rule as such:
+            To select a form field value, consider if the URI <em>/info/Mary</em> matched the pattern: 
+            <em>^/info/{name}</em>. Then the <em>${name}</em> token could be used in a Target run rule as such:
 <pre>run ${name}.html</pre>
             <a name="processing"></a>
             <h2 class="section">Route Processing</h2>
@@ -258,7 +257,7 @@
             Not all steps are required. However, the selected route will always perform pattern match, param definition and 
             target execution.  If a route fails to match at a step, the route is discarded and the next configured route 
             is considered.</p>
-            <img src="../../../images/routeSteps.jpg" />
+            <img src="../../../images/routeSteps.jpg" alt="steps"/>
             <h3>Routing Steps</h3>
             <ol>
                 <li><a href="#step-pattern">Pattern Matching</a> &mdash; Test if the request URI matches route pattern.</li>
@@ -277,9 +276,9 @@
             has been read from the client. This enables the routing directives to take action based on the received form
             data. If a request has no form data, it is routed immediately after the HTTP headers have been read and 
             parsed.</p>
-            <p>A request with form data has a <tt>Content-Type</tt> header of
-            <tt>application/x-www-form-urlencoded</tt>. Requests with a <tt>Content-Type</tt> set to 
-            <tt>multipart/form-data</tt> which indicates form based file upload, will also delay routing until the uploaded
+            <p>A request with form data has a <em>Content-Type</em> header of
+            <em>application/x-www-form-urlencoded</em>. Requests with a <em>Content-Type</em> set to 
+            <em>multipart/form-data</em> which indicates form based file upload, will also delay routing until the uploaded
             file has been fully received.</p>
             <a name="step-pattern"></a>
             <h3>Pattern Matching</h3>
@@ -287,7 +286,7 @@
             request URI. The route pattern may match the entire request URI, just a subset at the start of the URI
             or any portion in between. Regular expressions are ideal for route patterns as they can express a wide 
             variety of URI formats and can also extract sub-expressions for later evaluation.</p>
-            <h4>URI Tokenization</h4>
+            <h4>URI Tokens</h4>
             <p>Often the request URI will not only provide a path to a resource, but it will contain tokens of 
             information that must be isolated and extracted from the URI. Appweb route patterns provide an easy and
             efficient means to extract such tokens and define as request <a href="#params">params</a> 
@@ -305,9 +304,9 @@ will match the URI:
 <pre class="paper">
 /user/login
 </pre>
-            <p>After pattern matching, the request param <tt>controller</tt> will be set to "user" and 
-            <tt>action</tt> will be set to "login".</p>
-            <p>Token values can be accessed in condition, update and target directives via the <tt>${token}</tt> syntax.</p>
+            <p>After pattern matching, the request param <em>controller</em> will be set to "user" and 
+            <em>action</em> will be set to "login".</p>
+            <p>Token values can be accessed in condition, update and target directives via the <em>${token}</em> syntax.</p>
             <p>To enable the extension token syntax, the standard regular expression syntax for repeat sub-expressions 
                 that uses braces: {m,n} needs to be back-quoted. i.e. \{m,n}.
             <h4>Sub-Expressions</h4>
@@ -316,11 +315,11 @@ will match the URI:
 <pre>
 &lt;Route /(user|admin)/{cmd}>
 </pre>
-            <p>This will allow URIs that begin with either <tt>/user</tt> or <tt>/admin</tt>. Sub-expression and token
-            values are made available to Conditions, Updates and Targets by using <tt>$N</tt> in the directive details. 
-            The first sub-expression or token is assigned to <tt>$1</tt>, the second to <tt>$2</tt> and so on. 
-            If a request with the URI <tt>/user/login</tt> was received, the route above would set <tt>$1</tt> to 
-            "user" and <tt>$2</tt> to "login".
+            <p>This will allow URIs that begin with either <em>/user</em> or <em>/admin</em>. Sub-expression and token
+            values are made available to Conditions, Updates and Targets by using <em>$N</em> in the directive details. 
+            The first sub-expression or token is assigned to <em>$1</em>, the second to <em>$2</em> and so on. 
+            If a request with the URI <em>/user/login</em> was received, the route above would set <em>$1</em> to 
+            "user" and <em>$2</em> to "login".
             <h4>Conditional Sub-Expressions</h4>
             <p>Conditional sub-expressions can be defined by wrapping in "(~" and "~)". This means the wrapped
             sub-expression is valid but not required. For example:
@@ -334,9 +333,9 @@ will match any of the URIs:
 /user/login
 </pre>
             <h4>Anchoring Route Patterns</h4>
-            <p>It is wise to anchor route patterns to the start of the URI. This is done by using the <tt>"^"</tt> character
+            <p>It is wise to anchor route patterns to the start of the URI. This is done by using the <em>"^"</em> character
             at the start of the URI. If the pattern describes the full request URI, the pattern can anchor to the end
-            of the URI by appending <tt>"$"</tt>. For example:</p>
+            of the URI by appending <em>"$"</em>. For example:</p>
 <pre>
 ^/{controller}(~/{action}~)$
 </pre>
@@ -391,17 +390,17 @@ will match any of the URIs:
             <h3>Target Execution</h3>
             <p>Route targets have responsibility to generate the actual response to the client.
             But, before the target can be executed, the appropriate request handler must be selected.
-            If a route has an explicit handler defined via <tt>SetHandler</tt> then that handler will be used.
-            If a set of handlers have been defined via <tt>AddHandler</tt> directives, then the handler defined with 
+            If a route has an explicit handler defined via <em>SetHandler</em> then that handler will be used.
+            If a set of handlers have been defined via <em>AddHandler</em> directives, then the handler defined with 
             the corresponding URI extension will be selected.</p>
-            The target has four possible rules: <tt>close</tt>, <tt>redirect</tt>, <tt>run</tt> and
-            <tt>write</tt>.  Of these, all except for the <tt>close</tt> rule take parameters that are 
+            The target has four possible rules: <em>close</em>, <em>redirect</em>, <em>run</em> and
+            <em>write</em>.  Of these, all except for the <em>close</em> rule take parameters that are 
             expanded using the matching sub-expressions and/or route tokens derived when matching the route pattern.
-            <p>Target rule parameters can use <tt>"${token}"</tt> to be replaced with the value of the token.
-            Target rule parameters can also use <tt>"$N"</tt> to be replaced with the Nth matching sub-expression, 
-            <tt>"$&"</tt> to be replaced with the entire
-            matched pattern, <tt>"$`"</tt> to be replaced with the portion that precedes the matched pattern and 
-            <tt>"$'"</tt> to be replaced with the portion that follows the matched pattern. 
+            <p>Target rule parameters can use <em>"${token}"</em> to be replaced with the value of the token.
+            Target rule parameters can also use <em>"$N"</em> to be replaced with the Nth matching sub-expression, 
+            <em>"$&"</em> to be replaced with the entire
+            matched pattern, <em>"$`"</em> to be replaced with the portion that precedes the matched pattern and 
+            <em>"$'"</em> to be replaced with the portion that follows the matched pattern. 
             <p>Route tokens can also access 
             
             For example:
@@ -409,8 +408,8 @@ will match any of the URIs:
 Target write 200 "Running controller ${controller} action ${action}\n\n"
 </pre>
             <p>This will write the message back to the client with a HTML status code of 200 .</p>
-            <p>Note: to be more secure, the <tt>write</tt> rule will escape embeded HTML sequences. If you need to emit
-            HTML, use the <tt>-r</tt> switch for raw write output.</p>
+            <p>Note: to be more secure, the <em>write</em> rule will escape embeded HTML sequences. If you need to emit
+            HTML, use the <em>-r</em> switch for raw write output.</p>
             <h3>Prefix Removal</h3>
             <p>If Appweb is running several applications, Appweb will need to be able to route and distinguish 
             requests for each application. There are two primary ways to achieve this: run each application
@@ -451,7 +450,7 @@ Target write 200 "Running controller ${controller} action ${action}\n\n"
 </pre>
             <h3>Serving Compressed Content</h3>
             <p>This example enables the serving of compressed content where an equivalent compressed document exists. i.e.
-               A request for <tt>/manual/overview.html</tt> may return <tt>/manual/overview.html.gz</tt> if it exists. If
+               A request for <em>/manual/overview.html</em> may return <em>/manual/overview.html.gz</em> if it exists. If
                there is no compressed content, the uncompressed version is returned.</p>
 <pre>
 &lt;Route ^/manual/>
@@ -459,8 +458,8 @@ Target write 200 "Running controller ${controller} action ${action}\n\n"
 &lt;/Route>
 </pre>
             <h3>Multi-Language Content</h3>
-            <p>This example stores English content under the <tt>"english-docs"</tt> directory and French under the 
-            <tt>"french-docs"</tt> directory. The client's browser should include an <tt>Accept-Language</tt> 
+            <p>This example stores English content under the <em>"english-docs"</em> directory and French under the 
+            <em>"french-docs"</em> directory. The client's browser should include an <em>Accept-Language</em> 
             header which stipulates what language is preferred.
             If the accept header is missing or the requested language is not English or French, then the DefaultLanguage
             directive indicates that english content should be returned.</p>
@@ -473,8 +472,8 @@ Target write 200 "Running controller ${controller} action ${action}\n\n"
 </pre>
             <h3>Multi-Language by Suffix</h3>
             <p>This example stores content for all languages together and includes a language suffix to the request document
-            filename. If the client requested a French version of <tt>index.html</tt>, then the document 
-            <tt>index.fr.html</tt> would be served.</p>
+            filename. If the client requested a French version of <em>index.html</em>, then the document 
+            <em>index.fr.html</em> would be served.</p>
 <pre>
 &lt;Route />
     DefaultLanguage en
@@ -496,7 +495,7 @@ Target write 200 "Running controller ${controller} action ${action}\n\n"
 &lt;/Route>
 </pre>
             <h3>Denial of Service Protection</h3>
-            <p>To immediately close a connection without responding use the <tt>Target close</tt> directive.
+            <p>To immediately close a connection without responding use the <em>Target close</em> directive.
 <pre>
 &lt;Route /hacked-url/>
     target close

@@ -40,7 +40,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul class="nav">
                 <li><a href="#overview">Overview</a></li>
                 <li><a href="#configuration">Route Configuration</a></li>
@@ -72,7 +72,7 @@
             a language-aware <a href="routing.html">Routing Engine</a> and a set of 
             <a href="configuration.html#directives">configuration file directives</a> to configure and control 
             response language selection.</p>
-            <p>When a client sends a request, the HTTP headers typically include an <tt>Accept-Language</tt> HTTP header that
+            <p>When a client sends a request, the HTTP headers typically include an <em>Accept-Language</em> HTTP header that
             specifies the client's language preference for the request. The Appweb routing engine listens for this
             header and will modify the request to select response content of the appropriate language.</p>
             <a name="documents"></a>
@@ -82,12 +82,12 @@
                 <li>Separate directories for each language content, and </li>
                 <li>Unified storage for content with a language suffix integrated into each document filename.</li>
             </ul>
-            <p>Appweb manages these models via the <tt>AddLanguageDir</tt> and <tt>AddLanguageSuffix</tt>
+            <p>Appweb manages these models via the <em>AddLanguageDir</em> and <em>AddLanguageSuffix</em>
             directives.</p>
             <a name="configuration"></a>
             <h2 class="section">Language Configuration Directives</h2>
             <p>Three directives control the language configuration on a per-route basis: 
-            <tt>AddLanguageDir</tt>, <tt>AddLanguageSuffix</tt> and <tt>DefaultLanguage</tt>.
+            <em>AddLanguageDir</em>, <em>AddLanguageSuffix</em> and <em>DefaultLanguage</em>.
             <a name="isotag"></a>
             <h3>ISO Language Tags</h3>
             <p>The AddLanguageDir and AddLanguageSuffix directives add support for a single language and so a typical Appweb
@@ -102,7 +102,7 @@
             with an associated directory of language for 
             the language specific content. 
             When a client request is received, the appropriate language directory will be selected by the routing engine
-            using the language specified by the client's <tt>Accept-Language</tt> HTTP header.</p>
+            using the language specified by the client's <em>Accept-Language</em> HTTP header.</p>
 <pre>
 &lt;Route /info/>
     AddLanguageDir en /path/to/english-docs
@@ -112,7 +112,7 @@
             <p>The AddLanguageSuffix directive defines a supported language 
             <a href="#isotag">tag</a> with an associated filename suffix. When
             a client request is received, the appropriate language will be selected using the language
-            specified by the client's <tt>Accept-Language</tt> HTTP header. Then the document filename will be constructed
+            specified by the client's <em>Accept-Language</em> HTTP header. Then the document filename will be constructed
             using the language suffix. The suffix can be positioned either before or after the document
             extension via the directives "position" argument.</p>
 <pre>
@@ -120,9 +120,9 @@
     AddLanguageSuffix en eng before
 &lt;/Route>
 </pre>
-            <p>With this configuration, a request for <tt>/index.html</tt> will resolve to <tt>index.eng.html</tt>.</p>
+            <p>With this configuration, a request for <em>/index.html</em> will resolve to <em>index.eng.html</em>.</p>
             <h3>DefaultLanguage</h3>
-            <p>The DefaultLanguage directive defines the language to use when the the client <tt>Accept-Language</tt>
+            <p>The DefaultLanguage directive defines the language to use when the the client <em>Accept-Language</em>
             HTTP header is either absent or requests a non-supported language.</p>
 <pre>
 &lt;Route />

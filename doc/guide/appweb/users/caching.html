@@ -41,20 +41,14 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul class="nav">
-                <li><a href="#webServerInterface">Web Server Interface</a></li>
-                <li><a href="#generator">Application Generator</a></li>
-                <li><a href="#parser">Web Page Parser</a></li>
-                <li><a href="#mvc">MVC</a></li>
-                <li><a href="#models">Models</a></li>
-                <li><a href="#views">Views</a></li>
-                <li><a href="#viewPipeline">View Pipeline</a></li>
-                <li><a href="#controllers">Controllers</a></li>
-                <li><a href="#routing">Routing</a></li>
-                <li><a href="#actions">Actions</a></li>
-                <li><a href="#deployment">Developing</a></li>
-                <li><a href="#deployment">Deployment</a></li>
+                <li><a href="#why">Why Cache?</a></li>
+                <li><a href="#options">Caching Options</a></li>
+                <li><a href="#server">Server Caching</a></li>
+                <li><a href="#configuring">Configuring</a></li>
+                <li><a href="#performance">Performance</a></li>
+                <li><a href="#criteria">Deciding Criteria</a></li>
             </ul>
 <!-- BeginDsi "dsi/webFrameSeeAlso.html" -->
             <h1>See Also</h1>
@@ -87,12 +81,14 @@
             as there are several places to locate the cached content and many ways to configure the overall caching
             architecture. This document provides a basic overview of Appweb
             caching and how to configure its caching capabilities.</p> 
+
+            <a name="why"></a>
             <h2>Why Cache?</h2>
             <p>When a browser issues an HTTP request to a server, that request must be transmitted and received. Then the 
             response must be computed, delivered and finally rendered in the browser. This process may take from fractions of a 
             second up to many seconds to complete. The delays are comprised of the many steps the request and 
             response must traverse from the browser to the server and back. These steps all impart delay. The key
-            delays are:
+            delays are:</p>
             <ul>
                 <li>Network travel time for the request to travel from the browser to the server</li>
                 <li>Processing time to run the request and to prepare a response</li>
@@ -105,9 +101,10 @@
             client, the network delay can be reduced or eliminated altogether. By caching at the server, the time
             to generate the response can be eliminated.</p>
             
+            <a name="options"></a>
             <h2 class="section">Caching Options</h2>
             <p>When responding to a client request, there are four alternative ways to utilize Appweb caching:</p>
-            <p><img class="xbare-screen" src="../../../images/caching/caching-steps.jpg" /></p>
+            <p><img class="xbare-screen" src="../../../images/caching/caching-steps.jpg" alt="steps"/></p>
             <h3>Options</h3>
             <ol>
                 <li>Use the client cache and don't contact the server at all.</li>
@@ -139,6 +136,8 @@
             the response is eliminated, but the full response data must be sent over the network to the client. </p>
             <P>This kind of caching is best for dynamic web pages that are viewed more often than the data on which they
             depend is updated.</p>
+
+            <a name="server"></a>
             <h2 class="section">Caching on the Server</h2>
             <p>On the server, there are three paradigms for how and when to update cached responses.</p>
             <ol>
@@ -174,6 +173,8 @@
             running a request handler. This paradigm is effective if the delay in creating a response web page is large.
             In that case, pre-computing the web page in the background means that the client request can be serviced very
             quickly without waiting for the page to be generated.</p>
+
+            <a name="configuring"></a>
             <h2 class="section">Configuring Caching</h2>
             <p>Appweb caching is configured via the <a href="dir/route.html#cache"><tt>Cache</tt></a> configuration
             directive. This directive specifies: </p>
@@ -229,6 +230,8 @@ Cache server manual /dashboard.esp
             <p>Caching records, like most other configuration file settings, are inherited by inner routes. Consequently, if
             you define a caching record at the default server level, all subsequent routes will inherit that caching
             definition.</p>
+
+            <a name="performance"></a>
             <h2 class="section">Performance Considerations</h2>
             <h3>Cache Lifespans</h3>
             <p>When selecting a lifespan for a resource, ask the questions:
@@ -254,6 +257,8 @@ Cache server manual /dashboard.esp
             details about how Appweb is processing the request. It will display the selected route and also trace 
             information about whether cached responses have been found and are suitable for use.</p>
             <pre>appweb --log stdout:4</pre>
+
+            <a name="criteria"></a>
             <h2 class="section">Deciding Criteria</h2>
             <p>In summary, here are some rules of thumb to assist in designing your caching strategy.</p>
             <ul>
