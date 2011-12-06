@@ -8096,7 +8096,6 @@ HttpRoute *httpCreateInheritedRoute(HttpRoute *parent)
     route->eroute = parent->eroute;
     route->errorDocuments = parent->errorDocuments;
     route->extensions = parent->extensions;
-    route->flags = parent->flags;
     route->handler = parent->handler;
     route->handlers = parent->handlers;
     route->handlersWithMatch = parent->handlersWithMatch;
@@ -8140,6 +8139,7 @@ HttpRoute *httpCreateInheritedRoute(HttpRoute *parent)
     route->logSize = parent->logSize;
     route->logBackup = parent->logBackup;
     route->logFlags = parent->logFlags;
+    route->flags = parent->flags & ~(HTTP_ROUTE_FREE_PATTERN);
     return route;
 }
 
@@ -8199,8 +8199,9 @@ static void manageRoute(HttpRoute *route, int flags)
         mprMark(route->logPath);
 
     } else if (flags & MPR_MANAGE_FREE) {
-        if (route->patternCompiled) {
+        if (route->patternCompiled && (route->flags & HTTP_ROUTE_FREE_PATTERN)) {
             free(route->patternCompiled);
+            route->patternCompiled = 0;
         }
     }
 }
@@ -9337,12 +9338,13 @@ static void finalizePattern(HttpRoute *route)
     if (mprGetListLength(route->tokens) == 0) {
         route->tokens = 0;
     }
-    if (route->patternCompiled) {
+    if (route->patternCompiled && (route->flags & HTTP_ROUTE_FREE_PATTERN)) {
         free(route->patternCompiled);
     }
     if ((route->patternCompiled = pcre_compile2(route->optimizedPattern, 0, 0, &errMsg, &column, NULL)) == 0) {
         mprError("Can't compile route. Error %s at column %d", errMsg, column); 
     }
+    route->flags |= HTTP_ROUTE_FREE_PATTERN;
 }
 
 
