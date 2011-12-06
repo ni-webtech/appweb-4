@@ -9252,6 +9252,12 @@ void mprManageEpoll(MprWaitService *ws, int flags)
             close(ws->epoll);
             ws->epoll = 0;
         }
+        if (ws->breakPipe[0] >= 0) {
+            close(ws->breakPipe[0]);
+        }
+        if (ws->breakPipe[1] >= 0) {
+            close(ws->breakPipe[1]);
+        }
     }
 }
 
