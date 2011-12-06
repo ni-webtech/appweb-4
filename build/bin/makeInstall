@@ -43,14 +43,18 @@ TASK=${TASK:-Install}
 processPackage() {
     local fileList
     
+    if [ "${BLD_EJS}" = "" ] ; then
+        echo -e "\nRequire \"ejs\" shell to create packages. Exiting." 1>&2
+        exit 255
+    fi
     if [ -f package/$1.es ] ; then
         [ "$QUIET" = 0 ] && log ${VERB} package/$1.es ...
-        ejs package/$1.es $TASK $ROOT_DIR $BARE
+        ${BLD_EJS} package/$1.es $TASK $ROOT_DIR $BARE
     elif [ -f package/$1.files ] ; then
         [ "$QUIET" = 0 ] && log ${VERB} package/$1.files ...
         . "package/$1.files"
     else
-        echo -e "\nCan't open $fileList. Exiting" 1>&2
+        echo -e "\nCan't open $fileList. Exiting." 1>&2
         exit 255
     fi 
 }
