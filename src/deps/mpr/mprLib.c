@@ -5492,6 +5492,7 @@ ssize mprReadCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize)
     /*
         Need to detect EOF in windows. Pipe always in blocking mode, but reads block even with no one on the other end.
      */
+    mprAssert(cmd->files[channel].handle);
     rc = PeekNamedPipe(cmd->files[channel].handle, NULL, 0, NULL, &count, NULL);
     if (rc > 0 && count > 0) {
         return read(cmd->files[channel].fd, buf, (uint) bufsize);
@@ -5505,6 +5506,7 @@ ssize mprReadCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize)
     return -1;
 }
 #else
+    mprAssert(cmd->files[channel].fd >= 0);
     return read(cmd->files[channel].fd, buf, bufsize);
 #endif
 }
@@ -5753,8 +5755,16 @@ static void reapCmd(MprCmd *cmd, MprSignal *sp)
             if (cmd->files[MPR_CMD_STDOUT].fd >= 0) {
                 mprCloseCmdFd(cmd, MPR_CMD_STDOUT);
             }
+            /*
+                May not close stdin/stdout if command times out
+             */
+#if UNUSED && DONT_USE && KEEP
+            if (cmd->eofCount != cmd->requiredEof) {
+                mprLog(0, "reapCmd: insufficient EOFs %d %d, complete %d", cmd->eofCount, cmd->requiredEof, cmd->complete);
+            }
             mprAssert(cmd->eofCount == cmd->requiredEof);
             mprAssert(cmd->complete);
+#endif
         }
     }
 }
@@ -5816,7 +5826,7 @@ static ssize cmdCallback(MprCmd *cmd, int channel, void *data)
 
 static void stdinCallback(MprCmd *cmd, MprEvent *event)
 {
-    if (cmd->callback) {
+    if (cmd->callback && cmd->files[MPR_CMD_STDIN].fd >= 0) {
         (cmd->callback)(cmd, MPR_CMD_STDIN, cmd->callbackData);
     }
 }
@@ -5824,7 +5834,10 @@ static void stdinCallback(MprCmd *cmd, MprEvent *event)
 
 static void stdoutCallback(MprCmd *cmd, MprEvent *event)
 {
-    if (cmd->callback) {
+    /*
+        reapCmd can consume data from the client and close the fd
+     */
+    if (cmd->callback && cmd->files[MPR_CMD_STDOUT].fd >= 0) {
         (cmd->callback)(cmd, MPR_CMD_STDOUT, cmd->callbackData);
     }
 }
@@ -5832,7 +5845,10 @@ static void stdoutCallback(MprCmd *cmd, MprEvent *event)
 
 static void stderrCallback(MprCmd *cmd, MprEvent *event)
 {
-    if (cmd->callback) {
+    /*
+        reapCmd can consume data from the client and close the fd
+     */
+    if (cmd->callback && cmd->files[MPR_CMD_STDERR].fd >= 0) {
         (cmd->callback)(cmd, MPR_CMD_STDERR, cmd->callbackData);
     }
 }
@@ -13375,13 +13391,13 @@ void mprAssertError(cchar *loc, cchar *msg)
 
     if (loc) {
 #if BLD_UNIX_LIKE
-        snprintf(buf, sizeof(buf), "Assertion %s, failed at %s\n", msg, loc);
+        snprintf(buf, sizeof(buf), "Assertion %s, failed at %s", msg, loc);
 #else
-        sprintf(buf, "Assertion %s, failed at %s\n", msg, loc);
+        sprintf(buf, "Assertion %s, failed at %s", msg, loc);
 #endif
         msg = buf;
     }
-    mprLog(1, "%s", buf);
+    mprLog(0, "%s", buf);
 #endif
 }
 
