@@ -81,7 +81,6 @@
             as there are several places to locate the cached content and many ways to configure the overall caching
             architecture. This document provides a basic overview of Appweb
             caching and how to configure its caching capabilities.</p> 
-
             <a name="why"></a>
             <h2>Why Cache?</h2>
             <p>When a browser issues an HTTP request to a server, that request must be transmitted and received. Then the 
@@ -124,9 +123,9 @@
             copies of the response. When the client makes a request, it submits the unique Etag and modification date
             of the response. The server checks these two fields against its cached copy and if they match, the server
             responds to the client immediately without regenerating the response. This eliminates the delay in
-            generating the response. Furthermore, the server can respond with a <tt>304 Not-Modified</tt> header and
+            generating the response. Furthermore, the server can respond with a <em>304 Not-Modified</em> header and
             omit the response content itself. So the response is very small and will travel quickly over the network.</p>
-            If the client cache does not match the server cache, the response must contain the full response
+            <p>If the client cache does not match the server cache, the response must contain the full response
             data.</p>
             <p>The advantage of this mode, is that the server keeps control and can immediately update cached content. It 
             eliminates the delay in generating the response and can greatly reduce network traffic. The downside is that
@@ -136,7 +135,6 @@
             the response is eliminated, but the full response data must be sent over the network to the client. </p>
             <P>This kind of caching is best for dynamic web pages that are viewed more often than the data on which they
             depend is updated.</p>
-
             <a name="server"></a>
             <h2 class="section">Caching on the Server</h2>
             <p>On the server, there are three paradigms for how and when to update cached responses.</p>
@@ -159,7 +157,7 @@
             server state has changed that would require regenerating the response. The handler will manually send the cached
             response if it is current by using the 
             
-            <a href="../../../api/esp.html#group___esp_req_1ga94594750521ce6621691dcec43a2d670"><tt>espRenderCached</tt></a>
+            <a href="../../../api/esp.html#group___esp_req_1ga94594750521ce6621691dcec43a2d670"><em>espRenderCached</em></a>
             API. If the response is stale, it will generate a new response. In both cases, the
             Appweb cacheFilter will automatically capture the response and save it to the cache for future requests.
             This paradigm is useful when a stale page must <i>never</i> be sent to the client and the handler must
@@ -168,15 +166,14 @@
             <p>In Event Driven mode, the web page is not generated in response to a client request, but rather in
             response to some state change on the server system. The pre-generated web page is then manually stored in
             the cache by calling the
-            <a href="../../../api/esp.html#group___esp_req_1ga2d10fdd68ab00d306d344c815f7655e7"><tt>espUpdateCache</tt></a>
+            <a href="../../../api/esp.html#group___esp_req_1ga2d10fdd68ab00d306d344c815f7655e7"><em>espUpdateCache</em></a>
             API.  When the client request is subsequently received, the response is retrieved from the cache without
             running a request handler. This paradigm is effective if the delay in creating a response web page is large.
             In that case, pre-computing the web page in the background means that the client request can be serviced very
             quickly without waiting for the page to be generated.</p>
-
             <a name="configuring"></a>
             <h2 class="section">Configuring Caching</h2>
-            <p>Appweb caching is configured via the <a href="dir/route.html#cache"><tt>Cache</tt></a> configuration
+            <p>Appweb caching is configured via the <a href="dir/route.html#cache"><em>Cache</em></a> configuration
             directive. This directive specifies: </p>
             <ol>
                 <li>Whether the client should contact the server to verify content</li>
@@ -195,33 +192,33 @@ Cache server only /user/login.esp?first=1
 Cache server unique /user/login.esp
 Cache server manual /dashboard.esp
 </pre>
-            <p>The <tt>Cache 8600</tt> directive defines a default cache lifespan for the current route. If subsequent
+            <p>The <em>Cache 8600</em> directive defines a default cache lifespan for the current route. If subsequent
             Cache directives do not define a lifespan, this default will be used.</p>
-            <p>The <tt>Cache client=86400 ext="gif,jpg,png,ico"</tt> directive will cache images with the specified
+            <p>The <em>Cache client=86400 ext="gif,jpg,png,ico"</em> directive will cache images with the specified
             extensions at the client-side for one day (86400 seconds). The client will not contact the server to refresh
-            these images unless <tt>reload</tt> is clicked on the browser.</p>
-            <p>The <tt>Cache server methods="GET"</tt> directive will cause all requests using the HTTP GET method to be
+            these images unless <em>reload</em> is clicked on the browser.</p>
+            <p>The <em>Cache server methods="GET"</em> directive will cause all requests using the HTTP GET method to be
             cached at the server with the default lifespan. Note, such global caching of all requests is typically not what
             is desired.</p>
-            <p>The <tt>Cache server methods="GET,POST" /status.esp /inventory.esp</tt>
+            <p>The <em>Cache server methods="GET,POST" /status.esp /inventory.esp</em>
                 directive will cache the /status.esp and /inventory.esp URIs if the requests use the GET or POST HTTP
                 methods.</p>
-            <p>The <tt>Cache server all /user/login.esp</tt> directive will cache all requests that have the given URI
+            <p>The <em>Cache server all /user/login.esp</em> directive will cache all requests that have the given URI
             regardless of any additional query, POST data or route parameters. i.e. this means the request
             "/users/login.esp?fast" will use the same cached response as "/users/login.esp".
-            <p>The <tt>Cache server only /user/login.esp?first=1</tt> directive will cache "only" this exact request.
+            <p>The <em>Cache server only /user/login.esp?first=1</em> directive will cache "only" this exact request.
             When matching a request with this cache record, the request parameters (query, POST data and route
             parameters) will be added to the request URI to form a sorted www-urlencoded URI. This means that different
             request parameters will not be cached and only the exact form specified will be cached.</p>
-            <p>The <tt>Cache server unique /user/login.esp</tt> directive will cache all requests with a matching
+            <p>The <em>Cache server unique /user/login.esp</em> directive will cache all requests with a matching
             request pathInfo regardless of the request parameters. However, each request with different request
             parameters will be cached uniquely. This means that the URI "/users/login.esp?first" will be cached
             differently to the URI "/usrs/login.esp?second". Note that this applies to POST data and route parameters as
             well as request query information.</p>
-            <p>The <tt>Cache server manual /dashboard.esp</tt> directive will invoke manual mode where the Appweb
+            <p>The <em>Cache server manual /dashboard.esp</em> directive will invoke manual mode where the Appweb
             handlers must manually send the cached response to the client. The response will then be automatically
             cached by the cacheFilter for subsequent requests.</p>
-            <p>See the <a href="dir/route.html#cache"><tt>Cache</tt></a> directive documentation for full details.</p>
+            <p>See the <a href="dir/route.html#cache"><em>Cache</em></a> directive documentation for full details.</p>
             <h3>Inheriting Caching Configuration</h3>
             <p>Each Cache directive creates a cache record that applies to the current route in the appweb.conf
             configuration file. Requests that match the current route will consider the caching records in the order in
@@ -230,7 +227,6 @@ Cache server manual /dashboard.esp
             <p>Caching records, like most other configuration file settings, are inherited by inner routes. Consequently, if
             you define a caching record at the default server level, all subsequent routes will inherit that caching
             definition.</p>
-
             <a name="performance"></a>
             <h2 class="section">Performance Considerations</h2>
             <h3>Cache Lifespans</h3>
@@ -257,7 +253,6 @@ Cache server manual /dashboard.esp
             details about how Appweb is processing the request. It will display the selected route and also trace 
             information about whether cached responses have been found and are suitable for use.</p>
             <pre>appweb --log stdout:4</pre>
-
             <a name="criteria"></a>
             <h2 class="section">Deciding Criteria</h2>
             <p>In summary, here are some rules of thumb to assist in designing your caching strategy.</p>

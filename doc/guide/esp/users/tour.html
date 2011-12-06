@@ -40,34 +40,32 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul class="nav">
-                <li><a href="#blog">Blog App</a></li>
-                <li><a href="#create">Creating a New App</a></li>
-                <li><a href="#run">Run the App</a></li>
+                <li><a href="#starting">Starting Appweb</a></li>
+                <li><a href="#testing">Testing Appweb</a></li>
                 <li><a href="#hello">Hello World</a></li>
-                <li><a href="#layout">Layout Pages</a></li>
                 <li><a href="#dynamic">Dynamic Content</a></li>
-                <li><a href="#scaffolds">Scaffolds</a></li>
-                <li><a href="#newPosts">Create New Posts</a></li>
-                <li><a href="#homePage">Edit the Home Page</a></li>
-                <li><a href="#layout">Changing the Layout</a></li>
-                <li><a href="#validations">Validations</a></li>
+                <li><a href="#declarations">Declarations</a></li>
+                <li><a href="#params">Forms and Parameters</a></li>
+                <li><a href="#controls">Web Controls</a></li>
+                <li><a href="#sessions">Sessions and Flash</a></li>
+                <li><a href="#layouts">Layouts</a></li>
                 <li><a href="#learn">Learn More</a></li>
             </ul>
 <!-- BeginDsi "dsi/espSeeAlso.html" -->
 		        <h1>See Also</h1>
 		        <ul class="nav">
-		          <li><a href="../../../../../../guide/appweb/esp/using.html">ESP Overview</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/tour.html">ESP Tour</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/template.html">Templates and Layouts</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/controls.html">HTML Controls</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/config.html">ESP Configuration Directives</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/mvc.html">Model-View-Controller</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/generator.html">Application Generator</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/controllers.html">Controllers and Actions</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/database.html">Database Interface</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/caching.html">Caching Responses</a></li>
+		          <li><a href="../../../../../../guide/esp/users/using.html">ESP Overview</a></li>
+		          <li><a href="../../../../../../guide/esp/users/tour.html">ESP Tour</a></li>
+		          <li><a href="../../../../../../guide/esp/users/template.html">Templates and Layouts</a></li>
+		          <li><a href="../../../../../../guide/esp/users/controls.html">HTML Controls</a></li>
+		          <li><a href="../../../../../../guide/esp/users/config.html">ESP Configuration Directives</a></li>
+		          <li><a href="../../../../../../guide/esp/users/mvc.html">Model-View-Controller</a></li>
+		          <li><a href="../../../../../../guide/esp/users/generator.html">Application Generator</a></li>
+		          <li><a href="../../../../../../guide/esp/users/controllers.html">Controllers and Actions</a></li>
+		          <li><a href="../../../../../../guide/esp/users/database.html">Database Interface</a></li>
+		          <li><a href="../../../../../../guide/esp/users/caching.html">Caching Responses</a></li>
 		        </ul>
 <!-- EndDsi -->
         </div>
@@ -77,35 +75,38 @@
             First make sure you have read the <a href="../../appweb/users/quickStart.html">Quick Start</a> and 
             that you have ESP installed on your system so you can type along as you go.</p>
             
+            <a name="starting"></a>
             <h2 class="section">Starting Appweb</h2>
             <p>When Appweb is installed, it will start automatically and run in the background. You can start and stop
-            Appweb via the "<tt>appman</tt>" command.
+            Appweb via the "<em>appman</em>" command.
 <pre>
 appman start
 appman stop
 </pre>
-            <p>Type <tt>appman</tt> -? to see a list of options. See <a href="guide/appweb/users/service.html">
+            <p>Type <em>appman</em> -? to see a list of options. See <a href="../../guide/appweb/users/service.html">
                 Running Appweb as a System Service</a> for platform specific details about starting and stopping Appweb.</p>
             
             <h3>Manually Running Appweb</h3>
             
-            <p>When developing, it can be most convenient to run Appweb manually. To run Appweb directly, use this command:
+            <p>When developing, it can be most convenient to run Appweb manually. To run Appweb directly, use this
+            command:</p>
 <pre>
 sudo appweb -v
 </pre>
-            <p>You must be in the Appweb server root directory containing an <tt>appweb.conf</tt> configuration file.</p>
+            <p>You must be in the Appweb server root directory containing an <em>appweb.conf</em> configuration file.</p>
             
             
+            <a name="testing"></a>
             <h2 class="section">Testing Appweb</h2>
             To test Appweb, enter
-            <tt>localhost/test.esp</tt> in your browser. You should see the following page:</p>
+            <em>localhost/test.esp</em> in your browser. You should see the following page:</p>
             
             <img src="../../../images/esp/tour/home.png" class="screen" alt="" />
             <a name="hello" id="hello"></a>
             <h2 class="section">Hello World</h2>
             <p>The first step in any tour is to create a simple "Hello World" web page. ESP web pages have an <b>.esp</b>
-            extension. Create a file called <tt>hello.esp</tt> under the directory nominated as your <tt>DocumentRoot</tt> 
-            directory in the <tt>appweb.conf</tt> configuration file. Create a file with your favorite text editor with 
+            extension. Create a file called <em>hello.esp</em> under the directory nominated as your <em>DocumentRoot</em> 
+            directory in the <em>appweb.conf</em> configuration file. Create a file with your favorite text editor with 
             the following content:</p>
             <pre>
 &lt;html&gt;
@@ -152,14 +153,16 @@ sudo appweb -v
 </pre>
             <p>By using the ESP statement directive <b>&lt;% code %&gt;</b>, you can embed arbitrary "C" language
             statements in your web page. The <b>render</b> function allows you to write arbitrary data which is patched
-            back where the directive was defined in the page. See the <a href="views.html">Views and Layouts</a>
-            document for full details about all the ESP web page directives.</p><a name="views" id="views"></a>
+            back where the directive was defined in the page. See the <a href="template.html">Web Pages and Templates</a>
+            document for full details about all the ESP web page directives.</p>
+            
+            <a name="declarations"></a>
             <h2 class="section">Declarations</h2>
             <p>Some compilers (Microsoft CL) do not permit "C" declarations except at the start of a block. When ESP
             compiles an ESP web page, it converts it to "C" code and wraps it inside a function that will be invoked
             at run-time in response to client requests. ESP supports MSCL by controlling where ESP code will be
             placed in the web page function. To ensure that declarations are emitted at the start of the function block 
-            use the <tt>^start</tt> directive.</p>
+            use the <em>^start</em> directive.</p>
 <pre>&lt;%<b>^start</b>
     char *msg = "hello world";
     int  x = 42;
@@ -169,10 +172,10 @@ sudo appweb -v
             <a name="params" id="params"></a>
             <h2 class="section">Forms and Request Params</h2>
             <p>When an HTML form is submitted, ESP converts form data and query parameters into ESP request parameters. 
-            These can be accessed via the <tt>param()</tt> function or more conveniently via the literal <tt>@@variable</tt> 
-            directive. By prefixing a variable with <tt>@@</tt> ESP will automatically look up the request parameters,
+            These can be accessed via the <em>param()</em> function or more conveniently via the literal <em>@@variable</em> 
+            directive. By prefixing a variable with <em>@@</em> ESP will automatically look up the request parameters,
             and if not found, the session data store for the variable, and then substitute its value.</p>
-            <p>If an HTTP request has the URI: <tt>http://example.com/submit.esp?name=julie</tt>, then the following
+            <p>If an HTTP request has the URI: <em>http://example.com/submit.esp?name=julie</em>, then the following
             ESP code could access the user name directly.</p>
 <pre>&lt;p>User Name: <b>@@name</b>&lt;/p></pre>
             <h3>XSS Security</h3>
@@ -185,12 +188,12 @@ sudo appweb -v
 </pre>
             <a name="controls" id="controls"></a>
             <h2 class="section">Web Controls</h2>
-            <p>ESP includes a rich library of web control funtions that easily generate HTML. These web controls
+            <p>ESP includes a rich library of web control functions that easily generate HTML. These web controls
             are integrated with the <a href="http://jquery.com/">jQuery</a> client-side JavaScript library.
             <p>Controls are provided to create forms, buttons, input lists, checkboxes, selectable tabs, and tables.
             <p>To the following control will emit a text label that will dynamically update using background AJAX requests.
-            This control will create the appropriate HTML to invoke the <tt>data.esp</tt> page every 1 second to
-            get the current time. The web page will transparently update with the data returned by <tt>data.esp</tt>.</p>
+            This control will create the appropriate HTML to invoke the <em>data.esp</em> page every 1 second to
+            get the current time. The web page will transparently update with the data returned by <em>data.esp</em>.</p>
 <pre>&lt;% Time: label("", "{ data-refresh: "data.esp", data-period: 1000 }"); %></pre>
             <a name="binding" id="binding"></a>
             <h3>Database Binding</h3>
@@ -207,20 +210,20 @@ sudo appweb -v
     endform();
 %>
 </pre>
-            <p>In this example, the <tt>form</tt> control <i>binds</i> the <tt>userRecord</tt>. The input controls
+            <p>In this example, the <em>form</em> control <i>binds</i> the <em>userRecord</em>. The input controls
             then retrieve the "name", and "address" fields from the database record and emit the appropriate HTML
-            input elements. 
-            <a name="session" id="session"></a>
+            input elements.</p>
+            <a name="sessions" id="sessions"></a>
             <h2>Sessions and Flash</h2>
             <p>ESP provides an integrated session store so that state can be shared across requests. Session variables
-            can be accessed using the <tt>@@variable</tt> directive in ESP pages or via the
-            <tt>getSessionVar()</tt> API.</p>
+            can be accessed using the <em>@@variable</em> directive in ESP pages or via the
+            <em>getSessionVar()</em> API.</p>
             <p>Flash storage is a portion of the session storage used to pass messages and state to the next request 
-            only. This is useful after a form, to add feedback messsages to the next web page. Messages can be added
-            to flash storage via the <tt>error</tt>, <tt>inform</tt>, or <tt>warn</tt> APIs. </p>
+            only. This is useful after a form, to add feedback messages to the next web page. Messages can be added
+            to flash storage via the <em>error</em>, <em>inform</em>, or <em>warn</em> APIs. </p>
 <pre>&lt;% <b>inform</b>("Record updated"); %></pre>
             
-            <p>The <tt>flash</tt> web
+            <p>The <em>flash</em> web
             control is used in the next web page to extract flash messages for display.</p>
 <pre>&lt;% <b>flash</b>("all", NULL); %></pre>
             <a name="layouts" id="layouts"></a>
@@ -233,7 +236,7 @@ sudo appweb -v
             from page to page. </p>
             
             <p>A layout page provides template for the page and defines the location for the content via a
-                <tt>&lt;%@ content %></tt> directive.</p>
+                <em>&lt;%@ content %&gt;</em> directive.</p>
 <pre>
 &lt;html&gt;
 &lt;body&gt;
@@ -247,13 +250,13 @@ sudo appweb -v
 &lt;/html&gt;
 </pre>
             <p>A content page defines only the HTML and code that is unique for a specific page. 
-            It is merged with a layout page by inserting the content and replacing the <tt>&lt;%@ content %></tt> tag 
+            It is merged with a layout page by inserting the content and replacing the <em>&lt;%@ content %&gt;</em> tag 
             in the layout page.</p>
-            <p>To use a layout page, a layout directory must be defined in the <tt>appweb.conf</tt> configuration file
+            <p>To use a layout page, a layout directory must be defined in the <em>appweb.conf</em> configuration file
             using the EspDir directive. With this directive, pages will use the 
-            "<tt>./layouts/default.esp</tt>" layout page by default.
+            "<em>./layouts/default.esp</em>" layout page by default.
 <pre>EspDir layout "./layouts"</pre>
-            <p>The ESP <tt>&lt;%@ layout</tt> directive may be used in web pages to control what layout page (if any) 
+            <p>The ESP <em>&lt;%@ layout</em> directive may be used in web pages to control what layout page (if any) 
             is used for the page. </p>
 <pre>
 &lt;%@ layout "custom-layout.esp" %&gt;
@@ -265,7 +268,7 @@ sudo appweb -v
             <p>To learn more, please read:</p>
             <ul>
                 <li><a href="../../../index.html">ESP Documentation</a></li>
-                <li><a href="../../../ref/esp/webArchitecture.html">ESP Web Framework Architecture</a></li>
+                <li><a href="../../../ref/esp/espArchitecture.html">ESP Architecture</a></li>
                 <li><a href="mvc.html">ESP MVC Framework</a></li>
                 <li><a href="mvcTour.html">MVC Tour</a>.
             </ul>

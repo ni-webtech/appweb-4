@@ -93,7 +93,6 @@
             locks to serialize access to such data, but this is a crude solution and often leads to brittle applications.
             Appweb has a better solution that effectively serializes all activity for a request: per-request 
             event dispatchers.</p>
-
             <a name="dispatchers"></a>
             <h3>Event Dispatchers</h3>
             <p>The Multithreaded Portable Runtime (MPR) used by Appweb has a facility called Event Dispatchers. These
@@ -105,14 +104,12 @@
             eventually service the I/O event. If the request is currently idle, a thread is assigned from the thread 
             pool for the request, and the thread is resumed to service the request's dispatcher queue. This greatly 
             simplifies Appweb as all activity for a request is thus serialized via the dispatcher queue.</p>
-
             <a name="multithreaded"></a>
             <h3>Multithreaded Appweb</h3>
             <p>By using request dispatchers, Appweb serializes all request activity, yet it can support many 
             simultaneous requests due to its multithreaded core. Appweb efficiently utilizes thread resources by using
             a thread pool and not dedicating threads permanently to requests. Threads are temporarily assigned
             only as required by active requests.</p>
-
             <a name="modules"></a>
             <h3>Modules</h3>
             <p>Appweb can be extended by writing loadable modules. Modules can add request handlers, pipeline filters,

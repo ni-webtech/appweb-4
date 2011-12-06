@@ -40,7 +40,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul class="nav">
                 <li><a href="#updates">Updates</a></li>
                 <li><a href="#account">Appweb User Account</a></li>
@@ -95,7 +95,7 @@
             <p>On Windows, when running as a system service, Appweb will run using the LocalSystem account. This account
             has no privileges to access the network using network drives, named pipes, RPC or DCOM. However, it has
             considerable privileges locally. It is suggested that you create a dedicated account for Appweb to minimize
-            the priviliges available should Appweb be compromised.</p>
+            the privileges available should Appweb be compromised.</p>
             <p>When creating an account for Appweb, ensure you do the following:</p>
             <ul>
                 <li>Using the Group Policy manager, grant the account the privilege of "Act as part of the operating
@@ -150,11 +150,11 @@ chmod 755  . lib logs
             <h3>PHP</h3>
             <p>The php.ini file controls the setup and execution of the PHP web framework. The following table lists
             several parameters that should be set for enhanced security:</p>
-            <table summary="" width="100%">
+            <table title="parameters">
                 <thead>
                     <tr>
-                        <td>Parameter</td>
-                        <td>Description</td>
+                        <th>Parameter</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -174,7 +174,7 @@ chmod 755  . lib logs
                         access.</td>
                     </tr>
                     <tr>
-                        <td nowrap="nowrap">safe_mode_exec_dir = directory[:...]</td>
+                        <td class="nowrap">safe_mode_exec_dir = directory[:...]</td>
                         <td>Define a set of directories that will be the only directories from which PHP can execute
                         programs.</td>
                     </tr>
@@ -225,7 +225,7 @@ AddType application/x-httpd-php .web
             relaxed set of defaults that will permit a wide range of requests.</p>
             <h3>Sandbox Directives</h3>
             <p>The sandbox directives are:</p>
-            <table summary="">
+            <table title="sandbox">
                 <tbody>
                     <tr>
                         <td class="pivot">LimitChunk</td>
@@ -241,7 +241,7 @@ AddType application/x-httpd-php .web
                     </tr>
                     <tr>
                         <td class="pivot">LimitRequestHeaderLines</td>
-                        <td>Maximum number of header linjes in the request</td>
+                        <td>Maximum number of header lines in the request</td>
                     </tr>
                     <tr>
                         <td class="pivot">LimitRequestHeader</td>

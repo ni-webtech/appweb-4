@@ -40,24 +40,25 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul class="nav">
-                <li><a href="#libraries">Ajax Libraries</a></li>
-                <li><a href="#dynamic">Dynamic Controls</a></li>
+                <li><a href="#families">Control Families</a></li>
+                <li><a href="#ajax">Ajax Libraries</a></li>
+                <li><a href="#database">Database Integration</a></li>
             </ul>
 <!-- BeginDsi "dsi/espSeeAlso.html" -->
 		        <h1>See Also</h1>
 		        <ul class="nav">
-		          <li><a href="../../../../../../guide/appweb/esp/using.html">ESP Overview</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/tour.html">ESP Tour</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/template.html">Templates and Layouts</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/controls.html">HTML Controls</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/config.html">ESP Configuration Directives</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/mvc.html">Model-View-Controller</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/generator.html">Application Generator</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/controllers.html">Controllers and Actions</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/database.html">Database Interface</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/caching.html">Caching Responses</a></li>
+		          <li><a href="../../../../../../guide/esp/users/using.html">ESP Overview</a></li>
+		          <li><a href="../../../../../../guide/esp/users/tour.html">ESP Tour</a></li>
+		          <li><a href="../../../../../../guide/esp/users/template.html">Templates and Layouts</a></li>
+		          <li><a href="../../../../../../guide/esp/users/controls.html">HTML Controls</a></li>
+		          <li><a href="../../../../../../guide/esp/users/config.html">ESP Configuration Directives</a></li>
+		          <li><a href="../../../../../../guide/esp/users/mvc.html">Model-View-Controller</a></li>
+		          <li><a href="../../../../../../guide/esp/users/generator.html">Application Generator</a></li>
+		          <li><a href="../../../../../../guide/esp/users/controllers.html">Controllers and Actions</a></li>
+		          <li><a href="../../../../../../guide/esp/users/database.html">Database Interface</a></li>
+		          <li><a href="../../../../../../guide/esp/users/caching.html">Caching Responses</a></li>
 		        </ul>
 <!-- EndDsi -->
         </div>
@@ -103,7 +104,7 @@
             these controls are pre-integrated with the jQuery client-side JavaScript library and may optionally bind
             with server-side databases. ESP controls make it easy to create dynamically updating tables, perform background
             page updates and do automatic user feedback and form validation.</p>
-            <h3>Sample</h3>
+            <h2>Sample</h2>
             <p>In essence, ESP HTML controls are functions that can be called anywhere in an ESP page or ESP
             controller. Based on their arguments, they emit HTML and jQuery calls into the client response.
             Here is a quick sample of some of the ESP controls in action:</p>
@@ -116,22 +117,23 @@ table(data, "{ \
         body: { header: 'BODY' }, \
     }");
 </pre>
+            <a name="families"></a>
             <h2 class="section">ESP Control Families</h2>
             <p>ESP Controls are grouped into two families: 
             <ul>
                 <li>Form-based controls that do input
                 <li>Non form-based that do output and other tasks
             </ul>
-            <p>Form-based controls are typically located inside a <tt>form</tt>/<tt>endform</tt> control 
+            <p>Form-based controls are typically located inside a <em>form</em>, <em>endform</em> control 
             pair that defines a current database record from which data will be utilized. Non form-based controls 
             can be used anywhere on a page outside a form/endform pair.</p>
-            <h3>HTML Controls</h3>
-            <table summary="">
+            <h2>HTML Controls</h2>
+            <table title="controls">
                 <thead>
                     <tr>
-                        <td>Name</td>
-                        <td>Form</td>
-                        <td>Description</td>
+                        <th>Name</th>
+                        <th>Form</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -267,9 +269,9 @@ table(data, "{ \
                     </tr>
                 </tbody>
             </table>
-            <h3>ESP Control Options</h3>
+            <h2>ESP Control Options</h2>
             <p>ESP controls are generally of the form: function(args ..., options). The options argument is an optional 
-            set of properties to modify the behaviour of the control. It is expressed as a 
+            set of properties to modify the behavior of the control. It is expressed as a 
             <a href="http://en.wikipedia.org/wiki/JSON">JSON</a> string where a set of properties are enclosed in 
             braces. Each keyword is followed by a colon. It helps to use single quotes around property values
             and use double quotes around the entire option string. For example: </p>
@@ -285,7 +287,7 @@ label("Hello World", "{ effects: 'fadein' }");
                     <tr><td>action</td><td>Action function to invoke</td></tr>
                     <tr><td>apply</td><td>Client jQuery selector identifying the element to receive the update</td></tr>
                     <tr><td>background</td><td>Background color</td></tr>
-                    <tr><td>click</td><td>URI to onvoke if the control is clicked</td></tr>
+                    <tr><td>click</td><td>URI to invoke if the control is clicked</td></tr>
                     <tr><td>color</td><td>Foreground color</td></tr>
                     <tr><td>confirm</td><td>Message to prompt user before submitting a form</td></tr>
                     <tr><td>controller</td><td>Controller owning the action to invoke</td></tr>
@@ -303,7 +305,7 @@ label("Hello World", "{ effects: 'fadein' }");
                     <tr><td>period</td><td>Period in milliseconds between invoking a refresh of the control data</td></tr>
                     <tr><td>query</td><td>URI query string to add to the URI</td></tr>
                     <tr><td>rel</td><td>HTML rel attribute. Use to generate "rel='nofollow' link attributes</td></tr>
-                    <tr><td>remote</td><td>Perform the request in the background without chaning the browser location</td></tr>
+                    <tr><td>remote</td><td>Perform the request in the background without changing the browser location</td></tr>
                     <tr><td>refresh</td><td>URI to invoke in the background to refresh the control data</td></tr>
                     <tr><td>size</td><td>Size of the element</td></tr>
                     <tr><td>style</td><td>CSS style to use for the element</td></tr>
@@ -311,7 +313,8 @@ label("Hello World", "{ effects: 'fadein' }");
                     <tr><td>width</td><td>HTML width of the control</td></tr>
                 </tbody>
             </table>
-            <h2 class="section">AJAX and Client JavaScript Libraries</h1>
+            <a name="ajax"></a>
+            <h2 class="section">AJAX and Client JavaScript Libraries</h2>
             <p>Web applications split their processing between the server and the client. Increasingly, more processing
             is being done at the client to give a better overall user experience. <a href=
             "http://en.wikipedia.org/wiki/Ajax_(programming)">Ajax</a> programming has risen as one of the more popular
@@ -322,6 +325,7 @@ label("Hello World", "{ effects: 'fadein' }");
             web framework integrate well with the client-side JavaScript library. ESP is thoroughly integrated 
             with jQuery and provides a jQuery client-side adapter and automatically generates the necessary HTML and
             jQuery calls for dynamic and background requests.</p>
+            <a name="database"></a>
             <h2 class="section">Database Integration</h1>
             <a name="dynamic" id="dynamic"></a>
             <h3>Dynamic Controls</h3>

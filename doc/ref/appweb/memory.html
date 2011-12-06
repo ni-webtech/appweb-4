@@ -115,7 +115,6 @@
             This strategy permits worker threads to allocate temporary memory without fear. The memory will not be 
             prematurely collected until the worker explicitly acknowledges and yields to the collector by 
             calling <em>mprYield</em>.</p>
-
             <p>To prevent collection of a memory block and retain the block over a yield point, the application must 
             hold a managed reference for the block. A managed reference, is a reference to an allocated block that 
             will be marked as active during a collection cycle by the Owning Blocks manager function. Manager functions
@@ -138,7 +137,6 @@
             The mprMark function will then invoke the manager for these managed references and so on.
             In this manner, managed memory forms a tree from the roots to the leaves and the mark phase visits every 
             managed block currently in use.</p>
-
             <a name="alloc"></a>
             <h3>Allocating Memory</h3>
             <p>Managers are defined when allocating a block of memory. For example, this code will allocate a block

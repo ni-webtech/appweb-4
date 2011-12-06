@@ -40,7 +40,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul class="nav">
                 <li><a href="#models">Models</a></li>
                 <li><a href="#views">Views</a></li>
@@ -49,16 +49,16 @@
 <!-- BeginDsi "dsi/espSeeAlso.html" -->
 		        <h1>See Also</h1>
 		        <ul class="nav">
-		          <li><a href="../../../../../../guide/appweb/esp/using.html">ESP Overview</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/tour.html">ESP Tour</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/template.html">Templates and Layouts</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/controls.html">HTML Controls</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/config.html">ESP Configuration Directives</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/mvc.html">Model-View-Controller</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/generator.html">Application Generator</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/controllers.html">Controllers and Actions</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/database.html">Database Interface</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/caching.html">Caching Responses</a></li>
+		          <li><a href="../../../../../../guide/esp/users/using.html">ESP Overview</a></li>
+		          <li><a href="../../../../../../guide/esp/users/tour.html">ESP Tour</a></li>
+		          <li><a href="../../../../../../guide/esp/users/template.html">Templates and Layouts</a></li>
+		          <li><a href="../../../../../../guide/esp/users/controls.html">HTML Controls</a></li>
+		          <li><a href="../../../../../../guide/esp/users/config.html">ESP Configuration Directives</a></li>
+		          <li><a href="../../../../../../guide/esp/users/mvc.html">Model-View-Controller</a></li>
+		          <li><a href="../../../../../../guide/esp/users/generator.html">Application Generator</a></li>
+		          <li><a href="../../../../../../guide/esp/users/controllers.html">Controllers and Actions</a></li>
+		          <li><a href="../../../../../../guide/esp/users/database.html">Database Interface</a></li>
+		          <li><a href="../../../../../../guide/esp/users/caching.html">Caching Responses</a></li>
 		        </ul>
 <!-- EndDsi -->
         </div>
@@ -75,7 +75,7 @@
             controllers and routes messages between the various components.</p>
             
             <a name="models" id="models"></a>
-            <h3>Models</h3>
+            <h2>Models</h2>
             <p>The model is responsible for managing access to application data and state. It is also responsible for
             ensuring the data remains valid and consistent.</p>
             <p>ESP provides an basic Object Relational Mapper (ORM) via the Embedded Database Interface (EDI).
@@ -83,15 +83,15 @@
             object-oriented programming (OOP) when dealing with database data stored in rows and columns. </p>
             
             <a name="views" id="views"></a>
-            <h3>Views</h3>
+            <h2>Views</h2>
             <p>The view is responsible for rendering the user interface and presenting the application to the user.
             Views should not manage incoming requests &mdash; that is the job of Controllers.</p>
             <p>ESP provides the ESP web pages to assist in creating view web pages. ESP web pages are HTML
-            pages with embedded "C" code. They are compiled and run to render the user interace. The ESP view 
+            pages with embedded "C" code. They are compiled and run to render the user interface. The ESP view 
             mechanism also provides a templating engine so you can deal separately with layout pages and content pages.</p>
             
             <a name="controllers" id="controllers"></a>
-            <h3>Controllers</h3>
+            <h2>Controllers</h2>
             <p>Controllers manage the application and respond to client requests. They orchestrate the application's
             response, they access and update model data, and display views back to the client. Incoming requests invoke
             <b>Actions</b> in the controller which modify the application state and ultimately render a view.</p>

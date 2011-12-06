@@ -40,10 +40,10 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul class="nav">
                 <li><a href="#record">Fields, Records and Grids</a></li>
-                <li><a href="#column">Columns to Properties</a></li>
+                <li><a href="#columns">Columns to Properties</a></li>
                 <li><a href="#tour">Quick Tour of EDI</a></li>
                 <li><a href="#types">Data Types</a></li>
                 <li><a href="#connections">Database Connections</a></li>
@@ -53,23 +53,22 @@
                 <li><a href="#read">Read</a></li>
                 <li><a href="#update">Update</a></li>
                 <li><a href="#delete">Delete</a></li>
-                <li><a href="#manual">Manual SQL</a></li>
                 <li><a href="#accessing">Accessing Records</a></li>
                 <li><a href="#validation">Record Validation</a></li>
             </ul>
 <!-- BeginDsi "dsi/espSeeAlso.html" -->
 		        <h1>See Also</h1>
 		        <ul class="nav">
-		          <li><a href="../../../../../../guide/appweb/esp/using.html">ESP Overview</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/tour.html">ESP Tour</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/template.html">Templates and Layouts</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/controls.html">HTML Controls</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/config.html">ESP Configuration Directives</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/mvc.html">Model-View-Controller</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/generator.html">Application Generator</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/controllers.html">Controllers and Actions</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/database.html">Database Interface</a></li>
-		          <li><a href="../../../../../../guide/appweb/esp/caching.html">Caching Responses</a></li>
+		          <li><a href="../../../../../../guide/esp/users/using.html">ESP Overview</a></li>
+		          <li><a href="../../../../../../guide/esp/users/tour.html">ESP Tour</a></li>
+		          <li><a href="../../../../../../guide/esp/users/template.html">Templates and Layouts</a></li>
+		          <li><a href="../../../../../../guide/esp/users/controls.html">HTML Controls</a></li>
+		          <li><a href="../../../../../../guide/esp/users/config.html">ESP Configuration Directives</a></li>
+		          <li><a href="../../../../../../guide/esp/users/mvc.html">Model-View-Controller</a></li>
+		          <li><a href="../../../../../../guide/esp/users/generator.html">Application Generator</a></li>
+		          <li><a href="../../../../../../guide/esp/users/controllers.html">Controllers and Actions</a></li>
+		          <li><a href="../../../../../../guide/esp/users/database.html">Database Interface</a></li>
+		          <li><a href="../../../../../../guide/esp/users/caching.html">Caching Responses</a></li>
 		        </ul>
 <!-- EndDsi -->
         </div>
@@ -81,7 +80,7 @@
             The MDB database is a tiny, in-memory database &mdash; great for embedded applications. SQLite is a 
             full SQL implementation for embedded applications, while MySQL is an enterprise class SQL server.
             MDB is the smallest and fastest, but has the least features.</p>
-            <pThe EDI interface provides a consistent way to interface with database data, without worrying about
+            <p>The EDI interface provides a consistent way to interface with database data, without worrying about
             the specifics of the chosen database backend. EDI provides functions for the typical Create, Read, 
             Update and Delete (CRUD) semantics. It also provides functions to manage man manipulate database schema.</p>
  
@@ -95,7 +94,7 @@
             data. While not a full Object Relational Mapper (ORM), the EdiRec representation is an effective and
             compact representation that is well suited for use in web applications where you are rendering database 
             tables in web pages. In the Model-View-Controller (MVC) parlance, you can consider the EdiRec representation 
-            as the "<tt>Model</tt>" in <tt>M</tt>VC.</p>
+            as the "<em>Model</em>" in <em>M</em>VC.</p>
             <pAn EdiRec structure has an array of fields (EdiField), one for each column in the corresponding database table.
             EdiFields stores data as strings to make it easy to display and render in web pages. All EDI APIs that
             get or set field data always operate on strings. The underlying database backend may store data in more
@@ -111,7 +110,7 @@
             
             <a name="tour" id="tour"></a>
             <h2>Quick Tour of EDI</h2>
-            <p>Assume we have a database with a <tt>product</tt> table that has columns for id, name, description, and
+            <p>Assume we have a database with a <em>product</em> table that has columns for id, name, description, and
             price.</p>
             <table summary="" width="75%">
                 <thead>
@@ -139,7 +138,7 @@
             </table>
             <p>By convention, the database table and columns should be lower case. 
             EDI assumes and requires that database tables will have a primary key column named 
-            <tt>id</tt>. </p>
+            <em>id</em>. </p>
             
             <p>The following code demonstrates some typical uses:</p>
             <pre>
@@ -223,17 +222,17 @@ ediUpdateRec(db, product);</b>
             <h2 class="section">Database Connections</h2>
             <p>Database connections are one of the few items that are setup by configuration files. The Appweb 
             configuration file: "appweb.conf" defines the database name, username, password, and other
-            configuration parameters via the <tt>EspDb</tt> configuration directive.</p>
+            configuration parameters via the <em>EspDb</em> configuration directive.</p>
             <pre>EspDb mdb://test.mdb</pre>
             <a name="tables" id="tables"></a>
             <h2 class="section">Creating Database Tables</h2>
-            <p>If creating an MVC application, The <tt>esp</tt> command can be used to create database tables for you:</p>
+            <p>If creating an MVC application, The <em>esp</em> command can be used to create database tables for you:</p>
             <pre>
 esp generate table [field:type ...]
 </pre>
             <p>If field:type pairs are supplied, columns will be created for the specified type. The valid 
-            EDI database types are: <tt>binary</tt>, <tt>bool</tt>, <tt>date</tt>, <tt>float</tt>, <tt>int</tt>, 
-            <tt>string</tt> and <tt>text</tt>.</p>
+            EDI database types are: <em>binary</em>, <em>bool</em>, <em>date</em>, <em>float</em>, <em>int</em>, 
+            <em>string</em> and <em>text</em>.</p>
             
             <a name="crud" id="crud"></a>
             <h2 class="section">Create, Read, Update and Delete (CRUD)</h2>
@@ -256,8 +255,8 @@ ediUpdateRec(db, product);
             
             <a name="read" id="read"></a>
             <h3>Reading a Record</h3>
-            <p>Reading a record from the database is done with the <tt>ediRead</tt> family of Record static methods. The
-            basic <tt>ediReadRec</tt> method will return a record with a given <tt>id</tt> field. Other read methods include:
+            <p>Reading a record from the database is done with the <em>ediRead</em> family of Record static methods. The
+            basic <em>ediReadRec</em> method will return a record with a given <em>id</em> field. Other read methods include:
             ediReadRecWhere, ediReadTable and ediReadField.</p>
             <pre>
 product = ediReadRec(db, "product", "2");
@@ -265,8 +264,8 @@ product = ediReadRecWhere(db, "product", "price", "<", "5.0");
 </pre>
             <a name="update" id="update"></a>
             <h3>Updating a Record</h3>
-            <p>To update a record, first read it using one of the <tt>find</tt> methods. Then update any of the object
-            properties. Finally, call the <tt>save</tt> method to save the changes to the database.</p>
+            <p>To update a record, first read it using one of the <em>find</em> methods. Then update any of the object
+            properties. Finally, call the <em>save</em> method to save the changes to the database.</p>
             <pre>
 product = ediReadRecWhere(db, "product", "name", "==", "Ferarri");
 ediSetField(product, "description", "458 Spider");
@@ -275,7 +274,7 @@ ediSetField(product, "description", "458 Spider");
             
             <a name="delete" id="delete"></a>
             <h3>Deleting a Record</h3>
-            <p>Records have a static method <tt>remove</tt> which will remove the record with the given primary key
+            <p>Records have a static method <em>remove</em> which will remove the record with the given primary key
             id.</p>
             <pre>
 <b>ediDeleteRow(db, "product", "1");</b>
@@ -289,8 +288,8 @@ ediSetField(product, "description", "458 Spider");
                 <li>Controller Directed Access</li>
             </ul>
             <h3>Direct API Access</h3>
-            <p>In <tt>direct model</tt> access, ESP web pages or controllers query the database using 
-            EDI APIs which return EdiRec instances. They then directly access field values using <tt>ediGetField</tt>.</p>
+            <p>In <em>direct model</em> access, ESP web pages or controllers query the database using 
+            EDI APIs which return EdiRec instances. They then directly access field values using <em>ediGetField</em>.</p>
             <pre>
 &lt;p&gt;Price: &lt%= ediGetField(product, "price"); &lt;/p&gt;
 </pre>
@@ -298,8 +297,8 @@ ediSetField(product, "description", "458 Spider");
             <p>To make it easy to display and update database data, ESP supports "data binding" where an EDI 
             database record can be bound to a request form. Thereafter, the ESP web controls will take data 
             from that record.</p>
-            <p>A record is bound by passing a record instance to the <tt>form</tt> ESP control. ESP then defines
-            it as the current record until the next <tt>endform</tt> is encountered. ESP controls can then
+            <p>A record is bound by passing a record instance to the <em>form</em> ESP control. ESP then defines
+            it as the current record until the next <em>endform</em> is encountered. ESP controls can then
             use the current record as a data source.</p>
 <pre>
 &lt% 
@@ -313,13 +312,13 @@ ediSetField(product, "description", "458 Spider");
 %>
 </pre>
             <p>In this example, the form control binds the userRecord. The input controls then retrieve the 
-            "<tt>name</tt>", and "<tt>address</tt>" fields from the database record and emit the appropriate 
+            "<em>name</em>", and "<em>address</em>" fields from the database record and emit the appropriate 
             HTML input elements.</p>
             <h3>Controller Directed Access</h3>
             <p>When using the ESP MVC application support, controllers will frequently read a record, prepare
             some data for viewing, and then invoke a view to render a response. In this pattern, the controller
             defines a "current" database record which can then be used by views to conveniently display field data.</p>
-            <p>To make this easy, ESP supports an inline "<tt>@#</tt>" directive. If the controller defined a
+            <p>To make this easy, ESP supports an inline "<em>@#</em>" directive. If the controller defined a
             current product record, this example would render the product price.</p>
 <pre>
 &lt;p&gt;Price: <b>@#price</b>&lt;/p&gt;
@@ -338,7 +337,7 @@ ediSetField(product, "description", "458 Spider");
             <img src="../../../images/esp/tour/validate.png" class="screen" alt="" />
             <h3>Validation Methods</h3>
             <p>Validations are typically defined by the 
-            <a href="../../../api/esp.html#group___edi_1ga64cb0410a70843250c9826e8d12e3944"><tt>ediAddValidation</tt></a> 
+            <a href="../../../api/esp.html#group___edi_1ga64cb0410a70843250c9826e8d12e3944"><em>ediAddValidation</em></a> 
             call in the load initialization routine for a controller. This happens one when the controller is 
             first loaded and after that database has been opened. 
             <pre>
@@ -367,7 +366,7 @@ ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module)
             <h3>Custom Validation</h3>
             <p>You can define new validation routines via the 
             <a href="../../../api/esp.html#group___edi_service_1ga889df64bdd239f71c66b4fa920be8f46">
-                <tt>ediDefineValidation</tt></a> call.
+                <em>ediDefineValidation</em></a> call.
             <h2 class="section">Learn More ...</h2>
             <p>To learn more, please read:</p>
             <ul>

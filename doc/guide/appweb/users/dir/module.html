@@ -41,12 +41,12 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
                 <li><a href="#loadModule">LoadModule</a></li>
                 <li><a href="#loadModulePath">LoadModulePath</a></li>
             </ul>
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul>
                 <li><a href="../../../../guide/appweb/users/modules.html">Loadable Modules</a></li>
                 <li><a href="../../../../guide/appweb/users/stages.html">Handlers</a></li>
@@ -57,12 +57,14 @@
         <div class="contentLeft">
             <h1>Module Directives</h1><a name="loadModule" id="loadModule"></a>
             <h2>LoadModule</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="loadModule">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Load the static or dynamic Appweb module</td>
+                        <th class="pivot">Description</th>
+                        <th>Load the static or dynamic Appweb module</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>LoadModule moduleName modulePath</td>
@@ -108,7 +110,7 @@
                             themselves. Pure modules are units of functionality that augment Appweb without directly
                             handling HTTP responses themselves.</p>
                             <h3>Appweb supplied modules</h3>
-                            <table summary="">
+                            <table summary="cgi">
                                 <tbody>
                                     <tr>
                                         <td>Common Gateway Interface Handler</td>
@@ -143,12 +145,14 @@
                 </tbody>
             </table><a name="loadModulePath" id="loadModulePath"></a>
             <h2>LoadModulePath</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" summary="loadModulePath">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Specify a list of directory paths to search when loading Modules</td>
+                        <th class="pivot">Description</th>
+                        <th>Specify a list of directory paths to search when loading Modules</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>LoadModule path ...</td>

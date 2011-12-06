@@ -77,9 +77,8 @@
             <p>Appweb also supports HTML web based authentication schemes via the ESP and Ejscript web frameworks. These
             both provide access to sessions and cookies, and provide assistance in creating login dialogs.</p>
             
-            
             <a name="basicAuthentication" id="basicAuthentication"></a>
-            <h3>HTTP-Based Authentication</h3>
+            <h2>HTTP-Based Authentication</h2>
             <p>Basic and Digest authentication are HTTP protocol mechanisms defined by the <a href=
             "http://www.w3.org/Protocols/rfc2616/rfc2616.html">HTTP/1.1</a> specification. Because they operate at the
             protocol level, they offer a low level of capability and flexibility. When a user attempts to access
@@ -94,7 +93,7 @@
             passwords using a trivial encoding that is no better than using plain text.</p>
             <p><b>SECURITY WARNING</b>: You should not use Basic Authentication if at all possible. Use Digest
             Authentication instead if it is supported by your clients.</p>
-            <h3>Basic Authentication Directives</h3>
+            <h2>Basic Authentication Directives</h2>
             <p>Appweb basic authorization is controlled by configuration file directives that may be used inside a
             Route or VirtualHost block, or within the Default server configuration.</p>
             <pre>
@@ -128,7 +127,7 @@
             <h2 class="section">Digest Authentication</h2>
             <p>The Digest authentication scheme is a modern replacement for the Basic authorization scheme. It uses
             cryptographic techniques to encode passwords and does not transmit sensitive information in clear-text.</p>
-            <h3>Digest Authentication Directives</h3>
+            <h2>Digest Authentication Directives</h2>
             <p>Appweb digest authorization is controlled by configuration file directives that may be used within any
             Route, VirtualHost block or within the Default server configuration.</p>
             <pre>

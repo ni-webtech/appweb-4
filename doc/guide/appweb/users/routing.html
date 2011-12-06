@@ -88,12 +88,12 @@
             <a name="configuration"></a>
             <h2 class="section">Route Configuration</h2>
             <p>Routes are defined in the appweb.conf configuration file or via an API and are processed at run-time when 
-            client HTTP requests are received. 
+            client HTTP requests are received.</p>
             <p>The most fundamental directive is the Route block directive which declares a new route block and defines the
                 route matching pattern:</p>
 <pre>
-&lt;Route /info/>
-&lt;/Route>
+&lt;Route /info/&gt;
+&lt;/Route&gt;
 </pre>
             <p>This example defines a route pattern <em>/info/</em> that will match request URIs that begin with 
             <em>"/info/"</em>.  The route pattern is a regular expression pattern that is used to match against the 
@@ -204,7 +204,7 @@
             <p>Target, Condition and Update directives can reference tokenized values that are expanded
             when evaluated at run-time. There are three classes of tokens:
             <ul>  
-                <li>System varibles &mdash; DOCUMENT_ROOT, LIBDIR, PRODUCT, OS, SERVER_ROOT, VERSION.</li>
+                <li>System variables &mdash; DOCUMENT_ROOT, LIBDIR, PRODUCT, OS, SERVER_ROOT, VERSION.</li>
                 <li>Route URI tokens &mdash; these are the braced tokens in the route pattern.</li>
                 <li>Request tokens &mdash; these are request state and property values.</li>
             </ul>
@@ -322,7 +322,7 @@ will match the URI:
             "user" and <em>$2</em> to "login".
             <h4>Conditional Sub-Expressions</h4>
             <p>Conditional sub-expressions can be defined by wrapping in "(~" and "~)". This means the wrapped
-            sub-expression is valid but not required. For example:
+            sub-expression is valid but not required. For example:</p>
 <pre>
 &lt;Route /{controller}(~/{action}~) >
 </pre>
@@ -348,7 +348,7 @@ will match any of the URIs:
             <h3>Header Matching</h3>
             <p>Header matching is an optional step. Routes can be configured to require that the request has HTTP
             headers with or without defined values. For example: a route may wish to only be relevant for a 
-            particular browser:
+            particular browser:</p>
 <pre>
 &lt;Route /info/>
     Header User-Agent /Chrome/
@@ -398,17 +398,15 @@ will match any of the URIs:
             expanded using the matching sub-expressions and/or route tokens derived when matching the route pattern.
             <p>Target rule parameters can use <em>"${token}"</em> to be replaced with the value of the token.
             Target rule parameters can also use <em>"$N"</em> to be replaced with the Nth matching sub-expression, 
-            <em>"$&"</em> to be replaced with the entire
+            <em>"$&amp;"</em> to be replaced with the entire
             matched pattern, <em>"$`"</em> to be replaced with the portion that precedes the matched pattern and 
             <em>"$'"</em> to be replaced with the portion that follows the matched pattern. 
-            <p>Route tokens can also access 
-            
-            For example:
+            <p>For example:</p>
 <pre>
 Target write 200 "Running controller ${controller} action ${action}\n\n"
 </pre>
             <p>This will write the message back to the client with a HTML status code of 200 .</p>
-            <p>Note: to be more secure, the <em>write</em> rule will escape embeded HTML sequences. If you need to emit
+            <p>Note: to be more secure, the <em>write</em> rule will escape embedded HTML sequences. If you need to emit
             HTML, use the <em>-r</em> switch for raw write output.</p>
             <h3>Prefix Removal</h3>
             <p>If Appweb is running several applications, Appweb will need to be able to route and distinguish 
@@ -418,8 +416,8 @@ Target write 200 "Running controller ${controller} action ${action}\n\n"
             often convenient to have the application prefix removed from the URI once the route is selected. The Prefix
             directive defines a URI prefix that will be stripped from the start of the request URI once the route
             is selected. If the route defines a header, form or condition that is not satisfied, the prefix is restored
-            to let other routes see the full URI.
-            <a name="examples"/></a>
+            to let other routes see the full URI.</p>
+            <a name="examples"></a>
             <h2 class="section">Route Examples</h2>
             <h3>Redirecting Old URIs</h3>
             <p>To redirect requests for old documents to newer versions:</p>
