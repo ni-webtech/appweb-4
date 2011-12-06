@@ -67,8 +67,9 @@
         </div>
         <div class="contentLeft">
             <h1>Appweb for the OpenWrt Platform</h1>
-            <p><img src="../../../images/nslu2.jpg" class="wrapLeft shadow" />This document describes the process to
-            build Appweb for the OpenWrt platform. For other platforms and generic build instructions, please read
+            <p><img src="../../../images/nslu2.jpg" class="wrapLeft shadow" alt="nslu2"/>This document 
+            describes the process to build Appweb for the OpenWrt platform. For other platforms and generic build
+            instructions, please read
             <a href="building.html">Building from Source Code</a>.</p>
             <h2>Background</h2>
             <p>OpenWrt is a Linux project to create downloadable replacement firmware for consumer communications and
@@ -115,9 +116,9 @@ make menuconfig
 <pre>make</pre>
                 </li>
                 <li>Flash the OpenWrt firmware to your device. This is highly device specific and you need to consult
-                the OpenWrt and your device documentation. The new firmware can be found under the <tt>bin</tt>
+                the OpenWrt and your device documentation. The new firmware can be found under the <em>bin</em>
                 directory.</li>
-                <li>If you build Appweb as a package, it will be built as <tt>bin/packages/*/appweb*.ipk</tt>. You wll
+                <li>If you build Appweb as a package, it will be built as <em>bin/packages/*/appweb*.ipk</em>. You wll
                 need to install on your target by logging onto your device using ssh and then typing:
                     <pre>
 opkg install http://url_to_appweb_package"
@@ -130,14 +131,14 @@ http://hostname:8000/appweb.html
                 </li>
             </ol>
             <h2>Configuration</h2>
-            <p>The appweb source tree is built under the <tt>build_dir/*/appweb*</tt> directory. Appweb saves the
+            <p>The appweb source tree is built under the <em>build_dir/*/appweb*</em> directory. Appweb saves the
             OpenWrt configuration so that you can use make at any time inside the Appweb source tree. WARNING: If you
-            modify the OpenWrt <tt>package/appweb/Makefile</tt>, OpenWrt will remove the Appweb source and re-download
+            modify the OpenWrt <em>package/appweb/Makefile</em>, OpenWrt will remove the Appweb source and re-download
             and extract the source code. So save any changes you make!</p>
             <p>The Appweb configuration for OpenWrt includes: Ejscript, Sqlite, Regular Expressions, Authentication,
             Directory Listings, HTTP client, ranged and chunked transfers, error logging and file upload. You can
-            modify this configuration by editing the configure command in OpenWrt <tt>packages/appweb/Makefile</tt> and
-            the run <tt>make</tt> or <tt>make package/appweb/compile</tt> if you are selected to build Appweb as a
+            modify this configuration by editing the configure command in OpenWrt <em>packages/appweb/Makefile</em> and
+            the run <em>make</em> or <em>make package/appweb/compile</em> if you are selected to build Appweb as a
             package.</p>
         </div>
     </div>

@@ -40,13 +40,10 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
-                <li><a href="#components">Appweb Components</a></li>
                 <li><a href="#goals">Goals</a></li>
-                <li><a href="#uses">Target Uses</a></li>
-                <li><a href="#internals">Internals</a></li>
-                <li><a href="#security">Security</a></li>
+                <li><a href="#nonGoals">Non-Goals</a></li>
                 <li><a href="#more">Want More?</a></li>
             </ul>
 <!-- BeginDsi "dsi/genSeeAlso.html" -->
@@ -69,20 +66,22 @@
         <div class="contentLeft">
             <h1>Embedthis Appweb&trade; Design Goals</h1>
             <a name="goals" id="goals"></a>
-            <p>The goal of Appweb is to create the best web server for hosting embedded web applications. 
+            <p>The goal of Appweb is to create the fastest, little web server for the efficient hosting of web
+            applications. </p>
+            <p>
             This requires that Appweb be:</p>
             <ol>
-                <li>Robust and secure</li>
-                <li>Efficient with memory</li>
                 <li>Fast with low request latency</li>
+                <li>Efficient with memory</li>
+                <li>Robust and secure</li>
                 <li>Easy to configure and manage</li>
             </ol>
             <a name="nonGoals" id="nonGoals"></a>
             <p>Appweb was specifically designed to handle small loads exceptionally well. An explicit goal was
             <b>NOT</b> to create a single, monolithic, enterprise web server like Apache for 
-            thousands of simultaneous users with multiple web applications. Rather, Appweb is designed to be highly 
-            efficient when hosting smaller web applications or communications tasks. It is exceptionally fast and will
-            handle many thousands of requests per second.</p>
+            tens of thousands of simultaneous users with multiple web applications. Rather, Appweb is designed to be highly 
+            efficient when hosting smaller web applications or communications tasks. It is exceptionally fast and 
+            will serve file requests in less than a milli-second.</p>
             <a name="more" id="more"></a>
             <h2 class="section">Want More?</h2>
             <p>To learn more about Appweb, please read:</p>

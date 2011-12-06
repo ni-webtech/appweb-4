@@ -40,20 +40,21 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul class="nav">
                 <li><a href="#router">Request Router</a></li>
                 <li><a href="#caching">Response Caching</a></li>
                 <li><a href="#handler">ESP Handler</a></li>
                 <li><a href="#mvc">Model-View-Controller</a></li>
                 <li><a href="#views">Views</a></li>
+                <li><a href="#pipeline">Pipeline</a></li>
+                <li><a href="#layouts">Layouts</a></li>
                 <li><a href="#controllers">Controllers</a></li>
-                <li><a href="#api">ESP API</a></li>
-                <li><a href="#generator">ESP Generator</a></li>
-<!-- MOB -->
-                <li><a href="#routing">Routing</a></li>
                 <li><a href="#actions">Actions</a></li>
-                <li><a href="#deployment">Developing</a></li>
+                <li><a href="#api">ESP API</a></li>
+                <li><a href="#compiler">Compiler</a></li>
+                <li><a href="#generator">ESP Generator</a></li>
+                <li><a href="#models">Models</a></li>
                 <li><a href="#deployment">Deployment</a></li>
             </ul>
 <!-- BeginDsi "dsi/webFrameSeeAlso.html" -->
@@ -81,7 +82,7 @@
         </div>
         <div class="contentLeft">
             <h1>Embedded Server Pages</h1>
-            <p>The Embedded Server Pages (ESP) web framework makes it dramatically easier to create blazingly fast
+            <p>The Embedded Server Pages (ESP) web framework makes it dramatically easier to create blazing fast
             dynamic web applications. The ESP web framework provides an application generator, templating engine, a powerful
             Model-View-Controller framework, a library of HTML controls and an extensive API to take the tedium out 
             of creating web applications. Via this framework, ESP drastically reduces the number of lines of code you
@@ -122,9 +123,10 @@
             activated to respond to the request and what ESP view page to serve.</p>
             <p>ESP eschews "ugly" long URIs that are gibberish to users and instead actively encourages human readable URIs
             that represent the resource being requested. The request router is essential to support this.</p>
+            
             <a name="caching" id="caching"></a>
             <h2 class="section">Response Caching</h2>
-            <p>Pages that are slow to render and genernal slow network transmission can have large detrimental
+            <p>Pages that are slow to render and general slow network transmission can have large detrimental
             effect on the usability of a web application. Caching client response data is an ideal and simple technique 
             for speeding up slow web pages. </p>
             <p>Web pages that are frequently used, but slow to render are ideal candidates to be cached. 
@@ -132,12 +134,12 @@
             client responses are served directly from the cache without invoking the handler to render the page. This
             often results in dramatic performance gains. Further, if the Appweb caching is configured to also cache at the
             client, the Appweb cache cooperates with the client-side cache so the content itself may not need
-            to be resent to the client. See the <a href="">Appweb Response Caching</a> for more details.</p>
+            to be resent to the client. See the <a href="../../appweb/users/caching.html">Appweb Response Caching</a> for more details.</p>
             <a name="handler" id="handler"></a>
             <h2 class="section">ESP Handler</h2>
-            <p>Appweb hosts the ESP handler via a loadable module called <tt>mod_esp</tt>.  This is an optional 
+            <p>Appweb hosts the ESP handler via a loadable module called <em>mod_esp</em>.  This is an optional 
             Appweb module that includes the ESP web framework. The module is configured by directives in the
-            <tt>appweb.conf</tt> configuration file.  ESP applications will typically define an Appweb route 
+            <em>appweb.conf</em> configuration file.  ESP applications will typically define an Appweb route 
             for the application via the EspApp directive. For example:</p> <pre>
 EspApp /store/ /Directory/to/storeApp  restful sqlite://app/db/store.sdb
 </pre>
@@ -147,7 +149,7 @@ EspApp /store/ /Directory/to/storeApp  restful sqlite://app/db/store.sdb
             <h2 class="section">Model-View-Controller</h2>
             <p>A Model-View Controller-framework, also known as MVC, is a proven paradigm for organizing web
             applications. The model manages the state of the application including the database. The controller manages
-            the application, responding to inputs and invoks the relevant views to generate the user interface.</p>
+            the application, responding to inputs and invokes the relevant views to generate the user interface.</p>
             <p>Originally developed in the '70s, it has been more recently adapted for web applications and been
             popularized by frameworks such as <a href="http://www.rubyonrails.org">Ruby on Rails</a>. ESP uses the
             same paradigm with an embedded spin.</p>
@@ -159,9 +161,9 @@ EspApp /store/ /Directory/to/storeApp  restful sqlite://app/db/store.sdb
             </ul>
             <h3>ESP Pages</h3>
             <p>An ESP page is a HTML web page with embedded "C" code that executes at run-time to dynamically create a
-            client response. The pages typically have a <tt>.esp</tt> extension and may use ESP template layout pages to
+            client response. The pages typically have a <em>.esp</em> extension and may use ESP template layout pages to
             define the look and feel of the application. They do not use the full Model-View-Controlller paradigm, nor
-            do they use the ESP <tt>esp</tt> application generator. ESP pages often use a simple "Post-Back" paradigm
+            do they use the ESP <em>esp</em> application generator. ESP pages often use a simple "Post-Back" paradigm
             where form data is posted back to the same page.</p>
             <p>ESP MVC applications are more powerful and and better suited for creating web applications. They provide
             more structure to support the application by providing database models, controllers and actions. They combine
@@ -181,19 +183,19 @@ EspApp /store/ /Directory/to/storeApp  restful sqlite://app/db/store.sdb
                 <li>A suite of HTML controls such as table, chart, tab, and tree</li>
             </ul>
             
-            <a name="viewPipeline" id="viewPipeline"></a>
+            <a name="pipeline" id="pipeline"></a>
             <h3>View Pipeline</h3>
             <p>The ESP View mechanism consists of a processing pipeline that progressively transforms the web page. Views
             start with a partial HTML view page which typically, though not always, contains embedded "C" code. This is
             parsed by the ESP Template Engine and combined with layout views to create a single composite web page. 
             This is then converted to pure "C" code that is compiled, linked and saved as a native-code shared library. </p>
             
-            <img src="../../../images/esp/template/layout.jpeg" alt="View Pipeline" /></p>
+            <img src="../../../images/esp/template/layout.jpeg" alt="View Pipeline" />
             
             <a name="layouts" id= "layouts"></a>
             <h3>Layout Pages</h3>
             <p>Layout pages are an important part of a view framework. They allow you to specify the UI "look
-            and feel" and standard components of a web application in one place. Content pages can then resuse the 
+            and feel" and standard components of a web application in one place. Content pages can then reuse the 
             "look and feel" in by simply referencing a layout page.</p>
             <p>The layout page is structurally just an ESP Page that typically contains the top level HTML
             structure, style sheets and graphic content that is standard on every page. It may contain embedded "C" 
@@ -237,16 +239,16 @@ EspApp /store/ /Directory/to/storeApp  restful sqlite://app/db/store.sdb
             include directives can be nested.</p>
             <p>The &lt;%@ layout "file" %&gt; directive specifies the name of the layout page. By using this directive
             in layout pages, you can build up the web page layout by nesting layout pages. If omitted in content pages,
-            which is usually the case, the default layout of <tt>layouts/default.esp</tt> will be used. 
+            which is usually the case, the default layout of <em>layouts/default.esp</em> will be used. 
             If omitted in layout pages, it is assumed the layout page is the top level layout page.</p>
             <p>The web parser supports the following web page directives in layout pages:</p>
             <pre class="light">&lt;%@ content %&gt;</pre>
             <p>This specifies the location for the content page data.</p>
             <p>Note: you do not have to use layout pages. Simple stand-alone web pages without layouts code are
-            supported. To disable use of a layout page, use a <tt>&lt;%@ layout="" %&gt;</tt> directive.</p>
+            supported. To disable use of a layout page, use a <em>&lt;%@ layout="" %&gt;</em> directive.</p>
             <h3>HTML Controls</h3>
             <p>The ESP web framework provides a suite of view controls for common UI elements. These include button, chart,
-            checkbox, form, image, lable, link, list, progress bar, radio button, table, tabs, text, textarea and tree.
+            checkbox, form, image, label, link, list, progress bar, radio button, table, tabs, text, textarea and tree.
             The controls are a themeable and skinnable set of UI controls that provides a higher
             level of functionality than bare HTML. For example, the table control allows the easy display of database
             data with sortable rows and selectable columns.</p>
@@ -266,7 +268,7 @@ EspApp /store/ /Directory/to/storeApp  restful sqlite://app/db/store.sdb
                 <li>Respond to the request</li>
                 <li>Render a response view back to the client</li>
             </ol>
-            <p>The action reponds to the request depending on the request parameters that include the request
+            <p>The action responds to the request depending on the request parameters that include the request
             query information, form parameters and other Http and application state information.</p>
             <p>Here is a sample action function that updates a database table based on user submitted form data in
             "params".</p>
@@ -301,21 +303,21 @@ static void update() {
             When developing, the compiler is used to transparently compile and recompile ESP pages and controllers as
             they are modified on disk. This results in a set of shared-library files that represent the ESP application. </p>
             <h3>Deployment</h3>
-            To deploy this application, only the library files are required. The source code for the ESP pages and 
+            <p>To deploy this application, only the library files are required. The source code for the ESP pages and 
             controllers is typically not deployed. Of course, if you wish to continue to provide transparent compilation once
-            deployed, then include the source and set <tt>EspUpdate on</tt> in the appweb.conf configuration file.</p>
-            <p>The <tt>esp</tt> generator program can also be used to compile an ESP application including all ESP 
+            deployed, then include the source and set <em>EspUpdate on</em> in the appweb.conf configuration file.</p>
+            <p>The <em>esp</em> generator program can also be used to compile an ESP application including all ESP 
             pages and controllers into a single shared library file. This is an ideal and simple way to deploy an ESP
             application.</p>
             <h3>Cross Compilation</h3>
             <p>When cross-compiling, prepare a version of the appweb.conf and esp.conf configuration files for your 
-            target. This means editing the <tt>esp.conf</tt> file to define the appropriate compilation command line
-            for your target. Then invoke <tt>esp --config cross.conf compile ...</tt> to cross compile the ESP pages 
+            target. This means editing the <em>esp.conf</em> file to define the appropriate compilation command line
+            for your target. Then invoke <em>esp --config cross.conf compile ...</em> to cross compile the ESP pages 
             and controllers.</p>
             <a name="generator" id="generator"></a>
             <h2 class="section">ESP Generator</h2>
-            The ESP framework includes a utility program to generate new applications, scaffolds, controllers,
-            and views. This program is called <tt>esp</tt> and automates many common tasks when dealing with MVC
+            <p>The ESP framework includes a utility program to generate new applications, scaffolds, controllers,
+            and views. This program is called <em>esp</em> and automates many common tasks when dealing with MVC
             applications.</p>
            
             <p>To create a new application called demo:</p>
@@ -338,7 +340,7 @@ esp generate app demo
                 <li>test/esp-app.h</li>
                 <li>test/layouts/default.esp</li>
             </ul>
-            <p>The <tt>esp</tt> program creates the application directory and populates it with the necessary
+            <p>The <em>esp</em> program creates the application directory and populates it with the necessary
             directories, configuration files and stubs to begin the application.</p>
             <p>When you run Appweb, ESP will automatically compile and load MVC components as required. You can also
             pre-compile your entire application from the application directory via:</p>
@@ -354,19 +356,19 @@ esp compile
             memory requirements.</p>
             <h3>Embedded Database Interface</h3>
             <p>ESP supports an Embedded Database Interface (EDI) above a selectable database backend such as:
-            SQLite, MySQL and MDB. The MDB database is a tiny, in-memory database — great for embedded applications.
+            SQLite, MySQL and MDB. The MDB database is a tiny, in-memory database &mdash; great for embedded applications.
             SQLite is a full SQL implementation for embedded applications, while MySQL is an enterprise class SQL
             server. MDB is the smallest and fastest, but has the least features.</p>
             
             <a name="deployment" id="deployment"></a>
             <h2 class="section">Development and Deployment</h2>
-            <p>There are two phases of use for ESP: 
+            <p>There are two phases of use for ESP: </p>
             <ul>
                 <li>Development</li>
                 <li>Deployment</li>
             </ul>
             <h3>Development</h3>
-            When developing, developers need
+            <p>When developing, developers need
             quick turn-around with rapid test-modify-build cycles. ESP supports and edit-and-continue style of 
             development where modified ESP pages are transparently recompiled and reloaded. There is no explicit 
             compilation step required. >Simply reloading an ESP page in the browser will trigger the changed page to be

@@ -40,13 +40,13 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
-                <li><a href="#components">Appweb Components</a></li>
-                <li><a href="#goals">Goals</a></li>
-                <li><a href="#uses">Target Uses</a></li>
-                <li><a href="#internals">Internals</a></li>
+                <li><a href="#pipeline">Request Pipeline</a></li>
                 <li><a href="#security">Security</a></li>
+                <li><a href="#mpr">MPR</a></li>
+                <li><a href="#security">Security</a></li>
+                <li><a href="#sandboxing">Sandboxing</a></li>
                 <li><a href="#more">Want More?</a></li>
             </ul>
 <!-- BeginDsi "dsi/genSeeAlso.html" -->
@@ -71,9 +71,10 @@
             <p>The core of Appweb is an event-driven, multi-threaded HTTP pipeline above which modules are loaded to
             provide content specific handling and to extend its functionality.</p>
             <p><img src="../../images/modules.jpg" alt="" /></p>
-            <p>Appweb has the following feaures:</p>
+            <p>Appweb has the following features:</p>
             <ul>
-                <li>High performance multi-threaded core.</li>
+                <li>High performance event based request engine.</li>
+                <li>Multi-threaded core for sync and async processing.</li>
                 <li>Modular architecture with dynamic module loading.</li>
                 <li>Garbage collector based memory allocator provides fast allocations and eliminates memory leaks.</li>
                 <li>Portable runtime layer to isolate platform dependencies.</li>
@@ -81,14 +82,18 @@
                 <li>Safe programming layer to prevent buffer overrun exploits.</li>
                 <li>Apache compatible configuration.</li>
                 <li>Extensive logging and debug trace.</li>
-            </ul><a name="pipeline" id="pipeline"></a>
+            </ul>
+            
+            <a name="pipeline" id="pipeline"></a>
             <h3>Request Pipeline</h3>
-            <p>Appweb has an efficient, zero-copy request bi-directional pipeline to process requests and generate
+            <p>Appweb has an efficient, zero-copy request bidirectional pipeline to process requests and generate
             responses. This consists of a mechanism of queues, packets, buffering and event scheduling. The pipeline
             architecture is highly optimized and supports the efficient transmission of data without copying. It uses
             sendfile, async I/O and vectored, scatter/gather writes to the network to avoid the costly aggregation of
             data and headers in a single buffer before writing to the network. <img src="../../images/pipeline.jpg"
-            alt="" /> <a name="security" id="security"></a></p>
+            alt="" /> 
+            
+            <a name="security" id="security"></a></p>
             <h2 class="section">Security</h2>
             <p>Most web servers have become gradually become more secure by a painful process of patching. 
             Developing a web server to be secure by design from the inception is much easier than trying to 
@@ -100,8 +105,9 @@
             <p>Appweb has been designed to be secure from the foundation up by using a Portable Runtime (MPR). The MPR
             is a cross-platform layer that permits over 97% of the Appweb code to be portable. It includes many
             mechanisms to assist in the creation of secure application. One such facility is a safe string and buffer
-            handling module to help eliminate buffer overflows that have plagued many products.</p><a name="sandboxing"
-            id="sandboxing"></a>
+            handling module to help eliminate buffer overflows that have plagued many products.</p>
+            
+            <a name="sandboxing" id="sandboxing"></a>
             <h3>Sandboxing</h3>
             <p>Appweb closely controls its use of system resources via a technique known as "sandboxing". This means
             running the web server within tightly controlled limits so that request errors will not compromise system
@@ -116,6 +122,7 @@
             </ul>
             <p>To build on this foundation, Appweb also provides a Secure Sockets Layer and Digest
             authentication.</p>
+            
             <a name="more" id="more"></a>
             <h2 class="section">Want More?</h2>
             <p>To learn more about Appweb, please read:</p>

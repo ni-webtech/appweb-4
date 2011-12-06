@@ -41,7 +41,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul class="nav">
                 <li><a href="#webServerInterface">Web Server Interface</a></li>
                 <li><a href="#generator">Application Generator</a></li>
@@ -94,9 +94,7 @@
             handler to support the Ejscript framework.
             The Appweb opens source binary distribution includes the Ejscript web framework. Commercial distributions will
             require a separate Ejscript license.</p>
-            <p>See also the <a href="../../../ejs/ref/ejs/architecture.html">Ejscript Language Architecture</a>,
-            <a href="../../../ejs/guide/ejs/users/tour.html">Language Tour</a> and the <a href=
-            "../../../ejs/guide/ejs/web/webTour.html">Ejscript Web Framework Tour</a>.</p>
+            <p>See also the <a href="http://ejscript.org/">Ejscript Web Site</a>.</p>
             <h3>Ejscript Web Framework Architecture</h3>
             <p>Ejscript uses JavaScript for server-side web programming. Using the same language in the client and 
             server makes web programming that much easier.</p>
@@ -119,7 +117,7 @@
             the appropriate application or ejscript web page, processes the output and passes it back to the web server
             for transmission to the client.</p>
             <h3>Appweb Hosting</h3>
-            <p>Appweb hosts Ejscript via a loadable module <tt>mod_ejs</tt> for the highest performance.
+            <p>Appweb hosts Ejscript via a loadable module <em>mod_ejs</em> for the highest performance.</p>
             <p>Ejscript application will typically define an Appweb route using the EjsAlias directive
             the EjsAppAlias directive. For example:</p>
 <pre>
@@ -133,10 +131,10 @@ EjsAlias /myAppName/ "/Directory/to/myApp"
             <p>The web interface converts incoming post and form data into a format suitable for easy processing by
             Ejscript applications. Traditionally, form data is passed to web applications by environment variables. But
             this format is often clumsy, doesn't scale and does not map well onto an object-oriented language such as
-            Javscript.</p>
+            JavaScript.</p>
             <p>Ejscript replaces environment variables with a params[] collection object and it transparently converts
             form data into a nested collection of objects. It automatically converts dot separated form names into
-            objects that are addressible by dot notation.</p>
+            objects that are addressable by dot notation.</p>
             
             <a name="requestState" id="requestState"></a>
             <h3>Request State</h3>
@@ -154,7 +152,7 @@ EjsAlias /myAppName/ "/Directory/to/myApp"
             the pre-created interpreters to the new request. The interpreter pool saves memory by sharing 
             the system types, classes and web framework. </p>
             
-            <a name="apps" id="apps"></a></p>
+            <a name="apps" id="apps"></a>
             <h2 class="section">Application Paradigms</h2>
             <p>The Ejscript web framework supports three paradigms:</p>
             <ul>
@@ -164,23 +162,23 @@ EjsAlias /myAppName/ "/Directory/to/myApp"
             </ul>
             <p>These paradigms can be combined in a single application if desired.</p>
             <h3>Ejs Web Pages</h3>
-            <p>Ejs web pages are HTML web pages with embedded Ejscript code. They typically have a <tt>.ejs</tt> extension
+            <p>Ejs web pages are HTML web pages with embedded Ejscript code. They typically have a <em>.ejs</em> extension
             and may use layout pages to define the look and feel of the application. They
-            do not use the full Model, View, Controller paradigm, nor do they use the Ejscript <tt>mvc</tt> application 
+            do not use the full Model, View, Controller paradigm, nor do they use the Ejscript <em>mvc</em> application 
             generator. Ejs web pages often use a simple "Post-Back" paradigm where form
             data is posted back to the same page.</p>
             <h3>Ejscript</h3>
             <p>Ejscript 2.X adds a new application paradigm &mdash; simple scripts. Appweb can route URI requests to
             simple Ejscripts which then respond by writing status and data back to the client. These Ejscripts 
-            typically have a <tt>.es</tt> extension. They do not use layout pages and typically don't use the Model, View,
-            Controller facilities.
+            typically have a <em>.es</em> extension. They do not use layout pages and typically don't use the Model, View,
+            Controller facilities.</p>
             <p>MVC applications are more powerful. They have database models, controllers and views. They combine
-            templated ejs web pages with the power of controllers. MVC applications typically start life by using 
-            the <tt>mvc</tt> application generator. 
+            template ejs web pages with the power of controllers. MVC applications typically start life by using 
+            the <em>mvc</em> application generator. 
             
             <a name="generator" id="generator"></a></p>
             <h2 class="section">Application Generator</h2>
-            The Ejscript <tt>mvc</tt> application generator generates new applications, scaffolds, controllers,
+            The Ejscript <em>mvc</em> application generator generates new applications, scaffolds, controllers,
             views, models and data migrations. It creates the application directory and
             populates it with the necessary directories, configuration files and stubs to begin the application.</p>
             <p>The application generator is named <b>mvc</b>.</p>
@@ -251,7 +249,7 @@ mvc -v compile
             <p>The Ejscript View framework provides:</p>
             <ul>
                 <li>A templating engine for master layout pages</li>
-                <li>Embedded server-side javascripting in HTML</li>
+                <li>Embedded server-side JavaScript in HTML</li>
                 <li>A rich library of methods to render output</li>
                 <li>A consistent interface to Ajax libraries</li>
                 <li>A suite of view dynamic user controls such as table, chart, tab, tree, ...</li>
@@ -275,7 +273,7 @@ mvc -v compile
             embedded javascript and layout directives to expand the view content pages and create a composite page that
             represents an entire web page that the user will see.</p>
             <p>A <b>templating engine</b> is an important part of a view framework. It allows you to specify the "look
-            and feel" and standard components of a web application in one place, and then resuse the "look and feel" in
+            and feel" and standard components of a web application in one place, and then reuse the "look and feel" in
             content pages by simply referencing a layout page. The layout page typically contains the top level HTML
             structure, style sheets and graphic content that is standard on every page. Is also specifies the location
             to insert content from content pages. The content pages focus on the content and data unique to that page
@@ -332,7 +330,7 @@ mvc -v compile
             supported. To disable templating, use a &lt;%@ layout="" %&gt; directive.</p>
             <h3>View Controls</h3>
             <p>The web framework provides a suite of view controls for common UI elements. These include button, chart,
-            checkbox, form, image, lable, link, list, progress bar, radio button, table, tabs, text, textarea and tree.
+            checkbox, form, image, label, link, list, progress bar, radio button, table, tabs, text, textarea and tree.
             The purpose of the controls is to be a themeable and skinnable set of UI controls that provides a higher
             level of functionality than bare HTML. For example, the table control allows the easy display of database
             data with sortable rows and selectable columns.</p>
@@ -355,8 +353,9 @@ mvc -v compile
             a response view to the user.</p>
             
             <!-- MOB -- FIX -->
+            <a name="routing"></a>
             <h3>Routing</h3>
-            <p>The Ejscript web framework routes incoming URI requests by tokenizing the requeste URI. The format used
+            <p>The Ejscript web framework routes incoming URI requests by tokenizing the request URI. The format used
             is:</p>
             <blockquote>
                 <p>http://site/APP/CONTROLLER/ACTION</p>
@@ -377,7 +376,7 @@ mvc -v compile
                 <li>Respond to the request</li>
                 <li>Render a response view back to the client</li>
             </ol>
-            <p>The action reponds to the request by examining the request form parameters, query string and other Http
+            <p>The action responds to the request by examining the request form parameters, query string and other Http
             and application state information.</p>
             <p>Here is a sample action method that updates a database table based on user submitted form data in
             "params".</p>
@@ -408,7 +407,7 @@ action function update() {
             traditional compiled languages when used for such iterative or <a href=
             "http://en.wikipedia.org/wiki/Agile_software_development">Agile Web Development</a>. Ejscript offers the
             best of both. When developing, Ejscript runs as an interpreted environment. Changes made to web pages or
-            scripts cause the files to be reparsed and compiled without restarting the web server. Simply reloading the
+            scripts cause the files to be parsed and compiled without restarting the web server. Simply reloading the
             web pages in the browser will trigger the changed page to be rebuilt.</p>
             <p>When ready for deployment, the entire application can be compiled into a single module file for easy
             deployment.</p>

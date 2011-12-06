@@ -40,7 +40,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul class="nav">
                 <li><a href="#configuringCgi">Configuring CGI</a></li>
                 <li><a href="#invoking">Invoking CGI Programs</a></li>
@@ -110,7 +110,7 @@ ScriptAlias /cgi-bin/ $SERVER_ROOT/cgi-bin/
     Target run
 &lt;/Route>
 </pre>
-            <p>When a URI is requested by a browser that includes the "<tt>/cgi-bin/</tt>" prefix, the 
+            <p>When a URI is requested by a browser that includes the "<em>/cgi-bin/</em>" prefix, the 
             script name immediately after "/cgi-bin/" will be run. For example:</p>
 <pre>
 http://www.embedthis.com/cgi-bin/testCgi
@@ -151,11 +151,11 @@ Action application/x-appweb-perl /usr/bin/perl
             <p>The command line arguments for the CGI program will be set differently in each case. See the tables
             below for the specifications as to how the command line arguments are defined:</p>
             <h4>Programs Invoked Directly via the Request URI</h4>
-            <table summary="">
+            <table title="args">
                 <thead>
                     <tr>
-                        <td>Arg</td>
-                        <td>Contents</td>
+                        <th>Arg</th>
+                        <th>Contents</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -174,11 +174,11 @@ Action application/x-appweb-perl /usr/bin/perl
             <p>If the CGI program/script specified in the URI contains a "#!/pathToProgram" directive on the first
             line, it is interpreted to be the path to the real CGI program to run. The script name is then passed in
             the command line.</p>
-            <table summary="">
+            <table title="args">
                 <thead>
                     <tr>
-                        <td>Arg</td>
-                        <td>Contents</td>
+                        <th>Arg</th>
+                        <th>Contents</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -198,11 +198,11 @@ Action application/x-appweb-perl /usr/bin/perl
                 </tbody>
             </table>
             <h4>Programs Specified via an ActionProgram Directive</h4>
-            <table summary="">
+            <table title="args">
                 <thead>
                     <tr>
-                        <td>Arg</td>
-                        <td>Contents</td>
+                        <th>Arg</th>
+                        <th>Contents</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -223,11 +223,11 @@ Action application/x-appweb-perl /usr/bin/perl
                 </tbody>
             </table>
             <h4>Windows Batch Commands</h4>
-            <table summary="" width="50%">
+            <table title="args">
                 <thead>
                     <tr>
-                        <td>Arg</td>
-                        <td>Contents</td>
+                        <th>Arg</th>
+                        <th>Contents</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -256,11 +256,11 @@ Action application/x-appweb-perl /usr/bin/perl
             <h2 class="section">CGI Environment Variables</h2>
             <p>CGI uses environment variables to send your program additional parameters. The following environment
             variables are defined:</p>
-            <table summary="">
+            <table title="args">
                 <thead>
                     <tr>
-                        <td>Variable</td>
-                        <td>Description</td>
+                        <th>Variable</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -373,11 +373,11 @@ Action application/x-appweb-perl /usr/bin/perl
 http://hostname/cgi-bin/myScript/products/pricelists.pl?id=23&amp;payment=creditCard
 </pre>
             <p>This URI will cause the following environment settings:</p>
-            <table summary="">
+            <table title="evn">
                 <thead>
                     <tr>
-                        <td>Variable</td>
-                        <td>Value</td>
+                        <th>Variable</th>
+                        <th>Value</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -423,11 +423,11 @@ http://hostname/cgi-bin/myScript/products/pricelists.pl?id=23&amp;payment=credit
 http://hostname/cgi-bin/cgiProgram/extra/Path?var1=a+a&amp;var2=b%20b&amp;var3=c
 </pre>
             <p>This URI will cause the following environment settings:</p>
-            <table summary="">
+            <table title="env">
                 <thead>
                     <tr>
-                        <td>Variable</td>
-                        <td>Value</td>
+                        <th>Variable</th>
+                        <th>Value</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -478,11 +478,11 @@ http://hostname/cgi-bin/cgiProgram/extra/Path?var1=a+a&amp;var2=b%20b&amp;var3=c
             on to the client.</p>
             <p>Appweb understands the following CGI headers that can be output by the CGI program. They are
             case-insensitive.</p>
-            <table summary="">
+            <table title="headers">
                 <thead>
                     <tr>
-                        <td>Header</td>
-                        <td>Description</td>
+                        <th>Header</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
                 <tbody>

@@ -107,7 +107,7 @@
             <p>Routes can be nested where route blocks are placed inside other route blocks. The inner route
             will inherit the configuration that existed at the point the open route block directive appears in 
             the configuration file. </p>
-            <p>When a route block is defined, it is not added to the list of routes until the closing &lt/Route> 
+            <p>When a route block is defined, it is not added to the list of routes until the closing &lt;/Route&gt; 
             directive is encountered.  This means that inner route blocks will be correctly defined before 
             their outer route block. For example:</p>
 <pre>
@@ -188,7 +188,7 @@
             The <em>cmd</em> rule can be used to run external commands.</p>
             <a name="params"></a>
             <h4>Request Params</h4>
-            <p>Request parameters are comprised of a set of request state information. This includes:
+            <p>Request parameters are comprised of a set of request state information. This includes:</p>
             <ul>
                 <li>Query field values</li>
                 <li>Posted form fields</li>
@@ -202,7 +202,7 @@
             <a name="tokens"></a>
             <h2 class="section"><a href="dir/route.html#tokens">Tokens</a></h2>
             <p>Target, Condition and Update directives can reference tokenized values that are expanded
-            when evaluated at run-time. There are three classes of tokens:
+            when evaluated at run-time. There are three classes of tokens:</p>
             <ul>  
                 <li>System variables &mdash; DOCUMENT_ROOT, LIBDIR, PRODUCT, OS, SERVER_ROOT, VERSION.</li>
                 <li>Route URI tokens &mdash; these are the braced tokens in the route pattern.</li>
@@ -244,10 +244,10 @@
                 <li>serverPort &mdash; The server port number</li>
                 <li>uri &mdash; The full request URI. May be modified by routes, handlers and filters</li>
             </ul>
-            For example, to select the client's browser string passed in the HTTP headers:
+            <p>For example, to select the client's browser string passed in the HTTP headers:</p>
 <pre>Target run ${header:User-Agent}</pre>
-            To select a form field value, consider if the URI <em>/info/Mary</em> matched the pattern: 
-            <em>^/info/{name}</em>. Then the <em>${name}</em> token could be used in a Target run rule as such:
+            <p>To select a form field value, consider if the URI <em>/info/Mary</em> matched the pattern:
+            <em>^/info/{name}</em>. Then the <em>${name}</em> token could be used in a Target run rule as such:</p>
 <pre>run ${name}.html</pre>
             <a name="processing"></a>
             <h2 class="section">Route Processing</h2>
@@ -289,14 +289,13 @@
             <h4>URI Tokens</h4>
             <p>Often the request URI will not only provide a path to a resource, but it will contain tokens of 
             information that must be isolated and extracted from the URI. Appweb route patterns provide an easy and
-            efficient means to extract such tokens and define as request <a href="#params">params</a> 
-            to pass to the request.  
-            To do this, Appweb route patterns extend the standard regular expression syntax via embedded tokens.
+            efficient means to extract such tokens and define them as request <a href="#params">params</a>.
+            To do this, Appweb route patterns extend the standard regular expression syntax via embedded tokens.</p>
             
             <p>A token is a 
             portion of the URI that is enclosed in braces "{token}". The token name is a symbolic name that will be used
             later to define a request parameter. In the request URI, any sequence of characters except 
-            "/" are acceptable in the token name. For example the route pattern: 
+            "/" are acceptable in the token name. For example the route pattern:</p>
 <pre>
 &lt;Route ^/{controller}/{action}$>
 </pre>
@@ -308,10 +307,10 @@ will match the URI:
             <em>action</em> will be set to "login".</p>
             <p>Token values can be accessed in condition, update and target directives via the <em>${token}</em> syntax.</p>
             <p>To enable the extension token syntax, the standard regular expression syntax for repeat sub-expressions 
-                that uses braces: {m,n} needs to be back-quoted. i.e. \{m,n}.
+                that uses braces: {m,n} needs to be back-quoted. i.e. \{m,n}.</p>
             <h4>Sub-Expressions</h4>
             <p>In addition to route tokens, standard regular expression sub-patterns can be defined by wrapping a 
-            sub-expression in parentheses. For example:
+            sub-expression in parentheses. For example:</p>
 <pre>
 &lt;Route /(user|admin)/{cmd}>
 </pre>
@@ -319,7 +318,7 @@ will match the URI:
             values are made available to Conditions, Updates and Targets by using <em>$N</em> in the directive details. 
             The first sub-expression or token is assigned to <em>$1</em>, the second to <em>$2</em> and so on. 
             If a request with the URI <em>/user/login</em> was received, the route above would set <em>$1</em> to 
-            "user" and <em>$2</em> to "login".
+            "user" and <em>$2</em> to "login".</p>
             <h4>Conditional Sub-Expressions</h4>
             <p>Conditional sub-expressions can be defined by wrapping in "(~" and "~)". This means the wrapped
             sub-expression is valid but not required. For example:</p>

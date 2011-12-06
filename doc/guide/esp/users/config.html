@@ -102,14 +102,14 @@
             <h2 class="section">Configuration</h2>
             <p>Before ESP can be used, the ESP web framework including the ESP handler must be loaded. ESP is packaged as 
             as an Appweb module called "<em>mod_esp</em>". This is loaded into Appweb via the <em>LoadModule</em>
-            directive.
+            directive.</p>
 <pre>LoadModule espHandler mod_esp</pre>
             <p>This loads the <em>mod_esp</em> module and invokes the ESP module initialization routine that registers
             ESP with Appweb.</p>
             <h2>Configuring the ESP Handler</h2>
             <p>For ESP to receive incoming client requests, the Appweb router must be told what requests to send to ESP.
             The <em>AddHandler</em> directive below achieves this. It tells Appweb that the <em>espHandler</em> will service
-            all URIs that end with "<em>.esp</em>".
+            all URIs that end with "<em>.esp</em>".</p>
 <pre>AddHandler espHandler *.esp</pre>
             <p>This is all that is needed to service any ESP web page that ends with "<em>.esp</em>". If you want to
             ESP pages with another extension, you can specify extra extensions:</p>
@@ -120,7 +120,7 @@
             This defaults to the file <em>error.log</em>. If appweb is run manually, you can see these message on 
             the console.</p> 
             <p>Often during development, it is useful to send errors back to the browser. To do this, add the following
-            directive to appweb.conf.
+            directive to appweb.conf.</p>
 <pre>EspShowErrors on</pre>
             <p>This will display errors to the browser in addition to sending the errors to the Appweb log.</p>
             <a name="dir"></a>
@@ -128,10 +128,10 @@
             <p>ESP has certain conventions and defaults as to where it locates controllers, pages, layouts and other
             components. If you follow these conventions, you will not need to manually configure ESP's directories.
             However, if you need to, you can modify these on a per-route basis via the <em>EspDir</em> directive.</p>
-            The directories are:
-            <table>
+            <p>The directories are:</p>
+            <table title="dirs">
                 <thead>
-                    <tr><td>Directory</td><td>Purpose</td>
+                    <tr><th>Directory</th><th>Purpose</th></tr>
                 </thead>
                 <tbody>
                     <tr><td>cache</td><td>Location to store compiled ESP pages and controllers</td>
@@ -182,7 +182,7 @@
             <h2>One Line MVC Configuration</h2>
             <p>If your MVC application uses RESTful routes and follows the ESP defaults, the one-liner 
             <a href="../../appweb/users/dir/esp.html#espApp">EspApp</a>
-            directive is typically all you need. This directive takes the following arguments:
+            directive is typically all you need. This directive takes the following arguments:</p>
             <pre>Esp URI-Prefix Directory RouteSet Database</pre>
             <p>This defines an ESP application at the given directory that will receive all
             requests that begin with specified URI prefix. This will define a new Route block, inheriting the existing
@@ -195,9 +195,10 @@
             <h2 class="section">Routes</h2>
             <p>So far, we've covered the basics, but Appweb provides very powerful Routing and directives 
             that can be utilized to custom configure ESP applications. The EspApp directive is really a convenience
-            directive that is equivalent to a set of lower-level directives. For example, the previous EspApp directive:
+            directive that is equivalent to a set of lower-level directives. For example, the previous EspApp
+            directive:</p>
 <pre class="light">EspApp /myblog ./blog restful sqlite://blog/blog.sdb</pre> 
-            is equivalent to:</p>
+            <p>is equivalent to:</p>
 <pre>
 &lt;Route ^/myblog>
     Prefix /myblog
@@ -233,7 +234,7 @@
             for details of the actual routes created.</p>
             <h2>Custom Routes</h2>
             <p>Sometimes you need a specific, custom mapping of a URI to a ESP controller and action. You can do this
-            with the lowest-level Appweb directives:
+            with the lowest-level Appweb directives:</p>
                 <ul>
                     <li><a href="../../appweb/users/dir/route.html#route">Route</a></li>
                     <li><a href="../../appweb/users/dir/route.html#name">Name</a></li>
@@ -241,7 +242,7 @@
                     <li><a href="../../appweb/users/dir/route.html#target">Target</a></li>
                 </ul>
             <p>However, it is easier to use the EspRoute directive that will create a route for a URI and 
-               map the URI to an ESP controller and action. For example: 
+               map the URI to an ESP controller and action. For example: </p>
 <pre>EspRoute administration POST ^/wifi/admin/login admin-login admin.c</pre>
             <p>This will map <em>/wifi/admin/login</em> URI to the <em>admin</em> controller and invoke 
                 the <em>login</em> action.</p>
@@ -295,38 +296,38 @@ EspCompile cc -shared ${DEBUG} -Wall -Wno-unused-result \
             <h2 class="section">Directives List</h2>
             <p>The following is a list of the various ESP directives and their purpose. Click on the "purpose" text, to
             see the appropriate directive reference.</p>
-            <table>
+            <table title="directives">
                 <thead>
-                    <tr><td>Directive</td><td>Purpose</td>
+                    <tr><th>Directive</th><th>Purpose</th></tr>
                 </thead>
                 <tbody>
-                    <tr><td><a href="../../appweb/users/dir/esp.html#espApp">EspApp</td>
+                    <tr><td><a href="../../appweb/users/dir/esp.html#espApp">EspApp</a></td>
                             <td>Define an ESP web application</td></tr>
-                    <tr><td><a href="../../appweb/users/dir/esp.html#espCompile">EspCompile</td>
+                        <tr><td><a href="../../appweb/users/dir/esp.html#espCompile">EspCompile</a></td>
                             <td>Compile command for ESP controllers and pages</td></tr>
-                    <tr><td><a href="../../appweb/users/dir/esp.html#espDb">EspDb</td>
+                        <tr><td><a href="../../appweb/users/dir/esp.html#espDb">EspDb</a></td>
                             <td>Pre-open a database</td></tr>
-                    <tr><td><a href="../../appweb/users/dir/esp.html#espDir">EspDir</td>
+                        <tr><td><a href="../../appweb/users/dir/esp.html#espDir">EspDir</a></td>
                             <td>Set an ESP directory location</td></tr>
-                    <tr><td><a href="../../appweb/users/dir/esp.html#espEnv">EspEnv</td>
+                        <tr><td><a href="../../appweb/users/dir/esp.html#espEnv">EspEnv</a></td>
                             <td>Set an environment variable</td></tr>
-                    <tr><td><a href="../../appweb/users/dir/esp.html#espKeepSource">EspKeepSource</td>
+                        <tr><td><a href="../../appweb/users/dir/esp.html#espKeepSource">EspKeepSource</a></td>
                             <td>Preserve intermediate page source code</td></tr>
-                    <tr><td><a href="../../appweb/users/dir/esp.html#espLink">EspLink</td>
+                        <tr><td><a href="../../appweb/users/dir/esp.html#espLink">EspLink</a></td>
                             <td>Link command for ESP controllers and pages</td></tr>
-                    <tr><td><a href="../../appweb/users/dir/esp.html#espLoad">EspLoad</td>
+                        <tr><td><a href="../../appweb/users/dir/esp.html#espLoad">EspLoad</a></td>
                             <td>Pre-load an ESP application that has been compiled flat</td></tr>
-                    <tr><td><a href="../../appweb/users/dir/esp.html#espResource">EspResource</td>
+                        <tr><td><a href="../../appweb/users/dir/esp.html#espResource">EspResource</a></td>
                             <td>Create a set of routes for a singleton resource</td></tr>
-                    <tr><td><a href="../../appweb/users/dir/esp.html#espResourceGroup">EspResourceGroup</td>
+                        <tr><td><a href="../../appweb/users/dir/esp.html#espResourceGroup">EspResourceGroup</a></td>
                             <td>Create a set of routes for a group of resources</td></tr>
-                    <tr><td><a href="../../appweb/users/dir/esp.html#espRoute">EspRoute</td>
+                        <tr><td><a href="../../appweb/users/dir/esp.html#espRoute">EspRoute</a></td>
                             <td>Define and configure an ESP route</td></tr>
-                    <tr><td><a href="../../appweb/users/dir/esp.html#espRouteSet">EspRouteSet</td>
+                        <tr><td><a href="../../appweb/users/dir/esp.html#espRouteSet">EspRouteSet</a></td>
                             <td>Create a pre-defined set of routes</td></tr>
-                    <tr><td><a href="../../appweb/users/dir/esp.html#espShowErrors">EspShowErrors</td>
+                        <tr><td><a href="../../appweb/users/dir/esp.html#espShowErrors">EspShowErrors</a></td>
                             <td>Show ESP errors to the client</td></tr>
-                    <tr><td><a href="../../appweb/users/dir/esp.html#espUpdate">EspUpdate</td>
+                        <tr><td><a href="../../appweb/users/dir/esp.html#espUpdate">EspUpdate</a></td>
                             <td>Reload updated ESP controllers and pages</td></tr>
                 </tbody>
             </table>

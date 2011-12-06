@@ -1,5 +1,3 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <!-- BeginDsi "dsi/head.html" -->
 <!DOCTYPE html>
 <html lang="en">
@@ -42,7 +40,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
                 <li><a href="#webServerInterface">Web Server Interface</a></li>
                 <li><a href="#generator">Application Generator</a></li>
@@ -57,16 +55,18 @@
                 <li><a href="#deployment">Developing</a></li>
                 <li><a href="#deployment">Deployment</a></li>
             </ul>
-            <h2>See Also</h2>
+        <!--
+            <h1>See Also</h1>
             <ul>
                 <li><a href="architecture.html">Language Architecture</a></li>
-                <li><a href="../../api/ejscript/index.html" target="api">Script Library</a></li>
+                <li><a href="../../api/ejscript/index.html">Script Library</a></li>
                 <li><a href="../../api/native.html">Native APIs</a></li>
                 <li><a href="../../guide/ejs/solutions/index.html">Solution Guide</a></li>
                 <li><a href="../../guide/ejs/programmers/index.html">Programmers Guide</a></li>
                 <li><a href="../../guide/ejs/users/index.html">User Guide</a></li>
                 <li><a href="../../api/ejscript/index.html" target="new">ESP Library</a></li>
             </ul>
+        -->
         </div>
         <div class="contentLeft">
             <h1>ESP Architecture</h1>
@@ -78,9 +78,6 @@
             <p>This document describes the ESP Web Framework and how ESP is embedded in web servers to run
             web applications and respond to web requests. It describes the flow of execution and the main processing
             components.</p>
-            <p>See also the <a href="architecture.html">ESP Language Architecture</a>, <a href=
-            "../../guide/ejs/users/tour.html">Language Tour</a> and the <a href="../../guide/ejs/web/webTour.html">Web
-            Tour</a>.</p>
             <h3>ESP Web Framework Architecture</h3>
             <p>The Web Framework embeds the ESP language into leading web servers such as <a href=
             "http://www.appwebserver.org">Appweb</a> and <a href="http://www.apache.org">Apache</a> to provide a
@@ -230,7 +227,7 @@ ejsweb -v compile
             <p>The ESP View framework provides:</p>
             <ul>
                 <li>A templating engine for master layout pages</li>
-                <li>Embedded server-side javascripting in HTML</li>
+                <li>Embedded server-side JavaScript in HTML</li>
                 <li>A rich library of methods to render output</li>
                 <li>A consistent interface to Ajax libraries</li>
                 <li>A suite of view dynamic user controls such as table, chart, tab, tree, ...</li>
@@ -251,7 +248,7 @@ ejsweb -v compile
             embedded javascript and layout directives to expand the view content pages and create a composite page that
             represents an entire web page that the user will see.</p>
             <p>A <b>templating engine</b> is an important part of a view framework. It allows you to specify the "look
-            and feel" and standard components of a web application in one place, and then resuse the "look and feel" in
+            and feel" and standard components of a web application in one place, and then reuse the "look and feel" in
             content pages by simply referencing a layout page. The layout page typically contains the top level HTML
             structure, style sheets, and graphic content that is standard on every page. It also specifies the location
             to insert content from content pages. The content pages focus on the content and data unique to that page.
@@ -310,7 +307,7 @@ ejsweb -v compile
             supported. To disable templating, use a &lt;%@ layout="" %&gt; directive.</p>
             <h3>View Controls</h3>
             <p>The web framework provides a suite of view controls for common UI elements. These include button, chart,
-            checkbox, form, image, lable, link, list, progress bar, radio button, table, tabs, text, textarea and tree.
+            checkbox, form, image, label, link, list, progress bar, radio button, table, tabs, text, textarea and tree.
             The purpose of the controls is to be a themeable and skinnable set of UI controls that provides a higher
             level of functionality than bare HTML. For example, the table control allows the easy display of database
             data with sortable rows and selectable columns.</p>
@@ -349,7 +346,7 @@ ejsweb -v compile
                 <li>Respond to the request</li>
                 <li>Render a response view back to the client</li>
             </ol>
-            <p>The action reponds to the request by examining the request form parameters, query string, and other Http
+            <p>The action responds to the request by examining the request form parameters, query string, and other Http
             and application state information.</p>
             <p>Here is a sample action method that updates a database table based on user submitted form data in
             "params".</p>
@@ -378,7 +375,7 @@ action function update() {
             traditional compiled languages when used for such iterative or <a href=
             "http://en.wikipedia.org/wiki/Agile_software_development">Agile Web Development</a>. ESP offers the
             best of both. When developing, ESP runs as an interpreted environment. Changes made to web pages or
-            scripts cause the files to be reparsed and compiled without restarting the web server. Simply reloading the
+            scripts cause the files to be parsed and compiled without restarting the web server. Simply reloading the
             web pages in the browser will trigger the changed page to be rebuilt.</p>
             <p>When ready for deployment, the entire application can be compiled into a single module file for easy
             deployment.</p>

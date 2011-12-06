@@ -59,16 +59,16 @@
 <!-- BeginDsi "dsi/espSeeAlso.html" -->
 		        <h1>See Also</h1>
 		        <ul class="nav">
-		          <li><a href="../../../../../../guide/esp/users/using.html">ESP Overview</a></li>
-		          <li><a href="../../../../../../guide/esp/users/tour.html">ESP Tour</a></li>
-		          <li><a href="../../../../../../guide/esp/users/template.html">Templates and Layouts</a></li>
-		          <li><a href="../../../../../../guide/esp/users/controls.html">HTML Controls</a></li>
-		          <li><a href="../../../../../../guide/esp/users/config.html">ESP Configuration Directives</a></li>
-		          <li><a href="../../../../../../guide/esp/users/mvc.html">Model-View-Controller</a></li>
-		          <li><a href="../../../../../../guide/esp/users/generator.html">Application Generator</a></li>
-		          <li><a href="../../../../../../guide/esp/users/controllers.html">Controllers and Actions</a></li>
-		          <li><a href="../../../../../../guide/esp/users/database.html">Database Interface</a></li>
-		          <li><a href="../../../../../../guide/esp/users/caching.html">Caching Responses</a></li>
+		          <li><a href="../../../guide/esp/users/using.html">ESP Overview</a></li>
+		          <li><a href="../../../guide/esp/users/tour.html">ESP Tour</a></li>
+		          <li><a href="../../../guide/esp/users/template.html">Templates and Layouts</a></li>
+		          <li><a href="../../../guide/esp/users/controls.html">HTML Controls</a></li>
+		          <li><a href="../../../guide/esp/users/config.html">ESP Configuration Directives</a></li>
+		          <li><a href="../../../guide/esp/users/mvc.html">Model-View-Controller</a></li>
+		          <li><a href="../../../guide/esp/users/generator.html">Application Generator</a></li>
+		          <li><a href="../../../guide/esp/users/controllers.html">Controllers and Actions</a></li>
+		          <li><a href="../../../guide/esp/users/database.html">Database Interface</a></li>
+		          <li><a href="../../../guide/appweb/users/caching.html">Caching Responses</a></li>
 		        </ul>
 <!-- EndDsi -->
         </div>
@@ -89,15 +89,15 @@
             <p>Programs interact with the EDI using EDI Records. When a record is read from the
             database, EDI extracts the database data and copies it into an EdiRec structure. This structure
             efficiently stores data with database scheme information necessary for data formatting and display. </p>
-            <p>The EdiRec representation wraps a database record and allows you to use object-oriented programming (<a href=
-            "http://en.wikipedia.org/wiki/Object-oriented_programming">OOP</a>) when dealing with tabular database
+            <p>The EdiRec representation wraps a database record and allows you to use object-oriented programming 
+            (<a href="http://en.wikipedia.org/wiki/Object-oriented_programming">OOP</a>) when dealing with tabular database
             data. While not a full Object Relational Mapper (ORM), the EdiRec representation is an effective and
             compact representation that is well suited for use in web applications where you are rendering database 
             tables in web pages. In the Model-View-Controller (MVC) parlance, you can consider the EdiRec representation 
             as the "<em>Model</em>" in <em>M</em>VC.</p>
-            <pAn EdiRec structure has an array of fields (EdiField), one for each column in the corresponding database table.
-            EdiFields stores data as strings to make it easy to display and render in web pages. All EDI APIs that
-            get or set field data always operate on strings. The underlying database backend may store data in more
+            <p>An EdiRec structure has an array of fields (EdiField), one for each column in the corresponding database
+            table.  EdiFields stores data as strings to make it easy to display and render in web pages. All EDI APIs
+            that get or set field data always operate on strings. The underlying database backend may store data in more
             compact forms using native data types.</p>
             <p>When an EDI API needs to return multiple records an EdiGrid structure is used which contains one or more
             EdiRec structures.</p>
@@ -112,13 +112,13 @@
             <h2>Quick Tour of EDI</h2>
             <p>Assume we have a database with a <em>product</em> table that has columns for id, name, description, and
             price.</p>
-            <table summary="" width="75%">
+            <table title="record">
                 <thead>
                     <tr>
-                        <td>id</td>
-                        <td>name</td>
-                        <td>description</td>
-                        <td>price</td>
+                        <th>id</th>
+                        <th>name</th>
+                        <th>description</th>
+                        <th>price</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -163,13 +163,13 @@ ediUpdateRec(db, product);</b>
             <h2 class="section">Data Types</h2>
             <p>EDI maps database types to the corresponding "C" language data types. The
             following type conversions will occur when reading and writing data to and from the database.</p>
-            <table summary="" width="75%">
+            <table title="providers">
                 <thead>
                     <tr>
-                        <td>EDI Type</td>
-                        <td>MDB Type</td>
-                        <td>SQLite Type</td>
-                        <td>MySQL</td>
+                        <th>EDI Type</th>
+                        <th>MDB Type</th>
+                        <th>SQLite Type</th>
+                        <th>MySQL</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -362,7 +362,6 @@ ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module)
                 <li>date&mdash;tests if the field has a valid date/time value</li>
                 <li>unique&mdash;tests if the field is unique in the database</li>
             </ul>
-</pre>
             <h3>Custom Validation</h3>
             <p>You can define new validation routines via the 
             <a href="../../../api/esp.html#group___edi_service_1ga889df64bdd239f71c66b4fa920be8f46">
@@ -372,7 +371,7 @@ ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module)
             <ul>
                 <li><a href="../../../api/esp.html#group___edi">EDI Documentation</a></li>
                 <li><a href="../../../index.html">Appweb Documentation</a></li>
-                <li><a href="../../../ref/esp/webArchitecture.html">ESP Web Framework Architecture</a></li>
+                <li><a href="../../../ref/esp/espArchitecture.html">ESP Web Framework Architecture</a></li>
                 <li><a href="mvc.html">ESP MVC Framework</a></li>
                 <li><a href="mvcTour.html">MVC Tour</a>.
             </ul>

@@ -40,7 +40,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul class="nav">
                 <li><a href="#cryptographicTechniques">Cryptographic Techniques</a></li>
                 <li><a href="#symmetricCryptography">Symmetric Cryptography</a></li>
@@ -160,7 +160,7 @@
             the certificate is valid. It may have additional information (or extensions) as well as administrative
             information for the Certificate Authority's use, such as a serial number.</p>
             <h4><a name="table1" id="table1"></a>Table 1: Certificate Information</h4>
-            <table summary="" width="100%">
+            <table title="cert">
                 <tbody>
                     <tr>
                         <td class="pivot">Subject</td>
@@ -175,7 +175,7 @@
                         <td>Not Before Date, Not After Date</td>
                     </tr>
                     <tr>
-                        <td nowrap="nowrap" class="pivot">Administrative Information</td>
+                        <td class="nowrap" class="pivot">Administrative Information</td>
                         <td>Version, Serial Number</td>
                     </tr>
                     <tr>
@@ -189,7 +189,7 @@
             Distinguished names are defined by the X.509 standard, which defines the fields, field names, and
             abbreviations used to refer to the fields (see <a href="#table2">Table 2</a>).</p>
             <h4><a name="table2" id="table2"></a>Table 2: Distinguished Name Information</h4>
-            <table summary="">
+            <table title="info">
                 <thead>
                     <tr>
                         <th>DN Field</th>
@@ -321,8 +321,9 @@ dUHzICxBVC1lnHyYGjDuAMhe396lYAn8bCld1/L4NMGBCQ==
         cryptography, digests, and signatures. This allows algorithm selection for specific servers to be made based on
         legal, export or other concerns, and also enables the protocol to take advantage of new algorithms. Choices are
         negotiated between client and server at the start of establishing a protocol session.</p>
-        <h3>Table 4: Versions of the SSL protocol<a name="table4" id="table4"></a></h3>
-        <table summary="" width="100%">
+        <h3>Table 4: Versions of the SSL protocol</h3>
+        <a name="table4" id="table4"></a>
+        <table title="protocols">
             <thead>
                 <tr>
                     <th>Version</th>

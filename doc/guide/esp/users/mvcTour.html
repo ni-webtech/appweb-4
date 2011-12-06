@@ -40,7 +40,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul class="nav">
                 <li><a href="#blog">Blog App</a></li>
                 <li><a href="#create">Creating a New App</a></li>
@@ -58,16 +58,16 @@
 <!-- BeginDsi "dsi/espSeeAlso.html" -->
 		        <h1>See Also</h1>
 		        <ul class="nav">
-		          <li><a href="../../../../../../guide/esp/users/using.html">ESP Overview</a></li>
-		          <li><a href="../../../../../../guide/esp/users/tour.html">ESP Tour</a></li>
-		          <li><a href="../../../../../../guide/esp/users/template.html">Templates and Layouts</a></li>
-		          <li><a href="../../../../../../guide/esp/users/controls.html">HTML Controls</a></li>
-		          <li><a href="../../../../../../guide/esp/users/config.html">ESP Configuration Directives</a></li>
-		          <li><a href="../../../../../../guide/esp/users/mvc.html">Model-View-Controller</a></li>
-		          <li><a href="../../../../../../guide/esp/users/generator.html">Application Generator</a></li>
-		          <li><a href="../../../../../../guide/esp/users/controllers.html">Controllers and Actions</a></li>
-		          <li><a href="../../../../../../guide/esp/users/database.html">Database Interface</a></li>
-		          <li><a href="../../../../../../guide/esp/users/caching.html">Caching Responses</a></li>
+		          <li><a href="../../../guide/esp/users/using.html">ESP Overview</a></li>
+		          <li><a href="../../../guide/esp/users/tour.html">ESP Tour</a></li>
+		          <li><a href="../../../guide/esp/users/template.html">Templates and Layouts</a></li>
+		          <li><a href="../../../guide/esp/users/controls.html">HTML Controls</a></li>
+		          <li><a href="../../../guide/esp/users/config.html">ESP Configuration Directives</a></li>
+		          <li><a href="../../../guide/esp/users/mvc.html">Model-View-Controller</a></li>
+		          <li><a href="../../../guide/esp/users/generator.html">Application Generator</a></li>
+		          <li><a href="../../../guide/esp/users/controllers.html">Controllers and Actions</a></li>
+		          <li><a href="../../../guide/esp/users/database.html">Database Interface</a></li>
+		          <li><a href="../../../guide/appweb/users/caching.html">Caching Responses</a></li>
 		        </ul>
 <!-- EndDsi -->
         </div>
@@ -77,13 +77,13 @@
             framework and how to use it for your web applications.</p>
             <p>First make sure you have read the <a href="../../appweb/users/quickStart.html">Quick Start</a>,
             and <a href="tour.html">ESP Tour</a>  and that you have ESP installed on your system so you
-            can type along as you go. This tour uses the <tt><a href="generator.html">esp</a></tt> application
+            can type along as you go. This tour uses the <em><a href="generator.html">esp</a></em> application
             generator.</p>
             
             <a name="blog" id="blog"></a>
             <a name="create" id="create"></a>
             <h2 class="section">Creating a New Application</h2>
-            <p>To create a new ESP application, you will use <tt>esp</tt>, the ESP application generator
+            <p>To create a new ESP application, you will use <em>esp</em>, the ESP application generator
             program. Type the following esp command in a command terminal window:</p>
             <pre>
 <b>home&gt;</b> esp generate app blog<b>
@@ -112,7 +112,7 @@
         [TASK] Complete</b>
 </pre>
             <p>This simple command accomplished quite a bit. It first created a new directory called <b>blog</b> for
-            the application, and then created subdirectories for various parts of the application. Initiallly, some of
+            the application, and then created subdirectories for various parts of the application. Initially, some of
             these directories are empty, but they will be used as your application grows.</p>
             <p>The command also created an appweb.conf configuration file to allow you to run appweb for your application. 
             The appweb.conf configuration file is the place where you can define your database name, and other 
@@ -122,11 +122,11 @@
             how names are used. If you work with these conventions, then you need to do little or no configuration.
             Things will just work.</p>
             <p>Here are the most important directories:</p>
-            <table summary="directories">
+            <table title="directories">
                 <thead>
                     <tr>
-                        <td>Name</td>
-                        <td>Description</td>
+                        <th>Name</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -161,10 +161,10 @@
             
             <!--
             <p>The purpose of the other directories:</p>
-            <table summary="directories">
+            <table title="directories">
                 <thead>
                     <tr>
-                        <td>Name</td><td>Description</td>
+                        <th>Name</th><th>Description</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -180,7 +180,7 @@
 -->
             <a name="run" id="run"></a>
             <h2 class="section">Running your Application</h2>
-            <p>You can immediately run your application after generation. The <tt>esp</tt> command will invoke appweb
+            <p>You can immediately run your application after generation. The <em>esp</em> command will invoke appweb
             to run your application: </p>
             <pre>
 <b>home&gt;</b> cd blog
@@ -213,7 +213,7 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
             <a name="hello" id="hello"></a>
             <h2 class="section">Hello World</h2>
             <p>The next step is to create a simple "Hello World" web page. ESP web pages have an <b>.esp</b>
-            extension. Create a file called <tt>hello.esp</tt> under the <b>static</b> directory with the following
+            extension. Create a file called <em>hello.esp</em> under the <b>static</b> directory with the following
             content:</p>
             <pre>
 &lt;%@ layout ""%&gt;
@@ -225,8 +225,8 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
             <p>Don't worry about the layout directive for now, that tells ESP not to use a layout page.</p>
             <p>To view the "Hello" web page in your browser, type in the following url:
             http://localhost:4000/static/hello.esp.</p>
-            <img src="../../../images/esp/tour/hello.png" alt="hello" class= "screen" /> 
-            <a name="dynamic" id="dynamic"></a>
+            <img src="../../../images/esp/tour/hello.png" alt="hello" class="screen" /> 
+            <a name="layouts" id="layouts"></a>
             <h2>Layouts</h2>
             <p>The ESP templating engine can apply a layout page to allow each page so that it inherits its layout and
             look and feel from a master layout page. The ESP layout directive allows you to control what layout
@@ -270,11 +270,13 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
 </pre>
             <p>By using the ESP statement directive <b>&lt;% code %&gt;</b>, you can embed arbitrary "C" language
             statements in your web page. The <b>render</b> function allows you to write arbitrary data which is patched
-            back where the directive was defined in the page. See the <a href="views.html">Views and Layouts</a>
-            document for full details about all the ESP web page directives.</p><a name="views" id="views"></a>
+            back where the directive was defined in the page. See the <a href="template.html">Views and Layouts</a>
+            document for full details about all the ESP web page directives.</p>
+            
+            <a name="views" id="views"></a>
             <a name="scaffolds" id="scaffolds"></a>
             <h2 class="scaffolds">Scaffolds</h2>
-            <p>Scaffolding is a quick way to generate pieces of your application. The <tt>esp</tt> command can generate
+            <p>Scaffolding is a quick way to generate pieces of your application. The <em>esp</em> command can generate
             database tables, views and controllers for you. The command below will create a "post" database table
             with a blog post title and post comment body. The "title" is a string data type and the "body" is a
             multi-line text field.</p>
@@ -287,20 +289,20 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
         [TASK] Complete</b>
 </pre>
             <p>This command created a database table called "post" and a post controller with
-            <tt>post-list</tt> and <tt>post-edit</tt> views. 
+            <em>post-list</em> and <em>post-edit</em> views. 
             <p>Now if you set your browser to the URI for the post controller, you will see your post listing screen.
             <img src="../../../images/esp/tour/post-list.png" alt="postList" class="screen" /> <a name="newPosts" id=
             "newPosts"></a></p>
             <h2 class="section">Create New Posts</h2>
-            <p>The new post button directs your browser to the <tt>/post/init</tt> URI. Behind the scenes, Appweb
+            <p>The new post button directs your browser to the <em>/post/init</em> URI. Behind the scenes, Appweb
             parses this URI and and selects the appropriate request route and handler for the request. It 
             then identifies "post" as the name of the controler and "init" as the name of an action to invoke. 
-            The controller file <tt>controllers/post.c</tt> defines the controller action to respond to this
+            The controller file <em>controllers/post.c</em> defines the controller action to respond to this
             request.</p>
             <p>The controller file defines functions called actions, that are bound to URIs of the same name. Actions
             are defined using the <b>espDefineAction</b> API in the initialization function of the controller. When 
             a request comes for a given action, the corresponding action method is invoked.</p>
-            <p>A minimal controller file looks like this:
+            <p>A minimal controller file looks like this:</p>
             <pre>
 #include "esp.h"
 static void hello() { 
@@ -314,7 +316,7 @@ ESP_EXPORT int esp_controller_NAME(EspRoute *eroute, MprModule *module)
 </pre>
             <h3>Actions</h3>
             <p>The job of the action is to respond to the request and generate the response via views for the
-            client. Here is the <tt>create</tt> action.</p>
+            client. Here is the <em>create</em> action.</p>
             <pre>
 static void create() { 
     if (writeRec(createRec("post", params()))) {
@@ -325,37 +327,39 @@ static void create() {
     }
 }
 </pre>
-            <p>The <tt>create</tt> action above creates a new post record based on the request parameters and then 
-            uses the <tt>views/post-edit.esp</tt> view to render a response to the client. ESP <tt>edit</tt> scaffolds 
-            handle the work of both <tt>edit</tt> and <tt>create</tt> views because they are so similar.</p>
-            <p>If an action does not call any of the <tt>render</tt> methods (as the <tt>list</tt> action does not),
-            ESP will automatically invoke a view of the same name. In the case of the <tt>list</tt> action, the
-            <tt>views/post-list.esp</tt> will be used to generate the response.</p>
+            <p>The <em>create</em> action above creates a new post record based on the request parameters and then 
+            uses the <em>views/post-edit.esp</em> view to render a response to the client. ESP <em>edit</em> scaffolds 
+            handle the work of both <em>edit</em> and <em>create</em> views because they are so similar.</p>
+            <p>If an action does not call any of the <em>render</em> methods (as the <em>list</em> action does not),
+            ESP will automatically invoke a view of the same name. In the case of the <em>list</em> action, the
+            <em>views/post-list.esp</em> will be used to generate the response.</p>
             
             <img src= "../../../images/esp/tour/create.png" alt="createPost" class="screen" />
-            <p>Click OK to add the new blog post.</p><a name="homePage" id="homePage"></a>
+            <p>Click OK to add the new blog post.</p>
+            
+            <a name="homePage" id="homePage"></a>
             <h2>Edit the Home Page</h2>
             <p>You can edit the application's home page to add a link to your post listing page. Change
-            <tt>web/index.esp</tt> to contain just the following:</p>
+            <em>web/index.esp</em> to contain just the following:</p>
             <pre>
 &lt;%@ layout "default" %&gt;
 &lt;h2&gt;&lt;% label("Go to My Blog", "@post/") %&gt;&lt;/h2&gt;
 </pre>
-            <p>The <tt>@post/</tt> link means redirect to the <tt>post</tt> controller if the label is clicked.</p>
+            <p>The <em>@post/</em> link means redirect to the <em>post</em> controller if the label is clicked.</p>
             Reload the page and you will see:</p>
             <img src="../../../images/esp/tour/home-link.png" alt="homeLink" class="screen" /> 
             <h2>Code Errors</h2>
             <p>What happens if you make a mistake entering the embedded "C" code in an ESP page. Say you forgot the 
             semicolon in the last example. You will see an error like this in your browser:</p>
             <img src="../../../images/esp/tour/error.png" alt="homeLink" class="screen" /> 
-            <p>You can suppress these errors by setting <tt>EspShowErrors</tt> to <tt>off</tt> in the appweb.conf
+            <p>You can suppress these errors by setting <em>EspShowErrors</em> to <em>off</em> in the appweb.conf
             configuration file.</p>
             <a name="layout" id="layout"></a>
             <h2>Changing the Layout</h2>
             <p>You may wish to add some tabs to navigate your blog app. ESP provides a layout
             template engine that is used by all views to provide a common look and feel to your application. View pages
             leverage templates so they don't need to repeat page elements that are common across the application. Edit
-            the layout template file <tt>layouts/default.esp</tt> and change it to use the <tt>tabs</tt>
+            the layout template file <em>layouts/default.esp</em> and change it to use the <em>tabs</em>
             view control.</p>
             <pre>
 &lt;div class="top"&gt;
@@ -369,7 +373,7 @@ static void create() {
             <p>This will create two tab buttons to navigate your application.</p>
             <p>After modifying the layout, you will need to re-compile the cached web pages. Normally, ESP
             transparently compiles the web pages whenever you modify a web page. However, if you change a layout, 
-            you may need to recompile the app. This is easy to do via the <tt>esp</tt> command.</p>
+            you may need to recompile the app. This is easy to do via the <em>esp</em> command.</p>
             <pre>
 esp compile
 </pre>
@@ -380,7 +384,7 @@ esp compile
             <h2 class="section">Validations</h2>
             <p>ESP provides flexible validation methods to help ensure the data you save is correct.</p>
             <p>You can add calls to validate record data before it is saved to the database. To do this, edit the
-            <tt>controllers/post.c</tt> file and add calls to <tt>ediAddValidation</tt>.</p>
+            <em>controllers/post.c</em> file and add calls to <em>ediAddValidation</em>.</p>
             <pre>
 ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module) 
 {
@@ -393,10 +397,10 @@ ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module)
     return 0;
 }
 </pre>
-            <p>This will cause the database to automatically validate that the <tt>title</tt> and <tt>body</tt> fields are
-            not blank and that the <tt>title</tt> is unique in the database.</p>
+            <p>This will cause the database to automatically validate that the <em>title</em> and <em>body</em> fields are
+            not blank and that the <em>title</em> is unique in the database.</p>
            
-            <p>If you click OK in the Post <tt>edit</tt> web page without entering any data
+            <p>If you click OK in the Post <em>edit</em> web page without entering any data
             you will see the following:</p>
             
             <img src="../../../images/esp/tour/validate.png" alt="validate" class="screen" />
@@ -405,7 +409,7 @@ ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module)
             application style sheets.<p>
            
             <p>Other validation types include: checkNumber, checkBoolean, checkDate and checkFormat.
-            You can also define new validation types by calling <tt>ejsDefineValidation</tt>.
+            You can also define new validation types by calling <em>ejsDefineValidation</em>.
             <a name="learn" id="learn"></a>
             <h2 class="section">Learn More ...</h2>
             <p>That concludes the a quick tour through some of the capabilities of the ESP web framework.</p>

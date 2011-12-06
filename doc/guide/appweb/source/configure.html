@@ -40,7 +40,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
                 <li><a href="#running">Running Configure</a></li>
                 <li><a href="#options">Configure Options</a></li>
@@ -71,18 +71,18 @@
         </div>
         <div class="contentLeft">
             <h1>The Configure Program</h1>
-            <p>The <tt>configure</tt> program is used to tailor the software's configuration to suit your needs. It is
+            <p>The <em>configure</em> program is used to tailor the software's configuration to suit your needs. It is
             the master configuration tool and it will create the "out/inc/buildConfig.h" configuration file.</p>
             <p>This file is used by make files, shell scripts and by C source files to control the build
             process. You should <i>NOT</i> edit this files as it is very easy to introduce inconsistencies between 
             the internal sections of this file that can be very difficult to diagnose.</p>
             <p>You may run configure with no options to accept the factory defaults &mdash; this is a good starting
-            point. The <tt>configure</tt> program will begin with the default settings supplied in the
+            point. The <em>configure</em> program will begin with the default settings supplied in the
             "build/standard.defaults" file. Then it will apply the various options specified on the command line. You
             can edit the "standard.defaults" file to modify the factory defaults to suit your requirements.</p><a name=
             "running" id="running"></a>
             <h2 class="section">Running Configure</h2>
-            <p>To run the <tt>configure</tt> program, type:</p>
+            <p>To run the <em>configure</em> program, type:</p>
             <pre>
 ./configure
 </pre>
@@ -99,23 +99,24 @@
             <p>The tables below describe the <b>configure</b> options and the variables defined in the "buildConfig.*"
             configuration files. The defaults below are the defaults in the supplied binary distribution.</p>
             <h3>Installation Directory Options</h3>
-            <table summary="" width="100%">
+            <table title="options">
                 <thead>
                     <tr>
-                        <td>Option</td>
-                        <td>Description</td>
+                        <th>Option</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
+                <tbody>
                 <tr>
-                    <td nowrap="nowrap">--prefix</td>
+                    <td class="nowrap">--prefix</td>
                     <td>Set the installation directory path for the primary product distribution files.</td>
                 </tr>
                 <tr>
-                    <td nowrap="nowrap">--bindir=PATH</td>
+                    <td class="nowrap">--bindir=PATH</td>
                     <td>Set the installation directory path for the product binaries.</td>
                 </tr>
                 <tr>
-                    <td nowrap="nowrap">--docdir=PATH</td>
+                    <td class="nowrap">--docdir=PATH</td>
                     <td>Set the installation directory path for the product manual documentation.</td>
                 </tr>
                 <tr>
@@ -133,7 +134,7 @@
                     --libdir and --moddir is prefereable.</td>
                 </tr>
                 <tr>
-                    <td nowrap="nowrap">--localstatedir=PATH</td>
+                    <td class="nowrap">--localstatedir=PATH</td>
                     <td>Set the directory for modifyable files. This affects the location of web content. Provided for
                     compatibility with autoconf, but using --webdir is prefereable.</td>
                 </tr>
@@ -142,17 +143,18 @@
                     <td>Set the directory for log files.</td>
                 </tr>
                 <tr>
-                    <td nowrap="nowrap">--mandir=PATH</td>
+                    <td class="nowrap">--mandir=PATH</td>
                     <td>The the installation directory path for the man pages.</td>
                 </tr>
                 <tr>
-                    <td nowrap="nowrap">--moddir=PATH</td>
+                    <td class="nowrap">--moddir=PATH</td>
                     <td>The the installation directory path for the module files.</td>
                 </tr>
                 <tr>
                     <td>--srcdir=PATH</td>
                     <td>Set the installation directory path for source code.</td>
                 </tr>
+                </tbody>
             </table>
             <p>You can selectively modify installation directories by setting the appropriate <b>configure</b> location
             option. For example:</p>
@@ -160,15 +162,16 @@
 ./configure --prefix=/home/myDir
 </pre>
             <h3>System Build Types</h3>
-            <table summary="">
+            <table title="types">
                 <thead>
                     <tr>
-                        <td width="30%">Option</td>
-                        <td width="70%">Description</td>
+                        <th>Option</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
+                <tbody>
                 <tr>
-                    <td>--build=cpu-vendor-os</td>
+                    <td class="nowrap">--build=cpu-vendor-os</td>
                     <td>Configure for building on the system specified by "cpu-vendor-os". This value is guessed by
                     default.</td>
                 </tr>
@@ -181,15 +184,17 @@
                     <td>--device=DEVICE</td>
                     <td>Set the device or emulator. Used in Windows CE to specify the desired device target.</td>
                 </tr>
+            </tbody>
             </table>
             <h3>Basic Configure Options</h3>
-            <table summary="">
+            <table title="options">
                 <thead>
                     <tr>
-                        <td width="24%">Option</td>
-                        <td width="76%">Description</td>
+                        <th">Option</th>
+                        <th">Description</th>
                     </tr>
                 </thead>
+                <tbody>
                 <tr>
                     <td nowrap="nowrap">--buildNumber=NUMBER</td>
                     <td>Set the build number part of the version (the last digit of a version number, e.g.
@@ -229,16 +234,18 @@
                     <td>--type=BUILD</td>
                     <td>Set the build type (DEBUG | RELEASE)</td>
                 </tr>
+                </tbody>
             </table>
             <h3>Feature Options</h3>
-            <table summary="">
+            <table title="options">
                 <thead>
                     <tr>
-                        <td width="28%">Option</td>
-                        <td>Default</td>
-                        <td width="61%">Description</td>
+                        <th>Option</th>
+                        <th>Default</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
+                <tbody>
                 <tr>
                     <td>--disable-FEATURE</td>
                     <td></td>
@@ -283,16 +290,18 @@
                     <td>Tune the build to optimize for "size", "speed". You can also select "balanced" for a balance
                     between speed and size.</td>
                 </tr>
+                </tbody>
             </table>
             <h3>Optional Packages</h3>
-            <table summary="">
+            <table title="packages">
                 <thead>
                     <tr>
-                        <td>Option</td>
-                        <td>Default</td>
-                        <td>Description</td>
+                        <th>Option</th>
+                        <th>Default</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
+                <tbody>
                 <tr>
                     <td nowrap="nowrap">--with-COMPONENT=dir</td>
                     <td></td>
@@ -303,17 +312,19 @@
                     <td></td>
                     <td>Do not include the COMPONENT in the build.</td>
                 </tr>
+                </tbody>
             </table>
             <h3>Environment Variables</h3>
             <p>These environment variables can be passed into <b>configure</b> to alter its behavior. These are most
             typically used when cross compiling.</p>
-            <table summary="">
+            <table title="env">
                 <thead>
                     <tr>
-                        <td>Variable</td>
-                        <td>Description</td>
+                        <th>Variable</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
+                <tbody>
                 <tr>
                     <td>ANT</td>
                     <td>Builder for Java programs.</td>
@@ -393,22 +404,26 @@
                     <td>RANLIB</td>
                     <td>Path to the ranlib program to use if required.</td>
                 </tr>
+                </tbody>
             </table>
             <h3>Example Use</h3>
             <pre>
 configure --type=DEBUG --with-openssl=/usr/src/openssl
-</pre><a name="variables" id="variables"></a>
+</pre>
+            
+            <a name="variables" id="variables"></a>
             <h2 class="section">Configuration Variables</h2>
             <p>The configure program will define the following variables (among others) in the relevant "buildConfig.*"
             configuration files.</p>
-            <table summary="" width="100%">
+            <table title="vars">
                 <thead>
                     <tr>
-                        <td>Variable</td>
-                        <td>Typical Value</td>
-                        <td>Description</td>
+                        <th>Variable</th>
+                        <th>Typical Value</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
+                <tbody>
                 <tr>
                     <td>BLD_BIN_PREFIX</td>
                     <td nowrap="nowrap">/usr/bin</td>
@@ -560,6 +575,7 @@ configure --type=DEBUG --with-openssl=/usr/src/openssl
                     <td>0 or 1</td>
                     <td>Enable the building of the module by NAME.</td>
                 </tr>
+                </tbody>
             </table>
         </div>
     </div>

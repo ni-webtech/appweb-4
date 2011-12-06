@@ -56,16 +56,16 @@
 <!-- BeginDsi "dsi/espSeeAlso.html" -->
 		        <h1>See Also</h1>
 		        <ul class="nav">
-		          <li><a href="../../../../../../guide/esp/users/using.html">ESP Overview</a></li>
-		          <li><a href="../../../../../../guide/esp/users/tour.html">ESP Tour</a></li>
-		          <li><a href="../../../../../../guide/esp/users/template.html">Templates and Layouts</a></li>
-		          <li><a href="../../../../../../guide/esp/users/controls.html">HTML Controls</a></li>
-		          <li><a href="../../../../../../guide/esp/users/config.html">ESP Configuration Directives</a></li>
-		          <li><a href="../../../../../../guide/esp/users/mvc.html">Model-View-Controller</a></li>
-		          <li><a href="../../../../../../guide/esp/users/generator.html">Application Generator</a></li>
-		          <li><a href="../../../../../../guide/esp/users/controllers.html">Controllers and Actions</a></li>
-		          <li><a href="../../../../../../guide/esp/users/database.html">Database Interface</a></li>
-		          <li><a href="../../../../../../guide/esp/users/caching.html">Caching Responses</a></li>
+		          <li><a href="../../../guide/esp/users/using.html">ESP Overview</a></li>
+		          <li><a href="../../../guide/esp/users/tour.html">ESP Tour</a></li>
+		          <li><a href="../../../guide/esp/users/template.html">Templates and Layouts</a></li>
+		          <li><a href="../../../guide/esp/users/controls.html">HTML Controls</a></li>
+		          <li><a href="../../../guide/esp/users/config.html">ESP Configuration Directives</a></li>
+		          <li><a href="../../../guide/esp/users/mvc.html">Model-View-Controller</a></li>
+		          <li><a href="../../../guide/esp/users/generator.html">Application Generator</a></li>
+		          <li><a href="../../../guide/esp/users/controllers.html">Controllers and Actions</a></li>
+		          <li><a href="../../../guide/esp/users/database.html">Database Interface</a></li>
+		          <li><a href="../../../guide/appweb/users/caching.html">Caching Responses</a></li>
 		        </ul>
 <!-- EndDsi -->
 
@@ -146,8 +146,8 @@
                     pages.</li>
             </ul>
             <a name="layouts"></a>
-            <h2 class="section">Layouts &mdash; Creating a Consistent Look and Feel</h3>
-            Highly usable applications have a consistent structure, menus and appearance so the user can easily 
+            <h2 class="section">Layouts &mdash; Creating a Consistent Look and Feel</h2>
+            <p>Highly usable applications have a consistent structure, menus and appearance so the user can easily 
             navigate that application. Such applications typically consist of many web pages that share a common look
             and feel.  However, designing and maintaining that consistency is sometimes a challenge.</p>
             
@@ -338,12 +338,10 @@ views/CONTROLLER-VIEW.esp
                     </tr>
                 </tbody>
             </table>
-
             <h3>&lt;%@ include "file" %&gt;</h3>
             <p>This directive can be used to include other HTML or ESP files at this location. The included 
                 contents will be parsed as an ESP page and the results substituted at this location. ESP include
                 directives can be nested to an arbitrary depth.</p>
-
             <h3>&lt;%@ layout "file" %&gt;</h3>
             <p>The layout directive specifies the filename of the layout page to use. If set to the empty string <em>""</em>
             then no layout page will be used. The default layout page is <em>layouts/default.esp</em></p>
@@ -356,7 +354,7 @@ views/CONTROLLER-VIEW.esp
             <h3>&lt;%^ start ...</h3>
             <p>This directive specifies that the code from this block will be positioned at the start of the
             generated function for the template. Some "C" compilers do not allow variable declarations to be place other
-            than at the start of a block. So this directive is useful local variable declarations.</td>
+            than at the start of a block. So this directive is useful local variable declarations.</p>
             <h3>&lt;%^ end ...</h3>
             <p>This directive specifies that the code from this block will be positioned at the end of the
                 generated function for the template.</p>
@@ -439,9 +437,9 @@ Today is <%= mprGetDate(0); %>&lt;
             </ul>
             <p>The Rx, Tx, Host, Route, EspRoute and EspReq objects are all addressable from the Conn object. 
             <p>Here is a collection of especially useful context items:</p>
-            <table>
+            <table title="items">
                 <tr><td>getConn()</td><td>Get the current connection object. Can be used inside controllers and 
-                    template web pages</td></td>
+                    template web pages</td></tr>
                 <tr><td>conn-&gt;rx</td><td>Request object</td>
                 <tr><td>conn-&gt;tx</td><td>Transmit object</td>
                 <tr><td>conn-&gt;host</td><td>Host object</td>

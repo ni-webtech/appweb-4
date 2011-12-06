@@ -41,20 +41,13 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul class="nav">
-                <li><a href="#webServerInterface">Web Server Interface</a></li>
-                <li><a href="#generator">Application Generator</a></li>
-                <li><a href="#parser">Web Page Parser</a></li>
-                <li><a href="#mvc">MVC</a></li>
-                <li><a href="#models">Models</a></li>
-                <li><a href="#views">Views</a></li>
-                <li><a href="#viewPipeline">View Pipeline</a></li>
-                <li><a href="#controllers">Controllers</a></li>
-                <li><a href="#routing">Routing</a></li>
-                <li><a href="#actions">Actions</a></li>
-                <li><a href="#deployment">Developing</a></li>
-                <li><a href="#deployment">Deployment</a></li>
+                <li><a href="#sample">Sample Code</a></li>
+                <li><a href="#apis">ESP APIs</a></li>
+                <li><a href="#flash">Flash Storage</a></li>
+                <li><a href="#configuring">Configuring</a></li>
+                <li><a href="#performance">Performance</a></li>
             </ul>
 <!-- BeginDsi "dsi/webFrameSeeAlso.html" -->
             <h1>See Also</h1>
@@ -88,13 +81,14 @@
             imposes a session timeout on information and will automatically prune stale information. It uses the Appweb
             memory limit configured by the <a href="../../appweb/users/dir/sandbox.html#limitMemory">LimitMemory</a>
             directive to restrict the amount of memory that is devoted to session state.</p>
-            <h3>Sample Code</h3>
+            <a name="sample"></a>
+            <h2>Sample Code</h2>
             <pre>
 if (!(id = getSessionVar("user-id")) != 0) {
     redirect("/login");
 }
 </pre>
-            <p>This example (above) tests if a "<tt>user-id</tt>" is defined in the session store. If not, the user must
+            <p>This example (above) tests if a "<em>user-id</em>" is defined in the session store. If not, the user must
             login and is redirect to the login page.</p>
             <pre>
 destroySession();
@@ -104,7 +98,8 @@ createSession();
 <pre>
 setSessionVar("Name", "John");
 </pre>
-            <p>This defines the "<tt>Name</tt>" variable to the value "<tt>John</tt>".</p>
+            <p>This defines the "<em>Name</em>" variable to the value "<em>John</em>".</p>
+            <a name="apis"></a>
             <h2 class="section">ESP APIs</h2>
             <p>The ESP session state API is comprised of four key APIs:
             <ul>
@@ -113,6 +108,7 @@ setSessionVar("Name", "John");
                 <li><a href="../../../api/esp.html#group___esp_abbrev_1ga241f0cd4f5d49f8a137f1024415b2674">getSessionVar</a></li>
                 <li><a href="../../../api/esp.html#group___esp_abbrev_1gadb4f7bc3020ab9c481f1ebcaf1ed3f2a">setSessionVar</a></li>
             </ul>
+            <a name="flash"></a>
             <h2 class="section">Flash Storage</h2>
             <p>ESP provides a traditional get/set key/value store. But it also provides a "flash" storage for passing
             information to the next web request (only). Thereafter, the flash information is automatically removed.
@@ -132,17 +128,17 @@ setSessionVar("Name", "John");
                 informational errors.
             <h3>Defining Flash Messages</h3>
             <p>To issue a flash message for the next web page, use one of the APIs:
-            "<tt>error</tt>",
-            "<tt>inform</tt>",
-            "<tt>warn</tt>",
-            "<tt>setFlash</tt>",
+            "<em>error</em>",
+            "<em>inform</em>",
+            "<em>warn</em>",
+            "<em>setFlash</em>",
 <pre>
 inform("Document saved");
 warn("Session is about to expire in %d seconds", seconds);
 error("Could not save document");
 setFlash("custom", "Could not save document %s", myDocument);
 </pre>
-            <p>You can use "<tt>setFlash</tt>" to define a custom type flash message using a type of your choosing.</p>
+            <p>You can use "<em>setFlash</em>" to define a custom type flash message using a type of your choosing.</p>
             <h3>Displaying Flash Messages</h3>
             <p>To display flash messages in a web page, use the 
             <a href="../../../api/esp.html#group___esp_abbrev_1ga8fd13fd70582fa020ad0dd5c00af5579">flash()</a> API.
@@ -150,6 +146,7 @@ setFlash("custom", "Could not save document %s", myDocument);
 &lt;% flash("all", NULL); %>
 </pre>
             <p>This will display all flash messages and then erase them from the flash store.</p>
+            <a name="configuring"></a>
             <h2 class="section">Configuring Session</h2>
             <p>Session data has a lifespan defined by the <a
                 href="../../appweb/users/dir/route.html#sessionTimeout">SessionTimeout</a> configuration file
@@ -157,6 +154,7 @@ setFlash("custom", "Could not save document %s", myDocument);
             <p>If there is a low memory condition, Appweb may prune session data prematurely to free up memory. 
             The maximum memory limit may be configured by the 
             <a href="../../appweb/users/dir/sandbox.html#limitMemory">LimitMemory</a> configuration directive.</p>
+            <a name="performance"></a>
             <h2 class="section">Performance Considerations</h2>
             <h3>Minimize Session Data Size</h3>
             <p>To maximize the performance of your application, try to minimize the size of data stored in the session

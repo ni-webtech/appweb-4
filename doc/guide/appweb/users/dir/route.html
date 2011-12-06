@@ -41,7 +41,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
                 <li><a href="#addHandler">AddHandler</a></li>
                 <li><a href="#addInputFilter">AddInputFilter</a></li>
@@ -73,7 +73,7 @@
                 <li><a href="#traceMethod">TraceMethod</a></li>
                 <li><a href="#update">Update</a></li>
             </ul>
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul>
                 <li><a href="../configuration.html">Configuration</a></li>
                 <li><a href="../configuration.html#directives">Configuration Directives</a></li>
@@ -84,7 +84,7 @@
             <a href="../configuration.html#directives"></a>
             <h1>Route Directives</h1><a name="addHandler" id="addHandler"></a>
             <h2>AddHandler</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -112,7 +112,7 @@
                             or <a href="route.html">Route</a> block, it is only valid within that context.
                             VirtualHosts and Route blocks inherit the handler settings defined by outer blocks. I.e.
                             a VirtualHost will inherit all the handlers of the default server. If you wish to remove a
-                            handler mapping, use <tt>Reset pipeline</tt> and then re-add the required handlers.</p>
+                            handler mapping, use <em>Reset pipeline</em> and then re-add the required handlers.</p>
                             <p>NOTE: Unlike Apache, the extensions are case sensitive on systems that have case
                             sensitive file systems. Also, the period must be part of the extension.</p>
                         </td>
@@ -122,7 +122,7 @@
             
             <a name="addInputFilter" id="addInputFilter"></a>
             <h2>AddInputFilter</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -158,7 +158,7 @@
             
             <a name="addOutputFilter" id="addOutputFilter"></a>
             <h2>AddOutputFilter</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -192,7 +192,7 @@
             </table>
             <a name="addLanguageDir" id="addLanguageDir"></a>
             <h2>AddLanguageDir</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -228,7 +228,7 @@
             </table>
             <a name="addLanguageSuffix" id="addLanguageSuffix"></a>
             <h2>AddLanguageSuffix</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -265,7 +265,7 @@
             </table>
             <a name="alias" id="alias"></a>
             <h2>Alias</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -307,7 +307,7 @@
             </table>
             <a name="cache" id="cache"></a>
             <h2>Cache</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -399,7 +399,7 @@
             
             <a name="clientCacheByType" id="clientCacheByType"></a>
             <h2>ClientCacheByType</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -435,7 +435,7 @@
             
             <a name="compress" id="compress"></a>
             <h2>Compress</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -456,11 +456,11 @@
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The <tt>"Compress gzip"</tt> directive enables the serving of compressed content by
+                            <p>The <em>"Compress gzip"</em> directive enables the serving of compressed content by
                             the fileHandler and other supported handlers. If a document is not present, but a compressed
                             version of the document exists, then the compressed version will be served. The filename
                             for compressed content is assumed to be the normal filename with a ".gz" extension added.</p>
-                            <p>The <tt>"Compress none"</tt> directive can be used to turn compression off.</p>
+                            <p>The <em>"Compress none"</em> directive can be used to turn compression off.</p>
                         </td>
                     </tr>
                 </tbody>
@@ -468,7 +468,7 @@
             
             <a name="condition" id="condition"></a>
             <h2>Condition</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -505,7 +505,7 @@
                                 <li>exists &mdash; True if the rule argument evaluates to an existing file</li>
                                 <li>match &mdash; True if the regular expression matches the argument</li>
                             </ul>
-                            <p>The rule result can be negated by prefixing with "<tt>!</tt>".</p>
+                            <p>The rule result can be negated by prefixing with "<em>!</em>".</p>
                             <p>For information about embedded {tokens}, see <a href="../routing.html#tokens">Tokens</a>
                             in the <a href="../routing.html">Routing Guide</a>.</p>
                         </td>
@@ -515,7 +515,7 @@
             
             <a name="defaultLanguage" id="defaultLanguage"></a>
             <h2>DefaultLanguage</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -545,7 +545,7 @@
             
             <a name="documentRoot" id="documentRoot"></a>
             <h2>DocumentRoot</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -576,7 +576,7 @@
             
             <a name="errorDocument" id="errorDocument"></a>
             <h2>ErrorDocument</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -606,7 +606,7 @@
             
             <a name="header" id="header"></a>
             <h2>Header</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -628,7 +628,7 @@
                         <td class="pivot">Notes</td>
                         <td>
                             <p>The Header directive tests if the specified request HTTP header value matches the
-                            required value. The rule result can be negated by prefixing with "<tt>!</tt>".</p>
+                            required value. The rule result can be negated by prefixing with "<em>!</em>".</p>
                             <p>For information about embedded {tokens}, see <a href="../routing.html#tokens">Tokens</a>
                             in the <a href="../routing.html">Routing Guide</a>.</p>
                         </td>
@@ -638,7 +638,7 @@
             
             <a name="inactivityTimeout" id="inactivityTimeout"></a>
             <h2>InactivityTimeout</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -676,7 +676,7 @@
             
             <a name="logRoutes" id="logRoutes"></a>
             <h2>LogRoutes</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -707,7 +707,7 @@
             
             <a name="methods" id="methods"></a>
             <h2>Methods</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -729,8 +729,8 @@
                         <td class="pivot">Notes</td>
                         <td>
                             <p>The Methods directive defines the valid HTTP methods for the route. The standard HTTP
-                            methods are: <tt>DELETE, GET, OPTIONS, POST, PUT and TRACE</tt>. The 
-                            MethodSet argument can also be set to "<tt>ALL</tt>" or "<tt>*</tt>" to indicate any
+                            methods are: <em>DELETE, GET, OPTIONS, POST, PUT and TRACE</em>. The 
+                            MethodSet argument can also be set to "<em>ALL</em>" or "<em>*</em>" to indicate any
                             possible HTTP method.</p>
                         </td>
                     </tr>
@@ -739,7 +739,7 @@
             
             <a name="name" id="name"></a>
             <h2>Name</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -770,7 +770,7 @@
             
             <a name="param" id="param"></a>
             <h2>Param</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -794,7 +794,7 @@
                             <p>The Param directive tests if the specified request param value matches the
                             required value. Request <a href="../routing.html#params">params</a> are sourced from 
                             the request URI query and posted form data.</p>
-                            <P>The rule result can be negated by prefixing with "<tt>!</tt>".</p>
+                            <P>The rule result can be negated by prefixing with "<em>!</em>".</p>
                             <p>For information about embedded {tokens}, see <a href="../routing.html#tokens">Tokens</a>
                             in the <a href="../routing.html">Routing Guide</a>.</p>
                         </td>
@@ -804,7 +804,7 @@
             
             <a name="prefix" id="prefix"></a>
             <h2>Prefix</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -838,7 +838,7 @@
             
             <a name="putMethod" id="putMethod"></a>
             <h2>PutMethod</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -870,7 +870,7 @@
             
             <a name="redirect" id="redirect"></a>
             <h2>Redirect</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -916,7 +916,7 @@
             
             <a name="requestTimeout" id="requestTimeout"></a>
             <h2>RequestTimeout</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -948,7 +948,7 @@
             </table>
             <a name="reset" id="reset"></a>
             <h2>Reset [routes|pipeline]</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -970,14 +970,14 @@
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The <tt>Reset routes</tt> directive erases the configured and inherited route definition. 
-                            This is useful to start with a clean slate for route configuration. The <tt>Reset pipeline</tt>
+                            <p>The <em>Reset routes</em> directive erases the configured and inherited route definition. 
+                            This is useful to start with a clean slate for route configuration. The <em>Reset pipeline</em>
                             preserves route configuration but erases defined handlers, filters and
                             connectors for the specified context. Use AddInputFilter, AddoutputFilter, AddHandler and 
                             AddConnector to reinitialize the pipeline.</p>
-                            <p><tt>Reset pipeline</tt> is most often used inside VirtualHost blocks when you want to 
+                            <p><em>Reset pipeline</em> is most often used inside VirtualHost blocks when you want to 
                             limit the pipeline to a small set of handlers and filters for that Virtual Host.</p>
-                            <p>NOTE: <tt>Reset</tt> is a proprietary Appweb directive.</p>
+                            <p>NOTE: <em>Reset</em> is a proprietary Appweb directive.</p>
                         </td>
                     </tr>
                 </tbody>
@@ -985,7 +985,7 @@
             
             <a name="route" id="route"></a>
             <h2>Route</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -1021,7 +1021,7 @@
             </table>
             <a name="scriptAlias" id="scriptAlias"></a>
             <h2>ScriptAlias</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -1063,7 +1063,7 @@
             
             <a name="sessionTimeout" id="sessionTimeout"></a>
             <h2>SessionTimeout</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -1093,7 +1093,7 @@
             </table>
             <a name="setConnector" id="setConnector"></a>
             <h2>SetConnector</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -1123,7 +1123,7 @@
             
             <a name="setHandler" id="setHandler"></a>
             <h2>SetHandler</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -1152,7 +1152,7 @@
             </table>
             <a name="source" id="source"></a>
             <h2>Source</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -1183,7 +1183,7 @@
             
             <a name="target" id="target"></a>
             <h2>Target</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -1225,10 +1225,10 @@
                                 that to the client.</li>
                                 <li>write &mdash; Writes the given message to the client with the specified status.
                                 By default, this rule will escape embeded HTML sequences. If you need to emit pure HTML, 
-                                use the <tt>-r</tt> switch for raw write output.</li>
+                                use the <em>-r</em> switch for raw write output.</li>
                             </ul>
-                            <p>If the Target directive is omitted in a Route, the default action is <tt>Target run</tt>.</p>
-                            <p>Arguments for the <tt>redirect</tt> and <tt>run</tt> rules may contain embedded tokens. 
+                            <p>If the Target directive is omitted in a Route, the default action is <em>Target run</em>.</p>
+                            <p>Arguments for the <em>redirect</em> and <em>run</em> rules may contain embedded tokens. 
                             For information about embedded {tokens}, see <a href="../routing.html#tokens">Tokens</a>
                             in the <a href="../routing.html">Routing Guide</a>.</p>
                         </td>
@@ -1238,7 +1238,7 @@
             
             <a name="traceMethod" id="traceMethod"></a>
             <h2>TraceMethod</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
@@ -1273,7 +1273,7 @@
             
             <a name="update" id="update"></a>
             <h2>Update</h2>
-            <table class="directive" summary="" width="100%">
+            <table class="directive" title="details">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
