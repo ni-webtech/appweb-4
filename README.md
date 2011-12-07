@@ -16,12 +16,15 @@ To build:
 Images are built into out/bin and out/lib. The build configuration is saved in out/inc/buildConfig.h.
 
 To test:
+
     make test
 
 To run:
+
     sudo make -C src/server run
 
 To install
+
     make install
 
 Copyright
