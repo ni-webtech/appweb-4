@@ -352,7 +352,7 @@ parseSystemConfiguration() {
         # Microsoft Windows XP [Version 5.1.2600]
         # Microsoft Windows [Version 6.0.6000]
 
-        rel=`cmd /c ver | tail -1`
+        rel=`$COMSPEC/cmd /c ver | tail -1`
         version=`echo $rel | sed 's/.*Version //;s/]//' | awk '{ print $1 }'`
         version=${version%%.*}
         #  if [ "$version" = 6 ] ; then

@@ -44,8 +44,11 @@ processPackage() {
     local fileList
     
     if [ "${BLD_EJS}" = "" ] ; then
-        echo -e "\nRequire \"ejs\" shell to create packages. Exiting." 1>&2
-        exit 255
+        if ! type -p ejs ; then
+            echo -e "\nRequire \"ejs\" shell to create packages. Exiting." 1>&2
+            exit 255
+        fi
+        BLD_EJS=`type ejs`
     fi
     if [ -f package/$1.es ] ; then
         [ "$QUIET" = 0 ] && log ${VERB} package/$1.es ...
