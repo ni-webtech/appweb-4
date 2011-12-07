@@ -5,7 +5,7 @@ This software is licensed according to the provisions of GNU GENERAL PUBLIC LICE
 
 Commercial license are also available for those who require them.  The Embedthis Commercial License, allows you to provide commercial software licenses for products containing Embedthis software. This is for individuals or organizations that do not want to release their source code as open source / free software as governed by the GPL license below. For more information on licensing, please see:
 
-    http://embedthis.com/downloads/licensing.html
+http://embedthis.com/downloads/licensing.html
 
 Some components of the sofware are licensed from third parties. See the end of this document for a list of licensed third party software.
 
@@ -111,7 +111,7 @@ Third Party Components
 4) MatrixSSL. The MatrixSSL interface contains some licensed code from PeerSec. MatrixSSL is an optional component.
 5) DTOA (Decimal to Ascii conversion code). This is used in the runtime core. It is licensed by Lucent with a BSD style license.
 6) JQuery and plugins. These optional components may be deployed in client-side browser user interfaces. They are not part of the binary product. JQuery is licensed under an MIT or GPL license. Some plugins have other licenses. 
-7) Hashing algorithm inspired by Paul Hsieh at http://www.azillionmonkeys.com/qed/hash.html
+7) Hashing algorithm inspired by Paul Hsieh at http://www.azillionmonkeys.com/qed/hash.html.
 
 Contributors have provided other portions of the software that are covered by the Embedthis Contributor license that grants Embedthis sufficient rights to execute this license Agreement.
 
