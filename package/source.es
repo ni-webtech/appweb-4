@@ -23,7 +23,7 @@ copy("build/*", src, {
 
 copy("build/bin/*", src, {
     permissions: 0755,
-    include: /^getlib$|^makedep$|^priv$|^fakePriv$|utest*|bld$|make.*Package.*|makeInstall|combo|makedep|cacheConfig|patchAppweb/,
+    include: /^getlib$|^makedep$|^priv$|^fakePriv$|utest*|bld$|make.*Package.*|priv|makeInstall|combo|makedep|cacheConfig|patchAppweb/,
 })
 
 copy("build/src/*", src, {
@@ -33,7 +33,7 @@ copy("build/src/*", src, {
 copy("build/components/*", src)
 
 copy("package/*", src, {
-    include: /Makefile|\.files/,
+    include: /Makefile|\.files|\.es/,
 })
 
 copy("package/*", src, {
@@ -60,5 +60,6 @@ copy("doc/*", src, {
 })
 
 copy("projects/*", src, {
+    recurse: true,
     exclude: /\/Debug|\/Release|\.ncb|\.mode1v3|\.pbxuser/,
 })
