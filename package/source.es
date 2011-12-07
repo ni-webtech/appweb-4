@@ -23,7 +23,7 @@ copy("build/*", src, {
 
 copy("build/bin/*", src, {
     permissions: 0755,
-    include: /^getlib$|^makedep$|^priv$|^fakePriv$|utest*|bld$|make.*Package.*|priv|makeInstall|combo|makedep|cacheConfig|patchAppweb/,
+    include: /getlib|makedep|priv|fakePriv|utest*|bld$|make.*Package.*|fakePriv|mkdmg|makeInstall|combo|makedep|cacheConfig|patchAppweb/,
 })
 
 copy("build/src/*", src, {

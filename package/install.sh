@@ -168,7 +168,7 @@ askUser() {
         if [ "$installbin" = "Y" ] ; then
             runDaemon=`yesno "Start $BLD_PRODUCT automatically at system boot" $runDaemon`
             HTTP_PORT=`ask "Enter the HTTP port number" "$HTTP_PORT"`
-            SSL_PORT=`ask "Enter the SSL port number" "$SSL_PORT"`
+            # SSL_PORT=`ask "Enter the SSL port number" "$SSL_PORT"`
             username=`ask "Enter the user account for $BLD_PRODUCT" "$username"`
             groupname=`ask "Enter the user group for $BLD_PRODUCT" "$groupname"`
         else
@@ -182,7 +182,7 @@ askUser() {
             if [ "$installbin" = "Y" ] ; then
                 echo -e "    Start automatically at system boot: $runDaemon"
                 echo -e "    HTTP port number: $HTTP_PORT"
-                echo -e "    SSL port number: $SSL_PORT"
+                # echo -e "    SSL port number: $SSL_PORT"
                 echo -e "    Username: $username"
                 echo -e "    Groupname: $groupname"
             fi

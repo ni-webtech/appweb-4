@@ -13713,6 +13713,7 @@ static char *standardMimeTypes[] = {
     "bmp",   "image/bmp",
     "class", "application/octet-stream",
     "css",   "text/css",
+    "deb",   "application/octet-stream",
     "dll",   "application/octet-stream",
     "dmg",   "application/octet-stream",
     "doc",   "application/msword",
