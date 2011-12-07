@@ -8,7 +8,10 @@ BASE_NAME	= $(BLD_PRODUCT)-$(BLD_VERSION)-$(BLD_NUMBER)-$(BLD_HOST_DIST)-$(BLD_H
 #
 #	Top level test targets to test installing and removing packages
 #
-testExtra:: testPackages
+testExtra:: testWarn testPackages
+
+testWarn:
+	[ "$(BLD_EJS)" = "" ] && echo "Install Ejscript for unit tests" ; true
 
 testPackages:
 	if [ "$(BUILD_DEPTH)" -ge 3 -a "$(BLD_TYPE)" = RELEASE ] ; then \
