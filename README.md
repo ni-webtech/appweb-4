@@ -8,9 +8,9 @@ Licensing
 Appweb is dual-licensed under a GPLv2 license and commercial licenses are offered by Embedthis Software.
 See http://appwebserver.org/downloads/licensing.html for licensing details.
 
-### To read documentation:
+### To Read Documentation:
 
-  See http://www.appwebserver.org/products/appweb/doc/product/index.html
+  See http://appwebserver.org/products/appweb/doc/product/index.html
 
 ### To Build:
 
@@ -29,11 +29,11 @@ Images are built into out/bin and out/lib. The build configuration is saved in o
 
 This will run appweb in the src/server directory using the src/server/appweb.conf configuration file.
 
-### To Install
+### To Install:
 
     make install
 
-### To Create Packages
+### To Create Packages:
 
     make package
 

@@ -1,4 +1,5 @@
 Embedthis Appweb GPL License Agreement
+===
 
 This software is licensed according to the provisions of GNU GENERAL PUBLIC LICENSE below. 
 
@@ -8,16 +9,16 @@ Commercial license are also available for those who require them.  The Embedthis
 
 Some components of the sofware are licensed from third parties. See the end of this document for a list of licensed third party software.
 
--------------------------------------------------------------------------------
-
 GNU GENERAL PUBLIC LICENSE
 Version 2, June 1991
+---
 
 Copyright (C) 1989, 1991 Free Software Foundation, Inc.  59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 Everyone is permitted to copy and distribute verbatim copies of this license document, but changing it is not allowed.
 
 PREAMBLE
+---
 
 The licenses for most software are designed to take away your freedom to share and change it.  By contrast, the GNU General Public License is intended to guarantee your freedom to share and change free software--to make sure the software is free for all its users.  This General Public License applies to most of the Free Software Foundation's software and to any other program whose authors commit to using it.  (Some other Free Software Foundation software is covered by the GNU Library General Public License instead.)  You can apply it to your programs, too.
 
@@ -36,9 +37,8 @@ Finally, any free program is threatened constantly by software patents.  We wish
 The precise terms and conditions for copying, distribution and modification follow.
 
 
--------------------------------------------------------------------------------
-
 GNU GENERAL PUBLIC LICENSE TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+===
 
 0. This License applies to any program or other work which contains a notice placed by the copyright holder saying it may be distributed under the terms of this General Public License.  The "Program", below, refers to any such program or work, and a "work based on the Program" means either the Program or any derivative work under copyright law: that is to say, a work containing the Program or a portion of it, either verbatim or with modifications and/or translated into another language.  (Hereinafter, translation is included without limitation in the term "modification".)  Each licensee is addressed as "you".
 
@@ -104,7 +104,7 @@ NO WARRANTY
 
 
 Third Party Components
----------------------------------------------------------------------------------------------
+===
 
 1) Build Tools. Some of the tools used to build the Licensed Software are licensed under a GPL license. They are not part of the binary product nor are they normally deployed with the software after it is built into binary form.
 2) Perl Regular Expressions. Portions of the Perl Regular Expression Library (pcre) are used. These are covered by the PCRE license. The Perl regular expression library is an optional component of the Licensed Software.
@@ -117,9 +117,7 @@ Third Party Components
 Contributors have provided other portions of the software that are covered by the Embedthis Contributor license that grants Embedthis sufficient rights to execute this license Agreement.
 
 Trademarks
----------------------------------------------------------------------------------------------
+===
 Copyright (c) 2003-2011 Embedthis Software, LLC. All Rights Reserved.
 Embedthis and Appweb are trademarks of Embedthis Software, LLC. Other 
 brands and their products are trademarks of their respective holders.
-
-See http://appwebserver.org/downloads/licensing.html for further licensing details.
