@@ -366,6 +366,7 @@ askUser() {
 #
 #	Main program
 #
+cd /
 setup $*
 askUser
 

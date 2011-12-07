@@ -148,3 +148,5 @@ src/test/access.log*
 imports
 src/deps/ejs
 dtmp
+install.log
+val.log
