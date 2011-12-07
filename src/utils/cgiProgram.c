@@ -59,8 +59,11 @@
 	#define rmdir(a)    _rmdir(a)
 #else
 #include <unistd.h>
+
+#if VXWORKS
 /* Just for VxWorks */
 extern char *strdup(const char *);
+#endif
 #endif
 
 /*********************************** Locals ***********************************/
