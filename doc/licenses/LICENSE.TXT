@@ -6,7 +6,7 @@ Commercial license are also available for those who require them.  The Embedthis
 
     http://embedthis.com/downloads/licensing.html
 
--------------------------------------------------------------------------------
+
 
 GNU GENERAL PUBLIC LICENSE
 Version 2, June 1991
@@ -34,7 +34,6 @@ Finally, any free program is threatened constantly by software patents.  We wish
 The precise terms and conditions for copying, distribution and modification follow.
 
 
--------------------------------------------------------------------------------
 
 GNU GENERAL PUBLIC LICENSE TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
 

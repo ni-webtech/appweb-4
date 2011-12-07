@@ -1,5 +1,4 @@
 Embedthis Appweb(TM)
---------------------
 
 Welcome to the Embedthis Appweb distribution. Appweb is a compact, fast, modular and powerful embedded web server. 
 
@@ -11,7 +10,6 @@ This software is copyrighted and distributed under license. Please read the LICE
 
 
 Table of Contents
------------------
 
 * System Requirements
 * Installation Package Formats
@@ -25,8 +23,8 @@ Table of Contents
 * Building from the Source Code
 * License and Copyright Information
 
+
 System Requirements
--------------------
 
 Operating System Support
 
@@ -52,7 +50,6 @@ To rebuild Appweb from source code on your development system, you will need at 
 
 
 Installation Package Formats
-----------------------------
 
 The Appweb binary installation is published in several formats:
 
@@ -74,7 +71,6 @@ See below for operating system specific installation information.
 
 
 Development Environment Platform Support
-----------------------------------------
 
 If you wish to embed Appweb in your application or build Appweb from source code, you will need to use a C compiler and associated development tools.  Several development environments are supported.  You may choose any of the following:
 
@@ -87,7 +83,6 @@ If you wish to embed Appweb in your application or build Appweb from source code
 
 
 Installating the Tar Self-Install Image
----------------------------------------
 
 This is the procedure to to install the self-install Tar format image:
 
@@ -104,7 +99,6 @@ This is the procedure to to install the self-install Tar format image:
 
 
 Apple Mac OS X Release Details
--------------------------------
 
 To install the native MAC OS X DMG image:
 
@@ -119,7 +113,6 @@ To install the native MAC OS X DMG image:
 
 
 Linux Release Details
----------------------
 
 The installation images all include an "install" script that will intelligently invoke the appropriate native software package manager such as "rpm" or dpkg as required.
 
@@ -139,7 +132,6 @@ To install a Linux image:
 
 
 Windows Release Details
------------------------
 
 To install the Windows Installer image:
 
@@ -153,7 +145,6 @@ To install the Windows Installer image:
 
 
 Removing Appweb on Windows
-----------------------------
 
 This is the procedure to remove Appweb on all systems except Windows.
 
@@ -175,7 +166,6 @@ self-install image, you will need to remove Appweb using the procedure described
 
 
 Running Appweb
-----------------
 
 Appweb will start when the Appweb installation procedure completes and on some systems, will launch your browser directed at the Appweb local home page.  Thereafter, Appweb will automatically start if the system is rebooted. If you wish to manually stop Appweb, type:
 
@@ -204,13 +194,11 @@ To tailor the Embedthis Appweb configuration, including the default port, you ma
 
 
 Building from the Source Code
------------------------------
 
 If you wish to rebuild the Appweb product from the distributed source code, please download the source code distribution from the Embedthis web site. Then read "Building from Source" in the Appweb product documentation for an explanation of the necessary steps to successfully rebuild the product.
 
 
 License and Copyright Information
----------------------------------
 
 This software is supplied under license. Both a GNU and commercial license are available. Please read LICENSE.TXT for details. This documentation and the software described in this document may be used and copied only in accordance with the terms of the accompanying license agreement. Product and technical information in this document is subject to change without notice and does not represent a commitment on the part of Embedthis Software LLC.
 

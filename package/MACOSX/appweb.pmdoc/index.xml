@@ -4,7 +4,7 @@
         <organization>com.embedthis</organization>
         <userSees ui="both"/>
         <min-target os="2"/>
-        <domain anywhere="true" system="true" user="true"/>
+        <domain system="true" />
     </properties>
     <distribution>
         <versions min-spec="1.000000"/>
@@ -14,7 +14,8 @@
         <choice title="BIN" id="choice4" starts_selected="true" starts_enabled="true" starts_hidden="false">
             <pkgref id="com.embedthis.appweb.bin.pkg"/>
         </choice>
-    </contents><resources bg-scale="none" bg-align="topleft"/>
+    </contents>
+    <resources bg-scale="none" bg-align="topleft"/>
     <flags/>
     <item type="flat-pkgref">01bin.xml</item>
     <mod>properties.customizeOption</mod>
