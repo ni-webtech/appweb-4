@@ -26,7 +26,7 @@ C/C++ Language
     ejsApi              Demonstrates the Ejscript API
     pollEventLoop       Http server using a polling event loop
     selectEventLoop     Http server using a select event loop
-    simpleClient
+    simpleClient        Http client
     simpleEgi           Simple Embedded Gateway Interface sample
     simpleEjs           Simple Ejscript web framework sample
     simpleHandler       Simple Appweb URL handler
@@ -38,7 +38,7 @@ C/C++ Language
 Licensing
 ---
 
-Please read LICENSE.TXT or go to:
+Please see: 
 
     http://www.embedthis.com/downloads/licensing.html
 
@@ -50,7 +50,7 @@ avail yourself of free support via our Online Forum. This is a community based
 forum where users can share ideas and ask questions. You can also search the
 forum for answers to past questions. To visit the Appweb forum, go to:
 
-    http://www.embedthis.com/phpbb/index.php
+    http://appwebserver.org/forum/
 
 You also have the option of purchasing support with the Embedthis Commercial
 License. It includes paid support as part of the license benefits.
