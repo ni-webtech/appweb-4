@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <installer-script minSpecVersion="1.000000" authoringTool="com.apple.PackageMaker" authoringToolVersion="3.0.3" authoringToolBuild="174">
     <title>Appweb</title>
-    <options customize="allow" allow-external-scripts="no" rootVolumeOnly="false"/>
-    <domains enable_anywhere="true" enable_localSystem="true" enable_currentUserHome="true"/>
+    <options allow-external-scripts="no" rootVolumeOnly="true"/>
+    <domains enable_localSystem="true" />
     <readme file="ReadMe"/>
     <license file="License"/>
     <choices-outline>
