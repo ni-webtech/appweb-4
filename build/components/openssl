@@ -7,7 +7,7 @@ defineComponent() {
     ver="latest"
     eval SHOBJ=\$BLD_${kind}_SHOBJ
     if [ "$BLD_HOST_OS" = LINUX -o "$BLD_HOST_OS" = MACOSX -o "$BLD_HOST_OS" = CYGWIN ] ; then
-        path=${1:-/usr/include:/usr/lib}
+        path=${1:-.}
     else
         path="${1:-.}"
     fi
@@ -36,13 +36,14 @@ defineComponent() {
 #       libs="ssl crypto"
 #       imports="$libpaths/libssl.1*${SHOBJ} $libpaths/libcrypto.1*${SHOBJ}"
 
-        libpaths=`probe --name openssl --search "$path:extensions/openssl/$ver" --dir "libcrypto" `
-        iflags=-I`probe --name openssl --search "$path:extensions/openssl/$ver/include" --dir "openssl/ssl.h"`
+        libpaths=`probe --name openssl --search "$path:extensions/openssl/$ver:/usr/lib" --dir "libcrypto" `
+        iflags=-I`probe --name openssl --search "$path:extensions/openssl/$ver/include:/usr/include" --dir "openssl/ssl.h"`
         libs="ssl crypto"
+        imports="$libpaths/libssl*${SHOBJ} $libpaths/libcrypto*${SHOBJ}"
 
     else 
-        libpaths=`probe --name openssl --search "$path:extensions/openssl/$ver" --dir "libcrypto" `
-        iflags=-I`probe --name openssl --search "$path:extensions/openssl/$ver/include" --dir "openssl/ssl.h"`
+        libpaths=`probe --name openssl --search "$path:extensions/openssl/$ver:/usr/lib:/lib" --dir "libcrypto" `
+        iflags=-I`probe --name openssl --search "$path:extensions/openssl/$ver/include:/usr/include" --dir "openssl/ssl.h"`
         libs="ssl crypto"
         imports="$libpaths/libssl*${SHOBJ} $libpaths/libcrypto*${SHOBJ}"
     fi

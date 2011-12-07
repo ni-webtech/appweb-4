@@ -1095,7 +1095,7 @@ probe()
     eval arch=\$BLD_${KIND}_ARCH
     eval shobj=\$BLD_${KIND}_SHOBJ
     eval exe=\$BLD_${KIND}_EXE
-    extensions="$exe $shobj $arch .h"
+    extensions="$exe $shobj $shobj.* $arch .h"
     executable=0
     warn=0
 
@@ -1178,7 +1178,8 @@ probe()
             [ "${d}" = "/" ] && d=
             for e in "" $extensions ; do
                 f=${d}/${file}${e}
-                if [ -f "${f}" -o -d "${f}" ] ; then
+                [ "$trace" -gt 0 ] && echo "probe: Probing ${d}/${file}${e}" >&2
+                if [ -f ${f} -o -d ${f} -o -h ${f} ] ; then
                     [ "${d}" = "" ] && d=/
                     if [ "$emitdir" = "1" ] ; then
                         found="$d"
