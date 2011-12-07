@@ -24,7 +24,6 @@ setPerms() {
 		fi
 	done
 	for g in www-data _www nobody nogroup Administrator ; do
-	do
 		grep "$g" /etc/group >/dev/null
 		if [ $? = 0 ] ; then
 			groupname=$g
