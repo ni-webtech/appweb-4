@@ -16,7 +16,7 @@ endif
 
 compileExtra: $(OBJECTS) 
 	
-modules: $(ESP_CMD)
+modules: $(ESP_CMD) $(TARGETS)
 
 $(BLD_BIN_DIR)/esp$(BLD_EXE): $(OBJECTS)
 	bld --exe $(BLD_BIN_DIR)/esp$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" --libs "$(BLD_APPWEB_LIBS)" \

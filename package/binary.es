@@ -73,23 +73,21 @@ ver.makeDir(dperms)
 cfg.makeDir(dperms)
 cfg.join("config").makeDir(dperms)
 web.makeDir(dperms)
+var saveLink : Path
 
 if (!bare) {
     man.join("man1").makeDir(dperms)
     lib.join("www").makeDir(dperms)
-}
 
-var saveLink : Path
-if (options.task == "Remove" && bin.join("linkup").exists) {
-    saveLink = Path(".").temp()
-    bin.join("linkup").copy(saveLink)
-    saveLink.attributes = {permissions: 0755}
+    if (options.task == "Remove" && bin.join("linkup").exists) {
+        saveLink = Path(".").temp()
+        bin.join("linkup").copy(saveLink)
+        saveLink.attributes = {permissions: 0755}
+    }
 }
-
-copy("appweb*", bin, {from: sbin, permissions: 0755, strip: strip})
-copy("setConfig*", bin, {from: sbin, permissions: 0755, strip: strip})
 
 if (!bare) {
+    copy("setConfig*", bin, {from: sbin, permissions: 0755, strip: strip})
     copy("LICENSE.TXT", ver, { from: "doc/licenses", fold: true, expand: true })
     copy("*.TXT", ver, { from: "doc/product", fold: true, expand: true })
     copy("uninstall.sh", bin.join("uninstall"), {from: "package", permissions: 0755, expand: true})
@@ -133,10 +131,24 @@ if (!bare) {
         from: sinc,
         exclude: /appwebMonitor.h|testAppweb.h/,
     })
+    copy("*", cfg, {
+        from: "src/server",
+        include: /mime.types/,
+        permissions: 0644,
+    })
+    copy("*", lib, {
+        from: slib,
+        include: /esp.conf|esp-www/,
+        exclude: /files.save/,
+        permissions: 0644,
+        recurse: true,
+    })
 
 } else {
     copy("src/server/web/min-index.html", web.join("appweb.html"))
 }
+
+copy("appweb*", bin, {from: sbin, permissions: 0755, strip: strip})
 
 /*
     Copy libraries 
@@ -163,17 +175,9 @@ if (options.task != "Remove" && build.BLD_FEATURE_SSL == 1 && os == "LINUX") {
 
 copy("*", cfg, {
     from: "src/server",
-    include: /mime.types|\.db$|php.ini|appweb.conf/,
+    include: /php.ini|appweb.conf/,
+    exclude: /appweb.conf.bak/,
     permissions: 0644,
-    verbose: true,
-})
-
-copy("*", lib, {
-    from: slib,
-    include: /esp.conf|esp-www/,
-    exclude: /files.save/,
-    permissions: 0644,
-    recurse: true,
 })
 
 if (build.BLD_HOST_OS == "WIN") {
@@ -223,7 +227,8 @@ if (!bare) {
             initd.makeDir(dperms)
         }
         copy("package/LINUX/" + product + ".init", initd.join(product), {permissions: 0755, expand: true})
-        copy("package/LINUX/" + product + ".upstart", init.join(product).joinExt("conf"), {permissions: 0644, expand: true})
+        copy("package/LINUX/" + product + ".upstart", init.join(product).joinExt("conf"), 
+            {permissions: 0644, expand: true})
         if (options.task != "Package") {
             if (App.uid == 0 && options.root != "") {
                 if (options.openwrt) {
