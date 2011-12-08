@@ -9,9 +9,7 @@ if (false && test.os == "LINUX") {
 
     if (test.depth >= 2) {
         testCmdNoCapture(command)
-        if (test.multithread) {
-            testCmdNoCapture(valgrind + " --threads " + 8)
-        }
+        testCmdNoCapture(valgrind + " --threads " + 8)
     }
 
 } else {
