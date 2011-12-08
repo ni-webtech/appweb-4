@@ -352,7 +352,8 @@ parseSystemConfiguration() {
         # Microsoft Windows XP [Version 5.1.2600]
         # Microsoft Windows [Version 6.0.6000]
 
-        rel=`$COMSPEC/cmd /c ver | tail -1`
+        cmd=`cygpath -m "${COMSPEC}"`
+        rel=`$cmd /c ver | tail -1`
         version=`echo $rel | sed 's/.*Version //;s/]//' | awk '{ print $1 }'`
         version=${version%%.*}
         #  if [ "$version" = 6 ] ; then
@@ -1087,7 +1088,7 @@ configureComponent() {
 probe()
 {
     local args emitdir extensions name d e f file found path search arch shobj exe trace warn SAVE_IFS OLD_PATH
-    local executable
+    local executable ext
 
     args="$@"
     trace=$verbose
@@ -1095,7 +1096,7 @@ probe()
     eval arch=\$BLD_${KIND}_ARCH
     eval shobj=\$BLD_${KIND}_SHOBJ
     eval exe=\$BLD_${KIND}_EXE
-    extensions="$exe $shobj $shobj.* $arch .h"
+    extensions="$exe $shobj $arch .h"
     executable=0
     warn=0
 
@@ -1176,21 +1177,23 @@ probe()
             IFS=$SAVE_IFS
             [ "$trace" != 0 -a "$found" != "" ] && echo "    probe: testing $name at $d" 1>&2
             [ "${d}" = "/" ] && d=
-            for e in "" $extensions ; do
-                f=${d}/${file}${e}
-                [ "$trace" -gt 0 ] && echo "probe: Probing ${d}/${file}${e}" >&2
-                if [ -f ${f} -o -d ${f} -o -h ${f} ] ; then
-                    [ "${d}" = "" ] && d=/
-                    if [ "$emitdir" = "1" ] ; then
-                        found="$d"
-                    else
-                        found=${f}
+            for ext in "" $extensions ; do
+                for e in "${ext}" "${ext}.*" ; do
+                    eval f=\"`echo ${d}/${file}${e}`\"
+                    [ "$trace" -gt 0 ] && echo "probe: Probing ${d}/${file}${e}" >&2
+                    if [ -f "${f}" -o -d "${f}" -o -h "${f}" ] ; then
+                        [ "${d}" = "" ] && d=/
+                        if [ "$emitdir" = "1" ] ; then
+                            found="$d"
+                        else
+                            found="${f}"
+                        fi
+                        search=
+                        [ "$found" != "" -a "$executable" = 1 -a ! -x "$found" ] && found=""
+                        [ "$trace" != 0 -a "$found" != "" ] && echo "    probe: found $name at $found" 1>&2
+                        break
                     fi
-                    search=
-                    [ "$found" != "" -a "$executable" = 1 -a ! -x "$found" ] && found=""
-                    [ "$trace" != 0 -a "$found" != "" ] && echo "    probe: found $name at $found" 1>&2
-                    break
-                fi
+                done
             done
             [ "$found" != "" ] && break
             IFS=":"
