@@ -108,7 +108,7 @@ scanUpdate:
 	perl ~/src/nikto/nikto.pl -update
 
 apacheBench:
-	ab -k -c 10 -n 1000 http://127.0.0.1:4010/bench.html 
+	ab -k -c 10 -n 1000 http://127.0.0.1:4100/numbers.html 
 
 testPrep:
 	mkdir -p cache app/cache

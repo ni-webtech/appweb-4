@@ -1700,9 +1700,9 @@ static int sourceDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    StartThreads count
+    StartWorkers count
  */
-static int startThreadsDirective(MaState *state, cchar *key, cchar *value)
+static int startWorkersDirective(MaState *state, cchar *key, cchar *value)
 {
     mprSetMinWorkers((int) stoi(value));
     return 0;
@@ -1738,11 +1738,17 @@ static int templateDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    ThreadLimit count
+    WorkerLimit count
  */
-static int threadLimitDirective(MaState *state, cchar *key, cchar *value)
+static int workerLimitDirective(MaState *state, cchar *key, cchar *value)
 {
-    mprSetMaxWorkers((int) stoi(value));
+    int     count;
+
+    count = atoi(value);
+    if (count <= 1) {
+        mprError("Must have at least one worker");
+    }
+    mprSetMaxWorkers(count);
     return 0;
 }
 
@@ -2259,10 +2265,10 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "InactivityTimeout", inactivityTimeoutDirective);
     maAddDirective(appweb, "Include", includeDirective);
 
-    /* Deprecated use InactivityTimeout instead */
+    /* Deprecated use InactivityTimeout */
     maAddDirective(appweb, "KeepAliveTimeout", inactivityTimeoutDirective);
 
-    /* Deprecated: use <Route> instead */
+    /* Deprecated: use <Route> */
     maAddDirective(appweb, "<Location", routeDirective);
     maAddDirective(appweb, "</Location", closeDirective);
 
@@ -2276,9 +2282,9 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "LimitRequestBody", limitRequestBodyDirective);
     maAddDirective(appweb, "LimitRequestForm", limitRequestFormDirective);
 
-    /* Deprecated use LimitRequestHeaderLines instead */
+    /* Deprecated use LimitRequestHeaderLines */
     maAddDirective(appweb, "LimitRequestFields", limitRequestHeaderLinesDirective);
-    /* Deprecated use LimitRequestHeader instead */
+    /* Deprecated use LimitRequestHeader */
     maAddDirective(appweb, "LimitRequestFieldSize", limitRequestHeaderDirective);
 
     maAddDirective(appweb, "LimitRequestHeaderLines", limitRequestHeaderLinesDirective);
@@ -2288,7 +2294,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "LimitStageBuffer", limitStageBufferDirective);
     maAddDirective(appweb, "LimitUri", limitUriDirective);
 
-    /* Deprecated: LimitUrl - use LimitUri instead  */
+    /* Deprecated: LimitUrl - use LimitUri */
     maAddDirective(appweb, "LimitUrl", limitUriDirective);
 
     maAddDirective(appweb, "LimitUpload", limitUploadDirective);
@@ -2301,7 +2307,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "LoadModulePath", loadModulePathDirective);
     maAddDirective(appweb, "LoadModule", loadModuleDirective);
 
-    /* Deprecated use LimitKeepAlive instead */
+    /* Deprecated use LimitKeepAlive */
     maAddDirective(appweb, "MaxKeepAliveRequests", limitKeepAliveDirective);
     maAddDirective(appweb, "MemoryPolicy", memoryPolicyDirective);
     maAddDirective(appweb, "Methods", methodsDirective);
@@ -2317,7 +2323,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "Require", requireDirective);
     maAddDirective(appweb, "Reset", resetDirective);
 
-    /* Deprecated: ResetPipeline - use Reset instead */
+    /* Deprecated: ResetPipeline - use Reset */
     maAddDirective(appweb, "ResetPipeline", resetPipelineDirective);
     maAddDirective(appweb, "<Route", routeDirective);
     maAddDirective(appweb, "</Route", closeDirective);
@@ -2327,13 +2333,19 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "SetConnector", setConnectorDirective);
     maAddDirective(appweb, "SetHandler", setHandlerDirective);
     maAddDirective(appweb, "Source", sourceDirective);
-    maAddDirective(appweb, "StartThreads", startThreadsDirective);
+
+    /* Deprecated: Use StartWorkers */
+    maAddDirective(appweb, "StartThreads", startWorkersDirective);
+    maAddDirective(appweb, "StartWorkers", startWorkersDirective);
     maAddDirective(appweb, "Target", targetDirective);
     maAddDirective(appweb, "Template", templateDirective);
 
-    /* Deprecated: Use requestTimeout instead */
+    /* Deprecated: Use requestTimeout */
     maAddDirective(appweb, "Timeout", requestTimeoutDirective);
-    maAddDirective(appweb, "ThreadLimit", threadLimitDirective);
+
+    /* Deprecated: Use workerLimit */
+    maAddDirective(appweb, "ThreadLimit", workerLimitDirective);
+
     maAddDirective(appweb, "ThreadStack", threadStackDirective);
     maAddDirective(appweb, "TraceMethod", traceMethodDirective);
     maAddDirective(appweb, "TraceMethod", traceMethodDirective);
@@ -2344,6 +2356,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "UploadDir", uploadDirDirective);
     maAddDirective(appweb, "User", userDirective);
 
+    maAddDirective(appweb, "WorkerLimit", workerLimitDirective);
     maAddDirective(appweb, "<VirtualHost", virtualHostDirective);
     maAddDirective(appweb, "</VirtualHost", closeDirective);
 

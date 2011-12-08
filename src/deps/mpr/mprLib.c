@@ -8098,7 +8098,7 @@ static void manageEventService(MprEventService *es, int flags);
 static void queueDispatcher(MprDispatcher *prior, MprDispatcher *dispatcher);
 static void scheduleDispatcher(MprDispatcher *dispatcher);
 static void serviceDispatcherMain(MprDispatcher *dispatcher);
-static void serviceDispatcher(MprDispatcher *dp);
+static bool serviceDispatcher(MprDispatcher *dp);
 
 #define isRunning(dispatcher) (dispatcher->parent == dispatcher->service->runQ)
 #define isReady(dispatcher) (dispatcher->parent == dispatcher->service->readyQ)
@@ -8122,6 +8122,7 @@ MprEventService *mprCreateEventService()
     es->runQ = mprCreateDispatcher("running", 0);
     es->readyQ = mprCreateDispatcher("ready", 0);
     es->idleQ = mprCreateDispatcher("idle", 0);
+    es->pendingQ = mprCreateDispatcher("pending", 0);
     es->waitQ = mprCreateDispatcher("waiting", 0);
     return es;
 }
@@ -8134,6 +8135,7 @@ static void manageEventService(MprEventService *es, int flags)
         mprMark(es->readyQ);
         mprMark(es->waitQ);
         mprMark(es->idleQ);
+        mprMark(es->pendingQ);
         mprMark(es->waitCond);
         mprMark(es->mutex);
 
@@ -8308,7 +8310,10 @@ int mprServiceEvents(MprTime timeout, int flags)
         while ((dp = getNextReadyDispatcher(es)) != NULL) {
             mprAssert(!dp->destroyed);
             mprAssert(dp->magic == MPR_DISPATCHER_MAGIC);
-            serviceDispatcher(dp);
+            if (!serviceDispatcher(dp)) {
+                queueDispatcher(es->pendingQ, dp);
+                continue;
+            }
             if (justOne) {
                 return abs(es->eventCount - beginEventCount);
             }
@@ -8594,7 +8599,7 @@ static int dispatchEvents(MprDispatcher *dispatcher)
 }
 
 
-static void serviceDispatcher(MprDispatcher *dispatcher)
+static bool serviceDispatcher(MprDispatcher *dispatcher)
 {
     mprAssert(isRunning(dispatcher));
     mprAssert(dispatcher->owner == 0);
@@ -8611,10 +8616,14 @@ static void serviceDispatcher(MprDispatcher *dispatcher)
 
     } else {
         if (mprStartWorker((MprWorkerProc) serviceDispatcherMain, dispatcher) < 0) {
+#if UNUSED
             /* Can't start a worker thread, run using the current thread */
             serviceDispatcherMain(dispatcher);
+#endif
+            return 0;
         } 
     }
+    return 1;
 }
 
 
@@ -8646,19 +8655,34 @@ void mprClaimDispatcher(MprDispatcher *dispatcher)
 }
 
 
+void mprWakePendingDispatchers()
+{
+    mprWakeNotifier();
+}
+
+
 /*
     Get the next (ready) dispatcher off given runQ and move onto the runQ
  */
 static MprDispatcher *getNextReadyDispatcher(MprEventService *es)
 {
-    MprDispatcher   *dp, *next, *readyQ, *waitQ, *dispatcher;
+    MprDispatcher   *dp, *next, *pendingQ, *readyQ, *waitQ, *dispatcher;
     MprEvent        *event;
 
     waitQ = es->waitQ;
     readyQ = es->readyQ;
+    pendingQ = es->pendingQ;
+    dispatcher = 0;
 
     lock(es);
-    if (readyQ->next == readyQ) {
+    if (pendingQ->next != pendingQ && mprAvailableWorkers()) {
+        dispatcher = pendingQ->next;
+        mprAssert(!dispatcher->destroyed);
+        queueDispatcher(es->runQ, dispatcher);
+        mprAssert(dispatcher->enabled);
+        dispatcher->owner = 0;
+
+    } else if (readyQ->next == readyQ) {
         /*
             ReadyQ is empty, try to transfer a dispatcher with due events onto the readyQ
          */
@@ -8674,14 +8698,12 @@ static MprDispatcher *getNextReadyDispatcher(MprEventService *es)
             }
         }
     }
-    if (readyQ->next != readyQ) {
+    if (!dispatcher && readyQ->next != readyQ) {
         dispatcher = readyQ->next;
         mprAssert(!dispatcher->destroyed);
         queueDispatcher(es->runQ, dispatcher);
         mprAssert(dispatcher->enabled);
         dispatcher->owner = 0;
-    } else {
-        dispatcher = NULL;
     }
     unlock(es);
     mprAssert(dispatcher == NULL || isRunning(dispatcher));
@@ -8847,6 +8869,7 @@ static int makeRunnable(MprDispatcher *dispatcher)
 }
 
 
+#if UNUSED
 /*
     Designate the required worker thread to run the event
  */
@@ -8862,6 +8885,7 @@ void mprReleaseWorkerFromDispatcher(MprDispatcher *dispatcher, MprWorker *worker
     dispatcher->requiredWorker = 0;
     mprReleaseWorker(worker);
 }
+#endif
 
 
 void mprSignalDispatcher(MprDispatcher *dispatcher)
@@ -23178,7 +23202,7 @@ int mprStartWorkerService()
     MprWorkerService    *ws;
 
     /*
-        Create a timer to trim excess threads in the worker
+        Create a timer to trim excess workers
      */
     ws = MPR->workerService;
     mprSetMinWorkers(ws->minThreads);
@@ -23199,9 +23223,9 @@ void mprWakeWorkers()
         mprRemoveEvent(ws->pruneTimer);
     }
     /*
-        Wake up all idle threads. Busy threads take care of themselves. An idle thread will wakeup, exit and be 
+        Wake up all idle workers. Busy workers take care of themselves. An idle thread will wakeup, exit and be 
         removed from the busy list and then delete the thread. We progressively remove the last thread in the idle
-        list. ChangeState will move the threads to the busy queue.
+        list. ChangeState will move the workers to the busy queue.
      */
     for (next = -1; (worker = (MprWorker*) mprGetPrevItem(ws->idleThreads, &next)) != 0; ) {
         changeState(worker, MPR_WORKER_BUSY);
@@ -23211,7 +23235,7 @@ void mprWakeWorkers()
 
 
 /*
-    Define the new minimum number of threads. Pre-allocate the minimum.
+    Define the new minimum number of workers. Pre-allocate the minimum.
  */
 void mprSetMinWorkers(int n)
 { 
@@ -23286,6 +23310,7 @@ MprWorker *mprGetCurrentWorker()
 }
 
 
+#if UNUSED && FUTURE && KEEP
 /*
     Set the worker as dedicated to the current task
  */
@@ -23303,6 +23328,7 @@ void mprReleaseWorker(MprWorker *worker)
     worker->flags &= ~MPR_WORKER_DEDICATED;
     mprUnlock(worker->workerService->mutex);
 }
+#endif
 
 
 void mprActivateWorker(MprWorker *worker, MprWorkerProc proc, void *data)
@@ -23314,7 +23340,9 @@ void mprActivateWorker(MprWorker *worker, MprWorkerProc proc, void *data)
     mprLock(ws->mutex);
     worker->proc = proc;
     worker->data = data;
+#if UNUSED && FUTURE && KEEP
     mprAssert(worker->flags & MPR_WORKER_DEDICATED);
+#endif
     changeState(worker, MPR_WORKER_BUSY);
     mprUnlock(ws->mutex);
 }
@@ -23326,25 +23354,49 @@ void mprSetWorkerStartCallback(MprWorkerProc start)
 }
 
 
+int mprAvailableWorkers()
+{
+    MprWorkerService    *ws;
+    int                 count;
+
+    ws = MPR->workerService;
+    mprLock(ws->mutex);
+    count = mprGetListLength(ws->idleThreads) + (ws->maxThreads - ws->numThreads);
+    mprUnlock(ws->mutex);
+    return count;
+
+#if FUTURE && UNUSED && KEEP
+    for (next = 0; (worker = (MprWorker*) mprGetNextItem(ws->idleThreads, &next)) != 0; ) {
+        if (!(worker->flags & MPR_WORKER_DEDICATED)) {
+            count++;
+        }
+    }
+#endif
+}
+
+
 int mprStartWorker(MprWorkerProc proc, void *data)
 {
     MprWorkerService    *ws;
     MprWorker           *worker;
-    int                 next;
 
     ws = MPR->workerService;
     mprLock(ws->mutex);
 
     /*
         Try to find an idle thread and wake it up. It will wakeup in workerMain(). If not any available, then add 
-        another thread to the worker. Must account for threads we've already created but have not yet gone to work 
+        another thread to the worker. Must account for workers we've already created but have not yet gone to work 
         and inserted themselves in the idle/busy queues.
      */
+#if UNUSED
     for (next = 0; (worker = (MprWorker*) mprGetNextItem(ws->idleThreads, &next)) != 0; ) {
         if (!(worker->flags & MPR_WORKER_DEDICATED)) {
             break;
         }
     }
+#else
+    worker = mprGetFirstItem(ws->idleThreads);
+#endif
     if (worker) {
         worker->proc = proc;
         worker->data = data;
@@ -23353,7 +23405,7 @@ int mprStartWorker(MprWorkerProc proc, void *data)
     } else if (ws->numThreads < ws->maxThreads) {
 
         /*
-            Can't find an idle thread. Try to create more threads in the worker. Otherwise, we will have to wait. 
+            Can't find an idle thread. Try to create more workers in the pool. Otherwise, we will have to wait. 
             No need to wakeup the thread -- it will immediately go to work.
          */
         worker = createWorker(ws, ws->stackSize);
@@ -23369,10 +23421,10 @@ int mprStartWorker(MprWorkerProc proc, void *data)
     } else {
         static int warned = 0;
         /*
-            No free threads and can't create anymore
+            No free workers and can't create anymore
          */
         if (warned++ == 0) {
-            mprError("No free worker threads, using service thread. (currently allocated %d)", ws->numThreads);
+            mprError("No free workers. (Count %d of %d)", ws->numThreads, ws->maxThreads);
         }
         mprUnlock(ws->mutex);
         return MPR_ERR_BUSY;
@@ -23383,7 +23435,7 @@ int mprStartWorker(MprWorkerProc proc, void *data)
 
 
 /*
-    Trim idle threads from a task
+    Trim idle workers
  */
 static void pruneWorkers(MprWorkerService *ws, MprEvent *timer)
 {
@@ -23430,7 +23482,7 @@ static int getNextThreadNum(MprWorkerService *ws)
 
 
 /*
-    Define a new stack size for new threads. Existing threads unaffected.
+    Define a new stack size for new workers. Existing workers unaffected.
  */
 void mprSetWorkerStackSize(int n)
 {
@@ -23509,9 +23561,8 @@ static void workerMain(MprWorker *worker, MprThread *tp)
             worker->proc = 0;
         }
         worker->lastActivity = MPR->eventService->now;
-        changeState(worker, MPR_WORKER_SLEEPING);
+        changeState(worker, MPR_WORKER_IDLE);
 
-        //  TODO -- is this used?
         mprAssert(worker->cleanup == 0);
         if (worker->cleanup) {
             (*worker->cleanup)(worker->data, worker);
@@ -23555,13 +23606,13 @@ static int changeState(MprWorker *worker, int state)
         break;
 
     case MPR_WORKER_IDLE:
-        lp = ws->idleThreads;
-        break;
-
-    case MPR_WORKER_SLEEPING:
+#if UNUSED && FUTURE && KEEP
         if (!(worker->flags & MPR_WORKER_DEDICATED)) {
+#endif
             lp = ws->idleThreads;
+#if UNUSED && FUTURE && KEEP
         }
+#endif
         wake = 1;
         break;
         
@@ -23582,14 +23633,19 @@ static int changeState(MprWorker *worker, int state)
         break;
 
     case MPR_WORKER_IDLE:
-    case MPR_WORKER_SLEEPING:
+#if UNUSED && FUTURE && KEEP
         if (!(worker->flags & MPR_WORKER_DEDICATED)) {
+#endif
             lp = ws->idleThreads;
+#if UNUSED && FUTURE && KEEP
         }
+#endif
+        mprWakePendingDispatchers();
         break;
 
     case MPR_WORKER_PRUNED:
         /* Don't put on a queue and the thread will exit */
+        mprWakePendingDispatchers();
         break;
     }
     worker->state = state;

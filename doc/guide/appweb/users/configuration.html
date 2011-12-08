@@ -519,16 +519,12 @@ Include conf/applications/*.conf
                         <td>Define source code for the handler to use.</td>
                     </tr>
                     <tr>
-                        <td><a href="dir/sandbox.html#startThreads">StartThreads</a></td>
-                        <td>Number of threads to pre-allocate.</td>
+                        <td><a href="dir/sandbox.html#startWorkers">StartWorkers</a></td>
+                        <td>Number of worker threads to pre-allocate and preserve.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/route.html#target">Target</a></td>
                         <td>Define the target action to take for a route to serve a response to the client.</td>
-                    </tr>
-                    <tr>
-                        <td><a href="dir/sandbox.html#thread">Threads</a></td>
-                        <td>Maximum number of threads.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/sandbox.html#threadStack">ThreadStack</a></td>
@@ -609,6 +605,10 @@ Include conf/applications/*.conf
                     <tr>
                         <td><a href="dir/vhost.html#virtualHost">VirtualHost</a></td>
                         <td>Create a directory block for virtual hosting for an IP address.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/sandbox.html#thread">WorkerLimit</a></td>
+                        <td>Maximum number of worker threads.</td>
                     </tr>
                 </tbody>
             </table>

@@ -5772,6 +5772,7 @@ typedef struct MprEventService {
     MprDispatcher   *readyQ;            /**< Queue of dispatchers with events ready to run */
     MprDispatcher   *waitQ;             /**< Queue of waiting (future) events */
     MprDispatcher   *idleQ;             /**< Queue of idle dispatchers */
+    MprDispatcher   *pendingQ;          /**< Queue of pending dispatchers (waiting for resources) */
     MprOsThread     serviceThread;      /**< Thread running the dispatcher service */
     int             eventCount;         /**< Count of events */
     int             waiting;            /**< Waiting for I/O (sleeping) */
@@ -5948,6 +5949,7 @@ extern void mprQueueTimerEvent(MprDispatcher *dispatcher, MprEvent *event);
 extern void mprDedicateWorkerToDispatcher(MprDispatcher *dispatcher, struct MprWorker *worker);
 extern void mprReleaseWorkerFromDispatcher(MprDispatcher *dispatcher, struct MprWorker *worker);
 extern bool mprDispatcherHasEvents(MprDispatcher *dispatcher);
+extern void mprWakePendingDispatchers();
 
 /*
     XML parser states. The states that are passed to the user handler have "U" appended to the comment.
@@ -7279,14 +7281,15 @@ extern void mprGetWorkerServiceStats(MprWorkerService *ws, MprWorkerStats *stats
     Worker Thread State
  */
 #define MPR_WORKER_BUSY        0x1          /**< Worker currently running to a callback */
-#define MPR_WORKER_IDLE        0x2          /**< Worker idle and available for work */
-#define MPR_WORKER_PRUNED      0x4          /**< Worker has been pruned and will be terminated */
-#define MPR_WORKER_SLEEPING    0x8          /**< Worker is sleeping (idle) on idleCond */
+#define MPR_WORKER_PRUNED      0x2          /**< Worker has been pruned and will be terminated */
+#define MPR_WORKER_IDLE        0x4          /**< Worker is sleeping (idle) on idleCond */
 
+#if UNUSED && KEEP && FUTURE
 /*
     Flags
  */
 #define MPR_WORKER_DEDICATED   0x1          /**< Worker reserved and not part of the worker pool */
+#endif
 
 /**
     Worker thread structure. Worker threads are allocated and dedicated to tasks. When idle, they are stored in
@@ -7339,6 +7342,9 @@ extern void mprReleaseWorker(MprWorker *worker);
     @returns Zero if successful, otherwise a negative MPR error code.
  */
 extern int mprStartWorker(MprWorkerProc proc, void *data);
+
+/* Internal */
+extern int mprAvailableWorkers();
 
 /**
     Return a random number

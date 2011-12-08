@@ -54,9 +54,9 @@
                 <li><a href="#limitRequestHeaderLines">LimitRequestHeaderLines</a></li>
                 <li><a href="#limitResponseBody">LimitResponseBody</a></li>
                 <li><a href="#limitUri">LimitUri</a></li>
-                <li><a href="#startThreads">StartThreads</a></li>
-                <li><a href="#threads">Threads</a></li>
+                <li><a href="#startWorkers">StartWorkers</a></li>
                 <li><a href="#threadStack">ThreadStack</a></li>
+                <li><a href="#workerLimit">WorkerLimit</a></li>
             </ul>
             <h2>See Also</h2>
             <ul>
@@ -600,17 +600,17 @@
             </table>
             
             
-            <a name="startThreads" id="startThreads"></a>
-            <h2>StartThreads</h2>
+            <a name="startWorkers" id="startWorkers"></a>
+            <h2>StartWorkers</h2>
             <table class="directive" summary="" width="100%">
                 <tbody>
                     <tr>
                         <td class="pivot">Description</td>
-                        <td>Number of threads to pre-allocate in the Appweb thread pool</td>
+                        <td>Number of worker threads to pre-allocate in the Appweb worker pool</td>
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>StartThreads number</td>
+                        <td>StartWorkers number</td>
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
@@ -618,59 +618,27 @@
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>StartThreads 100</td>
+                        <td>StartWorkers 100</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The StartThreads directive will pre-allocate the specified number of threads on startup
-                            and then ensure that the thread pool always has at least this number of threads.</p>
-                            <p>Appweb will automatically adjust the number of pool threads between the minimum specified
-                            by this directive and the maximum specified by the Threads directive or via the Appweb
-                            command line. Appweb will prune idle threads to reduce resource consumption as
-                            required.</p>
+                            <p>The StartWorkers directive will pre-allocate the specified number of worker threads on startup
+                            and then ensure that the worker pool always has at least this number of workers.</p>
+                            <p>Appweb will automatically adjust the number of workers between the minimum specified
+                            by this directive and the maximum specified by the WorkerLimit directive or via the Appweb
+                            command line. Every ten minutes, Appweb will prune workers that have been idle for five
+                            minutes to reduce resource consumption.</p>
+                            <p>Appweb 4 has two non-worker threads: one for the master event loop and one for the
+                            garbage collector. So the total number of Appweb threads will be two plus the number of
+                            active workers.</p>
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="threads" id="threads"></a>
-            <h2>Threads</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
-                    <tr>
-                        <td class="pivot">Description</td>
-                        <td>Maximum number of threads to allocate for the Appweb thread pool.</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Synopsis</td>
-                        <td>Threads number</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Context</td>
-                        <td>Default Server</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Example</td>
-                        <td>Threads 8</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">Notes</td>
-                        <td>
-                            <p>The Threads directive defines a maximum number of threads for the Appweb thread
-                            pool. When running in multithreaded mode, Appweb will use a pool thread to service each
-                            request and then will return the thread to the pool. This results in a highly responsive
-                            and scalable architecture with excellent throughput characteristics. Each thread requires a
-                            thread stack and thus consumes memory. By limiting the number of threads, memory can be
-                            conserved.</p>
-                            <p>If the maximum number of threads is also specified via the <a href=
-                            "../starting.html#appwebOptions">Appweb command line</a>, the command line value will take
-                            precedence.</p>
-                            <p>Appweb will automatically adjust the number of pool threads between the minimum specified
-                            by the StartThreads directive and the maximum specified by this directive. Appweb will
-                            prune idle threads to reduce resource consumption as required.</p>
-                        </td>
-                    </tr>
-                </tbody>
-            </table><a name="threadStack" id="threadStack"></a>
+            </table>
+            
+            
+            <a name="threadStack" id="threadStack"></a>
             <h2>ThreadStack</h2><br />
             <table class="directive" summary="" width="100%">
                 <tbody>
@@ -701,6 +669,45 @@
                             error when running single-threaded, you may need to increase this value. See the <a href=
                             "../starting.html#appwebOptions">Appweb command line</a> for details on running single user
                             by setting the "-p 0" option.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <a name="workerLimit" id="workerLimit"></a>
+            <h2>WorkerLimit</h2>
+            <table class="directive" summary="" width="100%">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Maximum number of worker threads to allocate for the Appweb worker pool.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>WorkerLimit number</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>WorkerLimit 8</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The WorkerLimit directive defines a maximum number of threads for the Appweb thread
+                            pool. When running in multithreaded mode, Appweb will use a pool thread to service each
+                            request and then will return the thread to the pool. This results in a highly responsive
+                            and scalable architecture with excellent throughput characteristics. Each thread requires a
+                            thread stack and thus consumes memory. By limiting the number of threads, memory can be
+                            conserved.</p>
+                            <p>If the maximum number of threads is also specified via the <a href=
+                            "../starting.html#appwebOptions">Appweb command line</a>, the command line value will take
+                            precedence.</p>
+                            <p>Appweb will automatically adjust the number of pool threads between the minimum specified
+                            by the StartWorkers directive and the maximum specified by this directive. Appweb will
+                            prune idle threads to reduce resource consumption as required.</p>
                         </td>
                     </tr>
                 </tbody>
