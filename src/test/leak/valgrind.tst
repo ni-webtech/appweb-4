@@ -2,13 +2,14 @@
     valgrind.tst - Valgrind tests on Unix-like systems
  */
 let PORT = 4150
+let valgrind = Cmd.locate("valgrind")
 
-if (test.os == "LINUX" && test.depth >= 5) {
+if (test.os == "LINUX" && test.depth >= 4 && valgrind) {
     let host = "127.0.0.1:" + PORT
 
     let httpCmd = Cmd.locate("http").portable + " -q --exit "
     let appweb = Cmd.locate("appweb").portable + " --config appweb.conf --name api.valgrind"
-    let valgrind = "/usr/bin/env valgrind -q --tool=memcheck --leak-check=yes --suppressions=../../../build/bin/mpr.supp " + appweb + test.mapVerbosity(-2)
+    valgrind += " -q --tool=memcheck --leak-check=yes --suppressions=../../../build/bin/mpr.supp " + appweb + test.mapVerbosity(-2)
     valgrind = appweb
 
     //  Run http
@@ -63,6 +64,10 @@ if (test.os == "LINUX" && test.depth >= 5) {
     cmd.stop()
 
 } else {
-    test.skip("Run on Linux at depth 5")
+    if (test.os == "LINUX" && !valgrind) {
+        test.skip("Run with valgrind installed")
+    } else {
+        test.skip("Run on Linux at depth 4 with valgrind installed")
+    }
 }
 
