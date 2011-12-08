@@ -1,0 +1,7 @@
+<%
+    /*
+        WARNING: Do not include this script in your web site ever!!!!
+        This is just for testing locally and should never be distributed.
+     */
+    mprTerminate(1, 0);
+%>

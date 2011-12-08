@@ -1,17 +1,68 @@
 /*
     valgrind.tst - Valgrind tests on Unix-like systems
  */
+let PORT = 4150
 
-if (false && test.os == "LINUX") {
+if (test.os == "LINUX" && test.depth >= 5) {
+    let host = "127.0.0.1:" + PORT
 
-    let command = Cmd.locate("testAppweb").portable + " --host " + host["host"] + " --name mpr.api.valgrind --iterations 5 "
-    let valgrind = "/usr/bin/env valgrind -q --tool=memcheck --suppressions=mpr.supp " + command + test.mapVerbosity(-2)
+    let httpCmd = Cmd.locate("http").portable + " -q --exit "
+    let appweb = Cmd.locate("appweb").portable + " --config appweb.conf --name api.valgrind"
+    let valgrind = "/usr/bin/env valgrind -q --tool=memcheck --leak-check=yes --suppressions=../../../build/bin/mpr.supp " + appweb + test.mapVerbosity(-2)
+    valgrind = appweb
 
-    if (test.depth >= 2) {
-        testCmdNoCapture(command)
-        testCmdNoCapture(valgrind + " --threads " + 8)
+    //  Run http
+    function run(args): String {
+        try {
+            // print(httpCmd, args)
+            result = System.run(httpCmd + args)
+            assert(true)
+        } catch (e) {
+            assert(false, e)
+        }
+        return result
     }
+    /*
+        Start valgrind and wait till ready
+     */
+    let cmd = Cmd(valgrind, {detach: true})
+    let http
+    for (i in 10) {
+        http = new Http
+        try { 
+            http.get(host + "/index.html")
+            if (http.status == 200) break
+        } catch (e) {}
+        App.sleep(1000)
+        http.close()
+    }
+    if (http.status != 200) {
+        throw "Can't start appweb for valgrind"
+    }
+    run("-i 100 " + PORT + "/index.html")
+    if (test.config["esp"]) {
+        run(PORT + "/test.esp")
+    }
+    //  MOB - re-enable php when php shutdown is clean
+    if (0 && test.config["php"]) {
+        run(PORT + "/test.php")
+    }
+    if (test.config["cgi"]) {
+        run(PORT + "/test.cgi")
+    }
+    if (test.config["ejscript"]) {
+        run(PORT + "/test.ejs")
+    }
+    run(PORT + "/exit.esp")
+    let ok = cmd.wait(10000)
+    if (cmd.status != 0) {
+        App.log.error("valgrind error: " + cmd.error)
+        App.log.error("valgrind output: " + cmd.response)
+    }
+    assert(cmd.status == 0)
+    cmd.stop()
 
 } else {
-    test.skip("Run on Linux")
+    test.skip("Run on Linux at depth 5")
 }
+
