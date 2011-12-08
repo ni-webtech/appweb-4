@@ -36,8 +36,8 @@ Operating System Support
 
 To install Appweb, your development system will need at least the following:
 
-    * 40 MB Disk
-    * 512 MB RAM
+    * 50 MB Disk
+    * 1 GB RAM
 
 To deploy Appweb in an embedded environment, you will need at least the following:
 

@@ -54,30 +54,25 @@ configureService() {
 	esac
 }
 
-removeOld() {
-    if [ -x /usr/lib/appweb/bin/uninstall ] ; then
-        appweb_HEADLESS=1 /usr/lib/appweb/bin/uninstall </dev/null 2>&1 >/dev/null
-    fi
-}
-
 ###############################################################################
 #
 #	Main
 #
 cd /
 action=$1
+
+echo PREINST $action
+
 case $action in
 	remove|install)					# when new
 		# or conflictor's prerm remove in-favor package new-version
 		oldVersion=$2
 		configureService stop
 		configureService remove
-        removeOld
 		;;
 	upgrade)				# when old
 		newVersion=$2
 		configureService stop
-        removeOld
 		;;
 	failed-upgrade)			# when new
 		oldVersion=$2
