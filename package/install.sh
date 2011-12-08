@@ -196,10 +196,6 @@ askUser() {
         echo -e "Nothing to install, exiting. "
         exit 0
     fi
-    #
-    #   Save the install settings. Remove.sh will need this
-    #
-    saveSetup
 }
 
 createPackageName() {
@@ -389,6 +385,7 @@ if [ "$installbin" = "Y" ] ; then
     appman stop disable uninstall >/dev/null 2>&1
 fi
 removeOld
+saveSetup
 installFiles $FMT
 if [ "$installbin" = "Y" ] ; then
     appman stop disable uninstall >/dev/null 2>&1

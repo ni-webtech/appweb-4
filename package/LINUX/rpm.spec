@@ -14,7 +14,7 @@ BuildRoot: !!ROOT_DIR!!/RPM/BUILDROOT/!!BLD_PRODUCT!!-!!BLD_VERSION!!-!!BLD_NUMB
 AutoReqProv: no
 
 %description
-Embedthis Appweb is an embeddable HTTP Web Server
+Embedthis Appweb is the fast, little web server.
 
 %prep
 
