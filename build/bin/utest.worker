@@ -98,8 +98,9 @@ public function startService(cmdline: String, options = {}): Void {
         Path(PIDFILE).write(pid)
         let port = options.port || App.config.test.http_port
         let url = ":" + port + "/web/ready.ready"
+        let http
         for (i in 10) {
-            let http = new Http
+            http = new Http
             try { 
                 http.get(url)
                 /* Expect to get a not-found response */
