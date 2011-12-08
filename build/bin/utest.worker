@@ -99,7 +99,7 @@ public function startService(cmdline: String, options = {}): Void {
         let port = options.port || App.config.test.http_port
         let url = ":" + port + "/web/ready.ready"
         for (i in 10) {
-            http = new Http
+            let http = new Http
             try { 
                 http.get(url)
                 /* Expect to get a not-found response */

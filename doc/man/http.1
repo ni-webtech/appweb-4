@@ -11,7 +11,6 @@ http \- HTTP Client program
 [\fI--data\fR] 
 [\fI--debugger\fR] 
 [\fI--delete\fR] 
-[\fI--exit\fR] 
 [\fI--form string\fR]
 [\fI--header 'key: value'\fR]
 [\fI--host hostName\fR]
@@ -38,6 +37,7 @@ http \- HTTP Client program
 [\fI--user name\fR]
 [\fI--verbose\fR]
 [\fI--workers count\fR]
+[\fI--zero\fR] 
 .SH DESCRIPTION
 The http command issues HTTP commands to retrieve files from a web server. If "files" are provided on the command line
 these are included in the request body data. 
@@ -65,9 +65,6 @@ String of raw body data to send with the request.
 .TP
 \fB\--delete\fR 
 Issue a DELETE request. This is an alias for --method DELETE.
-.TP
-\fB\--exit\fR 
-Exit with a error status for non-200 HTTP results.
 .TP
 \fB\--form formData\fR 
 String of body data to send with the request. Assumed to be URL encoded. ie. "name=paul&address=uk".
@@ -166,6 +163,10 @@ This switch can also be abbreviated as \fB\-v\fR.
 .TP
 \fB\--workers count\fR 
 Specify the number of worker threads to use. Worker threads temporarily assigned to process callbacks.
+.TP
+\fB\--zero\fR 
+Exit with a zero status for any valid HTTP response. Normally returns a non-zero status if the HTTP response 
+code is not a 2XX or 3XX series response code.
 .PP
 .SH "REPORTING BUGS"
 Report bugs to dev@embedthis.com.
