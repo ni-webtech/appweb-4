@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+#	preflight -- Pre flight script for binary install
+#
+#	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+#
+###############################################################################
+
+removeOld() {
+    if [ -x /usr/lib/appweb/bin/uninstall ] ; then
+        appweb_HEADLESS=1 /usr/lib/appweb/bin/uninstall </dev/null 2>&1 >/dev/null
+    fi
+}
+
+###############################################################################
+#
+#	Main
+#
+
+removeOld
+exit 0

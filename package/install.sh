@@ -259,6 +259,12 @@ saveSetup() {
     echo -e "FMT=$FMT\nbinDir=\"${BLD_PRD_PREFIX}\"\ninstallbin=$installbin\nrunDaemon=$runDaemon\nhttpPort=$HTTP_PORT\nsslPort=$SSL_PORT\nusername=$username\ngroupname=$groupname\nhostname=$HOSTNAME" >"$BLD_PRD_PREFIX/install.conf"
 }
 
+removeOld() {
+    if [ -x /usr/lib/appweb/bin/uninstall ] ; then
+        appweb_HEADLESS=1 /usr/lib/appweb/bin/uninstall </dev/null 2>&1 >/dev/null
+    fi
+}
+
 installFiles() {
     local dir pkg doins NAME upper target
 
@@ -382,6 +388,7 @@ if [ "$installbin" = "Y" ] ; then
     [ "$headless" != 1 ] && echo "Disable existing service"
     appman stop disable uninstall >/dev/null 2>&1
 fi
+removeOld
 installFiles $FMT
 if [ "$installbin" = "Y" ] ; then
     appman stop disable uninstall >/dev/null 2>&1
