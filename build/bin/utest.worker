@@ -7,11 +7,13 @@ require ejs.unix
 const PIDFILE = ".pidfile"
 
 enumerable public class Test {
+    //  MOB - not used
     public var bin: Path
+    public var lib: Path
+
     public var config: Object
     public var depth: Number
     public var dir: Path
-    public var lib: Path
     public var multithread: Boolean
     public var phase: String
     public var threads: Number

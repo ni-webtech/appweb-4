@@ -7,8 +7,8 @@ let valgrind = Cmd.locate("valgrind")
 if (test.os == "LINUX" && test.depth >= 4 && valgrind) {
     let host = "127.0.0.1:" + PORT
 
-    let httpCmd = Cmd.locate("http").portable + " -q --exit "
-    let appweb = Cmd.locate("appweb").portable + " --config appweb.conf --name api.valgrind"
+    let httpCmd = test.bin.join("http").portable + " -q --exit "
+    let appweb = test.bin.join("appweb").portable + " --config appweb.conf --name api.valgrind"
     valgrind += " -q --tool=memcheck --leak-check=yes --suppressions=../../../build/bin/mpr.supp " + appweb + test.mapVerbosity(-2)
     valgrind = appweb
 
