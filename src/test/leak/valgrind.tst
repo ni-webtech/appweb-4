@@ -7,16 +7,21 @@ let valgrind = Cmd.locate("valgrind")
 if (test.os == "LINUX" && test.depth >= 4 && valgrind) {
     let host = "127.0.0.1:" + PORT
 
-    let httpCmd = test.bin.join("http").portable + " -q --exit "
+    let httpCmd = test.bin.join("http").portable + " -q --zero "
     let appweb = test.bin.join("appweb").portable + " --config appweb.conf --name api.valgrind"
     valgrind += " -q --tool=memcheck --leak-check=yes --suppressions=../../../build/bin/mpr.supp " + appweb + test.mapVerbosity(-2)
-    valgrind = appweb
+    // valgrind = appweb
 
     //  Run http
     function run(args): String {
         try {
             // print(httpCmd, args)
             let cmd = Cmd(httpCmd + args)
+            if (cmd.status != 0) {
+                print("STATUS " + cmd.status)
+                print(cmd.error)
+                print(cmd.response)
+            }
             assert(cmd.status == 0)
             return cmd.response
         } catch (e) {
@@ -27,6 +32,7 @@ if (test.os == "LINUX" && test.depth >= 4 && valgrind) {
     /*
         Start valgrind and wait till ready
      */
+    // print("VALGRIND CMD: " + valgrind)
     let cmd = Cmd(valgrind, {detach: true})
     let http
     for (i in 10) {
@@ -58,6 +64,7 @@ if (test.os == "LINUX" && test.depth >= 4 && valgrind) {
     run(PORT + "/exit.esp")
     let ok = cmd.wait(10000)
     if (cmd.status != 0) {
+        App.log.error("valgrind status: " + cmd.status)
         App.log.error("valgrind error: " + cmd.error)
         App.log.error("valgrind output: " + cmd.response)
     }
