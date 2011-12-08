@@ -39,7 +39,7 @@ if (!test || test.config["ejscript"] == 1) {
         assert(uploaded.size == size)
         Cmd.sh("diff " + uploaded + " " + TESTFILE)
     }
-    Path(TESTFILE).remove
+    Path(TESTFILE).remove()
 
 } else {
     test.skip("Ejscript not enabled")
