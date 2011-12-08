@@ -1493,7 +1493,7 @@ createBuildConfig() {
         fi
 		#
 		#	MOB - temporarily allow overrides.
-        echo -e "\${BLD_TOP}/${dir}/${item##*/}:: ${item}\n\t"'$(call log) [IMPORT]' "${item}" >>$CONFIG_IMP
+        echo -e "\${BLD_TOP}/${dir}/${item##*/}:: ${item}\n\t"'$(call log) [Import]' "${item}" >>$CONFIG_IMP
         echo -e "\tcp ${item} ${BLD_TOP}/${dir}/${item##*/}\n" >>$CONFIG_IMP
         echo -e "\t\${BLD_TOP}/${dir}/${item##*/} \\" >>/tmp/$$targets
     done

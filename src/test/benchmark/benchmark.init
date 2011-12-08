@@ -1,0 +1,4 @@
+
+if (test.depth < 5) {
+    test.skip("Benchmark tests run at depth 5 or greater")
+}
