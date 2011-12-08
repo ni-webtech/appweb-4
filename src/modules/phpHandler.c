@@ -257,13 +257,16 @@ static void processPhp(HttpQueue *q)
             sapi_send_headers(TSRMLS_C);
         }
     } zend_catch {
-        php_request_shutdown(0);
+        php_request_shutdown(NULL);
         httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR,  "PHP script execution failed");
         return;
     } zend_end_try();
 
     zend_try {
-        php_request_shutdown(0);
+        php_request_shutdown(NULL);
+        SG(server_context) = NULL;
+    } zend_catch {
+        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR,  "PHP script shutdown failed");
     } zend_end_try();
 
     httpFinalize(conn);
@@ -519,19 +522,14 @@ static int finalizePhp(MprModule *mp)
         return 0;
     }
     if (stage->stageData) {
-        TSRMLS_FETCH();
-#if UNUSED
-        php_module_shutdown(TSRMLS_C);
+        mprLog(4, "php: Finalize library before unloading");
+        phpSapiBlock.shutdown(&phpSapiBlock);
+        sapi_shutdown();
+#if UNUSED && KEEP
+        /* PHP crashes by destroying the EG(persistent_list) twice. Once in zend_shutdown and once in tsrm_shutdown */
+        tsrm_shutdown();
 #endif
-        if (SG(server_context)) {
-            mprLog(4, "php: Finalize library before unloading");
-            phpSapiBlock.shutdown(&phpSapiBlock);
-#if UNUSED
-            sapi_shutdown();
-#endif
-            tsrm_shutdown();
-            stage->stageData = 0;
-        }
+        stage->stageData = 0;
     }
     return 0;
 }

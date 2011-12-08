@@ -206,7 +206,6 @@ MAIN(appweb, int argc, char **argv)
     mprLog(1, "Stopping Appweb ...");
     maStopAppweb(app->appweb);
     mprDestroy(MPR_EXIT_DEFAULT);
-    print("EXIT WITH STATUS 0\n");
     return status;
 }
 
