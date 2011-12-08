@@ -32,10 +32,10 @@ begin
 	PortPage.Add('HTTP Port:', False);
 	PortPage.values[0] := '80';
 
-#	SSLPortPage := CreateInputQueryPage(PortPage.ID, 'SSL Port', 'TCP/IP Port for SSL Connections',
-#		'Please specify the TCP/IP port on which Appweb should listen for SSL requests.');
-#	SSLPortPage.Add('SSL Port:', False);
-#	SSLPortPage.values[0] := '443';
+//	SSLPortPage := CreateInputQueryPage(PortPage.ID, 'SSL Port', 'TCP/IP Port for SSL Connections',
+//		'Please specify the TCP/IP port on which Appweb should listen for SSL requests.');
+//	SSLPortPage.Add('SSL Port:', False);
+//	SSLPortPage.values[0] := '443';
 
 end;
 
@@ -158,7 +158,7 @@ end;
 
 function GetSSL(Param: String): String;
 begin
-  # Result := SSLPortPage.Values[0];
+  // Result := SSLPortPage.Values[0];
   Result := "443";
 end;
 
