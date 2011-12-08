@@ -3128,10 +3128,10 @@ void httpCallEvent(HttpConn *conn, int mask)
 
 
 /*  
-    IO event handler. This is invoked by the wait subsystem in response to I/O events. It is also invoked via relay when 
-    an accept event is received by the server. Initially the conn->dispatcher will be set to the server->dispatcher and 
-    the first I/O event will be handled on the server thread (or main thread). A request handler may create a new 
-    conn->dispatcher and transfer execution to a worker thread if required.
+    IO event handler. This is invoked by the wait subsystem in response to I/O events. It is also invoked via 
+    relay when an accept event is received by the server. Initially the conn->dispatcher will be set to the
+    server->dispatcher and the first I/O event will be handled on the server thread (or main thread). A request handler
+    may create a new conn->dispatcher and transfer execution to a worker thread if required.
  */
 void httpEvent(HttpConn *conn, MprEvent *event)
 {
@@ -3144,7 +3144,6 @@ void httpEvent(HttpConn *conn, MprEvent *event)
     if (event->mask & MPR_READABLE) {
         readEvent(conn);
     }
-
     mprAssert(conn->sock);
 
     if (conn->endpoint) {

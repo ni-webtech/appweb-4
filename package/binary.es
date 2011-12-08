@@ -86,7 +86,8 @@ if (options.task == "Remove" && bin.join("linkup").exists) {
     saveLink.attributes = {permissions: 0755}
 }
 
-copy("appweb*", bin, {from: sbin, permissions: 0755, strip: strip, trace: true})
+copy("appweb*", bin, {from: sbin, permissions: 0755, strip: strip})
+copy("setConfig*", bin, {from: sbin, permissions: 0755, strip: strip})
 
 if (!bare) {
     copy("LICENSE.TXT", ver, { from: "doc/licenses", fold: true, expand: true })

@@ -53,7 +53,7 @@ headless=${!!BLD_PRODUCT!!_HEADLESS:-0}
 HTTP_PORT=80
 SSL_PORT=443
 
-PATH=$PATH:/sbin:/usr/sbin
+PATH="$PATH:/sbin:/usr/sbin"
 
 ###############################################################################
 
@@ -340,13 +340,13 @@ patchConfiguration() {
         cp "$BLD_CFG_PREFIX/new.conf" "$BLD_CFG_PREFIX/$BLD_PRODUCT.conf"
     fi
     if [ $BLD_HOST_OS = WIN ] ; then
-        setConfig --port ${HTTP_PORT} --ssl ${SSL_PORT} --home "." --logs "logs" \
+        "$BLD_BIN_PREFIX/setConfig" --port ${HTTP_PORT} --ssl ${SSL_PORT} --home "." --logs "logs" \
             --documents "web" --modules "bin" --cache "cache" \
             --user $username --group $groupname "${BLD_CFG_PREFIX}/appweb.conf"
     else
-        setConfig --port ${HTTP_PORT} --ssl ${SSL_PORT} --home "${BLD_CFG_PREFIX}" --logs "${BLD_LOG_PREFIX}" \
-            --documents "${BLD_WEB_PREFIX}" --modules "${BLD_LIB_PREFIX}" --cache "${BLD_SPL_PREFIX}/cache" \
-            --user $username --group $groupname "${BLD_CFG_PREFIX}/appweb.conf"
+        "$BLD_BIN_PREFIX/setConfig" --port ${HTTP_PORT} --ssl ${SSL_PORT} --home "${BLD_CFG_PREFIX}" \
+            --logs "${BLD_LOG_PREFIX}" --documents "${BLD_WEB_PREFIX}" --modules "${BLD_LIB_PREFIX}" \
+            --cache "${BLD_SPL_PREFIX}/cache" --user $username --group $groupname "${BLD_CFG_PREFIX}/appweb.conf"
     fi
 }
 
