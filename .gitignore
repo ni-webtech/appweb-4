@@ -151,3 +151,4 @@ dtmp
 install.log
 val.log
 src/test/api/error.log
+src/test/leak/error.log
