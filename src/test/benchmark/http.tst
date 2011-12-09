@@ -28,7 +28,8 @@ if (test.depth >= 5) {
         let start = new Date
         let count = (ITER / threads).toFixed()
         // print(command + " -q -i " + count + " -t " + threads + " " + HTTP + "/bench/bench.html")
-        run("-q -i " + count + " -t " + threads + " " + HTTP + "/bench/bench.html")
+        //  MOB - remove --zero
+        run("--zero -q -i " + count + " -t " + threads + " " + HTTP + "/bench/bench.html")
         elapsed = start.elapsed
         App.log.activity("Benchmark", "Throughput %.0f request/sec, with %d threads" % [ITER / elapsed * 1000, threads])
     }

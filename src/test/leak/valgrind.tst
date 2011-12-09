@@ -17,7 +17,7 @@ if (test.os == "LINUX" && test.depth >= 4 && valgrind) {
         try {
             // print(httpCmd, args)
             let cmd = Cmd(httpCmd + args)
-            assert(cmd.status == 0
+            assert(cmd.status == 0)
             return cmd.response
         } catch (e) {
             assert(false, e)
