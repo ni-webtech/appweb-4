@@ -254,10 +254,8 @@ if (build.BLD_UNIX_LIKE == 1) {
 }
 
 if (options.task == "Install") {
-    if (!bare) {
-        if (build.BLD_HOST_OS != "WIN") {
-            Cmd.sh([bin.join("linkup"), options.task, options.root])
-        }
+    if (!bare && build.BLD_HOST_OS != "WIN") {
+        Cmd.sh([bin.join("linkup"), options.task, options.root])
     }
 } else if (saveLink && saveLink.exists) {
     if (build.BLD_HOST_OS != "WIN") {

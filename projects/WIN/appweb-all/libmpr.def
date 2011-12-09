@@ -42,6 +42,7 @@ EXPORTS
   mprAtomicExchange
   mprAtomicListInsert
   mprAttachFileFd
+  mprAvailableWorkers
   mprBackupLog
   mprBlendHash
   mprBreakpoint
@@ -101,8 +102,6 @@ EXPORTS
   mprDecode64
   mprDecodeLocalTime
   mprDecodeUniversalTime
-  mprDedicateWorker
-  mprDedicateWorkerToDispatcher
   mprDeletePath
   mprDeserialize
   mprDeserializeCustom
@@ -169,6 +168,7 @@ EXPORTS
   mprGetEndian
   mprGetError
   mprGetEventCount
+  mprGetExitStatus
   mprGetFileChar
   mprGetFileFd
   mprGetFilePosition
@@ -338,8 +338,6 @@ EXPORTS
   mprRefillBuf
   mprRelayEvent
   mprRelease
-  mprReleaseWorker
-  mprReleaseWorkerFromDispatcher
   mprRemoveCache
   mprRemoveEvent
   mprRemoveItem
@@ -499,6 +497,7 @@ EXPORTS
   mprWakeDispatchers
   mprWakeGCService
   mprWakeNotifier
+  mprWakePendingDispatchers
   mprWakeWorkers
   mprWarn
   mprWriteCache

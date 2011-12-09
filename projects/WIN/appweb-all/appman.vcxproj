@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{DADCA066-2973-4D88-863A-F5B44625EE97}</ProjectGuid>
+    <ProjectGuid>{109E008B-0A3F-4D04-B089-DA8D5B3355E7}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -59,6 +59,10 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\..\out\obj\appman\</IntDir>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ClInclude Include="..\..\..\out\inc\appweb.h" />
+  </ItemGroup>
+
   <ItemGroup >
     <ClCompile Include="..\..\..\src\deps\mpr\manager.c" />
   </ItemGroup>
@@ -77,7 +81,7 @@
 
   <ItemGroup>
     <ProjectReference Include="libmpr.vcxproj">
-      <Project>{1D60A65E-7727-4A67-AC61-F8CA70E2322B}</Project>
+      <Project>{878DF937-E521-4245-84CA-7D29039E8B8B}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
