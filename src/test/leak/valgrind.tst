@@ -16,12 +16,13 @@ if (test.os == "LINUX" && test.depth >= 4 && valgrind) {
     function run(args): String {
         try {
             // print(httpCmd, args)
-            result = System.run(httpCmd + args)
-            assert(true)
+            let cmd = Cmd(httpCmd + args)
+            assert(cmd.status == 0
+            return cmd.response
         } catch (e) {
             assert(false, e)
         }
-        return result
+        return null
     }
     /*
         Start valgrind and wait till ready

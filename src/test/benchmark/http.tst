@@ -14,18 +14,21 @@ if (test.depth >= 5) {
     function run(args): String {
         // App.log.debug(5, "[TestRun]", command + args)
         try {
-            result = System.run(command + args)
-            assert(true)
+            let cmd = Cmd(command + args)
+            assert(cmd.status == 0)
+            return cmd.response
         } catch (e) {
             assert(false, e)
         }
-        return result
+        return null
     }
     App.log.write("running\n")
 
     for each (threads in [2, 3, 4, 5, 6, 7, 8, 16]) {
         let start = new Date
-        run("-q -i " + ITER / threads + " -t " + threads + " " + HTTP + "/bench/bench.html")
+        let count = (ITER / threads).toFixed()
+        // print(command + " -q -i " + count + " -t " + threads + " " + HTTP + "/bench/bench.html")
+        run("-q -i " + count + " -t " + threads + " " + HTTP + "/bench/bench.html")
         elapsed = start.elapsed
         App.log.activity("Benchmark", "Throughput %.0f request/sec, with %d threads" % [ITER / elapsed * 1000, threads])
     }

@@ -13,12 +13,14 @@ if (test.depth > 1) {
     function run(args): String {
         App.log.debug(5, "[TestRun]", command + args)
         try {
-            result = System.run(command + args)
+            let cmd = Cmd(command + args)
+            assert(cmd.status == 0) 
+            return cmd.response
             assert(true)
         } catch (e) {
             assert(false, e)
         }
-        return result
+        return null
     }
 
     //  Empty get
