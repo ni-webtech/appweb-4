@@ -45,6 +45,7 @@
             <ul>
                 <li><a href="#loadModule">LoadModule</a></li>
                 <li><a href="#loadModulePath">LoadModulePath</a></li>
+                <li><a href="#unloadModule">UnloadModule</a></li>
             </ul>
             <h1>See Also</h1>
             <ul>
@@ -61,7 +62,7 @@
                 <thead>
                     <tr>
                         <th class="pivot">Description</th>
-                        <th>Load the static or dynamic Appweb module</th>
+                        <th>Load Appweb module</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -81,16 +82,10 @@
                         <td class="pivot">Notes</td>
                         <td>
                             <p>The LoadModule directive causes the specified module to be loaded and its functionality
-                            made available to the default server and all virtual hosts. Appweb supports both static and
-                            dynamically loaded modules. By supporting dynamic loadable modules, the memory footprint of
-                            Appweb is minimized yet Appweb can be extended to meet almost any need.</p>
-                            <p>Modules may be dynamically loaded shared objects (DLLs) or they may be statically linked
-                            objects. If a module is statically linked into Appweb, the LoadModule directive will start
-                            the module and activate it for processing. If a module is not statically linked into Appweb
-                            and it has been made into a dynamically loadable module, then the LoadModule directive will
-                            locate and dynamically load the shared object, link it into Appweb and then activate it for
-                            processing.</p>
-                            <p>The modulePath is the filename for the module without the extension. Appweb omits the
+                            made available to the default server and all virtual hosts.</p>
+                            <p>LoadModule directive will locate and dynamically load the module shared library and
+                            then activate it for processing.</p>
+                            <p>The modulePath argument is the filename for the module without the extension. Appweb omits the
                             extension so that loading modules will work regardless of the platform specific module
                             filename extension. The modulePath may be an absolute path or it may be relative to the
                             Server Root. If the modulePath if a pure filename without any directory portion, the
@@ -139,11 +134,12 @@
                                     </tr>
                                 </tbody>
                             </table>
-                            <p>NOTE: Appweb modules are not binary or source compatible with Apache modules.</p>
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="loadModulePath" id="loadModulePath"></a>
+            </table>
+            
+            <a name="loadModulePath" id="loadModulePath"></a>
             <h2>LoadModulePath</h2>
             <table class="directive" title="loadModulePath">
                 <thead>
@@ -176,6 +172,40 @@
                     </tr>
                 </tbody>
             </table>
+
+            <h1>Module Directives</h1><a name="unloadModule" id="unloadModule"></a>
+            <h2>UnloadModule</h2>
+            <table class="directive" title="unloadModule">
+                <thead>
+                    <tr>
+                        <th class="pivot">Description</th>
+                        <th>Unload an Appweb module</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>UnloadModule moduleName seconds</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>UnloadModule espHandler 60</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The UnloadModule directive causes the specified module to be unloaded if it is inactive
+                            for the given number of seconds.</p>
+                            <p>NOTE: PHP cannot be unloaded due to a common bug in the PHP shutdown routines.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->
