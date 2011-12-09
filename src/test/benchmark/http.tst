@@ -1,7 +1,7 @@
 /*
     http.tst - Test the http command
  */
-if (test.depth >= 5) {
+if (test.depth >= 6) {
 
     const HTTP = (global.tsession && tsession["http"]) || ":4100"
     const ITER = 10000
@@ -12,7 +12,7 @@ if (test.depth >= 5) {
     }
 
     function run(args): String {
-        // App.log.debug(5, "[TestRun]", command + args)
+        // App.log.debug(0, "[TestRun]", command + args)
         try {
 print("CMD: ", command + args)
             let cmd = Cmd(command + args)
@@ -41,5 +41,5 @@ if (cmd.status != 0) {
     App.log.write("%12s %s" % ["[Benchmark]", "finalizing ..."])
 
 } else {
-    test.skip("Test runs at depth 5")
+    test.skip("Test runs at depth 6")
 }
