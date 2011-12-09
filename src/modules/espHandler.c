@@ -31,6 +31,7 @@ static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *rec
 static int  runAction(HttpConn *conn);
 static void setRouteDirs(MaState *state, cchar *kind);
 static bool unloadModule(cchar *module, MprTime timeout);
+static int unloadEsp(MprModule *mp);
 static bool viewExists(HttpConn *conn);
 
 /************************************* Code ***********************************/
@@ -480,6 +481,9 @@ static bool viewExists(HttpConn *conn)
 }
 
 
+/*
+    This is called when unloading a view or controller module
+ */
 static bool unloadModule(cchar *module, MprTime timeout)
 {
     MprModule   *mp;
@@ -834,9 +838,6 @@ static int espDbDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_MEMORY;
     }
     flags = EDI_CREATE | EDI_AUTO_SAVE;
-#if UNUSED
-    flags |= smatch(options, "auto") ? EDI_AUTO_SAVE : 0;
-#endif
     provider = stok(sclone(value), "://", &path);
     if (provider == 0 || path == 0) {
         mprError("Bad database spec '%s'. Use: provider://database", value);
@@ -945,34 +946,6 @@ static int espKeepSourceDirective(MaState *state, cchar *key, cchar *value)
     eroute->keepSource = on;
     return 0;
 }
-
-
-#if UNUSED
-/*
-    EspLifespan secs
- */
-static int espLifespanDirective(MaState *state, cchar *key, cchar *value)
-{
-    EspRoute    *eroute;
-
-    if ((eroute = getEroute(state->route)) == 0) {
-        return MPR_ERR_MEMORY;
-    }
-    eroute->lifespan = ((MprTime) atoi(value)) * MPR_TICKS_PER_SEC;
-    return 0;
-}
-
-
-/*
-    EspLimitSessionCache bytes
- */
-static int espLimitSessionCacheDirective(MaState *state, cchar *key, cchar *value)
-{
-    state->limits->sessionCacheSize = stoi(value, 10, 0);
-    mprSetCacheLimits(esp->sessionCache, 0, 0, state->limits->sessionCacheSize, 0);
-    return 0;
-}
-#endif
 
 
 /*
@@ -1123,12 +1096,12 @@ static int espUpdateDirective(MaState *state, cchar *key, cchar *value)
 
 /************************************ Init ************************************/
 
-int maEspHandlerInit(Http *http, MprModule *mp)
+int maEspHandlerInit(Http *http, MprModule *module)
 {
     HttpStage   *handler;
     MaAppweb    *appweb;
 
-    if ((handler = httpCreateHandler(http, "espHandler", 0, NULL)) == 0) {
+    if ((handler = httpCreateHandler(http, "espHandler", 0, module)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     handler->open = openEsp; 
@@ -1141,6 +1114,8 @@ int maEspHandlerInit(Http *http, MprModule *mp)
     MPR->espService = esp;
     esp->mutex = mprCreateLock();
     esp->local = mprCreateThreadLocal();
+    mprSetModuleFinalizer(module, unloadEsp);
+
     if ((esp->internalOptions = mprCreateHash(-1, MPR_HASH_STATIC_VALUES)) == 0) {
         return 0;
     }
@@ -1160,11 +1135,6 @@ int maEspHandlerInit(Http *http, MprModule *mp)
     maAddDirective(appweb, "EspDir", espDirDirective);
     maAddDirective(appweb, "EspEnv", espEnvDirective);
     maAddDirective(appweb, "EspKeepSource", espKeepSourceDirective);
-#if UNUSED
-    maAddDirective(appweb, "EspLifespan", espLifespanDirective);
-    maAddDirective(appweb, "EspCache", espCacheDirective);
-    maAddDirective(appweb, "EspLimitSessionCache", espLimitSessionCacheDirective);
-#endif
     maAddDirective(appweb, "EspLink", espLinkDirective);
     maAddDirective(appweb, "EspLoad", espLoadDirective);
     maAddDirective(appweb, "EspResource", espResourceDirective);
@@ -1186,6 +1156,19 @@ int maEspHandlerInit(Http *http, MprModule *mp)
     return 0;
 }
 
+
+static int unloadEsp(MprModule *mp)
+{
+    HttpStage   *stage;
+
+    if (esp->inUse) {
+       return MPR_ERR_BUSY;
+    }
+    if ((stage = httpLookupStage(MPR->httpService, mp->name)) != 0) {
+        stage->flags |= HTTP_STAGE_UNLOADED;
+    }
+    return 0;
+}
 
 #else /* BLD_FEATURE_ESP */
 

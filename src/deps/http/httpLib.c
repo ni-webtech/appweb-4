@@ -3264,6 +3264,7 @@ void httpUsePrimary(HttpConn *conn)
 void httpEnableConnEvents(HttpConn *conn)
 {
     HttpTx      *tx;
+    HttpRx      *rx;
     HttpQueue   *q;
     MprEvent    *event;
     int         eventMask;
@@ -3274,6 +3275,7 @@ void httpEnableConnEvents(HttpConn *conn)
         return;
     }
     tx = conn->tx;
+    rx = conn->rx;
     eventMask = 0;
     conn->lastActivity = conn->http->now;
 
@@ -3296,7 +3298,7 @@ void httpEnableConnEvents(HttpConn *conn)
                 Enable read events if the read queue is not full. 
              */
             q = tx->queue[HTTP_QUEUE_RX]->nextQ;
-            if (q->count < q->max || conn->rx->form) {
+            if (q->count < q->max || rx->form) {
                 eventMask |= MPR_READABLE;
             }
         } else {
@@ -3316,6 +3318,9 @@ void httpEnableConnEvents(HttpConn *conn)
         }
         mprAssert(conn->dispatcher->enabled);
         unlock(conn->http);
+    }
+    if (tx && tx->handler && tx->handler->module) {
+        tx->handler->module->lastActivity = conn->lastActivity;
     }
 }
 
@@ -5093,9 +5098,8 @@ static void startTimer(Http *http)
 
 
 /*  
-    The http timer does maintenance activities and will fire per second while there is active requests.
-    When multi-threaded, the http timer runs as an event off the service thread. Because we lock the http here,
-    connections cannot be deleted while we are modifying the list.
+    The http timer does maintenance activities and will fire per second while there are active requests.
+    NOTE: Because we lock the http here, connections cannot be deleted while we are modifying the list.
  */
 static void httpTimer(Http *http, MprEvent *event)
 {
@@ -5104,7 +5108,7 @@ static void httpTimer(Http *http, MprEvent *event)
     HttpRx      *rx;
     HttpLimits  *limits;
     MprModule   *module;
-    int         next, count;
+    int         next, active;
 
     mprAssert(event);
     
@@ -5117,7 +5121,7 @@ static void httpTimer(Http *http, MprEvent *event)
      */
     lock(http);
     mprLog(6, "httpTimer: %d active connections", mprGetListLength(http->connections));
-    for (count = 0, next = 0; (conn = mprGetNextItem(http->connections, &next)) != 0; count++) {
+    for (active = 0, next = 0; (conn = mprGetNextItem(http->connections, &next)) != 0; active++) {
         rx = conn->rx;
         limits = conn->limits;
         if (!conn->timeoutEvent && (
@@ -5142,6 +5146,7 @@ static void httpTimer(Http *http, MprEvent *event)
 
     /*
         Check for unloadable modules
+        MOB - move down into MPR and set stage->flags in an unload callback
      */
     if (mprGetListLength(http->connections) == 0) {
         for (next = 0; (module = mprGetNextItem(MPR->moduleService->modules, &next)) != 0; ) {
@@ -5149,23 +5154,21 @@ static void httpTimer(Http *http, MprEvent *event)
                 if (module->lastActivity + module->timeout < http->now) {
                     mprLog(2, "Unloading inactive module %s", module->name);
                     if ((stage = httpLookupStage(http, module->name)) != 0) {
-                        if (stage->match) {
-                            mprError("Can't unload modules with match routines");
-                            module->timeout = 0;
+                        if (mprUnloadModule(module) < 0)  {
+                            active++;
                         } else {
-                            mprUnloadModule(module);
                             stage->flags |= HTTP_STAGE_UNLOADED;
                         }
                     } else {
                         mprUnloadModule(module);
                     }
                 } else {
-                    count++;
+                    active++;
                 }
             }
         }
     }
-    if (count == 0) {
+    if (active == 0) {
         mprRemoveEvent(event);
         http->timer = 0;
     }

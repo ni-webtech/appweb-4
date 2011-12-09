@@ -5684,7 +5684,7 @@ extern int mprStartModule(MprModule *mp);
     @param mp Module object returned via #mprLookupModule
     @ingroup MprModule
  */
-extern void mprStopModule(MprModule *mp);
+extern int mprStopModule(MprModule *mp);
 
 /**
     Unload a module
@@ -5692,9 +5692,10 @@ extern void mprStopModule(MprModule *mp);
         is not fully supported by the MPR and is often fraught with issues. A module must usually be completely inactive 
         with no allocated memory when it is unloaded. USE WITH CARE.
     @param mp Module object returned via #mprLookupModule
+    @return Zero if the module can be unloaded. Otherwise a negative MPR error code.
     @ingroup MprModule
  */
-extern void mprUnloadModule(MprModule *mp);
+extern int mprUnloadModule(MprModule *mp);
 
 /*
     Flags for mprCreateEvent

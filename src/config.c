@@ -1801,18 +1801,23 @@ static int typesConfigDirective(MaState *state, cchar *key, cchar *value)
 static int unloadModuleDirective(MaState *state, cchar *key, cchar *value)
 {
     MprModule   *module;
-    char        *name;
-    int         timeout;
+    HttpStage   *stage;
+    char        *name, *timeout;
 
     timeout = MA_UNLOAD_TIMEOUT;
-    if (!maTokenize(state, value, "%S ?N", &name, &timeout)) {
+    if (!maTokenize(state, value, "%S ?S", &name, &timeout)) {
         return MPR_ERR_BAD_SYNTAX;
     }
     if ((module = mprLookupModule(name)) == 0) {
         mprError("Can't find module stage %s", name);
         return MPR_ERR_BAD_SYNTAX;
     }
-    module->timeout = gettime(value);
+    if ((stage = httpLookupStage(state->http, module->name)) != 0 && stage->match) {
+        mprError("Can't unload module %s due to match routine", module->name);
+        return MPR_ERR_BAD_SYNTAX;
+    } else {
+        module->timeout = gettime(timeout);
+    }
     return 0;
 }
 

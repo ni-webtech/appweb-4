@@ -14557,6 +14557,7 @@ MprModule *mprCreateModule(cchar *name, cchar *path, cchar *entry, void *data)
 static void manageModule(MprModule *mp, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
+        mprMark(mp->entry);
         mprMark(mp->name);
         mprMark(mp->path);
         mprMark(mp->moduleData);
@@ -14578,14 +14579,17 @@ int mprStartModule(MprModule *mp)
 }
 
 
-void mprStopModule(MprModule *mp)
+int mprStopModule(MprModule *mp)
 {
     mprAssert(mp);
 
     if (mp->stop && (mp->flags & MPR_MODULE_STARTED) && !(mp->flags & MPR_MODULE_STOPPED)) {
-        mp->stop(mp);
+        if (mp->stop(mp) < 0) {
+            return MPR_ERR_NOT_READY;
+        }
+        mp->flags |= MPR_MODULE_STOPPED;
     }
-    mp->flags |= MPR_MODULE_STOPPED;
+    return 0;
 }
 
 
@@ -14626,13 +14630,11 @@ void *mprLookupModuleData(cchar *name)
 
 void mprSetModuleTimeout(MprModule *module, MprTime timeout)
 {
-    /*
-        Module timeouts are not yet implemented
-     */
     module->timeout = timeout;
 }
 
 
+//  MOB - rename SetModuleStop
 void mprSetModuleFinalizer(MprModule *module, MprModuleProc stop)
 {
     module->stop = stop;
@@ -14688,10 +14690,12 @@ int mprLoadModule(MprModule *mp)
 }
 
 
-void mprUnloadModule(MprModule *mp)
+int mprUnloadModule(MprModule *mp)
 {
     mprLog(6, "Unloading native module %s from %s", mp->name, mp->path);
-    mprStopModule(mp);
+    if (mprStopModule(mp) < 0) {
+        return MPR_ERR_NOT_READY;
+    }
 #if BLD_CC_DYN_LOAD
     if (mp->handle) {
         if (mprUnloadNativeModule(mp) != 0) {
@@ -14701,6 +14705,7 @@ void mprUnloadModule(MprModule *mp)
     }
 #endif
     mprRemoveItem(MPR->moduleService->modules, mp);
+    return 0;
 }
 
 
@@ -27956,13 +27961,14 @@ void mprSleep(MprTime timeout)
 }
 
 
-void mprUnloadModule(MprModule *mp)
+void mprUnloadNativeModule(MprModule *mp)
 {
     mprAssert(mp->handle);
 
-    mprStopModule(mp);
-    mprRemoveItem(MPR->moduleService->modules, mp);
-    FreeLibrary((HINSTANCE) mp->handle);
+    if (FreeLibrary((HINSTANCE) mp->handle) == 0) {
+        return MPR_ERR_ABORTED;
+    }
+    return 0;
 }
 
 
