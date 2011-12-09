@@ -86,7 +86,7 @@ if (test.depth > 1) {
 
     //  Options with show status
     run("--method OPTIONS /index.html")
-    data = run("--showStatus -q --method TRACE /index.html")
+    data = run("--zero --showStatus -q --method TRACE /index.html")
     assert(data.trim() == "406")
 
     //  Show headers
