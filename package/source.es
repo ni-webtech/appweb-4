@@ -23,7 +23,8 @@ copy("build/*", src, {
 
 copy("build/bin/*", src, {
     permissions: 0755,
-    include: /getlib|makedep|priv|fakePriv|utest*|bld$|make.*Package.*|fakePriv|mkdmg|makeInstall|combo|makedep|cacheConfig|patchAppweb/,
+    include: /getImports|getlib|makedep|priv|fakePriv|utest*|bld$|make.*Package.*|fakePriv|mkdmg|makeInstall|combo|makedep|cacheConfig|patchAppweb/,
+    trace: true,
 })
 
 copy("build/src/*", src, {
@@ -61,5 +62,5 @@ copy("doc/*", src, {
 
 copy("projects/*", src, {
     recurse: true,
-    exclude: /\/Debug|\/Release|\.ncb|\.mode1v3|\.pbxuser/,
+    exclude: /\/Debug\/|\/Release\/|\.ncb|\.mode1v3|\.pbxuser/,
 })
