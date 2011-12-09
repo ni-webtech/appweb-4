@@ -8346,6 +8346,14 @@ extern int mprGetEndian();
 extern int mprGetError();
 
 /**
+    Get the exit status
+    @description Get the exit status set via mprTerminate()
+    @return The proposed application exit status
+    @ingroup Mpr
+ */
+extern int mprGetExitStatus();
+
+/**
     Get the application host name string
     @returns A string containing the application host name string.
     @ingroup Mpr

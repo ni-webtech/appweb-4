@@ -67,7 +67,7 @@ MAIN(appweb, int argc, char **argv)
     Mpr     *mpr;
     cchar   *ipAddrPort, *argp, *jail;
     char    *ip;
-    int     argind, port;
+    int     argind, port, status;
 
     ipAddrPort = 0;
     ip = 0;
@@ -202,11 +202,12 @@ MAIN(appweb, int argc, char **argv)
     while (!mprIsStopping()) {
         mprServiceEvents(-1, 0);
     }
+    status = mprGetExitStatus();
     mprLog(1, "Stopping Appweb ...");
     maStopAppweb(app->appweb);
     mprDestroy(MPR_EXIT_DEFAULT);
     print("EXIT WITH STATUS 0\n");
-    return 0;
+    return status;
 }
 
 

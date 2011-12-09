@@ -2854,6 +2854,12 @@ void mprTerminate(int how, int status)
 }
 
 
+int mprGetExitStatus()
+{
+    return MPR->exitStatus;
+}
+
+
 void mprAddTerminator(MprTerminator terminator)
 {
     mprAddItem(MPR->terminators, terminator);

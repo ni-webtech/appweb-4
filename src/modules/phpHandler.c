@@ -518,16 +518,20 @@ static int finalizePhp(MprModule *mp)
     if ((stage = httpLookupStage(MPR->httpService, "phpHandler")) == 0) {
         return 0;
     }
-    if (stage->stageData == 0) {
-        return 0;
-    }
-    {
+    if (stage->stageData) {
         TSRMLS_FETCH();
-        mprLog(4, "php: Finalize library before unloading");
+#if UNUSED
         php_module_shutdown(TSRMLS_C);
-        sapi_shutdown();
-        tsrm_shutdown();
-        stage->stageData = 0;
+#endif
+        if (SG(server_context)) {
+            mprLog(4, "php: Finalize library before unloading");
+            phpSapiBlock.shutdown(&phpSapiBlock);
+#if UNUSED
+            sapi_shutdown();
+#endif
+            tsrm_shutdown();
+            stage->stageData = 0;
+        }
     }
     return 0;
 }
