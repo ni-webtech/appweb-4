@@ -20,6 +20,7 @@ const StandardFilter = /\.makedep$|\.o$|\.pdb$|\.tmp$|\.save$|\.sav$|OLD|\/Archi
     option perms Set file perms
     option strip Strip object or executable
     option expand Expand variables using %%TOKENS%%
+    option trace Set to true to trace copies
  */
 public function copy(src: Path, target: Path = Dir, options = {}) 
 {
@@ -29,13 +30,13 @@ public function copy(src: Path, target: Path = Dir, options = {})
     let owner = options.owner || -1
     let permissions = options.permissions
     let task = options.task 
-    let verbose: Boolean = options.trace
+    let verbose: Boolean = options.trace == "1" || options.trace == true
     let compress = options.compress || false
     let build = options.build
     let log = App.log
     options.root ||= "/tmp"
 
-    if (verbose > 0) log.activity("Process", "cpy: " + src + " " + target)
+    if (verbose) log.activity("Process", "cpy: " + src + " " + target)
 
     let pat = src.basename
     let dir, from
