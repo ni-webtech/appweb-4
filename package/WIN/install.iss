@@ -176,8 +176,8 @@ end;
 
 [Icons]
 Name: "{group}\!!BLD_NAME!!Monitor"; Filename: "{app}/bin/!!BLD_PRODUCT!!Monitor.exe"; Components: bin
-Name: "{group}\Documentation"; Filename: "http://appwebserver.org/products/appweb/doc/appweb-4/product/index.html"; Components: dev
 Name: "{group}\ReadMe"; Filename: "{app}/README.TXT"
+; Name: "{group}\Documentation"; Filename: "http://appwebserver.org/products/appweb/doc/appweb-4/product/index.html"; Components: dev
 ;Name: "{group}\Manage"; Filename: "http://127.0.0.1:{code:GetPort}/index.html"; Components: bin
 
 [Registry]
@@ -186,7 +186,7 @@ Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 [Types]
 Name: "full"; Description: "Complete Installation"; 
 Name: "binary"; Description: "Binary Installation"; 
-Name: "development"; Description: "Development Documentation, Headers and Libraries"; 
+Name: "development"; Description: "Development Headers and Libraries"; 
 
 [Components]
 Name: "bin"; Description: "Binary Files"; Types: binary full;
@@ -223,7 +223,7 @@ Filename: "{app}/bin/appman.exe"; Parameters: "start"; WorkingDir: "{app}"; Stat
 
 Filename: "{app}/bin/!!BLD_PRODUCT!!Monitor.exe"; Parameters: ""; WorkingDir: "{app}/bin"; StatusMsg: "Starting the Appweb Monitor"; Flags: waituntilidle;
 
-Filename: "http://127.0.0.1:{code:GetPort}/index.html"; Description: "View the Documentation"; Flags: skipifsilent waituntilidle shellexec postinstall; Components: bin
+Filename: "http://appwebserver.org/product/appweb/doc-4/product/index.html"; Description: "View the Documentation"; Flags: skipifsilent waituntilidle shellexec postinstall; Components: bin
 
 [UninstallRun]
 Filename: "{app}/bin/!!BLD_PRODUCT!!Monitor.exe"; Parameters: "--stop"; WorkingDir: "{app}"; StatusMsg: "Stopping the Appweb Monitor"; Flags: waituntilterminated;
