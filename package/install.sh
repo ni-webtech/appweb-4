@@ -54,6 +54,7 @@ HTTP_PORT=80
 SSL_PORT=443
 
 PATH="$PATH:/sbin:/usr/sbin"
+export CYGWIN=nodosfilewarning
 
 ###############################################################################
 

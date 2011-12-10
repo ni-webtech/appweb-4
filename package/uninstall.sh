@@ -61,6 +61,7 @@ removebin=Y
 headless=${!!BLD_PRODUCT!!_HEADLESS:-0}
 
 PATH=$PATH:/sbin:/usr/sbin
+export CYGWIN=nodosfilewarning
 unset CDPATH
 
 ###############################################################################
@@ -275,13 +276,13 @@ cleanDir() {
     find . -type d -print | sort -r | grep -v '^\.$' | while read d
     do
         count=`ls "$d" 2>/dev/null | wc -l | sed -e 's/ *//'`
-        [ "$count" = "0" ] && rmdir "$d"
+        [ "$count" = "0" ] && rmdir "$d" >/dev/null 2>&1
     done 
 
     if [ -d $cdir ] ; then
         cd $cdir
         count=`ls "$dir" 2>/dev/null | wc -l | sed -e 's/ *//'`
-        [ "$count" = "0" ] && rmdir "$dir"
+        [ "$count" = "0" ] && rmdir "$dir" >/dev/null 2>&1
         rmdir "$dir" 2>/dev/null
     fi
 }
