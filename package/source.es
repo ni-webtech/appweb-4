@@ -52,7 +52,7 @@ copy("src/*.c", src, {})
 copy("src/*", src, {
     recurse: true,
     include: /^src\/Makefile|^src\/deps|^src\/utils|^src\/server|^src\/test|^src\/modules|^src\/esp|^src\/samples|\.h$/,
-    exclude: /\.log$|fcgi|ejs.debugger|ejs.cgi|\.lst$|ejs.zip|\.stackdump$|\/cache\/view_|huge.txt|\.swp$/
+    exclude: /\.log$|fcgi|ejs.debugger|ejs.cgi|\.lst$|ejs.zip|\.stackdump$|\/cache\/view_|huge.txt|\.swp$|^src\/deps\/ejs/
 })
 
 copy("doc/*", src, {
