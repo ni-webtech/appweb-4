@@ -140,7 +140,7 @@ To install the Windows Installer image:
    3. Double click on the setup.exe image to run it.
 
 
-Removing Appweb on Windows
+Removing Appweb
 
 This is the procedure to remove Appweb on all systems except Windows.
 
