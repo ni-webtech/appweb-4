@@ -388,12 +388,12 @@ removeOld
 saveSetup
 installFiles $FMT
 if [ "$installbin" = "Y" ] ; then
-    appman stop disable uninstall >/dev/null 2>&1
+    "$BLD_BIN_PREFIX/appman" stop disable uninstall >/dev/null 2>&1
     patchConfiguration
-    appman install
+    "$BLD_BIN_PREFIX/appman" install
     if [ "$runDaemon" = "Y" ] ; then
-        appman enable
-        appman start
+        "$BLD_BIN_PREFIX/appman" enable
+        "$BLD_BIN_PREFIX/appman" start
         #
         #   Don't start browser anymore. Many systems can't determine the logged in user's keychain when run privileged
         # startBrowser
