@@ -59,15 +59,11 @@ The Appweb binary installation is published in several formats:
     * Native Windows installer format
     * Tar format for custom self installs.
 
-All formats are wrapped in a compressed Tar archive with this README.TXT file.  It is recommended that you use one of the native O/S formats if your system supports it. The native formats will typically register the software installation with your system's software manager so that you can query, verify, and easily manage the software on your system. 
+Most formats are wrapped in a compressed Tar archive with this README.TXT file.  It is recommended that you use one of the native O/S formats if your system supports it. The native formats will typically register the software installation with your system's software manager so that you can query, verify, and easily manage the software on your system.  The installation package includes binaries, development libraries, and headers.  
 
 The Tar format consists of tar archives that you can manually extract for maximum control over the placement of various product components.
 
-The installation package includes binaries, development libraries, headers and documentation. You can selectively install sub-packages or you can install the complete distribution.
-
 For those looking to build from source code, you will need to download the separate source code distribution. The product documentation describes how to build from source. 
-
-See below for operating system specific installation information.
 
 
 Development Environment Platform Support
@@ -148,12 +144,9 @@ Removing Appweb on Windows
 
 This is the procedure to remove Appweb on all systems except Windows.
 
-   1. Change directory to the installation directory for Appweb. This is 
-      usually /etc/appweb
+   1. Run the uninstall script in the install directory for Appweb by typing:
 
-   2. Run the uninstall script in the install directory for Appweb by typing 
-
-      sudo ./uninstall
+      sudo /usr/lib/appweb/bin/uninstall
 
 If you installed the Appweb Windows Installer image, follow these steps to remove Appweb. If you installed the Tar
 self-install image, you will need to remove Appweb using the procedure described above. 
@@ -178,7 +171,7 @@ To restart Appweb:
 Alternatively, you can run appweb manually:
 
     cd /etc/appweb
-    appweb
+    appweb -v
 
 To get all the options for Appweb, read the Appweb man page via
 
@@ -188,9 +181,7 @@ or get the command help via:
 
     appweb --help
 
-Appweb is configured by default to listen on port 7777. To test that it is serving pages, point your browser at http://localhost:7777. 
-
-To tailor the Embedthis Appweb configuration, including the default port, you may wish to edit the appweb.conf configuration file.
+Appweb is configured by default to listen on port 80. To test that it is serving pages, point your browser at http://localhost/. 
 
 
 Building from the Source Code
