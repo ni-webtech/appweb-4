@@ -138,7 +138,7 @@ if (!bare) {
     })
     copy("*", lib, {
         from: slib,
-        include: /esp.conf|esp-www/,
+        include: /esp-www/,
         exclude: /files.save/,
         permissions: 0644,
         recurse: true,
@@ -149,15 +149,16 @@ if (!bare) {
 }
 
 copy("appweb*", bin, {from: sbin, permissions: 0755, strip: strip})
-
-/*
-    Copy libraries 
- */
 copy("*" + build.BLD_SHOBJ, lib, {
     from: slib, 
     exclude: /simple|sample/,
     permissions: 0755, 
     strip: strip
+})
+copy("*", lib, {
+    from: slib,
+    include: /esp.conf/,
+    permissions: 0644,
 })
 
 if (options.task != "Remove" && build.BLD_FEATURE_SSL == 1 && os == "LINUX") {

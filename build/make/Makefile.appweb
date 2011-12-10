@@ -11,7 +11,7 @@ BASE_NAME	= $(BLD_PRODUCT)-$(BLD_VERSION)-$(BLD_NUMBER)-$(BLD_HOST_DIST)-$(BLD_H
 testExtra:: testWarn testPackages
 
 testWarn:
-	[ "$(BLD_EJS)" = "" ] && echo "Install Ejscript for unit tests" ; true
+	[ "$(BLD_EJS)" = "" ] && echo "Install Ejscript for unit tests and re-run ./configure" ; true
 
 testPackages:
 	if [ "$(BUILD_DEPTH)" -ge 3 -a "$(BLD_TYPE)" = RELEASE ] ; then \
