@@ -9,8 +9,8 @@ var bare: Boolean = App.args[3] == "1"
 var options = copySetup({task: App.args[1], root: Path(App.args[2])})
 var build = options.build
 var src: Path = build.BLD_SRC_PREFIX
-src.makeDir()
 
+src.makeDir()
 copy("Makefile", src)
 copy("LICENSE.TXT", src, {from: "doc/licenses", fold: true, expand: true})
 copy("*.TXT", src, {from: "doc/product", fold: true, expand: true})
@@ -64,3 +64,8 @@ copy("projects/*", src, {
     recurse: true,
     exclude: /\/Debug\/|\/Release\/|\.ncb|\.mode1v3|\.pbxuser/,
 })
+
+if (build.BLD_HOST_OS != "WIN") {
+    Cmd.sh("chown -R 0 " + src)
+    Cmd.sh("chgrp -R 0 " + src)
+}

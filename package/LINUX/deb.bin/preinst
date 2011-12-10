@@ -61,8 +61,6 @@ configureService() {
 cd /
 action=$1
 
-echo PREINST $action
-
 case $action in
 	remove|install)					# when new
 		# or conflictor's prerm remove in-favor package new-version
