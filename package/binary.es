@@ -192,6 +192,7 @@ if (build.BLD_HOST_OS == "WIN") {
             "--cache", "cache", 
             "--modules", "bin", 
             cfg.join("appweb.conf")])
+        cfg.join("appweb.conf.bak").remove()
     }
 } else {
     if (options.task != "Remove") {
@@ -206,6 +207,7 @@ if (build.BLD_HOST_OS == "WIN") {
             "--cache", Path(build.ORIG_BLD_SPL_PREFIX).join("cache"), 
             "--modules", build.ORIG_BLD_LIB_PREFIX, 
             cfg.join("appweb.conf")])
+        cfg.join("appweb.conf.bak").remove()
     }
 }
 
