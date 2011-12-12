@@ -541,7 +541,7 @@ module embedthis.doc {
                             Parameters
                          */
                         emit('    <dl><dt>Parameters:</dt><dd>')
-                        emit('    <table class="parameters" summary="Parameters">')
+                        emit('    <table class="parameters" title="Parameters">')
                         for each (p in n.parameteritem) {
                             emit('    <tr><td class="param">' + p.parameternamelist.parametername + '</td><td>' + 
                                 cleanDot(p.parameterdescription.para) + '</td>')
@@ -568,7 +568,7 @@ module embedthis.doc {
         for each (m in def.sectiondef.memberdef) {
             if (!doneHeader) {
                 emit('    <dl><dt>Fields:</dt><dd>')
-                emit('    <table class="parameters" summary="Parameters">')
+                emit('    <table class="parameters" title="Parameters">')
                 doneHeader = true
             }
             if (m.@kind == "variable") {
@@ -639,7 +639,7 @@ module embedthis.doc {
             Emit the group indicies
          */
         emit('<a name="Components"></a><h1>Components</h1>')
-        emit('  <table class="apiIndex" summary="Components">')
+        emit('  <table class="apiIndex" title="Components">')
 
         for each (def in xml) {
             if (def.@kind == "group") {
@@ -652,7 +652,7 @@ module embedthis.doc {
             Emit the navigation indicies
          */
         emit('<a name="Functions"></a><h1>Functions</h1>')
-        emit('  <table class="apiIndex" summary="Functions">')
+        emit('  <table class="apiIndex" title="Functions">')
 
         let functionIndex = {}
         for each (def in xml) {
@@ -670,7 +670,7 @@ module embedthis.doc {
         emit('</table>')
 
         emit('<a name="Typedefs"></a><h1>Typedefs</h1>')
-        emit('<table class="apiIndex" summary="typedefs">')
+        emit('<table class="apiIndex" title="typedefs">')
         let typeIndex = {}
         for each (def in xml) {
             if (def.@kind == "struct") {
@@ -691,7 +691,7 @@ module embedthis.doc {
         emit('</table>')
 
         emit('<a name="Defines"></a><h1>Defines</h1>')
-        emit('<table class="apiIndex" summary="Defines">')
+        emit('<table class="apiIndex" title="Defines">')
         for each (def in xml) {
             sections = def.sectiondef
             for each (section in sections) {
