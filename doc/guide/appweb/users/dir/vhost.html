@@ -41,12 +41,12 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
                 <li><a href="#namedVirtualHost">NameVirtualHost</a></li>
                 <li><a href="#virtualHost">VirtualHost</a></li>
             </ul>
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul>
                 <li><a href="../vhosts.html">Virtual Host Overview</a></li>
                 <li><a href="../configuration.html">Configuration</a></li>
@@ -57,12 +57,14 @@
             <a name="namedVirtualHost" id="namedVirtualHost"></a>
             <h1>Virtual Host Directives</h1>
             <h2>NameVirtualHost</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Nominates an IP address as using name based virutal hosting</td>
+                        <th class="pivot">Description</th>
+                        <th>Nominates an IP address as using name based virtual hosting</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>NameVirtualHost IPaddr[:port]</td>
@@ -135,15 +137,19 @@ NameVirtualHost 206.148.97.56
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="virtualHost" id="virtualHost"></a>
+            </table>
+            
+            <a name="virtualHost" id="virtualHost"></a>
             <h2>VirtualHost</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Create a new directive block that applies to a specific IP address. The VirtualHost block
-                            inherits the existing configuration at the point of the opening VirtualHost directive.</td>
+                        <th class="pivot">Description</th>
+                        <th>Create a new directive block that applies to a specific IP address. The VirtualHost block
+                            inherits the existing configuration at the point of the opening VirtualHost directive.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>&lt;VirtualHost IPaddress[:port]&gt;<br />

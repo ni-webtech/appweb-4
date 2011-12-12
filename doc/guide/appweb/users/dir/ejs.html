@@ -60,12 +60,14 @@
             
             <a name="ejsAlias" id="ejsAlias"></a>
             <h2>EjsAlias</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Define an Ejscript web application</td>
+                        <th class="pivot">Description</th>
+                        <th>Define an Ejscript web application</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>EjsAlias UriPrefix [Directory] [Script] [Workers]</td>
@@ -98,11 +100,10 @@ server.on("readable", function (event, request) {
 })
 server.listen()
 </pre>
-                            <p>The Workers arguments speci
                             <p>The Workers arguments directive specifies the maximum number of worker threads to use 
                             when serving requests for this ejs application. Worker threads are retained in a pool for 
                             rapid reuse once requests complete. Set to zero for single-threaded operation. Defaults to 
-                            any previously defined worker limit via EjsWorkers or the number of Appweb theads set via 
+                            any previously defined worker limit via EjsWorkers or the number of Appweb threads set via 
                             Threads (defaults to 10).</p>
                             <p>It is convenient to define applications using this directive in a separate configuration
                             file for each application. If the application config file is stored under the Appweb
@@ -117,19 +118,22 @@ server.listen()
                                 <li>Defines the <b>ejs</b> handler as the handler for the URL prefix</li>
                             </ul>
                             <p>Note: use a trailing "/" on the prefix to prevent matching URIs that have the prefix
-                            as part of the first (non-directory) portion of their URI.</P.
+                            as part of the first (non-directory) portion of their URI.</p>.
                         </td>
                     </tr>
                 </tbody>
             </table>
+
             <a name="ejsStartup" id="ejsStartup"></a>
             <h2>EjsStartup</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Define the Ejscript startup script</td>
+                        <th class="pivot">Description</th>
+                        <th>Define the Ejscript startup script</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>EjsScript filename</td>
@@ -162,14 +166,17 @@ server.listen()
                     </tr>
                 </tbody>
             </table>
+
             <a name="ejsWorkers" id="ejsWorkers"></a>
             <h2>EjsWorkers</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Control if Ejscript automatically creates session objects</td>
+                        <th class="pivot">Description</th>
+                        <th>Control if Ejscript automatically creates session objects</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>EjsWorkers number</td>
@@ -188,7 +195,7 @@ server.listen()
                             <p>This directive specifies the maximum number of worker threads to use when serving
                             requests for the ejs handler. Worker threads are retained in a pool for rapid reuse once
                             requests complete. Set to zero for single-threaded operation. Defaults to the number
-                            of Appweb theads set via the Threads directive (defaults to 10).</p>
+                            of Appweb threads set via the Threads directive (defaults to 10).</p>
                         </td>
                     </tr>
                 </tbody>

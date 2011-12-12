@@ -85,7 +85,7 @@
             </ul>
             
             <a name="pipeline" id="pipeline"></a>
-            <h3>Request Pipeline</h3>
+            <h2>Request Pipeline</h2>
             <p>Appweb has an efficient, zero-copy request bidirectional pipeline to process requests and generate
             responses. This consists of a mechanism of queues, packets, buffering and event scheduling. The pipeline
             architecture is highly optimized and supports the efficient transmission of data without copying. It uses
@@ -101,14 +101,14 @@
             servers , as it must be done without increasing memory footprint or degrading performance.</p>
             
             <a name="mpr" id="mpr"></a>
-            <h3>Embedthis Portable Runtime (MPR)</h3>
+            <h2>Embedthis Portable Runtime (MPR)</h2>
             <p>Appweb has been designed to be secure from the foundation up by using a Portable Runtime (MPR). The MPR
             is a cross-platform layer that permits over 97% of the Appweb code to be portable. It includes many
             mechanisms to assist in the creation of secure application. One such facility is a safe string and buffer
             handling module to help eliminate buffer overflows that have plagued many products.</p>
             
             <a name="sandboxing" id="sandboxing"></a>
-            <h3>Sandboxing</h3>
+            <h2>Sandboxing</h2>
             <p>Appweb closely controls its use of system resources via a technique known as "sandboxing". This means
             running the web server within tightly controlled limits so that request errors will not compromise system
             operation. Appweb has also been hardened against several common denial of service attacks.</p>

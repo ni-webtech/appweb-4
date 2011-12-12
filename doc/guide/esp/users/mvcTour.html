@@ -237,7 +237,7 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
             <pre>
 &lt;h1&gt;Hello Bright World&lt;/h1&gt;
 </pre>
-            <p>And the web page now looks like this in your browser:
+            <p>And the web page now looks like this in your browser:</p>
             <img src="../../../images/esp/tour/hello-layout.png" alt="hello" class= "screen" /> 
             
             <a name="dynamic" id="dynamic"></a>
@@ -289,14 +289,14 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
         [TASK] Complete</b>
 </pre>
             <p>This command created a database table called "post" and a post controller with
-            <em>post-list</em> and <em>post-edit</em> views. 
+            <em>post-list</em> and <em>post-edit</em> views.</p>
             <p>Now if you set your browser to the URI for the post controller, you will see your post listing screen.
             <img src="../../../images/esp/tour/post-list.png" alt="postList" class="screen" /> <a name="newPosts" id=
             "newPosts"></a></p>
             <h2 class="section">Create New Posts</h2>
             <p>The new post button directs your browser to the <em>/post/init</em> URI. Behind the scenes, Appweb
             parses this URI and and selects the appropriate request route and handler for the request. It 
-            then identifies "post" as the name of the controler and "init" as the name of an action to invoke. 
+            then identifies "post" as the name of the controller and "init" as the name of an action to invoke. 
             The controller file <em>controllers/post.c</em> defines the controller action to respond to this
             request.</p>
             <p>The controller file defines functions called actions, that are bound to URIs of the same name. Actions
@@ -345,7 +345,7 @@ static void create() {
 &lt;%@ layout "default" %&gt;
 &lt;h2&gt;&lt;% label("Go to My Blog", "@post/") %&gt;&lt;/h2&gt;
 </pre>
-            <p>The <em>@post/</em> link means redirect to the <em>post</em> controller if the label is clicked.</p>
+            <p>The <em>@post/</em> link means redirect to the <em>post</em> controller if the label is clicked.
             Reload the page and you will see:</p>
             <img src="../../../images/esp/tour/home-link.png" alt="homeLink" class="screen" /> 
             <h2>Code Errors</h2>
@@ -417,10 +417,9 @@ ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module)
             <ul>
                 <li><a href="index.html">ESP Documentation</a></li>
                 <li><a href="tour.html">ESP Web Framework Tour</a></li>
-                <li><a href="../../../ref/esp/webArchitecture.html">ESP Web Framework Architecture</a></li>
+                <li><a href="../../../ref/esp/espArchitecture.html">ESP Web Framework Architecture</a></li>
             </ul>
             <p>You may also like to ask questions at the <a href="http://www.ejscript.org/forum/">ESP Support Forum</a>.</p>
-        </ul>
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->

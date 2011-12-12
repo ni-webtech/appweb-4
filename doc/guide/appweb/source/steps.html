@@ -190,11 +190,12 @@ sudo make uninstall
             <table title="components">
                 <thead>
                     <tr>
-                        <td>Command</td>
-                        <td>Description</td>
-                        <td>Configure Location Option</td>
+                        <th>Command</th>
+                        <th>Description</th>
+                        <th>Configure Location Option</th>
                     </tr>
                 </thead>
+                <tbody>
                 <tr>
                     <td>make install</td>
                     <td>Install the program binaries and libraries</td>
@@ -205,6 +206,7 @@ sudo make uninstall
                     <td>Install the product documentation and headers</td>
                     <td>--libDir --incDir</td>
                 </tr>
+            </tbody>
             </table>
             <p>You can remove the components by using make uninstall-ITEM. Where ITEM is one of the above components.
             If you want to see what files get installed and where, set TRACE=1.</p>
@@ -233,12 +235,12 @@ make TRACE=1 install
             <table title="dirs">
                 <thead>
                     <tr>
-                        <td>Directory</td>
-                        <td>Subdir</td>
-                        <td>Description</td>
+                        <th>Directory</th>
+                        <th>Subdirectory</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
-                </tr>
+                <tbody>
                 <tr>
                     <td>build</td>
                     <td></td>
@@ -334,15 +336,17 @@ make TRACE=1 install
                     <td></td>
                     <td>Unit and integration tests.</td>
                 </tr>
+            </tbody>
             </table>
             <h3>Key Build Files</h3>
             <table title="files">
                 <thead>
                     <tr>
-                        <td>Name</td>
-                        <td>Description</td>
+                        <th>Name</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
+                <tbody>
                 <tr>
                     <td>build/make/make.rules</td>
                     <td>Key make targets and rules for all make files. This is a copy of the relevant make.rules.OS
@@ -366,6 +370,7 @@ make TRACE=1 install
                     <td>Configuration defaults for each operating system. Configure uses these as the default O/S
                     settings.</td>
                 </tr>
+                </tbody>
             </table>
         </div>
     </div>

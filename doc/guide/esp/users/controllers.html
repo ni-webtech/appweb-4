@@ -42,18 +42,13 @@
         <div class="contentRight">
             <h1>Quick Nav</h1>
             <ul class="nav">
-                <li><a href="#flow">Processing Flow</a></li>
+                <li><a href="#example">Controller Example</a></li>
                 <li><a href="#routing">Routing Requests</a></li>
-                <li><a href="#anatomy">Anatomy of a Controller</a></li>
+                <li><a href="#config">Configuring a Controller</a></li>
                 <li><a href="#actions">Actions</a></li>
                 <li><a href="#context">Controller Context</a></li>
-                <li><a href="#processing">Processing Requests</a></li>
-                <li><a href="#models">Model Data</a></li>
-                <li><a href="#forms">Form Data</a></li>
-                <li><a href="#views">Rendering Views</a></li>
+                <li><a href="#parameters">Request Parameters</a></li>
                 <li><a href="#generating">Generating Controllers</a></li>
-                <li><a href="#controller">Controller Class</a></li>
-                <!-- <li><a href="#tips">Tips and Tricks</a></li> -->
             </ul>
 <!-- BeginDsi "dsi/espSeeAlso.html" -->
 		        <h1>See Also</h1>
@@ -85,10 +80,10 @@
         <p>MVC <em>controllers</em> are the conductors of the application and they orchestrate the application's 
         activities. Via <em>action</em> functions, they receive client requests and generate appropriate responses, 
         mutating the applications data model in the process.</p>
-            <a name="anatomy" id="anatomy"></a>
-            <h2 class="section">Anatomy of a Controller</h2>
+
+        <a name="example" id="example"></a>
+        <h2 class="section">Example of a Controller</h2>
             <p>So what does a controller look like? Here is a partial example that has four actions:</p>
-            <a name="example" id="example"></a>
             <pre class="light">
 #include "esp.h"
 static void create() { 
@@ -121,6 +116,7 @@ http://embedthis.com/app/post/create
             <p>assuming a correctly configured request route, the <em>create</em> action, in the <em>post</em>
             controller will be run. This will create a new blog post and then render the <em>post-list.esp</em> 
             view of posts back to the client.</p>
+
         <a name="routing" id="routing"></a>
         <h2 class="section">Routing Requests</h2>
         <p>At the heart of understanding how controllers are loaded and actions are run, is understanding Appweb
@@ -138,9 +134,9 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
         <h3>RESTful Routes</h3>
         <p>A RESTful approach to designing URI routes is also often used where different controller 
         actions are linked to specific routes. The benefit being being simple, readable, RESTful URIs.</p>
-<table>
+<table title="routes">
     <thead>
-<tr><td>Name</td><td>Method</td><td>Pattern</td><td>Action</td></tr>
+<tr><th>Name</th><th>Method</th><th>Pattern</th><th>Action</th></tr>
     </thead>
     <tbody>
 <tr><td>init</td><td>GET</td><td>/CONTROLLER/init$</td><td>init</td></tr>
@@ -166,9 +162,10 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
                 <li>Run the specified controller action determined by the request route pattern</li>
                 <li>Optionally render a response view to the client</li>
             </ol>
+
             <a name="config" id="config"></a>
             <h2 class="section">Configuring Controllers</h2>
-            <p>Controllers may be configured two ways:
+            <p>Controllers may be configured two ways:</p>
             <ul>
                 <li>As part of an MVC application</li>
                 <li>As a stand-alone controller function.</li>
@@ -189,7 +186,7 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
 <pre>EspApp /store ./applications/store restful mdb://app/db/store.mdb</pre>
             <h3>Stand-Alone Controllers</h3>
             <p>Sometimes, you may wish to have a controller without a full MVC application. You can do this by using a
-            set of Appweb directives.
+            set of Appweb directives.</p>
             <pre>
 &lt;Route ^/app/{controller}(/)*$>
     Name /app/*/list
@@ -205,6 +202,7 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
             DocumentRoot/controllers. The Target directive defines how the action function name to invoke. 
             Note: This usage is less typical than using the MVC pattern.</p>
             <a name="actions" id="actions"></a>
+
             <h2 class="section">Actions</h2>
             <p>Actions are where the controller does its work. In ESP, actions are simple "C" functions and thus
             they need to be registered before use. This is done in the controller initialization function. 
@@ -226,7 +224,7 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
             want to block for too long without giving the client some feedback. Because Appweb is multithreaded, you can
             block. In that case, the server will continue to run and serve other requests. However, note that threads
             are a limited resource. It may be better to use non-blocking techniques such as async processing.</p>
-            <h3>Async Processsing</h3>
+            <h3>Async Processing</h3>
             <p>An action may service a long-running request without blocking, by responding in pieces. 
             An action function may return without completing the request. Normally, ESP will automatically finalize
             the request when the action returns. To prevent this, call 
@@ -235,8 +233,8 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
                 response open. At anytime and from any other code, you may then call 
                 <a href="../../../api/esp.html#group___esp_abbrev_1ga32d626626eee0bc4ade146973f6abb1c">finalize</a>
                 to complete the request. To force output to the client, without finalizing, use 
-                <a href="../../../api/esp.html#group___esp_abbrev_1ga32d626626eee0bc4ade146973f6abb1c">flush</a>.
-                <p>For example:</p>
+                <a href="../../../api/esp.html#group___esp_abbrev_1ga32d626626eee0bc4ade146973f6abb1c">flush</a>.</p>
+            <p>For example:</p>
 <pre>
 static void second(HttpConn *conn) {
     setConn(conn);
@@ -254,6 +252,7 @@ static void first() {
             is held open, but Appweb is not blocked in any thread. The call to <em>setTimeout</em> will arrange to have
             the Appweb event loop invoke <em>second</em> after five seconds have elapsed. This pattern is a 
             highly efficient in its use of system resources and scales very well.</p>
+
             <h2>Loading and Caching Controllers</h2>
             <p>Before a controller can run, it must first be compiled and linked into a loadable library.
             On Windows, this will be a DLL, on Unix, it will be a shared library with a ".so" extension. On VxWorks it
@@ -274,6 +273,7 @@ static void first() {
             <p>If Appweb was configured and built in debug mode, the default value for <em>EspUpdate</em> will be
             <em>on</em>. If Appweb was built in release mode, the default value is <em>off</em>. In release mode is it
             common practice to lock down the compiled controllers and not auto-recompile once deployed.</p>
+
             <a name="context" id="context"></a>
             <h2 class="section">Controller Context</h2>
             <p>ESP establishes a request context for the controller before invoking the controller action. The top level 
@@ -293,14 +293,14 @@ static void first() {
             <a href="../../../api/esp.html#group___esp_abbrev">API</a> that uses the current connection object to
             provide context for the API. When using this API, explicit access to the connection object should not 
             typically be required. The ESP short-form API should cover 95% of requirements for action processing.</p>
-            <h3>Explict Connection Access</h3>
+            <h3>Explicit Connection Access</h3>
             <p>If explicit access to the connection object is required, action functions may
             define a connection argument as 
             which is passed into all actions.</p>
 <pre>static void ACTION(HttpConn *conn) {
     /* Use the conn reference here */
 }</pre> 
-            Alternatively, the connection object can can be retrieved using the <a
+            <p>Alternatively, the connection object can can be retrieved using the <a
                 href="../../../api/esp.html#group___esp_abbrev_1gabe448b3542b4d1391e80e74192a09cb3">
                 getConn</a> API.</p>
             <h3>Navigating the Connection Object</h3>
@@ -327,9 +327,9 @@ static void first() {
             <p>The <a href="../../../api/http.html#group___http_rx">HttpRx</a> object represents the receive side of the
             HTTP protocol. On the server, it holds state regarding the client HTTP request. The fields of the HttpRx
             object are public and can be accessed and navigated.</p> 
-            <table>
+            <table title="fields">
                 <thead>
-                    <tr><td>HttpRx Property</td><td>Purpose</td></tr>
+                    <tr><th>HttpRx Property</th><th>Purpose</th></tr>
                 </thead>
                 <tbody>
                     <tr><td>method</td><td>HTTP request method</td></tr>
@@ -344,11 +344,11 @@ static void first() {
             </table>
             <h3>Navigating the Tx Object</h3>
             <p>The <a href="../../../api/http.html#group___http_tx">HttpTx</a> object represents the transmit side of the
-            HTTP protocol. On the server, it holds state regarding the response to the clientThe fields of the HttpTx
+            HTTP protocol. On the server, it holds state regarding the response to the client. The fields of the HttpTx
             object are public and can be accessed and navigated.</p> 
-            <table>
+            <table title="state">
                 <thead>
-                    <tr><td>HttpTx Property</td><td>Purpose</td></tr>
+                    <tr><th>HttpTx Property</th><th>Purpose</th></tr>
                 </thead>
                 <tbody>
                     <tr><td>filename</td><td>Name of the real file being served</td></tr>
@@ -366,8 +366,8 @@ static void first() {
             <table title="viewClass">
                 <thead>
                     <tr>
-                        <td class="nowrap">Method / Property</td>
-                        <td>Description</td>
+                        <th class="nowrap">Method / Property</th>
+                        <th>Description</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -448,6 +448,8 @@ static void first() {
                     </tr>
                 </tbody>
             </table>
+
+            <a name="parameters"></a>
             <h2 class="section">Request Parameters</h2>
             <p>ESP will collect request query, form data and route parameters into one
             <em>params</em> object which is accessible to actions via the 
@@ -467,6 +469,7 @@ static void first() {
             
             If the action method does not explicitly generate any response, ESP will invoke a view with the same name as
             the action method.</p>
+
             <a name="generating" id="generating"></a>
             <h2 class="section">Generating Controllers and Actions</h2>
             <p>If you are creating an MVC application, you may use the ESP application generator, called <em>esp</em> to

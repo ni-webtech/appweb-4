@@ -41,7 +41,7 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
                 <li style="list-style: none"><a href="#sslEngine">SSLEngine</a></li>
                 <li><a href="#sslProtocol">SSLProtocol</a></li>
@@ -52,7 +52,7 @@
                 <li><a href="#sslCaCertificatePath">SSLCACertificatePath</a></li>
                 <li><a href="#sslVerifyClient">SSLVerifyClient</a></li>
             </ul>
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul>
                 <li><a href="../ssl.html">SSL Guide</a></li>
                 <li><a href="../configuration.html">Configuration</a></li>
@@ -63,12 +63,14 @@
             <a href="../configuration.html#directives"></a>
             <h1>SSL Directives</h1><a name="sslEngine" id="sslEngine"></a>
             <h2>SSLEngine</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Enable SSL processing.</td>
+                        <th class="pivot">Description</th>
+                        <th>Enable SSL processing.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>SSLEngine [on | off]</td>
@@ -92,14 +94,18 @@
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="sslProtocol" id="sslProtocol"></a>
+            </table>
+            
+            <a name="sslProtocol" id="sslProtocol"></a>
             <h2>SSLProtocol</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Specify the SSL protocols to enable.</td>
+                        <th class="pivot">Description</th>
+                        <th>Specify the SSL protocols to enable.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>SSLProtocol [+ | -] protocol ...</td>
@@ -123,7 +129,7 @@
                             <h3>SSLv3</h3>
                             <p>This is the Secure Sockets Layer (SSL) protocol version 3.</p>
                             <h3>TLSv1</h3>
-                            <p>This is the Transport Layer Security (TLS) protcol version 1. It is the most current SSL
+                            <p>This is the Transport Layer Security (TLS) protocol version 1. It is the most current SSL
                             standard defined by the IETF and should be used if available.</p>
                             <h3>ALL</h3>
                             <p>Enables all SSL protocol variants.</p>
@@ -141,14 +147,18 @@ SSLProtocol all -SSLv2
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="sslCipherSuite" id="sslCipherSuite"></a>
+            </table>
+            
+            <a name="sslCipherSuite" id="sslCipherSuite"></a>
             <h2>SSLCipherSuite</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Selects the Cipher suite to use when negotiating SSL sessions.</td>
+                        <th class="pivot">Description</th>
+                        <th>Selects the Cipher suite to use when negotiating SSL sessions.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>SSLCipherSuite cipher-spec</td>
@@ -182,7 +192,7 @@ SSLProtocol all -SSLv2
                             (here TLSv1 is equivalent to SSLv3). To specify which ciphers to use, one can either
                             specify all the Ciphers, one at a time, or use aliases to specify the preference and order
                             for the ciphers (see Table 1).</p>
-                            <table summary="">
+                            <table title="ciphers">
                                 <tbody>
                                     <tr>
                                         <th>Tag</th>
@@ -358,14 +368,18 @@ SSLProtocol all -SSLv2
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="sslCertificateFile" id="sslCertificateFile"></a>
+            </table>
+            
+            <a name="sslCertificateFile" id="sslCertificateFile"></a>
             <h2>SSLCertificateFile</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Defines the location of the X.509 file containing the server certificate</td>
+                        <th class="pivot">Description</th>
+                        <th>Defines the location of the X.509 file containing the server certificate</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>SSLCertificateFile path</td>
@@ -388,14 +402,18 @@ SSLProtocol all -SSLv2
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="sslCertificateKeyFile" id="sslCertificateKeyFile"></a>
+            </table>
+            
+            <a name="sslCertificateKeyFile" id="sslCertificateKeyFile"></a>
             <h2>SSLCertificateKeyFile</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Defines the location of the server's private key</td>
+                        <th class="pivot">Description</th>
+                        <th>Defines the location of the server's private key</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>SSLCertificateKeyFile</td>
@@ -415,25 +433,29 @@ SSLProtocol all -SSLv2
                             key file for the server. This directive is not required if the server's private key is
                             combined with the certificate file.</p>
                             <p>If the private key is encrypted, you will be prompted to enter the pass-phrase to
-                            decript the private key on system reboot.</p>
+                            decrypt the private key on system reboot.</p>
                         </td>
                     </tr>
                     <tr>
                         <td class="security">Security</td>
-                        <td>There is a delima here. If you use a crypted private key, the server will pause until you
+                        <td>There is a dilemma here. If you use an encrypted private key, the server will pause until you
                         enter the pass-phrase which makes headless operation impossible. If you do not encrypt the
                         private key, your private key is more vulnerable should the server be compromised. Which option
                         you choose depends on whether headless operation is essential or not.</td>
                     </tr>
                 </tbody>
-            </table><a name="sslCaCertificateFile" id="sslCaCertificateFile"></a>
+            </table>
+            
+            <a name="sslCaCertificateFile" id="sslCaCertificateFile"></a>
             <h2>SSLCACertificateFile</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Defines the location of the certificate file for client authentication</td>
+                        <th class="pivot">Description</th>
+                        <th>Defines the location of the certificate file for client authentication</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>SSLCACertificateFile path</td>
@@ -459,14 +481,18 @@ SSLProtocol all -SSLv2
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="sslCaCertificatePath" id="sslCaCertificatePath"></a>
+            </table>
+            
+            <a name="sslCaCertificatePath" id="sslCaCertificatePath"></a>
             <h2>SSLCACertificatePath</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Defines the directory containing the certificates to use for client authentication.</td>
+                        <th class="pivot">Description</th>
+                        <th>Defines the directory containing the certificates to use for client authentication.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>SSLCACertificatePath</td>
@@ -492,14 +518,18 @@ SSLProtocol all -SSLv2
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="sslVerifyClient" id="sslVerifyClient"></a>
+            </table>
+            
+            <a name="sslVerifyClient" id="sslVerifyClient"></a>
             <h2>SSLVerifyClient</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Defines the type of client certificate verification.</td>
+                        <th class="pivot">Description</th>
+                        <th>Defines the type of client certificate verification.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>SSLVerifyClient [none | require]</td>

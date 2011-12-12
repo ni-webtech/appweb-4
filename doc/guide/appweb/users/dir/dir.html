@@ -41,13 +41,13 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
                 <li><a href="#directoryIndex">DirectoryIndex</a></li>
                 <li><a href="#indexOptions">IndexOptions</a></li>
                 <li><a href="#indexOrder">IndexOrder</a></li>
             </ul>
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul>
                 <li><a href="../../../../guide/appweb/users/configuration.html">Configuration</a></li>
                 <li><a href="../configuration.html#directives">Configuration Directives</a></li>
@@ -58,12 +58,14 @@
             <h1>Directory Directives</h1>
             <a name="directoryIndex" id="directoryIndex"></a>
             <h2>DirectoryIndex</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Define the default index file to serve for directory requests</td>
+                        <th class="pivot">Description</th>
+                        <th>Define the default index file to serve for directory requests</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>DirectoryIndex document</td>
@@ -84,22 +86,26 @@
                             will be tested in order. The first index that exists will be served.</p>
                             <p>The DirectoryIndex argument must be a simple filename without any directory portion.</p>
                             <p>If a client requests a directory, but without a trailing "/" in the URI, the 
-                            client will be redirected to the URI with a trailing "/". When the clien then uses that URI,
+                            client will be redirected to the URI with a trailing "/". When the client then uses that URI,
                             the directory index file will be used for the response.</p>
-                            <p>For example: if a DirectoryIndex of "index.php" is specified and a user requestes
+                            <p>For example: if a DirectoryIndex of "index.php" is specified and a user requests
                             http://www.acme.com/products/. Then the document /products/index.php will be returned to
                             the user.</p>
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="indexOptions" id="indexOptions"></a>
+            </table>
+            
+            <a name="indexOptions" id="indexOptions"></a>
             <h2>IndexOptions</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Define directory indexing options</td>
+                        <th class="pivot">Description</th>
+                        <th>Define directory indexing options</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>IndexOptions [[+|-] options] ...</td>
@@ -124,14 +130,18 @@
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="indexOrder" id="indexOrder"></a>
+            </table>
+            
+            <a name="indexOrder" id="indexOrder"></a>
             <h2>IndexOrder</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Set the default ordering of the directory listing</td>
+                        <th class="pivot">Description</th>
+                        <th>Set the default ordering of the directory listing</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>IndexOrder [Ascending|Descending] [Name|Date|Size|Description]</td>

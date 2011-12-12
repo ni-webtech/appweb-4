@@ -166,7 +166,7 @@ Action application/x-appweb-perl /usr/bin/perl
                     <tr>
                         <td>argv[1..N]</td>
                         <td>Each arg is set to portions of the QUERY_STRING. The query is split at "+" characters after
-                        de-escaping the query.</td>
+                        unescaping the query.</td>
                     </tr>
                 </tbody>
             </table>
@@ -193,7 +193,7 @@ Action application/x-appweb-perl /usr/bin/perl
                     <tr>
                         <td>argv[2..N]</td>
                         <td>Each arg is set to portions of the QUERY_STRING. The query is split at "+" characters after
-                        de-escaping the query.</td>
+                        unescaping the query.</td>
                     </tr>
                 </tbody>
             </table>
@@ -218,7 +218,7 @@ Action application/x-appweb-perl /usr/bin/perl
                     <tr>
                         <td>argv[2..N]</td>
                         <td>Each arg is set to portions of the QUERY_STRING. The query is split at "+" characters after
-                        de-escaping the query.</td>
+                        unescaping the query.</td>
                     </tr>
                 </tbody>
             </table>
@@ -487,7 +487,7 @@ http://hostname/cgi-bin/cgiProgram/extra/Path?var1=a+a&amp;var2=b%20b&amp;var3=c
                 </thead>
                 <tbody>
                     <tr>
-                        <td nowrap="nowrap">Content-type</td>
+                        <td class="nowrap">Content-type</td>
                         <td>Nominate the content Mime Type. Typically "text/html". See the mime.types for a list of
                         possible mime types.</td>
                     </tr>

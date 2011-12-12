@@ -85,11 +85,13 @@
             <h1>Route Directives</h1><a name="addHandler" id="addHandler"></a>
             <h2>AddHandler</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Add a handler for processing content with specific file extensions</td>
+                        <th class="pivot">Description</th>
+                        <th>Add a handler for processing content with specific file extensions</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>AddHandler handlerName extension [extension] ...</td>
@@ -123,11 +125,13 @@
             <a name="addInputFilter" id="addInputFilter"></a>
             <h2>AddInputFilter</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Add the specified filter to the input processing pipeline</td>
+                        <th class="pivot">Description</th>
+                        <th>Add the specified filter to the input processing pipeline</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>AddInputFilter filterName</td>
@@ -159,11 +163,13 @@
             <a name="addOutputFilter" id="addOutputFilter"></a>
             <h2>AddOutputFilter</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Add the specified filter to the output processing pipeline</td>
+                        <th class="pivot">Description</th>
+                        <th>Add the specified filter to the output processing pipeline</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>AddOutputFilter filterName</td>
@@ -193,11 +199,13 @@
             <a name="addLanguageDir" id="addLanguageDir"></a>
             <h2>AddLanguageDir</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Add the specified language and language document directory to the route</td>
+                        <th class="pivot">Description</th>
+                        <th>Add the specified language and language document directory to the route</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>AddLanguageDir iso-lang-tag path</td>
@@ -229,11 +237,13 @@
             <a name="addLanguageSuffix" id="addLanguageSuffix"></a>
             <h2>AddLanguageSuffix</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Add the specified language</td>
+                        <th class="pivot">Description</th>
+                        <th>Add the specified language</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>AddLanguageSuffix iso-lang-tag suffix [position]</td>
@@ -266,11 +276,13 @@
             <a name="alias" id="alias"></a>
             <h2>Alias</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Map URIs and leading URI portions to file system locations.</td>
+                        <th class="pivot">Description</th>
+                        <th>Map URIs and leading URI portions to file system locations.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>Alias urlPortion destinationPath</td>
@@ -308,11 +320,13 @@
             <a name="cache" id="cache"></a>
             <h2>Cache</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Control content caching</td>
+                        <th class="pivot">Description</th>
+                        <th>Control content caching</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>Cache lifespan<br/>
@@ -347,42 +361,42 @@
                             (query, post and route parameters). Alternatively, the URI may specify request parameters in
                             sorted www-urlencoded form to select a specific URI/parameter combination.  When responses are
                             cached, the response data and response headers are cached.</p>
-                            <h4>Client-Side Caching</h4>
+                            <h3>Client-Side Caching</h3>
                             <p>If client caching is requested by specifying "client" with an optional lifespan in seconds,
                             a "Cache-Control: max-age=lifespan" HTTP header will be added to the response.  This header will
                             define a client-side cache lifespan that instructs clients to cache response content for a
                             specified duration. If the document is subsequently requested by the client before the
-                            cached response has expired in the clientcache, the document will be served from the client
+                            cached response has expired in the client cache, the document will be served from the client
                             cache without contacting the server.</p> 
                             
-                            <h4>Server-Side Caching Modes</h4>
+                            <h3>Server-Side Caching Modes</h3>
                             <p>When using Server-Side caching, there are three possible modes:
                             <ul>
                                 <li>Combined &mdash; All qualifying requests for a cache definition will be combined onto a
                                 single cached response. the request params (query, post data and route parameters) will be
                                 ignored and all requests for a given URI path will cache to the same cache record.</li>
-                                <li>Unique &mdash; All qualifying requests will cache uniquely depending on the requeset
+                                <li>Unique &mdash; All qualifying requests will cache uniquely depending on the request
                                 parameters. i.e. Requests with different query, post data, or route parameters will be
                                 separately cached. Any URIs specified in the directive should not contain any request
                                 parameters.</li>
                                 <li>Only &mdash; Only the exact URIs specified in the directive will be cached. The URIs
                                 specified must contain request parameters in a sorted www-urlencoded format. <br/> 
-                                E.g.: /example.esp?hobby=sailing&name=john.</li>
+                                E.g.: /example.esp?hobby=sailing&amp;name=john.</li>
                                 <li>Manual &mdash; In manual-mode the response will still be automatically cached.  However,
                                 it will not be automatically written to the client.  The request handler must call the
                                 espWriteCached API or must set the X-SendCache HTTP header to manually write the cached
                                 response content. </li>
                             </ul>
-                            <h4>Server-Side Caching</h4>
+                            <h3>Server-Side Caching</h3>
                             <p>When a request is generated, the response is automatically cached and also sent to the 
                             client. The response is sent with an HTTP ETag header and a last-modified timestamp. Together
-                            thse uniquely identify the response data. Subsequent client requests will submit these header
+                            these uniquely identify the response data. Subsequent client requests will submit these header
                             values so that they can then be validated by the server. If the server-side cached content has
                             not expired and has not been modified, then an HTTP Not-Modified (304) response will be sent 
                             to the client and then the client can use its client-side cached content.  This results in a
                             very fast transaction with the client as no response data is sent.  </p>
                             <p>Note: Server-side caching will cache both the response headers and content.</p>
-                            <h4>Cache Lifespans</h4>
+                            <h3>Cache Lifespans</h3>
                             <p>The Cache directive may specify a lifespan in seconds using the "client=secs" or
                             "server=secs" options.  If the lifespan is not specified, the default route lifespan will be
                             used. To set the default lifespan for the route, just include a lifespan with no other
@@ -400,11 +414,13 @@
             <a name="clientCacheByType" id="clientCacheByType"></a>
             <h2>ClientCacheByType</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Control client-side caching by document mime type</td>
+                        <th class="pivot">Description</th>
+                        <th>Control client-side caching by document mime type</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>ClientCacheByType lifespan mime-types ...</td>
@@ -436,11 +452,13 @@
             <a name="compress" id="compress"></a>
             <h2>Compress</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Control serving of compressed documents.</td>
+                        <th class="pivot">Description</th>
+                        <th>Control serving of compressed documents.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>Compress [gzip|none]</td>
@@ -469,11 +487,13 @@
             <a name="condition" id="condition"></a>
             <h2>Condition</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Define a pre-condition that must be true for the route to be selected.</td>
+                        <th class="pivot">Description</th>
+                        <th>Define a pre-condition that must be true for the route to be selected.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>Condition [!] rule details ...<br/>
@@ -516,11 +536,13 @@
             <a name="defaultLanguage" id="defaultLanguage"></a>
             <h2>DefaultLanguage</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Set the default language to select for content.</td>
+                        <th class="pivot">Description</th>
+                        <th>Set the default language to select for content.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>DefaultLanguage languageNmenonic</td>
@@ -546,11 +568,13 @@
             <a name="documentRoot" id="documentRoot"></a>
             <h2>DocumentRoot</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Top level directory containing the documents to be published for context.</td>
+                        <th class="pivot">Description</th>
+                        <th>Top level directory containing the documents to be published for context.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>DocumentRoot directoryPath</td>
@@ -577,11 +601,13 @@
             <a name="errorDocument" id="errorDocument"></a>
             <h2>ErrorDocument</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Define an error document to be served when a HTTP error occurs</td>
+                        <th class="pivot">Description</th>
+                        <th>Define an error document to be served when a HTTP error occurs</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>ErrorDocument code URI</td>
@@ -607,11 +633,13 @@
             <a name="header" id="header"></a>
             <h2>Header</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Define a header value must match a value for the route to be selected.</td>
+                        <th class="pivot">Description</th>
+                        <th>Define a header value must match a value for the route to be selected.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>Header [!] field pattern</td>
@@ -639,11 +667,13 @@
             <a name="inactivityTimeout" id="inactivityTimeout"></a>
             <h2>InactivityTimeout</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Control the timeout period for TCP/IP connections</td>
+                        <th class="pivot">Description</th>
+                        <th>Control the timeout period for TCP/IP connections</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>InactivityTimeout time</td>
@@ -677,11 +707,13 @@
             <a name="logRoutes" id="logRoutes"></a>
             <h2>LogRoutes</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Show the route table in the error log.</td>
+                        <th class="pivot">Description</th>
+                        <th>Show the route table in the error log.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>LogRoutes</td>
@@ -708,11 +740,13 @@
             <a name="methods" id="methods"></a>
             <h2>Methods</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Define the valid HTTP Methods for the route</td>
+                        <th class="pivot">Description</th>
+                        <th>Define the valid HTTP Methods for the route</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>Methods MethodSet</td>
@@ -740,11 +774,13 @@
             <a name="name" id="name"></a>
             <h2>Name</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Define a name for the route</td>
+                        <th class="pivot">Description</th>
+                        <th>Define a name for the route</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>Name string</td>
@@ -771,11 +807,13 @@
             <a name="param" id="param"></a>
             <h2>Param</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Add a request param test that must match for the route to be selected.</td>
+                        <th class="pivot">Description</th>
+                        <th>Add a request param test that must match for the route to be selected.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>Param [!] field pattern</td>
@@ -805,11 +843,13 @@
             <a name="prefix" id="prefix"></a>
             <h2>Prefix</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Define a URI prefix for the route.</td>
+                        <th class="pivot">Description</th>
+                        <th>Define a URI prefix for the route.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>Prefix URI-Prefix</td>
@@ -839,11 +879,13 @@
             <a name="putMethod" id="putMethod"></a>
             <h2>PutMethod</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Control use of the HTTP PUT method inside a route block.</td>
+                        <th class="pivot">Description</th>
+                        <th>Control use of the HTTP PUT method inside a route block.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>PutMethod [on|off]</td>
@@ -861,7 +903,7 @@
                         <td>
                             <p>The HTTP PUT method is used for sending content to the server. It can be destructive
                             and so the PUT method is disabled by default. It must be explicitly enabled for a location
-                            block efore use.
+                            block before use.
                             <p>NOTE: PutMethod is a proprietary Appweb directive.</p>
                         </td>
                     </tr>
@@ -871,11 +913,13 @@
             <a name="redirect" id="redirect"></a>
             <h2>Redirect</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Redirect requests to a new target.</td>
+                        <th class="pivot">Description</th>
+                        <th>Redirect requests to a new target.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>Redirect [status] oldURI [newURI]</td>
@@ -917,11 +961,13 @@
             <a name="requestTimeout" id="requestTimeout"></a>
             <h2>RequestTimeout</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Defines the maximum request duration</td>
+                        <th class="pivot">Description</th>
+                        <th>Defines the maximum request duration</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>RequestTimeout time</td>
@@ -937,7 +983,7 @@
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>This directive defines the maximum duration for a request. If the maximum is excceded,
+                            <p>This directive defines the maximum duration for a request. If the maximum is exceeded,
                             Appweb will forcibly terminate the request and close the connection.
                             <p>Some web user interfaces with monitoring applets open HTTP connections and keep them
                             open to stream response data back to the applet. To prevent Appweb from closing the
@@ -949,11 +995,13 @@
             <a name="reset" id="reset"></a>
             <h2>Reset [routes|pipeline]</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Reset the input and output processing pipeline.</td>
+                        <th class="pivot">Description</th>
+                        <th>Reset the input and output processing pipeline.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>Reset pipeline<br/>
@@ -974,7 +1022,7 @@
                             This is useful to start with a clean slate for route configuration. The <em>Reset pipeline</em>
                             preserves route configuration but erases defined handlers, filters and
                             connectors for the specified context. Use AddInputFilter, AddoutputFilter, AddHandler and 
-                            AddConnector to reinitialize the pipeline.</p>
+                            AddConnector to re-initialize the pipeline.</p>
                             <p><em>Reset pipeline</em> is most often used inside VirtualHost blocks when you want to 
                             limit the pipeline to a small set of handlers and filters for that Virtual Host.</p>
                             <p>NOTE: <em>Reset</em> is a proprietary Appweb directive.</p>
@@ -986,11 +1034,13 @@
             <a name="route" id="route"></a>
             <h2>Route</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Define a block of directives to apply to a matching URI pattern</td>
+                        <th class="pivot">Description</th>
+                        <th>Define a block of directives to apply to a matching URI pattern</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>&lt;Route URI-Pattern&gt;<br />
@@ -1022,11 +1072,13 @@
             <a name="scriptAlias" id="scriptAlias"></a>
             <h2>ScriptAlias</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Map a URI to a destination and enable CGI script processing for that location.</td>
+                        <th class="pivot">Description</th>
+                        <th>Map a URI to a destination and enable CGI script processing for that location.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>ScriptAlias urlPath destinationPath</td>
@@ -1064,11 +1116,13 @@
             <a name="sessionTimeout" id="sessionTimeout"></a>
             <h2>SessionTimeout</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Defines the maximum session state duration</td>
+                        <th class="pivot">Description</th>
+                        <th>Defines the maximum session state duration</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>SessionTimeout seconds</td>
@@ -1094,11 +1148,13 @@
             <a name="setConnector" id="setConnector"></a>
             <h2>SetConnector</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Set the connector to transmit the response to the client</td>
+                        <th class="pivot">Description</th>
+                        <th>Set the connector to transmit the response to the client</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>SetConnector connectorName</td>
@@ -1124,11 +1180,13 @@
             <a name="setHandler" id="setHandler"></a>
             <h2>SetHandler</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Set the handler to processing requests</td>
+                        <th class="pivot">Description</th>
+                        <th>Set the handler to processing requests</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>SetHandler handlerName</td>
@@ -1153,11 +1211,13 @@
             <a name="source" id="source"></a>
             <h2>Source</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Define source code for the handler to use when servicing the request.</td>
+                        <th class="pivot">Description</th>
+                        <th>Define source code for the handler to use when servicing the request.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>Source path</td>
@@ -1184,11 +1244,13 @@
             <a name="target" id="target"></a>
             <h2>Target</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Define the route target rule that describes how the request should be handled.</td>
+                        <th class="pivot">Description</th>
+                        <th>Define the route target rule that describes how the request should be handled.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>Target rule details ...<br/>
@@ -1218,13 +1280,13 @@
                             <ul>
                                 <li>close &mdash; Immediately close the connection without sending a response to the
                                         client.</li>
-                                <li>redirect &mdash; Redirect the client with the given status and URI.</a>
+                                <li>redirect &mdash; Redirect the client with the given status and URI.</li>
                                 <li>run &mdash; Run the selected handler and use the any argument as the destination
                                 document or resource to serve back to the client. If the argument is omitted, most handlers
                                 will construct a filename from the request URI and the route document root and serve
                                 that to the client.</li>
                                 <li>write &mdash; Writes the given message to the client with the specified status.
-                                By default, this rule will escape embeded HTML sequences. If you need to emit pure HTML, 
+                                By default, this rule will escape embedded HTML sequences. If you need to emit pure HTML, 
                                 use the <em>-r</em> switch for raw write output.</li>
                             </ul>
                             <p>If the Target directive is omitted in a Route, the default action is <em>Target run</em>.</p>
@@ -1239,11 +1301,13 @@
             <a name="traceMethod" id="traceMethod"></a>
             <h2>TraceMethod</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Control the Trace HTTP method</td>
+                        <th class="pivot">Description</th>
+                        <th>Control the Trace HTTP method</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>TraceMethod on|off</td>
@@ -1274,11 +1338,13 @@
             <a name="update" id="update"></a>
             <h2>Update</h2>
             <table class="directive" title="details">
-                <tbody>
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Define an update rule to modify the request when the route is selected.</td>
+                        <th class="pivot">Description</th>
+                        <th>Define an update rule to modify the request when the route is selected.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>Update param var value ...<br/>
@@ -1291,8 +1357,8 @@
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td> Update param client ${request:clientAddress}<br/
-                            Update cmd sh -c 'echo Demo Downloaded | mail -s"Download from ${request:clientAddress}"'</td>
+                        <td> Update param client ${request:clientAddress}<br/>
+                            Update cmd sh -c 'echo Demo Downloaded | mail -s"Download from ${request:clientAddress}"'
                         </td>
                     </tr>
                     <tr>
@@ -1300,10 +1366,10 @@
                         <td>
                             <p>The Update directive support two rules: </p>
                             <ul>
-                                <li>param &mdash; Set a request parameter.</p>
+                                <li>param &mdash; Set a request parameter.</li>
                                 <li>cmd &mdash; Run an external command.</li>
                             </ul>
-                            <p>Upate arguments can contain embedded tokens.
+                            <p>Update arguments can contain embedded tokens.
                             For information about embedded {tokens}, see <a href="../routing.html#tokens">Tokens</a>
                             in the <a href="../routing.html">Routing Guide</a>.</p>
                         </td>

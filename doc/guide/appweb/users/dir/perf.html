@@ -41,13 +41,12 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
                 <li><a href="#inactivityTimeout">InactivityTimeout</a></li>
-                <li><a href="#sendBufferSize">SendBufferSize</a></li>
                 <li><a href="#requestTimeout">RequestTimeout</a></li>
             </ul>
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul>
                 <li><a href="sandbox.html">Sandbox Directives</a></li>
                 <li><a href="../../../../guide/appweb/users/configuration.html">Configuration</a></li>
@@ -59,12 +58,14 @@
             <h1>Performance Directives</h1>
             <a name="inactivityTimeout" id="inactivityTimeout"></a>
             <h2>InactivityTimeout</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Control the timeout period for TCP/IP connections</td>
+                        <th class="pivot">Description</th>
+                        <th>Control the timeout period for TCP/IP connections</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>InactivityTimeout seconds</td>
@@ -97,12 +98,14 @@
             
             <a name="requestTimeout" id="requestTimeout"></a>
             <h2>RequestTimeout</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Defines the maximum request duration</td>
+                        <th class="pivot">Description</th>
+                        <th>Defines the maximum request duration</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>RequestTimeout seconds</td>
@@ -118,7 +121,7 @@
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>This directive defines the maximum duration for a request. If the maximum is excceded,
+                            <p>This directive defines the maximum duration for a request. If the maximum is exceeded,
                             Appweb will forcibly terminate the request and close the connection.
                             <p>Some web user interfaces with monitoring applets open HTTP connections and keep them
                             open to stream response data back to the applet. To prevent Appweb from closing the

@@ -41,13 +41,13 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            <h2>Quick Nav</h2>
+            <h1>Quick Nav</h1>
             <ul>
                 <li><a href="#accessLog">AccessLog</a></li>
                 <li><a href="#errorLog">ErrorLog</a></li>
                 <li><a href="#log">Log</a></li>
             </ul>
-            <h2>See Also</h2>
+            <h1>See Also</h1>
             <ul>
                 <li><a href="../logFiles.html">Logging Overview</a></li>
                 <li><a href="../../../../guide/appweb/users/configuration.html">Configuration</a></li>
@@ -57,12 +57,14 @@
         <div class="contentLeft">
             <h1>Logging Directives</h1><a name="accessLog" id="accessLog"></a>
             <h2>AccessLog</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Configure a request access log.</td>
+                        <th class="pivot">Description</th>
+                        <th>Configure a request access log.</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>AccessLog path <br/>
@@ -86,12 +88,12 @@
                             HTTP requests for the current route. The given path may be an absolute filename or it may be
                             relative to the ServerRoot. The AccessLog directive is inherited from outer routes in the
                             config file.</p>
-                            <p>The <tt>size</tt> parameter specifies a maximum size to write to a single log file.
-                            The <tt>backup</tt> parameter indicates how many backup log files to preserve. When the
+                            <p>The <em>size</em> parameter specifies a maximum size to write to a single log file.
+                            The <em>backup</em> parameter indicates how many backup log files to preserve. When the
                             maximum size is exceeded, the log files will be renamed by appending a sequential number
                             from zero up to the given path name. The highest number will be the oldest log file.</p>
-                            <p>The <tt>append</tt> option means that new content will be appended to an existing log
-                            file, whereas, <tt>anew</tt> specifies that the log file will be created anew whenever
+                            <p>The <em>append</em> option means that new content will be appended to an existing log
+                            file, whereas, <em>anew</em> specifies that the log file will be created anew whenever
                             Appweb is restarted.</p>
                         </td>
                     </tr>
@@ -100,12 +102,14 @@
             
             <a name="errorLog" id="errorLog"></a>
             <h2>ErrorLog</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Configure the Appweb diagnostic error log</td>
+                        <th class="pivot">Description</th>
+                        <th>Configure the Appweb diagnostic error log</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>ErrorLog path <br/>
@@ -128,23 +132,23 @@
                         <td>
                             <p>The ErrorLog directive configures the diagnostic error log for Appweb. There is one
                             such error log and all error messages and trace will be written to this log.</p>
-                            The given <tt>path</tt> may be an absolute filename or it may be
+                            The given <em>path</em> may be an absolute filename or it may be
                             relative to the ServerRoot. 
-                            <p>The <tt>size</tt> parameter specifies a maximum size to write to a single log file.
-                            The <tt>backup</tt> parameter indicates how many backup log files to preserve. When the
+                            <p>The <em>size</em> parameter specifies a maximum size to write to a single log file.
+                            The <em>backup</em> parameter indicates how many backup log files to preserve. When the
                             maximum size is exceeded, the log files will be renamed by appending a sequential number
                             from zero up to the given path name. The highest number will be the oldest log file.</p>
-                            <p>The <tt>append</tt> option means that new content will be appended to an existing log
-                            file, whereas, <tt>anew</tt> specifies that the log file will be created anew whenever
+                            <p>The <em>append</em> option means that new content will be appended to an existing log
+                            file, whereas, <em>anew</em> specifies that the log file will be created anew whenever
                             Appweb is restarted.</p>
-                            <p>The <tt>level</tt> argument defines a
+                            <p>The <em>level</em> argument defines a
                             logging verbosity level between 0 and 9 with 9 being the most verbose.</p>
                             <p>The following levels are generally observed:</p>
-                            <table summary="">
+                            <table title="levels">
                                 <thead>
                                     <tr>
-                                        <td>Level</td>
-                                        <td>Usage</td>
+                                        <th>Level</th>
+                                        <th>Usage</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -174,8 +178,8 @@
                                     </tr>
                                 </tbody>
                             </table>
-                            <p>If Appweb is invoked with a <tt>--log</tt> or <tt>--verbose</tt> argument, it will
-                            override the ErrorLog directive which will be ignored.</tt>
+                            <p>If Appweb is invoked with a <em>--log</em> or <em>--verbose</em> argument, it will
+                            override the ErrorLog directive which will be ignored.</p>
                             <p>A general overview of using log files is discussed in the Administration
                             section on <a href="../logFiles.html">Log Files</a>.</p>
                         </td>
@@ -185,12 +189,14 @@
             
             <a name="log" id="log"></a>
             <h2>Log</h2>
-            <table class="directive" summary="" width="100%">
-                <tbody>
+            <table class="directive" title="directive">
+                <thead>
                     <tr>
-                        <td class="pivot">Description</td>
-                        <td>Control the tracing of HTTP messages</td>
+                        <th class="pivot">Description</th>
+                        <th>Control the tracing of HTTP messages</th>
                     </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>Log [rx|tx] <br/>
@@ -230,8 +236,8 @@
                             <p>For each class, the level defines the log level at which tracing will occur.</p>
                             <p>When tracing is enabled for a HTTP message, the headers and/or body of the message
                             will be written to the log file. Binary body content will be encoded into printable hex
-                            characters. Tracing will be limited to at most <tt>size</tt> bytes per request.</p>
-                            <p>The <tt>include</tt> and <tt>exclude</tt> define a set of file extensions that will be
+                            characters. Tracing will be limited to at most <em>size</em> bytes per request.</p>
+                            <p>The <em>include</em> and <em>exclude</em> define a set of file extensions that will be
                             included or excluded in the trace.</p>
                         </td>
                     </tr>
