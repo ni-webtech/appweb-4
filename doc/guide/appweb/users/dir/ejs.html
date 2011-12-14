@@ -8,6 +8,7 @@
     <meta name="description" content="Embedthis Sofware provides commercial and open source embedded web servers for 
         devices and applications." />
 	<meta name="robots" content="index,follow" />
+    <link href="http://www.google.com/cse/style/look/default.css" type="text/css" rel="stylesheet" />
 	<link href="../../../../doc.css" rel="stylesheet" type="text/css" />
 	<link href="../../../../print.css" rel="stylesheet" type="text/css" media="print"/>
     <!--[if IE]>
@@ -19,18 +20,22 @@
     <div class="top">
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
-             <div class="search">
-                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
-                     <p>
-                        <label for="q" title="Search">Search</label> 
-                        <input type="text" id="q" name="q" size="15" maxlength="255" />
-                        <input type="submit" id="submit" value="Go" /> 
-                        <input type="hidden" name="domains" value="appwebserver.org" /> 
-                        <input type="hidden" name="sitesearch" value="appwebserver.org" />
-                    </p>
-                 </form>
-              </div>
-            <!--TITLE-->Embedthis Appweb 4.0.0
+            <div class="search">
+                <div id="cse-search-form">Loading</div>
+                <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+                <script type="text/javascript"> 
+                  google.load('search', '1', {language : 'en'});
+                  google.setOnLoadCallback(function() {
+                    var customSearchControl = new google.search.CustomSearchControl(
+                      '000262706376373952077:1hs0lhenihk');
+                    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+                    var options = new google.search.DrawOptions();
+                    options.enableSearchboxOnly("http://appwebserver.org/search.html");
+                    customSearchControl.draw('cse-search-form', options);
+                  }, true);
+                </script>
+                <div class="version">Embedthis Appweb 4.0.0</div>
+            </div>
         </div>
         <div class="crumbs">
             <a href="../../../../product/index.html">Home</a>
@@ -123,7 +128,6 @@ server.listen()
                     </tr>
                 </tbody>
             </table>
-
             <a name="ejsStartup" id="ejsStartup"></a>
             <h2>EjsStartup</h2>
             <table class="directive" title="directive">
@@ -166,7 +170,6 @@ server.listen()
                     </tr>
                 </tbody>
             </table>
-
             <a name="ejsWorkers" id="ejsWorkers"></a>
             <h2>EjsWorkers</h2>
             <table class="directive" title="directive">

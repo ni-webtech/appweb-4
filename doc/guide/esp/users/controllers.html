@@ -8,6 +8,7 @@
     <meta name="description" content="Embedthis Sofware provides commercial and open source embedded web servers for 
         devices and applications." />
 	<meta name="robots" content="index,follow" />
+    <link href="http://www.google.com/cse/style/look/default.css" type="text/css" rel="stylesheet" />
 	<link href="../../../doc.css" rel="stylesheet" type="text/css" />
 	<link href="../../../print.css" rel="stylesheet" type="text/css" media="print"/>
     <!--[if IE]>
@@ -19,18 +20,22 @@
     <div class="top">
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
-             <div class="search">
-                 <form id="search" method="get" action="http://www.google.com/search" title="Search appwebserver.org">
-                     <p>
-                        <label for="q" title="Search">Search</label> 
-                        <input type="text" id="q" name="q" size="15" maxlength="255" />
-                        <input type="submit" id="submit" value="Go" /> 
-                        <input type="hidden" name="domains" value="appwebserver.org" /> 
-                        <input type="hidden" name="sitesearch" value="appwebserver.org" />
-                    </p>
-                 </form>
-              </div>
-            <!--TITLE-->Embedthis Appweb 4.0.0
+            <div class="search">
+                <div id="cse-search-form">Loading</div>
+                <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+                <script type="text/javascript"> 
+                  google.load('search', '1', {language : 'en'});
+                  google.setOnLoadCallback(function() {
+                    var customSearchControl = new google.search.CustomSearchControl(
+                      '000262706376373952077:1hs0lhenihk');
+                    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+                    var options = new google.search.DrawOptions();
+                    options.enableSearchboxOnly("http://appwebserver.org/search.html");
+                    customSearchControl.draw('cse-search-form', options);
+                  }, true);
+                </script>
+                <div class="version">Embedthis Appweb 4.0.0</div>
+            </div>
         </div>
         <div class="crumbs">
             <a href="../../../product/index.html">Home</a>
@@ -80,7 +85,6 @@
         <p>MVC <em>controllers</em> are the conductors of the application and they orchestrate the application's 
         activities. Via <em>action</em> functions, they receive client requests and generate appropriate responses, 
         mutating the applications data model in the process.</p>
-
         <a name="example" id="example"></a>
         <h2 class="section">Example of a Controller</h2>
             <p>So what does a controller look like? Here is a partial example that has four actions:</p>
@@ -116,7 +120,6 @@ http://embedthis.com/app/post/create
             <p>assuming a correctly configured request route, the <em>create</em> action, in the <em>post</em>
             controller will be run. This will create a new blog post and then render the <em>post-list.esp</em> 
             view of posts back to the client.</p>
-
         <a name="routing" id="routing"></a>
         <h2 class="section">Routing Requests</h2>
         <p>At the heart of understanding how controllers are loaded and actions are run, is understanding Appweb
@@ -162,7 +165,6 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
                 <li>Run the specified controller action determined by the request route pattern</li>
                 <li>Optionally render a response view to the client</li>
             </ol>
-
             <a name="config" id="config"></a>
             <h2 class="section">Configuring Controllers</h2>
             <p>Controllers may be configured two ways:</p>
@@ -202,7 +204,6 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
             DocumentRoot/controllers. The Target directive defines how the action function name to invoke. 
             Note: This usage is less typical than using the MVC pattern.</p>
             <a name="actions" id="actions"></a>
-
             <h2 class="section">Actions</h2>
             <p>Actions are where the controller does its work. In ESP, actions are simple "C" functions and thus
             they need to be registered before use. This is done in the controller initialization function. 
@@ -252,7 +253,6 @@ static void first() {
             is held open, but Appweb is not blocked in any thread. The call to <em>setTimeout</em> will arrange to have
             the Appweb event loop invoke <em>second</em> after five seconds have elapsed. This pattern is a 
             highly efficient in its use of system resources and scales very well.</p>
-
             <h2>Loading and Caching Controllers</h2>
             <p>Before a controller can run, it must first be compiled and linked into a loadable library.
             On Windows, this will be a DLL, on Unix, it will be a shared library with a ".so" extension. On VxWorks it
@@ -273,7 +273,6 @@ static void first() {
             <p>If Appweb was configured and built in debug mode, the default value for <em>EspUpdate</em> will be
             <em>on</em>. If Appweb was built in release mode, the default value is <em>off</em>. In release mode is it
             common practice to lock down the compiled controllers and not auto-recompile once deployed.</p>
-
             <a name="context" id="context"></a>
             <h2 class="section">Controller Context</h2>
             <p>ESP establishes a request context for the controller before invoking the controller action. The top level 
@@ -448,7 +447,6 @@ static void first() {
                     </tr>
                 </tbody>
             </table>
-
             <a name="parameters"></a>
             <h2 class="section">Request Parameters</h2>
             <p>ESP will collect request query, form data and route parameters into one
@@ -469,7 +467,6 @@ static void first() {
             
             If the action method does not explicitly generate any response, ESP will invoke a view with the same name as
             the action method.</p>
-
             <a name="generating" id="generating"></a>
             <h2 class="section">Generating Controllers and Actions</h2>
             <p>If you are creating an MVC application, you may use the ESP application generator, called <em>esp</em> to
