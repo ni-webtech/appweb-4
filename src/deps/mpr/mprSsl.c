@@ -1283,7 +1283,9 @@ static int configureOss(MprSsl *ssl)
     }
 
     SSL_CTX_set_app_data(context, (void*) ssl);
+#if UNUSED
     SSL_CTX_set_quiet_shutdown(context, 1);
+#endif
     SSL_CTX_sess_set_cache_size(context, 512);
 
     RAND_bytes(resume, sizeof(resume));
