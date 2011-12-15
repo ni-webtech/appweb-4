@@ -23430,13 +23430,10 @@ int mprStartWorker(MprWorkerProc proc, void *data)
         mprStartThread(worker->thread);
 
     } else {
-        static int warned = 0;
         /*
             No free workers and can't create anymore
          */
-        if (warned++ == 0) {
-            mprError("No free workers. (Count %d of %d)", ws->numThreads, ws->maxThreads);
-        }
+        mprError("No free workers. Increase ThreadLimit. (Count %d of %d)", ws->numThreads, ws->maxThreads);
         mprUnlock(ws->mutex);
         return MPR_ERR_BUSY;
     }

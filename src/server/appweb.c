@@ -66,13 +66,14 @@ MAIN(appweb, int argc, char **argv)
 {
     Mpr     *mpr;
     cchar   *ipAddrPort, *argp, *jail;
-    char    *ip;
-    int     argind, port, status;
+    char    *ip, *logSpec;
+    int     argind, port, status, verbose;
 
     ipAddrPort = 0;
     ip = 0;
     jail = 0;
     port = -1;
+    verbose = 0;
     argv[0] = "appweb";
 
     if ((mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD)) == NULL) {
@@ -86,6 +87,11 @@ MAIN(appweb, int argc, char **argv)
     mprAddRoot(app);
     mprAddStandardSignals();
 
+#if BLD_FEATURE_ROMFS
+    extern MprRomInode romFiles[];
+    mprSetRomFileSystem(romFiles);
+#endif
+
     argc = mpr->argc;
     argv = mpr->argv;
     app->mpr = mpr;
@@ -93,11 +99,7 @@ MAIN(appweb, int argc, char **argv)
     app->configFile = BLD_CONFIG_FILE;
     app->home = BLD_SERVER_ROOT;
     app->documents = app->home;
-
-#if BLD_FEATURE_ROMFS
-    extern MprRomInode romFiles[];
-    mprSetRomFileSystem(romFiles);
-#endif
+    logSpec = 0;
 
     for (argind = 1; argind < argc; argind++) {
         argp = argv[argind];
@@ -135,8 +137,7 @@ MAIN(appweb, int argc, char **argv)
             if (argind >= argc) {
                 usageError();
             }
-            mprStartLogging(argv[++argind], 1);
-            mprSetCmdlineLogging(1);
+            logSpec = argv[++argind];
 
         } else if (strcmp(argp, "--name") == 0 || strcmp(argp, "-n") == 0) {
             if (argind >= argc) {
@@ -151,8 +152,7 @@ MAIN(appweb, int argc, char **argv)
             app->workers = atoi(argv[++argind]);
 
         } else if (strcmp(argp, "--verbose") == 0 || strcmp(argp, "-v") == 0) {
-            mprStartLogging("stderr:2", 1);
-            mprSetCmdlineLogging(1);
+            verbose++;
 
         } else if (strcmp(argp, "--version") == 0 || strcmp(argp, "-V") == 0) {
             mprPrintf("%s %s-%s\n", mprGetAppTitle(), BLD_VERSION, BLD_NUMBER);
@@ -164,7 +164,13 @@ MAIN(appweb, int argc, char **argv)
             exit(5);
         }
     }
-
+    if (logSpec) {
+        mprStartLogging(logSpec, 1);
+        mprSetCmdlineLogging(1);
+    } else if (verbose) {
+        mprStartLogging(sfmt("stderr:%d", verbose + 1), 1);
+        mprSetCmdlineLogging(1);
+    }
     if (mprStart() < 0) {
         mprUserError("Can't start MPR for %s", mprGetAppName());
         mprDestroy(MPR_EXIT_DEFAULT);
