@@ -1793,6 +1793,8 @@ BLD_IMPORTS="${BLD_IMPORTS}"
         echo export WIND_HOME=${WIND_HOME} >>$FILE
         echo export WIND_BASE=${WIND_BASE} >>$FILE
         echo export WIND_HOST_TYPE=${WIND_HOST_TYPE} >>$FILE
+        echo export WIND_PLATFORM=${WIND_PLATFORM} >>$FILE
+        echo export WIND_GNU_PATH=${WIND_GNU_PATH} >>$FILE
         echo >>$FILE
     fi
     createConfigFooter "$FILE"

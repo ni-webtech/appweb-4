@@ -92,6 +92,9 @@
 #endif
 
 #if VXWORKS
+    #ifndef _VSB_CONFIG_FILE
+        #define _VSB_CONFIG_FILE "vsbConfig.h"
+    #endif
     #include    <vxWorks.h>
     #define     HAS_USHORT 1
 #endif
@@ -263,7 +266,11 @@
     #include    <ioLib.h>
     #include    <pipeDrv.h>
     #include    <hostLib.h>
+#if UNUSED
     #include    <symSyncLib.h>
+#else
+    #include    <symSync.h>
+#endif
     #include    <sysSymTbl.h>
     #include    <sys/fcntlcom.h>
     #include    <tickLib.h>
@@ -625,8 +632,12 @@ typedef int64 MprTime;
 #endif
 
 #if !BLD_WIN_LIKE && !CYGWIN
-    #define O_BINARY        0
-    #define O_TEXT          0
+    #ifndef O_BINARY
+        #define O_BINARY    0
+    #endif
+    #ifndef O_TEXT
+        #define O_TEXT      0
+    #endif
 #endif
 
 #if !LINUX
@@ -665,8 +676,12 @@ typedef int64 MprTime;
     #if _DIAB_TOOL
         #define inline __inline__
     #endif
-    #define closesocket(x)  close(x)
-    #define va_copy(d, s) ((d) = (s))
+    #ifndef closesocket
+        #define closesocket(x)  close(x)
+    #endif
+    #ifndef va_copy
+        #define va_copy(d, s) ((d) = (s))
+    #endif
     #define strcasecmp scasecmp
     #define strncasecmp sncasecmp
 #endif
