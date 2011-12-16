@@ -1146,6 +1146,7 @@ probe()
             fi
             found=`canonPath "${file}"`
             [ "$found" != "" -a "$executable" = 1 -a ! -x "$found" ] && found=""
+            [ "$executable" = 1 -a -d "$found" ] && found=""
             [ "$trace" != 0 -a "$found" != "" ] && echo "    probe: found $name at $found" 1>&2
         fi
     fi
@@ -1164,6 +1165,7 @@ probe()
             found=${found%/}
         fi
         [ "$found" != "" -a "$executable" = 1 -a ! -x "$found" ] && found=""
+        [ "$executable" = 1 -a -d "$found" ] && found=""
         [ "$trace" != 0 -a "$found" != "" ] && echo "    probe: $name at found $found" 1>&2
     fi
 
@@ -1190,6 +1192,7 @@ probe()
                         fi
                         search=
                         [ "$found" != "" -a "$executable" = 1 -a ! -x "$found" ] && found=""
+                        [ "$executable" = 1 -a -d "$found" ] && found=""
                         [ "$trace" != 0 -a "$found" != "" ] && echo "    probe: found $name at $found" 1>&2
                         break
                     fi

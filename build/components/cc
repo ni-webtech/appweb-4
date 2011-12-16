@@ -155,7 +155,7 @@ setCompilerOptions()
             if [ $? = 0 ] ; then
                 eval $hasDynLoad=1
             else
-                eval \"${cc}\" ${flags} -ldl -o $out $file >/dev/null 2>&1
+                eval \"${cc}\" ${flags} -o $out $file -ldl >/dev/null 2>&1
                 if [ $? = 0 ] ; then
                     eval $hasDynLoad=1
                 fi
@@ -169,7 +169,7 @@ setCompilerOptions()
                 # echo "         ${cc}" -o $out -c $file 
             fi
             echo -e "#include <histedit.h>\nint main() { history_init(); return 0; }\n" >$file
-            eval \"${cc}\" ${flags} -ledit -lcurses -o $out $file >/dev/null 2>&1
+            eval \"${cc}\" ${flags} -o $out $file -ledit -lcurses >/dev/null 2>&1
             if [ $? = 0 ] ; then
                 eval $hasLibEdit=1
             fi
@@ -182,7 +182,7 @@ setCompilerOptions()
                 # echo "         ${cc}" -o $out -c $file 
             fi
             echo -e "extern pam_start(); \nint main() { void *x = pam_start; return 0; }\n" >$file
-            eval \"${cc}\" ${flags} -lpam -o $out $file >/dev/null 2>&1
+            eval \"${cc}\" ${flags} -o $out $file -lpam >/dev/null 2>&1
             if [ $? = 0 ] ; then
                 eval $hasPam=1
             fi

@@ -94,7 +94,7 @@
             <ol>
                 <li>Uncompress and extract the image:
                     <pre>
-tar xvfz appweb-VERSION-DIST-LINUX-i686.FMT.tar.gz
+tar xvfz appweb-VERSION-DIST-LINUX-CPU.FMT.tgz
 </pre>
                     <p>Where VERSION is the current version (e.g. 1.2.3-1), and DIST is the name of the Linux
                     distribution (e.g. fedora), and FMT is either <b>rpm</b> or <b>deb</b>.</p>
@@ -109,7 +109,7 @@ sudo ./install
             <ol>
                 <li>Uncompress and extract the image:
                     <pre>
-tar xvfz appweb-VERSION-DIST-LINUX-i686.tar.tar.gz
+tar xvfz appweb-VERSION-DIST-LINUX-CPU.tgz
 </pre>
                 </li>
                 <li>Then start the installation with administrator privilege:
@@ -134,11 +134,11 @@ sudo ./uninstall
             rebooted.</p>
             <p>If you wish to manually stop Appweb, type:</p>
             <pre>
-/etc/init.d/appweb stop
+appman start
 </pre>
             <p>To restart Appweb:</p>
             <pre>
-/etc/init.d/appweb start
+appman stop
 </pre>
             <p>Alternatively, you can run appweb manually:</p>
             <pre>
