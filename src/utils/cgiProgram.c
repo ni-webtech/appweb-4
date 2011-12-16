@@ -22,6 +22,9 @@
 /********************************** Includes **********************************/
 
 #define _CRT_SECURE_NO_WARNINGS 1
+#ifndef _VSB_CONFIG_FILE
+    #define _VSB_CONFIG_FILE "vsbConfig.h"
+#endif
 
 #include <errno.h>
 #include <ctype.h>
