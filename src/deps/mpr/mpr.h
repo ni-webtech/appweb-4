@@ -682,8 +682,12 @@ typedef int64 MprTime;
     #ifndef va_copy
         #define va_copy(d, s) ((d) = (s))
     #endif
-    #define strcasecmp scasecmp
-    #define strncasecmp sncasecmp
+    #ifndef strcasecmp
+        #define strcasecmp scasecmp
+    #endif
+    #ifndef strncasecmp
+        #define strncasecmp sncasecmp
+    #endif
 #endif
 
 #if BLD_WIN_LIKE

@@ -92,7 +92,8 @@ setVxEnv()
 		WIND_HOME="$path"
 	fi
     BLD_BUILD_SYSTEM_VX=$WIND_HOST_TYPE
-	eval WIND_GNU_PATH=\"$WIND_HOME/gnu/*-${WIND_PLATFORM}\"
+	eval WIND_GNU_PATH=`echo $WIND_HOME/gnu/*-${WIND_PLATFORM}`
+
 	eval BLD_${kind}_IFLAGS=\"$BLD_HOST_IFLAGS $CFG_HOST_VXWORKS_IFLAGS\"
 
 	#
