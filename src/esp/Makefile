@@ -20,7 +20,7 @@ modules: $(ESP_CMD) $(TARGETS)
 
 $(BLD_BIN_DIR)/esp$(BLD_EXE): $(OBJECTS)
 	bld --exe $(BLD_BIN_DIR)/esp$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" --libs "$(BLD_APPWEB_LIBS)" \
-		$(BLD_LIB_DIR)/mod_esp$(BLD_SHLIB) esp$(BLD_OBJ)
+	esp$(BLD_OBJ) $(BLD_LIB_DIR)/mod_esp$(BLD_SHLIB) 
 
 $(BLD_LIB_DIR)/esp-www: www/* www/files/*/*
 	$(call log) [Copy] "www to $(BLD_LIB_DIR)/esp-www"
