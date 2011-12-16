@@ -72,6 +72,11 @@ imported have to be identified as such. When building PCRE, the appropriate
 export setting is defined in pcre_internal.h, which includes this file. So we
 don't change existing definitions of PCRE_EXP_DECL and PCRECPP_EXP_DECL. */
 
+/* EMBEDTHIS */
+#ifndef _VSB_CONFIG_FILE
+    #define _VSB_CONFIG_FILE "vsbConfig.h"
+#endif
+
 #if BLD_ALL_IN_ONE
     /*
      *  When building all-in-one, we must use internal definitions

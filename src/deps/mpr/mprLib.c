@@ -19639,7 +19639,7 @@ static MprSocket *acceptSocket(MprSocket *listen)
     struct sockaddr_storage     addrStorage, saddrStorage;
     struct sockaddr             *addr, *saddr;
     char                        ip[MPR_MAX_IP_ADDR], acceptIp[MPR_MAX_IP_ADDR];
-    socklen_t                   addrlen, saddrlen;
+    MprSocklen                  addrlen, saddrlen;
     int                         fd, port, acceptPort;
 
     ss = MPR->socketService;
@@ -19736,7 +19736,7 @@ ssize mprReadSocket(MprSocket *sp, void *buf, ssize bufsize)
 static ssize readSocket(MprSocket *sp, void *buf, ssize bufsize)
 {
     struct sockaddr_storage server;
-    socklen_t               len;
+    MprSocklen              len;
     ssize                   bytes;
     int                     errCode;
 
@@ -19752,7 +19752,7 @@ static ssize readSocket(MprSocket *sp, void *buf, ssize bufsize)
 again:
     if (sp->flags & MPR_SOCKET_DATAGRAM) {
         len = sizeof(server);
-        bytes = recvfrom(sp->fd, buf, (int) bufsize, MSG_NOSIGNAL, (struct sockaddr*) &server, (socklen_t*) &len);
+        bytes = recvfrom(sp->fd, buf, (int) bufsize, MSG_NOSIGNAL, (struct sockaddr*) &server, (MprSocklen*) &len);
     } else {
         bytes = recv(sp->fd, buf, (int) bufsize, MSG_NOSIGNAL);
     }

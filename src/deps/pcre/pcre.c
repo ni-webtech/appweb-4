@@ -327,6 +327,11 @@ functions whose names all begin with "_pcre_". */
 
 #include "buildConfig.h"
 
+/* EMBEDTHIS */
+#ifndef _VSB_CONFIG_FILE
+    #define _VSB_CONFIG_FILE "vsbConfig.h"
+#endif
+
 #if BLD_FEATURE_PCRE
 /* Define DEBUG to get debugging output on stdout. */
 
