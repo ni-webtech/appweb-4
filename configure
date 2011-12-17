@@ -351,9 +351,7 @@ parseSystemConfiguration() {
 
         # Microsoft Windows XP [Version 5.1.2600]
         # Microsoft Windows [Version 6.0.6000]
-
-        cmd=`cygpath -m "${COMSPEC}"`
-        rel=`$cmd /c ver | tail -1`
+        rel=`cmd /c ver | tail -1`
         version=`echo $rel | sed 's/.*Version //;s/]//' | awk '{ print $1 }'`
         version=${version%%.*}
         #  if [ "$version" = 6 ] ; then
@@ -1794,7 +1792,9 @@ BLD_IMPORTS="${BLD_IMPORTS}"
         echo export WIND_BASE=${WIND_BASE} >>$FILE
         echo export WIND_HOST_TYPE=${WIND_HOST_TYPE} >>$FILE
         echo export WIND_PLATFORM=${WIND_PLATFORM} >>$FILE
-        echo export WIND_GNU_PATH=${WIND_GNU_PATH} >>$FILE
+        if [ "$WIND_GNU_PATH" != "" ] ; then
+            echo export WIND_GNU_PATH=${WIND_GNU_PATH} >>$FILE
+        fi
         echo >>$FILE
     fi
     createConfigFooter "$FILE"
