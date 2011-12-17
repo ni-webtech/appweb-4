@@ -88,24 +88,25 @@ setVxEnv()
 	#
 	if [ "${version%.*}" -ge 6 ] ; then
 		WIND_HOME="${path%/*}"
+        eval WIND_GNU_PATH=`echo $WIND_HOME/gnu/*-${WIND_PLATFORM}`
+        search="
+            '\$WIND_GNU_PATH/\$WIND_HOST_TYPE/bin'
+            '\$WIND_GNU_PATH/\$WIND_HOST_TYPE/\$BLD_HOST_SYSTEM/bin'
+            '\$WIND_BASE/host/\$WIND_HOST_TYPE/bin'
+            '\$WIND_BASE/host/resource/hutils/tcl'
+            '\$WIND_HOME/workbench*/foundation/*/\$WIND_HOST_TYPE/bin'
+        "
 	else
 		WIND_HOME="$path"
+        WIND_GNU_PATH
+        search="
+            '\$WIND_BASE/host/\$WIND_HOST_TYPE/bin'
+            '\$WIND_BASE/host/resource/hutils/tcl'
+            '\$WIND_HOME/workbench*/foundation/*/\$WIND_HOST_TYPE/bin'
+        "
 	fi
     BLD_BUILD_SYSTEM_VX=$WIND_HOST_TYPE
-	eval WIND_GNU_PATH=`echo $WIND_HOME/gnu/*-${WIND_PLATFORM}`
 
-	eval BLD_${kind}_IFLAGS=\"$BLD_HOST_IFLAGS $CFG_HOST_VXWORKS_IFLAGS\"
-
-	#
-	#	Update search path for base tools to use
-	#
-    search="
-		'\$WIND_GNU_PATH/\$WIND_HOST_TYPE/bin'
-		'\$WIND_GNU_PATH/\$WIND_HOST_TYPE/\$BLD_HOST_SYSTEM/bin'
-		'\$WIND_BASE/host/\$WIND_HOST_TYPE/bin'
-		'\$WIND_BASE/host/resource/hutils/tcl'
-		'\$WIND_HOME/workbench*/foundation/*/\$WIND_HOST_TYPE/bin'
-	"
 	SEARCH_PATH="$SEARCH_PATH:`convertSearchPath "$search"`"
 
 	#
@@ -120,4 +121,7 @@ setVxEnv()
 	#	Export so the "cc" component file can run the compiler
     #
 	export WIND_HOME WIND_BASE WIND_HOST_TYPE WIND_PLATFORM WIND_GNU_PATH 
+
+	eval BLD_${kind}_IFLAGS=\"$BLD_HOST_IFLAGS $CFG_HOST_VXWORKS_IFLAGS\"
+
 }
