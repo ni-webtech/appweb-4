@@ -315,7 +315,6 @@ enumerable class Test {
             test.verbosity = Number(data.verbosity)
             test.config = data.config
             blend(App.config.test, test.config, false)
-            // test.multithread = test.config.multithread
             tsession = data.tsession
             if (data.logPath) {
                 test.setLogPath(Path(data.logPath))
@@ -505,9 +504,6 @@ enumerable class Test {
                 value = value cast Number
             }
             config[key] = value
-        }
-        if (config["multithread"] == 0) {
-            error("Requires configure --enable-multithread")
         }
     }
 

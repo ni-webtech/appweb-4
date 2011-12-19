@@ -1364,10 +1364,13 @@ static int configureOss(MprSsl *ssl)
     SSL_CTX_set_tmp_rsa_callback(context, rsaCallback);
     SSL_CTX_set_tmp_dh_callback(context, dhCallback);
 
-    /*
-        Enable all buggy client work-arounds 
-     */
     SSL_CTX_set_options(context, SSL_OP_ALL);
+#ifdef SSL_OP_NO_TICKET
+    SSL_CTX_set_options(context, SSL_OP_NO_TICKET);
+#endif
+#ifdef SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
+    SSL_CTX_set_options(context, SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
+#endif
     SSL_CTX_set_mode(context, SSL_MODE_ENABLE_PARTIAL_WRITE | SSL_MODE_AUTO_RETRY);
 
     /*
