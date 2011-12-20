@@ -1500,11 +1500,17 @@ void mprResetYield()
 {
     MprThread   *tp;
 
+    mprAssert(mprGetCurrentThread());
+
     if ((tp = mprGetCurrentThread()) != 0) {
         tp->stickyYield = 0;
     }
-    /* This ensures if marking, we will be not yielded on return */
-    mprYield(0);
+    /* Rather than just clear yield, we must wait till marking is finished if underway */
+    if (heap->mustYield) {
+        mprYield(0);
+    } else {
+        tp->yielded = 0;
+    }
 }
 
 
@@ -18743,9 +18749,16 @@ static void signalHandler(int signo, siginfo_t *info, void *arg)
     if (signo <= 0 || signo >= MPR_MAX_SIGNALS || MPR == 0) {
         return;
     }
+#if UNUSED
     if (MPR->state >= MPR_STOPPING && signo == SIGINT) {
         exit(1);
     }
+#else
+    if (signo == SIGINT) {
+        exit(1);
+        return;
+    }
+#endif
     ssp = MPR->signalService;
     ip = &ssp->info[signo];
     ip->triggered = 1;
@@ -19646,7 +19659,13 @@ static MprSocket *acceptSocket(MprSocket *listen)
     addr = (struct sockaddr*) &addrStorage;
     addrlen = sizeof(addrStorage);
 
+    if (listen->flags & MPR_SOCKET_BLOCK) {
+        mprYield(MPR_YIELD_STICKY);
+    }
     fd = (int) accept(listen->fd, addr, &addrlen);
+    if (listen->flags & MPR_SOCKET_BLOCK) {
+        mprResetYield();
+    }
     if (fd < 0) {
         if (mprGetError() != EAGAIN) {
             mprError("socket: accept failed, errno %d", mprGetOsError());
@@ -19750,11 +19769,17 @@ static ssize readSocket(MprSocket *sp, void *buf, ssize bufsize)
         return -1;
     }
 again:
+    if (sp->flags & MPR_SOCKET_BLOCK) {
+        mprYield(MPR_YIELD_STICKY);
+    }
     if (sp->flags & MPR_SOCKET_DATAGRAM) {
         len = sizeof(server);
         bytes = recvfrom(sp->fd, buf, (int) bufsize, MSG_NOSIGNAL, (struct sockaddr*) &server, (MprSocklen*) &len);
     } else {
         bytes = recv(sp->fd, buf, (int) bufsize, MSG_NOSIGNAL);
+    }
+    if (sp->flags & MPR_SOCKET_BLOCK) {
+        mprResetYield();
     }
     if (bytes < 0) {
         errCode = mprGetSocketError(sp);
@@ -19840,10 +19865,16 @@ static ssize writeSocket(MprSocket *sp, cvoid *buf, ssize bufsize)
         sofar = 0;
         while (len > 0) {
             unlock(sp);
+            if (sp->flags & MPR_SOCKET_BLOCK) {
+                mprYield(MPR_YIELD_STICKY);
+            }
             if ((sp->flags & MPR_SOCKET_BROADCAST) || (sp->flags & MPR_SOCKET_DATAGRAM)) {
                 written = sendto(sp->fd, &((char*) buf)[sofar], (int) len, MSG_NOSIGNAL, addr, addrlen);
             } else {
                 written = send(sp->fd, &((char*) buf)[sofar], (int) len, MSG_NOSIGNAL);
+            }
+            if (sp->flags & MPR_SOCKET_BLOCK) {
+                mprResetYield();
             }
             lock(sp);
             if (written < 0) {
@@ -19966,7 +19997,13 @@ MprOff mprSendFileToSocket(MprSocket *sock, MprFile *file, MprOff offset, MprOff
 
     if (file && file->fd >= 0) {
         written = bytes;
+        if (sock->flags & MPR_SOCKET_BLOCK) {
+            mprYield(MPR_YIELD_STICKY);
+        }
         rc = sendfile(file->fd, sock->fd, offset, &written, &def, 0);
+        if (sock->flags & MPR_SOCKET_BLOCK) {
+            mprResetYield();
+        }
     } else
 #else
     if (1) 
@@ -20004,6 +20041,9 @@ MprOff mprSendFileToSocket(MprSocket *sock, MprFile *file, MprOff offset, MprOff
 #endif
             while (!done && toWriteFile > 0) {
                 nbytes = (ssize) min(MAXSSIZE, toWriteFile);
+                if (sock->flags & MPR_SOCKET_BLOCK) {
+                    mprYield(MPR_YIELD_STICKY);
+                }
 #if LINUX && !__UCLIBC__
     #if HAS_OFF64
                 rc = sendfile64(sock->fd, file->fd, &offset, nbytes);
@@ -20013,6 +20053,9 @@ MprOff mprSendFileToSocket(MprSocket *sock, MprFile *file, MprOff offset, MprOff
 #else
                 rc = localSendfile(sock, file, offset, nbytes);
 #endif
+                if (sock->flags & MPR_SOCKET_BLOCK) {
+                    mprResetYield();
+                }
                 if (rc > 0) {
                     written += rc;
                     toWriteFile -= rc;
@@ -20407,6 +20450,9 @@ static int getSocketIpAddr(struct sockaddr *addr, int addrlen, char *ip, int ipL
 }
 
 
+/*
+    Looks like an IPv6 address if it has 2 or more colons
+ */
 static int ipv6(cchar *ip)
 {
     cchar   *cp;
@@ -20438,6 +20484,9 @@ static int ipv6(cchar *ip)
         aaaa:bbbb:cccc:dddd:eeee:ffff:gggg:hhhh:iiii
     or
         [aaaa:bbbb:cccc:dddd:eeee:ffff:gggg:hhhh:iiii]:port
+
+    If supplied an IPv6 address, the backets are stripped in the returned IP address.
+    This routine skips any "protocol://" prefix.
  */
 int mprParseSocketAddress(cchar *ipAddrPort, char **pip, int *pport, int defaultPort)
 {
@@ -20490,7 +20539,6 @@ int mprParseSocketAddress(cchar *ipAddrPort, char **pip, int *pport, int default
             ipv4 
          */
         ip = sclone(ipAddrPort);
-
         if ((cp = strchr(ip, ':')) != 0) {
             *cp++ = '\0';
             if (*cp == '*') {
@@ -20522,6 +20570,18 @@ int mprParseSocketAddress(cchar *ipAddrPort, char **pip, int *pport, int default
 bool mprIsSocketSecure(MprSocket *sp)
 {
     return sp->sslSocket != 0;
+}
+
+
+bool mprIsSocketV6(MprSocket *sp)
+{
+    return sp->ip && ipv6(sp->ip);
+}
+
+
+bool mprIsIPv6(cchar *ip)
+{
+    return ip && ipv6(ip);
 }
 
 

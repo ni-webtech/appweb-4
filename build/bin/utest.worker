@@ -79,11 +79,12 @@ public function share(key: String, value: String) {
 }
 
 
-public function stopService() {
-    if (Path(PIDFILE).exists) {
-        pid = Path(PIDFILE).readString()
-        Path(PIDFILE).remove()
-        try { kill(pid, 9); } catch (e) { /* print("Can't stop service " + pid)  */}
+public function stopService(options = {}) {
+    let pidfile = options.pidfile || PIDFILE
+    if (Path(pidfile).exists) {
+        pid = Path(pidfile).readString()
+        Path(pidfile).remove()
+        try { kill(pid, 9); } catch (e) { }
         App.sleep(500);
     }
 }
@@ -91,33 +92,28 @@ public function stopService() {
 
 public function startService(cmdline: String, options = {}): Void {
     stopService()
+    let port = options.port || App.config.test.http_port
+    let pidfile = options.pidfile || PIDFILE
+
     if (!App.getenv("NOSERVER")) {
         let cmd = new Cmd
         blend(options, {detach: true})
         cmd.start(cmdline, options)
         cmd.finalize()
         let pid = cmd.pid
-        Path(PIDFILE).write(pid)
-        let port = options.port || App.config.test.http_port
-        let url = ":" + port + "/web/ready.ready"
-        let http
-        for (i in 10) {
-            http = new Http
-            try { 
-                http.get(url)
-                /* Expect to get a not-found response */
-                if (http.status == 404 || http.status == 200) {
-                    break
-                }
-            } catch (e) { }
-            App.sleep(100)
-            http.close()
-        }
-        if (http.status != 404 && http.status != 200) {
-            throw "Can't start web server"
-        }
-        http.close()
+        Path(pidfile).write(pid)
     }
+    let connected
+    for (i in 50) {
+        try {
+            Socket().connect(port)
+            connected = true
+            break
+        } catch (e) { 
+            App.sleep(100) 
+        }
+    }
+    assert(connected, "Can't connect to service: " + cmdline)
 }
 
 

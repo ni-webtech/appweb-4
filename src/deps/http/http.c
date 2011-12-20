@@ -193,6 +193,7 @@ static void initSettings()
     app->headers = mprCreateList(0, 0);
     app->mutex = mprCreateLock();
 #if WIN
+    //  MOB - should be in mpr somewhere
     _setmode(fileno(stdout), O_BINARY);
 #endif
 }
@@ -724,7 +725,7 @@ static int issueRequest(HttpConn *conn, cchar *url, MprList *files)
                 if (redirect) {
                     location = httpCreateUri(redirect, 0);
                     target = httpJoinUri(conn->tx->parsedUri, 1, &location);
-                    url = httpUriToString(target, 1);
+                    url = httpUriToString(target, HTTP_COMPLETE_URI);
                     count = 0;
                 }
                 /* Count redirects and auth retries */

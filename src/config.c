@@ -1082,10 +1082,14 @@ static int limitUploadDirective(MaState *state, cchar *key, cchar *value)
 static int listenDirective(MaState *state, cchar *key, cchar *value)
 {
     HttpEndpoint    *endpoint;
-    char            *ip, *cp, *vp;
+    char            *ip;
+    int             port;
+    
+#if UNUSED
+    int colonCount;
+    char *cp, *vp;
     ssize           len;
-    int             port, colonCount;
-
+    
     vp = sclone(value);
     if (isdigit((int) *vp) && strchr(vp, '.') == 0 && strchr(vp, ':') == 0) {
         /*
@@ -1140,6 +1144,9 @@ static int listenDirective(MaState *state, cchar *key, cchar *value)
             ip = 0;
         }
     }
+#else
+    mprParseSocketAddress(value, &ip, &port, HTTP_DEFAULT_PORT);
+#endif
     if (port == 0) {
         mprError("Bad or missing port %d in Listen directive", port);
         return -1;
