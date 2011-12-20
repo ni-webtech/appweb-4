@@ -43,10 +43,10 @@ static int checkEnvironment(cchar *program);
 static int findConfigFile();
 static void manageApp(App *app, int flags);
 static int initialize(cchar *ip, int port);
-static void traceHandler(void *ignored, MprSignal *sp);
 static void usageError();
 
 #if BLD_UNIX_LIKE
+static void traceHandler(void *ignored, MprSignal *sp);
 static int  unixSecurityChecks(cchar *program, cchar *home);
 #elif BLD_WIN_LIKE
 static int writePort(MaServer *server);
@@ -274,7 +274,7 @@ static int initialize(cchar *ip, int port)
     }
 #if BLD_WIN_LIKE
     writePort(app->server);
-#else
+#elif BLD_UNIX_LIKE
     app->traceToggle = mprAddSignalHandler(SIGUSR2, traceHandler, 0, 0, MPR_SIGNAL_AFTER);
 #endif
     return 0;
@@ -344,6 +344,7 @@ static int checkEnvironment(cchar *program)
 }
 
 
+#if BLD_UNIX_LIKE
 /*
     SIGUSR2 will toggle trace from level 2 to 6
  */
@@ -357,7 +358,6 @@ static void traceHandler(void *ignored, MprSignal *sp)
 }
 
 
-#if BLD_UNIX_LIKE
 /*
     Security checks. Make sure we are staring with a safe environment
  */

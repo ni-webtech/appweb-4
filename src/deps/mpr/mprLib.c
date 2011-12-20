@@ -3683,7 +3683,7 @@ void mprAtomicBarrier()
         __sync_synchronize();
     #elif BLD_UNIX_LIKE
         asm volatile ("" : : : "memory");
-    #elif MPR_CPU_IX86
+    #elif MPR_CPU_IX86 && 0
         asm volatile ("lock; add %eax,0");
     #else
         mprGlobalLock();
