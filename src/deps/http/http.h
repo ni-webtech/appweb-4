@@ -572,26 +572,29 @@ typedef struct HttpUri {
     char        *uri;                   /**< Original URI (not decoded) */
 } HttpUri;
 
+#define HTTP_COMPLETE_URI       0x1     /**< Complete all missing URI fields */
+#define HTTP_COMPLETE_URI_PATH  0x2     /**< Complete missing URI path */
+
 
 /** 
     Create and initialize a URI.
     @description Parse a uri and return a tokenized HttpUri structure.
     @param uri Uri string to parse
-    @param complete Add missing components. ie. Add scheme, host and port if not supplied. 
+    @param flags Set to HTTP_COMPLETE_URI to add missing components. ie. Add scheme, host and port if not supplied. 
     @return A newly allocated HttpUri structure. 
     @ingroup HttpUri
  */
-extern HttpUri *httpCreateUri(cchar *uri, int complete);
+extern HttpUri *httpCreateUri(cchar *uri, int flags);
 
 /**
     Clone a URI
     @description This call copies the base URI and optionally completes missing fields in the URI
     @param base Base URI to copy
-    @param complete If set to true, missing fields in the URI will be completed with default values.
+    @param flags Set to HTTP_COMPLETE_URI to add missing components. ie. Add scheme, host and port if not supplied. 
     @return A new URI object
     @ingroup HttpUri
  */
-extern HttpUri *httpCloneUri(HttpUri *base, int complete);
+extern HttpUri *httpCloneUri(HttpUri *base, int flags);
 
 /** 
     Format a URI
@@ -602,12 +605,12 @@ extern HttpUri *httpCloneUri(HttpUri *base, int complete);
     @param path URL path
     @param ref URL reference fragment
     @param query Additiona query parameters.
-    @param complete Add missing elements. For example, if scheme is null, then add "http".
+    @param flags Set to HTTP_COMPLETE_URI to add missing components. ie. Add scheme, host and port if not supplied. 
     @return A newly allocated uri string
     @ingroup HttpUri
  */
 extern char *httpFormatUri(cchar *scheme, cchar *host, int port, cchar *path, cchar *ref, cchar *query, 
-        int complete);
+        int flags);
 
 /**
     Create a URI from parts
@@ -619,12 +622,12 @@ extern char *httpFormatUri(cchar *scheme, cchar *host, int port, cchar *path, cc
     @param path The URI path to the requested document.
     @param reference URI reference with an HTML document. This is the URI component after the "#" in the URI path.
     @param query URI query component. This is the URI component after the "?" in the URI.
-    @param complete Set to true to complete the URI by supplying missing URI parts with default values.
+    @param flags Set to HTTP_COMPLETE_URI to add missing components. ie. Add scheme, host and port if not supplied. 
     @return A new URI 
     @ingroup HttpUri
  */
 extern HttpUri *httpCreateUriFromParts(cchar *scheme, cchar *host, int port, cchar *path, cchar *reference, 
-        cchar *query, int complete);
+        cchar *query, int flags);
 
 /** 
     Get the mime type for an extension.
@@ -639,11 +642,11 @@ extern cchar *httpLookupMimeType(cchar *ext);
     Convert a Uri to a string.
     @description Convert the given Uri to a string, optionally completing missing parts such as the host, port and path.
     @param uri A Uri object created via httpCreateUri 
-    @param complete Fill in missing parts of the uri
+    @param flags Set to HTTP_COMPLETE_URI to add missing components. ie. Add scheme, host and port if not supplied. 
     @return A newly allocated uri string. 
     @ingroup HttpUri
  */
-extern char *httpUriToString(HttpUri *uri, int complete);
+extern char *httpUriToString(HttpUri *uri, int flags);
 
 /** 
     Normalize a URI

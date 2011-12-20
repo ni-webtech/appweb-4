@@ -71,7 +71,8 @@ static int findFile(HttpConn *conn)
                 path = mprJoinPath(tx->filename, index);
                 if (mprPathExists(path, R_OK)) {
                     pathInfo = sjoin(rx->scriptName, rx->pathInfo, index, NULL);
-                    uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, prior->query,0);
+                    uri = httpFormatUri(prior->scheme, prior->host, prior->port, pathInfo, prior->reference, 
+                        prior->query, 0);
                     httpSetUri(conn, uri, 0);
                     tx->filename = path;
                     tx->ext = httpGetExt(conn);

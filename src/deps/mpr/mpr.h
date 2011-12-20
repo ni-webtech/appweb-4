@@ -6949,6 +6949,14 @@ extern int mprGetSocketInfo(cchar *ip, int port, int *family, int *protocol, str
 extern int mprGetSocketPort(MprSocket *sp);
 
 /**
+    Determine if the IP address is an IPv6 address
+    @param ip IP address
+    @return True if the address is an IPv6 address, otherwise zero.
+    @internal
+ */
+extern bool mprIsIPv6(cchar *ip);
+
+/**
     Determine if the socket is secure
     @description Determine if the socket is using SSL to provide enhanced security.
     @param sp Socket object returned from #mprCreateSocket
@@ -6956,6 +6964,15 @@ extern int mprGetSocketPort(MprSocket *sp);
     @ingroup MprSocket
  */
 extern bool mprIsSocketSecure(MprSocket *sp);
+
+/**
+    Determine if the socket is using IPv6
+    Currently only works for server side addresses.
+    @param sp Socket object returned from #mprCreateSocket
+    @return True if the socket is using IPv6, otherwise zero.
+    @internal
+ */
+extern bool mprIsSocketV6(MprSocket *sp);
 
 /**
     Test if the other end of the socket has been closed.

@@ -2469,7 +2469,8 @@ static HttpConn *openConnection(HttpConn *conn, cchar *url)
     mprAssert(conn);
 
     http = conn->http;
-    uri = httpCreateUri(url, 0);
+    uri = httpCreateUri(url, HTTP_COMPLETE_URI);
+    conn->tx->parsedUri = uri;
 
     if (uri->secure) {
 #if BLD_FEATURE_SSL
@@ -2639,7 +2640,6 @@ int httpConnect(HttpConn *conn, cchar *method, cchar *url)
     conn->sentCredentials = 0;
 
     conn->tx->method = supper(method);
-    conn->tx->parsedUri = httpCreateUri(url, 0);
 
 #if BLD_DEBUG
     conn->startTime = conn->http->now;
@@ -3777,7 +3777,11 @@ int httpStartEndpoint(HttpEndpoint *endpoint)
     }
     proto = mprIsSocketSecure(endpoint->sock) ? "HTTPS" : "HTTP ";
     ip = *endpoint->ip ? endpoint->ip : "*";
-    mprLog(1, "Started %s service on \"%s:%d\"", proto, ip, endpoint->port);
+    if (mprIsSocketV6(endpoint->sock)) {
+        mprLog(1, "Started %s service on \"[%s]:%d\" %s", proto, ip, endpoint->port);
+    } else {
+        mprLog(1, "Started %s service on \"%s:%d\" %s", proto, ip, endpoint->port);
+    }
     return 0;
 }
 
@@ -13991,7 +13995,8 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
                 /*
                     Absolute URL. If hostName has a port specifier, it overrides prev->port.
                  */
-                uri = httpFormatUri(prev->scheme, rx->hostHeader, port, target->path, target->reference, target->query, 1);
+                uri = httpFormatUri(prev->scheme, rx->hostHeader, port, target->path, target->reference, target->query, 
+                    HTTP_COMPLETE_URI);
             } else {
                 /*
                     Relative file redirection to a file in the same directory as the previous request.
@@ -14002,7 +14007,8 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
                     *cp = '\0';
                 }
                 path = sjoin(dir, "/", target->path, NULL);
-                uri = httpFormatUri(prev->scheme, rx->hostHeader, port, path, target->reference, target->query, 1);
+                uri = httpFormatUri(prev->scheme, rx->hostHeader, port, path, target->reference, target->query, 
+                    HTTP_COMPLETE_URI);
             }
             targetUri = uri;
         }
@@ -15023,71 +15029,109 @@ static void trimPathToDirname(HttpUri *uri);
 
 /*  
     Create and initialize a URI. This accepts full URIs with schemes (http:) and partial URLs
+    Support IPv4 and [IPv6]. Supported forms:
+
+        scheme://[::]:PORT/URI
+        scheme://HOST:PORT/URI
+        [::]:PORT/URI
+        :PORT/URI
+        HOST:PORT/URI
+        PORT/URI
+        /URI
+        URI
+
+        NOTE: the following is not supported and requires a scheme prefix. This is because it is ambiguous with URI.
+        HOST/URI
  */
-HttpUri *httpCreateUri(cchar *uri, int complete)
+HttpUri *httpCreateUri(cchar *uri, int flags)
 {
     HttpUri     *up;
-    char        *tok, *cp;
+    char        *tok, *next;
 
     mprAssert(uri);
 
     if ((up = mprAllocObj(HttpUri, manageUri)) == 0) {
         return 0;
     }
-    up->uri = sclone(uri);
+    tok = up->uri = sclone(uri);
 
-    tok = up->uri;
-    if (schr(tok, ':')) {
-        if (sncmp(up->uri, "https://", 8) == 0) {
-            up->scheme = sclone("https");
-            up->secure = 1;
-            if (complete) {
-                up->port = 443;
-            }
-            tok = &up->uri[8];
-
-        } else if (sncmp(up->uri, "http://", 7) == 0) {
-            up->scheme = sclone("http");
-            tok = &up->uri[7];
-
-        } else {
-            up->scheme = 0;
-            tok = up->uri;
-        }
-        if ((cp = spbrk(tok, ":/")) == NULL) {
-            up->host = sclone(tok);
-
-        } else if (*cp == ':') {
-            up->host = snclone(tok, cp - tok);
-            up->port = atoi(++cp);
-
-        } else if (*cp == '/') {
-            up->host = snclone(tok, cp - tok);
-        }
-        if (complete && up->port == 0) {
+    if (sncmp(up->uri, "http://", 7) == 0) {
+        up->scheme = sclone("http");
+        if (flags & HTTP_COMPLETE_URI) {
             up->port = 80;
         }
-        tok = schr(cp, '/');
+        tok = &up->uri[7];
+
+    } else if (sncmp(up->uri, "https://", 8) == 0) {
+        up->scheme = sclone("https");
+        up->secure = 1;
+        if (flags & HTTP_COMPLETE_URI) {
+            up->port = 443;
+        }
+        tok = &up->uri[8];
 
     } else {
-        if (complete) {
-            up->scheme = "http";
-            up->host = "localhost";
-            up->port = 80;
-        }
+        up->scheme = 0;
         tok = up->uri;
     }
+    if (schr(tok, ':')) {
+        /* Must be a host portion */
+        if (*tok == '[' && ((next = strchr(tok, ']')) != 0)) {
+            /* IPv6  [::]:port/uri */
+            up->host = snclone(&tok[1], (next - tok) - 1);
+            if (*++next == ':') {
+                up->port = atoi(++next);
+            }
+            tok = schr(next, '/');
 
-    if ((cp = spbrk(tok, "#?")) == NULL) {
+        } else if ((next = spbrk(tok, ":/")) == NULL) {
+            /* hostname */
+            up->host = sclone(tok);
+            tok = 0;
+
+        } else if (*next == ':') {
+            /* hostname:port */
+            up->host = snclone(tok, next - tok);
+            up->port = atoi(++next);
+            tok = schr(next, '/');
+
+        } else if (*next == '/') {
+            /* hostname/uri */
+            up->host = snclone(tok, next - tok);
+            tok = next;
+        }
+
+    } else if (up->scheme && *tok != '/') {
+        /* hostname/uri */
+        if ((next = schr(tok, '/')) != 0) {
+            up->host = snclone(tok, next - tok);
+            tok = next;
+        } else {
+            /* hostname */
+            up->host = sclone(tok);
+            tok = 0;
+        }
+    }
+    if (flags & HTTP_COMPLETE_URI) {
+        if (!up->scheme) {
+            up->scheme = sclone("http");
+        }
+        if (!up->host) {
+            up->host = sclone("localhost");
+        }
+        if (!up->port) {
+            up->port = 80;
+        }
+    }
+    if ((next = spbrk(tok, "#?")) == NULL) {
         up->path = sclone(tok);
-
     } else {
-        up->path = snclone(tok, cp - tok);
-        tok = cp + 1;
-        if (*cp == '#') {
-            if ((cp = schr(tok, '?')) != NULL) {
-                up->reference = snclone(tok, cp - tok);
-                up->query = sclone(++cp);
+        up->path = snclone(tok, next - tok);
+        tok = next + 1;
+        if (*next == '#') {
+            if ((next = schr(tok, '?')) != NULL) {
+                up->reference = snclone(tok, next - tok);
+                up->query = sclone(++next);
             } else {
                 up->reference = sclone(tok);
             }
@@ -15095,18 +15139,19 @@ HttpUri *httpCreateUri(cchar *uri, int complete)
             up->query = sclone(tok);
         }
     }
-
     if (up->path && (tok = srchr(up->path, '.')) != NULL) {
-        if ((cp = srchr(up->path, '/')) != NULL) {
-            if (cp <= tok) {
+        if ((next = srchr(up->path, '/')) != NULL) {
+            if (next <= tok) {
                 up->ext = sclone(++tok);
             }
         } else {
             up->ext = sclone(++tok);
         }
     }
-    if (up->path == 0) {
-        up->path = sclone("/");
+    if (flags & (HTTP_COMPLETE_URI | HTTP_COMPLETE_URI_PATH)) {
+        if (up->path == 0 || *up->path == '\0') {
+            up->path = sclone("/");
+        }
     }
     return up;
 }
@@ -15130,7 +15175,7 @@ static void manageUri(HttpUri *uri, int flags)
     Create and initialize a URI. This accepts full URIs with schemes (http:) and partial URLs
  */
 HttpUri *httpCreateUriFromParts(cchar *scheme, cchar *host, int port, cchar *path, cchar *reference, cchar *query, 
-        int complete)
+        int flags)
 {
     HttpUri     *up;
     char        *cp, *tok;
@@ -15140,15 +15185,22 @@ HttpUri *httpCreateUriFromParts(cchar *scheme, cchar *host, int port, cchar *pat
     }
     if (scheme) {
         up->scheme = sclone(scheme);
-    } else if (complete) {
+    } else if (flags & HTTP_COMPLETE_URI) {
         up->scheme = "http";
     }
     if (host) {
-        up->host = sclone(host);
-        if ((cp = schr(host, ':')) && port == 0) {
-            port = (int) stoi(++cp);
+        if (*host == '[' && ((cp = strchr(host, ']')) != 0)) {
+            up->host = snclone(&host[1], (cp - host) - 2);
+            if ((cp = schr(++cp, ':')) && port == 0) {
+                port = (int) stoi(++cp);
+            }
+        } else {
+            up->host = sclone(host);
+            if ((cp = schr(up->host, ':')) && port == 0) {
+                port = (int) stoi(++cp);
+            }
         }
-    } else if (complete) {
+    } else if (flags & HTTP_COMPLETE_URI) {
         up->host = sclone("localhost");
     }
     if (port) {
@@ -15182,7 +15234,7 @@ HttpUri *httpCreateUriFromParts(cchar *scheme, cchar *host, int port, cchar *pat
 }
 
 
-HttpUri *httpCloneUri(HttpUri *base, int complete)
+HttpUri *httpCloneUri(HttpUri *base, int flags)
 {
     HttpUri     *up;
     char        *path, *cp, *tok;
@@ -15196,15 +15248,26 @@ HttpUri *httpCloneUri(HttpUri *base, int complete)
 
     if (base->scheme) {
         up->scheme = sclone(base->scheme);
-    } else if (complete) {
+    } else if (flags & HTTP_COMPLETE_URI) {
         up->scheme = sclone("http");
     }
     if (base->host) {
-        up->host = sclone(base->host);
-        if ((cp = schr(base->host, ':')) && port == 0) {
-            port = (int) stoi(++cp);
+#if UNUSED
+        if (*base->host == '[' && ((cp = strchr(base->host, ']')) != 0)) {
+            up->host = snclone(&base->host[1], (cp - base->host) - 2);
+            if ((cp = schr(++cp, ':')) && port == 0) {
+                port = (int) stoi(++cp);
+            }
+        } else {
+            up->host = sclone(base->host);
+            if ((cp = schr(up->host, ':')) && port == 0) {
+                port = (int) stoi(++cp);
+            }
         }
-    } else if (complete) {
+#else
+        up->host = sclone(base->host);
+#endif
+    } else if (flags & HTTP_COMPLETE_URI) {
         base->host = sclone("localhost");
     }
     if (port) {
@@ -15264,15 +15327,17 @@ HttpUri *httpCompleteUri(HttpUri *uri, HttpUri *missing)
 
 
 /*  
-    Format a fully qualified URI
-    If complete is true, missing elements are completed
+    Format a string URI from parts
  */
-char *httpFormatUri(cchar *scheme, cchar *host, int port, cchar *path, cchar *reference, cchar *query, int complete)
+char *httpFormatUri(cchar *scheme, cchar *host, int port, cchar *path, cchar *reference, cchar *query, int flags)
 {
     char    *uri;
-    cchar   *portStr, *hostDelim, *portDelim, *pathDelim, *queryDelim, *referenceDelim;
+    cchar   *portStr, *hostDelim, *portDelim, *pathDelim, *queryDelim, *referenceDelim, *cp;
 
-    if (complete || host || scheme) {
+    portDelim = "";
+    portStr = "";
+
+    if ((flags & HTTP_COMPLETE_URI) || host || scheme) {
         if (scheme == 0 || *scheme == '\0') {
             scheme = "http";
         }
@@ -15286,17 +15351,15 @@ char *httpFormatUri(cchar *scheme, cchar *host, int port, cchar *path, cchar *re
     /*  
         Hosts with integral port specifiers override
      */
-    if (host && schr(host, ':')) {
-        portDelim = "";
-        portStr = "";
-    } else {
-        if (port != 0 && port != getDefaultPort(scheme)) {
-            portStr = itos(port);
-            portDelim = ":";
-        } else {
-            portStr = "";
-            portDelim = "";
+    if (host) {
+        cp = (*host == '[') ? strchr(host, ']') : host;
+        if (cp && strchr(cp, ':')) {
+            port = 0;
         }
+    }
+    if (port != 0 && port != getDefaultPort(scheme)) {
+        portStr = itos(port);
+        portDelim = ":";
     }
     if (scheme == 0) {
         scheme = "";
@@ -15613,9 +15676,9 @@ HttpUri *httpResolveUri(HttpUri *base, int argc, HttpUri **others, bool local)
 }
 
 
-char *httpUriToString(HttpUri *uri, int complete)
+char *httpUriToString(HttpUri *uri, int flags)
 {
-    return httpFormatUri(uri->scheme, uri->host, uri->port, uri->path, uri->reference, uri->query, complete);
+    return httpFormatUri(uri->scheme, uri->host, uri->port, uri->path, uri->reference, uri->query, flags);
 }
 
 

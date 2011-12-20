@@ -20450,6 +20450,9 @@ static int getSocketIpAddr(struct sockaddr *addr, int addrlen, char *ip, int ipL
 }
 
 
+/*
+    Looks like an IPv6 address if it has 2 or more colons
+ */
 static int ipv6(cchar *ip)
 {
     cchar   *cp;
@@ -20481,6 +20484,9 @@ static int ipv6(cchar *ip)
         aaaa:bbbb:cccc:dddd:eeee:ffff:gggg:hhhh:iiii
     or
         [aaaa:bbbb:cccc:dddd:eeee:ffff:gggg:hhhh:iiii]:port
+
+    If supplied an IPv6 address, the backets are stripped in the returned IP address.
+    This routine skips any "protocol://" prefix.
  */
 int mprParseSocketAddress(cchar *ipAddrPort, char **pip, int *pport, int defaultPort)
 {
@@ -20533,7 +20539,6 @@ int mprParseSocketAddress(cchar *ipAddrPort, char **pip, int *pport, int default
             ipv4 
          */
         ip = sclone(ipAddrPort);
-
         if ((cp = strchr(ip, ':')) != 0) {
             *cp++ = '\0';
             if (*cp == '*') {
@@ -20565,6 +20570,18 @@ int mprParseSocketAddress(cchar *ipAddrPort, char **pip, int *pport, int default
 bool mprIsSocketSecure(MprSocket *sp)
 {
     return sp->sslSocket != 0;
+}
+
+
+bool mprIsSocketV6(MprSocket *sp)
+{
+    return sp->ip && ipv6(sp->ip);
+}
+
+
+bool mprIsIPv6(cchar *ip)
+{
+    return ip && ipv6(ip);
 }
 
 
