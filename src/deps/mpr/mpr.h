@@ -1357,32 +1357,44 @@ struct  MprXml;
     #define T(s) s
 #endif
 
+#if UNUSED
 typedef struct MprArgs {
     cchar   *program;
     cchar   *args;
 } MprArgs;
+#endif
 
 /*
-    Convenience define to declare a main program entry point that works for Windows, VxWorks and Posix
+    Convenience define to declare a main program entry point that works for Windows, VxWorks and Unix
  */
-#if VXWORKS
+#if 0
     #define MAIN(name, _argc, _argv)  \
-        int name() { \
+        int name(char *command) { \
             extern int main(); \
             MprArgs args; \
             args.program = #name; \
-            args.args = 0; \
+            args.args = _argc; \
             return main(0, (char**) &args); \
+        } \
+        int main(_argc, _argv)
+#elif VXWORKS
+    #define MAIN(name, _argc, _argv)  \
+        int name(char *command) { \
+            extern int main(); \
+            char *largv[2]; \
+            largv[0] = #name; \
+            largv[1] = command; \
+            return main(2, largv); \
         } \
         int main(_argc, _argv)
 #elif WINCE
     #define MAIN(name, argc, argv)  \
         APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, LPWSTR command, int junk2) { \
-            MprArgs args; \
-            args.program = #name; \
-            args.args = (char*) command; \
+            char *largv[2];
             extern int main(); \
-            main(0, (char**) &args); \
+            largv[0] = #name; \
+            largv[1] = (char*) command; \
+            main(2, largv); \
         } \
         int main(argc, argv)
 #else

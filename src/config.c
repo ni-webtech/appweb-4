@@ -1275,6 +1275,11 @@ static int loadModulePathDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%T", &value)) {
         return MPR_ERR_BAD_SYNTAX;
     }
+    /*
+		 Actual search path is:
+		 
+		 USER_SEARCH : exeDir : exeDir/../lib : /usr/lib/appweb/lib
+     */
     sep = MPR_SEARCH_SEP;
     lib = mprJoinPath(mprGetPathParent(mprGetAppDir()), BLD_LIB_NAME);
     path = sjoin(value, sep, mprGetAppDir(), sep, lib, sep, BLD_LIB_PREFIX, NULL);
@@ -2283,7 +2288,7 @@ int maParseInit(MaAppweb *appweb)
     /* Deprecated: use <Route> */
     maAddDirective(appweb, "<Location", routeDirective);
     maAddDirective(appweb, "</Location", closeDirective);
-
+    
     maAddDirective(appweb, "LimitCache", limitCacheDirective);
     maAddDirective(appweb, "LimitCacheItem", limitCacheItemDirective);
     maAddDirective(appweb, "LimitChunk", limitChunkDirective);

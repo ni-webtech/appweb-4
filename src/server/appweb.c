@@ -60,6 +60,11 @@ static long msgProc(HWND hwnd, uint msg, uint wp, long lp);
     #define BLD_CONFIG_FILE NULL
 #endif
 
+#define BLD_APPWEB_PATH "/home/mob/appweb/out/i586-wrs-vxworks/bin/appweb.out"
+#ifndef BLD_APPWEB_PATH
+    #define BLD_APPWEB_PATH "appweb"
+#endif
+
 /*********************************** Code *************************************/
 
 MAIN(appweb, int argc, char **argv)
@@ -69,12 +74,12 @@ MAIN(appweb, int argc, char **argv)
     char    *ip, *logSpec;
     int     argind, port, status, verbose;
 
+    argv[0] = BLD_APPWEB_PATH;
     ipAddrPort = 0;
     ip = 0;
     jail = 0;
     port = -1;
     verbose = 0;
-    argv[0] = "appweb";
 
     if ((mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD)) == NULL) {
         exit(1);
@@ -94,6 +99,7 @@ MAIN(appweb, int argc, char **argv)
 
     argc = mpr->argc;
     argv = mpr->argv;
+    
     app->mpr = mpr;
     app->workers = -1;
     app->configFile = BLD_CONFIG_FILE;

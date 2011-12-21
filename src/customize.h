@@ -8,11 +8,14 @@
 /*
     Override definitions here. This file is included after all other headers are parsed.
 
-    Use this to define the default appweb.conf file
+    Use this to override the default appweb.conf file
         #define BLD_CONFIG_FILE     "/path/to/default/appweb.conf"
 
-    Use this to define the default server root directory
+    Use this to override the default server root directory
         #define BLD_SERVER_ROOT     "/var/spool/chroot/jail"
+
+    Use this to override the path to the appweb executable
+        #define BLD_APPWEB_PATH     "/path/to/appweb"
  */
 
 /*

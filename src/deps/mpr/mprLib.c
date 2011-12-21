@@ -2908,15 +2908,16 @@ static void getArgs(Mpr *mpr, int argc, char **argv)
         argv[0] = sclone(args->program);
         mprHold(argv[0]);
 #elif VXWORKS
-        MprArgs *args = (MprArgs*) argv;
-        argc = mprMakeArgv("", &argv, MPR_ARGV_ARGS_ONLY);
+        char **old_argv = argv;
+        argc = mprMakeArgv(old_argv[1],  &argv, MPR_ARGV_ARGS_ONLY);
         mprHold(argv);
-        argv[0] = sclone(args->program);
-        mprHold(argv[0]);
+        argv[0] = old_argv[0];
+        mpr->appPath = sclone(argv[0]);
 #else
         argv[0] = mprGetAppPath();
         mprHold(argv[0]);
 #endif
+        /* argv is not GC managed - must be held above if required */
         mpr->argc = argc;
         mpr->argv = argv;
     }
@@ -3687,10 +3688,14 @@ void mprAtomicBarrier()
         MemoryBarrier();
     #elif BLD_CC_SYNC
         __sync_synchronize();
-    #elif BLD_UNIX_LIKE
-        asm volatile ("" : : : "memory");
-    #elif MPR_CPU_IX86 && 0
+#if UNUSED
+/*  BLD_UNIX_LIKE
+        asm volatile ("sync : : : "memory");
+        asm volatile ("mfence : : : "memory");
+    MPR_CPU_IX86
         asm volatile ("lock; add %eax,0");
+*/
+#endif
     #else
         mprGlobalLock();
         mprGlobalUnlock();
@@ -3751,7 +3756,7 @@ void mprAtomicAdd(volatile int *ptr, int value)
         OSAtomicAdd32(value, ptr);
     #elif BLD_WIN_LIKE
         InterlockedExchangeAdd(ptr, value);
-    #elif (BLD_CPU_ARCH == MPR_CPU_IX86 || BLD_CPU_ARCH == MPR_CPU_IX64) && 0
+    #elif (BLD_CPU_ARCH == MPR_CPU_IX86 || BLD_CPU_ARCH == MPR_CPU_IX64) && FUTURE
         asm volatile ("lock; xaddl %0,%1"
             : "=r" (value), "=m" (*ptr)
             : "0" (value), "m" (*ptr)
@@ -13257,6 +13262,7 @@ int mprStartLogging(cchar *logSpec, int showConfig)
                 mprLog(MPR_CONFIG, "Distribution:       %s %s", BLD_DIST, BLD_DIST_VER);
             }
             mprLog(MPR_CONFIG, "Host:               %s", mprGetHostName());
+            mprLog(MPR_CONFIG, "Dir:                %s", mprGetCurrentPath());
             mprLog(MPR_CONFIG, "Configure:          %s", BLD_CONFIG_CMD);
             mprLog(MPR_CONFIG, "---------------------------------------------");
         }
@@ -14459,14 +14465,14 @@ static void manageModuleService(MprModuleService *ms, int flags);
 MprModuleService *mprCreateModuleService()
 {
     MprModuleService    *ms;
+    cchar               *libdir;
 
     if ((ms = mprAllocObj(MprModuleService, manageModuleService)) == 0) {
         return 0;
     }
     ms->modules = mprCreateList(-1, 0);
-    ms->searchPath = sfmt(".%s%s%s/../%s%s%s", \
-        mprGetAppDir(), MPR_SEARCH_SEP, 
-        mprGetAppDir(), BLD_LIB_NAME, MPR_SEARCH_SEP, 
+    libdir = mprJoinPath(mprGetAppDir(), "../lib");
+    ms->searchPath = sfmt("%s%s%s%s%s", mprGetAppDir(), MPR_SEARCH_SEP, libdir, MPR_SEARCH_SEP, 
         BLD_LIB_PREFIX);
     ms->mutex = mprCreateLock();
     return ms;
@@ -14927,7 +14933,7 @@ static MPR_INLINE bool isFullPath(MprFileSystem *fs, cchar *path)
     mprAssert(fs);
     mprAssert(path);
 
-#if BLD_WIN_LIKE && !WINCE
+#if (BLD_WIN_LIKE || VXWORKS) && !WINCE
 {
     char    *cp, *endDrive;
 
@@ -15003,8 +15009,7 @@ int mprCopyPath(cchar *fromName, cchar *toName, int mode)
 }
 
 
-//  MOB - need a rename too
-//  MOB - should this be called remove?
+//  MOB - need a rename too - should this be called remove?
 int mprDeletePath(cchar *path)
 {
     MprFileSystem   *fs;
@@ -15091,7 +15096,6 @@ char *mprGetAbsPath(cchar *path)
         return mprNormalizePath(path);
     }
 
-//  MOB - what does WINCE require?
 #if BLD_WIN_LIKE && !WINCE
 {
     char    buf[MPR_MAX_PATH];
@@ -15316,7 +15320,7 @@ char *mprGetPathBase(cchar *path)
 char *mprGetPathDir(cchar *path)
 {
     MprFileSystem   *fs;
-    cchar           *cp;
+    cchar           *cp, *start;
     char            *result;
     ssize          len;
 
@@ -15329,22 +15333,25 @@ char *mprGetPathDir(cchar *path)
     fs = mprLookupFileSystem(path);
     len = slen(path);
     cp = &path[len - 1];
+    start = hasDrive(fs, path) ? strchr(path, ':') + 1 : path;
 
     /*
         Step back over trailing slashes
      */
-    while (cp > path && isSep(fs, *cp)) {
+    while (cp > start && isSep(fs, *cp)) {
         cp--;
     }
-    for (; cp > path && !isSep(fs, *cp); cp--) {
-        ;
-    }
-    if (cp == path) {
+    for (; cp > start && !isSep(fs, *cp); cp--) { }
+
+    if (cp == start) {
         if (!isSep(fs, *cp)) {
             /* No slashes found, parent is current dir */
             return sclone(".");
         }
+        cp++;
+#if UNUSED
         return sclone(fs->root);
+#endif
     }
     len = (cp - path);
     result = mprAlloc(len + 1);
@@ -15618,7 +15625,7 @@ char *mprGetRelPath(cchar *pathArg)
 
 #if (BLD_WIN_LIKE && !WINCE)
     path = mprGetAbsPath(path);
-#elif CYGWIN
+#elif CYGWIN || VXWORKS
     if (hasDrive(fs, path)) {
         path = mprGetAbsPath(path);
     }
@@ -25823,7 +25830,7 @@ int mprLoadNativeModule(MprModule *mp)
     }
     close(fd);
     if (mp->entry) {
-#if BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64
+#if UNUSED && (BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64)
         mprSprintf(entryPoint, sizeof(entryPoint), "_%s", mp->entry);
 #else
         scopy(entryPoint, sizeof(entryPoint), mp->entry);
