@@ -53,6 +53,9 @@ static int writePort(MaServer *server);
 static long msgProc(HWND hwnd, uint msg, uint wp, long lp);
 #endif
 
+/*
+    If customize.h does not define, set reasonable defaults.
+ */
 #ifndef BLD_SERVER_ROOT
     #define BLD_SERVER_ROOT mprGetCurrentPath()
 #endif
@@ -60,7 +63,9 @@ static long msgProc(HWND hwnd, uint msg, uint wp, long lp);
     #define BLD_CONFIG_FILE NULL
 #endif
 
+//  MOB - review
 #define BLD_APPWEB_PATH "/home/mob/appweb/out/i586-wrs-vxworks/bin/appweb.out"
+
 #ifndef BLD_APPWEB_PATH
     #define BLD_APPWEB_PATH "appweb"
 #endif
@@ -80,6 +85,7 @@ MAIN(appweb, int argc, char **argv)
     jail = 0;
     port = -1;
     verbose = 0;
+    logSpec = 0;
 
     if ((mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD)) == NULL) {
         exit(1);
@@ -93,19 +99,18 @@ MAIN(appweb, int argc, char **argv)
     mprAddStandardSignals();
 
 #if BLD_FEATURE_ROMFS
+    //  MOB - review
     extern MprRomInode romFiles[];
     mprSetRomFileSystem(romFiles);
 #endif
 
-    argc = mpr->argc;
-    argv = mpr->argv;
-    
     app->mpr = mpr;
     app->workers = -1;
     app->configFile = BLD_CONFIG_FILE;
     app->home = BLD_SERVER_ROOT;
     app->documents = app->home;
-    logSpec = 0;
+    argc = mpr->argc;
+    argv = mpr->argv;
 
     for (argind = 1; argind < argc; argind++) {
         argp = argv[argind];

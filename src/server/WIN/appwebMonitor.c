@@ -69,16 +69,13 @@ static void     updateMenu(int id, char *text, int enable, int check);
 
 /*********************************** Code *************************************/
 
-int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2)
+APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2)
 {
-    MprArgs args;
-    char    **argv, *argp;
+    char    *argv[MPR_MAX_ARGC], *argp;
     int     argc, err, nextArg, manage, stop;
 
-    args.program = "AppwebMonitor";
-    args.args = (char*) command;
-
-    if (mprCreate(0, (char**) &args, MPR_USER_EVENTS_THREAD | MPR_NO_WINDOW) == NULL) {
+    argc = mprParseArgs(command, &argv[1], MPR_MAX_ARGC - 1);
+    if (mprCreate(argc, argv, MPR_USER_EVENTS_THREAD | MPR_NO_WINDOW) == NULL) {
         exit(1);
     }
     if ((app = mprAllocObj(App, manageApp)) == NULL) {
@@ -102,9 +99,6 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2)
     /*
         Parse command line arguments
      */
-    if ((argc = mprMakeArgv(command, &argv, MPR_ARGV_ARGS_ONLY)) < 0) {
-        return FALSE;
-    }
     for (nextArg = 1; nextArg < argc; nextArg++) {
         argp = argv[nextArg];
         if (*argp != '-') {
