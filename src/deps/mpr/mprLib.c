@@ -2629,12 +2629,6 @@ Mpr *mprCreate(int argc, char **argv, int flags)
         mprAssert(mpr);
         return 0;
     }
-    if (argv) {
-        mpr->argc = argc;
-        mpr->argv = argv;
-        mpr->argv[0] = mprGetAppPath();
-        mpr->name = mprTrimPathExt(mprGetPathBase(mpr->argv[0]));
-    }
     mpr->exitStrategy = MPR_EXIT_NORMAL;
     mpr->emptyString = sclone("");
     mpr->title = sclone(BLD_NAME);
@@ -2653,6 +2647,13 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     fs = mprCreateFileSystem("/");
     mprAddFileSystem(fs);
     mprCreateLogService();
+    
+    if (argv) {
+        mpr->argc = argc;
+        mpr->argv = argv;
+        mpr->argv[0] = mprGetAppPath();
+        mpr->name = mprTrimPathExt(mprGetPathBase(mpr->argv[0]));
+    }
 
     mpr->signalService = mprCreateSignalService();
     mpr->threadService = mprCreateThreadService();
