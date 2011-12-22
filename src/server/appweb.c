@@ -64,7 +64,9 @@ static long msgProc(HWND hwnd, uint msg, uint wp, long lp);
 #endif
 
 //  MOB - review
+#if VXWORKS
 #define BLD_APPWEB_PATH "/home/mob/appweb/out/i586-wrs-vxworks/bin/appweb.out"
+#endif
 
 #ifndef BLD_APPWEB_PATH
     #define BLD_APPWEB_PATH "appweb"
