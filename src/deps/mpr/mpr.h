@@ -1408,9 +1408,8 @@ typedef struct MprArgs {
             char *mcommand[MPR_MAX_STRING]; \
             int largc; \
             wtom(mcommand, sizeof(dest), command, -1);
+            largc = mprParseArgs(mcommand, &largv[1], MPR_MAX_ARGC - 1); \
             largv[0] = #name; \
-            largv[1] = mcommand; \
-            largc = mprParseArgs(mcommand, largv, MPR_MAX_ARGC); \
             main(largc, largv); \
         } \
         int main(argc, argv)
@@ -1420,9 +1419,8 @@ typedef struct MprArgs {
             extern int main(); \
             char *largv[MPR_MAX_ARGC]; \
             int largc; \
+            largc = mprParseArgs(command, &largv[1], MPR_MAX_ARGC - 1); \
             largv[0] = #name; \
-            largv[1] = command; \
-            largc = mprParseArgs(command, largv, MPR_MAX_ARGC); \
             main(largc, largv); \
         } \
         int main(argc, argv)
