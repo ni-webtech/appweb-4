@@ -1066,7 +1066,6 @@ struct  MprXml;
     #define MPR_MAX_LOG             (8 * 1024)    /**< Maximum log message size (impacts stack) */
     #define MPR_DEFAULT_ALLOC       64            /**< Default small alloc size */
     #define MPR_DEFAULT_HASH_SIZE   23            /**< Default size of hash table */ 
-    #define MPR_MAX_ARGC            128           /**< Reasonable max of args */
     #define MPR_BUFSIZE             4096          /**< Reasonable size for buffers */
     #define MPR_BUF_INCR            4096          /**< Default buffer growth inc */
     #define MPR_EPOLL_SIZE          32            /**< Epoll backlog */
@@ -1093,7 +1092,6 @@ struct  MprXml;
     #define MPR_MAX_LOG             (32 * 1024)
     #define MPR_DEFAULT_ALLOC       256
     #define MPR_DEFAULT_HASH_SIZE   43
-    #define MPR_MAX_ARGC            256
     #define MPR_BUFSIZE             4096
     #define MPR_BUF_INCR            4096
     #define MPR_MAX_BUF             -1
@@ -1119,7 +1117,6 @@ struct  MprXml;
     #define MPR_MAX_STRING          4096
     #define MPR_DEFAULT_ALLOC       512
     #define MPR_DEFAULT_HASH_SIZE   97
-    #define MPR_MAX_ARGC            512
     #define MPR_BUFSIZE             8192
     #define MPR_MAX_BUF             -1
     #define MPR_EPOLL_SIZE          128
@@ -1211,12 +1208,12 @@ struct  MprXml;
 #define MPR_CMD_TIMER_PERIOD    5000        /* Check for expired commands */
 
 /*
-    Tunable constants
+    Other tunable constants
  */
+#define MPR_MAX_ARGC            32           /**< Reasonable max of args for MAIN */
 #define MPR_TEST_POLL_NAP       25
 #define MPR_TEST_SLEEP          (60 * 1000)
-#define MPR_TEST_MAX_STACK      (16)
-
+#define MPR_TEST_MAX_STACK      16
 #define MPR_TEST_TIMEOUT        10000       /* Ten seconds */
 #define MPR_TEST_LONG_TIMEOUT   300000      /* 5 minutes */
 #define MPR_TEST_SHORT_TIMEOUT  200         /* 1/5 sec */
@@ -1377,7 +1374,7 @@ typedef struct MprArgs {
             return main(0, (char**) &args); \
         } \
         int main(_argc, _argv)
-#elif VXWORKS
+#elif 0
     #define MAIN(name, _argc, _argv)  \
         int name(char *command) { \
             extern int main(); \
@@ -1387,14 +1384,46 @@ typedef struct MprArgs {
             return main(2, largv); \
         } \
         int main(_argc, _argv)
-#elif WINCE
+#elif VXWORKS
+    #define MAIN(name, _argc, _argv)  \
+        int name(char *arg0, ...) { \
+            extern int main(); \
+            va_list args; \
+            char *argp, *largv[MPR_MAX_ARGC]; \
+            int largc = 0; \
+            va_start(args, arg0); \
+            largv[largc++] = #name; \
+            largv[largc++] = arg0; \
+            for (argp = va_arg(args, char*); argp && largc < MPR_MAX_ARGC; argp = va_arg(args, char*)) { \
+                largv[largc++] = argp; \
+            } \
+            return main(largc, largv); \
+        } \
+        int main(_argc, _argv)
+#elif BLD_WIN_LIKE && BLD_CHAR_LEN > 1
     #define MAIN(name, argc, argv)  \
         APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, LPWSTR command, int junk2) { \
-            char *largv[2];
+            char *largv[MPR_MAX_ARGC]; \
             extern int main(); \
+            char *mcommand[MPR_MAX_STRING]; \
+            int largc; \
+            wtom(mcommand, sizeof(dest), command, -1);
             largv[0] = #name; \
-            largv[1] = (char*) command; \
-            main(2, largv); \
+            largv[1] = mcommand; \
+            largc = mprParseArgs(mcommand, largv, MPR_MAX_ARGC); \
+            main(largc, largv); \
+        } \
+        int main(argc, argv)
+#elif BLD_WIN_LIKE
+    #define MAIN(name, argc, argv)  \
+        APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2) { \
+            extern int main(); \
+            char *largv[MPR_MAX_ARGC]; \
+            int largc; \
+            largv[0] = #name; \
+            largv[1] = command; \
+            largc = mprParseArgs(command, largv, MPR_MAX_ARGC); \
+            main(largc, largv); \
         } \
         int main(argc, argv)
 #else
@@ -8510,6 +8539,7 @@ extern bool mprIsStoppingCore();
     @param flags Set to MPR_ARGV_ARGS_ONLY if the command string does not contain a program name. In this case, argv[0] 
         will be set to "".
     @return The count of arguments in argv
+    @ingroup Mpr
  */
 extern int mprMakeArgv(cchar *command, char ***argv, int flags);
 
@@ -8520,6 +8550,20 @@ extern int mprMakeArgv(cchar *command, char ***argv, int flags);
     @ingroup Mpr
 */
 extern void mprNap(MprTime msec);
+
+/**
+    Make a argv style array of command arguments
+    @description The given command is parsed and broken into separate arguments and returned in a null-terminated, argv
+        array. Arguments in the command may be quoted with single or double quotes to group words into one argument. 
+        Use back-quote "\\" to escape quotes. This routine modifies command and does not allocate any memory and may be
+        used before mprCreate is invoked.
+    @param command Command string to parse.
+    @param argv Array for the arguments.
+    @param maxArgs Size of the argv array.
+    @return The count of arguments in argv
+    @ingroup Mpr
+ */
+extern int mprParseArgs(char *command, char **argv, int maxArgs);
 
 /**
     Restart the application

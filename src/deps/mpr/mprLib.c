@@ -2612,7 +2612,6 @@ static void checkYielded()
 
 
 
-static void getArgs(Mpr *mpr, int argc, char **argv);
 static void manageMpr(Mpr *mpr, int flags);
 static void serviceEventsThread(void *data, MprThread *tp);
 
@@ -2623,13 +2622,18 @@ Mpr *mprCreate(int argc, char **argv, int flags)
 {
     MprFileSystem   *fs;
     Mpr             *mpr;
-    char            *cp, *name;
 
     srand((uint) time(NULL));
 
     if ((mpr = mprCreateMemService((MprManager) manageMpr, flags)) == 0) {
         mprAssert(mpr);
         return 0;
+    }
+    if (argv) {
+        mpr->argc = argc;
+        mpr->argv = argv;
+        mpr->argv[0] = mprGetAppPath();
+        mpr->name = mprTrimPathExt(mprGetPathBase(mpr->argv[0]));
     }
     mpr->exitStrategy = MPR_EXIT_NORMAL;
     mpr->emptyString = sclone("");
@@ -2650,21 +2654,6 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     mprAddFileSystem(fs);
     mprCreateLogService();
 
-    if (argv) {
-        getArgs(mpr, argc, argv);
-    }
-    if (mpr->argv && mpr->argv[0] && *mpr->argv[0]) {
-        name = mpr->argv[0];
-        if ((cp = strrchr(name, '/')) != 0 || (cp = strrchr(name, '\\')) != 0) {
-            name = &cp[1];
-        }
-        mpr->name = sclone(name);
-        if ((cp = strrchr(mpr->name, '.')) != 0) {
-            *cp = '\0';
-        }
-    } else {
-        mpr->name = sclone(BLD_PRODUCT);
-    }
     mpr->signalService = mprCreateSignalService();
     mpr->threadService = mprCreateThreadService();
     mpr->moduleService = mprCreateModuleService();
@@ -2894,36 +2883,6 @@ void mprRestart()
 }
 
 
-/*
-    Wince and Vxworks passes an arg via argc, and the program name in argv. NOTE: this will only work on 32-bit systems.
- */
-static void getArgs(Mpr *mpr, int argc, char **argv) 
-{
-    if (argv) {
-#if WINCE
-        MprArgs *args = (MprArgs*) argv;
-        command = mprToMulti((uni*) args->command);
-        argc = mprMakeArgv(command, &argv, MPR_ARGV_ARGS_ONLY);
-        mprHold(argv);
-        argv[0] = sclone(args->program);
-        mprHold(argv[0]);
-#elif VXWORKS
-        char **old_argv = argv;
-        argc = mprMakeArgv(old_argv[1],  &argv, MPR_ARGV_ARGS_ONLY);
-        mprHold(argv);
-        argv[0] = old_argv[0];
-        mpr->appPath = sclone(argv[0]);
-#else
-        argv[0] = mprGetAppPath();
-        mprHold(argv[0]);
-#endif
-        /* argv is not GC managed - must be held above if required */
-        mpr->argc = argc;
-        mpr->argv = argv;
-    }
-}
-
-
 int mprStart()
 {
     int     rc;
@@ -3045,7 +3004,7 @@ bool mprIsIdle()
     Parse the args and return the count of args. If argv is NULL, the args are parsed read-only. If argv is set,
     then the args will be extracted, back-quotes removed and argv will be set to point to all the args.
  */
-static int parseArgs(char *args, char **argv)
+int mprParseArgs(char *args, char **argv, int maxArgc)
 {
     char    *dest, *src, *start;
     int     quote, argc;
@@ -3054,7 +3013,7 @@ static int parseArgs(char *args, char **argv)
         Example     "showColors" red 'light blue' "yellow white" 'Can\'t \"render\"'
         Becomes:    ["showColors", "red", "light blue", "yellow white", "Can't \"render\""]
      */
-    for (argc = 0, src = args; src && *src != '\0'; argc++) {
+    for (argc = 0, src = args; src && *src != '\0' && argc < maxArgc; argc++) {
         while (isspace((int) *src)) {
             src++;
         }
@@ -3103,8 +3062,7 @@ static int parseArgs(char *args, char **argv)
 /*
     Make an argv array. All args are in a single memory block of which argv points to the start.
     Set MPR_ARGV_ARGS_ONLY if not passing in a program name. 
-    Always returns and argv[0] reserved for the program name or empty string.
-    First arg starts at argv[1]
+    Always returns and argv[0] reserved for the program name or empty string.  First arg starts at argv[1].
  */
 int mprMakeArgv(cchar *command, char ***argvp, int flags)
 {
@@ -3118,7 +3076,7 @@ int mprMakeArgv(cchar *command, char ***argvp, int flags)
         Allocate one vector for argv and the actual args themselves
      */
     len = slen(command) + 1;
-    argc = parseArgs((char*) command, NULL);
+    argc = mprParseArgs((char*) command, NULL, INT_MAX);
     if (flags & MPR_ARGV_ARGS_ONLY) {
         argc++;
     }
@@ -3131,10 +3089,10 @@ int mprMakeArgv(cchar *command, char ***argvp, int flags)
     argv = (char**) vector;
 
     if (flags & MPR_ARGV_ARGS_ONLY) {
-        parseArgs(args, &argv[1]);
+        mprParseArgs(args, &argv[1], argc);
         argv[0] = MPR->emptyString;
     } else {
-        parseArgs(args, argv);
+        mprParseArgs(args, argv, argc);
     }
     argv[argc] = 0;
     *argvp = argv;
@@ -17127,6 +17085,7 @@ static int getState(char c, int state)
 }
 
 
+//  MOB - rename arg to args
 static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list arg)
 {
     Format        fmt;
