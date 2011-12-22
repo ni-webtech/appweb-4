@@ -13,7 +13,6 @@
 
 /***************************** Forward Declarations ***************************/
 
-static char *getSearchPath(cchar *dir);
 static void manageAppweb(MaAppweb *appweb, int flags);
 static void openHandlers(Http *http);
 
@@ -176,11 +175,10 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *d
     HttpEndpoint    *endpoint;
     HttpHost        *host;
     HttpRoute       *route;
-    char            *path, *searchPath, *dir;
+    char            *path;
 
     appweb = server->appweb;
     http = appweb->http;
-    dir = mprGetAppDir();
 
     if (configFile) {
         path = mprGetAbsPath(configFile);
@@ -201,8 +199,10 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *d
         route = mprGetFirstItem(host->routes);
         mprAssert(route);
 
+#if UNUSED
         searchPath = getSearchPath(dir);
         mprSetModuleSearchPath(searchPath);
+#endif
 
 #if BLD_FEATURE_CGI
         maLoadModule(appweb, "cgiHandler", "mod_cgi");
@@ -506,16 +506,20 @@ int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
 }
 
 
+#if UNUSED
 static char *getSearchPath(cchar *dir)
 {
 #if WIN
+        //  bin : .
         return sfmt("%s" MPR_SEARCH_SEP ".", dir);
 #else
+        //  bin : /usr/lib/appweb/bin : /usr/lib/appweb/lib : lib : . 
         char *libDir = mprJoinPath(mprGetPathParent(dir), BLD_LIB_NAME);
         return sfmt("%s" MPR_SEARCH_SEP "%s" MPR_SEARCH_SEP ".", dir,
             mprSamePath(BLD_BIN_PREFIX, dir) ? BLD_LIB_PREFIX: libDir);
 #endif
 }
+#endif
 
 /*
     @copy   default

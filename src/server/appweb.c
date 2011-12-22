@@ -79,13 +79,13 @@ MAIN(appweb, int argc, char **argv)
     char    *ip, *logSpec;
     int     argind, port, status, verbose;
 
-    argv[0] = BLD_APPWEB_PATH;
     ipAddrPort = 0;
     ip = 0;
     jail = 0;
     port = -1;
     verbose = 0;
     logSpec = 0;
+    argv[0] = BLD_APPWEB_PATH;
 
     if ((mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD)) == NULL) {
         exit(1);

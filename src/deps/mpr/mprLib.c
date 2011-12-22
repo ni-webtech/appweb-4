@@ -2651,7 +2651,9 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     if (argv) {
         mpr->argc = argc;
         mpr->argv = argv;
-        mpr->argv[0] = mprGetAppPath();
+        if (!mprIsPathAbs(mpr->argv[0])) {
+            mpr->argv[0] = mprGetAppPath();
+        }
         mpr->name = mprTrimPathExt(mprGetPathBase(mpr->argv[0]));
     }
 
@@ -14431,8 +14433,8 @@ MprModuleService *mprCreateModuleService()
     }
     ms->modules = mprCreateList(-1, 0);
     libdir = mprJoinPath(mprGetAppDir(), "../lib");
-    ms->searchPath = sfmt("%s%s%s%s%s", mprGetAppDir(), MPR_SEARCH_SEP, libdir, MPR_SEARCH_SEP, 
-        BLD_LIB_PREFIX);
+    ms->searchPath = sjoin(mprGetAppDir(), MPR_SEARCH_SEP, libdir, MPR_SEARCH_SEP, 
+        BLD_LIB_PREFIX, NULL);
     ms->mutex = mprCreateLock();
     return ms;
 }
@@ -15170,7 +15172,11 @@ char *mprGetAppPath()
     MPR->appPath = mprGetAbsPath(pbuf);
 }
 #else
-    MPR->appPath = mprGetCurrentPath();
+    if (mprIsPathAbs(MPR->argv[0])) {
+        MPR->appPath = sclone(MPR->argv[0]);
+    } else {
+        MPR->appPath = mprGetCurrentPath();
+    }
 #endif
     return sclone(MPR->appPath);
 }
