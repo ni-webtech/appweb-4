@@ -603,7 +603,7 @@ static void run(int argc, char **argv)
 }
 
 
-static int runCommand(cchar *command, cchar *csource, cchar *module)
+static int runEspCommand(cchar *command, cchar *csource, cchar *module)
 {
     MprCmd      *cmd;
     char        *err, *out;
@@ -703,12 +703,12 @@ static void compileFile(cchar *source, int kind)
             fail("Missing EspCompile directive for %s", app->csource);
             return;
         }
-        if (runCommand(eroute->compile, app->csource, app->module) < 0) {
+        if (runEspCommand(eroute->compile, app->csource, app->module) < 0) {
             return;
         }
         if (eroute->link) {
             trace("LINK", "%s", app->module);
-            if (runCommand(eroute->link, app->csource, app->module) < 0) {
+            if (runEspCommand(eroute->link, app->csource, app->module) < 0) {
                 return;
             }
 #if !(BLD_DEBUG && MACOSX)
@@ -846,12 +846,12 @@ static void compile(int argc, char **argv)
 
         app->module = mprNormalizePath(sfmt("%s/app%s", eroute->cacheDir, BLD_SHOBJ));
         trace("COMPILE", "%s", app->csource);
-        if (runCommand(eroute->compile, app->flatPath, app->module) < 0) {
+        if (runEspCommand(eroute->compile, app->flatPath, app->module) < 0) {
             return;
         }
         if (eroute->link) {
             trace("LINK", "%s", app->module);
-            if (runCommand(eroute->link, app->flatPath, app->module) < 0) {
+            if (runEspCommand(eroute->link, app->flatPath, app->module) < 0) {
                 return;
             }
         }
