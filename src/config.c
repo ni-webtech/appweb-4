@@ -489,7 +489,7 @@ static int authDigestQopDirective(MaState *state, cchar *key, cchar *value)
         client=lifespan
         extensions="html,gif,..."
         methods="GET,PUT,*,..."
-        types="GET,PUT,*,..."
+        types="mime-type,*,..."
         all | only | unique
  */
 static int cacheDirective(MaState *state, cchar *key, cchar *value)
