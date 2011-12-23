@@ -91,6 +91,14 @@
     #endif
 #endif
 
+/*
+    Use GNU extensions for:
+        RTLD_DEFAULT for dlsym()
+ */
+#if LINUX
+    #define _GNU_SOURCE 1
+#endif
+
 #if VXWORKS
     #ifndef _VSB_CONFIG_FILE
         #define _VSB_CONFIG_FILE "vsbConfig.h"

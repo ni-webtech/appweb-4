@@ -53,6 +53,36 @@ $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE): $(OBJECTS) $(call lib, $(LIBDEP)) $(cal
 	bld --exe $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" \
 		--libs "$(BLD_APPWEB_LIBS) $(LIBS)" --syslibs "$(SYSLIBS)" $(RES) $(OBJECTS) $(EXTRA_OBJECTS)
 
+#
+#	Test static link
+#
+slink:
+	$(BLD_CC) -static -o $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE) \
+	$(BLD_OBJ_DIR)/appweb.o \
+	$(BLD_OBJ_DIR)/cgiHandler.o \
+	$(BLD_OBJ_DIR)/config.o \
+	$(BLD_OBJ_DIR)/convenience.o \
+	$(BLD_OBJ_DIR)/dirHandler.o \
+	$(BLD_OBJ_DIR)/edi.o \
+	$(BLD_OBJ_DIR)/espAbbrev.o \
+	$(BLD_OBJ_DIR)/espFramework.o \
+	$(BLD_OBJ_DIR)/espHandler.o \
+	$(BLD_OBJ_DIR)/espHtml.o \
+	$(BLD_OBJ_DIR)/espSession.o \
+	$(BLD_OBJ_DIR)/espTemplate.o \
+	$(BLD_OBJ_DIR)/fileHandler.o \
+	$(BLD_OBJ_DIR)/httpLib.o \
+	$(BLD_OBJ_DIR)/log.o \
+	$(BLD_OBJ_DIR)/mdb.o \
+	$(BLD_OBJ_DIR)/mprLib.o \
+	$(BLD_OBJ_DIR)/mprSsl.o \
+	$(BLD_OBJ_DIR)/pcre.o \
+	$(BLD_OBJ_DIR)/romFiles.o \
+	$(BLD_OBJ_DIR)/sdb.o \
+	$(BLD_OBJ_DIR)/server.o \
+	-g -Wl,-r -lgcc
+
+
 run:
 	$(call setlibpath) ; sudo $(BLD_BIN_DIR)/$(BLD_PRODUCT) -v
 

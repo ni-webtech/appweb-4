@@ -148,19 +148,22 @@ int stopSeqno = -1;
 /*
     Fast find first/last bit set
  */
-#if !MACOSX && !FREEBSD
-    #define NEED_FFSL 1
-    #if WIN
-    #elif BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64
-        #define USE_FFSL_ASM_X86 1
+#if LINUX
+    #define NEED_FLSL 1
+    #if BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64
+        #define USE_FLSL_ASM_X86 1
     #endif
+    static MPR_INLINE int flsl(ulong word);
+
+#elif BLD_WIN_LIKE
+    #define NEED_FFSL 1
+    #define NEED_FLSL 1
     static MPR_INLINE int ffsl(ulong word);
     static MPR_INLINE int flsl(ulong word);
-#elif BSD_EMULATION
-    #define ffsl FFSL
-    #define flsl FLSL
+
+#elif !MACOSX && !FREEBSD
     #define NEED_FFSL 1
-    #define USE_FFSL_ASM_X86 1
+    #define NEED_FLSL 1
     static MPR_INLINE int ffsl(ulong word);
     static MPR_INLINE int flsl(ulong word);
 #endif
@@ -2318,6 +2321,9 @@ static ssize fastMemSize()
 
 
 #if NEED_FFSL
+/* 
+    Find first bit set in word 
+ */
 #if USE_FFSL_ASM_X86
 static MPR_INLINE int ffsl(ulong x)
 {
@@ -2329,24 +2335,7 @@ static MPR_INLINE int ffsl(ulong x)
         "1:" : "=r" (r) : "rm" (x));
     return (int) r + 1;
 }
-
-
-static MPR_INLINE int flsl(ulong x)
-{
-    long r;
-
-    asm("bsr %1,%0\n\t"
-        "jnz 1f\n\t"
-        "mov $-1,%0\n"
-        "1:" : "=r" (r) : "rm" (x));
-    return (int) r + 1;
-}
-#else /* USE_FFSL_ASM_X86 */ 
-
-
-/* 
-    Find first bit set in word 
- */
+#else
 static MPR_INLINE int ffsl(ulong word)
 {
     int     b;
@@ -2359,11 +2348,27 @@ static MPR_INLINE int ffsl(ulong word)
     }
     return b;
 }
+#endif
+#endif
 
 
+#if NEED_FLSL
 /* 
     Find last bit set in word 
  */
+#if USE_FFSL_ASM_X86
+static MPR_INLINE int flsl(ulong x)
+{
+    long r;
+
+    asm("bsr %1,%0\n\t"
+        "jnz 1f\n\t"
+        "mov $-1,%0\n"
+        "1:" : "=r" (r) : "rm" (x));
+    return (int) r + 1;
+}
+#else /* USE_FFSL_ASM_X86 */ 
+
 static MPR_INLINE int flsl(ulong word)
 {
     int     b;
@@ -25579,12 +25584,25 @@ int mprLoadNativeModule(MprModule *mp)
 
     mprAssert(mp);
 
-    if ((handle = dlopen(mp->path, RTLD_LAZY | RTLD_GLOBAL)) == 0) {
-        mprError("Can't load module %s\nReason: \"%s\"", mp->path, dlerror());
-        return MPR_ERR_CANT_OPEN;
-    } 
-    mp->handle = handle;
-
+    /*
+        Search the image incase the module has been statically linked
+     */
+#ifdef RTLD_MAIN_ONLY
+    handle = RTLD_MAIN_ONLY;
+#else
+#ifdef RTLD_DEFAULT
+    handle = RTLD_DEFAULT;
+#else
+    handle = 0;
+#endif
+#endif
+    if (!mp->entry || handle == 0 || !dlsym(handle, mp->entry)) {
+        if ((handle = dlopen(mp->path, RTLD_LAZY | RTLD_GLOBAL)) == 0) {
+            mprError("Can't load module %s\nReason: \"%s\"", mp->path, dlerror());
+            return MPR_ERR_CANT_OPEN;
+        } 
+        mp->handle = handle;
+    }
     if (mp->entry) {
         if ((fn = (MprModuleEntry) dlsym(handle, mp->entry)) != 0) {
             if ((fn)(mp->moduleData, mp) < 0) {
@@ -25772,37 +25790,31 @@ int mprLoadNativeModule(MprModule *mp)
     MprModuleEntry  fn;
     SYM_TYPE        symType;
     void            *handle;
-    char            entryPoint[MPR_MAX_FNAME];
     int             fd;
 
     mprAssert(mp);
+    fn = 0;
+    handle = 0;
 
-    if (moduleFindByName(mp->path) != 0) {
-        return 0;
-    }
-    if ((fd = open(mp->path, O_RDONLY, 0664)) < 0) {
-        mprError("Can't open module \"%s\"", mp->path);
-        return MPR_ERR_CANT_OPEN;
-    }
-    errno = 0;
-    handle = loadModule(fd, LOAD_GLOBAL_SYMBOLS);
-    if (handle == 0 || errno != 0) {
-        close(fd);
-        if (handle) {
-            unldByModuleId(handle, 0);
+    if (!mp->entry || symFindByName(sysSymTbl, mp->entry, (char**) &fn, &symType) == -1) {
+        if ((fd = open(mp->path, O_RDONLY, 0664)) < 0) {
+            mprError("Can't open module \"%s\"", mp->path);
+            return MPR_ERR_CANT_OPEN;
         }
-        mprError("Can't load module %s", mp->path);
-        return MPR_ERR_CANT_READ;
+        errno = 0;
+        handle = loadModule(fd, LOAD_GLOBAL_SYMBOLS);
+        if (handle == 0 || errno != 0) {
+            close(fd);
+            if (handle) {
+                unldByModuleId(handle, 0);
+            }
+            mprError("Can't load module %s", mp->path);
+            return MPR_ERR_CANT_READ;
+        }
+        close(fd);
     }
-    close(fd);
     if (mp->entry) {
-#if UNUSED && (BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64)
-        mprSprintf(entryPoint, sizeof(entryPoint), "_%s", mp->entry);
-#else
-        scopy(entryPoint, sizeof(entryPoint), mp->entry);
-#endif
-        fn = 0;
-        if (symFindByName(sysSymTbl, entryPoint, (char**) &fn, &symType) == -1) {
+        if (symFindByName(sysSymTbl, mp->entry, (char**) &fn, &symType) == -1) {
             mprError("Can't find symbol %s when loading %s", mp->entry, mp->path);
             return MPR_ERR_CANT_READ;
         }
@@ -27459,12 +27471,16 @@ int mprLoadNativeModule(MprModule *mp)
     void            *handle;
 
     mprAssert(mp);
-    baseName = mprGetPathBase(mp->path);
-    if ((handle = GetModuleHandle(baseName)) == 0 && (handle = LoadLibrary(mp->path)) == 0) {
-        mprError("Can't load module %s\nReason: \"%d\"\n", mp->path, mprGetOsError());
-        return MPR_ERR_CANT_READ;
-    } 
-    mp->handle = handle;
+
+    handle = MPR->appInstance;
+    if (!handle || !mp->entry || !GetProcAddress((HINSTANCE) MPR->appInstance, mp->entry)) {
+        baseName = mprGetPathBase(mp->path);
+        if ((handle = GetModuleHandle(baseName)) == 0 && (handle = LoadLibrary(mp->path)) == 0) {
+            mprError("Can't load module %s\nReason: \"%d\"\n", mp->path, mprGetOsError());
+            return MPR_ERR_CANT_READ;
+        } 
+        mp->handle = handle;
+    }
     if (mp->entry) {
         if ((fn = (MprModuleEntry) GetProcAddress((HINSTANCE) handle, mp->entry)) == 0) {
             mprError("Can't load module %s\nReason: can't find function \"%s\"\n", mp->name, mp->entry);
