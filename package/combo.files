@@ -71,7 +71,6 @@ cp ${BLD_TOP}/doc/man/appweb.1 ${DOC}/man
 cp ${BLD_TOP}/doc/man/appwebMonitor.1 ${DOC}/man
 cp ${BLD_TOP}/doc/man/auth.1 ${DOC}
 
-
 #
 #	deps.c
 #

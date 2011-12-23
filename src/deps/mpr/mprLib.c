@@ -27472,7 +27472,7 @@ int mprLoadNativeModule(MprModule *mp)
 
     mprAssert(mp);
 
-    handle = MPR->appInstance;
+    handle = (HANDLE) MPR->appInstance;
     if (!handle || !mp->entry || !GetProcAddress((HINSTANCE) MPR->appInstance, mp->entry)) {
         baseName = mprGetPathBase(mp->path);
         if ((handle = GetModuleHandle(baseName)) == 0 && (handle = LoadLibrary(mp->path)) == 0) {
@@ -27508,7 +27508,7 @@ int mprUnloadNativeModule(MprModule *mp)
 }
 
 
-void mprSetInst(long inst)
+void mprSetInst(HINSTANCE inst)
 {
     MPR->appInstance = inst;
 }
