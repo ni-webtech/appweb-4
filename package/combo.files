@@ -10,11 +10,9 @@ DIR="${BLD_OUT_DIR}/${WHERE}/${BLD_PRODUCT}-${BLD_VERSION}"
 SRC="${DIR}/src/deps/appweb"
 DOC="${DIR}/doc"
 
-APPWEB_HEADERS="${BLD_INC_DIR}/appweb.h ${BLD_INC_DIR}/appwebMonitor.h"
-EDI_HEADERS="${BLD_INC_DIR}/edi.h"
-ESP_HEADERS="${BLD_INC_DIR}/esp.h"
-LIB_SOURCES=`find ${S} -name '*.c' | egrep -v 'deps|server/|test|utils|sav|appman|makerom'`
-DEP_SOURCES=`find ${S}/deps -name '*.c' | egrep -v 'appman|makerom|utils|test|http/http.c'`
+APPWEB_HEADERS="${BLD_INC_DIR}/mpr.h ${BLD_INC_DIR}/mprSsl.h ${BLD_INC_DIR}/http.h ${BLD_INC_DIR}/appweb.h ${BLD_INC_DIR}/appwebMonitor.h ${BLD_INC_DIR}/edi.h ${BLD_INC_DIR}/mdb.h ${BLD_INC_DIR}/esp.h ${BLD_INC_DIR}/pcre.h"
+LIB_SOURCES=`find ${S} -name '*.c' | egrep -v 'deps|server/|test|utils|sav|appman|makerom|samples|esp/esp.c'`
+DEP_SOURCES=`find ${S}/deps -name '*.c' | egrep -v 'appman|makerom|utils|test|http/http.c|sqlite|mpr/manager'`
 
 mkdir -p ${SRC} ${DOC}/man ${DOC}/api
 
@@ -22,19 +20,19 @@ mkdir -p ${SRC} ${DOC}/man ${DOC}/api
 #   Build files
 #
 cp ${BLD_TOP}/package/Makefile.combo "${SRC}/Makefile"
-cp ${BLD_INC_DIR}/buildConfig.h "${DIR}/buildConfig.h"
+cat ${BLD_INC_DIR}/buildConfig.h | grep '#define' | sort | uniq >"${DIR}/buildConfig.h"
 
 #
 #	appweb.h
 #
 echo '#include "buildConfig.h"' >${SRC}/appweb.h
-combo ${APPWEB_HEADERS} | egrep -v '#include.*appweb' >>${SRC}/appweb.h
+combo ${APPWEB_HEADERS} | egrep -v '#include.*customize.h|#include.*appweb|#include.*mpr|#include.*http|#include.*edi.h' >>${SRC}/appweb.h
 
 #
 #	appwebLib.c
 #
 echo '#include "appweb.h"' >${SRC}/appwebLib.c
-combo ${LIB_SOURCES} | egrep -v '#include.*appweb|#include.*http|#include.*esp|#include.*mpr|#include.*pcre' >>${SRC}/appwebLib.c
+combo ${LIB_SOURCES} | egrep -v '#include.*appweb|#include.*http|#include.*esp|#include.*mpr|#include.*pcre|#include.*edi.h|#include.*mdb.h' >>${SRC}/appwebLib.c
 
 #
 #	appweb.c
@@ -46,20 +44,13 @@ combo ${S}/server/appweb.c | egrep -v '#include.*appweb|#include.*http' >>${SRC}
 #	appweb.conf
 #
 cp ${S}/server/*.conf ${SRC}
-
-#
-#	esp.h
-#
-echo '#include "buildConfig.h"' >${SRC}/esp.h
-combo ${ESP_HEADERS} | egrep -v '#include.*UNUSED' >>${SRC}/esp.h
-echo '#include "buildConfig.h"' >${SRC}/edi.h
-combo ${EDI_HEADERS} | egrep -v '#include.*UNUSED' >>${SRC}/edi.h
+cp ${S}/esp/esp.conf ${SRC}
 
 #
 #	esp.c
 #
-echo '#include "esp.h"' >${SRC}/esp.c
-combo ${S}/esp/esp*.c | egrep -v '#include.*UNUSED' >>${SRC}/esp.c
+echo '#include "appweb.h"' >${SRC}/esp.c
+combo ${S}/esp/esp.c | egrep -v '#include.*esp.h$|#include.*edi.h' >>${SRC}/esp.c
 
 #
 #	Doc

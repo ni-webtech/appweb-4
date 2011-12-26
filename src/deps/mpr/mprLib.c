@@ -7084,7 +7084,7 @@ static signed char decodeMap[] = {
 
 static void decode(uint *output, uchar *input, uint len);
 static void encode(uchar *output, uint *input, uint len);
-static void finalize(uchar digest[16], MD5CONTEXT *context);
+static void finalizeMD5(uchar digest[16], MD5CONTEXT *context);
 static void initMD5(MD5CONTEXT *context);
 static void transform(uint state[4], uchar block[64]);
 static void update(MD5CONTEXT *context, uchar *input, uint inputLen);
@@ -7191,7 +7191,7 @@ char *mprGetMD5WithPrefix(cchar *buf, ssize length, cchar *prefix)
     }
     initMD5(&context);
     update(&context, (uchar*) buf, (uint) length);
-    finalize(hash, &context);
+    finalizeMD5(hash, &context);
 
     for (i = 0, r = result; i < 16; i++) {
         *r++ = hex[hash[i] >> 4];
@@ -7262,7 +7262,7 @@ static void update(MD5CONTEXT *context, uchar *input, uint inputLen)
 /*
     MD5 finalization. Ends an MD5 message-digest operation, writing the message digest and zeroizing the context.
  */ 
-static void finalize(uchar digest[16], MD5CONTEXT *context)
+static void finalizeMD5(uchar digest[16], MD5CONTEXT *context)
 {
     uchar   bits[8];
     uint    index, padLen;
@@ -14437,7 +14437,7 @@ MprModuleService *mprCreateModuleService()
         return 0;
     }
     ms->modules = mprCreateList(-1, 0);
-    libdir = mprJoinPath(mprGetAppDir(), "../lib");
+    libdir = mprJoinPath(mprGetPathParent(mprGetAppDir()), mprGetPathBase(BLD_LIB_NAME));
     ms->searchPath = sjoin(mprGetAppDir(), MPR_SEARCH_SEP, libdir, MPR_SEARCH_SEP, 
         BLD_LIB_PREFIX, NULL);
     ms->mutex = mprCreateLock();

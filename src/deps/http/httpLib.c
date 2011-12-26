@@ -10365,7 +10365,7 @@ static void definePathVars(HttpRoute *route)
     mprAddKey(route->pathTokens, "PRODUCT", sclone(BLD_PRODUCT));
     mprAddKey(route->pathTokens, "OS", sclone(BLD_OS));
     mprAddKey(route->pathTokens, "VERSION", sclone(BLD_VERSION));
-    mprAddKey(route->pathTokens, "LIBDIR", mprJoinPath(mprGetAppDir(), "../lib"));
+    mprAddKey(route->pathTokens, "LIBDIR", mprJoinPath(mprGetPathParent(mprGetAppDir()), mprGetPathBase(BLD_LIB_NAME)));
     if (route->host) {
         defineHostVars(route);
     }
@@ -13663,7 +13663,7 @@ static void manageTx(HttpTx *tx, int flags)
 /*
     Add key/value to the header hash. If already present, update the value
 */
-static void addHeader(HttpConn *conn, cchar *key, cchar *value)
+static void addHdr(HttpConn *conn, cchar *key, cchar *value)
 {
     mprAssert(key && *key);
     mprAssert(value);
@@ -13698,7 +13698,7 @@ void httpAddHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
     va_end(vargs);
 
     if (!mprLookupKey(conn->tx->headers, key)) {
-        addHeader(conn, key, value);
+        addHdr(conn, key, value);
     }
 }
 
@@ -13712,7 +13712,7 @@ void httpAddHeaderString(HttpConn *conn, cchar *key, cchar *value)
     mprAssert(value);
 
     if (!mprLookupKey(conn->tx->headers, key)) {
-        addHeader(conn, key, sclone(value));
+        addHdr(conn, key, sclone(value));
     }
 }
 
@@ -13742,10 +13742,10 @@ void httpAppendHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
         if (scasematch(key, "Set-Cookie")) {
             mprAddDuplicateKey(conn->tx->headers, key, value);
         } else {
-            addHeader(conn, key, sfmt("%s, %s", oldValue, value));
+            addHdr(conn, key, sfmt("%s, %s", oldValue, value));
         }
     } else {
-        addHeader(conn, key, value);
+        addHdr(conn, key, value);
     }
 }
 
@@ -13766,10 +13766,10 @@ void httpAppendHeaderString(HttpConn *conn, cchar *key, cchar *value)
         if (scasematch(key, "Set-Cookie")) {
             mprAddDuplicateKey(conn->tx->headers, key, sclone(value));
         } else {
-            addHeader(conn, key, sfmt("%s, %s", oldValue, value));
+            addHdr(conn, key, sfmt("%s, %s", oldValue, value));
         }
     } else {
-        addHeader(conn, key, sclone(value));
+        addHdr(conn, key, sclone(value));
     }
 }
 
@@ -13788,7 +13788,7 @@ void httpSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
     va_start(vargs, fmt);
     value = sfmtv(fmt, vargs);
     va_end(vargs);
-    addHeader(conn, key, value);
+    addHdr(conn, key, value);
 }
 
 
@@ -13799,7 +13799,7 @@ void httpSetHeaderString(HttpConn *conn, cchar *key, cchar *value)
     mprAssert(key && *key);
     mprAssert(value);
 
-    addHeader(conn, key, sclone(value));
+    addHdr(conn, key, sclone(value));
 }
 
 

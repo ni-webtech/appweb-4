@@ -34,7 +34,7 @@ typedef struct Dir {
 static Dir *allocDir(HttpRoute *route);
 static Dir *cloneDir(Dir *parent, HttpRoute *route);
 static void filterDirList(HttpConn *conn, MprList *list);
-static Dir* getDir(MaState *state);
+static Dir* getDirObj(MaState *state);
 static int  match(cchar *pattern, cchar *file);
 static void outputFooter(HttpQueue *q);
 static void outputHeader(HttpQueue *q, cchar *dir, int nameSize);
@@ -548,7 +548,7 @@ static int indexOrderDirective(MaState *state, cchar *key, cchar *value)
     Dir     *dir;
     char    *option;
 
-    dir = getDir(state);
+    dir = getDirObj(state);
 
     if (!maTokenize(state, value, "%S %S", &option, &dir->sortField)) {
         return MPR_ERR_BAD_SYNTAX;
@@ -574,7 +574,7 @@ static int indexOptionsDirective(MaState *state, cchar *key, cchar *value)
     Dir     *dir;
     char    *option, *tok;
 
-    dir = getDir(state);
+    dir = getDirObj(state);
     option = stok(sclone(value), " \t", &tok);
     while (option) {
         if (scasematch(option, "FancyIndexing")) {
@@ -598,7 +598,7 @@ static int optionsDirective(MaState *state, cchar *key, cchar *value)
     Dir     *dir;
     char    *option, *tok;
 
-    dir = getDir(state);
+    dir = getDirObj(state);
     option = stok(sclone(value), " \t", &tok);
     while (option) {
         if (scasematch(option, "Indexes")) {
@@ -625,7 +625,7 @@ static void manageDir(Dir *dir, int flags)
 }
 
 
-static Dir *getDir(MaState *state)
+static Dir *getDirObj(MaState *state)
 {
     HttpRoute   *route;
     Dir         *dir, *parent;
