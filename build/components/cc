@@ -22,17 +22,16 @@ setCompilerOptions()
     eval os=\$BLD_${KIND}_OS
     eval cc=\$CFG_${KIND}_CC
     eval cpu=\$BLD_${KIND}_CPU
-    eval hasStackProtector=\${KIND}_HAS_STACK_PROTECTOR
-    eval hasDoubleBraces=\${KIND}_HAS_DOUBLE_BRACES
-    eval hasSync=\${KIND}_HAS_SYNC
-    eval hasPam=\${KIND}_HAS_PAM
-    eval hasLibEdit=\${KIND}_HAS_EDITLINE
-    eval hasMtune=\${KIND}_HAS_MTUNE
-    eval hasDynLoad=\${KIND}_HAS_DYN_LOAD
-    eval hasPam=\${KIND}_HAS_PAM
-    eval hasMmu=\${KIND}_HAS_MMU
     eval hasCygwin=\${KIND}_HAS_CYGWIN
     eval hasDiab=\${KIND}_HAS_DIAB
+    eval hasDoubleBraces=\${KIND}_HAS_DOUBLE_BRACES
+    eval hasDynLoad=\${KIND}_HAS_DYN_LOAD
+    eval hasLibEdit=\${KIND}_HAS_EDITLINE
+    eval hasMmu=\${KIND}_HAS_MMU
+    eval hasMtune=\${KIND}_HAS_MTUNE
+    eval hasPam=\${KIND}_HAS_PAM
+    eval hasStackProtector=\${KIND}_HAS_STACK_PROTECTOR
+    eval hasSync=\${KIND}_HAS_SYNC
     eval hasWarnUnused=\${KIND}_HAS_WARN_UNUSED
     eval hasWarn64to32=\${KIND}_HAS_WARN_64TO32
     eval hasUnnamedUnions=\${KIND}_HAS_UNNAMED_UNIONS
@@ -232,9 +231,9 @@ setCompilerOptions()
         #
         #   Enable for all non-GNU O/S
         #
-        eval $hasMmu=1
         eval $hasDynLoad=1
         eval $hasDoubleBraces=0
+        eval $hasMmu=1
         eval $hasPam=0
         eval $hasSync=0
         eval $hasUnnamedUnions=1

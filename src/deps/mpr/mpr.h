@@ -1401,7 +1401,9 @@ typedef struct MprArgs {
             int largc = 0; \
             va_start(args, arg0); \
             largv[largc++] = #name; \
-            largv[largc++] = arg0; \
+            if (arg0) { \
+                largv[largc++] = arg0; \
+            } \
             for (argp = va_arg(args, char*); argp && largc < MPR_MAX_ARGC; argp = va_arg(args, char*)) { \
                 largv[largc++] = argp; \
             } \

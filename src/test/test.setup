@@ -14,7 +14,15 @@ const HTTP       = "http://" + LOCALHOST + ":" + PORT
 const HTTPS      = "https://" + LOCALHOST + ":" + SSL_PORT
 const PIDFILE    = ".pidfile"
 
-let cmd = Cmd.locate("appweb").portable + " --log trace.txt:4 --name forAppwebTest --config appweb.conf"
+let cmd
+if (test.hostOs == "VXWORKS") {
+    let base = App.getenv("WIND_BASE")
+    let host = App.getenv("WIND_HOST_TYPE")
+    let vxsim = base.join("/host", host, "/bin/vxsim")
+    cmd = vxsim + " -f " + + " -s vxargs -l vx.log"
+} else {
+    cmd = Cmd.locate("appweb").portable + " --log trace.txt:4 --name forAppwebTest --config appweb.conf"
+}
 
 if (test.phase == "init") {
     if (!App.getenv("SECOND")) {
