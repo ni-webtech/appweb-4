@@ -2,7 +2,7 @@
 #	standard.defaults -- Release configuration settings when building 
 #		Embedthis Appweb from source.
 #
-#	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+#	Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
 #
 #	These initial defaults are read by configure when first creating the
 #	buildConfig.h configuration file.

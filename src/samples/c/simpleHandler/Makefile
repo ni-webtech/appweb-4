@@ -1,7 +1,7 @@
 #
 #	Makefile for the simpleHandler sample
 #
-#	Copyright (c) Embedthis Software, 2003-2011. All Rights Reserved.
+#	Copyright (c) Embedthis Software, 2003-2012. All Rights Reserved.
 #
 
 NAME			:= simpleHandler

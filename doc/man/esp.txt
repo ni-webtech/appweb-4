@@ -218,7 +218,7 @@ REPORTING BUGS
 
 
 COPYRIGHT
-       Copyright  (C)  2004-2011  Embedthis  Software.   ESP is a trademark of
+       Copyright  (C)  2004-2012  Embedthis  Software.   ESP is a trademark of
        Embedthis Software.
 
 
@@ -227,4 +227,4 @@ SEE ALSO
 
 
 
-esp                              November 2011                          ESP(1)
+esp                              November 2012                          ESP(1)

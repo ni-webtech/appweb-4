@@ -2,7 +2,7 @@
 #
 #   configure -- Build configuration script for Embedthis Products
 #
-#   Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+#   Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
 #
 #   This script creates the buildConfig.h configuration file. This is included
 #   in every C/C++ source file and all makefiles.

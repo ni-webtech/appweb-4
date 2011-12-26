@@ -6,7 +6,7 @@
 #
 #   . `cacheConfig ${BLD_INC_DIR}/buildConfig.h`
 #
-#   Copyright (c) Embedthis LLC, 2003-2011. All Rights Reserved.
+#   Copyright (c) Embedthis LLC, 2003-2012. All Rights Reserved.
 #
 config="$1"
 cache="`dirname "$1"`/.buildConfig.sh"

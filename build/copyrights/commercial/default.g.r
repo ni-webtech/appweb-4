@@ -1,5 +1,5 @@
 
-Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
 Portions Copyright (C) 1991-2, RSA Data Security, Inc. All rights reserved. 
 Portions Copyright (C) 1995-2000, GoAhead Software. All rights reserved. 
 MD5C.C - RSA Data Security, Inc., MD5 message-digest algorithm

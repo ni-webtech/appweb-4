@@ -417,8 +417,8 @@ static bool parseArgs(int argc, char **argv)
 
         } else if (strcmp(argp, "--version") == 0 || strcmp(argp, "-V") == 0) {
             mprPrintfError("%s %s\n"
-                "Copyright (C) Embedthis Software 2003-2011\n"
-                "Copyright (C) Michael O'Brien 2003-2011\n",
+                "Copyright (C) Embedthis Software 2003-2012\n"
+                "Copyright (C) Michael O'Brien 2003-2012\n",
                BLD_NAME, BLD_VERSION);
             exit(0);
 
@@ -1208,8 +1208,8 @@ int _exit() {
 /*
     @copy   default
     
-    Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2011. All Rights Reserved.
+    Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
+    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
     
     This software is distributed under commercial and open source licenses.
     You may use the GPL open source license described below or you may acquire 

@@ -117,6 +117,6 @@ Contributors have provided other portions of the software that are covered by th
 
 Trademarks
 ---
-Copyright (c) 2003-2011 Embedthis Software, LLC. All Rights Reserved.
+Copyright (c) 2003-2012 Embedthis Software, LLC. All Rights Reserved.
 Embedthis, Appweb, Ejscript and ESP are trademarks of Embedthis Software, LLC. Other brands and their products 
 are trademarks of their respective holders.

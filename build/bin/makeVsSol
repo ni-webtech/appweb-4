@@ -2,7 +2,7 @@
 #
 #   makeVsSol -- Make Visual Studio (10) Solutions 
 #
-#   Copyright (c) Embedthis LLC, 2003-2011. All Rights Reserved.
+#   Copyright (c) Embedthis LLC, 2003-2012. All Rights Reserved.
 #
 #   It is expected that makeVsSol is only invoked from the Embedthis build systems. It
 #   expects the Makefile and and make.rules to have defined all the necessary compile 

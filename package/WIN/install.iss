@@ -1,7 +1,7 @@
 ;
 ; install.iss -- Inno Setup 5 install configuration file for Embedthis Appweb
 ;
-; Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+; Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
 ;
 
 [Setup]

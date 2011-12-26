@@ -1,7 +1,7 @@
 /*
  	binary.files - Files needed for the binary installation 
 
- 	Copyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+ 	Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
  */
 
 var top = App.dir.findAbove("configure").dirname

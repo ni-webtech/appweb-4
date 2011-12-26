@@ -7,9 +7,9 @@ Index: package/appweb/Makefile
 +#   Makefile for the Appweb Web Server
  #
 -#  	Makefile for the Appweb Web Server
-+#   Copyright (C) 2011 Embedthis Software
++#   Copyright (C) 2012 Embedthis Software
  #
--#  	Copyright (C) 2011 Embedthis Software
+-#  	Copyright (C) 2012 Embedthis Software
 +#   This software is licensed under the GPLv2. Commercial and other licenses are available
 +#   from http://www.embedthis.com.
  #

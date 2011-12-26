@@ -1,7 +1,7 @@
 /*
     jquery.esp.js - ESP jQuery support
   
-    Copyright (c) 2011 Embedthis Software
+    Copyright (c) 2012 Embedthis Software
     Dual licensed under GPL licenses and the Embedthis commercial license.
     See http://embedthis.com/ for further licensing details.
  */

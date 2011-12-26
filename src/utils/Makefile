@@ -1,7 +1,7 @@
 #
 # 	Makefile for utilities for the http web server 
 #
-# 	opyright (c) Embedthis Software LLC, 2003-2011. All Rights Reserved.
+# 	opyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
 #
 
 include 		.makedep
