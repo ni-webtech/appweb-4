@@ -274,11 +274,7 @@
     #include    <ioLib.h>
     #include    <pipeDrv.h>
     #include    <hostLib.h>
-#if UNUSED
-    #include    <symSyncLib.h>
-#else
     #include    <symSync.h>
-#endif
     #include    <sysSymTbl.h>
     #include    <sys/fcntlcom.h>
     #include    <tickLib.h>
