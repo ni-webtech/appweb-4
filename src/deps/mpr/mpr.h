@@ -1052,7 +1052,7 @@ struct  MprXml;
         No MMU, so the stack size actually consumes memory. Set this as low as possible. 
         NOTE: php and ejs use stack heavily.
      */
-    #define MPR_DEFAULT_STACK       (64 * 1024)   /**< Default thread stack size (0 means use system default) */
+    #define MPR_DEFAULT_STACK       (128 * 1024)   /**< Default thread stack size (0 means use system default) */
 #endif
 
 #if BLD_TUNE == MPR_TUNE_SIZE || DOXYGEN

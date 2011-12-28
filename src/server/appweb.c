@@ -74,23 +74,6 @@ static long msgProc(HWND hwnd, uint msg, uint wp, long lp);
 
 /*********************************** Code *************************************/
 
-#if UNUSED
-int appweb(char *arg0, ...) {
-    extern int main();
-    va_list args;
-    char *argp, *largv[MPR_MAX_ARGC];
-    int largc = 0;
-    va_start(args, arg0);
-    largv[largc++] = "appweb";
-    largv[largc++] = arg0;
-    for (argp = va_arg(args, char*); argp && largc < MPR_MAX_ARGC; argp = va_arg(args, char*)) {
-        largv[largc++] = argp;
-    }
-    return main(largc, largv);
-}
-int main(int argc, char **argv)
-#endif
-
 MAIN(appweb, int argc, char **argv)
 {
     Mpr     *mpr;
