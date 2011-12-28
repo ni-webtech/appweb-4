@@ -3058,6 +3058,7 @@ typedef struct HttpRoute {
     MprList         *tokens;                /**< Tokens in pattern, {name} */
 
     struct MprSsl   *ssl;                   /**< SSL configuration */
+    MprMutex        *mutex;                 /**< Multithread sync */
 } HttpRoute;
 
 

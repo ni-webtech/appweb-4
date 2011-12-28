@@ -69,13 +69,11 @@
 #define MPR_CPU_SH4         12
 
 
-#if LINUX
-    #if __WORDSIZE == 64 || __amd64 || __x86_64 || __x86_64__ || _WIN64
-    #else
-        /* Linux-32 */
-        #define _LARGEFILE64_SOURCE 1
-        #define _FILE_OFFSET_BITS 64
-    #endif
+#if __WORDSIZE == 64 || __amd64 || __x86_64 || __x86_64__ || _WIN64
+    #define MPR_64_BIT 1
+    #define MPR_BITS 64
+#else
+    #define MPR_BITS 32
 #endif
 
 /*
@@ -97,6 +95,10 @@
  */
 #if LINUX
     #define _GNU_SOURCE 1
+    #if !MPR_64_BIT
+        #define _LARGEFILE64_SOURCE 1
+        #define _FILE_OFFSET_BITS 64
+    #endif
 #endif
 
 #if VXWORKS
@@ -283,6 +285,7 @@
 #if _WRS_VXWORKS_MAJOR >= 6
     #include    <wait.h>
 #endif
+    #include    <vxAtomicLib.h>
 #endif
 
 /*
@@ -468,13 +471,6 @@ typedef int64 MprOff;
     @defgroup MprTime MprTime
  */
 typedef int64 MprTime;
-
-#if __WORDSIZE == 64 || __amd64 || __x86_64 || __x86_64__ || _WIN64
-    #define MPR_64_BIT 1
-    #define MPR_BITS 64
-#else
-    #define MPR_BITS 32
-#endif
 
 #ifndef BITSPERBYTE
     #define BITSPERBYTE     (8 * sizeof(char))
@@ -1068,7 +1064,7 @@ struct  MprXml;
     #define MPR_MAX_URL             512           /**< Max URL size. Also request URL size. */
     #define MPR_MAX_STRING          1024          /**< Maximum (stack) string size */
     #define MPR_MAX_LOG             (8 * 1024)    /**< Maximum log message size (impacts stack) */
-    #define MPR_DEFAULT_ALLOC       64            /**< Default small alloc size */
+    #define MPR_SMALL_ALLOC         256           /**< Default small. Used in printf. */
     #define MPR_DEFAULT_HASH_SIZE   23            /**< Default size of hash table */ 
     #define MPR_BUFSIZE             4096          /**< Reasonable size for buffers */
     #define MPR_BUF_INCR            4096          /**< Default buffer growth inc */
@@ -1094,7 +1090,7 @@ struct  MprXml;
     #define MPR_MAX_URL             2048
     #define MPR_MAX_STRING          2048
     #define MPR_MAX_LOG             (32 * 1024)
-    #define MPR_DEFAULT_ALLOC       256
+    #define MPR_SMALL_ALLOC         512
     #define MPR_DEFAULT_HASH_SIZE   43
     #define MPR_BUFSIZE             4096
     #define MPR_BUF_INCR            4096
@@ -1119,7 +1115,7 @@ struct  MprXml;
     #define MPR_MAX_URL             4096
     #define MPR_MAX_LOG             (64 * 1024)
     #define MPR_MAX_STRING          4096
-    #define MPR_DEFAULT_ALLOC       512
+    #define MPR_SMALL_ALLOC         1024
     #define MPR_DEFAULT_HASH_SIZE   97
     #define MPR_BUFSIZE             8192
     #define MPR_MAX_BUF             -1
@@ -1494,7 +1490,7 @@ typedef struct MprCond {
     #elif VXWORKS
         SEM_ID cv;                  /* Condition variable */
     #else
-        error("Unsupported OS");
+        #warning "Unsupported OS in MprCond definition in mpr.h"
     #endif
     struct MprMutex *mutex;         /**< Thread synchronization mutex */
     volatile int triggered;         /**< Value of the condition */
@@ -1571,7 +1567,7 @@ typedef struct MprMutex {
     #elif BLD_UNIX_LIKE
         pthread_mutex_t  cs;
     #else
-        error("Unsupported OS");
+        #warning "Unsupported OS in MprMutex definition in mpr.h"
     #endif
 #if BLD_DEBUG
         MprOsThread owner;
@@ -1586,19 +1582,25 @@ typedef struct MprMutex {
  */
 typedef struct MprSpin {
     #if USE_MPR_LOCK
-        MprMutex            cs;
+        MprMutex                cs;
     #elif BLD_WIN_LIKE
-        CRITICAL_SECTION    cs;            /**< Internal mutex critical section */
+        CRITICAL_SECTION        cs;            /**< Internal mutex critical section */
     #elif VXWORKS
-        SEM_ID              cs;
+        #if FUTURE && SPIN_LOCK_TASK_INIT
+            spinlockTask_t      cs;
+        #else
+            SEM_ID              cs;
+        #endif
     #elif MACOSX
-        OSSpinLock          cs;
-    #elif BLD_UNIX_LIKE && BLD_HAS_SPINLOCK
-        pthread_spinlock_t  cs;
+        OSSpinLock              cs;
     #elif BLD_UNIX_LIKE
-        pthread_mutex_t     cs;
+        #if BLD_HAS_SPINLOCK
+            pthread_spinlock_t  cs;
+        #else
+            pthread_mutex_t     cs;
+        #endif
     #else
-        error("Unsupported OS");
+        #warning "Unsupported OS in MprSpin definition in mpr.h"
     #endif
     #if BLD_DEBUG
         MprOsThread         owner;
@@ -2112,7 +2114,9 @@ typedef struct MprHeap {
     MprMemNotifier   notifier;               /**< Memory allocation failure callback */
     MprCond          *markerCond;            /**< Marker sleep cond var */
     MprSpin          heapLock;               /**< Heap allocation lock */
+#if UNUSED
     MprSpin          heapLock2;              /**< Heap allocation lock */
+#endif
     MprSpin          rootLock;               /**< Root locking */
     MprRegion        *regions;               /**< List of memory regions */
     struct MprThread *marker;                /**< Marker thread */

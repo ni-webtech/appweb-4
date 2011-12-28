@@ -5486,6 +5486,7 @@ void httpBackupRouteLog(HttpRoute *route)
 
     mprAssert(route->logBackup);
     mprAssert(route->logSize > 100);
+    lock(route);
     mprGetPathInfo(route->logPath, &info);
     if (info.valid && ((route->logFlags & MPR_LOG_ANEW) || info.size > route->logSize || route->logSize <= 0)) {
         if (route->log) {
@@ -5493,7 +5494,9 @@ void httpBackupRouteLog(HttpRoute *route)
             route->log = 0;
         }
         mprBackupLog(route->logPath, route->logBackup);
+        route->logFlags &= ~MPR_LOG_ANEW;
     }
+    unlock(route);
 }
 
 
@@ -8068,6 +8071,7 @@ HttpRoute *httpCreateRoute(HttpHost *host)
     route->workers = -1;
     route->limits = mprMemdup(((Http*) MPR->httpService)->serverLimits, sizeof(HttpLimits));
     route->mimeTypes = MPR->mimeTypes;
+    route->mutex = mprCreateLock();
     httpInitTrace(route->trace);
 
     if ((route->mimeTypes = mprCreateMimeTypes("mime.types")) == 0) {
@@ -8202,6 +8206,7 @@ static void manageRoute(HttpRoute *route, int flags)
         mprMark(route->log);
         mprMark(route->logFormat);
         mprMark(route->logPath);
+        mprMark(route->mutex);
 
     } else if (flags & MPR_MANAGE_FREE) {
         if (route->patternCompiled && (route->flags & HTTP_ROUTE_FREE_PATTERN)) {
