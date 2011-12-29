@@ -2,7 +2,7 @@
     post.tst - Stress test post data
  */
 
-const HTTP = (global.tsession && tsession["http"]) || ":4100"
+const HTTP = App.config.main || "127.0.0.1:4100"
 
 let http: Http = new Http
 
@@ -40,18 +40,18 @@ function postTest(url: String) {
 
 postTest("/index.html")
 
-if (test.config["ejscript"] == 1) {
+if (App.config.bld_ejscript) {
     postTest("/form.ejs")
 }
 
-if (test.config["php"] == 1) {
+if (App.config.bld_php) {
     postTest("/form.php")
 }
 
-if (test.config["cgi"] == 1) {
+if (App.config.bld_cgi) {
     postTest("/cgi-bin/cgiProgram")
 }
 
-if (test.config["esp"] == 1) {
+if (App.config.bld_esp) {
     postTest("/test.esp")
 }

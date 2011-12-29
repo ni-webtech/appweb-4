@@ -6,7 +6,7 @@
 //  MOB - incomplete
 module test.http.getmethod {
 
-    const HTTP = tsession["http"]
+    const HTTP = App.config.main || "127.0.0.1:4100"
     const URL = HTTP + "/index.html"
     const BIG = HTTP + "/big.ejs"
 

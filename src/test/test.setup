@@ -3,29 +3,40 @@
  */
 require ejs.unix
 
-let conf         = Path("appweb.conf").readString()
-const PORT       = conf.replace(/.*Listen *([0-9]+) *# MAIN.*/ms, "$1")
-const IPV6       = conf.replace(/.*Listen *\[::\]:([0-9]+) *# IPV6.*/ms, "$1")
-const SSL_PORT   = conf.replace(/.*Listen *([0-9]+) *# SSL.*/ms, "$1")
-const VHOST_PORT = conf.replace(/.*Listen *([0-9]+) *# VHOST.*/ms, "$1")
-const IPHOST     = conf.replace(/.*Listen *([0-9]+) *# IPHOST.*/ms, "$1")
-const LOCALHOST  = "127.0.0.1"
-const HTTP       = "http://" + LOCALHOST + ":" + PORT
-const HTTPS      = "https://" + LOCALHOST + ":" + SSL_PORT
-const PIDFILE    = ".pidfile"
+let conf            = Path("appweb.conf").readString()
+const PORT          = conf.replace(/.*Listen *([0-9]+) *# MAIN.*/ms, "$1")
+const SSL_PORT      = conf.replace(/.*Listen *([0-9]+) *# SSL.*/ms, "$1")
+const NAMED_PORT    = conf.replace(/.*Listen *([0-9]+) *# NAMED.*/ms, "$1")
+const VIP_PORT      = conf.replace(/.*Listen *([0-9]+) *# IPHOST.*/ms, "$1")
+const IPV6_PORT     = conf.replace(/.*Listen *\[::\]:([0-9]+) *# IPV6.*/ms, "$1")
+const TARGET        = (test.hostOs == "VXWORKS") ? "192.168.200.1" : "127.0.0.1"
+const PIDFILE       = ".pidfile"
+
+/*
+    Provide definitions via App.test.session[]
+ */
+share("main",   "http://" + TARGET + ":" + PORT)
+share("ssl", "https://" + TARGET + ":" + SSL_PORT)
+share("named", "http://" + TARGET + ":" + NAMED_PORT)
+share("virt", "http://" + TARGET + ":" + VIP_PORT)
+
+//  MOB -- must change host
+share("ipv6", "http://[::1]:" + IPV6_PORT)
 
 let cmd
 if (test.hostOs == "VXWORKS") {
     // export WIND_HOME=/home/mob/WindRiver
     // export WIND_PLATFORM=vxworks-6.8
+/*
     let base: Path = App.getenv("WIND_BASE") || "/home/mob/WindRiver/vxworks-6.8"
     let host: Path = App.getenv("WIND_HOST_TYPE") || "x86-linux2"
-print("BASE", base)
     let vxsim: Path = base.join("host", host, "bin/vxsim")
     let vxworks: Path = base.join("workspace", "test-image2", "default/vxWorks")
-print("VXSIM", vxsim)
     cmd = vxsim + " -f " + vxworks + " -s vxargs -l vx.log"
-print("CMD", cmd)
+    print("CMD", cmd)
+*/
+    cmd = "vxrun"
+
 } else {
     cmd = Cmd.locate("appweb").portable + " --log trace.txt:4 --name forAppwebTest --config appweb.conf"
 }
@@ -40,7 +51,7 @@ if (test.phase == "init") {
             rm(f)
         }
     }
-    startService(cmd, {port: PORT})
+    startService(cmd, {address: "http://" + TARGET + ":" + PORT})
 } else {
     stopService()
     for each (f in find(".", "*.tdat", true)) {
@@ -48,11 +59,8 @@ if (test.phase == "init") {
     }
 }
 
-share("host", HTTP)
-share("port", PORT)
-share("http", "http://" + LOCALHOST + ":" + PORT)
-share("https", "https://" + LOCALHOST + ":" + SSL_PORT)
-share("ipv6", "http://[::1]:" + IPV6)
-share("vhost", "http://" + LOCALHOST + ":" + VHOST_PORT)
-share("vhostPort", VHOST_PORT)
-share("iphost", "http://" + LOCALHOST + ":" + IPHOST)
+/*
+    share("port", PORT)
+    share("vhostPort", NAMED_PORT)
+    share("host", http://" + TARGET + ":" + PORT)
+*/

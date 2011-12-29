@@ -5,24 +5,23 @@
 if (!Config.SSL) {
     test.skip("SSL not enabled in ejs")
 
-} else if (!test || test.config["ssl"] == 1) {
-    const HTTP = (global.tsession && tsession["http"]) || ":4100"
-    const HTTPS = (global.tsession && tsession["https"]) || "https://127.0.0.1:4110"
+} else if (App.config.bld_ssl) {
+    const HTTPS = App.config.ssl || "https://127.0.0.1:4110"
     let http: Http = new Http
 
     /*
         With keep alive
      */
-    for (i in 500) {
-        http.get(HTTP + "/index.html")
+    for (i in 200) {
+        http.get(HTTPS + "/index.html")
         http.reset()
     }
 
     /*
         With-out keep alive
      */
-    for (i in 500) {
-        http.get(HTTP + "/index.html")
+    for (i in 200) {
+        http.get(HTTPS + "/index.html")
         http.close()
     }
 

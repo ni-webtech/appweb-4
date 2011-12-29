@@ -3,7 +3,7 @@
  */
 if (test.depth > 1) {
 
-    const HTTP = (global.tsession && tsession["http"]) || ":4100"
+    const HTTP = App.config.main || "127.0.0.1:4100"
 
     let command = Cmd.locate("http").portable + " --host " + HTTP + " "
     if (test.verbosity > 2) {
@@ -61,7 +61,7 @@ if (test.depth > 1) {
     run("--user 'joshua:pass1' /basic/basic.html")
     run("--user 'joshua' --password 'pass1' /basic/basic.html")
 
-    if (!test || test.config["ejscript"] == 1) {
+    if (App.config.bld_ejscript) {
         //  Form data
         data = run("--form 'name=John+Smith&address=300+Park+Avenue' /form.ejs")
         assert(data.contains('"address": "300 Park Avenue"'))
@@ -96,7 +96,7 @@ if (test.depth > 1) {
     assert(data.contains('Content-Type'))
 
     //  Upload
-    if (!test || test.config["ejscript"] == 1) {
+    if (App.config.bld_ejscript) {
         let files = Path(".").files().join(" ")
         data = run("--upload " + files + " /upload.ejs")
         assert(data.contains('"clientFilename": "http.tst"'))

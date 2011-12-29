@@ -2,10 +2,10 @@
     cgi.tst - CGI tests
  */
 
-const HTTP = (global.tsession && tsession["http"]) || ":4100"
+const HTTP = App.config.main || "127.0.0.1:4100"
 let http: Http = new Http
 
-if ((!global.test || test.config["cgi"] == 1) && Path(test.top + "src/test/web/cgiProgram.cgi").exists) {
+if (App.config.bld_cgi && Path(test.top + "src/test/web/cgiProgram.cgi").exists) {
     /* Suport routines */
 
     function contains(pat): Void {
@@ -41,7 +41,7 @@ if ((!global.test || test.config["cgi"] == 1) && Path(test.top + "src/test/web/c
         assert(http.status == 200)
         contains("cgiProgram: Output")
 
-        if (global.test && test.os == "WIN") {
+        if (App.test.os == "WIN") {
             http.get(HTTP + "/cgi-bin/cgiProgram.exe")
             assert(http.status == 200)
             contains("cgiProgram: Output")

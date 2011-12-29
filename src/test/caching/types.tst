@@ -2,7 +2,7 @@
     types.tst - Test cache matching by mime type of the file extension
  */
 
-const HTTP = (global.tsession && tsession["http"]) || ":4100"
+const HTTP = App.config.main || "127.0.0.1:4100"
 let http: Http = new Http
 
 /*
@@ -21,9 +21,11 @@ function cached(uri): Boolean {
     return (resp.number == first)
 }
 
-if (!test || (test.config["esp"] == 1 && test.config["php"] == 1)) {
-    //  The php request should be cached and the esp should not
+//  The php request should be cached and the esp should not
+if (App.config.bld_esp) {
     assert(cached("/types/cache.php"))
+}
+if (App.config.bld_php) {
     assert(!cached("/types/cache.esp"))
 }
 

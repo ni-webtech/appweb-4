@@ -2,7 +2,7 @@
     ext.tst - Test cache matching by extension.
  */
 
-const HTTP = (global.tsession && tsession["http"]) || ":4100"
+const HTTP = App.config.main || "127.0.0.1:4100"
 let http: Http = new Http
 
 /*
@@ -26,9 +26,11 @@ function cached(uri, expected): Boolean {
     return (resp.number == first)
 }
 
-if (!test || (test.config["esp"] == 1 && test.config["php"] == 1)) {
-    //  The esp request should be cached and the php should not
+//  The esp request should be cached and the php should not
+if (App.config.bld_esp) {
     assert(cached("/ext/cache.esp", true))
+}
+if (App.config.bld_php) {
     assert(!cached("/ext/cache.php", false))
 }
 

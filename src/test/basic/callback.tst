@@ -1,11 +1,11 @@
 /*
- *  callback.tst - Http tests using callbacks
+    callback.tst - Http tests using callbacks
  */
 
 //  MOB - re-enable
 
 if (false) {
-    const HTTP = (global.tsession && tsession["http"]) || ":4100"
+    const HTTP = App.config.main || "127.0.0.1:4100"
     let http: Http = new Http
 
     //  Using a read callback

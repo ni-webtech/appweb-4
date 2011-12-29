@@ -2,10 +2,11 @@
     dirlist.tst - Directory listings
  */
 
-const HTTP = (global.tsession && tsession["http"]) || ":4100"
+const HTTP = App.config.main || "127.0.0.1:4100"
+
 let http: Http = new Http
 
-if (!global.test || test.config["dir"] == 1) {
+if (App.config.dir) {
     http.get(HTTP + "/listing/")
     assert(http.status == 200)
 }

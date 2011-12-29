@@ -4,10 +4,10 @@
 
 require ejs.unix
 
-const HTTP = (global.tsession && tsession["http"]) || ":4100"
+const HTTP = App.config.main || "127.0.0.1:4100"
 let http: Http = new Http
 
-if (!test || test.config["ejscript"] == 1) {
+if (App.config.bld_ejscript) {
     http.upload(HTTP + "/upload.ejs", { myfile: "test.dat"} )
     assert(http.status == 200)
     assert(http.response.contains('"clientFilename": "test.dat"'))

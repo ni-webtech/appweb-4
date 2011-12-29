@@ -2,7 +2,7 @@
     auth.tst - Authentication http tests
  */
 
-const HTTP = (global.tsession && tsession["http"]) || ":4100"
+const HTTP = App.config.main || "127.0.0.1:4100"
 
 let http: Http = new Http
 
@@ -32,8 +32,7 @@ http.setCredentials("mary", "pass2")
 http.get(HTTP + "/basic/user/user.html")
 assert(http.status == 401)
 
-//  Access to cgi
-if (!global.test && test.config.cgi) {
+if (App.config.bld_cgi) {
     http.setCredentials(null, null)
     http.get(HTTP + "/basic/basic.cgi")
     assert(http.status == 401)

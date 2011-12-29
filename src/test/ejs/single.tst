@@ -2,7 +2,7 @@
     single.tst -- Single non blocking request
  */
 
-const HTTP = (global.tsession && tsession["http"]) || ":4100"
+const HTTP = App.config.main || "127.0.0.1:4100"
 
 var http: Http = new Http
 

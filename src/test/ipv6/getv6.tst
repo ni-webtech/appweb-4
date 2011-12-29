@@ -2,7 +2,7 @@
     getv6.tst - IPv6 GET tests
  */
 
-const HTTP = (global.tsession && tsession["ipv6"]) || "[::1]:4113"
+const HTTP = App.config.ipv6 || "[::1]:4113"
 let http: Http = new Http
 
 //  Basic get. Validate response code and contents

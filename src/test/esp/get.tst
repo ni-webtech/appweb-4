@@ -2,7 +2,7 @@
     get.tst - ESP GET tests
  */
 
-const HTTP = (global.tsession && tsession["http"]) || ":4100"
+const HTTP = App.config.main || "127.0.0.1:4100"
 let http: Http = new Http
 
 //  Basic get. Validate response code and contents
@@ -14,7 +14,7 @@ assert(http.response.contains("ESP Test Program"))
 assert(http.response.contains("Product Name"))
 http.close()
 
-if (global.test && test.os == "WIN") {
+if (App.test.os == "WIN") {
     http.get(HTTP + "/teST.eSP")
     assert(http.status == 200)
     http.close()

@@ -2,7 +2,7 @@
     bigUrl.tst - Stress test very long URLs 
  */
 
-const HTTP = (global.tsession && tsession["http"]) || ":4100"
+const HTTP = App.config.main || "127.0.0.1:4100"
 
 let http: Http = new Http
 
@@ -27,7 +27,7 @@ for (iter in test.depth) {
     assert(http.status == 200)
     assert(http.response.contains("Hello /index.html"))
 
-    if (!test || test.config["ejscript"] == 1) {
+    if (App.config.bld_ejscript) {
         //  Test /index.ejs
         http.get(HTTP + "/index.ejs?" + query)
         assert(http.status == 200)

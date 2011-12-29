@@ -10,12 +10,12 @@ enumerable public class Test {
     //  MOB - not used
     public var bin: Path
     public var lib: Path
-
-    public var config: Object
+    public var features: Object
     public var depth: Number
     public var dir: Path
     public var multithread: Boolean
     public var phase: String
+    public var session: Object
     public var threads: Number
     public var top: Path
     public var os: Path
@@ -90,11 +90,10 @@ public function stopService(options = {}) {
 }
 
 
-public function startService(cmdline: String, options = {}): Void {
+public function startService(cmdline: String, options): Void {
     stopService()
-    let port = options.port || App.config.test.http_port
+    let address = options.address
     let pidfile = options.pidfile || PIDFILE
-
     if (!App.getenv("NOSERVER")) {
         let cmd = new Cmd
         blend(options, {detach: true})
@@ -106,7 +105,7 @@ public function startService(cmdline: String, options = {}): Void {
     let connected
     for (i in 50) {
         try {
-            Socket().connect(port)
+            Socket().connect(address)
             connected = true
             break
         } catch (e) { 

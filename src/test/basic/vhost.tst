@@ -2,10 +2,9 @@
     vhost.tst - Virtual Host tests
  */
 
-const HTTP = (global.tsession && tsession["http"]) || ":4100"
-const VHOST = (global.tsession && tsession["vhost"]) || ":4111"
-const IPHOST = (global.tsession && tsession["iphost"]) || ":4112"
-const PORT = (global.tsession && tsession["vhostport"]) || 4111
+const HTTP = App.config.main || "127.0.0.1:4100"
+const NAMED = App.config.named || "127.0.0.1:4111"
+const VIRT = App.config.virt || "127.0.0.1:4112"
 
 let http: Http = new Http
 
@@ -27,7 +26,7 @@ function mainHost() {
 //  The first virtual host listens to "localhost", the second listens to "127.0.0.1". Both on the same port (4111)
 
 function namedHost() {
-    let vhost = "http://localhost:" + PORT
+    let vhost = "http://localhost:" + Uri(NAMED).port
     http.get(vhost + "/vhost1.html")
     assert(http.status == 200)
 
@@ -40,7 +39,7 @@ function namedHost() {
     assert(http.status == 404)
 
     //  Now try the second vhost on 127.0.0.1
-    vhost = "http://127.0.0.1:" + PORT
+    vhost = "http://127.0.0.1:" + Uri(NAMED).port
     http.get(vhost + "/vhost2.html")
     assert(http.status == 200)
 
@@ -56,7 +55,7 @@ function namedHost() {
 function ipHost() {
     let http: Http = new Http
     http.setCredentials("mary", "pass2")
-    http.get(IPHOST + "/private.html")
+    http.get(VIRT + "/private.html")
     assert(http.status == 200)
 }
 

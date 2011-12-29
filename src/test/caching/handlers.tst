@@ -2,7 +2,7 @@
     handlers.tst - Test caching with various handler types
  */
 
-const HTTP = (global.tsession && tsession["http"]) || ":4100"
+const HTTP = App.config.main || "127.0.0.1:4100"
 let http: Http = new Http
 
 //  1. Test that content is being cached
@@ -21,16 +21,16 @@ function testCache(uri) {
     http.close()
 }
 
-if (!test || test.config["php"] == 1) {
+if (App.config.bld_php) {
     testCache("/combined/cache.php")
 }
-if (!test || test.config["esp"] == 1) {
+if (App.config.bld_esp) {
     testCache("/combined/cache.esp")
 }
-if (!test || test.config["ejscript"] == 1) {
+if (App.config.bld_ejscript) {
     testCache("/combined/cache.ejs")
 }
-if (!test || test.config["cgi"] == 1) {
+if (App.config.bld_cgi) {
     testCache("/combined/cache.cgi")
 }
 

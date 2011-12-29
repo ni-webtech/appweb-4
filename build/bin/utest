@@ -22,13 +22,13 @@ enumerable class Test {
         Parsed args
      */
     var _bin: Path                          // Path to bin directory
-    var config: Object                      // buildConfig.h features
     var continueOnErrors: Boolean = false   // Continue on errors 
     var data: Object                        // Opaque data
     var _depth: Number = 1                  // Test level. Higher levels mean deeper testing.
     var echo: Boolean = false               // Echo the command line 
     var errorMsg: String                    // Worker callback error msg
     var failed: Boolean                     // Did the test pass
+    var features: Object                    // buildConfig.h features
     var filters: Array = []                 // Filter tests by pattern x.y.z... 
     var finish: Boolean                     // Set to true when time to exit 
     var _hostOs: String                     // Host operating system
@@ -65,7 +65,10 @@ enumerable class Test {
     var skippedCount: Number = 0
     var testCount: Number = 0
 
-    public var tsession = { }
+    /*
+        Test session data provided via share()
+     */
+    var session = { }
         
     function Test() {
         workerImage = new Worker
@@ -298,10 +301,9 @@ enumerable class Test {
         let estr = serialize(export)
         //  MOB OPT. Better not to use eval here. Slower.
         w.preeval('
-            data = deserialize(\'' + estr.replace(/\\/g, "\\\\") + '\')
-
+            let data = deserialize(\'' + estr.replace(/\\/g, "\\\\") + '\')
             public var test: Test = new Test
-            public var tsession: Object
+            App.test = test
 
             test.depth = data.depth
             test.bin = Path(data.bin)
@@ -313,19 +315,19 @@ enumerable class Test {
             test.threads = data.threads
             test.top = Path(data.top)
             test.verbosity = Number(data.verbosity)
-            test.config = data.config
-            blend(App.config.test, test.config, false)
-            tsession = data.tsession
+            test.features = data.features
             if (data.logPath) {
                 test.setLogPath(Path(data.logPath))
             }
+            blend(App.config, test.features)
+            blend(App.config, data.session)
         ')
     }
 
     function startWorker(file: Path, phase: String = null): Worker {
         let export = { 
             bin: _bin, 
-            config: config,
+            features: features,
             depth: _depth, 
             dir: file.dirname,
             hostOs: _hostOs, 
@@ -333,7 +335,7 @@ enumerable class Test {
             log: logPath,
             os: _os, 
             phase: phase,
-            tsession: tsession,
+            session: session,
             threads: threads, 
             top: _top, 
             verbosity: verbosity, 
@@ -355,7 +357,7 @@ enumerable class Test {
                 test.skippedMsg = obj.skip
                 test.skippedCount++
             } else if (obj.key) {
-                test.tsession[obj.key] = obj.value
+                test.session[obj.key] = obj.value
             }
         }
         w.onerror = function (e) {
@@ -425,6 +427,11 @@ enumerable class Test {
     function runSetup(path: Path, phase: String): Boolean {
         let file = path.join("test.setup")
         if (file.exists) {
+            runTest(file, phase)
+            return !skipTest 
+/*
+    Always run test.setup along the path to a test
+
             if (filters.length == 0) {
                 runTest(file, phase)
                 return !skipTest 
@@ -434,6 +441,7 @@ enumerable class Test {
                     return !skipTest 
                 }
             }
+*/
         }
         return true
     }
@@ -490,8 +498,8 @@ enumerable class Test {
         let data = Path(path).readString()
         _os = getKey(data, "BLD_BUILD_OS")
         _hostOs = getKey(data, "BLD_HOST_OS")
-        config = {}
-        config["debug"] = getKey(data, "BLD_DEBUG")
+        features = {}
+        features["bld_debug"] = getKey(data, "BLD_DEBUG")
         data = data.match(/BLD_FEATURE.*|BLD_HTTP_PORT.*|BLD_SSL_PORT.*/g)
         for each (item in data) {
             if (!item.contains("=")) {
@@ -503,7 +511,7 @@ enumerable class Test {
             if (value == "1" || value == "0") {
                 value = value cast Number
             }
-            config[key] = value
+            features["bld_" + key] = value
         }
     }
 

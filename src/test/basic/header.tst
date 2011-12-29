@@ -1,8 +1,8 @@
 /*
- *  header.tst - Http response header tests
+    header.tst - Http response header tests
  */
 
-const HTTP = (global.tsession && tsession["http"]) || ":4100"
+const HTTP = App.config.main || "127.0.0.1:4100"
 const URL = HTTP + "/index.html"
 let http: Http = new Http
 

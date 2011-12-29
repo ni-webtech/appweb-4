@@ -2,7 +2,7 @@
     only.tst - Test caching in "only" mode. This caches only the exact URIs specified.
  */
 
-const HTTP = (global.tsession && tsession["http"]) || ":4100"
+const HTTP = App.config.main || "127.0.0.1:4100"
 let http: Http = new Http
 
 //  1. Test that content is being cached

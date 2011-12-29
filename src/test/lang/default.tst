@@ -2,7 +2,7 @@
     default.tst - Test DefaultLanguage
  */
 
-const HTTP = (global.tsession && tsession["http"]) || ":4100"
+const HTTP = App.config.main || "127.0.0.1:4100"
 let http: Http = new Http
 
 // http.setHeader("Accept-Language", "en")

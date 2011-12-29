@@ -2,8 +2,9 @@
     php.tst - PHP tests
  */
 
-if (!global.test || test.config["php"] == 1) {
-    const HTTP = (global.tsession && tsession["http"]) || ":4100"
+const HTTP = App.config.main || "127.0.0.1:4100"
+
+if (App.config.bld_php) {
     let http: Http = new Http
 
     //  Simple Get 

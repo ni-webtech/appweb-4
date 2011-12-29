@@ -3,7 +3,7 @@
  */
 if (test.depth >= 6) {
 
-    const HTTP = (global.tsession && tsession["http"]) || ":4100"
+    const HTTP = App.config.main || "127.0.0.1:4100"
     const ITER = 10000
 
     let command = Cmd.locate("http").portable + " --host " + HTTP + " "

@@ -6,16 +6,16 @@
 let nc
 try { nc = Cmd.sh("which nc"); } catch {}
 
-if (!global.test || (test.depth > 0 && nc && Config.OS != "WIN" && test.config["ejscript"] == 1)) {
-    const HTTP = (global.tsession && tsession["http"]) || ":4100"
-    const PORT = (global.tsession && tsession["port"]) || "4100"
-    Cmd.sh("cat 01000-chunk.dat | nc 127.0.0.1 " + PORT);
+if (App.test.depth > 0 && nc && Config.OS != "WIN" && App.config.bld_ejscript) {
+    const HTTP = App.config.main || "127.0.0.1:4100"
+    let [ip,port] = HTTP.split(":")
 
+    Cmd.sh("cat 01000-chunk.dat | nc " + ip + " " + port);
     Cmd.sh("cc -o tcp tcp.c")
     if (Config.OS == "WIN") {
-        Cmd.sh("./tcp.exe 127.0.0.1 " + PORT + " 01000-chunk.dat")
+        Cmd.sh("./tcp.exe " + ip + " " + port + " 01000-chunk.dat")
     } else {
-        Cmd.sh("./tcp 127.0.0.1 " + PORT + " 01000-chunk.dat")
+        Cmd.sh("./tcp " + ip + " " + port + " 01000-chunk.dat")
     }
 
 } else {

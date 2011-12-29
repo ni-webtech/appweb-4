@@ -2,7 +2,7 @@
     methods.tst - Test cache matching by method
  */
 
-const HTTP = (global.tsession && tsession["http"]) || ":4100"
+const HTTP = App.config.main || "127.0.0.1:4100"
 
 /*
     Fetch twice and test if caching is working
@@ -29,7 +29,7 @@ function cached(method, uri): Boolean {
     return (resp.number == first)
 }
 
-if (!test || test.config["esp"] == 1) {
+if (App.config.bld_esp) {
     //  The POST requst should be cached and the GET not
     assert(cached("POST", "/methods/cache.esp"))
     assert(!cached("GET", "/methods/cache.esp"))

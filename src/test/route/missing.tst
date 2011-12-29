@@ -2,10 +2,10 @@
     missing.tst - Add extension
  */
 
-const HTTP = (global.tsession && tsession["http"]) || ":4100"
+const HTTP = App.config.main || "127.0.0.1:4100"
 let http: Http = new Http
 
-if (!test || test.config["php"] == 1) {
+if (App.config.bld_php) {
     http.get(HTTP + "/route/missing-ext/index")
     assert(http.status == 200)
     assert(http.response.contains("Hello PHP World"))

@@ -2,7 +2,7 @@
     gzip.tst - Compressed content
  */
 
-const HTTP = (global.tsession && tsession["http"]) || ":4100"
+const HTTP = App.config.main || "127.0.0.1:4100"
 let http: Http = new Http
 
 //  Accept a gzip encoding if present

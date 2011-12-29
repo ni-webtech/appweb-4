@@ -2,9 +2,9 @@
     load.tst - Load tests
  */
 
-const HOST = (global.tsession && tsession["host"]) || "http://127.0.0.1:4100"
+const HOST = App.config.main || "127.0.0.1:4100"
 
-if (test.depth >= 4) {
+if (App.test.depth >= 4) {
     let command = Cmd.locate("testAppweb").portable + " --host " + HOST + 
         " --name mpr.api.c --iterations 400 " + test.mapVerbosity(-2)
 
