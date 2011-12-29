@@ -2,7 +2,7 @@
     session.tst -- Test sessions
  */
 
-const HTTP = App.config.main || "127.0.0.1:4100"
+const HTTP = App.config.uris.http || "127.0.0.1:4100"
 
 var http: Http = new Http
 

@@ -2,9 +2,9 @@
     vhost.tst - Virtual Host tests
  */
 
-const HTTP = App.config.main || "127.0.0.1:4100"
-const NAMED = App.config.named || "127.0.0.1:4111"
-const VIRT = App.config.virt || "127.0.0.1:4112"
+const HTTP = App.config.uris.http || "127.0.0.1:4100"
+const NAMED = App.config.uris.named || "127.0.0.1:4111"
+const VIRT = App.config.uris.virt || "127.0.0.1:4112"
 
 let http: Http = new Http
 

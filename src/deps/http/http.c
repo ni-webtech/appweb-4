@@ -1129,7 +1129,7 @@ static void trace(HttpConn *conn, cchar *url, int fetchCount, cchar *method, int
             mprPrintf("  Count  Thread   Op  Code   Bytes  Url\n");
         }
         mprPrintf("%7d %7s %4s %5d %7d  %s\n", fetchCount - 1,
-            mprGetCurrentThreadName(conn), method, status, contentLen, url);
+            mprGetCurrentThreadName(conn), method, status, (int) contentLen, url);
     }
 }
 

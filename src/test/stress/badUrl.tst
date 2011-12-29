@@ -2,7 +2,7 @@
     badUrl.tst - Stress test malformed URLs 
  */
 
-const HTTP = App.config.main || "127.0.0.1:4100"
+const HTTP = App.config.uris.http || "127.0.0.1:4100"
 let http: Http = new Http
 
 //  TODO - this will be more meaningful when ejs supports unicode

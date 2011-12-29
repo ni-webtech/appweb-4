@@ -2,7 +2,7 @@
     fullpat.tst - Test pattern matching features
  */
 
-const HTTP = App.config.main || "127.0.0.1:4100"
+const HTTP = App.config.uris.http || "127.0.0.1:4100"
 let http: Http = new Http
 
 //  Test route-01  ^/route/(user|admin)/{action}/[^a-z]\{2}(\.[hH][tT][mM][lL])$>

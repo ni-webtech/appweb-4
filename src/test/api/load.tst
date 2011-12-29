@@ -2,7 +2,7 @@
     load.tst - Load tests
  */
 
-const HOST = App.config.main || "127.0.0.1:4100"
+const HOST = App.config.uris.http || "127.0.0.1:4100"
 
 if (App.test.depth >= 4) {
     let command = Cmd.locate("testAppweb").portable + " --host " + HOST + 

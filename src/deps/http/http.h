@@ -2964,6 +2964,7 @@ extern ssize httpWriteCached(HttpConn *conn);
 #define HTTP_ROUTE_RAW            0x8       /**< Don't html encode the write data */
 #define HTTP_ROUTE_PUT_DELETE     0x1000    /**< Support PUT|DELETE */
 #define HTTP_ROUTE_GZIP           0x2000    /**< Support gzipped content */
+#define HTTP_ROUTE_STARTED        0x4000    /**< Route initialized */
 
 /**
     Route Control

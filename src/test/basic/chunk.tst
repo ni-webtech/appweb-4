@@ -4,7 +4,7 @@
     MOB - incomplete
  */
 
-const HTTP = App.config.main || "127.0.0.1:4100"
+const HTTP = App.config.uris.http || "127.0.0.1:4100"
 let http: Http = new Http
 
 http.post(HTTP + "/index.html")

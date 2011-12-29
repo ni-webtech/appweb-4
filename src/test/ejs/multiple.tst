@@ -2,7 +2,7 @@
     multiple.tst -- Multiple overlapped requests
  */
 
-const HTTP = App.config.main || "127.0.0.1:4100"
+const HTTP = App.config.uris.http || "127.0.0.1:4100"
 
 var nap: Http = new Http
 

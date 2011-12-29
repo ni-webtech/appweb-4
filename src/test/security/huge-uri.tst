@@ -1,7 +1,7 @@
 /*
     Very large URI test (3MB)
  */ 
-const HTTP = App.config.main || "127.0.0.1:4100"
+const HTTP = App.config.uris.http || "127.0.0.1:4100"
 const port: Number = Uri(HTTP).port
 
 //  This writes a 2MB URI

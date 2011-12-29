@@ -2,7 +2,7 @@
     Denial of service testing
  */
 
-const HTTP = App.config.main || "127.0.0.1:4100"
+const HTTP = App.config.uris.http || "127.0.0.1:4100"
 let port: Number = Uri(HTTP).port
 
 //  Check server available

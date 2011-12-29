@@ -2,7 +2,7 @@
     cgi.tst - CGI tests
  */
 
-const HTTP = App.config.main || "127.0.0.1:4100"
+const HTTP = App.config.uris.http || "127.0.0.1:4100"
 let http: Http = new Http
 
 if (App.config.bld_cgi && Path(test.top + "src/test/web/cgiProgram.cgi").exists) {

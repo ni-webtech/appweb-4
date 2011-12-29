@@ -6,13 +6,13 @@ if (!Config.SSL) {
     test.skip("SSL not enabled in ejs")
 
 } else if (App.config.bld_ssl) {
-    const HTTPS = App.config.ssl || "https://127.0.0.1:4110"
+    const HTTPS = App.config.uris.ssl || "https://127.0.0.1:4110"
     let http: Http = new Http
 
     /*
         With keep alive
      */
-    for (i in 200) {
+    for (i in 110) {
         http.get(HTTPS + "/index.html")
         http.reset()
     }
@@ -20,7 +20,7 @@ if (!Config.SSL) {
     /*
         With-out keep alive
      */
-    for (i in 200) {
+    for (i in 50) {
         http.get(HTTPS + "/index.html")
         http.close()
     }

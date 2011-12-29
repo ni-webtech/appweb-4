@@ -3,7 +3,7 @@
  */
 if (test.depth > 1) {
 
-    const HTTP = App.config.main || "127.0.0.1:4100"
+    const HTTP = App.config.uris.http || "127.0.0.1:4100"
 
     let command = Cmd.locate("http").portable + " --host " + HTTP + " "
     if (test.verbosity > 2) {

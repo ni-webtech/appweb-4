@@ -3,25 +3,24 @@
  */
 require ejs.unix
 
-let conf            = Path("appweb.conf").readString()
-const PORT          = conf.replace(/.*Listen *([0-9]+) *# MAIN.*/ms, "$1")
-const SSL_PORT      = conf.replace(/.*Listen *([0-9]+) *# SSL.*/ms, "$1")
-const NAMED_PORT    = conf.replace(/.*Listen *([0-9]+) *# NAMED.*/ms, "$1")
-const VIP_PORT      = conf.replace(/.*Listen *([0-9]+) *# IPHOST.*/ms, "$1")
-const IPV6_PORT     = conf.replace(/.*Listen *\[::\]:([0-9]+) *# IPV6.*/ms, "$1")
-const TARGET        = (test.hostOs == "VXWORKS") ? "192.168.200.1" : "127.0.0.1"
-const PIDFILE       = ".pidfile"
+let conf        = Path("appweb.conf").readString()
+const HOST      = (test.hostOs == "VXWORKS") ? "192.168.200.1" : "127.0.0.1"
+const HOSTV6    = (test.hostOs == "VXWORKS") ? "192.168.200.1" : "[::1]"
+const HTTP      = "http://"  + HOST   + ":" + conf.replace(/.*Listen *([0-9]+) *# MAIN.*/ms, "$1")
+const SSL       = "https://" + HOST   + ":" + conf.replace(/.*Listen *([0-9]+) *# SSL.*/ms, "$1")
+const NAMED     = "http://"  + HOST   + ":" + conf.replace(/.*Listen *([0-9]+) *# NAMED.*/ms, "$1")
+const VIP       = "http://"  + HOST   + ":" + conf.replace(/.*Listen *([0-9]+) *# IPHOST.*/ms, "$1")
+const IPV6      = "http://"  + HOSTV6 + ":" + conf.replace(/.*Listen *\[::\]:([0-9]+) *# IPV6.*/ms, "$1")
+const PIDFILE   = ".pidfile"
 
 /*
-    Provide definitions via App.test.session[]
+    Provide definitions via App.config.uris[]
  */
-share("main",   "http://" + TARGET + ":" + PORT)
-share("ssl", "https://" + TARGET + ":" + SSL_PORT)
-share("named", "http://" + TARGET + ":" + NAMED_PORT)
-share("virt", "http://" + TARGET + ":" + VIP_PORT)
-
-//  MOB -- must change host
-share("ipv6", "http://[::1]:" + IPV6_PORT)
+shareUri("http", HTTP)
+shareUri("ssl", SSL)
+shareUri("named", NAMED)
+shareUri("virt", VIP)
+shareUri("ipv6", IPV6)
 
 let cmd
 if (test.hostOs == "VXWORKS") {
@@ -43,24 +42,12 @@ if (test.hostOs == "VXWORKS") {
 
 if (test.phase == "init") {
     if (!App.getenv("SECOND")) {
-        for each (file in find("cache", "*.mod")) {
-            rm(file)
-        }
+        rm(find(".", "*.mod"))
+        rm(find(".", "*.tdat"))
         cleanDir("web/tmp")
-        for each (f in find(".", "*.tdat", true)) {
-            rm(f)
-        }
     }
-    startService(cmd, {address: "http://" + TARGET + ":" + PORT})
+    startService(cmd, {address: HTTP})
 } else {
     stopService()
-    for each (f in find(".", "*.tdat", true)) {
-        rm(f)
-    }
 }
-
-/*
-    share("port", PORT)
-    share("vhostPort", NAMED_PORT)
-    share("host", http://" + TARGET + ":" + PORT)
-*/
+rm(find(".", "*.tdat"))

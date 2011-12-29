@@ -50,7 +50,6 @@ enumerable public class Test {
         postMessage({ skip: message })
 }
 
-
 /*
     Global functions
  */
@@ -73,11 +72,19 @@ public function cleanDir(path) {
     mkdir(path)
 }
 
-
+/*
+    Share test session data. Available in App.test.session[]
+ */
 public function share(key: String, value: String) {
     postMessage({ key: key, value: value })
 }
 
+/*
+    Share a URI. Available in App.config.uris[]
+ */
+public function shareUri(uri, value: String) {
+    postMessage({ uri: uri.toString(), value: value })
+}
 
 public function stopService(options = {}) {
     let pidfile = options.pidfile || PIDFILE
@@ -89,11 +96,11 @@ public function stopService(options = {}) {
     }
 }
 
-
 public function startService(cmdline: String, options): Void {
     stopService()
-    let address = options.address
     let pidfile = options.pidfile || PIDFILE
+    let address = options.address || App.config.uris.http
+    address = Uri(address).complete()
     if (!App.getenv("NOSERVER")) {
         let cmd = new Cmd
         blend(options, {detach: true})
@@ -105,16 +112,15 @@ public function startService(cmdline: String, options): Void {
     let connected
     for (i in 50) {
         try {
-            Socket().connect(address)
+            Socket().connect(address.host + ":" + address.port)
             connected = true
             break
         } catch (e) { 
             App.sleep(100) 
         }
     }
-    assert(connected, "Can't connect to service: " + cmdline)
+    assert(connected, "Can't connect to service: " + cmdline + " on " + address)
 }
-
 
 public function httpService(cmd: String, options = {}): Void {
     if (test.phase == "init") {

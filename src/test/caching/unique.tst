@@ -2,7 +2,7 @@
     unique.tst - Test unique caching mode. This mode, each URI+params is uniquely cached.
  */
 
-const HTTP = App.config.main || "127.0.0.1:4100"
+const HTTP = App.config.uris.http || "127.0.0.1:4100"
 let http: Http = new Http
 
 //  1. Test that content is being cached

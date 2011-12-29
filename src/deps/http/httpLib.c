@@ -5486,7 +5486,14 @@ void httpBackupRouteLog(HttpRoute *route)
 
     mprAssert(route->logBackup);
     mprAssert(route->logSize > 100);
+
     lock(route);
+    if (route->parent && route->parent->log == route->log) {
+        httpBackupRouteLog(route->parent);
+        route->log = route->parent->log;
+        unlock(route);
+        return;
+    }
     mprGetPathInfo(route->logPath, &info);
     if (info.valid && ((route->logFlags & MPR_LOG_ANEW) || info.size > route->logSize || route->logSize <= 0)) {
         if (route->log) {
@@ -5521,6 +5528,7 @@ void httpWriteRouteLog(HttpRoute *route, cchar *buf, ssize len)
 {
     lock(MPR);
     if (route->logBackup > 0) {
+        //  TODO OPT - don't check this on every write
         httpBackupRouteLog(route);
         if (!route->log && !httpOpenRouteLog(route)) {
             unlock(MPR);
@@ -8276,15 +8284,18 @@ HttpRoute *httpCreateAliasRoute(HttpRoute *parent, cchar *pattern, cchar *path, 
 int httpStartRoute(HttpRoute *route)
 {
 #if !BLD_FEATURE_ROMFS
-    if (route->logPath && (!route->parent || route->logPath != route->parent->logPath)) {
-        if (route->logBackup > 0) {
-            httpBackupRouteLog(route);
-        }
-        mprAssert(!route->log);
-        route->log = mprOpenFile(route->logPath, O_CREAT | O_APPEND | O_WRONLY | O_TEXT, 0664);
-        if (route->log == 0) {
-            mprError("Can't open log file %s", route->logPath);
-            return MPR_ERR_CANT_OPEN;
+    if (!(route->flags & HTTP_ROUTE_STARTED)) {
+        route->flags |= HTTP_ROUTE_STARTED;
+        if (route->logPath && (!route->parent || route->logPath != route->parent->logPath)) {
+            if (route->logBackup > 0) {
+                httpBackupRouteLog(route);
+            }
+            mprAssert(!route->log);
+            route->log = mprOpenFile(route->logPath, O_CREAT | O_APPEND | O_WRONLY | O_TEXT, 0664);
+            if (route->log == 0) {
+                mprError("Can't open log file %s", route->logPath);
+                return MPR_ERR_CANT_OPEN;
+            }
         }
     }
 #endif
@@ -15244,40 +15255,26 @@ HttpUri *httpCloneUri(HttpUri *base, int flags)
 {
     HttpUri     *up;
     char        *path, *cp, *tok;
-    int         port;
 
     if ((up = mprAllocObj(HttpUri, manageUri)) == 0) {
         return 0;
     }
-    port = base->port;
     path = base->path;
 
-    if (base->scheme) {
+    if (base->scheme && *base->scheme) {
         up->scheme = sclone(base->scheme);
     } else if (flags & HTTP_COMPLETE_URI) {
         up->scheme = sclone("http");
     }
-    if (base->host) {
-#if UNUSED
-        if (*base->host == '[' && ((cp = strchr(base->host, ']')) != 0)) {
-            up->host = snclone(&base->host[1], (cp - base->host) - 2);
-            if ((cp = schr(++cp, ':')) && port == 0) {
-                port = (int) stoi(++cp);
-            }
-        } else {
-            up->host = sclone(base->host);
-            if ((cp = schr(up->host, ':')) && port == 0) {
-                port = (int) stoi(++cp);
-            }
-        }
-#else
+    if (base->host && *base->host) {
         up->host = sclone(base->host);
-#endif
     } else if (flags & HTTP_COMPLETE_URI) {
-        base->host = sclone("localhost");
+        up->host = sclone("localhost");
     }
-    if (port) {
-        up->port = port;
+    if (base->port) {
+        up->port = base->port;
+    } else if (flags & HTTP_COMPLETE_URI) {
+        up->port = smatch(up->scheme, "https") ? 443 : 80;
     }
     if (path) {
         while (path[0] == '/' && path[1] == '/') {
@@ -15358,14 +15355,6 @@ char *httpFormatUri(cchar *scheme, cchar *host, int port, cchar *path, cchar *re
         if (mprIsIPv6(host) && *host != '[') {
             host = sfmt("[%s]", host);
         }
-#if UNUSED
-        cp = (*host == '[') ? strchr(host, ']') : host;
-        } else {
-            if (strchr(cp, ':')) {
-                port = 0;
-            }
-        }
-#endif
     }
     if (port != 0 && port != getDefaultPort(scheme)) {
         portStr = itos(port);
