@@ -2593,11 +2593,10 @@ static int setClientHeaders(HttpConn *conn)
         conn->sentCredentials = 1;
     }
     if (conn->port != 80) {
-        httpSetHeader(conn, "Host", "%s:%d", conn->ip, conn->port);
+        httpAddHeader(conn, "Host", "%s:%d", conn->ip, conn->port);
     } else {
-        httpSetHeaderString(conn, "Host", conn->ip);
+        httpAddHeaderString(conn, "Host", conn->ip);
     }
-
     if (strcmp(conn->protocol, "HTTP/1.1") == 0) {
         /* If zero, we ask the client to close one request early. This helps with client led closes */
         if (conn->keepAliveCount > 0) {
@@ -8077,7 +8076,11 @@ HttpRoute *httpCreateRoute(HttpHost *host)
     route->targetRule = sclone("run");
     route->autoDelete = 1;
     route->workers = -1;
-    route->limits = mprMemdup(((Http*) MPR->httpService)->serverLimits, sizeof(HttpLimits));
+
+    //  MOB
+    if (MPR->httpService) {
+        route->limits = mprMemdup(((Http*) MPR->httpService)->serverLimits, sizeof(HttpLimits));
+    }
     route->mimeTypes = MPR->mimeTypes;
     route->mutex = mprCreateLock();
     httpInitTrace(route->trace);

@@ -21,7 +21,7 @@ APPWEB_HDR 	= $(OUT)/inc/appweb.h
 MPR_SRC		= $(SRC)/deps/mpr/mprLib.c
 APPWEB_SRC	= $(shell find $(SRC) -name '*.c' | egrep -v 'deps|test|utils' | \
 			  egrep -v 'server/|filters|handlers|modules|esp|samples') \
-              $(SRC)/modules/dirHandler.c $(SRC)/modules/fileHandler.c
+              $(SRC)/dirHandler.c $(SRC)/fileHandler.c
 LIBS		= ws2_32.lib
 SSL_IFLAGS	+= $(BLD_OPENSSL_IFLAGS)
 PHP_IFLAGS	+= $(BLD_PHP_IFLAGS)
