@@ -5,34 +5,31 @@
 #
 
 BUILD_DEPTH		?= 2
-SKIP_STND_TEST	= 1
 
 include 		.makedep
 
 ifeq ($(BUILDING_DEV),1)
 	TARGETS		+= $(BLD_BIN_DIR)/testAppweb$(BLD_EXE) 
+else
+    OBJECTS     := $(patsubst $(BLD_OBJ_DIR)/testAppweb$(BLD_OBJ),,$(OBJECTS))
+    OBJECTS     := $(patsubst $(BLD_OBJ_DIR)/testHttp$(BLD_OBJ),,$(OBJECTS))
 endif
-
 ifeq ($(BUILDING_TARGET),1)
 	ifeq ($(BLD_FEATURE_CGI),1)
-		CGIP		+= $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
-		TARGETS		+= $(CGIP)
-		TARGETS		+= cgi-bin/testScript web/cgiProgram.cgi web/caching/cache.cgi
+		CGIP	+= $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
+		TARGETS	+= $(CGIP)
+		TARGETS	+= cgi-bin/testScript web/cgiProgram.cgi web/caching/cache.cgi
 	endif
 endif
 
-compileExtra: $(TARGETS) $(MODULES) 
-
-ifeq ($(BUILDING_TARGET),1)
-$(BLD_OBJ_DIR)/testAppweb$(BLD_OBJ):
-$(BLD_OBJ_DIR)/testHttp$(BLD_OBJ):
-endif
+compileExtra: $(TARGETS)
 
 #
 #	Build testAppweb
 #
 $(BLD_BIN_DIR)/testAppweb$(BLD_EXE): $(OBJECTS)
-	bld --exe $(BLD_BIN_DIR)/testAppweb$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" --libs "$(BLD_HTTP_LIBS) $(BLD_MPR_LIBS)" \
+	bld --exe $(BLD_BIN_DIR)/testAppweb$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" \
+		--libs "$(BLD_HTTP_LIBS) $(BLD_MPR_LIBS) $(BLD_SSL_LIBS)" \
 		testHttp$(BLD_OBJ) testAppweb$(BLD_OBJ)
 
 #
@@ -130,7 +127,6 @@ testPrep:
 cleanExtra: testPrep
 	rm -f *.obj *.pdb
 	rm -f access.log error.log leak.log
-	rm -f $(MODULES) $(BLD_BIN_DIR)/testAppweb$(BLD_EXE) testAppweb$(BLD_EXE)
 	rm -f *.o *.lo *.obj *.out */*.mod */*/*.mod
 	rm -f cgi-bin/*cgi* ../cgi-bin/testScript
 	rm -f web/cgiProgram.cgi

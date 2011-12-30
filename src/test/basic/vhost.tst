@@ -2,9 +2,15 @@
     vhost.tst - Virtual Host tests
  */
 
-const HTTP = App.config.uris.http || "127.0.0.1:4100"
-const NAMED = App.config.uris.named || "127.0.0.1:4111"
-const VIRT = App.config.uris.virt || "127.0.0.1:4112"
+blend(App.config.uris, {
+  http: "http://127.0.0.1:4100",
+  named:"http://127.0.0.1:4111",
+  virt: "http://127.0.0.1:4112",
+}, {overwrite: false})
+
+const HTTP = App.config.uris.http
+const NAMED = App.config.uris.named
+const VIRT = App.config.uris.virt
 
 let http: Http = new Http
 
@@ -33,10 +39,17 @@ function namedHost() {
 
     //  These should fail
     http = new Http
+    http.setHeader("Host", "localhost:" + Uri(NAMED).port)
     http.get(NAMED + "/main.html")
     assert(http.status == 404)
+
+    http = new Http
+    http.setHeader("Host", "localhost:" + Uri(NAMED).port)
     http.get(NAMED + "/iphost.html")
     assert(http.status == 404)
+
+    http = new Http
+    http.setHeader("Host", "localhost:" + Uri(NAMED).port)
     http.get(NAMED + "/vhost2.html")
     assert(http.status == 404)
 
@@ -47,10 +60,16 @@ function namedHost() {
     assert(http.status == 200)
 
     //  These should fail
+    http = new Http
+    http.setHeader("Host", "127.0.0.1:" + Uri(NAMED).port)
     http.get(NAMED + "/main.html")
     assert(http.status == 404)
+    http = new Http
+    http.setHeader("Host", "127.0.0.1:" + Uri(NAMED).port)
     http.get(NAMED + "/iphost.html")
     assert(http.status == 404)
+    http = new Http
+    http.setHeader("Host", "127.0.0.1:" + Uri(NAMED).port)
     http.get(NAMED + "/vhost1.html")
     assert(http.status == 404)
 }

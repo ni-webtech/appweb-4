@@ -5,6 +5,9 @@
 #
 
 OBJECTS			=
+
+include 		.makedep
+
 CGI				:= mod_cgi
 FILE			:= mod_file
 EJS				:= mod_ejs
@@ -12,10 +15,7 @@ ESP				:= mod_esp
 PHP				:= mod_php
 SSL				:= mod_ssl
 
-include 		.makedep
-
-OBJECTS			= $(BLD_OBJ_DIR)/dirHandler$(BLD_OBJ)
-OBJECTS			+= $(BLD_OBJ_DIR)/fileHandler$(BLD_OBJ)
+ifeq	($(BUILDING_TARGET),1)
 ifeq	($(BLD_FEATURE_CGI),1)
 	OBJECTS		+= $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ)
 endif
@@ -54,10 +54,11 @@ ifeq ($(BLD_FEATURE_SSL),1)
 	IMPORTS 	+= $(BLD_OPENSSL_IMPORTS)
 	IMPORTED	+= $(patsubst %,$(BLD_LIB_DIR)/%, $(notdir $(BLD_OPENSSL_IMPORTS)))
 endif
+endif
+
 ifeq ($(MACOSX),1)
 	sslModule_IFLAGS   +=  -Wno-deprecated-declarations
 endif
-
 sslModule_IFLAGS	+= $(BLD_OPENSSL_IFLAGS) $(BLD_MATRIXSSL_IFLAGS) 
 ejsHandler_IFLAGS	+= $(BLD_EJSCRIPT_IFLAGS)
 phpHandler_IFLAGS	+= $(BLD_PHP_IFLAGS)
@@ -69,10 +70,8 @@ LIBS				+= $(BLD_APPWEB_LIBS)
 #
 _CFLAGS				:= $(patsubst -Wshorten-64-to-32,,$(_CFLAGS))
 
-compileExtra: $(IMPORTED) $(OBJECTS) 
+compileExtra: $(IMPORTED) $(OBJECTS) $(MODULES)
 	
-modules: $(MODULES) $(IMPORTED)
-
 #
 #	Build Modules (esp does its own build, see ./esp/Makefile)
 #

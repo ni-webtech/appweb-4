@@ -31,8 +31,12 @@ else
 	COMPILE				:= manager.c
 endif
 
-ifneq ($(BLD_MANAGER),)
 ifneq ($(BUILDING_DEV),1)
+    OBJECTS             := $(patsubst $(BLD_OBJ_DIR)/makerom$(BLD_OBJ),,$(OBJECTS))
+endif
+
+ifeq ($(BUILDING_TARGET),1)
+ifneq ($(BLD_MANAGER),)
 ifneq ($(BLD_HOST_VXWORKS),1)
 	TARGETS				+= $(BLD_BIN_DIR)/$(BLD_MANAGER)$(BLD_EXE)
 endif
@@ -44,11 +48,6 @@ ifeq ($(MACOSX),1)
 endif
 
 compileTargets: $(TARGETS)
-
-ifeq ($(BUILDING_TARGET),1)
-$(BLD_OBJ_DIR)/makerom$(BLD_OBJ):
-	true
-endif
 
 $(MPR_LIB): $(OBJECTS)
 	bld --library $(MPR_LIB) $(MPR_OBJECTS)

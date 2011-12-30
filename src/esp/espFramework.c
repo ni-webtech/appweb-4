@@ -920,6 +920,26 @@ cchar *espUri(HttpConn *conn, cchar *target)
 }
 
 
+void espManageEspRoute(EspRoute *eroute, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(eroute->appModuleName);
+        mprMark(eroute->appModulePath);
+        mprMark(eroute->cacheDir);
+        mprMark(eroute->compile);
+        mprMark(eroute->controllersDir);
+        mprMark(eroute->dbDir);
+        mprMark(eroute->edi);
+        mprMark(eroute->env);
+        mprMark(eroute->layoutsDir);
+        mprMark(eroute->link);
+        mprMark(eroute->searchPath);
+        mprMark(eroute->staticDir);
+        mprMark(eroute->viewsDir);
+    }
+}
+
+
 #endif /* BLD_FEATURE_ESP */
 /*
     @copy   default

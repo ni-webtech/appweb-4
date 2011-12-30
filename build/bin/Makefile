@@ -4,8 +4,6 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
 #
 
-PRE_DIRS	:= src
-
 include 	.makedep
 
 dependExtra:

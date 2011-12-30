@@ -14,6 +14,8 @@ ifeq ($(BUILDING_TARGET),1)
 	ifeq	($(BLD_FEATURE_CGI),1)
 		TARGETS	+= $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
 	endif
+else
+    OBJECTS     := $(patsubst $(BLD_OBJ_DIR)/cgiProgram$(BLD_OBJ),,$(OBJECTS))
 endif
 
 compileExtra: $(TARGETS)
@@ -30,11 +32,6 @@ $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE): $(BLD_OBJ_DIR)/cgiProgram$(BLD_OBJ)
 $(BLD_BIN_DIR)/setConfig$(BLD_EXE): $(BLD_OBJ_DIR)/setConfig$(BLD_OBJ)
 	bld --graphical --exe $(BLD_BIN_DIR)/setConfig$(BLD_EXE) --search "$(BLD_MPR_LIBPATHS)" --libs "$(BLD_MPR_LIBS)" \
 		$(BLD_OBJ_DIR)/setConfig$(BLD_OBJ)
-
-ifeq ($(BUILDING_DEV),1)
-$(BLD_OBJ_DIR)/cgiProgram$(BLD_OBJ):
-	true
-endif
 
 #
 #   Local variables:

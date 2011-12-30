@@ -6,12 +6,15 @@
 
 include 	.makedep 
 
-PRE_DIRS	= $(BLD_HOST_OS) all
+PRE_DIRS	= $(BLD_HOST_OS)
 
 dependExtra:
 	[ "$(shell echo *.sh)" != "*.sh" ] && chmod +x *.sh ; true
 
+ifeq ($(BUILDING_TARGET),1)
 packageFinal:
+	echo BD $(BUILDING_DEV)
+	echo BT $(BUILDING_TARGET)
 	$(MAKE) -C .. packageRelease
 	if [ `id -u` = 0 ] ; then \
 		if logname >/dev/null 2>&1 ; then \
@@ -20,6 +23,7 @@ packageFinal:
 	fi
 	$(MAKE) -C .. packageCombo
 	$(MAKE) -C .. packageFlat
+endif
 
 #
 #   Local variables:

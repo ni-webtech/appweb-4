@@ -4,53 +4,27 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
 #
 
+include 		.makedep
+
 CGI				:= mod_cgi
 FILE			:= mod_file
 EJS				:= mod_ejs
 PHP				:= mod_php
 SSL				:= mod_ssl
-
-include 		.makedep
-
 PRE_DIRS		+= deps
-ifeq ($(BLD_FEATURE_ESP),1)
-	PRE_DIRS	+= esp
-endif
-PRE_DIRS		+= modules
-POST_DIRS		+= utils server test samples
+POST_DIRS		+= esp modules utils server test samples
 TARGETS			+= $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
-SOURCES			+= $(shell ls *.c | egrep -v 'deps')
-OBJECTS			+= $(BLD_OBJ_DIR)/fileHandler$(BLD_OBJ)
-OBJECTS			+= $(BLD_OBJ_DIR)/dirHandler$(BLD_OBJ)
 
-compileFirst: prep tools
-
-tools:
-	$(MAKE) -S --no-print-directory BUILDING_DEV=1 TRACE=$(TRACE) DIR=$(DIR)/deps -C deps compile
-	$(MAKE) -S --no-print-directory BUILDING_DEV=1 TRACE=$(TRACE) DIR=$(DIR)/utils -C utils compile
-ifeq ($(BLD_CROSS),1)
-	echo
-	$(call log) [Notice] "Building $(BLD_NAME) for ($(BLD_HOST_SYSTEM))"
-endif
-
-compileExtra: $(TARGETS) always
-
-always:
-	@T=modules D=modules ; $(DO_RECURSE)
-	@T=modules D=esp ; $(DO_RECURSE)
-	$(MAKE) -S --no-print-directory BUILDING_DEV=1 TRACE=$(TRACE) DIR=$(DIR)/test -C test compile
-
-#
-#	Build the appweb library (includes dirHandler, fileHandler)
-#
-$(BLD_LIB_DIR)/libappweb$(BLD_LIB): Makefile $(OBJECTS) $(BLD_MPR_MAKEDEP)
-	bld --library $(BLD_LIB_DIR)/libappweb --search "$(BLD_APPWEB_LIBPATHS)" --libs "http $(BLD_APPWEB_WITHLIBS)" $(OBJECTS)
-
-prep:
+compileFirst:
 	if [ -f $(BLD_BIN_DIR)/.ideBuild ] ; then \
 		rm -f $(BLD_BIN_DIR)/* $(BLD_BIN_DIR)/.ideBuild ; \
-		make -C ../build/src ; \
 	fi
+
+compileExtra: $(TARGETS)
+
+$(BLD_LIB_DIR)/libappweb$(BLD_LIB): Makefile $(OBJECTS) $(BLD_MPR_MAKEDEP)
+	bld --library $(BLD_LIB_DIR)/libappweb --search "$(BLD_APPWEB_LIBPATHS)" \
+		--libs "http $(BLD_APPWEB_WITHLIBS)" $(OBJECTS)
 
 #
 #   Local variables:

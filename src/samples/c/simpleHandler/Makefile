@@ -5,7 +5,6 @@
 #
 
 NAME			:= simpleHandler
-BUILD_NATIVE	:= 0
 
 include 		.makedep
 
@@ -14,10 +13,10 @@ TARGETS			+= $(BLD_LIB_DIR)/$(NAME)$(BLD_SHOBJ)
 compileExtra: 	$(TARGETS)
 
 $(BLD_LIB_DIR)/$(NAME)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/$(NAME)$(BLD_OBJ)
-	@bld --shared --library $(BLD_LIB_DIR)/$(NAME) --libs "$(BLD_APPWEB_LIBS)" $(OBJECTS)
+	bld --shared --library $(BLD_LIB_DIR)/$(NAME) --libs "$(BLD_APPWEB_LIBS)" $(OBJECTS)
 
 projectsExtra:
-	@makeVsProj --project $(NAME).vcproj --library $(NAME) --libs "$(BLD_APPWEB_LIBS)" *.c
+	makeVsProj --project $(NAME).vcproj --library $(NAME) --libs "$(BLD_APPWEB_LIBS)" *.c
 
 #
 #   Local variables:

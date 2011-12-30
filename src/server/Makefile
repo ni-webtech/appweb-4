@@ -4,11 +4,9 @@
 # 	Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
 #
 
-POST_DIRS			:= package
-
 include 			.makedep 
 
-PRE_DIRS			+= $(BLD_OS) test
+PRE_DIRS			+= $(BLD_OS)
 
 #
 #	Extra libraries
@@ -22,19 +20,22 @@ ifeq	($(BLD_FEATURE_AUTH_PAM),1)
 endif
 
 LIBDEP				+= appweb
-VLIBDEP				+= mpr
+LIBDEP				+= mpr
 ifeq	($(BLD_FEATURE_SSL),1)
-	VLIBDEP			+= mprssl
+	LIBDEP			+= mprssl
 endif
 
-TARGETS				+= $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE)
+ifeq ($(BUILDING_TARGET),1)
+	TARGETS			+= $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE)
+	ROM_FILES		+= romFiles.c
+endif
 
-compileExtra: $(TARGETS) $(EXTRA_TARGETS)
+compileExtra: $(TARGETS)
 
-compileFirst: romFiles.c
+compileFirst: $(ROM_FILES)
 
 ifeq ($(BLD_FEATURE_ROMFS),1)
-romFiles.c: *.db mime.types appweb.conf web/*.html
+$(ROM_FILES): *.db mime.types appweb.conf web/*.html
 	$(call log) "[Generate]" "romFiles.c"
 	echo -e ".\nappweb.conf\nmime.types\nusers.db\ngroups.db" >rom.files
 	find conf -print | egrep -v 'ejs.conf|php.conf|fcgi.conf|ssl|dummy' >>rom.files
@@ -49,54 +50,20 @@ endif
 #
 #	Build the appweb program
 #
-$(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE): $(OBJECTS) $(call lib, $(LIBDEP)) $(call vlib $(VLIBDEP))
+$(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE): $(OBJECTS) $(call lib, $(LIBDEP)) $(call vlib $(LIBDEP))
 	bld --exe $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" \
-		--libs "$(BLD_APPWEB_LIBS) $(LIBS)" --syslibs "$(SYSLIBS)" $(RES) $(OBJECTS) $(EXTRA_OBJECTS)
-
-#
-#	Test static link
-#
-slink:
-	$(BLD_CC) -static -o $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE) \
-	$(BLD_OBJ_DIR)/appweb.o \
-	$(BLD_OBJ_DIR)/cgiHandler.o \
-	$(BLD_OBJ_DIR)/config.o \
-	$(BLD_OBJ_DIR)/convenience.o \
-	$(BLD_OBJ_DIR)/dirHandler.o \
-	$(BLD_OBJ_DIR)/edi.o \
-	$(BLD_OBJ_DIR)/espAbbrev.o \
-	$(BLD_OBJ_DIR)/espFramework.o \
-	$(BLD_OBJ_DIR)/espHandler.o \
-	$(BLD_OBJ_DIR)/espHtml.o \
-	$(BLD_OBJ_DIR)/espSession.o \
-	$(BLD_OBJ_DIR)/espTemplate.o \
-	$(BLD_OBJ_DIR)/fileHandler.o \
-	$(BLD_OBJ_DIR)/httpLib.o \
-	$(BLD_OBJ_DIR)/log.o \
-	$(BLD_OBJ_DIR)/mdb.o \
-	$(BLD_OBJ_DIR)/mprLib.o \
-	$(BLD_OBJ_DIR)/mprSsl.o \
-	$(BLD_OBJ_DIR)/pcre.o \
-	$(BLD_OBJ_DIR)/romFiles.o \
-	$(BLD_OBJ_DIR)/sdb.o \
-	$(BLD_OBJ_DIR)/server.o \
-	-g -Wl,-r -lgcc
-
+		--libs "$(BLD_APPWEB_LIBS) $(LIBS)" --syslibs "$(SYSLIBS)" $(RES) $(OBJECTS)
 
 run:
 	$(call setlibpath) ; sudo $(BLD_BIN_DIR)/$(BLD_PRODUCT) -v
 
 cleanExtra:
-	rm -f $(TARGETS) $(BLD_PRODUCT)$(BLD_EXE) $(EXTRA_TARGETS)
+	rm -f $(TARGETS)
 	rm -f trace.txt access.log error.log leak.log
 	rm -f *.obj *.pdb
 	rm -f error.log* access.log*
-	rm -fr target
 	rm -f web/*.mod web/*.es
-
-vxSetup:
-	mkdir -p target
-	subst v: c:\usr\svn\appweb\trunk\appweb\target
+	find web -name .DS_Store | xargs rm -f
 
 size:
 	@echo -e "    #\n    #	Size of $(BLD_PRODUCT)\n    #"

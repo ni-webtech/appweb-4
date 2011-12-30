@@ -207,7 +207,7 @@ static int runAction(HttpConn *conn)
         if (!loadApp(conn, &updated)) {
             return 0;
         }
-    } else if (eroute->update || !mprLookupModule(req->controllerPath)) {
+    } else if (eroute->update /* UNUSED || !mprLookupModule(req->controllerPath) */) {
         req->cacheName = mprGetMD5WithPrefix(req->controllerPath, slen(req->controllerPath), "controller_");
         req->module = mprNormalizePath(sfmt("%s/%s%s", eroute->cacheDir, req->cacheName, BLD_SHOBJ));
 
@@ -304,7 +304,7 @@ void espRenderView(HttpConn *conn, cchar *name)
         if (!loadApp(conn, &updated)) {
             return;
         }
-    } else if (eroute->update || !mprLookupModule(req->source)) {
+    } else if (eroute->update /* UNUSED || !mprLookupModule(req->source) */) {
         req->cacheName = mprGetMD5WithPrefix(req->source, slen(req->source), "view_");
         req->module = mprNormalizePath(sfmt("%s/%s%s", eroute->cacheDir, req->cacheName, BLD_SHOBJ));
 
@@ -630,6 +630,7 @@ static void setMvcDirs(EspRoute *eroute, HttpRoute *route)
 }
 
 
+#if MOVED && UNUSED
 void espManageEspRoute(EspRoute *eroute, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
@@ -648,7 +649,7 @@ void espManageEspRoute(EspRoute *eroute, int flags)
         mprMark(eroute->viewsDir);
     }
 }
-
+#endif
 
 static void manageReq(EspReq *req, int flags)
 {

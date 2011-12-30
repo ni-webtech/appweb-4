@@ -23,13 +23,15 @@
 #	To remove, use make uninstall-ITEM, where ITEM is a component above.
 #
 
-DEPS		= tools mpr pcre http sqlite
+DEPS		:= tools mpr pcre http sqlite
+PRE_DIRS	:= build src doc projects package
 
 include		build/make/Makefile.top
 include		build/make/Makefile.appweb
 include		out/inc/Makefile.import
 
-testCleanup:
+#	MOB - is this used?
+testCleanup_MOB:
 	killall testAppweb >/dev/null 2>&1 ; true
 
 #

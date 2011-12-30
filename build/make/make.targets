@@ -1,5 +1,5 @@
 #
-#	make.rules -- Embedthis Build System rules
+#	make.targets -- Embedthis Build System targets
 #
 #	This file expects that the per-directory Makefiles will have included
 #	their .makedep files which will in-turn include buildConfig.h and 
@@ -47,21 +47,29 @@ endif
 include		$(BLD_TOP)/build/make.config
 
 COMPILE     ?= *.c *.h
-.PHONY:		test always
+
+.PHONY:		check headers headersDirs headersExtra
+.PHONY:     compile compileFirst compileDirs compileTargets compileExtra compileAdirs compileFinal
+.PHONY:     depend dependExtra dependDirs dependCwd dependAfter
+.PHONY:     test testDirs testPrep testExtra testFinal testCleanup
+.PHONY:     clean cleanDirs cleanExtra 
+.PHONY:     clobber clobberDirs cleanExtra clobberExtra
+.PHONY:     projects projectsDirs projectsExtra
+.PHONY:     package packageFirst packageDirs packageExtra packageFinal
 .NOTPARALLEL:
 
 #
 #	These exports may be defined by users make files and are passed to bld
 #
-export 	MAKE_CFLAGS MAKE_DFLAGS MAKE_IFLAGS MAKE_LDFLAGS EXPORT_OBJECTS BUILDING_DEV BUILDING_TARGET TRACE TEMP
+export 	MAKE_CFLAGS MAKE_DFLAGS MAKE_IFLAGS MAKE_LDFLAGS EXPORT_OBJECTS TRACE TEMP
 
 #
 #	Compute the directory path for display purposes
 #
 DIR             ?= .
 BUILD_DEPTH     ?= 2
-BUILDING_DEV    := 0
-BUILDING_TARGET := $(shell expr 1 - $(BUILDING_DEV))
+BUILDING_DEV    ?= 1
+BUILDING_TARGET ?= 1
 MAKE			:= $(BLD_MAKE)
 MAKE			?= make
 TEMP			?= /tmp
@@ -81,15 +89,7 @@ do [ -d "$$i" ] || continue ;\
 	set -e ; \
     dir=$${DIR}/$$i ; dir=$${dir\#/} ;\
 	if [ -f "$$i/Makefile" ] ; then \
-		unset CDPATH EXPORT_OBJECTS BUILDING_DEV BUILDING_TARGET BLD_TOP ; \
-        if [ -f "$(BLD_OUT_DIR)/.needDepend" -o ! -f "$$i/.makedep" -o \
-                "$(BLD_OUT_DIR)/buildConfig.h" -nt "$$i/.makedep" ] ; then \
-            rm -f $(BLD_OUT_DIR)/.needDepend ; \
-            $(call log) [Generate] "Makefile dependencies" ; \
-            cd $(BLD_TOP) >/dev/null 2>&1 ; makedep ; \
-            $(MAKE) -S --no-print-directory "DIR=$$dir" PRE=$(PRE) TRACE=$(TRACE) depend ; \
-            cd - >/dev/null 2>&1 ; \
-        fi ; \
+		unset CDPATH EXPORT_OBJECTS BLD_TOP ; \
 		if [ "$(TRACE)" = 1 ] ; then \
             echo $(MAKE) -S -C "$$i" --no-print-directory "DIR=$$dir" PRE=$(PRE) TRACE=$(TRACE) $$T ; \
         fi ; \
@@ -163,7 +163,8 @@ check:
 #
 #	Compile target phases
 #
-compile: check $(BUILD_CHECK) compileFirst compileDirs $(HEADERS) $(OBJECTS) compileTargets compileExtra compileAdirs compileFinal
+AUTO_COMPILE ?= $(OBJECTS)
+compile: check $(BUILD_CHECK) compileFirst $(HEADERS) compileDirs $(AUTO_COMPILE) compileTargets compileExtra compileAdirs compileFinal
 
 compileFirst:
 
@@ -171,7 +172,6 @@ compileExtra:
 
 compileTargets: 
 
-# MOB - should be compileLast
 compileFinal:
 
 compileDirs:
@@ -182,15 +182,17 @@ compileAdirs:
 
 depend: check $(BUILD_CHECK) dependExtra dependDirs dependCwd dependAfter
 
-dependCwd:
-	@if [ ! -x $(BLD_BUILD_BIN_DIR)/edep$(BLD_BUILD_EXE) ] ; then \
-		$(MAKE) -S --no-print-directory TRACE=$(TRACE) -C $(BLD_TOP)/build/src tools ; \
+UNUSED_depend:
+	if [ ! -x $(BLD_BUILD_BIN_DIR)/edep$(BLD_BUILD_EXE) ] ; then \
+		$(MAKE) -S --no-print-directory TRACE=$(TRACE) BUILDING_TARGET=0 BUILDING_DEV=1 BUILDING_CROSS=1 \
+            -C $(BLD_TOP)/build/src $(BLD_BUILD_BIN_DIR)/edep$(BLD_EXE); \
 	fi
-	@[ "$(TRACE)" = 1 ] && \
-	    echo $(BLD_BUILD_BIN_DIR)/edep$(BLD_BUILD_EXE) --out $(BLD_OUT_DIR) $(MAKE_IFLAGS) $(BLD_IFLAGS) \
+
+dependCwd:
+	[ "$(TRACE)" = 1 ] && echo $(BLD_BUILD_BIN_DIR)/edep$(BLD_BUILD_EXE) --out $(BLD_OUT_DIR) $(MAKE_IFLAGS) $(BLD_IFLAGS) \
             $(_IFLAGS) $(DEPEND_FLAGS) $(COMPILE) ; true
-	@$(BLD_BUILD_BIN_DIR)/edep$(BLD_BUILD_EXE) --out "$(BLD_OUT_DIR)" \
-        $(MAKE_IFLAGS) $(BLD_IFLAGS) $(_IFLAGS) $(DEPEND_FLAGS) $(COMPILE)
+	$(BLD_BUILD_BIN_DIR)/edep$(BLD_BUILD_EXE) --out "$(BLD_OUT_DIR)" $(MAKE_IFLAGS) $(BLD_IFLAGS) \
+        $(_IFLAGS) $(DEPEND_FLAGS) $(COMPILE)
 
 dependDirs:
 	@if [ ! -f .makedep ] ; then \

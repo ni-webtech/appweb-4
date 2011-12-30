@@ -10,10 +10,16 @@
 #define _h_POSIX 1
 
 /*
-    Suppress MS VS warnings
+    Suppress VS and VxWorks warnings
  */
 #define _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_DEPRECATE
+
+#if VXWORKS
+    #ifndef _VSB_CONFIG_FILE
+        #define _VSB_CONFIG_FILE "vsbConfig.h"
+    #endif
+#endif
 
 #include    <ctype.h>
 #include    <signal.h>

@@ -1949,39 +1949,48 @@ bool maValidateServer(MaServer *server)
 
 static bool conditionalDefinition(cchar *key)
 {
+    int     result, not;
+
+    not = (*key == '!') ? 1 : 0;
+    if (not) {
+        for (++key; isspace((int) *key); key++) {}
+    }
     if (scasematch(key, "BLD_COMMERCIAL")) {
-        return strcmp(BLD_COMMERCIAL, "0");
+        result = smatch(BLD_COMMERCIAL, "0");
 
 #if BLD_DEBUG
     } else if (scasematch(key, "BLD_DEBUG")) {
-        return BLD_DEBUG;
+        result = BLD_DEBUG;
 #endif
 
     } else if (scasematch(key, "CGI_MODULE")) {
-        return BLD_FEATURE_CGI;
+        result = BLD_FEATURE_CGI;
 
     } else if (scasematch(key, "DIR_MODULE")) {
-        return BLD_FEATURE_DIR;
+        result = BLD_FEATURE_DIR;
 
     } else if (scasematch(key, "EJS_MODULE")) {
-        return BLD_FEATURE_EJSCRIPT;
+        result = BLD_FEATURE_EJSCRIPT;
 
     } else if (scasematch(key, "ESP_MODULE")) {
-        return BLD_FEATURE_ESP;
+        result = BLD_FEATURE_ESP;
 
     } else if (scasematch(key, "PHP_MODULE")) {
-        return BLD_FEATURE_PHP;
+        result = BLD_FEATURE_PHP;
 
     } else if (scasematch(key, "SSL_MODULE")) {
-        return BLD_FEATURE_SSL;
+        result = BLD_FEATURE_SSL;
 
     } else if (scasematch(key, BLD_OS)) {
-        return 1;
+        result = 1;
 
     } else if (scasematch(key, BLD_CPU)) {
-        return 1;
+        result = 1;
+
+    } else {
+        result = 0;
     }
-    return 0;
+    return (not) ? !result : result;
 }
 
 
