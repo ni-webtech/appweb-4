@@ -139,7 +139,7 @@ public function readBuildConfig(options)
         if (line.startsWith("#") || line.trim() == "" || line.startsWith("if")) {
             continue
         }
-        if (line.contains("(BUILDING_NATIVE)")) {
+        if (line.contains("(BUILDING_DEV)")) {
             for (; l < lines.length; l++) {
                 if (line.contains("Configuration for the Target")) {
                     break;

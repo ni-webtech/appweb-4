@@ -41,7 +41,7 @@ static void manageApp(App *app, int flags);
 
 /************************************* Code ***********************************/
 
-MAIN(testAppWeb, int argc, char *argv[]) 
+int main(int argc, char *argv[]) 
 {
     Mpr             *mpr;
     int             rc;
@@ -59,6 +59,10 @@ MAIN(testAppWeb, int argc, char *argv[])
         mprError("Can't create test service");
         exit(2);
     }
+int i;
+for (i = 0; i < argc; i++) {
+    printf("ARG[%d] = %s\n", i, argv[i]);
+}
     if (mprParseTestArgs(ts, argc, argv, parseArgs) < 0) {
         mprPrintfError("\n"
             "  Commands specifically for %s\n"
@@ -104,12 +108,15 @@ static void manageApp(App *app, int flags)
 static int parseArgs(int argc, char **argv)
 {
     char    *argp, *ip, *cp;
+    int     nextArg;
 
     mprAssert(app);
-    argp = argv[argc];
+    nextArg = 0;
+
+    argp = argv[nextArg++];
 
     if (scmp(argp, "--host") == 0 || scmp(argp, "-h") == 0) {
-        ip = argv[++argc];
+        ip = argv[nextArg++];
         if (ip == 0) {
             return MPR_ERR_BAD_ARGS;
         }
@@ -124,7 +131,7 @@ static int parseArgs(int argc, char **argv)
         }
         app->host = sclone(ip);
     }
-    return argc;
+    return nextArg - 1;
 }
 
 

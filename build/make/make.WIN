@@ -25,8 +25,8 @@ else
 endif
 
 _DFLAGS  			+= -D_REENTRANT -D_MT
-ifeq ($(BUILDING_NATIVE),1)
-_DFLAGS  			+= -DBUILDING_NATIVE=1
+ifeq ($(BUILDING_DEV),1)
+    _DFLAGS  		+= -DBUILDING_DEV=1
 endif
 _IFLAGS			    += -I$(BLD_INC_DIR)
 

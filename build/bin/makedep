@@ -36,7 +36,7 @@ BLD_INC_DIR := ${BLD_INC_DIR:-${top}/out/inc}
 include \$(BLD_INC_DIR)/buildConfig.h
 include \$(BLD_TOP)/build/make/make.rules
 
-ifeq (\$(BUILDING_NATIVE),1)
+ifeq (\$(BUILDING_DEV),1)
     include \$(BLD_TOP)/build/make/make.\$(BLD_BUILD_OS)
 else
     include \$(BLD_TOP)/build/make/make.\$(BLD_HOST_OS)

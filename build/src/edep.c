@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
     fprintf(fp, "\n#\n#   Read the Makefile rules and per-os make definitions.\n#\n");
     fprintf(fp, "include $(BLD_TOP)/build/make/make.rules\n\n");
 
-    fprintf(fp, "ifeq ($(BUILDING_NATIVE),1)\n");
+    fprintf(fp, "ifeq ($(BUILDING_DEV),1)\n");
     fprintf(fp, "   include $(BLD_TOP)/build/make/make.$(BLD_BUILD_OS)\n");
     fprintf(fp, "else\n");
     fprintf(fp, "   include $(BLD_TOP)/build/make/make.$(BLD_HOST_OS)\n");

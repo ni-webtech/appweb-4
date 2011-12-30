@@ -84,8 +84,8 @@ endif
 
 
 _DLFAGS     	+= -D_REENTRANT
-ifeq ($(BUILDING_NATIVE),1)
-    _DFLAGS  	+= -DBUILDING_NATIVE=1
+ifeq ($(BUILDING_DEV),1)
+    _DFLAGS  	+= -DBUILDING_DEV=1
 endif
 ifneq ($(BLD_OS),VXWORKS)
 	_LIBS   	+= -lpthread

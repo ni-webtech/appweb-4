@@ -18,8 +18,9 @@ enumerable public class Test {
     public var session: Object
     public var threads: Number
     public var top: Path
-    public var os: Path
-    public var hostOs: Path
+    public var os: String
+    public var hostOs: String
+    public var hostSystem: String
     public var verbosity: Number = false
 
     var log = App.log
@@ -99,8 +100,7 @@ public function stopService(options = {}) {
 public function startService(cmdline: String, options): Void {
     stopService()
     let pidfile = options.pidfile || PIDFILE
-    let address = options.address || App.config.uris.http
-    address = Uri(address).complete()
+    let address: Uri = Uri(options.address || App.config.uris.http).complete()
     if (!App.getenv("NOSERVER")) {
         let cmd = new Cmd
         blend(options, {detach: true})

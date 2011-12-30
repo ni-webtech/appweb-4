@@ -23,32 +23,35 @@ function mainHost() {
 }
 
 
-//  The first virtual host listens to "localhost", the second listens to "127.0.0.1". Both on the same port (4111)
+//  The first virtual host listens to "localhost", the second listens to HTTP.
 
 function namedHost() {
-    let vhost = "http://localhost:" + Uri(NAMED).port
-    http.get(vhost + "/vhost1.html")
+    http = new Http
+    http.setHeader("Host", "localhost:" + Uri(NAMED).port)
+    http.get(NAMED + "/vhost1.html")
     assert(http.status == 200)
 
     //  These should fail
-    http.get(vhost + "/main.html")
+    http = new Http
+    http.get(NAMED + "/main.html")
     assert(http.status == 404)
-    http.get(vhost + "/iphost.html")
+    http.get(NAMED + "/iphost.html")
     assert(http.status == 404)
-    http.get(vhost + "/vhost2.html")
+    http.get(NAMED + "/vhost2.html")
     assert(http.status == 404)
 
     //  Now try the second vhost on 127.0.0.1
-    vhost = "http://127.0.0.1:" + Uri(NAMED).port
-    http.get(vhost + "/vhost2.html")
+    http = new Http
+    http.setHeader("Host", "127.0.0.1:" + Uri(NAMED).port)
+    http.get(NAMED + "/vhost2.html")
     assert(http.status == 200)
 
     //  These should fail
-    http.get(vhost + "/main.html")
+    http.get(NAMED + "/main.html")
     assert(http.status == 404)
-    http.get(vhost + "/iphost.html")
+    http.get(NAMED + "/iphost.html")
     assert(http.status == 404)
-    http.get(vhost + "/vhost1.html")
+    http.get(NAMED + "/vhost1.html")
     assert(http.status == 404)
 }
 

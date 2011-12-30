@@ -154,13 +154,16 @@ setCompilerOptions()
         if [ $? = 0 ] ; then
             eval $hasSync=1
         fi
-        echo -e "$vsb\n#include <stdio.h>\nint main() { void *ptr; __sync_bool_compare_and_swap(&ptr, ptr, ptr); return 0; }\n" >$file
-        eval \"${cc}\" ${flags} -Wall -c -o $out -c $file >/dev/null 2>&1
-        if [ $? = 0 ] ; then
-            eval $hasSyncCas=1
-        fi
 
         if [ $os != VXWORKS ] ; then
+            #
+            #   VxWorks compiles and links but fails to load
+            #
+            echo -e "$vsb\n#include <stdio.h>\nint main() { void *ptr; __sync_bool_compare_and_swap(&ptr, ptr, ptr); return 0; }\n" >$file
+            eval \"${cc}\" ${flags} -Wall -c -o $out -c $file >/dev/null 2>&1
+            if [ $? = 0 ] ; then
+                eval $hasSyncCas=1
+            fi
             #
             #   Test if fork() supported
             #

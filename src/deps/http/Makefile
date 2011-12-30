@@ -17,7 +17,7 @@ else
 	COMPILE			:= http.c
 endif
 
-ifeq ($(BUILDING_NATIVE),1)
+ifeq ($(BUILDING_DEV),1)
 	TARGETS			+= $(BLD_BIN_DIR)/$(BLD_HTTP)$(BLD_EXE)
 endif
 

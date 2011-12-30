@@ -26,16 +26,19 @@ OBJECTS			+= $(BLD_OBJ_DIR)/dirHandler$(BLD_OBJ)
 compileFirst: prep tools
 
 tools:
-	$(MAKE) -S --no-print-directory BUILDING_NATIVE=1 TRACE=$(TRACE) DIR=$(DIR)/deps -C deps compile
-	$(MAKE) -S --no-print-directory BUILDING_NATIVE=1 TRACE=$(TRACE) DIR=$(DIR)/utils -C utils compile
+	$(MAKE) -S --no-print-directory BUILDING_DEV=1 TRACE=$(TRACE) DIR=$(DIR)/deps -C deps compile
+	$(MAKE) -S --no-print-directory BUILDING_DEV=1 TRACE=$(TRACE) DIR=$(DIR)/utils -C utils compile
 ifeq ($(BLD_CROSS),1)
 	echo
 	$(call log) [Notice] "Building $(BLD_NAME) for ($(BLD_HOST_SYSTEM))"
 endif
 
-compileExtra: $(TARGETS)
+compileExtra: $(TARGETS) always
+
+always:
 	@T=modules D=modules ; $(DO_RECURSE)
 	@T=modules D=esp ; $(DO_RECURSE)
+	$(MAKE) -S --no-print-directory BUILDING_DEV=1 TRACE=$(TRACE) DIR=$(DIR)/test -C test compile
 
 #
 #	Build the appweb library (includes dirHandler, fileHandler)

@@ -24,7 +24,7 @@ ifeq ($(BLD_MPR_BUILTIN),1)
 		TARGETS			+= $(MPRSSL_LIB)
 		SSL_OBJECTS		+= mprSsl
 	endif
-	ifeq ($(BUILDING_NATIVE),1)
+	ifeq ($(BUILDING_DEV),1)
 		TARGETS				+= $(BLD_BIN_DIR)/makerom$(BLD_EXE)
 	endif
 else
@@ -32,7 +32,7 @@ else
 endif
 
 ifneq ($(BLD_MANAGER),)
-ifneq ($(BUILDING_NATIVE),1)
+ifneq ($(BUILDING_DEV),1)
 ifneq ($(BLD_HOST_VXWORKS),1)
 	TARGETS				+= $(BLD_BIN_DIR)/$(BLD_MANAGER)$(BLD_EXE)
 endif
@@ -44,6 +44,11 @@ ifeq ($(MACOSX),1)
 endif
 
 compileTargets: $(TARGETS)
+
+ifeq ($(BUILDING_TARGET),1)
+$(BLD_OBJ_DIR)/makerom$(BLD_OBJ):
+	true
+endif
 
 $(MPR_LIB): $(OBJECTS)
 	bld --library $(MPR_LIB) $(MPR_OBJECTS)

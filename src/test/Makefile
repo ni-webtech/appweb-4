@@ -5,36 +5,45 @@
 #
 
 BUILD_DEPTH		?= 2
-TEST_SYSTEM		:= 127.0.0.1:4100
 SKIP_STND_TEST	= 1
 
 include 		.makedep
 
-TARGETS			+= $(BLD_BIN_DIR)/testAppweb$(BLD_EXE) 
-
-ifeq ($(BLD_FEATURE_CGI),1)
-	CGIP		:= $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
-	TARGETS		+= cgi-bin/testScript web/cgiProgram.cgi web/caching/cache.cgi
+ifeq ($(BUILDING_DEV),1)
+	TARGETS		+= $(BLD_BIN_DIR)/testAppweb$(BLD_EXE) 
 endif
 
-compileExtra: 	$(TARGETS) $(MODULES)
+ifeq ($(BUILDING_TARGET),1)
+	ifeq ($(BLD_FEATURE_CGI),1)
+		CGIP		+= $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
+		TARGETS		+= $(CGIP)
+		TARGETS		+= cgi-bin/testScript web/cgiProgram.cgi web/caching/cache.cgi
+	endif
+endif
+
+compileExtra: $(TARGETS) $(MODULES) 
+
+ifeq ($(BUILDING_TARGET),1)
+$(BLD_OBJ_DIR)/testAppweb$(BLD_OBJ):
+$(BLD_OBJ_DIR)/testHttp$(BLD_OBJ):
+endif
 
 #
 #	Build testAppweb
 #
-$(BLD_BIN_DIR)/testAppweb$(BLD_EXE): $(OBJECTS) $(call lib, appweb)
-	bld --exe $(BLD_BIN_DIR)/testAppweb$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" --libs "http $(BLD_APPWEB_LIBS)" \
+$(BLD_BIN_DIR)/testAppweb$(BLD_EXE): $(OBJECTS)
+	bld --exe $(BLD_BIN_DIR)/testAppweb$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" --libs "$(BLD_HTTP_LIBS) $(BLD_MPR_LIBS)" \
 		testHttp$(BLD_OBJ) testAppweb$(BLD_OBJ)
 
 #
 #	Update the shbang path in testScript. Must be an absolute path on some systems and for valgrind.
 #
-cgi-bin/testScript: $(CGIP) Makefile $(BLD_INC_DIR)/buildConfig.h
+cgi-bin/testScript: Makefile $(BLD_INC_DIR)/buildConfig.h
 	dir=`getpath -a "$(BLD_BIN_DIR)"` ; \
 	echo "#!$$dir/cgiProgram$(BLD_EXE)" >cgi-bin/testScript
 	chmod +x cgi-bin/testScript
 
-web/caching/cache.cgi: $(CGIP) Makefile $(BLD_INC_DIR)/buildConfig.h
+web/caching/cache.cgi: Makefile $(BLD_INC_DIR)/buildConfig.h
 ifeq ($(BLD_WIN_LIKE),1)
 	path=`type -p sh` ; path=`cygpath -m "$$path"` ; \
 	echo -e "#!$${path}\n" >web/caching/cache.cgi
@@ -48,7 +57,7 @@ endif
 #
 #	cgiProgram
 #
-web/cgiProgram.cgi: $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE) Makefile
+web/cgiProgram.cgi: Makefile $(BLD_INC_DIR)/buildConfig.h
 	cp $(CGIP)  cgi-bin/cgiProgram$(BLD_EXE)
 	cp $(CGIP)  cgi-bin/nph-cgiProgram$(BLD_EXE)
 	cp $(CGIP) 'cgi-bin/cgi Program$(BLD_EXE)'
@@ -74,6 +83,7 @@ second:
 #	Test using the http program
 #
 http:
+	TEST_SYSTEM=127.0.0.1:4100
 	iterations=4000 ; \
 	set -e ; while : ; \
 	do \

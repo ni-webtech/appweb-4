@@ -1,21 +1,20 @@
 #
-# 	Makefile for utilities for the http web server 
+# 	Makefile for utilities
 #
 # 	opyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
 #
 
 include 		.makedep
 
-## MOB FIX
-ifneq ($(BUILDING_NATIVE),0)
+ifeq ($(BUILDING_DEV),1)
 	TARGETS		+= $(BLD_BIN_DIR)/auth$(BLD_EXE)
 	TARGETS		+= $(BLD_BIN_DIR)/setConfig$(BLD_EXE)
-else
+endif
+ifeq ($(BUILDING_TARGET),1)
 	ifeq	($(BLD_FEATURE_CGI),1)
 		TARGETS	+= $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
 	endif
 endif
-	TARGETS		+= $(BLD_BIN_DIR)/setConfig$(BLD_EXE)
 
 compileExtra: $(TARGETS)
 
@@ -31,6 +30,11 @@ $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE): $(BLD_OBJ_DIR)/cgiProgram$(BLD_OBJ)
 $(BLD_BIN_DIR)/setConfig$(BLD_EXE): $(BLD_OBJ_DIR)/setConfig$(BLD_OBJ)
 	bld --graphical --exe $(BLD_BIN_DIR)/setConfig$(BLD_EXE) --search "$(BLD_MPR_LIBPATHS)" --libs "$(BLD_MPR_LIBS)" \
 		$(BLD_OBJ_DIR)/setConfig$(BLD_OBJ)
+
+ifeq ($(BUILDING_DEV),1)
+$(BLD_OBJ_DIR)/cgiProgram$(BLD_OBJ):
+	true
+endif
 
 #
 #   Local variables:

@@ -53,14 +53,15 @@ COMPILE     ?= *.c *.h
 #
 #	These exports may be defined by users make files and are passed to bld
 #
-export 	MAKE_CFLAGS MAKE_DFLAGS MAKE_IFLAGS MAKE_LDFLAGS EXPORT_OBJECTS BUILDING_NATIVE TRACE TEMP
+export 	MAKE_CFLAGS MAKE_DFLAGS MAKE_IFLAGS MAKE_LDFLAGS EXPORT_OBJECTS BUILDING_DEV BUILDING_TARGET TRACE TEMP
 
 #
 #	Compute the directory path for display purposes
 #
 DIR             ?= .
 BUILD_DEPTH     ?= 2
-BUILDING_NATIVE := 0
+BUILDING_DEV    := 0
+BUILDING_TARGET := $(shell expr 1 - $(BUILDING_DEV))
 MAKE			:= $(BLD_MAKE)
 MAKE			?= make
 TEMP			?= /tmp
@@ -80,7 +81,7 @@ do [ -d "$$i" ] || continue ;\
 	set -e ; \
     dir=$${DIR}/$$i ; dir=$${dir\#/} ;\
 	if [ -f "$$i/Makefile" ] ; then \
-		unset CDPATH EXPORT_OBJECTS BUILDING_NATIVE BLD_TOP ; \
+		unset CDPATH EXPORT_OBJECTS BUILDING_DEV BUILDING_TARGET BLD_TOP ; \
         if [ -f "$(BLD_OUT_DIR)/.needDepend" -o ! -f "$$i/.makedep" -o \
                 "$(BLD_OUT_DIR)/buildConfig.h" -nt "$$i/.makedep" ] ; then \
             rm -f $(BLD_OUT_DIR)/.needDepend ; \

@@ -1,8 +1,7 @@
 /*
     Very large URI test (3MB)
  */ 
-const HTTP = App.config.uris.http || "127.0.0.1:4100"
-const port: Number = Uri(HTTP).port
+const HTTP: Uri = App.config.uris.http || "127.0.0.1:4100"
 
 //  This writes a 2MB URI
 
@@ -16,7 +15,7 @@ for (i in 1000) {
     Test LimitUri
  */
 let s = new Socket
-s.connect(port)
+s.connect(HTTP.address)
 let count = 0
 try {
     count += s.write("GET ")

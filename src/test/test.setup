@@ -20,7 +20,9 @@ shareUri("http", HTTP)
 shareUri("ssl", SSL)
 shareUri("named", NAMED)
 shareUri("virt", VIP)
-shareUri("ipv6", IPV6)
+if (test.hostOs != "VXWORKS") {
+    shareUri("ipv6", IPV6)
+}
 
 let cmd
 if (test.hostOs == "VXWORKS") {
@@ -34,7 +36,8 @@ if (test.hostOs == "VXWORKS") {
     cmd = vxsim + " -f " + vxworks + " -s vxargs -l vx.log"
     print("CMD", cmd)
 */
-    cmd = "vxrun"
+    cmd = "vxrun " + HOST + " " + test.top.join("out", test.hostSystem, "bin", "appweb.out")
+    // print(cmd)
 
 } else {
     cmd = Cmd.locate("appweb").portable + " --log trace.txt:4 --name forAppwebTest --config appweb.conf"

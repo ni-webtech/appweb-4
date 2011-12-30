@@ -32,6 +32,7 @@ enumerable class Test {
     var filters: Array = []                 // Filter tests by pattern x.y.z... 
     var finish: Boolean                     // Set to true when time to exit 
     var _hostOs: String                     // Host operating system
+    var _hostSystem: String                 // Host system details
     var iterations: Number = 1              // Number of iterations to run the test 
     var _lib: Path                          // Path to lib directory
     var logPath: Path                       // Loging filename
@@ -314,6 +315,7 @@ enumerable class Test {
             test.os = data.os
             test.phase = data.phase
             test.hostOs = data.hostOs
+            test.hostSystem = data.hostSystem
             test.session = data.session
             test.threads = data.threads
             test.top = Path(data.top)
@@ -334,6 +336,7 @@ enumerable class Test {
             depth: _depth, 
             dir: file.dirname,
             hostOs: _hostOs, 
+            hostSystem: _hostSystem, 
             lib: _lib, 
             log: logPath,
             os: _os, 
@@ -504,6 +507,7 @@ enumerable class Test {
         let data = Path(path).readString()
         _os = getKey(data, "BLD_BUILD_OS")
         _hostOs = getKey(data, "BLD_HOST_OS")
+        _hostSystem = getKey(data, "BLD_HOST_SYSTEM")
         features = {}
         features["bld_debug"] = getKey(data, "BLD_DEBUG")
         data = data.match(/BLD_FEATURE.*|BLD_HTTP_PORT.*|BLD_SSL_PORT.*/g)
