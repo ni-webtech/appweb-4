@@ -56,6 +56,12 @@ ifeq ($(BLD_FEATURE_SSL),1)
 endif
 endif
 
+ifeq ($(BUILDING_DEV),1)
+ifeq	($(BLD_FEATURE_ESP),1)
+	MODULES		+= $(BLD_LIB_DIR)/$(ESP)$(BLD_SHOBJ)
+endif
+endif
+
 ifeq ($(MACOSX),1)
 	sslModule_IFLAGS   +=  -Wno-deprecated-declarations
 endif

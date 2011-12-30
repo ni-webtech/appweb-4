@@ -155,7 +155,9 @@ headersAdirs:
 
 headersExtra:
 
-depend: check $(BUILD_CHECK) dependExtra dependDirs dependCwd dependAfter
+depend: check $(BUILD_CHECK) dependFirst dependExtra dependDirs dependCwd dependAfter
+
+dependFirst:
 
 check:
 	@mkdir -p $(BLD_OUT_DIR) $(BLD_BIN_DIR) $(BLD_OBJ_DIR) $(BLD_LIB_DIR) $(BLD_INC_DIR)

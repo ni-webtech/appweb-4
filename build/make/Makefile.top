@@ -102,28 +102,14 @@ sync:
 	done
 	echo
 
-##	#
-##	#	Check for the existing of the dynamic dependancy files (.makedep)
-##	#
-##	.PRECIOUS	: $(BLD_TOP)/build/src/.makedep
-##	
-##	$(BLD_TOP)/build/src/.makedep: $(BLD_OUT_DIR)/inc/buildConfig.h
-##		echo -e "\n  # Making dynamic makefile dependancies\n"
-##		find . -name '*.h' | xargs cp "{}" $(BLD_INC_DIR)
-##		$(MAKE) TRACE=$(TRACE) --no-print-directory depend clean
-##	
-##	#
-##	#	Ensure the build tools are built first
-##	#
-##	$(BLD_TOOLS_DIR)/edep$(BLD_EXE): 
-##		T=$(BLD_TOOLS_DIR)/src; $(DO_RECURSE)
-##	
-
 #
 #	If publisher build, always do a combo build as part of the final compile 
 #
 compileFinal: 
-	[ -f .publisher -a "$(BUILDING_TARGET)" = 1 ] && $(MAKE) TRACE=$(TRACE) --no-print-directory packageCombo ; true
+	if [ -f .publisher -a "$(BUILDING_TARGET)" = 1 ] ; then \
+        echo ; \
+        $(MAKE) TRACE=$(TRACE) --no-print-directory packageCombo ; true ; \
+    fi
 
 dependExtra:
 	[ ! -L extensions ] && ln -s ../packages extensions ; true

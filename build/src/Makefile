@@ -14,16 +14,15 @@ else
 	TARGETS		+= $(BLD_BUILD_BIN_DIR)/dsi$(BLD_EXE)
 	TARGETS		+= $(BLD_BUILD_BIN_DIR)/edep$(BLD_EXE)
 	TARGETS		+= $(BLD_BUILD_BIN_DIR)/getpath$(BLD_EXE)
-endif
-
 dependExtra: $(BLD_BUILD_BIN_DIR)/edep$(BLD_EXE)
+endif
 
 compileExtra: $(TARGETS)
 
-KeepcompileFirst:
+keep_dependFirst keep_compileFirst:
 	echo $(BUILDING_DEV) $(BUILDING_TARGET)
-	echo $(TARGETS) $(TARGETS)
-	echo $(OBJECTS) $(OBJECTS)
+	echo TARGETS $(TARGETS)
+	echo OBJECTS $(OBJECTS)
 
 $(BLD_BUILD_BIN_DIR)/dsi$(BLD_EXE): $(BLD_OBJ_DIR)/dsi$(BLD_OBJ)
 	bld --exe $(BLD_BUILD_BIN_DIR)/dsi$(BLD_EXE) dsi$(BLD_OBJ)
