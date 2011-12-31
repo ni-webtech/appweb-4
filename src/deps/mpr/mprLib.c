@@ -16155,22 +16155,43 @@ int mprSamePathCount(cchar *path1, cchar *path2, ssize len)
 }
 
 
+static char* checkPath(cchar *path, int flags) 
+{
+    MprPath     info;
+    int         access;
+
+    access = (flags & (MPR_SEARCH_EXE | MPR_SEARCH_DIR)) ? X_OK : R_OK;
+
+    if (mprPathExists(path, access)) {
+        mprGetPathInfo(path, &info);
+        if (flags & MPR_SEARCH_DIR && info.isDir) {
+            mprLog(5, "mprSearchForFile: found %s", path);
+            return sclone(path);
+        }
+        if (info.isReg) {
+            mprLog(5, "mprSearchForFile: found %s", path);
+            return sclone(path);
+        }
+    }
+    return 0;
+}
+
+
 char *mprSearchPath(cchar *file, int flags, cchar *search, ...)
 {
     va_list     args;
-    char        *path, *dir, *nextDir, *tok;
-    int         access;
+    char        *result, *path, *dir, *nextDir, *tok;
 
     va_start(args, search);
-    access = (flags & MPR_SEARCH_EXE) ? X_OK : R_OK;
 
-    if (mprPathExists(file, access)) {
-        return sclone(file);
+    mprLog(5, "mprSearchForFile: %s", file);
+
+    if ((result = checkPath(file, flags)) != 0) {
+        return result;
     }
     if ((flags & MPR_SEARCH_EXE) && *BLD_EXE) {
-        path = mprJoinPathExt(file, BLD_EXE);
-        if (mprPathExists(path, access)) {
-            return sclone(path);
+        if ((result = checkPath(mprJoinPathExt(file, BLD_EXE), flags)) != 0) {
+            return result;
         }
     }
     for (nextDir = (char*) search; nextDir; nextDir = va_arg(args, char*)) {
@@ -16178,17 +16199,14 @@ char *mprSearchPath(cchar *file, int flags, cchar *search, ...)
         nextDir = sclone(nextDir);
         dir = stok(nextDir, MPR_SEARCH_SEP, &tok);
         while (dir && *dir) {
-            mprLog(7, "mprSearchForFile: %s in directory %s", file, nextDir);
+            mprLog(5, "mprSearchForFile: %s in search path %s", file, dir);
             path = mprJoinPath(dir, file);
-            if (mprPathExists(path, access)) {
-                mprLog(7, "mprSearchForFile: found %s", path);
-                return mprNormalizePath(path);
+            if ((result = checkPath(path, flags)) != 0) {
+                return mprNormalizePath(result);
             }
             if ((flags & MPR_SEARCH_EXE) && *BLD_EXE) {
-                path = mprJoinPathExt(path, BLD_EXE);
-                if (mprPathExists(path, access)) {
-                    mprLog(7, "mprSearchForFile: found %s", path);
-                    return mprNormalizePath(path);
+                if ((result = checkPath(mprJoinPathExt(path, BLD_EXE), flags)) != 0) {
+                    return mprNormalizePath(result);
                 }
             }
             dir = stok(0, MPR_SEARCH_SEP, &tok);

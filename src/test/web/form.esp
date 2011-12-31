@@ -8,7 +8,7 @@
 
     <h3>Request Details</h3>
     <pre>
-        <% show(); %>
+        <% showRequest(); %>
     </pre>
 </body>
 </html>

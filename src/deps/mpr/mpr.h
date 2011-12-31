@@ -5495,6 +5495,8 @@ extern int mprSamePathCount(cchar *path1, cchar *path2, ssize len);
     Flags for mprSearchPath
  */
 #define MPR_SEARCH_EXE      0x1         /* Search for an executable */
+#define MPR_SEARCH_DIR      0x2         /* Search for a directory */
+#define MPR_SEARCH_FILE     0x4         /* Search for regular file */
 
 /**
     Search for a path

@@ -200,4 +200,4 @@ upload:
 	fi
 
 version:
-	echo $(BLD_VERSION)-$(BLD_NUMBER)
+	@echo $(BLD_VERSION)-$(BLD_NUMBER)
