@@ -146,9 +146,6 @@ public function readBuildConfig(options)
                 }
             }
         }
-        if (line.contains("EXPORT_OBJECTS")) {
-            break
-        }
         let [key, value] = line.trim().split("=")
         options.build[key] = value
     }

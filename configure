@@ -1773,25 +1773,6 @@ BLD_IMPORTS="${BLD_IMPORTS}"
         [ "$FILE" = "$CONFIG_SRC" ] && echo -e ' _#endif' >>$FILE
     fi
     echo '' >>$FILE
-
-    #   MOB - remove
-    if [ "$FILE" = "$CONFIG_H" ] ; then
-        echo 'EXPORT_OBJECTS ?= 1' >>$FILE
-        echo 'ifeq ($(EXPORT_OBJECTS),0)' >>$FILE
-        echo '  BLD_OBJ_DIR := .' >>$FILE
-        echo 'endif' >>$FILE
-        echo '' >>$FILE
-    fi
-#MOB    if [ "$BLD_HOST_OS" = VXWORKS ] ; then
-#MOB        echo export WIND_HOME=${WIND_HOME} >>$FILE
-#MOB        echo export WIND_BASE=${WIND_BASE} >>$FILE
-#MOB        echo export WIND_HOST_TYPE=${WIND_HOST_TYPE} >>$FILE
-#MOB        echo export WIND_PLATFORM=${WIND_PLATFORM} >>$FILE
-#MOB        if [ "$WIND_GNU_PATH" != "" ] ; then
-#MOB            echo export WIND_GNU_PATH=${WIND_GNU_PATH} >>$FILE
-#MOB        fi
-#MOB        echo >>$FILE
-#MOB    fi
     createConfigFooter "$FILE"
 }
 

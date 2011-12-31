@@ -9,10 +9,8 @@ include 	.makedep
 PRE_DIRS	= js
 
 ifeq	($(BLD_FEATURE_ESP),1)
-	TARGETS		+= $(BLD_LIB_DIR)/esp-www
-	ifeq	($(BUILDING_DEV),1)
-		TARGETS	+= $(BLD_LIB_DIR)/esp.conf
-	endif
+	TARGETS	+= $(BLD_LIB_DIR)/esp-www
+	TARGETS	+= $(BLD_LIB_DIR)/esp.conf
 endif
 
 compileExtra: $(TARGETS)

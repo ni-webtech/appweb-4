@@ -30,8 +30,6 @@
 #	The following Make variables used (among others):
 #
 #		BLD_TOP			Relative path to the top of the source tree
-#		EXPORT_OBJECTS	Create objects in top level object directories. Used 
-#						in buildConfig.h and buildConfig.sh
 #		PRE_DIRS		Directories to recurse before the current directory
 #		POST_DIRS		Directories to recurse after the current directory
 #		MAKE_XXFLAGS    These are specified in user makefiles. Valid for IFLAGS,
@@ -61,7 +59,7 @@ COMPILE     ?= *.c *.h
 #
 #	These exports may be defined by users make files and are passed to bld
 #
-export 	MAKE_CFLAGS MAKE_DFLAGS MAKE_IFLAGS MAKE_LDFLAGS EXPORT_OBJECTS TRACE TEMP
+export 	MAKE_CFLAGS MAKE_DFLAGS MAKE_IFLAGS MAKE_LDFLAGS TRACE TEMP
 
 #
 #	Compute the directory path for display purposes
@@ -89,7 +87,7 @@ do [ -d "$$i" ] || continue ;\
 	set -e ; \
     dir=$${DIR}/$$i ; dir=$${dir\#/} ;\
 	if [ -f "$$i/Makefile" ] ; then \
-		unset CDPATH EXPORT_OBJECTS BLD_TOP ; \
+		unset CDPATH BLD_TOP ; \
 		if [ "$(TRACE)" = 1 ] ; then \
             echo $(MAKE) -S -C "$$i" --no-print-directory "DIR=$$dir" PRE=$(PRE) TRACE=$(TRACE) $$T ; \
         fi ; \

@@ -112,11 +112,14 @@ compileFinal:
     fi
 
 dependExtra:
+	$(call log) "[INFO]" "Generate dependencies"
 	[ ! -L extensions ] && ln -s ../packages extensions ; true
 
 cleanExtra:
-	[ "$(_RECURSIVE_)" = "" ] && \
-		$(MAKE) -S --no-print-directory BUILDING_DEV=1 TRACE=$(TRACE) _RECURSIVE_=1 -C . clean ; true
+	if [ "$(_RECURSIVE_)" = "" ] ; then \
+        $(call log) "[INFO]" "Clean intermediates" ; \
+		$(MAKE) -S --no-print-directory BUILDING_DEV=1 TRACE=$(TRACE) _RECURSIVE_=1 -C . clean ; true ; \
+    fi
 	rm -f $(BLD_OUT_DIR)/releases/*
 
 clobberExtra:
