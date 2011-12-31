@@ -70,7 +70,13 @@ buildPatch() {
 syncFiles() {
     local status file
 
-    log "Sync" ${ARCHIVE}
+    if [ "$diff" = 1 ] ; then
+        log "diff" ${ARCHIVE}
+    elif [ "$import" = 1 ] ; then
+        log "Import" ${ARCHIVE}
+    else
+        log "Sync" ${ARCHIVE}
+    fi
 
     (cd $SRC >/dev/null 2>&1 ; find *) | while read file ; do
         # Strip off "./"

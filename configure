@@ -1774,6 +1774,7 @@ BLD_IMPORTS="${BLD_IMPORTS}"
     fi
     echo '' >>$FILE
 
+    #   MOB - remove
     if [ "$FILE" = "$CONFIG_H" ] ; then
         echo 'EXPORT_OBJECTS ?= 1' >>$FILE
         echo 'ifeq ($(EXPORT_OBJECTS),0)' >>$FILE
@@ -1781,16 +1782,16 @@ BLD_IMPORTS="${BLD_IMPORTS}"
         echo 'endif' >>$FILE
         echo '' >>$FILE
     fi
-    if [ "$BLD_HOST_OS" = VXWORKS ] ; then
-        echo export WIND_HOME=${WIND_HOME} >>$FILE
-        echo export WIND_BASE=${WIND_BASE} >>$FILE
-        echo export WIND_HOST_TYPE=${WIND_HOST_TYPE} >>$FILE
-        echo export WIND_PLATFORM=${WIND_PLATFORM} >>$FILE
-        if [ "$WIND_GNU_PATH" != "" ] ; then
-            echo export WIND_GNU_PATH=${WIND_GNU_PATH} >>$FILE
-        fi
-        echo >>$FILE
-    fi
+#MOB    if [ "$BLD_HOST_OS" = VXWORKS ] ; then
+#MOB        echo export WIND_HOME=${WIND_HOME} >>$FILE
+#MOB        echo export WIND_BASE=${WIND_BASE} >>$FILE
+#MOB        echo export WIND_HOST_TYPE=${WIND_HOST_TYPE} >>$FILE
+#MOB        echo export WIND_PLATFORM=${WIND_PLATFORM} >>$FILE
+#MOB        if [ "$WIND_GNU_PATH" != "" ] ; then
+#MOB            echo export WIND_GNU_PATH=${WIND_GNU_PATH} >>$FILE
+#MOB        fi
+#MOB        echo >>$FILE
+#MOB    fi
     createConfigFooter "$FILE"
 }
 
@@ -1881,11 +1882,34 @@ createCrossConfig()
     # fi
     eval v=\${BLD_${kind}_INC_DIR} ; v=`eval canonPath "${v}"` ; echo -e "${t}BLD_ABS_INC_DIR=\"${v}\"" ; mkdir -p "${v}"
 
-    if [ $name != $CONFIG_SRC ] ; then
-        #
-        #   Set PATH, INCLUDE and LIB environment variables
-        #
-        echo -e "\n${t}#\n${t}#\tEnvironment Variables\n${t}#" 
+    #
+    #   Set PATH, INCLUDE and LIB environment variables
+    #
+    if [ $name = $CONFIG_SRC ] ; then
+        if [ "$BLD_HOST_OS" = VXWORKS ] ; then
+            echo
+            echo -e "${t}WIND_HOME=\"${WIND_HOME}\""
+            echo -e "${t}WIND_BASE=\"${WIND_BASE}\""
+            echo -e "${t}WIND_HOST_TYPE=\"${WIND_HOST_TYPE}\""
+            echo -e "${t}WIND_PLATFORM=\"${WIND_PLATFORM}\""
+            if [ "$WIND_GNU_PATH" != "" ] ; then
+                echo -e "${t}WIND_GNU_PATH=\"${WIND_GNU_PATH}\""
+            fi
+            echo
+        fi
+
+    else
+        if [ "$BLD_HOST_OS" = VXWORKS ] ; then
+            echo
+            echo -e "${t}export WIND_HOME:=\"${WIND_HOME}\""
+            echo -e "${t}export WIND_BASE:=\"${WIND_BASE}\""
+            echo -e "${t}export WIND_HOST_TYPE:=\"${WIND_HOST_TYPE}\""
+            echo -e "${t}export WIND_PLATFORM:=\"${WIND_PLATFORM}\""
+            if [ "$WIND_GNU_PATH" != "" ] ; then
+                echo -e "${t}export WIND_GNU_PATH:=\"${WIND_GNU_PATH}\""
+            fi
+        fi
+
         if [ "$os" = WIN -o "$os" = WINCE ] ; then
             for var in INCLUDE LIB 
             do
@@ -1909,6 +1933,7 @@ createCrossConfig()
         fi
         eval path=\$CFG_${kind}_PATH
         echo -e "${t}export PATH:=${top}/build/bin:${out}/bin:${out}/lib${SYS_DIR}:${path}:\$(PATH)" 
+
     fi
 
     if [ $kind = "HOST" ] ; then

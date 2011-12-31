@@ -5528,11 +5528,20 @@ extern char *mprTransformPath(cchar *path, int flags);
 /**
     Trim an extension from a path
     @description Trim a file extension (".ext") from a path name.
-    @param path First path to compare
+    @param path Path to examine
     @returns An allocated string with the trimmed path.
     @ingroup MprPath
  */
 extern char *mprTrimPathExt(cchar *path);
+
+/**
+    Trim the drive from a path
+    @description Trim a drive specifier ("c:") from the start of a path.
+    @param path Path to examine
+    @returns An allocated string with the trimmed drive.
+    @ingroup MprPath
+ */
+extern char *mprTrimPathDrive(cchar *path);
 
 /**
     Create a file and write contents

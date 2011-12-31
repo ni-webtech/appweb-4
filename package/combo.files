@@ -50,7 +50,7 @@ cp ${S}/esp/esp.conf ${SRC}
 #	esp.c
 #
 echo '#include "appweb.h"' >${SRC}/esp.c
-combo ${S}/esp/esp.c | egrep -v '#include.*esp.h$|#include.*edi.h' >>${SRC}/esp.c
+combo ${S}/utils/esp.c | egrep -v '#include.*esp.h$|#include.*edi.h' >>${SRC}/esp.c
 
 #
 #	Doc

@@ -267,7 +267,7 @@ static void usageError();
 MAIN(espgen, int argc, char **argv)
 {
     Mpr     *mpr;
-    cchar   *argp;
+    cchar   *argp, *logSpec;
     int     argind, rc;
 
     if ((mpr = mprCreate(argc, argv, 0)) == NULL) {
@@ -279,6 +279,7 @@ MAIN(espgen, int argc, char **argv)
     mprAddRoot(app);
     mprAddStandardSignals();
     
+    logSpec = "stderr:0";
     argc = mpr->argc;
     argv = mpr->argv;
     app->mpr = mpr;
@@ -333,8 +334,7 @@ MAIN(espgen, int argc, char **argv)
             if (argind >= argc) {
                 usageError();
             } else {
-                mprStartLogging(argv[++argind], 0);
-                mprSetCmdlineLogging(1);
+                logSpec = argv[++argind];
             }
 
         } else if (smatch(argp, "--min")) {
@@ -361,8 +361,7 @@ MAIN(espgen, int argc, char **argv)
             }
 
         } else if (smatch(argp, "--verbose") || smatch(argp, "-v")) {
-            mprStartLogging("stderr:2", 0);
-            mprSetCmdlineLogging(1);
+            logSpec = "stderr:2";
 
         } else if (smatch(argp, "--version") || smatch(argp, "-V")) {
             mprPrintf("%s %s-%s\n", mprGetAppTitle(), BLD_VERSION, BLD_NUMBER);
@@ -373,6 +372,9 @@ MAIN(espgen, int argc, char **argv)
             usageError();
         }
     }
+    mprStartLogging(logSpec, 0);
+    mprSetCmdlineLogging(1);
+
     if (app->error) {
         return app->error;
     }
@@ -629,7 +631,7 @@ static int runEspCommand(cchar *command, cchar *csource, cchar *module)
 			/* Windows puts errors to stdout Ugh! */
 			err = out;
 		}
-        fail("Can't run command: \n%s\nError %s", app->command, err);
+        fail("Can't run command: \n%s\nError: %s", app->command, err);
         return MPR_ERR_CANT_COMPLETE;
     }
     return 0;

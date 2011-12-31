@@ -61,8 +61,8 @@ static bool matchToken(cchar **str, cchar *token)
     LIBS        Libraries required to link with ESP
     OBJ         Name of compiled source (out/lib/view-MD5.o)
     OUT         Output module (view_MD5.dylib)
-    SHLIB       Shared library (.lib, .so)
-    SHOBJ       Shared Object (.dll, .so)
+    SHLIB       Host Shared library (.lib, .so)
+    SHOBJ       Host Shared Object (.dll, .so)
     SRC         Source code for view or controller (already templated)
     TMP         Temp directory
     VS          Visual Studio directory
@@ -136,11 +136,11 @@ char *espExpandCommand(cchar *command, cchar *source, cchar *module)
 
             } else if (matchToken(&cp, "${SHLIB}")) {
                 /* .lib */
-                mprPutStringToBuf(buf, BLD_SHLIB);
+                mprPutStringToBuf(buf, BLD_HOST_SHLIB);
 
             } else if (matchToken(&cp, "${SHOBJ}")) {
                 /* .dll */
-                mprPutStringToBuf(buf, BLD_SHOBJ);
+                mprPutStringToBuf(buf, BLD_HOST_SHOBJ);
 
             } else if (matchToken(&cp, "${SRC}")) {
                 /* View (already parsed into C code) or controller source */
@@ -155,6 +155,28 @@ char *espExpandCommand(cchar *command, cchar *source, cchar *module)
                 tmp = getenv("TMPDIR");
 #endif
                 mprPutStringToBuf(buf, tmp ? tmp : ".");
+#ifdef WIND_BASE
+            } else if (matchToken(&cp, "${WIND_BASE}")) {
+                mprPutStringToBuf(buf, WIND_BASE);
+#endif
+#ifdef WIND_HOME
+            } else if (matchToken(&cp, "${WIND_HOME}")) {
+                mprPutStringToBuf(buf, WIND_HOME);
+#endif
+#ifdef WIND_HOST_TYPE
+
+            } else if (matchToken(&cp, "${WIND_HOST_TYPE}")) {
+                mprPutStringToBuf(buf, WIND_HOST_TYPE);
+#endif
+#ifdef WIND_PLATFORM
+            } else if (matchToken(&cp, "${WIND_PLATFORM}")) {
+                mprPutStringToBuf(buf, WIND_PLATFORM);
+
+#endif
+#ifdef WIND_GNU_PATH
+            } else if (matchToken(&cp, "${WIND_GNU_PATH}")) {
+                mprPutStringToBuf(buf, WIND_GNU_PATH);
+#endif
 
             } else {
                 mprPutCharToBuf(buf, *cp++);

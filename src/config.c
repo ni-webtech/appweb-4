@@ -1981,10 +1981,10 @@ static bool conditionalDefinition(cchar *key)
     } else if (scasematch(key, "SSL_MODULE")) {
         result = BLD_FEATURE_SSL;
 
-    } else if (scasematch(key, BLD_OS)) {
+    } else if (scasematch(key, BLD_HOST_OS)) {
         result = 1;
 
-    } else if (scasematch(key, BLD_CPU)) {
+    } else if (scasematch(key, BLD_HOST_CPU)) {
         result = 1;
 
     } else {

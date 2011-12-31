@@ -5157,7 +5157,7 @@ int mprRunCmd(MprCmd *cmd, cchar *command, char **out, char **err, MprTime timeo
  */
 void mprSetCmdDefaultEnv(MprCmd *cmd, cchar **env)
 {
-    /* WARNING: defaultEnv is not cloned */
+    /* WARNING: defaultEnv is not cloned, but is marked */
     cmd->defaultEnv = env;
 }
 
@@ -16240,6 +16240,23 @@ char *mprTrimPathExt(cchar *path)
 }
 
 
+char *mprTrimPathDrive(cchar *path)
+{
+    MprFileSystem   *fs;
+    char            *cp, *endDrive;
+
+    fs = mprLookupFileSystem(path);
+    if (fs->hasDriveSpecs) {
+        cp = firstSep(fs, path);
+        endDrive = strchr(path, ':');
+        if (endDrive && (cp == NULL || endDrive < cp)) {
+            return sclone(++endDrive);
+        }
+    }
+    return sclone(path);
+}
+
+
 /*
     @copy   default
     
@@ -23356,7 +23373,7 @@ static void pruneWorkers(MprWorkerService *ws, MprEvent *timer)
     if (mprGetDebugMode()) {
         return;
     }
-    mprLog(4, "Check to prune idle workers. Pool has %d workers. Limits %d-%d", 
+    mprLog(6, "Check to prune idle workers. Pool has %d workers. Limits %d-%d", 
         ws->numThreads, ws->minThreads, ws->maxThreads);
     mprLock(ws->mutex);
     for (index = 0; index < ws->idleThreads->length; index++) {
