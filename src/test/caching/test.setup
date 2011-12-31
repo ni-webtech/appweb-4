@@ -1,3 +1,6 @@
 if (!App.config.bld_esp) {
     test.skip("ESP not enabled")
+} else if (test.cross) {
+    //  Enable when esp command can pre-compile and route each request
+    test.skip("Skip if cross compiling")
 }
