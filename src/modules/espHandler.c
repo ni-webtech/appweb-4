@@ -179,7 +179,7 @@ static int runAction(HttpConn *conn)
     EspRoute    *eroute;
     EspReq      *req;
     EspAction   *action;
-    char        *key;
+    char        *key, *source;
     int         updated, recompile;
 
     rx = conn->rx;
@@ -208,7 +208,12 @@ static int runAction(HttpConn *conn)
             return 0;
         }
     } else if (eroute->update /* UNUSED || !mprLookupModule(req->controllerPath) */) {
-        req->cacheName = mprGetMD5WithPrefix(req->controllerPath, slen(req->controllerPath), "controller_");
+        /* Trim the drive for VxWorks where simulated host drives only exist on the target */
+        source = req->controllerPath;
+#if VXWORKS
+        source = mprTrimPathDrive(source);
+#endif
+        req->cacheName = mprGetMD5WithPrefix(source, slen(source), "controller_");
         req->module = mprNormalizePath(sfmt("%s/%s%s", eroute->cacheDir, req->cacheName, BLD_SHOBJ));
 
         if (!mprPathExists(req->controllerPath, R_OK)) {
@@ -280,6 +285,7 @@ void espRenderView(HttpConn *conn, cchar *name)
     EspRoute    *eroute;
     EspReq      *req;
     EspViewProc view;
+    cchar       *source;
     int         recompile, updated;
     
     rx = conn->rx;
@@ -305,7 +311,12 @@ void espRenderView(HttpConn *conn, cchar *name)
             return;
         }
     } else if (eroute->update /* UNUSED || !mprLookupModule(req->source) */) {
-        req->cacheName = mprGetMD5WithPrefix(req->source, slen(req->source), "view_");
+        /* Trim the drive for VxWorks where simulated host drives only exist on the target */
+        source = req->source;
+#if VXWORKS
+        source = mprTrimPathDrive(source);
+#endif
+        req->cacheName = mprGetMD5WithPrefix(source, slen(source), "view_");
         req->module = mprNormalizePath(sfmt("%s/%s%s", eroute->cacheDir, req->cacheName, BLD_SHOBJ));
 
         if (!mprPathExists(req->source, R_OK)) {

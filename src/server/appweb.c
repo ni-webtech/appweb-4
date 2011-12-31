@@ -89,7 +89,6 @@ MAIN(appweb, int argc, char **argv)
     logSpec = 0;
     argv[0] = BLD_APPWEB_PATH;
 
-printf("ARGC %d\n", argc);
     if ((mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD)) == NULL) {
         exit(1);
     }
@@ -117,7 +116,6 @@ printf("ARGC %d\n", argc);
 
     for (argind = 1; argind < argc; argind++) {
         argp = argv[argind];
-printf("ARGP %s\n", argp);
         if (*argp != '-') {
             break;
         }
