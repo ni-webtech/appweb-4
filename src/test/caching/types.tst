@@ -22,10 +22,9 @@ function cached(uri): Boolean {
 }
 
 //  The php request should be cached and the esp should not
-if (App.config.bld_esp) {
+if (App.config.bld_php) {
     assert(cached("/types/cache.php"))
 }
-if (App.config.bld_php) {
+if (App.config.bld_esp) {
     assert(!cached("/types/cache.esp"))
 }
-

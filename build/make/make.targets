@@ -220,7 +220,7 @@ testPrep testFinal testCleanup:
 #   This rule handles "make test" in the top directory and avoids stepping into extensions.
 #
 testExtra::
-	if [ -x "$(BLD_EJS)" -a "$(DIR)" = "." -a "$(BLD_CROSS)" != 1 ] ; then \
+	if [ -x "$(BLD_EJS)" -a "$(DIR)" = "." ] ; then \
         if [ -f configure -a -d src ] ; then \
             $(MAKE) -C src -S --no-print-directory "DIR=." PRE=$(PRE) TRACE=$(TRACE) test-utest ; \
         else \

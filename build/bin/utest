@@ -28,10 +28,12 @@ enumerable class Test {
     var echo: Boolean = false               // Echo the command line 
     var errorMsg: String                    // Worker callback error msg
     var failed: Boolean                     // Did the test pass
+    var env: Object                         // buildConfig.h exports
     var features: Object                    // buildConfig.h features
     var filters: Array = []                 // Filter tests by pattern x.y.z... 
     var finish: Boolean                     // Set to true when time to exit 
     var _hostOs: String                     // Host operating system
+    var _cross: Boolean                     // Cross compiling
     var _hostSystem: String                 // Host system details
     var iterations: Number = 1              // Number of iterations to run the test 
     var _lib: Path                          // Path to lib directory
@@ -311,9 +313,11 @@ enumerable class Test {
             test.bin = Path(data.bin)
             test.dir = Path(data.dir)
             test.lib = Path(data.lib)
+            test.env = data.env
             test.features = data.features
             test.os = data.os
             test.phase = data.phase
+            test.cross = data.cross
             test.hostOs = data.hostOs
             test.hostSystem = data.hostSystem
             test.session = data.session
@@ -332,11 +336,13 @@ enumerable class Test {
     function startWorker(file: Path, phase: String = null): Worker {
         let export = { 
             bin: _bin, 
-            features: features,
+            cross: _cross,
             depth: _depth, 
             dir: file.dirname,
             hostOs: _hostOs, 
             hostSystem: _hostSystem, 
+            env: env,
+            features: features,
             lib: _lib, 
             log: logPath,
             os: _os, 
@@ -506,12 +512,13 @@ enumerable class Test {
     function parseBuildConfig(path: Path) {
         let data = Path(path).readString()
         _os = getKey(data, "BLD_BUILD_OS")
+        _cross = getKey(data, "BLD_CROSS") == "1"
         _hostOs = getKey(data, "BLD_HOST_OS")
         _hostSystem = getKey(data, "BLD_HOST_SYSTEM")
         features = {}
         features["bld_debug"] = getKey(data, "BLD_DEBUG")
-        data = data.match(/BLD_FEATURE.*|BLD_HTTP_PORT.*|BLD_SSL_PORT.*/g)
-        for each (item in data) {
+        let str = data.match(/BLD_FEATURE.*|BLD_HTTP_PORT.*|BLD_SSL_PORT.*/g)
+        for each (item in str) {
             if (!item.contains("=")) {
                 continue
             }
@@ -522,6 +529,16 @@ enumerable class Test {
                 value = value cast Number
             }
             features["bld_" + key] = value
+        }
+        str = data.match(/export.*/g)
+        env = {}
+        for each (item in str) {
+            if (!item.contains("=")) {
+                continue
+            }
+            let [key, value] = item.split(":=")
+            key = key.replace(/export /, "")
+            env[key] = value
         }
     }
 

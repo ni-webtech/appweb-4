@@ -141,6 +141,13 @@ dependExtra:
 	mkdir -p web/tmp cache app/cache
 	chmod 777 web/tmp cache app/cache
 
+x:
+	echo $(WIND_HOME)
+	echo $(WIND_BASE)
+	echo $(WIND_HOST_TYPE)
+	echo $(WIND_PLATFORM)
+	echo $(WIND_GNU_PATH)
+
 #
 #   Local variables:
 #   tab-width: 4
