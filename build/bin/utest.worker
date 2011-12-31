@@ -10,6 +10,7 @@ enumerable public class Test {
     //  MOB - not used
     public var bin: Path
     public var lib: Path
+    public var env: Object
     public var features: Object
     public var cross: Boolean
     public var depth: Number

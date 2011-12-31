@@ -48,6 +48,9 @@ ifeq			($(BLD_CPU_ARCH),MPR_CPU_SIMSPARC)
     _DFLAGS     -DCPU=SIMSPARC
 endif
 
+export WIND_HOME WIND_BASE WIND_HOST_TYPE WIND_PLATFORM WIND_GNU_PATH
+
+
 ################################################################################
 #
 #	Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.

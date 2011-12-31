@@ -28,6 +28,7 @@ enumerable class Test {
     var echo: Boolean = false               // Echo the command line 
     var errorMsg: String                    // Worker callback error msg
     var failed: Boolean                     // Did the test pass
+    var env: Object                         // buildConfig.h exports
     var features: Object                    // buildConfig.h features
     var filters: Array = []                 // Filter tests by pattern x.y.z... 
     var finish: Boolean                     // Set to true when time to exit 
@@ -312,6 +313,7 @@ enumerable class Test {
             test.bin = Path(data.bin)
             test.dir = Path(data.dir)
             test.lib = Path(data.lib)
+            test.env = data.env
             test.features = data.features
             test.os = data.os
             test.phase = data.phase
@@ -339,6 +341,7 @@ enumerable class Test {
             dir: file.dirname,
             hostOs: _hostOs, 
             hostSystem: _hostSystem, 
+            env: env,
             features: features,
             lib: _lib, 
             log: logPath,
@@ -514,8 +517,8 @@ enumerable class Test {
         _hostSystem = getKey(data, "BLD_HOST_SYSTEM")
         features = {}
         features["bld_debug"] = getKey(data, "BLD_DEBUG")
-        data = data.match(/BLD_FEATURE.*|BLD_HTTP_PORT.*|BLD_SSL_PORT.*/g)
-        for each (item in data) {
+        let str = data.match(/BLD_FEATURE.*|BLD_HTTP_PORT.*|BLD_SSL_PORT.*/g)
+        for each (item in str) {
             if (!item.contains("=")) {
                 continue
             }
@@ -526,6 +529,16 @@ enumerable class Test {
                 value = value cast Number
             }
             features["bld_" + key] = value
+        }
+        str = data.match(/export.*/g)
+        env = {}
+        for each (item in str) {
+            if (!item.contains("=")) {
+                continue
+            }
+            let [key, value] = item.split(":=")
+            key = key.replace(/export /, "")
+            env[key] = value
         }
     }
 
