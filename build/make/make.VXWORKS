@@ -9,7 +9,7 @@
 
 include			$(BLD_TOP)/build/make/make.gcc
 
-_DFLAGS 		+= -DRW_MULTI_THREAD
+_DFLAGS 		+= -DRW_MULTI_THREAD -D_REENTRANT
 
 ifeq            ($(BLD_CC_DIAB),1)
     _CFLAGS		+= -c -tPPC8548FH:vxworks63 -g -XO -Xkill-reorder=0x8 -W:c:,-Xmismatch-warning=2 \

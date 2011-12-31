@@ -17,8 +17,8 @@ ifeq ($(BUILDING_TARGET),1)
 	endif
 else
     OBJECTS     := $(patsubst $(BLD_OBJ_DIR)/cgiProgram$(BLD_OBJ),,$(OBJECTS))
-    ESP_OBJECTS := $(patsubst %,$(BLD_OBJ_DIR)/%$(BLD_OBJ),esp espFramework espSession espTemplate espHtml edi mdb sdb)
 endif
+ESP_OBJECTS 	:= $(patsubst %,$(BLD_OBJ_DIR)/%$(BLD_OBJ),esp espFramework espSession espTemplate espHtml edi mdb sdb)
 
 compileExtra: $(TARGETS)
 

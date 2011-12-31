@@ -163,7 +163,8 @@ int main(int argc, char *argv[])
         mapExtension(path);
         fprintf(fp, " \\\n\t$(BLD_INC_DIR)/%s", mprGetBaseName(path));
     }
-    fprintf(fp, "\n\n");
+    fprintf(fp, "\n");
+    fprintf(fp, "\n#\n#   Read the make rules.\n#\n");
     fprintf(fp, "include $(BLD_TOP)/build/make/make.rules\n");
 
     for (i = nextArg; !finished && i < argc; i++) {

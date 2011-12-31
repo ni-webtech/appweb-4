@@ -164,7 +164,7 @@ esp.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project esp.vcxproj --exe esp.exe --search "$(BLD_MPR_LIBPATHS)" \
 		--props "$(PROPS)" --deps "libmpr mod_esp" \
 		--libs "libmpr.lib libhttp.lib libpcre.lib libappweb.lib $(LIBS)" \
-        --dflags "$(DFLAGS)" --libs "mod_esp.lib libmpr.lib $(LIBS)" $(SRC)/esp/esp.c
+        --dflags "$(DFLAGS)" --libs "mod_esp.lib libmpr.lib $(LIBS)" $(SRC)/utils/esp.c
 
 http.vcxproj: Makefile $(CONFIG)
 	$(VSP) --project http.vcxproj --exe http.exe --search "$(BLD_MPR_LIBPATHS)" --dflags "$(DFLAGS)" \
