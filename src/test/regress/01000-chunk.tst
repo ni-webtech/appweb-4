@@ -7,8 +7,9 @@ let nc
 try { nc = Cmd.sh("which nc"); } catch {}
 
 if (App.test.depth > 0 && nc && Config.OS != "WIN" && App.config.bld_ejscript) {
-    const HTTP = App.config.uris.http || "127.0.0.1:4100"
-    let [ip,port] = HTTP.split(":")
+    const HTTP = Uri(App.config.uris.http || "127.0.0.1:4100")
+    let ip = HTTP.host
+    let port = HTTP.port
 
     Cmd.sh("cat 01000-chunk.dat | nc " + ip + " " + port);
     Cmd.sh("cc -o tcp tcp.c")

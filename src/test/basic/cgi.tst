@@ -5,7 +5,7 @@
 const HTTP = App.config.uris.http || "127.0.0.1:4100"
 let http: Http = new Http
 
-if (App.config.bld_cgi && Path(test.top + "src/test/web/cgiProgram.cgi").exists) {
+if (App.config.bld_cgi && Path(test.top).join("src/test/web/cgiProgram.cgi").exists) {
     /* Suport routines */
 
     function contains(pat): Void {
@@ -245,5 +245,5 @@ if (App.config.bld_cgi && Path(test.top + "src/test/web/cgiProgram.cgi").exists)
     quoting()
 
 } else {
-    test.skip("Ejscript not enabled")
+    test.skip("CGI not enabled")
 }

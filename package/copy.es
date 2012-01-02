@@ -189,7 +189,7 @@ public function preparePrefixes(options)
             build[key] = value
         }
         if (key.contains("DIR")) {
-            build[key] = Path(build[key]).portable
+            build[key] = Path(value).portable
         }
     }
     build.ABS_BLD_TOP = Path(build.BLD_TOP).absolute.portable

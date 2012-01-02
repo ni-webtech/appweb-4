@@ -2,7 +2,7 @@
 #   ejscript - Ejscript language
 #
 defineComponent() {
-    local deps libs optional path libdir builtin imports incdir iflags present SHOBJ type n allinone search
+    local deps libs optional path libdir builtin imports incdir iflags present SHOBJ type n allinone search dir
 
     path="${1}"
     eval SHOBJ=\$BLD_${kind}_SHOBJ
@@ -17,7 +17,7 @@ defineComponent() {
         # http http://farm.embedthis.com/software/ejs-2.0.0-B0-flat.tgz >src/deps/ejs.tgz
         curl -s -f $path >src/deps/ejs.tgz
         if [ $? != 0 ] ; then
-            warnComponent ejscript "Can't download Ejscript from $path"
+            warnComponent ejscript "Cannot download Ejscript from $path"
             return
         fi
         mkdir -p src/deps/ejs 
@@ -48,10 +48,12 @@ defineComponent() {
         #
         #   Building with an external ejscript source tree
         #
-        search="$path/out/lib:$path/out/bin:$path/out/inc:$path"
+        dir="${path}"
+        [ "$dir" = "" ] && dir=.
+        search="${dir}/out/lib:${dir}/out/bin:${dir}/out/inc:${dir}"
         libdir=`probe --name libejs --dir --search "$search" "libejs"`
-        if [ "$libdir" = "" -a "$path" != "." ] ; then
-            warnComponent ejscript "Can't locate libejs"
+        if [ "$libdir" = "" -a "$path" != "" ] ; then
+            warnComponent ejscript "Cannot locate libejs"
             return
         fi
         for lib in `echo $libdir/libejs* $libdir/libmpr* $libdir/libhttp* $libdir/libpcre* $libdir/ejs*${SHOBJ} \
@@ -86,9 +88,9 @@ defineComponent() {
             if [ "$makerom" != "" ] ; then
                 imports="$imports $makerom"
             fi
-            for n in MPR HTTP PCRE ; do
+            for n in MPR HTTP PCRE SQLITE ; do
                 eval CFG_${kind}_${n}_IMPORTS=
-                eval CFG_${kind}_${n}_BUILTIN=
+                eval CFG_${kind}_${n}_BUILTIN=0
             done
         else
             #
