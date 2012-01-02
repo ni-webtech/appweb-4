@@ -18,7 +18,7 @@ ifeq ($(BUILDING_TARGET),1)
 	ifeq ($(BLD_FEATURE_CGI),1)
 		CGIP	+= $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE)
 		TARGETS	+= $(CGIP)
-		TARGETS	+= cgi-bin/testScript web/cgiProgram.cgi web/caching/cache.cgi
+		TARGETS	+= cgi-bin/testScript web/cgiProgram.cgi web/caching/cache.cgi web/basic/basic.cgi
 	endif
 endif
 
@@ -50,6 +50,16 @@ endif
 	echo -e "echo 'HTTP/1.0 200 OK'\necho 'Content-Type: text/plain'\necho ''\necho '{ number: ' $$$$ ' }'" \
 		>>web/caching/cache.cgi
 	chmod +x web/caching/cache.cgi
+
+web/basic/basic.cgi: Makefile $(BLD_INC_DIR)/buildConfig.h
+ifeq ($(BLD_WIN_LIKE),1)
+	path=`type -p sh` ; path=`cygpath -m "$$path"` ; \
+	echo -e "#!$${path}\n" >web/basic/basic.cgi
+else
+	echo -e "#!`type -p sh`\n" >web/basic/basic.cgi
+endif
+	echo -e "echo 'Content-Type: text/plain'\n/usr/bin/env" \ >>web/basic/basic.cgi
+	chmod +x web/basic/basic.cgi
 
 #
 #	cgiProgram

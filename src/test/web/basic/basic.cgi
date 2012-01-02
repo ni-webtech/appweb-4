@@ -1,6 +1,4 @@
-#!/bin/sh
+#!C:/cygwin/bin/sh
 
-echo "Content-type: text/plain"
-echo ""
-
-/usr/bin/env
+echo 'Content-Type: text/plain'
+/usr/bin/env  
