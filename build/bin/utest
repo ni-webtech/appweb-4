@@ -245,19 +245,23 @@ enumerable class Test {
                 if (finish) { 
                     break
                 }
-                let matched = true
-                for each (pat in filters) {
-                    matched = false
-                    if (file.toString().match(pat)) {
-                        matched = true
-                        break
-                    }
-                }
-                if (!matched) continue
                 if (file.isDir) {
                     runGroupTests(file)
-                } else if (file.extension == "tst") {
-                    runTest(file)
+                } else {
+                    let matched = true
+                    for each (pat in filters) {
+                        matched = false
+                        if (file.toString().match(pat)) {
+                            matched = true
+                            break
+                        }
+                    }
+                    if (!matched) continue
+                    if (file.isDir) {
+                        runGroupTests(file)
+                    } else if (file.extension == "tst") {
+                        runTest(file)
+                    }
                 }
             }
         } finally {
