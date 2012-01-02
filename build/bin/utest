@@ -16,7 +16,7 @@ enumerable class Test {
     /*
          Directories to omit from unit tests
      */
-    const skipDirs = [ "out", "build", "package", "samples" ]
+    const skipDirs = [ "extensions", "out", "build", "package", "projects", "samples" ]
 
     /*
         Parsed args
@@ -154,7 +154,7 @@ enumerable class Test {
                 if (args[i].startsWith("-")) {
                     usage()
                 }
-                filters.append(new RegExp("^" + args[i].trimEnd(".tst") + "[\\.\/\\\\]"))
+                filters.append(new RegExp("^" + args[i].trimEnd(".tst") + "([\\.\/\\\\]|$)"))
                 break
             }
         }
@@ -226,13 +226,15 @@ enumerable class Test {
         if (skipDirs.contains(dir.toString())) {
             return
         }
-        if (dir != "." && dir.join("ejsrc").exists) {
+        let saveConfig
+        if (dir.join("ejsrc").exists) {
+            saveConfig = App.config.clone()
             App.loadrc(dir.join("ejsrc"), false)
         }
         if (!runSetup(dir, "init")) {
-            return
-        }
-        if (!runPrePost(dir, "init")) {
+            if (saveConfig) {
+                App.config = saveConfig
+            }
             return
         }
         try {
@@ -243,23 +245,25 @@ enumerable class Test {
                 if (finish) { 
                     break
                 }
+                let matched = true
+                for each (pat in filters) {
+                    matched = false
+                    if (file.toString().match(pat)) {
+                        matched = true
+                        break
+                    }
+                }
+                if (!matched) continue
                 if (file.isDir) {
                     runGroupTests(file)
                 } else if (file.extension == "tst") {
-                    if (filters.length == 0) {
-                        runTest(file)
-                    } else {
-                        for each (pat in filters) {
-                            if (file.toString().match(pat)) {
-                                runTest(file)
-                                break
-                            }
-                        }
-                    }
+                    runTest(file)
                 }
             }
         } finally {
-            runPrePost(dir, "term")
+            if (saveConfig) {
+                App.config = saveConfig
+            }
             runSetup(dir, "term")
         }
     }
@@ -414,27 +418,6 @@ enumerable class Test {
         return w
     }
 
-    //  DEPRECATE
-    /*
-        Run a pre/post script. If it calls skip(), 
-        then return skip so the whole directory can be skipped.
-     */
-    function runPrePost(path: Path, suffix: String = "pre"): Boolean {
-        let file = path.join(path.absolute.basename.toString()).joinExt(suffix)
-        if (file.exists) {
-            if (filters.length == 0) {
-                runTest(file)
-                return !skipTest 
-            } else for each (pat in filters) {
-                if (file.toString().match(pat)) {
-                    runTest(file)
-                    return !skipTest 
-                }
-            }
-        }
-        return true
-    }
-
     /*
         Run a test.setup script. If it calls skip(), 
         then return skip so the whole directory can be skipped.
@@ -444,19 +427,6 @@ enumerable class Test {
         if (file.exists) {
             runTest(file, phase)
             return !skipTest 
-/*  UNUSED
-    Always run test.setup along the path to a test
-
-            if (filters.length == 0) {
-                runTest(file, phase)
-                return !skipTest 
-            } else for each (pat in filters) {
-                if (file.toString().match(pat)) {
-                    runTest(file, phase)
-                    return !skipTest 
-                }
-            }
-*/
         }
         return true
     }

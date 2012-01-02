@@ -59,10 +59,6 @@ int main(int argc, char *argv[])
         mprError("Can't create test service");
         exit(2);
     }
-int i;
-for (i = 0; i < argc; i++) {
-    printf("ARG[%d] = %s\n", i, argv[i]);
-}
     if (mprParseTestArgs(ts, argc, argv, parseArgs) < 0) {
         mprPrintfError("\n"
             "  Commands specifically for %s\n"
