@@ -20,7 +20,7 @@ ifeq	($(BLD_FEATURE_AUTH_PAM),1)
 endif
 
 LIBDEP				+= appweb
-LIBDEP				+= mpr
+LIBDEP				+= mpr http
 ifeq	($(BLD_FEATURE_SSL),1)
 	LIBDEP			+= mprssl
 endif

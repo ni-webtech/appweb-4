@@ -55,7 +55,7 @@ if (test.phase == "init") {
         rm(find(".", "*.tdat"))
         cleanDir("web/tmp")
     }
-    stdout.write("starting web server .. ")
+    stdout.write("connecting to web server .. ")
     startService(service, {address: HTTP})
 } else {
     stopService()

@@ -1,4 +1,4 @@
-#!C:/cygwin/bin/sh
+#!/bin/sh
 
 echo 'Content-Type: text/plain'
 /usr/bin/env  
