@@ -229,8 +229,9 @@ testExtra::
     fi
 
 test-utest:
-	ulimit -c unlimited ; \
-	$(BLD_EJS) $(BLD_TOOLS_DIR)/utest -v -d $(BUILD_DEPTH) ; \
+ifeq ($(BUILDING_TARGET),1)
+	ulimit -c unlimited ; $(BLD_EJS) $(BLD_TOOLS_DIR)/utest -v -d $(BUILD_DEPTH)
+endif
 
 #
 #	Clean the source tree
