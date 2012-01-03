@@ -63,9 +63,10 @@ static long msgProc(HWND hwnd, uint msg, uint wp, long lp);
     #define BLD_CONFIG_FILE NULL
 #endif
 
-//  MOB - review
+#if UNUSED
 #if VXWORKS
 #define BLD_APPWEB_PATH "/home/mob/appweb/out/i586-wrs-vxworks/bin/appweb.out"
+#endif
 #endif
 
 #ifndef BLD_APPWEB_PATH
@@ -135,6 +136,14 @@ MAIN(appweb, int argc, char **argv)
 
         } else if (strcmp(argp, "--debugger") == 0 || strcmp(argp, "-D") == 0) {
             mprSetDebugMode(1);
+
+        } else if (strcmp(argp, "--exe") == 0) {
+            if (argind >= argc) {
+                usageError();
+            }
+            mpr->argv[0] = mprGetAbsPath(argv[++argind]);
+            mprSetAppPath(mpr->argv[0]);
+            mprSetModuleSearchPath(NULL);
 
         } else if (strcmp(argp, "--home") == 0) {
             if (argind >= argc) {

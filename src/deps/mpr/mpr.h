@@ -8611,6 +8611,13 @@ extern bool mprServicesAreIdle();
 extern int mprSetAppName(cchar *name, cchar *title, cchar *version);
 
 /**
+    Set the application executable path
+    @param A string containing the application executable path.
+    @ingroup Mpr
+ */
+extern void mprSetAppPath(cchar *path);
+
+/**
     Set if command line logging was requested.
     @description Logging may be initiated by invoking an MPR based program with a "--log" switch. This API assists
         programs to tell the MPR that command line logging has been used.

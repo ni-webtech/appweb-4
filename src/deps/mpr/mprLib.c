@@ -14313,16 +14313,14 @@ static void manageModuleService(MprModuleService *ms, int flags);
 MprModuleService *mprCreateModuleService()
 {
     MprModuleService    *ms;
-    cchar               *libdir;
 
     if ((ms = mprAllocObj(MprModuleService, manageModuleService)) == 0) {
         return 0;
     }
     ms->modules = mprCreateList(-1, 0);
-    libdir = mprJoinPath(mprGetPathParent(mprGetAppDir()), mprGetPathBase(BLD_LIB_NAME));
-    ms->searchPath = sjoin(mprGetAppDir(), MPR_SEARCH_SEP, libdir, MPR_SEARCH_SEP, 
-        BLD_LIB_PREFIX, NULL);
     ms->mutex = mprCreateLock();
+    MPR->moduleService = ms;
+    mprSetModuleSearchPath(NULL);
     return ms;
 }
 
@@ -14504,11 +14502,16 @@ void mprSetModuleFinalizer(MprModule *module, MprModuleProc stop)
 void mprSetModuleSearchPath(char *searchPath)
 {
     MprModuleService    *ms;
-
-    mprAssert(searchPath && *searchPath);
+    cchar               *libdir;
 
     ms = MPR->moduleService;
-    ms->searchPath = sclone(searchPath);
+
+    if (searchPath == 0) {
+        libdir = mprJoinPath(mprGetPathParent(mprGetAppDir()), mprGetPathBase(BLD_LIB_NAME));
+        ms->searchPath = sjoin(mprGetAppDir(), MPR_SEARCH_SEP, libdir, MPR_SEARCH_SEP, BLD_LIB_PREFIX, NULL);
+    } else {
+        ms->searchPath = sclone(searchPath);
+    }
 
 #if BLD_WIN_LIKE && !WINCE
     {
@@ -16158,6 +16161,13 @@ int mprSamePathCount(cchar *path1, cchar *path2, ssize len)
         }
     }
     return len == 0;
+}
+
+
+void mprSetAppPath(cchar *path)
+{ 
+    MPR->appPath = sclone(path);
+    MPR->appDir = mprGetPathDir(MPR->appPath);
 }
 
 
