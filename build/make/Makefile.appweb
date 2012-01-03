@@ -166,8 +166,7 @@ test-uninstalled:
 #
 config:
 	$(call log) "[Config]" "configure"
-	./configure --without-ejscript
-	make depend clean >/dev/null
+	./configure
 
 esp:
 	./configure --host=i386-apple-darwin --without-matrixssl --without-php --disable-cgi
