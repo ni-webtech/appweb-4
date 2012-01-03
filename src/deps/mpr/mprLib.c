@@ -9201,7 +9201,7 @@ static int growEvents(MprWaitService *ws)
 int mprNotifyOn(MprWaitService *ws, MprWaitHandler *wp, int mask)
 {
     struct epoll_event  ev;
-    int                 fd;
+    int                 fd, rc;
 
     mprAssert(wp);
     fd = wp->fd;
@@ -9210,14 +9210,17 @@ int mprNotifyOn(MprWaitService *ws, MprWaitHandler *wp, int mask)
     if (wp->desiredMask != mask) {
         memset(&ev, 0, sizeof(ev));
         ev.data.fd = fd;
-        if (wp->desiredMask & MPR_READABLE && !(mask & MPR_READABLE)) {
+        if (wp->desiredMask & MPR_READABLE) {
             ev.events |= (EPOLLIN | EPOLLHUP);
         }
-        if (wp->desiredMask & MPR_WRITABLE && !(mask & MPR_WRITABLE)) {
+        if (wp->desiredMask & MPR_WRITABLE) {
             ev.events |= EPOLLOUT;
         }
         if (ev.events) {
-            epoll_ctl(ws->epoll, EPOLL_CTL_DEL, fd, &ev);
+            rc = epoll_ctl(ws->epoll, EPOLL_CTL_DEL, fd, &ev);
+            if (rc != 0) {
+                mprError("Epoll del error %d on fd %d\n", errno, fd);
+            }
         }
         ev.events = 0;
         if (mask & MPR_READABLE) {
@@ -9227,7 +9230,10 @@ int mprNotifyOn(MprWaitService *ws, MprWaitHandler *wp, int mask)
             ev.events |= EPOLLOUT;
         }
         if (ev.events) {
-            epoll_ctl(ws->epoll, EPOLL_CTL_ADD, fd, &ev);
+            rc = epoll_ctl(ws->epoll, EPOLL_CTL_ADD, fd, &ev);
+            if (rc != 0) {
+                mprError("Epoll add error %d on fd %d\n", errno, fd);
+            }
         }
         if (mask && fd >= ws->handlerMax) {
             ws->handlerMax = fd + 32;

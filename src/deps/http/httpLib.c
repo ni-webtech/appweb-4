@@ -3130,7 +3130,7 @@ void httpCallEvent(HttpConn *conn, int mask)
  */
 void httpEvent(HttpConn *conn, MprEvent *event)
 {
-    LOG(7, "httpEvent for fd %d, mask %d\n", conn->sock->fd, event->mask);
+    LOG(5, "httpEvent for fd %d, mask %d\n", conn->sock->fd, event->mask);
     conn->lastActivity = conn->http->now;
 
     if (event->mask & MPR_WRITABLE) {
@@ -12301,17 +12301,17 @@ int httpSetUri(HttpConn *conn, cchar *uri, cchar *query)
 static void waitHandler(HttpConn *conn, struct MprEvent *event)
 {
     httpCallEvent(conn, event->mask);
+#if UNUSED
     //  MOB -- should not need this signal
     mprSignalDispatcher(conn->dispatcher);
+#endif
 }
 
 
 /*
-    Wait for an I/O event. There are two modes:
-      - Wait for just one event (set state to zero)
-      - Wait until the given state is achieved
-    If timeout is zero, then wait forever. If set to < 0, then use default inactivity and duration timeouts. 
-    This routine will process buffered input.
+    Wait for the connection to reach a given state.
+    @param state Desired state. Set to zero if you want to wait for one I/O event.
+    @param timeout Timeout in msec. If timeout is zer, wait forever. If timeout is < 0, use default inactivity and duration timeouts.
  */
 int httpWait(HttpConn *conn, int state, MprTime timeout)
 {
@@ -12350,10 +12350,12 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
     if (!conn->connectorComplete) {
         eventMask |= MPR_WRITABLE;
     }
-    if (conn->waitHandler == 0) {
-        conn->waitHandler = mprCreateWaitHandler(conn->sock->fd, eventMask, conn->dispatcher, waitHandler, conn, 0);
-    } else {
-        mprWaitOn(conn->waitHandler, eventMask);
+    if (conn->state < state) {
+        if (conn->waitHandler == 0) {
+            conn->waitHandler = mprCreateWaitHandler(conn->sock->fd, eventMask, conn->dispatcher, waitHandler, conn, 0);
+        } else {
+            mprWaitOn(conn->waitHandler, eventMask);
+        }
     }
     remaining = timeout;
     do {
