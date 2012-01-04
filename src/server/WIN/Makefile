@@ -13,7 +13,6 @@ ifeq	($(BLD_OS),WIN)
 	SYSLIBS	+= shell32.lib
 	MONITOR_RES = --resources appwebMonitor.rc
 endif
-//MOB MAKE_IFLAGS	+= $(BLD_MPR_IFLAGS) $(BLD_HTTP_IFLAGS)
 
 compileExtra: $(TARGETS) 
 
