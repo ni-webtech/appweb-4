@@ -37,8 +37,7 @@ if (test.hostOs == "VXWORKS") {
         let image: Path = test.top.join("out", test.hostSystem, "bin", "appweb.out")
         service = vxsim + " -f " + base.join("target/proj/linux_diab/default/vxWorks") + 
             " -d simnet -tn vxsim0 -e " + HOST + " -size 134217728 -s vxargs"
-        Path("vxargs").write('ld < ' + image + '\n' + 
-            'taskSpawn "appweb",100,0,200000,appweb,"--home","/home/mob/appweb/src/test"\n')
+        Path("vxargs").write('ld < ' + image + '\n' + 'taskSpawn "appweb",100,0,200000,appweb\n')
     }
 } else {
     service = Cmd.locate("appweb").portable + " --log trace.txt:4 --name forAppwebTest --config appweb.conf"
@@ -61,4 +60,4 @@ if (test.phase == "init") {
     stopService()
 }
 rm(find(".", "*.tdat"))
-Path("vxargs").remove()
+// Path("vxargs").remove()

@@ -4,34 +4,17 @@
 #
 
 ADDRESS=${1:-192.168.200.1}
-IMAGE=${2:-/home/mob/appweb/out/i586-wrs-vxworks/bin/appweb.out}
-
-# taskSpawn "appweb",100,0,200000,appweb,"--log","stdout:4","--home","/home/mob/appweb/src/test"
+IMAGE=${2:-../../out/i586-wrs-vxworks/bin/appweb.out}
+SIM=vxsim0
+MEMSIZE=134217728
 
 cat >vxargs <<!EOF
 ld < $IMAGE
-taskSpawn "appweb",100,0,200000,appweb,"--home","/home/mob/appweb/src/test"
+taskSpawn "appweb",100,0,200000,appweb
 !EOF
 
-# -ethernet addr
-# -backplane addr
-# -hostinet addr
-# -gateway addr
-# -netif addr
-# -memsize Num
-# -f /home/mob/WindRiver/workspace/test-image2/default/vxWorks \
-# -add_dev serial0=telnet:38762
-
-/home/mob/WindRiver/vxworks-6.8/host/x86-linux2/bin/vxsim \
-    -f /home/mob/WindRiver/vxworks-6.8/target/proj/linux_diab/default/vxWorks \
-    -d simnet \
-    -tn vxsim0 \
-    -e $ADDRESS \
-    -size 134217728 \
-    -s vxargs
+/WindRiver/vxworks-6.8/host/x86-linux2/bin/vxsim \
+    -f /WindRiver/vxworks-6.8/target/proj/linux_diab/default/vxWorks \
+    -d simnet -tn $SIM -e $ADDRESS -size $MEMSIZE -s vxargs
 
 rm -f vxargs
-
-# &
-# sleep 2
-# telnet 127.0.0.1 38762
