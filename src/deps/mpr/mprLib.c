@@ -14513,15 +14513,19 @@ void mprSetModuleSearchPath(char *searchPath)
         ms->searchPath = sclone(searchPath);
     }
 
+#if UNUSED && KEEP
 #if BLD_WIN_LIKE && !WINCE
     {
         /*
             Set PATH so dependent DLLs can be loaded by LoadLibrary
+            WARNING: this will leak if called too much.
          */
         char *path = sjoin("PATH=", searchPath, ";", getenv("PATH"), NULL);
         mprMapSeparators(path, '\\');
+        mprHold(path);
         putenv(path);
     }
+#endif
 #endif
 }
 
