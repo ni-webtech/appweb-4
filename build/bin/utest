@@ -154,7 +154,7 @@ enumerable class Test {
                 if (args[i].startsWith("-")) {
                     usage()
                 }
-                filters.append(new RegExp("^" + args[i].trimEnd(".tst") + "([\\.\/\\\\]|$)"))
+                filters.append(args[i])
                 break
             }
         }
@@ -245,23 +245,26 @@ enumerable class Test {
                 if (finish) { 
                     break
                 }
-                if (file.isDir) {
-                    runGroupTests(file)
-                } else {
-                    let matched = true
-                    for each (pat in filters) {
-                        matched = false
-                        if (file.toString().match(pat)) {
-                            matched = true
+                if (filters.length > 0) {
+                    let found
+                    for each (let filter: Path in filters) {
+                        if (file.isDir && filter.startsWith(file)) {
+                            found = true
+                            break
+                        }
+                        if (file.startsWith(filter)) {
+                            found = true
                             break
                         }
                     }
-                    if (!matched) continue
-                    if (file.isDir) {
-                        runGroupTests(file)
-                    } else if (file.extension == "tst") {
-                        runTest(file)
+                    if (!found) {
+                        continue
                     }
+                }
+                if (file.isDir) {
+                    runGroupTests(file)
+                } else if (file.extension == "tst") {
+                    runTest(file)
                 }
             }
         } finally {
