@@ -38,7 +38,9 @@ if (test.hostOs == "VXWORKS") {
         service = vxsim + " -f " + base.join("target/proj/linux_diab/default/vxWorks") + 
             " -d simnet -tn vxsim0 -e " + HOST + " -size 134217728 -s vxargs"
         Path("vxargs").write('ld < ' + image + '\n' + 'taskSpawn "appweb",100,0,200000,appweb\n')
-    }
+        if (!App.getenv("NOSERVER")) {
+            Cmd.killall("vxsim")
+        }
 } else {
     service = Cmd.locate("appweb").portable + " --log trace.txt:4 --name forAppwebTest --config appweb.conf"
 }

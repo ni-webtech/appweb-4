@@ -1395,12 +1395,16 @@ void mprResetYield()
     if ((tp = mprGetCurrentThread()) != 0) {
         tp->stickyYield = 0;
     }
+#if UNUSED
     /* Rather than just clear yield, we must wait till marking is finished if underway */
     if (heap->mustYield) {
         mprYield(0);
     } else {
         tp->yielded = 0;
     }
+#else
+    tp->yielded = 0;
+#endif
 }
 
 
