@@ -47,7 +47,6 @@ if (test.phase == "init") {
     if (test.cross) {
         stdout.write("precompiling esp pages .. ")
         Cmd("esp compile")
-        Cmd("esp compile", {dir: "app"})
     }
     if (!App.getenv("SECOND")) {
         rm(find(".", "*.mod"))
@@ -60,4 +59,4 @@ if (test.phase == "init") {
     stopService()
 }
 rm(find(".", "*.tdat"))
-// Path("vxargs").remove()
+Path("vxargs").remove()

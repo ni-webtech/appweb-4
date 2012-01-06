@@ -251,6 +251,7 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
     rx = conn->rx;
     route = rx->route;
     eroute = route->eroute;
+    layout = 0;
 
     if (isView) {
         if ((page = mprReadPathContents(source, &len)) == 0) {
@@ -260,7 +261,13 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
         /*
             Use layouts iff there is a source defined on the route. Only MVC/controllers based apps do this.
          */
+        if (eroute->layoutsDir) {
+#if UNUSED
         layout = mprSamePath(eroute->layoutsDir, route->dir) ? 0 : mprJoinPath(eroute->layoutsDir, "default.esp");
+#else
+        layout = mprJoinPath(eroute->layoutsDir, "default.esp");
+#endif
+        }
         if ((script = espBuildScript(route, page, source, cacheName, layout, &err)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't build %s, error %s", source, err);
             return 0;
