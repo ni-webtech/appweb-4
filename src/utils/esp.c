@@ -21,6 +21,8 @@ typedef struct App {
     char        *configFile;
     char        *pathEnv;
     char        *database;              /* Database provider "mdb" | "sqlite" */
+    char        *hostOS;                /* Target host O/S for cross compilation */
+    char        *hostArch;              /* Target host CPU for cross compilation */
     char        *listen;
 
     char        *currentDir;            /* Initial starting current directory */
@@ -292,7 +294,14 @@ int main(int argc, char **argv)
         if (*argp != '-') {
             break;
         }
-        if (smatch(argp, "--chdir")) {
+        if (smatch(argp, "--arch")) {
+            if (argind >= argc) {
+                usageError();
+            } else {
+                app->hostArch = slower(argv[++argind]);
+            }
+
+        } else if (smatch(argp, "--chdir")) {
             if (argind >= argc) {
                 usageError();
             } else {
@@ -326,6 +335,13 @@ int main(int argc, char **argv)
 
         } else if (smatch(argp, "--flat") || smatch(argp, "-f")) {
             app->flat = 1;
+
+        } else if (smatch(argp, "--host")) {
+            if (argind >= argc) {
+                usageError();
+            } else {
+                app->hostOS = supper(argv[++argind]);
+            }
 
         } else if (smatch(argp, "--listen") || smatch(argp, "-l")) {
             if (argind >= argc) {
@@ -413,6 +429,8 @@ static void manageApp(App *app, int flags)
         mprMark(app->flatFile);
         mprMark(app->flatItems);
         mprMark(app->flatPath);
+        mprMark(app->hostArch);
+        mprMark(app->hostOS);
         mprMark(app->libDir);
         mprMark(app->listen);
         mprMark(app->module);
@@ -627,7 +645,12 @@ static void readConfig()
     }
     appweb = app->appweb;
     http = app->appweb->http;
-
+    if (app->hostOS) {
+        appweb->hostOS = app->hostOS;
+    }
+    if (app->hostArch) {
+        appweb->hostCPU = app->hostArch;
+    }
     findConfigFile();
     if (app->error) {
         return;
@@ -1600,10 +1623,12 @@ static void usageError(Mpr *mpr)
     mprPrintfError("\nESP Usage:\n\n"
     "  %s [options] [commands]\n\n"
     "  Options:\n"
+    "    --arch CPU             # Target CPU architecture\n"
     "    --chdir dir            # Change to the named directory first\n"
     "    --config configFile    # Use named config file instead appweb.conf\n"
     "    --database name        # Database provider 'mdb|sqlite' \n"
     "    --flat                 # Compile into a single module\n"
+    "    --host OS              # Target O/S\n"
     "    --listen [ip:]port     # Listen on specified address \n"
     "    --log logFile:level    # Log to file file at verbosity level\n"
     "    --overwrite            # Overwrite existing files \n"
