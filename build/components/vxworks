@@ -86,7 +86,7 @@ setVxEnv()
 	#	Tornado sets both HOME and BASE to /tornado
 	#	Workbench sets BASE to /WindRiver/vxworks-6.3 and HOME to /WindRiver
 	#
-	if [ "${version%.*}" -ge 6 ] ; then
+	if [ "${version%%.*}" -ge 6 ] ; then
 		WIND_HOME="${path%/*}"
         eval WIND_GNU_PATH=`echo $WIND_HOME/gnu/*-${WIND_PLATFORM}`
         search="
@@ -112,7 +112,7 @@ setVxEnv()
 	#
 	#	If VxWorks 6.3, all X86 tools have "pentium" extension
 	#
-	if [ "${version%.*}" -gt 5 -a "$BLD_HOST_CPU_ARCH" = MPR_CPU_IX86 ] ; then
+	if [ "${version%%.*}" -gt 5 -a "$BLD_HOST_CPU_ARCH" = MPR_CPU_IX86 ] ; then
 		BLD_HOST_CPU=pentium
 		KIND=HOST . build/config/config.VXWORKS
 	fi

@@ -12,7 +12,7 @@
 
 static int addCondition(MaState *state, cchar *name, cchar *condition, int flags);
 static int addUpdate(MaState *state, cchar *name, cchar *details, int flags);
-static bool conditionalDefinition(cchar *key);
+static bool conditionalDefinition(MaState *state, cchar *key);
 static int configError(MaState *state, cchar *key);
 static MaState *createState(MaServer *server, HttpHost *host, HttpRoute *route);
 static char *getDirective(char *line, char **valuep);
@@ -893,7 +893,7 @@ static int ifDirective(MaState *state, cchar *key, cchar *value)
 {
     state = maPushState(state);
     if (state->enabled) {
-        state->enabled = conditionalDefinition(value);
+        state->enabled = conditionalDefinition(state, value);
         if (!state->enabled) {
             mprLog(7, "If \"%s\" conditional is false at %s:%d", value, state->filename, state->lineNumber);
         }
@@ -1947,7 +1947,7 @@ bool maValidateServer(MaServer *server)
 }
 
 
-static bool conditionalDefinition(cchar *key)
+static bool conditionalDefinition(MaState *state, cchar *key)
 {
     int     result, not;
 
@@ -1981,10 +1981,10 @@ static bool conditionalDefinition(cchar *key)
     } else if (scasematch(key, "SSL_MODULE")) {
         result = BLD_FEATURE_SSL;
 
-    } else if (scasematch(key, BLD_HOST_OS)) {
+    } else if (scasematch(key, state->appweb->hostOS)) {
         result = 1;
 
-    } else if (scasematch(key, BLD_HOST_CPU)) {
+    } else if (scasematch(key, state->appweb->hostCPU)) {
         result = 1;
 
     } else {

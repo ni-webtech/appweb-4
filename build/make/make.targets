@@ -182,12 +182,6 @@ compileAdirs:
 
 depend: check $(BUILD_CHECK) dependExtra dependDirs dependCwd dependAfter
 
-UNUSED_depend:
-	if [ ! -x $(BLD_BUILD_BIN_DIR)/edep$(BLD_BUILD_EXE) ] ; then \
-		$(MAKE) -S --no-print-directory TRACE=$(TRACE) BUILDING_TARGET=0 BUILDING_DEV=1 BUILDING_CROSS=1 \
-            -C $(BLD_TOP)/build/src $(BLD_BUILD_BIN_DIR)/edep$(BLD_EXE); \
-	fi
-
 dependCwd:
 	[ "$(TRACE)" = 1 ] && echo $(BLD_BUILD_BIN_DIR)/edep$(BLD_BUILD_EXE) --out $(BLD_OUT_DIR) $(MAKE_IFLAGS) $(BLD_IFLAGS) \
             $(_IFLAGS) $(DEPEND_FLAGS) $(COMPILE) ; true
