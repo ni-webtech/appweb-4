@@ -71,6 +71,12 @@ web/cgiProgram.cgi: Makefile $(BLD_INC_DIR)/buildConfig.h
 	cp $(CGIP)  web/cgiProgram.cgi
 	chmod +x cgi-bin/* web/cgiProgram.cgi
 
+test-utest::
+	true
+ifeq ($(BUILDING_TARGET),1)
+	ulimit -c unlimited ; $(BLD_EJS) $(BLD_TOOLS_DIR)/utest -v -d $(BUILD_DEPTH)
+endif
+
 valgrindTest:
 	if type valgrind >/dev/null 2>/dev/null ; then \
 		$(call log) "[Test]" "Valgrind tests" ; \
