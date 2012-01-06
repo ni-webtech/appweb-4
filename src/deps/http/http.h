@@ -2993,7 +2993,7 @@ typedef struct HttpRoute {
     char            *tplate;                /**< URI template for forming links based on this route (includes prefix) */
     char            *targetRule;            /**< Target rule */
     char            *target;                /**< Route target details */
-    char            *dir;                   /**< Directory filename */
+    char            *dir;                   /**< Directory filename (DocumentRoot) */
     MprList         *indicies;              /**< Directory index documents */
     char            *methodSpec;            /**< Supported HTTP methods */
     HttpStage       *handler;               /**< Fixed handler */

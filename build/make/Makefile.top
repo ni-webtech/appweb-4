@@ -128,25 +128,34 @@ clobberExtra:
 deploy: deploy-binary
 
 deploy-%:
+	true
+ifneq ($(BLD_CROSS),1)
 	packs=$* ; [ "$$packs" = "" ] && packs="binary dev"; \
 	if [ "$$ROOT_DIR" = "" ] ; then echo -n "Enter deployment directory : " ; read ROOT_DIR ; fi ; \
 	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
-		$$BROWSER --root=$$ROOT_DIR --bare --install --with-conf="$(CONF)" pre $$packs post ; \
+		$$BROWSER --root=$$ROOT_DIR --bare --install --with-conf="$(CONF)" pre $$packs post
+endif
 
 install: install-binary
 
 install-%:
+	true
+ifneq ($(BLD_CROSS),1)
 	packs=$* ; [ "$$packs" = "" ] && packs="binary dev"; \
 	[ "$$packs" = "binary dev" ] && BROWSER=--browser ; \
 	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
 		$$BROWSER --root=$(ROOT_DIR) --install $(INS_WITH) pre $$packs post
+endif
 
 uninstall: uninstall-binary
 
 uninstall-%:
+	true
+ifneq ($(BLD_CROSS),1)
 	packs=$* ; [ "$$packs" = "" ] && packs="binary dev" ; \
 	priv OPTIONS=$(OPTIONS) QUIET=$(QUIET) TRACE=$(TRACE) $(BLD_TOP)/build/bin/makeInstall \
 		--root=$(ROOT_DIR) --remove $(INS_WITH) pre $$packs post
+endif
 	
 combo packageCombo:
 	$(BLD_TOP)/build/bin/makeInstall --root=$(COMBO_DIR) --package combo && \
@@ -182,6 +191,10 @@ upload:
 		cd $(BLD_OUT_DIR)/releases >/dev/null 2>&1 ; \
 		if ls $(IMG_NAME)* >/dev/null 2>&1 ; then \
 			for name in $(IMG_NAME)* md5-$(IMG_NAME)* ; do \
+				if [ "$$name" = "$(IMG_NAME)-flat.tgz" ] ; then \
+					mv "$$name" "$(BLD_PRODUCT)-latest-flat.tgz" ; \
+					name="$(BLD_PRODUCT)-latest-flat.tgz" ; \
+				fi ; \
 				chmod 664 $$name ; \
 				echo http --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \
 				http -q --upload --form "server=`hostname`&key=$(BUILD_KEY)" $$name $(BUILD_UPLOAD); \

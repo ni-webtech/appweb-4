@@ -34,12 +34,12 @@ all:
 	set -e ; \
     $(call log) "[Notice]" "Building $(BLD_NAME) $(BLD_VERSION). For command details, use \"make TRACE=1\"."; \
     if [ "$(SKIP_DEV)" = "" ] ; then \
-        $(call log) [Notice] "Building Required Dev Tools for ($(BLD_BUILD_SYSTEM))" ; \
+        $(call log) [Notice] "Building Required Dev Tools for $(BLD_BUILD_SYSTEM)" ; \
         $(MAKE) -S --no-print-directory BUILDING_DEV=1 BUILDING_TARGET=0 BUILDING_CROSS=1 $@ ; \
         [ $$? -ne 0 ] && exit 255 ; echo ; \
     fi ; \
     if [ "$(SKIP_TARGET)" = "" ] ; then \
-        $(call log) [Notice] "Building $(BLD_NAME) for ($(BLD_HOST_SYSTEM))" ; \
+        $(call log) [Notice] "Building $(BLD_NAME) for $(BLD_HOST_SYSTEM)" ; \
         $(MAKE) -S --no-print-directory BUILDING_DEV=0 BUILDING_TARGET=1 BUILDING_CROSS=1 $@ ;\
         [ $$? -ne 0 ] && exit 255 ; true ; \
     fi ; \

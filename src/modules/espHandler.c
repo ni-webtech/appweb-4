@@ -534,12 +534,16 @@ static EspRoute *allocEspRoute(HttpRoute *route)
 #else
     eroute->cacheDir = mprJoinPath(mprGetAppDir(), "../" BLD_LIB_NAME);
 #endif
+
+#if UNUSED
+    eroute->layoutsDir = route->dir;
     eroute->dbDir = route->dir;
     eroute->controllersDir = route->dir;
-    eroute->layoutsDir = route->dir;
     eroute->viewsDir = route->dir;
     eroute->staticDir = route->dir;
+#endif
 
+#if UNUSED
     /*
         Setup default parameters for $expansion of Http route paths
      */
@@ -548,6 +552,7 @@ static EspRoute *allocEspRoute(HttpRoute *route)
     httpSetRoutePathVar(route, "LAYOUTS_DIR", eroute->layoutsDir);
     httpSetRoutePathVar(route, "STATIC_DIR", eroute->staticDir);
     httpSetRoutePathVar(route, "VIEWS_DIR", eroute->viewsDir);
+#endif
 
 #if BLD_DEBUG
     eroute->update = 1;
@@ -601,18 +606,20 @@ static EspRoute *cloneEspRoute(HttpRoute *route, EspRoute *parent)
 }
 
 
+#if UNUSED
 static void setSimpleDirs(EspRoute *eroute, HttpRoute *route)
 {
     char    *dir;
 
     /* Don't set cache dir here - keep inherited value */
     dir = route->dir;
+    eroute->layoutsDir = dir;
     eroute->controllersDir = dir;
     eroute->dbDir = dir;
-    eroute->layoutsDir = dir;
     eroute->viewsDir = dir;
     eroute->staticDir = dir;
 }
+#endif
 
 
 static void setMvcDirs(EspRoute *eroute, HttpRoute *route)
@@ -640,27 +647,6 @@ static void setMvcDirs(EspRoute *eroute, HttpRoute *route)
     httpSetRoutePathVar(route, "VIEWS_DIR", eroute->viewsDir);
 }
 
-
-#if MOVED && UNUSED
-void espManageEspRoute(EspRoute *eroute, int flags)
-{
-    if (flags & MPR_MANAGE_MARK) {
-        mprMark(eroute->appModuleName);
-        mprMark(eroute->appModulePath);
-        mprMark(eroute->cacheDir);
-        mprMark(eroute->compile);
-        mprMark(eroute->controllersDir);
-        mprMark(eroute->dbDir);
-        mprMark(eroute->edi);
-        mprMark(eroute->env);
-        mprMark(eroute->layoutsDir);
-        mprMark(eroute->link);
-        mprMark(eroute->searchPath);
-        mprMark(eroute->staticDir);
-        mprMark(eroute->viewsDir);
-    }
-}
-#endif
 
 static void manageReq(EspReq *req, int flags)
 {
@@ -727,13 +713,16 @@ static void setRouteDirs(MaState *state, cchar *kind)
     if ((eroute = getEroute(state->route)) == 0) {
         return;
     }
+#if UNUSED
     if (smatch(kind, "none")) {
         setSimpleDirs(eroute, state->route);
 
     } else if (smatch(kind, "simple")) {
         setSimpleDirs(eroute, state->route);
+    }
+#endif
 
-    } else if (smatch(kind, "mvc") || smatch(kind, "restful")) {
+    if (smatch(kind, "mvc") || smatch(kind, "restful")) {
         setMvcDirs(eroute, state->route);
     }
 }
@@ -759,11 +748,11 @@ static int appDirective(MaState *state, cchar *key, cchar *value)
     char        *appName, *path, *routeSet, *database;
 
     route = state->route;
-    if ((eroute = getEroute(route)) == 0) {
-        return MPR_ERR_MEMORY;
-    }
     if (!maTokenize(state, value, "%S ?S ?S ?S", &appName, &path, &routeSet, &database)) {
         return MPR_ERR_BAD_SYNTAX;
+    }
+    if ((eroute = getEroute(route)) == 0) {
+        return MPR_ERR_MEMORY;
     }
     if (*appName != '/') {
         mprError("Script name should start with a \"/\"");
