@@ -41,6 +41,7 @@ if (test.hostOs == "VXWORKS") {
         if (!App.getenv("NOSERVER")) {
             Cmd.killall("vxsim")
         }
+    }
 } else {
     service = Cmd.locate("appweb").portable + " --log trace.txt:4 --name forAppwebTest --config appweb.conf"
 }
