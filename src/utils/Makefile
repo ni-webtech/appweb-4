@@ -20,6 +20,8 @@ else
 endif
 ESP_OBJECTS 	:= $(patsubst %,$(BLD_OBJ_DIR)/%$(BLD_OBJ),esp espFramework espSession espTemplate espHtml edi mdb sdb)
 
+cgiProgram_IFLAGS	= -D$(BLD_OS)=1
+
 compileExtra: $(TARGETS)
 
 $(BLD_BIN_DIR)/auth$(BLD_EXE): $(BLD_OBJ_DIR)/auth$(BLD_OBJ)
