@@ -542,6 +542,7 @@ static MprList *getRoutes()
         /*
             Check for routes of the same directory or of a direct parent directory
          */
+        rp = 0;
         for (ITERATE_ITEMS(routes, rp, nextRoute)) {
             if (sstarts(route->dir, rp->dir)) {
                 if (!rp->startWith) {
