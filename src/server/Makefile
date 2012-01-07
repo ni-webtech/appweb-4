@@ -4,6 +4,8 @@
 # 	Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
 #
 
+COMPILE				= 
+
 include 			.makedep 
 
 PRE_DIRS			+= $(BLD_OS)
@@ -16,7 +18,7 @@ ifeq	($(BLD_OS),WIN)
 	RES				= --resources appweb.rc
 endif
 ifeq	($(BLD_OS),VXWORKS)
-	MAKE_DFLAGS		+= -DBLD_APPWEB_PATH=\"$(BLD_ABS_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE)\"
+	MAKE_DFLAGS		+= '-DBLD_APPWEB_PATH=\"$(BLD_ABS_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE)\"'
 endif
 ifeq	($(BLD_FEATURE_AUTH_PAM),1)
 	LIBS			+= pam
@@ -38,7 +40,7 @@ compileExtra: $(TARGETS)
 compileFirst: $(ROM_FILES)
 
 ifeq ($(BLD_FEATURE_ROMFS),1)
-$(ROM_FILES): *.db mime.types appweb.conf web/*.html
+$(ROM_FILES): *.db mime.types appweb.conf web/*.html $(BLD_OBJ_DIR)/appweb$(BLD_OBJ)
 	$(call log) "[Generate]" "romFiles.c"
 	echo -e ".\nappweb.conf\nmime.types\nusers.db\ngroups.db" >rom.files
 	find conf -print | egrep -v 'ejs.conf|php.conf|fcgi.conf|ssl|dummy' >>rom.files
@@ -53,7 +55,7 @@ endif
 #
 #	Build the appweb program
 #
-$(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE): $(OBJECTS) $(call lib, $(LIBDEP)) $(call vlib $(LIBDEP))
+$(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE): $(BLD_OBJ_DIR)/appweb$(BLD_OBJ) $(call lib, $(LIBDEP)) $(call vlib $(LIBDEP))
 	bld --exe $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" \
 		--libs "$(BLD_APPWEB_LIBS) $(LIBS)" --syslibs "$(SYSLIBS)" $(RES) $(OBJECTS)
 

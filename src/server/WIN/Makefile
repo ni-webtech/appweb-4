@@ -8,10 +8,12 @@ BUILD_CROSS	:= 0
 
 include 	.makedep 
 
+ifeq ($(BUILDING_TARGET),1)
 TARGETS		+= $(BLD_PRODUCT)Monitor$(BLD_EXE)
 ifeq	($(BLD_OS),WIN)
 	SYSLIBS	+= shell32.lib
 	MONITOR_RES = --resources appwebMonitor.rc
+endif
 endif
 
 compileExtra: $(TARGETS) 
