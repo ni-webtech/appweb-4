@@ -3580,7 +3580,7 @@ int mprAtomicCas(void * volatile *addr, void *expected, cvoid *value)
         }
     #elif BLD_CC_SYNC_CAS
         return __sync_bool_compare_and_swap(addr, expected, value);
-    #elif VXWORKS && !MPR_64BIT
+    #elif VXWORKS && _VX_ATOMIC_INIT && !MPR_64BIT
         /* vxCas operates with integer values */
         return vxCas((atomic_t*) addr, (atomicVal_t) expected, (atomicVal_t) value);
     #elif BLD_CPU_ARCH == MPR_CPU_IX86
@@ -3622,7 +3622,7 @@ void mprAtomicAdd(volatile int *ptr, int value)
         OSAtomicAdd32(value, ptr);
     #elif BLD_WIN_LIKE
         InterlockedExchangeAdd(ptr, value);
-    #elif VXWORKS
+    #elif VXWORKS && _VX_ATOMIC_INIT
         vxAtomicAdd(ptr, value);
     #elif (BLD_CPU_ARCH == MPR_CPU_IX86 || BLD_CPU_ARCH == MPR_CPU_IX64) && FUTURE
         asm volatile ("lock; xaddl %0,%1"
