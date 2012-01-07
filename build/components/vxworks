@@ -98,7 +98,7 @@ setVxEnv()
         "
 	else
 		WIND_HOME="$path"
-        WIND_GNU_PATH
+        WIND_GNU_PATH=
         search="
             '\$WIND_BASE/host/\$WIND_HOST_TYPE/bin'
             '\$WIND_BASE/host/resource/hutils/tcl'
