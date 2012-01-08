@@ -2115,7 +2115,6 @@ typedef struct MprHeap {
     MprCond          *markerCond;            /**< Marker sleep cond var */
     MprSpin          heapLock;               /**< Heap allocation lock */
     MprSpin          rootLock;               /**< Root locking */
-    MprMutex         *mutex;                 /**< Heap lock */
     MprRegion        *regions;               /**< List of memory regions */
     struct MprThread *marker;                /**< Marker thread */
     struct MprThread *sweeper;               /**< Optional sweeper thread */

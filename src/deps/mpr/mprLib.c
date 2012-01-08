@@ -298,7 +298,6 @@ Mpr *mprCreateMemService(MprManager manager, int flags)
     heap->markerCond = mprCreateCond();
     heap->roots = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
     mprAddRoot(MPR);
-    heap->mutex = mprCreateLock();
     return MPR;
 }
 
@@ -1078,10 +1077,7 @@ static void mark()
     if (heap->newCount > heap->earlyYieldQuota) {
         heap->mustYield = 1;
     }
-    unlock(heap);
 #else
-    /* The lock is for ResetYield */
-    lock(heap);
     heap->mustYield = 1;
     if (!syncThreads()) {
         LOG(6, "DEBUG: GC synchronization timed out, some threads did not yield.");
@@ -1089,8 +1085,6 @@ static void mark()
         return;
     }
     nextGen();
-    MPR->marking = 1;
-    unlock(heap);
 #endif
     heap->priorNewCount = heap->newCount;
     heap->priorFree = heap->stats.bytesFree;
@@ -1219,7 +1213,6 @@ static void markRoots()
     heap->stats.markVisited = 0;
     heap->stats.marked = 0;
     mprMark(heap->roots);
-    mprMark(heap->mutex);
 
     heap->rootIndex = 0;
     while ((root = getNextRoot()) != 0) {
@@ -1409,12 +1402,14 @@ void mprResetYield()
         tp->yielded = 0;
     }
 #else
-    lock(heap);
+    lock(MPR);
     if (MPR->marking) {
+        unlock(MPR);
         mprYield(0);
+    } else {
+        tp->yielded = 0;
+        unlock(MPR);
     }
-    tp->yielded = 0;
-    unlock(heap);
 #endif
 }
 
@@ -1445,6 +1440,11 @@ static int syncThreads()
     }
     do {
         allYielded = 1;
+        /*
+             The MPR is locked is to serialize access to MPR->marking. mprResetYield has a race where
+             its thread will have been yielded.
+         */
+        lock(MPR);
         mprLock(ts->mutex);
         for (i = 0; i < ts->threads->length; i++) {
             tp = (MprThread*) mprGetItem(ts->threads, i);
@@ -1457,9 +1457,13 @@ static int syncThreads()
             }
         }
         mprUnlock(ts->mutex);
+
         if (allYielded) {
+            MPR->marking = 1;
+            unlock(MPR);
             break;
         }
+        unlock(MPR);
         LOG(7, "syncThreads: waiting for threads to yield");
         mprWaitForCond(ts->cond, 20);
 
