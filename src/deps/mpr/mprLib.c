@@ -298,6 +298,7 @@ Mpr *mprCreateMemService(MprManager manager, int flags)
     heap->markerCond = mprCreateCond();
     heap->roots = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
     mprAddRoot(MPR);
+    heap->mutex = mprCreateLock();
     return MPR;
 }
 
@@ -1077,7 +1078,10 @@ static void mark()
     if (heap->newCount > heap->earlyYieldQuota) {
         heap->mustYield = 1;
     }
+    unlock(heap);
 #else
+    /* The lock is for ResetYield */
+    lock(heap);
     heap->mustYield = 1;
     if (!syncThreads()) {
         LOG(6, "DEBUG: GC synchronization timed out, some threads did not yield.");
@@ -1085,8 +1089,9 @@ static void mark()
         return;
     }
     nextGen();
-#endif
     MPR->marking = 1;
+    unlock(heap);
+#endif
     heap->priorNewCount = heap->newCount;
     heap->priorFree = heap->stats.bytesFree;
     heap->newCount = 0;
@@ -1214,6 +1219,7 @@ static void markRoots()
     heap->stats.markVisited = 0;
     heap->stats.marked = 0;
     mprMark(heap->roots);
+    mprMark(heap->mutex);
 
     heap->rootIndex = 0;
     while ((root = getNextRoot()) != 0) {
@@ -1403,7 +1409,12 @@ void mprResetYield()
         tp->yielded = 0;
     }
 #else
+    lock(heap);
+    if (MPR->marking) {
+        mprYield(0);
+    }
     tp->yielded = 0;
+    unlock(heap);
 #endif
 }
 

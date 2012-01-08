@@ -2114,10 +2114,8 @@ typedef struct MprHeap {
     MprMemNotifier   notifier;               /**< Memory allocation failure callback */
     MprCond          *markerCond;            /**< Marker sleep cond var */
     MprSpin          heapLock;               /**< Heap allocation lock */
-#if UNUSED
-    MprSpin          heapLock2;              /**< Heap allocation lock */
-#endif
     MprSpin          rootLock;               /**< Root locking */
+    MprMutex         *mutex;                 /**< Heap lock */
     MprRegion        *regions;               /**< List of memory regions */
     struct MprThread *marker;                /**< Marker thread */
     struct MprThread *sweeper;               /**< Optional sweeper thread */
