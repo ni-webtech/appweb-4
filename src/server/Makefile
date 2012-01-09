@@ -18,7 +18,11 @@ ifeq	($(BLD_OS),WIN)
 	RES				= --resources appweb.rc
 endif
 ifeq	($(BLD_OS),VXWORKS)
+ifeq 	($(BLD_BUILD_OS),WIN)
 	MAKE_DFLAGS		+= '-DBLD_APPWEB_PATH=\"$(BLD_ABS_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE)\"'
+else
+	MAKE_DFLAGS		+= -DBLD_APPWEB_PATH=\"$(BLD_ABS_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE)\"
+endif
 endif
 ifeq	($(BLD_FEATURE_AUTH_PAM),1)
 	LIBS			+= pam
