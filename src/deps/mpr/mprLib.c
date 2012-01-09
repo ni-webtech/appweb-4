@@ -14443,13 +14443,14 @@ MprModule *mprCreateModule(cchar *name, cchar *path, cchar *entry, void *data)
 {
     MprModuleService    *ms;
     MprModule           *mp;
-    MprPath             info;
-    char                *at;
     int                 index;
 
     ms = MPR->moduleService;
     mprAssert(ms);
 
+#if UNUSED
+    MprPath             info;
+    char                *at;
     if (path) {
         if ((at = mprSearchForModule(path)) == 0) {
             mprError("Can't find module \"%s\", cwd: \"%s\", search path \"%s\"", path, mprGetCurrentPath(),
@@ -14459,6 +14460,7 @@ MprModule *mprCreateModule(cchar *name, cchar *path, cchar *entry, void *data)
         path = at;
         mprGetPathInfo(path, &info);
     }
+#endif
     if ((mp = mprAllocObj(MprModule, manageModule)) == 0) {
         return 0;
     }
@@ -14466,7 +14468,6 @@ MprModule *mprCreateModule(cchar *name, cchar *path, cchar *entry, void *data)
     mp->path = sclone(path);
     mp->entry = sclone(entry);
     mp->moduleData = data;
-    mp->modified = info.mtime;
     mp->lastActivity = mprGetTime();
     index = mprAddItem(ms->modules, mp);
     if (index < 0 || mp->name == 0) {
@@ -14608,7 +14609,6 @@ int mprLoadModule(MprModule *mp)
 #if BLD_CC_DYN_LOAD
     mprAssert(mp);
 
-    mprLog(6, "Loading native module %s from %s", mp->name, mp->path);
     if (mprLoadNativeModule(mp) < 0) {
         return MPR_ERR_CANT_READ;
     }
@@ -25564,6 +25564,8 @@ int mprGetRandomBytes(char *buf, ssize length, bool block)
 int mprLoadNativeModule(MprModule *mp)
 {
     MprModuleEntry  fn;
+    MprPath         info;
+    char            *at;
     void            *handle;
 
     mprAssert(mp);
@@ -25580,12 +25582,25 @@ int mprLoadNativeModule(MprModule *mp)
     handle = 0;
 #endif
 #endif
+
     if (!mp->entry || handle == 0 || !dlsym(handle, mp->entry)) {
+        if ((at = mprSearchForModule(mp->path)) == 0) {
+            mprError("Can't find module \"%s\", cwd: \"%s\", search path \"%s\"", mp->path, mprGetCurrentPath(),
+                mprGetModuleSearchPath());
+            return 0;
+        }
+        mp->path = at;
+        mprGetPathInfo(mp->path, &info);
+        mp->modified = info.mtime;
+        mprLog(2, "Loading native module %s from %s", mp->name, mp->path);
         if ((handle = dlopen(mp->path, RTLD_LAZY | RTLD_GLOBAL)) == 0) {
             mprError("Can't load module %s\nReason: \"%s\"", mp->path, dlerror());
             return MPR_ERR_CANT_OPEN;
         } 
         mp->handle = handle;
+
+    } else if (mp->entry) {
+        mprLog(2, "Activating native module %s", mp->name);
     }
     if (mp->entry) {
         if ((fn = (MprModuleEntry) dlsym(handle, mp->entry)) != 0) {
@@ -25772,6 +25787,8 @@ int mprLoadNativeModule(MprModule *mp)
 {
     MprModuleEntry  fn;
     SYM_TYPE        symType;
+    MprPath         info;
+    char            *at;
     void            *handle;
     int             fd;
 
@@ -25780,6 +25797,16 @@ int mprLoadNativeModule(MprModule *mp)
     handle = 0;
 
     if (!mp->entry || symFindByName(sysSymTbl, mp->entry, (char**) &fn, &symType) == -1) {
+        if ((at = mprSearchForModule(mp->path)) == 0) {
+            mprError("Can't find module \"%s\", cwd: \"%s\", search path \"%s\"", mp->path, mprGetCurrentPath(),
+                mprGetModuleSearchPath());
+            return 0;
+        }
+        mp->path = at;
+        mprGetPathInfo(mp->path, &info);
+        mp->modified = info.mtime;
+
+        mprLog(2, "Loading native module %s from %s", mp->name, mp->path);
         if ((fd = open(mp->path, O_RDONLY, 0664)) < 0) {
             mprError("Can't open module \"%s\"", mp->path);
             return MPR_ERR_CANT_OPEN;
@@ -25795,6 +25822,9 @@ int mprLoadNativeModule(MprModule *mp)
             return MPR_ERR_CANT_READ;
         }
         close(fd);
+
+    } else if (mp->entry) {
+        mprLog(2, "Activating module %s", mp->name);
     }
     if (mp->entry) {
         if (symFindByName(sysSymTbl, mp->entry, (char**) &fn, &symType) == -1) {
@@ -27450,19 +27480,32 @@ int mprGetRandomBytes(char *buf, ssize length, bool block)
 int mprLoadNativeModule(MprModule *mp)
 {
     MprModuleEntry  fn;
-    char            *baseName;
+    MprPath         info;
+    char            *at, *baseName;
     void            *handle;
 
     mprAssert(mp);
 
     handle = (HANDLE) MPR->appInstance;
     if (!handle || !mp->entry || !GetProcAddress((HINSTANCE) MPR->appInstance, mp->entry)) {
+        if ((at = mprSearchForModule(mp->path)) == 0) {
+            mprError("Can't find module \"%s\", cwd: \"%s\", search path \"%s\"", mp->path, mprGetCurrentPath(),
+                mprGetModuleSearchPath());
+            return 0;
+        }
+        mp->path = at;
+        mprGetPathInfo(mp->path, &info);
+        mp->modified = info.mtime;
+        mprLog(2, "Loading native module %s from %s", mp->name, mp->path);
         baseName = mprGetPathBase(mp->path);
         if ((handle = GetModuleHandle(baseName)) == 0 && (handle = LoadLibrary(mp->path)) == 0) {
             mprError("Can't load module %s\nReason: \"%d\"\n", mp->path, mprGetOsError());
             return MPR_ERR_CANT_READ;
         } 
         mp->handle = handle;
+
+    } else if (mp->entry) {
+        mprLog(2, "Activating native module %s", mp->name);
     }
     if (mp->entry) {
         if ((fn = (MprModuleEntry) GetProcAddress((HINSTANCE) handle, mp->entry)) == 0) {

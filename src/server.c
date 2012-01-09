@@ -505,7 +505,6 @@ int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
     if (mprLoadModule(module) < 0) {
         return MPR_ERR_CANT_CREATE;
     }
-    mprLog(MPR_CONFIG, "Activating module (Loadable) %s", name);
     return 0;
 }
 

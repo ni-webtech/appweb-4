@@ -39,6 +39,11 @@ ifeq ($(BUILDING_TARGET),1)
 	ROM_FILES		+= romFiles.c
 endif
 
+#
+#	Add modules that you wish to link with appweb
+#
+#	MODULES				+= mod_esp
+
 compileExtra: $(TARGETS)
 
 compileFirst: $(ROM_FILES)
@@ -61,7 +66,7 @@ endif
 #
 $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE): $(BLD_OBJ_DIR)/appweb$(BLD_OBJ) $(call lib, $(LIBDEP)) $(call vlib $(LIBDEP))
 	bld --exe $(BLD_BIN_DIR)/$(BLD_PRODUCT)$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" \
-		--libs "$(BLD_APPWEB_LIBS) $(LIBS)" --syslibs "$(SYSLIBS)" $(RES) $(BLD_OBJ_DIR)/appweb$(BLD_OBJ)
+		--libs "$(BLD_APPWEB_LIBS) $(LIBS) $(MODULES)" --syslibs "$(SYSLIBS)" $(RES) $(BLD_OBJ_DIR)/appweb$(BLD_OBJ)
 
 run:
 	$(call setlibpath) ; sudo $(BLD_BIN_DIR)/$(BLD_PRODUCT) -v
