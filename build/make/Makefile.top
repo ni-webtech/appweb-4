@@ -49,7 +49,7 @@ INS_WITH	= --with-conf="$(CONF)" --with-testweb
 ifeq ($(shell [ ! -f .makedep ] && echo missing),missing)
 all compile depend clean clobber test package:
 %::
-	echo -e "\nMust run configure first\n" >&2 ; exit 2
+	@echo -e "\nMust run configure first\n" >&2 ; exit 2
 else 
 
 include out/inc/buildConfig.h

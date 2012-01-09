@@ -1818,9 +1818,11 @@ extern void *mprAtomicExchange(void * volatile *target, cvoid *value);
 #if BLD_DEBUG
     #define BLD_MEMORY_DEBUG        1                   /**< Fill blocks, verifies block integrity. */
     #define BLD_MEMORY_STATS        1                   /**< Include memory stats routines */
+    #define BLD_MEMORY_STACK        1                   /**< Monitor stack usage */
 #else
     #define BLD_MEMORY_DEBUG        0
     #define BLD_MEMORY_STATS        0
+    #define BLD_MEMORY_STACK        0
 #endif
 
 /*
@@ -6342,6 +6344,10 @@ typedef struct MprThread {
     int             isMain;             /**< Is the main thread */
     int             priority;           /**< Current priority */
     ssize           stackSize;          /**< Only VxWorks implements */
+#if BLD_MEMORY_STACK
+    void            *stackBase;         /**< Base of stack (approx) */
+    int             peakStack;          /**< Peak stack usage */
+#endif
     int             stickyYield;        /**< Yielded does not auto-clear after GC */
     int             yielded;            /**< Thread has yielded to GC */
 } MprThread;

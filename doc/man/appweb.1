@@ -10,6 +10,7 @@ appweb\- Embedded HTTP Web Server
 [\fI--config configFile\fR]
 [\fI--chroot directory\fR]
 [\fI--debugger\fR]
+[\fI--exe path\fR]
 [\fI--log logSpec\fR]
 [\fI--home directory\fR] 
 [\fI--threads threads\fR]
@@ -40,6 +41,11 @@ any files outside the given directory.
 \fB\--debugger\fR
 Run Appweb in debug mode and disable all timeouts. This disables request and session timeouts.
 The \fB-d\fR option is an alias for --debug.
+.TP
+\fB\--exe path\fR
+Set the path to the appweb.exe executable image. This may be required on VxWorks so that Appweb can 
+load modules which are located at "appweb.exe/../lib". This is necessary because VxWorks cannot determine
+the path to the executable image at runtime.
 .TP
 \fB\--log logSpec\fR
 Name the Appweb log file. This will override the ErrorLog directive 

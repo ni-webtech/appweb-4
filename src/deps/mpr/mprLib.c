@@ -205,6 +205,9 @@ static void triggerGC(int flags);
     static void printQueueStats();
     static void printGCStats();
 #endif
+#if BLD_MEMORY_STACK
+static void monitorStack();
+#endif
 
 static int initFree();
 static MprMem *allocMem(ssize size, int flags);
@@ -508,6 +511,10 @@ static MprMem *allocMem(ssize required, int flags)
     ulong       groupMap, bucketMap;
     int         bucket, baseGroup, group, index;
     
+#if BLD_MEMORY_STACK
+    monitorStack();
+#endif
+
     index = getQueueIndex(required, 1);
     baseGroup = index / MPR_ALLOC_NUM_BUCKETS;
     bucket = index % MPR_ALLOC_NUM_BUCKETS;
@@ -2464,6 +2471,31 @@ static void checkYielded()
     mprUnlock(ts->mutex);
 #endif
 }
+
+
+#if BLD_MEMORY_STACK
+static void monitorStack()
+{
+    MprThread   *tp;
+    int         diff;
+
+    if (MPR->threadService && (tp = mprGetCurrentThread()) != 0) {
+        if (tp->stackBase == 0) {
+            tp->stackBase = &tp;
+        }
+        diff = (int) ((char*) tp->stackBase - (char*) &diff);
+        if (diff < 0) {
+            tp->peakStack -= diff;
+            tp->stackBase = (void*) &diff;
+            diff = 0;
+        }
+        if (diff > tp->peakStack) {
+            tp->peakStack = diff;
+        }
+    }
+}
+#endif
+
 
 /*
     @copy   default

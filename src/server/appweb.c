@@ -63,12 +63,6 @@ static long msgProc(HWND hwnd, uint msg, uint wp, long lp);
     #define BLD_CONFIG_FILE NULL
 #endif
 
-#if UNUSED
-#if VXWORKS
-#define BLD_APPWEB_PATH "/home/mob/appweb/out/i586-wrs-vxworks/bin/appweb.out"
-#endif
-#endif
-
 #ifndef BLD_APPWEB_PATH
     #define BLD_APPWEB_PATH "appweb"
 #endif
@@ -336,6 +330,7 @@ static void usageError(Mpr *mpr)
     "    --config configFile    # Use named config file instead appweb.conf\n"
     "    --chroot directory     # Change root directory to run more securely (Unix)\n"
     "    --debugger             # Disable timeouts to make debugging easier\n"
+    "    --exe path             # Set path to Appweb executable on Vxworks\n"
     "    --home directory       # Change to directory to run\n"
     "    --log logFile:level    # Log to file file at verbosity level\n"
     "    --name uniqueName      # Unique name for this instance\n"

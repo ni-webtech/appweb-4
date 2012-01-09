@@ -8,8 +8,9 @@ APPWEB(1)                        User Commands                       APPWEB(1)
        <B>appweb [options]</B>
        <B>appweb [options] [IP][:port] [documentRoot]</B>
 
-       <B>appweb  </B>[<I>--config  configFile</I>] [<I>--chroot directory</I>] [<I>--debugger</I>] [<I>--log</I>
-       <I>logSpec</I>] [<I>--home directory</I>] [<I>--threads threads</I>] [<I>--version</I>] [<I>--verbose</I>]
+       <B>appweb  </B>[<I>--config  configFile</I>] [<I>--chroot directory</I>] [<I>--debugger</I>] [<I>--exe</I>
+       <I>path</I>] [<I>--log logSpec</I>] [<I>--home directory</I>]  [<I>--threads  threads</I>]  [<I>--ver-</I>
+       <I>sion</I>] [<I>--verbose</I>]
 
 <B>DESCRIPTION</B>
        Appweb  is  a  compact  embedded HTTP web server.  It is a fast, small-
@@ -44,6 +45,13 @@ APPWEB(1)                        User Commands                       APPWEB(1)
               Run Appweb in debug mode and disable all timeouts. This disables
               request and session timeouts.  The <B>-d </B>option  is  an  alias  for
               --debug.
+
+       <B>--exe path</B>
+              Set  the  path  to  the appweb.exe executable image. This may be
+              required on VxWorks so that Appweb can load  modules  which  are
+              located   at  "appweb.exe/../lib".  This  is  necessary  because
+              VxWorks cannot determine the path to  the  executable  image  at
+              runtime.
 
        <B>--log logSpec</B>
               Name the Appweb log file. This will override the ErrorLog direc-

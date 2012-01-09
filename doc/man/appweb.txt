@@ -9,8 +9,9 @@ SYNOPSIS
        appweb [options]
        appweb [options] [IP][:port] [documentRoot]
 
-       appweb  [--config  configFile] [--chroot directory] [--debugger] [--log
-       logSpec] [--home directory] [--threads threads] [--version] [--verbose]
+       appweb  [--config  configFile] [--chroot directory] [--debugger] [--exe
+       path] [--log logSpec] [--home directory]  [--threads  threads]  [--ver-
+       sion] [--verbose]
 
 DESCRIPTION
        Appweb  is  a  compact  embedded HTTP web server.  It is a fast, small-
@@ -45,6 +46,13 @@ OPTIONS
               Run Appweb in debug mode and disable all timeouts. This disables
               request and session timeouts.  The -d option  is  an  alias  for
               --debug.
+
+       --exe path
+              Set  the  path  to  the appweb.exe executable image. This may be
+              required on VxWorks so that Appweb can load  modules  which  are
+              located   at  "appweb.exe/../lib".  This  is  necessary  because
+              VxWorks cannot determine the path to  the  executable  image  at
+              runtime.
 
        --log logSpec
               Name the Appweb log file. This will override the ErrorLog direc-
