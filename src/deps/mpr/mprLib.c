@@ -166,10 +166,11 @@ int stopSeqno = -1;
 #endif
 
 
-#undef          MPR
-Mpr             *MPR;
-static MprHeap  *heap;
-static int      padding[] = { 0, MANAGER_SIZE };
+#undef              MPR
+Mpr                 *MPR;
+static MprHeap      *heap;
+static MprMemStats  memStats;
+static int          padding[] = { 0, MANAGER_SIZE };
 
 
 static void allocException(int cause, ssize size);
@@ -216,8 +217,8 @@ static int getQueueIndex(ssize size, int roundup);
 static MprMem *growHeap(ssize size, int flags);
 static void linkBlock(MprMem *mp); 
 static void unlinkBlock(MprFreeMem *fp);
-#define valloc(size, flags) mprVirtAlloc(size, flags)
-#define vfree(ptr, size) mprVirtFree(ptr, size)
+static void *vmalloc(ssize size, int mode);
+static void vmfree(void *ptr, ssize size);
 #if BLD_MEMORY_STATS
     static MprFreeMem *getQueue(ssize size);
 #endif
@@ -225,15 +226,17 @@ static void unlinkBlock(MprFreeMem *fp);
 
 Mpr *mprCreateMemService(MprManager manager, int flags)
 {
-    MprHeap     initHeap;
     MprMem      *mp;
-    ssize       size, mprSize, spareSize;
     MprMem      *spare;
     MprRegion   *region;
-    ssize       regionSize;
+    ssize       size, mprSize, spareSize, regionSize;
 
-    flags |= MPR_THREAD_PATTERN;
-    heap = &initHeap;
+    getSystemInfo();
+
+    size = MPR_PAGE_ALIGN(sizeof(MprHeap), memStats.pageSize);
+    if ((heap = vmalloc(size, MPR_MAP_READ | MPR_MAP_WRITE)) == NULL) {
+        return NULL;
+    }
     memset(heap, 0, sizeof(MprHeap));
     heap->stats.maxMemory = MAXINT;
     heap->stats.redLine = MAXINT / 100 * 99;
@@ -246,7 +249,7 @@ Mpr *mprCreateMemService(MprManager manager, int flags)
     mprSize = MPR_ALLOC_ALIGN(sizeof(MprMem) + sizeof(Mpr) + (MANAGER_SIZE * sizeof(void*)));
     regionSize = MPR_ALLOC_ALIGN(sizeof(MprRegion));
     size = max(mprSize + regionSize, MPR_MEM_REGION_SIZE);
-    if ((region = valloc(size, MPR_MAP_READ | MPR_MAP_WRITE)) == NULL) {
+    if ((region = mprVirtAlloc(size, MPR_MAP_READ | MPR_MAP_WRITE)) == NULL) {
         return NULL;
     }
     mp = region->start = (MprMem*) (((char*) region) + regionSize);
@@ -256,16 +259,16 @@ Mpr *mprCreateMemService(MprManager manager, int flags)
     INIT_BLK(mp, mprSize, 1, 0, NULL);
     SET_MANAGER(mp, manager);
     mprSetName(MPR, "Mpr");
+    MPR->heap = heap;
 
-    heap = &MPR->heap;
-    heap->flags = flags;
+    heap->flags = flags | MPR_THREAD_PATTERN;
     heap->nextSeqno = 1;
     heap->chunkSize = MPR_MEM_REGION_SIZE;
     heap->stats.maxMemory = MAXINT;
     heap->stats.redLine = MAXINT / 100 * 99;
     heap->newQuota = MPR_NEW_QUOTA;
     heap->earlyYieldQuota = MPR_NEW_QUOTA * 5;
-    heap->enabled = !(flags & MPR_DISABLE_GC);
+    heap->enabled = !(heap->flags & MPR_DISABLE_GC);
     if (scmp(getenv("MPR_DISABLE_GC"), "1") == 0) {
         heap->enabled = 0;
     }
@@ -283,7 +286,6 @@ Mpr *mprCreateMemService(MprManager manager, int flags)
 
     mprInitSpinLock(&heap->heapLock);
     mprInitSpinLock(&heap->rootLock);
-    getSystemInfo();
     initGen();
     initFree();
 
@@ -298,7 +300,7 @@ Mpr *mprCreateMemService(MprManager manager, int flags)
         linkBlock(spare);
     }
 
-    heap->markerCond = mprCreateCond();
+    MPR->markerCond = mprCreateCond();
     heap->roots = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
     mprAddRoot(MPR);
     return MPR;
@@ -616,7 +618,7 @@ static MprMem *growHeap(ssize required, int flags)
 
     rsize = MPR_ALLOC_ALIGN(sizeof(MprRegion));
     size = max(required + rsize, (ssize) heap->chunkSize);
-    size = MPR_PAGE_ALIGN(size, heap->pageSize);
+    size = MPR_PAGE_ALIGN(size, memStats.pageSize);
     if (size < 0 || size >= ((ssize) 1 << MPR_SIZE_BITS)) {
         allocException(MPR_MEM_TOO_BIG, size);
         return 0;
@@ -631,7 +633,7 @@ static MprMem *growHeap(ssize required, int flags)
     }
 }
 #endif
-    if ((region = valloc(size, MPR_MAP_READ | MPR_MAP_WRITE)) == NULL) {
+    if ((region = mprVirtAlloc(size, MPR_MAP_READ | MPR_MAP_WRITE)) == NULL) {
         return 0;
     }
     mprInitSpinLock(&((MprRegion*) region)->lock);
@@ -898,6 +900,7 @@ static MprFreeMem *getQueue(ssize size)
     Allocate virtual memory and check a memory allocation request against configured maximums and redlines. 
     An application-wide memory allocation failure routine can be invoked from here when a memory redline is exceeded. 
     It is the application's responsibility to set the red-line value suitable for the system.
+    MOB _ is memory zeroed?
  */
 void *mprVirtAlloc(ssize size, int mode)
 {
@@ -905,8 +908,8 @@ void *mprVirtAlloc(ssize size, int mode)
     void        *ptr;
 
     used = fastMemSize();
-    if (heap->pageSize) {
-        size = MPR_PAGE_ALIGN(size, heap->pageSize);
+    if (memStats.pageSize) {
+        size = MPR_PAGE_ALIGN(size, memStats.pageSize);
     }
 #if UNUSED && KEEP
     printf("VALLOC %d K, total %d K\n", (int) size / 1024, (int) (size + used) / 1024);
@@ -916,21 +919,7 @@ void *mprVirtAlloc(ssize size, int mode)
     } else if ((size + used) > heap->stats.redLine) {
         allocException(MPR_MEM_REDLINE, size);
     }
-#if VALLOC
-    #if BLD_UNIX_LIKE
-        ptr = mmap(0, size, mode, MAP_PRIVATE | MAP_ANON, -1, 0);
-        if (ptr == (void*) -1) {
-            ptr = 0;
-        }
-    #elif BLD_WIN_LIKE
-        ptr = VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, winPageModes(mode));
-    #else
-        ptr = malloc(size);
-    #endif
-#else
-    ptr = malloc(size);
-#endif
-    if (ptr == NULL) {
+    if ((ptr = vmalloc(size, mode)) == 0) {
         allocException(MPR_MEM_FAIL, size);
         return 0;
     }
@@ -942,6 +931,36 @@ void *mprVirtAlloc(ssize size, int mode)
 
 
 void mprVirtFree(void *ptr, ssize size)
+{
+    vmfree(ptr, size);
+    lockHeap();
+    heap->stats.bytesAllocated -= size;
+    mprAssert(heap->stats.bytesAllocated >= 0);
+    unlockHeap();
+}
+
+
+static void *vmalloc(ssize size, int mode)
+{
+#if VALLOC
+    #if BLD_UNIX_LIKE
+        void    *ptr;
+        if ((ptr = mmap(0, size, mode, MAP_PRIVATE | MAP_ANON, -1, 0)) == (void*) -1) {
+            return 0;
+        }
+        return ptr;
+    #elif BLD_WIN_LIKE
+        return VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, winPageModes(mode));
+    #else
+        return malloc(size);
+    #endif
+#else
+    return malloc(size);
+#endif
+}
+
+
+static void vmfree(void *ptr, ssize size)
 {
 #if VALLOC
     #if BLD_UNIX_LIKE
@@ -959,11 +978,8 @@ void mprVirtFree(void *ptr, ssize size)
 #else
     free(ptr);
 #endif
-    lockHeap();
-    heap->stats.bytesAllocated -= size;
-    mprAssert(heap->stats.bytesAllocated >= 0);
-    unlockHeap();
 }
+
 
 
 void mprStartGCService()
@@ -1001,7 +1017,7 @@ void mprStopGCService()
 
 void mprWakeGCService()
 {
-    mprSignalCond(heap->markerCond);
+    mprSignalCond(MPR->markerCond);
     mprResumeThreads();
 }
 
@@ -1014,7 +1030,7 @@ static void triggerGC(int flags)
         heap->mustYield = 1;
 #endif
         if (heap->flags & MPR_MARK_THREAD) {
-            mprSignalCond(heap->markerCond);
+            mprSignalCond(MPR->markerCond);
         }
     }
 }
@@ -1204,7 +1220,8 @@ static void sweep()
                 heap->regions = nextRegion;
             }
             unlockHeap();
-            LOG(9, "DEBUG: Unpin %p to %p size %d, used %d", region, ((char*) region) + region->size, region->size,fastMemSize());
+            LOG(9, "DEBUG: Unpin %p to %p size %d, used %d", region, 
+                ((char*) region) + region->size, region->size,fastMemSize());
             mprVirtFree(region, region->size);
         } else {
             prior = region;
@@ -1329,7 +1346,7 @@ static void marker(void *unused, MprThread *tp)
 
     while (!mprIsFinished()) {
         if (!heap->mustYield) {
-            mprWaitForCond(heap->markerCond, -1);
+            mprWaitForCond(MPR->markerCond, -1);
             if (mprIsFinished()) {
                 break;
             }
@@ -1979,8 +1996,8 @@ static void allocException(int cause, ssize size)
     } else if (cause == MPR_MEM_LIMIT) {
         mprLog(0, "%s: Memory request for %,d bytes exceeds memory limit.", MPR->name, size);
     }
-    mprLog(0, "%s: Memory used %,d, redline %,d, limit %,d.", MPR->name, (int) used, (int) MPR->heap.stats.redLine,
-        (int) MPR->heap.stats.maxMemory);
+    mprLog(0, "%s: Memory used %,d, redline %,d, limit %,d.", MPR->name, (int) used, (int) heap->stats.redLine,
+        (int) heap->stats.maxMemory);
     mprLog(0, "%s: Consider increasing memory limit.", MPR->name);
     
     if (heap->notifier) {
@@ -2009,18 +2026,15 @@ static void allocException(int cause, ssize size)
 
 static void getSystemInfo()
 {
-    MprMemStats   *ap;
-
-    ap = &heap->stats;
-    ap->numCpu = 1;
+    memStats.numCpu = 1;
 
 #if MACOSX
     #ifdef _SC_NPROCESSORS_ONLN
-        ap->numCpu = (uint) sysconf(_SC_NPROCESSORS_ONLN);
+        memStats.numCpu = (uint) sysconf(_SC_NPROCESSORS_ONLN);
     #else
-        ap->numCpu = 1;
+        memStats.numCpu = 1;
     #endif
-    ap->pageSize = (uint) sysconf(_SC_PAGESIZE);
+    memStats.pageSize = (uint) sysconf(_SC_PAGESIZE);
 #elif SOLARIS
 {
     FILE *ptr;
@@ -2035,8 +2049,8 @@ static void getSystemInfo()
     SYSTEM_INFO     info;
 
     GetSystemInfo(&info);
-    ap->numCpu = info.dwNumberOfProcessors;
-    ap->pageSize = info.dwPageSize;
+    memStats.numCpu = info.dwNumberOfProcessors;
+    memStats.pageSize = info.dwPageSize;
 
 }
 #elif FREEBSD
@@ -2046,12 +2060,12 @@ static void getSystemInfo()
 
         cmd[0] = CTL_HW;
         cmd[1] = HW_NCPU;
-        len = sizeof(ap->numCpu);
-        ap->numCpu = 0;
-        if (sysctl(cmd, 2, &ap->numCpu, &len, 0, 0) < 0) {
-            ap->numCpu = 1;
+        len = sizeof(memStats.numCpu);
+        memStats.numCpu = 0;
+        if (sysctl(cmd, 2, &memStats.numCpu, &len, 0, 0) < 0) {
+            memStats.numCpu = 1;
         }
-        ap->pageSize = sysconf(_SC_PAGESIZE);
+        memStats.pageSize = sysconf(_SC_PAGESIZE);
     }
 #elif LINUX
     {
@@ -2076,22 +2090,21 @@ static void getSystemInfo()
                     col++;
 
                 } else if (match) {
-                    ap->numCpu++;
+                    memStats.numCpu++;
                     match = 0;
                 }
             }
         }
-        --ap->numCpu;
+        --memStats.numCpu;
         close(fd);
-        ap->pageSize = sysconf(_SC_PAGESIZE);
+        memStats.pageSize = sysconf(_SC_PAGESIZE);
     }
 #else
-        ap->pageSize = 4096;
+        memStats.pageSize = 4096;
 #endif
-    if (ap->pageSize <= 0 || ap->pageSize >= (16 * 1024)) {
-        ap->pageSize = 4096;
+    if (memStats.pageSize <= 0 || memStats.pageSize >= (16 * 1024)) {
+        memStats.pageSize = 4096;
     }
-    heap->pageSize = ap->pageSize;
 }
 
 
@@ -2303,7 +2316,7 @@ Mpr *mprGetMpr()
 
 int mprGetPageSize()
 {
-    return heap->pageSize;
+    return memStats.pageSize;
 }
 
 
@@ -2674,7 +2687,7 @@ static void manageMpr(Mpr *mpr, int flags)
         mprMark(mpr->dtoaSpin[1]);
         mprMark(mpr->cond);
         mprMark(mpr->emptyString);
-        mprMark(mpr->heap.markerCond);
+        mprMark(mpr->markerCond);
     }
 }
 
@@ -22036,7 +22049,7 @@ void mprReportTestResults(MprTestService *sp)
             "[DETAILS]", sp->totalTestCount, sp->totalFailedCount);
         mprPrintf("%12s Elapsed time: %5.2f seconds.\n", "[BENCHMARK]", elapsed);
     }
-    if (MPR->heap.track) {
+    if (MPR->heap->track) {
         mprPrintMem("Memory Results", 1);
     }
 }
