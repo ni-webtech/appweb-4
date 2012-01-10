@@ -545,7 +545,7 @@ static MprList *getRoutes()
         rp = 0;
         for (ITERATE_ITEMS(routes, rp, nextRoute)) {
             if (sstarts(route->dir, rp->dir)) {
-                if (!rp->startWith) {
+                if (!rp->startWith && route->sourceName) {
                     /* Replace the default route with this route. This is for MVC Apps with prefix of "/" */
                     mprRemoveItem(routes, rp);
                     rp = 0;
@@ -842,7 +842,7 @@ static void compileFile(HttpRoute *route, cchar *source, int kind)
 
         } else {
             app->csource = mprJoinPathExt(mprTrimPathExt(app->module), ".c");
-            trace("GENERATE", "%s", app->csource);
+            trace("PARSE", "%s", source);
             if (mprWritePathContents(app->csource, script, len, 0664) < 0) {
                 fail("Can't write compiled script file %s", app->csource);
                 return;
