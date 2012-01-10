@@ -1364,30 +1364,10 @@ typedef struct MprArgs {
 /*
     Convenience define to declare a main program entry point that works for Windows, VxWorks and Unix
  */
-#if 0
+#if VXWORKS
     #define MAIN(name, _argc, _argv)  \
-        int name(char *command) { \
-            extern int main(); \
-            MprArgs args; \
-            args.program = #name; \
-            args.args = _argc; \
-            return main(0, (char**) &args); \
-        } \
-        int main(_argc, _argv)
-#elif 0
-    #define MAIN(name, _argc, _argv)  \
-        int name(char *command) { \
-            extern int main(); \
-            char *largv[2]; \
-            largv[0] = #name; \
-            largv[1] = command; \
-            return main(2, largv); \
-        } \
-        int main(_argc, _argv)
-#elif VXWORKS
-    #define MAIN(name, _argc, _argv)  \
+        static int innerMain(int argc, char **argv); \
         int name(char *arg0, ...) { \
-            extern int main(); \
             va_list args; \
             char *argp, *largv[MPR_MAX_ARGC]; \
             int largc = 0; \
@@ -1399,9 +1379,9 @@ typedef struct MprArgs {
             for (argp = va_arg(args, char*); argp && largc < MPR_MAX_ARGC; argp = va_arg(args, char*)) { \
                 largv[largc++] = argp; \
             } \
-            return main(largc, largv); \
+            return innerMain(largc, largv); \
         } \
-        int main(_argc, _argv)
+        static int innerMain(_argc, _argv)
 #elif BLD_WIN_LIKE && BLD_CHAR_LEN > 1
     #define MAIN(name, argc, argv)  \
         APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, LPWSTR command, int junk2) { \

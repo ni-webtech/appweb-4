@@ -42,7 +42,8 @@ defineComponent() {
         imports="$libpaths/libssl*${SHOBJ} $libpaths/libcrypto*${SHOBJ}"
 
     else 
-        libpaths=`probe --name openssl --search "$path:extensions/openssl/$ver:/usr/lib:/lib" --dir "libcrypto" `
+        libpaths=`probe --name openssl --search "$path:extensions/openssl/$ver:/usr/lib:/lib:/lib/*-linux-gnu" \
+            --dir "libcrypto" `
         iflags=-I`probe --name openssl --search "$path:extensions/openssl/$ver/include:/usr/include" --dir "openssl/ssl.h"`
         libs="ssl crypto"
         imports="$libpaths/libssl*${SHOBJ}* $libpaths/libcrypto*${SHOBJ}*"
