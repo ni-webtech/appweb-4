@@ -197,6 +197,12 @@ make
             <p>On VxWorks, it is required to define BLD_APPWEB_PATH so that Appweb can load modules which
             are located relative to the Appweb executable image.</p>
             <p>Define BLD_CONFIG_FILE and BLD_SERVER_ROOT to set default locations for Appweb initialization.</p>
+
+            <h3>Static Linking</h3>
+            <p>On VxWorks, it is sometimes required to statically link the Appweb web server. The default
+            <em>src/server/Makefile</em> is setup to build Appweb and the loadable modules separately. If you want to
+            statically link the modules, edit the Makefile and add the required modules to the <em>MODULES</em> 
+            variable.</p>
             
             <a name="installing" id="installing"></a>
             <h2 class="section">Installing</h2>
@@ -339,11 +345,6 @@ make TRACE=1 install
                     <td>Microsoft Visual Studio and Eclipse project and workspace files.</td>
                 </tr>
                 <tr>
-                    <td>samples</td>
-                    <td></td>
-                    <td>Sample source code and examples</td>
-                </tr>
-                <tr>
                     <td>src</td>
                     <td></td>
                     <td>Product source code.</td>
@@ -352,6 +353,11 @@ make TRACE=1 install
                     <td></td>
                     <td>deps</td>
                     <td>Dependant libraries including MPR, Http, Pcre.</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>samples</td>
+                    <td>Sample source code and examples</td>
                 </tr>
                 <tr>
                     <td>test</td>
