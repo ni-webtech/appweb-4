@@ -1955,7 +1955,15 @@ static bool conditionalDefinition(MaState *state, cchar *key)
     if (not) {
         for (++key; isspace((int) *key); key++) {}
     }
-    if (scasematch(key, "BLD_COMMERCIAL")) {
+    result = 0;
+
+    if (scasematch(key, state->appweb->hostOS)) {
+        result = 1;
+
+    } else if (scasematch(key, state->appweb->hostCPU)) {
+        result = 1;
+
+    } else if (scasematch(key, "BLD_COMMERCIAL")) {
         result = smatch(BLD_COMMERCIAL, "0");
 
 #if BLD_DEBUG
@@ -1963,32 +1971,31 @@ static bool conditionalDefinition(MaState *state, cchar *key)
         result = BLD_DEBUG;
 #endif
 
-    } else if (scasematch(key, "CGI_MODULE")) {
-        result = BLD_FEATURE_CGI;
-
-    } else if (scasematch(key, "DIR_MODULE")) {
-        result = BLD_FEATURE_DIR;
-
-    } else if (scasematch(key, "EJS_MODULE")) {
-        result = BLD_FEATURE_EJSCRIPT;
-
-    } else if (scasematch(key, "ESP_MODULE")) {
-        result = BLD_FEATURE_ESP;
-
-    } else if (scasematch(key, "PHP_MODULE")) {
-        result = BLD_FEATURE_PHP;
-
-    } else if (scasematch(key, "SSL_MODULE")) {
-        result = BLD_FEATURE_SSL;
-
-    } else if (scasematch(key, state->appweb->hostOS)) {
-        result = 1;
-
-    } else if (scasematch(key, state->appweb->hostCPU)) {
-        result = 1;
+    } else if (state->appweb->skipModules) {
+        /* ESP utility needs to be able to load mod_esp */
+        if (smatch(mprGetAppName(), "esp") && scasematch(key, "ESP_MODULE")) {
+            result = BLD_FEATURE_ESP;
+        }
 
     } else {
-        result = 0;
+        if (scasematch(key, "CGI_MODULE")) {
+            result = BLD_FEATURE_CGI;
+
+        } else if (scasematch(key, "DIR_MODULE")) {
+            result = BLD_FEATURE_DIR;
+
+        } else if (scasematch(key, "EJS_MODULE")) {
+            result = BLD_FEATURE_EJSCRIPT;
+
+        } else if (scasematch(key, "ESP_MODULE")) {
+            result = BLD_FEATURE_ESP;
+
+        } else if (scasematch(key, "PHP_MODULE")) {
+            result = BLD_FEATURE_PHP;
+
+        } else if (scasematch(key, "SSL_MODULE")) {
+            result = BLD_FEATURE_SSL;
+        }
     }
     return (not) ? !result : result;
 }

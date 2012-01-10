@@ -5,6 +5,9 @@
 const HTTP = App.config.uris.http || "127.0.0.1:4100"
 let http: Http = new Http
 
+let dotcgi = (global.test && test.hostOs != "VXWORKS")
+let vxworks = (global.test && test.hostOs == "VXWORKS")
+
 if (App.config.bld_cgi && Path(test.top).join("src/test/web/cgiProgram.cgi").exists) {
     /* Suport routines */
 
@@ -37,9 +40,11 @@ if (App.config.bld_cgi && Path(test.top).join("src/test/web/cgiProgram.cgi").exi
         assert(http.status == 200)
         contains("cgiProgram: Output")
 
-        http.get(HTTP + "/cgiProgram.cgi")
-        assert(http.status == 200)
-        contains("cgiProgram: Output")
+        if (dotcgi) {
+            http.get(HTTP + "/cgiProgram.cgi")
+            assert(http.status == 200)
+            contains("cgiProgram: Output")
+        }
 
         if (App.test.os == "WIN") {
             http.get(HTTP + "/cgi-bin/cgiProgram.exe")
@@ -69,26 +74,33 @@ if (App.config.bld_cgi && Path(test.top).join("src/test/web/cgiProgram.cgi").exi
         match("PATH_INFO", "")
         match("PATH_TRANSLATED", "")
 
-        http.get(HTTP + "/YourScripts/cgiProgram.cgi")
-        assert(http.status == 200)
-        contains("cgiProgram: Output")
+        if (dotcgi) {
+            http.get(HTTP + "/YourScripts/cgiProgram.cgi")
+            assert(http.status == 200)
+            contains("cgiProgram: Output")
+        }
     }
 
     function extraPath() {
-        http.get(HTTP + "/cgiProgram.cgi")
-        assert(http.status == 200)
-        match("PATH_INFO", "")
-        match("PATH_TRANSLATED", "")
+        if (dotcgi) {
+            http.get(HTTP + "/cgiProgram.cgi")
+            assert(http.status == 200)
+            match("PATH_INFO", "")
+            match("PATH_TRANSLATED", "")
 
-        http.get(HTTP + "/cgiProgram.cgi/extra/path")
-        match("PATH_INFO", "/extra/path")
-        let scriptFilename = keyword("SCRIPT_FILENAME")
-        let path = Path(scriptFilename).dirname.join("extra/path")
-        let translated = Path(keyword("PATH_TRANSLATED"))
-        assert(path == translated)
+            http.get(HTTP + "/cgiProgram.cgi/extra/path")
+            match("PATH_INFO", "/extra/path")
+            let scriptFilename = keyword("SCRIPT_FILENAME")
+            let path = Path(scriptFilename).dirname.join("extra/path")
+            let translated = Path(keyword("PATH_TRANSLATED"))
+            assert(path == translated)
+        }
     }
 
     function query() {
+        if (!dotcgi) {
+            return
+        }
 /*
         http.get(HTTP + "/cgiProgram.cgi/extra/path?a=b&c=d&e=f")
         match("SCRIPT_NAME", "/cgiProgram.cgi")
@@ -133,16 +145,18 @@ if (App.config.bld_cgi && Path(test.top).join("src/test/web/cgiProgram.cgi").exi
         assert(keyword("ARG[0]").contains("cgiProgram"))
         assert(!http.response.contains("ARG[1]"))
 
-        http.get(HTTP + "/cgiProgram.cgi/extra/path")
-        assert(keyword("ARG[0]").contains("cgiProgram"))
-        assert(!http.response.contains("ARG[1]"))
+        if (dotcgi) {
+            http.get(HTTP + "/cgiProgram.cgi/extra/path")
+            assert(keyword("ARG[0]").contains("cgiProgram"))
+            assert(!http.response.contains("ARG[1]"))
 
-        http.get(HTTP + "/cgiProgram.cgi/extra/path?a+b+c")
-        match("QUERY_STRING", "a+b+c")
-        assert(keyword("ARG[0]").contains("cgiProgram"))
-        match("ARG.1.", "a")
-        match("ARG.2.", "b")
-        match("ARG.3.", "c")
+            http.get(HTTP + "/cgiProgram.cgi/extra/path?a+b+c")
+            match("QUERY_STRING", "a+b+c")
+            assert(keyword("ARG[0]").contains("cgiProgram"))
+            match("ARG.1.", "a")
+            match("ARG.2.", "b")
+            match("ARG.3.", "c")
+        }
 
         http.get(HTTP + "/cgi-bin/cgiProgram?var1=a+a&var2=b%20b&var3=c")
         match("QUERY_STRING", "var1=a+a&var2=b%20b&var3=c")
@@ -160,10 +174,13 @@ if (App.config.bld_cgi && Path(test.top).join("src/test/web/cgiProgram.cgi").exi
         let translated = Path(keyword("PATH_TRANSLATED"))
         assert(path == translated)
 
-        http.get(HTTP + "/cgi-bin/cgi%20Program?var%201=value%201")
-        match("QUERY_STRING", "var%201=value%201")
-        match("SCRIPT_NAME", "/cgi-bin/cgi Program")
-        match("QVAR var 1", "value 1")
+        if (!vxworks) {
+            /* VxWorks doesn't have "cgi Program" installed */
+            http.get(HTTP + "/cgi-bin/cgi%20Program?var%201=value%201")
+            match("QUERY_STRING", "var%201=value%201")
+            match("SCRIPT_NAME", "/cgi-bin/cgi Program")
+            match("QVAR var 1", "value 1")
+        }
     }
 
     function status() {
@@ -185,12 +202,15 @@ if (App.config.bld_cgi && Path(test.top).join("src/test/web/cgiProgram.cgi").exi
 
     //  Non-parsed header
     function nph() {
-        let http = new Http
-        http.setHeader("SWITCHES", "-n")
-        http.get(HTTP + "/cgi-bin/nph-cgiProgram")
-        assert(http.status == 200)
-        assert(http.response.startsWith("HTTP/1.0"))
-        assert(http.response.contains("X-CGI-CustomHeader: Any value at all"))
+        if (!vxworks) {
+            /* VxWorks doesn't have "nph-cgiProgram" installed */
+            let http = new Http
+            http.setHeader("SWITCHES", "-n")
+            http.get(HTTP + "/cgi-bin/nph-cgiProgram")
+            assert(http.status == 200)
+            assert(http.response.startsWith("HTTP/1.0"))
+            assert(http.response.contains("X-CGI-CustomHeader: Any value at all"))
+        }
     }
 
     function quoting() {

@@ -55,6 +55,7 @@ typedef struct MaAppweb {
     int                 gid;                /**< Group Id */
     int                 userChanged;        /**< User name changed */
     int                 groupChanged;       /**< Group name changed */
+    int                 skipModules;        /**< Don't load modules */
 } MaAppweb;
 
 /**

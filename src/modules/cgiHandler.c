@@ -235,9 +235,6 @@ static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
             q->queueData = 0;
             httpError(conn, HTTP_CODE_BAD_REQUEST, "Client supplied insufficient body data");
         }
-#if UNUSED
-        httpAddParamsFromQueue(q);
-#endif
     } else {
         /* No service routine, we just need it to be queued for writeToCGI */
         httpPutForService(q, packet, 0);
@@ -354,9 +351,6 @@ static ssize cgiCallback(MprCmd *cmd, int channel, void *data)
     }
     mprAssert(conn->tx);
     mprAssert(conn->rx);
-#if UNUSED
-    mprAssert(!cmd->disconnected);
-#endif
 
     tx = conn->tx;
     mprAssert(tx);
@@ -365,7 +359,6 @@ static ssize cgiCallback(MprCmd *cmd, int channel, void *data)
 
     switch (channel) {
     case MPR_CMD_STDIN:
-//  MOB - do we ever get this event?
         /* CGI's stdin can now accept more data */
         writeToCGI(q->pair);
         break;
@@ -409,14 +402,9 @@ static ssize readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf 
     int         err;
 
     conn = q->conn;
-#if UNUSED
-    mprAssert(!cmd->disconnected);
-#endif
     mprAssert(conn->state > HTTP_STATE_BEGIN);
     mprResetBufIfEmpty(buf);
     total = 0;
-
-    //  MOB - refactor
 
     while (mprGetCmdFd(cmd, channel) >= 0 && conn->sock && conn->state > HTTP_STATE_BEGIN) {
         do {
@@ -430,9 +418,13 @@ static ssize readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf 
                     break;
                 }
             }
+#if UNUSED
             mprYield(MPR_YIELD_STICKY);
+#endif
             nbytes = mprReadCmd(cmd, channel, mprGetBufEnd(buf), space);
+#if UNUSED
             mprResetYield();
+#endif
 
             mprLog(7, "CGI: Read from gateway, channel %d, got %d bytes. errno %d", channel, nbytes, 
                 nbytes >= 0 ? 0 : mprGetOsError());
@@ -453,11 +445,9 @@ static ssize readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf 
             } else if (nbytes == 0) {
                 /*
                     This may reap the terminated child and thus clear cmd->process if both stderr and stdout are closed.
-                 */
-                mprLog(5, "CGI: Gateway EOF for %s, pid %d", (channel == MPR_CMD_STDOUT) ? "stdout" : "stderr", cmd->pid);
-                /* 
                     WARNING: this may complete the request here 
                  */
+                mprLog(5, "CGI: Gateway EOF for %s, pid %d", (channel == MPR_CMD_STDOUT) ? "stdout" : "stderr", cmd->pid);
                 mprCloseCmdFd(cmd, channel);
                 break;
 

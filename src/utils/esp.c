@@ -645,6 +645,7 @@ static void readConfig()
         return;
     }
     appweb = app->appweb;
+    appweb->skipModules = 1;
     http = app->appweb->http;
     if (app->hostOS) {
         appweb->hostOS = app->hostOS;

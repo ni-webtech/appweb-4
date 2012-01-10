@@ -202,11 +202,11 @@ release32:
 
 vx5:
 	unset WIND_HOME WIND_BASE ; \
-	SEARCH_PATH=/tornado ./configure --host=i386-wrs-vxworks --enable-all --without-ssl --without-php --without-cgi
+	SEARCH_PATH=/tornado ./configure --host=i386-wrs-vxworks --enable-all --without-ssl --without-php
 
 vx vx6:
 	unset WIND_HOME WIND_BASE ; \
-	./configure --host=pentium-wrs-vxworks --enable-all --without-ssl --without-php --without-cgi
+	./configure --host=pentium-wrs-vxworks --enable-all --without-ssl --without-php
 
 vxsim:
 	unset WIND_HOME WIND_BASE ; \

@@ -5176,8 +5176,13 @@ void mprCloseCmdFd(MprCmd *cmd, int channel)
 #endif
         if (channel != MPR_CMD_STDIN) {
             cmd->eofCount++;
-            if (cmd->eofCount >= cmd->requiredEof && cmd->pid == 0) {
-                cmd->complete = 1;
+            if (cmd->eofCount >= cmd->requiredEof) {
+#if VXWORKS
+                reapCmd(cmd, 0);
+#endif
+                if (cmd->pid == 0) {
+                    cmd->complete = 1;
+                }
             }
         }
     }
@@ -5435,7 +5440,6 @@ int mprStopCmd(MprCmd *cmd, int signal)
 ssize mprReadCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize)
 {
 #if BLD_WIN_LIKE
-{
     int     rc, count;
     /*
         Need to detect EOF in windows. Pipe always in blocking mode, but reads block even with no one on the other end.
@@ -5452,7 +5456,28 @@ ssize mprReadCmd(MprCmd *cmd, int channel, char *buf, ssize bufsize)
     /* This maps to EAGAIN */
     SetLastError(WSAEWOULDBLOCK);
     return -1;
-}
+
+#elif VXWORKS
+    /*
+        Only needed when using non-blocking I/O
+     */
+    int     rc;
+
+    rc = read(cmd->files[channel].fd, buf, bufsize);
+
+    /*
+        VxWorks can't signal EOF on non-blocking pipes. Need a pattern indicator.
+     */
+    if (rc == MPR_CMD_VXWORKS_EOF_LEN && strncmp(buf, MPR_CMD_VXWORKS_EOF, MPR_CMD_VXWORKS_EOF_LEN) == 0) {
+        /* EOF */
+        return 0;
+
+    } else if (rc == 0) {
+        rc = -1;
+        errno = EAGAIN;
+    }
+    return rc;
+
 #else
     mprAssert(cmd->files[channel].fd >= 0);
     return read(cmd->files[channel].fd, buf, bufsize);
@@ -5643,9 +5668,11 @@ static void reapCmd(MprCmd *cmd, MprSignal *sp)
     /*
         The command exit status (cmd->status) is set in cmdTaskEntry
      */
-    if (semTake(cmd->exitCond, MPR_TIMEOUT_STOP_TASK) != OK) {
-        mprError("cmd: child %s did not exit, errno %d", cmd->program);
-        return;
+    if (!cmd->stopped) {
+        if (semTake(cmd->exitCond, MPR_TIMEOUT_STOP_TASK) != OK) {
+            mprError("cmd: child %s did not exit, errno %d", cmd->program);
+            return;
+        }
     }
     semDelete(cmd->exitCond);
     cmd->exitCond = 0;
@@ -5857,14 +5884,14 @@ void mprSetCmdDir(MprCmd *cmd, cchar *dir)
  */
 static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
 {
-#if VXWORKS
+#if VXWORKS && UNUSED
     cmd->argv = argv;
     cmd->argc = argc;
     cmd->env = 0;
 #endif
 
-#if BLD_UNIX_LIKE
-    char    *cp, **envp;
+#if BLD_UNIX_LIKE || VXWORKS
+    char    **envp;
     int     ecount, index, i, hasPath, hasLibPath;
 
     cmd->argv = argv;
@@ -5889,16 +5916,20 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
             }
             envp[index++] = sclone(env[i]);
         }
-
+#if BLD_UNIX_LIKE
+{
         /*
             Add PATH and LD_LIBRARY_PATH 
          */
+        char *cp;
         if (!hasPath && (cp = getenv("PATH")) != 0) {
             envp[index++] = sfmt("PATH=%s", cp);
         }
         if (!hasLibPath && (cp = getenv(LD_LIBRARY_PATH)) != 0) {
             envp[index++] = sfmt("%s=%s", LD_LIBRARY_PATH, cp);
         }
+}
+#endif
         envp[index++] = '\0';
         mprLog(4, "mprStartCmd %s", cmd->program);
         for (i = 0; i < argc; i++) {
@@ -6390,14 +6421,14 @@ int startProcess(MprCmd *cmd)
     program = mprGetPathBase(cmd->program);
     if (entryPoint == 0) {
         program = mprTrimPathExt(program);
-#if BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64
+#if UNUSED && (BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64)
         entryPoint = sjoin("_", program, "Main", NULL);
 #else
-        entryPoint = sjoin(program, "Main", NULL);
+        entryPoint = program;
 #endif
     }
     if (symFindByName(sysSymTbl, entryPoint, (char**) &entryFn, &symType) < 0) {
-        if ((mp = mprCreateModule(cmd->program, cmd->program, entryPoint, NULL)) == 0) {
+        if ((mp = mprCreateModule(cmd->program, cmd->program, NULL, NULL)) == 0) {
             mprError("start: can't create module");
             return MPR_ERR_CANT_CREATE;
         }
@@ -6412,10 +6443,7 @@ int startProcess(MprCmd *cmd)
     }
     taskPriorityGet(taskIdSelf(), &pri);
 
-    /*
-        Pass the server output file to become the client stdin.
-     */
-    cmd->pid = taskSpawn(entryPoint, pri, VX_FP_TASK, MPR_DEFAULT_STACK, (FUNCPTR) cmdTaskEntry, 
+    cmd->pid = taskSpawn(entryPoint, pri, VX_FP_TASK | VX_PRIVATE_ENV, MPR_DEFAULT_STACK, (FUNCPTR) cmdTaskEntry, 
         (int) cmd->program, (int) entryFn, (int) cmd, 0, 0, 0, 0, 0, 0, 0);
 
     if (cmd->pid < 0) {
@@ -14466,7 +14494,9 @@ MprModule *mprCreateModule(cchar *name, cchar *path, cchar *entry, void *data)
     }
     mp->name = sclone(name);
     mp->path = sclone(path);
-    mp->entry = sclone(entry);
+    if (entry && *entry) {
+        mp->entry = sclone(entry);
+    }
     mp->moduleData = data;
     mp->lastActivity = mprGetTime();
     index = mprAddItem(ms->modules, mp);
@@ -25822,6 +25852,7 @@ int mprLoadNativeModule(MprModule *mp)
             return MPR_ERR_CANT_READ;
         }
         close(fd);
+        mp->handle = handle;
 
     } else if (mp->entry) {
         mprLog(2, "Activating module %s", mp->name);
@@ -25831,7 +25862,6 @@ int mprLoadNativeModule(MprModule *mp)
             mprError("Can't find symbol %s when loading %s", mp->entry, mp->path);
             return MPR_ERR_CANT_READ;
         }
-        mp->handle = handle;
         if ((fn)(mp->moduleData, mp) < 0) {
             mprError("Initialization for %s failed.", mp->path);
             return MPR_ERR_CANT_INITIALIZE;
