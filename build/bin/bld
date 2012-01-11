@@ -668,7 +668,7 @@ if [ "$BLD_WIN_LIKE" = 1 ] ; then
 
 else
     #
-    #   Unix / Linux / MacOS / FreeBSD
+    #   Unix / Linux / MacOS / FreeBSD / VxWorks
     #
     for p in ${LIBRARY_PATHS} ; do
         if [ "${p}" != "" ] ; then
@@ -690,14 +690,14 @@ else
                 LIB_LIST="${LIB_LIST} $libName"
             fi
         done
-        for mod in ${MODULES}
-        do
-            if [ "${mod}" != "" ] ; then
-                findLib $mod modName IMPORTS
-                MOD_LIST="${MOD_LIST} $modName"
-            fi
-        done
     fi
+    for mod in ${MODULES}
+    do
+        if [ "${mod}" != "" ] ; then
+            findLib $mod modName IMPORTS
+            MOD_LIST="${MOD_LIST} $modName"
+        fi
+    done
 
     if [ "$OS" = MACOSX ] ; then
         RPATH_LIST="@executable_path/../$BLD_LIB_NAME @executable_path/ @loader_path/ $RPATH_LIST"
@@ -953,7 +953,7 @@ else
             fi
             run "${LINKER}" -o ${SHARED_LIBRARY} ${SONAME_SWITCH} ${INSTALL_NAME} ${DSO} ${LOBJS} \
                 ${MAKE_LDFLAGS} ${BLD_LDFLAGS} ${_LDFLAGS} ${MAKE_CFLAGS} ${BLD_CFLAGS} ${_CFLAGS} \
-                ${LINK_LIBRARY_PATHS} -L${_LDPATH} ${RPATH} ${LIB_LIST} \
+                ${LINK_LIBRARY_PATHS} -L${_LDPATH} ${RPATH} ${LIB_LIST} ${MOD_LIST} \
                 ${STND_LIBS} ${ERRORS}
             if [ $? != 0 ] ; then
                 echo "bld: $LINKER failed"

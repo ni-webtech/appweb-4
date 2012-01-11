@@ -438,8 +438,6 @@ static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *rec
     *recompile = 0;
     mprGetPathInfo(module, &minfo);
     if (!minfo.valid) {
-    	char where[512];
-    	getcwd(where, 512);
         *recompile = 1;
         if ((mp = mprLookupModule(source)) != 0) {
             if (!unloadModule(source, 0)) {

@@ -85,8 +85,8 @@ $(BLD_LIB_DIR)/$(CGI)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ) $(BLD_LIB
 	bld --shared --library $(BLD_LIB_DIR)/$(CGI) --libs "$(LIBS)" $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ)
 
 $(BLD_LIB_DIR)/$(EJS)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/ejsHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
-	bld --shared --library $(BLD_LIB_DIR)/$(EJS) --search "$(BLD_EJSCRIPT_LIBPATHS)" --libs "$(LIBS) \
-		$(BLD_EJSCRIPT_LIBS)" ejsHandler$(BLD_OBJ) 
+	bld --shared --library $(BLD_LIB_DIR)/$(EJS) --search "$(BLD_EJSCRIPT_LIBPATHS)" \
+		--modules ejs --libs "$(LIBS) $(BLD_EJSCRIPT_LIBS)" ejsHandler$(BLD_OBJ) 
 
 $(BLD_LIB_DIR)/$(ESP)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/espHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB) \
 		$(BLD_OBJ_DIR)/espAbbrev$(BLD_OBJ) $(BLD_OBJ_DIR)/espHandler$(BLD_OBJ) $(BLD_OBJ_DIR)/espFramework$(BLD_OBJ) \
