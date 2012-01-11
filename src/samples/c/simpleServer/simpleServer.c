@@ -10,7 +10,7 @@
 
 /********************************* Code *******************************/
 
-MAIN(simpleServer, int argc, char** argv)
+MAIN(simpleServer, int argc, char** argv, char **envp)
 {
     /*
         This will create and run the web server described by the 

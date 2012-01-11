@@ -57,7 +57,7 @@ int maParseConfig(MaServer *server, cchar *path, int flags)
         Create top level host and route
         NOTE: the route is not added to the host until the finalization below
      */
-    host = httpCreateHost();
+    host = httpCreateHost(mprGetPathDir(path));
     httpSetHostName(host, "default-server");
     route = httpCreateRoute(host);
     httpSetHostDefaultRoute(host, route);

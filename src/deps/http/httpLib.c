@@ -3692,7 +3692,7 @@ HttpEndpoint *httpCreateConfiguredEndpoint(cchar *home, cchar *documents, cchar 
             return 0;
         }
     }
-    if ((host = httpCreateHost()) == 0) {
+    if ((host = httpCreateHost(home)) == 0) {
         return 0;
     }
     if ((route = httpCreateRoute(host)) == 0) {
@@ -3701,7 +3701,6 @@ HttpEndpoint *httpCreateConfiguredEndpoint(cchar *home, cchar *documents, cchar 
     httpSetHostDefaultRoute(host, route);
     httpSetHostIpAddr(host, ip, port);
     httpAddHostToEndpoint(endpoint, host);
-    httpSetHostHome(host, home);
     httpSetRouteDir(route, documents);
     httpFinalizeRoute(route);
     return endpoint;
@@ -4407,7 +4406,7 @@ void httpMemoryError(HttpConn *conn)
 static void manageHost(HttpHost *host, int flags);
 
 
-HttpHost *httpCreateHost()
+HttpHost *httpCreateHost(cchar *home)
 {
     HttpHost    *host;
     Http        *http;
@@ -4425,7 +4424,7 @@ HttpHost *httpCreateHost()
     host->routes = mprCreateList(-1, 0);
     host->flags = HTTP_HOST_NO_TRACE;
     host->protocol = sclone("HTTP/1.1");
-    host->home = sclone(".");
+    host->home = sclone(home ? home : ".");
     httpAddHost(http, host);
     return host;
 }

@@ -54,7 +54,7 @@ static EjsVar *myEjs(Ejs *ejs, EjsVar *thisObj, int argc, EjsVar **argv)
 /*  
     Create a simple stand-alone web server
  */
-MAIN(simpleEjs, int argc, char **argv)
+MAIN(simpleEjs, int argc, char **argv, char **envp)
 {
 #if TODO
     MaServer    *server;

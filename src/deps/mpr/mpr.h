@@ -1365,8 +1365,8 @@ typedef struct MprArgs {
     Convenience define to declare a main program entry point that works for Windows, VxWorks and Unix
  */
 #if VXWORKS
-    #define MAIN(name, _argc, _argv)  \
-        static int innerMain(int argc, char **argv); \
+    #define MAIN(name, _argc, _argv, _envp)  \
+        static int innerMain(int argc, char **argv, char **envp); \
         int name(char *arg0, ...) { \
             va_list args; \
             char *argp, *largv[MPR_MAX_ARGC]; \
@@ -1379,11 +1379,11 @@ typedef struct MprArgs {
             for (argp = va_arg(args, char*); argp && largc < MPR_MAX_ARGC; argp = va_arg(args, char*)) { \
                 largv[largc++] = argp; \
             } \
-            return innerMain(largc, largv); \
+            return innerMain(largc, largv, NULL); \
         } \
-        static int innerMain(_argc, _argv)
+        static int innerMain(_argc, _argv, _envp)
 #elif BLD_WIN_LIKE && BLD_CHAR_LEN > 1
-    #define MAIN(name, argc, argv)  \
+    #define MAIN(name, argc, argv, envp)  \
         APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, LPWSTR command, int junk2) { \
             char *largv[MPR_MAX_ARGC]; \
             extern int main(); \
@@ -1392,22 +1392,22 @@ typedef struct MprArgs {
             wtom(mcommand, sizeof(dest), command, -1);
             largc = mprParseArgs(mcommand, &largv[1], MPR_MAX_ARGC - 1); \
             largv[0] = #name; \
-            main(largc, largv); \
+            main(largc, largv, envp); \
         } \
-        int main(argc, argv)
+        int main(argc, argv, envp)
 #elif BLD_WIN_LIKE
-    #define MAIN(name, argc, argv)  \
+    #define MAIN(name, argc, argv, envp)  \
         APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2) { \
             extern int main(); \
             char *largv[MPR_MAX_ARGC]; \
             int largc; \
             largc = mprParseArgs(command, &largv[1], MPR_MAX_ARGC - 1); \
             largv[0] = #name; \
-            main(largc, largv); \
+            main(largc, largv, envp); \
         } \
-        int main(argc, argv)
+        int main(argc, argv, envp)
 #else
-    #define MAIN(name, argc, argv) int main(argc, argv)
+    #define MAIN(name, argc, argv, envp) int main(argc, argv, envp)
 #endif
 
 #if BLD_UNIX_LIKE

@@ -438,6 +438,8 @@ static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *rec
     *recompile = 0;
     mprGetPathInfo(module, &minfo);
     if (!minfo.valid) {
+    	char where[512];
+    	getcwd(where, 512);
         *recompile = 1;
         if ((mp = mprLookupModule(source)) != 0) {
             if (!unloadModule(source, 0)) {
@@ -524,35 +526,25 @@ static bool unloadModule(cchar *module, MprTime timeout)
 
 static EspRoute *allocEspRoute(HttpRoute *route)
 {
-    EspRoute  *eroute;
+    EspRoute    *eroute;
+    MprPath     info;
+    char        *path;
 
     if ((eroute = mprAllocObj(EspRoute, espManageEspRoute)) == 0) {
         return 0;
     }
-#if DEBUG_IDE
-    eroute->cacheDir = mprGetAppDir();
+#if UNUSED
+    path = mprJoinPath(mprGetAppDir(), "../" BLD_LIB_NAME);
 #else
-    eroute->cacheDir = mprJoinPath(mprGetAppDir(), "../" BLD_LIB_NAME);
+    path = mprJoinPath(route->host->home, "cache");
+    if (mprGetPathInfo(path, &info) != 0 || !info.isDir) {
+        path = route->host->home;
+    }
 #endif
-
-#if UNUSED
-    eroute->layoutsDir = route->dir;
-    eroute->dbDir = route->dir;
-    eroute->controllersDir = route->dir;
-    eroute->viewsDir = route->dir;
-    eroute->staticDir = route->dir;
+#if DEBUG_IDE
+    path = mprGetAppDir();
 #endif
-
-#if UNUSED
-    /*
-        Setup default parameters for $expansion of Http route paths
-     */
-    httpSetRoutePathVar(route, "CONTROLLERS_DIR", eroute->controllersDir);
-    httpSetRoutePathVar(route, "DB_DIR", eroute->dbDir);
-    httpSetRoutePathVar(route, "LAYOUTS_DIR", eroute->layoutsDir);
-    httpSetRoutePathVar(route, "STATIC_DIR", eroute->staticDir);
-    httpSetRoutePathVar(route, "VIEWS_DIR", eroute->viewsDir);
-#endif
+    eroute->cacheDir = path;
 
 #if BLD_DEBUG
     eroute->update = 1;

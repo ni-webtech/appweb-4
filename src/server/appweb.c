@@ -69,7 +69,7 @@ static long msgProc(HWND hwnd, uint msg, uint wp, long lp);
 
 /*********************************** Code *************************************/
 
-MAIN(appweb, int argc, char **argv)
+MAIN(appweb, int argc, char **argv, char **envp)
 {
     Mpr     *mpr;
     cchar   *ipAddrPort, *argp, *jail;
@@ -114,24 +114,24 @@ MAIN(appweb, int argc, char **argv)
         if (*argp != '-') {
             break;
         }
-        if (strcmp(argp, "--config") == 0 || strcmp(argp, "--conf") == 0) {
+        if (smatch(argp, "--config") || smatch(argp, "--conf")) {
             if (argind >= argc) {
                 usageError();
             }
             app->configFile = sclone(argv[++argind]);
 
 #if BLD_UNIX_LIKE
-        } else if (strcmp(argp, "--chroot") == 0) {
+        } else if (smatch(argp, "--chroot")) {
             if (argind >= argc) {
                 usageError();
             }
             jail = mprGetAbsPath(argv[++argind]);
 #endif
 
-        } else if (strcmp(argp, "--debugger") == 0 || strcmp(argp, "-D") == 0) {
+        } else if (smatch(argp, "--debugger") || smatch(argp, "-D")) {
             mprSetDebugMode(1);
 
-        } else if (strcmp(argp, "--exe") == 0) {
+        } else if (smatch(argp, "--exe")) {
             if (argind >= argc) {
                 usageError();
             }
@@ -139,38 +139,40 @@ MAIN(appweb, int argc, char **argv)
             mprSetAppPath(mpr->argv[0]);
             mprSetModuleSearchPath(NULL);
 
-        } else if (strcmp(argp, "--home") == 0) {
+        } else if (smatch(argp, "--home")) {
             if (argind >= argc) {
                 usageError();
             }
             app->home = mprGetAbsPath(argv[++argind]);
+#if UNUSED && KEEP
             if (chdir(app->home) < 0) {
                 mprError("%s: Can't change directory to %s", mprGetAppName(), app->home);
                 exit(4);
             }
+#endif
 
-        } else if (strcmp(argp, "--log") == 0 || strcmp(argp, "-l") == 0) {
+        } else if (smatch(argp, "--log") || smatch(argp, "-l")) {
             if (argind >= argc) {
                 usageError();
             }
             logSpec = argv[++argind];
 
-        } else if (strcmp(argp, "--name") == 0 || strcmp(argp, "-n") == 0) {
+        } else if (smatch(argp, "--name") || smatch(argp, "-n")) {
             if (argind >= argc) {
                 usageError();
             }
             mprSetAppName(argv[++argind], 0, 0);
 
-        } else if (strcmp(argp, "--threads") == 0) {
+        } else if (smatch(argp, "--threads")) {
             if (argind >= argc) {
                 usageError();
             }
             app->workers = atoi(argv[++argind]);
 
-        } else if (strcmp(argp, "--verbose") == 0 || strcmp(argp, "-v") == 0) {
+        } else if (smatch(argp, "--verbose") || smatch(argp, "-v")) {
             verbose++;
 
-        } else if (strcmp(argp, "--version") == 0 || strcmp(argp, "-V") == 0) {
+        } else if (smatch(argp, "--version") || smatch(argp, "-V")) {
             mprPrintf("%s %s-%s\n", mprGetAppTitle(), BLD_VERSION, BLD_NUMBER);
             exit(0);
 

@@ -135,7 +135,12 @@ static void startCgi(HttpQueue *q)
     cmd->stdoutBuf = mprCreateBuf(HTTP_BUFSIZE, HTTP_BUFSIZE);
     cmd->stderrBuf = mprCreateBuf(HTTP_BUFSIZE, HTTP_BUFSIZE);
 
+#if !VXWORKS
+    /*
+        This will be ignored on VxWorks because there is only one global current directory for all tasks
+     */
     mprSetCmdDir(cmd, mprGetPathDir(fileName));
+#endif
     mprSetCmdCallback(cmd, cgiCallback, tx);
 
     if (mprStartCmd(cmd, argc, argv, envv, MPR_CMD_IN | MPR_CMD_OUT | MPR_CMD_ERR) < 0) {

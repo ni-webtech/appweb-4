@@ -5873,9 +5873,13 @@ MprBuf *mprGetCmdBuf(MprCmd *cmd, int channel)
 
 void mprSetCmdDir(MprCmd *cmd, cchar *dir)
 {
+#if VXWORKS
+    mprError("WARNING: Setting working directory on VxWorks is global: %s", dir);
+#else
     mprAssert(dir && *dir);
 
     cmd->dir = sclone(dir);
+#endif
 }
 
 
@@ -6443,6 +6447,13 @@ int startProcess(MprCmd *cmd)
     }
     taskPriorityGet(taskIdSelf(), &pri);
 
+{
+    char where[512];
+    getcwd(where, 511);
+
+    mprLog(0, "Before SPAWN, cwd %s", where);
+}
+
     cmd->pid = taskSpawn(entryPoint, pri, VX_FP_TASK | VX_PRIVATE_ENV, MPR_DEFAULT_STACK, (FUNCPTR) cmdTaskEntry, 
         (int) cmd->program, (int) entryFn, (int) cmd, 0, 0, 0, 0, 0, 0, 0);
 
@@ -6470,8 +6481,8 @@ static void cmdTaskEntry(char *program, MprCmdTaskFn entry, int cmdArg)
     MprCmd          *cmd;
     MprCmdFile      *files;
     WIND_TCB        *tcb;
-    char            **ep, *dir;
-    int             inFd, outFd, errFd, id, rc;
+    char            **ep;
+    int             inFd, outFd, errFd, id;
 
     cmd = (MprCmd*) cmdArg;
 
@@ -6506,8 +6517,14 @@ static void cmdTaskEntry(char *program, MprCmdTaskFn entry, int cmdArg)
         putenv(*ep);
     }
 
+#if !VXWORKS
+{
+    char    *dir;
+    int     rc;
+
     /*
         Set current directory if required
+        WARNING: Setting working directory on VxWorks is global
      */
     if (cmd->dir) {
         rc = chdir(cmd->dir);
@@ -6519,6 +6536,8 @@ static void cmdTaskEntry(char *program, MprCmdTaskFn entry, int cmdArg)
         mprError("cmd: Can't change directory to %s", cmd->dir);
         exit(255);
     }
+}
+#endif
 
     /*
         Call the user's entry point

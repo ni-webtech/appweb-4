@@ -43,7 +43,7 @@ static void myEgi(HttpQueue *q)
 /*
     Create a simple stand-alone web server
  */
-MAIN(simpleEgi, int argc, char **argv)
+MAIN(simpleEgi, int argc, char **argv, char **envp)
 {
     MaServer    *server;
 

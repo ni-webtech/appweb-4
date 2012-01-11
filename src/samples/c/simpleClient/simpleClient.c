@@ -22,7 +22,7 @@ static void manageApp(App *app, int flags);
 
 /********************************* Code *******************************/
 
-MAIN(simpleClient, int argc, char** argv)
+MAIN(simpleClient, int argc, char **argv, char **envp)
 {
     Mpr     *mpr;
     App     *app;

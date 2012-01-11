@@ -93,7 +93,7 @@ static ssize    writeBody(HttpConn *conn, MprList *files);
 
 /*********************************** Code *************************************/
 
-MAIN(httpMain, int argc, char *argv[])
+MAIN(httpMain, int argc, char **argv, char **envp)
 {
     MprTime     start;
     double      elapsed;
