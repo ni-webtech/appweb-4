@@ -802,11 +802,12 @@ static int errorLogDirective(MaState *state, cchar *key, cchar *value)
     if (sncmp(path, "stdout", 6) != 0 && sncmp(path, "stderr", 6) != 0) {
         path = httpMakePath(state->route, path);
     }
-    if (mprStartLogging(path, 1) < 0) {
+    if (mprStartLogging(path, 0) < 0) {
         mprError("Can't write to ErrorLog: %s", path);
         return MPR_ERR_BAD_SYNTAX;
     }
     mprSetLogLevel(level);
+    mprLogHeader();
     return 0;
 }
 
