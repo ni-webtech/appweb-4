@@ -123,6 +123,29 @@
 </pre>
             <p>Use the "--help" switch to see the available options or see the <a href="configure.html">Configure
             Program</a> document for more details.</p><a name="cross" id="cross"></a>
+
+            <h3>External Packages</h3>
+            <p>The Appweb configure command supports the resolution of external packages such as Ejscript, OpenSSL and
+                PHP. By default, Appweb can locate these packages if the source distributions are installed in 
+                standard locations. Otherwise, the packages can be identified by using the configure 
+                <em>--with-PACKAGE=PATH</em> switch. This specifies that path to the source directory containing the
+                package source distribution.</p>
+                <p>For example, to build with Ejscript, follow these steps:</p>
+            <ol>
+                <li>Download Ejscript. You can download the open source version of Ejscript from
+                <a href="https://github.com/embedthis/ejs-2">https://github.com/embedthis/ejs-2</a>. Contact
+                <a mailto"sales@embedthis.com">sales@embedthis.com</a> if you require a commercial license.</li>
+                <li>Configure and build Ejscript via the Ejscript configure command in the Ejscript directory:
+                    <pre>./configure
+make</pre></li> 
+                <li>From the Appweb source directory run the Appweb configure:
+                <pre>./configure --with-ejscript=/path/to/ejscript
+make</pre></li>
+            </ol>
+            <p>The Appweb configure program and Makefiles will import the required libraries and headers into
+            the Appweb source tree. NOTE: Ejscript will provide the MPR and HTTP library as they must be 
+            common between Appweb and Ejscript.</p>
+
             <h3>Cross Compilation</h3>
             <p>To configure for cross compilation you need to specify the --host and --build switches. These take
             system architecture specifications in the form: CPU-VENDOR-OS. For example: i386-pc-linux or

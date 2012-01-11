@@ -4235,13 +4235,21 @@ extern void mprCreateLogService();
     </ul>
     @param showConfig Set to true to log an initial system configuration.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
+    @ingroup MprLog
 */
 extern int mprStartLogging(cchar *logSpec, int showConfig);
+
+/**
+    Emit a descriptive log header
+    @ingroup MprLog
+ */
+extern void mprLogHeader();
 
 /**
     Backup a log
     @param path Base log filename
     @param count Count of archived logs to keep
+    @ingroup MprLog
  */
 extern int mprBackupLog(cchar *path, int count);
 
@@ -4252,6 +4260,7 @@ extern int mprBackupLog(cchar *path, int count);
     @param backupCount Count of the number of log files to keep
     @param flags Set to MPR_LOG_APPEND to append to existing log files. Set to MPR_LOG_TRUNCATE to truncate log files
         on application restart.
+    @ingroup MprLog
  */
 extern void mprSetLogBackup(ssize logSize, int backupCount, int flags);
 
