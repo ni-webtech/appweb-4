@@ -25890,26 +25890,6 @@ int mprInitWindow()
 }
 
 
-int isnan(double n) {
-    return n != n;
-}
-
-
-int isnanf(float n) {
-    return n != n;
-}
-
-
-int isinf(double n) {
-    return n == (1.0 / 0.0) || n == (-1.0 / 0.0);
-}
-
-
-int isinff(float n) {
-    return n == (1.0f / 0.0f) || n == (-1.0f / 0.0f);
-}
-
-
 //  TODO - is this still needed?
 /*
     Create a routine to pull in the GCC support routines for double and int64 manipulations for some platforms. Do this

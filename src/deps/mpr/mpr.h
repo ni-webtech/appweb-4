@@ -488,6 +488,12 @@ typedef int64 MprTime;
             #define MAXFLOAT        FLT_MAX
         #endif
     #endif
+    #if VXWORKS
+        #define isnan(n)  ((n) != (n))
+        #define isnanf(n) ((n) != (n))
+        #define isinf(n)  ((n) == (1.0 / 0.0) || (n) == (-1.0 / 0.0))
+        #define isinff(n) ((n) == (1.0 / 0.0) || (n) == (-1.0 / 0.0))
+    #endif
     #if BLD_WIN_LIKE
         #define isNan(f) (_isnan(f))
     #elif VXWORKS || MACOSX || LINUX
