@@ -1382,7 +1382,7 @@ struct  MprXml;
         } \
         static int innerMain(_argc, _argv, _envp)
 #elif BLD_WIN_LIKE && BLD_CHAR_LEN > 1
-    #define MAIN(name, argc, argv, envp)  \
+    #define MAIN(name, _argc, _argv, _envp)  \
         APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, LPWSTR command, int junk2) { \
             char *largv[MPR_MAX_ARGC]; \
             extern int main(); \
@@ -1391,22 +1391,22 @@ struct  MprXml;
             wtom(mcommand, sizeof(dest), command, -1);
             largc = mprParseArgs(mcommand, &largv[1], MPR_MAX_ARGC - 1); \
             largv[0] = #name; \
-            main(largc, largv, envp); \
+            main(largc, largv, NULL); \
         } \
-        int main(argc, argv, envp)
+        int main(argc, argv, _envp)
 #elif BLD_WIN_LIKE
-    #define MAIN(name, argc, argv, envp)  \
+    #define MAIN(name, _argc, _argv, _envp)  \
         APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2) { \
             extern int main(); \
             char *largv[MPR_MAX_ARGC]; \
             int largc; \
             largc = mprParseArgs(command, &largv[1], MPR_MAX_ARGC - 1); \
             largv[0] = #name; \
-            main(largc, largv, envp); \
+            main(largc, largv, NULL); \
         } \
-        int main(argc, argv, envp)
+        int main(_argc, _argv, _envp)
 #else
-    #define MAIN(name, argc, argv, envp) int main(argc, argv, envp)
+    #define MAIN(name, _argc, _argv, _envp) int main(_argc, _argv, _envp)
 #endif
 
 #if BLD_UNIX_LIKE
