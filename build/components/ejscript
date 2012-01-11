@@ -50,7 +50,12 @@ defineComponent() {
         #
         dir="${path}"
         [ "$dir" = "" ] && dir=.
-        search="${dir}/out/lib:${dir}/out/bin:${dir}/out/inc:${dir}"
+        if [ "$BLD_CROSS" = 1 ] ; then
+            out=out/${BLD_HOST_SYSTEM}
+            search="${dir}/${out}/lib:${dir}/${out}/bin:${dir}/out/inc:${dir}"
+        else 
+            search="${dir}/out/lib:${dir}/out/bin:${dir}/out/inc:${dir}"
+        fi
         libdir=`probe --name libejs --dir --search "$search" "libejs"`
         if [ "$libdir" = "" -a "$path" != "" ] ; then
             warnComponent ejscript "Cannot locate libejs"
