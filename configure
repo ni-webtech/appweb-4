@@ -250,7 +250,7 @@ parseSystemConfiguration() {
         eval BLD_${kind}_CPU_ARCH=MPR_CPU_ARM
         prefix=arm
         ;;
-    i?86*|x86*)
+    i?86*)
         eval BLD_${kind}_CPU_ARCH=MPR_CPU_IX86
         prefix="i?86"
         ;;
@@ -276,10 +276,6 @@ parseSystemConfiguration() {
         eval BLD_${kind}_CPU_ARCH=MPR_CPU_SPARC
         prefix=sparc
         ;;
-    x86_64*)
-        eval BLD_${kind}_CPU_ARCH=MPR_CPU_IX64
-        prefix=x86_64
-        ;;
     sim)
         eval BLD_${kind}_CPU_ARCH=MPR_CPU_SIMNT
         prefix=sim
@@ -299,6 +295,14 @@ parseSystemConfiguration() {
     universal)
         eval BLD_${kind}_CPU_ARCH=MPR_CPU_UNIVERSAL
         prefix=universal
+        ;;
+    x86_64*)
+        eval BLD_${kind}_CPU_ARCH=MPR_CPU_IX64
+        prefix=x86_64
+        ;;
+    x86*)
+        eval BLD_${kind}_CPU_ARCH=MPR_CPU_IX86
+        prefix="i?86"
         ;;
     xscale*)
         eval BLD_${kind}_CPU_ARCH=MPR_CPU_XSCALE
