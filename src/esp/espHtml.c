@@ -17,7 +17,7 @@ static char *defaultScripts[] = {
     "/js/jquery.tablesorter",
     "/js/jquery.simplemodal",
 #if UNUSED && KEEP
-    "/js/jquery.treeview",              //  MOB - treeview not yet supported
+    "/js/jquery.treeview",
 #endif
     "/js/jquery.esp",
     0,

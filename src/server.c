@@ -78,7 +78,6 @@ void maSetDefaultServer(MaAppweb *appweb, MaServer *server)
     appweb->defaultServer = server;
 }
 
-//  MOB - sort this file
 
 MaServer *maLookupServer(MaAppweb *appweb, cchar *name)
 {
@@ -353,8 +352,6 @@ void maSetServerAddress(MaServer *server, cchar *ip, int port)
 }
 
 
-//  MOB - rename maSetGroup
-
 void maGetUserGroup(MaAppweb *appweb)
 {
 #if BLD_UNIX_LIKE
@@ -379,7 +376,6 @@ void maGetUserGroup(MaAppweb *appweb)
 }
 
 
-//  MOB - rename maSetUser
 int maSetHttpUser(MaAppweb *appweb, cchar *newUser)
 {
 #if BLD_UNIX_LIKE

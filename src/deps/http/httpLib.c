@@ -3229,12 +3229,10 @@ static void writeEvent(HttpConn *conn)
 
 void httpUseWorker(HttpConn *conn, MprDispatcher *dispatcher, MprEvent *event)
 {
-    //  MOB -- locking should not be needed
     lock(conn->http);
     conn->oldDispatcher = conn->dispatcher;
     conn->dispatcher = dispatcher;
     conn->worker = 1;
-
     mprAssert(!conn->workerEvent);
     conn->workerEvent = event;
     unlock(conn->http);
@@ -3243,12 +3241,10 @@ void httpUseWorker(HttpConn *conn, MprDispatcher *dispatcher, MprEvent *event)
 
 void httpUsePrimary(HttpConn *conn)
 {
-    //  MOB -- locking should not be needed
     lock(conn->http);
     mprAssert(conn->worker);
     mprAssert(conn->state == HTTP_STATE_BEGIN);
     mprAssert(conn->oldDispatcher && conn->dispatcher != conn->oldDispatcher);
-
     conn->dispatcher = conn->oldDispatcher;
     conn->oldDispatcher = 0;
     conn->worker = 0;
@@ -3280,7 +3276,6 @@ void httpEnableConnEvents(HttpConn *conn)
         mprQueueEvent(conn->dispatcher, event);
 
     } else {
-        //  MOB - why locking here?
         lock(conn->http);
         if (tx) {
             /*
@@ -3304,7 +3299,6 @@ void httpEnableConnEvents(HttpConn *conn)
                 conn->waitHandler = mprCreateWaitHandler(conn->sock->fd, eventMask, conn->dispatcher, conn->ioCallback, 
                     conn, 0);
             } else {
-                //  MOB API for this
                 conn->waitHandler->dispatcher = conn->dispatcher;
                 mprWaitOn(conn->waitHandler, eventMask);
             }
@@ -3433,7 +3427,6 @@ void httpSetChunkSize(HttpConn *conn, ssize size)
 }
 
 
-//  MOB - why not define this on the host or endpoint?
 void httpSetHeadersCallback(HttpConn *conn, HttpHeadersCallback fn, void *arg)
 {
     conn->headersCallback = fn;
@@ -3987,7 +3980,6 @@ int httpIsEndpointAsync(HttpEndpoint *endpoint)
 }
 
 
-//  MOB - rename. This could be a "restart"
 void httpSetEndpointAddress(HttpEndpoint *endpoint, cchar *ip, int port)
 {
     if (ip) {
@@ -5964,12 +5956,6 @@ static void freeNetPackets(HttpQueue *q, ssize bytes)
              */
             httpGetPacket(q);
         }
-#if UNUSED
-        mprAssert(bytes >= 0);
-        if (bytes == 0 && (q->first == NULL || !(q->first->flags & HTTP_PACKET_END))) {
-            break;
-        }
-#endif
     }
 }
 
@@ -7176,7 +7162,6 @@ void httpDiscardData(HttpQueue *q, bool removePackets)
                 continue;
             } else {
                 len = httpGetPacketLength(packet);
-                //  MOB - should this be done? Why not in the removePackets case?
                 q->conn->tx->length -= len;
                 q->count -= len;
                 mprAssert(q->count >= 0);
@@ -8076,7 +8061,6 @@ HttpRoute *httpCreateRoute(HttpHost *host)
     route->autoDelete = 1;
     route->workers = -1;
 
-    //  MOB
     if (MPR->httpService) {
         route->limits = mprMemdup(((Http*) MPR->httpService)->serverLimits, sizeof(HttpLimits));
     }
@@ -9561,8 +9545,7 @@ void httpFinalizeRoute(HttpRoute *route)
 
 
 /*
-    MOB - some description here
-    what does this return. Does it return an absolute URI?
+    What does this return. Does it return an absolute URI?
     MOB - rename httpUri() and move to uri.c
  */
 char *httpLink(HttpConn *conn, cchar *target, MprHash *options)
@@ -9655,7 +9638,7 @@ char *httpLink(HttpConn *conn, cchar *target, MprHash *options)
             target = "/";
         }
     }
-    //  MOB OPT
+    //  OPT
     uri = httpCreateUri(target, 0);
     uri = httpResolveUri(httpCreateUri(rx->uri, 0), 1, &uri, 0);
     httpNormalizeUri(uri);
@@ -10459,8 +10442,7 @@ static char *expandRequestTokens(HttpConn *conn, char *str)
 
         } else if (smatch(key, "request")) {
             value = stok(value, "=", &defaultValue);
-            //  MOB - implement default value below for those that can be null
-            //  MOB - OPT with switch on first char
+            //  OPT with switch on first char
             if (smatch(value, "clientAddress")) {
                 mprPutStringToBuf(buf, conn->ip);
 
@@ -11723,7 +11705,6 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                 }
                 *value++ = '\0';
                 conn->authType = slower(conn->authType);
-                // MOB - move this into the auth filter
                 if (!parseAuthenticate(conn, value)) {
                     httpError(conn, HTTP_CODE_BAD_REQUEST, "Bad Authentication header");
                     break;
@@ -11753,7 +11734,6 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
 
 /*  
     Parse an authentication response (client side only)
-    MOB - move this into the auth filter
  */
 static bool parseAuthenticate(HttpConn *conn, char *authDetails)
 {
@@ -12020,7 +12000,6 @@ static bool processRunning(HttpConn *conn)
 {
     int     canProceed;
 
-    //  MOB - refactor
     canProceed = 1;
     if (conn->connError) {
         httpSetState(conn, HTTP_STATE_COMPLETE);
@@ -12300,10 +12279,6 @@ int httpSetUri(HttpConn *conn, cchar *uri, cchar *query)
 static void waitHandler(HttpConn *conn, struct MprEvent *event)
 {
     httpCallEvent(conn, event->mask);
-#if UNUSED
-    //  MOB -- should not need this signal
-    mprSignalDispatcher(conn->dispatcher);
-#endif
 }
 
 
@@ -13465,7 +13440,7 @@ int httpShouldTrace(HttpConn *conn, int dir, int item, cchar *ext)
 }
 
 
-//  MOB OPT
+//  OPT
 static void traceBuf(HttpConn *conn, int dir, int level, cchar *msg, cchar *buf, ssize len)
 {
     cchar       *start, *cp, *tag, *digits;
@@ -13812,8 +13787,6 @@ void httpSetHeader(HttpConn *conn, cchar *key, cchar *fmt, ...)
     addHdr(conn, key, value);
 }
 
-
-//  MOB - sort file
 
 void httpSetHeaderString(HttpConn *conn, cchar *key, cchar *value)
 {
@@ -15972,7 +15945,6 @@ MprHash *httpGetParams(HttpConn *conn)
 }
 
 
-//  MOB - sort file
 int httpTestParam(HttpConn *conn, cchar *var)
 {
     MprHash    *vars;

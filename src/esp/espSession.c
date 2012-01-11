@@ -40,7 +40,6 @@ EspSession *espAllocSession(HttpConn *conn, cchar *id, MprTime lifespan)
 }
 
 
-//  MOB - need to be able to hook session creation / destruction
 void espDestroySession(EspSession *sp)
 {
     mprAssert(sp);
@@ -132,29 +131,11 @@ int espSetSessionVar(HttpConn *conn, cchar *key, cchar *value)
     if ((sp = espGetSession(conn, 1)) == 0) {
         return 0;
     }
-//  MOB - should not the session expire all at once?
     if (mprWriteCache(sp->cache, makeKey(sp, key), value, 0, sp->lifespan, 0, MPR_CACHE_SET) == 0) {
         return MPR_ERR_CANT_WRITE;
     }
     return 0;
 }
-
-
-#if UNUSED
-//  MOB - sessions should expire in their entirity
-void espExpireSessionVar(HttpConn *conn, cchar *key, MprTime lifespan)
-{
-    EspReq      *req;
-    EspSession  *sp;
-
-    mprAssert(conn);
-    mprAssert(key && *key);
-
-    req = conn->data;
-    sp = req->session;
-    mprExpireCache(sp->cache, makeKey(sp, key), mprGetTime() + lifespan);
-}
-#endif
 
 
 char *espGetSessionID(HttpConn *conn)

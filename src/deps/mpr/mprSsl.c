@@ -2173,9 +2173,6 @@ static MprModule *loadSsl(bool lazy)
     if (MPR->flags & MPR_SSL_PROVIDER_LOADED) {
         return mprLookupModule("sslModule");
     }
-#if UNUSED
-    mprLog(MPR_CONFIG, "Activating the SSL provider");
-#endif
 #if BLD_FEATURE_OPENSSL
     /*
         NOTE: preference given to open ssl if both are enabled

@@ -13,7 +13,6 @@
 
 /***************************** Forward Declarations ***************************/
 
-//  MOB TODO -- more unique prefixes for combo dist
 static int findFile(HttpConn *conn);
 static void handleDeleteRequest(HttpQueue *q);
 static void handlePutRequest(HttpQueue *q);

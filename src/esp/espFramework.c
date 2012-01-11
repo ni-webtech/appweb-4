@@ -340,14 +340,12 @@ Edi *espGetRouteDatabase(HttpRoute *route)
 }
 
 
-//  MOB - is this only for clients?
 int espGetStatus(HttpConn *conn)
 {
     return httpGetStatus(conn);
 }
 
 
-//  MOB - is this only for clients?
 char *espGetStatusMessage(HttpConn *conn)
 {
     return httpGetStatusMessage(conn);

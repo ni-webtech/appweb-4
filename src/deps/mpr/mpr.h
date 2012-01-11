@@ -1354,13 +1354,6 @@ struct  MprXml;
     #define T(s) s
 #endif
 
-#if UNUSED
-typedef struct MprArgs {
-    cchar   *program;
-    cchar   *args;
-} MprArgs;
-#endif
-
 /*
     Convenience define to declare a main program entry point that works for Windows, VxWorks and Unix
  */
@@ -1974,10 +1967,6 @@ typedef struct MprMem {
 #define MPR_MEM_LIMIT               0x2         /**< Memory use exceeds memory limit - invoking policy */
 #define MPR_MEM_FAIL                0x4         /**< Memory allocation failed - immediate exit */
 #define MPR_MEM_TOO_BIG             0x4         /**< Memory allocation request is too big - immediate exit */
-
-#if UNUSED && KEEP
-#define MPR_MEM_ATTENTION           0x8         /**< GC needs attention, threads should yield */
-#endif
 
 /**
     Memory allocation error callback. Notifiers are called if a low memory condition exists.
@@ -3705,10 +3694,6 @@ extern int mprPutFmtToWideBuf(MprBuf *buf, cchar *fmt, ...);
     Date format for use in HTTP (headers)
  */
 #define MPR_HTTP_DATE       "%a, %d %b %Y %T GMT"
-
-#if UNUSED && KEEP
-#define MPR_LEGACY_DATE     "%a %b %d %Y %T GMT%z (%Z)"
-#endif
 
 /**
     Mpr time structure.
@@ -7368,13 +7353,6 @@ extern void mprGetWorkerServiceStats(MprWorkerService *ws, MprWorkerStats *stats
 #define MPR_WORKER_BUSY        0x1          /**< Worker currently running to a callback */
 #define MPR_WORKER_PRUNED      0x2          /**< Worker has been pruned and will be terminated */
 #define MPR_WORKER_IDLE        0x4          /**< Worker is sleeping (idle) on idleCond */
-
-#if UNUSED && KEEP && FUTURE
-/*
-    Flags
- */
-#define MPR_WORKER_DEDICATED   0x1          /**< Worker reserved and not part of the worker pool */
-#endif
 
 /**
     Worker thread structure. Worker threads are allocated and dedicated to tasks. When idle, they are stored in

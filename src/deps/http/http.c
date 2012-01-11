@@ -193,7 +193,6 @@ static void initSettings()
     app->headers = mprCreateList(0, 0);
     app->mutex = mprCreateLock();
 #if WIN
-    //  MOB - should be in mpr somewhere
     _setmode(fileno(stdout), O_BINARY);
 #endif
 }
@@ -751,8 +750,7 @@ static int issueRequest(HttpConn *conn, cchar *url, MprList *files)
         }
         mprLog(MPR_DEBUG, "retry %d of %d for: %s %s", count, conn->retries, app->method, url);
     }
-    //  MOB - comment out errorMsg as auth errors were returning errors here.
-    if (conn->error /* || conn->errorMsg */) {
+    if (conn->error) {
         msg = (conn->errorMsg) ? conn->errorMsg : "";
         sep = (msg && *msg) ? "\n" : "";
         mprError("http: failed \"%s\" request for %s after %d attempt(s).%s%s", app->method, url, count, sep, msg);

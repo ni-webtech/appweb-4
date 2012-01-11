@@ -315,7 +315,6 @@ enumerable class Test {
     function initWorker(w: Worker, export: Object) {
         w.preload(_top.join("build/bin/utest.worker"))
         let estr = serialize(export)
-        //  MOB OPT. Better not to use eval here. Slower.
         w.preeval('
             let data = deserialize(\'' + estr.replace(/\\/g, "\\\\") + '\')
             public var test: Test = new Test

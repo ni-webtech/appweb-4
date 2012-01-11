@@ -833,8 +833,6 @@ findComponents() {
                 fi
             fi
         done
-
-        # MOB - why break
         [ $BLD_CROSS = 0 ] && break
     done
     [ "$verbose" -gt 0 ] && echo
@@ -957,20 +955,6 @@ configureComponent() {
         path="$priorPath"
     fi
     eval unset "CFG_${kind}_${upper}"
-
-    #
-    #   MOB - this should be done after all have been scanned.
-    #
-#    for dep in $dependencies 
-#    do
-#        upperDep=`upper ${dep}`
-#        if ! isdefined "$dep" ; then
-#            if [ "$mandatory" = 1 ] ; then
-#                echo "configureComponent: Missing dependency \"${dep}\" for mandatory component: ${name}" 1>&2
-#                exit 255
-#            fi
-#        fi
-#    done
 
     for dep in $optional $dependencies
     do
@@ -1487,8 +1471,6 @@ createBuildConfig() {
         else
             eval dir=$BLD_HOST_BIN_DIR
         fi
-		#
-		#	MOB - temporarily allow overrides.
         echo -e "\${BLD_TOP}/${dir}/${item##*/}:: ${item}\n\t"'$(call log) [Import]' "${item}" >>$CONFIG_IMP
         echo -e "\tcp ${item} ${BLD_TOP}/${dir}/${item##*/}\n" >>$CONFIG_IMP
         echo -e "\t\${BLD_TOP}/${dir}/${item##*/} \\" >>/tmp/$$targets

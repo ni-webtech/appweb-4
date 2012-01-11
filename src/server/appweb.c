@@ -96,7 +96,6 @@ MAIN(appweb, int argc, char **argv, char **envp)
     mprAddStandardSignals();
 
 #if BLD_FEATURE_ROMFS
-    //  MOB - review
     extern MprRomInode romFiles[];
     mprSetRomFileSystem(romFiles);
 #endif

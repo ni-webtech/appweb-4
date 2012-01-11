@@ -162,9 +162,6 @@ int maSslModuleInit(Http *http, MprModule *module)
     appweb = httpGetContext(http);
     maAddDirective(appweb, "SSL", sslDirective);
     maAddDirective(appweb, "SSLEngine", sslDirective);
-#if FUTURE && MOB
-    maAddDirective(appweb, "ListenSecure", listenSecureDirective);
-#endif
     maAddDirective(appweb, "SSLCACertificateFile", sslCaCertificateFileDirective);
     maAddDirective(appweb, "SSLCACertificatePath", sslCaCertificatePathDirective);
     maAddDirective(appweb, "SSLCertificateFile", sslCertificateFileDirective);

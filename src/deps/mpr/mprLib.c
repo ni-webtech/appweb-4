@@ -406,8 +406,6 @@ void *mprReallocMem(void *ptr, ssize usize)
 }
 
 
-//  MOB - rename mprMemdup
-
 void *mprMemdupMem(cvoid *ptr, ssize usize)
 {
     char    *newp;
@@ -900,7 +898,7 @@ static MprFreeMem *getQueue(ssize size)
     Allocate virtual memory and check a memory allocation request against configured maximums and redlines. 
     An application-wide memory allocation failure routine can be invoked from here when a memory redline is exceeded. 
     It is the application's responsibility to set the red-line value suitable for the system.
-    MOB _ is memory zeroed?
+    Memory is not zereod on all platforms.
  */
 void *mprVirtAlloc(ssize size, int mode)
 {
@@ -911,9 +909,6 @@ void *mprVirtAlloc(ssize size, int mode)
     if (memStats.pageSize) {
         size = MPR_PAGE_ALIGN(size, memStats.pageSize);
     }
-#if UNUSED && KEEP
-    printf("VALLOC %d K, total %d K\n", (int) size / 1024, (int) (size + used) / 1024);
-#endif
     if ((size + used) > heap->stats.maxMemory) {
         allocException(MPR_MEM_LIMIT, size);
     } else if ((size + used) > heap->stats.redLine) {
@@ -1418,14 +1413,6 @@ void mprResetYield()
     if ((tp = mprGetCurrentThread()) != 0) {
         tp->stickyYield = 0;
     }
-#if UNUSED
-    /* Rather than just clear yield, we must wait till marking is finished if underway */
-    if (heap->mustYield) {
-        mprYield(0);
-    } else {
-        tp->yielded = 0;
-    }
-#else
     lock(MPR);
     if (MPR->marking) {
         unlock(MPR);
@@ -1434,7 +1421,6 @@ void mprResetYield()
         tp->yielded = 0;
         unlock(MPR);
     }
-#endif
 }
 
 
@@ -2228,8 +2214,6 @@ static ssize fastMemSize()
 
 #if LINUX
     struct rusage rusage;
-    //  MOB - is this the current maximum or the peak?
-    //  MOB - measure how fast reading is from /proc. Could keep /proc open and then seek+read
     getrusage(RUSAGE_SELF, &rusage);
     size = rusage.ru_maxrss * 1024;
 #elif MACOSX
@@ -2822,7 +2806,6 @@ void mprAddTerminator(MprTerminator terminator)
 
 void mprRestart()
 {
-    //  MOB TODO - Other systems
 #if BLD_UNIX_LIKE
     int     i;
     for (i = 3; i < MPR_MAX_FILE; i++) {
@@ -2838,6 +2821,8 @@ void mprRestart()
         printf("%s ", MPR->argv[i]);
     }
     printf("\n");
+#else
+    mprError("mprRestart not supported on this platform");
 #endif
 }
 
@@ -3616,7 +3601,6 @@ void mprAtomicBarrier()
     #endif
 
 #if FUTURE && KEEP
-        //  MOB - understand what these actually do
         __asm volatile ("nop" ::: "memory")
         asm volatile ("sync" : : : "memory");
         asm volatile ("mfence" : : : "memory");
@@ -4506,7 +4490,6 @@ void *mprDestroyCache(MprCache *cache)
         mprRemoveEvent(cache->timer);
         cache->timer = 0;
     }
-    //  MOB - race here
     if (cache == shared) {
         shared = 0;
     }
@@ -5730,9 +5713,6 @@ static void reapCmd(MprCmd *cmd, MprSignal *sp)
             if (cmd->files[MPR_CMD_STDOUT].fd >= 0) {
                 mprCloseCmdFd(cmd, MPR_CMD_STDOUT);
             }
-            /*
-                May not close stdin/stdout if command times out
-             */
 #if UNUSED && DONT_USE && KEEP
             if (cmd->eofCount != cmd->requiredEof) {
                 mprLog(0, "reapCmd: insufficient EOFs %d %d, complete %d", cmd->eofCount, cmd->requiredEof, cmd->complete);
@@ -5888,12 +5868,6 @@ void mprSetCmdDir(MprCmd *cmd, cchar *dir)
  */
 static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
 {
-#if VXWORKS && UNUSED
-    cmd->argv = argv;
-    cmd->argc = argc;
-    cmd->env = 0;
-#endif
-
 #if BLD_UNIX_LIKE || VXWORKS
     char    **envp;
     int     ecount, index, i, hasPath, hasLibPath;
@@ -6425,11 +6399,7 @@ int startProcess(MprCmd *cmd)
     program = mprGetPathBase(cmd->program);
     if (entryPoint == 0) {
         program = mprTrimPathExt(program);
-#if UNUSED && (BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64)
-        entryPoint = sjoin("_", program, "Main", NULL);
-#else
         entryPoint = program;
-#endif
     }
     if (symFindByName(sysSymTbl, entryPoint, (char**) &entryFn, &symType) < 0) {
         if ((mp = mprCreateModule(cmd->program, cmd->program, NULL, NULL)) == 0) {
@@ -6446,13 +6416,6 @@ int startProcess(MprCmd *cmd)
         }
     }
     taskPriorityGet(taskIdSelf(), &pri);
-
-{
-    char where[512];
-    getcwd(where, 511);
-
-    mprLog(0, "Before SPAWN, cwd %s", where);
-}
 
     cmd->pid = taskSpawn(entryPoint, pri, VX_FP_TASK | VX_PRIVATE_ENV, MPR_DEFAULT_STACK, (FUNCPTR) cmdTaskEntry, 
         (int) cmd->program, (int) entryFn, (int) cmd, 0, 0, 0, 0, 0, 0, 0);
@@ -7583,7 +7546,9 @@ static void manageDiskFile(MprFile *file, int flags)
         mprMark(file->path);
         mprMark(file->fileSystem);
         mprMark(file->buf);
-        //  MOB - mark inode?
+#if BLD_FEATURE_ROMFS
+        mprMark(file->inode);
+#endif
 
     } else if (flags & MPR_MANAGE_FREE) {
         closeFile(file);
@@ -7664,7 +7629,6 @@ static bool accessPath(MprDiskFileSystem *fs, cchar *path, int omode)
 }
 
 
-//  MOB - should this be called removePath
 static int deletePath(MprDiskFileSystem *fs, cchar *path)
 {
     MprPath     info;
@@ -8611,10 +8575,6 @@ static bool serviceDispatcher(MprDispatcher *dispatcher)
 
     } else {
         if (mprStartWorker((MprWorkerProc) serviceDispatcherMain, dispatcher) < 0) {
-#if UNUSED
-            /* Can't start a worker thread, run using the current thread */
-            serviceDispatcherMain(dispatcher);
-#endif
             return 0;
         } 
     }
@@ -8864,7 +8824,7 @@ static int makeRunnable(MprDispatcher *dispatcher)
 }
 
 
-#if UNUSED
+#if UNUSED && KEEP
 /*
     Designate the required worker thread to run the event
  */
@@ -10000,7 +9960,6 @@ int mprFlushFile(MprFile *file)
 }
 
 
-//  MOB - naming vs mprSeekFile or mprSetFilePosition or mprTellFile
 MprOff mprGetFilePosition(MprFile *file)
 {
     return file->pos;
@@ -13434,7 +13393,7 @@ static void defaultLogHandler(int flags, int level, cchar *msg)
     lock(MPR);
 
     if (MPR->logBackup > 0 && MPR->logSize) {
-        //  MOB - slow. Should not check every time
+        //  OPT - slow. Should not check every time
         mprGetPathInfo(MPR->logPath, &info);
         if (info.valid && info.size > MPR->logSize) {
             mprSetLogFile(0);
@@ -14497,19 +14456,6 @@ MprModule *mprCreateModule(cchar *name, cchar *path, cchar *entry, void *data)
     ms = MPR->moduleService;
     mprAssert(ms);
 
-#if UNUSED
-    MprPath             info;
-    char                *at;
-    if (path) {
-        if ((at = mprSearchForModule(path)) == 0) {
-            mprError("Can't find module \"%s\", cwd: \"%s\", search path \"%s\"", path, mprGetCurrentPath(),
-                mprGetModuleSearchPath());
-            return 0;
-        }
-        path = at;
-        mprGetPathInfo(path, &info);
-    }
-#endif
     if ((mp = mprAllocObj(MprModule, manageModule)) == 0) {
         return 0;
     }
@@ -14608,7 +14554,6 @@ void mprSetModuleTimeout(MprModule *module, MprTime timeout)
 }
 
 
-//  MOB - rename SetModuleStop
 void mprSetModuleFinalizer(MprModule *module, MprModuleProc stop)
 {
     module->stop = stop;
@@ -14621,28 +14566,12 @@ void mprSetModuleSearchPath(char *searchPath)
     cchar               *libdir;
 
     ms = MPR->moduleService;
-
     if (searchPath == 0) {
         libdir = mprJoinPath(mprGetPathParent(mprGetAppDir()), mprGetPathBase(BLD_LIB_NAME));
         ms->searchPath = sjoin(mprGetAppDir(), MPR_SEARCH_SEP, libdir, MPR_SEARCH_SEP, BLD_LIB_PREFIX, NULL);
     } else {
         ms->searchPath = sclone(searchPath);
     }
-
-#if UNUSED && KEEP
-#if BLD_WIN_LIKE && !WINCE
-    {
-        /*
-            Set PATH so dependent DLLs can be loaded by LoadLibrary
-            WARNING: this will leak if called too much.
-         */
-        char *path = sjoin("PATH=", searchPath, ";", getenv("PATH"), NULL);
-        mprMapSeparators(path, '\\');
-        mprHold(path);
-        putenv(path);
-    }
-#endif
-#endif
 }
 
 
@@ -14979,7 +14908,7 @@ int mprCopyPath(cchar *fromName, cchar *toName, int mode)
 }
 
 
-//  MOB - need a rename too - should this be called remove?
+//  MOB - need a rename too
 int mprDeletePath(cchar *path)
 {
     MprFileSystem   *fs;
@@ -15323,9 +15252,6 @@ char *mprGetPathDir(cchar *path)
             return sclone(".");
         }
         cp++;
-#if UNUSED
-        return sclone(fs->root);
-#endif
     }
     len = (cp - path);
     result = mprAlloc(len + 1);
@@ -15496,7 +15422,7 @@ MprList *mprGetPathFiles(cchar *path, bool enumDirs)
 
 
 //  MOB - need mprIsPathDir
-//  MOB - better boolean?
+
 int mprGetPathInfo(cchar *path, MprPath *info)
 {
     MprFileSystem  *fs;
@@ -17133,8 +17059,7 @@ static int getState(char c, int state)
 }
 
 
-//  MOB - rename arg to args
-static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list arg)
+static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list args)
 {
     Format        fmt;
     MprEjsString  *es;
@@ -17213,7 +17138,7 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list arg)
 
         case STATE_WIDTH:
             if (c == '*') {
-                fmt.width = va_arg(arg, int);
+                fmt.width = va_arg(args, int);
                 if (fmt.width < 0) {
                     fmt.width = -fmt.width;
                     fmt.flags |= SPRINTF_LEFT;
@@ -17233,7 +17158,7 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list arg)
 
         case STATE_PRECISION:
             if (c == '*') {
-                fmt.precision = va_arg(arg, int);
+                fmt.precision = va_arg(args, int);
             } else {
                 while (isdigit((int) c)) {
                     fmt.precision = fmt.precision * 10 + (c - '0');
@@ -17266,17 +17191,17 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list arg)
             case 'g':
             case 'f':
                 fmt.radix = 10;
-                outFloat(&fmt, c, (double) va_arg(arg, double));
+                outFloat(&fmt, c, (double) va_arg(args, double));
                 break;
 #endif /* BLD_FEATURE_FLOAT */
 
             case 'c':
-                BPUT(&fmt, (char) va_arg(arg, int));
+                BPUT(&fmt, (char) va_arg(args, int));
                 break;
 
             case 'N':
                 /* Name */
-                qname = va_arg(arg, MprEjsName);
+                qname = va_arg(args, MprEjsName);
                 if (qname.name) {
 #if BLD_CHAR_LEN == 1
                     outString(&fmt, qname.space->value, qname.space->length);
@@ -17298,19 +17223,19 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list arg)
                 /* Safe string */
 #if BLD_CHAR_LEN > 1
                 if (fmt.flags & SPRINTF_LONG) {
-                    safe = mprEscapeHtml(va_arg(arg, MprChar*));
+                    safe = mprEscapeHtml(va_arg(args, MprChar*));
                     outWideString(&fmt, safe, -1);
                 } else
 #endif
                 {
-                    safe = mprEscapeHtml(va_arg(arg, MprChar*));
+                    safe = mprEscapeHtml(va_arg(args, MprChar*));
                     outString(&fmt, safe, -1);
                 }
                 break;
 
             case '@':
                 /* MprEjsString */
-                es = va_arg(arg, MprEjsString*);
+                es = va_arg(args, MprEjsString*);
                 if (es) {
 #if BLD_CHAR_LEN == 1
                     outString(&fmt, es->value, es->length);
@@ -17325,7 +17250,7 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list arg)
             case 'w':
                 /* Wide string of MprChar characters (Same as %ls"). Null terminated. */
 #if BLD_CHAR_LEN > 1
-                outWideString(&fmt, va_arg(arg, MprChar*), -1);
+                outWideString(&fmt, va_arg(args, MprChar*), -1);
                 break;
 #else
                 /* Fall through */
@@ -17335,10 +17260,10 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list arg)
                 /* Standard string */
 #if BLD_CHAR_LEN > 1
                 if (fmt.flags & SPRINTF_LONG) {
-                    outWideString(&fmt, va_arg(arg, MprChar*), -1);
+                    outWideString(&fmt, va_arg(args, MprChar*), -1);
                 } else
 #endif
-                    outString(&fmt, va_arg(arg, char*), -1);
+                    outString(&fmt, va_arg(args, char*), -1);
                 break;
 
             case 'i':
@@ -17347,13 +17272,13 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list arg)
             case 'd':
                 fmt.radix = 10;
                 if (fmt.flags & SPRINTF_SHORT) {
-                    iValue = (short) va_arg(arg, int);
+                    iValue = (short) va_arg(args, int);
                 } else if (fmt.flags & SPRINTF_LONG) {
-                    iValue = (long) va_arg(arg, long);
+                    iValue = (long) va_arg(args, long);
                 } else if (fmt.flags & SPRINTF_INT64) {
-                    iValue = (int64) va_arg(arg, int64);
+                    iValue = (int64) va_arg(args, int64);
                 } else {
-                    iValue = (int) va_arg(arg, int);
+                    iValue = (int) va_arg(args, int);
                 }
                 if (iValue >= 0) {
                     if (fmt.flags & SPRINTF_LEAD_SPACE) {
@@ -17381,13 +17306,13 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list arg)
             case 'x':
             case 'u':
                 if (fmt.flags & SPRINTF_SHORT) {
-                    uValue = (ushort) va_arg(arg, uint);
+                    uValue = (ushort) va_arg(args, uint);
                 } else if (fmt.flags & SPRINTF_LONG) {
-                    uValue = (ulong) va_arg(arg, ulong);
+                    uValue = (ulong) va_arg(args, ulong);
                 } else if (fmt.flags & SPRINTF_INT64) {
-                    uValue = (uint64) va_arg(arg, uint64);
+                    uValue = (uint64) va_arg(args, uint64);
                 } else {
-                    uValue = va_arg(arg, uint);
+                    uValue = va_arg(args, uint);
                 }
                 if (c == 'u') {
                     fmt.radix = 10;
@@ -17415,22 +17340,22 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list arg)
 
             case 'n':       /* Count of chars seen thus far */
                 if (fmt.flags & SPRINTF_SHORT) {
-                    short *count = va_arg(arg, short*);
+                    short *count = va_arg(args, short*);
                     *count = (int) (fmt.end - fmt.start);
                 } else if (fmt.flags & SPRINTF_LONG) {
-                    long *count = va_arg(arg, long*);
+                    long *count = va_arg(args, long*);
                     *count = (int) (fmt.end - fmt.start);
                 } else {
-                    int *count = va_arg(arg, int *);
+                    int *count = va_arg(args, int *);
                     *count = (int) (fmt.end - fmt.start);
                 }
                 break;
 
             case 'p':       /* Pointer */
 #if MPR_64_BIT
-                uValue = (uint64) va_arg(arg, void*);
+                uValue = (uint64) va_arg(args, void*);
 #else
-                uValue = (uint) PTOI(va_arg(arg, void*));
+                uValue = (uint) PTOI(va_arg(args, void*));
 #endif
                 fmt.radix = 16;
                 outNum(&fmt, "0x", uValue);
@@ -18763,16 +18688,10 @@ static void signalHandler(int signo, siginfo_t *info, void *arg)
     if (signo <= 0 || signo >= MPR_MAX_SIGNALS || MPR == 0) {
         return;
     }
-#if UNUSED
-    if (MPR->state >= MPR_STOPPING && signo == SIGINT) {
-        exit(1);
-    }
-#else
     if (signo == SIGINT) {
         exit(1);
         return;
     }
-#endif
     ssp = MPR->signalService;
     ip = &ssp->info[signo];
     ip->triggered = 1;
@@ -20764,7 +20683,7 @@ char *scamel(cchar *str)
 
 /*
     Case insensitive string comparison. Limited by length
-    MOB TODO - name is not great. scaselesscmp, sncaselesscmp
+    MOB rename sacasecmp
  */
 int scasecmp(cchar *s1, cchar *s2)
 {
@@ -20779,6 +20698,7 @@ int scasecmp(cchar *s1, cchar *s2)
 }
 
 
+// MOB rename sacasematch
 bool scasematch(cchar *s1, cchar *s2)
 {
     return scasecmp(s1, s2) == 0;
@@ -21089,6 +21009,8 @@ bool smatch(cchar *s1, cchar *s2)
     return scmp(s1, s2) == 0;
 }
 
+
+// MOB rename snacasecmp
 
 int sncasecmp(cchar *s1, cchar *s2, ssize n)
 {
@@ -21464,7 +21386,7 @@ int64 stoiradix(cchar *str, int radix, int *err)
 
 /*
     Note "str" is modifed as per strtok()
-    MOB - warning this does not allocate - should it?
+    WARNING:  this does not allocate
  */
 char *stok(char *str, cchar *delim, char **last)
 {

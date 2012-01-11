@@ -391,7 +391,7 @@ extern int ediLookupField(Edi *edi, cchar *tableName, cchar *fieldName);
  */
 extern Edi *ediOpen(cchar *source, cchar *provider, int flags);
 
-//  MOB - how do you get query errors back?  Should have an cchar *err argument.
+//  MOB - Should have an cchar *err argument.
 /**
     Run a query.
     @description This runs a provider dependant query. For the SQLite provider, this runs an SQL statement.
@@ -613,7 +613,6 @@ extern int ediUpdateField(Edi *edi, cchar *tableName, cchar *key, cchar *fieldNa
 extern int ediUpdateFields(Edi *edi, cchar *tableName, MprHash *data);
 #endif
 
-//  MOB - change Write to Update
 /**
     Write a record to the database.
     @description If the record is a new record and the "id" column is EDI_AUTO_INC, then the "id" will be assigned

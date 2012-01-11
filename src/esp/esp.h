@@ -1539,7 +1539,6 @@ extern void espButtonLink(HttpConn *conn, cchar *text, cchar *uri, cchar *option
  */
 extern void espChart(HttpConn *conn, EdiGrid *grid, cchar *options);
 
-//  MOB DB
 /**
     Render an input checkbox. 
     @description This creates a checkbox suitable for use within an input form. 
@@ -1650,7 +1649,6 @@ extern void espInput(HttpConn *conn, cchar *field, cchar *options);
  */
 extern void espLabel(HttpConn *conn, cchar *text, cchar *options);
 
-//  MOB DB
 //  MOB - how to get a choices list from a database
 /**
     Render a dropdown selection list.
@@ -1685,7 +1683,6 @@ extern void espMail(HttpConn *conn, cchar *name, cchar *address, cchar *options)
  */
 extern void espProgress(HttpConn *conn, cchar *progress, cchar *options);
 
-//  MOB DB
 /**
     Render a radio button. This creates a radio button suitable for use within an input form. 
     @param conn Http connection object
@@ -1806,7 +1803,6 @@ extern void espTable(HttpConn *conn, EdiGrid *grid, cchar *options);
  */
 extern void espTabs(HttpConn *conn, EdiRec *rec, cchar *options);
 
-//MOB DB
 /**
     Render a text input field as part of a form.
     @param conn Http connection object

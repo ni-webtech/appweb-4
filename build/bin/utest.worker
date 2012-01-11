@@ -7,7 +7,6 @@ require ejs.unix
 const PIDFILE = ".pidfile"
 
 enumerable public class Test {
-    //  MOB - not used
     public var bin: Path
     public var lib: Path
     public var env: Object

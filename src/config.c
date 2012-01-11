@@ -1160,7 +1160,6 @@ static int listenDirective(MaState *state, cchar *key, cchar *value)
 /*
     Load name path
  */
-//  MOB - complete
 static int loadDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *name, *path;

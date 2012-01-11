@@ -1182,7 +1182,6 @@ static void generateScaffoldMigration(int argc, char **argv)
             fail("Unknown type '%s' for field '%s'", typeString, field);
             return;
         }
-        //  MOB -- should support flags
         flags = 0;
         def = sfmt("    ediAddColumn(db, \"%s\", \"%s\", %d, %d);\n", name, field, type, flags);
         forward = sjoin(forward, def, NULL);

@@ -713,7 +713,7 @@ static cchar *checkUnique(EdiValidation *vp, EdiRec *rec, cchar *fieldName, ccha
 {
     EdiRec  *other;
 
-    //  MOB - optimize. Could require an index to enforce this.
+    //  OPT Could require an index to enforce this.
     if ((other = ediReadOneWhere(rec->edi, rec->tableName, fieldName, "==", value)) == 0) {
         return 0;
     }

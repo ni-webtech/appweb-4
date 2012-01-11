@@ -35,7 +35,6 @@ static int sqliteInitialized;
 static void initSqlite();
 
 #if UNUSED
-    //  MOB - HERE
 static var DataTypeToSqlType: Object = {
     "binary":       "blob",
     "boolean":      "tinyint",
