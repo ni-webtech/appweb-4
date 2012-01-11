@@ -9329,9 +9329,11 @@ int mprNotifyOn(MprWaitService *ws, MprWaitHandler *wp, int mask)
         }
         if (ev.events) {
             rc = epoll_ctl(ws->epoll, EPOLL_CTL_DEL, fd, &ev);
+#if UNUSED && KEEP
             if (rc != 0) {
                 mprError("Epoll del error %d on fd %d\n", errno, fd);
             }
+#endif
         }
         ev.events = 0;
         if (mask & MPR_READABLE) {
@@ -13220,7 +13222,7 @@ int mprStartLogging(cchar *logSpec, int showConfig)
                 mprLog(MPR_CONFIG, "Distribution:       %s %s", BLD_DIST, BLD_DIST_VER);
             }
             mprLog(MPR_CONFIG, "Host:               %s", mprGetHostName());
-            mprLog(MPR_CONFIG, "Dir:                %s", mprGetCurrentPath());
+            mprLog(MPR_CONFIG, "Directory:          %s", mprGetCurrentPath());
             mprLog(MPR_CONFIG, "Configure:          %s", BLD_CONFIG_CMD);
             mprLog(MPR_CONFIG, "---------------------------------------------");
         }
@@ -15493,6 +15495,7 @@ MprList *mprGetPathFiles(cchar *path, bool enumDirs)
 #endif
 
 
+//  MOB - need mprIsPathDir
 //  MOB - better boolean?
 int mprGetPathInfo(cchar *path, MprPath *info)
 {
