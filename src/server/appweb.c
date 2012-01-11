@@ -308,7 +308,10 @@ static int findConfigFile()
     }
     if (!mprPathExists(app->configFile, R_OK)) {
         if (!userPath) {
-            app->configFile = mprJoinPath(mprGetAppDir(), sfmt("../%s/%s.conf", BLD_LIB_NAME, mprGetAppName()));
+            app->configFile = mprJoinPath(app->home, "appweb.conf");
+            if (!mprPathExists(app->configFile, R_OK)) {
+                app->configFile = mprJoinPath(mprGetAppDir(), sfmt("../%s/%s.conf", BLD_LIB_NAME, mprGetAppName()));
+            }
         }
         if (!mprPathExists(app->configFile, R_OK)) {
             mprError("Can't open config file %s", app->configFile);
