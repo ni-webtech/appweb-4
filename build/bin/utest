@@ -241,7 +241,7 @@ enumerable class Test {
             if (!dir.exists) {
                 error("Can't read directory: " + dir)
             }
-            for each (file in ls(dir, true)) {
+            for each (file in ls(dir)) {
                 if (finish) { 
                     break
                 }

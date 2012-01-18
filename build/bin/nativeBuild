@@ -27,7 +27,7 @@ if [ -x src/include ] ; then
 else
     mkdir -p out/inc out/bin
     cp projects/${BLD_OS}/*-all/buildConfig.default out/inc/buildConfig.h
-    . `cacheConfig out/inc/buildConfig.h`
+    . `build/bin/cacheConfig out/inc/buildConfig.h`
 fi
 touch projects/${BLD_OS}/${BLD_PRODUCT}-all/buildConfig.default
 
