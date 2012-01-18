@@ -74,7 +74,7 @@ APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2)
     char    *argv[MPR_MAX_ARGC], *argp;
     int     argc, err, nextArg, manage, stop;
 
-    argc = mprParseArgs(command, &argv[1], MPR_MAX_ARGC - 1);
+    argc = mprParseArgs(command, &argv[1], MPR_MAX_ARGC - 1) + 1;
     if (mprCreate(argc, argv, MPR_USER_EVENTS_THREAD | MPR_NO_WINDOW) == NULL) {
         exit(1);
     }
