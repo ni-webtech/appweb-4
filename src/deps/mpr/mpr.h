@@ -5050,7 +5050,7 @@ extern ssize mprWriteFileString(MprFile *file, cchar *str);
     Path (filename) Information
     @description MprPath is the cross platform Path (filename) information structure.
     @stability Evolving.
-    @see MprDirEntry MprFile MprPath mprCopyPath mprDeletePath mprFindFiles mprGetAbsPath mprGetCurrentPath 
+    @see MprDirEntry MprFile MprPath mprCopyPath mprDeletePath mprGetAbsPath mprGetCurrentPath 
         mprGetFirstPathSeparator mprGetLastPathSeparator mprGetNativePath mprGetPathBase 
         mprGetPathDir mprGetPathExt mprGetPathFiles mprGetPathLink mprGetPathNewline mprGetPathParent 
         mprGetPathSeparators mprGetPortablePath mprGetRelPath mprGetTempPath mprGetWinPath mprIsAbsPath 
@@ -5119,9 +5119,6 @@ extern int mprCopyPath(cchar *from, cchar *to, int omode);
     @ingroup MprPath
  */
 extern int mprDeletePath(cchar *path);
-
-#define MPR_PATH_ENUM_DIRS  0x1             /**< Flag for mprFindFiles to traverse directories */
-#define MPR_PATH_INC_DIRS   0x2             /**< Flag for mprFindFiles to include directories in results */
 
 /**
     Convert a path to an absolute path
@@ -5195,15 +5192,35 @@ extern char *mprGetPathDir(cchar *path);
  */
 extern char *mprGetPathExt(cchar *path);
 
+/*
+    Flags for mprGetPathFiles
+ */
+#define MPR_PATH_DESCEND        0x1             /**< Flag for mprGetPathFiles to traverse subdirectories */
+#define MPR_PATH_DEPTH_FIRST    0x2             /**< Flag for mprGetPathFiles to do a depth-first traversal */
+#define MPR_PATH_INC_HIDDEN     0x4             /**< Flag for mprGetPathFiles to include hidden files */
+#define MPR_PATH_NODIRS         0x8             /**< Flag for mprGetPathFiles to exclude subdirectories */
+#define MPR_PATH_RELATIVE       0x10            /**< Flag for mprGetPathFiles to return paths relative to the directory */
+
 /**
-    Create a directory list of files.
+    Create a list of files in a directory or subdirectories.
     @description Get the list of files in a directory and return a list.
     @param dir Directory to list.
-    @param enumDirs Set to true to enumerate directory entries as well as regular paths. 
-    @returns A list (MprList) of directory paths. Each path is a regular string owned by the list object.
+    @param flags The flags may be set to #MPR_PATH_DESCEND to traverse subdirectories. Set #MPR_PATH_NO_DIRS 
+        to exclude directories from the results. Set to MPR_PATH_HIDDEN to include hidden files that start with ".".
+        Set to MPR_PATH_DEPTH_FIRST to do a depth-first traversal, i.e. traverse subdirectories before considering 
+        adding the directory to the list.
+    @returns A list (MprList) of directory paths.
     @ingroup MprPath
  */
-extern MprList *mprGetPathFiles(cchar *dir, bool enumDirs);
+extern MprList *mprGetPathFiles(cchar *dir, int flags);
+
+/**
+    Get the first directory portion of a path
+    @param path Path name to examine
+    @returns A new string containing the directory name.
+    @ingroup MprPath
+ */
+extern char *mprGetPathFirstDir(cchar *path);
 
 /**
     Return information about a file represented by a path.
@@ -5252,15 +5269,6 @@ extern char *mprGetPathParent(cchar *path);
 extern cchar *mprGetPathSeparators(cchar *path);
 
 /**
-    Find files below a path directory
-    @param path Directory path name to examine
-    @param flags The flags may be set to #MPR_PATH_INC_DIRS to include directories in the results or #MPR_PATH_ENUM_DIRS 
-    to enumerate directories but not include them in the results.
-    @return A list of filename character strings (char*)
- */
-extern MprList *mprGetPathTree(cchar *path, int flags);
-
-/**
     Get a portable path 
     @description Get an equivalent absolute path that is somewhat portable. 
         This means it will use forward slashes ("/") as the directory separator. This call will not remove drive specifiers.
@@ -5306,6 +5314,14 @@ extern char *mprGetWinPath(cchar *path);
     @ingroup MprPath
  */ 
 extern bool mprIsPathAbs(cchar *path);
+
+/**
+    Determine if a path is a directory
+    @param path Path name to examine
+    @returns True if the path is a directory
+    @ingroup MprPath
+ */ 
+extern bool mprIsPathDir(cchar *path);
 
 /**
     Determine if a path is relative

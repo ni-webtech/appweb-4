@@ -946,7 +946,7 @@ static void compileItems(HttpRoute *route)
 
     if (eroute->controllersDir) {
         mprAssert(eroute);
-        app->files = mprGetPathTree(eroute->controllersDir, 0);
+        app->files = mprGetPathFiles(eroute->controllersDir, MPR_PATH_DESCEND);
         for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
             if (!validTarget(path)) {
                 continue;
@@ -957,7 +957,7 @@ static void compileItems(HttpRoute *route)
         }
     }
     if (eroute->viewsDir) {
-        app->files = mprGetPathTree(eroute->viewsDir, 0);
+        app->files = mprGetPathFiles(eroute->viewsDir, MPR_PATH_DESCEND);
         for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
             if (!validTarget(path)) {
                 continue;
@@ -968,7 +968,7 @@ static void compileItems(HttpRoute *route)
         }
     }
     if (eroute->staticDir) {
-        app->files = mprGetPathTree(eroute->staticDir, MPR_PATH_ENUM_DIRS);
+        app->files = mprGetPathFiles(eroute->staticDir, MPR_PATH_DESCEND);
         for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
             if (!validTarget(path)) {
                 continue;
@@ -980,7 +980,7 @@ static void compileItems(HttpRoute *route)
 
     } else {
         /* Non-MVC */
-        app->files = mprGetPathTree(route->dir, MPR_PATH_ENUM_DIRS);
+        app->files = mprGetPathFiles(route->dir, MPR_PATH_DESCEND);
         for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
             if (!validTarget(path)) {
                 continue;
@@ -1014,24 +1014,24 @@ static void compileFlat(HttpRoute *route)
 
     if (route->sourceName) {
         /* MVC */
-        app->files = mprGetPathTree(eroute->controllersDir, 0);
+        app->files = mprGetPathFiles(eroute->controllersDir, MPR_PATH_DESCEND);
         for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
             if (smatch(mprGetPathExt(path), "c")) {
                 compileFile(route, path, ESP_CONTROLLER);
             }
         }
-        app->files = mprGetPathTree(eroute->viewsDir, 0);
+        app->files = mprGetPathFiles(eroute->viewsDir, MPR_PATH_DESCEND);
         for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
             compileFile(route, path, ESP_VIEW);
         }
-        app->files = mprGetPathTree(eroute->staticDir, 0);
+        app->files = mprGetPathFiles(eroute->staticDir, MPR_PATH_DESCEND);
         for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
             if (smatch(mprGetPathExt(path), "esp")) {
                 compileFile(route, path, ESP_PAGE);
             }
         }
     } else {
-        app->files = mprGetPathTree(route->dir, 0);
+        app->files = mprGetPathFiles(route->dir, MPR_PATH_DESCEND);
         for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
             if (smatch(mprGetPathExt(path), "esp")) {
                 compileFile(route, path, ESP_PAGE);
@@ -1420,7 +1420,7 @@ static void copyDir(cchar *fromDir, cchar *toDir)
     char        *from, *to;
     int         next;
 
-    files = mprGetPathFiles(fromDir, 1);
+    files = mprGetPathFiles(fromDir, MPR_PATH_DESCEND);
     for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
         if (!checkPath(dp->name)) {
             continue;
