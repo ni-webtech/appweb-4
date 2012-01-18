@@ -15299,7 +15299,7 @@ static MprList *getDirFiles(cchar *dir, int flags)
         if (findData.cFileName[0] == '.' && (findData.cFileName[1] == '\0' || findData.cFileName[1] == '.')) {
             continue;
         }
-        if ((flags & MPR_PATH_DIRS) || !(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+        if (!(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || !(flags & MPR_PATH_NODIRS)) {
             dp = mprAlloc(sizeof(MprDirEntry));
             if (dp == 0) {
                 return 0;
