@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{349FD880-C89D-4ED8-B98B-565D0CDA8BE6}</ProjectGuid>
+    <ProjectGuid>{2890C527-C08A-4D1A-A123-1C85FA5B1EAC}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -60,7 +60,7 @@
   </PropertyGroup>
 
   <ItemGroup >
-    <ClCompile Include="..\..\..\src\esp\esp.c" />
+    <ClCompile Include="..\..\..\src\utils\esp.c" />
   </ItemGroup>
 
   <ItemDefinitionGroup >
@@ -71,14 +71,14 @@
 
   <ItemGroup>
     <ProjectReference Include="libmpr.vcxproj">
-      <Project>{878DF937-E521-4245-84CA-7D29039E8B8B}</Project>
+      <Project>{90213E40-726A-46F3-B336-2F6585A8A6DD}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="mod_esp.vcxproj">
-      <Project>{BC9B4C9E-4F0B-4F88-98D3-49FBE6CE07B0}</Project>
+      <Project>{5C6F40E1-5BE1-4C64-8155-1CAFC10432F7}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

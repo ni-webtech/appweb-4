@@ -4,6 +4,7 @@ EXPORTS
   amtow
   assertTrue
   awtom
+  classMap
   dtoa
   dummyWide
   floorDiv
@@ -253,6 +254,7 @@ EXPORTS
   mprIsCmdRunning
   mprIsDead
   mprIsFinished
+  mprIsIPv6
   mprIsIdle
   mprIsInfinite
   mprIsNan
@@ -261,6 +263,7 @@ EXPORTS
   mprIsPathSeparator
   mprIsSocketEof
   mprIsSocketSecure
+  mprIsSocketV6
   mprIsStopping
   mprIsStoppingCore
   mprIsValid
@@ -274,6 +277,7 @@ EXPORTS
   mprLock
   mprLockDtoa
   mprLog
+  mprLogHeader
   mprLookAtLastCharInBuf
   mprLookAtNextCharInBuf
   mprLookupFileSystem
@@ -301,6 +305,7 @@ EXPORTS
   mprNormalizePath
   mprNotifyOn
   mprOpenFile
+  mprParseArgs
   mprParseSocketAddress
   mprParseTestArgs
   mprParseTime
@@ -380,6 +385,7 @@ EXPORTS
   mprServicesAreIdle
   mprSetAllocName
   mprSetAppName
+  mprSetAppPath
   mprSetBufMax
   mprSetBufRefillProc
   mprSetBufSize
@@ -470,6 +476,7 @@ EXPORTS
   mprStopThreadService
   mprTerminate
   mprTransformPath
+  mprTrimPathDrive
   mprTrimPathExt
   mprTruncateFile
   mprTryLock
@@ -553,6 +560,7 @@ EXPORTS
   sspn
   sstarts
   ssub
+  stateMap
   stemplate
   stoi
   stoiradix

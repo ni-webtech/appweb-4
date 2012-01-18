@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{6F73626F-1981-44CE-BCC3-708162AE0DAC}</ProjectGuid>
+    <ProjectGuid>{0CD1D441-2BA9-4279-89CD-47027D1D245E}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -66,10 +66,12 @@
   <ItemGroup >
     <ClCompile Include="..\..\..\src\config.c" />
     <ClCompile Include="..\..\..\src\convenience.c" />
+    <ClCompile Include="..\..\..\src\dirHandler.c" />
+    <ClCompile Include="..\..\..\src\fileHandler.c" />
     <ClCompile Include="..\..\..\src\log.c" />
     <ClCompile Include="..\..\..\src\server.c" />
-    <ClCompile Include="..\..\..\src\modules\dirHandler.c" />
-    <ClCompile Include="..\..\..\src\modules\fileHandler.c" />
+    <ClCompile Include="..\..\..\src\dirHandler.c" />
+    <ClCompile Include="..\..\..\src\fileHandler.c" />
   </ItemGroup>
 
   <ItemDefinitionGroup>
@@ -86,21 +88,21 @@
 
   <ItemGroup>
     <ProjectReference Include="libmpr.vcxproj">
-      <Project>{878DF937-E521-4245-84CA-7D29039E8B8B}</Project>
+      <Project>{90213E40-726A-46F3-B336-2F6585A8A6DD}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="libhttp.vcxproj">
-      <Project>{8DCD3D51-EC98-4F5C-8B86-EAEC15208373}</Project>
+      <Project>{1EAA70B2-7C3A-484F-BC5D-EE05DC9A1DBD}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="libpcre.vcxproj">
-      <Project>{E17FBEC4-C856-413C-9A52-42654C497973}</Project>
+      <Project>{2E73999C-84D4-4C09-A740-D7A11A13663E}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

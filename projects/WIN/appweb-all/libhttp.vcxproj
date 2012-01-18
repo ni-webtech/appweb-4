@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{8DCD3D51-EC98-4F5C-8B86-EAEC15208373}</ProjectGuid>
+    <ProjectGuid>{1EAA70B2-7C3A-484F-BC5D-EE05DC9A1DBD}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -81,21 +81,21 @@
 
   <ItemGroup>
     <ProjectReference Include="libmpr.vcxproj">
-      <Project>{878DF937-E521-4245-84CA-7D29039E8B8B}</Project>
+      <Project>{90213E40-726A-46F3-B336-2F6585A8A6DD}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="libmprssl.vcxproj">
-      <Project>{6C7E9AA4-39EE-4A13-AA99-228D9E93F568}</Project>
+      <Project>{F0717E06-51EC-4D1B-8C4A-EEEAA4F10623}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="libpcre.vcxproj">
-      <Project>{E17FBEC4-C856-413C-9A52-42654C497973}</Project>
+      <Project>{2E73999C-84D4-4C09-A740-D7A11A13663E}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

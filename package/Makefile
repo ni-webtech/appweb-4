@@ -13,8 +13,6 @@ dependExtra:
 
 ifeq ($(BUILDING_TARGET),1)
 packageFinal:
-	echo BD $(BUILDING_DEV)
-	echo BT $(BUILDING_TARGET)
 	$(MAKE) -C .. packageRelease
 	if [ `id -u` = 0 ] ; then \
 		if logname >/dev/null 2>&1 ; then \
