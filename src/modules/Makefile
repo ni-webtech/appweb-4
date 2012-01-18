@@ -110,6 +110,10 @@ $(IMPORTED): $(IMPORTS)
 	
 cleanExtra:
 	rm -f $(MODULES) $(OBJECTS)
+	rm -f $(subst $(BLD_SHOBJ),$(BLD_SHLIB),$(MODULES))
+	rm -f $(subst $(BLD_SHOBJ),.def,$(MODULES))
+	rm -f $(subst $(BLD_SHOBJ),.pdb,$(MODULES))
+	rm -f $(subst $(BLD_SHOBJ),.exp,$(MODULES))
 
 #
 #   Local variables:
