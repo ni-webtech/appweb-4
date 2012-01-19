@@ -214,7 +214,6 @@ EXPORTS
   mprGetPathNewline
   mprGetPathParent
   mprGetPathSeparators
-  mprGetPathTree
   mprGetPortablePath
   mprGetPrevItem
   mprGetRandomBytes
