@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{5C6F40E1-5BE1-4C64-8155-1CAFC10432F7}</ProjectGuid>
+    <ProjectGuid>{6CABAF03-DACC-4DE9-B216-9EEDA4D7A46D}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -85,14 +85,14 @@
 
   <ItemGroup>
     <ProjectReference Include="libappweb.vcxproj">
-      <Project>{0CD1D441-2BA9-4279-89CD-47027D1D245E}</Project>
+      <Project>{654B6D8F-FA49-4869-8538-BF6F05A5E739}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="libpcre.vcxproj">
-      <Project>{2E73999C-84D4-4C09-A740-D7A11A13663E}</Project>
+      <Project>{258726BB-B13B-4D75-8109-AEC699D0FF4D}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

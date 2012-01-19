@@ -209,6 +209,7 @@ EXPORTS
   mprGetPathDir
   mprGetPathExt
   mprGetPathFiles
+  mprGetPathFirstDir
   mprGetPathInfo
   mprGetPathLink
   mprGetPathNewline
@@ -258,6 +259,7 @@ EXPORTS
   mprIsInfinite
   mprIsNan
   mprIsPathAbs
+  mprIsPathDir
   mprIsPathRel
   mprIsPathSeparator
   mprIsSocketEof
@@ -353,6 +355,7 @@ EXPORTS
   mprRemoveSignalHandler
   mprRemoveSocketHandler
   mprRemoveWaitHandler
+  mprRenamePath
   mprReplacePathExt
   mprReportTestResults
   mprRequestGC
