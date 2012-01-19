@@ -119,12 +119,12 @@ if (!bare) {
     copy("*", web, {
         from: "src/server/web",
         exclude: /mgmt\//,
-        recurse: true,
+        descend: true,
     })
     copy("*", web.join("test"), {
         from: "src/server/web/test",
         include: /.cgi|test.pl|test.py/,
-        recurse: true,
+        descend: true,
         permissions: 0755,
     })
     copy("*", inc, {
@@ -141,7 +141,7 @@ if (!bare) {
         include: /esp-www/,
         exclude: /files.save/,
         permissions: 0644,
-        recurse: true,
+        descend: true,
     })
 
 } else {

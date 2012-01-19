@@ -10,6 +10,9 @@ enumerable class Test {
 
     use default namespace public
 
+    var args: Args
+    var options: Object
+
     var verbosity: Number = 0               // Verbosity level
     const TIMEOUT: Number = 15 * 60 * 1000  // Test timeout (15 minutes)
 
@@ -20,6 +23,7 @@ enumerable class Test {
 
     /*
         Parsed args
+        MOB - don't need to store separate to options.
      */
     var _bin: Path                          // Path to bin directory
     var continueOnErrors: Boolean = false   // Continue on errors 
@@ -73,90 +77,87 @@ enumerable class Test {
      */
     var session = { }
         
-    function Test() {
-        workerImage = new Worker
-        program = Path(App.args[0]).basename
-        if ((path = searchUp("configure")) == null) {
-            throw "Can't find configure"
-        }
-        _top = path.dirname.absolute
-        _bin = Path(Cmd.locate("edep")).dirname
-        _lib = App.exeDir.join("../lib")
-        if (!_lib.exists) {
-            _lib = _bin
-        }
-        parseBuildConfig(_top.join("out/inc/buildConfig.h"));
+    let argsTemplate = {
+        options: {
+            chdir: { range: Path },
+            'continue': { alias: 'c' },
+            depth: { alias: 'd', range: Number },
+            debug: { alias: 'D' },
+            echo: { alias: 'e' },
+            iterations: { alias: 'i', range: Number },
+            log: { alias: 'l', range: String },
+            name: { range: String },
+            noserver: {},
+            os: { alias: 'o', range: String },
+            second: { alias: '2' },
+            step: { alias: 's' },
+            threads: { alias: 't', range: Number },
+            verbose: { alias: 'v' },
+            version: { alias: 'V' },
+        },
+        usage: usage,
     }
 
     /*
         Parse args and invoke required commands
      */
-    function parseArgs(args: Array): Void {
-        for (let i: Number = 1; i < args.length; i++) {
-            switch (args[i]) {
-            case "--":
-                i = args.length
-                break
-            case "-2": case "--second":
-                second = true
-                noserver = true
-                App.putenv("SECOND", "1")
-                App.putenv("NOSERVER", "1")
-                break
-            case "--chdir":
-                App.chdir(args[++i])
-                break
-            case "-c" : case "--continue":
-                continueOnErrors = true
-                break
-            case "-d": case "--depth":
-                _depth = args[++i] cast Number
-                if (_depth < 1 || _depth > 9) {
-                    _depth = 1
-                }
-                break
-            case "--debug": case "-D":
-                Debug.mode = true
-                break
-            case "-e": case "--echo":
-                echo = true
-                break
-            case "-i": case "--iterations":
-                iterations = args[++i] cast Number
-                break
-            case "-l": case "--log":
-                logSpec = args[++i]
-                break
-            case "-n": case "--noserver":
-                noserver = true
-                App.putenv("NOSERVER", "1")
-                break
-            case "--name":
-                testName = args[++i]
-                break
-            case "-o": case "--os":
-                _os = args[++i]
-                break
-            case "-s": case "--step":
-                step = true
-                break
-            case "-t": case "--threads":
-                threads = args[++i] cast Number
-                break
-            case "-v": case "--verbose": case "--verbosity":
-                verbosity++
-                break
-            case "-V": case "--version":
-                print(program.toString().toPascal() + " " + version)
-                App.exit()
-                break
-            default:
-                if (args[i].startsWith("-")) {
-                    usage()
-                }
-                filters.append(args[i])
-                break
+    function parseArgs(): Void {
+        args = Args(argsTemplate, App.args)
+        options = args.options
+        filters += args.rest
+
+        if (options.second) {
+            second = true
+            noserver = true
+            App.putenv("SECOND", "1")
+            App.putenv("NOSERVER", "1")
+        }
+        if (options.chdir) {
+            App.chdir(options.chdir)
+        }
+        if (options['continue']) {
+            continueOnErrors = true
+        }
+        if (options.depth) {
+            _depth = options.depth
+            if (_depth < 1 || _depth > 9) {
+                _depth = 1
             }
+        }
+        if (options.debug) {
+            Debug.mode = true
+        }
+        if (options.echo) {
+            echo = true
+        }
+        if (options.iterations) {
+            iterations = options.iterations
+        }
+        if (options.log) {
+            logSpec = options.log
+        }
+        if (options.noserver) {
+            noserver = true
+            App.putenv("NOSERVER", "1")
+        }
+        if (options.name) {
+            testName = options.name
+        }
+        if (options.os) {
+            _os = options.os
+        }
+        if (options.step) {
+            step = true
+        }
+        if (options.threads) {
+            threads = options.threads
+        }
+        if (options.verbose) {
+            verbosity++
+        }
+        if (options.version) {
+            print(program.toString().toPascal() + " " + options.version)
+            App.exit()
         }
     }
 
@@ -188,6 +189,21 @@ enumerable class Test {
         if (echo) {
             log.activity("Test", App.args.join(" "))
         }
+    }
+
+    function Test() {
+        workerImage = new Worker
+        program = Path(App.args[0]).basename
+        if ((path = searchUp("configure")) == null) {
+            throw "Can't find configure"
+        }
+        _top = path.dirname.absolute
+        _bin = Path(Cmd.locate("edep")).dirname
+        _lib = App.exeDir.join("../lib")
+        if (!_lib.exists) {
+            _lib = _bin
+        }
+        parseBuildConfig(_top.join("out/inc/buildConfig.h"));
     }
 
     /*
@@ -547,7 +563,7 @@ enumerable class Test {
     Main program
  */
 var test: Test = new Test
-test.parseArgs(App.args)
+test.parseArgs()
 test.initialize()
 
 try {

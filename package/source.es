@@ -17,7 +17,7 @@ copy("*.TXT", src, {from: "doc/product", fold: true, expand: true})
 copy("configure", src, {permissions: 0755})
 
 copy("build/*", src, {
-    recurse: true,
+    descend: true,
     include: /Makefile|Makefile.top|configure\.|\.defaults|config\.|make\.|\.config/,
 })
 
@@ -43,25 +43,25 @@ copy("package/*", src, {
 })
 
 copy("package/*", src, {
-    recurse: true,
+    descend: true,
     include: /LINUX|MACOSX|WIN/
 })
 
 copy("src/*.c", src, {})
 
 copy("src/*", src, {
-    recurse: true,
+    descend: true,
     include: /^src\/Makefile|^src\/deps|^src\/utils|^src\/server|^src\/test|^src\/modules|^src\/esp|^src\/samples|\.h$/,
     exclude: /\.log$|fcgi|ejs.debugger|ejs.cgi|\.lst$|ejs.zip|\.stackdump$|\/cache\/view_|huge.txt|\.swp$|^src\/deps\/ejs/
 })
 
 copy("doc/*", src, {
-    recurse: true,
+    descend: true,
     exclude: /\/xml\/|\/html\/|Archive|\.mod$|\.so$|\.dylib$|\.o$/
 })
 
 copy("projects/*", src, {
-    recurse: true,
+    descend: true,
     exclude: /\/Debug\/|\/Release\/|\.ncb|\.mode1v3|\.pbxuser/,
 })
 
