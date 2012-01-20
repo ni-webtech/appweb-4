@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{F0717E06-51EC-4D1B-8C4A-EEEAA4F10623}</ProjectGuid>
+    <ProjectGuid>{0DF668A0-7D8E-4834-8789-B354444E1A7A}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -83,7 +83,7 @@
 
   <ItemGroup>
     <ProjectReference Include="libmpr.vcxproj">
-      <Project>{90213E40-726A-46F3-B336-2F6585A8A6DD}</Project>
+      <Project>{D92F8B53-C4C2-45DA-82F9-9D519505525D}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
