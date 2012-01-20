@@ -5280,12 +5280,14 @@ extern char *mprGetPortablePath(cchar *path);
 
 /**
     Get a relative path
-    @description Get an equivalent path that is relative to the application's current working directory.
-    @param path Path name to examine
+    @description Get a relative path path from an origin path to a destination. 
+    @param dest Destination file 
+    @param origin Starting location from which to compute a relative path to the destination
+        If the origin is null, use the application's current working directory as the origin.
     @returns An allocated string containing the relative directory.
     @ingroup MprPath
  */
-extern char *mprGetRelPath(cchar *path);
+extern char *mprGetRelPath(cchar *dest, cchar *origin);
 
 /**
     Make a temporary file.

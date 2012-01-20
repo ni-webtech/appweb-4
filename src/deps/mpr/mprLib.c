@@ -15542,107 +15542,100 @@ char *mprGetPortablePath(cchar *path)
 }
 
 
-//  MOB - could generalize this to get a path relative to any directory
 /*
     This returns a path relative to the current working directory for the given path
  */
-char *mprGetRelPath(cchar *pathArg)
+char *mprGetRelPath(cchar *destArg, cchar *originArg)
 {
     MprFileSystem   *fs;
-    char            home[MPR_MAX_FNAME], *hp, *cp, *result, *path, *lasthp, *lastcp;
-    int             homeSegments, i, commonSegments, sep;
+    char            originBuf[MPR_MAX_FNAME], *cp, *result, *dest, *lastcp, *origin, *op, *lastop;
+    int             originSegments, i, commonSegments, sep;
 
-    fs = mprLookupFileSystem(pathArg);
+    fs = mprLookupFileSystem(destArg);
     
-    if (pathArg == 0 || *pathArg == '\0') {
+    if (destArg == 0 || *destArg == '\0') {
         return sclone(".");
     }
+    dest = mprNormalizePath(destArg);
 
-    /*
-        Must clean to ensure a minimal relative path result.
-     */
-    path = mprNormalizePath(pathArg);
-
-    if (!isAbsPath(fs, path)) {
-        return path;
+    if (!isAbsPath(fs, dest) && (originArg == 0 || *originArg == '\0')) {
+        return dest;
     }
-    sep = (cp = firstSep(fs, path)) ? *cp : defaultSep(fs);
+    sep = (cp = firstSep(fs, dest)) ? *cp : defaultSep(fs);
     
-    /*
-        Get the working directory. Ensure it is null terminated and leave room to append a trailing separators
-        On cygwin, this will be a cygwin style path (starts with "/" and no drive specifier).
-     */
-    if (getcwd(home, sizeof(home)) == 0) {
-        strcpy(home, ".");
+    if (originArg == 0 || *originArg == '\0') {
+        /*
+            Get the working directory. Ensure it is null terminated and leave room to append a trailing separators
+            On cygwin, this will be a cygwin style path (starts with "/" and no drive specifier).
+         */
+        if (getcwd(originBuf, sizeof(originBuf)) == 0) {
+            strcpy(originBuf, ".");
+        }
+        originBuf[sizeof(originBuf) - 2] = '\0';
+        origin = originBuf;
+    } else {
+        origin = mprGetAbsPath(originArg);
     }
-    home[sizeof(home) - 2] = '\0';
-
-#if (BLD_WIN_LIKE && !WINCE)
-    path = mprGetAbsPath(path);
-#elif CYGWIN || VXWORKS
-    if (hasDrive(fs, path)) {
-        path = mprGetAbsPath(path);
-    }
-#endif
+    dest = mprGetAbsPath(dest);
 
     /*
-        Count segments in home working directory. Ignore trailing separators.
+        Count segments in origin working directory. Ignore trailing separators.
      */
-    for (homeSegments = 0, cp = home; *cp; cp++) {
+    for (originSegments = 0, cp = origin; *cp; cp++) {
         if (isSep(fs, *cp) && cp[1]) {
-            homeSegments++;
+            originSegments++;
         }
     }
 
     /*
-        Find portion of path that matches the home directory, if any. Start at -1 because matching root doesn't count.
+        Find portion of dest that matches the origin directory, if any. Start at -1 because matching root doesn't count.
      */
     commonSegments = -1;
-    for (lasthp = hp = home, lastcp = cp = path; *hp && *cp; hp++, cp++) {
-        if (isSep(fs, *hp)) {
-            lasthp = hp + 1;
+    for (lastop = op = origin, lastcp = cp = dest; *op && *cp; op++, cp++) {
+        if (isSep(fs, *op)) {
+            lastop = op + 1;
             if (isSep(fs, *cp)) {
                 lastcp = cp + 1;
                 commonSegments++;
             }
         } else if (fs->caseSensitive) {
-            if (*hp != *cp) {
+            if (*op != *cp) {
                 break;
             }
-        } else if (*hp != *cp && tolower((int) *hp) != tolower((int) *cp)) {
+        } else if (*op != *cp && tolower((int) *op) != tolower((int) *cp)) {
             break;
         }
     }
     mprAssert(commonSegments >= 0);
 
-    if (*cp && *hp) {
-        hp = lasthp;
+    if (*cp && *op) {
+        op = lastop;
         cp = lastcp;
     }
 
     /*
         Add one more segment if the last segment matches. Handle trailing separators
      */
-    if ((isSep(fs, *hp) || *hp == '\0') && (isSep(fs, *cp) || *cp == '\0')) {
+    if ((isSep(fs, *op) || *op == '\0') && (isSep(fs, *cp) || *cp == '\0')) {
         commonSegments++;
     }
     if (isSep(fs, *cp)) {
         cp++;
     }
     
-    hp = result = mprAlloc(homeSegments * 3 + slen(path) + 2);
-    for (i = commonSegments; i < homeSegments; i++) {
-        *hp++ = '.';
-        *hp++ = '.';
-        *hp++ = defaultSep(fs);
+    op = result = mprAlloc(originSegments * 3 + slen(dest) + 2);
+    for (i = commonSegments; i < originSegments; i++) {
+        *op++ = '.';
+        *op++ = '.';
+        *op++ = defaultSep(fs);
     }
     if (*cp) {
-        strcpy(hp, cp);
-    } else if (hp > result) {
+        strcpy(op, cp);
+    } else if (op > result) {
         /*
             Cleanup trailing separators ("../" is the end of the new path)
          */
-        hp[-1] = '\0';
+        op[-1] = '\0';
     } else {
         strcpy(result, ".");
     }
@@ -16329,12 +16322,11 @@ char *mprTransformPath(cchar *path, int flags)
 
 #endif
     } else if (flags & MPR_PATH_REL) {
-        result = mprGetRelPath(path);
+        result = mprGetRelPath(path, 0);
 
     } else {
         result = mprNormalizePath(path);
     }
-
     if (flags & MPR_PATH_NATIVE_SEP) {
 #if BLD_WIN_LIKE
         mprMapSeparators(result, '\\');

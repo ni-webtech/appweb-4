@@ -1433,7 +1433,7 @@ static void copyDir(cchar *fromDir, cchar *toDir)
                     fail("Can't make directory %s", to);
                     return;
                 }
-                trace("CREATE",  "Directory: %s", mprGetRelPath(to));
+                trace("CREATE",  "Directory: %s", mprGetRelPath(to, 0));
             }
             copyDir(from, to);
         
@@ -1443,12 +1443,12 @@ static void copyDir(cchar *fromDir, cchar *toDir)
                 return;
             }
             if (mprPathExists(to, R_OK) && !app->overwrite) {
-                trace("EXISTS",  "File: %s", mprGetRelPath(to));
+                trace("EXISTS",  "File: %s", mprGetRelPath(to, 0));
             } else {
-                trace("CREATE",  "File: %s", mprGetRelPath(to));
+                trace("CREATE",  "File: %s", mprGetRelPath(to, 0));
             }
             if (mprCopyPath(from, to, 0644) < 0) {
-                fail("Can't copy file %s to %s", from, mprGetRelPath(to));
+                fail("Can't copy file %s to %s", from, mprGetRelPath(to, 0));
                 return;
             }
         }
@@ -1503,7 +1503,7 @@ static void copyFile(HttpRoute *route, cchar *from, cchar *to)
         return;
     }
     fixupFile(route, mprGetAbsPath(to));
-    trace("CREATE",  "File: %s", mprGetRelPath(to));
+    trace("CREATE",  "File: %s", mprGetRelPath(to, 0));
 }
 
 
@@ -1544,7 +1544,7 @@ static void generateAppDb(HttpRoute *route)
     if (mprWritePathContents(dbpath, buf, 0, 0664) < 0) {
         return;
     }
-    trace("CREATE", "Database: %s", mprGetRelPath(dbpath));
+    trace("CREATE", "Database: %s", mprGetRelPath(dbpath, 0));
 }
 
 
@@ -1587,7 +1587,7 @@ static void makeDir(HttpRoute *route, cchar *dir)
         if (mprMakeDir(path, 0755, -1, -1, 1) < 0) {
             app->error++;
         } else {
-            trace("CREATE",  "Directory: %s", mprGetRelPath(path));
+            trace("CREATE",  "Directory: %s", mprGetRelPath(path, 0));
         }
     }
 }
@@ -1608,7 +1608,7 @@ static void makeFile(cchar *path, cchar *data, cchar *msg)
     }
     msg = sfmt("%s: %s", msg, path);
     if (!exists) {
-        trace("CREATE", mprGetRelPath(path));
+        trace("CREATE", mprGetRelPath(path, 0));
     } else {
         trace("OVERWRITE", path);
     }

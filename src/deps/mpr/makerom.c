@@ -39,7 +39,6 @@ int main(int argc, char **argv)
         if (*argp != '-') {
             break;
         }
-
         if (strcmp(argp, "--prefix") == 0) {
             if (nextArg >= argc) {
                 err++;
