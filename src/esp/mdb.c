@@ -126,6 +126,8 @@ static void manageMdb(Mdb *mdb, int flags)
         mprMark(mdb->mutex);
         mprMark(mdb->tables);
         /* Don't mark load fields */
+    } else {
+        mdbClose((Edi*) mdb);
     }
 }
 

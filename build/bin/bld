@@ -801,7 +801,7 @@ if [ "$BLD_WIN_LIKE" = 1 ] ; then
                     dumpbin /symbols ${OBJECTS} | grep ' External ' | egrep -v 'UNDEF|__real@|\?' | \
                         cut --characters=49- | sort | uniq >> ${DEF}
                 else
-                    dumpbin /symbols ${OBJECTS} | grep ' External ' | egrep -v 'UNDEF|__real@|\?' | tee /tmp/mob.1 | \
+                    dumpbin /symbols ${OBJECTS} | grep ' External ' | egrep -v 'UNDEF|__real@|\?' | \
                         sed 's/.*| _/  /' | sort | uniq >> ${DEF}
                 fi
             fi

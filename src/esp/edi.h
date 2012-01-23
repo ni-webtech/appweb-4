@@ -355,6 +355,7 @@ extern int ediGetColumnSchema(Edi *edi, cchar *tableName, cchar *columnName, int
 extern MprList *ediGetTables(Edi *edi);
 
 /**
+    MOB - remove this API
     Load the database file.
     @param edi Database handle
     @param path Database path name

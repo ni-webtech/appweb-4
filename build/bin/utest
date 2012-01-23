@@ -26,9 +26,16 @@ enumerable class Test {
         MOB - don't need to store separate to options.
      */
     var _bin: Path                          // Path to bin directory
+    var _cross: Boolean                     // Cross compiling
+    var _depth: Number = 1                  // Test level. Higher levels mean deeper testing.
+    var _hostOs: String                     // Host operating system
+    var _hostSystem: String                 // Host system details
+    var _lib: Path                          // Path to lib directory
+    var _os: String                         // Operating system
+    var _top: Path                          // Path to top of source tree
+
     var continueOnErrors: Boolean = false   // Continue on errors 
     var data: Object                        // Opaque data
-    var _depth: Number = 1                  // Test level. Higher levels mean deeper testing.
     var echo: Boolean = false               // Echo the command line 
     var errorMsg: String                    // Worker callback error msg
     var failed: Boolean                     // Did the test pass
@@ -36,16 +43,9 @@ enumerable class Test {
     var features: Object                    // buildConfig.h features
     var filters: Array = []                 // Filter tests by pattern x.y.z... 
     var finish: Boolean                     // Set to true when time to exit 
-    var _hostOs: String                     // Host operating system
-    var _cross: Boolean                     // Cross compiling
-    var _hostSystem: String                 // Host system details
     var iterations: Number = 1              // Number of iterations to run the test 
-    var _lib: Path                          // Path to lib directory
-    var logPath: Path                       // Loging filename
-    var logSpec: String                     // Logging specifier (file:level) to output log messages
     var nth: Number = 0                     // Current iteration
     var noserver: Boolean = false           // Omit running a server (sets NOSERVER=1)
-    var _os: String                         // Operating system
     var second: Boolean = false             // Second instance. Bypass some initializations
     var skipTest: Boolean = false           // Skip a test
     var skippedMsg: String                  // Test skipped message
@@ -53,7 +53,6 @@ enumerable class Test {
     var testName: String                    // Set test name 
     var testDirs: Array = [ "." ]           // Test directories to run
     var threads: Number = 1                 // Number of test threads 
-    var _top: Path                          // Path to top of source tree
     var version: String = "0.1.0"           // Output version information 
     var workerImage: Worker                 // Clonable worker image
 
@@ -61,6 +60,7 @@ enumerable class Test {
     var currentTest: String                 // Test currently executing
     var fullName: String                    // Full name of the current test 
     var log: Logger = App.log
+    var out: Stream
     var start = Date.now()
 
     /*
@@ -87,7 +87,7 @@ enumerable class Test {
             iterations: { alias: 'i', range: Number },
             log: { alias: 'l', range: String },
             name: { range: String },
-            noserver: {},
+            noserver: { alias: 'n' },
             os: { alias: 'o', range: String },
             second: { alias: '2' },
             step: { alias: 's' },
@@ -96,6 +96,27 @@ enumerable class Test {
             version: { alias: 'V' },
         },
         usage: usage,
+    }
+
+    function usage(): Void {
+        error("Usage: " + program + " [options] [filter patterns...]\n" +
+            "  --chdir dir           # Change to directory before testing\n" + 
+            "  --continue            # Continue on errors\n" + 
+            "  --depth number        # Zero == basic, 1 == throrough, 2 extensive\n" + 
+            "  --debug               # Run in debug mode\n" + 
+            "  --echo                # Echo the command line\n" + 
+            "  --iterations count    # Number of iterations to run the test\n" + 
+            "  --log logSpec         # Control debug logging\n" + 
+            "  --name testName       # Set test name\n" + 
+            "  --noserver            # Don't run server side of tests\n" + 
+            "  --os O/S              # Set operating system\n" + 
+            "  --out path            # Save output to a file\n" + 
+            "  --second              # Second instance. Bypass some initializations\n" + 
+            "  --step                # Single step tests\n" + 
+            "  --threads count       # Number of test threads\n" + 
+            "  --verbose             # Verbose mode\n" + 
+            "  --version             # Output version information\n")
+        App.exit(1)
     }
 
     /*
@@ -133,9 +154,6 @@ enumerable class Test {
         if (options.iterations) {
             iterations = options.iterations
         }
-        if (options.log) {
-            logSpec = options.log
-        }
         if (options.noserver) {
             noserver = true
             App.putenv("NOSERVER", "1")
@@ -161,33 +179,18 @@ enumerable class Test {
         }
     }
 
-    function usage(): Void {
-        error("Usage: " + program + " [options] [filter patterns...]\n" +
-            "  --chdir dir           # Change to directory before testing\n" + 
-            "  --continue            # Continue on errors\n" + 
-            "  --depth number        # Zero == basic, 1 == throrough, 2 extensive\n" + 
-            "  --debug               # Run in debug mode\n" + 
-            "  --echo                # Echo the command line\n" + 
-            "  --iterations count    # Number of iterations to run the test\n" + 
-            "  --log logFile         # Send output to a log file \n" + 
-            "  --name testName       # Set test name\n" + 
-            "  --noserver            # Don't run server side of tests\n" + 
-            "  --os O/S              # Set operating system\n" + 
-            "  --second              # Second instance. Bypass some initializations\n" + 
-            "  --step                # Single step tests\n" + 
-            "  --threads count       # Number of test threads\n" + 
-            "  --verbose             # Verbose mode (can use multiple times)\n" + 
-            "  --version             # Output version information\n")
-        App.exit(1)
-    }
-
     function initialize(): Void {
-        if (logSpec) {
-            App.log.redirect(logSpec)
-            App.mprLog.redirect(logSpec)
+        if (options.log) {
+            App.log.redirect(options.log)
+            App.mprLog.redirect(options.log)
+        }
+        if (options.out) {
+            out = File(options.out, "w")
+        } else {
+            out = stdout
         }
         if (echo) {
-            log.activity("Test", App.args.join(" "))
+            activity("Test", App.args.join(" "))
         }
     }
 
@@ -210,7 +213,7 @@ enumerable class Test {
         Main test runner
      */
     function runner(): Void {
-        log.activity("Test", "Starting tests. Test depth: " + _depth + ", iterations: " + iterations)
+        activity("Test", "Starting tests. Test depth: " + _depth + ", iterations: " + iterations)
         for (i in testDirs) {
             testDirs[i] = new Path(testDirs[i])
         }
@@ -221,7 +224,7 @@ enumerable class Test {
         }
         finally {
             if (!success && test.verbosity == 1 && test.threads <= 1) {
-                log.write("FAILED\n")
+                out.write("FAILED\n")
             }
         }
     }
@@ -231,7 +234,7 @@ enumerable class Test {
             for each (dir in testDirs) {
                 runGroupTests(dir)
             }
-            log.activity("Progress", "Completed iteration " + nth)
+            activity("Progress", "Completed iteration " + nth)
         }
     }
 
@@ -350,9 +353,6 @@ enumerable class Test {
             test.threads = data.threads
             test.top = Path(data.top)
             test.verbosity = Number(data.verbosity)
-            if (data.logPath) {
-                test.setLogPath(Path(data.logPath))
-            }
             blend(App.config, data.features)
             blend(App.config.uris, data.uris)
             blend(App.config.dirs, data.dirs)
@@ -370,7 +370,6 @@ enumerable class Test {
             env: env,
             features: features,
             lib: _lib, 
-            log: logPath,
             os: _os, 
             phase: phase,
             session: session,
@@ -404,7 +403,7 @@ enumerable class Test {
         }
         w.onerror = function (e) {
             if (test.verbosity == 1 && test.threads <= 1) {
-                App.log.write("FAILED\n\n")
+                out.write("FAILED\n\n")
             }
             test.failed = true
             test.failedCount++
@@ -413,12 +412,13 @@ enumerable class Test {
                 let stack = e.formatStack()
                 if (!test.continueOnErrors) {
                     test.finish = true
-                    App.log.write("Test Failed: \"" + test.fullName + "\". " + e.message + " At:\n" + stack + "\n")
+                    out.write("Test Failed: \"" + test.fullName + "\". " + e.message + " At:\n" + stack + "\n")
                 }
             } else {
-                App.log.write("Test Failed: " + e.message + "\n")
+                out.write("Test Failed: " + e.message + "\n")
             }
         }
+        let out = this.out
         w.onclose = function (e) {
             if (test.testCount == priorCount) {
                 /*
@@ -429,10 +429,10 @@ enumerable class Test {
             }
             if (test.verbosity == 1 && test.threads <= 1) {
                 if (test.skippedMsg) {
-                    App.log.write("SKIPPED (" + test.skippedMsg + ")\n")
+                    out.write("SKIPPED (" + test.skippedMsg + ")\n")
                     test.skippedMsg = null
                 } else if (!test.failed) {
-                    App.log.write("PASSED\n")
+                    out.write("PASSED\n")
                 }
             }
         }
@@ -454,7 +454,7 @@ enumerable class Test {
     }
 
     function summary() {
-        log.activity("Test", ((failedCount == 0) ? "PASSED" : "FAILED") + ": " + 
+        activity("Test", ((failedCount == 0) ? "PASSED" : "FAILED") + ": " + 
             testCount + " tests completed, " + failedCount +
             " tests(s) failed, " + skippedCount + " tests(s) skipped. " + 
             "Elapsed time " + ("%.2f" % ((Date.now() - start) / 1000)) + " secs.")
@@ -476,19 +476,19 @@ enumerable class Test {
         currentTest = file.toString()
         this.fullName = testName ? (testName + "." + currentTest) : currentTest
         if (verbosity || step) {
-            log.write("%12s " % prefix)
+            out.write("%12s " % prefix)
         }
         if (step) {
-            log.write(fullName + ", press <ENTER>: ")
+            out.write(fullName + ", press <ENTER>: ")
             if (step) stdin.readLine()
         } else if (verbosity > 0) {
-            log.write(fullName)
+            out.write(fullName)
             if (verbosity == 1 && threads == 1) {
-                log.write(" ... ")
+                out.write(" ... ")
             }
         }
         if (verbosity > 1 || threads > 1) {
-            log.write("\n")
+            out.write("\n")
         }
     }
         
@@ -556,6 +556,12 @@ enumerable class Test {
     function error(...msg): Void {
         App.log.error("\nutest: " + msg + "\n\n")
         App.exit(1)
+    }
+
+    function activity(tag: String, ...args): Void {
+        let msg = args.join(" ")
+        let msg = "%12s %s" % (["[" + tag + "]"] + [msg]) + "\n"
+        out.write(msg)
     }
 }
 

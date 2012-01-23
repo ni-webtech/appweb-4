@@ -97,14 +97,19 @@
             <ul>
                 <li>Appweb 4 is a major release and most APIs have been modified based on the updated MPR.</li>
             </ul>
+
+            <a name="r3.3.3" id="r3.3.3"></a>
+            <h2 class="section">Changes in 3.3.3</h2>
+            <h3>Key Fixes</h3>
+            <ul>
+                <li>Fixes for building for VxWorks on linux</li>
+                <li>Fix httpPassword parsing corrupt files</li>
+                <li>Add SSL_OP_NO_TICKET and SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION</li>
+                <li>Enable no free threads message to continually be emitted</li>
+            </ul>
+
             <a name="r3.3.2" id="r3.3.2"></a>
             <h2 class="section">Changes in 3.3.2</h2>
-            <!--
-            <h3>Minor Features</h3>
-            <ul>
-                <li>None</li>
-            </ul>
-            -->
             <h3>Key Fixes</h3>
             <ul>
                 <li>CGI content-length headers</li>
@@ -128,12 +133,6 @@
                 <li>Windows 64-bit file stat</li>
                 <li>Add huge file support (&gt; 2GB)</li>
             </ul>
-            <!--
-            <h3><strong>API Changes</strong></h3>
-            <ul>
-                <li>None</li>
-            </ul>
-            -->
             <a name="r3.3.1" id="r3.3.1"></a>
             <h2 class="section">Changes in 3.3.1</h2>
             <h3>Key Fixes</h3>
@@ -192,12 +191,7 @@
                 <li>Ejscript: Compiler spin with }; construct</li>
                 <li>Ejscript: escape(quote)</li>
             </ul>
-            <!--
-            <h3><strong>API Changes</strong></h3>
-            <ul>
-                <li>None</li>
-            </ul>
-            -->
+            
             <a name="r3.2.2" id="r3.2.2"></a>
             <h2 class="section">Changes in 3.2.2</h2>
             <h3>Minor Features</h3>
@@ -412,43 +406,7 @@
                 <li>Project files for MAC OS Xcode and Microsoft Visual Studio</li>
                 <li>Enhanced http command supporting SSL, chunking, ranged requests and file upload</li>
             </ul>
-            <!--
-            <a name="r2.5.0"></a>
-            <h2 class="section">Changes in 2.5.0</h2>
-            <h3>Major Features</h3>
-            <ul>
-                <li>Modified syntaxt for ==with. No need to provide =loadable or =builtin. These are set via the
-                ==shared or ==static setting.</li>
-                <li>Simplified package configuration for PHP, OpenSSL and MatrixSSL. Instead of specifying libraries
-                and library paths via configure ==with-libpath commands, now package configuration comes from simple
-                text files under build/packages.</li>
-            </ul>
-            <h3>Minor Features</h3>
-            <ul>
-                <li>Support for Microsoft Visual Studio 2008 including express editions. Removed support for Visual
-                Studio 6.</li>
-                <li>Included Microsoft Visual Studio project for building without requiring cygwin tools on
-                windows.</li>
-                <li>Added support for static linking on windows.</li>
-                <li>Simplified configuration for static building. If ==static, then all modules are static. NOTE: can't
-                have both ==static and ==shared due to different building requirements on windows. Removed build
-                switches ==preferStatic and ==preferShared. Removed BLD_FEATURE_DLL define.</li>
-                <li>Added "const" to most declarations to improve C++ compatibility and remove compile warnings when
-                using gcc 4.2.</li>
-                <li>Removed ==enable-shared-libc option for configure. Now driven from ==shared and ==static.</li>
-                <li>Added patch for Pharlap support</li>
-                <li>Added patch for PAM support</li>
-                <li>Added expect header support</li>
-                <li>Remove bldout utility to format output. Speeds up builds.</li>
-                <li>Strengthened session validation</li>
-                <li>Moved modules from lib/modules to lib directory.</li>
-            </ul>
-            <h3>Fixes</h3>
-            <ul>
-                <li>Ensure only one SSL provider can be configured at a time.</li>
-                <li>Fixed embedding manifests in Windows builds.</li>
-            </ul>
-            -->
+
             <a name="r2.4.2" id="r2.4.2"></a>
             <h2 class="section">Changes in 2.4.2</h2>
             <h3>Fixes</h3>

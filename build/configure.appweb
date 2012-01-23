@@ -64,6 +64,7 @@ manageFeatures()
     if [ "$BLD_FEATURE_SQLITE" = 0 -a "$BLD_FEATURE_SDB" = 1 ] ; then
         echo " "
         echo "Must have configure with SQLite to use SDB."
+        echo "Configure with --with-sqlite."
         echo "Disabling SDB"
         BLD_FEATURE_SDB=0
     fi
