@@ -288,6 +288,11 @@
 #endif
 #endif
 
+
+#ifndef BLD_FEATURE_ROMFS
+    #define BLD_FEATURE_ROMFS 0
+#endif
+
 /*
     Standard types
  */
@@ -887,7 +892,7 @@ extern "C" {
             This may or may not be necessary - let us know dev@embedthis.com if your system needs this (and why).
          */
         #if _DIAB_TOOL
-            #if BLD_HOST_CPU_ARCH == MPR_CPU_PPC
+            #if BLD_CPU_ARCH == MPR_CPU_PPC
                 /* #define __va_copy(dest, src) *(dest) = *(src) */
                 #define __va_copy(dest, src) memcpy((dest), (src), sizeof(va_list))
             #endif
@@ -1349,6 +1354,9 @@ struct  MprXml;
 /*
     Foundational types
  */
+#ifndef BLD_CHAR_LEN
+    #define BLD_CHAR_LEN 1
+#endif
 #if BLD_CHAR_LEN == 4
     typedef int MprChar;
     #define T(s) L ## s
@@ -3795,7 +3803,7 @@ extern char *mprGetDate(char *fmt);
  */
 extern uint64 mprGetTicks();
 
-#if (LINUX || MACOSX || WIN) && (BLD_HOST_CPU_ARCH == MPR_CPU_IX86 || BLD_HOST_CPU_ARCH == MPR_CPU_IX64)
+#if (LINUX || MACOSX || WIN) && (BLD_CPU_ARCH == MPR_CPU_IX86 || BLD_CPU_ARCH == MPR_CPU_IX64)
     #define MPR_HIGH_RES_TIMER 1
 #else
     #define MPR_HIGH_RES_TIMER 0

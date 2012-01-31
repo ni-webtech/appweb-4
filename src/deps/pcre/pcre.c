@@ -325,7 +325,6 @@ functions whose names all begin with "_pcre_". */
 #ifndef PCRE_INTERNAL_H
 #define PCRE_INTERNAL_H
 
-#include "buildConfig.h"
 
 /* EMBEDTHIS */
 #ifndef _VSB_CONFIG_FILE
@@ -1526,7 +1525,6 @@ extern BOOL         _pcre_xclass(int, const uschar *);
 *          Unicode Property Table handler        *
 *************************************************/
 
-#include "buildConfig.h"
 
 #if BLD_FEATURE_PCRE
 
@@ -1681,7 +1679,6 @@ enum {
 #ifndef _UCPINTERNAL_H
 #define _UCPINTERNAL_H
 
-#include "buildConfig.h"
 
 #if BLD_FEATURE_PCRE
 
@@ -1789,7 +1786,6 @@ When searching the data, proceed as follows:
 property table. See ucpinternal.h for a description of the layout.
 This version was made from the Unicode 5.0.0 tables. */
 
-#include "buildConfig.h"
 
 #if BLD_FEATURE_PCRE
 
@@ -4916,7 +4912,6 @@ and dead code stripping is activated. This leads to link errors. Pulling in the
 header ensures that the array gets flagged as "someone outside this compilation
 unit might reference this" and so it will always be supplied to the linker. */
 
-#include "buildConfig.h"
 
 #if BLD_FEATURE_PCRE
 
@@ -5150,7 +5145,6 @@ POSSIBILITY OF SUCH DAMAGE.
 supporting internal functions that are not used by other modules. */
 
 
-#include "buildConfig.h"
 
 #if BLD_FEATURE_PCRE
 
@@ -11600,7 +11594,6 @@ POSSIBILITY OF SUCH DAMAGE.
 pattern matching using an NFA algorithm, trying to mimic Perl as closely as
 possible. There are also some static supporting functions. */
 
-#include "buildConfig.h"
 
 #if BLD_FEATURE_PCRE
 
@@ -16601,7 +16594,6 @@ indirection. These values can be changed by the caller, but are shared between
 all threads. However, when compiling for Virtual Pascal, things are done
 differently, and global variables are not used (see pcre.in). */
 
-#include "buildConfig.h"
 
 #if BLD_FEATURE_PCRE
 
@@ -16678,7 +16670,6 @@ and NLTYPE_ANY. The full list of Unicode newline characters is taken from
 http://unicode.org/unicode/reports/tr18/. */
 
 
-#include "buildConfig.h"
 
 #if BLD_FEATURE_PCRE
 
@@ -16849,7 +16840,6 @@ POSSIBILITY OF SUCH DAMAGE.
 /* This file contains a private PCRE function that converts an ordinal
 character value into a UTF8 string. */
 
-#include "buildConfig.h"
 
 #if BLD_FEATURE_PCRE
 
@@ -16949,7 +16939,6 @@ uses macros to change their names from _pcre_xxx to xxxx, thereby avoiding name
 clashes with the library. */
 
 
-#include "buildConfig.h"
 
 #if BLD_FEATURE_PCRE
 
@@ -17279,7 +17268,6 @@ see if it was compiled with the opposite endianness. If so, it uses an
 auxiliary local function to flip the appropriate bytes. */
 
 
-#include "buildConfig.h"
 
 #if BLD_FEATURE_PCRE
 
@@ -17427,7 +17415,6 @@ POSSIBILITY OF SUCH DAMAGE.
 /* This module contains code for searching the table of Unicode character
 properties. */
 
-#include "buildConfig.h"
 
 #if BLD_FEATURE_PCRE
 
@@ -17617,7 +17604,6 @@ POSSIBILITY OF SUCH DAMAGE.
 strings. */
 
 
-#include "buildConfig.h"
 
 #if BLD_FEATURE_PCRE
 
@@ -17793,7 +17779,6 @@ class (one that contains characters whose values are > 255). It is used by both
 pcre_exec() and pcre_def_exec(). */
 
 
-#include "buildConfig.h"
 
 #if BLD_FEATURE_PCRE
 

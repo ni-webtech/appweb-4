@@ -11,16 +11,12 @@ include 		.makedep
 CGI				:= mod_cgi
 FILE			:= mod_file
 EJS				:= mod_ejs
-ESP				:= mod_esp
 PHP				:= mod_php
 SSL				:= mod_ssl
 
 ifeq	($(BUILDING_TARGET),1)
 ifeq	($(BLD_FEATURE_CGI),1)
 	OBJECTS		+= $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ)
-endif
-ifeq	($(BLD_FEATURE_ESP),1)
-	OBJECTS 	+= $(BLD_OBJ_DIR)/espHandler$(BLD_OBJ)
 endif
 ifeq	($(BLD_FEATURE_EJSCRIPT),1)
 	OBJECTS 	+= $(BLD_OBJ_DIR)/ejsHandler$(BLD_OBJ)
@@ -41,9 +37,6 @@ endif
 ifeq	($(BLD_FEATURE_EJSCRIPT),1)
 	MODULES		+= $(BLD_LIB_DIR)/$(EJS)$(BLD_SHOBJ)
 endif
-ifeq	($(BLD_FEATURE_ESP),1)
-	MODULES		+= $(BLD_LIB_DIR)/$(ESP)$(BLD_SHOBJ)
-endif
 ifeq	($(BLD_FEATURE_PHP),1)
 	MODULES		+= $(BLD_LIB_DIR)/$(PHP)$(BLD_SHOBJ)
 	IMPORTS 	+= $(BLD_PHP_IMPORTS)
@@ -53,12 +46,6 @@ ifeq ($(BLD_FEATURE_SSL),1)
 	MODULES		+= $(BLD_LIB_DIR)/$(SSL)$(BLD_SHOBJ)
 	IMPORTS 	+= $(BLD_OPENSSL_IMPORTS)
 	IMPORTED	+= $(patsubst %,$(BLD_LIB_DIR)/%, $(notdir $(BLD_OPENSSL_IMPORTS)))
-endif
-endif
-
-ifeq ($(BUILDING_DEV),1)
-ifeq	($(BLD_FEATURE_ESP),1)
-	MODULES		+= $(BLD_LIB_DIR)/$(ESP)$(BLD_SHOBJ)
 endif
 endif
 
@@ -87,14 +74,6 @@ $(BLD_LIB_DIR)/$(CGI)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/cgiHandler$(BLD_OBJ) $(BLD_LIB
 $(BLD_LIB_DIR)/$(EJS)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/ejsHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
 	bld --shared --library $(BLD_LIB_DIR)/$(EJS) --search "$(BLD_EJSCRIPT_LIBPATHS)" \
 		--modules ejs --libs "$(LIBS) $(BLD_EJSCRIPT_LIBS)" ejsHandler$(BLD_OBJ) 
-
-$(BLD_LIB_DIR)/$(ESP)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/espHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB) \
-		$(BLD_OBJ_DIR)/espAbbrev$(BLD_OBJ) $(BLD_OBJ_DIR)/espHandler$(BLD_OBJ) $(BLD_OBJ_DIR)/espFramework$(BLD_OBJ) \
-		$(BLD_OBJ_DIR)/espSession$(BLD_OBJ) $(BLD_OBJ_DIR)/espTemplate$(BLD_OBJ) $(BLD_OBJ_DIR)/espHtml$(BLD_OBJ) \
-		$(BLD_OBJ_DIR)/edi$(BLD_OBJ) $(BLD_OBJ_DIR)/mdb$(BLD_OBJ)
-	bld --shared --library $(BLD_LIB_DIR)/$(ESP) --search "$(BLD_ESP_LIBPATHS)" --libs "$(LIBS) $(BLD_ESP_LIBS)" \
-		espAbbrev$(BLD_OBJ) espHandler$(BLD_OBJ) espFramework$(BLD_OBJ) espSession$(BLD_OBJ) espTemplate$(BLD_OBJ) \
-		espHtml$(BLD_OBJ) edi$(BLD_OBJ) mdb$(BLD_OBJ) sdb$(BLD_OBJ)
 
 $(BLD_LIB_DIR)/$(PHP)$(BLD_SHOBJ): $(BLD_OBJ_DIR)/phpHandler$(BLD_OBJ) $(BLD_LIB_DIR)/libappweb$(BLD_LIB)
 	bld --shared --library $(BLD_LIB_DIR)/$(PHP) --rpath "$(BLD_LIB_PREFIX)" \

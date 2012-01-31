@@ -1957,14 +1957,11 @@ static bool conditionalDefinition(MaState *state, cchar *key)
     }
     result = 0;
 
-    if (scasematch(key, state->appweb->hostOS)) {
+    if (scasematch(key, state->appweb->hostOs)) {
         result = 1;
 
-    } else if (scasematch(key, state->appweb->hostCPU)) {
+    } else if (scasematch(key, state->appweb->hostArch)) {
         result = 1;
-
-    } else if (scasematch(key, "BLD_COMMERCIAL")) {
-        result = smatch(BLD_COMMERCIAL, "0");
 
 #if BLD_DEBUG
     } else if (scasematch(key, "BLD_DEBUG")) {

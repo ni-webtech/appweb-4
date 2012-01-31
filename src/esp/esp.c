@@ -21,7 +21,7 @@ typedef struct App {
     char        *configFile;
     char        *pathEnv;
     char        *database;              /* Database provider "mdb" | "sqlite" */
-    char        *hostOS;                /* Target host O/S for cross compilation */
+    char        *hostOs;                /* Target host O/S for cross compilation */
     char        *hostArch;              /* Target host CPU for cross compilation */
     char        *listen;
 
@@ -340,7 +340,7 @@ int main(int argc, char **argv)
             if (argind >= argc) {
                 usageError();
             } else {
-                app->hostOS = supper(argv[++argind]);
+                app->hostOs = supper(argv[++argind]);
             }
 
         } else if (smatch(argp, "--listen") || smatch(argp, "-l")) {
@@ -430,7 +430,7 @@ static void manageApp(App *app, int flags)
         mprMark(app->flatItems);
         mprMark(app->flatPath);
         mprMark(app->hostArch);
-        mprMark(app->hostOS);
+        mprMark(app->hostOs);
         mprMark(app->libDir);
         mprMark(app->listen);
         mprMark(app->module);
@@ -647,11 +647,11 @@ static void readConfig()
     appweb = app->appweb;
     appweb->skipModules = 1;
     http = app->appweb->http;
-    if (app->hostOS) {
-        appweb->hostOS = app->hostOS;
+    if (app->hostOs) {
+        appweb->hostOs = app->hostOs;
     }
     if (app->hostArch) {
-        appweb->hostCPU = app->hostArch;
+        appweb->hostArch = app->hostArch;
     }
     findConfigFile();
     if (app->error) {

@@ -1162,7 +1162,7 @@ static int unloadEsp(MprModule *mp)
 
 #else /* BLD_FEATURE_ESP */
 
-int maEspHandlerInit(Http *http)
+int maEspHandlerInit(Http *http, MprModule *mp)
 {
     mprNop(0);
     return 0;

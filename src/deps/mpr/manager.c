@@ -30,7 +30,7 @@
     #define SERVICE_NAME BLD_PRODUCT
 #endif
 #ifndef SERVICE_HOME
-    #define SERVICE_HOME BLD_PREFIX
+    #define SERVICE_HOME "/"
 #endif
 
 #if BLD_UNIX_LIKE

@@ -8,7 +8,6 @@ include 		.makedep
 
 ifeq ($(BUILDING_DEV),1)
 	TARGETS		+= $(BLD_BIN_DIR)/auth$(BLD_EXE)
-	TARGETS		+= $(BLD_BIN_DIR)/esp$(BLD_EXE)
 	TARGETS		+= $(BLD_BIN_DIR)/setConfig$(BLD_EXE)
 endif
 ifeq ($(BUILDING_TARGET),1)
@@ -18,7 +17,6 @@ ifeq ($(BUILDING_TARGET),1)
 else
     OBJECTS     := $(patsubst $(BLD_OBJ_DIR)/cgiProgram$(BLD_OBJ),,$(OBJECTS))
 endif
-ESP_OBJECTS 	:= $(patsubst %,$(BLD_OBJ_DIR)/%$(BLD_OBJ),esp espFramework espSession espTemplate espHtml edi mdb sdb)
 
 cgiProgram_IFLAGS	= -D$(BLD_OS)=1
 
@@ -32,10 +30,6 @@ $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE): $(BLD_OBJ_DIR)/cgiProgram$(BLD_OBJ)
 	bld --exe $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE) $(BLD_OBJ_DIR)/cgiProgram$(BLD_OBJ)
 	cp $(BLD_BIN_DIR)/cgiProgram$(BLD_EXE) ../test/cgi-bin
 	chmod +x ../test/cgi-bin/cgiProgram$(BLD_EXE)
-
-$(BLD_BIN_DIR)/esp$(BLD_EXE): $(ESP_OBJECTS)
-	bld --exe $(BLD_BIN_DIR)/esp$(BLD_EXE) --search "$(BLD_APPWEB_LIBPATHS)" --libs "$(BLD_APPWEB_LIBS)" \
-		$(ESP_OBJECTS) $(BLD_LIB_DIR)/mod_esp$(BLD_SHLIB)
 
 $(BLD_BIN_DIR)/setConfig$(BLD_EXE): $(BLD_OBJ_DIR)/setConfig$(BLD_OBJ)
 	bld --graphical --exe $(BLD_BIN_DIR)/setConfig$(BLD_EXE) --search "$(BLD_MPR_LIBPATHS)" --libs "$(BLD_MPR_LIBS)" \

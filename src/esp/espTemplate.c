@@ -70,9 +70,10 @@ static bool matchToken(cchar **str, cchar *token)
  */
 char *espExpandCommand(cchar *command, cchar *source, cchar *module)
 {
-    MprBuf  *buf;
-    cchar   *cp, *out;
-    char    *tmp;
+    MprBuf      *buf;
+    MaAppweb    *appweb;
+    cchar       *cp, *out;
+    char        *tmp;
     
 #if BLD_WIN_LIKE
     cchar   *path;
@@ -84,12 +85,13 @@ char *espExpandCommand(cchar *command, cchar *source, cchar *module)
     }
     out = mprTrimPathExt(module);
     buf = mprCreateBuf(-1, -1);
+    appweb = MPR->appwebService;
 
     for (cp = command; *cp; ) {
 		if (*cp == '$') {
             if (matchToken(&cp, "${ARCH}")) {
                 /* Build architecture */
-                mprPutStringToBuf(buf, BLD_HOST_CPU);
+                mprPutStringToBuf(buf, appweb->hostArch);
 
 #if BLD_WIN_LIKE
             } else if (matchToken(&cp, "${WINSDK}")) {
@@ -104,8 +106,8 @@ char *espExpandCommand(cchar *command, cchar *source, cchar *module)
                 
             } else if (matchToken(&cp, "${CC}")) {
                 /* Compiler */
-                //  MOB - what about cross compilation
 #if BLD_WIN_LIKE
+                //  MOB - what about cross compilation
                 path = mprJoinPath(mprGetPathParent(mprGetPathParent(getenv("VS100COMNTOOLS"))), "VC/bin/cl.exe");
                 mprPutStringToBuf(buf, mprGetPortablePath(path));
 #else
@@ -116,7 +118,7 @@ char *espExpandCommand(cchar *command, cchar *source, cchar *module)
 
             } else if (matchToken(&cp, "${INC}")) {
                 /* Include directory (out/inc) */
-                mprPutStringToBuf(buf, mprResolvePath(mprGetAppDir(), BLD_INC_NAME));
+                mprPutStringToBuf(buf, mprResolvePath(mprGetAppDir(), "inc"));
 
             } else if (matchToken(&cp, "${LIB}")) {
                 /* Library directory. IDE's use bin dir */
@@ -136,11 +138,16 @@ char *espExpandCommand(cchar *command, cchar *source, cchar *module)
 
             } else if (matchToken(&cp, "${SHLIB}")) {
                 /* .lib */
-                mprPutStringToBuf(buf, BLD_HOST_SHLIB);
+                mprPutStringToBuf(buf, appweb->hostOs);
 
             } else if (matchToken(&cp, "${SHOBJ}")) {
                 /* .dll */
+#ifdef BLD_HOST_SHOBJ
+                //  MOB - need this for bit
                 mprPutStringToBuf(buf, BLD_HOST_SHOBJ);
+#else
+                mprPutStringToBuf(buf, BLD_SHOBJ);
+#endif
 
             } else if (matchToken(&cp, "${SRC}")) {
                 /* View (already parsed into C code) or controller source */

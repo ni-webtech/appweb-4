@@ -51,8 +51,8 @@ typedef struct MaAppweb {
     Http                *http;              /**< Http service object */
     char                *user;              /**< O/S application user name */
     char                *group;             /**< O/S application group name */
-    char                *hostCPU;           /**< Host CPU */
-    char                *hostOS;            /**< Host operating system */
+    char                *hostArch;          /**< Host CPU architecture */
+    char                *hostOs;            /**< Host operating system */
     int                 uid;                /**< User Id */
     int                 gid;                /**< Group Id */
     int                 userChanged;        /**< User name changed */
