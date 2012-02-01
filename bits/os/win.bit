@@ -48,7 +48,7 @@ Bit.load({
                 let defaults = bit.defaults
                 let settings = bit.settings
                 if (settings.preprocess) defaults.compiler += [ "-E" ]
-                if (settings.configuration == "debug") {
+                if (settings.profile == "debug") {
                     defaults.compiler += [ "-Zi", "-Od", "-MDd" ]
                     defaults.linker += [ "-debug" ]
                 } else {

@@ -16,15 +16,13 @@ Bit.load({
                 if (bit.settings.preprocess) {
                     defaults.compiler.push('-E')
                 }
-                if (bit.settings.configuration == 'debug') {
+                if (bit.settings.profile == 'debug') {
                     defaults.compiler.push('-g')
+                    defaults.linker.push('-g')
                 } else if (bit.settings.tune == 'size') {
                     defaults.compiler.push('-Os')
                 } else {
                     defaults.compiler.push('-O3')
-                }
-                if (bit.settings.configuration == 'debug') {
-                    defaults.linker.push('-g')
                 }
                 if (bit.settings.warnUnused) {
                     defaults.compiler.push('-Wno-unused-result')
@@ -41,15 +39,15 @@ Bit.load({
                 } else if (arch.startsWith('ppc')) {
                     defaults.defines.push('-D_GNU_TOOL')
                 }
-                let tunesw = bit.settings.hasMtune ? 'mtune' : 'mcpu'
+                let tunesw = bit.settings.hasMtune ? '-mtune' : '-mcpu'
                 defaults.compiler.push(tunesw + '=' + arch)
             ",
         },
     },
     rules: {
-        'c->o': '${packs.compiler.path} -c -o ${OUT} -arch ${ARCH} ${CFLAGS} ${target.defines} ${INCLUDES} ${PREPROCESS} ${IN}',
-        'lib':  '${packs.compiler.path} -dynamiclib -o ${OUT} -arch ${ARCH} ${target.linker} ${LIBS} ${IN}'
-        'exe':  '${packs.compiler.path} -o ${OUT} -arch ${ARCH} ${target.linker} -L${dir.lib} ${LIBS} ${IN}'
-        'gui':  '${packs.compiler.path} -o ${OUT} -arch ${ARCH} ${target.linker} -L${dir.lib} ${LIBS} ${IN}'
+        'c->o': '${packs.compiler.path} -c -o ${OUT} ${CFLAGS} ${target.defines} ${INCLUDES} ${PREPROCESS} ${IN}',
+        'lib':  '${packs.compiler.path} -shared -o ${OUT} ${target.linker} ${IN} ${LIBS}'
+        'exe':  '${packs.compiler.path} -o ${OUT} ${target.linker} -L${dir.lib} ${IN} ${LIBS}'
+        'gui':  '${packs.compiler.path} -o ${OUT} ${target.linker} -L${dir.lib} ${IN} ${LIBS}'
     },
 })
