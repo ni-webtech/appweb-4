@@ -31,14 +31,14 @@ Bit.load({
                 if (bit.settings.preprocess) {
                     defaults.compiler.push('-E')
                 }
-                if (bit.settings.configuration == 'debug') {
+                if (bit.settings.profile == 'debug') {
                     defaults.compiler += ['-g']
                 } else if (bit.settings.tune == 'size') {
                     defaults.compiler += ['-Os']
                 } else {
                     defaults.compiler += ['-fast']
                 }
-                if (bit.settings.configuration == 'debug') {
+                if (bit.settings.profile == 'debug') {
                     defaults.linker.push('-g')
                 }
                 if (bit.settings.warnUnused) {
