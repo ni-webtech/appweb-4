@@ -1,0 +1,29 @@
+/*
+    posix.bit -- POSIX Settings
+ */
+
+Bit.load({
+    ext: {
+        lib:   'a',
+        shlib: 'so',
+        shobj: 'so',
+        obj:   'o',
+        exe:   '',
+    },
+
+    prefixes: {
+        config:     '/etc/${settings.product}',
+        product:    '/usr/lib/${settings.product}',
+        productver: '${prefixes.product}/${settings.version}',
+        bin:        '${prefixes.productver}/bin',
+        lib:        '${prefixes.productver}/lib',
+        log:        '/var/log/${settings.product}',
+        include:    '/usr/include/${settings.product}',
+        spool:      '/var/spool/${settings.product}',
+        src:        '/usr/src/${settings.product}-${settings.version}',
+        web:        '/var/www/${settings.product}-default',
+    },
+
+    '+required': [ 'compiler' ],
+    '+optional': [ ],
+})

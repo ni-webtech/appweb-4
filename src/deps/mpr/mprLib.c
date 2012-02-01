@@ -3228,6 +3228,22 @@ void mprUnlockDtoa(int n)
 }
 
 
+void mprSetEnv(cchar *key, cchar *value)
+{
+#if !WINCE
+#if BLD_UNIX_LIKE
+    setenv(key, value, 1);
+#else
+    char *cmd = sjoin(key, "=", value, NULL);
+    putenv(cmd);
+#endif
+#endif
+    if (scasematch(key, "PATH")) {
+        MPR->pathEnv = sclone(value);
+    }
+}
+
+
 void mprNop(void *ptr) {}
 
 /*

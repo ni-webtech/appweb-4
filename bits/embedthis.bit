@@ -1,0 +1,123 @@
+/*
+    embedthis.bit -- Embedthis Build Actions
+ */
+
+Bit.load({
+    internal: {
+        runopt: {dir: bit.dir.src, show: true, toss: true}
+        platforms: [ 'local' ],
+    },
+
+    targets: {
+        combo: {
+            action: "
+                let parts = bit.settings.package || 'binary dev'
+                let keep = (bit.settings.keep) ? ' --keep' : ''
+                run('makeInstall --package --root=' + bit.dir.out.join('combo') + ' combo', bit.target.runopt)
+                run('makePackage --combo --root=' + bit.dir.out.join('combo') + keep + ' combo', bit.target.runopt)
+            ",
+        },
+
+        deploy: {
+            action: "
+                stdout.write('Enter deployment directory: ')
+                let got = stdin.readLine()
+                let parts = bit.settings.package || 'binary dev'
+                run('priv makeInstall --install --bare --root=' + bit.dir.out.join('pkg') + 
+                    ' pre ' + parts + ' post', bit.target.runopt)
+            ",
+        },
+
+        flat: {
+            action: "
+                let parts = bit.settings.package || 'binary dev'
+                let keep = (bit.settings.keep) ? ' --keep' : ''
+                run('makeInstall --package --root=' + bit.dir.out.join('flat') + ' flat', bit.target.runopt)
+                run('makePackage --combo --root=' + bit.dir.out.join('flat') + keep + ' flat', bit.target.runopt)
+            ",
+        },
+
+        install: {
+            action: "
+                let parts = bit.settings.package || 'binary dev'
+                run('priv makeInstall --install --root=' + bit.dir.out.join('pkg') + 
+                    ' pre ' + parts + ' post', bit.target.runopt)
+            ",
+        },
+
+        sync: {
+            action: "
+                for each (peer in bit.settings.sync) {
+                    let from = bit.dir.src.parent.join(peer + '/out/releases/' + peer + '-combo.tgz')
+                    run('syncup --sync ' + from, bit.target.runopt)
+                }
+            ",
+        },
+
+        package: {
+            action: "
+                if (bit.settings.depth >= 2) {
+                    let keep = (bit.settings.keep) ? ' --keep' : ''
+                    let parts = bit.settings.package || 'binary dev'
+                    run('fakePriv build/bin/makeInstall --package --root=' + bit.dir.out.join('pkg') +
+                        ' pre ' + parts + ' post', bit.target.runopt)
+                    run('fakePriv build/bin/makePackage --root=' + bit.dir.out.join('pkg') + keep + 
+                        ' pre ' + parts + ' post', bit.target.runopt)
+                } else {
+                    activity('Info', 'Packaging skipped at build depth ' + bit.settings.depth)
+                }
+            ",
+        },
+
+        uninstall: {
+            action: "
+                let parts = bit.settings.package || 'binary dev'
+                run('priv build/bin/makeInstall --remove pre ' + parts + ' post', bit.target.runopt)
+            ",
+        },
+
+        upload: {
+            action: "
+                if (bit.settings.depth < 2) {
+                    activity('Info', 'Upload skipped at build depth ' + bit.settings.depth)
+                } else {
+                    let img = $(BLD_PRODUCT)-$(BLD_VERSION)-$(BLD_NUMBER)
+                    let src = $(BLD_PRODUCT)-src-$(BLD_VERSION)-$(BLD_NUMBER)
+                    let uri = App.getenv('BUILD_UPLOAD')
+                    let key = App.getenv('BUILD_KEY')
+                    if (key == '') {
+                        throw 'Missing a BUILD_KEY authorization key'
+                    }
+                    if (uri == '') {
+                        throw 'Missing a BUILD_UPLOAD uri'
+                    }
+                    for each (file in bit.dir.rel.glob('${settings.product}-${settings.version}-${settings.number}')) {
+                        if (file.toString().contains('flat.tgz')) {
+                            let latest = file.dirname.join('${settings.product}-latest-flat.tgz')
+                            file.rename(latest)
+                            file = latest
+                        }
+                        let http = new Http
+                        http.upload(uri, {server: System.hostname, key: key}, file)
+                        if (http.status != 200) {
+                            throw 'Can\'t upload ' + file
+                        }
+                    }
+                }
+            "
+        },
+
+        utest: {
+            type: 'test',
+            action: "
+                if (bit.packs.ejs && bit.packs.ejs.path) {
+                    run(bit.packs.ejs.path + ' build/bin/utest -v -d ' + bit.settings.depth, {dir: bit.dir.src.join('src')})
+                }
+            ",
+        }
+
+        version: {
+            action: "print('bit.settings.version')",
+        },
+    },
+})

@@ -1,0 +1,10 @@
+/*
+    ssl.bit - SSL package for Bit
+ */
+
+if (bit.packs.openssl.enable || bit.packs.matrixssl.enable) {
+    let ssl = probe('sslModule.c', {fullpath: true, search: [bit.dir.src.join('src/modules')]})
+    Bit.load({packs: { ssl: { path: ssl }}})
+} else {
+    throw 'No SSL provider defined'
+}

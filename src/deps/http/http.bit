@@ -1,0 +1,24 @@
+/*
+    http.bit -- Bit File for Http
+ */
+
+Bit.load({
+
+    defaults: {
+        '+includes': [ '.' ]
+    },
+
+    targets: {
+        libhttp: {
+            type: 'lib',
+            sources: [ 'httpLib.c' ],
+            depends: [ 'libmpr', 'libpcre', 'libmprssl'  ],
+        },
+
+        http: {
+            type: 'exe',
+            sources: [ 'http.c' ],
+            depends: [ 'libhttp', ],
+        },
+	},
+})

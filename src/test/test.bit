@@ -1,0 +1,79 @@
+/*
+    test.bit
+ */
+
+Bit.load({
+    targets: {
+        testAppweb: {
+            type: 'exe',
+            sources: [ '*.c' ],
+            includes: [ '.' ],
+            depends: [ 'libappweb' ],
+            platforms: [ 'local' ],
+        },
+
+        'cgi-bin/testScript': {
+            path: 'cgi-bin/testScript',
+            build: "
+                let path = Path('cgi-bin/testScript')
+                path.write('#!' + bit.directories.bin.join('cgiProgram'))
+                path.attributes = { permissions: 0755 }
+            ",
+        },
+
+        'cache.cgi': {
+            path: 'web/caching/cache.cgi',
+            build: "
+                let path = Path('web/caching/cache.cgi')
+                path.write('#!' + App.exePath + '\n' + 
+                    'print(\"HTTP/1.0 200 OK\nContent-Type: text/plain\n\n{number: \" + App.pid + \"}\n\")')
+                path.attributes = {permissions: 0755}
+            ",
+        },
+
+        'basic.cgi': {
+            path: 'web/basic/basic.cgi',
+            build: "
+                let path = Path('web/basic/basic.cgi')
+                path.write('#!' + App.exePath + '\n' + 
+                    'print(\"HTTP/1.0 200 OK\nContent-Type: text/plain\n\n\" + App.env + \"\n\")')
+                path.attributes = {permissions: 0755}
+            ",
+        },
+
+        'web/cgiProgram': {
+            path: 'cgi-bin/cgiProgram',
+            build: "
+                let perms = { permissions: 0755 }
+                let cgiProgram = bit.directories.bin.join('cgiProgram')
+                copy(cgiProgram, Path('cgi-bin/cgiProgram').joinExt(bit.suffixes.exe), perms)
+                copy(cgiProgram, Path('cgi-bin/nph-cgiProgram').joinExt(bit.suffixes.exe), perms)
+                copy(cgiProgram, Path('cgi-bin/cgi Program').joinExt(bit.suffixes.exe), perms)
+                copy(cgiProgram, Path('web/cgiProgram.cgi'), perms)
+            ",
+        },
+
+        test: {
+            action: "
+                run('utest -v -i 2 --depth ${settings.testDepth}')
+                if (${settings.testDepth} >= 3) {
+                    activity('Test', 'Light load tests')
+                    Cmd('utest -v -i 20 --depth ${settings.testDepth}')
+                    for each (t in [2, 4]) {
+                        activity('Test', 'Light thread tests')
+                        Cmd('utest -v -i 20 --depth ${settings.testDepth} --threads ' + t)
+                    }
+                }
+                if (${settings.testDepth} >= 4) {
+                    activity('Test', 'Longevity load tests')
+                    Cmd('utest -v -i 100 --depth ${settings.testDepth}')
+                    for each (t in [8, 16]) {
+                        activity('Test', 'Light thread tests')
+                        Cmd('utest -v -i 100 --depth ${settings.testDepth} --threads ' + t)
+                    }
+                }
+                activity('Test', 'Unit tests complete')
+            ",
+        },
+    },
+})

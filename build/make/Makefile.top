@@ -33,7 +33,6 @@ FIRST		= first
 IMG_NAME	= $(BLD_PRODUCT)-$(BLD_VERSION)-$(BLD_NUMBER)
 SRC_NAME	= $(BLD_PRODUCT)-src-$(BLD_VERSION)-$(BLD_NUMBER)
 PACKS		= binary source
-STAGE_DIR	= $(BLD_TOP)/out/staging
 COMBO_DIR	= $(BLD_TOP)/out/combo
 FLAT_DIR	= $(BLD_TOP)/out/flat
 PKG_DIR		= $(BLD_TOP)/out/pkg
@@ -113,7 +112,6 @@ compileFinal:
 
 dependExtra:
 	$(call log) "[INFO]" "Generate dependencies"
-	[ ! -L extensions ] && ln -s ../packages extensions ; true
 
 cleanExtra:
 	if [ "$(_RECURSIVE_)" = "" ] ; then \

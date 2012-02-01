@@ -1,0 +1,9 @@
+/*
+    inno.bit - InnoSetup package for Bit
+ */
+
+let search = []
+for each (drive in (FileSystem.drives() - ['A', 'B'])) {
+    search += Path(drive + ':/').glob('/Program Files*/Inno Setup*')
+}
+Bit.load({packs: { inno: { path: probe('iscc.exe', {fullpath: true, search: search.sort().reverse()})}}})

@@ -125,18 +125,6 @@ checkSetup() {
 }
 
 
-setExtensions()
-{
-    if [ "$BLD_HOST_CPU" = i386 -a -d ../packages.32 ] ; then
-        rm -f extensions
-        ln -s ../packages.32 extensions
-    elif [ -d ../packages ] ; then
-        rm -f extensions
-        ln -s ../packages extensions
-    fi
-}
-
-
 #
 #   Link a file. If that fails, copy.
 #
@@ -2379,7 +2367,6 @@ fi
 #
 [ $quiet = 0 ] && echo -e "  # Sleuth system configuration ..."
 setSystemConfiguration
-setExtensions
 
 #
 #   Build up the search path

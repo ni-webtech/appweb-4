@@ -1,0 +1,28 @@
+/*
+    pcre.bit -- Bit File for the PCRE Regular Expressions
+ */
+
+Bit.load({
+
+    defaults: {
+        '+includes': [ '.' ]
+    },
+
+    targets: {
+        libpcre: {
+			scripts: {
+				prebuild: "
+					if (bit.settings.charlen == 2) {
+						bit.target.defines = [ '-DPCRE_CHAR=short' ]
+					} else if (bit.settings.charlen == 4) {
+						bit.target.defines = [ '-DPCRE_CHAR=int32' ]
+					} else {
+						bit.target.defines = [ '-DPCRE_CHAR=char' ]
+					}
+				",
+			}
+            type: 'lib',
+            sources: [ 'pcre.c' ],
+        },
+	},
+})

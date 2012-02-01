@@ -1,0 +1,19 @@
+/*
+    solaris.bit -- Solaris Settings
+ */
+
+Bit.load({
+    blend: [    
+        'posix.bit',
+        'gcc.bit',
+    ],
+
+    defaults: {
+        '+libraries: [
+            'lxnet', 
+            'rt', 
+            'socket',
+        ],
+    },
+})
+

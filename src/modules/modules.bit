@@ -1,0 +1,34 @@
+/*
+    modules.bit -- Bit File for Appweb modules
+ */
+
+Bit.load({
+    internal: {
+        '+depends': [ 'libappweb' ],
+    },
+    targets: {
+        mod_cgi: {
+            enable: 'bit.packs.cgi.enable',
+            type: 'lib',
+            sources: [ 'cgiHandler.c' ],
+        },
+        mod_ejs: {
+            enable: 'bit.packs.ejscript.enable',
+            type: 'lib',
+            sources: [ 'ejsHandler.c' ],
+            depends: [ 'ejscript' ],
+        },
+        mod_php: {
+            enable: 'bit.packs.php.enable',
+            type: 'lib',
+            sources: [ 'phpHandler.c' ],
+            depends: [ 'php' ],
+        },
+        mod_ssl: {
+            enable: 'bit.packs.ssl.enable',
+            type: 'lib',
+            sources: [ 'sslModule.c' ],
+            depends: [ 'libmprssl', 'openssl', 'matrixssl' ],
+        },
+	},
+})

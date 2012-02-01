@@ -1,0 +1,17 @@
+/*
+    sqlite.bit -- Bit File for SQLite
+ */
+
+Bit.load({
+
+    defaults: {
+        '+includes': [ '.' ]
+    },
+
+    targets: {
+        libsqlite3: {
+            type: 'lib',
+            sources: [ 'sqlite3.c' ],
+        },
+	},
+})

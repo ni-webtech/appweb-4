@@ -1,0 +1,6 @@
+/*
+    ranlib.bit - Ranlib package for Bit
+ */
+
+program('ranlib')
+

@@ -11,9 +11,10 @@ defineComponent() {
     else
         path="${1:-.}"
     fi
+    packages=../packages-`echo ${BLD_HOST_OS}-${BLD_HOST_CPU} | tr '[:upper:]' '[:lower:]'`
 
     if [ $OS = WIN ] ; then
-        libpaths=`probe --name openssl --search "$path:extensions/openssl/$ver" --dir "out32dll/libeay32" `
+        libpaths=`probe --name openssl --search "$path:$packages/openssl/$ver" --dir "out32dll/libeay32" `
         imports="$libpaths/out32dll/libeay32.dll $libpaths/out32dll/ssleay32.dll"
         libs="libeay32 ssleay32"
         iflags="-I$libpaths/inc32"
@@ -31,20 +32,20 @@ defineComponent() {
 #       
 #       Use native OpenSSL - dont do this as Apple is deprecating it
 #
-#       libpaths=`probe --name openssl --search "$path:extensions/openssl/$ver" --dir "libcrypto" `
-#       iflags=-I`probe --name openssl --search "$path:extensions/openssl/$ver/include" --dir "openssl/ssl.h"`
+#       libpaths=`probe --name openssl --search "$path:$packages/openssl/$ver" --dir "libcrypto" `
+#       iflags=-I`probe --name openssl --search "$path:$packages/openssl/$ver/include" --dir "openssl/ssl.h"`
 #       libs="ssl crypto"
 #       imports="$libpaths/libssl.1*${SHOBJ} $libpaths/libcrypto.1*${SHOBJ}"
 
-        libpaths=`probe --name openssl --search "$path:extensions/openssl/$ver:/usr/lib" --dir "libcrypto" `
-        iflags=-I`probe --name openssl --search "$path:extensions/openssl/$ver/include:/usr/include" --dir "openssl/ssl.h"`
+        libpaths=`probe --name openssl --search "$path:$packages/openssl/$ver:/usr/lib" --dir "libcrypto" `
+        iflags=-I`probe --name openssl --search "$path:$packages/openssl/$ver/include:/usr/include" --dir "openssl/ssl.h"`
         libs="ssl crypto"
         imports="$libpaths/libssl*${SHOBJ} $libpaths/libcrypto*${SHOBJ}"
 
     else 
-        libpaths=`probe --name openssl --search "$path:extensions/openssl/$ver:/usr/lib:/lib:/lib/*-linux-gnu" \
+        libpaths=`probe --name openssl --search "$path:$packages/openssl/$ver:/usr/lib:/lib:/lib/*-linux-gnu" \
             --dir "libcrypto" `
-        iflags=-I`probe --name openssl --search "$path:extensions/openssl/$ver/include:/usr/include" --dir "openssl/ssl.h"`
+        iflags=-I`probe --name openssl --search "$path:$packages/openssl/$ver/include:/usr/include" --dir "openssl/ssl.h"`
         libs="ssl crypto"
         imports="$libpaths/libssl*${SHOBJ}* $libpaths/libcrypto*${SHOBJ}*"
     fi

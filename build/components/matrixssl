@@ -7,13 +7,14 @@ defineComponent() {
     path="${1:-.}"
     ver="latest"
 
+    packages=../packages-`echo ${BLD_HOST_OS}-${BLD_HOST_CPU} | tr '[:upper:]' '[:lower:]'`
     if [ $OS = WIN ] ; then
-        imports=`probe --name matrixssl --search "$path:extensions/matrixssl/$ver/src/Release" libmatrixssl`
-        iflags=-I`probe --name matrixssl --dir --search "$path:extensions/matrixssl/$ver" matrixSsl.h`
+        imports=`probe --name matrixssl --search "$path:$packages/matrixssl/$ver/src/Release" libmatrixssl`
+        iflags=-I`probe --name matrixssl --dir --search "$path:$packages/matrixssl/$ver" matrixSsl.h`
         libs="libmatrixssl"
     else
-        imports=`probe --name matrixssl --search "$path:extensions/matrixssl/$ver/src" libmatrixsslstatic.a`
-        iflags=-I`probe --name matrixssl --dir --search "$path:extensions/matrixssl/$ver" matrixSsl.h`
+        imports=`probe --name matrixssl --search "$path:$packages/matrixssl/$ver/src" libmatrixsslstatic.a`
+        iflags=-I`probe --name matrixssl --dir --search "$path:$packages/matrixssl/$ver" matrixSsl.h`
         libs="matrixsslstatic.a"
     fi
     if [ "$imports" = "" -o "$iflags" = "-I" ] ; then

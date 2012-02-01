@@ -12,6 +12,8 @@ defineComponent() {
     fi
     eval ${KIND}_PHP_DEBUG=0
 
+    packages=../packages-`echo ${BLD_HOST_OS}-${BLD_HOST_CPU} | tr '[:upper:]' '[:lower:]'`
+
     if [ "$PHP_LIBS" != "" ] ; then
         libs="${PHP_LIBS}"
     else
@@ -19,19 +21,19 @@ defineComponent() {
         #   Probe for the php library
         #
         if [ $BLD_HOST_OS = WIN ] ; then
-            phplib=`probe --name php --search "$path:extensions/php/$ver" "Release_TS/php5ts" `
+            phplib=`probe --name php --search "$path:$packages/php/$ver" "Release_TS/php5ts" `
             if [ "$phplib" = "" ] ; then
-                phplib=`probe --name php --search "$path:extensions/php/$ver" "Release/php5" `
+                phplib=`probe --name php --search "$path:$packages/php/$ver" "Release/php5" `
                 if [ "$phplib" = "" ] ; then
-                    phplib=`probe --name php --search "$path:extensions/php/$ver" "Debug_TS/php5ts_debug" `
+                    phplib=`probe --name php --search "$path:$packages/php/$ver" "Debug_TS/php5ts_debug" `
                     if [ "$phplib" = "" ] ; then
-                        phplib=`probe --name php --search "$path:extensions/php/$ver" "Debug/php5" `
+                        phplib=`probe --name php --search "$path:$packages/php/$ver" "Debug/php5" `
                     fi
                     eval ${KIND}_PHP_DEBUG=1
                 fi
             fi
         else
-            phplib=`probe --name php --search "$path:extensions/php/$ver/libs" "libphp5" `
+            phplib=`probe --name php --search "$path:$packages/php/$ver/libs" "libphp5" `
         fi
         if [ "${phplib}" ] ; then
             libs="php5"
@@ -45,7 +47,7 @@ defineComponent() {
     if [ "$PHP_IFLAGS" != "" ] ; then
         iflags="${PHP_IFLAGS}"
     else
-        idir=`probe --name php --search "$path:extensions/php/$ver" --dir "main/php.h"`
+        idir=`probe --name php --search "$path:$packages/php/$ver" --dir "main/php.h"`
         if [ "${idir}" != "" ] ; then
             iflags="-I${idir} -I${idir}/main -I${idir}/Zend -I${idir}/TSRM"
         fi

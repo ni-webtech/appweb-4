@@ -1,0 +1,25 @@
+/*
+    utils.bit -- Bit File for Utilities
+ */
+
+Bit.load({
+
+    targets: {
+        auth: {
+            type: 'exe',
+            sources: [ 'auth.c' ],
+            depends: [ 'libmpr' ],
+        },
+
+        cgiProgram: {
+            type: 'exe',
+            sources: [ 'cgiProgram.c' ]
+        },
+
+        setConfig: {
+            type: 'exe',
+            sources: [ 'setConfig.c' ],
+            depends: [ 'libmpr' ]
+        },
+	},
+})

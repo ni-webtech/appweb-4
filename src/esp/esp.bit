@@ -1,0 +1,35 @@
+/*
+    esp.bit -- Bit File for Embedded Server Pages
+ */
+
+Bit.load({
+    defaults: {
+        '+includes': [ '.' ]
+    },
+
+    targets: {
+        mod_esp: {
+            type: 'lib',
+            depends: [ 'libappweb' ],
+            sources: [ '*.c' ],
+            exclude: [ 'esp.c' ],
+        },
+
+        esp: {
+            type: 'exe',
+            depends: [ 'libappweb' ],
+            sources: [ '*.c' ]
+        },
+
+        'esp.conf': {
+            type: 'file',
+            files: [ 'esp.conf' ],
+        },
+
+        'esp.www': {
+            type: 'file',
+            path: '${dirs.lib}/esp-www',
+            files: [ 'www' ],
+        },
+	},
+})

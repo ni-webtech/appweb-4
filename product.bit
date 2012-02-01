@@ -1,0 +1,56 @@
+/*
+    product.bit -- Product Bit File for Appweb
+ */
+
+Bit.load({
+    blend: [
+        "src/deps/mpr/mpr.bit",
+        "src/deps/pcre/pcre.bit",
+        "src/deps/http/http.bit",
+        "src/deps/sqlite/sqlite.bit",
+        "src/libappweb.bit",
+        "src/esp/esp.bit",
+        "src/modules/modules.bit",
+        "src/utils/utils.bit",
+        "src/server/server.bit",
+        "src/test/test.bit",
+//      "src/samples/samples.bit",
+        "bits/embedthis.bit",
+    ],
+    settings: {
+        /* Default settings overridden by build.bit */
+		product: 'appweb',
+		title: 'Embedthis Appweb',
+        company: 'Embedthis',
+		version: '4.0.0',
+		buildNumber: 'B2',
+        profile: 'debug',
+        debug: true,
+        depth: 1,
+        charlen: 1,
+        tune: 'size',
+        assert: true,
+        float: true,
+        legacy: false,
+        rom: false,
+    },
+
+    profiles: {
+        debug: { settings: { 
+            debug: true, 
+            assert: true,
+        }, },
+        release: { settings: { 
+            debug: false, 
+            assert: false,
+        } },
+    },
+
+    //  Order matters
+    '+optional': [ 'cgi', 'dir', 'doxygen', 'ejs', 'esp', 'openssl', 'matrixssl', 'php', 'sqlite', 'ssl', 'ejscript' ],
+    '+required': [ 'pcre', 'http' ]
+
+    defaults: {
+        '+includes': [ 'src', '${dir.inc}', '.' ]
+    },
+})
