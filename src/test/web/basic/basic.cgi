@@ -1,4 +1,6 @@
-#!C:/cygwin/bin/sh
+#!C:\cygwin\home\mob\ejs\out\bin\ejs.exe
+print("HTTP/1.0 200 OK
+Content-Type: text/plain
 
-echo 'Content-Type: text/plain'
-/usr/bin/env  
+" + App.env + "
+")

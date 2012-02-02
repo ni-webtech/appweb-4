@@ -2,43 +2,43 @@
     php.bit -- PHP package search
  */
 
-const ver = 'latest'
+let cfg
 let path = bit.packs.php.path
-let search
+if (!path) {
+    let vers = bit.dir.packs.join('php').glob('php-5*').sort().reverse()
+    if (!vers) {
+        throw 'Can\'t find php'
+    }
+    path = vers[0]
+}
 
 if (bit.platform.os == 'win') {
-    if (path) {
-        search = [path]
-    } else {
-        search = [
-            bit.dir.packs.join('php', ver, 'Release_TS/php5ts'),
-            bit.dir.packs.join('php', ver, 'Release/php5'),
-            bit.dir.packs.join('php', ver, 'Debug_TS/php5ts_debug'),
-            bit.dir.packs.join('php', ver, 'Debug/php5'),
-        ]
-    }
-    let lib = probe('libeay32.dll', {fullpath: true, search: search}).absolute
+    let search = [
+        path.join('Release_TS'),
+        path.join('Release'),
+        path.join('Debug_TS'),
+        path.join('Debug'),
+    ]
+    let reldir = probe('php.exe', {search: search}).absolute
+    let names = { Release_TS: 'php5ts.dll', Release: 'php5.dll', Debug_TS: 'php5ts_debug.dll', Debug: 'php5.dll' }
+    let lib = probe(names[reldir.basename], {fullpath: true, search: search}).absolute
     let dir = lib.parent.parent
-    search = path ? ([path.join('include')]) : [bit.dir.packs.join('php', ver, 'include') ]
-    let incdir = probe('php/ssl.h', {search: search}).absolute
+    search = [path.join('main')]
+    let incdir = probe('php.h', {search: search}).absolute
     cfg = {
         dir: dir,
         path: lib,
-        includes: [ incdir.join('inc32') ],
-        libraries: [ 'libeay32', 'ssleay32' ],
+        includes: [ incdir, incdir.join('main'), incdir.join('Zend'), incdir.join('TSRM') ],
+        libraries: [ 'php5ts' ],
         linker: [ '-L' + lib.parent ],
-        imports: [ lib.parent.join('libeay32.dll'), lib.parent.join('ssleay32.dll') ],
+        imports: lib.parent.glob('php5ts.*'),
     }
 
 } else if (bit.platform.os == 'macosx') {
-    if (path) {
-        search = [path]
-    } else {
-        search = [bit.dir.packs.join('php', ver, '.libs'), '/usr/lib']
-    }
+    let search = [path.join('.libs'), '/usr/lib']
     let lib = probe('libphp5.dylib', {fullpath: true, search: search}).absolute
     let dir = lib.parent.parent
-    search = path ? ([path.join('main')]) : [bit.dir.packs.join('php', ver, 'main'), '/usr/include' ]
+    search = [path.join('main'), '/usr/include']
     let incdir = probe('php.h', {search: search}).absolute.parent
     cfg = {
         dir: dir,
@@ -50,19 +50,18 @@ if (bit.platform.os == 'win') {
     }
 
 } else {
-    let search = path ? ([path]) : [bit.dir.packs.join('php', ver), '/usr/lib', '/lib' ] + 
-        Path('/lib').glob('*-linux-gnu')
+    let search = [path.join('/usr/lib', '/lib')] + Path('/lib').glob('*-linux-gnu')
     let lib = probe('libphp5.so', {fullpath: true, search: search}).absolute
     let dir = lib.parent
-    search = path ? ([path]) : [bit.dir.packs.join('php', ver, 'include'), '/usr/include' ]
-    let incdir = probe('php/ssl.h', {search: search}).absolute
+    search = [path.join('main'), '/usr/include']
+    let incdir = probe('php.h', {search: search}).absolute
     cfg = {
         dir: dir,
         path: lib,
         includes: [ incdir ],
-        libraries: [ 'ssl', 'crypto' ],
+        libraries: [ 'php5' ],
         linker: [ '-L' + lib.parent ],
-        imports: lib.parent.glob('libphp5*.dylib*')
+        imports: lib.parent.glob('libphp5*.so*')
     }
 }
 

@@ -41,8 +41,8 @@ Bit.load({
             ",
         },
 
-        'web/cgiProgram': {
-            path: 'cgi-bin/cgiProgram',
+        'cgi-bin/cgiProgram': {
+            path: 'cgi-bin/cgiProgram${EXE}',
             build: "
                 let perms = { permissions: 0755 }
                 let cgiProgram = bit.dir.bin.join('cgiProgram')

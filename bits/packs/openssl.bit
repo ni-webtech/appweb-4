@@ -2,15 +2,22 @@
     openssl.bit -- OpenSSL package
  */
 
-const ver = 'latest'
-let path = bit.packs.openssl.path
-
 if (bit.packs.ssl && bit.packs.ssl.enable == false) {
     throw "SSL has been disabled"
 }
 
+let cfg
+let path = bit.packs.openssl.path
+if (!path) {
+    let vers = bit.dir.packs.join('openssl').glob('openssl-*').sort().reverse()
+    if (!vers) {
+        throw 'Can\'t find openssl'
+    }
+    path = vers[0]
+}
+
 if (bit.platform.os == 'win') {
-    let search = path ? ([path]) : [bit.dir.packs.join('openssl', ver, 'out32dll') ]
+    let search = [path.join('out32dll')]
     let lib = probe('libeay32.dll', {fullpath: true, search: search}).absolute
     let dir = lib.parent.parent
     search = path ? ([path.join('include')]) : [bit.dir.packs.join('openssl', ver, 'include') ]
