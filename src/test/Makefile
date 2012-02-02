@@ -153,6 +153,7 @@ cleanExtra: testPrep
 #	Don't copy this. Ensure you set minimal permissions on upload and temp directories
 #
 dependExtra:
+	mkdir -p cgi-bin
 	rm -f cache/* app/cache/*
 	mkdir -p web/tmp cache app/cache
 	chmod 777 web/tmp cache app/cache

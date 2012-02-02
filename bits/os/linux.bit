@@ -8,7 +8,7 @@ Bit.load({
         'gcc.bit',
     ],
     defaults: {
-        '+linker':   [ 
+        '+linker': [ 
             '-L${dir.lib}', 
             '-Wl,--enable-new-dtags', 
             '-Wl,-rpath,$ORIGIN/', 

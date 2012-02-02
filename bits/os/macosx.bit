@@ -31,14 +31,14 @@ Bit.load({
                 if (bit.settings.preprocess) {
                     defaults.compiler.push('-E')
                 }
-                if (bit.settings.configuration == 'debug') {
+                if (bit.settings.profile == 'debug') {
                     defaults.compiler += ['-g']
                 } else if (bit.settings.tune == 'size') {
                     defaults.compiler += ['-Os']
                 } else {
                     defaults.compiler += ['-fast']
                 }
-                if (bit.settings.configuration == 'debug') {
+                if (bit.settings.profile == 'debug') {
                     defaults.linker.push('-g')
                 }
                 if (bit.settings.warnUnused) {
@@ -57,8 +57,8 @@ Bit.load({
 
     rules: {
         'c->o': '${packs.compiler.path} -c -o ${OUT} -arch ${ARCH} ${CFLAGS} ${target.defines} ${INCLUDES} ${PREPROCESS} ${IN}',
-        'lib':  '${packs.compiler.path} -dynamiclib -o ${OUT} -arch ${ARCH} ${target.linker} -install_name @rpath/${LIBNAME} ${LIBS} ${IN}'
-        'exe':  '${packs.compiler.path} -o ${OUT} -arch ${ARCH} ${target.linker} -L${dir.lib} ${LIBS} ${IN}'
-        'gui':  '${packs.compiler.path} -o ${OUT} -arch ${ARCH} ${target.linker} -L${dir.lib} ${LIBS} ${IN}'
+        'lib':  '${packs.compiler.path} -dynamiclib -o ${OUT} -arch ${ARCH} ${target.linker} -install_name @rpath/${LIBNAME} ${IN} ${LIBS}'
+        'exe':  '${packs.compiler.path} -o ${OUT} -arch ${ARCH} ${target.linker} -L${dir.lib} ${IN} ${LIBS}'
+        'gui':  '${packs.compiler.path} -o ${OUT} -arch ${ARCH} ${target.linker} -L${dir.lib} ${IN} ${LIBS}'
     },
 })
