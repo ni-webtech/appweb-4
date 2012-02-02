@@ -13,13 +13,14 @@ Bit.load({
 
         cgiProgram: {
             type: 'exe',
-            sources: [ 'cgiProgram.c' ]
+            sources: [ 'cgiProgram.c' ],
         },
 
         setConfig: {
             type: 'exe',
+            rule: 'gui',
             sources: [ 'setConfig.c' ],
-            depends: [ 'libmpr' ]
+            depends: [ 'libmpr' ],
         },
 	},
 })

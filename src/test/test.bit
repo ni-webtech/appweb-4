@@ -16,7 +16,7 @@ Bit.load({
             path: 'cgi-bin/testScript',
             build: "
                 let path = Path('cgi-bin/testScript')
-                path.write('#!' + bit.directories.bin.join('cgiProgram'))
+                path.write('#!' + bit.dir.bin.join('cgiProgram'))
                 path.attributes = { permissions: 0755 }
             ",
         },
@@ -45,10 +45,10 @@ Bit.load({
             path: 'cgi-bin/cgiProgram',
             build: "
                 let perms = { permissions: 0755 }
-                let cgiProgram = bit.directories.bin.join('cgiProgram')
-                copy(cgiProgram, Path('cgi-bin/cgiProgram').joinExt(bit.suffixes.exe), perms)
-                copy(cgiProgram, Path('cgi-bin/nph-cgiProgram').joinExt(bit.suffixes.exe), perms)
-                copy(cgiProgram, Path('cgi-bin/cgi Program').joinExt(bit.suffixes.exe), perms)
+                let cgiProgram = bit.dir.bin.join('cgiProgram')
+                copy(cgiProgram, Path('cgi-bin/cgiProgram').joinExt(bit.ext.exe), perms)
+                copy(cgiProgram, Path('cgi-bin/nph-cgiProgram').joinExt(bit.ext.exe), perms)
+                copy(cgiProgram, Path('cgi-bin/cgi Program').joinExt(bit.ext.exe), perms)
                 copy(cgiProgram, Path('web/cgiProgram.cgi'), perms)
             ",
         },
