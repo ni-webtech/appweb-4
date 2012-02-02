@@ -10,7 +10,7 @@ let cfg
 let path = bit.packs.openssl.path
 if (!path) {
     let vers = bit.dir.packs.join('openssl').glob('openssl-*').sort().reverse()
-    if (!vers) {
+    if (vers.length == 0) {
         throw 'Can\'t find openssl'
     }
     path = vers[0]

@@ -6,7 +6,7 @@ let cfg
 let path = bit.packs.php.path
 if (!path) {
     let vers = bit.dir.packs.join('php').glob('php-5*').sort().reverse()
-    if (!vers) {
+    if (vers.length == 0) {
         throw 'Can\'t find php'
     }
     path = vers[0]
