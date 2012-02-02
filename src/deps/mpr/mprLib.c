@@ -2589,6 +2589,23 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     mprCreateLogService();
     
     if (argv) {
+#if BLD_WIN_LIKE
+        if (argc >= 1 && strstr(argv[1], "--cygroot") != 0) {
+            /*
+                Cygwin shebang is broken. It will catenate args into argv[1]
+             */
+            char *args, *arg0;
+            int  i;
+            args = argv[1];
+            for (i = 2; i < argc; i++) {
+                args = sjoin(args, " ", argv[i], NULL);
+            }
+            arg0 = argv[0];
+            argc = mprMakeArgv(args, &mpr->argBuf, MPR_ARGV_ARGS_ONLY);
+            argv = mpr->argBuf;
+            argv[0] = arg0;
+        }
+#endif
         mpr->argc = argc;
         mpr->argv = argv;
         if (!mprIsPathAbs(mpr->argv[0])) {
@@ -2673,6 +2690,7 @@ static void manageMpr(Mpr *mpr, int flags)
         mprMark(mpr->cond);
         mprMark(mpr->emptyString);
         mprMark(mpr->markerCond);
+        mprMark(mpr->argBuf);
     }
 }
 
@@ -2948,6 +2966,7 @@ bool mprIsIdle()
 /*
     Parse the args and return the count of args. If argv is NULL, the args are parsed read-only. If argv is set,
     then the args will be extracted, back-quotes removed and argv will be set to point to all the args.
+    NOTE: this routine does not allocate.
  */
 int mprParseArgs(char *args, char **argv, int maxArgc)
 {

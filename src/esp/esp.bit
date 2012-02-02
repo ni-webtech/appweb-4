@@ -28,7 +28,7 @@ Bit.load({
 
         'esp.www': {
             type: 'file',
-            path: '${dirs.lib}/esp-www',
+            path: '${dir.lib}/esp-www',
             files: [ 'www' ],
         },
 	},

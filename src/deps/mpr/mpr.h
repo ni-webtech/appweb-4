@@ -8243,6 +8243,7 @@ typedef struct Mpr {
     char            *version;               /**< Product version */
     int             argc;                   /**< Count of command line args */
     char            **argv;                 /**< Application command line args (not alloced) */
+    char            **argBuf;               /**< Space for allocated argv */
     char            *domainName;            /**< Domain portion */
     char            *hostName;              /**< Host name (fully qualified name) */
     char            *ip;                    /**< Public IP Address */
