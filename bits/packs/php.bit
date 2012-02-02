@@ -30,7 +30,7 @@ if (bit.platform.os == 'win') {
         path: lib,
         includes: [ incdir, incdir.join('main'), incdir.join('Zend'), incdir.join('TSRM') ],
         libraries: [ 'php5ts' ],
-        linker: [ '-L' + lib.parent ],
+        linker: [ '-libpath:' + lib.parent ],
         imports: lib.parent.glob('php5ts.*'),
     }
 
