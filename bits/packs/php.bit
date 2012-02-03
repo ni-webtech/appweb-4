@@ -6,7 +6,7 @@ let cfg
 let path = bit.packs.php.path
 if (!path) {
     let vers = bit.dir.packs.join('php').glob('php-5*').sort().reverse()
-    if (!vers) {
+    if (vers.length == 0) {
         throw 'Can\'t find php'
     }
     path = vers[0]
@@ -23,14 +23,14 @@ if (bit.platform.os == 'win') {
     let names = { Release_TS: 'php5ts.dll', Release: 'php5.dll', Debug_TS: 'php5ts_debug.dll', Debug: 'php5.dll' }
     let lib = probe(names[reldir.basename], {fullpath: true, search: search}).absolute
     let dir = lib.parent.parent
-    search = [path.join('main')]
-    let incdir = probe('php.h', {search: search}).absolute
+    search = [path]
+    let incdir = probe('main/php.h', {search: search}).absolute
     cfg = {
         dir: dir,
         path: lib,
         includes: [ incdir, incdir.join('main'), incdir.join('Zend'), incdir.join('TSRM') ],
         libraries: [ 'php5ts' ],
-        linker: [ '-L' + lib.parent ],
+        linker: [ '-libpath:' + lib.parent ],
         imports: lib.parent.glob('php5ts.*'),
     }
 
