@@ -23,8 +23,8 @@ if (bit.platform.os == 'win') {
     let names = { Release_TS: 'php5ts.dll', Release: 'php5.dll', Debug_TS: 'php5ts_debug.dll', Debug: 'php5.dll' }
     let lib = probe(names[reldir.basename], {fullpath: true, search: search}).absolute
     let dir = lib.parent.parent
-    search = [path.join('main')]
-    let incdir = probe('php.h', {search: search}).absolute
+    search = [path]
+    let incdir = probe('main/php.h', {search: search}).absolute
     cfg = {
         dir: dir,
         path: lib,
