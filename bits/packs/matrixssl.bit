@@ -7,10 +7,9 @@ if (bit.packs.ssl && bit.packs.ssl.enable == false) {
 }
 
 let path = bit.packs.matrixssl.path
-
 if (!path) {
-    let vers = bit.dir.packs.join('matrixssl').glob('matrixssl-1-8*').sort().reverse()
-    if (!vers) {
+    let vers = bit.dir.packs.join('matrixssl').glob('matrixssl-1*').sort().reverse()
+    if (vers.length == 0) {
         throw 'Can\'t find matrixssl'
     }
     path = vers[0]
@@ -18,7 +17,7 @@ if (!path) {
 
 let cfg = {}
 if (bit.platform.os == 'win') {
-    let search = [path.join('src/Release')]
+    let search = [path.join('src/Release') ]
     let lib = probe('libmatrixssl.dll', {fullpath: true, search: search}).absolute
     let dir = lib.parent.parent
     search = [path]
@@ -28,7 +27,7 @@ if (bit.platform.os == 'win') {
         path: lib,
         includes: [ incdir ],
         libraries: [ 'libmatrixssl.a' ],
-        linker: [ '-L' + lib.parent ],
+        linker: [ '-libpath:' + lib.parent ],
         imports: [ lib ]
     }
 
@@ -36,7 +35,7 @@ if (bit.platform.os == 'win') {
     let search = [path.join('src')]
     let lib = probe('libmatrixssl.dylib', {fullpath: true, search: search}).absolute
     let dir = lib.parent.parent
-    search = [path]
+    let search = [path]
     let incdir = probe('matrixSsl.h', {search: search}).absolute
     cfg = {
         dir: dir,
