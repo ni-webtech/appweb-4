@@ -6891,7 +6891,7 @@ typedef struct MprSocket {
     int             flags;              /**< Current state flags */
     MprSocketProvider *provider;        /**< Socket implementation provider */
     struct MprSocket *listenSock;       /**< Listening socket */
-    void            *sslSocket;         /**< Extended SSL socket provider state */
+    void            *sslSocket;         /**< Extended SSL socket state */
     struct MprSsl   *ssl;               /**< SSL configuration */
     MprMutex        *mutex;             /**< Multi-thread sync */
 } MprSocket;
@@ -7259,7 +7259,7 @@ typedef struct MprSsl {
     int             verifyDepth;
     int             protocols;
 
-    void            *providerData;      /* Provider SSL configuration */
+    void            *extendedSsl;       /* Extended provider SSL configuration */
 } MprSsl;
 
 
