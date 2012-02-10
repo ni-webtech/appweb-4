@@ -27,7 +27,7 @@ warn() {
 }
 
 usage() {
-    echo "usage: ${PROGRAM} [--diff|sync|import] [--dir dir] [--ignore xx] [--patch preserveFeature] image"
+    echo "usage: ${PROGRAM} [--diff|sync|import] [--dir dir] [--ignore xx] [--patch preserveFeature] image" >&2
     exit 2
 }
 
@@ -200,7 +200,8 @@ DIR=`pwd`
 ARCHIVE=`getabs "$1"`
 
 if [ ! -f "$ARCHIVE" ] ; then
-    echo "Can't find $ARCHIVE"
+    echo "Can't find $ARCHIVE" >&2
+    exit 255
 fi
 
 getBuildConfig
@@ -219,7 +220,7 @@ rm -fr $IDIR/*
 
 if [ "$patch" = "1" ]
 then
-    echo PATCHING copyrights not supported
+    echo PATCHING copyrights not supported >&2
     exit 255
     echo -en "\n  #\n  # "
     echo -e "Patch copyrights ...\n  #"

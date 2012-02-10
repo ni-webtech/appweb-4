@@ -67,10 +67,8 @@
 		C913688214041CBA0024EB0A /* espFramework.c in Sources */ = {isa = PBXBuildFile; fileRef = C913687E14041CBA0024EB0A /* espFramework.c */; };
 		C913688314041CBA0024EB0A /* espSession.c in Sources */ = {isa = PBXBuildFile; fileRef = C913687F14041CBA0024EB0A /* espSession.c */; };
 		C913688414041CBA0024EB0A /* espTemplate.c in Sources */ = {isa = PBXBuildFile; fileRef = C913688014041CBA0024EB0A /* espTemplate.c */; };
-		C913688614041CD70024EB0A /* espHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C913688514041CD70024EB0A /* espHandler.c */; };
 		C9206BC11477391400A0C012 /* manager.c in Sources */ = {isa = PBXBuildFile; fileRef = C9206BC01477391400A0C012 /* manager.c */; };
 		C93ACAB414206B17006FF043 /* espHtml.c in Sources */ = {isa = PBXBuildFile; fileRef = C93ACAB214206B17006FF043 /* espHtml.c */; };
-		C93AEB9F14AE81D100F69616 /* esp.c in Sources */ = {isa = PBXBuildFile; fileRef = C93AEB9E14AE81D100F69616 /* esp.c */; };
 		C94086AF101A665B0019809C /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C94086D8101A672F0019809C /* testAppweb.c in Sources */ = {isa = PBXBuildFile; fileRef = C94086CB101A672F0019809C /* testAppweb.c */; };
 		C94086DE101A672F0019809C /* testHttp.c in Sources */ = {isa = PBXBuildFile; fileRef = C94086D2101A672F0019809C /* testHttp.c */; };
@@ -108,6 +106,7 @@
 		C9817CD3110D22BB00F241EF /* libhttp.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9817C51110D183800F241EF /* libhttp.dylib */; };
 		C9817CD9110D230600F241EF /* http.c in Sources */ = {isa = PBXBuildFile; fileRef = C9817C14110D15DF00F241EF /* http.c */; };
 		C9817CDC110D231500F241EF /* libhttp.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9817C51110D183800F241EF /* libhttp.dylib */; };
+		C989046A14E5758800BFC342 /* espHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = C989046914E5758800BFC342 /* espHandler.c */; };
 		C9A26CE613D1787B007A3D7C /* libmpr.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DA00FD03F94009C78E1 /* libmpr.dylib */; };
 		C9A26CE713D1787B007A3D7C /* libappweb.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9761DC30FD03FD9009C78E1 /* libappweb.dylib */; };
 		C9A26CE813D1787B007A3D7C /* libhttp.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C9817C51110D183800F241EF /* libhttp.dylib */; };
@@ -611,11 +610,9 @@
 		C913687E14041CBA0024EB0A /* espFramework.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espFramework.c; path = ../../../src/esp/espFramework.c; sourceTree = "<group>"; };
 		C913687F14041CBA0024EB0A /* espSession.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espSession.c; path = ../../../src/esp/espSession.c; sourceTree = "<group>"; };
 		C913688014041CBA0024EB0A /* espTemplate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espTemplate.c; path = ../../../src/esp/espTemplate.c; sourceTree = "<group>"; };
-		C913688514041CD70024EB0A /* espHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = espHandler.c; sourceTree = "<group>"; };
 		C9206BC01477391400A0C012 /* manager.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = manager.c; path = ../../../src/deps/mpr/manager.c; sourceTree = "<group>"; };
 		C938480E1123BD80002AD34B /* ejsHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ejsHandler.c; sourceTree = "<group>"; };
 		C93ACAB214206B17006FF043 /* espHtml.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espHtml.c; path = ../../../src/esp/espHtml.c; sourceTree = "<group>"; };
-		C93AEB9E14AE81D100F69616 /* esp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = esp.c; path = ../../../src/utils/esp.c; sourceTree = "<group>"; };
 		C94086B3101A665B0019809C /* testAppweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testAppweb; sourceTree = BUILT_PRODUCTS_DIR; };
 		C94086CB101A672F0019809C /* testAppweb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testAppweb.c; path = ../../../src/test/testAppweb.c; sourceTree = SOURCE_ROOT; };
 		C94086D2101A672F0019809C /* testHttp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testHttp.c; path = ../../../src/test/testHttp.c; sourceTree = SOURCE_ROOT; };
@@ -650,6 +647,7 @@
 		C9817C23110D170500F241EF /* log.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = log.c; path = ../../../src/log.c; sourceTree = SOURCE_ROOT; };
 		C9817C51110D183800F241EF /* libhttp.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libhttp.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9817CF0110D234800F241EF /* makerom.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = makerom.c; path = ../../../src/deps/mpr/makerom.c; sourceTree = SOURCE_ROOT; };
+		C989046914E5758800BFC342 /* espHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espHandler.c; path = ../esp/espHandler.c; sourceTree = "<group>"; };
 		C9A26CED13D1787B007A3D7C /* mod_ejs.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_ejs.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9A44E9813D74BAC009BF64B /* appweb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = appweb.h; path = ../../../src/appweb.h; sourceTree = "<group>"; };
 		C9A44E9913D74BAC009BF64B /* customize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = customize.h; path = ../../../src/customize.h; sourceTree = "<group>"; };
@@ -876,7 +874,6 @@
 			children = (
 				C96176F312DCE345002702E0 /* auth.c */,
 				C9761E880FD0442C009C78E1 /* cgiProgram.c */,
-				C93AEB9E14AE81D100F69616 /* esp.c */,
 				C9206BC01477391400A0C012 /* manager.c */,
 				C96A9A2A147F5C40000E589D /* setConfig.c */,
 			);
@@ -886,11 +883,11 @@
 		C97620660FD04E38009C78E1 /* modules */ = {
 			isa = PBXGroup;
 			children = (
+				C989046914E5758800BFC342 /* espHandler.c */,
 				C96D40DA14AE7AB5005C17DB /* dirHandler.c */,
 				C96D40DB14AE7AB5005C17DB /* fileHandler.c */,
 				C97620690FD04E38009C78E1 /* cgiHandler.c */,
 				C938480E1123BD80002AD34B /* ejsHandler.c */,
-				C913688514041CD70024EB0A /* espHandler.c */,
 				C97620700FD04E38009C78E1 /* phpHandler.c */,
 				C97620760FD04E38009C78E1 /* sslModule.c */,
 			);
@@ -1723,12 +1720,12 @@
 				C913688214041CBA0024EB0A /* espFramework.c in Sources */,
 				C913688314041CBA0024EB0A /* espSession.c in Sources */,
 				C913688414041CBA0024EB0A /* espTemplate.c in Sources */,
-				C913688614041CD70024EB0A /* espHandler.c in Sources */,
 				C93ACAB414206B17006FF043 /* espHtml.c in Sources */,
 				C9120B84142CE2B5006826A9 /* edi.c in Sources */,
 				C9120B85142CE2B5006826A9 /* mdb.c in Sources */,
 				C9120B86142CE2B5006826A9 /* sdb.c in Sources */,
 				C90DFAD61455E8E300C0CC7F /* espAbbrev.c in Sources */,
+				C989046A14E5758800BFC342 /* espHandler.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1736,7 +1733,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C93AEB9F14AE81D100F69616 /* esp.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2120,12 +2116,20 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				EXECUTABLE_PREFIX = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "POSIX=1";
 				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
+				HEADER_SEARCH_PATHS = (
+					"/Users/mob/git/packages-macosx-x86_64/openssl/latest/include",
+					$OUT/inc,
+					"/Users/mob/git/packages-macosx-x86_64/matrixssl/latest",
+					"/Users/mob/git/packages-macosx-x86_64/matrixssl/latest/matrixssl",
+				);
 				INSTALL_PATH = "/usr/lib/$(BLD_PRODUCT_NAME)/lib";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lcrypto",
 					"-lssl",
+					"-lmatrixssl",
 				);
 				PRODUCT_NAME = libmprssl;
 			};
@@ -2135,12 +2139,20 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				EXECUTABLE_PREFIX = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "POSIX=1";
 				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
+				HEADER_SEARCH_PATHS = (
+					"/Users/mob/git/packages-macosx-x86_64/openssl/latest/include",
+					$OUT/inc,
+					"/Users/mob/git/packages-macosx-x86_64/matrixssl/latest",
+					"/Users/mob/git/packages-macosx-x86_64/matrixssl/latest/matrixssl",
+				);
 				INSTALL_PATH = "/usr/lib/$(BLD_PRODUCT_NAME)/lib";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lcrypto",
 					"-lssl",
+					"-lmatrixssl",
 				);
 				PRODUCT_NAME = libmprssl;
 			};
@@ -2424,10 +2436,10 @@
 			buildSettings = {
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
-					../../../extensions/php/latest/TSRM,
-					../../../extensions/php/latest/Zend,
-					../../../extensions/php/latest/main,
-					../../../extensions/php/latest,
+					"../../../../packages-macosx-x86_64/php/latest/TSRM",
+					"../../../../packages-macosx-x86_64/php/latest/Zend",
+					"../../../../packages-macosx-x86_64/php/latest/main",
+					"../../../../packages-macosx-x86_64/php/latest",
 				);
 				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				OTHER_LDFLAGS = (
@@ -2444,10 +2456,10 @@
 				EXECUTABLE_PREFIX = "";
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
-					../../../extensions/php/latest/TSRM,
-					../../../extensions/php/latest/Zend,
-					../../../extensions/php/latest/main,
-					../../../extensions/php/latest,
+					"../../../../packages-macosx-x86_64/php/latest/TSRM",
+					"../../../../packages-macosx-x86_64/php/latest/Zend",
+					"../../../../packages-macosx-x86_64/php/latest/main",
+					"../../../../packages-macosx-x86_64/php/latest",
 				);
 				INSTALL_PATH = "$(INSTALL_PATH)/lib";
 				OTHER_LDFLAGS = (

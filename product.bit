@@ -25,6 +25,12 @@ Bit.load({
         company: 'Embedthis',
 		version: '4.0.0',
 		buildNumber: 'B2',
+        http_port: 80,
+        ssl_port: 443,
+        mdb: true,
+        sdb: false,
+        manager: 'appman',
+        auth: 'file',
         sync: ['http', 'mpr', 'pcre', 'sqlite'],
     },
 

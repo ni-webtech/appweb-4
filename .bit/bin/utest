@@ -206,7 +206,13 @@ enumerable class Test {
         if (!_lib.exists) {
             _lib = _bin
         }
-        parseBuildConfig(_top.join("out/inc/buildConfig.h"));
+        let config = _top.join('out/inc/buildConfig.h')
+        if (config.exists) {
+            parseBuildConfig(config)
+        } else {
+            let local =  Config.OS.toLower() + '-' + Config.CPU
+            let config = _top.join(local + 'inc/buildConfig.h')
+        }
     }
 
     /*
