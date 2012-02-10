@@ -1,24 +1,3 @@
-
-/******************************************************************************/
-/* 
-    This file is an amalgamation of all the individual source code files for the
-    .
-  
-    Catenating all the source into a single file makes embedding simpler and
-    the resulting application faster, as many compilers can do whole file
-    optimization.
-  
-    If you want to modify the product, you can still get the whole source as 
-    individual files if you need.
- */
-
-
-/************************************************************************/
-/*
- *  Start of file "./out/inc/pcre.h"
- */
-/************************************************************************/
-
 /*************************************************
 *       Perl-Compatible Regular Expressions      *
 *************************************************/
@@ -59,6 +38,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #ifndef _PCRE_H
 #define _PCRE_H
+
+#ifndef BLD_FEATURE_PCRE
+    #define BLD_FEATURE_PCRE 1
+#endif
 
 /* The current PCRE version information. */
 
@@ -379,9 +362,3 @@ PCRE_EXP_DECL const char *pcre_version(void);
 #endif
 
 #endif /* End of pcre.h */
-/************************************************************************/
-/*
- *  End of file "./out/inc/pcre.h"
- */
-/************************************************************************/
-

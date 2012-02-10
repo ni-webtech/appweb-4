@@ -1,5 +1,5 @@
 #
-#	Makefile for the MPR (Multithreaded Portable Runtime)
+#	Makefile for the combo release of the MPR (Multithreaded Portable Runtime)
 #
 #	Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
 #
@@ -19,6 +19,7 @@ ifeq ($(BLD_MPR_BUILTIN),1)
 	endif
 	ifeq ($(BLD_FEATURE_MATRIXSSL),1)
 		MAKE_IFLAGS		+= $(BLD_MATRIXSSL_IFLAGS)
+		MAKE_DFLAGS		+= $(BLD_MATRIXSSL_DFLAGS)
 	endif
 	ifeq ($(BLD_FEATURE_SSL),1)
 		TARGETS			+= $(MPRSSL_LIB)

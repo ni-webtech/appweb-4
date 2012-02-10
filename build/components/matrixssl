@@ -2,7 +2,7 @@
 #   MatrixSSL
 #
 defineComponent() {
-	local path iflags libpaths ver libs imports
+	local path idir iflags libpaths ver libs imports
 
     path="${1:-.}"
     ver="latest"
@@ -10,18 +10,20 @@ defineComponent() {
     packages=../packages-`echo ${BLD_HOST_OS}-${BLD_HOST_CPU} | tr '[:upper:]' '[:lower:]'`
     if [ $OS = WIN ] ; then
         imports=`probe --name matrixssl --search "$path:$packages/matrixssl/$ver/src/Release" libmatrixssl`
-        iflags=-I`probe --name matrixssl --dir --search "$path:$packages/matrixssl/$ver" matrixSsl.h`
+        idir=`probe --name matrixssl --dir --search "$path:$packages/matrixssl/$ver" matrixSsl.h`
+        iflags="-I${idir} -I${idir}/.."
         libs="libmatrixssl"
     else
-        imports=`probe --name matrixssl --search "$path:$packages/matrixssl/$ver/src" libmatrixsslstatic.a`
-        iflags=-I`probe --name matrixssl --dir --search "$path:$packages/matrixssl/$ver" matrixSsl.h`
-        libs="matrixsslstatic.a"
+        imports=`probe --name matrixssl --search "$path:$packages/matrixssl/$ver" libmatrixssl.a`
+        idir=`probe --name matrixssl --dir --search "$path:$packages/matrixssl/$ver/matrixssl" matrixsslApi.h`
+        iflags="-I${idir} -I${idir}/.."
+        libs="libmatrixssl"
+        dflags="-DPOSIX=1"
     fi
-    if [ "$imports" = "" -o "$iflags" = "-I" ] ; then
+    if [ "$imports" = "" -o "$idir" = "" ] ; then
         warnComponent matrixssl
         return
     fi
     CFG_HOST_SSL_MANDATORY=1
-    # libpaths="${imports%/*}"
-    configureComponent --libs "$libs" --libpaths "$libpaths" --iflags "$iflags" --imports "$imports" matrixssl
+    configureComponent --libs "$libs" --libpaths "$libpaths" --dflags "$dflags" --iflags "$iflags" --imports "$imports" matrixssl
 }

@@ -241,7 +241,7 @@ setup() {
     fi
     export ROOT_DIR ORIGINAL_ROOT_DIR
 
-    . ${BLD_TOP}/build/bin/makePackage.common
+    . ${BLD_TOP}/.bit/bin/makePackage.common
     . package/makeInstall.${BLD_PRODUCT}
 
     [ $TASK = Install ] && VERB=Installing

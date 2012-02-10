@@ -336,7 +336,7 @@ findTop() {
         top=.
         level=0
         while [ $level -lt 30 ] ; do
-            if [ -d $top/build -a -d $top/build/bin -a -f $top/configure ] ; then
+            if [ -d $top/build -a -d $top/.bit/bin -a -f $top/configure ] ; then
                 break
             fi
             top=$top/..

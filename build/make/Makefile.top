@@ -68,14 +68,22 @@ endif
 endif
 
 diff import:
+	@set -e ; \
 	for dep in $(DEPS) ; do \
-		$(BLD_TOOLS_DIR)/syncup --$@ ../$$dep/out/releases/$$dep-combo.tgz ; \
+		if [ -x ../$$dep/releases ] ; then \
+			rel=../$$dep/releases ; \
+		else rel=../$$dep/out/releases ; fi ; \
+		$(BLD_TOOLS_DIR)/syncup --$@ $$releases/$$dep-combo.tgz ; \
 	done
 	echo
 
 sync:
+	@set -e ; \
 	for dep in $(DEPS) ; do \
-		$(BLD_TOOLS_DIR)/syncup --$@ ../$$dep/out/releases/$$dep-combo.tgz ; \
+		if [ -x ../$$dep/releases ] ; then \
+			rel=../$$dep/releases ; \
+		else rel=../$$dep/out/releases ; fi ; \
+		$(BLD_TOOLS_DIR)/syncup --$@ $$rel/$$dep-combo.tgz ; \
 	done
 	for f in $(BLD_IMPORTS) ; do \
 		eval f="$${f}" ; \

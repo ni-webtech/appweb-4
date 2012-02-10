@@ -1,0 +1,6 @@
+/*
+    man2html.bit - Strip package for Bit
+ */
+
+program('man2html')
+

@@ -1,5 +1,5 @@
 /*
-    mpr.bit -- Bit File for the Multithreaded Portable Runtime (MPR)
+    mpr.bit -- Bit File to build the combo MPR release
  */
 
 Bit.load({

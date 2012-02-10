@@ -1,0 +1,6 @@
+/*
+    dsi.bit - dsi package for Bit
+ */
+
+program('dsi')
+

@@ -154,3 +154,5 @@ src/test/api/error.log
 src/test/leak/error.log
 web/reload.esp
 local.bit
+*-debug
+*-release

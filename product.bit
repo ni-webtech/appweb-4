@@ -14,8 +14,9 @@ Bit.load({
         "src/utils/utils.bit",
         "src/server/server.bit",
         "src/test/test.bit",
-        "bits/embedthis.bit",
+        ".bit/embedthis.bit",
     ],
+
     settings: {
         /* Default settings overridden by build.bit */
 		product: 'appweb',
@@ -23,15 +24,12 @@ Bit.load({
         company: 'Embedthis',
 		version: '4.0.0',
 		buildNumber: 'B2',
-        profile: 'debug',
-        debug: true,
-        depth: 1,
-        charlen: 1,
-        tune: 'size',
-        assert: true,
-        float: true,
-        legacy: false,
-        rom: false,
+    },
+
+    usage: {
+        assert: 'Enable program assertions',
+        debug: 'Enable a debug build',
+        tune: 'Optimize for size|speed|balanced',
     },
 
     profiles: {
@@ -45,10 +43,17 @@ Bit.load({
         } },
     },
 
-    '+optional': [ 'cgi', 'dir', 'doxygen', 'ejs', 'esp', 'openssl', 'matrixssl', 'php', 'sqlite', 'ssl', 'ejscript' ],
-    '+required': [ 'pcre', 'http' ]
+    '+optional': [ 'cgi', 'dir', 'doxygen', 'dsi', 'ejs', 'esp', 'man', 'man2html', 'openssl', 
+        'matrixssl', 'php', 'sqlite', 'ssl', 'ejscript' ],
+    '+xxrequired': [ 'pcre', 'http' ]
 
     defaults: {
         '+includes': [ 'src' ]
     },
+
+    packs: {
+        http: {
+            path: '${BIN}/http'
+        },
+    }
 })

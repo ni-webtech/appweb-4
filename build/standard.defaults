@@ -51,7 +51,7 @@ with --os=win --build --optional pkg
 
 with mpr 
 with http
-with --host --optional openssl ssl
+with --host --optional openssl matrixssl ssl
 with --host --optional php
 # with --host --optional sqlite
 

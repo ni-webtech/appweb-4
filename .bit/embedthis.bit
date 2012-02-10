@@ -3,9 +3,17 @@
  */
 
 Bit.load({
+    '+modules': [
+        'embedthis.es',
+    ],
+
     internal: {
         runopt: {dir: bit.dir.src, show: true, toss: true}
         platforms: [ 'local' ],
+    },
+
+    settings: {
+        depth: 1,
     },
 
     targets: {
@@ -37,7 +45,7 @@ Bit.load({
             ",
         },
 
-        install: {
+        _install: {
             action: "
                 let parts = bit.settings.package || 'binary dev'
                 run('priv makeInstall --install --root=' + bit.dir.out.join('pkg') + 
@@ -48,13 +56,17 @@ Bit.load({
         sync: {
             action: "
                 for each (peer in bit.settings.sync) {
-                    let from = bit.dir.src.parent.join(peer + '/out/releases/' + peer + '-combo.tgz')
+                    let dir = bit.dir.src.parent.join(peer + '/releases')
+                    if (!dir.exists) {
+                        dir = bit.dir.src.parent.join(peer + '/out/releases')
+                    }
+                    let from = dir.join(peer + '-combo.tgz')
                     run('syncup --sync ' + from, bit.target.runopt)
                 }
             ",
         },
 
-        package: {
+        _package: {
             action: "
                 if (bit.settings.depth >= 2) {
                     let keep = (bit.settings.keep) ? ' --keep' : ''
@@ -64,12 +76,18 @@ Bit.load({
                     run('fakePriv build/bin/makePackage --root=' + bit.dir.out.join('pkg') + keep + 
                         ' pre ' + parts + ' post', bit.target.runopt)
                 } else {
-                    activity('Info', 'Packaging skipped at build depth ' + bit.settings.depth)
+                    trace('Info', 'Packaging skipped at build depth ' + bit.settings.depth)
                 }
             ",
         },
 
-        uninstall: {
+        _package2: {
+            action: "
+                load(bit.dirs.src.join('.bit/combo.es'))
+            ",
+        },
+
+        _uninstall: {
             action: "
                 let parts = bit.settings.package || 'binary dev'
                 run('priv build/bin/makeInstall --remove pre ' + parts + ' post', bit.target.runopt)
@@ -79,7 +97,7 @@ Bit.load({
         upload: {
             action: "
                 if (bit.settings.depth < 2) {
-                    activity('Info', 'Upload skipped at build depth ' + bit.settings.depth)
+                    trace('Info', 'Upload skipped at build depth ' + bit.settings.depth)
                 } else {
                     let img = $(BLD_PRODUCT)-$(BLD_VERSION)-$(BLD_NUMBER)
                     let src = $(BLD_PRODUCT)-src-$(BLD_VERSION)-$(BLD_NUMBER)
@@ -118,6 +136,94 @@ Bit.load({
 
         version: {
             action: "print('bit.settings.version')",
+        },
+
+        /*
+            Documentation targets 
+         */
+        doc: {
+            depends: ['man', 'api', 'cleanDoc', 'patch'],
+        },
+
+        api: {
+            depends: ['package', 'man'],
+            action: "
+                rm(['${SRC}/doc/api/html', '${SRC}/api/xml'])
+                let name = bit.settings.product
+                let dox = Path('${LIB}/dox.tmp')
+                let data = Path('${SRC}/doc/api/' + name + '.dox').readString().replace(/^INPUT .*=.*$/m, 
+                        'INPUT = ${PKG}/' + name + '-${settings.version}/src/deps/' + name + '/' + name + '.h')
+                Path(dox).write(data)
+                trace('Generate', 'API documentation')
+                run('doxygen ' + dox, {dir: '${SRC}/doc/api'})
+                trace('Process', 'Post-process API documentation (takes a while)')
+                run('ejs ${SRC}/.bit/bin/gendoc.es ' + 
+                    '--title \"MPR - Multithreaded Portable Runtime Native API\" --out ' + name + '.html ' + 
+                    (['xml/' + name + '_8h.xml'] + ls('xml/group*') + ls('xml/struct_*.xml')).join(' '), 
+                    {dir: '${SRC}/doc/api'})
+                run('ejs ${SRC}/.bit/bin/gendoc.es --bare ' + 
+                    '--title \"MPR - Multithreaded Portable Runtime Native API\" --out ' + name + 'Bare.html ' + 
+                    (['xml/' + name + '_8h.xml'] + ls('xml/group*') + ls('xml/struct_*.xml')).join(' '), 
+                    {dir: '${SRC}/doc/api'})
+                rm(['${SRC}/doc/api/html', '${SRC}/api/xml'])
+            ",
+        },
+
+        man: {
+            depends: ['package'],
+            action: "
+                for each (file in ls('../doc/man/*.1')) {
+                    let name = file.basename
+                    trace('Generate', 'Manual page for ' + name)
+                    let man = run('man ' + file, {})
+                    file.replaceExt('txt').write(man.response.replace(/.\b/g, ''))
+                    let cmd = run('man2html -u', {detach: true})
+                    cmd.write(run('man ' + file, {}).response)
+                    cmd.finalize()
+                    file.replaceExt('html').write(cmd.response)
+                }
+            ",
+        },
+
+        cleanDoc: {
+            type: 'clean',
+            action: "
+                rmdir(['../doc/api/html', '../doc/api/xml'])
+            "
+        },
+    
+        patch: {
+            action: "
+                if (bit.packs.dsi.path) {
+                    if (!bit.dir.src.join('doc/dsi').exists) {
+                        trace('Skip', 'Nothing to patch')
+                    } else {
+                        trace('Patch', 'HTML doc')
+                        for each (file in ls('../doc/**.html')) {
+                            vtrace('Patch', file)
+                            run([bit.packs.dsi.path, file])
+                        }
+                    }
+                } else {
+                    trace('Skip', 'patch bacause ' + bit.packs.dsi.diagnostic)
+                }
+            ",
+        },
+
+        tidy: {
+            depends: ['doc', 'patch'],
+            enable: false,
+            action: "
+                if (bit.packs.dsi.path) {
+                    trace('Tidy', 'HTML doc')
+                    for each (file in ls('../doc/**html')) 
+                        trace('Tidy', file)
+                        run(bit.packs.tidy.path + ' -q -config tidy.conf ' + file)
+                    }
+                } else {
+                    trace('Skip', 'tidy bacause ' + bit.packs.dsi.diagnostic)
+                }
+            "
         },
     },
 })

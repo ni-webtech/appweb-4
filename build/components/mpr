@@ -21,7 +21,7 @@ defineComponent() {
     fi
     incdir=`probe --dir --name mpr.h --search "$path:$path/src:$path/src/deps/mpr:$path/out/inc" "mpr.h" `
     if [ "$incdir" != "" ] ; then
-        imports="$incdir/mpr.h $incdir/mprSsl.h"
+        imports="$incdir/mpr.h"
     fi
     if [ "$builtin" = "" ] ; then
         imports="$imports $import_libmpr $import_libmprssl"

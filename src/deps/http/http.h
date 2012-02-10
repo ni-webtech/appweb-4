@@ -1,24 +1,3 @@
-
-/******************************************************************************/
-/* 
-    This file is an amalgamation of all the individual source code files for the
-    Http Library Header.
-  
-    Catenating all the source into a single file makes embedding simpler and
-    the resulting application faster, as many compilers can do whole file
-    optimization.
-  
-    If you want to modify the product, you can still get the whole source as 
-    individual files if you need.
- */
-
-
-/************************************************************************/
-/*
- *  Start of file "./out/inc/http.h"
- */
-/************************************************************************/
-
 /*
     http.h -- Header for the Embedthis Http Library.
 
@@ -28,9 +7,11 @@
 #ifndef _h_HTTP
 #define _h_HTTP 1
 
+/********************************* Includes ***********************************/
 
 #include    "mpr.h"
 
+/****************************** Forward Declarations **************************/
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,6 +34,7 @@ struct HttpTx;
 struct HttpUri;
 #endif
 
+/********************************** Tunables **********************************/
 
 #define HTTP_DEFAULT_PORT 80
 
@@ -148,6 +130,7 @@ struct HttpUri;
 #define HTTP_MED_HASH_SIZE        61                /* Medium */
 #define HTTP_LARGE_HASH_SIZE      101               /* Large */
 
+/********************************** Defines ***********************************/
 /*
     Standard HTTP/1.1 status codes
  */
@@ -269,6 +252,7 @@ typedef int (*HttpListenCallback)(struct HttpEndpoint *endpoint);
  */
 extern void httpSetForkCallback(struct Http *http, MprForkCallback proc, void *arg);
 
+/************************************ Http **********************************/
 /** 
     Http service object
     @description The Http service is managed by a single service object.
@@ -484,6 +468,7 @@ extern void httpAddHost(Http *http, struct HttpHost *host);
 extern void httpRemoveHost(Http *http, struct HttpHost *host);
 extern void httpDefineRouteBuiltins();
 
+/************************************* Limits *********************************/
 /** 
     Http limits
     @stability Evolving
@@ -549,6 +534,7 @@ extern void httpEaseLimits(HttpLimits *limits);
  */
 extern void httpEnableTraceMethod(struct HttpLimits *limits, bool on);
 
+/************************************* URI Services ***************************/
 /** 
     URI management
     @description The HTTP provides routines for formatting and parsing URIs. Routines are also provided
@@ -728,6 +714,7 @@ extern HttpUri *httpResolveUri(HttpUri *base, int argc, HttpUri **others, bool l
  */
 extern HttpUri *httpMakeUriLocal(HttpUri *uri);
 
+/************************************* Range **********************************/
 /** 
     Content range structure
     @pre
@@ -745,6 +732,7 @@ typedef struct HttpRange {
     struct HttpRange    *next;                  /**< Next range */
 } HttpRange;
 
+/************************************* Packet *********************************/
 /*  
     Packet flags
  */
@@ -924,6 +912,7 @@ extern HttpPacket *httpSplitPacket(HttpPacket *packet, ssize offset);
  */
 #define httpGetPacketEntityLength(p) (p->content ? mprGetBufLength(p->content) : packet->esize)
 
+/************************************* Queue *********************************/
 /*  
     Queue directions
  */
@@ -1306,6 +1295,7 @@ extern void httpInsertQueue(HttpQueue *prev, HttpQueue *q);
 extern void httpMarkQueueHead(HttpQueue *q);
 extern void httpAssignQueue(HttpQueue *q, struct HttpStage *stage, int dir);
 
+/******************************** Pipeline Stages *****************************/
 /*
     Stage Flags
  */
@@ -1620,6 +1610,7 @@ extern void httpSendClose(HttpQueue *q);
 extern void httpSendOutgoingService(HttpQueue *q);
 extern ssize httpFilterChunkData(HttpQueue *q, HttpPacket *packet);
 
+/********************************** HttpConn *********************************/
 /** 
     Notification flags
  */
@@ -2252,6 +2243,7 @@ extern void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *pack
 extern void httpUsePrimary(HttpConn *conn);
 extern void httpUseWorker(HttpConn *conn, MprDispatcher *dispatcher, MprEvent *event);
 
+/********************************** HttpAuth *********************************/
 /*  
     Deny/Allow order
  */
@@ -2817,6 +2809,7 @@ extern bool httpValidatePamCredentials(HttpAuth *auth, cchar *realm, cchar *user
     cchar *requiredPass, char **msg);
 #endif /* AUTH_PAM */
 
+/********************************** HttpLang  ********************************/
 
 #define HTTP_LANG_BEFORE        0x1         /**< Insert suffix before extension */
 #define HTTP_LANG_AFTER         0x2         /**< Insert suffix after extension */
@@ -2831,6 +2824,7 @@ typedef struct HttpLang {
     int         flags;                      /**< Control suffix position */
 } HttpLang;
 
+/********************************** HttpCache  *********************************/
 
 #define HTTP_CACHE_CLIENT           0x1     /**< Cache on the client side */
 #define HTTP_CACHE_SERVER           0x2     /**< Cache on the server side */
@@ -2955,6 +2949,7 @@ extern ssize httpUpdateCache(HttpConn *conn, cchar *uri, cchar *data, MprTime li
   */
 extern ssize httpWriteCached(HttpConn *conn);
 
+/********************************** HttpRoute  *********************************/
 /*
     Misc route API flags
  */
@@ -3986,6 +3981,7 @@ extern MprFile *httpOpenRouteLog(HttpRoute *route);
 extern int httpStartRoute(HttpRoute *route);
 extern void httpStopRoute(HttpRoute *route);
 
+/********************************** HttpUploadFile *********************************/
 /**
     Upload File
     @description Each uploaded file has an HttpUploadedFile entry. This is managed by the upload handler.
@@ -4031,6 +4027,7 @@ extern void httpRemoveAllUploadedFiles(HttpConn *conn);
  */
 extern void httpRemoveUploadFile(HttpConn *conn, cchar *id);
 
+/********************************** HttpRx *********************************/
 /* 
     Rx flags
  */
@@ -4444,6 +4441,7 @@ extern void httpProcess(HttpConn *conn, HttpPacket *packet);
 extern bool httpProcessCompletion(HttpConn *conn);
 extern void httpProcessWriteEvent(HttpConn *conn);
 
+/********************************** HttpTx *********************************/
 /*  
     Tx flags
  */
@@ -4878,6 +4876,7 @@ extern void httpWriteHeaders(HttpConn *conn, HttpPacket *packet);
  */
 extern ssize httpWriteUploadData(HttpConn *conn, MprList *formData, MprList *fileData);
 
+/********************************* HttpEndpoint ***********************************/
 /*  
     Endpoint flags
  */
@@ -5098,6 +5097,7 @@ extern void httpStopEndpoint(HttpEndpoint *endpoint);
  */
 extern bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn);
 
+/********************************** HttpHost ***************************************/
 /*
     Flags
  */
@@ -5373,10 +5373,4 @@ extern void httpStopHost(HttpHost *host);
 
     @end
  */
-
-/************************************************************************/
-/*
- *  End of file "./out/inc/http.h"
- */
-/************************************************************************/
 

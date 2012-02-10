@@ -1,29 +1,21 @@
+/*
+    pcre.c -- PCRE Library Library Source
+
+    This file is a catenation of all the source code. Amalgamating into a
+    single file makes embedding simpler and the resulting application faster.
+ */
+
 #include "buildConfig.h"
 #include "pcre.h"
 
-/******************************************************************************/
-/* 
-    This file is an amalgamation of all the individual source code files for the
-    .
-  
-    Catenating all the source into a single file makes embedding simpler and
-    the resulting application faster, as many compilers can do whole file
-    optimization.
-  
-    If you want to modify the product, you can still get the whole source as 
-    individual files if you need.
- */
-
-
 /************************************************************************/
 /*
- *  Start of file "./src/config.h"
+    Start of file "src/config.h"
  */
 /************************************************************************/
 
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
-
 
 /* On Unix-like systems config.h.in is converted by "configure" into config.h.
 Some other environments also support the use of "configure". PCRE is written in
@@ -264,17 +256,10 @@ them both to 0; an emulation function will be used. */
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 /* #undef size_t */
-/************************************************************************/
-/*
- *  End of file "./src/config.h"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/pcre_internal.h"
+    Start of file "src/pcre_internal.h"
  */
 /************************************************************************/
 
@@ -324,6 +309,8 @@ functions whose names all begin with "_pcre_". */
 
 #ifndef PCRE_INTERNAL_H
 #define PCRE_INTERNAL_H
+
+#include "buildConfig.h"
 
 
 /* EMBEDTHIS */
@@ -436,6 +423,7 @@ Windows, the two should always be the same.
 
 The reason for wrapping this in #ifndef PCRE_EXP_DECL is so that pcretest,
 which is an application, but needs to import this file in order to "peek" at
+internals, can #include pcre.h first to get an application's-eye view.
 
 In principle, people compiling for non-Windows, non-Unix-like (i.e. uncommon,
 special-purpose environments) might want to stick other stuff in front of
@@ -595,6 +583,8 @@ must begin with PCRE_. */
 
 /* Include the public PCRE header and the definitions of UCP character property
 values. */
+
+
 
 
 /* When compiling for use with the Virtual Pascal compiler, these functions
@@ -1507,17 +1497,10 @@ extern BOOL         _pcre_xclass(int, const uschar *);
 
 /* End of pcre_internal.h */
 #endif /* BLD_FEATURE_PCRE */
-/************************************************************************/
-/*
- *  End of file "./src/pcre_internal.h"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/ucp.h"
+    Start of file "src/ucp.h"
  */
 /************************************************************************/
 
@@ -1525,6 +1508,7 @@ extern BOOL         _pcre_xclass(int, const uschar *);
 *          Unicode Property Table handler        *
 *************************************************/
 
+#include "buildConfig.h"
 
 #if BLD_FEATURE_PCRE
 
@@ -1658,17 +1642,10 @@ enum {
 
 /* End of ucp.h */
 #endif /* BLD_FEATURE_PCRE */
-/************************************************************************/
-/*
- *  End of file "./src/ucp.h"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/ucpinternal.h"
+    Start of file "src/ucpinternal.h"
  */
 /************************************************************************/
 
@@ -1679,6 +1656,7 @@ enum {
 #ifndef _UCPINTERNAL_H
 #define _UCPINTERNAL_H
 
+#include "buildConfig.h"
 
 #if BLD_FEATURE_PCRE
 
@@ -1768,17 +1746,10 @@ When searching the data, proceed as follows:
 #endif /* _UCPINTERNAL_H */
 
 /* End of ucpinternal.h */
-/************************************************************************/
-/*
- *  End of file "./src/ucpinternal.h"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/ucptable.h"
+    Start of file "src/ucptable.h"
  */
 /************************************************************************/
 
@@ -1786,6 +1757,7 @@ When searching the data, proceed as follows:
 property table. See ucpinternal.h for a description of the layout.
 This version was made from the Unicode 5.0.0 tables. */
 
+#include "buildConfig.h"
 
 #if BLD_FEATURE_PCRE
 
@@ -4876,17 +4848,10 @@ static const cnode ucp_table[] = {
 
 #endif /* BLD_FEATURE_PCRE */
 
-/************************************************************************/
-/*
- *  End of file "./src/ucptable.h"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/pcre_chartables.c"
+    Start of file "src/pcre_chartables.c"
  */
 /************************************************************************/
 
@@ -4912,8 +4877,11 @@ and dead code stripping is activated. This leads to link errors. Pulling in the
 header ensures that the array gets flagged as "someone outside this compilation
 unit might reference this" and so it will always be supplied to the linker. */
 
+#include "buildConfig.h"
+
 
 #if BLD_FEATURE_PCRE
+
 
 
 const unsigned char _pcre_default_tables[] = {
@@ -5087,17 +5055,10 @@ graph, print, punct, and cntrl. Other classes are built from combinations. */
 
 /* End of pcre_chartables.c */
 #endif /* BLD_FEATURE_PCRE */
-/************************************************************************/
-/*
- *  End of file "./src/pcre_chartables.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/pcre_compile.c"
+    Start of file "src/pcre_compile.c"
  */
 /************************************************************************/
 
@@ -5145,6 +5106,8 @@ POSSIBILITY OF SUCH DAMAGE.
 supporting internal functions that are not used by other modules. */
 
 
+#include "buildConfig.h"
+
 
 #if BLD_FEATURE_PCRE
 
@@ -5186,10 +5149,12 @@ supporting internal functions that are not used by other modules. */
 
 
 
+
 /* When DEBUG is defined, we need the pcre_printint() function, which is also
 used by pcretest. DEBUG is not defined when building a production library. */
 
 #ifdef DEBUG
+    #include "pcre_printint.src"
 #endif
 
 
@@ -11536,17 +11501,10 @@ return (pcre *)re;
 
 /* End of pcre_compile.c */
 #endif /* BLD_FEATURE_PCRE */
-/************************************************************************/
-/*
- *  End of file "./src/pcre_compile.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/pcre_exec.c"
+    Start of file "src/pcre_exec.c"
  */
 /************************************************************************/
 
@@ -11594,6 +11552,8 @@ POSSIBILITY OF SUCH DAMAGE.
 pattern matching using an NFA algorithm, trying to mimic Perl as closely as
 possible. There are also some static supporting functions. */
 
+#include "buildConfig.h"
+
 
 #if BLD_FEATURE_PCRE
 
@@ -11630,6 +11590,7 @@ possible. There are also some static supporting functions. */
      (NLBLOCK->nllen == 1 || (p)[-NLBLOCK->nllen+1] == NLBLOCK->nl[1]) \
     ) \
   )
+
 
 
 /* Undefine some potentially clashing cpp symbols */
@@ -16532,17 +16493,10 @@ else
 
 /* End of pcre_exec.c */
 #endif /* BLD_FEATURE_PCRE */
-/************************************************************************/
-/*
- *  End of file "./src/pcre_exec.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/pcre_globals.c"
+    Start of file "src/pcre_globals.c"
  */
 /************************************************************************/
 
@@ -16594,8 +16548,11 @@ indirection. These values can be changed by the caller, but are shared between
 all threads. However, when compiling for Virtual Pascal, things are done
 differently, and global variables are not used (see pcre.in). */
 
+#include "buildConfig.h"
+
 
 #if BLD_FEATURE_PCRE
+
 
 #ifndef VPCOMPAT
 PCRE_EXP_DATA_DEFN void *(*pcre_malloc)(size_t) = malloc;
@@ -16607,17 +16564,10 @@ PCRE_EXP_DATA_DEFN int   (*pcre_callout)(pcre_callout_block *) = NULL;
 
 /* End of pcre_globals.c */
 #endif /* BLD_FEATURE_PCRE */
-/************************************************************************/
-/*
- *  End of file "./src/pcre_globals.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/pcre_newline.c"
+    Start of file "src/pcre_newline.c"
  */
 /************************************************************************/
 
@@ -16670,8 +16620,11 @@ and NLTYPE_ANY. The full list of Unicode newline characters is taken from
 http://unicode.org/unicode/reports/tr18/. */
 
 
+#include "buildConfig.h"
+
 
 #if BLD_FEATURE_PCRE
+
 
 
 
@@ -16783,17 +16736,10 @@ else switch(c)
 
 /* End of pcre_newline.c */
 #endif /* BLD_FEATURE_PCRE */
-/************************************************************************/
-/*
- *  End of file "./src/pcre_newline.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/pcre_ord2utf8.c"
+    Start of file "src/pcre_ord2utf8.c"
  */
 /************************************************************************/
 
@@ -16840,8 +16786,11 @@ POSSIBILITY OF SUCH DAMAGE.
 /* This file contains a private PCRE function that converts an ordinal
 character value into a UTF8 string. */
 
+#include "buildConfig.h"
+
 
 #if BLD_FEATURE_PCRE
+
 
 
 /*************************************************
@@ -16880,17 +16829,10 @@ return 0;   /* Keep compiler happy; this function won't ever be */
 
 /* End of pcre_ord2utf8.c */
 #endif /* BLD_FEATURE_PCRE */
-/************************************************************************/
-/*
- *  End of file "./src/pcre_ord2utf8.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/pcre_tables.c"
+    Start of file "src/pcre_tables.c"
  */
 /************************************************************************/
 
@@ -16935,12 +16877,16 @@ POSSIBILITY OF SUCH DAMAGE.
 
 
 /* This module contains some fixed tables that are used by more than one of the
+PCRE code modules. The tables are also #included by the pcretest program, which
 uses macros to change their names from _pcre_xxx to xxxx, thereby avoiding name
 clashes with the library. */
 
 
+#include "buildConfig.h"
+
 
 #if BLD_FEATURE_PCRE
+
 
 
 /* Table of sizes for the fixed-length opcodes. It's defined in a macro so that
@@ -17209,17 +17155,10 @@ const int _pcre_utt_size = sizeof(_pcre_utt)/sizeof(ucp_type_table);
 
 /* End of pcre_tables.c */
 #endif /* BLD_FEATURE_PCRE */
-/************************************************************************/
-/*
- *  End of file "./src/pcre_tables.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/pcre_try_flipped.c"
+    Start of file "src/pcre_try_flipped.c"
  */
 /************************************************************************/
 
@@ -17268,8 +17207,11 @@ see if it was compiled with the opposite endianness. If so, it uses an
 auxiliary local function to flip the appropriate bytes. */
 
 
+#include "buildConfig.h"
+
 
 #if BLD_FEATURE_PCRE
+
 
 
 /*************************************************
@@ -17358,17 +17300,10 @@ return internal_re;
 
 /* End of pcre_tryflipped.c */
 #endif /* BLD_FEATURE_PCRE */
-/************************************************************************/
-/*
- *  End of file "./src/pcre_try_flipped.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/pcre_ucp_searchfuncs.c"
+    Start of file "src/pcre_ucp_searchfuncs.c"
  */
 /************************************************************************/
 
@@ -17415,8 +17350,14 @@ POSSIBILITY OF SUCH DAMAGE.
 /* This module contains code for searching the table of Unicode character
 properties. */
 
+#include "buildConfig.h"
+
 
 #if BLD_FEATURE_PCRE
+
+
+
+
 
 
 
@@ -17546,17 +17487,10 @@ return (offset == 0)? NOTACHAR : c + offset;
 
 /* End of pcre_ucp_searchfuncs.c */
 #endif /* BLD_FEATURE_PCRE */
-/************************************************************************/
-/*
- *  End of file "./src/pcre_ucp_searchfuncs.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/pcre_valid_utf8.c"
+    Start of file "src/pcre_valid_utf8.c"
  */
 /************************************************************************/
 
@@ -17604,8 +17538,11 @@ POSSIBILITY OF SUCH DAMAGE.
 strings. */
 
 
+#include "buildConfig.h"
+
 
 #if BLD_FEATURE_PCRE
+
 
 
 /*************************************************
@@ -17720,17 +17657,10 @@ return -1;
 
 /* End of pcre_valid_utf8.c */
 #endif /* BLD_FEATURE_PCRE */
-/************************************************************************/
-/*
- *  End of file "./src/pcre_valid_utf8.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/pcre_xclass.c"
+    Start of file "src/pcre_xclass.c"
  */
 /************************************************************************/
 
@@ -17779,8 +17709,11 @@ class (one that contains characters whose values are > 255). It is used by both
 pcre_exec() and pcre_def_exec(). */
 
 
+#include "buildConfig.h"
+
 
 #if BLD_FEATURE_PCRE
+
 
 
 /*************************************************
@@ -17880,9 +17813,3 @@ return negated;   /* char did not match */
 
 /* End of pcre_xclass.c */
 #endif /* BLD_FEATURE_PCRE */
-/************************************************************************/
-/*
- *  End of file "./src/pcre_xclass.c"
- */
-/************************************************************************/
-

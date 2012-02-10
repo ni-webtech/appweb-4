@@ -332,7 +332,7 @@ enumerable class Test {
     }
 
     function initWorker(w: Worker, export: Object) {
-        w.preload(_top.join("build/bin/utest.worker"))
+        w.preload(_top.join(".bit/bin/utest.worker"))
         let estr = serialize(export)
         w.preeval('
             let data = deserialize(\'' + estr.replace(/\\/g, "\\\\") + '\')
@@ -558,6 +558,7 @@ enumerable class Test {
         App.exit(1)
     }
 
+//  MOB - rename tor trace
     function activity(tag: String, ...args): Void {
         let msg = args.join(" ")
         let msg = "%12s %s" % (["[" + tag + "]"] + [msg]) + "\n"

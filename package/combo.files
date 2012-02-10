@@ -10,7 +10,7 @@ DIR="${BLD_OUT_DIR}/${WHERE}/${BLD_PRODUCT}-${BLD_VERSION}"
 SRC="${DIR}/src/deps/appweb"
 DOC="${DIR}/doc"
 
-APPWEB_HEADERS="${BLD_INC_DIR}/mpr.h ${BLD_INC_DIR}/mprSsl.h ${BLD_INC_DIR}/http.h ${BLD_INC_DIR}/appweb.h ${BLD_INC_DIR}/appwebMonitor.h ${BLD_INC_DIR}/edi.h ${BLD_INC_DIR}/mdb.h ${BLD_INC_DIR}/esp.h ${BLD_INC_DIR}/pcre.h"
+APPWEB_HEADERS="${BLD_INC_DIR}/mpr.h ${BLD_INC_DIR}/http.h ${BLD_INC_DIR}/appweb.h ${BLD_INC_DIR}/appwebMonitor.h ${BLD_INC_DIR}/edi.h ${BLD_INC_DIR}/mdb.h ${BLD_INC_DIR}/esp.h ${BLD_INC_DIR}/pcre.h"
 LIB_SOURCES=`find ${S} -name '*.c' | egrep -v 'deps|server/|test|utils|sav|appman|makerom|samples|esp/esp.c'`
 DEP_SOURCES=`find ${S}/deps -name '*.c' | egrep -v 'appman|makerom|utils|test|http/http.c|sqlite|mpr/manager'`
 
@@ -20,6 +20,7 @@ mkdir -p ${SRC} ${DOC}/man ${DOC}/api
 #   Build files
 #
 cp ${BLD_TOP}/package/Makefile.combo "${SRC}/Makefile"
+# cp ${BLD_TOP}/package/appweb.bit "${SRC}/appweb.bit"
 cat ${BLD_INC_DIR}/buildConfig.h | grep '#define' | sort | uniq >"${DIR}/buildConfig.h"
 
 #

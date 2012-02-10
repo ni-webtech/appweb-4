@@ -1013,7 +1013,7 @@ configureComponent() {
     eval CFG_${kind}_${upper}_BUILTIN=\"$builtin\"
     eval CFG_${kind}_${upper}_CFLAGS=\"$cflags\"
     eval CFG_${kind}_${upper}_DEPENDENCIES=\"$dependencies\"
-    eval CFG_${kind}_${upper}_DFLAGS=\"$dflags\"
+    eval CFG_${kind}_${upper}_DFLAGS=\"'$dflags'\"
     eval CFG_${kind}_${upper}_EMITTER=$emitter
     eval CFG_${kind}_${upper}_IFLAGS=\"'$iflags'\"
     eval CFG_${kind}_${upper}_IMPORTS=\"'$imports'\"
@@ -1915,7 +1915,7 @@ emitComponents() {
             egrep -v "_EMITTER|_WITH=|_WITH_|_MANDATORY=|_PRESENT=" | while read v
         do
             [ "$v" = "CFG_${kind}_${p}=1" ] && continue
-            v=${v%=*}
+            v=${v%%=*}
             eval value=\$$v
             v=${v/CFG/BLD}
             if [ "$value" != "" ] ; then

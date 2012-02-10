@@ -80,7 +80,7 @@ setup() {
     BLD_TOP=.
     HOME=`pwd`
 
-    . ${BLD_TOP}/build/bin/makePackage.common
+    . ${BLD_TOP}/.bit/bin/makePackage.common
 
     if [ $BLD_BUILD_OS = LINUX -a `id -u` != 0 -a "$COMBO" != 1 ] ; then
         echo -e "\nWARNING: Non-root package. Installed files will be owned by `id -nu`\n"

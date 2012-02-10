@@ -1,22 +1,15 @@
-#include "http.h"
+/*
+    httpLib.c -- Http Library Library Source
 
-/******************************************************************************/
-/* 
-    This file is an amalgamation of all the individual source code files for the
-    Http Library Library Source.
-  
-    Catenating all the source into a single file makes embedding simpler and
-    the resulting application faster, as many compilers can do whole file
-    optimization.
-  
-    If you want to modify the product, you can still get the whole source as 
-    individual files if you need.
+    This file is a catenation of all the source code. Amalgamating into a
+    single file makes embedding simpler and the resulting application faster.
  */
 
+#include "http.h"
 
 /************************************************************************/
 /*
- *  Start of file "./src/auth.c"
+    Start of file "src/auth.c"
  */
 /************************************************************************/
 
@@ -25,11 +18,15 @@
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/********************************* Forwards ***********************************/
 
 static void manageAuth(HttpAuth *auth, int flags);
 
+/*********************************** Code *************************************/
 
 HttpAuth *httpCreateAuth()
 {
@@ -257,17 +254,10 @@ void httpInitAuth(Http *http)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/auth.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/authCheck.c"
+    Start of file "src/authCheck.c"
  */
 /************************************************************************/
 
@@ -276,8 +266,11 @@ void httpInitAuth(Http *http)
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/********************************** Defines ***********************************/
 /*
     Per-request authorization data
  */
@@ -294,6 +287,7 @@ typedef struct AuthData
     char            *uri;
 } AuthData;
 
+/********************************** Forwards **********************************/
 
 static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *realm, cchar *uri, 
     cchar *nonce, cchar *qop, cchar *nc, cchar *cnonce, cchar *method);
@@ -303,6 +297,7 @@ static int  decodeDigestDetails(HttpConn *conn, AuthData *ad);
 static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *msg, char *logMsg);
 static int parseDigestNonce(char *nonce, cchar **secret, cchar **realm, MprTime *when);
 
+/*********************************** Code *************************************/
 
 int httpCheckAuth(HttpConn *conn)
 {
@@ -718,17 +713,10 @@ static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *re
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/authCheck.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/authFile.c"
+    Start of file "src/authFile.c"
  */
 /************************************************************************/
 
@@ -738,14 +726,18 @@ static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *re
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
+/********************************* Includes ***********************************/
+
 
 
 #if BLD_FEATURE_AUTH_FILE
+/********************************** Forwards **********************************/
 
 static bool isUserValid(HttpAuth *auth, cchar *realm, cchar *user);
 static void manageGroup(HttpGroup *group, int flags);
 static void manageUser(HttpUser *user, int flags);
 
+/*********************************** Code *************************************/
 
 cchar *httpGetFilePassword(HttpAuth *auth, cchar *realm, cchar *user)
 {
@@ -1398,17 +1390,10 @@ void __nativeAuthFile() {}
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/authFile.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/authPam.c"
+    Start of file "src/authPam.c"
  */
 /************************************************************************/
 
@@ -1417,6 +1402,8 @@ void __nativeAuthFile() {}
 
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
+
+/********************************* Includes ***********************************/
 
 
 
@@ -1428,15 +1415,18 @@ void __nativeAuthFile() {}
     #include    <security/pam_appl.h>
 #endif
 
+/********************************* Defines ************************************/
 
 typedef struct {
     char    *name;
     char    *password;
 } UserInfo;
 
+/********************************* Forwards ***********************************/
 
 static int pamChat(int msgCount, const struct pam_message **msg, struct pam_response **resp, void *data);
 
+/*********************************** Code *************************************/
 
 cchar *httpGetPamPassword(HttpAuth *auth, cchar *realm, cchar *user)
 {
@@ -1548,17 +1538,10 @@ void __pamAuth() {}
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/authPam.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/cache.c"
+    Start of file "src/cache.c"
  */
 /************************************************************************/
 
@@ -1572,8 +1555,11 @@ void __pamAuth() {}
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/********************************** Forwards **********************************/
 
 static void cacheAtClient(HttpConn *conn);
 static bool fetchCachedResponse(HttpConn *conn);
@@ -1587,6 +1573,7 @@ static void processCacheHandler(HttpQueue *q);
 static void saveCachedResponse(HttpConn *conn);
 static cchar *setHeadersFromCache(HttpConn *conn, cchar *content);
 
+/************************************ Code ************************************/
 
 int httpOpenCacheHandler(Http *http)
 {
@@ -2153,17 +2140,10 @@ static cchar *setHeadersFromCache(HttpConn *conn, cchar *content)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/cache.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/chunkFilter.c"
+    Start of file "src/chunkFilter.c"
  */
 /************************************************************************/
 
@@ -2173,14 +2153,18 @@ static cchar *setHeadersFromCache(HttpConn *conn, cchar *content)
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/********************************** Forwards **********************************/
 
 static int matchChunk(HttpConn *conn, HttpRoute *route, int dir);
 static void openChunk(HttpQueue *q);
 static void outgoingChunkService(HttpQueue *q);
 static void setChunkPrefix(HttpQueue *q, HttpPacket *packet);
 
+/*********************************** Code *************************************/
 /* 
    Loadable module initialization
  */
@@ -2431,17 +2415,10 @@ static void setChunkPrefix(HttpQueue *q, HttpPacket *packet)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/chunkFilter.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/client.c"
+    Start of file "src/client.c"
  */
 /************************************************************************/
 
@@ -2451,8 +2428,11 @@ static void setChunkPrefix(HttpQueue *q, HttpPacket *packet)
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/*********************************** Code *************************************/
 
 static HttpConn *openConnection(HttpConn *conn, cchar *url)
 {
@@ -2802,17 +2782,10 @@ ssize httpWriteUploadData(HttpConn *conn, MprList *fileData, MprList *formData)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/client.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/conn.c"
+    Start of file "src/conn.c"
  */
 /************************************************************************/
 
@@ -2821,14 +2794,18 @@ ssize httpWriteUploadData(HttpConn *conn, MprList *fileData, MprList *formData)
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/***************************** Forward Declarations ***************************/
 
 static void manageConn(HttpConn *conn, int flags);
 static HttpPacket *getPacket(HttpConn *conn, ssize *bytesToRead);
 static void readEvent(HttpConn *conn);
 static void writeEvent(HttpConn *conn);
 
+/*********************************** Code *************************************/
 /*
     Create a new connection object.
  */
@@ -3566,17 +3543,10 @@ void httpWritable(HttpConn *conn)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/conn.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/endpoint.c"
+    Start of file "src/endpoint.c"
  */
 /************************************************************************/
 
@@ -3585,12 +3555,16 @@ void httpWritable(HttpConn *conn)
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/********************************** Forwards **********************************/
 
 static int manageEndpoint(HttpEndpoint *endpoint, int flags);
 static int destroyEndpointConnections(HttpEndpoint *endpoint);
 
+/************************************ Code ************************************/
 /*
     Create a listening endpoint on ip:port. NOTE: ip may be empty which means bind to all addresses.
  */
@@ -4165,17 +4139,10 @@ int httpConfigureNamedVirtualEndpoints(Http *http, cchar *ip, int port)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/endpoint.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/error.c"
+    Start of file "src/error.c"
  */
 /************************************************************************/
 
@@ -4184,12 +4151,16 @@ int httpConfigureNamedVirtualEndpoints(Http *http, cchar *ip, int port)
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/********************************** Forwards **********************************/
 
 static void errorv(HttpConn *conn, int flags, cchar *fmt, va_list args);
 static void formatErrorv(HttpConn *conn, int status, cchar *fmt, va_list args);
 
+/*********************************** Code *************************************/
 
 void httpDisconnect(HttpConn *conn)
 {
@@ -4369,17 +4340,10 @@ void httpMemoryError(HttpConn *conn)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/error.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/host.c"
+    Start of file "src/host.c"
  */
 /************************************************************************/
 
@@ -4392,11 +4356,15 @@ void httpMemoryError(HttpConn *conn)
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/********************************** Forwards **********************************/
 
 static void manageHost(HttpHost *host, int flags);
 
+/*********************************** Code *************************************/
 
 HttpHost *httpCreateHost(cchar *home)
 {
@@ -4707,17 +4675,10 @@ void httpSetHostDefaultRoute(HttpHost *host, HttpRoute *route)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/host.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/httpService.c"
+    Start of file "src/httpService.c"
  */
 /************************************************************************/
 
@@ -4726,8 +4687,11 @@ void httpSetHostDefaultRoute(HttpHost *host, HttpRoute *route)
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/********************************** Locals ************************************/
 /**
     Standard HTTP error code table
  */
@@ -4784,6 +4748,7 @@ HttpStatusCode HttpStatusCodes[] = {
     { 0,   0 }
 };
 
+/****************************** Forward Declarations **************************/
 
 static void httpTimer(Http *http, MprEvent *event);
 static bool isIdle();
@@ -4791,6 +4756,7 @@ static void manageHttp(Http *http, int flags);
 static void terminateHttp(int how, int status);
 static void updateCurrentDate(Http *http);
 
+/*********************************** Code *************************************/
 
 Http *httpCreate()
 {
@@ -5420,17 +5386,10 @@ static void updateCurrentDate(Http *http)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/httpService.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/log.c"
+    Start of file "src/log.c"
  */
 /************************************************************************/
 
@@ -5440,8 +5399,11 @@ static void updateCurrentDate(Http *http)
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/************************************ Code ************************************/
 
 void httpSetRouteLog(HttpRoute *route, cchar *path, ssize size, int backup, cchar *format, int flags)
 {
@@ -5691,17 +5653,10 @@ void httpLogRequest(HttpConn *conn)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/log.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/netConnector.c"
+    Start of file "src/netConnector.c"
  */
 /************************************************************************/
 
@@ -5714,8 +5669,11 @@ void httpLogRequest(HttpConn *conn)
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/**************************** Forward Declarations ****************************/
 
 static void addPacketForNet(HttpQueue *q, HttpPacket *packet);
 static void adjustNetVec(HttpQueue *q, ssize written);
@@ -5724,6 +5682,7 @@ static void freeNetPackets(HttpQueue *q, ssize written);
 static void netClose(HttpQueue *q);
 static void netOutgoingService(HttpQueue *q);
 
+/*********************************** Code *************************************/
 /*  
     Initialize the net connector
  */
@@ -6042,17 +6001,10 @@ static void adjustNetVec(HttpQueue *q, ssize written)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/netConnector.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/packet.c"
+    Start of file "src/packet.c"
  */
 /************************************************************************/
 
@@ -6062,11 +6014,15 @@ static void adjustNetVec(HttpQueue *q, ssize written)
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/********************************** Forwards **********************************/
 
 static void managePacket(HttpPacket *packet, int flags);
 
+/************************************ Code ************************************/
 /*  
     Create a new packet. If size is -1, then also create a default growable buffer -- 
     used for incoming body content. If size > 0, then create a non-growable buffer 
@@ -6497,17 +6453,10 @@ HttpPacket *httpSplitPacket(HttpPacket *orig, ssize offset)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/packet.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/passHandler.c"
+    Start of file "src/passHandler.c"
  */
 /************************************************************************/
 
@@ -6520,8 +6469,11 @@ HttpPacket *httpSplitPacket(HttpPacket *orig, ssize offset)
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/*********************************** Code *************************************/
 
 void httpHandleOptionsTrace(HttpConn *conn)
 {
@@ -6635,17 +6587,10 @@ int httpOpenPassHandler(Http *http)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/passHandler.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/pipeline.c"
+    Start of file "src/pipeline.c"
  */
 /************************************************************************/
 
@@ -6654,13 +6599,17 @@ int httpOpenPassHandler(Http *http)
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/********************************** Forward ***********************************/
 
 static bool matchFilter(HttpConn *conn, HttpStage *filter, HttpRoute *route, int dir);
 static void openQueues(HttpConn *conn);
 static void pairQueues(HttpConn *conn);
 
+/*********************************** Code *************************************/
 
 void httpCreateTxPipeline(HttpConn *conn, HttpRoute *route)
 {
@@ -7002,17 +6951,10 @@ static bool matchFilter(HttpConn *conn, HttpStage *filter, HttpRoute *route, int
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/pipeline.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/queue.c"
+    Start of file "src/queue.c"
  */
 /************************************************************************/
 
@@ -7021,11 +6963,15 @@ static bool matchFilter(HttpConn *conn, HttpStage *filter, HttpRoute *route, int
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/********************************** Forwards **********************************/
 
 static void manageQueue(HttpQueue *q, int flags);
 
+/************************************ Code ************************************/
 
 HttpQueue *httpCreateQueueHead(HttpConn *conn, cchar *name)
 {
@@ -7647,17 +7593,10 @@ bool httpVerifyQueue(HttpQueue *q)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/queue.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/rangeFilter.c"
+    Start of file "src/rangeFilter.c"
  */
 /************************************************************************/
 
@@ -7666,8 +7605,11 @@ bool httpVerifyQueue(HttpQueue *q)
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/********************************** Forwards **********************************/
 
 static bool applyRange(HttpQueue *q, HttpPacket *packet);
 static void createRangeBoundary(HttpConn *conn);
@@ -7678,6 +7620,7 @@ static bool fixRangeLength(HttpConn *conn);
 static int matchRange(HttpConn *conn, HttpRoute *route, int dir);
 static void startRange(HttpQueue *q);
 
+/*********************************** Code *************************************/
 
 int httpOpenRangeFilter(Http *http)
 {
@@ -7968,17 +7911,10 @@ static bool fixRangeLength(HttpConn *conn)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/rangeFilter.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/route.c"
+    Start of file "src/route.c"
  */
 /************************************************************************/
 
@@ -7988,9 +7924,12 @@ static bool fixRangeLength(HttpConn *conn)
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
+/********************************* Includes ***********************************/
+
 
 #include    "pcre.h"
 
+/********************************** Forwards **********************************/
 
 #define GRADUATE_LIST(route, field) \
     if (route->field == 0) { \
@@ -8005,6 +7944,7 @@ static bool fixRangeLength(HttpConn *conn)
         route->field = mprCloneHash(route->parent->field); \
     }
 
+/********************************** Forwards **********************************/
 
 static void addUniqueItem(MprList *list, HttpRouteOp *op);
 static HttpLang *createLangDef(cchar *path, cchar *suffix, int flags);
@@ -8031,6 +7971,7 @@ static int testCondition(HttpConn *conn, HttpRoute *route, HttpRouteOp *conditio
 static char *trimQuotes(char *str);
 static int updateRequest(HttpConn *conn, HttpRoute *route, HttpRouteOp *update);
 
+/************************************ Code ************************************/
 /*
     Host may be null
  */
@@ -8593,6 +8534,7 @@ void httpMapFile(HttpConn *conn, HttpRoute *route)
 }
 
 
+/************************************ API *************************************/
 
 int httpAddRouteCondition(HttpRoute *route, cchar *name, cchar *details, int flags)
 {
@@ -9218,6 +9160,7 @@ cchar *httpLookupRouteErrorDocument(HttpRoute *route, int code)
     return (cchar*) mprLookupKey(route->errorDocuments, num);
 }
 
+/********************************* Route Finalization *************************/
 
 static void finalizeMethods(HttpRoute *route)
 {
@@ -9544,6 +9487,7 @@ void httpFinalizeRoute(HttpRoute *route)
 }
 
 
+/********************************* Path and URI Expansion *****************************/
 /*
     What does this return. Does it return an absolute URI?
     MOB - rename httpUri() and move to uri.c
@@ -9744,6 +9688,7 @@ char *httpMakePath(HttpRoute *route, cchar *file)
     return mprGetAbsPath(path);
 }
 
+/********************************* Language ***********************************/
 /*
     Language can be an empty string
  */
@@ -9801,6 +9746,7 @@ void httpSetRouteDefaultLanguage(HttpRoute *route, cchar *language)
 }
 
 
+/********************************* Conditions *********************************/
 
 static int testCondition(HttpConn *conn, HttpRoute *route, HttpRouteOp *condition)
 {
@@ -9952,6 +9898,7 @@ static int matchCondition(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 }
 
 
+/********************************* Updates ******************************/
 
 static int updateRequest(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 {
@@ -10041,6 +9988,7 @@ static int langUpdate(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 }
 
 
+/*********************************** Targets **********************************/
 
 static int closeTarget(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 {
@@ -10116,6 +10064,7 @@ static int writeTarget(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 }
 
 
+/************************************************** Route Convenience ****************************************************/
 
 HttpRoute *httpDefineRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, 
         cchar *source)
@@ -10267,6 +10216,7 @@ void httpAddRouteSet(HttpRoute *parent, cchar *set)
 }
 
 
+/*************************************************** Support Routines ****************************************************/
 /*
     Route operations are used per-route for headers and fields
  */
@@ -10952,17 +10902,10 @@ HttpLimits *httpGraduateLimits(HttpRoute *route)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/route.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/rx.c"
+    Start of file "src/rx.c"
  */
 /************************************************************************/
 
@@ -10971,8 +10914,11 @@ HttpLimits *httpGraduateLimits(HttpRoute *route)
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/***************************** Forward Declarations ***************************/
 
 static void addMatchEtag(HttpConn *conn, char *etag);
 static char *getToken(HttpConn *conn, cchar *delim);
@@ -10991,6 +10937,7 @@ static bool processParsed(HttpConn *conn);
 static bool processRunning(HttpConn *conn);
 static void routeRequest(HttpConn *conn);
 
+/*********************************** Code *************************************/
 
 HttpRx *httpCreateRx(HttpConn *conn)
 {
@@ -12715,17 +12662,10 @@ void httpTrimExtraPath(HttpConn *conn)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/rx.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/sendConnector.c"
+    Start of file "src/sendConnector.c"
  */
 /************************************************************************/
 
@@ -12739,8 +12679,11 @@ void httpTrimExtraPath(HttpConn *conn)
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/**************************** Forward Declarations ****************************/
 #if !BLD_FEATURE_ROMFS
 
 static void addPacketForSend(HttpQueue *q, HttpPacket *packet);
@@ -12748,6 +12691,7 @@ static void adjustSendVec(HttpQueue *q, MprOff written);
 static MprOff buildSendVec(HttpQueue *q);
 static void adjustPacketData(HttpQueue *q, MprOff written);
 
+/*********************************** Code *************************************/
 
 int httpOpenSendConnector(Http *http)
 {
@@ -13109,17 +13053,10 @@ void httpSendOutgoingService(HttpQueue *q) {}
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/sendConnector.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/stage.c"
+    Start of file "src/stage.c"
  */
 /************************************************************************/
 
@@ -13132,11 +13069,15 @@ void httpSendOutgoingService(HttpQueue *q) {}
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/********************************* Forwards ***********************************/
 
 static void manageStage(HttpStage *stage, int flags);
 
+/*********************************** Code *************************************/
 
 static void defaultOpen(HttpQueue *q)
 {
@@ -13324,17 +13265,10 @@ HttpStage *httpCreateConnector(Http *http, cchar *name, int flags, MprModule *mo
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/stage.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/trace.c"
+    Start of file "src/trace.c"
  */
 /************************************************************************/
 
@@ -13343,8 +13277,11 @@ HttpStage *httpCreateConnector(Http *http, cchar *name, int flags, MprModule *mo
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/*********************************** Code *************************************/
 
 void httpSetRouteTraceFilter(HttpRoute *route, int dir, int levels[HTTP_TRACE_MAX_ITEM], ssize len, 
     cchar *include, cchar *exclude)
@@ -13557,17 +13494,10 @@ void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssi
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/trace.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/tx.c"
+    Start of file "src/tx.c"
  */
 /************************************************************************/
 
@@ -13576,11 +13506,15 @@ void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssi
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/***************************** Forward Declarations ***************************/
 
 static void manageTx(HttpTx *tx, int flags);
 
+/*********************************** Code *************************************/
 
 HttpTx *httpCreateTx(HttpConn *conn, MprHash *headers)
 {
@@ -14338,17 +14272,10 @@ bool httpFileExists(HttpConn *conn)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/tx.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/uploadFilter.c"
+    Start of file "src/uploadFilter.c"
  */
 /************************************************************************/
 
@@ -14359,8 +14286,11 @@ bool httpFileExists(HttpConn *conn)
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
+/********************************** Includes **********************************/
 
 
+
+/*********************************** Locals ***********************************/
 /*
     Upload state machine states
  */
@@ -14385,6 +14315,7 @@ typedef struct Upload {
 } Upload;
 
 
+/********************************** Forwards **********************************/
 
 static void closeUpload(HttpQueue *q);
 static char *getBoundary(void *buf, ssize bufLen, void *boundary, ssize boundaryLen);
@@ -14397,6 +14328,7 @@ static int  processContentBoundary(HttpQueue *q, char *line);
 static int  processContentHeader(HttpQueue *q, char *line);
 static int  processContentData(HttpQueue *q);
 
+/************************************* Code ***********************************/
 
 int httpOpenUploadFilter(Http *http)
 {
@@ -14994,17 +14926,10 @@ static char *getBoundary(void *buf, ssize bufLen, void *boundary, ssize boundary
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/uploadFilter.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/uri.c"
+    Start of file "src/uri.c"
  */
 /************************************************************************/
 
@@ -15013,14 +14938,18 @@ static char *getBoundary(void *buf, ssize bufLen, void *boundary, ssize boundary
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/********************************** Forwards **********************************/
 
 static int getPort(HttpUri *uri);
 static int getDefaultPort(cchar *scheme);
 static void manageUri(HttpUri *uri, int flags);
 static void trimPathToDirname(HttpUri *uri);
 
+/************************************ Code ************************************/
 /*  
     Create and initialize a URI. This accepts full URIs with schemes (http:) and partial URLs
     Support IPv4 and [IPv6]. Supported forms:
@@ -15733,17 +15662,10 @@ static void trimPathToDirname(HttpUri *uri)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/uri.c"
- */
-/************************************************************************/
-
-
 
 /************************************************************************/
 /*
- *  Start of file "./src/var.c"
+    Start of file "src/var.c"
  */
 /************************************************************************/
 
@@ -15752,8 +15674,11 @@ static void trimPathToDirname(HttpUri *uri)
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
+/********************************* Includes ***********************************/
 
 
+
+/*********************************** Code *************************************/
 /*
     Define standard CGI variables
  */
@@ -16133,9 +16058,3 @@ void httpRemoveAllUploadedFiles(HttpConn *conn)
 
     @end
  */
-/************************************************************************/
-/*
- *  End of file "./src/var.c"
- */
-/************************************************************************/
-
