@@ -15,7 +15,7 @@ SYNOPSIS
        pass]  [--post]  [--printable]  [--protocol  version]  [--put] [--range
        byteRanges] [--retries count] [--sequence] [--showHeaders]  [--showSta-
        tus]   [--single]  [--threads  count]  [--timeout  seconds]  [--upload]
-       [--user name] [--verbose] [--workers count]
+       [--user name] [--verbose] [--workers count] [--zero]
 
 DESCRIPTION
        The http command issues HTTP commands to  retrieve  files  from  a  web
@@ -159,6 +159,10 @@ OPTIONS
        --workers count
               Specify the number of worker threads to use. Worker threads tem-
               porarily assigned to process callbacks.
+
+       --zero Exit with a zero status for any valid  HTTP  response.  Normally
+              returns a non-zero status if the HTTP response code is not a 2XX
+              or 3XX series response code.
 
 
 REPORTING BUGS

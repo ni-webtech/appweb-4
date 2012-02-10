@@ -14,6 +14,7 @@ Bit.load({
         "src/utils/utils.bit",
         "src/server/server.bit",
         "src/test/test.bit",
+        "doc/doc.bit",
         ".bit/embedthis.bit",
     ],
 
@@ -45,7 +46,6 @@ Bit.load({
 
     '+optional': [ 'cgi', 'dir', 'doxygen', 'dsi', 'ejs', 'esp', 'man', 'man2html', 'openssl', 
         'matrixssl', 'php', 'sqlite', 'ssl', 'ejscript' ],
-    '+xxrequired': [ 'pcre', 'http' ]
 
     defaults: {
         '+includes': [ 'src' ]

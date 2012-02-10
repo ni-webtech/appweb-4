@@ -19,7 +19,7 @@
 #
 
 DEPS		:= tools mpr pcre http sqlite
-PRE_DIRS	:= build src doc projects package
+PRE_DIRS	:= build src projects package
 
 include		build/make/Makefile.top
 include		build/make/Makefile.appweb

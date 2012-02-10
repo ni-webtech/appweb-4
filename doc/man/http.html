@@ -14,7 +14,7 @@ HTTP(1)                          User Commands                         HTTP(1)
        <I>pass</I>]  [<I>--post</I>]  [<I>--printable</I>]  [<I>--protocol  version</I>]  [<I>--put</I>] [<I>--range</I>
        <I>byteRanges</I>] [<I>--retries count</I>] [<I>--sequence</I>] [<I>--showHeaders</I>]  [<I>--showSta-</I>
        <I>tus</I>]   [<I>--single</I>]  [<I>--threads  count</I>]  [<I>--timeout  seconds</I>]  [<I>--upload</I>]
-       [<I>--user name</I>] [<I>--verbose</I>] [<I>--workers count</I>]
+       [<I>--user name</I>] [<I>--verbose</I>] [<I>--workers count</I>] [<I>--zero</I>]
 
 <B>DESCRIPTION</B>
        The http command issues HTTP commands to  retrieve  files  from  a  web
@@ -157,6 +157,10 @@ HTTP(1)                          User Commands                         HTTP(1)
        <B>--workers count</B>
               Specify the number of worker threads to use. Worker threads tem-
               porarily assigned to process callbacks.
+
+       <B>--zero </B>Exit with a zero status for any valid  HTTP  response.  Normally
+              returns a non-zero status if the HTTP response code is not a 2XX
+              or 3XX series response code.
 
 <B>REPORTING BUGS</B>
        Report bugs to dev@embedthis.com.

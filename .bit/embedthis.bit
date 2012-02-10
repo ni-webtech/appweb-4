@@ -142,30 +142,32 @@ Bit.load({
             Documentation targets 
          */
         doc: {
-            depends: ['man', 'api', 'cleanDoc', 'patch'],
+            depends: ['patch', 'man', 'api', 'cleanDoc', 'ssi'],
         },
 
         api: {
             depends: ['package', 'man'],
             action: "
-                rm(['${SRC}/doc/api/html', '${SRC}/api/xml'])
-                let name = bit.settings.product
-                let dox = Path('${LIB}/dox.tmp')
-                let data = Path('${SRC}/doc/api/' + name + '.dox').readString().replace(/^INPUT .*=.*$/m, 
-                        'INPUT = ${PKG}/' + name + '-${settings.version}/src/deps/' + name + '/' + name + '.h')
-                Path(dox).write(data)
-                trace('Generate', 'API documentation')
-                run('doxygen ' + dox, {dir: '${SRC}/doc/api'})
-                trace('Process', 'Post-process API documentation (takes a while)')
-                run('ejs ${SRC}/.bit/bin/gendoc.es ' + 
-                    '--title \"MPR - Multithreaded Portable Runtime Native API\" --out ' + name + '.html ' + 
-                    (['xml/' + name + '_8h.xml'] + ls('xml/group*') + ls('xml/struct_*.xml')).join(' '), 
-                    {dir: '${SRC}/doc/api'})
-                run('ejs ${SRC}/.bit/bin/gendoc.es --bare ' + 
-                    '--title \"MPR - Multithreaded Portable Runtime Native API\" --out ' + name + 'Bare.html ' + 
-                    (['xml/' + name + '_8h.xml'] + ls('xml/group*') + ls('xml/struct_*.xml')).join(' '), 
-                    {dir: '${SRC}/doc/api'})
-                rm(['${SRC}/doc/api/html', '${SRC}/api/xml'])
+                rm(['${SRC}/doc/api/html', '${SRC}/doc/api/xml'])
+                for each (dfile in ls('${SRC}/doc/api/*.dox')) {
+                    let name = dfile.basename.trimExt()
+                    let dox = Path('${LIB}/dox.tmp')
+                    let data = Path('${SRC}/doc/api/' + name + '.dox').readString().replace(/^INPUT .*=.*$/m, 
+                            'INPUT = ${PKG}/' + name + '-${settings.version}/src/deps/' + name + '/' + name + '.h')
+                    Path(dox).write(data)
+                    trace('Generate', 'API documentation for ' + name)
+                    run('doxygen ' + dox, {dir: '${SRC}/doc/api'})
+                    trace('Process', 'Post-process ' + name + ' API documentation (may take a while)')
+                    run('ejs ${SRC}/.bit/bin/gendoc.es ' + 
+                        '--title \"MPR - Multithreaded Portable Runtime Native API\" --out ' + name + '.html ' + 
+                        (['xml/' + name + '_8h.xml'] + ls('xml/group*') + ls('xml/struct_*.xml')).join(' '), 
+                        {dir: '${SRC}/doc/api'})
+                    run('ejs ${SRC}/.bit/bin/gendoc.es --bare ' + 
+                        '--title \"MPR - Multithreaded Portable Runtime Native API\" --out ' + name + 'Bare.html ' + 
+                        (['xml/' + name + '_8h.xml'] + ls('xml/group*') + ls('xml/struct_*.xml')).join(' '), 
+                        {dir: '${SRC}/doc/api'})
+                    rm(['${SRC}/doc/api/html', '${SRC}/doc/api/xml'])
+                }
             ",
         },
 
@@ -192,26 +194,29 @@ Bit.load({
             "
         },
     
-        patch: {
+        patch: {},
+
+        ssi: {
             action: "
                 if (bit.packs.dsi.path) {
                     if (!bit.dir.src.join('doc/dsi').exists) {
-                        trace('Skip', 'Nothing to patch')
+                        trace('Skip', 'No server side includes')
                     } else {
-                        trace('Patch', 'HTML doc')
+                        trace('Process', 'HTML SSI')
                         for each (file in ls('../doc/**.html')) {
+                            file = file.absolute
                             vtrace('Patch', file)
-                            run([bit.packs.dsi.path, file])
+                            run([bit.packs.dsi.path, file], {dir: bit.dir.src.join('doc')})
                         }
                     }
                 } else {
-                    trace('Skip', 'patch bacause ' + bit.packs.dsi.diagnostic)
+                    trace('Skip', 'ssi bacause ' + bit.packs.dsi.diagnostic)
                 }
             ",
         },
 
         tidy: {
-            depends: ['doc', 'patch'],
+            depends: ['doc', 'ssi'],
             enable: false,
             action: "
                 if (bit.packs.dsi.path) {

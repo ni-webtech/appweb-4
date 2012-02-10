@@ -1,0 +1,27 @@
+/*
+    doc.bit -- Appweb documentation build file
+ */
+
+Bit.load({
+
+    targets: {
+        patch: {
+            action: "
+                trace('Patch', 'Patch version string ${settings.version}')
+                let path = Path('product/version.html')
+                path.write(path.readString().replace(/<p>.*<.p>/, '<p>' + bit.settings.version + '</p>'))
+                path = Path('dsi/head.html')
+                path.write(path.readString().replace(/<title>.*<.title>/, 
+                    '<title>' + bit.settings.title + ' ' + bit.settings.version + ' Documentation</title>'))
+
+                for each (name in ['mpr', 'http', 'appweb', 'esp']) {
+                    trace('Generate', name + '.html')
+                    let path = Path('api/' + name + '.html')
+                    path.write(Path('api/' + name + 'Header.tem').readString())
+                    path.append(Path('api/' + name + 'Bare.html').readString())
+                    path.append(Path('api/apiFooter.tem').readString())
+                }
+            ",
+        },
+    },
+})
