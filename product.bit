@@ -25,6 +25,7 @@ Bit.load({
         company: 'Embedthis',
 		version: '4.0.0',
 		buildNumber: 'B2',
+        sync: ['http', 'mpr', 'pcre', 'sqlite'],
     },
 
     usage: {

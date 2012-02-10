@@ -30,6 +30,10 @@ Bit.load({
                 rm('${TOP}/local.bit')
                 rmdir(['${TOP}/releases', '${TOP}/*-debug', '${TOP}/*-release'])
             "
-        }
+        },
+
+        compile: {
+            depends: ['build'],
+        },
     },
 })
