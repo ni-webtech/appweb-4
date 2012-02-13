@@ -156,3 +156,4 @@ web/reload.esp
 local.bit
 *-debug
 *-release
+macosx-x86_64.bit
