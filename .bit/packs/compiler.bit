@@ -7,6 +7,64 @@ if (bit.platform.like == 'posix') {
     cc = probe('cc', {fullpath: true})
     Bit.load({packs: { compiler: { path: cc }}})
 
+} else if (bit.platform.like == 'windows') {
+    let search = []
+    for each (drive in (FileSystem.drives() - ['A', 'B'])) {
+        search += Path(drive + ':/').glob('/Program Files*/Microsoft Visual Studio*/VC/Bin')
+    }
+    /*
+    if (bit.platform.arch == 'x86_64') {
+        if (CROSS) {
+            search.map(function(e) Path(e).join('x86_64'))
+        } else {
+            search.map(function(e) Path(e).join('amd64'))
+        }
+    } else {
+        search.map(function(e) Path(e).join('amd64'))
+    }
+    */
+    cc = probe('cl.exe', {fullpath: true, search: search.sort().reverse()})
+    Bit.load({packs: { compiler: { path: cc }}})
+
+    let vsdir = cc.dirname.dirname.dirname
+    bit.env.PATH += [
+        vsdir.join('VC/Bin'),
+        vsdir.join('Common7/IDE'),
+        vsdir.join('Common7/Tools'),
+        vsdir.join('SDK/v3.5/bin'),
+        vsdir.join('VC/VCPackages'),
+    ]
+    bit.env.INCLUDE += [
+        vsdir.join('VC/INCLUDE')
+    ]
+    bit.env.LIB += [
+        Path(vsdir.join('VC/lib').toString().replace(/x86_amd64/, 'amd64'))
+    ]
+
+} else if (bit.platform.os == 'vxworks') {
+    let name
+    if (bit.platform.arch.match(/^i386$|^i486$/)) {
+        name = 'cc386'
+    } else if (bit.platform.arch.match(/^i[56]86$/)) {
+        name = 'ccpentium'
+    } else if (bit.platform.arch.match(/^ppc/)) {
+        name = 'ccppc'
+    } else if (bit.platform.arch.match(/^xscale|^arm/)) {
+        name = 'ccarm'
+    } else if (bit.platform.arch.match(/^68/)) {
+        name = 'cc68k'
+    } else if (bit.platform.arch.match(/^sh/)) {
+        name = 'ccsh'
+    } else if (bit.platform.arch.match(/^mips$/)) {
+        name = 'ccmips'
+    } else {
+        throw 'Unsupported CPU architecture: ' + bit.platform.arch
+    }
+    cc = probe(name, {fullpath: true, search: bit.packs.vxworks.search})
+    Bit.load({packs: { compiler: { path: cc }}})
+}
+
+if (bit.platform.like == 'posix' || bit.platform.os == 'vxworks') {
     let settings = {}
     settings.hasDoubleBraces = compile(cc, '', '#include <stdarg.h>\nva_list d = {{0}};')
     //  MOB - if env CFLAGS has -mtune=xxx then it should be used instead
@@ -32,41 +90,6 @@ if (bit.platform.like == 'posix') {
             '#include <stdio.h>\nint main() { struct test { union { int x; int y; };}; return 0; }')
     }
     Bit.load({ settings: settings })
-
-} else if (bit.platform.like == 'windows') {
-    let search = []
-    for each (drive in (FileSystem.drives() - ['A', 'B'])) {
-        search += Path(drive + ':/').glob('/Program Files*/Microsoft Visual Studio*/VC/Bin')
-    }
-    /*
-    if (bit.platform.arch == 'x86_64') {
-        if (CROSS) {
-            search.map(function(e) Path(e).join('x86_64'))
-        } else {
-            search.map(function(e) Path(e).join('amd64'))
-        }
-    } else {
-        search.map(function(e) Path(e).join('amd64'))
-    }
-    */
-
-    cc = probe('cl.exe', {fullpath: true, search: search.sort().reverse()})
-    Bit.load({packs: { compiler: { path: cc }}})
-
-    let vsdir = cc.dirname.dirname.dirname
-    bit.env.PATH += [
-        vsdir.join('VC/Bin'),
-        vsdir.join('Common7/IDE'),
-        vsdir.join('Common7/Tools'),
-        vsdir.join('SDK/v3.5/bin'),
-        vsdir.join('VC/VCPackages'),
-    ]
-    bit.env.INCLUDE += [
-        vsdir.join('VC/INCLUDE')
-    ]
-    bit.env.LIB += [
-        Path(vsdir.join('VC/lib').toString().replace(/x86_amd64/, 'amd64'))
-    ]
 }
 
 /*
@@ -86,7 +109,9 @@ function compile(cc: Path, command: String, contents: String = null): Boolean {
     command = '' + cc + ' -Werror -Wall ' + command
     let cmd
     try {
-        cmd = Cmd(command)
+        cmd = new Cmd
+        cmd.env = bit.env
+        cmd.start(command)
         if (cmd.status != 0) {
             App.log.debug(3, "Test " + command)
             App.log.debug(3, "Compiler package test compile result: " + cmd.error)

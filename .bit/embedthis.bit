@@ -142,7 +142,7 @@ Bit.load({
             Documentation targets 
          */
         doc: {
-            depends: ['patch', 'man', 'api', 'cleanDoc', 'ssi'],
+            depends: ['patch', 'man', 'api', 'clean-doc', 'ssi'],
         },
 
         api: {
@@ -187,7 +187,7 @@ Bit.load({
             ",
         },
 
-        cleanDoc: {
+        'clean-doc': {
             type: 'clean',
             action: "
                 rmdir(['../doc/api/html', '../doc/api/xml'])

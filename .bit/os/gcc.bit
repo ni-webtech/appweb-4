@@ -4,15 +4,20 @@
 
 Bit.load({
     defaults: {
-        '+compiler': [ '-fPIC', '-Wall', ],
-        '+defines':  [ '-DPIC', '-D_REENTRANT', '-DCPU=' + '${ARCH}'.toUpper() ],
-        '+libraries':[ 'pthread', 'm' ],
+        '+compiler': [ '-Wall', ],
+        '+defines':  [ '-D_REENTRANT', '-DCPU=' + '${ARCH}'.toUpper() ],
+        '+libraries':[ ],
 
         scripts: {
             '+preblend': "
                 let defaults = bit.defaults
                 let arch = bit.platform.arch
 
+                if (bit.platform.os != 'vxworks') {
+                    defaults.compiler.push('-fPIC')
+                    defaults.defines.push('-DPIC')
+                    defaults.libraries += ['pthread', 'm']
+                }
                 if (bit.settings.preprocess) {
                     defaults.compiler.push('-E')
                 }
