@@ -157,3 +157,4 @@ local.bit
 *-debug
 *-release
 macosx-x86_64.bit
+linux-i686.bit
