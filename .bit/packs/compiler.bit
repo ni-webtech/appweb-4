@@ -60,7 +60,6 @@ if (bit.platform.like == 'posix') {
     } else {
         throw 'Unsupported CPU architecture: ' + bit.platform.arch
     }
-print("HERE", name)
     cc = probe(name, {fullpath: true, search: bit.packs.vxworks.search})
     Bit.load({packs: { compiler: { path: cc }}})
 }
