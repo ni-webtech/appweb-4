@@ -8,7 +8,6 @@ if (bit.packs.ssl && bit.packs.ssl.enable == false) {
 
 let path = bit.packs.matrixssl.path
 if (!path) {
-    let vers = bit.dir.packs.join('matrixssl').glob('matrixssl-1*').sort().reverse()
     let vers = bit.dir.packs.join('matrixssl').glob('matrixssl-3*').sort().reverse()
     if (!vers.length || vers.length == 0) {
         throw 'Can\'t find matrixssl'
