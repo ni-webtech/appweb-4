@@ -153,8 +153,6 @@ val.log
 src/test/api/error.log
 src/test/leak/error.log
 web/reload.esp
-local.bit
-*-debug
-*-release
-macosx-x86_64.bit
-*-*.bit
+/*-*.bit
+/*-*-debug/
+/*-*-release/

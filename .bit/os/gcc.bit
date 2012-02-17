@@ -13,6 +13,7 @@ Bit.load({
                 let defaults = bit.defaults
                 let arch = bit.platform.arch
 
+                blend(defaults, {compiler: [], defines: [], libraries: [], linker: []})
                 if (bit.platform.os != 'vxworks') {
                     defaults.compiler.push('-fPIC')
                     defaults.defines.push('-DPIC')
@@ -45,7 +46,12 @@ Bit.load({
                     defaults.defines.push('-D_GNU_TOOL')
                 }
                 let tunesw = bit.settings.hasMtune ? '-mtune' : '-mcpu'
-                defaults.compiler.push(tunesw + '=' + arch)
+                let targ = arch
+                if (arch == 'x86_64') {
+                    targ = 'generic'
+                }
+                defaults.compiler.push(tunesw + '=' + targ)
+                
             ",
         },
     },

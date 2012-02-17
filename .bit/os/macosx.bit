@@ -17,7 +17,6 @@ Bit.load({
         '+defines':  [ '-DPIC' ],
         '+libraries':[ 'pthread', 'm' ],
         '+linker':   [
-            '-L${dir.lib}',
             '-Wl,-rpath,@executable_path/../lib',
             '-Wl,-rpath,@executable_path/',
             '-Wl,-rpath,@loader_path/',
@@ -25,9 +24,7 @@ Bit.load({
         scripts: {
             '+preblend': "
                 let defaults = bit.defaults
-                let tunesw = bit.settings.hasMtune ? 'mtune' : 'mcpu'
                 let arch = bit.platform.arch
-
                 if (bit.settings.preprocess) {
                     defaults.compiler.push('-E')
                 }
@@ -38,6 +35,7 @@ Bit.load({
                 } else {
                     defaults.compiler += ['-fast']
                 }
+                defaults.linker.push('-L' + bit.dir.lib.relative)
                 if (bit.settings.profile == 'debug') {
                     defaults.linker.push('-g')
                 }

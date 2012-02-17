@@ -45,6 +45,23 @@ Bit.load({
             ",
         },
 
+        projects: {
+            action: "
+                run('bit -without ssl configure generate', bit.target.runopt)
+                run('bit -emulate linux-i686 -without ssl configure -gen sh,make', bit.target.runopt)
+                run('bit -emulate macosx-i686 -without ssl configure -gen sh,make', bit.target.runopt)
+                run('bit -emulate solaris-i686 -without ssl configure -gen sh,make', bit.target.runopt)
+                run('bit -emulate win-i686 -without ssl configure -gen sh,make,vs', bit.target.runopt)
+            ",
+        },
+
+        'projects-clobber': {
+            action: "
+                rm(['${dir.projects}/*.mk', '${dir.projects}/*.sh'])
+                rmdir(['${dir.projects}/*-*-debug', '${dir.projects}/*-*-release'])
+            "
+        },
+
         _install: {
             action: "
                 let parts = bit.settings.package || 'binary dev'
@@ -135,7 +152,7 @@ Bit.load({
         }
 
         version: {
-            action: "print('bit.settings.version')",
+            action: "print(bit.settings.version + '-' + bit.settings.buildNumber)",
         },
 
         /*

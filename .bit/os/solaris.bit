@@ -7,12 +7,14 @@ Bit.load({
         'posix.bit',
         'gcc.bit',
     ],
-
     defaults: {
-        '+libraries: [
+        '+libraries': [
             'lxnet', 
             'rt', 
             'socket',
+        ],
+        '+linker': [
+            '-L${dir.lib}',
         ],
     },
 })

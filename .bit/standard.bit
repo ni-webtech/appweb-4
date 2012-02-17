@@ -12,7 +12,8 @@ Bit.load({
 		obj:    	'${dir.cfg}/obj',
         packs:      '../packages-${platform.name}',
         pkg:        '${dir.cfg}/pkg',
-        rel:        'releases',
+		projects: 	'${dir.top}/projects',
+        rel:        '${dir.top}/releases',
 	},
 
     targets: {
@@ -24,16 +25,26 @@ Bit.load({
                 safeRemove('${FLAT}')
             ",
         },
+
         clobber: {
             depends: ['clean'],
             action: "
-                rm('${TOP}/local.bit')
-                rmdir(['${TOP}/releases', '${TOP}/*-debug', '${TOP}/*-release'])
+                rmdir(['${TOP}/*-*-debug', '${TOP}/*-*-release'])
+                rm('${TOP}/*-*.bit')
+                rmdir('${TOP}/releases')
             "
         },
 
         compile: {
             depends: ['build'],
+        },
+
+        configure: {
+            type: 'configure',
+        },
+
+        generate: {
+            type: 'generate',
         },
     },
 })

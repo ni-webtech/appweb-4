@@ -23,10 +23,16 @@ if (bit.platform.like == 'posix') {
         search.map(function(e) Path(e).join('amd64'))
     }
     */
-    cc = probe('cl.exe', {fullpath: true, search: search.sort().reverse()})
+    let vsdir: Path
+    if (!bit.emulating) {
+        cc = probe('cl.exe', {fullpath: true, search: search.sort().reverse()})
+        vsdir = cc.dirname.dirname.dirname
+    } else {
+        cc = 'cl'
+        vsdir = '%VS%'
+    }
     Bit.load({packs: { compiler: { path: cc }}})
 
-    let vsdir = cc.dirname.dirname.dirname
     bit.env.PATH += [
         vsdir.join('VC/Bin'),
         vsdir.join('Common7/IDE'),
