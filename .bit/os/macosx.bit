@@ -35,7 +35,7 @@ Bit.load({
                 } else {
                     defaults.compiler += ['-fast']
                 }
-                defaults.linker.push('-L' + bit.dir.lib.relative)
+                defaults.linker.push('-L' + bit.dir.lib)
                 if (bit.settings.profile == 'debug') {
                     defaults.linker.push('-g')
                 }
