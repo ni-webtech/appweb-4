@@ -38,24 +38,24 @@ Bit.load({
         '+libraries':[ 'ws2_32.lib', 'advapi32.lib', 'user32.lib', 'kernel32.lib', 'oldnames.lib', 'msvcrt.lib' ],
         '+linker':   [
             '-nologo',
-            '-libpath:${dir.lib}',
             '-nodefaultlib',
             '-incremental:no',
         ],
         scripts: {
-            '+preblend': '
+            '+preblend': "
                 //  Runs to update defaults.* before blending defaults into targets
                 let defaults = bit.defaults
                 let settings = bit.settings
-                if (settings.preprocess) defaults.compiler += [ "-E" ]
-                if (settings.profile == "debug") {
-                    defaults.compiler += [ "-Zi", "-Od", "-MDd" ]
-                    defaults.linker += [ "-debug" ]
+                if (settings.preprocess) defaults.compiler += [ '-E' ]
+                defaults.linker.push('-libpath:' + bit.dir.lib)
+                if (settings.profile == 'debug') {
+                    defaults.compiler += [ '-Zi', '-Od', '-MDd' ]
+                    defaults.linker += [ '-debug' ]
                 } else {
-                    defaults.compiler += [ "-Zi", "-Od", "-MDd" ]
+                    defaults.compiler += [ '-Zi', '-Od', '-MDd' ]
                 }
-                defaults.linker += [(("${ARCH}" == "x86_64") ? "-machine:x64" : "-machine:x86")]
-            ',
+                defaults.linker += [(('${ARCH}' == 'x86_64') ? '-machine:x64' : '-machine:x86')]
+            ",
         },
     },
 

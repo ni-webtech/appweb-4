@@ -832,7 +832,7 @@ static void     setAppDefaults();
 static bool     installService();
 static void     logHandler(int flags, int level, cchar *msg);
 static int      registerService();
-static int      removeService(int removeFromScmDb);
+static bool     removeService(int removeFromScmDb);
 static void     gracefulShutdown(MprTime timeout);
 static bool     process(cchar *operation);
 static void     run();

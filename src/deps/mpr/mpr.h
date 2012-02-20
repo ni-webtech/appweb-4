@@ -311,7 +311,7 @@
             /**
                 Boolean data type.
              */
-            typedef int bool;
+            typedef char bool;
         #endif
     #endif
 #endif
@@ -2432,7 +2432,7 @@ extern void *mprAlloc(ssize size);
 /**
     Allocate an object of a given type.
     @description Allocates a zeroed block of memory large enough to hold an instance of the specified type with a 
-        manager callback.  this call associates a manager function with an object that will be invoked when the 
+        manager callback. This call associates a manager function with an object that will be invoked when the 
         object is freed or the garbage collector needs the object to mark internal properties as being used.  
         This call is implemented as a macro.
     @param type Type of the object to allocate
@@ -2522,7 +2522,7 @@ extern void mprMarkBlock(cvoid *ptr);
 
 /**
     Release a memory block
-    @description This call is used to allow a memory block to be freed freed by the garbage collector after calling
+    @description This call is used to allow a memory block to be freed by the garbage collector after calling
         mprHold.
     @param ptr Any memory block
     @ingroup MprMem
@@ -3972,8 +3972,7 @@ extern MprList *mprAppendList(MprList *list, MprList *add);
 
 /**
     Clears the list of all items.
-    @description Resets the list length to zero and clears all items. Existing items are not freed, they 
-        are only removed from the list.
+    @description Resets the list length to zero and clears all items.
     @param list List pointer returned from mprCreateList.
     @ingroup MprList
  */
@@ -4115,7 +4114,6 @@ extern int mprLookupItem(MprList *list, cvoid *item);
 /**
     Remove an item from the list
     @description Search for a specified item and then remove it from the list.
-        Existing items are not freed, they are only removed from the list.
     @param list List pointer returned from mprCreateList.
     @param item Item pointer to remove. 
     @return Returns the positive index of the removed item, otherwise a negative MPR error code.
@@ -4135,7 +4133,6 @@ extern int mprRemoveItemAtPos(MprList *list, int index);
 /**
     Remove the last item from the list
     @description Remove the item at the highest index position.
-        Existing items are not freed, they are only removed from the list.
     @param list List pointer returned from mprCreateList.
     @return Returns the positive index of the removed item, otherwise a negative MPR error code.
     @ingroup MprList
@@ -5117,6 +5114,7 @@ typedef struct MprPath {
  */
 typedef struct MprDirEntry {
     char            *name;              /**< Name of the file */
+    //  MOB - rename modified
     MprTime         lastModified;       /**< Time the file was last modified */
     MprOff          size;               /**< Size of the file */
     bool            isDir;              /**< True if the file is a directory */
@@ -5201,11 +5199,20 @@ extern char *mprGetNativePath(cchar *path);
     Get the base portion of a path
     @description Get the base portion of a path by stripping off all directory components
     @param path Path name to examine
-    @returns A path without any directory portion. The path is a reference into the original file string and 
-        should not be freed. 
+    @returns A path without any directory portion.
     @ingroup MprPath
  */
 extern char *mprGetPathBase(cchar *path);
+
+/**
+    Get a reference to the base portion of a path
+    @description Get the base portion of a path by stripping off all directory components. This returns a reference
+        into the original path.
+    @param path Path name to examine
+    @returns A path without any directory portion. The path is a reference into the original file string.
+    @ingroup MprPath
+ */
+extern cchar *mprGetPathBaseRef(cchar *path);
 
 /**
     Get the directory portion of a path
@@ -5993,8 +6000,7 @@ extern void mprRemoveEvent(MprEvent *event);
 
 /**
     Stop an event
-    @description Stop a continuous event and remove from the queue. The event object is not freed, but simply removed
-        from the event queue.
+    @description Stop a continuous event and remove from the queue.
     @param event Event object returned from #mprCreateEvent
     @ingroup MprEvent
  */
@@ -7533,20 +7539,45 @@ extern int mprAvailableWorkers();
 extern int mprRandom();
 
 /**
-    Deocde buffer using base-46 encoding.
+    Deocde a null terminated string using base-46 encoding.
+    Decoding will terminate at the first null or '='.
     @param str String to decode
-    @returns Buffer containing the decoded string.
+    @returns Buffer containing the encoded data
     @ingroup Mpr
  */
 extern char *mprDecode64(cchar *str);
 
 /**
-    Encode buffer using base-46 encoding.
+    Decode base 64 blocks up to a NULL or equals
+ */
+#define MPR_DECODE_TOKEQ 1
+
+/**
+    Deocde buffer using base-46 encoding.
+    @param buf String to decode
+    @param len Length of buffer to decode
+    @param flags Set to MPR_DECODE_TOKEQ to stop at the first '='
+    @returns Buffer containing the encoded data.
+    @ingroup Mpr
+  */
+extern char *mprDecode64Block(cchar *buf, ssize len, int flags);
+
+/**
+    Encode a string using base-46 encoding.
     @param str String to encode
     @returns Buffer containing the encoded string.
     @ingroup Mpr
  */
 extern char *mprEncode64(cchar *str);
+
+/**
+    Encode buffer using base-46 encoding.
+    @param buf Buffer to encode
+    @param len Length of the buffer to encode
+    @returns Buffer containing the encoded string.
+    @ingroup Mpr
+ */
+extern char *mprEncode64Block(cchar *str, ssize len);
 
 /**
     Get an MD5 checksum

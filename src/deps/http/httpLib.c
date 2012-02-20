@@ -5193,9 +5193,7 @@ void httpAddConn(Http *http, HttpConn *conn)
     mprAddItem(http->connections, conn);
     conn->started = http->now;
     conn->seqno = http->connCount++;
-    if (http->now < (conn->started - MPR_TICKS_PER_SEC)) {
-        updateCurrentDate(http);
-    }
+    updateCurrentDate(http);
     if (http->timer == 0) {
         startTimer(http);
     }
@@ -5339,15 +5337,15 @@ static void updateCurrentDate(Http *http)
 {
     static MprTime  recalcExpires = 0;
 
-    lock(http);
     http->now = mprGetTime();
-    http->currentDate = httpGetDateString(NULL);
-
-    if (http->expiresDate == 0 || recalcExpires < (http->now / (60 * 1000))) {
-        http->expiresDate = mprFormatUniversalTime(HTTP_DATE_FORMAT, http->now + (86400 * 1000));
-        recalcExpires = http->now / (60 * 1000);
+    if (http->now > (http->currentTime + MPR_TICKS_PER_SEC - 1)) {
+        http->currentTime = http->now;
+        http->currentDate = httpGetDateString(NULL);
+        if (http->expiresDate == 0 || recalcExpires < (http->now / (60 * 1000))) {
+            http->expiresDate = mprFormatUniversalTime(HTTP_DATE_FORMAT, http->now + (86400 * 1000));
+            recalcExpires = http->now / (60 * 1000);
+        }
     }
-    unlock(http);
 }
 
 

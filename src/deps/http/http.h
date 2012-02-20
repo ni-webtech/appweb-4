@@ -307,6 +307,7 @@ typedef struct Http {
 
     int             connCount;              /**< Count of connections for Conn.seqno */
     void            *context;               /**< Embedding context */
+    MprTime         currentTime;            /**< When currentDate was last calculated */
     char            *currentDate;           /**< Date string for HTTP response headers */
     char            *expiresDate;           /**< Convenient expiry date (1 day in advance) */
     char            *secret;                /**< Random bytes for authentication */

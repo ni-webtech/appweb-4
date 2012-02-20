@@ -70,8 +70,8 @@ if (bit.platform.like == 'posix') {
     Bit.load({packs: { compiler: { path: cc }}})
 }
 
+let settings = {}
 if (bit.platform.like == 'posix' || bit.platform.os == 'vxworks') {
-    let settings = {}
     settings.hasDoubleBraces = compile(cc, '', '#include <stdarg.h>\nva_list d = {{0}};')
     //  MOB - if env CFLAGS has -mtune=xxx then it should be used instead
     settings.hasMtune = compile(cc, '-mtune=generic', 'int main() { return 0;}')
@@ -95,8 +95,15 @@ if (bit.platform.like == 'posix' || bit.platform.os == 'vxworks') {
         settings.hasUnnamedUnions = compile(cc, '', 
             '#include <stdio.h>\nint main() { struct test { union { int x; int y; };}; return 0; }')
     }
-    Bit.load({ settings: settings })
+
+} else if (bit.platform.like == 'windows') {
+    settings = {
+        hasMmu: true,
+        hasDynLoad: true,
+        hasUnnamedUnions: true,
+    }
 }
+Bit.load({ settings: settings })
 
 /*
     Test compile to determine supported compiler switches
