@@ -146,7 +146,8 @@ Bit.load({
             type: 'test',
             action: "
                 if (bit.packs.ejs && bit.packs.ejs.path) {
-                    run(bit.packs.ejs.path + ' build/bin/utest -v -d ' + bit.settings.depth, {dir: bit.dir.src.join('src')})
+                    run(bit.packs.ejs.path + ' ' + bit.dir.top.join('.bit/bin/utest') + ' -v -d ' + bit.settings.depth, 
+                        {dir: bit.dir.src.join('src')})
                 }
             ",
         }

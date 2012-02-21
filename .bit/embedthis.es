@@ -8,6 +8,33 @@
 
 require ejs.unix
 
+public function getWebUser(): String {
+    let passwdFile: Path = Path("/etc/passwd")
+    if (passwdFile.exists) {
+        let passwords = passwdFile.readString()
+        for each (u in ["www-data", "_www", "nobody", "Administrator"]) {
+            if (passwords.contains(u + ":")) {
+                return u
+            }
+        }
+    }
+    return '0'
+}
+
+public function getWebGroup(): String {
+    let groupFile: Path = Path("/etc/group")
+    if (groupFile.exists) {
+        let groups = groupFile.readString()
+        for each (g in ["www-data", "_www", "nobody", "nogroup", "Administrator"]) {
+            if (groups.contains(g + ":")) {
+                return g
+            }
+        }
+    }
+    return '0'
+}
+
+
 function installCallback(src: Path, dest: Path, options = {}): Boolean {
     options.task ||= 'install'
 
@@ -32,7 +59,7 @@ function installCallback(src: Path, dest: Path, options = {}): Boolean {
     let attributes = { 
         owner: options.owner || -1, 
         group: options.group || -1, 
-        permissions: src.extension.match(/exe|lib|so|dylib|sh|es/) ? 0755 : 0644
+        permissions: options.permissions || (src.extension.match(/exe|lib|so|dylib|sh|es/) ? 0755 : 0644)
     }
     if (options.cat) {
         vtrace('Combine', dest.relative + ' += ' + src.relative)

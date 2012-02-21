@@ -39,7 +39,9 @@ function solBuild(projects, base: Path) {
             '", "{' + target.guid + '}"')
         for each (dname in target.depends) {
             let dep = bit.targets[dname]
-            if (!dep.guid) continue
+            if (!dep || !dep.guid) {
+                continue
+            }
             dep.guid = dep.guid.toUpper()
             output('\tProjectSection(ProjectDependencies) = postProject')
             output('\t\t{' + dep.guid + '} = {' + dep.guid + '}')
@@ -239,10 +241,30 @@ function projLink(base, target) {
     </ItemDefinitionGroup>')
         }
     }
-    bit.LIBS = (target.libraries - bit.defaults.libraries).map(function(l) 'lib'+l+'.lib').join(';')
+
+    let libs = []
+    for each (libname in (target.libraries - bit.defaults.libraries)) {
+        let path = bit.dir.lib.join('lib' + libname).joinExt(bit.ext.shlib)
+        if (path.exists) {
+            libs.push(path)
+        } else {
+            libs.push(Path(libname).joinExt(bit.ext.shlib))
+        }
+    }
+    //  MOB - convert when target.libpaths exists
+    bit.LIBS = libs.join(';')
+    let libpaths = []
+    for each (flag in target.linker) {
+        if (flag.contains('-libpath:')) {
+            libpaths.push(flag.replace('-libpath:', ''))
+        }
+    }
+    bit.LIBPATHS = libpaths.join(';')
+    //MOB bit.LIBS = (target.libraries - bit.defaults.libraries).map(function(l) 'lib' + l + '.lib').join(';')
     output('<ItemDefinitionGroup>
 <Link>
   <AdditionalDependencies>${LIBS};%(AdditionalDependencies)</AdditionalDependencies>
+  <AdditionalLibraryDirectories>$(OutDir);${LIBPATHS};%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
 </Link>
 </ItemDefinitionGroup>')
 }

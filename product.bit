@@ -62,5 +62,111 @@ Bit.load({
         http: {
             path: '${BIN}/http'
         },
-    }
+    },
+
+    targets: {
+        /*
+            MOB - how can this do install, uninstall
+            Options:
+                install
+                uninstall
+                package
+                flat
+
+            TODO:
+                init.d, init, ssl
+         */
+        package: {
+            depends: ['build'],
+            action: "
+                safeRemove(bit.dir.pkg)
+                let strip = bit.settings.profile == 'debug'
+                let p = {}
+                for (prefix in bit.prefixes) {
+                    p[prefix] = Path(bit.dir.pkg.name + bit.prefixes[prefix])
+                    p[prefix].makeDir({permissions: 0755, owner: 0, group: 0})
+                }
+                install('doc/licenses/LICENSE.TXT', p.product, {fold: true, expand: true})
+                install('doc/product/*.TXT', p.product, {fold: true, expand: true})
+
+                //  MOB - move from package
+                install('package/uninstall.sh', p.bin.join('uninstall'), {permissions: 0755, expand: true})
+                install('package/linkup', p.bin, {permissions: 0755, expand: true})
+                install(bit.dir.bin + '/*', p.bin, {
+                    include: /appweb|appman|esp|http|auth|makerom|libappweb|libmpr/,
+                    permissions: 0755, 
+                })
+                install(bit.dir.bin.join('appweb'), p.bin, {
+                    permissions: 0755, 
+                    strip: strip,
+                })
+                install(bit.dir.lib.join('*'), p.lib, {
+                    permissions: 0755, 
+                    exclude: /file-save|www|simple|sample/,
+                })
+                install('src/server/appweb.conf', p.config)
+                install('src/server/mime.types', p.config)
+                install('src/server/php.ini', p.config)
+                install('src/server/web/**/*', p.web, {exclude: /mgmt/ })
+                install('src/server/web/test/*', p.web.join('test'))
+                install('src/server/web/test/*', p.web.join('test'), {
+                    include: /.cgi|test.pl|test.py/,
+                    permissions: 0755,
+                })
+                install(bit.dir.lib + '/*', p.lib, {
+                    permissions: 0644, 
+                    include: /esp.conf|esp-www/,
+                })
+                let user = getWebUser(), group = getWebUser()
+                p.spool.join('cache').makeDir()
+                let tmp = p.spool.join('cache/.dummy')
+                tmp.write()
+                tmp.attributes = {permissions: 0755, owner: user, group: group}
+                tmp = p.log.join('error.log')
+                tmp.write()
+                tmp.attributes = {permissions: 0755, owner: user, group: group}
+
+                if (bit.settings.task != 'remove') {
+                    if (bit.packs.ssl.enable && bit.platform.os == 'linux') {
+                        install(bit.dir.lib.join(bit.ext.shobj + '.*'), p.lib, {strip: strip, permissions: 0755})
+                        for each (f in p.lib.glob('*.so.*')) {
+                            let withver = f.basename
+                            let nover = withver.name.replace(/\.[0-9]*.*/, '.so')
+                            lib.join(nover).remove()
+                            //  MOB - withver.link(p.lib.join(nover))
+                            Cmd.sh('ln -s ' + withver + ' ' + lib.join(nover)) 
+                        }
+                    }
+                    if (bit.platform.os == 'win') {
+                        Cmd(['setConfig', 
+                            '--home', '.', 
+                            '--documents', 'web', 
+                            '--logs', 'logs', 
+                            '--port', bit.settings.http_port,
+                            '--ssl', bit.settings.ssl_port,
+                            '--cache', 'cache', 
+                            '--modules', 'bin', 
+                            cfg.join('appweb.conf')])
+                    } else {
+                        Cmd(['setConfig', 
+                            '--home', bit.prefix.config,
+                            '--documents', bit.prefix.web,
+                            '--logs', bit.prefix.log,
+                            '--port', bit.settings.http_port,
+                            '--ssl', bit.settings.ssl_port,
+                            '--user', user,
+                            '--group', group,
+                            '--cache', bit.dir.prefix.spool.join('cache'), 
+                            '--modules', bit.dir.prefix.lib,
+                            cfg.join('appweb.conf')])
+                    }
+                    cfg.join('appweb.conf.bak').remove()
+                }
+                if (bit.packs.ejscript.enable) {
+                    install(bit.dir.lib.join('ejs*.mod'), p.lib);
+                }
+                package(['tar', 'native'])
+            ",
+        },
+    },
 })

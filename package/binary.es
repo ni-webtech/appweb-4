@@ -42,6 +42,8 @@ var init: Path = etc.join("init")
 var initd: Path = etc.join("init.d")
 var cache: Path = spl.join("cache")
 
+print('bin', bin, 'lib', lib)
+
 let user = 0, group = 0
 if (Config.OS != "WIN") {
     let passwords = Path("/etc/passwd").readString()

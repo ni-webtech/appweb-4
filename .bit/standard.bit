@@ -46,5 +46,10 @@ Bit.load({
         generate: {
             type: 'generate',
         },
+
+        init: {
+            type: 'init',
+        },
+
     },
 })
