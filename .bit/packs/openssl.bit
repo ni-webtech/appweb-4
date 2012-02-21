@@ -43,9 +43,7 @@ if (bit.platform.os == 'win') {
         includes: [ incdir ],
         libraries: [ 'ssl', 'crypto' ],
         linker: [ '-L' + lib.parent ],
-        imports: [lib.parent.join('libssl.dylib'), lib.parent.join('libcrypto.dylib'),
-            lib.parent.glob('libssl.*.dylib').sort().reverse()[0],
-            lib.parent.glob('libcrypto.*.dylib').sort().reverse()[0]]
+        imports: [ lib.parent.glob('libssl*.dylib'), lib.parent.glob('libcrypto*.dylib') ]
     }
 
 } else {
