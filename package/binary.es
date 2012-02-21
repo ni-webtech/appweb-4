@@ -136,7 +136,7 @@ if (!bare) {
         include: /mime.types/,
         permissions: 0644,
     })
-    copy("*", lib, {
+    copy("**/*", lib, {
         from: slib,
         include: /esp-www/,
         exclude: /files.save/,
@@ -155,7 +155,7 @@ copy("*" + build.BLD_SHOBJ, lib, {
     permissions: 0755, 
     strip: strip
 })
-copy("*", lib, {
+copy("**/*", lib, {
     from: slib,
     include: /esp.conf/,
     permissions: 0644,

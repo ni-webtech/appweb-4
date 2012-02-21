@@ -42,7 +42,7 @@ copy("package/*", src, {
     permissions: 0755,
 })
 
-copy("package/*", src, {
+copy("package/**/*", src, {
     descend: true,
     include: /LINUX|MACOSX|WIN/
 })

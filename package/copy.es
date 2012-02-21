@@ -38,13 +38,13 @@ public function copy(src: Path, target: Path = Dir, options = {})
 
     if (verbose) log.activity("Process", "cpy: " + src + " " + target)
 
-    let pat = src.basename
+    let pat = src
     let dir, from
     if (options.from) {
         from = Path(options.from).relative
-        dir = from.join(src.dirname)
+        dir = from
     } else {
-        dir = src.dirname
+        dir = "."
         from = ""
     }
     let files = options.top.join(dir).glob(pat, options)
