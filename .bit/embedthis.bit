@@ -47,11 +47,12 @@ Bit.load({
 
         projects: {
             action: "
-                run('bit -without ssl configure generate', bit.target.runopt)
-                run('bit -emulate linux-i686 -without ssl configure -gen sh,make', bit.target.runopt)
-                run('bit -emulate macosx-i686 -without ssl configure -gen sh,make', bit.target.runopt)
-                run('bit -emulate solaris-i686 -without ssl configure -gen sh,make', bit.target.runopt)
-                run('bit -emulate win-i686 -without ssl configure -gen sh,make,vs', bit.target.runopt)
+                let ejs = 'ejs ' + Cmd.locate('bit')
+                run(ejs + ' -without ssl configure generate', bit.target.runopt)
+                run(ejs + ' -emulate linux-i686 -without ssl configure -gen sh,make', bit.target.runopt)
+                run(ejs + ' -emulate macosx-i686 -without ssl configure -gen sh,make', bit.target.runopt)
+                run(ejs + ' -emulate solaris-i686 -without ssl configure -gen sh,make', bit.target.runopt)
+                run(ejs + ' -emulate win-i686 -without ssl configure -gen sh,make,vs', bit.target.runopt)
             ",
         },
 

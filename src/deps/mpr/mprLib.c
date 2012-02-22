@@ -2595,7 +2595,7 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     
     if (argv) {
 #if BLD_WIN_LIKE
-        if (argc >= 1 && strstr(argv[1], "--cygroot") != 0) {
+        if (argc >= 2 && strstr(argv[1], "--cygroot") != 0) {
             /*
                 Cygwin shebang is broken. It will catenate args into argv[1]
              */

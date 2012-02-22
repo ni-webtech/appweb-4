@@ -4,7 +4,11 @@
 var cc: Path
 
 if (bit.platform.like == 'posix') {
-    cc = probe('cc', {fullpath: true})
+    if (!bit.emulating) {
+        cc = probe('cc', {fullpath: true})
+    } else {
+        cc = 'cc'
+    }
     Bit.load({packs: { compiler: { path: cc }}})
 
 } else if (bit.platform.like == 'windows') {
@@ -71,7 +75,7 @@ if (bit.platform.like == 'posix') {
 }
 
 let settings = {}
-if (bit.platform.like == 'posix' || bit.platform.os == 'vxworks') {
+if ((bit.platform.like == 'posix' || bit.platform.os == 'vxworks') && !bit.emulating) {
     settings.hasDoubleBraces = compile(cc, '', '#include <stdarg.h>\nva_list d = {{0}};')
     //  MOB - if env CFLAGS has -mtune=xxx then it should be used instead
     settings.hasMtune = compile(cc, '-mtune=generic', 'int main() { return 0;}')
