@@ -4,7 +4,7 @@
 if (bit.platform.like == 'windows') {
     let search = []
     for each (drive in (FileSystem.drives() - ['A', 'B'])) {
-        search += Path(drive + ':/').glob('/Program Files*/Microsoft Visual Studio*/VC/Bin')
+        search += Path(drive + ':/').glob('Program Files*/Microsoft Visual Studio*/VC/Bin')
     }
     let link
     if (bit.emulating) {

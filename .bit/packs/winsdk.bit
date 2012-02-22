@@ -4,7 +4,7 @@
 
 let search = []
 for each (drive in (FileSystem.drives() - ['A', 'B'])) {
-    search += Path(drive + ':/').glob('/Program Files*/Microsoft SDKs/Windows/*')
+    search += Path(drive + ':/').glob('Program Files*/Microsoft SDKs/Windows/*')
 }
 
 let winsdk: Path = '%WINSDK%'
