@@ -68,6 +68,7 @@ static MprSocket *acceptMss(MprSocket *sp);
 static void     closeMss(MprSocket *sp, bool gracefully);
 static int      configureMss(MprSsl *ssl);
 static int      connectMss(MprSocket *sp, cchar *host, int port, int flags);
+static MprMatrixSsl *createMatrixSsl(MprSsl *ssl);
 static MprSocketProvider *createMatrixSslProvider();
 static MprSocket *createMss(MprSsl *ssl);
 static void     disconnectMss(MprSocket *sp);
@@ -122,10 +123,25 @@ static MprSsl *getDefaultMatrixSsl()
         return 0;
     }
     ss->secureProvider->defaultSsl = ssl;
-    if ((ssl->extendedSsl = mprAllocObj(MprMatrixSsl, manageMatrixSsl)) == 0) {
+    if (!createMatrixSsl(ssl)) {
         return 0;
     }
     return ssl;
+}
+
+
+static MprMatrixSsl *createMatrixSsl(MprSsl *ssl)
+{
+    MprMatrixSsl    *mssl;
+
+    if ((mssl = mprAllocObj(MprMatrixSsl, manageMatrixSsl)) == 0) {
+        return 0;
+    }
+    ssl->extendedSsl = mssl;
+    if (matrixSslNewKeys(&mssl->keys) < 0) {
+        return 0;
+    }
+    return mssl;
 }
 
 
@@ -162,41 +178,47 @@ static void manageMatrixProvider(MprSocketProvider *provider, int flags)
 
 
 /*
-    Initialize an SSL configuration. An application can have multiple different SSL configurations
+    Initialize a server-side SSL configuration. An application can have multiple different SSL configurations
+    for different routes.
  */
 static int configureMss(MprSsl *ssl)
 {
-    MprMatrixSsl    *mssl, *src;
+    MprMatrixSsl    *mssl;
     MprSsl          *defaultSsl;
-
     char            *password;
 
+    mprAssert(ssl);
+
+#if UNUSED
     if ((defaultSsl = getDefaultMatrixSsl()) == 0) {
         return MPR_ERR_MEMORY;
     }
     if (ssl != defaultSsl) {
-        if (!ssl->extendedSsl && (ssl->extendedSsl = mprAllocObj(MprMatrixSsl, manageMatrixSsl)) == 0) {
+        /* 
+            If not using the default SSL configuration, allocate a new MatrixSSL configuration.
+         */
+        if ((mssl = createMatrixSsl(ssl)) == 0) {
             return 0;
         }
-        mssl = ssl->extendedSsl;
+#if UNUSED
         src = defaultSsl->extendedSsl;
         mssl->keys = src->keys;
         mssl->session = src->session;
+#endif
     } else {
         mssl = ssl->extendedSsl;
     }
+#endif
+
+    if ((mssl = createMatrixSsl(ssl)) == 0) {
+        return 0;
+    }
     /*
         Read the certificate and the key file for this server. FUTURE - If using encrypted private keys, 
-        we should prompt through a dialog box or on the console, for the user to enter the password
+        we could prompt through a dialog box or on the console, for the user to enter the password
         rather than using NULL as the password here.
      */
     password = NULL;
-    mprAssert(mssl->keys == NULL);
-
-    if (matrixSslNewKeys(&mssl->keys) < 0) {
-        mprError("MatrixSSL: Could not read or decode certificate or key file."); 
-        return MPR_ERR_CANT_INITIALIZE;
-    }
     if (matrixSslLoadRsaKeys(mssl->keys, ssl->certFile, ssl->keyFile, password, NULL) < 0) {
         mprError("MatrixSSL: Could not read or decode certificate or key file."); 
         return MPR_ERR_CANT_INITIALIZE;
@@ -389,7 +411,7 @@ static int connectMss(MprSocket *sp, cchar *host, int port, int flags)
     MprMatrixSocket     *msp;
     MprMatrixSsl        *mssl;
     MprSsl              *ssl;
-    int32               cipherSuite;
+    uint32              cipherSuite;
     
     lock(sp);
     ss = sp->service;
@@ -1010,8 +1032,8 @@ static void manageOpenProvider(MprSocketProvider *provider, int flags)
 
 
 /*
-    Configure the SSL configuration. Called from connect or explicitly in server code
-    to setup various SSL contexts. Appweb uses this from location.c.
+    Initialize a server-side SSL configuration. An application can have multiple different SSL configurations
+    for different routes.
  */
 static int configureOss(MprSsl *ssl)
 {
@@ -1019,6 +1041,8 @@ static int configureOss(MprSsl *ssl)
     MprOpenSsl          *ossl, *src;
     SSL_CTX             *context;
     uchar               resume[16];
+
+    mprAssert(ssl);
 
     if ((context = SSL_CTX_new(SSLv23_method())) == 0) {
         mprError("OpenSSL: Unable to create SSL context"); 
@@ -1136,6 +1160,8 @@ static int configureOss(MprSsl *ssl)
     if ((defaultSsl = getDefaultSslSettings()) == 0) {
         return MPR_ERR_MEMORY;
     }
+    //  MOB - always true
+    mprAssert(ssl != defaultSsl);
     if (ssl != defaultSsl) {
         if (!ssl->extendedSsl && (ssl->extendedSsl = mprAllocObj(MprOpenSsl, manageOpenSsl)) == 0) {
             return 0;
