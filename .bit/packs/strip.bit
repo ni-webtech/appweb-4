@@ -1,6 +1,0 @@
-/*
-    strip.bit - Strip package for Bit
- */
-
-program('strip')
-

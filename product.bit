@@ -15,11 +15,10 @@ Bit.load({
         "src/server/server.bit",
         "src/test/test.bit",
         "doc/doc.bit",
-        ".bit/embedthis.bit",
+        "${BITS}/embedthis.bit",
     ],
 
     settings: {
-        /* Default settings overridden by build.bit */
 		product: 'appweb',
 		title: 'Embedthis Appweb',
         company: 'Embedthis',
@@ -32,6 +31,7 @@ Bit.load({
         manager: 'appman',
         auth: 'file',
         sync: ['http', 'mpr', 'pcre', 'sqlite'],
+        packs: [ 'bits/packs' ]
     },
 
     usage: {

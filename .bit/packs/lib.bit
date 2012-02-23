@@ -1,7 +1,0 @@
-/*
-    lib.bit - Library package for Bit
- */
-
-let name = (bit.platform.os == 'win') ? 'lib' : 'ar'
-Bit.load({packs: { lib: { path: probe(name, {fullpath: true})}}})
-

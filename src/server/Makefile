@@ -72,7 +72,7 @@ run:
 	$(call setlibpath) ; sudo $(BLD_BIN_DIR)/$(BLD_PRODUCT) -v
 
 cleanExtra:
-	rm -f $(TARGETS)
+	rm -f $(TARGETS) $(BLD_OBJ_DIR)/appweb$(BLD_OBJ)
 	rm -f trace.txt access.log error.log leak.log
 	rm -f *.obj *.pdb
 	rm -f error.log* access.log*

@@ -288,16 +288,15 @@ BLD_HTTP_WITHLIBS=pcre
 #
 #	OPENSSL
 #
-BLD_FEATURE_OPENSSL=1
+BLD_FEATURE_OPENSSL=0
 BLD_OPENSSL_BUILTIN=0
-BLD_OPENSSL_LIBS=ssl crypto
 
 #
 #	SSL
 #
 BLD_FEATURE_SSL=1
 BLD_SSL_BUILTIN=1
-BLD_SSL_DEPENDENCIES= openssl mpr
+BLD_SSL_DEPENDENCIES= matrixssl mpr
 BLD_SSL_LIBS=mprssl ssl crypto mpr
 BLD_SSL_WITHLIBS=ssl crypto mpr
 
@@ -339,8 +338,15 @@ BLD_APPWEB_WITHLIBS=pcre mprssl ssl crypto mpr http
 
 BLD_FEATURE_EJS=0
 BLD_FEATURE_EJSCRIPT=0
-BLD_FEATURE_MATRIXSSL=0
 BLD_FEATURE_PHP=0
+
+BLD_FEATURE_MATRIXSSL=1
+BLD_MATRIXSSL_BUILTIN=0
+BLD_MATRIXSSL_DFLAGS=-DPOSIX=1
+BLD_MATRIXSSL_IFLAGS=-I/Users/mob/git/packages-macosx-x86_64/matrixssl/latest/matrixssl -I/Users/mob/git/packages-macosx-x86_64/
+matrixssl/latest/matrixssl/..
+BLD_MATRIXSSL_IMPORTS=${BLD_TOP}/../packages-macosx-x86_64/matrixssl/latest/libmatrixssl.a
+BLD_MATRIXSSL_LIBS=libmatrixssl
 
 EXPORT_OBJECTS ?= 1
 ifeq ($(EXPORT_OBJECTS),0)
@@ -512,12 +518,11 @@ else
     #define BLD_HTTP_IMPORTS "${BLD_TOP}/src/deps/http/http.h "
     #define BLD_HTTP_LIBS "http pcre"
     #define BLD_HTTP_WITHLIBS "pcre"
-    #define BLD_FEATURE_OPENSSL 1
+    #define BLD_FEATURE_OPENSSL 0
     #define BLD_OPENSSL_BUILTIN 0
-    #define BLD_OPENSSL_LIBS "ssl crypto"
     #define BLD_FEATURE_SSL 1
     #define BLD_SSL_BUILTIN 1
-    #define BLD_SSL_DEPENDENCIES " openssl mpr"
+    #define BLD_SSL_DEPENDENCIES " matrixssl mpr"
     #define BLD_SSL_LIBS "mprssl ssl crypto mpr"
     #define BLD_SSL_WITHLIBS "ssl crypto mpr"
     #define BLD_FEATURE_PCRE 1
@@ -539,7 +544,14 @@ else
     #define BLD_FEATURE_EJS 0
     #define BLD_FEATURE_EJSCRIPT 0
     #define BLD_FEATURE_PHP 0
-    #define BLD_FEATURE_MATRIXSSL 0
+    #define BLD_FEATURE_MATRIXSSL 1
+    #define BLD_MATRIXSSL_BUILTIN 0
+    #define BLD_MATRIXSSL_DFLAGS "-DPOSIX=1"
+    #define BLD_MATRIXSSL_IFLAGS "-I/Users/mob/git/packages-macosx-x86_64/matrixssl/latest/matrixssl -I/Users/mob/git/packages- macosx-x86_64/matrixssl/latest/matrixssl/.."
+    #define BLD_MATRIXSSL_IMPORTS "${BLD_TOP}/../packages-macosx-x86_64/matrixssl/latest/libmatrixssl.a "
+    #define BLD_MATRIXSSL_LIBS "libmatrixssl"
+    #define BLD_FEATURE_SSL 1
+
 #endif /* IGNORE_IN_C_CODE */
 #if IGNORE_IN_C_CODE
 endif

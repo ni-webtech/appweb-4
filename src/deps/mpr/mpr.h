@@ -7275,7 +7275,8 @@ typedef struct MprSsl {
 #define MPR_PROTO_SSLV2    0x1              /**< SSL V2 protocol */
 #define MPR_PROTO_SSLV3    0x2              /**< SSL V3 protocol */
 #define MPR_PROTO_TLSV1    0x4              /**< TLS V1 protocol */
-#define MPR_PROTO_ALL      0x7              /**< All SSL protocols */
+#define MPR_PROTO_TLSV11   0x8              /**< TLS V1.1 protocol */
+#define MPR_PROTO_ALL      0xf              /**< All SSL protocols */
 
 /*
     Default SSL configuration

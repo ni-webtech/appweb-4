@@ -42,8 +42,6 @@ var init: Path = etc.join("init")
 var initd: Path = etc.join("init.d")
 var cache: Path = spl.join("cache")
 
-print('bin', bin, 'lib', lib)
-
 let user = 0, group = 0
 if (Config.OS != "WIN") {
     let passwords = Path("/etc/passwd").readString()
@@ -107,6 +105,11 @@ if (!bare) {
         include: /appman|esp|http|auth|makerom|libappweb|libmpr/
         exclude: cmdFilter,
         permissions: 0755,
+    })
+    copy("bits/**", lib, {
+        from: slib, 
+        permissions: 0644, 
+        hidden: true,
     })
     log.makeDir(lowperms)
     let dummy = log.join("error.log")

@@ -46,10 +46,10 @@ Bit.load({
             build: "
                 let perms = { permissions: 0755 }
                 let cgiProgram = bit.dir.bin.join('cgiProgram')
-                copy(cgiProgram, Path('cgi-bin/cgiProgram').joinExt(bit.ext.exe), perms)
-                copy(cgiProgram, Path('cgi-bin/nph-cgiProgram').joinExt(bit.ext.exe), perms)
-                copy(cgiProgram, Path('cgi-bin/cgi Program').joinExt(bit.ext.exe), perms)
-                copy(cgiProgram, Path('web/cgiProgram.cgi'), perms)
+                cp(cgiProgram, Path('cgi-bin/cgiProgram').joinExt(bit.ext.exe), perms)
+                cp(cgiProgram, Path('cgi-bin/nph-cgiProgram').joinExt(bit.ext.exe), perms)
+                cp(cgiProgram, Path('cgi-bin/cgi Program').joinExt(bit.ext.exe), perms)
+                cp(cgiProgram, Path('web/cgiProgram.cgi'), perms)
             ",
         },
 

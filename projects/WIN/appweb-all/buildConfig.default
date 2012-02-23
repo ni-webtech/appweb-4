@@ -365,10 +365,20 @@ BLD_APPWEB_WITHLIBS=pcre mpr http
 
 BLD_FEATURE_EJS=0
 BLD_FEATURE_EJSCRIPT=0
-BLD_FEATURE_MATRIXSSL=0
 BLD_FEATURE_OPENSSL=0
 BLD_FEATURE_PHP=0
 BLD_FEATURE_SSL=0
+
+#
+#   MATRIXSSL
+#
+BLD_FEATURE_MATRIXSSL=1
+BLD_MATRIXSSL_BUILTIN=0
+BLD_MATRIXSSL_DFLAGS=-DPOSIX=1
+BLD_MATRIXSSL_IFLAGS=-I/Users/mob/git/packages-macosx-x86_64/matrixssl/latest/matrixssl -I/Users/mob/git/packages-macosx-x86_64/
+matrixssl/latest/matrixssl/..
+BLD_MATRIXSSL_IMPORTS=${BLD_TOP}/../packages-macosx-x86_64/matrixssl/latest/libmatrixssl.a
+BLD_MATRIXSSL_LIBS=libmatrixssl
 
 EXPORT_OBJECTS ?= 1
 ifeq ($(EXPORT_OBJECTS),0)
@@ -572,10 +582,17 @@ else
     #define BLD_APPWEB_WITHLIBS "pcre mpr http"
     #define BLD_FEATURE_EJS 0
     #define BLD_FEATURE_EJSCRIPT 0
-    #define BLD_FEATURE_MATRIXSSL 0
     #define BLD_FEATURE_OPENSSL 0
     #define BLD_FEATURE_PHP 0
     #define BLD_FEATURE_SSL 0
+
+    #define BLD_FEATURE_MATRIXSSL 1
+    #define BLD_MATRIXSSL_BUILTIN 0
+    #define BLD_MATRIXSSL_DFLAGS "-DPOSIX=1"
+    #define BLD_MATRIXSSL_IFLAGS "-I/Users/mob/git/packages-macosx-x86_64/matrixssl/latest/matrixssl -I/Users/mob/git/packages-
+macosx-x86_64/matrixssl/latest/matrixssl/.."
+    #define BLD_MATRIXSSL_IMPORTS "${BLD_TOP}/../packages-macosx-x86_64/matrixssl/latest/libmatrixssl.a "
+    #define BLD_MATRIXSSL_LIBS "libmatrixssl"
 #endif /* IGNORE_IN_C_CODE */
 #if IGNORE_IN_C_CODE
 endif
