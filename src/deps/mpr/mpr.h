@@ -7195,6 +7195,15 @@ extern void mprSetSocketEof(MprSocket *sp, bool eof);
 extern int mprSetSocketNoDelay(MprSocket *sp, bool on);
 
 /**
+    Set the SSL configuration for a client socket.
+    @description The SSL configuration defines the eligible ciphers and if certificate verification should be used.
+    This call must be made before calling mprConnectSocket
+    @param sp Socket object returned from #mprCreateSocket
+    @param ssl SSL configuration object created via #mprCreateSsl
+ */
+extern void mprSetSocketSslConfig(MprSocket *sp, struct MprSsl *ssl);
+
+/**
     Test if the socket has buffered read data.
     @description Use this function to avoid waiting for incoming I/O if data is already buffered.
     @param sp Socket object returned from #mprCreateSocket
@@ -7255,16 +7264,16 @@ typedef struct MprSsl {
     char            *certFile;          /* Alternatively, locate the cert in a file */
     char            *caFile;            /* Client verification cert file or bundle */
     char            *caPath;            /* Client verification cert directory */
-    char            *ciphers;
-    int             configured;
+    char            *ciphers;           /* Candidate ciphers to use */
+    int             configured;         /* Set if this SSL configuration has been processed */
 
     /*
         Client configuration
      */
-    int             verifyClient;
-    int             verifyDepth;
-    int             protocols;
-
+    int             verifyServer;       /* Set if the server cert should be verified */
+    int             verifyClient;       /* Set if the client cert should be verified */
+    int             verifyDepth;        /* Set if the server cert should be verified */
+    int             protocols;          /* MOB */
     void            *extendedSsl;       /* Extended provider SSL configuration */
 } MprSsl;
 
@@ -7363,6 +7372,14 @@ extern void mprSetSslProtocols(struct MprSsl *ssl, int protocols);
     @ingroup MprSocket
  */
 extern void mprVerifySslClients(struct MprSsl *ssl, bool on);
+
+/**
+    Control the verification of SSL servers
+    @param ssl SSL instance returned from #mprCreateSsl
+    @param on Set to true to enable server SSL verification.
+    @ingroup MprSocket
+ */
+extern void mprVerifySslServers(struct MprSsl *ssl, bool on);
 
 #if BLD_FEATURE_MATRIXSSL
     extern int mprCreateMatrixSslModule(bool lazy);

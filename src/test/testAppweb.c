@@ -144,7 +144,7 @@ int startRequest(MprTestGroup *gp, cchar *method, cchar *uri)
         httpSetDefaultClientHost(http, app->host);
     }
     gp->conn = conn = httpCreateConn(http, NULL, gp->dispatcher);
-    if (httpConnect(conn, method, uri) < 0) {
+    if (httpConnect(conn, method, uri, NULL) < 0) {
         return MPR_ERR_CANT_OPEN;
     }
     return 0;

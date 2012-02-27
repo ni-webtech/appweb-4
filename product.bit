@@ -79,11 +79,13 @@ Bit.load({
         package: {
             depends: ['build'],
             action: "
-                safeRemove(bit.dir.pkg)
+                let pkg = bit.dir.pkg
+                let prefixes = bit.prefixes;
                 let strip = bit.settings.profile == 'debug'
+                safeRemove(pkg)
                 let p = {}
                 for (prefix in bit.prefixes) {
-                    p[prefix] = Path(bit.dir.pkg.name + bit.prefixes[prefix])
+                    p[prefix] = Path(pkg.name + bit.prefixes[prefix])
                     p[prefix].makeDir({permissions: 0755, owner: 0, group: 0})
                 }
                 install('doc/licenses/LICENSE.TXT', p.product, {fold: true, expand: true})
@@ -146,25 +148,49 @@ Bit.load({
                             '--ssl', bit.settings.ssl_port,
                             '--cache', 'cache', 
                             '--modules', 'bin', 
-                            cfg.join('appweb.conf')])
+                            bit.dir.cfg.join('appweb.conf')])
                     } else {
                         Cmd(['setConfig', 
-                            '--home', bit.prefix.config,
-                            '--documents', bit.prefix.web,
-                            '--logs', bit.prefix.log,
+                            '--home', prefixes.config,
+                            '--documents', prefixes.web,
+                            '--logs', prefixes.log,
                             '--port', bit.settings.http_port,
                             '--ssl', bit.settings.ssl_port,
                             '--user', user,
                             '--group', group,
-                            '--cache', bit.dir.prefix.spool.join('cache'), 
-                            '--modules', bit.dir.prefix.lib,
-                            cfg.join('appweb.conf')])
+                            '--cache', prefixes.spool.join('cache'), 
+                            '--modules', prefixes.lib,
+                            bit.dir.cfg.join('appweb.conf')])
                     }
-                    cfg.join('appweb.conf.bak').remove()
+                    bit.dir.cfg.join('appweb.conf.bak').remove()
                 }
                 if (bit.packs.ejscript.enable) {
                     install(bit.dir.lib.join('ejs*.mod'), p.lib);
                 }
+                if (OS == 'macosx') {
+                    let daemons = pkg.join('Library/LaunchDaemons')
+                    daemons.makeDir()
+                    cp('package/MACOSX/com.embedthis.appweb.plist', daemons, {permissions: 0644, expand: true})
+
+                } else if (OS == 'linux') {
+                    cp('package/LINUX/' + product + '.init', pkg.join('init.d', product), 
+                        {permissions: 0755, expand: true})
+                    cp('package/LINUX/' + product + '.upstart', pkg.join('init', product).joinExt('conf'),
+                        {permissions: 0644, expand: true})
+
+                } else if (OS == 'win') {
+                    copy('msvcrt.lib', bin, {from: bit.packs.compiler.parent.join('redist/x86/Microsoft.VC100.CRT')})
+                    copy('removeFiles*', bin, {from: bit.dir.bin, permissions: 0755})
+                    copy('setConf*', bin, {from: bit.dir.bin, permissions: 0755})
+                }
+                if (bit.platform.like == 'posix') {
+                    copy('doc/man/*.1', p.product.join('man/man1'), {compress: true })
+                }
+                if (bit.settings.task == 'Install') {
+                    if (bit.platform.like == 'posix') {
+                        Cmd.sh([bin.join('linkup'), bit.settings.task, options.root])
+                    }
+                } 
                 package(['tar', 'native'])
             ",
         },

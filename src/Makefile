@@ -20,15 +20,11 @@ compileFirst:
 		rm -f $(BLD_BIN_DIR)/* $(BLD_BIN_DIR)/.ideBuild ; \
 	fi
 
-compileExtra: $(TARGETS) $(BLD_LIB_DIR)/bits
+compileExtra: $(TARGETS)
 
 $(BLD_LIB_DIR)/libappweb$(BLD_LIB): Makefile $(OBJECTS) $(BLD_MPR_MAKEDEP)
 	bld --library $(BLD_LIB_DIR)/libappweb --search "$(BLD_APPWEB_LIBPATHS)" \
 		--libs "http $(BLD_APPWEB_WITHLIBS)" $(OBJECTS)
-
-$(BLD_LIB_DIR)/bits: ../.bit
-	rm -fr $(BLD_LIB_DIR)/bits
-	cp -r ../.bit $(BLD_LIB_DIR)/bits
 
 #
 #   Local variables:

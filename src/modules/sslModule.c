@@ -27,10 +27,6 @@ static bool checkSsl(MaState *state)
 }
 
 
-#if FUTURE
-static int listenSecureDirective(MaState *state, cchar *key, cchar *value)
-#endif
-
 static int sslCaCertificatePathDirective(MaState *state, cchar *key, cchar *value)
 {
     checkSsl(state);

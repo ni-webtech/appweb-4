@@ -4565,7 +4565,7 @@ extern void httpAppendHeaderString(HttpConn *conn, cchar *key, cchar *value);
     @return "Zero" if the request was successfully sent to the server. Otherwise a negative MPR error code is returned.
     @ingroup HttpTx
  */
-extern int httpConnect(HttpConn *conn, cchar *method, cchar *uri);
+extern int httpConnect(HttpConn *conn, cchar *method, cchar *uri, struct MprSsl *ssl);
 
 /** 
     Create the tx object. This is used internally by the http library.

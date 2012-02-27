@@ -22,10 +22,12 @@ typedef struct ThreadData {
 typedef struct App {
     int      activeLoadThreads;  /* Still running test threads */
     int      benchmark;          /* Output benchmarks */
+    cchar    *cert;              /* Cert file */
     int      chunkSize;          /* Ask for response data to be chunked in this quanta */
     int      continueOnErrors;   /* Continue testing even if an error occurs. Default is to stop */
     int      success;            /* Total success flag */
     int      fetchCount;         /* Total count of fetches */
+    int      insecure;           /* Don't validate server certs */
     MprFile  *inFile;            /* Input file for post/put data */
     MprList  *files;             /* Upload files */
     MprList  *formData;          /* Form body data */
@@ -54,6 +56,7 @@ typedef struct App {
     int      showStatus;         /* Output the Http response status */
     int      showHeaders;        /* Output the response headers */
     int      singleStep;         /* Pause between requests */
+    MprSsl   *ssl;               /* SSL configuration */
     char     *target;            /* Destination url */
     int      text;               /* Emit errors in plain text */
     int      timeout;            /* Timeout in msecs for a non-responsive server */
@@ -119,6 +122,13 @@ MAIN(httpMain, int argc, char **argv, char **envp)
         mprError("Can't load SSL");
         exit(1);
     }
+    if (app->insecure || app->cert) {
+        app->ssl = mprCreateSsl();
+        mprVerifySslServers(app->ssl, !app->insecure);
+        if (app->cert) {
+            mprSetSslCertFile(app->ssl, app->cert);
+        }
+    }
 #endif
     if (mprStart() < 0) {
         mprError("Can't start MPR for %s", mprGetAppTitle());
@@ -154,6 +164,7 @@ MAIN(httpMain, int argc, char **argv, char **envp)
 static void manageApp(App *app, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
+        mprMark(app->cert);
         mprMark(app->files);
         mprMark(app->formData);
         mprMark(app->headers);
@@ -167,6 +178,7 @@ static void manageApp(App *app, int flags)
         mprMark(app->password);
         mprMark(app->ranges);
         mprMark(app->requestFiles);
+        mprMark(app->ssl);
         mprMark(app->threadData);
     }
 }
@@ -211,10 +223,17 @@ static bool parseArgs(int argc, char **argv)
             break;
         }
 
-        if (strcmp(argp, "--benchmark") == 0 || strcmp(argp, "-b") == 0) {
+        if (smatch(argp, "--benchmark") || smatch(argp, "-b")) {
             app->benchmark++;
 
-        } else if (strcmp(argp, "--chunk") == 0) {
+        } else if (smatch(argp, "--cert")) {
+            if (nextArg >= argc) {
+                return 0;
+            } else {
+                app->cert = sclone(argv[++nextArg]);
+            }
+
+        } else if (smatch(argp, "--chunk")) {
             if (nextArg >= argc) {
                 return 0;
             } else {
@@ -226,17 +245,17 @@ static bool parseArgs(int argc, char **argv)
                 }
             }
 
-        } else if (strcmp(argp, "--continue") == 0) {
+        } else if (smatch(argp, "--continue")) {
             app->continueOnErrors++;
 
-        } else if (strcmp(argp, "--cookie") == 0) {
+        } else if (smatch(argp, "--cookie")) {
             if (nextArg >= argc) {
                 return 0;
             } else {
                 mprAddItem(app->headers, mprCreateKeyPair("Cookie", argv[++nextArg]));
             }
 
-        } else if (strcmp(argp, "--data") == 0) {
+        } else if (smatch(argp, "--data")) {
             if (nextArg >= argc) {
                 return 0;
             } else {
@@ -246,15 +265,15 @@ static bool parseArgs(int argc, char **argv)
                 mprPutStringToBuf(app->bodyData, argv[++nextArg]);
             }
 
-        } else if (strcmp(argp, "--debugger") == 0 || strcmp(argp, "-D") == 0) {
+        } else if (smatch(argp, "--debugger") || smatch(argp, "-D")) {
             mprSetDebugMode(1);
             app->retries = 0;
             app->timeout = MAXINT;
 
-        } else if (strcmp(argp, "--delete") == 0) {
+        } else if (smatch(argp, "--delete")) {
             app->method = "DELETE";
 
-        } else if (strcmp(argp, "--form") == 0 || strcmp(argp, "-f") == 0) {
+        } else if (smatch(argp, "--form") || smatch(argp, "-f") == 0) {
             if (nextArg >= argc) {
                 return 0;
             } else {
@@ -264,7 +283,7 @@ static bool parseArgs(int argc, char **argv)
                 addFormVars(argv[++nextArg]);
             }
 
-        } else if (strcmp(argp, "--header") == 0) {
+        } else if (smatch(argp, "--header")) {
             if (nextArg >= argc) {
                 return 0;
             } else {
@@ -280,7 +299,7 @@ static bool parseArgs(int argc, char **argv)
                 mprAddItem(app->headers, mprCreateKeyPair(key, value));
             }
 
-        } else if (strcmp(argp, "--host") == 0) {
+        } else if (smatch(argp, "--host")) {
             if (nextArg >= argc) {
                 return 0;
             } else {
@@ -295,65 +314,68 @@ static bool parseArgs(int argc, char **argv)
                 }
             }
 
-        } else if (strcmp(argp, "--iterations") == 0 || strcmp(argp, "-i") == 0) {
+        } else if (smatch(argp, "--insecure")) {
+            app->insecure++;
+
+        } else if (smatch(argp, "--iterations") || smatch(argp, "-i")) {
             if (nextArg >= argc) {
                 return 0;
             } else {
                 app->iterations = atoi(argv[++nextArg]);
             }
 
-        } else if (strcmp(argp, "--log") == 0 || strcmp(argp, "-l") == 0) {
+        } else if (smatch(argp, "--log") || smatch(argp, "-l")) {
             if (nextArg >= argc) {
                 return 0;
             } else {
                 mprStartLogging(argv[++nextArg], 0);
             }
 
-        } else if (strcmp(argp, "--method") == 0 || strcmp(argp, "-m") == 0) {
+        } else if (smatch(argp, "--method") || smatch(argp, "-m")) {
             if (nextArg >= argc) {
                 return 0;
             } else {
                 app->method = argv[++nextArg];
             }
 
-        } else if (strcmp(argp, "--out") == 0 || strcmp(argp, "-o") == 0) {
+        } else if (smatch(argp, "--out") || smatch(argp, "-o")) {
             if (nextArg >= argc) {
                 return 0;
             } else {
                 app->outFilename = sclone(argv[++nextArg]);
             }
 
-        } else if (strcmp(argp, "--noout") == 0 || strcmp(argp, "-n") == 0  ||
-                   strcmp(argp, "--quiet") == 0 || strcmp(argp, "-q") == 0) {
+        } else if (smatch(argp, "--noout") || smatch(argp, "-n")  ||
+                   smatch(argp, "--quiet") || smatch(argp, "-q")) {
             app->noout++;
 
-        } else if (strcmp(argp, "--nofollow") == 0) {
+        } else if (smatch(argp, "--nofollow")) {
             app->nofollow++;
 
-        } else if (strcmp(argp, "--password") == 0 || strcmp(argp, "-p") == 0) {
+        } else if (smatch(argp, "--password") || smatch(argp, "-p")) {
             if (nextArg >= argc) {
                 return 0;
             } else {
                 app->password = sclone(argv[++nextArg]);
             }
 
-        } else if (strcmp(argp, "--post") == 0) {
+        } else if (smatch(argp, "--post")) {
             app->method = "POST";
 
-        } else if (strcmp(argp, "--printable") == 0) {
+        } else if (smatch(argp, "--printable")) {
             app->printable++;
 
-        } else if (strcmp(argp, "--protocol") == 0) {
+        } else if (smatch(argp, "--protocol")) {
             if (nextArg >= argc) {
                 return 0;
             } else {
                 app->protocol = supper(argv[++nextArg]);
             }
 
-        } else if (strcmp(argp, "--put") == 0) {
+        } else if (smatch(argp, "--put")) {
             app->method = "PUT";
 
-        } else if (strcmp(argp, "--range") == 0) {
+        } else if (smatch(argp, "--range")) {
             if (nextArg >= argc) {
                 return 0;
             } else {
@@ -365,63 +387,63 @@ static bool parseArgs(int argc, char **argv)
                 }
             }
             
-        } else if (strcmp(argp, "--retries") == 0 || strcmp(argp, "-r") == 0) {
+        } else if (smatch(argp, "--retries") || smatch(argp, "-r")) {
             if (nextArg >= argc) {
                 return 0;
             } else {
                 app->retries = atoi(argv[++nextArg]);
             }
             
-        } else if (strcmp(argp, "--sequence") == 0) {
+        } else if (smatch(argp, "--sequence")) {
             app->sequence++;
 
-        } else if (strcmp(argp, "--showHeaders") == 0 || strcmp(argp, "--show") == 0 || strcmp(argp, "-s") == 0) {
+        } else if (smatch(argp, "--showHeaders") || smatch(argp, "--show") || smatch(argp, "-s")) {
             app->showHeaders++;
 
-        } else if (strcmp(argp, "--showStatus") == 0 || strcmp(argp, "--showCode") == 0) {
+        } else if (smatch(argp, "--showStatus") || smatch(argp, "--showCode")) {
             app->showStatus++;
 
-        } else if (strcmp(argp, "--single") == 0 || strcmp(argp, "-s") == 0) {
+        } else if (smatch(argp, "--single") || smatch(argp, "-s")) {
             app->singleStep++;
 
-        } else if (strcmp(argp, "--text") == 0) {
+        } else if (smatch(argp, "--text")) {
             app->text++;
 
-        } else if (strcmp(argp, "--threads") == 0 || strcmp(argp, "-t") == 0) {
+        } else if (smatch(argp, "--threads") || smatch(argp, "-t")) {
             if (nextArg >= argc) {
                 return 0;
             } else {
                 app->loadThreads = atoi(argv[++nextArg]);
             }
 
-        } else if (strcmp(argp, "--timeout") == 0) {
+        } else if (smatch(argp, "--timeout")) {
             if (nextArg >= argc) {
                 return 0;
             } else {
                 app->timeout = atoi(argv[++nextArg]) * MPR_TICKS_PER_SEC;
             }
 
-        } else if (strcmp(argp, "--upload") == 0 || strcmp(argp, "-u") == 0) {
+        } else if (smatch(argp, "--upload") || smatch(argp, "-u")) {
             app->upload++;
 
-        } else if (strcmp(argp, "--user") == 0 || strcmp(argp, "--username") == 0) {
+        } else if (smatch(argp, "--user") || smatch(argp, "--username")) {
             if (nextArg >= argc) {
                 return 0;
             } else {
                 app->username = argv[++nextArg];
             }
 
-        } else if (strcmp(argp, "--verbose") == 0 || strcmp(argp, "-v") == 0) {
+        } else if (smatch(argp, "--verbose") || smatch(argp, "-v")) {
             app->verbose++;
 
-        } else if (strcmp(argp, "--version") == 0 || strcmp(argp, "-V") == 0) {
+        } else if (smatch(argp, "--version") || smatch(argp, "-V")) {
             mprPrintfError("%s %s\n"
                 "Copyright (C) Embedthis Software 2003-2012\n"
                 "Copyright (C) Michael O'Brien 2003-2012\n",
                BLD_NAME, BLD_VERSION);
             exit(0);
 
-        } else if (strcmp(argp, "--workerTheads") == 0 || strcmp(argp, "-w") == 0) {
+        } else if (smatch(argp, "--workerTheads") || smatch(argp, "-w")) {
             if (nextArg >= argc) {
                 return 0;
             } else {
@@ -429,14 +451,14 @@ static bool parseArgs(int argc, char **argv)
             }
             setWorkers++;
 
-        } else if (strcmp(argp, "--zero") == 0) {
+        } else if (smatch(argp, "--zero")) {
             app->zeroOnErrors++;
 
-        } else if (strcmp(argp, "--") == 0) {
+        } else if (smatch(argp, "--")) {
             nextArg++;
             break;
 
-        } else if (strcmp(argp, "-") == 0) {
+        } else if (smatch(argp, "-")) {
             break;
 
         } else {
@@ -483,6 +505,7 @@ static void showUsage()
     mprPrintfError("usage: %s [options] [files] url\n"
         "  Options:\n"
         "  --benchmark           # Compute benchmark results.\n"
+        "  --cert file           # Certificat CA file to validate server certs.\n"
         "  --chunk size          # Request response data to use this chunk size.\n"
         "  --continue            # Continue on errors.\n"
         "  --cookie CookieString # Define a cookie header. Multiple uses okay.\n"
@@ -492,6 +515,7 @@ static void showUsage()
         "  --form string         # Form data. Must already be form-www-urlencoded.\n"
         "  --header 'key: value' # Add a custom request header.\n"
         "  --host hostName       # Host name or IP address for unqualified URLs.\n"
+        "  --insecure            # Don't validate server certificates when using SSL\n"
         "  --iterations count    # Number of times to fetch the urls (default 1).\n"
         "  --log logFile:level   # Log to the file at the verbosity level.\n"
         "  --method KIND         # HTTP request method GET|OPTIONS|POST|PUT|TRACE (default GET).\n"
@@ -681,7 +705,7 @@ static int prepRequest(HttpConn *conn, MprList *files, int retry)
 
 static int sendRequest(HttpConn *conn, cchar *method, cchar *url, MprList *files)
 {
-    if (httpConnect(conn, method, url) < 0) {
+    if (httpConnect(conn, method, url, app->ssl) < 0) {
         mprError("Can't process request for \"%s\". %s.", url, httpGetError(conn));
         return MPR_ERR_CANT_OPEN;
     }

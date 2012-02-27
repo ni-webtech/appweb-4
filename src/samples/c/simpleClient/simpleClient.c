@@ -57,7 +57,7 @@ MAIN(simpleClient, int argc, char **argv, char **envp)
     /* 
        Get a URL
      */
-    if (httpConnect(app->conn, "GET", "http://www.embedthis.com/index.html") < 0) {
+    if (httpConnect(app->conn, "GET", "http://www.embedthis.com/index.html", NULL) < 0) {
         mprError("Can't get URL");
         exit(2);
     }
