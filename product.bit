@@ -86,7 +86,8 @@ Bit.load({
                 let p = {}
                 for (prefix in bit.prefixes) {
                     p[prefix] = Path(pkg.name + bit.prefixes[prefix])
-                    p[prefix].makeDir({permissions: 0755, owner: 0, group: 0})
+                    // p[prefix].makeDir({permissions: 0755, uid: 0, gid: 0})
+                    p[prefix].makeDir()
                 }
                 install('doc/licenses/LICENSE.TXT', p.product, {fold: true, expand: true})
                 install('doc/product/*.TXT', p.product, {fold: true, expand: true})
@@ -123,10 +124,10 @@ Bit.load({
                 p.spool.join('cache').makeDir()
                 let tmp = p.spool.join('cache/.dummy')
                 tmp.write()
-                tmp.attributes = {permissions: 0755, owner: user, group: group}
+                tmp.setAttributes({permissions: 0755, uid: user, gid: group})
                 tmp = p.log.join('error.log')
                 tmp.write()
-                tmp.attributes = {permissions: 0755, owner: user, group: group}
+                tmp.setAttributes({permissions: 0755, uid: user, gid: group})
 
                 if (bit.settings.task != 'remove') {
                     if (bit.packs.ssl.enable && bit.platform.os == 'linux') {
@@ -179,19 +180,20 @@ Bit.load({
                         {permissions: 0644, expand: true})
 
                 } else if (OS == 'win') {
-                    copy('msvcrt.lib', bin, {from: bit.packs.compiler.parent.join('redist/x86/Microsoft.VC100.CRT')})
-                    copy('removeFiles*', bin, {from: bit.dir.bin, permissions: 0755})
-                    copy('setConf*', bin, {from: bit.dir.bin, permissions: 0755})
+                    cp('msvcrt.lib', bin, {from: bit.packs.compiler.parent.join('redist/x86/Microsoft.VC100.CRT')})
+                    cp('removeFiles*', bin, {from: bit.dir.bin, permissions: 0755})
+                    cp('setConf*', bin, {from: bit.dir.bin, permissions: 0755})
                 }
                 if (bit.platform.like == 'posix') {
-                    copy('doc/man/*.1', p.product.join('man/man1'), {compress: true })
+                    cp('doc/man/*.1', p.product.join('man/man1'), {compress: true })
                 }
                 if (bit.settings.task == 'Install') {
                     if (bit.platform.like == 'posix') {
                         Cmd.sh([bin.join('linkup'), bit.settings.task, options.root])
                     }
                 } 
-                package(['tar', 'native'])
+                package(['tar'])
+                // package(['tar', 'native'])
             ",
         },
     },
