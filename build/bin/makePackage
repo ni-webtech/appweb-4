@@ -242,30 +242,26 @@ createScripts() {
     cp package/install.sh ${ROOT_DIR}/install
     cp package/uninstall.sh ${ROOT_DIR}/uninstall
 
-    cp doc/licenses/LICENSE.TXT ${ROOT_DIR}
+    cp LICENSE.md ${ROOT_DIR}/LICENSE.md
     if [ -f package/${BLD_HOST_OS}/README.TXT ] ; then
         cp package/${BLD_HOST_OS}/README.TXT ${ROOT_DIR}
     fi
     if [ -f doc/product/README.TXT ] ; then
         cp doc/product/README.TXT ${ROOT_DIR}
     fi
-    if [ -f doc/product/COPYRIGHT.TXT ] ; then
-        cp doc/product/COPYRIGHT.TXT ${ROOT_DIR}
-    fi
 
     cd ${ROOT_DIR} >/dev/null
-    patchFile install uninstall COPYRIGHT.TXT README.TXT LICENSE.TXT
+    patchFile install uninstall README.TXT LICENSE.md
     chmod 755 install uninstall
-    chmod 644 COPYRIGHT.TXT README.TXT LICENSE.TXT
+    chmod 644 README.TXT LICENSE.md
     if [ $BLD_BUILD_OS = WIN ] ; then
         if type dos2unix >/dev/null 2>&1 ; then
             foldFile README.TXT
-            foldFile LICENSE.TXT
+            foldFile LICENSE.md
             dos2unix install >/dev/null 2>&1
             dos2unix uninstall >/dev/null 2>&1
-            unix2dos COPYRIGHT.TXT  >/dev/null 2>&1
             unix2dos README.TXT  >/dev/null 2>&1
-            unix2dos LICENSE.TXT >/dev/null 2>&1
+            unix2dos LICENSE.md >/dev/null 2>&1
         fi
     fi
     cd ${HOME} >/dev/null
@@ -352,7 +348,6 @@ createEnvelopes() {
     [ $BLD_OS = LINUX -o $BLD_OS = WIN ] && owner="--owner 0 --group 0"
 
     for fmt in deb rpm tar exe ; do
-
         if ! ls *.${fmt} >/dev/null 2>&1 ; then
             continue
         fi
@@ -361,16 +356,16 @@ createEnvelopes() {
         if [ $fmt = exe ] ; then
             env=${ROOT_DIR}/$name.zip
             ${RM} -f $zip 
-            ls -1 COPYRIGHT.TXT README.TXT LICENSE.TXT *.$fmt | grep -v "${BLD_PRODUCT}-src" | zip -q ${env} -@
-            ls -1 COPYRIGHT.TXT README.TXT LICENSE.TXT *.$fmt | zip -q "${env}" -@
+            ls -1 README.TXT LICENSE.md *.$fmt | grep -v "${BLD_PRODUCT}-src" | zip -q ${env} -@
+            ls -1 README.TXT LICENSE.md *.$fmt | zip -q "${env}" -@
         else
             env=${ROOT_DIR}/$name.tgz
             ${RM} -f $env
             files="*.$fmt"
             srcPkg=`echo ${BLD_PRODUCT}-src-${BLD_VERSION}-${BLD_NUMBER}.${fmt}`
             files=`echo $files | sed "s^$srcPkg^^"`
-            log Run "tar $owner -czf `basename ${env}` COPYRIGHT.TXT README.TXT LICENSE.TXT install uninstall $files"
-            tar $owner -czf ${env} COPYRIGHT.TXT README.TXT LICENSE.TXT install uninstall $files
+            log Run "tar $owner -czf `basename ${env}` README.TXT LICENSE.md install uninstall $files"
+            tar $owner -czf ${env} README.TXT LICENSE.md install uninstall $files
         fi
         count=`expr $count + 1`
     done

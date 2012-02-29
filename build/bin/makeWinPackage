@@ -78,7 +78,7 @@ createInnoSetupFile() {
     #   Fixup paths in the spec file
     #
     cp "${ROOT_DIR}/install.iss" "${ROOT_DIR}/install.new"
-    cat "${ROOT_DIR}/install.new" | sed -e "/LicenseFile/s^.*^LicenseFile=${BLD_PREFIX}/LICENSE.TXT^g" | \
+    cat "${ROOT_DIR}/install.new" | sed -e "/LicenseFile/s^.*^LicenseFile=${BLD_PREFIX}/LICENSE.md^g" | \
         sed -e 's/={sd}.:/={sd}/' > "${ROOT_DIR}/install.iss" 
     rm -f cp "${ROOT_DIR}/install.new"
     unix2dos -D ${ROOT_DIR}/install.iss 2>/dev/null

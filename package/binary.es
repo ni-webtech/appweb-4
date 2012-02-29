@@ -64,8 +64,11 @@ if (Config.OS != "WIN") {
     }
 }
 
-var lowperms = {permissions: 0755, owner: user, group: group }
-var dperms = {permissions: 0755, owner: 0, group: 0 }
+var lowperms = {permissions: 0755, user: user, group: group }
+var dperms = {permissions: 0755, user: 'root', group: 'root', uid: 0, gid: 0 }
+if (os == "MACOSX") {
+    dperms.group = 'admin'
+}
 bin.makeDir(dperms)
 inc.makeDir(dperms)
 lib.makeDir(dperms)
@@ -88,7 +91,7 @@ if (!bare) {
 
 if (!bare) {
     copy("setConfig*", bin, {from: sbin, permissions: 0755, strip: strip})
-    copy("LICENSE.TXT", ver, { from: "doc/licenses", fold: true, expand: true })
+    copy("LICENSE.md", ver, { fold: true, expand: true })
     copy("*.TXT", ver, { from: "doc/product", fold: true, expand: true })
     copy("uninstall.sh", bin.join("uninstall"), {from: "package", permissions: 0755, expand: true})
     copy("linkup", bin.join("linkup"), {from: "package", permissions: 0755, expand: true})
@@ -114,12 +117,12 @@ if (!bare) {
     log.makeDir(lowperms)
     let dummy = log.join("error.log")
     dummy.write("")
-    dummy.attributes = dperms
+    dummy.setAttributes(dperms)
     spl.makeDir(lowperms)
     cache.makeDir(lowperms)
     dummy = cache.join(".dummy")
     dummy.write("")
-    dummy.attributes = dperms
+    dummy.setAttributes(dperms)
 
     copy("*", web, {
         from: "src/server/web",

@@ -52,7 +52,7 @@ Bit.load({
     },
 
     '+optional': [ 'cgi', 'dir', 'doxygen', 'dsi', 'ejs', 'esp', 'man', 'man2html', 'openssl', 
-        'matrixssl', 'php', 'sqlite', 'ssl', 'ejscript' ],
+        'matrixssl', 'pmaker', 'php', 'sqlite', 'ssl', 'ejscript' ],
 
     defaults: {
         '+includes': [ 'src' ]
@@ -80,19 +80,26 @@ Bit.load({
             depends: ['build'],
             action: "
                 let pkg = bit.dir.pkg
-                let prefixes = bit.prefixes;
-                let strip = bit.settings.profile == 'debug'
                 safeRemove(pkg)
+                pkg.makeDir()
+
+                /* These three files are replicated outside the top directory for easy access */
+                install('doc/product/README.TXT', pkg, {fold: true, expand: true})
+                install('package/install.sh', pkg.join('install'), {permissions: 0755, expand: true})
+                install('package/uninstall.sh', pkg.join('uninstall'), {permissions: 0755, expand: true})
+
+                let vname = bit.settings.product + '-' + bit.settings.version + '-' + bit.settings.buildNumber
+                pkg = bit.dir.pkg.join(vname)
+                let prefixes = bit.prefixes;
                 let p = {}
                 for (prefix in bit.prefixes) {
                     p[prefix] = Path(pkg.name + bit.prefixes[prefix])
-                    // p[prefix].makeDir({permissions: 0755, uid: 0, gid: 0})
                     p[prefix].makeDir()
                 }
-                install('doc/licenses/LICENSE.TXT', p.product, {fold: true, expand: true})
-                install('doc/product/*.TXT', p.product, {fold: true, expand: true})
+                let strip = bit.settings.profile == 'debug'
 
-                //  MOB - move from package
+                install('LICENSE.md', p.product, {fold: true, expand: true})
+                install('doc/product/README.TXT', p.product, {fold: true, expand: true})
                 install('package/uninstall.sh', p.bin.join('uninstall'), {permissions: 0755, expand: true})
                 install('package/linkup', p.bin, {permissions: 0755, expand: true})
                 install(bit.dir.bin + '/*', p.bin, {
@@ -186,14 +193,11 @@ Bit.load({
                 }
                 if (bit.platform.like == 'posix') {
                     cp('doc/man/*.1', p.product.join('man/man1'), {compress: true })
-                }
-                if (bit.settings.task == 'Install') {
-                    if (bit.platform.like == 'posix') {
+                    if (bit.settings.task == 'Install') {
                         Cmd.sh([bin.join('linkup'), bit.settings.task, options.root])
                     }
                 } 
-                package(['tar'])
-                // package(['tar', 'native'])
+                package(['combo', 'flat', 'tar', 'native'])
             ",
         },
     },

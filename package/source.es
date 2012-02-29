@@ -12,7 +12,7 @@ var src: Path = build.BLD_SRC_PREFIX
 
 src.makeDir()
 copy("Makefile", src)
-copy("LICENSE.TXT", src, {from: "doc/licenses", fold: true, expand: true})
+copy("LICENSE.md", src, {fold: true, expand: true})
 copy("*.TXT", src, {from: "doc/product", fold: true, expand: true})
 copy("configure", src, {permissions: 0755})
 

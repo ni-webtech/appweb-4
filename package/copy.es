@@ -15,7 +15,7 @@ const StandardFilter = /\.makedep$|\.o$|\.pdb$|\.tmp$|\.save$|\.sav$|OLD|\/Archi
     option include Include files that match the pattern
     option fold Fold long lines on windows and convert new line endings
     option zip Compress target file
-    option owner Set file owner
+    option user Set file user
     option group Set file group
     option perms Set file perms
     option strip Strip object or executable
@@ -26,8 +26,8 @@ public function copy(src: Path, target: Path = Dir, options = {})
 {
     blend(options, masterOptions)
     let copied = 0
-    let group = options.group || -1
-    let owner = options.owner || -1
+    let group = options.group
+    let user = options.user
     let permissions = options.permissions
     let task = options.task 
     let verbose: Boolean = options.trace == "1" || options.trace == true
@@ -81,21 +81,21 @@ public function copy(src: Path, target: Path = Dir, options = {})
             let parent = dest.parent.relative.portable
             if (!dest.parent.isDir) {
                 if (verbose) log.activity("MakeDir", parent)
-                parent.makeDir({ group: group, owner: owner, permissions: 0755})
+                parent.makeDir({ group: group, user: user, permissions: 0755})
             }
             if (verbose) log.activity("Copy", dest.relative)
             permissions ||= file.extension.match(/exe|lib|so|dylib|sh|ksh/) ? 0755 : 0644
-            let attributes = { permissions: permissions, owner: owner, group: group}
+            let attributes = { permissions: permissions, user: user, group: group}
             file.copy(dest, attributes)
 
             if (options.expand) {
                 if (verbose) log.activity("Patch", dest)
                 expand(dest, options)
-                dest.attributes = attributes
+                dest.setAttributes(attributes)
             }
             if (options.fold && Config.OS == "WIN") {
                 fold(dest, options)
-                dest.attributes = attributes
+                dest.setAttributes(attributes)
             }
             if (options.strip && build.BLD_STRIP != "" && build.BLD_UNIX_LIKE == 1 && build.BLD_BUILD_OS != "MACOSX") {
                 if (verbose) {

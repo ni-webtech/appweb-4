@@ -26,7 +26,7 @@ updateReadme()  {
     cp "${ABS_BLD_TOP}/doc/product/README.TXT" ${DestD}/ReadMe
     patchFile "${DestD}/ReadMe"
 
-    cp "${ABS_BLD_TOP}/doc/licenses/LICENSE.TXT" ${DestD}/License
+    cp "${ABS_BLD_TOP}/LICENSE.md" ${DestD}/License
     patchFile "${DestD}/License"
 }
 
@@ -81,6 +81,9 @@ makeDmgPackage() {
         updateScripts $kind
         upper=`echo $kind | tr '[:lower:]' '[:upper:]'`
 
+        echo ${PMAKER} --domain system --root ${ROOT_DIR}/${upper} --id com.embedthis.${BLD_PRODUCT}.${BLD_PRODUCT}${kind}.pkg \
+            --root-volume-only --domain system --verbose --no-relocate --target 10.6 \
+            --scripts ${ROOT_DIR}/scripts --out ${dir}/Contents/Packages/${kind}.pkg 
         ${PMAKER} --domain system --root ${ROOT_DIR}/${upper} --id com.embedthis.${BLD_PRODUCT}.${BLD_PRODUCT}${kind}.pkg \
             --root-volume-only --domain system --verbose --no-relocate --target 10.6 \
             --scripts ${ROOT_DIR}/scripts --out ${dir}/Contents/Packages/${kind}.pkg >build.log 2>&1

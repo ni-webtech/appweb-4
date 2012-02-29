@@ -105,17 +105,16 @@ NO WARRANTY
 Third Party Components
 ---
 
-1) Build Tools. Some of the tools used to build the Licensed Software are licensed under a GPL license. They are not part of the binary product nor are they normally deployed with the software after it is built into binary form.
-2) Perl Regular Expressions. Portions of the Perl Regular Expression Library (pcre) are used. These are covered by the PCRE license. The Perl regular expression library is an optional component of the Licensed Software.
-3) SQLite. The SQLite library is included as an optional component of the Licensed Software. It is covered by the SQLite license.
-4) MatrixSSL. The MatrixSSL interface contains some licensed code from PeerSec. MatrixSSL is an optional component.
-5) DTOA (Decimal to Ascii conversion code). This is used in the runtime core. It is licensed by Lucent with a BSD style license.
-6) JQuery and plugins. These optional components may be deployed in client-side browser user interfaces. They are not part of the binary product. JQuery is licensed under an MIT or GPL license. Some plugins have other licenses. 
-7) Hashing algorithm inspired by Paul Hsieh at http://www.azillionmonkeys.com/qed/hash.html.
+1) Perl Regular Expressions. Portions of the Perl Regular Expression Library (pcre) are used. These are covered by the PCRE license. The Perl regular expression library is an optional component of the Licensed Software.
+2) SQLite. The SQLite library is included as an optional component of the Licensed Software. It is covered by the SQLite license.
+3) MatrixSSL. The MatrixSSL interface contains some licensed code from PeerSec. MatrixSSL is an optional component.
+4) DTOA (Decimal to Ascii conversion code). This is used in the runtime core. It is licensed by Lucent with a BSD style license.
+5) JQuery and plugins. These optional components may be deployed in client-side browser user interfaces. They are not part of the binary product. JQuery is licensed under an MIT or GPL license. Some plugins have other licenses. 
+6) Hashing algorithm inspired by Paul Hsieh at http://www.azillionmonkeys.com/qed/hash.html.
 
 Contributors have provided other portions of the software that are covered by the Embedthis Contributor license that grants Embedthis sufficient rights to execute this license Agreement.
 
-Trademarks
+Trademarks and Copyrights
 ---
 Copyright (c) 2003-2012 Embedthis Software, LLC. All Rights Reserved.
 Embedthis, Appweb, Ejscript and ESP are trademarks of Embedthis Software, LLC. Other brands and their products 
