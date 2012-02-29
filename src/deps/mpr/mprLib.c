@@ -405,6 +405,7 @@ void *mprReallocMem(void *ptr, ssize usize)
 }
 
 
+//  MOB rename
 void *mprMemdupMem(cvoid *ptr, ssize usize)
 {
     char    *newp;
@@ -18863,7 +18864,7 @@ void mprSetModuleSearchPath(char *searchPath)
 
     ms = MPR->moduleService;
     if (searchPath == 0) {
-        libdir = mprJoinPath(mprGetPathParent(mprGetAppDir()), mprGetPathBase(BLD_LIB_NAME));
+        libdir = mprJoinPath(mprGetPathParent(mprGetAppDir()), BLD_LIB_NAME);
         ms->searchPath = sjoin(mprGetAppDir(), MPR_SEARCH_SEP, libdir, MPR_SEARCH_SEP, BLD_LIB_PREFIX, NULL);
     } else {
         ms->searchPath = sclone(searchPath);
@@ -19956,7 +19957,7 @@ char *mprGetTempPath(cchar *tempDir)
     int             i, now;
     static int      tempSeed = 0;
 
-    if (tempDir == 0) {
+    if (tempDir == 0 || *tempDir == '\0') {
 #if WINCE
         dir = sclone("/Temp");
 #elif BLD_WIN_LIKE
@@ -23360,8 +23361,7 @@ MprSocketService *mprCreateSocketService()
     MprSocketService    *ss;
     char                hostName[MPR_MAX_IP_NAME], serverName[MPR_MAX_IP_NAME], domainName[MPR_MAX_IP_NAME], *dp;
 
-    ss = mprAllocObj(MprSocketService, manageSocketService);
-    if (ss == 0) {
+    if ((ss = mprAllocObj(MprSocketService, manageSocketService)) == 0) {
         return 0;
     }
     ss->maxAccept = MAXINT;
@@ -23374,7 +23374,6 @@ MprSocketService *mprCreateSocketService()
     if ((ss->mutex = mprCreateLock()) == 0) {
         return 0;
     }
-
     serverName[0] = '\0';
     domainName[0] = '\0';
     hostName[0] = '\0';
@@ -31391,6 +31390,7 @@ MprChar *amtow(cchar *src, ssize *lenp)
 }
 
 
+//  MOB - need a version that can supply a length
 char *awtom(MprChar *src, ssize *lenp)
 {
     char    *dest;

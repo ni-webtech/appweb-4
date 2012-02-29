@@ -1158,6 +1158,12 @@ struct  MprXml;
 #define MPR_DEFAULT_BREAK_PORT  9473
 #define MPR_FD_MIN              32
 
+#if BLD_WIN_LIKE
+    #define BLD_LIB_NAME        "bin"
+#else
+    #define BLD_LIB_NAME        "lib"
+#endif
+
 /* 
     Longest IPv6 is XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX (40 bytes with null) 
  */ 
@@ -6808,6 +6814,9 @@ typedef struct MprSocketService {
     MprSocketProvider *standardProvider;        /**< Socket provider for non-SSL connections */
     MprSocketProvider *secureProvider;          /**< Socket provider for SSL connections */
     MprSocketPrebind  prebind;                  /**< Prebind callback */
+#if BLD_FEATURE_SSL
+    MprList         *secureSockets;             /**< List of secured (matrixssl) sockets */
+#endif
     MprMutex        *mutex;                     /**< Multithread locking */
 } MprSocketService;
 

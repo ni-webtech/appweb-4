@@ -273,7 +273,7 @@ static bool parseArgs(int argc, char **argv)
         } else if (smatch(argp, "--delete")) {
             app->method = "DELETE";
 
-        } else if (smatch(argp, "--form") || smatch(argp, "-f") == 0) {
+        } else if (smatch(argp, "--form") || smatch(argp, "-f")) {
             if (nextArg >= argc) {
                 return 0;
             } else {

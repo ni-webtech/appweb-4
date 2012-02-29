@@ -13,7 +13,10 @@ if (test.depth > 1) {
     function run(args): String {
         App.log.debug(5, "[TestRun]", command + args)
         try {
+print(command + args)
             let cmd = Cmd(command + args)
+print("STATUS", cmd.status)
+print("RESP", cmd.response)
             assert(cmd.status == 0) 
             return cmd.response
             assert(true)

@@ -318,12 +318,15 @@ static MprSocket *createMss(MprSsl *ssl)
     msp->sock = sp;
     sp->sslSocket = msp;
     sp->ssl = ssl;
+    mprAddItem(ss->secureSockets, sp);
     return sp;
 }
 
 
 static void manageMatrixSocket(MprMatrixSocket *msp, int flags)
 {
+    MprSocketService    *ss;
+
     if (flags & MPR_MANAGE_MARK) {
         mprMark(msp->sock);
 
@@ -331,6 +334,8 @@ static void manageMatrixSocket(MprMatrixSocket *msp, int flags)
         if (msp->handle) {
             matrixSslDeleteSession(msp->handle);
         }
+        ss = MPR->socketService;
+        mprRemoveItem(ss->secureSockets, msp->sock);
     }
 }
 
@@ -405,14 +410,99 @@ static MprSocket *acceptMss(MprSocket *listen)
 
 
 /*
-    Validate the certificate
+    Validate the server certificate
     UGLY: really need a MprMatrixSsl handle here
  */
-static int certValidator(ssl_t *ssl, psX509Cert_t *cert, int32 alert)
+static int verifyServer(ssl_t *ssl, psX509Cert_t *cert, int32 alert)
 {
-    //  MOB See client.c - example
-    return SSL_ALLOW_ANON_CONNECTION;
-    // return alert;
+    MprSocketService    *ss;
+    MprSocket           *sp;
+    struct tm           t;
+    char                *c;
+    int                 next, y, m, d;
+
+    ss = sp->service;
+    lock(ss);
+    for (ITERATE_ITEMS(ss->secureSockets, sp, next)) {
+        if (sp->ssl && ((MprMatrixSocket*) sp->sslSocket)->handle == ssl) {
+            break;
+        }
+    }
+    unlock(ss);
+    if (!sp) {
+        /* Should not get here */
+        mprAssert(sp);
+        return SSL_ALLOW_ANON_CONNECTION;
+    }
+    if (alert > 0) {
+        if (!sp->ssl->verifyServer) {
+            return SSL_ALLOW_ANON_CONNECTION;
+        }
+        return alert;
+    }
+    mprDecodeLocalTime(&t, mprGetTime());
+
+	/* 
+        Validate the 'not before' date 
+     */
+	if ((c = cert->notBefore) != NULL) {
+		if (strlen(c) < 8) {
+			return PS_FAILURE;
+		}
+		/* 
+            UTCTIME, defined in 1982, has just a 2 digit year 
+         */
+		if (cert->timeType == ASN_UTCTIME) {
+			y =  2000 + 10 * (c[0] - '0') + (c[1] - '0'); 
+            c += 2;
+		} else {
+			y = 1000 * (c[0] - '0') + 100 * (c[1] - '0') + 10 * (c[2] - '0') + (c[3] - '0'); 
+            c += 4;
+		}
+		m = 10 * (c[0] - '0') + (c[1] - '0'); 
+        c += 2;
+		d = 10 * (c[0] - '0') + (c[1] - '0'); 
+        y -= 1900;
+        m -= 1;
+		if (t.tm_year < y) {
+            return PS_FAILURE; 
+        }
+		if (t.tm_year == y) {
+			if (t.tm_mon < m || (t.tm_mon == m && t.tm_mday < d)) {
+                mprError("Certificate not yet valid");
+                return PS_FAILURE;
+            }
+		}
+	}
+	/* 
+        Validate the 'not after' date 
+     */
+	if ((c = cert->notAfter) != NULL) {
+		if (strlen(c) < 8) {
+			return PS_FAILURE;
+		}
+		if (cert->timeType == ASN_UTCTIME) {
+			y =  2000 + 10 * (c[0] - '0') + (c[1] - '0'); 
+            c += 2;
+		} else {
+			y = 1000 * (c[0] - '0') + 100 * (c[1] - '0') + 10 * (c[2] - '0') + (c[3] - '0'); 
+            c += 4;
+		}
+		m = 10 * (c[0] - '0') + (c[1] - '0'); 
+        c += 2;
+		d = 10 * (c[0] - '0') + (c[1] - '0'); 
+        y -= 1900;
+        m -= 1;
+		if (t.tm_year > y) {
+            return PS_FAILURE; 
+        } else if (t.tm_year == y) {
+			if (t.tm_mon > m || (t.tm_mon == m && t.tm_mday > d)) {
+                mprError("Certificate has expired");
+                return PS_FAILURE;
+            }
+		}
+	}
+	return PS_SUCCESS;
 }
 
 
@@ -453,7 +543,7 @@ static int connectMss(MprSocket *sp, cchar *host, int port, int flags)
         return MPR_ERR_CANT_INITIALIZE;
     }
     cipherSuite = 0;
-    if (matrixSslNewClientSession(&msp->handle, mssl->keys, NULL, cipherSuite, certValidator, NULL, NULL) < 0) {
+    if (matrixSslNewClientSession(&msp->handle, mssl->keys, NULL, cipherSuite, verifyServer, NULL, NULL) < 0) {
         unlock(sp);
         return MPR_ERR_CANT_CONNECT;
     }
@@ -1174,8 +1264,6 @@ static int configureOss(MprSsl *ssl)
     if ((defaultSsl = getDefaultSslSettings()) == 0) {
         return MPR_ERR_MEMORY;
     }
-    //  MOB - always true
-    mprAssert(ssl != defaultSsl);
     if (ssl != defaultSsl) {
         if (!ssl->extendedSsl && (ssl->extendedSsl = mprAllocObj(MprOpenSsl, manageOpenSsl)) == 0) {
             return 0;
