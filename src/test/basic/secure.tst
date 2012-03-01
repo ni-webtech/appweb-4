@@ -2,9 +2,6 @@
     secure.tst - SSL http tests
  */
 
-dump(Config)
-dump(App.config)
-
 if (!Config.SSL) {
     test.skip("SSL not enabled in ejs")
 
