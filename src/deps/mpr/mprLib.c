@@ -657,7 +657,7 @@ static MprMem *growHeap(ssize required, int flags)
     heap->regions = region;
 
     if (spareLen > 0) {
-        mprAssert(spareLen > sizeof(MprFreeMem));
+        mprAssert(spareLen >= sizeof(MprFreeMem));
         spare = (MprMem*) ((char*) mp + required);
         INIT_BLK(spare, spareLen, 0, 1, mp);
         CHECK(spare);
@@ -1292,7 +1292,7 @@ void mprMarkBlock(cvoid *ptr)
         if (HAS_MANAGER(mp)) {
 #if BLD_DEBUG
             if (++depth > 400) {
-                fprintf(stderr, "WARNING: marking depth exceeds 400\n");
+                fprintf(stderr, "WARNING: Possibly too much recursion. Marking depth exceeds 400\n");
                 mprBreakpoint();
             }
 #endif

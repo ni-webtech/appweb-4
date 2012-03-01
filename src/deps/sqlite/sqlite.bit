@@ -12,6 +12,10 @@ Bit.load({
         libsqlite3: {
             type: 'lib',
             sources: [ 'sqlite3.c' ],
+            '-compiler': [
+                '-Wall',
+                '-Wshorten-64-to-32',
+            ],
         },
 	},
 })
