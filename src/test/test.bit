@@ -19,6 +19,9 @@ Bit.load({
                 path.write('#!' + bit.dir.bin.join('cgiProgram'))
                 path.attributes = { permissions: 0755 }
             ",
+            'generate-sh': "\
+                echo '#!${BIN}/cgiProgram${EXE}' >cgi-bin/testScript ; chmod +x cgi-bin/testScript
+            ",
         },
 
         'cache.cgi': {
@@ -29,6 +32,14 @@ Bit.load({
                     'print(\"HTTP/1.0 200 OK\nContent-Type: text/plain\n\n{number: \" + App.pid + \"}\n\")')
                 path.attributes = {permissions: 0755}
             ",
+            'generate-sh': "\
+                echo -e '#!`type -p sh`' >web/caching/cache.cgi
+                echo -e '' >>web/caching/cache.cgi
+                echo -e 'echo HTTP/1.0 200 OK' >>web/caching/cache.cgi
+                echo -e 'echo Content-Type: text/plain' >>web/caching/cache.cgi
+                echo -e 'date' >>web/caching/cache.cgi
+                chmod +x web/caching/cache.cgi
+            ",
         },
 
         'basic.cgi': {
@@ -38,6 +49,13 @@ Bit.load({
                 path.write('#!' + App.exePath + '\n' + 
                     'print(\"HTTP/1.0 200 OK\nContent-Type: text/plain\n\n\" + App.env + \"\n\")')
                 path.attributes = {permissions: 0755}
+            ",
+            'generate-sh': "\
+                echo -e '#!`type -p sh`' >web/basic/basic.cgi
+                echo -e '' >>web/basic/basic.cgi
+                echo -e 'echo Content-Type: text/plain' >>web/basic/basic.cgi
+                echo -e '/usr/bin/env' >>web/basic/basic.cgi
+                chmod +x web/basic/basic.cgi
             ",
         },
 
@@ -50,6 +68,13 @@ Bit.load({
                 cp(cgiProgram, Path('cgi-bin/nph-cgiProgram').joinExt(bit.ext.exe), perms)
                 cp(cgiProgram, Path('cgi-bin/cgi Program').joinExt(bit.ext.exe), perms)
                 cp(cgiProgram, Path('web/cgiProgram.cgi'), perms)
+            ",
+            'generate-sh': "\
+                cp ${BIN}/cgiProgram cgi-bin/cgiProgram$(BLD_EXE)
+                cp ${BIN}/cgiProgram cgi-bin/nph-cgiProgram$(BLD_EXE)
+                cp ${BIN}/cgiProgram 'cgi-bin/cgi Program$(BLD_EXE)'
+                cp ${BIN}/cgiProgram web/cgiProgram.cgi
+                chmod +x cgi-bin/* web/cgiProgram.cgi
             ",
         },
 
