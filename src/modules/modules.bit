@@ -23,6 +23,10 @@ Bit.load({
             type: 'lib',
             sources: [ 'phpHandler.c' ],
             depends: [ 'php' ],
+            '-compiler': [
+                '-Wall',
+                '-Wshorten-64-to-32',
+            ],
         },
         mod_ssl: {
             enable: 'bit.packs.ssl.enable',
