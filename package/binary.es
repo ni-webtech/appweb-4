@@ -109,11 +109,6 @@ if (!bare) {
         exclude: cmdFilter,
         permissions: 0755,
     })
-    copy("bits/**", lib, {
-        from: slib, 
-        permissions: 0644, 
-        hidden: true,
-    })
     log.makeDir(lowperms)
     let dummy = log.join("error.log")
     dummy.write("")

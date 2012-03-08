@@ -5,6 +5,7 @@
 Bit.load({
     defaults: {
         '+includes': [ '.' ]
+        '+defines': [ '${INC}' ],
     },
 
     targets: {
@@ -31,5 +32,11 @@ Bit.load({
             path: '${dir.lib}/esp-www',
             files: [ 'www' ],
         },
+
+        'esp-app.h': {
+            type: 'file',
+            path: '${dir.inc}/esp-app.h',
+            files: [ 'esp-app.h' ],
+        }
 	},
 })

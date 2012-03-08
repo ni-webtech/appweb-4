@@ -1,5 +1,5 @@
 #
-#	Makefile.bit - Makefile to build Appweb with bit.
+#	Makefile.future - Future Makefile to build Appweb with bit.
 #
 
 ARCH 	:= $(shell uname -m)

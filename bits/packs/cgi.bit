@@ -1,6 +1,0 @@
-/*
-    cgi.bit - CGI package for Bit
- */
-
-let cgi = probe('cgiHandler.c', {fullpath: true, search: [bit.dir.src.join('src/modules')]})
-Bit.load({packs: { cgi: { path: cgi }}})

@@ -80,21 +80,21 @@ Bit.load({
 
         test: {
             action: "
-                run('utest -v -i 2 --depth ${settings.testDepth}')
-                if (${settings.testDepth} >= 3) {
+                run('utest -v -i 2 --depth ${settings.depth}')
+                if (${settings.depth} >= 3) {
                     activity('Test', 'Light load tests')
-                    Cmd('utest -v -i 20 --depth ${settings.testDepth}')
+                    Cmd('utest -v -i 20 --depth ${settings.depth}')
                     for each (t in [2, 4]) {
                         activity('Test', 'Light thread tests')
-                        Cmd('utest -v -i 20 --depth ${settings.testDepth} --threads ' + t)
+                        Cmd('utest -v -i 20 --depth ${settings.depth} --threads ' + t)
                     }
                 }
-                if (${settings.testDepth} >= 4) {
+                if (${settings.depth} >= 4) {
                     activity('Test', 'Longevity load tests')
-                    Cmd('utest -v -i 100 --depth ${settings.testDepth}')
+                    Cmd('utest -v -i 100 --depth ${settings.depth}')
                     for each (t in [8, 16]) {
                         activity('Test', 'Light thread tests')
-                        Cmd('utest -v -i 100 --depth ${settings.testDepth} --threads ' + t)
+                        Cmd('utest -v -i 100 --depth ${settings.depth} --threads ' + t)
                     }
                 }
                 activity('Test', 'Unit tests complete')

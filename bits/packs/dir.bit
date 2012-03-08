@@ -1,6 +1,0 @@
-/*
-    dir.bit - DIR package for Bit
- */
-
-let dir = probe('dirHandler.c', {fullpath: true, search: [bit.dir.src.join('src')]})
-Bit.load({packs: { dir: { path: dir }}})
