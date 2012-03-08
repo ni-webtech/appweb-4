@@ -30,7 +30,7 @@
 </ItemGroup>
 
 <PropertyGroup Label="Globals">
-  <ProjectGuid>{92ff77c3-e3b9-4dcf-a232-61f5897846f2}</ProjectGuid>
+  <ProjectGuid>{4f4c3981-6a2b-4e7a-ab5f-c5239b9627e6}</ProjectGuid>
   <RootNamespace />
   <Keyword>Win32Proj</Keyword>
 </PropertyGroup>
@@ -67,7 +67,7 @@
 
 <ItemGroup>
   <ProjectReference Include="libappweb.vcxproj">
-  <Project>ceacd3b4-6d06-470f-874c-f46b6af922c7</Project>
+  <Project>d467ce71-6b0a-4a6c-a6c7-8c63e0bc768a</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>
