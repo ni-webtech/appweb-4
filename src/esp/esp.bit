@@ -5,7 +5,7 @@
 Bit.load({
     defaults: {
         '+includes': [ '.' ]
-        '+defines': [ '${INC}' ],
+        '+defines': [ '-DINCLUDES="${INCLUDES}"' ],
     },
 
     targets: {
@@ -13,6 +13,7 @@ Bit.load({
             type: 'lib',
             depends: [ 'libappweb' ],
             sources: [ '*.c' ],
+            headers: [ '*.h' ],
             exclude: [ 'esp.c' ],
         },
 
@@ -29,14 +30,8 @@ Bit.load({
 
         'esp.www': {
             type: 'file',
-            path: '${dir.lib}/esp-www',
+            path: '${LIB}/esp-www',
             files: [ 'www' ],
         },
-
-        'esp-app.h': {
-            type: 'file',
-            path: '${dir.inc}/esp-app.h',
-            files: [ 'esp-app.h' ],
-        }
 	},
 })

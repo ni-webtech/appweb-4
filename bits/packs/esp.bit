@@ -1,0 +1,6 @@
+/*
+    esp.bit - ESP package for Bit
+ */
+
+let esp = probe('espHandler.c', {fullpath: true, search: [bit.dir.src.join('src/esp')]})
+Bit.load({packs: { esp: { path: esp }}})

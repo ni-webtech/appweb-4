@@ -1,0 +1,69 @@
+/*
+    php.bit -- PHP package search
+ */
+
+let cfg
+let path = bit.packs.php.path
+if (!path) {
+    let vers = bit.dir.packs.join('php').glob('php-5*').sort().reverse()
+    if (vers.length == 0) {
+        throw 'Can\'t find php'
+    }
+    path = vers[0]
+}
+
+if (bit.platform.os == 'win') {
+    let search = [
+        path.join('Release_TS'),
+        path.join('Release'),
+        path.join('Debug_TS'),
+        path.join('Debug'),
+    ]
+    let reldir = probe('php.exe', {search: search}).absolute
+    let names = { Release_TS: 'php5ts.dll', Release: 'php5.dll', Debug_TS: 'php5ts_debug.dll', Debug: 'php5.dll' }
+    let lib = probe(names[reldir.basename], {fullpath: true, search: search}).absolute
+    let dir = lib.parent.parent
+    search = [path]
+    let incdir = probe('main/php.h', {search: search}).absolute
+    cfg = {
+        dir: dir,
+        path: lib,
+        includes: [ incdir, incdir.join('main'), incdir.join('Zend'), incdir.join('TSRM') ],
+        libraries: [ 'php5ts' ],
+        linker: [ '-libpath:' + lib.parent ],
+        imports: lib.parent.glob('php5ts.*'),
+    }
+
+} else if (bit.platform.os == 'macosx') {
+    let search = [path.join('.libs'), '/usr/lib']
+    let lib = probe('libphp5.dylib', {fullpath: true, search: search}).absolute
+    let dir = lib.parent.parent
+    search = [path.join('main'), '/usr/include']
+    let incdir = probe('php.h', {search: search}).absolute.parent
+    cfg = {
+        dir: dir,
+        path: lib,
+        includes: [ incdir, incdir.join('main'), incdir.join('Zend'), incdir.join('TSRM') ],
+        libraries: [ 'php5' ],
+        linker: [ '-L' + lib.parent ],
+        imports: lib.parent.glob('libphp5*.dylib')
+    }
+
+} else {
+    let search = [path.join('/usr/lib', '/lib')] + Path('/lib').glob('*-linux-gnu')
+    let lib = probe('libphp5.so', {fullpath: true, search: search}).absolute
+    let dir = lib.parent
+    search = [path.join('main'), '/usr/include']
+    let incdir = probe('php.h', {search: search}).absolute
+    cfg = {
+        dir: dir,
+        path: lib,
+        includes: [ incdir ],
+        libraries: [ 'php5' ],
+        linker: [ '-L' + lib.parent ],
+        imports: lib.parent.glob('libphp5*.so*')
+    }
+}
+
+let template = {packs: { php: cfg}}
+Bit.load(template)
