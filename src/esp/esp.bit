@@ -3,11 +3,6 @@
  */
 
 Bit.load({
-    defaults: {
-        '+includes': [ '.' ]
-        '+defines': [ '-DINCLUDES="${INCLUDES}"' ],
-    },
-
     targets: {
         mod_esp: {
             type: 'lib',

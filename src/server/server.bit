@@ -9,6 +9,7 @@ Bit.load({
             //  MOB - how to link in mod_esp for static linking
             depends: [ 'libappweb' ],
             sources: [ 'appweb.c' ],
+            headers: [ '*.h' ],
         },
 	},
 })

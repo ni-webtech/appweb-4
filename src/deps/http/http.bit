@@ -4,14 +4,11 @@
 
 Bit.load({
 
-    defaults: {
-        '+includes': [ '.' ]
-    },
-
     targets: {
         libhttp: {
             type: 'lib',
             sources: [ 'httpLib.c' ],
+            headers: [ '*.h' ],
             depends: [ 'libmpr', 'libpcre', 'libmprssl'  ],
         },
 

@@ -4,14 +4,11 @@
 
 Bit.load({
 
-    defaults: {
-        '+includes': [ '.' ]
-    },
-
     targets: {
         libmpr: {
             type: 'lib',
             sources: [ 'mprLib.c' ],
+            headers: [ '*.h' ],
         },
 
         libmprssl: {

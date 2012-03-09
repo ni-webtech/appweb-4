@@ -4,13 +4,10 @@
 
 Bit.load({
 
-    defaults: {
-        '+includes': [ '.' ]
-    },
-
     targets: {
         libsqlite3: {
             type: 'lib',
+            headers: [ '*.h' ],
             sources: [ 'sqlite3.c' ],
             '-compiler': [
                 '-Wall',

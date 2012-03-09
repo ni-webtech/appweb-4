@@ -12,6 +12,7 @@ Bit.load({
         libappweb: {
             type: 'lib',
             sources: [ '*.c' ],
+            headers: [ '*.h' ],
             depends: [ 'libmpr', 'libhttp', 'libpcre', 'libmprssl' ],
         },
 	},

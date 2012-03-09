@@ -4,10 +4,6 @@
 
 Bit.load({
 
-    defaults: {
-        '+includes': [ '.' ]
-    },
-
     targets: {
         libpcre: {
 			scripts: {
@@ -22,6 +18,7 @@ Bit.load({
 				",
 			}
             type: 'lib',
+            headers: [ '*.h' ],
             sources: [ 'pcre.c' ],
         },
 	},
