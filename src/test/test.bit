@@ -17,7 +17,7 @@ Bit.load({
             build: "
                 let path = Path('cgi-bin/testScript')
                 path.write('#!' + bit.dir.bin.join('cgiProgram'))
-                path.attributes = { permissions: 0755 }
+                path.setAttributes({permissions: 0755})
             ",
             'generate-sh': "\
                 echo '#!${BIN}/cgiProgram${EXE}' >${HOME}/cgi-bin/testScript ; chmod +x ${HOME}/cgi-bin/testScript
@@ -28,9 +28,9 @@ Bit.load({
             path: 'web/caching/cache.cgi',
             build: "
                 let path = Path('web/caching/cache.cgi')
-                path.write('#!' + App.exePath + '\n' + 
+                path.write('#!' + App.exeDir.join('ejs') + '\n' + 
                     'print(\"HTTP/1.0 200 OK\nContent-Type: text/plain\n\n{number: \" + App.pid + \"}\n\")')
-                path.attributes = {permissions: 0755}
+                path.setAttributes({permissions: 0755})
             ",
             'generate-sh': "\
                 echo -e '#!`type -p sh`' >${HOME}/web/caching/cache.cgi
@@ -46,9 +46,9 @@ Bit.load({
             path: 'web/basic/basic.cgi',
             build: "
                 let path = Path('web/basic/basic.cgi')
-                path.write('#!' + App.exePath + '\n' + 
+                path.write('#!' + App.exeDir.join('ejs') + '\n' + 
                     'print(\"HTTP/1.0 200 OK\nContent-Type: text/plain\n\n\" + App.env + \"\n\")')
-                path.attributes = {permissions: 0755}
+                path.setAttributes({permissions: 0755})
             ",
             'generate-sh': "\
                 echo -e '#!`type -p sh`' >${HOME}/web/basic/basic.cgi

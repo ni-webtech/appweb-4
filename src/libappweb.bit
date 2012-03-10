@@ -4,10 +4,6 @@
 
 Bit.load({
 
-    defaults: {
-        '+includes': [ '.' ]
-    },
-
     targets: {
         libappweb: {
             type: 'lib',
