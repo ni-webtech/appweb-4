@@ -75,6 +75,7 @@ Bit.load({
         package: {
             depends: ['build'],
             action: "
+                let settings = bit.settings
                 let pkg = bit.dir.pkg
                 safeRemove(pkg)
                 pkg.makeDir()
@@ -84,7 +85,7 @@ Bit.load({
                 install('package/install.sh', pkg.join('install'), {permissions: 0755, expand: true})
                 install('package/uninstall.sh', pkg.join('uninstall'), {permissions: 0755, expand: true})
 
-                let vname = bit.settings.product + '-' + bit.settings.version + '-' + bit.settings.buildNumber
+                let vname = settings.product + '-' + settings.version + '-' + settings.buildNumber
                 pkg = bit.dir.pkg.join(vname)
                 let prefixes = bit.prefixes;
                 let p = {}
@@ -92,7 +93,7 @@ Bit.load({
                     p[prefix] = Path(pkg.name + bit.prefixes[prefix])
                     p[prefix].makeDir()
                 }
-                let strip = bit.settings.profile == 'debug'
+                let strip = settings.profile == 'debug'
 
                 install('LICENSE.md', p.product, {fold: true, expand: true})
                 install('doc/product/README.TXT', p.product, {fold: true, expand: true})
@@ -132,7 +133,7 @@ Bit.load({
                 tmp.write()
                 tmp.setAttributes({permissions: 0755, uid: user, gid: group})
 
-                if (bit.settings.task != 'remove') {
+                if (settings.task != 'remove') {
                     if (bit.packs.ssl.enable && bit.platform.os == 'linux') {
                         install(bit.dir.lib.join(bit.ext.shobj + '.*'), p.lib, {strip: strip, permissions: 0755})
                         for each (f in p.lib.glob('*.so.*')) {
@@ -148,8 +149,8 @@ Bit.load({
                             '--home', '.', 
                             '--documents', 'web', 
                             '--logs', 'logs', 
-                            '--port', bit.settings.http_port,
-                            '--ssl', bit.settings.ssl_port,
+                            '--port', settings.http_port,
+                            '--ssl', settings.ssl_port,
                             '--cache', 'cache', 
                             '--modules', 'bin', 
                             bit.dir.cfg.join('appweb.conf')])
@@ -158,8 +159,8 @@ Bit.load({
                             '--home', prefixes.config,
                             '--documents', prefixes.web,
                             '--logs', prefixes.log,
-                            '--port', bit.settings.http_port,
-                            '--ssl', bit.settings.ssl_port,
+                            '--port', settings.http_port,
+                            '--ssl', settings.ssl_port,
                             '--user', user,
                             '--group', group,
                             '--cache', prefixes.spool.join('cache'), 
@@ -177,9 +178,11 @@ Bit.load({
                     cp('package/MACOSX/com.embedthis.appweb.plist', daemons, {permissions: 0644, expand: true})
 
                 } else if (OS == 'linux') {
-                    cp('package/LINUX/' + product + '.init', pkg.join('init.d', product), 
+                    cp('package/LINUX/' + settings.product + '.init', 
+                        pkg.join('etc/init.d', settings.product), 
                         {permissions: 0755, expand: true})
-                    cp('package/LINUX/' + product + '.upstart', pkg.join('init', product).joinExt('conf'),
+                    cp('package/LINUX/' + settings.product + '.upstart', 
+                        pkg.join('init', settings.product).joinExt('conf'),
                         {permissions: 0644, expand: true})
 
                 } else if (OS == 'win') {
@@ -189,8 +192,8 @@ Bit.load({
                 }
                 if (bit.platform.like == 'posix') {
                     cp('doc/man/*.1', p.product.join('man/man1'), {compress: true })
-                    if (bit.settings.task == 'Install') {
-                        Cmd.sh([bin.join('linkup'), bit.settings.task, options.root])
+                    if (settings.task == 'Install') {
+                        Cmd.sh([bin.join('linkup'), settings.task, options.root])
                     }
                 } 
                 package(['combo', 'flat', 'tar', 'native'])

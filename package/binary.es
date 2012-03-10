@@ -169,7 +169,7 @@ if (options.task != "Remove" && build.BLD_FEATURE_SSL == 1 && os == "LINUX") {
         Symlink to sonames for openssl
      */
     copy("*" + build.BLD_SHOBJ + ".*", lib, {from: slib, permissions: 0755, strip: strip})
-    for each (f in slib.find("*.so.*")) {
+    for each (f in slib.glob("*.so.*")) {
         let withver = f.basename
         let nover = withver.name.replace(/\.[0-9]*.*/, ".so")
         Cmd.sh("rm -f " + lib.join(nover))
