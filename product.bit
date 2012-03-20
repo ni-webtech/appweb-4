@@ -73,6 +73,10 @@ Bit.load({
                 init.d, init, ssl
          */
         package: {
+            depends: ['packageBinary', 'packageSource'],
+        },
+
+        packageBinary: {
             depends: ['build'],
             action: "
                 let settings = bit.settings
@@ -197,6 +201,57 @@ Bit.load({
                     }
                 } 
                 package(['combo', 'flat', 'tar', 'native'])
+            ",
+        },
+
+        packageSource: {
+            depends: ['build'],
+            action: "
+                let s = bit.settings
+                let pkg = bit.dir.pkg.join(s.product + '-' + s.version)
+                safeRemove(pkg)
+                pkg.makeDir()
+
+                install('Makefile', pkg)
+                install('*.md', pkg, {fold: true, expand: true})
+                install('configure', pkg, {permissions: 0755})
+                install('build/**', pkg.join('build'), {
+                    permissions: 0755,
+                    include: /Makefile|Makefile.top|configure\.|\.defaults|config\.|make\.|\.config/,
+                })
+if (false) {
+                install('build/bin/*', pkg.join('build/bin'), {
+                    permissions: 0755,
+                    include: /getImports|getlib|makedep|priv|fakePriv|utest*|bld$|make.*Package.*|fakePriv|mkdmg|makeInstall|combo|makedep|cacheConfig|patchAppweb|patchFile/,
+                    trace: true,
+                })
+                install('build/src/*', pkg.join('build/src'), {
+                    include: /^Makefile$|\.c$|\.h$/,
+                })
+                install('build/components/*', pkg.join('build/components'))
+                install('bits/*', pkg.join('bits'))
+                install('package/*', pkg.join('package'), {
+                    include: /Makefile|\.files|\.es/,
+                })
+                install('package/*', pkg.join('package'), {
+                    include: /\.sh|makeInstall\.|linkup/,
+                    permissions: 0755,
+                })
+                install('package/**/*', pkg.join('package'), {
+                    include: /LINUX|MACOSX|WIN/,
+                })
+                install('src/*.c', pkg.join('src'))
+                install('src/**', pkg.join('src'), {
+                    exclude: /\\.log$|\\.lst$|ejs.zip|\\.stackdump$|\\/cache|huge.txt|\\.swp$/,
+                })
+                install('doc/*', pkg.join('doc'), {
+                    exclude: /\\/xml\\/|\\/html\\/|Archive|\\.mod$|\\.so$|\\.dylib$|\\.o$/,
+                })
+                install('projects/*', pkg.join('projects'), {
+                    exclude: /\\/Debug\\/|\\/Release\\/|\\.ncb|\\.mode1v3|\\.pbxuser/,
+                })
+                package(['src'])
+}
             ",
         },
     },

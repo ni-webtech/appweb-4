@@ -2620,6 +2620,8 @@ Mpr *mprCreate(int argc, char **argv, int flags)
         mpr->name = mprTrimPathExt(mprGetPathBase(mpr->argv[0]));
     } else {
         mpr->name = sclone(BLD_PRODUCT);
+        mpr->argv = mprAllocZeroed(sizeof(void*));
+        mpr->argc = 0;
     }
     mpr->signalService = mprCreateSignalService();
     mpr->threadService = mprCreateThreadService();
@@ -22653,7 +22655,6 @@ void mprManageSelect(MprWaitService *ws, int flags)
 
 static int growFds(MprWaitService *ws)
 {
-    growFds(ws);
     ws->handlerMax *= 2;
     if ((ws->handlerMap = mprRealloc(ws->handlerMap, sizeof(MprWaitHandler*) * ws->handlerMax)) == 0) {
         mprAssert(!MPR_ERR_MEMORY);
@@ -30112,9 +30113,8 @@ int mprLoadNativeModule(MprModule *mp)
             mprError("Can't open module \"%s\"", mp->path);
             return MPR_ERR_CANT_OPEN;
         }
-        errno = 0;
         handle = loadModule(fd, LOAD_GLOBAL_SYMBOLS);
-        if (handle == 0 || errno != 0) {
+        if (handle == 0) {
             close(fd);
             if (handle) {
                 unldByModuleId(handle, 0);

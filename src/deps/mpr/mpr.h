@@ -290,6 +290,9 @@
     #include    <unldLib.h>
 #if _WRS_VXWORKS_MAJOR >= 6
     #include    <wait.h>
+#endif
+#if _WRS_VXWORKS_MAJOR >= 6 || (_WRS_VXWORKS_MAJOR == 6 && _WRS_VXWORKS_MINOR >= 8)
+    #include    <symSync.h>
     #include    <vxAtomicLib.h>
 #endif
 #endif
