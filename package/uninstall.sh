@@ -28,37 +28,33 @@
 #
 ################################################################################
 #
-#	NOTE: We require a saved setup file exist in $BLD_PRD_PREFIX/install.conf
+#	NOTE: We require a saved setup file exist in $VER_PREFIX/install.conf
 #	This is created by install.
 #
 
 HOME=`pwd`
 FMT=
 
-BLD_PRODUCT="!!BLD_PRODUCT!!"
-BLD_COMPANY="!!BLD_COMPANY!!"
-BLD_NAME="!!BLD_NAME!!"
-BLD_VERSION="!!BLD_VERSION!!"
-BLD_NUMBER="!!BLD_NUMBER!!"
-BLD_BUILD_OS="!!BLD_BUILD_OS!!"
-BLD_HOST_OS="!!BLD_HOST_OS!!"
-BLD_HOST_CPU="!!BLD_HOST_CPU!!"
+PRODUCT="${settings.product}"
+COMPANY="${settings.company}"
+NAME="${settings.title}"
+VERSION="${settings.version}"
+NUMBER="${settings.buildNumber}"
+HOST_OS="${platform.os}"
+HOST_CPU="${platform.arch}"
 
-BLD_PREFIX="!!ORIG_BLD_PREFIX!!"				# Fixed and can't be relocated
-BLD_BIN_PREFIX="!!ORIG_BLD_BIN_PREFIX!!"
-BLD_CFG_PREFIX="!!ORIG_BLD_CFG_PREFIX!!"
-BLD_DOC_PREFIX="!!ORIG_BLD_DOC_PREFIX!!"
-BLD_INC_PREFIX="!!ORIG_BLD_INC_PREFIX!!"
-BLD_LIB_PREFIX="!!ORIG_BLD_LIB_PREFIX!!"
-BLD_MAN_PREFIX="!!ORIG_BLD_MAN_PREFIX!!"
-BLD_PRD_PREFIX="!!ORIG_BLD_PRD_PREFIX!!"
-BLD_SAM_PREFIX="!!ORIG_BLD_SAM_PREFIX!!"
-BLD_SPL_PREFIX="!!ORIG_BLD_SPL_PREFIX!!"
-BLD_SRC_PREFIX="!!ORIG_BLD_SRC_PREFIX!!"
-BLD_WEB_PREFIX="!!ORIG_BLD_WEB_PREFIX!!"
+BIN_PREFIX="${prefixes.bin}"
+CFG_PREFIX="${prefixes.config}"
+INC_PREFIX="${prefixes.include}"
+LIB_PREFIX="${prefixes.lib}"
+MAN_PREFIX="${prefixes.lib}/man"
+PRD_PREFIX="${prefixes.product}"
+VER_PREFIX="${prefixes.productver}"
+SPL_PREFIX="${prefixes.spool}"
+WEB_PREFIX="${prefixes.web}"
 
 removebin=Y
-headless=${!!BLD_PRODUCT!!_HEADLESS:-0}
+headless=${HEADLESS:-0}
 
 PATH=$PATH:/sbin:/usr/sbin
 export CYGWIN=nodosfilewarning
@@ -69,7 +65,6 @@ unset CDPATH
 #	Get a yes/no answer from the user. Usage: ans=`yesno "prompt" "default"`
 #	Echos 1 for Y or 0 for N
 #
-
 yesno() {
     if [ "$headless" = 1 ] ; then
         echo "Y"
@@ -92,18 +87,18 @@ yesno() {
 
 
 deconfigureService() {
-    [ "$headless" != 1 ] && echo -e "Stopping $BLD_NAME service"
+    [ "$headless" != 1 ] && echo -e "Stopping $NAME service"
     # Fedora will indiscriminately kill appman here too
     # Need this ( ; true) to suppress the Killed message
     (appman -v stop ; true) >/dev/null 2>&1
-    [ "$headless" != 1 ] && echo -e "Removing $BLD_NAME service"
+    [ "$headless" != 1 ] && echo -e "Removing $NAME service"
     appman disable 
     appman uninstall
-    if [ -f "$BLD_BIN_PREFIX/$BLD_PRODUCT" ] ; then
+    if [ -f "$BIN_PREFIX/$PRODUCT" ] ; then
         if which pidof >/dev/null 2>&1 ; then
-            pid=`pidof $BLD_BIN_PREFIX/$BLD_PRODUCT`
+            pid=`pidof $BIN_PREFIX/$PRODUCT`
         else
-            pid=`ps -ef | grep $BLD_BIN_PREFIX/$BLD_PRODUCT | grep -v 'grep' | awk '{print $2}'`
+            pid=`ps -ef | grep $BIN_PREFIX/$PRODUCT | grep -v 'grep' | awk '{print $2}'`
         fi
         [ "$pid" != "" ] && kill -9 $pid >/dev/null 2>&1
     fi
@@ -119,9 +114,9 @@ removeFiles() {
         if [ "$doins" = Y ] ; then
             suffix="-${pkg}"
             if [ "$pkg" = bin ] ; then
-            	name="${BLD_PRODUCT}"
+            	name="${PRODUCT}"
             else 
-            	name="${BLD_PRODUCT}${suffix}"
+            	name="${PRODUCT}${suffix}"
             fi
             if [ "$FMT" = "rpm" ] ; then
             	[ "$headless" != 1 ] && echo -e "Running \"rpm -e $name\""
@@ -144,16 +139,16 @@ removeTarFiles() {
     local cdir=`pwd`
 
     pkg=$1
-    [ $pkg = bin ] && prefix="$BLD_PRD_PREFIX"
-    if [ -f "$prefix/fileList.txt" ] ; then
-        if [ $BLD_HOST_OS = WIN ] ; then
+    [ $pkg = bin ] && prefix="$VER_PREFIX"
+    if [ -f "$prefix/files.log" ] ; then
+        if [ $HOST_OS = WIN ] ; then
             cd ${prefix%%:*}:/
         else
             cd /
         fi
-        removeFileList "$prefix/fileList.txt"
+        removeFileList "$prefix/files.log"
         cd "$cdir"
-        rm -f "$prefix/fileList.txt"
+        rm -f "$prefix/files.log"
     fi
 }
 
@@ -162,37 +157,31 @@ preClean() {
     local f
     local cdir=`pwd`
 
-    cp "$BLD_BIN_PREFIX/linkup" /tmp/linkup$$
-    if [ $BLD_HOST_OS != WIN ] ; then
-        rm -f /var/lock/subsys/$BLD_PRODUCT /var/lock/$BLD_PRODUCT
-        rm -fr /var/log/$BLD_PRODUCT
-        rm -rf /var/run/$BLD_PRODUCT
-        rm -rf /var/spool/$BLD_PRODUCT
+    cp "$BIN_PREFIX/linkup" /tmp/linkup$$
+    if [ $HOST_OS != WIN ] ; then
+        rm -f /var/lock/subsys/$PRODUCT /var/lock/$PRODUCT
+        rm -fr /var/log/$PRODUCT
+        rm -rf /var/run/$PRODUCT
+        rm -rf /var/spool/$PRODUCT
     fi
-    if [ -x "$BLD_PRD_PREFIX" ] ; then
-        cd "$BLD_PRD_PREFIX"
-        removeIntermediateFiles access.log* error.log* '*.log.old' .dummy $BLD_PRODUCT.conf make.log *.obj *.oC
+    if [ -x "$PRD_PREFIX" ] ; then
+        cd "$PRD_PREFIX"
         removeIntermediateFiles *.dylib *.dll *.exp *.lib
     fi
-    if [ -x "$BLD_CFG_PREFIX" ] ; then
-        cd "$BLD_CFG_PREFIX"
-        removeIntermediateFiles access.log* error.log* '*.log.old' .dummy $BLD_PRODUCT.conf make.log $BLD_PRODUCT.conf.bak
+    if [ -x "$CFG_PREFIX" ] ; then
+        cd "$CFG_PREFIX"
+        removeIntermediateFiles access.log* error.log* '*.log.old' .dummy $PRODUCT.conf make.log $PRODUCT.conf.bak
     fi
-    if [ -x "$BLD_LIB_PREFIX" ] ; then
-        cd "$BLD_LIB_PREFIX"
-        removeIntermediateFiles access.log* error.log* '*.log.old' .dummy $BLD_PRODUCT.conf make.log
-    fi
-    if [ -x "$BLD_WEB_PREFIX" ] ; then
-        cd "$BLD_WEB_PREFIX"
+    if [ -x "$WEB_PREFIX" ] ; then
+        cd "$WEB_PREFIX"
         removeIntermediateFiles *.mod 
     fi
-    if [ -x "$BLD_SPL_PREFIX/cache" ] ; then
-        cd "$BLD_SPL_PREFIX/cache"
+    if [ -x "$SPL_PREFIX" ] ; then
+        cd "$SPL_PREFIX"
         removeIntermediateFiles *.mod *.c *.dll *.exp *.lib *.obj *.o *.dylib *.so
     fi
-    if [ -d "$BLD_INC_PREFIX" ] ; then
-        cd "$BLD_INC_PREFIX"
-        make clean >/dev/null 2>&1 || true
+    if [ -d "$INC_PREFIX" ] ; then
+        cd "$INC_PREFIX"
         removeIntermediateFiles '*.o' '*.lo' '*.so' '*.a' make.rules .config.h.sav make.log .changes
     fi
     cd "$cdir"
@@ -202,50 +191,35 @@ preClean() {
 postClean() {
     local cdir=`pwd`
 
-    # Legacy
-    rm -f "${BLD_CFG_PREFIX}/${BLD_PRODUCT}Install.conf"
-    rm -f "${BLD_PRD_PREFIX}/install.conf"
+    rm -f "${VER_PREFIX}/install.conf"
 
-    if [ -d "$BLD_MAN_PREFIX" ] ; then
-        rm -rf "$BLD_MAN_PREFIX"/man*
-    fi
-    cleanDir "$BLD_MAN_PREFIX"
-    cleanDir "$BLD_SAM_PREFIX"
-    cleanDir "$BLD_INC_PREFIX"
-    cleanDir "$BLD_DOC_PREFIX"
+    for p in MAN INC DOC PRD CFG LIB WEB SPL ; do
+        eval cleanDir "\$${p}_PREFIX"
+    done
 
-    cleanDir "$BLD_PRD_PREFIX"
-    cleanDir "$BLD_CFG_PREFIX"
-    cleanDir "$BLD_LIB_PREFIX"
-    cleanDir "$BLD_WEB_PREFIX"
-    cleanDir "$BLD_SPL_PREFIX"
-
-    if [ $BLD_HOST_OS != WIN ] ; then
-        if [ -x /usr/share/$BLD_PRODUCT ] ; then
-            cleanDir /usr/share/$BLD_PRODUCT
+    if [ $HOST_OS != WIN ] ; then
+        if [ -x /usr/share/$PRODUCT ] ; then
+            cleanDir /usr/share/$PRODUCT
         fi
-        if [ -d /var/$BLD_PRODUCT ] ; then
-            cleanDir /var/$BLD_PRODUCT
+        if [ -d /var/$PRODUCT ] ; then
+            cleanDir /var/$PRODUCT
         fi
-        rmdir /usr/share/${BLD_PRODUCT} >/dev/null 2>&1
-        rmdir $BLD_WEB_PREFIX >/dev/null 2>&1
-        rmdir $BLD_MAN_PREFIX >/dev/null 2>&1
-        rmdir $BLD_DOC_PREFIX >/dev/null 2>&1
-        rmdir $BLD_INC_PREFIX >/dev/null 2>&1
-        rmdir $BLD_PRD_PREFIX >/dev/null 2>&1
-        rmdir $BLD_CFG_PREFIX >/dev/null 2>&1
-        rmdir $BLD_SPL_PREFIX >/dev/null 2>&1
+        rmdir /usr/share/${PRODUCT} >/dev/null 2>&1
+        for p in MAN INC DOC PRD CFG LIB WEB SPL ; do
+            eval rmdir "\$${p}_PREFIX" >/dev/null 2>&1
+        done
     fi
-    /tmp/linkup$$ Remove /
-    rm -f /tmp/linkup$$
+    if [ -x /tmp/linkup$$ ] ; then
+        /tmp/linkup$$ Remove /
+        rm -f /tmp/linkup$$
+    fi
 }
 
 
 #
-#	Clean a directory. Usage: removeFileList fileList
+#	Clean a directory. Usage: removeFileList files.log
 #
 removeFileList() {
-
     if [ -f "$1" ] ; then
         [ "$headless" != 1 ] && echo -e "Removing files in file list \"$1\" ..."
         cat "$1" | while read f
@@ -264,7 +238,6 @@ cleanDir() {
     local cdir=`pwd`
 
     dir="$1"
-
     [ ! -d "$dir" ] && return
 
     cd "$dir"
@@ -288,14 +261,10 @@ cleanDir() {
 }
 
 
-#
-#	Cleanup intermediate files
-#
 removeIntermediateFiles() {
     local cdir=`pwd`
 
-    find "`pwd`" -type d -print | while read d
-    do
+    find "`pwd`" -type d -print | while read d ; do
         cd "${d}"
         eval rm -f "$*"
         cd "${cdir}"
@@ -304,7 +273,7 @@ removeIntermediateFiles() {
 
 
 setup() {
-    if [ `id -u` != "0" -a $BLD_HOST_OS != WIN ] ; then
+    if [ `id -u` != "0" -a $HOST_OS != WIN ] ; then
         echo "You must be root to remove this product."
         exit 255
     fi
@@ -324,12 +293,12 @@ setup() {
     #
     #	Get defaults from the installation configuration file
     #
-    if [ -f "${BLD_PRD_PREFIX}/install.conf" ] ; then
-        .  "${BLD_PRD_PREFIX}/install.conf"
+    if [ -f "${PRD_PREFIX}/install.conf" ] ; then
+        .  "${PRD_PREFIX}/install.conf"
     fi
     
-    binDir=${binDir:-$BLD_PRD_PREFIX}
-    [ "$headless" != 1 ] && echo -e "\n$BLD_NAME !!BLD_VERSION!!-!!BLD_NUMBER!! Removal\n"
+    binDir=${binDir:-$PRD_PREFIX}
+    [ "$headless" != 1 ] && echo -e "\n$NAME ${VERSION}-${NUMBER} Removal\n"
 }
 
 
@@ -376,7 +345,6 @@ if [ "$removebin" = "Y" ] ; then
     preClean
     removeFiles $FMT
     postClean
-    [ "$headless" != 1 ] && echo -e "$BLD_NAME uninstall successful"
+    [ "$headless" != 1 ] && echo -e "$NAME uninstall successful"
 fi
 exit 0
-

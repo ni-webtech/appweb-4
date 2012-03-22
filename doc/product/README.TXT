@@ -1,6 +1,6 @@
 Embedthis Appweb(TM)
 
-Welcome to the Embedthis Appweb distribution. Appweb is a compact, fast, modular and powerful embedded web server. 
+Welcome to the Embedthis Appweb distribution. Appweb is the fastest, little web server.
 
 This document contains details regarding the installation procedure for the binary Embedthis Appweb package.  This package contains pre-built stand-alone web server and an embeddable HTTP library with headers. You can read the documentation for the latest release online at:
 

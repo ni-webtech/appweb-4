@@ -81,8 +81,11 @@ makeDmgPackage() {
         updateScripts $kind
         upper=`echo $kind | tr '[:lower:]' '[:upper:]'`
 
+        echo ${PMAKER} --domain system --root ${ROOT_DIR}/${upper} --id com.embedthis.${BLD_PRODUCT}.${BLD_PRODUCT}${kind}.pkg \
+            --root-volume-only --domain system --verbose --no-relocate --target 10.5 \
+            --scripts ${ROOT_DIR}/scripts --out ${dir}/Contents/Packages/${kind}.pkg
         ${PMAKER} --domain system --root ${ROOT_DIR}/${upper} --id com.embedthis.${BLD_PRODUCT}.${BLD_PRODUCT}${kind}.pkg \
-            --root-volume-only --domain system --verbose --no-relocate --target 10.6 \
+            --root-volume-only --domain system --verbose --no-relocate --target 10.5 \
             --scripts ${ROOT_DIR}/scripts --out ${dir}/Contents/Packages/${kind}.pkg >build.log 2>&1
         if [ $? != 0 ] 
         then

@@ -1,8 +1,6 @@
 /**
     setConfig.c  -- Appweb set configuration program
   
-    The Appweb Monitor is a windows monitor program that interacts with the Appweb angel program.
-
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 

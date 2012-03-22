@@ -9,36 +9,33 @@ TASK=$1
 ROOT_DIR="${2%/}"
 PRODUCT=appweb
 EXE=
-INC="${ROOT_DIR}/usr/include"
-MAN="${ROOT_DIR}/usr/share/man"
+INC_DIR="${ROOT_DIR}/usr/include"
+MAN_DIR="${ROOT_DIR}/usr/share/man"
 PROGRAMS="appman appweb http auth esp"
 
 if [ -x "${ROOT_DIR}/usr/local/bin" ] ; then
-    BIN="${ROOT_DIR}/usr/local/bin"
+    BIN_DIR="${ROOT_DIR}/usr/local/bin"
 else 
-    BIN="${ROOT_DIR}/usr/bin"
+    BIN_DIR="${ROOT_DIR}/usr/bin"
 fi
 
 prefix="${ROOT_DIR}/usr/lib/${PRODUCT}"
 version=
 for v in `ls $prefix 2>/dev/null | egrep -v '[a-zA-Z@!_\-]' | sort -n -r`
 do
-    if [ -x "$prefix/$v/bin/ejs" ] ; then
+    if [ -x "$prefix/$v/bin/appweb" ] ; then
         version=$v
         break
     fi
 done
 
-# Appweb is not yet fully versioned
-version=
-
 if [ "$TASK" = "Remove" ] ; then
     for name in $PROGRAMS ; do
-        # echo rm -f "${BIN}/$name"
-        rm -f "${BIN}/$name"
+        # echo rm -f "${BIN_DIR}/$name"
+        rm -f "${BIN_DIR}/$name"
     done
-    # echo rm -fr "${INC}/${PRODUCT}"
-    rm -fr "${INC}/${PRODUCT}"
+    # echo rm -fr "${INC_DIR}/${PRODUCT}"
+    rm -fr "${INC_DIR}/${PRODUCT}"
 else
     if [ "$version" = "" ] ; then
         latest=${prefix}
@@ -47,32 +44,32 @@ else
     fi
     bin=${latest}/bin
     inc=${latest}/inc
-    man=${latest}/doc/man
+    man=${latest}/doc/man/man1
 
-    [ ! -x "${BIN}" ] && mkdir -p "${BIN}"
+    [ ! -x "${BIN_DIR}" ] && mkdir -p "${BIN_DIR}"
 
     home=`pwd`
     for name in $PROGRAMS
     do
         name=${name}${EXE}
-        rm -f "${BIN}/${name}"
+        rm -f "${BIN_DIR}/${name}"
         if [ -f "${bin}/${name}" ] ; then
-            ln -s "${bin}/${name}" "${BIN}/${name}"
+            ln -s "${bin}/${name}" "${BIN_DIR}/${name}"
         fi
     done
 
     if [ -d "${inc}" ] ; then
-        [ ! -x "${INC}" ] && mkdir -p "${INC}"
-        rm -rf  "${INC}/${PRODUCT}"
-        ln -s "${inc}" "${INC}/${PRODUCT}"
+        [ ! -x "${INC_DIR}" ] && mkdir -p "${INC_DIR}"
+        rm -rf  "${INC_DIR}/${PRODUCT}"
+        ln -s "${inc}" "${INC_DIR}/${PRODUCT}"
     fi
     if [ -d "${man}" ] ; then
-        [ ! -x "${MAN}" ] && mkdir -p "${MAN}/man1"
+        [ ! -x "${MAN_DIR}" ] && mkdir -p "${MAN_DIR}/man1"
         for f in ${man}/*.1.gz
         do
             name=`basename "$f"`
-            rm -f "${MAN}/man1/${name}"
-            ln -s "${f}" "${MAN}/man1/${name}"
+            rm -f "${MAN_DIR}/man1/${name}"
+            ln -s "${f}" "${MAN_DIR}/man1/${name}"
         done
     fi
 fi

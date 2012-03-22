@@ -73,28 +73,30 @@ Bit.load({
                 init.d, init, ssl
          */
         package: {
-            depends: ['packageBinary', 'packageSource'],
+            xdepends: ['packageBinary', 'packageSource'],
+            depends: ['packageBinary'],
         },
 
         packageBinary: {
             depends: ['build'],
             action: "
                 let settings = bit.settings
-                let pkg = bit.dir.pkg
-                safeRemove(pkg)
+                let bin = bit.dir.pkg.join('bin')
+                safeRemove(bit.dir.pkg)
+                let vname = settings.product + '-' + settings.version + '-' + settings.buildNumber
+                let pkg = bin.join(vname)
                 pkg.makeDir()
 
-                /* These three files are replicated outside the top directory for easy access */
+                /* These three files are replicated outside the data directory */
                 install('doc/product/README.TXT', pkg, {fold: true, expand: true})
                 install('package/install.sh', pkg.join('install'), {permissions: 0755, expand: true})
                 install('package/uninstall.sh', pkg.join('uninstall'), {permissions: 0755, expand: true})
+                let contents = pkg.join('contents')
 
-                let vname = settings.product + '-' + settings.version + '-' + settings.buildNumber
-                pkg = bit.dir.pkg.join(vname)
                 let prefixes = bit.prefixes;
                 let p = {}
                 for (prefix in bit.prefixes) {
-                    p[prefix] = Path(pkg.name + bit.prefixes[prefix])
+                    p[prefix] = Path(contents.name + bit.prefixes[prefix])
                     p[prefix].makeDir()
                 }
                 let strip = settings.profile == 'debug'
@@ -102,9 +104,9 @@ Bit.load({
                 install('LICENSE.md', p.product, {fold: true, expand: true})
                 install('doc/product/README.TXT', p.product, {fold: true, expand: true})
                 install('package/uninstall.sh', p.bin.join('uninstall'), {permissions: 0755, expand: true})
-                install('package/linkup', p.bin, {permissions: 0755, expand: true})
+                install('package/linkup', p.bin, {permissions: 0755})
                 install(bit.dir.bin + '/*', p.bin, {
-                    include: /appweb|appman|esp|http|auth|makerom|libappweb|libmpr/,
+                    include: /appweb|appman|esp|http|auth|makerom|libappweb|libmpr|setConfig/,
                     permissions: 0755, 
                 })
                 install(bit.dir.bin.join('appweb'), p.bin, {
@@ -177,30 +179,30 @@ Bit.load({
                     install(bit.dir.lib.join('ejs*.mod'), p.lib);
                 }
                 if (OS == 'macosx') {
-                    let daemons = pkg.join('Library/LaunchDaemons')
+                    let daemons = contents.join('Library/LaunchDaemons')
                     daemons.makeDir()
-                    cp('package/MACOSX/com.embedthis.appweb.plist', daemons, {permissions: 0644, expand: true})
+                    install('package/MACOSX/com.embedthis.appweb.plist', daemons, {permissions: 0644, expand: true})
 
                 } else if (OS == 'linux') {
-                    cp('package/LINUX/' + settings.product + '.init', 
-                        pkg.join('etc/init.d', settings.product), 
+                    install('package/LINUX/' + settings.product + '.init', 
+                        contents.join('etc/init.d', settings.product), 
                         {permissions: 0755, expand: true})
-                    cp('package/LINUX/' + settings.product + '.upstart', 
-                        pkg.join('init', settings.product).joinExt('conf'),
+                    install('package/LINUX/' + settings.product + '.upstart', 
+                        contents.join('init', settings.product).joinExt('conf'),
                         {permissions: 0644, expand: true})
 
                 } else if (OS == 'win') {
-                    cp('msvcrt.lib', bin, {from: bit.packs.compiler.parent.join('redist/x86/Microsoft.VC100.CRT')})
-                    cp('removeFiles*', bin, {from: bit.dir.bin, permissions: 0755})
-                    cp('setConf*', bin, {from: bit.dir.bin, permissions: 0755})
+                    install('msvcrt.lib', bin, {from: bit.packs.compiler.parent.join('redist/x86/Microsoft.VC100.CRT')})
+                    install('removeFiles*', bin, {from: bit.dir.bin, permissions: 0755})
+                    install('setConf*', bin, {from: bit.dir.bin, permissions: 0755})
                 }
                 if (bit.platform.like == 'posix') {
-                    cp('doc/man/*.1', p.product.join('man/man1'), {compress: true })
+                    install('doc/man/*.1', p.productver.join('doc/man/man1'), {compress: true})
                     if (settings.task == 'Install') {
                         Cmd.sh([bin.join('linkup'), settings.task, options.root])
                     }
                 } 
-                package(['combo', 'flat', 'tar', 'native'])
+                package(bin, ['tar', 'native'])
             ",
         },
 
@@ -208,18 +210,19 @@ Bit.load({
             depends: ['build'],
             action: "
                 let s = bit.settings
-                let pkg = bit.dir.pkg.join(s.product + '-' + s.version)
+                let src = bit.dir.pkg.join('src')
+                let pkg = src.join(s.product + '-' + s.version)
                 safeRemove(pkg)
                 pkg.makeDir()
 
-                install('Makefile', pkg)
+                install(['Makefile', 'product.bit'], pkg)
+                install('bits', pkg)
                 install('*.md', pkg, {fold: true, expand: true})
                 install('configure', pkg, {permissions: 0755})
-                install('build/**', pkg.join('build'), {
+                install('build', pkg, {
                     permissions: 0755,
                     include: /Makefile|Makefile.top|configure\.|\.defaults|config\.|make\.|\.config/,
                 })
-if (false) {
                 install('build/bin/*', pkg.join('build/bin'), {
                     permissions: 0755,
                     include: /getImports|getlib|makedep|priv|fakePriv|utest*|bld$|make.*Package.*|fakePriv|mkdmg|makeInstall|combo|makedep|cacheConfig|patchAppweb|patchFile/,
@@ -228,30 +231,21 @@ if (false) {
                 install('build/src/*', pkg.join('build/src'), {
                     include: /^Makefile$|\.c$|\.h$/,
                 })
-                install('build/components/*', pkg.join('build/components'))
-                install('bits/*', pkg.join('bits'))
-                install('package/*', pkg.join('package'), {
-                    include: /Makefile|\.files|\.es/,
+                install('build/components', pkg)
+                install('package', pkg, {
+                    exclude: /makedep|.DS_Store/,
                 })
-                install('package/*', pkg.join('package'), {
-                    include: /\.sh|makeInstall\.|linkup/,
-                    permissions: 0755,
+                install('src', pkg, {
+                    exclude: /\\.log$|\\.lst$|ejs.zip|\\.stackdump$|\\/cache|huge.txt|\\.swp$|\\.tmp/,
                 })
-                install('package/**/*', pkg.join('package'), {
-                    include: /LINUX|MACOSX|WIN/,
-                })
-                install('src/*.c', pkg.join('src'))
-                install('src/**', pkg.join('src'), {
-                    exclude: /\\.log$|\\.lst$|ejs.zip|\\.stackdump$|\\/cache|huge.txt|\\.swp$/,
-                })
-                install('doc/*', pkg.join('doc'), {
+                install('doc', pkg, {
                     exclude: /\\/xml\\/|\\/html\\/|Archive|\\.mod$|\\.so$|\\.dylib$|\\.o$/,
                 })
-                install('projects/*', pkg.join('projects'), {
+                install('projects', pkg, {
                     exclude: /\\/Debug\\/|\\/Release\\/|\\.ncb|\\.mode1v3|\\.pbxuser/,
                 })
-                package(['src'])
-}
+                // package(pkg, ['src', 'combo', 'flat'])
+                package(src, ['src'])
             ",
         },
     },

@@ -12,7 +12,7 @@
         <true/>
 	<key>ProgramArguments</key>
         <array>
-            <string>/usr/lib/appweb/bin/appweb</string>
+            <string>/usr/local/bin/appweb</string>
         </array>
 </dict>
 </plist>
