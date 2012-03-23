@@ -1,8 +1,0 @@
-#
-#   ESP handler
-#
-defineComponent() {
-    eval file=\$BLD_${KIND}_ESP
-
-    configureComponent --dependencies pcre --libs pcre --withlibs pcre --builtin esp
-}

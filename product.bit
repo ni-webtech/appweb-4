@@ -3,6 +3,9 @@
  */
 
 Bit.load({
+    '+modules': [
+        'bits/appweb.es',
+    ],
     blend: [
         "src/deps/mpr/mpr.bit",
         "src/deps/pcre/pcre.bit",
@@ -61,17 +64,17 @@ Bit.load({
     },
 
     targets: {
-        /*
-            MOB - how can this do install, uninstall
-            Options:
-                install
-                uninstall
-                package
-                flat
+        install: {
+            depends: ['build'],
+            action: "
+                packageBinaryFiles()
+                package(bit.dir.pkg.join('bin'), 'install')
+                createLinks()
+                trace('Start', 'appman install enable start')
+                Cmd.run('/usr/local/bin/appman install enable start')
+            "
+        },
 
-            TODO:
-                init.d, init, ssl
-         */
         package: {
             depends: ['packageBinary', 'packageSource'],
         },
@@ -79,129 +82,8 @@ Bit.load({
         packageBinary: {
             depends: ['build'],
             action: "
-                let settings = bit.settings
-                let bin = bit.dir.pkg.join('bin')
-                safeRemove(bit.dir.pkg)
-                let vname = settings.product + '-' + settings.version + '-' + settings.buildNumber
-                let pkg = bin.join(vname)
-                pkg.makeDir()
-
-                /* These three files are replicated outside the data directory */
-                install('doc/product/README.TXT', pkg, {fold: true, expand: true})
-                install('package/install.sh', pkg.join('install'), {permissions: 0755, expand: true})
-                install('package/uninstall.sh', pkg.join('uninstall'), {permissions: 0755, expand: true})
-                let contents = pkg.join('contents')
-
-                let prefixes = bit.prefixes;
-                let p = {}
-                for (prefix in bit.prefixes) {
-                    p[prefix] = Path(contents.name + bit.prefixes[prefix])
-                    p[prefix].makeDir()
-                }
-                let strip = settings.profile == 'debug'
-
-                install('LICENSE.md', p.product, {fold: true, expand: true})
-                install('doc/product/README.TXT', p.product, {fold: true, expand: true})
-                install('package/uninstall.sh', p.bin.join('uninstall'), {permissions: 0755, expand: true})
-                install('package/linkup', p.bin, {permissions: 0755})
-                install(bit.dir.bin + '/*', p.bin, {
-                    include: /appweb|appman|esp|http|auth|makerom|libappweb|libmpr|setConfig/,
-                    permissions: 0755, 
-                })
-                install(bit.dir.bin.join('appweb'), p.bin, {
-                    permissions: 0755, 
-                    strip: strip,
-                })
-                install(bit.dir.lib.join('*'), p.lib, {
-                    permissions: 0755, 
-                    exclude: /file-save|www|simple|sample/,
-                })
-                install('src/server/appweb.conf', p.config)
-                install('src/server/mime.types', p.config)
-                install('src/server/php.ini', p.config)
-                install('src/server/web/**/*', p.web, {exclude: /mgmt/ })
-                install('src/server/web/test/*', p.web.join('test'))
-                install('src/server/web/test/*', p.web.join('test'), {
-                    include: /.cgi|test.pl|test.py/,
-                    permissions: 0755,
-                })
-                install(bit.dir.lib + '/*', p.lib, {
-                    permissions: 0644, 
-                    include: /esp.conf|esp-www/,
-                })
-                let user = getWebUser(), group = getWebUser()
-                p.spool.join('cache').makeDir()
-                let tmp = p.spool.join('cache/.dummy')
-                tmp.write()
-                tmp.setAttributes({permissions: 0755, uid: user, gid: group})
-                tmp = p.log.join('error.log')
-                tmp.write()
-                tmp.setAttributes({permissions: 0755, uid: user, gid: group})
-
-                if (settings.task != 'remove') {
-                    if (bit.packs.ssl.enable && bit.platform.os == 'linux') {
-                        install(bit.dir.lib.join(bit.ext.shobj + '.*'), p.lib, {strip: strip, permissions: 0755})
-                        for each (f in p.lib.glob('*.so.*')) {
-                            let withver = f.basename
-                            let nover = withver.name.replace(/\.[0-9]*.*/, '.so')
-                            lib.join(nover).remove()
-                            //  MOB - withver.link(p.lib.join(nover))
-                            Cmd.sh('ln -s ' + withver + ' ' + lib.join(nover)) 
-                        }
-                    }
-                    if (bit.platform.os == 'win') {
-                        Cmd(['setConfig', 
-                            '--home', '.', 
-                            '--documents', 'web', 
-                            '--logs', 'logs', 
-                            '--port', settings.http_port,
-                            '--ssl', settings.ssl_port,
-                            '--cache', 'cache', 
-                            '--modules', 'bin', 
-                            bit.dir.cfg.join('appweb.conf')])
-                    } else {
-                        Cmd(['setConfig', 
-                            '--home', prefixes.config,
-                            '--documents', prefixes.web,
-                            '--logs', prefixes.log,
-                            '--port', settings.http_port,
-                            '--ssl', settings.ssl_port,
-                            '--user', user,
-                            '--group', group,
-                            '--cache', prefixes.spool.join('cache'), 
-                            '--modules', prefixes.lib,
-                            bit.dir.cfg.join('appweb.conf')])
-                    }
-                    bit.dir.cfg.join('appweb.conf.bak').remove()
-                }
-                if (bit.packs.ejscript.enable) {
-                    install(bit.dir.lib.join('ejs*.mod'), p.lib);
-                }
-                if (OS == 'macosx') {
-                    let daemons = contents.join('Library/LaunchDaemons')
-                    daemons.makeDir()
-                    install('package/MACOSX/com.embedthis.appweb.plist', daemons, {permissions: 0644, expand: true})
-
-                } else if (OS == 'linux') {
-                    install('package/LINUX/' + settings.product + '.init', 
-                        contents.join('etc/init.d', settings.product), 
-                        {permissions: 0755, expand: true})
-                    install('package/LINUX/' + settings.product + '.upstart', 
-                        contents.join('init', settings.product).joinExt('conf'),
-                        {permissions: 0644, expand: true})
-
-                } else if (OS == 'win') {
-                    install('msvcrt.lib', bin, {from: bit.packs.compiler.parent.join('redist/x86/Microsoft.VC100.CRT')})
-                    install('removeFiles*', bin, {from: bit.dir.bin, permissions: 0755})
-                    install('setConf*', bin, {from: bit.dir.bin, permissions: 0755})
-                }
-                if (bit.platform.like == 'posix') {
-                    install('doc/man/*.1', p.productver.join('doc/man/man1'), {compress: true})
-                    if (settings.task == 'Install') {
-                        Cmd.sh([bin.join('linkup'), settings.task, options.root])
-                    }
-                } 
-                package(bin, ['tar', 'native'])
+                packageBinaryFiles()
+                package(bit.dir.pkg.join('bin'), ['tar', 'native'])
             ",
         },
 
@@ -217,22 +99,6 @@ Bit.load({
                 install('bits', pkg)
                 install('*.md', pkg, {fold: true, expand: true})
                 install('configure', pkg, {permissions: 0755})
-                install('build', pkg, {
-                    permissions: 0755,
-                    include: /Makefile|Makefile.top|configure\.|\.defaults|config\.|make\.|\.config/,
-                })
-                install('build/bin/*', pkg.join('build/bin'), {
-                    permissions: 0755,
-                    include: /getImports|getlib|makedep|priv|fakePriv|utest*|bld$|make.*Package.*|fakePriv|mkdmg|makeInstall|combo|makedep|cacheConfig|patchAppweb|patchFile/,
-                    trace: true,
-                })
-                install('build/src/*', pkg.join('build/src'), {
-                    include: /^Makefile$|\.c$|\.h$/,
-                })
-                install('build/components', pkg)
-                install('package', pkg, {
-                    exclude: /makedep|.DS_Store/,
-                })
                 install('src', pkg, {
                     exclude: /\\.log$|\\.lst$|ejs.zip|\\.stackdump$|\\/cache|huge.txt|\\.swp$|\\.tmp/,
                 })
@@ -244,6 +110,54 @@ Bit.load({
                 })
                 package(pkg, ['src', 'combo', 'flat'])
             ",
+        },
+
+        uninstall: {
+            action: "
+                if (App.uid != 0) {
+                    throw 'Must run as root. Use \"sudo bit install\"'
+                }
+                let appman = Cmd.locate('appman')
+                try {
+                    Cmd.run('appman stop disable uninstall')
+                } catch {}
+                let fileslog = bit.prefixes.productver.join('files.log')
+                if (fileslog.exists) {
+                    for each (let file: Path in fileslog.readLines()) {
+                        vtrace('Remove', file)
+                        file.remove()
+                    }
+                }
+                fileslog.remove()
+                for each (file in bit.prefixes.log.glob('*.log*')) {
+                    file.remove()
+                }
+                for each (prefix in bit.prefixes) {
+                    for each (dir in prefix.glob('**', {include: /\\/$/}).sort().reverse()) {
+                        vtrace('Remove', dir)
+                        dir.remove()
+                    }
+                    vtrace('Remove', prefix)
+                    prefix.remove()
+                }
+                trace('Uninstall', bit.settings.title)
+            "
+        },
+
+        check: {
+            action: "
+                let present
+                for each (prefix in bit.prefixes) {
+                    if (prefix.exists) {
+                        trace('Exists', prefix)
+                        let files = prefix.glob('**')
+                        if (files.length > 0) {
+                            trace('Exists', files.join(', '))
+                        }
+                        present = true
+                    }
+                }
+            "
         },
     },
 })

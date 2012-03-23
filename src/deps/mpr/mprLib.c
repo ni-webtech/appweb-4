@@ -405,7 +405,7 @@ void *mprReallocMem(void *ptr, ssize usize)
 }
 
 
-//  MOB rename
+//  MOB rename  
 void *mprMemdupMem(cvoid *ptr, ssize usize)
 {
     char    *newp;

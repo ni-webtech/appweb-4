@@ -1,6 +1,0 @@
-export PATH="c:\\tornado\\host\\x86-win32\\bin;c:\\WINDOWS\\system32;c:\\WINDOWS;c:\\WINDOWS\\System32\\Wbem"
-export WIND_HOME="c:\\tornado"
-export WIND_BASE="$WIND_HOME"
-export WIND_GNU_PATH="$WIND_BASE"
-export WIND_HOST_TYPE="x86-win32"
-export WIND_PLATFORM="vxworks-5.4"

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <% /* securityToken() */ %>
+    <% /* icon("/static/images/favicon.ico") */ %>
+    <% /* stylesheet() */ %>
+    <% /* script() */ %>
+    <meta name="SecurityTokenName" content="__ejs_security_token__" />
+    <meta name="__ejs_security_token__" content="1e59bf5fdaba61cdf9ebe8bc04d8d10c" />
+    <link href="/static/images/favicon.ico" rel="shortcut icon" />
+    <link rel="stylesheet" type="text/css" href="/static/layout.css" />
+    <link rel="stylesheet" type="text/css" href="/static/themes/default.css" />
+    <link rel="stylesheet" type="text/css" href="/static/js/treeview.css" />
+    <script src="/static/js/jquery.min.js" type="text/javascript"></script>
+    <script src="/static/js/jquery.tablesorter.min.js" type="text/javascript"></script>
+    <script src="/static/js/jquery.simplemodal.min.js" type="text/javascript"></script>
+    <script src="/static/js/jquery.treeview.min.js" type="text/javascript"></script>
+    <script src="/static/js/jquery.ejs.min.js" type="text/javascript"></script>
+    <title>@@title</title>
+</head>
+
+<body>
+    <div class="top">
+        <h1>
+            <% /* label("git Application", request.home) */ %>
+            <a href="/">GUI Application</a>
+        </h1>
+    </div>
+    <div id="logo">Appweb&trade;</div>
+
+    <% /* flash(["inform", "error", "message", "warning"]) */ %>
+    <div class="content">
+        <%@ content %>
+    </div>
+
+    <div class="bottom">
+        <p class="footnote">Powered by Appweb&trade;</p>
+    </div>
+</body>
+</html>
