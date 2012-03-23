@@ -4,111 +4,148 @@
 
 PLATFORM="linux-i686-debug"
 CC="cc"
-CFLAGS="-fPIC -g -mcpu=i686"
-DFLAGS="-DPIC"
-IFLAGS="-Ilinux-i686-debug/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc"
-LDFLAGS="-L/Users/mob/git/appweb/${PLATFORM}/lib -g"
+CFLAGS="-Wall -fPIC -g -mcpu=i686"
+DFLAGS="-D_REENTRANT -DCPU=i686 -DPIC"
+IFLAGS="-Ilinux-i686-debug/inc"
+LDFLAGS="-LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L/Users/mob/git/appweb/${PLATFORM}/lib -g"
 LIBS="-lpthread -lm"
 
-${CC} -c -o ${PLATFORM}/obj/mprLib.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/deps/mpr/mprLib.c
+[ ! -x ${PLATFORM}/inc ] && mkdir -p ${PLATFORM}/inc ${PLATFORM}/obj ${PLATFORM}/lib ${PLATFORM}/bin
+[ ! -f ${PLATFORM}/inc/buildConfig.h ] && cp src/buildConfig.default ${PLATFORM}/inc/buildConfig.h
 
-${CC} -shared -o ${PLATFORM}/lib/libmpr.so -L${PLATFORM}/lib -g ${PLATFORM}/obj/mprLib.o ${LIBS}
+rm -rf /Users/mob/git/appweb/linux-i686-debug/inc/mpr.h
+cp -r /Users/mob/git/appweb/src/deps/mpr/mpr.h /Users/mob/git/appweb/linux-i686-debug/inc/mpr.h
 
-${CC} -c -o ${PLATFORM}/obj/manager.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/deps/mpr/manager.c
+${CC} -c -o ${PLATFORM}/obj/mprLib.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/deps/mpr/mprLib.c
 
-${CC} -o ${PLATFORM}/bin/manager -L${PLATFORM}/lib -g -L${PLATFORM}/lib ${PLATFORM}/obj/manager.o ${LIBS} -lmpr -L${PLATFORM}/lib -g
+${CC} -shared -o ${PLATFORM}/lib/libmpr.so -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g ${PLATFORM}/obj/mprLib.o ${LIBS}
 
-${CC} -c -o ${PLATFORM}/obj/makerom.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/deps/mpr/makerom.c
+${CC} -c -o ${PLATFORM}/obj/manager.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/deps/mpr/manager.c
 
-${CC} -o ${PLATFORM}/bin/makerom -L${PLATFORM}/lib -g -L${PLATFORM}/lib ${PLATFORM}/obj/makerom.o ${LIBS} -lmpr -L${PLATFORM}/lib -g
+${CC} -o ${PLATFORM}/bin/appman -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g -L${PLATFORM}/lib ${PLATFORM}/obj/manager.o ${LIBS} -lmpr -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g
 
-${CC} -c -o ${PLATFORM}/obj/pcre.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/deps/pcre/pcre.c
+${CC} -c -o ${PLATFORM}/obj/makerom.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/deps/mpr/makerom.c
 
-${CC} -shared -o ${PLATFORM}/lib/libpcre.so -L${PLATFORM}/lib -g ${PLATFORM}/obj/pcre.o ${LIBS}
+${CC} -o ${PLATFORM}/bin/makerom -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g -L${PLATFORM}/lib ${PLATFORM}/obj/makerom.o ${LIBS} -lmpr -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g
 
-${CC} -c -o ${PLATFORM}/obj/httpLib.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/deps/http/httpLib.c
+rm -rf /Users/mob/git/appweb/linux-i686-debug/inc/pcre.h
+cp -r /Users/mob/git/appweb/src/deps/pcre/pcre.h /Users/mob/git/appweb/linux-i686-debug/inc/pcre.h
 
-${CC} -shared -o ${PLATFORM}/lib/libhttp.so -L${PLATFORM}/lib -g ${PLATFORM}/obj/httpLib.o ${LIBS} -lmpr -lpcre
+${CC} -c -o ${PLATFORM}/obj/pcre.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/deps/pcre/pcre.c
 
-${CC} -c -o ${PLATFORM}/obj/http.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/deps/http/http.c
+${CC} -shared -o ${PLATFORM}/lib/libpcre.so -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g ${PLATFORM}/obj/pcre.o ${LIBS}
 
-${CC} -o ${PLATFORM}/bin/http -L${PLATFORM}/lib -g -L${PLATFORM}/lib ${PLATFORM}/obj/http.o ${LIBS} -lhttp -lmpr -lpcre -L${PLATFORM}/lib -g
+rm -rf /Users/mob/git/appweb/linux-i686-debug/inc/http.h
+cp -r /Users/mob/git/appweb/src/deps/http/http.h /Users/mob/git/appweb/linux-i686-debug/inc/http.h
 
-${CC} -c -o ${PLATFORM}/obj/sqlite3.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/deps/sqlite/sqlite3.c
+${CC} -c -o ${PLATFORM}/obj/httpLib.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/deps/http/httpLib.c
 
-${CC} -shared -o ${PLATFORM}/lib/libsqlite3.so -L${PLATFORM}/lib -g ${PLATFORM}/obj/sqlite3.o ${LIBS}
+${CC} -shared -o ${PLATFORM}/lib/libhttp.so -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g ${PLATFORM}/obj/httpLib.o ${LIBS} -lmpr -lpcre
 
-${CC} -c -o ${PLATFORM}/obj/config.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/config.c
+${CC} -c -o ${PLATFORM}/obj/http.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/deps/http/http.c
 
-${CC} -c -o ${PLATFORM}/obj/convenience.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/convenience.c
+${CC} -o ${PLATFORM}/bin/http -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g -L${PLATFORM}/lib ${PLATFORM}/obj/http.o ${LIBS} -lhttp -lmpr -lpcre -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g
 
-${CC} -c -o ${PLATFORM}/obj/dirHandler.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/dirHandler.c
+rm -rf /Users/mob/git/appweb/linux-i686-debug/inc/sqlite3.h
+cp -r /Users/mob/git/appweb/src/deps/sqlite/sqlite3.h /Users/mob/git/appweb/linux-i686-debug/inc/sqlite3.h
 
-${CC} -c -o ${PLATFORM}/obj/fileHandler.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/fileHandler.c
+${CC} -c -o ${PLATFORM}/obj/sqlite3.o -fPIC -g -mcpu=i686 ${DFLAGS} -I${PLATFORM}/inc src/deps/sqlite/sqlite3.c
 
-${CC} -c -o ${PLATFORM}/obj/log.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/log.c
+${CC} -shared -o ${PLATFORM}/lib/libsqlite3.so -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g ${PLATFORM}/obj/sqlite3.o ${LIBS}
 
-${CC} -c -o ${PLATFORM}/obj/server.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/server.c
+rm -rf /Users/mob/git/appweb/linux-i686-debug/inc/appweb.h
+cp -r /Users/mob/git/appweb/src/appweb.h /Users/mob/git/appweb/linux-i686-debug/inc/appweb.h
 
-${CC} -shared -o ${PLATFORM}/lib/libappweb.so -L${PLATFORM}/lib -g ${PLATFORM}/obj/config.o ${PLATFORM}/obj/convenience.o ${PLATFORM}/obj/dirHandler.o ${PLATFORM}/obj/fileHandler.o ${PLATFORM}/obj/log.o ${PLATFORM}/obj/server.o ${LIBS} -lmpr -lhttp -lpcre -lpcre
+rm -rf /Users/mob/git/appweb/linux-i686-debug/inc/customize.h
+cp -r /Users/mob/git/appweb/src/customize.h /Users/mob/git/appweb/linux-i686-debug/inc/customize.h
 
-${CC} -c -o ${PLATFORM}/obj/edi.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/esp/edi.c
+${CC} -c -o ${PLATFORM}/obj/config.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/config.c
 
-${CC} -c -o ${PLATFORM}/obj/espAbbrev.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/esp/espAbbrev.c
+${CC} -c -o ${PLATFORM}/obj/convenience.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/convenience.c
 
-${CC} -c -o ${PLATFORM}/obj/espFramework.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/esp/espFramework.c
+${CC} -c -o ${PLATFORM}/obj/dirHandler.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/dirHandler.c
 
-${CC} -c -o ${PLATFORM}/obj/espHandler.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/esp/espHandler.c
+${CC} -c -o ${PLATFORM}/obj/fileHandler.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/fileHandler.c
 
-${CC} -c -o ${PLATFORM}/obj/espHtml.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/esp/espHtml.c
+${CC} -c -o ${PLATFORM}/obj/log.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/log.c
 
-${CC} -c -o ${PLATFORM}/obj/espSession.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/esp/espSession.c
+${CC} -c -o ${PLATFORM}/obj/server.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/server.c
 
-${CC} -c -o ${PLATFORM}/obj/espTemplate.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/esp/espTemplate.c
+${CC} -shared -o ${PLATFORM}/lib/libappweb.so -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g ${PLATFORM}/obj/config.o ${PLATFORM}/obj/convenience.o ${PLATFORM}/obj/dirHandler.o ${PLATFORM}/obj/fileHandler.o ${PLATFORM}/obj/log.o ${PLATFORM}/obj/server.o ${LIBS} -lmpr -lhttp -lpcre -lpcre
 
-${CC} -c -o ${PLATFORM}/obj/mdb.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/esp/mdb.c
+rm -rf /Users/mob/git/appweb/linux-i686-debug/inc/edi.h
+cp -r /Users/mob/git/appweb/src/esp/edi.h /Users/mob/git/appweb/linux-i686-debug/inc/edi.h
 
-${CC} -c -o ${PLATFORM}/obj/sdb.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/esp/sdb.c
+rm -rf /Users/mob/git/appweb/linux-i686-debug/inc/esp-app.h
+cp -r /Users/mob/git/appweb/src/esp/esp-app.h /Users/mob/git/appweb/linux-i686-debug/inc/esp-app.h
 
-${CC} -shared -o ${PLATFORM}/lib/mod_esp.so -L${PLATFORM}/lib -g ${PLATFORM}/obj/edi.o ${PLATFORM}/obj/espAbbrev.o ${PLATFORM}/obj/espFramework.o ${PLATFORM}/obj/espHandler.o ${PLATFORM}/obj/espHtml.o ${PLATFORM}/obj/espSession.o ${PLATFORM}/obj/espTemplate.o ${PLATFORM}/obj/mdb.o ${PLATFORM}/obj/sdb.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
+rm -rf /Users/mob/git/appweb/linux-i686-debug/inc/esp.h
+cp -r /Users/mob/git/appweb/src/esp/esp.h /Users/mob/git/appweb/linux-i686-debug/inc/esp.h
 
-${CC} -c -o ${PLATFORM}/obj/esp.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/esp/esp.c
+rm -rf /Users/mob/git/appweb/linux-i686-debug/inc/mdb.h
+cp -r /Users/mob/git/appweb/src/esp/mdb.h /Users/mob/git/appweb/linux-i686-debug/inc/mdb.h
 
-${CC} -o ${PLATFORM}/bin/esp -L${PLATFORM}/lib -g -L${PLATFORM}/lib ${PLATFORM}/obj/edi.o ${PLATFORM}/obj/esp.o ${PLATFORM}/obj/espAbbrev.o ${PLATFORM}/obj/espFramework.o ${PLATFORM}/obj/espHandler.o ${PLATFORM}/obj/espHtml.o ${PLATFORM}/obj/espSession.o ${PLATFORM}/obj/espTemplate.o ${PLATFORM}/obj/mdb.o ${PLATFORM}/obj/sdb.o ${LIBS} -lappweb -lmpr -lhttp -lpcre -L${PLATFORM}/lib -g
+${CC} -c -o ${PLATFORM}/obj/edi.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/edi.c
+
+${CC} -c -o ${PLATFORM}/obj/espAbbrev.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espAbbrev.c
+
+${CC} -c -o ${PLATFORM}/obj/espFramework.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espFramework.c
+
+${CC} -c -o ${PLATFORM}/obj/espHandler.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espHandler.c
+
+${CC} -c -o ${PLATFORM}/obj/espHtml.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espHtml.c
+
+${CC} -c -o ${PLATFORM}/obj/espSession.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espSession.c
+
+${CC} -c -o ${PLATFORM}/obj/espTemplate.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espTemplate.c
+
+${CC} -c -o ${PLATFORM}/obj/mdb.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/mdb.c
+
+${CC} -c -o ${PLATFORM}/obj/sdb.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/sdb.c
+
+${CC} -shared -o ${PLATFORM}/lib/mod_esp.so -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g ${PLATFORM}/obj/edi.o ${PLATFORM}/obj/espAbbrev.o ${PLATFORM}/obj/espFramework.o ${PLATFORM}/obj/espHandler.o ${PLATFORM}/obj/espHtml.o ${PLATFORM}/obj/espSession.o ${PLATFORM}/obj/espTemplate.o ${PLATFORM}/obj/mdb.o ${PLATFORM}/obj/sdb.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
+
+${CC} -c -o ${PLATFORM}/obj/esp.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/esp.c
+
+${CC} -o ${PLATFORM}/bin/esp -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g -L${PLATFORM}/lib ${PLATFORM}/obj/edi.o ${PLATFORM}/obj/esp.o ${PLATFORM}/obj/espAbbrev.o ${PLATFORM}/obj/espFramework.o ${PLATFORM}/obj/espHandler.o ${PLATFORM}/obj/espHtml.o ${PLATFORM}/obj/espSession.o ${PLATFORM}/obj/espTemplate.o ${PLATFORM}/obj/mdb.o ${PLATFORM}/obj/sdb.o ${LIBS} -lappweb -lmpr -lhttp -lpcre -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g
 
 rm -rf /Users/mob/git/appweb/linux-i686-debug/lib/esp.conf
-
 cp -r /Users/mob/git/appweb/src/esp/esp.conf /Users/mob/git/appweb/linux-i686-debug/lib/esp.conf
 
 rm -rf /Users/mob/git/appweb/linux-i686-debug/lib/esp-www
-
 cp -r /Users/mob/git/appweb/src/esp/www /Users/mob/git/appweb/linux-i686-debug/lib/esp-www
 
-${CC} -c -o ${PLATFORM}/obj/cgiHandler.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/modules/cgiHandler.c
+${CC} -c -o ${PLATFORM}/obj/cgiHandler.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/modules/cgiHandler.c
 
-${CC} -shared -o ${PLATFORM}/lib/mod_cgi.so -L${PLATFORM}/lib -g ${PLATFORM}/obj/cgiHandler.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
+${CC} -shared -o ${PLATFORM}/lib/mod_cgi.so -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g ${PLATFORM}/obj/cgiHandler.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
 
-${CC} -c -o ${PLATFORM}/obj/auth.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/utils/auth.c
+${CC} -c -o ${PLATFORM}/obj/auth.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/utils/auth.c
 
-${CC} -o ${PLATFORM}/bin/auth -L${PLATFORM}/lib -g -L${PLATFORM}/lib ${PLATFORM}/obj/auth.o ${LIBS} -lmpr -L${PLATFORM}/lib -g
+${CC} -o ${PLATFORM}/bin/auth -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g -L${PLATFORM}/lib ${PLATFORM}/obj/auth.o ${LIBS} -lmpr -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g
 
-${CC} -c -o ${PLATFORM}/obj/cgiProgram.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/utils/cgiProgram.c
+${CC} -c -o ${PLATFORM}/obj/cgiProgram.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/utils/cgiProgram.c
 
-${CC} -o ${PLATFORM}/bin/cgiProgram -L${PLATFORM}/lib -g -L${PLATFORM}/lib ${PLATFORM}/obj/cgiProgram.o ${LIBS} -L${PLATFORM}/lib -g
+${CC} -o ${PLATFORM}/bin/cgiProgram -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g -L${PLATFORM}/lib ${PLATFORM}/obj/cgiProgram.o ${LIBS} -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g
 
-${CC} -c -o ${PLATFORM}/obj/setConfig.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/utils/setConfig.c
+${CC} -c -o ${PLATFORM}/obj/setConfig.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/utils/setConfig.c
 
-${CC} -o ${PLATFORM}/bin/setConfig -L${PLATFORM}/lib -g -L${PLATFORM}/lib ${PLATFORM}/obj/setConfig.o ${LIBS} -lmpr -L${PLATFORM}/lib -g
+${CC} -o ${PLATFORM}/bin/setConfig -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g -L${PLATFORM}/lib ${PLATFORM}/obj/setConfig.o ${LIBS} -lmpr -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g
 
-${CC} -c -o ${PLATFORM}/obj/appweb.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc src/server/appweb.c
+rm -rf /Users/mob/git/appweb/linux-i686-debug/inc/appwebMonitor.h
+cp -r /Users/mob/git/appweb/src/server/appwebMonitor.h /Users/mob/git/appweb/linux-i686-debug/inc/appwebMonitor.h
 
-${CC} -o ${PLATFORM}/bin/appweb -L${PLATFORM}/lib -g -L${PLATFORM}/lib ${PLATFORM}/obj/appweb.o ${LIBS} -lappweb -lmpr -lhttp -lpcre -L${PLATFORM}/lib -g
+${CC} -c -o ${PLATFORM}/obj/appweb.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/server/appweb.c
 
-${CC} -c -o ${PLATFORM}/obj/testAppweb.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc -Isrc/test src/test/testAppweb.c
+${CC} -o ${PLATFORM}/bin/appweb -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g -L${PLATFORM}/lib ${PLATFORM}/obj/appweb.o ${LIBS} -lappweb -lmpr -lhttp -lpcre -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g
 
-${CC} -c -o ${PLATFORM}/obj/testHttp.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc -Isrc/deps/mpr -Isrc/deps/pcre -Isrc/deps/http -Isrc/deps/sqlite -Isrc -Isrc/esp -Isrc -Isrc/test src/test/testHttp.c
+rm -rf /Users/mob/git/appweb/linux-i686-debug/inc/testAppweb.h
+cp -r /Users/mob/git/appweb/src/test/testAppweb.h /Users/mob/git/appweb/linux-i686-debug/inc/testAppweb.h
 
-${CC} -o ${PLATFORM}/bin/testAppweb -L${PLATFORM}/lib -g -L${PLATFORM}/lib ${PLATFORM}/obj/testAppweb.o ${PLATFORM}/obj/testHttp.o ${LIBS} -lappweb -lmpr -lhttp -lpcre -L${PLATFORM}/lib -g
+${CC} -c -o ${PLATFORM}/obj/testAppweb.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/test/testAppweb.c
+
+${CC} -c -o ${PLATFORM}/obj/testHttp.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/test/testHttp.c
+
+${CC} -o ${PLATFORM}/bin/testAppweb -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g -L${PLATFORM}/lib ${PLATFORM}/obj/testAppweb.o ${PLATFORM}/obj/testHttp.o ${LIBS} -lappweb -lmpr -lhttp -lpcre -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g
 
 echo '#!/Users/mob/git/appweb/linux-i686-debug/bin/cgiProgram' >/Users/mob/git/appweb/src/test/cgi-bin/testScript ; chmod +x /Users/mob/git/appweb/src/test/cgi-bin/testScript
 echo -e '#!`type -p sh`' >/Users/mob/git/appweb/src/test/web/caching/cache.cgi

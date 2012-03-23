@@ -73,8 +73,7 @@ Bit.load({
                 init.d, init, ssl
          */
         package: {
-            xdepends: ['packageBinary', 'packageSource'],
-            depends: ['packageBinary'],
+            depends: ['packageBinary', 'packageSource'],
         },
 
         packageBinary: {
@@ -214,7 +213,6 @@ Bit.load({
                 let pkg = src.join(s.product + '-' + s.version)
                 safeRemove(pkg)
                 pkg.makeDir()
-
                 install(['Makefile', 'product.bit'], pkg)
                 install('bits', pkg)
                 install('*.md', pkg, {fold: true, expand: true})
@@ -244,8 +242,7 @@ Bit.load({
                 install('projects', pkg, {
                     exclude: /\\/Debug\\/|\\/Release\\/|\\.ncb|\\.mode1v3|\\.pbxuser/,
                 })
-                // package(pkg, ['src', 'combo', 'flat'])
-                package(src, ['src'])
+                package(pkg, ['src', 'combo', 'flat'])
             ",
         },
     },

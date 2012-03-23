@@ -121,9 +121,9 @@ syncFiles() {
                 log "Update" "${target#./}"
                 cp ${SRC}/${file} ${DIR}/${target}
             fi
-            if [ `uname` != "CYGWIN_NT-5.1" -a ! -d "${DIR}/target}" ] ; then
-                chmod -w "${DIR}/$target"
-            fi
+            # if [ `uname` != "CYGWIN_NT-5.1" -a ! -d "${DIR}/target}" ] ; then
+            #     chmod -w "${DIR}/$target"
+            # fi
         fi
     done
 }
