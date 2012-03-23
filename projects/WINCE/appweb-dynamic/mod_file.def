@@ -1,3 +1,0 @@
-LIBRARY mod_file.dll
-EXPORTS
-maFileHandlerInit

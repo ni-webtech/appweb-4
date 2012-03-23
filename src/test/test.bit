@@ -100,5 +100,14 @@ Bit.load({
                 activity('Test', 'Unit tests complete')
             ",
         },
+
+        'clean-test': {
+            type: 'clean',                                                                                 
+            action: "                                                                                      
+                rm('cache/*')
+                rm('app/cache/*')
+                rm('junk/**')
+            "                                                                                              
+        },  
     },
 })

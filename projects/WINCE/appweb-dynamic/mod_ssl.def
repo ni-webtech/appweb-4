@@ -1,3 +1,0 @@
-LIBRARY mod_ssl.dll
-EXPORTS
-  maSslModuleInit

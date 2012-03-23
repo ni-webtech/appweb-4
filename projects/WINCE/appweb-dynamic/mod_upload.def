@@ -1,3 +1,0 @@
-LIBRARY mod_upload.dll
-EXPORTS
-maUploadFilterInit

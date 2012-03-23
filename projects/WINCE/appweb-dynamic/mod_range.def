@@ -1,5 +1,0 @@
-LIBRARY mod_range.dll
-EXPORTS
-maCreateRangeBoundary
-maFixRangeLength
-maRangeFilterInit

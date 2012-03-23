@@ -1,7 +1,0 @@
-			<Tool
-				Name="VCCustomBuildTool"
-				Description="Build Ejscript Modules"
-				CommandLine="if not exist $(ProjectDir)\..\..\..\bin\ajs.mod echo Building ajs.mod &amp; $(IntDir)\ajsc --debug --optimize 9 --bind --empty --out $(ProjectDir)/../../../bin/ajs.mod $(ProjectDir)/../../../src/ejs/ejs.es&#x0D;&#x0A;if not exist $(ProjectDir)\..\..\..\bin\ajsweb.mod echo Building ajsweb.mod &amp; $(IntDir)\ajsc --debug --optimize 9 --bind --out $(ProjectDir)/../../../bin/ajsweb.mod $(ProjectDir)/../../../src/ejs/ejsweb.es&#x0D;&#x0A;if not exist $(ProjectDir)\..\..\..\src\include\ejs.slots.h echo Building ejs.slots.h &amp; $(IntDir)\ajsmod --showBuiltin --showDebug --empty --listing --out $(ProjectDir)/../../../src/include/ejs.slots.h $(ProjectDir)/../../../bin/ajs.mod"
-				Outputs="$(ProjectDir)/../../../bin/ajs.mod"
-			/>
-

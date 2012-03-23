@@ -1,4 +1,0 @@
-LIBRARY mod_egi.dll
-EXPORTS
-maDefineEgiForm
-maEgiHandlerInit

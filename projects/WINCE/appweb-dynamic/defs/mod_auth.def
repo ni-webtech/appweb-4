@@ -1,7 +1,0 @@
-LIBRARY mod_auth.dll
-EXPORTS
-maAuthFilterInit
-maSetAuthQop
-maSetAuthRealm
-maSetAuthRequiredGroups
-maSetAuthRequiredUsers

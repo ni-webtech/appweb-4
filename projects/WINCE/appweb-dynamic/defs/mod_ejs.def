@@ -1,4 +1,0 @@
-LIBRARY mod_ejs.dll
-EXPORTS
-__ejsAppweb_floating_point_resolution
-maEjsHandlerInit
