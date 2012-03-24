@@ -66,12 +66,14 @@ Bit.load({
     targets: {
         install: {
             depends: ['build'],
+            depends: ['build', 'uninstall'],
             action: "
                 packageBinaryFiles()
                 package(bit.dir.pkg.join('bin'), 'install')
                 createLinks()
                 trace('Start', 'appman install enable start')
                 Cmd.run('/usr/local/bin/appman install enable start')
+                bit.dir.pkg.join('bin').removeAll()
             "
         },
 

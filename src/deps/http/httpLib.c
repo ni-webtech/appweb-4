@@ -3741,9 +3741,9 @@ int httpStartEndpoint(HttpEndpoint *endpoint)
     proto = mprIsSocketSecure(endpoint->sock) ? "HTTPS" : "HTTP ";
     ip = *endpoint->ip ? endpoint->ip : "*";
     if (mprIsSocketV6(endpoint->sock)) {
-        mprLog(1, "Started %s service on \"[%s]:%d\"", proto, ip, endpoint->port);
+        mprLog(2, "Started %s service on \"[%s]:%d\"", proto, ip, endpoint->port);
     } else {
-        mprLog(1, "Started %s service on \"%s:%d\"", proto, ip, endpoint->port);
+        mprLog(2, "Started %s service on \"%s:%d\"", proto, ip, endpoint->port);
     }
     return 0;
 }

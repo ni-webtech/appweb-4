@@ -405,7 +405,6 @@ void *mprReallocMem(void *ptr, ssize usize)
 }
 
 
-//  MOB rename  
 void *mprMemdupMem(cvoid *ptr, ssize usize)
 {
     char    *newp;
@@ -899,7 +898,7 @@ static MprFreeMem *getQueue(ssize size)
     Allocate virtual memory and check a memory allocation request against configured maximums and redlines. 
     An application-wide memory allocation failure routine can be invoked from here when a memory redline is exceeded. 
     It is the application's responsibility to set the red-line value suitable for the system.
-    Memory is not zereod on all platforms.
+    Memory is zereod on all platforms.
  */
 void *mprVirtAlloc(ssize size, int mode)
 {
