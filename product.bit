@@ -16,7 +16,7 @@ Bit.load({
         "src/modules/modules.bit",
         "src/utils/utils.bit",
         "src/server/server.bit",
-        "src/test/test.bit",
+        "test/test.bit",
         "doc/doc.bit",
         "${BITS}/embedthis.bit",
     ],
@@ -102,6 +102,9 @@ Bit.load({
                 install('*.md', pkg, {fold: true, expand: true})
                 install('configure', pkg, {permissions: 0755})
                 install('src', pkg, {
+                    exclude: /\\.log$|\\.lst$|ejs.zip|\\.stackdump$|\\/cache|huge.txt|\\.swp$|\\.tmp/,
+                })
+                install('test', pkg, {
                     exclude: /\\.log$|\\.lst$|ejs.zip|\\.stackdump$|\\/cache|huge.txt|\\.swp$|\\.tmp/,
                 })
                 install('doc', pkg, {
