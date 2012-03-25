@@ -7,7 +7,7 @@ CC        := /usr/bin/cc
 CFLAGS    := -fPIC -Wall -g -Wshorten-64-to-32
 DFLAGS    := -DPIC -DCPU=X86_64
 IFLAGS    := -I$(PLATFORM)/inc
-LDFLAGS   := -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L/Users/mob/git/appweb/$(PLATFORM)/lib -g -ldl
+LDFLAGS   := -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L$(PLATFORM)/lib -g -ldl
 LIBS      := -lpthread -lm
 
 all: prep \
@@ -30,10 +30,10 @@ all: prep \
         $(PLATFORM)/bin/setConfig \
         $(PLATFORM)/bin/appweb \
         $(PLATFORM)/bin/testAppweb \
-        src/test/cgi-bin/testScript \
-        src/test/web/caching/cache.cgi \
-        src/test/web/basic/basic.cgi \
-        src/test/cgi-bin/cgiProgram
+        test/cgi-bin/testScript \
+        test/web/caching/cache.cgi \
+        test/web/basic/basic.cgi \
+        test/cgi-bin/cgiProgram
 
 .PHONY: prep
 
@@ -100,8 +100,8 @@ clean:
 	rm -rf $(PLATFORM)/obj/testHttp.o
 
 $(PLATFORM)/inc/mpr.h: 
-	rm -fr /Users/mob/git/appweb/macosx-x86_64-debug/inc/mpr.h
-	cp -r /Users/mob/git/appweb/src/deps/mpr/mpr.h /Users/mob/git/appweb/macosx-x86_64-debug/inc/mpr.h
+	rm -fr macosx-x86_64-debug/inc/mpr.h
+	cp -r src/deps/mpr/mpr.h macosx-x86_64-debug/inc/mpr.h
 
 $(PLATFORM)/obj/mprLib.o: \
         src/deps/mpr/mprLib.c \
@@ -137,8 +137,8 @@ $(PLATFORM)/bin/makerom:  \
 	$(CC) -o $(PLATFORM)/bin/makerom -arch x86_64 -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L$(PLATFORM)/lib -g -ldl -L$(PLATFORM)/lib $(PLATFORM)/obj/makerom.o $(LIBS) -lmpr
 
 $(PLATFORM)/inc/pcre.h: 
-	rm -fr /Users/mob/git/appweb/macosx-x86_64-debug/inc/pcre.h
-	cp -r /Users/mob/git/appweb/src/deps/pcre/pcre.h /Users/mob/git/appweb/macosx-x86_64-debug/inc/pcre.h
+	rm -fr macosx-x86_64-debug/inc/pcre.h
+	cp -r src/deps/pcre/pcre.h macosx-x86_64-debug/inc/pcre.h
 
 $(PLATFORM)/obj/pcre.o: \
         src/deps/pcre/pcre.c \
@@ -152,8 +152,8 @@ $(PLATFORM)/lib/libpcre.dylib:  \
 	$(CC) -dynamiclib -o $(PLATFORM)/lib/libpcre.dylib -arch x86_64 -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L$(PLATFORM)/lib -g -ldl -install_name @rpath/libpcre.dylib $(PLATFORM)/obj/pcre.o $(LIBS)
 
 $(PLATFORM)/inc/http.h: 
-	rm -fr /Users/mob/git/appweb/macosx-x86_64-debug/inc/http.h
-	cp -r /Users/mob/git/appweb/src/deps/http/http.h /Users/mob/git/appweb/macosx-x86_64-debug/inc/http.h
+	rm -fr macosx-x86_64-debug/inc/http.h
+	cp -r src/deps/http/http.h macosx-x86_64-debug/inc/http.h
 
 $(PLATFORM)/obj/httpLib.o: \
         src/deps/http/httpLib.c \
@@ -181,8 +181,8 @@ $(PLATFORM)/bin/http:  \
 	$(CC) -o $(PLATFORM)/bin/http -arch x86_64 -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L$(PLATFORM)/lib -g -ldl -L$(PLATFORM)/lib $(PLATFORM)/obj/http.o $(LIBS) -lhttp -lmpr -lpcre
 
 $(PLATFORM)/inc/sqlite3.h: 
-	rm -fr /Users/mob/git/appweb/macosx-x86_64-debug/inc/sqlite3.h
-	cp -r /Users/mob/git/appweb/src/deps/sqlite/sqlite3.h /Users/mob/git/appweb/macosx-x86_64-debug/inc/sqlite3.h
+	rm -fr macosx-x86_64-debug/inc/sqlite3.h
+	cp -r src/deps/sqlite/sqlite3.h macosx-x86_64-debug/inc/sqlite3.h
 
 $(PLATFORM)/obj/sqlite3.o: \
         src/deps/sqlite/sqlite3.c \
@@ -196,12 +196,12 @@ $(PLATFORM)/lib/libsqlite3.dylib:  \
 	$(CC) -dynamiclib -o $(PLATFORM)/lib/libsqlite3.dylib -arch x86_64 -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L$(PLATFORM)/lib -g -ldl -install_name @rpath/libsqlite3.dylib $(PLATFORM)/obj/sqlite3.o $(LIBS)
 
 $(PLATFORM)/inc/appweb.h: 
-	rm -fr /Users/mob/git/appweb/macosx-x86_64-debug/inc/appweb.h
-	cp -r /Users/mob/git/appweb/src/appweb.h /Users/mob/git/appweb/macosx-x86_64-debug/inc/appweb.h
+	rm -fr macosx-x86_64-debug/inc/appweb.h
+	cp -r src/appweb.h macosx-x86_64-debug/inc/appweb.h
 
 $(PLATFORM)/inc/customize.h: 
-	rm -fr /Users/mob/git/appweb/macosx-x86_64-debug/inc/customize.h
-	cp -r /Users/mob/git/appweb/src/customize.h /Users/mob/git/appweb/macosx-x86_64-debug/inc/customize.h
+	rm -fr macosx-x86_64-debug/inc/customize.h
+	cp -r src/customize.h macosx-x86_64-debug/inc/customize.h
 
 $(PLATFORM)/obj/config.o: \
         src/config.c \
@@ -255,20 +255,20 @@ $(PLATFORM)/lib/libappweb.dylib:  \
 	$(CC) -dynamiclib -o $(PLATFORM)/lib/libappweb.dylib -arch x86_64 -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L$(PLATFORM)/lib -g -ldl -install_name @rpath/libappweb.dylib $(PLATFORM)/obj/config.o $(PLATFORM)/obj/convenience.o $(PLATFORM)/obj/dirHandler.o $(PLATFORM)/obj/fileHandler.o $(PLATFORM)/obj/log.o $(PLATFORM)/obj/server.o $(LIBS) -lmpr -lhttp -lpcre -lpcre
 
 $(PLATFORM)/inc/edi.h: 
-	rm -fr /Users/mob/git/appweb/macosx-x86_64-debug/inc/edi.h
-	cp -r /Users/mob/git/appweb/src/esp/edi.h /Users/mob/git/appweb/macosx-x86_64-debug/inc/edi.h
+	rm -fr macosx-x86_64-debug/inc/edi.h
+	cp -r src/esp/edi.h macosx-x86_64-debug/inc/edi.h
 
 $(PLATFORM)/inc/esp-app.h: 
-	rm -fr /Users/mob/git/appweb/macosx-x86_64-debug/inc/esp-app.h
-	cp -r /Users/mob/git/appweb/src/esp/esp-app.h /Users/mob/git/appweb/macosx-x86_64-debug/inc/esp-app.h
+	rm -fr macosx-x86_64-debug/inc/esp-app.h
+	cp -r src/esp/esp-app.h macosx-x86_64-debug/inc/esp-app.h
 
 $(PLATFORM)/inc/esp.h: 
-	rm -fr /Users/mob/git/appweb/macosx-x86_64-debug/inc/esp.h
-	cp -r /Users/mob/git/appweb/src/esp/esp.h /Users/mob/git/appweb/macosx-x86_64-debug/inc/esp.h
+	rm -fr macosx-x86_64-debug/inc/esp.h
+	cp -r src/esp/esp.h macosx-x86_64-debug/inc/esp.h
 
 $(PLATFORM)/inc/mdb.h: 
-	rm -fr /Users/mob/git/appweb/macosx-x86_64-debug/inc/mdb.h
-	cp -r /Users/mob/git/appweb/src/esp/mdb.h /Users/mob/git/appweb/macosx-x86_64-debug/inc/mdb.h
+	rm -fr macosx-x86_64-debug/inc/mdb.h
+	cp -r src/esp/mdb.h macosx-x86_64-debug/inc/mdb.h
 
 $(PLATFORM)/obj/edi.o: \
         src/esp/edi.c \
@@ -370,12 +370,12 @@ $(PLATFORM)/bin/esp:  \
 	$(CC) -o $(PLATFORM)/bin/esp -arch x86_64 -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L$(PLATFORM)/lib -g -ldl -L$(PLATFORM)/lib $(PLATFORM)/obj/edi.o $(PLATFORM)/obj/esp.o $(PLATFORM)/obj/espAbbrev.o $(PLATFORM)/obj/espFramework.o $(PLATFORM)/obj/espHandler.o $(PLATFORM)/obj/espHtml.o $(PLATFORM)/obj/espSession.o $(PLATFORM)/obj/espTemplate.o $(PLATFORM)/obj/mdb.o $(PLATFORM)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 $(PLATFORM)/lib/esp.conf: 
-	rm -fr /Users/mob/git/appweb/macosx-x86_64-debug/lib/esp.conf
-	cp -r /Users/mob/git/appweb/src/esp/esp.conf /Users/mob/git/appweb/macosx-x86_64-debug/lib/esp.conf
+	rm -fr macosx-x86_64-debug/lib/esp.conf
+	cp -r src/esp/esp.conf macosx-x86_64-debug/lib/esp.conf
 
 $(PLATFORM)/lib/esp-www: 
-	rm -fr /Users/mob/git/appweb/macosx-x86_64-debug/lib/esp-www
-	cp -r /Users/mob/git/appweb/src/esp/www /Users/mob/git/appweb/macosx-x86_64-debug/lib/esp-www
+	rm -fr macosx-x86_64-debug/lib/esp-www
+	cp -r src/esp/www macosx-x86_64-debug/lib/esp-www
 
 $(PLATFORM)/obj/cgiHandler.o: \
         src/modules/cgiHandler.c \
@@ -431,8 +431,8 @@ $(PLATFORM)/bin/setConfig:  \
 	$(CC) -o $(PLATFORM)/bin/setConfig -arch x86_64 -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L$(PLATFORM)/lib -g -ldl -L$(PLATFORM)/lib $(PLATFORM)/obj/setConfig.o $(LIBS) -lmpr
 
 $(PLATFORM)/inc/appwebMonitor.h: 
-	rm -fr /Users/mob/git/appweb/macosx-x86_64-debug/inc/appwebMonitor.h
-	cp -r /Users/mob/git/appweb/src/server/appwebMonitor.h /Users/mob/git/appweb/macosx-x86_64-debug/inc/appwebMonitor.h
+	rm -fr macosx-x86_64-debug/inc/appwebMonitor.h
+	cp -r src/server/appwebMonitor.h macosx-x86_64-debug/inc/appwebMonitor.h
 
 $(PLATFORM)/obj/appweb.o: \
         src/server/appweb.c \
@@ -447,20 +447,20 @@ $(PLATFORM)/bin/appweb:  \
 	$(CC) -o $(PLATFORM)/bin/appweb -arch x86_64 -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L$(PLATFORM)/lib -g -ldl -L$(PLATFORM)/lib $(PLATFORM)/obj/appweb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 $(PLATFORM)/inc/testAppweb.h: 
-	rm -fr /Users/mob/git/appweb/macosx-x86_64-debug/inc/testAppweb.h
-	cp -r /Users/mob/git/appweb/src/test/testAppweb.h /Users/mob/git/appweb/macosx-x86_64-debug/inc/testAppweb.h
+	rm -fr macosx-x86_64-debug/inc/testAppweb.h
+	cp -r test/testAppweb.h macosx-x86_64-debug/inc/testAppweb.h
 
 $(PLATFORM)/obj/testAppweb.o: \
-        src/test/testAppweb.c \
+        test/testAppweb.c \
         $(PLATFORM)/inc/buildConfig.h \
         $(PLATFORM)/inc/testAppweb.h
-	$(CC) -c -o $(PLATFORM)/obj/testAppweb.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/test/testAppweb.c
+	$(CC) -c -o $(PLATFORM)/obj/testAppweb.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc test/testAppweb.c
 
 $(PLATFORM)/obj/testHttp.o: \
-        src/test/testHttp.c \
+        test/testHttp.c \
         $(PLATFORM)/inc/buildConfig.h \
         $(PLATFORM)/inc/testAppweb.h
-	$(CC) -c -o $(PLATFORM)/obj/testHttp.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/test/testHttp.c
+	$(CC) -c -o $(PLATFORM)/obj/testHttp.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc test/testHttp.c
 
 $(PLATFORM)/bin/testAppweb:  \
         $(PLATFORM)/lib/libappweb.dylib \
@@ -469,28 +469,28 @@ $(PLATFORM)/bin/testAppweb:  \
         $(PLATFORM)/obj/testHttp.o
 	$(CC) -o $(PLATFORM)/bin/testAppweb -arch x86_64 -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L$(PLATFORM)/lib -g -ldl -L$(PLATFORM)/lib $(PLATFORM)/obj/testAppweb.o $(PLATFORM)/obj/testHttp.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
-src/test/cgi-bin/testScript: 
-	echo '#!/Users/mob/git/appweb/macosx-x86_64-debug/bin/cgiProgram' >/Users/mob/git/appweb/src/test/cgi-bin/testScript ; chmod +x /Users/mob/git/appweb/src/test/cgi-bin/testScript
+test/cgi-bin/testScript: 
+	echo '#!$(PLATFORM)/bin/cgiProgram' >test/cgi-bin/testScript ; chmod +x test/cgi-bin/testScript
 
-src/test/web/caching/cache.cgi: 
-	echo -e '#!`type -p sh`' >/Users/mob/git/appweb/src/test/web/caching/cache.cgi
-	echo -e '' >>/Users/mob/git/appweb/src/test/web/caching/cache.cgi
-	echo -e 'echo HTTP/1.0 200 OK' >>/Users/mob/git/appweb/src/test/web/caching/cache.cgi
-	echo -e 'echo Content-Type: text/plain' >>/Users/mob/git/appweb/src/test/web/caching/cache.cgi
-	echo -e 'date' >>/Users/mob/git/appweb/src/test/web/caching/cache.cgi
-	chmod +x /Users/mob/git/appweb/src/test/web/caching/cache.cgi
+test/web/caching/cache.cgi: 
+	echo -e '#!`type -p sh`' >test/web/caching/cache.cgi
+	echo -e '' >>test/web/caching/cache.cgi
+	echo -e 'echo HTTP/1.0 200 OK' >>test/web/caching/cache.cgi
+	echo -e 'echo Content-Type: text/plain' >>test/web/caching/cache.cgi
+	echo -e 'date' >>test/web/caching/cache.cgi
+	chmod +x test/web/caching/cache.cgi
 
-src/test/web/basic/basic.cgi: 
-	echo -e '#!`type -p sh`' >/Users/mob/git/appweb/src/test/web/basic/basic.cgi
-	echo -e '' >>/Users/mob/git/appweb/src/test/web/basic/basic.cgi
-	echo -e 'echo Content-Type: text/plain' >>/Users/mob/git/appweb/src/test/web/basic/basic.cgi
-	echo -e '/usr/bin/env' >>/Users/mob/git/appweb/src/test/web/basic/basic.cgi
-	chmod +x /Users/mob/git/appweb/src/test/web/basic/basic.cgi
+test/web/basic/basic.cgi: 
+	echo -e '#!`type -p sh`' >test/web/basic/basic.cgi
+	echo -e '' >>test/web/basic/basic.cgi
+	echo -e 'echo Content-Type: text/plain' >>test/web/basic/basic.cgi
+	echo -e '/usr/bin/env' >>test/web/basic/basic.cgi
+	chmod +x test/web/basic/basic.cgi
 
-src/test/cgi-bin/cgiProgram: 
-	cp /Users/mob/git/appweb/macosx-x86_64-debug/bin/cgiProgram /Users/mob/git/appweb/src/test/cgi-bin/cgiProgram
-	cp /Users/mob/git/appweb/macosx-x86_64-debug/bin/cgiProgram /Users/mob/git/appweb/src/test/cgi-bin/nph-cgiProgram
-	cp /Users/mob/git/appweb/macosx-x86_64-debug/bin/cgiProgram '/Users/mob/git/appweb/src/test/cgi-bin/cgi Program'
-	cp /Users/mob/git/appweb/macosx-x86_64-debug/bin/cgiProgram /Users/mob/git/appweb/src/test/web/cgiProgram.cgi
-	chmod +x /Users/mob/git/appweb/src/test/cgi-bin/* /Users/mob/git/appweb/src/test/web/cgiProgram.cgi
+test/cgi-bin/cgiProgram: 
+	cp $(PLATFORM)/bin/cgiProgram test/cgi-bin/cgiProgram
+	cp $(PLATFORM)/bin/cgiProgram test/cgi-bin/nph-cgiProgram
+	cp $(PLATFORM)/bin/cgiProgram 'test/cgi-bin/cgi Program'
+	cp $(PLATFORM)/bin/cgiProgram test/web/cgiProgram.cgi
+	chmod +x test/cgi-bin/* test/web/cgiProgram.cgi
 

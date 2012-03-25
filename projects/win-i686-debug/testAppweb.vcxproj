@@ -30,7 +30,7 @@
 </ItemGroup>
 
 <PropertyGroup Label="Globals">
-  <ProjectGuid>{84fd6a07-f2bd-4dba-a453-f8ea04e49973}</ProjectGuid>
+  <ProjectGuid>{dad3ed02-5f66-46a8-9a64-ad9a01f9e4b1}</ProjectGuid>
   <RootNamespace />
   <Keyword>Win32Proj</Keyword>
 </PropertyGroup>
@@ -56,8 +56,8 @@
 </PropertyGroup>
     
 <ItemGroup>
-  <ClCompile Include="..\..\src\test\testAppweb.c" />
-  <ClCompile Include="..\..\src\test\testHttp.c" />
+  <ClCompile Include="..\..\test\testAppweb.c" />
+  <ClCompile Include="..\..\test\testHttp.c" />
 </ItemGroup>
 <ItemDefinitionGroup>
 <Link>
@@ -68,7 +68,7 @@
 
 <ItemGroup>
   <ProjectReference Include="libappweb.vcxproj">
-  <Project>d0064f9d-295d-4622-a880-c8c449e5b0f2</Project>
+  <Project>8eb41e24-e1c4-4ee6-8ab1-b29f8037c233</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>

@@ -30,7 +30,7 @@
 </ItemGroup>
 
 <PropertyGroup Label="Globals">
-  <ProjectGuid>{d0064f9d-295d-4622-a880-c8c449e5b0f2}</ProjectGuid>
+  <ProjectGuid>{8eb41e24-e1c4-4ee6-8ab1-b29f8037c233}</ProjectGuid>
   <RootNamespace />
   <Keyword>Win32Proj</Keyword>
 </PropertyGroup>
@@ -72,21 +72,21 @@
 
 <ItemGroup>
   <ProjectReference Include="libmpr.vcxproj">
-  <Project>481699ab-b440-4960-aa39-69e64207ff19</Project>
+  <Project>a6d0c15f-29ba-4d67-b317-1efb94a76ff9</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>
 
 <ItemGroup>
   <ProjectReference Include="libhttp.vcxproj">
-  <Project>8079f974-ab6c-4b05-b860-03e77c647b1f</Project>
+  <Project>80236165-0ec4-4fd2-b3e8-526d37632a95</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>
 
 <ItemGroup>
   <ProjectReference Include="libpcre.vcxproj">
-  <Project>b7c2ef29-82bc-4543-a6e9-6e8040cbed31</Project>
+  <Project>9998efd7-ce72-42c7-a6b5-a3136d361208</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>
