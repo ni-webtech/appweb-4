@@ -157,3 +157,10 @@ web/reload.esp
 /*-*-debug/
 /*-*-release/
 releases
+test/cgi-bin/cgiProgram
+test/cgi-bin/testScript
+test/farm.conf
+test/regress/tcp
+test/servers.conf
+test/trace.txt
+test/web/caching/cache.cgi
