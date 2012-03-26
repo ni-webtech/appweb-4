@@ -4,7 +4,7 @@
 
 PLATFORM="macosx-x86_64-debug"
 CC="/usr/bin/cc"
-CFLAGS="-fPIC -Wall -g -Wshorten-64-to-32"
+CFLAGS="-DMACOSX=1 -DMACOSX -fPIC -Wall -g -Wshorten-64-to-32"
 DFLAGS="-DPIC -DCPU=X86_64"
 IFLAGS="-Imacosx-x86_64-debug/inc"
 LDFLAGS="-Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L${PLATFORM}/lib -g -ldl"

@@ -4,7 +4,7 @@
 
 PLATFORM="macosx-i686-debug"
 CC="cc"
-CFLAGS="-fPIC -Wall -g"
+CFLAGS="-DMACOSX=1 -DMACOSX -fPIC -Wall -g"
 DFLAGS="-DPIC -DCPU=I686"
 IFLAGS="-Imacosx-i686-debug/inc"
 LDFLAGS="-Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L${PLATFORM}/lib -g"

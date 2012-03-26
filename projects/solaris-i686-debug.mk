@@ -4,10 +4,10 @@
 
 PLATFORM  := solaris-i686-debug
 CC        := cc
-CFLAGS    := -Wall -fPIC -g -mcpu=i686
+CFLAGS    := -DSOLARIS=1 -DSOLARIS -Wall -fPIC -g -mcpu=i686
 DFLAGS    := -D_REENTRANT -DCPU=i686 -DPIC
 IFLAGS    := -I$(PLATFORM)/inc
-LDFLAGS   := -LMOB -L$(PLATFORM)/lib -g
+LDFLAGS   := -L$(PLATFORM)/lib -g
 LIBS      := -llxnet -lrt -lsocket -lpthread -lm
 
 all: prep \
@@ -110,7 +110,7 @@ $(PLATFORM)/obj/mprLib.o: \
 $(PLATFORM)/lib/libmpr.so:  \
         $(PLATFORM)/inc/mpr.h \
         $(PLATFORM)/obj/mprLib.o
-	$(CC) -shared -o $(PLATFORM)/lib/libmpr.so -LMOB -L$(PLATFORM)/lib -g $(PLATFORM)/obj/mprLib.o $(LIBS)
+	$(CC) -shared -o $(PLATFORM)/lib/libmpr.so -L$(PLATFORM)/lib -g $(PLATFORM)/obj/mprLib.o $(LIBS)
 
 $(PLATFORM)/obj/manager.o: \
         src/deps/mpr/manager.c \
@@ -120,7 +120,7 @@ $(PLATFORM)/obj/manager.o: \
 $(PLATFORM)/bin/appman:  \
         $(PLATFORM)/lib/libmpr.so \
         $(PLATFORM)/obj/manager.o
-	$(CC) -o $(PLATFORM)/bin/appman -LMOB -L$(PLATFORM)/lib -g -L$(PLATFORM)/lib $(PLATFORM)/obj/manager.o $(LIBS) -lmpr -LMOB -L$(PLATFORM)/lib -g
+	$(CC) -o $(PLATFORM)/bin/appman -L$(PLATFORM)/lib -g -L$(PLATFORM)/lib $(PLATFORM)/obj/manager.o $(LIBS) -lmpr -L$(PLATFORM)/lib -g
 
 $(PLATFORM)/obj/makerom.o: \
         src/deps/mpr/makerom.c \
@@ -130,7 +130,7 @@ $(PLATFORM)/obj/makerom.o: \
 $(PLATFORM)/bin/makerom:  \
         $(PLATFORM)/lib/libmpr.so \
         $(PLATFORM)/obj/makerom.o
-	$(CC) -o $(PLATFORM)/bin/makerom -LMOB -L$(PLATFORM)/lib -g -L$(PLATFORM)/lib $(PLATFORM)/obj/makerom.o $(LIBS) -lmpr -LMOB -L$(PLATFORM)/lib -g
+	$(CC) -o $(PLATFORM)/bin/makerom -L$(PLATFORM)/lib -g -L$(PLATFORM)/lib $(PLATFORM)/obj/makerom.o $(LIBS) -lmpr -L$(PLATFORM)/lib -g
 
 $(PLATFORM)/inc/pcre.h: 
 	rm -fr solaris-i686-debug/inc/pcre.h
@@ -144,7 +144,7 @@ $(PLATFORM)/obj/pcre.o: \
 $(PLATFORM)/lib/libpcre.so:  \
         $(PLATFORM)/inc/pcre.h \
         $(PLATFORM)/obj/pcre.o
-	$(CC) -shared -o $(PLATFORM)/lib/libpcre.so -LMOB -L$(PLATFORM)/lib -g $(PLATFORM)/obj/pcre.o $(LIBS)
+	$(CC) -shared -o $(PLATFORM)/lib/libpcre.so -L$(PLATFORM)/lib -g $(PLATFORM)/obj/pcre.o $(LIBS)
 
 $(PLATFORM)/inc/http.h: 
 	rm -fr solaris-i686-debug/inc/http.h
@@ -160,7 +160,7 @@ $(PLATFORM)/lib/libhttp.so:  \
         $(PLATFORM)/lib/libpcre.so \
         $(PLATFORM)/inc/http.h \
         $(PLATFORM)/obj/httpLib.o
-	$(CC) -shared -o $(PLATFORM)/lib/libhttp.so -LMOB -L$(PLATFORM)/lib -g $(PLATFORM)/obj/httpLib.o $(LIBS) -lmpr -lpcre
+	$(CC) -shared -o $(PLATFORM)/lib/libhttp.so -L$(PLATFORM)/lib -g $(PLATFORM)/obj/httpLib.o $(LIBS) -lmpr -lpcre
 
 $(PLATFORM)/obj/http.o: \
         src/deps/http/http.c \
@@ -170,7 +170,7 @@ $(PLATFORM)/obj/http.o: \
 $(PLATFORM)/bin/http:  \
         $(PLATFORM)/lib/libhttp.so \
         $(PLATFORM)/obj/http.o
-	$(CC) -o $(PLATFORM)/bin/http -LMOB -L$(PLATFORM)/lib -g -L$(PLATFORM)/lib $(PLATFORM)/obj/http.o $(LIBS) -lhttp -lmpr -lpcre -LMOB -L$(PLATFORM)/lib -g
+	$(CC) -o $(PLATFORM)/bin/http -L$(PLATFORM)/lib -g -L$(PLATFORM)/lib $(PLATFORM)/obj/http.o $(LIBS) -lhttp -lmpr -lpcre -L$(PLATFORM)/lib -g
 
 $(PLATFORM)/inc/sqlite3.h: 
 	rm -fr solaris-i686-debug/inc/sqlite3.h
@@ -184,7 +184,7 @@ $(PLATFORM)/obj/sqlite3.o: \
 $(PLATFORM)/lib/libsqlite3.so:  \
         $(PLATFORM)/inc/sqlite3.h \
         $(PLATFORM)/obj/sqlite3.o
-	$(CC) -shared -o $(PLATFORM)/lib/libsqlite3.so -LMOB -L$(PLATFORM)/lib -g $(PLATFORM)/obj/sqlite3.o $(LIBS)
+	$(CC) -shared -o $(PLATFORM)/lib/libsqlite3.so -L$(PLATFORM)/lib -g $(PLATFORM)/obj/sqlite3.o $(LIBS)
 
 $(PLATFORM)/inc/appweb.h: 
 	rm -fr solaris-i686-debug/inc/appweb.h
@@ -236,7 +236,7 @@ $(PLATFORM)/lib/libappweb.so:  \
         $(PLATFORM)/obj/fileHandler.o \
         $(PLATFORM)/obj/log.o \
         $(PLATFORM)/obj/server.o
-	$(CC) -shared -o $(PLATFORM)/lib/libappweb.so -LMOB -L$(PLATFORM)/lib -g $(PLATFORM)/obj/config.o $(PLATFORM)/obj/convenience.o $(PLATFORM)/obj/dirHandler.o $(PLATFORM)/obj/fileHandler.o $(PLATFORM)/obj/log.o $(PLATFORM)/obj/server.o $(LIBS) -lmpr -lhttp -lpcre -lpcre
+	$(CC) -shared -o $(PLATFORM)/lib/libappweb.so -L$(PLATFORM)/lib -g $(PLATFORM)/obj/config.o $(PLATFORM)/obj/convenience.o $(PLATFORM)/obj/dirHandler.o $(PLATFORM)/obj/fileHandler.o $(PLATFORM)/obj/log.o $(PLATFORM)/obj/server.o $(LIBS) -lmpr -lhttp -lpcre -lpcre
 
 $(PLATFORM)/inc/edi.h: 
 	rm -fr solaris-i686-debug/inc/edi.h
@@ -314,7 +314,7 @@ $(PLATFORM)/lib/mod_esp.so:  \
         $(PLATFORM)/obj/espTemplate.o \
         $(PLATFORM)/obj/mdb.o \
         $(PLATFORM)/obj/sdb.o
-	$(CC) -shared -o $(PLATFORM)/lib/mod_esp.so -LMOB -L$(PLATFORM)/lib -g $(PLATFORM)/obj/edi.o $(PLATFORM)/obj/espAbbrev.o $(PLATFORM)/obj/espFramework.o $(PLATFORM)/obj/espHandler.o $(PLATFORM)/obj/espHtml.o $(PLATFORM)/obj/espSession.o $(PLATFORM)/obj/espTemplate.o $(PLATFORM)/obj/mdb.o $(PLATFORM)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -shared -o $(PLATFORM)/lib/mod_esp.so -L$(PLATFORM)/lib -g $(PLATFORM)/obj/edi.o $(PLATFORM)/obj/espAbbrev.o $(PLATFORM)/obj/espFramework.o $(PLATFORM)/obj/espHandler.o $(PLATFORM)/obj/espHtml.o $(PLATFORM)/obj/espSession.o $(PLATFORM)/obj/espTemplate.o $(PLATFORM)/obj/mdb.o $(PLATFORM)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 $(PLATFORM)/obj/esp.o: \
         src/esp/esp.c \
@@ -333,7 +333,7 @@ $(PLATFORM)/bin/esp:  \
         $(PLATFORM)/obj/espTemplate.o \
         $(PLATFORM)/obj/mdb.o \
         $(PLATFORM)/obj/sdb.o
-	$(CC) -o $(PLATFORM)/bin/esp -LMOB -L$(PLATFORM)/lib -g -L$(PLATFORM)/lib $(PLATFORM)/obj/edi.o $(PLATFORM)/obj/esp.o $(PLATFORM)/obj/espAbbrev.o $(PLATFORM)/obj/espFramework.o $(PLATFORM)/obj/espHandler.o $(PLATFORM)/obj/espHtml.o $(PLATFORM)/obj/espSession.o $(PLATFORM)/obj/espTemplate.o $(PLATFORM)/obj/mdb.o $(PLATFORM)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre -LMOB -L$(PLATFORM)/lib -g
+	$(CC) -o $(PLATFORM)/bin/esp -L$(PLATFORM)/lib -g -L$(PLATFORM)/lib $(PLATFORM)/obj/edi.o $(PLATFORM)/obj/esp.o $(PLATFORM)/obj/espAbbrev.o $(PLATFORM)/obj/espFramework.o $(PLATFORM)/obj/espHandler.o $(PLATFORM)/obj/espHtml.o $(PLATFORM)/obj/espSession.o $(PLATFORM)/obj/espTemplate.o $(PLATFORM)/obj/mdb.o $(PLATFORM)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre -L$(PLATFORM)/lib -g
 
 $(PLATFORM)/lib/esp.conf: 
 	rm -fr solaris-i686-debug/lib/esp.conf
@@ -351,7 +351,7 @@ $(PLATFORM)/obj/cgiHandler.o: \
 $(PLATFORM)/lib/mod_cgi.so:  \
         $(PLATFORM)/lib/libappweb.so \
         $(PLATFORM)/obj/cgiHandler.o
-	$(CC) -shared -o $(PLATFORM)/lib/mod_cgi.so -LMOB -L$(PLATFORM)/lib -g $(PLATFORM)/obj/cgiHandler.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -shared -o $(PLATFORM)/lib/mod_cgi.so -L$(PLATFORM)/lib -g $(PLATFORM)/obj/cgiHandler.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 $(PLATFORM)/obj/auth.o: \
         src/utils/auth.c \
@@ -361,7 +361,7 @@ $(PLATFORM)/obj/auth.o: \
 $(PLATFORM)/bin/auth:  \
         $(PLATFORM)/lib/libmpr.so \
         $(PLATFORM)/obj/auth.o
-	$(CC) -o $(PLATFORM)/bin/auth -LMOB -L$(PLATFORM)/lib -g -L$(PLATFORM)/lib $(PLATFORM)/obj/auth.o $(LIBS) -lmpr -LMOB -L$(PLATFORM)/lib -g
+	$(CC) -o $(PLATFORM)/bin/auth -L$(PLATFORM)/lib -g -L$(PLATFORM)/lib $(PLATFORM)/obj/auth.o $(LIBS) -lmpr -L$(PLATFORM)/lib -g
 
 $(PLATFORM)/obj/cgiProgram.o: \
         src/utils/cgiProgram.c \
@@ -370,7 +370,7 @@ $(PLATFORM)/obj/cgiProgram.o: \
 
 $(PLATFORM)/bin/cgiProgram:  \
         $(PLATFORM)/obj/cgiProgram.o
-	$(CC) -o $(PLATFORM)/bin/cgiProgram -LMOB -L$(PLATFORM)/lib -g -L$(PLATFORM)/lib $(PLATFORM)/obj/cgiProgram.o $(LIBS) -LMOB -L$(PLATFORM)/lib -g
+	$(CC) -o $(PLATFORM)/bin/cgiProgram -L$(PLATFORM)/lib -g -L$(PLATFORM)/lib $(PLATFORM)/obj/cgiProgram.o $(LIBS) -L$(PLATFORM)/lib -g
 
 $(PLATFORM)/obj/setConfig.o: \
         src/utils/setConfig.c \
@@ -380,7 +380,7 @@ $(PLATFORM)/obj/setConfig.o: \
 $(PLATFORM)/bin/setConfig:  \
         $(PLATFORM)/lib/libmpr.so \
         $(PLATFORM)/obj/setConfig.o
-	$(CC) -o $(PLATFORM)/bin/setConfig -LMOB -L$(PLATFORM)/lib -g -L$(PLATFORM)/lib $(PLATFORM)/obj/setConfig.o $(LIBS) -lmpr -LMOB -L$(PLATFORM)/lib -g
+	$(CC) -o $(PLATFORM)/bin/setConfig -L$(PLATFORM)/lib -g -L$(PLATFORM)/lib $(PLATFORM)/obj/setConfig.o $(LIBS) -lmpr -L$(PLATFORM)/lib -g
 
 $(PLATFORM)/inc/appwebMonitor.h: 
 	rm -fr solaris-i686-debug/inc/appwebMonitor.h
@@ -395,7 +395,7 @@ $(PLATFORM)/bin/appweb:  \
         $(PLATFORM)/lib/libappweb.so \
         $(PLATFORM)/inc/appwebMonitor.h \
         $(PLATFORM)/obj/appweb.o
-	$(CC) -o $(PLATFORM)/bin/appweb -LMOB -L$(PLATFORM)/lib -g -L$(PLATFORM)/lib $(PLATFORM)/obj/appweb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre -LMOB -L$(PLATFORM)/lib -g
+	$(CC) -o $(PLATFORM)/bin/appweb -L$(PLATFORM)/lib -g -L$(PLATFORM)/lib $(PLATFORM)/obj/appweb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre -L$(PLATFORM)/lib -g
 
 $(PLATFORM)/inc/testAppweb.h: 
 	rm -fr solaris-i686-debug/inc/testAppweb.h
@@ -416,7 +416,7 @@ $(PLATFORM)/bin/testAppweb:  \
         $(PLATFORM)/inc/testAppweb.h \
         $(PLATFORM)/obj/testAppweb.o \
         $(PLATFORM)/obj/testHttp.o
-	$(CC) -o $(PLATFORM)/bin/testAppweb -LMOB -L$(PLATFORM)/lib -g -L$(PLATFORM)/lib $(PLATFORM)/obj/testAppweb.o $(PLATFORM)/obj/testHttp.o $(LIBS) -lappweb -lmpr -lhttp -lpcre -LMOB -L$(PLATFORM)/lib -g
+	$(CC) -o $(PLATFORM)/bin/testAppweb -L$(PLATFORM)/lib -g -L$(PLATFORM)/lib $(PLATFORM)/obj/testAppweb.o $(PLATFORM)/obj/testHttp.o $(LIBS) -lappweb -lmpr -lhttp -lpcre -L$(PLATFORM)/lib -g
 
 test/cgi-bin/testScript: 
 	echo '#!$(PLATFORM)/bin/cgiProgram' >test/cgi-bin/testScript ; chmod +x test/cgi-bin/testScript

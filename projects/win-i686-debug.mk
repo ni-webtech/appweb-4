@@ -4,7 +4,7 @@
 
 PLATFORM  := win-i686-debug
 CC        := cl
-CFLAGS    := -nologo -GR- -W3 -Zi -Od -MDd
+CFLAGS    := -DWIN=1 -DWIN -nologo -GR- -W3 -Zi -Od -MDd
 DFLAGS    := -D_REENTRANT -D_MT
 IFLAGS    := -I$(PLATFORM)/inc
 LDFLAGS   := -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86

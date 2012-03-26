@@ -4,7 +4,7 @@
 
 PLATFORM  := macosx-x86_64-debug
 CC        := /usr/bin/cc
-CFLAGS    := -fPIC -Wall -g -Wshorten-64-to-32
+CFLAGS    := -DMACOSX=1 -DMACOSX -fPIC -Wall -g -Wshorten-64-to-32
 DFLAGS    := -DPIC -DCPU=X86_64
 IFLAGS    := -I$(PLATFORM)/inc
 LDFLAGS   := -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L$(PLATFORM)/lib -g -ldl
@@ -104,7 +104,8 @@ $(PLATFORM)/inc/mpr.h:
 
 $(PLATFORM)/obj/mprLib.o: \
         src/deps/mpr/mprLib.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/mpr.h
 	$(CC) -c -o $(PLATFORM)/obj/mprLib.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/deps/mpr/mprLib.c
 
 $(PLATFORM)/lib/libmpr.dylib:  \
@@ -114,7 +115,8 @@ $(PLATFORM)/lib/libmpr.dylib:  \
 
 $(PLATFORM)/obj/manager.o: \
         src/deps/mpr/manager.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/mpr.h
 	$(CC) -c -o $(PLATFORM)/obj/manager.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/deps/mpr/manager.c
 
 $(PLATFORM)/bin/appman:  \
@@ -124,7 +126,8 @@ $(PLATFORM)/bin/appman:  \
 
 $(PLATFORM)/obj/makerom.o: \
         src/deps/mpr/makerom.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/mpr.h
 	$(CC) -c -o $(PLATFORM)/obj/makerom.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/deps/mpr/makerom.c
 
 $(PLATFORM)/bin/makerom:  \
@@ -138,7 +141,8 @@ $(PLATFORM)/inc/pcre.h:
 
 $(PLATFORM)/obj/pcre.o: \
         src/deps/pcre/pcre.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/pcre.h
 	$(CC) -c -o $(PLATFORM)/obj/pcre.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/deps/pcre/pcre.c
 
 $(PLATFORM)/lib/libpcre.dylib:  \
@@ -152,7 +156,9 @@ $(PLATFORM)/inc/http.h:
 
 $(PLATFORM)/obj/httpLib.o: \
         src/deps/http/httpLib.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/http.h \
+        $(PLATFORM)/inc/pcre.h
 	$(CC) -c -o $(PLATFORM)/obj/httpLib.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/deps/http/httpLib.c
 
 $(PLATFORM)/lib/libhttp.dylib:  \
@@ -164,7 +170,8 @@ $(PLATFORM)/lib/libhttp.dylib:  \
 
 $(PLATFORM)/obj/http.o: \
         src/deps/http/http.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/http.h
 	$(CC) -c -o $(PLATFORM)/obj/http.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/deps/http/http.c
 
 $(PLATFORM)/bin/http:  \
@@ -178,7 +185,8 @@ $(PLATFORM)/inc/sqlite3.h:
 
 $(PLATFORM)/obj/sqlite3.o: \
         src/deps/sqlite/sqlite3.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/sqlite3.h
 	$(CC) -c -o $(PLATFORM)/obj/sqlite3.o -arch x86_64 -fPIC -g $(DFLAGS) -I$(PLATFORM)/inc src/deps/sqlite/sqlite3.c
 
 $(PLATFORM)/lib/libsqlite3.dylib:  \
@@ -196,32 +204,39 @@ $(PLATFORM)/inc/customize.h:
 
 $(PLATFORM)/obj/config.o: \
         src/config.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/appweb.h \
+        $(PLATFORM)/inc/pcre.h
 	$(CC) -c -o $(PLATFORM)/obj/config.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/config.c
 
 $(PLATFORM)/obj/convenience.o: \
         src/convenience.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/appweb.h
 	$(CC) -c -o $(PLATFORM)/obj/convenience.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/convenience.c
 
 $(PLATFORM)/obj/dirHandler.o: \
         src/dirHandler.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/appweb.h
 	$(CC) -c -o $(PLATFORM)/obj/dirHandler.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/dirHandler.c
 
 $(PLATFORM)/obj/fileHandler.o: \
         src/fileHandler.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/appweb.h
 	$(CC) -c -o $(PLATFORM)/obj/fileHandler.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/fileHandler.c
 
 $(PLATFORM)/obj/log.o: \
         src/log.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/appweb.h
 	$(CC) -c -o $(PLATFORM)/obj/log.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/log.c
 
 $(PLATFORM)/obj/server.o: \
         src/server.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/appweb.h
 	$(CC) -c -o $(PLATFORM)/obj/server.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/server.c
 
 $(PLATFORM)/lib/libappweb.dylib:  \
@@ -256,47 +271,64 @@ $(PLATFORM)/inc/mdb.h:
 
 $(PLATFORM)/obj/edi.o: \
         src/esp/edi.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/edi.h \
+        $(PLATFORM)/inc/pcre.h
 	$(CC) -c -o $(PLATFORM)/obj/edi.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/edi.c
 
 $(PLATFORM)/obj/espAbbrev.o: \
         src/esp/espAbbrev.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/esp.h
 	$(CC) -c -o $(PLATFORM)/obj/espAbbrev.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/espAbbrev.c
 
 $(PLATFORM)/obj/espFramework.o: \
         src/esp/espFramework.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/esp.h
 	$(CC) -c -o $(PLATFORM)/obj/espFramework.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/espFramework.c
 
 $(PLATFORM)/obj/espHandler.o: \
         src/esp/espHandler.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/appweb.h \
+        $(PLATFORM)/inc/esp.h \
+        $(PLATFORM)/inc/edi.h
 	$(CC) -c -o $(PLATFORM)/obj/espHandler.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/espHandler.c
 
 $(PLATFORM)/obj/espHtml.o: \
         src/esp/espHtml.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/esp.h \
+        $(PLATFORM)/inc/edi.h
 	$(CC) -c -o $(PLATFORM)/obj/espHtml.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/espHtml.c
 
 $(PLATFORM)/obj/espSession.o: \
         src/esp/espSession.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/esp.h
 	$(CC) -c -o $(PLATFORM)/obj/espSession.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/espSession.c
 
 $(PLATFORM)/obj/espTemplate.o: \
         src/esp/espTemplate.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/esp.h
 	$(CC) -c -o $(PLATFORM)/obj/espTemplate.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/espTemplate.c
 
 $(PLATFORM)/obj/mdb.o: \
         src/esp/mdb.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/appweb.h \
+        $(PLATFORM)/inc/edi.h \
+        $(PLATFORM)/inc/mdb.h \
+        $(PLATFORM)/inc/pcre.h
 	$(CC) -c -o $(PLATFORM)/obj/mdb.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/mdb.c
 
 $(PLATFORM)/obj/sdb.o: \
         src/esp/sdb.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/appweb.h \
+        $(PLATFORM)/inc/edi.h
 	$(CC) -c -o $(PLATFORM)/obj/sdb.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/sdb.c
 
 $(PLATFORM)/lib/mod_esp.dylib:  \
@@ -318,7 +350,8 @@ $(PLATFORM)/lib/mod_esp.dylib:  \
 
 $(PLATFORM)/obj/esp.o: \
         src/esp/esp.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/esp.h
 	$(CC) -c -o $(PLATFORM)/obj/esp.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/esp.c
 
 $(PLATFORM)/bin/esp:  \
@@ -345,7 +378,8 @@ $(PLATFORM)/lib/esp-www:
 
 $(PLATFORM)/obj/cgiHandler.o: \
         src/modules/cgiHandler.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/appweb.h
 	$(CC) -c -o $(PLATFORM)/obj/cgiHandler.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/modules/cgiHandler.c
 
 $(PLATFORM)/lib/mod_cgi.dylib:  \
@@ -355,7 +389,8 @@ $(PLATFORM)/lib/mod_cgi.dylib:  \
 
 $(PLATFORM)/obj/auth.o: \
         src/utils/auth.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/http.h
 	$(CC) -c -o $(PLATFORM)/obj/auth.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/utils/auth.c
 
 $(PLATFORM)/bin/auth:  \
@@ -374,7 +409,8 @@ $(PLATFORM)/bin/cgiProgram:  \
 
 $(PLATFORM)/obj/setConfig.o: \
         src/utils/setConfig.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/mpr.h
 	$(CC) -c -o $(PLATFORM)/obj/setConfig.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/utils/setConfig.c
 
 $(PLATFORM)/bin/setConfig:  \
@@ -388,7 +424,8 @@ $(PLATFORM)/inc/appwebMonitor.h:
 
 $(PLATFORM)/obj/appweb.o: \
         src/server/appweb.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/appweb.h
 	$(CC) -c -o $(PLATFORM)/obj/appweb.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/server/appweb.c
 
 $(PLATFORM)/bin/appweb:  \
@@ -403,12 +440,14 @@ $(PLATFORM)/inc/testAppweb.h:
 
 $(PLATFORM)/obj/testAppweb.o: \
         test/testAppweb.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/testAppweb.h
 	$(CC) -c -o $(PLATFORM)/obj/testAppweb.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc test/testAppweb.c
 
 $(PLATFORM)/obj/testHttp.o: \
         test/testHttp.c \
-        $(PLATFORM)/inc/buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/testAppweb.h
 	$(CC) -c -o $(PLATFORM)/obj/testHttp.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc test/testHttp.c
 
 $(PLATFORM)/bin/testAppweb:  \

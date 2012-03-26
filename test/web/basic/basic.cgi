@@ -1,4 +1,4 @@
-#!`type -p sh`
-
-echo Content-Type: text/plain
-/usr/bin/env
+-e #!`type -p sh`
+-e 
+-e echo Content-Type: text/plain
+-e /usr/bin/env
