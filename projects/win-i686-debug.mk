@@ -4,7 +4,7 @@
 
 PLATFORM  := win-i686-debug
 CC        := cl
-CFLAGS    := -DWIN=1 -DWIN -nologo -GR- -W3 -Zi -Od -MDd
+CFLAGS    := -nologo -GR- -W3 -Zi -Od -MDd
 DFLAGS    := -D_REENTRANT -D_MT
 IFLAGS    := -I$(PLATFORM)/inc
 LDFLAGS   := -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86
@@ -41,7 +41,7 @@ all: prep \
 
 prep:
 	@[ ! -x $(PLATFORM)/inc ] && mkdir -p $(PLATFORM)/inc $(PLATFORM)/obj $(PLATFORM)/lib $(PLATFORM)/bin ; true
-	@[ ! -f $(PLATFORM)/inc/buildConfig.h ] && cp src/buildConfig.default $(PLATFORM)/inc/buildConfig.h ; true
+	@[ ! -f $(PLATFORM)/inc/buildConfig.h ] && cp projects/buildConfig.$(PLATFORM) $(PLATFORM)/inc/buildConfig.h ; true
 
 clean:
 	rm -rf $(PLATFORM)/bin/libmpr.dll

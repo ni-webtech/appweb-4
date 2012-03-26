@@ -4,7 +4,7 @@
 
 PLATFORM  := linux-i686-debug
 CC        := cc
-CFLAGS    := -DLINUX=1 -DLINUX -Wall -fPIC -g -Wno-unused-result -mtune=i686
+CFLAGS    := -Wall -fPIC -g -Wno-unused-result -mtune=i686
 DFLAGS    := -D_REENTRANT -DCPU=i686 -DPIC
 IFLAGS    := -I$(PLATFORM)/inc
 LDFLAGS   := -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L$(PLATFORM)/lib -g -ldl
@@ -38,7 +38,7 @@ all: prep \
 
 prep:
 	@[ ! -x $(PLATFORM)/inc ] && mkdir -p $(PLATFORM)/inc $(PLATFORM)/obj $(PLATFORM)/lib $(PLATFORM)/bin ; true
-	@[ ! -f $(PLATFORM)/inc/buildConfig.h ] && cp src/buildConfig.default $(PLATFORM)/inc/buildConfig.h ; true
+	@[ ! -f $(PLATFORM)/inc/buildConfig.h ] && cp projects/buildConfig.$(PLATFORM) $(PLATFORM)/inc/buildConfig.h ; true
 
 clean:
 	rm -rf $(PLATFORM)/lib/libmpr.so

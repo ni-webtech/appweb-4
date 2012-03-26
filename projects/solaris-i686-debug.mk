@@ -4,7 +4,7 @@
 
 PLATFORM  := solaris-i686-debug
 CC        := cc
-CFLAGS    := -DSOLARIS=1 -DSOLARIS -Wall -fPIC -g -mcpu=i686
+CFLAGS    := -Wall -fPIC -g -mcpu=i686
 DFLAGS    := -D_REENTRANT -DCPU=i686 -DPIC
 IFLAGS    := -I$(PLATFORM)/inc
 LDFLAGS   := -L$(PLATFORM)/lib -g
@@ -38,7 +38,7 @@ all: prep \
 
 prep:
 	@[ ! -x $(PLATFORM)/inc ] && mkdir -p $(PLATFORM)/inc $(PLATFORM)/obj $(PLATFORM)/lib $(PLATFORM)/bin ; true
-	@[ ! -f $(PLATFORM)/inc/buildConfig.h ] && cp src/buildConfig.default $(PLATFORM)/inc/buildConfig.h ; true
+	@[ ! -f $(PLATFORM)/inc/buildConfig.h ] && cp projects/buildConfig.$(PLATFORM) $(PLATFORM)/inc/buildConfig.h ; true
 
 clean:
 	rm -rf $(PLATFORM)/lib/libmpr.so

@@ -4,14 +4,14 @@
 
 PLATFORM="macosx-i686-debug"
 CC="cc"
-CFLAGS="-DMACOSX=1 -DMACOSX -fPIC -Wall -g"
+CFLAGS="-fPIC -Wall -g"
 DFLAGS="-DPIC -DCPU=I686"
 IFLAGS="-Imacosx-i686-debug/inc"
 LDFLAGS="-Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L${PLATFORM}/lib -g"
 LIBS="-lpthread -lm"
 
 [ ! -x ${PLATFORM}/inc ] && mkdir -p ${PLATFORM}/inc ${PLATFORM}/obj ${PLATFORM}/lib ${PLATFORM}/bin
-[ ! -f ${PLATFORM}/inc/buildConfig.h ] && cp src/buildConfig.default ${PLATFORM}/inc/buildConfig.h
+[ ! -f ${PLATFORM}/inc/buildConfig.h ] && cp projects/buildConfig.${PLATFORM} ${PLATFORM}/inc/buildConfig.h
 
 rm -rf macosx-i686-debug/inc/mpr.h
 cp -r src/deps/mpr/mpr.h macosx-i686-debug/inc/mpr.h

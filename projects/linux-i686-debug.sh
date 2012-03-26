@@ -4,14 +4,14 @@
 
 PLATFORM="linux-i686-debug"
 CC="cc"
-CFLAGS="-DLINUX=1 -DLINUX -Wall -fPIC -g -Wno-unused-result -mtune=i686"
+CFLAGS="-Wall -fPIC -g -Wno-unused-result -mtune=i686"
 DFLAGS="-D_REENTRANT -DCPU=i686 -DPIC"
 IFLAGS="-Ilinux-i686-debug/inc"
 LDFLAGS="-Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L${PLATFORM}/lib -g -ldl"
 LIBS="-lpthread -lm"
 
 [ ! -x ${PLATFORM}/inc ] && mkdir -p ${PLATFORM}/inc ${PLATFORM}/obj ${PLATFORM}/lib ${PLATFORM}/bin
-[ ! -f ${PLATFORM}/inc/buildConfig.h ] && cp src/buildConfig.default ${PLATFORM}/inc/buildConfig.h
+[ ! -f ${PLATFORM}/inc/buildConfig.h ] && cp projects/buildConfig.${PLATFORM} ${PLATFORM}/inc/buildConfig.h
 
 rm -rf linux-i686-debug/inc/mpr.h
 cp -r src/deps/mpr/mpr.h linux-i686-debug/inc/mpr.h

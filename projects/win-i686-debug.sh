@@ -4,7 +4,7 @@
 
 PLATFORM="win-i686-debug"
 CC="cl"
-CFLAGS="-DWIN=1 -DWIN -nologo -GR- -W3 -Zi -Od -MDd"
+CFLAGS="-nologo -GR- -W3 -Zi -Od -MDd"
 DFLAGS="-D_REENTRANT -D_MT"
 IFLAGS="-Iwin-i686-debug/inc"
 LDFLAGS="-nologo -nodefaultlib -incremental:no -libpath:${PLATFORM}/bin -debug -machine:x86"
@@ -14,7 +14,7 @@ export PATH="%VS%/Bin:%VS%/VC/Bin:%VS%/Common7/IDE:%VS%/Common7/Tools:%VS%/SDK/v
 export INCLUDE="%VS%/INCLUDE:%VS%/VC/INCLUDE"
 export LIB="%VS%/lib:%VS%/VC/lib"
 [ ! -x ${PLATFORM}/inc ] && mkdir -p ${PLATFORM}/inc ${PLATFORM}/obj ${PLATFORM}/lib ${PLATFORM}/bin
-[ ! -f ${PLATFORM}/inc/buildConfig.h ] && cp src/buildConfig.default ${PLATFORM}/inc/buildConfig.h
+[ ! -f ${PLATFORM}/inc/buildConfig.h ] && cp projects/buildConfig.${PLATFORM} ${PLATFORM}/inc/buildConfig.h
 
 rm -rf win-i686-debug/inc/mpr.h
 cp -r src/deps/mpr/mpr.h win-i686-debug/inc/mpr.h

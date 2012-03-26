@@ -4,7 +4,7 @@
 
 PLATFORM  := macosx-i686-debug
 CC        := cc
-CFLAGS    := -DMACOSX=1 -DMACOSX -fPIC -Wall -g
+CFLAGS    := -fPIC -Wall -g
 DFLAGS    := -DPIC -DCPU=I686
 IFLAGS    := -I$(PLATFORM)/inc
 LDFLAGS   := -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L$(PLATFORM)/lib -g
@@ -38,7 +38,7 @@ all: prep \
 
 prep:
 	@[ ! -x $(PLATFORM)/inc ] && mkdir -p $(PLATFORM)/inc $(PLATFORM)/obj $(PLATFORM)/lib $(PLATFORM)/bin ; true
-	@[ ! -f $(PLATFORM)/inc/buildConfig.h ] && cp src/buildConfig.default $(PLATFORM)/inc/buildConfig.h ; true
+	@[ ! -f $(PLATFORM)/inc/buildConfig.h ] && cp projects/buildConfig.$(PLATFORM) $(PLATFORM)/inc/buildConfig.h ; true
 
 clean:
 	rm -rf $(PLATFORM)/lib/libmpr.dylib

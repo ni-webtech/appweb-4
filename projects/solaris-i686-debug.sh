@@ -4,14 +4,14 @@
 
 PLATFORM="solaris-i686-debug"
 CC="cc"
-CFLAGS="-DSOLARIS=1 -DSOLARIS -Wall -fPIC -g -mcpu=i686"
+CFLAGS="-Wall -fPIC -g -mcpu=i686"
 DFLAGS="-D_REENTRANT -DCPU=i686 -DPIC"
 IFLAGS="-Isolaris-i686-debug/inc"
 LDFLAGS="-L${PLATFORM}/lib -g"
 LIBS="-llxnet -lrt -lsocket -lpthread -lm"
 
 [ ! -x ${PLATFORM}/inc ] && mkdir -p ${PLATFORM}/inc ${PLATFORM}/obj ${PLATFORM}/lib ${PLATFORM}/bin
-[ ! -f ${PLATFORM}/inc/buildConfig.h ] && cp src/buildConfig.default ${PLATFORM}/inc/buildConfig.h
+[ ! -f ${PLATFORM}/inc/buildConfig.h ] && cp projects/buildConfig.${PLATFORM} ${PLATFORM}/inc/buildConfig.h
 
 rm -rf solaris-i686-debug/inc/mpr.h
 cp -r src/deps/mpr/mpr.h solaris-i686-debug/inc/mpr.h
