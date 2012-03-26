@@ -5,10 +5,10 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
 #
 
-BLD_PRODUCT=!!BLD_PRODUCT!!
-BLD_NAME="!!BLD_NAME!!"
-BLD_CFG_PREFIX=!!ORIG_BLD_CFG_PREFIX!!
-BLD_LIB_PREFIX=!!ORIG_BLD_LIB_PREFIX!!
+BLD_PRODUCT=${settings.product}
+BLD_NAME="${settings.title}"
+BLD_CFG_PREFIX="${prefixes.config}"
+BLD_LIB_PREFIX="${prefixes.lib}"
 
 remove() {
 	local cdir=`pwd`
