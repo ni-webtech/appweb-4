@@ -35,6 +35,7 @@ Bit.load({
         auth: 'file',
         sync: ['http', 'mpr', 'pcre', 'sqlite'],
         packs: [ 'bits/packs' ]
+        minimal: ['php', 'ssl'],
     },
 
     usage: {

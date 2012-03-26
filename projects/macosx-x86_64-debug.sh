@@ -119,10 +119,6 @@ ${CC} -c -o ${PLATFORM}/obj/cgiHandler.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${PL
 
 ${CC} -dynamiclib -o ${PLATFORM}/lib/mod_cgi.dylib -arch x86_64 -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L${PLATFORM}/lib -g -ldl -install_name @rpath/mod_cgi.dylib ${PLATFORM}/obj/cgiHandler.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
 
-${CC} -c -o ${PLATFORM}/obj/phpHandler.o -arch x86_64 -fPIC -g ${DFLAGS} -I${PLATFORM}/inc -I../packages-macosx-x86_64/php/php-5.3.8 -I../packages-macosx-x86_64/php/php-5.3.8/main -I../packages-macosx-x86_64/php/php-5.3.8/Zend -I../packages-macosx-x86_64/php/php-5.3.8/TSRM src/modules/phpHandler.c
-
-${CC} -dynamiclib -o ${PLATFORM}/lib/mod_php.dylib -arch x86_64 -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L${PLATFORM}/lib -g -ldl -L/Users/mob/git/packages-macosx-x86_64/php/php-5.3.8/.libs -install_name @rpath/mod_php.dylib ${PLATFORM}/obj/phpHandler.o ${LIBS} -lphp5 -lappweb -lmpr -lhttp -lpcre
-
 ${CC} -c -o ${PLATFORM}/obj/auth.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/utils/auth.c
 
 ${CC} -o ${PLATFORM}/bin/auth -arch x86_64 -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L${PLATFORM}/lib -g -ldl -L${PLATFORM}/lib ${PLATFORM}/obj/auth.o ${LIBS} -lmpr

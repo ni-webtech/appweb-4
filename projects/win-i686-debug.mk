@@ -7,7 +7,7 @@ CC        := cl
 CFLAGS    := -nologo -GR- -W3 -Zi -Od -MDd
 DFLAGS    := -D_REENTRANT -D_MT
 IFLAGS    := -I$(PLATFORM)/inc
-LDFLAGS   := -nologo -nodefaultlib -incremental:no -libpath:/Users/mob/git/appweb/$(PLATFORM)/bin -debug -machine:x86
+LDFLAGS   := -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86
 LIBS      := ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib
 
 export PATH := %VS%/Bin:%VS%/VC/Bin:%VS%/Common7/IDE:%VS%/Common7/Tools:%VS%/SDK/v3.5/bin:%VS%/VC/VCPackages
@@ -103,7 +103,7 @@ clean:
 
 $(PLATFORM)/inc/mpr.h: 
 	rm -fr win-i686-debug/inc/mpr.h
-	cp -r /Users/mob/git/appweb/src/deps/mpr/mpr.h win-i686-debug/inc/mpr.h
+	cp -r src/deps/mpr/mpr.h win-i686-debug/inc/mpr.h
 
 $(PLATFORM)/obj/mprLib.obj: \
         src/deps/mpr/mprLib.c \
@@ -137,7 +137,7 @@ $(PLATFORM)/bin/makerom.exe:  \
 
 $(PLATFORM)/inc/pcre.h: 
 	rm -fr win-i686-debug/inc/pcre.h
-	cp -r /Users/mob/git/appweb/src/deps/pcre/pcre.h win-i686-debug/inc/pcre.h
+	cp -r src/deps/pcre/pcre.h win-i686-debug/inc/pcre.h
 
 $(PLATFORM)/obj/pcre.obj: \
         src/deps/pcre/pcre.c \
@@ -151,7 +151,7 @@ $(PLATFORM)/bin/libpcre.dll:  \
 
 $(PLATFORM)/inc/http.h: 
 	rm -fr win-i686-debug/inc/http.h
-	cp -r /Users/mob/git/appweb/src/deps/http/http.h win-i686-debug/inc/http.h
+	cp -r src/deps/http/http.h win-i686-debug/inc/http.h
 
 $(PLATFORM)/obj/httpLib.obj: \
         src/deps/http/httpLib.c \
@@ -177,7 +177,7 @@ $(PLATFORM)/bin/http.exe:  \
 
 $(PLATFORM)/inc/sqlite3.h: 
 	rm -fr win-i686-debug/inc/sqlite3.h
-	cp -r /Users/mob/git/appweb/src/deps/sqlite/sqlite3.h win-i686-debug/inc/sqlite3.h
+	cp -r src/deps/sqlite/sqlite3.h win-i686-debug/inc/sqlite3.h
 
 $(PLATFORM)/obj/sqlite3.obj: \
         src/deps/sqlite/sqlite3.c \
@@ -191,11 +191,11 @@ $(PLATFORM)/bin/libsqlite3.dll:  \
 
 $(PLATFORM)/inc/appweb.h: 
 	rm -fr win-i686-debug/inc/appweb.h
-	cp -r /Users/mob/git/appweb/src/appweb.h win-i686-debug/inc/appweb.h
+	cp -r src/appweb.h win-i686-debug/inc/appweb.h
 
 $(PLATFORM)/inc/customize.h: 
 	rm -fr win-i686-debug/inc/customize.h
-	cp -r /Users/mob/git/appweb/src/customize.h win-i686-debug/inc/customize.h
+	cp -r src/customize.h win-i686-debug/inc/customize.h
 
 $(PLATFORM)/obj/config.obj: \
         src/config.c \
@@ -243,19 +243,19 @@ $(PLATFORM)/bin/libappweb.dll:  \
 
 $(PLATFORM)/inc/edi.h: 
 	rm -fr win-i686-debug/inc/edi.h
-	cp -r /Users/mob/git/appweb/src/esp/edi.h win-i686-debug/inc/edi.h
+	cp -r src/esp/edi.h win-i686-debug/inc/edi.h
 
 $(PLATFORM)/inc/esp-app.h: 
 	rm -fr win-i686-debug/inc/esp-app.h
-	cp -r /Users/mob/git/appweb/src/esp/esp-app.h win-i686-debug/inc/esp-app.h
+	cp -r src/esp/esp-app.h win-i686-debug/inc/esp-app.h
 
 $(PLATFORM)/inc/esp.h: 
 	rm -fr win-i686-debug/inc/esp.h
-	cp -r /Users/mob/git/appweb/src/esp/esp.h win-i686-debug/inc/esp.h
+	cp -r src/esp/esp.h win-i686-debug/inc/esp.h
 
 $(PLATFORM)/inc/mdb.h: 
 	rm -fr win-i686-debug/inc/mdb.h
-	cp -r /Users/mob/git/appweb/src/esp/mdb.h win-i686-debug/inc/mdb.h
+	cp -r src/esp/mdb.h win-i686-debug/inc/mdb.h
 
 $(PLATFORM)/obj/edi.obj: \
         src/esp/edi.c \
@@ -340,11 +340,11 @@ $(PLATFORM)/bin/esp.exe:  \
 
 $(PLATFORM)/bin/esp.conf: 
 	rm -fr win-i686-debug/bin/esp.conf
-	cp -r /Users/mob/git/appweb/src/esp/esp.conf win-i686-debug/bin/esp.conf
+	cp -r src/esp/esp.conf win-i686-debug/bin/esp.conf
 
 $(PLATFORM)/bin/esp-www: 
 	rm -fr win-i686-debug/bin/esp-www
-	cp -r /Users/mob/git/appweb/src/esp/www win-i686-debug/bin/esp-www
+	cp -r src/esp/www win-i686-debug/bin/esp-www
 
 $(PLATFORM)/obj/cgiHandler.obj: \
         src/modules/cgiHandler.c \
@@ -387,7 +387,7 @@ $(PLATFORM)/bin/setConfig.exe:  \
 
 $(PLATFORM)/inc/appwebMonitor.h: 
 	rm -fr win-i686-debug/inc/appwebMonitor.h
-	cp -r /Users/mob/git/appweb/src/server/appwebMonitor.h win-i686-debug/inc/appwebMonitor.h
+	cp -r src/server/appwebMonitor.h win-i686-debug/inc/appwebMonitor.h
 
 $(PLATFORM)/obj/appweb.obj: \
         src/server/appweb.c \
@@ -402,7 +402,7 @@ $(PLATFORM)/bin/appweb.exe:  \
 
 $(PLATFORM)/inc/testAppweb.h: 
 	rm -fr win-i686-debug/inc/testAppweb.h
-	cp -r /Users/mob/git/appweb/test/testAppweb.h win-i686-debug/inc/testAppweb.h
+	cp -r test/testAppweb.h win-i686-debug/inc/testAppweb.h
 
 $(PLATFORM)/obj/testAppweb.obj: \
         test/testAppweb.c \
@@ -422,27 +422,27 @@ $(PLATFORM)/bin/testAppweb.exe:  \
 	"link" -out:$(PLATFORM)/bin/testAppweb.exe -entry:mainCRTStartup -subsystem:console -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/testAppweb.obj $(PLATFORM)/obj/testHttp.obj $(LIBS) appweb.lib mpr.lib http.lib pcre.lib
 
 test/cgi-bin/testScript: 
-	echo '#!/Users/mob/git/appweb/win-i686-debug/bin/cgiProgram.exe' >/Users/mob/git/appweb/test/cgi-bin/testScript ; chmod +x /Users/mob/git/appweb/test/cgi-bin/testScript
+	echo '#!$(PLATFORM)/bin/cgiProgram.exe' >test/cgi-bin/testScript ; chmod +x test/cgi-bin/testScript
 
 test/web/caching/cache.cgi: 
-	echo -e '#!`type -p sh`' >/Users/mob/git/appweb/test/web/caching/cache.cgi
-	echo -e '' >>/Users/mob/git/appweb/test/web/caching/cache.cgi
-	echo -e 'echo HTTP/1.0 200 OK' >>/Users/mob/git/appweb/test/web/caching/cache.cgi
-	echo -e 'echo Content-Type: text/plain' >>/Users/mob/git/appweb/test/web/caching/cache.cgi
-	echo -e 'date' >>/Users/mob/git/appweb/test/web/caching/cache.cgi
-	chmod +x /Users/mob/git/appweb/test/web/caching/cache.cgi
+	echo -e '#!`type -p sh`' >test/web/caching/cache.cgi
+	echo -e '' >>test/web/caching/cache.cgi
+	echo -e 'echo HTTP/1.0 200 OK' >>test/web/caching/cache.cgi
+	echo -e 'echo Content-Type: text/plain' >>test/web/caching/cache.cgi
+	echo -e 'date' >>test/web/caching/cache.cgi
+	chmod +x test/web/caching/cache.cgi
 
 test/web/basic/basic.cgi: 
-	echo -e '#!`type -p sh`' >/Users/mob/git/appweb/test/web/basic/basic.cgi
-	echo -e '' >>/Users/mob/git/appweb/test/web/basic/basic.cgi
-	echo -e 'echo Content-Type: text/plain' >>/Users/mob/git/appweb/test/web/basic/basic.cgi
-	echo -e '/usr/bin/env' >>/Users/mob/git/appweb/test/web/basic/basic.cgi
-	chmod +x /Users/mob/git/appweb/test/web/basic/basic.cgi
+	echo -e '#!`type -p sh`' >test/web/basic/basic.cgi
+	echo -e '' >>test/web/basic/basic.cgi
+	echo -e 'echo Content-Type: text/plain' >>test/web/basic/basic.cgi
+	echo -e '/usr/bin/env' >>test/web/basic/basic.cgi
+	chmod +x test/web/basic/basic.cgi
 
 test/cgi-bin/cgiProgram.exe: 
-	cp /Users/mob/git/appweb/win-i686-debug/bin/cgiProgram /Users/mob/git/appweb/test/cgi-bin/cgiProgram.exe
-	cp /Users/mob/git/appweb/win-i686-debug/bin/cgiProgram /Users/mob/git/appweb/test/cgi-bin/nph-cgiProgram.exe
-	cp /Users/mob/git/appweb/win-i686-debug/bin/cgiProgram '/Users/mob/git/appweb/test/cgi-bin/cgi Program.exe'
-	cp /Users/mob/git/appweb/win-i686-debug/bin/cgiProgram /Users/mob/git/appweb/test/web/cgiProgram.cgi
-	chmod +x /Users/mob/git/appweb/test/cgi-bin/* /Users/mob/git/appweb/test/web/cgiProgram.cgi
+	cp $(PLATFORM)/bin/cgiProgram test/cgi-bin/cgiProgram.exe
+	cp $(PLATFORM)/bin/cgiProgram test/cgi-bin/nph-cgiProgram.exe
+	cp $(PLATFORM)/bin/cgiProgram 'test/cgi-bin/cgi Program.exe'
+	cp $(PLATFORM)/bin/cgiProgram test/web/cgiProgram.cgi
+	chmod +x test/cgi-bin/* test/web/cgiProgram.cgi
 

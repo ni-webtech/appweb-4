@@ -7,7 +7,7 @@ CC        := cc
 CFLAGS    := -Wall -fPIC -g -mcpu=i686
 DFLAGS    := -D_REENTRANT -DCPU=i686 -DPIC
 IFLAGS    := -I$(PLATFORM)/inc
-LDFLAGS   := -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L/Users/mob/git/appweb/$(PLATFORM)/lib -g
+LDFLAGS   := -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L$(PLATFORM)/lib -g
 LIBS      := -lpthread -lm
 
 all: prep \
@@ -100,7 +100,7 @@ clean:
 
 $(PLATFORM)/inc/mpr.h: 
 	rm -fr linux-i686-debug/inc/mpr.h
-	cp -r /Users/mob/git/appweb/src/deps/mpr/mpr.h linux-i686-debug/inc/mpr.h
+	cp -r src/deps/mpr/mpr.h linux-i686-debug/inc/mpr.h
 
 $(PLATFORM)/obj/mprLib.o: \
         src/deps/mpr/mprLib.c \
@@ -134,7 +134,7 @@ $(PLATFORM)/bin/makerom:  \
 
 $(PLATFORM)/inc/pcre.h: 
 	rm -fr linux-i686-debug/inc/pcre.h
-	cp -r /Users/mob/git/appweb/src/deps/pcre/pcre.h linux-i686-debug/inc/pcre.h
+	cp -r src/deps/pcre/pcre.h linux-i686-debug/inc/pcre.h
 
 $(PLATFORM)/obj/pcre.o: \
         src/deps/pcre/pcre.c \
@@ -148,7 +148,7 @@ $(PLATFORM)/lib/libpcre.so:  \
 
 $(PLATFORM)/inc/http.h: 
 	rm -fr linux-i686-debug/inc/http.h
-	cp -r /Users/mob/git/appweb/src/deps/http/http.h linux-i686-debug/inc/http.h
+	cp -r src/deps/http/http.h linux-i686-debug/inc/http.h
 
 $(PLATFORM)/obj/httpLib.o: \
         src/deps/http/httpLib.c \
@@ -174,7 +174,7 @@ $(PLATFORM)/bin/http:  \
 
 $(PLATFORM)/inc/sqlite3.h: 
 	rm -fr linux-i686-debug/inc/sqlite3.h
-	cp -r /Users/mob/git/appweb/src/deps/sqlite/sqlite3.h linux-i686-debug/inc/sqlite3.h
+	cp -r src/deps/sqlite/sqlite3.h linux-i686-debug/inc/sqlite3.h
 
 $(PLATFORM)/obj/sqlite3.o: \
         src/deps/sqlite/sqlite3.c \
@@ -188,11 +188,11 @@ $(PLATFORM)/lib/libsqlite3.so:  \
 
 $(PLATFORM)/inc/appweb.h: 
 	rm -fr linux-i686-debug/inc/appweb.h
-	cp -r /Users/mob/git/appweb/src/appweb.h linux-i686-debug/inc/appweb.h
+	cp -r src/appweb.h linux-i686-debug/inc/appweb.h
 
 $(PLATFORM)/inc/customize.h: 
 	rm -fr linux-i686-debug/inc/customize.h
-	cp -r /Users/mob/git/appweb/src/customize.h linux-i686-debug/inc/customize.h
+	cp -r src/customize.h linux-i686-debug/inc/customize.h
 
 $(PLATFORM)/obj/config.o: \
         src/config.c \
@@ -240,19 +240,19 @@ $(PLATFORM)/lib/libappweb.so:  \
 
 $(PLATFORM)/inc/edi.h: 
 	rm -fr linux-i686-debug/inc/edi.h
-	cp -r /Users/mob/git/appweb/src/esp/edi.h linux-i686-debug/inc/edi.h
+	cp -r src/esp/edi.h linux-i686-debug/inc/edi.h
 
 $(PLATFORM)/inc/esp-app.h: 
 	rm -fr linux-i686-debug/inc/esp-app.h
-	cp -r /Users/mob/git/appweb/src/esp/esp-app.h linux-i686-debug/inc/esp-app.h
+	cp -r src/esp/esp-app.h linux-i686-debug/inc/esp-app.h
 
 $(PLATFORM)/inc/esp.h: 
 	rm -fr linux-i686-debug/inc/esp.h
-	cp -r /Users/mob/git/appweb/src/esp/esp.h linux-i686-debug/inc/esp.h
+	cp -r src/esp/esp.h linux-i686-debug/inc/esp.h
 
 $(PLATFORM)/inc/mdb.h: 
 	rm -fr linux-i686-debug/inc/mdb.h
-	cp -r /Users/mob/git/appweb/src/esp/mdb.h linux-i686-debug/inc/mdb.h
+	cp -r src/esp/mdb.h linux-i686-debug/inc/mdb.h
 
 $(PLATFORM)/obj/edi.o: \
         src/esp/edi.c \
@@ -337,11 +337,11 @@ $(PLATFORM)/bin/esp:  \
 
 $(PLATFORM)/lib/esp.conf: 
 	rm -fr linux-i686-debug/lib/esp.conf
-	cp -r /Users/mob/git/appweb/src/esp/esp.conf linux-i686-debug/lib/esp.conf
+	cp -r src/esp/esp.conf linux-i686-debug/lib/esp.conf
 
 $(PLATFORM)/lib/esp-www: 
 	rm -fr linux-i686-debug/lib/esp-www
-	cp -r /Users/mob/git/appweb/src/esp/www linux-i686-debug/lib/esp-www
+	cp -r src/esp/www linux-i686-debug/lib/esp-www
 
 $(PLATFORM)/obj/cgiHandler.o: \
         src/modules/cgiHandler.c \
@@ -384,7 +384,7 @@ $(PLATFORM)/bin/setConfig:  \
 
 $(PLATFORM)/inc/appwebMonitor.h: 
 	rm -fr linux-i686-debug/inc/appwebMonitor.h
-	cp -r /Users/mob/git/appweb/src/server/appwebMonitor.h linux-i686-debug/inc/appwebMonitor.h
+	cp -r src/server/appwebMonitor.h linux-i686-debug/inc/appwebMonitor.h
 
 $(PLATFORM)/obj/appweb.o: \
         src/server/appweb.c \
@@ -399,7 +399,7 @@ $(PLATFORM)/bin/appweb:  \
 
 $(PLATFORM)/inc/testAppweb.h: 
 	rm -fr linux-i686-debug/inc/testAppweb.h
-	cp -r /Users/mob/git/appweb/test/testAppweb.h linux-i686-debug/inc/testAppweb.h
+	cp -r test/testAppweb.h linux-i686-debug/inc/testAppweb.h
 
 $(PLATFORM)/obj/testAppweb.o: \
         test/testAppweb.c \
@@ -419,27 +419,27 @@ $(PLATFORM)/bin/testAppweb:  \
 	$(CC) -o $(PLATFORM)/bin/testAppweb -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L$(PLATFORM)/lib -g -L$(PLATFORM)/lib $(PLATFORM)/obj/testAppweb.o $(PLATFORM)/obj/testHttp.o $(LIBS) -lappweb -lmpr -lhttp -lpcre -LMOB -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L$(PLATFORM)/lib -g
 
 test/cgi-bin/testScript: 
-	echo '#!/Users/mob/git/appweb/linux-i686-debug/bin/cgiProgram' >/Users/mob/git/appweb/test/cgi-bin/testScript ; chmod +x /Users/mob/git/appweb/test/cgi-bin/testScript
+	echo '#!$(PLATFORM)/bin/cgiProgram' >test/cgi-bin/testScript ; chmod +x test/cgi-bin/testScript
 
 test/web/caching/cache.cgi: 
-	echo -e '#!`type -p sh`' >/Users/mob/git/appweb/test/web/caching/cache.cgi
-	echo -e '' >>/Users/mob/git/appweb/test/web/caching/cache.cgi
-	echo -e 'echo HTTP/1.0 200 OK' >>/Users/mob/git/appweb/test/web/caching/cache.cgi
-	echo -e 'echo Content-Type: text/plain' >>/Users/mob/git/appweb/test/web/caching/cache.cgi
-	echo -e 'date' >>/Users/mob/git/appweb/test/web/caching/cache.cgi
-	chmod +x /Users/mob/git/appweb/test/web/caching/cache.cgi
+	echo -e '#!`type -p sh`' >test/web/caching/cache.cgi
+	echo -e '' >>test/web/caching/cache.cgi
+	echo -e 'echo HTTP/1.0 200 OK' >>test/web/caching/cache.cgi
+	echo -e 'echo Content-Type: text/plain' >>test/web/caching/cache.cgi
+	echo -e 'date' >>test/web/caching/cache.cgi
+	chmod +x test/web/caching/cache.cgi
 
 test/web/basic/basic.cgi: 
-	echo -e '#!`type -p sh`' >/Users/mob/git/appweb/test/web/basic/basic.cgi
-	echo -e '' >>/Users/mob/git/appweb/test/web/basic/basic.cgi
-	echo -e 'echo Content-Type: text/plain' >>/Users/mob/git/appweb/test/web/basic/basic.cgi
-	echo -e '/usr/bin/env' >>/Users/mob/git/appweb/test/web/basic/basic.cgi
-	chmod +x /Users/mob/git/appweb/test/web/basic/basic.cgi
+	echo -e '#!`type -p sh`' >test/web/basic/basic.cgi
+	echo -e '' >>test/web/basic/basic.cgi
+	echo -e 'echo Content-Type: text/plain' >>test/web/basic/basic.cgi
+	echo -e '/usr/bin/env' >>test/web/basic/basic.cgi
+	chmod +x test/web/basic/basic.cgi
 
 test/cgi-bin/cgiProgram: 
-	cp /Users/mob/git/appweb/linux-i686-debug/bin/cgiProgram /Users/mob/git/appweb/test/cgi-bin/cgiProgram
-	cp /Users/mob/git/appweb/linux-i686-debug/bin/cgiProgram /Users/mob/git/appweb/test/cgi-bin/nph-cgiProgram
-	cp /Users/mob/git/appweb/linux-i686-debug/bin/cgiProgram '/Users/mob/git/appweb/test/cgi-bin/cgi Program'
-	cp /Users/mob/git/appweb/linux-i686-debug/bin/cgiProgram /Users/mob/git/appweb/test/web/cgiProgram.cgi
-	chmod +x /Users/mob/git/appweb/test/cgi-bin/* /Users/mob/git/appweb/test/web/cgiProgram.cgi
+	cp $(PLATFORM)/bin/cgiProgram test/cgi-bin/cgiProgram
+	cp $(PLATFORM)/bin/cgiProgram test/cgi-bin/nph-cgiProgram
+	cp $(PLATFORM)/bin/cgiProgram 'test/cgi-bin/cgi Program'
+	cp $(PLATFORM)/bin/cgiProgram test/web/cgiProgram.cgi
+	chmod +x test/cgi-bin/* test/web/cgiProgram.cgi
 
