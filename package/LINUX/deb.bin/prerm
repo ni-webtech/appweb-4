@@ -5,9 +5,9 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
 #
 
-BLD_PRODUCT=!!BLD_PRODUCT!!
-BLD_NAME="!!BLD_NAME!!"
-BLD_CFG_PREFIX=!!ORIG_BLD_CFG_PREFIX!!
+BLD_PRODUCT=${settings.product}
+BLD_NAME="${settings.title}"
+BLD_CFG_PREFIX="${prefixes.config}"
 
 ###############################################################################
 #
@@ -22,7 +22,7 @@ case $action in
 		appman stop >/dev/null 2>&1 ; true
 		appman disable >/dev/null 2>&1 ; true
 		appman uninstall >/dev/null 2>&1 ; true
-		pid=`/bin/pidof !!ORIG_BLD_BIN_PREFIX!!/$BLD_PRODUCT; true`
+		pid=`/bin/pidof ${prefixes.bin}/$BLD_PRODUCT; true`
 		[ "$pid" != "" ] && kill -9 $pid
 		rm -rf /var/lock/subsys/$BLD_PRODUCT /var/lock/$BLD_PRODUCT /var/log/$BLD_PRODUCT /var/run/$BLD_PRODUCT
 		;;

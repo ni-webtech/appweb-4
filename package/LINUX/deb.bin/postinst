@@ -5,11 +5,11 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
 #
 
-BLD_PRODUCT=!!BLD_PRODUCT!!
-BLD_NAME="!!BLD_NAME!!"
-BLD_LIB_PREFIX="!!ORIG_BLD_LIB_PREFIX!!"
-BLD_LOG_PREFIX="!!ORIG_BLD_LOG_PREFIX!!"
-BLD_SPL_PREFIX="!!ORIG_BLD_SPL_PREFIX!!"
+BLD_PRODUCT=${settings.product}
+BLD_NAME="${settings.title}"
+BLD_LIB_PREFIX="${prefixes.lib}"
+BLD_LOG_PREFIX="${prefixes.log}"
+BLD_SPL_PREFIX="${prefixes.spool}"
 
 ###############################################################################
 

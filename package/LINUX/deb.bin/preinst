@@ -5,9 +5,9 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
 #
 
-BLD_PRODUCT=!!BLD_PRODUCT!!
-BLD_NAME="!!BLD_NAME!!"
-BLD_CFG_PREFIX=!!ORIG_BLD_CFG_PREFIX!!
+BLD_PRODUCT=${settings.product}
+BLD_NAME="${settings.title}"
+BLD_CFG_PREFIX="${prefixes.config}"
 
 #
 #	Modify service. Usage:configureService stop|remove
@@ -30,8 +30,8 @@ configureService() {
         elif [ -f /etc/init.d/$BLD_PRODUCT ] ; then
             /etc/init.d/$BLD_PRODUCT stop >/dev/null 2>&1
 		fi
-		if [ "`/bin/pidof !!ORIG_BLD_BIN_PREFIX!!/$BLD_PRODUCT`" != "" ] ; then
-            kill -9 `/bin/pidof !!ORIG_BLD_BIN_PREFIX!!/$BLD_PRODUCT`
+		if [ "`/bin/pidof ${prefixes.bin}/$BLD_PRODUCT`" != "" ] ; then
+            kill -9 `/bin/pidof ${prefixes.bin}/$BLD_PRODUCT`
         fi
 		rm -rf /var/lock/subsys/$BLD_PRODUCT /var/lock/$BLD_PRODUCT /var/log/$BLD_PRODUCT /var/run/$BLD_PRODUCT
 		;;

@@ -69,14 +69,15 @@ public function packageBinaryFiles() {
     tmp.write()
     tmp.setAttributes({permissions: 0755, uid: user, gid: group})
 
+    //  MOB - should this apply to non-openssl ?
     if (bit.packs.ssl.enable && bit.platform.os == 'linux') {
-        install(bit.dir.lib.join(bit.ext.shobj + '.*'), p.lib, {strip: strip, permissions: 0755})
+        install(bit.dir.lib.join('*.' + bit.ext.shobj + '*'), p.lib, {strip: strip, permissions: 0755})
         for each (f in p.lib.glob('*.so.*')) {
             let withver = f.basename
             let nover = withver.name.replace(/\.[0-9]*.*/, '.so')
-            lib.join(nover).remove()
-            //  MOB - withver.link(p.lib.join(nover))
-            Cmd.sh('ln -s ' + withver + ' ' + lib.join(nover)) 
+            let link = p.lib.join(nover)
+            f.remove()
+            f.symlink(link.basename)
         }
     }
     let conf = Path(contents.name + bit.prefixes.config + '/appweb.conf')
