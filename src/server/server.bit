@@ -6,10 +6,32 @@ Bit.load({
     targets: {
         appweb: {
             type: 'exe',
-            //  MOB - how to link in mod_esp for static linking
             depends: [ 'libappweb' ],
             sources: [ 'appweb.c' ],
             headers: [ '*.h' ],
+        },
+
+        appwebMonitor: {
+            enable: bit.platform.like == 'windows',
+            type: 'exe',
+            rule: 'gui'
+            depends: [ 'libappweb' ],
+            sources: [ 'WIN/appwebMonitor.c' ],
+            headers: [ ],
+            libraries: [ 'shell32.lib' ],
+            resources: [ 'appwebMonitor.rc' ],
+        },
+
+        'appwebMonitor.ico': {
+            enable: bit.platform.like == 'windows',
+            type: 'file',
+            files: [ 'WIN/appwebMonitor.ico' ],
+            build: "
+                cp('WIN/appwebMonitor.ico', ${BIN})
+            "
+            'generate-sh': "
+                cp '${HOME}/WIN/appwebMonitor.ico'  ${BIN}
+            "
         },
 	},
 })

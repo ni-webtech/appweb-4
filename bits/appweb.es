@@ -28,7 +28,9 @@ public function packageBinaryFiles() {
     let prefixes = bit.prefixes;
     let p = {}
     for (prefix in bit.prefixes) {
-        p[prefix] = Path(contents.name + bit.prefixes[prefix])
+print("NAME", contents.name, "PP", bit.prefixes[prefix].portable)
+        p[prefix] = Path(contents.name + bit.prefixes[prefix].removeDrive().portable)
+print("PRE", p[prefix])
         p[prefix].makeDir()
     }
     let strip = settings.profile == 'debug'
