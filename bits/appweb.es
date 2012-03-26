@@ -129,12 +129,12 @@ public function createLinks() {
 
     for each (program in programs) {
         let link = Path(localbin.join(program))
-        bin.join(program).symlink(link)
+        link.symlink(bin.join(program))
         log.push(link)
     }
     for each (page in bit.prefixes.productver.join('doc/man').glob('**/*.1.gz')) {
         let link = Path('/usr/share/man/man1/' + page.basename)
-        page.symlink(link)
+        link.symlink(page)
         log.push(link)
     }
     bit.prefixes.productver.join('files.log').append(log.join('\n') + '\n')
