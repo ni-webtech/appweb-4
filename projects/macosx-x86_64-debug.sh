@@ -147,7 +147,7 @@ ${CC} -c -o ${PLATFORM}/obj/testHttp.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${PLAT
 
 ${CC} -o ${PLATFORM}/bin/testAppweb -arch x86_64 -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L${PLATFORM}/lib -g -ldl -L${PLATFORM}/lib ${PLATFORM}/obj/testAppweb.o ${PLATFORM}/obj/testHttp.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
 
-echo '#!macosx-x86_64/bin/cgiProgram' >test/cgi-bin/testScript ; chmod +x test/cgi-bin/testScript
+echo '#!${PLATFORM}/bin/cgiProgram' >test/cgi-bin/testScript ; chmod +x test/cgi-bin/testScript
 echo -e '#!`type -p sh`' >test/web/caching/cache.cgi
 echo -e '' >>test/web/caching/cache.cgi
 echo -e 'echo HTTP/1.0 200 OK' >>test/web/caching/cache.cgi
@@ -159,8 +159,8 @@ echo -e '' >>test/web/basic/basic.cgi
 echo -e 'echo Content-Type: text/plain' >>test/web/basic/basic.cgi
 echo -e '/usr/bin/env' >>test/web/basic/basic.cgi
 chmod +x test/web/basic/basic.cgi
-cp macosx-x86_64/bin/cgiProgram test/cgi-bin/cgiProgram
-cp macosx-x86_64/bin/cgiProgram test/cgi-bin/nph-cgiProgram
-cp macosx-x86_64/bin/cgiProgram 'test/cgi-bin/cgi Program'
-cp macosx-x86_64/bin/cgiProgram test/web/cgiProgram.cgi
+cp ${PLATFORM}/bin/cgiProgram test/cgi-bin/cgiProgram
+cp ${PLATFORM}/bin/cgiProgram test/cgi-bin/nph-cgiProgram
+cp ${PLATFORM}/bin/cgiProgram 'test/cgi-bin/cgi Program'
+cp ${PLATFORM}/bin/cgiProgram test/web/cgiProgram.cgi
 chmod +x test/cgi-bin/* test/web/cgiProgram.cgi

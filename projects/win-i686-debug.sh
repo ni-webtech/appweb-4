@@ -150,7 +150,7 @@ cp -r test/testAppweb.h win-i686-debug/inc/testAppweb.h
 
 "link" -out:${PLATFORM}/bin/testAppweb.exe -entry:mainCRTStartup -subsystem:console -nologo -nodefaultlib -incremental:no -libpath:${PLATFORM}/bin -debug -machine:x86 ${PLATFORM}/obj/testAppweb.obj ${PLATFORM}/obj/testHttp.obj ${LIBS} appweb.lib mpr.lib http.lib pcre.lib
 
-echo '#!win-i686/bin/cgiProgram.exe' >test/cgi-bin/testScript ; chmod +x test/cgi-bin/testScript
+echo '#!${PLATFORM}/bin/cgiProgram.exe' >test/cgi-bin/testScript ; chmod +x test/cgi-bin/testScript
 echo -e '#!`type -p sh`' >test/web/caching/cache.cgi
 echo -e '' >>test/web/caching/cache.cgi
 echo -e 'echo HTTP/1.0 200 OK' >>test/web/caching/cache.cgi
@@ -162,8 +162,8 @@ echo -e '' >>test/web/basic/basic.cgi
 echo -e 'echo Content-Type: text/plain' >>test/web/basic/basic.cgi
 echo -e '/usr/bin/env' >>test/web/basic/basic.cgi
 chmod +x test/web/basic/basic.cgi
-cp win-i686/bin/cgiProgram test/cgi-bin/cgiProgram.exe
-cp win-i686/bin/cgiProgram test/cgi-bin/nph-cgiProgram.exe
-cp win-i686/bin/cgiProgram 'test/cgi-bin/cgi Program.exe'
-cp win-i686/bin/cgiProgram test/web/cgiProgram.cgi
+cp ${PLATFORM}/bin/cgiProgram test/cgi-bin/cgiProgram.exe
+cp ${PLATFORM}/bin/cgiProgram test/cgi-bin/nph-cgiProgram.exe
+cp ${PLATFORM}/bin/cgiProgram 'test/cgi-bin/cgi Program.exe'
+cp ${PLATFORM}/bin/cgiProgram test/web/cgiProgram.cgi
 chmod +x test/cgi-bin/* test/web/cgiProgram.cgi
