@@ -10,9 +10,10 @@ IFLAGS    := -I$(PLATFORM)/inc
 LDFLAGS   := -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86
 LIBS      := ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib
 
-export PATH := %VS%/Bin:%VS%/VC/Bin:%VS%/Common7/IDE:%VS%/Common7/Tools:%VS%/SDK/v3.5/bin:%VS%/VC/VCPackages
-export INCLUDE := %VS%/INCLUDE:%VS%/VC/INCLUDE
-export LIB := %VS%/lib:%VS%/VC/lib
+# export PATH := %VS%/Bin:%VS%/VC/Bin:%VS%/Common7/IDE:%VS%/Common7/Tools:%VS%/SDK/v3.5/bin:%VS%/VC/VCPackages
+# export INCLUDE := %VS%/INCLUDE:%VS%/VC/INCLUDE
+# export LIB := %VS%/lib:%VS%/VC/lib
+
 all: prep \
         $(PLATFORM)/bin/libmpr.dll \
         $(PLATFORM)/bin/appman \

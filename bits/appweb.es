@@ -28,9 +28,7 @@ public function packageBinaryFiles() {
     let prefixes = bit.prefixes;
     let p = {}
     for (prefix in bit.prefixes) {
-print("NAME", contents.name, "PP", bit.prefixes[prefix].portable)
-        p[prefix] = Path(contents.name + bit.prefixes[prefix].removeDrive().portable)
-print("PRE", p[prefix])
+        p[prefix] = Path(contents.portable.name + bit.prefixes[prefix].removeDrive().portable)
         p[prefix].makeDir()
     }
     let strip = settings.profile == 'debug'
@@ -43,7 +41,7 @@ print("PRE", p[prefix])
         include: /appweb|appman|esp|http|auth|makerom|libappweb|libmpr|setConfig/,
         permissions: 0755, 
     })
-    install(bit.dir.bin.join('appweb'), p.bin, {
+    install(bit.dir.bin.join('appweb').joinExt(bit.ext.exe), p.bin, {
         permissions: 0755, 
         strip: strip,
     })
@@ -82,7 +80,7 @@ print("PRE", p[prefix])
             f.symlink(link.basename)
         }
     }
-    let conf = Path(contents.name + bit.prefixes.config + '/appweb.conf')
+    let conf = Path(contents.portable + '' + bit.prefixes.config.removeDrive().portable + '/appweb.conf')
     if (bit.platform.os == 'win') {
         run(['setConfig', '--home', '.', '--documents', 'web', '--logs', 'logs', '--port', settings.http_port,
             '--ssl', settings.ssl_port, '--cache', 'cache', '--modules', 'bin', conf])
@@ -110,9 +108,12 @@ print("PRE", p[prefix])
             {permissions: 0644, expand: true})
 
     } else if (OS == 'win') {
-        install('msvcrt.lib', bin, {from: bit.packs.compiler.parent.join('redist/x86/Microsoft.VC100.CRT')})
-        install('removeFiles*', bin, {from: bit.dir.bin, permissions: 0755})
-        install('setConf*', bin, {from: bit.dir.bin, permissions: 0755})
+        install(bit.packs.compiler.path.join('../../redist/x86/Microsoft.VC100.CRT/msvcr100.dll'), p.bin)
+        /*
+            install(bit.packs.compiler.path.join('../../lib/msvcrt.lib'), p.bin)
+         */
+        install(bit.dir.bin.join('removeFiles*'), bin)
+        install(bit.dir.bin.join('setConf*'), bin)
     }
     if (bit.platform.like == 'posix') {
         install('doc/man/*.1', p.productver.join('doc/man/man1'), {compress: true})

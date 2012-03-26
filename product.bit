@@ -17,6 +17,7 @@ Bit.load({
         "src/utils/utils.bit",
         "src/server/server.bit",
         "test/test.bit",
+        "package/package.bit",
         "doc/doc.bit",
         "${BITS}/embedthis.bit",
     ],
