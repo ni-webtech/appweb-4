@@ -1,5 +1,6 @@
 #
-#	Makefile - Makefile to build Appweb with bit.
+#   Makefile - Top level Makefile when using "make" to build.
+#              Alternatively, use bit directly.
 #
 
 ARCH 	:= $(shell uname -m)
@@ -19,11 +20,11 @@ ifeq ($(UNAME),Cygwin)
 	OS	:=	win
 endif
 
-all clean compile:
+all clean clobber compile:
 	make -f projects/$(OS)-$(ARCH)-$(PROFILE).mk $@
 
 build configure generate test package:
-	@bit $@
+	bit $@
 
 version:
 	@bit -q version
