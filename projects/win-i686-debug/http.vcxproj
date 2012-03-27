@@ -30,7 +30,7 @@
 </ItemGroup>
 
 <PropertyGroup Label="Globals">
-  <ProjectGuid>{c66f047b-01d9-40f3-966b-cd95f9cd7c05}</ProjectGuid>
+  <ProjectGuid>{70932bf4-9691-4c26-a0f5-21f432aca9ef}</ProjectGuid>
   <RootNamespace />
   <Keyword>Win32Proj</Keyword>
 </PropertyGroup>
@@ -61,13 +61,13 @@
 <ItemDefinitionGroup>
 <Link>
   <AdditionalDependencies>http.lib;mpr.lib;pcre.lib;%(AdditionalDependencies)</AdditionalDependencies>
-  <AdditionalLibraryDirectories>$(OutDir);/home/mob/appweb/win-i686-debug/bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+  <AdditionalLibraryDirectories>$(OutDir);/Users/mob/git/appweb/win-i686-debug/bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
 </Link>
 </ItemDefinitionGroup>
 
 <ItemGroup>
   <ProjectReference Include="libhttp.vcxproj">
-  <Project>7cfeccb2-6d11-4665-a302-fd678a2c057b</Project>
+  <Project>c405dc73-c5c2-4404-8803-f6dbe5d806d9</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>

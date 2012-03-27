@@ -30,7 +30,7 @@
 </ItemGroup>
 
 <PropertyGroup Label="Globals">
-  <ProjectGuid>{94a9be2b-e204-44a7-90de-c5568dcabf20}</ProjectGuid>
+  <ProjectGuid>{2741eb04-e303-4ce7-bb87-b7d283f22a4e}</ProjectGuid>
   <RootNamespace />
   <Keyword>Win32Proj</Keyword>
 </PropertyGroup>
@@ -61,7 +61,7 @@
 <ItemDefinitionGroup>
 <Link>
   <AdditionalDependencies>;%(AdditionalDependencies)</AdditionalDependencies>
-  <AdditionalLibraryDirectories>$(OutDir);/home/mob/appweb/win-i686-debug/bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+  <AdditionalLibraryDirectories>$(OutDir);/Users/mob/git/appweb/win-i686-debug/bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
 </Link>
 </ItemDefinitionGroup>
 

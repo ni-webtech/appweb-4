@@ -30,7 +30,7 @@
 </ItemGroup>
 
 <PropertyGroup Label="Globals">
-  <ProjectGuid>{c2b24c48-7f75-42f6-b465-1e222224e978}</ProjectGuid>
+  <ProjectGuid>{8b36c24f-5bc4-48f1-9893-5ddaceb38667}</ProjectGuid>
   <RootNamespace />
   <Keyword>Win32Proj</Keyword>
 </PropertyGroup>
@@ -57,36 +57,36 @@
     
 <ItemGroup>
   <ClCompile Include="..\..\src\config.c" />
-  <ClCompile Include="..\..\src\dirHandler.c" />
-  <ClCompile Include="..\..\src\log.c" />
   <ClCompile Include="..\..\src\convenience.c" />
-  <ClCompile Include="..\..\src\server.c" />
+  <ClCompile Include="..\..\src\dirHandler.c" />
   <ClCompile Include="..\..\src\fileHandler.c" />
+  <ClCompile Include="..\..\src\log.c" />
+  <ClCompile Include="..\..\src\server.c" />
 </ItemGroup>
 <ItemDefinitionGroup>
 <Link>
   <AdditionalDependencies>mpr.lib;http.lib;pcre.lib;pcre.lib;%(AdditionalDependencies)</AdditionalDependencies>
-  <AdditionalLibraryDirectories>$(OutDir);/home/mob/appweb/win-i686-debug/bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+  <AdditionalLibraryDirectories>$(OutDir);/Users/mob/git/appweb/win-i686-debug/bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
 </Link>
 </ItemDefinitionGroup>
 
 <ItemGroup>
   <ProjectReference Include="libmpr.vcxproj">
-  <Project>17904485-244e-4efc-ae8c-b7be023bf142</Project>
+  <Project>054ca9e2-3e3b-4f5a-b1e0-d407df20568f</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>
 
 <ItemGroup>
   <ProjectReference Include="libhttp.vcxproj">
-  <Project>7cfeccb2-6d11-4665-a302-fd678a2c057b</Project>
+  <Project>c405dc73-c5c2-4404-8803-f6dbe5d806d9</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>
 
 <ItemGroup>
   <ProjectReference Include="libpcre.vcxproj">
-  <Project>94a9be2b-e204-44a7-90de-c5568dcabf20</Project>
+  <Project>2741eb04-e303-4ce7-bb87-b7d283f22a4e</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>

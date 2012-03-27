@@ -30,7 +30,7 @@
 </ItemGroup>
 
 <PropertyGroup Label="Globals">
-  <ProjectGuid>{9fe73d7d-da8b-4205-ab2e-7832fb69eefb}</ProjectGuid>
+  <ProjectGuid>{dc4d6db1-86eb-475d-9d8f-4709a71cb94e}</ProjectGuid>
   <RootNamespace />
   <Keyword>Win32Proj</Keyword>
 </PropertyGroup>
@@ -59,23 +59,23 @@
   <ClCompile Include="..\..\src\esp\edi.c" />
   <ClCompile Include="..\..\src\esp\espAbbrev.c" />
   <ClCompile Include="..\..\src\esp\espFramework.c" />
+  <ClCompile Include="..\..\src\esp\espHandler.c" />
   <ClCompile Include="..\..\src\esp\espHtml.c" />
   <ClCompile Include="..\..\src\esp\espSession.c" />
-  <ClCompile Include="..\..\src\esp\espHandler.c" />
-  <ClCompile Include="..\..\src\esp\sdb.c" />
-  <ClCompile Include="..\..\src\esp\mdb.c" />
   <ClCompile Include="..\..\src\esp\espTemplate.c" />
+  <ClCompile Include="..\..\src\esp\mdb.c" />
+  <ClCompile Include="..\..\src\esp\sdb.c" />
 </ItemGroup>
 <ItemDefinitionGroup>
 <Link>
   <AdditionalDependencies>appweb.lib;mpr.lib;http.lib;pcre.lib;%(AdditionalDependencies)</AdditionalDependencies>
-  <AdditionalLibraryDirectories>$(OutDir);/home/mob/appweb/win-i686-debug/bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+  <AdditionalLibraryDirectories>$(OutDir);/Users/mob/git/appweb/win-i686-debug/bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
 </Link>
 </ItemDefinitionGroup>
 
 <ItemGroup>
   <ProjectReference Include="libappweb.vcxproj">
-  <Project>c2b24c48-7f75-42f6-b465-1e222224e978</Project>
+  <Project>8b36c24f-5bc4-48f1-9893-5ddaceb38667</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>

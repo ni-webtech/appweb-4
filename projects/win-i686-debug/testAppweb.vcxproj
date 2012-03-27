@@ -30,7 +30,7 @@
 </ItemGroup>
 
 <PropertyGroup Label="Globals">
-  <ProjectGuid>{060c47ed-1019-4a7b-95e9-1b4c8e8d452f}</ProjectGuid>
+  <ProjectGuid>{d4180659-b281-407d-8fa6-1f45e24c4337}</ProjectGuid>
   <RootNamespace />
   <Keyword>Win32Proj</Keyword>
 </PropertyGroup>
@@ -56,19 +56,19 @@
 </PropertyGroup>
     
 <ItemGroup>
-  <ClCompile Include="..\..\test\testHttp.c" />
   <ClCompile Include="..\..\test\testAppweb.c" />
+  <ClCompile Include="..\..\test\testHttp.c" />
 </ItemGroup>
 <ItemDefinitionGroup>
 <Link>
   <AdditionalDependencies>appweb.lib;mpr.lib;http.lib;pcre.lib;%(AdditionalDependencies)</AdditionalDependencies>
-  <AdditionalLibraryDirectories>$(OutDir);/home/mob/appweb/win-i686-debug/bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+  <AdditionalLibraryDirectories>$(OutDir);/Users/mob/git/appweb/win-i686-debug/bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
 </Link>
 </ItemDefinitionGroup>
 
 <ItemGroup>
   <ProjectReference Include="libappweb.vcxproj">
-  <Project>c2b24c48-7f75-42f6-b465-1e222224e978</Project>
+  <Project>8b36c24f-5bc4-48f1-9893-5ddaceb38667</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>

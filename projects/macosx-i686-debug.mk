@@ -7,7 +7,7 @@ CC        := cc
 CFLAGS    := -fPIC -Wall -g
 DFLAGS    := -DPIC -DCPU=I686
 IFLAGS    := -I$(PLATFORM)/inc
-LDFLAGS   := -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L$(PLATFORM)/lib -g
+LDFLAGS   := -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L$(PLATFORM)/lib -g -ldl
 LIBS      := -lpthread -lm
 
 
@@ -76,20 +76,20 @@ clean:
 	rm -rf $(PLATFORM)/obj/http.o
 	rm -rf $(PLATFORM)/obj/sqlite3.o
 	rm -rf $(PLATFORM)/obj/config.o
-	rm -rf $(PLATFORM)/obj/dirHandler.o
-	rm -rf $(PLATFORM)/obj/log.o
 	rm -rf $(PLATFORM)/obj/convenience.o
-	rm -rf $(PLATFORM)/obj/server.o
+	rm -rf $(PLATFORM)/obj/dirHandler.o
 	rm -rf $(PLATFORM)/obj/fileHandler.o
+	rm -rf $(PLATFORM)/obj/log.o
+	rm -rf $(PLATFORM)/obj/server.o
 	rm -rf $(PLATFORM)/obj/edi.o
 	rm -rf $(PLATFORM)/obj/espAbbrev.o
 	rm -rf $(PLATFORM)/obj/espFramework.o
+	rm -rf $(PLATFORM)/obj/espHandler.o
 	rm -rf $(PLATFORM)/obj/espHtml.o
 	rm -rf $(PLATFORM)/obj/espSession.o
-	rm -rf $(PLATFORM)/obj/espHandler.o
-	rm -rf $(PLATFORM)/obj/sdb.o
-	rm -rf $(PLATFORM)/obj/mdb.o
 	rm -rf $(PLATFORM)/obj/espTemplate.o
+	rm -rf $(PLATFORM)/obj/mdb.o
+	rm -rf $(PLATFORM)/obj/sdb.o
 	rm -rf $(PLATFORM)/obj/esp.o
 	rm -rf $(PLATFORM)/obj/cgiHandler.o
 	rm -rf $(PLATFORM)/obj/ejsHandler.o
@@ -100,9 +100,12 @@ clean:
 	rm -rf $(PLATFORM)/obj/setConfig.o
 	rm -rf $(PLATFORM)/obj/appweb.o
 	rm -rf $(PLATFORM)/obj/appwebMonitor.o
-	rm -rf $(PLATFORM)/obj/testHttp.o
 	rm -rf $(PLATFORM)/obj/testAppweb.o
+	rm -rf $(PLATFORM)/obj/testHttp.o
 	rm -rf $(PLATFORM)/obj/removeFiles.o
+
+clobber: clean
+	rm -fr ./$(PLATFORM)
 
 $(PLATFORM)/inc/mpr.h: 
 	rm -fr macosx-i686-debug/inc/mpr.h
@@ -192,69 +195,69 @@ $(PLATFORM)/lib/libsqlite3.dylib:  \
         $(PLATFORM)/obj/sqlite3.o
 	$(CC) -dynamiclib -o $(PLATFORM)/lib/libsqlite3.dylib -arch i686 $(LDFLAGS) -install_name @rpath/libsqlite3.dylib $(PLATFORM)/obj/sqlite3.o $(LIBS)
 
-$(PLATFORM)/inc/customize.h: 
-	rm -fr macosx-i686-debug/inc/customize.h
-	cp -r src/customize.h macosx-i686-debug/inc/customize.h
-
 $(PLATFORM)/inc/appweb.h: 
 	rm -fr macosx-i686-debug/inc/appweb.h
 	cp -r src/appweb.h macosx-i686-debug/inc/appweb.h
+
+$(PLATFORM)/inc/customize.h: 
+	rm -fr macosx-i686-debug/inc/customize.h
+	cp -r src/customize.h macosx-i686-debug/inc/customize.h
 
 $(PLATFORM)/obj/config.o: \
         src/config.c \
         $(PLATFORM)/inc/buildConfig.h
 	$(CC) -c -o $(PLATFORM)/obj/config.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/config.c
 
-$(PLATFORM)/obj/dirHandler.o: \
-        src/dirHandler.c \
-        $(PLATFORM)/inc/buildConfig.h
-	$(CC) -c -o $(PLATFORM)/obj/dirHandler.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/dirHandler.c
-
-$(PLATFORM)/obj/log.o: \
-        src/log.c \
-        $(PLATFORM)/inc/buildConfig.h
-	$(CC) -c -o $(PLATFORM)/obj/log.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/log.c
-
 $(PLATFORM)/obj/convenience.o: \
         src/convenience.c \
         $(PLATFORM)/inc/buildConfig.h
 	$(CC) -c -o $(PLATFORM)/obj/convenience.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/convenience.c
 
-$(PLATFORM)/obj/server.o: \
-        src/server.c \
+$(PLATFORM)/obj/dirHandler.o: \
+        src/dirHandler.c \
         $(PLATFORM)/inc/buildConfig.h
-	$(CC) -c -o $(PLATFORM)/obj/server.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/server.c
+	$(CC) -c -o $(PLATFORM)/obj/dirHandler.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/dirHandler.c
 
 $(PLATFORM)/obj/fileHandler.o: \
         src/fileHandler.c \
         $(PLATFORM)/inc/buildConfig.h
 	$(CC) -c -o $(PLATFORM)/obj/fileHandler.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/fileHandler.c
 
+$(PLATFORM)/obj/log.o: \
+        src/log.c \
+        $(PLATFORM)/inc/buildConfig.h
+	$(CC) -c -o $(PLATFORM)/obj/log.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/log.c
+
+$(PLATFORM)/obj/server.o: \
+        src/server.c \
+        $(PLATFORM)/inc/buildConfig.h
+	$(CC) -c -o $(PLATFORM)/obj/server.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/server.c
+
 $(PLATFORM)/lib/libappweb.dylib:  \
         $(PLATFORM)/lib/libmpr.dylib \
         $(PLATFORM)/lib/libhttp.dylib \
         $(PLATFORM)/lib/libpcre.dylib \
-        $(PLATFORM)/inc/customize.h \
         $(PLATFORM)/inc/appweb.h \
+        $(PLATFORM)/inc/customize.h \
         $(PLATFORM)/obj/config.o \
-        $(PLATFORM)/obj/dirHandler.o \
-        $(PLATFORM)/obj/log.o \
         $(PLATFORM)/obj/convenience.o \
-        $(PLATFORM)/obj/server.o \
-        $(PLATFORM)/obj/fileHandler.o
-	$(CC) -dynamiclib -o $(PLATFORM)/lib/libappweb.dylib -arch i686 $(LDFLAGS) -install_name @rpath/libappweb.dylib $(PLATFORM)/obj/config.o $(PLATFORM)/obj/dirHandler.o $(PLATFORM)/obj/log.o $(PLATFORM)/obj/convenience.o $(PLATFORM)/obj/server.o $(PLATFORM)/obj/fileHandler.o $(LIBS) -lmpr -lhttp -lpcre -lpcre
+        $(PLATFORM)/obj/dirHandler.o \
+        $(PLATFORM)/obj/fileHandler.o \
+        $(PLATFORM)/obj/log.o \
+        $(PLATFORM)/obj/server.o
+	$(CC) -dynamiclib -o $(PLATFORM)/lib/libappweb.dylib -arch i686 $(LDFLAGS) -install_name @rpath/libappweb.dylib $(PLATFORM)/obj/config.o $(PLATFORM)/obj/convenience.o $(PLATFORM)/obj/dirHandler.o $(PLATFORM)/obj/fileHandler.o $(PLATFORM)/obj/log.o $(PLATFORM)/obj/server.o $(LIBS) -lmpr -lhttp -lpcre -lpcre
 
-$(PLATFORM)/inc/esp.h: 
-	rm -fr macosx-i686-debug/inc/esp.h
-	cp -r src/esp/esp.h macosx-i686-debug/inc/esp.h
+$(PLATFORM)/inc/edi.h: 
+	rm -fr macosx-i686-debug/inc/edi.h
+	cp -r src/esp/edi.h macosx-i686-debug/inc/edi.h
 
 $(PLATFORM)/inc/esp-app.h: 
 	rm -fr macosx-i686-debug/inc/esp-app.h
 	cp -r src/esp/esp-app.h macosx-i686-debug/inc/esp-app.h
 
-$(PLATFORM)/inc/edi.h: 
-	rm -fr macosx-i686-debug/inc/edi.h
-	cp -r src/esp/edi.h macosx-i686-debug/inc/edi.h
+$(PLATFORM)/inc/esp.h: 
+	rm -fr macosx-i686-debug/inc/esp.h
+	cp -r src/esp/esp.h macosx-i686-debug/inc/esp.h
 
 $(PLATFORM)/inc/mdb.h: 
 	rm -fr macosx-i686-debug/inc/mdb.h
@@ -275,6 +278,11 @@ $(PLATFORM)/obj/espFramework.o: \
         $(PLATFORM)/inc/buildConfig.h
 	$(CC) -c -o $(PLATFORM)/obj/espFramework.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/espFramework.c
 
+$(PLATFORM)/obj/espHandler.o: \
+        src/esp/espHandler.c \
+        $(PLATFORM)/inc/buildConfig.h
+	$(CC) -c -o $(PLATFORM)/obj/espHandler.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/espHandler.c
+
 $(PLATFORM)/obj/espHtml.o: \
         src/esp/espHtml.c \
         $(PLATFORM)/inc/buildConfig.h
@@ -285,42 +293,37 @@ $(PLATFORM)/obj/espSession.o: \
         $(PLATFORM)/inc/buildConfig.h
 	$(CC) -c -o $(PLATFORM)/obj/espSession.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/espSession.c
 
-$(PLATFORM)/obj/espHandler.o: \
-        src/esp/espHandler.c \
+$(PLATFORM)/obj/espTemplate.o: \
+        src/esp/espTemplate.c \
         $(PLATFORM)/inc/buildConfig.h
-	$(CC) -c -o $(PLATFORM)/obj/espHandler.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/espHandler.c
-
-$(PLATFORM)/obj/sdb.o: \
-        src/esp/sdb.c \
-        $(PLATFORM)/inc/buildConfig.h
-	$(CC) -c -o $(PLATFORM)/obj/sdb.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/sdb.c
+	$(CC) -c -o $(PLATFORM)/obj/espTemplate.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/espTemplate.c
 
 $(PLATFORM)/obj/mdb.o: \
         src/esp/mdb.c \
         $(PLATFORM)/inc/buildConfig.h
 	$(CC) -c -o $(PLATFORM)/obj/mdb.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/mdb.c
 
-$(PLATFORM)/obj/espTemplate.o: \
-        src/esp/espTemplate.c \
+$(PLATFORM)/obj/sdb.o: \
+        src/esp/sdb.c \
         $(PLATFORM)/inc/buildConfig.h
-	$(CC) -c -o $(PLATFORM)/obj/espTemplate.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/espTemplate.c
+	$(CC) -c -o $(PLATFORM)/obj/sdb.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/sdb.c
 
 $(PLATFORM)/lib/mod_esp.dylib:  \
         $(PLATFORM)/lib/libappweb.dylib \
-        $(PLATFORM)/inc/esp.h \
-        $(PLATFORM)/inc/esp-app.h \
         $(PLATFORM)/inc/edi.h \
+        $(PLATFORM)/inc/esp-app.h \
+        $(PLATFORM)/inc/esp.h \
         $(PLATFORM)/inc/mdb.h \
         $(PLATFORM)/obj/edi.o \
         $(PLATFORM)/obj/espAbbrev.o \
         $(PLATFORM)/obj/espFramework.o \
+        $(PLATFORM)/obj/espHandler.o \
         $(PLATFORM)/obj/espHtml.o \
         $(PLATFORM)/obj/espSession.o \
-        $(PLATFORM)/obj/espHandler.o \
-        $(PLATFORM)/obj/sdb.o \
+        $(PLATFORM)/obj/espTemplate.o \
         $(PLATFORM)/obj/mdb.o \
-        $(PLATFORM)/obj/espTemplate.o
-	$(CC) -dynamiclib -o $(PLATFORM)/lib/mod_esp.dylib -arch i686 $(LDFLAGS) -install_name @rpath/mod_esp.dylib $(PLATFORM)/obj/edi.o $(PLATFORM)/obj/espAbbrev.o $(PLATFORM)/obj/espFramework.o $(PLATFORM)/obj/espHtml.o $(PLATFORM)/obj/espSession.o $(PLATFORM)/obj/espHandler.o $(PLATFORM)/obj/sdb.o $(PLATFORM)/obj/mdb.o $(PLATFORM)/obj/espTemplate.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+        $(PLATFORM)/obj/sdb.o
+	$(CC) -dynamiclib -o $(PLATFORM)/lib/mod_esp.dylib -arch i686 $(LDFLAGS) -install_name @rpath/mod_esp.dylib $(PLATFORM)/obj/edi.o $(PLATFORM)/obj/espAbbrev.o $(PLATFORM)/obj/espFramework.o $(PLATFORM)/obj/espHandler.o $(PLATFORM)/obj/espHtml.o $(PLATFORM)/obj/espSession.o $(PLATFORM)/obj/espTemplate.o $(PLATFORM)/obj/mdb.o $(PLATFORM)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 $(PLATFORM)/obj/esp.o: \
         src/esp/esp.c \
@@ -329,17 +332,17 @@ $(PLATFORM)/obj/esp.o: \
 
 $(PLATFORM)/bin/esp:  \
         $(PLATFORM)/lib/libappweb.dylib \
-        $(PLATFORM)/obj/esp.o \
         $(PLATFORM)/obj/edi.o \
+        $(PLATFORM)/obj/esp.o \
         $(PLATFORM)/obj/espAbbrev.o \
         $(PLATFORM)/obj/espFramework.o \
+        $(PLATFORM)/obj/espHandler.o \
         $(PLATFORM)/obj/espHtml.o \
         $(PLATFORM)/obj/espSession.o \
-        $(PLATFORM)/obj/espHandler.o \
-        $(PLATFORM)/obj/sdb.o \
+        $(PLATFORM)/obj/espTemplate.o \
         $(PLATFORM)/obj/mdb.o \
-        $(PLATFORM)/obj/espTemplate.o
-	$(CC) -o $(PLATFORM)/bin/esp -arch i686 $(LDFLAGS) -L$(PLATFORM)/lib $(PLATFORM)/obj/esp.o $(PLATFORM)/obj/edi.o $(PLATFORM)/obj/espAbbrev.o $(PLATFORM)/obj/espFramework.o $(PLATFORM)/obj/espHtml.o $(PLATFORM)/obj/espSession.o $(PLATFORM)/obj/espHandler.o $(PLATFORM)/obj/sdb.o $(PLATFORM)/obj/mdb.o $(PLATFORM)/obj/espTemplate.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+        $(PLATFORM)/obj/sdb.o
+	$(CC) -o $(PLATFORM)/bin/esp -arch i686 $(LDFLAGS) -L$(PLATFORM)/lib $(PLATFORM)/obj/edi.o $(PLATFORM)/obj/esp.o $(PLATFORM)/obj/espAbbrev.o $(PLATFORM)/obj/espFramework.o $(PLATFORM)/obj/espHandler.o $(PLATFORM)/obj/espHtml.o $(PLATFORM)/obj/espSession.o $(PLATFORM)/obj/espTemplate.o $(PLATFORM)/obj/mdb.o $(PLATFORM)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 $(PLATFORM)/lib/esp.conf: 
 	rm -fr macosx-i686-debug/lib/esp.conf
@@ -407,22 +410,22 @@ $(PLATFORM)/inc/testAppweb.h:
 	rm -fr macosx-i686-debug/inc/testAppweb.h
 	cp -r test/testAppweb.h macosx-i686-debug/inc/testAppweb.h
 
-$(PLATFORM)/obj/testHttp.o: \
-        test/testHttp.c \
-        $(PLATFORM)/inc/buildConfig.h
-	$(CC) -c -o $(PLATFORM)/obj/testHttp.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc test/testHttp.c
-
 $(PLATFORM)/obj/testAppweb.o: \
         test/testAppweb.c \
         $(PLATFORM)/inc/buildConfig.h
 	$(CC) -c -o $(PLATFORM)/obj/testAppweb.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc test/testAppweb.c
 
+$(PLATFORM)/obj/testHttp.o: \
+        test/testHttp.c \
+        $(PLATFORM)/inc/buildConfig.h
+	$(CC) -c -o $(PLATFORM)/obj/testHttp.o -arch i686 $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc test/testHttp.c
+
 $(PLATFORM)/bin/testAppweb:  \
         $(PLATFORM)/lib/libappweb.dylib \
         $(PLATFORM)/inc/testAppweb.h \
-        $(PLATFORM)/obj/testHttp.o \
-        $(PLATFORM)/obj/testAppweb.o
-	$(CC) -o $(PLATFORM)/bin/testAppweb -arch i686 $(LDFLAGS) -L$(PLATFORM)/lib $(PLATFORM)/obj/testHttp.o $(PLATFORM)/obj/testAppweb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+        $(PLATFORM)/obj/testAppweb.o \
+        $(PLATFORM)/obj/testHttp.o
+	$(CC) -o $(PLATFORM)/bin/testAppweb -arch i686 $(LDFLAGS) -L$(PLATFORM)/lib $(PLATFORM)/obj/testAppweb.o $(PLATFORM)/obj/testHttp.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 test/cgi-bin/testScript: 
 	echo '#!$(PLATFORM)/bin/cgiProgram' >test/cgi-bin/testScript ; chmod +x test/cgi-bin/testScript

@@ -53,34 +53,34 @@ ${CC} -c -o ${PLATFORM}/obj/sqlite3.o -fPIC -g -Wno-unused-result -mtune=i686 ${
 
 ${CC} -shared -o ${PLATFORM}/lib/libsqlite3.so ${LDFLAGS} ${PLATFORM}/obj/sqlite3.o ${LIBS}
 
-rm -rf linux-i686-debug/inc/customize.h
-cp -r src/customize.h linux-i686-debug/inc/customize.h
-
 rm -rf linux-i686-debug/inc/appweb.h
 cp -r src/appweb.h linux-i686-debug/inc/appweb.h
 
+rm -rf linux-i686-debug/inc/customize.h
+cp -r src/customize.h linux-i686-debug/inc/customize.h
+
 ${CC} -c -o ${PLATFORM}/obj/config.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/config.c
-
-${CC} -c -o ${PLATFORM}/obj/dirHandler.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/dirHandler.c
-
-${CC} -c -o ${PLATFORM}/obj/log.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/log.c
 
 ${CC} -c -o ${PLATFORM}/obj/convenience.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/convenience.c
 
-${CC} -c -o ${PLATFORM}/obj/server.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/server.c
+${CC} -c -o ${PLATFORM}/obj/dirHandler.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/dirHandler.c
 
 ${CC} -c -o ${PLATFORM}/obj/fileHandler.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/fileHandler.c
 
-${CC} -shared -o ${PLATFORM}/lib/libappweb.so ${LDFLAGS} ${PLATFORM}/obj/config.o ${PLATFORM}/obj/dirHandler.o ${PLATFORM}/obj/log.o ${PLATFORM}/obj/convenience.o ${PLATFORM}/obj/server.o ${PLATFORM}/obj/fileHandler.o ${LIBS} -lmpr -lhttp -lpcre -lpcre
+${CC} -c -o ${PLATFORM}/obj/log.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/log.c
 
-rm -rf linux-i686-debug/inc/esp.h
-cp -r src/esp/esp.h linux-i686-debug/inc/esp.h
+${CC} -c -o ${PLATFORM}/obj/server.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/server.c
+
+${CC} -shared -o ${PLATFORM}/lib/libappweb.so ${LDFLAGS} ${PLATFORM}/obj/config.o ${PLATFORM}/obj/convenience.o ${PLATFORM}/obj/dirHandler.o ${PLATFORM}/obj/fileHandler.o ${PLATFORM}/obj/log.o ${PLATFORM}/obj/server.o ${LIBS} -lmpr -lhttp -lpcre -lpcre
+
+rm -rf linux-i686-debug/inc/edi.h
+cp -r src/esp/edi.h linux-i686-debug/inc/edi.h
 
 rm -rf linux-i686-debug/inc/esp-app.h
 cp -r src/esp/esp-app.h linux-i686-debug/inc/esp-app.h
 
-rm -rf linux-i686-debug/inc/edi.h
-cp -r src/esp/edi.h linux-i686-debug/inc/edi.h
+rm -rf linux-i686-debug/inc/esp.h
+cp -r src/esp/esp.h linux-i686-debug/inc/esp.h
 
 rm -rf linux-i686-debug/inc/mdb.h
 cp -r src/esp/mdb.h linux-i686-debug/inc/mdb.h
@@ -91,23 +91,23 @@ ${CC} -c -o ${PLATFORM}/obj/espAbbrev.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc sr
 
 ${CC} -c -o ${PLATFORM}/obj/espFramework.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espFramework.c
 
+${CC} -c -o ${PLATFORM}/obj/espHandler.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espHandler.c
+
 ${CC} -c -o ${PLATFORM}/obj/espHtml.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espHtml.c
 
 ${CC} -c -o ${PLATFORM}/obj/espSession.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espSession.c
 
-${CC} -c -o ${PLATFORM}/obj/espHandler.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espHandler.c
-
-${CC} -c -o ${PLATFORM}/obj/sdb.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/sdb.c
+${CC} -c -o ${PLATFORM}/obj/espTemplate.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espTemplate.c
 
 ${CC} -c -o ${PLATFORM}/obj/mdb.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/mdb.c
 
-${CC} -c -o ${PLATFORM}/obj/espTemplate.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espTemplate.c
+${CC} -c -o ${PLATFORM}/obj/sdb.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/sdb.c
 
-${CC} -shared -o ${PLATFORM}/lib/mod_esp.so ${LDFLAGS} ${PLATFORM}/obj/edi.o ${PLATFORM}/obj/espAbbrev.o ${PLATFORM}/obj/espFramework.o ${PLATFORM}/obj/espHtml.o ${PLATFORM}/obj/espSession.o ${PLATFORM}/obj/espHandler.o ${PLATFORM}/obj/sdb.o ${PLATFORM}/obj/mdb.o ${PLATFORM}/obj/espTemplate.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
+${CC} -shared -o ${PLATFORM}/lib/mod_esp.so ${LDFLAGS} ${PLATFORM}/obj/edi.o ${PLATFORM}/obj/espAbbrev.o ${PLATFORM}/obj/espFramework.o ${PLATFORM}/obj/espHandler.o ${PLATFORM}/obj/espHtml.o ${PLATFORM}/obj/espSession.o ${PLATFORM}/obj/espTemplate.o ${PLATFORM}/obj/mdb.o ${PLATFORM}/obj/sdb.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
 
 ${CC} -c -o ${PLATFORM}/obj/esp.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/esp.c
 
-${CC} -o ${PLATFORM}/bin/esp ${LDFLAGS} -L${PLATFORM}/lib ${PLATFORM}/obj/esp.o ${PLATFORM}/obj/edi.o ${PLATFORM}/obj/espAbbrev.o ${PLATFORM}/obj/espFramework.o ${PLATFORM}/obj/espHtml.o ${PLATFORM}/obj/espSession.o ${PLATFORM}/obj/espHandler.o ${PLATFORM}/obj/sdb.o ${PLATFORM}/obj/mdb.o ${PLATFORM}/obj/espTemplate.o ${LIBS} -lappweb -lmpr -lhttp -lpcre ${LDFLAGS}
+${CC} -o ${PLATFORM}/bin/esp ${LDFLAGS} -L${PLATFORM}/lib ${PLATFORM}/obj/edi.o ${PLATFORM}/obj/esp.o ${PLATFORM}/obj/espAbbrev.o ${PLATFORM}/obj/espFramework.o ${PLATFORM}/obj/espHandler.o ${PLATFORM}/obj/espHtml.o ${PLATFORM}/obj/espSession.o ${PLATFORM}/obj/espTemplate.o ${PLATFORM}/obj/mdb.o ${PLATFORM}/obj/sdb.o ${LIBS} -lappweb -lmpr -lhttp -lpcre ${LDFLAGS}
 
 rm -rf linux-i686-debug/lib/esp.conf
 cp -r src/esp/esp.conf linux-i686-debug/lib/esp.conf
@@ -141,11 +141,11 @@ ${CC} -o ${PLATFORM}/bin/appweb ${LDFLAGS} -L${PLATFORM}/lib ${PLATFORM}/obj/app
 rm -rf linux-i686-debug/inc/testAppweb.h
 cp -r test/testAppweb.h linux-i686-debug/inc/testAppweb.h
 
-${CC} -c -o ${PLATFORM}/obj/testHttp.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc test/testHttp.c
-
 ${CC} -c -o ${PLATFORM}/obj/testAppweb.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc test/testAppweb.c
 
-${CC} -o ${PLATFORM}/bin/testAppweb ${LDFLAGS} -L${PLATFORM}/lib ${PLATFORM}/obj/testHttp.o ${PLATFORM}/obj/testAppweb.o ${LIBS} -lappweb -lmpr -lhttp -lpcre ${LDFLAGS}
+${CC} -c -o ${PLATFORM}/obj/testHttp.o ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc test/testHttp.c
+
+${CC} -o ${PLATFORM}/bin/testAppweb ${LDFLAGS} -L${PLATFORM}/lib ${PLATFORM}/obj/testAppweb.o ${PLATFORM}/obj/testHttp.o ${LIBS} -lappweb -lmpr -lhttp -lpcre ${LDFLAGS}
 
 echo '#!${PLATFORM}/bin/cgiProgram' >test/cgi-bin/testScript ; chmod +x test/cgi-bin/testScript
 echo -e '#!`type -p sh`' >test/web/caching/cache.cgi

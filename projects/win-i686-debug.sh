@@ -56,34 +56,34 @@ cp -r src/deps/sqlite/sqlite3.h win-i686-debug/inc/sqlite3.h
 
 "link" -dll -out:${PLATFORM}/bin/libsqlite3.dll -entry:_DllMainCRTStartup@12 -def:${PLATFORM}/bin/libsqlite3.def ${LDFLAGS} ${PLATFORM}/obj/sqlite3.obj ${PLATFORM}/bin/libws2_32.lib ${PLATFORM}/bin/libadvapi32.lib ${PLATFORM}/bin/libuser32.lib ${PLATFORM}/bin/libkernel32.lib ${PLATFORM}/bin/liboldnames.lib ${PLATFORM}/bin/libmsvcrt.lib
 
-rm -rf win-i686-debug/inc/customize.h
-cp -r src/customize.h win-i686-debug/inc/customize.h
-
 rm -rf win-i686-debug/inc/appweb.h
 cp -r src/appweb.h win-i686-debug/inc/appweb.h
 
+rm -rf win-i686-debug/inc/customize.h
+cp -r src/customize.h win-i686-debug/inc/customize.h
+
 "${CC}" -c -Fo${PLATFORM}/obj/config.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/config.c
-
-"${CC}" -c -Fo${PLATFORM}/obj/dirHandler.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/dirHandler.c
-
-"${CC}" -c -Fo${PLATFORM}/obj/log.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/log.c
 
 "${CC}" -c -Fo${PLATFORM}/obj/convenience.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/convenience.c
 
-"${CC}" -c -Fo${PLATFORM}/obj/server.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/server.c
+"${CC}" -c -Fo${PLATFORM}/obj/dirHandler.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/dirHandler.c
 
 "${CC}" -c -Fo${PLATFORM}/obj/fileHandler.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/fileHandler.c
 
-"link" -dll -out:${PLATFORM}/bin/libappweb.dll -entry:_DllMainCRTStartup@12 -def:${PLATFORM}/bin/libappweb.def ${LDFLAGS} ${PLATFORM}/obj/config.obj ${PLATFORM}/obj/dirHandler.obj ${PLATFORM}/obj/log.obj ${PLATFORM}/obj/convenience.obj ${PLATFORM}/obj/server.obj ${PLATFORM}/obj/fileHandler.obj ${PLATFORM}/bin/libws2_32.lib ${PLATFORM}/bin/libadvapi32.lib ${PLATFORM}/bin/libuser32.lib ${PLATFORM}/bin/libkernel32.lib ${PLATFORM}/bin/liboldnames.lib ${PLATFORM}/bin/libmsvcrt.lib ${PLATFORM}/bin/libmpr.lib ${PLATFORM}/bin/libhttp.lib ${PLATFORM}/bin/libpcre.lib ${PLATFORM}/bin/libpcre.lib
+"${CC}" -c -Fo${PLATFORM}/obj/log.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/log.c
 
-rm -rf win-i686-debug/inc/esp.h
-cp -r src/esp/esp.h win-i686-debug/inc/esp.h
+"${CC}" -c -Fo${PLATFORM}/obj/server.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/server.c
+
+"link" -dll -out:${PLATFORM}/bin/libappweb.dll -entry:_DllMainCRTStartup@12 -def:${PLATFORM}/bin/libappweb.def ${LDFLAGS} ${PLATFORM}/obj/config.obj ${PLATFORM}/obj/convenience.obj ${PLATFORM}/obj/dirHandler.obj ${PLATFORM}/obj/fileHandler.obj ${PLATFORM}/obj/log.obj ${PLATFORM}/obj/server.obj ${PLATFORM}/bin/libws2_32.lib ${PLATFORM}/bin/libadvapi32.lib ${PLATFORM}/bin/libuser32.lib ${PLATFORM}/bin/libkernel32.lib ${PLATFORM}/bin/liboldnames.lib ${PLATFORM}/bin/libmsvcrt.lib ${PLATFORM}/bin/libmpr.lib ${PLATFORM}/bin/libhttp.lib ${PLATFORM}/bin/libpcre.lib ${PLATFORM}/bin/libpcre.lib
+
+rm -rf win-i686-debug/inc/edi.h
+cp -r src/esp/edi.h win-i686-debug/inc/edi.h
 
 rm -rf win-i686-debug/inc/esp-app.h
 cp -r src/esp/esp-app.h win-i686-debug/inc/esp-app.h
 
-rm -rf win-i686-debug/inc/edi.h
-cp -r src/esp/edi.h win-i686-debug/inc/edi.h
+rm -rf win-i686-debug/inc/esp.h
+cp -r src/esp/esp.h win-i686-debug/inc/esp.h
 
 rm -rf win-i686-debug/inc/mdb.h
 cp -r src/esp/mdb.h win-i686-debug/inc/mdb.h
@@ -94,23 +94,23 @@ cp -r src/esp/mdb.h win-i686-debug/inc/mdb.h
 
 "${CC}" -c -Fo${PLATFORM}/obj/espFramework.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espFramework.c
 
+"${CC}" -c -Fo${PLATFORM}/obj/espHandler.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espHandler.c
+
 "${CC}" -c -Fo${PLATFORM}/obj/espHtml.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espHtml.c
 
 "${CC}" -c -Fo${PLATFORM}/obj/espSession.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espSession.c
 
-"${CC}" -c -Fo${PLATFORM}/obj/espHandler.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espHandler.c
-
-"${CC}" -c -Fo${PLATFORM}/obj/sdb.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/sdb.c
+"${CC}" -c -Fo${PLATFORM}/obj/espTemplate.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espTemplate.c
 
 "${CC}" -c -Fo${PLATFORM}/obj/mdb.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/mdb.c
 
-"${CC}" -c -Fo${PLATFORM}/obj/espTemplate.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/espTemplate.c
+"${CC}" -c -Fo${PLATFORM}/obj/sdb.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/sdb.c
 
-"link" -dll -out:${PLATFORM}/bin/mod_esp.dll -entry:_DllMainCRTStartup@12 -def:${PLATFORM}/bin/mod_esp.def ${LDFLAGS} ${PLATFORM}/obj/edi.obj ${PLATFORM}/obj/espAbbrev.obj ${PLATFORM}/obj/espFramework.obj ${PLATFORM}/obj/espHtml.obj ${PLATFORM}/obj/espSession.obj ${PLATFORM}/obj/espHandler.obj ${PLATFORM}/obj/sdb.obj ${PLATFORM}/obj/mdb.obj ${PLATFORM}/obj/espTemplate.obj ${PLATFORM}/bin/libws2_32.lib ${PLATFORM}/bin/libadvapi32.lib ${PLATFORM}/bin/libuser32.lib ${PLATFORM}/bin/libkernel32.lib ${PLATFORM}/bin/liboldnames.lib ${PLATFORM}/bin/libmsvcrt.lib ${PLATFORM}/bin/libappweb.lib ${PLATFORM}/bin/libmpr.lib ${PLATFORM}/bin/libhttp.lib ${PLATFORM}/bin/libpcre.lib
+"link" -dll -out:${PLATFORM}/bin/mod_esp.dll -entry:_DllMainCRTStartup@12 -def:${PLATFORM}/bin/mod_esp.def ${LDFLAGS} ${PLATFORM}/obj/edi.obj ${PLATFORM}/obj/espAbbrev.obj ${PLATFORM}/obj/espFramework.obj ${PLATFORM}/obj/espHandler.obj ${PLATFORM}/obj/espHtml.obj ${PLATFORM}/obj/espSession.obj ${PLATFORM}/obj/espTemplate.obj ${PLATFORM}/obj/mdb.obj ${PLATFORM}/obj/sdb.obj ${PLATFORM}/bin/libws2_32.lib ${PLATFORM}/bin/libadvapi32.lib ${PLATFORM}/bin/libuser32.lib ${PLATFORM}/bin/libkernel32.lib ${PLATFORM}/bin/liboldnames.lib ${PLATFORM}/bin/libmsvcrt.lib ${PLATFORM}/bin/libappweb.lib ${PLATFORM}/bin/libmpr.lib ${PLATFORM}/bin/libhttp.lib ${PLATFORM}/bin/libpcre.lib
 
 "${CC}" -c -Fo${PLATFORM}/obj/esp.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/esp.c
 
-"link" -out:${PLATFORM}/bin/esp.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${PLATFORM}/obj/esp.obj ${PLATFORM}/obj/edi.obj ${PLATFORM}/obj/espAbbrev.obj ${PLATFORM}/obj/espFramework.obj ${PLATFORM}/obj/espHtml.obj ${PLATFORM}/obj/espSession.obj ${PLATFORM}/obj/espHandler.obj ${PLATFORM}/obj/sdb.obj ${PLATFORM}/obj/mdb.obj ${PLATFORM}/obj/espTemplate.obj ${PLATFORM}/bin/libws2_32.lib ${PLATFORM}/bin/libadvapi32.lib ${PLATFORM}/bin/libuser32.lib ${PLATFORM}/bin/libkernel32.lib ${PLATFORM}/bin/liboldnames.lib ${PLATFORM}/bin/libmsvcrt.lib ${PLATFORM}/bin/libappweb.lib ${PLATFORM}/bin/libmpr.lib ${PLATFORM}/bin/libhttp.lib ${PLATFORM}/bin/libpcre.lib
+"link" -out:${PLATFORM}/bin/esp.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${PLATFORM}/obj/edi.obj ${PLATFORM}/obj/esp.obj ${PLATFORM}/obj/espAbbrev.obj ${PLATFORM}/obj/espFramework.obj ${PLATFORM}/obj/espHandler.obj ${PLATFORM}/obj/espHtml.obj ${PLATFORM}/obj/espSession.obj ${PLATFORM}/obj/espTemplate.obj ${PLATFORM}/obj/mdb.obj ${PLATFORM}/obj/sdb.obj ${PLATFORM}/bin/libws2_32.lib ${PLATFORM}/bin/libadvapi32.lib ${PLATFORM}/bin/libuser32.lib ${PLATFORM}/bin/libkernel32.lib ${PLATFORM}/bin/liboldnames.lib ${PLATFORM}/bin/libmsvcrt.lib ${PLATFORM}/bin/libappweb.lib ${PLATFORM}/bin/libmpr.lib ${PLATFORM}/bin/libhttp.lib ${PLATFORM}/bin/libpcre.lib
 
 rm -rf win-i686-debug/bin/esp.conf
 cp -r src/esp/esp.conf win-i686-debug/bin/esp.conf
@@ -151,11 +151,11 @@ cp -r src/server/WIN/appwebMonitor.ico win-i686-debug/bin/appwebMonitor.ico
 rm -rf win-i686-debug/inc/testAppweb.h
 cp -r test/testAppweb.h win-i686-debug/inc/testAppweb.h
 
-"${CC}" -c -Fo${PLATFORM}/obj/testHttp.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc test/testHttp.c
-
 "${CC}" -c -Fo${PLATFORM}/obj/testAppweb.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc test/testAppweb.c
 
-"link" -out:${PLATFORM}/bin/testAppweb.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${PLATFORM}/obj/testHttp.obj ${PLATFORM}/obj/testAppweb.obj ${PLATFORM}/bin/libws2_32.lib ${PLATFORM}/bin/libadvapi32.lib ${PLATFORM}/bin/libuser32.lib ${PLATFORM}/bin/libkernel32.lib ${PLATFORM}/bin/liboldnames.lib ${PLATFORM}/bin/libmsvcrt.lib ${PLATFORM}/bin/libappweb.lib ${PLATFORM}/bin/libmpr.lib ${PLATFORM}/bin/libhttp.lib ${PLATFORM}/bin/libpcre.lib
+"${CC}" -c -Fo${PLATFORM}/obj/testHttp.obj -Fd${PLATFORM}/obj ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc test/testHttp.c
+
+"link" -out:${PLATFORM}/bin/testAppweb.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${PLATFORM}/obj/testAppweb.obj ${PLATFORM}/obj/testHttp.obj ${PLATFORM}/bin/libws2_32.lib ${PLATFORM}/bin/libadvapi32.lib ${PLATFORM}/bin/libuser32.lib ${PLATFORM}/bin/libkernel32.lib ${PLATFORM}/bin/liboldnames.lib ${PLATFORM}/bin/libmsvcrt.lib ${PLATFORM}/bin/libappweb.lib ${PLATFORM}/bin/libmpr.lib ${PLATFORM}/bin/libhttp.lib ${PLATFORM}/bin/libpcre.lib
 
 echo '#!${PLATFORM}/bin/cgiProgram.exe' >test/cgi-bin/testScript ; chmod +x test/cgi-bin/testScript
 echo -e '#!`type -p sh`' >test/web/caching/cache.cgi
