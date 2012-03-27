@@ -5,12 +5,12 @@
 ;
 
 [Setup]
-AppName=!!BLD_NAME!!
-AppVerName=!!BLD_NAME!! !!BLD_VERSION!!-!!BLD_NUMBER!!
-DefaultDirName={pf}\!!BLD_NAME!!
-DefaultGroupName=!!BLD_NAME!!
-UninstallDisplayIcon={app}/!!BLD_PRODUCT!!.exe
-LicenseFile=!!ORIG_BLD_PREFIX!!/LICENSE.TXT
+AppName=${settings.title}
+AppVerName=${settings.title} ${settings.version}-${settings.buildNumber}
+DefaultDirName={pf}\${settings.title}
+DefaultGroupName=${settings.product}
+UninstallDisplayIcon={app}/${settings.product}.exe
+LicenseFile=LICENSE.TXT
 
 [Code]
 var
@@ -175,7 +175,7 @@ end;
 
 
 [Icons]
-Name: "{group}\!!BLD_NAME!!Monitor"; Filename: "{app}/bin/!!BLD_PRODUCT!!Monitor.exe"; Components: bin
+Name: "{group}\${settings.product}Monitor"; Filename: "{app}/bin/${settings.product}Monitor.exe"; Components: bin
 Name: "{group}\ReadMe"; Filename: "{app}/README.TXT"
 ; Name: "{group}\Documentation"; Filename: "http://appwebserver.org/products/appweb/doc/appweb-4/product/index.html"; Components: dev
 ;Name: "{group}\Manage"; Filename: "http://127.0.0.1:{code:GetPort}/index.html"; Components: bin
@@ -208,10 +208,10 @@ Type: files; Name: "{app}/cache/*.*";
 Type: filesandordirs; Name: "{app}/*.obj";
 
 [Tasks]
-Name: addpath; Description: Add !!BLD_NAME!! to the system PATH variable;
+Name: addpath; Description: Add ${settings.title} to the system PATH variable;
 
 [Run]
-Filename: "{app}/bin/!!BLD_PRODUCT!!Monitor.exe"; Parameters: "--stop"; WorkingDir: "{app}/bin"; Check: IsPresent('{app}/bin/!!BLD_PRODUCT!!Monitor.exe'); StatusMsg: "Stopping the Appweb Monitor"; Flags: waituntilterminated;
+Filename: "{app}/bin/${settings.product}Monitor.exe"; Parameters: "--stop"; WorkingDir: "{app}/bin"; Check: IsPresent('{app}/bin/${settings.product}Monitor.exe'); StatusMsg: "Stopping the Appweb Monitor"; Flags: waituntilterminated;
 
 Filename: "{app}/bin/appman.exe"; Parameters: "uninstall"; WorkingDir: "{app}"; Check: IsPresent('{app}/bin/appman.exe'); StatusMsg: "Stopping Appweb"; Flags: waituntilterminated; Components: bin
 
@@ -221,12 +221,12 @@ Filename: "{app}/bin/appman.exe"; Parameters: "install enable"; WorkingDir: "{ap
 
 Filename: "{app}/bin/appman.exe"; Parameters: "start"; WorkingDir: "{app}"; StatusMsg: "Starting the Appweb Server"; Flags: waituntilterminated;
 
-Filename: "{app}/bin/!!BLD_PRODUCT!!Monitor.exe"; Parameters: ""; WorkingDir: "{app}/bin"; StatusMsg: "Starting the Appweb Monitor"; Flags: waituntilidle;
+Filename: "{app}/bin/${settings.product}Monitor.exe"; Parameters: ""; WorkingDir: "{app}/bin"; StatusMsg: "Starting the Appweb Monitor"; Flags: waituntilidle;
 
 Filename: "http://appwebserver.org/products/appweb/doc-4/product/index.html"; Description: "View the Documentation"; Flags: skipifsilent waituntilidle shellexec postinstall; Components: bin
 
 [UninstallRun]
-Filename: "{app}/bin/!!BLD_PRODUCT!!Monitor.exe"; Parameters: "--stop"; WorkingDir: "{app}"; StatusMsg: "Stopping the Appweb Monitor"; Flags: waituntilterminated;
+Filename: "{app}/bin/${settings.product}Monitor.exe"; Parameters: "--stop"; WorkingDir: "{app}"; StatusMsg: "Stopping the Appweb Monitor"; Flags: waituntilterminated;
 Filename: "{app}/bin/appman.exe"; Parameters: "uninstall"; WorkingDir: "{app}"; Check: IsPresent('{app}/bin/appman.exe'); Components: bin
 Filename: "{app}/bin/removeFiles.exe"; Parameters: "-r -s 5"; WorkingDir: "{app}"; Flags:
 
