@@ -78,7 +78,8 @@
 #define BLD_CGI "src/modules/cgiHandler.c"
 #define BLD_FEATURE_DIR 1
 #define BLD_DIR "src/dirHandler.c"
-#define BLD_FEATURE_DPKG 0
+#define BLD_FEATURE_DPKG 1
+#define BLD_DPKG "../../../usr/bin/dpkg"
 #define BLD_FEATURE_ESP 1
 #define BLD_ESP "src/esp/espHandler.c"
 #define BLD_FEATURE_OPENSSL 0
