@@ -10,6 +10,7 @@ IFLAGS    := -I$(PLATFORM)/inc
 LDFLAGS   := -Wl,--enable-new-dtags -Wl,-rpath,$ORIGIN/ -Wl,-rpath,$ORIGIN/../lib -L$(PLATFORM)/lib -g -ldl
 LIBS      := -lpthread -lm
 
+
 all: prep \
         $(PLATFORM)/lib/libmpr.so \
         $(PLATFORM)/bin/appman \
@@ -62,7 +63,10 @@ clean:
 	rm -rf $(PLATFORM)/bin/cgiProgram
 	rm -rf $(PLATFORM)/bin/setConfig
 	rm -rf $(PLATFORM)/bin/appweb
+	rm -rf $(PLATFORM)/bin/appwebMonitor
+	rm -rf $(PLATFORM)/lib/appwebMonitor.ico
 	rm -rf $(PLATFORM)/bin/testAppweb
+	rm -rf $(PLATFORM)/bin/removeFiles
 	rm -rf $(PLATFORM)/obj/mprLib.o
 	rm -rf $(PLATFORM)/obj/mprSsl.o
 	rm -rf $(PLATFORM)/obj/manager.o
@@ -95,8 +99,10 @@ clean:
 	rm -rf $(PLATFORM)/obj/cgiProgram.o
 	rm -rf $(PLATFORM)/obj/setConfig.o
 	rm -rf $(PLATFORM)/obj/appweb.o
+	rm -rf $(PLATFORM)/obj/appwebMonitor.o
 	rm -rf $(PLATFORM)/obj/testAppweb.o
 	rm -rf $(PLATFORM)/obj/testHttp.o
+	rm -rf $(PLATFORM)/obj/removeFiles.o
 
 $(PLATFORM)/inc/mpr.h: 
 	rm -fr linux-i686-debug/inc/mpr.h

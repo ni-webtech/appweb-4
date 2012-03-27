@@ -70,6 +70,7 @@
 #define BLD_FEATURE_MAN 0
 #define BLD_FEATURE_MAN2HTML 0
 #define BLD_FEATURE_PHP 0
+#define BLD_FEATURE_PMAKER 0
 #define BLD_FEATURE_SSL 0
 #define BLD_FEATURE_CC 1
 #define BLD_CC "cc"
@@ -77,12 +78,11 @@
 #define BLD_CGI "src/modules/cgiHandler.c"
 #define BLD_FEATURE_DIR 1
 #define BLD_DIR "src/dirHandler.c"
+#define BLD_FEATURE_DPKG 0
 #define BLD_FEATURE_ESP 1
 #define BLD_ESP "src/esp/espHandler.c"
 #define BLD_FEATURE_OPENSSL 0
 #define BLD_FEATURE_MATRIXSSL 0
-#define BLD_FEATURE_PMAKER 1
-#define BLD_PMAKER "../../../../Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker"
 #define BLD_FEATURE_SQLITE 1
 #define BLD_SQLITE "src/deps/sqlite"
 #define BLD_FEATURE_EJSCRIPT 0

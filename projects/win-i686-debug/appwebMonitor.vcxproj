@@ -16,7 +16,7 @@
     <Link>
       <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
@@ -30,7 +30,7 @@
 </ItemGroup>
 
 <PropertyGroup Label="Globals">
-  <ProjectGuid>{a3e90c5d-ee87-4de0-bb42-0eca6e94373d}</ProjectGuid>
+  <ProjectGuid>{3f8f1892-508e-4035-b44d-dccd74cbdbac}</ProjectGuid>
   <RootNamespace />
   <Keyword>Win32Proj</Keyword>
 </PropertyGroup>
@@ -52,18 +52,25 @@
 <PropertyGroup>
   <_ProjectFileVersion>10</_ProjectFileVersion>
   <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\bin\</OutDir>
-  <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\obj\cgiProgram\</IntDir>
+  <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\obj\appwebMonitor\</IntDir>
 </PropertyGroup>
     
 <ItemGroup>
-  <ClCompile Include="..\..\src\utils\cgiProgram.c" />
+  <ClCompile Include="..\..\src\server\WIN\appwebMonitor.c" />
 </ItemGroup>
 <ItemDefinitionGroup>
 <Link>
-  <AdditionalDependencies>;%(AdditionalDependencies)</AdditionalDependencies>
+  <AdditionalDependencies>shell32.lib;appweb.lib;mpr.lib;http.lib;pcre.lib;%(AdditionalDependencies)</AdditionalDependencies>
   <AdditionalLibraryDirectories>$(OutDir);/Users/mob/git/appweb/win-i686-debug/bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
 </Link>
 </ItemDefinitionGroup>
+
+<ItemGroup>
+  <ProjectReference Include="libappweb.vcxproj">
+  <Project>895fb2b8-06c3-4c82-8697-7cb220f8262b</Project>
+  <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+  </ProjectReference>
+</ItemGroup>
 
 <Import Project="$(VCTargetsPath)Microsoft.Cpp.targets" />
 <ImportGroup Label="ExtensionTargets">

@@ -10,9 +10,9 @@ IFLAGS    := -I$(PLATFORM)/inc
 LDFLAGS   := -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86
 LIBS      := ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib
 
-# export PATH := %VS%/Bin:%VS%/VC/Bin:%VS%/Common7/IDE:%VS%/Common7/Tools:%VS%/SDK/v3.5/bin:%VS%/VC/VCPackages
-# export INCLUDE := %VS%/INCLUDE:%VS%/VC/INCLUDE
-# export LIB := %VS%/lib:%VS%/VC/lib
+export PATH := %VS%/Bin:%VS%/VC/Bin:%VS%/Common7/IDE:%VS%/Common7/Tools:%VS%/SDK/v3.5/bin:%VS%/VC/VCPackages
+export INCLUDE := %VS%/INCLUDE:%VS%/VC/INCLUDE
+export LIB := %VS%/lib:%VS%/VC/lib
 
 all: prep \
         $(PLATFORM)/bin/libmpr.dll \
@@ -32,11 +32,14 @@ all: prep \
         $(PLATFORM)/bin/cgiProgram.exe \
         $(PLATFORM)/bin/setConfig.exe \
         $(PLATFORM)/bin/appweb.exe \
+        $(PLATFORM)/bin/appwebMonitor.exe \
+        $(PLATFORM)/bin/appwebMonitor.ico \
         $(PLATFORM)/bin/testAppweb.exe \
         test/cgi-bin/testScript \
         test/web/caching/cache.cgi \
         test/web/basic/basic.cgi \
-        test/cgi-bin/cgiProgram.exe
+        test/cgi-bin/cgiProgram.exe \
+        $(PLATFORM)/bin/removeFiles.exe
 
 .PHONY: prep
 
@@ -66,7 +69,10 @@ clean:
 	rm -rf $(PLATFORM)/bin/cgiProgram.exe
 	rm -rf $(PLATFORM)/bin/setConfig.exe
 	rm -rf $(PLATFORM)/bin/appweb.exe
+	rm -rf $(PLATFORM)/bin/appwebMonitor.exe
+	rm -rf $(PLATFORM)/bin/appwebMonitor.ico
 	rm -rf $(PLATFORM)/bin/testAppweb.exe
+	rm -rf $(PLATFORM)/bin/removeFiles.exe
 	rm -rf $(PLATFORM)/obj/mprLib.obj
 	rm -rf $(PLATFORM)/obj/mprSsl.obj
 	rm -rf $(PLATFORM)/obj/manager.obj
@@ -99,8 +105,10 @@ clean:
 	rm -rf $(PLATFORM)/obj/cgiProgram.obj
 	rm -rf $(PLATFORM)/obj/setConfig.obj
 	rm -rf $(PLATFORM)/obj/appweb.obj
+	rm -rf $(PLATFORM)/obj/appwebMonitor.obj
 	rm -rf $(PLATFORM)/obj/testAppweb.obj
 	rm -rf $(PLATFORM)/obj/testHttp.obj
+	rm -rf $(PLATFORM)/obj/removeFiles.obj
 
 $(PLATFORM)/inc/mpr.h: 
 	rm -fr win-i686-debug/inc/mpr.h
@@ -114,7 +122,7 @@ $(PLATFORM)/obj/mprLib.obj: \
 $(PLATFORM)/bin/libmpr.dll:  \
         $(PLATFORM)/inc/mpr.h \
         $(PLATFORM)/obj/mprLib.obj
-	"link" -dll -out:$(PLATFORM)/bin/libmpr.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libmpr.def -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/mprLib.obj $(LIBS)
+	"link" -dll -out:$(PLATFORM)/bin/libmpr.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libmpr.def -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/mprLib.obj $(PLATFORM)/bin/libws2_32.lib $(PLATFORM)/bin/libadvapi32.lib $(PLATFORM)/bin/libuser32.lib $(PLATFORM)/bin/libkernel32.lib $(PLATFORM)/bin/liboldnames.lib $(PLATFORM)/bin/libmsvcrt.lib
 
 $(PLATFORM)/obj/manager.obj: \
         src/deps/mpr/manager.c \
@@ -124,7 +132,7 @@ $(PLATFORM)/obj/manager.obj: \
 $(PLATFORM)/bin/appman:  \
         $(PLATFORM)/bin/libmpr.dll \
         $(PLATFORM)/obj/manager.obj
-	"link" -out:$(PLATFORM)/bin/appman -entry:WinMainCRTStartup -subsystem:Windows -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/manager.obj $(LIBS) mpr.lib shell32.lib
+	"link" -out:$(PLATFORM)/bin/appman -entry:WinMainCRTStartup -subsystem:Windows -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/manager.obj $(PLATFORM)/bin/libws2_32.lib $(PLATFORM)/bin/libadvapi32.lib $(PLATFORM)/bin/libuser32.lib $(PLATFORM)/bin/libkernel32.lib $(PLATFORM)/bin/liboldnames.lib $(PLATFORM)/bin/libmsvcrt.lib $(PLATFORM)/bin/libmpr.lib shell32.lib
 
 $(PLATFORM)/obj/makerom.obj: \
         src/deps/mpr/makerom.c \
@@ -134,7 +142,7 @@ $(PLATFORM)/obj/makerom.obj: \
 $(PLATFORM)/bin/makerom.exe:  \
         $(PLATFORM)/bin/libmpr.dll \
         $(PLATFORM)/obj/makerom.obj
-	"link" -out:$(PLATFORM)/bin/makerom.exe -entry:mainCRTStartup -subsystem:console -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/makerom.obj $(LIBS) mpr.lib
+	"link" -out:$(PLATFORM)/bin/makerom.exe -entry:mainCRTStartup -subsystem:console -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/makerom.obj $(PLATFORM)/bin/libws2_32.lib $(PLATFORM)/bin/libadvapi32.lib $(PLATFORM)/bin/libuser32.lib $(PLATFORM)/bin/libkernel32.lib $(PLATFORM)/bin/liboldnames.lib $(PLATFORM)/bin/libmsvcrt.lib $(PLATFORM)/bin/libmpr.lib
 
 $(PLATFORM)/inc/pcre.h: 
 	rm -fr win-i686-debug/inc/pcre.h
@@ -148,7 +156,7 @@ $(PLATFORM)/obj/pcre.obj: \
 $(PLATFORM)/bin/libpcre.dll:  \
         $(PLATFORM)/inc/pcre.h \
         $(PLATFORM)/obj/pcre.obj
-	"link" -dll -out:$(PLATFORM)/bin/libpcre.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libpcre.def -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/pcre.obj $(LIBS)
+	"link" -dll -out:$(PLATFORM)/bin/libpcre.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libpcre.def -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/pcre.obj $(PLATFORM)/bin/libws2_32.lib $(PLATFORM)/bin/libadvapi32.lib $(PLATFORM)/bin/libuser32.lib $(PLATFORM)/bin/libkernel32.lib $(PLATFORM)/bin/liboldnames.lib $(PLATFORM)/bin/libmsvcrt.lib
 
 $(PLATFORM)/inc/http.h: 
 	rm -fr win-i686-debug/inc/http.h
@@ -164,7 +172,7 @@ $(PLATFORM)/bin/libhttp.dll:  \
         $(PLATFORM)/bin/libpcre.dll \
         $(PLATFORM)/inc/http.h \
         $(PLATFORM)/obj/httpLib.obj
-	"link" -dll -out:$(PLATFORM)/bin/libhttp.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libhttp.def -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/httpLib.obj $(LIBS) mpr.lib pcre.lib
+	"link" -dll -out:$(PLATFORM)/bin/libhttp.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libhttp.def -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/httpLib.obj $(PLATFORM)/bin/libws2_32.lib $(PLATFORM)/bin/libadvapi32.lib $(PLATFORM)/bin/libuser32.lib $(PLATFORM)/bin/libkernel32.lib $(PLATFORM)/bin/liboldnames.lib $(PLATFORM)/bin/libmsvcrt.lib $(PLATFORM)/bin/libmpr.lib $(PLATFORM)/bin/libpcre.lib
 
 $(PLATFORM)/obj/http.obj: \
         src/deps/http/http.c \
@@ -174,7 +182,7 @@ $(PLATFORM)/obj/http.obj: \
 $(PLATFORM)/bin/http.exe:  \
         $(PLATFORM)/bin/libhttp.dll \
         $(PLATFORM)/obj/http.obj
-	"link" -out:$(PLATFORM)/bin/http.exe -entry:mainCRTStartup -subsystem:console -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/http.obj $(LIBS) http.lib mpr.lib pcre.lib
+	"link" -out:$(PLATFORM)/bin/http.exe -entry:mainCRTStartup -subsystem:console -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/http.obj $(PLATFORM)/bin/libws2_32.lib $(PLATFORM)/bin/libadvapi32.lib $(PLATFORM)/bin/libuser32.lib $(PLATFORM)/bin/libkernel32.lib $(PLATFORM)/bin/liboldnames.lib $(PLATFORM)/bin/libmsvcrt.lib $(PLATFORM)/bin/libhttp.lib $(PLATFORM)/bin/libmpr.lib $(PLATFORM)/bin/libpcre.lib
 
 $(PLATFORM)/inc/sqlite3.h: 
 	rm -fr win-i686-debug/inc/sqlite3.h
@@ -188,7 +196,7 @@ $(PLATFORM)/obj/sqlite3.obj: \
 $(PLATFORM)/bin/libsqlite3.dll:  \
         $(PLATFORM)/inc/sqlite3.h \
         $(PLATFORM)/obj/sqlite3.obj
-	"link" -dll -out:$(PLATFORM)/bin/libsqlite3.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libsqlite3.def -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/sqlite3.obj $(LIBS)
+	"link" -dll -out:$(PLATFORM)/bin/libsqlite3.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libsqlite3.def -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/sqlite3.obj $(PLATFORM)/bin/libws2_32.lib $(PLATFORM)/bin/libadvapi32.lib $(PLATFORM)/bin/libuser32.lib $(PLATFORM)/bin/libkernel32.lib $(PLATFORM)/bin/liboldnames.lib $(PLATFORM)/bin/libmsvcrt.lib
 
 $(PLATFORM)/inc/appweb.h: 
 	rm -fr win-i686-debug/inc/appweb.h
@@ -240,7 +248,7 @@ $(PLATFORM)/bin/libappweb.dll:  \
         $(PLATFORM)/obj/fileHandler.obj \
         $(PLATFORM)/obj/log.obj \
         $(PLATFORM)/obj/server.obj
-	"link" -dll -out:$(PLATFORM)/bin/libappweb.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libappweb.def -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/config.obj $(PLATFORM)/obj/convenience.obj $(PLATFORM)/obj/dirHandler.obj $(PLATFORM)/obj/fileHandler.obj $(PLATFORM)/obj/log.obj $(PLATFORM)/obj/server.obj $(LIBS) mpr.lib http.lib pcre.lib pcre.lib
+	"link" -dll -out:$(PLATFORM)/bin/libappweb.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libappweb.def -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/config.obj $(PLATFORM)/obj/convenience.obj $(PLATFORM)/obj/dirHandler.obj $(PLATFORM)/obj/fileHandler.obj $(PLATFORM)/obj/log.obj $(PLATFORM)/obj/server.obj $(PLATFORM)/bin/libws2_32.lib $(PLATFORM)/bin/libadvapi32.lib $(PLATFORM)/bin/libuser32.lib $(PLATFORM)/bin/libkernel32.lib $(PLATFORM)/bin/liboldnames.lib $(PLATFORM)/bin/libmsvcrt.lib $(PLATFORM)/bin/libmpr.lib $(PLATFORM)/bin/libhttp.lib $(PLATFORM)/bin/libpcre.lib $(PLATFORM)/bin/libpcre.lib
 
 $(PLATFORM)/inc/edi.h: 
 	rm -fr win-i686-debug/inc/edi.h
@@ -318,7 +326,7 @@ $(PLATFORM)/bin/mod_esp.dll:  \
         $(PLATFORM)/obj/espTemplate.obj \
         $(PLATFORM)/obj/mdb.obj \
         $(PLATFORM)/obj/sdb.obj
-	"link" -dll -out:$(PLATFORM)/bin/mod_esp.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/mod_esp.def -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/edi.obj $(PLATFORM)/obj/espAbbrev.obj $(PLATFORM)/obj/espFramework.obj $(PLATFORM)/obj/espHandler.obj $(PLATFORM)/obj/espHtml.obj $(PLATFORM)/obj/espSession.obj $(PLATFORM)/obj/espTemplate.obj $(PLATFORM)/obj/mdb.obj $(PLATFORM)/obj/sdb.obj $(LIBS) appweb.lib mpr.lib http.lib pcre.lib
+	"link" -dll -out:$(PLATFORM)/bin/mod_esp.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/mod_esp.def -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/edi.obj $(PLATFORM)/obj/espAbbrev.obj $(PLATFORM)/obj/espFramework.obj $(PLATFORM)/obj/espHandler.obj $(PLATFORM)/obj/espHtml.obj $(PLATFORM)/obj/espSession.obj $(PLATFORM)/obj/espTemplate.obj $(PLATFORM)/obj/mdb.obj $(PLATFORM)/obj/sdb.obj $(PLATFORM)/bin/libws2_32.lib $(PLATFORM)/bin/libadvapi32.lib $(PLATFORM)/bin/libuser32.lib $(PLATFORM)/bin/libkernel32.lib $(PLATFORM)/bin/liboldnames.lib $(PLATFORM)/bin/libmsvcrt.lib $(PLATFORM)/bin/libappweb.lib $(PLATFORM)/bin/libmpr.lib $(PLATFORM)/bin/libhttp.lib $(PLATFORM)/bin/libpcre.lib
 
 $(PLATFORM)/obj/esp.obj: \
         src/esp/esp.c \
@@ -337,7 +345,7 @@ $(PLATFORM)/bin/esp.exe:  \
         $(PLATFORM)/obj/espTemplate.obj \
         $(PLATFORM)/obj/mdb.obj \
         $(PLATFORM)/obj/sdb.obj
-	"link" -out:$(PLATFORM)/bin/esp.exe -entry:mainCRTStartup -subsystem:console -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/edi.obj $(PLATFORM)/obj/esp.obj $(PLATFORM)/obj/espAbbrev.obj $(PLATFORM)/obj/espFramework.obj $(PLATFORM)/obj/espHandler.obj $(PLATFORM)/obj/espHtml.obj $(PLATFORM)/obj/espSession.obj $(PLATFORM)/obj/espTemplate.obj $(PLATFORM)/obj/mdb.obj $(PLATFORM)/obj/sdb.obj $(LIBS) appweb.lib mpr.lib http.lib pcre.lib
+	"link" -out:$(PLATFORM)/bin/esp.exe -entry:mainCRTStartup -subsystem:console -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/edi.obj $(PLATFORM)/obj/esp.obj $(PLATFORM)/obj/espAbbrev.obj $(PLATFORM)/obj/espFramework.obj $(PLATFORM)/obj/espHandler.obj $(PLATFORM)/obj/espHtml.obj $(PLATFORM)/obj/espSession.obj $(PLATFORM)/obj/espTemplate.obj $(PLATFORM)/obj/mdb.obj $(PLATFORM)/obj/sdb.obj $(PLATFORM)/bin/libws2_32.lib $(PLATFORM)/bin/libadvapi32.lib $(PLATFORM)/bin/libuser32.lib $(PLATFORM)/bin/libkernel32.lib $(PLATFORM)/bin/liboldnames.lib $(PLATFORM)/bin/libmsvcrt.lib $(PLATFORM)/bin/libappweb.lib $(PLATFORM)/bin/libmpr.lib $(PLATFORM)/bin/libhttp.lib $(PLATFORM)/bin/libpcre.lib
 
 $(PLATFORM)/bin/esp.conf: 
 	rm -fr win-i686-debug/bin/esp.conf
@@ -355,7 +363,7 @@ $(PLATFORM)/obj/cgiHandler.obj: \
 $(PLATFORM)/bin/mod_cgi.dll:  \
         $(PLATFORM)/bin/libappweb.dll \
         $(PLATFORM)/obj/cgiHandler.obj
-	"link" -dll -out:$(PLATFORM)/bin/mod_cgi.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/mod_cgi.def -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/cgiHandler.obj $(LIBS) appweb.lib mpr.lib http.lib pcre.lib
+	"link" -dll -out:$(PLATFORM)/bin/mod_cgi.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/mod_cgi.def -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/cgiHandler.obj $(PLATFORM)/bin/libws2_32.lib $(PLATFORM)/bin/libadvapi32.lib $(PLATFORM)/bin/libuser32.lib $(PLATFORM)/bin/libkernel32.lib $(PLATFORM)/bin/liboldnames.lib $(PLATFORM)/bin/libmsvcrt.lib $(PLATFORM)/bin/libappweb.lib $(PLATFORM)/bin/libmpr.lib $(PLATFORM)/bin/libhttp.lib $(PLATFORM)/bin/libpcre.lib
 
 $(PLATFORM)/obj/auth.obj: \
         src/utils/auth.c \
@@ -365,7 +373,7 @@ $(PLATFORM)/obj/auth.obj: \
 $(PLATFORM)/bin/auth.exe:  \
         $(PLATFORM)/bin/libmpr.dll \
         $(PLATFORM)/obj/auth.obj
-	"link" -out:$(PLATFORM)/bin/auth.exe -entry:mainCRTStartup -subsystem:console -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/auth.obj $(LIBS) mpr.lib
+	"link" -out:$(PLATFORM)/bin/auth.exe -entry:mainCRTStartup -subsystem:console -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/auth.obj $(PLATFORM)/bin/libws2_32.lib $(PLATFORM)/bin/libadvapi32.lib $(PLATFORM)/bin/libuser32.lib $(PLATFORM)/bin/libkernel32.lib $(PLATFORM)/bin/liboldnames.lib $(PLATFORM)/bin/libmsvcrt.lib $(PLATFORM)/bin/libmpr.lib
 
 $(PLATFORM)/obj/cgiProgram.obj: \
         src/utils/cgiProgram.c \
@@ -374,7 +382,7 @@ $(PLATFORM)/obj/cgiProgram.obj: \
 
 $(PLATFORM)/bin/cgiProgram.exe:  \
         $(PLATFORM)/obj/cgiProgram.obj
-	"link" -out:$(PLATFORM)/bin/cgiProgram.exe -entry:mainCRTStartup -subsystem:console -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/cgiProgram.obj $(LIBS)
+	"link" -out:$(PLATFORM)/bin/cgiProgram.exe -entry:mainCRTStartup -subsystem:console -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/cgiProgram.obj $(PLATFORM)/bin/libws2_32.lib $(PLATFORM)/bin/libadvapi32.lib $(PLATFORM)/bin/libuser32.lib $(PLATFORM)/bin/libkernel32.lib $(PLATFORM)/bin/liboldnames.lib $(PLATFORM)/bin/libmsvcrt.lib
 
 $(PLATFORM)/obj/setConfig.obj: \
         src/utils/setConfig.c \
@@ -384,7 +392,7 @@ $(PLATFORM)/obj/setConfig.obj: \
 $(PLATFORM)/bin/setConfig.exe:  \
         $(PLATFORM)/bin/libmpr.dll \
         $(PLATFORM)/obj/setConfig.obj
-	"link" -out:$(PLATFORM)/bin/setConfig.exe -entry:WinMainCRTStartup -subsystem:Windows -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/setConfig.obj $(LIBS) mpr.lib shell32.lib
+	"link" -out:$(PLATFORM)/bin/setConfig.exe -entry:WinMainCRTStartup -subsystem:Windows -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/setConfig.obj $(PLATFORM)/bin/libws2_32.lib $(PLATFORM)/bin/libadvapi32.lib $(PLATFORM)/bin/libuser32.lib $(PLATFORM)/bin/libkernel32.lib $(PLATFORM)/bin/liboldnames.lib $(PLATFORM)/bin/libmsvcrt.lib $(PLATFORM)/bin/libmpr.lib shell32.lib
 
 $(PLATFORM)/inc/appwebMonitor.h: 
 	rm -fr win-i686-debug/inc/appwebMonitor.h
@@ -399,7 +407,21 @@ $(PLATFORM)/bin/appweb.exe:  \
         $(PLATFORM)/bin/libappweb.dll \
         $(PLATFORM)/inc/appwebMonitor.h \
         $(PLATFORM)/obj/appweb.obj
-	"link" -out:$(PLATFORM)/bin/appweb.exe -entry:mainCRTStartup -subsystem:console -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/appweb.obj $(LIBS) appweb.lib mpr.lib http.lib pcre.lib
+	"link" -out:$(PLATFORM)/bin/appweb.exe -entry:mainCRTStartup -subsystem:console -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/appweb.obj $(PLATFORM)/bin/libws2_32.lib $(PLATFORM)/bin/libadvapi32.lib $(PLATFORM)/bin/libuser32.lib $(PLATFORM)/bin/libkernel32.lib $(PLATFORM)/bin/liboldnames.lib $(PLATFORM)/bin/libmsvcrt.lib $(PLATFORM)/bin/libappweb.lib $(PLATFORM)/bin/libmpr.lib $(PLATFORM)/bin/libhttp.lib $(PLATFORM)/bin/libpcre.lib
+
+$(PLATFORM)/obj/appwebMonitor.obj: \
+        src/server/WIN/appwebMonitor.c \
+        $(PLATFORM)/inc/buildConfig.h
+	"$(CC)" -c -Fo$(PLATFORM)/obj/appwebMonitor.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/server/WIN/appwebMonitor.c
+
+$(PLATFORM)/bin/appwebMonitor.exe:  \
+        $(PLATFORM)/bin/libappweb.dll \
+        $(PLATFORM)/obj/appwebMonitor.obj
+	"link" -out:$(PLATFORM)/bin/appwebMonitor.exe -entry:WinMainCRTStartup -subsystem:Windows -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/appwebMonitor.obj $(PLATFORM)/bin/libshell32.lib $(PLATFORM)/bin/libappweb.lib $(PLATFORM)/bin/libws2_32.lib $(PLATFORM)/bin/libadvapi32.lib $(PLATFORM)/bin/libuser32.lib $(PLATFORM)/bin/libkernel32.lib $(PLATFORM)/bin/liboldnames.lib $(PLATFORM)/bin/libmsvcrt.lib $(PLATFORM)/bin/libmpr.lib $(PLATFORM)/bin/libhttp.lib $(PLATFORM)/bin/libpcre.lib shell32.lib
+
+$(PLATFORM)/bin/appwebMonitor.ico: 
+	rm -fr win-i686-debug/bin/appwebMonitor.ico
+	cp -r src/server/WIN/appwebMonitor.ico win-i686-debug/bin/appwebMonitor.ico
 
 $(PLATFORM)/inc/testAppweb.h: 
 	rm -fr win-i686-debug/inc/testAppweb.h
@@ -420,7 +442,7 @@ $(PLATFORM)/bin/testAppweb.exe:  \
         $(PLATFORM)/inc/testAppweb.h \
         $(PLATFORM)/obj/testAppweb.obj \
         $(PLATFORM)/obj/testHttp.obj
-	"link" -out:$(PLATFORM)/bin/testAppweb.exe -entry:mainCRTStartup -subsystem:console -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/testAppweb.obj $(PLATFORM)/obj/testHttp.obj $(LIBS) appweb.lib mpr.lib http.lib pcre.lib
+	"link" -out:$(PLATFORM)/bin/testAppweb.exe -entry:mainCRTStartup -subsystem:console -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/testAppweb.obj $(PLATFORM)/obj/testHttp.obj $(PLATFORM)/bin/libws2_32.lib $(PLATFORM)/bin/libadvapi32.lib $(PLATFORM)/bin/libuser32.lib $(PLATFORM)/bin/libkernel32.lib $(PLATFORM)/bin/liboldnames.lib $(PLATFORM)/bin/libmsvcrt.lib $(PLATFORM)/bin/libappweb.lib $(PLATFORM)/bin/libmpr.lib $(PLATFORM)/bin/libhttp.lib $(PLATFORM)/bin/libpcre.lib
 
 test/cgi-bin/testScript: 
 	echo '#!$(PLATFORM)/bin/cgiProgram.exe' >test/cgi-bin/testScript ; chmod +x test/cgi-bin/testScript
@@ -446,4 +468,14 @@ test/cgi-bin/cgiProgram.exe:
 	cp $(PLATFORM)/bin/cgiProgram 'test/cgi-bin/cgi Program.exe'
 	cp $(PLATFORM)/bin/cgiProgram test/web/cgiProgram.cgi
 	chmod +x test/cgi-bin/* test/web/cgiProgram.cgi
+
+$(PLATFORM)/obj/removeFiles.obj: \
+        package/WIN/removeFiles.c \
+        $(PLATFORM)/inc/buildConfig.h
+	"$(CC)" -c -Fo$(PLATFORM)/obj/removeFiles.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc package/WIN/removeFiles.c
+
+$(PLATFORM)/bin/removeFiles.exe:  \
+        $(PLATFORM)/bin/libmpr.dll \
+        $(PLATFORM)/obj/removeFiles.obj
+	"link" -out:$(PLATFORM)/bin/removeFiles.exe -entry:WinMainCRTStartup -subsystem:Windows -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86 $(PLATFORM)/obj/removeFiles.obj $(PLATFORM)/bin/libws2_32.lib $(PLATFORM)/bin/libadvapi32.lib $(PLATFORM)/bin/libuser32.lib $(PLATFORM)/bin/libkernel32.lib $(PLATFORM)/bin/liboldnames.lib $(PLATFORM)/bin/libmsvcrt.lib $(PLATFORM)/bin/libmpr.lib shell32.lib
 
