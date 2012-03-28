@@ -14,7 +14,7 @@ LD="link.exe"
 CFLAGS="-nologo -GR- -W3 -Zi -Od -MDd"
 DFLAGS="-D_REENTRANT -D_MT"
 IFLAGS="-Iwin-i686-debug/inc"
-LDFLAGS="-nologo -nodefaultlib -incremental:no -libpath:${PLATFORM}/bin -debug -machine:x86
+LDFLAGS="-nologo -nodefaultlib -incremental:no -libpath:${PLATFORM}/bin -debug -machine:x86"
 LIBS="ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib"
 
 [ ! -x ${PLATFORM}/inc ] && mkdir -p ${PLATFORM}/inc ${PLATFORM}/obj ${PLATFORM}/lib ${PLATFORM}/bin

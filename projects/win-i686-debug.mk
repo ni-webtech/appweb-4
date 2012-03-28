@@ -128,7 +128,7 @@ $(PLATFORM)\obj\mprLib.obj: \
 $(PLATFORM)\bin\libmpr.dll:  \
         $(PLATFORM)\inc\mpr.h \
         $(PLATFORM)\obj\mprLib.obj
-	"$(LD)" -dll -out:$(PLATFORM)/bin/libmpr.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libmpr.def $(LDFLAGS) $(PLATFORM)/obj/mprLib.obj 
+	"$(LD)" -dll -out:$(PLATFORM)/bin/libmpr.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libmpr.def $(LDFLAGS) $(PLATFORM)/obj/mprLib.obj $(LIBS)
 
 $(PLATFORM)\obj\manager.obj: \
         src/deps/mpr/manager.c \
@@ -138,7 +138,7 @@ $(PLATFORM)\obj\manager.obj: \
 $(PLATFORM)\bin\appman:  \
         $(PLATFORM)\bin\libmpr.dll \
         $(PLATFORM)\obj\manager.obj
-	"$(LD)" -out:$(PLATFORM)/bin/appman -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(PLATFORM)/obj/manager.obj mpr.lib shell32.lib
+	"$(LD)" -out:$(PLATFORM)/bin/appman -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(PLATFORM)/obj/manager.obj $(LIBS) mpr.lib shell32.lib
 
 $(PLATFORM)\obj\makerom.obj: \
         src/deps/mpr/makerom.c \
@@ -148,7 +148,7 @@ $(PLATFORM)\obj\makerom.obj: \
 $(PLATFORM)\bin\makerom.exe:  \
         $(PLATFORM)\bin\libmpr.dll \
         $(PLATFORM)\obj\makerom.obj
-	"$(LD)" -out:$(PLATFORM)/bin/makerom.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/makerom.obj mpr.lib
+	"$(LD)" -out:$(PLATFORM)/bin/makerom.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/makerom.obj $(LIBS) mpr.lib
 
 $(PLATFORM)\inc\pcre.h: 
 	rm -fr win-i686-debug/inc/pcre.h
@@ -162,7 +162,7 @@ $(PLATFORM)\obj\pcre.obj: \
 $(PLATFORM)\bin\libpcre.dll:  \
         $(PLATFORM)\inc\pcre.h \
         $(PLATFORM)\obj\pcre.obj
-	"$(LD)" -dll -out:$(PLATFORM)/bin/libpcre.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libpcre.def $(LDFLAGS) $(PLATFORM)/obj/pcre.obj 
+	"$(LD)" -dll -out:$(PLATFORM)/bin/libpcre.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libpcre.def $(LDFLAGS) $(PLATFORM)/obj/pcre.obj $(LIBS)
 
 $(PLATFORM)\inc\http.h: 
 	rm -fr win-i686-debug/inc/http.h
@@ -178,7 +178,7 @@ $(PLATFORM)\bin\libhttp.dll:  \
         $(PLATFORM)\bin\libpcre.dll \
         $(PLATFORM)\inc\http.h \
         $(PLATFORM)\obj\httpLib.obj
-	"$(LD)" -dll -out:$(PLATFORM)/bin/libhttp.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libhttp.def $(LDFLAGS) $(PLATFORM)/obj/httpLib.obj mpr.lib pcre.lib
+	"$(LD)" -dll -out:$(PLATFORM)/bin/libhttp.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libhttp.def $(LDFLAGS) $(PLATFORM)/obj/httpLib.obj $(LIBS) mpr.lib pcre.lib
 
 $(PLATFORM)\obj\http.obj: \
         src/deps/http/http.c \
@@ -188,7 +188,7 @@ $(PLATFORM)\obj\http.obj: \
 $(PLATFORM)\bin\http.exe:  \
         $(PLATFORM)\bin\libhttp.dll \
         $(PLATFORM)\obj\http.obj
-	"$(LD)" -out:$(PLATFORM)/bin/http.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/http.obj http.lib mpr.lib pcre.lib
+	"$(LD)" -out:$(PLATFORM)/bin/http.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/http.obj $(LIBS) http.lib mpr.lib pcre.lib
 
 $(PLATFORM)\inc\sqlite3.h: 
 	rm -fr win-i686-debug/inc/sqlite3.h
@@ -202,7 +202,7 @@ $(PLATFORM)\obj\sqlite3.obj: \
 $(PLATFORM)\bin\libsqlite3.dll:  \
         $(PLATFORM)\inc\sqlite3.h \
         $(PLATFORM)\obj\sqlite3.obj
-	"$(LD)" -dll -out:$(PLATFORM)/bin/libsqlite3.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libsqlite3.def $(LDFLAGS) $(PLATFORM)/obj/sqlite3.obj 
+	"$(LD)" -dll -out:$(PLATFORM)/bin/libsqlite3.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libsqlite3.def $(LDFLAGS) $(PLATFORM)/obj/sqlite3.obj $(LIBS)
 
 $(PLATFORM)\inc\appweb.h: 
 	rm -fr win-i686-debug/inc/appweb.h
@@ -254,7 +254,7 @@ $(PLATFORM)\bin\libappweb.dll:  \
         $(PLATFORM)\obj\fileHandler.obj \
         $(PLATFORM)\obj\log.obj \
         $(PLATFORM)\obj\server.obj
-	"$(LD)" -dll -out:$(PLATFORM)/bin/libappweb.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libappweb.def $(LDFLAGS) $(PLATFORM)/obj/config.obj $(PLATFORM)/obj/convenience.obj $(PLATFORM)/obj/dirHandler.obj $(PLATFORM)/obj/fileHandler.obj $(PLATFORM)/obj/log.obj $(PLATFORM)/obj/server.obj mpr.lib http.lib pcre.lib pcre.lib
+	"$(LD)" -dll -out:$(PLATFORM)/bin/libappweb.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libappweb.def $(LDFLAGS) $(PLATFORM)/obj/config.obj $(PLATFORM)/obj/convenience.obj $(PLATFORM)/obj/dirHandler.obj $(PLATFORM)/obj/fileHandler.obj $(PLATFORM)/obj/log.obj $(PLATFORM)/obj/server.obj $(LIBS) mpr.lib http.lib pcre.lib pcre.lib
 
 $(PLATFORM)\inc\edi.h: 
 	rm -fr win-i686-debug/inc/edi.h
@@ -332,7 +332,7 @@ $(PLATFORM)\bin\mod_esp.dll:  \
         $(PLATFORM)\obj\espTemplate.obj \
         $(PLATFORM)\obj\mdb.obj \
         $(PLATFORM)\obj\sdb.obj
-	"$(LD)" -dll -out:$(PLATFORM)/bin/mod_esp.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/mod_esp.def $(LDFLAGS) $(PLATFORM)/obj/edi.obj $(PLATFORM)/obj/espAbbrev.obj $(PLATFORM)/obj/espFramework.obj $(PLATFORM)/obj/espHandler.obj $(PLATFORM)/obj/espHtml.obj $(PLATFORM)/obj/espSession.obj $(PLATFORM)/obj/espTemplate.obj $(PLATFORM)/obj/mdb.obj $(PLATFORM)/obj/sdb.obj appweb.lib mpr.lib http.lib pcre.lib
+	"$(LD)" -dll -out:$(PLATFORM)/bin/mod_esp.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/mod_esp.def $(LDFLAGS) $(PLATFORM)/obj/edi.obj $(PLATFORM)/obj/espAbbrev.obj $(PLATFORM)/obj/espFramework.obj $(PLATFORM)/obj/espHandler.obj $(PLATFORM)/obj/espHtml.obj $(PLATFORM)/obj/espSession.obj $(PLATFORM)/obj/espTemplate.obj $(PLATFORM)/obj/mdb.obj $(PLATFORM)/obj/sdb.obj $(LIBS) appweb.lib mpr.lib http.lib pcre.lib
 
 $(PLATFORM)\obj\esp.obj: \
         src/esp/esp.c \
@@ -351,7 +351,7 @@ $(PLATFORM)\bin\esp.exe:  \
         $(PLATFORM)\obj\espTemplate.obj \
         $(PLATFORM)\obj\mdb.obj \
         $(PLATFORM)\obj\sdb.obj
-	"$(LD)" -out:$(PLATFORM)/bin/esp.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/edi.obj $(PLATFORM)/obj/esp.obj $(PLATFORM)/obj/espAbbrev.obj $(PLATFORM)/obj/espFramework.obj $(PLATFORM)/obj/espHandler.obj $(PLATFORM)/obj/espHtml.obj $(PLATFORM)/obj/espSession.obj $(PLATFORM)/obj/espTemplate.obj $(PLATFORM)/obj/mdb.obj $(PLATFORM)/obj/sdb.obj appweb.lib mpr.lib http.lib pcre.lib
+	"$(LD)" -out:$(PLATFORM)/bin/esp.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/edi.obj $(PLATFORM)/obj/esp.obj $(PLATFORM)/obj/espAbbrev.obj $(PLATFORM)/obj/espFramework.obj $(PLATFORM)/obj/espHandler.obj $(PLATFORM)/obj/espHtml.obj $(PLATFORM)/obj/espSession.obj $(PLATFORM)/obj/espTemplate.obj $(PLATFORM)/obj/mdb.obj $(PLATFORM)/obj/sdb.obj $(LIBS) appweb.lib mpr.lib http.lib pcre.lib
 
 $(PLATFORM)\bin\esp.conf: 
 	rm -fr win-i686-debug/bin/esp.conf
@@ -369,7 +369,7 @@ $(PLATFORM)\obj\cgiHandler.obj: \
 $(PLATFORM)\bin\mod_cgi.dll:  \
         $(PLATFORM)\bin\libappweb.dll \
         $(PLATFORM)\obj\cgiHandler.obj
-	"$(LD)" -dll -out:$(PLATFORM)/bin/mod_cgi.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/mod_cgi.def $(LDFLAGS) $(PLATFORM)/obj/cgiHandler.obj appweb.lib mpr.lib http.lib pcre.lib
+	"$(LD)" -dll -out:$(PLATFORM)/bin/mod_cgi.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/mod_cgi.def $(LDFLAGS) $(PLATFORM)/obj/cgiHandler.obj $(LIBS) appweb.lib mpr.lib http.lib pcre.lib
 
 $(PLATFORM)\obj\auth.obj: \
         src/utils/auth.c \
@@ -379,7 +379,7 @@ $(PLATFORM)\obj\auth.obj: \
 $(PLATFORM)\bin\auth.exe:  \
         $(PLATFORM)\bin\libmpr.dll \
         $(PLATFORM)\obj\auth.obj
-	"$(LD)" -out:$(PLATFORM)/bin/auth.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/auth.obj mpr.lib
+	"$(LD)" -out:$(PLATFORM)/bin/auth.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/auth.obj $(LIBS) mpr.lib
 
 $(PLATFORM)\obj\cgiProgram.obj: \
         src/utils/cgiProgram.c \
@@ -388,7 +388,7 @@ $(PLATFORM)\obj\cgiProgram.obj: \
 
 $(PLATFORM)\bin\cgiProgram.exe:  \
         $(PLATFORM)\obj\cgiProgram.obj
-	"$(LD)" -out:$(PLATFORM)/bin/cgiProgram.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/cgiProgram.obj 
+	"$(LD)" -out:$(PLATFORM)/bin/cgiProgram.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/cgiProgram.obj $(LIBS)
 
 $(PLATFORM)\obj\setConfig.obj: \
         src/utils/setConfig.c \
@@ -398,7 +398,7 @@ $(PLATFORM)\obj\setConfig.obj: \
 $(PLATFORM)\bin\setConfig.exe:  \
         $(PLATFORM)\bin\libmpr.dll \
         $(PLATFORM)\obj\setConfig.obj
-	"$(LD)" -out:$(PLATFORM)/bin/setConfig.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(PLATFORM)/obj/setConfig.obj mpr.lib shell32.lib
+	"$(LD)" -out:$(PLATFORM)/bin/setConfig.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(PLATFORM)/obj/setConfig.obj $(LIBS) mpr.lib shell32.lib
 
 $(PLATFORM)\inc\appwebMonitor.h: 
 	rm -fr win-i686-debug/inc/appwebMonitor.h
@@ -413,7 +413,7 @@ $(PLATFORM)\bin\appweb.exe:  \
         $(PLATFORM)\bin\libappweb.dll \
         $(PLATFORM)\inc\appwebMonitor.h \
         $(PLATFORM)\obj\appweb.obj
-	"$(LD)" -out:$(PLATFORM)/bin/appweb.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/appweb.obj appweb.lib mpr.lib http.lib pcre.lib
+	"$(LD)" -out:$(PLATFORM)/bin/appweb.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/appweb.obj $(LIBS) appweb.lib mpr.lib http.lib pcre.lib
 
 $(PLATFORM)\obj\appwebMonitor.obj: \
         src/server/WIN/appwebMonitor.c \
@@ -423,7 +423,7 @@ $(PLATFORM)\obj\appwebMonitor.obj: \
 $(PLATFORM)\bin\appwebMonitor.exe:  \
         $(PLATFORM)\bin\libappweb.dll \
         $(PLATFORM)\obj\appwebMonitor.obj
-	"$(LD)" -out:$(PLATFORM)/bin/appwebMonitor.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(PLATFORM)/obj/appwebMonitor.obj shell32.lib appweb.lib mpr.lib http.lib pcre.lib shell32.lib
+	"$(LD)" -out:$(PLATFORM)/bin/appwebMonitor.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(PLATFORM)/obj/appwebMonitor.obj shell32.lib appweb.lib $(LIBS) mpr.lib http.lib pcre.lib shell32.lib
 
 $(PLATFORM)\bin\appwebMonitor.ico: 
 	rm -fr win-i686-debug/bin/appwebMonitor.ico
@@ -448,7 +448,7 @@ $(PLATFORM)\bin\testAppweb.exe:  \
         $(PLATFORM)\inc\testAppweb.h \
         $(PLATFORM)\obj\testAppweb.obj \
         $(PLATFORM)\obj\testHttp.obj
-	"$(LD)" -out:$(PLATFORM)/bin/testAppweb.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/testAppweb.obj $(PLATFORM)/obj/testHttp.obj appweb.lib mpr.lib http.lib pcre.lib
+	"$(LD)" -out:$(PLATFORM)/bin/testAppweb.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/testAppweb.obj $(PLATFORM)/obj/testHttp.obj $(LIBS) appweb.lib mpr.lib http.lib pcre.lib
 
 test/cgi-bin/testScript: 
 	echo '#!$(PLATFORM)/bin/cgiProgram.exe' >test/cgi-bin/testScript ; chmod +x test/cgi-bin/testScript
@@ -483,5 +483,5 @@ $(PLATFORM)\obj\removeFiles.obj: \
 $(PLATFORM)\bin\removeFiles.exe:  \
         $(PLATFORM)\bin\libmpr.dll \
         $(PLATFORM)\obj\removeFiles.obj
-	"$(LD)" -out:$(PLATFORM)/bin/removeFiles.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(PLATFORM)/obj/removeFiles.obj mpr.lib shell32.lib
+	"$(LD)" -out:$(PLATFORM)/bin/removeFiles.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(PLATFORM)/obj/removeFiles.obj $(LIBS) mpr.lib shell32.lib
 

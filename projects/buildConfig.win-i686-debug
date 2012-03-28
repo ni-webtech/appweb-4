@@ -24,7 +24,7 @@
 #define BLD_CPU "i686"
 #define BIT_CPU_ARCH MPR_CPU_IX86
 #define BLD_OS "WIN"
-#define BLD_CONFIG_CMD "bit -emulate win-i686 -without all configure -gen sh,nmake,vs,make"
+#define BLD_CONFIG_CMD "bit -emulate win-i686 -without all configure -gen sh,nmake,make,vs"
 #define BLD_LIB_NAME "bin"
 #define BLD_CFG_PREFIX "C:/Program Files/Embedthis Appweb"
 #define BLD_BIN_PREFIX "C:/Program Files/Embedthis Appweb/bin"

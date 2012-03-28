@@ -8,7 +8,7 @@ LD="ld"
 CFLAGS="-Wall -fPIC -g -mcpu=i686"
 DFLAGS="-D_REENTRANT -DCPU=i686 -DPIC"
 IFLAGS="-Isolaris-i686-debug/inc"
-LDFLAGS="-L${PLATFORM}/lib -g
+LDFLAGS="-L${PLATFORM}/lib -g"
 LIBS="-llxnet -lrt -lsocket -lpthread -lm"
 
 [ ! -x ${PLATFORM}/inc ] && mkdir -p ${PLATFORM}/inc ${PLATFORM}/obj ${PLATFORM}/lib ${PLATFORM}/bin
