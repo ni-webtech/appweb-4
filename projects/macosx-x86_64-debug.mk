@@ -1,18 +1,19 @@
 #
-#   build.mk -- Build It Makefile to build Embedthis Appweb for macosx on x86_64
+#   macosx-x86_64-debug.mk -- Build It Makefile to build Embedthis Appweb for macosx on x86_64
 #
 
-PLATFORM  := macosx-x86_64-debug
-CC        := cc
-CFLAGS    := -fPIC -Wall -g
-DFLAGS    := -DPIC -DCPU=X86_64
-IFLAGS    := -I$(PLATFORM)/inc
-LDFLAGS   := -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L$(PLATFORM)/lib -g -ldl
-LIBS      := -lpthread -lm
-
+PLATFORM       := macosx-x86_64-debug
+CC             := /usr/bin/cc
+LD             := /usr/bin/ld
+CFLAGS         := -fPIC -Wall -g -Wshorten-64-to-32
+DFLAGS         := -DPIC -DCPU=X86_64
+IFLAGS         := -I$(PLATFORM)/inc
+LDFLAGS        := -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L$(PLATFORM)/lib -g -ldl
+LIBS           := -lpthread -lm
 
 all: prep \
         $(PLATFORM)/lib/libmpr.dylib \
+        $(PLATFORM)/lib/libmprssl.dylib \
         $(PLATFORM)/bin/appman \
         $(PLATFORM)/bin/makerom \
         $(PLATFORM)/lib/libpcre.dylib \
@@ -25,6 +26,8 @@ all: prep \
         $(PLATFORM)/lib/esp.conf \
         $(PLATFORM)/lib/esp-www \
         $(PLATFORM)/lib/mod_cgi.dylib \
+        $(PLATFORM)/lib/mod_php.dylib \
+        $(PLATFORM)/lib/mod_ssl.dylib \
         $(PLATFORM)/bin/auth \
         $(PLATFORM)/bin/cgiProgram \
         $(PLATFORM)/bin/setConfig \
@@ -122,6 +125,17 @@ $(PLATFORM)/lib/libmpr.dylib:  \
         $(PLATFORM)/obj/mprLib.o
 	$(CC) -dynamiclib -o $(PLATFORM)/lib/libmpr.dylib -arch x86_64 $(LDFLAGS) -install_name @rpath/libmpr.dylib $(PLATFORM)/obj/mprLib.o $(LIBS)
 
+$(PLATFORM)/obj/mprSsl.o: \
+        src/deps/mpr/mprSsl.c \
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/mpr.h
+	$(CC) -c -o $(PLATFORM)/obj/mprSsl.o -arch x86_64 $(CFLAGS) $(DFLAGS) -DPOSIX -DMATRIX_USE_FILE_SYSTEM -I$(PLATFORM)/inc -I../packages-macosx-x86_64/openssl/openssl-1.0.0d/include -I../packages-macosx-x86_64/matrixssl/matrixssl-3-3-open/matrixssl -I../packages-macosx-x86_64/matrixssl/matrixssl-3-3-open src/deps/mpr/mprSsl.c
+
+$(PLATFORM)/lib/libmprssl.dylib:  \
+        $(PLATFORM)/lib/libmpr.dylib \
+        $(PLATFORM)/obj/mprSsl.o
+	$(CC) -dynamiclib -o $(PLATFORM)/lib/libmprssl.dylib -arch x86_64 $(LDFLAGS) -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -install_name @rpath/libmprssl.dylib $(PLATFORM)/obj/mprSsl.o $(LIBS) -lmpr -lssl -lcrypto -lmatrixssl
+
 $(PLATFORM)/obj/manager.o: \
         src/deps/mpr/manager.c \
         $(PLATFORM)/inc/buildConfig.h \
@@ -173,9 +187,10 @@ $(PLATFORM)/obj/httpLib.o: \
 $(PLATFORM)/lib/libhttp.dylib:  \
         $(PLATFORM)/lib/libmpr.dylib \
         $(PLATFORM)/lib/libpcre.dylib \
+        $(PLATFORM)/lib/libmprssl.dylib \
         $(PLATFORM)/inc/http.h \
         $(PLATFORM)/obj/httpLib.o
-	$(CC) -dynamiclib -o $(PLATFORM)/lib/libhttp.dylib -arch x86_64 $(LDFLAGS) -install_name @rpath/libhttp.dylib $(PLATFORM)/obj/httpLib.o $(LIBS) -lmpr -lpcre
+	$(CC) -dynamiclib -o $(PLATFORM)/lib/libhttp.dylib -arch x86_64 $(LDFLAGS) -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -install_name @rpath/libhttp.dylib $(PLATFORM)/obj/httpLib.o $(LIBS) -lmpr -lpcre -lmprssl -lssl -lcrypto -lmatrixssl
 
 $(PLATFORM)/obj/http.o: \
         src/deps/http/http.c \
@@ -186,7 +201,7 @@ $(PLATFORM)/obj/http.o: \
 $(PLATFORM)/bin/http:  \
         $(PLATFORM)/lib/libhttp.dylib \
         $(PLATFORM)/obj/http.o
-	$(CC) -o $(PLATFORM)/bin/http -arch x86_64 $(LDFLAGS) -L$(PLATFORM)/lib $(PLATFORM)/obj/http.o $(LIBS) -lhttp -lmpr -lpcre
+	$(CC) -o $(PLATFORM)/bin/http -arch x86_64 $(LDFLAGS) -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -L$(PLATFORM)/lib $(PLATFORM)/obj/http.o $(LIBS) -lhttp -lmpr -lpcre -lmprssl -lssl -lcrypto -lmatrixssl
 
 $(PLATFORM)/inc/sqlite3.h: 
 	rm -fr macosx-x86_64-debug/inc/sqlite3.h
@@ -252,6 +267,7 @@ $(PLATFORM)/lib/libappweb.dylib:  \
         $(PLATFORM)/lib/libmpr.dylib \
         $(PLATFORM)/lib/libhttp.dylib \
         $(PLATFORM)/lib/libpcre.dylib \
+        $(PLATFORM)/lib/libmprssl.dylib \
         $(PLATFORM)/inc/appweb.h \
         $(PLATFORM)/inc/customize.h \
         $(PLATFORM)/obj/config.o \
@@ -260,7 +276,7 @@ $(PLATFORM)/lib/libappweb.dylib:  \
         $(PLATFORM)/obj/fileHandler.o \
         $(PLATFORM)/obj/log.o \
         $(PLATFORM)/obj/server.o
-	$(CC) -dynamiclib -o $(PLATFORM)/lib/libappweb.dylib -arch x86_64 $(LDFLAGS) -install_name @rpath/libappweb.dylib $(PLATFORM)/obj/config.o $(PLATFORM)/obj/convenience.o $(PLATFORM)/obj/dirHandler.o $(PLATFORM)/obj/fileHandler.o $(PLATFORM)/obj/log.o $(PLATFORM)/obj/server.o $(LIBS) -lmpr -lhttp -lpcre -lpcre
+	$(CC) -dynamiclib -o $(PLATFORM)/lib/libappweb.dylib -arch x86_64 $(LDFLAGS) -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -install_name @rpath/libappweb.dylib $(PLATFORM)/obj/config.o $(PLATFORM)/obj/convenience.o $(PLATFORM)/obj/dirHandler.o $(PLATFORM)/obj/fileHandler.o $(PLATFORM)/obj/log.o $(PLATFORM)/obj/server.o $(LIBS) -lmpr -lhttp -lpcre -lmprssl -lssl -lcrypto -lmatrixssl -lpcre -lmprssl
 
 $(PLATFORM)/inc/edi.h: 
 	rm -fr macosx-x86_64-debug/inc/edi.h
@@ -355,7 +371,7 @@ $(PLATFORM)/lib/mod_esp.dylib:  \
         $(PLATFORM)/obj/espTemplate.o \
         $(PLATFORM)/obj/mdb.o \
         $(PLATFORM)/obj/sdb.o
-	$(CC) -dynamiclib -o $(PLATFORM)/lib/mod_esp.dylib -arch x86_64 $(LDFLAGS) -install_name @rpath/mod_esp.dylib $(PLATFORM)/obj/edi.o $(PLATFORM)/obj/espAbbrev.o $(PLATFORM)/obj/espFramework.o $(PLATFORM)/obj/espHandler.o $(PLATFORM)/obj/espHtml.o $(PLATFORM)/obj/espSession.o $(PLATFORM)/obj/espTemplate.o $(PLATFORM)/obj/mdb.o $(PLATFORM)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -dynamiclib -o $(PLATFORM)/lib/mod_esp.dylib -arch x86_64 $(LDFLAGS) -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -install_name @rpath/mod_esp.dylib $(PLATFORM)/obj/edi.o $(PLATFORM)/obj/espAbbrev.o $(PLATFORM)/obj/espFramework.o $(PLATFORM)/obj/espHandler.o $(PLATFORM)/obj/espHtml.o $(PLATFORM)/obj/espSession.o $(PLATFORM)/obj/espTemplate.o $(PLATFORM)/obj/mdb.o $(PLATFORM)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre -lmprssl -lssl -lcrypto -lmatrixssl
 
 $(PLATFORM)/obj/esp.o: \
         src/esp/esp.c \
@@ -375,7 +391,7 @@ $(PLATFORM)/bin/esp:  \
         $(PLATFORM)/obj/espTemplate.o \
         $(PLATFORM)/obj/mdb.o \
         $(PLATFORM)/obj/sdb.o
-	$(CC) -o $(PLATFORM)/bin/esp -arch x86_64 $(LDFLAGS) -L$(PLATFORM)/lib $(PLATFORM)/obj/edi.o $(PLATFORM)/obj/esp.o $(PLATFORM)/obj/espAbbrev.o $(PLATFORM)/obj/espFramework.o $(PLATFORM)/obj/espHandler.o $(PLATFORM)/obj/espHtml.o $(PLATFORM)/obj/espSession.o $(PLATFORM)/obj/espTemplate.o $(PLATFORM)/obj/mdb.o $(PLATFORM)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -o $(PLATFORM)/bin/esp -arch x86_64 $(LDFLAGS) -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -L$(PLATFORM)/lib $(PLATFORM)/obj/edi.o $(PLATFORM)/obj/esp.o $(PLATFORM)/obj/espAbbrev.o $(PLATFORM)/obj/espFramework.o $(PLATFORM)/obj/espHandler.o $(PLATFORM)/obj/espHtml.o $(PLATFORM)/obj/espSession.o $(PLATFORM)/obj/espTemplate.o $(PLATFORM)/obj/mdb.o $(PLATFORM)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre -lmprssl -lssl -lcrypto -lmatrixssl
 
 $(PLATFORM)/lib/esp.conf: 
 	rm -fr macosx-x86_64-debug/lib/esp.conf
@@ -394,7 +410,30 @@ $(PLATFORM)/obj/cgiHandler.o: \
 $(PLATFORM)/lib/mod_cgi.dylib:  \
         $(PLATFORM)/lib/libappweb.dylib \
         $(PLATFORM)/obj/cgiHandler.o
-	$(CC) -dynamiclib -o $(PLATFORM)/lib/mod_cgi.dylib -arch x86_64 $(LDFLAGS) -install_name @rpath/mod_cgi.dylib $(PLATFORM)/obj/cgiHandler.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -dynamiclib -o $(PLATFORM)/lib/mod_cgi.dylib -arch x86_64 $(LDFLAGS) -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -install_name @rpath/mod_cgi.dylib $(PLATFORM)/obj/cgiHandler.o $(LIBS) -lappweb -lmpr -lhttp -lpcre -lmprssl -lssl -lcrypto -lmatrixssl
+
+$(PLATFORM)/obj/phpHandler.o: \
+        src/modules/phpHandler.c \
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/appweb.h
+	$(CC) -c -o $(PLATFORM)/obj/phpHandler.o -arch x86_64 -fPIC -g $(DFLAGS) -I$(PLATFORM)/inc -I../packages-macosx-x86_64/php/php-5.3.8 -I../packages-macosx-x86_64/php/php-5.3.8/main -I../packages-macosx-x86_64/php/php-5.3.8/Zend -I../packages-macosx-x86_64/php/php-5.3.8/TSRM src/modules/phpHandler.c
+
+$(PLATFORM)/lib/mod_php.dylib:  \
+        $(PLATFORM)/lib/libappweb.dylib \
+        $(PLATFORM)/obj/phpHandler.o
+	$(CC) -dynamiclib -o $(PLATFORM)/lib/mod_php.dylib -arch x86_64 $(LDFLAGS) -L/Users/mob/git/packages-macosx-x86_64/php/php-5.3.8/.libs -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -install_name @rpath/mod_php.dylib $(PLATFORM)/obj/phpHandler.o $(LIBS) -lphp5 -lappweb -lmpr -lhttp -lpcre -lmprssl -lssl -lcrypto -lmatrixssl
+
+$(PLATFORM)/obj/sslModule.o: \
+        src/modules/sslModule.c \
+        $(PLATFORM)/inc/buildConfig.h \
+        $(PLATFORM)/inc/appweb.h
+	$(CC) -c -o $(PLATFORM)/obj/sslModule.o -arch x86_64 $(CFLAGS) $(DFLAGS) -DPOSIX -DMATRIX_USE_FILE_SYSTEM -I$(PLATFORM)/inc -I../packages-macosx-x86_64/openssl/openssl-1.0.0d/include -I../packages-macosx-x86_64/matrixssl/matrixssl-3-3-open/matrixssl -I../packages-macosx-x86_64/matrixssl/matrixssl-3-3-open src/modules/sslModule.c
+
+$(PLATFORM)/lib/mod_ssl.dylib:  \
+        $(PLATFORM)/lib/libmprssl.dylib \
+        $(PLATFORM)/lib/libappweb.dylib \
+        $(PLATFORM)/obj/sslModule.o
+	$(CC) -dynamiclib -o $(PLATFORM)/lib/mod_ssl.dylib -arch x86_64 $(LDFLAGS) -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -install_name @rpath/mod_ssl.dylib $(PLATFORM)/obj/sslModule.o $(LIBS) -lmprssl -lmpr -lssl -lcrypto -lmatrixssl -lssl -lcrypto -lmatrixssl -lappweb -lhttp -lpcre
 
 $(PLATFORM)/obj/auth.o: \
         src/utils/auth.c \
@@ -441,7 +480,7 @@ $(PLATFORM)/bin/appweb:  \
         $(PLATFORM)/lib/libappweb.dylib \
         $(PLATFORM)/inc/appwebMonitor.h \
         $(PLATFORM)/obj/appweb.o
-	$(CC) -o $(PLATFORM)/bin/appweb -arch x86_64 $(LDFLAGS) -L$(PLATFORM)/lib $(PLATFORM)/obj/appweb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -o $(PLATFORM)/bin/appweb -arch x86_64 $(LDFLAGS) -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -L$(PLATFORM)/lib $(PLATFORM)/obj/appweb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre -lmprssl -lssl -lcrypto -lmatrixssl
 
 $(PLATFORM)/inc/testAppweb.h: 
 	rm -fr macosx-x86_64-debug/inc/testAppweb.h
@@ -464,7 +503,7 @@ $(PLATFORM)/bin/testAppweb:  \
         $(PLATFORM)/inc/testAppweb.h \
         $(PLATFORM)/obj/testAppweb.o \
         $(PLATFORM)/obj/testHttp.o
-	$(CC) -o $(PLATFORM)/bin/testAppweb -arch x86_64 $(LDFLAGS) -L$(PLATFORM)/lib $(PLATFORM)/obj/testAppweb.o $(PLATFORM)/obj/testHttp.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -o $(PLATFORM)/bin/testAppweb -arch x86_64 $(LDFLAGS) -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -L$(PLATFORM)/lib $(PLATFORM)/obj/testAppweb.o $(PLATFORM)/obj/testHttp.o $(LIBS) -lappweb -lmpr -lhttp -lpcre -lmprssl -lssl -lcrypto -lmatrixssl
 
 test/cgi-bin/testScript: 
 	echo '#!$(PLATFORM)/bin/cgiProgram' >test/cgi-bin/testScript ; chmod +x test/cgi-bin/testScript

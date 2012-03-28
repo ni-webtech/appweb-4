@@ -1,13 +1,14 @@
 #
-#   build.sh -- Build It Shell Script to build Embedthis Appweb
+#   macosx-x86_64-debug.sh -- Build It Shell Script to build Embedthis Appweb
 #
 
 PLATFORM="macosx-x86_64-debug"
-CC="cc"
-CFLAGS="-fPIC -Wall -g"
+CC="/usr/bin/cc"
+LD="/usr/bin/ld"
+CFLAGS="-fPIC -Wall -g -Wshorten-64-to-32"
 DFLAGS="-DPIC -DCPU=X86_64"
 IFLAGS="-Imacosx-x86_64-debug/inc"
-LDFLAGS="-Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L${PLATFORM}/lib -g -ldl
+LDFLAGS="-Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L${PLATFORM}/lib -g -ldl"
 LIBS="-lpthread -lm"
 
 [ ! -x ${PLATFORM}/inc ] && mkdir -p ${PLATFORM}/inc ${PLATFORM}/obj ${PLATFORM}/lib ${PLATFORM}/bin
@@ -19,6 +20,10 @@ cp -r src/deps/mpr/mpr.h macosx-x86_64-debug/inc/mpr.h
 ${CC} -c -o ${PLATFORM}/obj/mprLib.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/deps/mpr/mprLib.c
 
 ${CC} -dynamiclib -o ${PLATFORM}/lib/libmpr.dylib -arch x86_64 ${LDFLAGS} -install_name @rpath/libmpr.dylib ${PLATFORM}/obj/mprLib.o ${LIBS}
+
+${CC} -c -o ${PLATFORM}/obj/mprSsl.o -arch x86_64 ${CFLAGS} ${DFLAGS} -DPOSIX -DMATRIX_USE_FILE_SYSTEM -I${PLATFORM}/inc -I../packages-macosx-x86_64/openssl/openssl-1.0.0d/include -I../packages-macosx-x86_64/matrixssl/matrixssl-3-3-open/matrixssl -I../packages-macosx-x86_64/matrixssl/matrixssl-3-3-open src/deps/mpr/mprSsl.c
+
+${CC} -dynamiclib -o ${PLATFORM}/lib/libmprssl.dylib -arch x86_64 ${LDFLAGS} -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -install_name @rpath/libmprssl.dylib ${PLATFORM}/obj/mprSsl.o ${LIBS} -lmpr -lssl -lcrypto -lmatrixssl
 
 ${CC} -c -o ${PLATFORM}/obj/manager.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/deps/mpr/manager.c
 
@@ -40,11 +45,11 @@ cp -r src/deps/http/http.h macosx-x86_64-debug/inc/http.h
 
 ${CC} -c -o ${PLATFORM}/obj/httpLib.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/deps/http/httpLib.c
 
-${CC} -dynamiclib -o ${PLATFORM}/lib/libhttp.dylib -arch x86_64 ${LDFLAGS} -install_name @rpath/libhttp.dylib ${PLATFORM}/obj/httpLib.o ${LIBS} -lmpr -lpcre
+${CC} -dynamiclib -o ${PLATFORM}/lib/libhttp.dylib -arch x86_64 ${LDFLAGS} -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -install_name @rpath/libhttp.dylib ${PLATFORM}/obj/httpLib.o ${LIBS} -lmpr -lpcre -lmprssl -lssl -lcrypto -lmatrixssl
 
 ${CC} -c -o ${PLATFORM}/obj/http.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/deps/http/http.c
 
-${CC} -o ${PLATFORM}/bin/http -arch x86_64 ${LDFLAGS} -L${PLATFORM}/lib ${PLATFORM}/obj/http.o ${LIBS} -lhttp -lmpr -lpcre
+${CC} -o ${PLATFORM}/bin/http -arch x86_64 ${LDFLAGS} -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -L${PLATFORM}/lib ${PLATFORM}/obj/http.o ${LIBS} -lhttp -lmpr -lpcre -lmprssl -lssl -lcrypto -lmatrixssl
 
 rm -rf macosx-x86_64-debug/inc/sqlite3.h
 cp -r src/deps/sqlite/sqlite3.h macosx-x86_64-debug/inc/sqlite3.h
@@ -71,7 +76,7 @@ ${CC} -c -o ${PLATFORM}/obj/log.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${PLATFORM}
 
 ${CC} -c -o ${PLATFORM}/obj/server.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/server.c
 
-${CC} -dynamiclib -o ${PLATFORM}/lib/libappweb.dylib -arch x86_64 ${LDFLAGS} -install_name @rpath/libappweb.dylib ${PLATFORM}/obj/config.o ${PLATFORM}/obj/convenience.o ${PLATFORM}/obj/dirHandler.o ${PLATFORM}/obj/fileHandler.o ${PLATFORM}/obj/log.o ${PLATFORM}/obj/server.o ${LIBS} -lmpr -lhttp -lpcre -lpcre
+${CC} -dynamiclib -o ${PLATFORM}/lib/libappweb.dylib -arch x86_64 ${LDFLAGS} -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -install_name @rpath/libappweb.dylib ${PLATFORM}/obj/config.o ${PLATFORM}/obj/convenience.o ${PLATFORM}/obj/dirHandler.o ${PLATFORM}/obj/fileHandler.o ${PLATFORM}/obj/log.o ${PLATFORM}/obj/server.o ${LIBS} -lmpr -lhttp -lpcre -lmprssl -lssl -lcrypto -lmatrixssl -lpcre -lmprssl
 
 rm -rf macosx-x86_64-debug/inc/edi.h
 cp -r src/esp/edi.h macosx-x86_64-debug/inc/edi.h
@@ -103,11 +108,11 @@ ${CC} -c -o ${PLATFORM}/obj/mdb.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${PLATFORM}
 
 ${CC} -c -o ${PLATFORM}/obj/sdb.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/sdb.c
 
-${CC} -dynamiclib -o ${PLATFORM}/lib/mod_esp.dylib -arch x86_64 ${LDFLAGS} -install_name @rpath/mod_esp.dylib ${PLATFORM}/obj/edi.o ${PLATFORM}/obj/espAbbrev.o ${PLATFORM}/obj/espFramework.o ${PLATFORM}/obj/espHandler.o ${PLATFORM}/obj/espHtml.o ${PLATFORM}/obj/espSession.o ${PLATFORM}/obj/espTemplate.o ${PLATFORM}/obj/mdb.o ${PLATFORM}/obj/sdb.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
+${CC} -dynamiclib -o ${PLATFORM}/lib/mod_esp.dylib -arch x86_64 ${LDFLAGS} -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -install_name @rpath/mod_esp.dylib ${PLATFORM}/obj/edi.o ${PLATFORM}/obj/espAbbrev.o ${PLATFORM}/obj/espFramework.o ${PLATFORM}/obj/espHandler.o ${PLATFORM}/obj/espHtml.o ${PLATFORM}/obj/espSession.o ${PLATFORM}/obj/espTemplate.o ${PLATFORM}/obj/mdb.o ${PLATFORM}/obj/sdb.o ${LIBS} -lappweb -lmpr -lhttp -lpcre -lmprssl -lssl -lcrypto -lmatrixssl
 
 ${CC} -c -o ${PLATFORM}/obj/esp.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/esp/esp.c
 
-${CC} -o ${PLATFORM}/bin/esp -arch x86_64 ${LDFLAGS} -L${PLATFORM}/lib ${PLATFORM}/obj/edi.o ${PLATFORM}/obj/esp.o ${PLATFORM}/obj/espAbbrev.o ${PLATFORM}/obj/espFramework.o ${PLATFORM}/obj/espHandler.o ${PLATFORM}/obj/espHtml.o ${PLATFORM}/obj/espSession.o ${PLATFORM}/obj/espTemplate.o ${PLATFORM}/obj/mdb.o ${PLATFORM}/obj/sdb.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
+${CC} -o ${PLATFORM}/bin/esp -arch x86_64 ${LDFLAGS} -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -L${PLATFORM}/lib ${PLATFORM}/obj/edi.o ${PLATFORM}/obj/esp.o ${PLATFORM}/obj/espAbbrev.o ${PLATFORM}/obj/espFramework.o ${PLATFORM}/obj/espHandler.o ${PLATFORM}/obj/espHtml.o ${PLATFORM}/obj/espSession.o ${PLATFORM}/obj/espTemplate.o ${PLATFORM}/obj/mdb.o ${PLATFORM}/obj/sdb.o ${LIBS} -lappweb -lmpr -lhttp -lpcre -lmprssl -lssl -lcrypto -lmatrixssl
 
 rm -rf macosx-x86_64-debug/lib/esp.conf
 cp -r src/esp/esp.conf macosx-x86_64-debug/lib/esp.conf
@@ -117,7 +122,15 @@ cp -r src/esp/www macosx-x86_64-debug/lib/esp-www
 
 ${CC} -c -o ${PLATFORM}/obj/cgiHandler.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/modules/cgiHandler.c
 
-${CC} -dynamiclib -o ${PLATFORM}/lib/mod_cgi.dylib -arch x86_64 ${LDFLAGS} -install_name @rpath/mod_cgi.dylib ${PLATFORM}/obj/cgiHandler.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
+${CC} -dynamiclib -o ${PLATFORM}/lib/mod_cgi.dylib -arch x86_64 ${LDFLAGS} -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -install_name @rpath/mod_cgi.dylib ${PLATFORM}/obj/cgiHandler.o ${LIBS} -lappweb -lmpr -lhttp -lpcre -lmprssl -lssl -lcrypto -lmatrixssl
+
+${CC} -c -o ${PLATFORM}/obj/phpHandler.o -arch x86_64 -fPIC -g ${DFLAGS} -I${PLATFORM}/inc -I../packages-macosx-x86_64/php/php-5.3.8 -I../packages-macosx-x86_64/php/php-5.3.8/main -I../packages-macosx-x86_64/php/php-5.3.8/Zend -I../packages-macosx-x86_64/php/php-5.3.8/TSRM src/modules/phpHandler.c
+
+${CC} -dynamiclib -o ${PLATFORM}/lib/mod_php.dylib -arch x86_64 ${LDFLAGS} -L/Users/mob/git/packages-macosx-x86_64/php/php-5.3.8/.libs -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -install_name @rpath/mod_php.dylib ${PLATFORM}/obj/phpHandler.o ${LIBS} -lphp5 -lappweb -lmpr -lhttp -lpcre -lmprssl -lssl -lcrypto -lmatrixssl
+
+${CC} -c -o ${PLATFORM}/obj/sslModule.o -arch x86_64 ${CFLAGS} ${DFLAGS} -DPOSIX -DMATRIX_USE_FILE_SYSTEM -I${PLATFORM}/inc -I../packages-macosx-x86_64/openssl/openssl-1.0.0d/include -I../packages-macosx-x86_64/matrixssl/matrixssl-3-3-open/matrixssl -I../packages-macosx-x86_64/matrixssl/matrixssl-3-3-open src/modules/sslModule.c
+
+${CC} -dynamiclib -o ${PLATFORM}/lib/mod_ssl.dylib -arch x86_64 ${LDFLAGS} -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -install_name @rpath/mod_ssl.dylib ${PLATFORM}/obj/sslModule.o ${LIBS} -lmprssl -lmpr -lssl -lcrypto -lmatrixssl -lssl -lcrypto -lmatrixssl -lappweb -lhttp -lpcre
 
 ${CC} -c -o ${PLATFORM}/obj/auth.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/utils/auth.c
 
@@ -136,7 +149,7 @@ cp -r src/server/appwebMonitor.h macosx-x86_64-debug/inc/appwebMonitor.h
 
 ${CC} -c -o ${PLATFORM}/obj/appweb.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc src/server/appweb.c
 
-${CC} -o ${PLATFORM}/bin/appweb -arch x86_64 ${LDFLAGS} -L${PLATFORM}/lib ${PLATFORM}/obj/appweb.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
+${CC} -o ${PLATFORM}/bin/appweb -arch x86_64 ${LDFLAGS} -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -L${PLATFORM}/lib ${PLATFORM}/obj/appweb.o ${LIBS} -lappweb -lmpr -lhttp -lpcre -lmprssl -lssl -lcrypto -lmatrixssl
 
 rm -rf macosx-x86_64-debug/inc/testAppweb.h
 cp -r test/testAppweb.h macosx-x86_64-debug/inc/testAppweb.h
@@ -145,7 +158,7 @@ ${CC} -c -o ${PLATFORM}/obj/testAppweb.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${PL
 
 ${CC} -c -o ${PLATFORM}/obj/testHttp.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${PLATFORM}/inc test/testHttp.c
 
-${CC} -o ${PLATFORM}/bin/testAppweb -arch x86_64 ${LDFLAGS} -L${PLATFORM}/lib ${PLATFORM}/obj/testAppweb.o ${PLATFORM}/obj/testHttp.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
+${CC} -o ${PLATFORM}/bin/testAppweb -arch x86_64 ${LDFLAGS} -L/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d -L/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open -L${PLATFORM}/lib ${PLATFORM}/obj/testAppweb.o ${PLATFORM}/obj/testHttp.o ${LIBS} -lappweb -lmpr -lhttp -lpcre -lmprssl -lssl -lcrypto -lmatrixssl
 
 echo '#!${PLATFORM}/bin/cgiProgram' >test/cgi-bin/testScript ; chmod +x test/cgi-bin/testScript
 echo -e '#!`type -p sh`' >test/web/caching/cache.cgi

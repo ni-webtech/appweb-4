@@ -1,9 +1,10 @@
 #
-#   build.sh -- Build It Shell Script to build Embedthis Appweb
+#   solaris-i686-debug.sh -- Build It Shell Script to build Embedthis Appweb
 #
 
 PLATFORM="solaris-i686-debug"
 CC="cc"
+LD="ld"
 CFLAGS="-Wall -fPIC -g -mcpu=i686"
 DFLAGS="-D_REENTRANT -DCPU=i686 -DPIC"
 IFLAGS="-Isolaris-i686-debug/inc"

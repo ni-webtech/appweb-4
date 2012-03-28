@@ -1,9 +1,10 @@
 #
-#   build.sh -- Build It Shell Script to build Embedthis Appweb
+#   macosx-i686-debug.sh -- Build It Shell Script to build Embedthis Appweb
 #
 
 PLATFORM="macosx-i686-debug"
 CC="cc"
+LD="ld"
 CFLAGS="-fPIC -Wall -g"
 DFLAGS="-DPIC -DCPU=I686"
 IFLAGS="-Imacosx-i686-debug/inc"

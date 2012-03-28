@@ -1,15 +1,15 @@
 #
-#   build.mk -- Build It Makefile to build Embedthis Appweb for linux on i686
+#   linux-i686-debug.mk -- Build It Makefile to build Embedthis Appweb for linux on i686
 #
 
-PLATFORM  := linux-i686-debug
-CC        := cc
-CFLAGS    := -Wall -fPIC -g -Wno-unused-result -mtune=i686
-DFLAGS    := -D_REENTRANT -DCPU=i686 -DPIC
-IFLAGS    := -I$(PLATFORM)/inc
-LDFLAGS   := -Wl,--enable-new-dtags '-Wl,-rpath,$$ORIGIN/' '-Wl,-rpath,$$ORIGIN/../lib' -L$(PLATFORM)/lib -g -ldl
-LIBS      := -lpthread -lm
-
+PLATFORM       := linux-i686-debug
+CC             := cc
+LD             := ld
+CFLAGS         := -Wall -fPIC -g -Wno-unused-result -mtune=i686
+DFLAGS         := -D_REENTRANT -DCPU=i686 -DPIC
+IFLAGS         := -I$(PLATFORM)/inc
+LDFLAGS        := -Wl,--enable-new-dtags '-Wl,-rpath,$$ORIGIN/' '-Wl,-rpath,$$ORIGIN/../lib' -L$(PLATFORM)/lib -g -ldl
+LIBS           := -lpthread -lm
 
 all: prep \
         $(PLATFORM)/lib/libmpr.so \

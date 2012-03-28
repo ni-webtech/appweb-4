@@ -1,15 +1,15 @@
 #
-#   build.mk -- Build It Makefile to build Embedthis Appweb for macosx on i686
+#   macosx-i686-debug.mk -- Build It Makefile to build Embedthis Appweb for macosx on i686
 #
 
-PLATFORM  := macosx-i686-debug
-CC        := cc
-CFLAGS    := -fPIC -Wall -g
-DFLAGS    := -DPIC -DCPU=I686
-IFLAGS    := -I$(PLATFORM)/inc
-LDFLAGS   := -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L$(PLATFORM)/lib -g -ldl
-LIBS      := -lpthread -lm
-
+PLATFORM       := macosx-i686-debug
+CC             := cc
+LD             := ld
+CFLAGS         := -fPIC -Wall -g
+DFLAGS         := -DPIC -DCPU=I686
+IFLAGS         := -I$(PLATFORM)/inc
+LDFLAGS        := -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L$(PLATFORM)/lib -g -ldl
+LIBS           := -lpthread -lm
 
 all: prep \
         $(PLATFORM)/lib/libmpr.dylib \

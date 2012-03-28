@@ -1,15 +1,15 @@
 #
-#   build.mk -- Build It Makefile to build Embedthis Appweb for solaris on i686
+#   solaris-i686-debug.mk -- Build It Makefile to build Embedthis Appweb for solaris on i686
 #
 
-PLATFORM  := solaris-i686-debug
-CC        := cc
-CFLAGS    := -Wall -fPIC -g -mcpu=i686
-DFLAGS    := -D_REENTRANT -DCPU=i686 -DPIC
-IFLAGS    := -I$(PLATFORM)/inc
-LDFLAGS   := -L$(PLATFORM)/lib -g
-LIBS      := -llxnet -lrt -lsocket -lpthread -lm
-
+PLATFORM       := solaris-i686-debug
+CC             := cc
+LD             := ld
+CFLAGS         := -Wall -fPIC -g -mcpu=i686
+DFLAGS         := -D_REENTRANT -DCPU=i686 -DPIC
+IFLAGS         := -I$(PLATFORM)/inc
+LDFLAGS        := -L$(PLATFORM)/lib -g
+LIBS           := -llxnet -lrt -lsocket -lpthread -lm
 
 all: prep \
         $(PLATFORM)/lib/libmpr.so \
