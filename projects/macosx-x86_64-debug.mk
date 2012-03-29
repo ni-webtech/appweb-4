@@ -8,7 +8,8 @@ LD             := ld
 CFLAGS         := -fPIC -Wall -g
 DFLAGS         := -DPIC -DCPU=X86_64
 IFLAGS         := -I$(PLATFORM)/inc
-LDFLAGS        := -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -L$(PLATFORM)/lib -g -ldl
+LDFLAGS        := '-Wl,-rpath,@executable_path/../lib' '-Wl,-rpath,@executable_path/' '-Wl,-rpath,@loader_path/' '-g' '-ldl'
+LIBPATHS       := -L$(PLATFORM)/lib
 LIBS           := -lpthread -lm
 
 all: prep \
@@ -120,7 +121,7 @@ $(PLATFORM)/obj/mprLib.o: \
 $(PLATFORM)/lib/libmpr.dylib:  \
         $(PLATFORM)/inc/mpr.h \
         $(PLATFORM)/obj/mprLib.o
-	$(CC) -dynamiclib -o $(PLATFORM)/lib/libmpr.dylib -arch x86_64 $(LDFLAGS) -install_name @rpath/libmpr.dylib $(PLATFORM)/obj/mprLib.o $(LIBS)
+	$(CC) -dynamiclib -o $(PLATFORM)/lib/libmpr.dylib -arch x86_64 $(LDFLAGS) $(LIBPATHS) -install_name @rpath/libmpr.dylib $(PLATFORM)/obj/mprLib.o $(LIBS)
 
 $(PLATFORM)/obj/manager.o: \
         src/deps/mpr/manager.c \
@@ -131,7 +132,7 @@ $(PLATFORM)/obj/manager.o: \
 $(PLATFORM)/bin/appman:  \
         $(PLATFORM)/lib/libmpr.dylib \
         $(PLATFORM)/obj/manager.o
-	$(CC) -o $(PLATFORM)/bin/appman -arch x86_64 $(LDFLAGS) -L$(PLATFORM)/lib $(PLATFORM)/obj/manager.o $(LIBS) -lmpr
+	$(CC) -o $(PLATFORM)/bin/appman -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/manager.o $(LIBS) -lmpr
 
 $(PLATFORM)/obj/makerom.o: \
         src/deps/mpr/makerom.c \
@@ -142,7 +143,7 @@ $(PLATFORM)/obj/makerom.o: \
 $(PLATFORM)/bin/makerom:  \
         $(PLATFORM)/lib/libmpr.dylib \
         $(PLATFORM)/obj/makerom.o
-	$(CC) -o $(PLATFORM)/bin/makerom -arch x86_64 $(LDFLAGS) -L$(PLATFORM)/lib $(PLATFORM)/obj/makerom.o $(LIBS) -lmpr
+	$(CC) -o $(PLATFORM)/bin/makerom -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/makerom.o $(LIBS) -lmpr
 
 $(PLATFORM)/inc/pcre.h: 
 	rm -fr macosx-x86_64-debug/inc/pcre.h
@@ -157,7 +158,7 @@ $(PLATFORM)/obj/pcre.o: \
 $(PLATFORM)/lib/libpcre.dylib:  \
         $(PLATFORM)/inc/pcre.h \
         $(PLATFORM)/obj/pcre.o
-	$(CC) -dynamiclib -o $(PLATFORM)/lib/libpcre.dylib -arch x86_64 $(LDFLAGS) -install_name @rpath/libpcre.dylib $(PLATFORM)/obj/pcre.o $(LIBS)
+	$(CC) -dynamiclib -o $(PLATFORM)/lib/libpcre.dylib -arch x86_64 $(LDFLAGS) $(LIBPATHS) -install_name @rpath/libpcre.dylib $(PLATFORM)/obj/pcre.o $(LIBS)
 
 $(PLATFORM)/inc/http.h: 
 	rm -fr macosx-x86_64-debug/inc/http.h
@@ -175,7 +176,7 @@ $(PLATFORM)/lib/libhttp.dylib:  \
         $(PLATFORM)/lib/libpcre.dylib \
         $(PLATFORM)/inc/http.h \
         $(PLATFORM)/obj/httpLib.o
-	$(CC) -dynamiclib -o $(PLATFORM)/lib/libhttp.dylib -arch x86_64 $(LDFLAGS) -install_name @rpath/libhttp.dylib $(PLATFORM)/obj/httpLib.o $(LIBS) -lmpr -lpcre
+	$(CC) -dynamiclib -o $(PLATFORM)/lib/libhttp.dylib -arch x86_64 $(LDFLAGS) $(LIBPATHS) -install_name @rpath/libhttp.dylib $(PLATFORM)/obj/httpLib.o $(LIBS) -lmpr -lpcre
 
 $(PLATFORM)/obj/http.o: \
         src/deps/http/http.c \
@@ -186,7 +187,7 @@ $(PLATFORM)/obj/http.o: \
 $(PLATFORM)/bin/http:  \
         $(PLATFORM)/lib/libhttp.dylib \
         $(PLATFORM)/obj/http.o
-	$(CC) -o $(PLATFORM)/bin/http -arch x86_64 $(LDFLAGS) -L$(PLATFORM)/lib $(PLATFORM)/obj/http.o $(LIBS) -lhttp -lmpr -lpcre
+	$(CC) -o $(PLATFORM)/bin/http -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/http.o $(LIBS) -lhttp -lmpr -lpcre
 
 $(PLATFORM)/inc/sqlite3.h: 
 	rm -fr macosx-x86_64-debug/inc/sqlite3.h
@@ -201,7 +202,7 @@ $(PLATFORM)/obj/sqlite3.o: \
 $(PLATFORM)/lib/libsqlite3.dylib:  \
         $(PLATFORM)/inc/sqlite3.h \
         $(PLATFORM)/obj/sqlite3.o
-	$(CC) -dynamiclib -o $(PLATFORM)/lib/libsqlite3.dylib -arch x86_64 $(LDFLAGS) -install_name @rpath/libsqlite3.dylib $(PLATFORM)/obj/sqlite3.o $(LIBS)
+	$(CC) -dynamiclib -o $(PLATFORM)/lib/libsqlite3.dylib -arch x86_64 $(LDFLAGS) $(LIBPATHS) -install_name @rpath/libsqlite3.dylib $(PLATFORM)/obj/sqlite3.o $(LIBS)
 
 $(PLATFORM)/inc/appweb.h: 
 	rm -fr macosx-x86_64-debug/inc/appweb.h
@@ -260,7 +261,7 @@ $(PLATFORM)/lib/libappweb.dylib:  \
         $(PLATFORM)/obj/fileHandler.o \
         $(PLATFORM)/obj/log.o \
         $(PLATFORM)/obj/server.o
-	$(CC) -dynamiclib -o $(PLATFORM)/lib/libappweb.dylib -arch x86_64 $(LDFLAGS) -install_name @rpath/libappweb.dylib $(PLATFORM)/obj/config.o $(PLATFORM)/obj/convenience.o $(PLATFORM)/obj/dirHandler.o $(PLATFORM)/obj/fileHandler.o $(PLATFORM)/obj/log.o $(PLATFORM)/obj/server.o $(LIBS) -lmpr -lhttp -lpcre -lpcre
+	$(CC) -dynamiclib -o $(PLATFORM)/lib/libappweb.dylib -arch x86_64 $(LDFLAGS) $(LIBPATHS) -install_name @rpath/libappweb.dylib $(PLATFORM)/obj/config.o $(PLATFORM)/obj/convenience.o $(PLATFORM)/obj/dirHandler.o $(PLATFORM)/obj/fileHandler.o $(PLATFORM)/obj/log.o $(PLATFORM)/obj/server.o $(LIBS) -lmpr -lhttp -lpcre -lpcre
 
 $(PLATFORM)/inc/edi.h: 
 	rm -fr macosx-x86_64-debug/inc/edi.h
@@ -355,7 +356,7 @@ $(PLATFORM)/lib/mod_esp.dylib:  \
         $(PLATFORM)/obj/espTemplate.o \
         $(PLATFORM)/obj/mdb.o \
         $(PLATFORM)/obj/sdb.o
-	$(CC) -dynamiclib -o $(PLATFORM)/lib/mod_esp.dylib -arch x86_64 $(LDFLAGS) -install_name @rpath/mod_esp.dylib $(PLATFORM)/obj/edi.o $(PLATFORM)/obj/espAbbrev.o $(PLATFORM)/obj/espFramework.o $(PLATFORM)/obj/espHandler.o $(PLATFORM)/obj/espHtml.o $(PLATFORM)/obj/espSession.o $(PLATFORM)/obj/espTemplate.o $(PLATFORM)/obj/mdb.o $(PLATFORM)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -dynamiclib -o $(PLATFORM)/lib/mod_esp.dylib -arch x86_64 $(LDFLAGS) $(LIBPATHS) -install_name @rpath/mod_esp.dylib $(PLATFORM)/obj/edi.o $(PLATFORM)/obj/espAbbrev.o $(PLATFORM)/obj/espFramework.o $(PLATFORM)/obj/espHandler.o $(PLATFORM)/obj/espHtml.o $(PLATFORM)/obj/espSession.o $(PLATFORM)/obj/espTemplate.o $(PLATFORM)/obj/mdb.o $(PLATFORM)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 $(PLATFORM)/obj/esp.o: \
         src/esp/esp.c \
@@ -375,7 +376,7 @@ $(PLATFORM)/bin/esp:  \
         $(PLATFORM)/obj/espTemplate.o \
         $(PLATFORM)/obj/mdb.o \
         $(PLATFORM)/obj/sdb.o
-	$(CC) -o $(PLATFORM)/bin/esp -arch x86_64 $(LDFLAGS) -L$(PLATFORM)/lib $(PLATFORM)/obj/edi.o $(PLATFORM)/obj/esp.o $(PLATFORM)/obj/espAbbrev.o $(PLATFORM)/obj/espFramework.o $(PLATFORM)/obj/espHandler.o $(PLATFORM)/obj/espHtml.o $(PLATFORM)/obj/espSession.o $(PLATFORM)/obj/espTemplate.o $(PLATFORM)/obj/mdb.o $(PLATFORM)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -o $(PLATFORM)/bin/esp -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/edi.o $(PLATFORM)/obj/esp.o $(PLATFORM)/obj/espAbbrev.o $(PLATFORM)/obj/espFramework.o $(PLATFORM)/obj/espHandler.o $(PLATFORM)/obj/espHtml.o $(PLATFORM)/obj/espSession.o $(PLATFORM)/obj/espTemplate.o $(PLATFORM)/obj/mdb.o $(PLATFORM)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 $(PLATFORM)/lib/esp.conf: 
 	rm -fr macosx-x86_64-debug/lib/esp.conf
@@ -394,7 +395,7 @@ $(PLATFORM)/obj/cgiHandler.o: \
 $(PLATFORM)/lib/mod_cgi.dylib:  \
         $(PLATFORM)/lib/libappweb.dylib \
         $(PLATFORM)/obj/cgiHandler.o
-	$(CC) -dynamiclib -o $(PLATFORM)/lib/mod_cgi.dylib -arch x86_64 $(LDFLAGS) -install_name @rpath/mod_cgi.dylib $(PLATFORM)/obj/cgiHandler.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -dynamiclib -o $(PLATFORM)/lib/mod_cgi.dylib -arch x86_64 $(LDFLAGS) $(LIBPATHS) -install_name @rpath/mod_cgi.dylib $(PLATFORM)/obj/cgiHandler.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 $(PLATFORM)/obj/auth.o: \
         src/utils/auth.c \
@@ -405,7 +406,7 @@ $(PLATFORM)/obj/auth.o: \
 $(PLATFORM)/bin/auth:  \
         $(PLATFORM)/lib/libmpr.dylib \
         $(PLATFORM)/obj/auth.o
-	$(CC) -o $(PLATFORM)/bin/auth -arch x86_64 $(LDFLAGS) -L$(PLATFORM)/lib $(PLATFORM)/obj/auth.o $(LIBS) -lmpr
+	$(CC) -o $(PLATFORM)/bin/auth -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/auth.o $(LIBS) -lmpr
 
 $(PLATFORM)/obj/cgiProgram.o: \
         src/utils/cgiProgram.c \
@@ -414,7 +415,7 @@ $(PLATFORM)/obj/cgiProgram.o: \
 
 $(PLATFORM)/bin/cgiProgram:  \
         $(PLATFORM)/obj/cgiProgram.o
-	$(CC) -o $(PLATFORM)/bin/cgiProgram -arch x86_64 $(LDFLAGS) -L$(PLATFORM)/lib $(PLATFORM)/obj/cgiProgram.o $(LIBS)
+	$(CC) -o $(PLATFORM)/bin/cgiProgram -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/cgiProgram.o $(LIBS)
 
 $(PLATFORM)/obj/setConfig.o: \
         src/utils/setConfig.c \
@@ -425,7 +426,7 @@ $(PLATFORM)/obj/setConfig.o: \
 $(PLATFORM)/bin/setConfig:  \
         $(PLATFORM)/lib/libmpr.dylib \
         $(PLATFORM)/obj/setConfig.o
-	$(CC) -o $(PLATFORM)/bin/setConfig -arch x86_64 $(LDFLAGS) -L$(PLATFORM)/lib $(PLATFORM)/obj/setConfig.o $(LIBS) -lmpr
+	$(CC) -o $(PLATFORM)/bin/setConfig -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/setConfig.o $(LIBS) -lmpr
 
 $(PLATFORM)/inc/appwebMonitor.h: 
 	rm -fr macosx-x86_64-debug/inc/appwebMonitor.h
@@ -441,7 +442,7 @@ $(PLATFORM)/bin/appweb:  \
         $(PLATFORM)/lib/libappweb.dylib \
         $(PLATFORM)/inc/appwebMonitor.h \
         $(PLATFORM)/obj/appweb.o
-	$(CC) -o $(PLATFORM)/bin/appweb -arch x86_64 $(LDFLAGS) -L$(PLATFORM)/lib $(PLATFORM)/obj/appweb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -o $(PLATFORM)/bin/appweb -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/appweb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 $(PLATFORM)/inc/testAppweb.h: 
 	rm -fr macosx-x86_64-debug/inc/testAppweb.h
@@ -464,7 +465,7 @@ $(PLATFORM)/bin/testAppweb:  \
         $(PLATFORM)/inc/testAppweb.h \
         $(PLATFORM)/obj/testAppweb.o \
         $(PLATFORM)/obj/testHttp.o
-	$(CC) -o $(PLATFORM)/bin/testAppweb -arch x86_64 $(LDFLAGS) -L$(PLATFORM)/lib $(PLATFORM)/obj/testAppweb.o $(PLATFORM)/obj/testHttp.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -o $(PLATFORM)/bin/testAppweb -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/testAppweb.o $(PLATFORM)/obj/testHttp.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 test/cgi-bin/testScript: 
 	echo '#!$(PLATFORM)/bin/cgiProgram' >test/cgi-bin/testScript ; chmod +x test/cgi-bin/testScript

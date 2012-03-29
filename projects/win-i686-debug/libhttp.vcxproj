@@ -30,7 +30,7 @@
 </ItemGroup>
 
 <PropertyGroup Label="Globals">
-  <ProjectGuid>{6fe1d91d-b7d6-4ef2-b964-e6968ebaed2f}</ProjectGuid>
+  <ProjectGuid>{790bfb15-e653-4165-9ac1-bc1be6073cf5}</ProjectGuid>
   <RootNamespace />
   <Keyword>Win32Proj</Keyword>
 </PropertyGroup>
@@ -61,20 +61,20 @@
 <ItemDefinitionGroup>
 <Link>
   <AdditionalDependencies>mpr.lib;pcre.lib;%(AdditionalDependencies)</AdditionalDependencies>
-  <AdditionalLibraryDirectories>$(OutDir);/Users/mob/git/appweb/win-i686-debug/bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+  <AdditionalLibraryDirectories>$(OutDir);;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
 </Link>
 </ItemDefinitionGroup>
 
 <ItemGroup>
   <ProjectReference Include="libmpr.vcxproj">
-  <Project>3d1cb75f-12b2-4a67-adba-c45f69847567</Project>
+  <Project>eeeadbf4-df4d-452f-a37d-70a3140436b8</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>
 
 <ItemGroup>
   <ProjectReference Include="libpcre.vcxproj">
-  <Project>0d61cb8d-cf68-4950-8bcb-94730b8c1488</Project>
+  <Project>7b8d4f3d-efed-4ef6-8b68-012619a793c5</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>

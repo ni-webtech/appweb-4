@@ -4,9 +4,9 @@
 
 export VS      := $(PROGRAMFILES)\Microsoft Visual Studio 10.0
 export SDK     := $(PROGRAMFILES)\Microsoft SDKs\Windows\v7.0A
-export PATH    := $(SDK)\Bin:$(VS)\VC\Bin:$(VS)\Common7\IDE:$(VS)\Common7\Tools:$(VS)\SDK\v3.5\bin:$(VS)\VC\VCPackages
-export INCLUDE := $(SDK)\INCLUDE:$(VS)\VC\INCLUDE
-export LIB     := $(SDK)\lib:$(VS)\VC\lib
+export PATH    := $(SDK)/Bin:$(VS)/VC/Bin:$(VS)/Common7/IDE:$(VS)/Common7/Tools:$(VS)/SDK/v3.5/bin:$(VS)/VC/VCPackages;$(PATH)
+export INCLUDE := $(INCLUDE);$(SDK)/INCLUDE:$(VS)/VC/INCLUDE
+export LIB     := $(LIB);$(SDK)/lib:$(VS)/VC/lib
 
 PLATFORM       := win-i686-debug
 CC             := cl.exe
@@ -14,35 +14,36 @@ LD             := link.exe
 CFLAGS         := -nologo -GR- -W3 -Zi -Od -MDd
 DFLAGS         := -D_REENTRANT -D_MT
 IFLAGS         := -I$(PLATFORM)/inc
-LDFLAGS        := -nologo -nodefaultlib -incremental:no -libpath:$(PLATFORM)/bin -debug -machine:x86
-LIBS           := ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib
+LDFLAGS        := '-nologo' '-nodefaultlib' '-incremental:no' '-debug' '-machine:x86'
+LIBPATHS       := -libpath:$(PLATFORM)/bin
+LIBS           := ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib shell32.lib
 
 all: prep \
-        $(PLATFORM)\bin\libmpr.dll \
-        $(PLATFORM)\bin\appman \
-        $(PLATFORM)\bin\makerom.exe \
-        $(PLATFORM)\bin\libpcre.dll \
-        $(PLATFORM)\bin\libhttp.dll \
-        $(PLATFORM)\bin\http.exe \
-        $(PLATFORM)\bin\libsqlite3.dll \
-        $(PLATFORM)\bin\libappweb.dll \
-        $(PLATFORM)\bin\mod_esp.dll \
-        $(PLATFORM)\bin\esp.exe \
-        $(PLATFORM)\bin\esp.conf \
-        $(PLATFORM)\bin\esp-www \
-        $(PLATFORM)\bin\mod_cgi.dll \
-        $(PLATFORM)\bin\auth.exe \
-        $(PLATFORM)\bin\cgiProgram.exe \
-        $(PLATFORM)\bin\setConfig.exe \
-        $(PLATFORM)\bin\appweb.exe \
-        $(PLATFORM)\bin\appwebMonitor.exe \
-        $(PLATFORM)\bin\appwebMonitor.ico \
-        $(PLATFORM)\bin\testAppweb.exe \
-        test\cgi-bin\testScript \
-        test\web\caching\cache.cgi \
-        test\web\basic\basic.cgi \
-        test\cgi-bin\cgiProgram.exe \
-        $(PLATFORM)\bin\removeFiles.exe
+        $(PLATFORM)/bin/libmpr.dll \
+        $(PLATFORM)/bin/appman \
+        $(PLATFORM)/bin/makerom.exe \
+        $(PLATFORM)/bin/libpcre.dll \
+        $(PLATFORM)/bin/libhttp.dll \
+        $(PLATFORM)/bin/http.exe \
+        $(PLATFORM)/bin/libsqlite3.dll \
+        $(PLATFORM)/bin/libappweb.dll \
+        $(PLATFORM)/bin/mod_esp.dll \
+        $(PLATFORM)/bin/esp.exe \
+        $(PLATFORM)/bin/esp.conf \
+        $(PLATFORM)/bin/esp-www \
+        $(PLATFORM)/bin/mod_cgi.dll \
+        $(PLATFORM)/bin/auth.exe \
+        $(PLATFORM)/bin/cgiProgram.exe \
+        $(PLATFORM)/bin/setConfig.exe \
+        $(PLATFORM)/bin/appweb.exe \
+        $(PLATFORM)/bin/appwebMonitor.exe \
+        $(PLATFORM)/bin/appwebMonitor.ico \
+        $(PLATFORM)/bin/testAppweb.exe \
+        test/cgi-bin/testScript \
+        test/web/caching/cache.cgi \
+        test/web/basic/basic.cgi \
+        test/cgi-bin/cgiProgram.exe \
+        $(PLATFORM)/bin/removeFiles.exe
 
 .PHONY: prep
 
@@ -51,404 +52,404 @@ prep:
 	@[ ! -f $(PLATFORM)/inc/buildConfig.h ] && cp projects/buildConfig.$(PLATFORM) $(PLATFORM)/inc/buildConfig.h ; true
 
 clean:
-	rm -rf $(PLATFORM)\bin\libmpr.dll
-	rm -rf $(PLATFORM)\bin\libmprssl.dll
-	rm -rf $(PLATFORM)\bin\appman
-	rm -rf $(PLATFORM)\bin\makerom.exe
-	rm -rf $(PLATFORM)\bin\libpcre.dll
-	rm -rf $(PLATFORM)\bin\libhttp.dll
-	rm -rf $(PLATFORM)\bin\http.exe
-	rm -rf $(PLATFORM)\bin\libsqlite3.dll
-	rm -rf $(PLATFORM)\bin\libappweb.dll
-	rm -rf $(PLATFORM)\bin\mod_esp.dll
-	rm -rf $(PLATFORM)\bin\esp.exe
-	rm -rf $(PLATFORM)\bin\esp.conf
-	rm -rf $(PLATFORM)\bin\esp-www
-	rm -rf $(PLATFORM)\bin\mod_cgi.dll
-	rm -rf $(PLATFORM)\bin\mod_ejs.dll
-	rm -rf $(PLATFORM)\bin\mod_php.dll
-	rm -rf $(PLATFORM)\bin\mod_ssl.dll
-	rm -rf $(PLATFORM)\bin\auth.exe
-	rm -rf $(PLATFORM)\bin\cgiProgram.exe
-	rm -rf $(PLATFORM)\bin\setConfig.exe
-	rm -rf $(PLATFORM)\bin\appweb.exe
-	rm -rf $(PLATFORM)\bin\appwebMonitor.exe
-	rm -rf $(PLATFORM)\bin\appwebMonitor.ico
-	rm -rf $(PLATFORM)\bin\testAppweb.exe
-	rm -rf $(PLATFORM)\bin\removeFiles.exe
-	rm -rf $(PLATFORM)\obj\mprLib.obj
-	rm -rf $(PLATFORM)\obj\mprSsl.obj
-	rm -rf $(PLATFORM)\obj\manager.obj
-	rm -rf $(PLATFORM)\obj\makerom.obj
-	rm -rf $(PLATFORM)\obj\pcre.obj
-	rm -rf $(PLATFORM)\obj\httpLib.obj
-	rm -rf $(PLATFORM)\obj\http.obj
-	rm -rf $(PLATFORM)\obj\sqlite3.obj
-	rm -rf $(PLATFORM)\obj\config.obj
-	rm -rf $(PLATFORM)\obj\convenience.obj
-	rm -rf $(PLATFORM)\obj\dirHandler.obj
-	rm -rf $(PLATFORM)\obj\fileHandler.obj
-	rm -rf $(PLATFORM)\obj\log.obj
-	rm -rf $(PLATFORM)\obj\server.obj
-	rm -rf $(PLATFORM)\obj\edi.obj
-	rm -rf $(PLATFORM)\obj\espAbbrev.obj
-	rm -rf $(PLATFORM)\obj\espFramework.obj
-	rm -rf $(PLATFORM)\obj\espHandler.obj
-	rm -rf $(PLATFORM)\obj\espHtml.obj
-	rm -rf $(PLATFORM)\obj\espSession.obj
-	rm -rf $(PLATFORM)\obj\espTemplate.obj
-	rm -rf $(PLATFORM)\obj\mdb.obj
-	rm -rf $(PLATFORM)\obj\sdb.obj
-	rm -rf $(PLATFORM)\obj\esp.obj
-	rm -rf $(PLATFORM)\obj\cgiHandler.obj
-	rm -rf $(PLATFORM)\obj\ejsHandler.obj
-	rm -rf $(PLATFORM)\obj\phpHandler.obj
-	rm -rf $(PLATFORM)\obj\sslModule.obj
-	rm -rf $(PLATFORM)\obj\auth.obj
-	rm -rf $(PLATFORM)\obj\cgiProgram.obj
-	rm -rf $(PLATFORM)\obj\setConfig.obj
-	rm -rf $(PLATFORM)\obj\appweb.obj
-	rm -rf $(PLATFORM)\obj\appwebMonitor.obj
-	rm -rf $(PLATFORM)\obj\testAppweb.obj
-	rm -rf $(PLATFORM)\obj\testHttp.obj
-	rm -rf $(PLATFORM)\obj\removeFiles.obj
+	rm -rf $(PLATFORM)/bin/libmpr.dll
+	rm -rf $(PLATFORM)/bin/libmprssl.dll
+	rm -rf $(PLATFORM)/bin/appman
+	rm -rf $(PLATFORM)/bin/makerom.exe
+	rm -rf $(PLATFORM)/bin/libpcre.dll
+	rm -rf $(PLATFORM)/bin/libhttp.dll
+	rm -rf $(PLATFORM)/bin/http.exe
+	rm -rf $(PLATFORM)/bin/libsqlite3.dll
+	rm -rf $(PLATFORM)/bin/libappweb.dll
+	rm -rf $(PLATFORM)/bin/mod_esp.dll
+	rm -rf $(PLATFORM)/bin/esp.exe
+	rm -rf $(PLATFORM)/bin/esp.conf
+	rm -rf $(PLATFORM)/bin/esp-www
+	rm -rf $(PLATFORM)/bin/mod_cgi.dll
+	rm -rf $(PLATFORM)/bin/mod_ejs.dll
+	rm -rf $(PLATFORM)/bin/mod_php.dll
+	rm -rf $(PLATFORM)/bin/mod_ssl.dll
+	rm -rf $(PLATFORM)/bin/auth.exe
+	rm -rf $(PLATFORM)/bin/cgiProgram.exe
+	rm -rf $(PLATFORM)/bin/setConfig.exe
+	rm -rf $(PLATFORM)/bin/appweb.exe
+	rm -rf $(PLATFORM)/bin/appwebMonitor.exe
+	rm -rf $(PLATFORM)/bin/appwebMonitor.ico
+	rm -rf $(PLATFORM)/bin/testAppweb.exe
+	rm -rf $(PLATFORM)/bin/removeFiles.exe
+	rm -rf $(PLATFORM)/obj/mprLib.obj
+	rm -rf $(PLATFORM)/obj/mprSsl.obj
+	rm -rf $(PLATFORM)/obj/manager.obj
+	rm -rf $(PLATFORM)/obj/makerom.obj
+	rm -rf $(PLATFORM)/obj/pcre.obj
+	rm -rf $(PLATFORM)/obj/httpLib.obj
+	rm -rf $(PLATFORM)/obj/http.obj
+	rm -rf $(PLATFORM)/obj/sqlite3.obj
+	rm -rf $(PLATFORM)/obj/config.obj
+	rm -rf $(PLATFORM)/obj/convenience.obj
+	rm -rf $(PLATFORM)/obj/dirHandler.obj
+	rm -rf $(PLATFORM)/obj/fileHandler.obj
+	rm -rf $(PLATFORM)/obj/log.obj
+	rm -rf $(PLATFORM)/obj/server.obj
+	rm -rf $(PLATFORM)/obj/edi.obj
+	rm -rf $(PLATFORM)/obj/espAbbrev.obj
+	rm -rf $(PLATFORM)/obj/espFramework.obj
+	rm -rf $(PLATFORM)/obj/espHandler.obj
+	rm -rf $(PLATFORM)/obj/espHtml.obj
+	rm -rf $(PLATFORM)/obj/espSession.obj
+	rm -rf $(PLATFORM)/obj/espTemplate.obj
+	rm -rf $(PLATFORM)/obj/mdb.obj
+	rm -rf $(PLATFORM)/obj/sdb.obj
+	rm -rf $(PLATFORM)/obj/esp.obj
+	rm -rf $(PLATFORM)/obj/cgiHandler.obj
+	rm -rf $(PLATFORM)/obj/ejsHandler.obj
+	rm -rf $(PLATFORM)/obj/phpHandler.obj
+	rm -rf $(PLATFORM)/obj/sslModule.obj
+	rm -rf $(PLATFORM)/obj/auth.obj
+	rm -rf $(PLATFORM)/obj/cgiProgram.obj
+	rm -rf $(PLATFORM)/obj/setConfig.obj
+	rm -rf $(PLATFORM)/obj/appweb.obj
+	rm -rf $(PLATFORM)/obj/appwebMonitor.obj
+	rm -rf $(PLATFORM)/obj/testAppweb.obj
+	rm -rf $(PLATFORM)/obj/testHttp.obj
+	rm -rf $(PLATFORM)/obj/removeFiles.obj
 
 clobber: clean
 	rm -fr ./$(PLATFORM)
 
-$(PLATFORM)\inc\mpr.h: 
+$(PLATFORM)/inc/mpr.h: 
 	rm -fr win-i686-debug/inc/mpr.h
 	cp -r src/deps/mpr/mpr.h win-i686-debug/inc/mpr.h
 
-$(PLATFORM)\obj\mprLib.obj: \
+$(PLATFORM)/obj/mprLib.obj: \
         src/deps/mpr/mprLib.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/mprLib.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/deps/mpr/mprLib.c
 
-$(PLATFORM)\bin\libmpr.dll:  \
-        $(PLATFORM)\inc\mpr.h \
-        $(PLATFORM)\obj\mprLib.obj
-	"$(LD)" -dll -out:$(PLATFORM)/bin/libmpr.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libmpr.def $(LDFLAGS) $(PLATFORM)/obj/mprLib.obj $(LIBS)
+$(PLATFORM)/bin/libmpr.dll:  \
+        $(PLATFORM)/inc/mpr.h \
+        $(PLATFORM)/obj/mprLib.obj
+	"$(LD)" -dll -out:$(PLATFORM)/bin/libmpr.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libmpr.def $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/mprLib.obj $(LIBS)
 
-$(PLATFORM)\obj\manager.obj: \
+$(PLATFORM)/obj/manager.obj: \
         src/deps/mpr/manager.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/manager.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/deps/mpr/manager.c
 
-$(PLATFORM)\bin\appman:  \
-        $(PLATFORM)\bin\libmpr.dll \
-        $(PLATFORM)\obj\manager.obj
-	"$(LD)" -out:$(PLATFORM)/bin/appman -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(PLATFORM)/obj/manager.obj $(LIBS) mpr.lib shell32.lib
+$(PLATFORM)/bin/appman:  \
+        $(PLATFORM)/bin/libmpr.dll \
+        $(PLATFORM)/obj/manager.obj
+	"$(LD)" -out:$(PLATFORM)/bin/appman -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/manager.obj $(LIBS) libmpr.lib
 
-$(PLATFORM)\obj\makerom.obj: \
+$(PLATFORM)/obj/makerom.obj: \
         src/deps/mpr/makerom.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/makerom.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/deps/mpr/makerom.c
 
-$(PLATFORM)\bin\makerom.exe:  \
-        $(PLATFORM)\bin\libmpr.dll \
-        $(PLATFORM)\obj\makerom.obj
-	"$(LD)" -out:$(PLATFORM)/bin/makerom.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/makerom.obj $(LIBS) mpr.lib
+$(PLATFORM)/bin/makerom.exe:  \
+        $(PLATFORM)/bin/libmpr.dll \
+        $(PLATFORM)/obj/makerom.obj
+	"$(LD)" -out:$(PLATFORM)/bin/makerom.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/makerom.obj $(LIBS) libmpr.lib
 
-$(PLATFORM)\inc\pcre.h: 
+$(PLATFORM)/inc/pcre.h: 
 	rm -fr win-i686-debug/inc/pcre.h
 	cp -r src/deps/pcre/pcre.h win-i686-debug/inc/pcre.h
 
-$(PLATFORM)\obj\pcre.obj: \
+$(PLATFORM)/obj/pcre.obj: \
         src/deps/pcre/pcre.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/pcre.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/deps/pcre/pcre.c
 
-$(PLATFORM)\bin\libpcre.dll:  \
-        $(PLATFORM)\inc\pcre.h \
-        $(PLATFORM)\obj\pcre.obj
-	"$(LD)" -dll -out:$(PLATFORM)/bin/libpcre.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libpcre.def $(LDFLAGS) $(PLATFORM)/obj/pcre.obj $(LIBS)
+$(PLATFORM)/bin/libpcre.dll:  \
+        $(PLATFORM)/inc/pcre.h \
+        $(PLATFORM)/obj/pcre.obj
+	"$(LD)" -dll -out:$(PLATFORM)/bin/libpcre.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libpcre.def $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/pcre.obj $(LIBS)
 
-$(PLATFORM)\inc\http.h: 
+$(PLATFORM)/inc/http.h: 
 	rm -fr win-i686-debug/inc/http.h
 	cp -r src/deps/http/http.h win-i686-debug/inc/http.h
 
-$(PLATFORM)\obj\httpLib.obj: \
+$(PLATFORM)/obj/httpLib.obj: \
         src/deps/http/httpLib.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/httpLib.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/deps/http/httpLib.c
 
-$(PLATFORM)\bin\libhttp.dll:  \
-        $(PLATFORM)\bin\libmpr.dll \
-        $(PLATFORM)\bin\libpcre.dll \
-        $(PLATFORM)\inc\http.h \
-        $(PLATFORM)\obj\httpLib.obj
-	"$(LD)" -dll -out:$(PLATFORM)/bin/libhttp.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libhttp.def $(LDFLAGS) $(PLATFORM)/obj/httpLib.obj $(LIBS) mpr.lib pcre.lib
+$(PLATFORM)/bin/libhttp.dll:  \
+        $(PLATFORM)/bin/libmpr.dll \
+        $(PLATFORM)/bin/libpcre.dll \
+        $(PLATFORM)/inc/http.h \
+        $(PLATFORM)/obj/httpLib.obj
+	"$(LD)" -dll -out:$(PLATFORM)/bin/libhttp.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libhttp.def $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/httpLib.obj $(LIBS) libmpr.lib libpcre.lib
 
-$(PLATFORM)\obj\http.obj: \
+$(PLATFORM)/obj/http.obj: \
         src/deps/http/http.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/http.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/deps/http/http.c
 
-$(PLATFORM)\bin\http.exe:  \
-        $(PLATFORM)\bin\libhttp.dll \
-        $(PLATFORM)\obj\http.obj
-	"$(LD)" -out:$(PLATFORM)/bin/http.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/http.obj $(LIBS) http.lib mpr.lib pcre.lib
+$(PLATFORM)/bin/http.exe:  \
+        $(PLATFORM)/bin/libhttp.dll \
+        $(PLATFORM)/obj/http.obj
+	"$(LD)" -out:$(PLATFORM)/bin/http.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/http.obj $(LIBS) libhttp.lib libmpr.lib libpcre.lib
 
-$(PLATFORM)\inc\sqlite3.h: 
+$(PLATFORM)/inc/sqlite3.h: 
 	rm -fr win-i686-debug/inc/sqlite3.h
 	cp -r src/deps/sqlite/sqlite3.h win-i686-debug/inc/sqlite3.h
 
-$(PLATFORM)\obj\sqlite3.obj: \
+$(PLATFORM)/obj/sqlite3.obj: \
         src/deps/sqlite/sqlite3.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/sqlite3.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/deps/sqlite/sqlite3.c
 
-$(PLATFORM)\bin\libsqlite3.dll:  \
-        $(PLATFORM)\inc\sqlite3.h \
-        $(PLATFORM)\obj\sqlite3.obj
-	"$(LD)" -dll -out:$(PLATFORM)/bin/libsqlite3.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libsqlite3.def $(LDFLAGS) $(PLATFORM)/obj/sqlite3.obj $(LIBS)
+$(PLATFORM)/bin/libsqlite3.dll:  \
+        $(PLATFORM)/inc/sqlite3.h \
+        $(PLATFORM)/obj/sqlite3.obj
+	"$(LD)" -dll -out:$(PLATFORM)/bin/libsqlite3.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libsqlite3.def $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/sqlite3.obj $(LIBS)
 
-$(PLATFORM)\inc\appweb.h: 
+$(PLATFORM)/inc/appweb.h: 
 	rm -fr win-i686-debug/inc/appweb.h
 	cp -r src/appweb.h win-i686-debug/inc/appweb.h
 
-$(PLATFORM)\inc\customize.h: 
+$(PLATFORM)/inc/customize.h: 
 	rm -fr win-i686-debug/inc/customize.h
 	cp -r src/customize.h win-i686-debug/inc/customize.h
 
-$(PLATFORM)\obj\config.obj: \
+$(PLATFORM)/obj/config.obj: \
         src/config.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/config.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/config.c
 
-$(PLATFORM)\obj\convenience.obj: \
+$(PLATFORM)/obj/convenience.obj: \
         src/convenience.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/convenience.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/convenience.c
 
-$(PLATFORM)\obj\dirHandler.obj: \
+$(PLATFORM)/obj/dirHandler.obj: \
         src/dirHandler.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/dirHandler.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/dirHandler.c
 
-$(PLATFORM)\obj\fileHandler.obj: \
+$(PLATFORM)/obj/fileHandler.obj: \
         src/fileHandler.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/fileHandler.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/fileHandler.c
 
-$(PLATFORM)\obj\log.obj: \
+$(PLATFORM)/obj/log.obj: \
         src/log.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/log.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/log.c
 
-$(PLATFORM)\obj\server.obj: \
+$(PLATFORM)/obj/server.obj: \
         src/server.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/server.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/server.c
 
-$(PLATFORM)\bin\libappweb.dll:  \
-        $(PLATFORM)\bin\libmpr.dll \
-        $(PLATFORM)\bin\libhttp.dll \
-        $(PLATFORM)\bin\libpcre.dll \
-        $(PLATFORM)\inc\appweb.h \
-        $(PLATFORM)\inc\customize.h \
-        $(PLATFORM)\obj\config.obj \
-        $(PLATFORM)\obj\convenience.obj \
-        $(PLATFORM)\obj\dirHandler.obj \
-        $(PLATFORM)\obj\fileHandler.obj \
-        $(PLATFORM)\obj\log.obj \
-        $(PLATFORM)\obj\server.obj
-	"$(LD)" -dll -out:$(PLATFORM)/bin/libappweb.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libappweb.def $(LDFLAGS) $(PLATFORM)/obj/config.obj $(PLATFORM)/obj/convenience.obj $(PLATFORM)/obj/dirHandler.obj $(PLATFORM)/obj/fileHandler.obj $(PLATFORM)/obj/log.obj $(PLATFORM)/obj/server.obj $(LIBS) mpr.lib http.lib pcre.lib pcre.lib
+$(PLATFORM)/bin/libappweb.dll:  \
+        $(PLATFORM)/bin/libmpr.dll \
+        $(PLATFORM)/bin/libhttp.dll \
+        $(PLATFORM)/bin/libpcre.dll \
+        $(PLATFORM)/inc/appweb.h \
+        $(PLATFORM)/inc/customize.h \
+        $(PLATFORM)/obj/config.obj \
+        $(PLATFORM)/obj/convenience.obj \
+        $(PLATFORM)/obj/dirHandler.obj \
+        $(PLATFORM)/obj/fileHandler.obj \
+        $(PLATFORM)/obj/log.obj \
+        $(PLATFORM)/obj/server.obj
+	"$(LD)" -dll -out:$(PLATFORM)/bin/libappweb.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/libappweb.def $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/config.obj $(PLATFORM)/obj/convenience.obj $(PLATFORM)/obj/dirHandler.obj $(PLATFORM)/obj/fileHandler.obj $(PLATFORM)/obj/log.obj $(PLATFORM)/obj/server.obj $(LIBS) libmpr.lib libhttp.lib libpcre.lib libpcre.lib
 
-$(PLATFORM)\inc\edi.h: 
+$(PLATFORM)/inc/edi.h: 
 	rm -fr win-i686-debug/inc/edi.h
 	cp -r src/esp/edi.h win-i686-debug/inc/edi.h
 
-$(PLATFORM)\inc\esp-app.h: 
+$(PLATFORM)/inc/esp-app.h: 
 	rm -fr win-i686-debug/inc/esp-app.h
 	cp -r src/esp/esp-app.h win-i686-debug/inc/esp-app.h
 
-$(PLATFORM)\inc\esp.h: 
+$(PLATFORM)/inc/esp.h: 
 	rm -fr win-i686-debug/inc/esp.h
 	cp -r src/esp/esp.h win-i686-debug/inc/esp.h
 
-$(PLATFORM)\inc\mdb.h: 
+$(PLATFORM)/inc/mdb.h: 
 	rm -fr win-i686-debug/inc/mdb.h
 	cp -r src/esp/mdb.h win-i686-debug/inc/mdb.h
 
-$(PLATFORM)\obj\edi.obj: \
+$(PLATFORM)/obj/edi.obj: \
         src/esp/edi.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/edi.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/edi.c
 
-$(PLATFORM)\obj\espAbbrev.obj: \
+$(PLATFORM)/obj/espAbbrev.obj: \
         src/esp/espAbbrev.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/espAbbrev.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/espAbbrev.c
 
-$(PLATFORM)\obj\espFramework.obj: \
+$(PLATFORM)/obj/espFramework.obj: \
         src/esp/espFramework.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/espFramework.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/espFramework.c
 
-$(PLATFORM)\obj\espHandler.obj: \
+$(PLATFORM)/obj/espHandler.obj: \
         src/esp/espHandler.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/espHandler.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/espHandler.c
 
-$(PLATFORM)\obj\espHtml.obj: \
+$(PLATFORM)/obj/espHtml.obj: \
         src/esp/espHtml.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/espHtml.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/espHtml.c
 
-$(PLATFORM)\obj\espSession.obj: \
+$(PLATFORM)/obj/espSession.obj: \
         src/esp/espSession.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/espSession.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/espSession.c
 
-$(PLATFORM)\obj\espTemplate.obj: \
+$(PLATFORM)/obj/espTemplate.obj: \
         src/esp/espTemplate.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/espTemplate.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/espTemplate.c
 
-$(PLATFORM)\obj\mdb.obj: \
+$(PLATFORM)/obj/mdb.obj: \
         src/esp/mdb.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/mdb.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/mdb.c
 
-$(PLATFORM)\obj\sdb.obj: \
+$(PLATFORM)/obj/sdb.obj: \
         src/esp/sdb.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/sdb.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/sdb.c
 
-$(PLATFORM)\bin\mod_esp.dll:  \
-        $(PLATFORM)\bin\libappweb.dll \
-        $(PLATFORM)\inc\edi.h \
-        $(PLATFORM)\inc\esp-app.h \
-        $(PLATFORM)\inc\esp.h \
-        $(PLATFORM)\inc\mdb.h \
-        $(PLATFORM)\obj\edi.obj \
-        $(PLATFORM)\obj\espAbbrev.obj \
-        $(PLATFORM)\obj\espFramework.obj \
-        $(PLATFORM)\obj\espHandler.obj \
-        $(PLATFORM)\obj\espHtml.obj \
-        $(PLATFORM)\obj\espSession.obj \
-        $(PLATFORM)\obj\espTemplate.obj \
-        $(PLATFORM)\obj\mdb.obj \
-        $(PLATFORM)\obj\sdb.obj
-	"$(LD)" -dll -out:$(PLATFORM)/bin/mod_esp.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/mod_esp.def $(LDFLAGS) $(PLATFORM)/obj/edi.obj $(PLATFORM)/obj/espAbbrev.obj $(PLATFORM)/obj/espFramework.obj $(PLATFORM)/obj/espHandler.obj $(PLATFORM)/obj/espHtml.obj $(PLATFORM)/obj/espSession.obj $(PLATFORM)/obj/espTemplate.obj $(PLATFORM)/obj/mdb.obj $(PLATFORM)/obj/sdb.obj $(LIBS) appweb.lib mpr.lib http.lib pcre.lib
+$(PLATFORM)/bin/mod_esp.dll:  \
+        $(PLATFORM)/bin/libappweb.dll \
+        $(PLATFORM)/inc/edi.h \
+        $(PLATFORM)/inc/esp-app.h \
+        $(PLATFORM)/inc/esp.h \
+        $(PLATFORM)/inc/mdb.h \
+        $(PLATFORM)/obj/edi.obj \
+        $(PLATFORM)/obj/espAbbrev.obj \
+        $(PLATFORM)/obj/espFramework.obj \
+        $(PLATFORM)/obj/espHandler.obj \
+        $(PLATFORM)/obj/espHtml.obj \
+        $(PLATFORM)/obj/espSession.obj \
+        $(PLATFORM)/obj/espTemplate.obj \
+        $(PLATFORM)/obj/mdb.obj \
+        $(PLATFORM)/obj/sdb.obj
+	"$(LD)" -dll -out:$(PLATFORM)/bin/mod_esp.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/mod_esp.def $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/edi.obj $(PLATFORM)/obj/espAbbrev.obj $(PLATFORM)/obj/espFramework.obj $(PLATFORM)/obj/espHandler.obj $(PLATFORM)/obj/espHtml.obj $(PLATFORM)/obj/espSession.obj $(PLATFORM)/obj/espTemplate.obj $(PLATFORM)/obj/mdb.obj $(PLATFORM)/obj/sdb.obj $(LIBS) libappweb.lib libmpr.lib libhttp.lib libpcre.lib
 
-$(PLATFORM)\obj\esp.obj: \
+$(PLATFORM)/obj/esp.obj: \
         src/esp/esp.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/esp.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/esp/esp.c
 
-$(PLATFORM)\bin\esp.exe:  \
-        $(PLATFORM)\bin\libappweb.dll \
-        $(PLATFORM)\obj\edi.obj \
-        $(PLATFORM)\obj\esp.obj \
-        $(PLATFORM)\obj\espAbbrev.obj \
-        $(PLATFORM)\obj\espFramework.obj \
-        $(PLATFORM)\obj\espHandler.obj \
-        $(PLATFORM)\obj\espHtml.obj \
-        $(PLATFORM)\obj\espSession.obj \
-        $(PLATFORM)\obj\espTemplate.obj \
-        $(PLATFORM)\obj\mdb.obj \
-        $(PLATFORM)\obj\sdb.obj
-	"$(LD)" -out:$(PLATFORM)/bin/esp.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/edi.obj $(PLATFORM)/obj/esp.obj $(PLATFORM)/obj/espAbbrev.obj $(PLATFORM)/obj/espFramework.obj $(PLATFORM)/obj/espHandler.obj $(PLATFORM)/obj/espHtml.obj $(PLATFORM)/obj/espSession.obj $(PLATFORM)/obj/espTemplate.obj $(PLATFORM)/obj/mdb.obj $(PLATFORM)/obj/sdb.obj $(LIBS) appweb.lib mpr.lib http.lib pcre.lib
+$(PLATFORM)/bin/esp.exe:  \
+        $(PLATFORM)/bin/libappweb.dll \
+        $(PLATFORM)/obj/edi.obj \
+        $(PLATFORM)/obj/esp.obj \
+        $(PLATFORM)/obj/espAbbrev.obj \
+        $(PLATFORM)/obj/espFramework.obj \
+        $(PLATFORM)/obj/espHandler.obj \
+        $(PLATFORM)/obj/espHtml.obj \
+        $(PLATFORM)/obj/espSession.obj \
+        $(PLATFORM)/obj/espTemplate.obj \
+        $(PLATFORM)/obj/mdb.obj \
+        $(PLATFORM)/obj/sdb.obj
+	"$(LD)" -out:$(PLATFORM)/bin/esp.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/edi.obj $(PLATFORM)/obj/esp.obj $(PLATFORM)/obj/espAbbrev.obj $(PLATFORM)/obj/espFramework.obj $(PLATFORM)/obj/espHandler.obj $(PLATFORM)/obj/espHtml.obj $(PLATFORM)/obj/espSession.obj $(PLATFORM)/obj/espTemplate.obj $(PLATFORM)/obj/mdb.obj $(PLATFORM)/obj/sdb.obj $(LIBS) libappweb.lib libmpr.lib libhttp.lib libpcre.lib
 
-$(PLATFORM)\bin\esp.conf: 
+$(PLATFORM)/bin/esp.conf: 
 	rm -fr win-i686-debug/bin/esp.conf
 	cp -r src/esp/esp.conf win-i686-debug/bin/esp.conf
 
-$(PLATFORM)\bin\esp-www: 
+$(PLATFORM)/bin/esp-www: 
 	rm -fr win-i686-debug/bin/esp-www
 	cp -r src/esp/www win-i686-debug/bin/esp-www
 
-$(PLATFORM)\obj\cgiHandler.obj: \
+$(PLATFORM)/obj/cgiHandler.obj: \
         src/modules/cgiHandler.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/cgiHandler.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/modules/cgiHandler.c
 
-$(PLATFORM)\bin\mod_cgi.dll:  \
-        $(PLATFORM)\bin\libappweb.dll \
-        $(PLATFORM)\obj\cgiHandler.obj
-	"$(LD)" -dll -out:$(PLATFORM)/bin/mod_cgi.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/mod_cgi.def $(LDFLAGS) $(PLATFORM)/obj/cgiHandler.obj $(LIBS) appweb.lib mpr.lib http.lib pcre.lib
+$(PLATFORM)/bin/mod_cgi.dll:  \
+        $(PLATFORM)/bin/libappweb.dll \
+        $(PLATFORM)/obj/cgiHandler.obj
+	"$(LD)" -dll -out:$(PLATFORM)/bin/mod_cgi.dll -entry:_DllMainCRTStartup@12 -def:$(PLATFORM)/bin/mod_cgi.def $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/cgiHandler.obj $(LIBS) libappweb.lib libmpr.lib libhttp.lib libpcre.lib
 
-$(PLATFORM)\obj\auth.obj: \
+$(PLATFORM)/obj/auth.obj: \
         src/utils/auth.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/auth.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/utils/auth.c
 
-$(PLATFORM)\bin\auth.exe:  \
-        $(PLATFORM)\bin\libmpr.dll \
-        $(PLATFORM)\obj\auth.obj
-	"$(LD)" -out:$(PLATFORM)/bin/auth.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/auth.obj $(LIBS) mpr.lib
+$(PLATFORM)/bin/auth.exe:  \
+        $(PLATFORM)/bin/libmpr.dll \
+        $(PLATFORM)/obj/auth.obj
+	"$(LD)" -out:$(PLATFORM)/bin/auth.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/auth.obj $(LIBS) libmpr.lib
 
-$(PLATFORM)\obj\cgiProgram.obj: \
+$(PLATFORM)/obj/cgiProgram.obj: \
         src/utils/cgiProgram.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/cgiProgram.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/utils/cgiProgram.c
 
-$(PLATFORM)\bin\cgiProgram.exe:  \
-        $(PLATFORM)\obj\cgiProgram.obj
-	"$(LD)" -out:$(PLATFORM)/bin/cgiProgram.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/cgiProgram.obj $(LIBS)
+$(PLATFORM)/bin/cgiProgram.exe:  \
+        $(PLATFORM)/obj/cgiProgram.obj
+	"$(LD)" -out:$(PLATFORM)/bin/cgiProgram.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/cgiProgram.obj $(LIBS)
 
-$(PLATFORM)\obj\setConfig.obj: \
+$(PLATFORM)/obj/setConfig.obj: \
         src/utils/setConfig.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/setConfig.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/utils/setConfig.c
 
-$(PLATFORM)\bin\setConfig.exe:  \
-        $(PLATFORM)\bin\libmpr.dll \
-        $(PLATFORM)\obj\setConfig.obj
-	"$(LD)" -out:$(PLATFORM)/bin/setConfig.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(PLATFORM)/obj/setConfig.obj $(LIBS) mpr.lib shell32.lib
+$(PLATFORM)/bin/setConfig.exe:  \
+        $(PLATFORM)/bin/libmpr.dll \
+        $(PLATFORM)/obj/setConfig.obj
+	"$(LD)" -out:$(PLATFORM)/bin/setConfig.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/setConfig.obj $(LIBS) libmpr.lib
 
-$(PLATFORM)\inc\appwebMonitor.h: 
+$(PLATFORM)/inc/appwebMonitor.h: 
 	rm -fr win-i686-debug/inc/appwebMonitor.h
 	cp -r src/server/appwebMonitor.h win-i686-debug/inc/appwebMonitor.h
 
-$(PLATFORM)\obj\appweb.obj: \
+$(PLATFORM)/obj/appweb.obj: \
         src/server/appweb.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/appweb.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/server/appweb.c
 
-$(PLATFORM)\bin\appweb.exe:  \
-        $(PLATFORM)\bin\libappweb.dll \
-        $(PLATFORM)\inc\appwebMonitor.h \
-        $(PLATFORM)\obj\appweb.obj
-	"$(LD)" -out:$(PLATFORM)/bin/appweb.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/appweb.obj $(LIBS) appweb.lib mpr.lib http.lib pcre.lib
+$(PLATFORM)/bin/appweb.exe:  \
+        $(PLATFORM)/bin/libappweb.dll \
+        $(PLATFORM)/inc/appwebMonitor.h \
+        $(PLATFORM)/obj/appweb.obj
+	"$(LD)" -out:$(PLATFORM)/bin/appweb.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/appweb.obj $(LIBS) libappweb.lib libmpr.lib libhttp.lib libpcre.lib
 
-$(PLATFORM)\obj\appwebMonitor.obj: \
+$(PLATFORM)/obj/appwebMonitor.obj: \
         src/server/WIN/appwebMonitor.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/appwebMonitor.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc src/server/WIN/appwebMonitor.c
 
-$(PLATFORM)\bin\appwebMonitor.exe:  \
-        $(PLATFORM)\bin\libappweb.dll \
-        $(PLATFORM)\obj\appwebMonitor.obj
-	"$(LD)" -out:$(PLATFORM)/bin/appwebMonitor.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(PLATFORM)/obj/appwebMonitor.obj shell32.lib appweb.lib $(LIBS) mpr.lib http.lib pcre.lib shell32.lib
+$(PLATFORM)/bin/appwebMonitor.exe:  \
+        $(PLATFORM)/bin/libappweb.dll \
+        $(PLATFORM)/obj/appwebMonitor.obj
+	"$(LD)" -out:$(PLATFORM)/bin/appwebMonitor.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/appwebMonitor.obj shell32.lib libappweb.lib ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib libmpr.lib libhttp.lib libpcre.lib
 
-$(PLATFORM)\bin\appwebMonitor.ico: 
+$(PLATFORM)/bin/appwebMonitor.ico: 
 	rm -fr win-i686-debug/bin/appwebMonitor.ico
 	cp -r src/server/WIN/appwebMonitor.ico win-i686-debug/bin/appwebMonitor.ico
 
-$(PLATFORM)\inc\testAppweb.h: 
+$(PLATFORM)/inc/testAppweb.h: 
 	rm -fr win-i686-debug/inc/testAppweb.h
 	cp -r test/testAppweb.h win-i686-debug/inc/testAppweb.h
 
-$(PLATFORM)\obj\testAppweb.obj: \
+$(PLATFORM)/obj/testAppweb.obj: \
         test/testAppweb.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/testAppweb.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc test/testAppweb.c
 
-$(PLATFORM)\obj\testHttp.obj: \
+$(PLATFORM)/obj/testHttp.obj: \
         test/testHttp.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/testHttp.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc test/testHttp.c
 
-$(PLATFORM)\bin\testAppweb.exe:  \
-        $(PLATFORM)\bin\libappweb.dll \
-        $(PLATFORM)\inc\testAppweb.h \
-        $(PLATFORM)\obj\testAppweb.obj \
-        $(PLATFORM)\obj\testHttp.obj
-	"$(LD)" -out:$(PLATFORM)/bin/testAppweb.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(PLATFORM)/obj/testAppweb.obj $(PLATFORM)/obj/testHttp.obj $(LIBS) appweb.lib mpr.lib http.lib pcre.lib
+$(PLATFORM)/bin/testAppweb.exe:  \
+        $(PLATFORM)/bin/libappweb.dll \
+        $(PLATFORM)/inc/testAppweb.h \
+        $(PLATFORM)/obj/testAppweb.obj \
+        $(PLATFORM)/obj/testHttp.obj
+	"$(LD)" -out:$(PLATFORM)/bin/testAppweb.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/testAppweb.obj $(PLATFORM)/obj/testHttp.obj $(LIBS) libappweb.lib libmpr.lib libhttp.lib libpcre.lib
 
 test/cgi-bin/testScript: 
 	echo '#!$(PLATFORM)/bin/cgiProgram.exe' >test/cgi-bin/testScript ; chmod +x test/cgi-bin/testScript
@@ -475,13 +476,13 @@ test/cgi-bin/cgiProgram.exe:
 	cp $(PLATFORM)/bin/cgiProgram test/web/cgiProgram.cgi
 	chmod +x test/cgi-bin/* test/web/cgiProgram.cgi
 
-$(PLATFORM)\obj\removeFiles.obj: \
+$(PLATFORM)/obj/removeFiles.obj: \
         package/WIN/removeFiles.c \
-        $(PLATFORM)\inc\buildConfig.h
+        $(PLATFORM)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(PLATFORM)/obj/removeFiles.obj -Fd$(PLATFORM)/obj $(CFLAGS) $(DFLAGS) -I$(PLATFORM)/inc package/WIN/removeFiles.c
 
-$(PLATFORM)\bin\removeFiles.exe:  \
-        $(PLATFORM)\bin\libmpr.dll \
-        $(PLATFORM)\obj\removeFiles.obj
-	"$(LD)" -out:$(PLATFORM)/bin/removeFiles.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(PLATFORM)/obj/removeFiles.obj $(LIBS) mpr.lib shell32.lib
+$(PLATFORM)/bin/removeFiles.exe:  \
+        $(PLATFORM)/bin/libmpr.dll \
+        $(PLATFORM)/obj/removeFiles.obj
+	"$(LD)" -out:$(PLATFORM)/bin/removeFiles.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/removeFiles.obj $(LIBS) libmpr.lib
 
