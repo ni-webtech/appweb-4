@@ -34,9 +34,9 @@ Bit.load({
         sdb: false,
         manager: 'appman',
         auth: 'file',
-        minimal: ['doxygen', 'dsi', 'ejs', 'man', 'man2html', 'php', 'pmaker', 'ssl'],
         sync: ['http', 'mpr', 'pcre', 'sqlite'],
         packs: [ 'bits/packs' ]
+        without: ['doxygen', 'dsi', 'ejs', 'man', 'man2html', 'php', 'pmaker', 'ssl'],
     },
 
     usage: {
