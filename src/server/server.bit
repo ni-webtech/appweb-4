@@ -19,7 +19,7 @@ Bit.load({
             sources: [ 'WIN/appwebMonitor.c' ],
             headers: [ ],
             libraries: [ 'shell32.lib' ],
-            resources: [ 'appwebMonitor.rc' ],
+            resources: [ 'WIN/appwebMonitor.rc' ],
         },
 
         'appwebMonitor.ico': {
