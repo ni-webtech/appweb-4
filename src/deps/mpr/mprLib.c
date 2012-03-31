@@ -20002,7 +20002,7 @@ char *mprGetTempPath(cchar *tempDir)
 
 
 /*
-    Return an absolute (normalized) path.
+    Return a windows path.
     On CYGWIN, this is a cygwin path without drive specs.
  */
 char *mprGetWinPath(cchar *path)
@@ -20028,7 +20028,8 @@ char *mprGetWinPath(cchar *path)
     }
 }
 #else
-    result = mprGetAbsPath(path);
+    result = mprNormalizePath(path);
+    mprMapSeparators(result, '\\');
 #endif
     return result;
 }
@@ -29884,17 +29885,16 @@ int mprLoadNativeModule(MprModule *mp)
     /*
         Search the image incase the module has been statically linked
      */
-#ifdef RTLD_MAIN_ONLY
-    handle = RTLD_MAIN_ONLY;
-#else
 #ifdef RTLD_DEFAULT
     handle = RTLD_DEFAULT;
+#else
+#ifdef RTLD_MAIN_ONLY
+    handle = RTLD_MAIN_ONLY;
 #else
     handle = 0;
 #endif
 #endif
-
-    if (!mp->entry || handle == 0 || !dlsym(handle, mp->entry)) {
+    if (!mp->entry || !dlsym(handle, mp->entry)) {
         if ((at = mprSearchForModule(mp->path)) == 0) {
             mprError("Can't find module \"%s\", cwd: \"%s\", search path \"%s\"", mp->path, mprGetCurrentPath(),
                 mprGetModuleSearchPath());
