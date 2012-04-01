@@ -3,9 +3,9 @@
 #
 
 PLATFORM="macosx-x86_64-debug"
-CC="cc"
-LD="ld"
-CFLAGS="-fPIC -Wall -g"
+CC="/usr/bin/cc"
+LD="/usr/bin/ld"
+CFLAGS="-fPIC -Wall -g -Wshorten-64-to-32"
 DFLAGS="-DPIC -DCPU=X86_64"
 IFLAGS="-Imacosx-x86_64-debug/inc"
 LDFLAGS="-Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -g -ldl"
@@ -13,7 +13,7 @@ LIBPATHS="-L${PLATFORM}/lib"
 LIBS="-lpthread -lm"
 
 [ ! -x ${PLATFORM}/inc ] && mkdir -p ${PLATFORM}/inc ${PLATFORM}/obj ${PLATFORM}/lib ${PLATFORM}/bin
-[ ! -f ${PLATFORM}/inc/buildConfig.h ] && cp projects/buildConfig.${PLATFORM} ${PLATFORM}/inc/buildConfig.h
+cp projects/buildConfig.${PLATFORM} ${PLATFORM}/inc/buildConfig.h
 
 rm -rf macosx-x86_64-debug/inc/mpr.h
 cp -r src/deps/mpr/mpr.h macosx-x86_64-debug/inc/mpr.h

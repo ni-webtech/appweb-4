@@ -77,9 +77,11 @@
 #define BLD_FEATURE_CC 1
 #define BLD_CC "cl.exe"
 #define BLD_FEATURE_LINK 1
-#define BLD_LINK "undefined"
+#define BLD_LINK "link.exe"
 #define BLD_FEATURE_DUMPBIN 1
-#define BLD_DUMPBIN "undefined"
+#define BLD_DUMPBIN "dumpbin"
+#define BLD_FEATURE_RC 1
+#define BLD_RC "rc"
 #define BLD_FEATURE_INNO 0
 #define BLD_FEATURE_CGI 1
 #define BLD_CGI "src/modules/cgiHandler.c"

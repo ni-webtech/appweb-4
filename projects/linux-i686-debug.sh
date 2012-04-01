@@ -13,7 +13,7 @@ LIBPATHS="-L${PLATFORM}/lib"
 LIBS="-lpthread -lm -ldl"
 
 [ ! -x ${PLATFORM}/inc ] && mkdir -p ${PLATFORM}/inc ${PLATFORM}/obj ${PLATFORM}/lib ${PLATFORM}/bin
-[ ! -f ${PLATFORM}/inc/buildConfig.h ] && cp projects/buildConfig.${PLATFORM} ${PLATFORM}/inc/buildConfig.h
+cp projects/buildConfig.${PLATFORM} ${PLATFORM}/inc/buildConfig.h
 
 rm -rf linux-i686-debug/inc/mpr.h
 cp -r src/deps/mpr/mpr.h linux-i686-debug/inc/mpr.h

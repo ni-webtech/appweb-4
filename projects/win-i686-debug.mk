@@ -2,8 +2,12 @@
 #   win-i686-debug.mk -- Build It Makefile to build Embedthis Appweb for win on i686
 #
 
-export VS      := $(PROGRAMFILES)\Microsoft Visual Studio 10.0
-export SDK     := $(PROGRAMFILES)\Microsoft SDKs\Windows\v7.0A
+VS             := $(VSINSTALLDIR)
+VS             ?= $(VS)
+SDK            := $(WindowsSDKDir)
+SDK            ?= $(SDK)
+
+export         SDK VS
 export PATH    := $(SDK)/Bin:$(VS)/VC/Bin:$(VS)/Common7/IDE:$(VS)/Common7/Tools:$(VS)/SDK/v3.5/bin:$(VS)/VC/VCPackages;$(PATH)
 export INCLUDE := $(INCLUDE);$(SDK)/INCLUDE:$(VS)/VC/INCLUDE
 export LIB     := $(LIB);$(SDK)/lib:$(VS)/VC/lib
@@ -50,6 +54,10 @@ all: prep \
 prep:
 	@[ ! -x $(PLATFORM)/inc ] && mkdir -p $(PLATFORM)/inc $(PLATFORM)/obj $(PLATFORM)/lib $(PLATFORM)/bin ; true
 	@[ ! -f $(PLATFORM)/inc/buildConfig.h ] && cp projects/buildConfig.$(PLATFORM) $(PLATFORM)/inc/buildConfig.h ; true
+	@if ! diff $(PLATFORM)/inc/buildConfig.h projects/buildConfig.$(PLATFORM) >/dev/null ; then\
+		echo cp projects/buildConfig.$(PLATFORM) $(PLATFORM)/inc/buildConfig.h  ; \
+		cp projects/buildConfig.$(PLATFORM) $(PLATFORM)/inc/buildConfig.h  ; \
+	fi; true
 
 clean:
 	rm -rf $(PLATFORM)/bin/libmpr.dll
@@ -416,6 +424,10 @@ $(PLATFORM)/bin/appweb.exe:  \
         $(PLATFORM)/obj/appweb.obj
 	"$(LD)" -out:$(PLATFORM)/bin/appweb.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/appweb.obj $(LIBS) libappweb.lib libmpr.lib libhttp.lib libpcre.lib
 
+$(PLATFORM)/obj/appwebMonitor.res: \
+        src/server/WIN/appwebMonitor.rc
+	"rc" -Fo $(PLATFORM)/obj/appwebMonitor.res src/server/WIN/appwebMonitor.rc
+
 $(PLATFORM)/obj/appwebMonitor.obj: \
         src/server/WIN/appwebMonitor.c \
         $(PLATFORM)/inc/buildConfig.h
@@ -423,8 +435,9 @@ $(PLATFORM)/obj/appwebMonitor.obj: \
 
 $(PLATFORM)/bin/appwebMonitor.exe:  \
         $(PLATFORM)/bin/libappweb.dll \
+        $(PLATFORM)/obj/appwebMonitor.res \
         $(PLATFORM)/obj/appwebMonitor.obj
-	"$(LD)" -out:$(PLATFORM)/bin/appwebMonitor.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/appwebMonitor.obj shell32.lib libappweb.lib ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib libmpr.lib libhttp.lib libpcre.lib
+	"$(LD)" -out:$(PLATFORM)/bin/appwebMonitor.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(LIBPATHS) $(PLATFORM)/obj/appwebMonitor.res $(PLATFORM)/obj/appwebMonitor.obj shell32.lib libappweb.lib ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib libmpr.lib libhttp.lib libpcre.lib
 
 $(PLATFORM)/bin/appwebMonitor.ico: 
 	rm -fr win-i686-debug/bin/appwebMonitor.ico

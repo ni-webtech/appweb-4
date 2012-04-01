@@ -75,7 +75,7 @@
 #define BLD_FEATURE_CC 1
 #define BLD_CC "cc"
 #define BLD_FEATURE_LINK 1
-#define BLD_LINK "undefined"
+#define BLD_LINK "ld"
 #define BLD_FEATURE_CGI 1
 #define BLD_CGI "src/modules/cgiHandler.c"
 #define BLD_FEATURE_DIR 1
