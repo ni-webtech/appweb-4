@@ -10,7 +10,7 @@
 #define BLD_PRODUCT "appweb"
 #define BLD_NAME "Embedthis Appweb"
 #define BLD_COMPANY "Embedthis"
-#define BLD_APPWEBPRODUCT 1
+#define BLD_APPWEB_PRODUCT 1
 #define BLD_VERSION "4.0.0"
 #define BLD_NUMBER "B2"
 #define BLD_DEBUG 1

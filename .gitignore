@@ -165,3 +165,4 @@ test/servers.conf
 test/trace.txt
 test/web/caching/cache.cgi
 test/web/basic/basic.cgi
+.*.guid
