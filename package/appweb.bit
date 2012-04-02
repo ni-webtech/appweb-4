@@ -1,5 +1,5 @@
 /*
-    appweb.bit -- Bit File to build the combo Appweb release
+    product.bit -- Bit File to build the combo Appweb release
  */
 
 Bit.load({
@@ -38,11 +38,6 @@ Bit.load({
             depends: [ 'libappweb' ],
             sources: [ 'appweb.c' ],
             headers: [ '*.h' ],
-        },
-        esp: {
-            type: 'exe',
-            depends: [ 'libappweb' ],
-            sources: [ 'esp.c' ]
         },
     },
     packs: {
