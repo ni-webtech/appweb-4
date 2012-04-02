@@ -80,7 +80,7 @@ Bit.load({
         },
 
         package: {
-            depends: ['packageBinary', 'packageSource'],
+            depends: ['packageBinary', 'packageSource', 'packageComboFlat'],
         },
 
         packageBinary: {
@@ -88,6 +88,52 @@ Bit.load({
             action: "
                 packageBinaryFiles()
                 package(bit.dir.pkg.join('bin'), ['tar', 'native'])
+            ",
+        },
+
+        packageComboFlat: {
+            depends: ['build'],
+            action: "
+                let s = bit.settings
+                let src = bit.dir.pkg.join('src')
+                let pkg = src.join(s.product + '-' + s.version)
+                safeRemove(pkg)
+                pkg.makeDir()
+                install('package/appweb.bit', pkg.join('src/deps/appweb/product.bit'))
+                install('package/Makefile.flat', pkg.join('src/deps/appweb/Makefile'))
+                install(['src/deps/mpr/mpr.h', 'src/deps/http/http.h', 'src/appweb.h', 'src/server/appwebMonitor.h',
+                    'src/esp/edi.h', 'src/esp/mdb.h', 'src/esp/esp.h', 'src/deps/pcre/pcre.h'], 
+                    pkg.join('src/deps/appweb/appweb.h'), {
+                    cat: true,
+                    filter: /^#inc.*appweb.*$|^#inc.*mpr.*$|^#inc.*http.*$|^#inc.*customize.*$|^#inc.*edi.*$|^#inc.*mdb.*$|^#inc.*esp.*$/mg,
+                    title: bit.settings.title + ' Library Source',
+                })
+                install(['src/deps/**.c'], pkg.join('src/deps/appweb/deps.c'), {
+                    cat: true,
+                    filter: /^#inc.*appweb.*$|^#inc.*mpr.*$|^#inc.*http.*$|^#inc.*customize.*$|^#inc.*edi.*$|^#inc.*mdb.*$|^#inc.*esp.*$/mg,
+                    exclude: /pcre|makerom|http\.c|sqlite|manager/,
+                    header: '#include \"appweb.h\"',
+                    title: bit.settings.title + ' Library Source',
+                })
+                install(['src/**.c'], pkg.join('src/deps/appweb/appwebLib.c'), {
+                    cat: true,
+                    filter: /^#inc.*appweb.*$|^#inc.*mpr.*$|^#inc.*http.*$|^#inc.*customize.*$|^#inc.*edi.*$|^#inc.*mdb.*$|^#inc.*esp.*$/mg,
+                    exclude: /deps|server.appweb.c|esp\.c|samples|romFiles|pcre|appwebMonitor|sqlite|appman|makerom|utils|test|http\.c|sqlite|manager/,
+                    header: '#include \"appweb.h\"',
+                    title: bit.settings.title + ' Library Source',
+                })
+                install(['src/server/appweb.c'], pkg.join('src/deps/appweb/appweb.c'))
+                install(['src/server/appweb.conf'], pkg.join('src/deps/appweb/appweb.conf'))
+                install(['src/esp/esp.conf'], pkg.join('src/deps/appweb/esp.conf'))
+                install(['src/deps/pcre/pcre.c', 'src/deps/pcre/pcre.h'], pkg.join('src/deps/appweb'))
+                install(['src/deps/sqlite/sqlite3.c', 'src/deps/sqlite/sqlite3.h'], pkg.join('src/deps/sqlite'))
+                package(pkg, ['src', 'combo', 'flat'])
+/*
+    sqlite
+    pcre
+    esp utility
+    appweb.conf, mime.types, php.ini, start.es
+ */
             ",
         },
 

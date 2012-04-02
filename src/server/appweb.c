@@ -22,7 +22,7 @@
 /*
     Global application object. Provides the top level roots of all data objects for the GC.
  */
-typedef struct App {
+typedef struct AppwebApp {
     Mpr         *mpr;
     MaAppweb    *appweb;
     MaServer    *server;
@@ -32,17 +32,17 @@ typedef struct App {
     char        *configFile;
     char        *pathVar;
     int         workers;
-} App;
+} AppwebApp;
 
-static App *app;
+static AppwebApp *app;
 
 /***************************** Forward Declarations ***************************/
 
 static int changeRoot(cchar *jail);
 static int checkEnvironment(cchar *program);
-static int findConfigFile();
-static void manageApp(App *app, int flags);
-static int initialize(cchar *ip, int port);
+static int findAppwebConf();
+static void manageApp(AppwebApp *app, int flags);
+static int initializeAppweb(cchar *ip, int port);
 static void usageError();
 
 #if BLD_UNIX_LIKE
@@ -89,7 +89,7 @@ MAIN(appweb, int argc, char **argv, char **envp)
     }
     mprSetAppName(BLD_PRODUCT, BLD_NAME, BLD_VERSION);
 
-    if ((app = mprAllocObj(App, manageApp)) == NULL) {
+    if ((app = mprAllocObj(AppwebApp, manageApp)) == NULL) {
         exit(2);
     }
     mprAddRoot(app);
@@ -206,13 +206,13 @@ MAIN(appweb, int argc, char **argv, char **envp)
         }
         mprParseSocketAddress(ipAddrPort, &ip, &port, HTTP_DEFAULT_PORT);
         
-    } else if (findConfigFile() < 0) {
+    } else if (findAppwebConf() < 0) {
         exit(7);
     }
     if (jail && changeRoot(jail) < 0) {
         exit(8);
     }
-    if (initialize(ip, port) < 0) {
+    if (initializeAppweb(ip, port) < 0) {
         return MPR_ERR_CANT_INITIALIZE;
     }
     if (maStartAppweb(app->appweb) < 0) {
@@ -233,7 +233,7 @@ MAIN(appweb, int argc, char **argv, char **envp)
 }
 
 
-static void manageApp(App *app, int flags)
+static void manageApp(AppwebApp *app, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(app->appweb);
@@ -270,7 +270,7 @@ static int changeRoot(cchar *jail)
 }
 
 
-static int initialize(cchar *ip, int port)
+static int initializeAppweb(cchar *ip, int port)
 {
     if ((app->appweb = maCreateAppweb()) == 0) {
         mprUserError("Can't create HTTP service for %s", mprGetAppName());
@@ -298,7 +298,7 @@ static int initialize(cchar *ip, int port)
 }
 
 
-static int findConfigFile()
+static int findAppwebConf()
 {
     cchar   *userPath;
 

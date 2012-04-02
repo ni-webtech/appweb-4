@@ -35,7 +35,7 @@ static Dir *allocDir(HttpRoute *route);
 static Dir *cloneDir(Dir *parent, HttpRoute *route);
 static void filterDirList(HttpConn *conn, MprList *list);
 static Dir* getDirObj(MaState *state);
-static int  match(cchar *pattern, cchar *file);
+static int  matchDirPattern(cchar *pattern, cchar *file);
 static void outputFooter(HttpQueue *q);
 static void outputHeader(HttpQueue *q, cchar *dir, int nameSize);
 static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *dir, int nameSize);
@@ -457,7 +457,7 @@ static void filterDirList(HttpConn *conn, MprList *list)
         Do pattern matching. Entries that don't match, free the name to mark
      */
     for (next = 0; (dp = mprGetNextItem(list, &next)) != 0; ) {
-        if (! match(dir->pattern, dp->name)) {
+        if (! matchDirPattern(dir->pattern, dp->name)) {
             mprRemoveItem(list, dp);
             next--;
         }
@@ -468,7 +468,7 @@ static void filterDirList(HttpConn *conn, MprList *list)
 /*
     Return true if the file matches the pattern. Supports '?' and '*'
  */
-static int match(cchar *pattern, cchar *file)
+static int matchDirPattern(cchar *pattern, cchar *file)
 {
     cchar   *pp, *fp;
 
@@ -488,7 +488,7 @@ static int match(cchar *pattern, cchar *file)
         }
 
         if (*pp == '*') {
-            if (match(&pp[1], &fp[0])) {
+            if (matchDirPattern(&pp[1], &fp[0])) {
                 return 1;
             }
             fp++;

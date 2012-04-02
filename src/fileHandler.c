@@ -20,7 +20,7 @@ static ssize readFileData(HttpQueue *q, HttpPacket *packet, MprOff pos, ssize si
 
 /*********************************** Code *************************************/
 
-static int checkFile(HttpConn *conn, HttpRoute *route)
+static int checkFileHandler(HttpConn *conn, HttpRoute *route)
 {
     HttpRx      *rx;
     
@@ -110,7 +110,7 @@ static int findFile(HttpConn *conn)
 /*
     Initialize a handler instance for the file handler.
  */
-static void openFile(HttpQueue *q)
+static void openFileHandler(HttpQueue *q)
 {
     HttpRx      *rx;
     HttpTx      *tx;
@@ -171,7 +171,7 @@ static void openFile(HttpQueue *q)
 }
 
 
-static void startFile(HttpQueue *q)
+static void startFileHandler(HttpQueue *q)
 {
     HttpConn    *conn;
     HttpRx      *rx;
@@ -200,7 +200,7 @@ static void startFile(HttpQueue *q)
 }
 
 
-static void processFile(HttpQueue *q)
+static void processFileHandler(HttpQueue *q)
 {
     /*
         The queue already contains a single data packet representing all the output data.
@@ -442,10 +442,10 @@ int maOpenFileHandler(Http *http)
     if ((handler = httpCreateHandler(http, "fileHandler", 0, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
-    handler->check = checkFile;
-    handler->open = openFile;
-    handler->start = startFile;
-    handler->process = processFile;
+    handler->check = checkFileHandler;
+    handler->open = openFileHandler;
+    handler->start = startFileHandler;
+    handler->process = processFileHandler;
     handler->outgoingService = outgoingFileService;
     handler->incomingData = incomingFileData;
     http->fileHandler = handler;

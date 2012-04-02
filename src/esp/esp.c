@@ -80,7 +80,7 @@ static cchar *AppHeader = "\
 #ifndef _h_ESP_APP\n\
 #define _h_ESP_APP 1\n\
 \n\
-#include    \"esp.h\"\n\
+ #include    \"esp.h\"\n\
 \n\
 #ifdef __cplusplus\n\
 extern \"C\" {\n\
@@ -106,7 +106,7 @@ static cchar *ControllerTemplateHeader = "\
 /*\n\
     ${NAME} controller\n\
  */\n\
-#include \"esp-app.h\"\n\
+ #include \"esp-app.h\"\n\
 \n\
 ";
 
@@ -122,7 +122,7 @@ static cchar *ScaffoldTemplateHeader = "\
 /*\n\
     ${NAME} controller\n\
  */\n\
-#include \"esp-app.h\"\n\
+ #include \"esp-app.h\"\n\
 \n\
 static void create() { \n\
     if (updateRec(createRec(\"${NAME}\", params()))) {\n\
@@ -218,7 +218,7 @@ static cchar *MigrationTemplate = "\
 /*\n\
     ${COMMENT}\n\
  */\n\
-#include \"esp-app.h\"\n\
+ #include \"esp-app.h\"\n\
 \n\
 static int forward(Edi *db) {\n\
 ${FORWARD}}\n\
@@ -240,7 +240,7 @@ static void clean(MprList *routes);
 static void compile(MprList *routes);
 static void compileItems(HttpRoute *route);
 static void compileFlat(HttpRoute *route);
-static void copyDir(cchar *fromDir, cchar *toDir);
+static void copyEspDir(cchar *fromDir, cchar *toDir);
 static HttpRoute *createRoute(cchar *dir);
 static void fail(cchar *fmt, ...);
 static void findConfigFile();
@@ -254,8 +254,8 @@ static void generateAppFiles(HttpRoute *route);
 static void generateAppConfigFile(HttpRoute *route);
 static void generateAppHeader(HttpRoute *route);
 static void initialize();
-static void makeDir(HttpRoute *route, cchar *dir);
-static void makeFile(cchar *path, cchar *data, cchar *msg);
+static void makeEspDir(HttpRoute *route, cchar *dir);
+static void makeEspFile(cchar *path, cchar *data, cchar *msg);
 static void manageApp(App *app, int flags);
 static void process(int argc, char **argv);
 static void readConfig();
@@ -1107,7 +1107,7 @@ static void generateController(HttpRoute *route, int argc, char **argv)
         data = sjoin(data, sfmt("static void %s() {\n}\n\n", action), NULL);
     }
     data = sjoin(data, stemplate(ControllerTemplateFooter, tokens), NULL);
-    makeFile(path, data, "Controller");
+    makeEspFile(path, data, "Controller");
 }
 
 
@@ -1149,7 +1149,7 @@ static void generateScaffoldController(HttpRoute *route, int argc, char **argv)
         data = sjoin(data, sfmt("static void %s() {\n}\n\n", action), NULL);
     }
     data = sjoin(data, stemplate(ScaffoldTemplateFooter, tokens), NULL);
-    makeFile(path, data, "Scaffold");
+    makeEspFile(path, data, "Scaffold");
 }
 
 
@@ -1187,7 +1187,7 @@ static void generateScaffoldMigration(int argc, char **argv)
         forward = sjoin(forward, def, NULL);
     }
     dir = mprJoinPath(eroute->dbDir, "migrations");
-    makeDir(route, dir);
+    makeEspDir(route, dir);
 
     fileComment = sreplace(comment, " ", "_");
     path = sfmt("%s/%s_%s.c", eroute->migrationsDir, seq, fileComment, ".c");
@@ -1195,7 +1195,7 @@ static void generateScaffoldMigration(int argc, char **argv)
     tokens = mprDeserialize(sfmt("{ NAME: %s, TITLE: %s, COMMENT: '%s', FORWARD: '%s', BACKWARD: '%s' }", 
         name, title, comment, forward, backward));
     data = stemplate(MigrationTemplate, tokens);
-    makeFile(path, data, "Migration");
+    makeEspFile(path, data, "Migration");
 }
 #endif
 
@@ -1269,12 +1269,12 @@ static void generateScaffoldViews(HttpRoute *route, int argc, char **argv)
     path = sfmt("%s/%s-list.esp", eroute->viewsDir, name);
     tokens = mprDeserialize(sfmt("{ NAME: %s, TITLE: %s, }", name, title));
     data = stemplate(ScaffoldListView, tokens);
-    makeFile(path, data, "Scaffold Index View");
+    makeEspFile(path, data, "Scaffold Index View");
 
     path = sfmt("%s/%s-edit.esp", eroute->viewsDir, name);
     tokens = mprDeserialize(sfmt("{ NAME: %s, TITLE: %s, }", name, title));
     data = stemplate(ScaffoldEditView, tokens);
-    makeFile(path, data, "Scaffold Index View");
+    makeEspFile(path, data, "Scaffold Index View");
 }
 
 /*
@@ -1345,16 +1345,16 @@ static void generate(int argc, char **argv)
 
 static void generateAppDirs(HttpRoute *route)
 {
-    makeDir(route, "");
-    makeDir(route, "cache");
-    makeDir(route, "controllers");
-    makeDir(route, "db");
-    makeDir(route, "layouts");
-    makeDir(route, "static");
-    makeDir(route, "static/images");
-    makeDir(route, "static/js");
-    makeDir(route, "static/themes");
-    makeDir(route, "views");
+    makeEspDir(route, "");
+    makeEspDir(route, "cache");
+    makeEspDir(route, "controllers");
+    makeEspDir(route, "db");
+    makeEspDir(route, "layouts");
+    makeEspDir(route, "static");
+    makeEspDir(route, "static/images");
+    makeEspDir(route, "static/js");
+    makeEspDir(route, "static/themes");
+    makeEspDir(route, "views");
 }
 
 
@@ -1388,12 +1388,12 @@ static void fixupFile(HttpRoute *route, cchar *path)
 
 static void generateAppFiles(HttpRoute *route)
 {
-    copyDir(mprJoinPath(app->wwwDir, "files"), route->dir);
+    copyEspDir(mprJoinPath(app->wwwDir, "files"), route->dir);
     fixupFile(route, "layouts/default.esp");
 }
 
 
-static bool checkPath(cchar *path)
+static bool checkEspPath(cchar *path)
 {
     if (scontains(path, "jquery.", -1)) {
         if (app->minified) {
@@ -1413,7 +1413,7 @@ static bool checkPath(cchar *path)
 
 
 
-static void copyDir(cchar *fromDir, cchar *toDir)
+static void copyEspDir(cchar *fromDir, cchar *toDir)
 {
     MprList     *files;
     MprDirEntry *dp;
@@ -1422,7 +1422,7 @@ static void copyDir(cchar *fromDir, cchar *toDir)
 
     files = mprGetPathFiles(fromDir, MPR_PATH_DESCEND);
     for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
-        if (!checkPath(dp->name)) {
+        if (!checkEspPath(dp->name)) {
             continue;
         }
         from = mprJoinPath(fromDir, dp->name);
@@ -1435,7 +1435,7 @@ static void copyDir(cchar *fromDir, cchar *toDir)
                 }
                 trace("CREATE",  "Directory: %s", mprGetRelPath(to, 0));
             }
-            copyDir(from, to);
+            copyEspDir(from, to);
         
         } else {
             if (mprMakeDir(mprGetPathDir(to), 0755, -1, -1, 1) < 0) {
@@ -1529,7 +1529,7 @@ static void generateAppHeader(HttpRoute *route)
     path = mprJoinPath(route->dir, mprJoinPathExt("esp-app", "h"));
     tokens = mprDeserialize(sfmt("{ NAME: %s, TITLE: %s }", app->appName, spascal(app->appName)));
     data = stemplate(AppHeader, tokens);
-    makeFile(path, data, "Header");
+    makeEspFile(path, data, "Header");
 }
 
 
@@ -1576,7 +1576,7 @@ static void findConfigFile()
 }
 
 
-static void makeDir(HttpRoute *route, cchar *dir)
+static void makeEspDir(HttpRoute *route, cchar *dir)
 {
     char    *path;
 
@@ -1593,7 +1593,7 @@ static void makeDir(HttpRoute *route, cchar *dir)
 }
 
 
-static void makeFile(cchar *path, cchar *data, cchar *msg)
+static void makeEspFile(cchar *path, cchar *data, cchar *msg)
 {
     bool    exists;
 
