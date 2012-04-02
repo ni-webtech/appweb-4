@@ -1,0 +1,74 @@
+/*
+    appweb.bit -- Bit File to build the combo Appweb release
+ */
+
+Bit.load({
+    blend: [
+        "${BITS}/embedthis.bit",
+    ],
+
+    settings: {
+		product: 'appweb',
+		title: 'Embedthis Appweb',
+        company: 'Embedthis',
+		version: '4.0.0',
+		buildNumber: 'B2',
+        http_port: 80,
+        ssl_port: 443,
+        mdb: true,
+        sdb: false,
+        manager: 'appman',
+        auth: 'file',
+    },
+
+    targets: {
+        libappweb: {
+            type: 'lib',
+            sources: [ 'appwebLib.c', 'deps.c', 'pcre.c', 'sqlite3.c' ],
+            headers: [ '*.h' ],
+            depends: [ ],
+            '-compiler': [
+                /* SQLite needs these */
+                '-Wall',
+                '-Wshorten-64-to-32',
+            ],
+        },
+        appweb: {
+            type: 'exe',
+            depends: [ 'libappweb' ],
+            sources: [ 'appweb.c' ],
+            headers: [ '*.h' ],
+        },
+        esp: {
+            type: 'exe',
+            depends: [ 'libappweb' ],
+            sources: [ 'esp.c' ]
+        },
+    },
+    packs: {
+        cgi: {
+            enable: true,
+            path: ".",
+        },
+        dir: {
+            enable: true,
+            path: ".",
+        },
+        esp: {
+            enable: true,
+            path: ".",
+        },
+        php: {
+            enable: false,
+        },
+        sqlite: {
+            enable: true,
+        },
+        ssl: {
+            enable: false,
+        },
+        ejscript: {
+            enable: false,
+        },
+    },
+})
