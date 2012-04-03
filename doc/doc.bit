@@ -23,5 +23,21 @@ Bit.load({
                 }
             ",
         },
+
+        api: {
+            action: "
+                apidoc('api/appweb.dox', 'Appweb API', '${SRC}/src/appweb.h', 'api/*.tags')
+                apidoc('api/esp.dox', 'ESP API', ['${SRC}/src/esp/edi.h', '${SRC}/src/esp/mdb.h', '${SRC}/src/esp/esp.h'], ls('api/*.tags'))
+                apiwrap(['api/appweb.html', 'api/http.html', 'api/mpr.html', 'api/esp.html'])
+            ",
+        }, 
+
+        'clean-doc': {
+            type: 'clean',
+            action: "
+                rmdir(['../doc/api/html', '../doc/api/xml'])
+            "
+        },
+    
     },
 })

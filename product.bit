@@ -66,6 +66,7 @@ Bit.load({
     },
 
     targets: {
+        //  MOB - move targets to the package/package.bit
         install: {
             depends: ['build'],
             depends: ['build', 'uninstall'],
@@ -80,7 +81,7 @@ Bit.load({
         },
 
         package: {
-            depends: ['packageBinary', 'packageSource', 'packageComboFlat'],
+            depends: ['packageBinary', 'packageSource', 'packageCombo'],
         },
 
         packageBinary: {
@@ -119,7 +120,7 @@ Bit.load({
             ",
         },
 
-        packageComboFlat: {
+        packageCombo: {
             depends: ['build'],
             action: "
                 let s = bit.settings

@@ -226,27 +226,9 @@
     <filename>group___ma_state.html</filename>
   </compound>
   <compound kind="dir">
-    <name>staging/src/deps/appweb/</name>
-    <path>/Users/mob/git/appweb/doc/api/appweb/staging/src/deps/appweb/</path>
-    <filename>dir_11b42e9abefce95d31a30d44cbfd673b.html</filename>
+    <name>/Users/mob/git/appweb/src/</name>
+    <path>/Users/mob/git/appweb/src/</path>
+    <filename>dir_9556dc5a760e16a3902915b1ecaf1631.html</filename>
     <file>appweb.h</file>
-  </compound>
-  <compound kind="dir">
-    <name>staging/src/deps/</name>
-    <path>/Users/mob/git/appweb/doc/api/appweb/staging/src/deps/</path>
-    <filename>dir_f314609b9351bf2ff0752397c1324837.html</filename>
-    <dir>staging/src/deps/appweb/</dir>
-  </compound>
-  <compound kind="dir">
-    <name>staging/src/</name>
-    <path>/Users/mob/git/appweb/doc/api/appweb/staging/src/</path>
-    <filename>dir_4d9286c2dd6b2f042052d85a9e1ecf9b.html</filename>
-    <dir>staging/src/deps/</dir>
-  </compound>
-  <compound kind="dir">
-    <name>staging/</name>
-    <path>/Users/mob/git/appweb/doc/api/appweb/staging/</path>
-    <filename>dir_d773023a19cf5c44633fc74de0eab3f4.html</filename>
-    <dir>staging/src/</dir>
   </compound>
 </tagfile>

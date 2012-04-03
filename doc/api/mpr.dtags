@@ -2,7 +2,7 @@
 <tagfile>
   <compound kind="file">
     <name>mpr.h</name>
-    <path>/Users/mob/git/mpr/macosx-x86_64-debug/pkg/mpr-4.0.0/src/deps/mpr/</path>
+    <path>/Users/mob/git/mpr/macosx-x86_64-debug/flat/mpr-4.0.0-B0/</path>
     <filename>mpr_8h</filename>
     <class kind="struct">MprCond</class>
     <class kind="struct">MprDirEntry</class>
@@ -252,6 +252,13 @@
       <name>MPR_DEBUG</name>
       <anchorfile>mpr_8h.html</anchorfile>
       <anchor>a990bc0ed43b1479ca1ea9e9c81fbb13a</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
+      <name>MPR_DECODE_TOKEQ</name>
+      <anchorfile>mpr_8h.html</anchorfile>
+      <anchor>acbb0af96c8a7015a479fb63e014a6b02</anchor>
       <arglist></arglist>
     </member>
     <member kind="define">
@@ -1061,6 +1068,13 @@
     </member>
     <member kind="define">
       <type>#define</type>
+      <name>MPR_PROTO_TLSV11</name>
+      <anchorfile>mpr_8h.html</anchorfile>
+      <anchor>a31b6416f6ed995314e98eb1c527f8e28</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
       <name>MPR_RAW</name>
       <anchorfile>mpr_8h.html</anchorfile>
       <anchor>ae22e813ec3ec62fa10aa6be80269be98</anchor>
@@ -1606,10 +1620,10 @@
       <arglist></arglist>
     </member>
     <member kind="typedef">
-      <type>int</type>
+      <type>char</type>
       <name>bool</name>
       <anchorfile>mpr_8h.html</anchorfile>
-      <anchor>a1062901a7428fdd9c7f180f5e01ea056</anchor>
+      <anchor>ad5c9d4ba3dc37783a528b0925dc981a0</anchor>
       <arglist></arglist>
     </member>
     <member kind="typedef">
@@ -2418,6 +2432,13 @@
       <arglist>(cchar *str)</arglist>
     </member>
     <member kind="function">
+      <type>char *</type>
+      <name>mprDecode64Block</name>
+      <anchorfile>group___mpr.html</anchorfile>
+      <anchor>ga31b39fbbf5e5e2160ad8ce15ad2cb272</anchor>
+      <arglist>(cchar *buf, ssize len, int flags)</arglist>
+    </member>
+    <member kind="function">
       <type>void</type>
       <name>mprDecodeLocalTime</name>
       <anchorfile>group___mpr_time.html</anchorfile>
@@ -2584,6 +2605,13 @@
       <anchorfile>group___mpr.html</anchorfile>
       <anchor>ga673dc62bf4786f92566ae697b1fdcc89</anchor>
       <arglist>(cchar *str)</arglist>
+    </member>
+    <member kind="function">
+      <type>char *</type>
+      <name>mprEncode64Block</name>
+      <anchorfile>group___mpr.html</anchorfile>
+      <anchor>ga6c5934d2b6c8dd3d307e8e85cc27908a</anchor>
+      <arglist>(cchar *buf, ssize len)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -3122,6 +3150,13 @@
       <name>mprGetPathBase</name>
       <anchorfile>group___mpr_path.html</anchorfile>
       <anchor>gabd75bccc31adfe405ad12b566badcc68</anchor>
+      <arglist>(cchar *path)</arglist>
+    </member>
+    <member kind="function">
+      <type>cchar *</type>
+      <name>mprGetPathBaseRef</name>
+      <anchorfile>group___mpr_path.html</anchorfile>
+      <anchor>ga74c1b093a73d3090e7a2cfe65b484a73</anchor>
       <arglist>(cchar *path)</arglist>
     </member>
     <member kind="function">
@@ -4617,6 +4652,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>mprSetSocketSslConfig</name>
+      <anchorfile>mpr_8h.html</anchorfile>
+      <anchor>a01199611ed4a5bbc42cdee37bb013b59</anchor>
+      <arglist>(MprSocket *sp, struct MprSsl *ssl)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>mprSetSslCaFile</name>
       <anchorfile>group___mpr_socket.html</anchorfile>
       <anchor>ga472960cd4ec2360bf05ab678e7cba577</anchor>
@@ -4998,6 +5040,13 @@
       <name>mprVerifySslClients</name>
       <anchorfile>group___mpr_socket.html</anchorfile>
       <anchor>gac388b7454d677ec235510b09de786589</anchor>
+      <arglist>(struct MprSsl *ssl, bool on)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>mprVerifySslServers</name>
+      <anchorfile>group___mpr_socket.html</anchorfile>
+      <anchor>ga4be0b8d2cff23e963531b92a819ba89c</anchor>
       <arglist>(struct MprSsl *ssl, bool on)</arglist>
     </member>
     <member kind="function">
@@ -7201,6 +7250,13 @@
       <arglist>(cchar *path)</arglist>
     </member>
     <member kind="function">
+      <type>cchar *</type>
+      <name>mprGetPathBaseRef</name>
+      <anchorfile>group___mpr_path.html</anchorfile>
+      <anchor>ga74c1b093a73d3090e7a2cfe65b484a73</anchor>
+      <arglist>(cchar *path)</arglist>
+    </member>
+    <member kind="function">
       <type>char *</type>
       <name>mprGetPathDir</name>
       <anchorfile>group___mpr_path.html</anchorfile>
@@ -8065,6 +8121,13 @@
       <arglist>(struct MprSsl *ssl, bool on)</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>mprVerifySslServers</name>
+      <anchorfile>group___mpr_socket.html</anchorfile>
+      <anchor>ga4be0b8d2cff23e963531b92a819ba89c</anchor>
+      <arglist>(struct MprSsl *ssl, bool on)</arglist>
+    </member>
+    <member kind="function">
       <type>ssize</type>
       <name>mprWriteSocket</name>
       <anchorfile>group___mpr_socket.html</anchorfile>
@@ -8457,6 +8520,13 @@
     </member>
     <member kind="function">
       <type>char *</type>
+      <name>mprDecode64Block</name>
+      <anchorfile>group___mpr.html</anchorfile>
+      <anchor>ga31b39fbbf5e5e2160ad8ce15ad2cb272</anchor>
+      <arglist>(cchar *buf, ssize len, int flags)</arglist>
+    </member>
+    <member kind="function">
+      <type>char *</type>
       <name>mprEmptyString</name>
       <anchorfile>group___mpr.html</anchorfile>
       <anchor>ga14459c3278e0c72246970cd1c15dd55d</anchor>
@@ -8468,6 +8538,13 @@
       <anchorfile>group___mpr.html</anchorfile>
       <anchor>ga673dc62bf4786f92566ae697b1fdcc89</anchor>
       <arglist>(cchar *str)</arglist>
+    </member>
+    <member kind="function">
+      <type>char *</type>
+      <name>mprEncode64Block</name>
+      <anchorfile>group___mpr.html</anchorfile>
+      <anchor>ga6c5934d2b6c8dd3d307e8e85cc27908a</anchor>
+      <arglist>(cchar *buf, ssize len)</arglist>
     </member>
     <member kind="function">
       <type>char *</type>
@@ -9634,6 +9711,13 @@
       <arglist></arglist>
     </member>
     <member kind="variable">
+      <type>MprList *</type>
+      <name>secureSockets</name>
+      <anchorfile>struct_mpr_socket_service.html</anchorfile>
+      <anchor>aa78e3cc2a1534c6ad47ab1726707189f</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
       <type>MprSocketProvider *</type>
       <name>standardProvider</name>
       <anchorfile>struct_mpr_socket_service.html</anchorfile>
@@ -10025,39 +10109,21 @@
     </member>
   </compound>
   <compound kind="dir">
-    <name>/Users/mob/git/mpr/macosx-x86_64-debug/pkg/mpr-4.0.0/src/deps/</name>
-    <path>/Users/mob/git/mpr/macosx-x86_64-debug/pkg/mpr-4.0.0/src/deps/</path>
-    <filename>dir_c103b7b03d5bd8bece7048ef6291fb0e.html</filename>
-    <dir>/Users/mob/git/mpr/macosx-x86_64-debug/pkg/mpr-4.0.0/src/deps/mpr/</dir>
+    <name>/Users/mob/git/mpr/macosx-x86_64-debug/flat/</name>
+    <path>/Users/mob/git/mpr/macosx-x86_64-debug/flat/</path>
+    <filename>dir_2b3eae0959c8d1c4ba8df2c0ecdbc5ee.html</filename>
+    <dir>/Users/mob/git/mpr/macosx-x86_64-debug/flat/mpr-4.0.0-B0/</dir>
   </compound>
   <compound kind="dir">
     <name>/Users/mob/git/mpr/macosx-x86_64-debug/</name>
     <path>/Users/mob/git/mpr/macosx-x86_64-debug/</path>
     <filename>dir_0d33234b46da3265417e3bcba0fcbd70.html</filename>
-    <dir>/Users/mob/git/mpr/macosx-x86_64-debug/pkg/</dir>
+    <dir>/Users/mob/git/mpr/macosx-x86_64-debug/flat/</dir>
   </compound>
   <compound kind="dir">
-    <name>/Users/mob/git/mpr/macosx-x86_64-debug/pkg/mpr-4.0.0/src/deps/mpr/</name>
-    <path>/Users/mob/git/mpr/macosx-x86_64-debug/pkg/mpr-4.0.0/src/deps/mpr/</path>
-    <filename>dir_e0a7b9e7c1c3555bc0880ea2c832c862.html</filename>
+    <name>/Users/mob/git/mpr/macosx-x86_64-debug/flat/mpr-4.0.0-B0/</name>
+    <path>/Users/mob/git/mpr/macosx-x86_64-debug/flat/mpr-4.0.0-B0/</path>
+    <filename>dir_017257a557f45e33980a7b22c554cd43.html</filename>
     <file>mpr.h</file>
-  </compound>
-  <compound kind="dir">
-    <name>/Users/mob/git/mpr/macosx-x86_64-debug/pkg/mpr-4.0.0/</name>
-    <path>/Users/mob/git/mpr/macosx-x86_64-debug/pkg/mpr-4.0.0/</path>
-    <filename>dir_06a3f2df4695ed354d8f4c04164f2e08.html</filename>
-    <dir>/Users/mob/git/mpr/macosx-x86_64-debug/pkg/mpr-4.0.0/src/</dir>
-  </compound>
-  <compound kind="dir">
-    <name>/Users/mob/git/mpr/macosx-x86_64-debug/pkg/</name>
-    <path>/Users/mob/git/mpr/macosx-x86_64-debug/pkg/</path>
-    <filename>dir_ee75f5854f0100559d385141eded7f42.html</filename>
-    <dir>/Users/mob/git/mpr/macosx-x86_64-debug/pkg/mpr-4.0.0/</dir>
-  </compound>
-  <compound kind="dir">
-    <name>/Users/mob/git/mpr/macosx-x86_64-debug/pkg/mpr-4.0.0/src/</name>
-    <path>/Users/mob/git/mpr/macosx-x86_64-debug/pkg/mpr-4.0.0/src/</path>
-    <filename>dir_f018fb8773bea1d766ec0a3be5a7b66b.html</filename>
-    <dir>/Users/mob/git/mpr/macosx-x86_64-debug/pkg/mpr-4.0.0/src/deps/</dir>
   </compound>
 </tagfile>
