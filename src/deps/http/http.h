@@ -4225,9 +4225,9 @@ extern cchar *httpGetParam(HttpConn *conn, cchar *var, cchar *defaultValue);
     Get the request params table
     @description This call gets the form var table for the current request.
         Query data and www-url encoded form data is entered into the table after decoding.
-        Use #mprLookupKey to retrieve data from the table.
+        Use $mprLookupKey to retrieve data from the table.
     @param conn HttpConn connection object
-    @return #MprHash instance containing the form vars
+    @return $MprHash instance containing the form vars
     @ingroup HttpRx
  */
 extern MprHash *httpGetParams(HttpConn *conn);
@@ -4562,6 +4562,7 @@ extern void httpAppendHeaderString(HttpConn *conn, cchar *key, cchar *value);
     @param conn HttpConn connection object created via $httpCreateConn
     @param method Http method to use. Valid methods include: "GET", "POST", "PUT", "DELETE", "OPTIONS" and "TRACE" 
     @param uri URI to fetch
+    @param ssl SSL configuration to use if a secure connection. 
     @return "Zero" if the request was successfully sent to the server. Otherwise a negative MPR error code is returned.
     @ingroup HttpTx
  */
@@ -5164,7 +5165,7 @@ extern HttpHost *httpCloneHost(HttpHost *parent);
 /**
     Create a host
     @description Create a new host object. The host is added to the Http service's list of hosts.
-    @param Home directory for the host's configuration files.
+    @param home directory for the host's configuration files.
     @return The new HttpHost object.
     @ingroup HttpHost
  */

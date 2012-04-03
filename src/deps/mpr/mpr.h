@@ -7607,7 +7607,7 @@ extern char *mprEncode64(cchar *str);
     @returns Buffer containing the encoded string.
     @ingroup Mpr
  */
-extern char *mprEncode64Block(cchar *str, ssize len);
+extern char *mprEncode64Block(cchar *buf, ssize len);
 
 /**
     Get an MD5 checksum
