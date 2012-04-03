@@ -14,5 +14,10 @@ Bit.load({
                 '-Wshorten-64-to-32',
             ],
         },
+        sqlite: {
+            type: 'exe'
+            sources: ['sqlite.c'],
+            depends: ['libsqlite3'],
+        },
 	},
 })
