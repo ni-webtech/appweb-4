@@ -42,8 +42,8 @@ LIB_PREFIX="${prefixes.lib}"
 LOG_PREFIX="${prefixes.log}"
 MAN_PREFIX="${prefixes.lib}/man"
 VER_PREFIX="${prefixes.productver}"
+PRD_PREFIX="${prefixes.product}"
 SPL_PREFIX="${prefixes.spool}"
-SRC_PREFIX="${prefixes.src}"
 WEB_PREFIX="${prefixes.web}"
 
 installbin=Y
@@ -107,7 +107,6 @@ getAccountDetails() {
             break
         fi
     done
-
     if [ "$username" = "" ] ; then
         echo "Can't find a suitable username in /etc/passwd for $PRODUCT" 1>&2
         exit 255
@@ -124,7 +123,6 @@ getAccountDetails() {
             break
         fi
     done
-    
     if [ "$groupname" = "" ] ; then
         echo "Can't find a suitable group in /etc/group for $PRODUCT" 1>&2
         exit 255
@@ -321,6 +319,8 @@ installFiles() {
         find "$CFG_PREFIX" -type f -exec chmod g+r,o+r "{}" \; 
         find "$WEB_PREFIX" -type d -exec chmod 755 "{}" \;
         find "$WEB_PREFIX" -type f -exec chmod g+r,o+r "{}" \;
+        find "$PRD_PREFIX" -type d -exec chmod 755 "{}" \;
+        find "$PRD_PREFIX" -type f -exec chmod g+r,o+r "{}" \;
         mkdir -p "$CFG_PREFIX/logs"
         chmod 777 "$CFG_PREFIX/logs"
         mkdir -p "$SPL_PREFIX"

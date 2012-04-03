@@ -209,6 +209,9 @@ postClean() {
             eval rmdir "\$${p}_PREFIX" >/dev/null 2>&1
         done
     fi
+    cleanDir ${VER_PREFIX}
+    rm -f ${PRD_PREFIX}/latest
+    cleanDir ${PRD_PREFIX}
     if [ -x /tmp/linkup$$ ] ; then
         /tmp/linkup$$ Remove /
         rm -f /tmp/linkup$$
@@ -216,9 +219,6 @@ postClean() {
 }
 
 
-#
-#	Clean a directory. Usage: removeFileList files.log
-#
 removeFileList() {
     if [ -f "$1" ] ; then
         [ "$headless" != 1 ] && echo -e "Removing files in file list \"$1\" ..."
@@ -293,8 +293,8 @@ setup() {
     #
     #	Get defaults from the installation configuration file
     #
-    if [ -f "${PRD_PREFIX}/install.conf" ] ; then
-        .  "${PRD_PREFIX}/install.conf"
+    if [ -f "${VER_PREFIX}/install.conf" ] ; then
+        .  "${VER_PREFIX}/install.conf"
     fi
     
     binDir=${binDir:-$PRD_PREFIX}

@@ -39,6 +39,13 @@ Bit.load({
             sources: [ 'appweb.c' ],
             headers: [ '*.h' ],
         },
+        prep: {
+            type: 'configure',
+            build: "
+                rm('${SRC}/*.o')
+                rm('${SRC}/buildConfig.h')
+            ",
+        },
     },
     packs: {
         cgi: {

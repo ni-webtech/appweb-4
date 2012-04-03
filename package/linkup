@@ -6,8 +6,8 @@
 #
 
 TASK=$1
-ROOT_DIR="${2%/}"
 PRODUCT=appweb
+ROOT_DIR="${2%/}"
 EXE=
 INC_DIR="${ROOT_DIR}/usr/include"
 MAN_DIR="${ROOT_DIR}/usr/share/man"

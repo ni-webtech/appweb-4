@@ -91,6 +91,34 @@ Bit.load({
             ",
         },
 
+        packageSource: {
+            depends: ['build'],
+            action: "
+                let s = bit.settings
+                let src = bit.dir.pkg.join('src')
+                let pkg = src.join(s.product + '-' + s.version)
+                safeRemove(pkg)
+                pkg.makeDir()
+                install(['Makefile', 'product.bit'], pkg)
+                install('bits', pkg)
+                install('*.md', pkg, {fold: true, expand: true})
+                install('configure', pkg, {permissions: 0755})
+                install('src', pkg, {
+                    exclude: /\\.log$|\\.lst$|ejs.zip|\\.stackdump$|\\/cache|huge.txt|\\.swp$|\\.tmp/,
+                })
+                install('test', pkg, {
+                    exclude: /\\.log$|\\.lst$|ejs.zip|\\.stackdump$|\\/cache|huge.txt|\\.swp$|\\.tmp/,
+                })
+                install('doc', pkg, {
+                    exclude: /\\/xml\\/|\\/html\\/|Archive|\\.mod$|\\.so$|\\.dylib$|\\.o$/,
+                })
+                install('projects', pkg, {
+                    exclude: /\\/Debug\\/|\\/Release\\/|\\.ncb|\\.mode1v3|\\.pbxuser/,
+                })
+                package(pkg, ['src', 'combo', 'flat'])
+            ",
+        },
+
         packageComboFlat: {
             depends: ['build'],
             action: "
@@ -99,6 +127,7 @@ Bit.load({
                 let pkg = src.join(s.product + '-' + s.version)
                 safeRemove(pkg)
                 pkg.makeDir()
+                install('projects/buildConfig.' + bit.platform.name + '-' + bit.settings.profile, pkg.join('src/deps/appweb/buildConfig.h'))
                 install('package/appweb.bit', pkg.join('src/deps/appweb/product.bit'))
                 install('package/Makefile.flat', pkg.join('src/deps/appweb/Makefile'))
                 install(['src/deps/mpr/mpr.h', 'src/deps/http/http.h', 'src/appweb.h', 'src/server/appwebMonitor.h',
@@ -127,40 +156,6 @@ Bit.load({
                 install(['src/esp/esp.conf'], pkg.join('src/deps/appweb/esp.conf'))
                 install(['src/deps/pcre/pcre.c', 'src/deps/pcre/pcre.h'], pkg.join('src/deps/appweb'))
                 install(['src/deps/sqlite/sqlite3.c', 'src/deps/sqlite/sqlite3.h'], pkg.join('src/deps/sqlite'))
-                package(pkg, ['src', 'combo', 'flat'])
-/*
-    sqlite
-    pcre
-    esp utility
-    appweb.conf, mime.types, php.ini, start.es
- */
-            ",
-        },
-
-        packageSource: {
-            depends: ['build'],
-            action: "
-                let s = bit.settings
-                let src = bit.dir.pkg.join('src')
-                let pkg = src.join(s.product + '-' + s.version)
-                safeRemove(pkg)
-                pkg.makeDir()
-                install(['Makefile', 'product.bit'], pkg)
-                install('bits', pkg)
-                install('*.md', pkg, {fold: true, expand: true})
-                install('configure', pkg, {permissions: 0755})
-                install('src', pkg, {
-                    exclude: /\\.log$|\\.lst$|ejs.zip|\\.stackdump$|\\/cache|huge.txt|\\.swp$|\\.tmp/,
-                })
-                install('test', pkg, {
-                    exclude: /\\.log$|\\.lst$|ejs.zip|\\.stackdump$|\\/cache|huge.txt|\\.swp$|\\.tmp/,
-                })
-                install('doc', pkg, {
-                    exclude: /\\/xml\\/|\\/html\\/|Archive|\\.mod$|\\.so$|\\.dylib$|\\.o$/,
-                })
-                install('projects', pkg, {
-                    exclude: /\\/Debug\\/|\\/Release\\/|\\.ncb|\\.mode1v3|\\.pbxuser/,
-                })
                 package(pkg, ['src', 'combo', 'flat'])
             ",
         },
@@ -194,22 +189,6 @@ Bit.load({
                     prefix.remove()
                 }
                 trace('Uninstall', bit.settings.title)
-            "
-        },
-
-        check: {
-            action: "
-                let present
-                for each (prefix in bit.prefixes) {
-                    if (prefix.exists) {
-                        trace('Exists', prefix)
-                        let files = prefix.glob('**')
-                        if (files.length > 0) {
-                            trace('Exists', files.join(', '))
-                        }
-                        present = true
-                    }
-                }
             "
         },
     },

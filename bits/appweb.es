@@ -1,6 +1,6 @@
 /*
-    Support functions for Embedthis products
-    Exporting: install(), package()
+    Support functions for Embedthis Appweb
+    Exporting: packageBinaryFiles, createLinks, startAppweb
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
@@ -118,6 +118,7 @@ public function packageBinaryFiles() {
     if (bit.platform.like == 'posix') {
         install('doc/man/*.1', p.productver.join('doc/man/man1'), {compress: true})
     }
+    p.productver.join('files.log').write(contents.glob('**', {exclude: /\/$/, relative: true}).join('\n') + '\n')
 }
 
 /*
