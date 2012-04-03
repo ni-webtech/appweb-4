@@ -1,5 +1,5 @@
 #
-#   macosx-x86_64-debug.mk -- Build It Makefile to build Embedthis Appweb for macosx on x86_64
+#   Makefile -- Build It Makefile to build Embedthis Appweb for macosx on x86_64
 #
 
 CFLAGS      := -g

@@ -115,7 +115,7 @@ Bit.load({
                 install('projects', pkg, {
                     exclude: /\\/Debug\\/|\\/Release\\/|\\.ncb|\\.mode1v3|\\.pbxuser/,
                 })
-                package(pkg, ['src', 'combo', 'flat'])
+                package(src, 'src')
             ",
         },
 
