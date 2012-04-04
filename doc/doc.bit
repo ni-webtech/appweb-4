@@ -13,21 +13,14 @@ Bit.load({
                 path = Path('dsi/head.html')
                 path.write(path.readString().replace(/<title>.*<.title>/, 
                     '<title>' + bit.settings.title + ' ' + bit.settings.version + ' Documentation</title>'))
-
-                for each (name in ['mpr', 'http', 'appweb', 'esp']) {
-                    trace('Generate', name + '.html')
-                    let path = Path('api/' + name + '.html')
-                    path.write(Path('api/' + name + 'Header.tem').readString())
-                    path.append(Path('api/' + name + 'Bare.html').readString())
-                    path.append(Path('api/apiFooter.tem').readString())
-                }
             ",
         },
 
         api: {
             action: "
-                apidoc('api/appweb.dox', 'Appweb API', '${SRC}/src/appweb.h', 'api/*.tags')
-                apidoc('api/esp.dox', 'ESP API', ['${SRC}/src/esp/edi.h', '${SRC}/src/esp/mdb.h', '${SRC}/src/esp/esp.h'], ls('api/*.tags'))
+                apidoc('api/appweb.dox', '${SRC}/src/appweb.h', 'Appweb API', 'api/*.tags')
+                apidoc('api/esp.dox', ['${SRC}/src/esp/edi.h', '${SRC}/src/esp/mdb.h', '${SRC}/src/esp/esp.h'], 
+                    'ESP API', ls('api/*.tags'))
                 apiwrap(['api/appweb.html', 'api/http.html', 'api/mpr.html', 'api/esp.html'])
             ",
         }, 

@@ -85,7 +85,6 @@
             controllers, views and web pages.</p>
             <p>The <em>esp</em> program is not just for MVC applications. It can be used to pre-compile stand-alone
             ESP web pages too.</p> 
-
             <a name="generating" id="generating"></a>
             <h2 class="section">Generating Applications</h2>
             <p>To start a new web application, run <em>esp</em> to create the application directory and generate the
@@ -275,7 +274,6 @@ esp generate migration description MODEL [field:type ...]
             source code is modified. It can intelligently recompile views and controllers as
             required. However, you can also explicitly pre-compile portions or the complete application via
             the <em>esp</em> command.</p>
-
             <h3>Compile Everything</h3>
             <p>The <em>esp</em> command can recompile the entire application via:</p>
             <pre>
@@ -283,7 +281,6 @@ esp compile
 </pre>
             <p>This will compile and link all controllers and views and place the generated shared libraries (DLLs)
             in the <em>cache</em> directory.</p>
-
             <h3>Routes</h3>
             <p>When <em>esp</em> is invoked it, loads the <em>appweb.conf</em> configuration file from the current
             directory, unless <em>esp</em> is invoked with the <em>--config</em> switch to select an alternative 
@@ -304,10 +301,8 @@ esp compile /directory/of/apps
             a directory that is part of an MVC application is provided, then all resources under that directory will
             be compiled. If a directory that is a parent directory of ESP applications or web pages, then all those
             resources contained by that directory will be compiled.</p>
-
             <p>You may also use the <em>--routeName</em> or <em>--routePrefix</em> switches to select a specific route
             in the appweb.conf configuration file. Then only the resources managed by that route will be compiled.</p>
-
             <h3>Keep Source</h3>
             <p>When compiling views or web pages, the <em>EspKeepSource</em> configuration file directive will control
             if the intermediate C source code generated from the ESP will be preserved.  This can sometimes be helpful
@@ -322,7 +317,6 @@ esp --flat compile
             <p>If you compile flat, you will need to add an <em>EspLoad</em> directive to the appweb.conf. This tells
             ESP to pre-load the application and where to locate the module file.</p>
 <pre>EspLoad NAME PATH</pre>
-
             <h3>Cross Compiling</h3>
             <p>When <em>esp compile</em> is invoked, it selects its compile and link rules from the <em>esp.conf</em>
             configuration file. This file, which may be customized, contains the rules for various operating systems
@@ -337,7 +331,6 @@ esp --arch ppc --host vxworks
             <p>This will compile the application for VxWorks on ppc. Of course, the resulting module cannot be 
             run on the development system if cross-compiling. You may need to modify the esp.conf configuration file
             to add rules for your operating system and CPU architecture or to customize for your application.</p>
-
             <a name="running" id="running"></a>
             <h2 class="section">Running</h2>
             <p>To run your application:</p>
@@ -355,9 +348,7 @@ esp clean
             <p>To see the <em>esp</em> command options, run <em>esp</em> with no options. This produces:
             <pre>
 ESP Usage:
-
   esp [options] [commands]
-
   Options:
     --arch CPU             # Target CPU architecture
     --chdir dir            # Change to the named directory first
@@ -372,7 +363,6 @@ ESP Usage:
     --routeName name       # Route name in appweb.conf to use 
     --routePrefix prefix   # Route prefix in appweb.conf to use 
     --verbose              # Emit verbose trace 
-
   Commands:
     esp clean
     esp compile
@@ -442,7 +432,7 @@ ESP Usage:
 
 	<div class="bottom">
 		<p class="footnote"> 
-            <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2012. 
+            <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2012.
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>

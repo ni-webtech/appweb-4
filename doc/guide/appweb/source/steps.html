@@ -123,7 +123,6 @@
 </pre>
             <p>Use the "--help" switch to see the available options or see the <a href="configure.html">Configure
             Program</a> document for more details.</p><a name="cross" id="cross"></a>
-
             <h3>External Packages</h3>
             <p>The Appweb configure command supports the resolution of external packages such as Ejscript, OpenSSL and
                 PHP. By default, Appweb can locate these packages if the source distributions are installed in 
@@ -145,7 +144,6 @@ make</pre></li>
             <p>The Appweb configure program and Makefiles will import the required libraries and headers into
             the Appweb source tree. NOTE: Ejscript will provide the MPR and HTTP library as they must be 
             common between Appweb and Ejscript.</p>
-
             <h3>Cross Compilation</h3>
             <p>To configure for cross compilation you need to specify the --host and --build switches. These take
             system architecture specifications in the form: CPU-VENDOR-OS. For example: i386-pc-linux or
@@ -211,7 +209,6 @@ make
             <h2>Customizing</h2>
             <p>Appweb includes the <em>src/customize.h</em> header when building. This file may be used to 
             customize or override certain Appweb settings.
-
             <ul>
                 <li>#define BLD_SERVER_ROOT &mdash; Path to the Appweb configuration directory</li>
                 <li>#define BLD_CONFIG_FILE &mdash; Path to the appweb.conf configuration file</li>
@@ -220,7 +217,6 @@ make
             <p>On VxWorks, it is required to define BLD_APPWEB_PATH so that Appweb can load modules which
             are located relative to the Appweb executable image.</p>
             <p>Define BLD_CONFIG_FILE and BLD_SERVER_ROOT to set default locations for Appweb initialization.</p>
-
             <h3>Static Linking</h3>
             <p>On VxWorks, it is sometimes required to statically link the Appweb web server. The default
             <em>src/server/Makefile</em> is setup to build Appweb and the loadable modules separately. If you want to
@@ -429,7 +425,7 @@ make TRACE=1 install
 
 	<div class="bottom">
 		<p class="footnote"> 
-            <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2012. 
+            <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2012.
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>

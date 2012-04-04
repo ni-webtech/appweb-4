@@ -185,8 +185,8 @@ ALIASES                = "reminder=\xrefitem reminders \"Reminder\" \"Reminders\
                          "overview=\par \b Overview:\n" \
                          "scope=\par \b Scope:\n" \
                          "library=\par \b Library:\n" \
-                         "description=\par \b Description:\n" \
                          "options=\par \b Options:\n" \
+                         "description=\par \b Description:\n" \
                          "elements=\par \b Elements:\n" \
                          "example=\par \b Example:\n" \
                          "stability=\par \b API Stability:\n"
@@ -575,7 +575,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = TBD
+INPUT                  = ../../src/esp/esp.h
 
 # This tag can be used to specify the character encoding of the source files 
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is 
@@ -1257,7 +1257,7 @@ INCLUDE_FILE_PATTERNS  =
 # undefined via #undef or recursively expanded use the := operator 
 # instead of the = operator.
 
-PREDEFINED             =  WIN=1 \
+PREDEFINED             = WIN=1 \
 						 LINUX=1 \
                          BLD_UNIX_LIKE=1 \
                          BLD_WIN_LIKE=1 \
