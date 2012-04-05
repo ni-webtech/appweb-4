@@ -1,0 +1,13 @@
+/*
+	simpleServer.bit - Bit file for the simpleServer sample
+ */
+
+Bit.load({
+	targets: {
+		simpleServer: {
+			type: 'exe',
+			sources: ['*.c'],
+			depends: ['libappweb'],
+		},
+	},
+})

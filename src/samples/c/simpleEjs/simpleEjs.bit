@@ -1,0 +1,14 @@
+/*
+	simpleEjs.bit - Bit file for the simpleEjs sample
+ */
+
+Bit.load({
+	targets: {
+		simpleEjs: {
+            enable: 'bit.packs.ejscript.enable',
+			type: 'exe',
+			sources: ['*.c'],
+			depends: ['libappweb'],
+		},
+	},
+})

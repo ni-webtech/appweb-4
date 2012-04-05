@@ -1,0 +1,13 @@
+/*
+	simpleEsp.bit - Bit file for the simpleEsp sample
+ */
+
+Bit.load({
+	targets: {
+		simpleEsp: {
+			type: 'exe',
+			sources: ['*.c'],
+			depends: ['libappweb', 'mod_esp'],
+		},
+	},
+})

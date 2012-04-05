@@ -1,0 +1,13 @@
+/*
+	simpleModule.bit - Bit file for the simpleModule sample
+ */
+
+Bit.load({
+	targets: {
+		simpleModule: {
+			type: 'exe',
+			sources: ['*.c'],
+			depends: ['libappweb'],
+		}
+	},
+})

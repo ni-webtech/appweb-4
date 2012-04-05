@@ -1,0 +1,15 @@
+/*
+	cppHandler.bit - Bit file for the cppHandler sample
+ */
+
+Bit.load({
+	targets: {
+		cppHandler: {
+			type: 'lib',
+            path: 'cppModule${SHOBJ}',
+			sources: ['*.cpp'],
+			depends: ['libappweb'],
+		}
+	},
+})
+

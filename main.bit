@@ -1,12 +1,11 @@
 /*
-    product.bit -- Product Bit File for Appweb
+    main.bit -- Main Bit File for Appweb
  */
 
 Bit.load({
-    '+modules': [
-        'bits/appweb.es',
-    ],
     blend: [
+        '${PLATFORM}.bit',
+        "${BITS}/embedthis.bit",
         "src/deps/mpr/mpr.bit",
         "src/deps/pcre/pcre.bit",
         "src/deps/http/http.bit",
@@ -16,10 +15,14 @@ Bit.load({
         "src/modules/modules.bit",
         "src/utils/utils.bit",
         "src/server/server.bit",
+        "src/samples/samples.bit",
         "test/test.bit",
         "package/package.bit",
         "doc/doc.bit",
-        "${BITS}/embedthis.bit",
+    ],
+
+    '+modules': [
+        'bits/appweb.es',
     ],
 
     settings: {
@@ -37,6 +40,8 @@ Bit.load({
         sync: ['http', 'mpr', 'pcre', 'sqlite'],
         packs: [ 'bits/packs' ]
         without: ['doxygen', 'dsi', 'ejs', 'man', 'man2html', 'php', 'pmaker', 'ssl'],
+        '+optional': [ 'cgi', 'dir', 'doxygen', 'dpkg', 'dsi', 'ejs', 'esp', 'man', 'man2html', 'openssl', 
+            'matrixssl', 'pmaker', 'php', 'sqlite', 'ssl', 'ejscript' ],
     },
 
     usage: {
@@ -56,8 +61,6 @@ Bit.load({
         } },
     },
 
-    '+optional': [ 'cgi', 'dir', 'doxygen', 'dpkg', 'dsi', 'ejs', 'esp', 'man', 'man2html', 'openssl', 
-        'matrixssl', 'pmaker', 'php', 'sqlite', 'ssl', 'ejscript' ],
 
     packs: {
         http: {

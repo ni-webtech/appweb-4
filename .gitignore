@@ -17,7 +17,6 @@ cgi\ Program
 src/server/cgi-bin/cgiProgram
 samples/c/simpleClient/simpleClient
 samples/c/simpleEgi/simpleEgi
-samples/c/simpleEjs/simpleEjs
 samples/c/simpleServer/simpleServer
 src/handlers/accessHandler.sav
 src/handlers/proxyHandler.c
@@ -126,7 +125,6 @@ doc/api/esp/xml
 doc/api/esp/html
 src/test/app/db/test.bak
 src/modules/proxyHandler.nc
-simpleEjs
 src/test/apps
 build/bin/appman
 src/server/cache
@@ -166,3 +164,4 @@ test/trace.txt
 test/web/caching/cache.cgi
 test/web/basic/basic.cgi
 .*.guid
+src/samples/c/simpleEjs/simpleEjs

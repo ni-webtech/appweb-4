@@ -1,0 +1,13 @@
+/*
+	simpleClient.bit - Bit file for the simpleClient sample
+ */
+
+Bit.load({
+	targets: {
+		simpleClient: {
+			type: 'exe',
+			sources: ['*.c'],
+			depends: ['libappweb'],
+		}
+	},
+})

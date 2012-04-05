@@ -1,0 +1,14 @@
+/*
+  	samples.bit -- Master samples bit file
+ */
+
+Bit.load({
+    blend: [
+        'c/simpleServer/simpleServer.bit',
+        'c/simpleHandler/simpleHandler.bit',
+        'c/simpleClient/simpleClient.bit',
+        'c/simpleEjs/simpleEjs.bit',
+        'cpp/cppHandler/cppHandler.bit',
+        'cpp/cppModule/cppModule.bit',
+    ],
+})

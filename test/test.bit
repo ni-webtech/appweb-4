@@ -6,9 +6,9 @@ Bit.load({
     targets: {
         testAppweb: {
             type: 'exe',
-            headers: [ '*.h' ],
-            sources: [ '*.c' ],
-            depends: [ 'libappweb' ],
+            headers:   [ '*.h' ],
+            sources:   [ '*.c' ],
+            depends:   [ 'libappweb' ],
             platforms: [ 'local' ],
         },
 
