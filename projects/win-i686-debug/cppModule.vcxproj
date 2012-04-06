@@ -30,7 +30,7 @@
 </ItemGroup>
 
 <PropertyGroup Label="Globals">
-  <ProjectGuid>{9eb51d9e-5b85-410d-9913-4912ea2928bf}</ProjectGuid>
+  <ProjectGuid>{ceeb9153-2682-46f9-a9e0-3957240f2e58}</ProjectGuid>
   <RootNamespace />
   <Keyword>Win32Proj</Keyword>
 </PropertyGroup>
@@ -52,19 +52,11 @@
 <PropertyGroup>
   <_ProjectFileVersion>10</_ProjectFileVersion>
   <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\bin\</OutDir>
-  <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\obj\mod_esp\</IntDir>
+  <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\obj\cppModule\</IntDir>
 </PropertyGroup>
     
 <ItemGroup>
-  <ClCompile Include="..\..\src\esp\edi.c" />
-  <ClCompile Include="..\..\src\esp\espAbbrev.c" />
-  <ClCompile Include="..\..\src\esp\espFramework.c" />
-  <ClCompile Include="..\..\src\esp\espHandler.c" />
-  <ClCompile Include="..\..\src\esp\espHtml.c" />
-  <ClCompile Include="..\..\src\esp\espSession.c" />
-  <ClCompile Include="..\..\src\esp\espTemplate.c" />
-  <ClCompile Include="..\..\src\esp\mdb.c" />
-  <ClCompile Include="..\..\src\esp\sdb.c" />
+  <ClCompile Include="..\..\src\samples\cpp\cppModule\cppModule.cpp" />
 </ItemGroup>
 <ItemDefinitionGroup>
 <Link>

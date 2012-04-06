@@ -39,7 +39,7 @@ Bit.load({
         auth: 'file',
         sync: ['http', 'mpr', 'pcre', 'sqlite'],
         packs: [ 'bits/packs' ]
-        without: ['doxygen', 'dsi', 'ejs', 'man', 'man2html', 'php', 'pmaker', 'ssl'],
+        'without-all': ['doxygen', 'dsi', 'ejs', 'man', 'man2html', 'php', 'pmaker', 'ssl'],
         '+optional': [ 'cgi', 'dir', 'doxygen', 'dpkg', 'dsi', 'ejs', 'esp', 'man', 'man2html', 'openssl', 
             'matrixssl', 'pmaker', 'php', 'sqlite', 'ssl', 'ejscript' ],
     },
