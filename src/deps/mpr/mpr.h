@@ -7569,7 +7569,7 @@ extern int mprAvailableWorkers();
 extern int mprRandom();
 
 /**
-    Deocde a null terminated string using base-46 encoding.
+    Decode a null terminated string using base-46 encoding.
     Decoding will terminate at the first null or '='.
     @param str String to decode
     @returns Buffer containing the encoded data
@@ -7583,14 +7583,14 @@ extern char *mprDecode64(cchar *str);
 #define MPR_DECODE_TOKEQ 1
 
 /**
-    Deocde buffer using base-46 encoding.
+    Decode a null terminated string  using base-46 encoding.
     @param buf String to decode
-    @param len Length of buffer to decode
+    @param len Return parameter with the Length of the decoded data
     @param flags Set to MPR_DECODE_TOKEQ to stop at the first '='
-    @returns Buffer containing the encoded data.
+    @returns Buffer containing the encoded data and returns length in len.
     @ingroup Mpr
   */
-extern char *mprDecode64Block(cchar *buf, ssize len, int flags);
+extern char *mprDecode64Block(cchar *buf, ssize *len, int flags);
 
 /**
     Encode a string using base-46 encoding.

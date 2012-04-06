@@ -1,4 +1,4 @@
-<h1>MPR - Multithreaded Portable Runtime Native API</h1>
+<h1>HTTP - Http API Native API</h1>
 <a name="Components"></a><h1>Components</h1>
   <table class="apiIndex" title="Components">
 <tr class="apiDef">
@@ -3876,7 +3876,7 @@ List of Route defintions.
     <dl><dt><b>Description</b>:</dt><dd>Create a new host object. The host is added to the Http service&apos;s list of hosts.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">Home</td><td>directory for the host&apos;s configuration files.</td>
+    <tr><td class="param">home</td><td>directory for the host&apos;s configuration files.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>The new HttpHost object.</dd></dl>
     <dl><dt>See Also:</dt><dd>
@@ -6954,12 +6954,12 @@ User-Agent header.
   </div>
   <div class="apiDetail">
 <p>Get the request params table.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This call gets the form var table for the current request. Query data and www-url encoded form data is entered into the table after decoding. Use #mprLookupKey to retrieve data from the table.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This call gets the form var table for the current request. Query data and www-url encoded form data is entered into the table after decoding. Use $mprLookupKey to retrieve data from the table.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object.</td>
     </table></dd></dl>
-    <dl><dt>Returns:</dt><dd>#MprHash instance containing the form vars.</dd></dl>
+    <dl><dt>Returns:</dt><dd>$MprHash instance containing the form vars.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_rx_1ga59e938b0437fb2fde01885946058efb6" class="ref">httpContentNotModified</a>, <a href="#group___http_rx_1ga88695d5677cbd4f42889c09fa7d43a65" class="ref">httpCreateCGIParams</a>, <a href="#group___http_rx_1gadafdace3fe2bdbbd5e62b6942af088c5" class="ref">httpGetContentLength</a>, <a href="#group___http_rx_1gab765b374148bc401f8c2b88a92732421" class="ref">httpGetCookies</a>, <a href="#group___http_rx_1ga8972473e3610bed271f76e27d04af473" class="ref">httpGetHeader</a>, <a href="#group___http_rx_1ga3c065c5a2be0bf2ac90ef94f972f2494" class="ref">httpGetHeaderHash</a>, <a href="#group___http_rx_1ga2bfb4c582aa38c8a34c028b5f4547ef1" class="ref">httpGetHeaders</a>, <a href="#group___http_rx_1ga4e52e60e13d1c4b8a67db629068eaa2a" class="ref">httpGetIntParam</a>, <a href="#group___http_rx_1ga3034c56a903aa338c56cba7301c7b687" class="ref">httpGetLanguage</a>, <a href="#group___http_rx_1ga0bccc6d844d84b424a2b770c61a4e604" class="ref">httpGetParam</a>, <a href="#group___http_rx_1ga1b77e1b5b3f6a24f691f80c0278cecd9" class="ref">httpGetQueryString</a>, <a href="#group___http_rx_1gaf7d28c87e2d92899991228c32eeca10a" class="ref">httpGetStatus</a>, <a href="#group___http_rx_1ga5e5417c28bda8b93d5ea80e5f889a83a" class="ref">httpGetStatusMessage</a>, <a href="#group___http_rx_1ga5bfd6791a6b71fbf6891dd565a41dd5d" class="ref">httpMatchParam</a>, <a href="#group___http_rx_1gad0b2d6713dd793d832e822fa9f9852ff" class="ref">httpRead</a>, <a href="#group___http_rx_1gab7d21bd58ae2f0cb64ae8c9e7c01208b" class="ref">httpReadString</a>, <a href="#group___http_rx_1ga65544de95f88799ed0390fe6d468b2eb" class="ref">httpSetIntParam</a>, <a href="#group___http_rx_1ga818d335c49dd7f45ba3a45aa397c63cb" class="ref">httpSetParam</a>, <a href="#group___http_rx_1gae94616ee8e45c87cb0d2d833ac2cffa6" class="ref">httpSetUri</a>, <a href="#group___http_tx_1gac8760dad727f97e824e5abdb06d1cd99" class="ref">httpSetWriteBlocked</a>, <a href="#group___http_rx_1ga5a1ddb99bdfc515bed222f18381505ae" class="ref">httpTestParam</a>, <a href="#group___http_rx_1ga0ac0fdda7fc8cf2738b5083e3517707d" class="ref">httpTrimExtraPath</a></dd></dl>
   </div>
@@ -7743,6 +7743,7 @@ Handler methods supported.
     <tr><td class="param">conn</td><td>HttpConn connection object created via $httpCreateConn.</td>
     <tr><td class="param">method</td><td>Http method to use. Valid methods include: &quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, &quot;DELETE&quot;, &quot;OPTIONS&quot; and &quot;TRACE&quot;.</td>
     <tr><td class="param">uri</td><td>URI to fetch.</td>
+    <tr><td class="param">ssl</td><td>SSL configuration to use if a secure connection.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>&quot;Zero&quot; if the request was successfully sent to the server. Otherwise a negative MPR error code is returned.</dd></dl>
     <dl><dt>See Also:</dt><dd>

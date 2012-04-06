@@ -11392,13 +11392,21 @@ int mprRandom()
 }
 
 
+/*
+    Decode a null terminated string and returns a null terminated string.
+    Stops decoding at the end of string or '='
+ */
 char *mprDecode64(cchar *s)
 {
-    return mprDecode64Block(s, slen(s), MPR_DECODE_TOKEQ);
+    return mprDecode64Block(s, NULL, MPR_DECODE_TOKEQ);
 }
 
 
-char *mprDecode64Block(cchar *s, ssize len, int flags)
+/*
+    Decode a null terminated string and return a block with length.
+    Stops decoding at the end of the block or '=' if MPR_DECODE_TOKEQ is specified.
+ */
+char *mprDecode64Block(cchar *s, ssize *len, int flags)
 {
     uint    bitBuf;
     char    *buffer, *bp;
@@ -11406,13 +11414,13 @@ char *mprDecode64Block(cchar *s, ssize len, int flags)
     ssize   size;
     int     c, i, j, shift;
 
-    size = len;
+    size = slen(s);
     if ((buffer = mprAlloc(size + 1)) == 0) {
         return NULL;
     }
     bp = buffer;
     *bp = '\0';
-    end = &s[len];
+    end = &s[size];
     while (s < end && (*s != '=' || !(flags & MPR_DECODE_TOKEQ))) {
         bitBuf = 0;
         shift = 18;
@@ -11431,16 +11439,27 @@ char *mprDecode64Block(cchar *s, ssize len, int flags)
         }
         *bp = '\0';
     }
+    if (len) {
+        *len = bp - buffer;
+    }
     return buffer;
 }
 
 
+/*
+    Encode a null terminated string.
+    Returns a null terminated block
+ */
 char *mprEncode64(cchar *s)
 {
     return mprEncode64Block(s, slen(s));
 }
 
 
+/*
+    Encode a block of a given length
+    Returns a null terminated block
+ */
 char *mprEncode64Block(cchar *s, ssize len)
 {
     uint    shiftbuf;

@@ -2,7 +2,7 @@
 <tagfile>
   <compound kind="file">
     <name>mpr.h</name>
-    <path>/Users/mob/git/mpr/macosx-x86_64-debug/flat/mpr-4.0.0-B0/</path>
+    <path>/Users/mob/git/mpr/src/</path>
     <filename>mpr_8h</filename>
     <class kind="struct">MprCond</class>
     <class kind="struct">MprDirEntry</class>
@@ -10109,21 +10109,9 @@
     </member>
   </compound>
   <compound kind="dir">
-    <name>/Users/mob/git/mpr/macosx-x86_64-debug/flat/</name>
-    <path>/Users/mob/git/mpr/macosx-x86_64-debug/flat/</path>
-    <filename>dir_2b3eae0959c8d1c4ba8df2c0ecdbc5ee.html</filename>
-    <dir>/Users/mob/git/mpr/macosx-x86_64-debug/flat/mpr-4.0.0-B0/</dir>
-  </compound>
-  <compound kind="dir">
-    <name>/Users/mob/git/mpr/macosx-x86_64-debug/</name>
-    <path>/Users/mob/git/mpr/macosx-x86_64-debug/</path>
-    <filename>dir_0d33234b46da3265417e3bcba0fcbd70.html</filename>
-    <dir>/Users/mob/git/mpr/macosx-x86_64-debug/flat/</dir>
-  </compound>
-  <compound kind="dir">
-    <name>/Users/mob/git/mpr/macosx-x86_64-debug/flat/mpr-4.0.0-B0/</name>
-    <path>/Users/mob/git/mpr/macosx-x86_64-debug/flat/mpr-4.0.0-B0/</path>
-    <filename>dir_017257a557f45e33980a7b22c554cd43.html</filename>
+    <name>/Users/mob/git/mpr/src/</name>
+    <path>/Users/mob/git/mpr/src/</path>
+    <filename>dir_5a99dfd120445cdafaf1d33ece26ab40.html</filename>
     <file>mpr.h</file>
   </compound>
 </tagfile>

@@ -69,18 +69,9 @@ Bit.load({
     },
 
     targets: {
-        //  MOB - move targets to the package/package.bit
         install: {
             depends: ['build'],
-            depends: ['build', 'uninstall'],
-            action: "
-                packageBinaryFiles()
-                package(bit.dir.pkg.join('bin'), 'install')
-                createLinks()
-                trace('Start', 'appman install enable start')
-                Cmd.run('/usr/local/bin/appman install enable start')
-                bit.dir.pkg.join('bin').removeAll()
-            "
+            action: "installBinary()",
         },
 
         package: {
@@ -89,111 +80,21 @@ Bit.load({
 
         packageBinary: {
             depends: ['build'],
-            action: "
-                packageBinaryFiles()
-                package(bit.dir.pkg.join('bin'), ['tar', 'native'])
-            ",
+            action: "packageBinaryFiles()",
         },
 
         packageSource: {
             depends: ['build'],
-            action: "
-                let s = bit.settings
-                let src = bit.dir.pkg.join('src')
-                let pkg = src.join(s.product + '-' + s.version)
-                safeRemove(pkg)
-                pkg.makeDir()
-                install(['Makefile', 'product.bit'], pkg)
-                install('bits', pkg)
-                install('*.md', pkg, {fold: true, expand: true})
-                install('configure', pkg, {permissions: 0755})
-                install('src', pkg, {
-                    exclude: /\\.log$|\\.lst$|ejs.zip|\\.stackdump$|\\/cache|huge.txt|\\.swp$|\\.tmp/,
-                })
-                install('test', pkg, {
-                    exclude: /\\.log$|\\.lst$|ejs.zip|\\.stackdump$|\\/cache|huge.txt|\\.swp$|\\.tmp/,
-                })
-                install('doc', pkg, {
-                    exclude: /\\/xml\\/|\\/html\\/|Archive|\\.mod$|\\.so$|\\.dylib$|\\.o$/,
-                })
-                install('projects', pkg, {
-                    exclude: /\\/Debug\\/|\\/Release\\/|\\.ncb|\\.mode1v3|\\.pbxuser/,
-                })
-                package(src, 'src')
-            ",
+            action: "packageSourceFiles()",
         },
 
         packageCombo: {
             depends: ['build'],
-            action: "
-                let s = bit.settings
-                let src = bit.dir.pkg.join('src')
-                let pkg = src.join(s.product + '-' + s.version)
-                safeRemove(pkg)
-                pkg.makeDir()
-                install('projects/buildConfig.' + bit.platform.name + '-' + bit.settings.profile, pkg.join('src/deps/appweb/buildConfig.h'))
-                install('package/appweb.bit', pkg.join('src/deps/appweb/product.bit'))
-                install('package/Makefile.flat', pkg.join('src/deps/appweb/Makefile'))
-                install(['src/deps/mpr/mpr.h', 'src/deps/http/http.h', 'src/appweb.h', 'src/server/appwebMonitor.h',
-                    'src/esp/edi.h', 'src/esp/mdb.h', 'src/esp/esp.h', 'src/deps/pcre/pcre.h'], 
-                    pkg.join('src/deps/appweb/appweb.h'), {
-                    cat: true,
-                    filter: /^#inc.*appweb.*$|^#inc.*mpr.*$|^#inc.*http.*$|^#inc.*customize.*$|^#inc.*edi.*$|^#inc.*mdb.*$|^#inc.*esp.*$/mg,
-                    title: bit.settings.title + ' Library Source',
-                })
-                install(['src/deps/**.c'], pkg.join('src/deps/appweb/deps.c'), {
-                    cat: true,
-                    filter: /^#inc.*appweb.*$|^#inc.*mpr.*$|^#inc.*http.*$|^#inc.*customize.*$|^#inc.*edi.*$|^#inc.*mdb.*$|^#inc.*esp.*$/mg,
-                    exclude: /pcre|makerom|http\.c|sqlite|manager/,
-                    header: '#include \"appweb.h\"',
-                    title: bit.settings.title + ' Library Source',
-                })
-                install(['src/**.c'], pkg.join('src/deps/appweb/appwebLib.c'), {
-                    cat: true,
-                    filter: /^#inc.*appweb.*$|^#inc.*mpr.*$|^#inc.*http.*$|^#inc.*customize.*$|^#inc.*edi.*$|^#inc.*mdb.*$|^#inc.*esp.*$/mg,
-                    exclude: /deps|server.appweb.c|esp\.c|samples|romFiles|pcre|appwebMonitor|sqlite|appman|makerom|utils|test|http\.c|sqlite|manager/,
-                    header: '#include \"appweb.h\"',
-                    title: bit.settings.title + ' Library Source',
-                })
-                install(['src/server/appweb.c'], pkg.join('src/deps/appweb/appweb.c'))
-                install(['src/server/appweb.conf'], pkg.join('src/deps/appweb/appweb.conf'))
-                install(['src/esp/esp.conf'], pkg.join('src/deps/appweb/esp.conf'))
-                install(['src/deps/pcre/pcre.c', 'src/deps/pcre/pcre.h'], pkg.join('src/deps/appweb'))
-                install(['src/deps/sqlite/sqlite3.c', 'src/deps/sqlite/sqlite3.h'], pkg.join('src/deps/sqlite'))
-                package(pkg, ['src', 'combo', 'flat'])
-            ",
+            action: "packageComboFiles()",
         },
 
         uninstall: {
-            action: "
-                if (App.uid != 0) {
-                    throw 'Must run as root. Use \"sudo bit install\"'
-                }
-                let appman = Cmd.locate('appman')
-                try {
-                    Cmd.run('appman stop disable uninstall')
-                } catch {}
-                let fileslog = bit.prefixes.productver.join('files.log')
-                if (fileslog.exists) {
-                    for each (let file: Path in fileslog.readLines()) {
-                        vtrace('Remove', file)
-                        file.remove()
-                    }
-                }
-                fileslog.remove()
-                for each (file in bit.prefixes.log.glob('*.log*')) {
-                    file.remove()
-                }
-                for each (prefix in bit.prefixes) {
-                    for each (dir in prefix.glob('**', {include: /\\/$/}).sort().reverse()) {
-                        vtrace('Remove', dir)
-                        dir.remove()
-                    }
-                    vtrace('Remove', prefix)
-                    prefix.remove()
-                }
-                trace('Uninstall', bit.settings.title)
-            "
+            action: "uninstallBinary()"
         },
     },
 })

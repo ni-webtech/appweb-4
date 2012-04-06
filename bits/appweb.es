@@ -11,7 +11,7 @@ require ejs.unix
 /*
     Copy binary files to package staging area
  */
-public function packageBinaryFiles() {
+public function packageBinaryFiles(formats = ['tar', 'native']) {
     let settings = bit.settings
     let bin = bit.dir.pkg.join('bin')
     safeRemove(bit.dir.pkg)
@@ -31,7 +31,7 @@ public function packageBinaryFiles() {
         p[prefix] = Path(contents.portable.name + bit.prefixes[prefix].removeDrive().portable)
         p[prefix].makeDir()
     }
-    let strip = settings.profile == 'debug'
+    let strip = bit.platform.profile == 'debug'
 
     install('LICENSE.md', p.product, {fold: true, expand: true})
     install('doc/product/README.TXT', p.product, {fold: true, expand: true})
@@ -119,6 +119,115 @@ public function packageBinaryFiles() {
         install('doc/man/*.1', p.productver.join('doc/man/man1'), {compress: true})
     }
     p.productver.join('files.log').write(contents.glob('**', {exclude: /\/$/, relative: true}).join('\n') + '\n')
+    if (formats) {
+        package(bit.dir.pkg.join('bin'), formats)
+    }
+}
+
+public function packageSourceFiles() {
+    let s = bit.settings
+    let src = bit.dir.pkg.join('src')
+    let pkg = src.join(s.product + '-' + s.version)
+    safeRemove(pkg)
+    pkg.makeDir()
+    install(['Makefile', 'product.bit'], pkg)
+    install('bits', pkg)
+    install('*.md', pkg, {fold: true, expand: true})
+    install('configure', pkg, {permissions: 0755})
+    install('src', pkg, {
+        exclude: /\.log$|\.lst$|ejs.zip|\.stackdump$|\/cache|huge.txt|\.swp$|\.tmp/,
+    })
+    install('test', pkg, {
+        exclude: /\.log$|\.lst$|ejs.zip|\.stackdump$|\/cache|huge.txt|\.swp$|\.tmp/,
+    })
+    install('doc', pkg, {
+        exclude: /\/xml\/|\/html\/|Archive|\.mod$|\.so$|\.dylib$|\.o$/,
+    })
+    install('projects', pkg, {
+        exclude: /\/Debug\/|\/Release\/|\.ncb|\.mode1v3|\.pbxuser/,
+    })
+    package(bit.dir.pkg.join('src'), 'src')
+}
+
+public function packageComboFiles() {
+    let s = bit.settings
+    let src = bit.dir.pkg.join('src')
+    let pkg = src.join(s.product + '-' + s.version)
+    safeRemove(pkg)
+    pkg.makeDir()
+    install('projects/buildConfig.' + bit.platform.configuration, pkg.join('src/deps/appweb/buildConfig.h'))
+    install('package/appweb.bit', pkg.join('src/deps/appweb/product.bit'))
+    install('package/Makefile.flat', pkg.join('src/deps/appweb/Makefile'))
+    install(['src/deps/mpr/mpr.h', 'src/deps/http/http.h', 'src/appweb.h', 'src/server/appwebMonitor.h',
+        'src/esp/edi.h', 'src/esp/mdb.h', 'src/esp/esp.h', 'src/deps/pcre/pcre.h'], 
+        pkg.join('src/deps/appweb/appweb.h'), {
+        cat: true,
+        filter: /^#inc.*appweb.*$|^#inc.*mpr.*$|^#inc.*http.*$|^#inc.*customize.*$|^#inc.*edi.*$|^#inc.*mdb.*$|^#inc.*esp.*$/mg,
+        title: bit.settings.title + ' Library Source',
+    })
+    install(['src/deps/**.c'], pkg.join('src/deps/appweb/deps.c'), {
+        cat: true,
+        filter: /^#inc.*appweb.*$|^#inc.*mpr.*$|^#inc.*http.*$|^#inc.*customize.*$|^#inc.*edi.*$|^#inc.*mdb.*$|^#inc.*esp.*$/mg,
+        exclude: /pcre|makerom|http\.c|sqlite|manager/,
+        header: '#include \"appweb.h\"',
+        title: bit.settings.title + ' Library Source',
+    })
+    install(['src/**.c'], pkg.join('src/deps/appweb/appwebLib.c'), {
+        cat: true,
+        filter: /^#inc.*appweb.*$|^#inc.*mpr.*$|^#inc.*http.*$|^#inc.*customize.*$|^#inc.*edi.*$|^#inc.*mdb.*$|^#inc.*esp.*$/mg,
+        exclude: /deps|server.appweb.c|esp\.c|samples|romFiles|pcre|appwebMonitor|sqlite|appman|makerom|utils|test|http\.c|sqlite|manager/,
+        header: '#include \"appweb.h\"',
+        title: bit.settings.title + ' Library Source',
+    })
+    install(['src/server/appweb.c'], pkg.join('src/deps/appweb/appweb.c'))
+    install(['src/server/appweb.conf'], pkg.join('src/deps/appweb/appweb.conf'))
+    install(['src/esp/esp.conf'], pkg.join('src/deps/appweb/esp.conf'))
+    install(['src/deps/pcre/pcre.c', 'src/deps/pcre/pcre.h'], pkg.join('src/deps/appweb'))
+    install(['src/deps/sqlite/sqlite3.c', 'src/deps/sqlite/sqlite3.h'], pkg.join('src/deps/sqlite'))
+    package(bit.dir.pkg.join('src'), ['src', 'combo', 'flat'])
+}
+
+public function installBinary() {
+    if (App.uid != 0) {
+        throw 'Must run as root. Use \"sudo bit install\"'
+    }
+    packageBinaryFiles(null)
+    package(bit.dir.pkg.join('bin'), 'install')
+    createLinks()
+    trace('Start', 'appman install enable start')
+    Cmd.run('/usr/local/bin/appman install enable start')
+    bit.dir.pkg.join('bin').removeAll()
+    trace('Complete', bit.settings.title + ' installed')
+}
+
+public function uninstallBinary() {
+    if (App.uid != 0) {
+        throw 'Must run as root. Use \"sudo bit uninstall\"'
+    }
+    trace('Uninstall', bit.settings.title)                                                     
+    let appman = Cmd.locate('appman')
+    try {
+        Cmd.run('appman stop disable uninstall')
+    } catch {}
+    let fileslog = bit.prefixes.productver.join('files.log')
+    if (fileslog.exists) {
+        for each (let file: Path in fileslog.readLines()) {
+            vtrace('Remove', file)
+            file.remove()
+        }
+    }
+    fileslog.remove()
+    for each (file in bit.prefixes.log.glob('*.log*')) {
+        file.remove()
+    }
+    for each (prefix in bit.prefixes) {
+        for each (dir in prefix.glob('**', {include: /\/$/}).sort().reverse()) {
+            vtrace('Remove', dir)
+            dir.remove()
+        }
+        vtrace('Remove', prefix)
+        prefix.remove()
+    }
 }
 
 /*
