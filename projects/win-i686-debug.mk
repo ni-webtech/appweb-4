@@ -15,11 +15,11 @@ export LIB     := $(LIB);$(SDK)/lib:$(VS)/VC/lib
 CONFIG   := win-i686-debug
 CC       := cl.exe
 LD       := link.exe
-CFLAGS   := -nologo -GR- -W3 -Zi -Od -MDd -Zi -Od -MDd
+CFLAGS   := -nologo -GR- -W3 -Zi -Od -MDd
 DFLAGS   := -D_REENTRANT -D_MT
-IFLAGS   := -I$(CONFIG)/inc -I$(CONFIG)/inc
-LDFLAGS  := '-nologo' '-nodefaultlib' '-incremental:no' '-machine:x86' '-machine:x86'
-LIBPATHS := -libpath:$(CONFIG)/bin -libpath:$(CONFIG)/bin
+IFLAGS   := -I$(CONFIG)/inc
+LDFLAGS  := '-nologo' '-nodefaultlib' '-incremental:no' '-machine:x86'
+LIBPATHS := -libpath:$(CONFIG)/bin
 LIBS     := ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib shell32.lib
 
 all: prep \
@@ -156,7 +156,7 @@ $(CONFIG)/inc/mpr.h:
 $(CONFIG)/obj/mprLib.obj: \
         src/deps/mpr/mprLib.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/mprLib.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/deps/mpr/mprLib.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/mprLib.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/mpr/mprLib.c
 
 $(CONFIG)/bin/libmpr.dll:  \
         $(CONFIG)/inc/mpr.h \
@@ -166,7 +166,7 @@ $(CONFIG)/bin/libmpr.dll:  \
 $(CONFIG)/obj/manager.obj: \
         src/deps/mpr/manager.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/manager.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/deps/mpr/manager.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/manager.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/mpr/manager.c
 
 $(CONFIG)/bin/appman:  \
         $(CONFIG)/bin/libmpr.dll \
@@ -176,7 +176,7 @@ $(CONFIG)/bin/appman:  \
 $(CONFIG)/obj/makerom.obj: \
         src/deps/mpr/makerom.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/makerom.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/deps/mpr/makerom.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/makerom.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/mpr/makerom.c
 
 $(CONFIG)/bin/makerom.exe:  \
         $(CONFIG)/bin/libmpr.dll \
@@ -190,7 +190,7 @@ $(CONFIG)/inc/pcre.h:
 $(CONFIG)/obj/pcre.obj: \
         src/deps/pcre/pcre.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/pcre.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/deps/pcre/pcre.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/pcre.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/pcre/pcre.c
 
 $(CONFIG)/bin/libpcre.dll:  \
         $(CONFIG)/inc/pcre.h \
@@ -204,7 +204,7 @@ $(CONFIG)/inc/http.h:
 $(CONFIG)/obj/httpLib.obj: \
         src/deps/http/httpLib.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/httpLib.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/deps/http/httpLib.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/httpLib.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/http/httpLib.c
 
 $(CONFIG)/bin/libhttp.dll:  \
         $(CONFIG)/bin/libmpr.dll \
@@ -216,7 +216,7 @@ $(CONFIG)/bin/libhttp.dll:  \
 $(CONFIG)/obj/http.obj: \
         src/deps/http/http.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/http.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/deps/http/http.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/http.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/http/http.c
 
 $(CONFIG)/bin/http.exe:  \
         $(CONFIG)/bin/libhttp.dll \
@@ -230,7 +230,7 @@ $(CONFIG)/inc/sqlite3.h:
 $(CONFIG)/obj/sqlite3.obj: \
         src/deps/sqlite/sqlite3.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/sqlite3.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/deps/sqlite/sqlite3.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/sqlite3.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/sqlite/sqlite3.c
 
 $(CONFIG)/bin/libsqlite3.dll:  \
         $(CONFIG)/inc/sqlite3.h \
@@ -240,7 +240,7 @@ $(CONFIG)/bin/libsqlite3.dll:  \
 $(CONFIG)/obj/sqlite.obj: \
         src/deps/sqlite/sqlite.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/sqlite.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/deps/sqlite/sqlite.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/sqlite.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/sqlite/sqlite.c
 
 $(CONFIG)/bin/sqlite.exe:  \
         $(CONFIG)/bin/libsqlite3.dll \
@@ -258,32 +258,32 @@ $(CONFIG)/inc/customize.h:
 $(CONFIG)/obj/config.obj: \
         src/config.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/config.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/config.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/config.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/config.c
 
 $(CONFIG)/obj/convenience.obj: \
         src/convenience.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/convenience.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/convenience.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/convenience.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/convenience.c
 
 $(CONFIG)/obj/dirHandler.obj: \
         src/dirHandler.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/dirHandler.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/dirHandler.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/dirHandler.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/dirHandler.c
 
 $(CONFIG)/obj/fileHandler.obj: \
         src/fileHandler.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/fileHandler.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/fileHandler.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/fileHandler.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/fileHandler.c
 
 $(CONFIG)/obj/log.obj: \
         src/log.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/log.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/log.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/log.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/log.c
 
 $(CONFIG)/obj/server.obj: \
         src/server.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/server.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/server.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/server.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/server.c
 
 $(CONFIG)/bin/libappweb.dll:  \
         $(CONFIG)/bin/libmpr.dll \
@@ -318,47 +318,47 @@ $(CONFIG)/inc/mdb.h:
 $(CONFIG)/obj/edi.obj: \
         src/esp/edi.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/edi.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/edi.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/edi.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/edi.c
 
 $(CONFIG)/obj/espAbbrev.obj: \
         src/esp/espAbbrev.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/espAbbrev.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/espAbbrev.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/espAbbrev.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espAbbrev.c
 
 $(CONFIG)/obj/espFramework.obj: \
         src/esp/espFramework.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/espFramework.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/espFramework.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/espFramework.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espFramework.c
 
 $(CONFIG)/obj/espHandler.obj: \
         src/esp/espHandler.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/espHandler.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/espHandler.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/espHandler.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espHandler.c
 
 $(CONFIG)/obj/espHtml.obj: \
         src/esp/espHtml.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/espHtml.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/espHtml.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/espHtml.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espHtml.c
 
 $(CONFIG)/obj/espSession.obj: \
         src/esp/espSession.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/espSession.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/espSession.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/espSession.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espSession.c
 
 $(CONFIG)/obj/espTemplate.obj: \
         src/esp/espTemplate.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/espTemplate.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/espTemplate.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/espTemplate.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espTemplate.c
 
 $(CONFIG)/obj/mdb.obj: \
         src/esp/mdb.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/mdb.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/mdb.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/mdb.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/mdb.c
 
 $(CONFIG)/obj/sdb.obj: \
         src/esp/sdb.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/sdb.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/sdb.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/sdb.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/sdb.c
 
 $(CONFIG)/bin/mod_esp.dll:  \
         $(CONFIG)/bin/libappweb.dll \
@@ -380,7 +380,7 @@ $(CONFIG)/bin/mod_esp.dll:  \
 $(CONFIG)/obj/esp.obj: \
         src/esp/esp.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/esp.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/esp.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/esp.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/esp.c
 
 $(CONFIG)/bin/esp.exe:  \
         $(CONFIG)/bin/libappweb.dll \
@@ -407,7 +407,7 @@ $(CONFIG)/bin/esp-www:
 $(CONFIG)/obj/cgiHandler.obj: \
         src/modules/cgiHandler.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/cgiHandler.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/modules/cgiHandler.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/cgiHandler.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/modules/cgiHandler.c
 
 $(CONFIG)/bin/mod_cgi.dll:  \
         $(CONFIG)/bin/libappweb.dll \
@@ -417,7 +417,7 @@ $(CONFIG)/bin/mod_cgi.dll:  \
 $(CONFIG)/obj/auth.obj: \
         src/utils/auth.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/auth.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/utils/auth.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/auth.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/utils/auth.c
 
 $(CONFIG)/bin/auth.exe:  \
         $(CONFIG)/bin/libmpr.dll \
@@ -427,7 +427,7 @@ $(CONFIG)/bin/auth.exe:  \
 $(CONFIG)/obj/cgiProgram.obj: \
         src/utils/cgiProgram.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/cgiProgram.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/utils/cgiProgram.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/cgiProgram.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/utils/cgiProgram.c
 
 $(CONFIG)/bin/cgiProgram.exe:  \
         $(CONFIG)/obj/cgiProgram.obj
@@ -436,7 +436,7 @@ $(CONFIG)/bin/cgiProgram.exe:  \
 $(CONFIG)/obj/setConfig.obj: \
         src/utils/setConfig.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/setConfig.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/utils/setConfig.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/setConfig.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/utils/setConfig.c
 
 $(CONFIG)/bin/setConfig.exe:  \
         $(CONFIG)/bin/libmpr.dll \
@@ -450,7 +450,7 @@ $(CONFIG)/inc/appwebMonitor.h:
 $(CONFIG)/obj/appweb.obj: \
         src/server/appweb.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/appweb.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/server/appweb.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/appweb.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/server/appweb.c
 
 $(CONFIG)/bin/appweb.exe:  \
         $(CONFIG)/bin/libappweb.dll \
@@ -465,7 +465,7 @@ $(CONFIG)/obj/appwebMonitor.res: \
 $(CONFIG)/obj/appwebMonitor.obj: \
         src/server/WIN/appwebMonitor.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/appwebMonitor.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/server/WIN/appwebMonitor.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/appwebMonitor.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/server/WIN/appwebMonitor.c
 
 $(CONFIG)/bin/appwebMonitor.exe:  \
         $(CONFIG)/bin/libappweb.dll \
@@ -480,7 +480,7 @@ $(CONFIG)/bin/appwebMonitor.ico:
 $(CONFIG)/obj/simpleServer.obj: \
         src/samples/c/simpleServer/simpleServer.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/simpleServer.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/samples/c/simpleServer/simpleServer.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/simpleServer.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/c/simpleServer/simpleServer.c
 
 $(CONFIG)/bin/simpleServer.exe:  \
         $(CONFIG)/bin/libappweb.dll \
@@ -490,7 +490,7 @@ $(CONFIG)/bin/simpleServer.exe:  \
 $(CONFIG)/obj/simpleHandler.obj: \
         src/samples/c/simpleHandler/simpleHandler.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/simpleHandler.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/samples/c/simpleHandler/simpleHandler.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/simpleHandler.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/c/simpleHandler/simpleHandler.c
 
 $(CONFIG)/bin/simpleHandler.dll:  \
         $(CONFIG)/bin/libappweb.dll \
@@ -500,7 +500,7 @@ $(CONFIG)/bin/simpleHandler.dll:  \
 $(CONFIG)/obj/simpleClient.obj: \
         src/samples/c/simpleClient/simpleClient.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/simpleClient.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/samples/c/simpleClient/simpleClient.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/simpleClient.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/c/simpleClient/simpleClient.c
 
 $(CONFIG)/bin/simpleClient.exe:  \
         $(CONFIG)/bin/libappweb.dll \
@@ -510,7 +510,7 @@ $(CONFIG)/bin/simpleClient.exe:  \
 $(CONFIG)/obj/cppHandler.obj: \
         src/samples/cpp/cppHandler/cppHandler.cpp \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/cppHandler.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/samples/cpp/cppHandler/cppHandler.cpp
+	"$(CC)" -c -Fo$(CONFIG)/obj/cppHandler.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/cpp/cppHandler/cppHandler.cpp
 
 src/samples/cpp/cppHandler/cppModule.dll:  \
         $(CONFIG)/bin/libappweb.dll \
@@ -520,7 +520,7 @@ src/samples/cpp/cppHandler/cppModule.dll:  \
 $(CONFIG)/obj/cppModule.obj: \
         src/samples/cpp/cppModule/cppModule.cpp \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/cppModule.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc src/samples/cpp/cppModule/cppModule.cpp
+	"$(CC)" -c -Fo$(CONFIG)/obj/cppModule.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/cpp/cppModule/cppModule.cpp
 
 src/samples/cpp/cppModule/cppModule.dll:  \
         $(CONFIG)/bin/libappweb.dll \
@@ -534,12 +534,12 @@ $(CONFIG)/inc/testAppweb.h:
 $(CONFIG)/obj/testAppweb.obj: \
         test/testAppweb.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/testAppweb.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc test/testAppweb.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/testAppweb.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc test/testAppweb.c
 
 $(CONFIG)/obj/testHttp.obj: \
         test/testHttp.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/testHttp.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc test/testHttp.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/testHttp.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc test/testHttp.c
 
 $(CONFIG)/bin/testAppweb.exe:  \
         $(CONFIG)/bin/libappweb.dll \
@@ -576,7 +576,7 @@ test/cgi-bin/cgiProgram.exe:
 $(CONFIG)/obj/removeFiles.obj: \
         package/WIN/removeFiles.c \
         $(CONFIG)/inc/buildConfig.h
-	"$(CC)" -c -Fo$(CONFIG)/obj/removeFiles.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I$(CONFIG)/inc package/WIN/removeFiles.c
+	"$(CC)" -c -Fo$(CONFIG)/obj/removeFiles.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc package/WIN/removeFiles.c
 
 $(CONFIG)/bin/removeFiles.exe:  \
         $(CONFIG)/bin/libmpr.dll \

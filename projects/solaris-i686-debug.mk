@@ -5,12 +5,12 @@
 CONFIG   := solaris-i686-debug
 CC       := cc
 LD       := ld
-CFLAGS   := -Wall -fPIC -O3 -mcpu=i686 -fPIC -O3 -mcpu=i686
-DFLAGS   := -D_REENTRANT -DCPU=${ARCH} -DPIC -DPIC
-IFLAGS   := -I$(CONFIG)/inc -I$(CONFIG)/inc
-LDFLAGS  := 
-LIBPATHS := -L$(CONFIG)/lib -L$(CONFIG)/lib
-LIBS     := -llxnet -lrt -lsocket -lpthread -lm -lpthread -lm
+CFLAGS   := -Wall -fPIC -g -mcpu=i686
+DFLAGS   := -D_REENTRANT -DCPU=${ARCH} -DPIC
+IFLAGS   := -I$(CONFIG)/inc
+LDFLAGS  := '-g'
+LIBPATHS := -L$(CONFIG)/lib
+LIBS     := -llxnet -lrt -lsocket -lpthread -lm
 
 all: prep \
         $(CONFIG)/lib/libmpr.so \
@@ -143,32 +143,32 @@ $(CONFIG)/inc/mpr.h:
 $(CONFIG)/obj/mprLib.o: \
         src/deps/mpr/mprLib.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/mprLib.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/deps/mpr/mprLib.c
+	$(CC) -c -o $(CONFIG)/obj/mprLib.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/deps/mpr/mprLib.c
 
 $(CONFIG)/lib/libmpr.so:  \
         $(CONFIG)/inc/mpr.h \
         $(CONFIG)/obj/mprLib.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -shared -o $(CONFIG)/lib/libmpr.so $(LIBPATHS) $(CONFIG)/obj/mprLib.o $(LIBS)
+	$(CC) -shared -o $(CONFIG)/lib/libmpr.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/mprLib.o $(LIBS)
 
 $(CONFIG)/obj/manager.o: \
         src/deps/mpr/manager.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/manager.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/deps/mpr/manager.c
+	$(CC) -c -o $(CONFIG)/obj/manager.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/deps/mpr/manager.c
 
 $(CONFIG)/bin/appman:  \
         $(CONFIG)/lib/libmpr.so \
         $(CONFIG)/obj/manager.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -o $(CONFIG)/bin/appman $(LIBPATHS) $(CONFIG)/obj/manager.o $(LIBS) -lmpr 
+	$(CC) -o $(CONFIG)/bin/appman $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/manager.o $(LIBS) -lmpr $(LDFLAGS)
 
 $(CONFIG)/obj/makerom.o: \
         src/deps/mpr/makerom.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/makerom.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/deps/mpr/makerom.c
+	$(CC) -c -o $(CONFIG)/obj/makerom.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/deps/mpr/makerom.c
 
 $(CONFIG)/bin/makerom:  \
         $(CONFIG)/lib/libmpr.so \
         $(CONFIG)/obj/makerom.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -o $(CONFIG)/bin/makerom $(LIBPATHS) $(CONFIG)/obj/makerom.o $(LIBS) -lmpr 
+	$(CC) -o $(CONFIG)/bin/makerom $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/makerom.o $(LIBS) -lmpr $(LDFLAGS)
 
 $(CONFIG)/inc/pcre.h: 
 	rm -fr solaris-i686-debug/inc/pcre.h
@@ -177,12 +177,12 @@ $(CONFIG)/inc/pcre.h:
 $(CONFIG)/obj/pcre.o: \
         src/deps/pcre/pcre.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/pcre.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/deps/pcre/pcre.c
+	$(CC) -c -o $(CONFIG)/obj/pcre.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/deps/pcre/pcre.c
 
 $(CONFIG)/lib/libpcre.so:  \
         $(CONFIG)/inc/pcre.h \
         $(CONFIG)/obj/pcre.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -shared -o $(CONFIG)/lib/libpcre.so $(LIBPATHS) $(CONFIG)/obj/pcre.o $(LIBS)
+	$(CC) -shared -o $(CONFIG)/lib/libpcre.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/pcre.o $(LIBS)
 
 $(CONFIG)/inc/http.h: 
 	rm -fr solaris-i686-debug/inc/http.h
@@ -191,24 +191,24 @@ $(CONFIG)/inc/http.h:
 $(CONFIG)/obj/httpLib.o: \
         src/deps/http/httpLib.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/httpLib.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/deps/http/httpLib.c
+	$(CC) -c -o $(CONFIG)/obj/httpLib.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/deps/http/httpLib.c
 
 $(CONFIG)/lib/libhttp.so:  \
         $(CONFIG)/lib/libmpr.so \
         $(CONFIG)/lib/libpcre.so \
         $(CONFIG)/inc/http.h \
         $(CONFIG)/obj/httpLib.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -shared -o $(CONFIG)/lib/libhttp.so $(LIBPATHS) $(CONFIG)/obj/httpLib.o $(LIBS) -lmpr -lpcre
+	$(CC) -shared -o $(CONFIG)/lib/libhttp.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/httpLib.o $(LIBS) -lmpr -lpcre
 
 $(CONFIG)/obj/http.o: \
         src/deps/http/http.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/http.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/deps/http/http.c
+	$(CC) -c -o $(CONFIG)/obj/http.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/deps/http/http.c
 
 $(CONFIG)/bin/http:  \
         $(CONFIG)/lib/libhttp.so \
         $(CONFIG)/obj/http.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -o $(CONFIG)/bin/http $(LIBPATHS) $(CONFIG)/obj/http.o $(LIBS) -lhttp -lmpr -lpcre 
+	$(CC) -o $(CONFIG)/bin/http $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/http.o $(LIBS) -lhttp -lmpr -lpcre $(LDFLAGS)
 
 $(CONFIG)/inc/sqlite3.h: 
 	rm -fr solaris-i686-debug/inc/sqlite3.h
@@ -217,22 +217,22 @@ $(CONFIG)/inc/sqlite3.h:
 $(CONFIG)/obj/sqlite3.o: \
         src/deps/sqlite/sqlite3.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/sqlite3.o -fPIC -O3 -mcpu=i686 -fPIC -O3 -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/deps/sqlite/sqlite3.c
+	$(CC) -c -o $(CONFIG)/obj/sqlite3.o -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/deps/sqlite/sqlite3.c
 
 $(CONFIG)/lib/libsqlite3.so:  \
         $(CONFIG)/inc/sqlite3.h \
         $(CONFIG)/obj/sqlite3.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -shared -o $(CONFIG)/lib/libsqlite3.so $(LIBPATHS) $(CONFIG)/obj/sqlite3.o $(LIBS)
+	$(CC) -shared -o $(CONFIG)/lib/libsqlite3.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/sqlite3.o $(LIBS)
 
 $(CONFIG)/obj/sqlite.o: \
         src/deps/sqlite/sqlite.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/sqlite.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/deps/sqlite/sqlite.c
+	$(CC) -c -o $(CONFIG)/obj/sqlite.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/deps/sqlite/sqlite.c
 
 $(CONFIG)/bin/sqlite:  \
         $(CONFIG)/lib/libsqlite3.so \
         $(CONFIG)/obj/sqlite.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -o $(CONFIG)/bin/sqlite $(LIBPATHS) $(CONFIG)/obj/sqlite.o $(LIBS) -lsqlite3 
+	$(CC) -o $(CONFIG)/bin/sqlite $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/sqlite.o $(LIBS) -lsqlite3 $(LDFLAGS)
 
 $(CONFIG)/inc/appweb.h: 
 	rm -fr solaris-i686-debug/inc/appweb.h
@@ -245,32 +245,32 @@ $(CONFIG)/inc/customize.h:
 $(CONFIG)/obj/config.o: \
         src/config.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/config.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/config.c
+	$(CC) -c -o $(CONFIG)/obj/config.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/config.c
 
 $(CONFIG)/obj/convenience.o: \
         src/convenience.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/convenience.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/convenience.c
+	$(CC) -c -o $(CONFIG)/obj/convenience.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/convenience.c
 
 $(CONFIG)/obj/dirHandler.o: \
         src/dirHandler.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/dirHandler.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/dirHandler.c
+	$(CC) -c -o $(CONFIG)/obj/dirHandler.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/dirHandler.c
 
 $(CONFIG)/obj/fileHandler.o: \
         src/fileHandler.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/fileHandler.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/fileHandler.c
+	$(CC) -c -o $(CONFIG)/obj/fileHandler.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/fileHandler.c
 
 $(CONFIG)/obj/log.o: \
         src/log.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/log.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/log.c
+	$(CC) -c -o $(CONFIG)/obj/log.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/log.c
 
 $(CONFIG)/obj/server.o: \
         src/server.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/server.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/server.c
+	$(CC) -c -o $(CONFIG)/obj/server.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/server.c
 
 $(CONFIG)/lib/libappweb.so:  \
         $(CONFIG)/lib/libmpr.so \
@@ -284,7 +284,7 @@ $(CONFIG)/lib/libappweb.so:  \
         $(CONFIG)/obj/fileHandler.o \
         $(CONFIG)/obj/log.o \
         $(CONFIG)/obj/server.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -shared -o $(CONFIG)/lib/libappweb.so $(LIBPATHS) $(CONFIG)/obj/config.o $(CONFIG)/obj/convenience.o $(CONFIG)/obj/dirHandler.o $(CONFIG)/obj/fileHandler.o $(CONFIG)/obj/log.o $(CONFIG)/obj/server.o $(LIBS) -lmpr -lhttp -lpcre -lpcre
+	$(CC) -shared -o $(CONFIG)/lib/libappweb.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/config.o $(CONFIG)/obj/convenience.o $(CONFIG)/obj/dirHandler.o $(CONFIG)/obj/fileHandler.o $(CONFIG)/obj/log.o $(CONFIG)/obj/server.o $(LIBS) -lmpr -lhttp -lpcre -lpcre
 
 $(CONFIG)/inc/edi.h: 
 	rm -fr solaris-i686-debug/inc/edi.h
@@ -305,47 +305,47 @@ $(CONFIG)/inc/mdb.h:
 $(CONFIG)/obj/edi.o: \
         src/esp/edi.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/edi.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/edi.c
+	$(CC) -c -o $(CONFIG)/obj/edi.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/esp/edi.c
 
 $(CONFIG)/obj/espAbbrev.o: \
         src/esp/espAbbrev.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/espAbbrev.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/espAbbrev.c
+	$(CC) -c -o $(CONFIG)/obj/espAbbrev.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/esp/espAbbrev.c
 
 $(CONFIG)/obj/espFramework.o: \
         src/esp/espFramework.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/espFramework.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/espFramework.c
+	$(CC) -c -o $(CONFIG)/obj/espFramework.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/esp/espFramework.c
 
 $(CONFIG)/obj/espHandler.o: \
         src/esp/espHandler.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/espHandler.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/espHandler.c
+	$(CC) -c -o $(CONFIG)/obj/espHandler.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/esp/espHandler.c
 
 $(CONFIG)/obj/espHtml.o: \
         src/esp/espHtml.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/espHtml.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/espHtml.c
+	$(CC) -c -o $(CONFIG)/obj/espHtml.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/esp/espHtml.c
 
 $(CONFIG)/obj/espSession.o: \
         src/esp/espSession.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/espSession.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/espSession.c
+	$(CC) -c -o $(CONFIG)/obj/espSession.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/esp/espSession.c
 
 $(CONFIG)/obj/espTemplate.o: \
         src/esp/espTemplate.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/espTemplate.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/espTemplate.c
+	$(CC) -c -o $(CONFIG)/obj/espTemplate.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/esp/espTemplate.c
 
 $(CONFIG)/obj/mdb.o: \
         src/esp/mdb.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/mdb.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/mdb.c
+	$(CC) -c -o $(CONFIG)/obj/mdb.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/esp/mdb.c
 
 $(CONFIG)/obj/sdb.o: \
         src/esp/sdb.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/sdb.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/sdb.c
+	$(CC) -c -o $(CONFIG)/obj/sdb.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/esp/sdb.c
 
 $(CONFIG)/lib/mod_esp.so:  \
         $(CONFIG)/lib/libappweb.so \
@@ -362,12 +362,12 @@ $(CONFIG)/lib/mod_esp.so:  \
         $(CONFIG)/obj/espTemplate.o \
         $(CONFIG)/obj/mdb.o \
         $(CONFIG)/obj/sdb.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -shared -o $(CONFIG)/lib/mod_esp.so $(LIBPATHS) $(CONFIG)/obj/edi.o $(CONFIG)/obj/espAbbrev.o $(CONFIG)/obj/espFramework.o $(CONFIG)/obj/espHandler.o $(CONFIG)/obj/espHtml.o $(CONFIG)/obj/espSession.o $(CONFIG)/obj/espTemplate.o $(CONFIG)/obj/mdb.o $(CONFIG)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -shared -o $(CONFIG)/lib/mod_esp.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/edi.o $(CONFIG)/obj/espAbbrev.o $(CONFIG)/obj/espFramework.o $(CONFIG)/obj/espHandler.o $(CONFIG)/obj/espHtml.o $(CONFIG)/obj/espSession.o $(CONFIG)/obj/espTemplate.o $(CONFIG)/obj/mdb.o $(CONFIG)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 $(CONFIG)/obj/esp.o: \
         src/esp/esp.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/esp.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/esp/esp.c
+	$(CC) -c -o $(CONFIG)/obj/esp.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/esp/esp.c
 
 $(CONFIG)/bin/esp:  \
         $(CONFIG)/lib/libappweb.so \
@@ -381,7 +381,7 @@ $(CONFIG)/bin/esp:  \
         $(CONFIG)/obj/espTemplate.o \
         $(CONFIG)/obj/mdb.o \
         $(CONFIG)/obj/sdb.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -o $(CONFIG)/bin/esp $(LIBPATHS) $(CONFIG)/obj/edi.o $(CONFIG)/obj/esp.o $(CONFIG)/obj/espAbbrev.o $(CONFIG)/obj/espFramework.o $(CONFIG)/obj/espHandler.o $(CONFIG)/obj/espHtml.o $(CONFIG)/obj/espSession.o $(CONFIG)/obj/espTemplate.o $(CONFIG)/obj/mdb.o $(CONFIG)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre 
+	$(CC) -o $(CONFIG)/bin/esp $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/edi.o $(CONFIG)/obj/esp.o $(CONFIG)/obj/espAbbrev.o $(CONFIG)/obj/espFramework.o $(CONFIG)/obj/espHandler.o $(CONFIG)/obj/espHtml.o $(CONFIG)/obj/espSession.o $(CONFIG)/obj/espTemplate.o $(CONFIG)/obj/mdb.o $(CONFIG)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre $(LDFLAGS)
 
 $(CONFIG)/lib/esp.conf: 
 	rm -fr solaris-i686-debug/lib/esp.conf
@@ -394,41 +394,41 @@ $(CONFIG)/lib/esp-www:
 $(CONFIG)/obj/cgiHandler.o: \
         src/modules/cgiHandler.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/cgiHandler.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/modules/cgiHandler.c
+	$(CC) -c -o $(CONFIG)/obj/cgiHandler.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/modules/cgiHandler.c
 
 $(CONFIG)/lib/mod_cgi.so:  \
         $(CONFIG)/lib/libappweb.so \
         $(CONFIG)/obj/cgiHandler.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -shared -o $(CONFIG)/lib/mod_cgi.so $(LIBPATHS) $(CONFIG)/obj/cgiHandler.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -shared -o $(CONFIG)/lib/mod_cgi.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/cgiHandler.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 $(CONFIG)/obj/auth.o: \
         src/utils/auth.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/auth.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/utils/auth.c
+	$(CC) -c -o $(CONFIG)/obj/auth.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/utils/auth.c
 
 $(CONFIG)/bin/auth:  \
         $(CONFIG)/lib/libmpr.so \
         $(CONFIG)/obj/auth.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -o $(CONFIG)/bin/auth $(LIBPATHS) $(CONFIG)/obj/auth.o $(LIBS) -lmpr 
+	$(CC) -o $(CONFIG)/bin/auth $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/auth.o $(LIBS) -lmpr $(LDFLAGS)
 
 $(CONFIG)/obj/cgiProgram.o: \
         src/utils/cgiProgram.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/cgiProgram.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/utils/cgiProgram.c
+	$(CC) -c -o $(CONFIG)/obj/cgiProgram.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/utils/cgiProgram.c
 
 $(CONFIG)/bin/cgiProgram:  \
         $(CONFIG)/obj/cgiProgram.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -o $(CONFIG)/bin/cgiProgram $(LIBPATHS) $(CONFIG)/obj/cgiProgram.o $(LIBS) 
+	$(CC) -o $(CONFIG)/bin/cgiProgram $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/cgiProgram.o $(LIBS) $(LDFLAGS)
 
 $(CONFIG)/obj/setConfig.o: \
         src/utils/setConfig.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/setConfig.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/utils/setConfig.c
+	$(CC) -c -o $(CONFIG)/obj/setConfig.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/utils/setConfig.c
 
 $(CONFIG)/bin/setConfig:  \
         $(CONFIG)/lib/libmpr.so \
         $(CONFIG)/obj/setConfig.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -o $(CONFIG)/bin/setConfig $(LIBPATHS) $(CONFIG)/obj/setConfig.o $(LIBS) -lmpr 
+	$(CC) -o $(CONFIG)/bin/setConfig $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/setConfig.o $(LIBS) -lmpr $(LDFLAGS)
 
 $(CONFIG)/inc/appwebMonitor.h: 
 	rm -fr solaris-i686-debug/inc/appwebMonitor.h
@@ -437,63 +437,63 @@ $(CONFIG)/inc/appwebMonitor.h:
 $(CONFIG)/obj/appweb.o: \
         src/server/appweb.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/appweb.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/server/appweb.c
+	$(CC) -c -o $(CONFIG)/obj/appweb.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/server/appweb.c
 
 $(CONFIG)/bin/appweb:  \
         $(CONFIG)/lib/libappweb.so \
         $(CONFIG)/inc/appwebMonitor.h \
         $(CONFIG)/obj/appweb.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -o $(CONFIG)/bin/appweb $(LIBPATHS) $(CONFIG)/obj/appweb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre 
+	$(CC) -o $(CONFIG)/bin/appweb $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/appweb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre $(LDFLAGS)
 
 $(CONFIG)/obj/simpleServer.o: \
         src/samples/c/simpleServer/simpleServer.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/simpleServer.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/samples/c/simpleServer/simpleServer.c
+	$(CC) -c -o $(CONFIG)/obj/simpleServer.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/samples/c/simpleServer/simpleServer.c
 
 $(CONFIG)/bin/simpleServer:  \
         $(CONFIG)/lib/libappweb.so \
         $(CONFIG)/obj/simpleServer.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -o $(CONFIG)/bin/simpleServer $(LIBPATHS) $(CONFIG)/obj/simpleServer.o $(LIBS) -lappweb -lmpr -lhttp -lpcre 
+	$(CC) -o $(CONFIG)/bin/simpleServer $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/simpleServer.o $(LIBS) -lappweb -lmpr -lhttp -lpcre $(LDFLAGS)
 
 $(CONFIG)/obj/simpleHandler.o: \
         src/samples/c/simpleHandler/simpleHandler.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/simpleHandler.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/samples/c/simpleHandler/simpleHandler.c
+	$(CC) -c -o $(CONFIG)/obj/simpleHandler.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/samples/c/simpleHandler/simpleHandler.c
 
 $(CONFIG)/lib/simpleHandler.so:  \
         $(CONFIG)/lib/libappweb.so \
         $(CONFIG)/obj/simpleHandler.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -shared -o $(CONFIG)/lib/simpleHandler.so $(LIBPATHS) $(CONFIG)/obj/simpleHandler.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -shared -o $(CONFIG)/lib/simpleHandler.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/simpleHandler.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 $(CONFIG)/obj/simpleClient.o: \
         src/samples/c/simpleClient/simpleClient.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/simpleClient.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/samples/c/simpleClient/simpleClient.c
+	$(CC) -c -o $(CONFIG)/obj/simpleClient.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/samples/c/simpleClient/simpleClient.c
 
 $(CONFIG)/bin/simpleClient:  \
         $(CONFIG)/lib/libappweb.so \
         $(CONFIG)/obj/simpleClient.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -o $(CONFIG)/bin/simpleClient $(LIBPATHS) $(CONFIG)/obj/simpleClient.o $(LIBS) -lappweb -lmpr -lhttp -lpcre 
+	$(CC) -o $(CONFIG)/bin/simpleClient $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/simpleClient.o $(LIBS) -lappweb -lmpr -lhttp -lpcre $(LDFLAGS)
 
 $(CONFIG)/obj/cppHandler.o: \
         src/samples/cpp/cppHandler/cppHandler.cpp \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/cppHandler.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/samples/cpp/cppHandler/cppHandler.cpp
+	$(CC) -c -o $(CONFIG)/obj/cppHandler.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/samples/cpp/cppHandler/cppHandler.cpp
 
 src/samples/cpp/cppHandler/cppModule.so:  \
         $(CONFIG)/lib/libappweb.so \
         $(CONFIG)/obj/cppHandler.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -shared -o src/samples/cpp/cppHandler/cppModule.so $(LIBPATHS) $(CONFIG)/obj/cppHandler.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -shared -o src/samples/cpp/cppHandler/cppModule.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/cppHandler.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 $(CONFIG)/obj/cppModule.o: \
         src/samples/cpp/cppModule/cppModule.cpp \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/cppModule.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc src/samples/cpp/cppModule/cppModule.cpp
+	$(CC) -c -o $(CONFIG)/obj/cppModule.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/samples/cpp/cppModule/cppModule.cpp
 
 src/samples/cpp/cppModule/cppModule.so:  \
         $(CONFIG)/lib/libappweb.so \
         $(CONFIG)/obj/cppModule.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -shared -o src/samples/cpp/cppModule/cppModule.so $(LIBPATHS) $(CONFIG)/obj/cppModule.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -shared -o src/samples/cpp/cppModule/cppModule.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/cppModule.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 $(CONFIG)/inc/testAppweb.h: 
 	rm -fr solaris-i686-debug/inc/testAppweb.h
@@ -502,19 +502,19 @@ $(CONFIG)/inc/testAppweb.h:
 $(CONFIG)/obj/testAppweb.o: \
         test/testAppweb.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/testAppweb.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc test/testAppweb.c
+	$(CC) -c -o $(CONFIG)/obj/testAppweb.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc test/testAppweb.c
 
 $(CONFIG)/obj/testHttp.o: \
         test/testHttp.c \
         $(CONFIG)/inc/buildConfig.h
-	$(LDFLAGS)$(LDFLAGS)$(CC) -c -o $(CONFIG)/obj/testHttp.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -DPIC -I$(CONFIG)/inc -I$(CONFIG)/inc test/testHttp.c
+	$(CC) -c -o $(CONFIG)/obj/testHttp.o -Wall -fPIC $(LDFLAGS) -mcpu=i686 -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc test/testHttp.c
 
 $(CONFIG)/bin/testAppweb:  \
         $(CONFIG)/lib/libappweb.so \
         $(CONFIG)/inc/testAppweb.h \
         $(CONFIG)/obj/testAppweb.o \
         $(CONFIG)/obj/testHttp.o
-	$(LDFLAGS)$(LDFLAGS)$(CC) -o $(CONFIG)/bin/testAppweb $(LIBPATHS) $(CONFIG)/obj/testAppweb.o $(CONFIG)/obj/testHttp.o $(LIBS) -lappweb -lmpr -lhttp -lpcre 
+	$(CC) -o $(CONFIG)/bin/testAppweb $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/testAppweb.o $(CONFIG)/obj/testHttp.o $(LIBS) -lappweb -lmpr -lhttp -lpcre $(LDFLAGS)
 
 test/cgi-bin/testScript: 
 	echo '#!$(CONFIG)/bin/cgiProgram' >test/cgi-bin/testScript ; chmod +x test/cgi-bin/testScript
