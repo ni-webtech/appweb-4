@@ -5,8 +5,8 @@
 #
 START=50
 STOP=50
-APPWEB_CMD=!!ORIG_BLD_BIN_PREFIX!!/!!BLD_PRODUCT!!
-APPWEB_DIR=!!ORIG_BLD_CFG_PREFIX!!
+APPWEB_CMD=${prefixes.bin}/${settings.product}
+APPWEB_DIR=${prefixes.cfg}
 
 start() {
     start-stop-daemon -S -b -x "${APPWEB_CMD}" -- --home "$APPWEB_DIR"

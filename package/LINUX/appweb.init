@@ -21,16 +21,15 @@
 #
 ###############################################################################
 
-NAME=!!BLD_PRODUCT!!
-
-APPWEB_NAME="!!BLD_NAME!!"
-APPWEB_CMD=!!ORIG_BLD_BIN_PREFIX!!/$NAME
-APPWEB_DIR=!!ORIG_BLD_CFG_PREFIX!!
+NAME=${settings.product}
+APPWEB_NAME="${settings.title}"
+APPWEB_CMD=${prefixes.bin}/$NAME
+APPWEB_DIR=${prefixes.cfg}
 
 PIDFILE=${PIDFILE-/var/run/$NAME.pid}
 LOCKFILE=${LOCKFILE-/var/lock/$NAME}
 
-MANAGER_CMD=!!ORIG_BLD_BIN_PREFIX!!/appman
+MANAGER_CMD=${prefixes.bin}/appman
 MANAGER_SWITCHES="--daemon --program $APPWEB_CMD --home $APPWEB_DIR --pidfile $PIDFILE run"
 MANAGER_TIMEOUT=10
 

@@ -165,3 +165,5 @@ test/web/caching/cache.cgi
 test/web/basic/basic.cgi
 .*.guid
 src/samples/c/simpleEjs/simpleEjs
+src/samples/cpp/cppHandler/cppModule.so
+src/samples/cpp/cppModule/cppModule.so
