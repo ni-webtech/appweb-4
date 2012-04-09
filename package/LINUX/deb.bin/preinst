@@ -50,6 +50,7 @@ configureService() {
         elif [ -f /etc/init.d/$BLD_PRODUCT ] ; then
             ( cd /etc/init.d ; /etc/init.d/$BLD_PRODUCT disable )
 		fi
+        "$BLD_BIN_PREFIX/linkup" Remove /
 		;;
 	esac
 }

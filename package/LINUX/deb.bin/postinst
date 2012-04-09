@@ -7,6 +7,7 @@
 
 BLD_PRODUCT=${settings.product}
 BLD_NAME="${settings.title}"
+BLD_BIN_PREFIX="${prefixes.bin}"
 BLD_LIB_PREFIX="${prefixes.lib}"
 BLD_LOG_PREFIX="${prefixes.log}"
 BLD_SPL_PREFIX="${prefixes.spool}"
@@ -52,6 +53,7 @@ case $action in
 	configure)							# when new
         setPerms
 		oldVersion=$2
+        "$BLD_BIN_PREFIX/linkup" Install /
         appman -v install
         if [ "$APPWEB_DONT_START" != 1 ] ; then
             appman enable
