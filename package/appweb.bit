@@ -1,5 +1,5 @@
 /*
-    product.bit -- Bit File to build the combo Appweb release
+    main.bit -- Bit File to build the combo Appweb release
  */
 
 Bit.load({
