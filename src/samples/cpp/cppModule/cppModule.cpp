@@ -22,6 +22,10 @@ static int customConfigKey(MaState *state, cchar *key, cchar *value)
 }
 
 
+#ifdef __cplusplus 
+extern "C" {
+#endif
+
 /*
     Module load initialization. This is called when the module is first loaded.
  */
@@ -41,6 +45,9 @@ int maSimpleModuleInit(Http *http, MprModule *mp)
     return 0;
 }
 
+#ifdef __cplusplus 
+}
+#endif
 
 /*
     @copy   default

@@ -51,6 +51,9 @@ static void incomingSimpleData(HttpQueue *q, HttpPacket *packet)
     mprLog(0, "Data in packet is %s", mprGetBufStart(packet->content));
 }
 
+#ifdef __cplusplus 
+extern "C" {
+#endif
 
 /*
     Module load initialization. This is called when the module is first loaded. The module name is "Simple".
@@ -67,6 +70,9 @@ int maSimpleHandlerInit(Http *http, MprModule *module)
     return 0;
 }
 
+#ifdef __cplusplus 
+}
+#endif
 
 /*
     @copy   default
