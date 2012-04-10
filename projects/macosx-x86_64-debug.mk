@@ -31,11 +31,6 @@ all: prep \
         $(CONFIG)/bin/cgiProgram \
         $(CONFIG)/bin/setConfig \
         $(CONFIG)/bin/appweb \
-        $(CONFIG)/bin/simpleServer \
-        $(CONFIG)/lib/simpleHandler.dylib \
-        $(CONFIG)/bin/simpleClient \
-        src/samples/cpp/cppHandler/cppModule.dylib \
-        src/samples/cpp/cppModule/cppModule.dylib \
         $(CONFIG)/bin/testAppweb \
         test/cgi-bin/testScript \
         test/web/caching/cache.cgi \
@@ -77,12 +72,6 @@ clean:
 	rm -rf $(CONFIG)/bin/appweb
 	rm -rf $(CONFIG)/bin/appwebMonitor
 	rm -rf $(CONFIG)/lib/appwebMonitor.ico
-	rm -rf $(CONFIG)/bin/simpleServer
-	rm -rf $(CONFIG)/lib/simpleHandler.dylib
-	rm -rf $(CONFIG)/bin/simpleClient
-	rm -rf $(CONFIG)/bin/simpleEjs
-	rm -rf src/samples/cpp/cppHandler/cppModule.dylib
-	rm -rf src/samples/cpp/cppModule/cppModule.dylib
 	rm -rf $(CONFIG)/bin/testAppweb
 	rm -rf test/cgi-bin/testScript
 	rm -rf test/web/caching/cache.cgi
@@ -489,21 +478,11 @@ $(CONFIG)/obj/simpleServer.o: \
         $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/simpleServer.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/c/simpleServer/simpleServer.c
 
-$(CONFIG)/bin/simpleServer:  \
-        $(CONFIG)/lib/libappweb.dylib \
-        $(CONFIG)/obj/simpleServer.o
-	$(CC) -o $(CONFIG)/bin/simpleServer -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/simpleServer.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
-
 $(CONFIG)/obj/simpleHandler.o: \
         src/samples/c/simpleHandler/simpleHandler.c \
         $(CONFIG)/inc/buildConfig.h \
         $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/simpleHandler.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/c/simpleHandler/simpleHandler.c
-
-$(CONFIG)/lib/simpleHandler.dylib:  \
-        $(CONFIG)/lib/libappweb.dylib \
-        $(CONFIG)/obj/simpleHandler.o
-	$(CC) -dynamiclib -o $(CONFIG)/lib/simpleHandler.dylib -arch x86_64 $(LDFLAGS) $(LIBPATHS) -install_name @rpath/simpleHandler.dylib $(CONFIG)/obj/simpleHandler.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 $(CONFIG)/obj/simpleClient.o: \
         src/samples/c/simpleClient/simpleClient.c \
@@ -511,32 +490,17 @@ $(CONFIG)/obj/simpleClient.o: \
         $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/simpleClient.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/c/simpleClient/simpleClient.c
 
-$(CONFIG)/bin/simpleClient:  \
-        $(CONFIG)/lib/libappweb.dylib \
-        $(CONFIG)/obj/simpleClient.o
-	$(CC) -o $(CONFIG)/bin/simpleClient -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/simpleClient.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
-
 $(CONFIG)/obj/cppHandler.o: \
         src/samples/cpp/cppHandler/cppHandler.cpp \
         $(CONFIG)/inc/buildConfig.h \
         $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/cppHandler.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/cpp/cppHandler/cppHandler.cpp
 
-src/samples/cpp/cppHandler/cppModule.dylib:  \
-        $(CONFIG)/lib/libappweb.dylib \
-        $(CONFIG)/obj/cppHandler.o
-	$(CC) -dynamiclib -o src/samples/cpp/cppHandler/cppModule.dylib -arch x86_64 $(LDFLAGS) $(LIBPATHS) -install_name @rpath/cppModule.dylib $(CONFIG)/obj/cppHandler.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
-
 $(CONFIG)/obj/cppModule.o: \
         src/samples/cpp/cppModule/cppModule.cpp \
         $(CONFIG)/inc/buildConfig.h \
         $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/cppModule.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/cpp/cppModule/cppModule.cpp
-
-src/samples/cpp/cppModule/cppModule.dylib:  \
-        $(CONFIG)/lib/libappweb.dylib \
-        $(CONFIG)/obj/cppModule.o
-	$(CC) -dynamiclib -o src/samples/cpp/cppModule/cppModule.dylib -arch x86_64 $(LDFLAGS) $(LIBPATHS) -install_name @rpath/cppModule.dylib $(CONFIG)/obj/cppModule.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 $(CONFIG)/inc/testAppweb.h: 
 	rm -fr macosx-x86_64-debug/inc/testAppweb.h

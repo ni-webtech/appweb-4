@@ -8,6 +8,7 @@ Bit.load({
 			type: 'exe',
 			sources: ['*.c'],
 			depends: ['libappweb', 'mod_esp'],
+            nogen: true,
 		},
 	},
 })

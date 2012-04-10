@@ -8,6 +8,7 @@ Bit.load({
 			type: 'lib',
 			sources: ['*.c'],
 			depends: ['libappweb'],
+            nogen: true,
 		}
 	},
 })

@@ -165,23 +165,13 @@ cp -r src/server/WIN/appwebMonitor.ico win-i686-debug/bin/appwebMonitor.ico
 
 "${CC}" -c -Fo${CONFIG}/obj/simpleServer.obj -Fd${CONFIG}/obj ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/samples/c/simpleServer/simpleServer.c
 
-"${LD}" -out:${CONFIG}/bin/simpleServer.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/simpleServer.obj ${LIBS} libappweb.lib libmpr.lib libhttp.lib libpcre.lib
-
 "${CC}" -c -Fo${CONFIG}/obj/simpleHandler.obj -Fd${CONFIG}/obj ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/samples/c/simpleHandler/simpleHandler.c
-
-"${LD}" -dll -out:${CONFIG}/bin/simpleHandler.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/simpleHandler.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/simpleHandler.obj ${LIBS} libappweb.lib libmpr.lib libhttp.lib libpcre.lib
 
 "${CC}" -c -Fo${CONFIG}/obj/simpleClient.obj -Fd${CONFIG}/obj ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/samples/c/simpleClient/simpleClient.c
 
-"${LD}" -out:${CONFIG}/bin/simpleClient.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/simpleClient.obj ${LIBS} libappweb.lib libmpr.lib libhttp.lib libpcre.lib
-
 "${CC}" -c -Fo${CONFIG}/obj/cppHandler.obj -Fd${CONFIG}/obj ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/samples/cpp/cppHandler/cppHandler.cpp
 
-"${LD}" -dll -out:src/samples/cpp/cppHandler/cppModule.dll -entry:_DllMainCRTStartup@12 -def:src/samples/cpp/cppHandler/cppModule.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/cppHandler.obj ${LIBS} libappweb.lib libmpr.lib libhttp.lib libpcre.lib
-
 "${CC}" -c -Fo${CONFIG}/obj/cppModule.obj -Fd${CONFIG}/obj ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/samples/cpp/cppModule/cppModule.cpp
-
-"${LD}" -dll -out:src/samples/cpp/cppModule/cppModule.dll -entry:_DllMainCRTStartup@12 -def:src/samples/cpp/cppModule/cppModule.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/cppModule.obj ${LIBS} libappweb.lib libmpr.lib libhttp.lib libpcre.lib
 
 rm -rf win-i686-debug/inc/testAppweb.h
 cp -r test/testAppweb.h win-i686-debug/inc/testAppweb.h

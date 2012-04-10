@@ -12,7 +12,7 @@ Bit.load({
             platforms: [ 'local' ],
         },
 
-        'cgi-bin/testScript': {
+        'cgi-bin-testScript': {
             path: 'cgi-bin/testScript',
             build: "
                 let path = Path('cgi-bin/testScript')
@@ -59,7 +59,7 @@ Bit.load({
             ",
         },
 
-        'cgi-bin/cgiProgram': {
+        'cgi-bin-cgiProgram': {
             path: 'cgi-bin/cgiProgram${EXE}',
             build: "
                 let perms = { permissions: 0755 }

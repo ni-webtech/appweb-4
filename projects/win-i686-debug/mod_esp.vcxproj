@@ -3,6 +3,7 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
+
   <ItemDefinitionGroup>
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -13,14 +14,13 @@
     <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
     <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
-    <Link>
+ <Link>
       <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup />
 
 <ItemGroup Label="ProjectConfigurations">
   <ProjectConfiguration Include="Debug|Win32">
@@ -53,8 +53,8 @@
   <_ProjectFileVersion>10</_ProjectFileVersion>
   <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\bin\</OutDir>
   <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\obj\mod_esp\</IntDir>
-</PropertyGroup>
-    
+  <CustomBuildBeforeTargets Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">PreBuildEvent</CustomBuildBeforeTargets>
+  </PropertyGroup>
 <ItemGroup>
   <ClCompile Include="..\..\src\esp\edi.c" />
   <ClCompile Include="..\..\src\esp\espAbbrev.c" />
@@ -66,11 +66,30 @@
   <ClCompile Include="..\..\src\esp\mdb.c" />
   <ClCompile Include="..\..\src\esp\sdb.c" />
 </ItemGroup>
+<ItemGroup>
+  <ClInclude Include="win-i686-debug\inc\edi.h" />
+</ItemGroup>
+<ItemGroup>
+  <ClInclude Include="win-i686-debug\inc\esp-app.h" />
+</ItemGroup>
+<ItemGroup>
+  <ClInclude Include="win-i686-debug\inc\esp.h" />
+</ItemGroup>
+<ItemGroup>
+  <ClInclude Include="win-i686-debug\inc\mdb.h" />
+</ItemGroup>
 <ItemDefinitionGroup>
 <Link>
   <AdditionalDependencies>libappweb.lib;libmpr.lib;libhttp.lib;libpcre.lib;%(AdditionalDependencies)</AdditionalDependencies>
   <AdditionalLibraryDirectories>$(OutDir);win-i686-debug\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
 </Link>
+<CustomBuildStep>
+  <Command>xcopy /Y /S /D ..\..\src\esp\edi.h ..\..\win-i686-debug\inc
+xcopy /Y /S /D ..\..\src\esp\esp-app.h ..\..\win-i686-debug\inc
+xcopy /Y /S /D ..\..\src\esp\esp.h ..\..\win-i686-debug\inc
+xcopy /Y /S /D ..\..\src\esp\mdb.h ..\..\win-i686-debug\inc</Command>
+  <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\bin\mod_esp.dll</Outputs>
+  </CustomBuildStep>
 </ItemDefinitionGroup>
 
 <ItemGroup>

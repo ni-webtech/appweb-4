@@ -31,11 +31,6 @@ all: prep \
         $(CONFIG)/bin/cgiProgram \
         $(CONFIG)/bin/setConfig \
         $(CONFIG)/bin/appweb \
-        $(CONFIG)/bin/simpleServer \
-        $(CONFIG)/lib/simpleHandler.so \
-        $(CONFIG)/bin/simpleClient \
-        src/samples/cpp/cppHandler/cppModule.so \
-        src/samples/cpp/cppModule/cppModule.so \
         $(CONFIG)/bin/testAppweb \
         test/cgi-bin/testScript \
         test/web/caching/cache.cgi \
@@ -77,12 +72,6 @@ clean:
 	rm -rf $(CONFIG)/bin/appweb
 	rm -rf $(CONFIG)/bin/appwebMonitor
 	rm -rf $(CONFIG)/lib/appwebMonitor.ico
-	rm -rf $(CONFIG)/bin/simpleServer
-	rm -rf $(CONFIG)/lib/simpleHandler.so
-	rm -rf $(CONFIG)/bin/simpleClient
-	rm -rf $(CONFIG)/bin/simpleEjs
-	rm -rf src/samples/cpp/cppHandler/cppModule.so
-	rm -rf src/samples/cpp/cppModule/cppModule.so
 	rm -rf $(CONFIG)/bin/testAppweb
 	rm -rf test/cgi-bin/testScript
 	rm -rf test/web/caching/cache.cgi
@@ -450,50 +439,25 @@ $(CONFIG)/obj/simpleServer.o: \
         $(CONFIG)/inc/buildConfig.h
 	$(CC) -c -o $(CONFIG)/obj/simpleServer.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/samples/c/simpleServer/simpleServer.c
 
-$(CONFIG)/bin/simpleServer:  \
-        $(CONFIG)/lib/libappweb.so \
-        $(CONFIG)/obj/simpleServer.o
-	$(CC) -o $(CONFIG)/bin/simpleServer $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/simpleServer.o $(LIBS) -lappweb -lmpr -lhttp -lpcre $(LDFLAGS)
-
 $(CONFIG)/obj/simpleHandler.o: \
         src/samples/c/simpleHandler/simpleHandler.c \
         $(CONFIG)/inc/buildConfig.h
 	$(CC) -c -o $(CONFIG)/obj/simpleHandler.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/samples/c/simpleHandler/simpleHandler.c
-
-$(CONFIG)/lib/simpleHandler.so:  \
-        $(CONFIG)/lib/libappweb.so \
-        $(CONFIG)/obj/simpleHandler.o
-	$(CC) -shared -o $(CONFIG)/lib/simpleHandler.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/simpleHandler.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 $(CONFIG)/obj/simpleClient.o: \
         src/samples/c/simpleClient/simpleClient.c \
         $(CONFIG)/inc/buildConfig.h
 	$(CC) -c -o $(CONFIG)/obj/simpleClient.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/samples/c/simpleClient/simpleClient.c
 
-$(CONFIG)/bin/simpleClient:  \
-        $(CONFIG)/lib/libappweb.so \
-        $(CONFIG)/obj/simpleClient.o
-	$(CC) -o $(CONFIG)/bin/simpleClient $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/simpleClient.o $(LIBS) -lappweb -lmpr -lhttp -lpcre $(LDFLAGS)
-
 $(CONFIG)/obj/cppHandler.o: \
         src/samples/cpp/cppHandler/cppHandler.cpp \
         $(CONFIG)/inc/buildConfig.h
 	$(CC) -c -o $(CONFIG)/obj/cppHandler.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/samples/cpp/cppHandler/cppHandler.cpp
 
-src/samples/cpp/cppHandler/cppModule.so:  \
-        $(CONFIG)/lib/libappweb.so \
-        $(CONFIG)/obj/cppHandler.o
-	$(CC) -shared -o src/samples/cpp/cppHandler/cppModule.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/cppHandler.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
-
 $(CONFIG)/obj/cppModule.o: \
         src/samples/cpp/cppModule/cppModule.cpp \
         $(CONFIG)/inc/buildConfig.h
 	$(CC) -c -o $(CONFIG)/obj/cppModule.o $(CFLAGS) -D_REENTRANT -DCPU=i686 -DPIC -I$(CONFIG)/inc src/samples/cpp/cppModule/cppModule.cpp
-
-src/samples/cpp/cppModule/cppModule.so:  \
-        $(CONFIG)/lib/libappweb.so \
-        $(CONFIG)/obj/cppModule.o
-	$(CC) -shared -o src/samples/cpp/cppModule/cppModule.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/cppModule.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
 
 $(CONFIG)/inc/testAppweb.h: 
 	rm -fr linux-i686-debug/inc/testAppweb.h

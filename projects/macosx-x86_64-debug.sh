@@ -146,23 +146,13 @@ ${CC} -o ${CONFIG}/bin/appweb -arch x86_64 ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/
 
 ${CC} -c -o ${CONFIG}/obj/simpleServer.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/samples/c/simpleServer/simpleServer.c
 
-${CC} -o ${CONFIG}/bin/simpleServer -arch x86_64 ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/simpleServer.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
-
 ${CC} -c -o ${CONFIG}/obj/simpleHandler.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/samples/c/simpleHandler/simpleHandler.c
-
-${CC} -dynamiclib -o ${CONFIG}/lib/simpleHandler.dylib -arch x86_64 ${LDFLAGS} ${LIBPATHS} -install_name @rpath/simpleHandler.dylib ${CONFIG}/obj/simpleHandler.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
 
 ${CC} -c -o ${CONFIG}/obj/simpleClient.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/samples/c/simpleClient/simpleClient.c
 
-${CC} -o ${CONFIG}/bin/simpleClient -arch x86_64 ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/simpleClient.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
-
 ${CC} -c -o ${CONFIG}/obj/cppHandler.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/samples/cpp/cppHandler/cppHandler.cpp
 
-${CC} -dynamiclib -o src/samples/cpp/cppHandler/cppModule.dylib -arch x86_64 ${LDFLAGS} ${LIBPATHS} -install_name @rpath/cppModule.dylib ${CONFIG}/obj/cppHandler.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
-
 ${CC} -c -o ${CONFIG}/obj/cppModule.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/samples/cpp/cppModule/cppModule.cpp
-
-${CC} -dynamiclib -o src/samples/cpp/cppModule/cppModule.dylib -arch x86_64 ${LDFLAGS} ${LIBPATHS} -install_name @rpath/cppModule.dylib ${CONFIG}/obj/cppModule.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
 
 rm -rf macosx-x86_64-debug/inc/testAppweb.h
 cp -r test/testAppweb.h macosx-x86_64-debug/inc/testAppweb.h

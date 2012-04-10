@@ -146,23 +146,13 @@ ${CC} -o ${CONFIG}/bin/appweb ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/appweb.o ${LI
 
 ${CC} -c -o ${CONFIG}/obj/simpleServer.o ${CFLAGS} -D_REENTRANT -DCPU=i686 -DPIC -I${CONFIG}/inc src/samples/c/simpleServer/simpleServer.c
 
-${CC} -o ${CONFIG}/bin/simpleServer ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/simpleServer.o ${LIBS} -lappweb -lmpr -lhttp -lpcre ${LDFLAGS}
-
 ${CC} -c -o ${CONFIG}/obj/simpleHandler.o ${CFLAGS} -D_REENTRANT -DCPU=i686 -DPIC -I${CONFIG}/inc src/samples/c/simpleHandler/simpleHandler.c
-
-${CC} -shared -o ${CONFIG}/lib/simpleHandler.so ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/simpleHandler.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
 
 ${CC} -c -o ${CONFIG}/obj/simpleClient.o ${CFLAGS} -D_REENTRANT -DCPU=i686 -DPIC -I${CONFIG}/inc src/samples/c/simpleClient/simpleClient.c
 
-${CC} -o ${CONFIG}/bin/simpleClient ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/simpleClient.o ${LIBS} -lappweb -lmpr -lhttp -lpcre ${LDFLAGS}
-
 ${CC} -c -o ${CONFIG}/obj/cppHandler.o ${CFLAGS} -D_REENTRANT -DCPU=i686 -DPIC -I${CONFIG}/inc src/samples/cpp/cppHandler/cppHandler.cpp
 
-${CC} -shared -o src/samples/cpp/cppHandler/cppModule.so ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/cppHandler.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
-
 ${CC} -c -o ${CONFIG}/obj/cppModule.o ${CFLAGS} -D_REENTRANT -DCPU=i686 -DPIC -I${CONFIG}/inc src/samples/cpp/cppModule/cppModule.cpp
-
-${CC} -shared -o src/samples/cpp/cppModule/cppModule.so ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/cppModule.o ${LIBS} -lappweb -lmpr -lhttp -lpcre
 
 rm -rf linux-i686-debug/inc/testAppweb.h
 cp -r test/testAppweb.h linux-i686-debug/inc/testAppweb.h

@@ -9,6 +9,7 @@ Bit.load({
             path: 'cppModule${SHOBJ}',
 			sources: ['*.cpp'],
 			depends: ['libappweb'],
+            nogen: true,
 		}
 	},
 })

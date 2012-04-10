@@ -3,6 +3,7 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
+
   <ItemDefinitionGroup>
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -13,14 +14,13 @@
     <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
     <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
-    <Link>
+ <Link>
       <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup />
 
 <ItemGroup Label="ProjectConfigurations">
   <ProjectConfiguration Include="Debug|Win32">
@@ -53,8 +53,8 @@
   <_ProjectFileVersion>10</_ProjectFileVersion>
   <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\bin\</OutDir>
   <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\obj\libappweb\</IntDir>
-</PropertyGroup>
-    
+  <CustomBuildBeforeTargets Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">PreBuildEvent</CustomBuildBeforeTargets>
+  </PropertyGroup>
 <ItemGroup>
   <ClCompile Include="..\..\src\config.c" />
   <ClCompile Include="..\..\src\convenience.c" />
@@ -63,11 +63,22 @@
   <ClCompile Include="..\..\src\log.c" />
   <ClCompile Include="..\..\src\server.c" />
 </ItemGroup>
+<ItemGroup>
+  <ClInclude Include="win-i686-debug\inc\appweb.h" />
+</ItemGroup>
+<ItemGroup>
+  <ClInclude Include="win-i686-debug\inc\customize.h" />
+</ItemGroup>
 <ItemDefinitionGroup>
 <Link>
   <AdditionalDependencies>libmpr.lib;libhttp.lib;libpcre.lib;libpcre.lib;%(AdditionalDependencies)</AdditionalDependencies>
   <AdditionalLibraryDirectories>$(OutDir);win-i686-debug\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
 </Link>
+<CustomBuildStep>
+  <Command>xcopy /Y /S /D ..\..\src\appweb.h ..\..\win-i686-debug\inc
+xcopy /Y /S /D ..\..\src\customize.h ..\..\win-i686-debug\inc</Command>
+  <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\bin\libappweb.dll</Outputs>
+  </CustomBuildStep>
 </ItemDefinitionGroup>
 
 <ItemGroup>

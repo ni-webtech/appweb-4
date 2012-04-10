@@ -43,11 +43,6 @@ all: prep \
         $(CONFIG)/bin/appweb.exe \
         $(CONFIG)/bin/appwebMonitor.exe \
         $(CONFIG)/bin/appwebMonitor.ico \
-        $(CONFIG)/bin/simpleServer.exe \
-        $(CONFIG)/bin/simpleHandler.dll \
-        $(CONFIG)/bin/simpleClient.exe \
-        src/samples/cpp/cppHandler/cppModule.dll \
-        src/samples/cpp/cppModule/cppModule.dll \
         $(CONFIG)/bin/testAppweb.exe \
         test/cgi-bin/testScript \
         test/web/caching/cache.cgi \
@@ -90,12 +85,6 @@ clean:
 	rm -rf $(CONFIG)/bin/appweb.exe
 	rm -rf $(CONFIG)/bin/appwebMonitor.exe
 	rm -rf $(CONFIG)/bin/appwebMonitor.ico
-	rm -rf $(CONFIG)/bin/simpleServer.exe
-	rm -rf $(CONFIG)/bin/simpleHandler.dll
-	rm -rf $(CONFIG)/bin/simpleClient.exe
-	rm -rf $(CONFIG)/bin/simpleEjs.exe
-	rm -rf src/samples/cpp/cppHandler/cppModule.dll
-	rm -rf src/samples/cpp/cppModule/cppModule.dll
 	rm -rf $(CONFIG)/bin/testAppweb.exe
 	rm -rf test/cgi-bin/testScript
 	rm -rf test/web/caching/cache.cgi
@@ -482,50 +471,25 @@ $(CONFIG)/obj/simpleServer.obj: \
         $(CONFIG)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(CONFIG)/obj/simpleServer.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/c/simpleServer/simpleServer.c
 
-$(CONFIG)/bin/simpleServer.exe:  \
-        $(CONFIG)/bin/libappweb.dll \
-        $(CONFIG)/obj/simpleServer.obj
-	"$(LD)" -out:$(CONFIG)/bin/simpleServer.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/simpleServer.obj $(LIBS) libappweb.lib libmpr.lib libhttp.lib libpcre.lib
-
 $(CONFIG)/obj/simpleHandler.obj: \
         src/samples/c/simpleHandler/simpleHandler.c \
         $(CONFIG)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(CONFIG)/obj/simpleHandler.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/c/simpleHandler/simpleHandler.c
-
-$(CONFIG)/bin/simpleHandler.dll:  \
-        $(CONFIG)/bin/libappweb.dll \
-        $(CONFIG)/obj/simpleHandler.obj
-	"$(LD)" -dll -out:$(CONFIG)/bin/simpleHandler.dll -entry:_DllMainCRTStartup@12 -def:$(CONFIG)/bin/simpleHandler.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/simpleHandler.obj $(LIBS) libappweb.lib libmpr.lib libhttp.lib libpcre.lib
 
 $(CONFIG)/obj/simpleClient.obj: \
         src/samples/c/simpleClient/simpleClient.c \
         $(CONFIG)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(CONFIG)/obj/simpleClient.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/c/simpleClient/simpleClient.c
 
-$(CONFIG)/bin/simpleClient.exe:  \
-        $(CONFIG)/bin/libappweb.dll \
-        $(CONFIG)/obj/simpleClient.obj
-	"$(LD)" -out:$(CONFIG)/bin/simpleClient.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/simpleClient.obj $(LIBS) libappweb.lib libmpr.lib libhttp.lib libpcre.lib
-
 $(CONFIG)/obj/cppHandler.obj: \
         src/samples/cpp/cppHandler/cppHandler.cpp \
         $(CONFIG)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(CONFIG)/obj/cppHandler.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/cpp/cppHandler/cppHandler.cpp
 
-src/samples/cpp/cppHandler/cppModule.dll:  \
-        $(CONFIG)/bin/libappweb.dll \
-        $(CONFIG)/obj/cppHandler.obj
-	"$(LD)" -dll -out:src/samples/cpp/cppHandler/cppModule.dll -entry:_DllMainCRTStartup@12 -def:src/samples/cpp/cppHandler/cppModule.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/cppHandler.obj $(LIBS) libappweb.lib libmpr.lib libhttp.lib libpcre.lib
-
 $(CONFIG)/obj/cppModule.obj: \
         src/samples/cpp/cppModule/cppModule.cpp \
         $(CONFIG)/inc/buildConfig.h
 	"$(CC)" -c -Fo$(CONFIG)/obj/cppModule.obj -Fd$(CONFIG)/obj $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/cpp/cppModule/cppModule.cpp
-
-src/samples/cpp/cppModule/cppModule.dll:  \
-        $(CONFIG)/bin/libappweb.dll \
-        $(CONFIG)/obj/cppModule.obj
-	"$(LD)" -dll -out:src/samples/cpp/cppModule/cppModule.dll -entry:_DllMainCRTStartup@12 -def:src/samples/cpp/cppModule/cppModule.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/cppModule.obj $(LIBS) libappweb.lib libmpr.lib libhttp.lib libpcre.lib
 
 $(CONFIG)/inc/testAppweb.h: 
 	rm -fr win-i686-debug/inc/testAppweb.h
