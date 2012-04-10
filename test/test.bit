@@ -47,7 +47,7 @@ Bit.load({
             build: "
                 let path = Path('web/basic/basic.cgi')
                 path.write('#!' + App.exeDir.join('ejs') + '\n' + 
-                    'print(\"HTTP/1.0 200 OK\nContent-Type: text/plain\n\n\" + App.env + \"\n\")')
+                    'print(\"HTTP/1.0 200 OK\nContent-Type: text/plain\n\n\" + serialize(App.env, {pretty: true}) + \"\n\")')
                 path.setAttributes({permissions: 0755})
             ",
             'generate-sh': "\
