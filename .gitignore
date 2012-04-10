@@ -167,3 +167,6 @@ test/web/basic/basic.cgi
 src/samples/c/simpleEjs/simpleEjs
 src/samples/cpp/cppHandler/cppModule.so
 src/samples/cpp/cppModule/cppModule.so
+view_*.c
+view_*.o
+view_*.dylib
