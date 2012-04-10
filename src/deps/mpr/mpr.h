@@ -49,11 +49,6 @@
 #ifndef BLD_TUNE
     #define BLD_TUNE MPR_TUNE_SIZE
 #endif
-#if BLD_FEATURE_MATRIXSSL || BLD_FEATURE_OPENSSL
-    #define BLD_FEATURE_SSL 1
-#else
-    #define BLD_FEATURE_SSL 0
-#endif
 
 /********************************* CPU Families *******************************/
 /*
@@ -574,9 +569,11 @@ typedef int64 MprTime;
 #if BLD_WIN_LIKE
     #define INT64(x)    (x##i64)
     #define UINT64(x)   (x##Ui64)
+    #define MPR_EXPORT  __declspec(dllexport)
 #else
     #define INT64(x)    (x##LL)
     #define UINT64(x)   (x##ULL)
+    #define MPR_EXPORT 
 #endif
 
 #ifndef max
