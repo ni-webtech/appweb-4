@@ -138,7 +138,7 @@ char *espExpandCommand(cchar *command, cchar *source, cchar *module)
 
             } else if (matchToken(&cp, "${SHLIB}")) {
                 /* .lib */
-                mprPutStringToBuf(buf, appweb->hostOs);
+                mprPutStringToBuf(buf, BLD_SHLIB);
 
             } else if (matchToken(&cp, "${SHOBJ}")) {
                 /* .dll */
