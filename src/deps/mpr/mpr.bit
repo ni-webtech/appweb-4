@@ -21,7 +21,7 @@ Bit.load({
         manager: {
             enable: 'bit.settings.manager',
             type: 'exe',
-            path: '${BIN}/${settings.manager}'
+            path: '${BIN}/${settings.manager}${EXE}'
             rule: 'gui',
             depends: [ 'libmpr' ],
             sources: [ 'manager.c' ],

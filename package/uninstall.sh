@@ -40,8 +40,7 @@ COMPANY="${settings.company}"
 NAME="${settings.title}"
 VERSION="${settings.version}"
 NUMBER="${settings.buildNumber}"
-HOST_OS="${platform.os}"
-HOST_CPU="${platform.arch}"
+OS="${platform.OS}"
 
 BIN_PREFIX="${prefixes.bin}"
 CFG_PREFIX="${prefixes.config}"
@@ -141,7 +140,7 @@ removeTarFiles() {
     pkg=$1
     [ $pkg = bin ] && prefix="$VER_PREFIX"
     if [ -f "$prefix/files.log" ] ; then
-        if [ $HOST_OS = WIN ] ; then
+        if [ $OS = WIN ] ; then
             cd ${prefix%%:*}:/
         else
             cd /
@@ -158,7 +157,7 @@ preClean() {
     local cdir=`pwd`
 
     cp "$BIN_PREFIX/linkup" /tmp/linkup$$
-    if [ $HOST_OS != WIN ] ; then
+    if [ $OS != WIN ] ; then
         rm -f /var/lock/subsys/$PRODUCT /var/lock/$PRODUCT
         rm -fr /var/log/$PRODUCT
         rm -rf /var/run/$PRODUCT
@@ -193,11 +192,17 @@ postClean() {
 
     rm -f "${VER_PREFIX}/install.conf"
 
-    for p in MAN INC DOC PRD CFG LIB WEB SPL ; do
-        eval cleanDir "\$${p}_PREFIX"
-    done
+    cleanDir "${BIN_PREFIX}"
+    cleanDir "${MAN_PREFIX}"
+    cleanDir "${INC_PREFIX}"
+    cleanDir "${DOC_PREFIX}"
+    cleanDir "${PRD_PREFIX}"
+    cleanDir "${CFG_PREFIX}"
+    cleanDir "${LIB_PREFIX}"
+    cleanDir "${WEB_PREFIX}"
+    cleanDir "${SPL_PREFIX}"
 
-    if [ $HOST_OS != WIN ] ; then
+    if [ $OS != WIN ] ; then
         if [ -x /usr/share/$PRODUCT ] ; then
             cleanDir /usr/share/$PRODUCT
         fi
@@ -209,9 +214,9 @@ postClean() {
             eval rmdir "\$${p}_PREFIX" >/dev/null 2>&1
         done
     fi
-    cleanDir ${VER_PREFIX}
-    rm -f ${PRD_PREFIX}/latest
-    cleanDir ${PRD_PREFIX}
+    cleanDir "${VER_PREFIX}"
+    rm -f "${PRD_PREFIX}/latest"
+    cleanDir "${PRD_PREFIX}"
     if [ -x /tmp/linkup$$ ] ; then
         /tmp/linkup$$ Remove /
         rm -f /tmp/linkup$$
@@ -252,8 +257,8 @@ cleanDir() {
         [ "$count" = "0" ] && rmdir "$d" >/dev/null 2>&1
     done 
 
-    if [ -d $cdir ] ; then
-        cd $cdir
+    if [ -d "$cdir" ] ; then
+        cd "$cdir"
         count=`ls "$dir" 2>/dev/null | wc -l | sed -e 's/ *//'`
         [ "$count" = "0" ] && rmdir "$dir" >/dev/null 2>&1
         rmdir "$dir" 2>/dev/null
@@ -273,7 +278,7 @@ removeIntermediateFiles() {
 
 
 setup() {
-    if [ `id -u` != "0" -a $HOST_OS != WIN ] ; then
+    if [ `id -u` != "0" -a $OS != WIN ] ; then
         echo "You must be root to remove this product."
         exit 255
     fi

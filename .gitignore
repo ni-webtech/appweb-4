@@ -170,3 +170,9 @@ src/samples/cpp/cppModule/cppModule.so
 view_*.c
 view_*.o
 view_*.dylib
+view_*.ilk
+view_*.exp
+controller_*.exp
+controller_*.ilk
+*.ilk
+*.exp

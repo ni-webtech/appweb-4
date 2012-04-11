@@ -30,7 +30,7 @@ PRODUCT="${settings.product}"
 NAME="${settings.title}"
 VERSION="${settings.version}"
 NUMBER="${settings.buildNumber}"
-OS="${platform.os}"
+OS="${platform.OS}"
 CPU="${platform.arch}"
 DIST="${platform.dist}"
 
@@ -54,6 +54,7 @@ SSL_PORT=443
 
 PATH="$PATH:/sbin:/usr/sbin"
 export CYGWIN=nodosfilewarning
+CYGWIN=nodosfilewarning
 
 ###############################################################################
 
@@ -287,7 +288,7 @@ installFiles() {
                 cp -rp contents/* $target
 
                 cd contents >/dev/null
-                find . -type f >$VER_PREFIX/files.log
+                find . -type f >"$VER_PREFIX/files.log"
                 cd - >/dev/null
             fi
         fi

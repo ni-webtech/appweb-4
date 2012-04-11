@@ -45,10 +45,12 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
         permissions: 0755, 
         strip: strip,
     })
-    install(bit.dir.lib.join('*'), p.lib, {
-        permissions: 0755, 
-        exclude: /file-save|www|simple|sample/,
-    })
+    if (OS != 'win') {
+        install(bit.dir.lib.join('*'), p.lib, {
+            permissions: 0755, 
+            exclude: /file-save|www|simple|sample/,
+        })
+    }
     install('src/server/appweb.conf', p.config)
     install('src/server/mime.types', p.config)
     install('src/server/php.ini', p.config)
@@ -112,8 +114,8 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
         /*
             install(bit.packs.compiler.path.join('../../lib/msvcrt.lib'), p.bin)
          */
-        install(bit.dir.bin.join('removeFiles*'), bin)
-        install(bit.dir.bin.join('setConf*'), bin)
+        install(bit.dir.bin.join('removeFiles*'), p.bin)
+        install(bit.dir.bin.join('setConf*'), p.bin)
     }
     if (bit.platform.like == 'posix') {
         install('doc/man/*.1', p.productver.join('doc/man/man1'), {compress: true})
