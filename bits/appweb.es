@@ -187,27 +187,34 @@ public function packageComboFiles() {
 }
 
 public function installBinary() {
-    if (App.uid != 0) {
+    if (Config.OS != 'WIN' && App.uid != 0) {
         throw 'Must run as root. Use \"sudo bit install\"'
     }
     packageBinaryFiles(null)
+    if (bit.platform.os == 'win') {
+        Cmd([bit.dir.bin.join('appwebMonitor' + bit.EXE), '--stop'])
+        Cmd([bit.dir.bin.join('appman'), '--continue', 'stop', 'disable', 'uninstall'])
+    }
     package(bit.dir.pkg.join('bin'), 'install')
     createLinks()
     trace('Start', 'appman install enable start')
-    Cmd.run('/usr/local/bin/appman install enable start')
+    Cmd([bit.prefixes.bin.join('appman' + bit.EXE), 'install', 'enable', 'start'])
+    if (bit.platform.os == 'win') {
+        Cmd([bit.prefixes.bin.join('appwebMonitor' + bit.EXE)], {detach: true})
+    }
     bit.dir.pkg.join('bin').removeAll()
     trace('Complete', bit.settings.title + ' installed')
 }
 
 public function uninstallBinary() {
-    if (App.uid != 0) {
-        throw 'Must run as root. Use \"sudo bit uninstall\"'
+    if (Config.OS != 'WIN' && App.uid != 0) {
+        throw 'Must run as root. Use \"sudo bit install\"'
     }
     trace('Uninstall', bit.settings.title)                                                     
-    let appman = Cmd.locate('appman')
-    try {
-        Cmd.run('appman stop disable uninstall')
-    } catch {}
+    if (bit.platform.os == 'win') {
+        Cmd([bit.prefixes.bin.join('appwebMonitor'), '--stop'])
+    }
+    Cmd([bit.prefixes.bin.join('appman'), '--continue', 'stop', 'disable', 'uninstall'])
     let fileslog = bit.prefixes.productver.join('files.log')
     if (fileslog.exists) {
         for each (let file: Path in fileslog.readLines()) {
@@ -239,24 +246,26 @@ public function createLinks() {
     let target: Path
     let log = []
 
-    for each (program in programs) {
-        let link = Path(localbin.join(program))
-        link.symlink(bin.join(program))
-        log.push(link)
-    }
-    for each (page in bit.prefixes.productver.join('doc/man').glob('**/*.1.gz')) {
-        let link = Path('/usr/share/man/man1/' + page.basename)
-        link.symlink(page)
-        log.push(link)
+    if (localbin.exists) {
+        for each (program in programs) {
+            let link = Path(localbin.join(program))
+            link.symlink(bin.join(program))
+            log.push(link)
+        }
+        for each (page in bit.prefixes.productver.join('doc/man').glob('**/*.1.gz')) {
+            let link = Path('/usr/share/man/man1/' + page.basename)
+            link.symlink(page)
+            log.push(link)
+        }
     }
     bit.prefixes.productver.join('files.log').append(log.join('\n') + '\n')
 }
 
 public function startAppweb() {
+    throw new Error("UNUSED")
     trace('Start', 'appman install enable start')
     Cmd.run('/usr/local/bin/appman install enable start')
 }
-
 
 /*
     @copy   default

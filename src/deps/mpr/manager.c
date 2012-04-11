@@ -42,6 +42,7 @@
 
 typedef struct App {
     cchar   *appName;                   /* Manager name */
+    int     continueOnErrors;           /* Keep going through errors */
     int     exiting;                    /* Program should exit */
     int     retries;                    /* Number of times to retry staring app */
     int     signal;                     /* Signal to use to terminate service */
@@ -109,6 +110,9 @@ int main(int argc, char *argv[])
 
         } else if (strcmp(argp, "--console") == 0) {
             /* Does nothing. Here for compatibility with windows watcher */
+
+        } else if (strcmp(argp, "--continue") == 0) {
+            app->continueOnErrors = 1;
 
         } else if (strcmp(argp, "--daemon") == 0) {
             app->runAsDaemon++;
@@ -215,6 +219,7 @@ int main(int argc, char *argv[])
             "  Usage: %s [commands]\n"
             "  Switches:\n"
             "    --args               # Args to pass to service\n"
+            "    --continue           # Continue on errors\n"
             "    --daemon             # Run manager as a daemon\n"
             "    --home path          # Home directory for service\n"
             "    --log logFile:level  # Log directive for service\n"
@@ -258,7 +263,7 @@ int main(int argc, char *argv[])
     } else {
         mprStartEventsThread();
         for (; nextArg < argc; nextArg++) {
-            if (!process(argv[nextArg], 0)) {
+            if (!process(argv[nextArg], 0) && !app->continueOnErrors) {
                 status = 3;                                                                    
                 break;
             }
@@ -797,6 +802,7 @@ typedef struct App {
     HINSTANCE    appInst;            /* Current application instance */
     cchar        *appName;           /* Manager name */
     cchar        *appTitle;          /* Manager title */
+    int          continueOnErrors;   /* Keep going through errors */
     int          createConsole;      /* Display service console */
     int          exiting;            /* Program should exit */
     char         *logSpec;           /* Log directive for service */
@@ -877,7 +883,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
     mprSetWinMsgCallback((MprMsgCallback) msgProc);
 
     if ((argc = mprMakeArgv(args, &argv, MPR_ARGV_ARGS_ONLY)) < 0) {
-        return FALSE;
+        return MPR_ERR_BAD_ARGS;
     }
     for (nextArg = 1; nextArg < argc; nextArg++) {
         argp = argv[nextArg];
@@ -899,6 +905,9 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
                 Allow the service to interact with the console
              */
             app->createConsole++;
+ 
+        } else if (strcmp(argp, "--continue") == 0) {
+            app->continueOnErrors = 1;
 
         } else if (strcmp(argp, "--daemon") == 0) {
             /* Ignored on windows */
@@ -960,6 +969,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
                 "  Usage: %s [options] [program args]\n"
                 "  Switches:\n"
                 "    --args               # Args to pass to service\n"
+                "    --continue           # Continue on errors\n"
                 "    --console            # Display the service console\n"
                 "    --heartBeat interval # Heart beat interval period (secs)\n"
                 "    --home path          # Home directory for service\n"
@@ -974,7 +984,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
                 "    stop                 # Start the service\n"
                 "    run                  # Run and watch over the service\n",
                 args, app->appName);
-            return -1;
+            return MPR_ERR_BAD_ARGS;
         }
     }
     if (mprStart() < 0) {
@@ -982,15 +992,17 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
     } else {
         mprStartEventsThread();
         if (nextArg >= argc) {
-            return process("run");
+            if (!process("run")) {
+                return MPR_ERR_CANT_COMPLETE;
+            }
 
         } else for (; nextArg < argc; nextArg++) {
-            if (!process(argv[nextArg])) {
-                return FALSE;
+            if (!process(argv[nextArg]) && !app->continueOnErrors) {
+                return MPR_ERR_CANT_COMPLETE;
             }
         }
     }
-    return TRUE;
+    return 0;
 }
 
 
