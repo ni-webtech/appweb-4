@@ -12105,6 +12105,7 @@ static int getPathInfo(MprDiskFileSystem *fs, cchar *path, MprPath *info)
         return -1;
 #endif
     }
+    ext = mprGetPathExt(path);
     info->valid = 1;
     info->size = s.st_size;
     info->atime = s.st_atime;
@@ -12117,9 +12118,12 @@ static int getPathInfo(MprDiskFileSystem *fs, cchar *path, MprPath *info)
     info->isDir = (s.st_mode & S_IFDIR) != 0;
     info->isReg = (s.st_mode & S_IFREG) != 0;
     info->isLink = 0;
-    ext = mprGetPathExt(path);
-    if (ext && strcmp(ext, "lnk") == 0) {
-        info->isLink = 1;
+    if (ext) {
+        if (strcmp(ext, "lnk") == 0) {
+            info->isLink = 1;
+        } else if (strcmp(ext, "dll") == 0) {
+            info->perms |= 111;
+        }
     }
     /*
         Work hard on windows to determine if the file is a regular file.
