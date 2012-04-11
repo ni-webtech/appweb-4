@@ -32063,7 +32063,7 @@ int mprWriteRegistry(cchar *key, cchar *name, cchar *value)
         if (RegOpenKeyEx(top, key, 0, KEY_CREATE_SUB_KEY, &h) != ERROR_SUCCESS){
             return MPR_ERR_CANT_ACCESS;
         }
-        if (RegCreateKeyEx(h, name, 0, NULL, REG_OPTION_NON_VOLATILE,
+        if (RegCreateKeyEx(h, value, 0, NULL, REG_OPTION_NON_VOLATILE,
             KEY_ALL_ACCESS, NULL, &subHandle, &disposition) != ERROR_SUCCESS) {
             return MPR_ERR_CANT_ACCESS;
         }

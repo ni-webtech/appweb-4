@@ -314,26 +314,27 @@ installFiles() {
     fi
     "$BIN_PREFIX/linkup" Install /
 
+    [ "$headless" != 1 ] && echo -e "\nSetting file permissions ..."
     if [ $OS = WIN ] ; then
-        [ "$headless" != 1 ] && echo -e "\nSetting file permissions ..."
         find "$CFG_PREFIX" -type d -exec chmod 755 "{}" \;
         find "$CFG_PREFIX" -type f -exec chmod g+r,o+r "{}" \; 
         find "$WEB_PREFIX" -type d -exec chmod 755 "{}" \;
         find "$WEB_PREFIX" -type f -exec chmod g+r,o+r "{}" \;
         find "$PRD_PREFIX" -type d -exec chmod 755 "{}" \;
         find "$PRD_PREFIX" -type f -exec chmod g+r,o+r "{}" \;
-        mkdir -p "$CFG_PREFIX/logs"
-        chmod 777 "$CFG_PREFIX/logs"
-        mkdir -p "$SPL_PREFIX"
-        chmod 777 "$SPL_PREFIX"
-        chmod 755 "$WEB_PREFIX"
         find "$BIN_PREFIX" -name '*.dll' -exec chmod 755 "{}" \;
         find "$BIN_PREFIX" -name '*.exe' -exec chmod 755 "{}" \;
+        mkdir -p "$SPL_PREFIX"
+        chmod 777 "$SPL_PREFIX" "$CFG_PREFIX"
+        chmod 755 "$WEB_PREFIX"
+        mode=777
+    else
+        mode=755
     fi
     mkdir -p "$SPL_PREFIX" "$SPL_PREFIX/cache" "$LOG_PREFIX"
     chown $username "$SPL_PREFIX" "$SPL_PREFIX/cache" "$LOG_PREFIX"
     chgrp $groupname "$SPL_PREFIX" "$SPL_PREFIX/cache" "$LOG_PREFIX"
-    chmod 755 "$SPL_PREFIX" "$SPL_PREFIX/cache" "$LOG_PREFIX"
+    chmod $mode "$SPL_PREFIX" "$SPL_PREFIX/cache" "$LOG_PREFIX"
     [ "$headless" != 1 ] && echo
 }
 

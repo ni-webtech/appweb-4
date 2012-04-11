@@ -37,13 +37,11 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
     install('doc/product/README.TXT', p.product, {fold: true, expand: true})
     install('package/uninstall.sh', p.bin.join('uninstall'), {permissions: 0755, expand: true})
     install('package/linkup', p.bin, {permissions: 0755})
+
     install(bit.dir.bin + '/*', p.bin, {
-        include: /appweb|appman|esp|http|auth|makerom|libappweb|libmpr|setConfig/,
+        include: /appweb|appman|esp|http|auth|makerom|libappweb|libmpr|setConfig|\.dll/,
+        exclude: /\.pdb|\.exp|\.lib|\.def|\.suo|\.old/,
         permissions: 0755, 
-    })
-    install(bit.dir.bin.join('appweb').joinExt(bit.ext.exe), p.bin, {
-        permissions: 0755, 
-        strip: strip,
     })
     if (OS != 'win') {
         install(bit.dir.lib.join('*'), p.lib, {
@@ -114,7 +112,7 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
         /*
             install(bit.packs.compiler.path.join('../../lib/msvcrt.lib'), p.bin)
          */
-        install(bit.dir.bin.join('removeFiles*'), p.bin)
+        install(bit.dir.bin.join('removeFiles' + bit.EXE), p.bin)
         install(bit.dir.bin.join('setConf*'), p.bin)
     }
     if (bit.platform.like == 'posix') {

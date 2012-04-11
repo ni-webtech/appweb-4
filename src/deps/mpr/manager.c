@@ -1118,7 +1118,8 @@ static void run()
 
 #if USEFUL_FOR_DEBUG
     /* 
-        This is useful to debug manager as a windows service.
+        This is useful to debug manager as a windows service. Enable this and then Watson will prompt to attach
+        when the service is run. Must have run prior "manager install enable"
      */
     DebugBreak();
 #endif
@@ -1330,9 +1331,14 @@ static bool installService()
     /*
         Write a service description
      */
-    mprSprintf(key, sizeof(key), "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\" "Services\\%s", app->serviceName);
-
+    mprSprintf(key, sizeof(key), "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services");
+    if (mprWriteRegistry(key, NULL, app->serviceName) < 0) {
+        mprError("Can't write %s key to registry");
+        return 0;
+    }
+    mprSprintf(key, sizeof(key), "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\%s", app->serviceName);
     if (mprWriteRegistry(key, "Description", SERVICE_DESCRIPTION) < 0) {
+        mprError("Can't write service Description key to registry");
         return 0;
     }
 
@@ -1343,6 +1349,7 @@ static bool installService()
         app->serviceHome = mprGetPathParent(mprGetAppDir());
     }
     if (mprWriteRegistry(key, "HomeDir", app->serviceHome) < 0) {
+        mprError("Can't write HomeDir key to registry");
         return 0;
     }
 
@@ -1351,6 +1358,7 @@ static bool installService()
      */
     if (app->serviceArgs && *app->serviceArgs) {
         if (mprWriteRegistry(key, "Args", app->serviceArgs) < 0) {
+            mprError("Can't write Args key to registry");
             return 0;
         }
     }
@@ -1532,9 +1540,9 @@ static int tellSCM(long state, long exitCode, long wait)
 static void setAppDefaults()
 {
     app->appName = mprGetAppName();
-    app->serviceProgram = sjoin(mprGetAppDir(), "/", BLD_PRODUCT, ".exe", NULL);
+    app->serviceProgram = sjoin(mprGetAppDir(), "\\", BLD_PRODUCT, ".exe", NULL);
     app->serviceName = sclone(BLD_COMPANY "-" BLD_PRODUCT);
-    app->serviceHome = mprGetNativePath(SERVICE_HOME);
+    app->serviceHome = NULL;
     app->serviceTitle = sclone(BLD_NAME);
     app->serviceStopped = 0;
 }
