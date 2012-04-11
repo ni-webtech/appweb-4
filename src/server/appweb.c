@@ -428,7 +428,7 @@ static int writePort(MaServer *server)
     int         fd, len;
 
     host = mprGetFirstItem(server->http->hosts);
-    //  TODO - should really go to a BLD_LOG_DIR
+    //  TODO - should really go to a BLD_LOG_DIR (then fix uninstall.sh)
     path = mprJoinPath(mprGetAppDir(), "../.port.log");
     if ((fd = open(path, O_CREAT | O_WRONLY | O_TRUNC, 0666)) < 0) {
         mprError("Could not create port file %s", path);

@@ -316,25 +316,25 @@ installFiles() {
 
     [ "$headless" != 1 ] && echo -e "\nSetting file permissions ..."
     if [ $OS = WIN ] ; then
-        find "$CFG_PREFIX" -type d -exec chmod 755 "{}" \;
-        find "$CFG_PREFIX" -type f -exec chmod g+r,o+r "{}" \; 
-        find "$WEB_PREFIX" -type d -exec chmod 755 "{}" \;
-        find "$WEB_PREFIX" -type f -exec chmod g+r,o+r "{}" \;
-        find "$PRD_PREFIX" -type d -exec chmod 755 "{}" \;
-        find "$PRD_PREFIX" -type f -exec chmod g+r,o+r "{}" \;
-        find "$BIN_PREFIX" -name '*.dll' -exec chmod 755 "{}" \;
-        find "$BIN_PREFIX" -name '*.exe' -exec chmod 755 "{}" \;
-        mkdir -p "$SPL_PREFIX"
+        # Cygwin bug. Chmod fails to stick if not in current directory for paths with spaces
+        home=`pwd` >/dev/null
+        mkdir -p "$SPL_PREFIX" "$SPL_PREFIX/cache" "$LOG_PREFIX"
         chmod 777 "$SPL_PREFIX" "$CFG_PREFIX"
         chmod 755 "$WEB_PREFIX"
-        mode=777
+        cd "$CFG_PREFIX" ; chmod -R g+r,o+r . ; find . -type d -exec chmod 755 "{}" \;
+        cd "$PRD_PREFIX" ; chmod -R g+r,o+r . ; find . -type d -exec chmod 755 "{}" \;
+        cd "$WEB_PREFIX" ; chmod -R g+r,o+r . ; find . -type d -exec chmod 755 "{}" \;
+        cd "$BIN_PREFIX" ; chmod 755 *.dll *.exe
+        cd "$SPL_PREFIX" ; chmod 777 . cache ; chown $username . cache
+        cd "$LOG_PREFIX" ; chmod 777 . ; chown $username .
+        cd "$CFG_PREFIX" ; chmod 777 . ; chown $username .
+        cd "${home}" >/dev/null
     else
-        mode=755
+        mkdir -p "$SPL_PREFIX" "$SPL_PREFIX/cache" "$LOG_PREFIX"
+        chown $username "$SPL_PREFIX" "$SPL_PREFIX/cache" "$LOG_PREFIX"
+        chgrp $groupname "$SPL_PREFIX" "$SPL_PREFIX/cache" "$LOG_PREFIX"
+        chmod 755 "$SPL_PREFIX" "$SPL_PREFIX/cache" "$LOG_PREFIX"
     fi
-    mkdir -p "$SPL_PREFIX" "$SPL_PREFIX/cache" "$LOG_PREFIX"
-    chown $username "$SPL_PREFIX" "$SPL_PREFIX/cache" "$LOG_PREFIX"
-    chgrp $groupname "$SPL_PREFIX" "$SPL_PREFIX/cache" "$LOG_PREFIX"
-    chmod $mode "$SPL_PREFIX" "$SPL_PREFIX/cache" "$LOG_PREFIX"
     [ "$headless" != 1 ] && echo
 }
 
@@ -389,6 +389,9 @@ askUser
 if [ "$installbin" = "Y" ] ; then
     [ "$headless" != 1 ] && echo "Disable existing service"
     appman stop disable uninstall >/dev/null 2>&1
+    if [ $OS = WIN ] ; then
+        "$BIN_PREFIX/appwebMonitor" --stop >/dev/null 2>&1
+    fi
 fi
 removeOld
 saveSetup
@@ -402,6 +405,9 @@ if [ "$installbin" = "Y" ] ; then
         "$BIN_PREFIX/appman" enable
         "$BIN_PREFIX/appman" start
     fi
+fi
+if [ $OS = WIN ] ; then
+    "$BIN_PREFIX/appwebMonitor" >/dev/null 2>&1 &
 fi
 if [ "$headless" != 1 ] ; then
     echo -e "$NAME installation successful."

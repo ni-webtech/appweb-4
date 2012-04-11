@@ -32035,7 +32035,6 @@ int mprWriteRegistry(cchar *key, cchar *name, cchar *value)
     ulong   disposition;
 
     mprAssert(key && *key);
-    mprAssert(name && *name);
     mprAssert(value && *value);
 
     /*

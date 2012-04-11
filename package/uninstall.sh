@@ -87,6 +87,9 @@ yesno() {
 
 deconfigureService() {
     [ "$headless" != 1 ] && echo -e "Stopping $NAME service"
+    if [ $OS = WIN ] ; then
+        "$BIN_PREFIX/appwebMonitor" --stop >/dev/null 2>&1
+    fi
     # Fedora will indiscriminately kill appman here too
     # Need this ( ; true) to suppress the Killed message
     (appman -v stop ; true) >/dev/null 2>&1
@@ -214,6 +217,7 @@ postClean() {
             eval rmdir "\$${p}_PREFIX" >/dev/null 2>&1
         done
     fi
+    rm -f "${PRD_PREFIX}/.port.log"
     cleanDir "${VER_PREFIX}"
     rm -f "${PRD_PREFIX}/latest"
     cleanDir "${PRD_PREFIX}"

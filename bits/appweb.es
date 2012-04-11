@@ -52,8 +52,7 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
     install('src/server/appweb.conf', p.config)
     install('src/server/mime.types', p.config)
     install('src/server/php.ini', p.config)
-    install('src/server/web/**/*', p.web, {exclude: /mgmt/ })
-    install('src/server/web/test/*', p.web.join('test'))
+    install('src/server/web', p.web.parent, {exclude: /mgmt/ })
     install('src/server/web/test/*', p.web.join('test'), {
         include: /.cgi|test.pl|test.py/,
         permissions: 0755,
