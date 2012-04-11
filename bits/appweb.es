@@ -59,6 +59,8 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
     })
     install(bit.dir.lib + '/esp.conf', p.lib)
     install(bit.dir.lib + '/esp-www', p.lib)
+    install(bit.dir.inc.join('*.h'), p.include)
+
     let user = getWebUser(), group = getWebUser()
     p.spool.join('cache').makeDir()
     let tmp = p.spool.join('cache/.dummy')
@@ -259,6 +261,7 @@ public function createLinks() {
         }
     }
     bit.prefixes.productver.join('files.log').append(log.join('\n') + '\n')
+    bit.prefixes.product.join('latest').symlink(bit.settings.version)
 }
 
 public function startAppweb() {

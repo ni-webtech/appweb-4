@@ -9,6 +9,8 @@
 
 #include    "appweb.h"
 
+#error "This has not been updated for Appweb 4"
+
 /********************************* Code *******************************/
 /*
     This method is run when the EGI form is called from the web

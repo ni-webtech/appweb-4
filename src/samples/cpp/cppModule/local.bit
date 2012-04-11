@@ -1,0 +1,19 @@
+/*
+	local.bit - Bit file for the cppModule sample
+ */
+
+Bit.load({
+    defaults: {
+        '+includes': [ '/usr/lib/appweb/latest/inc' ],
+        '+libpaths': [ '/usr/lib/appweb/latest/lib' ],
+    },
+	targets: {
+		cppModule: {
+			type: 'lib',
+            path: 'cppModule${SHOBJ}',
+			sources: ['*.cpp'],
+            '+libraries': [ 'appweb', 'http', 'mpr', 'mprssl' ],
+		}
+	},
+})
+

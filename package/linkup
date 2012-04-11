@@ -72,4 +72,5 @@ else
             ln -s "${f}" "${MAN_DIR}/man1/${name}"
         done
     fi
+    ln -s "${latest}" "${prefix}/latest"
 fi

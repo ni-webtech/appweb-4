@@ -15,7 +15,6 @@ Bit.load({
         "src/modules/modules.bit",
         "src/utils/utils.bit",
         "src/server/server.bit",
-        "src/samples/samples.bit",
         "test/test.bit",
         "package/package.bit",
         "doc/doc.bit",

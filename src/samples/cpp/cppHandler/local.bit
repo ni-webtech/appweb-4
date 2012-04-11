@@ -1,0 +1,19 @@
+/*
+	lcoal.bit - Bit file for the cppHandler sample
+ */
+
+Bit.load({
+    defaults: {
+        '+includes': [ '/usr/lib/appweb/latest/inc' ],
+        '+libpaths': [ '/usr/lib/appweb/latest/lib' ],
+    },
+	targets: {
+		cppHandler: {
+			type: 'lib',
+            path: 'cppModule${SHOBJ}',
+			sources: ['*.cpp'],
+            '+libraries': [ 'appweb', 'http', 'mpr', 'mprssl' ],
+		}
+	},
+})
+

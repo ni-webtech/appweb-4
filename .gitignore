@@ -176,3 +176,5 @@ controller_*.exp
 controller_*.ilk
 *.ilk
 *.exp
+src/samples/c/simpleClient/simpleClient
+src/samples/c/simpleServer/simpleServer

@@ -1,0 +1,17 @@
+/*
+	local.bit - Bit file for the simpleEsp sample
+ */
+
+Bit.load({
+    defaults: {
+        '+includes': [ '/usr/lib/appweb/latest/inc' ],
+        '+libpaths': [ '/usr/lib/appweb/latest/lib' ],
+    },
+	targets: {
+		simpleEsp: {
+			type: 'exe',
+			sources: ['*.c'],
+            '+libraries': [ 'appweb', 'http', 'mpr', 'mprssl', '/usr/lib/appweb/latest/lib/mod_esp${SHLIB}' ],
+		},
+	},
+})
