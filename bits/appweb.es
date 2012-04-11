@@ -199,6 +199,7 @@ public function installBinary() {
     }
     package(bit.dir.pkg.join('bin'), 'install')
     createLinks()
+    updateLatestLink()
     trace('Start', 'appman install enable start')
     Cmd([bit.prefixes.bin.join('appman' + bit.EXE), 'install', 'enable', 'start'])
     if (bit.platform.os == 'win') {
@@ -236,6 +237,7 @@ public function uninstallBinary() {
         vtrace('Remove', prefix)
         prefix.remove()
     }
+    updateLatestLink()
 }
 
 /*
@@ -262,6 +264,16 @@ public function createLinks() {
     }
     bit.prefixes.productver.join('files.log').append(log.join('\n') + '\n')
     bit.prefixes.product.join('latest').symlink(bit.settings.version)
+}
+
+function updateLatestLink() {
+    let latest = bit.prefixes.product.join('latest')
+    let version = Path('.').glob('*', {include: /\d+\.\d+\.\d+/}).sort().pop()
+    if (version) {
+        latest.symlink(version)
+    } else {
+        latest.remove()
+    }
 }
 
 public function startAppweb() {
