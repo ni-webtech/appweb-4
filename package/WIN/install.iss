@@ -31,12 +31,6 @@ begin
 		'Please specify the TCP/IP port on which Appweb should listen for HTTP requests.');
 	PortPage.Add('HTTP Port:', False);
 	PortPage.values[0] := '80';
-
-//	SSLPortPage := CreateInputQueryPage(PortPage.ID, 'SSL Port', 'TCP/IP Port for SSL Connections',
-//		'Please specify the TCP/IP port on which Appweb should listen for SSL requests.');
-//	SSLPortPage.Add('SSL Port:', False);
-//	SSLPortPage.values[0] := '443';
-
 end;
 
 
@@ -175,22 +169,11 @@ end;
 
 
 [Icons]
-Name: "{group}\${settings.product}Monitor"; Filename: "{app}/bin/${settings.product}Monitor.exe"; Components: bin
+Name: "{group}\${settings.product}Monitor"; Filename: "{app}/bin/${settings.product}Monitor.exe";
 Name: "{group}\ReadMe"; Filename: "{app}/README.TXT"
-; Name: "{group}\Documentation"; Filename: "http://appwebserver.org/products/appweb/doc/appweb-4/product/index.html"; Components: dev
-;Name: "{group}\Manage"; Filename: "http://127.0.0.1:{code:GetPort}/index.html"; Components: bin
 
 [Registry]
 Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "AppwebMonitor"; ValueData: "{app}\bin\appwebMonitor.exe"
-
-[Types]
-Name: "full"; Description: "Complete Installation"; 
-Name: "binary"; Description: "Binary Installation"; 
-Name: "development"; Description: "Development Headers and Libraries"; 
-
-[Components]
-Name: "bin"; Description: "Binary Files"; Types: binary full;
-Name: "dev"; Description: "Development Files"; Types: development full;
 
 [Dirs]
 Name: "{app}/logs"; Permissions: system-modify;
@@ -213,7 +196,7 @@ Name: addpath; Description: Add ${settings.title} to the system PATH variable;
 [Run]
 Filename: "{app}/bin/${settings.product}Monitor.exe"; Parameters: "--stop"; WorkingDir: "{app}/bin"; Check: IsPresent('{app}/bin/${settings.product}Monitor.exe'); StatusMsg: "Stopping the Appweb Monitor"; Flags: waituntilterminated;
 
-Filename: "{app}/bin/appman.exe"; Parameters: "uninstall"; WorkingDir: "{app}"; Check: IsPresent('{app}/bin/appman.exe'); StatusMsg: "Stopping Appweb"; Flags: waituntilterminated; Components: bin
+Filename: "{app}/bin/appman.exe"; Parameters: "uninstall"; WorkingDir: "{app}"; Check: IsPresent('{app}/bin/appman.exe'); StatusMsg: "Stopping Appweb"; Flags: waituntilterminated;
 
 Filename: "{app}/bin/setConfig.exe"; Parameters: "--home . --documents ""{code:GetWebDir}"" --logs logs --port {code:GetPort} --ssl {code:GetSSL} --cache cache --modules bin appweb.conf"; WorkingDir: "{app}"; StatusMsg: "Updating Appweb configuration"; Flags: runhidden waituntilterminated; 
 
@@ -223,11 +206,11 @@ Filename: "{app}/bin/appman.exe"; Parameters: "start"; WorkingDir: "{app}"; Stat
 
 Filename: "{app}/bin/${settings.product}Monitor.exe"; Parameters: ""; WorkingDir: "{app}/bin"; StatusMsg: "Starting the Appweb Monitor"; Flags: waituntilidle;
 
-Filename: "http://appwebserver.org/products/appweb/doc-4/product/index.html"; Description: "View the Documentation"; Flags: skipifsilent waituntilidle shellexec postinstall; Components: bin
+Filename: "http://appwebserver.org/products/appweb/doc-4/product/index.html"; Description: "View the Documentation"; Flags: skipifsilent waituntilidle shellexec postinstall;
 
 [UninstallRun]
 Filename: "{app}/bin/${settings.product}Monitor.exe"; Parameters: "--stop"; WorkingDir: "{app}"; StatusMsg: "Stopping the Appweb Monitor"; Flags: waituntilterminated;
-Filename: "{app}/bin/appman.exe"; Parameters: "uninstall"; WorkingDir: "{app}"; Check: IsPresent('{app}/bin/appman.exe'); Components: bin
+Filename: "{app}/bin/appman.exe"; Parameters: "uninstall"; WorkingDir: "{app}"; Check: IsPresent('{app}/bin/appman.exe');
 Filename: "{app}/bin/removeFiles.exe"; Parameters: "-r -s 5"; WorkingDir: "{app}"; Flags:
 
 [Files]
