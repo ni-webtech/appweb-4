@@ -11857,8 +11857,7 @@ static MprFile *openFile(MprFileSystem *fs, cchar *path, int omode, int perms)
     
     mprAssert(path);
 
-    file = mprAllocObj(MprFile, manageDiskFile);
-    if (file == 0) {
+    if ((file = mprAllocObj(MprFile, manageDiskFile)) == 0) {
         return NULL;
     }
     file->path = sclone(path);
