@@ -15,7 +15,7 @@
 #undef      _CRT_SECURE_NO_DEPRECATE
 #define     _CRT_SECURE_NO_DEPRECATE 1
 
-#include "buildConfig.h"
+#include "bit.h"
 
 #ifndef _h_SQLITE3_
 #define _h_SQLITE3_ 1

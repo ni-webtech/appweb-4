@@ -12,19 +12,17 @@ Bit.load({
             platforms: [ 'local' ],
         },
 
-        'cgi-bin-testScript': {
+        'test-testScript': {
             path: 'cgi-bin/testScript',
             build: "
                 let path = Path('cgi-bin/testScript')
                 path.write('#!' + bit.dir.bin.join('cgiProgram'))
                 path.setAttributes({permissions: 0755})
             ",
-            'generate-sh': "\
-                echo '#!${BIN}/cgiProgram${EXE}' >${HOME}/cgi-bin/testScript ; chmod +x ${HOME}/cgi-bin/testScript
-            ",
+            'generate-sh': "echo '#!${BIN}/cgiProgram${EXE}' >cgi-bin/testScript ; chmod +x cgi-bin/testScript",
         },
 
-        'cache.cgi': {
+        'test-cache.cgi': {
             path: 'web/caching/cache.cgi',
             build: "
                 let path = Path('web/caching/cache.cgi')
@@ -33,16 +31,16 @@ Bit.load({
                 path.setAttributes({permissions: 0755})
             ",
             'generate-sh': "\
-                echo -e '#!`type -p sh`' >${HOME}/web/caching/cache.cgi
-                echo -e '' >>${HOME}/web/caching/cache.cgi
-                echo -e 'echo HTTP/1.0 200 OK' >>${HOME}/web/caching/cache.cgi
-                echo -e 'echo Content-Type: text/plain' >>${HOME}/web/caching/cache.cgi
-                echo -e 'date' >>${HOME}/web/caching/cache.cgi
-                chmod +x ${HOME}/web/caching/cache.cgi
+                echo -e '#!`type -p sh`' >web/caching/cache.cgi
+                echo -e '' >>web/caching/cache.cgi
+                echo -e 'echo HTTP/1.0 200 OK' >>web/caching/cache.cgi
+                echo -e 'echo Content-Type: text/plain' >>web/caching/cache.cgi
+                echo -e 'date' >>web/caching/cache.cgi
+                chmod +x web/caching/cache.cgi
             ",
         },
 
-        'basic.cgi': {
+        'test-basic.cgi': {
             path: 'web/basic/basic.cgi',
             build: "
                 let path = Path('web/basic/basic.cgi')
@@ -51,15 +49,15 @@ Bit.load({
                 path.setAttributes({permissions: 0755})
             ",
             'generate-sh': "\
-                echo -e '#!`type -p sh`' >${HOME}/web/basic/basic.cgi
-                echo -e '' >>${HOME}/web/basic/basic.cgi
-                echo -e 'echo Content-Type: text/plain' >>${HOME}/web/basic/basic.cgi
-                echo -e '/usr/bin/env' >>${HOME}/web/basic/basic.cgi
-                chmod +x ${HOME}/web/basic/basic.cgi
+                echo -e '#!`type -p sh`' >web/basic/basic.cgi
+                echo -e '' >>web/basic/basic.cgi
+                echo -e 'echo Content-Type: text/plain' >>web/basic/basic.cgi
+                echo -e '/usr/bin/env' >>web/basic/basic.cgi
+                chmod +x web/basic/basic.cgi
             ",
         },
 
-        'cgi-bin-cgiProgram': {
+        'test-cgiProgram': {
             path: 'cgi-bin/cgiProgram${EXE}',
             build: "
                 let perms = { permissions: 0755 }
@@ -70,11 +68,11 @@ Bit.load({
                 cp(cgiProgram, Path('web/cgiProgram.cgi'), perms)
             ",
             'generate-sh': "\
-                cp ${BIN}/cgiProgram ${HOME}/cgi-bin/cgiProgram${EXE}
-                cp ${BIN}/cgiProgram ${HOME}/cgi-bin/nph-cgiProgram${EXE}
-                cp ${BIN}/cgiProgram '${HOME}/cgi-bin/cgi Program${EXE}'
-                cp ${BIN}/cgiProgram ${HOME}/web/cgiProgram.cgi
-                chmod +x ${HOME}/cgi-bin/* ${HOME}/web/cgiProgram.cgi
+                cp ${BIN}/cgiProgram cgi-bin/cgiProgram${EXE}
+                cp ${BIN}/cgiProgram cgi-bin/nph-cgiProgram${EXE}
+                cp ${BIN}/cgiProgram 'cgi-bin/cgi Program${EXE}'
+                cp ${BIN}/cgiProgram web/cgiProgram.cgi
+                chmod +x cgi-bin/* web/cgiProgram.cgi
             ",
         },
 

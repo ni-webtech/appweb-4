@@ -29,12 +29,12 @@
 
 /********************************** Includes **********************************/
 
-#include "buildConfig.h"
+#include "bit.h"
 
 /******************************* Default Features *****************************/
 
-#ifndef BLD_FEATURE_FLOAT
-    #define BLD_FEATURE_FLOAT 1
+#ifndef BLD_DEBUG
+    #define BLD_DEBUG 0
 #endif
 #ifndef BLD_FEATURE_ASSERT
     #if BLD_DEBUG
@@ -42,6 +42,9 @@
     #else
         #define BLD_FEATURE_ASSERT 0
     #endif
+#endif
+#ifndef BLD_FEATURE_FLOAT
+    #define BLD_FEATURE_FLOAT 1
 #endif
 #ifndef BLD_FEATURE_ROMFS
     #define BLD_FEATURE_ROMFS 0
@@ -55,18 +58,103 @@
     CPU families
  */
 #define MPR_CPU_UNKNOWN     0
-#define MPR_CPU_IX86        1           /* X86 */
-#define MPR_CPU_PPC         2           /* Power PC */
-#define MPR_CPU_SPARC       3           /* Sparc */
-#define MPR_CPU_XSCALE      4           /* XScale */
-#define MPR_CPU_ARM         5           /* Arm */
-#define MPR_CPU_MIPS        6           /* Mips */
-#define MPR_CPU_68K         7           /* Motorola 68000 */
-#define MPR_CPU_SIMNT       8           /* VxWorks NT simulator */
-#define MPR_CPU_SIMSPARC    9           /* VxWorks sparc simulator */
-#define MPR_CPU_IX64        10          /* AMD64 or EMT64 */
-#define MPR_CPU_UNIVERSAL   11          /* MAC OS X universal binaries */
-#define MPR_CPU_SH4         12
+#define MPR_CPU_ARM         1           /* Arm */
+#define MPR_CPU_ITANIUM     2           /* Intel Itanium */
+#define MPR_CPU_IX86        3           /* X86 */
+#define MPR_CPU_IX64        4           /* AMD64 or EMT64 */
+#define MPR_CPU_MIPS        5           /* Mips */
+#define MPR_CPU_PPC         6           /* Power PC */
+#define MPR_CPU_SPARC       7           /* Sparc */
+
+#if defined(__alpha__)
+    #define BLD_CPU "ALPHA"
+    #define BLD_CPU_ARCH MPR_CPU_ALPHA
+#elif defined(__arm__)
+    #define BLD_CPU "ARM"
+    #define BLD_CPU_ARCH MPR_CPU_ARM
+#elif defined(__x86_64__) || defined(_M_AMD64)
+    #define BLD_CPU "x86_64"
+    #define BLD_CPU_ARCH MPR_CPU_IX64
+#elif defined(__i386__) || defined(_M_IX86)
+    #define BLD_CPU "i386"
+    #define BLD_CPU_ARCH MPR_CPU_IX86
+#elif defined(__i486__)
+    #define BLD_CPU "i486"
+    #define BLD_CPU_ARCH MPR_CPU_IX86
+#elif defined(__i586__)
+    #define BLD_CPU "i586"
+    #define BLD_CPU_ARCH MPR_CPU_IX86
+#elif defined(__i686__) 
+    #define BLD_CPU "i686"
+    #define BLD_CPU_ARCH MPR_CPU_IX86
+#elif defined(_M_IA64)
+    #define BLD_CPU "IA64"
+    #define BLD_CPU_ARCH MPR_CPU_ITANIUM
+#elif defined(__mips__)
+    #define BLD_CPU "MIPS"
+    #define BLD_CPU_ARCH MPR_CPU_SPARC
+#elif defined(__ppc__) || defined(__powerpc__) || defined(__ppc64__)
+    #define BLD_CPU "PPC"
+    #define BLD_CPU_ARCH MPR_CPU_PPC
+#elif defined(__sparc__)
+    #define BLD_CPU "SPARC"
+    #define BLD_CPU_ARCH MPR_CPU_SPARC
+#endif
+
+/*
+    Operating system defines
+ */
+#if defined(__APPLE__)
+    #define BLD_OS "MACOSX"
+    #define MACOSX 1
+    #define BLD_UNIX_LIKE 1
+    #define BLD_WIN_LIKE 0
+#elif defined(__linux__)
+    #define BLD_OS "LINUX"
+    #define LINUX 1
+    #define BLD_UNIX_LIKE 1
+    #define BLD_WIN_LIKE 0
+#elif defined(__FreeBSD__)
+    #define BLD_OS "FREEBSD"
+    #define FREEBSD 1
+    #define BLD_UNIX_LIKE 1
+    #define BLD_WIN_LIKE 0
+#elif defined(_WIN32)
+    #define BLD_OS "WIN"
+    #define WIN 1
+    #define BLD_UNIX_LIKE 0
+    #define BLD_WIN_LIKE 1
+#elif defined(__bsdi__)
+    #define BLD_OS "BSDI"
+    #define BSDI 1
+    #define BLD_UNIX_LIKE 1
+    #define BLD_WIN_LIKE 0
+#elif defined(__NetBSD__)
+    #define BLD_OS "NETBSD"
+    #define NETBSD 1
+    #define BLD_UNIX_LIKE 1
+    #define BLD_WIN_LIKE 0
+#elif defined(__hpux)
+    #define BLD_OS "HPUX"
+    #define HPUX 1
+    #define BLD_UNIX_LIKE 1
+    #define BLD_WIN_LIKE 0
+#elif defined(_AIX)
+    #define BLD_OS "AIX"
+    #define AIX 1
+    #define BLD_UNIX_LIKE 1
+    #define BLD_WIN_LIKE 0
+#elif defined(__CYGWIN__)
+    #define BLD_OS "CYGWIN"
+    #define CYGWIN 1
+    #define BLD_UNIX_LIKE 1
+    #define BLD_WIN_LIKE 0
+#elif defined(__VMS)
+    #define BLD_OS "VMS"
+    #define VMS 1
+    #define BLD_UNIX_LIKE 0
+    #define BLD_WIN_LIKE 0
+#endif
 
 /********************************* O/S Includes *******************************/
 
@@ -1157,12 +1245,6 @@ struct  MprXml;
  */
 #define MPR_DEFAULT_BREAK_PORT  9473
 #define MPR_FD_MIN              32
-
-#if BLD_WIN_LIKE
-    #define BLD_LIB_NAME        "bin"
-#else
-    #define BLD_LIB_NAME        "lib"
-#endif
 
 /* 
     Longest IPv6 is XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX (40 bytes with null) 

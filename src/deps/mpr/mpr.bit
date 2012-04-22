@@ -12,7 +12,6 @@ Bit.load({
         },
 
         libmprssl: {
-            enable: 'bit.packs.openssl.enable || bit.packs.matrixssl.enable',
             type: 'lib',
             depends: [ 'libmpr', 'openssl', 'matrixssl' ],
             sources: [ 'mprSsl.c' ],

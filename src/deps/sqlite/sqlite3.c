@@ -6,7 +6,7 @@
 
 /********************************** Includes **********************************/
 
-#include "buildConfig.h"
+#include "bit.h"
 
 
 #if BLD_FEATURE_SQLITE
@@ -25522,7 +25522,7 @@ static int proxyGetHostID(char *pHostID, int *pError){
       return SQLITE_PERM;
     }
     len = pread(fd, pHostID, HOSTIDLEN, 0);
-    if( len<0 ){
+    if( len<=0 ){
       *pError = errno;
       rc = SQLITE_IOERR_READ;
     }else if( len<HOSTIDLEN ){
@@ -25536,7 +25536,7 @@ static int proxyGetHostID(char *pHostID, int *pError){
     /* we're creating the host ID file (use a random string of bytes) */
     proxyGenerateHostID(pHostID);
     len = pwrite(fd, pHostID, HOSTIDLEN, 0);
-    if( len<0 ){
+    if( len<=0 ){
       *pError = errno;
       rc = SQLITE_IOERR_WRITE;
     }else if( len<HOSTIDLEN ){
