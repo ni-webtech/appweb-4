@@ -1,0 +1,535 @@
+#
+#   win-i686-debug.nmake -- Build It Makefile to build Embedthis Appweb for win on i686
+#
+
+!IFDEF VSINSTALLDIR
+VS        = $(VSINSTALLDIR)
+!ELSE
+VS        = \Users\mob\git\appweb\$(VS)
+!ENDIF
+
+!IFDEF WindowsSDKDir
+SDK       = $(WindowsSDKDir)
+!ELSE
+SDK       = $(SDK)
+!ENDIF
+
+PATH      = $(SDK)\Bin:$(VS)\VC\Bin:$(VS)\Common7\IDE:$(VS)\Common7\Tools:$(VS)\SDK\v3.5\bin:$(VS)\VC\VCPackages;$(PATH)
+INCLUDE   = $(INCLUDE);$(SDK)\INCLUDE:$(VS)\VC\INCLUDE
+LIB       = $(LIB);$(SDK)\lib:$(VS)\VC\lib
+
+OS       = win
+CONFIG   = $(OS)-i686-debug
+CC       = cl
+LD       = link
+CFLAGS   = -nologo -GR- -W3 -Zi -Od -MDd
+DFLAGS   = -D_REENTRANT -D_MT
+IFLAGS   = -I$(CONFIG)\inc
+LDFLAGS  = -nologo -nodefaultlib -incremental:no -debug -machine:x86
+LIBPATHS = -libpath:$(CONFIG)\bin
+LIBS     = ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib shell32.lib
+
+all: prep \
+        $(CONFIG)\bin\libmpr.dll \
+        $(CONFIG)\bin\libmprssl.dll \
+        $(CONFIG)\bin\appman.exe \
+        $(CONFIG)\bin\makerom.exe \
+        $(CONFIG)\bin\libpcre.dll \
+        $(CONFIG)\bin\libhttp.dll \
+        $(CONFIG)\bin\http.exe \
+        $(CONFIG)\bin\libsqlite3.dll \
+        $(CONFIG)\bin\sqlite.exe \
+        $(CONFIG)\bin\libappweb.dll \
+        $(CONFIG)\bin\mod_esp.dll \
+        $(CONFIG)\bin\esp.exe \
+        $(CONFIG)\bin\esp.conf \
+        $(CONFIG)\bin\esp-www \
+        $(CONFIG)\bin\mod_cgi.dll \
+        $(CONFIG)\bin\auth.exe \
+        $(CONFIG)\bin\cgiProgram.exe \
+        $(CONFIG)\bin\setConfig.exe \
+        $(CONFIG)\bin\appweb.exe \
+        $(CONFIG)\bin\appwebMonitor.exe \
+        $(CONFIG)\bin\appwebMonitor.ico \
+        $(CONFIG)\bin\testAppweb.exe \
+        test\cgi-bin\testScript \
+        test\web\caching\cache.cgi \
+        test\web\basic\basic.cgi \
+        test\cgi-bin\cgiProgram.exe \
+        $(CONFIG)\bin\removeFiles.exe
+
+.PHONY: prep
+
+prep:
+	@if not exist $(CONFIG)\inc md $(CONFIG)\inc
+	@if not exist $(CONFIG)\obj md $(CONFIG)\obj
+	@if not exist $(CONFIG)\bin md $(CONFIG)\bin
+	@if not exist $(CONFIG)\inc\bit.h copy projects\appweb-$(OS)-bit.h $(CONFIG)\inc\bit.h
+	@if not exist $(CONFIG)\bin\libmpr.def xcopy /Y /S projects\$(CONFIG)\*.def $(CONFIG)\bin
+
+clean:
+	-if exist $(CONFIG)\bin\libmpr.dll del /Q $(CONFIG)\bin\libmpr.dll
+	-if exist $(CONFIG)\bin\libmprssl.dll del /Q $(CONFIG)\bin\libmprssl.dll
+	-if exist $(CONFIG)\bin\appman.exe del /Q $(CONFIG)\bin\appman.exe
+	-if exist $(CONFIG)\bin\makerom.exe del /Q $(CONFIG)\bin\makerom.exe
+	-if exist $(CONFIG)\bin\libpcre.dll del /Q $(CONFIG)\bin\libpcre.dll
+	-if exist $(CONFIG)\bin\libhttp.dll del /Q $(CONFIG)\bin\libhttp.dll
+	-if exist $(CONFIG)\bin\http.exe del /Q $(CONFIG)\bin\http.exe
+	-if exist $(CONFIG)\bin\libsqlite3.dll del /Q $(CONFIG)\bin\libsqlite3.dll
+	-if exist $(CONFIG)\bin\sqlite.exe del /Q $(CONFIG)\bin\sqlite.exe
+	-if exist $(CONFIG)\bin\libappweb.dll del /Q $(CONFIG)\bin\libappweb.dll
+	-if exist $(CONFIG)\bin\mod_esp.dll del /Q $(CONFIG)\bin\mod_esp.dll
+	-if exist $(CONFIG)\bin\esp.exe del /Q $(CONFIG)\bin\esp.exe
+	-if exist $(CONFIG)\bin\esp.conf del /Q $(CONFIG)\bin\esp.conf
+	-if exist $(CONFIG)\bin\esp-www del /Q $(CONFIG)\bin\esp-www
+	-if exist $(CONFIG)\bin\mod_cgi.dll del /Q $(CONFIG)\bin\mod_cgi.dll
+	-if exist $(CONFIG)\bin\mod_ejs.dll del /Q $(CONFIG)\bin\mod_ejs.dll
+	-if exist $(CONFIG)\bin\mod_php.dll del /Q $(CONFIG)\bin\mod_php.dll
+	-if exist $(CONFIG)\bin\mod_ssl.dll del /Q $(CONFIG)\bin\mod_ssl.dll
+	-if exist $(CONFIG)\bin\auth.exe del /Q $(CONFIG)\bin\auth.exe
+	-if exist $(CONFIG)\bin\cgiProgram.exe del /Q $(CONFIG)\bin\cgiProgram.exe
+	-if exist $(CONFIG)\bin\setConfig.exe del /Q $(CONFIG)\bin\setConfig.exe
+	-if exist $(CONFIG)\bin\appweb.exe del /Q $(CONFIG)\bin\appweb.exe
+	-if exist $(CONFIG)\bin\appwebMonitor.exe del /Q $(CONFIG)\bin\appwebMonitor.exe
+	-if exist $(CONFIG)\bin\appwebMonitor.ico del /Q $(CONFIG)\bin\appwebMonitor.ico
+	-if exist $(CONFIG)\bin\testAppweb.exe del /Q $(CONFIG)\bin\testAppweb.exe
+	-if exist test\cgi-bin\testScript del /Q test\cgi-bin\testScript
+	-if exist test\web\caching\cache.cgi del /Q test\web\caching\cache.cgi
+	-if exist test\web\basic\basic.cgi del /Q test\web\basic\basic.cgi
+	-if exist test\cgi-bin\cgiProgram.exe del /Q test\cgi-bin\cgiProgram.exe
+	-if exist $(CONFIG)\bin\removeFiles.exe del /Q $(CONFIG)\bin\removeFiles.exe
+	-if exist $(CONFIG)\obj\mprLib.obj del /Q $(CONFIG)\obj\mprLib.obj
+	-if exist $(CONFIG)\obj\mprSsl.obj del /Q $(CONFIG)\obj\mprSsl.obj
+	-if exist $(CONFIG)\obj\manager.obj del /Q $(CONFIG)\obj\manager.obj
+	-if exist $(CONFIG)\obj\makerom.obj del /Q $(CONFIG)\obj\makerom.obj
+	-if exist $(CONFIG)\obj\pcre.obj del /Q $(CONFIG)\obj\pcre.obj
+	-if exist $(CONFIG)\obj\httpLib.obj del /Q $(CONFIG)\obj\httpLib.obj
+	-if exist $(CONFIG)\obj\http.obj del /Q $(CONFIG)\obj\http.obj
+	-if exist $(CONFIG)\obj\sqlite3.obj del /Q $(CONFIG)\obj\sqlite3.obj
+	-if exist $(CONFIG)\obj\sqlite.obj del /Q $(CONFIG)\obj\sqlite.obj
+	-if exist $(CONFIG)\obj\config.obj del /Q $(CONFIG)\obj\config.obj
+	-if exist $(CONFIG)\obj\convenience.obj del /Q $(CONFIG)\obj\convenience.obj
+	-if exist $(CONFIG)\obj\dirHandler.obj del /Q $(CONFIG)\obj\dirHandler.obj
+	-if exist $(CONFIG)\obj\fileHandler.obj del /Q $(CONFIG)\obj\fileHandler.obj
+	-if exist $(CONFIG)\obj\log.obj del /Q $(CONFIG)\obj\log.obj
+	-if exist $(CONFIG)\obj\server.obj del /Q $(CONFIG)\obj\server.obj
+	-if exist $(CONFIG)\obj\edi.obj del /Q $(CONFIG)\obj\edi.obj
+	-if exist $(CONFIG)\obj\espAbbrev.obj del /Q $(CONFIG)\obj\espAbbrev.obj
+	-if exist $(CONFIG)\obj\espFramework.obj del /Q $(CONFIG)\obj\espFramework.obj
+	-if exist $(CONFIG)\obj\espHandler.obj del /Q $(CONFIG)\obj\espHandler.obj
+	-if exist $(CONFIG)\obj\espHtml.obj del /Q $(CONFIG)\obj\espHtml.obj
+	-if exist $(CONFIG)\obj\espSession.obj del /Q $(CONFIG)\obj\espSession.obj
+	-if exist $(CONFIG)\obj\espTemplate.obj del /Q $(CONFIG)\obj\espTemplate.obj
+	-if exist $(CONFIG)\obj\mdb.obj del /Q $(CONFIG)\obj\mdb.obj
+	-if exist $(CONFIG)\obj\sdb.obj del /Q $(CONFIG)\obj\sdb.obj
+	-if exist $(CONFIG)\obj\esp.obj del /Q $(CONFIG)\obj\esp.obj
+	-if exist $(CONFIG)\obj\cgiHandler.obj del /Q $(CONFIG)\obj\cgiHandler.obj
+	-if exist $(CONFIG)\obj\ejsHandler.obj del /Q $(CONFIG)\obj\ejsHandler.obj
+	-if exist $(CONFIG)\obj\phpHandler.obj del /Q $(CONFIG)\obj\phpHandler.obj
+	-if exist $(CONFIG)\obj\sslModule.obj del /Q $(CONFIG)\obj\sslModule.obj
+	-if exist $(CONFIG)\obj\auth.obj del /Q $(CONFIG)\obj\auth.obj
+	-if exist $(CONFIG)\obj\cgiProgram.obj del /Q $(CONFIG)\obj\cgiProgram.obj
+	-if exist $(CONFIG)\obj\setConfig.obj del /Q $(CONFIG)\obj\setConfig.obj
+	-if exist $(CONFIG)\obj\appweb.obj del /Q $(CONFIG)\obj\appweb.obj
+	-if exist $(CONFIG)\obj\appwebMonitor.obj del /Q $(CONFIG)\obj\appwebMonitor.obj
+	-if exist $(CONFIG)\obj\testAppweb.obj del /Q $(CONFIG)\obj\testAppweb.obj
+	-if exist $(CONFIG)\obj\testHttp.obj del /Q $(CONFIG)\obj\testHttp.obj
+	-if exist $(CONFIG)\obj\removeFiles.obj del /Q $(CONFIG)\obj\removeFiles.obj
+
+$(CONFIG)\inc\mpr.h: 
+	-if exist win-i686-debug\inc\mpr.h del /Q win-i686-debug\inc\mpr.h
+	copy /Y src\deps\mpr\mpr.h win-i686-debug\inc\mpr.h
+
+$(CONFIG)\obj\mprLib.obj: \
+        src\deps\mpr\mprLib.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\mprLib.obj -Fd$(CONFIG)\obj\mprLib.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\mpr\mprLib.c
+
+$(CONFIG)\bin\libmpr.dll:  \
+        $(CONFIG)\inc\mpr.h \
+        $(CONFIG)\obj\mprLib.obj
+	"$(LD)" -dll -out:$(CONFIG)\bin\libmpr.dll -entry:_DllMainCRTStartup@12 -def:$(CONFIG)\bin\libmpr.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\mprLib.obj $(LIBS)
+
+$(CONFIG)\obj\mprSsl.obj: \
+        src\deps\mpr\mprSsl.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\mprSsl.obj -Fd$(CONFIG)\obj\mprSsl.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\mpr\mprSsl.c
+
+$(CONFIG)\bin\libmprssl.dll:  \
+        $(CONFIG)\bin\libmpr.dll \
+        $(CONFIG)\obj\mprSsl.obj
+	"$(LD)" -dll -out:$(CONFIG)\bin\libmprssl.dll -entry:_DllMainCRTStartup@12 -def:$(CONFIG)\bin\libmprssl.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\mprSsl.obj $(LIBS) libmpr.lib
+
+$(CONFIG)\obj\manager.obj: \
+        src\deps\mpr\manager.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\manager.obj -Fd$(CONFIG)\obj\manager.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\mpr\manager.c
+
+$(CONFIG)\bin\appman.exe:  \
+        $(CONFIG)\bin\libmpr.dll \
+        $(CONFIG)\obj\manager.obj
+	"$(LD)" -out:$(CONFIG)\bin\appman.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\manager.obj $(LIBS) libmpr.lib
+
+$(CONFIG)\obj\makerom.obj: \
+        src\deps\mpr\makerom.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\makerom.obj -Fd$(CONFIG)\obj\makerom.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\mpr\makerom.c
+
+$(CONFIG)\bin\makerom.exe:  \
+        $(CONFIG)\bin\libmpr.dll \
+        $(CONFIG)\obj\makerom.obj
+	"$(LD)" -out:$(CONFIG)\bin\makerom.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\makerom.obj $(LIBS) libmpr.lib
+
+$(CONFIG)\inc\pcre.h: 
+	-if exist win-i686-debug\inc\pcre.h del /Q win-i686-debug\inc\pcre.h
+	copy /Y src\deps\pcre\pcre.h win-i686-debug\inc\pcre.h
+
+$(CONFIG)\obj\pcre.obj: \
+        src\deps\pcre\pcre.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\pcre.obj -Fd$(CONFIG)\obj\pcre.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\pcre\pcre.c
+
+$(CONFIG)\bin\libpcre.dll:  \
+        $(CONFIG)\inc\pcre.h \
+        $(CONFIG)\obj\pcre.obj
+	"$(LD)" -dll -out:$(CONFIG)\bin\libpcre.dll -entry:_DllMainCRTStartup@12 -def:$(CONFIG)\bin\libpcre.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\pcre.obj $(LIBS)
+
+$(CONFIG)\inc\http.h: 
+	-if exist win-i686-debug\inc\http.h del /Q win-i686-debug\inc\http.h
+	copy /Y src\deps\http\http.h win-i686-debug\inc\http.h
+
+$(CONFIG)\obj\httpLib.obj: \
+        src\deps\http\httpLib.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\httpLib.obj -Fd$(CONFIG)\obj\httpLib.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\http\httpLib.c
+
+$(CONFIG)\bin\libhttp.dll:  \
+        $(CONFIG)\bin\libmpr.dll \
+        $(CONFIG)\bin\libpcre.dll \
+        $(CONFIG)\bin\libmprssl.dll \
+        $(CONFIG)\inc\http.h \
+        $(CONFIG)\obj\httpLib.obj
+	"$(LD)" -dll -out:$(CONFIG)\bin\libhttp.dll -entry:_DllMainCRTStartup@12 -def:$(CONFIG)\bin\libhttp.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\httpLib.obj $(LIBS) libmpr.lib libpcre.lib libmprssl.lib
+
+$(CONFIG)\obj\http.obj: \
+        src\deps\http\http.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\http.obj -Fd$(CONFIG)\obj\http.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\http\http.c
+
+$(CONFIG)\bin\http.exe:  \
+        $(CONFIG)\bin\libhttp.dll \
+        $(CONFIG)\obj\http.obj
+	"$(LD)" -out:$(CONFIG)\bin\http.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\http.obj $(LIBS) libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
+
+$(CONFIG)\inc\sqlite3.h: 
+	-if exist win-i686-debug\inc\sqlite3.h del /Q win-i686-debug\inc\sqlite3.h
+	copy /Y src\deps\sqlite\sqlite3.h win-i686-debug\inc\sqlite3.h
+
+$(CONFIG)\obj\sqlite3.obj: \
+        src\deps\sqlite\sqlite3.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\sqlite3.obj -Fd$(CONFIG)\obj\sqlite3.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\sqlite\sqlite3.c
+
+$(CONFIG)\bin\libsqlite3.dll:  \
+        $(CONFIG)\inc\sqlite3.h \
+        $(CONFIG)\obj\sqlite3.obj
+	"$(LD)" -dll -out:$(CONFIG)\bin\libsqlite3.dll -entry:_DllMainCRTStartup@12 -def:$(CONFIG)\bin\libsqlite3.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\sqlite3.obj $(LIBS)
+
+$(CONFIG)\obj\sqlite.obj: \
+        src\deps\sqlite\sqlite.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\sqlite.obj -Fd$(CONFIG)\obj\sqlite.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\sqlite\sqlite.c
+
+$(CONFIG)\bin\sqlite.exe:  \
+        $(CONFIG)\bin\libsqlite3.dll \
+        $(CONFIG)\obj\sqlite.obj
+	"$(LD)" -out:$(CONFIG)\bin\sqlite.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\sqlite.obj $(LIBS) libsqlite3.lib
+
+$(CONFIG)\inc\appweb.h: 
+	-if exist win-i686-debug\inc\appweb.h del /Q win-i686-debug\inc\appweb.h
+	copy /Y src\appweb.h win-i686-debug\inc\appweb.h
+
+$(CONFIG)\inc\customize.h: 
+	-if exist win-i686-debug\inc\customize.h del /Q win-i686-debug\inc\customize.h
+	copy /Y src\customize.h win-i686-debug\inc\customize.h
+
+$(CONFIG)\obj\config.obj: \
+        src\config.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\config.obj -Fd$(CONFIG)\obj\config.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\config.c
+
+$(CONFIG)\obj\convenience.obj: \
+        src\convenience.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\convenience.obj -Fd$(CONFIG)\obj\convenience.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\convenience.c
+
+$(CONFIG)\obj\dirHandler.obj: \
+        src\dirHandler.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\dirHandler.obj -Fd$(CONFIG)\obj\dirHandler.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\dirHandler.c
+
+$(CONFIG)\obj\fileHandler.obj: \
+        src\fileHandler.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\fileHandler.obj -Fd$(CONFIG)\obj\fileHandler.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\fileHandler.c
+
+$(CONFIG)\obj\log.obj: \
+        src\log.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\log.obj -Fd$(CONFIG)\obj\log.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\log.c
+
+$(CONFIG)\obj\server.obj: \
+        src\server.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\server.obj -Fd$(CONFIG)\obj\server.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\server.c
+
+$(CONFIG)\bin\libappweb.dll:  \
+        $(CONFIG)\bin\libhttp.dll \
+        $(CONFIG)\inc\appweb.h \
+        $(CONFIG)\inc\customize.h \
+        $(CONFIG)\obj\config.obj \
+        $(CONFIG)\obj\convenience.obj \
+        $(CONFIG)\obj\dirHandler.obj \
+        $(CONFIG)\obj\fileHandler.obj \
+        $(CONFIG)\obj\log.obj \
+        $(CONFIG)\obj\server.obj
+	"$(LD)" -dll -out:$(CONFIG)\bin\libappweb.dll -entry:_DllMainCRTStartup@12 -def:$(CONFIG)\bin\libappweb.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\config.obj $(CONFIG)\obj\convenience.obj $(CONFIG)\obj\dirHandler.obj $(CONFIG)\obj\fileHandler.obj $(CONFIG)\obj\log.obj $(CONFIG)\obj\server.obj $(LIBS) libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
+
+$(CONFIG)\inc\edi.h: 
+	-if exist win-i686-debug\inc\edi.h del /Q win-i686-debug\inc\edi.h
+	copy /Y src\esp\edi.h win-i686-debug\inc\edi.h
+
+$(CONFIG)\inc\esp-app.h: 
+	-if exist win-i686-debug\inc\esp-app.h del /Q win-i686-debug\inc\esp-app.h
+	copy /Y src\esp\esp-app.h win-i686-debug\inc\esp-app.h
+
+$(CONFIG)\inc\esp.h: 
+	-if exist win-i686-debug\inc\esp.h del /Q win-i686-debug\inc\esp.h
+	copy /Y src\esp\esp.h win-i686-debug\inc\esp.h
+
+$(CONFIG)\inc\mdb.h: 
+	-if exist win-i686-debug\inc\mdb.h del /Q win-i686-debug\inc\mdb.h
+	copy /Y src\esp\mdb.h win-i686-debug\inc\mdb.h
+
+$(CONFIG)\obj\edi.obj: \
+        src\esp\edi.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\edi.obj -Fd$(CONFIG)\obj\edi.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\edi.c
+
+$(CONFIG)\obj\espAbbrev.obj: \
+        src\esp\espAbbrev.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\espAbbrev.obj -Fd$(CONFIG)\obj\espAbbrev.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\espAbbrev.c
+
+$(CONFIG)\obj\espFramework.obj: \
+        src\esp\espFramework.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\espFramework.obj -Fd$(CONFIG)\obj\espFramework.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\espFramework.c
+
+$(CONFIG)\obj\espHandler.obj: \
+        src\esp\espHandler.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\espHandler.obj -Fd$(CONFIG)\obj\espHandler.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\espHandler.c
+
+$(CONFIG)\obj\espHtml.obj: \
+        src\esp\espHtml.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\espHtml.obj -Fd$(CONFIG)\obj\espHtml.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\espHtml.c
+
+$(CONFIG)\obj\espSession.obj: \
+        src\esp\espSession.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\espSession.obj -Fd$(CONFIG)\obj\espSession.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\espSession.c
+
+$(CONFIG)\obj\espTemplate.obj: \
+        src\esp\espTemplate.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\espTemplate.obj -Fd$(CONFIG)\obj\espTemplate.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\espTemplate.c
+
+$(CONFIG)\obj\mdb.obj: \
+        src\esp\mdb.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\mdb.obj -Fd$(CONFIG)\obj\mdb.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\mdb.c
+
+$(CONFIG)\obj\sdb.obj: \
+        src\esp\sdb.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\sdb.obj -Fd$(CONFIG)\obj\sdb.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\sdb.c
+
+$(CONFIG)\bin\mod_esp.dll:  \
+        $(CONFIG)\bin\libappweb.dll \
+        $(CONFIG)\inc\edi.h \
+        $(CONFIG)\inc\esp-app.h \
+        $(CONFIG)\inc\esp.h \
+        $(CONFIG)\inc\mdb.h \
+        $(CONFIG)\obj\edi.obj \
+        $(CONFIG)\obj\espAbbrev.obj \
+        $(CONFIG)\obj\espFramework.obj \
+        $(CONFIG)\obj\espHandler.obj \
+        $(CONFIG)\obj\espHtml.obj \
+        $(CONFIG)\obj\espSession.obj \
+        $(CONFIG)\obj\espTemplate.obj \
+        $(CONFIG)\obj\mdb.obj \
+        $(CONFIG)\obj\sdb.obj
+	"$(LD)" -dll -out:$(CONFIG)\bin\mod_esp.dll -entry:_DllMainCRTStartup@12 -def:$(CONFIG)\bin\mod_esp.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\edi.obj $(CONFIG)\obj\espAbbrev.obj $(CONFIG)\obj\espFramework.obj $(CONFIG)\obj\espHandler.obj $(CONFIG)\obj\espHtml.obj $(CONFIG)\obj\espSession.obj $(CONFIG)\obj\espTemplate.obj $(CONFIG)\obj\mdb.obj $(CONFIG)\obj\sdb.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
+
+$(CONFIG)\obj\esp.obj: \
+        src\esp\esp.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\esp.obj -Fd$(CONFIG)\obj\esp.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\esp.c
+
+$(CONFIG)\bin\esp.exe:  \
+        $(CONFIG)\bin\libappweb.dll \
+        $(CONFIG)\obj\edi.obj \
+        $(CONFIG)\obj\esp.obj \
+        $(CONFIG)\obj\espAbbrev.obj \
+        $(CONFIG)\obj\espFramework.obj \
+        $(CONFIG)\obj\espHandler.obj \
+        $(CONFIG)\obj\espHtml.obj \
+        $(CONFIG)\obj\espSession.obj \
+        $(CONFIG)\obj\espTemplate.obj \
+        $(CONFIG)\obj\mdb.obj \
+        $(CONFIG)\obj\sdb.obj
+	"$(LD)" -out:$(CONFIG)\bin\esp.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\edi.obj $(CONFIG)\obj\esp.obj $(CONFIG)\obj\espAbbrev.obj $(CONFIG)\obj\espFramework.obj $(CONFIG)\obj\espHandler.obj $(CONFIG)\obj\espHtml.obj $(CONFIG)\obj\espSession.obj $(CONFIG)\obj\espTemplate.obj $(CONFIG)\obj\mdb.obj $(CONFIG)\obj\sdb.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
+
+$(CONFIG)\bin\esp.conf: 
+	-if exist win-i686-debug\bin\esp.conf del /Q win-i686-debug\bin\esp.conf
+	copy /Y src\esp\esp.conf win-i686-debug\bin\esp.conf
+
+$(CONFIG)\bin\esp-www: 
+	-if exist win-i686-debug\bin\esp-www del /Q win-i686-debug\bin\esp-www
+	xcopy /S /Y src\esp\www win-i686-debug\bin\esp-www
+
+$(CONFIG)\obj\cgiHandler.obj: \
+        src\modules\cgiHandler.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\cgiHandler.obj -Fd$(CONFIG)\obj\cgiHandler.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\modules\cgiHandler.c
+
+$(CONFIG)\bin\mod_cgi.dll:  \
+        $(CONFIG)\bin\libappweb.dll \
+        $(CONFIG)\obj\cgiHandler.obj
+	"$(LD)" -dll -out:$(CONFIG)\bin\mod_cgi.dll -entry:_DllMainCRTStartup@12 -def:$(CONFIG)\bin\mod_cgi.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\cgiHandler.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
+
+$(CONFIG)\obj\auth.obj: \
+        src\utils\auth.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\auth.obj -Fd$(CONFIG)\obj\auth.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\utils\auth.c
+
+$(CONFIG)\bin\auth.exe:  \
+        $(CONFIG)\bin\libmpr.dll \
+        $(CONFIG)\obj\auth.obj
+	"$(LD)" -out:$(CONFIG)\bin\auth.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\auth.obj $(LIBS) libmpr.lib
+
+$(CONFIG)\obj\cgiProgram.obj: \
+        src\utils\cgiProgram.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\cgiProgram.obj -Fd$(CONFIG)\obj\cgiProgram.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\utils\cgiProgram.c
+
+$(CONFIG)\bin\cgiProgram.exe:  \
+        $(CONFIG)\obj\cgiProgram.obj
+	"$(LD)" -out:$(CONFIG)\bin\cgiProgram.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\cgiProgram.obj $(LIBS)
+
+$(CONFIG)\obj\setConfig.obj: \
+        src\utils\setConfig.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\setConfig.obj -Fd$(CONFIG)\obj\setConfig.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\utils\setConfig.c
+
+$(CONFIG)\bin\setConfig.exe:  \
+        $(CONFIG)\bin\libmpr.dll \
+        $(CONFIG)\obj\setConfig.obj
+	"$(LD)" -out:$(CONFIG)\bin\setConfig.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\setConfig.obj $(LIBS) libmpr.lib
+
+$(CONFIG)\inc\appwebMonitor.h: 
+	-if exist win-i686-debug\inc\appwebMonitor.h del /Q win-i686-debug\inc\appwebMonitor.h
+	copy /Y src\server\appwebMonitor.h win-i686-debug\inc\appwebMonitor.h
+
+$(CONFIG)\obj\appweb.obj: \
+        src\server\appweb.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\appweb.obj -Fd$(CONFIG)\obj\appweb.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\server\appweb.c
+
+$(CONFIG)\bin\appweb.exe:  \
+        $(CONFIG)\bin\libappweb.dll \
+        $(CONFIG)\inc\appwebMonitor.h \
+        $(CONFIG)\obj\appweb.obj
+	"$(LD)" -out:$(CONFIG)\bin\appweb.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\appweb.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
+
+$(CONFIG)\obj\appwebMonitor.res: \
+        src\server\WIN\appwebMonitor.rc
+	"rc" -nologo -Fo $(CONFIG)\obj\appwebMonitor.res src\server\WIN\appwebMonitor.rc
+
+$(CONFIG)\obj\appwebMonitor.obj: \
+        src\server\WIN\appwebMonitor.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\appwebMonitor.obj -Fd$(CONFIG)\obj\appwebMonitor.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\server\WIN\appwebMonitor.c
+
+$(CONFIG)\bin\appwebMonitor.exe:  \
+        $(CONFIG)\bin\libappweb.dll \
+        $(CONFIG)\obj\appwebMonitor.res \
+        $(CONFIG)\obj\appwebMonitor.obj
+	"$(LD)" -out:$(CONFIG)\bin\appwebMonitor.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\appwebMonitor.res $(CONFIG)\obj\appwebMonitor.obj shell32.lib libappweb.lib ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
+
+$(CONFIG)\bin\appwebMonitor.ico: 
+	-if exist win-i686-debug\bin\appwebMonitor.ico del /Q win-i686-debug\bin\appwebMonitor.ico
+	copy /Y src\server\WIN\appwebMonitor.ico win-i686-debug\bin\appwebMonitor.ico
+
+$(CONFIG)\inc\testAppweb.h: 
+	-if exist win-i686-debug\inc\testAppweb.h del /Q win-i686-debug\inc\testAppweb.h
+	copy /Y test\testAppweb.h win-i686-debug\inc\testAppweb.h
+
+$(CONFIG)\obj\testAppweb.obj: \
+        test\testAppweb.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\testAppweb.obj -Fd$(CONFIG)\obj\testAppweb.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc test\testAppweb.c
+
+$(CONFIG)\obj\testHttp.obj: \
+        test\testHttp.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\testHttp.obj -Fd$(CONFIG)\obj\testHttp.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc test\testHttp.c
+
+$(CONFIG)\bin\testAppweb.exe:  \
+        $(CONFIG)\bin\libappweb.dll \
+        $(CONFIG)\inc\testAppweb.h \
+        $(CONFIG)\obj\testAppweb.obj \
+        $(CONFIG)\obj\testHttp.obj
+	"$(LD)" -out:$(CONFIG)\bin\testAppweb.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\testAppweb.obj $(CONFIG)\obj\testHttp.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
+
+test\cgi-bin\testScript: 
+cd test >/dev/null ;\
+echo '#!../$(CONFIG)/bin/cgiProgram.exe' >cgi-bin/testScript ; chmod +x cgi-bin/testScript 
+
+test\web\caching\cache.cgi: 
+cd test >/dev/null ;\
+echo -e '#!`type -p sh`' >web/caching/cache.cgi ;\
+echo -e '' >>web/caching/cache.cgi ;\
+echo -e 'echo HTTP/1.0 200 OK' >>web/caching/cache.cgi ;\
+echo -e 'echo Content-Type: text/plain' >>web/caching/cache.cgi ;\
+echo -e 'date' >>web/caching/cache.cgi ;\
+chmod +x web/caching/cache.cgi 
+
+test\web\basic\basic.cgi: 
+cd test >/dev/null ;\
+echo -e '#!`type -p sh`' >web/basic/basic.cgi ;\
+echo -e '' >>web/basic/basic.cgi ;\
+echo -e 'echo Content-Type: text/plain' >>web/basic/basic.cgi ;\
+echo -e '/usr/bin/env' >>web/basic/basic.cgi ;\
+chmod +x web/basic/basic.cgi 
+
+test\cgi-bin\cgiProgram.exe: 
+cd test >/dev/null ;\
+cp ../$(CONFIG)/bin/cgiProgram cgi-bin/cgiProgram.exe ;\
+cp ../$(CONFIG)/bin/cgiProgram cgi-bin/nph-cgiProgram.exe ;\
+cp ../$(CONFIG)/bin/cgiProgram 'cgi-bin/cgi Program.exe' ;\
+cp ../$(CONFIG)/bin/cgiProgram web/cgiProgram.cgi ;\
+chmod +x cgi-bin/* web/cgiProgram.cgi 
+
+$(CONFIG)\obj\removeFiles.obj: \
+        package\WIN\removeFiles.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\removeFiles.obj -Fd$(CONFIG)\obj\removeFiles.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc package\WIN\removeFiles.c
+
+$(CONFIG)\bin\removeFiles.exe:  \
+        $(CONFIG)\bin\libmpr.dll \
+        $(CONFIG)\obj\removeFiles.obj
+	"$(LD)" -out:$(CONFIG)\bin\removeFiles.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\removeFiles.obj $(LIBS) libmpr.lib
+

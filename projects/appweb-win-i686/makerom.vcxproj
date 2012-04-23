@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <AdditionalIncludeDirectories>..\..\win-i686-debug\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    
+  <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;DEBUG_IDE;_REENTRANT;_MT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    <Optimization>Disabled</Optimization>
+    <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+    <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+    </ClCompile>
+ <Link>
+      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+
+<ItemGroup Label="ProjectConfigurations">
+  <ProjectConfiguration Include="Debug|Win32">
+    <Configuration>Debug</Configuration>
+    <Platform>Win32</Platform>
+  </ProjectConfiguration>
+</ItemGroup>
+
+<PropertyGroup Label="Globals">
+  <ProjectGuid>{ebdeaacb-4cce-4c6d-9f21-a3dab8941e63}</ProjectGuid>
+  <RootNamespace />
+  <Keyword>Win32Proj</Keyword>
+</PropertyGroup>
+
+<Import Project="$(VCTargetsPath)Microsoft.Cpp.Default.props" />
+
+<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+  <ConfigurationType>Application</ConfigurationType>
+  <CharacterSet>NotSet</CharacterSet>
+</PropertyGroup>
+
+<Import Project="$(VCTargetsPath)Microsoft.Cpp.props" />
+
+<ImportGroup Label="ExtensionSettings">
+</ImportGroup>
+
+<PropertyGroup Label="UserMacros" />
+
+<PropertyGroup>
+  <_ProjectFileVersion>10</_ProjectFileVersion>
+  <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\bin\</OutDir>
+  <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\obj\makerom\</IntDir>
+  <CustomBuildBeforeTargets Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">PreBuildEvent</CustomBuildBeforeTargets>
+  </PropertyGroup>
+<ItemGroup>
+  <ClCompile Include="..\..\src\deps\mpr\makerom.c" />
+</ItemGroup>
+<ItemDefinitionGroup>
+<Link>
+  <AdditionalDependencies>libmpr.lib;%(AdditionalDependencies)</AdditionalDependencies>
+  <AdditionalLibraryDirectories>$(OutDir);win-i686-debug\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+</Link>
+</ItemDefinitionGroup>
+
+<ItemGroup>
+  <ProjectReference Include="libmpr.vcxproj">
+  <Project>9651275b-c035-4265-a696-e2dc0147f040</Project>
+  <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+  </ProjectReference>
+</ItemGroup>
+
+<Import Project="$(VCTargetsPath)Microsoft.Cpp.targets" />
+<ImportGroup Label="ExtensionTargets">
+</ImportGroup>
+
+</Project>
