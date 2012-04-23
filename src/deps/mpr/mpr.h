@@ -75,17 +75,17 @@
 #elif defined(__x86_64__) || defined(_M_AMD64)
     #define BLD_CPU "x86_64"
     #define BLD_CPU_ARCH MPR_CPU_IX64
-#elif defined(__i386__) || defined(_M_IX86)
-    #define BLD_CPU "i386"
-    #define BLD_CPU_ARCH MPR_CPU_IX86
-#elif defined(__i486__)
-    #define BLD_CPU "i486"
+#elif defined(__i686__) 
+    #define BLD_CPU "i686"
     #define BLD_CPU_ARCH MPR_CPU_IX86
 #elif defined(__i586__)
     #define BLD_CPU "i586"
     #define BLD_CPU_ARCH MPR_CPU_IX86
-#elif defined(__i686__) 
-    #define BLD_CPU "i686"
+#elif defined(__i486__)
+    #define BLD_CPU "i486"
+    #define BLD_CPU_ARCH MPR_CPU_IX86
+#elif defined(__i386__) || defined(_M_IX86)
+    #define BLD_CPU "i386"
     #define BLD_CPU_ARCH MPR_CPU_IX86
 #elif defined(_M_IA64)
     #define BLD_CPU "IA64"
