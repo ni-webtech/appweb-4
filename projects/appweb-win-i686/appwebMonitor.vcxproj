@@ -61,7 +61,7 @@
 </ItemGroup>
 <ItemDefinitionGroup>
 <Link>
-  <AdditionalDependencies>libappweb.lib;libmpr.lib;libhttp.lib;libpcre.lib;%(AdditionalDependencies)</AdditionalDependencies>
+  <AdditionalDependencies>libappweb.lib;libhttp.lib;libmpr.lib;libpcre.lib;libmprssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
   <AdditionalLibraryDirectories>$(OutDir);win-i686-debug\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
 </Link>
 </ItemDefinitionGroup>

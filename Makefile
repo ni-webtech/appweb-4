@@ -1,12 +1,11 @@
 #
-#   Makefile - Top level Makefile when using "make" to build.
-#              Alternatively, use bit directly.
-#
+#	Makefile - Top level Makefile when using "make" to build.
+#			   Alternatively, use bit directly.
+#	
 
 ARCH 	:= $(shell uname -m)
-PROFILE	:= debug
-EXT		:= mk
 MAKE	:= make
+EXT		:= mk
 UNAME 	:= $(shell uname)
 
 ifeq ($(UNAME),Darwin)
@@ -18,14 +17,14 @@ endif
 ifeq ($(UNAME),Solaris)
 	OS	:=	SOLARIS
 endif
-ifeq ($(UNAME),Cygwin)
-	OS	:=	win
+ifeq ($(UNAME),CYGWIN_NT-5.1)
+	OS	:= win
 	MAKE:= nmake
-	EXT	:= nmake
+	EXT := nmake
 endif
 
 all clean clobber compile:
-	$(MAKE) -f projects/$(OS)-$(ARCH)-$(PROFILE).$(EXT) $@
+	$(MAKE) -f projects/appweb-$(OS)-$(ARCH).$(EXT) $@
 
 build configure generate test package:
 	bit $@

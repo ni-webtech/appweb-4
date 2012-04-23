@@ -9,7 +9,7 @@ Bit.load({
             type: 'lib',
             sources: [ '*.c' ],
             headers: [ '*.h' ],
-            depends: [ 'libmpr', 'libhttp', 'libpcre', 'libmprssl' ],
+            depends: [ 'libhttp' ],
         },
 	},
 })

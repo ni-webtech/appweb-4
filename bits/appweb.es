@@ -156,7 +156,7 @@ public function packageComboFiles() {
     let pkg = src.join(s.product + '-' + s.version)
     safeRemove(pkg)
     pkg.makeDir()
-    install('projects/buildConfig.' + bit.platform.configuration, pkg.join('src/deps/appweb/buildConfig.h'))
+    install('projects/appweb-' + bit.platform.os + '-bit.h', pkg.join('src/deps/appweb/bit.h'))
     install('package/appweb.bit', pkg.join('src/deps/appweb/product.bit'))
     install('package/Makefile.flat', pkg.join('src/deps/appweb/Makefile'))
     install(['src/deps/mpr/mpr.h', 'src/deps/http/http.h', 'src/appweb.h', 'src/server/appwebMonitor.h',

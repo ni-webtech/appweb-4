@@ -2,31 +2,33 @@
 #   macosx-x86_64-debug.mk -- Build It Makefile to build Embedthis Appweb for macosx on x86_64
 #
 
-CONFIG   := macosx-x86_64-debug
-CC       := /usr/bin/cc
+OS       := macosx
+CONFIG   := $(OS)-x86_64-debug
+CC       := /usr/bin/clang
 LD       := /usr/bin/ld
-CFLAGS   := -fPIC -Wall -g -Wno-unused-result -Wshorten-64-to-32
-DFLAGS   := -DPIC -DCPU=X86_64
+CFLAGS   := -Wall -g -Wno-unused-result -Wshorten-64-to-32
+DFLAGS   := -DBLD_DEBUG
 IFLAGS   := -I$(CONFIG)/inc
 LDFLAGS  := '-Wl,-rpath,@executable_path/../lib' '-Wl,-rpath,@executable_path/' '-Wl,-rpath,@loader_path/' '-g'
-LIBPATHS := -L$(CONFIG)/lib
+LIBPATHS := -L$(CONFIG)/bin
 LIBS     := -lpthread -lm -ldl
 
 all: prep \
-        $(CONFIG)/lib/libmpr.dylib \
+        $(CONFIG)/bin/libmpr.dylib \
+        $(CONFIG)/bin/libmprssl.dylib \
         $(CONFIG)/bin/appman \
         $(CONFIG)/bin/makerom \
-        $(CONFIG)/lib/libpcre.dylib \
-        $(CONFIG)/lib/libhttp.dylib \
+        $(CONFIG)/bin/libpcre.dylib \
+        $(CONFIG)/bin/libhttp.dylib \
         $(CONFIG)/bin/http \
-        $(CONFIG)/lib/libsqlite3.dylib \
+        $(CONFIG)/bin/libsqlite3.dylib \
         $(CONFIG)/bin/sqlite \
-        $(CONFIG)/lib/libappweb.dylib \
-        $(CONFIG)/lib/mod_esp.dylib \
+        $(CONFIG)/bin/libappweb.dylib \
+        $(CONFIG)/bin/mod_esp.dylib \
         $(CONFIG)/bin/esp \
-        $(CONFIG)/lib/esp.conf \
-        $(CONFIG)/lib/esp-www \
-        $(CONFIG)/lib/mod_cgi.dylib \
+        $(CONFIG)/bin/esp.conf \
+        $(CONFIG)/bin/esp-www \
+        $(CONFIG)/bin/mod_cgi.dylib \
         $(CONFIG)/bin/auth \
         $(CONFIG)/bin/cgiProgram \
         $(CONFIG)/bin/setConfig \
@@ -41,37 +43,37 @@ all: prep \
 
 prep:
 	@[ ! -x $(CONFIG)/inc ] && mkdir -p $(CONFIG)/inc $(CONFIG)/obj $(CONFIG)/lib $(CONFIG)/bin ; true
-	@[ ! -f $(CONFIG)/inc/buildConfig.h ] && cp projects/buildConfig.$(CONFIG) $(CONFIG)/inc/buildConfig.h ; true
-	@if ! diff $(CONFIG)/inc/buildConfig.h projects/buildConfig.$(CONFIG) >/dev/null ; then\
-		echo cp projects/buildConfig.$(CONFIG) $(CONFIG)/inc/buildConfig.h  ; \
-		cp projects/buildConfig.$(CONFIG) $(CONFIG)/inc/buildConfig.h  ; \
+	@[ ! -f $(CONFIG)/inc/bit.h ] && cp projects/appweb-$(OS)-bit.h $(CONFIG)/inc/bit.h ; true
+	@if ! diff $(CONFIG)/inc/bit.h projects/appweb-$(OS)-bit.h >/dev/null ; then\
+		echo cp projects/appweb-$(OS)-bit.h $(CONFIG)/inc/bit.h  ; \
+		cp projects/appweb-$(OS)-bit.h $(CONFIG)/inc/bit.h  ; \
 	fi; true
 
 clean:
-	rm -rf $(CONFIG)/lib/libmpr.dylib
-	rm -rf $(CONFIG)/lib/libmprssl.dylib
+	rm -rf $(CONFIG)/bin/libmpr.dylib
+	rm -rf $(CONFIG)/bin/libmprssl.dylib
 	rm -rf $(CONFIG)/bin/appman
 	rm -rf $(CONFIG)/bin/makerom
-	rm -rf $(CONFIG)/lib/libpcre.dylib
-	rm -rf $(CONFIG)/lib/libhttp.dylib
+	rm -rf $(CONFIG)/bin/libpcre.dylib
+	rm -rf $(CONFIG)/bin/libhttp.dylib
 	rm -rf $(CONFIG)/bin/http
-	rm -rf $(CONFIG)/lib/libsqlite3.dylib
+	rm -rf $(CONFIG)/bin/libsqlite3.dylib
 	rm -rf $(CONFIG)/bin/sqlite
-	rm -rf $(CONFIG)/lib/libappweb.dylib
-	rm -rf $(CONFIG)/lib/mod_esp.dylib
+	rm -rf $(CONFIG)/bin/libappweb.dylib
+	rm -rf $(CONFIG)/bin/mod_esp.dylib
 	rm -rf $(CONFIG)/bin/esp
-	rm -rf $(CONFIG)/lib/esp.conf
-	rm -rf $(CONFIG)/lib/esp-www
-	rm -rf $(CONFIG)/lib/mod_cgi.dylib
-	rm -rf $(CONFIG)/lib/mod_ejs.dylib
-	rm -rf $(CONFIG)/lib/mod_php.dylib
-	rm -rf $(CONFIG)/lib/mod_ssl.dylib
+	rm -rf $(CONFIG)/bin/esp.conf
+	rm -rf $(CONFIG)/bin/esp-www
+	rm -rf $(CONFIG)/bin/mod_cgi.dylib
+	rm -rf $(CONFIG)/bin/mod_ejs.dylib
+	rm -rf $(CONFIG)/bin/mod_php.dylib
+	rm -rf $(CONFIG)/bin/mod_ssl.dylib
 	rm -rf $(CONFIG)/bin/auth
 	rm -rf $(CONFIG)/bin/cgiProgram
 	rm -rf $(CONFIG)/bin/setConfig
 	rm -rf $(CONFIG)/bin/appweb
 	rm -rf $(CONFIG)/bin/appwebMonitor
-	rm -rf $(CONFIG)/lib/appwebMonitor.ico
+	rm -rf $(CONFIG)/bin/appwebMonitor.ico
 	rm -rf $(CONFIG)/bin/testAppweb
 	rm -rf test/cgi-bin/testScript
 	rm -rf test/web/caching/cache.cgi
@@ -112,12 +114,6 @@ clean:
 	rm -rf $(CONFIG)/obj/setConfig.o
 	rm -rf $(CONFIG)/obj/appweb.o
 	rm -rf $(CONFIG)/obj/appwebMonitor.o
-	rm -rf $(CONFIG)/obj/simpleServer.o
-	rm -rf $(CONFIG)/obj/simpleHandler.o
-	rm -rf $(CONFIG)/obj/simpleClient.o
-	rm -rf $(CONFIG)/obj/simpleEjs.o
-	rm -rf $(CONFIG)/obj/cppHandler.o
-	rm -rf $(CONFIG)/obj/cppModule.o
 	rm -rf $(CONFIG)/obj/testAppweb.o
 	rm -rf $(CONFIG)/obj/testHttp.o
 	rm -rf $(CONFIG)/obj/removeFiles.o
@@ -126,161 +122,171 @@ clobber: clean
 	rm -fr ./$(CONFIG)
 
 $(CONFIG)/inc/mpr.h: 
-	rm -fr macosx-x86_64-debug/inc/mpr.h
-	cp -r src/deps/mpr/mpr.h macosx-x86_64-debug/inc/mpr.h
+	rm -fr $(CONFIG)/inc/mpr.h
+	cp -r src/deps/mpr/mpr.h $(CONFIG)/inc/mpr.h
 
 $(CONFIG)/obj/mprLib.o: \
         src/deps/mpr/mprLib.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/mpr.h
 	$(CC) -c -o $(CONFIG)/obj/mprLib.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/mpr/mprLib.c
 
-$(CONFIG)/lib/libmpr.dylib:  \
+$(CONFIG)/bin/libmpr.dylib:  \
         $(CONFIG)/inc/mpr.h \
         $(CONFIG)/obj/mprLib.o
-	$(CC) -dynamiclib -o $(CONFIG)/lib/libmpr.dylib -arch x86_64 $(LDFLAGS) $(LIBPATHS) -install_name @rpath/libmpr.dylib $(CONFIG)/obj/mprLib.o $(LIBS)
+	$(CC) -dynamiclib -o $(CONFIG)/bin/libmpr.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.0.0 -current_version 4.0.0 -compatibility_version 4.0.0 -current_version 4.0.0 $(LIBPATHS) -install_name @rpath/libmpr.dylib $(CONFIG)/obj/mprLib.o $(LIBS)
+
+$(CONFIG)/obj/mprSsl.o: \
+        src/deps/mpr/mprSsl.c \
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/mpr.h
+	$(CC) -c -o $(CONFIG)/obj/mprSsl.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/mpr/mprSsl.c
+
+$(CONFIG)/bin/libmprssl.dylib:  \
+        $(CONFIG)/bin/libmpr.dylib \
+        $(CONFIG)/obj/mprSsl.o
+	$(CC) -dynamiclib -o $(CONFIG)/bin/libmprssl.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.0.0 -current_version 4.0.0 -compatibility_version 4.0.0 -current_version 4.0.0 $(LIBPATHS) -install_name @rpath/libmprssl.dylib $(CONFIG)/obj/mprSsl.o $(LIBS) -lmpr
 
 $(CONFIG)/obj/manager.o: \
         src/deps/mpr/manager.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/mpr.h
 	$(CC) -c -o $(CONFIG)/obj/manager.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/mpr/manager.c
 
 $(CONFIG)/bin/appman:  \
-        $(CONFIG)/lib/libmpr.dylib \
+        $(CONFIG)/bin/libmpr.dylib \
         $(CONFIG)/obj/manager.o
 	$(CC) -o $(CONFIG)/bin/appman -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/manager.o $(LIBS) -lmpr
 
 $(CONFIG)/obj/makerom.o: \
         src/deps/mpr/makerom.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/mpr.h
 	$(CC) -c -o $(CONFIG)/obj/makerom.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/mpr/makerom.c
 
 $(CONFIG)/bin/makerom:  \
-        $(CONFIG)/lib/libmpr.dylib \
+        $(CONFIG)/bin/libmpr.dylib \
         $(CONFIG)/obj/makerom.o
 	$(CC) -o $(CONFIG)/bin/makerom -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/makerom.o $(LIBS) -lmpr
 
 $(CONFIG)/inc/pcre.h: 
-	rm -fr macosx-x86_64-debug/inc/pcre.h
-	cp -r src/deps/pcre/pcre.h macosx-x86_64-debug/inc/pcre.h
+	rm -fr $(CONFIG)/inc/pcre.h
+	cp -r src/deps/pcre/pcre.h $(CONFIG)/inc/pcre.h
 
 $(CONFIG)/obj/pcre.o: \
         src/deps/pcre/pcre.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/pcre.h
 	$(CC) -c -o $(CONFIG)/obj/pcre.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/pcre/pcre.c
 
-$(CONFIG)/lib/libpcre.dylib:  \
+$(CONFIG)/bin/libpcre.dylib:  \
         $(CONFIG)/inc/pcre.h \
         $(CONFIG)/obj/pcre.o
-	$(CC) -dynamiclib -o $(CONFIG)/lib/libpcre.dylib -arch x86_64 $(LDFLAGS) $(LIBPATHS) -install_name @rpath/libpcre.dylib $(CONFIG)/obj/pcre.o $(LIBS)
+	$(CC) -dynamiclib -o $(CONFIG)/bin/libpcre.dylib -arch x86_64 $(LDFLAGS) $(LIBPATHS) -install_name @rpath/libpcre.dylib $(CONFIG)/obj/pcre.o $(LIBS)
 
 $(CONFIG)/inc/http.h: 
-	rm -fr macosx-x86_64-debug/inc/http.h
-	cp -r src/deps/http/http.h macosx-x86_64-debug/inc/http.h
+	rm -fr $(CONFIG)/inc/http.h
+	cp -r src/deps/http/http.h $(CONFIG)/inc/http.h
 
 $(CONFIG)/obj/httpLib.o: \
         src/deps/http/httpLib.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/http.h \
         $(CONFIG)/inc/pcre.h
 	$(CC) -c -o $(CONFIG)/obj/httpLib.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/http/httpLib.c
 
-$(CONFIG)/lib/libhttp.dylib:  \
-        $(CONFIG)/lib/libmpr.dylib \
-        $(CONFIG)/lib/libpcre.dylib \
+$(CONFIG)/bin/libhttp.dylib:  \
+        $(CONFIG)/bin/libmpr.dylib \
+        $(CONFIG)/bin/libpcre.dylib \
+        $(CONFIG)/bin/libmprssl.dylib \
         $(CONFIG)/inc/http.h \
         $(CONFIG)/obj/httpLib.o
-	$(CC) -dynamiclib -o $(CONFIG)/lib/libhttp.dylib -arch x86_64 $(LDFLAGS) $(LIBPATHS) -install_name @rpath/libhttp.dylib $(CONFIG)/obj/httpLib.o $(LIBS) -lmpr -lpcre
+	$(CC) -dynamiclib -o $(CONFIG)/bin/libhttp.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.0.0 -current_version 4.0.0 -compatibility_version 4.0.0 -current_version 4.0.0 $(LIBPATHS) -install_name @rpath/libhttp.dylib $(CONFIG)/obj/httpLib.o $(LIBS) -lmpr -lpcre -lmprssl
 
 $(CONFIG)/obj/http.o: \
         src/deps/http/http.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/http.h
 	$(CC) -c -o $(CONFIG)/obj/http.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/http/http.c
 
 $(CONFIG)/bin/http:  \
-        $(CONFIG)/lib/libhttp.dylib \
+        $(CONFIG)/bin/libhttp.dylib \
         $(CONFIG)/obj/http.o
-	$(CC) -o $(CONFIG)/bin/http -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/http.o $(LIBS) -lhttp -lmpr -lpcre
+	$(CC) -o $(CONFIG)/bin/http -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/http.o $(LIBS) -lhttp -lmpr -lpcre -lmprssl
 
 $(CONFIG)/inc/sqlite3.h: 
-	rm -fr macosx-x86_64-debug/inc/sqlite3.h
-	cp -r src/deps/sqlite/sqlite3.h macosx-x86_64-debug/inc/sqlite3.h
+	rm -fr $(CONFIG)/inc/sqlite3.h
+	cp -r src/deps/sqlite/sqlite3.h $(CONFIG)/inc/sqlite3.h
 
 $(CONFIG)/obj/sqlite3.o: \
         src/deps/sqlite/sqlite3.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/sqlite3.h
-	$(CC) -c -o $(CONFIG)/obj/sqlite3.o -arch x86_64 -fPIC -g -Wno-unused-result $(DFLAGS) -I$(CONFIG)/inc src/deps/sqlite/sqlite3.c
+	$(CC) -c -o $(CONFIG)/obj/sqlite3.o -arch x86_64 -g -Wno-unused-result $(DFLAGS) -I$(CONFIG)/inc src/deps/sqlite/sqlite3.c
 
-$(CONFIG)/lib/libsqlite3.dylib:  \
+$(CONFIG)/bin/libsqlite3.dylib:  \
         $(CONFIG)/inc/sqlite3.h \
         $(CONFIG)/obj/sqlite3.o
-	$(CC) -dynamiclib -o $(CONFIG)/lib/libsqlite3.dylib -arch x86_64 $(LDFLAGS) $(LIBPATHS) -install_name @rpath/libsqlite3.dylib $(CONFIG)/obj/sqlite3.o $(LIBS)
+	$(CC) -dynamiclib -o $(CONFIG)/bin/libsqlite3.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.0.0 -current_version 4.0.0 -compatibility_version 4.0.0 -current_version 4.0.0 $(LIBPATHS) -install_name @rpath/libsqlite3.dylib $(CONFIG)/obj/sqlite3.o $(LIBS)
 
 $(CONFIG)/obj/sqlite.o: \
         src/deps/sqlite/sqlite.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/sqlite3.h
 	$(CC) -c -o $(CONFIG)/obj/sqlite.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/sqlite/sqlite.c
 
 $(CONFIG)/bin/sqlite:  \
-        $(CONFIG)/lib/libsqlite3.dylib \
+        $(CONFIG)/bin/libsqlite3.dylib \
         $(CONFIG)/obj/sqlite.o
 	$(CC) -o $(CONFIG)/bin/sqlite -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/sqlite.o $(LIBS) -lsqlite3
 
 $(CONFIG)/inc/appweb.h: 
-	rm -fr macosx-x86_64-debug/inc/appweb.h
-	cp -r src/appweb.h macosx-x86_64-debug/inc/appweb.h
+	rm -fr $(CONFIG)/inc/appweb.h
+	cp -r src/appweb.h $(CONFIG)/inc/appweb.h
 
 $(CONFIG)/inc/customize.h: 
-	rm -fr macosx-x86_64-debug/inc/customize.h
-	cp -r src/customize.h macosx-x86_64-debug/inc/customize.h
+	rm -fr $(CONFIG)/inc/customize.h
+	cp -r src/customize.h $(CONFIG)/inc/customize.h
 
 $(CONFIG)/obj/config.o: \
         src/config.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/appweb.h \
         $(CONFIG)/inc/pcre.h
 	$(CC) -c -o $(CONFIG)/obj/config.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/config.c
 
 $(CONFIG)/obj/convenience.o: \
         src/convenience.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/convenience.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/convenience.c
 
 $(CONFIG)/obj/dirHandler.o: \
         src/dirHandler.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/dirHandler.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/dirHandler.c
 
 $(CONFIG)/obj/fileHandler.o: \
         src/fileHandler.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/fileHandler.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/fileHandler.c
 
 $(CONFIG)/obj/log.o: \
         src/log.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/log.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/log.c
 
 $(CONFIG)/obj/server.o: \
         src/server.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/server.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/server.c
 
-$(CONFIG)/lib/libappweb.dylib:  \
-        $(CONFIG)/lib/libmpr.dylib \
-        $(CONFIG)/lib/libhttp.dylib \
-        $(CONFIG)/lib/libpcre.dylib \
+$(CONFIG)/bin/libappweb.dylib:  \
+        $(CONFIG)/bin/libhttp.dylib \
         $(CONFIG)/inc/appweb.h \
         $(CONFIG)/inc/customize.h \
         $(CONFIG)/obj/config.o \
@@ -289,46 +295,46 @@ $(CONFIG)/lib/libappweb.dylib:  \
         $(CONFIG)/obj/fileHandler.o \
         $(CONFIG)/obj/log.o \
         $(CONFIG)/obj/server.o
-	$(CC) -dynamiclib -o $(CONFIG)/lib/libappweb.dylib -arch x86_64 $(LDFLAGS) $(LIBPATHS) -install_name @rpath/libappweb.dylib $(CONFIG)/obj/config.o $(CONFIG)/obj/convenience.o $(CONFIG)/obj/dirHandler.o $(CONFIG)/obj/fileHandler.o $(CONFIG)/obj/log.o $(CONFIG)/obj/server.o $(LIBS) -lmpr -lhttp -lpcre -lpcre
+	$(CC) -dynamiclib -o $(CONFIG)/bin/libappweb.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.0.0 -current_version 4.0.0 -compatibility_version 4.0.0 -current_version 4.0.0 $(LIBPATHS) -install_name @rpath/libappweb.dylib $(CONFIG)/obj/config.o $(CONFIG)/obj/convenience.o $(CONFIG)/obj/dirHandler.o $(CONFIG)/obj/fileHandler.o $(CONFIG)/obj/log.o $(CONFIG)/obj/server.o $(LIBS) -lhttp -lmpr -lpcre -lmprssl
 
 $(CONFIG)/inc/edi.h: 
-	rm -fr macosx-x86_64-debug/inc/edi.h
-	cp -r src/esp/edi.h macosx-x86_64-debug/inc/edi.h
+	rm -fr $(CONFIG)/inc/edi.h
+	cp -r src/esp/edi.h $(CONFIG)/inc/edi.h
 
 $(CONFIG)/inc/esp-app.h: 
-	rm -fr macosx-x86_64-debug/inc/esp-app.h
-	cp -r src/esp/esp-app.h macosx-x86_64-debug/inc/esp-app.h
+	rm -fr $(CONFIG)/inc/esp-app.h
+	cp -r src/esp/esp-app.h $(CONFIG)/inc/esp-app.h
 
 $(CONFIG)/inc/esp.h: 
-	rm -fr macosx-x86_64-debug/inc/esp.h
-	cp -r src/esp/esp.h macosx-x86_64-debug/inc/esp.h
+	rm -fr $(CONFIG)/inc/esp.h
+	cp -r src/esp/esp.h $(CONFIG)/inc/esp.h
 
 $(CONFIG)/inc/mdb.h: 
-	rm -fr macosx-x86_64-debug/inc/mdb.h
-	cp -r src/esp/mdb.h macosx-x86_64-debug/inc/mdb.h
+	rm -fr $(CONFIG)/inc/mdb.h
+	cp -r src/esp/mdb.h $(CONFIG)/inc/mdb.h
 
 $(CONFIG)/obj/edi.o: \
         src/esp/edi.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/edi.h \
         $(CONFIG)/inc/pcre.h
 	$(CC) -c -o $(CONFIG)/obj/edi.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/edi.c
 
 $(CONFIG)/obj/espAbbrev.o: \
         src/esp/espAbbrev.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/esp.h
 	$(CC) -c -o $(CONFIG)/obj/espAbbrev.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espAbbrev.c
 
 $(CONFIG)/obj/espFramework.o: \
         src/esp/espFramework.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/esp.h
 	$(CC) -c -o $(CONFIG)/obj/espFramework.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espFramework.c
 
 $(CONFIG)/obj/espHandler.o: \
         src/esp/espHandler.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/appweb.h \
         $(CONFIG)/inc/esp.h \
         $(CONFIG)/inc/edi.h
@@ -336,26 +342,26 @@ $(CONFIG)/obj/espHandler.o: \
 
 $(CONFIG)/obj/espHtml.o: \
         src/esp/espHtml.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/esp.h \
         $(CONFIG)/inc/edi.h
 	$(CC) -c -o $(CONFIG)/obj/espHtml.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espHtml.c
 
 $(CONFIG)/obj/espSession.o: \
         src/esp/espSession.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/esp.h
 	$(CC) -c -o $(CONFIG)/obj/espSession.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espSession.c
 
 $(CONFIG)/obj/espTemplate.o: \
         src/esp/espTemplate.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/esp.h
 	$(CC) -c -o $(CONFIG)/obj/espTemplate.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espTemplate.c
 
 $(CONFIG)/obj/mdb.o: \
         src/esp/mdb.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/appweb.h \
         $(CONFIG)/inc/edi.h \
         $(CONFIG)/inc/mdb.h \
@@ -364,13 +370,13 @@ $(CONFIG)/obj/mdb.o: \
 
 $(CONFIG)/obj/sdb.o: \
         src/esp/sdb.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/appweb.h \
         $(CONFIG)/inc/edi.h
 	$(CC) -c -o $(CONFIG)/obj/sdb.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/sdb.c
 
-$(CONFIG)/lib/mod_esp.dylib:  \
-        $(CONFIG)/lib/libappweb.dylib \
+$(CONFIG)/bin/mod_esp.dylib:  \
+        $(CONFIG)/bin/libappweb.dylib \
         $(CONFIG)/inc/edi.h \
         $(CONFIG)/inc/esp-app.h \
         $(CONFIG)/inc/esp.h \
@@ -384,16 +390,16 @@ $(CONFIG)/lib/mod_esp.dylib:  \
         $(CONFIG)/obj/espTemplate.o \
         $(CONFIG)/obj/mdb.o \
         $(CONFIG)/obj/sdb.o
-	$(CC) -dynamiclib -o $(CONFIG)/lib/mod_esp.dylib -arch x86_64 $(LDFLAGS) $(LIBPATHS) -install_name @rpath/mod_esp.dylib $(CONFIG)/obj/edi.o $(CONFIG)/obj/espAbbrev.o $(CONFIG)/obj/espFramework.o $(CONFIG)/obj/espHandler.o $(CONFIG)/obj/espHtml.o $(CONFIG)/obj/espSession.o $(CONFIG)/obj/espTemplate.o $(CONFIG)/obj/mdb.o $(CONFIG)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -dynamiclib -o $(CONFIG)/bin/mod_esp.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.0.0 -current_version 4.0.0 -compatibility_version 4.0.0 -current_version 4.0.0 $(LIBPATHS) -install_name @rpath/mod_esp.dylib $(CONFIG)/obj/edi.o $(CONFIG)/obj/espAbbrev.o $(CONFIG)/obj/espFramework.o $(CONFIG)/obj/espHandler.o $(CONFIG)/obj/espHtml.o $(CONFIG)/obj/espSession.o $(CONFIG)/obj/espTemplate.o $(CONFIG)/obj/mdb.o $(CONFIG)/obj/sdb.o $(LIBS) -lappweb -lhttp -lmpr -lpcre -lmprssl
 
 $(CONFIG)/obj/esp.o: \
         src/esp/esp.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/esp.h
 	$(CC) -c -o $(CONFIG)/obj/esp.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/esp.c
 
 $(CONFIG)/bin/esp:  \
-        $(CONFIG)/lib/libappweb.dylib \
+        $(CONFIG)/bin/libappweb.dylib \
         $(CONFIG)/obj/edi.o \
         $(CONFIG)/obj/esp.o \
         $(CONFIG)/obj/espAbbrev.o \
@@ -404,41 +410,41 @@ $(CONFIG)/bin/esp:  \
         $(CONFIG)/obj/espTemplate.o \
         $(CONFIG)/obj/mdb.o \
         $(CONFIG)/obj/sdb.o
-	$(CC) -o $(CONFIG)/bin/esp -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/edi.o $(CONFIG)/obj/esp.o $(CONFIG)/obj/espAbbrev.o $(CONFIG)/obj/espFramework.o $(CONFIG)/obj/espHandler.o $(CONFIG)/obj/espHtml.o $(CONFIG)/obj/espSession.o $(CONFIG)/obj/espTemplate.o $(CONFIG)/obj/mdb.o $(CONFIG)/obj/sdb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -o $(CONFIG)/bin/esp -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/edi.o $(CONFIG)/obj/esp.o $(CONFIG)/obj/espAbbrev.o $(CONFIG)/obj/espFramework.o $(CONFIG)/obj/espHandler.o $(CONFIG)/obj/espHtml.o $(CONFIG)/obj/espSession.o $(CONFIG)/obj/espTemplate.o $(CONFIG)/obj/mdb.o $(CONFIG)/obj/sdb.o $(LIBS) -lappweb -lhttp -lmpr -lpcre -lmprssl
 
-$(CONFIG)/lib/esp.conf: 
-	rm -fr macosx-x86_64-debug/lib/esp.conf
-	cp -r src/esp/esp.conf macosx-x86_64-debug/lib/esp.conf
+$(CONFIG)/bin/esp.conf: 
+	rm -fr $(CONFIG)/bin/esp.conf
+	cp -r src/esp/esp.conf $(CONFIG)/bin/esp.conf
 
-$(CONFIG)/lib/esp-www: 
-	rm -fr macosx-x86_64-debug/lib/esp-www
-	cp -r src/esp/www macosx-x86_64-debug/lib/esp-www
+$(CONFIG)/bin/esp-www: 
+	rm -fr $(CONFIG)/bin/esp-www
+	cp -r src/esp/www $(CONFIG)/bin/esp-www
 
 $(CONFIG)/obj/cgiHandler.o: \
         src/modules/cgiHandler.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/cgiHandler.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/modules/cgiHandler.c
 
-$(CONFIG)/lib/mod_cgi.dylib:  \
-        $(CONFIG)/lib/libappweb.dylib \
+$(CONFIG)/bin/mod_cgi.dylib:  \
+        $(CONFIG)/bin/libappweb.dylib \
         $(CONFIG)/obj/cgiHandler.o
-	$(CC) -dynamiclib -o $(CONFIG)/lib/mod_cgi.dylib -arch x86_64 $(LDFLAGS) $(LIBPATHS) -install_name @rpath/mod_cgi.dylib $(CONFIG)/obj/cgiHandler.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -dynamiclib -o $(CONFIG)/bin/mod_cgi.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.0.0 -current_version 4.0.0 -compatibility_version 4.0.0 -current_version 4.0.0 $(LIBPATHS) -install_name @rpath/mod_cgi.dylib $(CONFIG)/obj/cgiHandler.o $(LIBS) -lappweb -lhttp -lmpr -lpcre -lmprssl
 
 $(CONFIG)/obj/auth.o: \
         src/utils/auth.c \
-        $(CONFIG)/inc/buildConfig.h \
-        $(CONFIG)/inc/http.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/mpr.h
 	$(CC) -c -o $(CONFIG)/obj/auth.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/utils/auth.c
 
 $(CONFIG)/bin/auth:  \
-        $(CONFIG)/lib/libmpr.dylib \
+        $(CONFIG)/bin/libmpr.dylib \
         $(CONFIG)/obj/auth.o
 	$(CC) -o $(CONFIG)/bin/auth -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/auth.o $(LIBS) -lmpr
 
 $(CONFIG)/obj/cgiProgram.o: \
         src/utils/cgiProgram.c \
-        $(CONFIG)/inc/buildConfig.h
+        $(CONFIG)/inc/bit.h
 	$(CC) -c -o $(CONFIG)/obj/cgiProgram.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/utils/cgiProgram.c
 
 $(CONFIG)/bin/cgiProgram:  \
@@ -447,106 +453,84 @@ $(CONFIG)/bin/cgiProgram:  \
 
 $(CONFIG)/obj/setConfig.o: \
         src/utils/setConfig.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/mpr.h
 	$(CC) -c -o $(CONFIG)/obj/setConfig.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/utils/setConfig.c
 
 $(CONFIG)/bin/setConfig:  \
-        $(CONFIG)/lib/libmpr.dylib \
+        $(CONFIG)/bin/libmpr.dylib \
         $(CONFIG)/obj/setConfig.o
 	$(CC) -o $(CONFIG)/bin/setConfig -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/setConfig.o $(LIBS) -lmpr
 
 $(CONFIG)/inc/appwebMonitor.h: 
-	rm -fr macosx-x86_64-debug/inc/appwebMonitor.h
-	cp -r src/server/appwebMonitor.h macosx-x86_64-debug/inc/appwebMonitor.h
+	rm -fr $(CONFIG)/inc/appwebMonitor.h
+	cp -r src/server/appwebMonitor.h $(CONFIG)/inc/appwebMonitor.h
 
 $(CONFIG)/obj/appweb.o: \
         src/server/appweb.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/appweb.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/server/appweb.c
 
 $(CONFIG)/bin/appweb:  \
-        $(CONFIG)/lib/libappweb.dylib \
+        $(CONFIG)/bin/libappweb.dylib \
         $(CONFIG)/inc/appwebMonitor.h \
         $(CONFIG)/obj/appweb.o
-	$(CC) -o $(CONFIG)/bin/appweb -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/appweb.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
-
-$(CONFIG)/obj/simpleServer.o: \
-        src/samples/c/simpleServer/simpleServer.c \
-        $(CONFIG)/inc/buildConfig.h \
-        $(CONFIG)/inc/appweb.h
-	$(CC) -c -o $(CONFIG)/obj/simpleServer.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/c/simpleServer/simpleServer.c
-
-$(CONFIG)/obj/simpleHandler.o: \
-        src/samples/c/simpleHandler/simpleHandler.c \
-        $(CONFIG)/inc/buildConfig.h \
-        $(CONFIG)/inc/appweb.h
-	$(CC) -c -o $(CONFIG)/obj/simpleHandler.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/c/simpleHandler/simpleHandler.c
-
-$(CONFIG)/obj/simpleClient.o: \
-        src/samples/c/simpleClient/simpleClient.c \
-        $(CONFIG)/inc/buildConfig.h \
-        $(CONFIG)/inc/appweb.h
-	$(CC) -c -o $(CONFIG)/obj/simpleClient.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/c/simpleClient/simpleClient.c
-
-$(CONFIG)/obj/cppHandler.o: \
-        src/samples/cpp/cppHandler/cppHandler.cpp \
-        $(CONFIG)/inc/buildConfig.h \
-        $(CONFIG)/inc/appweb.h
-	$(CC) -c -o $(CONFIG)/obj/cppHandler.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/cpp/cppHandler/cppHandler.cpp
-
-$(CONFIG)/obj/cppModule.o: \
-        src/samples/cpp/cppModule/cppModule.cpp \
-        $(CONFIG)/inc/buildConfig.h \
-        $(CONFIG)/inc/appweb.h
-	$(CC) -c -o $(CONFIG)/obj/cppModule.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/samples/cpp/cppModule/cppModule.cpp
+	$(CC) -o $(CONFIG)/bin/appweb -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/appweb.o $(LIBS) -lappweb -lhttp -lmpr -lpcre -lmprssl
 
 $(CONFIG)/inc/testAppweb.h: 
-	rm -fr macosx-x86_64-debug/inc/testAppweb.h
-	cp -r test/testAppweb.h macosx-x86_64-debug/inc/testAppweb.h
+	rm -fr $(CONFIG)/inc/testAppweb.h
+	cp -r test/testAppweb.h $(CONFIG)/inc/testAppweb.h
 
 $(CONFIG)/obj/testAppweb.o: \
         test/testAppweb.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/testAppweb.h
 	$(CC) -c -o $(CONFIG)/obj/testAppweb.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc test/testAppweb.c
 
 $(CONFIG)/obj/testHttp.o: \
         test/testHttp.c \
-        $(CONFIG)/inc/buildConfig.h \
+        $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/testAppweb.h
 	$(CC) -c -o $(CONFIG)/obj/testHttp.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc test/testHttp.c
 
 $(CONFIG)/bin/testAppweb:  \
-        $(CONFIG)/lib/libappweb.dylib \
+        $(CONFIG)/bin/libappweb.dylib \
         $(CONFIG)/inc/testAppweb.h \
         $(CONFIG)/obj/testAppweb.o \
         $(CONFIG)/obj/testHttp.o
-	$(CC) -o $(CONFIG)/bin/testAppweb -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/testAppweb.o $(CONFIG)/obj/testHttp.o $(LIBS) -lappweb -lmpr -lhttp -lpcre
+	$(CC) -o $(CONFIG)/bin/testAppweb -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/testAppweb.o $(CONFIG)/obj/testHttp.o $(LIBS) -lappweb -lhttp -lmpr -lpcre -lmprssl
 
 test/cgi-bin/testScript: 
-	echo '#!$(CONFIG)/bin/cgiProgram' >test/cgi-bin/testScript ; chmod +x test/cgi-bin/testScript
+	cd test >/dev/null ;\
+		echo '#!../$(CONFIG)/bin/cgiProgram' >cgi-bin/testScript ; chmod +x cgi-bin/testScript ;\
+		cd - >/dev/null 
 
 test/web/caching/cache.cgi: 
-	echo -e '#!`type -p sh`' >test/web/caching/cache.cgi
-	echo -e '' >>test/web/caching/cache.cgi
-	echo -e 'echo HTTP/1.0 200 OK' >>test/web/caching/cache.cgi
-	echo -e 'echo Content-Type: text/plain' >>test/web/caching/cache.cgi
-	echo -e 'date' >>test/web/caching/cache.cgi
-	chmod +x test/web/caching/cache.cgi
+	cd test >/dev/null ;\
+		echo -e '#!`type -p sh`' >web/caching/cache.cgi ;\
+	echo -e '' >>web/caching/cache.cgi ;\
+	echo -e 'echo HTTP/1.0 200 OK' >>web/caching/cache.cgi ;\
+	echo -e 'echo Content-Type: text/plain' >>web/caching/cache.cgi ;\
+	echo -e 'date' >>web/caching/cache.cgi ;\
+	chmod +x web/caching/cache.cgi ;\
+		cd - >/dev/null 
 
 test/web/basic/basic.cgi: 
-	echo -e '#!`type -p sh`' >test/web/basic/basic.cgi
-	echo -e '' >>test/web/basic/basic.cgi
-	echo -e 'echo Content-Type: text/plain' >>test/web/basic/basic.cgi
-	echo -e '/usr/bin/env' >>test/web/basic/basic.cgi
-	chmod +x test/web/basic/basic.cgi
+	cd test >/dev/null ;\
+		echo -e '#!`type -p sh`' >web/basic/basic.cgi ;\
+	echo -e '' >>web/basic/basic.cgi ;\
+	echo -e 'echo Content-Type: text/plain' >>web/basic/basic.cgi ;\
+	echo -e '/usr/bin/env' >>web/basic/basic.cgi ;\
+	chmod +x web/basic/basic.cgi ;\
+		cd - >/dev/null 
 
 test/cgi-bin/cgiProgram: 
-	cp $(CONFIG)/bin/cgiProgram test/cgi-bin/cgiProgram
-	cp $(CONFIG)/bin/cgiProgram test/cgi-bin/nph-cgiProgram
-	cp $(CONFIG)/bin/cgiProgram 'test/cgi-bin/cgi Program'
-	cp $(CONFIG)/bin/cgiProgram test/web/cgiProgram.cgi
-	chmod +x test/cgi-bin/* test/web/cgiProgram.cgi
+	cd test >/dev/null ;\
+		cp ../$(CONFIG)/bin/cgiProgram cgi-bin/cgiProgram ;\
+	cp ../$(CONFIG)/bin/cgiProgram cgi-bin/nph-cgiProgram ;\
+	cp ../$(CONFIG)/bin/cgiProgram 'cgi-bin/cgi Program' ;\
+	cp ../$(CONFIG)/bin/cgiProgram web/cgiProgram.cgi ;\
+	chmod +x cgi-bin/* web/cgiProgram.cgi ;\
+		cd - >/dev/null 
 

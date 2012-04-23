@@ -26,12 +26,8 @@ Bit.load({
             enable: bit.platform.like == 'windows',
             type: 'file',
             files: [ 'WIN/appwebMonitor.ico' ],
-            build: "
-                cp('WIN/appwebMonitor.ico', ${BIN})
-            "
-            'generate-sh': "
-                cp '${HOME}/WIN/appwebMonitor.ico'  ${BIN}
-            "
+            build: "cp('WIN/appwebMonitor.ico', ${BIN})"
+            'generate-sh': "cp 'WIN/appwebMonitor.ico' ${BIN}"
         },
 	},
 })

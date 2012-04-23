@@ -488,7 +488,7 @@ static int getQueryString(char **buf, size_t *buflen)
 static int getPostData(char **bufp, size_t *lenp)
 {
     char    *contentLength, *buf;
-    size_t  bufsize, bytes, size, limit, len;
+    ssize_t bufsize, bytes, size, limit, len;
 
     if ((contentLength = getenv("CONTENT_LENGTH")) != 0) {
         size = atoi(contentLength);

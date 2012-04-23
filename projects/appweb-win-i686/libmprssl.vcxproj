@@ -30,7 +30,7 @@
 </ItemGroup>
 
 <PropertyGroup Label="Globals">
-  <ProjectGuid>{1afc1b00-a132-4507-8810-d12a6b0c8da7}</ProjectGuid>
+  <ProjectGuid>{d1614b75-b3f7-44a0-ac53-c81ddfdc00d6}</ProjectGuid>
   <RootNamespace />
   <Keyword>Win32Proj</Keyword>
 </PropertyGroup>
@@ -52,36 +52,22 @@
 <PropertyGroup>
   <_ProjectFileVersion>10</_ProjectFileVersion>
   <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\bin\</OutDir>
-  <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\obj\libhttp\</IntDir>
+  <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\obj\libmprssl\</IntDir>
   <CustomBuildBeforeTargets Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">PreBuildEvent</CustomBuildBeforeTargets>
   </PropertyGroup>
 <ItemGroup>
-  <ClCompile Include="..\..\src\deps\http\httpLib.c" />
-</ItemGroup>
-<ItemGroup>
-  <ClInclude Include="win-i686-debug\inc\http.h" />
+  <ClCompile Include="..\..\src\deps\mpr\mprSsl.c" />
 </ItemGroup>
 <ItemDefinitionGroup>
 <Link>
-  <AdditionalDependencies>libmpr.lib;libpcre.lib;%(AdditionalDependencies)</AdditionalDependencies>
+  <AdditionalDependencies>libmpr.lib;%(AdditionalDependencies)</AdditionalDependencies>
   <AdditionalLibraryDirectories>$(OutDir);win-i686-debug\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
 </Link>
-<CustomBuildStep>
-  <Command>xcopy /Y /S /D ..\..\src\deps\http\http.h ..\..\win-i686-debug\inc</Command>
-  <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\bin\libhttp.dll</Outputs>
-  </CustomBuildStep>
 </ItemDefinitionGroup>
 
 <ItemGroup>
   <ProjectReference Include="libmpr.vcxproj">
   <Project>9651275b-c035-4265-a696-e2dc0147f040</Project>
-  <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-  </ProjectReference>
-</ItemGroup>
-
-<ItemGroup>
-  <ProjectReference Include="libpcre.vcxproj">
-  <Project>40a6ab0d-04c1-4486-97b2-3b6d4fee198f</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>

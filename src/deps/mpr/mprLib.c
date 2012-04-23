@@ -3501,7 +3501,7 @@ void mprNop(void *ptr) {}
  */
 
 #if EMBEDTHIS || 1
- #include    "buildConfig.h"
+ #include    "bit.h"
 #endif
 #ifndef BLD_FEATURE_FLOAT
     #define BLD_FEATURE_FLOAT 1
@@ -17515,7 +17515,7 @@ void mprLogHeader()
     mprLog(MPR_CONFIG, "Configuration for %s", mprGetAppTitle());
     mprLog(MPR_CONFIG, "---------------------------------------------");
     mprLog(MPR_CONFIG, "Version:            %s-%s", BLD_VERSION, BLD_NUMBER);
-    mprLog(MPR_CONFIG, "BuildType:          %s", BLD_TYPE);
+    mprLog(MPR_CONFIG, "BuildType:          %s", BLD_DEBUG ? "Debug" : "Release");
     mprLog(MPR_CONFIG, "CPU:                %s", BLD_CPU);
     mprLog(MPR_CONFIG, "OS:                 %s", BLD_OS);
     mprLog(MPR_CONFIG, "Host:               %s", mprGetHostName());
@@ -23251,7 +23251,7 @@ void mprAddStandardSignals()
 #if SIGXFSZ
     mprAddItem(ssp->standard, mprAddSignalHandler(SIGXFSZ, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
 #endif
-#if MACOSX && BLD_DEBUG && 1
+#if MACOSX && BLD_DEBUG
     mprAddItem(ssp->standard, mprAddSignalHandler(SIGBUS, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
     mprAddItem(ssp->standard, mprAddSignalHandler(SIGSEGV, standardSignalHandler, 0, 0, MPR_SIGNAL_AFTER));
 #endif
@@ -23279,8 +23279,9 @@ static void standardSignalHandler(void *ignored, MprSignal *sp)
     } else if (sp->signo == SIGPIPE || sp->signo == SIGXFSZ) {
         /* Ignore */
 
-#if MACOSX && BLD_DEBUG && 1
+#if MACOSX && BLD_DEBUG
     } else if (sp->signo == SIGSEGV || sp->signo == SIGBUS) {
+        //  MOB - Review
         printf("PAUSED for watson to debug\n");
         sleep(86400 * 7);
 #endif
@@ -32043,7 +32044,7 @@ int mprWriteRegistry(cchar *key, cchar *name, cchar *value)
     if ((key = getHive(key, &top)) == 0) {
         return MPR_ERR_CANT_ACCESS;
     }
-    if (name) {
+    if (name && *name) {
         /*
             Write a registry string value
          */
@@ -32063,7 +32064,7 @@ int mprWriteRegistry(cchar *key, cchar *name, cchar *value)
             return MPR_ERR_CANT_ACCESS;
         }
         if (RegCreateKeyEx(h, value, 0, NULL, REG_OPTION_NON_VOLATILE,
-            KEY_ALL_ACCESS, NULL, &subHandle, &disposition) != ERROR_SUCCESS) {
+                KEY_ALL_ACCESS, NULL, &subHandle, &disposition) != ERROR_SUCCESS) {
             return MPR_ERR_CANT_ACCESS;
         }
         RegCloseKey(subHandle);

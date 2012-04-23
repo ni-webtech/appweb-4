@@ -5,7 +5,7 @@
 #define EMBEDTHIS_MODIFICATION 1
 
 #if EMBEDTHIS_MODIFICATION
-#include "buildConfig.h"
+#include "bit.h"
 #endif
 
 #if BLD_FEATURE_SQLITE || BLD_SQLITE_PRODUCT

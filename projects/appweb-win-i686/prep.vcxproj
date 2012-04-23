@@ -12,7 +12,7 @@
 </ItemGroup>
 
 <PropertyGroup Label="Globals">
-  <ProjectGuid>{5610e917-85fa-4ff7-b51c-a98e8dcd79b2}</ProjectGuid>
+  <ProjectGuid>{6589cc4a-746d-4282-9076-57cb05f6cae4}</ProjectGuid>
   <RootNamespace />
   <Keyword>Win32Proj</Keyword>
 </PropertyGroup>
@@ -34,14 +34,22 @@
 <PropertyGroup>
   <_ProjectFileVersion>10</_ProjectFileVersion>
   <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\bin\</OutDir>
-  <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\obj\cache.cgi\</IntDir>
+  <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\obj\prep\</IntDir>
   <CustomBuildBeforeTargets Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">PreBuildEvent</CustomBuildBeforeTargets>
   </PropertyGroup>
 <ItemDefinitionGroup>
 <Link>
   <AdditionalDependencies>;%(AdditionalDependencies)</AdditionalDependencies>
-  <AdditionalLibraryDirectories>$(OutDir);win-i686-debug\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+  <AdditionalLibraryDirectories>$(OutDir);;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
 </Link>
+<CustomBuildStep>
+  <Command>if not exist ..\..\win-i686-debug\obj md ..\..\win-i686-debug\obj
+if not exist ..\..\win-i686-debug\bin md ..\..\win-i686-debug\bin
+if not exist ..\..\win-i686-debug\inc md ..\..\win-i686-debug\inc
+if not exist ..\..\win-i686-debug\inc\bit.h copy ..\win-bit.h ..\..\win-i686-debug\inc\bit.h
+if not exist ..\..\win-i686-debug\bin\libmpr.def xcopy /Y /S *.def ..\..\win-i686-debug\bin</Command>
+  <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\always</Outputs>
+  </CustomBuildStep>
 </ItemDefinitionGroup>
 
 <Import Project="$(VCTargetsPath)Microsoft.Cpp.targets" />

@@ -30,7 +30,7 @@
 </ItemGroup>
 
 <PropertyGroup Label="Globals">
-  <ProjectGuid>{2ed553a4-c82b-4eaa-9ed7-25151963b1b7}</ProjectGuid>
+  <ProjectGuid>{66002183-4b43-4751-b3f4-36ad8e08be3c}</ProjectGuid>
   <RootNamespace />
   <Keyword>Win32Proj</Keyword>
 </PropertyGroup>
@@ -38,7 +38,7 @@
 <Import Project="$(VCTargetsPath)Microsoft.Cpp.Default.props" />
 
 <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-  <ConfigurationType>Application</ConfigurationType>
+  <ConfigurationType>DynamicLibrary</ConfigurationType>
   <CharacterSet>NotSet</CharacterSet>
 </PropertyGroup>
 
@@ -52,17 +52,33 @@
 <PropertyGroup>
   <_ProjectFileVersion>10</_ProjectFileVersion>
   <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\bin\</OutDir>
-  <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\obj\http\</IntDir>
+  <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\obj\libappweb\</IntDir>
   <CustomBuildBeforeTargets Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">PreBuildEvent</CustomBuildBeforeTargets>
   </PropertyGroup>
 <ItemGroup>
-  <ClCompile Include="..\..\src\deps\http\http.c" />
+  <ClCompile Include="..\..\src\config.c" />
+  <ClCompile Include="..\..\src\convenience.c" />
+  <ClCompile Include="..\..\src\dirHandler.c" />
+  <ClCompile Include="..\..\src\fileHandler.c" />
+  <ClCompile Include="..\..\src\log.c" />
+  <ClCompile Include="..\..\src\server.c" />
+</ItemGroup>
+<ItemGroup>
+  <ClInclude Include="win-i686-debug\inc\appweb.h" />
+</ItemGroup>
+<ItemGroup>
+  <ClInclude Include="win-i686-debug\inc\customize.h" />
 </ItemGroup>
 <ItemDefinitionGroup>
 <Link>
-  <AdditionalDependencies>libhttp.lib;libmpr.lib;libpcre.lib;%(AdditionalDependencies)</AdditionalDependencies>
+  <AdditionalDependencies>libhttp.lib;libmpr.lib;libpcre.lib;libmprssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
   <AdditionalLibraryDirectories>$(OutDir);win-i686-debug\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
 </Link>
+<CustomBuildStep>
+  <Command>xcopy /Y /S /D ..\..\src\appweb.h ..\..\win-i686-debug\inc
+xcopy /Y /S /D ..\..\src\customize.h ..\..\win-i686-debug\inc</Command>
+  <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\bin\libappweb.dll</Outputs>
+  </CustomBuildStep>
 </ItemDefinitionGroup>
 
 <ItemGroup>

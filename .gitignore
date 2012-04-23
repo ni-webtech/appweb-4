@@ -178,3 +178,6 @@ controller_*.ilk
 *.exp
 src/samples/c/simpleClient/simpleClient
 src/samples/c/simpleServer/simpleServer
+test/cache/view_*.*
+test/app/cache/controller_*.*
+test/app/cache/view_*.*

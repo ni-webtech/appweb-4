@@ -30,7 +30,7 @@
 </ItemGroup>
 
 <PropertyGroup Label="Globals">
-  <ProjectGuid>{7316f140-3a06-4125-a34a-f39d11bb56ef}</ProjectGuid>
+  <ProjectGuid>{1afc1b00-a132-4507-8810-d12a6b0c8da7}</ProjectGuid>
   <RootNamespace />
   <Keyword>Win32Proj</Keyword>
 </PropertyGroup>
@@ -38,7 +38,7 @@
 <Import Project="$(VCTargetsPath)Microsoft.Cpp.Default.props" />
 
 <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-  <ConfigurationType>Application</ConfigurationType>
+  <ConfigurationType>DynamicLibrary</ConfigurationType>
   <CharacterSet>NotSet</CharacterSet>
 </PropertyGroup>
 
@@ -52,30 +52,43 @@
 <PropertyGroup>
   <_ProjectFileVersion>10</_ProjectFileVersion>
   <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\bin\</OutDir>
-  <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\obj\testAppweb\</IntDir>
+  <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\obj\libhttp\</IntDir>
   <CustomBuildBeforeTargets Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">PreBuildEvent</CustomBuildBeforeTargets>
   </PropertyGroup>
 <ItemGroup>
-  <ClCompile Include="..\..\test\testAppweb.c" />
-  <ClCompile Include="..\..\test\testHttp.c" />
+  <ClCompile Include="..\..\src\deps\http\httpLib.c" />
 </ItemGroup>
 <ItemGroup>
-  <ClInclude Include="win-i686-debug\inc\testAppweb.h" />
+  <ClInclude Include="win-i686-debug\inc\http.h" />
 </ItemGroup>
 <ItemDefinitionGroup>
 <Link>
-  <AdditionalDependencies>libappweb.lib;libmpr.lib;libhttp.lib;libpcre.lib;%(AdditionalDependencies)</AdditionalDependencies>
+  <AdditionalDependencies>libmpr.lib;libpcre.lib;libmprssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
   <AdditionalLibraryDirectories>$(OutDir);win-i686-debug\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
 </Link>
 <CustomBuildStep>
-  <Command>xcopy /Y /S /D ..\..\test\testAppweb.h ..\..\win-i686-debug\inc</Command>
-  <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\bin\testAppweb.exe</Outputs>
+  <Command>xcopy /Y /S /D ..\..\src\deps\http\http.h ..\..\win-i686-debug\inc</Command>
+  <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-i686-debug\bin\libhttp.dll</Outputs>
   </CustomBuildStep>
 </ItemDefinitionGroup>
 
 <ItemGroup>
-  <ProjectReference Include="libappweb.vcxproj">
-  <Project>66002183-4b43-4751-b3f4-36ad8e08be3c</Project>
+  <ProjectReference Include="libmpr.vcxproj">
+  <Project>9651275b-c035-4265-a696-e2dc0147f040</Project>
+  <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+  </ProjectReference>
+</ItemGroup>
+
+<ItemGroup>
+  <ProjectReference Include="libpcre.vcxproj">
+  <Project>40a6ab0d-04c1-4486-97b2-3b6d4fee198f</Project>
+  <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+  </ProjectReference>
+</ItemGroup>
+
+<ItemGroup>
+  <ProjectReference Include="libmprssl.vcxproj">
+  <Project>d1614b75-b3f7-44a0-ac53-c81ddfdc00d6</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>
