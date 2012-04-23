@@ -17,7 +17,7 @@ See http://appwebserver.org/downloads/licensing.html for licensing details.
     ./configure
     make
 
-Images are built into out/bin and out/lib. The build configuration is saved in out/inc/buildConfig.h.
+Images are built into */bin. The build configuration is saved in */inc/bit.h.
 
 ### To Test:
 
