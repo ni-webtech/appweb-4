@@ -1,0 +1,16 @@
+LIBRARY libmprssl.dll
+EXPORTS
+  mprConfigureSsl
+  mprCreateMatrixSslModule
+  mprCreateOpenSslModule
+  mprCreateSsl
+  mprLoadSsl
+  mprSetSocketSslConfig
+  mprSetSslCaFile
+  mprSetSslCaPath
+  mprSetSslCertFile
+  mprSetSslCiphers
+  mprSetSslKeyFile
+  mprSetSslProtocols
+  mprSslInit
+  mprVerifySslClients
