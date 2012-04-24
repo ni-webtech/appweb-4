@@ -16,7 +16,7 @@
 #define BLD_MINOR_VERSION 0
 #define BLD_PATCH_VERSION 0
 #define BLD_VNUM 400000000
-#define BLD_CONFIG_CMD "bit -emulate win-i686 -without all configure -gen sh,make,nmake,vs"
+#define BLD_CONFIG_CMD "bit -emulate win-i686 -without all configure -gen sh,nmake,vs"
 #define BLD_LIB_NAME "bin"
 #define BLD_CFG_PREFIX "/Users/mob/git/appweb/C:/Program Files/Embedthis Appweb"
 #define BLD_BIN_PREFIX "/Users/mob/git/appweb/C:/Program Files/Embedthis Appweb/bin"

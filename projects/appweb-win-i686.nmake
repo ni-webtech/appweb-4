@@ -23,7 +23,7 @@ CONFIG   = $(OS)-i686-debug
 CC       = cl
 LD       = link
 CFLAGS   = -nologo -GR- -W3 -Zi -Od -MDd
-DFLAGS   = -D_REENTRANT -D_MT
+DFLAGS   = -D_REENTRANT -D_MT -DBLD_DEBUG
 IFLAGS   = -I$(CONFIG)\inc
 LDFLAGS  = -nologo -nodefaultlib -incremental:no -debug -machine:x86
 LIBPATHS = -libpath:$(CONFIG)\bin
@@ -495,33 +495,37 @@ $(CONFIG)\bin\testAppweb.exe:  \
 	"$(LD)" -out:$(CONFIG)\bin\testAppweb.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\testAppweb.obj $(CONFIG)\obj\testHttp.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 test\cgi-bin\testScript: 
-cd test >/dev/null ;\
-echo '#!../$(CONFIG)/bin/cgiProgram.exe' >cgi-bin/testScript ; chmod +x cgi-bin/testScript 
+	cd test
+		echo '#!../$(CONFIG)/bin/cgiProgram.exe' >cgi-bin/testScript ; chmod +x cgi-bin/testScript
+		cd ..
 
 test\web\caching\cache.cgi: 
-cd test >/dev/null ;\
-echo -e '#!`type -p sh`' >web/caching/cache.cgi ;\
-echo -e '' >>web/caching/cache.cgi ;\
-echo -e 'echo HTTP/1.0 200 OK' >>web/caching/cache.cgi ;\
-echo -e 'echo Content-Type: text/plain' >>web/caching/cache.cgi ;\
-echo -e 'date' >>web/caching/cache.cgi ;\
-chmod +x web/caching/cache.cgi 
+	cd test
+		echo -e '#!`type -p sh`' >web/caching/cache.cgi
+	echo -e '' >>web/caching/cache.cgi
+	echo -e 'echo HTTP/1.0 200 OK' >>web/caching/cache.cgi
+	echo -e 'echo Content-Type: text/plain' >>web/caching/cache.cgi
+	echo -e 'date' >>web/caching/cache.cgi
+	chmod +x web/caching/cache.cgi
+		cd ..
 
 test\web\basic\basic.cgi: 
-cd test >/dev/null ;\
-echo -e '#!`type -p sh`' >web/basic/basic.cgi ;\
-echo -e '' >>web/basic/basic.cgi ;\
-echo -e 'echo Content-Type: text/plain' >>web/basic/basic.cgi ;\
-echo -e '/usr/bin/env' >>web/basic/basic.cgi ;\
-chmod +x web/basic/basic.cgi 
+	cd test
+		echo -e '#!`type -p sh`' >web/basic/basic.cgi
+	echo -e '' >>web/basic/basic.cgi
+	echo -e 'echo Content-Type: text/plain' >>web/basic/basic.cgi
+	echo -e '/usr/bin/env' >>web/basic/basic.cgi
+	chmod +x web/basic/basic.cgi
+		cd ..
 
 test\cgi-bin\cgiProgram.exe: 
-cd test >/dev/null ;\
-cp ../$(CONFIG)/bin/cgiProgram cgi-bin/cgiProgram.exe ;\
-cp ../$(CONFIG)/bin/cgiProgram cgi-bin/nph-cgiProgram.exe ;\
-cp ../$(CONFIG)/bin/cgiProgram 'cgi-bin/cgi Program.exe' ;\
-cp ../$(CONFIG)/bin/cgiProgram web/cgiProgram.cgi ;\
-chmod +x cgi-bin/* web/cgiProgram.cgi 
+	cd test
+		cp ../$(CONFIG)/bin/cgiProgram cgi-bin/cgiProgram.exe
+	cp ../$(CONFIG)/bin/cgiProgram cgi-bin/nph-cgiProgram.exe
+	cp ../$(CONFIG)/bin/cgiProgram 'cgi-bin/cgi Program.exe'
+	cp ../$(CONFIG)/bin/cgiProgram web/cgiProgram.cgi
+	chmod +x cgi-bin/* web/cgiProgram.cgi
+		cd ..
 
 $(CONFIG)\obj\removeFiles.obj: \
         package\WIN\removeFiles.c \
