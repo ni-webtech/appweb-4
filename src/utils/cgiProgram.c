@@ -60,6 +60,7 @@
 	
 	#define mkdir(a,b)  _mkdir(a)
 	#define rmdir(a)    _rmdir(a)
+    typedef int ssize_t;
 #else
 #include <unistd.h>
 
