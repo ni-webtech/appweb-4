@@ -3,17 +3,10 @@
 #			   Alternatively, use bit directly.
 #	
 
-ARCH 	:= $(shell uname -m)
 MAKE	:= make
 EXT		:= mk
 UNAME 	:= $(shell uname)
 
-ifeq ($(ARCH),i386)
-	ARCH:= x86
-endif
-ifeq ($(ARCH),i686)
-	ARCH:= x86
-endif
 ifeq ($(UNAME),Darwin)
 	OS	:=	macosx
 endif
@@ -21,7 +14,7 @@ ifeq ($(UNAME),Linux)
 	OS	:=	linux
 endif
 ifeq ($(UNAME),Solaris)
-	OS	:=	SOLARIS
+	OS	:=	solaris
 endif
 ifeq ($(UNAME),CYGWIN_NT-5.1)
 	OS	:= win
@@ -30,7 +23,7 @@ ifeq ($(UNAME),CYGWIN_NT-5.1)
 endif
 
 all clean clobber compile:
-	$(MAKE) -f projects/appweb-$(OS)-$(ARCH).$(EXT) $@
+	$(MAKE) -f projects/*-$(OS).$(EXT) $@
 
 build configure generate test package:
 	bit $@

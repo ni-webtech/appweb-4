@@ -1,10 +1,11 @@
 #
-#   macosx-x86_64-debug.mk -- Build It Makefile to build Embedthis Appweb for macosx on x86_64
+#   macosx-x86_64-debug.mk -- Build It Makefile to build Embedthis Appweb for macosx
 #
 
-ARCH     := x86_64
+ARCH     := $(shell uname -m | sed 's/i.86/x86/')
 OS       := macosx
-CONFIG   := $(OS)-$(ARCH)-debug
+PROFILE  := debug
+CONFIG   := $(OS)-$(ARCH)-$(PROFILE)
 CC       := /usr/bin/clang
 LD       := /usr/bin/ld
 CFLAGS   := -Wall -g -Wno-unused-result -Wshorten-64-to-32

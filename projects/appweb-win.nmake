@@ -1,5 +1,5 @@
 #
-#   win-x86-debug.nmake -- Build It Makefile to build Embedthis Appweb for win on x86
+#   win-x86-debug.nmake -- Build It Makefile to build Embedthis Appweb for win
 #
 
 !IFDEF VSINSTALLDIR
@@ -18,9 +18,10 @@ PATH      = $(SDK)\Bin:$(VS)\VC\Bin:$(VS)\Common7\IDE:$(VS)\Common7\Tools:$(VS)\
 INCLUDE   = $(INCLUDE);$(SDK)\INCLUDE:$(VS)\VC\INCLUDE
 LIB       = $(LIB);$(SDK)\lib:$(VS)\VC\lib
 
-ARCH     = x86
+ARCH     = $(PROCESSOR_ARCHITECTURE)
 OS       = win
-CONFIG   = $(OS)-$(ARCH)-debug
+PROFILE  = debug
+CONFIG   = $(OS)-$(ARCH)-$(PROFILE)
 CC       = cl
 LD       = link
 CFLAGS   = -nologo -GR- -W3 -Zi -Od -MDd

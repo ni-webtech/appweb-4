@@ -2,8 +2,11 @@
 #   macosx-x86_64-debug.sh -- Build It Shell Script to build Embedthis Appweb
 #
 
+ARCH="x86_64"
+ARCH="$(shell uname -m | sed 's/i.86/x86/')"
 OS="macosx"
-CONFIG="${OS}-x86_64-debug"
+PROFILE="debug"
+CONFIG="${OS}-${ARCH}-${PROFILE}"
 CC="/usr/bin/clang"
 LD="/usr/bin/ld"
 CFLAGS="-Wall -g -Wno-unused-result -Wshorten-64-to-32"
