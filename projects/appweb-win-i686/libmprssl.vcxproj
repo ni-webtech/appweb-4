@@ -58,6 +58,12 @@
 <ItemGroup>
   <ClCompile Include="..\..\src\deps\mpr\mprSsl.c" />
 </ItemGroup>
+
+    <ItemDefinitionGroup>
+    <Link>
+      <ModuleDefinitionFile>libmprssl.def</ModuleDefinitionFile>
+    </Link>
+    </ItemDefinitionGroup>
 <ItemDefinitionGroup>
 <Link>
   <AdditionalDependencies>libmpr.lib;%(AdditionalDependencies)</AdditionalDependencies>

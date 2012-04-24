@@ -399,6 +399,7 @@ $(CONFIG)\bin\esp.conf:
 
 $(CONFIG)\bin\esp-www: 
 	-if exist win-i686-debug\bin\esp-www del /Q win-i686-debug\bin\esp-www
+	if not exist win-i686-debug\bin\esp-www md win-i686-debug\bin\esp-www
 	xcopy /S /Y src\esp\www win-i686-debug\bin\esp-www
 
 $(CONFIG)\obj\cgiHandler.obj: \
