@@ -8,6 +8,12 @@ MAKE	:= make
 EXT		:= mk
 UNAME 	:= $(shell uname)
 
+ifeq ($(ARCH),i386)
+	ARCH:= x86
+endif
+ifeq ($(ARCH),i686)
+	ARCH:= x86
+endif
 ifeq ($(UNAME),Darwin)
 	OS	:=	macosx
 endif

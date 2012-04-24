@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <AdditionalIncludeDirectories>..\..\win-x86-debug\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    
+  <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;DEBUG_IDE;_REENTRANT;_MT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    <Optimization>Disabled</Optimization>
+    <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+    <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+    </ClCompile>
+ <Link>
+      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+
+<ItemGroup Label="ProjectConfigurations">
+  <ProjectConfiguration Include="Debug|Win32">
+    <Configuration>Debug</Configuration>
+    <Platform>Win32</Platform>
+  </ProjectConfiguration>
+</ItemGroup>
+
+<PropertyGroup Label="Globals">
+  <ProjectGuid>{66002183-4b43-4751-b3f4-36ad8e08be3c}</ProjectGuid>
+  <RootNamespace />
+  <Keyword>Win32Proj</Keyword>
+</PropertyGroup>
+
+<Import Project="$(VCTargetsPath)Microsoft.Cpp.Default.props" />
+
+<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+  <ConfigurationType>DynamicLibrary</ConfigurationType>
+  <CharacterSet>NotSet</CharacterSet>
+</PropertyGroup>
+
+<Import Project="$(VCTargetsPath)Microsoft.Cpp.props" />
+
+<ImportGroup Label="ExtensionSettings">
+</ImportGroup>
+
+<PropertyGroup Label="UserMacros" />
+
+<PropertyGroup>
+  <_ProjectFileVersion>10</_ProjectFileVersion>
+  <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-x86-debug\bin\</OutDir>
+  <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-x86-debug\obj\libappweb\</IntDir>
+  <CustomBuildBeforeTargets Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">PreBuildEvent</CustomBuildBeforeTargets>
+  </PropertyGroup>
+<ItemGroup>
+  <ClCompile Include="..\..\src\config.c" />
+  <ClCompile Include="..\..\src\convenience.c" />
+  <ClCompile Include="..\..\src\dirHandler.c" />
+  <ClCompile Include="..\..\src\fileHandler.c" />
+  <ClCompile Include="..\..\src\log.c" />
+  <ClCompile Include="..\..\src\server.c" />
+</ItemGroup>
+<ItemGroup>
+  <ClInclude Include="win-x86-debug\inc\appweb.h" />
+</ItemGroup>
+<ItemGroup>
+  <ClInclude Include="win-x86-debug\inc\customize.h" />
+</ItemGroup>
+
+    <ItemDefinitionGroup>
+    <Link>
+      <ModuleDefinitionFile>libappweb.def</ModuleDefinitionFile>
+    </Link>
+    </ItemDefinitionGroup>
+<ItemDefinitionGroup>
+<Link>
+  <AdditionalDependencies>libhttp.lib;libmpr.lib;libpcre.lib;libmprssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+  <AdditionalLibraryDirectories>$(OutDir);win-x86-debug\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+</Link>
+<CustomBuildStep>
+  <Command>xcopy /Y /S /D ..\..\src\appweb.h ..\..\win-x86-debug\inc
+xcopy /Y /S /D ..\..\src\customize.h ..\..\win-x86-debug\inc</Command>
+  <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\win-x86-debug\bin\libappweb.dll</Outputs>
+  </CustomBuildStep>
+</ItemDefinitionGroup>
+
+<ItemGroup>
+  <ProjectReference Include="libhttp.vcxproj">
+  <Project>1afc1b00-a132-4507-8810-d12a6b0c8da7</Project>
+  <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+  </ProjectReference>
+</ItemGroup>
+
+<Import Project="$(VCTargetsPath)Microsoft.Cpp.targets" />
+<ImportGroup Label="ExtensionTargets">
+</ImportGroup>
+
+</Project>
