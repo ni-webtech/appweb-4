@@ -10,9 +10,8 @@
  */
 #define _CRT_SECURE_NO_WARNINGS
 
-#include    "buildConfig.h"
+#include    "bit.h"
 
-#if BLD_WIN_LIKE
 #include    <stdio.h>
 #include    <direct.h>
 #include    <windows.h>
@@ -264,9 +263,6 @@ static int mprStrcpy(char *dest, int destMax, const char *src)
     } 
     return len;
 }
-
-
-#endif /* BLD_WIN_LIKE */
 
 /*
     @copy   default
