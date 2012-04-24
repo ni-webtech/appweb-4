@@ -2,8 +2,9 @@
 #   linux-i686-debug.mk -- Build It Makefile to build Embedthis Appweb for linux on i686
 #
 
+ARCH     := i686
 OS       := linux
-CONFIG   := $(OS)-i686-debug
+CONFIG   := $(OS)-$(ARCH)-debug
 CC       := gcc
 LD       := ld
 CFLAGS   := -Wall -fPIC -g -Wno-unused-result -mtune=i686
