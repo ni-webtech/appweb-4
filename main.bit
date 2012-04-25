@@ -4,7 +4,6 @@
 
 Bit.load({
     blend: [
-        '${PLATFORM}.bit',
         "${BITS}/embedthis.bit",
         "src/deps/mpr/mpr.bit",
         "src/deps/pcre/pcre.bit",
