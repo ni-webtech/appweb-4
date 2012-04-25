@@ -3,21 +3,11 @@
 #			   Alternatively, use bit directly.
 #	
 
+OS      := $(shell uname | sed 's/CYGWIN.*/win/;s/Darwin/macosx/' | tr '[A-Z]' '[a-z]')
 MAKE	:= make
 EXT		:= mk
-UNAME 	:= $(shell uname)
 
-ifeq ($(UNAME),Darwin)
-	OS	:=	macosx
-endif
-ifeq ($(UNAME),Linux)
-	OS	:=	linux
-endif
-ifeq ($(UNAME),Solaris)
-	OS	:=	solaris
-endif
-ifeq ($(UNAME),CYGWIN_NT-5.1)
-	OS	:= win
+ifeq ($(OS),win)
 	MAKE:= nmake
 	EXT := nmake
 endif

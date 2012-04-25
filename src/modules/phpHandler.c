@@ -162,7 +162,7 @@ static void openPhp(HttpQueue *q)
 /*
     Process the request. Run once all the input data has been received and buffered.
  */
-static void processPhp(HttpQueue *q)
+static void readyPhp(HttpQueue *q)
 {
     HttpConn            *conn;
     HttpRx              *rx;
@@ -175,7 +175,6 @@ static void processPhp(HttpQueue *q)
 
     TSRMLS_FETCH();
 
-    mprLog(5, "processPhp");
     conn = q->conn;
     rx = conn->rx;
     tx = conn->tx;
@@ -560,7 +559,7 @@ int maPhpHandlerInit(Http *http, MprModule *module)
         return MPR_ERR_CANT_CREATE;
     }
     handler->open = openPhp;
-    handler->process = processPhp;
+    handler->ready = readyPhp;
     http->phpHandler = handler;
     return 0;
 }

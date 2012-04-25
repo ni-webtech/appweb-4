@@ -1106,6 +1106,7 @@ static void mark()
     if (!syncThreads()) {
         LOG(6, "DEBUG: GC synchronization timed out, some threads did not yield.");
         LOG(6, "This is most often caused by a thread doing a long running operation and not first calling mprYield.");
+        LOG(6, "If debugging, run the process with -D to enable debug mode.");
         return;
     }
     nextGen();
@@ -2954,6 +2955,7 @@ bool mprServicesAreIdle()
 
     /*
         Only test top level services. Dispatchers may have timers scheduled, but that is okay.
+        If not, users can install their own idleCallback.
      */
     idle = mprGetListLength(MPR->workerService->busyThreads) == 0 && mprGetListLength(MPR->cmdService->cmds) == 0;
     if (!idle) {
@@ -9528,6 +9530,7 @@ int mprRunCmd(MprCmd *cmd, cchar *command, char **out, char **err, MprTime timeo
 
 /*
     Env is an array of "KEY=VALUE" strings. Null terminated
+    The user must preserve the environment. This module does not clone the environment and uses the supplied reference.
  */
 void mprSetCmdDefaultEnv(MprCmd *cmd, cchar **env)
 {
@@ -10201,7 +10204,6 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
     if (env) {
         for (ecount = 0; env && env[ecount]; ecount++) ;
         if ((envp = mprAlloc((ecount + 3) * sizeof(char*))) == NULL) {
-            mprAssert(!MPR_ERR_MEMORY);
             return MPR_ERR_MEMORY;
         }
         cmd->env = envp;
@@ -10219,7 +10221,7 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
 #if BLD_UNIX_LIKE
 {
         /*
-            Add PATH and LD_LIBRARY_PATH 
+            Pass PATH and LD_LIBRARY_PATH through
          */
         char *cp;
         if (!hasPath && (cp = getenv("PATH")) != 0) {
@@ -10350,7 +10352,9 @@ static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
         }
         len += 2;       /* Windows requires 2 nulls for the block end */
 
-        dp = (char*) mprAlloc(len);
+        if ((dp = (char*) mprAlloc(len)) == 0) {
+            return 0;
+        }
         endp = &dp[len];
         cmd->env = (char**) dp;
         for (ep = env, i = 0; ep && *ep; ep++, i++) {
@@ -23236,6 +23240,7 @@ void mprRemoveSignalHandler(MprSignal *sp)
         SIGPIPE - ignore
         SIGXFZ - ignore
         SIGUSR1 - restart
+        SIGUSR2 - toggle trace level (Appweb only)
         All others - default exit
  */
 void mprAddStandardSignals()

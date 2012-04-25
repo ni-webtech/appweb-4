@@ -1390,15 +1390,27 @@ typedef struct HttpStage {
     /** 
         Start the handler
         @description The request has been parsed and the handler may start processing. Input data may not have 
-        been received yet.
+        been received yet. Form requests (those with a Content-Type of "application/x-www-form-urlencoded"), will 
+        be started before processing input data. All other requests will be started immediately after the
+        request headers have been parsed.
         @param q Queue instance object
         @ingroup HttpStage
      */
     void (*start)(HttpQueue *q);
 
     /** 
-        Process the data.
-        @description All incoming data has been received. The handler can now complete the request.
+        The request is now ready.
+        @description This callback will be invoked when all incoming data has been received. 
+        @param q Queue instance object
+        @ingroup HttpStage
+     */
+    void (*ready)(HttpQueue *q);
+
+    /** 
+        Process the request data.
+        @description Process the request. 
+            This callback will be invoked when all incoming data has been received and again on each and every
+            outgoing I/O event. As such, it may be called multiple times. 
         @param q Queue instance object
         @ingroup HttpStage
      */
@@ -1628,8 +1640,9 @@ extern ssize httpFilterChunkData(HttpQueue *q, HttpPacket *packet);
 #define HTTP_STATE_FIRST            3       /**< First request line has been parsed */
 #define HTTP_STATE_PARSED           4       /**< Headers have been parsed, handler can start */
 #define HTTP_STATE_CONTENT          5       /**< Reading posted content */
-#define HTTP_STATE_RUNNING          6       /**< Handler running */
-#define HTTP_STATE_COMPLETE         7       /**< Request complete */
+#define HTTP_STATE_READY            6       /**< Handler ready - all body data received  */
+#define HTTP_STATE_RUNNING          7       /**< Handler running */
+#define HTTP_STATE_COMPLETE         8       /**< Request complete */
 
 /*
     I/O Events
@@ -2055,12 +2068,21 @@ extern void httpPrepServerConn(HttpConn *conn);
 extern void httpPrepClientConn(HttpConn *conn, bool keepHeaders);
 
 /**
-    Run the process pipeline stage
-    @description This may be called multiple times to pump data through the pipeline
+    Run the process pipeline callback.
+    @description This callback provides an opportunity for handlers to resume output after filling the 
+        pipeline and TCP/IP output buffers. It will be called on each outgoing I/O event.
     @param conn HttpConn object created via $httpCreateConn
     @ingroup HttpConn
  */
 extern void httpProcessPipeline(HttpConn *conn);
+
+/**
+    Run the ready pipeline callback.
+    @description This will be called when all incoming data for the request has been fully received.
+    @param conn HttpConn object created via $httpCreateConn
+    @ingroup HttpConn
+ */
+extern void httpReadyPipeline(HttpConn *conn);
 
 /** 
     Reset the current security credentials

@@ -200,7 +200,7 @@ static void startFileHandler(HttpQueue *q)
 }
 
 
-static void processFileHandler(HttpQueue *q)
+static void readyFileHandler(HttpQueue *q)
 {
     /*
         The queue already contains a single data packet representing all the output data.
@@ -400,6 +400,7 @@ static void handlePutRequest(HttpQueue *q)
         }
     }
     httpSetStatus(conn, tx->fileInfo.isReg ? HTTP_CODE_NO_CONTENT : HTTP_CODE_CREATED);
+    httpSetContentLength(conn, 0);
     q->pair->queueData = (void*) file;
 }
 
@@ -426,6 +427,7 @@ static void handleDeleteRequest(HttpQueue *q)
         return;
     }
     httpSetStatus(conn, HTTP_CODE_NO_CONTENT);
+    httpSetContentLength(conn, 0);
 }
 
 
@@ -445,7 +447,7 @@ int maOpenFileHandler(Http *http)
     handler->check = checkFileHandler;
     handler->open = openFileHandler;
     handler->start = startFileHandler;
-    handler->process = processFileHandler;
+    handler->ready = readyFileHandler;
     handler->outgoingService = outgoingFileService;
     handler->incomingData = incomingFileData;
     http->fileHandler = handler;

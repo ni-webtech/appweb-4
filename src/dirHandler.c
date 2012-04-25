@@ -70,7 +70,7 @@ int maMatchDir(HttpConn *conn, HttpRoute *route, int direction)
 }
 
 
-static void processDir(HttpQueue *q)
+static void readyDir(HttpQueue *q)
 {
     HttpConn        *conn;
     HttpTx          *tx;
@@ -85,8 +85,6 @@ static void processDir(HttpQueue *q)
     rx = conn->rx;
     tx = conn->tx;
     dir = conn->data;
-
-    mprLog(5, "processDir");
     mprAssert(tx->filename);
 
     httpSetHeaderString(conn, "Cache-Control", "no-cache");
@@ -701,7 +699,7 @@ int maOpenDirHandler(Http *http)
         return MPR_ERR_MEMORY;
     }
     handler->match = maMatchDir; 
-    handler->process = processDir; 
+    handler->ready = readyDir; 
     http->dirHandler = handler;
     dir->sortOrder = 1;
 

@@ -4,6 +4,10 @@
 
 Bit.load({
 
+    settings: {
+        manager: 'manager',
+    },
+
     targets: {
         libmpr: {
             type: 'lib',

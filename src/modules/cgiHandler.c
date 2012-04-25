@@ -25,7 +25,7 @@ static int copyVars(char **envv, int index, MprHash *vars, cchar *prefix);
 static char *getCgiToken(MprBuf *buf, cchar *delim);
 static bool parseFirstCgiResponse(HttpConn *conn, MprCmd *cmd);
 static bool parseHeader(HttpConn *conn, MprCmd *cmd);
-static int processCgiData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf);
+static int relayCgiResponse(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf);
 static void writeToCGI(HttpQueue *q);
 static ssize readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf);
 
@@ -150,7 +150,7 @@ static void startCgi(HttpQueue *q)
 
 
 /*
-    This routine runs after all incoming data has been received and while the gateway is still running.
+    This routine is called for outgoing I/O events when the pipeline and TCP/IP buffers have drained.
     It may be called multiple times until the gateway exits.
  */
 static void processCgi(HttpQueue *q)
@@ -161,13 +161,16 @@ static void processCgi(HttpQueue *q)
     mprAssert(cmd);
     mprLog(5, "CGI: Process");
 
+#if UNUSED
     if (q->pair) {
+//  MOB - review
         writeToCGI(q->pair);
     }
+#endif
     if (q->pair == 0 || q->pair->count == 0) {
         /*  
             Close the CGI program's stdin (idempotent). This will allow the gateway to exit if it was 
-            expecting input data 
+            expecting input data and insufficient was sent by the client.
          */
         if (cmd->files[MPR_CMD_STDIN].fd >= 0) {
             mprCloseCmdFd(cmd, MPR_CMD_STDIN);
@@ -175,9 +178,10 @@ static void processCgi(HttpQueue *q)
     }
 #if BLD_WIN_LIKE
     /*
-        Windows can't select on named pipes. So must poll here.
+        Windows can't select on named pipes. So must poll here. This consumes a thread.
      */
     while (!cmd->complete) {
+//  MOB - review
         mprWaitForCmd(cmd, 1000);
     }
 #endif
@@ -252,7 +256,7 @@ static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
 
 /*
     Write data to the CGI program. This is called from incomingCgiData and from the cgiCallback when the pipe
-    to the CGI program becomes writable.
+    to the CGI program becomes writable. This routine will write all queued data and will block until it is sent. 
  */
 static void writeToCGI(HttpQueue *q)
 {
@@ -337,9 +341,9 @@ static int writeToClient(HttpQueue *q, MprCmd *cmd, MprBuf *buf, int channel)
 
 
 /*
-    Read the output data from the CGI script and return it to the client. This is called for stdout/stderr data from
-    the CGI script and for EOF from the CGI's stdin.
-    This event runs on the connections dispatcher. (ie. single threaded and safe)
+    Read the output data from the CGI script and return it to the client. This is called by the MPR in response to
+    I/O events from the CGI process for stdout/stderr data from the CGI script and for EOF from the CGI's stdin.
+    This event runs on the connection's dispatcher. (ie. single threaded and safe)
  */
 static ssize cgiCallback(MprCmd *cmd, int channel, void *data)
 {
@@ -423,13 +427,7 @@ static ssize readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf 
                     break;
                 }
             }
-#if UNUSED
-            mprYield(MPR_YIELD_STICKY);
-#endif
             nbytes = mprReadCmd(cmd, channel, mprGetBufEnd(buf), space);
-#if UNUSED
-            mprResetYield();
-#endif
 
             mprLog(7, "CGI: Read from gateway, channel %d, got %d bytes. errno %d", channel, nbytes, 
                 nbytes >= 0 ? 0 : mprGetOsError());
@@ -472,7 +470,7 @@ static ssize readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf 
         if (mprGetBufLength(buf) == 0) {
             break;
         }
-        if (processCgiData(q, cmd, channel, buf) < 0) {
+        if (relayCgiResponse(q, cmd, channel, buf) < 0) {
             break;
         }
     }
@@ -484,7 +482,10 @@ static ssize readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf 
 }
 
 
-static int processCgiData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
+/*
+    Relay CGI response data to the client
+ */
+static int relayCgiResponse(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
 {
     HttpConn    *conn;
 
@@ -492,7 +493,7 @@ static int processCgiData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
     mprAssert(conn->state > HTTP_STATE_BEGIN);
     mprAssert(conn->tx);
     
-    mprLog(7, "processCgiData pid %d", cmd->pid);
+    mprLog(7, "relayCgiResponse pid %d", cmd->pid);
 
     if (channel == MPR_CMD_STDERR) {
         /*
@@ -1041,8 +1042,7 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     HttpStage   *handler;
     MaAppweb    *appweb;
 
-    handler = httpCreateHandler(http, "cgiHandler", 0, module);
-    if (handler == 0) {
+    if ((handler = httpCreateHandler(http, "cgiHandler", 0, module)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
     http->cgiHandler = handler;
