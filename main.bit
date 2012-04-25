@@ -44,7 +44,6 @@ Bit.load({
 
     usage: {
         assert: 'Enable program assertions',
-        debug: 'Enable a debug build',
         tune: 'Optimize for size|speed|balanced',
     },
 
