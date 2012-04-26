@@ -895,7 +895,7 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
             buf[MPR_MAX_FNAME] = '\0';
             if (buf[0] == '#' && buf[1] == '!') {
                 cp = start = &buf[2];
-                cmdShell = strtok(&buf[2], "\r\n", &tok);
+                cmdShell = stok(&buf[2], "\r\n", &tok);
                 if (!mprIsPathAbs(cmdShell)) {
                     /*
                         If we can't access the command shell and the command is not an absolute path, 
