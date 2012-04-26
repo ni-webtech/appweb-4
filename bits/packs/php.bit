@@ -50,7 +50,7 @@ if (bit.platform.os == 'win') {
     }
 
 } else {
-    let search = [path.join('/usr/lib', '/lib')] + Path('/lib').glob('*-linux-gnu')
+    let search = [path.join('.libs'), '/usr/lib', '/lib'] + Path('/lib').glob('*-linux-gnu')
     let lib = probe('libphp5.so', {fullpath: true, search: search}).absolute
     let dir = lib.parent
     search = [path.join('main'), '/usr/include']
