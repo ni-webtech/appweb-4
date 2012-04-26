@@ -54,7 +54,7 @@ if (bit.platform.os == 'win') {
     let lib = probe('libphp5.so', {fullpath: true, search: search}).absolute
     let dir = lib.parent
     search = [path.join('main'), '/usr/include']
-    let incdir = probe('php.h', {search: search}).absolute
+    let incdir = probe('php.h', {search: search}).absolute.parent
     cfg = {
         dir: dir,
         path: lib,
