@@ -828,8 +828,9 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
     HttpRoute   *route;
     MprKey      *kp;
     MprFile     *file;
-    cchar       *actionProgram, *ext, *cmdShell;
+    cchar       *actionProgram, *ext, *cmdShell, *cp, *start;
     char        *tok, buf[MPR_MAX_FNAME + 1], *path;
+    int         quoted;
 
     rx = conn->rx;
     tx = conn->tx;
@@ -885,13 +886,31 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
     }
 #endif
 
-    if ((file = mprOpenFile(path, O_RDONLY, 0)) != 0) {
+    if (actionProgram) {
+        *program = sclone(actionProgram);
+
+    } else if ((file = mprOpenFile(path, O_RDONLY, 0)) != 0) {
         if (mprReadFile(file, buf, MPR_MAX_FNAME) > 0) {
             mprCloseFile(file);
             buf[MPR_MAX_FNAME] = '\0';
             if (buf[0] == '#' && buf[1] == '!') {
-                cmdShell = stok(&buf[2], " \t\r\n", &tok);
-                if (mprIsPathAbs(cmdShell)) {
+                cp = start = &buf[2];
+                quoted = 0;
+                if (*cp == '"') {
+                    start = ++cp;
+                    quoted = 1;
+                }
+                for (; *cp; cp++) {
+                    if (quoted) {
+                        if (*cp == '"') {
+                            break;
+                        }
+                    } else if (isspace((int) *cp)) {
+                        break;
+                    }
+                }
+                cmdShell = snclone(start, cp - start);
+                if (!mprIsPathAbs(cmdShell)) {
                     /*
                         If we can't access the command shell and the command is not an absolute path, 
                         look in the same directory as the script.
@@ -900,11 +919,7 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
                         cmdShell = mprJoinPath(mprGetPathDir(path), cmdShell);
                     }
                 }
-                if (actionProgram) {
-                    *program = sclone(actionProgram);
-                } else {
-                    *program = sclone(cmdShell);
-                }
+                *program = sclone(cmdShell);
                 *bangScript = sclone(path);
                 return;
             }
