@@ -16,17 +16,17 @@ Bit.load({
             path: 'cgi-bin/testScript',
             build: "
                 let path = Path('cgi-bin/testScript')
-                path.write('#!\"' + bit.dir.bin.join('cgiProgram') + '\"')
+                path.write('#!' + bit.dir.bin.join('cgiProgram'))
                 path.setAttributes({permissions: 0755})
             ",
-            'generate-sh': "echo '#!\"${BIN}/cgiProgram${EXE}\"' >cgi-bin/testScript ; chmod +x cgi-bin/testScript",
+            'generate-sh': "echo '#!${BIN}/cgiProgram${EXE}' >cgi-bin/testScript ; chmod +x cgi-bin/testScript",
         },
 
         'test-cache.cgi': {
             path: 'web/caching/cache.cgi',
             build: "
                 let path = Path('web/caching/cache.cgi')
-                path.write('#!\"' + App.exeDir.join('ejs') + '\"\n' + 
+                path.write('#!' + App.exeDir.join('ejs') + '\n' + 
                     'print(\"HTTP/1.0 200 OK\nContent-Type: text/plain\n\n{number: \" + App.pid + \"}\n\")')
                 path.setAttributes({permissions: 0755})
             ",
@@ -44,7 +44,7 @@ Bit.load({
             path: 'web/basic/basic.cgi',
             build: "
                 let path = Path('web/basic/basic.cgi')
-                path.write('#!\"' + App.exeDir.join('ejs') + '\"\n' + 
+                path.write('#!' + App.exeDir.join('ejs') + '\n' + 
                     'print(\"HTTP/1.0 200 OK\nContent-Type: text/plain\n\n\" + serialize(App.env, {pretty: true}) + \"\n\")')
                 path.setAttributes({permissions: 0755})
             ",
