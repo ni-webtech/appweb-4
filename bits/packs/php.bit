@@ -58,7 +58,7 @@ if (bit.platform.os == 'win') {
     cfg = {
         dir: dir,
         path: lib,
-        includes: [ incdir ],
+        includes: [ incdir, incdir.join('main'), incdir.join('Zend'), incdir.join('TSRM') ],
         libraries: [ 'php5' ],
         linker: [ '-L' + lib.parent ],
         imports: lib.parent.glob('libphp5*.so*')
