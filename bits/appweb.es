@@ -244,12 +244,12 @@ public function uninstallBinary() {
     Create symlinks for binaries and man pages
  */
 public function createLinks() {
+    let log = []
     let localbin = Path('/usr/local/bin')
     if (localbin.exists) {
         let programs = ['appman', 'appweb', 'http', 'auth', 'esp']
         let bin = bit.prefixes.bin
         let target: Path
-        let log = []
         for each (program in programs) {
             let link = Path(localbin.join(program))
             link.symlink(bin.join(program))
@@ -260,8 +260,11 @@ public function createLinks() {
             link.symlink(page)
             log.push(link)
         }
-        bit.prefixes.productver.join('files.log').append(log.join('\n') + '\n')
     }
+    let link = Path('/usr/include').join(bit.settings.product)
+    link.symlink(bit.prefixes.include)
+    log.push(link)
+    bit.prefixes.productver.join('files.log').append(log.join('\n') + '\n')
 }
 
 function updateLatestLink() {
