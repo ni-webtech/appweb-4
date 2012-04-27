@@ -28,6 +28,7 @@ if [ "$TASK" = "Remove" ] ; then
     for name in $PROGRAMS ; do
         rm -f "${BIN_DIR}/$name"
     done
+    rm -rf  "${INC_DIR}/${PRODUCT}"
 else
     for v in `ls $prefix 2>/dev/null | egrep -v '[a-zA-Z@!_\-]' | sort -n -r`
     do

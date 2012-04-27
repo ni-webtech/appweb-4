@@ -52,7 +52,7 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
     install('src/server/appweb.conf', p.config)
     install('src/server/mime.types', p.config)
     install('src/server/php.ini', p.config)
-    install('src/server/web', p.web.parent, {exclude: /mgmt/ })
+    install('src/server/web', p.web, {exclude: /mgmt/, subtree: true})
     install('src/server/web/test/*', p.web.join('test'), {
         include: /.cgi|test.pl|test.py/,
         permissions: 0755,
@@ -63,10 +63,14 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
 
     let user = getWebUser(), group = getWebUser()
     p.spool.join('cache').makeDir()
+
+/*
+    //  MOB - remove this
     let tmp = p.spool.join('cache/.dummy')
     tmp.write()
     tmp.setAttributes({permissions: 0755, uid: user, gid: group})
-    tmp = p.log.join('error.log')
+*/
+    let tmp = p.log.join('error.log')
     tmp.write()
     tmp.setAttributes({permissions: 0755, uid: user, gid: group})
 

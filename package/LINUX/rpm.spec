@@ -7,10 +7,10 @@ Version: ${settings.version}
 Release: ${settings.buildNumber}
 License: Dual GPL/commercial
 Group: Applications/Internet
-URL: http://www.appwebserver.org
+URL: http://appwebserver.org
 Distribution: Embedthis
 Vendor: Embedthis Software
-BuildRoot: ${dir.pkg}/RPM/BUILDROOT/${settings.product}-${settings.version}-${settings.buildNumber}.${platform.arch}
+BuildRoot: ${dir.rpm}/BUILDROOT/${settings.product}-${settings.version}-${settings.buildNumber}.${platform.mappedCpu}
 AutoReqProv: no
 
 %description
@@ -21,13 +21,11 @@ Embedthis Appweb is the fast, little web server.
 %build
 
 %install
-    if [ -x /usr/lib/appweb/bin/uninstall ] ; then
-        appweb_HEADLESS=1 /usr/lib/appweb/bin/uninstall </dev/null 2>&1 >/dev/null
+    if [ -x /usr/lib/appweb/latest/bin/uninstall ] ; then
+        appweb_HEADLESS=1 /usr/lib/appweb/latest/bin/uninstall </dev/null 2>&1 >/dev/null
     fi
-    mkdir -p ${dir.pkg}/RPM/BUILDROOT/${settings.product}-${settings.version}-${settings.buildNumber}.${platform.arch}
-    for dir in BIN SRC ; do
-        cp -r ${dir.pkg}/${dir}/* ${dir.pkg}/RPM/BUILDROOT/${settings.product}-${settings.version}-${settings.buildNumber}.${platform.arch}
-    done
+    mkdir -p ${dir.rpm}/BUILDROOT/${settings.product}-${settings.version}-${settings.buildNumber}.${platform.mappedCpu}
+    cp -r ${dir.contents}/* ${dir.rpm}/BUILDROOT/${settings.product}-${settings.version}-${settings.buildNumber}.${platform.mappedCpu}
 
 %clean
 
@@ -46,31 +44,7 @@ ${prefixes.bin}/linkup Install /
 ldconfig -n ${prefixes.lib}
 
 %preun
+rm -f ${prefixes.product}/latest
+${prefixes.bin}/linkup Remove / 
 
 %postun
-
-#
-#	Dev package
-#
-##	%package dev
-##	Summary: Embedthis Appweb -- Development headers for ${settings.title}
-##	Group: Applications/Internet
-##	Prefix: ${prefixes.inc}
-##	
-##	%description dev
-##	Development headers for ${settings.title}
-##	
-##	%files dev -f devFiles.txt
-
-#
-#	Source package
-#
-%package src
-Summary: Embedthis Appweb -- Source code for ${settings.title}
-Group: Applications/Internet
-Prefix: ${prefixes.src}
-
-%description src
-Source code for ${settings.title}
-
-%files src -f srcFiles.txt
