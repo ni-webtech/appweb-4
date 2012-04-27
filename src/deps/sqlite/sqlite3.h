@@ -81,6 +81,10 @@
 #endif
 
 #if VXWORKS
+    #ifndef _VSB_CONFIG_FILE
+        #define _VSB_CONFIG_FILE "vsbConfig.h"
+    #endif
+
     #include    <vxWorks.h>
     #include    <envLib.h>
     #include    <sys/types.h>
