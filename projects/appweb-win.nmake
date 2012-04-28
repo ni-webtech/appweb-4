@@ -1,5 +1,5 @@
 #
-#   win-x86-debug.nmake -- Build It Makefile to build Embedthis Appweb for win
+#   appweb-win.nmake -- Build It Makefile to build Embedthis Appweb for win
 #
 
 !IFDEF VSINSTALLDIR
@@ -19,6 +19,9 @@ INCLUDE   = $(INCLUDE);$(SDK)\INCLUDE:$(VS)\VC\INCLUDE
 LIB       = $(LIB);$(SDK)\lib:$(VS)\VC\lib
 
 ARCH     = $(PROCESSOR_ARCHITECTURE)
+!IF "$(ARCH)" == "AMD64"
+ARCH     = x86_64
+!ENDIF
 OS       = win
 PROFILE  = debug
 CONFIG   = $(OS)-$(ARCH)-$(PROFILE)
@@ -67,7 +70,7 @@ prep:
 	@if not exist $(CONFIG)\obj md $(CONFIG)\obj
 	@if not exist $(CONFIG)\bin md $(CONFIG)\bin
 	@if not exist $(CONFIG)\inc\bit.h copy projects\appweb-$(OS)-bit.h $(CONFIG)\inc\bit.h
-	@if not exist $(CONFIG)\bin\libmpr.def xcopy /Y /S projects\appweb-win-$(ARCH)\*.def $(CONFIG)\bin
+	@if not exist $(CONFIG)\bin\libmpr.def xcopy /Y /S projects\appweb-win\*.def $(CONFIG)\bin
 
 clean:
 	-if exist $(CONFIG)\bin\libmpr.dll del /Q $(CONFIG)\bin\libmpr.dll
@@ -87,6 +90,7 @@ clean:
 	-if exist $(CONFIG)\bin\mod_cgi.dll del /Q $(CONFIG)\bin\mod_cgi.dll
 	-if exist $(CONFIG)\bin\mod_ejs.dll del /Q $(CONFIG)\bin\mod_ejs.dll
 	-if exist $(CONFIG)\bin\mod_php.dll del /Q $(CONFIG)\bin\mod_php.dll
+	-if exist $(CONFIG)\bin\mod_proxy.dll del /Q $(CONFIG)\bin\mod_proxy.dll
 	-if exist $(CONFIG)\bin\mod_ssl.dll del /Q $(CONFIG)\bin\mod_ssl.dll
 	-if exist $(CONFIG)\bin\auth.exe del /Q $(CONFIG)\bin\auth.exe
 	-if exist $(CONFIG)\bin\cgiProgram.exe del /Q $(CONFIG)\bin\cgiProgram.exe
@@ -128,6 +132,7 @@ clean:
 	-if exist $(CONFIG)\obj\cgiHandler.obj del /Q $(CONFIG)\obj\cgiHandler.obj
 	-if exist $(CONFIG)\obj\ejsHandler.obj del /Q $(CONFIG)\obj\ejsHandler.obj
 	-if exist $(CONFIG)\obj\phpHandler.obj del /Q $(CONFIG)\obj\phpHandler.obj
+	-if exist $(CONFIG)\obj\proxyHandler.obj del /Q $(CONFIG)\obj\proxyHandler.obj
 	-if exist $(CONFIG)\obj\sslModule.obj del /Q $(CONFIG)\obj\sslModule.obj
 	-if exist $(CONFIG)\obj\auth.obj del /Q $(CONFIG)\obj\auth.obj
 	-if exist $(CONFIG)\obj\cgiProgram.obj del /Q $(CONFIG)\obj\cgiProgram.obj
@@ -139,8 +144,8 @@ clean:
 	-if exist $(CONFIG)\obj\removeFiles.obj del /Q $(CONFIG)\obj\removeFiles.obj
 
 $(CONFIG)\inc\mpr.h: 
-	-if exist win-x86-debug\inc\mpr.h del /Q win-x86-debug\inc\mpr.h
-	copy /Y src\deps\mpr\mpr.h win-x86-debug\inc\mpr.h
+	-if exist $(CONFIG)\inc\mpr.h del /Q $(CONFIG)\inc\mpr.h
+	copy /Y src\deps\mpr\mpr.h $(CONFIG)\inc\mpr.h
 
 $(CONFIG)\obj\mprLib.obj: \
         src\deps\mpr\mprLib.c \
@@ -183,8 +188,8 @@ $(CONFIG)\bin\makerom.exe:  \
 	"$(LD)" -out:$(CONFIG)\bin\makerom.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\makerom.obj $(LIBS) libmpr.lib
 
 $(CONFIG)\inc\pcre.h: 
-	-if exist win-x86-debug\inc\pcre.h del /Q win-x86-debug\inc\pcre.h
-	copy /Y src\deps\pcre\pcre.h win-x86-debug\inc\pcre.h
+	-if exist $(CONFIG)\inc\pcre.h del /Q $(CONFIG)\inc\pcre.h
+	copy /Y src\deps\pcre\pcre.h $(CONFIG)\inc\pcre.h
 
 $(CONFIG)\obj\pcre.obj: \
         src\deps\pcre\pcre.c \
@@ -197,8 +202,8 @@ $(CONFIG)\bin\libpcre.dll:  \
 	"$(LD)" -dll -out:$(CONFIG)\bin\libpcre.dll -entry:_DllMainCRTStartup@12 -def:$(CONFIG)\bin\libpcre.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\pcre.obj $(LIBS)
 
 $(CONFIG)\inc\http.h: 
-	-if exist win-x86-debug\inc\http.h del /Q win-x86-debug\inc\http.h
-	copy /Y src\deps\http\http.h win-x86-debug\inc\http.h
+	-if exist $(CONFIG)\inc\http.h del /Q $(CONFIG)\inc\http.h
+	copy /Y src\deps\http\http.h $(CONFIG)\inc\http.h
 
 $(CONFIG)\obj\httpLib.obj: \
         src\deps\http\httpLib.c \
@@ -224,8 +229,8 @@ $(CONFIG)\bin\http.exe:  \
 	"$(LD)" -out:$(CONFIG)\bin\http.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\http.obj $(LIBS) libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 $(CONFIG)\inc\sqlite3.h: 
-	-if exist win-x86-debug\inc\sqlite3.h del /Q win-x86-debug\inc\sqlite3.h
-	copy /Y src\deps\sqlite\sqlite3.h win-x86-debug\inc\sqlite3.h
+	-if exist $(CONFIG)\inc\sqlite3.h del /Q $(CONFIG)\inc\sqlite3.h
+	copy /Y src\deps\sqlite\sqlite3.h $(CONFIG)\inc\sqlite3.h
 
 $(CONFIG)\obj\sqlite3.obj: \
         src\deps\sqlite\sqlite3.c \
@@ -248,12 +253,12 @@ $(CONFIG)\bin\sqlite.exe:  \
 	"$(LD)" -out:$(CONFIG)\bin\sqlite.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\sqlite.obj $(LIBS) libsqlite3.lib
 
 $(CONFIG)\inc\appweb.h: 
-	-if exist win-x86-debug\inc\appweb.h del /Q win-x86-debug\inc\appweb.h
-	copy /Y src\appweb.h win-x86-debug\inc\appweb.h
+	-if exist $(CONFIG)\inc\appweb.h del /Q $(CONFIG)\inc\appweb.h
+	copy /Y src\appweb.h $(CONFIG)\inc\appweb.h
 
 $(CONFIG)\inc\customize.h: 
-	-if exist win-x86-debug\inc\customize.h del /Q win-x86-debug\inc\customize.h
-	copy /Y src\customize.h win-x86-debug\inc\customize.h
+	-if exist $(CONFIG)\inc\customize.h del /Q $(CONFIG)\inc\customize.h
+	copy /Y src\customize.h $(CONFIG)\inc\customize.h
 
 $(CONFIG)\obj\config.obj: \
         src\config.c \
@@ -298,20 +303,20 @@ $(CONFIG)\bin\libappweb.dll:  \
 	"$(LD)" -dll -out:$(CONFIG)\bin\libappweb.dll -entry:_DllMainCRTStartup@12 -def:$(CONFIG)\bin\libappweb.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\config.obj $(CONFIG)\obj\convenience.obj $(CONFIG)\obj\dirHandler.obj $(CONFIG)\obj\fileHandler.obj $(CONFIG)\obj\log.obj $(CONFIG)\obj\server.obj $(LIBS) libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 $(CONFIG)\inc\edi.h: 
-	-if exist win-x86-debug\inc\edi.h del /Q win-x86-debug\inc\edi.h
-	copy /Y src\esp\edi.h win-x86-debug\inc\edi.h
+	-if exist $(CONFIG)\inc\edi.h del /Q $(CONFIG)\inc\edi.h
+	copy /Y src\esp\edi.h $(CONFIG)\inc\edi.h
 
 $(CONFIG)\inc\esp-app.h: 
-	-if exist win-x86-debug\inc\esp-app.h del /Q win-x86-debug\inc\esp-app.h
-	copy /Y src\esp\esp-app.h win-x86-debug\inc\esp-app.h
+	-if exist $(CONFIG)\inc\esp-app.h del /Q $(CONFIG)\inc\esp-app.h
+	copy /Y src\esp\esp-app.h $(CONFIG)\inc\esp-app.h
 
 $(CONFIG)\inc\esp.h: 
-	-if exist win-x86-debug\inc\esp.h del /Q win-x86-debug\inc\esp.h
-	copy /Y src\esp\esp.h win-x86-debug\inc\esp.h
+	-if exist $(CONFIG)\inc\esp.h del /Q $(CONFIG)\inc\esp.h
+	copy /Y src\esp\esp.h $(CONFIG)\inc\esp.h
 
 $(CONFIG)\inc\mdb.h: 
-	-if exist win-x86-debug\inc\mdb.h del /Q win-x86-debug\inc\mdb.h
-	copy /Y src\esp\mdb.h win-x86-debug\inc\mdb.h
+	-if exist $(CONFIG)\inc\mdb.h del /Q $(CONFIG)\inc\mdb.h
+	copy /Y src\esp\mdb.h $(CONFIG)\inc\mdb.h
 
 $(CONFIG)\obj\edi.obj: \
         src\esp\edi.c \
@@ -395,13 +400,13 @@ $(CONFIG)\bin\esp.exe:  \
 	"$(LD)" -out:$(CONFIG)\bin\esp.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\edi.obj $(CONFIG)\obj\esp.obj $(CONFIG)\obj\espAbbrev.obj $(CONFIG)\obj\espFramework.obj $(CONFIG)\obj\espHandler.obj $(CONFIG)\obj\espHtml.obj $(CONFIG)\obj\espSession.obj $(CONFIG)\obj\espTemplate.obj $(CONFIG)\obj\mdb.obj $(CONFIG)\obj\sdb.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 $(CONFIG)\bin\esp.conf: 
-	-if exist win-x86-debug\bin\esp.conf del /Q win-x86-debug\bin\esp.conf
-	copy /Y src\esp\esp.conf win-x86-debug\bin\esp.conf
+	-if exist $(CONFIG)\bin\esp.conf del /Q $(CONFIG)\bin\esp.conf
+	copy /Y src\esp\esp.conf $(CONFIG)\bin\esp.conf
 
 $(CONFIG)\bin\esp-www: 
-	-if exist win-x86-debug\bin\esp-www del /Q win-x86-debug\bin\esp-www
-	if not exist win-x86-debug\bin\esp-www md win-x86-debug\bin\esp-www
-	xcopy /S /Y src\esp\www win-x86-debug\bin\esp-www
+	-if exist $(CONFIG)\bin\esp-www del /Q $(CONFIG)\bin\esp-www
+	if not exist $(CONFIG)\bin\esp-www md $(CONFIG)\bin\esp-www
+	xcopy /S /Y src\esp\www $(CONFIG)\bin\esp-www
 
 $(CONFIG)\obj\cgiHandler.obj: \
         src\modules\cgiHandler.c \
@@ -443,8 +448,8 @@ $(CONFIG)\bin\setConfig.exe:  \
 	"$(LD)" -out:$(CONFIG)\bin\setConfig.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\setConfig.obj $(LIBS) libmpr.lib
 
 $(CONFIG)\inc\appwebMonitor.h: 
-	-if exist win-x86-debug\inc\appwebMonitor.h del /Q win-x86-debug\inc\appwebMonitor.h
-	copy /Y src\server\appwebMonitor.h win-x86-debug\inc\appwebMonitor.h
+	-if exist $(CONFIG)\inc\appwebMonitor.h del /Q $(CONFIG)\inc\appwebMonitor.h
+	copy /Y src\server\appwebMonitor.h $(CONFIG)\inc\appwebMonitor.h
 
 $(CONFIG)\obj\appweb.obj: \
         src\server\appweb.c \
@@ -473,12 +478,12 @@ $(CONFIG)\bin\appwebMonitor.exe:  \
 	"$(LD)" -out:$(CONFIG)\bin\appwebMonitor.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\appwebMonitor.res $(CONFIG)\obj\appwebMonitor.obj shell32.lib libappweb.lib ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 $(CONFIG)\bin\appwebMonitor.ico: 
-	-if exist win-x86-debug\bin\appwebMonitor.ico del /Q win-x86-debug\bin\appwebMonitor.ico
-	copy /Y src\server\WIN\appwebMonitor.ico win-x86-debug\bin\appwebMonitor.ico
+	-if exist $(CONFIG)\bin\appwebMonitor.ico del /Q $(CONFIG)\bin\appwebMonitor.ico
+	copy /Y src\server\WIN\appwebMonitor.ico $(CONFIG)\bin\appwebMonitor.ico
 
 $(CONFIG)\inc\testAppweb.h: 
-	-if exist win-x86-debug\inc\testAppweb.h del /Q win-x86-debug\inc\testAppweb.h
-	copy /Y test\testAppweb.h win-x86-debug\inc\testAppweb.h
+	-if exist $(CONFIG)\inc\testAppweb.h del /Q $(CONFIG)\inc\testAppweb.h
+	copy /Y test\testAppweb.h $(CONFIG)\inc\testAppweb.h
 
 $(CONFIG)\obj\testAppweb.obj: \
         test\testAppweb.c \

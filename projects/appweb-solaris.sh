@@ -1,5 +1,5 @@
 #
-#   solaris-x86-debug.sh -- Build It Shell Script to build Embedthis Appweb
+#   appweb-solaris.sh -- Build It Shell Script to build Embedthis Appweb
 #
 
 ARCH="x86"

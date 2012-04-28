@@ -16,7 +16,7 @@
 #define BLD_MINOR_VERSION 0
 #define BLD_PATCH_VERSION 0
 #define BLD_VNUM 400000000
-#define BLD_CONFIG_CMD "bit configure"
+#define BLD_CONFIG_CMD "bit -q -d -without all configure -gen sh,make,xcode"
 #define BLD_LIB_NAME "bin"
 #define BLD_CFG_PREFIX "/etc/appweb"
 #define BLD_BIN_PREFIX "/usr/lib/appweb/4.0.0/bin"
@@ -55,6 +55,14 @@
 #define BLD_CC_WARN_64TO32 1
 #define BLD_CC_WARN_UNUSED 1
 #define BLD_FEATURE_HTTP 0
+#define BLD_FEATURE_DOXYGEN 0
+#define BLD_FEATURE_DSI 0
+#define BLD_FEATURE_EJS 0
+#define BLD_FEATURE_MAN 0
+#define BLD_FEATURE_MAN2HTML 0
+#define BLD_FEATURE_PHP 0
+#define BLD_FEATURE_PMAKER 0
+#define BLD_FEATURE_SSL 0
 #define BLD_FEATURE_CC 1
 #define BLD_CC "/usr/bin/clang"
 #define BLD_FEATURE_LINK 1
@@ -63,30 +71,14 @@
 #define BLD_CGI "/Users/mob/git/appweb/src/modules/cgiHandler.c"
 #define BLD_FEATURE_DIR 1
 #define BLD_DIR "/Users/mob/git/appweb/src/dirHandler.c"
-#define BLD_FEATURE_DOXYGEN 1
-#define BLD_DOXYGEN "/usr/local/bin/doxygen"
 #define BLD_FEATURE_DPKG 1
-#define BLD_FEATURE_DSI 1
-#define BLD_DSI "/Users/mob/git/appweb.stable/build/bin/dsi"
-#define BLD_FEATURE_EJS 1
-#define BLD_EJS "/Users/mob/git/ejs/macosx-x86_64-debug/bin/ejs"
 #define BLD_FEATURE_EJSCRIPT 0
 #define BLD_FEATURE_ESP 1
 #define BLD_ESP "/Users/mob/git/appweb/src/esp/espHandler.c"
-#define BLD_FEATURE_MAN 1
-#define BLD_MAN "/usr/bin/man"
-#define BLD_FEATURE_MAN2HTML 1
-#define BLD_MAN2HTML "/usr/local/bin/man2html"
-#define BLD_FEATURE_OPENSSL 1
-#define BLD_OPENSSL "/Users/mob/git/packages-macosx-x86_64/openssl/openssl-1.0.0d/libcrypto.dylib"
-#define BLD_FEATURE_MATRIXSSL 1
-#define BLD_MATRIXSSL "/Users/mob/git/packages-macosx-x86_64/matrixssl/matrixssl-3-3-open/libmatrixssl.dylib"
-#define BLD_FEATURE_PMAKER 1
-#define BLD_PMAKER "/Applications/PackageMaker.app/Contents/MacOS/PackageMaker"
-#define BLD_FEATURE_PHP 1
-#define BLD_PHP "/Users/mob/git/packages-macosx-x86_64/php/php-5.3.8/.libs/libphp5.dylib"
+#define BLD_FEATURE_OPENSSL 0
+#define BLD_FEATURE_MATRIXSSL 0
+#define BLD_FEATURE_RPMBUILD 1
 #define BLD_FEATURE_SQLITE 1
 #define BLD_SQLITE "/Users/mob/git/appweb/src/deps/sqlite"
-#define BLD_FEATURE_SSL 1
 #define BLD_FEATURE_UTEST 1
 #define BLD_UTEST "/Users/mob/git/ejs/macosx-x86_64-debug/bin/utest"

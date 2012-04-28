@@ -16,7 +16,7 @@
 #define BLD_MINOR_VERSION 0
 #define BLD_PATCH_VERSION 0
 #define BLD_VNUM 400000000
-#define BLD_CONFIG_CMD "bit -emulate win-x86 -d -without all configure -gen sh,nmake,vs"
+#define BLD_CONFIG_CMD "bit -emulate win-x86 -q -d -without all configure -gen sh,nmake,vs"
 #define BLD_LIB_NAME "bin"
 #define BLD_CFG_PREFIX "/Users/mob/git/appweb/C:/Program Files/Embedthis Appweb"
 #define BLD_BIN_PREFIX "/Users/mob/git/appweb/C:/Program Files/Embedthis Appweb/bin"
@@ -84,6 +84,7 @@
 #define BLD_ESP "/Users/mob/git/appweb/src/esp/espHandler.c"
 #define BLD_FEATURE_OPENSSL 0
 #define BLD_FEATURE_MATRIXSSL 0
+#define BLD_FEATURE_RPMBUILD 1
 #define BLD_FEATURE_SQLITE 1
 #define BLD_SQLITE "/Users/mob/git/appweb/src/deps/sqlite"
 #define BLD_FEATURE_UTEST 1

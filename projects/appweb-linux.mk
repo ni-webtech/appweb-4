@@ -1,5 +1,5 @@
 #
-#   linux-x86-debug.mk -- Build It Makefile to build Embedthis Appweb for linux
+#   appweb-linux.mk -- Build It Makefile to build Embedthis Appweb for linux
 #
 
 ARCH     := $(shell uname -m | sed 's/i.86/x86/')
@@ -69,6 +69,7 @@ clean:
 	rm -rf $(CONFIG)/bin/mod_cgi.so
 	rm -rf $(CONFIG)/bin/mod_ejs.so
 	rm -rf $(CONFIG)/bin/mod_php.so
+	rm -rf $(CONFIG)/bin/mod_proxy.so
 	rm -rf $(CONFIG)/bin/mod_ssl.so
 	rm -rf $(CONFIG)/bin/auth
 	rm -rf $(CONFIG)/bin/cgiProgram
@@ -110,6 +111,7 @@ clean:
 	rm -rf $(CONFIG)/obj/cgiHandler.o
 	rm -rf $(CONFIG)/obj/ejsHandler.o
 	rm -rf $(CONFIG)/obj/phpHandler.o
+	rm -rf $(CONFIG)/obj/proxyHandler.o
 	rm -rf $(CONFIG)/obj/sslModule.o
 	rm -rf $(CONFIG)/obj/auth.o
 	rm -rf $(CONFIG)/obj/cgiProgram.o

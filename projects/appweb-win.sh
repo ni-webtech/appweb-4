@@ -1,5 +1,5 @@
 #
-#   win-x86-debug.sh -- Build It Shell Script to build Embedthis Appweb
+#   appweb-win.sh -- Build It Shell Script to build Embedthis Appweb
 #
 
 VS="${VSINSTALLDIR}"
