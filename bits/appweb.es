@@ -59,7 +59,7 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
     })
     install(bit.dir.lib + '/esp.conf', p.lib)
     install(bit.dir.lib + '/esp-www', p.lib)
-    install(bit.dir.inc.join('*.h'), p.include)
+    install(bit.dir.inc.join('*.h'), p.inc)
 
     let user = getWebUser(), group = getWebUser()
     p.spool.join('cache').makeDir()
@@ -267,7 +267,7 @@ public function createLinks() {
     }
     if (Config.OS != 'WIN') {
         let link = Path('/usr/include').join(bit.settings.product)
-        link.symlink(bit.prefixes.include)
+        link.symlink(bit.prefixes.inc)
         log.push(link)
         bit.prefixes.productver.join('files.log').append(log.join('\n') + '\n')
     }
