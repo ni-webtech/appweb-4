@@ -8,7 +8,7 @@ PROFILE  := debug
 CONFIG   := $(OS)-$(ARCH)-$(PROFILE)
 CC       := gcc
 LD       := ld
-CFLAGS   := -Wall -fPIC -g -mcpu=generic
+CFLAGS   := -fPIC -g -mcpu=generic -w
 DFLAGS   := -D_REENTRANT -DPIC -DBLD_DEBUG
 IFLAGS   := -I$(CONFIG)/inc
 LDFLAGS  := '-g'

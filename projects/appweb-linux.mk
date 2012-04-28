@@ -8,7 +8,7 @@ PROFILE  := debug
 CONFIG   := $(OS)-$(ARCH)-$(PROFILE)
 CC       := gcc
 LD       := ld
-CFLAGS   := -Wall -fPIC -g -Wno-unused-result -mtune=generic
+CFLAGS   := -fPIC -g -mtune=generic -w
 DFLAGS   := -D_REENTRANT -DPIC -DBLD_DEBUG
 IFLAGS   := -I$(CONFIG)/inc
 LDFLAGS  := '-Wl,--enable-new-dtags' '-Wl,-rpath,$$ORIGIN/' '-Wl,-rpath,$$ORIGIN/../bin' '-rdynamic' '-g'
