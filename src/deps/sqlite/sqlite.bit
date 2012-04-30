@@ -17,6 +17,8 @@ Bit.load({
                 '+precompile': "
                     if (bit.packs.compiler.path.basename == 'gcc') {
                         bit.target.compiler.push('-w')
+                    } else if (bit.packs.compiler.path.basename == 'clang') {
+                        bit.target.compiler.push('-w')
                     }
                 ",
             },

@@ -111,7 +111,11 @@ char *espExpandCommand(cchar *command, cchar *source, cchar *module)
                 path = mprJoinPath(mprGetPathParent(mprGetPathParent(getenv("VS100COMNTOOLS"))), "VC/bin/cl.exe");
                 mprPutStringToBuf(buf, mprGetPortablePath(path));
 #else
+#if MOB
                 mprPutStringToBuf(buf, BLD_CC);
+#else
+                mprPutStringToBuf(buf, "cc");
+#endif
 #endif
             } else if (matchToken(&cp, "${DEBUG}")) {
                 mprPutStringToBuf(buf, ESP_DEBUG);

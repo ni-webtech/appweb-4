@@ -2,5 +2,6 @@
     dir.bit - DIR package for Bit
  */
 
+pack('dir', 'Directory Listing Module')
 let dir = probe('dirHandler.c', {fullpath: true, search: [bit.dir.src.join('src')]})
 Bit.load({packs: { dir: { path: dir }}})

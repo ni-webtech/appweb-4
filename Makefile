@@ -8,7 +8,7 @@ MAKE	:= make
 EXT		:= mk
 
 ifeq ($(OS),win)
-	MAKE:= nmake
+	MAKE:= projects/win.bat $(PROCESSOR_ARCHITEW6432)
 	EXT := nmake
 endif
 

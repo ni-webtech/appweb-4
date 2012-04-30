@@ -2,5 +2,6 @@
     esp.bit - ESP package for Bit
  */
 
+pack('esp', 'Embedded Server Pages Web Framework')
 let esp = probe('espHandler.c', {fullpath: true, search: [bit.dir.src.join('src/esp')]})
 Bit.load({packs: { esp: { path: esp }}})

@@ -2,6 +2,7 @@
     php.bit -- PHP package search
  */
 
+pack('php', 'PHP Web Framework')
 let cfg
 let path = bit.packs.php.path
 if (!path) {

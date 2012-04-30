@@ -2,6 +2,7 @@
     ejscript.bit - Ejscript package for Bit
  */
 
+pack('ejscript', 'Ejscript Web Framework')
 let path = bit.packs.ejscript.path
 
 if (path && path.startsWith('http:')) {
