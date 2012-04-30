@@ -8,10 +8,12 @@ MAKE	:= make
 EXT		:= mk
 
 ifeq ($(OS),win)
+ifeq ($(ARCH),)
 ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
 	ARCH:=x64
 else
 	ARCH:=x86
+endif
 endif
 	MAKE:= projects/win.bat $(ARCH)
 	EXT := nmake
