@@ -10,13 +10,22 @@ http.get(HTTP + "/index.html")
 assert(http.status == 200)
 http.close()
 
-//  Try to crash with DOS attack
-for (i in 2000) {
-    let s = new Socket
-    s.connect(HTTP.address)
-    let written = s.write("Any Text")
-    assert(written == 8)
-    s.close()
+//  MOB - TEMP
+if (Config.OS != 'WIN') {
+    //  Try to crash with DOS attack
+    for (i in 2000) {
+        let s = new Socket
+    try {
+        s.connect(HTTP.address)
+    } catch (e) {
+        print("ERROR", i)
+        print(e)
+        throw e
+    }
+        let written = s.write("Any Text")
+        assert(written == 8)
+        s.close()
+    }
 }
 
 //  Check server still there
