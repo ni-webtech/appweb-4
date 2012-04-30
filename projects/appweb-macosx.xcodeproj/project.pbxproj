@@ -2399,6 +2399,7 @@ fi";
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				PRODUCT_NAME = libsqlite3;
+				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
 
 
 			};
@@ -2408,6 +2409,7 @@ fi";
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				PRODUCT_NAME = libsqlite3;
+				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
 
 
 			};
