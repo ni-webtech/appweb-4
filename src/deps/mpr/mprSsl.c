@@ -23,6 +23,10 @@
 #include    "bit.h"
 
 #if BLD_FEATURE_MATRIXSSL
+#if WIN32
+ #include   <winsock2.h>
+ #include   <windows.h>
+#endif
  #include    "matrixsslApi.h"
 
 /*
