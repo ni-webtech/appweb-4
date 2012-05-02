@@ -91,7 +91,7 @@ static void readyDir(HttpQueue *q)
     httpSetHeaderString(conn, "Last-Modified", conn->http->currentDate);
     parseQuery(conn);
 
-    list = mprGetPathFiles(tx->filename, 1);
+    list = mprGetPathFiles(tx->filename, MPR_PATH_RELATIVE);
     if (list == 0) {
         httpWrite(q, "<h2>Can't get file list</h2>\r\n");
         outputFooter(q);
