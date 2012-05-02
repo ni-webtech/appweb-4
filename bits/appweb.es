@@ -113,7 +113,11 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
             {permissions: 0644, expand: true})
 
     } else if (OS == 'win') {
-        install(bit.packs.compiler.path.join('../../redist/x86/Microsoft.VC100.CRT/msvcr100.dll'), p.bin)
+        if (bit.platform.arch == 'x86_64') {
+            install(bit.packs.compiler.dir.join('VC/redist/x64/Microsoft.VC100.CRT/msvcr100.dll'), p.bin)
+        } else {
+            install(bit.packs.compiler.dir.join('VC/redist/x86/Microsoft.VC100.CRT/msvcr100.dll'), p.bin)
+        }
         /*
             install(bit.packs.compiler.path.join('../../lib/msvcrt.lib'), p.bin)
          */
