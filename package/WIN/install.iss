@@ -11,6 +11,7 @@ DefaultDirName={pf}\${settings.title}
 DefaultGroupName=${settings.product}
 UninstallDisplayIcon={app}/${settings.product}.exe
 LicenseFile=LICENSE.TXT
+ArchitecturesInstallIn64BitMode=x64
 
 [Code]
 var

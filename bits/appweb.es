@@ -206,7 +206,9 @@ public function installBinary() {
         Cmd([bit.dir.bin.join('appman'), '--continue', 'stop', 'disable', 'uninstall'])
     }
     package(bit.dir.pkg.join('bin'), 'install')
-    createLinks()
+    if (Config.OS != 'WIN') {
+        createLinks()
+    }
     updateLatestLink()
     trace('Start', 'appman install enable start')
     Cmd([bit.prefixes.bin.join('appman' + bit.EXE), 'install', 'enable', 'start'])
@@ -260,7 +262,7 @@ public function createLinks() {
         let target: Path
         for each (program in programs) {
             let link = Path(localbin.join(program))
-            link.symlink(bin.join(program))
+            link.symlink(bin.join(program + bit.EXE))
             log.push(link)
         }
         for each (page in bit.prefixes.productver.join('doc/man').glob('**/*.1.gz')) {
