@@ -31,7 +31,6 @@ all: prep \
         $(CONFIG)/bin/esp.conf \
         $(CONFIG)/bin/esp-www \
         $(CONFIG)/bin/mod_cgi.dylib \
-        $(CONFIG)/bin/mod_proxy.dylib \
         $(CONFIG)/bin/auth \
         $(CONFIG)/bin/cgiProgram \
         $(CONFIG)/bin/setConfig \
@@ -68,7 +67,6 @@ clean:
 	rm -rf $(CONFIG)/bin/esp.conf
 	rm -rf $(CONFIG)/bin/esp-www
 	rm -rf $(CONFIG)/bin/mod_cgi.dylib
-	rm -rf $(CONFIG)/bin/mod_proxy.dylib
 	rm -rf $(CONFIG)/bin/auth
 	rm -rf $(CONFIG)/bin/cgiProgram
 	rm -rf $(CONFIG)/bin/setConfig
@@ -429,17 +427,6 @@ $(CONFIG)/bin/mod_cgi.dylib:  \
         $(CONFIG)/bin/libappweb.dylib \
         $(CONFIG)/obj/cgiHandler.o
 	$(CC) -dynamiclib -o $(CONFIG)/bin/mod_cgi.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.0.0 -current_version 4.0.0 -compatibility_version 4.0.0 -current_version 4.0.0 $(LIBPATHS) -install_name @rpath/mod_cgi.dylib $(CONFIG)/obj/cgiHandler.o $(LIBS) -lappweb -lhttp -lmpr -lpcre -lmprssl
-
-$(CONFIG)/obj/proxyHandler.o: \
-        src/modules/proxyHandler.c \
-        $(CONFIG)/inc/bit.h \
-        $(CONFIG)/inc/appweb.h
-	$(CC) -c -o $(CONFIG)/obj/proxyHandler.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/modules/proxyHandler.c
-
-$(CONFIG)/bin/mod_proxy.dylib:  \
-        $(CONFIG)/bin/libappweb.dylib \
-        $(CONFIG)/obj/proxyHandler.o
-	$(CC) -dynamiclib -o $(CONFIG)/bin/mod_proxy.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.0.0 -current_version 4.0.0 -compatibility_version 4.0.0 -current_version 4.0.0 $(LIBPATHS) -install_name @rpath/mod_proxy.dylib $(CONFIG)/obj/proxyHandler.o $(LIBS) -lappweb -lhttp -lmpr -lpcre -lmprssl
 
 $(CONFIG)/obj/auth.o: \
         src/utils/auth.c \

@@ -40,7 +40,6 @@ all: prep \
         $(CONFIG)\bin\esp.conf \
         $(CONFIG)\bin\esp-www \
         $(CONFIG)\bin\mod_cgi.dll \
-        $(CONFIG)\bin\mod_proxy.dll \
         $(CONFIG)\bin\auth.exe \
         $(CONFIG)\bin\cgiProgram.exe \
         $(CONFIG)\bin\setConfig.exe \
@@ -83,7 +82,6 @@ clean:
 	-if exist $(CONFIG)\bin\esp.conf del /Q $(CONFIG)\bin\esp.conf
 	-if exist $(CONFIG)\bin\esp-www del /Q $(CONFIG)\bin\esp-www
 	-if exist $(CONFIG)\bin\mod_cgi.dll del /Q $(CONFIG)\bin\mod_cgi.dll
-	-if exist $(CONFIG)\bin\mod_proxy.dll del /Q $(CONFIG)\bin\mod_proxy.dll
 	-if exist $(CONFIG)\bin\auth.exe del /Q $(CONFIG)\bin\auth.exe
 	-if exist $(CONFIG)\bin\cgiProgram.exe del /Q $(CONFIG)\bin\cgiProgram.exe
 	-if exist $(CONFIG)\bin\setConfig.exe del /Q $(CONFIG)\bin\setConfig.exe
@@ -409,16 +407,6 @@ $(CONFIG)\bin\mod_cgi.dll:  \
         $(CONFIG)\bin\libappweb.dll \
         $(CONFIG)\obj\cgiHandler.obj
 	"$(LD)" -dll -out:$(CONFIG)\bin\mod_cgi.dll -entry:$(ENTRY) -def:$(CONFIG)\bin\mod_cgi.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\cgiHandler.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
-
-$(CONFIG)\obj\proxyHandler.obj: \
-        src\modules\proxyHandler.c \
-        $(CONFIG)\inc\bit.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\proxyHandler.obj -Fd$(CONFIG)\obj\proxyHandler.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\modules\proxyHandler.c
-
-$(CONFIG)\bin\mod_proxy.dll:  \
-        $(CONFIG)\bin\libappweb.dll \
-        $(CONFIG)\obj\proxyHandler.obj
-	"$(LD)" -dll -out:$(CONFIG)\bin\mod_proxy.dll -entry:$(ENTRY) -def:$(CONFIG)\bin\mod_proxy.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\proxyHandler.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 $(CONFIG)\obj\auth.obj: \
         src\utils\auth.c \

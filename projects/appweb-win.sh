@@ -141,10 +141,6 @@ cp -r src/esp/www ${CONFIG}/bin/esp-www
 
 "${LD}" -dll -out:${CONFIG}/bin/mod_cgi.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/mod_cgi.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/cgiHandler.obj ${LIBS} libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
-"${CC}" -c -Fo${CONFIG}/obj/proxyHandler.obj -Fd${CONFIG}/obj/proxyHandler.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/modules/proxyHandler.c
-
-"${LD}" -dll -out:${CONFIG}/bin/mod_proxy.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/mod_proxy.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/proxyHandler.obj ${LIBS} libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
-
 "${CC}" -c -Fo${CONFIG}/obj/auth.obj -Fd${CONFIG}/obj/auth.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/utils/auth.c
 
 "${LD}" -out:${CONFIG}/bin/auth.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/auth.obj ${LIBS} libmpr.lib

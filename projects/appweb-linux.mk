@@ -31,7 +31,6 @@ all: prep \
         $(CONFIG)/bin/esp.conf \
         $(CONFIG)/bin/esp-www \
         $(CONFIG)/bin/mod_cgi.so \
-        $(CONFIG)/bin/mod_proxy.so \
         $(CONFIG)/bin/auth \
         $(CONFIG)/bin/cgiProgram \
         $(CONFIG)/bin/setConfig \
@@ -68,7 +67,6 @@ clean:
 	rm -rf $(CONFIG)/bin/esp.conf
 	rm -rf $(CONFIG)/bin/esp-www
 	rm -rf $(CONFIG)/bin/mod_cgi.so
-	rm -rf $(CONFIG)/bin/mod_proxy.so
 	rm -rf $(CONFIG)/bin/auth
 	rm -rf $(CONFIG)/bin/cgiProgram
 	rm -rf $(CONFIG)/bin/setConfig
@@ -393,16 +391,6 @@ $(CONFIG)/bin/mod_cgi.so:  \
         $(CONFIG)/bin/libappweb.so \
         $(CONFIG)/obj/cgiHandler.o
 	$(CC) -shared -o $(CONFIG)/bin/mod_cgi.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/cgiHandler.o $(LIBS) -lappweb -lhttp -lmpr -lpcre -lmprssl
-
-$(CONFIG)/obj/proxyHandler.o: \
-        src/modules/proxyHandler.c \
-        $(CONFIG)/inc/bit.h
-	$(CC) -c -o $(CONFIG)/obj/proxyHandler.o $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/modules/proxyHandler.c
-
-$(CONFIG)/bin/mod_proxy.so:  \
-        $(CONFIG)/bin/libappweb.so \
-        $(CONFIG)/obj/proxyHandler.o
-	$(CC) -shared -o $(CONFIG)/bin/mod_proxy.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/proxyHandler.o $(LIBS) -lappweb -lhttp -lmpr -lpcre -lmprssl
 
 $(CONFIG)/obj/auth.o: \
         src/utils/auth.c \
