@@ -151,11 +151,14 @@ static void startCgi(HttpQueue *q)
 
 #if BLD_WIN_LIKE
 /*
-    This routine is called for outgoing I/O events when the pipeline and TCP/IP buffers have drained.
-    It may be called multiple times until the gateway exits.
+    This routine is called for when the outgoing queue is writable.  We don't actually do output here, just poll
+    until the command is complete.
  */
-static void processCgi(HttpQueue *q)
+static void outputCgi(HttpQueue *q)
 {
+    MprCmd      *cmd;
+
+    cmd = (MprCmd*) q->queueData;
     /*
         Windows can't select on named pipes. So must poll here. This consumes a thread.
      */
@@ -834,7 +837,6 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
     MprFile     *file;
     cchar       *actionProgram, *ext, *cmdShell, *cp, *start;
     char        *tok, buf[MPR_MAX_FNAME + 1], *path;
-    int         quoted;
 
     rx = conn->rx;
     tx = conn->tx;
@@ -1058,7 +1060,7 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     handler->open = openCgi; 
     handler->start = startCgi; 
 #if BLD_WIN_LIKE
-    handler->process = processCgi; 
+    handler->output = outputCgi; 
 #endif
             
     appweb = httpGetContext(http);
