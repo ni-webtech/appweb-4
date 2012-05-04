@@ -19,6 +19,11 @@ Bit.load({
         "doc/doc.bit",
     ],
 
+    customize: [
+        /* Optionally load this if present. Feel free to create and customize */
+        'custom.bit',
+    ],
+
     '+modules': [
         'bits/appweb.es',
     ],
