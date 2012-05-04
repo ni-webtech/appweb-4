@@ -206,7 +206,9 @@ public function installBinary() {
         Cmd([bit.dir.bin.join('appman'), '--continue', 'stop', 'disable', 'uninstall'])
     }
     package(bit.dir.pkg.join('bin'), 'install')
-    createLinks()
+    if (Config.OS != 'WIN') {
+        createLinks()
+    }
     updateLatestLink()
     trace('Start', 'appman install enable start')
     Cmd([bit.prefixes.bin.join('appman' + bit.EXE), 'install', 'enable', 'start'])
