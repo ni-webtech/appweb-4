@@ -12,7 +12,7 @@ OS="win"
 PROFILE="debug"
 CONFIG="${OS}-${ARCH}-${PROFILE}"
 CC="cl.exe"
-LD="link.exe"
+LD="link"
 CFLAGS="-nologo -GR- -W3 -Zi -Od -MDd"
 DFLAGS="-D_REENTRANT -D_MT -DBLD_DEBUG"
 IFLAGS="-I${CONFIG}/inc"
@@ -140,6 +140,10 @@ cp -r src/esp/www ${CONFIG}/bin/esp-www
 "${CC}" -c -Fo${CONFIG}/obj/cgiHandler.obj -Fd${CONFIG}/obj/cgiHandler.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/modules/cgiHandler.c
 
 "${LD}" -dll -out:${CONFIG}/bin/mod_cgi.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/mod_cgi.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/cgiHandler.obj ${LIBS} libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
+
+"${CC}" -c -Fo${CONFIG}/obj/proxyHandler.obj -Fd${CONFIG}/obj/proxyHandler.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/modules/proxyHandler.c
+
+"${LD}" -dll -out:${CONFIG}/bin/mod_proxy.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/mod_proxy.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/proxyHandler.obj ${LIBS} libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 "${CC}" -c -Fo${CONFIG}/obj/auth.obj -Fd${CONFIG}/obj/auth.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/utils/auth.c
 

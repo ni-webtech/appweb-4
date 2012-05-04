@@ -53,7 +53,8 @@ static bool matchToken(cchar **str, cchar *token)
 
 /*
     Tokens:
-    ARCH        Build architecture (x86_64)
+    ARCH        Build architecture (64)
+    GCC_ARCH    ARCH mapped to gcc -arch switches (x86_64)
     CC          Compiler (cc)
     DEBUG       Debug compilation options (-g, -Zi -Od)
     INC         Include directory out/inc
@@ -72,7 +73,7 @@ char *espExpandCommand(cchar *command, cchar *source, cchar *module)
 {
     MprBuf      *buf;
     MaAppweb    *appweb;
-    cchar       *cp, *out;
+    cchar       *cp, *out, *arch;
     char        *tmp;
     
 #if BLD_WIN_LIKE
@@ -93,6 +94,14 @@ char *espExpandCommand(cchar *command, cchar *source, cchar *module)
                 /* Build architecture */
                 mprPutStringToBuf(buf, appweb->hostArch);
 
+            } else if (matchToken(&cp, "${GCC_ARCH}")) {
+                arch = appweb->hostArch;
+                if (smatch(arch, "x64")) {
+                    arch = "x86_64";
+                } else if (smatch(arch, "x86")) {
+                    arch = "i686";
+                }
+                mprPutStringToBuf(buf, arch);
 #if BLD_WIN_LIKE
             } else if (matchToken(&cp, "${WINSDK}")) {
                 path = mprReadRegistry("HKLM\\SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows", "CurrentInstallFolder");
@@ -425,7 +434,7 @@ char *espBuildScript(HttpRoute *route, cchar *page, cchar *path, cchar *cacheNam
         switch (tid) {
         case ESP_TOK_CODE:
             if (*token == '^') {
-                for (token++; *token && isspace((int) *token); token++) ;
+                for (token++; *token && isspace((uchar) *token); token++) ;
                 where = stok(token, " \t\r\n", &rest);
                 if (rest == 0) {
                     ;
@@ -596,7 +605,7 @@ static bool addChar(EspParse *parse, int c)
 
 static char *eatSpace(EspParse *parse, char *next)
 {
-    for (; *next && isspace((int) *next); next++) {
+    for (; *next && isspace((uchar) *next); next++) {
         if (*next == '\n') {
             parse->lineNumber++;
         }
@@ -607,7 +616,7 @@ static char *eatSpace(EspParse *parse, char *next)
 
 static char *eatNewLine(EspParse *parse, char *next)
 {
-    for (; *next && isspace((int) *next); next++) {
+    for (; *next && isspace((uchar) *next); next++) {
         if (*next == '\n') {
             parse->lineNumber++;
             next++;
@@ -700,7 +709,7 @@ static int getEspToken(EspParse *parse)
                     } else {
                         tid = next[-1] == '@' ? ESP_TOK_VAR : ESP_TOK_FIELD;
                         next = eatSpace(parse, next);
-                        while (isalnum((int) *next) || *next == '_') {
+                        while (isalnum((uchar) *next) || *next == '_') {
                             if (*next == '\n') parse->lineNumber++;
                             if (!addChar(parse, *next++)) {
                                 return ESP_TOK_ERR;

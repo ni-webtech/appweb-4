@@ -370,11 +370,11 @@ static char* trimWhiteSpace(char *str)
     if (str == 0) {
         return str;
     }
-    while (isspace((int) *str)) {
+    while (isspace((uchar) *str)) {
         str++;
     }
     len = strlen(str) - 1;
-    while (isspace((int) str[len])) {
+    while (isspace((uchar) str[len])) {
         str[len--] = '\0';
     }
     return str;

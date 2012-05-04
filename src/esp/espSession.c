@@ -159,7 +159,7 @@ char *espGetSessionID(HttpConn *conn)
     cookies = httpGetCookies(conn);
     for (cookie = cookies; cookie && (value = strstr(cookie, ESP_SESSION)) != 0; cookie = value) {
         value += strlen(ESP_SESSION);
-        while (isspace((int) *value) || *value == '=') {
+        while (isspace((uchar) *value) || *value == '=') {
             value++;
         }
         quoted = 0;

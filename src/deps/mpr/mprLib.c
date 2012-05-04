@@ -2128,7 +2128,7 @@ MprMemStats *mprGetMemStats()
         if ((len = read(fd, buf, sizeof(buf) - 1)) > 0) {
             buf[len] = '\0';
             if ((cp = strstr(buf, "MemTotal:")) != 0) {
-                for (; *cp && !isdigit((int) *cp); cp++) {}
+                for (; *cp && !isdigit((uchar) *cp); cp++) {}
                 heap->stats.ram = ((ssize) atoi(cp) * 1024);
             }
         }
@@ -2183,7 +2183,7 @@ ssize mprGetMem()
         if (nbytes > 0) {
             buf[nbytes] = '\0';
             if ((tok = strstr(buf, "VmRSS:")) != 0) {
-                for (tok += 6; tok && isspace((int) *tok); tok++) {}
+                for (tok += 6; tok && isspace((uchar) *tok); tok++) {}
                 size = stoi(tok) * 1024;
             }
         }
@@ -2987,7 +2987,7 @@ int mprParseArgs(char *args, char **argv, int maxArgc)
         Becomes:    ["showColors", "red", "light blue", "yellow white", "Can't \"render\""]
      */
     for (argc = 0, src = args; src && *src != '\0' && argc < maxArgc; argc++) {
-        while (isspace((int) *src)) {
+        while (isspace((uchar) *src)) {
             src++;
         }
         if (*src == '\0')  {
@@ -13373,11 +13373,11 @@ char *mprUriDecode(cchar *inbuf)
         if (*ip == '+') {
             *op = ' ';
 
-        } else if (*ip == '%' && isxdigit((int) ip[1]) && isxdigit((int) ip[2])) {
+        } else if (*ip == '%' && isxdigit((uchar) ip[1]) && isxdigit((uchar) ip[2])) {
             ip++;
             num = 0;
             for (i = 0; i < 2; i++, ip++) {
-                c = tolower((int) *ip);
+                c = tolower((uchar) *ip);
                 if (c >= 'a' && c <= 'f') {
                     num = (num * 16) + 10 + c - 'a';
                 } else if (c >= '0' && c <= '9') {
@@ -15881,7 +15881,7 @@ cchar *mprSerialize(MprObj *obj, int flags)
 
 static char advanceToken(MprJson *jp)
 {
-    while (isspace((int) *jp->tok)) {
+    while (isspace((uchar) *jp->tok)) {
         if (*jp->tok == '\n') {
             jp->lineNumber++;
         }
@@ -17479,7 +17479,7 @@ int mprStartLogging(cchar *logSpec, int showConfig)
     }
     if (*logSpec && strcmp(logSpec, "none") != 0) {
         MPR->logPath = path = sclone(logSpec);
-        if ((levelSpec = strrchr(path, ':')) != 0 && isdigit((int) levelSpec[1])) {
+        if ((levelSpec = strrchr(path, ':')) != 0 && isdigit((uchar) levelSpec[1])) {
             *levelSpec++ = '\0';
             level = atoi(levelSpec);
         }
@@ -18078,7 +18078,7 @@ MprHash *mprCreateMimeTypes(cchar *path)
         line = 0;
         while ((buf = mprReadLine(file, 0, NULL)) != 0) {
             line++;
-            if (buf[0] == '#' || isspace((int) buf[0])) {
+            if (buf[0] == '#' || isspace((uchar) buf[0])) {
                 continue;
             }
             type = stok(buf, " \t\n\r", &tok);
@@ -18435,7 +18435,7 @@ int mncasecmp(MprChar *s1, cchar *s2, ssize n)
         return 1;
     }
     for (rc = 0; n > 0 && *s1 && rc == 0; s1++, s2++, n--) {
-        rc = tolower((int) *s1) - tolower((int) (uchar) *s2);
+        rc = tolower(*s1) - tolower(*s2);
     }
     if (rc) {
         return (rc > 0) ? 1 : -1;
@@ -19941,7 +19941,7 @@ char *mprGetRelPath(cchar *destArg, cchar *originArg)
             if (*op != *cp) {
                 break;
             }
-        } else if (*op != *cp && tolower((int) *op) != tolower((int) *cp)) {
+        } else if (*op != *cp && tolower((uchar) *op) != tolower((uchar) *cp)) {
             break;
         }
     }
@@ -20526,7 +20526,7 @@ int mprSamePath(cchar *path1, cchar *path2)
         }
     } else {
         for (p1 = path1, p2 = path2; *p1 && *p2; p1++, p2++) {
-            if (tolower((int) *p1) != tolower((int) *p2) && !(isSep(fs, *p1) && isSep(fs, *p2))) {
+            if (tolower((uchar) *p1) != tolower((uchar) *p2) && !(isSep(fs, *p1) && isSep(fs, *p2))) {
                 break;
             }
         }
@@ -20563,7 +20563,7 @@ int mprSamePathCount(cchar *path1, cchar *path2, ssize len)
         }
     } else {
         for (p1 = path1, p2 = path2; *p1 && *p2 && len > 0; p1++, p2++, len--) {
-            if (tolower((int) *p1) != tolower((int) *p2) && !(isSep(fs, *p1) && isSep(fs, *p2))) {
+            if (tolower((uchar) *p1) != tolower((uchar) *p2) && !(isSep(fs, *p1) && isSep(fs, *p2))) {
                 break;
             }
         }
@@ -21537,7 +21537,7 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list args)
                     fmt.flags |= SPRINTF_LEFT;
                 }
             } else {
-                while (isdigit((int) c)) {
+                while (isdigit((uchar) c)) {
                     fmt.width = fmt.width * 10 + (c - '0');
                     c = *spec++;
                 }
@@ -21553,7 +21553,7 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list args)
             if (c == '*') {
                 fmt.precision = va_arg(args, int);
             } else {
-                while (isdigit((int) c)) {
+                while (isdigit((uchar) c)) {
                     fmt.precision = fmt.precision * 10 + (c - '0');
                     c = *spec++;
                 }
@@ -21597,15 +21597,15 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list args)
                 qname = va_arg(args, MprEjsName);
                 if (qname.name) {
 #if BLD_CHAR_LEN == 1
-                    outString(&fmt, qname.space->value, qname.space->length);
+                    outString(&fmt, (char*) qname.space->value, qname.space->length);
                     BPUT(&fmt, ':');
                     BPUT(&fmt, ':');
-                    outString(&fmt, qname.name->value, qname.name->length);
+                    outString(&fmt, (char*) qname.name->value, qname.name->length);
 #else
-                    outWideString(&fmt, qname.space->value, qname.space->length);
+                    outWideString(&fmt, (MprChar*) qname.space->value, qname.space->length);
                     BPUT(&fmt, ':');
                     BPUT(&fmt, ':');
-                    outWideString(&fmt, qname.name->value, qname.name->length);
+                    outWideString(&fmt, (MprChar*) qname.name->value, qname.name->length);
 #endif
                 } else {
                     outString(&fmt, NULL, 0);
@@ -21616,12 +21616,13 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list args)
                 /* Safe string */
 #if BLD_CHAR_LEN > 1
                 if (fmt.flags & SPRINTF_LONG) {
+                    //  MOB - not right MprChar
                     safe = mprEscapeHtml(va_arg(args, MprChar*));
                     outWideString(&fmt, safe, -1);
                 } else
 #endif
                 {
-                    safe = mprEscapeHtml(va_arg(args, MprChar*));
+                    safe = mprEscapeHtml(va_arg(args, char*));
                     outString(&fmt, safe, -1);
                 }
                 break;
@@ -21631,7 +21632,7 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list args)
                 es = va_arg(args, MprEjsString*);
                 if (es) {
 #if BLD_CHAR_LEN == 1
-                    outString(&fmt, es->value, es->length);
+                    outString(&fmt, (char*) es->value, es->length);
 #else
                     outWideString(&fmt, es->value, es->length);
 #endif
@@ -24862,7 +24863,7 @@ int mprParseSocketAddress(cchar *ipAddrPort, char **pip, int *pport, int default
             }
 
         } else {
-            if (isdigit((int) *ip)) {
+            if (isdigit((uchar) *ip)) {
                 *pport = atoi(ip);
                 ip = 0;
             } else {
@@ -25050,7 +25051,7 @@ char *scamel(cchar *str)
         memcpy(ptr, str, len);
         ptr[len] = '\0';
     }
-    ptr[0] = (char) tolower((int) ptr[0]);
+    ptr[0] = (char) tolower((uchar) ptr[0]);
     return ptr;
 }
 
@@ -25369,7 +25370,7 @@ char *slower(cchar *str)
         s = sclone(str);
         for (cp = s; *cp; cp++) {
             if (isupper((int) *cp)) {
-                *cp = (char) tolower((int) *cp);
+                *cp = (char) tolower((uchar) *cp);
             }
         }
         str = s;
@@ -25400,7 +25401,7 @@ int sncasecmp(cchar *s1, cchar *s2, ssize n)
         return 1;
     }
     for (rc = 0; n > 0 && *s1 && rc == 0; s1++, s2++, n--) {
-        rc = tolower((int) *s1) - tolower((int) *s2);
+        rc = tolower((uchar) *s1) - tolower((uchar) *s2);
     }
     if (rc) {
         return (rc > 0) ? 1 : -1;
@@ -25525,7 +25526,7 @@ char *spascal(cchar *str)
         memcpy(ptr, str, len);
         ptr[len] = '\0';
     }
-    ptr[0] = (char) toupper((int) ptr[0]);
+    ptr[0] = (char) toupper((uchar) ptr[0]);
     return ptr;
 }
 
@@ -25694,7 +25695,7 @@ int64 stoiradix(cchar *str, int radix, int *err)
         }
         return 0;
     }
-    while (isspace((int) *str)) {
+    while (isspace((uchar) *str)) {
         str++;
     }
     val = 0;
@@ -25708,7 +25709,7 @@ int64 stoiradix(cchar *str, int radix, int *err)
     if (radix <= 0) {
         radix = 10;
         if (*str == '0') {
-            if (tolower((int) str[1]) == 'x') {
+            if (tolower((uchar) str[1]) == 'x') {
                 radix = 16;
                 str += 2;
             } else {
@@ -25718,7 +25719,7 @@ int64 stoiradix(cchar *str, int radix, int *err)
         }
 
     } else if (radix == 16) {
-        if (*str == '0' && tolower((int) str[1]) == 'x') {
+        if (*str == '0' && tolower((uchar) str[1]) == 'x') {
             str += 2;
         }
 
@@ -25727,8 +25728,8 @@ int64 stoiradix(cchar *str, int radix, int *err)
     }
     if (radix == 16) {
         while (*str) {
-            c = tolower((int) *str);
-            if (isdigit(c)) {
+            c = tolower((uchar) *str);
+            if (isdigit((uchar) c)) {
                 val = (val * radix) + c - '0';
             } else if (c >= 'a' && c <= 'f') {
                 val = (val * radix) + c - 'a' + 10;
@@ -25738,7 +25739,7 @@ int64 stoiradix(cchar *str, int radix, int *err)
             str++;
         }
     } else {
-        while (*str && isdigit((int) *str)) {
+        while (*str && isdigit((uchar) *str)) {
             n = *str - '0';
             if (n >= radix) {
                 break;
@@ -25851,8 +25852,8 @@ char *supper(cchar *str)
     if (str) {
         s = sclone(str);
         for (cp = s; *cp; cp++) {
-            if (islower((int) *cp)) {
-                *cp = (char) toupper((int) *cp);
+            if (islower((uchar) *cp)) {
+                *cp = (char) toupper((uchar) *cp);
             }
         }
         str = s;
@@ -25881,7 +25882,7 @@ char *stemplate(cchar *str, MprHash *keys)
                     for (cp = ++src; *cp && *cp != '}'; cp++) ;
                     tok = snclone(src, cp - src);
                 } else {
-                    for (cp = src; *cp && (isalnum((int) *cp) || *cp == '_'); cp++) ;
+                    for (cp = src; *cp && (isalnum((uchar) *cp) || *cp == '_'); cp++) ;
                     tok = snclone(src, cp - src);
                 }
                 if ((value = mprLookupKey(keys, tok)) != 0) {
@@ -29520,7 +29521,7 @@ int mprParseTime(MprTime *time, cchar *dateString, int zoneFlags, struct tm *def
                 }
             }
 
-        } else if ((cp = strchr(token, timeSep)) != 0 && isdigit((int) token[0])) {
+        } else if ((cp = strchr(token, timeSep)) != 0 && isdigit((uchar) token[0])) {
             /*
                 Time:  10:52[:23]
                 Must not parse GMT-07:30
@@ -30987,7 +30988,7 @@ MprChar *wlower(MprChar *str)
         s = wclone(str);
         for (cp = s; *cp; cp++) {
             if (isupper((int) *cp)) {
-                *cp = (MprChar) tolower((int) *cp);
+                *cp = (MprChar) tolower(*cp);
             }
         }
         str = s;
@@ -31010,7 +31011,7 @@ int wncasecmp(MprChar *s1, MprChar *s2, ssize n)
         return 1;
     }
     for (rc = 0; n > 0 && *s1 && rc == 0; s1++, s2++, n--) {
-        rc = tolower((int) *s1) - tolower((int) *s2);
+        rc = tolower(*s1) - tolower(*s2);
     }
     if (rc) {
         return (rc > 0) ? 1 : -1;
@@ -31309,8 +31310,8 @@ char *wupper(MprChar *str)
     if (str) {
         s = wclone(str);
         for (cp = s; *cp; cp++) {
-            if (islower((int) *cp)) {
-                *cp = (char) toupper((int) *cp);
+            if (islower(*cp)) {
+                *cp = (MprChar) toupper(*cp);
             }
         }
         str = s;
@@ -31672,16 +31673,16 @@ MprChar *amtow(cchar *src, ssize *len)
     if (len) {
         *len = slen(src);
     }
-    return sclone(src);
+    return (MprChar*) sclone(src);
 }
 
 
 char *awtom(MprChar *src, ssize *len)
 {
     if (len) {
-        *len = slen(src);
+        *len = slen((char*) src);
     }
-    return sclone(src);
+    return sclone((char*) src);
 }
 
 
@@ -33436,7 +33437,7 @@ static MprXmlToken getXmlToken(MprXml *xp, int state)
             If all white space, then zero the token buffer
          */
         for (cp = tokBuf->start; *cp; cp++) {
-            if (!isspace((int) *cp & 0x7f)) {
+            if (!isspace((uchar) *cp & 0x7f)) {
                 return MPR_XMLTOK_TEXT;
             }
         }
@@ -33503,7 +33504,7 @@ static MprXmlToken getXmlToken(MprXml *xp, int state)
                 xp->quoteChar = 0;
 
             } else {
-                while (!isspace(c) && c != '>' && c != '/' && c != '=') {
+                while (!isspace((uchar) c) && c != '>' && c != '/' && c != '=') {
                     if (mprPutCharToBuf(tokBuf, c) < 0) {
                         return MPR_XMLTOK_TOO_BIG;
                     }

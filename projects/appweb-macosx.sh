@@ -2,14 +2,14 @@
 #   appweb-macosx.sh -- Build It Shell Script to build Embedthis Appweb
 #
 
-ARCH="x86_64"
+ARCH="x64"
 ARCH="$(shell uname -m | sed 's/i.86/x86/')"
 OS="macosx"
 PROFILE="debug"
 CONFIG="${OS}-${ARCH}-${PROFILE}"
 CC="/usr/bin/clang"
 LD="/usr/bin/ld"
-CFLAGS="-Wall -g -Wno-unused-result -Wshorten-64-to-32"
+CFLAGS="-Wall -Wno-deprecated-declarations -g -Wno-unused-result -Wshorten-64-to-32"
 DFLAGS="-DBLD_DEBUG"
 IFLAGS="-I${CONFIG}/inc"
 LDFLAGS="-Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/ -g"
@@ -63,7 +63,7 @@ ${CC} -o ${CONFIG}/bin/http -arch x86_64 ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/ht
 rm -rf ${CONFIG}/inc/sqlite3.h
 cp -r src/deps/sqlite/sqlite3.h ${CONFIG}/inc/sqlite3.h
 
-${CC} -c -o ${CONFIG}/obj/sqlite3.o -arch x86_64 -g -Wno-unused-result -w ${DFLAGS} -I${CONFIG}/inc src/deps/sqlite/sqlite3.c
+${CC} -c -o ${CONFIG}/obj/sqlite3.o -arch x86_64 -Wno-deprecated-declarations -g -Wno-unused-result -w ${DFLAGS} -I${CONFIG}/inc src/deps/sqlite/sqlite3.c
 
 ${CC} -dynamiclib -o ${CONFIG}/bin/libsqlite3.dylib -arch x86_64 ${LDFLAGS} -compatibility_version 4.0.0 -current_version 4.0.0 ${LIBPATHS} -install_name @rpath/libsqlite3.dylib ${CONFIG}/obj/sqlite3.o ${LIBS}
 
@@ -136,6 +136,10 @@ cp -r src/esp/www ${CONFIG}/bin/esp-www
 ${CC} -c -o ${CONFIG}/obj/cgiHandler.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/modules/cgiHandler.c
 
 ${CC} -dynamiclib -o ${CONFIG}/bin/mod_cgi.dylib -arch x86_64 ${LDFLAGS} -compatibility_version 4.0.0 -current_version 4.0.0 ${LIBPATHS} -install_name @rpath/mod_cgi.dylib ${CONFIG}/obj/cgiHandler.o ${LIBS} -lappweb -lhttp -lmpr -lpcre -lmprssl
+
+${CC} -c -o ${CONFIG}/obj/proxyHandler.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/modules/proxyHandler.c
+
+${CC} -dynamiclib -o ${CONFIG}/bin/mod_proxy.dylib -arch x86_64 ${LDFLAGS} -compatibility_version 4.0.0 -current_version 4.0.0 ${LIBPATHS} -install_name @rpath/mod_proxy.dylib ${CONFIG}/obj/proxyHandler.o ${LIBS} -lappweb -lhttp -lmpr -lpcre -lmprssl
 
 ${CC} -c -o ${CONFIG}/obj/auth.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/utils/auth.c
 

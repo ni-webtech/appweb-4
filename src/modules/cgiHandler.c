@@ -149,42 +149,34 @@ static void startCgi(HttpQueue *q)
 }
 
 
+#if BLD_WIN_LIKE
 /*
     This routine is called for outgoing I/O events when the pipeline and TCP/IP buffers have drained.
     It may be called multiple times until the gateway exits.
  */
 static void processCgi(HttpQueue *q)
 {
-    MprCmd      *cmd;
-
-    cmd = (MprCmd*) q->queueData;
-    mprAssert(cmd);
-    mprLog(5, "CGI: Process");
-
-#if UNUSED
-    if (q->pair) {
-//  MOB - review
-        writeToCGI(q->pair);
-    }
-#endif
-    if (q->pair == 0 || q->pair->count == 0) {
-        /*  
-            Close the CGI program's stdin (idempotent). This will allow the gateway to exit if it was 
-            expecting input data and insufficient was sent by the client.
-         */
-        if (cmd->files[MPR_CMD_STDIN].fd >= 0) {
-            mprCloseCmdFd(cmd, MPR_CMD_STDIN);
-        }
-    }
-#if BLD_WIN_LIKE
     /*
         Windows can't select on named pipes. So must poll here. This consumes a thread.
      */
     while (!cmd->complete) {
-//  MOB - review
         mprWaitForCmd(cmd, 1000);
     }
+}
 #endif
+
+
+static void outgoingCgiData(HttpQueue *q, HttpPacket *packet)
+{
+    int     enableService;
+
+    /*  
+        Handlers service routines must only be auto-enabled if in the running state.
+     */
+    mprAssert(httpVerifyQueue(q));
+    enableService = !(q->stage->flags & HTTP_STAGE_HANDLER) || (q->conn->state >= HTTP_STATE_READY) ? 1 : 0;
+    httpPutForService(q, packet, enableService);
+    mprAssert(httpVerifyQueue(q));
 }
 
 
@@ -213,6 +205,7 @@ static void outgoingCgiService(HttpQueue *q)
         mprLog(7, "CGI: @@@ OutgoingCgiService - re-enable gateway output count %d (low %d)", q->count, q->low);
         cmd->userFlags &= ~MA_CGI_FLOW_CONTROL;
         mprEnableCmdEvents(cmd, MPR_CMD_STDOUT);
+        httpResumeQueue(q);
     }
 }
 
@@ -243,6 +236,14 @@ static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
             }
             q->queueData = 0;
             httpError(conn, HTTP_CODE_BAD_REQUEST, "Client supplied insufficient body data");
+        } else {
+            /*  
+                Close the CGI program's stdin. This will allow the gateway to exit if it was 
+                expecting input data and insufficient was sent by the client.
+             */
+            if (cmd->files[MPR_CMD_STDIN].fd >= 0) {
+                mprCloseCmdFd(cmd, MPR_CMD_STDIN);
+            }
         }
     } else {
         /* No service routine, we just need it to be queued for writeToCGI */
@@ -307,7 +308,10 @@ static int writeToClient(HttpQueue *q, MprCmd *cmd, MprBuf *buf, int channel)
 
     conn = q->conn;
     mprAssert(conn->tx);
-    rc = 0;
+#if UNUSED
+    httpEnableQueue(q);
+    printf("MOB Enable Queue in writeToClient %d\n", __LINE__);
+#endif
 
     /*
         Write to the browser. Write as much as we can. Service queues to get the filters and connectors pumping.
@@ -316,8 +320,8 @@ static int writeToClient(HttpQueue *q, MprCmd *cmd, MprBuf *buf, int channel)
         if (conn->tx && !conn->finalized && conn->state < HTTP_STATE_COMPLETE) {
             if ((q->count + len) > q->max) {
                 cmd->userFlags |= MA_CGI_FLOW_CONTROL;
-                mprLog(7, "CGI: @@@ client write queue full. Disable queue, enable conn events");
-                httpDisableQueue(q);
+                mprLog(7, "CGI: @@@ client write queue full. Suspend queue, enable conn events");
+                httpSuspendQueue(q);
                 return -1;
             }
             rc = httpWriteBlock(q, mprGetBufStart(buf), len);
@@ -364,7 +368,7 @@ static ssize cgiCallback(MprCmd *cmd, int channel, void *data)
     tx = conn->tx;
     mprAssert(tx);
     conn->lastActivity = conn->http->now;
-    q = conn->tx->queue[HTTP_QUEUE_TX]->nextQ;
+    q = conn->writeq;
 
     switch (channel) {
     case MPR_CMD_STDIN:
@@ -613,7 +617,7 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
                 key = "Bad Header";
             }
             value = getCgiToken(buf, "\n");
-            while (isspace((int) *value)) {
+            while (isspace((uchar) *value)) {
                 value++;
             }
             len = (int) strlen(value);
@@ -994,7 +998,7 @@ static int copyVars(char **envv, int index, MprHash *vars, cchar *prefix)
                 if (*cp == '-') {
                     *cp = '_';
                 } else {
-                    *cp = toupper((int) *cp);
+                    *cp = toupper((uchar) *cp);
                 }
             }
             index++;
@@ -1048,11 +1052,14 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     }
     http->cgiHandler = handler;
     handler->close = closeCgi; 
+    handler->outgoingData = outgoingCgiData;
     handler->outgoingService = outgoingCgiService;
     handler->incomingData = incomingCgiData; 
     handler->open = openCgi; 
     handler->start = startCgi; 
+#if BLD_WIN_LIKE
     handler->process = processCgi; 
+#endif
             
     appweb = httpGetContext(http);
     maAddDirective(appweb, "Action", actionDirective);

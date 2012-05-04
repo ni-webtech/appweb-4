@@ -494,7 +494,7 @@ int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
         return 0;
     }
     mprSprintf(entryPoint, sizeof(entryPoint), "ma%sInit", name);
-    entryPoint[2] = toupper((int) entryPoint[2]);
+    entryPoint[2] = toupper((uchar) entryPoint[2]);
     if ((module = mprCreateModule(name, path, entryPoint, MPR->httpService)) == 0) {
         return 0;
     }

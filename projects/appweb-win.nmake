@@ -2,13 +2,12 @@
 #   appweb-win.nmake -- Build It Makefile to build Embedthis Appweb for win
 #
 
-ARCH     = $(PROCESSOR_ARCHITECTURE)
-!IF "$(ARCH)" == "AMD64"
-ARCH     = x86_64
-MACHINE  = x64
+PA        = $(PROCESSOR_ARCHITECTURE)
+!IF "$(PA)" == "AMD64"
+ARCH     = x64
 ENTRY    = _DllMainCRTStartup
 !ELSE
-MACHINE  = x86
+ARCH  = x86
 ENTRY    = _DllMainCRTStartup@12
 !ENDIF
 
@@ -21,7 +20,7 @@ RC       = rc
 CFLAGS   = -nologo -GR- -W3 -Zi -Od -MDd
 DFLAGS   = -D_REENTRANT -D_MT -DBLD_DEBUG
 IFLAGS   = -I$(CONFIG)\inc
-LDFLAGS  = -nologo -nodefaultlib -incremental:no -debug -machine:$(MACHINE)
+LDFLAGS  = -nologo -nodefaultlib -incremental:no -debug -machine:$(ARCH)
 LIBPATHS = -libpath:$(CONFIG)\bin
 LIBS     = ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib shell32.lib
 
@@ -41,6 +40,7 @@ all: prep \
         $(CONFIG)\bin\esp.conf \
         $(CONFIG)\bin\esp-www \
         $(CONFIG)\bin\mod_cgi.dll \
+        $(CONFIG)\bin\mod_proxy.dll \
         $(CONFIG)\bin\auth.exe \
         $(CONFIG)\bin\cgiProgram.exe \
         $(CONFIG)\bin\setConfig.exe \
@@ -83,10 +83,7 @@ clean:
 	-if exist $(CONFIG)\bin\esp.conf del /Q $(CONFIG)\bin\esp.conf
 	-if exist $(CONFIG)\bin\esp-www del /Q $(CONFIG)\bin\esp-www
 	-if exist $(CONFIG)\bin\mod_cgi.dll del /Q $(CONFIG)\bin\mod_cgi.dll
-	-if exist $(CONFIG)\bin\mod_ejs.dll del /Q $(CONFIG)\bin\mod_ejs.dll
-	-if exist $(CONFIG)\bin\mod_php.dll del /Q $(CONFIG)\bin\mod_php.dll
 	-if exist $(CONFIG)\bin\mod_proxy.dll del /Q $(CONFIG)\bin\mod_proxy.dll
-	-if exist $(CONFIG)\bin\mod_ssl.dll del /Q $(CONFIG)\bin\mod_ssl.dll
 	-if exist $(CONFIG)\bin\auth.exe del /Q $(CONFIG)\bin\auth.exe
 	-if exist $(CONFIG)\bin\cgiProgram.exe del /Q $(CONFIG)\bin\cgiProgram.exe
 	-if exist $(CONFIG)\bin\setConfig.exe del /Q $(CONFIG)\bin\setConfig.exe
@@ -412,6 +409,16 @@ $(CONFIG)\bin\mod_cgi.dll:  \
         $(CONFIG)\bin\libappweb.dll \
         $(CONFIG)\obj\cgiHandler.obj
 	"$(LD)" -dll -out:$(CONFIG)\bin\mod_cgi.dll -entry:$(ENTRY) -def:$(CONFIG)\bin\mod_cgi.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\cgiHandler.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
+
+$(CONFIG)\obj\proxyHandler.obj: \
+        src\modules\proxyHandler.c \
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\proxyHandler.obj -Fd$(CONFIG)\obj\proxyHandler.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\modules\proxyHandler.c
+
+$(CONFIG)\bin\mod_proxy.dll:  \
+        $(CONFIG)\bin\libappweb.dll \
+        $(CONFIG)\obj\proxyHandler.obj
+	"$(LD)" -dll -out:$(CONFIG)\bin\mod_proxy.dll -entry:$(ENTRY) -def:$(CONFIG)\bin\mod_proxy.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\proxyHandler.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 $(CONFIG)\obj\auth.obj: \
         src\utils\auth.c \
