@@ -260,7 +260,7 @@ public function createLinks() {
         let target: Path
         for each (program in programs) {
             let link = Path(localbin.join(program))
-            link.symlink(bin.join(program))
+            link.symlink(bin.join(program + bit.EXE))
             log.push(link)
         }
         for each (page in bit.prefixes.productver.join('doc/man').glob('**/*.1.gz')) {
