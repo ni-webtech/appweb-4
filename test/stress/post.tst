@@ -27,6 +27,7 @@ function postTest(url: String) {
     // print("Count " + count + " buf " + buf.available + " total " + count * buf.available)
     for (i in count) {
         let n = http.write(buf)
+        // print('WROTE', n)
     }
     http.wait(120 * 1000)
     if (http.status != 200) {

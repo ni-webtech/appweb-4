@@ -3824,7 +3824,7 @@ bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn)
         break;
 
     case HTTP_VALIDATE_CLOSE_REQUEST:
-        if (conn->rx && conn->rx->flags & HTTP_LIMIT_DENIED) {
+        if (conn->rx && conn->rx->flags & HTTP_LIMIT_DENIED && conn->state >= HTTP_STATE_PARSED) {
             event = 0;
         } else {
             endpoint->requestCount--;
@@ -11137,7 +11137,7 @@ void httpProcess(HttpConn *conn, HttpPacket *packet)
             conn->canProceed = processCompletion(conn);
             break;
         }
-        if (conn->connError || (conn->endpoint && conn->connectorComplete)) {
+        if (conn->connError || (conn->endpoint && conn->connectorComplete && conn->state >= HTTP_STATE_RUNNING)) {
             httpSetState(conn, HTTP_STATE_COMPLETE);
             continue;
         }
