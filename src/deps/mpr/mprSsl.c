@@ -599,13 +599,11 @@ static ssize blockingWrite(MprSocket *sp, cchar *buf, ssize len)
 static int doHandshake(MprSocket *sp, short cipherSuite)
 {
     MprMatrixSocket     *msp;
-    MprSocketProvider   *standard;
     ssize               rc, written, toWrite;
     char                *obuf, buf[MPR_SSL_BUFSIZE];
     int                 mode;
 
     msp = sp->sslSocket;
-    standard = sp->service->standardProvider;
 
     toWrite = matrixSslGetOutdata(msp->handle, (uchar**) &obuf);
     if ((written = blockingWrite(sp, obuf, toWrite)) < 0) {
@@ -644,14 +642,12 @@ static int doHandshake(MprSocket *sp, short cipherSuite)
 static ssize processMssData(MprSocket *sp, char *buf, ssize size, ssize nbytes, int *readMore)
 {
     MprMatrixSocket     *msp;
-    MprSocketProvider   *standard;
     uchar               *data, *obuf;
     ssize               toWrite, written, copied, sofar;
     uint32              dlen;
     int                 rc;
 
     msp = (MprMatrixSocket*) sp->sslSocket;
-    standard = sp->service->standardProvider;
     *readMore = 0;
     sofar = 0;
 

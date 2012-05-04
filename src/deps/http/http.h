@@ -925,13 +925,16 @@ extern HttpPacket *httpSplitPacket(HttpPacket *packet, ssize offset);
    Queue flags
  */
 #define HTTP_QUEUE_OPEN           0x1         /**< Queue's open routine has been called */
-#define HTTP_QUEUE_DISABLED       0x2         /**< Queue's service routine is disabled. Can accept data, but not send */
-#define HTTP_QUEUE_FULL           0x4         /**< Queue is full */
-#define HTTP_QUEUE_ALL            0x8         /**< Queue has all the data there is and will be */
-#define HTTP_QUEUE_SERVICED       0x10        /**< Queue has been serviced at least once */
-#define HTTP_QUEUE_EOF            0x20        /**< Queue at end of data */
-#define HTTP_QUEUE_STARTED        0x40        /**< Queue started */
-#define HTTP_QUEUE_RESERVICE      0x80        /**< Queue requires reservicing */
+#define HTTP_QUEUE_SUSPENDED      0x2         /**< Queue's service routine is suspended due to flow control */
+#if UNUSED && MOB 
+#define HTTP_QUEUE_DISABLED       0x4         /**< Queue's service routine is disabled. Requires manual enable */
+#define HTTP_QUEUE_FULL           0x8         /**< Queue is full */
+#endif
+#define HTTP_QUEUE_ALL            0x10        /**< Queue has all the data there is and will be */
+#define HTTP_QUEUE_SERVICED       0x20        /**< Queue has been serviced at least once */
+#define HTTP_QUEUE_EOF            0x40        /**< Queue at end of data */
+#define HTTP_QUEUE_STARTED        0x80        /**< Queue started */
+#define HTTP_QUEUE_RESERVICE      0x100       /**< Queue requires reservicing */
 
 /*  
     Queue callback prototypes
@@ -958,11 +961,11 @@ typedef void (*HttpQueueService)(struct HttpQueue *q);
         into a single packet on the service queue.
     @stability Evolving
     @defgroup HttpQueue HttpQueue
-    @see HttpConn HttpPacket HttpQueue httpDisableQueue httpDiscardData httpEnableQueue httpFlushQueue 
-        httpGetQueueRoom httpIsEof httpIsPacketTooBig httpIsQueueEmpty httpJoinPacketForService httpJoinPackets 
-        httpOpenQueue httpPutBackPacket httpPutForService httpPutPacket httpPutPacketToNext httpRemoveQueue 
-        httpResizePacket httpScheduleQueue httpSendEndPacket httpSendPackets httpServiceQueue httpWillNextQueueAccept 
-        httpWillNextQueueAcceptSize httpWrite httpWriteBlock httpWriteBody httpWriteString 
+    @see HttpConn HttpPacket HttpQueue httpDisableQueue httpDiscardData httpEnableQueue httpFlushQueue httpGetQueueRoom
+        httpIsEof httpIsPacketTooBig httpIsQueueEmpty httpJoinPacketForService httpJoinPackets httpOpenQueue
+        httpPutBackPacket httpPutForService httpPutPacket httpPutPacketToNext httpRemoveQueue httpResizePacket
+        httpResumeQueue httpScheduleQueue httpSendEndPacket httpSendPackets httpServiceQueue httpSuspendQueue
+        httpWillNextQueueAccept httpWillNextQueueAcceptSize httpWrite httpWriteBlock httpWriteBody httpWriteString 
  */
 typedef struct HttpQueue {
     cchar               *owner;                 /**< Name of owning stage */
@@ -990,7 +993,7 @@ typedef struct HttpQueue {
     void                *queueData;             /**< Stage instance data */
 
     /*  
-        Connector instance data. Put here to save a memory alroute.
+        Connector instance data
      */
     MprIOVec            iovec[HTTP_MAX_IOVEC];
     int                 ioIndex;                /**< Next index into iovec */
@@ -1002,7 +1005,8 @@ typedef struct HttpQueue {
 
 /** 
     Disable a queue
-    @description Mark a queue as disabled, so that it will not be scheduled for service.
+    @description Disable a queue so that it will not be scheduled for service. The queue will remain disabled until
+        httpEnableQueue is called.
     @param q Queue reference
     @ingroup HttpQueue
  */
@@ -1019,7 +1023,7 @@ extern void httpDisableQueue(HttpQueue *q);
 extern void httpDiscardData(HttpQueue *q, bool removePackets);
 
 /** 
-    Enable a queue
+    Enable a queue after it has been disabled.
     @description Enable a queue for service and schedule it to run. This will cause the service routine
         to run as soon as possible.
     @param q Queue reference
@@ -1120,8 +1124,8 @@ extern void httpPutBackPacket(struct HttpQueue *q, HttpPacket *packet);
 /*
     Convenience flags for httpPutForService in the serviceQ argument
  */
-#define HTTP_DELAY_SERVICE  0           /**< Delay servicing the queue */
-#define HTTP_SERVICE_NOW    1           /* Service the queue now */
+#define HTTP_DELAY_SERVICE      0           /**< Delay servicing the queue */
+#define HTTP_SCHEDULE_QUEUE     1           /**< Schedule the queue for service */
 
 /** 
     Put a packet onto the service queue
@@ -1174,6 +1178,16 @@ extern void httpRemoveQueue(HttpQueue *q);
 extern int httpResizePacket(struct HttpQueue *q, HttpPacket *packet, ssize size);
 
 /** 
+    Resume a queue
+    @description Resume a queue for service and schedule it to run. This will cause the service routine
+        to run as soon as possible. This is normally called automatically called by the pipeline when downstream
+        congestion has cleared.
+    @param q Queue reference
+    @ingroup HttpQueue
+ */
+extern void httpResumeQueue(HttpQueue *q);
+
+/** 
     Schedule a queue
     @description Schedule a queue by adding it to the schedule queue. Queues are serviced FIFO.
     @param q Queue reference
@@ -1204,6 +1218,15 @@ extern void httpSendPackets(HttpQueue *q);
     @ingroup HttpQueue
  */
 extern void httpServiceQueue(HttpQueue *q);
+
+/** 
+    Suspend a queue. 
+    @description Suspended a queue so that it will not be scheduled for service. The pipeline will 
+    will automatically call httpResumeQueue when the downstream queues are less congested.
+    @param q Queue reference
+    @ingroup HttpQueue
+ */
+extern void httpSuspendQueue(HttpQueue *q);
 
 /**
     Verify a queue 
@@ -1345,10 +1368,13 @@ typedef struct HttpStage {
     MprModule       *module;                /**< Backing module */
     MprHash         *extensions;            /**< Matching extensions for this filter */
      
-     /** 
+    /*  These callbacks apply to all stages */
+
+    /** 
         Match a request
         @description This procedure is invoked to see if the stage wishes to handle the request. If a stage denies to
-            handle a request, it will be removed from the pipeline for the specified direction.
+            handle a request, it will be removed from the pipeline for the specified direction. Invoked for 
+            all pipeline stages (handlers, filters and connectors).
         @param conn HttpConn connection object
         @param stage Stage object
         @param dir Direction. Set to HTTP_RX or HTTP_TX. A filter may be placed in the tx, rx or both pipeline directions.
@@ -1358,18 +1384,6 @@ typedef struct HttpStage {
         @ingroup HttpStage
       */
     int (*match)(struct HttpConn *conn, struct HttpRoute *route, int dir);
-
-     /** 
-        Check a request
-        @description Check a fully routed request. A handler is given one last chance to accept, reject or reroute
-            a request before processing.
-        @param conn HttpConn connection object
-        @param stage Stage object
-        @return HTTP_ROUTE_OK if the request is acceptable. Return HTTP_ROUTE_REROUTE if the request is rewritten.
-            Return HTTP_ROUTE_REJECT it the request is not acceptable.
-        @ingroup HttpStage
-      */
-    int (*check)(struct HttpConn *conn, struct HttpRoute *route);
 
     /** 
         Open the queue
@@ -1386,35 +1400,6 @@ typedef struct HttpStage {
         @ingroup HttpStage
      */
     void (*close)(HttpQueue *q);
-
-    /** 
-        Start the handler
-        @description The request has been parsed and the handler may start processing. Input data may not have 
-        been received yet. Form requests (those with a Content-Type of "application/x-www-form-urlencoded"), will 
-        be started before processing input data. All other requests will be started immediately after the
-        request headers have been parsed.
-        @param q Queue instance object
-        @ingroup HttpStage
-     */
-    void (*start)(HttpQueue *q);
-
-    /** 
-        The request is now ready.
-        @description This callback will be invoked when all incoming data has been received. 
-        @param q Queue instance object
-        @ingroup HttpStage
-     */
-    void (*ready)(HttpQueue *q);
-
-    /** 
-        Process the request data.
-        @description Process the request. 
-            This callback will be invoked when all incoming data has been received and again on each and every
-            outgoing I/O event. As such, it may be called multiple times. 
-        @param q Queue instance object
-        @ingroup HttpStage
-     */
-    void (*process)(HttpQueue *q);
 
     /** 
         Process outgoing data.
@@ -1447,6 +1432,51 @@ typedef struct HttpStage {
         @ingroup HttpStage
      */
     void (*incomingService)(HttpQueue *q);
+
+
+    /*  These callbacks apply only to handlers */
+
+    /** 
+        Check a request
+        @description Check a fully routed request. A handler is given one last chance to accept, reject or reroute
+            a request before processing. Only invoked for handlers.
+        @param conn HttpConn connection object
+        @param stage Stage object
+        @return HTTP_ROUTE_OK if the request is acceptable. Return HTTP_ROUTE_REROUTE if the request is rewritten.
+            Return HTTP_ROUTE_REJECT it the request is not acceptable.
+        @ingroup HttpStage
+      */
+    int (*check)(struct HttpConn *conn, struct HttpRoute *route);
+
+    /** 
+        Start the handler
+        @description The request has been parsed and the handler may start processing. Input data may not have 
+        been received yet. Form requests (those with a Content-Type of "application/x-www-form-urlencoded"), will 
+        be started before processing input data. All other requests will be started immediately after the
+        request headers have been parsed.
+        @param q Queue instance object
+        @ingroup HttpStage
+     */
+    void (*start)(HttpQueue *q);
+
+    /** 
+        The request is now ready.
+        @description This callback will be invoked when all incoming data has been received. 
+        @param q Queue instance object
+        @ingroup HttpStage
+     */
+    void (*ready)(HttpQueue *q);
+
+    /** 
+        Output the request response.
+        @description Output a response for the request.
+            This optional handler callback will be invoked to emit a response back to the client.
+            It is called when all incoming data has been received and when the service queue has room for more output
+            data. As such, it may be called multiple times. 
+        @param q Queue instance object
+        @ingroup HttpStage
+     */
+    void (*output)(HttpQueue *q);
 
 } HttpStage;
 
@@ -1738,10 +1768,10 @@ extern void httpSetIOCallback(struct HttpConn *conn, HttpIOCallback fn);
         httpCreateTxPipeline httpDestroyConn httpDestroyPipeline httpDiscardTransmitData httpDisconnect 
         httpEnableUpload httpError httpEvent httpGetAsync httpGetChunkSize httpGetConnContext httpGetConnHost 
         httpGetError httpGetExt httpGetKeepAliveCount httpMatchHost httpMemoryError httpPrepClientConn 
-        httpPrepServerConn httpProcessPipeline httpResetCredentials httpRouteRequest httpServiceQueues httpSetAsync 
-        httpSetChunkSize httpSetConnContext httpSetConnHost httpSetConnNotifier httpSetCredentials 
-        httpSetKeepAliveCount httpSetPipelineHandler httpSetProtocol httpSetRetries httpSetSendConnector httpSetState 
-        httpSetTimeout httpShouldTrace httpStartPipeline httpWritable 
+        httpPrepServerConn httpResetCredentials httpRouteRequest httpRunHandlerOutput httpRunHandlerReady
+        httpServiceQueues httpSetAsync httpSetChunkSize httpSetConnContext httpSetConnHost httpSetConnNotifier
+        httpSetCredentials httpSetKeepAliveCount httpSetPipelineHandler httpSetProtocol httpSetRetries
+        httpSetSendConnector httpSetState httpSetTimeout httpShouldTrace httpStartPipeline httpNotifyWritable 
  */
 typedef struct HttpConn {
     /*  Ordered for debugability */
@@ -1758,7 +1788,7 @@ typedef struct HttpConn {
     int             responded;              /**< The request has started to respond. Some output has been initiated. */
     int             finalized;              /**< End of response has been signified (set at handler level) */
     int             connectorComplete;      /**< Connector has finished sending the response */
-    int             advancing;              /**< In httpProcess (re-entrancy prevention) */
+    int             inHttpProcess;          /**< Rre-entrancy prevention for httpProcess() */
     int             refinalize;             /**< Finalize required once the Tx pipeline is created */
 
     HttpLimits      *limits;                /**< Service limits */
@@ -1798,6 +1828,7 @@ typedef struct HttpConn {
     int             followRedirects;        /**< Follow redirects for client requests */
     int             keepAliveCount;         /**< Count of remaining Keep-Alive requests for this connection */
     int             http10;                 /**< Using legacy HTTP/1.0 */
+    int             processCalls;           /**< Count of calls to processing() */
 
     int             port;                   /**< Remote port */
     int             retries;                /**< Client request retries */
@@ -2053,6 +2084,13 @@ extern void httpMatchHost(HttpConn *conn);
 extern void httpMemoryError(HttpConn *conn);
 
 /**
+    Inform notifiers that the connection is now writable
+    @param conn HttpConn object created via $httpCreateConn
+    @ingroup HttpConn
+ */ 
+extern void httpNotifyWritable(HttpConn *conn);
+
+/**
     Prepare a connection for a new request. This is used internally when using Keep-Alive.
     @param conn HttpConn object created via $httpCreateConn
     @ingroup HttpConn
@@ -2066,23 +2104,6 @@ extern void httpPrepServerConn(HttpConn *conn);
     @ingroup HttpConn
  */
 extern void httpPrepClientConn(HttpConn *conn, bool keepHeaders);
-
-/**
-    Run the process pipeline callback.
-    @description This callback provides an opportunity for handlers to resume output after filling the 
-        pipeline and TCP/IP output buffers. It will be called on each outgoing I/O event.
-    @param conn HttpConn object created via $httpCreateConn
-    @ingroup HttpConn
- */
-extern void httpProcessPipeline(HttpConn *conn);
-
-/**
-    Run the ready pipeline callback.
-    @description This will be called when all incoming data for the request has been fully received.
-    @param conn HttpConn object created via $httpCreateConn
-    @ingroup HttpConn
- */
-extern void httpReadyPipeline(HttpConn *conn);
 
 /** 
     Reset the current security credentials
@@ -2098,6 +2119,23 @@ extern void httpResetCredentials(HttpConn *conn);
     @ingroup HttpConn
   */
 extern void httpRouteRequest(HttpConn *conn);
+
+/**
+    Run the handler output callback.
+    @description This optional handler callback is invoked when the service queue has room for more data.
+    @param conn HttpConn object created via $httpCreateConn
+    @return True if the handler output callback exists and can be invoked.
+    @ingroup HttpConn
+ */
+extern int httpRunHandlerOutput(HttpConn *conn);
+
+/**
+    Run the handler ready callback.
+    @description This will be called when all incoming data for the request has been fully received.
+    @param conn HttpConn object created via $httpCreateConn
+    @ingroup HttpConn
+ */
+extern void httpRunHandlerReady(HttpConn *conn);
 
 /**
     Service pipeline queues to flow data.
@@ -2223,8 +2261,10 @@ extern void httpSetState(HttpConn *conn, int state);
     Set the Http inactivity timeout
     @description Define an inactivity timeout after which the Http connection will be closed. 
     @param conn HttpConn object created via $httpCreateConn
-    @param requestTimeout Request timeout in msec. This is the total time for the request
-    @param inactivityTimeout Inactivity timeout in msec. This is maximum connection idle time.
+    @param requestTimeout Request timeout in msec. This is the total time for the request. Set to -1 to preserve the
+        existing value.
+    @param inactivityTimeout Inactivity timeout in msec. This is maximum connection idle time. Set to -1 to preserve the
+        existing value.
     @ingroup HttpConn
  */
 extern void httpSetTimeout(HttpConn *conn, int requestTimeout, int inactivityTimeout);
@@ -2247,13 +2287,6 @@ extern int httpShouldTrace(HttpConn *conn, int dir, int item, cchar *ext);
     @ingroup HttpConn
  */
 extern void httpStartPipeline(HttpConn *conn);
-
-/**
-    Inform notifiers that the connection is now writable
-    @param conn HttpConn object created via $httpCreateConn
-    @ingroup HttpConn
- */ 
-extern void httpWritable(HttpConn *conn);
 
 /** Internal APIs */
 extern struct HttpConn *httpAccept(struct HttpEndpoint *endpoint);
@@ -4088,7 +4121,7 @@ extern void httpRemoveUploadFile(HttpConn *conn, cchar *id);
         httpCreateCGIParams httpGetContentLength httpGetCookies httpGetParam httpGetParams httpGetHeader 
         httpGetHeaderHash httpGetHeaders httpGetIntParam httpGetLanguage httpGetQueryString httpGetStatus 
         httpGetStatusMessage httpMatchParam httpRead httpReadString httpSetParam httpSetIntParam httpSetUri 
-        httpSetWriteBlocked httpTestParam httpTrimExtraPath 
+        httpTestParam httpTrimExtraPath 
  */
 typedef struct HttpRx {
     /* Ordered for debugging */
@@ -4485,8 +4518,7 @@ extern void httpProcessWriteEvent(HttpConn *conn);
         httpFormatErrorV httpFormatResponse httpFormatResponseBody httpFormatResponseError httpFormatResponsev 
         httpGetQueueData httpIsChunked httpIsFinalized httpNeedRetry httpOmitBody httpRedirect httpRemoveHeader 
         httpSetContentLength httpSetContentType httpSetCookie httpSetEntityLength httpSetHeader httpSetHeaderString 
-        httpSetResponded httpSetStatus httpSetWriteBlocked httpWait httpWriteHeaders httpWriteUploadData 
-    httpSetWriteBlocked
+        httpSetResponded httpSetStatus httpSocketBlocked httpWait httpWriteHeaders httpWriteUploadData 
  */
 typedef struct HttpTx {
     /* Ordered for debugging */
@@ -4863,7 +4895,7 @@ extern void httpSetResponded(HttpConn *conn);
     @param conn Http connection object created via $httpCreateConn
     @ingroup HttpTx
  */
-extern void httpSetWriteBlocked(HttpConn *conn);
+extern void httpSocketBlocked(HttpConn *conn);
 
 /** 
     Wait for the connection to achieve the requested state Used for blocking client requests.

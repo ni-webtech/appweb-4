@@ -24,16 +24,16 @@
 
 #include    "appweb.h"
 
-#if BLD_FEATURE_PROXY
+#if BLD_FEATURE_PROXY || 1
 /************************************ Locals ***********************************/
 
 /*********************************** Forwards *********************************/
 
 /************************************* Code ***********************************/
 
-static bool matchProxy(HttpConn *conn, HttpStage *handler)
+static int matchProxy(HttpConn *conn, HttpRoute *route, int dir)
 {
-    return 1;
+    return HTTP_ROUTE_OK;
 }
 
 
@@ -107,22 +107,66 @@ static void readyProxy(HttpQueue *q)
 
 static int sofar;
 
-static void processProxy(HttpQueue *q)
+static void outputProxy(HttpQueue *q)
 {
-    //  Test write up to 100K lines
-    //  Anything to do here?
-    for (; sofar < 100000; sofar++) {
-        httpWrite(q, "%d aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n", sofar);
-        if (q->count > q->max) {
-            mprAssert(q->conn->writeBlocked);
-            mprLog(1, "FULL %d %d\n", q->count, q->max);
-            break;
-        }
+    int     count = 50000;
+    
+    q->max = 65536;
+    
+#if USE0
+    /*
+     May overflow q->max
+     */
+    while (sofar < count) {
+        httpWrite(q, "%d aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n", sofar++);
     }
-    if (sofar == 100000) {
+    httpFinalize(q->conn);
+    sofar = 0;
+#endif
+    
+    
+#if USE1 || 1
+    httpWrite(q, "%d aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n", sofar++);
+    if (sofar == count) {
         httpFinalize(q->conn);
         sofar = 0;
     }
+#endif
+    
+    
+#if USE2
+    while (sofar < count && q->count < (q->max * 3 / 4)) {
+        /* NOTE: httpWrite may do internal flush if count > max */
+        httpWrite(q, "%d aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n", sofar++);
+    }
+    if (sofar == count) {
+        httpFinalize(q->conn);
+        sofar = 0;
+    }
+#endif
+    
+    
+#if USE3
+    /*
+        MANUAL FLOW CONTROL
+     */
+    HttpPacket  *packet;
+    int         i, size;
+    
+    size = 1024;
+    for (; sofar < count && q->count < q->max; sofar++) {
+        packet = httpCreateDataPacket(size);
+        for (i = 1; i < size - 1; i++) {
+            mprPutCharToBuf(packet->content, 'a');
+        }
+        mprPutCharToBuf(packet->content, '\n');
+        httpPutForService(q, packet, HTTP_DELAY_SERVICE);
+    }
+    if (sofar == count) {
+        httpFinalize(q->conn);
+        sofar = 0;
+    }
+#endif
 }
 
 
@@ -207,7 +251,7 @@ int maProxyHandlerInit(Http *http, MprModule *module)
     handler->outgoingService = outgoingProxyService;
     handler->start = startProxy; 
     handler->ready = readyProxy; 
-    handler->process = processProxy; 
+    handler->output = outputProxy; 
 
     appweb = httpGetContext(http);
     maAddDirective(appweb, "Proxy", proxyDirective);

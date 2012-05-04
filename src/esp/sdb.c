@@ -496,7 +496,7 @@ static int query(Edi *edi, cchar *cmd, EdiGrid *gridp)
                         //  MOB - is this required?
                         len = strlen(tableName) + 1;
                         tableName = sjoin("_", tableName, colName, NULL);
-                        tableName[len] = toupper((int) tableName[len]);
+                        tableName[len] = toupper((uchar) tableName[len]);
                     }
                     //  MOB - need type?
                     rec->fields[i] = makeRecField(value, colName, 0);
@@ -506,7 +506,7 @@ static int query(Edi *edi, cchar *cmd, EdiGrid *gridp)
                 stmt = 0;
                 if (rc != SQLITE_SCHEMA) {
                     retries = 0;
-                    for (cmd = tail; isspace((int) *cmd); cmd++) {
+                    for (cmd = tail; isspace((uchar) *cmd); cmd++) {
                         ;
                     }
                 }

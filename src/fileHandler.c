@@ -203,8 +203,7 @@ static void startFileHandler(HttpQueue *q)
 static void readyFileHandler(HttpQueue *q)
 {
     /*
-        The queue already contains a single data packet representing all the output data.
-        So can be finalized now.
+        The queue already contains a single data packet representing all the output data. So can be finalized now.
      */
     httpFinalize(q->conn);
 }
@@ -266,12 +265,14 @@ static int prepPacket(HttpQueue *q, HttpPacket *packet)
     }
     if ((size + nextQ->count) > nextQ->max) {
         /*  
-            The downstream queue is full, so disable the queue and mark the downstream queue as full and service.
+            The downstream queue is full, so disable the queue and service downstream queue.
             Will re-enable via a writable event on the connection.
          */
+#if UNUSED
         nextQ->flags |= HTTP_QUEUE_FULL;
-        httpDisableQueue(q);
-        if (!(nextQ->flags & HTTP_QUEUE_DISABLED)) {
+#endif
+        httpSuspendQueue(q);
+        if (!(nextQ->flags & HTTP_QUEUE_SUSPENDED)) {
             httpScheduleQueue(nextQ);
         }
         return 0;
@@ -405,9 +406,6 @@ static void handlePutRequest(HttpQueue *q)
 }
 
 
-/*  
-    Immediate processing of delete requests
- */
 static void handleDeleteRequest(HttpQueue *q)
 {
     HttpConn    *conn;

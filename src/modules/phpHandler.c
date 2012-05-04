@@ -403,7 +403,7 @@ static int writeHeader(sapi_header_struct *sapiHeader, sapi_headers_struct *sapi
         return -1;
     }
     *value++ = '\0';
-    while (!isalnum(*value) && *value) {
+    while (!isalnum((uchar) *value) && *value) {
         value++;
     }
 #if PHP_MAJOR_VERSION >=5 && PHP_MINOR_VERSION >= 3

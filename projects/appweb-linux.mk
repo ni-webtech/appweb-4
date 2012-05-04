@@ -67,22 +67,15 @@ clean:
 	rm -rf $(CONFIG)/bin/esp.conf
 	rm -rf $(CONFIG)/bin/esp-www
 	rm -rf $(CONFIG)/bin/mod_cgi.so
-	rm -rf $(CONFIG)/bin/mod_ejs.so
-	rm -rf $(CONFIG)/bin/mod_php.so
-	rm -rf $(CONFIG)/bin/mod_proxy.so
-	rm -rf $(CONFIG)/bin/mod_ssl.so
 	rm -rf $(CONFIG)/bin/auth
 	rm -rf $(CONFIG)/bin/cgiProgram
 	rm -rf $(CONFIG)/bin/setConfig
 	rm -rf $(CONFIG)/bin/appweb
-	rm -rf $(CONFIG)/bin/appwebMonitor
-	rm -rf $(CONFIG)/bin/appwebMonitor.ico
 	rm -rf $(CONFIG)/bin/testAppweb
 	rm -rf test/cgi-bin/testScript
 	rm -rf test/web/caching/cache.cgi
 	rm -rf test/web/basic/basic.cgi
 	rm -rf test/cgi-bin/cgiProgram
-	rm -rf $(CONFIG)/bin/removeFiles
 	rm -rf $(CONFIG)/obj/mprLib.o
 	rm -rf $(CONFIG)/obj/mprSsl.o
 	rm -rf $(CONFIG)/obj/manager.o

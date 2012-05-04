@@ -293,7 +293,7 @@ static bool parseArgs(int argc, char **argv)
                     return 0;
                 }
                 *value++ = '\0';
-                while (isspace((int) *value)) {
+                while (isspace((uchar) *value)) {
                     value++;
                 }
                 mprAddItem(app->headers, mprCreateKeyPair(key, value));
@@ -1056,7 +1056,7 @@ static bool isPort(cchar *name)
     cchar   *cp;
 
     for (cp = name; *cp && *cp != '/'; cp++) {
-        if (!isdigit((int) *cp) || *cp == '.') {
+        if (!isdigit((uchar) *cp) || *cp == '.') {
             return 0;
         }
     }
@@ -1118,7 +1118,7 @@ static void showOutput(HttpConn *conn, cchar *buf, ssize count)
         return;
     }
     for (i = 0; i < count; i++) {
-        if (!isprint((int) buf[i]) && buf[i] != '\n' && buf[i] != '\r' && buf[i] != '\t') {
+        if (!isprint((uchar) buf[i]) && buf[i] != '\n' && buf[i] != '\r' && buf[i] != '\t') {
             app->isBinary = 1;
             break;
         }
@@ -1132,7 +1132,7 @@ static void showOutput(HttpConn *conn, cchar *buf, ssize count)
         if (app->printable && app->isBinary) {
             mprFprintf(app->outFile, "%02x ", c & 0xff);
         } else {
-            mprFprintf(app->outFile, "%c", (int) buf[i]);
+            mprFprintf(app->outFile, "%c", (uchar) buf[i]);
         }
     }
 }
@@ -1151,7 +1151,7 @@ static void trace(HttpConn *conn, cchar *url, int fetchCount, cchar *method, int
             mprPrintf("  Count  Thread   Op  Code   Bytes  Url\n");
         }
         mprPrintf("%7d %7s %4s %5d %7d  %s\n", fetchCount - 1,
-            mprGetCurrentThreadName(conn), method, status, (int) contentLen, url);
+            mprGetCurrentThreadName(conn), method, status, (uchar) contentLen, url);
     }
 }
 

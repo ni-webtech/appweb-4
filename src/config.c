@@ -111,7 +111,7 @@ static int parseFileInner(MaState *state, cchar *path)
         return MPR_ERR_CANT_OPEN;
     }
     for (state->lineNumber = 1; state->file && (line = mprReadLine(state->file, 0, NULL)) != 0; state->lineNumber++) {
-        for (tok = line; isspace((int) *tok); tok++) ;
+        for (tok = line; isspace((uchar) *tok); tok++) ;
         if (*tok == '\0' || *tok == '#') {
             continue;
         }
@@ -514,7 +514,7 @@ static int cacheDirective(MaState *state, cchar *key, cchar *value)
         }
         option = stok(option, " =\t,", &ovalue);
         ovalue = strim(ovalue, "\"'", MPR_TRIM_BOTH);
-        if ((int) isdigit(*option)) {
+        if ((int) isdigit((uchar) *option)) {
             lifespan = gettime(option);
 
         } else if (smatch(option, "client")) {
@@ -1092,7 +1092,7 @@ static int listenDirective(MaState *state, cchar *key, cchar *value)
     ssize           len;
     
     vp = sclone(value);
-    if (isdigit((int) *vp) && strchr(vp, '.') == 0 && strchr(vp, ':') == 0) {
+    if (isdigit((uchar) *vp) && strchr(vp, '.') == 0 && strchr(vp, ':') == 0) {
         /*
             Port only, listen on all interfaces (ipv4 + ipv6)
          */
@@ -1477,7 +1477,7 @@ static int redirectDirective(MaState *state, cchar *key, cchar *value)
         }
         status = HTTP_CODE_MOVED_TEMPORARILY;
 #if UNUSED
-    } else if (isdigit((int) value[0])) {
+    } else if (isdigit((uchar) value[0])) {
         if (!maTokenize(state, value, "%N %S %S", &status, &uri, &path)) {
             return MPR_ERR_BAD_SYNTAX;
         }
@@ -1953,7 +1953,7 @@ static bool conditionalDefinition(MaState *state, cchar *key)
 
     not = (*key == '!') ? 1 : 0;
     if (not) {
-        for (++key; isspace((int) *key); key++) {}
+        for (++key; isspace((uchar) *key); key++) {}
     }
     result = 0;
 
@@ -2230,19 +2230,19 @@ static char *gettok(char *s, char **tok)
     if (s == 0) {
         return 0;
     }
-    for (; isspace((int) *s); s++);  
+    for (; isspace((uchar) *s); s++);  
     if (*s == '\'' || *s == '"') {
         quote = *s++;
         for (etok = s; *etok && !(*etok == quote && etok[-1] != '\\'); etok++) ;
     } else {
-        for (etok = s; *etok && !(isspace((int) *etok) || *etok == ','); etok++) ;
+        for (etok = s; *etok && !(isspace((uchar) *etok) || *etok == ','); etok++) ;
     }
     if (*etok == '\0') {
         *tok = NULL;
         etok = NULL;
     } else {
         *etok++ = '\0';
-	    for (; isspace((int) *etok); etok++);  
+	    for (; isspace((uchar) *etok); etok++);  
     }
     *tok = etok;
     return s;

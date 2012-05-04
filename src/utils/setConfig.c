@@ -155,8 +155,8 @@ static char *replace(cchar *str, cchar *pattern, cchar *fmt, ...)
     for (s = str; *s; s++) {
         if (*s == *pattern && sncmp(s, pattern, plen) == 0) {
             mprPutStringToBuf(buf, replacement);
-            for (s += plen; *s && isspace((int) *s) && *s != '\n'; s++) ;
-            for (; *s && !isspace((int) *s) && *s != '\n' && *s != '>'; s++) ;
+            for (s += plen; *s && isspace((uchar) *s) && *s != '\n'; s++) ;
+            for (; *s && !isspace((uchar) *s) && *s != '\n' && *s != '>'; s++) ;
          
         }
 #if BLD_WIN_LIKE

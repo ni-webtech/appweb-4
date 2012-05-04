@@ -426,16 +426,16 @@ static int decodeDigestDetails(HttpConn *conn, AuthData *ad)
     key = sclone(rx->authDetails);
 
     while (*key) {
-        while (*key && isspace((int) *key)) {
+        while (*key && isspace((uchar) *key)) {
             key++;
         }
         tok = key;
-        while (*tok && !isspace((int) *tok) && *tok != ',' && *tok != '=') {
+        while (*tok && !isspace((uchar) *tok) && *tok != ',' && *tok != '=') {
             tok++;
         }
         *tok++ = '\0';
 
-        while (isspace((int) *tok)) {
+        while (isspace((uchar) *tok)) {
             tok++;
         }
         seenComma = 0;
@@ -469,7 +469,7 @@ static int decodeDigestDetails(HttpConn *conn, AuthData *ad)
         /*
             user, response, oqaque, uri, realm, nonce, nc, cnonce, qop
          */
-        switch (tolower((int) *key)) {
+        switch (tolower((uchar) *key)) {
         case 'a':
             if (scasecmp(key, "algorithm") == 0) {
                 break;
@@ -1096,7 +1096,7 @@ HttpAcl httpParseAcl(HttpAuth *auth, cchar *aclStr)
             aclStr += 2;
         }
         for (; isxdigit((int) *aclStr); aclStr++) {
-            c = (int) tolower((int) *aclStr);
+            c = tolower((uchar) *aclStr);
             if ('0' <= c && c <= '9') {
                 acl = (acl * 16) + c - '0';
             } else {
@@ -1237,7 +1237,7 @@ int httpReadGroupFile(HttpAuth *auth, char *path)
     }
     while ((buf = mprReadLine(file, MPR_BUFSIZE, NULL)) != NULL) {
         enabled = stok(buf, " :\t", &tok);
-        for (cp = enabled; cp && isspace((int) *cp); cp++) { }
+        for (cp = enabled; cp && isspace((uchar) *cp); cp++) { }
         if (cp == 0 || *cp == '\0' || *cp == '#') {
             continue;
         }
@@ -1268,7 +1268,7 @@ int httpReadUserFile(HttpAuth *auth, char *path)
     }
     while ((buf = mprReadLine(file, MPR_BUFSIZE, NULL)) != NULL) {
         enabled = stok(buf, " :\t", &tok);
-        for (cp = enabled; cp && isspace((int) *cp); cp++) { }
+        for (cp = enabled; cp && isspace((uchar) *cp); cp++) { }
         if (cp == 0 || *cp == '\0' || *cp == '#') {
             continue;
         }
@@ -3199,7 +3199,7 @@ static void writeEvent(HttpConn *conn)
 
     conn->writeBlocked = 0;
     if (conn->tx) {
-        httpEnableQueue(conn->connectorq);
+        httpResumeQueue(conn->connectorq);
         httpServiceQueues(conn);
         httpProcess(conn, NULL);
     }
@@ -3505,7 +3505,7 @@ HttpLimits *httpSetUniqueConnLimits(HttpConn *conn)
 }
 
 
-void httpWritable(HttpConn *conn)
+void httpNotifyWritable(HttpConn *conn)
 {
     HTTP_NOTIFY(conn, HTTP_EVENT_IO, HTTP_NOTIFY_WRITABLE);
 }
@@ -4207,6 +4207,10 @@ static void errorv(HttpConn *conn, int flags, cchar *fmt, va_list args)
     if (conn == 0) {
         return;
     }
+    status = flags & HTTP_CODE_MASK;
+    if (status == 0) {
+        status = HTTP_CODE_INTERNAL_SERVER_ERROR;
+    }
     if (flags & HTTP_ABORT) {
         conn->connError = 1;
     }
@@ -4216,23 +4220,20 @@ static void errorv(HttpConn *conn, int flags, cchar *fmt, va_list args)
     if (flags & HTTP_ABORT || (tx && tx->flags & HTTP_TX_HEADERS_CREATED)) {
         /* 
             If headers have been sent, must let the other side of the failure - abort is the only way.
-            Disconnect will cause a readable (EOF) event
+            Disconnect will cause a readable (EOF) event. Call formatErrorv just to set errorMsg for clients-side.
          */
         httpDisconnect(conn);
+        conn->error = 1;
     }
+    formatErrorv(conn, status, fmt, args);
+    
     if (conn->error) {
         return;
     }
+    conn->error = 1;
     if (rx) {
         rx->eof = 1;
     }
-    conn->error = 1;
-    status = flags & HTTP_CODE_MASK;
-    if (status == 0) {
-        status = HTTP_CODE_INTERNAL_SERVER_ERROR;
-    }
-    formatErrorv(conn, status, fmt, args);
-
     if (conn->endpoint && tx && rx) {
         if (!(tx->flags & HTTP_TX_HEADERS_CREATED)) {
             if (rx->route && (uri = httpLookupRouteErrorDocument(rx->route, tx->status))) {
@@ -5769,7 +5770,7 @@ static void netOutgoingService(HttpQueue *q)
             errCode = mprGetError(q);
             if (errCode == EAGAIN || errCode == EWOULDBLOCK) {
                 /*  Socket full, wait for an I/O event */
-                httpSetWriteBlocked(conn);
+                httpSocketBlocked(conn);
                 break;
             }
             if (errCode != EPIPE && errCode != ECONNRESET) {
@@ -5781,7 +5782,7 @@ static void netOutgoingService(HttpQueue *q)
 
         } else if (written == 0) {
             /*  Socket full, wait for an I/O event */
-            httpSetWriteBlocked(conn);
+            httpSocketBlocked(conn);
             break;
 
         } else if (written > 0) {
@@ -5794,7 +5795,7 @@ static void netOutgoingService(HttpQueue *q)
         if ((q->flags & HTTP_QUEUE_EOF)) {
             httpConnectorComplete(conn);
         } else {
-            httpWritable(conn);
+            httpNotifyWritable(conn);
         }
     }
 }
@@ -6163,14 +6164,17 @@ HttpPacket *httpGetPacket(HttpQueue *q)
                 mprAssert(q->first == 0);
             }
         }
-        if (q->flags & HTTP_QUEUE_FULL && q->count < q->low) {
+        if (/* MOB q->flags & HTTP_QUEUE_FULL && */ q->count < q->low) {
             /*
                 This queue was full and now is below the low water mark. Back-enable the previous queue.
              */
+#if MOB && UNUSED
             q->flags &= ~HTTP_QUEUE_FULL;
+#endif
+            //  MOB - would not need this if all queues always had a service routine?
             prev = httpFindPreviousQueue(q);
-            if (prev && prev->flags & HTTP_QUEUE_DISABLED) {
-                httpEnableQueue(prev);
+            if (prev && prev->flags & HTTP_QUEUE_SUSPENDED) {
+                httpResumeQueue(prev);
             }
         }
         return packet;
@@ -6212,7 +6216,7 @@ void httpJoinPacketForService(HttpQueue *q, HttpPacket *packet, bool serviceQ)
         q->count += httpGetPacketLength(packet);
     }
     mprAssert(httpVerifyQueue(q));
-    if (serviceQ && !(q->flags & HTTP_QUEUE_DISABLED))  {
+    if (serviceQ && !(q->flags & HTTP_QUEUE_SUSPENDED))  {
         httpScheduleQueue(q);
     }
 }
@@ -6336,7 +6340,7 @@ void httpPutForService(HttpQueue *q, HttpPacket *packet, bool serviceQ)
         q->first = packet;
         q->last = packet;
     }
-    if (serviceQ && !(q->flags & HTTP_QUEUE_DISABLED))  {
+    if (serviceQ && !(q->flags & HTTP_QUEUE_SUSPENDED))  {
         httpScheduleQueue(q);
     }
 }
@@ -6619,7 +6623,7 @@ int httpOpenPassHandler(Http *http)
 
 /********************************** Forward ***********************************/
 
-static bool matchFilter(HttpConn *conn, HttpStage *filter, HttpRoute *route, int dir);
+static bool matchStage(HttpConn *conn, HttpStage *filter, HttpRoute *route, int dir);
 static void openQueues(HttpConn *conn);
 static void pairQueues(HttpConn *conn);
 
@@ -6650,7 +6654,7 @@ void httpCreateTxPipeline(HttpConn *conn, HttpRoute *route)
     hasOutputFilters = 0;
     if (route->outputStages) {
         for (next = 0; (filter = mprGetNextItem(route->outputStages, &next)) != 0; ) {
-            if (matchFilter(conn, filter, route, HTTP_STAGE_TX) == HTTP_ROUTE_OK) {
+            if (matchStage(conn, filter, route, HTTP_STAGE_TX) == HTTP_ROUTE_OK) {
                 mprAddItem(tx->outputPipeline, filter);
                 hasOutputFilters = 1;
             }
@@ -6710,7 +6714,7 @@ void httpCreateRxPipeline(HttpConn *conn, HttpRoute *route)
     rx->inputPipeline = mprCreateList(-1, 0);
     if (route) {
         for (next = 0; (filter = mprGetNextItem(route->inputStages, &next)) != 0; ) {
-            if (matchFilter(conn, filter, route, HTTP_STAGE_RX) == HTTP_ROUTE_OK) {
+            if (matchStage(conn, filter, route, HTTP_STAGE_RX) == HTTP_ROUTE_OK) {
                 mprAddItem(rx->inputPipeline, filter);
             }
         }
@@ -6855,36 +6859,38 @@ void httpStartPipeline(HttpConn *conn)
     }
     if (!conn->error && !conn->connectorComplete && rx->remainingContent > 0) {
         /* If no remaining content, wait till the processing stage to avoid duplicate writable events */
-        httpWritable(conn);
+        httpNotifyWritable(conn);
     }
 }
 
 
-void httpReadyPipeline(HttpConn *conn)
+void httpRunHandlerReady(HttpConn *conn)
 {
     HttpQueue   *q;
     
-    q = conn->tx->queue[HTTP_QUEUE_TX]->nextQ;
+    q = conn->writeq;
     if (q->stage->ready) {
         q->stage->ready(q);
     }
 }
 
 
-/*
-    Note: this may be called multiple times
- */
-void httpProcessPipeline(HttpConn *conn)
+int httpRunHandlerOutput(HttpConn *conn)
 {
     HttpQueue   *q;
     
-    if (conn->error) {
-        httpFinalize(conn);
+    q = conn->writeq;
+    if (!q->stage->output) {
+       return 0;
     }
-    q = conn->tx->queue[HTTP_QUEUE_TX]->nextQ;
-    if (q->stage->process) {
-        q->stage->process(q);
+    if (!conn->finalized) {
+        q->stage->output(q);
+        if (q->count > 0) {
+            httpScheduleQueue(q);
+            httpServiceQueues(conn);
+        }
     }
+    return 1;
 }
 
 
@@ -6926,7 +6932,7 @@ void httpDiscardTransmitData(HttpConn *conn)
 }
 
 
-static bool matchFilter(HttpConn *conn, HttpStage *filter, HttpRoute *route, int dir)
+static bool matchStage(HttpConn *conn, HttpStage *filter, HttpRoute *route, int dir)
 {
     HttpTx      *tx;
 
@@ -7097,10 +7103,19 @@ void httpAppendQueue(HttpQueue *head, HttpQueue *q)
 }
 
 
+#if UNUSED
 void httpDisableQueue(HttpQueue *q)
 {
     mprLog(7, "Disable q %s", q->owner);
-    q->flags |= HTTP_QUEUE_DISABLED;
+    q->flags |= HTTP_QUEUE_SUSPENDED | HTTP_QUEUE_DISABLED;
+}
+#endif
+
+
+void httpSuspendQueue(HttpQueue *q)
+{
+    mprLog(7, "Suspend q %s", q->owner);
+    q->flags |= HTTP_QUEUE_SUSPENDED;
 }
 
 
@@ -7168,16 +7183,50 @@ bool httpFlushQueue(HttpQueue *q, bool blocking)
         if (conn->sock == 0) {
             break;
         }
-    } while (blocking && q->count >= q->max);
+    } while (blocking && q->count > 0);
     return (q->count < q->max) ? 1 : 0;
 }
 
 
+#if UNUSED
+/*
+    May run on any thread. If the request has completed and the connection and queue have been released, then the
+    caller MUST arrange to preserve a GC reference to the queue. This preserves memory.
+    preserve
+ */
 void httpEnableQueue(HttpQueue *q)
 {
+    Http    *http;
     mprLog(7, "Enable q %s", q->owner);
-    q->flags &= ~HTTP_QUEUE_DISABLED;
-    httpScheduleQueue(q);
+
+    http = mprGetMpr()->httpService;
+    lock(http);
+    if (q->flags & HTTP_QUEUE_OPEN) {
+        mprAssert(q->conn && q->conn->http);
+        q->flags &= ~HTTP_QUEUE_DISABLED;
+        httpResumeQueue(q);
+        /* 
+            Enable write I/O events on the connection. This will cause httpProcess() to be invoked.
+         */
+        httpSocketBlocked(q->conn);
+        httpEnableConnEvents(q->conn);
+    }
+    unlock(http);
+}
+#endif
+
+
+void httpResumeQueue(HttpQueue *q)
+{
+    mprLog(7, "Enable q %s", q->owner);
+#if UNUSED
+    if (!(q->flags & HTTP_QUEUE_DISABLED)) {
+#endif
+        q->flags &= ~HTTP_QUEUE_SUSPENDED;
+        httpScheduleQueue(q);
+#if UNUSED
+    }
+#endif
 }
 
 
@@ -7399,7 +7448,7 @@ void httpScheduleQueue(HttpQueue *q)
     mprAssert(q->conn);
     head = q->conn->serviceq;
     
-    if (q->scheduleNext == q && !(q->flags & HTTP_QUEUE_DISABLED)) {
+    if (q->scheduleNext == q && !(q->flags & HTTP_QUEUE_SUSPENDED)) {
         q->scheduleNext = head;
         q->schedulePrev = head->schedulePrev;
         head->schedulePrev->scheduleNext = q;
@@ -7421,7 +7470,7 @@ void httpServiceQueue(HttpQueue *q)
         if (q->conn->serviceq->scheduleNext == q) {
             httpGetNextQueueForService(q->conn->serviceq);
         }
-        if (!(q->flags & HTTP_QUEUE_DISABLED)) {
+        if (!(q->flags & HTTP_QUEUE_SUSPENDED)) {
             q->servicing = 1;
             q->service(q);
             if (q->flags & HTTP_QUEUE_RESERVICE) {
@@ -7460,9 +7509,8 @@ bool httpWillNextQueueAcceptPacket(HttpQueue *q, HttpPacket *packet)
     /*  
         The downstream queue is full, so disable the queue and mark the downstream queue as full and service 
      */
-    httpDisableQueue(q);
-    nextQ->flags |= HTTP_QUEUE_FULL;
-    if (!(nextQ->flags & HTTP_QUEUE_DISABLED)) {
+    httpSuspendQueue(q);
+    if (!(nextQ->flags & HTTP_QUEUE_SUSPENDED)) {
         httpScheduleQueue(nextQ);
     }
     return 0;
@@ -7480,9 +7528,8 @@ bool httpWillNextQueueAcceptSize(HttpQueue *q, ssize size)
     if (size <= nextQ->packetSize && (size + nextQ->count) <= nextQ->max) {
         return 1;
     }
-    httpDisableQueue(q);
-    nextQ->flags |= HTTP_QUEUE_FULL;
-    if (!(nextQ->flags & HTTP_QUEUE_DISABLED)) {
+    httpSuspendQueue(q);
+    if (!(nextQ->flags & HTTP_QUEUE_SUSPENDED)) {
         httpScheduleQueue(nextQ);
     }
     return 0;
@@ -7536,10 +7583,9 @@ ssize httpWriteBlock(HttpQueue *q, cchar *buf, ssize size)
         size -= bytes;
         q->count += bytes;
         written += bytes;
-    }
-    if (q->count >= q->max) {
-        /* Non-blocking */
-        httpFlushQueue(q, 0);
+        if (q->count >= q->max) {
+            httpFlushQueue(q, 0);
+        }
     }
     if (conn->error) {
         return MPR_ERR_CANT_WRITE;
@@ -9356,7 +9402,7 @@ static char *finalizeReplacement(HttpRoute *route, cchar *str)
                     if (braced) {
                         for (ep = tok; *ep && *ep != '}'; ep++) ;
                     } else {
-                        for (ep = tok; *ep && isdigit((int) *ep); ep++) ;
+                        for (ep = tok; *ep && isdigit((uchar) *ep); ep++) ;
                     }
                     token = snclone(tok, ep - tok);
                     if (schr(token, ':')) {
@@ -10553,9 +10599,9 @@ static char *expandPatternTokens(cchar *str, cchar *replacement, int *matches, i
                 break;
             default:
                 /* Insert the nth submatch */
-                if (isdigit((int) *cp)) {
+                if (isdigit((uchar) *cp)) {
                     submatch = (int) wtoi(cp);
-                    while (isdigit((int) *++cp))
+                    while (isdigit((uchar) *++cp))
                         ;
                     cp--;
                     if (submatch < matchCount) {
@@ -10647,11 +10693,11 @@ bool httpTokenizev(HttpRoute *route, cchar *line, cchar *fmt, va_list args)
     end = &tok[slen(line)];
 
     for (f = fmt; *f && tok < end; f++) {
-        for (; isspace((int) *tok); tok++) ;
+        for (; isspace((uchar) *tok); tok++) ;
         if (*tok == '\0' || *tok == '#') {
             break;
         }
-        if (isspace((int) *f)) {
+        if (isspace((uchar) *f)) {
             continue;
         }
         if (*f == '%' || *f == '?') {
@@ -10673,7 +10719,7 @@ bool httpTokenizev(HttpRoute *route, cchar *line, cchar *fmt, va_list args)
                         }
                     }
                 } else {
-                    for (etok = tok; *etok && !isspace((int) *etok); etok++) ;
+                    for (etok = tok; *etok && !isspace((uchar) *etok); etok++) ;
                 }
                 *etok++ = '\0';
             }
@@ -10733,7 +10779,7 @@ bool httpTokenizev(HttpRoute *route, cchar *line, cchar *fmt, va_list args)
         /*
             Extra unparsed text
          */
-        for (; tok < end && isspace((int) *tok); tok++) ;
+        for (; tok < end && isspace((uchar) *tok); tok++) ;
         if (*tok) {
             mprError("Extra unparsed text: \"%s\"", tok);
             return 0;
@@ -11061,11 +11107,10 @@ void httpProcess(HttpConn *conn, HttpPacket *packet)
     mprAssert(conn);
 
     conn->canProceed = 1;
-    conn->advancing = 1;
+    conn->inHttpProcess = 1;
 
     while (conn->canProceed) {
         LOG(7, "httpProcess %s, state %d, error %d", conn->dispatcher->name, conn->state, conn->error);
-
         switch (conn->state) {
         case HTTP_STATE_BEGIN:
         case HTTP_STATE_CONNECTED:
@@ -11092,9 +11137,13 @@ void httpProcess(HttpConn *conn, HttpPacket *packet)
             conn->canProceed = processCompletion(conn);
             break;
         }
+        if (conn->connError || (conn->endpoint && conn->connectorComplete)) {
+            httpSetState(conn, HTTP_STATE_COMPLETE);
+            continue;
+        }
         packet = conn->input;
     }
-    conn->advancing = 0;
+    conn->inHttpProcess = 0;
 }
 
 
@@ -11142,9 +11191,7 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
     } else {
         parseResponseLine(conn, packet);
     }
-    if (!conn->error) {
-        parseHeaders(conn, packet);
-    }
+    parseHeaders(conn, packet);
     if (conn->endpoint) {
         httpMatchHost(conn);
         if (httpSetUri(conn, rx->uri, "") < 0) {
@@ -11418,7 +11465,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
     limits = conn->limits;
     keepAlive = (conn->http10) ? 0 : 1;
 
-    for (count = 0; content->start[0] != '\r' && !conn->connError; count++) {
+    for (count = 0; content->start[0] != '\r' && !conn->error; count++) {
         if (count >= limits->headerCount) {
             httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Too many headers");
             break;
@@ -11428,7 +11475,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
             break;
         }
         value = getToken(conn, "\r\n");
-        while (isspace((int) *value)) {
+        while (isspace((uchar) *value)) {
             value++;
         }
         LOG(8, "Key %s, value %s", key, value);
@@ -11442,7 +11489,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
         }
         mprAddKey(rx->headers, key, hvalue);
 
-        switch (tolower((int) key[0])) {
+        switch (tolower((uchar) key[0])) {
         case 'a':
             if (strcasecmp(key, "authorization") == 0) {
                 value = sclone(value);
@@ -11507,7 +11554,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
 
                 start = end = size = -1;
                 sp = value;
-                while (*sp && !isdigit((int) *sp)) {
+                while (*sp && !isdigit((uchar) *sp)) {
                     sp++;
                 }
                 if (*sp) {
@@ -11680,7 +11727,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
         case 'w':
             if (strcasecmp(key, "www-authenticate") == 0) {
                 conn->authType = value;
-                while (*value && !isspace((int) *value)) {
+                while (*value && !isspace((uchar) *value)) {
                     value++;
                 }
                 *value++ = '\0';
@@ -11725,16 +11772,16 @@ static bool parseAuthenticate(HttpConn *conn, char *authDetails)
     key = (char*) authDetails;
 
     while (*key) {
-        while (*key && isspace((int) *key)) {
+        while (*key && isspace((uchar) *key)) {
             key++;
         }
         tok = key;
-        while (*tok && !isspace((int) *tok) && *tok != ',' && *tok != '=') {
+        while (*tok && !isspace((uchar) *tok) && *tok != ',' && *tok != '=') {
             tok++;
         }
         *tok++ = '\0';
 
-        while (isspace((int) *tok)) {
+        while (isspace((uchar) *tok)) {
             tok++;
         }
         seenComma = 0;
@@ -11769,7 +11816,7 @@ static bool parseAuthenticate(HttpConn *conn, char *authDetails)
             algorithm, domain, nonce, oqaque, realm, qop, stale
             We don't strdup any of the values as the headers are persistently saved.
          */
-        switch (tolower((int) *key)) {
+        switch (tolower((uchar) *key)) {
         case 'a':
             if (scasecmp(key, "algorithm") == 0) {
                 rx->authAlgorithm = sclone(value);
@@ -11965,9 +12012,6 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
         return conn->workerEvent ? 0 : 1;
     }
     httpServiceQueues(conn);
-    if (conn->connError) {
-        httpSetState(conn, HTTP_STATE_READY);
-    }
     return conn->error || (conn->input ? httpGetPacketLength(conn->input) : 0);
 }
 
@@ -11977,14 +12021,8 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
  */
 static bool processReady(HttpConn *conn)
 {
-    if (!conn->connError) {
-        httpReadyPipeline(conn);
-    }
-    if (conn->connError || conn->connectorComplete) {
-        httpSetState(conn, HTTP_STATE_COMPLETE);
-    } else {
-        httpSetState(conn, HTTP_STATE_RUNNING);
-    }
+    httpRunHandlerReady(conn);
+    httpSetState(conn, HTTP_STATE_RUNNING);
     return 1;
 }
 
@@ -11994,25 +12032,41 @@ static bool processReady(HttpConn *conn)
  */
 static bool processRunning(HttpConn *conn)
 {
-    int     canProceed;
+    HttpQueue   *q;
+    int         canProceed;
 
+    q = conn->writeq;
     canProceed = 1;
-    if (conn->connError) {
-        httpSetState(conn, HTTP_STATE_COMPLETE);
-    } else {
-        if (conn->endpoint) {
-            httpProcessPipeline(conn);
-            if (conn->connError || conn->connectorComplete) {
-                httpSetState(conn, HTTP_STATE_COMPLETE);
-            } else {
-                httpWritable(conn);
-                canProceed = httpServiceQueues(conn);
+    httpServiceQueues(conn);
+
+    if (conn->endpoint) {
+        /* Server side */
+        if (conn->finalized) {
+            if (!conn->connectorComplete) {
+                /* Wait for Tx I/O event. Do suspend incase handler not using auto-flow routines */
+                httpSuspendQueue(q);
+                httpSocketBlocked(q->conn);
+                httpEnableConnEvents(q->conn);
+                canProceed = 0;
             }
+        } else if (!httpRunHandlerOutput(conn)) {
+            canProceed = 0;
+        } else if (q->count == 0) {
+            /* Queue is empty and data may have drained above in httpServiceQueues. Yield to reclaim memory. */
+            mprYield(0);
+        } else if (q->count < q->low) {
+            httpResumeQueue(q);
         } else {
-            httpServiceQueues(conn);
-            httpFinalize(conn);
-            httpSetState(conn, HTTP_STATE_COMPLETE);
+            httpSuspendQueue(q);
+            httpSocketBlocked(q->conn);
+            httpEnableConnEvents(q->conn);
+            canProceed = 0;
         }
+    } else {
+        /* Client side */
+        httpServiceQueues(conn);
+        httpFinalize(conn);
+        httpSetState(conn, HTTP_STATE_COMPLETE);
     }
     return canProceed;
 }
@@ -12082,7 +12136,7 @@ void httpCloseRx(HttpConn *conn)
         /* May not have consumed all read data, so can't be assured the next request will be okay */
         conn->keepAliveCount = -1;
     }
-    if (conn->state < HTTP_STATE_COMPLETE && !conn->advancing) {
+    if (conn->state < HTTP_STATE_COMPLETE && !conn->inHttpProcess) {
         httpProcess(conn, NULL);
     }
 }
@@ -12281,7 +12335,8 @@ static void waitHandler(HttpConn *conn, struct MprEvent *event)
 /*
     Wait for the connection to reach a given state.
     @param state Desired state. Set to zero if you want to wait for one I/O event.
-    @param timeout Timeout in msec. If timeout is zer, wait forever. If timeout is < 0, use default inactivity and duration timeouts.
+    @param timeout Timeout in msec. If timeout is zer, wait forever. If timeout is < 0, use default inactivity 
+        and duration timeouts.
  */
 int httpWait(HttpConn *conn, int state, MprTime timeout)
 {
@@ -12353,10 +12408,13 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
 /*  
     Set the connector as write blocked and can't proceed.
  */
-void httpSetWriteBlocked(HttpConn *conn)
+void httpSocketBlocked(HttpConn *conn)
 {
-    mprLog(6, "Write Blocked");
+    mprLog(6, "Socket Blocked");
+#if MOB
+    //  SHOULD REMOVE THIS - not required and process() does not listen to it
     conn->canProceed = 0;
+#endif 
     conn->writeBlocked = 1;
 }
 
@@ -12570,7 +12628,7 @@ char *httpGetPathExt(cchar *path)
 
     if ((ext = strrchr(path, '.')) != 0) {
         ext = sclone(++ext);
-        for (ep = ext; *ep && isalnum((int)*ep); ep++) {
+        for (ep = ext; *ep && isalnum((uchar) *ep); ep++) {
             ;
         }
         *ep = '\0';
@@ -12847,7 +12905,7 @@ void httpSendOutgoingService(HttpQueue *q)
             errCode = mprGetError(q);
             if (errCode == EAGAIN || errCode == EWOULDBLOCK) {
                 /* Socket is full. Wait for an I/O event */
-                httpSetWriteBlocked(conn);
+                httpSocketBlocked(conn);
                 break;
             }
             if (errCode != EPIPE && errCode != ECONNRESET) {
@@ -12859,7 +12917,7 @@ void httpSendOutgoingService(HttpQueue *q)
 
         } else if (written == 0) {
             /* Socket is full. Wait for an I/O event */
-            httpSetWriteBlocked(conn);
+            httpSocketBlocked(conn);
             break;
 
         } else if (written > 0) {
@@ -12872,7 +12930,7 @@ void httpSendOutgoingService(HttpQueue *q)
         if ((q->flags & HTTP_QUEUE_EOF)) {
             httpConnectorComplete(conn);
         } else {
-            httpWritable(conn);
+            httpNotifyWritable(conn);
         }
     }
 }
@@ -13127,6 +13185,9 @@ void httpSendOutgoingService(HttpQueue *q) {}
 static void manageStage(HttpStage *stage, int flags);
 
 /*********************************** Code *************************************/
+/*
+    Invoked for all stages
+ */
 
 static void defaultOpen(HttpQueue *q)
 {
@@ -13137,13 +13198,28 @@ static void defaultOpen(HttpQueue *q)
 }
 
 
+/*
+    Invoked for all stages
+ */
 static void defaultClose(HttpQueue *q)
 {
 }
 
 
+#if UNUSED
+/*
+    Invoked for handlers only
+ */
+static void defaultProcess(HttpQueue *q)
+{
+    httpFinalize(q->conn);
+}
+#endif
+
+
+
 /*  
-    The default put will put the packet on the service queue.
+    Put packets on the service queue.
  */
 static void outgoingData(HttpQueue *q, HttpPacket *packet)
 {
@@ -13232,6 +13308,11 @@ HttpStage *httpCreateStage(Http *http, cchar *name, int flags, MprModule *module
     stage->outgoingData = outgoingData;
     stage->outgoingService = httpDefaultOutgoingServiceStage;
     stage->module = module;
+#if UNUSED
+    if (flags & HTTP_STAGE_HANDLER) {
+        stage->process = defaultProcess;
+    }
+#endif
     httpAddStage(http, stage);
     return stage;
 }
@@ -13797,10 +13878,11 @@ void httpFinalize(HttpConn *conn)
     }
     conn->responded = 1;
     conn->finalized = 1;
+
     if (conn->state >= HTTP_STATE_CONNECTED && conn->writeq && conn->sock) {
-        httpPutForService(conn->writeq, httpCreateEndPacket(), HTTP_SERVICE_NOW);
+        httpPutForService(conn->writeq, httpCreateEndPacket(), HTTP_SCHEDULE_QUEUE);
         httpServiceQueues(conn);
-        if (conn->state >= HTTP_STATE_READY && conn->connectorComplete && !conn->advancing) {
+        if (conn->state >= HTTP_STATE_READY /* MOB && conn->connectorComplete */ && !conn->inHttpProcess) {
             httpProcess(conn, NULL);
         }
         conn->refinalize = 0;

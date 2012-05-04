@@ -8,7 +8,7 @@ PROFILE  := debug
 CONFIG   := $(OS)-$(ARCH)-$(PROFILE)
 CC       := /usr/bin/clang
 LD       := /usr/bin/ld
-CFLAGS   := -g -w
+CFLAGS   := -Wno-deprecated-declarations -g -w
 DFLAGS   := -DBLD_DEBUG
 IFLAGS   := -I$(CONFIG)/inc
 LDFLAGS  := '-Wl,-rpath,@executable_path/../lib' '-Wl,-rpath,@executable_path/' '-Wl,-rpath,@loader_path/' '-g'
@@ -67,22 +67,15 @@ clean:
 	rm -rf $(CONFIG)/bin/esp.conf
 	rm -rf $(CONFIG)/bin/esp-www
 	rm -rf $(CONFIG)/bin/mod_cgi.dylib
-	rm -rf $(CONFIG)/bin/mod_ejs.dylib
-	rm -rf $(CONFIG)/bin/mod_php.dylib
-	rm -rf $(CONFIG)/bin/mod_proxy.dylib
-	rm -rf $(CONFIG)/bin/mod_ssl.dylib
 	rm -rf $(CONFIG)/bin/auth
 	rm -rf $(CONFIG)/bin/cgiProgram
 	rm -rf $(CONFIG)/bin/setConfig
 	rm -rf $(CONFIG)/bin/appweb
-	rm -rf $(CONFIG)/bin/appwebMonitor
-	rm -rf $(CONFIG)/bin/appwebMonitor.ico
 	rm -rf $(CONFIG)/bin/testAppweb
 	rm -rf test/cgi-bin/testScript
 	rm -rf test/web/caching/cache.cgi
 	rm -rf test/web/basic/basic.cgi
 	rm -rf test/cgi-bin/cgiProgram
-	rm -rf $(CONFIG)/bin/removeFiles
 	rm -rf $(CONFIG)/obj/mprLib.o
 	rm -rf $(CONFIG)/obj/mprSsl.o
 	rm -rf $(CONFIG)/obj/manager.o
@@ -226,7 +219,7 @@ $(CONFIG)/obj/sqlite3.o: \
         src/deps/sqlite/sqlite3.c \
         $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/sqlite3.h
-	$(CC) -c -o $(CONFIG)/obj/sqlite3.o -arch x86_64 -g -Wno-unused-result -w -w $(DFLAGS) -I$(CONFIG)/inc src/deps/sqlite/sqlite3.c
+	$(CC) -c -o $(CONFIG)/obj/sqlite3.o -arch x86_64 -Wno-deprecated-declarations -g -Wno-unused-result -w -w $(DFLAGS) -I$(CONFIG)/inc src/deps/sqlite/sqlite3.c
 
 $(CONFIG)/bin/libsqlite3.dylib:  \
         $(CONFIG)/inc/sqlite3.h \

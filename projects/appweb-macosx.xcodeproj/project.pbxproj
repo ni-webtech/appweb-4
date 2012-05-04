@@ -618,8 +618,8 @@
 
 /* Begin PBXFileReference section */
 		CA0B6DEDCA0B9E1D00000035 /* mprLib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mprLib.c; path = src/deps/mpr/mprLib.c; sourceTree = "<group>"; };
-		CA0B6DEDCA0B9E1D000000F0 /* bit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bit.h; path = macosx-x86_64-debug/inc/bit.h; sourceTree = "<group>"; };
-		CA0B6DEDCA0B9E1D000000F1 /* mpr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mpr.h; path = macosx-x86_64-debug/inc/mpr.h; sourceTree = "<group>"; };
+		CA0B6DEDCA0B9E1D000000F0 /* bit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bit.h; path = macosx-x64-debug/inc/bit.h; sourceTree = "<group>"; };
+		CA0B6DEDCA0B9E1D000000F1 /* mpr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mpr.h; path = macosx-x64-debug/inc/mpr.h; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D00000075 /* libmpr */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libmpr.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA0B6DEDCA0B9E1D00000037 /* mprSsl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mprSsl.c; path = src/deps/mpr/mprSsl.c; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D0000007C /* libmprssl */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libmprssl.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -628,20 +628,20 @@
 		CA0B6DEDCA0B9E1D0000003B /* makerom.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = makerom.c; path = src/deps/mpr/makerom.c; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D000000F3 /* makerom */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = makerom; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA0B6DEDCA0B9E1D0000003D /* pcre.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pcre.c; path = src/deps/pcre/pcre.c; sourceTree = "<group>"; };
-		CA0B6DEDCA0B9E1D000000F4 /* pcre.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pcre.h; path = macosx-x86_64-debug/inc/pcre.h; sourceTree = "<group>"; };
+		CA0B6DEDCA0B9E1D000000F4 /* pcre.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pcre.h; path = macosx-x64-debug/inc/pcre.h; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D0000007A /* libpcre */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libpcre.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA0B6DEDCA0B9E1D0000003F /* httpLib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = httpLib.c; path = src/deps/http/httpLib.c; sourceTree = "<group>"; };
-		CA0B6DEDCA0B9E1D000000F5 /* http.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = http.h; path = macosx-x86_64-debug/inc/http.h; sourceTree = "<group>"; };
+		CA0B6DEDCA0B9E1D000000F5 /* http.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = http.h; path = macosx-x64-debug/inc/http.h; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D0000007E /* libhttp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libhttp.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA0B6DEDCA0B9E1D00000041 /* http.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = http.c; path = src/deps/http/http.c; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D000000F6 /* http */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = http; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA0B6DEDCA0B9E1D00000043 /* sqlite3.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sqlite3.c; path = src/deps/sqlite/sqlite3.c; sourceTree = "<group>"; };
-		CA0B6DEDCA0B9E1D000000F7 /* sqlite3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sqlite3.h; path = macosx-x86_64-debug/inc/sqlite3.h; sourceTree = "<group>"; };
+		CA0B6DEDCA0B9E1D000000F7 /* sqlite3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sqlite3.h; path = macosx-x64-debug/inc/sqlite3.h; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D00000083 /* libsqlite3 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libsqlite3.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA0B6DEDCA0B9E1D00000045 /* sqlite.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sqlite.c; path = src/deps/sqlite/sqlite.c; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D000000F8 /* sqlite */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = sqlite; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA0B6DEDCA0B9E1D00000047 /* config.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = config.c; path = src/config.c; sourceTree = "<group>"; };
-		CA0B6DEDCA0B9E1D000000F9 /* appweb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = appweb.h; path = macosx-x86_64-debug/inc/appweb.h; sourceTree = "<group>"; };
+		CA0B6DEDCA0B9E1D000000F9 /* appweb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = appweb.h; path = macosx-x64-debug/inc/appweb.h; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D00000049 /* convenience.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = convenience.c; path = src/convenience.c; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D0000004B /* dirHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dirHandler.c; path = src/dirHandler.c; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D0000004D /* fileHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fileHandler.c; path = src/fileHandler.c; sourceTree = "<group>"; };
@@ -649,16 +649,16 @@
 		CA0B6DEDCA0B9E1D00000051 /* server.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = server.c; path = src/server.c; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D00000089 /* libappweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libappweb.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA0B6DEDCA0B9E1D00000053 /* edi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = edi.c; path = src/esp/edi.c; sourceTree = "<group>"; };
-		CA0B6DEDCA0B9E1D000000FA /* edi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = edi.h; path = macosx-x86_64-debug/inc/edi.h; sourceTree = "<group>"; };
+		CA0B6DEDCA0B9E1D000000FA /* edi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = edi.h; path = macosx-x64-debug/inc/edi.h; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D00000055 /* espAbbrev.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espAbbrev.c; path = src/esp/espAbbrev.c; sourceTree = "<group>"; };
-		CA0B6DEDCA0B9E1D000000FB /* esp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = esp.h; path = macosx-x86_64-debug/inc/esp.h; sourceTree = "<group>"; };
+		CA0B6DEDCA0B9E1D000000FB /* esp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = esp.h; path = macosx-x64-debug/inc/esp.h; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D00000057 /* espFramework.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espFramework.c; path = src/esp/espFramework.c; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D00000059 /* espHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espHandler.c; path = src/esp/espHandler.c; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D0000005B /* espHtml.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espHtml.c; path = src/esp/espHtml.c; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D0000005D /* espSession.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espSession.c; path = src/esp/espSession.c; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D0000005F /* espTemplate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espTemplate.c; path = src/esp/espTemplate.c; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D00000061 /* mdb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mdb.c; path = src/esp/mdb.c; sourceTree = "<group>"; };
-		CA0B6DEDCA0B9E1D000000FC /* mdb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mdb.h; path = macosx-x86_64-debug/inc/mdb.h; sourceTree = "<group>"; };
+		CA0B6DEDCA0B9E1D000000FC /* mdb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mdb.h; path = macosx-x64-debug/inc/mdb.h; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D00000063 /* sdb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sdb.c; path = src/esp/sdb.c; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D000000FD /* mod_esp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_esp.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA0B6DEDCA0B9E1D00000053 /* edi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = edi.c; path = src/esp/edi.c; sourceTree = "<group>"; };
@@ -683,7 +683,7 @@
 		CA0B6DEDCA0B9E1D0000006F /* appweb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = appweb.c; path = src/server/appweb.c; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D00000103 /* appweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = appweb; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA0B6DEDCA0B9E1D00000071 /* testAppweb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testAppweb.c; path = test/testAppweb.c; sourceTree = "<group>"; };
-		CA0B6DEDCA0B9E1D00000104 /* testAppweb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = testAppweb.h; path = macosx-x86_64-debug/inc/testAppweb.h; sourceTree = "<group>"; };
+		CA0B6DEDCA0B9E1D00000104 /* testAppweb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = testAppweb.h; path = macosx-x64-debug/inc/testAppweb.h; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D00000073 /* testHttp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testHttp.c; path = test/testHttp.c; sourceTree = "<group>"; };
 		CA0B6DEDCA0B9E1D00000105 /* testAppweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testAppweb; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -1482,7 +1482,7 @@
 ../src/esp/esp.conf
 			);
 			outputPaths = (
-../macosx-x86_64-debug/bin/esp.conf
+../macosx-x64-debug/bin/esp.conf
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
@@ -1500,7 +1500,7 @@ cp -r ../src/esp/esp.conf $(CFG_DIR)/bin/esp.conf
 ../src/esp/www
 			);
 			outputPaths = (
-../macosx-x86_64-debug/bin/esp-www
+../macosx-x64-debug/bin/esp-www
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
@@ -1523,7 +1523,7 @@ cp -r ../src/esp/www $(CFG_DIR)/bin/esp-www
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "cd ../test
-echo '#!../macosx-x86_64-debug/bin/cgiProgram' >cgi-bin/testScript ; chmod +x cgi-bin/testScript";
+echo '#!../macosx-x64-debug/bin/cgiProgram' >cgi-bin/testScript ; chmod +x cgi-bin/testScript";
 		};
 		CA0B6DEDCA0B9E1D00000013 /* ShellScript for test-cache.cgi */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1580,10 +1580,10 @@ chmod +x web/basic/basic.cgi";
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "cd ../test
-cp ../macosx-x86_64-debug/bin/cgiProgram cgi-bin/cgiProgram
-cp ../macosx-x86_64-debug/bin/cgiProgram cgi-bin/nph-cgiProgram
-cp ../macosx-x86_64-debug/bin/cgiProgram 'cgi-bin/cgi Program'
-cp ../macosx-x86_64-debug/bin/cgiProgram web/cgiProgram.cgi
+cp ../macosx-x64-debug/bin/cgiProgram cgi-bin/cgiProgram
+cp ../macosx-x64-debug/bin/cgiProgram cgi-bin/nph-cgiProgram
+cp ../macosx-x64-debug/bin/cgiProgram 'cgi-bin/cgi Program'
+cp ../macosx-x64-debug/bin/cgiProgram web/cgiProgram.cgi
 chmod +x cgi-bin/* web/cgiProgram.cgi";
 		};
 		CA0B6DEDCA0B9E1D00000033 /* ShellScript for Prep */ = {
@@ -2137,11 +2137,11 @@ fi";
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				SDKROOT = macosx;
 
-                CFG_DIR = "../macosx-x86_64-debug";
-                BIN_DIR = "../macosx-x86_64-debug/bin";
-                LIB_DIR = "../macosx-x86_64-debug/bin";
-                INC_DIR = "../macosx-x86_64-debug/inc";
-                OBJ_DIR = "../macosx-x86_64-debug/obj";
+                CFG_DIR = "../macosx-x64-debug";
+                BIN_DIR = "../macosx-x64-debug/bin";
+                LIB_DIR = "../macosx-x64-debug/bin";
+                INC_DIR = "../macosx-x64-debug/inc";
+                OBJ_DIR = "../macosx-x64-debug/obj";
                 SRC_DIR = "..";
 
                 CONFIGURATION_TEMP_DIR = "$(OBJ_DIR)/tmp/$(CONFIGURATION)";
@@ -2166,7 +2166,7 @@ fi";
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = (
-					"../macosx-x86_64-debug/inc",
+					"../macosx-x64-debug/inc",
 					"$(inherited)"
 				);
 
@@ -2175,7 +2175,7 @@ fi";
 						"$(inherited)"
 				);
 				LIBRARY_SEARCH_PATHS = (
-					"../macosx-x86_64-debug/bin",
+					"../macosx-x64-debug/bin",
 					"$(inherited)"
 				);
 				OTHER_LDFLAGS = (
@@ -2208,11 +2208,11 @@ fi";
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				SDKROOT = macosx;
 
-                CFG_DIR = "../macosx-x86_64-debug";
-                BIN_DIR = "../macosx-x86_64-debug/bin";
-                LIB_DIR = "../macosx-x86_64-debug/bin";
-                INC_DIR = "../macosx-x86_64-debug/inc";
-                OBJ_DIR = "../macosx-x86_64-debug/obj";
+                CFG_DIR = "../macosx-x64-debug";
+                BIN_DIR = "../macosx-x64-debug/bin";
+                LIB_DIR = "../macosx-x64-debug/bin";
+                INC_DIR = "../macosx-x64-debug/inc";
+                OBJ_DIR = "../macosx-x64-debug/obj";
                 SRC_DIR = "..";
 
                 CONFIGURATION_TEMP_DIR = "$(OBJ_DIR)/tmp/$(CONFIGURATION)";
@@ -2238,7 +2238,7 @@ fi";
 				GCC_OPTIMIZATION_LEVEL = s;
                 GCC_WARN_UNINITIALIZED_AUTOS = NO;
 				HEADER_SEARCH_PATHS = (
-					"../macosx-x86_64-debug/inc",
+					"../macosx-x64-debug/inc",
 					"$(inherited)"
 				);
 
@@ -2247,7 +2247,7 @@ fi";
 						"$(inherited)"
 				);
 				LIBRARY_SEARCH_PATHS = (
-					"../macosx-x86_64-debug/bin",
+					"../macosx-x64-debug/bin",
 					"$(inherited)"
 				);
 				OTHER_LDFLAGS = (
