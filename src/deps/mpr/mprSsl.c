@@ -69,7 +69,7 @@ typedef struct MprMatrixSocket {
 /*
     Empty CA cert.
  */
-unsigned char CAcertSrvBuf[] = { 
+static uchar CAcertSrvBuf[] = { 
     48, 130, 2, 144, 48, 130, 1, 249, 160, 3, 2, 1, 2,
     2, 1, 31, 48, 13, 6, 9, 42, 134, 72, 134, 247, 13,
     1, 1, 5, 5, 0, 48, 129, 129, 49, 35, 48, 33, 6,

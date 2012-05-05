@@ -46,7 +46,7 @@
   <Command>if not exist ..\..\win-x86-debug\obj md ..\..\win-x86-debug\obj
 if not exist ..\..\win-x86-debug\bin md ..\..\win-x86-debug\bin
 if not exist ..\..\win-x86-debug\inc md ..\..\win-x86-debug\inc
-if not exist ..\..\win-x86-debug\inc\bit.h copy ..\win-bit.h ..\..\win-x86-debug\inc\bit.h
+if not exist ..\..\win-x86-debug\inc\bit.h copy ..\appweb-win-bit.h ..\..\win-x86-debug\inc\bit.h
 if not exist ..\..\win-x86-debug\bin\libmpr.def xcopy /Y /S *.def ..\..\win-x86-debug\bin</Command>
   <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\always</Outputs>
   </CustomBuildStep>

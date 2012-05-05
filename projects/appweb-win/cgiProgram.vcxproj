@@ -9,7 +9,7 @@
       <WarningLevel>Level3</WarningLevel>
       <AdditionalIncludeDirectories>..\..\win-x86-debug\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     
-  <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;DEBUG_IDE;_REENTRANT;_MT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+  <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;BLD_DEBUG;DEBUG_IDE;_REENTRANT;_MT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     <Optimization>Disabled</Optimization>
     <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
     <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
