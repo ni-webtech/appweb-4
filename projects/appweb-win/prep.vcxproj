@@ -95,11 +95,11 @@
   </Link>
 
   <CustomBuildStep>
-    <Command>if not exist ..\..\win-x86-debug\obj md ..\..\win-x86-debug\obj
-if not exist ..\..\win-x86-debug\bin md ..\..\win-x86-debug\bin
-if not exist ..\..\win-x86-debug\inc md ..\..\win-x86-debug\inc
-if not exist ..\..\win-x86-debug\inc\bit.h copy ..\appweb-win-bit.h ..\..\win-x86-debug\inc\bit.h
-if not exist ..\..\win-x86-debug\bin\libmpr.def xcopy /Y /S *.def ..\..\win-x86-debug\bin</Command>
+    <Command>if not exist "$(ObjDir)" md "$(ObjDir)"
+if not exist "$(BinDir)" md "$(BinDir)"
+if not exist "$(IncDir)" md "$(IncDir)"
+if not exist "$(IncDir)\bit.h" copy "..\appweb-win-bit.h" "$(IncDir)\bit.h"
+if not exist "$(BinDir)\libmpr.def" xcopy /Y /S *.def "$(BinDir)"</Command>
     <Outputs>..\..\always</Outputs>
   </CustomBuildStep>
   </ItemDefinitionGroup>
