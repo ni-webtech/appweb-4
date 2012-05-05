@@ -31,13 +31,12 @@
     #define VALLOC 0
 #endif
 
-#if BLD_MEMORY_DEBUG
 /*
     Set this address to break when this address is allocated or freed
+    Only used for debug, but defined regardless so we can have constant exports.
  */
 MprMem *stopAlloc = 0;
 int stopSeqno = -1;
-#endif
 
 #define GET_MEM(ptr)                ((MprMem*) (((char*) (ptr)) - sizeof(MprMem)))
 #define GET_PTR(mp)                 ((char*) (((char*) mp) + sizeof(MprMem)))
@@ -1958,6 +1957,8 @@ void *mprCopyName(void *dest, void *src)
 void mprCheckBlock(MprMem *mp) {}
 #undef mprSetName
 void *mprSetName(void *ptr, cchar *name) { return 0;}
+void *mprCopyName(void *dest, void *src) {}
+void *mprSetAllocName(void *ptr, cchar *name) { }
 #endif
 
 /********************************************* Misc ***************************************************/
@@ -2501,7 +2502,6 @@ static void monitorStack()
     }
 }
 #endif
-
 
 /*
     @copy   default
