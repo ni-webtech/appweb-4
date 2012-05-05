@@ -1954,8 +1954,10 @@ void *mprCopyName(void *dest, void *src)
 
 
 #else
-void mprCheckBlock(MprMem *mp) {}
 #undef mprSetName
+#undef mprCopyName
+#undef mprSetAllocName
+void mprCheckBlock(MprMem *mp) {}
 void *mprSetName(void *ptr, cchar *name) { return 0;}
 void *mprCopyName(void *dest, void *src) {}
 void *mprSetAllocName(void *ptr, cchar *name) { }
