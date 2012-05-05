@@ -14,3 +14,4 @@ EXPORTS
   mprSetSslProtocols
   mprSslInit
   mprVerifySslClients
+  mprVerifySslServers

@@ -1,6 +1,5 @@
 LIBRARY libmpr.dll
 EXPORTS
-  MemoryBarrier
   amtow
   assertTrue
   awtom
@@ -101,6 +100,7 @@ EXPORTS
   mprCreateWaitService
   mprCreateWorkerService
   mprDecode64
+  mprDecode64Block
   mprDecodeLocalTime
   mprDecodeUniversalTime
   mprDeletePath
@@ -127,6 +127,7 @@ EXPORTS
   mprEnableGC
   mprEnableSocketEvents
   mprEncode64
+  mprEncode64Block
   mprError
   mprEscapeCmd
   mprEscapeHtml
@@ -206,6 +207,7 @@ EXPORTS
   mprGetOsError
   mprGetPageSize
   mprGetPathBase
+  mprGetPathBaseRef
   mprGetPathDir
   mprGetPathExt
   mprGetPathFiles
@@ -401,6 +403,7 @@ EXPORTS
   mprSetCurrentThreadPriority
   mprSetDebugMode
   mprSetDomainName
+  mprSetEnv
   mprSetExitStrategy
   mprSetHostName
   mprSetHwnd

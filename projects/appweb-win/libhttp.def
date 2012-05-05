@@ -105,7 +105,6 @@ EXPORTS
   httpDestroyRx
   httpDestroyTx
   httpDisableGroup
-  httpDisableQueue
   httpDisableUser
   httpDiscardData
   httpDiscardTransmitData
@@ -113,7 +112,6 @@ EXPORTS
   httpEaseLimits
   httpEnableConnEvents
   httpEnableGroup
-  httpEnableQueue
   httpEnableTraceMethod
   httpEnableUpload
   httpEnableUser
@@ -221,6 +219,7 @@ EXPORTS
   httpNeedRetry
   httpNormalizeUri
   httpNormalizeUriPath
+  httpNotifyWritable
   httpOmitBody
   httpOpenCacheHandler
   httpOpenChunkFilter
@@ -235,7 +234,6 @@ EXPORTS
   httpPrepClientConn
   httpPrepServerConn
   httpProcess
-  httpProcessPipeline
   httpPutBackPacket
   httpPutForService
   httpPutPacket
@@ -264,7 +262,10 @@ EXPORTS
   httpResetRoutes
   httpResizePacket
   httpResolveUri
+  httpResumeQueue
   httpRouteRequest
+  httpRunHandlerOutput
+  httpRunHandlerReady
   httpScheduleQueue
   httpSecureEndpoint
   httpSecureEndpointByName
@@ -353,8 +354,8 @@ EXPORTS
   httpSetTimeout
   httpSetUniqueConnLimits
   httpSetUri
-  httpSetWriteBlocked
   httpShouldTrace
+  httpSocketBlocked
   httpSplitPacket
   httpStartEndpoint
   httpStartHost
@@ -363,6 +364,7 @@ EXPORTS
   httpStopEndpoint
   httpStopHost
   httpStopRoute
+  httpSuspendQueue
   httpTemplate
   httpTestParam
   httpTokenize
@@ -380,7 +382,6 @@ EXPORTS
   httpWait
   httpWillNextQueueAcceptPacket
   httpWillNextQueueAcceptSize
-  httpWritable
   httpWrite
   httpWriteBlock
   httpWriteCached
