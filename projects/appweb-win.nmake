@@ -518,7 +518,7 @@ test\web\basic\basic.cgi:
 
 test\cgi-bin\cgiProgram.exe: 
 	cd test
-		cp ../$(CONFIG)/bin/cgiProgram cgi-bin/cgiProgram.exe
+		copy ../$(CONFIG)/bin/cgiProgram cgi-bin/cgiProgram.exe
 	cp ../$(CONFIG)/bin/cgiProgram cgi-bin/nph-cgiProgram.exe
 	cp ../$(CONFIG)/bin/cgiProgram 'cgi-bin/cgi Program.exe'
 	cp ../$(CONFIG)/bin/cgiProgram web/cgiProgram.cgi
