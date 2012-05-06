@@ -104,7 +104,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ClInclude Include="win-x86-debug\inc\pcre.h" />
+    <ClInclude Include="$(IncDir)\pcre.h" />
   </ItemGroup>
 
   <ItemDefinitionGroup>
@@ -116,12 +116,12 @@
   <ItemDefinitionGroup>
   <Link>
     <AdditionalDependencies>;%(AdditionalDependencies)</AdditionalDependencies>
-    <AdditionalLibraryDirectories>$(OutDir);win-x86-debug\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    <AdditionalLibraryDirectories>$(OutDir);$(Cfg)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
   </Link>
 
   <CustomBuildStep>
     <Command>cd ..\..\src\deps\pcre
-xcopy /Y /S /D pcre.h ..\$(IncDir)
+xcopy /Y /S /D pcre.h $(IncDir)
 cd ..\..\..\projects\appweb-win</Command>
     <Outputs>$(BinDir)\libpcre.dll</Outputs>
   </CustomBuildStep>

@@ -115,7 +115,7 @@
   <ItemDefinitionGroup>
   <Link>
     <AdditionalDependencies>libappweb.lib;libhttp.lib;libmpr.lib;libpcre.lib;libmprssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    <AdditionalLibraryDirectories>$(OutDir);win-x86-debug\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    <AdditionalLibraryDirectories>$(OutDir);$(Cfg)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
   </Link>
   </ItemDefinitionGroup>
 

@@ -109,11 +109,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ClInclude Include="win-x86-debug\inc\appweb.h" />
+    <ClInclude Include="$(IncDir)\appweb.h" />
   </ItemGroup>
 
   <ItemGroup>
-    <ClInclude Include="win-x86-debug\inc\customize.h" />
+    <ClInclude Include="$(IncDir)\customize.h" />
   </ItemGroup>
 
   <ItemDefinitionGroup>
@@ -125,13 +125,13 @@
   <ItemDefinitionGroup>
   <Link>
     <AdditionalDependencies>libhttp.lib;libmpr.lib;libpcre.lib;libmprssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    <AdditionalLibraryDirectories>$(OutDir);win-x86-debug\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    <AdditionalLibraryDirectories>$(OutDir);$(Cfg)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
   </Link>
 
   <CustomBuildStep>
     <Command>cd ..\..\src
-xcopy /Y /S /D appweb.h ..\win-x86-debug\inc
-xcopy /Y /S /D customize.h ..\win-x86-debug\inc
+xcopy /Y /S /D appweb.h $(IncDir)
+xcopy /Y /S /D customize.h $(IncDir)
 cd ..\projects\appweb-win</Command>
     <Outputs>$(BinDir)\libappweb.dll</Outputs>
   </CustomBuildStep>

@@ -104,7 +104,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ClInclude Include="win-x86-debug\inc\http.h" />
+    <ClInclude Include="$(IncDir)\http.h" />
   </ItemGroup>
 
   <ItemDefinitionGroup>
@@ -116,12 +116,12 @@
   <ItemDefinitionGroup>
   <Link>
     <AdditionalDependencies>libmpr.lib;libpcre.lib;libmprssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    <AdditionalLibraryDirectories>$(OutDir);win-x86-debug\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    <AdditionalLibraryDirectories>$(OutDir);$(Cfg)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
   </Link>
 
   <CustomBuildStep>
     <Command>cd ..\..\src\deps\http
-xcopy /Y /S /D http.h ..\$(IncDir)
+xcopy /Y /S /D http.h $(IncDir)
 cd ..\..\..\projects\appweb-win</Command>
     <Outputs>$(BinDir)\libhttp.dll</Outputs>
   </CustomBuildStep>

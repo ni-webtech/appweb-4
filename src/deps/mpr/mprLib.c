@@ -1958,9 +1958,9 @@ void *mprCopyName(void *dest, void *src)
 #undef mprCopyName
 #undef mprSetAllocName
 void mprCheckBlock(MprMem *mp) {}
-void *mprSetName(void *ptr, cchar *name) { return 0;}
-void *mprCopyName(void *dest, void *src) {}
-void *mprSetAllocName(void *ptr, cchar *name) { }
+void *mprSetName(void *ptr, cchar *name) { return 0; }
+void *mprCopyName(void *dest, void *src) { return 0; }
+void *mprSetAllocName(void *ptr, cchar *name) { return 0; }
 #endif
 
 /********************************************* Misc ***************************************************/
