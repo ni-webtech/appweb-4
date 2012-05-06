@@ -124,7 +124,8 @@ $(CONFIG)/inc/mpr.h:
 
 $(CONFIG)/obj/mprLib.o: \
         src/deps/mpr/mprLib.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/mpr.h
 	$(CC) -c -o $(CONFIG)/obj/mprLib.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/mpr/mprLib.c
 
 $(CONFIG)/bin/libmpr.dylib:  \
@@ -134,7 +135,8 @@ $(CONFIG)/bin/libmpr.dylib:  \
 
 $(CONFIG)/obj/mprSsl.o: \
         src/deps/mpr/mprSsl.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/mpr.h
 	$(CC) -c -o $(CONFIG)/obj/mprSsl.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/mpr/mprSsl.c
 
 $(CONFIG)/bin/libmprssl.dylib:  \
@@ -144,7 +146,8 @@ $(CONFIG)/bin/libmprssl.dylib:  \
 
 $(CONFIG)/obj/manager.o: \
         src/deps/mpr/manager.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/mpr.h
 	$(CC) -c -o $(CONFIG)/obj/manager.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/mpr/manager.c
 
 $(CONFIG)/bin/appman:  \
@@ -154,7 +157,8 @@ $(CONFIG)/bin/appman:  \
 
 $(CONFIG)/obj/makerom.o: \
         src/deps/mpr/makerom.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/mpr.h
 	$(CC) -c -o $(CONFIG)/obj/makerom.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/mpr/makerom.c
 
 $(CONFIG)/bin/makerom:  \
@@ -168,7 +172,8 @@ $(CONFIG)/inc/pcre.h:
 
 $(CONFIG)/obj/pcre.o: \
         src/deps/pcre/pcre.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/pcre.h
 	$(CC) -c -o $(CONFIG)/obj/pcre.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/pcre/pcre.c
 
 $(CONFIG)/bin/libpcre.dylib:  \
@@ -182,7 +187,9 @@ $(CONFIG)/inc/http.h:
 
 $(CONFIG)/obj/httpLib.o: \
         src/deps/http/httpLib.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/http.h \
+        $(CONFIG)/inc/pcre.h
 	$(CC) -c -o $(CONFIG)/obj/httpLib.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/http/httpLib.c
 
 $(CONFIG)/bin/libhttp.dylib:  \
@@ -195,7 +202,8 @@ $(CONFIG)/bin/libhttp.dylib:  \
 
 $(CONFIG)/obj/http.o: \
         src/deps/http/http.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/http.h
 	$(CC) -c -o $(CONFIG)/obj/http.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/http/http.c
 
 $(CONFIG)/bin/http:  \
@@ -209,7 +217,8 @@ $(CONFIG)/inc/sqlite3.h:
 
 $(CONFIG)/obj/sqlite3.o: \
         src/deps/sqlite/sqlite3.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/sqlite3.h
 	$(CC) -c -o $(CONFIG)/obj/sqlite3.o -arch x86_64 -Wno-deprecated-declarations -g -Wno-unused-result -w -w $(DFLAGS) -I$(CONFIG)/inc src/deps/sqlite/sqlite3.c
 
 $(CONFIG)/bin/libsqlite3.dylib:  \
@@ -219,7 +228,8 @@ $(CONFIG)/bin/libsqlite3.dylib:  \
 
 $(CONFIG)/obj/sqlite.o: \
         src/deps/sqlite/sqlite.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/sqlite3.h
 	$(CC) -c -o $(CONFIG)/obj/sqlite.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/sqlite/sqlite.c
 
 $(CONFIG)/bin/sqlite:  \
@@ -237,32 +247,39 @@ $(CONFIG)/inc/customize.h:
 
 $(CONFIG)/obj/config.o: \
         src/config.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/appweb.h \
+        $(CONFIG)/inc/pcre.h
 	$(CC) -c -o $(CONFIG)/obj/config.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/config.c
 
 $(CONFIG)/obj/convenience.o: \
         src/convenience.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/convenience.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/convenience.c
 
 $(CONFIG)/obj/dirHandler.o: \
         src/dirHandler.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/dirHandler.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/dirHandler.c
 
 $(CONFIG)/obj/fileHandler.o: \
         src/fileHandler.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/fileHandler.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/fileHandler.c
 
 $(CONFIG)/obj/log.o: \
         src/log.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/log.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/log.c
 
 $(CONFIG)/obj/server.o: \
         src/server.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/server.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/server.c
 
 $(CONFIG)/bin/libappweb.dylib:  \
@@ -295,47 +312,64 @@ $(CONFIG)/inc/mdb.h:
 
 $(CONFIG)/obj/edi.o: \
         src/esp/edi.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/edi.h \
+        $(CONFIG)/inc/pcre.h
 	$(CC) -c -o $(CONFIG)/obj/edi.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/edi.c
 
 $(CONFIG)/obj/espAbbrev.o: \
         src/esp/espAbbrev.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/esp.h
 	$(CC) -c -o $(CONFIG)/obj/espAbbrev.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espAbbrev.c
 
 $(CONFIG)/obj/espFramework.o: \
         src/esp/espFramework.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/esp.h
 	$(CC) -c -o $(CONFIG)/obj/espFramework.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espFramework.c
 
 $(CONFIG)/obj/espHandler.o: \
         src/esp/espHandler.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/appweb.h \
+        $(CONFIG)/inc/esp.h \
+        $(CONFIG)/inc/edi.h
 	$(CC) -c -o $(CONFIG)/obj/espHandler.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espHandler.c
 
 $(CONFIG)/obj/espHtml.o: \
         src/esp/espHtml.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/esp.h \
+        $(CONFIG)/inc/edi.h
 	$(CC) -c -o $(CONFIG)/obj/espHtml.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espHtml.c
 
 $(CONFIG)/obj/espSession.o: \
         src/esp/espSession.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/esp.h
 	$(CC) -c -o $(CONFIG)/obj/espSession.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espSession.c
 
 $(CONFIG)/obj/espTemplate.o: \
         src/esp/espTemplate.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/esp.h
 	$(CC) -c -o $(CONFIG)/obj/espTemplate.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espTemplate.c
 
 $(CONFIG)/obj/mdb.o: \
         src/esp/mdb.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/appweb.h \
+        $(CONFIG)/inc/edi.h \
+        $(CONFIG)/inc/mdb.h \
+        $(CONFIG)/inc/pcre.h
 	$(CC) -c -o $(CONFIG)/obj/mdb.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/mdb.c
 
 $(CONFIG)/obj/sdb.o: \
         src/esp/sdb.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/appweb.h \
+        $(CONFIG)/inc/edi.h
 	$(CC) -c -o $(CONFIG)/obj/sdb.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/sdb.c
 
 $(CONFIG)/bin/mod_esp.dylib:  \
@@ -357,7 +391,8 @@ $(CONFIG)/bin/mod_esp.dylib:  \
 
 $(CONFIG)/obj/esp.o: \
         src/esp/esp.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/esp.h
 	$(CC) -c -o $(CONFIG)/obj/esp.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/esp.c
 
 $(CONFIG)/bin/esp:  \
@@ -384,7 +419,8 @@ $(CONFIG)/bin/esp-www:
 
 $(CONFIG)/obj/cgiHandler.o: \
         src/modules/cgiHandler.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/cgiHandler.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/modules/cgiHandler.c
 
 $(CONFIG)/bin/mod_cgi.dylib:  \
@@ -394,7 +430,8 @@ $(CONFIG)/bin/mod_cgi.dylib:  \
 
 $(CONFIG)/obj/auth.o: \
         src/utils/auth.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/mpr.h
 	$(CC) -c -o $(CONFIG)/obj/auth.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/utils/auth.c
 
 $(CONFIG)/bin/auth:  \
@@ -413,7 +450,8 @@ $(CONFIG)/bin/cgiProgram:  \
 
 $(CONFIG)/obj/setConfig.o: \
         src/utils/setConfig.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/mpr.h
 	$(CC) -c -o $(CONFIG)/obj/setConfig.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/utils/setConfig.c
 
 $(CONFIG)/bin/setConfig:  \
@@ -427,7 +465,8 @@ $(CONFIG)/inc/appwebMonitor.h:
 
 $(CONFIG)/obj/appweb.o: \
         src/server/appweb.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/appweb.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/server/appweb.c
 
 $(CONFIG)/bin/appweb:  \
@@ -442,12 +481,14 @@ $(CONFIG)/inc/testAppweb.h:
 
 $(CONFIG)/obj/testAppweb.o: \
         test/testAppweb.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/testAppweb.h
 	$(CC) -c -o $(CONFIG)/obj/testAppweb.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc test/testAppweb.c
 
 $(CONFIG)/obj/testHttp.o: \
         test/testHttp.c \
-        $(CONFIG)/inc/bit.h
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/testAppweb.h
 	$(CC) -c -o $(CONFIG)/obj/testHttp.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc test/testHttp.c
 
 $(CONFIG)/bin/testAppweb:  \
