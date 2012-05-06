@@ -93,13 +93,6 @@
     <AdditionalDependencies>;%(AdditionalDependencies)</AdditionalDependencies>
     <AdditionalLibraryDirectories>$(OutDir);$(Cfg)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
   </Link>
-
-  <CustomBuildStep>
-    <Command>cd ..\..\test
-echo '#!$(BinDir)/cgiProgram.exe' >cgi-bin/testScript ; chmod +x cgi-bin/testScript
-cd ..\projects\appweb-win</Command>
-    <Outputs>..\..\test\cgi-bin\testScript</Outputs>
-  </CustomBuildStep>
   </ItemDefinitionGroup>
 
   <Import Project="$(VCTargetsPath)Microsoft.Cpp.targets" />

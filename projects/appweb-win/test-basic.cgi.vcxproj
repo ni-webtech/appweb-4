@@ -93,17 +93,6 @@
     <AdditionalDependencies>;%(AdditionalDependencies)</AdditionalDependencies>
     <AdditionalLibraryDirectories>$(OutDir);$(Cfg)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
   </Link>
-
-  <CustomBuildStep>
-    <Command>cd ..\..\test
-echo -e '#!`type -p sh`' >web/basic/basic.cgi
-echo -e '' >>web/basic/basic.cgi
-echo -e 'echo Content-Type: text/plain' >>web/basic/basic.cgi
-echo -e '/usr/bin/env' >>web/basic/basic.cgi
-chmod +x web/basic/basic.cgi
-cd ..\projects\appweb-win</Command>
-    <Outputs>..\..\test\web\basic\basic.cgi</Outputs>
-  </CustomBuildStep>
   </ItemDefinitionGroup>
 
   <Import Project="$(VCTargetsPath)Microsoft.Cpp.targets" />

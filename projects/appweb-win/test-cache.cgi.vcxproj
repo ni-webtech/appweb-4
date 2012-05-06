@@ -93,18 +93,6 @@
     <AdditionalDependencies>;%(AdditionalDependencies)</AdditionalDependencies>
     <AdditionalLibraryDirectories>$(OutDir);$(Cfg)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
   </Link>
-
-  <CustomBuildStep>
-    <Command>cd ..\..\test
-echo -e '#!`type -p sh`' >web/caching/cache.cgi
-echo -e '' >>web/caching/cache.cgi
-echo -e 'echo HTTP/1.0 200 OK' >>web/caching/cache.cgi
-echo -e 'echo Content-Type: text/plain' >>web/caching/cache.cgi
-echo -e 'date' >>web/caching/cache.cgi
-chmod +x web/caching/cache.cgi
-cd ..\projects\appweb-win</Command>
-    <Outputs>..\..\test\web\caching\cache.cgi</Outputs>
-  </CustomBuildStep>
   </ItemDefinitionGroup>
 
   <Import Project="$(VCTargetsPath)Microsoft.Cpp.targets" />

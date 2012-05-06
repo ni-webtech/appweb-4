@@ -93,17 +93,6 @@
     <AdditionalDependencies>;%(AdditionalDependencies)</AdditionalDependencies>
     <AdditionalLibraryDirectories>$(OutDir);$(Cfg)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
   </Link>
-
-  <CustomBuildStep>
-    <Command>cd ..\..\test
-copy $(BinDir)/cgiProgram cgi-bin/cgiProgram.exe
-copy $(BinDir)/cgiProgram cgi-bin/nph-cgiProgram.exe
-copy $(BinDir)/cgiProgram 'cgi-bin/cgi Program.exe'
-copy $(BinDir)/cgiProgram web/cgiProgram.cgi
-chmod +x cgi-bin/* web/cgiProgram.cgi
-cd ..\projects\appweb-win</Command>
-    <Outputs>..\..\test\cgi-bin\cgiProgram.exe</Outputs>
-  </CustomBuildStep>
   </ItemDefinitionGroup>
 
   <Import Project="$(VCTargetsPath)Microsoft.Cpp.targets" />
