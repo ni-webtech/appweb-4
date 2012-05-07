@@ -1468,15 +1468,15 @@ typedef struct HttpStage {
     void (*ready)(HttpQueue *q);
 
     /** 
-        Output the request response.
-        @description Output a response for the request.
-            This optional handler callback will be invoked to emit a response back to the client.
-            It is called when all incoming data has been received and when the service queue has room for more output
-            data. As such, it may be called multiple times. 
+        Process the request and generate a response.
+        @description This optional handler callback will be invoked to emit a response back to the client.
+            A handler may generate or start to generate a response in the 'start' or 'ready' callbacks. The
+            'process' callback is called when all incoming data has been received and when the service queue has room
+            for more output data. As such, it may be used to support non-blocking generation of a response.
         @param q Queue instance object
         @ingroup HttpStage
      */
-    void (*output)(HttpQueue *q);
+    void (*process)(HttpQueue *q);
 
 } HttpStage;
 
@@ -1768,7 +1768,7 @@ extern void httpSetIOCallback(struct HttpConn *conn, HttpIOCallback fn);
         httpCreateTxPipeline httpDestroyConn httpDestroyPipeline httpDiscardTransmitData httpDisconnect 
         httpEnableUpload httpError httpEvent httpGetAsync httpGetChunkSize httpGetConnContext httpGetConnHost 
         httpGetError httpGetExt httpGetKeepAliveCount httpMatchHost httpMemoryError httpPrepClientConn 
-        httpPrepServerConn httpResetCredentials httpRouteRequest httpRunHandlerOutput httpRunHandlerReady
+        httpPrepServerConn httpResetCredentials httpRouteRequest httpProcessHandler httpRunHandlerReady
         httpServiceQueues httpSetAsync httpSetChunkSize httpSetConnContext httpSetConnHost httpSetConnNotifier
         httpSetCredentials httpSetKeepAliveCount httpSetPipelineHandler httpSetProtocol httpSetRetries
         httpSetSendConnector httpSetState httpSetTimeout httpShouldTrace httpStartPipeline httpNotifyWritable 
@@ -2098,12 +2098,29 @@ extern void httpNotifyWritable(HttpConn *conn);
 extern void httpPrepServerConn(HttpConn *conn);
 
 /**
+    Run the handler process callback.
+    @description This optional handler callback is invoked when the service queue has room for more data.
+    @param conn HttpConn object created via $httpCreateConn
+    @return True if the handler output callback exists and can be invoked.
+    @ingroup HttpConn
+ */
+extern int httpProcessHandler(HttpConn *conn);
+
+/**
     Prepare a client connection for a new request. 
     @param conn HttpConn object created via $httpCreateConn
     @param keepHeaders If true, keep the headers already defined on the connection object
     @ingroup HttpConn
  */
 extern void httpPrepClientConn(HttpConn *conn, bool keepHeaders);
+
+/**
+    Run the handler ready callback.
+    @description This will be called when all incoming data for the request has been fully received.
+    @param conn HttpConn object created via $httpCreateConn
+    @ingroup HttpConn
+ */
+extern void httpReadyHandler(HttpConn *conn);
 
 /** 
     Reset the current security credentials
@@ -2119,23 +2136,6 @@ extern void httpResetCredentials(HttpConn *conn);
     @ingroup HttpConn
   */
 extern void httpRouteRequest(HttpConn *conn);
-
-/**
-    Run the handler output callback.
-    @description This optional handler callback is invoked when the service queue has room for more data.
-    @param conn HttpConn object created via $httpCreateConn
-    @return True if the handler output callback exists and can be invoked.
-    @ingroup HttpConn
- */
-extern int httpRunHandlerOutput(HttpConn *conn);
-
-/**
-    Run the handler ready callback.
-    @description This will be called when all incoming data for the request has been fully received.
-    @param conn HttpConn object created via $httpCreateConn
-    @ingroup HttpConn
- */
-extern void httpRunHandlerReady(HttpConn *conn);
 
 /**
     Service pipeline queues to flow data.

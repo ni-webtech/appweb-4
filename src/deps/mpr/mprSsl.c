@@ -695,14 +695,14 @@ static ssize processMssData(MprSocket *sp, char *buf, ssize size, ssize nbytes, 
             break;
 
         case MATRIXSSL_APP_DATA:
-            copied = min(dlen, size);
+            copied = min((ssize) dlen, size);
             memcpy(buf, data, copied);
             buf += copied;
             size -= copied;
             data += copied;
             dlen = dlen - (int) copied;
             sofar += copied;
-            msp->more = (dlen > size) ? 1 : 0;
+            msp->more = ((ssize) dlen > size) ? 1 : 0;
             if (!msp->more) {
                 /* The MatrixSSL buffer has been consumed, see if we can get more data */
                 rc = matrixSslProcessedData(msp->handle, &data, &dlen);
