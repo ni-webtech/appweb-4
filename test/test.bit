@@ -79,21 +79,22 @@ Bit.load({
         test: {
             action: "
                 let ro = {noio: true}
-                run('utest -v -i 2 --depth ${settings.depth}', ro)
-                if (${settings.depth} >= 3) {
+                let depth = bit.settings.depth
+                run('utest -v -i 2 --depth ' + depth, ro)
+                if (depth >= 3) {
                     trace('Test', 'Light load tests')
-                    run('utest -v -i 20 --depth ${settings.depth}', ro)
+                    run('utest -v -i 20 --depth ' + depth, ro)
                     for each (t in [2, 4]) {
                         trace('Test', 'Light thread tests')
-                        run('utest -v -i 20 --depth ${settings.depth} --threads ' + t, ro)
+                        run('utest -v -i 20 --depth ' + depth + ' --threads ' + t, ro)
                     }
                 }
-                if (${settings.depth} >= 4) {
+                if (depth >= 4) {
                     trace('Test', 'Longevity load tests')
-                    run('utest -v -i 100 --depth ${settings.depth}', ro)
+                    run('utest -v -i 100 --depth ' + depth, ro)
                     for each (t in [8, 16]) {
                         trace('Test', 'Light thread tests')
-                        run('utest -v -i 100 --depth ${settings.depth} --threads ' + t, ro)
+                        run('utest -v -i 100 --depth ' + depth + ' --threads ' + t, ro)
                     }
                 }
                 trace('Test', 'Unit tests complete')
