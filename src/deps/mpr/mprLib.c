@@ -22703,7 +22703,7 @@ void mprManageSelect(MprWaitService *ws, int flags)
 
 static int growFds(MprWaitService *ws, int fd)
 {
-    ws->handlerMax = min(ws->handlerMax * 2, fd);
+    ws->handlerMax = max(ws->handlerMax * 2, fd);
     if ((ws->handlerMap = mprRealloc(ws->handlerMap, sizeof(MprWaitHandler*) * ws->handlerMax)) == 0) {
         mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
