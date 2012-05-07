@@ -107,6 +107,8 @@ Bit.load({
                 rm('cache/*')
                 rm('app/cache/*')
                 rm('junk/**')
+                Path('cache/.keep').write()
+                Path('app/cache/.keep').write()
             "                                                                                              
         },  
     },
