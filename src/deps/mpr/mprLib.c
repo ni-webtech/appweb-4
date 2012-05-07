@@ -22688,9 +22688,9 @@ void mprManageSelect(MprWaitService *ws, int flags)
 }
 
 
-static int growFds(MprWaitService *ws)
+static int growFds(MprWaitService *ws, int fd)
 {
-    ws->handlerMax *= 2;
+    ws->handlerMax = min(ws->handlerMax * 2, fd);
     if ((ws->handlerMap = mprRealloc(ws->handlerMap, sizeof(MprWaitHandler*) * ws->handlerMax)) == 0) {
         mprAssert(!MPR_ERR_MEMORY);
         return MPR_ERR_MEMORY;
@@ -22723,7 +22723,7 @@ int mprNotifyOn(MprWaitService *ws, MprWaitHandler *wp, int mask)
             FD_SET(fd, &ws->writeMask);
         }
         if (mask) {
-            if (fd >= ws->handlerMax && growFds(ws) < 0) {
+            if (fd >= ws->handlerMax && growFds(ws, fd) < 0) {
                 unlock(ws);
                 mprAssert(!MPR_ERR_MEMORY);
                 return MPR_ERR_MEMORY;
