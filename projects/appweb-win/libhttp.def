@@ -264,8 +264,8 @@ EXPORTS
   httpResolveUri
   httpResumeQueue
   httpRouteRequest
-  httpRunHandlerOutput
-  httpRunHandlerReady
+  httpProcessHandler
+  httpReadyHandler
   httpScheduleQueue
   httpSecureEndpoint
   httpSecureEndpointByName
