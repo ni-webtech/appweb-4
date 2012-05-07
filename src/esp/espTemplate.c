@@ -406,6 +406,7 @@ static char *joinLine(cchar *str, ssize *lenp)
 char *espBuildScript(HttpRoute *route, cchar *page, cchar *path, cchar *cacheName, cchar *layout, char **err)
 {
     EspParse    parse;
+    EspRoute    *eroute;
     char        *control, *incBuf, *incText, *global, *token, *body, *where;
     char        *rest, *start, *end, *include, *line, *fmt, *layoutPage, *layoutBuf;
     ssize       len;
@@ -413,6 +414,7 @@ char *espBuildScript(HttpRoute *route, cchar *page, cchar *path, cchar *cacheNam
 
     mprAssert(page);
 
+    eroute = route->eroute;
     body = start = end = global = "";
     *err = 0;
 
@@ -495,7 +497,7 @@ char *espBuildScript(HttpRoute *route, cchar *page, cchar *path, cchar *cacheNam
                     if (token[0] == '/') {
                         layout = sclone(token);
                     } else {
-                        layout = mprJoinPath(mprGetPathDir(path), token);
+                        layout = mprJoinPath(eroute->layoutsDir ? eroute->layoutsDir : mprGetPathDir(path), token);
                     }
                     if (!mprPathExists(layout, F_OK)) {
                         *err = sfmt("Can't access layout page %s", layout);
