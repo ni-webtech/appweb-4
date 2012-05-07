@@ -154,7 +154,7 @@ static void startCgi(HttpQueue *q)
     This routine is called for when the outgoing queue is writable.  We don't actually do output here, just poll
     until the command is complete.
  */
-static void outputCgi(HttpQueue *q)
+static void processCgi(HttpQueue *q)
 {
     MprCmd      *cmd;
 
@@ -1060,7 +1060,7 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     handler->open = openCgi; 
     handler->start = startCgi; 
 #if BLD_WIN_LIKE
-    handler->output = outputCgi; 
+    handler->process = processCgi; 
 #endif
             
     appweb = httpGetContext(http);
