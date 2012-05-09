@@ -106,7 +106,7 @@ MAIN(appweb, int argc, char **argv, char **envp)
     app->home = BLD_SERVER_ROOT;
     app->documents = app->home;
     argc = mpr->argc;
-    argv = mpr->argv;
+    argv = (char**) mpr->argv;
 
     for (argind = 1; argind < argc; argind++) {
         argp = argv[argind];

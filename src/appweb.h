@@ -45,19 +45,22 @@ struct MaServer;
         maLookupServer maMatchDir maParseInit maSetDefaultServer maSetHttpGroup maSetHttpUser maStartAppweb maStopAppweb 
  */
 typedef struct MaAppweb {
-    struct MaServer     *defaultServer;     /**< Default server object */
-    MprList             *servers;           /**< List of server objects */
-    MprHash             *directives;        /**< Config file directives */
-    Http                *http;              /**< Http service object */
-    char                *user;              /**< O/S application user name */
-    char                *group;             /**< O/S application group name */
-    char                *hostArch;          /**< Host CPU architecture */
-    char                *hostOs;            /**< Host operating system */
-    int                 uid;                /**< User Id */
-    int                 gid;                /**< Group Id */
-    int                 userChanged;        /**< User name changed */
-    int                 groupChanged;       /**< Group name changed */
-    int                 skipModules;        /**< Don't load modules */
+    struct MaServer     *defaultServer;         /**< Default server object */
+    MprList             *servers;               /**< List of server objects */
+    MprHash             *directives;            /**< Config file directives */
+    Http                *http;                  /**< Http service object */
+    char                *user;                  /**< O/S application user name */
+    char                *group;                 /**< O/S application group name */
+    char                *targetArch;            /**< Target CPU architecture (lower case) */
+    char                *targetOs;              /**< Target operating system (lower case) */
+    char                *targetPlatform;        /**< Target platform os-arch (lower case) */
+    char                *targetConfiguration;   /**< Target configuration os-arch-profile (lower case) */
+    int                 release;                /**< Build loadable content in release mode */
+    int                 uid;                    /**< User Id */
+    int                 gid;                    /**< Group Id */
+    int                 userChanged;            /**< User name changed */
+    int                 groupChanged;           /**< Group name changed */
+    int                 skipModules;            /**< Don't load modules */
 } MaAppweb;
 
 /**

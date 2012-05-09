@@ -1957,10 +1957,16 @@ static bool conditionalDefinition(MaState *state, cchar *key)
     }
     result = 0;
 
-    if (scasematch(key, state->appweb->hostOs)) {
+    if (scasematch(key, state->appweb->targetOs)) {
         result = 1;
 
-    } else if (scasematch(key, state->appweb->hostArch)) {
+    } else if (scasematch(key, state->appweb->targetArch)) {
+        result = 1;
+
+    } else if (scasematch(key, state->appweb->targetPlatform)) {
+        result = 1;
+
+    } else if (scasematch(key, state->appweb->targetConfiguration)) {
         result = 1;
 
 #if BLD_DEBUG

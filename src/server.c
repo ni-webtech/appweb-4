@@ -31,8 +31,12 @@ MaAppweb *maCreateAppweb()
     appweb->http = http = httpCreate(appweb);
     httpSetContext(http, appweb);
     appweb->servers = mprCreateList(-1, 0);
-    appweb->hostOs = sclone(BLD_OS);
-    appweb->hostArch = sclone(BLD_CPU);
+    appweb->targetOs = slower(BLD_OS);
+    appweb->release = 0;
+    appweb->targetArch = sclone(BLD_CPU);
+    appweb->targetPlatform = sfmt("%s-%s", appweb->targetOs, appweb->targetArch);
+    //  MOB - rethink BLD_CFG
+    appweb->targetConfiguration = sclone(BLD_CFG);
     maGetUserGroup(appweb);
     maParseInit(appweb);
     openHandlers(http);
@@ -49,8 +53,10 @@ static void manageAppweb(MaAppweb *appweb, int flags)
         mprMark(appweb->http);
         mprMark(appweb->user);
         mprMark(appweb->group);
-        mprMark(appweb->hostOs);
-        mprMark(appweb->hostArch);
+        mprMark(appweb->targetArch);
+        mprMark(appweb->targetOs);
+        mprMark(appweb->targetPlatform);
+        mprMark(appweb->targetConfiguration);
 
     } else if (flags & MPR_MANAGE_FREE) {
         maStopAppweb(appweb);

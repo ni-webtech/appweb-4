@@ -345,7 +345,7 @@ static bool run(cchar *fmt, ...)
     mprLog(1, "Run: %s", app->command);
 
     cmd = mprCreateCmd(NULL);
-    rc = mprRunCmd(cmd, app->command, &out, &err, MANAGE_TIMEOUT, 0);
+    rc = mprRunCmd(cmd, app->command, NULL, &out, &err, MANAGE_TIMEOUT, 0);
     app->error = sclone(err);
     app->output = sclone(out);
     mprDestroyCmd(cmd);
@@ -545,7 +545,8 @@ static bool process(cchar *operation, bool quiet)
 static void runService()
 {
     MprTime     mark;
-    char        **av, *env[3], **argv;
+    cchar       **av, **argv;
+    char        *env[3];
     int         err, i, status, ac, next;
 
     app->servicePid = 0;
@@ -625,7 +626,7 @@ static void runService()
                 for (i = 1; argv[i]; i++) {
                     mprLog(1, "%s: argv[%d] = %s", app->appName, i, argv[i]);
                 }
-                execve(app->serviceProgram, argv, (char**) &env);
+                execve(app->serviceProgram, (char**) argv, (char**) &env);
 
                 /* Should not get here */
                 err = errno;

@@ -898,7 +898,7 @@ static int espEnvDirective(MaState *state, cchar *key, cchar *value)
     if (eroute->env == 0) {
         eroute->env = mprCreateList(-1, 0);
     }
-    evalue = espExpandCommand(evalue, "", "");
+    evalue = espExpandCommand(eroute, evalue, "", "");
 #if UNUSED && KEEP
     /*
         This messes up TMP by prepending an existing value

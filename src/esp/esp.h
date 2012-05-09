@@ -31,6 +31,7 @@ extern "C" {
 #define ESP_UNLOAD_TIMEOUT  (10)                        /**< Very short timeout for reloading */
 #define ESP_LIFESPAN        (3600 * MPR_TICKS_PER_SEC)  /**< Default generated content cache lifespan */
 
+#if UNUSED
 /*
     Default compiler settings for ${DEBUG} and ${LIBS} tokens in EspCompile and EspLink
  */
@@ -47,11 +48,12 @@ extern "C" {
         #define ESP_DEBUG "-O2"
     #endif
 #endif
+
 #if WIN
-    #define ESP_CORE_LIBS "\"${LIB}\\mod_esp${SHLIB}\" \"${LIB}\\libappweb.lib\" \
-        \"${LIB}\\libhttp.lib\" \"${LIB}\\libmpr.lib\""
+    #define ESP_CORE_LIBS "\"${LIBPATH}\\mod_esp${SHLIB}\" \"${LIBPATH}\\libappweb.lib\" \
+        \"${LIBPATH}\\libhttp.lib\" \"${LIBPATH}\\libmpr.lib\""
 #else
-    #define ESP_CORE_LIBS "${LIB}/mod_esp${SHOBJ} -lappweb -lpcre -lhttp -lmpr -lpthread -lm"
+    #define ESP_CORE_LIBS "${LIBPATH}/mod_esp${SHOBJ} -lappweb -lpcre -lhttp -lmpr -lpthread -lm"
 #endif
 
 /*
@@ -59,7 +61,7 @@ extern "C" {
  */
 #if BLD_FEATURE_SSL
     #if WIN
-        #define ESP_SSL_LIBS " \"${LIB}\\libmprssl.lib\""
+        #define ESP_SSL_LIBS " \"${LIBPATH}\\libmprssl.lib\""
     #else
         #define ESP_SSL_LIBS " -lmprssl"
     #endif
@@ -67,6 +69,16 @@ extern "C" {
     #define ESP_SSL_LIBS
 #endif
 #define ESP_LIBS ESP_CORE_LIBS ESP_SSL_LIBS
+
+#if MACOSX
+    #define ESP_CCNAME "clang"
+#else
+    #define ESP_CCNAME "gcc"
+#endif
+#endif
+
+//  MOB - move to bit.h
+#define BLD_VISUAL_STUDIO_VERSION "10.0"
 
 /********************************** Defines ***********************************/
 /**
@@ -87,6 +99,25 @@ typedef void (*EspProc)(HttpConn *conn);
 
 #define ESP_SECURITY_TOKEN_NAME "__esp_security_token__"
 #define ESP_FLASH_VAR           "__flash__"
+
+/*
+    Default VxWorks environment
+ */
+#ifndef WIND_BASE
+#define WIND_BASE "Not-Configured"
+#endif
+#ifndef WIND_HOME
+#define WIND_HOME "Not-Configured"
+#endif
+#ifndef WIND_HOST_TYPE
+#define WIND_HOST_TYPE "Not-Configured"
+#endif
+#ifndef WIND_PLATFORM
+#define WIND_PLATFORM "Not-Configured"
+#endif
+#ifndef WIND_GNU_PATH
+#define WIND_GNU_PATH "Not-Configured"
+#endif
 
 /********************************** Parsing ***********************************/
 /**
@@ -296,13 +327,14 @@ extern void espDefineView(HttpRoute *route, cchar *path, void *viewProc);
             <li>WINSDK - Path to the Windows SDK</li>
             <li>VS - Path to Visual Studio</li>
         </ul>
+    @param eroute Esp route object
     @param command Http connection object
     @param source ESP web page source pathname
     @param module Output module pathname
     @return An expanded command line
     @ingroup EspRoute
  */
-extern char *espExpandCommand(cchar *command, cchar *source, cchar *module);
+extern char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *module);
 
 /*
     Internal

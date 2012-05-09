@@ -21,8 +21,9 @@ typedef struct App {
     char        *configFile;
     char        *pathEnv;
     char        *database;              /* Database provider "mdb" | "sqlite" */
-    char        *hostOs;                /* Target host O/S for cross compilation */
-    char        *hostArch;              /* Target host CPU for cross compilation */
+    char        *targetPlatform;        /* Target platform os-arch (lower) for cross compilation */
+    char        *targetOs;              /* Target operating system for cross compilation (lower) */
+    char        *targetArch;            /* Target host architecture for cross compilation (lower) */
     char        *listen;
 
     char        *currentDir;            /* Initial starting current directory */
@@ -54,6 +55,7 @@ typedef struct App {
     int         minified;               /* Use minified JS files */
     int         overwrite;              /* Overwrite existing files if required */
     int         quiet;                  /* Don't trace progress */
+    int         release;                /* Compile in release mode without debug symbols */
 } App;
 
 static App       *app;                  /* Top level application object */
@@ -270,6 +272,7 @@ int main(int argc, char **argv)
 {
     Mpr     *mpr;
     cchar   *argp, *logSpec, *path;
+    char    *arch;
     int     argind, rc;
 
     if ((mpr = mprCreate(argc, argv, 0)) == NULL) {
@@ -283,7 +286,7 @@ int main(int argc, char **argv)
     
     logSpec = "stderr:0";
     argc = mpr->argc;
-    argv = mpr->argv;
+    argv = (char**) mpr->argv;
     app->mpr = mpr;
     app->configFile = 0;
     app->listen = sclone(ESP_LISTEN);
@@ -294,12 +297,14 @@ int main(int argc, char **argv)
         if (*argp != '-') {
             break;
         }
+#if UNUSED || DEPRECATED || 1
         if (smatch(argp, "--arch")) {
             if (argind >= argc) {
                 usageError();
             } else {
-                app->hostArch = slower(argv[++argind]);
+                app->targetArch = slower(argv[++argind]);
             }
+#endif
 
         } else if (smatch(argp, "--chdir")) {
             if (argind >= argc) {
@@ -336,12 +341,14 @@ int main(int argc, char **argv)
         } else if (smatch(argp, "--flat") || smatch(argp, "-f")) {
             app->flat = 1;
 
+#if UNUSED || DEPRECATED
         } else if (smatch(argp, "--host")) {
             if (argind >= argc) {
                 usageError();
             } else {
-                app->hostOs = supper(argv[++argind]);
+                app->targetOs = supper(argv[++argind]);
             }
+#endif
 
         } else if (smatch(argp, "--listen") || smatch(argp, "-l")) {
             if (argind >= argc) {
@@ -365,6 +372,18 @@ int main(int argc, char **argv)
 
         } else if (smatch(argp, "--quiet") || smatch(argp, "-q")) {
             app->quiet = 1;
+
+        } else if (smatch(argp, "--platform")) {
+            if (argind >= argc) {
+                usageError();
+            } else {
+                app->targetPlatform = slower(argv[++argind]);
+                app->targetOs = stok(sclone(app->targetPlatform), "-", &arch);
+                app->targetArch = sclone(arch);
+            }
+
+        } else if (smatch(argp, "--release")) {
+            app->release = 1;
 
         } else if (smatch(argp, "--routeName")) {
             if (argind >= argc) {
@@ -424,24 +443,25 @@ static void manageApp(App *app, int flags)
         mprMark(app->configFile);
         mprMark(app->csource);
         mprMark(app->currentDir);
-        mprMark(app->routes);
+        mprMark(app->database);
         mprMark(app->files);
         mprMark(app->flatFile);
         mprMark(app->flatItems);
         mprMark(app->flatPath);
-        mprMark(app->hostArch);
-        mprMark(app->hostOs);
         mprMark(app->libDir);
         mprMark(app->listen);
         mprMark(app->module);
         mprMark(app->mpr);
         mprMark(app->pathEnv);
-        mprMark(app->database);
+        mprMark(app->routes);
         mprMark(app->routeName);
         mprMark(app->routePrefix);
         mprMark(app->server);
         mprMark(app->serverRoot);
         mprMark(app->source);
+        mprMark(app->targetArch);
+        mprMark(app->targetOs);
+        mprMark(app->targetPlatform);
         mprMark(app->targets);
         mprMark(app->wwwDir);
     }
@@ -647,11 +667,17 @@ static void readConfig()
     appweb = app->appweb;
     appweb->skipModules = 1;
     http = app->appweb->http;
-    if (app->hostOs) {
-        appweb->hostOs = app->hostOs;
+    if (app->targetOs) {
+        appweb->targetOs = app->targetOs;
     }
-    if (app->hostArch) {
-        appweb->hostArch = app->hostArch;
+    if (app->targetArch) {
+        appweb->targetArch = app->targetArch;
+    }
+    if (app->targetPlatform) {
+        appweb->targetPlatform = app->targetPlatform;
+    }
+    if (app->release) {
+        appweb->release = app->release;
     }
     findConfigFile();
     if (app->error) {
@@ -747,7 +773,7 @@ static void run(int argc, char **argv)
     }
     cmd = mprCreateCmd(0);
     trace("RUN", "appweb -v");
-    if (mprRunCmd(cmd, "appweb -v", NULL, NULL, -1, MPR_CMD_DETACH) != 0) {
+    if (mprRunCmd(cmd, "appweb -v", NULL, NULL, NULL, -1, MPR_CMD_DETACH) != 0) {
         fail("Can't run command: \n%s", app->command);
         return;
     }
@@ -759,18 +785,21 @@ static int runEspCommand(HttpRoute *route, cchar *command, cchar *csource, cchar
 {
     EspRoute    *eroute;
     MprCmd      *cmd;
+    cchar       **env;
     char        *err, *out;
 
     eroute = route->eroute;
     cmd = mprCreateCmd(0);
-    if ((app->command = espExpandCommand(command, csource, module)) == 0) {
+    if ((app->command = espExpandCommand(eroute, command, csource, module)) == 0) {
         fail("Missing EspCompile directive for %s", csource);
         return MPR_ERR_CANT_READ;
     }
     mprLog(4, "ESP command: %s\n", app->command);
     if (eroute->env) {
         mprAddNullItem(eroute->env);
-        mprSetCmdDefaultEnv(cmd, (cchar**) &eroute->env->items[0]);
+        env = (cchar**) &eroute->env->items[0];
+    } else {
+        env = 0;
     }
     if (eroute->searchPath) {
         mprSetCmdSearchPath(cmd, eroute->searchPath);
@@ -778,7 +807,7 @@ static int runEspCommand(HttpRoute *route, cchar *command, cchar *csource, cchar
     mprLog(1, "Run: %s", app->command);
 
     //  WARNING: GC will run here
-	if (mprRunCmd(cmd, app->command, &out, &err, -1, 0) != 0) {
+	if (mprRunCmd(cmd, app->command, env, &out, &err, -1, 0) != 0) {
 		if (err == 0 || *err == '\0') {
 			/* Windows puts errors to stdout Ugh! */
 			err = out;
@@ -1624,16 +1653,16 @@ static void usageError(Mpr *mpr)
     mprPrintfError("\nESP Usage:\n\n"
     "  %s [options] [commands]\n\n"
     "  Options:\n"
-    "    --arch CPU             # Target CPU architecture\n"
     "    --chdir dir            # Change to the named directory first\n"
     "    --config configFile    # Use named config file instead appweb.conf\n"
     "    --database name        # Database provider 'mdb|sqlite' \n"
     "    --flat                 # Compile into a single module\n"
-    "    --host OS              # Target O/S\n"
     "    --listen [ip:]port     # Listen on specified address \n"
     "    --log logFile:level    # Log to file file at verbosity level\n"
     "    --overwrite            # Overwrite existing files \n"
     "    --quiet                # Don't emit trace \n"
+    "    --platform os-arch     # Target O/S-architecture (win-x86)\n"
+    "    --release              # Compile in release mode (optimized)\n"
     "    --routeName name       # Route name in appweb.conf to use \n"
     "    --routePrefix prefix   # Route prefix in appweb.conf to use \n"
     "    --verbose              # Emit verbose trace \n"
