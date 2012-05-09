@@ -508,7 +508,7 @@ static MprList *getRoutes()
         Filter ESP routes. Go in reverse order to locate outermost routes first.
      */
     for (prev = -1; (route = mprGetPrevItem(host->routes, &prev)) != 0; ) {
-        mprLog(2, "Check route name %s, prefix %s", route->name, route->startWith);
+        mprLog(3, "Check route name %s, prefix %s", route->name, route->startWith);
 
         if ((eroute = route->eroute) == 0 || !eroute->compile) {
             /* No ESP configuration for compiling */
@@ -588,7 +588,7 @@ static HttpRoute *getMvcRoute()
         Go in reverse order to locate outermost routes first.
      */
     for (prev = -1; (route = mprGetPrevItem(host->routes, &prev)) != 0; ) {
-        mprLog(2, "Check route name %s, prefix %s", route->name, route->startWith);
+        mprLog(3, "Check route name %s, prefix %s", route->name, route->startWith);
         if ((eroute = route->eroute) == 0 || !eroute->compile) {
             /* No ESP configuration for compiling */
             continue;

@@ -29,14 +29,14 @@ static int getEspToken(EspParse *parse);
 static cchar *getDebug(MaAppweb *appweb);
 static cchar *getEnvString(cchar *key, cchar *defaultValue);
 static cchar *getShobjExt(cchar *os);
-static cchar *getShlibExt(cchar *os);
 static cchar *getCompilerName(cchar *os, cchar *arch);
 static cchar *getCompilerPath(cchar *os, cchar *arch);
 static cchar *getLibs(cchar *os);
 static cchar *getMappedArch(cchar *arch);
 static cchar *getObjExt(cchar *os);
-static cchar *getWinVisualStudio(MaAppweb *appweb);
-static cchar *getWinSdk(MaAppweb *appweb);
+static cchar *getWinVisualStudio();
+static cchar *getWinSDK();
+static cchar *getVxCPU(cchar *arch);
 static bool matchToken(cchar **str, cchar *token);
 
 /************************************* Code ***********************************/
@@ -82,6 +82,7 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
 
     for (cp = command; *cp; ) {
 		if (*cp == '$') {
+//  MOB - sort
             if (matchToken(&cp, "${ARCH}")) {
                 /* Target architecture (x86|mips|arm|x64) */
                 mprPutStringToBuf(buf, arch);
@@ -95,10 +96,13 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
                 mprPutStringToBuf(buf, getMappedArch(arch));
 
             } else if (matchToken(&cp, "${WINSDK}")) {
-                mprPutStringToBuf(buf, getWinSdk(appweb));
+                mprPutStringToBuf(buf, getWinSDK());
 
             } else if (matchToken(&cp, "${VS}")) {
-                mprPutStringToBuf(buf,getWinVisualStudio(appweb));
+                mprPutStringToBuf(buf,getWinVisualStudio());
+
+            } else if (matchToken(&cp, "${VXCPU}")) {
+                mprPutStringToBuf(buf, getVxCPU(arch));
 
             } else if (matchToken(&cp, "${CC}")) {
                 /* Compiler */
@@ -127,9 +131,11 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
                 /* Output module path in the cache without extension */
                 mprPutStringToBuf(buf, outputModule);
 
+#if UNUSED
             } else if (matchToken(&cp, "${SHLIB}")) {
                 /* .lib */
                 mprPutStringToBuf(buf, getShlibExt(os));
+#endif
 
             } else if (matchToken(&cp, "${SHOBJ}")) {
                 /* .dll, .so, .dylib */
@@ -240,7 +246,6 @@ static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *mod
 bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, int isView)
 {
     MprFile     *fp;
-    MaAppweb    *appweb;
     HttpRx      *rx;
     HttpRoute   *route;
     EspRoute    *eroute;
@@ -251,7 +256,6 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
     rx = conn->rx;
     route = rx->route;
     eroute = route->eroute;
-    appweb = MPR->appwebService;
     layout = 0;
 
     if (isView) {
@@ -303,7 +307,7 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
         /*
             MAC needs the object for debug information
          */
-        mprDeletePath(mprJoinPathExt(mprTrimPathExt(module), getObjExt(os)));
+        mprDeletePath(mprJoinPathExt(mprTrimPathExt(module), "dylib"));
 #endif
     }
 #if BLD_WIN_LIKE
@@ -744,37 +748,41 @@ static cchar *getEnvString(cchar *key, cchar *defaultValue)
 
 static cchar *getShobjExt(cchar *os)
 {
+printf("OS %s\n", os);
     if (smatch(os, "macosx")) {
         return ".dylib";
     } else if (smatch(os, "win")) {
         return ".dll";
+    } else if (smatch(os, "vxworks")) {
+        return ".out";
     } else {
         return ".so";
     }
 }
 
 
+#if UNUSED
 static cchar *getShlibExt(cchar *os)
 {
     if (smatch(os, "macosx")) {
         return ".dylib";
     } else if (smatch(os, "win")) {
         return ".lib";
+    } else if (smatch(os, "vxworks")) {
+        return ".a";
     } else {
         return ".so";
     }
 }
+#endif
 
 
 static cchar *getObjExt(cchar *os)
 {
-    if (smatch(os, "macosx")) {
-        return ".dylib";
-    } else if (smatch(os, "win")) {
-        return ".dll";
-    } else {
-        return ".so";
+    if (smatch(os, "win")) {
+        return ".obj";
     }
+    return ".o";
 }
 
 
@@ -784,7 +792,7 @@ static cchar *getCompilerName(cchar *os, cchar *arch)
 
     name = "gcc";
     if (smatch(os, "vxworks")) {
-        if (smatch(arch, "i586") || smatch(arch, "i686") || smatch(arch, "pentium")) {
+        if (smatch(arch, "x86") || smatch(arch, "i586") || smatch(arch, "i686") || smatch(arch, "pentium")) {
             name = "ccpentium";
         } else if (scontains(arch, "86", -1)) {
             name = "cc386";
@@ -806,15 +814,28 @@ static cchar *getCompilerName(cchar *os, cchar *arch)
 }
 
 
+static cchar *getVxCPU(cchar *arch)
+{
+    if (smatch(arch, "i386")) {
+        return "I80386";
+    } else if (smatch(arch, "i486")) {
+        return "I80486";
+    } else if (smatch(arch, "x86") | sends(arch, "86")) {
+        return "PENTIUM";
+    } 
+    return supper(arch);
+}
+
+
 static cchar *getDebug(MaAppweb *appweb)
 {
     int     debug;
 
     debug = sends(appweb->out, "-debug");
     if (scontains(appweb->out, "-win-", -1)) {
-        return (debug) ? "-Zi -Od" : "-O";
+        return (debug) ? "-DBLD_DEBUG -Zi -Od" : "-O";
     }
-    return (debug) ? "-g" : "-O2";
+    return (debug) ? "-DBLD_DEBUG -g" : "-O2";
 }
 
 
@@ -873,7 +894,7 @@ static cchar *getMappedArch(cchar *arch)
     return arch;
 }
 
-static cchar *getWinSdk(MaAppweb *appweb)
+static cchar *getWinSDK()
 {
 #if WIN
     cchar   *path;
@@ -886,7 +907,7 @@ static cchar *getWinSdk(MaAppweb *appweb)
 }
 
 
-static cchar *getWinVisualStudio(MaAppweb *appweb)
+static cchar *getWinVisualStudio()
 {
 #if WIN
     cchar   *path;
