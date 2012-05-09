@@ -217,12 +217,12 @@ public function installBinary() {
         Cmd([bit.dir.bin.join('appman'), '--continue', 'stop', 'disable', 'uninstall'])
     }
     package(bit.dir.pkg.join('bin'), 'install')
-    if (Config.OS != 'WIN') {
-        createLinks()
-        updateLatestLink()
-    }
-    trace('Start', 'appman install enable start')
     if (!bit.cross) {
+        if (Config.OS != 'WIN') {
+            createLinks()
+            updateLatestLink()
+        }
+        trace('Start', 'appman install enable start')
         Cmd([bit.prefixes.bin.join('appman' + bit.EXE), 'install', 'enable', 'start'])
         if (bit.platform.os == 'win') {
             Cmd([bit.prefixes.bin.join('appwebMonitor' + bit.EXE)], {detach: true})
