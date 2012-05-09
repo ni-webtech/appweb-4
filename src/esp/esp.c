@@ -21,9 +21,13 @@ typedef struct App {
     char        *configFile;
     char        *pathEnv;
     char        *database;              /* Database provider "mdb" | "sqlite" */
-    char        *targetPlatform;        /* Target platform os-arch (lower) for cross compilation */
-    char        *targetOs;              /* Target operating system for cross compilation (lower) */
-    char        *targetArch;            /* Target host architecture for cross compilation (lower) */
+
+    //  MOB - just store targetOut and crack the rest? -- same in Appweb.h
+    char        *targetOut;             /* Target output directory os-arch-profile (lower) */
+    char        *targetProfile;         /* Target platform os-arch (lower) */
+    char        *targetPlatform;        /* Target platform os-arch (lower) */
+    char        *targetOs;              /* Target operating system (lower) */
+    char        *targetArch;            /* Target host architecture (lower) */
     char        *listen;
 
     char        *currentDir;            /* Initial starting current directory */
@@ -55,7 +59,6 @@ typedef struct App {
     int         minified;               /* Use minified JS files */
     int         overwrite;              /* Overwrite existing files if required */
     int         quiet;                  /* Don't trace progress */
-    int         release;                /* Compile in release mode without debug symbols */
 } App;
 
 static App       *app;                  /* Top level application object */
@@ -272,7 +275,7 @@ int main(int argc, char **argv)
 {
     Mpr     *mpr;
     cchar   *argp, *logSpec, *path;
-    char    *arch;
+    char    *rest;
     int     argind, rc;
 
     if ((mpr = mprCreate(argc, argv, 0)) == NULL) {
@@ -297,7 +300,7 @@ int main(int argc, char **argv)
         if (*argp != '-') {
             break;
         }
-#if UNUSED || DEPRECATED || 1
+#if UNUSED || DEPRECATED
         if (smatch(argp, "--arch")) {
             if (argind >= argc) {
                 usageError();
@@ -306,7 +309,7 @@ int main(int argc, char **argv)
             }
 #endif
 
-        } else if (smatch(argp, "--chdir")) {
+        if (smatch(argp, "--chdir")) {
             if (argind >= argc) {
                 usageError();
             } else {
@@ -370,9 +373,20 @@ int main(int argc, char **argv)
         } else if (smatch(argp, "--overwrite")) {
             app->overwrite = 1;
 
+        } else if (smatch(argp, "--out")) {
+            if (argind >= argc) {
+                usageError();
+            } else {
+                app->targetOut = slower(argv[++argind]);
+                app->targetOs = stok(sclone(app->targetPlatform), "-", &rest);
+                app->targetArch = sclone(stok(NULL, "-", &rest));
+                app->targetProfile = sclone(rest);
+            }
+
         } else if (smatch(argp, "--quiet") || smatch(argp, "-q")) {
             app->quiet = 1;
 
+#if UNUSED
         } else if (smatch(argp, "--platform")) {
             if (argind >= argc) {
                 usageError();
@@ -381,9 +395,7 @@ int main(int argc, char **argv)
                 app->targetOs = stok(sclone(app->targetPlatform), "-", &arch);
                 app->targetArch = sclone(arch);
             }
-
-        } else if (smatch(argp, "--release")) {
-            app->release = 1;
+#endif
 
         } else if (smatch(argp, "--routeName")) {
             if (argind >= argc) {
@@ -667,17 +679,20 @@ static void readConfig()
     appweb = app->appweb;
     appweb->skipModules = 1;
     http = app->appweb->http;
-    if (app->targetOs) {
-        appweb->targetOs = app->targetOs;
-    }
     if (app->targetArch) {
         appweb->targetArch = app->targetArch;
     }
+    if (app->targetOs) {
+        appweb->targetOs = app->targetOs;
+    }
+    if (app->targetOut) {
+        appweb->targetOut = app->targetOut;
+    }
+    if (app->targetProfile) {
+        appweb->targetProfile = app->targetProfile;
+    }
     if (app->targetPlatform) {
         appweb->targetPlatform = app->targetPlatform;
-    }
-    if (app->release) {
-        appweb->release = app->release;
     }
     findConfigFile();
     if (app->error) {
@@ -1661,8 +1676,7 @@ static void usageError(Mpr *mpr)
     "    --log logFile:level    # Log to file file at verbosity level\n"
     "    --overwrite            # Overwrite existing files \n"
     "    --quiet                # Don't emit trace \n"
-    "    --platform os-arch     # Target O/S-architecture (win-x86)\n"
-    "    --release              # Compile in release mode (optimized)\n"
+    "    --out os-arch-profile  # Target output configuration (linux-ppc-debug)\n"
     "    --routeName name       # Route name in appweb.conf to use \n"
     "    --routePrefix prefix   # Route prefix in appweb.conf to use \n"
     "    --verbose              # Emit verbose trace \n"
