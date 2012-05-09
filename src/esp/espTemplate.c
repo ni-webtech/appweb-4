@@ -251,6 +251,7 @@ static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *mod
 bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, int isView)
 {
     MprFile     *fp;
+    MaAppweb    *appweb;
     HttpRx      *rx;
     HttpRoute   *route;
     EspRoute    *eroute;
@@ -261,6 +262,7 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
     rx = conn->rx;
     route = rx->route;
     eroute = route->eroute;
+    appweb = MPR->appwebService;
     layout = 0;
 
     if (isView) {
