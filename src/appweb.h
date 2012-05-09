@@ -42,7 +42,8 @@ struct MaServer;
     @stability Evolving
     @defgroup Appweb Appweb
     @see Http maAddServer maApplyChangedGroup maApplyChangedUser maCreateAppweb maGetUserGroup maLoadModule 
-        maLookupServer maMatchDir maParseInit maSetDefaultServer maSetHttpGroup maSetHttpUser maStartAppweb maStopAppweb 
+        maLookupServer maMatchDir maParseInit maParseOut maSetDefaultServer maSetHttpGroup maSetHttpUser maStartAppweb
+        maStopAppweb 
  */
 typedef struct MaAppweb {
     struct MaServer     *defaultServer;         /**< Default server object */
@@ -51,11 +52,7 @@ typedef struct MaAppweb {
     Http                *http;                  /**< Http service object */
     char                *user;                  /**< O/S application user name */
     char                *group;                 /**< O/S application group name */
-    char                *targetArch;            /**< Target CPU architecture (lower case) */
-    char                *targetOs;              /**< Target operating system (lower case) */
-    char                *targetPlatform;        /**< Target platform os-arch (lower case) */
-    char                *targetProfile;         /**< Target profile (debug|release|...) */
-    char                *targetOut;             /**< Target output directory os-arch-profile (lower case) */
+    char                *out;                   /**< Output directory os-arch-profile (lower case) */
     int                 uid;                    /**< User Id */
     int                 gid;                    /**< Group Id */
     int                 userChanged;            /**< User name changed */
@@ -146,6 +143,16 @@ extern int maMatchDir(HttpConn *conn, HttpRoute *route, int direction);
     @internal
  */
 extern int maParseInit(MaAppweb *appweb);
+
+/**
+    Parse an output directory string
+    @param out The output directory. Must be of the form: os-arch-profile
+    @param os Parsed O/S portion
+    @param arch Parsed architecture portion
+    @param profile Parsed profile portion
+    @return Zero if successful, otherwise a negative Mpr error code.
+ */
+extern int maParseOut(cchar *out, cchar **os, cchar **arch, cchar **profile);
 
 /**
     Set the default server

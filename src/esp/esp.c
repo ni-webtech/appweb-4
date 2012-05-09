@@ -21,15 +21,8 @@ typedef struct App {
     char        *configFile;
     char        *pathEnv;
     char        *database;              /* Database provider "mdb" | "sqlite" */
-
-    //  MOB - just store targetOut and crack the rest? -- same in Appweb.h
-    char        *targetOut;             /* Target output directory os-arch-profile (lower) */
-    char        *targetProfile;         /* Target platform os-arch (lower) */
-    char        *targetPlatform;        /* Target platform os-arch (lower) */
-    char        *targetOs;              /* Target operating system (lower) */
-    char        *targetArch;            /* Target host architecture (lower) */
+    char        *out;                   /* Target output directory os-arch-profile (lower) */
     char        *listen;
-
     char        *currentDir;            /* Initial starting current directory */
     char        *libDir;                /* Appweb lib directory */
     char        *wwwDir;                /* Appweb esp-www default files directory */
@@ -274,7 +267,7 @@ static bool validTarget(cchar *target);
 int main(int argc, char **argv)
 {
     Mpr     *mpr;
-    cchar   *argp, *logSpec, *path;
+    cchar   *argp, *logSpec, *path, *junk;
     char    *rest;
     int     argind, rc;
 
@@ -300,15 +293,6 @@ int main(int argc, char **argv)
         if (*argp != '-') {
             break;
         }
-#if UNUSED || DEPRECATED
-        if (smatch(argp, "--arch")) {
-            if (argind >= argc) {
-                usageError();
-            } else {
-                app->targetArch = slower(argv[++argind]);
-            }
-#endif
-
         if (smatch(argp, "--chdir")) {
             if (argind >= argc) {
                 usageError();
@@ -344,15 +328,6 @@ int main(int argc, char **argv)
         } else if (smatch(argp, "--flat") || smatch(argp, "-f")) {
             app->flat = 1;
 
-#if UNUSED || DEPRECATED
-        } else if (smatch(argp, "--host")) {
-            if (argind >= argc) {
-                usageError();
-            } else {
-                app->targetOs = supper(argv[++argind]);
-            }
-#endif
-
         } else if (smatch(argp, "--listen") || smatch(argp, "-l")) {
             if (argind >= argc) {
                 usageError();
@@ -377,25 +352,15 @@ int main(int argc, char **argv)
             if (argind >= argc) {
                 usageError();
             } else {
-                app->targetOut = slower(argv[++argind]);
-                app->targetOs = stok(sclone(app->targetPlatform), "-", &rest);
-                app->targetArch = sclone(stok(NULL, "-", &rest));
-                app->targetProfile = sclone(rest);
+                app->out = slower(argv[++argind]);
+                if (maParseOut(app->out, &junk, &junk, &junk) < 0) {
+                    fail("Bad output directory. Must be of the form: os-arch-profile.");
+                    usageError();
+                }
             }
 
         } else if (smatch(argp, "--quiet") || smatch(argp, "-q")) {
             app->quiet = 1;
-
-#if UNUSED
-        } else if (smatch(argp, "--platform")) {
-            if (argind >= argc) {
-                usageError();
-            } else {
-                app->targetPlatform = slower(argv[++argind]);
-                app->targetOs = stok(sclone(app->targetPlatform), "-", &arch);
-                app->targetArch = sclone(arch);
-            }
-#endif
 
         } else if (smatch(argp, "--routeName")) {
             if (argind >= argc) {
@@ -464,6 +429,7 @@ static void manageApp(App *app, int flags)
         mprMark(app->listen);
         mprMark(app->module);
         mprMark(app->mpr);
+        mprMark(app->out);
         mprMark(app->pathEnv);
         mprMark(app->routes);
         mprMark(app->routeName);
@@ -471,9 +437,6 @@ static void manageApp(App *app, int flags)
         mprMark(app->server);
         mprMark(app->serverRoot);
         mprMark(app->source);
-        mprMark(app->targetArch);
-        mprMark(app->targetOs);
-        mprMark(app->targetPlatform);
         mprMark(app->targets);
         mprMark(app->wwwDir);
     }
@@ -676,23 +639,11 @@ static void readConfig()
         fail("Can't create HTTP service for %s", mprGetAppName());
         return;
     }
-    appweb = app->appweb;
+    appweb = MPR->appwebService = app->appweb;
     appweb->skipModules = 1;
     http = app->appweb->http;
-    if (app->targetArch) {
-        appweb->targetArch = app->targetArch;
-    }
-    if (app->targetOs) {
-        appweb->targetOs = app->targetOs;
-    }
-    if (app->targetOut) {
-        appweb->targetOut = app->targetOut;
-    }
-    if (app->targetProfile) {
-        appweb->targetProfile = app->targetProfile;
-    }
-    if (app->targetPlatform) {
-        appweb->targetPlatform = app->targetPlatform;
+    if (app->out) {
+        appweb->out = app->out;
     }
     findConfigFile();
     if (app->error) {
@@ -983,6 +934,7 @@ static bool validTarget(cchar *target)
 static void compileItems(HttpRoute *route) 
 {
     EspRoute    *eroute;
+    MprDirEntry *dp;
     cchar       *path;
     int         next;
 
@@ -991,7 +943,8 @@ static void compileItems(HttpRoute *route)
     if (eroute->controllersDir) {
         mprAssert(eroute);
         app->files = mprGetPathFiles(eroute->controllersDir, MPR_PATH_DESCEND);
-        for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+        for (next = 0; (dp = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+            path = dp->name;
             if (!validTarget(path)) {
                 continue;
             }
@@ -1002,7 +955,8 @@ static void compileItems(HttpRoute *route)
     }
     if (eroute->viewsDir) {
         app->files = mprGetPathFiles(eroute->viewsDir, MPR_PATH_DESCEND);
-        for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+        for (next = 0; (dp = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+            path = dp->name;
             if (!validTarget(path)) {
                 continue;
             }
@@ -1013,7 +967,8 @@ static void compileItems(HttpRoute *route)
     }
     if (eroute->staticDir) {
         app->files = mprGetPathFiles(eroute->staticDir, MPR_PATH_DESCEND);
-        for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+        for (next = 0; (dp = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+            path = dp->name;
             if (!validTarget(path)) {
                 continue;
             }
@@ -1025,7 +980,8 @@ static void compileItems(HttpRoute *route)
     } else {
         /* Non-MVC */
         app->files = mprGetPathFiles(route->dir, MPR_PATH_DESCEND);
-        for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+        for (next = 0; (dp = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+            path = dp->name;
             if (!validTarget(path)) {
                 continue;
             }
@@ -1040,6 +996,7 @@ static void compileItems(HttpRoute *route)
 static void compileFlat(HttpRoute *route)
 {
     EspRoute    *eroute;
+    MprDirEntry *dp;
     char        *path, *line;
     int         next;
     
@@ -1059,24 +1016,28 @@ static void compileFlat(HttpRoute *route)
     if (route->sourceName) {
         /* MVC */
         app->files = mprGetPathFiles(eroute->controllersDir, MPR_PATH_DESCEND);
-        for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+        for (next = 0; (dp = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+            path = dp->name;
             if (smatch(mprGetPathExt(path), "c")) {
                 compileFile(route, path, ESP_CONTROLLER);
             }
         }
         app->files = mprGetPathFiles(eroute->viewsDir, MPR_PATH_DESCEND);
-        for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+        for (next = 0; (dp = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+            path = dp->name;
             compileFile(route, path, ESP_VIEW);
         }
         app->files = mprGetPathFiles(eroute->staticDir, MPR_PATH_DESCEND);
-        for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+        for (next = 0; (dp = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+            path = dp->name;
             if (smatch(mprGetPathExt(path), "esp")) {
                 compileFile(route, path, ESP_PAGE);
             }
         }
     } else {
         app->files = mprGetPathFiles(route->dir, MPR_PATH_DESCEND);
-        for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+        for (next = 0; (dp = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+            path = dp->name;
             if (smatch(mprGetPathExt(path), "esp")) {
                 compileFile(route, path, ESP_PAGE);
             }
@@ -1676,7 +1637,7 @@ static void usageError(Mpr *mpr)
     "    --log logFile:level    # Log to file file at verbosity level\n"
     "    --overwrite            # Overwrite existing files \n"
     "    --quiet                # Don't emit trace \n"
-    "    --out os-arch-profile  # Target output configuration (linux-ppc-debug)\n"
+    "    --out os-arch-profile  # Cross-compile output configuration\n"
     "    --routeName name       # Route name in appweb.conf to use \n"
     "    --routePrefix prefix   # Route prefix in appweb.conf to use \n"
     "    --verbose              # Emit verbose trace \n"

@@ -28,19 +28,18 @@
 static int getEspToken(EspParse *parse);
 static cchar *getDebug(MaAppweb *appweb);
 static cchar *getEnvString(cchar *key, cchar *defaultValue);
-static cchar *getShobjExt(MaAppweb *appweb);
-static cchar *getShlibExt(MaAppweb *appweb);
-static cchar *getCompilerName(MaAppweb *appweb);
-static cchar *getCompilerPath(MaAppweb *appweb);
-static cchar *getLibs(MaAppweb *appweb);
-static cchar *getMappedArch(MaAppweb *appweb);
-static cchar *getObjExt(MaAppweb *appweb);
+static cchar *getShobjExt(cchar *os);
+static cchar *getShlibExt(cchar *os);
+static cchar *getCompilerName(cchar *os, cchar *arch);
+static cchar *getCompilerPath(cchar *os, cchar *arch);
+static cchar *getLibs(cchar *os);
+static cchar *getMappedArch(cchar *arch);
+static cchar *getObjExt(cchar *os);
 static cchar *getWinVisualStudio(MaAppweb *appweb);
 static cchar *getWinSdk(MaAppweb *appweb);
 static bool matchToken(cchar **str, cchar *token);
 
 /************************************* Code ***********************************/
-
 /*
     Tokens:
     ARCH        Build architecture (64)
@@ -63,7 +62,7 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
 {
     MprBuf      *buf;
     MaAppweb    *appweb;
-    cchar       *cp, *outputModule, *configDir;
+    cchar       *cp, *outputModule, *configDir, *os, *arch, *profile;
     char        *tmp;
     
     if (command == 0) {
@@ -71,12 +70,13 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
     }
     appweb = MPR->appwebService;
     outputModule = mprTrimPathExt(module);
+    maParseOut(appweb->out, &os, &arch, &profile);
 
     if (mprSamePath(mprGetAppDir(), BLD_BIN_PREFIX)) {
         configDir = mprGetAppDir();
     } else {
-        //  MOB - if targetOut is a path, then this wont join properly
-        configDir = mprNormalizePath(sfmt("%s/../../%s", mprGetAppDir(), appweb->targetOut)); 
+        //  MOB - if out is a path, then this wont join properly
+        configDir = mprNormalizePath(sfmt("%s/../../%s", mprGetAppDir(), appweb->out)); 
     }
     buf = mprCreateBuf(-1, -1);
 
@@ -84,19 +84,15 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
 		if (*cp == '$') {
             if (matchToken(&cp, "${ARCH}")) {
                 /* Target architecture (x86|mips|arm|x64) */
-                mprPutStringToBuf(buf, appweb->targetArch);
+                mprPutStringToBuf(buf, arch);
 
             } else if (matchToken(&cp, "${OS}")) {
                 /* Target architecture (freebsd|linux|macosx|win|vxworks) */
-                mprPutStringToBuf(buf, appweb->targetOs);
-
-            } else if (matchToken(&cp, "${PLATFORM}")) {
-                /* Target platform (os-arch)) */
-                mprPutStringToBuf(buf, appweb->targetPlatform);
+                mprPutStringToBuf(buf, os);
 
             } else if (matchToken(&cp, "${GCC_ARCH}")) {
                 /* Target architecture mapped to GCC mtune|mcpu values */
-                mprPutStringToBuf(buf, getMappedArch(appweb));
+                mprPutStringToBuf(buf, getMappedArch(arch));
 
             } else if (matchToken(&cp, "${WINSDK}")) {
                 mprPutStringToBuf(buf, getWinSdk(appweb));
@@ -106,42 +102,38 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
 
             } else if (matchToken(&cp, "${CC}")) {
                 /* Compiler */
-                mprPutStringToBuf(buf, getCompilerPath(appweb));
+                mprPutStringToBuf(buf, getCompilerPath(os, arch));
 
             } else if (matchToken(&cp, "${CCNAME}")) {
-                mprPutStringToBuf(buf, getCompilerName(appweb));
+                mprPutStringToBuf(buf, getCompilerName(os, arch));
 
             } else if (matchToken(&cp, "${INC}")) {
                 /* Include directory for the configuration */
                 mprPutStringToBuf(buf, mprJoinPath(configDir, "inc")); 
 
             } else if (matchToken(&cp, "${LIBPATH}")) {
-                /* Library directory for Appweb libraries for the target platform */
+                /* Library directory for Appweb libraries for the target */
                 mprPutStringToBuf(buf, mprJoinPath(configDir, BLD_LIB_NAME)); 
 
             } else if (matchToken(&cp, "${LIBS}")) {
                 /* Required libraries to link. These may have nested ${TOKENS} */
-                mprPutStringToBuf(buf, espExpandCommand(eroute, getLibs(appweb), source, module));
+                mprPutStringToBuf(buf, espExpandCommand(eroute, getLibs(os), source, module));
 
             } else if (matchToken(&cp, "${OBJ}")) {
                 /* Output object with extension (.o) in the cache directory */
-                mprPutStringToBuf(buf, mprJoinPathExt(outputModule, getObjExt(appweb)));
+                mprPutStringToBuf(buf, mprJoinPathExt(outputModule, getObjExt(os)));
 
             } else if (matchToken(&cp, "${MOD}")) {
                 /* Output module path in the cache without extension */
                 mprPutStringToBuf(buf, outputModule);
 
-            } else if (matchToken(&cp, "${PLATFORM}")) {
-                /* Build platform os-arch  */
-                mprPutStringToBuf(buf, appweb->targetPlatform);
-
             } else if (matchToken(&cp, "${SHLIB}")) {
                 /* .lib */
-                mprPutStringToBuf(buf, getShlibExt(appweb));
+                mprPutStringToBuf(buf, getShlibExt(os));
 
             } else if (matchToken(&cp, "${SHOBJ}")) {
                 /* .dll, .so, .dylib */
-                mprPutStringToBuf(buf, getShobjExt(appweb));
+                mprPutStringToBuf(buf, getShobjExt(os));
 
             } else if (matchToken(&cp, "${SRC}")) {
                 /* View (already parsed into C code) or controller source */
@@ -311,7 +303,7 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
         /*
             MAC needs the object for debug information
          */
-        mprDeletePath(mprJoinPathExt(mprTrimPathExt(module), getObjExt(appweb)));
+        mprDeletePath(mprJoinPathExt(mprTrimPathExt(module), getObjExt(os)));
 #endif
     }
 #if BLD_WIN_LIKE
@@ -320,7 +312,7 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
             Windows leaves intermediate object in the current directory
          */
         cchar   *obj;
-        obj = mprReplacePathExt(mprGetPathBase(csource), getObjExt(appweb));
+        obj = mprReplacePathExt(mprGetPathBase(csource), getObjExt(os));
         if (mprPathExists(obj, F_OK)) {
             mprDeletePath(obj);
         }
@@ -750,11 +742,11 @@ static cchar *getEnvString(cchar *key, cchar *defaultValue)
 }
 
 
-static cchar *getShobjExt(MaAppweb *appweb)
+static cchar *getShobjExt(cchar *os)
 {
-    if (smatch(appweb->targetOs, "macosx")) {
+    if (smatch(os, "macosx")) {
         return ".dylib";
-    } else if (smatch(appweb->targetOs, "win")) {
+    } else if (smatch(os, "win")) {
         return ".dll";
     } else {
         return ".so";
@@ -762,11 +754,11 @@ static cchar *getShobjExt(MaAppweb *appweb)
 }
 
 
-static cchar *getShlibExt(MaAppweb *appweb)
+static cchar *getShlibExt(cchar *os)
 {
-    if (smatch(appweb->targetOs, "macosx")) {
+    if (smatch(os, "macosx")) {
         return ".dylib";
-    } else if (smatch(appweb->targetOs, "win")) {
+    } else if (smatch(os, "win")) {
         return ".lib";
     } else {
         return ".so";
@@ -774,11 +766,11 @@ static cchar *getShlibExt(MaAppweb *appweb)
 }
 
 
-static cchar *getObjExt(MaAppweb *appweb)
+static cchar *getObjExt(cchar *os)
 {
-    if (smatch(appweb->targetOs, "macosx")) {
+    if (smatch(os, "macosx")) {
         return ".dylib";
-    } else if (smatch(appweb->targetOs, "win")) {
+    } else if (smatch(os, "win")) {
         return ".dll";
     } else {
         return ".so";
@@ -786,13 +778,12 @@ static cchar *getObjExt(MaAppweb *appweb)
 }
 
 
-static cchar *getCompilerName(MaAppweb *appweb) 
+static cchar *getCompilerName(cchar *os, cchar *arch)
 {
-    cchar       *arch, *name;
+    cchar       *name;
 
     name = "gcc";
-    if (smatch(appweb->targetOs, "vxworks")) {
-        arch = appweb->targetArch;
+    if (smatch(os, "vxworks")) {
         if (smatch(arch, "i586") || smatch(arch, "i686") || smatch(arch, "pentium")) {
             name = "ccpentium";
         } else if (scontains(arch, "86", -1)) {
@@ -808,7 +799,7 @@ static cchar *getCompilerName(MaAppweb *appweb)
         } else if (scontains(arch, "mips", -1)) {
             name = "ccmips";
         }
-    } else if (smatch(appweb->targetOs, "macosx")) {
+    } else if (smatch(os, "macosx")) {
         name = "clang";
     }
     return name;
@@ -819,19 +810,19 @@ static cchar *getDebug(MaAppweb *appweb)
 {
     int     debug;
 
-    debug = sends(appweb->targetOut, "-debug");
-    if (smatch(appweb->targetOs, "win")) {
+    debug = sends(appweb->out, "-debug");
+    if (scontains(appweb->out, "-win-", -1)) {
         return (debug) ? "-Zi -Od" : "-O";
     }
     return (debug) ? "-g" : "-O2";
 }
 
 
-static cchar *getLibs(MaAppweb *appweb)
+static cchar *getLibs(cchar *os)
 {
     cchar       *libs;
 
-    if (smatch(appweb->targetOs, "win")) {
+    if (smatch(os, "win")) {
         libs = "\"${LIBPATH}\\mod_esp${SHLIB}\" \"${LIBPATH}\\libappweb.lib\" \"${LIBPATH}\\libhttp.lib\" \"${LIBPATH}\\libmpr.lib\" \"${LIBPATH}\\libmprssl.lib\"";
     } else {
         libs = "${LIBPATH}/mod_esp${SHOBJ} -lappweb -lpcre -lhttp -lmpr -lmprssl -lpthread -lm";
@@ -872,11 +863,8 @@ static bool matchToken(cchar **str, cchar *token)
 
 
 //  MOB order
-static cchar *getMappedArch(MaAppweb *appweb)
+static cchar *getMappedArch(cchar *arch)
 {
-    cchar       *arch;
-
-    arch = appweb->targetArch;
     if (smatch(arch, "x64")) {
         arch = "x86_64";
     } else if (smatch(arch, "x86")) {
@@ -911,7 +899,7 @@ static cchar *getWinVisualStudio(MaAppweb *appweb)
 }
 
 
-static cchar *getCompilerPath(MaAppweb *appweb)
+static cchar *getCompilerPath(cchar *os, cchar *arch)
 {
     cchar   *path;
 #if WIN
@@ -934,7 +922,7 @@ static cchar *getCompilerPath(MaAppweb *appweb)
     path = mprJoinPath(mprGetPathParent(mprGetPathParent(getenv("VS100COMNTOOLS"))), "VC/bin/cl.exe");
     path = mprGetPortablePath(path);
 #else
-    path = getCompilerName(appweb);
+    path = getCompilerName(os, arch);
 #endif
     return path;
 }

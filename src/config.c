@@ -1947,8 +1947,27 @@ bool maValidateServer(MaServer *server)
 }
 
 
+int maParseOut(cchar *out, cchar **os, cchar **arch, cchar **profile)
+{
+    char   *rest;
+
+    if (out == 0 || *out == '\0') {
+        return MPR_ERR_BAD_ARGS;
+    }
+    *os = stok(sclone(out), "-", &rest);
+    *arch = sclone(stok(NULL, "-", &rest));
+    *profile = sclone(rest);
+    if (*os == 0 || *arch == 0 || *profile == 0 ||
+        **os == '\0' || **arch == '\0' || **profile == '\0') {
+        return MPR_ERR_BAD_ARGS;
+    }
+    return 0;
+}
+
+
 static bool conditionalDefinition(MaState *state, cchar *key)
 {
+    cchar   *arch, *os, *profile;
     int     result, not;
 
     not = (*key == '!') ? 1 : 0;
@@ -1957,19 +1976,18 @@ static bool conditionalDefinition(MaState *state, cchar *key)
     }
     result = 0;
 
-    if (scasematch(key, state->appweb->targetOs)) {
+    maParseOut(state->appweb->out, &os, &arch, &profile);
+
+    if (scasematch(key, arch)) {
         result = 1;
 
-    } else if (scasematch(key, state->appweb->targetArch)) {
+    } else if (scasematch(key, os)) {
         result = 1;
 
-    } else if (scasematch(key, state->appweb->targetOut)) {
+    } else if (scasematch(key, profile)) {
         result = 1;
 
-    } else if (scasematch(key, state->appweb->targetPlatform)) {
-        result = 1;
-
-    } else if (scasematch(key, state->appweb->targetProfile)) {
+    } else if (scasematch(key, state->appweb->out)) {
         result = 1;
 
 #if BLD_DEBUG
