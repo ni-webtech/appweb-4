@@ -54,8 +54,8 @@ typedef struct MaAppweb {
     char                *targetArch;            /**< Target CPU architecture (lower case) */
     char                *targetOs;              /**< Target operating system (lower case) */
     char                *targetPlatform;        /**< Target platform os-arch (lower case) */
-    char                *targetConfiguration;   /**< Target configuration os-arch-profile (lower case) */
-    int                 release;                /**< Build loadable content in release mode */
+    char                *targetProfile;         /**< Target profile (debug|release|...) */
+    char                *targetOut;             /**< Target output directory os-arch-profile (lower case) */
     int                 uid;                    /**< User Id */
     int                 gid;                    /**< Group Id */
     int                 userChanged;            /**< User name changed */

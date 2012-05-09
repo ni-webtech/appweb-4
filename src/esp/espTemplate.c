@@ -51,7 +51,7 @@ static bool matchToken(cchar **str, cchar *token);
     LIB         Library directory (out/lib, xcode/VS: out/bin)
     LIBS        Libraries required to link with ESP
     OBJ         Name of compiled source (out/lib/view-MD5.o)
-    OUT         Output module (view_MD5.dylib)
+    MOD         Output module (view_MD5.dylib)
     SHLIB       Host Shared library (.lib, .so)
     SHOBJ       Host Shared Object (.dll, .so)
     SRC         Source code for view or controller (already templated)
@@ -72,14 +72,11 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
     appweb = MPR->appwebService;
     outputModule = mprTrimPathExt(module);
 
-#if UNUSED
-    cchar *cacheDir = mprGetPathParent(outputModule);
-#endif
-
     if (mprSamePath(mprGetAppDir(), BLD_BIN_PREFIX)) {
         configDir = mprGetAppDir();
     } else {
-        configDir = mprNormalizePath(sfmt("%s/../../%s", mprGetAppDir(), appweb->targetConfiguration)); 
+        //  MOB - if targetOut is a path, then this wont join properly
+        configDir = mprNormalizePath(sfmt("%s/../../%s", mprGetAppDir(), appweb->targetOut)); 
     }
     buf = mprCreateBuf(-1, -1);
 
@@ -130,8 +127,8 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
                 /* Output object with extension (.o) in the cache directory */
                 mprPutStringToBuf(buf, mprJoinPathExt(outputModule, getObjExt(appweb)));
 
-            } else if (matchToken(&cp, "${OUT}")) {
-                /* Output module path in the cache */
+            } else if (matchToken(&cp, "${MOD}")) {
+                /* Output module path in the cache without extension */
                 mprPutStringToBuf(buf, outputModule);
 
             } else if (matchToken(&cp, "${PLATFORM}")) {
@@ -820,14 +817,13 @@ static cchar *getCompilerName(MaAppweb *appweb)
 
 static cchar *getDebug(MaAppweb *appweb)
 {
-    cchar       *debug;
+    int     debug;
 
+    debug = sends(appweb->targetOut, "-debug");
     if (smatch(appweb->targetOs, "win")) {
-        debug = (appweb->release) ? "-O" : "-Zi -Od";
-    } else {
-        debug = (appweb->release) ? "-O2" : "-g";
+        return (debug) ? "-Zi -Od" : "-O";
     }
-    return debug;
+    return (debug) ? "-g" : "-O2";
 }
 
 

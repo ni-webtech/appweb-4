@@ -1963,10 +1963,13 @@ static bool conditionalDefinition(MaState *state, cchar *key)
     } else if (scasematch(key, state->appweb->targetArch)) {
         result = 1;
 
+    } else if (scasematch(key, state->appweb->targetOut)) {
+        result = 1;
+
     } else if (scasematch(key, state->appweb->targetPlatform)) {
         result = 1;
 
-    } else if (scasematch(key, state->appweb->targetConfiguration)) {
+    } else if (scasematch(key, state->appweb->targetProfile)) {
         result = 1;
 
 #if BLD_DEBUG
