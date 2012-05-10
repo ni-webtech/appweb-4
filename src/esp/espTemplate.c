@@ -73,7 +73,7 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
     maParseOut(appweb->out, &os, &arch, &profile);
 
     if (mprSamePath(mprGetAppDir(), BLD_BIN_PREFIX)) {
-        configDir = mprGetAppDir();
+        configDir = mprGetPathParent(mprGetAppDir());
     } else {
         //  MOB - if out is a path, then this wont join properly
         configDir = mprNormalizePath(sfmt("%s/../../%s", mprGetAppDir(), appweb->out)); 
