@@ -32,7 +32,7 @@ Bit.load({
         'esp-appweb.conf': {
             type: 'file',
             path: '${LIB}/esp-appweb.conf',
-            files: [ 'appweb.conf' ],
+            files: [ 'esp-appweb.conf' ],
         },
 	},
 })
