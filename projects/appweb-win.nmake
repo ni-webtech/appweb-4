@@ -39,6 +39,7 @@ all: prep \
         $(CONFIG)\bin\esp.exe \
         $(CONFIG)\bin\esp.conf \
         $(CONFIG)\bin\esp-www \
+        $(CONFIG)\bin\esp-appweb.conf \
         $(CONFIG)\bin\mod_cgi.dll \
         $(CONFIG)\bin\auth.exe \
         $(CONFIG)\bin\cgiProgram.exe \
@@ -81,6 +82,7 @@ clean:
 	-if exist $(CONFIG)\bin\esp.exe del /Q $(CONFIG)\bin\esp.exe
 	-if exist $(CONFIG)\bin\esp.conf del /Q $(CONFIG)\bin\esp.conf
 	-if exist $(CONFIG)\bin\esp-www del /Q $(CONFIG)\bin\esp-www
+	-if exist $(CONFIG)\bin\esp-appweb.conf del /Q $(CONFIG)\bin\esp-appweb.conf
 	-if exist $(CONFIG)\bin\mod_cgi.dll del /Q $(CONFIG)\bin\mod_cgi.dll
 	-if exist $(CONFIG)\bin\auth.exe del /Q $(CONFIG)\bin\auth.exe
 	-if exist $(CONFIG)\bin\cgiProgram.exe del /Q $(CONFIG)\bin\cgiProgram.exe
@@ -398,6 +400,10 @@ $(CONFIG)\bin\esp-www:
 	if not exist $(CONFIG)\bin\esp-www md $(CONFIG)\bin\esp-www
 	xcopy /S /Y src\esp\www $(CONFIG)\bin\esp-www
 
+$(CONFIG)\bin\esp-appweb.conf: 
+	-if exist $(CONFIG)\bin\esp-appweb.conf del /Q $(CONFIG)\bin\esp-appweb.conf
+	copy /Y src\esp\esp-appweb.conf $(CONFIG)\bin\esp-appweb.conf
+
 $(CONFIG)\obj\cgiHandler.obj: \
         src\modules\cgiHandler.c \
         $(CONFIG)\inc\bit.h
@@ -492,7 +498,8 @@ $(CONFIG)\bin\testAppweb.exe:  \
         $(CONFIG)\obj\testHttp.obj
 	"$(LD)" -out:$(CONFIG)\bin\testAppweb.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\testAppweb.obj $(CONFIG)\obj\testHttp.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
-test\cgi-bin\testScript: 
+test\cgi-bin\testScript:  \
+        $(CONFIG)\bin\cgiProgram.exe
 #  Omit build script /Users/mob/git/appweb/test/cgi-bin/testScript
 
 test\web\caching\cache.cgi: 
@@ -501,7 +508,8 @@ test\web\caching\cache.cgi:
 test\web\basic\basic.cgi: 
 #  Omit build script /Users/mob/git/appweb/test/web/basic/basic.cgi
 
-test\cgi-bin\cgiProgram.exe: 
+test\cgi-bin\cgiProgram.exe:  \
+        $(CONFIG)\bin\cgiProgram.exe
 #  Omit build script /Users/mob/git/appweb/test/cgi-bin/cgiProgram.exe
 
 $(CONFIG)\obj\removeFiles.obj: \

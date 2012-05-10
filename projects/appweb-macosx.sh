@@ -133,6 +133,9 @@ cp -r src/esp/esp.conf ${CONFIG}/bin/esp.conf
 rm -rf ${CONFIG}/bin/esp-www
 cp -r src/esp/www ${CONFIG}/bin/esp-www
 
+rm -rf ${CONFIG}/bin/esp-appweb.conf
+cp -r src/esp/esp-appweb.conf ${CONFIG}/bin/esp-appweb.conf
+
 ${CC} -c -o ${CONFIG}/obj/cgiHandler.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/modules/cgiHandler.c
 
 ${CC} -dynamiclib -o ${CONFIG}/bin/mod_cgi.dylib -arch x86_64 ${LDFLAGS} -compatibility_version 4.0.0 -current_version 4.0.0 ${LIBPATHS} -install_name @rpath/mod_cgi.dylib ${CONFIG}/obj/cgiHandler.o ${LIBS} -lappweb -lhttp -lmpr -lpcre -lmprssl

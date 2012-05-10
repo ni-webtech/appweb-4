@@ -95,6 +95,13 @@
   </Link>
   </ItemDefinitionGroup>
 
+<ItemGroup>
+  <ProjectReference Include="cgiProgram.vcxproj">
+  <Project>23d633d5-5b77-4ac1-88c4-0cbe6ec41b81</Project>
+  <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+  </ProjectReference>
+</ItemGroup>
+
   <Import Project="$(VCTargetsPath)Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

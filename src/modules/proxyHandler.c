@@ -24,7 +24,7 @@
 
 #include    "appweb.h"
 
-#if BLD_FEATURE_PROXY || 1
+#if BLD_FEATURE_PROXY
 /************************************ Locals ***********************************/
 
 /*********************************** Forwards *********************************/
@@ -107,7 +107,7 @@ static void readyProxy(HttpQueue *q)
 
 static int sofar;
 
-static void outputProxy(HttpQueue *q)
+static void processProxy(HttpQueue *q)
 {
     int     count = 50000;
     
@@ -125,7 +125,7 @@ static void outputProxy(HttpQueue *q)
 #endif
     
     
-#if USE1 || 1
+#if USE1
     httpWrite(q, "%d aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n", sofar++);
     if (sofar == count) {
         httpFinalize(q->conn);
@@ -166,6 +166,10 @@ static void outputProxy(HttpQueue *q)
         httpFinalize(q->conn);
         sofar = 0;
     }
+#endif
+
+#if USE4 || 1
+    httpStealConn(q->conn);
 #endif
 }
 
@@ -251,7 +255,7 @@ int maProxyHandlerInit(Http *http, MprModule *module)
     handler->outgoingService = outgoingProxyService;
     handler->start = startProxy; 
     handler->ready = readyProxy; 
-    handler->output = outputProxy; 
+    handler->process = processProxy; 
 
     appweb = httpGetContext(http);
     maAddDirective(appweb, "Proxy", proxyDirective);

@@ -961,7 +961,7 @@ typedef void (*HttpQueueService)(struct HttpQueue *q);
         into a single packet on the service queue.
     @stability Evolving
     @defgroup HttpQueue HttpQueue
-    @see HttpConn HttpPacket HttpQueue httpDisableQueue httpDiscardData httpEnableQueue httpFlushQueue httpGetQueueRoom
+    @see HttpConn HttpPacket HttpQueue httpDisableQueue httpDiscardQueueData httpEnableQueue httpFlushQueue httpGetQueueRoom
         httpIsEof httpIsPacketTooBig httpIsQueueEmpty httpJoinPacketForService httpJoinPackets httpOpenQueue
         httpPutBackPacket httpPutForService httpPutPacket httpPutPacketToNext httpRemoveQueue httpResizePacket
         httpResumeQueue httpScheduleQueue httpSendEndPacket httpSendPackets httpServiceQueue httpSuspendQueue
@@ -1020,7 +1020,7 @@ extern void httpDisableQueue(HttpQueue *q);
     @param removePackets If "true", the data packets will be removed from the queue.
     @ingroup HttpQueue
  */
-extern void httpDiscardData(HttpQueue *q, bool removePackets);
+extern void httpDiscardQueueData(HttpQueue *q, bool removePackets);
 
 /** 
     Enable a queue after it has been disabled.
@@ -1765,7 +1765,7 @@ extern void httpSetIOCallback(struct HttpConn *conn, HttpIOCallback fn);
     @see HttpConn HttpEnvCallback HttpGetPassword HttpListenCallback HttpNotifier HttpQueue HttpRedirectCallback 
         HttpRx HttpStage HttpTx HtttpListenCallback httpCallEvent httpCloseConn 
         httpConnectorComplete httpConnTimeout httpConsumeLastRequest httpCreateConn httpCreateRxPipeline 
-        httpCreateTxPipeline httpDestroyConn httpDestroyPipeline httpDiscardTransmitData httpDisconnect 
+        httpCreateTxPipeline httpDestroyConn httpDestroyPipeline httpDiscardData httpDisconnect 
         httpEnableUpload httpError httpEvent httpGetAsync httpGetChunkSize httpGetConnContext httpGetConnHost 
         httpGetError httpGetExt httpGetKeepAliveCount httpMatchHost httpMemoryError httpPrepClientConn 
         httpPrepServerConn httpResetCredentials httpRouteRequest httpProcessHandler httpRunHandlerReady
@@ -1952,9 +1952,10 @@ extern void httpDestroyPipeline(HttpConn *conn);
 /**
     Discard buffered transmit pipeline data
     @param conn HttpConn object created via $httpCreateConn
+    @param dir Queue direction. Either HTTP_QUEUE_TX or HTTP_QUEUE_RX.
     @ingroup HttpConn
  */
-extern void httpDiscardTransmitData(HttpConn *conn);
+extern void httpDiscardData(HttpConn *conn, int dir);
 
 /**
     Disconnect the connection's socket
@@ -2287,6 +2288,9 @@ extern int httpShouldTrace(HttpConn *conn, int dir, int item, cchar *ext);
     @ingroup HttpConn
  */
 extern void httpStartPipeline(HttpConn *conn);
+
+//  MOB
+extern MprSocket *httpStealConn(HttpConn *conn);
 
 /** Internal APIs */
 extern struct HttpConn *httpAccept(struct HttpEndpoint *endpoint);
