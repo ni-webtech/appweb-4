@@ -61,6 +61,7 @@ int maParseConfig(MaServer *server, cchar *path, int flags)
     httpSetHostName(host, "default-server");
     route = httpCreateRoute(host);
     httpSetHostDefaultRoute(host, route);
+    httpSetRoutePathVar(route, "LIBDIR", mprJoinPath(server->appweb->platformDir, BLD_LIB_NAME));
 
     state = createState(server, host, route);
     state->flags = flags;

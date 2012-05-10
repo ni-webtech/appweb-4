@@ -104,19 +104,19 @@ typedef void (*EspProc)(HttpConn *conn);
     Default VxWorks environment
  */
 #ifndef WIND_BASE
-#define WIND_BASE "Not-Configured"
+#define WIND_BASE "WIND_BASE-Not-Configured"
 #endif
 #ifndef WIND_HOME
-#define WIND_HOME "Not-Configured"
+#define WIND_HOME "WIND_HOME-Not-Configured"
 #endif
 #ifndef WIND_HOST_TYPE
-#define WIND_HOST_TYPE "Not-Configured"
+#define WIND_HOST_TYPE "WIND_HOST_TYPE-Not-Configured"
 #endif
 #ifndef WIND_PLATFORM
-#define WIND_PLATFORM "Not-Configured"
+#define WIND_PLATFORM "WIND_PLATFORM-Not-Configured"
 #endif
 #ifndef WIND_GNU_PATH
-#define WIND_GNU_PATH "Not-Configured"
+#define WIND_GNU_PATH "WIND_GNU_PATH-Not-Configured"
 #endif
 
 /********************************** Parsing ***********************************/
@@ -159,7 +159,7 @@ extern void espInitHtmlOptions(Esp *esp);
  */
 typedef struct EspRoute {
     HttpRoute       *route;                 /**< Back link to the owning route */
-    MprList         *env;                   /**< Environment for compiler */
+    MprHash         *env;                   /**< Environment variables for route */
     char            *compile;               /**< Compile template */
     char            *link;                  /**< Link template */
     char            *searchPath;            /**< Search path to use when locating compiler/linker */

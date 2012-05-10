@@ -400,7 +400,6 @@ int main(int argc, char **argv)
         process(argc - argind, &argv[argind]);
     }
     rc = app->error;
-    mprLog(1, "Exit complete");
     mprDestroy(MPR_EXIT_DEFAULT);
     return rc;
 }
@@ -756,6 +755,8 @@ static int runEspCommand(HttpRoute *route, cchar *command, cchar *csource, cchar
 {
     EspRoute    *eroute;
     MprCmd      *cmd;
+    MprList     *elist;
+    MprKey      *var;
     cchar       **env;
     char        *err, *out;
 
@@ -767,8 +768,12 @@ static int runEspCommand(HttpRoute *route, cchar *command, cchar *csource, cchar
     }
     mprLog(4, "ESP command: %s\n", app->command);
     if (eroute->env) {
-        mprAddNullItem(eroute->env);
-        env = (cchar**) &eroute->env->items[0];
+        elist = mprCreateList(0, 0);
+        for (ITERATE_KEYS(eroute->env, var)) {
+            mprAddItem(elist, sfmt("%s=%s", var->key, var->data));
+        }
+        mprAddNullItem(elist);
+        env = &elist->items[0];
     } else {
         env = 0;
     }

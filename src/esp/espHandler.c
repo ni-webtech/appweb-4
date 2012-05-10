@@ -576,7 +576,7 @@ static EspRoute *cloneEspRoute(HttpRoute *route, EspRoute *parent)
         eroute->link = sclone(parent->link);
     }
     if (parent->env) {
-        eroute->env = mprCloneList(parent->env);
+        eroute->env = mprCloneHash(parent->env);
     }
     eroute->cacheDir = parent->cacheDir;
     eroute->controllersDir = parent->controllersDir;
@@ -877,6 +877,7 @@ static int espDirDirective(MaState *state, cchar *key, cchar *value)
 
 /*
     EspEnv var string
+    This defines an environment variable setting. It is defined only when commands for this route are executed.
  */
 static int espEnvDirective(MaState *state, cchar *key, cchar *value)
 {
@@ -890,18 +891,10 @@ static int espEnvDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_BAD_SYNTAX;
     }
     if (eroute->env == 0) {
-        eroute->env = mprCreateList(-1, 0);
+        eroute->env = mprCreateHash(-1, 0);
     }
     evalue = espExpandCommand(eroute, evalue, "", "");
-#if UNUSED && KEEP
-    /*
-        This messes up TMP by prepending an existing value
-     */
-    if ((prior = getenv(ekey)) != 0) {
-        mprAddItem(eroute->env, sfmt("%s=%s;%s", ekey, evalue, prior));
-    } else {
-#endif
-    mprAddItem(eroute->env, sfmt("%s=%s", ekey, evalue));
+    mprAddKey(eroute->env, ekey, evalue);
     if (scasematch(ekey, "PATH")) {
         if (eroute->searchPath) {
             eroute->searchPath = sclone(evalue);
