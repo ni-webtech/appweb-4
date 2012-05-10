@@ -1078,12 +1078,15 @@ static int espUpdateDirective(MaState *state, cchar *key, cchar *value)
     return 0;
 }
 
+
 /************************************ Init ************************************/
 
 int maEspHandlerInit(Http *http, MprModule *module)
 {
     HttpStage   *handler;
     MaAppweb    *appweb;
+
+    appweb = httpGetContext(http);
 
     if ((handler = httpCreateHandler(http, "espHandler", 0, module)) == 0) {
         return MPR_ERR_CANT_CREATE;
@@ -1112,7 +1115,6 @@ int maEspHandlerInit(Http *http, MprModule *module)
     if ((esp->sessionCache = mprCreateCache(MPR_CACHE_SHARED)) == 0) {
         return MPR_ERR_MEMORY;
     }
-    appweb = httpGetContext(http);
     maAddDirective(appweb, "EspApp", espAppDirective);
     maAddDirective(appweb, "EspCompile", espCompileDirective);
     maAddDirective(appweb, "EspDb", espDbDirective);

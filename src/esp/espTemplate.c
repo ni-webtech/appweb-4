@@ -26,7 +26,7 @@
 /************************************ Forwards ********************************/
 
 static int getEspToken(EspParse *parse);
-static cchar *getDebug(MaAppweb *appweb);
+static cchar *getDebug();
 static cchar *getEnvString(cchar *key, cchar *defaultValue);
 static cchar *getShobjExt(cchar *os);
 static cchar *getCompilerName(cchar *os, cchar *arch);
@@ -62,7 +62,7 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
 {
     MprBuf      *buf;
     MaAppweb    *appweb;
-    cchar       *cp, *outputModule, *configDir, *os, *arch, *profile;
+    cchar       *cp, *outputModule, *os, *arch, *profile;
     char        *tmp;
     
     if (command == 0) {
@@ -71,15 +71,6 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
     appweb = MPR->appwebService;
     outputModule = mprTrimPathExt(module);
     maParsePlatform(appweb->platform, &os, &arch, &profile);
-
-    if (mprSamePath(mprGetAppDir(), BLD_BIN_PREFIX)) {
-        configDir = mprGetPathParent(mprGetAppDir());
-    } else {
-        configDir = mprGetPathParent(mprGetPathParent(mprGetAppDir()));
-    }
-    if (!smatch(appweb->platform, appweb->localPlatform)) {
-        configDir = mprJoinPath(configDir, appweb->platform);
-    }
     buf = mprCreateBuf(-1, -1);
 
     for (cp = command; *cp; ) {
@@ -92,20 +83,16 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
                 /* Target architecture mapped to GCC mtune|mcpu values */
                 mprPutStringToBuf(buf, getMappedArch(arch));
 
-            } else if (matchToken(&cp, "${CC}")) {
-                /* Compiler */
-                mprPutStringToBuf(buf, getCompilerPath(os, arch));
-
             } else if (matchToken(&cp, "${CCNAME}")) {
                 mprPutStringToBuf(buf, getCompilerName(os, arch));
 
             } else if (matchToken(&cp, "${INC}")) {
                 /* Include directory for the configuration */
-                mprPutStringToBuf(buf, mprJoinPath(configDir, "inc")); 
+                mprPutStringToBuf(buf, mprJoinPath(appweb->platformDir, "inc")); 
 
             } else if (matchToken(&cp, "${LIBPATH}")) {
                 /* Library directory for Appweb libraries for the target */
-                mprPutStringToBuf(buf, mprJoinPath(configDir, BLD_LIB_NAME)); 
+                mprPutStringToBuf(buf, mprJoinPath(appweb->platformDir, BLD_LIB_NAME)); 
 
             } else if (matchToken(&cp, "${LIBS}")) {
                 /* Required libraries to link. These may have nested ${TOKENS} */
@@ -148,14 +135,14 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
             } else if (matchToken(&cp, "${WINSDK}")) {
                 mprPutStringToBuf(buf, getWinSDK());
 
+            } else if (matchToken(&cp, "${CC}")) {
+                mprPutStringToBuf(buf, getEnvString("CC", getCompilerPath(os, arch)));
             } else if (matchToken(&cp, "${CFLAGS}")) {
                 mprPutStringToBuf(buf, getEnvString("CFLAGS", ""));
             } else if (matchToken(&cp, "${DEBUG}")) {
-                mprPutStringToBuf(buf, getEnvString("DEBUG", getDebug(appweb)));
+                mprPutStringToBuf(buf, getEnvString("DEBUG", getDebug()));
             } else if (matchToken(&cp, "${LDFLAGS}")) {
                 mprPutStringToBuf(buf, getEnvString("LDFLAGS", ""));
-            } else if (matchToken(&cp, "${CC}")) {
-                mprPutStringToBuf(buf, getEnvString("CC", ""));
             } else if (matchToken(&cp, "${LINK}")) {
                 mprPutStringToBuf(buf, getEnvString("LINK", ""));
 
@@ -202,9 +189,6 @@ static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *mod
     if (eroute->env) {
         mprAddNullItem(eroute->env);
         env = eroute->env->items[0];
-#if UNUSED
-        mprSetCmdDefaultEnv(cmd, (cchar**) &eroute->env->items[0]);
-#endif
     } else {
         env = 0;
     }
@@ -729,7 +713,7 @@ static cchar *getEnvString(cchar *key, cchar *defaultValue)
     cchar   *value;
 
     if ((value = getenv(key)) == 0) {
-        if (*defaultValue) {
+        if (defaultValue) {
             value = defaultValue;
         } else {
             value = "Not-Configured";
@@ -819,10 +803,12 @@ static cchar *getVxCPU(cchar *arch)
 }
 
 
-static cchar *getDebug(MaAppweb *appweb)
+static cchar *getDebug()
 {
-    int     debug;
+    MaAppweb    *appweb;
+    int         debug;
 
+    appweb = MPR->appwebService;
     debug = sends(appweb->platform, "-debug");
     if (scontains(appweb->platform, "-win-", -1)) {
         return (debug) ? "-DBLD_DEBUG -Zi -Od" : "-O";

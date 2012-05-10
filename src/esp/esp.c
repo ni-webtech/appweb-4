@@ -18,16 +18,16 @@ typedef struct App {
     MaAppweb    *appweb;
     MaServer    *server;
 
-    char        *appName;               /* Application name */
-    char        *serverRoot;            /* Root directory for server config */
-    char        *configFile;            /* Arg to --config */
-    char        *currentDir;            /* Initial starting current directory */
-    char        *database;              /* Database provider "mdb" | "sqlite" */
-    char        *flatPath;              /* Output filename for flat compilations */
-    char        *libDir;                /* Appweb lib directory */
-    char        *listen;                /* Listen endpoint for "esp run" */
-    char        *platform;              /* Target platform os-arch-profile (lower) */
-    char        *wwwDir;                /* Appweb esp-www default files directory */
+    cchar       *appName;               /* Application name */
+    cchar       *serverRoot;            /* Root directory for server config */
+    cchar       *configFile;            /* Arg to --config */
+    cchar       *currentDir;            /* Initial starting current directory */
+    cchar       *database;              /* Database provider "mdb" | "sqlite" */
+    cchar       *flatPath;              /* Output filename for flat compilations */
+    cchar       *libDir;                /* Appweb lib directory */
+    cchar       *listen;                /* Listen endpoint for "esp run" */
+    cchar       *platform;              /* Target platform os-arch-profile (lower) */
+    cchar       *wwwDir;                /* Appweb esp-www default files directory */
     MprFile     *flatFile;              /* Output file for flat compilations */
     MprList     *flatItems;             /* Items to invoke from Init */
 
@@ -38,12 +38,12 @@ typedef struct App {
     MprList     *files;                 /* List of files to process */
     MprList     *targets;               /* Command line targets */
 
-    char        *command;               /* Compilation or link command */
-    char        *cacheName;             /* MD5 name of cached component */
+    cchar       *command;               /* Compilation or link command */
+    cchar       *cacheName;             /* MD5 name of cached component */
     cchar       *csource;               /* Name of "C" source for controller or view */
-    char        *routeName;             /* Name of route to use for ESP configuration */
-    char        *routePrefix;           /* Route prefix to use for ESP configuration */
-    char        *module;                /* Compiled module name */
+    cchar       *routeName;             /* Name of route to use for ESP configuration */
+    cchar       *routePrefix;           /* Route prefix to use for ESP configuration */
+    cchar       *module;                /* Compiled module name */
 
     int         error;                  /* Any processing error */
     int         flat;                   /* Combine all inputs into one, flat output */ 
@@ -265,8 +265,7 @@ static bool validTarget(cchar *target);
 int main(int argc, char **argv)
 {
     Mpr     *mpr;
-    cchar   *argp, *logSpec, *path, *junk;
-    char    *rest;
+    cchar   *argp, *logSpec, *path;
     int     argind, rc;
 
     if ((mpr = mprCreate(argc, argv, 0)) == NULL) {
@@ -354,10 +353,6 @@ int main(int argc, char **argv)
                 usageError();
             } else {
                 app->platform = slower(argv[++argind]);
-                if (maParsePlatform(app->platform, &junk, &junk, &junk) < 0) {
-                    fail("Bad output directory. Must be of the form: os-arch-profile.");
-                    usageError();
-                }
             }
 
         } else if (smatch(argp, "quiet") || smatch(argp, "q")) {
@@ -467,6 +462,7 @@ static HttpRoute *createRoute(cchar *dir)
 
 static void initialize()
 {
+    readConfig();
     app->currentDir = mprGetCurrentPath();
     app->libDir = mprJoinPath(mprGetPathParent(mprGetAppDir()), BLD_LIB_NAME);
     app->wwwDir = mprJoinPath(app->libDir, "esp-www");
@@ -492,7 +488,7 @@ static MprList *getRoutes()
     HttpRoute   *route, *rp, *parent;
     EspRoute    *eroute;
     MprList     *routes;
-    char        *routeName, *routePrefix;
+    cchar       *routeName, *routePrefix;
     int         prev, nextRoute;
 
     if ((host = mprGetFirstItem(http->hosts)) == 0) {
@@ -572,7 +568,7 @@ static HttpRoute *getMvcRoute()
     HttpHost    *host;
     HttpRoute   *route, *parent;
     EspRoute    *eroute;
-    char        *routeName, *routePrefix;
+    cchar       *routeName, *routePrefix;
     int         prev;
 
     if ((host = mprGetFirstItem(http->hosts)) == 0) {
@@ -652,6 +648,12 @@ static void readConfig()
         fail("Can't create HTTP server for %s", mprGetAppName());
         return;
     }
+    if (app->platform) {
+        if (maSetPlatform(app->platform) < 0) {
+            fail("Can't find platform %s", app->platform);
+            return;
+        }
+    }
     if (maParseConfig(app->server, app->configFile, MA_PARSE_NON_SERVER) < 0) {
         fail("Can't configure the server, exiting.");
         return;
@@ -677,13 +679,17 @@ static void process(int argc, char **argv)
         return;
     }
     if (smatch(cmd, "clean")) {
+#if UNUSED
         readConfig();
+#endif
         app->targets = getTargets(argc - 1, &argv[1]);
         app->routes = getRoutes();
         clean(app->routes);
 
     } else if (smatch(cmd, "compile")) {
+#if UNUSED
         readConfig();
+#endif
         app->targets = getTargets(argc - 1, &argv[1]);
         app->routes = getRoutes();
         compile(app->routes);
@@ -1315,12 +1321,16 @@ static void generate(int argc, char **argv)
         generateApp(createRoute(name), name);
 
     } else if (smatch(kind, "controller")) {
+#if UNUSED
         readConfig();
+#endif
         route = getMvcRoute();
         generateController(route, argc - 1, &argv[1]);
 
     } else if (smatch(kind, "scaffold")) {
+#if UNUSED
         readConfig();
+#endif
         route = getMvcRoute();
         generateScaffold(route, argc - 1, &argv[1]);
 
@@ -1332,7 +1342,9 @@ static void generate(int argc, char **argv)
 
 #endif
     } else if (smatch(kind, "table")) {
+#if UNUSED
         readConfig();
+#endif
         route = getMvcRoute();
         generateTable(route, argc - 1, &argv[1]);
 
@@ -1555,7 +1567,7 @@ static void generateAppDb(HttpRoute *route)
 /*
     Search strategy is:
 
-    [--config dir] : ./appweb.conf : /usr/lib/appweb/lib/appweb.conf
+    [--config dir] : ./appweb.conf : /usr/lib/appweb/VER/bin/esp-appweb.conf
  */
 static void findConfigFile()
 {
@@ -1570,7 +1582,7 @@ static void findConfigFile()
             fail("Can't open config file %s", app->configFile);
             return;
         }
-        app->configFile = mprJoinPath(mprGetAppDir(), sfmt("../%s/%s.conf", BLD_LIB_NAME, BLD_PRODUCT));
+        app->configFile = mprJoinPath(mprGetAppDir(), sfmt("../%s/esp-%s.conf", BLD_LIB_NAME, BLD_PRODUCT));
         if (!mprPathExists(app->configFile, R_OK)) {
             fail("Can't open config file %s", app->configFile);
             return;

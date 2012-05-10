@@ -1959,8 +1959,7 @@ int maParsePlatform(cchar *platform, cchar **os, cchar **arch, cchar **profile)
     *os = stok(sclone(platform), "-", &rest);
     *arch = sclone(stok(NULL, "-", &rest));
     *profile = sclone(rest);
-    if (*os == 0 || *arch == 0 || *profile == 0 ||
-        **os == '\0' || **arch == '\0' || **profile == '\0') {
+    if (*os == 0 || *arch == 0 || *profile == 0 || **os == '\0' || **arch == '\0' || **profile == '\0') {
         return MPR_ERR_BAD_ARGS;
     }
     return 0;
@@ -1972,12 +1971,11 @@ static bool conditionalDefinition(MaState *state, cchar *key)
     cchar   *arch, *os, *profile;
     int     result, not;
 
+    result = 0;
     not = (*key == '!') ? 1 : 0;
     if (not) {
         for (++key; isspace((uchar) *key); key++) {}
     }
-    result = 0;
-
     maParsePlatform(state->appweb->platform, &os, &arch, &profile);
 
     if (scasematch(key, arch)) {

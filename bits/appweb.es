@@ -1,6 +1,5 @@
 /*
     Support functions for Embedthis Appweb
-    Exporting: packageBinaryFiles, createLinks
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
@@ -82,6 +81,7 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
     }
     install(bit.dir.lib + '/esp.conf', p.lib)
     install(bit.dir.lib + '/esp-www', p.lib)
+    install(bit.dir.lib + '/esp-appweb.conf', p.lib)
     install(bit.dir.inc.join('*.h'), p.inc)
 
     if (bit.packs.ssl.enable && bit.platform.os == 'linux') {

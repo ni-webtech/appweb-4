@@ -50,10 +50,11 @@ typedef struct MaAppweb {
     MprList             *servers;               /**< List of server objects */
     MprHash             *directives;            /**< Config file directives */
     Http                *http;                  /**< Http service object */
-    char                *group;                 /**< O/S application group name */
-    char                *localPlatform;         /**< Local dev platform os-arch-profile (lower case) */
-    char                *platform;              /**< Target platform os-arch-profile (lower case) */
-    char                *user;                  /**< O/S application user name */
+    cchar               *group;                 /**< O/S application group name */
+    cchar               *localPlatform;         /**< Local (dev) platform os-arch-profile (lower case) */
+    cchar               *platform;              /**< Target platform os-arch-profile (lower case) */
+    cchar               *platformDir;           /**< Path to platform */
+    cchar               *user;                  /**< O/S application user name */
     int                 uid;                    /**< User Id */
     int                 gid;                    /**< Group Id */
     int                 userChanged;            /**< User name changed */
@@ -212,6 +213,7 @@ extern int maPhpHandlerInit(Http *http, MprModule *mp);
 extern int maSslModuleInit(Http *http, MprModule *mp);
 extern int maOpenDirHandler(Http *http);
 extern int maOpenFileHandler(Http *http);
+extern int maSetPlatform(cchar *platform);
 
 /********************************** MaServer **********************************/
 /**
