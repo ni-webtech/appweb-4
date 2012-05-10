@@ -5330,14 +5330,14 @@ extern char *mprGetPathExt(cchar *path);
 #define MPR_PATH_RELATIVE       0x10            /**< Flag for mprGetPathFiles to return paths relative to the directory */
 
 /**
-    Create a list of files in a directory or subdirectories.
+    Create a list of files in a directory or subdirectories. This call returns a list of MprDirEntry objects.
     @description Get the list of files in a directory and return a list.
     @param dir Directory to list.
     @param flags The flags may be set to #MPR_PATH_DESCEND to traverse subdirectories. Set $MPR_PATH_NO_DIRS 
         to exclude directories from the results. Set to MPR_PATH_HIDDEN to include hidden files that start with ".".
         Set to MPR_PATH_DEPTH_FIRST to do a depth-first traversal, i.e. traverse subdirectories before considering 
         adding the directory to the list.
-    @returns A list (MprList) of directory paths.
+    @returns A list (MprList) of MprDirEntry objects.
     @ingroup MprPath
  */
 extern MprList *mprGetPathFiles(cchar *dir, int flags);

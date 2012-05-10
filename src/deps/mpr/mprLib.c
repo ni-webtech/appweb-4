@@ -19752,6 +19752,7 @@ static MprList *getDirFiles(cchar *path, int flags)
 
 /*
     Find files in the directory "dir". If base is set, use that as the prefix for returned files.
+    Returns a list of MprDirEntry objects.
  */
 static MprList *findFiles(MprList *list, cchar *dir, cchar *base, int flags)
 {
@@ -19792,7 +19793,7 @@ static MprList *findFiles(MprList *list, cchar *dir, cchar *base, int flags)
 
 
 /*
-    This returns a list of filenames
+    Get the files in a directory. Returns a list of MprDirEntry objects.
 
     MPR_PATH_DESCEND        to traverse subdirectories
     MPR_PATH_DEPTH_FIRST    to do a depth-first traversal
