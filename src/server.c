@@ -349,6 +349,18 @@ int maSetPlatform(cchar *platform)
     }
     appweb->platformDir = dir;
     appweb->platform = platform;
+#if UNUSED
+int nextEndpoint, nextHost, nextRoute;
+HttpRoute *route;
+HttpHost *host;
+    if (!smatch(platform, appweb->localPlatform)) {
+        for (ITERATE_ITEMS(appweb->http->hosts, host, nextHost)) {
+            for (ITERATE_ITEMS(host->routes, route, nextRoute)) {
+                httpSetRoutePathVar(route, "LIBDIR", appweb->platformDir);
+            }
+        }
+    }
+#endif
     return 0;
 }
 

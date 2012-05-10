@@ -27,7 +27,7 @@
 
 static int getEspToken(EspParse *parse);
 static cchar *getDebug();
-static cchar *getEnvString(cchar *key, cchar *defaultValue);
+static cchar *getEnvString(EspRoute *eroute, cchar *key, cchar *defaultValue);
 static cchar *getShobjExt(cchar *os);
 static cchar *getCompilerName(cchar *os, cchar *arch);
 static cchar *getCompilerPath(cchar *os, cchar *arch);
@@ -83,9 +83,6 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
                 /* Target architecture mapped to GCC mtune|mcpu values */
                 mprPutStringToBuf(buf, getMappedArch(arch));
 
-            } else if (matchToken(&cp, "${CCNAME}")) {
-                mprPutStringToBuf(buf, getCompilerName(os, arch));
-
             } else if (matchToken(&cp, "${INC}")) {
                 /* Include directory for the configuration */
                 mprPutStringToBuf(buf, mprJoinPath(appweb->platformDir, "inc")); 
@@ -135,28 +132,33 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
             } else if (matchToken(&cp, "${WINSDK}")) {
                 mprPutStringToBuf(buf, getWinSDK());
 
+            /*
+                These vars can be configured from environment variables.
+                NOTE: the default esp.conf includes "esp->vxworks.conf" which has EspEnv definitions for the configured VxWorks toolchain
+             */
             } else if (matchToken(&cp, "${CC}")) {
-                mprPutStringToBuf(buf, getEnvString("CC", getCompilerPath(os, arch)));
-            } else if (matchToken(&cp, "${CFLAGS}")) {
-                mprPutStringToBuf(buf, getEnvString("CFLAGS", ""));
-            } else if (matchToken(&cp, "${DEBUG}")) {
-                mprPutStringToBuf(buf, getEnvString("DEBUG", getDebug()));
-            } else if (matchToken(&cp, "${LDFLAGS}")) {
-                mprPutStringToBuf(buf, getEnvString("LDFLAGS", ""));
+                mprPutStringToBuf(buf, getEnvString(eroute, "CC", getCompilerPath(os, arch)));
             } else if (matchToken(&cp, "${LINK}")) {
-                mprPutStringToBuf(buf, getEnvString("LINK", ""));
+                mprPutStringToBuf(buf, getEnvString(eroute, "LINK", ""));
+            } else if (matchToken(&cp, "${CFLAGS}")) {
+                mprPutStringToBuf(buf, getEnvString(eroute, "CFLAGS", ""));
+            } else if (matchToken(&cp, "${DEBUG}")) {
+                mprPutStringToBuf(buf, getEnvString(eroute, "DEBUG", getDebug()));
+            } else if (matchToken(&cp, "${LDFLAGS}")) {
+                mprPutStringToBuf(buf, getEnvString(eroute, "LDFLAGS", ""));
 
             } else if (matchToken(&cp, "${WIND_BASE}")) {
-                mprPutStringToBuf(buf, getEnvString("WIND_BASE", WIND_BASE));
+                mprPutStringToBuf(buf, getEnvString(eroute, "WIND_BASE", WIND_BASE));
             } else if (matchToken(&cp, "${WIND_HOME}")) {
-                mprPutStringToBuf(buf, getEnvString("WIND_HOME", WIND_HOME));
+                mprPutStringToBuf(buf, getEnvString(eroute, "WIND_HOME", WIND_HOME));
             } else if (matchToken(&cp, "${WIND_HOST_TYPE}")) {
-                mprPutStringToBuf(buf, getEnvString("WIND_HOST_TYPE", WIND_HOST_TYPE));
+                mprPutStringToBuf(buf, getEnvString(eroute, "WIND_HOST_TYPE", WIND_HOST_TYPE));
             } else if (matchToken(&cp, "${WIND_PLATFORM}")) {
-                mprPutStringToBuf(buf, getEnvString("WIND_PLATFORM", WIND_PLATFORM));
+                mprPutStringToBuf(buf, getEnvString(eroute, "WIND_PLATFORM", WIND_PLATFORM));
             } else if (matchToken(&cp, "${WIND_GNU_PATH}")) {
-                mprPutStringToBuf(buf, getEnvString("WIND_GNU_PATH", WIND_GNU_PATH));
-
+                mprPutStringToBuf(buf, getEnvString(eroute, "WIND_GNU_PATH", WIND_GNU_PATH));
+            } else if (matchToken(&cp, "${WIND_CCNAME}")) {
+                mprPutStringToBuf(buf, getEnvString(eroute, "WIND_CCNAME", getCompilerName(os, arch)));
             } else {
                 mprPutCharToBuf(buf, *cp++);
             }
@@ -174,6 +176,8 @@ static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *mod
     EspReq      *req;
     EspRoute    *eroute;
     MprCmd      *cmd;
+    MprKey      *var;
+    MprList     *elist;
     cchar       **env;
     char        *err, *out;
 
@@ -187,8 +191,12 @@ static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *mod
     }
     mprLog(4, "ESP command: %s\n", req->commandLine);
     if (eroute->env) {
-        mprAddNullItem(eroute->env);
-        env = eroute->env->items[0];
+        elist = mprCreateList(0, 0);
+        for (ITERATE_KEYS(eroute->env, var)) {
+            mprAddItem(elist, sfmt("%s=%s", var->key, var->data));
+        }
+        mprAddNullItem(elist);
+        env = &elist->items[0];
     } else {
         env = 0;
     }
@@ -708,15 +716,17 @@ static int getEspToken(EspParse *parse)
 }
 
 
-static cchar *getEnvString(cchar *key, cchar *defaultValue)
+static cchar *getEnvString(EspRoute *eroute, cchar *key, cchar *defaultValue)
 {
     cchar   *value;
 
-    if ((value = getenv(key)) == 0) {
-        if (defaultValue) {
-            value = defaultValue;
-        } else {
-            value = "Not-Configured";
+    if (!eroute || !eroute->env || (value = mprLookupKey(eroute->env, key)) == 0) {
+        if ((value = getenv(key)) == 0) {
+            if (defaultValue) {
+                value = defaultValue;
+            } else {
+                value = sfmt("${%s}", key);
+            }
         }
     }
     return value;
