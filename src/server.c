@@ -31,7 +31,8 @@ MaAppweb *maCreateAppweb()
     appweb->http = http = httpCreate(appweb);
     httpSetContext(http, appweb);
     appweb->servers = mprCreateList(-1, 0);
-    appweb->out = slower(sfmt("%s-%s-%s", BLD_OS, BLD_CPU, BLD_PROFILE));
+    appweb->platform = slower(sfmt("%s-%s-%s", BLD_OS, BLD_CPU, BLD_PROFILE));
+    appweb->localPlatform = appweb->platform;
     maGetUserGroup(appweb);
     maParseInit(appweb);
     openHandlers(http);
@@ -48,7 +49,7 @@ static void manageAppweb(MaAppweb *appweb, int flags)
         mprMark(appweb->http);
         mprMark(appweb->user);
         mprMark(appweb->group);
-        mprMark(appweb->out);
+        mprMark(appweb->platform);
 
     } else if (flags & MPR_MANAGE_FREE) {
         maStopAppweb(appweb);

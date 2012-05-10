@@ -70,39 +70,27 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
     }
     appweb = MPR->appwebService;
     outputModule = mprTrimPathExt(module);
-    maParseOut(appweb->out, &os, &arch, &profile);
+    maParsePlatform(appweb->platform, &os, &arch, &profile);
 
     if (mprSamePath(mprGetAppDir(), BLD_BIN_PREFIX)) {
         configDir = mprGetPathParent(mprGetAppDir());
     } else {
-        //  MOB - if out is a path, then this wont join properly
-        configDir = mprNormalizePath(sfmt("%s/../../%s", mprGetAppDir(), appweb->out)); 
+        configDir = mprGetPathParent(mprGetPathParent(mprGetAppDir()));
+    }
+    if (!smatch(appweb->platform, appweb->localPlatform)) {
+        configDir = mprJoinPath(configDir, appweb->platform);
     }
     buf = mprCreateBuf(-1, -1);
 
     for (cp = command; *cp; ) {
 		if (*cp == '$') {
-//  MOB - sort
             if (matchToken(&cp, "${ARCH}")) {
                 /* Target architecture (x86|mips|arm|x64) */
                 mprPutStringToBuf(buf, arch);
 
-            } else if (matchToken(&cp, "${OS}")) {
-                /* Target architecture (freebsd|linux|macosx|win|vxworks) */
-                mprPutStringToBuf(buf, os);
-
             } else if (matchToken(&cp, "${GCC_ARCH}")) {
                 /* Target architecture mapped to GCC mtune|mcpu values */
                 mprPutStringToBuf(buf, getMappedArch(arch));
-
-            } else if (matchToken(&cp, "${WINSDK}")) {
-                mprPutStringToBuf(buf, getWinSDK());
-
-            } else if (matchToken(&cp, "${VS}")) {
-                mprPutStringToBuf(buf,getWinVisualStudio());
-
-            } else if (matchToken(&cp, "${VXCPU}")) {
-                mprPutStringToBuf(buf, getVxCPU(arch));
 
             } else if (matchToken(&cp, "${CC}")) {
                 /* Compiler */
@@ -123,19 +111,17 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
                 /* Required libraries to link. These may have nested ${TOKENS} */
                 mprPutStringToBuf(buf, espExpandCommand(eroute, getLibs(os), source, module));
 
-            } else if (matchToken(&cp, "${OBJ}")) {
-                /* Output object with extension (.o) in the cache directory */
-                mprPutStringToBuf(buf, mprJoinPathExt(outputModule, getObjExt(os)));
-
             } else if (matchToken(&cp, "${MOD}")) {
                 /* Output module path in the cache without extension */
                 mprPutStringToBuf(buf, outputModule);
 
-#if UNUSED
-            } else if (matchToken(&cp, "${SHLIB}")) {
-                /* .lib */
-                mprPutStringToBuf(buf, getShlibExt(os));
-#endif
+            } else if (matchToken(&cp, "${OBJ}")) {
+                /* Output object with extension (.o) in the cache directory */
+                mprPutStringToBuf(buf, mprJoinPathExt(outputModule, getObjExt(os)));
+
+            } else if (matchToken(&cp, "${OS}")) {
+                /* Target architecture (freebsd|linux|macosx|win|vxworks) */
+                mprPutStringToBuf(buf, os);
 
             } else if (matchToken(&cp, "${SHOBJ}")) {
                 /* .dll, .so, .dylib */
@@ -153,12 +139,19 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
                 }
                 mprPutStringToBuf(buf, tmp ? tmp : ".");
 
+            } else if (matchToken(&cp, "${VS}")) {
+                mprPutStringToBuf(buf,getWinVisualStudio());
+
+            } else if (matchToken(&cp, "${VXCPU}")) {
+                mprPutStringToBuf(buf, getVxCPU(arch));
+
+            } else if (matchToken(&cp, "${WINSDK}")) {
+                mprPutStringToBuf(buf, getWinSDK());
+
             } else if (matchToken(&cp, "${CFLAGS}")) {
                 mprPutStringToBuf(buf, getEnvString("CFLAGS", ""));
             } else if (matchToken(&cp, "${DEBUG}")) {
                 mprPutStringToBuf(buf, getEnvString("DEBUG", getDebug(appweb)));
-            } else if (matchToken(&cp, "${DFLAGS}")) {
-                mprPutStringToBuf(buf, getEnvString("DFLAGS", ""));
             } else if (matchToken(&cp, "${LDFLAGS}")) {
                 mprPutStringToBuf(buf, getEnvString("LDFLAGS", ""));
             } else if (matchToken(&cp, "${CC}")) {
@@ -830,8 +823,8 @@ static cchar *getDebug(MaAppweb *appweb)
 {
     int     debug;
 
-    debug = sends(appweb->out, "-debug");
-    if (scontains(appweb->out, "-win-", -1)) {
+    debug = sends(appweb->platform, "-debug");
+    if (scontains(appweb->platform, "-win-", -1)) {
         return (debug) ? "-DBLD_DEBUG -Zi -Od" : "-O";
     }
     return (debug) ? "-DBLD_DEBUG -g" : "-O2";
