@@ -60,8 +60,8 @@
 #define MPR_CPU_UNKNOWN     0
 #define MPR_CPU_ARM         1           /* Arm */
 #define MPR_CPU_ITANIUM     2           /* Intel Itanium */
-#define MPR_CPU_IX86        3           /* X86 */
-#define MPR_CPU_IX64        4           /* AMD64 or EMT64 */
+#define MPR_CPU_X86         3           /* X86 */
+#define MPR_CPU_X64         4           /* AMD64 or EMT64 */
 #define MPR_CPU_MIPS        5           /* Mips */
 #define MPR_CPU_PPC         6           /* Power PC */
 #define MPR_CPU_SPARC       7           /* Sparc */
@@ -74,10 +74,10 @@
     #define BLD_CPU_ARCH MPR_CPU_ARM
 #elif defined(__x86_64__) || defined(_M_AMD64)
     #define BLD_CPU "x64"
-    #define BLD_CPU_ARCH MPR_CPU_IX64
+    #define BLD_CPU_ARCH MPR_CPU_X64
 #elif defined(__i386__) || defined(__i486__) || defined(__i585__) || defined(__i686__) || defined(_M_IX86)
     #define BLD_CPU "x86"
-    #define BLD_CPU_ARCH MPR_CPU_IX86
+    #define BLD_CPU_ARCH MPR_CPU_X86
 #elif defined(_M_IA64)
     #define BLD_CPU "IA64"
     #define BLD_CPU_ARCH MPR_CPU_ITANIUM
@@ -3911,7 +3911,7 @@ extern char *mprGetDate(char *fmt);
  */
 extern uint64 mprGetTicks();
 
-#if (LINUX || MACOSX || WIN) && (BLD_CPU_ARCH == MPR_CPU_IX86 || BLD_CPU_ARCH == MPR_CPU_IX64)
+#if (LINUX || MACOSX || WIN) && (BLD_CPU_ARCH == MPR_CPU_X86 || BLD_CPU_ARCH == MPR_CPU_X64)
     #define MPR_HIGH_RES_TIMER 1
 #else
     #define MPR_HIGH_RES_TIMER 0

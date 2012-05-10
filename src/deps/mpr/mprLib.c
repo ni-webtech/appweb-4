@@ -142,7 +142,7 @@ int stopSeqno = -1;
  */
 #if LINUX
     #define NEED_FLSL 1
-    #if BLD_CPU_ARCH == MPR_CPU_IX86 || BLD_CPU_ARCH == MPR_CPU_IX64
+    #if BLD_CPU_ARCH == MPR_CPU_X86 || BLD_CPU_ARCH == MPR_CPU_X64
         #define USE_FLSL_ASM_X86 1
     #endif
     static MPR_INLINE int flsl(ulong word);
@@ -7931,29 +7931,24 @@ void stubMprAsync() {}
 
 void mprAtomicBarrier()
 {
-    #if MACOSX
+    #ifdef VX_MEM_BARRIER_RW
+        VX_MEM_BARRIER_RW();
+    #elif MACOSX
         OSMemoryBarrier();
     #elif BLD_WIN_LIKE
         MemoryBarrier();
     #elif BLD_CC_SYNC
         __sync_synchronize();
-    #elif VXWORKS
-        #ifdef VX_MEM_BARRIER_RW
-            VX_MEM_BARRIER_RW();
-        #else
-            /* A system call should act as a fence */
-            getpid();
-        #endif
+    #elif __GNUC__ && (BLD_CPU_ARCH == MPR_CPU_X86 || BLD_CPU_ARCH == MPR_CPU_X64)
+        asm volatile ("mfence" : : : "memory");
+    #elif __GNUC__ && (BLD_CPU_ARCH == MPR_CPU_PPC)
+        asm volatile ("sync" : : : "memory");
     #else
-        /* A system call should act as a fence */
         getpid();
     #endif
 
 #if FUTURE && KEEP
-        __asm volatile ("nop" ::: "memory")
-        asm volatile ("sync" : : : "memory");
-        asm volatile ("mfence" : : : "memory");
-        asm volatile ("lock; add %eax,0");
+    asm volatile ("lock; add %eax,0");
 #endif
 }
 
@@ -7976,7 +7971,7 @@ int mprAtomicCas(void * volatile *addr, void *expected, cvoid *value)
     #elif VXWORKS && _VX_ATOMIC_INIT && !MPR_64BIT
         /* vxCas operates with integer values */
         return vxCas((atomic_t*) addr, (atomicVal_t) expected, (atomicVal_t) value);
-    #elif BLD_CPU_ARCH == MPR_CPU_IX86
+    #elif BLD_CPU_ARCH == MPR_CPU_X86
         {
             void *prev;
             asm volatile ("lock; cmpxchgl %2, %1"
@@ -7984,7 +7979,7 @@ int mprAtomicCas(void * volatile *addr, void *expected, cvoid *value)
                 : "r" (value), "m" (*addr), "0" (expected));
             return expected == prev;
         }
-    #elif BLD_CPU_ARCH == MPR_CPU_IX64
+    #elif BLD_CPU_ARCH == MPR_CPU_X64
         {
             void *prev;
             asm volatile ("lock; cmpxchgq %q2, %1"
@@ -8017,7 +8012,7 @@ void mprAtomicAdd(volatile int *ptr, int value)
         InterlockedExchangeAdd(ptr, value);
     #elif VXWORKS && _VX_ATOMIC_INIT
         vxAtomicAdd(ptr, value);
-    #elif (BLD_CPU_ARCH == MPR_CPU_IX86 || BLD_CPU_ARCH == MPR_CPU_IX64) && FUTURE
+    #elif (BLD_CPU_ARCH == MPR_CPU_X86 || BLD_CPU_ARCH == MPR_CPU_X64) && FUTURE
         asm volatile ("lock; xaddl %0,%1"
             : "=r" (value), "=m" (*ptr)
             : "0" (value), "m" (*ptr)
@@ -25112,6 +25107,7 @@ char *schr(cchar *s, int c)
 }
 
 
+//  MOB - this should have no limit and then provide sncontains
 char *scontains(cchar *str, cchar *pattern, ssize limit)
 {
     cchar   *cp, *s1, *s2;

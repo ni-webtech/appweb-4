@@ -748,7 +748,6 @@ static cchar *getEnvString(cchar *key, cchar *defaultValue)
 
 static cchar *getShobjExt(cchar *os)
 {
-printf("OS %s\n", os);
     if (smatch(os, "macosx")) {
         return ".dylib";
     } else if (smatch(os, "win")) {
