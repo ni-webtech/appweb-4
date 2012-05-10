@@ -17,18 +17,17 @@ typedef struct App {
     Mpr         *mpr;
     MaAppweb    *appweb;
     MaServer    *server;
-    char        *serverRoot;
-    char        *configFile;
-    char        *pathEnv;
-    char        *database;              /* Database provider "mdb" | "sqlite" */
-    char        *out;                   /* Target output directory os-arch-profile (lower) */
-    char        *listen;
-    char        *currentDir;            /* Initial starting current directory */
-    char        *libDir;                /* Appweb lib directory */
-    char        *wwwDir;                /* Appweb esp-www default files directory */
-    char        *appName;               /* Application name */
 
+    char        *appName;               /* Application name */
+    char        *serverRoot;            /* Root directory for server config */
+    char        *configFile;            /* Arg to --config */
+    char        *currentDir;            /* Initial starting current directory */
+    char        *database;              /* Database provider "mdb" | "sqlite" */
     char        *flatPath;              /* Output filename for flat compilations */
+    char        *libDir;                /* Appweb lib directory */
+    char        *listen;                /* Listen endpoint for "esp run" */
+    char        *platform;              /* Target platform os-arch-profile (lower) */
+    char        *wwwDir;                /* Appweb esp-www default files directory */
     MprFile     *flatFile;              /* Output file for flat compilations */
     MprList     *flatItems;             /* Items to invoke from Init */
 
@@ -39,13 +38,12 @@ typedef struct App {
     MprList     *files;                 /* List of files to process */
     MprList     *targets;               /* Command line targets */
 
-    char        *routeName;             /* Name of route to use for ESP configuration */
-    char        *routePrefix;           /* Route prefix to use for ESP configuration */
     char        *command;               /* Compilation or link command */
     char        *cacheName;             /* MD5 name of cached component */
     cchar       *csource;               /* Name of "C" source for controller or view */
+    char        *routeName;             /* Name of route to use for ESP configuration */
+    char        *routePrefix;           /* Route prefix to use for ESP configuration */
     char        *module;                /* Compiled module name */
-    char        *source;
 
     int         error;                  /* Any processing error */
     int         flat;                   /* Combine all inputs into one, flat output */ 
@@ -290,10 +288,13 @@ int main(int argc, char **argv)
 
     for (argind = 1; argind < argc && !app->error; argind++) {
         argp = argv[argind];
-        if (*argp != '-') {
+        if (*argp++ != '-') {
             break;
         }
-        if (smatch(argp, "--chdir")) {
+        if (*argp == '-') {
+            argp++;
+        }
+        if (smatch(argp, "chdir")) {
             if (argind >= argc) {
                 usageError();
             } else {
@@ -303,7 +304,7 @@ int main(int argc, char **argv)
                 }
             }
 
-        } else if (smatch(argp, "--config")) {
+        } else if (smatch(argp, "config")) {
             if (argind >= argc) {
                 usageError();
             } else {
@@ -314,7 +315,7 @@ int main(int argc, char **argv)
                 app->configFile = mprGetPathBase(path);
             }
 
-        } else if (smatch(argp, "--database")) {
+        } else if (smatch(argp, "database")) {
             if (argind >= argc) {
                 usageError();
             } else {
@@ -325,61 +326,61 @@ int main(int argc, char **argv)
                 }
             }
 
-        } else if (smatch(argp, "--flat") || smatch(argp, "-f")) {
+        } else if (smatch(argp, "flat") || smatch(argp, "f")) {
             app->flat = 1;
 
-        } else if (smatch(argp, "--listen") || smatch(argp, "-l")) {
+        } else if (smatch(argp, "listen") || smatch(argp, "l")) {
             if (argind >= argc) {
                 usageError();
             } else {
                 app->listen = sclone(argv[++argind]);
             }
 
-        } else if (smatch(argp, "--log") || smatch(argp, "-l")) {
+        } else if (smatch(argp, "log") || smatch(argp, "l")) {
             if (argind >= argc) {
                 usageError();
             } else {
                 logSpec = argv[++argind];
             }
 
-        } else if (smatch(argp, "--min")) {
+        } else if (smatch(argp, "min")) {
             app->minified = 1;
 
-        } else if (smatch(argp, "--overwrite")) {
+        } else if (smatch(argp, "overwrite")) {
             app->overwrite = 1;
 
-        } else if (smatch(argp, "--out")) {
+        } else if (smatch(argp, "platform")) {
             if (argind >= argc) {
                 usageError();
             } else {
-                app->out = slower(argv[++argind]);
-                if (maParseOut(app->out, &junk, &junk, &junk) < 0) {
+                app->platform = slower(argv[++argind]);
+                if (maParsePlatform(app->platform, &junk, &junk, &junk) < 0) {
                     fail("Bad output directory. Must be of the form: os-arch-profile.");
                     usageError();
                 }
             }
 
-        } else if (smatch(argp, "--quiet") || smatch(argp, "-q")) {
+        } else if (smatch(argp, "quiet") || smatch(argp, "q")) {
             app->quiet = 1;
 
-        } else if (smatch(argp, "--routeName")) {
+        } else if (smatch(argp, "routeName")) {
             if (argind >= argc) {
                 usageError();
             } else {
                 app->routeName = sclone(argv[++argind]);
             }
 
-        } else if (smatch(argp, "--routePrefix")) {
+        } else if (smatch(argp, "routePrefix")) {
             if (argind >= argc) {
                 usageError();
             } else {
                 app->routePrefix = sclone(argv[++argind]);
             }
 
-        } else if (smatch(argp, "--verbose") || smatch(argp, "-v")) {
+        } else if (smatch(argp, "verbose") || smatch(argp, "v")) {
             logSpec = "stderr:2";
 
-        } else if (smatch(argp, "--version") || smatch(argp, "-V")) {
+        } else if (smatch(argp, "version") || smatch(argp, "V")) {
             mprPrintf("%s %s-%s\n", mprGetAppTitle(), BLD_VERSION, BLD_NUMBER);
             exit(0);
 
@@ -429,14 +430,12 @@ static void manageApp(App *app, int flags)
         mprMark(app->listen);
         mprMark(app->module);
         mprMark(app->mpr);
-        mprMark(app->out);
-        mprMark(app->pathEnv);
+        mprMark(app->platform);
         mprMark(app->routes);
         mprMark(app->routeName);
         mprMark(app->routePrefix);
         mprMark(app->server);
         mprMark(app->serverRoot);
-        mprMark(app->source);
         mprMark(app->targets);
         mprMark(app->wwwDir);
     }
@@ -642,8 +641,8 @@ static void readConfig()
     appweb = MPR->appwebService = app->appweb;
     appweb->skipModules = 1;
     http = app->appweb->http;
-    if (app->out) {
-        appweb->out = app->out;
+    if (app->platform) {
+        appweb->platform = app->platform;
     }
     findConfigFile();
     if (app->error) {
@@ -1629,18 +1628,18 @@ static void usageError(Mpr *mpr)
     mprPrintfError("\nESP Usage:\n\n"
     "  %s [options] [commands]\n\n"
     "  Options:\n"
-    "    --chdir dir            # Change to the named directory first\n"
-    "    --config configFile    # Use named config file instead appweb.conf\n"
-    "    --database name        # Database provider 'mdb|sqlite' \n"
-    "    --flat                 # Compile into a single module\n"
-    "    --listen [ip:]port     # Listen on specified address \n"
-    "    --log logFile:level    # Log to file file at verbosity level\n"
-    "    --overwrite            # Overwrite existing files \n"
-    "    --quiet                # Don't emit trace \n"
-    "    --out os-arch-profile  # Cross-compile output configuration\n"
-    "    --routeName name       # Route name in appweb.conf to use \n"
-    "    --routePrefix prefix   # Route prefix in appweb.conf to use \n"
-    "    --verbose              # Emit verbose trace \n"
+    "    --chdir dir                # Change to the named directory first\n"
+    "    --config configFile        # Use named config file instead appweb.conf\n"
+    "    --database name            # Database provider 'mdb|sqlite' \n"
+    "    --flat                     # Compile into a single module\n"
+    "    --listen [ip:]port         # Listen on specified address \n"
+    "    --log logFile:level        # Log to file file at verbosity level\n"
+    "    --overwrite                # Overwrite existing files \n"
+    "    --quiet                    # Don't emit trace \n"
+    "    --platform os-arch-profile # Target platform\n"
+    "    --routeName name           # Route name in appweb.conf to use \n"
+    "    --routePrefix prefix       # Route prefix in appweb.conf to use \n"
+    "    --verbose                  # Emit verbose trace \n"
     "\n"
     "  Commands:\n"
     "    esp clean\n"

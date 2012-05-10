@@ -531,25 +531,19 @@ static EspRoute *allocEspRoute(HttpRoute *route)
     if ((eroute = mprAllocObj(EspRoute, espManageEspRoute)) == 0) {
         return 0;
     }
-#if UNUSED
-    path = mprJoinPath(mprGetAppDir(), "../" BLD_LIB_NAME);
-#else
     path = mprJoinPath(route->host->home, "cache");
     if (mprGetPathInfo(path, &info) != 0 || !info.isDir) {
         path = route->host->home;
     }
-#endif
 #if DEBUG_IDE
     path = mprGetAppDir();
 #endif
     eroute->cacheDir = path;
 
-#if BLD_DEBUG
-    eroute->update = 1;
-    eroute->showErrors = 1;
-#endif
-    eroute->lifespan = 0;
+    eroute->update = BLD_DEBUG;
+    eroute->showErrors = BLD_DEBUG;
     eroute->keepSource = BLD_DEBUG;
+    eroute->lifespan = 0;
     eroute->route = route;
     route->eroute = eroute;
     return eroute;
