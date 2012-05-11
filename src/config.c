@@ -61,6 +61,7 @@ int maParseConfig(MaServer *server, cchar *path, int flags)
     httpSetHostName(host, "default-server");
     route = httpCreateRoute(host);
     httpSetHostDefaultRoute(host, route);
+    httpSetRoutePathVar(route, "LIBDIR", mprJoinPath(server->appweb->platformDir, BLD_LIB_NAME));
 
     state = createState(server, host, route);
     state->flags = flags;
@@ -1915,10 +1916,12 @@ bool maValidateServer(MaServer *server)
     defaultHost = mprGetFirstItem(http->hosts);
     mprAssert(defaultHost);
 
+#if UNUSED
     if (mprGetListLength(server->endpoints) == 0) {
         mprError("Missing listening HttpEndpoint. Must have a Listen directive.");
         return 0;
     }
+#endif
     /*
         Add hosts to relevant listen endpoints
      */
@@ -1947,20 +1950,45 @@ bool maValidateServer(MaServer *server)
 }
 
 
+int maParsePlatform(cchar *platform, cchar **os, cchar **arch, cchar **profile)
+{
+    char   *rest;
+
+    if (platform == 0 || *platform == '\0') {
+        return MPR_ERR_BAD_ARGS;
+    }
+    *os = stok(sclone(platform), "-", &rest);
+    *arch = sclone(stok(NULL, "-", &rest));
+    *profile = sclone(rest);
+    if (*os == 0 || *arch == 0 || *profile == 0 || **os == '\0' || **arch == '\0' || **profile == '\0') {
+        return MPR_ERR_BAD_ARGS;
+    }
+    return 0;
+}
+
+
 static bool conditionalDefinition(MaState *state, cchar *key)
 {
+    cchar   *arch, *os, *profile;
     int     result, not;
 
+    result = 0;
     not = (*key == '!') ? 1 : 0;
     if (not) {
         for (++key; isspace((uchar) *key); key++) {}
     }
-    result = 0;
+    maParsePlatform(state->appweb->platform, &os, &arch, &profile);
 
-    if (scasematch(key, state->appweb->hostOs)) {
+    if (scasematch(key, arch)) {
         result = 1;
 
-    } else if (scasematch(key, state->appweb->hostArch)) {
+    } else if (scasematch(key, os)) {
+        result = 1;
+
+    } else if (scasematch(key, profile)) {
+        result = 1;
+
+    } else if (scasematch(key, state->appweb->platform)) {
         result = 1;
 
 #if BLD_DEBUG

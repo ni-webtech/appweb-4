@@ -27,7 +27,7 @@ Bit.load({
             type: 'file',
             files: [ 'WIN/appwebMonitor.ico' ],
             build: "cp('WIN/appwebMonitor.ico', ${BIN})",
-            'generate': 'cp WIN/appwebMonitor.ico ${BIN}',
+            generate: 'cp WIN/appwebMonitor.ico ${BIN}',
         },
 	},
 })

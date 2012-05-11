@@ -17,20 +17,17 @@ typedef struct App {
     Mpr         *mpr;
     MaAppweb    *appweb;
     MaServer    *server;
-    char        *serverRoot;
-    char        *configFile;
-    char        *pathEnv;
-    char        *database;              /* Database provider "mdb" | "sqlite" */
-    char        *hostOs;                /* Target host O/S for cross compilation */
-    char        *hostArch;              /* Target host CPU for cross compilation */
-    char        *listen;
 
-    char        *currentDir;            /* Initial starting current directory */
-    char        *libDir;                /* Appweb lib directory */
-    char        *wwwDir;                /* Appweb esp-www default files directory */
-    char        *appName;               /* Application name */
-
-    char        *flatPath;              /* Output filename for flat compilations */
+    cchar       *appName;               /* Application name */
+    cchar       *serverRoot;            /* Root directory for server config */
+    cchar       *configFile;            /* Arg to --config */
+    cchar       *currentDir;            /* Initial starting current directory */
+    cchar       *database;              /* Database provider "mdb" | "sqlite" */
+    cchar       *flatPath;              /* Output filename for flat compilations */
+    cchar       *libDir;                /* Appweb lib directory */
+    cchar       *listen;                /* Listen endpoint for "esp run" */
+    cchar       *platform;              /* Target platform os-arch-profile (lower) */
+    cchar       *wwwDir;                /* Appweb esp-www default files directory */
     MprFile     *flatFile;              /* Output file for flat compilations */
     MprList     *flatItems;             /* Items to invoke from Init */
 
@@ -41,13 +38,12 @@ typedef struct App {
     MprList     *files;                 /* List of files to process */
     MprList     *targets;               /* Command line targets */
 
-    char        *routeName;             /* Name of route to use for ESP configuration */
-    char        *routePrefix;           /* Route prefix to use for ESP configuration */
-    char        *command;               /* Compilation or link command */
-    char        *cacheName;             /* MD5 name of cached component */
+    cchar       *command;               /* Compilation or link command */
+    cchar       *cacheName;             /* MD5 name of cached component */
     cchar       *csource;               /* Name of "C" source for controller or view */
-    char        *module;                /* Compiled module name */
-    char        *source;
+    cchar       *routeName;             /* Name of route to use for ESP configuration */
+    cchar       *routePrefix;           /* Route prefix to use for ESP configuration */
+    cchar       *module;                /* Compiled module name */
 
     int         error;                  /* Any processing error */
     int         flat;                   /* Combine all inputs into one, flat output */ 
@@ -283,7 +279,7 @@ int main(int argc, char **argv)
     
     logSpec = "stderr:0";
     argc = mpr->argc;
-    argv = mpr->argv;
+    argv = (char**) mpr->argv;
     app->mpr = mpr;
     app->configFile = 0;
     app->listen = sclone(ESP_LISTEN);
@@ -291,17 +287,13 @@ int main(int argc, char **argv)
 
     for (argind = 1; argind < argc && !app->error; argind++) {
         argp = argv[argind];
-        if (*argp != '-') {
+        if (*argp++ != '-') {
             break;
         }
-        if (smatch(argp, "--arch")) {
-            if (argind >= argc) {
-                usageError();
-            } else {
-                app->hostArch = slower(argv[++argind]);
-            }
-
-        } else if (smatch(argp, "--chdir")) {
+        if (*argp == '-') {
+            argp++;
+        }
+        if (smatch(argp, "chdir")) {
             if (argind >= argc) {
                 usageError();
             } else {
@@ -311,7 +303,7 @@ int main(int argc, char **argv)
                 }
             }
 
-        } else if (smatch(argp, "--config")) {
+        } else if (smatch(argp, "config")) {
             if (argind >= argc) {
                 usageError();
             } else {
@@ -322,7 +314,7 @@ int main(int argc, char **argv)
                 app->configFile = mprGetPathBase(path);
             }
 
-        } else if (smatch(argp, "--database")) {
+        } else if (smatch(argp, "database")) {
             if (argind >= argc) {
                 usageError();
             } else {
@@ -333,57 +325,57 @@ int main(int argc, char **argv)
                 }
             }
 
-        } else if (smatch(argp, "--flat") || smatch(argp, "-f")) {
+        } else if (smatch(argp, "flat") || smatch(argp, "f")) {
             app->flat = 1;
 
-        } else if (smatch(argp, "--host")) {
-            if (argind >= argc) {
-                usageError();
-            } else {
-                app->hostOs = supper(argv[++argind]);
-            }
-
-        } else if (smatch(argp, "--listen") || smatch(argp, "-l")) {
+        } else if (smatch(argp, "listen") || smatch(argp, "l")) {
             if (argind >= argc) {
                 usageError();
             } else {
                 app->listen = sclone(argv[++argind]);
             }
 
-        } else if (smatch(argp, "--log") || smatch(argp, "-l")) {
+        } else if (smatch(argp, "log") || smatch(argp, "l")) {
             if (argind >= argc) {
                 usageError();
             } else {
                 logSpec = argv[++argind];
             }
 
-        } else if (smatch(argp, "--min")) {
+        } else if (smatch(argp, "min")) {
             app->minified = 1;
 
-        } else if (smatch(argp, "--overwrite")) {
+        } else if (smatch(argp, "overwrite")) {
             app->overwrite = 1;
 
-        } else if (smatch(argp, "--quiet") || smatch(argp, "-q")) {
+        } else if (smatch(argp, "platform")) {
+            if (argind >= argc) {
+                usageError();
+            } else {
+                app->platform = slower(argv[++argind]);
+            }
+
+        } else if (smatch(argp, "quiet") || smatch(argp, "q")) {
             app->quiet = 1;
 
-        } else if (smatch(argp, "--routeName")) {
+        } else if (smatch(argp, "routeName")) {
             if (argind >= argc) {
                 usageError();
             } else {
                 app->routeName = sclone(argv[++argind]);
             }
 
-        } else if (smatch(argp, "--routePrefix")) {
+        } else if (smatch(argp, "routePrefix")) {
             if (argind >= argc) {
                 usageError();
             } else {
                 app->routePrefix = sclone(argv[++argind]);
             }
 
-        } else if (smatch(argp, "--verbose") || smatch(argp, "-v")) {
+        } else if (smatch(argp, "verbose") || smatch(argp, "v")) {
             logSpec = "stderr:2";
 
-        } else if (smatch(argp, "--version") || smatch(argp, "-V")) {
+        } else if (smatch(argp, "version") || smatch(argp, "V")) {
             mprPrintf("%s %s-%s\n", mprGetAppTitle(), BLD_VERSION, BLD_NUMBER);
             exit(0);
 
@@ -408,7 +400,6 @@ int main(int argc, char **argv)
         process(argc - argind, &argv[argind]);
     }
     rc = app->error;
-    mprLog(1, "Exit complete");
     mprDestroy(MPR_EXIT_DEFAULT);
     return rc;
 }
@@ -424,24 +415,21 @@ static void manageApp(App *app, int flags)
         mprMark(app->configFile);
         mprMark(app->csource);
         mprMark(app->currentDir);
-        mprMark(app->routes);
+        mprMark(app->database);
         mprMark(app->files);
         mprMark(app->flatFile);
         mprMark(app->flatItems);
         mprMark(app->flatPath);
-        mprMark(app->hostArch);
-        mprMark(app->hostOs);
         mprMark(app->libDir);
         mprMark(app->listen);
         mprMark(app->module);
         mprMark(app->mpr);
-        mprMark(app->pathEnv);
-        mprMark(app->database);
+        mprMark(app->platform);
+        mprMark(app->routes);
         mprMark(app->routeName);
         mprMark(app->routePrefix);
         mprMark(app->server);
         mprMark(app->serverRoot);
-        mprMark(app->source);
         mprMark(app->targets);
         mprMark(app->wwwDir);
     }
@@ -473,6 +461,7 @@ static HttpRoute *createRoute(cchar *dir)
 
 static void initialize()
 {
+    readConfig();
     app->currentDir = mprGetCurrentPath();
     app->libDir = mprJoinPath(mprGetPathParent(mprGetAppDir()), BLD_LIB_NAME);
     app->wwwDir = mprJoinPath(app->libDir, "esp-www");
@@ -498,7 +487,7 @@ static MprList *getRoutes()
     HttpRoute   *route, *rp, *parent;
     EspRoute    *eroute;
     MprList     *routes;
-    char        *routeName, *routePrefix;
+    cchar       *routeName, *routePrefix;
     int         prev, nextRoute;
 
     if ((host = mprGetFirstItem(http->hosts)) == 0) {
@@ -513,7 +502,7 @@ static MprList *getRoutes()
         Filter ESP routes. Go in reverse order to locate outermost routes first.
      */
     for (prev = -1; (route = mprGetPrevItem(host->routes, &prev)) != 0; ) {
-        mprLog(2, "Check route name %s, prefix %s", route->name, route->startWith);
+        mprLog(3, "Check route name %s, prefix %s", route->name, route->startWith);
 
         if ((eroute = route->eroute) == 0 || !eroute->compile) {
             /* No ESP configuration for compiling */
@@ -578,7 +567,7 @@ static HttpRoute *getMvcRoute()
     HttpHost    *host;
     HttpRoute   *route, *parent;
     EspRoute    *eroute;
-    char        *routeName, *routePrefix;
+    cchar       *routeName, *routePrefix;
     int         prev;
 
     if ((host = mprGetFirstItem(http->hosts)) == 0) {
@@ -593,7 +582,7 @@ static HttpRoute *getMvcRoute()
         Go in reverse order to locate outermost routes first.
      */
     for (prev = -1; (route = mprGetPrevItem(host->routes, &prev)) != 0; ) {
-        mprLog(2, "Check route name %s, prefix %s", route->name, route->startWith);
+        mprLog(3, "Check route name %s, prefix %s", route->name, route->startWith);
         if ((eroute = route->eroute) == 0 || !eroute->compile) {
             /* No ESP configuration for compiling */
             continue;
@@ -644,14 +633,11 @@ static void readConfig()
         fail("Can't create HTTP service for %s", mprGetAppName());
         return;
     }
-    appweb = app->appweb;
+    appweb = MPR->appwebService = app->appweb;
     appweb->skipModules = 1;
     http = app->appweb->http;
-    if (app->hostOs) {
-        appweb->hostOs = app->hostOs;
-    }
-    if (app->hostArch) {
-        appweb->hostArch = app->hostArch;
+    if (app->platform) {
+        appweb->platform = app->platform;
     }
     findConfigFile();
     if (app->error) {
@@ -660,6 +646,12 @@ static void readConfig()
     if ((app->server = maCreateServer(appweb, "default")) == 0) {
         fail("Can't create HTTP server for %s", mprGetAppName());
         return;
+    }
+    if (app->platform) {
+        if (maSetPlatform(app->platform) < 0) {
+            fail("Can't find platform %s", app->platform);
+            return;
+        }
     }
     if (maParseConfig(app->server, app->configFile, MA_PARSE_NON_SERVER) < 0) {
         fail("Can't configure the server, exiting.");
@@ -686,13 +678,17 @@ static void process(int argc, char **argv)
         return;
     }
     if (smatch(cmd, "clean")) {
+#if UNUSED
         readConfig();
+#endif
         app->targets = getTargets(argc - 1, &argv[1]);
         app->routes = getRoutes();
         clean(app->routes);
 
     } else if (smatch(cmd, "compile")) {
+#if UNUSED
         readConfig();
+#endif
         app->targets = getTargets(argc - 1, &argv[1]);
         app->routes = getRoutes();
         compile(app->routes);
@@ -747,7 +743,7 @@ static void run(int argc, char **argv)
     }
     cmd = mprCreateCmd(0);
     trace("RUN", "appweb -v");
-    if (mprRunCmd(cmd, "appweb -v", NULL, NULL, -1, MPR_CMD_DETACH) != 0) {
+    if (mprRunCmd(cmd, "appweb -v", NULL, NULL, NULL, -1, MPR_CMD_DETACH) != 0) {
         fail("Can't run command: \n%s", app->command);
         return;
     }
@@ -759,18 +755,27 @@ static int runEspCommand(HttpRoute *route, cchar *command, cchar *csource, cchar
 {
     EspRoute    *eroute;
     MprCmd      *cmd;
+    MprList     *elist;
+    MprKey      *var;
+    cchar       **env;
     char        *err, *out;
 
     eroute = route->eroute;
     cmd = mprCreateCmd(0);
-    if ((app->command = espExpandCommand(command, csource, module)) == 0) {
+    if ((app->command = espExpandCommand(eroute, command, csource, module)) == 0) {
         fail("Missing EspCompile directive for %s", csource);
         return MPR_ERR_CANT_READ;
     }
     mprLog(4, "ESP command: %s\n", app->command);
     if (eroute->env) {
-        mprAddNullItem(eroute->env);
-        mprSetCmdDefaultEnv(cmd, (cchar**) &eroute->env->items[0]);
+        elist = mprCreateList(0, 0);
+        for (ITERATE_KEYS(eroute->env, var)) {
+            mprAddItem(elist, sfmt("%s=%s", var->key, var->data));
+        }
+        mprAddNullItem(elist);
+        env = &elist->items[0];
+    } else {
+        env = 0;
     }
     if (eroute->searchPath) {
         mprSetCmdSearchPath(cmd, eroute->searchPath);
@@ -778,7 +783,7 @@ static int runEspCommand(HttpRoute *route, cchar *command, cchar *csource, cchar
     mprLog(1, "Run: %s", app->command);
 
     //  WARNING: GC will run here
-	if (mprRunCmd(cmd, app->command, &out, &err, -1, 0) != 0) {
+	if (mprRunCmd(cmd, app->command, env, &out, &err, -1, 0) != 0) {
 		if (err == 0 || *err == '\0') {
 			/* Windows puts errors to stdout Ugh! */
 			err = out;
@@ -939,6 +944,7 @@ static bool validTarget(cchar *target)
 static void compileItems(HttpRoute *route) 
 {
     EspRoute    *eroute;
+    MprDirEntry *dp;
     cchar       *path;
     int         next;
 
@@ -947,7 +953,8 @@ static void compileItems(HttpRoute *route)
     if (eroute->controllersDir) {
         mprAssert(eroute);
         app->files = mprGetPathFiles(eroute->controllersDir, MPR_PATH_DESCEND);
-        for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+        for (next = 0; (dp = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+            path = dp->name;
             if (!validTarget(path)) {
                 continue;
             }
@@ -958,7 +965,8 @@ static void compileItems(HttpRoute *route)
     }
     if (eroute->viewsDir) {
         app->files = mprGetPathFiles(eroute->viewsDir, MPR_PATH_DESCEND);
-        for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+        for (next = 0; (dp = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+            path = dp->name;
             if (!validTarget(path)) {
                 continue;
             }
@@ -969,7 +977,8 @@ static void compileItems(HttpRoute *route)
     }
     if (eroute->staticDir) {
         app->files = mprGetPathFiles(eroute->staticDir, MPR_PATH_DESCEND);
-        for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+        for (next = 0; (dp = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+            path = dp->name;
             if (!validTarget(path)) {
                 continue;
             }
@@ -981,7 +990,8 @@ static void compileItems(HttpRoute *route)
     } else {
         /* Non-MVC */
         app->files = mprGetPathFiles(route->dir, MPR_PATH_DESCEND);
-        for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+        for (next = 0; (dp = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+            path = dp->name;
             if (!validTarget(path)) {
                 continue;
             }
@@ -996,6 +1006,7 @@ static void compileItems(HttpRoute *route)
 static void compileFlat(HttpRoute *route)
 {
     EspRoute    *eroute;
+    MprDirEntry *dp;
     char        *path, *line;
     int         next;
     
@@ -1015,24 +1026,28 @@ static void compileFlat(HttpRoute *route)
     if (route->sourceName) {
         /* MVC */
         app->files = mprGetPathFiles(eroute->controllersDir, MPR_PATH_DESCEND);
-        for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+        for (next = 0; (dp = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+            path = dp->name;
             if (smatch(mprGetPathExt(path), "c")) {
                 compileFile(route, path, ESP_CONTROLLER);
             }
         }
         app->files = mprGetPathFiles(eroute->viewsDir, MPR_PATH_DESCEND);
-        for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+        for (next = 0; (dp = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+            path = dp->name;
             compileFile(route, path, ESP_VIEW);
         }
         app->files = mprGetPathFiles(eroute->staticDir, MPR_PATH_DESCEND);
-        for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+        for (next = 0; (dp = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+            path = dp->name;
             if (smatch(mprGetPathExt(path), "esp")) {
                 compileFile(route, path, ESP_PAGE);
             }
         }
     } else {
         app->files = mprGetPathFiles(route->dir, MPR_PATH_DESCEND);
-        for (next = 0; (path = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+        for (next = 0; (dp = mprGetNextItem(app->files, &next)) != 0 && !app->error; ) {
+            path = dp->name;
             if (smatch(mprGetPathExt(path), "esp")) {
                 compileFile(route, path, ESP_PAGE);
             }
@@ -1311,12 +1326,16 @@ static void generate(int argc, char **argv)
         generateApp(createRoute(name), name);
 
     } else if (smatch(kind, "controller")) {
+#if UNUSED
         readConfig();
+#endif
         route = getMvcRoute();
         generateController(route, argc - 1, &argv[1]);
 
     } else if (smatch(kind, "scaffold")) {
+#if UNUSED
         readConfig();
+#endif
         route = getMvcRoute();
         generateScaffold(route, argc - 1, &argv[1]);
 
@@ -1328,7 +1347,9 @@ static void generate(int argc, char **argv)
 
 #endif
     } else if (smatch(kind, "table")) {
+#if UNUSED
         readConfig();
+#endif
         route = getMvcRoute();
         generateTable(route, argc - 1, &argv[1]);
 
@@ -1551,7 +1572,7 @@ static void generateAppDb(HttpRoute *route)
 /*
     Search strategy is:
 
-    [--config dir] : ./appweb.conf : /usr/lib/appweb/lib/appweb.conf
+    [--config dir] : ./appweb.conf : /usr/lib/appweb/VER/bin/esp-appweb.conf
  */
 static void findConfigFile()
 {
@@ -1566,7 +1587,7 @@ static void findConfigFile()
             fail("Can't open config file %s", app->configFile);
             return;
         }
-        app->configFile = mprJoinPath(mprGetAppDir(), sfmt("../%s/%s.conf", BLD_LIB_NAME, BLD_PRODUCT));
+        app->configFile = mprJoinPath(mprGetAppDir(), sfmt("../%s/esp-%s.conf", BLD_LIB_NAME, BLD_PRODUCT));
         if (!mprPathExists(app->configFile, R_OK)) {
             fail("Can't open config file %s", app->configFile);
             return;
@@ -1624,19 +1645,18 @@ static void usageError(Mpr *mpr)
     mprPrintfError("\nESP Usage:\n\n"
     "  %s [options] [commands]\n\n"
     "  Options:\n"
-    "    --arch CPU             # Target CPU architecture\n"
-    "    --chdir dir            # Change to the named directory first\n"
-    "    --config configFile    # Use named config file instead appweb.conf\n"
-    "    --database name        # Database provider 'mdb|sqlite' \n"
-    "    --flat                 # Compile into a single module\n"
-    "    --host OS              # Target O/S\n"
-    "    --listen [ip:]port     # Listen on specified address \n"
-    "    --log logFile:level    # Log to file file at verbosity level\n"
-    "    --overwrite            # Overwrite existing files \n"
-    "    --quiet                # Don't emit trace \n"
-    "    --routeName name       # Route name in appweb.conf to use \n"
-    "    --routePrefix prefix   # Route prefix in appweb.conf to use \n"
-    "    --verbose              # Emit verbose trace \n"
+    "    --chdir dir                # Change to the named directory first\n"
+    "    --config configFile        # Use named config file instead appweb.conf\n"
+    "    --database name            # Database provider 'mdb|sqlite' \n"
+    "    --flat                     # Compile into a single module\n"
+    "    --listen [ip:]port         # Listen on specified address \n"
+    "    --log logFile:level        # Log to file file at verbosity level\n"
+    "    --overwrite                # Overwrite existing files \n"
+    "    --quiet                    # Don't emit trace \n"
+    "    --platform os-arch-profile # Target platform\n"
+    "    --routeName name           # Route name in appweb.conf to use \n"
+    "    --routePrefix prefix       # Route prefix in appweb.conf to use \n"
+    "    --verbose                  # Emit verbose trace \n"
     "\n"
     "  Commands:\n"
     "    esp clean\n"

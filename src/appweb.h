@@ -42,22 +42,24 @@ struct MaServer;
     @stability Evolving
     @defgroup Appweb Appweb
     @see Http maAddServer maApplyChangedGroup maApplyChangedUser maCreateAppweb maGetUserGroup maLoadModule 
-        maLookupServer maMatchDir maParseInit maSetDefaultServer maSetHttpGroup maSetHttpUser maStartAppweb maStopAppweb 
+        maLookupServer maMatchDir maParseInit maParsePlatform maSetDefaultServer maSetHttpGroup maSetHttpUser 
+        maStartAppweb maStopAppweb 
  */
 typedef struct MaAppweb {
-    struct MaServer     *defaultServer;     /**< Default server object */
-    MprList             *servers;           /**< List of server objects */
-    MprHash             *directives;        /**< Config file directives */
-    Http                *http;              /**< Http service object */
-    char                *user;              /**< O/S application user name */
-    char                *group;             /**< O/S application group name */
-    char                *hostArch;          /**< Host CPU architecture */
-    char                *hostOs;            /**< Host operating system */
-    int                 uid;                /**< User Id */
-    int                 gid;                /**< Group Id */
-    int                 userChanged;        /**< User name changed */
-    int                 groupChanged;       /**< Group name changed */
-    int                 skipModules;        /**< Don't load modules */
+    struct MaServer     *defaultServer;         /**< Default server object */
+    MprList             *servers;               /**< List of server objects */
+    MprHash             *directives;            /**< Config file directives */
+    Http                *http;                  /**< Http service object */
+    cchar               *group;                 /**< O/S application group name */
+    cchar               *localPlatform;         /**< Local (dev) platform os-arch-profile (lower case) */
+    cchar               *platform;              /**< Target platform os-arch-profile (lower case) */
+    cchar               *platformDir;           /**< Path to platform */
+    cchar               *user;                  /**< O/S application user name */
+    int                 uid;                    /**< User Id */
+    int                 gid;                    /**< Group Id */
+    int                 userChanged;            /**< User name changed */
+    int                 groupChanged;           /**< Group name changed */
+    int                 skipModules;            /**< Don't load modules */
 } MaAppweb;
 
 /**
@@ -145,6 +147,16 @@ extern int maMatchDir(HttpConn *conn, HttpRoute *route, int direction);
 extern int maParseInit(MaAppweb *appweb);
 
 /**
+    Parse a platform string
+    @param platform The platform string. Must be of the form: os-arch-profile
+    @param os Parsed O/S portion
+    @param arch Parsed architecture portion
+    @param profile Parsed profile portion
+    @return Zero if successful, otherwise a negative Mpr error code.
+ */
+extern int maParsePlatform(cchar *platform, cchar **os, cchar **arch, cchar **profile);
+
+/**
     Set the default server
     @param appweb Appweb object created via #maCreateAppweb
     @param server MaServer object
@@ -201,6 +213,7 @@ extern int maPhpHandlerInit(Http *http, MprModule *mp);
 extern int maSslModuleInit(Http *http, MprModule *mp);
 extern int maOpenDirHandler(Http *http);
 extern int maOpenFileHandler(Http *http);
+extern int maSetPlatform(cchar *platform);
 
 /********************************** MaServer **********************************/
 /**

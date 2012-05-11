@@ -142,7 +142,7 @@ int stopSeqno = -1;
  */
 #if LINUX
     #define NEED_FLSL 1
-    #if BLD_CPU_ARCH == MPR_CPU_IX86 || BLD_CPU_ARCH == MPR_CPU_IX64
+    #if BLD_CPU_ARCH == MPR_CPU_X86 || BLD_CPU_ARCH == MPR_CPU_X64
         #define USE_FLSL_ASM_X86 1
     #endif
     static MPR_INLINE int flsl(ulong word);
@@ -2628,7 +2628,7 @@ Mpr *mprCreate(int argc, char **argv, int flags)
         }
 #endif
         mpr->argc = argc;
-        mpr->argv = argv;
+        mpr->argv = (cchar**) argv;
         if (!mprIsPathAbs(mpr->argv[0])) {
             mpr->argv[0] = mprGetAppPath();
         }
@@ -2765,9 +2765,9 @@ void mprDestroy(int how)
     wgc(gmode);
 
     if (how & MPR_EXIT_RESTART) {
-        mprLog(2, "Restarting\n\n");
+        mprLog(3, "Restarting\n\n");
     } else {
-        mprLog(2, "Exiting");
+        mprLog(3, "Exiting");
     }
     MPR->state = MPR_FINISHED;
     mprStopGCService();
@@ -2806,14 +2806,14 @@ void mprTerminate(int how, int status)
     }
     how = MPR->exitStrategy;
     if (how & MPR_EXIT_IMMEDIATE) {
-        mprLog(2, "Immediate exit. Aborting all requests and services.");
+        mprLog(3, "Immediate exit. Terminate all requests and services.");
         exit(status);
 
     } else if (how & MPR_EXIT_NORMAL) {
-        mprLog(2, "Normal exit. Flush buffers, close files and aborting existing requests.");
+        mprLog(3, "Normal exit.");
 
     } else if (how & MPR_EXIT_GRACEFUL) {
-        mprLog(2, "Graceful exit. Waiting for existing requests to complete.");
+        mprLog(3, "Graceful exit. Waiting for existing requests to complete.");
 
     } else {
         mprLog(7, "mprTerminate: how %d", how);
@@ -2853,7 +2853,7 @@ void mprRestart()
     for (i = 3; i < MPR_MAX_FILE; i++) {
         close(i);
     }
-    execv(MPR->argv[0], MPR->argv);
+    execv(MPR->argv[0], (char*const*) MPR->argv);
 
     /*
         Last-ditch trace. Can only use stdout. Logging may be closed.
@@ -3052,7 +3052,7 @@ int mprParseArgs(char *args, char **argv, int maxArgc)
     Set MPR_ARGV_ARGS_ONLY if not passing in a program name. 
     Always returns and argv[0] reserved for the program name or empty string.  First arg starts at argv[1].
  */
-int mprMakeArgv(cchar *command, char ***argvp, int flags)
+int mprMakeArgv(cchar *command, cchar ***argvp, int flags)
 {
     char    **argv, *vector, *args;
     ssize   len;
@@ -3083,7 +3083,7 @@ int mprMakeArgv(cchar *command, char ***argvp, int flags)
         mprParseArgs(args, argv, argc);
     }
     argv[argc] = 0;
-    *argvp = argv;
+    *argvp = (cchar**) argv;
     return argc;
 }
 
@@ -7931,27 +7931,24 @@ void stubMprAsync() {}
 
 void mprAtomicBarrier()
 {
-    #if MACOSX
+    #ifdef VX_MEM_BARRIER_RW
+        VX_MEM_BARRIER_RW();
+    #elif MACOSX
         OSMemoryBarrier();
     #elif BLD_WIN_LIKE
         MemoryBarrier();
     #elif BLD_CC_SYNC
         __sync_synchronize();
-    #elif VXWORKS
-        #ifdef VX_MEM_BARRIER_RW
-            VX_MEM_BARRIER_RW();
-        #else
-            mprGlobalLock(); mprGlobalUnlock();
-        #endif
+    #elif __GNUC__ && (BLD_CPU_ARCH == MPR_CPU_X86 || BLD_CPU_ARCH == MPR_CPU_X64)
+        asm volatile ("mfence" : : : "memory");
+    #elif __GNUC__ && (BLD_CPU_ARCH == MPR_CPU_PPC)
+        asm volatile ("sync" : : : "memory");
     #else
-        mprGlobalLock(); mprGlobalUnlock();
+        getpid();
     #endif
 
 #if FUTURE && KEEP
-        __asm volatile ("nop" ::: "memory")
-        asm volatile ("sync" : : : "memory");
-        asm volatile ("mfence" : : : "memory");
-        asm volatile ("lock; add %eax,0");
+    asm volatile ("lock; add %eax,0");
 #endif
 }
 
@@ -7974,7 +7971,7 @@ int mprAtomicCas(void * volatile *addr, void *expected, cvoid *value)
     #elif VXWORKS && _VX_ATOMIC_INIT && !MPR_64BIT
         /* vxCas operates with integer values */
         return vxCas((atomic_t*) addr, (atomicVal_t) expected, (atomicVal_t) value);
-    #elif BLD_CPU_ARCH == MPR_CPU_IX86
+    #elif BLD_CPU_ARCH == MPR_CPU_X86
         {
             void *prev;
             asm volatile ("lock; cmpxchgl %2, %1"
@@ -7982,7 +7979,7 @@ int mprAtomicCas(void * volatile *addr, void *expected, cvoid *value)
                 : "r" (value), "m" (*addr), "0" (expected));
             return expected == prev;
         }
-    #elif BLD_CPU_ARCH == MPR_CPU_IX64
+    #elif BLD_CPU_ARCH == MPR_CPU_X64
         {
             void *prev;
             asm volatile ("lock; cmpxchgq %q2, %1"
@@ -8015,7 +8012,7 @@ void mprAtomicAdd(volatile int *ptr, int value)
         InterlockedExchangeAdd(ptr, value);
     #elif VXWORKS && _VX_ATOMIC_INIT
         vxAtomicAdd(ptr, value);
-    #elif (BLD_CPU_ARCH == MPR_CPU_IX86 || BLD_CPU_ARCH == MPR_CPU_IX64) && FUTURE
+    #elif (BLD_CPU_ARCH == MPR_CPU_X86 || BLD_CPU_ARCH == MPR_CPU_X64) && FUTURE
         asm volatile ("lock; xaddl %0,%1"
             : "=r" (value), "=m" (*ptr)
             : "0" (value), "m" (*ptr)
@@ -9249,7 +9246,7 @@ static void manageCmdService(MprCmdService *cmd, int flags);
 static void manageCmd(MprCmd *cmd, int flags);
 static void reapCmd(MprCmd *cmd, MprSignal *sp);
 static void resetCmd(MprCmd *cmd);
-static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env);
+static int sanitizeArgs(MprCmd *cmd, int argc, cchar **argv, cchar **env);
 static int startProcess(MprCmd *cmd);
 static void stdinCallback(MprCmd *cmd, MprEvent *event);
 static void stdoutCallback(MprCmd *cmd, MprEvent *event);
@@ -9257,7 +9254,7 @@ static void stderrCallback(MprCmd *cmd, MprEvent *event);
 static void vxCmdManager(MprCmd *cmd);
 
 #if BLD_UNIX_LIKE
-static char **fixenv(MprCmd *cmd);
+static cchar **fixenv(MprCmd *cmd);
 #endif
 
 #if VXWORKS
@@ -9529,9 +9526,9 @@ int mprIsCmdComplete(MprCmd *cmd)
 /*
     Run a simple blocking command. See arg usage below in mprRunCmdV.
  */
-int mprRunCmd(MprCmd *cmd, cchar *command, char **out, char **err, MprTime timeout, int flags)
+int mprRunCmd(MprCmd *cmd, cchar *command, cchar **envp, char **out, char **err, MprTime timeout, int flags)
 {
-    char    **argv;
+    cchar   **argv;
     int     argc;
 
     mprAssert(cmd);
@@ -9539,7 +9536,7 @@ int mprRunCmd(MprCmd *cmd, cchar *command, char **out, char **err, MprTime timeo
         return 0;
     }
     cmd->makeArgv = argv;
-    return mprRunCmdV(cmd, argc, argv, out, err, timeout, flags);
+    return mprRunCmdV(cmd, argc, argv, envp, out, err, timeout, flags);
 }
 
 
@@ -9568,7 +9565,7 @@ void mprSetCmdSearchPath(MprCmd *cmd, cchar *search)
         MPR_CMD_SHOW            Show the commands window on Windows
         MPR_CMD_IN              Connect to stdin
  */
-int mprRunCmdV(MprCmd *cmd, int argc, char **argv, char **out, char **err, MprTime timeout, int flags)
+int mprRunCmdV(MprCmd *cmd, int argc, cchar **argv, cchar **envp, char **out, char **err, MprTime timeout, int flags)
 {
     int     rc, status;
 
@@ -9592,7 +9589,7 @@ int mprRunCmdV(MprCmd *cmd, int argc, char **argv, char **out, char **err, MprTi
         cmd->stderrBuf = mprCreateBuf(MPR_BUFSIZE, -1);
     }
     mprSetCmdCallback(cmd, cmdCallback, NULL);
-    rc = mprStartCmd(cmd, argc, argv, 0, flags);
+    rc = mprStartCmd(cmd, argc, argv, envp, flags);
 
     /*
         Close the pipe connected to the client's stdin
@@ -9656,10 +9653,10 @@ static void addCmdHandlers(MprCmd *cmd)
     run a command. The caller needs to do code like mprRunCmd() themselves to wait for completion and to send/receive data.
     The routine does not wait. Callers must call mprWaitForCmd to wait for the command to complete.
  */
-int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags)
+int mprStartCmd(MprCmd *cmd, int argc, cchar **argv, cchar **envp, int flags)
 {
     MprPath     info;
-    char        *program, *search;
+    cchar       *program, *search;
     int         rc;
 
     mprAssert(cmd);
@@ -9675,7 +9672,7 @@ int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags)
     cmd->flags = flags;
 
     if (envp == 0) {
-        envp = (char**) cmd->defaultEnv;
+        envp = cmd->defaultEnv;
     }
     if (sanitizeArgs(cmd, argc, argv, envp) < 0) {
         mprAssert(!MPR_ERR_MEMORY);
@@ -10206,10 +10203,10 @@ void mprSetCmdDir(MprCmd *cmd, cchar *dir)
 /*
     Sanitize args. Convert "/" to "\" and converting '\r' and '\n' to spaces, quote all args and put the program as argv[0].
  */
-static int sanitizeArgs(MprCmd *cmd, int argc, char **argv, char **env)
+static int sanitizeArgs(MprCmd *cmd, int argc, cchar **argv, cchar **env)
 {
 #if BLD_UNIX_LIKE || VXWORKS
-    char    **envp;
+    cchar   **envp;
     int     ecount, index, i, hasPath, hasLibPath;
 
     cmd->argv = argv;
@@ -10688,9 +10685,9 @@ static int startProcess(MprCmd *cmd)
         }
         cmd->forkCallback(cmd->forkData);
         if (cmd->env) {
-            rc = execve(cmd->program, cmd->argv, fixenv(cmd));
+            rc = execve(cmd->program, (char**) cmd->argv, (char**) fixenv(cmd));
         } else {
-            rc = execv(cmd->program, cmd->argv);
+            rc = execv(cmd->program, (char**) cmd->argv);
         }
         err = errno;
         printf("Can't exec %s, rc %d, err %d\n", cmd->program, rc, err);
@@ -10878,9 +10875,9 @@ static void closeFiles(MprCmd *cmd)
 /*
     CYGWIN requires a PATH or else execve hangs in cygwin 1.7
  */
-static char **fixenv(MprCmd *cmd)
+static cchar **fixenv(MprCmd *cmd)
 {
-    char    **env;
+    cchar   **env;
 
     env = cmd->env;
 #if CYGWIN
@@ -19755,6 +19752,7 @@ static MprList *getDirFiles(cchar *path, int flags)
 
 /*
     Find files in the directory "dir". If base is set, use that as the prefix for returned files.
+    Returns a list of MprDirEntry objects.
  */
 static MprList *findFiles(MprList *list, cchar *dir, cchar *base, int flags)
 {
@@ -19795,7 +19793,7 @@ static MprList *findFiles(MprList *list, cchar *dir, cchar *base, int flags)
 
 
 /*
-    This returns a list of filenames
+    Get the files in a directory. Returns a list of MprDirEntry objects.
 
     MPR_PATH_DESCEND        to traverse subdirectories
     MPR_PATH_DEPTH_FIRST    to do a depth-first traversal
@@ -25110,6 +25108,7 @@ char *schr(cchar *s, int c)
 }
 
 
+//  MOB - this should have no limit and then provide sncontains
 char *scontains(cchar *str, cchar *pattern, ssize limit)
 {
     cchar   *cp, *s1, *s2;

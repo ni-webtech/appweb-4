@@ -19,9 +19,9 @@
 
 /*********************************** Forwards *********************************/
 
-static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp);
+static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, cchar ***argvp);
 static ssize cgiCallback(MprCmd *cmd, int channel, void *data);
-static int copyVars(char **envv, int index, MprHash *vars, cchar *prefix);
+static int copyVars(cchar **envv, int index, MprHash *vars, cchar *prefix);
 static char *getCgiToken(MprBuf *buf, cchar *delim);
 static bool parseFirstCgiResponse(HttpConn *conn, MprCmd *cmd);
 static bool parseHeader(HttpConn *conn, MprCmd *cmd);
@@ -69,6 +69,7 @@ static void closeCgi(HttpQueue *q)
     mprLog(5, "CGI: close");
     cmd = (MprCmd*) q->queueData;
     if (cmd) {
+        mprSetCmdCallback(cmd, NULL, NULL);
         if (cmd->pid) {
             mprStopCmd(cmd, -1);
         }
@@ -88,7 +89,8 @@ static void startCgi(HttpQueue *q)
     HttpConn        *conn;
     MprCmd          *cmd;
     cchar           *baseName;
-    char            **argv, **envv, *fileName;
+    cchar           **argv, *fileName;
+    cchar           **envv;
     int             argc, varCount, count;
 
     argv = 0;
@@ -675,11 +677,12 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
 /*
     Build the command arguments. NOTE: argv is untrusted input.
  */
-static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, char ***argvp)
+static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, cchar ***argvp)
 {
     HttpRx      *rx;
     HttpTx      *tx;
-    char        *fileName, **argv, *indexQuery, *cp, *tok;
+    cchar       **argv;
+    char        *fileName, *indexQuery, *cp, *tok;
     cchar       *actionProgram;
     size_t      len;
     int         argc, argind, i;
@@ -990,7 +993,7 @@ static void traceCGIData(MprCmd *cmd, char *src, ssize size)
 #endif
 
 
-static int copyVars(char **envv, int index, MprHash *vars, cchar *prefix)
+static int copyVars(cchar **envv, int index, MprHash *vars, cchar *prefix)
 {
     MprKey  *kp;
     char    *cp;

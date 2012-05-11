@@ -3,10 +3,9 @@
  */ 
 const HTTP: Uri = App.config.uris.http || "127.0.0.1:4100"
 
-//  This writes a 2MB URI
+//  This writes a ~100K URI. LimitUri should be less than 100K for this unit test.
 
-//  Data is 100K after this
-let data = ""
+let data = "/"
 for (i in 1000) {
     data += "012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678\n"
 }

@@ -106,7 +106,7 @@ MAIN(appweb, int argc, char **argv, char **envp)
     app->home = BLD_SERVER_ROOT;
     app->documents = app->home;
     argc = mpr->argc;
-    argv = mpr->argv;
+    argv = (char**) mpr->argv;
 
     for (argind = 1; argind < argc; argind++) {
         argp = argv[argind];
@@ -276,8 +276,6 @@ static int initializeAppweb(cchar *ip, int port)
         mprUserError("Can't create HTTP service for %s", mprGetAppName());
         return MPR_ERR_CANT_CREATE;
     }
-    MPR->appwebService = app->appweb;
-
     if ((app->server = maCreateServer(app->appweb, "default")) == 0) {
         mprUserError("Can't create HTTP server for %s", mprGetAppName());
         return MPR_ERR_CANT_CREATE;

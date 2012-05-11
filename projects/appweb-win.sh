@@ -137,6 +137,9 @@ cp -r src/esp/esp.conf ${CONFIG}/bin/esp.conf
 rm -rf ${CONFIG}/bin/esp-www
 cp -r src/esp/www ${CONFIG}/bin/esp-www
 
+rm -rf ${CONFIG}/bin/esp-appweb.conf
+cp -r src/esp/esp-appweb.conf ${CONFIG}/bin/esp-appweb.conf
+
 "${CC}" -c -Fo${CONFIG}/obj/cgiHandler.obj -Fd${CONFIG}/obj/cgiHandler.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/modules/cgiHandler.c
 
 "${LD}" -dll -out:${CONFIG}/bin/mod_cgi.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/mod_cgi.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/cgiHandler.obj ${LIBS} libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib

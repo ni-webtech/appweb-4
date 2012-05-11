@@ -30,6 +30,7 @@ all: prep \
         $(CONFIG)/bin/esp \
         $(CONFIG)/bin/esp.conf \
         $(CONFIG)/bin/esp-www \
+        $(CONFIG)/bin/esp-appweb.conf \
         $(CONFIG)/bin/mod_cgi.dylib \
         $(CONFIG)/bin/auth \
         $(CONFIG)/bin/cgiProgram \
@@ -66,6 +67,7 @@ clean:
 	rm -rf $(CONFIG)/bin/esp
 	rm -rf $(CONFIG)/bin/esp.conf
 	rm -rf $(CONFIG)/bin/esp-www
+	rm -rf $(CONFIG)/bin/esp-appweb.conf
 	rm -rf $(CONFIG)/bin/mod_cgi.dylib
 	rm -rf $(CONFIG)/bin/auth
 	rm -rf $(CONFIG)/bin/cgiProgram
@@ -417,6 +419,10 @@ $(CONFIG)/bin/esp-www:
 	rm -fr $(CONFIG)/bin/esp-www
 	cp -r src/esp/www $(CONFIG)/bin/esp-www
 
+$(CONFIG)/bin/esp-appweb.conf: 
+	rm -fr $(CONFIG)/bin/esp-appweb.conf
+	cp -r src/esp/esp-appweb.conf $(CONFIG)/bin/esp-appweb.conf
+
 $(CONFIG)/obj/cgiHandler.o: \
         src/modules/cgiHandler.c \
         $(CONFIG)/inc/bit.h \
@@ -498,7 +504,8 @@ $(CONFIG)/bin/testAppweb:  \
         $(CONFIG)/obj/testHttp.o
 	$(CC) -o $(CONFIG)/bin/testAppweb -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/testAppweb.o $(CONFIG)/obj/testHttp.o $(LIBS) -lappweb -lhttp -lmpr -lpcre -lmprssl
 
-test/cgi-bin/testScript: 
+test/cgi-bin/testScript:  \
+        $(CONFIG)/bin/cgiProgram
 	cd test >/dev/null ;\
 		echo '#!../$(CONFIG)/bin/cgiProgram' >cgi-bin/testScript ; chmod +x cgi-bin/testScript ;\
 		cd - >/dev/null 
@@ -522,7 +529,8 @@ test/web/basic/basic.cgi:
 	chmod +x web/basic/basic.cgi ;\
 		cd - >/dev/null 
 
-test/cgi-bin/cgiProgram: 
+test/cgi-bin/cgiProgram:  \
+        $(CONFIG)/bin/cgiProgram
 	cd test >/dev/null ;\
 		cp ../$(CONFIG)/bin/cgiProgram cgi-bin/cgiProgram ;\
 	cp ../$(CONFIG)/bin/cgiProgram cgi-bin/nph-cgiProgram ;\

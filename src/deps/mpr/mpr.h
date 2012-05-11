@@ -60,8 +60,8 @@
 #define MPR_CPU_UNKNOWN     0
 #define MPR_CPU_ARM         1           /* Arm */
 #define MPR_CPU_ITANIUM     2           /* Intel Itanium */
-#define MPR_CPU_IX86        3           /* X86 */
-#define MPR_CPU_IX64        4           /* AMD64 or EMT64 */
+#define MPR_CPU_X86         3           /* X86 */
+#define MPR_CPU_X64         4           /* AMD64 or EMT64 */
 #define MPR_CPU_MIPS        5           /* Mips */
 #define MPR_CPU_PPC         6           /* Power PC */
 #define MPR_CPU_SPARC       7           /* Sparc */
@@ -74,10 +74,10 @@
     #define BLD_CPU_ARCH MPR_CPU_ARM
 #elif defined(__x86_64__) || defined(_M_AMD64)
     #define BLD_CPU "x64"
-    #define BLD_CPU_ARCH MPR_CPU_IX64
+    #define BLD_CPU_ARCH MPR_CPU_X64
 #elif defined(__i386__) || defined(__i486__) || defined(__i585__) || defined(__i686__) || defined(_M_IX86)
     #define BLD_CPU "x86"
-    #define BLD_CPU_ARCH MPR_CPU_IX86
+    #define BLD_CPU_ARCH MPR_CPU_X86
 #elif defined(_M_IA64)
     #define BLD_CPU "IA64"
     #define BLD_CPU_ARCH MPR_CPU_ITANIUM
@@ -2501,8 +2501,7 @@ extern void mprVirtFree(void *ptr, ssize size);
 #define mprAllocObj(type, manage) \
     ((type*) mprSetManager( \
         mprSetAllocName(mprAllocMem(sizeof(type), MPR_ALLOC_MANAGER | MPR_ALLOC_ZERO), #type "@" MPR_LOC), (MprManager) manage))
-#define mprAllocStruct(type) \
-        ((type*) mprSetAllocName(mprAllocMem(sizeof(type), MPR_ALLOC_ZERO), #type "@" MPR_LOC))
+#define mprAllocStruct(type) ((type*) mprSetAllocName(mprAllocMem(sizeof(type), MPR_ALLOC_ZERO), #type "@" MPR_LOC))
 
 #if DOXYGEN
 typedef void *Type;
@@ -3912,7 +3911,7 @@ extern char *mprGetDate(char *fmt);
  */
 extern uint64 mprGetTicks();
 
-#if (LINUX || MACOSX || WIN) && (BLD_CPU_ARCH == MPR_CPU_IX86 || BLD_CPU_ARCH == MPR_CPU_IX64)
+#if (LINUX || MACOSX || WIN) && (BLD_CPU_ARCH == MPR_CPU_X86 || BLD_CPU_ARCH == MPR_CPU_X64)
     #define MPR_HIGH_RES_TIMER 1
 #else
     #define MPR_HIGH_RES_TIMER 0
@@ -5331,14 +5330,14 @@ extern char *mprGetPathExt(cchar *path);
 #define MPR_PATH_RELATIVE       0x10            /**< Flag for mprGetPathFiles to return paths relative to the directory */
 
 /**
-    Create a list of files in a directory or subdirectories.
+    Create a list of files in a directory or subdirectories. This call returns a list of MprDirEntry objects.
     @description Get the list of files in a directory and return a list.
     @param dir Directory to list.
     @param flags The flags may be set to #MPR_PATH_DESCEND to traverse subdirectories. Set $MPR_PATH_NO_DIRS 
         to exclude directories from the results. Set to MPR_PATH_HIDDEN to include hidden files that start with ".".
         Set to MPR_PATH_DEPTH_FIRST to do a depth-first traversal, i.e. traverse subdirectories before considering 
         adding the directory to the list.
-    @returns A list (MprList) of directory paths.
+    @returns A list (MprList) of MprDirEntry objects.
     @ingroup MprPath
  */
 extern MprList *mprGetPathFiles(cchar *dir, int flags);
@@ -7925,7 +7924,7 @@ typedef struct MprCmdFile {
 typedef struct MprCmd {
     /*  Ordered for debugging */
 
-    char            *program;           /**< Program path name */
+    cchar           *program;           /**< Program path name */
     int             pid;                /**< Process ID of the created process */
     int             status;             /**< Command exit status */
     int             flags;              /**< Control flags (userFlags not here) */
@@ -7933,9 +7932,9 @@ typedef struct MprCmd {
     int             requiredEof;        /**< Number of EOFs required for an exit */
     int             complete;           /**< All channels EOF and status gathered */
     int             stopped;            /**< Command stopped */
-    char            **makeArgv;         /**< Allocated argv */ 
-    char            **argv;             /**< List of args. Null terminated */
-    char            **env;              /**< List of environment variables. Null terminated */
+    cchar           **makeArgv;         /**< Allocated argv */ 
+    cchar           **argv;             /**< List of args. Null terminated */
+    cchar           **env;              /**< List of environment variables. Null terminated */
     char            *dir;               /**< Current working dir for the process */
     cchar           **defaultEnv;       /**< Environment to use if no env passed to mprStartCmd */
     char            *searchPath;        /**< Search path to use to locate the command */
@@ -8100,6 +8099,8 @@ extern int mprReapCmd(MprCmd *cmd, MprTime timeout);
     Run a command using a string command line. This starts the command via mprStartCmd() and waits for its completion.
     @param cmd MprCmd object created via mprCreateCmd
     @param command Command line to run
+    @param envp Array of environment strings. Each environment string should be of the form: "KEY=VALUE". The array
+        must be null terminated.
     @param out Reference to a string to receive the stdout from the command.
     @param err Reference to a string to receive the stderr from the command.
     @param timeout Time in milliseconds to wait for the command to complete and exit.
@@ -8110,13 +8111,15 @@ extern int mprReapCmd(MprCmd *cmd, MprTime timeout);
     @return Zero if successful. Otherwise a negative MPR error code.
     @ingroup MprCmd
  */
-extern int mprRunCmd(MprCmd *cmd, cchar *command, char **out, char **err, MprTime timeout, int flags);
+extern int mprRunCmd(MprCmd *cmd, cchar *command, cchar **envp, char **out, char **err, MprTime timeout, int flags);
 
 /**
     Run a command using an argv[] array of arguments. This invokes mprStartCmd() and waits for its completion.
     @param cmd MprCmd object created via mprCreateCmd
     @param argc Count of arguments in argv
     @param argv Command arguments array
+    @param envp Array of environment strings. Each environment string should be of the form: "KEY=VALUE". The array
+        must be null terminated.
     @param out Reference to a string to receive the stdout from the command.
     @param err Reference to a string to receive the stderr from the command.
     @param timeout Time in milliseconds to wait for the command to complete and exit.
@@ -8127,7 +8130,7 @@ extern int mprRunCmd(MprCmd *cmd, cchar *command, char **out, char **err, MprTim
     @return Zero if successful. Otherwise a negative MPR error code.
     @ingroup MprCmd
  */
-extern int mprRunCmdV(MprCmd *cmd, int argc, char **argv, char **out, char **err, MprTime timeout, int flags);
+extern int mprRunCmdV(MprCmd *cmd, int argc, cchar **argv, cchar **envp, char **out, char **err, MprTime timeout, int flags);
 
 /**
     Define a callback to be invoked to receive response data from the command.
@@ -8189,7 +8192,7 @@ extern void mprSetCmdSearchPath(MprCmd *cmd, cchar *search);
     @return Zero if successful. Otherwise a negative MPR error code.
     @ingroup MprCmd
  */
-extern int mprStartCmd(MprCmd *cmd, int argc, char **argv, char **envp, int flags);
+extern int mprStartCmd(MprCmd *cmd, int argc, cchar **argv, cchar **envp, int flags);
 
 /**
     Stop the command. The command is immediately killed.
@@ -8464,7 +8467,7 @@ typedef struct Mpr {
     char            *title;                 /**< Product title */
     char            *version;               /**< Product version */
     int             argc;                   /**< Count of command line args */
-    char            **argv;                 /**< Application command line args (not alloced) */
+    cchar           **argv;                 /**< Application command line args (not alloced) */
     char            **argBuf;               /**< Space for allocated argv */
     char            *domainName;            /**< Domain portion */
     char            *hostName;              /**< Host name (fully qualified name) */
@@ -8781,7 +8784,7 @@ extern bool mprIsStoppingCore();
     @return The count of arguments in argv
     @ingroup Mpr
  */
-extern int mprMakeArgv(cchar *command, char ***argv, int flags);
+extern int mprMakeArgv(cchar *command, cchar ***argv, int flags);
 
 /**
     Nap for a while

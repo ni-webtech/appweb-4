@@ -28,5 +28,27 @@ Bit.load({
             path: '${LIB}/esp-www',
             files: [ 'www' ],
         },
+
+        'esp-appweb.conf': {
+            type: 'file',
+            path: '${LIB}/esp-appweb.conf',
+            files: [ 'esp-appweb.conf' ],
+        },
+
+
+        'esp-configure': {
+            scripts: {
+                postconfig: "
+                    if (bit.platform.os == 'vxworks') {
+                        let evars = []
+                        for (let [key,value] in bit.env) {
+                            evars.push('EspEnv ' + key + ' \"' + value + '\"\n')
+                        }
+                        bit.dir.lib.join('esp-' + bit.platform.os + '.conf').write(evars.join())
+                    }
+                ",
+            },
+        },
 	},
+
 })

@@ -28,11 +28,12 @@ MaAppweb *maCreateAppweb()
     if ((appweb = mprAllocObj(MaAppweb, manageAppweb)) == NULL) {
         return 0;
     }
+    MPR->appwebService = appweb;
     appweb->http = http = httpCreate(appweb);
     httpSetContext(http, appweb);
     appweb->servers = mprCreateList(-1, 0);
-    appweb->hostOs = sclone(BLD_OS);
-    appweb->hostArch = sclone(BLD_CPU);
+    appweb->localPlatform = slower(sfmt("%s-%s-%s", BLD_OS, BLD_CPU, BLD_PROFILE));
+    maSetPlatform(appweb->localPlatform);
     maGetUserGroup(appweb);
     maParseInit(appweb);
     openHandlers(http);
@@ -49,8 +50,9 @@ static void manageAppweb(MaAppweb *appweb, int flags)
         mprMark(appweb->http);
         mprMark(appweb->user);
         mprMark(appweb->group);
-        mprMark(appweb->hostOs);
-        mprMark(appweb->hostArch);
+        mprMark(appweb->localPlatform);
+        mprMark(appweb->platform);
+        mprMark(appweb->platformDir);
 
     } else if (flags & MPR_MANAGE_FREE) {
         maStopAppweb(appweb);
@@ -202,11 +204,6 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *d
         route = mprGetFirstItem(host->routes);
         mprAssert(route);
 
-#if UNUSED
-        searchPath = getSearchPath(dir);
-        mprSetModuleSearchPath(searchPath);
-#endif
-
 #if BLD_FEATURE_CGI
         maLoadModule(appweb, "cgiHandler", "mod_cgi");
         if (httpLookupStage(http, "cgiHandler")) {
@@ -315,6 +312,57 @@ void maRemoveEndpoint(MaServer *server, HttpEndpoint *endpoint)
     mprRemoveItem(server->endpoints, endpoint);
 }
 
+
+int maSetPlatform(cchar *platform)
+{
+    MprDirEntry *dp;
+    MaAppweb    *appweb;
+    cchar       *base, *dir, *junk;
+    int         next;
+
+    appweb = MPR->appwebService;
+    if (mprSamePath(mprGetAppDir(), BLD_BIN_PREFIX)) {
+        /* Installed */
+        base = mprGetPathParent(mprGetAppDir());
+        dir = smatch(platform, appweb->localPlatform) ? base : mprJoinPath(base, platform);
+    } else {
+        /* Local Dev */
+        base = mprGetPathParent(mprGetPathParent(mprGetAppDir()));
+        dir = mprJoinPath(base, platform);
+    }
+    if (!mprIsPathDir(dir)) {
+        for (ITERATE_ITEMS(mprGetPathFiles(base, 0), dp, next)) {
+            if (dp->isDir && sstarts(mprGetPathBase(dp->name), platform)) {
+                platform = mprGetPathBase(dp->name);
+                dir = dp->name;
+                if (maParsePlatform(platform, &junk, &junk, &junk) == 0) {
+                    break;
+                }
+            }
+        }
+        if (!dp) {
+            return MPR_ERR_BAD_ARGS;
+        }
+    }
+    if (maParsePlatform(platform, &junk, &junk, &junk) < 0) {
+        return MPR_ERR_BAD_ARGS;
+    }
+    appweb->platformDir = dir;
+    appweb->platform = platform;
+#if UNUSED
+int nextEndpoint, nextHost, nextRoute;
+HttpRoute *route;
+HttpHost *host;
+    if (!smatch(platform, appweb->localPlatform)) {
+        for (ITERATE_ITEMS(appweb->http->hosts, host, nextHost)) {
+            for (ITERATE_ITEMS(host->routes, route, nextRoute)) {
+                httpSetRoutePathVar(route, "LIBDIR", appweb->platformDir);
+            }
+        }
+    }
+#endif
+    return 0;
+}
 
 /*  
     Set the home directory (Server Root). We convert path into an absolute path.

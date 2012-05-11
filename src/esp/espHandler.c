@@ -531,25 +531,19 @@ static EspRoute *allocEspRoute(HttpRoute *route)
     if ((eroute = mprAllocObj(EspRoute, espManageEspRoute)) == 0) {
         return 0;
     }
-#if UNUSED
-    path = mprJoinPath(mprGetAppDir(), "../" BLD_LIB_NAME);
-#else
     path = mprJoinPath(route->host->home, "cache");
     if (mprGetPathInfo(path, &info) != 0 || !info.isDir) {
         path = route->host->home;
     }
-#endif
 #if DEBUG_IDE
     path = mprGetAppDir();
 #endif
     eroute->cacheDir = path;
 
-#if BLD_DEBUG
-    eroute->update = 1;
-    eroute->showErrors = 1;
-#endif
-    eroute->lifespan = 0;
+    eroute->update = BLD_DEBUG;
+    eroute->showErrors = BLD_DEBUG;
     eroute->keepSource = BLD_DEBUG;
+    eroute->lifespan = 0;
     eroute->route = route;
     route->eroute = eroute;
     return eroute;
@@ -582,7 +576,7 @@ static EspRoute *cloneEspRoute(HttpRoute *route, EspRoute *parent)
         eroute->link = sclone(parent->link);
     }
     if (parent->env) {
-        eroute->env = mprCloneList(parent->env);
+        eroute->env = mprCloneHash(parent->env);
     }
     eroute->cacheDir = parent->cacheDir;
     eroute->controllersDir = parent->controllersDir;
@@ -883,6 +877,7 @@ static int espDirDirective(MaState *state, cchar *key, cchar *value)
 
 /*
     EspEnv var string
+    This defines an environment variable setting. It is defined only when commands for this route are executed.
  */
 static int espEnvDirective(MaState *state, cchar *key, cchar *value)
 {
@@ -896,18 +891,10 @@ static int espEnvDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_BAD_SYNTAX;
     }
     if (eroute->env == 0) {
-        eroute->env = mprCreateList(-1, 0);
+        eroute->env = mprCreateHash(-1, 0);
     }
-    evalue = espExpandCommand(evalue, "", "");
-#if UNUSED && KEEP
-    /*
-        This messes up TMP by prepending an existing value
-     */
-    if ((prior = getenv(ekey)) != 0) {
-        mprAddItem(eroute->env, sfmt("%s=%s;%s", ekey, evalue, prior));
-    } else {
-#endif
-    mprAddItem(eroute->env, sfmt("%s=%s", ekey, evalue));
+    evalue = espExpandCommand(eroute, evalue, "", "");
+    mprAddKey(eroute->env, ekey, evalue);
     if (scasematch(ekey, "PATH")) {
         if (eroute->searchPath) {
             eroute->searchPath = sclone(evalue);
@@ -1084,12 +1071,15 @@ static int espUpdateDirective(MaState *state, cchar *key, cchar *value)
     return 0;
 }
 
+
 /************************************ Init ************************************/
 
 int maEspHandlerInit(Http *http, MprModule *module)
 {
     HttpStage   *handler;
     MaAppweb    *appweb;
+
+    appweb = httpGetContext(http);
 
     if ((handler = httpCreateHandler(http, "espHandler", 0, module)) == 0) {
         return MPR_ERR_CANT_CREATE;
@@ -1118,7 +1108,6 @@ int maEspHandlerInit(Http *http, MprModule *module)
     if ((esp->sessionCache = mprCreateCache(MPR_CACHE_SHARED)) == 0) {
         return MPR_ERR_MEMORY;
     }
-    appweb = httpGetContext(http);
     maAddDirective(appweb, "EspApp", espAppDirective);
     maAddDirective(appweb, "EspCompile", espCompileDirective);
     maAddDirective(appweb, "EspDb", espDbDirective);

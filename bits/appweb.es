@@ -1,6 +1,5 @@
 /*
     Support functions for Embedthis Appweb
-    Exporting: packageBinaryFiles, createLinks, startAppweb
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
@@ -10,6 +9,7 @@ require ejs.unix
 
 /*
     Copy binary files to package staging area
+    This is run for local and cross platforms. The last platform does the packaging
  */
 public function packageBinaryFiles(formats = ['tar', 'native']) {
     let settings = bit.settings
@@ -19,10 +19,6 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
     let pkg = bin.join(vname)
     pkg.makeDir()
 
-    /* These three files are replicated outside the data directory */
-    install('doc/product/README.TXT', pkg, {fold: true, expand: true})
-    install('package/install.sh', pkg.join('install'), {permissions: 0755, expand: true})
-    install('package/uninstall.sh', pkg.join('uninstall'), {permissions: 0755, expand: true})
     let contents = pkg.join('contents')
 
     let prefixes = bit.prefixes;
@@ -33,11 +29,45 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
     }
     let strip = bit.platform.profile == 'debug'
 
-    install('LICENSE.md', p.product, {fold: true, expand: true})
-    install('doc/product/README.TXT', p.product, {fold: true, expand: true})
-    install('package/uninstall.sh', p.bin.join('uninstall'), {permissions: 0755, expand: true})
-    install('package/linkup', p.bin, {permissions: 0755})
+    if (!bit.cross) {
+        /* These three files are replicated outside the data directory */
+        install('doc/product/README.TXT', pkg, {fold: true, expand: true})
+        install('package/install.sh', pkg.join('install'), {permissions: 0755, expand: true})
+        install('package/uninstall.sh', pkg.join('uninstall'), {permissions: 0755, expand: true})
 
+        install('LICENSE.md', p.product, {fold: true, expand: true})
+        install('doc/product/README.TXT', p.product, {fold: true, expand: true})
+        install('package/uninstall.sh', p.bin.join('uninstall'), {permissions: 0755, expand: true})
+        install('package/linkup', p.bin, {permissions: 0755})
+
+        install('src/server/web', p.web, {exclude: /mgmt/, subtree: true})
+        install('src/server/web/test/*', p.web.join('test'), {
+            include: /.cgi|test.pl|test.py/,
+            permissions: 0755,
+        })
+
+        install('src/server/mime.types', p.config)
+        install('src/server/php.ini', p.config)
+        install('src/server/appweb.conf', p.config)
+
+        let conf = Path(contents.portable + '' + bit.prefixes.config.removeDrive().portable + '/appweb.conf')
+        if (bit.platform.os == 'win') {
+            run(['setConfig', '--home', '.', '--documents', 'web', '--logs', 'logs', '--port', settings.http_port,
+                '--ssl', settings.ssl_port, '--cache', 'cache', '--modules', 'bin', conf])
+        } else {
+            run(['setConfig', '--home', prefixes.config, '--documents', prefixes.web, '--logs', prefixes.log,
+                '--port', settings.http_port, '--ssl', settings.ssl_port, '--user', user, '--group', group,
+                '--cache', prefixes.spool.join('cache'), '--modules', prefixes.lib, conf])
+        }
+
+        bit.dir.cfg.join('appweb.conf.bak').remove()
+        let user = getWebUser(), group = getWebUser()
+        p.spool.join('cache').makeDir()
+        let tmp = p.log.join('error.log')
+        tmp.write()
+        tmp.setAttributes({permissions: 0755, uid: user, gid: group})
+
+    }
     install(bit.dir.bin + '/*', p.bin, {
         include: /appweb|appman|esp|http|auth|makerom|libappweb|libmpr|setConfig|\.dll/,
         exclude: /\.pdb|\.exp|\.lib|\.def|\.suo|\.old/,
@@ -49,32 +79,11 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
             exclude: /file-save|www|simple|sample/,
         })
     }
-    install('src/server/appweb.conf', p.config)
-    install('src/server/mime.types', p.config)
-    install('src/server/php.ini', p.config)
-    install('src/server/web', p.web, {exclude: /mgmt/, subtree: true})
-    install('src/server/web/test/*', p.web.join('test'), {
-        include: /.cgi|test.pl|test.py/,
-        permissions: 0755,
-    })
     install(bit.dir.lib + '/esp.conf', p.lib)
     install(bit.dir.lib + '/esp-www', p.lib)
+    install(bit.dir.lib + '/esp-appweb.conf', p.lib)
     install(bit.dir.inc.join('*.h'), p.inc)
 
-    let user = getWebUser(), group = getWebUser()
-    p.spool.join('cache').makeDir()
-
-/*
-    //  MOB - remove this
-    let tmp = p.spool.join('cache/.dummy')
-    tmp.write()
-    tmp.setAttributes({permissions: 0755, uid: user, gid: group})
-*/
-    let tmp = p.log.join('error.log')
-    tmp.write()
-    tmp.setAttributes({permissions: 0755, uid: user, gid: group})
-
-    //  MOB - should this apply to non-openssl ?
     if (bit.packs.ssl.enable && bit.platform.os == 'linux') {
         install(bit.dir.lib.join('*.' + bit.ext.shobj + '*'), p.lib, {strip: strip, permissions: 0755})
         for each (f in p.lib.glob('*.so.*')) {
@@ -85,55 +94,52 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
             f.symlink(link.basename)
         }
     }
-    let conf = Path(contents.portable + '' + bit.prefixes.config.removeDrive().portable + '/appweb.conf')
-    if (bit.platform.os == 'win') {
-        run(['setConfig', '--home', '.', '--documents', 'web', '--logs', 'logs', '--port', settings.http_port,
-            '--ssl', settings.ssl_port, '--cache', 'cache', '--modules', 'bin', conf])
-    } else {
-        run(['setConfig', '--home', prefixes.config, '--documents', prefixes.web, '--logs', prefixes.log,
-            '--port', settings.http_port, '--ssl', settings.ssl_port, '--user', user, '--group', group,
-            '--cache', prefixes.spool.join('cache'), '--modules', prefixes.lib, conf])
-    }
-    bit.dir.cfg.join('appweb.conf.bak').remove()
-
     if (bit.packs.ejscript.enable) {
         install(bit.dir.lib.join('ejs*.mod'), p.lib);
     }
-    if (OS == 'macosx') {
-        let daemons = contents.join('Library/LaunchDaemons')
-        daemons.makeDir()
-        install('package/MACOSX/com.embedthis.appweb.plist', daemons, {permissions: 0644, expand: true})
+    if (!bit.cross) {
+        if (OS == 'macosx') {
+            let daemons = contents.join('Library/LaunchDaemons')
+            daemons.makeDir()
+            install('package/MACOSX/com.embedthis.appweb.plist', daemons, {permissions: 0644, expand: true})
 
-    } else if (OS == 'linux') {
-        install('package/LINUX/' + settings.product + '.init', 
-            contents.join('etc/init.d', settings.product), 
-            {permissions: 0755, expand: true})
-        install('package/LINUX/' + settings.product + '.upstart', 
-            contents.join('init', settings.product).joinExt('conf'),
-            {permissions: 0644, expand: true})
+        } else if (OS == 'linux') {
+            install('package/LINUX/' + settings.product + '.init', 
+                contents.join('etc/init.d', settings.product), 
+                {permissions: 0755, expand: true})
+            install('package/LINUX/' + settings.product + '.upstart', 
+                contents.join('init', settings.product).joinExt('conf'),
+                {permissions: 0644, expand: true})
 
-    } else if (OS == 'win') {
-        if (bit.platform.arch == 'x86_64') {
-            install(bit.packs.compiler.dir.join('VC/redist/x64/Microsoft.VC100.CRT/msvcr100.dll'), p.bin)
-        } else {
-            install(bit.packs.compiler.dir.join('VC/redist/x86/Microsoft.VC100.CRT/msvcr100.dll'), p.bin)
+        } else if (OS == 'win') {
+            if (bit.platform.arch == 'x86_64') {
+                install(bit.packs.compiler.dir.join('VC/redist/x64/Microsoft.VC100.CRT/msvcr100.dll'), p.bin)
+            } else {
+                install(bit.packs.compiler.dir.join('VC/redist/x86/Microsoft.VC100.CRT/msvcr100.dll'), p.bin)
+            }
+            /*
+                install(bit.packs.compiler.path.join('../../lib/msvcrt.lib'), p.bin)
+             */
+            install(bit.dir.bin.join('removeFiles' + bit.EXE), p.bin)
+            install(bit.dir.bin.join('setConf*'), p.bin)
         }
-        /*
-            install(bit.packs.compiler.path.join('../../lib/msvcrt.lib'), p.bin)
-         */
-        install(bit.dir.bin.join('removeFiles' + bit.EXE), p.bin)
-        install(bit.dir.bin.join('setConf*'), p.bin)
+        if (bit.platform.like == 'posix') {
+            install('doc/man/*.1', p.productver.join('doc/man/man1'), {compress: true})
+        }
     }
-    if (bit.platform.like == 'posix') {
-        install('doc/man/*.1', p.productver.join('doc/man/man1'), {compress: true})
-    }
-    p.productver.join('files.log').write(contents.glob('**', {exclude: /\/$/, relative: true}).join('\n') + '\n')
-    if (formats) {
+    let files = contents.glob('**', {exclude: /\/$/, relative: true})
+    files = files.map(function(f) Path("/" + f))
+    p.productver.join('files.log').append(files.join('\n') + '\n')
+
+    if (formats && bit.platform.last) {
         package(bit.dir.pkg.join('bin'), formats)
     }
 }
 
 public function packageSourceFiles() {
+    if (bit.cross) {
+        return
+    }
     let s = bit.settings
     let src = bit.dir.pkg.join('src')
     let pkg = src.join(s.product + '-' + s.version)
@@ -159,6 +165,9 @@ public function packageSourceFiles() {
 }
 
 public function packageComboFiles() {
+    if (bit.cross) {
+        return
+    }
     let s = bit.settings
     let src = bit.dir.pkg.join('src')
     let pkg = src.join(s.product + '-' + s.version)
@@ -201,19 +210,23 @@ public function installBinary() {
         throw 'Must run as root. Use \"sudo bit install\"'
     }
     packageBinaryFiles(null)
-    if (bit.platform.os == 'win') {
-        Cmd([bit.dir.bin.join('appwebMonitor' + bit.EXE), '--stop'])
+    if (!bit.cross) {
+        if (bit.platform.os == 'win') {
+            Cmd([bit.dir.bin.join('appwebMonitor' + bit.EXE), '--stop'])
+        }
         Cmd([bit.dir.bin.join('appman'), '--continue', 'stop', 'disable', 'uninstall'])
     }
     package(bit.dir.pkg.join('bin'), 'install')
-    if (Config.OS != 'WIN') {
-        createLinks()
-    }
-    updateLatestLink()
-    trace('Start', 'appman install enable start')
-    Cmd([bit.prefixes.bin.join('appman' + bit.EXE), 'install', 'enable', 'start'])
-    if (bit.platform.os == 'win') {
-        Cmd([bit.prefixes.bin.join('appwebMonitor' + bit.EXE)], {detach: true})
+    if (!bit.cross) {
+        if (Config.OS != 'WIN') {
+            createLinks()
+            updateLatestLink()
+        }
+        trace('Start', 'appman install enable start')
+        Cmd([bit.prefixes.bin.join('appman' + bit.EXE), 'install', 'enable', 'start'])
+        if (bit.platform.os == 'win') {
+            Cmd([bit.prefixes.bin.join('appwebMonitor' + bit.EXE)], {detach: true})
+        }
     }
     bit.dir.pkg.join('bin').removeAll()
     trace('Complete', bit.settings.title + ' installed')
@@ -281,18 +294,12 @@ public function createLinks() {
 
 function updateLatestLink() {
     let latest = bit.prefixes.product.join('latest')
-    let version = Path('.').glob('*', {include: /\d+\.\d+\.\d+/}).sort().pop()
+    let version = bit.prefixes.product.glob('*', {include: /\d+\.\d+\.\d+/}).sort().pop()
     if (version) {
-        latest.symlink(version)
+        latest.symlink(version.basename)
     } else {
         latest.remove()
     }
-}
-
-public function startAppweb() {
-    throw new Error("UNUSED")
-    trace('Start', 'appman install enable start')
-    Cmd.run('/usr/local/bin/appman install enable start')
 }
 
 /*

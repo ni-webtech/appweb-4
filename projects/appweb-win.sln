@@ -105,6 +105,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "esp.www", "appweb-win\esp.w
 		{6589CC4A-746D-4282-9076-57CB05F6CAE4} = {6589CC4A-746D-4282-9076-57CB05F6CAE4}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "esp-appweb.conf", "appweb-win\esp-appweb.conf.vcxproj", "{CF329C0C-D3EA-47BF-A0D5-FA54BD24017A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6589CC4A-746D-4282-9076-57CB05F6CAE4} = {6589CC4A-746D-4282-9076-57CB05F6CAE4}
+	EndProjectSection
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mod_cgi", "appweb-win\mod_cgi.vcxproj", "{80DC892B-C6A8-4A69-8BD3-B400E555FA9D}"
 	ProjectSection(ProjectDependencies) = postProject
 		{6589CC4A-746D-4282-9076-57CB05F6CAE4} = {6589CC4A-746D-4282-9076-57CB05F6CAE4}
@@ -167,6 +172,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test-testScript", "appweb-w
 	ProjectSection(ProjectDependencies) = postProject
 		{6589CC4A-746D-4282-9076-57CB05F6CAE4} = {6589CC4A-746D-4282-9076-57CB05F6CAE4}
 	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{23D633D5-5B77-4AC1-88C4-0CBE6EC41B81} = {23D633D5-5B77-4AC1-88C4-0CBE6EC41B81}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test-cache.cgi", "appweb-win\test-cache.cgi.vcxproj", "{C62B9E06-2DB0-4186-A1F4-BCDE0778635B}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -181,6 +189,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test-cgiProgram", "appweb-win\test-cgiProgram.vcxproj", "{FFF2C1F1-EF41-4840-B575-6128858DB7F0}"
 	ProjectSection(ProjectDependencies) = postProject
 		{6589CC4A-746D-4282-9076-57CB05F6CAE4} = {6589CC4A-746D-4282-9076-57CB05F6CAE4}
+	EndProjectSection
+	ProjectSection(ProjectDependencies) = postProject
+		{23D633D5-5B77-4AC1-88C4-0CBE6EC41B81} = {23D633D5-5B77-4AC1-88C4-0CBE6EC41B81}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "removeFiles", "appweb-win\removeFiles.vcxproj", "{6BF15ABA-FA94-4EF6-91D1-C47F89BE0522}"
@@ -320,6 +331,14 @@ Global
 {69A85593-92EA-40E5-88E5-92D6E1878E5F}.Release|Win32.Build.0 = Release|Win32
 {69A85593-92EA-40E5-88E5-92D6E1878E5F}.Release|x64.ActiveCfg = Release|x64
 {69A85593-92EA-40E5-88E5-92D6E1878E5F}.Release|x64.Build.0 = Release|x64
+{CF329C0C-D3EA-47BF-A0D5-FA54BD24017A}.Debug|Win32.ActiveCfg = Debug|Win32
+{CF329C0C-D3EA-47BF-A0D5-FA54BD24017A}.Debug|Win32.Build.0 = Debug|Win32
+{CF329C0C-D3EA-47BF-A0D5-FA54BD24017A}.Debug|x64.ActiveCfg = Debug|x64
+{CF329C0C-D3EA-47BF-A0D5-FA54BD24017A}.Debug|x64.Build.0 = Debug|x64
+{CF329C0C-D3EA-47BF-A0D5-FA54BD24017A}.Release|Win32.ActiveCfg = Release|Win32
+{CF329C0C-D3EA-47BF-A0D5-FA54BD24017A}.Release|Win32.Build.0 = Release|Win32
+{CF329C0C-D3EA-47BF-A0D5-FA54BD24017A}.Release|x64.ActiveCfg = Release|x64
+{CF329C0C-D3EA-47BF-A0D5-FA54BD24017A}.Release|x64.Build.0 = Release|x64
 {80DC892B-C6A8-4A69-8BD3-B400E555FA9D}.Debug|Win32.ActiveCfg = Debug|Win32
 {80DC892B-C6A8-4A69-8BD3-B400E555FA9D}.Debug|Win32.Build.0 = Debug|Win32
 {80DC892B-C6A8-4A69-8BD3-B400E555FA9D}.Debug|x64.ActiveCfg = Debug|x64

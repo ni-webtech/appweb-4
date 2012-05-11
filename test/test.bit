@@ -20,6 +20,7 @@ Bit.load({
                 path.setAttributes({permissions: 0755})
             ",
             'generate-sh': "echo '#!${BIN}/cgiProgram${EXE}' >cgi-bin/testScript ; chmod +x cgi-bin/testScript",
+            depends: ['cgiProgram'],
         },
 
         'test-cache.cgi': {
@@ -74,6 +75,7 @@ Bit.load({
                 cp ${BIN}/cgiProgram web/cgiProgram.cgi
                 chmod +x cgi-bin/* web/cgiProgram.cgi
             ",
+            depends: ['cgiProgram'],
         },
 
         test: {
