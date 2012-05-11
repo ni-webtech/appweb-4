@@ -28,13 +28,14 @@
 static int getEspToken(EspParse *parse);
 static cchar *getDebug();
 static cchar *getEnvString(EspRoute *eroute, cchar *key, cchar *defaultValue);
+static cchar *getShlibExt(cchar *os);
 static cchar *getShobjExt(cchar *os);
 static cchar *getCompilerName(cchar *os, cchar *arch);
 static cchar *getCompilerPath(cchar *os, cchar *arch);
 static cchar *getLibs(cchar *os);
 static cchar *getMappedArch(cchar *arch);
 static cchar *getObjExt(cchar *os);
-static cchar *getWinVisualStudio();
+static cchar *getVisualStudio();
 static cchar *getWinSDK();
 static cchar *getVxCPU(cchar *arch);
 static bool matchToken(cchar **str, cchar *token);
@@ -107,6 +108,10 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
                 /* Target architecture (freebsd|linux|macosx|win|vxworks) */
                 mprPutStringToBuf(buf, os);
 
+            } else if (matchToken(&cp, "${SHLIB}")) {
+                /* .dll, .so, .dylib */
+                mprPutStringToBuf(buf, getShlibExt(os));
+
             } else if (matchToken(&cp, "${SHOBJ}")) {
                 /* .dll, .so, .dylib */
                 mprPutStringToBuf(buf, getShobjExt(os));
@@ -124,7 +129,7 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
                 mprPutStringToBuf(buf, tmp ? tmp : ".");
 
             } else if (matchToken(&cp, "${VS}")) {
-                mprPutStringToBuf(buf,getWinVisualStudio());
+                mprPutStringToBuf(buf, getVisualStudio());
 
             } else if (matchToken(&cp, "${VXCPU}")) {
                 mprPutStringToBuf(buf, getVxCPU(arch));
@@ -196,7 +201,7 @@ static int runCommand(HttpConn *conn, cchar *command, cchar *csource, cchar *mod
             mprAddItem(elist, sfmt("%s=%s", var->key, var->data));
         }
         mprAddNullItem(elist);
-        env = &elist->items[0];
+        env = (cchar**) &elist->items[0];
     } else {
         env = 0;
     }
@@ -301,7 +306,7 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
             Windows leaves intermediate object in the current directory
          */
         cchar   *obj;
-        obj = mprReplacePathExt(mprGetPathBase(csource), getObjExt(os));
+        obj = mprReplacePathExt(mprGetPathBase(csource), "obj");
         if (mprPathExists(obj, F_OK)) {
             mprDeletePath(obj);
         }
@@ -747,7 +752,6 @@ static cchar *getShobjExt(cchar *os)
 }
 
 
-#if UNUSED
 static cchar *getShlibExt(cchar *os)
 {
     if (smatch(os, "macosx")) {
@@ -760,7 +764,6 @@ static cchar *getShlibExt(cchar *os)
         return ".so";
     }
 }
-#endif
 
 
 static cchar *getObjExt(cchar *os)
@@ -820,7 +823,7 @@ static cchar *getDebug()
 
     appweb = MPR->appwebService;
     debug = sends(appweb->platform, "-debug");
-    if (scontains(appweb->platform, "-win-", -1)) {
+    if (scontains(appweb->platform, "win-", -1)) {
         return (debug) ? "-DBLD_DEBUG -Zi -Od" : "-O";
     }
     return (debug) ? "-DBLD_DEBUG -g" : "-O2";
@@ -888,6 +891,9 @@ static cchar *getWinSDK()
     cchar   *path;
 
     path = mprReadRegistry("HKLM\\SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows", "CurrentInstallFolder");
+    if (!path) {
+        path = "${WINSDK}";
+    }
     return strim(path, "\\", MPR_TRIM_END);
 #else
     return "";
@@ -895,12 +901,20 @@ static cchar *getWinSDK()
 }
 
 
-static cchar *getWinVisualStudio()
+static cchar *getVisualStudio()
 {
 #if WIN
     cchar   *path;
 
-    path = mprReadRegistry("HKLM\\SOFTWARE\\Microsoft\\Visual Studio" BLD_VISUAL_STUDIO_VERSION, "ShellFolder");
+    //  MOB - check this key. Does 'Visual Studio' have a space?
+    path = mprReadRegistry("HKLM\\SOFTWARE\\Microsoft\\Visual Studio\\" BLD_VISUAL_STUDIO_VERSION, "ShellFolder");
+    if (!path) {
+        path = mprReadRegistry("HKCU\\SOFTWARE\\Microsoft\\VisualStudio\\" BLD_VISUAL_STUDIO_VERSION "_Config", 
+            "ShellFolder");
+        if (!path) {
+            path = "${VS}";
+        }
+    }
     return strim(path, "\\", MPR_TRIM_END);
 #else
     return "";
@@ -915,10 +929,10 @@ static cchar *getCompilerPath(cchar *os, cchar *arch)
     /* 
         Get the real system architecture (32 or 64 bit)
      */
-    is64BitSystem = smatch(getenv("PROCESSOR_ARCHITECTURE"), "AMD64") || getenv("PROCESSOR_ARCHITEW6432"));
-    path = mprReadRegistry("HKLM\\SOFTWARE\\Microsoft\\Visual Studio" BLD_VISUAL_STUDIO_VERSION, "ShellFolder");
-    path = strim(path, "\\", MPR_TRIM_END);
-    if (smatch(app->targetArch, "x64")) {
+    MaAppweb *appweb = MPR->appwebService;
+    int is64BitSystem = smatch(getenv("PROCESSOR_ARCHITECTURE"), "AMD64") || getenv("PROCESSOR_ARCHITEW6432");
+    path = getVisualStudio();
+    if (scontains(appweb->platform, "-x64-", -1)) {
         if (is64BitSystem) {
             path = mprJoinPath(path, "VC/bin/amd64/cl.exe");
         } else {
@@ -927,9 +941,12 @@ static cchar *getCompilerPath(cchar *os, cchar *arch)
         }
     } else {
         path = mprJoinPath(path, "VC/bin/cl.exe");
-    })
+    }
+#if UNUSED
     path = mprJoinPath(mprGetPathParent(mprGetPathParent(getenv("VS100COMNTOOLS"))), "VC/bin/cl.exe");
     path = mprGetPortablePath(path);
+#endif
+
 #else
     path = getCompilerName(os, arch);
 #endif

@@ -36,7 +36,7 @@ typedef struct App {
      */
     MprList     *routes;
     MprList     *files;                 /* List of files to process */
-    MprList     *targets;               /* Command line targets */
+    MprHash     *targets;               /* Command line targets */
 
     cchar       *command;               /* Compilation or link command */
     cchar       *cacheName;             /* MD5 name of cached component */
@@ -63,6 +63,8 @@ static MaAppweb  *appweb;               /* Appweb service object */
 #define ESP_CONTROLLER  0x1
 #define ESP_VIEW        0x2
 #define ESP_PAGE        0x4
+
+#define ESP_FOUND_TARGET 1
 
 /********************************* Templates **********************************/
 
@@ -240,7 +242,7 @@ static void copyEspDir(cchar *fromDir, cchar *toDir);
 static HttpRoute *createRoute(cchar *dir);
 static void fail(cchar *fmt, ...);
 static void findConfigFile();
-static MprList *getTargets(int argc, char **argv);
+static MprHash *getTargets(int argc, char **argv);
 static HttpRoute *getMvcRoute();
 static MprList *getRoutes();
 static void generate(int argc, char **argv);
@@ -468,16 +470,16 @@ static void initialize()
 }
 
 
-static MprList *getTargets(int argc, char **argv)
+static MprHash *getTargets(int argc, char **argv)
 {
-    MprList     *list;
+    MprHash     *targets;
     int         i;
 
-    list = mprCreateList(0, 0);
+    targets = mprCreateHash(0, 0);
     for (i = 0; i < argc; i++) {
-        mprAddItem(list, mprGetAbsPath(argv[i]));
+        mprAddKey(targets, mprGetAbsPath(argv[i]), NULL);
     }
-    return list;
+    return targets;
 }
 
 
@@ -487,6 +489,7 @@ static MprList *getRoutes()
     HttpRoute   *route, *rp, *parent;
     EspRoute    *eroute;
     MprList     *routes;
+    MprKey      *kp;
     cchar       *routeName, *routePrefix;
     int         prev, nextRoute;
 
@@ -546,17 +549,28 @@ static MprList *getRoutes()
             continue;
         }
         if (mprLookupItem(routes, route) < 0) {
-            mprLog(1, "Compiling route dir: %-40s name: %-16s prefix: %-16s", route->dir, route->name, route->startWith);
+            // mprLog(1, "Compiling route dir: %-40s name: %-16s prefix: %-16s", route->dir, route->name, route->startWith);
+            mprLog(2, "Compiling route dir: %s name: %s prefix: %s", route->dir, route->name, route->startWith);
             mprAddItem(routes, route);
         }
     }
     if (mprGetListLength(routes) == 0) {
         if (routeName) {
-            fail("Can't find ESP configuration in %s for route %s", app->configFile, routeName);
+            fail("Can't find usable ESP configuration in %s for route %s", app->configFile, routeName);
+        } else if (routePrefix) {
+            fail("Can't find usable ESP configuration in %s for route prefix %s", app->configFile, routePrefix);
         } else {
-            fail("Can't find ESP configuration in %s for route prefix %s", app->configFile, routePrefix);
+            fail("Can't find usable ESP configuration in %s", app->configFile);
         }
         return 0;
+    }
+    /*
+        Check we have a route for all targets
+     */
+    for (ITERATE_KEYS(app->targets, kp)) {
+        if (!kp->type) {
+            fail("Can't find a usable route for %s", kp->key);
+        }
     }
     return routes;
 }
@@ -678,17 +692,11 @@ static void process(int argc, char **argv)
         return;
     }
     if (smatch(cmd, "clean")) {
-#if UNUSED
-        readConfig();
-#endif
         app->targets = getTargets(argc - 1, &argv[1]);
         app->routes = getRoutes();
         clean(app->routes);
 
     } else if (smatch(cmd, "compile")) {
-#if UNUSED
-        readConfig();
-#endif
         app->targets = getTargets(argc - 1, &argv[1]);
         app->routes = getRoutes();
         compile(app->routes);
@@ -773,7 +781,7 @@ static int runEspCommand(HttpRoute *route, cchar *command, cchar *csource, cchar
             mprAddItem(elist, sfmt("%s=%s", var->key, var->data));
         }
         mprAddNullItem(elist);
-        env = &elist->items[0];
+        env = (char**) &elist->items[0];
     } else {
         env = 0;
     }
@@ -901,17 +909,29 @@ static void compileFile(HttpRoute *route, cchar *source, int kind)
 static void compile(MprList *routes)
 {
     HttpRoute   *route;
+    MprKey      *kp;
     int         next;
  
     if (app->error) {
         return;
     }
+    for (ITERATE_KEYS(app->targets, kp)) {
+        kp->type = 0;
+    }
     for (ITERATE_ITEMS(routes, route, next)) {
-        trace("BUILD", "Route \"%s\" at %s", route->name, route->dir );
+        mprLog(2, "Build with route \"%s\" at %s", route->name, route->dir);
         if (app->flat) {
             compileFlat(route);
         } else {
             compileItems(route);
+        }
+    }
+    /*
+        Check we have compiled all targets
+     */
+    for (ITERATE_KEYS(app->targets, kp)) {
+        if (!kp->type) {
+            fail("Can't find target %s to compile", kp->key);
         }
     }
     if (!app->error) {
@@ -926,14 +946,15 @@ static void compile(MprList *routes)
  */
 static bool validTarget(cchar *target)
 {
+    MprKey  *kp;
     cchar   *tp;
-    int     nextTarget;
 
-    if (mprGetListLength(app->targets) == 0) {
+    if (mprGetHashLength(app->targets) == 0) {
         return 1;
     }
-    for (ITERATE_ITEMS(app->targets, tp, nextTarget)) {
-        if (sstarts(target, tp) || sstarts(tp, target)) {
+    for (ITERATE_KEYS(app->targets, kp)) {
+        if (sstarts(target, kp->key) || sstarts(kp->key, target)) {
+            kp->type = ESP_FOUND_TARGET;
             return 1;
         }
     }
@@ -1326,16 +1347,10 @@ static void generate(int argc, char **argv)
         generateApp(createRoute(name), name);
 
     } else if (smatch(kind, "controller")) {
-#if UNUSED
-        readConfig();
-#endif
         route = getMvcRoute();
         generateController(route, argc - 1, &argv[1]);
 
     } else if (smatch(kind, "scaffold")) {
-#if UNUSED
-        readConfig();
-#endif
         route = getMvcRoute();
         generateScaffold(route, argc - 1, &argv[1]);
 
@@ -1347,9 +1362,6 @@ static void generate(int argc, char **argv)
 
 #endif
     } else if (smatch(kind, "table")) {
-#if UNUSED
-        readConfig();
-#endif
         route = getMvcRoute();
         generateTable(route, argc - 1, &argv[1]);
 
