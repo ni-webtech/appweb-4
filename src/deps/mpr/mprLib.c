@@ -10265,8 +10265,8 @@ static int sanitizeArgs(MprCmd *cmd, int argc, cchar **argv, cchar **env)
             Cygwin will parse as  argv[1] == c:/path \a \b
             Windows will parse as argv[1] == c:/path "a b"
      */
-    cchar       *saveArg0, **ap, **ep;
-    char        *program, *SYSTEMROOT, *dp, *cp, *localArgv[2], *PATH, *endp, *start;
+    cchar       *saveArg0, **ap, **ep, *start, *cp;
+    char        *pp, *program, *SYSTEMROOT, *dp, *localArgv[2], *PATH, *endp;
     ssize       len;
     int         i, hasPath, hasSystemRoot, quote;
 
@@ -10278,16 +10278,16 @@ static int sanitizeArgs(MprCmd *cmd, int argc, cchar **argv, cchar **env)
     program = cmd->arg0 = mprAlloc(slen(argv[0]) * 2 + 1);
     strcpy(program, argv[0]);
 
-    for (cp = program; *cp; cp++) {
-        if (*cp == '/') {
-            *cp = '\\';
-        } else if (*cp == '\r' || *cp == '\n') {
-            *cp = ' ';
+    for (pp = program; *pp; pp++) {
+        if (*pp == '/') {
+            *pp = '\\';
+        } else if (*pp == '\r' || *pp == '\n') {
+            *pp = ' ';
         }
     }
     if (*program == '\"') {
-        if ((cp = strrchr(++program, '"')) != 0) {
-            *cp = '\0';
+        if ((pp = strrchr(++program, '"')) != 0) {
+            *pp = '\0';
         }
     }
     if (argv == 0) {
