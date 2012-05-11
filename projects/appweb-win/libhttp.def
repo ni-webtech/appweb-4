@@ -234,6 +234,7 @@ EXPORTS
   httpPrepClientConn
   httpPrepServerConn
   httpProcess
+  httpProcessHandler
   httpPutBackPacket
   httpPutForService
   httpPutPacket
@@ -243,6 +244,7 @@ EXPORTS
   httpReadGroupFile
   httpReadString
   httpReadUserFile
+  httpReadyHandler
   httpRedirect
   httpRemoveAllUploadedFiles
   httpRemoveConn
@@ -264,8 +266,6 @@ EXPORTS
   httpResolveUri
   httpResumeQueue
   httpRouteRequest
-  httpProcessHandler
-  httpReadyHandler
   httpScheduleQueue
   httpSecureEndpoint
   httpSecureEndpointByName
@@ -361,6 +361,7 @@ EXPORTS
   httpStartHost
   httpStartPipeline
   httpStartRoute
+  httpStealConn
   httpStopEndpoint
   httpStopHost
   httpStopRoute

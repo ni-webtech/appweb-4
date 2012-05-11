@@ -1,5 +1,6 @@
 LIBRARY libmpr.dll
 EXPORTS
+  __mask@@NegDouble@
   amtow
   assertTrue
   awtom
@@ -405,6 +406,7 @@ EXPORTS
   mprSetDomainName
   mprSetEnv
   mprSetExitStrategy
+  mprSetGracefulTimeout
   mprSetHostName
   mprSetHwnd
   mprSetIdleCallback
