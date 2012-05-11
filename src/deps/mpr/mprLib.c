@@ -10265,7 +10265,8 @@ static int sanitizeArgs(MprCmd *cmd, int argc, cchar **argv, cchar **env)
             Cygwin will parse as  argv[1] == c:/path \a \b
             Windows will parse as argv[1] == c:/path "a b"
      */
-    char        *program, *SYSTEMROOT, **ep, **ap, *dp, *cp, *localArgv[2], *saveArg0, *PATH, *endp, *start;
+    cchar       *saveArg0, **ap, **ep;
+    char        *program, *SYSTEMROOT, *dp, *cp, *localArgv[2], *PATH, *endp, *start;
     ssize       len;
     int         i, hasPath, hasSystemRoot, quote;
 
@@ -10432,7 +10433,7 @@ static int startProcess(MprCmd *cmd)
         startInfo.hStdError = (HANDLE) _get_osfhandle((int) fileno(stderr));
     }
 
-    if (! CreateProcess(0, cmd->command, 0, 0, 1, 0, cmd->env, cmd->dir, &startInfo, &procInfo)) {
+    if (! CreateProcess(0, cmd->command, 0, 0, 1, 0, (char**) cmd->env, cmd->dir, &startInfo, &procInfo)) {
         err = mprGetOsError();
         if (err == ERROR_DIRECTORY) {
             mprError("Can't create process: %s, directory %s is invalid", cmd->program, cmd->dir);
