@@ -107,7 +107,7 @@ EXPORTS
   httpDisableGroup
   httpDisableUser
   httpDiscardData
-  httpDiscardTransmitData
+  httpDiscardQueueData
   httpDisconnect
   httpEaseLimits
   httpEnableConnEvents
