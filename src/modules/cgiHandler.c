@@ -681,7 +681,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, cchar ***argvp)
 {
     HttpRx      *rx;
     HttpTx      *tx;
-    cchar       **argv;
+    char        **argv;
     char        *fileName, *indexQuery, *cp, *tok;
     cchar       *actionProgram;
     size_t      len;
