@@ -159,6 +159,13 @@ static void processCgi(HttpQueue *q)
     MprCmd      *cmd;
 
     cmd = (MprCmd*) q->queueData;
+
+    if (q->pair) {
+        writeToCGI(q->pair);
+    }
+    if (q->pair == 0 || q->pair->count == 0) {
+        mprCloseCmdFd(cmd, MPR_CMD_STDIN);
+    }
     /*
         Windows can't select on named pipes. So must poll here. This consumes a thread.
      */
@@ -244,7 +251,7 @@ static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
                 Close the CGI program's stdin. This will allow the gateway to exit if it was 
                 expecting input data and insufficient was sent by the client.
              */
-            if (cmd->files[MPR_CMD_STDIN].fd >= 0) {
+            if (cmd && cmd->files[MPR_CMD_STDIN].fd >= 0) {
                 mprCloseCmdFd(cmd, MPR_CMD_STDIN);
             }
         }
