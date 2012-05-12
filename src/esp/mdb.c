@@ -159,7 +159,7 @@ static EdiRec *mdbCreateRec(Edi *edi, cchar *tableName)
     if ((rec = mprAllocMem(sizeof(EdiRec) + sizeof(EdiField) * nfields, MPR_ALLOC_MANAGER | MPR_ALLOC_ZERO)) == 0) {
         return 0;
     }
-    mprSetManager(rec, ediManageEdiRec);
+    mprSetManager(rec, (MprManager) ediManageEdiRec);
 
     rec->edi = edi;
     rec->tableName = table->name;
@@ -1367,7 +1367,7 @@ static MdbSchema *growSchema(MdbTable *table)
                 sizeof(MdbCol) * MDB_INCR, MPR_ALLOC_MANAGER | MPR_ALLOC_ZERO)) == 0) {
             return 0;
         }
-        mprSetManager(table->schema, manageSchema);
+        mprSetManager(table->schema, (MprManager) manageSchema);
         table->schema->capacity = MDB_INCR;
 
     } else if (table->schema->ncols >= table->schema->capacity) {
@@ -1457,7 +1457,7 @@ static MdbRow *createRow(Mdb *mdb, MdbTable *table)
     if ((row = mprAllocMem(sizeof(MdbRow) + sizeof(EdiField) * ncols, MPR_ALLOC_MANAGER | MPR_ALLOC_ZERO)) == 0) {
         return 0;
     }
-    mprSetManager(row, manageRow);
+    mprSetManager(row, (MprManager) manageRow);
     row->table = table;
     row->nfields = ncols;
     row->rid = mprAddItem(table->rows, row);
@@ -1582,7 +1582,7 @@ static EdiRec *createRecFromRow(Edi *edi, MdbRow *row)
     if ((rec = mprAllocMem(sizeof(EdiRec) + sizeof(EdiField) * row->nfields, MPR_ALLOC_MANAGER | MPR_ALLOC_ZERO)) == 0) {
         return 0;
     }
-    mprSetManager(rec, ediManageEdiRec);
+    mprSetManager(rec, (MprManager) ediManageEdiRec);
     rec->edi = edi;
     rec->tableName = row->table->name;
     //  MOB - assert and check there is a valid ID

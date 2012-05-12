@@ -7,7 +7,7 @@ export INCLUDE="$(INCLUDE);$(SDK)/INCLUDE:$(VS)/VC/INCLUDE"
 export LIB="$(LIB);$(SDK)/lib:$(VS)/VC/lib"
 
 ARCH="x86"
-ARCH="$(shell uname -m | sed 's/i.86/x86/')"
+ARCH="$(shell uname -m | sed 's/i.86/x86/;s/x86_64/x64/')"
 OS="win"
 PROFILE="debug"
 CONFIG="${OS}-${ARCH}-${PROFILE}"

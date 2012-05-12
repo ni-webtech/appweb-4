@@ -821,7 +821,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, cchar ***argvp)
     mprAssert(argind <= argc);
     argv[argind] = 0;
     *argcp = argc;
-    *argvp = argv;
+    *argvp = (cchar**) argv;
 
     mprLog(5, "CGI: command:");
     for (i = 0; i < argind; i++) {

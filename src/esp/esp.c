@@ -781,7 +781,7 @@ static int runEspCommand(HttpRoute *route, cchar *command, cchar *csource, cchar
             mprAddItem(elist, sfmt("%s=%s", var->key, var->data));
         }
         mprAddNullItem(elist);
-        env = (char**) &elist->items[0];
+        env = (cchar**) &elist->items[0];
     } else {
         env = 0;
     }

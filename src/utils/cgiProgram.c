@@ -228,17 +228,12 @@ int main(int argc, char **argv, char **envp)
         fprintf(stderr, "Error at cgiProgram:%d\n", __LINE__);
         exit(255);
     }
-    method = getenv("REQUEST_METHOD") ;
-    if (method == 0) {
-        method = "GET";
-    } else {
-        if (strcmp(method, "POST") == 0) {
-            if (getPostData(&postBuf, &postBufLen) < 0) {
-                error("Can't read CGI input");
-            }
-            if (strcmp(safeGetenv("CONTENT_TYPE"), "application/x-www-form-urlencoded") == 0) {
-                numPostKeys = getVars(&postKeys, postBuf, postBufLen);
-            }
+    if ((method = getenv("REQUEST_METHOD")) != 0 && strcmp(method, "POST") == 0) {
+        if (getPostData(&postBuf, &postBufLen) < 0) {
+            error("Can't read CGI input");
+        }
+        if (strcmp(safeGetenv("CONTENT_TYPE"), "application/x-www-form-urlencoded") == 0) {
+            numPostKeys = getVars(&postKeys, postBuf, postBufLen);
         }
     }
 
@@ -264,12 +259,10 @@ int main(int argc, char **argv, char **envp)
     printf("Content-type: %s\r\n", "text/html");
 
     if (outputHeaderLines) {
-        j = 0;
         for (i = 0; i < outputHeaderLines; i++) {
             printf("X-CGI-%d: A loooooooooooooooooooooooong string\r\n", i);
         }
     }
-
     if (outputLocation) {
         printf("Location: %s\r\n", outputLocation);
     }
