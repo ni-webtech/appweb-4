@@ -13,7 +13,7 @@
   </ItemDefinitionGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{e7d050ea-1f23-441b-88e8-5f62a7d7ea6d}</ProjectGuid>
+    <ProjectGuid>{1afc1b00-a132-4507-8810-d12a6b0c8da7}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -115,8 +115,8 @@
 
   <ItemDefinitionGroup>
   <Link>
-    <AdditionalDependencies>libmpr.lib;libpcre.lib;libmprssl.lib;libeay32.lib;ssleay32.lib;libmatrixssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    <AdditionalLibraryDirectories>$(OutDir);$(Cfg)\bin;..\packages-win-x64\openssl\openssl-1.0.1b\out32dll;..\packages-win-x64\matrixssl\matrixssl-3-3-open\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    <AdditionalDependencies>libmpr.lib;libpcre.lib;libmprssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    <AdditionalLibraryDirectories>$(OutDir);$(Cfg)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
   </Link>
 
   <CustomBuildStep>
@@ -129,21 +129,21 @@ cd ..\..\..\projects\appweb-win</Command>
 
 <ItemGroup>
   <ProjectReference Include="libmpr.vcxproj">
-  <Project>400a7720-75fc-4a27-89dd-811308b1bd49</Project>
+  <Project>9651275b-c035-4265-a696-e2dc0147f040</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>
 
 <ItemGroup>
   <ProjectReference Include="libpcre.vcxproj">
-  <Project>40a79e37-16c2-4cdc-bd19-07f73b24bdbe</Project>
+  <Project>40a6ab0d-04c1-4486-97b2-3b6d4fee198f</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>
 
 <ItemGroup>
   <ProjectReference Include="libmprssl.vcxproj">
-  <Project>638f26fe-4675-4bb4-90d3-18ad2f48aaa0</Project>
+  <Project>d1614b75-b3f7-44a0-ac53-c81ddfdc00d6</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>

@@ -13,7 +13,7 @@
   </ItemDefinitionGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{b8a0e086-522e-4557-92d1-06a5eb41996b}</ProjectGuid>
+    <ProjectGuid>{2ed553a4-c82b-4eaa-9ed7-25151963b1b7}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -105,14 +105,14 @@
 
   <ItemDefinitionGroup>
   <Link>
-    <AdditionalDependencies>libhttp.lib;libmpr.lib;libpcre.lib;libmprssl.lib;libeay32.lib;ssleay32.lib;libmatrixssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    <AdditionalLibraryDirectories>$(OutDir);$(Cfg)\bin;..\packages-win-x64\openssl\openssl-1.0.1b\out32dll;..\packages-win-x64\matrixssl\matrixssl-3-3-open\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    <AdditionalDependencies>libhttp.lib;libmpr.lib;libpcre.lib;libmprssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    <AdditionalLibraryDirectories>$(OutDir);$(Cfg)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
   </Link>
   </ItemDefinitionGroup>
 
 <ItemGroup>
   <ProjectReference Include="libhttp.vcxproj">
-  <Project>e7d050ea-1f23-441b-88e8-5f62a7d7ea6d</Project>
+  <Project>1afc1b00-a132-4507-8810-d12a6b0c8da7</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>

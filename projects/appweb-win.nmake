@@ -20,7 +20,7 @@ RC       = rc
 CFLAGS   = -nologo -GR- -W3 -Zi -Od -MDd
 DFLAGS   = -D_REENTRANT -D_MT -DBLD_DEBUG
 IFLAGS   = -I$(CONFIG)\inc
-LDFLAGS  = -nologo -nodefaultlib -incremental:no -debug -machine:x64
+LDFLAGS  = -nologo -nodefaultlib -incremental:no -debug -machine:$(ARCH)
 LIBPATHS = -libpath:$(CONFIG)\bin
 LIBS     = ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib shell32.lib
 
@@ -41,8 +41,6 @@ all: prep \
         $(CONFIG)\bin\esp-www \
         $(CONFIG)\bin\esp-appweb.conf \
         $(CONFIG)\bin\mod_cgi.dll \
-        $(CONFIG)\bin\mod_php.dll \
-        $(CONFIG)\bin\mod_ssl.dll \
         $(CONFIG)\bin\auth.exe \
         $(CONFIG)\bin\cgiProgram.exe \
         $(CONFIG)\bin\setConfig.exe \
@@ -86,8 +84,6 @@ clean:
 	-if exist $(CONFIG)\bin\esp-www del /Q $(CONFIG)\bin\esp-www
 	-if exist $(CONFIG)\bin\esp-appweb.conf del /Q $(CONFIG)\bin\esp-appweb.conf
 	-if exist $(CONFIG)\bin\mod_cgi.dll del /Q $(CONFIG)\bin\mod_cgi.dll
-	-if exist $(CONFIG)\bin\mod_php.dll del /Q $(CONFIG)\bin\mod_php.dll
-	-if exist $(CONFIG)\bin\mod_ssl.dll del /Q $(CONFIG)\bin\mod_ssl.dll
 	-if exist $(CONFIG)\bin\auth.exe del /Q $(CONFIG)\bin\auth.exe
 	-if exist $(CONFIG)\bin\cgiProgram.exe del /Q $(CONFIG)\bin\cgiProgram.exe
 	-if exist $(CONFIG)\bin\setConfig.exe del /Q $(CONFIG)\bin\setConfig.exe
@@ -146,28 +142,27 @@ $(CONFIG)\inc\mpr.h:
 $(CONFIG)\obj\mprLib.obj: \
         src\deps\mpr\mprLib.c \
         $(CONFIG)\inc\bit.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\mprLib.obj -Fd$(CONFIG)\obj\mprLib.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\mpr\mprLib.c
+	"$(CC)" -c -Fo$(CONFIG)\obj\mprLib.obj -Fd$(CONFIG)\obj\mprLib.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\deps\mpr\mprLib.c
 
 $(CONFIG)\bin\libmpr.dll:  \
         $(CONFIG)\inc\mpr.h \
         $(CONFIG)\obj\mprLib.obj
-	"$(LD)" -dll -out:$(CONFIG)\bin\libmpr.dll -entry:_DllMainCRTStartup -def:$(CONFIG)\bin\libmpr.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\mprLib.obj $(LIBS)
+	"$(LD)" -dll -out:$(CONFIG)\bin\libmpr.dll -entry:$(ENTRY) -def:$(CONFIG)\bin\libmpr.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\mprLib.obj $(LIBS)
 
 $(CONFIG)\obj\mprSsl.obj: \
         src\deps\mpr\mprSsl.c \
         $(CONFIG)\inc\bit.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\mprSsl.obj -Fd$(CONFIG)\obj\mprSsl.pdb $(CFLAGS) $(DFLAGS) -DWIN32 -DMATRIX_USE_FILE_SYSTEM -I$(CONFIG)\inc -I..\packages-win-x64\openssl\openssl-1.0.1b\inc32 -I..\packages-win-x64\matrixssl\matrixssl-3-3-open\matrixssl -I..\packages-win-x64\matrixssl\matrixssl-3-3-open src\deps\mpr\mprSsl.c
+	"$(CC)" -c -Fo$(CONFIG)\obj\mprSsl.obj -Fd$(CONFIG)\obj\mprSsl.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\deps\mpr\mprSsl.c
 
 $(CONFIG)\bin\libmprssl.dll:  \
         $(CONFIG)\bin\libmpr.dll \
         $(CONFIG)\obj\mprSsl.obj
-	"$(LD)" -dll -out:$(CONFIG)\bin\libmprssl.dll -entry:_DllMainCRTStartup -def:$(CONFIG)\bin\libmprssl.def $(LDFLAGS) $(LIBPATHS) -libpath:..\packages-win-x64\openssl\openssl-1.0.1b\out32dll -libpath:..\packages-win-x64\matrixssl\matrixssl-3-3-open\Release $(CONFIG)\obj\mprSsl.obj $(LIBS) libmpr.lib libeay32.lib ssleay32.lib libmatrixssl.lib
+	"$(LD)" -dll -out:$(CONFIG)\bin\libmprssl.dll -entry:$(ENTRY) -def:$(CONFIG)\bin\libmprssl.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\mprSsl.obj $(LIBS) libmpr.lib
 
 $(CONFIG)\obj\manager.obj: \
         src\deps\mpr\manager.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\mpr.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\manager.obj -Fd$(CONFIG)\obj\manager.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\mpr\manager.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\manager.obj -Fd$(CONFIG)\obj\manager.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\deps\mpr\manager.c
 
 $(CONFIG)\bin\appman.exe:  \
         $(CONFIG)\bin\libmpr.dll \
@@ -176,9 +171,8 @@ $(CONFIG)\bin\appman.exe:  \
 
 $(CONFIG)\obj\makerom.obj: \
         src\deps\mpr\makerom.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\mpr.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\makerom.obj -Fd$(CONFIG)\obj\makerom.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\mpr\makerom.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\makerom.obj -Fd$(CONFIG)\obj\makerom.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\deps\mpr\makerom.c
 
 $(CONFIG)\bin\makerom.exe:  \
         $(CONFIG)\bin\libmpr.dll \
@@ -192,12 +186,12 @@ $(CONFIG)\inc\pcre.h:
 $(CONFIG)\obj\pcre.obj: \
         src\deps\pcre\pcre.c \
         $(CONFIG)\inc\bit.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\pcre.obj -Fd$(CONFIG)\obj\pcre.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\pcre\pcre.c
+	"$(CC)" -c -Fo$(CONFIG)\obj\pcre.obj -Fd$(CONFIG)\obj\pcre.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\deps\pcre\pcre.c
 
 $(CONFIG)\bin\libpcre.dll:  \
         $(CONFIG)\inc\pcre.h \
         $(CONFIG)\obj\pcre.obj
-	"$(LD)" -dll -out:$(CONFIG)\bin\libpcre.dll -entry:_DllMainCRTStartup -def:$(CONFIG)\bin\libpcre.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\pcre.obj $(LIBS)
+	"$(LD)" -dll -out:$(CONFIG)\bin\libpcre.dll -entry:$(ENTRY) -def:$(CONFIG)\bin\libpcre.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\pcre.obj $(LIBS)
 
 $(CONFIG)\inc\http.h: 
 	-if exist $(CONFIG)\inc\http.h del /Q $(CONFIG)\inc\http.h
@@ -206,7 +200,7 @@ $(CONFIG)\inc\http.h:
 $(CONFIG)\obj\httpLib.obj: \
         src\deps\http\httpLib.c \
         $(CONFIG)\inc\bit.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\httpLib.obj -Fd$(CONFIG)\obj\httpLib.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\http\httpLib.c
+	"$(CC)" -c -Fo$(CONFIG)\obj\httpLib.obj -Fd$(CONFIG)\obj\httpLib.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\deps\http\httpLib.c
 
 $(CONFIG)\bin\libhttp.dll:  \
         $(CONFIG)\bin\libmpr.dll \
@@ -214,18 +208,17 @@ $(CONFIG)\bin\libhttp.dll:  \
         $(CONFIG)\bin\libmprssl.dll \
         $(CONFIG)\inc\http.h \
         $(CONFIG)\obj\httpLib.obj
-	"$(LD)" -dll -out:$(CONFIG)\bin\libhttp.dll -entry:_DllMainCRTStartup -def:$(CONFIG)\bin\libhttp.def $(LDFLAGS) $(LIBPATHS) -libpath:..\packages-win-x64\openssl\openssl-1.0.1b\out32dll -libpath:..\packages-win-x64\matrixssl\matrixssl-3-3-open\Release $(CONFIG)\obj\httpLib.obj $(LIBS) libmpr.lib libpcre.lib libmprssl.lib libeay32.lib ssleay32.lib libmatrixssl.lib
+	"$(LD)" -dll -out:$(CONFIG)\bin\libhttp.dll -entry:$(ENTRY) -def:$(CONFIG)\bin\libhttp.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\httpLib.obj $(LIBS) libmpr.lib libpcre.lib libmprssl.lib
 
 $(CONFIG)\obj\http.obj: \
         src\deps\http\http.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\http.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\http.obj -Fd$(CONFIG)\obj\http.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\http\http.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\http.obj -Fd$(CONFIG)\obj\http.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\deps\http\http.c
 
 $(CONFIG)\bin\http.exe:  \
         $(CONFIG)\bin\libhttp.dll \
         $(CONFIG)\obj\http.obj
-	"$(LD)" -out:$(CONFIG)\bin\http.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) -libpath:..\packages-win-x64\openssl\openssl-1.0.1b\out32dll -libpath:..\packages-win-x64\matrixssl\matrixssl-3-3-open\Release $(CONFIG)\obj\http.obj $(LIBS) libhttp.lib libmpr.lib libpcre.lib libmprssl.lib libeay32.lib ssleay32.lib libmatrixssl.lib
+	"$(LD)" -out:$(CONFIG)\bin\http.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\http.obj $(LIBS) libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 $(CONFIG)\inc\sqlite3.h: 
 	-if exist $(CONFIG)\inc\sqlite3.h del /Q $(CONFIG)\inc\sqlite3.h
@@ -233,20 +226,18 @@ $(CONFIG)\inc\sqlite3.h:
 
 $(CONFIG)\obj\sqlite3.obj: \
         src\deps\sqlite\sqlite3.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\sqlite3.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\sqlite3.obj -Fd$(CONFIG)\obj\sqlite3.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\sqlite\sqlite3.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\sqlite3.obj -Fd$(CONFIG)\obj\sqlite3.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\deps\sqlite\sqlite3.c
 
 $(CONFIG)\bin\libsqlite3.dll:  \
         $(CONFIG)\inc\sqlite3.h \
         $(CONFIG)\obj\sqlite3.obj
-	"$(LD)" -dll -out:$(CONFIG)\bin\libsqlite3.dll -entry:_DllMainCRTStartup -def:$(CONFIG)\bin\libsqlite3.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\sqlite3.obj $(LIBS)
+	"$(LD)" -dll -out:$(CONFIG)\bin\libsqlite3.dll -entry:$(ENTRY) -def:$(CONFIG)\bin\libsqlite3.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\sqlite3.obj $(LIBS)
 
 $(CONFIG)\obj\sqlite.obj: \
         src\deps\sqlite\sqlite.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\sqlite3.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\sqlite.obj -Fd$(CONFIG)\obj\sqlite.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\sqlite\sqlite.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\sqlite.obj -Fd$(CONFIG)\obj\sqlite.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\deps\sqlite\sqlite.c
 
 $(CONFIG)\bin\sqlite.exe:  \
         $(CONFIG)\bin\libsqlite3.dll \
@@ -263,40 +254,33 @@ $(CONFIG)\inc\customize.h:
 
 $(CONFIG)\obj\config.obj: \
         src\config.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\appweb.h \
-        $(CONFIG)\inc\pcre.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\config.obj -Fd$(CONFIG)\obj\config.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\config.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\config.obj -Fd$(CONFIG)\obj\config.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\config.c
 
 $(CONFIG)\obj\convenience.obj: \
         src\convenience.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\appweb.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\convenience.obj -Fd$(CONFIG)\obj\convenience.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\convenience.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\convenience.obj -Fd$(CONFIG)\obj\convenience.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\convenience.c
 
 $(CONFIG)\obj\dirHandler.obj: \
         src\dirHandler.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\appweb.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\dirHandler.obj -Fd$(CONFIG)\obj\dirHandler.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\dirHandler.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\dirHandler.obj -Fd$(CONFIG)\obj\dirHandler.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\dirHandler.c
 
 $(CONFIG)\obj\fileHandler.obj: \
         src\fileHandler.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\appweb.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\fileHandler.obj -Fd$(CONFIG)\obj\fileHandler.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\fileHandler.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\fileHandler.obj -Fd$(CONFIG)\obj\fileHandler.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\fileHandler.c
 
 $(CONFIG)\obj\log.obj: \
         src\log.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\appweb.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\log.obj -Fd$(CONFIG)\obj\log.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\log.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\log.obj -Fd$(CONFIG)\obj\log.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\log.c
 
 $(CONFIG)\obj\server.obj: \
         src\server.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\appweb.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\server.obj -Fd$(CONFIG)\obj\server.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\server.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\server.obj -Fd$(CONFIG)\obj\server.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\server.c
 
 $(CONFIG)\bin\libappweb.dll:  \
         $(CONFIG)\bin\libhttp.dll \
@@ -308,7 +292,7 @@ $(CONFIG)\bin\libappweb.dll:  \
         $(CONFIG)\obj\fileHandler.obj \
         $(CONFIG)\obj\log.obj \
         $(CONFIG)\obj\server.obj
-	"$(LD)" -dll -out:$(CONFIG)\bin\libappweb.dll -entry:_DllMainCRTStartup -def:$(CONFIG)\bin\libappweb.def $(LDFLAGS) $(LIBPATHS) -libpath:..\packages-win-x64\openssl\openssl-1.0.1b\out32dll -libpath:..\packages-win-x64\matrixssl\matrixssl-3-3-open\Release $(CONFIG)\obj\config.obj $(CONFIG)\obj\convenience.obj $(CONFIG)\obj\dirHandler.obj $(CONFIG)\obj\fileHandler.obj $(CONFIG)\obj\log.obj $(CONFIG)\obj\server.obj $(LIBS) libhttp.lib libmpr.lib libpcre.lib libmprssl.lib libeay32.lib ssleay32.lib libmatrixssl.lib
+	"$(LD)" -dll -out:$(CONFIG)\bin\libappweb.dll -entry:$(ENTRY) -def:$(CONFIG)\bin\libappweb.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\config.obj $(CONFIG)\obj\convenience.obj $(CONFIG)\obj\dirHandler.obj $(CONFIG)\obj\fileHandler.obj $(CONFIG)\obj\log.obj $(CONFIG)\obj\server.obj $(LIBS) libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 $(CONFIG)\inc\edi.h: 
 	-if exist $(CONFIG)\inc\edi.h del /Q $(CONFIG)\inc\edi.h
@@ -328,65 +312,48 @@ $(CONFIG)\inc\mdb.h:
 
 $(CONFIG)\obj\edi.obj: \
         src\esp\edi.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\edi.h \
-        $(CONFIG)\inc\pcre.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\edi.obj -Fd$(CONFIG)\obj\edi.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\edi.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\edi.obj -Fd$(CONFIG)\obj\edi.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\esp\edi.c
 
 $(CONFIG)\obj\espAbbrev.obj: \
         src\esp\espAbbrev.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\esp.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\espAbbrev.obj -Fd$(CONFIG)\obj\espAbbrev.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\espAbbrev.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\espAbbrev.obj -Fd$(CONFIG)\obj\espAbbrev.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\esp\espAbbrev.c
 
 $(CONFIG)\obj\espFramework.obj: \
         src\esp\espFramework.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\esp.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\espFramework.obj -Fd$(CONFIG)\obj\espFramework.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\espFramework.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\espFramework.obj -Fd$(CONFIG)\obj\espFramework.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\esp\espFramework.c
 
 $(CONFIG)\obj\espHandler.obj: \
         src\esp\espHandler.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\appweb.h \
-        $(CONFIG)\inc\esp.h \
-        $(CONFIG)\inc\edi.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\espHandler.obj -Fd$(CONFIG)\obj\espHandler.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\espHandler.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\espHandler.obj -Fd$(CONFIG)\obj\espHandler.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\esp\espHandler.c
 
 $(CONFIG)\obj\espHtml.obj: \
         src\esp\espHtml.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\esp.h \
-        $(CONFIG)\inc\edi.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\espHtml.obj -Fd$(CONFIG)\obj\espHtml.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\espHtml.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\espHtml.obj -Fd$(CONFIG)\obj\espHtml.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\esp\espHtml.c
 
 $(CONFIG)\obj\espSession.obj: \
         src\esp\espSession.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\esp.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\espSession.obj -Fd$(CONFIG)\obj\espSession.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\espSession.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\espSession.obj -Fd$(CONFIG)\obj\espSession.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\esp\espSession.c
 
 $(CONFIG)\obj\espTemplate.obj: \
         src\esp\espTemplate.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\esp.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\espTemplate.obj -Fd$(CONFIG)\obj\espTemplate.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\espTemplate.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\espTemplate.obj -Fd$(CONFIG)\obj\espTemplate.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\esp\espTemplate.c
 
 $(CONFIG)\obj\mdb.obj: \
         src\esp\mdb.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\appweb.h \
-        $(CONFIG)\inc\edi.h \
-        $(CONFIG)\inc\mdb.h \
-        $(CONFIG)\inc\pcre.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\mdb.obj -Fd$(CONFIG)\obj\mdb.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\mdb.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\mdb.obj -Fd$(CONFIG)\obj\mdb.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\esp\mdb.c
 
 $(CONFIG)\obj\sdb.obj: \
         src\esp\sdb.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\appweb.h \
-        $(CONFIG)\inc\edi.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\sdb.obj -Fd$(CONFIG)\obj\sdb.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\sdb.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\sdb.obj -Fd$(CONFIG)\obj\sdb.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\esp\sdb.c
 
 $(CONFIG)\bin\mod_esp.dll:  \
         $(CONFIG)\bin\libappweb.dll \
@@ -403,13 +370,12 @@ $(CONFIG)\bin\mod_esp.dll:  \
         $(CONFIG)\obj\espTemplate.obj \
         $(CONFIG)\obj\mdb.obj \
         $(CONFIG)\obj\sdb.obj
-	"$(LD)" -dll -out:$(CONFIG)\bin\mod_esp.dll -entry:_DllMainCRTStartup -def:$(CONFIG)\bin\mod_esp.def $(LDFLAGS) $(LIBPATHS) -libpath:..\packages-win-x64\openssl\openssl-1.0.1b\out32dll -libpath:..\packages-win-x64\matrixssl\matrixssl-3-3-open\Release $(CONFIG)\obj\edi.obj $(CONFIG)\obj\espAbbrev.obj $(CONFIG)\obj\espFramework.obj $(CONFIG)\obj\espHandler.obj $(CONFIG)\obj\espHtml.obj $(CONFIG)\obj\espSession.obj $(CONFIG)\obj\espTemplate.obj $(CONFIG)\obj\mdb.obj $(CONFIG)\obj\sdb.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib libeay32.lib ssleay32.lib libmatrixssl.lib
+	"$(LD)" -dll -out:$(CONFIG)\bin\mod_esp.dll -entry:$(ENTRY) -def:$(CONFIG)\bin\mod_esp.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\edi.obj $(CONFIG)\obj\espAbbrev.obj $(CONFIG)\obj\espFramework.obj $(CONFIG)\obj\espHandler.obj $(CONFIG)\obj\espHtml.obj $(CONFIG)\obj\espSession.obj $(CONFIG)\obj\espTemplate.obj $(CONFIG)\obj\mdb.obj $(CONFIG)\obj\sdb.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 $(CONFIG)\obj\esp.obj: \
         src\esp\esp.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\esp.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\esp.obj -Fd$(CONFIG)\obj\esp.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\esp\esp.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\esp.obj -Fd$(CONFIG)\obj\esp.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\esp\esp.c
 
 $(CONFIG)\bin\esp.exe:  \
         $(CONFIG)\bin\libappweb.dll \
@@ -423,7 +389,7 @@ $(CONFIG)\bin\esp.exe:  \
         $(CONFIG)\obj\espTemplate.obj \
         $(CONFIG)\obj\mdb.obj \
         $(CONFIG)\obj\sdb.obj
-	"$(LD)" -out:$(CONFIG)\bin\esp.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) -libpath:..\packages-win-x64\openssl\openssl-1.0.1b\out32dll -libpath:..\packages-win-x64\matrixssl\matrixssl-3-3-open\Release $(CONFIG)\obj\edi.obj $(CONFIG)\obj\esp.obj $(CONFIG)\obj\espAbbrev.obj $(CONFIG)\obj\espFramework.obj $(CONFIG)\obj\espHandler.obj $(CONFIG)\obj\espHtml.obj $(CONFIG)\obj\espSession.obj $(CONFIG)\obj\espTemplate.obj $(CONFIG)\obj\mdb.obj $(CONFIG)\obj\sdb.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib libeay32.lib ssleay32.lib libmatrixssl.lib
+	"$(LD)" -out:$(CONFIG)\bin\esp.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\edi.obj $(CONFIG)\obj\esp.obj $(CONFIG)\obj\espAbbrev.obj $(CONFIG)\obj\espFramework.obj $(CONFIG)\obj\espHandler.obj $(CONFIG)\obj\espHtml.obj $(CONFIG)\obj\espSession.obj $(CONFIG)\obj\espTemplate.obj $(CONFIG)\obj\mdb.obj $(CONFIG)\obj\sdb.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 $(CONFIG)\bin\esp.conf: 
 	-if exist $(CONFIG)\bin\esp.conf del /Q $(CONFIG)\bin\esp.conf
@@ -440,43 +406,18 @@ $(CONFIG)\bin\esp-appweb.conf:
 
 $(CONFIG)\obj\cgiHandler.obj: \
         src\modules\cgiHandler.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\appweb.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\cgiHandler.obj -Fd$(CONFIG)\obj\cgiHandler.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\modules\cgiHandler.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\cgiHandler.obj -Fd$(CONFIG)\obj\cgiHandler.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\modules\cgiHandler.c
 
 $(CONFIG)\bin\mod_cgi.dll:  \
         $(CONFIG)\bin\libappweb.dll \
         $(CONFIG)\obj\cgiHandler.obj
-	"$(LD)" -dll -out:$(CONFIG)\bin\mod_cgi.dll -entry:_DllMainCRTStartup -def:$(CONFIG)\bin\mod_cgi.def $(LDFLAGS) $(LIBPATHS) -libpath:..\packages-win-x64\openssl\openssl-1.0.1b\out32dll -libpath:..\packages-win-x64\matrixssl\matrixssl-3-3-open\Release $(CONFIG)\obj\cgiHandler.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib libeay32.lib ssleay32.lib libmatrixssl.lib
-
-$(CONFIG)\obj\phpHandler.obj: \
-        src\modules\phpHandler.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\appweb.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\phpHandler.obj -Fd$(CONFIG)\obj\phpHandler.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc -I..\packages-win-x64\php\php-5.3.8 -I..\packages-win-x64\php\php-5.3.8\main -I..\packages-win-x64\php\php-5.3.8\Zend -I..\packages-win-x64\php\php-5.3.8\TSRM src\modules\phpHandler.c
-
-$(CONFIG)\bin\mod_php.dll:  \
-        $(CONFIG)\bin\libappweb.dll \
-        $(CONFIG)\obj\phpHandler.obj
-	"$(LD)" -dll -out:$(CONFIG)\bin\mod_php.dll -entry:_DllMainCRTStartup -def:$(CONFIG)\bin\mod_php.def $(LDFLAGS) -libpath:C:\home\mob\packages-win-x64\php\php-5.3.8\x64\Release_TS $(LIBPATHS) -libpath:..\packages-win-x64\openssl\openssl-1.0.1b\out32dll -libpath:..\packages-win-x64\matrixssl\matrixssl-3-3-open\Release $(CONFIG)\obj\phpHandler.obj $(LIBS) php5ts.lib libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib libeay32.lib ssleay32.lib libmatrixssl.lib
-
-$(CONFIG)\obj\sslModule.obj: \
-        src\modules\sslModule.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\appweb.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\sslModule.obj -Fd$(CONFIG)\obj\sslModule.pdb $(CFLAGS) $(DFLAGS) -DWIN32 -DMATRIX_USE_FILE_SYSTEM -I$(CONFIG)\inc -I..\packages-win-x64\openssl\openssl-1.0.1b\inc32 -I..\packages-win-x64\matrixssl\matrixssl-3-3-open\matrixssl -I..\packages-win-x64\matrixssl\matrixssl-3-3-open src\modules\sslModule.c
-
-$(CONFIG)\bin\mod_ssl.dll:  \
-        $(CONFIG)\bin\libmprssl.dll \
-        $(CONFIG)\bin\libappweb.dll \
-        $(CONFIG)\obj\sslModule.obj
-	"$(LD)" -dll -out:$(CONFIG)\bin\mod_ssl.dll -entry:_DllMainCRTStartup -def:$(CONFIG)\bin\mod_ssl.def $(LDFLAGS) $(LIBPATHS) -libpath:..\packages-win-x64\openssl\openssl-1.0.1b\out32dll -libpath:..\packages-win-x64\matrixssl\matrixssl-3-3-open\Release -libpath:..\packages-win-x64\openssl\openssl-1.0.1b\out32dll -libpath:..\packages-win-x64\matrixssl\matrixssl-3-3-open\Release $(CONFIG)\obj\sslModule.obj $(LIBS) libmprssl.lib libmpr.lib libeay32.lib ssleay32.lib libmatrixssl.lib libeay32.lib ssleay32.lib libmatrixssl.lib libappweb.lib libhttp.lib libpcre.lib
+	"$(LD)" -dll -out:$(CONFIG)\bin\mod_cgi.dll -entry:$(ENTRY) -def:$(CONFIG)\bin\mod_cgi.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\cgiHandler.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 $(CONFIG)\obj\auth.obj: \
         src\utils\auth.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\mpr.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\auth.obj -Fd$(CONFIG)\obj\auth.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\utils\auth.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\auth.obj -Fd$(CONFIG)\obj\auth.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\utils\auth.c
 
 $(CONFIG)\bin\auth.exe:  \
         $(CONFIG)\bin\libmpr.dll \
@@ -486,7 +427,7 @@ $(CONFIG)\bin\auth.exe:  \
 $(CONFIG)\obj\cgiProgram.obj: \
         src\utils\cgiProgram.c \
         $(CONFIG)\inc\bit.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\cgiProgram.obj -Fd$(CONFIG)\obj\cgiProgram.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\utils\cgiProgram.c
+	"$(CC)" -c -Fo$(CONFIG)\obj\cgiProgram.obj -Fd$(CONFIG)\obj\cgiProgram.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\utils\cgiProgram.c
 
 $(CONFIG)\bin\cgiProgram.exe:  \
         $(CONFIG)\obj\cgiProgram.obj
@@ -494,9 +435,8 @@ $(CONFIG)\bin\cgiProgram.exe:  \
 
 $(CONFIG)\obj\setConfig.obj: \
         src\utils\setConfig.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\mpr.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\setConfig.obj -Fd$(CONFIG)\obj\setConfig.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\utils\setConfig.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\setConfig.obj -Fd$(CONFIG)\obj\setConfig.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\utils\setConfig.c
 
 $(CONFIG)\bin\setConfig.exe:  \
         $(CONFIG)\bin\libmpr.dll \
@@ -509,15 +449,14 @@ $(CONFIG)\inc\appwebMonitor.h:
 
 $(CONFIG)\obj\appweb.obj: \
         src\server\appweb.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\appweb.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\appweb.obj -Fd$(CONFIG)\obj\appweb.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\server\appweb.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\appweb.obj -Fd$(CONFIG)\obj\appweb.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\server\appweb.c
 
 $(CONFIG)\bin\appweb.exe:  \
         $(CONFIG)\bin\libappweb.dll \
         $(CONFIG)\inc\appwebMonitor.h \
         $(CONFIG)\obj\appweb.obj
-	"$(LD)" -out:$(CONFIG)\bin\appweb.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) -libpath:..\packages-win-x64\openssl\openssl-1.0.1b\out32dll -libpath:..\packages-win-x64\matrixssl\matrixssl-3-3-open\Release $(CONFIG)\obj\appweb.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib libeay32.lib ssleay32.lib libmatrixssl.lib
+	"$(LD)" -out:$(CONFIG)\bin\appweb.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\appweb.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 $(CONFIG)\obj\appwebMonitor.res: \
         src\server\WIN\appwebMonitor.rc
@@ -525,16 +464,14 @@ $(CONFIG)\obj\appwebMonitor.res: \
 
 $(CONFIG)\obj\appwebMonitor.obj: \
         src\server\WIN\appwebMonitor.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\mpr.h \
-        $(CONFIG)\inc\appwebMonitor.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\appwebMonitor.obj -Fd$(CONFIG)\obj\appwebMonitor.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\server\WIN\appwebMonitor.c
+        $(CONFIG)\inc\bit.h
+	"$(CC)" -c -Fo$(CONFIG)\obj\appwebMonitor.obj -Fd$(CONFIG)\obj\appwebMonitor.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc s$(RC)\server\WIN\appwebMonitor.c
 
 $(CONFIG)\bin\appwebMonitor.exe:  \
         $(CONFIG)\bin\libappweb.dll \
         $(CONFIG)\obj\appwebMonitor.res \
         $(CONFIG)\obj\appwebMonitor.obj
-	"$(LD)" -out:$(CONFIG)\bin\appwebMonitor.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(LIBPATHS) -libpath:..\packages-win-x64\openssl\openssl-1.0.1b\out32dll -libpath:..\packages-win-x64\matrixssl\matrixssl-3-3-open\Release $(CONFIG)\obj\appwebMonitor.res $(CONFIG)\obj\appwebMonitor.obj shell32.lib libappweb.lib ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib libeay32.lib ssleay32.lib libmatrixssl.lib
+	"$(LD)" -out:$(CONFIG)\bin\appwebMonitor.exe -entry:WinMainCRTStartup -subsystem:Windows $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\appwebMonitor.res $(CONFIG)\obj\appwebMonitor.obj shell32.lib libappweb.lib ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 $(CONFIG)\bin\appwebMonitor.ico: 
 	-if exist $(CONFIG)\bin\appwebMonitor.ico del /Q $(CONFIG)\bin\appwebMonitor.ico
@@ -546,14 +483,12 @@ $(CONFIG)\inc\testAppweb.h:
 
 $(CONFIG)\obj\testAppweb.obj: \
         test\testAppweb.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\testAppweb.h
+        $(CONFIG)\inc\bit.h
 	"$(CC)" -c -Fo$(CONFIG)\obj\testAppweb.obj -Fd$(CONFIG)\obj\testAppweb.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc test\testAppweb.c
 
 $(CONFIG)\obj\testHttp.obj: \
         test\testHttp.c \
-        $(CONFIG)\inc\bit.h \
-        $(CONFIG)\inc\testAppweb.h
+        $(CONFIG)\inc\bit.h
 	"$(CC)" -c -Fo$(CONFIG)\obj\testHttp.obj -Fd$(CONFIG)\obj\testHttp.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc test\testHttp.c
 
 $(CONFIG)\bin\testAppweb.exe:  \
@@ -561,21 +496,21 @@ $(CONFIG)\bin\testAppweb.exe:  \
         $(CONFIG)\inc\testAppweb.h \
         $(CONFIG)\obj\testAppweb.obj \
         $(CONFIG)\obj\testHttp.obj
-	"$(LD)" -out:$(CONFIG)\bin\testAppweb.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) -libpath:..\packages-win-x64\openssl\openssl-1.0.1b\out32dll -libpath:..\packages-win-x64\matrixssl\matrixssl-3-3-open\Release $(CONFIG)\obj\testAppweb.obj $(CONFIG)\obj\testHttp.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib libeay32.lib ssleay32.lib libmatrixssl.lib
+	"$(LD)" -out:$(CONFIG)\bin\testAppweb.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\testAppweb.obj $(CONFIG)\obj\testHttp.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 test\cgi-bin\testScript:  \
         $(CONFIG)\bin\cgiProgram.exe
-#  Omit build script C:/home/mob/appweb/test/cgi-bin/testScript
+#  Omit build script /Users/mob/git/appweb/test/cgi-bin/testScript
 
 test\web\caching\cache.cgi: 
-#  Omit build script C:/home/mob/appweb/test/web/caching/cache.cgi
+#  Omit build script /Users/mob/git/appweb/test/web/caching/cache.cgi
 
 test\web\basic\basic.cgi: 
-#  Omit build script C:/home/mob/appweb/test/web/basic/basic.cgi
+#  Omit build script /Users/mob/git/appweb/test/web/basic/basic.cgi
 
 test\cgi-bin\cgiProgram.exe:  \
         $(CONFIG)\bin\cgiProgram.exe
-#  Omit build script C:/home/mob/appweb/test/cgi-bin/cgiProgram.exe
+#  Omit build script /Users/mob/git/appweb/test/cgi-bin/cgiProgram.exe
 
 $(CONFIG)\obj\removeFiles.obj: \
         package\WIN\removeFiles.c \

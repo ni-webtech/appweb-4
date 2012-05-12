@@ -7375,7 +7375,7 @@ ssize httpRead(HttpConn *conn, char *buf, ssize size)
     while (q->count <= 0 && !conn->async && !conn->error && conn->sock && (conn->state <= HTTP_STATE_CONTENT)) {
         httpServiceQueues(conn);
         if (conn->sock) {
-            httpWait(conn, 0, MPR_TIMEOUT_SOCKETS);
+            httpWait(conn, 0, MPR_TIMEOUT_NO_BUSY);
         }
     }
     //  TODO - better place for this?
@@ -11168,7 +11168,6 @@ void httpProcess(HttpConn *conn, HttpPacket *packet)
         }
         packet = conn->input;
     }
-done:
     conn->inHttpProcess = 0;
 }
 
@@ -11441,7 +11440,8 @@ static void parseResponseLine(HttpConn *conn, HttpPacket *packet)
     MprBuf      *content;
     cchar       *endp;
     char        *protocol, *status;
-    int         len, level, traced;
+    ssize       len;
+    int         level, traced;
 
     rx = conn->rx;
     tx = conn->tx;
