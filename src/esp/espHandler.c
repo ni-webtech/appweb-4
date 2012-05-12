@@ -22,6 +22,7 @@ static Esp *esp;
 
 static EspRoute *allocEspRoute(HttpRoute *loc);
 static int espDbDirective(MaState *state, cchar *key, cchar *value);
+static int espEnvDirective(MaState *state, cchar *key, cchar *value);
 static char *getControllerEntry(cchar *controllerName);
 static EspRoute *getEroute(HttpRoute *route);
 static int loadApp(HttpConn *conn, int *updated);
