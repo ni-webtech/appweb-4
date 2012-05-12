@@ -1,6 +1,5 @@
 LIBRARY libmpr.dll
 EXPORTS
-  __mask@@NegDouble@
   amtow
   assertTrue
   awtom

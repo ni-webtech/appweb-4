@@ -876,6 +876,40 @@ static int espDirDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
+    Define Visual Studio environment if not already present
+ */
+static void defineVisualStudioEnv(MaState *state)
+{
+    MaAppweb    *appweb;
+    int         is64BitSystem;
+
+    appweb = MPR->appwebService;
+
+    if (scontains(getenv("LIB"), "Visual Studio", -1) &&
+        scontains(getenv("INCLUDE"), "Visual Studio", -1) &&
+        scontains(getenv("PATH"), "Visual Studio", -1)) {
+        return;
+    }
+    if (scontains(appweb->platform, "-x64-", -1)) {
+        is64BitSystem = smatch(getenv("PROCESSOR_ARCHITECTURE"), "AMD64") || getenv("PROCESSOR_ARCHITEW6432");
+        if (is64BitSystem) {
+            espEnvDirective(state, "EspEnv", "LIB \"${WINSDK}\\LIB\\x64;${VS}\\VC\\lib\\amd64\"");
+            espEnvDirective(state, "EspEnv", "PATH \"${VS}\\Common7\\IDE;${VS}\\VC\\amd64\\bin;${VS}\\Common7\\Tools;${VS}\\SDK\\v3.5\\bin;${VS}\\VC\\VCPackages;${WINSDK}\\bin\\x64\"");
+        } else {
+            /* Cross building for 64-bit on a 32-bit system */
+            espEnvDirective(state, "EspEnv", "LIB \"${WINSDK}\\LIB\\x64;${VS}\\VC\\lib\\amd64\"");
+            espEnvDirective(state, "EspEnv", "PATH \"${VS}\\Common7\\IDE;${VS}\\VC\\x86_amd64\\bin;${VS}\\Common7\\Tools;${VS}\\SDK\\v3.5\\bin;${VS}\\VC\\VCPackages;${WINSDK}\\bin\\x64\"");
+        }
+    } else {
+        /* Building for 32 bit on any-bit */
+        espEnvDirective(state, "EspEnv", "LIB \"${WINSDK}\\LIB;${VS}\\VC\\lib\"");
+        espEnvDirective(state, "EspEnv", "PATH \"${VS}\\Common7\\IDE;${VS}\\VC\\bin;${VS}\\Common7\\Tools;${VS}\\SDK\\v3.5\\bin;${VS}\\VC\\VCPackages;${WINSDK}\\bin\"");
+    }
+    espEnvDirective(state, "EspEnv", "INCLUDE \"${VS}\\VC\\INCLUDE;${WINSDK}\\include\"");
+}
+
+
+/*
     EspEnv var string
     This defines an environment variable setting. It is defined only when commands for this route are executed.
  */
@@ -887,14 +921,18 @@ static int espEnvDirective(MaState *state, cchar *key, cchar *value)
     if ((eroute = getEroute(state->route)) == 0) {
         return MPR_ERR_MEMORY;
     }
-    if (!maTokenize(state, value, "%S %S", &ekey, &evalue)) {
+    if (!maTokenize(state, value, "%S ?S", &ekey, &evalue)) {
         return MPR_ERR_BAD_SYNTAX;
     }
     if (eroute->env == 0) {
         eroute->env = mprCreateHash(-1, 0);
     }
     evalue = espExpandCommand(eroute, evalue, "", "");
-    mprAddKey(eroute->env, ekey, evalue);
+    if (scasematch(ekey, "VisualStudio")) {
+        defineVisualStudioEnv(state);
+    } else {
+        mprAddKey(eroute->env, ekey, evalue);
+    }
     if (scasematch(ekey, "PATH")) {
         if (eroute->searchPath) {
             eroute->searchPath = sclone(evalue);

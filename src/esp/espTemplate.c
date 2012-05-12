@@ -139,7 +139,8 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
 
             /*
                 These vars can be configured from environment variables.
-                NOTE: the default esp.conf includes "esp->vxworks.conf" which has EspEnv definitions for the configured VxWorks toolchain
+                NOTE: the default esp.conf includes "esp->vxworks.conf" which has EspEnv definitions for the configured 
+                VxWorks toolchain
              */
             } else if (matchToken(&cp, "${CC}")) {
                 mprPutStringToBuf(buf, getEnvString(eroute, "CC", getCompilerPath(os, arch)));
@@ -907,7 +908,7 @@ static cchar *getVisualStudio()
     cchar   *path;
 
     //  MOB - check this key. Does 'Visual Studio' have a space?
-    path = mprReadRegistry("HKLM\\SOFTWARE\\Microsoft\\Visual Studio\\" BLD_VISUAL_STUDIO_VERSION, "ShellFolder");
+    path = mprReadRegistry("HKLM\\SOFTWARE\\Microsoft\\VisualStudio\\" BLD_VISUAL_STUDIO_VERSION, "ShellFolder");
     if (!path) {
         path = mprReadRegistry("HKCU\\SOFTWARE\\Microsoft\\VisualStudio\\" BLD_VISUAL_STUDIO_VERSION "_Config", 
             "ShellFolder");
@@ -924,15 +925,14 @@ static cchar *getVisualStudio()
 
 static cchar *getCompilerPath(cchar *os, cchar *arch)
 {
-    cchar   *path;
 #if WIN
     /* 
         Get the real system architecture (32 or 64 bit)
      */
     MaAppweb *appweb = MPR->appwebService;
-    int is64BitSystem = smatch(getenv("PROCESSOR_ARCHITECTURE"), "AMD64") || getenv("PROCESSOR_ARCHITEW6432");
-    path = getVisualStudio();
+    cchar *path = getVisualStudio();
     if (scontains(appweb->platform, "-x64-", -1)) {
+        int is64BitSystem = smatch(getenv("PROCESSOR_ARCHITECTURE"), "AMD64") || getenv("PROCESSOR_ARCHITEW6432");
         if (is64BitSystem) {
             path = mprJoinPath(path, "VC/bin/amd64/cl.exe");
         } else {
@@ -942,15 +942,10 @@ static cchar *getCompilerPath(cchar *os, cchar *arch)
     } else {
         path = mprJoinPath(path, "VC/bin/cl.exe");
     }
-#if UNUSED
-    path = mprJoinPath(mprGetPathParent(mprGetPathParent(getenv("VS100COMNTOOLS"))), "VC/bin/cl.exe");
-    path = mprGetPortablePath(path);
-#endif
-
-#else
-    path = getCompilerName(os, arch);
-#endif
     return path;
+#else
+    return getCompilerName(os, arch);
+#endif
 }
 
 #endif /* BLD_FEATURE_ESP */
