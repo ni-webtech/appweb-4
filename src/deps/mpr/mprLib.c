@@ -9260,6 +9260,9 @@ static void stdinCallback(MprCmd *cmd, MprEvent *event);
 static void stdoutCallback(MprCmd *cmd, MprEvent *event);
 static void stderrCallback(MprCmd *cmd, MprEvent *event);
 static void vxCmdManager(MprCmd *cmd);
+#if BLD_WIN_LIKE
+static cchar *makeWinEnvBlock(MprCmd *cmd);
+#endif
 
 #if VXWORKS
 typedef int (*MprCmdTaskFn)(int argc, char **argv, char **envp);
@@ -9695,7 +9698,7 @@ int mprStartCmd(MprCmd *cmd, int argc, cchar **argv, cchar **envp, int flags)
         mprLog(4, "    arg[%d]: %s", i, cmd->argv[i]);
     }
     for (ITERATE_ITEMS(cmd->env, pair, next)) {
-        mprLog(4, "    env[%d]: %s", i, pair);
+        mprLog(4, "    env[%d]: %s", next, pair);
     }
     slock(cmd);
     if (makeCmdIO(cmd) < 0) {
@@ -10213,7 +10216,7 @@ void mprSetCmdDir(MprCmd *cmd, cchar *dir)
 #if BLD_WIN_LIKE
 static int sortEnv(char **str1, char **str2)
 {
-    cchar    *s1, *s2, *cp;
+    cchar    *s1, *s2;
     int     c1, c2;
 
     for (s1 = *str1, s2 = *str2; *s1 && *s2; s1++, s2++) {
@@ -10258,7 +10261,7 @@ static int blendEnv(MprCmd *cmd, cchar **env, int flags)
 
     cmd->env = 0;
 
-    if ((cmd->env = mprCreateList(128, 0)) == 0) {
+    if ((cmd->env = mprCreateList(128, MPR_LIST_STATIC_VALUES)) == 0) {
         return MPR_ERR_MEMORY;
     }
     /*
@@ -10288,12 +10291,38 @@ static int blendEnv(MprCmd *cmd, cchar **env, int flags)
         Windows requires a caseless sort with two trailing nulls
      */
     mprSortList(cmd->env, sortEnv);
-    /* Windows requires two nulls at the end */
-    mprAddItem(cmd->env, NULL);
 #endif
     mprAddItem(cmd->env, NULL);
     return 0;
 }
+
+
+#if BLD_WIN_LIKE
+static cchar *makeWinEnvBlock(MprCmd *cmd)
+{
+    char    *item, *dp, *ep, *env;
+    ssize   len;
+    int     next;
+
+    for (len = 2, ITERATE_ITEMS(cmd->env, item, next)) {
+        len += slen(item) + 1;
+    }
+    if ((env = mprAlloc(len)) == 0) {
+        return 0;
+    }
+    ep = &env[len];
+    dp = env;
+    for (ITERATE_ITEMS(cmd->env, item, next)) {
+        strcpy(dp, item);
+        dp += slen(item) + 1;
+    }
+    /* Windows requires two nulls */
+    *dp++ = '\0';
+    *dp++ = '\0';
+    mprAssert(dp <= ep);
+    return env;
+}
+#endif
 
 
 /*
@@ -10398,6 +10427,7 @@ static int startProcess(MprCmd *cmd)
 {
     PROCESS_INFORMATION procInfo;
     STARTUPINFO         startInfo;
+    char                *envBlock;
     int                 err;
 
     memset(&startInfo, 0, sizeof(startInfo));
@@ -10433,7 +10463,8 @@ static int startProcess(MprCmd *cmd)
         startInfo.hStdError = (HANDLE) _get_osfhandle((int) fileno(stderr));
     }
 
-    if (! CreateProcess(0, cmd->command, 0, 0, 1, 0, (char**) cmd->env, cmd->dir, &startInfo, &procInfo)) {
+    envBlock = makeWinEnvBlock(cmd);
+    if (! CreateProcess(0, cmd->command, 0, 0, 1, 0, envBlock, cmd->dir, &startInfo, &procInfo)) {
         err = mprGetOsError();
         if (err == ERROR_DIRECTORY) {
             mprError("Can't create process: %s, directory %s is invalid", cmd->program, cmd->dir);
