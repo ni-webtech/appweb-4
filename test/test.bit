@@ -111,6 +111,8 @@ Bit.load({
                 rm('junk/**')
                 Path('cache/.keep').write()
                 Path('app/cache/.keep').write()
+                Path('web/caching/cache.cgi').remove()
+                Path('web/basic/basic.cgi').remove()
             "                                                                                              
         },  
     },
