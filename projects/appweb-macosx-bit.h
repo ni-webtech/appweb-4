@@ -16,7 +16,7 @@
 #define BLD_MINOR_VERSION 0
 #define BLD_PATCH_VERSION 0
 #define BLD_VNUM 400000000
-#define BLD_CONFIG_CMD "bit -q configure --debug"
+#define BLD_CONFIG_CMD "bit -q -d -without all configure -gen sh,make,xcode"
 #define BLD_LIB_NAME "bin"
 #define BLD_PROFILE "debug"
 #define BLD_CFG_PREFIX "/etc/appweb"
@@ -38,7 +38,6 @@
 #define BLD_SHOBJ ".dylib"
 #define BLD_LIB ".a"
 #define BLD_OBJ ".o"
-#define BLD_FEATURE_ASSERT 1
 #define BLD_FEATURE_AUTH_FILE 1
 #define BLD_FEATURE_AUTH_PAM 0
 #define BLD_FEATURE_MDB 1
@@ -57,21 +56,21 @@
 #define BLD_CC_WARN_64TO32 1
 #define BLD_CC_WARN_UNUSED 1
 #define BLD_FEATURE_HTTP 0
+#define BLD_FEATURE_DOXYGEN 0
+#define BLD_FEATURE_DSI 0
+#define BLD_FEATURE_EJS 0
+#define BLD_FEATURE_MAN 0
+#define BLD_FEATURE_MAN2HTML 0
+#define BLD_FEATURE_PHP 0
+#define BLD_FEATURE_PMAKER 0
+#define BLD_FEATURE_SSL 0
 #define BLD_FEATURE_CC 1
 #define BLD_FEATURE_LINK 1
 #define BLD_FEATURE_CGI 1
 #define BLD_FEATURE_DIR 1
-#define BLD_FEATURE_DOXYGEN 1
-#define BLD_FEATURE_DSI 1
-#define BLD_FEATURE_EJS 1
 #define BLD_FEATURE_EJSCRIPT 0
 #define BLD_FEATURE_ESP 1
-#define BLD_FEATURE_MAN 1
-#define BLD_FEATURE_MAN2HTML 1
-#define BLD_FEATURE_OPENSSL 1
-#define BLD_FEATURE_MATRIXSSL 1
-#define BLD_FEATURE_PMAKER 1
-#define BLD_FEATURE_PHP 1
+#define BLD_FEATURE_OPENSSL 0
+#define BLD_FEATURE_MATRIXSSL 0
 #define BLD_FEATURE_SQLITE 1
-#define BLD_FEATURE_SSL 1
 #define BLD_FEATURE_UTEST 1

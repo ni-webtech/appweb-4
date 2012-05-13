@@ -329,16 +329,21 @@ EspDir static ./web</pre>
                         <td class="pivot">Example</td>
                         <td>
 <pre>EspEnv LIB "${WINSDK}\LIB;${VS}\VC\lib"</pre>
+<pre>EspEnv VisualStudio</pre>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The EspEnv directive defines an environment variable that will be defined before running
+                            <p>The EspEnv directive specifies an environment variable that will be defined before running
                             the <a href="#espCompile">EspCompile</a> or <a href="#espLink">EspLink</a> commands. Some
                             platforms, such as Windows with Visual Studio, require certain environment variables to be 
                             defined for the compiler and linker to execute. Visual Studio requires that the INCLUDE,
                             LIB, PATH and TMP environment variables be defined correctly.</p>
-                        </td>
+                            <p> The EspEnv argument can also be set to "VisualStudio" to define the required Visual
+                            Studio environment. This will define the INCLUDE, LIB and PATH variables if the current
+                            user's environment does not contain the Visual Studio settings. User's can run 
+                            the Visual Studio vsvarsall.bat script (supplied with Visual Studio) to define 
+                            the environment.</p> </td>
                     </tr>
                 </tbody>
             </table>
