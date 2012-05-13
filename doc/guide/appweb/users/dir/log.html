@@ -51,6 +51,7 @@
                 <li><a href="#accessLog">AccessLog</a></li>
                 <li><a href="#errorLog">ErrorLog</a></li>
                 <li><a href="#log">Log</a></li>
+                <li><a href="#logStamp">LogStamp</a></li>
             </ul>
             <h1>See Also</h1>
             <ul>
@@ -244,6 +245,38 @@
                             characters. Tracing will be limited to at most <em>size</em> bytes per request.</p>
                             <p>The <em>include</em> and <em>exclude</em> define a set of file extensions that will be
                             included or excluded in the trace.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <a name="logStamp" id="logStamp"></a>
+            <h2>LogStamp</h2>
+            <table class="directive" title="directive">
+                <thead>
+                    <tr>
+                        <th class="pivot">Description</th>
+                        <th>Control Log Timestamp frequency</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>LogStamp period</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default Server</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>LogStamp 1hr</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The LogStamp directive controls how frequently log file time stamps are emitted. 
+                            Timestamps are useful to frame the time window in which log file events occurred.</p>
                         </td>
                     </tr>
                 </tbody>

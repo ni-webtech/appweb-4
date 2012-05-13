@@ -4856,6 +4856,7 @@ static void manageHttp(Http *http, int flags)
         mprMark(http->serverLimits);
         mprMark(http->clientRoute);
         mprMark(http->timer);
+        mprMark(http->timestamp);
         mprMark(http->mutex);
         mprMark(http->software);
         mprMark(http->forkData);
@@ -4885,6 +4886,9 @@ void httpDestroy(Http *http)
 {
     if (http->timer) {
         mprRemoveEvent(http->timer);
+    }
+    if (http->timestamp) {
+        mprRemoveEvent(http->timestamp);
     }
     MPR->httpService = NULL;
 }
@@ -5158,6 +5162,30 @@ static void httpTimer(Http *http, MprEvent *event)
         http->timer = 0;
     }
     unlock(http);
+}
+
+
+static void timestamp()
+{
+    mprLog(0, "Time: %s", mprGetDate(NULL));
+}
+
+
+void httpSetTimestamp(MprTime period)
+{
+    Http    *http;
+
+    http = MPR->httpService;
+    if (http->timestamp) {
+        mprRemoveEvent(http->timestamp);
+    }
+    if (period < (10 * MPR_TICKS_PER_SEC)) {
+        period = (10 * MPR_TICKS_PER_SEC);
+    }
+    if (period > 0) {
+        http->timer = mprCreateTimerEvent(NULL, "httpTimestamp", period, timestamp, NULL, 
+            MPR_EVENT_CONTINUOUS | MPR_EVENT_QUICK);
+    }
 }
 
 

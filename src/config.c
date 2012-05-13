@@ -1267,6 +1267,21 @@ static int logRoutesDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
+    LogStamp timeSpec
+ */
+static int logStampDirective(MaState *state, cchar *key, cchar *value)
+{
+    cchar   *period;
+
+    if (!maTokenize(state, value, "%S", &period)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    httpSetTimestamp(gettime(value));
+    return 0;
+}
+
+
+/*
     LoadModulePath searchPath
  */
 static int loadModulePathDirective(MaState *state, cchar *key, cchar *value)
@@ -2362,6 +2377,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "Load", loadDirective);
     maAddDirective(appweb, "Log", logDirective);
     maAddDirective(appweb, "LogRoutes", logRoutesDirective);
+    maAddDirective(appweb, "LogStamp", logStampDirective);
     maAddDirective(appweb, "LoadModulePath", loadModulePathDirective);
     maAddDirective(appweb, "LoadModule", loadModuleDirective);
 

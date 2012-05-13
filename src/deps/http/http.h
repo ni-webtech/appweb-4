@@ -297,6 +297,7 @@ typedef struct Http {
     struct HttpRoute *clientRoute;          /**< Default route for clients */
 
     MprEvent        *timer;                 /**< Admin service timer */
+    MprEvent        *timestamp;             /**< Timestamp timer */
     MprTime         booted;                 /**< Time the server started */
     MprTime         now;                    /**< When was the currentDate last computed */
     MprMutex        *mutex;
@@ -1771,8 +1772,8 @@ extern void httpSetIOCallback(struct HttpConn *conn, HttpIOCallback fn);
         httpPrepServerConn httpResetCredentials httpRouteRequest httpProcessHandler httpRunHandlerReady
         httpServiceQueues httpSetAsync httpSetChunkSize httpSetConnContext httpSetConnHost httpSetConnNotifier
         httpSetCredentials httpSetKeepAliveCount httpSetPipelineHandler httpSetProtocol httpSetRetries
-        httpSetSendConnector httpSetState httpSetTimeout httpShouldTrace httpStartPipeline httpNotifyWritable 
- */
+        httpSetSendConnector httpSetState httpSetTimeout httpSetTimestamp httpShouldTrace httpStartPipeline
+        httpNotifyWritable */
 typedef struct HttpConn {
     /*  Ordered for debugability */
 
@@ -2269,6 +2270,14 @@ extern void httpSetState(HttpConn *conn, int state);
     @ingroup HttpConn
  */
 extern void httpSetTimeout(HttpConn *conn, int requestTimeout, int inactivityTimeout);
+
+/**
+    Define a timestamp in the MPR log file.
+    @description This routine initiates the writing of a timestamp in the MPR log file
+    @param period Time in milliseconds between timestamps
+    @ingroup HttpConn
+ */
+extern void httpSetTimestamp(MprTime period);
 
 /**
     Test if the item should be traced
