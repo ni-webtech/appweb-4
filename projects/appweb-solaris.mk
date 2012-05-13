@@ -471,20 +471,20 @@ test/cgi-bin/testScript:  \
 
 test/web/caching/cache.cgi: 
 	cd test >/dev/null ;\
-		echo -e '#!`type -p sh`' >web/caching/cache.cgi ;\
-	echo -e '' >>web/caching/cache.cgi ;\
-	echo -e 'echo HTTP/1.0 200 OK' >>web/caching/cache.cgi ;\
-	echo -e 'echo Content-Type: text/plain' >>web/caching/cache.cgi ;\
-	echo -e 'date' >>web/caching/cache.cgi ;\
+		echo "#!`type -p sh`" >web/caching/cache.cgi ;\
+	echo '' >>web/caching/cache.cgi ;\
+	echo 'echo HTTP/1.0 200 OK' >>web/caching/cache.cgi ;\
+	echo 'echo Content-Type: text/plain' >>web/caching/cache.cgi ;\
+	echo 'date' >>web/caching/cache.cgi ;\
 	chmod +x web/caching/cache.cgi ;\
 		cd - >/dev/null 
 
 test/web/basic/basic.cgi: 
 	cd test >/dev/null ;\
-		echo -e '#!`type -p sh`' >web/basic/basic.cgi ;\
-	echo -e '' >>web/basic/basic.cgi ;\
-	echo -e 'echo Content-Type: text/plain' >>web/basic/basic.cgi ;\
-	echo -e '/usr/bin/env' >>web/basic/basic.cgi ;\
+		echo "#!`type -p sh`" >web/basic/basic.cgi ;\
+	echo '' >>web/basic/basic.cgi ;\
+	echo 'echo Content-Type: text/plain' >>web/basic/basic.cgi ;\
+	echo '/usr/bin/env' >>web/basic/basic.cgi ;\
 	chmod +x web/basic/basic.cgi ;\
 		cd - >/dev/null 
 
