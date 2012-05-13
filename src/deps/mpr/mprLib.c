@@ -2592,7 +2592,7 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     }
     mpr->exitStrategy = MPR_EXIT_NORMAL;
     mpr->emptyString = sclone("");
-    mpr->gracefulTimeout = MPR_TIMEOUT_STOP;
+    mpr->exitTimeout = MPR_TIMEOUT_STOP;
     mpr->title = sclone(BLD_NAME);
     mpr->version = sclone(BLD_VERSION);
     mpr->idleCallback = mprServicesAreIdle;
@@ -2750,7 +2750,7 @@ void mprDestroy(int how)
     mprRequestGC(gmode);
 
     if (how & MPR_EXIT_GRACEFUL) {
-        mprWaitTillIdle(MPR->gracefulTimeout);
+        mprWaitTillIdle(MPR->exitTimeout);
     }
     MPR->state = MPR_STOPPING_CORE;
     MPR->exitStrategy &= MPR_EXIT_GRACEFUL;
@@ -3288,9 +3288,9 @@ void mprSetEnv(cchar *key, cchar *value)
 }
 
 
-void mprSetGracefulTimeout(MprTime timeout)
+void mprSetExitTimeout(MprTime timeout)
 {
-    MPR->gracefulTimeout = timeout;
+    MPR->exitTimeout = timeout;
 }
 
 
@@ -23253,8 +23253,8 @@ void mprRemoveSignalHandler(MprSignal *sp)
         SIGTERM - graceful shutdown
         SIGPIPE - ignore
         SIGXFZ - ignore
-        SIGUSR1 - restart
-        SIGUSR2 - toggle trace level (Appweb only)
+        SIGUSR1 - graceful shutdown, then restart
+        SIGUSR2 - toggle trace level (Appweb)
         All others - default exit
  */
 void mprAddStandardSignals()

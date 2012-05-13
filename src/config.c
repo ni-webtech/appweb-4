@@ -814,6 +814,16 @@ static int errorLogDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
+    ExitTimeout timeout
+ */
+static int exitTimeoutDirective(MaState *state, cchar *key, cchar *value)
+{
+    mprSetExitTimeout(gettime(value));
+    return 0;
+}
+
+
+/*
     Group groupName
  */
 static int groupDirective(MaState *state, cchar *key, cchar *value)
@@ -1338,22 +1348,28 @@ static int limitKeepAliveDirective(MaState *state, cchar *key, cchar *value)
  */
 static int memoryPolicyDirective(MaState *state, cchar *key, cchar *value)
 {
-    int     policy;
+    cchar   *policy;
+    int     flags;
 
-    if (scmp(value, "exit") == 0) {
-        policy = MPR_ALLOC_POLICY_EXIT;
+    flags = MPR_ALLOC_POLICY_EXIT;
 
-    } else if (scmp(value, "prune") == 0) {
-        policy = MPR_ALLOC_POLICY_PRUNE;
-
-    } else if (scmp(value, "restart") == 0) {
-        policy = MPR_ALLOC_POLICY_RESTART;
-
-    } else {
-        mprError("Unknown memory depletion policy '%s'", value);
+    if (!maTokenize(state, value, "%S", &policy)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    mprSetMemPolicy(policy);
+    if (scmp(value, "exit") == 0) {
+        flags = MPR_ALLOC_POLICY_EXIT;
+
+    } else if (scmp(value, "prune") == 0) {
+        flags = MPR_ALLOC_POLICY_PRUNE;
+
+    } else if (scmp(value, "restart") == 0) {
+        flags = MPR_ALLOC_POLICY_RESTART;
+
+    } else {
+        mprError("Unknown memory depletion policy '%s'", policy);
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    mprSetMemPolicy(flags);
     return 0;
 }
 
@@ -2331,6 +2347,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "<else", elseDirective);
     maAddDirective(appweb, "ErrorDocument", errorDocumentDirective);
     maAddDirective(appweb, "ErrorLog", errorLogDirective);
+    maAddDirective(appweb, "ExitTimeout", exitTimeoutDirective);
     maAddDirective(appweb, "Group", groupDirective);
     maAddDirective(appweb, "Header", headerDirective);
     maAddDirective(appweb, "<If", ifDirective);

@@ -8470,7 +8470,7 @@ typedef struct Mpr {
     MprFile         *stdError;              /**< Standard error file */
     MprFile         *stdInput;              /**< Standard input file */
     MprFile         *stdOutput;             /**< Standard output file */
-    MprTime         gracefulTimeout;        /**< Timeout for graceful shutdowns */
+    MprTime         exitTimeout;            /**< Request timeout when exiting */
     char            *pathEnv;               /**< Cached PATH env var. Used by MprCmd */
     char            *name;                  /**< Product name */
     char            *title;                 /**< Product title */
@@ -8904,11 +8904,12 @@ extern void mprSetEnv(cchar *key, cchar *value);
 extern void mprSetExitStrategy(int strategy);
 
 /**
-    Set the timeout for a graceful shutdown. A graceful shutdown waits for existing requests to complete before exiting.
+    Set the exit timeout for a graceful shutdown or restart. A graceful shutdown waits for existing requests to 
+    complete before exiting.
     @param timeout Time in milliseconds to wait when terminating the MPR
     @ingroup Mpr
  */
-void mprSetGracefulTimeout(MprTime timeout);
+void mprSetExitTimeout(MprTime timeout);
 
 /**
     Set the application host name string. This is internal to the application and does not affect the O/S host name.

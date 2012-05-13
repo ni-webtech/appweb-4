@@ -48,6 +48,7 @@
         <div class="contentRight">
             <h1>Quick Nav</h1>
             <ul>
+                <li><a href="#exitTimeout">ExitTimeout</a></li>
                 <li><a href="#limitCache">LimitCache</a></li>
                 <li><a href="#limitChunk">LimitChunk</a></li>
                 <li><a href="#limitClients">LimitClients</a></li>
@@ -77,16 +78,44 @@
             technique is know as "sandboxing" because it creates a limited or safer area in which Appweb
             executes.</p>
             
+            <a name="exitTimeout" id="exitTimeout"></a>
+            <h2>ExitTimeout</h2>
+            <table class="directive" title="directive">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Timeout to wait when exiting or restarting</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>ExitTimeout period</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>ExitTimeout 30secs</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>This directive defines the maximum time to wait for existing requests to complete
+                            before exiting or restarting Appweb. </p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
             <a name="limitCache" id="limitCache"></a>
             <h2>LimitCache</h2>
             <table class="directive" title="directive">
-                <thead>
-                    <tr>
-                        <th class="pivot">Description</th>
-                        <th>Defines the maximum size of the Appweb cache for response data and session state.</th>
-                    </tr>
-                </thead>
                 <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Maximum size of response data and session state</td>
+                    </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>LimitCache size</td>
@@ -113,13 +142,11 @@
             <a name="limitChunk" id="limitChunk"></a>
             <h2>LimitChunk</h2>
             <table class="directive" title="directive">
-                <thead>
-                    <tr>
-                        <th class="pivot">Description</th>
-                        <th>Defines the maximum chunk size</th>
-                    </tr>
-                </thead>
                 <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Defines the maximum chunk size</td>
+                    </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>LimitChunk size</td>
@@ -144,13 +171,11 @@
             <a name="limitClients" id="limitClients"></a>
             <h2>LimitClients</h2>
             <table class="directive" title="directive">
-                <thead>
-                    <tr>
-                        <th class="pivot">Description</th>
-                        <th>Sets the maximum number of simultaneous client systems</th>
-                    </tr>
-                </thead>
                 <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Sets the maximum number of simultaneous client systems</td>
+                    </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
                         <td>LimitClients count</td>
