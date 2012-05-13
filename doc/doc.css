@@ -307,6 +307,10 @@ pre,code {
 	-webkit-box-shadow: 5px 5px 9px #888;
 }
 
+pre.dir { 
+    width: 450px;
+}
+
 pre.light, code.light { 
 	font-size: 110%;
 	line-height: 140%; 
