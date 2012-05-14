@@ -2975,7 +2975,7 @@ bool mprServicesAreIdle()
      */
     idle = mprGetListLength(MPR->workerService->busyThreads) == 0 && mprGetListLength(MPR->cmdService->cmds) == 0;
     if (!idle) {
-        mprLog(4, "Not idle: cmds %d, busy threads %d, eventing %d",
+        mprLog(6, "Not idle: cmds %d, busy threads %d, eventing %d",
             mprGetListLength(MPR->cmdService->cmds), mprGetListLength(MPR->workerService->busyThreads), MPR->eventing);
     }
     return idle;
@@ -12955,10 +12955,8 @@ static bool serviceDispatcher(MprDispatcher *dispatcher)
     } else if (dispatcher->requiredWorker) {
         mprActivateWorker(dispatcher->requiredWorker, (MprWorkerProc) serviceDispatcherMain, dispatcher);
 
-    } else {
-        if (mprStartWorker((MprWorkerProc) serviceDispatcherMain, dispatcher) < 0) {
-            return 0;
-        } 
+    } else if (mprStartWorker((MprWorkerProc) serviceDispatcherMain, dispatcher) < 0) {
+        return 0;
     }
     return 1;
 }

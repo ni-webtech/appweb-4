@@ -2,7 +2,7 @@
 #   appweb-solaris.mk -- Build It Makefile to build Embedthis Appweb for solaris
 #
 
-ARCH     := $(shell uname -m | sed 's/i.86/x86/')
+ARCH     := $(shell uname -m | sed 's/i.86/x86/;s/x86_64/x64/')
 OS       := solaris
 PROFILE  := debug
 CONFIG   := $(OS)-$(ARCH)-$(PROFILE)

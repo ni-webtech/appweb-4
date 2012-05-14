@@ -73,7 +73,7 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
         exclude: /\.pdb|\.exp|\.lib|\.def|\.suo|\.old/,
         permissions: 0755, 
     })
-    if (OS != 'win') {
+    if (bit.platform.os != 'win') {
         install(bit.dir.lib.join('*'), p.lib, {
             permissions: 0755, 
             exclude: /file-save|www|simple|sample/,
@@ -98,12 +98,12 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
         install(bit.dir.lib.join('ejs*.mod'), p.lib);
     }
     if (!bit.cross) {
-        if (OS == 'macosx') {
+        if (bit.platform.os == 'macosx') {
             let daemons = contents.join('Library/LaunchDaemons')
             daemons.makeDir()
             install('package/MACOSX/com.embedthis.appweb.plist', daemons, {permissions: 0644, expand: true})
 
-        } else if (OS == 'linux') {
+        } else if (bit.platform.os == 'linux') {
             install('package/LINUX/' + settings.product + '.init', 
                 contents.join('etc/init.d', settings.product), 
                 {permissions: 0755, expand: true})
@@ -111,7 +111,7 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
                 contents.join('init', settings.product).joinExt('conf'),
                 {permissions: 0644, expand: true})
 
-        } else if (OS == 'win') {
+        } else if (bit.platform.os == 'win') {
             if (bit.platform.arch == 'x86_64') {
                 install(bit.packs.compiler.dir.join('VC/redist/x64/Microsoft.VC100.CRT/msvcr100.dll'), p.bin)
             } else {
