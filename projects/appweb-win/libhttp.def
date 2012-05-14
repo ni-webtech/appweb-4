@@ -352,6 +352,7 @@ EXPORTS
   httpSetState
   httpSetStatus
   httpSetTimeout
+  httpSetTimestamp
   httpSetUniqueConnLimits
   httpSetUri
   httpShouldTrace
