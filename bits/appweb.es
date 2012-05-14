@@ -120,7 +120,7 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
             /*
                 install(bit.packs.compiler.path.join('../../lib/msvcrt.lib'), p.bin)
              */
-            install(bit.dir.bin.join('removeFiles' + bit.EXE), p.bin)
+            install(bit.dir.bin.join('removeFiles' + bit.globals.EXE), p.bin)
             install(bit.dir.bin.join('setConf*'), p.bin)
         }
         if (bit.platform.like == 'posix') {
@@ -212,7 +212,7 @@ public function installBinary() {
     packageBinaryFiles(null)
     if (!bit.cross) {
         if (bit.platform.os == 'win') {
-            Cmd([bit.dir.bin.join('appwebMonitor' + bit.EXE), '--stop'])
+            Cmd([bit.dir.bin.join('appwebMonitor' + bit.globals.EXE), '--stop'])
         }
         Cmd([bit.dir.bin.join('appman'), '--continue', 'stop', 'disable', 'uninstall'])
     }
@@ -223,9 +223,9 @@ public function installBinary() {
             updateLatestLink()
         }
         trace('Start', 'appman install enable start')
-        Cmd([bit.prefixes.bin.join('appman' + bit.EXE), 'install', 'enable', 'start'])
+        Cmd([bit.prefixes.bin.join('appman' + bit.globals.EXE), 'install', 'enable', 'start'])
         if (bit.platform.os == 'win') {
-            Cmd([bit.prefixes.bin.join('appwebMonitor' + bit.EXE)], {detach: true})
+            Cmd([bit.prefixes.bin.join('appwebMonitor' + bit.globals.EXE)], {detach: true})
         }
     }
     bit.dir.pkg.join('bin').removeAll()
@@ -275,7 +275,7 @@ public function createLinks() {
         let target: Path
         for each (program in programs) {
             let link = Path(localbin.join(program))
-            link.symlink(bin.join(program + bit.EXE))
+            link.symlink(bin.join(program + bit.globals.EXE))
             log.push(link)
         }
         for each (page in bit.prefixes.productver.join('doc/man').glob('**/*.1.gz')) {
