@@ -51,6 +51,7 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
         install('src/server/appweb.conf', p.config)
 
         let conf = Path(contents.portable + '' + bit.prefixes.config.removeDrive().portable + '/appweb.conf')
+        let user = getWebUser(), group = getWebUser()
         if (bit.platform.os == 'win') {
             run(['setConfig', '--home', '.', '--documents', 'web', '--logs', 'logs', '--port', settings.http_port,
                 '--ssl', settings.ssl_port, '--cache', 'cache', '--modules', 'bin', conf])
@@ -61,7 +62,6 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
         }
 
         bit.dir.cfg.join('appweb.conf.bak').remove()
-        let user = getWebUser(), group = getWebUser()
         p.spool.join('cache').makeDir()
         let tmp = p.log.join('error.log')
         tmp.write()
