@@ -298,7 +298,7 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
         /*
             MAC needs the object for debug information
          */
-        mprDeletePath(mprJoinPathExt(mprTrimPathExt(module), "dylib"));
+        mprDeletePath(mprJoinPathExt(mprTrimPathExt(module), &BLD_OBJ[1]));
 #endif
     }
 #if BLD_WIN_LIKE
