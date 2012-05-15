@@ -40,9 +40,10 @@ Bit.load({
         sdb: false,
         manager: 'appman',
         auth: 'file',
-        sync: ['http', 'mpr', 'pcre', 'sqlite'],
         packs: [ 'bits/packs' ]
+        sync: ['http', 'mpr', 'pcre', 'sqlite'],
         'without-all': ['doxygen', 'dsi', 'ejs', 'man', 'man2html', 'php', 'pmaker', 'ssl'],
+        '+required': [ 'pcre'],
         '+optional': [ 'cgi', 'dir', 'doxygen', 'dsi', 'ejs', 'ejscript', 'esp', 'man', 'man2html', 'openssl', 
             'matrixssl', 'pmaker', 'php', 'sqlite', 'ssl', 'utest' ],
     },
