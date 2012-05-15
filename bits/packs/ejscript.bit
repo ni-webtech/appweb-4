@@ -59,10 +59,10 @@ if (Path('src/deps/ejs/ejsLib.c').exists) {
         imports: imports,
     }
 }
-if (bit.packs.sqlite.enable) {
+if (bit.packs.sqlite && bit.packs.sqlite.enable) {
     cfg.libraries.push('sqlite3')
 }
-if (bit.packs.ssl.enable) {
+if (bit.packs.ssl && bit.packs.ssl.enable) {
     cfg.libraries.push('mprssl')
 }
 Bit.load({packs: { ejscript: cfg }})
@@ -71,7 +71,7 @@ Bit.load({packs: { ejscript: cfg }})
     Disable building libraries that are imported from Ejscript
  */
 let prebuilt = ['libmpr', 'libhttp', 'libpcre', 'libsqlite3']
-if (bit.packs.ssl.enable) {
+if (bit.packs.ssl && bit.packs.ssl.enable) {
     prebuilt.push('libmprssl')
 }
 for each (tname in prebuilt) {

@@ -52,7 +52,7 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
 
         let conf = Path(contents.portable + '' + bit.prefixes.config.removeDrive().portable + '/appweb.conf')
         let user = getWebUser(), group = getWebUser()
-        if (bit.platform.os == 'win') {
+        if (bit.platform.os == 'windows') {
             run(['setConfig', '--home', '.', '--documents', 'web', '--logs', 'logs', '--port', settings.http_port,
                 '--ssl', settings.ssl_port, '--cache', 'cache', '--modules', 'bin', conf])
         } else {
@@ -73,7 +73,7 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
         exclude: /\.pdb|\.exp|\.lib|\.def|\.suo|\.old/,
         permissions: 0755, 
     })
-    if (bit.platform.os != 'win') {
+    if (bit.platform.os != 'windows') {
         install(bit.dir.lib.join('*'), p.lib, {
             permissions: 0755, 
             exclude: /file-save|www|simple|sample/,
@@ -111,7 +111,7 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
                 contents.join('init', settings.product).joinExt('conf'),
                 {permissions: 0644, expand: true})
 
-        } else if (bit.platform.os == 'win') {
+        } else if (bit.platform.os == 'windows') {
             if (bit.platform.arch == 'x86_64') {
                 install(bit.packs.compiler.dir.join('VC/redist/x64/Microsoft.VC100.CRT/msvcr100.dll'), p.bin)
             } else {
@@ -206,25 +206,25 @@ public function packageComboFiles() {
 }
 
 public function installBinary() {
-    if (Config.OS != 'WIN' && App.uid != 0) {
+    if (Config.OS != 'WINDOWS' && App.uid != 0) {
         throw 'Must run as root. Use \"sudo bit install\"'
     }
     packageBinaryFiles(null)
     if (!bit.cross) {
-        if (bit.platform.os == 'win') {
+        if (bit.platform.os == 'windows') {
             Cmd([bit.dir.bin.join('appwebMonitor' + bit.globals.EXE), '--stop'])
         }
         Cmd([bit.dir.bin.join('appman'), '--continue', 'stop', 'disable', 'uninstall'])
     }
     package(bit.dir.pkg.join('bin'), 'install')
     if (!bit.cross) {
-        if (Config.OS != 'WIN') {
+        if (Config.OS != 'WINDOWS') {
             createLinks()
             updateLatestLink()
         }
         trace('Start', 'appman install enable start')
         Cmd([bit.prefixes.bin.join('appman' + bit.globals.EXE), 'install', 'enable', 'start'])
-        if (bit.platform.os == 'win') {
+        if (bit.platform.os == 'windows') {
             Cmd([bit.prefixes.bin.join('appwebMonitor' + bit.globals.EXE)], {detach: true})
         }
     }
@@ -233,11 +233,11 @@ public function installBinary() {
 }
 
 public function uninstallBinary() {
-    if (Config.OS != 'WIN' && App.uid != 0) {
+    if (Config.OS != 'WINDOWS' && App.uid != 0) {
         throw 'Must run as root. Use \"sudo bit install\"'
     }
     trace('Uninstall', bit.settings.title)                                                     
-    if (bit.platform.os == 'win') {
+    if (bit.platform.os == 'windows') {
         Cmd([bit.prefixes.bin.join('appwebMonitor'), '--stop'])
     }
     Cmd([bit.prefixes.bin.join('appman'), '--continue', 'stop', 'disable', 'uninstall'])
@@ -284,7 +284,7 @@ public function createLinks() {
             log.push(link)
         }
     }
-    if (Config.OS != 'WIN') {
+    if (Config.OS != 'WINDOWS') {
         let link = Path('/usr/include').join(bit.settings.product)
         link.symlink(bit.prefixes.inc)
         log.push(link)

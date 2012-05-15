@@ -42,7 +42,7 @@ static void maMD5Update(MD5_CONTEXT *, uchar *, uint );
 static void maMD5Final(uchar [16], MD5_CONTEXT *);
 static char *maMD5binary(uchar *buf, int length);
 
-#if BLD_WIN_LIKE || VXWORKS
+#if BIT_WIN_LIKE || VXWORKS
 static char *getpass(char *prompt);
 #endif
 
@@ -303,7 +303,7 @@ static char *getpass(char *prompt)
     return "NOT-SUPPORTED";
 }
 
-#elif BLD_WIN_LIKE || VXWORKS
+#elif BIT_WIN_LIKE || VXWORKS
 static char *getpass(char *prompt)
 {
     static char password[MAX_PASS];
@@ -345,7 +345,7 @@ static char *getpass(char *prompt)
     return password;
 }
 
-#endif /* BLD_WIN_LIKE */
+#endif /* BIT_WIN_LIKE */
  
 /*
     Display the usage

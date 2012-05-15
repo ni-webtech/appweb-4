@@ -3,7 +3,7 @@
  */
 #include "mpr.h"
 
-#if BLD_FEATURE_ROMFS
+#if BIT_FEATURE_ROMFS
 static uchar _file_2[] = {
      35, 10, 35, 32, 32, 32, 97,112,112,119,101, 98, 46, 99,111,110,
     102, 32, 45, 45, 32, 68,101,102, 97,117,108,116, 32, 67,111,110,
@@ -15035,4 +15035,4 @@ MprRomInode romFiles[] = {
     { "web/test/upload/uploadComplete.html", _file_48, 59, 48 },
     { 0, 0, 0, 0 },
 };
-#endif /* BLD_FEATURE_ROMFS */
+#endif /* BIT_FEATURE_ROMFS */

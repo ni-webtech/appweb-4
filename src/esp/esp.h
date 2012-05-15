@@ -11,7 +11,7 @@
 
 #include    "appweb.h"
 
-#if BLD_FEATURE_ESP
+#if BIT_FEATURE_ESP
 
 #include    "edi.h"
 
@@ -35,21 +35,21 @@ extern "C" {
 /*
     Default compiler settings for ${DEBUG} and ${LIBS} tokens in EspCompile and EspLink
  */
-#if BLD_DEBUG
-    #if WIN
+#if BIT_DEBUG
+    #if WINDOWS
         #define ESP_DEBUG "-Zi -Od"
     #else
         #define ESP_DEBUG "-g"
     #endif
 #else
-    #if WIN
+    #if WINDOWS
         #define ESP_DEBUG "-O"
     #else
         #define ESP_DEBUG "-O2"
     #endif
 #endif
 
-#if WIN
+#if WINDOWS
     #define ESP_CORE_LIBS "\"${LIBPATH}\\mod_esp${SHLIB}\" \"${LIBPATH}\\libappweb.lib\" \
         \"${LIBPATH}\\libhttp.lib\" \"${LIBPATH}\\libmpr.lib\""
 #else
@@ -59,8 +59,8 @@ extern "C" {
 /*
     Default SSL library switches
  */
-#if BLD_FEATURE_SSL
-    #if WIN
+#if BIT_FEATURE_SSL
+    #if WINDOWS
         #define ESP_SSL_LIBS " \"${LIBPATH}\\libmprssl.lib\""
     #else
         #define ESP_SSL_LIBS " -lmprssl"
@@ -75,10 +75,10 @@ extern "C" {
 #else
     #define ESP_CCNAME "gcc"
 #endif
-#endif
+#endif /* UNUSED
 
 //  MOB - move to bit.h
-#define BLD_VISUAL_STUDIO_VERSION "10.0"
+#define BIT_VISUAL_STUDIO_VERSION "10.0"
 
 /********************************** Defines ***********************************/
 /**
@@ -90,7 +90,7 @@ typedef void (*EspProc)(HttpConn *conn);
 #define CONTENT_MARKER  "${_ESP_CONTENT_MARKER_}"       /* Layout content marker */
 #define ESP_SESSION     "-esp-session-"                 /* ESP session cookie name */
 
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     #define ESP_EXPORT __declspec(dllexport)
 #else
     #define ESP_EXPORT
@@ -2981,7 +2981,7 @@ extern void warn(cchar *fmt, ...);
 #ifdef __cplusplus
 } /* extern C */
 #endif
-#endif /* BLD_FEATURE_ESP */
+#endif /* BIT_FEATURE_ESP */
 #endif /* _h_ESP */
 
 /*

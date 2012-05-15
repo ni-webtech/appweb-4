@@ -1259,17 +1259,17 @@ INCLUDE_FILE_PATTERNS  =
 
 PREDEFINED             = WIN=1 \
 						 LINUX=1 \
-                         BLD_UNIX_LIKE=1 \
-                         BLD_WIN_LIKE=1 \
-                         BLD_FEATURE_ASSERT=1 \
-                         BLD_FEATURE_FLOAT=1 \
-                         BLD_FEATURE_HTTP=1 \
-                         BLD_FEATURE_REGEXP=1 \
-                         BLD_FEATURE_SSL=1 \
-                         BLD_FEATURE_OPENSSL=1 \
-                         BLD_FEATURE_MATRIXSSL=1 \
-                         BLD_FEATURE_AUTH_FILE=1 \
-                         BLD_FEATURE_AUTH_PAM=1 \
+                         BIT_UNIX_LIKE=1 \
+                         BIT_WIN_LIKE=1 \
+                         BIT_FEATURE_ASSERT=1 \
+                         BIT_FEATURE_FLOAT=1 \
+                         BIT_FEATURE_HTTP=1 \
+                         BIT_FEATURE_REGEXP=1 \
+                         BIT_FEATURE_SSL=1 \
+                         BIT_FEATURE_OPENSSL=1 \
+                         BIT_FEATURE_MATRIXSSL=1 \
+                         BIT_FEATURE_AUTH_FILE=1 \
+                         BIT_FEATURE_AUTH_PAM=1 \
                          DOXYGEN=1
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 

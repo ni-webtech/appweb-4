@@ -8,7 +8,7 @@
 
 #include    "esp.h"
 
-#if BLD_FEATURE_ESP
+#if BIT_FEATURE_ESP
 /********************************** Locals ************************************/
 /*
     Global application object. Provides the top level roots of all data objects for the GC.
@@ -378,7 +378,7 @@ int main(int argc, char **argv)
             logSpec = "stderr:2";
 
         } else if (smatch(argp, "version") || smatch(argp, "V")) {
-            mprPrintf("%s %s-%s\n", mprGetAppTitle(), BLD_VERSION, BLD_NUMBER);
+            mprPrintf("%s %s-%s\n", mprGetAppTitle(), BIT_VERSION, BIT_NUMBER);
             exit(0);
 
         } else {
@@ -465,7 +465,7 @@ static void initialize()
 {
     readConfig();
     app->currentDir = mprGetCurrentPath();
-    app->libDir = mprJoinPath(mprGetPathParent(mprGetAppDir()), BLD_LIB_NAME);
+    app->libDir = mprJoinPath(mprGetPathParent(mprGetAppDir()), BIT_LIB_NAME);
     app->wwwDir = mprJoinPath(app->libDir, "esp-www");
 }
 
@@ -816,7 +816,7 @@ static void compileFile(HttpRoute *route, cchar *source, int kind)
     eroute = route->eroute;
     layout = 0;
     app->cacheName = mprGetMD5WithPrefix(source, slen(source), (kind == ESP_CONTROLLER) ? "controller_" : "view_");
-    app->module = mprNormalizePath(sfmt("%s/%s%s", eroute->cacheDir, app->cacheName, BLD_SHOBJ));
+    app->module = mprNormalizePath(sfmt("%s/%s%s", eroute->cacheDir, app->cacheName, BIT_SHOBJ));
 
     if (kind == ESP_CONTROLLER) {
         app->csource = source;
@@ -879,11 +879,11 @@ static void compileFile(HttpRoute *route, cchar *source, int kind)
             if (runEspCommand(route, eroute->link, app->csource, app->module) < 0) {
                 return;
             }
-#if !(BLD_DEBUG && MACOSX)
+#if !(BIT_DEBUG && MACOSX)
             /*
                 MAC needs the object for debug information
              */
-            mprDeletePath(mprJoinPathExt(mprTrimPathExt(app->module), BLD_OBJ));
+            mprDeletePath(mprJoinPathExt(mprTrimPathExt(app->module), BIT_OBJ));
 #endif
         }
         if (!eroute->keepSource && (kind & (ESP_VIEW | ESP_PAGE))) {
@@ -1081,7 +1081,7 @@ static void compileFlat(HttpRoute *route)
     mprWriteFileFmt(app->flatFile, "    return 0;\n}\n");
     mprCloseFile(app->flatFile);
 
-    app->module = mprNormalizePath(sfmt("%s/app%s", eroute->cacheDir, BLD_SHOBJ));
+    app->module = mprNormalizePath(sfmt("%s/app%s", eroute->cacheDir, BIT_SHOBJ));
     trace("COMPILE", "%s", app->csource);
     if (runEspCommand(route, eroute->compile, app->flatPath, app->module) < 0) {
         return;
@@ -1592,14 +1592,14 @@ static void findConfigFile()
 
     userPath = app->configFile;
     if (app->configFile == 0) {
-        app->configFile = mprJoinPathExt(BLD_PRODUCT, ".conf");
+        app->configFile = mprJoinPathExt(BIT_PRODUCT, ".conf");
     }
     if (!mprPathExists(app->configFile, R_OK)) {
         if (userPath) {
             fail("Can't open config file %s", app->configFile);
             return;
         }
-        app->configFile = mprJoinPath(mprGetAppDir(), sfmt("../%s/esp-%s.conf", BLD_LIB_NAME, BLD_PRODUCT));
+        app->configFile = mprJoinPath(mprGetAppDir(), sfmt("../%s/esp-%s.conf", BIT_LIB_NAME, BIT_PRODUCT));
         if (!mprPathExists(app->configFile, R_OK)) {
             fail("Can't open config file %s", app->configFile);
             return;
@@ -1716,7 +1716,7 @@ static void trace(cchar *tag, cchar *fmt, ...)
     }
 }
 
-#endif /* BLD_FEATURE_ESP */
+#endif /* BIT_FEATURE_ESP */
 
 /*
     @copy   default

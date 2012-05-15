@@ -7,7 +7,7 @@
 /********************************** Includes **********************************/
 
 /* Work-around for MAC OSX Xcode bug */
-#undef BLD_FEATURE_LEGACY_API
+#undef BIT_FEATURE_LEGACY_API
 
 /* Suppress windows posix errors */
 #undef      _CRT_SECURE_NO_WARNINGS
@@ -147,7 +147,7 @@
     #define F_OK    0
 
     /*
-     *  No locking on VxWorks
+        No locking on VxWorks
      */
     #define fcntl(A,B,C) 0
     #define getpid mprGetpid
@@ -156,9 +156,9 @@
 
 #endif /* VXWORKS */
 
-#if WIN
+#if WINDOWS
 /*
- *  Force winsock2 rather than winsock
+    Force winsock2 rather than winsock
  */
 #include    <winsock2.h>
 #endif

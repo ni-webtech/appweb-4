@@ -14,7 +14,7 @@
 #endif
 #endif
 
-#if BLD_FEATURE_SQLITE || BLD_SQLITE_PRODUCT
+#if BIT_FEATURE_SQLITE || BIT_SQLITE_PRODUCT
 /*
 ** 2001 September 15
 **
@@ -3211,4 +3211,4 @@ int main(int argc, char **argv){
   }
   return rc;
 }
-#endif /* BLD_FEATURE_SQLITE */
+#endif /* BIT_FEATURE_SQLITE */

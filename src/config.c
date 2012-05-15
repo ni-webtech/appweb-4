@@ -61,7 +61,7 @@ int maParseConfig(MaServer *server, cchar *path, int flags)
     httpSetHostName(host, "default-server");
     route = httpCreateRoute(host);
     httpSetHostDefaultRoute(host, route);
-    httpSetRoutePathVar(route, "LIBDIR", mprJoinPath(server->appweb->platformDir, BLD_LIB_NAME));
+    httpSetRoutePathVar(route, "LIBDIR", mprJoinPath(server->appweb->platformDir, BIT_LIB_NAME));
 
     state = createState(server, host, route);
     state->flags = flags;
@@ -148,7 +148,7 @@ static int parseFileInner(MaState *state, cchar *path)
 }
 
 
-#if !BLD_FEATURE_ROMFS
+#if !BIT_FEATURE_ROMFS
 /*
     AccessLog path
     AccessLog conf/log.conf size=10K, backup=5, append, anew, format=""
@@ -385,7 +385,7 @@ static int allowDirective(MaState *state, cchar *key, cchar *value)
  */
 static int authGroupFileDirective(MaState *state, cchar *key, cchar *value)
 {
-#if BLD_FEATURE_AUTH_FILE
+#if BIT_FEATURE_AUTH_FILE
     char    *path;
 
     path = mprJoinPath(state->configDir, value);
@@ -453,7 +453,7 @@ static int authTypeDirective(MaState *state, cchar *key, cchar *value)
  */
 static int authUserFileDirective(MaState *state, cchar *key, cchar *value)
 {
-#if BLD_FEATURE_AUTH_FILE
+#if BIT_FEATURE_AUTH_FILE
     char    *path;
     path = mprJoinPath(state->configDir, value);
     path = httpMakePath(state->route, path);
@@ -576,7 +576,7 @@ static int cacheDirective(MaState *state, cchar *key, cchar *value)
  */
 static int chrootDirective(MaState *state, cchar *key, cchar *value)
 {
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     char    *path;
     path = httpMakePath(state->route, value);
     if (chdir(path) < 0) {
@@ -1318,8 +1318,8 @@ static int loadModulePathDirective(MaState *state, cchar *key, cchar *value)
 		 USER_SEARCH : exeDir : exeDir/../lib : /usr/lib/appweb/lib
      */
     sep = MPR_SEARCH_SEP;
-    lib = mprJoinPath(mprGetPathParent(mprGetAppDir()), BLD_LIB_NAME);
-    path = sjoin(value, sep, mprGetAppDir(), sep, lib, sep, BLD_LIB_PREFIX, NULL);
+    lib = mprJoinPath(mprGetPathParent(mprGetAppDir()), BIT_LIB_NAME);
+    path = sjoin(value, sep, mprGetAppDir(), sep, lib, sep, BIT_LIB_PREFIX, NULL);
     mprSetModuleSearchPath(path);
     return 0;
 }
@@ -1594,7 +1594,7 @@ static int requireDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_BAD_SYNTAX;
     }
     if (scasecmp(type, "acl") == 0) {
-#if BLD_FEATURE_AUTH_FILE
+#if BIT_FEATURE_AUTH_FILE
         httpSetRequiredAcl(state->auth, httpParseAcl(state->auth, rest));
 #else
         mprError("Acl directive not supported when --auth=pam");
@@ -2033,35 +2033,35 @@ static bool conditionalDefinition(MaState *state, cchar *key)
     } else if (scasematch(key, state->appweb->platform)) {
         result = 1;
 
-#if BLD_DEBUG
-    } else if (scasematch(key, "BLD_DEBUG")) {
-        result = BLD_DEBUG;
+#if BIT_DEBUG
+    } else if (scasematch(key, "BIT_DEBUG")) {
+        result = BIT_DEBUG;
 #endif
 
     } else if (state->appweb->skipModules) {
         /* ESP utility needs to be able to load mod_esp */
         if (smatch(mprGetAppName(), "esp") && scasematch(key, "ESP_MODULE")) {
-            result = BLD_FEATURE_ESP;
+            result = BIT_FEATURE_ESP;
         }
 
     } else {
         if (scasematch(key, "CGI_MODULE")) {
-            result = BLD_FEATURE_CGI;
+            result = BIT_FEATURE_CGI;
 
         } else if (scasematch(key, "DIR_MODULE")) {
-            result = BLD_FEATURE_DIR;
+            result = BIT_FEATURE_DIR;
 
         } else if (scasematch(key, "EJS_MODULE")) {
-            result = BLD_FEATURE_EJSCRIPT;
+            result = BIT_FEATURE_EJSCRIPT;
 
         } else if (scasematch(key, "ESP_MODULE")) {
-            result = BLD_FEATURE_ESP;
+            result = BIT_FEATURE_ESP;
 
         } else if (scasematch(key, "PHP_MODULE")) {
-            result = BLD_FEATURE_PHP;
+            result = BIT_FEATURE_PHP;
 
         } else if (scasematch(key, "SSL_MODULE")) {
-            result = BLD_FEATURE_SSL;
+            result = BIT_FEATURE_SSL;
         }
     }
     return (not) ? !result : result;
@@ -2436,7 +2436,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "<VirtualHost", virtualHostDirective);
     maAddDirective(appweb, "</VirtualHost", closeDirective);
 
-#if !BLD_FEATURE_ROMFS
+#if !BIT_FEATURE_ROMFS
     maAddDirective(appweb, "AccessLog", accessLogDirective);
 #endif
 

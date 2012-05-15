@@ -696,7 +696,7 @@
                 <li>Improve calculation of random bytes for VxWorks</li>
                 <li>Remove VxWorks SEM_INVERSION_SAFE flag to preserve defined priorities</li>
                 <li>Fix Nan and Infinity calculations for VxWorks</li>
-                <li>Fix compilation errors if BLD_FEATURE_RANGES is not defined.</li>
+                <li>Fix compilation errors if BIT_FEATURE_RANGES is not defined.</li>
                 <li>Cleanup PHP shutdown</li>
                 <li>Fix PUT handler processing when the file exists and also some ranged upload behavior.</li>
                 <li>Fixed mprGetDirName API to handle file names with trailing "/"</li>
@@ -774,7 +774,7 @@
             <ul>
                 <li>Fix for form.php to post back to itself</li>
                 <li>Various code cleanup</li>
-                <li>Compiler fixes for when BLD_FEATURE_LOG is disabled</li>
+                <li>Compiler fixes for when BIT_FEATURE_LOG is disabled</li>
             </ul>
             <h2 class="section">Changes in 2.0.1</h2>
             <h3>Fixes</h3>
@@ -864,7 +864,7 @@
                 <li>Fix for single threaded compilation. Thanks Pauli.</li>
                 <li>Fix for compiling samples when using --disable-static</li>
                 <li>Fix for running configure on linux. Changes to bin/bld. Thanks Vinvagh.</li>
-                <li>Fix for uClinux building. Changes to bin/bld to use BLD_CFLAGS instead of BLD_LDFLAGS. Thanks
+                <li>Fix for uClinux building. Changes to bin/bld to use BIT_CFLAGS instead of BIT_LDFLAGS. Thanks
                 Ben.</li>
                 <li>Fix for building on Linux. Was not testing for existence of cygpath correctly. Thanks Barry Stone.</li>
                 <li>Fixed bugs in EJS for comparisons with non-boolean operands. Thanks Martin Brochu.</li>
@@ -1149,7 +1149,7 @@
                 <li>Security fix for user message disclosing too much information when denying access. (Ziv)</li>
                 <li>Fix for VirtualHosts (including SSL virtual hosts) incorrectly parsing authorization configuration
                 directives. (Ziv)</li>
-                <li>Fix when using BLD_FEATURE_ROMFS on Windows. Was still accessing file system routines.
+                <li>Fix when using BIT_FEATURE_ROMFS on Windows. Was still accessing file system routines.
                 (Black&amp;White)</li>
             </ul>
             <h2 class="section">Changes in 1.1.2</h2>
@@ -1207,7 +1207,7 @@
                 <li>Fix mprStrCmpAnyCase routine.</li>
                 <li>Fix Content-Length handling when the length is zero.</li>
                 <li>Fix MaRequest:getCrackedCookie. Could corrupt memory.</li>
-                <li>Fix when using ROMed web pages (BLD_FEATURE_ROMFS)</li>
+                <li>Fix when using ROMed web pages (BIT_FEATURE_ROMFS)</li>
                 <li>Fix some visual studio project files that referenced libraries of the wrong build type.</li>
             </ul>
             <h3>Compatibility Changes</h3>

@@ -95,7 +95,7 @@ static int binToC(MprList *files, char *romName, char *prefix)
     mprPrintf("/*\n    %s -- Compiled Files\n */\n", romName);
 
     mprPrintf("#include \"mpr.h\"\n\n");
-    mprPrintf("#if BLD_FEATURE_ROMFS\n");
+    mprPrintf("#if BIT_FEATURE_ROMFS\n");
 
     /*
         Open each input file and compile
@@ -157,7 +157,7 @@ static int binToC(MprList *files, char *romName, char *prefix)
     
     mprPrintf("    { 0, 0, 0, 0 },\n");
     mprPrintf("};\n");
-    mprPrintf("#endif /* BLD_FEATURE_ROMFS */\n");
+    mprPrintf("#endif /* BIT_FEATURE_ROMFS */\n");
     return 0;
 }
 

@@ -33,29 +33,29 @@
 
 /******************************* Default Features *****************************/
 
-#ifndef BLD_DEBUG
-    #define BLD_DEBUG 0
+#ifndef BIT_DEBUG
+    #define BIT_DEBUG 0
 #endif
-#ifndef BLD_FEATURE_ASSERT
-    #if BLD_DEBUG
-        #define BLD_FEATURE_ASSERT 1
+#ifndef BIT_FEATURE_ASSERT
+    #if BIT_DEBUG
+        #define BIT_FEATURE_ASSERT 1
     #else
-        #define BLD_FEATURE_ASSERT 0
+        #define BIT_FEATURE_ASSERT 0
     #endif
 #endif
-#ifndef BLD_FEATURE_FLOAT
-    #define BLD_FEATURE_FLOAT 1
+#ifndef BIT_FEATURE_FLOAT
+    #define BIT_FEATURE_FLOAT 1
 #endif
-#ifndef BLD_FEATURE_ROMFS
-    #define BLD_FEATURE_ROMFS 0
+#ifndef BIT_FEATURE_ROMFS
+    #define BIT_FEATURE_ROMFS 0
 #endif
-#ifndef BLD_TUNE
-    #define BLD_TUNE MPR_TUNE_SIZE
+#ifndef BIT_TUNE
+    #define BIT_TUNE MPR_TUNE_SIZE
 #endif
 
 /********************************* CPU Families *******************************/
 /*
-    CPU families
+    CPU Architectures
  */
 #define MPR_CPU_UNKNOWN     0
 #define MPR_CPU_ARM         1           /* Arm */
@@ -66,90 +66,94 @@
 #define MPR_CPU_PPC         6           /* Power PC */
 #define MPR_CPU_SPARC       7           /* Sparc */
 
+/*
+    Use compiler definitions to determine the CPU
+ */
 #if defined(__alpha__)
-    #define BLD_CPU "ALPHA"
-    #define BLD_CPU_ARCH MPR_CPU_ALPHA
+    #define BIT_CPU "ALPHA"
+    #define BIT_CPU_ARCH MPR_CPU_ALPHA
 #elif defined(__arm__)
-    #define BLD_CPU "ARM"
-    #define BLD_CPU_ARCH MPR_CPU_ARM
+    #define BIT_CPU "ARM"
+    #define BIT_CPU_ARCH MPR_CPU_ARM
 #elif defined(__x86_64__) || defined(_M_AMD64)
-    #define BLD_CPU "x64"
-    #define BLD_CPU_ARCH MPR_CPU_X64
+    #define BIT_CPU "x64"
+    #define BIT_CPU_ARCH MPR_CPU_X64
 #elif defined(__i386__) || defined(__i486__) || defined(__i585__) || defined(__i686__) || defined(_M_IX86)
-    #define BLD_CPU "x86"
-    #define BLD_CPU_ARCH MPR_CPU_X86
+    #define BIT_CPU "x86"
+    #define BIT_CPU_ARCH MPR_CPU_X86
 #elif defined(_M_IA64)
-    #define BLD_CPU "IA64"
-    #define BLD_CPU_ARCH MPR_CPU_ITANIUM
+    #define BIT_CPU "IA64"
+    #define BIT_CPU_ARCH MPR_CPU_ITANIUM
 #elif defined(__mips__)
-    #define BLD_CPU "MIPS"
-    #define BLD_CPU_ARCH MPR_CPU_SPARC
+    #define BIT_CPU "MIPS"
+    #define BIT_CPU_ARCH MPR_CPU_SPARC
 #elif defined(__ppc__) || defined(__powerpc__) || defined(__ppc64__)
-    #define BLD_CPU "PPC"
-    #define BLD_CPU_ARCH MPR_CPU_PPC
+    #define BIT_CPU "PPC"
+    #define BIT_CPU_ARCH MPR_CPU_PPC
 #elif defined(__sparc__)
-    #define BLD_CPU "SPARC"
-    #define BLD_CPU_ARCH MPR_CPU_SPARC
+    #define BIT_CPU "SPARC"
+    #define BIT_CPU_ARCH MPR_CPU_SPARC
 #endif
 
 /*
-    Operating system defines
+    Operating system defines. Use compiler standard defintions to sleuth. 
+    Works for all except VxWorks which does not define any special symbol.
  */
 #if defined(__APPLE__)
-    #define BLD_OS "MACOSX"
+    #define BIT_OS "MACOSX"
     #define MACOSX 1
-    #define BLD_UNIX_LIKE 1
-    #define BLD_WIN_LIKE 0
+    #define BIT_UNIX_LIKE 1
+    #define BIT_WIN_LIKE 0
 #elif defined(__linux__)
-    #define BLD_OS "LINUX"
+    #define BIT_OS "LINUX"
     #define LINUX 1
-    #define BLD_UNIX_LIKE 1
-    #define BLD_WIN_LIKE 0
+    #define BIT_UNIX_LIKE 1
+    #define BIT_WIN_LIKE 0
 #elif defined(__FreeBSD__)
-    #define BLD_OS "FREEBSD"
+    #define BIT_OS "FREEBSD"
     #define FREEBSD 1
-    #define BLD_UNIX_LIKE 1
-    #define BLD_WIN_LIKE 0
+    #define BIT_UNIX_LIKE 1
+    #define BIT_WIN_LIKE 0
 #elif defined(_WIN32)
-    #define BLD_OS "WIN"
-    #define WIN 1
-    #define BLD_UNIX_LIKE 0
-    #define BLD_WIN_LIKE 1
+    #define BIT_OS "WINDOWS"
+    #define WINDOWS 1
+    #define BIT_UNIX_LIKE 0
+    #define BIT_WIN_LIKE 1
 #elif defined(__bsdi__)
-    #define BLD_OS "BSDI"
+    #define BIT_OS "BSDI"
     #define BSDI 1
-    #define BLD_UNIX_LIKE 1
-    #define BLD_WIN_LIKE 0
+    #define BIT_UNIX_LIKE 1
+    #define BIT_WIN_LIKE 0
 #elif defined(__NetBSD__)
-    #define BLD_OS "NETBSD"
+    #define BIT_OS "NETBSD"
     #define NETBSD 1
-    #define BLD_UNIX_LIKE 1
-    #define BLD_WIN_LIKE 0
+    #define BIT_UNIX_LIKE 1
+    #define BIT_WIN_LIKE 0
 #elif defined(__hpux)
-    #define BLD_OS "HPUX"
+    #define BIT_OS "HPUX"
     #define HPUX 1
-    #define BLD_UNIX_LIKE 1
-    #define BLD_WIN_LIKE 0
+    #define BIT_UNIX_LIKE 1
+    #define BIT_WIN_LIKE 0
 #elif defined(_AIX)
-    #define BLD_OS "AIX"
+    #define BIT_OS "AIX"
     #define AIX 1
-    #define BLD_UNIX_LIKE 1
-    #define BLD_WIN_LIKE 0
+    #define BIT_UNIX_LIKE 1
+    #define BIT_WIN_LIKE 0
 #elif defined(__CYGWIN__)
-    #define BLD_OS "CYGWIN"
+    #define BIT_OS "CYGWIN"
     #define CYGWIN 1
-    #define BLD_UNIX_LIKE 1
-    #define BLD_WIN_LIKE 0
+    #define BIT_UNIX_LIKE 1
+    #define BIT_WIN_LIKE 0
 #elif defined(__VMS)
-    #define BLD_OS "VMS"
+    #define BIT_OS "VMS"
     #define VMS 1
-    #define BLD_UNIX_LIKE 0
-    #define BLD_WIN_LIKE 0
+    #define BIT_UNIX_LIKE 0
+    #define BIT_WIN_LIKE 0
 #elif defined(VXWORKS)
     /* VxWorks does not have a pre-defined symbol */
-    #define BLD_OS "VXWORKS"
-    #define BLD_UNIX_LIKE 0
-    #define BLD_WIN_LIKE 0
+    #define BIT_OS "VXWORKS"
+    #define BIT_UNIX_LIKE 0
+    #define BIT_WIN_LIKE 0
 #endif
 
 /********************************* O/S Includes *******************************/
@@ -164,7 +168,7 @@
 /*
     Out-of-order definitions and includes. Order really matters in this section
  */
-#if WIN
+#if WINDOWS
     #undef      _CRT_SECURE_NO_DEPRECATE
     #define     _CRT_SECURE_NO_DEPRECATE 1
     #undef      _CRT_SECURE_NO_WARNINGS
@@ -199,7 +203,7 @@
     #define     HAS_UINT 1
 #endif
 
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     #include    <winsock2.h>
     #include    <windows.h>
     #include    <winbase.h>
@@ -209,13 +213,13 @@
     #include    <wincrypt.h>
 #endif
 
-#if WIN
+#if WINDOWS
     #include    <ws2tcpip.h>
     #include    <conio.h>
     #include    <process.h>
     #include    <windows.h>
     #include    <shlobj.h>
-    #if BLD_DEBUG
+    #if BIT_DEBUG
         #include <crtdbg.h>
     #endif
 #endif
@@ -230,7 +234,7 @@
 
     #include    <ctype.h>
 
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     #include    <direct.h>
 #else
     #include    <dirent.h>
@@ -242,17 +246,17 @@
     #include    <fcntl.h>
     #include    <errno.h>
 
-#if BLD_FEATURE_FLOAT
+#if BIT_FEATURE_FLOAT
     #include    <float.h>
     #define __USE_ISOC99 1
     #include    <math.h>
 #endif
 
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     #include    <grp.h> 
 #endif
 
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     #include    <io.h>
 #endif
 
@@ -262,7 +266,7 @@
 
     #include    <limits.h>
 
-#if BLD_UNIX_LIKE || VXWORKS
+#if BIT_UNIX_LIKE || VXWORKS
     #include    <netdb.h>
     #include    <net/if.h>
     #include    <netinet/in.h>
@@ -270,7 +274,7 @@
     #include    <netinet/ip.h>
 #endif
 
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     #include    <pthread.h> 
     #include    <pwd.h> 
 #if !CYGWIN
@@ -282,7 +286,7 @@
     #include    <signal.h>
     #include    <stdarg.h>
 
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     #include    <stdint.h>
 #endif
 
@@ -290,7 +294,7 @@
     #include    <stdlib.h>
     #include    <string.h>
 
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     #include    <syslog.h>
 #endif
 
@@ -298,7 +302,7 @@
     #include    <sys/epoll.h>
 #endif
 
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     #include    <sys/ioctl.h>
     #include    <sys/mman.h>
     #include    <sys/poll.h>
@@ -312,7 +316,7 @@
 
     #include    <sys/types.h>
 
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     #include    <sys/resource.h>
     #include    <sys/sem.h>
     #include    <sys/socket.h>
@@ -326,7 +330,7 @@
 
     #include    <time.h>
 
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     #include    <unistd.h>
 #endif
 
@@ -382,8 +386,8 @@
 
 /************************************** Defaults ******************************/
 
-#ifndef BLD_FEATURE_ROMFS
-    #define BLD_FEATURE_ROMFS 0
+#ifndef BIT_FEATURE_ROMFS
+    #define BIT_FEATURE_ROMFS 0
 #endif
 
 /************************************** Defines *******************************/
@@ -492,7 +496,7 @@
 
 #ifndef HAS_SSIZE
     #define HAS_SSIZE 1
-    #if BLD_UNIX_LIKE || VXWORKS || DOXYGEN
+    #if BIT_UNIX_LIKE || VXWORKS || DOXYGEN
         /**
             Signed integer size field large enough to hold a pointer offset.
          */
@@ -511,21 +515,21 @@
 /*
     Windows uses uint for write/read counts (Ugh!)
  */
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     typedef uint wsize;
 #else
     typedef ssize wsize;
 #endif
 
 #ifndef HAS_INT64
-    #if BLD_UNIX_LIKE
+    #if BIT_UNIX_LIKE
         __extension__ typedef long long int int64;
     #elif VXWORKS || DOXYGEN
         /**
             Integer 64 bit data type.
          */
         typedef long long int int64;
-    #elif BLD_WIN_LIKE
+    #elif BIT_WIN_LIKE
         typedef __int64 int64;
     #else
         typedef long long int int64;
@@ -533,14 +537,14 @@
 #endif
 
 #ifndef HAS_UINT64
-    #if BLD_UNIX_LIKE
+    #if BIT_UNIX_LIKE
         __extension__ typedef unsigned long long int uint64;
     #elif VXWORKS || DOXYGEN
         /**
             Unsigned integer 64 bit data type.
          */
         typedef unsigned long long int uint64;
-    #elif BLD_WIN_LIKE
+    #elif BIT_WIN_LIKE
         typedef unsigned __int64 uint64;
     #else
         typedef unsigned long long int uint64;
@@ -581,9 +585,9 @@ typedef int64 MprTime;
     #define BITS(type)      (BITSPERBYTE * (int) sizeof(type))
 #endif
 
-#if BLD_FEATURE_FLOAT
+#if BIT_FEATURE_FLOAT
     #ifndef MAXFLOAT
-        #if BLD_WIN_LIKE
+        #if BIT_WIN_LIKE
             #define MAXFLOAT        DBL_MAX
         #else
             #define MAXFLOAT        FLT_MAX
@@ -595,7 +599,7 @@ typedef int64 MprTime;
         #define isinf(n)  ((n) == (1.0 / 0.0) || (n) == (-1.0 / 0.0))
         #define isinff(n) ((n) == (1.0 / 0.0) || (n) == (-1.0 / 0.0))
     #endif
-    #if BLD_WIN_LIKE
+    #if BIT_WIN_LIKE
         #define isNan(f) (_isnan(f))
     #elif VXWORKS || MACOSX || LINUX
         #define isNan(f) (isnan(f))
@@ -654,7 +658,7 @@ typedef int64 MprTime;
     #define PTOL(i)     ((int64) (int) i)
 #endif
 
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     #define INT64(x)    (x##i64)
     #define UINT64(x)   (x##Ui64)
     #define MPR_EXPORT  __declspec(dllexport)
@@ -672,7 +676,7 @@ typedef int64 MprTime;
 #endif
 
 #ifndef PRINTF_ATTRIBUTE
-    #if (__GNUC__ >= 3) && !DOXYGEN && BLD_DEBUG && UNUSED && KEEP
+    #if (__GNUC__ >= 3) && !DOXYGEN && BIT_DEBUG && UNUSED && KEEP
         /** 
             Use gcc attribute to check printf fns.  a1 is the 1-based index of the parameter containing the format, 
             and a2 the index of the first argument. Note that some gcc 2.x versions don't handle this properly 
@@ -697,10 +701,10 @@ typedef int64 MprTime;
 #endif
 
 #if !__UCLIBC__ && !CYGWIN && __USE_XOPEN2K
-    #define BLD_HAS_SPINLOCK    1
+    #define BIT_HAS_SPINLOCK    1
 #endif
 
-#if BLD_CC_DOUBLE_BRACES
+#if BIT_CC_DOUBLE_BRACES
     #define  NULL_INIT    {{0}}
 #else
     #define  NULL_INIT    {0}
@@ -709,7 +713,7 @@ typedef int64 MprTime;
 #ifndef R_OK
     #define R_OK    4
     #define W_OK    2
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     #define X_OK    R_OK
 #else
     #define X_OK    1
@@ -734,12 +738,12 @@ typedef int64 MprTime;
 
 /*********************************** Fixups ***********************************/
 
-#if BLD_UNIX_LIKE || VXWORKS
+#if BIT_UNIX_LIKE || VXWORKS
     #define MPR_TEXT        ""
     #define MPR_BINARY      ""
 #endif
 
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     #define closesocket(x)  close(x)
     #define SOCKET_ERROR    -1
     #ifndef PTHREAD_MUTEX_RECURSIVE_NP
@@ -750,7 +754,7 @@ typedef int64 MprTime;
     #endif
 #endif
 
-#if !BLD_WIN_LIKE && !CYGWIN
+#if !BIT_WIN_LIKE && !CYGWIN
     #ifndef O_BINARY
         #define O_BINARY    0
     #endif
@@ -809,7 +813,7 @@ typedef int64 MprTime;
     #endif
 #endif
 
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     typedef int     uid_t;
     typedef void    *handle;
     typedef char    *caddr_t;
@@ -992,7 +996,7 @@ extern "C" {
             This may or may not be necessary - let us know dev@embedthis.com if your system needs this (and why).
          */
         #if _DIAB_TOOL
-            #if BLD_CPU_ARCH == MPR_CPU_PPC
+            #if BIT_CPU_ARCH == MPR_CPU_PPC
                 #define __va_copy(dest, src) memcpy((dest), (src), sizeof(va_list))
             #endif
         #endif
@@ -1000,7 +1004,7 @@ extern "C" {
     #endif
 #endif  /* VXWORKS */
 
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     struct timezone {
       int  tz_minuteswest;      /* minutes W of Greenwich */
       int  tz_dsttime;          /* type of dst correction */
@@ -1149,7 +1153,7 @@ struct  MprXml;
 #define MPR_TUNE_BALANCED   2       /**< Tune balancing speed and size */
 #define MPR_TUNE_SPEED      3       /**< Tune for speed, program will use memory more aggressively */
 
-#if BLD_CC_MMU
+#if BIT_CC_MMU
     /* 
         If the system supports virtual memory, then stack size should use system default. Only used pages will
         actually consume memory 
@@ -1163,7 +1167,7 @@ struct  MprXml;
     #define MPR_DEFAULT_STACK       (128 * 1024)   /**< Default thread stack size (0 means use system default) */
 #endif
 
-#if BLD_TUNE == MPR_TUNE_SIZE || DOXYGEN
+#if BIT_TUNE == MPR_TUNE_SIZE || DOXYGEN
     /*
         Squeeze mode optimizes to reduce memory usage
      */
@@ -1188,7 +1192,7 @@ struct  MprXml;
     #define MPR_NEW_QUOTA           (4 * 1024)    /**< Number of new allocations before a GC is worthwhile */
     #define MPR_GC_WORKERS          0             /**< Run garbage collection non-concurrently */
     
-#elif BLD_TUNE == MPR_TUNE_BALANCED
+#elif BIT_TUNE == MPR_TUNE_BALANCED
     
     /*
         Tune balancing speed and size
@@ -1350,7 +1354,7 @@ struct  MprXml;
     #define MPR_EVENT_KQUEUE    1
 #elif VXWORKS || WINCE || CYGWIN
     #define MPR_EVENT_SELECT    1
-#elif WIN
+#elif WINDOWS
     #define MPR_EVENT_ASYNC     1
 #else
     #define MPR_EVENT_POLL      1
@@ -1456,13 +1460,13 @@ struct  MprXml;
 /*
     Foundational types
  */
-#ifndef BLD_CHAR_LEN
-    #define BLD_CHAR_LEN 1
+#ifndef BIT_CHAR_LEN
+    #define BIT_CHAR_LEN 1
 #endif
-#if BLD_CHAR_LEN == 4
+#if BIT_CHAR_LEN == 4
     typedef int MprChar;
     #define T(s) L ## s
-#elif BLD_CHAR_LEN == 2
+#elif BIT_CHAR_LEN == 2
     typedef short MprChar;
     #define T(s) L ## s
 #else
@@ -1491,7 +1495,7 @@ struct  MprXml;
             return innerMain(largc, largv, NULL); \
         } \
         static int innerMain(_argc, _argv, _envp)
-#elif BLD_WIN_LIKE && BLD_CHAR_LEN > 1
+#elif BIT_WIN_LIKE && BIT_CHAR_LEN > 1
     #define MAIN(name, _argc, _argv, _envp)  \
         APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, LPWSTR command, int junk2) { \
             char *largv[MPR_MAX_ARGC]; \
@@ -1504,7 +1508,7 @@ struct  MprXml;
             main(largc, largv, NULL); \
         } \
         int main(argc, argv, _envp)
-#elif BLD_WIN_LIKE
+#elif BIT_WIN_LIKE
     #define MAIN(name, _argc, _argv, _envp)  \
         APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2) { \
             extern int main(); \
@@ -1519,7 +1523,7 @@ struct  MprXml;
     #define MAIN(name, _argc, _argv, _envp) int main(_argc, _argv, _envp)
 #endif
 
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     typedef pthread_t   MprOsThread;
 #elif MPR_64_BIT
     typedef int64       MprOsThread;
@@ -1527,7 +1531,7 @@ struct  MprXml;
     typedef int         MprOsThread;
 #endif
 
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     #define MPR_INLINE __inline
 #else
     #define MPR_INLINE inline
@@ -1538,7 +1542,7 @@ struct  MprXml;
  */
 #define MPR_LITTLE_ENDIAN   1
 #define MPR_BIG_ENDIAN      2
-#define MPR_ENDIAN          BLD_ENDIAN
+#define MPR_ENDIAN          BIT_ENDIAN
 
 /************************************** Debug *********************************/
 /**
@@ -1548,7 +1552,7 @@ struct  MprXml;
  */
 extern void mprBreakpoint();
 
-#if BLD_FEATURE_ASSERT
+#if BIT_FEATURE_ASSERT
     #define mprAssert(C)    if (C) ; else mprAssertError(MPR_LOC, #C)
 #else
     #define mprAssert(C)    if (1) ; else
@@ -1574,9 +1578,9 @@ typedef struct MprSynch { int dummy; } MprSynch;
     @ingroup MprSynch
  */
 typedef struct MprCond {
-    #if BLD_UNIX_LIKE
+    #if BIT_UNIX_LIKE
         pthread_cond_t cv;          /**< Unix pthreads condition variable */
-    #elif BLD_WIN_LIKE
+    #elif BIT_WIN_LIKE
         HANDLE cv;                  /* Windows event handle */
     #elif VXWORKS
         SEM_ID cv;                  /* Condition variable */
@@ -1651,16 +1655,16 @@ extern int mprWaitForMultiCond(MprCond *cond, MprTime timeout);
     @ingroup MprSynch
  */
 typedef struct MprMutex {
-    #if BLD_WIN_LIKE
+    #if BIT_WIN_LIKE
         CRITICAL_SECTION cs;            /**< Internal mutex critical section */
     #elif VXWORKS
         SEM_ID      cs;
-    #elif BLD_UNIX_LIKE
+    #elif BIT_UNIX_LIKE
         pthread_mutex_t  cs;
     #else
         #warning "Unsupported OS in MprMutex definition in mpr.h"
     #endif
-#if BLD_DEBUG
+#if BIT_DEBUG
         MprOsThread owner;
 #endif
 } MprMutex;
@@ -1674,7 +1678,7 @@ typedef struct MprMutex {
 typedef struct MprSpin {
     #if USE_MPR_LOCK
         MprMutex                cs;
-    #elif BLD_WIN_LIKE
+    #elif BIT_WIN_LIKE
         CRITICAL_SECTION        cs;            /**< Internal mutex critical section */
     #elif VXWORKS
         #if FUTURE && SPIN_LOCK_TASK_INIT
@@ -1684,8 +1688,8 @@ typedef struct MprSpin {
         #endif
     #elif MACOSX
         OSSpinLock              cs;
-    #elif BLD_UNIX_LIKE
-        #if BLD_HAS_SPINLOCK
+    #elif BIT_UNIX_LIKE
+        #if BIT_HAS_SPINLOCK
             pthread_spinlock_t  cs;
         #else
             pthread_mutex_t     cs;
@@ -1693,7 +1697,7 @@ typedef struct MprSpin {
     #else
         #warning "Unsupported OS in MprSpin definition in mpr.h"
     #endif
-    #if BLD_DEBUG
+    #if BIT_DEBUG
         MprOsThread         owner;
     #endif
 } MprSpin;
@@ -1764,23 +1768,23 @@ extern bool mprTrySpinLock(MprSpin *lock);
 /*
     For maximum performance, use the spin lock/unlock routines macros
  */
-#if !BLD_DEBUG
-#define BLD_USE_LOCK_MACROS 1
+#if !BIT_DEBUG
+#define BIT_USE_LOCK_MACROS 1
 #endif
-#if BLD_USE_LOCK_MACROS && !DOXYGEN
+#if BIT_USE_LOCK_MACROS && !DOXYGEN
     /*
         Spin lock macros
      */
     #if MACOSX
         #define mprSpinLock(lock)   if (lock) OSSpinLockLock(&((lock)->cs))
         #define mprSpinUnlock(lock) if (lock) OSSpinLockUnlock(&((lock)->cs))
-    #elif BLD_UNIX_LIKE && BLD_HAS_SPINLOCK
+    #elif BIT_UNIX_LIKE && BIT_HAS_SPINLOCK
         #define mprSpinLock(lock)   if (lock) pthread_spin_lock(&((lock)->cs))
         #define mprSpinUnlock(lock) if (lock) pthread_spin_unlock(&((lock)->cs))
-    #elif BLD_UNIX_LIKE
+    #elif BIT_UNIX_LIKE
         #define mprSpinLock(lock)   if (lock) pthread_mutex_lock(&((lock)->cs))
         #define mprSpinUnlock(lock) if (lock) pthread_mutex_unlock(&((lock)->cs))
-    #elif BLD_WIN_LIKE
+    #elif BIT_WIN_LIKE
         #define mprSpinLock(lock)   if (lock && (((MprSpin*)(lock))->cs.SpinCount)) EnterCriticalSection(&((lock)->cs))
         #define mprSpinUnlock(lock) if (lock) LeaveCriticalSection(&((lock)->cs))
     #elif VXWORKS
@@ -1791,10 +1795,10 @@ extern bool mprTrySpinLock(MprSpin *lock);
     /*
         Lock macros
      */
-    #if BLD_UNIX_LIKE
+    #if BIT_UNIX_LIKE
         #define mprLock(lock)       if (lock) pthread_mutex_lock(&((lock)->cs))
         #define mprUnlock(lock)     if (lock) pthread_mutex_unlock(&((lock)->cs))
-    #elif BLD_WIN_LIKE
+    #elif BIT_WIN_LIKE
         #define mprLock(lock)       if (lock && (((MprSpin*)(lock))->cs.SpinCount)) EnterCriticalSection(&((lock)->cs))
         #define mprUnlock(lock)     if (lock) LeaveCriticalSection(&((lock)->cs))
     #elif VXWORKS
@@ -1907,14 +1911,14 @@ extern void *mprAtomicExchange(void * volatile *target, cvoid *value);
 /*
     Allocator debug and stats selection
  */
-#if BLD_DEBUG
-    #define BLD_MEMORY_DEBUG        1                   /**< Fill blocks, verifies block integrity. */
-    #define BLD_MEMORY_STATS        1                   /**< Include memory stats routines */
-    #define BLD_MEMORY_STACK        1                   /**< Monitor stack usage */
+#if BIT_DEBUG
+    #define BIT_MEMORY_DEBUG        1                   /**< Fill blocks, verifies block integrity. */
+    #define BIT_MEMORY_STATS        1                   /**< Include memory stats routines */
+    #define BIT_MEMORY_STACK        1                   /**< Monitor stack usage */
 #else
-    #define BLD_MEMORY_DEBUG        0
-    #define BLD_MEMORY_STATS        0
-    #define BLD_MEMORY_STACK        0
+    #define BIT_MEMORY_DEBUG        0
+    #define BIT_MEMORY_STATS        0
+    #define BIT_MEMORY_STACK        0
 #endif
 
 /*
@@ -2004,7 +2008,7 @@ typedef struct MprMem {
     size_t      field1;             /**< Pointer to adjacent, prior block in memory with last, manager fields */
     size_t      field2;             /**< Internal block length including header with gen and mark fields */
 
-#if BLD_MEMORY_DEBUG
+#if BIT_MEMORY_DEBUG
     uint            magic;          /* Unique signature */
     uint            seqno;          /* Allocation sequence number */
     cchar           *name;          /* Debug name */
@@ -2053,7 +2057,7 @@ typedef struct MprMem {
 /*
     VirtAloc flags
  */
-#if BLD_WIN_LIKE || VXWORKS
+#if BIT_WIN_LIKE || VXWORKS
     #define MPR_MAP_READ            0x1
     #define MPR_MAP_WRITE           0x2
     #define MPR_MAP_EXECUTE         0x4
@@ -2063,7 +2067,7 @@ typedef struct MprMem {
     #define MPR_MAP_EXECUTE         PROT_EXEC
 #endif
 
-#if BLD_MEMORY_DEBUG
+#if BIT_MEMORY_DEBUG
     #define MPR_CHECK_BLOCK(bp)     mprCheckBlock(bp)
     #define MPR_VERIFY_MEM()        if (MPR->heap->verify) { mprVerifyMem(); } else
 #else
@@ -2125,7 +2129,7 @@ typedef struct MprFreeMem {
 } MprFreeMem;
 
 
-#if BLD_MEMORY_STATS
+#if BIT_MEMORY_STATS
 #define MPR_TRACK_HASH        2053          /* Size of location name hash */
 #define MPR_TRACK_NAMES       8             /* Length of collision chain */
 
@@ -2158,7 +2162,7 @@ typedef struct MprMemStats {
     int             sweepVisited;
     int             swept;
 
-#if BLD_MEMORY_STATS
+#if BIT_MEMORY_STATS
     /*
         Optional memory stats
      */
@@ -2485,7 +2489,7 @@ extern void mprVirtFree(void *ptr, ssize size);
 /*
     In debug mode, all memory blocks can have a debug name
  */
-#if BLD_MEMORY_DEBUG
+#if BIT_MEMORY_DEBUG
     extern void *mprSetName(void *ptr, cchar *name);
     extern void *mprCopyName(void *dest, void *src);
     #define mprGetName(ptr) (MPR_GET_MEM(ptr)->name)
@@ -3116,7 +3120,7 @@ extern MprChar *amtow(cchar *src, ssize *len);
 extern char    *awtom(MprChar *src, ssize *len);
 extern MprChar *wfmt(MprChar *fmt, ...);
 
-#if BLD_CHAR_LEN > 1
+#if BIT_CHAR_LEN > 1
 extern ssize   wtom(char *dest, ssize count, MprChar *src, ssize len);
 extern ssize   mtow(MprChar *dest, ssize count, cchar *src, ssize len);
 
@@ -3188,7 +3192,7 @@ extern MprChar  *wupper(MprChar *s);
 #define wtrim(str, set, where)              strim(str, set, where)
 #define wupper(str)                         supper(str)
 
-#endif /* BLD_CHAR_LEN > 1 */
+#endif /* BIT_CHAR_LEN > 1 */
 
 /********************************* Mixed Strings ******************************/
 /*
@@ -3196,7 +3200,7 @@ extern MprChar  *wupper(MprChar *s);
     This API is not yet public
     TODO - document these routines
  */
-#if BLD_CHAR_LEN > 1
+#if BIT_CHAR_LEN > 1
 extern int      mcasecmp(MprChar *s1, cchar *s2);
 extern int      mcmp(MprChar *s1, cchar *s2);
 extern MprChar *mcontains(MprChar *str, cchar *pattern, ssize limit);
@@ -3237,7 +3241,7 @@ extern MprChar *mtrim(MprChar *str, cchar *set, int where);
 #define mstarts(str, prefix)            sstarts(str, prefix)
 #define mtok(str, delim, last)          stok(str, delim, last)
 #define mtrim(str, set, where)          strim(str, set, where)
-#endif /* BLD_CHAR_LEN > 1 */
+#endif /* BIT_CHAR_LEN > 1 */
 
 /************************************ Formatting ******************************/
 /**
@@ -3327,7 +3331,7 @@ extern char *mprAsprintf(cchar *fmt, ...);
 extern char *mprAsprintfv(cchar *fmt, va_list arg);
 
 /********************************* Floating Point *****************************/
-#if BLD_FEATURE_FLOAT
+#if BIT_FEATURE_FLOAT
 /**
     Floating Point Services
     @stability Evolving
@@ -3383,7 +3387,7 @@ extern int mprIsZero(double value);
  */
 extern int mprIsNan(double value);
 
-#endif /* BLD_FEATURE_FLOAT */
+#endif /* BIT_FEATURE_FLOAT */
 /********************************* Buffering **********************************/
 /**
     Buffer refill callback function
@@ -3748,7 +3752,7 @@ extern void mprSetBufRefillProc(MprBuf *buf, MprBufProc fn, void *arg);
  */
 extern int mprSetBufSize(MprBuf *buf, ssize size, ssize maxSize);
 
-#if DOXYGEN || BLD_CHAR_LEN > 1
+#if DOXYGEN || BIT_CHAR_LEN > 1
 /**
     Add a wide null character to the buffer contents.
     @description Add a null character but do not change the buffer content lengths. The null is added outside the
@@ -3789,7 +3793,7 @@ extern int mprPutStringToWideBuf(MprBuf *buf, cchar *str);
  */
 extern int mprPutFmtToWideBuf(MprBuf *buf, cchar *fmt, ...);
 
-#else /* BLD_CHAR_LEN == 1 */
+#else /* BIT_CHAR_LEN == 1 */
 #define mprAddNullToWideBuf     mprAddNullToBuf
 #define mprPutCharToWideBuf     mprPutCharToBuf
 #define mprPutStringToWideBuf   mprPutStringToBuf
@@ -3915,13 +3919,13 @@ extern char *mprGetDate(char *fmt);
  */
 extern uint64 mprGetTicks();
 
-#if (LINUX || MACOSX || WIN) && (BLD_CPU_ARCH == MPR_CPU_X86 || BLD_CPU_ARCH == MPR_CPU_X64)
+#if (LINUX || MACOSX || WIN) && (BIT_CPU_ARCH == MPR_CPU_X86 || BIT_CPU_ARCH == MPR_CPU_X64)
     #define MPR_HIGH_RES_TIMER 1
 #else
     #define MPR_HIGH_RES_TIMER 0
 #endif
 
-#if BLD_DEBUG
+#if BIT_DEBUG
     #if MPR_HIGH_RES_TIMER
         #define MPR_MEASURE(level, tag1, tag2, op) \
             if (1) { \
@@ -4532,7 +4536,7 @@ extern void mprWarn(cchar *fmt, ...);
 /*
     Optimized logging calling sequence. This compiles out for release mode.
  */
-#if BLD_DEBUG
+#if BIT_DEBUG
 #define LOG mprLog
 #else
 #define LOG if (0) mprLog
@@ -4786,14 +4790,14 @@ typedef struct MprFileSystem {
     char                *separators;    /**< Filename path separators. First separator is the preferred separator. */
     char                *newline;       /**< Newline for text files */
     cchar               *root;          /**< Root file path */
-#if BLD_WIN_LIKE || CYGWIN
+#if BIT_WIN_LIKE || CYGWIN
     char                *cygwin;        /**< Cygwin install directory */
     char                *cygdrive;      /**< Cygwin drive root */
 #endif
 } MprFileSystem;
 
 
-#if BLD_FEATURE_ROMFS
+#if BIT_FEATURE_ROMFS
 /**
     A RomInode is created for each file in the Rom file system.
     @ingroup FileSystem
@@ -4811,7 +4815,7 @@ typedef struct MprRomFileSystem {
     MprRomInode     *romInodes;
     int             rootLen;
 } MprRomFileSystem;
-#else /* !BLD_FEATURE_ROMFS */
+#else /* !BIT_FEATURE_ROMFS */
 
 typedef MprFileSystem MprDiskFileSystem;
 #endif
@@ -4829,7 +4833,7 @@ typedef MprFileSystem MprDiskFileSystem;
 extern MprFileSystem *mprCreateFileSystem(cchar *path);
 
 
-#if BLD_FEATURE_ROMFS
+#if BIT_FEATURE_ROMFS
 /**
     Create and initialize the ROM FileSystem. 
     @description This is an internal routine called by the MPR during initialization.
@@ -4915,7 +4919,7 @@ typedef struct MprFile {
     int             perms;              /**< File permissions */
     int             fd;                 /**< File handle */
     int             attached;           /**< Attached to existing descriptor */
-#if BLD_FEATURE_ROMFS
+#if BIT_FEATURE_ROMFS
     MprRomInode     *inode;             /**< Reference to ROM file */
 #endif
 } MprFile;
@@ -5215,7 +5219,7 @@ typedef struct MprDirEntry {
 /*
     Search path separator
  */
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     #define MPR_SEARCH_SEP      ";"
     #define MPR_SEARCH_SEP_CHAR ';'
 #else
@@ -5819,7 +5823,7 @@ extern cchar *mprGetModuleSearchPath();
  */
 extern int mprLoadModule(MprModule *mp);
 
-#if BLD_CC_DYN_LOAD || DOXYGEN
+#if BIT_CC_DYN_LOAD || DOXYGEN
 /**
     Load a native module
     @param mp Module object created via $mprCreateModule.
@@ -6463,7 +6467,7 @@ extern void mprStopThreadService();
  */
 typedef struct MprThread {
     MprOsThread     osThread;           /**< O/S thread id */
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     handle          threadHandle;       /**< Threads OS handle for WIN */
 #endif
     MprThreadProc   entry;              /**< Users thread entry point */
@@ -6475,7 +6479,7 @@ typedef struct MprThread {
     int             isMain;             /**< Is the main thread */
     int             priority;           /**< Current priority */
     ssize           stackSize;          /**< Only VxWorks implements */
-#if BLD_MEMORY_STACK
+#if BIT_MEMORY_STACK
     void            *stackBase;         /**< Base of stack (approx) */
     int             peakStack;          /**< Peak stack usage */
 #endif
@@ -6489,9 +6493,9 @@ typedef struct MprThread {
     @internal
  */
 typedef struct MprThreadLocal {
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     pthread_key_t   key;                /**< Data key */
-#elif BLD_WIN_LIKE
+#elif BIT_WIN_LIKE
     DWORD           key;
 #else
     MprHash         *store;
@@ -6630,7 +6634,7 @@ extern MprThreadLocal *mprCreateThreadLocal();
 #define MPR_READ_PIPE          0            /* Read side of breakPipe */
 #define MPR_WRITE_PIPE         1            /* Write side of breakPipe */
 
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
 typedef long (*MprMsgCallback)(HWND hwnd, uint msg, uint wp, long lp);
 #endif
 
@@ -6715,7 +6719,7 @@ extern int  mprInitWindow();
 #if MPR_EVENT_SELECT
     extern void mprManageSelect(MprWaitService *ws, int flags);
 #endif
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     extern void mprSetWinMsgCallback(MprMsgCallback callback);
     extern void mprServiceWinIO(MprWaitService *ws, int sockFd, int winMask);
 #endif
@@ -6899,7 +6903,7 @@ typedef struct MprSocketService {
     MprSocketProvider *standardProvider;        /**< Socket provider for non-SSL connections */
     MprSocketProvider *secureProvider;          /**< Socket provider for SSL connections */
     MprSocketPrebind  prebind;                  /**< Prebind callback */
-#if BLD_FEATURE_SSL
+#if BIT_FEATURE_SSL
     MprList         *secureSockets;             /**< List of secured (matrixssl) sockets */
 #endif
     MprMutex        *mutex;                     /**< Multithread locking */
@@ -7236,7 +7240,7 @@ extern ssize mprReadSocket(MprSocket *sp, void *buf, ssize size);
  */
 extern void mprRemoveSocketHandler(MprSocket *sp);
 
-#if !BLD_FEATURE_ROMFS
+#if !BIT_FEATURE_ROMFS
 /**
     Send a file to a socket
     @description Write the contents of a file to a socket. If the socket is in non-blocking mode (the default), the write
@@ -7475,10 +7479,10 @@ extern void mprVerifySslClients(struct MprSsl *ssl, bool on);
  */
 extern void mprVerifySslServers(struct MprSsl *ssl, bool on);
 
-#if BLD_FEATURE_MATRIXSSL
+#if BIT_FEATURE_MATRIXSSL
     extern int mprCreateMatrixSslModule(bool lazy);
 #endif
-#if BLD_FEATURE_OPENSSL
+#if BIT_FEATURE_OPENSSL
     extern int mprCreateOpenSslModule(bool lazy);
 #endif
 
@@ -7810,7 +7814,7 @@ typedef struct MprSignalService {
     MprMutex        *mutex;                 /**< Multithread sync */
     MprSignalInfo   info[MPR_MAX_SIGNALS];  /**< Actual signal info and arg */
     int             hasSignals;             /**< Signal sent to process */
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     struct sigaction prior[MPR_MAX_SIGNALS];/**< Prior sigaction handler before hooking */
 #endif
 } MprSignalService;
@@ -7910,7 +7914,7 @@ typedef struct MprCmdFile {
     char            *name;
     int             fd;
     int             clientFd;
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     HANDLE          handle;
 #endif
 } MprCmdFile;
@@ -7961,7 +7965,7 @@ typedef struct MprCmd {
     MprBuf          *stderrBuf;         /**< Standard error output from the client */
     void            *userData;          /**< User data storage */
     int             userFlags;          /**< User flags storage */
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     HANDLE          thread;             /**< Handle of the primary thread for the created process */
     HANDLE          process;            /**< Process handle for the created process */
     char            *command;           /**< Windows command line */          
@@ -8533,14 +8537,14 @@ typedef struct Mpr {
     MprCond         *markerCond;            /**< Marker sleep cond var */
 
     char            *emptyString;           /**< Empty string */
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     HINSTANCE       appInstance;            /**< Application instance (windows) */
 #endif
 } Mpr;
 
 extern void mprNop(void *ptr);
 
-#if DOXYGEN || BLD_WIN_LIKE
+#if DOXYGEN || BIT_WIN_LIKE
 /**
     Return the MPR control instance.
     @description Return the MPR singleton control object. 
@@ -8561,7 +8565,7 @@ extern Mpr *mprGetMpr();
 #define MPR_USER_EVENTS_THREAD  0x10        /**< User will explicitly manage own mprServiceEvents calls */
 #define MPR_NO_WINDOW           0x20        /**< Don't create a windows Window */
 
-#if BLD_TUNE == MPR_TUNE_SPEED
+#if BIT_TUNE == MPR_TUNE_SPEED
     // #define MPR_THREAD_PATTERN (MPR_MARK_THREAD | MPR_SWEEP_THREAD)
     //  Sweep thread not fully debugged
     #define MPR_THREAD_PATTERN (MPR_MARK_THREAD)
@@ -9006,7 +9010,7 @@ extern void mprTerminate(int flags, int status);
  */
 extern int mprWaitTillIdle(MprTime timeout);
 
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
 /**
     Get the Windows window handle
     @return the windows HWND reference
@@ -9039,7 +9043,7 @@ extern void mprSetInst(HINSTANCE inst);
 extern void mprSetSocketMessage(int message);
 #endif
 
-#if (BLD_WIN_LIKE && !WINCE) || CYGWIN
+#if (BIT_WIN_LIKE && !WINCE) || CYGWIN
 /**
     Read a key from the Windows registry
     @param key Windows registry key to read
@@ -9056,7 +9060,7 @@ extern char *mprReadRegistry(cchar *key, cchar *name);
     @return Zero if successful. Otherwise return a negative MPR error code.
   */
 extern int mprWriteRegistry(cchar *key, cchar *name, cchar *value);
-#endif /* (BLD_WIN_LIKE && !WINCE) || CYGWIN */
+#endif /* (BIT_WIN_LIKE && !WINCE) || CYGWIN */
 
 /*
     Internal

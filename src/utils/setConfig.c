@@ -13,7 +13,7 @@
 static char *replace(cchar *str, cchar *pattern, cchar *fmt, ...);
 
 /*********************************** Code *************************************/
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
 int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2) {
     char    **argv;
     cchar   *documents, *home, *logs, *port, *ssl, *argp, *path, *contents, *revised;
@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
         err++;
     }
     if (err) {
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
         mprUserError("Bad command line:");
 #else
         mprUserError("Bad command line:\n"
@@ -159,7 +159,7 @@ static char *replace(cchar *str, cchar *pattern, cchar *fmt, ...)
             for (; *s && !isspace((uchar) *s) && *s != '\n' && *s != '>'; s++) ;
          
         }
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
         if (*s == '\n' && s[-1] != '\r') {
             mprPutCharToBuf(buf, '\r');
         }
@@ -173,7 +173,7 @@ static char *replace(cchar *str, cchar *pattern, cchar *fmt, ...)
 
 
 
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
 /*
     Default log output is just to the console
  */

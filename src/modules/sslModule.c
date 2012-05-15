@@ -7,7 +7,7 @@
 
 #include    "appweb.h"
 
-#if BLD_FEATURE_SSL
+#if BIT_FEATURE_SSL
 /*********************************** Code *************************************/
 
 static bool checkSsl(MaState *state)
@@ -172,7 +172,7 @@ int maSslModuleInit(Http *http, MprModule *mp)
 {
     return 0;
 }
-#endif /* BLD_FEATURE_SSL */
+#endif /* BIT_FEATURE_SSL */
 
 /*
     @copy   default

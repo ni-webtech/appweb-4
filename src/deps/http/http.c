@@ -117,7 +117,7 @@ MAIN(httpMain, int argc, char **argv, char **envp)
     }
     mprSetMaxWorkers(app->workers);
 
-#if BLD_FEATURE_SSL
+#if BIT_FEATURE_SSL
     if (!mprLoadSsl(1)) {
         mprError("Can't load SSL");
         exit(1);
@@ -204,7 +204,7 @@ static void initSettings()
     app->workers = 1;            
     app->headers = mprCreateList(0, 0);
     app->mutex = mprCreateLock();
-#if WIN
+#if WINDOWS
     _setmode(fileno(stdout), O_BINARY);
 #endif
 }
@@ -440,7 +440,7 @@ static bool parseArgs(int argc, char **argv)
             mprPrintfError("%s %s\n"
                 "Copyright (C) Embedthis Software 2003-2012\n"
                 "Copyright (C) Michael O'Brien 2003-2012\n",
-               BLD_NAME, BLD_VERSION);
+               BIT_NAME, BIT_VERSION);
             exit(0);
 
         } else if (smatch(argp, "--workerTheads") || smatch(argp, "-w")) {
@@ -1156,7 +1156,7 @@ static void trace(HttpConn *conn, cchar *url, int fetchCount, cchar *method, int
 }
 
 
-#if (BLD_WIN_LIKE && !WINCE) || VXWORKS
+#if (BIT_WIN_LIKE && !WINCE) || VXWORKS
 static char *getpass(char *prompt)
 {
     static char password[MPR_MAX_STRING];

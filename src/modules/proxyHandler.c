@@ -24,7 +24,7 @@
 
 #include    "appweb.h"
 
-#if BLD_FEATURE_PROXY
+#if BIT_FEATURE_PROXY
 /************************************ Locals ***********************************/
 
 /*********************************** Forwards *********************************/
@@ -261,7 +261,7 @@ int maProxyHandlerInit(Http *http, MprModule *mp)
     return 0;
 }
 
-#endif /* BLD_FEATURE_PROXY */
+#endif /* BIT_FEATURE_PROXY */
 
 /*
     @copy   default

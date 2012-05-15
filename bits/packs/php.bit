@@ -13,7 +13,7 @@ if (!path) {
     path = vers[0]
 }
 
-if (bit.platform.os == 'win') {
+if (bit.platform.os == 'windows') {
     let search = [
         path.join('x64/Release_TS'),
         path.join('x64/Release'),

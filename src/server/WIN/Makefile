@@ -9,8 +9,8 @@ BUILD_CROSS	:= 0
 include 	.makedep 
 
 ifeq ($(BUILDING_TARGET),1)
-TARGETS		+= $(BLD_PRODUCT)Monitor$(BLD_EXE)
-ifeq	($(BLD_OS),WIN)
+TARGETS		+= $(BIT_PRODUCT)Monitor$(BIT_EXE)
+ifeq	($(BIT_OS),WIN)
 	SYSLIBS	+= shell32.lib
 	MONITOR_RES = --resources appwebMonitor.rc
 endif
@@ -21,12 +21,12 @@ compileExtra: $(TARGETS)
 #
 #	Link the monitor
 #
-$(BLD_PRODUCT)Monitor$(BLD_EXE): $(BLD_LIB_DIR)/libmpr$(BLD_LIB) $(OBJECTS)
-	@bld --graphical --exe $(BLD_PRODUCT)Monitor$(BLD_EXE) --rpath "$(BLD_LIB_PREFIX)" --rpath "../bin" \
+$(BIT_PRODUCT)Monitor$(BIT_EXE): $(BIT_LIB_DIR)/libmpr$(BIT_LIB) $(OBJECTS)
+	@bld --graphical --exe $(BIT_PRODUCT)Monitor$(BIT_EXE) --rpath "$(BIT_LIB_PREFIX)" --rpath "../bin" \
 		--search "$(LIBPATH)" $(MODE) --libs "mpr" $(MONITOR_RES) --syslibs "$(SYSLIBS)" \
-		$(BLD_OBJ_DIR)/$(BLD_PRODUCT)Monitor$(BLD_OBJ) 
-	cp $(BLD_PRODUCT)Monitor$(BLD_EXE) $(BLD_BIN_DIR)/$(BLD_PRODUCT)Monitor$(BLD_EXE) 
-	cp $(BLD_PRODUCT)Monitor.ico $(BLD_BIN_DIR)
+		$(BIT_OBJ_DIR)/$(BIT_PRODUCT)Monitor$(BIT_OBJ) 
+	cp $(BIT_PRODUCT)Monitor$(BIT_EXE) $(BIT_BIN_DIR)/$(BIT_PRODUCT)Monitor$(BIT_EXE) 
+	cp $(BIT_PRODUCT)Monitor.ico $(BIT_BIN_DIR)
 
 #
 #   Local variables:

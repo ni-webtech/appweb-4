@@ -67,7 +67,8 @@ Bit.load({
 
     packs: {
         http: {
-            path: '${BIN}/http'
+            enable: true,
+            path: '${BIN}/http',
         },
     },
 
@@ -78,7 +79,7 @@ Bit.load({
         },
 
         package: {
-            enable: "'${OS}' == 'linux' || '${OS}' == 'macosx' || '${OS}' == 'win'",
+            enable: "'${OS}' == 'linux' || '${OS}' == 'macosx' || '${OS}' == 'windows'",
             depends: ['packageBinary', 'packageSource', 'packageCombo'],
         },
 

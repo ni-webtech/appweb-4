@@ -8,7 +8,7 @@
 
 #include    "appweb.h"
 
-#if BLD_FEATURE_ESP
+#if BIT_FEATURE_ESP
 #include    "esp.h"
 #include    "edi.h"
 
@@ -215,7 +215,7 @@ static int runAction(HttpConn *conn)
         source = mprTrimPathDrive(source);
 #endif
         req->cacheName = mprGetMD5WithPrefix(source, slen(source), "controller_");
-        req->module = mprNormalizePath(sfmt("%s/%s%s", eroute->cacheDir, req->cacheName, BLD_SHOBJ));
+        req->module = mprNormalizePath(sfmt("%s/%s%s", eroute->cacheDir, req->cacheName, BIT_SHOBJ));
 
         if (!mprPathExists(req->controllerPath, R_OK)) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find controller %s", req->controllerPath);
@@ -318,7 +318,7 @@ void espRenderView(HttpConn *conn, cchar *name)
         source = mprTrimPathDrive(source);
 #endif
         req->cacheName = mprGetMD5WithPrefix(source, slen(source), "view_");
-        req->module = mprNormalizePath(sfmt("%s/%s%s", eroute->cacheDir, req->cacheName, BLD_SHOBJ));
+        req->module = mprNormalizePath(sfmt("%s/%s%s", eroute->cacheDir, req->cacheName, BIT_SHOBJ));
 
         if (!mprPathExists(req->source, R_OK)) {
             httpError(conn, HTTP_CODE_NOT_FOUND, "Can't find web page %s", req->source);
@@ -541,9 +541,9 @@ static EspRoute *allocEspRoute(HttpRoute *route)
 #endif
     eroute->cacheDir = path;
 
-    eroute->update = BLD_DEBUG;
-    eroute->showErrors = BLD_DEBUG;
-    eroute->keepSource = BLD_DEBUG;
+    eroute->update = BIT_DEBUG;
+    eroute->showErrors = BIT_DEBUG;
+    eroute->keepSource = BIT_DEBUG;
     eroute->lifespan = 0;
     eroute->route = route;
     route->eroute = eroute;
@@ -1165,10 +1165,10 @@ int maEspHandlerInit(Http *http, MprModule *module)
     if ((esp->ediService = ediCreateService()) == 0) {
         return 0;
     }
-#if BLD_FEATURE_MDB
+#if BIT_FEATURE_MDB
     mdbInit();
 #endif
-#if BLD_FEATURE_SDB
+#if BIT_FEATURE_SDB
     sdbInit();
 #endif
     return 0;
@@ -1188,7 +1188,7 @@ static int unloadEsp(MprModule *mp)
     return 0;
 }
 
-#else /* BLD_FEATURE_ESP */
+#else /* BIT_FEATURE_ESP */
 
 int maEspHandlerInit(Http *http, MprModule *mp)
 {
@@ -1196,7 +1196,7 @@ int maEspHandlerInit(Http *http, MprModule *mp)
     return 0;
 }
 
-#endif /* BLD_FEATURE_ESP */
+#endif /* BIT_FEATURE_ESP */
 /*
     @copy   default
     

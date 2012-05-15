@@ -33,9 +33,9 @@ HttpAuth *httpCreateAuth()
     HttpAuth      *auth;
 
     auth = mprAllocObj(HttpAuth, manageAuth);
-#if BLD_FEATURE_AUTH_PAM
+#if BIT_FEATURE_AUTH_PAM
     auth->backend = HTTP_AUTH_METHOD_PAM;
-#elif BLD_FEATURE_AUTH_FILE
+#elif BIT_FEATURE_AUTH_FILE
     auth->backend = HTTP_AUTH_METHOD_FILE;
 #endif
     return auth;
@@ -70,9 +70,9 @@ HttpAuth *httpCreateInheritedAuth(HttpAuth *parent)
         auth->groups = parent->groups;
 
     } else{
-#if BLD_FEATURE_AUTH_PAM
+#if BIT_FEATURE_AUTH_PAM
         auth->backend = HTTP_AUTH_METHOD_PAM;
-#elif BLD_FEATURE_AUTH_FILE
+#elif BIT_FEATURE_AUTH_FILE
         auth->backend = HTTP_AUTH_METHOD_FILE;
 #endif
     }
@@ -175,11 +175,11 @@ static bool validateCred(HttpAuth *auth, cchar *realm, char *user, cchar *passwo
         Use this funny code construct incase no backend method is configured. Still want the code to compile.
      */
     if (0) {
-#if BLD_FEATURE_AUTH_FILE
+#if BIT_FEATURE_AUTH_FILE
     } else if (auth->backend == HTTP_AUTH_METHOD_FILE) {
         return httpValidateFileCredentials(auth, realm, user, password, requiredPass, msg);
 #endif
-#if BLD_FEATURE_AUTH_PAM
+#if BIT_FEATURE_AUTH_PAM
     } else if (auth->backend == HTTP_AUTH_METHOD_PAM) {
         return httpValidatePamCredentials(auth, realm, user, password, NULL, msg);
 #endif
@@ -199,11 +199,11 @@ static cchar *getPassword(HttpAuth *auth, cchar *realm, cchar *user)
         Use this funny code construct incase no backend method is configured. Still want the code to compile.
      */
     if (0) {
-#if BLD_FEATURE_AUTH_FILE
+#if BIT_FEATURE_AUTH_FILE
     } else if (auth->backend == HTTP_AUTH_METHOD_FILE) {
         return httpGetFilePassword(auth, realm, user);
 #endif
-#if BLD_FEATURE_AUTH_PAM
+#if BIT_FEATURE_AUTH_PAM
     } else if (auth->backend == HTTP_AUTH_METHOD_PAM) {
         return httpGetPamPassword(auth, realm, user);
 #endif
@@ -730,7 +730,7 @@ static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *re
 
 
 
-#if BLD_FEATURE_AUTH_FILE
+#if BIT_FEATURE_AUTH_FILE
 /********************************** Forwards **********************************/
 
 static bool isUserValid(HttpAuth *auth, cchar *realm, cchar *user);
@@ -1353,7 +1353,7 @@ int httpWriteGroupFile(HttpAuth *auth, char *path)
 
 #else
 void __nativeAuthFile() {}
-#endif /* BLD_FEATURE_AUTH_FILE */
+#endif /* BIT_FEATURE_AUTH_FILE */
 
 /*
     @copy   default
@@ -1407,7 +1407,7 @@ void __nativeAuthFile() {}
 
 
 
-#if BLD_FEATURE_AUTH_PAM && BLD_UNIX_LIKE
+#if BIT_FEATURE_AUTH_PAM && BIT_UNIX_LIKE
 
 #if MACOSX
     #include    <pam/pam_appl.h>
@@ -1501,7 +1501,7 @@ static int pamChat(int msgCount, const struct pam_message **msg, struct pam_resp
 
 #else
 void __pamAuth() {}
-#endif /* BLD_FEATURE_AUTH_PAM */
+#endif /* BIT_FEATURE_AUTH_PAM */
 
 /*
     @copy   default
@@ -2449,7 +2449,7 @@ static HttpConn *openConnection(HttpConn *conn, cchar *url, struct MprSsl *ssl)
     conn->tx->parsedUri = uri;
 
     if (uri->secure) {
-#if BLD_FEATURE_SSL
+#if BIT_FEATURE_SSL
         if (!http->sslLoaded) {
             if (!mprLoadSsl(0)) {
                 mprError("Can't load SSL provider");
@@ -2486,7 +2486,7 @@ static HttpConn *openConnection(HttpConn *conn, cchar *url, struct MprSsl *ssl)
         httpError(conn, HTTP_CODE_COMMS_ERROR, "Can't create socket for %s", url);
         return 0;
     }
-#if BLD_FEATURE_SSL
+#if BIT_FEATURE_SSL
     if (uri->secure && ssl) {
         mprSetSocketSslConfig(sp, ssl);
     }
@@ -2619,7 +2619,7 @@ int httpConnect(HttpConn *conn, cchar *method, cchar *url, struct MprSsl *ssl)
     conn->sentCredentials = 0;
     conn->tx->method = supper(method);
 
-#if BLD_DEBUG
+#if BIT_DEBUG
     conn->startTime = conn->http->now;
     conn->startTicks = mprGetTicks();
 #endif
@@ -4042,7 +4042,7 @@ void httpSetEndpointNotifier(HttpEndpoint *endpoint, HttpNotifier notifier)
 
 int httpSecureEndpoint(HttpEndpoint *endpoint, struct MprSsl *ssl)
 {
-#if BLD_FEATURE_SSL
+#if BIT_FEATURE_SSL
     endpoint->ssl = ssl;
     return 0;
 #else
@@ -5366,7 +5366,7 @@ cchar *httpGetDefaultClientHost(Http *http)
 
 int httpLoadSsl(Http *http)
 {
-#if BLD_FEATURE_SSL
+#if BIT_FEATURE_SSL
     if (!http->sslLoaded) {
         if (!mprLoadSsl(0)) {
             mprError("Can't load SSL provider");
@@ -6498,7 +6498,7 @@ HttpPacket *httpSplitPacket(HttpPacket *orig, ssize offset)
         if (mprPutBlockToBuf(packet->content, mprGetBufEnd(orig->content), (ssize) count) != count) {
             return 0;
         }
-#if BLD_DEBUG
+#if BIT_DEBUG
         mprAddNullToBuf(orig->content);
 #endif
     }
@@ -6855,7 +6855,7 @@ void httpSetPipelineHandler(HttpConn *conn, HttpStage *handler)
 
 void httpSetSendConnector(HttpConn *conn, cchar *path)
 {
-#if !BLD_FEATURE_ROMFS
+#if !BIT_FEATURE_ROMFS
     HttpTx      *tx;
 
     tx = conn->tx;
@@ -8357,7 +8357,7 @@ HttpRoute *httpCreateAliasRoute(HttpRoute *parent, cchar *pattern, cchar *path, 
 
 int httpStartRoute(HttpRoute *route)
 {
-#if !BLD_FEATURE_ROMFS
+#if !BIT_FEATURE_ROMFS
     if (!(route->flags & HTTP_ROUTE_STARTED)) {
         route->flags |= HTTP_ROUTE_STARTED;
         if (route->logPath && (!route->parent || route->logPath != route->parent->logPath)) {
@@ -9632,7 +9632,7 @@ void httpFinalizeRoute(HttpRoute *route)
         mprAddItem(route->indicies,  sclone("index.html"));
     }
     httpAddRoute(route->host, route);
-#if BLD_FEATURE_SSL
+#if BIT_FEATURE_SSL
     mprConfigureSsl(route->ssl);
 #endif
 }
@@ -10465,10 +10465,10 @@ static void definePathVars(HttpRoute *route)
 {
     mprAssert(route);
 
-    mprAddKey(route->pathTokens, "PRODUCT", sclone(BLD_PRODUCT));
-    mprAddKey(route->pathTokens, "OS", sclone(BLD_OS));
-    mprAddKey(route->pathTokens, "VERSION", sclone(BLD_VERSION));
-    mprAddKey(route->pathTokens, "LIBDIR", mprJoinPath(mprGetPathParent(mprGetAppDir()), mprGetPathBase(BLD_LIB_NAME)));
+    mprAddKey(route->pathTokens, "PRODUCT", sclone(BIT_PRODUCT));
+    mprAddKey(route->pathTokens, "OS", sclone(BIT_OS));
+    mprAddKey(route->pathTokens, "VERSION", sclone(BIT_VERSION));
+    mprAddKey(route->pathTokens, "LIBDIR", mprJoinPath(mprGetPathParent(mprGetAppDir()), mprGetPathBase(BIT_LIB_NAME)));
     if (route->host) {
         defineHostVars(route);
     }
@@ -11444,7 +11444,7 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     ssize       len;
 
     rx = conn->rx;
-#if BLD_DEBUG
+#if BIT_DEBUG
     conn->startTime = conn->http->now;
     conn->startTicks = mprGetTicks();
 #endif
@@ -11791,7 +11791,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
         case 'x':
             if (strcasecmp(key, "x-http-method-override") == 0) {
                 httpSetMethod(conn, value);
-#if BLD_DEBUG
+#if BIT_DEBUG
             } else if (strcasecmp(key, "x-chunk-size") == 0) {
                 tx->chunkSize = atoi(value);
                 if (tx->chunkSize <= 0) {
@@ -12157,7 +12157,7 @@ static bool processRunning(HttpConn *conn)
 }
 
 
-#if BLD_DEBUG
+#if BIT_DEBUG
 static void measure(HttpConn *conn)
 {
     MprTime     elapsed;
@@ -12878,7 +12878,7 @@ void httpTrimExtraPath(HttpConn *conn)
 
 
 /**************************** Forward Declarations ****************************/
-#if !BLD_FEATURE_ROMFS
+#if !BIT_FEATURE_ROMFS
 
 static void addPacketForSend(HttpQueue *q, HttpPacket *packet);
 static void adjustSendVec(HttpQueue *q, MprOff written);
@@ -13211,7 +13211,7 @@ int httpOpenSendConnector(Http *http) { return 0; }
 void httpSendOpen(HttpQueue *q) {}
 void httpSendOutgoingService(HttpQueue *q) {}
 
-#endif /* !BLD_FEATURE_ROMFS */
+#endif /* !BIT_FEATURE_ROMFS */
 /*
     @copy   default
     
@@ -14613,7 +14613,7 @@ static void openUpload(HttpQueue *q)
     up->contentState = HTTP_UPLOAD_BOUNDARY;
 
     if (rx->uploadDir == 0) {
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
         rx->uploadDir = mprNormalizePath(getenv("TEMP"));
 #else
         rx->uploadDir = sclone("/tmp");

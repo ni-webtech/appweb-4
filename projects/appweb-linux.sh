@@ -10,7 +10,7 @@ CONFIG="${OS}-${ARCH}-${PROFILE}"
 CC="gcc"
 LD="ld"
 CFLAGS="-Wall -fPIC -g -Wno-unused-result -mtune=generic"
-DFLAGS="-D_REENTRANT -DPIC -DBLD_DEBUG"
+DFLAGS="-D_REENTRANT -DPIC -DBIT_DEBUG"
 IFLAGS="-I${CONFIG}/inc"
 LDFLAGS="-Wl,--enable-new-dtags -Wl,-rpath,\$ORIGIN/ -Wl,-rpath,\$ORIGIN/../bin -rdynamic -g"
 LIBPATHS="-L${CONFIG}/bin"
@@ -139,6 +139,10 @@ cp -r src/esp/esp-appweb.conf ${CONFIG}/bin/esp-appweb.conf
 ${CC} -c -o ${CONFIG}/obj/cgiHandler.o ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/modules/cgiHandler.c
 
 ${CC} -shared -o ${CONFIG}/bin/mod_cgi.so ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/cgiHandler.o ${LIBS} -lappweb -lhttp -lmpr -lpcre -lmprssl
+
+${CC} -c -o ${CONFIG}/obj/ejsHandler.o ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc -Iejs.h src/modules/ejsHandler.c
+
+${CC} -shared -o ${CONFIG}/bin/mod_ejs.so ${LDFLAGS} -L/Users/mob/git/appweb ${LIBPATHS} ${CONFIG}/obj/ejsHandler.o ${LIBS} -lejs -lmpr -lmprssl -lhttp -lpcre -lappweb
 
 ${CC} -c -o ${CONFIG}/obj/auth.o ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/utils/auth.c
 

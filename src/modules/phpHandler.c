@@ -8,9 +8,9 @@
 
 #include    "appweb.h"
 
-#if BLD_FEATURE_PHP
+#if BIT_FEATURE_PHP
 
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     /*
         Workaround for VS 2005 and PHP headers. Need to include before PHP headers include it.
      */
@@ -31,10 +31,10 @@
     #define ZEND_WIN32 1
 
     /*
-        WARNING: If you compile PHP with --debug, then you MUST re-run appweb configure which will set BLD_PHP_DEBUG
+        WARNING: If you compile PHP with --debug, then you MUST re-run appweb configure which will set BIT_PHP_DEBUG
         Unfortunately, PHP does not set ZEND_DEBUG in any of their headers (Ugh!)
      */
-    #if BLD_PHP_DEBUG
+    #if BIT_PHP_DEBUG
     #define ZEND_DEBUG 1
     #endif
 #endif
@@ -102,8 +102,8 @@ static int  writeHeader(sapi_header_struct *sapiHeader, sapi_headers_struct *sap
     PHP Module Interface
  */
 static sapi_module_struct phpSapiBlock = {
-    BLD_PRODUCT,                    /* Sapi name */
-    BLD_NAME,                       /* Full name */
+    BIT_PRODUCT,                    /* Sapi name */
+    BIT_NAME,                       /* Full name */
     startup,                        /* Start routine */
     php_module_shutdown_wrapper,    /* Stop routine  */
     0,                              /* Activate */
@@ -484,8 +484,8 @@ static int initializePhp(Http *http)
 
     mprLog(2, "php: initialize php library");
     appweb = httpGetContext(http);
-#ifdef BLD_FEATURE_PHP_INI
-    phpSapiBlock.php_ini_path_override = BLD_FEATURE_PHP_INI;
+#ifdef BIT_FEATURE_PHP_INI
+    phpSapiBlock.php_ini_path_override = BIT_FEATURE_PHP_INI;
 #else
     phpSapiBlock.php_ini_path_override = appweb->defaultServer->home;
 #endif
@@ -563,14 +563,14 @@ int maPhpHandlerInit(Http *http, MprModule *module)
     return 0;
 }
 
-#else /* BLD_FEATURE_PHP */
+#else /* BIT_FEATURE_PHP */
 
 int maPhpHandlerInit(Http *http, MprModule *module)
 {
     mprNop(0);
     return 0;
 }
-#endif /* BLD_FEATURE_PHP */
+#endif /* BIT_FEATURE_PHP */
 
 /*
     @copy   default

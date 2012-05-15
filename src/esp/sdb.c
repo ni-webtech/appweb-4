@@ -9,7 +9,7 @@
 #include    "appweb.h"
 #include    "edi.h"
 
-#if BLD_FEATURE_ESP && BLD_FEATURE_SDB
+#if BIT_FEATURE_ESP && BIT_FEATURE_SDB
  #include    "sqlite3.h"
 
 /************************************* Local **********************************/
@@ -1020,7 +1020,7 @@ static void initSqlite()
     mprGlobalUnlock();
 }
 
-#endif /* BLD_FEATURE_ESP && BLD_FEATURE_SDB */
+#endif /* BIT_FEATURE_ESP && BIT_FEATURE_SDB */
 
 /*
     @copy   default

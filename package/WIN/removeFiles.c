@@ -18,7 +18,7 @@
 
 /*********************************** Locals ***********************************/
 
-#define PROGRAM         BLD_NAME " Removal Program"
+#define PROGRAM         BIT_NAME " Removal Program"
 #define MPR_MAX_FNAME   1024
 
 static char *fileList[] = {
@@ -218,7 +218,7 @@ static char *mprGetDirName(char *buf, int bufsize, const char *path)
 
     cp = strrchr(path, '/');
     if (cp == 0) {
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
         cp = strrchr(path, '\\');
         if (cp == 0)
 #endif

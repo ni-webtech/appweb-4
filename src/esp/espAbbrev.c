@@ -8,7 +8,7 @@
 
 #include    "esp.h"
 
-#if BLD_FEATURE_ESP
+#if BIT_FEATURE_ESP
 /******************************* Abbreviated Controls *************************/ 
 
 void alert(cchar *text, cchar *optionString)
@@ -682,7 +682,7 @@ void warn(cchar *fmt, ...)
 }
 #endif
 
-#endif /* BLD_FEATURE_ESP */
+#endif /* BIT_FEATURE_ESP */
 /*
     @copy   default
     

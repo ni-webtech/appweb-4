@@ -39,8 +39,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef _PCRE_H
 #define _PCRE_H
 
-#ifndef BLD_FEATURE_PCRE
-    #define BLD_FEATURE_PCRE 1
+#ifndef BIT_FEATURE_PCRE
+    #define BIT_FEATURE_PCRE 1
 #endif
 
 /* The current PCRE version information. */
@@ -61,7 +61,7 @@ don't change existing definitions of PCRE_EXP_DECL and PCRECPP_EXP_DECL. */
 #endif
 
 /* UNUSED */
-#if BLD_ALL_IN_ONE && 0
+#if BIT_ALL_IN_ONE && 0
     /*
      *  When building all-in-one, we must use internal definitions
      */
@@ -260,8 +260,8 @@ typedef struct real_pcre pcre;
 replaced with a custom type. For conventional use, the public interface is a
 const char *. */
 
-#ifdef BLD_CHAR
-#define PCRE_SPTR const BLD_CHAR *
+#ifdef BIT_CHAR
+#define PCRE_SPTR const BIT_CHAR *
 #else
 #ifndef PCRE_SPTR
 #define PCRE_SPTR const char *

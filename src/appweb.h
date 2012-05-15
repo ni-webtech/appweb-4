@@ -16,7 +16,7 @@ extern "C" {
 
 /********************************* Tunables ***********************************/
 
-#define MA_SERVER_NAME          "Embedthis-Appweb/" BLD_VERSION
+#define MA_SERVER_NAME          "Embedthis-Appweb/" BIT_VERSION
 
 #define MA_UNLOAD_TIMEOUT       "5mins"             /**< Default module inactivity unload timeout */
 #define MA_MAX_CONFIG_DEPTH     16                  /**< Max nest of directives in config file */

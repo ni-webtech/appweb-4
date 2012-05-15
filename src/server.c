@@ -32,7 +32,7 @@ MaAppweb *maCreateAppweb()
     appweb->http = http = httpCreate(appweb);
     httpSetContext(http, appweb);
     appweb->servers = mprCreateList(-1, 0);
-    appweb->localPlatform = slower(sfmt("%s-%s-%s", BLD_OS, BLD_CPU, BLD_PROFILE));
+    appweb->localPlatform = slower(sfmt("%s-%s-%s", BIT_OS, BIT_CPU, BIT_PROFILE));
     maSetPlatform(appweb->localPlatform);
     maGetUserGroup(appweb);
     maParseInit(appweb);
@@ -62,7 +62,7 @@ static void manageAppweb(MaAppweb *appweb, int flags)
 
 static void openHandlers(Http *http)
 {
-#if BLD_FEATURE_DIR
+#if BIT_FEATURE_DIR
     maOpenDirHandler(http);
 #endif
     maOpenFileHandler(http);
@@ -204,7 +204,7 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *d
         route = mprGetFirstItem(host->routes);
         mprAssert(route);
 
-#if BLD_FEATURE_CGI
+#if BIT_FEATURE_CGI
         maLoadModule(appweb, "cgiHandler", "mod_cgi");
         if (httpLookupStage(http, "cgiHandler")) {
             httpAddRouteHandler(route, "cgiHandler", "cgi cgi-nph bat cmd pl py");
@@ -221,19 +221,19 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *d
             }
         }
 #endif
-#if BLD_FEATURE_ESP
+#if BIT_FEATURE_ESP
         maLoadModule(appweb, "espHandler", "mod_esp");
         if (httpLookupStage(http, "espHandler")) {
             httpAddRouteHandler(route, "espHandler", "esp");
         }
 #endif
-#if BLD_FEATURE_EJSCRIPT
+#if BIT_FEATURE_EJSCRIPT
         maLoadModule(appweb, "ejsHandler", "mod_ejs");
         if (httpLookupStage(http, "ejsHandler")) {
             httpAddRouteHandler(route, "ejsHandler", "ejs");
         }
 #endif
-#if BLD_FEATURE_PHP
+#if BIT_FEATURE_PHP
         maLoadModule(appweb, "phpHandler", "mod_php");
         if (httpLookupStage(http, "phpHandler")) {
             httpAddRouteHandler(route, "phpHandler", "php");
@@ -273,7 +273,7 @@ int maStartServer(MaServer *server)
         }
         return MPR_ERR_CANT_OPEN;
     }
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     MaAppweb    *appweb = server->appweb;
     if (appweb->userChanged || appweb->groupChanged) {
         if (!smatch(MPR->logPath, "stdout") && !smatch(MPR->logPath, "stderr")) {
@@ -321,7 +321,7 @@ int maSetPlatform(cchar *platform)
     int         next;
 
     appweb = MPR->appwebService;
-    if (mprSamePath(mprGetAppDir(), BLD_BIN_PREFIX)) {
+    if (mprSamePath(mprGetAppDir(), BIT_BIN_PREFIX)) {
         /* Installed */
         base = mprGetPathParent(mprGetAppDir());
         dir = smatch(platform, appweb->localPlatform) ? base : mprJoinPath(base, platform);
@@ -369,7 +369,7 @@ HttpHost *host;
  */
 void maSetServerHome(MaServer *server, cchar *path)
 {
-    if (path == 0 || BLD_FEATURE_ROMFS) {
+    if (path == 0 || BIT_FEATURE_ROMFS) {
         path = ".";
     }
 #if !VXWORKS
@@ -402,7 +402,7 @@ void maSetServerAddress(MaServer *server, cchar *ip, int port)
 
 void maGetUserGroup(MaAppweb *appweb)
 {
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     struct passwd   *pp;
     struct group    *gp;
 
@@ -426,7 +426,7 @@ void maGetUserGroup(MaAppweb *appweb)
 
 int maSetHttpUser(MaAppweb *appweb, cchar *newUser)
 {
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     struct passwd   *pp;
 
     if (snumber(newUser)) {
@@ -453,7 +453,7 @@ int maSetHttpUser(MaAppweb *appweb, cchar *newUser)
 
 int maSetHttpGroup(MaAppweb *appweb, cchar *newGroup)
 {
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     struct group    *gp;
 
     if (snumber(newGroup)) {
@@ -480,7 +480,7 @@ int maSetHttpGroup(MaAppweb *appweb, cchar *newGroup)
 
 int maApplyChangedUser(MaAppweb *appweb)
 {
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     if (appweb->userChanged && appweb->uid >= 0) {
         if ((setuid(appweb->uid)) != 0) {
             mprError("Can't change user to: %s: %d\n"
@@ -500,7 +500,7 @@ int maApplyChangedUser(MaAppweb *appweb)
 
 int maApplyChangedGroup(MaAppweb *appweb)
 {
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     if (appweb->groupChanged && appweb->gid >= 0) {
         if (setgid(appweb->gid) != 0) {
             mprError("Can't change group to %s: %d\n"
@@ -533,7 +533,7 @@ int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
         return 0;
     }
     if (libname == 0) {
-        path = sjoin("mod_", name, BLD_SHOBJ, NULL);
+        path = sjoin("mod_", name, BIT_SHOBJ, NULL);
     } else {
         path = sclone(libname);
     }
@@ -556,14 +556,14 @@ int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
 #if UNUSED
 static char *getSearchPath(cchar *dir)
 {
-#if WIN
+#if WINDOWS
         //  bin : .
         return sfmt("%s" MPR_SEARCH_SEP ".", dir);
 #else
         //  bin : /usr/lib/appweb/bin : /usr/lib/appweb/lib : lib : . 
-        char *libDir = mprJoinPath(mprGetPathParent(dir), BLD_LIB_NAME);
+        char *libDir = mprJoinPath(mprGetPathParent(dir), BIT_LIB_NAME);
         return sfmt("%s" MPR_SEARCH_SEP "%s" MPR_SEARCH_SEP ".", dir,
-            mprSamePath(BLD_BIN_PREFIX, dir) ? BLD_LIB_PREFIX: libDir);
+            mprSamePath(BIT_BIN_PREFIX, dir) ? BIT_LIB_PREFIX: libDir);
 #endif
 }
 #endif

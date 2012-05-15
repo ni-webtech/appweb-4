@@ -24,16 +24,16 @@
 #include    "mpr.h"
 
 #ifndef SERVICE_PROGRAM
-    #define SERVICE_PROGRAM BLD_BIN_PREFIX "/" BLD_PRODUCT
+    #define SERVICE_PROGRAM BIT_BIN_PREFIX "/" BIT_PRODUCT
 #endif
 #ifndef SERVICE_NAME
-    #define SERVICE_NAME BLD_PRODUCT
+    #define SERVICE_NAME BIT_PRODUCT
 #endif
 #ifndef SERVICE_HOME
     #define SERVICE_HOME "/"
 #endif
 
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
 /*********************************** Locals ***********************************/
 
 #define RESTART_DELAY (0 * 1000)        /* Default heart beat period (30 sec) */
@@ -366,7 +366,7 @@ static bool process(cchar *operation, bool quiet)
     name = app->serviceName;
     launch = upstart = update = service = 0;
 
-    if (exists("/bin/launchctl") && exists("/Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name)) {
+    if (exists("/bin/launchctl") && exists("/Library/LaunchDaemons/com.%s.%s.plist", slower(BIT_COMPANY), name)) {
         launch++;
 
     } else if (exists("/sbin/start") && exists("/etc/init/rc.conf") &&
@@ -428,7 +428,7 @@ static bool process(cchar *operation, bool quiet)
             Enable service (will start on reboot)
          */
         if (launch) {
-            path = sfmt("/Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
+            path = sfmt("/Library/LaunchDaemons/com.%s.%s.plist", slower(BIT_COMPANY), name);
             /* 
                 Unfortunately, there is no launchctl command to do an enable without starting. So must do a stop below.
              */
@@ -458,7 +458,7 @@ static bool process(cchar *operation, bool quiet)
     } else if (smatch(operation, "disable")) {
         process("stop", 1);
         if (launch) {
-            rc = run("/bin/launchctl unload -w /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
+            rc = run("/bin/launchctl unload -w /Library/LaunchDaemons/com.%s.%s.plist", slower(BIT_COMPANY), name);
 
         } else if (update) {
             /*  
@@ -478,7 +478,7 @@ static bool process(cchar *operation, bool quiet)
 
     } else if (smatch(operation, "start")) {
         if (launch) {
-            rc = run("/bin/launchctl load /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
+            rc = run("/bin/launchctl load /Library/LaunchDaemons/com.%s.%s.plist", slower(BIT_COMPANY), name);
 
         } else if (service) {
             rc = run("/sbin/service %s start", name);
@@ -497,7 +497,7 @@ static bool process(cchar *operation, bool quiet)
 
     } else if (smatch(operation, "stop")) {
         if (launch) {
-            rc = run("/bin/launchctl unload /Library/LaunchDaemons/com.%s.%s.plist", slower(BLD_COMPANY), name);
+            rc = run("/bin/launchctl unload /Library/LaunchDaemons/com.%s.%s.plist", slower(BIT_COMPANY), name);
 
         } else if (service) {
             if (!run("/sbin/service %s stop", name)) {
@@ -791,12 +791,12 @@ static int makeDaemon()
 }
 
 
-#elif BLD_WIN_LIKE
+#elif BIT_WIN_LIKE
 /*********************************** Locals ***********************************/
 
 #define HEART_BEAT_PERIOD   (10 * 1000) /* Default heart beat period (10 sec) */
 #define RESTART_MAX         (15)        /* Max restarts per hour */
-#define SERVICE_DESCRIPTION ("Manages " BLD_NAME)
+#define SERVICE_DESCRIPTION ("Manages " BIT_NAME)
 
 typedef struct App {
     HWND         hwnd;               /* Application window handle */
@@ -877,7 +877,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
 
     setAppDefaults();
 
-    mprSetAppName(BLD_PRODUCT "Manager", BLD_NAME "Manager", BLD_VERSION);
+    mprSetAppName(BIT_PRODUCT "Manager", BIT_NAME "Manager", BIT_VERSION);
     app->appName = mprGetAppName();
     app->appTitle = mprGetAppTitle(mpr);
     mprSetLogHandler(logHandler);
@@ -1147,7 +1147,7 @@ static void run()
         Expect to find the service executable in the same directory as this manager program.
      */
     if (app->serviceProgram == 0) {
-        path = sfmt("\"%s\\%s.exe\"", mprGetAppDir(), BLD_PRODUCT);
+        path = sfmt("\"%s\\%s.exe\"", mprGetAppDir(), BIT_PRODUCT);
     } else {
         path = sfmt("\"%s\"", app->serviceProgram);
     }
@@ -1553,10 +1553,10 @@ static int tellSCM(long state, long exitCode, long wait)
 static void setAppDefaults()
 {
     app->appName = mprGetAppName();
-    app->serviceProgram = sjoin(mprGetAppDir(), "\\", BLD_PRODUCT, ".exe", NULL);
-    app->serviceName = sclone(BLD_COMPANY "-" BLD_PRODUCT);
+    app->serviceProgram = sjoin(mprGetAppDir(), "\\", BIT_PRODUCT, ".exe", NULL);
+    app->serviceName = sclone(BIT_COMPANY "-" BIT_PRODUCT);
     app->serviceHome = NULL;
-    app->serviceTitle = sclone(BLD_NAME);
+    app->serviceTitle = sclone(BIT_NAME);
     app->serviceStopped = 0;
 }
 
@@ -1601,7 +1601,7 @@ static void gracefulShutdown(MprTime timeout)
 {
     HWND    hwnd;
 
-    hwnd = FindWindow(BLD_PRODUCT, BLD_NAME);
+    hwnd = FindWindow(BIT_PRODUCT, BIT_NAME);
     if (hwnd) {
         PostMessage(hwnd, WM_QUIT, 0, 0L);
 
@@ -1611,7 +1611,7 @@ static void gracefulShutdown(MprTime timeout)
         while (timeout > 0 && hwnd) {
             mprSleep(100);
             timeout -= 100;
-            hwnd = FindWindow(BLD_PRODUCT, BLD_NAME);
+            hwnd = FindWindow(BIT_PRODUCT, BIT_NAME);
             if (hwnd == 0) {
                 return;
             }
@@ -1628,7 +1628,7 @@ static void gracefulShutdown(MprTime timeout)
 void stubManager() {
     fprintf(stderr, "Manager not supported on this architecture");
 }
-#endif /* BLD_WIN_LIKE */
+#endif /* BIT_WIN_LIKE */
 
 /*
     @copy   default

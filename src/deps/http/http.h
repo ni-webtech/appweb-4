@@ -39,10 +39,10 @@ struct HttpUri;
 #define HTTP_DEFAULT_PORT 80
 
 #ifndef HTTP_NAME
-#define HTTP_NAME "Embedthis-http/" BLD_VERSION             /**< Default library name used in Http headers */
+#define HTTP_NAME "Embedthis-http/" BIT_VERSION             /**< Default library name used in Http headers */
 #endif
 
-#if BLD_TUNE == MPR_TUNE_SIZE || DOXYGEN
+#if BIT_TUNE == MPR_TUNE_SIZE || DOXYGEN
     /*  
         Tune for size
      */
@@ -61,7 +61,7 @@ struct HttpUri;
     #define HTTP_CLIENTS_HASH          (131)                /**< Hash table for client IP addresses */
     #define HTTP_MAX_ROUTE_MATCHES     32                   /**< Maximum number of submatches in routes */
 
-#elif BLD_TUNE == MPR_TUNE_BALANCED
+#elif BIT_TUNE == MPR_TUNE_BALANCED
     /*  
         Tune balancing speed and size
      */
@@ -1852,7 +1852,7 @@ typedef struct HttpConn {
     HttpHeadersCallback headersCallback;    /**< Callback to fill headers */
     void            *headersCallbackArg;    /**< Arg to fillHeaders */
 
-#if BLD_DEBUG
+#if BIT_DEBUG
     MprTime         startTime;              /**< Start time of request */
     uint64          startTicks;             /**< Start tick time of request */
 #endif
@@ -2487,7 +2487,7 @@ extern int httpCheckAuth(HttpConn *conn);
 extern HttpAuth *httpCreateInheritedAuth(HttpAuth *parent);
 
 
-#if BLD_FEATURE_AUTH_FILE
+#if BIT_FEATURE_AUTH_FILE
 /** 
     User Authorization
     File-based authorization backend
@@ -2840,7 +2840,7 @@ extern bool httpValidateFileCredentials(HttpAuth *auth, cchar *realm, cchar *use
     cchar *requiredPass, char **msg);
 #endif /* AUTH_FILE */
 
-#if BLD_FEATURE_AUTH_PAM
+#if BIT_FEATURE_AUTH_PAM
 
 /**
     Get the user password from a PAM database

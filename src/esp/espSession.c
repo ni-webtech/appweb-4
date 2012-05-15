@@ -8,7 +8,7 @@
 
 #include    "esp.h"
 
-#if BLD_FEATURE_ESP
+#if BIT_FEATURE_ESP
 /********************************** Forwards  *********************************/
 
 static char *makeKey(EspSession *sp, cchar *key);
@@ -202,7 +202,7 @@ static char *makeKey(EspSession *sp, cchar *key)
     return sfmt("session-%s-%s", sp->id, key);
 }
 
-#endif /* BLD_FEATURE_ESP */
+#endif /* BIT_FEATURE_ESP */
 /*
     @copy   default
  

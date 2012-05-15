@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
         exit(4);
     }
 
-#if BLD_FEATURE_SSL
+#if BIT_FEATURE_SSL
     if (!mprLoadSsl(0)) {
         return 0;
     }
@@ -350,7 +350,7 @@ bool matchAnyCase(MprTestGroup *gp, char *key, char *value)
         return 1;
     }
     trim = strim(vp, "\"", MPR_TRIM_BOTH);
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     if (vp == 0 || scasecmp(trim, value) != 0)
 #else
     if (vp == 0 || value == 0 || scmp(trim, value) != 0)

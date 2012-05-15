@@ -12,9 +12,9 @@ OS="win"
 PROFILE="debug"
 CONFIG="${OS}-${ARCH}-${PROFILE}"
 CC="cl.exe"
-LD="link"
+LD="link.exe"
 CFLAGS="-nologo -GR- -W3 -Zi -Od -MDd"
-DFLAGS="-D_REENTRANT -D_MT -DBLD_DEBUG"
+DFLAGS="-D_REENTRANT -D_MT -DBIT_DEBUG"
 IFLAGS="-I${CONFIG}/inc"
 LDFLAGS="-nologo -nodefaultlib -incremental:no -debug -machine:x86"
 LIBPATHS="-libpath:${CONFIG}/bin"
@@ -144,6 +144,10 @@ cp -r src/esp/esp-appweb.conf ${CONFIG}/bin/esp-appweb.conf
 
 "${LD}" -dll -out:${CONFIG}/bin/mod_cgi.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/mod_cgi.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/cgiHandler.obj ${LIBS} libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
+"${CC}" -c -Fo${CONFIG}/obj/ejsHandler.obj -Fd${CONFIG}/obj/ejsHandler.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc -Iejs.h src/modules/ejsHandler.c
+
+"${LD}" -dll -out:${CONFIG}/bin/mod_ejs.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/mod_ejs.def ${LDFLAGS} -L/Users/mob/git/appweb ${LIBPATHS} ${CONFIG}/obj/ejsHandler.obj ${LIBS} ejs libmpr.lib libmprssl.lib libhttp.lib libpcre.lib libappweb.lib
+
 "${CC}" -c -Fo${CONFIG}/obj/auth.obj -Fd${CONFIG}/obj/auth.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/utils/auth.c
 
 "${LD}" -out:${CONFIG}/bin/auth.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/auth.obj ${LIBS} libmpr.lib
@@ -163,7 +167,7 @@ cp -r src/server/appwebMonitor.h ${CONFIG}/inc/appwebMonitor.h
 
 "${LD}" -out:${CONFIG}/bin/appweb.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/appweb.obj ${LIBS} libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
-"rc" -nologo -Fo ${CONFIG}/obj/appwebMonitor.res src/server/WIN/appwebMonitor.rc
+"rc.exe" -nologo -Fo ${CONFIG}/obj/appwebMonitor.res src/server/WIN/appwebMonitor.rc
 
 "${CC}" -c -Fo${CONFIG}/obj/appwebMonitor.obj -Fd${CONFIG}/obj/appwebMonitor.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/server/WIN/appwebMonitor.c
 

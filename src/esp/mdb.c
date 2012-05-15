@@ -13,7 +13,7 @@
 #include    "mdb.h"
 #include    "pcre.h"
 
-#if BLD_FEATURE_ESP && BLD_FEATURE_MDB
+#if BIT_FEATURE_ESP && BIT_FEATURE_MDB
 /************************************* Local **********************************/
 
 #define MDB_LOAD_BEGIN   1      /* Initial state */
@@ -1628,7 +1628,7 @@ static int parseOperation(cchar *operation)
 }
 
 
-#endif /* BLD_FEATURE_ESP && BLD_FEATURE_ESP && BLD_FEATURE_MDB */
+#endif /* BIT_FEATURE_ESP && BIT_FEATURE_ESP && BIT_FEATURE_MDB */
 /*
     @copy   default
     

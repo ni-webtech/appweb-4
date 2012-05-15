@@ -22,7 +22,7 @@
 
 #include    "bit.h"
 
-#if BLD_FEATURE_MATRIXSSL
+#if BIT_FEATURE_MATRIXSSL
 #if WIN32
  #include   <winsock2.h>
  #include   <windows.h>
@@ -859,7 +859,7 @@ static ssize flushMss(MprSocket *sp)
 #else
 
 int mprCreateMatrixSslModule() { return -1; }
-#endif /* BLD_FEATURE_MATRIXSSL */
+#endif /* BIT_FEATURE_MATRIXSSL */
 
 /*
     @copy   default
@@ -913,7 +913,7 @@ int mprCreateMatrixSslModule() { return -1; }
 
 #include    "mpr.h"
 
-#if BLD_FEATURE_OPENSSL
+#if BIT_FEATURE_OPENSSL
 
 /* Clashes with WinCrypt.h */
 #undef OCSP_RESPONSE
@@ -1016,7 +1016,7 @@ int mprCreateOpenSslModule(bool lazy)
     randBuf.pid = getpid();
     RAND_seed((void*) &randBuf, sizeof(randBuf));
 
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     mprLog(6, "OpenSsl: Before calling RAND_load_file");
     RAND_load_file("/dev/urandom", 256);
     mprLog(6, "OpenSsl: After calling RAND_load_file");
@@ -1037,7 +1037,7 @@ int mprCreateOpenSslModule(bool lazy)
     CRYPTO_set_dynlock_destroy_callback(sslDestroyDynLock);
     CRYPTO_set_dynlock_lock_callback(sslDynLock);
 
-#if !BLD_WIN_LIKE
+#if !BIT_WIN_LIKE
     OpenSSL_add_all_algorithms();
 #endif
 
@@ -1972,7 +1972,7 @@ static DH *get_dh1024()
 
 #else
 int mprCreateOpenSslModule(bool lazy) { return -1; }
-#endif /* BLD_FEATURE_OPENSSL */
+#endif /* BIT_FEATURE_OPENSSL */
 
 /*
     @copy   default
@@ -2026,7 +2026,7 @@ int mprCreateOpenSslModule(bool lazy) { return -1; }
 
 #include    "mpr.h"
 
-#if BLD_FEATURE_SSL
+#if BIT_FEATURE_SSL
 /************************************ Code ************************************/
 /*
     Load the ssl provider
@@ -2038,7 +2038,7 @@ static MprModule *loadSsl(bool lazy)
     if (MPR->flags & MPR_SSL_PROVIDER_LOADED) {
         return mprLookupModule("sslModule");
     }
-#if BLD_FEATURE_OPENSSL
+#if BIT_FEATURE_OPENSSL
     /*
         NOTE: preference given to open ssl if both are enabled
      */
@@ -2046,7 +2046,7 @@ static MprModule *loadSsl(bool lazy)
     if (mprCreateOpenSslModule(lazy) < 0) {
         return 0;
     }
-#elif BLD_FEATURE_MATRIXSSL
+#elif BIT_FEATURE_MATRIXSSL
     mprLog(4, "Loading MatrixSSL module");
     if (mprCreateMatrixSslModule(lazy) < 0) {
         return 0;

@@ -8,7 +8,7 @@
 
 #include    "esp.h"
 
-#if BLD_FEATURE_ESP
+#if BIT_FEATURE_ESP
 
 /************************************ Defines *********************************/
 /*
@@ -90,7 +90,7 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
 
             } else if (matchToken(&cp, "${LIBPATH}")) {
                 /* Library directory for Appweb libraries for the target */
-                mprPutStringToBuf(buf, mprJoinPath(appweb->platformDir, BLD_LIB_NAME)); 
+                mprPutStringToBuf(buf, mprJoinPath(appweb->platformDir, BIT_LIB_NAME)); 
 
             } else if (matchToken(&cp, "${LIBS}")) {
                 /* Required libraries to link. These may have nested ${TOKENS} */
@@ -294,14 +294,14 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
         if (runCommand(conn, eroute->link, csource, module) < 0) {
             return 0;
         }
-#if !(BLD_DEBUG && MACOSX)
+#if !(BIT_DEBUG && MACOSX)
         /*
             MAC needs the object for debug information
          */
-        mprDeletePath(mprJoinPathExt(mprTrimPathExt(module), &BLD_OBJ[1]));
+        mprDeletePath(mprJoinPathExt(mprTrimPathExt(module), &BIT_OBJ[1]));
 #endif
     }
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     {
         /*
             Windows leaves intermediate object in the current directory
@@ -825,9 +825,9 @@ static cchar *getDebug()
     appweb = MPR->appwebService;
     debug = sends(appweb->platform, "-debug");
     if (scontains(appweb->platform, "win-", -1)) {
-        return (debug) ? "-DBLD_DEBUG -Zi -Od" : "-O";
+        return (debug) ? "-DBIT_DEBUG -Zi -Od" : "-O";
     }
-    return (debug) ? "-DBLD_DEBUG -g" : "-O2";
+    return (debug) ? "-DBIT_DEBUG -g" : "-O2";
 }
 
 
@@ -888,7 +888,7 @@ static cchar *getMappedArch(cchar *arch)
 
 static cchar *getWinSDK()
 {
-#if WIN
+#if WINDOWS
     cchar   *path;
 
     path = mprReadRegistry("HKLM\\SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows", "CurrentInstallFolder");
@@ -904,13 +904,13 @@ static cchar *getWinSDK()
 
 static cchar *getVisualStudio()
 {
-#if WIN
+#if WINDOWS
     cchar   *path;
 
     //  MOB - check this key. Does 'Visual Studio' have a space?
-    path = mprReadRegistry("HKLM\\SOFTWARE\\Microsoft\\VisualStudio\\" BLD_VISUAL_STUDIO_VERSION, "ShellFolder");
+    path = mprReadRegistry("HKLM\\SOFTWARE\\Microsoft\\VisualStudio\\" BIT_VISUAL_STUDIO_VERSION, "ShellFolder");
     if (!path) {
-        path = mprReadRegistry("HKCU\\SOFTWARE\\Microsoft\\VisualStudio\\" BLD_VISUAL_STUDIO_VERSION "_Config", 
+        path = mprReadRegistry("HKCU\\SOFTWARE\\Microsoft\\VisualStudio\\" BIT_VISUAL_STUDIO_VERSION "_Config", 
             "ShellFolder");
         if (!path) {
             path = "${VS}";
@@ -925,7 +925,7 @@ static cchar *getVisualStudio()
 
 static cchar *getCompilerPath(cchar *os, cchar *arch)
 {
-#if WIN
+#if WINDOWS
     /* 
         Get the real system architecture (32 or 64 bit)
      */
@@ -948,7 +948,7 @@ static cchar *getCompilerPath(cchar *os, cchar *arch)
 #endif
 }
 
-#endif /* BLD_FEATURE_ESP */
+#endif /* BIT_FEATURE_ESP */
 /*
     @copy   default
     

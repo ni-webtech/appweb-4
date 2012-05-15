@@ -11,7 +11,7 @@
 
 #include    "appweb.h"
 
-#if BLD_FEATURE_ESP
+#if BIT_FEATURE_ESP
 
 #ifdef __cplusplus
 extern "C" {
@@ -787,11 +787,11 @@ extern int ediParseTypeString(cchar *type);
  */
 extern void ediManageEdiRec(EdiRec *rec, int flags);
 
-#if BLD_FEATURE_MDB
+#if BIT_FEATURE_MDB
 extern void mdbInit();
 #endif
 
-#if BLD_FEATURE_SDB
+#if BIT_FEATURE_SDB
 extern void sdbInit();
 #endif
 
@@ -799,7 +799,7 @@ extern void sdbInit();
 } /* extern C */
 #endif
 
-#endif /* BLD_FEATURE_ESP */
+#endif /* BIT_FEATURE_ESP */
 #endif /* _h_EDI */
 
 /*

@@ -5,42 +5,42 @@
 #	Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
 #
 
-BLD_PRODUCT=${settings.product}
-BLD_NAME="${settings.title}"
-BLD_CFG_PREFIX="${prefixes.config}"
-BLD_LIB_PREFIX="${prefixes.lib}"
+BIT_PRODUCT=${settings.product}
+BIT_NAME="${settings.title}"
+BIT_CFG_PREFIX="${prefixes.config}"
+BIT_LIB_PREFIX="${prefixes.lib}"
 
 remove() {
 	local cdir=`pwd`
 
-	if [ -x $BLD_CFG_PREFIX ] ; then
-		cd $BLD_CFG_PREFIX
-		removeIntermediateFiles access.log error.log '*.log.old' .dummy $BLD_PRODUCT.conf .*.log make.log
+	if [ -x $BIT_CFG_PREFIX ] ; then
+		cd $BIT_CFG_PREFIX
+		removeIntermediateFiles access.log error.log '*.log.old' .dummy $BIT_PRODUCT.conf .*.log make.log
 		cleanDir
 		cd $cdir 
-		rmdir $BLD_CFG_PREFIX 2>/dev/null || true
+		rmdir $BIT_CFG_PREFIX 2>/dev/null || true
 	fi
-	if [ -x $BLD_LIB_PREFIX ] ; then
-		cd $BLD_LIB_PREFIX
-		removeIntermediateFiles access.log error.log '*.log.old' .dummy $BLD_PRODUCT.conf .*.log make.log
+	if [ -x $BIT_LIB_PREFIX ] ; then
+		cd $BIT_LIB_PREFIX
+		removeIntermediateFiles access.log error.log '*.log.old' .dummy $BIT_PRODUCT.conf .*.log make.log
 		cleanDir
 		cd $cdir 
-		rmdir $BLD_LIB_PREFIX 2>/dev/null || true
+		rmdir $BIT_LIB_PREFIX 2>/dev/null || true
 	fi
 }
 
 purge() {
 	local cdir=`pwd`
 	remove
-	if [ -x $BLD_CFG_PREFIX ] ; then
-		cd $BLD_CFG_PREFIX
+	if [ -x $BIT_CFG_PREFIX ] ; then
+		cd $BIT_CFG_PREFIX
 		removeIntermediateFiles access.log error.log '*.log.old' .dummy \
-			$BLD_PRODUCT.conf .appweb_pid.log '.httpClient_pid.log' make.log \
+			$BIT_PRODUCT.conf .appweb_pid.log '.httpClient_pid.log' make.log \
 			appweb.conf groups.db mime.types php.ini server.crt server.key \
 			server.key.pem users.db
 		cleanDir
 		cd $cdir 
-		rmdir $BLD_CFG_PREFIX 2>/dev/null || true
+		rmdir $BIT_CFG_PREFIX 2>/dev/null || true
 	fi
 }
 
@@ -107,5 +107,5 @@ case $action in
 esac
 
 echo
-echo "$BLD_NAME $action successful"
+echo "$BIT_NAME $action successful"
 exit 0

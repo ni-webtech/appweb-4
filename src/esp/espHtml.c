@@ -9,7 +9,7 @@
 #include    "esp.h"
 #include    "edi.h"
 
-#if BLD_FEATURE_ESP
+#if BIT_FEATURE_ESP
 /************************************* Local **********************************/
 
 static char *defaultScripts[] = {
@@ -1135,7 +1135,7 @@ void espInitHtmlOptions(Esp *esp)
 }
 
 
-#endif /* BLD_FEATURE_ESP */
+#endif /* BIT_FEATURE_ESP */
 /*
     @copy   default
     

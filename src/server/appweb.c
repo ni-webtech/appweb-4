@@ -45,10 +45,10 @@ static void manageApp(AppwebApp *app, int flags);
 static int initializeAppweb(cchar *ip, int port);
 static void usageError();
 
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
 static void traceHandler(void *ignored, MprSignal *sp);
 static int  unixSecurityChecks(cchar *program, cchar *home);
-#elif BLD_WIN_LIKE
+#elif BIT_WIN_LIKE
 static int writePort(MaServer *server);
 static long msgProc(HWND hwnd, uint msg, uint wp, long lp);
 #endif
@@ -56,15 +56,15 @@ static long msgProc(HWND hwnd, uint msg, uint wp, long lp);
 /*
     If customize.h does not define, set reasonable defaults.
  */
-#ifndef BLD_SERVER_ROOT
-    #define BLD_SERVER_ROOT mprGetCurrentPath()
+#ifndef BIT_SERVER_ROOT
+    #define BIT_SERVER_ROOT mprGetCurrentPath()
 #endif
-#ifndef BLD_CONFIG_FILE
-    #define BLD_CONFIG_FILE NULL
+#ifndef BIT_CONFIG_FILE
+    #define BIT_CONFIG_FILE NULL
 #endif
 
-#ifndef BLD_APPWEB_PATH
-    #define BLD_APPWEB_PATH "appweb"
+#ifndef BIT_APPWEB_PATH
+    #define BIT_APPWEB_PATH "appweb"
 #endif
 
 /*********************************** Code *************************************/
@@ -82,12 +82,12 @@ MAIN(appweb, int argc, char **argv, char **envp)
     port = -1;
     verbose = 0;
     logSpec = 0;
-    argv[0] = BLD_APPWEB_PATH;
+    argv[0] = BIT_APPWEB_PATH;
 
     if ((mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD)) == NULL) {
         exit(1);
     }
-    mprSetAppName(BLD_PRODUCT, BLD_NAME, BLD_VERSION);
+    mprSetAppName(BIT_PRODUCT, BIT_NAME, BIT_VERSION);
 
     if ((app = mprAllocObj(AppwebApp, manageApp)) == NULL) {
         exit(2);
@@ -95,15 +95,15 @@ MAIN(appweb, int argc, char **argv, char **envp)
     mprAddRoot(app);
     mprAddStandardSignals();
 
-#if BLD_FEATURE_ROMFS
+#if BIT_FEATURE_ROMFS
     extern MprRomInode romFiles[];
     mprSetRomFileSystem(romFiles);
 #endif
 
     app->mpr = mpr;
     app->workers = -1;
-    app->configFile = BLD_CONFIG_FILE;
-    app->home = BLD_SERVER_ROOT;
+    app->configFile = BIT_CONFIG_FILE;
+    app->home = BIT_SERVER_ROOT;
     app->documents = app->home;
     argc = mpr->argc;
     argv = (char**) mpr->argv;
@@ -119,7 +119,7 @@ MAIN(appweb, int argc, char **argv, char **envp)
             }
             app->configFile = sclone(argv[++argind]);
 
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
         } else if (smatch(argp, "--chroot")) {
             if (argind >= argc) {
                 usageError();
@@ -172,7 +172,7 @@ MAIN(appweb, int argc, char **argv, char **envp)
             verbose++;
 
         } else if (smatch(argp, "--version") || smatch(argp, "-V")) {
-            mprPrintf("%s %s-%s\n", mprGetAppTitle(), BLD_VERSION, BLD_NUMBER);
+            mprPrintf("%s %s-%s\n", mprGetAppTitle(), BIT_VERSION, BIT_NUMBER);
             exit(0);
 
         } else {
@@ -252,7 +252,7 @@ static void manageApp(AppwebApp *app, int flags)
  */
 static int changeRoot(cchar *jail)
 {
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     if (chdir(app->home) < 0) {
         mprError("%s: Can't change directory to %s", mprGetAppName(), app->home);
         return MPR_ERR_CANT_INITIALIZE;
@@ -287,9 +287,9 @@ static int initializeAppweb(cchar *ip, int port)
     if (app->workers >= 0) {
         mprSetMaxWorkers(app->workers);
     }
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     writePort(app->server);
-#elif BLD_UNIX_LIKE
+#elif BIT_UNIX_LIKE
     app->traceToggle = mprAddSignalHandler(SIGUSR2, traceHandler, 0, 0, MPR_SIGNAL_AFTER);
 #endif
     return 0;
@@ -308,7 +308,7 @@ static int findAppwebConf()
         if (!userPath) {
             app->configFile = mprJoinPath(app->home, "appweb.conf");
             if (!mprPathExists(app->configFile, R_OK)) {
-                app->configFile = mprJoinPath(mprGetAppDir(), sfmt("../%s/%s.conf", BLD_LIB_NAME, mprGetAppName()));
+                app->configFile = mprJoinPath(mprGetAppDir(), sfmt("../%s/%s.conf", BIT_LIB_NAME, mprGetAppName()));
             }
         }
         if (!mprPathExists(app->configFile, R_OK)) {
@@ -350,7 +350,7 @@ static void usageError(Mpr *mpr)
  */
 static int checkEnvironment(cchar *program)
 {
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
     char   *home;
     home = mprGetCurrentPath();
     if (unixSecurityChecks(program, home) < 0) {
@@ -363,7 +363,7 @@ static int checkEnvironment(cchar *program)
 }
 
 
-#if BLD_UNIX_LIKE
+#if BIT_UNIX_LIKE
 /*
     SIGUSR2 will toggle trace from level 2 to 6
  */
@@ -412,10 +412,10 @@ static int unixSecurityChecks(cchar *program, cchar *home)
     }
     return 0;
 }
-#endif /* BLD_HOST_UNIX */
+#endif /* BIT_HOST_UNIX */
 
 
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
 /*
     Write the port so the monitor can manage
  */ 
@@ -426,7 +426,7 @@ static int writePort(MaServer *server)
     int         fd, len;
 
     host = mprGetFirstItem(server->http->hosts);
-    //  TODO - should really go to a BLD_LOG_DIR (then fix uninstall.sh)
+    //  TODO - should really go to a BIT_LOG_DIR (then fix uninstall.sh)
     path = mprJoinPath(mprGetAppDir(), "../.port.log");
     if ((fd = open(path, O_CREAT | O_WRONLY | O_TRUNC, 0666)) < 0) {
         mprError("Could not create port file %s", path);
@@ -443,7 +443,7 @@ static int writePort(MaServer *server)
     close(fd);
     return 0;
 }
-#endif /* BLD_WIN_LIKE */
+#endif /* BIT_WIN_LIKE */
 
 
 #if VXWORKS

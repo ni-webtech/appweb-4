@@ -11,7 +11,7 @@
 
 #include    "appweb.h"
 
-#if BLD_FEATURE_CGI
+#if BIT_FEATURE_CGI
 /************************************ Locals ***********************************/
 
 #define MA_CGI_SEEN_HEADER          0x1
@@ -29,17 +29,17 @@ static int relayCgiResponse(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
 static void writeToCGI(HttpQueue *q);
 static ssize readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf);
 
-#if BLD_DEBUG
+#if BIT_DEBUG
     static void traceCGIData(MprCmd *cmd, char *src, ssize size);
     #define traceData(cmd, src, size) traceCGIData(cmd, src, size)
 #else
     #define traceData(cmd, src, size)
 #endif
 
-#if BLD_WIN_LIKE || VXWORKS
+#if BIT_WIN_LIKE || VXWORKS
     static void findExecutable(HttpConn *conn, char **program, char **script, char **bangScript, char *fileName);
 #endif
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     static void checkCompletion(HttpQueue *q, MprEvent *event);
 #endif
 
@@ -156,7 +156,7 @@ static void startCgi(HttpQueue *q)
 }
 
 
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
 /*
     This routine is called for when the outgoing queue is writable.  We don't actually do output here, just poll
     until the command is complete.
@@ -729,7 +729,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, cchar ***argvp)
         indexQuery = 0;
     }
 
-#if BLD_WIN_LIKE || VXWORKS
+#if BIT_WIN_LIKE || VXWORKS
 {
     char    *bangScript, *cmdBuf, *program, *cmdScript;
 
@@ -835,7 +835,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, cchar ***argvp)
 }
 
 
-#if BLD_WIN_LIKE || VXWORKS
+#if BIT_WIN_LIKE || VXWORKS
 /*
     If the program has a UNIX style "#!/program" string at the start of the file that program will be selected 
     and the original program will be passed as the first arg to that program with argv[] appended after that. If 
@@ -888,7 +888,7 @@ static void findExecutable(HttpConn *conn, char **program, char **script, char *
     }
     mprAssert(path && *path);
 
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     if (ext && (strcmp(ext, ".bat") == 0 || strcmp(ext, ".cmd") == 0)) {
         /*
             Let a mime action override COMSPEC
@@ -974,7 +974,7 @@ static char *getCgiToken(MprBuf *buf, cchar *delim)
 }
 
 
-#if BLD_DEBUG
+#if BIT_DEBUG
 /*
     Trace output received from the cgi process
  */
@@ -1074,7 +1074,7 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     handler->incomingData = incomingCgiData; 
     handler->open = openCgi; 
     handler->start = startCgi; 
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
     handler->process = processCgi; 
 #endif
             
@@ -1084,14 +1084,14 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     return 0;
 }
 
-#else /* BLD_FEATURE_CGI */
+#else /* BIT_FEATURE_CGI */
 
 int maCgiHandlerInit(Http *http, MprModule *module)
 {
     mprNop(0);
     return 0;
 }
-#endif /* BLD_FEATURE_CGI */
+#endif /* BIT_FEATURE_CGI */
 
 /*
     @copy   default

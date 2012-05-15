@@ -14,7 +14,7 @@
 
 #include    <winUser.h>
 
-#if BLD_WIN_LIKE
+#if BIT_WIN_LIKE
 /*********************************** Locals ***********************************/
 
 typedef struct App {
@@ -87,12 +87,12 @@ APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *command, int junk2)
     stop = 0;
     manage = 0;
     app->appInst = inst;
-    app->serviceName = sclone(BLD_COMPANY "-" BLD_PRODUCT);
-    app->serviceTitle = sclone(BLD_NAME);
-    app->serviceWindowName = sclone(BLD_PRODUCT "Angel");
-    app->serviceWindowTitle = sclone(BLD_NAME "Angel");
+    app->serviceName = sclone(BIT_COMPANY "-" BIT_PRODUCT);
+    app->serviceTitle = sclone(BIT_NAME);
+    app->serviceWindowName = sclone(BIT_PRODUCT "Angel");
+    app->serviceWindowTitle = sclone(BIT_NAME "Angel");
 
-    mprSetAppName(BLD_PRODUCT "Monitor", BLD_NAME " Monitor", BLD_VERSION);
+    mprSetAppName(BIT_PRODUCT "Monitor", BIT_NAME " Monitor", BIT_VERSION);
     mprSetLogHandler(logHandler);
     chdir(mprGetAppDir());
 
@@ -318,7 +318,7 @@ static long msgProc(HWND hwnd, uint msg, uint wp, long lp)
             /*
                 Single-threaded users beware. This blocks !!
              */
-            mprSprintf(buf, sizeof(buf), "%s %s-%s", BLD_NAME, BLD_VERSION, BLD_NUMBER);
+            mprSprintf(buf, sizeof(buf), "%s %s-%s", BIT_NAME, BIT_VERSION, BIT_NUMBER);
             MessageBoxEx(hwnd, buf, mprGetAppTitle(), MB_OK, 0);
             break;
 
@@ -427,12 +427,12 @@ static int monitorEvent(HWND hwnd, WPARAM wp, LPARAM lp)
         state = queryService();
 
         if (state < 0 || state & SERVICE_STOPPED) {
-            mprSprintf(textBuf, sizeof(textBuf), "%s Stopped", BLD_NAME);
+            mprSprintf(textBuf, sizeof(textBuf), "%s Stopped", BIT_NAME);
             updateMenu(MA_MENU_STATUS, textBuf, 0, -1);
             updateMenu(MA_MENU_START, 0, 1, 0);
             updateMenu(MA_MENU_STOP, 0, -1, 0);
         } else {
-            mprSprintf(textBuf, sizeof(textBuf), "%s Running", BLD_NAME);
+            mprSprintf(textBuf, sizeof(textBuf), "%s Running", BIT_NAME);
             updateMenu(MA_MENU_STATUS, textBuf, 0, 1);
             updateMenu(MA_MENU_START, 0, -1, 0);
             updateMenu(MA_MENU_STOP, 0, 1, 0);
