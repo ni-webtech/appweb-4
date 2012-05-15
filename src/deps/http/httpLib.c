@@ -8430,12 +8430,15 @@ void httpRouteRequest(HttpConn *conn)
     conn->trace[0] = route->trace[0];
     conn->trace[1] = route->trace[1];
 
-    //  MOB - not right as the data could be queued in the service queue and no error
+    if (rewrites >= HTTP_MAX_REWRITE) {
+        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Too many request rewrites");
+    }
     if (conn->finalized) {
+        /* 
+            Must be no data in queues as handlers and pipeline are not yet started. Only errors and redirects 
+            using tx->altBody 
+         */ 
         tx->handler = conn->http->passHandler;
-        if (rewrites >= HTTP_MAX_REWRITE) {
-            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Too many request rewrites");
-        }
     }
     if (rx->traceLevel >= 0) {
         mprLog(rx->traceLevel, "Select handler: \"%s\" for \"%s\"", tx->handler->name, rx->uri);
