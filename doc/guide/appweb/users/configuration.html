@@ -357,7 +357,7 @@ Include conf/applications/*.conf
                         <td>Control whether updated ESP source code triggers reloading.</td></tr>
                     <tr>
                         <td><a href="dir/sandbox.html#exitTimeout">ExitTimeout</a></td>
-                        <td>Define the timeout period to wait for requests when exiting or restarting.</td>
+                        <td>Define the timeout period to wait for requests to complete before exiting or restarting.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/route.html#header">Header</a></td>
@@ -384,6 +384,10 @@ Include conf/applications/*.conf
                         <td>Set the maximum size of the Appweb cache for responses and sessions.</td>
                     </tr>
                     <tr>
+                        <td><a href="dir/sandbox.html#limitCacheItem">LimitCacheItem</a></td>
+                        <td>Set the maximum size of a single item in the Appweb cache.</td>
+                    </tr>
+                    <tr>
                         <td><a href="dir/sandbox.html#limitChunk">LimitChunk</a></td>
                         <td>Set the maximum transfer chunk encoding size.</td>
                     </tr>
@@ -400,6 +404,10 @@ Include conf/applications/*.conf
                         <td>Limit the total memory usage of Appweb. This is a hard limit.</td>
                     </tr>
                     <tr>
+                        <td><a href="dir/sandbox.html#limitProcesses">LimitProcesses</a></td>
+                        <td>Maximum number of CGI processes to spawn.</td>
+                    </tr>
+                    <tr>
                         <td><a href="dir/sandbox.html#limitRequests">LimitRequests</a></td>
                         <td>Set the limit of simultaneous requests.</td>
                     </tr>
@@ -408,16 +416,16 @@ Include conf/applications/*.conf
                         <td>Set the maximum size of the incoming request body.</td>
                     </tr>
                     <tr>
+                        <td><a href="dir/sandbox.html#limitRequestForm">LimitRequestForm</a></td>
+                        <td>Set the maximum size of the incoming request form data.</td>
+                    </tr>
+                    <tr>
                         <td><a href="dir/sandbox.html#limitRequestHeader">LimitRequestHeader</a></td>
                         <td>Set the maximum total request header size.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/sandbox.html#limitRequestHeaderLines">LimitRequestHeaderLines</a></td>
                         <td>Set the maximum number of request header lines.</td>
-                    </tr>
-                    <tr>
-                        <td><a href="dir/sandbox.html#limitRequestForm">LimitRequestForm</a></td>
-                        <td>Set the maximum size of the incoming request form data.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/sandbox.html#limitResponseBody">LimitResponseBody</a></td>
@@ -434,6 +442,10 @@ Include conf/applications/*.conf
                     <tr>
                         <td><a href="dir/sandbox.html#limitUri">LimitUri</a></td>
                         <td>Set the maximum size of a request URI.</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dir/sandbox.html#limitWorkers">LimitWorkers</a></td>
+                        <td>Maximum number of worker threads.</td>
                     </tr>
                     <tr>
                         <td><a href="dir/server.html#listen">Listen</a></td>
@@ -618,10 +630,6 @@ Include conf/applications/*.conf
                     <tr>
                         <td><a href="dir/vhost.html#virtualHost">VirtualHost</a></td>
                         <td>Create a directory block for virtual hosting for an IP address.</td>
-                    </tr>
-                    <tr>
-                        <td><a href="dir/sandbox.html#thread">WorkerLimit</a></td>
-                        <td>Maximum number of worker threads.</td>
                     </tr>
                 </tbody>
             </table>

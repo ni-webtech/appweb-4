@@ -44,9 +44,10 @@ static void sortList(HttpConn *conn, MprList *list);
 
 /************************************* Code ***********************************/
 /*
-    Match if the filename maps to a directory and directory listings are enabled via "Options Indexes"
+    Test if this request is for a directory listing. This routine is called directly by the fileHandler.
+    Directory listings are enabled in a route via "Options Indexes".
  */
-int maMatchDir(HttpConn *conn, HttpRoute *route, int direction)
+bool maRenderDirListing(HttpConn *conn)
 {
     HttpRx      *rx;
     HttpTx      *tx;
@@ -57,20 +58,18 @@ int maMatchDir(HttpConn *conn, HttpRoute *route, int direction)
     mprAssert(tx->filename);
     mprAssert(tx->fileInfo.checked);
 
-    if (direction & HTTP_STAGE_TX) {
-        if ((dir = httpGetRouteData(rx->route, DIR_NAME)) == 0) {
-            return HTTP_ROUTE_REJECT;
-        }
-        if (dir->enabled && tx->fileInfo.isDir && sends(rx->pathInfo, "/")) {
-            conn->data = dir;
-            return HTTP_ROUTE_OK;
-        }
+    if ((dir = httpGetRouteData(rx->route, DIR_NAME)) == 0) {
+        return 0;
     }
-    return HTTP_ROUTE_REJECT;
+    if (dir->enabled && tx->fileInfo.isDir && sends(rx->pathInfo, "/")) {
+        conn->data = dir;
+        return 1;
+    }
+    return 0;
 }
 
 
-static void readyDir(HttpQueue *q)
+static void startDir(HttpQueue *q)
 {
     HttpConn        *conn;
     HttpTx          *tx;
@@ -100,9 +99,8 @@ static void readyDir(HttpQueue *q)
         filterDirList(conn, list);
     }
     sortList(conn, list);
-
     /*
-        Get max filename
+        Get max filename size
      */
     nameSize = 0;
     for (next = 0; (dp = mprGetNextItem(list, &next)) != 0; ) {
@@ -697,8 +695,10 @@ int maOpenDirHandler(Http *http)
     if ((handler->stageData = dir = mprAllocObj(Dir, manageDir)) == 0) {
         return MPR_ERR_MEMORY;
     }
+#if UNUSED
     handler->match = maMatchDir; 
-    handler->ready = readyDir; 
+#endif
+    handler->start = startDir; 
     http->dirHandler = handler;
     dir->sortOrder = 1;
 

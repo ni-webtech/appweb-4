@@ -2499,7 +2499,7 @@ static HttpConn *openConnection(HttpConn *conn, cchar *url, struct MprSsl *ssl)
     conn->ip = sclone(ip);
     conn->port = port;
     conn->secure = uri->secure;
-    conn->keepAliveCount = (conn->limits->keepAliveCount) ? conn->limits->keepAliveCount : -1;
+    conn->keepAliveCount = (conn->limits->keepAliveMax) ? conn->limits->keepAliveMax : -1;
 
     if ((level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_CONN, NULL)) >= 0) {
         mprLog(level, "### Outgoing connection from %s:%d to %s:%d", 
@@ -2845,7 +2845,7 @@ HttpConn *httpCreateConn(Http *http, HttpEndpoint *endpoint, MprDispatcher *disp
         conn->limits = http->clientLimits;
         httpInitTrace(conn->trace);
     }
-    conn->keepAliveCount = conn->limits->keepAliveCount;
+    conn->keepAliveCount = conn->limits->keepAliveMax;
     conn->serviceq = httpCreateQueueHead(conn, "serviceq");
 
     if (dispatcher) {
@@ -2870,9 +2870,7 @@ void httpDestroyConn(HttpConn *conn)
         mprAssert(conn->http);
         httpRemoveConn(conn->http, conn);
         if (conn->endpoint) {
-            if (conn->state >= HTTP_STATE_PARSED) {
-                httpValidateLimits(conn->endpoint, HTTP_VALIDATE_CLOSE_REQUEST, conn);
-            }
+            httpValidateLimits(conn->endpoint, HTTP_VALIDATE_CLOSE_REQUEST, conn);
             httpValidateLimits(conn->endpoint, HTTP_VALIDATE_CLOSE_CONN, conn);
         }
         if (HTTP_STATE_PARSED <= conn->state && conn->state < HTTP_STATE_COMPLETE) {
@@ -3795,6 +3793,7 @@ void httpStopEndpoint(HttpEndpoint *endpoint)
 bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn)
 {
     HttpLimits      *limits;
+    Http            *http;
     cchar           *action;
     int             count, level, dir;
 
@@ -3802,17 +3801,20 @@ bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn)
     dir = HTTP_TRACE_RX;
     action = "unknown";
     mprAssert(conn->endpoint == endpoint);
-    lock(endpoint->http);
+    http = endpoint->http;
+
+    lock(http);
 
     switch (event) {
     case HTTP_VALIDATE_OPEN_CONN:
         /*
-            This active client systems with unique IP addresses.
+            This measures active client systems with unique IP addresses.
          */
-        if (endpoint->clientCount >= limits->clientCount) {
-            unlock(endpoint->http);
+        if (endpoint->clientCount >= limits->clientMax) {
+            unlock(http);
+            /*  Abort connection */
             httpError(conn, HTTP_ABORT | HTTP_CODE_SERVICE_UNAVAILABLE, 
-                "Too many concurrent clients %d/%d", endpoint->clientCount, limits->clientCount);
+                "Too many concurrent clients %d/%d", endpoint->clientCount, limits->clientMax);
             return 0;
         }
         count = (int) PTOL(mprLookupKey(endpoint->clientLoad, conn->ip));
@@ -3835,10 +3837,10 @@ bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn)
         break;
     
     case HTTP_VALIDATE_OPEN_REQUEST:
-        if (endpoint->requestCount >= limits->requestCount) {
-            unlock(endpoint->http);
-            httpError(conn, HTTP_ABORT | HTTP_CODE_SERVICE_UNAVAILABLE, 
-                "Too many concurrent requests %d/%d", endpoint->requestCount, limits->requestCount);
+        if (endpoint->requestCount >= limits->requestMax) {
+            unlock(http);
+            httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, "Server overloaded");
+            mprError("Too many concurrent requests %d/%d", endpoint->requestCount, limits->requestMax);
             return 0;
         }
         endpoint->requestCount++;
@@ -3847,24 +3849,40 @@ bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn)
         break;
 
     case HTTP_VALIDATE_CLOSE_REQUEST:
-        if (conn->rx && conn->rx->flags & HTTP_LIMIT_DENIED && conn->state >= HTTP_STATE_PARSED) {
-            event = 0;
-        } else {
+        if (conn->rx) {
+            /* Requests incremented only when conn->rx is assigned */
             endpoint->requestCount--;
             mprAssert(endpoint->requestCount >= 0);
             action = "close request";
             dir = HTTP_TRACE_TX;
         }
         break;
+
+    case HTTP_VALIDATE_OPEN_PROCESS:
+        if (http->processCount >= limits->processMax) {
+            unlock(http);
+            httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, "Server overloaded");
+            mprError("Too many concurrent processes %d/%d", http->processCount, limits->processMax);
+            return 0;
+        }
+        http->processCount++;
+        action = "start process";
+        dir = HTTP_TRACE_RX;
+        break;
+
+    case HTTP_VALIDATE_CLOSE_PROCESS:
+        http->processCount--;
+        mprAssert(http->processCount >= 0);
+        break;
     }
     if (event == HTTP_VALIDATE_CLOSE_CONN || event == HTTP_VALIDATE_CLOSE_REQUEST) {
         if ((level = httpShouldTrace(conn, dir, HTTP_TRACE_LIMITS, NULL)) >= 0) {
             LOG(4, "Validate request for %s. Active connections %d, active requests: %d/%d, active client IP %d/%d", 
-                action, mprGetListLength(endpoint->http->connections), endpoint->requestCount, limits->requestCount, 
-                endpoint->clientCount, limits->clientCount);
+                action, mprGetListLength(http->connections), endpoint->requestCount, limits->requestMax, 
+                endpoint->clientCount, limits->clientMax);
         }
     }
-    unlock(endpoint->http);
+    unlock(http);
     return 1;
 }
 
@@ -4234,22 +4252,22 @@ static void errorv(HttpConn *conn, int flags, cchar *fmt, va_list args)
     if (status == 0) {
         status = HTTP_CODE_INTERNAL_SERVER_ERROR;
     }
-    if (flags & HTTP_ABORT) {
-        conn->connError = 1;
-    }
     if (flags & (HTTP_ABORT | HTTP_CLOSE)) {
         conn->keepAliveCount = -1;
+    }
+    if (flags & HTTP_ABORT) {
+        conn->connError = 1;
     }
     if (flags & HTTP_ABORT || (tx && tx->flags & HTTP_TX_HEADERS_CREATED)) {
         /* 
             If headers have been sent, must let the other side of the failure - abort is the only way.
-            Disconnect will cause a readable (EOF) event. Call formatErrorv just to set errorMsg for clients-side.
+            Disconnect will cause a readable (EOF) event. Call formatErrorv for client-side code to set errorMsg.
          */
         httpDisconnect(conn);
+        formatErrorv(conn, status, fmt, args);
         conn->error = 1;
+        return;
     }
-    formatErrorv(conn, status, fmt, args);
-    
     if (conn->error) {
         return;
     }
@@ -4257,6 +4275,8 @@ static void errorv(HttpConn *conn, int flags, cchar *fmt, va_list args)
     if (rx) {
         rx->eof = 1;
     }
+    formatErrorv(conn, status, fmt, args);
+
     if (conn->endpoint && tx && rx) {
         if (!(tx->flags & HTTP_TX_HEADERS_CREATED)) {
             if (rx->route && (uri = httpLookupRouteErrorDocument(rx->route, tx->status))) {
@@ -4969,11 +4989,14 @@ void httpInitLimits(HttpLimits *limits, bool serverSide)
     memset(limits, 0, sizeof(HttpLimits));
     limits->cacheItemSize = HTTP_MAX_CACHE_ITEM;
     limits->chunkSize = HTTP_MAX_CHUNK;
-    limits->headerCount = HTTP_MAX_NUM_HEADERS;
+    limits->clientMax = HTTP_MAX_CLIENTS;
+    limits->headerMax = HTTP_MAX_NUM_HEADERS;
     limits->headerSize = HTTP_MAX_HEADERS;
+    limits->keepAliveMax = HTTP_MAX_KEEP_ALIVE;
     limits->receiveFormSize = HTTP_MAX_RECEIVE_FORM;
     limits->receiveBodySize = HTTP_MAX_RECEIVE_BODY;
-    limits->requestCount = HTTP_MAX_REQUESTS;
+    limits->processMax = HTTP_MAX_REQUESTS;
+    limits->requestMax = HTTP_MAX_REQUESTS;
     limits->stageBufferSize = HTTP_MAX_STAGE_BUFFER;
     limits->transmissionBodySize = HTTP_MAX_TX_BODY;
     limits->uploadSize = HTTP_MAX_UPLOAD;
@@ -4982,10 +5005,6 @@ void httpInitLimits(HttpLimits *limits, bool serverSide)
     limits->inactivityTimeout = HTTP_INACTIVITY_TIMEOUT;
     limits->requestTimeout = MAXINT;
     limits->sessionTimeout = HTTP_SESSION_TIMEOUT;
-
-    limits->clientCount = HTTP_MAX_CLIENTS;
-    limits->keepAliveCount = HTTP_MAX_KEEP_ALIVE;
-    limits->requestCount = HTTP_MAX_REQUESTS;
 
 #if FUTURE
     mprSetMaxSocketClients(endpoint, atoi(value));
@@ -6675,7 +6694,7 @@ int httpOpenPassHandler(Http *http)
 
 /********************************** Forward ***********************************/
 
-static bool matchStage(HttpConn *conn, HttpStage *filter, HttpRoute *route, int dir);
+static bool matchFilter(HttpConn *conn, HttpStage *filter, HttpRoute *route, int dir);
 static void openQueues(HttpConn *conn);
 static void pairQueues(HttpConn *conn);
 
@@ -6706,7 +6725,7 @@ void httpCreateTxPipeline(HttpConn *conn, HttpRoute *route)
     hasOutputFilters = 0;
     if (route->outputStages) {
         for (next = 0; (filter = mprGetNextItem(route->outputStages, &next)) != 0; ) {
-            if (matchStage(conn, filter, route, HTTP_STAGE_TX) == HTTP_ROUTE_OK) {
+            if (matchFilter(conn, filter, route, HTTP_STAGE_TX) == HTTP_ROUTE_OK) {
                 mprAddItem(tx->outputPipeline, filter);
                 hasOutputFilters = 1;
             }
@@ -6731,8 +6750,8 @@ void httpCreateTxPipeline(HttpConn *conn, HttpRoute *route)
     }
     conn->writeq = tx->queue[HTTP_QUEUE_TX]->nextQ;
     conn->connectorq = tx->queue[HTTP_QUEUE_TX]->prevQ;
-
     pairQueues(conn);
+
     /*
         Put the header before opening the queues incase an open routine actually services and completes the request
         httpHandleOptionsTrace does this when called from openFile() in fileHandler.
@@ -6766,7 +6785,7 @@ void httpCreateRxPipeline(HttpConn *conn, HttpRoute *route)
     rx->inputPipeline = mprCreateList(-1, 0);
     if (route) {
         for (next = 0; (filter = mprGetNextItem(route->inputStages, &next)) != 0; ) {
-            if (matchStage(conn, filter, route, HTTP_STAGE_RX) == HTTP_ROUTE_OK) {
+            if (matchFilter(conn, filter, route, HTTP_STAGE_RX) == HTTP_ROUTE_OK) {
                 mprAddItem(rx->inputPipeline, filter);
             }
         }
@@ -6779,7 +6798,6 @@ void httpCreateRxPipeline(HttpConn *conn, HttpRoute *route)
         q = httpCreateQueue(conn, stage, HTTP_QUEUE_RX, q);
     }
     conn->readq = tx->queue[HTTP_QUEUE_RX]->prevQ;
-
     if (!conn->endpoint) {
         pairQueues(conn);
         openQueues(conn);
@@ -6877,6 +6895,9 @@ void httpStartPipeline(HttpConn *conn)
     HttpRx      *rx;
     
     tx = conn->tx;
+
+    //  MOB - how can this ever be already true?
+    mprAssert(!tx->started);
     if (tx->started) {
         return;
     }
@@ -6884,7 +6905,7 @@ void httpStartPipeline(HttpConn *conn)
     rx = conn->rx;
     if (rx->needInputPipeline) {
         qhead = tx->queue[HTTP_QUEUE_RX];
-        for (q = qhead->nextQ; q->nextQ != qhead; q = nextQ) {
+        for (q = qhead->nextQ; !conn->error && q->nextQ != qhead; q = nextQ) {
             nextQ = q->nextQ;
             if (q->start && !(q->flags & HTTP_QUEUE_STARTED)) {
                 if (q->pair == 0 || !(q->pair->flags & HTTP_QUEUE_STARTED)) {
@@ -6895,7 +6916,7 @@ void httpStartPipeline(HttpConn *conn)
         }
     }
     qhead = tx->queue[HTTP_QUEUE_TX];
-    for (q = qhead->prevQ; q->prevQ != qhead; q = prevQ) {
+    for (q = qhead->prevQ; !conn->error && q->prevQ != qhead; q = prevQ) {
         prevQ = q->prevQ;
         if (q->start && !(q->flags & HTTP_QUEUE_STARTED)) {
             q->flags |= HTTP_QUEUE_STARTED;
@@ -6904,7 +6925,7 @@ void httpStartPipeline(HttpConn *conn)
     }
     /* Start the handler last */
     q = qhead->nextQ;
-    if (q->start) {
+    if (q->start && !conn->error) {
         mprAssert(!(q->flags & HTTP_QUEUE_STARTED));
         q->flags |= HTTP_QUEUE_STARTED;
         q->stage->start(q);
@@ -6921,7 +6942,7 @@ void httpReadyHandler(HttpConn *conn)
     HttpQueue   *q;
     
     q = conn->writeq;
-    if (q->stage->ready) {
+    if (q->stage->ready && !conn->error) {
         q->stage->ready(q);
     }
 }
@@ -6984,7 +7005,7 @@ void httpDiscardData(HttpConn *conn, int dir)
 }
 
 
-static bool matchStage(HttpConn *conn, HttpStage *filter, HttpRoute *route, int dir)
+static bool matchFilter(HttpConn *conn, HttpStage *filter, HttpRoute *route, int dir)
 {
     HttpTx      *tx;
 
@@ -8409,6 +8430,7 @@ void httpRouteRequest(HttpConn *conn)
     conn->trace[0] = route->trace[0];
     conn->trace[1] = route->trace[1];
 
+    //  MOB - not right as the data could be queued in the service queue and no error
     if (conn->finalized) {
         tx->handler = conn->http->passHandler;
         if (rewrites >= HTTP_MAX_REWRITE) {
@@ -8586,8 +8608,8 @@ static int testRoute(HttpConn *conn, HttpRoute *route)
     if ((rc = (*proc)(conn, route, 0)) != HTTP_ROUTE_OK) {
         return rc;
     }
-    if (!conn->finalized && tx->handler->check) {
-        rc = tx->handler->check(conn, route);
+    if (!conn->finalized && tx->handler->match) {
+        rc = tx->handler->match(conn, route, HTTP_QUEUE_TX);
     }
     return rc;
 }
@@ -11217,6 +11239,9 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
         httpError(conn, HTTP_ABORT | HTTP_CODE_NOT_ACCEPTABLE, "Server terminating");
         return 0;
     }
+    if (conn->endpoint && !httpValidateLimits(conn->endpoint, HTTP_VALIDATE_OPEN_REQUEST, conn)) {
+        return 0;
+    }
     if (conn->rx == NULL) {
         conn->rx = httpCreateRx(conn);
         conn->tx = httpCreateTx(conn, NULL);
@@ -11263,10 +11288,6 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
         httpCreateRxPipeline(conn, conn->http->clientRoute);
     }
     httpSetState(conn, HTTP_STATE_PARSED);
-    if (conn->endpoint && !httpValidateLimits(conn->endpoint, HTTP_VALIDATE_OPEN_REQUEST, conn)) {
-        rx->flags |= HTTP_LIMIT_DENIED;
-        return 0;
-    }
     return 1;
 }
 
@@ -11527,7 +11548,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
     keepAlive = (conn->http10) ? 0 : 1;
 
     for (count = 0; content->start[0] != '\r' && !conn->error; count++) {
-        if (count >= limits->headerCount) {
+        if (count >= limits->headerMax) {
             httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Too many headers");
             break;
         }
@@ -12177,13 +12198,13 @@ static bool processCompletion(HttpConn *conn)
         if (rx->route && rx->route->log) {
             httpLogRequest(conn);
         }
+        httpValidateLimits(conn->endpoint, HTTP_VALIDATE_CLOSE_REQUEST, conn);
         rx->conn = 0;
         conn->tx->conn = 0;
         conn->rx = 0;
         conn->tx = 0;
         packet = conn->input;
         more = packet && !conn->connError && (httpGetPacketLength(packet) > 0);
-        httpValidateLimits(conn->endpoint, HTTP_VALIDATE_CLOSE_REQUEST, conn);
         if (conn->sock) {
             httpPrepServerConn(conn);
         }
@@ -14411,6 +14432,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
         mprPutStringToBuf(buf, "\r\n");
     }
     if (tx->altBody) {
+        /* Error responses are emitted here */
         mprPutStringToBuf(buf, tx->altBody);
         httpDiscardQueueData(tx->queue[HTTP_QUEUE_TX]->nextQ, 0);
     }

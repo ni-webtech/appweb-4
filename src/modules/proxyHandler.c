@@ -31,12 +31,6 @@
 
 /************************************* Code ***********************************/
 
-static int matchProxy(HttpConn *conn, HttpRoute *route, int dir)
-{
-    return HTTP_ROUTE_OK;
-}
-
-
 static void openProxy(HttpQueue *q)
 {
 #if UNUSED
@@ -250,7 +244,6 @@ int maProxyHandlerInit(Http *http, MprModule *module)
     }
     handler->open = openProxy; 
     handler->close = closeProxy; 
-    handler->match = matchProxy; 
     handler->incomingData = incomingProxyData; 
     handler->outgoingService = outgoingProxyService;
     handler->start = startProxy; 

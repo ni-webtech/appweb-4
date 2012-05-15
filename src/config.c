@@ -965,7 +965,7 @@ static int limitChunkDirective(MaState *state, cchar *key, cchar *value)
 static int limitClientsDirective(MaState *state, cchar *key, cchar *value)
 {
     state->limits = httpGraduateLimits(state->route);
-    state->limits->clientCount = atoi(value);
+    state->limits->clientMax = atoi(value);
     return 0;
 }
 
@@ -986,12 +986,23 @@ static int limitMemoryDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
+    LimitProcesses count
+ */
+static int limitProcessesDirective(MaState *state, cchar *key, cchar *value)
+{
+    state->limits = httpGraduateLimits(state->route);
+    state->limits->processMax = atoi(value);
+    return 0;
+}
+
+
+/*
     LimitRequests count
  */
 static int limitRequestsDirective(MaState *state, cchar *key, cchar *value)
 {
     state->limits = httpGraduateLimits(state->route);
-    state->limits->requestCount = atoi(value);
+    state->limits->requestMax = atoi(value);
     return 0;
 }
 
@@ -1024,7 +1035,7 @@ static int limitRequestFormDirective(MaState *state, cchar *key, cchar *value)
 static int limitRequestHeaderLinesDirective(MaState *state, cchar *key, cchar *value)
 {
     state->limits = httpGraduateLimits(state->route);
-    state->limits->headerCount = (int) getnum(value);
+    state->limits->headerMax = (int) getnum(value);
     return 0;
 }
 
@@ -1338,7 +1349,23 @@ static int loadModuleDirective(MaState *state, cchar *key, cchar *value)
 static int limitKeepAliveDirective(MaState *state, cchar *key, cchar *value)
 {
     state->limits = httpGraduateLimits(state->route);
-    state->limits->keepAliveCount = (int) stoi(value);
+    state->limits->keepAliveMax = (int) stoi(value);
+    return 0;
+}
+
+
+/*
+    LimitWorkers count
+ */
+static int limitWorkersDirective(MaState *state, cchar *key, cchar *value)
+{
+    int     count;
+
+    count = atoi(value);
+    if (count <= 1) {
+        mprError("Must have at least one worker");
+    }
+    mprSetMaxWorkers(count);
     return 0;
 }
 
@@ -1777,22 +1804,6 @@ static int targetDirective(MaState *state, cchar *key, cchar *value)
 static int templateDirective(MaState *state, cchar *key, cchar *value)
 {
     httpSetRouteTemplate(state->route, value);
-    return 0;
-}
-
-
-/*
-    WorkerLimit count
- */
-static int workerLimitDirective(MaState *state, cchar *key, cchar *value)
-{
-    int     count;
-
-    count = atoi(value);
-    if (count <= 1) {
-        mprError("Must have at least one worker");
-    }
-    mprSetMaxWorkers(count);
     return 0;
 }
 
@@ -2355,39 +2366,24 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "InactivityTimeout", inactivityTimeoutDirective);
     maAddDirective(appweb, "Include", includeDirective);
 
-    /* Deprecated use InactivityTimeout */
-    maAddDirective(appweb, "KeepAliveTimeout", inactivityTimeoutDirective);
-
-    /* Deprecated: use <Route> */
-    maAddDirective(appweb, "<Location", routeDirective);
-    maAddDirective(appweb, "</Location", closeDirective);
-    
     maAddDirective(appweb, "LimitCache", limitCacheDirective);
     maAddDirective(appweb, "LimitCacheItem", limitCacheItemDirective);
     maAddDirective(appweb, "LimitChunk", limitChunkDirective);
     maAddDirective(appweb, "LimitClients", limitClientsDirective);
     maAddDirective(appweb, "LimitKeepAlive", limitKeepAliveDirective);
     maAddDirective(appweb, "LimitMemory", limitMemoryDirective);
+    maAddDirective(appweb, "LimitProcesses", limitProcessesDirective);
     maAddDirective(appweb, "LimitRequests", limitRequestsDirective);
     maAddDirective(appweb, "LimitRequestBody", limitRequestBodyDirective);
     maAddDirective(appweb, "LimitRequestForm", limitRequestFormDirective);
-
-    /* Deprecated use LimitRequestHeaderLines */
-    maAddDirective(appweb, "LimitRequestFields", limitRequestHeaderLinesDirective);
-    /* Deprecated use LimitRequestHeader */
-    maAddDirective(appweb, "LimitRequestFieldSize", limitRequestHeaderDirective);
-
     maAddDirective(appweb, "LimitRequestHeaderLines", limitRequestHeaderLinesDirective);
     maAddDirective(appweb, "LimitRequestHeader", limitRequestHeaderDirective);
-
     maAddDirective(appweb, "LimitResponseBody", limitResponseBodyDirective);
     maAddDirective(appweb, "LimitStageBuffer", limitStageBufferDirective);
     maAddDirective(appweb, "LimitUri", limitUriDirective);
-
-    /* Deprecated: LimitUrl - use LimitUri */
-    maAddDirective(appweb, "LimitUrl", limitUriDirective);
-
     maAddDirective(appweb, "LimitUpload", limitUploadDirective);
+    maAddDirective(appweb, "LimitWorkers", limitWorkersDirective);
+
     maAddDirective(appweb, "Listen", listenDirective);
 
     //  MOB - not a great name "Load"
@@ -2398,8 +2394,6 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "LoadModulePath", loadModulePathDirective);
     maAddDirective(appweb, "LoadModule", loadModuleDirective);
 
-    /* Deprecated use LimitKeepAlive */
-    maAddDirective(appweb, "MaxKeepAliveRequests", limitKeepAliveDirective);
     maAddDirective(appweb, "MemoryPolicy", memoryPolicyDirective);
     maAddDirective(appweb, "Methods", methodsDirective);
     maAddDirective(appweb, "Name", nameDirective);
@@ -2425,17 +2419,9 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "SetHandler", setHandlerDirective);
     maAddDirective(appweb, "Source", sourceDirective);
 
-    /* Deprecated: Use StartWorkers */
-    maAddDirective(appweb, "StartThreads", startWorkersDirective);
     maAddDirective(appweb, "StartWorkers", startWorkersDirective);
     maAddDirective(appweb, "Target", targetDirective);
     maAddDirective(appweb, "Template", templateDirective);
-
-    /* Deprecated: Use requestTimeout */
-    maAddDirective(appweb, "Timeout", requestTimeoutDirective);
-
-    /* Deprecated: Use workerLimit */
-    maAddDirective(appweb, "ThreadLimit", workerLimitDirective);
 
     maAddDirective(appweb, "ThreadStack", threadStackDirective);
     maAddDirective(appweb, "TraceMethod", traceMethodDirective);
@@ -2447,13 +2433,36 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "UploadDir", uploadDirDirective);
     maAddDirective(appweb, "User", userDirective);
 
-    maAddDirective(appweb, "WorkerLimit", workerLimitDirective);
     maAddDirective(appweb, "<VirtualHost", virtualHostDirective);
     maAddDirective(appweb, "</VirtualHost", closeDirective);
 
 #if !BLD_FEATURE_ROMFS
     maAddDirective(appweb, "AccessLog", accessLogDirective);
 #endif
+
+#if DEPRECATED || 1
+    /* Use eprecated use LimitKeepAlive */
+    maAddDirective(appweb, "MaxKeepAliveRequests", limitKeepAliveDirective);
+    /* Use LimitUri */
+    maAddDirective(appweb, "LimitUrl", limitUriDirective);
+    /* Use StartWorkers */
+    maAddDirective(appweb, "StartThreads", startWorkersDirective);
+    /* Use requestTimeout */
+    maAddDirective(appweb, "Timeout", requestTimeoutDirective);
+    maAddDirective(appweb, "ThreadLimit", limitWorkersDirective);
+    maAddDirective(appweb, "WorkerLimit", limitWorkersDirective);
+    /* Use LimitRequestHeaderLines */
+    maAddDirective(appweb, "LimitRequestFields", limitRequestHeaderLinesDirective);
+    /* Use LimitRequestHeader */
+    maAddDirective(appweb, "LimitRequestFieldSize", limitRequestHeaderDirective);
+    /* Use InactivityTimeout */
+    maAddDirective(appweb, "KeepAliveTimeout", inactivityTimeoutDirective);
+    /* Use <Route> */
+    maAddDirective(appweb, "<Location", routeDirective);
+    maAddDirective(appweb, "</Location", closeDirective);
+    
+#endif
+
     return 0;
 }
 

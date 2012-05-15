@@ -184,7 +184,7 @@ struct HttpUri;
     Flags that can be ored into the status code
  */
 #define HTTP_CODE_MASK                      0xFFFF
-#define HTTP_ABORT                          0x10000 /* Abort the request, immediately close the conn */
+#define HTTP_ABORT                          0x10000 /* Abort the request and connection */
 #define HTTP_CLOSE                          0x20000 /* Close the conn at the completion of the request */
 
 /**
@@ -319,6 +319,7 @@ typedef struct Http {
     char            *protocol;              /**< HTTP/1.0 or HTTP/1.1 */
     char            *proxyHost;             /**< Proxy ip address */
     int             proxyPort;              /**< Proxy port */
+    int             processCount;           /**< Count of current active external processes */
     int             sslLoaded;              /**< True when the SSL provider has been loaded */
 
     /*
@@ -489,10 +490,11 @@ typedef struct HttpLimits {
     MprOff  transmissionBodySize;   /**< Maximum size of transmission body content */
     MprOff  uploadSize;             /**< Maximum size of an uploaded file */
 
-    int     clientCount;            /**< Maximum number of simultaneous clients endpoints */
-    int     headerCount;            /**< Maximum number of header lines */
-    int     keepAliveCount;         /**< Maximum number of Keep-Alive requests to perform per socket */
-    int     requestCount;           /**< Maximum number of simultaneous concurrent requests */
+    int     clientMax;              /**< Maximum number of simultaneous clients endpoints */
+    int     headerMax;              /**< Maximum number of header lines */
+    int     keepAliveMax;           /**< Maximum number of Keep-Alive requests to perform per socket */
+    int     requestMax;             /**< Maximum number of simultaneous concurrent requests */
+    int     processMax;             /**< Maximum number of processes (CGI) */
 
     MprTime inactivityTimeout;      /**< Default timeout for keep-alive and idle requests (msec) */
     MprTime requestTimeout;         /**< Default time a request can take (msec) */
@@ -1373,15 +1375,16 @@ typedef struct HttpStage {
 
     /** 
         Match a request
-        @description This procedure is invoked to see if the stage wishes to handle the request. If a stage denies to
-            handle a request, it will be removed from the pipeline for the specified direction. Invoked for 
-            all pipeline stages (handlers, filters and connectors).
+        @description This routine is invoked to see if the stage wishes to handle the request. For handlers, 
+            the match callback is invoked when selecting the appropriate route for the request. For filters, 
+            the callback is invoked subsequently when constructing the request pipeline.
+            If a filter declines to handle a request, the filter will be removed from the pipeline for the 
+            specified direction. The direction argument should be ignored for handlers.
         @param conn HttpConn connection object
-        @param stage Stage object
-        @param dir Direction. Set to HTTP_RX or HTTP_TX. A filter may be placed in the tx, rx or both pipeline directions.
-            The direction flag indicates what pipeline direction is being considered.
-        @return HTTP_ROUTE_OK if the request is acceptable,  HTTP_ROUTE_REJECT it the request is not acceptable,
-            and return HTTP_ROUTE_REROUTE if the request is rewritten.
+        @param route Route object
+        @param dir Queue direction. Set to HTTP_QUEUE_TX or HTTP_QUEUE_RX. Always set to HTTP_QUEUE_TX for handlers.
+        @return HTTP_ROUTE_OK if the request is acceptable. Return HTTP_ROUTE_REROUTE if the request has been rewritten.
+            Return HTTP_ROUTE_REJECT it the request is not acceptable.
         @ingroup HttpStage
       */
     int (*match)(struct HttpConn *conn, struct HttpRoute *route, int dir);
@@ -1436,18 +1439,6 @@ typedef struct HttpStage {
 
 
     /*  These callbacks apply only to handlers */
-
-    /** 
-        Check a request
-        @description Check a fully routed request. A handler is given one last chance to accept, reject or reroute
-            a request before processing. Only invoked for handlers.
-        @param conn HttpConn connection object
-        @param stage Stage object
-        @return HTTP_ROUTE_OK if the request is acceptable. Return HTTP_ROUTE_REROUTE if the request is rewritten.
-            Return HTTP_ROUTE_REJECT it the request is not acceptable.
-        @ingroup HttpStage
-      */
-    int (*check)(struct HttpConn *conn, struct HttpRoute *route);
 
     /** 
         Start the handler
@@ -1688,6 +1679,8 @@ extern ssize httpFilterChunkData(HttpQueue *q, HttpPacket *packet);
 #define HTTP_VALIDATE_CLOSE_CONN    2       /**< Close a connection */
 #define HTTP_VALIDATE_OPEN_REQUEST  3       /**< Open a new request */
 #define HTTP_VALIDATE_CLOSE_REQUEST 4       /**< Close a request */
+#define HTTP_VALIDATE_OPEN_PROCESS  5       /**< Open a new CGI process */
+#define HTTP_VALIDATE_CLOSE_PROCESS 6       /**< Close a CGI process */
 
 /*
     Trace directions
@@ -4114,7 +4107,6 @@ extern void httpRemoveUploadFile(HttpConn *conn, cchar *id);
 #define HTTP_CHUNKED            0x400       /**< Content is chunk encoded */
 #define HTTP_ADDED_QUERY_PARAMS 0x800       /**< Query added to params */
 #define HTTP_ADDED_FORM_PARAMS  0x1000      /**< Form body data added to params */
-#define HTTP_LIMIT_DENIED       0x2000      /**< Request did not validate limits */
 
 /*  
     Incoming chunk encoding states

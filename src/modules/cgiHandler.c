@@ -52,6 +52,9 @@ static void openCgi(HttpQueue *q)
     rx = q->conn->rx;
 
     mprLog(5, "Open CGI handler");
+    if (!httpValidateLimits(q->conn->endpoint, HTTP_VALIDATE_OPEN_PROCESS, q->conn)) {
+        return;
+    }
     if (rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
         httpHandleOptionsTrace(q->conn);
     } else {
@@ -59,6 +62,7 @@ static void openCgi(HttpQueue *q)
         httpMapFile(q->conn, rx->route);
         httpCreateCGIParams(q->conn);
     }
+
 }
 
 
@@ -75,6 +79,7 @@ static void closeCgi(HttpQueue *q)
         }
         mprDisconnectCmd(cmd);
     }
+    httpValidateLimits(q->conn->endpoint, HTTP_VALIDATE_CLOSE_PROCESS, q->conn);
 }
 
 
@@ -98,6 +103,7 @@ static void startCgi(HttpQueue *q)
     conn = q->conn;
     rx = conn->rx;
     tx = conn->tx;
+mprLog(0, "IN START CGI error %d, connError %d", conn->error, conn->connError);
 
     mprLog(5, "CGI: Start");
 

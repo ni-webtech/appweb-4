@@ -42,7 +42,7 @@ struct MaServer;
     @stability Evolving
     @defgroup Appweb Appweb
     @see Http maAddServer maApplyChangedGroup maApplyChangedUser maCreateAppweb maGetUserGroup maLoadModule 
-        maLookupServer maMatchDir maParseInit maParsePlatform maSetDefaultServer maSetHttpGroup maSetHttpUser 
+        maLookupServer maParseInit maParsePlatform maRenderDirListing maSetDefaultServer maSetHttpGroup maSetHttpUser 
         maStartAppweb maStopAppweb 
  */
 typedef struct MaAppweb {
@@ -127,15 +127,14 @@ extern int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname);
 extern struct MaServer *maLookupServer(MaAppweb *appweb, cchar *name);
 
 /**
-    Match routine for the dirHandler
+    Test if a directory listing should be rendered for the request.
     @param conn Connection object
     @param route Matching route object
-    @param direction Set to HTTP_STAGE_TX or HTTP_STAGE_RX
-    @return HTTP_ROUTE_OK if the request matches.
+    @return True if a directory listing is configured to be rendered for this request.
     @ingroup Appweb
     @internal
  */
-extern int maMatchDir(HttpConn *conn, HttpRoute *route, int direction);
+extern bool maRenderDirListing(HttpConn *conn);
 
 /**
     Initialize the config file parser.

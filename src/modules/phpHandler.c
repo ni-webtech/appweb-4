@@ -249,7 +249,6 @@ static void readyPhp(HttpQueue *q)
         fseek(fp, 0L, SEEK_SET);
     }
 #endif
-    // mprYield(0);
     zend_try {
         php_execute_script(&file_handle TSRMLS_CC);
         if (!SG(headers_sent)) {

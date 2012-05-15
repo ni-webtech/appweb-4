@@ -50,19 +50,24 @@
             <ul>
                 <li><a href="#exitTimeout">ExitTimeout</a></li>
                 <li><a href="#limitCache">LimitCache</a></li>
+                <li><a href="#limitCacheItem">LimitCacheItem</a></li>
                 <li><a href="#limitChunk">LimitChunk</a></li>
                 <li><a href="#limitClients">LimitClients</a></li>
                 <li><a href="#limitKeepAlive">LimitKeepAlive</a></li>
                 <li><a href="#limitMemory">LimitMemory</a></li>
+                <li><a href="#limitProcesses">LimitProcesses</a></li>
+                <li><a href="#limitRequests">LimitRequests</a></li>
                 <li><a href="#limitRequestBody">LimitRequestBody</a></li>
                 <li><a href="#limitRequestForm">LimitRequestForm</a></li>
                 <li><a href="#limitRequestHeader">LimitRequestHeader</a></li>
                 <li><a href="#limitRequestHeaderLines">LimitRequestHeaderLines</a></li>
                 <li><a href="#limitResponseBody">LimitResponseBody</a></li>
+                <li><a href="#limitStageBuffer">LimitStageBuffer</a></li>
+                <li><a href="#limitUpload">LimitUpload</a></li>
                 <li><a href="#limitUri">LimitUri</a></li>
+                <li><a href="#limitWorkers">LimitWorkers</a></li>
                 <li><a href="#startWorkers">StartWorkers</a></li>
                 <li><a href="#threadStack">ThreadStack</a></li>
-                <li><a href="#workerLimit">WorkerLimit</a></li>
             </ul>
             <h1>See Also</h1>
             <ul>
@@ -134,6 +139,38 @@
                             <p>This directive defines the maximum size of the Appweb data cache. This cache store is used
                             for caching responses and for the session state date for ESP applications. If the maximum size
                             is exceeded, Appweb will prune the oldest data in the cache to make room for newer items.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="limitCacheItem" id="limitCacheItem"></a>
+            <h2>LimitCacheItem</h2>
+            <table class="directive" title="directive">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Maximum size of a single item in the cache</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>LimitCacheItem size</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>LimitCacheItem 512K</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>This directive defines the maximum size of a single item in the Appweb data cache. 
+                            This cache store is used for caching responses and for the session state date for ESP
+                            applications. If the maximum size is exceeded, Appweb will not store the item in the cache.
+                            The request will continue, but not be served from the cache.</p>
                         </td>
                     </tr>
                 </tbody>
@@ -256,7 +293,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>LimitSize 1000000</td>
+                        <td>LimitSize 10MB</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
@@ -267,6 +304,36 @@
                             does not include thread stack or code allocations.
                             If the memory limit is exceeded, Appweb will invoke the policy specified by the
                             MemoryPolicy directive. </p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <a name="limitProcesses" id="limitProcesses"></a>
+            <h2>LimitProcesses</h2>
+            <table class="directive" title="directive">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Sets the maximum number of processes Appweb will spawn for CGI.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>LimitProcesses count</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>LimitProcesses 1000000</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The LimitProcesses directive defines the maximum number of processes that Appweb will
+                            spawn to serve CGI processes. If this maximum is exceeded, Appweb will deny the request.</p>
                         </td>
                     </tr>
                 </tbody>
@@ -507,7 +574,6 @@
                         <td class="pivot">Notes</td>
                         <td>
                             <p>The LimitResponseBody directive defines the maximum size for response body data.
-                            <p>NOTE: this is a proprietary directive of Appweb and is not supported by Apache.</p>
                         </td>
                     </tr>
                 </tbody>
@@ -542,11 +608,12 @@
                             functionality). It merely limits the memory consumed when trying to buffer the response data. 
                             Appweb handlers will flush the buffers and use HTTP/1.1 chunked output if the amount of 
                             response data exceeds the output buffer size.</p>
-                            <p>NOTE: this is a proprietary directive of Appweb and is not supported by Apache.</p>
                         </td>
                     </tr>
                 </tbody>
-            </table><a name="limitUri" id="limitUri"></a>
+            </table>
+            
+            <a name="limitUri" id="limitUri"></a>
             <h2>LimitUri</h2>
             <table class="directive" title="directive">
                 <tbody>
@@ -576,7 +643,49 @@
                             <p>The limit is an integer between zero and 256 K where zero means unlimited. If a request
                             is received that has a URL larger than the limit, it will be rejected and the client will
                             receive an error. The default limit is 4 K.</p>
-                            <p>NOTE: this is a proprietary directive of Appweb and is not supported by Apache.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="security">Security</td>
+                        <td>
+                            <p>This directive can be quite useful in certain denial-of-service attacks where the
+                            attacker sends requests with bogus URLs.</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            
+            <a name="limitUpload" id="limitUpload"></a>
+            <h2>LimitUpload</h2>
+            <table class="directive" title="directive">
+                <tbody>
+                    <tr>
+                        <td class="pivot">Description</td>
+                        <td>Maximum size of a URL in a request from a client.</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Synopsis</td>
+                        <td>LimitUpload size</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Context</td>
+                        <td>Default server, VirtualHost, Route</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Example</td>
+                        <td>LimitUpload 20MB</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">Notes</td>
+                        <td>
+                            <p>The LimitUpload directive defines the maximum size of an uploaded file. In embedded
+                            applications, it is useful to limit the maximum file upload size to ensure
+                            that rogue or malicious requests will not cause the server to allocate unwanted space
+                            for uploads.</p>
+                            <p>If set to zero, there is no limit. If a file larger than the limit is uploaded,
+                            Appweb will reject the request and the client will receive an error. 
+                            The default value is unlimited.</p>
                         </td>
                     </tr>
                     <tr>
@@ -709,7 +818,7 @@
                     </tr>
                 </tbody>
             </table>
-            <a name="workerLimit" id="workerLimit"></a>
+            <a name="limitWorkers" id="limitWorkers"></a>
             <h2>WorkerLimit</h2>
             <table class="directive" title="directive">
                 <tbody>

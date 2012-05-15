@@ -20,7 +20,7 @@ static ssize readFileData(HttpQueue *q, HttpPacket *packet, MprOff pos, ssize si
 
 /*********************************** Code *************************************/
 
-static int checkFileHandler(HttpConn *conn, HttpRoute *route)
+static int matchFileHandler(HttpConn *conn, HttpRoute *route, int dir)
 {
     HttpRx      *rx;
     
@@ -80,7 +80,11 @@ static int findFile(HttpConn *conn)
                 }
             }
         }
-        if (info->isDir && maMatchDir(conn, route, HTTP_STAGE_TX) == HTTP_ROUTE_OK) {
+        /*
+            If a directory, test if a directory listing should be rendered. If so, delegate to the dirHandler.
+            Can't use the sendFile handler and must use the netConnector.
+         */
+        if (info->isDir && maRenderDirListing(conn)) {
             tx->handler = conn->http->dirHandler;
             tx->connector = conn->http->netConnector;
             return HTTP_ROUTE_OK;
@@ -442,7 +446,7 @@ int maOpenFileHandler(Http *http)
     if ((handler = httpCreateHandler(http, "fileHandler", 0, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
-    handler->check = checkFileHandler;
+    handler->match = matchFileHandler;
     handler->open = openFileHandler;
     handler->start = startFileHandler;
     handler->ready = readyFileHandler;
