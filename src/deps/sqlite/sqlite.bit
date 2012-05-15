@@ -27,6 +27,7 @@ Bit.load({
             type: 'exe'
             sources: ['sqlite.c'],
             depends: ['libsqlite3'],
+            platforms: [ 'local' ],
         },
 	},
 })

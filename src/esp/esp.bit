@@ -16,6 +16,7 @@ Bit.load({
             type: 'exe',
             depends: [ 'libappweb' ],
             sources: [ '*.c' ]
+            platforms: [ 'local' ],
         },
 
         'esp.conf': {
@@ -27,12 +28,14 @@ Bit.load({
             type: 'file',
             path: '${LIB}/esp-www',
             files: [ 'www' ],
+            platforms: [ 'local' ],
         },
 
         'esp-appweb.conf': {
             type: 'file',
             path: '${LIB}/esp-appweb.conf',
             files: [ 'esp-appweb.conf' ],
+            platforms: [ 'local' ],
         },
 
 

@@ -9,6 +9,7 @@ Bit.load({
             type: 'exe',
             sources: [ 'auth.c' ],
             depends: [ 'libmpr' ],
+            platforms: [ 'local' ],
         },
 
         cgiProgram: {
@@ -21,6 +22,7 @@ Bit.load({
             rule: 'gui',
             sources: [ 'setConfig.c' ],
             depends: [ 'libmpr' ],
+            platforms: [ 'local' ],
         },
 	},
 })
