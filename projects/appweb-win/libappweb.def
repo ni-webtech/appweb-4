@@ -12,7 +12,6 @@ EXPORTS
   maLoadModule
   maLogRequest
   maLookupServer
-  maMatchDir
   maOpenConfig
   maOpenDirHandler
   maOpenFileHandler
@@ -22,6 +21,7 @@ EXPORTS
   maPopState
   maPushState
   maRemoveEndpoint
+  maRenderDirListing
   maRestartServer
   maRunSimpleWebServer
   maRunWebServer
