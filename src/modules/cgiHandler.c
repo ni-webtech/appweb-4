@@ -103,7 +103,6 @@ static void startCgi(HttpQueue *q)
     conn = q->conn;
     rx = conn->rx;
     tx = conn->tx;
-mprLog(0, "IN START CGI error %d, connError %d", conn->error, conn->connError);
 
     mprLog(5, "CGI: Start");
 
