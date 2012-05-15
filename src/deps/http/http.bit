@@ -16,6 +16,7 @@ Bit.load({
             type: 'exe',
             sources: [ 'http.c' ],
             depends: [ 'libhttp', ],
+            platforms: [ 'local' ],
         },
 	},
 })
