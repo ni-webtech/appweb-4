@@ -32,7 +32,6 @@ all: prep \
         $(CONFIG)/bin/esp-www \
         $(CONFIG)/bin/esp-appweb.conf \
         $(CONFIG)/bin/mod_cgi.so \
-        $(CONFIG)/bin/mod_ejs.so \
         $(CONFIG)/bin/auth \
         $(CONFIG)/bin/cgiProgram \
         $(CONFIG)/bin/setConfig \
@@ -70,7 +69,6 @@ clean:
 	rm -rf $(CONFIG)/bin/esp-www
 	rm -rf $(CONFIG)/bin/esp-appweb.conf
 	rm -rf $(CONFIG)/bin/mod_cgi.so
-	rm -rf $(CONFIG)/bin/mod_ejs.so
 	rm -rf $(CONFIG)/bin/auth
 	rm -rf $(CONFIG)/bin/cgiProgram
 	rm -rf $(CONFIG)/bin/setConfig
@@ -399,16 +397,6 @@ $(CONFIG)/bin/mod_cgi.so:  \
         $(CONFIG)/bin/libappweb.so \
         $(CONFIG)/obj/cgiHandler.o
 	$(CC) -shared -o $(CONFIG)/bin/mod_cgi.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/cgiHandler.o $(LIBS) -lappweb -lhttp -lmpr -lpcre -lmprssl
-
-$(CONFIG)/obj/ejsHandler.o: \
-        src/modules/ejsHandler.c \
-        $(CONFIG)/inc/bit.h
-	$(CC) -c -o $(CONFIG)/obj/ejsHandler.o $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -Iejs.h src/modules/ejsHandler.c
-
-$(CONFIG)/bin/mod_ejs.so:  \
-        $(CONFIG)/bin/libappweb.so \
-        $(CONFIG)/obj/ejsHandler.o
-	$(CC) -shared -o $(CONFIG)/bin/mod_ejs.so $(LDFLAGS) -L/Users/mob/git/appweb $(LIBPATHS) $(CONFIG)/obj/ejsHandler.o $(LIBS) -lejs -lmpr -lmprssl -lhttp -lpcre -lappweb
 
 $(CONFIG)/obj/auth.o: \
         src/utils/auth.c \

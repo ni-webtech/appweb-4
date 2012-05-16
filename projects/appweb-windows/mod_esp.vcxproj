@@ -128,6 +128,12 @@
   </ItemGroup>
 
   <ItemDefinitionGroup>
+    <Link>
+      <ModuleDefinitionFile>mod_esp.def</ModuleDefinitionFile>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup>
   <Link>
     <AdditionalDependencies>libappweb.lib;libhttp.lib;libmpr.lib;libpcre.lib;libmprssl.lib;%(AdditionalDependencies)</AdditionalDependencies>
     <AdditionalLibraryDirectories>$(OutDir);$(Cfg)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

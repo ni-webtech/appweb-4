@@ -41,7 +41,6 @@ all: prep \
         $(CONFIG)\bin\esp-www \
         $(CONFIG)\bin\esp-appweb.conf \
         $(CONFIG)\bin\mod_cgi.dll \
-        $(CONFIG)\bin\mod_ejs.dll \
         $(CONFIG)\bin\auth.exe \
         $(CONFIG)\bin\cgiProgram.exe \
         $(CONFIG)\bin\setConfig.exe \
@@ -85,7 +84,6 @@ clean:
 	-if exist $(CONFIG)\bin\esp-www del /Q $(CONFIG)\bin\esp-www
 	-if exist $(CONFIG)\bin\esp-appweb.conf del /Q $(CONFIG)\bin\esp-appweb.conf
 	-if exist $(CONFIG)\bin\mod_cgi.dll del /Q $(CONFIG)\bin\mod_cgi.dll
-	-if exist $(CONFIG)\bin\mod_ejs.dll del /Q $(CONFIG)\bin\mod_ejs.dll
 	-if exist $(CONFIG)\bin\auth.exe del /Q $(CONFIG)\bin\auth.exe
 	-if exist $(CONFIG)\bin\cgiProgram.exe del /Q $(CONFIG)\bin\cgiProgram.exe
 	-if exist $(CONFIG)\bin\setConfig.exe del /Q $(CONFIG)\bin\setConfig.exe
@@ -415,16 +413,6 @@ $(CONFIG)\bin\mod_cgi.dll:  \
         $(CONFIG)\bin\libappweb.dll \
         $(CONFIG)\obj\cgiHandler.obj
 	"$(LD)" -dll -out:$(CONFIG)\bin\mod_cgi.dll -entry:$(ENTRY) -def:$(CONFIG)\bin\mod_cgi.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\cgiHandler.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
-
-$(CONFIG)\obj\ejsHandler.obj: \
-        src\modules\ejsHandler.c \
-        $(CONFIG)\inc\bit.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\ejsHandler.obj -Fd$(CONFIG)\obj\ejsHandler.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc -Iejs.h src\modules\ejsHandler.c
-
-$(CONFIG)\bin\mod_ejs.dll:  \
-        $(CONFIG)\bin\libappweb.dll \
-        $(CONFIG)\obj\ejsHandler.obj
-	"$(LD)" -dll -out:$(CONFIG)\bin\mod_ejs.dll -entry:$(ENTRY) -def:$(CONFIG)\bin\mod_ejs.def $(LDFLAGS) -L\Users\mob\git\appweb $(LIBPATHS) $(CONFIG)\obj\ejsHandler.obj $(LIBS) ejs libmpr.lib libmprssl.lib libhttp.lib libpcre.lib libappweb.lib
 
 $(CONFIG)\obj\auth.obj: \
         src\utils\auth.c \

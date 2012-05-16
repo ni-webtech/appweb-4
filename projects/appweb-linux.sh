@@ -140,10 +140,6 @@ ${CC} -c -o ${CONFIG}/obj/cgiHandler.o ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/m
 
 ${CC} -shared -o ${CONFIG}/bin/mod_cgi.so ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/cgiHandler.o ${LIBS} -lappweb -lhttp -lmpr -lpcre -lmprssl
 
-${CC} -c -o ${CONFIG}/obj/ejsHandler.o ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc -Iejs.h src/modules/ejsHandler.c
-
-${CC} -shared -o ${CONFIG}/bin/mod_ejs.so ${LDFLAGS} -L/Users/mob/git/appweb ${LIBPATHS} ${CONFIG}/obj/ejsHandler.o ${LIBS} -lejs -lmpr -lmprssl -lhttp -lpcre -lappweb
-
 ${CC} -c -o ${CONFIG}/obj/auth.o ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/utils/auth.c
 
 ${CC} -o ${CONFIG}/bin/auth ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/auth.o ${LIBS} -lmpr ${LDFLAGS}
