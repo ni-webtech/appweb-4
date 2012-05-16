@@ -50,8 +50,8 @@ Bit.load({
     },
 
     usage: {
-        assert: 'Enable program assertions',
-        tune: 'Optimize for size|speed|balanced',
+        assert: 'Enable program assertions (true|false)',
+        tune: 'Optimize (size|speed|balanced)',
     },
 
     profiles: {
