@@ -1,3 +1,0 @@
-LIBRARY mod_cgi.dll
-EXPORTS
-  maCgiHandlerInit
