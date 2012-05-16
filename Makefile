@@ -3,11 +3,11 @@
 #			   Alternatively, use bit directly.
 #	
 
-OS      := $(shell uname | sed 's/CYGWIN.*/win/;s/Darwin/macosx/' | tr '[A-Z]' '[a-z]')
+OS      := $(shell uname | sed 's/CYGWIN.*/windows/;s/Darwin/macosx/' | tr '[A-Z]' '[a-z]')
 MAKE	:= make
 EXT		:= mk
 
-ifeq ($(OS),win)
+ifeq ($(OS),windows)
 ifeq ($(ARCH),)
 ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
 	ARCH:=x64
@@ -15,7 +15,7 @@ else
 	ARCH:=x86
 endif
 endif
-	MAKE:= projects/win.bat $(ARCH)
+	MAKE:= projects/windows.bat $(ARCH)
 	EXT := nmake
 endif
 
