@@ -3919,7 +3919,7 @@ extern char *mprGetDate(char *fmt);
  */
 extern uint64 mprGetTicks();
 
-#if (LINUX || MACOSX || WIN) && (BIT_CPU_ARCH == MPR_CPU_X86 || BIT_CPU_ARCH == MPR_CPU_X64)
+#if (LINUX || MACOSX || WINDOWS) && (BIT_CPU_ARCH == MPR_CPU_X86 || BIT_CPU_ARCH == MPR_CPU_X64)
     #define MPR_HIGH_RES_TIMER 1
 #else
     #define MPR_HIGH_RES_TIMER 0
