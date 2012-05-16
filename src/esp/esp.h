@@ -75,7 +75,7 @@ extern "C" {
 #else
     #define ESP_CCNAME "gcc"
 #endif
-#endif /* UNUSED
+#endif /* UNUSED */
 
 //  MOB - move to bit.h
 #define BIT_VISUAL_STUDIO_VERSION "10.0"
