@@ -96,7 +96,7 @@
 
   <CustomBuildStep>
     <Command>cd ..\..\src\esp
--if exist $(BinDir)\esp.conf del /Q $(BinDir)\esp.conf
+if exist $(BinDir)\esp.conf del /Q $(BinDir)\esp.conf
 copy /Y esp.conf $(BinDir)\esp.conf
 cd ..\..\projects\appweb-windows</Command>
     <Outputs>$(BinDir)\esp.conf</Outputs>

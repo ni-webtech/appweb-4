@@ -96,7 +96,7 @@
 
   <CustomBuildStep>
     <Command>cd ..\..\src\esp
--if exist $(BinDir)\esp-www del /Q $(BinDir)\esp-www
+if exist $(BinDir)\esp-www del /Q $(BinDir)\esp-www
 if not exist $(BinDir)\esp-www md $(BinDir)\esp-www
 xcopy /S /Y www $(BinDir)\esp-www
 cd ..\..\projects\appweb-windows</Command>
