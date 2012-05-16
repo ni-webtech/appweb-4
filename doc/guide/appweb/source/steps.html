@@ -83,8 +83,8 @@
             <h1>Build Steps</h1>
             <p>These steps (and links) to rebuild from source are defined below:</p>
             <ol>
-                <li><a href="#env">Define the Build Environment</a></li>
-                <li><a href="#env"></a><a href="#env"></a><a href="#configuring">Configure</a></li>
+                <li><a href="#env">Define the build environment</a></li>
+                <li><a href="#configuring">Configure</a></li>
                 <li><a href="#building">Make</a></li>
                 <li><a href="#installing">Install</a></li>
             </ol>
@@ -289,49 +289,19 @@ make TRACE=1 install
                 </thead>
                 <tbody>
                 <tr>
-                    <td>build</td>
+                    <td>bits</td>
                     <td></td>
-                    <td>Build configuration and tools.</td>
+                    <td>Bit configuration and scripts.</td>
                 </tr>
                 <tr>
                     <td></td>
-                    <td>bin</td>
-                    <td>Binary build tools.</td>
+                    <td>packs</td>
+                    <td>Bit extension packs.</td>
                 </tr>
                 <tr>
                     <td></td>
-                    <td>config</td>
-                    <td>Configure scripts for each O/S.</td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td>packages</td>
-                    <td>Default settings for 3rd party packages.</td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td>make</td>
-                    <td>Make rules and per O/S default settings.</td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td>src</td>
-                    <td>Source code for build tools.</td>
-                </tr>
-                <tr>
-                    <td>doc</td>
-                    <td></td>
-                    <td>Product documentation.</td>
-                </tr>
-                <tr>
-                    <td>out</td>
-                    <td></td>
+                    <td nowrap="nowrap">OS-ARCH-PROFILE</td>
                     <td>Build output directory.</td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td>bin</td>
-                    <td>Directory to hold generated executables and DLLs on windows.</td>
                 </tr>
                 <tr>
                     <td></td>
@@ -340,17 +310,12 @@ make TRACE=1 install
                 </tr>
                 <tr>
                     <td></td>
-                    <td>lib</td>
-                    <td>Generated libraries.</td>
-                </tr>
-                <tr>
-                    <td></td>
                     <td>obj</td>
                     <td>Directory to hold generated objects.</td>
                 </tr>
                 <tr>
-                    <td></td>
                     <td>releases</td>
+                    <td></td>
                     <td>Generated release distributions.</td>
                 </tr>
                 <tr>
@@ -395,27 +360,25 @@ make TRACE=1 install
                 </thead>
                 <tbody>
                 <tr>
-                    <td>build/make/make.rules</td>
-                    <td>Key make targets and rules for all make files. This is a copy of the relevant make.rules.OS
-                    file from the conf directory.</td>
+                    <td>*/inc/bit.h</td>
+                    <td>Build header created by Bit and included in all source files.</td>
                 </tr>
                 <tr>
-                    <td>out/inc/buildConfig.h</td>
-                    <td>Build header created by configure and included in all source files. On Windows, this file may
-                    be edited to modify the build.</td>
+                    <td nowrap="nowrap">OS-ARCH.bit</td>
+                    <td>Platform specific Bit file. If cross-compiling, there will be one Bit file for the
+                        development system and one for each cross-compiled target.</td>
+                </tr>
+                <tr>
+                    <td>main.bit</td>
+                    <td>Main Bit file for Appweb. It specifies the Appweb key settings and configured options.</td>
+                </tr>
+                <tr>
+                    <td>start.bit</td>
+                    <td>Startup bit file for Appweb. This file refers to the relevant Bit files for platforms.</td>
                 </tr>
                 <tr>
                     <td>configure</td>
-                    <td>Build configuration program.</td>
-                </tr>
-                <tr>
-                    <td>build/bin/bld</td>
-                    <td>Program to create executables and libraries (like GNU/libtool).</td>
-                </tr>
-                <tr>
-                    <td>build/config/config.OS</td>
-                    <td>Configuration defaults for each operating system. Configure uses these as the default O/S
-                    settings.</td>
+                    <td>Build configuration script. This invokes Bit to configure Appweb on the development system.</td>
                 </tr>
                 </tbody>
             </table>

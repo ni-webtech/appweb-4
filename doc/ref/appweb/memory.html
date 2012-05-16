@@ -85,8 +85,7 @@
             cooperative and non-compacting collector.  The use of a garbage collector is somewhat unusual in a C program. 
             However, garbage collection it is especially well suited for long running applications like a web server,
             as it eliminates most memory leaks. Unlike traditional memory allocation where <em>free</em> must be called
-            to release memory, Appweb uses the opposite approach where memory that must be retained, needs 
-            to be actively managed to 
+            to release memory, Appweb uses the opposite approach. Memory that must be retained, must be actively managed to 
             prevent garbage collection. This means that a <em>managed reference</em> must be held for all active memory.</p>
             <a name="allocator"></a>
             <h2>Allocator</h2>
@@ -94,9 +93,9 @@
             uses a scheme of free queues for fast allocation. Memory allocations are aligned on 16 byte boundaries on 64-bit 
             systems and otherwise on 8 byte boundaries. It will return chunks of unused memory back to the O/S.</p>
             <h3>Appweb 3 Allocator</h3>
-            <p>Appweb 3 used memory contexts for all memory allocations. This required many APIs to have a memory context
-            as the first parameter. Appweb 4 does not require this and these APIs have removed the memory context 
-            parameter.</p>
+            <p>Appweb 3 memory API required a memory context argument for all memory allocations. This required many
+            APIs to have a memory context as the first parameter. Appweb 4 does not require this and these APIs have
+            removed the memory context parameter.</p>
             <a name="errors"></a>
             <h2>Error Handling</h2>
             <p> It is difficult for programmers to consistently

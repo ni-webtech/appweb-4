@@ -100,11 +100,11 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <ClCompile Include="..\..\src\server\WIN\appwebMonitor.c" />
+    <ClCompile Include="..\..\src\server\WINDOWS\appwebMonitor.c" />
   </ItemGroup>
   
   <ItemGroup>
-    <ResourceCompile Include="..\..\src\server\WIN\appwebMonitor.rc" />
+    <ResourceCompile Include="..\..\src\server\WINDOWS\appwebMonitor.rc" />
   </ItemGroup>
 
   <ItemDefinitionGroup>

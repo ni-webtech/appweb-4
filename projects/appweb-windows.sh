@@ -163,14 +163,14 @@ cp -r src/server/appwebMonitor.h ${CONFIG}/inc/appwebMonitor.h
 
 "${LD}" -out:${CONFIG}/bin/appweb.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/appweb.obj ${LIBS} libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
-"rc.exe" -nologo -Fo ${CONFIG}/obj/appwebMonitor.res src/server/WIN/appwebMonitor.rc
+"rc.exe" -nologo -Fo ${CONFIG}/obj/appwebMonitor.res src/server/WINDOWS/appwebMonitor.rc
 
-"${CC}" -c -Fo${CONFIG}/obj/appwebMonitor.obj -Fd${CONFIG}/obj/appwebMonitor.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/server/WIN/appwebMonitor.c
+"${CC}" -c -Fo${CONFIG}/obj/appwebMonitor.obj -Fd${CONFIG}/obj/appwebMonitor.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/server/WINDOWS/appwebMonitor.c
 
 "${LD}" -out:${CONFIG}/bin/appwebMonitor.exe -entry:WinMainCRTStartup -subsystem:Windows ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/appwebMonitor.res ${CONFIG}/obj/appwebMonitor.obj shell32.lib libappweb.lib ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 rm -rf ${CONFIG}/bin/appwebMonitor.ico
-cp -r src/server/WIN/appwebMonitor.ico ${CONFIG}/bin/appwebMonitor.ico
+cp -r src/server/WINDOWS/appwebMonitor.ico ${CONFIG}/bin/appwebMonitor.ico
 
 rm -rf ${CONFIG}/inc/testAppweb.h
 cp -r test/testAppweb.h ${CONFIG}/inc/testAppweb.h
@@ -210,7 +210,7 @@ cp ../${CONFIG}/bin/cgiProgram web/cgiProgram.cgi ;\
 chmod +x cgi-bin/* web/cgiProgram.cgi ;\
 cd - >/dev/null 
 
-"${CC}" -c -Fo${CONFIG}/obj/removeFiles.obj -Fd${CONFIG}/obj/removeFiles.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc package/WIN/removeFiles.c
+"${CC}" -c -Fo${CONFIG}/obj/removeFiles.obj -Fd${CONFIG}/obj/removeFiles.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc package/WINDOWS/removeFiles.c
 
 "${LD}" -out:${CONFIG}/bin/removeFiles.exe -entry:WinMainCRTStartup -subsystem:Windows ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/removeFiles.obj ${LIBS} libmpr.lib
 

@@ -459,13 +459,13 @@ $(CONFIG)\bin\appweb.exe:  \
 	"$(LD)" -out:$(CONFIG)\bin\appweb.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\appweb.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 $(CONFIG)\obj\appwebMonitor.res: \
-        src\server\WIN\appwebMonitor.rc
-	"$(RC)" -nologo -Fo $(CONFIG)\obj\appwebMonitor.res src\server\WIN\appwebMonitor.rc
+        src\server\WINDOWS\appwebMonitor.rc
+	"$(RC)" -nologo -Fo $(CONFIG)\obj\appwebMonitor.res src\server\WINDOWS\appwebMonitor.rc
 
 $(CONFIG)\obj\appwebMonitor.obj: \
-        src\server\WIN\appwebMonitor.c \
+        src\server\WINDOWS\appwebMonitor.c \
         $(CONFIG)\inc\bit.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\appwebMonitor.obj -Fd$(CONFIG)\obj\appwebMonitor.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\server\WIN\appwebMonitor.c
+	"$(CC)" -c -Fo$(CONFIG)\obj\appwebMonitor.obj -Fd$(CONFIG)\obj\appwebMonitor.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\server\WINDOWS\appwebMonitor.c
 
 $(CONFIG)\bin\appwebMonitor.exe:  \
         $(CONFIG)\bin\libappweb.dll \
@@ -475,7 +475,7 @@ $(CONFIG)\bin\appwebMonitor.exe:  \
 
 $(CONFIG)\bin\appwebMonitor.ico: 
 	-if exist $(CONFIG)\bin\appwebMonitor.ico del /Q $(CONFIG)\bin\appwebMonitor.ico
-	copy /Y src\server\WIN\appwebMonitor.ico $(CONFIG)\bin\appwebMonitor.ico
+	copy /Y src\server\WINDOWS\appwebMonitor.ico $(CONFIG)\bin\appwebMonitor.ico
 
 $(CONFIG)\inc\testAppweb.h: 
 	-if exist $(CONFIG)\inc\testAppweb.h del /Q $(CONFIG)\inc\testAppweb.h
@@ -513,9 +513,9 @@ test\cgi-bin\cgiProgram.exe:  \
 #  Omit build script /Users/mob/git/appweb/test/cgi-bin/cgiProgram.exe
 
 $(CONFIG)\obj\removeFiles.obj: \
-        package\WIN\removeFiles.c \
+        package\WINDOWS\removeFiles.c \
         $(CONFIG)\inc\bit.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\removeFiles.obj -Fd$(CONFIG)\obj\removeFiles.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc package\WIN\removeFiles.c
+	"$(CC)" -c -Fo$(CONFIG)\obj\removeFiles.obj -Fd$(CONFIG)\obj\removeFiles.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc package\WINDOWS\removeFiles.c
 
 $(CONFIG)\bin\removeFiles.exe:  \
         $(CONFIG)\bin\libmpr.dll \
