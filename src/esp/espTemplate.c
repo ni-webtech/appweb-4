@@ -105,7 +105,7 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
                 mprPutStringToBuf(buf, mprJoinPathExt(outputModule, getObjExt(os)));
 
             } else if (matchToken(&cp, "${OS}")) {
-                /* Target architecture (freebsd|linux|macosx|win|vxworks) */
+                /* Target architecture (freebsd|linux|macosx|windows|vxworks) */
                 mprPutStringToBuf(buf, os);
 
             } else if (matchToken(&cp, "${SHLIB}")) {
@@ -743,7 +743,7 @@ static cchar *getShobjExt(cchar *os)
 {
     if (smatch(os, "macosx")) {
         return ".dylib";
-    } else if (smatch(os, "win")) {
+    } else if (smatch(os, "windows")) {
         return ".dll";
     } else if (smatch(os, "vxworks")) {
         return ".out";
@@ -757,7 +757,7 @@ static cchar *getShlibExt(cchar *os)
 {
     if (smatch(os, "macosx")) {
         return ".dylib";
-    } else if (smatch(os, "win")) {
+    } else if (smatch(os, "windows")) {
         return ".lib";
     } else if (smatch(os, "vxworks")) {
         return ".a";
@@ -769,7 +769,7 @@ static cchar *getShlibExt(cchar *os)
 
 static cchar *getObjExt(cchar *os)
 {
-    if (smatch(os, "win")) {
+    if (smatch(os, "windows")) {
         return ".obj";
     }
     return ".o";
@@ -824,7 +824,7 @@ static cchar *getDebug()
 
     appweb = MPR->appwebService;
     debug = sends(appweb->platform, "-debug");
-    if (scontains(appweb->platform, "win-", -1)) {
+    if (scontains(appweb->platform, "windows-", -1)) {
         return (debug) ? "-DBIT_DEBUG -Zi -Od" : "-O";
     }
     return (debug) ? "-DBIT_DEBUG -g" : "-O2";
@@ -835,7 +835,7 @@ static cchar *getLibs(cchar *os)
 {
     cchar       *libs;
 
-    if (smatch(os, "win")) {
+    if (smatch(os, "windows")) {
         libs = "\"${LIBPATH}\\mod_esp${SHLIB}\" \"${LIBPATH}\\libappweb.lib\" \"${LIBPATH}\\libhttp.lib\" \"${LIBPATH}\\libmpr.lib\" \"${LIBPATH}\\libmprssl.lib\"";
     } else {
         libs = "${LIBPATH}/mod_esp${SHOBJ} -lappweb -lpcre -lhttp -lmpr -lmprssl -lpthread -lm";
