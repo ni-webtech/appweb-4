@@ -13,7 +13,7 @@ DFLAGS   := -D_REENTRANT -DPIC -DBIT_DEBUG
 IFLAGS   := -I$(CONFIG)/inc
 LDFLAGS  := '-Wl,--enable-new-dtags' '-Wl,-rpath,$$ORIGIN/' '-Wl,-rpath,$$ORIGIN/../bin' '-rdynamic' '-g'
 LIBPATHS := -L$(CONFIG)/bin
-LIBS     := -lpthread -lm -ldl
+LIBS     := -lpthread -lm -ldl -lpam
 
 all: prep \
         $(CONFIG)/bin/libmpr.so \
