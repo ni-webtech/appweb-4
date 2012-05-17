@@ -87,50 +87,48 @@
             <h2 class="section">Supported Platforms</h2>
             <p>A variety of build environments are supported on various platforms:</p>
             <ul>
-                <li><b>Linux</b> &mdash; Linux 2.4, 2.6 with GNU C/C++, GNU make</li>
+                <li><b>Linux</b> &mdash; Linux 2.4, 2.6 with GNU C/C++</li>
                 <li><b>Windows</b> &mdash; Microsoft Windows XP with Visual Studio 2012 Express Edition</li>
-                <li><b>MAC OS X</b> &mdash; MAC OS X 10.5 (Leopard) or later</li>
+                <li><b>Mac OS X</b> &mdash; Mac OS X 10.5 (Leopard) or later</li>
             </ul>
-            <p>The source code has been ported to Free BSD, Linux, Windows, VxWorks, Mac OS X and other operating
+            <p>The source code has been ported to Free BSD, Linux, Mac OS X, Solaris Windows, VxWorks and other operating
             systems. It has been tested under Fedora Linux based on the Linux 2.6 Kernel, Microsoft Windows XP, Vista,
-            7, VxWorks 5.4, 6.3 and MAC OS X 10.4, 10.5. Both single and multi-cpu systems are supported.</p>
+            7 (32 and 64-bit), VxWorks 5.4, 6.3 and MAC OS X 10.7. Both single and multi-cpu systems are supported.</p>
             <p>The software is quite portable and you are welcome to try your hand at porting it to a new platform. See
             the <a href="porting.html">Porting Guide</a> for more details. <a name="overview" id="overview"></a></p>
+
             <h2 class="section">Build Overview</h2>
-            <p>The build procedure is substantially the same for all supported platforms. A <b>configure</b> program is
-            used to select features, options, and modules, and the GNU <b>make</b> program is used to build the
-            software.</p>
-            <p>Building utilizes the Embedthis Build Scheme which is a cross-platform and cross-targeting build system
-            that offers:</p>
-            <ul>
-                <li>Cross-platform building</li>
-                <li>Cross-compilation and cross-targeting</li>
-                <li>Building using standard tools</li>
-                <li>Reduced complexity of building</li>
-            </ul>
-            <h3>IDE Builds</h3>
-            <p>On MAC OS X and Windows, you can also build Appweb using the Xcode and Visual Studio IDEs. The Appweb
-            source code contains Xcode and Visual Studio projects under the projects/MACOSX and projects/WIN directories.</p>
-            <p>However, when building Appweb with an IDE, you do not have the flexibility provided by the configure/make 
-            build process. The IDEs will build a default, basic configuration. If you require customizing the Appweb 
-            build, we recommend that you use the configure/make approach.</p>
+            <p>The build procedure is substantially the same for all supported platforms. The 
+            <a href="http://ejscript.org/products/ejs/doc/guide/bit/index.html">Bit</a> tool is used to configure
+            and build Appweb. Bit is part of the Ejscript JavaScript environment. Click
+            to <a href="http://ejscript.org/downloads/ejs/download.ejs">Download Ejscript</a>.</p>
             
+            <p>A <em>configure</em> script is used to select features, options, and modules. This script invokes
+            Bit to do the actual configuration. Then Bit is used to build the software.</p>
+
+            <h3>Project Builds</h3>
+            <p>The source code also includes IDE projects, Makefiles, shell scripts to build Appweb in the absense of 
+            the Bit tool. IDE projects are provided for Visual Studio and Xcode. The project build scripts are 
+            under the <em>projects</em> directory.</p>
+            <p>when building Appweb with an IDE, you do not have the flexibility provided by the configure/bit 
+            build process. The IDEs will build a default, minimal configuration. If you require customizing the Appweb 
+            build, we recommend that you use the configure/bit approach.</p>
             
             <a name="steps" id="steps"></a>
-            <h2 class="section">Steps to build with configure/make</h2>
+            <h3 class="section">Steps to build with Bit</h3>
             <p>Read the <a href="steps.html">Build Steps</a> for detailed build instructions and
             background.</p><a name="solutions" id="solutions"></a>
+<!--
             <h2 class="section">Build Solutions</h2>
             <p>Specific building mini-guides are provided for for some configurations:</p>
             <ul>
                 <li><a href="openwrt.html">OpenWrt</a>: Linux firmware for embedded devices</li>
             </ul>
-            <h2>Testing Appweb</h2>
+-->
+            <h3>Testing Appweb</h3>
             <p>The Appweb source distribution has an extensive suite of unit tests to verify Appweb's execution. You
             can run the unit tests from the command line via:</p>
-            <pre>
-make test
-</pre>
+            <pre>bit test</pre>
             <p>You are welcome to write more unit tests and submit them to <a href=
             "mailto:dev@embedthis.com">dev@embedthis.com</a>.</p>
         </div>

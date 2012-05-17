@@ -47,7 +47,7 @@
         <div class="contentRight">
             <h1>Quick Nav</h1>
             <ul>
-                <li><a href="#env">Define the Environment</a></li>
+                <li><a href="#env">Prepare the Environment</a></li>
                 <li><a href="#configuring">Configuring the Build</a></li>
                 <li><a href="#cross">Cross Compilation</a></li>
                 <li><a href="#building">Building</a></li>
@@ -83,52 +83,92 @@
             <h1>Build Steps</h1>
             <p>These steps (and links) to rebuild from source are defined below:</p>
             <ol>
-                <li><a href="#env">Define the build environment</a></li>
+                <li><a href="#env">Prepare the build environment</a></li>
                 <li><a href="#configuring">Configure</a></li>
                 <li><a href="#building">Make</a></li>
                 <li><a href="#installing">Install</a></li>
             </ol>
             <p>If you want to build using source from the source code repository, please read these <a href=
             "#repository">additional instructions</a>.</p><a name="env" id="env"></a>
-            <h2 class="section">Define the Environment for Building</h2>
+
+            <h2 class="section">Prepare the Environment for Building</h2>
+            <p>Appweb supports several methods of building from source:
+            <ul>
+                <li>Building with the <a href="http://ejscript.org/products/ejs/doc/guide/bit/index.html">Bit</a>
+                (Build It) tool</li>
+                <li>Building with the make or nmake on Windows tool</li>
+                <li>Building with the Visual Studio or Xcode IDE</li>
+            </ul>
+
+            <p>Building with Bit is the most flexible and offers the most control. But it requires installing the
+            <a href="http://ejscript.org/downloads/ejs/download.ejs">Ejscript</a> product which includes the Bit tool.
+            Building with make or nmake is useful for a minimal build, but you do not have the flexibility to configure
+            the product for your system. Similarly, IDE builds are convenient, but are somewhat fixed in the Appweb
+            configuration they build. We recommend building with Bit.</p>
+
             <h3>Building on Windows</h3>
-            <p>To use the configure program on Windows, you will need to install the Cygwin UNIX emulation development
-            tools. These provide UNIX-like commands under Windows and provide a consistent development environment on
-            Windows and Unix. If you wish to build on Windows and not install the Cygwin tools, you can use the
-            supplied Microsoft Visual Studio project file and hand-edit the supplied <b>buildConfig.h</b> header
-            file.</p>
+            <p>To build on Windows, you will need to install Microsoft Visual Studio 10.0 or later. Either the full 
+            product or the express editions will work fine. You will also need to 
+            install the <a href="http://msdn.microsoft.com/en-us/windowsserver/bb980924.aspx">Windows SDK</a>.
+
             <p>You also need to define certain Microsoft compiler environment variables as described in the Microsoft
             Visual Studio installation. These variables are the PATH, INCLUDE and LIB variables. They need to be
             defined so they will contain references to where the Microsoft compiler and libraries are installed on your
-            system. The <b>vcvars32.bat</b> command supplied with Visual Studio is the normal way to define these
+            system. The <b>vcvarsall.bat</b> command supplied with Visual Studio is the normal way to define these
             variables.</p>
-            <p>If you wish to be able to run the <b>configure</b> program or use the <b>make</b> command to build from
-            the command line, then you will need to download the Cygwin tools from <a href=
-                "http://www.cygwin.com">www.cygwin.com</a>. You will need to install the binutils package, but we 
-            recommend you install all of cygwin if you have the room. 
-            Once installed, you should add the Cygwin programs directories to your PATH environment variable.</p>
-            
+
             <a name="configuring" id="configuring"></a>
-            <h2 class="section">Configuring the Build</h2>
-            <p>The <b>configure</b> program is used to tailor the software's configuration to suit your needs. It is
-            the master configuration tool and it will create the "build/buildConfig.*" configuration files. These files
-            are included by make files, shell scripts and by C source files to control the build process.</p>
-            <p>You may run configure with no options to accept the factory defaults &mdash; this is a good starting
-            point. The <b>configure</b> program will begin with the default settings supplied in the
-            "build/standard.default" file. Then it will apply the various options specified on the command line.</p>
+            <h2 class="section">Configuring the Build with Bit</h2>
+            <p>The <b>configure</b> script is used to tailor the software's configuration to suit your needs. It 
+            invokes <em>bit configure</em> to tailor the software to your local system configuration. During 
+            configuration, Bit will create several output files that contain settings for your system. These include:
+            <ul>
+                <li>A platform bit file called: OS-ARCH.bit</li>
+                <li>A platform output products directory called: OS-ARCH-PROFILE</li>
+                <li>A start.bit file which specifies the platforms to build</li>
+                <li>A OS-ARCH-PROFILE/inc/bit.h header with definitions for the build configuration</li>
+            </ul>
+
+            <p>The generated Bit files are readable JavaScript files that contain the settings to control the build
+            when Bit is run. When compiling, all source code includes the <em>bit.h</em> header to configure how
+            the source is built.</p>
             <h3>Running Configure</h3>
-            <p>To run the <b>configure</b> program, type:</p>
+            <p>To run the <b>configure</b> script, type:</p>
             <pre>
 ./configure
 </pre>
-            <p>Use the "--help" switch to see the available options or see the <a href="configure.html">Configure
-            Program</a> document for more details.</p><a name="cross" id="cross"></a>
+            <p>You may run configure with no options to accept the factory defaults &mdash; this is a good starting
+            point. Some useful Bit options for configuring are:
+
+            <p>To configure for building outside a source tree. This supports building from source from a 
+                read-only file system.</p>
+            <pre>configure --config /path/to/source</pre>
+
+            <p>To configure for a debug build with debug symbols:</p>
+            <pre>configure --debug</pre>
+
+            <p>To configure for an optimized release build:</p>
+            <pre>configure --release</pre>
+
+            <p>To configure without TLS/SSL:</p>
+            <pre>configure --without ssl</pre>
+
+            <p>To configure using PHP from a specific source location:</p>
+            <pre>configure --with php=/path/to/php-source</pre>
+
+            <p>To configure to build for 32-bit X86 (when on a 64-bit linux system):</p>
+            <pre>configure --emulate linux-x86</pre>
+
+            Use the "--help" switch to see the available options or see the <a href="configure.html">Configure
+                Script</a> document for more details.</p>
+
+            <a name="packages" id="packages"></a>
             <h3>External Packages</h3>
-            <p>The Appweb configure command supports the resolution of external packages such as Ejscript, OpenSSL and
-                PHP. By default, Appweb can locate these packages if the source distributions are installed in 
-                standard locations. Otherwise, the packages can be identified by using the configure 
-                <em>--with-PACKAGE=PATH</em> switch. This specifies that path to the source directory containing the
-                package source distribution.</p>
+            <p>The configuration process supports the resolution of external packages that extend and enhance Appweb, 
+                such as Ejscript, OpenSSL and PHP. By default, Appweb can locate these packages if the source
+                distributions are installed in standard locations. Otherwise, the packages can be identified by using
+                <em>configure --with PACKAGE=PATH</em> switch. This specifies that path to the source directory
+                containing the package source distribution.</p>
                 <p>For example, to build with Ejscript, follow these steps:</p>
             <ol>
                 <li>Download Ejscript. You can download the open source version of Ejscript from
@@ -136,14 +176,19 @@
                 <a mailto"sales@embedthis.com">sales@embedthis.com</a> if you require a commercial license.</li>
                 <li>Configure and build Ejscript via the Ejscript configure command in the Ejscript directory:
                     <pre>./configure
-make</pre></li> 
-                <li>From the Appweb source directory run the Appweb configure:
-                <pre>./configure --with-ejscript=/path/to/ejscript
-make</pre></li>
+make                        # Does a bootstrap build
+*/bin/bit configure build   # Configure and build
+sudo bit install            # Install so Appweb can use bit
+</pre></li> 
+                <li>Then, from the Appweb source directory run the Appweb configure:
+                <pre>./configure --with ejscript=/path/to/ejscript
+bit</pre></li>
             </ol>
-            <p>The Appweb configure program and Makefiles will import the required libraries and headers into
+            <p>During configuration, the required ejscript libraries and headers will be copied into
             the Appweb source tree. NOTE: Ejscript will provide the MPR and HTTP library as they must be 
             common between Appweb and Ejscript.</p>
+
+            <a name="cross" id="cross"></a>
             <h3>Cross Compilation</h3>
             <p>To configure for cross compilation you need to specify the --host and --build switches. These take
             system architecture specifications in the form: CPU-VENDOR-OS. For example: i386-pc-linux or
@@ -222,6 +267,19 @@ make
             <em>src/server/Makefile</em> is setup to build Appweb and the loadable modules separately. If you want to
             statically link the modules, edit the Makefile and add the required modules to the <em>MODULES</em> 
             variable.</p>
+
+
+            configure --show
+            configure --diagnose
+            configure --dump
+            configure --rebuild
+
+Targets:
+     clean clobber compile configure dump generate rebuild
+
+
+
+
             
             <a name="installing" id="installing"></a>
             <h2 class="section">Installing</h2>
