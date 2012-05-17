@@ -2,18 +2,23 @@
     ejscript.bit - Ejscript package for Bit
  */
 
+require ejs.tar
+require ejs.zlib
+
 pack('ejscript', 'Ejscript Web Framework')
 let path = bit.packs.ejscript.path
-let edir = bit.dir.src.join('src/deps/ejs')
+let deps = bit.dir.src.join('src/deps')
+let ejs = deps.join('ejs')
+let tgz = deps.join('ejs.tgz')
+let tar = deps.join('ejs.tar')
 
 if (path) {
     if (path.startsWith('http:')) {
         /*
             Auto download ejs
-         */
         let http = Http
-        let tfile = bit.dir.src.join('src/deps/ejs.tgz')
         let fp = File(tfile, 'w')
+        trace('Download', 'Ejscript from: ' + path)
         http.get(path)
         buf = new ByteArray
         while (http.read(buf) > 0) {
@@ -24,19 +29,20 @@ if (path) {
             throw "Cannot download Ejscript from " + path
         }
         http.close()
-        edir.removeAll()
-        edir.makeDir()
-        let home = App.dir
-        try {
-            App.chdir(edir)
-            // Cmd('tar -C src/deps/ejs --strip-components 2 -zxf src/deps/ejs.tgz')
-            Tar('src/deps/ejs.tgz').extract()
-            let dir = bit.dir.join('src/deps').glob('ejs-*')
-            dir.rename(edir)
-        } finally {
-            App.chdir(home)
+         */
+        trace('Prepare', 'Ejscript distribution')
+        ejs.removeAll()
+        ejs.makeDir()
+        Zlib.uncompress(tgz, tar)
+        Tar(tar, {chdir: deps}).extract()
+        let dir = deps.glob('ejs-*').sort().reverse()[0]
+        dir.rename(ejs)
+        tgz.remove()
+        tar.remove()
+        for each (n in ['Makefile', 'bit.h', 'deps.c', 'ejsmod.c', 'pcre.c', 'pcre.h', 'product.bit', 
+            'sqlite3.c', 'sqlite3.h', 'start.bit']) {
+            ejs.join(n).remove()
         }
-        tfile.remove()
     }
 }
 
@@ -73,6 +79,14 @@ if (Path('src/deps/ejs/ejsLib.c').exists) {
         libpaths: [ libdir.parent ],
         imports: imports,
     }
+    /*
+        Disable building libraries that are imported from Ejscript when using an external ejs distribution
+     */
+    let prebuilt = ['libmpr', 'libmprssl', 'libhttp', 'libpcre', 'libsqlite3']
+    for each (tname in prebuilt) {
+        bit.targets[tname] ||= {}
+        bit.targets[tname].built = true
+    }
 }
 if (bit.packs.sqlite && bit.packs.sqlite.enable) {
     cfg.libraries.push('sqlite3')
@@ -82,11 +96,3 @@ if (bit.packs.ssl && bit.packs.ssl.enable) {
 }
 Bit.load({packs: { ejscript: cfg }})
 
-/*
-    Disable building libraries that are imported from Ejscript
- */
-let prebuilt = ['libmpr', 'libmprssl', 'libhttp', 'libpcre', 'libsqlite3']
-for each (tname in prebuilt) {
-    bit.targets[tname] ||= {}
-    bit.targets[tname].built = true
-}

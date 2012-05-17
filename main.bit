@@ -11,6 +11,7 @@ Bit.load({
         "src/deps/sqlite/sqlite.bit",
         "src/libappweb.bit",
         "src/esp/esp.bit",
+        "?src/deps/ejs/ejs.bit",
         "src/modules/modules.bit",
         "src/utils/utils.bit",
         "src/server/server.bit",

@@ -145,7 +145,7 @@ public function packageSourceFiles() {
     let pkg = src.join(s.product + '-' + s.version)
     safeRemove(pkg)
     pkg.makeDir()
-    install(['Makefile', 'product.bit'], pkg)
+    install(['Makefile', 'start.bit', 'main.bit'], pkg)
     install('bits', pkg)
     install('*.md', pkg, {fold: true, expand: true})
     install('configure', pkg, {permissions: 0755})
@@ -174,8 +174,8 @@ public function packageComboFiles() {
     safeRemove(pkg)
     pkg.makeDir()
     install('projects/appweb-' + bit.platform.os + '-bit.h', pkg.join('src/deps/appweb/bit.h'))
-    install('package/appweb.bit', pkg.join('src/deps/appweb/product.bit'))
-    install('package/Makefile.flat', pkg.join('src/deps/appweb/Makefile'))
+    install('package/start-flat.bit', pkg.join('src/deps/appweb/start.bit'))
+    install('package/Makefile-flat', pkg.join('src/deps/appweb/Makefile'))
     install(['src/deps/mpr/mpr.h', 'src/deps/http/http.h', 'src/appweb.h', 'src/server/appwebMonitor.h',
         'src/esp/edi.h', 'src/esp/mdb.h', 'src/esp/esp.h', 'src/deps/pcre/pcre.h'], 
         pkg.join('src/deps/appweb/appweb.h'), {

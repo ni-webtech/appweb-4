@@ -10,6 +10,13 @@ Bit.load({
             sources: [ 'httpLib.c' ],
             headers: [ '*.h' ],
             depends: [ 'libmpr', 'libpcre', 'libmprssl'  ],
+            scripts: {
+                postblend: "
+                    if (bit.settings.hasPam) {
+                        bit.target.libraries.push('pam')
+                    }
+                ",
+            },
         },
 
         http: {
