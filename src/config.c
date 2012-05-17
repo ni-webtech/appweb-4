@@ -407,10 +407,12 @@ static int authGroupFileDirective(MaState *state, cchar *key, cchar *value)
  */
 static int authMethodDirective(MaState *state, cchar *key, cchar *value)
 {
-    if (scasecmp(value, "pam") == 0) {
-        state->auth->backend = HTTP_AUTH_METHOD_PAM;
-    } else if (scasecmp(value, "run") == 0) {
-        state->auth->backend = HTTP_AUTH_METHOD_FILE;
+    if (scasecmp(value, "run") == 0) {
+        state->auth->backend = HTTP_AUTH_FILE;
+#if BLD_CC_PAM
+    } else if (scasecmp(value, "pam") == 0) {
+        state->auth->backend = HTTP_AUTH_PAM;
+#endif
     } else {
         return configError(state, key);
     }

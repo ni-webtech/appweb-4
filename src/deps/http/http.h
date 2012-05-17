@@ -2309,29 +2309,29 @@ extern void httpUseWorker(HttpConn *conn, MprDispatcher *dispatcher, MprEvent *e
 /*  
     Deny/Allow order
  */
-#define HTTP_ALLOW_DENY           1         /**< Run allow checks before deny checks */
-#define HTTP_DENY_ALLOW           2         /**< Run deny checks before allow checks */
-#define HTTP_ACL_ALL             -1         /* All bits set */
+#define HTTP_ALLOW_DENY             1           /**< Run allow checks before deny checks */
+#define HTTP_DENY_ALLOW             2           /**< Run deny checks before allow checks */
+#define HTTP_ACL_ALL               -1           /* All bits set */
 
 /*  
     Authentication types
  */
-#define HTTP_AUTH_UNKNOWN         0         /**< Authentication method is unknown */
-#define HTTP_AUTH_BASIC           1         /**< Basic HTTP authentication (clear text) */
-#define HTTP_AUTH_DIGEST          2         /**< Digest authentication */
+#define HTTP_AUTH_UNKNOWN           0           /**< Authentication method is unknown */
+#define HTTP_AUTH_BASIC             1           /**< Basic HTTP authentication (clear text) */
+#define HTTP_AUTH_DIGEST            2           /**< Digest authentication */
 
 /*  
     Auth Flags
  */
-#define HTTP_AUTH_REQUIRED        0x1       /**< Route requires authentication */
+#define HTTP_AUTH_REQUIRED          0x1         /**< Route requires authentication */
 
 /*  
     Authentication methods
  */
-#define HTTP_AUTH_METHOD_FILE     1         /**< File-based authentication */
-#define HTTP_AUTH_METHOD_PAM      2         /**< Plugable authentication module scheme (Unix) */
+#define HTTP_AUTH_FILE              1           /**< File-based authentication */
+#define HTTP_AUTH_PAM               2           /**< Plugable authentication module scheme (Unix) */
 
-typedef long HttpAcl;                       /**< Authentication Access control mask */
+typedef long HttpAcl;                           /**< Authentication Access control mask */
 
 /** 
     Authorization
@@ -2487,7 +2487,6 @@ extern int httpCheckAuth(HttpConn *conn);
 extern HttpAuth *httpCreateInheritedAuth(HttpAuth *parent);
 
 
-#if BIT_FEATURE_AUTH_FILE
 /** 
     User Authorization
     File-based authorization backend
@@ -2838,9 +2837,6 @@ extern int httpWriteUserFile(HttpAuth *auth, char *path);
  */
 extern bool httpValidateFileCredentials(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, 
     cchar *requiredPass, char **msg);
-#endif /* AUTH_FILE */
-
-#if BIT_FEATURE_AUTH_PAM
 
 /**
     Get the user password from a PAM database
@@ -2869,7 +2865,6 @@ extern cchar *httpGetPamPassword(HttpAuth *auth, cchar *realm, cchar *user);
  */
 extern bool httpValidatePamCredentials(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, 
     cchar *requiredPass, char **msg);
-#endif /* AUTH_PAM */
 
 /********************************** HttpLang  ********************************/
 
