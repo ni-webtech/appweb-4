@@ -1,26 +1,8 @@
 /*
-    main.bit -- Bit File to build the combo Appweb release
+    start.bit -- Start Bit File to build the combo Appweb release
  */
 
 Bit.load({
-    blend: [
-        "${BITS}/embedthis.bit",
-    ],
-
-    settings: {
-		product: 'appweb',
-		title: 'Embedthis Appweb',
-        company: 'Embedthis',
-		version: '4.0.0',
-		buildNumber: 'B2',
-        http_port: 80,
-        ssl_port: 443,
-        mdb: true,
-        sdb: false,
-        manager: 'appman',
-        auth: 'file',
-    },
-
     targets: {
         libappweb: {
             type: 'lib',
@@ -32,19 +14,20 @@ Bit.load({
                 '-Wall',
                 '-Wshorten-64-to-32',
             ],
+            '+compiler': [ '-w', ],
+            scripts: {
+                prebuild: "
+                    if (bit.settings.hasPam) {
+                        bit.target.libraries.push('pam')
+                    }
+                ",
+            },
         },
         appweb: {
             type: 'exe',
             depends: [ 'libappweb' ],
             sources: [ 'appweb.c' ],
             headers: [ '*.h' ],
-        },
-        prep: {
-            type: 'configure',
-            build: "
-                rm('${SRC}/*.o')
-                rm('${SRC}/bit.h')
-            ",
         },
     },
     packs: {

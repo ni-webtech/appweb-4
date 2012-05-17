@@ -193,12 +193,17 @@ public function packageComboFiles() {
     install(['src/**.c'], pkg.join('src/deps/appweb/appwebLib.c'), {
         cat: true,
         filter: /^#inc.*appweb.*$|^#inc.*mpr.*$|^#inc.*http.*$|^#inc.*customize.*$|^#inc.*edi.*$|^#inc.*mdb.*$|^#inc.*esp.*$/mg,
-        exclude: /deps|server.appweb.c|esp\.c|samples|romFiles|pcre|appwebMonitor|sqlite|appman|makerom|utils|test|http\.c|sqlite|manager/,
+        exclude: /deps|server.appweb.c|esp\.c|ejs|samples|romFiles|pcre|appwebMonitor|sqlite|appman|makerom|utils|test|http\.c|sqlite|manager/,
         header: '#include \"appweb.h\"',
         title: bit.settings.title + ' Library Source',
     })
     install(['src/server/appweb.c'], pkg.join('src/deps/appweb/appweb.c'))
     install(['src/server/appweb.conf'], pkg.join('src/deps/appweb/appweb.conf'))
+
+    let econf = pkg.join('src/deps/appweb/appweb.conf')
+    econf.write(econf.readString().replace(/..LIBDIR../, ''))
+
+    //  MOB - better to edit appweb.conf and change LIBDIR/esp.conf to be just esp.conf
     install(['src/esp/esp.conf'], pkg.join('src/deps/appweb/esp.conf'))
     install(['src/deps/pcre/pcre.c', 'src/deps/pcre/pcre.h'], pkg.join('src/deps/appweb'))
     install(['src/deps/sqlite/sqlite3.c', 'src/deps/sqlite/sqlite3.h'], pkg.join('src/deps/sqlite'))

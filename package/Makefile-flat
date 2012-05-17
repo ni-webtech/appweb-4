@@ -2,9 +2,9 @@
 #   Makefile -- Build It Makefile to build Embedthis Appweb for macosx on x86_64
 #
 
-CFLAGS      := -g
+CFLAGS      := -g -w
 LDFLAGS     := -L. -Wl,-rpath,@executable_path/../lib -Wl,-rpath,@executable_path/ -Wl,-rpath,@loader_path/
-LIBS        := -lpthread -lm -ldl
+LIBS        := -lpthread -lm -ldl -lpam
 
 all: libappweb.dylib appweb
 
