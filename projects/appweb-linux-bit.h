@@ -39,7 +39,7 @@
 #define BIT_MANAGER "appman"
 #define BIT_CC_DOUBLE_BRACES 0
 #define BIT_CC_DYN_LOAD 1
-#define BIT_CC_EDITLINE 1
+#define BIT_CC_EDITLINE 0
 #define BIT_CC_MMU 1
 #define BIT_CC_MTUNE 1
 #define BIT_CC_PAM 0
