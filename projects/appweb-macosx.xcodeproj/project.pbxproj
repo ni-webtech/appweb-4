@@ -2375,7 +2375,6 @@ fi";
 					"-lpthread",
 					"-lm",
 					"-ldl",
-					"-lpam",
 					"$(inherited)"
 				);
 
@@ -2448,7 +2447,6 @@ fi";
 					"-lpthread",
 					"-lm",
 					"-ldl",
-					"-lpam",
 					"$(inherited)"
 				);
 
@@ -2556,6 +2554,10 @@ fi";
 			buildSettings = {
 				PRODUCT_NAME = libhttp;
 
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
 
 			};
 			name = Debug;
@@ -2565,6 +2567,10 @@ fi";
 			buildSettings = {
 				PRODUCT_NAME = libhttp;
 
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
 
 			};
 			name = Release;
@@ -2574,6 +2580,10 @@ fi";
 			buildSettings = {
 				PRODUCT_NAME = http;
 
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
 
 			};
 			name = Debug;
@@ -2583,6 +2593,10 @@ fi";
 			buildSettings = {
 				PRODUCT_NAME = http;
 
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
 
 			};
 			name = Release;
@@ -2630,6 +2644,10 @@ fi";
 			buildSettings = {
 				PRODUCT_NAME = libappweb;
 
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
 
 			};
 			name = Debug;
@@ -2639,6 +2657,10 @@ fi";
 			buildSettings = {
 				PRODUCT_NAME = libappweb;
 
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
 
 			};
 			name = Release;
@@ -2648,6 +2670,10 @@ fi";
 			buildSettings = {
 				PRODUCT_NAME = mod_esp;
 
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
 
 			};
 			name = Debug;
@@ -2657,6 +2683,10 @@ fi";
 			buildSettings = {
 				PRODUCT_NAME = mod_esp;
 
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
 
 			};
 			name = Release;
@@ -2666,6 +2696,10 @@ fi";
 			buildSettings = {
 				PRODUCT_NAME = esp;
 
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
 
 			};
 			name = Debug;
@@ -2675,6 +2709,10 @@ fi";
 			buildSettings = {
 				PRODUCT_NAME = esp;
 
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
 
 			};
 			name = Release;
@@ -2738,6 +2776,10 @@ fi";
 			buildSettings = {
 				PRODUCT_NAME = mod_cgi;
 
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
 
 			};
 			name = Debug;
@@ -2747,6 +2789,10 @@ fi";
 			buildSettings = {
 				PRODUCT_NAME = mod_cgi;
 
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
 
 			};
 			name = Release;
@@ -2810,6 +2856,10 @@ fi";
 			buildSettings = {
 				PRODUCT_NAME = appweb;
 
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
 
 			};
 			name = Debug;
@@ -2819,6 +2869,10 @@ fi";
 			buildSettings = {
 				PRODUCT_NAME = appweb;
 
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
 
 			};
 			name = Release;
@@ -2828,6 +2882,10 @@ fi";
 			buildSettings = {
 				PRODUCT_NAME = testAppweb;
 
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
 
 			};
 			name = Debug;
@@ -2837,6 +2895,10 @@ fi";
 			buildSettings = {
 				PRODUCT_NAME = testAppweb;
 
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
 
 			};
 			name = Release;

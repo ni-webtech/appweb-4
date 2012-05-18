@@ -34,8 +34,6 @@
 #define BIT_SHOBJ ".dylib"
 #define BIT_LIB ".a"
 #define BIT_OBJ ".o"
-#define BIT_FEATURE_AUTH_FILE 1
-#define BIT_FEATURE_AUTH_PAM 0
 #define BIT_FEATURE_MDB 1
 #define BIT_FEATURE_SDB 0
 #define BIT_MANAGER "appman"
