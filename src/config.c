@@ -385,7 +385,6 @@ static int allowDirective(MaState *state, cchar *key, cchar *value)
  */
 static int authGroupFileDirective(MaState *state, cchar *key, cchar *value)
 {
-#if BIT_FEATURE_AUTH_FILE
     char    *path;
 
     path = mprJoinPath(state->configDir, value);
@@ -395,10 +394,6 @@ static int authGroupFileDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_BAD_SYNTAX;
     }
     return 0;
-#else
-    mprError("AuthGroupFile directive not supported when --auth=pam");
-    return MPR_ERR_BAD_SYNTAX;
-#endif
 }
 
 
@@ -455,7 +450,6 @@ static int authTypeDirective(MaState *state, cchar *key, cchar *value)
  */
 static int authUserFileDirective(MaState *state, cchar *key, cchar *value)
 {
-#if BIT_FEATURE_AUTH_FILE
     char    *path;
     path = mprJoinPath(state->configDir, value);
     path = httpMakePath(state->route, path);
@@ -464,10 +458,6 @@ static int authUserFileDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_BAD_SYNTAX;
     }
     return 0;
-#else
-    mprError("AuthUserFile directive not supported when --auth=pam");
-    return MPR_ERR_BAD_SYNTAX;
-#endif
 }
 
 
@@ -1596,11 +1586,7 @@ static int requireDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_BAD_SYNTAX;
     }
     if (scasecmp(type, "acl") == 0) {
-#if BIT_FEATURE_AUTH_FILE
         httpSetRequiredAcl(state->auth, httpParseAcl(state->auth, rest));
-#else
-        mprError("Acl directive not supported when --auth=pam");
-#endif
     } else if (scasecmp(type, "valid-user") == 0) {
         httpSetAuthAnyValidUser(state->auth);
     } else if (scasecmp(type, "user") == 0) {
