@@ -22,18 +22,6 @@
         <div class="topRight">
             <div class="search">
                 <div id="cse-search-form">Loading</div>
-                <script src="http://www.google.com/jsapi" type="text/javascript"></script>
-                <script type="text/javascript"> 
-                  google.load('search', '1', {language : 'en'});
-                  google.setOnLoadCallback(function() {
-                    var customSearchControl = new google.search.CustomSearchControl(
-                      '000262706376373952077:1hs0lhenihk');
-                    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-                    var options = new google.search.DrawOptions();
-                    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-                    customSearchControl.draw('cse-search-form', options);
-                  }, true);
-                </script>
                 <div class="version">Embedthis Appweb 4.0.0</div>
             </div>
         </div>
@@ -50,7 +38,6 @@
                 <li><a href="#get">Getting the Source</a></li>
                 <li><a href="#repository">Repository</a></li>
                 <li><a href="#building">Building</a></li>
-                <li><a href="#testing">Testing</a></li>
                 <li><a href="#porting">Porting</a></li>
             </ul>
 <!-- BeginDsi "dsi/sourceSeeAlso.html" -->
@@ -58,9 +45,6 @@
             <ul class="nav">
                 <li><a href="../../../guide/appweb/source/index.html">Working with Source</a></li>
                 <li><a href="../../../guide/appweb/source/building.html">Building From Source</a></li>
-                <li><a href="../../../guide/appweb/source/steps.html">Build Steps</a></li>
-                <li><a href="../../../guide/appweb/source/configure.html">Configure Program</a></li>
-                <li><a href="../../../guide/appweb/source/make.html">Make Scheme</a></li>
                 <li><a href="../../../guide/appweb/source/porting.html">Porting Guide</a></li>
 
                 <li><a href="../../../ref/appweb/index.html">Programmers Reference</a></li>
@@ -70,7 +54,7 @@
                 <li><a href="../../../guide/appweb/programmers/embedding.html">Embedding Appweb</a></li>
                 <li><a href="../../../guide/appweb/programmers/modules.html">Appweb Modules</a></li>
                 <li><a href="../../../guide/appweb/programmers/stages.html">Pipeline Stages</a></li>
-                <li><a href="../../../guide/appweb/programmers/migrating.html">Migrating to Appweb 3</a></li>
+                <li><a href="../../../guide/appweb/programmers/migrating.html">Migrating to Appweb 4</a></li>
                 <li><a href="../../../guide/appweb/users/index.html">Users Guide</a></li>
                 <li><a href="../../../product/changeLog.html">Change Log</a></li>
             </ul>
@@ -82,8 +66,8 @@
             distribution you choose, but the source code distribution has several advantages:</p>
             <ul>
                 <li>You can recompile Appweb to optimize it for your specific system environment.</li>
-                <li>You can reconfigure Appweb using a wide variety of configuration options to select the specific
-                features that you require.</li>
+                <li>You can reconfigure Appweb via configuration options to select the specific
+                feature set you require.</li>
                 <li>You can minimize the memory footprint and decrease the securable surface area.</li>
             </ul><a name="get" id="get"></a>
             <h2>Getting the Source Code</h2>
@@ -116,10 +100,7 @@ $ git clone http://github.com/embedthis/appweb-4
             <h2>Building Appweb from Source</h2>
             <p>The Appweb source distribution contains all the required source files, headers, tools, and test framework
             to reconfigure, build, and verify Appweb. For details, see the <a href="building.html">building from
-            source</a> instructions.</p><a name="testing" id="testing"></a>
-            <h2>Running Unit Tests</h2>
-            <p>The Appweb source code uses a large test suite to verify correct operation and trap regression errors.
-            After building, run <em>bit test</em> to exercise the unit tests.</p>
+                source</a> instructions.</p>
             
             <a name="porting" id="porting"></a>
             <h2>Porting the Source to a New Platform</h2>
@@ -136,6 +117,21 @@ $ git clone http://github.com/embedthis/appweb-4
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
+</body>
+
+<script src="http://www.google.com/jsapi" type="text/javascript"></script>
+<script type="text/javascript"> 
+  google.load('search', '1', {language : 'en'});
+  google.setOnLoadCallback(function() {
+    var customSearchControl = new google.search.CustomSearchControl(
+      '000262706376373952077:1hs0lhenihk');
+    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+    var options = new google.search.DrawOptions();
+    options.enableSearchboxOnly("http://appwebserver.org/search.html");
+    customSearchControl.draw('cse-search-form', options);
+  }, true);
+</script>
+</html>
 <!-- EndDsi -->
 </body>
 </html>

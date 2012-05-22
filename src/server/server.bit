@@ -6,6 +6,11 @@ Bit.load({
     targets: {
         appweb: {
             type: 'exe',
+            /* 
+                To link statically, uncomment this and edit the 'depends' property with the required modules.
+                static: true,
+                depends: ['libappweb', 'mod_esp', 'mod_ssl'],
+             */
             depends: [ 'libappweb' ],
             sources: [ 'appweb.c' ],
             headers: [ '*.h' ],

@@ -13,7 +13,13 @@ Bit.load({
                 path = Path('dsi/head.html')
                 path.write(path.readString().replace(/<title>.*<.title>/, 
                     '<title>' + bit.settings.title + ' ' + bit.settings.version + ' Documentation</title>'))
-            ",
+
+                trace('Patch', 'Expand DSI')
+                for each (path in Path('.').glob('**.html', {exclude: /Bare.html|dsi/})) {
+                    vtrace('Patch', path)
+                    Cmd('dsi -v -I. ' + path)
+                }
+            "
         },
 
         api: {

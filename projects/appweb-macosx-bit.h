@@ -16,7 +16,7 @@
 #define BIT_MINOR_VERSION 0
 #define BIT_PATCH_VERSION 0
 #define BIT_VNUM 400000000
-#define BIT_CONFIG_CMD "bit -q -d -without all configure -gen sh,make,xcode"
+#define BIT_CONFIG_CMD "bit -d -q -c -platform windows-x86 -without all -configure . -gen sh,nmake,vs"
 #define BIT_LIB_NAME "bin"
 #define BIT_PROFILE "debug"
 #define BIT_CFG_PREFIX "/etc/appweb"
@@ -50,22 +50,22 @@
 #define BIT_CC_WARN_64TO32 1
 #define BIT_CC_WARN_UNUSED 1
 #define BIT_FEATURE_HTTP 1
-#define BIT_FEATURE_DOXYGEN 0
-#define BIT_FEATURE_DSI 0
-#define BIT_FEATURE_EJS 0
-#define BIT_FEATURE_MAN 0
-#define BIT_FEATURE_MAN2HTML 0
-#define BIT_FEATURE_PHP 0
-#define BIT_FEATURE_PMAKER 0
-#define BIT_FEATURE_SSL 0
-#define BIT_FEATURE_EJSCRIPT 0
-#define BIT_FEATURE_MATRIXSSL 0
-#define BIT_FEATURE_OPENSSL 0
 #define BIT_FEATURE_CC 1
 #define BIT_FEATURE_LINK 1
 #define BIT_FEATURE_PCRE 1
 #define BIT_FEATURE_CGI 1
 #define BIT_FEATURE_DIR 1
+#define BIT_FEATURE_DOXYGEN 1
+#define BIT_FEATURE_DSI 1
+#define BIT_FEATURE_EJS 1
+#define BIT_FEATURE_EJSCRIPT 0
 #define BIT_FEATURE_ESP 1
+#define BIT_FEATURE_MAN 1
+#define BIT_FEATURE_MAN2HTML 1
+#define BIT_FEATURE_OPENSSL 1
+#define BIT_FEATURE_MATRIXSSL 1
+#define BIT_FEATURE_PMAKER 1
+#define BIT_FEATURE_PHP 1
 #define BIT_FEATURE_SQLITE 1
+#define BIT_FEATURE_SSL 1
 #define BIT_FEATURE_UTEST 1

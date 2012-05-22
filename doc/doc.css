@@ -43,9 +43,10 @@ a.logo {
 
 div.topRight {
     position: relative;
-    width: 210px;
     top: 4px;
     left: 680px;
+    width: 210px;
+    height: 62px;
 	font-size: 90%;
 	text-align: right;
 	color: #000000; 
@@ -85,7 +86,7 @@ div.search form #q:hover, div.search form #q:focus {
 }
 
 div.version {
-    padding-right: 10px;
+    padding: 10px 10px 0 0;
 	color: #FFFFFF; 
 }
 

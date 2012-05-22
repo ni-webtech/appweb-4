@@ -1,5 +1,5 @@
 /*
-    esp.bit - ESP package for Bit
+    esp.pak - ESP package for Bit
  */
 
 pack('esp', 'Embedded Server Pages Web Framework')

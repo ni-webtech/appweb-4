@@ -1,5 +1,5 @@
 /*
-    cgi.bit - CGI package for Bit
+    cgi.pak - CGI package for Bit
  */
 
 pack('cgi', 'Common Gateway Interface Module')

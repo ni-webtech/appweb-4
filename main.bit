@@ -42,6 +42,8 @@ Bit.load({
         manager: 'appman',
         auth: 'file',
         packs: [ 'bits/packs' ]
+        /* Must build locally to build tools */
+        platforms: [ 'local' ],
         sync: ['http', 'mpr', 'pcre', 'sqlite'],
         'without-all': ['doxygen', 'dsi', 'ejs', 'man', 'man2html', 'php', 'pmaker', 'ssl', 'ejscript', 'php', 
             'matrixssl', 'openssl' ],

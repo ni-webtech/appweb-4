@@ -22,18 +22,6 @@
         <div class="topRight">
             <div class="search">
                 <div id="cse-search-form">Loading</div>
-                <script src="http://www.google.com/jsapi" type="text/javascript"></script>
-                <script type="text/javascript"> 
-                  google.load('search', '1', {language : 'en'});
-                  google.setOnLoadCallback(function() {
-                    var customSearchControl = new google.search.CustomSearchControl(
-                      '000262706376373952077:1hs0lhenihk');
-                    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-                    var options = new google.search.DrawOptions();
-                    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-                    customSearchControl.draw('cse-search-form', options);
-                  }, true);
-                </script>
                 <div class="version">Embedthis Appweb 4.0.0</div>
             </div>
         </div>
@@ -52,9 +40,6 @@
             <ul class="nav">
                 <li><a href="../../../guide/appweb/source/index.html">Working with Source</a></li>
                 <li><a href="../../../guide/appweb/source/building.html">Building From Source</a></li>
-                <li><a href="../../../guide/appweb/source/steps.html">Build Steps</a></li>
-                <li><a href="../../../guide/appweb/source/configure.html">Configure Program</a></li>
-                <li><a href="../../../guide/appweb/source/make.html">Make Scheme</a></li>
                 <li><a href="../../../guide/appweb/source/porting.html">Porting Guide</a></li>
 
                 <li><a href="../../../ref/appweb/index.html">Programmers Reference</a></li>
@@ -64,7 +49,7 @@
                 <li><a href="../../../guide/appweb/programmers/embedding.html">Embedding Appweb</a></li>
                 <li><a href="../../../guide/appweb/programmers/modules.html">Appweb Modules</a></li>
                 <li><a href="../../../guide/appweb/programmers/stages.html">Pipeline Stages</a></li>
-                <li><a href="../../../guide/appweb/programmers/migrating.html">Migrating to Appweb 3</a></li>
+                <li><a href="../../../guide/appweb/programmers/migrating.html">Migrating to Appweb 4</a></li>
                 <li><a href="../../../guide/appweb/users/index.html">Users Guide</a></li>
                 <li><a href="../../../product/changeLog.html">Change Log</a></li>
             </ul>
@@ -155,6 +140,21 @@ http://hostname:8000/appweb.html
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
+</body>
+
+<script src="http://www.google.com/jsapi" type="text/javascript"></script>
+<script type="text/javascript"> 
+  google.load('search', '1', {language : 'en'});
+  google.setOnLoadCallback(function() {
+    var customSearchControl = new google.search.CustomSearchControl(
+      '000262706376373952077:1hs0lhenihk');
+    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+    var options = new google.search.DrawOptions();
+    options.enableSearchboxOnly("http://appwebserver.org/search.html");
+    customSearchControl.draw('cse-search-form', options);
+  }, true);
+</script>
+</html>
 <!-- EndDsi -->
 </body>
 </html>
