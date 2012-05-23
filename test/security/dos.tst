@@ -11,7 +11,7 @@ assert(http.status == 200)
 http.close()
 
 //  MOB - TEMP
-if (Config.OS != 'WINDOWS') {
+if (Config.OS != 'windows') {
     //  Try to crash with DOS attack
     for (i in 2000) {
         let s = new Socket

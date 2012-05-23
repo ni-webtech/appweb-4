@@ -211,7 +211,7 @@ public function packageComboFiles() {
 }
 
 public function installBinary() {
-    if (Config.OS != 'WINDOWS' && App.uid != 0) {
+    if (Config.OS != 'windows' && App.uid != 0) {
         throw 'Must run as root. Use \"sudo bit install\"'
     }
     packageBinaryFiles(null)
@@ -223,7 +223,7 @@ public function installBinary() {
     }
     package(bit.dir.pkg.join('bin'), 'install')
     if (!bit.cross) {
-        if (Config.OS != 'WINDOWS') {
+        if (Config.OS != 'windows') {
             createLinks()
             updateLatestLink()
         }
@@ -238,7 +238,7 @@ public function installBinary() {
 }
 
 public function uninstallBinary() {
-    if (Config.OS != 'WINDOWS' && App.uid != 0) {
+    if (Config.OS != 'windows' && App.uid != 0) {
         throw 'Must run as root. Use \"sudo bit install\"'
     }
     trace('Uninstall', bit.settings.title)                                                     
@@ -289,7 +289,7 @@ public function createLinks() {
             log.push(link)
         }
     }
-    if (Config.OS != 'WINDOWS') {
+    if (Config.OS != 'windows') {
         let link = Path('/usr/include').join(bit.settings.product)
         link.symlink(bit.prefixes.inc)
         log.push(link)

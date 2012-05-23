@@ -240,7 +240,7 @@ if (App.config.bld_cgi && Path(test.top).join("src/test/web/cgiProgram.cgi").exi
         match("ARG.5.", "g\\>h")
         match("ARG.6.", "i\\'j")
 
-        if (Config.OS == "WIN" || Config.OS == "CYGWIN") {
+        if (Config.OS == "windows" || Config.OS == "cygwin") {
             //  TODO - fix. Windows is eating a backslash
             match("ARG.7.", "k\"l")
         } else {

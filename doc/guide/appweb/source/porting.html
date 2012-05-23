@@ -83,76 +83,30 @@
             <h2>Steps in Porting to a new Operating System</h2>
             <ol>
                 <li>
-                    <h3>Select the required Appweb features</h3>
-                    <p>Select the minimal Appweb feature set using configure. The smaller the feature set, the easier
-                    it is to focus and get something running.</p>
-MOB -- 
-    How to define a new OS in bit
-    How to define a new ARCH in bit
-    Test THIS
-
-                    <pre>./configure --platform OS-ARCH --without all </pre>
-                    <p>See also the <a href="building.html">Building from Source</a> document for details about the
-                    various <em>configure</em> and <em>bit</em> options.</p>
-                </li>
-                <li>
-                    <h3>Define your O/S configuration string</h3>
-                    <p>The configure program uses two programs to parse --host and --build switches. They are:
-                    build/bin/config.guess and build/bin/config.sub. Most probably, your O/S and CPU architecture are
-                    already in this file, but if you are porting to a new operating system, these script programs may
-                    not recognize your --host settings.</p>
-                    <p>The --host and --build switches take a system architecture specification in the form:
-                    CPU-VENDOR-OS. For example: i386-pc-linux, or, powerpc-wrs-vxworks. The host system is the target
-                    system that will eventually run Appweb. The build system is the system being used to compile and
-                    build Appweb. The config.sub program takes an abbreviated system string and emits a fully qualified
-                    architecture specification. The config.guess program attempts to sleuth your build string.</p>
-                    <p>You may need to define new MPR_CPU constants in the mpr/mpr.h file if you are doing a port to a
-                    new CPU architecture that is not already supported. You also may need to edit
-                    build/bin/config.guess. This program is run by configure to parse the --host and --build
-                    configuration values.</p>
-                </li>
-                <li>
-                    <h3>Prepare configure for the new target operating system.</h3>
-                    <p>If you create porting to a new unsupported operating system, you will need to create a new
-                    configure template in the "build/config" directory. The configure templates supply the default
-                    values for various configuration options including file extensions and system directories.</p>
-                    <p>You may also need to modify the component search scripts in build/components. These scripts are
-                    run by configure to scan your system for supported components. Configure will load the
-                    "build/env.config", "build/standard.defaults" and "build/product.config" files. These have key
-                    parameters used by configure. You may need to modify these files.</p>
-                </li>
-                <li>
-                    <h3>Run configure for the new target operating system.</h3>
-                    <p>When ready, run configure to generate the buildConfig.make, buildConfig.sh and buildConfig.h
-                    master build files. For example:</p>
-                    <pre>
-./configure --disable-all --host=powerpc-wrs-vxworks
-</pre>
-                    <p>After running configure, check the output in build/buildConfig.make. If your system is UNIX-like
-                    or windows-like, you may need to edit the parseSystemConfiguration function in the configure script
-                    and add a new definition for your O/S. This function controls the UNIX_LIKE and WIN_LIKE
-                    defines.</p>
-                </li>
-                <li>
-                    <h3>Pick a Name for the Operating System Port</h3>
+                    <h3>Pick a Name</h3>
                     <p>If you are doing a port for a new operating system, you need to pick a symbolic name that will
-                    be used in Makefiles, build scripts, and operating system specific directories. Use all CAPS for
-                    your OS name without any "_" or "-" characters. For example: "LINUX" is the Appweb name for the
-                    Linux specific portions. For the rest of this document, we will use the name <b>NEWOS</b> for the
-                    O/S symbolic name.</p>
+                    be used in conditional compilation, Makefiles, bit files, and operating system specific 
+                    directories. Some existing O/S names are: "linux", "windows", "freebsd", and "macosx".</p>
                 </li>
                 <li>
                     <h3>Select the Base O/S to Copy</h3>
                     <p>The easiest way to port to a new O/S is to find the closest existing supported O/S that the
                     Appweb software already supports and use it as a base to modify. For example, if you are porting to
-                    QNX, you may want to use the LINUX port as a base.</p>
-                </li>
-                <li>
-                    <h3>Tailor the Make directives file: make.os.NEWOS</h3>
-                    <p>This step is probably one of the longest. You need to edit the build/make/make.os.NEWOS file and
-                    change all the compiler and linker flag values for your operating system. See the <a href=
-                    "building.html">Building from Source</a> document for definitions of all the make variables used in
-                    this file.</p>
+                    QNX, you may want to use the Linux port as a base.</p>
+                    <p>Run configure for this "closest" O/S. You should specify '--without all' to select the minimal
+                    Appweb feature set. This allows you to first focus on the porting essentails.</p>
+                    <p>Next, copy the output products directory. For example:
+                    if copying Linux on a 32 bit system, configure will create a linux-x32-debug directory. Copy this to
+                    qnx-32-debug.</p>
+                    <p>Next copy the projects/appweb-linux.mk Makefile to projects/appweb-qnx.mk and edit the
+                    appropriate compiler and linker switches. Edit the top level Makefile if required to chain to this
+                    new Makefile.</p>
+
+                    <pre>
+bit --without all configure 
+cp -r linux-x86-debug qnx-x86-debug
+cp projects/appweb-linux.mk projects/appweb-qnx.mk
+</pre>
                 </li>
                 <li>
                     <h3>Tailor the cross-platform O/S header.</h3>
@@ -161,8 +115,8 @@ MOB --
                     consistent set of types and prototypes. None of the source files include normal O/S headers like
                     &lt;string.h&gt;. While this does slow the build by including more headers than are required
                     &mdash; it is barely noticeable on modern CPUs.</p>
-                    <p>When porting mpr.h, start by copying the sections in mpr.h that pertain to your base copied O/S.
-                    These will be protected by "#if BASE_OS" defines. In the example of NEWOS, we would look for, and
+                    <p>When porting the mpr.h, start by copying the sections in mpr.h that pertain to your base copied O/S.
+                    These will be protected by "#if BASEOS" defines. In the example of NEWOS, we would look for, and
                     copy, any sections with "#if LINUX" and create "#if NEWOS" sections.</p>
                     <p><b>DO NOT</b> introduce conditional code in other O/S sections. It is better to copy the entire
                     contents from the base O/S and modify. It is better to isolate the code for each O/S.</p>
@@ -174,67 +128,51 @@ MOB --
                 <li>
                     <h3>Test the Headers with a Hello World Program.</h3>
                     <p>Don't use the make system yet. Just create an empty C hello world program and include "mpr.h".
-                    Compile it and shake out the issues. You will need to define "-DNEWOS" on your compiler command
-                    line.</p>
+                    Compile it and shake out the issues. </p>
                 </li>
                 <li>
                     <h3>Port the per O/S MPR Source Code</h3>
-                    <p>Now is the time for the real work. You will probably need to modify the mprLib.c file.</p>
-                    <p>In it, you will see banners marking where the various sub-files have been catenated together.
+                    <p>Now is the time for the real work. You will need to modify the mprLib.c file to support your
+                    new platform.
+                    In mprLib.c, you will see banners marking where the various sub-files have been catenated together.
                     The main sections to modify will be mprOs.c, mprSocket.c, mprThread.c mprTime.c and mprWait.c. The
-                    mprThread.c file contains the multiprocessing thread, lock and condition variable code. If you only
-                    intend to support single-threading, you can largely skip these code sections.</p>
-                </li>
-                <li>
-                    <h3>Test the Make Subsystem</h3>
-                    <p>To aid the porting to many operating systems, a simple build system that is somewhat compatible
-                    with GNU configuration standards is provided. While the GNU Autoconf/Libtool system could arguably
-                    do the job, it struggles in non-Unix environments and lacks control for some cross-compilation
-                    scenarios. The Appweb build and make system makes fewer demands on the underlying operating system
-                    and is simpler in scope.</p>
-                    <p>The make subsystem requires GNU make and a fairly compliant bash shell implementation. If you
-                    are using windows, the CYGWIN package will provide the GNU environment. If you are porting to an
-                    O/S that uses the GNU development tools, you probably have little to do in this step. If not, you
-                    may require more modifications to your make.rules file.</p>
-                </li>
-                <li>
-                    <h3>Compile the Tools</h3>
-                    <p>Before you can build, various build tools must be made. 
-                    <pre>
-cd build
-make
-</pre>
+                    mprThread.c file contains the multiprocessing thread, lock and condition variable code. Search
+                    for conditionals for the BASEOS you chose and copy and modify these sections. </p>
                 </li>
                 <li>
                     <h3>Test Compile the Mpr</h3>
-                    <p>To start out, test compile one file in MPR first. Let's pick an easy one: <b>buf.cpp.</b> The
-                    Appweb build system compiles objects for most directories into a top level objects directory
-                    (./obj). This is done to make it easier to aggregate objects from various modules into common
-                    libraries. So to compile a single object, you need to specify the target object which will usually
-                    not be in the current directory.</p>
+                    <p>To start out, test compile just the MPR library. </p>
                     <pre>
-cd src/deps/mpr
-make 
+make NEWOS-ARCH-debug/obj/mprLib.o
 </pre>
                     <p>At this stage of the porting effort, the <b>make</b> command will undoubtedly provoke a stream
-                    of errors. Use this to work out the bugs in mpr.h, mprLib.c and make.rules for your O/S.</p>
+                    of errors. Use this to work out the bugs in mpr.h and mprLib.c for your O/S.</p>
                 </li>
                 <li>
-                    <h3>Compile the Reset</h3>
-                    <p>The rest of the code should compile and build easily. It is quite cross-platform.</p>
+                    <h3>Compile the Rest</h3>
+                    <p>After the MPR, it is more downhill. The rest of the code should compile and build more easily. 
+                    It is quite cross-platform.</p>
                     <pre>
-cd src
-make clean depend compile test
+make
 </pre>
                 </li>
                 <li>
                     <h3>Test Appweb</h3>
                     <pre>
 cd test
-make test
+appweb -v
 </pre>
                 </li>
-            </ol><a name="workingWithTheTeam" id="workingWithTheTeam"></a>
+            <!--
+                <li>
+                    <h3>Adding support to Bit for the new operating system.</h3>
+                    <p>If you wish to use Bit to build your newly ported code, you may need to add support for the
+                    operating system to bit. See the 
+                </li>
+            -->
+            </ol>
+            
+            <a name="workingWithTheTeam" id="workingWithTheTeam"></a>
             <h2 class="section">Working with the Appweb Development Team</h2>
             <p>Once you have a basic port running, you should send it back for the team to look over. They can provide
             advice and suggestions. At the first opportunity, your changes may be merged back into the development tree
