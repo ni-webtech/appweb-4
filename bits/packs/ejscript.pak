@@ -67,9 +67,9 @@ if (Path('src/deps/ejs/ejsLib.c').exists) {
         search = [ bit.dir.packs.join('ejs'), '/usr/lib/ejs/latest/lib', '/usr/include' ]
     }
     let libdir = probe(Path('libejs').joinExt(bit.ext.shobj), {search: search}).absolute
+    let incdir = probe('ejs.h', {search: search}).absolute
     let libraries = libdir.glob('libejs*') + libdir.glob('libmpr*') + libdir.glob('libpcre*') + 
         libdir.glob('libhttp*') + libdir.glob('ejs*' + bit.ext.shobj) + libdir.glob('libsqlite3*')
-    let incdir = probe('ejs.h', {search: search}).absolute
     let imports = libdir.glob('ejs*.mod') + libraries + incdir.glob('ejs*.h') + 
         incdir.glob('mpr.h') + incdir.glob('http.h') + incdir.glob('pcre.h') + incdir.glob('sqlite3.h')
     cfg = {

@@ -12,7 +12,7 @@ OS="windows"
 PROFILE="debug"
 CONFIG="${OS}-${ARCH}-${PROFILE}"
 CC="cl.exe"
-LD="undefined"
+LD="link.exe"
 CFLAGS="-nologo -GR- -W3 -Zi -Od -MDd"
 DFLAGS="-D_REENTRANT -D_MT -DBIT_DEBUG"
 IFLAGS="-I${CONFIG}/inc"
@@ -32,36 +32,36 @@ cp -r src/deps/mpr/mpr.h ${CONFIG}/inc/mpr.h
 
 "${CC}" -c -Fo${CONFIG}/obj/mprLib.obj -Fd${CONFIG}/obj/mprLib.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/deps/mpr/mprLib.c
 
-"" -dll -out:${CONFIG}/bin/libmpr.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/libmpr.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/mprLib.obj ${LIBS}
+"${LD}" -dll -out:${CONFIG}/bin/libmpr.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/libmpr.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/mprLib.obj ${LIBS}
 
 "${CC}" -c -Fo${CONFIG}/obj/mprSsl.obj -Fd${CONFIG}/obj/mprSsl.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/deps/mpr/mprSsl.c
 
-"" -dll -out:${CONFIG}/bin/libmprssl.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/libmprssl.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/mprSsl.obj ${LIBS} libmpr.lib
+"${LD}" -dll -out:${CONFIG}/bin/libmprssl.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/libmprssl.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/mprSsl.obj ${LIBS} libmpr.lib
 
 "${CC}" -c -Fo${CONFIG}/obj/manager.obj -Fd${CONFIG}/obj/manager.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/deps/mpr/manager.c
 
-"" -out:${CONFIG}/bin/appman.exe -entry:WinMainCRTStartup -subsystem:Windows ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/manager.obj ${LIBS} libmpr.lib
+"${LD}" -out:${CONFIG}/bin/appman.exe -entry:WinMainCRTStartup -subsystem:Windows ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/manager.obj ${LIBS} libmpr.lib
 
 rm -rf ${CONFIG}/inc/pcre.h
 cp -r src/deps/pcre/pcre.h ${CONFIG}/inc/pcre.h
 
 "${CC}" -c -Fo${CONFIG}/obj/pcre.obj -Fd${CONFIG}/obj/pcre.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/deps/pcre/pcre.c
 
-"" -dll -out:${CONFIG}/bin/libpcre.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/libpcre.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/pcre.obj ${LIBS}
+"${LD}" -dll -out:${CONFIG}/bin/libpcre.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/libpcre.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/pcre.obj ${LIBS}
 
 rm -rf ${CONFIG}/inc/http.h
 cp -r src/deps/http/http.h ${CONFIG}/inc/http.h
 
 "${CC}" -c -Fo${CONFIG}/obj/httpLib.obj -Fd${CONFIG}/obj/httpLib.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/deps/http/httpLib.c
 
-"" -dll -out:${CONFIG}/bin/libhttp.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/libhttp.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/httpLib.obj ${LIBS} libmpr.lib libpcre.lib libmprssl.lib
+"${LD}" -dll -out:${CONFIG}/bin/libhttp.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/libhttp.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/httpLib.obj ${LIBS} libmpr.lib libpcre.lib libmprssl.lib
 
 rm -rf ${CONFIG}/inc/sqlite3.h
 cp -r src/deps/sqlite/sqlite3.h ${CONFIG}/inc/sqlite3.h
 
 "${CC}" -c -Fo${CONFIG}/obj/sqlite3.obj -Fd${CONFIG}/obj/sqlite3.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/deps/sqlite/sqlite3.c
 
-"" -dll -out:${CONFIG}/bin/libsqlite3.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/libsqlite3.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/sqlite3.obj ${LIBS}
+"${LD}" -dll -out:${CONFIG}/bin/libsqlite3.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/libsqlite3.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/sqlite3.obj ${LIBS}
 
 rm -rf ${CONFIG}/inc/appweb.h
 cp -r src/appweb.h ${CONFIG}/inc/appweb.h
@@ -81,7 +81,7 @@ cp -r src/customize.h ${CONFIG}/inc/customize.h
 
 "${CC}" -c -Fo${CONFIG}/obj/server.obj -Fd${CONFIG}/obj/server.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/server.c
 
-"" -dll -out:${CONFIG}/bin/libappweb.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/libappweb.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/config.obj ${CONFIG}/obj/convenience.obj ${CONFIG}/obj/dirHandler.obj ${CONFIG}/obj/fileHandler.obj ${CONFIG}/obj/log.obj ${CONFIG}/obj/server.obj ${LIBS} libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
+"${LD}" -dll -out:${CONFIG}/bin/libappweb.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/libappweb.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/config.obj ${CONFIG}/obj/convenience.obj ${CONFIG}/obj/dirHandler.obj ${CONFIG}/obj/fileHandler.obj ${CONFIG}/obj/log.obj ${CONFIG}/obj/server.obj ${LIBS} libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 rm -rf ${CONFIG}/inc/edi.h
 cp -r src/esp/edi.h ${CONFIG}/inc/edi.h
@@ -113,31 +113,31 @@ cp -r src/esp/mdb.h ${CONFIG}/inc/mdb.h
 
 "${CC}" -c -Fo${CONFIG}/obj/sdb.obj -Fd${CONFIG}/obj/sdb.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/esp/sdb.c
 
-"" -dll -out:${CONFIG}/bin/mod_esp.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/mod_esp.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/edi.obj ${CONFIG}/obj/espAbbrev.obj ${CONFIG}/obj/espFramework.obj ${CONFIG}/obj/espHandler.obj ${CONFIG}/obj/espHtml.obj ${CONFIG}/obj/espSession.obj ${CONFIG}/obj/espTemplate.obj ${CONFIG}/obj/mdb.obj ${CONFIG}/obj/sdb.obj ${LIBS} libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
+"${LD}" -dll -out:${CONFIG}/bin/mod_esp.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/mod_esp.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/edi.obj ${CONFIG}/obj/espAbbrev.obj ${CONFIG}/obj/espFramework.obj ${CONFIG}/obj/espHandler.obj ${CONFIG}/obj/espHtml.obj ${CONFIG}/obj/espSession.obj ${CONFIG}/obj/espTemplate.obj ${CONFIG}/obj/mdb.obj ${CONFIG}/obj/sdb.obj ${LIBS} libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 rm -rf ${CONFIG}/bin/esp.conf
 cp -r src/esp/esp.conf ${CONFIG}/bin/esp.conf
 
 "${CC}" -c -Fo${CONFIG}/obj/cgiHandler.obj -Fd${CONFIG}/obj/cgiHandler.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/modules/cgiHandler.c
 
-"" -dll -out:${CONFIG}/bin/mod_cgi.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/mod_cgi.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/cgiHandler.obj ${LIBS} libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
+"${LD}" -dll -out:${CONFIG}/bin/mod_cgi.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/mod_cgi.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/cgiHandler.obj ${LIBS} libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 "${CC}" -c -Fo${CONFIG}/obj/cgiProgram.obj -Fd${CONFIG}/obj/cgiProgram.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/utils/cgiProgram.c
 
-"" -out:${CONFIG}/bin/cgiProgram.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/cgiProgram.obj ${LIBS}
+"${LD}" -out:${CONFIG}/bin/cgiProgram.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/cgiProgram.obj ${LIBS}
 
 rm -rf ${CONFIG}/inc/appwebMonitor.h
 cp -r src/server/appwebMonitor.h ${CONFIG}/inc/appwebMonitor.h
 
 "${CC}" -c -Fo${CONFIG}/obj/appweb.obj -Fd${CONFIG}/obj/appweb.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/server/appweb.c
 
-"" -out:${CONFIG}/bin/appweb.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/appweb.obj ${LIBS} libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
+"${LD}" -out:${CONFIG}/bin/appweb.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/appweb.obj ${LIBS} libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 "" -nologo -Fo ${CONFIG}/obj/appwebMonitor.res src/server/WINDOWS/appwebMonitor.rc
 
 "${CC}" -c -Fo${CONFIG}/obj/appwebMonitor.obj -Fd${CONFIG}/obj/appwebMonitor.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/server/WINDOWS/appwebMonitor.c
 
-"" -out:${CONFIG}/bin/appwebMonitor.exe -entry:WinMainCRTStartup -subsystem:Windows ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/appwebMonitor.res ${CONFIG}/obj/appwebMonitor.obj shell32.lib libappweb.lib ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
+"${LD}" -out:${CONFIG}/bin/appwebMonitor.exe -entry:WinMainCRTStartup -subsystem:Windows ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/appwebMonitor.res ${CONFIG}/obj/appwebMonitor.obj shell32.lib libappweb.lib ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
 rm -rf ${CONFIG}/bin/appwebMonitor.ico
 cp -r src/server/WINDOWS/appwebMonitor.ico ${CONFIG}/bin/appwebMonitor.ico

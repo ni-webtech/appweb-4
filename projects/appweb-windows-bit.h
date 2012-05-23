@@ -16,7 +16,7 @@
 #define BIT_MINOR_VERSION 0
 #define BIT_PATCH_VERSION 0
 #define BIT_VNUM 400000000
-#define BIT_CONFIG_CMD "bit -d -q -c -platform windows-x86 -without all -configure . -gen sh,nmake,vs"
+#define BIT_CONFIG_CMD "bit -d -q -platform windows-x86 -without all -configure . -gen sh,nmake,vs"
 #define BIT_LIB_NAME "bin"
 #define BIT_PROFILE "debug"
 #define BIT_CFG_PREFIX "C:/Program Files (x86)/Embedthis Appweb"
@@ -63,7 +63,7 @@
 #define BIT_FEATURE_OPENSSL 0
 #define BIT_FEATURE_WINSDK 1
 #define BIT_FEATURE_CC 1
-#define BIT_FEATURE_LINK 0
+#define BIT_FEATURE_LINK 1
 #define BIT_FEATURE_DUMPBIN 0
 #define BIT_FEATURE_RC 0
 #define BIT_FEATURE_PCRE 1
