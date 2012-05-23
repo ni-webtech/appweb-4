@@ -315,63 +315,51 @@ $(CONFIG)/inc/mdb.h:
 $(CONFIG)/obj/edi.o: \
         src/esp/edi.c \
         $(CONFIG)/inc/bit.h \
-        $(CONFIG)/inc/edi.h \
         $(CONFIG)/inc/pcre.h
 	$(CC) -c -o $(CONFIG)/obj/edi.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/edi.c
 
 $(CONFIG)/obj/espAbbrev.o: \
         src/esp/espAbbrev.c \
-        $(CONFIG)/inc/bit.h \
-        $(CONFIG)/inc/esp.h
+        $(CONFIG)/inc/bit.h
 	$(CC) -c -o $(CONFIG)/obj/espAbbrev.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espAbbrev.c
 
 $(CONFIG)/obj/espFramework.o: \
         src/esp/espFramework.c \
-        $(CONFIG)/inc/bit.h \
-        $(CONFIG)/inc/esp.h
+        $(CONFIG)/inc/bit.h
 	$(CC) -c -o $(CONFIG)/obj/espFramework.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espFramework.c
 
 $(CONFIG)/obj/espHandler.o: \
         src/esp/espHandler.c \
         $(CONFIG)/inc/bit.h \
-        $(CONFIG)/inc/appweb.h \
-        $(CONFIG)/inc/esp.h \
-        $(CONFIG)/inc/edi.h
+        $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/espHandler.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espHandler.c
 
 $(CONFIG)/obj/espHtml.o: \
         src/esp/espHtml.c \
-        $(CONFIG)/inc/bit.h \
-        $(CONFIG)/inc/esp.h \
-        $(CONFIG)/inc/edi.h
+        $(CONFIG)/inc/bit.h
 	$(CC) -c -o $(CONFIG)/obj/espHtml.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espHtml.c
 
 $(CONFIG)/obj/espSession.o: \
         src/esp/espSession.c \
-        $(CONFIG)/inc/bit.h \
-        $(CONFIG)/inc/esp.h
+        $(CONFIG)/inc/bit.h
 	$(CC) -c -o $(CONFIG)/obj/espSession.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espSession.c
 
 $(CONFIG)/obj/espTemplate.o: \
         src/esp/espTemplate.c \
-        $(CONFIG)/inc/bit.h \
-        $(CONFIG)/inc/esp.h
+        $(CONFIG)/inc/bit.h
 	$(CC) -c -o $(CONFIG)/obj/espTemplate.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/espTemplate.c
 
 $(CONFIG)/obj/mdb.o: \
         src/esp/mdb.c \
         $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/appweb.h \
-        $(CONFIG)/inc/edi.h \
-        $(CONFIG)/inc/mdb.h \
         $(CONFIG)/inc/pcre.h
 	$(CC) -c -o $(CONFIG)/obj/mdb.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/mdb.c
 
 $(CONFIG)/obj/sdb.o: \
         src/esp/sdb.c \
         $(CONFIG)/inc/bit.h \
-        $(CONFIG)/inc/appweb.h \
-        $(CONFIG)/inc/edi.h
+        $(CONFIG)/inc/appweb.h
 	$(CC) -c -o $(CONFIG)/obj/sdb.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/sdb.c
 
 $(CONFIG)/bin/mod_esp.dylib:  \
@@ -393,8 +381,7 @@ $(CONFIG)/bin/mod_esp.dylib:  \
 
 $(CONFIG)/obj/esp.o: \
         src/esp/esp.c \
-        $(CONFIG)/inc/bit.h \
-        $(CONFIG)/inc/esp.h
+        $(CONFIG)/inc/bit.h
 	$(CC) -c -o $(CONFIG)/obj/esp.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/esp.c
 
 $(CONFIG)/bin/esp:  \
@@ -487,14 +474,12 @@ $(CONFIG)/inc/testAppweb.h:
 
 $(CONFIG)/obj/testAppweb.o: \
         test/testAppweb.c \
-        $(CONFIG)/inc/bit.h \
-        $(CONFIG)/inc/testAppweb.h
+        $(CONFIG)/inc/bit.h
 	$(CC) -c -o $(CONFIG)/obj/testAppweb.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc test/testAppweb.c
 
 $(CONFIG)/obj/testHttp.o: \
         test/testHttp.c \
-        $(CONFIG)/inc/bit.h \
-        $(CONFIG)/inc/testAppweb.h
+        $(CONFIG)/inc/bit.h
 	$(CC) -c -o $(CONFIG)/obj/testHttp.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc test/testHttp.c
 
 $(CONFIG)/bin/testAppweb:  \

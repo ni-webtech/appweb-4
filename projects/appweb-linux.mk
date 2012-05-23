@@ -19,15 +19,24 @@ all: prep \
         $(CONFIG)/bin/libmpr.so \
         $(CONFIG)/bin/libmprssl.so \
         $(CONFIG)/bin/appman \
+        $(CONFIG)/bin/makerom \
         $(CONFIG)/bin/libpcre.so \
         $(CONFIG)/bin/libhttp.so \
+        $(CONFIG)/bin/http \
         $(CONFIG)/bin/libsqlite3.so \
+        $(CONFIG)/bin/sqlite \
         $(CONFIG)/bin/libappweb.so \
         $(CONFIG)/bin/mod_esp.so \
+        $(CONFIG)/bin/esp \
         $(CONFIG)/bin/esp.conf \
+        $(CONFIG)/bin/esp-www \
+        $(CONFIG)/bin/esp-appweb.conf \
         $(CONFIG)/bin/mod_cgi.so \
+        $(CONFIG)/bin/auth \
         $(CONFIG)/bin/cgiProgram \
+        $(CONFIG)/bin/setConfig \
         $(CONFIG)/bin/appweb \
+        $(CONFIG)/bin/testAppweb \
         test/cgi-bin/testScript \
         test/web/caching/cache.cgi \
         test/web/basic/basic.cgi \
@@ -47,15 +56,24 @@ clean:
 	rm -rf $(CONFIG)/bin/libmpr.so
 	rm -rf $(CONFIG)/bin/libmprssl.so
 	rm -rf $(CONFIG)/bin/appman
+	rm -rf $(CONFIG)/bin/makerom
 	rm -rf $(CONFIG)/bin/libpcre.so
 	rm -rf $(CONFIG)/bin/libhttp.so
+	rm -rf $(CONFIG)/bin/http
 	rm -rf $(CONFIG)/bin/libsqlite3.so
+	rm -rf $(CONFIG)/bin/sqlite
 	rm -rf $(CONFIG)/bin/libappweb.so
 	rm -rf $(CONFIG)/bin/mod_esp.so
+	rm -rf $(CONFIG)/bin/esp
 	rm -rf $(CONFIG)/bin/esp.conf
+	rm -rf $(CONFIG)/bin/esp-www
+	rm -rf $(CONFIG)/bin/esp-appweb.conf
 	rm -rf $(CONFIG)/bin/mod_cgi.so
+	rm -rf $(CONFIG)/bin/auth
 	rm -rf $(CONFIG)/bin/cgiProgram
+	rm -rf $(CONFIG)/bin/setConfig
 	rm -rf $(CONFIG)/bin/appweb
+	rm -rf $(CONFIG)/bin/testAppweb
 	rm -rf test/cgi-bin/testScript
 	rm -rf test/web/caching/cache.cgi
 	rm -rf test/web/basic/basic.cgi
@@ -136,6 +154,16 @@ $(CONFIG)/bin/appman:  \
         $(CONFIG)/obj/manager.o
 	$(CC) -o $(CONFIG)/bin/appman $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/manager.o $(LIBS) -lmpr $(LDFLAGS)
 
+$(CONFIG)/obj/makerom.o: \
+        src/deps/mpr/makerom.c \
+        $(CONFIG)/inc/bit.h
+	$(CC) -c -o $(CONFIG)/obj/makerom.o $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/mpr/makerom.c
+
+$(CONFIG)/bin/makerom:  \
+        $(CONFIG)/bin/libmpr.so \
+        $(CONFIG)/obj/makerom.o
+	$(CC) -o $(CONFIG)/bin/makerom $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/makerom.o $(LIBS) -lmpr $(LDFLAGS)
+
 $(CONFIG)/inc/pcre.h: 
 	rm -fr $(CONFIG)/inc/pcre.h
 	cp -r src/deps/pcre/pcre.h $(CONFIG)/inc/pcre.h
@@ -167,6 +195,16 @@ $(CONFIG)/bin/libhttp.so:  \
         $(CONFIG)/obj/httpLib.o
 	$(CC) -shared -o $(CONFIG)/bin/libhttp.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/httpLib.o $(LIBS) -lpam -lmpr -lpcre -lmprssl
 
+$(CONFIG)/obj/http.o: \
+        src/deps/http/http.c \
+        $(CONFIG)/inc/bit.h
+	$(CC) -c -o $(CONFIG)/obj/http.o $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/http/http.c
+
+$(CONFIG)/bin/http:  \
+        $(CONFIG)/bin/libhttp.so \
+        $(CONFIG)/obj/http.o
+	$(CC) -o $(CONFIG)/bin/http $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/http.o $(LIBS) -lhttp -lpam -lmpr -lpcre -lmprssl $(LDFLAGS)
+
 $(CONFIG)/inc/sqlite3.h: 
 	rm -fr $(CONFIG)/inc/sqlite3.h
 	cp -r src/deps/sqlite/sqlite3.h $(CONFIG)/inc/sqlite3.h
@@ -174,12 +212,22 @@ $(CONFIG)/inc/sqlite3.h:
 $(CONFIG)/obj/sqlite3.o: \
         src/deps/sqlite/sqlite3.c \
         $(CONFIG)/inc/bit.h
-	$(CC) -c -o $(CONFIG)/obj/sqlite3.o -fPIC -g -mtune=generic -w -w $(DFLAGS) -I$(CONFIG)/inc src/deps/sqlite/sqlite3.c
+	$(CC) -c -o $(CONFIG)/obj/sqlite3.o -fPIC -g -Wno-unused-result -mtune=generic -w -w $(DFLAGS) -I$(CONFIG)/inc src/deps/sqlite/sqlite3.c
 
 $(CONFIG)/bin/libsqlite3.so:  \
         $(CONFIG)/inc/sqlite3.h \
         $(CONFIG)/obj/sqlite3.o
 	$(CC) -shared -o $(CONFIG)/bin/libsqlite3.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/sqlite3.o $(LIBS)
+
+$(CONFIG)/obj/sqlite.o: \
+        src/deps/sqlite/sqlite.c \
+        $(CONFIG)/inc/bit.h
+	$(CC) -c -o $(CONFIG)/obj/sqlite.o $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/sqlite/sqlite.c
+
+$(CONFIG)/bin/sqlite:  \
+        $(CONFIG)/bin/libsqlite3.so \
+        $(CONFIG)/obj/sqlite.o
+	$(CC) -o $(CONFIG)/bin/sqlite $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/sqlite.o $(LIBS) -lsqlite3 $(LDFLAGS)
 
 $(CONFIG)/inc/appweb.h: 
 	rm -fr $(CONFIG)/inc/appweb.h
@@ -309,9 +357,36 @@ $(CONFIG)/bin/mod_esp.so:  \
         $(CONFIG)/obj/sdb.o
 	$(CC) -shared -o $(CONFIG)/bin/mod_esp.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/edi.o $(CONFIG)/obj/espAbbrev.o $(CONFIG)/obj/espFramework.o $(CONFIG)/obj/espHandler.o $(CONFIG)/obj/espHtml.o $(CONFIG)/obj/espSession.o $(CONFIG)/obj/espTemplate.o $(CONFIG)/obj/mdb.o $(CONFIG)/obj/sdb.o $(LIBS) -lappweb -lhttp -lpam -lmpr -lpcre -lmprssl
 
+$(CONFIG)/obj/esp.o: \
+        src/esp/esp.c \
+        $(CONFIG)/inc/bit.h
+	$(CC) -c -o $(CONFIG)/obj/esp.o $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/esp/esp.c
+
+$(CONFIG)/bin/esp:  \
+        $(CONFIG)/bin/libappweb.so \
+        $(CONFIG)/obj/edi.o \
+        $(CONFIG)/obj/esp.o \
+        $(CONFIG)/obj/espAbbrev.o \
+        $(CONFIG)/obj/espFramework.o \
+        $(CONFIG)/obj/espHandler.o \
+        $(CONFIG)/obj/espHtml.o \
+        $(CONFIG)/obj/espSession.o \
+        $(CONFIG)/obj/espTemplate.o \
+        $(CONFIG)/obj/mdb.o \
+        $(CONFIG)/obj/sdb.o
+	$(CC) -o $(CONFIG)/bin/esp $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/edi.o $(CONFIG)/obj/esp.o $(CONFIG)/obj/espAbbrev.o $(CONFIG)/obj/espFramework.o $(CONFIG)/obj/espHandler.o $(CONFIG)/obj/espHtml.o $(CONFIG)/obj/espSession.o $(CONFIG)/obj/espTemplate.o $(CONFIG)/obj/mdb.o $(CONFIG)/obj/sdb.o $(LIBS) -lappweb -lhttp -lpam -lmpr -lpcre -lmprssl $(LDFLAGS)
+
 $(CONFIG)/bin/esp.conf: 
 	rm -fr $(CONFIG)/bin/esp.conf
 	cp -r src/esp/esp.conf $(CONFIG)/bin/esp.conf
+
+$(CONFIG)/bin/esp-www: 
+	rm -fr $(CONFIG)/bin/esp-www
+	cp -r src/esp/www $(CONFIG)/bin/esp-www
+
+$(CONFIG)/bin/esp-appweb.conf: 
+	rm -fr $(CONFIG)/bin/esp-appweb.conf
+	cp -r src/esp/esp-appweb.conf $(CONFIG)/bin/esp-appweb.conf
 
 $(CONFIG)/obj/cgiHandler.o: \
         src/modules/cgiHandler.c \
@@ -323,6 +398,16 @@ $(CONFIG)/bin/mod_cgi.so:  \
         $(CONFIG)/obj/cgiHandler.o
 	$(CC) -shared -o $(CONFIG)/bin/mod_cgi.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/cgiHandler.o $(LIBS) -lappweb -lhttp -lpam -lmpr -lpcre -lmprssl
 
+$(CONFIG)/obj/auth.o: \
+        src/utils/auth.c \
+        $(CONFIG)/inc/bit.h
+	$(CC) -c -o $(CONFIG)/obj/auth.o $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/utils/auth.c
+
+$(CONFIG)/bin/auth:  \
+        $(CONFIG)/bin/libmpr.so \
+        $(CONFIG)/obj/auth.o
+	$(CC) -o $(CONFIG)/bin/auth $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/auth.o $(LIBS) -lmpr $(LDFLAGS)
+
 $(CONFIG)/obj/cgiProgram.o: \
         src/utils/cgiProgram.c \
         $(CONFIG)/inc/bit.h
@@ -331,6 +416,16 @@ $(CONFIG)/obj/cgiProgram.o: \
 $(CONFIG)/bin/cgiProgram:  \
         $(CONFIG)/obj/cgiProgram.o
 	$(CC) -o $(CONFIG)/bin/cgiProgram $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/cgiProgram.o $(LIBS) $(LDFLAGS)
+
+$(CONFIG)/obj/setConfig.o: \
+        src/utils/setConfig.c \
+        $(CONFIG)/inc/bit.h
+	$(CC) -c -o $(CONFIG)/obj/setConfig.o $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/utils/setConfig.c
+
+$(CONFIG)/bin/setConfig:  \
+        $(CONFIG)/bin/libmpr.so \
+        $(CONFIG)/obj/setConfig.o
+	$(CC) -o $(CONFIG)/bin/setConfig $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/setConfig.o $(LIBS) -lmpr $(LDFLAGS)
 
 $(CONFIG)/inc/appwebMonitor.h: 
 	rm -fr $(CONFIG)/inc/appwebMonitor.h
@@ -346,6 +441,27 @@ $(CONFIG)/bin/appweb:  \
         $(CONFIG)/inc/appwebMonitor.h \
         $(CONFIG)/obj/appweb.o
 	$(CC) -o $(CONFIG)/bin/appweb $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/appweb.o $(LIBS) -lappweb -lhttp -lpam -lmpr -lpcre -lmprssl $(LDFLAGS)
+
+$(CONFIG)/inc/testAppweb.h: 
+	rm -fr $(CONFIG)/inc/testAppweb.h
+	cp -r test/testAppweb.h $(CONFIG)/inc/testAppweb.h
+
+$(CONFIG)/obj/testAppweb.o: \
+        test/testAppweb.c \
+        $(CONFIG)/inc/bit.h
+	$(CC) -c -o $(CONFIG)/obj/testAppweb.o $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc test/testAppweb.c
+
+$(CONFIG)/obj/testHttp.o: \
+        test/testHttp.c \
+        $(CONFIG)/inc/bit.h
+	$(CC) -c -o $(CONFIG)/obj/testHttp.o $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc test/testHttp.c
+
+$(CONFIG)/bin/testAppweb:  \
+        $(CONFIG)/bin/libappweb.so \
+        $(CONFIG)/inc/testAppweb.h \
+        $(CONFIG)/obj/testAppweb.o \
+        $(CONFIG)/obj/testHttp.o
+	$(CC) -o $(CONFIG)/bin/testAppweb $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/testAppweb.o $(CONFIG)/obj/testHttp.o $(LIBS) -lappweb -lhttp -lpam -lmpr -lpcre -lmprssl $(LDFLAGS)
 
 test/cgi-bin/testScript:  \
         $(CONFIG)/bin/cgiProgram
