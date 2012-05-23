@@ -66,25 +66,34 @@
             <p>Porting any software is not for the novice. It requires considerable skill to read another person's code
             and adapt it to a new environment. These instructions are intended for experienced developers who want to
             port Appweb to a new operating system or processor architecture.</p>
+
             <p>Appweb has been written to maximize the ease of porting to a new environment. The O/S and
             processor-dependent code have been contained while the bulk of the code is cross-platform. Most of this
-            dependent code is under the <b>src/deps/mpr</b> sub-directory which represents the Embedthis Portable Runtime
-            (MPR).</p>
-            <p><b>NOTE:</b> When attempting a port, you should get the latest copy of the development source branch
+            dependent code is under the <b>src/deps/mpr</b> sub-directory which represents the Multithreaded Portable
+            Runtime (MPR).</p>
+
+            <p><b>NOTE:</b> When attempting a port, you should get the latest copy of the development source 
             rather than using the download source package. You can get the latest development source by checking out a
             copy from the <a href="https://github.com/embedthis/appweb-4">repository</a>.</p>
+
             <p><b>NOTE:</b> Please read <a href="building.html">Building from Source</a> before your read this
-            document. It provides valuable background about the Appweb build system.</p><a name="newOs" id="newOs"></a>
+            document. It provides valuable background about building from source.</p>
+            
+            <a name="newOs" id="newOs"></a>
             <h2>Steps in Porting to a new Operating System</h2>
             <ol>
                 <li>
                     <h3>Select the required Appweb features</h3>
-                    <p>Edit the build/standard.defaults configuration file. This file contains the factory defaults for
-                    the configure program. Select the features you wish to support. But start with the smallest set
-                    possible.</p>
-                    <p>Use <em>./configure --disable-all</em> to select the minimal feature set.</p>
-                    <p>See also the <a href="building.html">Building from Source</a> document for definitions
-                    of the various build variables used in the out/inc/buildConfig.h file.</p>
+                    <p>Select the minimal Appweb feature set using configure. The smaller the feature set, the easier
+                    it is to focus and get something running.</p>
+MOB -- 
+    How to define a new OS in bit
+    How to define a new ARCH in bit
+    Test THIS
+
+                    <pre>./configure --platform OS-ARCH --without all </pre>
+                    <p>See also the <a href="building.html">Building from Source</a> document for details about the
+                    various <em>configure</em> and <em>bit</em> options.</p>
                 </li>
                 <li>
                     <h3>Define your O/S configuration string</h3>
