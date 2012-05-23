@@ -163,7 +163,7 @@ cp -r src/server/appwebMonitor.h ${CONFIG}/inc/appwebMonitor.h
 
 "${LD}" -out:${CONFIG}/bin/appweb.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/appweb.obj ${LIBS} libappweb.lib libhttp.lib libmpr.lib libpcre.lib libmprssl.lib
 
-"" -nologo -Fo ${CONFIG}/obj/appwebMonitor.res src/server/WINDOWS/appwebMonitor.rc
+"rc.exe" -nologo -Fo ${CONFIG}/obj/appwebMonitor.res src/server/WINDOWS/appwebMonitor.rc
 
 "${CC}" -c -Fo${CONFIG}/obj/appwebMonitor.obj -Fd${CONFIG}/obj/appwebMonitor.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/server/WINDOWS/appwebMonitor.c
 

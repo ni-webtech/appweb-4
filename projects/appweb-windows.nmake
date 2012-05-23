@@ -460,7 +460,7 @@ $(CONFIG)\bin\appweb.exe:  \
 
 $(CONFIG)\obj\appwebMonitor.res: \
         src\server\WINDOWS\appwebMonitor.rc
-	"" -nologo -Fo $(CONFIG)\obj\appwebMonitor.res src\server\WINDOWS\appwebMonitor.rc
+	"$(RC)" -nologo -Fo $(CONFIG)\obj\appwebMonitor.res src\server\WINDOWS\appwebMonitor.rc
 
 $(CONFIG)\obj\appwebMonitor.obj: \
         src\server\WINDOWS\appwebMonitor.c \
