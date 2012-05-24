@@ -49,6 +49,7 @@
                 <li><a href="../../../guide/appweb/programmers/index.html">Programmers Guide</a></li>
                 <li><a href="../../../guide/appweb/programmers/embedding.html">Embedding Appweb</a></li>
                 <li><a href="../../../guide/appweb/programmers/modules.html">Custom Modules</a></li>
+                <li><a href="../../../guide/appweb/programmers/handlers.html">Custom Handlers</a></li>
                 <li><a href="../../../guide/appweb/programmers/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/programmers/migrating.html">Migrating to Appweb 4</a></li>
                 <li><a href="../../../guide/appweb/programmers/rom.html">ROM Content</a></li>
@@ -75,17 +76,17 @@
             <a name="support" id="support"></a>
             <h3>Legacy Appweb Support</h3>
             <p>To address the needs of users for whom upgrading to Appweb 3 will take some time, we intend to support
-            Appweb 3 till the end of 2012 and to continue to issue updates and upgrades for Appweb 3 during that
+            Appweb 3 till the end of 2013 and to continue to issue updates and upgrades for Appweb 3 during that
             period. Appweb 2 is now officially "end-of-life".</p>
             
             <a name="changes" id="changes"></a>
             <h2 class="section">Changes in Appweb 4</h2>
-            <p>Appweb 4 provides equivalent or greater functionality to that in Appweb 2 and 3 in nearly all cases. 
-            While Appweb 4 may have a different interface or API, the capabilities of Appweb 2 and 3 have been continued 
+            <p>Appweb 4 provides equivalent or greater functionality to that in Appweb 3. 
+            While Appweb 4 may have a different interface or API, the capabilities of Appweb 3 have been continued 
             in Appweb 4, and in many cases, the features have been enhanced.</p>
             <h3>New Capabilities</h3>
             <p>The following new capabilities have been added to Appweb 4 for which there is no equivalent in Appweb 3.
-            These additions should not require adjustment for applications developed under Appweb 3 or Appweb 2.</p>
+            These additions should not require adjustment for applications developed under Appweb 3.</p>
             <ul>
                 <li>Multi-Language support</li>
                 <li>Embedded Server Pages (ESP) web framework</li>
@@ -97,11 +98,11 @@
                 <li>Flexible request tracing and logging</li>
             </ul>
             <h3>Changed Capabilities</h3>
-            <p>The following capabilities have been changed and may impact your Appweb 3 and Appweb 2 applications.</p>
+            <p>The following capabilities have been changed and may impact your Appweb 3 applications.</p>
             <ul>
-                <li>The core of Appweb is written in C (Appweb 2 used C++). This was done for portability to some 
-                platforms and to eliminate the C API module.</li>
-                <li>Appweb 4 supports the Ejscript 2.X Web Framework.</li>
+                <li>The core Appweb Http engine has been extracted, enhanced and is now a separate library. All the
+                APIs have a "http" prefix instead of an "ma" prefix.</li>
+                <li>Appweb 4 supports the Ejscript 2.X Web Framework. Is is a major upgrade with new integration APIs.</li>
                 <li>The stand-alone Appweb command line program is upgraded with new switches and options.</li>
                 <li>The build system is upgraded and simplified. It now uses the Ejscript Bit build system.
                     New configure options and cross compiling capabilities have been added.</li>
@@ -112,9 +113,9 @@
                     extended functionality.</li>
             </ul>
             <h3>Changed APIs</h3>
-            <p>Many of the internal APIs in Appweb 4 have been changed. This is due to the utilization of a common Http library
-            between Appweb and Ejscript.  Appweb 3 APIs have been renamed/converted on a function by function basis to
-            equivalent APIs in Appweb 4. The APIs have very similar names to the previous counterpart.</p>
+            <p>Many of the internal APIs in Appweb 4 have been changed. This is due to the utilization of a common Http
+            library between Appweb and Ejscript.  Appweb 3 APIs have been renamed/converted on a function by function
+            basis to equivalent APIs in Appweb 4. The APIs have very similar names to the previous counterpart.</p>
             <h3>Memory Allocator</h3>
             <p>Appweb 4 includes a high performance memory allocator and generational garbage collector. The allocator 
             is a fast and immediate coalescing allocator. It is optimized for frequent allocations of small blocks and 
@@ -205,5 +206,3 @@
 </script>
 </html>
 <!-- EndDsi -->
-</body>
-</html>

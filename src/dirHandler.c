@@ -130,7 +130,6 @@ static void parseQuery(HttpConn *conn)
     if (query == 0) {
         return;
     }
-
     tok = stok(query, ";&", &next);
     while (tok) {
         if ((value = strchr(tok, '=')) != 0) {
@@ -451,8 +450,8 @@ static void filterDirList(HttpConn *conn, MprList *list)
     /*
         Do pattern matching. Entries that don't match, free the name to mark
      */
-    for (next = 0; (dp = mprGetNextItem(list, &next)) != 0; ) {
-        if (! matchDirPattern(dir->pattern, dp->name)) {
+    for (ITERATE_ITEMS(list, dp, next)) {
+        if (!matchDirPattern(dir->pattern, dp->name)) {
             mprRemoveItem(list, dp);
             next--;
         }
@@ -481,7 +480,6 @@ static int matchDirPattern(cchar *pattern, cchar *file)
             }
             return 0;
         }
-
         if (*pp == '*') {
             if (matchDirPattern(&pp[1], &fp[0])) {
                 return 1;
@@ -531,7 +529,6 @@ static int indexIgnoreDirective(MaState *state, cchar *key, cchar *value)
     }
     return 0;
 }
-
 #endif
 
 
@@ -678,8 +675,6 @@ static Dir *cloneDir(Dir *parent, HttpRoute *route)
 }
 
 
-
-
 /*
     Dynamic module initialization
  */
@@ -695,9 +690,6 @@ int maOpenDirHandler(Http *http)
     if ((handler->stageData = dir = mprAllocObj(Dir, manageDir)) == 0) {
         return MPR_ERR_MEMORY;
     }
-#if UNUSED
-    handler->match = maMatchDir; 
-#endif
     handler->start = startDir; 
     http->dirHandler = handler;
     dir->sortOrder = 1;

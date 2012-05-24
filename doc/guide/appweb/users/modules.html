@@ -51,7 +51,8 @@
                 <li><a href="../../../guide/appweb/users/vhosts.html">Virtual Hosts</a></li>
                 <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
                 <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
-                <li><a href="../../../guide/appweb/users/modules.html">Loadable Modules</a></li>
+                <li><a href="../../../guide/appweb/users/modules.html">Appweb Modules</a></li>
+                <li><a href="../../../guide/appweb/users/handlers.html">Appweb Handlers</a></li>
                 <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
                 <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
@@ -134,7 +135,7 @@ LoadModule myModule lib/libmyModule
             "dir/module.html#loadModulePath">LoadModulePath</a> directive is specified. This will nominate a set of
             directories to search in order when attempting to locate the module.</p>
             <pre>
-LoadModulePath "../../bin:../../bin/Debug:../../bin/Release"
+LoadModulePath "../macosx-x64-debug/bin"
 </pre>
             <p>For information about how to create a loadable module, see <a href=
             "../programmers/modules.html">Creating Appweb Modules</a>.</p>
@@ -164,5 +165,3 @@ LoadModulePath "../../bin:../../bin/Debug:../../bin/Release"
 </script>
 </html>
 <!-- EndDsi -->
-</body>
-</html>

@@ -50,7 +50,8 @@
                 <li><a href="../../../guide/appweb/users/vhosts.html">Virtual Hosts</a></li>
                 <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
                 <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
-                <li><a href="../../../guide/appweb/users/modules.html">Loadable Modules</a></li>
+                <li><a href="../../../guide/appweb/users/modules.html">Appweb Modules</a></li>
+                <li><a href="../../../guide/appweb/users/handlers.html">Appweb Handlers</a></li>
                 <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
                 <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
@@ -84,26 +85,23 @@
             <pre>
 appweb: 2: Configuration for Embedthis Appweb
 appweb: 2: ---------------------------------------------
-appweb: 2: Version:            4.0.0-B0
-appweb: 2: BuildType:          DEBUG
-appweb: 2: CPU:                x86_64
-appweb: 2: OS:                 MACOSX
-appweb: 2: Distribution:       Apple 10.7.2
-appweb: 2: Host:               magnetar.local
-appweb: 2: Configure:          --without-ejscript
+appweb: 2: Version:            4.0.0-B2
+appweb: 2: BuildType:          Debug
+appweb: 2: CPU:                x64
+appweb: 2: OS:                 macosx
+appweb: 2: Host:               sunny.local
+appweb: 2: Directory:          /Users/guest/git/appweb/src/server
+appweb: 2: Configure:          bit -q -configure . -debug
 appweb: 2: ---------------------------------------------
-appweb: 2: Config File /Users/mob/git/appweb/src/server/appweb.conf
-appweb: 2: Set server root to: "/Users/mob/git/appweb/src/server"
+appweb: 2: Config File /Users/guest/git/appweb/src/server/appweb.conf
+appweb: 2: Set server root to: "/Users/guest/git/appweb/src/server"
 appweb: 2: Server Root "."
-appweb: 2: Activating module (Loadable) cgiHandler
-appweb: 2: Activating module (Loadable) espHandler
-appweb: 2: Activating module (Loadable) phpHandler
-appweb: 2: Activating the SSL provider
-appweb: 2: Loading OpenSSL module
-appweb: 2: Activating module (Loadable) sslModule
-appweb: 1: Started HTTP  service on "*:80"
-appweb: 1: Started HTTP  service on "*:443"
-appweb: 1: HTTP services Started at Fri Nov 11 22:01:00 2012 PST with max 10 threads
+appweb: 2: Loading native module cgiHandler
+appweb: 2: Loading native module espHandler
+appweb: 2: Loading native module phpHandler
+appweb: 2: Loading native module sslModule
+appweb: 2: Started HTTP  service on "*:80"
+appweb: 1: HTTP services Started at Wed May 23 17:39:10 2012 PDT with max 10 threads
 </pre>
             <p>Each line in the error log is prefixed with source information. This follows the format:</p>
             <pre>
@@ -176,5 +174,3 @@ localhost - - [Fri Dec 19 16:08:24 2003] "GET /doc/images/backRight.png
 </script>
 </html>
 <!-- EndDsi -->
-</body>
-</html>

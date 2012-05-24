@@ -51,7 +51,8 @@
                 <li><a href="../../../guide/appweb/users/vhosts.html">Virtual Hosts</a></li>
                 <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
                 <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
-                <li><a href="../../../guide/appweb/users/modules.html">Loadable Modules</a></li>
+                <li><a href="../../../guide/appweb/users/modules.html">Appweb Modules</a></li>
+                <li><a href="../../../guide/appweb/users/handlers.html">Appweb Handlers</a></li>
                 <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
                 <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
@@ -63,7 +64,7 @@
             <h1>Appweb HTTP Client</h1>
             <p>http &mdash; HTTP client program.</p><a name="synopsis" id="synopsis"></a>
             <h2>Synopsis</h2>
-            <p>http [options] urls ...</p><a name="description" id="description"></a>
+            <p>http [options] URIs ...</p><a name="description" id="description"></a>
             <h2>Description</h2>
             <p>The <b>http</b> utility uses the Appweb HTTP client library to retrieve documents from HTTP servers. It
             supports HTTP, SSL, authentication and form data and the GET, POST, PUT, DELETE, OPTIONS and TRACE HTTP
@@ -81,6 +82,10 @@
                     <tr>
                         <td>--benchmark</td>
                         <td>Output timing results after retrieving URLs.</td>
+                    </tr>
+                    <tr>
+                        <td>--cert file</td>
+                        <td>Certificate CA file to validate server certificates.</td>
                     </tr>
                     <tr>
                         <td>--chunk size</td>
@@ -124,6 +129,10 @@
                         <td>--host name</td>
                         <td>Prepend all URLs with the specified host. For example if '-h www.myHost.com:8888" were used
                         with the URL "/index.html", then http will retrieve http://www.myHost.com:8888.</td>
+                    </tr>
+                    <tr>
+                        <td>--insecure</td>
+                        <td>Don't validate server certificates when using SSL</td>
                     </tr>
                     <tr>
                         <td>--iterations count</td>
@@ -254,5 +263,3 @@
 </script>
 </html>
 <!-- EndDsi -->
-</body>
-</html>

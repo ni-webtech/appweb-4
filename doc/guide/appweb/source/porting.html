@@ -53,6 +53,7 @@
 
                 <li><a href="../../../guide/appweb/programmers/embedding.html">Embedding Appweb</a></li>
                 <li><a href="../../../guide/appweb/programmers/modules.html">Appweb Modules</a></li>
+                <li><a href="../../../guide/appweb/programmers/handlers.html">Appweb Handlers</a></li>
                 <li><a href="../../../guide/appweb/programmers/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/programmers/migrating.html">Migrating to Appweb 4</a></li>
                 <li><a href="../../../guide/appweb/users/index.html">Users Guide</a></li>
@@ -66,16 +67,13 @@
             <p>Porting any software is not for the novice. It requires considerable skill to read another person's code
             and adapt it to a new environment. These instructions are intended for experienced developers who want to
             port Appweb to a new operating system or processor architecture.</p>
-
             <p>Appweb has been written to maximize the ease of porting to a new environment. The O/S and
             processor-dependent code have been contained while the bulk of the code is cross-platform. Most of this
             dependent code is under the <b>src/deps/mpr</b> sub-directory which represents the Multithreaded Portable
             Runtime (MPR).</p>
-
             <p><b>NOTE:</b> When attempting a port, you should get the latest copy of the development source 
             rather than using the download source package. You can get the latest development source by checking out a
             copy from the <a href="https://github.com/embedthis/appweb-4">repository</a>.</p>
-
             <p><b>NOTE:</b> Please read <a href="building.html">Building from Source</a> before your read this
             document. It provides valuable background about building from source.</p>
             
@@ -101,7 +99,6 @@
                     <p>Next copy the projects/appweb-linux.mk Makefile to projects/appweb-qnx.mk and edit the
                     appropriate compiler and linker switches. Edit the top level Makefile if required to chain to this
                     new Makefile.</p>
-
                     <pre>
 bit --without all configure 
 cp -r linux-x86-debug qnx-x86-debug
@@ -205,5 +202,3 @@ appweb -v
 </script>
 </html>
 <!-- EndDsi -->
-</body>
-</html>

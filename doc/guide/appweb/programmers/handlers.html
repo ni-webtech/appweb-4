@@ -28,7 +28,7 @@
         <div class="crumbs">
             <a href="../../../product/index.html">Home</a>
 <!-- EndDsi -->
-             &gt; <a href="index.html">Programming Guide</a> &gt; <b>Creating Appweb Modules</b>
+             &gt; <a href="index.html">Programming Guide</a> &gt; <b>Creating Appweb Handlers</b>
         </div>
     </div>
     <div class="content">
@@ -53,17 +53,70 @@
 <!-- EndDsi -->
         </div>
         <div class="contentLeft">
-            <h1>Creating Appweb Modules</h1>
-            <p>Appweb supports extension modules that can augment the capability of Appweb by adding new features,
-            handlers, protocols or any arbitrary code.</p>
-            <p>Appweb includes four loadable modules: CGI, ESP, PHP and SSL. The core appweb HTTP server includes
-            some basic document serving functionality, but modules are used to extend the core with loadable web 
-            frameworks and custom handlers.</p>
-            <p>This document describes the Appweb Module Interface and how to create Appweb modules. The Appweb Module
-            interface supports both dynamically loaded and statically linked modules from a single C code
-            base.</p><a name="overview" id="overview"></a>
+            <h1>Creating Appweb Handlers</h1>
+            <p>Appweb processes client Http requests using request handlers. Appweb provides a suite of 
+            handlers for various request types. The standard handlers are: CGI, directory, file, Ejscript, ESP and PHP.
+            Additionally, you can create your own handler to process Http requests and perform custom processing.</p>
+            Handlers are typically packaged as modules and are loaded as required.</p>
+
+            <a name="overview" id="overview"></a>
             <h2>Overview</h2>
-            <p>To create an Appweb module, you must create an initialization function that is called when Appweb loads
+            <p>When activated, a handler sets at the front of the request pipeline. The pipeline is a full-duplex
+            data stream in which request data flows upstream and response data to the client flows downstream. 
+
+            <img src="../../../images/pipeline.jpg" />
+
+            <p>To integrate into the pipeline, a handler defines a set of callback functions that are invoked by
+            the pipeline as required. These callbacks are:
+            <ul>
+                <li>match</li>
+                <li>open</li>
+                <li>close</li>
+                <li>outgoingData</li>
+                <li>outgoingService</li>
+                <li>incomingData</li>
+                <li>incomingService</li>
+                <li>start</li>
+                <li>ready</li>
+                <li>process</li>
+            </ul>
+            - optional
+
+            - Data Flow
+            - The role of service queues and callbacks
+            - Explain each callback
+            - Queue flow control
+            - Packet sizing
+            - Errors
+                - ConnError
+                - Error
+            - Objects
+                HttpQueue
+                HttpPacket
+                HttpRx
+                HttpTx
+                HttpConn
+                HttpRoute
+            - Generating Responses
+                - Finalizing
+                - Writing data
+                - Non-blocking (see NI emails
+                - Redirecting
+                - Errors
+
+            - Multithreading
+                - Connection dispatchers
+                - Yielding
+            - Garbage Collection
+
+            - Example
+                - Link to code in Git
+                    passHandler
+                    fileHandler
+                    dirHandler
+
+            <h2>Packaging as a Module</h2>
+            <p>To create an Appweb handler, you must create an initialization function that is called when Appweb loads
             your module. This must be named according to the form:</p>
             <pre>
 ma<b>Name</b>Init(Http *http, MprModule *module)
@@ -97,8 +150,7 @@ int maSimpleModuleInit(Http *http, MprModule *mp)
             the main program explicitly calls your initialization function during its initialization.</p>
 
             <h2>More Info</h2>
-            <p>See the <a
-                href="https://github.com/embedthis/appweb-4/tree/master/src/samples/c/simpleModule">samples/c/simpleModule</a> source code sample for a working module example.</p>
+            <p>See the samples/c/simpleModule source code sample for a working module example.</p>
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->

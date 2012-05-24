@@ -55,7 +55,8 @@
                 <li><a href="../../../guide/appweb/users/vhosts.html">Virtual Hosts</a></li>
                 <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
                 <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
-                <li><a href="../../../guide/appweb/users/modules.html">Loadable Modules</a></li>
+                <li><a href="../../../guide/appweb/users/modules.html">Appweb Modules</a></li>
+                <li><a href="../../../guide/appweb/users/handlers.html">Appweb Handlers</a></li>
                 <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
                 <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
@@ -221,6 +222,14 @@ AddType application/x-httpd-php .web
             <table title="sandbox">
                 <tbody>
                     <tr>
+                        <td class="pivot">LimitCache</td>
+                        <td>Maximum size of the response cache</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">LimitCacheItem</td>
+                        <td>Maximum size of a single item in the response cache</td>
+                    </tr>
+                    <tr>
                         <td class="pivot">LimitChunk</td>
                         <td>Maximum size of chunks when using Transfer Chunk Encoding</td>
                     </tr>
@@ -229,20 +238,44 @@ AddType application/x-httpd-php .web
                         <td>Maximum size of simultaneous clients</td>
                     </tr>
                     <tr>
+                        <td class="pivot">LimitKeepAlive</td>
+                        <td>Maximum number of requests to serve using a single TCP/IP connection</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">LimitMemory</td>
+                        <td>Maximum memory the server can allocate</td>
+                    </tr>
+                    <tr>
                         <td class="pivot">LimitRequestBody</td>
                         <td>Maximum size of the incoming request body</td>
                     </tr>
                     <tr>
-                        <td class="pivot">LimitRequestHeaderLines</td>
-                        <td>Maximum number of header lines in the request</td>
+                        <td class="pivot">LimitRequestForm</td>
+                        <td>Maximum size of request form data (POST data)</td>
                     </tr>
                     <tr>
                         <td class="pivot">LimitRequestHeader</td>
                         <td>Maximum size of the request header</td>
                     </tr>
                     <tr>
+                        <td class="pivot">LimitRequestHeaderLines</td>
+                        <td>Maximum number of header lines in the request</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">LimitRequests</td>
+                        <td>Maximum number of simultaneous requests</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">LimitResponseBody</td>
+                        <td>Maximum size of a response</td>
+                    </tr>
+                    <tr>
                         <td class="pivot">LimitStageBuffer</td>
                         <td>Pipeline stage buffer size</td>
+                    </tr>
+                    <tr>
+                        <td class="pivot">LimitUpload</td>
+                        <td>Maximum size of a file upload request</td>
                     </tr>
                     <tr>
                         <td class="pivot">LimitUri</td>
@@ -253,12 +286,8 @@ AddType application/x-httpd-php .web
                         <td>Number of threads to pre-allocate in the thread pool</td>
                     </tr>
                     <tr>
-                        <td class="pivot">TThreads</td>
-                        <td>Maximum number of threads to allocate on demand for the thread pool</td>
-                    </tr>
-                    <tr>
-                        <td class="pivot">ThreadStack</td>
-                        <td>Size of the per-thread stack</td>
+                        <td class="pivot">LimitWorkers</td>
+                        <td>Maximum number of worker threads to service requests</td>
                     </tr>
                 </tbody>
             </table>
@@ -294,5 +323,3 @@ AddType application/x-httpd-php .web
 </script>
 </html>
 <!-- EndDsi -->
-</body>
-</html>

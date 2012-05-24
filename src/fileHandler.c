@@ -272,9 +272,6 @@ static int prepPacket(HttpQueue *q, HttpPacket *packet)
             The downstream queue is full, so disable the queue and service downstream queue.
             Will re-enable via a writable event on the connection.
          */
-#if UNUSED
-        nextQ->flags |= HTTP_QUEUE_FULL;
-#endif
         httpSuspendQueue(q);
         if (!(nextQ->flags & HTTP_QUEUE_SUSPENDED)) {
             httpScheduleQueue(nextQ);
@@ -387,10 +384,8 @@ static void handlePutRequest(HttpQueue *q)
         /*  
             Open an existing file with fall-back to create
          */
-        file = mprOpenFile(path, O_BINARY | O_WRONLY, 0644);
-        if (file == 0) {
-            file = mprOpenFile(path, O_CREAT | O_TRUNC | O_BINARY | O_WRONLY, 0644);
-            if (file == 0) {
+        if ((file = mprOpenFile(path, O_BINARY | O_WRONLY, 0644)) == 0) {
+            if ((file = mprOpenFile(path, O_CREAT | O_TRUNC | O_BINARY | O_WRONLY, 0644)) == 0) {
                 httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't create the put URI");
                 return;
             }
@@ -398,8 +393,7 @@ static void handlePutRequest(HttpQueue *q)
             mprSeekFile(file, SEEK_SET, 0);
         }
     } else {
-        file = mprOpenFile(path, O_CREAT | O_TRUNC | O_BINARY | O_WRONLY, 0644);
-        if (file == 0) {
+        if ((file = mprOpenFile(path, O_CREAT | O_TRUNC | O_BINARY | O_WRONLY, 0644)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't create the put URI");
             return;
         }

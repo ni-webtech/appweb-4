@@ -51,7 +51,8 @@
                 <li><a href="../../../guide/appweb/users/vhosts.html">Virtual Hosts</a></li>
                 <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
                 <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
-                <li><a href="../../../guide/appweb/users/modules.html">Loadable Modules</a></li>
+                <li><a href="../../../guide/appweb/users/modules.html">Appweb Modules</a></li>
+                <li><a href="../../../guide/appweb/users/handlers.html">Appweb Handlers</a></li>
                 <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
                 <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
@@ -105,7 +106,7 @@
             password file. You may use a single password file for all authorization, or you can use different files for
             each authorization section.</p>
             <p>User passwords are defined for a user account / realm combination. To create passwords, see the section
-            below that describes the <a href="#httpPassword">httpPassword</a> utility.</p>
+            below that describes the <a href="#auth">auth</a> utility.</p>
             <p>The <a href="dir/auth.html#require">Require</a> directive controls how users are validated. There are
             three possibilities for validating users: by group name, by user id, or by any valid user name. The
             associated directives are:</p>
@@ -133,25 +134,25 @@
 </pre>
             <p>This example restricts access to the "/acme" directory and all sub-directories to users whose username
             and password are validated against the designated user.db password file. The essential differences between
-            this example and the Basic Authorization example is the AuthType directive.</p><a name="httpPassword" id=
-            "httpPassword"></a>
-            <h2 class="section">httpPassword</h2>
-            <p>The httpPassword program is used to create user passwords in a nominated password file. Appweb uses the
+            this example and the Basic Authorization example is the AuthType directive.</p><a name="auth" id=
+            "auth"></a>
+            <h2 class="section">auth</h2>
+            <p>The auth program is used to create user passwords in a nominated password file. Appweb uses the
             same authorization file and format for Digest and Basic authentication. This simplifies administration. The
             file format is:</p>
             <pre>
 coyote:Realm:EncryptedPassword
 </pre>
-            <p>The httpPassword will create and modify such entries in the password file.</p>
+            <p>The auth will create and modify such entries in the password file.</p>
             <p>The Realm is the name used in the AuthName directive. The EncryptedPassword is an MD5 secure hash of the
             user name, realm, and password.</p>
-            <p>The command line syntax for httpPassword is:</p>
+            <p>The command line syntax for auth is:</p>
             <pre>
-httpPassword [-c] [-p passWord] userFile realm userName
+auth [-c] [-p passWord] userFile realm userName
 </pre>
             <p>The userFile parameter specifies the name of the user password file. The userName is the name of the
-            user. If the -p password option is not used, httpPassword will prompt for the password. The -c option will
-            cause httpPassword to create the password file, otherwise it will update the nominated userFile.</p>
+            user. If the -p password option is not used, auth will prompt for the password. The -c option will
+            cause auth to create the password file, otherwise it will update the nominated userFile.</p>
             <p><b>SECURITY WARNING</b>: it is essential that the AuthUserFile and the AuthGroupFile be stored outside
             the DocumentRoot or any directory serving content.</p><a name="beltAndSuspenders" id=
             "beltAndSuspenders"></a>
@@ -186,5 +187,3 @@ httpPassword [-c] [-p passWord] userFile realm userName
 </script>
 </html>
 <!-- EndDsi -->
-</body>
-</html>
