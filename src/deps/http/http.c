@@ -505,7 +505,7 @@ static void showUsage()
     mprPrintfError("usage: %s [options] [files] url\n"
         "  Options:\n"
         "  --benchmark           # Compute benchmark results.\n"
-        "  --cert file           # Certificat CA file to validate server certs.\n"
+        "  --cert file           # Certificate CA file to validate server certs.\n"
         "  --chunk size          # Request response data to use this chunk size.\n"
         "  --continue            # Continue on errors.\n"
         "  --cookie CookieString # Define a cookie header. Multiple uses okay.\n"
