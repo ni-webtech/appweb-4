@@ -20,7 +20,7 @@ if [ -x "${VS}" ] ; then
 fi
 
 if [ -x "${XCODE}" ] ; then
-    log "[Test]" "Building ${PRODUCT} Visual Studio Project"
+    log "[Test]" "Building ${PRODUCT} Xcode Project"
     "${XCODE}" -project projects/*.xcodeproj -alltargets clean
     "${XCODE}" -project projects/*.xcodeproj -alltargets build
 fi
