@@ -1,6 +1,11 @@
 /*
     dirHandler.c - Directory listing handler
 
+    The dirHandler is unusual in that is is called (only) from the fileHandler.
+    The fileHandler tests if the request is for a directory and then examines if redirection
+    to an index, or rendering a directory listing is required. If a listing, the request is
+    relayed here.
+
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
@@ -69,6 +74,9 @@ bool maRenderDirListing(HttpConn *conn)
 }
 
 
+/*
+    Start the request (and complete it)
+ */
 static void startDir(HttpQueue *q)
 {
     HttpConn        *conn;
@@ -348,10 +356,7 @@ static void outputLine(HttpQueue *q, MprDirEntry *ep, cchar *path, int nameSize)
     int         len;
     cchar       *ext, *mimeType;
     char        *dirSuffix;
-    char        *months[] = { 
-                    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" 
-                };
+    char        *months[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
     dir = q->conn->data;
     if (ep->size >= (1024 * 1024 * 1024)) {
@@ -676,7 +681,7 @@ static Dir *cloneDir(Dir *parent, HttpRoute *route)
 
 
 /*
-    Dynamic module initialization
+    Loadable module initialization
  */
 int maOpenDirHandler(Http *http)
 {
@@ -694,6 +699,9 @@ int maOpenDirHandler(Http *http)
     http->dirHandler = handler;
     dir->sortOrder = 1;
 
+    /*
+        Declare configuration file directives
+     */
     appweb = httpGetContext(http);
     maAddDirective(appweb, "IndexOrder", indexOrderDirective);
     maAddDirective(appweb, "indexOptions", indexOptionsDirective);

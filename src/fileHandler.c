@@ -4,6 +4,9 @@
     This handler manages static file based content such as HTML, GIF /or JPEG pages. It supports all methods including:
     GET, PUT, DELETE, OPTIONS and TRACE. It is event based and does not use worker threads.
 
+    The fileHandler also manages requests for directories that require redirection to an index or responding with
+    a directory listing. 
+
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
 
@@ -19,7 +22,9 @@ static void handlePutRequest(HttpQueue *q);
 static ssize readFileData(HttpQueue *q, HttpPacket *packet, MprOff pos, ssize size);
 
 /*********************************** Code *************************************/
-
+/*
+    Test if the request matches. This may delegate the request to the dirHandler if a directory listing is required.
+ */
 static int matchFileHandler(HttpConn *conn, HttpRoute *route, int dir)
 {
     HttpRx      *rx;
@@ -33,6 +38,9 @@ static int matchFileHandler(HttpConn *conn, HttpRoute *route, int dir)
 }
 
 
+/*
+    Map the request pathInfo to a physical file. This may respond by generating an error if the file can't be found.
+ */
 static int findFile(HttpConn *conn)
 {
     HttpRx      *rx;
@@ -53,6 +61,9 @@ static int findFile(HttpConn *conn)
     mprAssert(info->checked);
 
     if (info->isDir) {
+        /*
+            Manage requests for directories
+         */
         if (!sends(rx->pathInfo, "/")) {
             /* 
                Append "/" and do an external redirect 
@@ -63,9 +74,12 @@ static int findFile(HttpConn *conn)
             return HTTP_ROUTE_OK;
         } 
         if (route->indicies) {
+            /*
+                Ends with a "/" so do internal redirection to an index file
+             */
             for (ITERATE_ITEMS(route->indicies, index, next)) {
                 /*  
-                    Internal directory redirections. Transparently append index.
+                    Internal directory redirections. Transparently append index. Test indicies in order.
                  */
                 path = mprJoinPath(tx->filename, index);
                 if (mprPathExists(path, R_OK)) {
@@ -91,6 +105,9 @@ static int findFile(HttpConn *conn)
         }
     }
     if (!info->valid && (route->flags & HTTP_ROUTE_GZIP) && rx->acceptEncoding && strstr(rx->acceptEncoding, "gzip") != 0) {
+        /*
+            If the route accepts zipped data and a zipped file exists, then transparently respond with it.
+         */
         zipfile = sfmt("%s.gz", tx->filename);
         if (mprGetPathInfo(zipfile, &zipInfo) == 0) {
             tx->filename = zipfile;
@@ -105,6 +122,9 @@ static int findFile(HttpConn *conn)
             httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", tx->filename);
         }
     } else if (tx->etag == 0 && info->valid) {
+        /*
+            Set the etag for caching in the client
+         */
         tx->etag = sfmt("\"%x-%Lx-%Lx\"", info->inode, info->size, info->mtime);
     }
     return HTTP_ROUTE_OK;
@@ -112,7 +132,7 @@ static int findFile(HttpConn *conn)
 
 
 /*
-    Initialize a handler instance for the file handler.
+    Initialize a handler instance for the file handler for this request
  */
 static void openFileHandler(HttpQueue *q)
 {
@@ -137,6 +157,10 @@ static void openFileHandler(HttpQueue *q)
             httpSetStatus(conn, HTTP_CODE_NOT_MODIFIED);
             httpOmitBody(conn);
         } else {
+            /*
+                The sendFile connector is optimized on some platforms to use the sendfile system call.
+                Set the entity length for the sendFile connector to utilize.
+             */
             httpSetEntityLength(conn, tx->fileInfo.size);
         }
         if (!tx->fileInfo.isReg && !tx->fileInfo.isLink) {
@@ -148,8 +172,8 @@ static void openFileHandler(HttpQueue *q)
             
         } else if (!(tx->connector == conn->http->sendConnector)) {
             /*
-                Open the file if a body must be sent with the response. The file will be automatically closed when 
-                the request completes.
+                If using the net connector, open the file if a body must be sent with the response. The file will be
+                automatically closed when the request completes.
              */
             if (!(tx->flags & HTTP_TX_NO_BODY)) {
                 tx->file = mprOpenFile(tx->filename, O_RDONLY | O_BINARY, 0);
@@ -167,6 +191,7 @@ static void openFileHandler(HttpQueue *q)
         httpHandleOptionsTrace(q->conn);
 
     } else if ((rx->flags & (HTTP_PUT | HTTP_DELETE)) && (route->flags & HTTP_ROUTE_PUT_DELETE)) {
+        /* No response body is sent for PUT or DELETE */
         httpOmitBody(conn);
 
     } else {
@@ -193,17 +218,21 @@ static void startFileHandler(HttpQueue *q)
             handleDeleteRequest(q);
         }
     } else {
-        /* Create a single data packet based on the entity length.  */
+        /* Create a single data packet based on the entity length */
         packet = httpCreateEntityPacket(0, tx->entityLength, readFileData);
         if (!tx->outputRanges) {
             /* Can set a content length */
             tx->length = tx->entityLength;
         }
+        /* Add to the output service queue */
         httpPutForService(q, packet, 0);
     }
 }
 
 
+/*
+    The ready callback is invoked when all body data has been received
+ */
 static void readyFileHandler(HttpQueue *q)
 {
     /*
@@ -251,9 +280,9 @@ static ssize readFileData(HttpQueue *q, HttpPacket *packet, MprOff pos, ssize si
 
 
 /*  
-    Prepare a data packet. This involves reading file data into a suitably sized packet. Return the 1 if the packet was 
-    sent entirely, return zero if the packet could not be completely sent. Return a negative error code for write errors.
-    This may split the packet if it exceeds the downstreams maximum packet size.
+    Prepare a data packet for sending downstream. This involves reading file data into a suitably sized packet. Return
+    the 1 if the packet was sent entirely, return zero if the packet could not be completely sent. Return a negative
+    error code for write errors. This may split the packet if it exceeds the downstreams maximum packet size.
  */
 static int prepPacket(HttpQueue *q, HttpPacket *packet)
 {
@@ -287,9 +316,10 @@ static int prepPacket(HttpQueue *q, HttpPacket *packet)
 
 
 /*  
-    The service routine will be called to service outgoing packets on the service queue. It will only be called 
-    once all incoming data has been received. This routine may flow control if the downstream stage cannot accept 
-    all the file data. It will then be re-called as required to send more data.
+    The service callback will be invoked to service outgoing packets on the service queue. It will only be called 
+    once all incoming data has been received and then there after when the downstream queues drain sufficiently to
+    absorb more data. This routine may flow control if the downstream stage cannot accept all the file data. It will
+    then be re-called as required to send more data.
  */
 static void outgoingFileService(HttpQueue *q)
 {
@@ -320,6 +350,9 @@ static void outgoingFileService(HttpQueue *q)
 }
 
 
+/*
+    The incoming callback is invoked to receive body data 
+ */
 static void incomingFileData(HttpQueue *q, HttpPacket *packet)
 {
     HttpConn    *conn;
@@ -354,10 +387,9 @@ static void incomingFileData(HttpQueue *q, HttpPacket *packet)
     range = rx->inputRange;
     if (range && mprSeekFile(file, SEEK_SET, range->start) != range->start) {
         httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't seek to range start to %d", range->start);
-    } else {
-        if (mprWriteFile(file, mprGetBufStart(buf), len) != len) {
-            httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't PUT to %s", tx->filename);
-        }
+
+    } else if (mprWriteFile(file, mprGetBufStart(buf), len) != len) {
+        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't PUT to %s", tx->filename);
     }
 }
 
@@ -428,7 +460,7 @@ static void handleDeleteRequest(HttpQueue *q)
 
 
 /*  
-    Dynamic module initialization
+    Loadable module initialization
  */
 int maOpenFileHandler(Http *http)
 {
