@@ -21,7 +21,7 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
             <div class="search">
-                <div id="cse-search-form">Loading</div>
+                <div id="cse-search-form"></div>
                 <div class="version">Embedthis Appweb 4.0.0</div>
             </div>
         </div>
@@ -54,35 +54,117 @@
         </div>
         <div class="contentLeft">
             <h1>Creating Appweb Handlers</h1>
-            <p>Appweb processes client Http requests using request handlers. Appweb provides a suite of 
-            handlers for various request types. The standard handlers are: CGI, directory, file, Ejscript, ESP and PHP.
-            Additionally, you can create your own handler to process Http requests and perform custom processing.</p>
-            Handlers are typically packaged as modules and are loaded as required.</p>
-
+            <p>Appweb responds to client Http requests by using request handlers. A request handler is module that
+            is responsible for analysing the request and generating the appropriate response content.</p>
+            
+            <p>Appweb provides a suite of handlers for various content types and web frameworks. The standard handlers
+            supplied with Appweb are: CGI, directory, file, Ejscript, ESP and PHP. You can extend Appweb by
+            creating your own custom handler to process Http requests and perform any processing you desire.</p> 
+            
+            <p>Handlers are typically packaged as modules and are configured in the <em>appweb.conf</em> configuration
+            file and then are loaded as required.</p> 
+            
             <a name="overview" id="overview"></a>
             <h2>Overview</h2>
             <p>When activated, a handler sets at the front of the request pipeline. The pipeline is a full-duplex
-            data stream in which request data flows upstream and response data to the client flows downstream. 
-
+            data stream in which request data flows upstream from the client and response data to the client flows
+            downstream.</p>
             <img src="../../../images/pipeline.jpg" />
 
-            <p>To integrate into the pipeline, a handler defines a set of callback functions that are invoked by
-            the pipeline as required. These callbacks are:
-            <ul>
-                <li>match</li>
-                <li>open</li>
-                <li>close</li>
-                <li>outgoingData</li>
-                <li>outgoingService</li>
-                <li>incomingData</li>
-                <li>incomingService</li>
-                <li>start</li>
-                <li>ready</li>
-                <li>process</li>
-            </ul>
-            - optional
+            <p>A handler is made available to service requests by publishing in the appweb.conf configuration file.
+            Handlers are typically packages as <a href="modules.html">modules</a> and are loaded via the <a
+                href="../users/dir/module.html#loadModule">LoadModule</a> directive. A handler
+            is specified to service requests for a route by either the 
+            <a href="../users/dir/route.html#addHandler">AddHandler</a> or 
+            <a href="../users/dir/route.html#setHandler">SetHandler</a> directives. For example:</p>
+            <pre>
+<b>LoadModule</b> myHandler mod_my
+&lt;Route /my/&gt;
+    <b>SetHandler</b> myHandler
+&lt;/Route&gt;
+</pre>
+            <p>The LoadModule directive causes Appweb to load a shared library containing your handler. The SetHandler
+            directive then defines the handler to serve all requests that begin with <em>/my/</em>.
 
+            <h3>Handler Callbacks</h3>
+            <p>To integrate into the request pipeline, a handler defines a set of callback functions that are invoked by
+            the pipeline as the client request progresses through the pipeline lifecycle. These callbacks are:
+            <table>
+                <thead>
+                <tr><td>Callback</td><td>Purpose</td></tr>
+                </thead>
+                <tbody>
+                <tr><td>match</td><td>Test if the request matches this handler.</td></tr>
+                <tr><td>open</td><td>Open a new request instance for the handler.</td></tr>
+                <tr><td>close</td><td>Close the request.</td></tr>
+                <tr><td>outgoingData</td><td>Accept a packet of outgoing data.</td></tr>
+                <tr><td>outgoingService</td><td>Service any packets on the outgoing data queue.</td></tr>
+                <tr><td>incomingData</td><td>Accept a packet of incoming data.</td></tr>
+                <tr><td>incomingService</td><td>Service any packets on the incoming data queue.</td></tr>
+                <tr><td>start</td><td>Start the request.</td></tr>
+                <tr><td>ready</td><td>The request is fully parsed and all incoming data has been received.</td></tr>
+                <tr><td>process</td><td>Do more processing of the request.</td></tr>
+                </tbody>
+            </table>
+            <p>The callbacks are discussed in more detail below.</p>
+
+            <h2>Pipeline Lifecycle</h2>
+            <p>When a request is received from the client, the Appweb Http engine parses the Http request headers and
+            then determines the best Appweb <a href="../users/routing.html">route</a> for the request. A route contains
+            the full details for how to process a request including the required handler and pipeline configuration.</p>
+            <h3>Matching a Handler</h3>
+            <p>Once parsed, the router tests each of the eligible handlers for the route by calling the handler 
+            <em>match</em> callback. The first handler to claim the request will be used.</p>
+
+            <h3>Starting a Handler</h3>
+            <p>The Http engine then creates the pipeline and invokes the handler <em>start</em> callback. At this point,
+            request body data may not have been received. Depending on the request, generating a response may or may
+            not be appropriate until all body data has been received. If there is no body data, the handler can process
+            and maybe complete the request during this callback.</p>
+
+            <h3>Readying a Handler</h3>
+            <p>Once all body data has been received, the handler <em>ready</em> callback is invoked. At this stage, 
+            the handler has all the request information and can fully process the request. The handler may start or
+            fully complete the request.</p>
+
+            <h3>Handler Processing</h3>
+            <p>Some requests may generate more response data than can be efficiently buffered by Appweb. If the output
+            TCP/IP socket to the client is full, a handler may not be able to continue processing until this data
+            drains. In these cases, the <em>process</em> callback will be invoked whenever the output service queue
+            can absorb more data. As such, it may be used to efficiently generate the response in chunks without
+            blocking.</p>
+            
+            <h2>Pipeline Data Flow</h2>
+            <p>Data is passed between pipeline stages (handlers, filter and connectors) in packets. The packets are passed
+            by invoking the <em>incomingData</em> and <em>outgoingData</em> callbacks depending on the data flow 
+            direction. By default, packets are not queued, but are passed directly by callback from stage to stage.
+            If one of these pipeline stages needs to aggregate, split or otherwse perform delayed processing on 
+            packets, the stage can queue the packet on a special service queue for deferred processing. Once the
+            packet is queued, the stage is invoked to service the queue via the <em>incomingService</em> or
+            <em>outgoingService</em> callbacks depending on the direction. The service queue callbacks will be invoked
+            whenever a packet is queued unless the queue is suspended due to flow control. In that case, the queue will
+            be released and the callback invoked when the pipeline has sufficiently drained.</p>
+            
+            <h3>HttpPacket</h3>Packets are an instance of
+            the HttpPacket structure. HttpPacket instances efficiently store data and can be passed through the 
+            pipeline without copying. Appweb network connectors are optimized to write packets to network connections
+            using scatter/gather techniques so multiple packets can be written in one O/S system call.
+            <pre>typedef struct HttpPacket {
+    MprBuf        *prefix;   /* Data to be sent before the content */
+    MprBuf        *content;  /* Chunk content */
+    MprOff        esize;     /* Data size in entity (file) */
+    MprOff        epos;      /* Data position in entity (file) */
+    HttpFillProc  fill;      /* Callback to fill packet with data */
+    int           flags;     /* Packet flags */
+    HttpPacket    *next;     /* Next packet in chain */
+} HttpPacket;
+</pre>
+
+            - Queue flow
+            - Output buffering paradigms
+            - optional
             - Data Flow
+                - max, min
             - The role of service queues and callbacks
             - Explain each callback
             - Queue flow control
@@ -103,18 +185,15 @@
                 - Non-blocking (see NI emails
                 - Redirecting
                 - Errors
-
             - Multithreading
                 - Connection dispatchers
                 - Yielding
             - Garbage Collection
-
             - Example
                 - Link to code in Git
                     passHandler
                     fileHandler
                     dirHandler
-
             <h2>Packaging as a Module</h2>
             <p>To create an Appweb handler, you must create an initialization function that is called when Appweb loads
             your module. This must be named according to the form:</p>
@@ -148,7 +227,6 @@ int maSimpleModuleInit(Http *http, MprModule *mp)
             <p>To package your module, you must create a DLL / shared library containing your module. On Windows,
             you also must export the initialization function. If you want to statically link your module, you need to ensure
             the main program explicitly calls your initialization function during its initialization.</p>
-
             <h2>More Info</h2>
             <p>See the samples/c/simpleModule source code sample for a working module example.</p>
         </div>

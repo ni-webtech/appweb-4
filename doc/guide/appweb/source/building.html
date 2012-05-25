@@ -21,7 +21,7 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
             <div class="search">
-                <div id="cse-search-form">Loading</div>
+                <div id="cse-search-form"></div>
                 <div class="version">Embedthis Appweb 4.0.0</div>
             </div>
         </div>
@@ -146,17 +146,17 @@
             run Visual Studio 2010 or later (The Express editions are fine to use). Then open the
             projects/appweb-windows.sln Solution project. Select Build Solution to build. Select Appweb as the start up
             project to debug.</p>
-            <p>To build Appweb with the Xcode on Mac OS X, run Xcode and open the projects/appweb-macosx.xcodeproj
-            project.  projects/appweb-windows.sln Solution project. Select Product -> Build to build. You will need to
-            create use Product -> Edit Scheme to set the executable to run under the Info tab, and define the working
-            directory under the Options tab. Set the working directory to the "test" directory of the source tree. </p>
-            <p>If you have built first with bit, make, nmake or shell scripts, you should remove the generated platform
-            output directory and all its contents before building with the IDE.</p>
+            <p>To build Appweb with the Xcode on Mac OS X, run Xcode and open the
+            <em>projects/appweb-macosx.xcodeproj</em> project.  Then select Product->Build to build. To debug, you will
+            need to create use Product->Edit Scheme to set the executable to run under the Info tab, and define the
+            working directory under the Options tab. Set the working directory to the "test" directory of the source
+            tree. </p> <p>If you have built first with bit, make, nmake or shell scripts, you should remove the
+            generated platform output directory and all its contents before building with the IDE.</p>
             <pre>bash projects/linux-x86.sh</pre>
             
             <a name="bit" id="bit"></a>
-            <h2 class="section">Building with Bit</h2>
-            <p>The procedure for building with Bit is substantially the same for all supported platforms. The 
+            <h3>Building with Bit</h3>
+            <p>The procedure for building with Bit is the same for all supported platforms. The 
             <a href="http://ejscript.org/products/ejs/doc/guide/bit/index.html">bit</a> tool is used to configure
             and to build Appweb. Bit is part of the <a href="http://ejscript.org">Ejscript</a> JavaScript environment. Click
             to <a href="http://ejscript.org/downloads/ejs/download.ejs">Download Ejscript</a>.</p>
@@ -373,7 +373,7 @@ CC=/opt/bin/ccarm configure
                 such as Ejscript, MatrixSSL, OpenSSL and PHP. By default, Appweb can locate these packages if the source
                 distributions are installed in standard locations. Otherwise, the packages can be identified by using
                 <em>configure --with PACKAGE=PATH</em> switch. This specifies the path to the package source directory.</p>
-                <p>For example, to build with Ejscript, follow these steps:</p>
+            <p>For example, to build with Ejscript, follow these steps:</p>
             <ol>
                 <li>Download Ejscript from
                 <a href="https://github.com/embedthis/ejs-2">https://github.com/embedthis/ejs-2</a>. Contact

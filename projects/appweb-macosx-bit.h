@@ -16,7 +16,7 @@
 #define BIT_MINOR_VERSION 0
 #define BIT_PATCH_VERSION 0
 #define BIT_VNUM 400000000
-#define BIT_CONFIG_CMD "bit -d -q -platform macosx-x64 -without all -configure . -gen sh,make"
+#define BIT_CONFIG_CMD "bit -d -q -platform macosx-x64 -without all -configure . -gen sh,make,xcode"
 #define BIT_LIB_NAME "bin"
 #define BIT_PROFILE "debug"
 #define BIT_CFG_PREFIX "/etc/appweb"

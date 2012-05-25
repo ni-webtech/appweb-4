@@ -21,7 +21,7 @@
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
             <div class="search">
-                <div id="cse-search-form">Loading</div>
+                <div id="cse-search-form"></div>
                 <div class="version">Embedthis Appweb 4.0.0</div>
             </div>
         </div>
@@ -95,7 +95,6 @@ int maSimpleModuleInit(Http *http, MprModule *mp)
             <p>To package your module, you must create a DLL / shared library containing your module. On Windows,
             you also must export the initialization function. If you want to statically link your module, you need to ensure
             the main program explicitly calls your initialization function during its initialization.</p>
-
             <h2>More Info</h2>
             <p>See the <a
                 href="https://github.com/embedthis/appweb-4/tree/master/src/samples/c/simpleModule">samples/c/simpleModule</a> source code sample for a working module example.</p>
