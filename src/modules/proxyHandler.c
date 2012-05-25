@@ -1,5 +1,5 @@
 /* 
-    proxyHandler.c -- Prototype only
+    proxyHandler.c -- Test handler prototype only
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
 
@@ -69,15 +69,12 @@ static void startProxy(HttpQueue *q)
     loc = rx->loc;
     
     httpo
-    //  MOB - or httpJoin
     uri = httpJoinUriPath(NULL, rx->parsedUri, loc->prefix);
 
     pp->target = getConnection(conn);
 
-//  MOB - how to get notified of data flowing the reverse way?
     - how to hook into the pipeline for the target
 
-    //  MOB -- need to setup the pipeline on the target
     if (httpConnect(pp->target, rx->method, httpUriToString(uri)) < 0) {
         for (mprGetFirstHash(rx->headers); hp; hp = mprGetNextHash(rx->headers, hp)) {
             httpSetHeader(target, hp->key, hp->data);

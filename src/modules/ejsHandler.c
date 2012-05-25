@@ -23,7 +23,9 @@ static char startup[] = "\
 ";
 
 /************************************* Code ***********************************/
-
+/*
+    Open handler for a new request
+ */
 static void openEjs(HttpQueue *q)
 {
     HttpConn    *conn;
@@ -52,12 +54,16 @@ static void openEjs(HttpQueue *q)
             mprLog(5, "ejs: Create ejs pool for route %s", route->name);
         }
         pool = conn->pool = route->context;
+        /*
+            Allocate an EJS VM engine to service the request
+         */
         if ((ejs = ejsAllocPoolVM(pool, EJS_FLAG_HOSTED)) == 0) {
             httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, "Can't create Ejs interpreter");
             return;
         }
         conn->ejs = ejs;
         ejs->hosted = 1;
+
         /*
             Because we are using on-demand loading of ejs, the ejsHandler stage callbacks may not have been set when
             the Http pipeline needed them (first time). The loading of ejs.web above will have fully initialized them.
@@ -118,6 +124,9 @@ static int ejsWorkersDirective(MaState *state, cchar *key, cchar *value)
 }
 
 
+/*
+    Loadable module initialization
+ */
 int maEjsHandlerInit(Http *http, MprModule *module)
 {
     MaAppweb    *appweb;
@@ -130,6 +139,9 @@ int maEjsHandlerInit(Http *http, MprModule *module)
             The rest of the stage callbacks will be defined by ejsAddWebHandler when ejs.web is loaded from openEjs
          */
     }
+    /*
+        Add configuration file directives
+     */
     appweb = httpGetContext(http);
     maAddDirective(appweb, "EjsAlias", ejsAliasDirective);
     maAddDirective(appweb, "EjsStartup", ejsStartupDirective);

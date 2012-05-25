@@ -127,7 +127,9 @@ static sapi_module_struct phpSapiBlock = {
 };
 
 /********************************** Code ***************************/
-
+/*
+    Open handler for a new request
+ */
 static void openPhp(HttpQueue *q)
 {
     HttpRx      *rx;
@@ -160,7 +162,8 @@ static void openPhp(HttpQueue *q)
 
 
 /*
-    Process the request. Run once all the input data has been received and buffered.
+    Run the request. This is invoked when all the input data has been received and buffered.
+    This routine completely services the request.
  */
 static void readyPhp(HttpQueue *q)
 {
@@ -499,12 +502,6 @@ static int initializePhp(Http *http)
     }
     zend_llist_init(&global_vars, sizeof(char *), 0, 0);
 
-#if UNUSED
-    /*
-        Must remove this for include files to work
-     */
-    SG(options) |= SAPI_OPTION_NO_CHDIR;
-#endif
     zend_alter_ini_entry("register_argc_argv", 19, "0", 1, PHP_INI_SYSTEM, PHP_INI_STAGE_ACTIVATE);
     zend_alter_ini_entry("html_errors", 12, "0", 1, PHP_INI_SYSTEM, PHP_INI_STAGE_ACTIVATE);
     zend_alter_ini_entry("implicit_flush", 15, "0", 1, PHP_INI_SYSTEM, PHP_INI_STAGE_ACTIVATE);
@@ -547,7 +544,7 @@ static char *mapHyphen(char *str)
 
 
 /*
-    Module initialization
+    loadable Module initialization
  */
 int maPhpHandlerInit(Http *http, MprModule *module)
 {

@@ -44,7 +44,9 @@ static ssize readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf 
 #endif
 
 /************************************* Code ***********************************/
-
+/*
+    Open the handler for a new request
+ */
 static void openCgi(HttpQueue *q)
 {
     HttpRx      *rx;
@@ -53,6 +55,7 @@ static void openCgi(HttpQueue *q)
 
     mprLog(5, "Open CGI handler");
     if (!httpValidateLimits(q->conn->endpoint, HTTP_VALIDATE_OPEN_PROCESS, q->conn)) {
+        /* Too many active CGI processes */
         return;
     }
     if (rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
@@ -75,6 +78,7 @@ static void closeCgi(HttpQueue *q)
     if (cmd) {
         mprSetCmdCallback(cmd, NULL, NULL);
         if (cmd->pid) {
+            /* Request has completed so can kill the command */
             mprStopCmd(cmd, -1);
         }
         mprDisconnectCmd(cmd);
@@ -119,8 +123,11 @@ static void startCgi(HttpQueue *q)
     argc = 1;                                   /* argv[0] == programName */
     buildArgs(conn, cmd, &argc, &argv);
     fileName = argv[0];
-
     baseName = mprGetPathBase(fileName);
+    
+    /*
+        nph prefix means non-parsed-header. Don't parse the CGI output for a CGI header
+     */
     if (strncmp(baseName, "nph-", 4) == 0 || 
             (strlen(baseName) > 4 && strcmp(&baseName[strlen(baseName) - 4], "-nph") == 0)) {
         /* Pretend we've seen the header for Non-parsed Header CGI programs */
@@ -159,7 +166,7 @@ static void startCgi(HttpQueue *q)
 #if BIT_WIN_LIKE
 /*
     This routine is called for when the outgoing queue is writable.  We don't actually do output here, just poll
-    until the command is complete.
+    on windows (only) until the command is complete.
  */
 static void processCgi(HttpQueue *q)
 {
@@ -183,6 +190,9 @@ static void processCgi(HttpQueue *q)
 #endif
 
 
+/*
+    Receive a packet of outgoing data
+ */
 static void outgoingCgiData(HttpQueue *q, HttpPacket *packet)
 {
     int     enableService;
@@ -190,10 +200,8 @@ static void outgoingCgiData(HttpQueue *q, HttpPacket *packet)
     /*  
         Handlers service routines must only be auto-enabled if in the running state.
      */
-    mprAssert(httpVerifyQueue(q));
     enableService = !(q->stage->flags & HTTP_STAGE_HANDLER) || (q->conn->state >= HTTP_STATE_READY) ? 1 : 0;
     httpPutForService(q, packet, enableService);
-    mprAssert(httpVerifyQueue(q));
 }
 
 
@@ -325,10 +333,6 @@ static int writeToClient(HttpQueue *q, MprCmd *cmd, MprBuf *buf, int channel)
 
     conn = q->conn;
     mprAssert(conn->tx);
-#if UNUSED
-    httpEnableQueue(q);
-    printf("MOB Enable Queue in writeToClient %d\n", __LINE__);
-#endif
 
     /*
         Write to the browser. Write as much as we can. Service queues to get the filters and connectors pumping.
@@ -1057,7 +1061,7 @@ static int scriptAliasDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*  
-    Dynamic module initialization
+    Loadable module initialization
  */
 int maCgiHandlerInit(Http *http, MprModule *module)
 {
@@ -1077,7 +1081,9 @@ int maCgiHandlerInit(Http *http, MprModule *module)
 #if BIT_WIN_LIKE
     handler->process = processCgi; 
 #endif
-            
+    /*
+        Add configuration file directives
+     */
     appweb = httpGetContext(http);
     maAddDirective(appweb, "Action", actionDirective);
     maAddDirective(appweb, "ScriptAlias", scriptAliasDirective);

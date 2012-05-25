@@ -36,7 +36,9 @@ static int unloadEsp(MprModule *mp);
 static bool viewExists(HttpConn *conn);
 
 /************************************* Code ***********************************/
-
+/*
+    Open an instance of the ESP for a new request
+ */
 static void openEsp(HttpQueue *q)
 {
     HttpConn    *conn;
@@ -56,6 +58,9 @@ static void openEsp(HttpQueue *q)
             httpMemoryError(conn);
             return;
         }
+        /*
+            Find the ESP route configuration. Search up the route parent chain
+         */
         for (eroute = 0, route = rx->route; route; route = route->parent) {
             if (route->eroute) {
                 eroute = route->eroute;
@@ -145,7 +150,11 @@ static void finalizeFlash(HttpConn *conn)
 }
 
 /************************************ Flash ***********************************/
-
+/*
+    Start the request. At this stage, body data may not have been fully received unless 
+    the request is a form (POST method and Content-Type is application/x-www-form-urlencoded).
+    Forms are a special case and delay invoking the start callback until all body data is received.
+ */
 static void startEsp(HttpQueue *q)
 {
     HttpConn    *conn;
@@ -477,6 +486,9 @@ static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *rec
 }
 
 
+/*
+    Test if the the required view page exists
+ */
 static bool viewExists(HttpConn *conn)
 {
     HttpRx      *rx;
@@ -633,6 +645,9 @@ static void setMvcDirs(EspRoute *eroute, HttpRoute *route)
 }
 
 
+/*
+    Manage all links for EspReq for the garbage collector
+ */
 static void manageReq(EspReq *req, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
@@ -654,6 +669,9 @@ static void manageReq(EspReq *req, int flags)
 }
 
 
+/*
+    Manage all links for Esp for the garbage collector
+ */
 static void manageEsp(Esp *esp, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
@@ -1112,7 +1130,9 @@ static int espUpdateDirective(MaState *state, cchar *key, cchar *value)
 
 
 /************************************ Init ************************************/
-
+/*
+    Loadable module configuration
+ */
 int maEspHandlerInit(Http *http, MprModule *module)
 {
     HttpStage   *handler;
@@ -1147,6 +1167,10 @@ int maEspHandlerInit(Http *http, MprModule *module)
     if ((esp->sessionCache = mprCreateCache(MPR_CACHE_SHARED)) == 0) {
         return MPR_ERR_MEMORY;
     }
+
+    /*
+        Add configuration file directives
+     */
     maAddDirective(appweb, "EspApp", espAppDirective);
     maAddDirective(appweb, "EspCompile", espCompileDirective);
     maAddDirective(appweb, "EspDb", espDbDirective);
@@ -1166,9 +1190,11 @@ int maEspHandlerInit(Http *http, MprModule *module)
         return 0;
     }
 #if BIT_FEATURE_MDB
+    /* Memory database */
     mdbInit();
 #endif
 #if BIT_FEATURE_SDB
+    /* Sqlite */
     sdbInit();
 #endif
     return 0;
