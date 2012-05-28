@@ -329,31 +329,31 @@ mprCreateEvent(q->conn->dispatcher, "deviceEvent", 0, doMoreOutput, q, 0);
         or completing the request, httpPump() should be called to perform pipeline processing on the request.</p>
 
         <h2>Coding Issues</h2>
+        <p>There are a few coding issues to keep in mind when creating handlers. Appweb is a multithreaded, event loop
+        server. As such, handlers must cooperate and take care when using resources.</p>
 
-<pre>
-- Coding Issues
-    - Memory Allocation
-        - Garbage Collection
-    - Blocking
-        - Yielding
-    - Multithreading
-        - Connection dispatchers
-- Example
-    - General example
-    - Example cases - See NI
-</pre>
-            <h2>Defining a Handler</h2>
-            <p>To define an Appweb handler, you must do three things:
-            <ol>
-                <li>Package as a module (see <a href="modules.html">Creating Modules</a>).</li>
-                <li>Call <a
-                    href="../../../api/http.html#group___http_stage_1gac2637a927981b3338c86a27f7ebd5f19">httpCreateHandler</a>
-                in your module initialization code to define the handler when the module is loaded</li>
-                <li>Define the handler in the appweb.conf configuration file via the
-                <a href="../users/dir/route.html#addHandler">AddHandler</a> or 
-                <a href="../users/dir/route.html#setHandler">SetHandler</a> directives.</li>
-            directive.</li>
-            </ol>
+        <h3>Blocking</h3>
+        <p>If a handler blocks, it will consume a worker thread. But more importantly, when a thread blocks, it must
+        yield to the garbage collector. Appweb uses a cooperative garbage collector where worker thread yield to the 
+        collector at designated control points. This provides workers with a guarantee that temporary memory will not be
+        prematurely collected. All MPR functions that wait implicitly also yield to the garbage collector. Handlers can
+        should call <a href="../../../mpr.html#mpr_8h_1af140a2fda18b2e8461236cc44c0a2cc4">mprYield</a> directly whenever
+        they block and are not calling an MPR function that blocks. This ensures that the garbage collector can work and
+        collect memory while the worker thread is asleep. Handlers do not need to call mprYield when executing on
+        threads that were created outside of the MPR (ie. not MPR worker threads).</p>
+
+        <h2>Defining a Handler</h2>
+        <p>To define an Appweb handler, you must do three things:
+        <ol>
+            <li>Package as a module (see <a href="modules.html">Creating Modules</a>).</li>
+            <li>Call <a
+                href="../../../api/http.html#group___http_stage_1gac2637a927981b3338c86a27f7ebd5f19">httpCreateHandler</a>
+            in your module initialization code to define the handler when the module is loaded</li>
+            <li>Define the handler in the appweb.conf configuration file via the
+            <a href="../users/dir/route.html#addHandler">AddHandler</a> or 
+            <a href="../users/dir/route.html#setHandler">SetHandler</a> directives.</li>
+        directive.</li>
+        </ol>
 <pre>
 int maMyModuleInit(Http *http, MprModule *mp)
 {
