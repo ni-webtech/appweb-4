@@ -14,12 +14,14 @@
 /*
     Run the handler. This is called when all input data has been received.
  */
-static void processSimple(HttpQueue *q)
+static void readySimple(HttpQueue *q)
 {
     HttpConn    *conn;
 
     conn = q->conn;
+
     httpSetHeader(conn, 0, "Last-Modified", conn->http->currentDate);
+    httpSetStatus(conn, 200);
 
     /*
         Create the empty header packet. This will be filled in by the downstream network connector stage.
@@ -59,7 +61,7 @@ int maSimpleHandlerInit(Http *http, MprModule *module)
     if ((stage = httpCreateHandler(http, "simpleHandler", 0, module)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
-    stage->process = processSimple;
+    stage->ready = readySimple;
     stage->incomingData = incomingSimpleData;
     return 0;
 }

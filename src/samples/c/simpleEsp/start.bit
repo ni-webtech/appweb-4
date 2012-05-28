@@ -5,7 +5,7 @@
 Bit.load({
     defaults: {
         '+includes': [ '/usr/lib/appweb/latest/inc' ],
-        '+libpaths': [ '/usr/lib/appweb/latest/lib' ],
+        '+libpaths': [ '/usr/lib/appweb/latest/bin' ],
     },
 	targets: {
 		simpleEsp: {

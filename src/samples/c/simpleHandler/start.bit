@@ -1,17 +1,18 @@
 /*
-	local.bit - Bit file for the simpleClient sample
+	start.bit - Bit file for the simpleHandler sample
  */
 
 Bit.load({
     defaults: {
         '+includes': [ '/usr/lib/appweb/latest/inc' ],
-        '+libpaths': [ '/usr/lib/appweb/latest/lib' ],
+        '+libpaths': [ '/usr/lib/appweb/latest/bin' ],
     },
 	targets: {
-		simpleClient: {
-			type: 'exe',
+		simpleHandler: {
+			type: 'lib',
 			sources: ['*.c'],
             '+libraries': [ 'appweb', 'http', 'mpr', 'mprssl' ],
 		}
 	},
 })
+

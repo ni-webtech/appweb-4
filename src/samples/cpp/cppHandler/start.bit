@@ -1,17 +1,19 @@
 /*
-	local.bit - Bit file for the simpleModule sample
+	lcoal.bit - Bit file for the cppHandler sample
  */
 
 Bit.load({
     defaults: {
         '+includes': [ '/usr/lib/appweb/latest/inc' ],
-        '+libpaths': [ '/usr/lib/appweb/latest/lib' ],
+        '+libpaths': [ '/usr/lib/appweb/latest/bin' ],
     },
 	targets: {
-		simpleModule: {
+		cppHandler: {
 			type: 'lib',
-			sources: ['*.c'],
+            path: 'cppModule${SHOBJ}',
+			sources: ['*.cpp'],
             '+libraries': [ 'appweb', 'http', 'mpr', 'mprssl' ],
 		}
 	},
 })
+
