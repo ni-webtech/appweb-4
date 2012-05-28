@@ -1,5 +1,5 @@
 /*
-	lcoal.bit - Bit file for the cppHandler sample
+	start.bit - Bit file for the cppHandler sample
  */
 
 Bit.load({

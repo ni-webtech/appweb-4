@@ -1,5 +1,5 @@
 /*
-	local.bit - Bit file for the simpleEsp sample
+	start.bit - Bit file for the simpleEsp sample
  */
 
 Bit.load({

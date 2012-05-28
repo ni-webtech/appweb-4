@@ -1,5 +1,5 @@
 /*
-	local.bit - Bit file for the simpleModule sample
+	start.bit - Bit file for the simpleModule sample
  */
 
 Bit.load({

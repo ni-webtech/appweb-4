@@ -232,7 +232,7 @@ EXPORTS
   httpParseAcl
   httpPrepClientConn
   httpPrepServerConn
-  httpProcess
+  httpPump
   httpProcessHandler
   httpPutBackPacket
   httpPutForService

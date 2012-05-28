@@ -1,5 +1,5 @@
 /*
-	local.bit - Bit file for the simpleServer sample
+	start.bit - Bit file for the simpleServer sample
  */
 
 Bit.load({

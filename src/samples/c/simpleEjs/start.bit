@@ -1,5 +1,5 @@
 /*
-	local.bit - Bit file for the simpleEjs sample
+	start.bit - Bit file for the simpleEjs sample
  */
 
 Bit.load({

@@ -1,5 +1,5 @@
 /*
-	local.bit - Bit file for the cppModule sample
+	start.bit - Bit file for the cppModule sample
  */
 
 Bit.load({
