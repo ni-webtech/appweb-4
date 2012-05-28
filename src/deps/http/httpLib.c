@@ -3130,7 +3130,7 @@ static void readEvent(HttpConn *conn)
        
         if (nbytes > 0) {
             mprAdjustBufEnd(packet->content, nbytes);
-            httpProcess(conn, packet);
+            httpPump(conn, packet);
 
         } else if (nbytes < 0) {
             if (conn->state <= HTTP_STATE_CONNECTED) {
@@ -3139,7 +3139,7 @@ static void readEvent(HttpConn *conn)
                 }
                 break;
             } else if (conn->state < HTTP_STATE_COMPLETE) {
-                httpProcess(conn, packet);
+                httpPump(conn, packet);
                 if (!conn->error && conn->state < HTTP_STATE_COMPLETE && mprIsSocketEof(conn->sock)) {
                     httpError(conn, HTTP_ABORT | HTTP_CODE_COMMS_ERROR, "Connection lost");
                     break;
@@ -3169,7 +3169,7 @@ static void writeEvent(HttpConn *conn)
     if (conn->tx) {
         httpResumeQueue(conn->connectorq);
         httpServiceQueues(conn);
-        httpProcess(conn, NULL);
+        httpPump(conn, NULL);
     }
 }
 
@@ -3200,8 +3200,7 @@ void httpUsePrimary(HttpConn *conn)
 
 
 /*
-    Steal a connection with open socket from Http.
-    This flushes all buffered data and completes the request as far as Http is concerned.
+    Steal a connection with open socket from Http and disconnect it from management by Http.
     It is the callers responsibility to call mprCloseSocket when required.
  */
 MprSocket *httpStealConn(HttpConn *conn)
@@ -6210,14 +6209,10 @@ HttpPacket *httpGetPacket(HttpQueue *q)
                 mprAssert(q->first == 0);
             }
         }
-        if (/* MOB q->flags & HTTP_QUEUE_FULL && */ q->count < q->low) {
+        if (q->count < q->low) {
             /*
                 This queue was full and now is below the low water mark. Back-enable the previous queue.
              */
-#if MOB && UNUSED
-            q->flags &= ~HTTP_QUEUE_FULL;
-#endif
-            //  MOB - would not need this if all queues always had a service routine?
             prev = httpFindPreviousQueue(q);
             if (prev && prev->flags & HTTP_QUEUE_SUSPENDED) {
                 httpResumeQueue(prev);
@@ -6328,7 +6323,7 @@ void httpPutPacket(HttpQueue *q, HttpPacket *packet)
 
 
 /*  
-    Pass to the next queue
+    Pass to the next stage in the pipeline
  */
 void httpPutPacketToNext(HttpQueue *q, HttpPacket *packet)
 {
@@ -6450,7 +6445,7 @@ HttpPacket *httpSplitPacket(HttpPacket *orig, ssize offset)
             return 0;
         }
         /*
-            MOB OPT - this is not efficient. A large packet will often be resized by splitting into chunks that the
+            OPT - A large packet will often be resized by splitting into chunks that the
             downstream queues will accept. This causes many allocations that are a small delta less than the large
             packet 
             Better:
@@ -6527,8 +6522,9 @@ HttpPacket *httpSplitPacket(HttpPacket *orig, ssize offset)
 /*
     passHandler.c -- Pass through handler
 
-    This handler simply relays all content onto a connector. It is used to when there is no handler defined 
-    and to convey errors when the actual handler fails.
+    This handler simply relays all content to a network connector. It is used to when there is no handler defined 
+    and to convey errors when the actual handler fails. It is configured as the "passHandler" and "errorHandler".
+    The pipeline will also select this handler if any routing errors occur. 
 
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
@@ -6538,7 +6534,10 @@ HttpPacket *httpSplitPacket(HttpPacket *orig, ssize offset)
 
 
 /*********************************** Code *************************************/
-
+/*
+    Handle Trace and Options requests. Handlers can do this themselves if they desire, but typically
+    all Trace/Options requests come here.
+ */
 void httpHandleOptionsTrace(HttpConn *conn)
 {
     HttpRx      *rx;
@@ -6549,12 +6548,14 @@ void httpHandleOptionsTrace(HttpConn *conn)
     rx = conn->rx;
 
     if (rx->flags & HTTP_TRACE) {
+        /* The trace method is disabled by default unless 'TraceMethod on' is specified */
         if (!conn->limits->enableTraceMethod) {
             tx->status = HTTP_CODE_NOT_ACCEPTABLE;
             httpFormatResponseBody(conn, "Trace Request Denied", "The TRACE method is disabled on this server.");
         } else {
             httpFormatResponse(conn, "%s %s %s\r\n", rx->method, rx->uri, conn->protocol);
         }
+        /* This finalizes output and indicates the request is now complete */
         httpFinalize(conn);
 
     } else if (rx->flags & HTTP_OPTIONS) {
@@ -6583,13 +6584,15 @@ static void openPass(HttpQueue *q)
 
 static void readyPass(HttpQueue *q)
 {
+#if UNUSED
     HttpConn    *conn;
 
     conn = q->conn;
     if (!conn->finalized) {
         httpError(conn, HTTP_CODE_NOT_FOUND, "Can't serve request: %s", conn->rx->uri);
     }
-    httpFinalize(conn);
+#endif
+    httpFinalize(q->conn);
 }
 
 
@@ -6605,7 +6608,7 @@ int httpOpenPassHandler(Http *http)
     stage->ready = readyPass;
 
     /*
-        PassHandler has an alias as the ErrorHandler too
+        PassHandler is an alias as the ErrorHandler too
      */
     if ((stage = httpCreateHandler(http, "errorHandler", HTTP_STAGE_ALL, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
@@ -7151,15 +7154,6 @@ void httpAppendQueue(HttpQueue *head, HttpQueue *q)
 }
 
 
-#if UNUSED
-void httpDisableQueue(HttpQueue *q)
-{
-    mprLog(7, "Disable q %s", q->owner);
-    q->flags |= HTTP_QUEUE_SUSPENDED | HTTP_QUEUE_DISABLED;
-}
-#endif
-
-
 void httpSuspendQueue(HttpQueue *q)
 {
     mprLog(7, "Suspend q %s", q->owner);
@@ -7236,45 +7230,11 @@ bool httpFlushQueue(HttpQueue *q, bool blocking)
 }
 
 
-#if UNUSED
-/*
-    May run on any thread. If the request has completed and the connection and queue have been released, then the
-    caller MUST arrange to preserve a GC reference to the queue. This preserves memory.
-    preserve
- */
-void httpEnableQueue(HttpQueue *q)
-{
-    Http    *http;
-    mprLog(7, "Enable q %s", q->owner);
-
-    http = mprGetMpr()->httpService;
-    lock(http);
-    if (q->flags & HTTP_QUEUE_OPEN) {
-        mprAssert(q->conn && q->conn->http);
-        q->flags &= ~HTTP_QUEUE_DISABLED;
-        httpResumeQueue(q);
-        /* 
-            Enable write I/O events on the connection. This will cause httpProcess() to be invoked.
-         */
-        httpSocketBlocked(q->conn);
-        httpEnableConnEvents(q->conn);
-    }
-    unlock(http);
-}
-#endif
-
-
 void httpResumeQueue(HttpQueue *q)
 {
     mprLog(7, "Enable q %s", q->owner);
-#if UNUSED
-    if (!(q->flags & HTTP_QUEUE_DISABLED)) {
-#endif
-        q->flags &= ~HTTP_QUEUE_SUSPENDED;
-        httpScheduleQueue(q);
-#if UNUSED
-    }
-#endif
+    q->flags &= ~HTTP_QUEUE_SUSPENDED;
+    httpScheduleQueue(q);
 }
 
 
@@ -11152,10 +11112,11 @@ void httpDestroyRx(HttpRx *rx)
 
 
 /*  
+    Pump the Http engine.
     Process incoming requests and drive the state machine. This will process as many requests as possible before returning. 
     All socket I/O is non-blocking, and this routine must not block. Note: packet may be null.
  */
-void httpProcess(HttpConn *conn, HttpPacket *packet)
+void httpPump(HttpConn *conn, HttpPacket *packet)
 {
     mprAssert(conn);
 
@@ -12104,21 +12065,24 @@ static bool processRunning(HttpConn *conn)
         if (conn->finalized) {
             if (!conn->connectorComplete) {
                 /* Wait for Tx I/O event. Do suspend incase handler not using auto-flow routines */
+                conn->writeBlocked = 1;
                 httpSuspendQueue(q);
-                httpSocketBlocked(q->conn);
                 httpEnableConnEvents(q->conn);
                 canProceed = 0;
             }
         } else if (!httpProcessHandler(conn)) {
+            /* No process callback defined */
             canProceed = 0;
         } else if (q->count == 0) {
             /* Queue is empty and data may have drained above in httpServiceQueues. Yield to reclaim memory. */
             mprYield(0);
         } else if (q->count < q->low) {
-            httpResumeQueue(q);
+            if (q->flags & HTTP_QUEUE_SUSPENDED) {
+                httpResumeQueue(q);
+            }
         } else {
+            conn->writeBlocked = 1;
             httpSuspendQueue(q);
-            httpSocketBlocked(q->conn);
             httpEnableConnEvents(q->conn);
             canProceed = 0;
         }
@@ -12199,7 +12163,7 @@ void httpCloseRx(HttpConn *conn)
         conn->keepAliveCount = -1;
     }
     if (conn->state < HTTP_STATE_COMPLETE && !conn->inHttpProcess) {
-        httpProcess(conn, NULL);
+        httpPump(conn, NULL);
     }
 }
 
@@ -12416,7 +12380,7 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
         return MPR_ERR_BAD_STATE;
     } 
     if (conn->input && httpGetPacketLength(conn->input) > 0) {
-        httpProcess(conn, conn->input);
+        httpPump(conn, conn->input);
     }
     if (conn->error) {
         return MPR_ERR_BAD_STATE;
@@ -12473,10 +12437,6 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
 void httpSocketBlocked(HttpConn *conn)
 {
     mprLog(6, "Socket Blocked");
-#if MOB
-    //  SHOULD REMOVE THIS - not required and process() does not listen to it
-    conn->canProceed = 0;
-#endif 
     conn->writeBlocked = 1;
 }
 
@@ -13268,18 +13228,6 @@ static void defaultClose(HttpQueue *q)
 }
 
 
-#if UNUSED
-/*
-    Invoked for handlers only
- */
-static void defaultProcess(HttpQueue *q)
-{
-    httpFinalize(q->conn);
-}
-#endif
-
-
-
 /*  
     Put packets on the service queue.
  */
@@ -13370,11 +13318,6 @@ HttpStage *httpCreateStage(Http *http, cchar *name, int flags, MprModule *module
     stage->outgoingData = outgoingData;
     stage->outgoingService = httpDefaultOutgoingServiceStage;
     stage->module = module;
-#if UNUSED
-    if (flags & HTTP_STAGE_HANDLER) {
-        stage->process = defaultProcess;
-    }
-#endif
     httpAddStage(http, stage);
     return stage;
 }
@@ -13945,7 +13888,7 @@ void httpFinalize(HttpConn *conn)
         httpPutForService(conn->writeq, httpCreateEndPacket(), HTTP_SCHEDULE_QUEUE);
         httpServiceQueues(conn);
         if (conn->state >= HTTP_STATE_READY /* MOB && conn->connectorComplete */ && !conn->inHttpProcess) {
-            httpProcess(conn, NULL);
+            httpPump(conn, NULL);
         }
         conn->refinalize = 0;
     } else {

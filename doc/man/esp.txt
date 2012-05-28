@@ -124,7 +124,9 @@ COMPILING
        explicilty recompile portions or the complete appliction.
 
        Esp can recompile everything via:
+
              esp compile ....
+
        This will re-compile each controller and ESP page.
 
        Esp also provides options for you to individually  compile  controllers

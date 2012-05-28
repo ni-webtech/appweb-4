@@ -188,7 +188,7 @@
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga5677ea87f674bd598faee87113b7fd2f" class="nameRef">espDivision</a>(<a href="httpBare.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *body, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render an HTML division.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1ga74f4ebc195992a3b8e1229db1cc864d3" class="nameRef">espDropdown</a>(<a href="httpBare.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *field, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *choices, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render a dropdown selection list.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1gadf62f0d9f2459c1be758606992c235ac" class="nameRef">espEndform</a>(<a href="httpBare.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Signify the end of an HTML form.</td></tr>
-<tr class="apiDef"><td class="apiType">char*</td><td><a href="#group___esp_route_1ga680226fbc5c0a870ff91eef7d13ac4c8" class="nameRef">espExpandCommand</a>(<a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *command, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *source, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *module)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Expand a compile or link command template.</td></tr>
+<tr class="apiDef"><td class="apiType">char*</td><td><a href="#group___esp_route_1ga799a49951faaac006de2e8f562b0f04b" class="nameRef">espExpandCommand</a>(<a href="#group___esp_route" class="ref">EspRoute</a> *eroute, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *command, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *source, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *module)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Expand a compile or link command template.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_req_1gac142434246bc5558dfe73a78ded7a7f0" class="nameRef">espFinalize</a>(<a href="httpBare.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Finalize transmission of the http request.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_control_1gad7619da182c4e98e7ff0c30036929229" class="nameRef">espFlash</a>(<a href="httpBare.html#group___http_conn" class="ref">HttpConn</a> *conn, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *kinds, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *options)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Render flash messages.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#group___esp_req_1gadf50b51bf7ab10d828e85be140c005c5" class="nameRef">espFlush</a>(<a href="httpBare.html#group___http_conn" class="ref">HttpConn</a> *conn)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Flush transmit data.</td></tr>
@@ -5455,8 +5455,8 @@ Directory for databases.
     <tr><td class="param">Edi *</td><td><td>edi</td><td>
 Default database for this route.
 </td>
-    <tr><td class="param">MprList *</td><td><td>env</td><td>
-Environment for compiler.
+    <tr><td class="param"><a class="ref" BBB href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>env</td><td>
+Environment variables for route.
 </td>
     <tr><td class="param">int</td><td><td>keepSource</td><td>
 Preserve generated source.
@@ -5630,18 +5630,19 @@ Directory for views.
     </dd></dl>
   </div>
 </div>
-<a name="group___esp_route_1ga680226fbc5c0a870ff91eef7d13ac4c8"></a>
+<a name="group___esp_route_1ga799a49951faaac006de2e8f562b0f04b"></a>
 <div class="api">
   <div class="prototype">
     char *
     espExpandCommand
-(<a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *command, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *source, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *module)
+(<a href="#group___esp_route" class="ref">EspRoute</a> *eroute, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *command, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *source, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *module)
   </div>
   <div class="apiDetail">
 <p>Expand a compile or link command template.</p>
     <dl><dt><b>Description</b>:</dt><dd>This expands a command template and replaces &quot;${tokens}&quot; with their equivalent value. The supported tokens are: <ul><li>ARCH - Build architecture (i386, x86_64) </li><li>CC - Compiler pathname </li><li>DEBUG - Compiler debug options (-g, -Zi, -Od) </li><li>INC - Include directory (out/inc) </li><li>LIB - Library directory (out/lib, out/bin) </li><li>LIBS - Required libraries directory (mod_esp, libappweb) </li><li>OBJ - Name of compiled source (out/lib/view-MD5.o) </li><li>OUT - Output module (view_MD5.dylib) </li><li>SHLIB - Shared library extension (.lib, .so) </li><li>SHOBJ - Shared object extension (.dll, .so) </li><li>SRC - Path to source code for view or controller (already templated) </li><li>TMP - System temporary directory </li><li>WINSDK - Path to the Windows SDK </li><li>VS - Path to Visual Studio </li></ul></dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
+    <tr><td class="param">eroute</td><td><a class="ref" BBB href="#struct_esp">Esp</a> route object.</td>
     <tr><td class="param">command</td><td>Http connection object.</td>
     <tr><td class="param">source</td><td>ESP web page source pathname.</td>
     <tr><td class="param">module</td><td>Output module pathname.</td>

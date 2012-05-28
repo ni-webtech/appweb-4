@@ -76,13 +76,6 @@
     </member>
     <member kind="function">
       <type>int</type>
-      <name>maMatchDir</name>
-      <anchorfile>group___appweb.html</anchorfile>
-      <anchor>ga0595cfc8aa7064cd3b26f4bd2c5748ba</anchor>
-      <arglist>(HttpConn *conn, HttpRoute *route, int direction)</arglist>
-    </member>
-    <member kind="function">
-      <type>int</type>
       <name>maParseConfig</name>
       <anchorfile>group___appweb.html</anchorfile>
       <anchor>gaaee49b7b7de456a272e476b9a1228bc8</anchor>
@@ -108,6 +101,13 @@
       <anchorfile>group___appweb.html</anchorfile>
       <anchor>gad960c7ab5089293e33a0cf221f41072d</anchor>
       <arglist>(MaState *state)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>maRenderDirListing</name>
+      <anchorfile>group___appweb.html</anchorfile>
+      <anchor>ga16d04b99389aac28bc4c210f49ff52dc</anchor>
+      <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
       <type>void</type>

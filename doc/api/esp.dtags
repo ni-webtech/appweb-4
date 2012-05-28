@@ -452,8 +452,8 @@
       <type>char *</type>
       <name>espExpandCommand</name>
       <anchorfile>group___esp_route.html</anchorfile>
-      <anchor>ga680226fbc5c0a870ff91eef7d13ac4c8</anchor>
-      <arglist>(cchar *command, cchar *source, cchar *module)</arglist>
+      <anchor>ga799a49951faaac006de2e8f562b0f04b</anchor>
+      <arglist>(EspRoute *eroute, cchar *command, cchar *source, cchar *module)</arglist>
     </member>
   </compound>
   <compound kind="group">

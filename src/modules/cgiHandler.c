@@ -190,6 +190,7 @@ static void processCgi(HttpQueue *q)
 #endif
 
 
+#if UNUSED
 /*
     Receive a packet of outgoing data
  */
@@ -203,6 +204,7 @@ static void outgoingCgiData(HttpQueue *q, HttpPacket *packet)
     enableService = !(q->stage->flags & HTTP_STAGE_HANDLER) || (q->conn->state >= HTTP_STATE_READY) ? 1 : 0;
     httpPutForService(q, packet, enableService);
 }
+#endif
 
 
 /*
@@ -420,7 +422,7 @@ static ssize cgiCallback(MprCmd *cmd, int channel, void *data)
             httpEnableConnEvents(conn);
         }
     } else {
-        httpProcess(conn, NULL);
+        httpPump(conn, NULL);
     }
     return nbytes;
 }
@@ -676,7 +678,7 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
         httpRedirect(conn, tx->status, location);
         httpFinalize(conn);
         if (conn->state == HTTP_STATE_COMPLETE) {
-            httpProcess(conn, NULL);
+            httpPump(conn, NULL);
         }
     }
     return 1;
@@ -1073,7 +1075,9 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     }
     http->cgiHandler = handler;
     handler->close = closeCgi; 
+#if UNUSED
     handler->outgoingData = outgoingCgiData;
+#endif
     handler->outgoingService = outgoingCgiService;
     handler->incomingData = incomingCgiData; 
     handler->open = openCgi; 

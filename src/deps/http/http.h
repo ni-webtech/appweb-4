@@ -967,7 +967,7 @@ typedef void (*HttpQueueService)(struct HttpQueue *q);
     @see HttpConn HttpPacket HttpQueue httpDisableQueue httpDiscardQueueData httpEnableQueue httpFlushQueue httpGetQueueRoom
         httpIsEof httpIsPacketTooBig httpIsQueueEmpty httpJoinPacketForService httpJoinPackets httpOpenQueue
         httpPutBackPacket httpPutForService httpPutPacket httpPutPacketToNext httpRemoveQueue httpResizePacket
-        httpResumeQueue httpScheduleQueue httpSendEndPacket httpSendPackets httpServiceQueue httpSuspendQueue
+        httpResumeQueue httpScheduleQueue httpServiceQueue httpSuspendQueue
         httpWillNextQueueAccept httpWillNextQueueAcceptSize httpWrite httpWriteBlock httpWriteBody httpWriteString 
  */
 typedef struct HttpQueue {
@@ -986,7 +986,7 @@ typedef struct HttpQueue {
     HttpQueueOpen       open;                   /**< Open the queue */
     HttpQueueClose      close;                  /**< Close the queue */
     HttpQueueStart      start;                  /**< Start the queue */
-    HttpQueueData       put;                    /**< Put a message on the queue */
+    HttpQueueData       put;                    /**< Callback to receive a packet */
     HttpQueueService    service;                /**< Service the queue */
     struct HttpQueue    *scheduleNext;          /**< Next linkage when queue is on the service queue */
     struct HttpQueue    *schedulePrev;          /**< Previous linkage when queue is on the service queue */
@@ -1131,7 +1131,7 @@ extern void httpPutBackPacket(struct HttpQueue *q, HttpPacket *packet);
 #define HTTP_SCHEDULE_QUEUE     1           /**< Schedule the queue for service */
 
 /** 
-    Put a packet onto the service queue
+    Put a packet into the service queue for deferred processing.
     @description Add a packet to the service queue. If serviceQ is true, the queue will be scheduled for service.
     @param q Queue reference
     @param packet Packet to join to the queue
@@ -1141,17 +1141,20 @@ extern void httpPutBackPacket(struct HttpQueue *q, HttpPacket *packet);
 extern void httpPutForService(struct HttpQueue *q, HttpPacket *packet, bool serviceQ);
 
 /** 
-    Put a packet onto a queue
-    @description Put the packet onto the end of queue by calling the queue's put() method. 
-    @param q Queue reference
+    Put a packet to the queue.
+    @description The packet is passed to the queue by invoking its put() callback. 
+        Note the receiving queue may immediately process the packet or it may choose to defer processing by putting to
+        its service queue.  @param q Queue reference
     @param packet Packet to put
     @ingroup HttpQueue
  */
 extern void httpPutPacket(struct HttpQueue *q, HttpPacket *packet);
 
 /** 
-    Put a packet onto the next queue
+    Put a packet to the next queue downstream.
     @description Put a packet onto the next downstream queue by calling the downstream queue's put() method. 
+        Note the receiving queue may immediately process the packet or it may choose to defer processing by putting to
+        its service queue.  @param q Queue reference
     @param q Queue reference. The packet will not be queued on this queue, but rather on the queue downstream.
     @param packet Packet to put
     @ingroup HttpQueue
@@ -1199,22 +1202,6 @@ extern void httpResumeQueue(HttpQueue *q);
 extern void httpScheduleQueue(HttpQueue *q);
 
 /** 
-    Send an end packet
-    @description Create and send an end-of-stream packet downstream
-    @param q Queue reference
-    @ingroup HttpQueue
- */
-extern void httpSendEndPacket(HttpQueue *q);
-
-/** 
-    Send all queued packets
-    @description Send all queued packets downstream
-    @param q Queue reference
-    @ingroup HttpQueue
- */
-extern void httpSendPackets(HttpQueue *q);
-
-/** 
     Service a queue
     @description Service a queue by invoking its service() routine. 
     @param q Queue reference
@@ -1246,7 +1233,7 @@ extern bool httpVerifyQueue(HttpQueue *q);
         and mark the downstream queue as full, and service it immediately to try to relieve the congestion.
     @param q Queue reference
     @param packet Packet to put
-    @return "True" if the downstream queue will accept the packet. Use $httpSendPacketToNext to send the packet downstream
+    @return "True" if the downstream queue will accept the packet. Use $httpPutPacketToNext to send the packet downstream
     @ingroup HttpQueue
  */
 extern bool httpWillNextQueueAcceptPacket(HttpQueue *q, HttpPacket *packet);
@@ -1407,7 +1394,7 @@ typedef struct HttpStage {
 
     /** 
         Process outgoing data.
-        @description Accept a packet as outgoing data
+        @description Accept a packet as outgoing data. Not used by handlers.
         @param q Queue instance object
         @param packet Packet of data
         @ingroup HttpStage
@@ -1423,7 +1410,7 @@ typedef struct HttpStage {
 
     /** 
         Process incoming data.
-        @description Accept an incoming packet of data
+        @description Accept an incoming packet of data. Not used by connectors.
         @param q Queue instance object
         @param packet Packet of data
         @ingroup HttpStage
@@ -1766,7 +1753,8 @@ extern void httpSetIOCallback(struct HttpConn *conn, HttpIOCallback fn);
         httpServiceQueues httpSetAsync httpSetChunkSize httpSetConnContext httpSetConnHost httpSetConnNotifier
         httpSetCredentials httpSetKeepAliveCount httpSetPipelineHandler httpSetProtocol httpSetRetries
         httpSetSendConnector httpSetState httpSetTimeout httpSetTimestamp httpShouldTrace httpStartPipeline
-        httpNotifyWritable */
+        httpNotifyWritable 
+ */
 typedef struct HttpConn {
     /*  Ordered for debugability */
 
@@ -1984,7 +1972,8 @@ extern void httpEnableUpload(HttpConn *conn);
     Error handling for the connection.
     @description The httpError call is used to flag the current request as failed.
     @param conn HttpConn connection object created via $httpCreateConn
-    @param status Http status code
+    @param status Http status code. The status code can be ored with the flags HTTP_ABORT to immediately abort the connection
+        or HTTP_CLOSE to close the connection at the completion of the request.
     @param fmt Printf style formatted string
     @param ... Arguments for fmt
     @ingroup HttpConn
@@ -2291,7 +2280,14 @@ extern int httpShouldTrace(HttpConn *conn, int dir, int item, cchar *ext);
  */
 extern void httpStartPipeline(HttpConn *conn);
 
-//  MOB
+/**
+    Steal a connection from Appweb
+    @description Steal a connection from Appweb and assume total responsibility for the connection.
+    This removes the connection from active management by Appweb. After calling, request and inactivity
+    timeouts will not be enforced. It is the callers responsibility to call mprCloseSocket.
+    @param conn HttpConn object created via $httpCreateConn
+    @return The connection socket object.
+ */
 extern MprSocket *httpStealConn(HttpConn *conn);
 
 /** Internal APIs */
@@ -4486,6 +4482,14 @@ extern int httpTestParam(HttpConn *conn, cchar *var);
  */
 extern void httpTrimExtraPath(HttpConn *conn);
 
+/**
+    Pump the Http engine
+    @param conn HttpConn connection object
+    @param packet Optional packet of input data. Set to NULL if calling from user handlers.
+    @ingroup HttpRx
+ */
+extern void httpPump(HttpConn *conn, HttpPacket *packet);
+
 /* Internal */
 extern void httpCloseRx(struct HttpConn *conn);
 extern HttpRange *httpCreateRange(HttpConn *conn, MprOff start, MprOff end);
@@ -4493,7 +4497,6 @@ extern HttpRx *httpCreateRx(HttpConn *conn);
 extern void httpDestroyRx(HttpRx *rx);
 extern bool httpMatchEtag(HttpConn *conn, char *requestedEtag);
 extern bool httpMatchModified(HttpConn *conn, MprTime time);
-extern void httpProcess(HttpConn *conn, HttpPacket *packet);
 extern bool httpProcessCompletion(HttpConn *conn);
 extern void httpProcessWriteEvent(HttpConn *conn);
 

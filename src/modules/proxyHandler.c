@@ -212,6 +212,18 @@ static void outgoingProxyService(HttpQueue *q)
     }
 }
 
+static ssize doOutput(HttpQueue *q, cchar *data, ssize len)
+{
+    HttpPacket  *packet;
+    ssize       count;
+
+    count = min(len, q->max - q->count);
+    count = min(count, q->packetSize);
+    packet = httpCreateDataPacket(count);
+    mprPutBlockToBuf(packet->content, data, len);
+    httpPutForService(q, packet, HTTP_SCHEDULE_QUEUE);
+    return count;
+}
 
 static int proxyDirective(MaState *state, cchar *key, cchar *value)
 {
