@@ -6066,9 +6066,11 @@ extern void mprSignalDispatcher(MprDispatcher *dispatcher);
     @param name Debug name of the event
     @param period Time in milliseconds used by continuous events between firing of the event.
     @param proc Function to invoke when the event is run
-    @param data Data to associate with the event and stored in event->data.
+    @param data Data to associate with the event and stored in event->data. The data must be either an allocated memory
+        object or MPR_EVENT_STATIC_DATA must be specified in flags.
     @param flags Flags to modify the behavior of the event. Valid values are: MPR_EVENT_CONTINUOUS to create an 
         event which will be automatically rescheduled accoring to the specified period.
+        Use MPR_EVENT_STATIC_DATA if the data argument does not point to an allocated memory object.
     @return Returns the event object if successful.
     @ingroup MprEvent
  */
