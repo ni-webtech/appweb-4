@@ -7610,8 +7610,7 @@ ssize httpWriteString(HttpQueue *q, cchar *s)
 
 ssize httpWriteSafeString(HttpQueue *q, cchar *s)
 {
-    s = mprEscapeHtml(s);
-    return httpWriteString(q, s);
+    return httpWriteString(q, mprEscapeHtml(s));
 }
 
 
