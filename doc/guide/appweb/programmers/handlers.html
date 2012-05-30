@@ -177,7 +177,6 @@
             <h3>Setting Status and Headers</h3>
             The response status may be set via:
                 <a href="../../../api/http.html#group___http_tx_1gab965a17de1c0a823eec176bdf95b2bee">httpSetStatus</a>. 
-
                 The response headers may be set via:
                 <a href="../../../api/http.html#group___http_tx_1gadc3a395967972fb839f0639f8cd66c61">httpSetHeader</a>.
                 For example:</p>
@@ -194,7 +193,6 @@ httpSetHeader(conn, "NowIs", "The time is %s", mprGetDate(NULL));
                 set, pipeline processing is abbreviated and handler callbacks will not be called anymore. Consequently, if
                 you need to continue handler processing, but want to set a non-zero status return code, do <i>not</i>
                 use httpError. Rather, use httpSetStatus.</p>
-
 <pre>
 httpError(conn, 200, HTTP_CODE_GONE, "Can't find %s", path);
 </pre>
@@ -210,13 +208,11 @@ httpError(conn, 200, HTTP_CODE_GONE, "Can't find %s", path);
 <pre>
 httpError(conn, 504, HTTP_ABOR, "Can't continue with the request");
 </pre>
-
             <h3>Redirecting</h3>
             <p>Sometimes a handler will want to generate a response that will redirect the client to a new URI.
             Use the <a href="api/http.html#group___http_tx_1ga616290c9e8fe95419d3a31f6fbb870b5">httpRedirect</a> call 
             to redirect the client. For example:
             <pre>httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, uri);</pre>
-
             <h3>Generating Response Body</h3>
             <p>The simplest way to generate a response is to use 
             <a href="../../../api/http.html#group___http_queue_1ga5599a178a2bab73929795952231d6e6a">httpWrite</a>. 
@@ -266,11 +262,9 @@ static void myProcess(HttpQueue *q)
 </pre>
             <p>This (trivial) example writes data in chunks each time the <em>process</em> callback is invoked.
             When output is complete, the example calls httpFinalize.</p>
-
             <p>If a handler puts data onto a service queue, it should call 
             <a href="../../../api/http.html#group___http_rx_1gaf5503f75323ec0c6df1b3ee5615ad496">httpPump</a> to enable
             the pipeline to advance and potentially invoke the handler's <em>process</em> callback.</p>
-
         <h2>Paradigms</h2>
         <p>In summary, a handler may use one of several paradigms to implement how it responds to requests.</p>
         <h3>Blocking</h3>
@@ -279,19 +273,16 @@ static void myProcess(HttpQueue *q)
         the response if required.  If the response is shorter than available buffering (typically 64K), the request
         should not block. After the handler has written all the data, it will return immediately and Appweb will use its event
         mechanism to manage completing the request. For such short requests, this is highly efficient.</p>
-
         <p>If the response is larger than available buffering, the Appweb worker thread will have to pause for data to
         drain to the client as there is more data than the pipeline can absorb. This will consume a worker thread while the request
         completes, and so is more costly in terms of Appweb resources. Use care when using this paradigm for larger
         responses. Ensure you provided you have sufficient worker threads and/or this kind of request is infrequent.
         Otherwise this can lead to a denial-of-service vulnerability.</p>
-
         <h3>Non-Blocking</h3>
         <p>A more advanced technique is to write data in portions from the process() callback. The callback will be
         invoked whenever the pipeline can absorb more data. The handler should test the <em>q->max, q->count</em> and
         <em>q->packetSize</em> values to determine how much to write before returning from process(). The httpFinalize
         routine should be called when the request is complete.</p>
-
         <h3>Async Generation</h3>
         <p>A handler can asynchronously generate response data outside of the typical handler callbacks. This may be in
         response to an application or device vent. Consequently, care must be taken to ensure thread safety. Appweb
@@ -299,14 +290,12 @@ static void myProcess(HttpQueue *q)
         pipeline processing. This is highly efficient, but requires that all interaction with Appweb data structures 
         be done from Appweb events via Appweb dispatchers. To run code from the connection dispatcher, use: 
         <a href="../../../api/mpr.html#group___mpr_event_1ga6154e34c582e39cd64b4505a6afb39c4">mprCreateEvent</a>.
-
         <pre>
 mprCreateEvent(q->conn->dispatcher, "deviceEvent", 0, doMoreOutput, q, 0);
 </pre>
         <p>This will schedule the function <em>doMoreOutput</em> to run from the connection dispatcher. 
         <p>You may call mprCreateEvent from any thread and the scheduled function will run serialized within the event
         loop for the connection.</p> 
-
         <h4>Owning a Connection</h4>
         <p>Appweb monitors requests and imposes timeout limits. The RequestTimeout directive in the appweb.conf file
         specifies the maximum time a request can take to complete. The InactivityTimeout directive specifies the maximum
@@ -324,14 +313,11 @@ mprCreateEvent(q->conn->dispatcher, "deviceEvent", 0, doMoreOutput, q, 0);
         request and connection. This is because calling <em>mprCreateEvent</em> with a queue reference will maintain a
         reference to the queue and connection object and this reference will delay the garbage collector from reclaiming
         the memory for these objects.</p>
-
         <p>When output is complete, httpFinalize should be called to signal the completion of the request. After writing
         or completing the request, httpPump() should be called to perform pipeline processing on the request.</p>
-
         <h2>Coding Issues</h2>
         <p>There are a few coding issues to keep in mind when creating handlers. Appweb is a multithreaded, event loop
         server. As such, handlers must cooperate and take care when using resources.</p>
-
         <h3>Blocking</h3>
         <p>If a handler blocks, it will consume a worker thread. But more importantly, when a thread blocks, it must
         yield to the garbage collector. Appweb uses a cooperative garbage collector where worker thread yield to the 
@@ -341,7 +327,6 @@ mprCreateEvent(q->conn->dispatcher, "deviceEvent", 0, doMoreOutput, q, 0);
         they block and are not calling an MPR function that blocks. This ensures that the garbage collector can work and
         collect memory while the worker thread is asleep. Handlers do not need to call mprYield when executing on
         threads that were created outside of the MPR (ie. not MPR worker threads).</p>
-
         <h2>Defining a Handler</h2>
         <p>To define an Appweb handler, you must do three things:
         <ol>

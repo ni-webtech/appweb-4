@@ -37,7 +37,7 @@
                 <ul>
                 <li><a href="#packages">Installation Packages</a></li>
                 <li><a href="#options">Installation Options</a></li>
-                <li><a href="#external">External Packages</a></li>
+                <li><a href="#packages">Supporting Packages</a></li>
                 <li><a href="#sourceCode">Source Code</a></li>
                 <li><a href="#upgrading">Upgrading</a></li>
             </ul>
@@ -45,7 +45,6 @@
             <h1>See Also</h1>
             <ul class="nav">
                 <li><a href="../../product/install/index.html">Installation Overview</a></li>
-                <li><a href="../../product/install/linux.html">Installing on Linux</a></li>
                 <li><a href="../../product/install/mac.html">Installing on Mac</a></li>
                 <li><a href="../../product/install/windows.html">Installing on Windows</a></li>
                 <li><a href="../../product/install/packages.html">Installing Packages</a></li>
@@ -68,40 +67,20 @@
         <div class="contentLeft">
             <h1>Installation Overview</h1>
             <p>Please read the overview information below, then refer to the specific instructions for your operating
-            system:</p>
+            system.  The Appweb binary installation is available for:</p>
             <ul>
-                <li><a href="linux.html">Linux Installation Instructions</a></li>
                 <li><a href="mac.html">Mac OS X Installation Instructions</a></li>
                 <li><a href="windows.html">Windows Installation Instructions</a></li>
-                <li><a href="packages.html">Installing Supporting Packages</a></li>
-            </ul><a name="packages" id="packages"></a>
-            <h2 class="section">Installation Packages</h2>
-            <p>The Appweb installation package is available in two formats for each operating system:</p>
-            <ul>
-                <li>Native operating system package format (RPM on Linux, PKG on MAC OS X, and zipped Windows Installer
-                Executable)</li>
-                <li>Archive for custom installations (Compressed Tar)</li>
             </ul>
-            <p>It is recommended that you use the native package format unless you want exact control over the
-            placement of all the installation components. The native package will register the software installation
-            with the system's software manager so that you can subsequently query, verify, uninstall and manage
-            the software on your system.</p>
-            <p>The Appweb source distribution is available in two formats: GZIP and ZIP.</p><a name="options" id=
-            "options"></a>
-            <h2 class="section">Installation Options</h2>
-            <p>The Appweb binary installation package contains two sub-packages:</p>
-            <ul>
-                <li>Binary distribution</li>
-                <li>Development libraries and headers</li>
-            </ul>
-            <p>The Appweb installation procedure allows you to select which sub-packages you wish to install. If you
-            are experienced with Appweb, and wish to run Appweb only, install just the binary package. If you are new to
-            Appweb, accept the defaults. This will install all the sub-packages. With the default settings, the total
-            install size is quite small and uses minimal system resources.</p>
-            <h2 class="section"><a name="external" id="external"></a>External Packages</h2>
-            <p>Appweb integrates with other 3rd party packages such as OpenSSL or MatrixSSL and also may be built for
-            specific environments such as uClibc and uClinux. See installing with <a href="packages.html">External
-            Package</a> for details.</p><a name="sourceCode" id="sourceCode"></a>
+            <p>For other platforms, you can build from source and then install the built binaries.</p>
+            
+            <a name="packages" id="packages"></a>
+            <h2 class="section">Supporting Packages</h2>
+            <p>Appweb integrates with other 3rd party packages such as OpenSSL or MatrixSSL.
+            See installing with <a href="packages.html">Supporting
+                Package</a> for details.</p>
+            
+            <a name="sourceCode" id="sourceCode"></a>
             <h2 class="section">Source Code</h2>
             <p>The Appweb source code is provided as a separate download distribution. It is also available via the
             source code <a href="https://github.com/embedthis/appweb-4">repository</a> for developers who wish to participate

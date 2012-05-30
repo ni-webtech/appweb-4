@@ -35,8 +35,7 @@
         <div class="contentRight">
             <h1>Quick Nav</h1>
             <ul>
-                <li><a href="#dmg">Installing the DMG Image</a></li>
-                <li><a href="#self">Installing the Self-Install Image</a></li>
+                <li><a href="#pkg">Installing the PKG Image</a></li>
                 <li><a href="#removing">Removing Appweb</a></li>
                 <li><a href="#running">Running Appweb</a></li>
             </ul>
@@ -44,7 +43,6 @@
             <h1>See Also</h1>
             <ul class="nav">
                 <li><a href="../../product/install/index.html">Installation Overview</a></li>
-                <li><a href="../../product/install/linux.html">Installing on Linux</a></li>
                 <li><a href="../../product/install/mac.html">Installing on Mac</a></li>
                 <li><a href="../../product/install/windows.html">Installing on Windows</a></li>
                 <li><a href="../../product/install/packages.html">Installing Packages</a></li>
@@ -66,38 +64,15 @@
         </div>
         <div class="contentLeft">
             <h1>Installing on MAC OS X</h1>
-            <p>The Appweb install distribution for MACOSX is published in two formats:</p>
-            <ul>
-                <li>Native DMG/PKG format</li>
-                <li>Tar format for custom/self installs</li>
-            </ul>
-            <p>It is recommended that you use the PKG package as it will register the software with the system's
-            software package manager. The self-install format consists of tar archives that you can manually extract
-            for maximum control over the placement of the product files.</p>
-            <p>Both distribution images contain a binary distribution, documentation and development headers, and
-            libraries in the one package. During installation you will have the option of installing the full
-            distribution or just portions.</p><a name="dmg" id="dmg"></a>
-            <h2 class="section">Installing the DMG Image</h2>
+            <p>The Embedthis Appweb install distribution for Mac OS X is published as a an installable pkg file.</p>
+            
+            <a name="pkg" id="pkg"></a>
+            <h2 class="section">Installing the PKG Image</h2>
             <ol>
-                <li>Double click on the DMG image.</li>
+                <li>Double click on the PKG image.</li>
             </ol>
             
-            <a name="self" id="self"></a>
-            <h2 class="section">Installing the Self-Install Image</h2>
-            <ol>
-                <li>Run the Terminal application</li>
-                <li>Uncompress and extract the files:
-                    <pre>
-tar xvfz appweb-VERSION-Apple-MACOSX-x86_64.tar.tar.gz
-</pre>
-                </li>
-                <li>Start the installation with administrator privilege:</li>
-                <li style="list-style: none">
-                    <pre>
-sudo ./install
-</pre>
-                </li>
-            </ol><a name="removing" id="removing"></a>
+            <a name="removing" id="removing"></a>
             <h2 class="section">Removing Appweb</h2>
             <ol>
                 <li>Run a terminal and change directory to the installation directory for Appweb. This is typically
@@ -107,25 +82,27 @@ sudo ./install
 sudo ./uninstall
 </pre>
                 </li>
-            </ol><a name="running" id="running"></a>
+            </ol>
+            
+            <a name="running" id="running"></a>
             <h2 class="section">Running Appweb</h2>
             <p>Appweb will start when the installation procedure completes and will launch your browser directed at the
             Appweb local home page. Thereafter, Appweb will automatically start when the system is rebooted.</p>
             <p>If you wish to manually stop Appweb type:</p>
             <pre>
-sudo launchctl unload -w  /Library/LaunchDaemons/com.embedthis.appweb.plist
+sudo appman stop
 </pre>
             <p>To restart Appweb:</p>
             <pre>
-sudo launchctl load -w  /Library/LaunchDaemons/com.embedthis.appweb.plist
+sudo appman start
 </pre>
-            <p>Alternatively, you can run appweb manually:</p>
+            <p>Alternatively, you can run appweb manually (if not already running):</p>
             <pre>
 cd /etc/appweb
 appweb
 </pre>
-            <p>Appweb is configured by default to listen on port 7777. To test that it is serving pages, point your
-            browser at http://localhost:7777. To tailor the Embedthis Appweb configuration, including the default port,
+            <p>Appweb is configured by default to listen on port 80. To test that it is serving pages, point your
+            browser at http://localhost. To tailor the Embedthis Appweb configuration, including the default port,
             you may wish to edit the appweb.conf configuration file.</p>
             <p>To get all the options for Appweb read the man page via:</p>
             <pre>
