@@ -7120,10 +7120,10 @@ void httpAssignQueue(HttpQueue *q, HttpStage *stage, int dir)
     q->open = stage->open;
     q->start = stage->start;
     if (dir == HTTP_QUEUE_TX) {
-        q->put = stage->outgoingData;
+        q->put = stage->outgoing;
         q->service = stage->outgoingService;
     } else {
-        q->put = stage->incomingData;
+        q->put = stage->incoming;
         q->service = stage->incomingService;
     }
     q->owner = stage->name;
@@ -8701,11 +8701,11 @@ int httpAddRouteFilter(HttpRoute *route, cchar *name, cchar *extensions, int dir
             word = stok(0, " \t\r\n", &tok);
         }
     }
-    if (direction & HTTP_STAGE_RX && filter->incomingData) {
+    if (direction & HTTP_STAGE_RX && filter->incoming) {
         GRADUATE_LIST(route, inputStages);
         mprAddItem(route->inputStages, filter);
     }
-    if (direction & HTTP_STAGE_TX && filter->outgoingData) {
+    if (direction & HTTP_STAGE_TX && filter->outgoing) {
         GRADUATE_LIST(route, outputStages);
         if (smatch(name, "cacheFilter") && 
                 (pos = mprGetListLength(route->outputStages) - 1) >= 0 &&
@@ -13230,7 +13230,7 @@ static void defaultClose(HttpQueue *q)
 /*  
     Put packets on the service queue.
  */
-static void outgoingData(HttpQueue *q, HttpPacket *packet)
+static void outgoing(HttpQueue *q, HttpPacket *packet)
 {
     int     enableService;
 
@@ -13247,7 +13247,7 @@ static void outgoingData(HttpQueue *q, HttpPacket *packet)
 /*  
     Default incoming data routine.  Simply transfer the data upstream to the next filter or handler.
  */
-static void incomingData(HttpQueue *q, HttpPacket *packet)
+static void incoming(HttpQueue *q, HttpPacket *packet)
 {
     mprAssert(q);
     mprAssert(packet);
@@ -13312,9 +13312,9 @@ HttpStage *httpCreateStage(Http *http, cchar *name, int flags, MprModule *module
     stage->name = sclone(name);
     stage->open = defaultOpen;
     stage->close = defaultClose;
-    stage->incomingData = incomingData;
+    stage->incoming = incoming;
     stage->incomingService = incomingService;
-    stage->outgoingData = outgoingData;
+    stage->outgoing = outgoing;
     stage->outgoingService = httpDefaultOutgoingServiceStage;
     stage->module = module;
     httpAddStage(http, stage);
@@ -14455,7 +14455,7 @@ typedef struct Upload {
 
 static void closeUpload(HttpQueue *q);
 static char *getBoundary(void *buf, ssize bufLen, void *boundary, ssize boundaryLen);
-static void incomingUploadData(HttpQueue *q, HttpPacket *packet);
+static void incomingUpload(HttpQueue *q, HttpPacket *packet);
 static void manageHttpUploadFile(HttpUploadFile *file, int flags);
 static void manageUpload(Upload *up, int flags);
 static int matchUpload(HttpConn *conn, HttpRoute *route, int dir);
@@ -14477,7 +14477,7 @@ int httpOpenUploadFilter(Http *http)
     filter->match = matchUpload; 
     filter->open = openUpload; 
     filter->close = closeUpload; 
-    filter->incomingData = incomingUploadData; 
+    filter->incoming = incomingUpload; 
     return 0;
 }
 
@@ -14590,7 +14590,7 @@ static void closeUpload(HttpQueue *q)
     Incoming data acceptance routine. The service queue is used, but not a service routine as the data is processed
     immediately. Partial data is buffered on the service queue until a correct mime boundary is seen.
  */
-static void incomingUploadData(HttpQueue *q, HttpPacket *packet)
+static void incomingUpload(HttpQueue *q, HttpPacket *packet)
 {
     HttpConn    *conn;
     HttpRx      *rx;

@@ -353,7 +353,7 @@ static void outgoingFileService(HttpQueue *q)
 /*
     The incoming callback is invoked to receive body data 
  */
-static void incomingFileData(HttpQueue *q, HttpPacket *packet)
+static void incomingFile(HttpQueue *q, HttpPacket *packet)
 {
     HttpConn    *conn;
     HttpTx      *tx;
@@ -477,7 +477,7 @@ int maOpenFileHandler(Http *http)
     handler->start = startFileHandler;
     handler->ready = readyFileHandler;
     handler->outgoingService = outgoingFileService;
-    handler->incomingData = incomingFileData;
+    handler->incoming = incomingFile;
     http->fileHandler = handler;
     return 0;
 }

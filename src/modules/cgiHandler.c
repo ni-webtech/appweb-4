@@ -190,23 +190,6 @@ static void processCgi(HttpQueue *q)
 #endif
 
 
-#if UNUSED
-/*
-    Receive a packet of outgoing data
- */
-static void outgoingCgiData(HttpQueue *q, HttpPacket *packet)
-{
-    int     enableService;
-
-    /*  
-        Handlers service routines must only be auto-enabled if in the running state.
-     */
-    enableService = !(q->stage->flags & HTTP_STAGE_HANDLER) || (q->conn->state >= HTTP_STATE_READY) ? 1 : 0;
-    httpPutForService(q, packet, enableService);
-}
-#endif
-
-
 /*
     Service outgoing data destined for the browser. This is response data from the CGI program. See writeToClient.
     This may be called by {maRunPipeline|cgiCallback} => httpServiceQueues
@@ -240,7 +223,7 @@ static void outgoingCgiService(HttpQueue *q)
 /*
     Accept incoming body data from the client destined for the CGI gateway. This is typically POST or PUT data.
  */
-static void incomingCgiData(HttpQueue *q, HttpPacket *packet)
+static void incomingCgi(HttpQueue *q, HttpPacket *packet)
 {
     HttpConn    *conn;
     HttpRx      *rx;
@@ -1075,11 +1058,8 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     }
     http->cgiHandler = handler;
     handler->close = closeCgi; 
-#if UNUSED
-    handler->outgoingData = outgoingCgiData;
-#endif
     handler->outgoingService = outgoingCgiService;
-    handler->incomingData = incomingCgiData; 
+    handler->incoming = incomingCgi; 
     handler->open = openCgi; 
     handler->start = startCgi; 
 #if BIT_WIN_LIKE

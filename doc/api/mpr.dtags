@@ -172,6 +172,13 @@
     </member>
     <member kind="define">
       <type>#define</type>
+      <name>MPR_CMD_EXACT_ENV</name>
+      <anchorfile>mpr_8h.html</anchorfile>
+      <anchor>ab462f92f7490dbb1c373576813d3bf3a</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
       <name>MPR_CMD_IN</name>
       <anchorfile>mpr_8h.html</anchorfile>
       <anchor>ad1983e4ebe978cc183518345b1b4f287</anchor>
@@ -1292,23 +1299,9 @@
     </member>
     <member kind="define">
       <type>#define</type>
-      <name>MPR_TIMEOUT_CMD</name>
-      <anchorfile>mpr_8h.html</anchorfile>
-      <anchor>a9900ec15eb1619e4a9bc5a675f0a4cdd</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="define">
-      <type>#define</type>
       <name>MPR_TIMEOUT_GC_SYNC</name>
       <anchorfile>mpr_8h.html</anchorfile>
       <anchor>a1e93ff508c17a532675a9bb090d2bc7a</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="define">
-      <type>#define</type>
-      <name>MPR_TIMEOUT_HANDLER</name>
-      <anchorfile>mpr_8h.html</anchorfile>
-      <anchor>acd2002df57aac80b02daa2f187cd4b4c</anchor>
       <arglist></arglist>
     </member>
     <member kind="define">
@@ -1320,13 +1313,6 @@
     </member>
     <member kind="define">
       <type>#define</type>
-      <name>MPR_TIMEOUT_LOG_STAMP</name>
-      <anchorfile>mpr_8h.html</anchorfile>
-      <anchor>a7aac261496b3ad0f1adea76a959e34fd</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="define">
-      <type>#define</type>
       <name>MPR_TIMEOUT_NAP</name>
       <anchorfile>mpr_8h.html</anchorfile>
       <anchor>add8b2cf7c323c276499a6df8940f8ab1</anchor>
@@ -1334,16 +1320,16 @@
     </member>
     <member kind="define">
       <type>#define</type>
-      <name>MPR_TIMEOUT_PRUNER</name>
+      <name>MPR_TIMEOUT_NO_BUSY</name>
       <anchorfile>mpr_8h.html</anchorfile>
-      <anchor>aa2eb3f4af9584897ff6ec601fcca4c3c</anchor>
+      <anchor>a852ad205e9b273796bb4958700334597</anchor>
       <arglist></arglist>
     </member>
     <member kind="define">
       <type>#define</type>
-      <name>MPR_TIMEOUT_SOCKETS</name>
+      <name>MPR_TIMEOUT_PRUNER</name>
       <anchorfile>mpr_8h.html</anchorfile>
-      <anchor>a0cefcf294650f2254b1fcb335af931da</anchor>
+      <anchor>aa2eb3f4af9584897ff6ec601fcca4c3c</anchor>
       <arglist></arglist>
     </member>
     <member kind="define">
@@ -1365,13 +1351,6 @@
       <name>MPR_TIMEOUT_STOP_TASK</name>
       <anchorfile>mpr_8h.html</anchorfile>
       <anchor>a3607582e032513bfb634178e569f6340</anchor>
-      <arglist></arglist>
-    </member>
-    <member kind="define">
-      <type>#define</type>
-      <name>MPR_TIMEOUT_STOP_THREAD</name>
-      <anchorfile>mpr_8h.html</anchorfile>
-      <anchor>ac71168dee2c19a44b17981748e1127c3</anchor>
       <arglist></arglist>
     </member>
     <member kind="define">
@@ -2435,8 +2414,8 @@
       <type>char *</type>
       <name>mprDecode64Block</name>
       <anchorfile>group___mpr.html</anchorfile>
-      <anchor>ga31b39fbbf5e5e2160ad8ce15ad2cb272</anchor>
-      <arglist>(cchar *buf, ssize len, int flags)</arglist>
+      <anchor>ga1fc4c545477ed18a37161aaea54fba5f</anchor>
+      <arglist>(cchar *buf, ssize *len, int flags)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -3730,8 +3709,8 @@
       <type>int</type>
       <name>mprMakeArgv</name>
       <anchorfile>group___mpr.html</anchorfile>
-      <anchor>ga1b5c386eda896c8ae6b068032050c4c7</anchor>
-      <arglist>(cchar *command, char ***argv, int flags)</arglist>
+      <anchor>ga02a389f1cd2f5a8ba4e5d2417ae87276</anchor>
+      <arglist>(cchar *command, cchar ***argv, int flags)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
@@ -4255,15 +4234,15 @@
       <type>int</type>
       <name>mprRunCmd</name>
       <anchorfile>group___mpr_cmd.html</anchorfile>
-      <anchor>gab2adf833816e9c66b4241a94bd2cc191</anchor>
-      <arglist>(MprCmd *cmd, cchar *command, char **out, char **err, MprTime timeout, int flags)</arglist>
+      <anchor>ga06e30d913b1432d1d3dc0fba6dfd1442</anchor>
+      <arglist>(MprCmd *cmd, cchar *command, cchar **envp, char **out, char **err, MprTime timeout, int flags)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
       <name>mprRunCmdV</name>
       <anchorfile>group___mpr_cmd.html</anchorfile>
-      <anchor>ga9e874422bf7de24be39711c56b708036</anchor>
-      <arglist>(MprCmd *cmd, int argc, char **argv, char **out, char **err, MprTime timeout, int flags)</arglist>
+      <anchor>ga8eb158a3373ebe139ef6374c896be916</anchor>
+      <arglist>(MprCmd *cmd, int argc, cchar **argv, cchar **envp, char **out, char **err, MprTime timeout, int flags)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
@@ -4443,9 +4422,16 @@
     <member kind="function">
       <type>void</type>
       <name>mprSetExitStrategy</name>
-      <anchorfile>mpr_8h.html</anchorfile>
-      <anchor>a49b3d16b8a016c08580f0ea5b6c5e346</anchor>
+      <anchorfile>group___mpr.html</anchorfile>
+      <anchor>ga49b3d16b8a016c08580f0ea5b6c5e346</anchor>
       <arglist>(int strategy)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>mprSetExitTimeout</name>
+      <anchorfile>group___mpr.html</anchorfile>
+      <anchor>gaf75f894bad6a8c48f1b44a2f351bcef5</anchor>
+      <arglist>(MprTime timeout)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -4514,8 +4500,8 @@
       <type>void *</type>
       <name>mprSetManager</name>
       <anchorfile>group___mpr_mem.html</anchorfile>
-      <anchor>gaacaf8470922146638dfe6090b58f3aed</anchor>
-      <arglist>(void *ptr, void *manager)</arglist>
+      <anchor>gaf3bf4cede9edc8e7ee5b159db9347ba6</anchor>
+      <arglist>(void *ptr, MprManager manager)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
@@ -4822,8 +4808,8 @@
       <type>int</type>
       <name>mprStartCmd</name>
       <anchorfile>group___mpr_cmd.html</anchorfile>
-      <anchor>ga63558463aa20f047dbd03cae5b6dab7b</anchor>
-      <arglist>(MprCmd *cmd, int argc, char **argv, char **envp, int flags)</arglist>
+      <anchor>ga120e7a3a3a571b9520853e31d9ce6021</anchor>
+      <arglist>(MprCmd *cmd, int argc, cchar **argv, cchar **envp, int flags)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
@@ -5953,8 +5939,8 @@
       <type>void *</type>
       <name>mprSetManager</name>
       <anchorfile>group___mpr_mem.html</anchorfile>
-      <anchor>gaacaf8470922146638dfe6090b58f3aed</anchor>
-      <arglist>(void *ptr, void *manager)</arglist>
+      <anchor>gaf3bf4cede9edc8e7ee5b159db9347ba6</anchor>
+      <arglist>(void *ptr, MprManager manager)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -8318,15 +8304,15 @@
       <type>int</type>
       <name>mprRunCmd</name>
       <anchorfile>group___mpr_cmd.html</anchorfile>
-      <anchor>gab2adf833816e9c66b4241a94bd2cc191</anchor>
-      <arglist>(MprCmd *cmd, cchar *command, char **out, char **err, MprTime timeout, int flags)</arglist>
+      <anchor>ga06e30d913b1432d1d3dc0fba6dfd1442</anchor>
+      <arglist>(MprCmd *cmd, cchar *command, cchar **envp, char **out, char **err, MprTime timeout, int flags)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
       <name>mprRunCmdV</name>
       <anchorfile>group___mpr_cmd.html</anchorfile>
-      <anchor>ga9e874422bf7de24be39711c56b708036</anchor>
-      <arglist>(MprCmd *cmd, int argc, char **argv, char **out, char **err, MprTime timeout, int flags)</arglist>
+      <anchor>ga8eb158a3373ebe139ef6374c896be916</anchor>
+      <arglist>(MprCmd *cmd, int argc, cchar **argv, cchar **envp, char **out, char **err, MprTime timeout, int flags)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -8353,8 +8339,8 @@
       <type>int</type>
       <name>mprStartCmd</name>
       <anchorfile>group___mpr_cmd.html</anchorfile>
-      <anchor>ga63558463aa20f047dbd03cae5b6dab7b</anchor>
-      <arglist>(MprCmd *cmd, int argc, char **argv, char **envp, int flags)</arglist>
+      <anchor>ga120e7a3a3a571b9520853e31d9ce6021</anchor>
+      <arglist>(MprCmd *cmd, int argc, cchar **argv, cchar **envp, int flags)</arglist>
     </member>
     <member kind="function">
       <type>int</type>
@@ -8522,8 +8508,8 @@
       <type>char *</type>
       <name>mprDecode64Block</name>
       <anchorfile>group___mpr.html</anchorfile>
-      <anchor>ga31b39fbbf5e5e2160ad8ce15ad2cb272</anchor>
-      <arglist>(cchar *buf, ssize len, int flags)</arglist>
+      <anchor>ga1fc4c545477ed18a37161aaea54fba5f</anchor>
+      <arglist>(cchar *buf, ssize *len, int flags)</arglist>
     </member>
     <member kind="function">
       <type>char *</type>
@@ -8725,8 +8711,8 @@
       <type>int</type>
       <name>mprMakeArgv</name>
       <anchorfile>group___mpr.html</anchorfile>
-      <anchor>ga1b5c386eda896c8ae6b068032050c4c7</anchor>
-      <arglist>(cchar *command, char ***argv, int flags)</arglist>
+      <anchor>ga02a389f1cd2f5a8ba4e5d2417ae87276</anchor>
+      <arglist>(cchar *command, cchar ***argv, int flags)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -8797,6 +8783,20 @@
       <anchorfile>group___mpr.html</anchorfile>
       <anchor>gaa335e1d324029029795409a9a857dbdf</anchor>
       <arglist>(cchar *key, cchar *value)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>mprSetExitStrategy</name>
+      <anchorfile>group___mpr.html</anchorfile>
+      <anchor>ga49b3d16b8a016c08580f0ea5b6c5e346</anchor>
+      <arglist>(int strategy)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>mprSetExitTimeout</name>
+      <anchorfile>group___mpr.html</anchorfile>
+      <anchor>gaf75f894bad6a8c48f1b44a2f351bcef5</anchor>
+      <arglist>(MprTime timeout)</arglist>
     </member>
     <member kind="function">
       <type>void</type>

@@ -1399,7 +1399,7 @@ typedef struct HttpStage {
         @param packet Packet of data
         @ingroup HttpStage
      */
-    void (*outgoingData)(HttpQueue *q, HttpPacket *packet);
+    void (*outgoing)(HttpQueue *q, HttpPacket *packet);
 
     /** 
         Service the outgoing data queue
@@ -1415,7 +1415,7 @@ typedef struct HttpStage {
         @param packet Packet of data
         @ingroup HttpStage
      */
-    void (*incomingData)(HttpQueue *q, HttpPacket *packet);
+    void (*incoming)(HttpQueue *q, HttpPacket *packet);
 
     /** 
         Service the incoming data queue
