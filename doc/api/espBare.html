@@ -416,7 +416,7 @@
     <tr><td class="param">int</td><td><td>flags</td><td>
 Database flags.
 </td>
-    <tr><td class="param">struct <a class="ref" BBB href="#struct_edi_provider">EdiProvider</a> *</td><td><td>provider</td><td>
+    <tr><td class="param">struct <a class="ref" href="#struct_edi_provider">EdiProvider</a> *</td><td><td>provider</td><td>
 Database provider.
 </td>
     </table></dd></dl>
@@ -956,7 +956,7 @@ Database provider.
     <tr><td class="param">fmt</td><td>Printf style format string.</td>
     <tr><td class="param">...</td><td>arguments.</td>
     </table></dd></dl>
-    <dl><dt>Returns:</dt><dd><a class="ref" BBB href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> instance.</dd></dl>
+    <dl><dt>Returns:</dt><dd><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> instance.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
   </div>
@@ -1320,7 +1320,7 @@ Database provider.
   </div>
   <div class="apiDetail">
 <p>Set record fields without writing to the database.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This routine updates the record object with the given values. The "data&apos; argument supplies a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually created via <a class="ref" BBB href="#group___edi_1gac8ba9b4a0cdc2d2f30de7d915a4c51c1">ediMakeHash</a> to convert a JSON string into an options hash. For example: ediSetFields(rec, ediMakeHash(&quot;{ name: &apos;%s&apos;, address: &apos;%s&apos; }&quot;, name, address)) The record will not be written to the database. To write to the database, use $ediUpdateRec.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This routine updates the record object with the given values. The "data&apos; argument supplies a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually created via <a class="ref" href="#group___edi_1gac8ba9b4a0cdc2d2f30de7d915a4c51c1">ediMakeHash</a> to convert a JSON string into an options hash. For example: ediSetFields(rec, ediMakeHash(&quot;{ name: &apos;%s&apos;, address: &apos;%s&apos; }&quot;, name, address)) The record will not be written to the database. To write to the database, use $ediUpdateRec.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">rec</td><td>Record to update.</td>
@@ -1426,7 +1426,7 @@ Database provider.
 Field flags. 
 Flag mask set to EDI_AUTO_INC, EDI_KEY and/or EDI_INDEX.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" external="mpr.dtags">cchar</a> *</td><td><td>name</td><td>
+    <tr><td class="param"><a class="ref" href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" external="mpr.dtags">cchar</a> *</td><td><td>name</td><td>
 Field name. 
 Sourced from the database column name.
 </td>
@@ -1438,7 +1438,7 @@ Set to one of EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE EDI_TYPE_FLOAT, EDI_
 Field validity. 
 Set to true if valid.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" external="mpr.dtags">cchar</a> *</td><td><td>value</td><td>
+    <tr><td class="param"><a class="ref" href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" external="mpr.dtags">cchar</a> *</td><td><td>value</td><td>
 Field data value.
 </td>
     </table></dd></dl>
@@ -1462,7 +1462,7 @@ Number of records in grid.
     <tr><td class="param">EdiRec *</td><td><td>records[MPR_FLEX]</td><td>
 Grid records.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" external="mpr.dtags">cchar</a> *</td><td><td>tableName</td><td>
+    <tr><td class="param"><a class="ref" href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" external="mpr.dtags">cchar</a> *</td><td><td>tableName</td><td>
 Base table name for grid.
 </td>
     </table></dd></dl>
@@ -1486,13 +1486,13 @@ List of record errors.
     <tr><td class="param">EdiField</td><td><td>fields[MPR_FLEX]</td><td>
 Field records.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" external="mpr.dtags">cchar</a> *</td><td><td>id</td><td>
+    <tr><td class="param"><a class="ref" href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" external="mpr.dtags">cchar</a> *</td><td><td>id</td><td>
 Record key ID.
 </td>
     <tr><td class="param">int</td><td><td>nfields</td><td>
 Number of fields in record.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" external="mpr.dtags">cchar</a> *</td><td><td>tableName</td><td>
+    <tr><td class="param"><a class="ref" href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" external="mpr.dtags">cchar</a> *</td><td><td>tableName</td><td>
 Base table name for record.
 </td>
     </table></dd></dl>
@@ -2004,7 +2004,7 @@ Base table name for record.
   <div class="apiDetail">
 <p>Get the HTTP URI query string.</p>
     <dl><dt><b>Description</b>:</dt><dd>This is a convenience API to return the query string for the current request.</dd></dl>
-    <dl><dt>Returns:</dt><dd>The <a class="ref" BBB href="#group___esp_req_1ga41a42035766ff5d2fd0fd74588e167ea">espGetConn()</a>-&gt;rx-&gt;parsedUri-&gt;query property.</dd></dl>
+    <dl><dt>Returns:</dt><dd>The <a class="ref" href="#group___esp_req_1ga41a42035766ff5d2fd0fd74588e167ea">espGetConn()</a>-&gt;rx-&gt;parsedUri-&gt;query property.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
   </div>
@@ -2083,7 +2083,7 @@ Base table name for record.
   <div class="apiDetail">
 <p>Get the request URI string.</p>
     <dl><dt><b>Description</b>:</dt><dd>This is a convenience API to return the request URI.</dd></dl>
-    <dl><dt>Returns:</dt><dd>The <a class="ref" BBB href="#group___esp_req_1ga41a42035766ff5d2fd0fd74588e167ea">espGetConn()</a>-&gt;rx-&gt;uri.</dd></dl>
+    <dl><dt>Returns:</dt><dd>The <a class="ref" href="#group___esp_req_1ga41a42035766ff5d2fd0fd74588e167ea">espGetConn()</a>-&gt;rx-&gt;uri.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
   </div>
@@ -2184,7 +2184,7 @@ This is a smart input control that will call the appropriate input control based
   </div>
   <div class="apiDetail">
 <p>Test if a http request is finalized.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This tests if <a class="ref" BBB href="#group___esp_req_1gac142434246bc5558dfe73a78ded7a7f0">espFinalize</a> or <a class="ref" BBB href="#group___http_tx_1ga279ad49e5163402e2afd6caf478bcc70" external="http.dtags">httpFinalize</a> has been called for a request.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This tests if <a class="ref" href="#group___esp_req_1gac142434246bc5558dfe73a78ded7a7f0">espFinalize</a> or <a class="ref" href="#group___http_tx_1ga279ad49e5163402e2afd6caf478bcc70" external="http.dtags">httpFinalize</a> has been called for a request.</dd></dl>
     <dl><dt>Returns:</dt><dd>&quot;true&quot; if the request has been finalized.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
@@ -2282,7 +2282,7 @@ for input fields
     <tr><td class="param">fmt</td><td>Printf style format string.</td>
     <tr><td class="param">...</td><td>arguments.</td>
     </table></dd></dl>
-    <dl><dt>Returns:</dt><dd><a class="ref" BBB href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> instance.</dd></dl>
+    <dl><dt>Returns:</dt><dd><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> instance.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
   </div>
@@ -2353,8 +2353,8 @@ for input fields
   </div>
   <div class="apiDetail">
 <p>Get the request parameter hash table.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This call gets the params hash table for the current request. Route tokens, request query data, and www-url encoded form data are all entered into the params table after decoding. Use <a class="ref" BBB href="#group___mpr_hash_1ga28eaf688ae47d09abd9552fe003cedbb" external="mpr.dtags">mprLookupKey</a> to retrieve data from the table. This routine calls $espGetParams.</dd></dl>
-    <dl><dt>Returns:</dt><dd><a class="ref" BBB href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> instance containing the request parameters.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This call gets the params hash table for the current request. Route tokens, request query data, and www-url encoded form data are all entered into the params table after decoding. Use <a class="ref" href="#group___mpr_hash_1ga28eaf688ae47d09abd9552fe003cedbb" external="mpr.dtags">mprLookupKey</a> to retrieve data from the table. This routine calls $espGetParams.</dd></dl>
+    <dl><dt>Returns:</dt><dd><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> instance containing the request parameters.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
   </div>
@@ -2743,7 +2743,7 @@ The Path, Domain, and Expires properties can be set to null for default values
   </div>
   <div class="apiDetail">
 <p>Update record fields without writing to the database.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This routine updates the record object with the given values. The "data&apos; argument supplies a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually created via <a class="ref" BBB href="#group___edi_1gac8ba9b4a0cdc2d2f30de7d915a4c51c1">ediMakeHash</a> to convert a JSON string into an options hash. For example: updateFields(rec, hash(&quot;{ name: &apos;%s&apos;, address: &apos;%s&apos; }&quot;, name, address)) The record will not be written to the database. To write to the database, use $ediWriteRec.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This routine updates the record object with the given values. The "data&apos; argument supplies a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually created via <a class="ref" href="#group___edi_1gac8ba9b4a0cdc2d2f30de7d915a4c51c1">ediMakeHash</a> to convert a JSON string into an options hash. For example: updateFields(rec, hash(&quot;{ name: &apos;%s&apos;, address: &apos;%s&apos; }&quot;, name, address)) The record will not be written to the database. To write to the database, use $ediWriteRec.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">rec</td><td>Record to update.</td>
@@ -3028,7 +3028,7 @@ The tab control can manage a set of panes and will selectively show and hide or 
   </div>
   <div class="apiDetail">
 <p>Write field values to a database row.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This routine updates the current record with the given data and then saves the record to the database. The "data&apos; argument supplies a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually created via <a class="ref" BBB href="#group___edi_1gac8ba9b4a0cdc2d2f30de7d915a4c51c1">ediMakeHash</a> to convert a JSON string into an options hash. For example: ediWriteFields(rec, <a class="ref" BBB href="#group___esp_abbrev_1ga3c8e01edebd0020f20411085635cca69">params()</a>); The record runs field validations before saving to the database.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This routine updates the current record with the given data and then saves the record to the database. The "data&apos; argument supplies a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually created via <a class="ref" href="#group___edi_1gac8ba9b4a0cdc2d2f30de7d915a4c51c1">ediMakeHash</a> to convert a JSON string into an options hash. For example: ediWriteFields(rec, <a class="ref" href="#group___esp_abbrev_1ga3c8e01edebd0020f20411085635cca69">params()</a>); The record runs field validations before saving to the database.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">tableName</td><td>Database table name.</td>
@@ -3680,7 +3680,7 @@ Storage buffer for token.
     </dd></dl>
     <dl><dt>Fields:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param"><a class="ref" BBB href="#struct_esp_action">EspAction</a> *</td><td><td>action</td><td>
+    <tr><td class="param"><a class="ref" href="#struct_esp_action">EspAction</a> *</td><td><td>action</td><td>
 Action to invoke.
 </td>
     <tr><td class="param">int</td><td><td>appLoaded</td><td>
@@ -3707,16 +3707,16 @@ Module entry point.
     <tr><td class="param">EspRoute *</td><td><td>eroute</td><td>
 Extended route info.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#struct_esp">Esp</a> *</td><td><td>esp</td><td>
+    <tr><td class="param"><a class="ref" href="#struct_esp">Esp</a> *</td><td><td>esp</td><td>
 Convenient esp reference.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>flash</td><td>
+    <tr><td class="param"><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>flash</td><td>
 New flash messages.
 </td>
     <tr><td class="param">int</td><td><td>lastDomID</td><td>
 Last generated DOM ID.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>lastFlash</td><td>
+    <tr><td class="param"><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>lastFlash</td><td>
 Flash messages from the last request.
 </td>
     <tr><td class="param">char *</td><td><td>module</td><td>
@@ -3856,7 +3856,7 @@ Path to view.
   </div>
   <div class="apiDetail">
 <p>Auto-finalize transmission of the http request.</p>
-    <dl><dt><b>Description</b>:</dt><dd>If auto-finalization is enabled via <a class="ref" BBB href="#group___esp_req_1ga54f5ce21966922b0883d1942ccbeae8d">espSetAutoFinalizing</a>, this call will finalize writing Http response data by writing the final chunk trailer if required. If using chunked transfers, a null chunk trailer is required to signify the end of write data. If the request is already finalized, this call does nothing.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>If auto-finalization is enabled via <a class="ref" href="#group___esp_req_1ga54f5ce21966922b0883d1942ccbeae8d">espSetAutoFinalizing</a>, this call will finalize writing Http response data by writing the final chunk trailer if required. If using chunked transfers, a null chunk trailer is required to signify the end of write data. If the request is already finalized, this call does nothing.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object.</td>
@@ -3874,7 +3874,7 @@ Path to view.
   </div>
   <div class="apiDetail">
 <p>Check a security token.</p>
-    <dl><dt><b>Description</b>:</dt><dd>Check the request security token. If a required security token is defined in the session state, the request must supply the same token with all POST requests. This helps mitigate potential CSRF threats. Security tokens are used to help guard against CSRF threats. If a template web page includes the <a class="ref" BBB href="#group___esp_abbrev_1gab3444f174346e0d8e8d4d3a43d451c5e">securityToken()</a> control, a security token will be added to the meta section of the generated HTML. When a form is posted from this page, the ESP jQuery script will add the security token to the form parameters. This call validates the security token to ensure it matches the security token stored in session state.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>Check the request security token. If a required security token is defined in the session state, the request must supply the same token with all POST requests. This helps mitigate potential CSRF threats. Security tokens are used to help guard against CSRF threats. If a template web page includes the <a class="ref" href="#group___esp_abbrev_1gab3444f174346e0d8e8d4d3a43d451c5e">securityToken()</a> control, a security token will be added to the meta section of the generated HTML. When a form is posted from this page, the ESP jQuery script will add the security token to the form parameters. This call validates the security token to ensure it matches the security token stored in session state.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>Http connection object.</td>
@@ -4131,7 +4131,7 @@ Path to view.
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object.</td>
     </table></dd></dl>
-    <dl><dt>Returns:</dt><dd>Hash table. See <a class="ref" BBB href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> for how to access the hash table.</dd></dl>
+    <dl><dt>Returns:</dt><dd>Hash table. See <a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> for how to access the hash table.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
   </div>
@@ -4221,12 +4221,12 @@ Path to view.
   </div>
   <div class="apiDetail">
 <p>Get the request parameter hash table.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This call gets the params hash table for the current request. Route tokens, request query data, and www-url encoded form data are all entered into the params table after decoding. Use <a class="ref" BBB href="#group___mpr_hash_1ga28eaf688ae47d09abd9552fe003cedbb" external="mpr.dtags">mprLookupKey</a> to retrieve data from the table.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This call gets the params hash table for the current request. Route tokens, request query data, and www-url encoded form data are all entered into the params table after decoding. Use <a class="ref" href="#group___mpr_hash_1ga28eaf688ae47d09abd9552fe003cedbb" external="mpr.dtags">mprLookupKey</a> to retrieve data from the table.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object.</td>
     </table></dd></dl>
-    <dl><dt>Returns:</dt><dd><a class="ref" BBB href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> instance containing the request parameters.</dd></dl>
+    <dl><dt>Returns:</dt><dd><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> instance containing the request parameters.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
   </div>
@@ -4372,7 +4372,7 @@ Path to view.
   <div class="apiDetail">
 <p>Get the request URI string.</p>
     <dl><dt><b>Description</b>:</dt><dd>This is a convenience API to return the request URI.</dd></dl>
-    <dl><dt>Returns:</dt><dd>The <a class="ref" BBB href="#group___esp_req_1ga41a42035766ff5d2fd0fd74588e167ea">espGetConn()</a>-&gt;rx-&gt;uri.</dd></dl>
+    <dl><dt>Returns:</dt><dd>The <a class="ref" href="#group___esp_req_1ga41a42035766ff5d2fd0fd74588e167ea">espGetConn()</a>-&gt;rx-&gt;uri.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
   </div>
@@ -4434,7 +4434,7 @@ Path to view.
   </div>
   <div class="apiDetail">
 <p>Test if a http request is finalized.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This tests if <a class="ref" BBB href="#group___esp_req_1gac142434246bc5558dfe73a78ded7a7f0">espFinalize</a> or <a class="ref" BBB href="#group___http_tx_1ga279ad49e5163402e2afd6caf478bcc70" external="http.dtags">httpFinalize</a> has been called for a request.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This tests if <a class="ref" href="#group___esp_req_1gac142434246bc5558dfe73a78ded7a7f0">espFinalize</a> or <a class="ref" href="#group___http_tx_1ga279ad49e5163402e2afd6caf478bcc70" external="http.dtags">httpFinalize</a> has been called for a request.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object.</td>
@@ -4500,7 +4500,7 @@ Path to view.
     <tr><td class="param">fmt</td><td>Printf style format string.</td>
     <tr><td class="param">...</td><td>arguments.</td>
     </table></dd></dl>
-    <dl><dt>Returns:</dt><dd><a class="ref" BBB href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> instance.</dd></dl>
+    <dl><dt>Returns:</dt><dd><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> instance.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
   </div>
@@ -5019,7 +5019,7 @@ The output is Html escaped for security
   </div>
   <div class="apiDetail">
 <p>Update record fields without writing to the database.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This routine updates the record object with the given values. The "data&apos; argument supplies a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually created via <a class="ref" BBB href="#group___edi_1gac8ba9b4a0cdc2d2f30de7d915a4c51c1">ediMakeHash</a> to convert a JSON string into an options hash. For example: updateFields(rec, hash(&quot;{ name: &apos;%s&apos;, address: &apos;%s&apos; }&quot;, name, address)) The record will not be written to the database. To write to the database, use $ediWriteRec.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This routine updates the record object with the given values. The "data&apos; argument supplies a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually created via <a class="ref" href="#group___edi_1gac8ba9b4a0cdc2d2f30de7d915a4c51c1">ediMakeHash</a> to convert a JSON string into an options hash. For example: updateFields(rec, hash(&quot;{ name: &apos;%s&apos;, address: &apos;%s&apos; }&quot;, name, address)) The record will not be written to the database. To write to the database, use $ediWriteRec.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">rec</td><td>Record to update.</td>
@@ -5173,7 +5173,7 @@ The output is Html escaped for security
   </div>
   <div class="apiDetail">
 <p>Set the current database record.</p>
-    <dl><dt><b>Description</b>:</dt><dd>The current record is used to supply data to various abbreviated controls, such as: <a class="ref" BBB href="#group___esp_abbrev_1ga3e4c53a1a64bfb4a120fd7864d11ce59">text()</a>, <a class="ref" BBB href="#group___esp_abbrev_1gaa3f886ac8ecb0b4f2f6decb1da1f5c82">input()</a>, checkbox and <a class="ref" BBB href="#group___esp_abbrev_1gae43638b69d2bf1bf6cf037459aad2ce2">dropdown()</a></dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>The current record is used to supply data to various abbreviated controls, such as: <a class="ref" href="#group___esp_abbrev_1ga3e4c53a1a64bfb4a120fd7864d11ce59">text()</a>, <a class="ref" href="#group___esp_abbrev_1gaa3f886ac8ecb0b4f2f6decb1da1f5c82">input()</a>, checkbox and <a class="ref" href="#group___esp_abbrev_1gae43638b69d2bf1bf6cf037459aad2ce2">dropdown()</a></dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object.</td>
@@ -5274,7 +5274,7 @@ The output is Html escaped for security
   </div>
   <div class="apiDetail">
 <p>Write field values to a database row.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This routine updates the current record with the given data and then saves the record to the database. The "data&apos; argument supplies a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually created via <a class="ref" BBB href="#group___edi_1gac8ba9b4a0cdc2d2f30de7d915a4c51c1">ediMakeHash</a> to convert a JSON string into an options hash. For example: ediWriteFields(rec, <a class="ref" BBB href="#group___esp_abbrev_1ga3c8e01edebd0020f20411085635cca69">params()</a>); The record runs field validations before saving to the database.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This routine updates the current record with the given data and then saves the record to the database. The "data&apos; argument supplies a hash of fieldNames and values. The data hash may come from the request $params() or it can be manually created via <a class="ref" href="#group___edi_1gac8ba9b4a0cdc2d2f30de7d915a4c51c1">ediMakeHash</a> to convert a JSON string into an options hash. For example: ediWriteFields(rec, <a class="ref" href="#group___esp_abbrev_1ga3c8e01edebd0020f20411085635cca69">params()</a>); The record runs field validations before saving to the database.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object.</td>
@@ -5396,7 +5396,7 @@ Directory for databases.
     <tr><td class="param">Edi *</td><td><td>edi</td><td>
 Default database for this route.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>env</td><td>
+    <tr><td class="param"><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>env</td><td>
 Environment variables for route.
 </td>
     <tr><td class="param">int</td><td><td>keepSource</td><td>
@@ -5583,7 +5583,7 @@ Directory for views.
     <dl><dt><b>Description</b>:</dt><dd>This expands a command template and replaces &quot;${tokens}&quot; with their equivalent value. The supported tokens are: <ul><li>ARCH - Build architecture (i386, x86_64) </li><li>CC - Compiler pathname </li><li>DEBUG - Compiler debug options (-g, -Zi, -Od) </li><li>INC - Include directory (out/inc) </li><li>LIB - Library directory (out/lib, out/bin) </li><li>LIBS - Required libraries directory (mod_esp, libappweb) </li><li>OBJ - Name of compiled source (out/lib/view-MD5.o) </li><li>OUT - Output module (view_MD5.dylib) </li><li>SHLIB - Shared library extension (.lib, .so) </li><li>SHOBJ - Shared object extension (.dll, .so) </li><li>SRC - Path to source code for view or controller (already templated) </li><li>TMP - System temporary directory </li><li>WINSDK - Path to the Windows SDK </li><li>VS - Path to Visual Studio </li></ul></dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">eroute</td><td><a class="ref" BBB href="#struct_esp">Esp</a> route object.</td>
+    <tr><td class="param">eroute</td><td><a class="ref" href="#struct_esp">Esp</a> route object.</td>
     <tr><td class="param">command</td><td>Http connection object.</td>
     <tr><td class="param">source</td><td>ESP web page source pathname.</td>
     <tr><td class="param">module</td><td>Output module pathname.</td>
@@ -5667,7 +5667,7 @@ Session inactivity timeout (msecs).
     <dl><dt><b>Description</b>:</dt><dd></dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">sp</td><td>Session state object allocated with <a class="ref" BBB href="#group___esp_session_1ga7d2c9558796acec2501b7d31dfc877b9">espAllocSession</a></td>
+    <tr><td class="param">sp</td><td>Session state object allocated with <a class="ref" href="#group___esp_session_1ga7d2c9558796acec2501b7d31dfc877b9">espAllocSession</a></td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
@@ -6021,7 +6021,7 @@ Session inactivity timeout (msecs).
   </div>
   <div class="apiDetail">
 <p>Set the current database record.</p>
-    <dl><dt><b>Description</b>:</dt><dd>The current record is used to supply data to various abbreviated controls, such as: <a class="ref" BBB href="#group___esp_abbrev_1ga3e4c53a1a64bfb4a120fd7864d11ce59">text()</a>, <a class="ref" BBB href="#group___esp_abbrev_1gaa3f886ac8ecb0b4f2f6decb1da1f5c82">input()</a>, checkbox and <a class="ref" BBB href="#group___esp_abbrev_1gae43638b69d2bf1bf6cf037459aad2ce2">dropdown()</a></dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>The current record is used to supply data to various abbreviated controls, such as: <a class="ref" href="#group___esp_abbrev_1ga3e4c53a1a64bfb4a120fd7864d11ce59">text()</a>, <a class="ref" href="#group___esp_abbrev_1gaa3f886ac8ecb0b4f2f6decb1da1f5c82">input()</a>, checkbox and <a class="ref" href="#group___esp_abbrev_1gae43638b69d2bf1bf6cf037459aad2ce2">dropdown()</a></dd></dl>
     <dl><dt>Returns:</dt><dd>The grid instance. This permits chaining.</dd></dl>
   </div>
 </div>
@@ -6085,16 +6085,16 @@ Session inactivity timeout (msecs).
 <p>Validation structure.</p>
     <dl><dt>Fields:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param"><a class="ref" BBB href="#mpr_8h_1a5272042f7e0f5c53e2fd4b49ff47d92d" external="mpr.dtags">cvoid</a> *</td><td><td>data</td><td>
+    <tr><td class="param"><a class="ref" href="#mpr_8h_1a5272042f7e0f5c53e2fd4b49ff47d92d" external="mpr.dtags">cvoid</a> *</td><td><td>data</td><td>
 Allocated data that must be marked for GC.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#mpr_8h_1a5272042f7e0f5c53e2fd4b49ff47d92d" external="mpr.dtags">cvoid</a> *</td><td><td>mdata</td><td>
+    <tr><td class="param"><a class="ref" href="#mpr_8h_1a5272042f7e0f5c53e2fd4b49ff47d92d" external="mpr.dtags">cvoid</a> *</td><td><td>mdata</td><td>
 Non-GC (malloc) data.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" external="mpr.dtags">cchar</a> *</td><td><td>name</td><td>
+    <tr><td class="param"><a class="ref" href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" external="mpr.dtags">cchar</a> *</td><td><td>name</td><td>
 Validation name.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#group___edi_service_1ga3cf21d57a02f250570e2beafc05befd9">EdiValidationProc</a></td><td><td>vfn</td><td>
+    <tr><td class="param"><a class="ref" href="#group___edi_service_1ga3cf21d57a02f250570e2beafc05befd9">EdiValidationProc</a></td><td><td>vfn</td><td>
 Validation callback procedure.
 </td>
     </table></dd></dl>
@@ -6107,28 +6107,28 @@ Validation callback procedure.
 <p>Top level ESP structure.</p>
     <dl><dt>Fields:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param"><a class="ref" BBB href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>actions</td><td>
+    <tr><td class="param"><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>actions</td><td>
 Table of actions.
 </td>
     <tr><td class="param">EdiService *</td><td><td>ediService</td><td>
 Database service.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>internalOptions</td><td>
+    <tr><td class="param"><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>internalOptions</td><td>
 Table of internal HTML control options.
 </td>
     <tr><td class="param">int</td><td><td>inUse</td><td>
 Active ESP request counter.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#struct_mpr_thread_local" external="mpr.dtags">MprThreadLocal</a> *</td><td><td>local</td><td>
+    <tr><td class="param"><a class="ref" href="#struct_mpr_thread_local" external="mpr.dtags">MprThreadLocal</a> *</td><td><td>local</td><td>
 Thread local data.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#struct_mpr_mutex" external="mpr.dtags">MprMutex</a> *</td><td><td>mutex</td><td>
+    <tr><td class="param"><a class="ref" href="#struct_mpr_mutex" external="mpr.dtags">MprMutex</a> *</td><td><td>mutex</td><td>
 Multithread lock.
 </td>
     <tr><td class="param">MprCache *</td><td><td>sessionCache</td><td>
 Session state cache.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>views</td><td>
+    <tr><td class="param"><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>views</td><td>
 Table of views.
 </td>
     </table></dd></dl>

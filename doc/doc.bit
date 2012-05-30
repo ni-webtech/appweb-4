@@ -27,7 +27,12 @@ Bit.load({
                 apidoc('api/appweb.dox', '${SRC}/src/appweb.h', 'Appweb API', 'api/*.tags')
                 apidoc('api/esp.dox', ['${SRC}/src/esp/edi.h', '${SRC}/src/esp/mdb.h', '${SRC}/src/esp/esp.h'], 
                     'ESP API', ls('api/*.tags'))
-                apiwrap(['api/appweb.html', 'api/http.html', 'api/mpr.html', 'api/esp.html'])
+                for each (let f: Path in ['api/appweb.html', 'api/http.html', 'api/mpr.html', 'api/esp.html']) {
+                    trace('Generate', f)
+                    apiwrap(f)
+                    f.write(f.readString().replace(/mprBare.html/g, 'mpr.html').
+                                           replace(/httpBare.html/g, 'http.html'))
+                }
             ",
         }, 
 

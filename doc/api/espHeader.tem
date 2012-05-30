@@ -38,13 +38,13 @@
             <!-- BeginDsi "dsi/see.html" -->
             <h2>See Also</h2>
             <ul>
-                <li><a href="../ref/ejs/index.html">Programmers Reference</a></li>
-                <li><a href="../api/ejs/native.html">Native APIs</a></li>
+                <li><a href="../ref/appweb/index.html">Programmers Reference</a></li>
+                <li><a href="native.html">Native APIs</a></li>
             </ul>
             <!-- EndDsi -->
             <h2>Quick Nav</h2>
             <ul>
-                <li><a href="#Modules">Modules</a></li>
+                <li><a href="#Components">Components</a></li>
                 <li><a href="#Typedefs">Typedefs</a></li>
                 <li><a href="#Functions">Functions</a></li>
                 <li><a href="#Defines">Defines</a></li>
