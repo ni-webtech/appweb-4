@@ -77,29 +77,23 @@
             configuration file directive. The ErrorLog directive can also specify the maximum log file size, 
             the number of backup log files to keep and whether to append or truncate the log file when Appweb is
             restarted. </p>
-
             <p>The ErrorLog directive can also specify the verbosity level with which to write to the log. 
             The log level is a digit ranging from 0, the least verbose to 9 being the most verbose. For example, if you
             set the log level to 2, messages at levels 0 and 1 will be output to the log. Level 0 will only record
             errors. Level 2 is the default and will record denied accesses. Levels 3-9 will record various internal
             Appweb activities. You should be careful with levels above 4 as the error log can grow very large with high
             log levels.</p>
-
             <pre>ErrorLog error.log level=2 backup=5 append stamp=1hr</pre>
-
             <h3>Logging Requests</h3>
             <p>The error log can also record detailed request information that is useful for debugging. The
             <a href="dir/log.html#log">Log</a> directive controls which parts of a request will be traced to the error
             log.</p>
-
             <pre>Log rx conn=5 first=2 headers=3 body=5 size=10K exclude="jpg,gif,png"</pre>
             <p>These directive will cause requests to be traced to the error log. New connections will be emitted
             at level 5, the first line of the request at level 2, request headers at level 3 and the request body
             data at level 5. Trace will be a maximum of 10K per request and graphic requests will be excluded.</p>
-
 <pre>Log tx first=3 headers=3 body=5 time=6 size=10K exclude="jpg,gif,png"</pre>
             <p>These directive will cause responses to be traced to the error log.</p>
-
             <h3>Sample Output</h3>
             <p>Here is a sample error log. Some lines have been manually wrapped to fit on the page.</p>
             <pre>
@@ -180,8 +174,6 @@ localhost - - [Fri Dec 19 16:08:24 2003] "GET /doc/images/backRight.png
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-</body>
-
 <script src="http://www.google.com/jsapi" type="text/javascript"></script>
 <script type="text/javascript"> 
   google.load('search', '1', {language : 'en'});
@@ -194,5 +186,6 @@ localhost - - [Fri Dec 19 16:08:24 2003] "GET /doc/images/backRight.png
     customSearchControl.draw('cse-search-form', options);
   }, true);
 </script>
+</body>
 </html>
 <!-- EndDsi -->
