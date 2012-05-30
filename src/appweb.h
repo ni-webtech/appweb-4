@@ -26,13 +26,14 @@ extern "C" {
 #define MA_SDB_TIMEOUT          (20 * 1000)         /**< SDB busy timeout */
 
 #undef HTTP_NAME
-#define HTTP_NAME               MA_SERVER_NAME  /**< Default web server software identification */
+#define HTTP_NAME               MA_SERVER_NAME      /**< Default web server software identification */
 
 /********************************** Defines ***********************************/
 
 #if !DOXYGEN
 struct MaSsl;
 struct MaServer;
+struct MaAppweb;
 #endif
 
 /**
@@ -40,7 +41,7 @@ struct MaServer;
     @description There is one instance of MaAppweb per application. It manages a list of HTTP servers running in
         the application.
     @stability Evolving
-    @defgroup Appweb Appweb
+    @defgroup MaAppweb MaAppweb
     @see Http maAddServer maApplyChangedGroup maApplyChangedUser maCreateAppweb maGetUserGroup maLoadModule 
         maLookupServer maParseInit maParsePlatform maRenderDirListing maSetDefaultServer maSetHttpGroup maSetHttpUser 
         maStartAppweb maStopAppweb 
