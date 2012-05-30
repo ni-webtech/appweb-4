@@ -115,9 +115,9 @@
                 <tr><td>incomingData</td><td>Accept a packet of incoming data. Corresponds to the receive queue put
                         callback.</td></tr>
                 <tr><td>ready</td><td>The request is fully parsed and all incoming data has been received.</td></tr>
-                <tr><td>process</td><td>Do more processing of the request.</td></tr>
                 <tr><td>outgoingService</td><td>Service the outgoing queue. Used primarily for non-blocking output
                         and flow control.</td></tr>
+                <tr><td>writable</td><td>The outgoing pipeline can absorb more data.</td></tr>
                 <tr><td>close</td><td>Close the request. Corresponds to the queue close callback.</td></tr>
                 </tbody>
             </table>
@@ -141,7 +141,7 @@
             <p>The httpWrite routine will always accept and buffer the data. But it will limit the amount of
             buffering by flushing data as required. Handlers that create their own packets should take create to test if
             the output queue is full. If the output queue is full, the handler should pause generating the response
-            and wait until the queue has drained sufficiently. When that occurs, the <em>process</em> callback will be
+            and wait until the queue has drained sufficiently. When that occurs, the <em>writable</em> callback will be
             invoked.</p>
             <h2>Pipeline Lifecycle</h2>
             <p>When a request is received from the client, the Appweb Http engine parses the Http request headers and
@@ -150,23 +150,26 @@
             <h3>Matching a Handler &mdash; <em>match</em></h3>
             <p>Once parsed, the router tests each of the eligible handlers for the route by calling the handler 
             <em>match</em> callback. The first handler to claim the request will be used.</p>
+
             <h3>Initializing a Handler &mdash; <em>open</em></h3>
             <p>The Http engine then creates the pipeline and invokes the handler <em>open</em> callback to perform
             required initialization for the handler.</p>
+
             <h3>Starting a Handler &mdash; <em>start</em></h3>
             <p>Once the request headers are fully parsed, the Http engine invokes the handler <em>start</em> callback.
             At this point, request body data may not have been received. Depending on the request, generating a response
             may or may not be appropriate until all body data has been received. If there is no body data, the handler
-            can process and maybe complete the request during this callback.</p>
+            can process and maybe generate the entire response for the request during this callback.</p>
+
             <h3>Ready to Respond &mdash; <em>ready</em></h3>
             <p>Once all body data has been received, the handler <em>ready</em> callback is invoked. At this stage, 
             the handler has all the request information and can fully process the request. The handler may start or
-            fully complete the request.</p>
-<!--MOB - improve -->
-            <h3>Handler Processing &mdash; <em>process</em></h3>
+            fully generate the response to the request.</p>
+
+            <h3>Pipeline Writable &mdash; <em>writable</em></h3>
             <p>Some requests may generate more response data than can be efficiently buffered by Appweb. If the output
             TCP/IP socket to the client is full, a handler may not be able to continue processing until this data
-            drains. In these cases, the <em>process</em> callback will be invoked whenever the output service queue
+            drains. In these cases, the <em>writable</em> callback will be invoked whenever the output service queue
             can absorb more data. As such, it may be used to efficiently generate the response in chunks without
             blocking.</p>
             
@@ -248,10 +251,10 @@ static ssize doOutput(HttpQueue *q, cchar *data, ssize len)
 }
 </pre>
             <p>The handler's <em>process</em> handler callback will be invoked once the request has received all body data
-            and whenever the output queue can absorb more data. Thus the process callback is an ideal place for
+            and whenever the output queue can absorb more data. Thus the <em>writable</em> callback is an ideal place for
             generating the response in chunks.</p>
 <pre>
-static void myProcess(HttpQueue *q)
+static void writable(HttpQueue *q)
 {
     if (finished) {
         httpFinalize(q->conn);
@@ -260,11 +263,11 @@ static void myProcess(HttpQueue *q)
     }
 }
 </pre>
-            <p>This (trivial) example writes data in chunks each time the <em>process</em> callback is invoked.
+            <p>This (trivial) example writes data in chunks each time the <em>writable</em> callback is invoked.
             When output is complete, the example calls httpFinalize.</p>
             <p>If a handler puts data onto a service queue, it should call 
             <a href="../../../api/http.html#group___http_rx_1gaf5503f75323ec0c6df1b3ee5615ad496">httpPump</a> to enable
-            the pipeline to advance and potentially invoke the handler's <em>process</em> callback.</p>
+            the pipeline to advance and potentially invoke the handler's <em>writable</em> callback.</p>
         <h2>Paradigms</h2>
         <p>In summary, a handler may use one of several paradigms to implement how it responds to requests.</p>
         <h3>Blocking</h3>
@@ -279,9 +282,9 @@ static void myProcess(HttpQueue *q)
         responses. Ensure you provided you have sufficient worker threads and/or this kind of request is infrequent.
         Otherwise this can lead to a denial-of-service vulnerability.</p>
         <h3>Non-Blocking</h3>
-        <p>A more advanced technique is to write data in portions from the process() callback. The callback will be
+        <p>A more advanced technique is to write data in portions from the writable() callback. The callback will be
         invoked whenever the pipeline can absorb more data. The handler should test the <em>q->max, q->count</em> and
-        <em>q->packetSize</em> values to determine how much to write before returning from process(). The httpFinalize
+        <em>q->packetSize</em> values to determine how much to write before returning from writable(). The httpFinalize
         routine should be called when the request is complete.</p>
         <h3>Async Generation</h3>
         <p>A handler can asynchronously generate response data outside of the typical handler callbacks. This may be in

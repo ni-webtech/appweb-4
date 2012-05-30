@@ -1036,8 +1036,9 @@ extern void httpEnableQueue(HttpQueue *q);
 
 /**
     Flush queue data
-    @description This flushes all queue data by scheduling the queue and servicing all scheduled queues. 
-    If blocking is requested, the call will block until the queue count falls below the queue maximum.
+    @description This initiates writing buffered queue data (flushes) by scheduling the queue and servicing all
+    scheduled queues.  If blocking is requested, the call will block until the queue count falls below the queue
+    maximum.
     WARNING: Be very careful when using blocking == true. Should only be used by end applications and not by middleware.
     @param q Queue to flush
     @param block If set to "true", this call will block until the data has drained below the queue maximum.
@@ -1251,8 +1252,8 @@ extern bool httpWillNextQueueAcceptSize(HttpQueue *q, ssize size);
 /** 
     Write a formatted string
     @description Write a formatted string of data into packets onto the end of the queue. Data packets will be created
-        as required to store the write data. This call may block waiting for the downstream queue to drain if it is 
-        or becomes full.
+        as required to store the write data. This call always accepts all the data and will buffer as required. 
+        This call may block waiting for the downstream queue to drain if it is or becomes full.
     @param q Queue reference
     @param fmt Printf style formatted string
     @param ... Arguments for fmt
@@ -1439,7 +1440,7 @@ typedef struct HttpStage {
     void (*start)(HttpQueue *q);
 
     /** 
-        The request is now ready.
+        The request is now fully ready.
         @description This callback will be invoked when all incoming data has been received. 
         @param q Queue instance object
         @ingroup HttpStage
@@ -1447,15 +1448,14 @@ typedef struct HttpStage {
     void (*ready)(HttpQueue *q);
 
     /** 
-        Process the request and generate a response.
-        @description This optional handler callback will be invoked to emit a response back to the client.
-            A handler may generate or start to generate a response in the 'start' or 'ready' callbacks. The
-            'process' callback is called when all incoming data has been received and when the service queue has room
-            for more output data. As such, it may be used to support non-blocking generation of a response.
+        The outgoing pipeline is writable and can accept more response data.
+        @description This callback will be invoked after all incoming data has been receeived and whenever the outgoing
+        pipeline can absorb more output data (writable). As such, it may be called multiple times and can be effectively
+        used for non-blocking generation of a response.
         @param q Queue instance object
         @ingroup HttpStage
      */
-    void (*process)(HttpQueue *q);
+    void (*writable)(HttpQueue *q);
 
 } HttpStage;
 
@@ -1683,7 +1683,7 @@ extern ssize httpFilterChunkData(HttpQueue *q, HttpPacket *packet);
 #define HTTP_TRACE_FIRST            1       /**< First line of header only */
 #define HTTP_TRACE_HEADER           2       /**< Header */
 #define HTTP_TRACE_BODY             3       /**< Body content */
-#define HTTP_TRACE_LIMITS           4       /**< Instrument http pipeline */
+#define HTTP_TRACE_LIMITS           4       /**< Request and connection count limits */
 #define HTTP_TRACE_TIME             5       /**< Instrument http pipeline */
 #define HTTP_TRACE_MAX_ITEM         6
 
@@ -1810,7 +1810,6 @@ typedef struct HttpConn {
     int             followRedirects;        /**< Follow redirects for client requests */
     int             keepAliveCount;         /**< Count of remaining Keep-Alive requests for this connection */
     int             http10;                 /**< Using legacy HTTP/1.0 */
-    int             processCalls;           /**< Count of calls to processing() */
 
     int             port;                   /**< Remote port */
     int             retries;                /**< Client request retries */

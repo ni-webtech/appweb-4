@@ -6931,11 +6931,11 @@ int httpProcessHandler(HttpConn *conn)
     HttpQueue   *q;
     
     q = conn->writeq;
-    if (!q->stage->process) {
+    if (!q->stage->writable) {
        return 0;
     }
     if (!conn->finalized) {
-        q->stage->process(q);
+        q->stage->writable(q);
         if (q->count > 0) {
             httpScheduleQueue(q);
             httpServiceQueues(conn);

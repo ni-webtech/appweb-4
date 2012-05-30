@@ -1105,7 +1105,7 @@
 <tr class="apiDef">
 <td>#define</td><td><a href="#http_8h_1a3c4a4138bf2fe4f9398e348531e84bfc" class="nameRef">HTTP_TRACE_LIMITS</a>&nbsp;&nbsp;&nbsp;4</td>
 </tr>
-<tr class="apiBrief"><td>&nbsp;</td><td>Instrument http pipeline.</td></tr>
+<tr class="apiBrief"><td>&nbsp;</td><td>Request and connection count limits.</td></tr>
 <tr class="apiDef">
 <td>#define</td><td><a href="#http_8h_1a8da21ba1c0730e24a4c67ba56bc26bad" class="nameRef">HTTP_TRACE_MAX_DIR</a>&nbsp;&nbsp;&nbsp;2</td>
 </tr>
@@ -2573,9 +2573,6 @@ Pool of VMs.
 </td>
     <tr><td class="param">int</td><td><td>port</td><td>
 Remote port.
-</td>
-    <tr><td class="param">int</td><td><td>processCalls</td><td>
-Count of calls to processing().
 </td>
     <tr><td class="param">char *</td><td><td>protocol</td><td>
 HTTP protocol.
@@ -4954,7 +4951,7 @@ Start the queue.
   </div>
   <div class="apiDetail">
 <p>Write a formatted string.</p>
-    <dl><dt><b>Description</b>:</dt><dd>Write a formatted string of data into packets onto the end of the queue. Data packets will be created as required to store the write data. This call may block waiting for the downstream queue to drain if it is or becomes full.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>Write a formatted string of data into packets onto the end of the queue. Data packets will be created as required to store the write data. This call always accepts all the data and will buffer as required. This call may block waiting for the downstream queue to drain if it is or becomes full.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">q</td><td>Queue reference.</td>
@@ -7460,12 +7457,8 @@ Service the outgoing data queue.
     <tr><td class="param">char *</td><td><td>path</td><td>
 Backing module path (from LoadModule).
 </td>
-    <tr><td class="param">void(*</td><td><td>process)(HttpQueue *q)</td><td>
-Process the request and generate a response. 
-<simplesect kind="par"><b>Description</b>:This optional handler callback will be invoked to emit a response back to the client. A handler may generate or start to generate a response in the &apos;start&apos; or &apos;ready&apos; callbacks. The &apos;process&apos; callback is called when all incoming data has been received and when the service queue has room for more output data. As such, it may be used to support non-blocking generation of a response. </simplesect><parameterlist kind="param"><parameteritem><parameternamelist><parametername>q</parametername></parameternamelist><parameterdescription>Queue instance object </parameterdescription></parameteritem></parameterlist>
-</td>
     <tr><td class="param">void(*</td><td><td>ready)(HttpQueue *q)</td><td>
-The request is now ready. 
+The request is now fully ready. 
 <simplesect kind="par"><b>Description</b>:This callback will be invoked when all incoming data has been received. </simplesect><parameterlist kind="param"><parameteritem><parameternamelist><parametername>q</parametername></parameternamelist><parameterdescription>Queue instance object </parameterdescription></parameteritem></parameterlist>
 </td>
     <tr><td class="param">void *</td><td><td>stageData</td><td>
@@ -7474,6 +7467,10 @@ Private stage data.
     <tr><td class="param">void(*</td><td><td>start)(HttpQueue *q)</td><td>
 Start the handler. 
 <simplesect kind="par"><b>Description</b>:The request has been parsed and the handler may start processing. Input data may not have been received yet. Form requests (those with a Content-Type of &quot;application/x-www-form-urlencoded&quot;), will be started before processing input data. All other requests will be started immediately after the request headers have been parsed. </simplesect><parameterlist kind="param"><parameteritem><parameternamelist><parametername>q</parametername></parameternamelist><parameterdescription>Queue instance object </parameterdescription></parameteritem></parameterlist>
+</td>
+    <tr><td class="param">void(*</td><td><td>writable)(HttpQueue *q)</td><td>
+The outgoing pipeline is writable and can accept more response data. 
+<simplesect kind="par"><b>Description</b>:This callback will be invoked after all incoming data has been receeived and whenever the outgoing pipeline can absorb more output data (writable). As such, it may be called multiple times and can be effectively used for non-blocking generation of a response. </simplesect><parameterlist kind="param"><parameteritem><parameternamelist><parametername>q</parametername></parameternamelist><parameterdescription>Queue instance object </parameterdescription></parameteritem></parameterlist>
 </td>
     </table></dd></dl>
   </div>
@@ -8893,7 +8890,7 @@ This adjusts the packet content by the given size. The packet position is increm
   </div>
   <div class="apiDetail">
 <p>Flush queue data.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This flushes all queue data by scheduling the queue and servicing all scheduled queues. If blocking is requested, the call will block until the queue count falls below the queue maximum. WARNING: Be very careful when using blocking == true. Should only be used by end applications and not by middleware.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This initiates writing buffered queue data (flushes) by scheduling the queue and servicing all scheduled queues. If blocking is requested, the call will block until the queue count falls below the queue maximum. WARNING: Be very careful when using blocking == true. Should only be used by end applications and not by middleware.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">q</td><td>Queue to flush.</td>
