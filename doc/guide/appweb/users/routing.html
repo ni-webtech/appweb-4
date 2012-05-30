@@ -85,7 +85,7 @@
             <p>The most fundamental directive is the Route block directive which declares a new route block and defines the
                 route matching pattern:</p>
 <pre>
-&lt;Route /info/&gt;
+&lt;Route /info/ &gt;
 &lt;/Route&gt;
 </pre>
             <p>This example defines a route pattern <em>/info/</em> that will match request URIs that begin with 
@@ -104,9 +104,9 @@
             directive is encountered.  This means that inner route blocks will be correctly defined before 
             their outer route block. For example:</p>
 <pre>
-&lt;Route /info/&gt;
+&lt;Route /info/ &gt;
     DocumentRoot /public-docs
-    &lt;Route /info/private/&gt;
+    &lt;Route /info/private/ &gt;
         DocumentRoot /confidential-docs
         AuthType digest
         AuthName "Top-Secret"
@@ -342,7 +342,7 @@ will match any of the URIs:
             headers with or without defined values. For example: a route may wish to only be relevant for a 
             particular browser:</p>
 <pre>
-&lt;Route /info/&gt;
+&lt;Route /info/ &gt;
     Header User-Agent /Chrome/
 &lt;/Route&gt;
 </pre>
@@ -353,7 +353,7 @@ will match any of the URIs:
             form body (POST) data. Form data must have a Content-Type of "application/x-www-form-urlencoded" &mdash;
             normal HTML forms are encoded this way.</p>
 <pre>
-&lt;Route ^/info/&gt;
+&lt;Route ^/info/ &gt;
     Query name /(Mary)|(John)/
 &lt;/Route&gt;
 </pre>
@@ -420,7 +420,7 @@ Target write 200 "Running controller ${controller} action ${action}\n\n"
             <h3>Authenticating Private Content</h3>
             <p>To secure private content :</p>
 <pre>
-&lt;Route /private/&gt;
+&lt;Route /private/ &gt;
     DocumentRoot /private-docs
     AuthType digest
     AuthName "Top-Secret"
@@ -442,7 +442,7 @@ Target write 200 "Running controller ${controller} action ${action}\n\n"
                A request for <em>/manual/overview.html</em> may return <em>/manual/overview.html.gz</em> if it exists. If
                there is no compressed content, the uncompressed version is returned.</p>
 <pre>
-&lt;Route ^/manual/&gt;
+&lt;Route ^/manual/ &gt;
     Compress gzip
 &lt;/Route&gt;
 </pre>
@@ -453,7 +453,7 @@ Target write 200 "Running controller ${controller} action ${action}\n\n"
             If the accept header is missing or the requested language is not English or French, then the DefaultLanguage
             directive indicates that english content should be returned.</p>
 <pre>
-&lt;Route /&gt;
+&lt;Route / &gt;
     DefaultLanguage en
     AddLanguageDir en /path/to/english-docs
     AddLanguageDir fr /path/to/french-docs
@@ -464,7 +464,7 @@ Target write 200 "Running controller ${controller} action ${action}\n\n"
             filename. If the client requested a French version of <em>index.html</em>, then the document 
             <em>index.fr.html</em> would be served.</p>
 <pre>
-&lt;Route /&gt;
+&lt;Route / &gt;
     DefaultLanguage en
     AddLanguageSuffix en en before
     AddLanguageSuffix fr fr
@@ -474,7 +474,7 @@ Target write 200 "Running controller ${controller} action ${action}\n\n"
             <p>To group routes for an application, enclose in a Route block and use a Prefix directive to remove the
                 application prefix.</p>
 <pre>
-&lt;Route /manage/&gt;
+&lt;Route /manage/ &gt;
     Prefix /manage
     DocumentRoot manage-app
     SetHandler espHandler
@@ -486,14 +486,14 @@ Target write 200 "Running controller ${controller} action ${action}\n\n"
             <h3>Denial of Service Protection</h3>
             <p>To immediately close a connection without responding use the <em>Target close</em> directive.
 <pre>
-&lt;Route /hacked-url/&gt;
+&lt;Route /hacked-url/ &gt;
     target close
 &lt;/Route&gt;
 </pre>
             <h3>Missing File</h3>
             <p>To match a missing document without redirection:</p>
 <pre>
-&lt;Route /&gt;
+&lt;Route / &gt;
     Condition ! exists ${request:filename}
     Target run /missing.html
 &lt;/Route&gt;

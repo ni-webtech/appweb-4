@@ -80,9 +80,9 @@ int maSimpleModuleInit(Http *http, MprModule *mp)
     if ((handler = httpCreateHandler(http, "simpleHandler", 0, mp)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
-    handler->open = openSimple; 
-    handler->close = closeSimple; 
-    handler->start = startSimple; 
+    handler-&gt;open = openSimple; 
+    handler-&gt;close = closeSimple; 
+    handler-&gt;start = startSimple; 
     return 0;
 }
 </pre>

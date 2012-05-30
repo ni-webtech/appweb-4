@@ -14,6 +14,11 @@ if (test.depth > 1) {
         App.log.debug(5, "[TestRun]", command + args)
         try {
             let cmd = Cmd(command + args)
+            if (cmd.status != 0) {
+print("STATUS", cmd.status)
+print("ERROR", cmd.error)
+print("RESPSONSE", cmd.response)
+            }
             assert(cmd.status == 0) 
             return cmd.response
             assert(true)
