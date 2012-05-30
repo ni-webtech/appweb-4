@@ -85,8 +85,8 @@
             code and then compiled into native machine code for exceptionally fast execution. </p>
             
             <pre>
-&lt;h1>Hello World&lt;/h1>
-&lt;h2>Today is <%= mprGetDate(0); %>&lt;/h2>
+&lt;h1&gt;Hello World&lt;/h1&gt;
+&lt;h2&gt;Today is &lt;%= mprGetDate(0); %&gt;&lt;/h2&gt;
 </pre>
             
             <h3>Why "C"?</h3>
@@ -357,13 +357,13 @@ views/CONTROLLER-VIEW.esp
             <a href="../../../api/mpr.html#mpr_8h_1a8ecdc6cb45d8758203e09764faaf5e2d">mprGetDate</a>
             function which returns the local date and time as a string.</p>
             <pre>
-Today is <%= mprGetDate(0); %>&lt;
+Today is &lt;%= mprGetDate(0); %&gt;&lt;
 </pre>
             <p>Note that the string returned from mprGetDate was not freed. This is because Appweb and ESP use a 
             <a href="../../../ref/appweb/memory.html#collector">Garbage Collection</a> and so such returned data does
             not need to be freed. This permits the use of a chaining style of programming where the outputs of one
             function can be used as arguments to others. For example:
-<pre>Resource name: <%= mprJoinExt(mprJoinPath(dir, supper(name)), "jpg") %> </pre>
+<pre>Resource name: &lt;%= mprJoinExt(mprJoinPath(dir, supper(name)), "jpg") %&gt; </pre>
             <h3>&lt;% statements %&gt;</h3>
             <p>Use this directive to run "C" code statements. No value is substituted back into the page in
             place of the directive. If you need to write data inside a statement block, use the 
@@ -371,8 +371,8 @@ Today is <%= mprGetDate(0); %>&lt;
             render API</p>
             <pre>
 &lt;% 
-    for (i = 0; i < 10; i++) {
-        render("I is %d &lt;br/>\n", i);
+    for (i = 0; i &lt; 10; i++) {
+        render("I is %d &lt;br/&gt;\n", i);
     }
 %&gt;
 </pre>
@@ -384,7 +384,7 @@ Today is <%= mprGetDate(0); %>&lt;
             <p>You can also iterate over regular HTML code. The following code will display <b>Hello World</b> ten
             times in the web page.</p>
             <pre>
-&lt;% for (i = 0; i < 10; i++) { %&gt;
+&lt;% for (i = 0; i &lt; 10; i++) { %&gt;
     Hello World
 &lt;% } %&gt;
 </pre>
@@ -590,4 +590,3 @@ esp compile
     </script>
 </body>
 </html>
-<!-- EndDsi -->

@@ -139,7 +139,7 @@ sudo appweb -v
 <b>&lt;h3&gt;&lt;% render("Request method is %s", getMethod()); %&gt;&lt;/h3&gt;</b>
 <b>&lt;% 
     int i;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i &gt; 10; i++) {
         render(" Line: %d&lt;/br&gt;\r\n", i);
     } 
 %&gt;</b>
@@ -156,11 +156,11 @@ sudo appweb -v
             at run-time in response to client requests. ESP supports MSCL by controlling where ESP code will be
             placed in the web page function. To ensure that declarations are emitted at the start of the function block 
             use the <em>^start</em> directive.</p>
-<pre>&lt;%<b>^start</b>
-    char *msg = "hello world";
+<pre>&lt;%^start
+    char *msg = "hello world"
     int  x = 42;
-&lt/%>
-&lt;%  render("%s, the answer is %d", msg, x); %>
+&lt;/%&gt;
+&lt;%  render("%s, the answer is %d", msg, x); %&gt;
 </pre>
             <a name="params" id="params"></a>
             <h2 class="section">Forms and Request Params</h2>
@@ -170,14 +170,14 @@ sudo appweb -v
             and if not found, the session data store for the variable, and then substitute its value.</p>
             <p>If an HTTP request has the URI: <em>http://example.com/submit.esp?name=julie</em>, then the following
             ESP code could access the user name directly.</p>
-<pre>&lt;p>User Name: <b>@@name</b>&lt;/p></pre>
+<pre>&lt;p&gt;User Name: <b>@@name</b>&lt;/p&gt;</pre>
             <h3>XSS Security</h3>
             <p>Normally, echoing user input back to the client in a web page is bad practice and can invite XSS security
             attacks. Fortunately, ESP HTML escapes the variable value to prevent such attacks. </p>
             <p>General ESP output can also be escaped by using a "safe" "%S" format specifier. The renderSafe function
             can also be used.</p>
-<pre>&lt;p>User Name: <b>&lt;%=%S param("name"); %></b>&lt;/p>
-&lt;p>User Name: <b>&lt;%= renderSafe(param("name")); %></b>&lt;/p>
+<pre>&lt;p&gt;User Name: <b>&lt;%=%S param("name"); %&gt;</b>&lt;/p&gt;
+&lt;p&gt;User Name: <b>&lt;%= renderSafe(param("name")); %&gt;</b>&lt;/p&gt;
 </pre>
             <a name="controls" id="controls"></a>
             <h2 class="section">Web Controls</h2>
@@ -187,13 +187,13 @@ sudo appweb -v
             <p>To the following control will emit a text label that will dynamically update using background AJAX requests.
             This control will create the appropriate HTML to invoke the <em>data.esp</em> page every 1 second to
             get the current time. The web page will transparently update with the data returned by <em>data.esp</em>.</p>
-<pre>&lt;% Time: label("", "{ data-refresh: "data.esp", data-period: 1000 }"); %></pre>
+<pre>&lt;% Time: label("", "{ data-refresh: "data.esp", data-period: 1000 }"); %&gt;</pre>
             <a name="binding" id="binding"></a>
             <h3>Database Binding</h3>
             <p>To make it easy to display and update database data, ESP supports "data binding" where a database 
             record can be bound to a request form. Thereafter, the ESP web controls will take data from the record.
 <pre>
-<% 
+&lt;% 
     form(userRecord, 0); 
         input("name", 0);
         input("address", 0);
@@ -201,7 +201,7 @@ sudo appweb -v
         buttonLink("Cancel", "../index.esp",  0);
         buttonLink("Delete", "destroy.esp");
     endform();
-%>
+%&gt;
 </pre>
             <p>In this example, the <em>form</em> control <i>binds</i> the <em>userRecord</em>. The input controls
             then retrieve the "name", and "address" fields from the database record and emit the appropriate HTML
@@ -214,11 +214,12 @@ sudo appweb -v
             <p>Flash storage is a portion of the session storage used to pass messages and state to the next request 
             only. This is useful after a form, to add feedback messages to the next web page. Messages can be added
             to flash storage via the <em>error</em>, <em>inform</em>, or <em>warn</em> APIs. </p>
-<pre>&lt;% <b>inform</b>("Record updated"); %></pre>
+<pre>&lt;% <b>inform</b>("Record updated"); %&gt;</pre>
             
             <p>The <em>flash</em> web
             control is used in the next web page to extract flash messages for display.</p>
-<pre>&lt;% <b>flash</b>("all", NULL); %></pre>
+<pre>&lt;% <b>flash</b>("all", NULL); %&gt;</pre>
+
             <a name="layouts" id="layouts"></a>
             <h2>Layouts</h2>
             <p>ESP Layouts provide a powerful and flexible solution for implementing a consistent UI. 
@@ -291,4 +292,3 @@ sudo appweb -v
     </script>
 </body>
 </html>
-<!-- EndDsi -->

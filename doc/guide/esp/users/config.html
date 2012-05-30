@@ -193,14 +193,14 @@
 <pre class="light">EspApp /myblog ./blog restful sqlite://blog/blog.sdb</pre> 
             <p>is equivalent to:</p>
 <pre>
-&lt;Route ^/myblog>
+&lt;Route ^/myblog &gt;
     Prefix /myblog
     DocumentRoot ./blog
     AddHandler espHandler
     EspDir restful
     EspDb sqlite://blog.mdb
     EspRouteSet restful                                                                                
-&lt;/Route>  
+&lt;/Route&gt;  
 </pre>
             <h2>REST and Resources</h2>
             <p>ESP supports using a RESTful design for mapping request URIs to resources.
@@ -348,4 +348,3 @@ EspCompile cc -shared ${DEBUG} -Wall -Wno-unused-result \
     </script>
 </body>
 </html>
-<!-- EndDsi -->

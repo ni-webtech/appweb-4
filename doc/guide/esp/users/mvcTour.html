@@ -256,7 +256,7 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
 &lt;h3&gt;&lt;% render("Request method is %s", getMethod()); %&gt;&lt;/h3&gt;
 &lt;% 
     int i;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i &lt; 10; i++) {
         render(" Line: %d&lt;/br&gt;\r\n", i);
     } 
 %&gt;
@@ -437,4 +437,3 @@ ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module)
     </script>
 </body>
 </html>
-<!-- EndDsi -->

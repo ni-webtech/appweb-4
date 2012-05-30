@@ -239,7 +239,7 @@ httpError(conn, 504, HTTP_ABOR, "Can't continue with the request");
             <a id="redirecting"></a>
             <h3>Redirecting</h3>
             <p>Sometimes a handler will want to generate a response that will redirect the client to a new URI.
-            Use the <a href="api/http.html#group___http_tx_1ga616290c9e8fe95419d3a31f6fbb870b5">httpRedirect</a> call 
+            Use the <a href="../../../api/http.html#group___http_tx_1ga616290c9e8fe95419d3a31f6fbb870b5">httpRedirect</a> call 
             to redirect the client. For example:
             <pre>httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, uri);</pre>
             <h3>Generating Response Body</h3>
@@ -341,7 +341,7 @@ mprCreateEvent(q-&gt;conn-&gt;dispatcher, "deviceEvent", 0, doMoreOutput, q, 0);
             href="../../../api/http.html#http_8h_1a269af9eeb75763738059d298b48f1032">httpStealConn</a>. Otherwise, a
         handler should check that a connection has not been closed before generating output for a connection. This can
         be done by checking <em>conn-&gt;tx</em> which will be set to NULL when the connection is closed.</p> 
-        <p>Note that the HttpConn object and other request objects will be preseved in memory even after Appweb closes a
+        <p>Note that the HttpConn object and other request objects will be preserved in memory even after Appweb closes a
         request and connection. This is because calling <em>mprCreateEvent</em> with a queue reference will maintain a
         reference to the queue and connection object and this reference will delay the garbage collector from reclaiming
         the memory for these objects.</p>
@@ -357,10 +357,10 @@ mprCreateEvent(q-&gt;conn-&gt;dispatcher, "deviceEvent", 0, doMoreOutput, q, 0);
         yield to the garbage collector. Appweb uses a cooperative garbage collector where worker thread yield to the 
         collector at designated control points. This provides workers with a guarantee that temporary memory will not be
         prematurely collected. All MPR functions that wait implicitly also yield to the garbage collector. Handlers can
-        should call <a href="../../../mpr.html#mpr_8h_1af140a2fda18b2e8461236cc44c0a2cc4">mprYield</a> directly whenever
+        should call <a href="../../../api/mpr.html#mpr_8h_1af140a2fda18b2e8461236cc44c0a2cc4">mprYield</a> directly whenever
         they block and are not calling an MPR function that blocks. This ensures that the garbage collector can work and
         collect memory while the worker thread is asleep. Handlers do not need to call mprYield when executing on
-        threads that were created outside of the MPR (ie. not MPR worker threads).</p>
+        threads that were created outside of the MPR (i.e. not MPR worker threads).</p>
 
         <a id="defining"></a>
         <h2>Defining a Handler</h2>
@@ -373,7 +373,6 @@ mprCreateEvent(q-&gt;conn-&gt;dispatcher, "deviceEvent", 0, doMoreOutput, q, 0);
             <li>Define the handler in the appweb.conf configuration file via the
             <a href="../users/dir/route.html#addHandler">AddHandler</a> or 
             <a href="../users/dir/route.html#setHandler">SetHandler</a> directives.</li>
-        directive.</li>
         </ol>
 <pre>
 int maMyModuleInit(Http *http, MprModule *mp)

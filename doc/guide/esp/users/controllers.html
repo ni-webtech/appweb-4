@@ -178,13 +178,13 @@ http://embedthis.com/APP/CONTROLLER/ACTION/ID
             <p>Sometimes, you may wish to have a controller without a full MVC application. You can do this by using a
             set of Appweb directives.</p>
             <pre>
-&lt;Route ^/app/{controller}(/)*$>
+&lt;Route ^/app/{controller}(/)*$ &gt;
     Name /app/*/list
     AddHandler espHandler
     EspDir controllers ./controllers
     Source test.c
     Target run $1-list
-&lt;/Route>
+&lt;/Route&gt;
 </pre>
             <p>This set of directives will create a route that will invoke the controller <em>controllers/test.c</em>.
             If the <em>/app/test/</em> URI is invoked, the <em>list</em> action function will be invoked.
@@ -491,4 +491,3 @@ esp generate CONTROLLER ACTIONS...
     </script>
 </body>
 </html>
-<!-- EndDsi -->

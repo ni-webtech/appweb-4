@@ -143,11 +143,11 @@
 <b>ediSetField(product, "price", "7.00");
 ediUpdateRec(db, product);</b>
 /* Find products costing over $10.00 */
-<b>EdiGrid *products = ediReadWhere(db, "product", "price", ">", "10.00");</b>
+<b>EdiGrid *products = ediReadWhere(db, "product", "price", "&gt;", "10.00");</b>
 /*  Read all products */
 <b>EdiGrid *products = ediReadTable(db, "product");</b>
 /* Get the number of rows and columns in the table */
-<b>ediGetTableSchema(db, "product", &numRows, &numCols);</b>
+<b>ediGetTableSchema(db, "product", &amp;numRows, &amp;numCols);</b>
 /* Remove the product with id == 1 */ 
 <b>ediDeleteRow(db, "product", "1");</b>
 </pre>
@@ -253,7 +253,7 @@ ediUpdateRec(db, product);
             ediReadRecWhere, ediReadTable and ediReadField.</p>
             <pre>
 product = ediReadRec(db, "product", "2");
-product = ediReadRecWhere(db, "product", "price", "<", "5.0");
+product = ediReadRecWhere(db, "product", "price", "&lt;", "5.0");
 </pre>
             <a name="update" id="update"></a>
             <h3>Updating a Record</h3>
@@ -284,7 +284,7 @@ ediSetField(product, "description", "458 Spider");
             <p>In <em>direct model</em> access, ESP web pages or controllers query the database using 
             EDI APIs which return EdiRec instances. They then directly access field values using <em>ediGetField</em>.</p>
             <pre>
-&lt;p&gt;Price: &lt%= ediGetField(product, "price"); &lt;/p&gt;
+&lt;p&gt;Price: &lt;%= ediGetField(product, "price"); &lt;/p&gt;
 </pre>
             <h3>Database Record Binding</h3>
             <p>To make it easy to display and update database data, ESP supports "data binding" where an EDI 
@@ -294,7 +294,7 @@ ediSetField(product, "description", "458 Spider");
             it as the current record until the next <em>endform</em> is encountered. ESP controls can then
             use the current record as a data source.</p>
 <pre>
-&lt% 
+&lt;% 
     <b>form(userRecord, 0);</b>
         input("name", 0);
         input("address", 0);
@@ -302,7 +302,7 @@ ediSetField(product, "description", "458 Spider");
         buttonLink("Cancel", "../index.esp",  0);
         buttonLink("Delete", "destroy.esp");
     <b>endform();</b>
-%>
+%&gt;
 </pre>
             <p>In this example, the form control binds the userRecord. The input controls then retrieve the 
             "<em>name</em>", and "<em>address</em>" fields from the database record and emit the appropriate 
@@ -336,7 +336,7 @@ ediSetField(product, "description", "458 Spider");
             <pre>
 ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module) 
 {
-    Edi     *edi = eroute->edi;
+    Edi     *edi = eroute-&gt;edi;
 <b>
     ediAddValidation(edi, "present", "user", "name", 0);
     ediAddValidation(edi, "number", "user", "account", 0);
@@ -394,4 +394,3 @@ ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module)
     </script>
 </body>
 </html>
-<!-- EndDsi -->
