@@ -1,10 +1,10 @@
 Embedthis Appweb(TM)
 
-Welcome to the Embedthis Appweb distribution. Appweb is the fastest, little web server.
+Welcome to the Appweb -- the fastest little web server.
 
 This document contains details regarding the installation procedure for the binary Embedthis Appweb package.  This package contains pre-built stand-alone web server and an embeddable HTTP library with headers. You can read the documentation for the latest release online at:
 
-http://embedthis.com/products/appweb/doc/appweb-4/product/index.html
+http://embedthis.com/products/appweb/doc/product/index.html
 
 This software is copyrighted and distributed under license. Please read the LICENSE.TXT for details.
 
@@ -17,7 +17,6 @@ Table of Contents
 * Installating the Tar Self-Install Image
 * Removing Embedthis Appweb
 * Apple MAC OS X  Release Details
-* Linux Release Details
 * Windows Release Details
 * Running Appweb
 * Building from the Source Code
@@ -51,19 +50,12 @@ To rebuild Appweb from source code on your development system, you will need at 
 
 Installation Package Formats
 
-The Appweb binary installation is published in several formats:
+The Appweb binary installation is published in two formats:
 
-    * Native Apple MAC OS X DMG/PKG format
-    * Native Linux RPM format
-    * Native Linux Debian format
+    * Native Apple MAC OS X PKG format
     * Native Windows installer format
-    * Tar format for custom self installs.
 
-Most formats are wrapped in a compressed Tar archive with this README.TXT file.  It is recommended that you use one of the native O/S formats if your system supports it. The native formats will typically register the software installation with your system's software manager so that you can query, verify, and easily manage the software on your system.  The installation package includes binaries, development libraries, and headers.  
-
-The Tar format consists of tar archives that you can manually extract for maximum control over the placement of various product components.
-
-For those looking to build from source code, you will need to download the separate source code distribution. The product documentation describes how to build from source. 
+For other platforms, you will need to download the source code distribution and build then install. The product documentation describes how to build from source. 
 
 
 Development Environment Platform Support
@@ -78,53 +70,15 @@ If you wish to embed Appweb in your application or build Appweb from source code
     * WindRiver Tornado Development Tools
 
 
-Installating the Tar Self-Install Image
-
-This is the procedure to to install the self-install Tar format image:
-
-   1. Uncompress and extract the image by typing
-
-      tar xvzf appweb-VERSION-BUILD-DIST-OS-ARCH.FMT.tgz
-
-      where FMT is "tar".
-
-   2. Invoke the installation script with administrator privilege
-
-      sudo ./install
-
-
-
 Apple Mac OS X Release Details
 
-To install the native MAC OS X DMG image:
+To install the native MAC OS X PKG image:
 
-   1. Download the DMG image.
+   1. Download the PKG image.
 
-   2. Double click on the DMG file image. This will mount a new drive called
-      appweb-VERSION. Double click on this drive to display its contents.
- 
-   3. Double click on the "appweb.mpkg" image.
+   2. Double click on the PKG file image.
 
-   4. Answer the questions as prompted.
-
-
-Linux Release Details
-
-The installation images all include an "install" script that will intelligently invoke the appropriate native software package manager such as "rpm" or dpkg as required.
-
-To install a Linux image:
-
-   1. Uncompress and extract the image by typing:
-
-      tar xvfz appweb-VERSION-BUILD-DIST-LINUX-ARCH.FMT.tgz
-
-      Where FMT is "rpm" or "deb".
-
-   2. Run the install script which will invoke the native package manager. If
-      you are doing a Tar self-install, the install script will complete the
-      installation for you.
-
-      sudo ./install
+   3. Answer the questions as prompted.
 
 
 Windows Release Details
@@ -146,7 +100,7 @@ This is the procedure to remove Appweb on all systems except Windows.
 
    1. Run the uninstall script in the install directory for Appweb by typing:
 
-      sudo /usr/lib/appweb/bin/uninstall
+      sudo /usr/lib/appweb/latest/bin/uninstall
 
 If you installed the Appweb Windows Installer image, follow these steps to remove Appweb. If you installed the Tar
 self-install image, you will need to remove Appweb using the procedure described above. 

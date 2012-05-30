@@ -1,7 +1,7 @@
-{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf320
+{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf470
 {\fonttbl\f0\fswiss\fcharset0 Helvetica;}
 {\colortbl;\red255\green255\blue255;}
-\margl1440\margr1440\vieww16360\viewh8980\viewkind0
+\margl1440\margr1440\vieww16700\viewh14780\viewkind0
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
 
 \f0\b\fs28 \cf0 Embedthis Appweb(TM)
@@ -21,10 +21,8 @@ Table of Contents\
 * System Requirements\
 * Installation Package Formats\
 * Development Environment Platform Support\
-* Installating the Tar Self-Install Image\
 * Removing Embedthis Appweb\
 * Apple MAC OS X  Release Details\
-* Linux Release Details\
 * Windows Release Details\
 * Running Appweb\
 * Building from the Source Code\
@@ -33,10 +31,13 @@ Table of Contents\
 \
 System Requirements\
 \
-Operating System Support\
+Binary Package Operating System Support\
 \
     * Windows XP, Vista, Windows-7 (x86,x86_64)\
     * Mac OS X 10.4, 10.5 (x86,x86_64)\
+\
+For other operating systems, download the source package and build then install.\
+Supported operating systems via source code:\
     * Linux 2.4, 2.6 (x86,,x86_64arm,ppc,sparc,xscale,mips)\
     * VxWorks (x86,arm,ppc,sparc,xscale,mips)\
     * Solaris (sparc,x86,x86_64)\
@@ -55,25 +56,14 @@ To rebuild Appweb from source code on your development system, you will need at 
 \
     * 80 MB disk space\
 \
+\ul Installation Package Formats\ulnone \
 \
-Installation Package Formats\
-\
-The Appweb binary installation is published in several formats:\
+The Appweb binary installation is published in two formats:\
 \
     * Native Apple MAC OS X DMG/PKG format\
-    * Native Linux RPM format\
-    * Native Linux Debian format\
     * Native Windows installer format\
-    * Tar format for custom self installs.\
 \
-Most formats are wrapped in a compressed Tar archive with this README.TXT file.  It is recommended that you use one of the native O/S formats if your system supports it. The native formats will typically register the software installation with your system's software manager so that you can query, verify, and easily manage the software on your system.  The installation package includes binaries, development libraries, and headers.  \
-\
-The Tar format consists of tar archives that you can manually extract for maximum control over the placement of various product components.\
-\
-For those looking to build from source code, you will need to download the separate source code distribution. The product documentation describes how to build from source. \
-\
-\
-Development Environment Platform Support\
+\ul Development Environment Platform Support\ulnone \
 \
 If you wish to embed Appweb in your application or build Appweb from source code, you will need to use a C compiler and associated development tools.  Several development environments are supported.  You may choose any of the following:\
 \
@@ -85,56 +75,18 @@ If you wish to embed Appweb in your application or build Appweb from source code
     * WindRiver Tornado Development Tools\
 \
 \
-Installating the Tar Self-Install Image\
-\
-This is the procedure to to install the self-install Tar format image:\
-\
-   1. Uncompress and extract the image by typing\
-\
-      tar xvzf appweb-VERSION-BUILD-DIST-OS-ARCH.FMT.tgz\
-\
-      where FMT is "tar".\
-\
-   2. Invoke the installation script with administrator privilege\
-\
-      sudo ./install\
-\
-\
-\
-Apple Mac OS X Release Details\
+\ul Apple Mac OS X Release Details\ulnone \
 \
 To install the native MAC OS X DMG image:\
 \
-   1. Download the DMG image.\
+   1. Download the PKG image.\
 \
-   2. Double click on the DMG file image. This will mount a new drive called\
-      appweb-VERSION. Double click on this drive to display its contents.\
- \
-   3. Double click on the "appweb.mpkg" image.\
-\
-   4. Answer the questions as prompted.\
+   2. Double click on the PKG file image. \
+   \
+   3. Answer the questions as prompted.\
 \
 \
-Linux Release Details\
-\
-The installation images all include an "install" script that will intelligently invoke the appropriate native software package manager such as "rpm" or dpkg as required.\
-\
-To install a Linux image:\
-\
-   1. Uncompress and extract the image by typing:\
-\
-      tar xvfz appweb-VERSION-BUILD-DIST-LINUX-ARCH.FMT.tgz\
-\
-      Where FMT is "rpm" or "deb".\
-\
-   2. Run the install script which will invoke the native package manager. If\
-      you are doing a Tar self-install, the install script will complete the\
-      installation for you.\
-\
-      sudo ./install\
-\
-\
-Windows Release Details\
+\ul Windows Release Details\ulnone \
 \
 To install the Windows Installer image:\
 \
@@ -147,13 +99,13 @@ To install the Windows Installer image:\
    3. Double click on the setup.exe image to run it.\
 \
 \
-Removing Appweb\
+\ul Removing Appweb\ulnone \
 \
 This is the procedure to remove Appweb on all systems except Windows.\
 \
    1. Run the uninstall script in the install directory for Appweb by typing:\
 \
-      sudo /usr/lib/appweb/bin/uninstall\
+      sudo /usr/lib/appweb/latest/bin/uninstall\
 \
 If you installed the Appweb Windows Installer image, follow these steps to remove Appweb. If you installed the Tar\
 self-install image, you will need to remove Appweb using the procedure described above. \
@@ -165,7 +117,7 @@ self-install image, you will need to remove Appweb using the procedure described
    3. Select the Embedthis Appweb and choose remove.\
 \
 \
-Running Appweb\
+\ul Running Appweb\ulnone \
 \
 Appweb will start when the Appweb installation procedure completes and on some systems, will launch your browser directed at the Appweb local home page.  Thereafter, Appweb will automatically start if the system is rebooted. If you wish to manually stop Appweb, type:\
 \
@@ -191,12 +143,12 @@ or get the command help via:\
 Appweb is configured by default to listen on port 80. To test that it is serving pages, point your browser at http://localhost/. \
 \
 \
-Building from the Source Code\
+\ul Building from the Source Code\ulnone \
 \
 If you wish to rebuild the Appweb product from the distributed source code, please download the source code distribution from the Embedthis web site. Then read "Building from Source" in the Appweb product documentation for an explanation of the necessary steps to successfully rebuild the product.\
 \
 \
-License and Copyright Information\
+\ul License and Copyright Information\ulnone \
 \
 This software is supplied under license. Both a GNU and commercial license are available. Please read LICENSE.TXT for details. This documentation and the software described in this document may be used and copied only in accordance with the terms of the accompanying license agreement. Product and technical information in this document is subject to change without notice and does not represent a commitment on the part of Embedthis Software LLC.\
 \
