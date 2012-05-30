@@ -67,8 +67,9 @@
         - Module Block diagram
         - Key objects
 -->
-            <p>The Appweb HTTP web server is a compact, modular, high-performance, embedded web server. It supports an
-            extensive feature set including: HTTP/1.1, TLS/SSL, CGI, PHP, ESP, Ejscript, Virtual Hosts, Digest
+            <p>The Appweb HTTP web server is the fastest little web server. It is a high-performance yet compact
+            embeddable webserver that has a modular, secure core.  It supports an extensive feature set including:
+            HTTP/1.1, TLS/SSL, CGI, PHP, ESP, Ejscript, Virtual Hosts, Digest
             Authentication, Apache style configuration, and logging and security sandboxing. Yet Appweb remains very
             small (from 1MB) and exceptionally fast (&gt; 7,000 requests per second).</p>
             <p>Appweb supports dynamic web application frameworks like ESP, Ejscript and PHP. It also supports older
@@ -94,10 +95,9 @@
             embedded, the application can provide data and respond to requests over HTTP. For devices, Appweb can be
             configured with the minimal required set of features for minimal memory and security footprint.</p>
             <h3>Proxied</h3>
-            <p>Appweb is an ideal application web server when running behind a reverse proxy such as Apache. The
+            <p>Appweb is an ideal application web server when running behind a reverse proxy. The
             reverse proxy dispatches incoming requests to a set of Appweb instances which can effectively host
             ESP, Ejscript or PHP applications.</p>
-            <img src="../../images/proxied.jpg" alt="" /> 
             
             <a name="processing" id="processing"></a>
             <h2 class="section">Processing Architecture</h2>
@@ -138,7 +138,7 @@
                 </thead>
                 <tbody>
                 <tr>
-                    <td class="nowrap">Embedthis Portable Runtime</td>
+                    <td class="nowrap">Multithreaded Portable Runtime</td>
                     <td>Cross-platform, multi-threaded portable runtime. Includes services for memory allocation,
                     dynamic module loading, safe string handling, lists, hashing, command execution, socket
                     communications, threads, thread synchronization, thread-pool, events, timers, debug trace and
@@ -158,14 +158,14 @@
                     uses special O/S APIs to directly copy files to the network.</td>
                 </tr>
                 <tr>
-                    <td>Ejscript Module</td>
-                    <td>Ejscript Web Framework Handler. This is a Server-Side JavaScript web application framework.
-                    Ideal for dynamic web applications.</td>
-                </tr>
-                <tr>
                     <td>ESP Handler</td>
                     <td>The Embedded Server Pages (ESP) web framework is an advanced, Model,View,Controller "C" 
                         language web framework.</td>
+                </tr>
+                <tr>
+                    <td>Ejscript Handler</td>
+                    <td>Ejscript Web Framework Handler. This is a Server-Side JavaScript web application framework.
+                    Ideal for dynamic web applications.</td>
                 </tr>
                 <tr>
                     <td>PHP Handler</td>
@@ -276,39 +276,39 @@ HeaderName: value
                 </thead>
                 <tbody>
                 <tr>
-                    <td>AUTHORIZATION</td>
+                    <td>Authorization</td>
                     <td>Authorization details including user name, realm, password digest and other authorization
                     parameters to implement Basic and Digest authentication.</td>
                 </tr>
                 <tr>
-                    <td>CONNECTION</td>
+                    <td>Connection</td>
                     <td>Describe how the TCP/IP connection should be managed when the request completes.</td>
                 </tr>
                 <tr>
-                    <td>CONTENT_LENGTH</td>
+                    <td>Content-Length</td>
                     <td>Length of any addition data with a POST request.</td>
                 </tr>
                 <tr>
-                    <td>CONTENT_TYPE</td>
+                    <td>Content-Type</td>
                     <td>Mime types the client prefers to accept in response to this request.</td>
                 </tr>
                 <tr>
-                    <td>COOKIE</td>
+                    <td>Cookie</td>
                     <td>Cookie associated with the URI in the clients cookie cache.</td>
                 </tr>
                 <tr>
-                    <td>HOST</td>
+                    <td>Host</td>
                     <td>Name to the target host to serve the request. This specifies the host name when using virtual
                     hosting.</td>
                 </tr>
                 <tr>
-                    <td>IF_MODIFIED_SINCE</td>
+                    <td>If-Modified-Since</td>
                     <td>Only return the content if it has been modified since the date specified. Clients who have
                     cached copies of a document (or graphics) use this header to allow the server to skip copying the
                     document if it has not changed.</td>
                 </tr>
                 <tr>
-                    <td>KEEP-ALIVE</td>
+                    <td>Keep-Alive</td>
                     <td>Request the server to keep the connection alive so that subsequent requests can reuse the
                     connection.</td>
                 </tr>
@@ -372,12 +372,23 @@ AddHandler espHandler myDoc
                 <li>Zero or more filters</li>
                 <li>One network connector</li>
             </ul>
-            <p>The Appweb HTTP core is responsible for parsing the incoming HTTP request and for creating the request
-            pipeline. A new request pipeline is established for each request. Depending on the request type, a
-            different handler may be required. There are handlers for PHP, CGI, Ejscript and static file data. The
-            incoming and outgoing pipelines are constructed separately as each direction may require a different set of
-            filters. After processing, generating and filtering the data, it is the job of the network connector to
-            transmit the response to the client.</p>
+
+            <h3>Http Core</h3>
+            <p>The Appweb HTTP core is responsible for parsing the incoming HTTP request. The HTTP request first line
+            specifies the request URI resource and the request headers provide additional context. The HTTP core stores
+            the parsed headers for use by the routing engine and creates a new request pipeline to process the request.
+            The incoming and outgoing pipelines are constructed separately as each direction may require a different set
+            of filters.</p>
+            
+            <h3>Routing Engine</h3>
+            <p>The routing engine matches the request against the configured request routes and selects the best 
+            route for the request. A route specifies the handler to manage the request and other context such as where
+            to find documents to serve. The routing engine may rewrite the request and then reroute. The engine 
+            also manages HTTP authorization.</p>
+
+            <p>Depending on the request URI and headers, the appropriate handler will be selected.  There are handlers
+            for ESP, PHP, CGI, Ejscript and static file data.</p>
+
             <h3>Handlers</h3>
             <p>The handler is responsible for receiving the request and creating a response. It generates response
             content based on the HTTP request URI, headers, any associated body data, and potential application session
@@ -399,11 +410,7 @@ AddHandler espHandler myDoc
             <p>Appweb uses filters to implement Transfer Authorization, Chunk Encoding and HTTP Ranged requests. By
             using filters to implement these features, they automatically become available to all handlers and all
             content types.</p>
-            <h4>Auth Filter</h4>
-            <p>Appweb configures the Auth filter as the first filter of the incoming pipeline. If the accessing user is
-            not authorized, the Auth filter will terminate processing of the request, and send an authorization error
-            back to the client via the outgoing pipeline. If the user is authorized, the Auth filter will do nothing
-            further. Appweb will then proceed with pipeline processing.</p>
+
             <h3>Connectors</h3>
             <p>The connector is responsible for transmitting the outgoing data to the client. It receives a set of
             packets representing the data to send to the client. The connector is responsible for requesting the Appweb

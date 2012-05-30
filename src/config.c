@@ -738,10 +738,17 @@ static int errorDocumentDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    ErrorLog logSpec
+    ErrorLog path
+        [size=bytes] 
+        [level=0-9] 
+        [backup=count] 
+        [append] 
+        [anew]
+        [stamp=period]
  */
 static int errorLogDirective(MaState *state, cchar *key, cchar *value)
 {
+    MprTime     stamp;
     char        *option, *ovalue, *tok, *path;
     ssize       size;
     int         level, flags, backup;
@@ -751,6 +758,7 @@ static int errorLogDirective(MaState *state, cchar *key, cchar *value)
         return 0;
     }
     size = INT_MAX;
+    stamp = 0;
     level = 0;
     backup = 0;
     path = 0;
@@ -777,6 +785,9 @@ static int errorLogDirective(MaState *state, cchar *key, cchar *value)
             } else if (smatch(option, "anew")) {
                 flags |= MPR_LOG_ANEW;
 
+            } else if (smatch(option, "stamp")) {
+                stamp = atoi(gettime(ovalue));
+
             } else {
                 mprError("Unknown option %s", option);
             }
@@ -801,6 +812,9 @@ static int errorLogDirective(MaState *state, cchar *key, cchar *value)
     }
     mprSetLogLevel(level);
     mprLogHeader();
+    if (stamp) {
+        httpSetTimestamp(gettime(value));
+    }
     return 0;
 }
 
@@ -1275,21 +1289,6 @@ static int logRoutesDirective(MaState *state, cchar *key, cchar *value)
         mprRawLog(0, "\nHTTP Routes for the '%s' host:\n\n", state->host->name ? state->host->name : "default");
         httpLogRoutes(state->host, smatch(full, "full"));
     }
-    return 0;
-}
-
-
-/*
-    LogStamp timeSpec
- */
-static int logStampDirective(MaState *state, cchar *key, cchar *value)
-{
-    cchar   *period;
-
-    if (!maTokenize(state, value, "%S", &period)) {
-        return MPR_ERR_BAD_SYNTAX;
-    }
-    httpSetTimestamp(gettime(value));
     return 0;
 }
 
@@ -2378,7 +2377,6 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "Load", loadDirective);
     maAddDirective(appweb, "Log", logDirective);
     maAddDirective(appweb, "LogRoutes", logRoutesDirective);
-    maAddDirective(appweb, "LogStamp", logStampDirective);
     maAddDirective(appweb, "LoadModulePath", loadModulePathDirective);
     maAddDirective(appweb, "LoadModule", loadModuleDirective);
 
