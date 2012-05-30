@@ -8,12 +8,12 @@
     <meta name="description" content="Embedthis Sofware provides commercial and open source embedded web servers for 
         devices and applications." />
 	<meta name="robots" content="index,follow" />
-    <link href="http://www.google.com/cse/style/look/default.css" type="text/css" rel="stylesheet" />
 	<link href="../../../doc.css" rel="stylesheet" type="text/css" />
 	<link href="../../../print.css" rel="stylesheet" type="text/css" media="print"/>
     <!--[if IE]>
     <link href="../../../iehacks.css" rel="stylesheet" type="text/css" />
     <![endif]-->
+    <link href="http://www.google.com/cse/style/look/default.css" type="text/css" rel="stylesheet" />
 </head>
 
 <body>
@@ -138,43 +138,34 @@ int maTurboConnectorInit(Http *http, MprModule *module)
             <h2 class="section">Pipeline Stages Callbacks</h2>
             <p>Pipeline stages can optionally provide callback functions which are run at various stages of the HTTP
             request processing. If they are not provided, a default implementation is used.</p>
-
             <h3>match</h3>
             <p>This callback is invoked to test if the current request should be serviced by the stage. It is invoked
             after the request headers are parsed by the Appweb core and before running the request pipeline. If the
             callback returns false, the stage is removed from the pipeline.</p>
-
             <h3>open</h3>
             <p>This callback is invoked to give the stage a chance to initialize for a given request and potentially
             allocate any request specific data or state. It is called at the start of request processing after the
             <em>match</em> callback.</p>
-
             <h3>close</h3>
             <p>The <em>close</em> callback is invoked to give stages an opportunity to release any request specific data. It
             is invoked just prior to dismantling the request pipeline.</p>
-
             <h3>start</h3>
             <p>The <em>start</em> callback is invoked to start processing the response for the client. 
             If the request is a form with Content-Type of "application/x-www-form-urlencoded",
             the start callback is called after processing all input client data. Otherwise, it is called before 
             any input data.</p>
-
             <h3>ready</h3>
             <p>The <em>ready</em> callback is invoked once all the request body data has bee received.</p>
-
             <h3>writable</h3>
             <p>The <em>writable</em> callback is invoked after receiving all body data and whenever the output pipeline
             can absorb more data.</p>
-
             <h3>incoming</h3>
             <p>The <em>incoming</em> callback is invoked to receive any incoming client data (typically POST or PUT
             data). It is called after the <em>open</em> callback and before the <em>start</em> callback.</p>
-
             <h3>outgoing</h3>
             <p>The <em>outgoing</em> callback is never called for handlers. Handlers generate data and send it downstream.
             Filters and connectors will have their outgoing callback invoked to receive data from upstream. The
             outgoing callback will be invoked after the <em>start</em> callback has been called for the handler.</p>
-
             <h3>Stage Data</h3>
             <p>Stages can allocate stage data and store it in the <em>stage-&gt;data</em> field. If the stage needs to
             store per-request data, it can store it in the stage's <em>queue-&gt;data</em> field which is unique for each
@@ -237,7 +228,6 @@ int maTurboConnectorInit(Http *http, MprModule *module)
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->
-
 	<div class="bottom">
 		<p class="footnote"> 
             <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2012.

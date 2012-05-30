@@ -12,23 +12,16 @@
     <!--[if IE]>
     <link href="../iehacks.css" rel="stylesheet" type="text/css" />
     <![endif]-->
+    <link href="http://www.google.com/cse/style/look/default.css" type="text/css" rel="stylesheet" />
 </head>
 <body>
     <div class="top">
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                 <form method="get" action="http://www.google.com/search" title="Search embedthis.com">
-                     <p>
-                        <label title="Search">Search</label> 
-                        <input type="text" id="q" name="q" size="15" maxlength="255" />
-                        <input type="submit" id="submit" value="Go" /> 
-                        <input type="hidden" name="domains" value="embedthis.com" /> 
-                        <input type="hidden" name="sitesearch" value="embedthis.com" />
-                    </p>
-                 </form>
-              </div>
-            <!--TITLE-->Embedthis Appweb 4.0.0
+                <div id="cse-search-form"></div>
+                <div class="version"><!--TITLE-->Embedthis Appweb 4.0.0</div>
+            </div>
         </div>
         <div class="crumbs">
             <a href="../product/index.html">Home</a>
@@ -60,7 +53,7 @@
 <h1>MPR - MPR API Native API</h1>
 <a name="mpr.h"></a>
 <p>The Multithreaded Portable Runtime (MPR) is a portable runtime library for embedded applications.</p>
-<p><br/><br/>
+<p>
  The MPR provides management for logging, error handling, events, files, http, memory, ssl, sockets, strings, xml parsing, and date/time functions. It also provides a foundation of safe routines for secure programming, that help to prevent buffer overflows and other security threats. The MPR is a library and a C API that can be used in both C and C++ programs. <br/><br/>
  The MPR uses a set extended typedefs for common types. These include: bool, cchar, cvoid, uchar, short, ushort, int, uint, long, ulong, int32, uint32, int64, uint64, float, and double. The cchar type is a const char, cvoid is const void. Several types have &quot;u&quot; prefixes to denote unsigned qualifiers. <br/><br/>
  The MPR includes a memory allocator and generational garbage collector. The allocator is a fast, immediate coalescing allocator that will return memory back to the O/S if not required. It is optimized for frequent allocations of small blocks (&lt; 4K) and uses a scheme of free queues for fast allocation. <br/><br/>
@@ -13569,7 +13562,6 @@ Configured minimum.
             </div>
         </div>
 <!-- BeginDsi "dsi/bottom.html" -->
-
 	<div class="bottom">
 		<p class="footnote"> 
             <a href="../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2012.
@@ -13588,8 +13580,5 @@ Configured minimum.
         customSearchControl.draw('cse-search-form', options);
       }, true);
     </script>
-</body>
-</html>
-<!-- EndDsi -->
 </body>
 </html>

@@ -8,12 +8,12 @@
     <meta name="description" content="Embedthis Sofware provides commercial and open source embedded web servers for 
         devices and applications." />
 	<meta name="robots" content="index,follow" />
-    <link href="http://www.google.com/cse/style/look/default.css" type="text/css" rel="stylesheet" />
 	<link href="../../../doc.css" rel="stylesheet" type="text/css" />
 	<link href="../../../print.css" rel="stylesheet" type="text/css" media="print"/>
     <!--[if IE]>
     <link href="../../../iehacks.css" rel="stylesheet" type="text/css" />
     <![endif]-->
+    <link href="http://www.google.com/cse/style/look/default.css" type="text/css" rel="stylesheet" />
 </head>
 
 <body>
@@ -91,7 +91,6 @@
 </pre>
             <p>The LoadModule directive causes Appweb to load a shared library containing your handler. The SetHandler
             directive then defines the handler to serve all requests that begin with <em>/my/</em>.</p>
-
             <a id="pipeline"></a>
             <h2>Request Pipeline</h2>
             <p>When configured for a route, a handler sets at one end of the request pipeline. The pipeline is a full-duplex
@@ -111,7 +110,6 @@
             <p>If a queue does not define a put() method, the default put() method will be used which queues data onto the
             service queue. The default incoming put() method joins incoming packets into a single packet on the service
             queue.</p>
-
             <a id="packets"></a>
             <h3>Packets</h3>
             <p>Packets are an instance of the 
@@ -119,7 +117,6 @@
             store data and can be passed through the pipeline without copying. Appweb network connectors are optimized
             to write packets to network connections using scatter/gather techniques so multiple packets can be written
             in one O/S system call.</p>
-
             <a id="callbacks"></a>
             <h3>Handler Callbacks</h3>
             <p>A handler integrates into the pipeline via its two queues. Furthermore, the handler defines an extended
@@ -143,11 +140,9 @@
                 <tr><td>close</td><td>Close the request. Corresponds to the queue close callback.</td></tr>
                 </tbody>
             </table>
-
             <p>When the pipeline is constructed for a request, the relevant handler callbacks 
             (open, close, incomingData, outgoingService) callbacks will be copied into the relevant queue callbacks
             (open, close, put, service). The handler callbacks are discussed in more detail below.</p>
-
             <a id="flow"></a>
             <h3>Handler Data Flow</h3>
             <p>A handler will receive request body data via its <em>incomingData</em> callback on its read queue. The
@@ -168,7 +163,6 @@
             the output queue is full. If the output queue is full, the handler should pause generating the response
             and wait until the queue has drained sufficiently. When that occurs, the <em>writable</em> callback will be
             invoked.</p>
-
             <a id="pipelineLifecycle"></a>
             <h2>Pipeline Life Cycle</h2>
             <p>When a request is received from the client, the Appweb Http engine parses the Http request headers and
@@ -243,7 +237,6 @@ httpError(conn, 504, HTTP_ABOR, "Can't continue with the request");
             to redirect the client. For example:
             <pre>httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, uri);</pre>
             <h3>Generating Response Body</h3>
-
             <p>The simplest way to generate a response is to use 
             <a href="../../../api/http.html#group___http_queue_1ga5599a178a2bab73929795952231d6e6a">httpWrite</a>. 
             This is effective if the total response content can be buffered in the pipeline and socket without blocking.
@@ -295,7 +288,6 @@ static void writable(HttpQueue *q)
             <p>If a handler puts data onto a service queue, it should call 
             <a href="../../../api/http.html#group___http_rx_1gaf5503f75323ec0c6df1b3ee5615ad496">httpPump</a> to enable
             the pipeline to advance and potentially invoke the handler's <em>writable</em> callback.</p>
-
         <a id="paradigms"></a>
         <h2>Response Paradigms</h2>
         <p>In summary, a handler may use one of several paradigms to implement how it responds to requests.</p>
@@ -347,7 +339,6 @@ mprCreateEvent(q-&gt;conn-&gt;dispatcher, "deviceEvent", 0, doMoreOutput, q, 0);
         the memory for these objects.</p>
         <p>When output is complete, httpFinalize should be called to signal the completion of the request. After writing
         or completing the request, httpPump() should be called to perform pipeline processing on the request.</p>
-
         <a id="coding"></a>
         <h2>Coding Issues</h2>
         <p>There are a few coding issues to keep in mind when creating handlers. Appweb is a multithreaded, event loop
@@ -361,7 +352,6 @@ mprCreateEvent(q-&gt;conn-&gt;dispatcher, "deviceEvent", 0, doMoreOutput, q, 0);
         they block and are not calling an MPR function that blocks. This ensures that the garbage collector can work and
         collect memory while the worker thread is asleep. Handlers do not need to call mprYield when executing on
         threads that were created outside of the MPR (i.e. not MPR worker threads).</p>
-
         <a id="defining"></a>
         <h2>Defining a Handler</h2>
         <p>To define an Appweb handler, you must do three things:
@@ -414,7 +404,6 @@ int maMyModuleInit(Http *http, MprModule *mp)
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->
-
 	<div class="bottom">
 		<p class="footnote"> 
             <a href="../../../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2012.
