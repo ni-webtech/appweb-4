@@ -786,7 +786,7 @@ static int errorLogDirective(MaState *state, cchar *key, cchar *value)
                 flags |= MPR_LOG_ANEW;
 
             } else if (smatch(option, "stamp")) {
-                stamp = atoi(gettime(ovalue));
+                stamp = gettime(ovalue);
 
             } else {
                 mprError("Unknown option %s", option);
@@ -813,7 +813,7 @@ static int errorLogDirective(MaState *state, cchar *key, cchar *value)
     mprSetLogLevel(level);
     mprLogHeader();
     if (stamp) {
-        httpSetTimestamp(gettime(value));
+        httpSetTimestamp(stamp);
     }
     return 0;
 }
