@@ -56,7 +56,6 @@
                 <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
                 <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
                 <li><a href="../../../guide/appweb/users/modules.html">Appweb Modules</a></li>
-                <li><a href="../../../guide/appweb/users/handlers.html">Appweb Handlers</a></li>
                 <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
                 <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
@@ -68,14 +67,14 @@
             <h1>Security Considerations</h1>
             <p>Securing applications that are accessible to the Internet is not a trivial task. This page outlines some
             of the issues, and offers tips to help you secure your application using the Embedthis Appweb
-            product.</p><a name="updates" id="updates"></a>
+            product.</p><a id="updates"></a>
             <h2 class="section">Updates</h2>
             <p>Even the best application or HTTP server can experience some security vulnerabilities that are
             discovered after being deployed in the field. It is highly recommended that you stay up to date with the
             latest version of Appweb.</p>
             <p><a href="http://www.embedthis.com/">Embedthis</a> offers a Security Enhancement Service as part of an
             Appweb commercial license that will proactively notify you of any security flaws and will expedite fixes or
-            workarounds to minimize the vulnerability.</p><a name="account" id="account"></a>
+            workarounds to minimize the vulnerability.</p><a id="account"></a>
             <h2 class="section">Appweb User Account</h2>
             <p>It is important that you run Appweb with the lowest system privilege that will get the job done. If any
             application is compromised, including Appweb, then the system will be safest if the compromised application
@@ -98,7 +97,7 @@
                 <li>Give the account read and execute rights to all HTML documents.</li>
                 <li>Give the account read, write, execute and delete rights to the logs directory.</li>
                 <li>Give the account read and execute rights to the appweb.exe and the DLLs in the libs directory.</li>
-            </ul><a name="directoryPermissions" id="directoryPermissions"></a>
+            </ul><a id="directoryPermissions"></a>
             <h2 class="section">Directory and File Permissions</h2>
             <p>When Appweb is installed, it is configured for maximum security. This section explains the policy 
             should you need to move or modify files and directories.</p>
@@ -128,7 +127,7 @@ cd    /etc/appweb
 chown root . lib logs
 chgrp root . lib logs
 chmod 755  . lib logs
-</pre><a name="dynamicContent" id="dynamicContent"></a>
+</pre><a id="dynamicContent"></a>
             <h2 class="section">Dynamic Content</h2>
             <p>Appweb supports several Web Frameworks for creating dynamic content. These frameworks sometimes require
             special security considerations because they are executing code or scripts to render the content.</p>
@@ -199,16 +198,16 @@ AddType application/x-httpd-php .web
             you use the <a href="../../../api/mpr.html">MPR</a> services for all your ESP code. This portable runtime
             has been extensively tested and includes routines to guard against common buffer overflows and other such
             exploits.</p>
-            <a name="ssl" id="ssl"></a>
+            <a id="ssl"></a>
             <h2 class="section">SSL Servers</h2>
             <p>If you configure a SSL virtual server, remember to define a separate DocumentRoot if you want to only
             serve private content to SSL users. Otherwise those pages will also be visible via the default
-            server.</p><a name="authentication" id="authentication"></a>
+            server.</p><a id="authentication"></a>
             <h2 class="section">Authentication</h2>
             <p>It is highly recommended that you use only <a href="authorization.html#digestAuthentication">Digest</a>
             authentication and not Basic authentication. As implemented in Appweb, digest authentication provides many
             safeguards against known exploits including; man-in-the-middle attacks, client spoofing, and replay
-            attacks.</p><a name="sandBoxing" id="sandBoxing"></a>
+            attacks.</p><a id="sandBoxing"></a>
             <h2 class="section">Sandboxing</h2>
             <p>Sandboxing is the term applied to running Appweb in a confined environment. When embedding a HTTP server
             in an application, the profile of client access is often well known. This profile includes the rate of
@@ -292,7 +291,7 @@ AddType application/x-httpd-php .web
                 </tbody>
             </table>
             <p>See the <a href="dir/sandbox.html">Sandbox Directives</a> and <a href="dir/perf.html">Performance
-            Directives</a> for further details.</p><a name="logFiles" id="logFiles"></a>
+            Directives</a> for further details.</p><a id="logFiles"></a>
             <h2 class="section">Log Files</h2>
             <p>Appweb will log satisfied requests to the access log (usually logs/access.log) and errors to the error
             log (usually logs/error.log). It is recommended that you regularly review these logs for suspicious
@@ -307,18 +306,17 @@ AddType application/x-httpd-php .web
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript"> 
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl(
-      '000262706376373952077:1hs0lhenihk');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-    customSearchControl.draw('cse-search-form', options);
-  }, true);
-</script>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> 
+      google.load('search', '1', {language : 'en'});
+      google.setOnLoadCallback(function() {
+        var customSearchControl = new google.search.CustomSearchControl(
+          '000262706376373952077:1hs0lhenihk');
+        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+        var options = new google.search.DrawOptions();
+        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        customSearchControl.draw('cse-search-form', options);
+      }, true);
+    </script>
 </body>
 </html>
-<!-- EndDsi -->

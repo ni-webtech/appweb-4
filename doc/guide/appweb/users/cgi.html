@@ -37,7 +37,7 @@
             <ul class="nav">
                 <li><a href="#configuringCgi">Configuring CGI</a></li>
                 <li><a href="#invoking">Invoking CGI Programs</a></li>
-                <li><a href="#cgiProgramming"></a></li>
+                <li><a href="#cgiProgramming">CGI Programming</a></li>
                 <li><a href="#environmentVariables">Environment Variables</a></li>
                 <li><a href="#cgiProgramming">CGI Programming</a></li>
                 <li><a href="#hints">Hints and Tips</a></li>
@@ -56,7 +56,6 @@
                 <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
                 <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
                 <li><a href="../../../guide/appweb/users/modules.html">Appweb Modules</a></li>
-                <li><a href="../../../guide/appweb/users/handlers.html">Appweb Handlers</a></li>
                 <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
                 <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
@@ -77,7 +76,7 @@
             PHP</a>.</p>
             <p>Embedthis Appweb supports CGI so that existing CGI applications can be fully supported. Appweb has a
             high-performance and fully featured CGI Handler that alleviates many of the pains with configuring CGI
-            setup.</p><a name="configuringCgi" id="configuringCgi"></a>
+            setup.</p><a id="configuringCgi"></a>
             <h2 class="section">Configuring CGI Programs</h2>
             <p>Requests for CGI programs may be configured in two primary ways:</p>
             <ul>
@@ -98,11 +97,11 @@ ScriptAlias /cgi-bin/ $SERVER_ROOT/cgi-bin/
 </pre>
             <p>The ScriptAlias directive above is short hand for:
 <pre>
-&lt;Route /cgi-bin/>
+&lt;Route /cgi-bin/&gt;
     DocumentRoot $SERVER_ROOT/cgi-bin/
     SetHandler cgiHandler
     Target run
-&lt;/Route>
+&lt;/Route&gt;
 </pre>
             <p>When a URI is requested by a browser that includes the "<em>/cgi-bin/</em>" prefix, the 
             script name immediately after "/cgi-bin/" will be run. For example:</p>
@@ -129,7 +128,7 @@ application/x-appweb-perl myExt
 Action application/x-appweb-perl /usr/bin/perl
 </pre>
             <p>This will cause /usr/bin/perl to be run to process the request. Output from perl is captured by the CGI
-            handler and then returned to the user's browser.</p><a name="invoking" id="invoking"></a>
+            handler and then returned to the user's browser.</p><a id="invoking"></a>
             <h2 class="section">Invoking CGI Programs</h2>
             <p>When a CGI program is run, the Appweb CGI handler communicates request information to the CGI program
             via Environment Variables and in some cases, via the command line.</p>
@@ -245,8 +244,7 @@ Action application/x-appweb-perl /usr/bin/perl
             </table>
             <p>The "Command" is a quoted string set to the name of the CGI script originally specified in the URI
             followed by the Query String, split at "+" characters. The entire Command string is escaped so that
-            dangerous characters are preceded by "^" to prevent security attacks.</p><a name="environmentVariables" id=
-            "environmentVariables"></a>
+            dangerous characters are preceded by "^" to prevent security attacks.</p><a id="environmentVariables"></a>
             <h2 class="section">CGI Environment Variables</h2>
             <p>CGI uses environment variables to send your program additional parameters. The following environment
             variables are defined:</p>
@@ -463,8 +461,7 @@ http://hostname/cgi-bin/cgiProgram/extra/Path?var1=a+a&amp;var2=b%20b&amp;var3=c
             <p>When a URI is sent via HTTP, certain special characters must be escaped so the URI can be processed
             unambiguously by the server. To escape the special characters, the HTTP client should convert them to their
             %hex equivalent. Form and query variables are separated by "&amp;". For example: a=1&amp;b=2 defines two
-            form variables "a" and "b" with their values equal to "1" and "2" respectively.</p><a name="cgiProgramming"
-            id="cgiProgramming"></a>
+            form variables "a" and "b" with their values equal to "1" and "2" respectively.</p><a id="cgiProgramming"></a>
             <h2 class="section">CGI Programming</h2>
             <p>CGI program can return almost any possible content type back to the client's browser: plain HTML, audio,
             video or any other format. CGI programs can also control the user's browser and redirect it to another URI.
@@ -513,11 +510,10 @@ Location: /newUrl.html
 </pre>To signify an error in the server:
             <pre>
 Status: 500
-</pre><a name="hints" id="hints"></a>
+</pre><a id="hints"></a>
             <h2 class="section">Hints and Tips</h2>
             <p>If you have special data or environment variables that must be passed to your CGI program, you can wrap
-            it with a script that defines that environment before invoking your script.</p><a name="otherResources" id=
-            "otherResources"></a>
+            it with a script that defines that environment before invoking your script.</p><a id="otherResources"></a>
             <h2 class="section">Other Resources</h2>
             <p>The following URIs may be helpful in further reading about CGI:</p>
             <ul>
@@ -537,18 +533,17 @@ Status: 500
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript"> 
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl(
-      '000262706376373952077:1hs0lhenihk');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-    customSearchControl.draw('cse-search-form', options);
-  }, true);
-</script>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> 
+      google.load('search', '1', {language : 'en'});
+      google.setOnLoadCallback(function() {
+        var customSearchControl = new google.search.CustomSearchControl(
+          '000262706376373952077:1hs0lhenihk');
+        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+        var options = new google.search.DrawOptions();
+        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        customSearchControl.draw('cse-search-form', options);
+      }, true);
+    </script>
 </body>
 </html>
-<!-- EndDsi -->

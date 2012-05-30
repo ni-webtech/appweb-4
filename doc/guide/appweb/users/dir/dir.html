@@ -49,7 +49,7 @@
         </div>
         <div class="contentLeft">
             <h1>Directory Directives</h1>
-            <a name="directoryIndex" id="directoryIndex"></a>
+            <a id="directoryIndex"></a>
             <h2>DirectoryIndex</h2>
             <table class="directive" title="directive">
                 <thead>
@@ -89,7 +89,7 @@
                 </tbody>
             </table>
             
-            <a name="indexOptions" id="indexOptions"></a>
+            <a id="indexOptions"></a>
             <h2>IndexOptions</h2>
             <table class="directive" title="directive">
                 <thead>
@@ -125,7 +125,7 @@
                 </tbody>
             </table>
             
-            <a name="indexOrder" id="indexOrder"></a>
+            <a id="indexOrder"></a>
             <h2>IndexOrder</h2>
             <table class="directive" title="directive">
                 <thead>
@@ -167,18 +167,17 @@
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript"> 
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl(
-      '000262706376373952077:1hs0lhenihk');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-    customSearchControl.draw('cse-search-form', options);
-  }, true);
-</script>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> 
+      google.load('search', '1', {language : 'en'});
+      google.setOnLoadCallback(function() {
+        var customSearchControl = new google.search.CustomSearchControl(
+          '000262706376373952077:1hs0lhenihk');
+        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+        var options = new google.search.DrawOptions();
+        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        customSearchControl.draw('cse-search-form', options);
+      }, true);
+    </script>
 </body>
 </html>
-<!-- EndDsi -->

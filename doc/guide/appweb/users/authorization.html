@@ -52,7 +52,6 @@
                 <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
                 <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
                 <li><a href="../../../guide/appweb/users/modules.html">Appweb Modules</a></li>
-                <li><a href="../../../guide/appweb/users/handlers.html">Appweb Handlers</a></li>
                 <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
                 <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
@@ -71,7 +70,7 @@
             <p>Appweb also supports HTML web based authentication schemes via the ESP and Ejscript web frameworks. These
             both provide access to sessions and cookies, and provide assistance in creating login dialogs.</p>
             
-            <a name="basicAuthentication" id="basicAuthentication"></a>
+            <a id="basicAuthentication"></a>
             <h2>HTTP-Based Authentication</h2>
             <p>Basic and Digest authentication are HTTP protocol mechanisms defined by the <a href=
             "http://www.w3.org/Protocols/rfc2616/rfc2616.html">HTTP/1.1</a> specification. Because they operate at the
@@ -116,8 +115,7 @@
                 <li>Require valid-user</li>
             </ul>
             <p><b>SECURITY WARNING</b>: it is essential that the AuthUserFile and the AuthGroupFile be stored outside
-            the DocumentRoot or any directory serving content.</p><a name="digestAuthentication" id=
-            "digestAuthentication"></a>
+            the DocumentRoot or any directory serving content.</p><a id= "digestAuthentication"></a>
             <h2 class="section">Digest Authentication</h2>
             <p>The Digest authentication scheme is a modern replacement for the Basic authorization scheme. It uses
             cryptographic techniques to encode passwords and does not transmit sensitive information in clear-text.</p>
@@ -134,8 +132,7 @@
 </pre>
             <p>This example restricts access to the "/acme" directory and all sub-directories to users whose username
             and password are validated against the designated user.db password file. The essential differences between
-            this example and the Basic Authorization example is the AuthType directive.</p><a name="auth" id=
-            "auth"></a>
+            this example and the Basic Authorization example is the AuthType directive.</p><a id="auth"></a>
             <h2 class="section">auth</h2>
             <p>The auth program is used to create user passwords in a nominated password file. Appweb uses the
             same authorization file and format for Digest and Basic authentication. This simplifies administration. The
@@ -154,8 +151,9 @@ auth [-c] [-p passWord] userFile realm userName
             user. If the -p password option is not used, auth will prompt for the password. The -c option will
             cause auth to create the password file, otherwise it will update the nominated userFile.</p>
             <p><b>SECURITY WARNING</b>: it is essential that the AuthUserFile and the AuthGroupFile be stored outside
-            the DocumentRoot or any directory serving content.</p><a name="beltAndSuspenders" id=
-            "beltAndSuspenders"></a>
+            the DocumentRoot or any directory serving content.</p>
+            
+            <a id="beltAndSuspenders"></a>
             <h2 class="section">Belt and suspenders</h2>
             <p>The public Internet is not a friendly place anymore, if it ever was. It is important to take adequate
             precautions and secure your web content with appropriate authorization and encryption.</p>
@@ -171,18 +169,17 @@ auth [-c] [-p passWord] userFile realm userName
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript"> 
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl(
-      '000262706376373952077:1hs0lhenihk');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-    customSearchControl.draw('cse-search-form', options);
-  }, true);
-</script>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> 
+      google.load('search', '1', {language : 'en'});
+      google.setOnLoadCallback(function() {
+        var customSearchControl = new google.search.CustomSearchControl(
+          '000262706376373952077:1hs0lhenihk');
+        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+        var options = new google.search.DrawOptions();
+        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        customSearchControl.draw('cse-search-form', options);
+      }, true);
+    </script>
 </body>
 </html>
-<!-- EndDsi -->

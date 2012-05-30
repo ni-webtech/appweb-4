@@ -68,13 +68,13 @@
             behavior and start Appweb manually if you wish.</p>
             <p>This page gives information about starting and stopping Appweb manually. Before you can run Appweb
             manually, you must first stop it running as a system service. See <a href="service.html">Running as a
-            service</a> for how to stop Appweb running as a system service.</p><a name="programs" id="programs"></a>
-            <a name="commandLine" id="commandLine"></a>
+            service</a> for how to stop Appweb running as a system service.</p><a id="programs"></a>
+            <a id="commandLine"></a>
             <h2 class="section">Appweb Command Line</h2>
             <p>The Appweb command line options are:</p>
             <pre>
 appweb [options]
-</pre><a name="appwebOptions" id="appwebOptions"></a>
+</pre><a id="appwebOptions"></a>
             <h2>Appweb Command Options</h2>
             <table title="options">
                 <thead>
@@ -129,7 +129,7 @@ appweb [options]
                         <td>Display the appweb version number</td>
                     </tr>
                 </tbody>
-            </table><a name="noconfig" id="noconfig"></a>
+            </table><a id="noconfig"></a>
             <h2 class="section">No Config File</h2>
             <p>Appweb normally reads the "appweb.conf" file for configuration directives. However, if appweb is invoked
             with an IP address or port number on the command line, Appweb will not read the configuration file. Rather, 
@@ -160,18 +160,17 @@ of the web pages.
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript"> 
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl(
-      '000262706376373952077:1hs0lhenihk');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-    customSearchControl.draw('cse-search-form', options);
-  }, true);
-</script>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> 
+      google.load('search', '1', {language : 'en'});
+      google.setOnLoadCallback(function() {
+        var customSearchControl = new google.search.CustomSearchControl(
+          '000262706376373952077:1hs0lhenihk');
+        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+        var options = new google.search.DrawOptions();
+        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        customSearchControl.draw('cse-search-form', options);
+      }, true);
+    </script>
 </body>
 </html>
-<!-- EndDsi -->

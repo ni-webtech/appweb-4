@@ -50,7 +50,6 @@
                 <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
                 <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
                 <li><a href="../../../guide/appweb/users/modules.html">Appweb Modules</a></li>
-                <li><a href="../../../guide/appweb/users/handlers.html">Appweb Handlers</a></li>
                 <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
                 <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
@@ -64,7 +63,8 @@
             mechanism of queues, packets, buffering and event scheduling. The pipeline architecture is highly optimized
             and supports the efficient transmission of data without copying.</p>
             <p>The request pipeline is comprised of an incoming and outgoing stream. Each stream is in turn comprised
-            of stages.</p><img src="../../../images/pipeline.jpg" alt="" />&lt;
+            of stages.</p>
+            <img src="../../../images/pipeline.jpg" alt="pipeline" />
             <p>Stages come in three varieties:</p>
             <ul>
                 <li>Handlers</li>
@@ -82,7 +82,7 @@
             <p>Appweb handlers typically utilize the Appweb <a href="modules.html">loadable module</a> interface and
             may be dynamically loaded and configured via the <a href="configuration.html">Appweb configuration
             file</a>. The configuration file defines the handlers to use and the order in which they are matched to a
-            given request.</p><a name="handlerProcessing" id="handlerProcessing"></a>
+            given request.</p><a id="handlerProcessing"></a>
             <h3>Handler Processing</h3>
             <p>The following is an example set of Appweb configuration file directives that loads modules and defines
             the handlers to process client requests.</p>
@@ -110,8 +110,8 @@ LoadModule file mod_file
             <p>Network connectors are the end of the outgoing stream of the pipeline. Their job is to transmit data
             back to the client. Appweb supplies two connectors. One general purpose <b>net</b> connector and a
             specialize <b>send</b> connector for static file content.</p>
-            <p>Please see the document <a href="../programmers/stages.html">Pipeline Stages</a> for programming
-            information about how to create Appweb handlers, filters and connectors.</p>
+            <p>Please see the document <a href="../programmers/stages.html">Extending via Pipeline Stages</a> for
+            programming information about how to create Appweb handlers, filters and connectors.</p>
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->
@@ -122,18 +122,17 @@ LoadModule file mod_file
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript"> 
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl(
-      '000262706376373952077:1hs0lhenihk');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-    customSearchControl.draw('cse-search-form', options);
-  }, true);
-</script>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> 
+      google.load('search', '1', {language : 'en'});
+      google.setOnLoadCallback(function() {
+        var customSearchControl = new google.search.CustomSearchControl(
+          '000262706376373952077:1hs0lhenihk');
+        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+        var options = new google.search.DrawOptions();
+        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        customSearchControl.draw('cse-search-form', options);
+      }, true);
+    </script>
 </body>
 </html>
-<!-- EndDsi -->

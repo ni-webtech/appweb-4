@@ -60,7 +60,7 @@
         <div class="contentLeft">
             <h1>ESP Directives</h1>
             <p>The ESP directives control the ESP Web Framework and configure and control ESP web applications.</p>
-            <a name="espApp" id="espApp"></a>
+            <a id="espApp"></a>
             <h2>EspApp</h2>
             <table class="directive" title="directive">
                 <thead>
@@ -92,14 +92,14 @@
                             is typically all you need to do to define an ESP application. It is loosely equivalent to the
                             following directive sequence:</p>
                             <pre>
-&lt;Route UriPrefix>
+&lt;Route UriPrefix&gt;
     <a href="route.html#prefix">Prefix</a> UriPrefix
     <a href="route.html#documentRoot">DocumentRoot</a> Directory
     <a href="route.html#addHandler">AddHandler</a> espHandler
     <a href="#espDir">EspDir</a> RouteSet
     <a href="#espRouteSet">EspRouteSet</a> RouteSet
     <a href="#espDb">EspDb</a> Database
-&lt;/Route>
+&lt;/Route&gt;
 </pre>
                             <p>The EspApp directive will create a route for the given URI prefix and will create 
                                 sub-routes if required by the RouteSet argument.</p>
@@ -140,7 +140,7 @@
                     </tr>
                 </tbody>
             </table>
-            <a name="espCompile" id="espCompile"></a>
+            <a id="espCompile"></a>
             <h2>EspCompile</h2>
             <table class="directive" title="directive">
                 <thead>
@@ -199,7 +199,7 @@
                     </tr>
                 </tbody>
             </table>
-            <a name="espDb" id="espDb"></a>
+            <a id="espDb"></a>
             <h2>EspDb</h2>
             <table class="directive" title="directive">
                 <thead>
@@ -246,7 +246,7 @@ EspDb sdb://test.sdb</pre>
                     </tr>
                 </tbody>
             </table>
-            <a name="espDir" id="espDir"></a>
+            <a id="espDir"></a>
             <h2>EspDb</h2>
             <table class="directive" title="directive">
                 <thead>
@@ -295,7 +295,7 @@ EspDir static ./web</pre>
                     </tr>
                 </tbody>
             </table>
-            <a name="espEnv" id="espEnv"></a>
+            <a id="espEnv"></a>
             <h2>EspEnv</h2>
             <table class="directive" title="directive">
                 <thead>
@@ -335,7 +335,7 @@ EspDir static ./web</pre>
                     </tr>
                 </tbody>
             </table>
-            <a name="espKeepSource" id="espKeepSource"></a>
+            <a id="espKeepSource"></a>
             <h2>EspKeepSource</h2>
             <table class="directive" title="directive">
                 <thead>
@@ -370,7 +370,7 @@ EspDir static ./web</pre>
                     </tr>
                 </tbody>
             </table>
-            <a name="espLink" id="espLink"></a>
+            <a id="espLink"></a>
             <h2>EspLink</h2>
             <table class="directive" title="directive">
                 <thead>
@@ -431,7 +431,7 @@ EspDir static ./web</pre>
                     </tr>
                 </tbody>
             </table>
-            <a name="espLoad" id="espLoad"></a>
+            <a id="espLoad"></a>
             <h2>EspLoad</h2>
             <table class="directive" title="directive">
                 <thead>
@@ -477,7 +477,7 @@ EspLoad blog cache/app.dylib
                     </tr>
                 </tbody>
             </table>
-            <a name="espResource" id="espResource"></a>
+            <a id="espResource"></a>
             <h2>EspResource</h2>
             <table class="directive" title="directive">
                 <thead>
@@ -525,7 +525,7 @@ Name             Method  Pattern             Target
                     </tr>
                 </tbody>
             </table>
-            <a name="espResourceGroup" id="espResourceGroup"></a>
+            <a id="espResourceGroup"></a>
             <h2>EspResourceGroup</h2>
             <table class="directive" title="directive">
                 <thead>
@@ -580,7 +580,7 @@ Name            Method  Pattern                      Target
                     </tr>
                 </tbody>
             </table>
-            <a name="espRoute" id="espRoute"></a>
+            <a id="espRoute"></a>
             <h2>EspRoute</h2>
             <table class="directive" title="directive">
                 <thead>
@@ -624,7 +624,7 @@ Name            Method  Pattern                      Target
                     </tr>
                 </tbody>
             </table>
-            <a name="espRouteSet" id="espRouteSet"></a>
+            <a id="espRouteSet"></a>
             <h2>EspRouteSet</h2>
             <table class="directive" title="directive">
                 <thead>
@@ -672,7 +672,7 @@ Name            Method  Pattern                      Target
                     </tr>
                 </tbody>
             </table>
-            <a name="espShowErrors" id="espShowErrors"></a>
+            <a id="espShowErrors"></a>
             <h2>EspShowErrors</h2>
             <table class="directive" title="directive">
                 <thead>
@@ -706,7 +706,7 @@ Name            Method  Pattern                      Target
                     </tr>
                 </tbody>
             </table>
-            <a name="espUpdate" id="espUpdate"></a>
+            <a id="espUpdate"></a>
             <h2>EspUpdate</h2>
             <table class="directive" title="directive">
                 <thead>
@@ -752,18 +752,17 @@ Name            Method  Pattern                      Target
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript"> 
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl(
-      '000262706376373952077:1hs0lhenihk');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-    customSearchControl.draw('cse-search-form', options);
-  }, true);
-</script>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> 
+      google.load('search', '1', {language : 'en'});
+      google.setOnLoadCallback(function() {
+        var customSearchControl = new google.search.CustomSearchControl(
+          '000262706376373952077:1hs0lhenihk');
+        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+        var options = new google.search.DrawOptions();
+        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        customSearchControl.draw('cse-search-form', options);
+      }, true);
+    </script>
 </body>
 </html>
-<!-- EndDsi -->

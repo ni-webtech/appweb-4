@@ -68,7 +68,7 @@
             <p>The core Appweb HTTP server cannot serve any requests or generate responses by itself. It relies on
             request handlers to generate response content for HTTP requests. The standard distribution of Appweb is
             itself comprised of seven different handlers which serve all the content provided by an Appweb
-            server.</p><a name="createHandler" id="createHandler"></a>
+            server.</p><a id="createHandler"></a>
             <h2 class="section">Creating a Handler</h2>
             <p>To create an Appweb handler, you need to call <b>maCreateHandler</b> and supply a unique handler name
             and flags that modify the behavior of the handler.</p>
@@ -86,16 +86,16 @@ int maSimpleHandlerInit(Http *http, MprModule *module)
     handler-&gt;open = openSimple;
     handler-&gt;close = closeSimple;
     handler-&gt;start = startSimple;
-    handler-&gt;process = processSimple;
-    handler-&gt;incomingData = incomingDataSimple;
-    handler-&gt;outgoingData = outgoingDataSimple;
+    handler-&gt;writable = writableSimple;
+    handler-&gt;incoming = incomingSimple;
+    handler-&gt;outgoing = outgoingSimple;
     handler-&gt;incomingService = incomingServiceSimple;
     handler-&gt;outgoingService = outgoingServiceSimple;
     /* Set handler private data */
     handler-&gt;stageData = mprAllocObj(SimpleData, 0);
     return 0;
 }
-</pre><a name="createFilter" id="createFilter"></a>
+</pre><a id="createFilter"></a>
             <h2 class="section">Creating a Filter</h2>
             <p>Creating a filter is very similar to creating a handler. An MaStage object is created and
             initialized.</p>
@@ -111,11 +111,11 @@ int maCompressFilterInit(Http *http, MprModule *module)
         return MPR_ERR_CANT_CREATE;
     }
     /* Define function callbacks */
-    filter-&gt;outgoingData = outgoingData;
-    filter-&gt;incomingData = incomingData;
+    filter-&gt;outgoing = outgoing;
+    filter-&gt;incoming = incoming;
     return 0;
 }
-</pre><a name="createConnector" id="createConnector"></a>
+</pre><a id="createConnector"></a>
             <h2 class="section">Creating a Connector</h2>
             <p>Creating a connector is similar to creating a handler. An MaStage object is created and initialized.</p>
             <p>To create an Appweb connector, you need to call <b>maCreateConnector</b> and supply a unique connector
@@ -130,44 +130,57 @@ int maTurboConnectorInit(Http *http, MprModule *module)
         return MPR_ERR_CANT_CREATE;
     }
     /* Define function callbacks */
-    connector-&gt;outgoingData = outgoingData;
-    connector-&gt;incomingData = incomingData;
+    connector-&gt;outgoing = outgoing;
+    connector-&gt;incoming = incoming;
     return 0;
 }
 </pre>
             <h2 class="section">Pipeline Stages Callbacks</h2>
             <p>Pipeline stages can optionally provide callback functions which are run at various stages of the HTTP
             request processing. If they are not provided, a default implementation is used.</p>
+
             <h3>match</h3>
             <p>This callback is invoked to test if the current request should be serviced by the stage. It is invoked
             after the request headers are parsed by the Appweb core and before running the request pipeline. If the
             callback returns false, the stage is removed from the pipeline.</p>
+
             <h3>open</h3>
             <p>This callback is invoked to give the stage a chance to initialize for a given request and potentially
             allocate any request specific data or state. It is called at the start of request processing after the
-            "match" callback.</p>
+            <em>match</em> callback.</p>
+
             <h3>close</h3>
-            <p>The "close" callback is invoked to give stages an opportunity to release any request specific data. It
+            <p>The <em>close</em> callback is invoked to give stages an opportunity to release any request specific data. It
             is invoked just prior to dismantling the request pipeline.</p>
+
             <h3>start</h3>
-            <p>The run callback is invoked to start processing the response for the client. 
+            <p>The <em>start</em> callback is invoked to start processing the response for the client. 
             If the request is a form with Content-Type of "application/x-www-form-urlencoded",
             the start callback is called after processing all input client data. Otherwise, it is called before 
             any input data.</p>
-            <h3>process</h3>
-            <p>The run callback is invoked periodically after I/O events to allow the stage to pump data through the
-                request pipeline.</p>
-            <h3>incomingData</h3>
-            <p>This callback is invoked to receive any incoming client data (typically POST or PUT data). It is 
-            called after the "open" callback and before the "run" callback.</p>
-            <h3>outgoingData</h3>
-            <p>The outgoingData callback is never called for handlers. Handlers generate data and send it downstream.
-            Filters and connectors will have their outgoingData callback invoked to receive data from upstream. The
-            outgoingData callback will be invoked after the "run" callback has been called for the handler.</p>
+
+            <h3>ready</h3>
+            <p>The <em>ready</em> callback is invoked once all the request body data has bee received.</p>
+
+            <h3>writable</h3>
+            <p>The <em>writable</em> callback is invoked after receiving all body data and whenever the output pipeline
+            can absorb more data.</p>
+
+            <h3>incoming</h3>
+            <p>The <em>incoming</em> callback is invoked to receive any incoming client data (typically POST or PUT
+            data). It is called after the <em>open</em> callback and before the <em>start</em> callback.</p>
+
+            <h3>outgoing</h3>
+            <p>The <em>outgoing</em> callback is never called for handlers. Handlers generate data and send it downstream.
+            Filters and connectors will have their outgoing callback invoked to receive data from upstream. The
+            outgoing callback will be invoked after the <em>start</em> callback has been called for the handler.</p>
+
             <h3>Stage Data</h3>
-            <p>Stages can allocate stage data and store it in the <b>stage-&gt;data</b> field. If the stage needs to
-            store per-request data, it can store it in the stage's <b>queue-&gt;data</b> field which is unique for each
-            request.</p><a name="flags" id="flags"></a>
+            <p>Stages can allocate stage data and store it in the <em>stage-&gt;data</em> field. If the stage needs to
+            store per-request data, it can store it in the stage's <em>queue-&gt;data</em> field which is unique for each
+            request.</p>
+            
+            <a id="flags"></a>
             <h3>Stage flags</h3>
             <p>The create handler, filter and connector APIs take a flags word which modified the behavior of the
             stage. The flags can take the following values OR'd together</p>
@@ -231,18 +244,17 @@ int maTurboConnectorInit(Http *http, MprModule *module)
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript"> 
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl(
-      '000262706376373952077:1hs0lhenihk');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-    customSearchControl.draw('cse-search-form', options);
-  }, true);
-</script>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> 
+      google.load('search', '1', {language : 'en'});
+      google.setOnLoadCallback(function() {
+        var customSearchControl = new google.search.CustomSearchControl(
+          '000262706376373952077:1hs0lhenihk');
+        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+        var options = new google.search.DrawOptions();
+        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        customSearchControl.draw('cse-search-form', options);
+      }, true);
+    </script>
 </body>
 </html>
-<!-- EndDsi -->

@@ -55,7 +55,6 @@
                 <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
                 <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
                 <li><a href="../../../guide/appweb/users/modules.html">Appweb Modules</a></li>
-                <li><a href="../../../guide/appweb/users/handlers.html">Appweb Handlers</a></li>
                 <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
                 <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
@@ -74,16 +73,16 @@
                 or <a href="#php">PHP</a> provide much more support for dynamic web content.</p>
             <p>Appweb provides a rich set of options to use when creating web pages or web applications. This document
             compares the alternatives and suggests where each option is best deployed.</p>
-            <a name="comparison" id="comparison"></a>
+            <a id="comparison"></a>
             <h2 class="section">Comparison</h2>
             
-            <a name="esp" id="esp"></a>
+            <a id="esp"></a>
             <h3><a href="../../esp/users/index.html">Embedded Server Pages</a></h3>
             <p>ESP is a new web framework that provides templates, caching, Model-View-Controller paradigm, 
             and a set of web controls that are pre-integrated with jQuery. ESP uses "C" language code
             embedded in web pages for native-speed execution. It is fast and compact.
             For more information, please read <a href="../../esp/users/index.html">Using ESP</a>.</p>
-            <a name="ejs" id="ejs"></a>
+            <a id="ejs"></a>
             <h3><a href="ejs.html">Ejscript</a></h3>
             <p>The <a href="http://ejscript.org">Ejscript</a> Web Framework is a web application environment that
             uses server-side JavaScript. It provides an application generator, templating engine, 
@@ -92,7 +91,7 @@
             <p>Ejscript is not as small as ESP, nor as fast, but is is a very powerful web framework. It is good for 
             embedded web interfaces and async communications services where sufficient memory is available.
             For more information, please read <a href="ejs.html">Using Ejscript</a>.</p>
-            <a name="php" id="php"></a>
+            <a id="php"></a>
             <h3><a href="php.html">PHP</a></h3>
             <p>PHP is a widely-used
             general-purpose scripting language that is especially suited for enterprise Web development. It provides an
@@ -100,14 +99,14 @@
             comes at a price, it typically has a memory footprint of more than 5 MB for the PHP code alone. For embedded
             systems, this is often too big and so we recommend using ESP instead for such systems.
             For more information, please read <a href="php.html">Using PHP</a>.</p>
-            <a name="cgi" id= "cgi"></a>
+            <a id= "cgi"></a>
             <h3><a href="cgi.html">CGI</a></h3>
             <p>CGI stands for the Common Gateway Interface and it is the legacy extension interface for running
             external programs to generate dynamic data. It is standard but slow. Unless you have legacy CGI programs or
             need to run a scripting language via CGI, you are better served by using either ESP or Ejscript.
             For more information, please read <a href="cgi.html">Using CGI</a>.</p>
             
-            <a name="summary" id= "summary"></a>
+            <a id= "summary"></a>
             <h2>Summary</h2>
             <p>For embedded devices and applications: we recommend using <b>ESP</b>. It provides the fastest, most
             compact web framework without compromising on functionality. Use <b>Ejscript</b> for large applications
@@ -178,18 +177,17 @@
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript"> 
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl(
-      '000262706376373952077:1hs0lhenihk');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-    customSearchControl.draw('cse-search-form', options);
-  }, true);
-</script>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> 
+      google.load('search', '1', {language : 'en'});
+      google.setOnLoadCallback(function() {
+        var customSearchControl = new google.search.CustomSearchControl(
+          '000262706376373952077:1hs0lhenihk');
+        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+        var options = new google.search.DrawOptions();
+        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        customSearchControl.draw('cse-search-form', options);
+      }, true);
+    </script>
 </body>
 </html>
-<!-- EndDsi -->

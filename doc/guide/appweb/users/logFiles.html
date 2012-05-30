@@ -51,7 +51,6 @@
                 <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
                 <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
                 <li><a href="../../../guide/appweb/users/modules.html">Appweb Modules</a></li>
-                <li><a href="../../../guide/appweb/users/handlers.html">Appweb Handlers</a></li>
                 <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
                 <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
@@ -69,7 +68,7 @@
             </ul>
             <p>This document describes the two logs and the information available in each log.</p>
             
-            <a name="errorLog" id="errorLog"></a>
+            <a id="errorLog"></a>
             <h2 class="section">Error Log</h2>
             <p>The Error Log records the essential Appweb configuration, details of denied requests, and other trace
             and error information. The location of the Error Log file is specified by the 
@@ -129,7 +128,7 @@ program:logLevel
             invoke Appweb with a "--log logSpec" command line option, it will override the ErrorLog and LogLevel
             directives.</p>
             
-            <a name="accessLog" id="accessLog"></a>
+            <a id="accessLog"></a>
             <h2>Access Log</h2>
             <p>The Access Log records the details of each successful request served by Appweb. The access log file
             format is configurable and can log requests in a variety of formats. By default, it will log in the
@@ -174,18 +173,17 @@ localhost - - [Fri Dec 19 16:08:24 2003] "GET /doc/images/backRight.png
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript"> 
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl(
-      '000262706376373952077:1hs0lhenihk');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-    customSearchControl.draw('cse-search-form', options);
-  }, true);
-</script>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> 
+      google.load('search', '1', {language : 'en'});
+      google.setOnLoadCallback(function() {
+        var customSearchControl = new google.search.CustomSearchControl(
+          '000262706376373952077:1hs0lhenihk');
+        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+        var options = new google.search.DrawOptions();
+        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        customSearchControl.draw('cse-search-form', options);
+      }, true);
+    </script>
 </body>
 </html>
-<!-- EndDsi -->

@@ -57,7 +57,6 @@
                 <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
                 <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
                 <li><a href="../../../guide/appweb/users/modules.html">Appweb Modules</a></li>
-                <li><a href="../../../guide/appweb/users/handlers.html">Appweb Handlers</a></li>
                 <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
                 <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
@@ -76,9 +75,10 @@
             <p>This following document explains SSL and how to configure SSL in Appweb. It has heavily borrowed from
             the Apache Documentation. Many thanks to the fine folks at Apache for this excellent base material and for
             Frederick Hirsch who authored quite a bit of the original material.</p>
-            <p>If you have a good understanding of SSL and now you want to configure SSL for Appweb, you may wish to
-            skip the background and read immediately how to setup <a href="ssl.html">SSL for Appweb</a>.</p><a name=
-            "cryptographicTechniques" id="cryptographicTechniques"></a>
+            <p>If you have a good understanding of SSL and now you want to configure SSL for Appweb, you may wish 
+            to skip the background and read immediately how to setup 
+            <a href="ssl.html">SSL for Appweb</a>.</p>
+            <a id="cryptographicTechniques"></a>
             <h2 class="section">Cryptographic Techniques</h2>
             <p>Understanding SSL requires an understanding of cryptographic algorithms, message digest functions (aka.
             one-way or hash functions), and digital signatures. The following section provides a brief introduction to
@@ -93,13 +93,13 @@
             algorithms make it so difficult for intruders to decode the original text that it isn't worth their
             effort.</p>
             <p>There are two categories of cryptographic algorithms: conventional and public key.</p>
-            <h4><a name="symmetricCryptography" id="symmetricCryptography"></a>Symmetric Cryptography</h4>
+            <h4><a id="symmetricCryptography"></a>Symmetric Cryptography</h4>
             <p>Symmetric cryptography, requires the sender and receiver to share a key: a secret piece of information
             that may be used to encrypt or decrypt a message. If this key is secret, then nobody other than the sender
             or receiver may read the message. If Alice and the bank know a secret key, then they may send each other
             private messages. The task of privately choosing a key before communicating, however, can be
             problematic.</p>
-            <h4><a name="publicKeyCryptography" id="publicKeyCryptography"></a>Public Key Cryptography</h4>
+            <h4><a id="publicKeyCryptography"></a>Public Key Cryptography</h4>
             <p>Public key cryptography also known as asymmetric cryptography, solves the key exchange problem by
             defining an algorithm which uses two keys, each of which may be used to encrypt a message. If one key is
             used to encrypt a message then the other may be used to decrypt it. This makes it possible to receive
@@ -108,7 +108,7 @@
             <p>Anyone may encrypt a message using the public key, but only the owner of the private key will be able to
             read it. In this way, you may send private messages to the owner of a key-pair (the bank), by encrypting it
             using their public key. Only the bank will be able to decrypt it.</p>
-            <h3><a name="messageDigests" id="messageDigests"></a>Message Digests</h3>
+            <h3><a id="messageDigests"></a>Message Digests</h3>
             <p>Although Alice may encrypt her message to make it private, there is still a concern that someone might
             modify her original message or substitute it with a different one, in order to transfer the money to
             themselves, for instance. One way of guaranteeing the integrity of Alice's message is to create a concise
@@ -124,7 +124,7 @@
             <p>Another challenge that Alice faces is finding a way to send the digest to the bank securely; when this
             is achieved, the integrity of the associated message is assured. One way to do this is to include the
             digest in a digital signature.</p>
-            <h3><a name="digitalSignatures" id="digitalSignatures"></a>Digital Signatures</h3>
+            <h3><a id="digitalSignatures"></a>Digital Signatures</h3>
             <p>When Alice sends a message to the bank, the bank needs to ensure that the message is really from her, so
             an intruder does not request a transaction involving her account. A <em>digital signature</em>, created by
             Alice and included with the message, serves this purpose.</p>
@@ -135,8 +135,7 @@
             integrity of the message since no one can change the digest and still sign it.</p>
             <p>To guard against interception and reuse of the signature by an intruder at a later date, the signature
             contains a unique sequence number. This protects the bank from a fraudulent claim from Alice that she did
-            not send the message &mdash; only she could have signed it (non-repudiation).</p><a name="certificates" id=
-            "certificates"></a>
+            not send the message &mdash; only she could have signed it (non-repudiation).</p><a id="certificates"></a>
             <h2 class="section">Certificates</h2>
             <p>Although Alice could have sent a private message to the bank, signed it, and ensured the integrity of
             the message, she still needs to be sure that she is really communicating with the bank. This means that she
@@ -153,7 +152,7 @@
             and signature of the Certificate Authority that issued the certificate, and the period of time during which
             the certificate is valid. It may have additional information (or extensions) as well as administrative
             information for the Certificate Authority's use, such as a serial number.</p>
-            <h4><a name="table1" id="table1"></a>Table 1: Certificate Information</h4>
+            <h4><a id="table1"></a>Table 1: Certificate Information</h4>
             <table title="cert">
                 <tbody>
                     <tr>
@@ -182,7 +181,7 @@
             individual might have a personal certificate as well as one for their identity as an employee.
             Distinguished names are defined by the X.509 standard, which defines the fields, field names, and
             abbreviations used to refer to the fields (see <a href="#table2">Table 2</a>).</p>
-            <h4><a name="table2" id="table2"></a>Table 2: Distinguished Name Information</h4>
+            <h4><a id="table2"></a>Table 2: Distinguished Name Information</h4>
             <table title="info">
                 <thead>
                     <tr>
@@ -264,7 +263,7 @@ gQAZUIHAL4D09oE6Lv2k56Gp38OBDuILvwLg1v1KL8mQR+KFjghCrtpqaztZqcDt
 dUHzICxBVC1lnHyYGjDuAMhe396lYAn8bCld1/L4NMGBCQ==
 -----END CERTIFICATE-----
 </pre>
-            <h3><a name="certificateAuthorities" id="certificateAuthorities"></a>Certificate Authorities</h3>
+            <h3><a id="certificateAuthorities"></a>Certificate Authorities</h3>
             <p>By first verifying the information in a certificate request before granting the certificate, the
             Certificate Authority assures the identity of the private key owner of a key-pair. For instance, if Alice
             requests a personal certificate, the Certificate Authority must first make sure that Alice really is the
@@ -309,14 +308,14 @@ dUHzICxBVC1lnHyYGjDuAMhe396lYAn8bCld1/L4NMGBCQ==
             load the Certificate Authority certificate into the browser, enabling the browser to validate server
             certificates signed by that Certificate Authority. Doing so may be dangerous, since once loaded, the
             browser will accept all certificates signed by that Certificate Authority.</p>
-        </div><a name="sslOverview" id="sslOverview"></a>
+        </div><a id="sslOverview"></a>
         <h2 class="section">Secure Sockets Layer (SSL) Overview</h2>
         <p>The Secure Sockets Layer protocols designed to support a range of choices for specific algorithms used for
         cryptography, digests, and signatures. This allows algorithm selection for specific servers to be made based on
         legal, export or other concerns, and also enables the protocol to take advantage of new algorithms. Choices are
         negotiated between client and server at the start of establishing a protocol session.</p>
         <h3>Table 4: Versions of the SSL protocol</h3>
-        <a name="table4" id="table4"></a>
+        <a id="table4"></a>
         <table title="protocols">
             <thead>
                 <tr>
@@ -462,18 +461,17 @@ dUHzICxBVC1lnHyYGjDuAMhe396lYAn8bCld1/L4NMGBCQ==
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript"> 
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl(
-      '000262706376373952077:1hs0lhenihk');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-    customSearchControl.draw('cse-search-form', options);
-  }, true);
-</script>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> 
+      google.load('search', '1', {language : 'en'});
+      google.setOnLoadCallback(function() {
+        var customSearchControl = new google.search.CustomSearchControl(
+          '000262706376373952077:1hs0lhenihk');
+        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+        var options = new google.search.DrawOptions();
+        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        customSearchControl.draw('cse-search-form', options);
+      }, true);
+    </script>
 </body>
 </html>
-<!-- EndDsi -->

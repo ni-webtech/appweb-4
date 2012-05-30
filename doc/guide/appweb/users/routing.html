@@ -55,7 +55,6 @@
                 <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
                 <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
                 <li><a href="../../../guide/appweb/users/modules.html">Appweb Modules</a></li>
-                <li><a href="../../../guide/appweb/users/handlers.html">Appweb Handlers</a></li>
                 <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
                 <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
@@ -65,7 +64,7 @@
         </div>
         <div class="contentLeft">
             <h1>Request Routing</h1>
-            <a name="overview"></a>
+            <a id="overview"></a>
             <h2>Overview</h2>
             <p>Appweb includes a powerful request routing engine that processes client HTTP requests. The engine
             is configured with a set of routes and when a request is received, it tests various routes and selects
@@ -79,7 +78,7 @@
             is always a catch-all route that will process the request if all prior routes fail to qualify.</p>
             <p>A route may modify the request during processing by changing the request URI or request data. The
             route may also run commands as a side-effect during processing.</p>
-            <a name="configuration"></a>
+            <a id="configuration"></a>
             <h2 class="section">Route Configuration</h2>
             <p>Routes are defined in the appweb.conf configuration file or via an API and are processed at run-time when 
             client HTTP requests are received.</p>
@@ -105,15 +104,15 @@
             directive is encountered.  This means that inner route blocks will be correctly defined before 
             their outer route block. For example:</p>
 <pre>
-&lt;Route /info/>
+&lt;Route /info/&gt;
     DocumentRoot /public-docs
-    &lt;Route /info/private/>
+    &lt;Route /info/private/&gt;
         DocumentRoot /confidential-docs
         AuthType digest
         AuthName "Top-Secret"
         Require valid-user
-    &lt;/Route>
-&lt;/Route>
+    &lt;/Route&gt;
+&lt;/Route&gt;
 </pre>
             <p>This example assigns different physical directories for public and private information and secures
             the private information with digest authentication. The inner <em>/info/private</em> route will be 
@@ -126,7 +125,7 @@
             <p><em>VirtualHost</em> directives also define implicit route blocks. In this way, they inherit the route
             configuration that existed at the point in the configuration file where the VirtualHost is defined, but they
             can override this to create a unique route configuration for the virtual host.</p>
-            <a name="directives"></a>
+            <a id="directives"></a>
             <h2 class="section">Route Directives</h2>
             <p>Other route related configuration directives include:</p>
             <h3><a href="dir/route.html#addHandler">AddHandler</a> and 
@@ -180,7 +179,7 @@
             <em>cmd</em>. The <em>param</em> rule can be used to set the request <a href="#params">params</a> 
             to a specific value. 
             The <em>cmd</em> rule can be used to run external commands.</p>
-            <a name="params"></a>
+            <a id="params"></a>
             <h4>Request Params</h4>
             <p>Request parameters are comprised of a set of request state information. This includes:</p>
             <ul>
@@ -193,7 +192,7 @@
             request parameters via environment variables. In PHP, they are mapped to PHP server variables. In ESP 
             they are accessed via the <em>espGetParam</em> API, and in Ejscript, request parameters are exposed via
             the Request.params[] collection.</p>
-            <a name="tokens"></a>
+            <a id="tokens"></a>
             <h2 class="section"><a href="dir/route.html#tokens">Tokens</a></h2>
             <p>Target, Condition and Update directives can reference tokenized values that are expanded
             when evaluated at run-time. There are three classes of tokens:</p>
@@ -243,7 +242,7 @@
             <p>To select a form field value, consider if the URI <em>/info/Mary</em> matched the pattern:
             <em>^/info/{name}</em>. Then the <em>${name}</em> token could be used in a Target run rule as such:</p>
 <pre>run ${name}.html</pre>
-            <a name="processing"></a>
+            <a id="processing"></a>
             <h2 class="section">Route Processing</h2>
             <p>To process a request, The Appweb route engine examines each of the configured routes to determine the 
             best matching route for a request.  It does this by considering each route in the order they are defined in
@@ -274,7 +273,7 @@
             <em>application/x-www-form-urlencoded</em>. Requests with a <em>Content-Type</em> set to 
             <em>multipart/form-data</em> which indicates form based file upload, will also delay routing until the uploaded
             file has been fully received.</p>
-            <a name="step-pattern"></a>
+            <a id="step-pattern"></a>
             <h3>Pattern Matching</h3>
             <p>A route pattern is a specially prepared regular expression that can be quickly matched against the 
             request URI. The route pattern may match the entire request URI, just a subset at the start of the URI
@@ -291,7 +290,7 @@
             later to define a request parameter. In the request URI, any sequence of characters except 
             "/" are acceptable in the token name. For example the route pattern:</p>
 <pre>
-&lt;Route ^/{controller}/{action}$>
+&lt;Route ^/{controller}/{action}$&gt;
 </pre>
 will match the URI:
 <pre class="paper">
@@ -306,7 +305,7 @@ will match the URI:
             <p>In addition to route tokens, standard regular expression sub-patterns can be defined by wrapping a 
             sub-expression in parentheses. For example:</p>
 <pre>
-&lt;Route /(user|admin)/{cmd}>
+&lt;Route /(user|admin)/{cmd}&gt;
 </pre>
             <p>This will allow URIs that begin with either <em>/user</em> or <em>/admin</em>. Sub-expression and token
             values are made available to Conditions, Updates and Targets by using <em>$N</em> in the directive details. 
@@ -317,7 +316,7 @@ will match the URI:
             <p>Conditional sub-expressions can be defined by wrapping in "(~" and "~)". This means the wrapped
             sub-expression is valid but not required. For example:</p>
 <pre>
-&lt;Route /{controller}(~/{action}~) >
+&lt;Route /{controller}(~/{action}~) &gt;
 </pre>
 will match any of the URIs:
 <pre class="paper">
@@ -332,53 +331,53 @@ will match any of the URIs:
 <pre>
 ^/{controller}(~/{action}~)$
 </pre>
-            <a name="step-method"></a>
+            <a id="step-method"></a>
             <h3>Method Matching</h3>
             <p>Method matching is an optional step. Routes can be configured to only match certain HTTP methods. 
             Method matching tests the supported route methods against the actual request HTTP method. 
             By default a route supports all methods</p>
-            <a name="step-header"></a>
+            <a id="step-header"></a>
             <h3>Header Matching</h3>
             <p>Header matching is an optional step. Routes can be configured to require that the request has HTTP
             headers with or without defined values. For example: a route may wish to only be relevant for a 
             particular browser:</p>
 <pre>
-&lt;Route /info/>
+&lt;Route /info/&gt;
     Header User-Agent /Chrome/
-&lt;/Route>
+&lt;/Route&gt;
 </pre>
-            <a name="step-form"></a>
+            <a id="step-form"></a>
             <h3>Form Value Matching</h3>
             <p>Form value matching is an optional step. Routes can be configured to require that the request has 
             form data with or without defined values. Form data is sourced from the request URI query string and from
             form body (POST) data. Form data must have a Content-Type of "application/x-www-form-urlencoded" &mdash;
             normal HTML forms are encoded this way.</p>
 <pre>
-&lt;Route ^/info/>
+&lt;Route ^/info/&gt;
     Query name /(Mary)|(John)/
-&lt;/Route>
+&lt;/Route&gt;
 </pre>
             <p>This route will match the URIs: </p>
 <pre class="paper">
 /info/file.html?name=Mary
 /info/file.html?name=John
 </pre>
-            <a name="step-condition"></a>
+            <a id="step-condition"></a>
             <h3>Condition Matching</h3>
             <p>Condition matching is an optional step where extra conditions can be tested before the route is selected.
             Conditions can test if a file exists or not and whether a file is a directory or not. Condition rules
             can also test any request parameter against a regular expression.</p>
-            <a name="step-update"></a>
+            <a id="step-update"></a>
             <h3>Request Update</h3>
             <p>Request update matching is an optional step where the request <a href="#params">params</a> 
             can be modified.</p>
-            <a name="step-param"></a>
+            <a id="step-param"></a>
             <h3>Param Definition</h3>
             <p>After a route fully qualifies, request <a href="#params">params</a>
             are created for route pattern tokens. This provides an
             easy mechanism for extracting useful information from the request URI and passing it to the web page or
             controller for processing.</p>
-            <a name="step-target"></a>
+            <a id="step-target"></a>
             <h3>Target Execution</h3>
             <p>Route targets have responsibility to generate the actual response to the client.
             But, before the target can be executed, the appropriate request handler must be selected.
@@ -409,43 +408,43 @@ Target write 200 "Running controller ${controller} action ${action}\n\n"
             directive defines a URI prefix that will be stripped from the start of the request URI once the route
             is selected. If the route defines a header, form or condition that is not satisfied, the prefix is restored
             to let other routes see the full URI.</p>
-            <a name="examples"></a>
+            <a id="examples"></a>
             <h2 class="section">Route Examples</h2>
             <h3>Redirecting Old URIs</h3>
             <p>To redirect requests for old documents to newer versions:</p>
 <pre>
-&lt;Route ^/public/oldFile.html$>
+&lt;Route ^/public/oldFile.html$&gt;
     Target redirect 302 /public/newFile.html
-&lt;/Route>
+&lt;/Route&gt;
 </pre>
             <h3>Authenticating Private Content</h3>
             <p>To secure private content :</p>
 <pre>
-&lt;Route /private/>
+&lt;Route /private/&gt;
     DocumentRoot /private-docs
     AuthType digest
     AuthName "Top-Secret"
     Require valid-user
-&lt;/Route>
+&lt;/Route&gt;
 </pre>
             <h3>Hiding PHP extensions</h3>
             <p>To hide the PHP extension in all URIs. This will automatically add the ".php" extension to the 
                 request document filename.</p>
 <pre>
-&lt;Route ^/store/>
+&lt;Route ^/store/ &gt;
     DocumentRoot /store-app
     SetHandler phpHandler
-    Target run $&.php
-&lt;/Route>
+    Target run $&amp;.php
+&lt;/Route&gt;
 </pre>
             <h3>Serving Compressed Content</h3>
             <p>This example enables the serving of compressed content where an equivalent compressed document exists. i.e.
                A request for <em>/manual/overview.html</em> may return <em>/manual/overview.html.gz</em> if it exists. If
                there is no compressed content, the uncompressed version is returned.</p>
 <pre>
-&lt;Route ^/manual/>
+&lt;Route ^/manual/&gt;
     Compress gzip
-&lt;/Route>
+&lt;/Route&gt;
 </pre>
             <h3>Multi-Language Content</h3>
             <p>This example stores English content under the <em>"english-docs"</em> directory and French under the 
@@ -454,50 +453,50 @@ Target write 200 "Running controller ${controller} action ${action}\n\n"
             If the accept header is missing or the requested language is not English or French, then the DefaultLanguage
             directive indicates that english content should be returned.</p>
 <pre>
-&lt;Route />
+&lt;Route /&gt;
     DefaultLanguage en
     AddLanguageDir en /path/to/english-docs
     AddLanguageDir fr /path/to/french-docs
-&lt;/Route>
+&lt;/Route&gt;
 </pre>
             <h3>Multi-Language by Suffix</h3>
             <p>This example stores content for all languages together and includes a language suffix to the request document
             filename. If the client requested a French version of <em>index.html</em>, then the document 
             <em>index.fr.html</em> would be served.</p>
 <pre>
-&lt;Route />
+&lt;Route /&gt;
     DefaultLanguage en
     AddLanguageSuffix en en before
     AddLanguageSuffix fr fr
-&lt;/Route>
+&lt;/Route&gt;
 </pre>
             <h3>Application Isolation</h3>
             <p>To group routes for an application, enclose in a Route block and use a Prefix directive to remove the
                 application prefix.</p>
 <pre>
-&lt;Route /manage/>
+&lt;Route /manage/&gt;
     Prefix /manage
     DocumentRoot manage-app
     SetHandler espHandler
-    &lt;Route /manage/{controller}/{action}>
+    &lt;Route /manage/{controller}/{action}&gt;
         Target run ${controller}-${action}
-    &lt;/Route>
-&lt;/Route>
+    &lt;/Route&gt;
+&lt;/Route&gt;
 </pre>
             <h3>Denial of Service Protection</h3>
             <p>To immediately close a connection without responding use the <em>Target close</em> directive.
 <pre>
-&lt;Route /hacked-url/>
+&lt;Route /hacked-url/&gt;
     target close
-&lt;/Route>
+&lt;/Route&gt;
 </pre>
             <h3>Missing File</h3>
             <p>To match a missing document without redirection:</p>
 <pre>
-&lt;Route />
+&lt;Route /&gt;
     Condition ! exists ${request:filename}
     Target run /missing.html
-&lt;/Route>
+&lt;/Route&gt;
 </pre>
         </div>
     </div>
@@ -509,18 +508,17 @@ Target write 200 "Running controller ${controller} action ${action}\n\n"
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript"> 
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl(
-      '000262706376373952077:1hs0lhenihk');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-    customSearchControl.draw('cse-search-form', options);
-  }, true);
-</script>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> 
+      google.load('search', '1', {language : 'en'});
+      google.setOnLoadCallback(function() {
+        var customSearchControl = new google.search.CustomSearchControl(
+          '000262706376373952077:1hs0lhenihk');
+        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+        var options = new google.search.DrawOptions();
+        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        customSearchControl.draw('cse-search-form', options);
+      }, true);
+    </script>
 </body>
 </html>
-<!-- EndDsi -->

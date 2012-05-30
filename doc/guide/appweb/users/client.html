@@ -52,7 +52,6 @@
                 <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
                 <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
                 <li><a href="../../../guide/appweb/users/modules.html">Appweb Modules</a></li>
-                <li><a href="../../../guide/appweb/users/handlers.html">Appweb Handlers</a></li>
                 <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
                 <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
@@ -62,14 +61,13 @@
         </div>
         <div class="contentLeft">
             <h1>Appweb HTTP Client</h1>
-            <p>http &mdash; HTTP client program.</p><a name="synopsis" id="synopsis"></a>
+            <p>http &mdash; HTTP client program.</p><a id="synopsis"></a>
             <h2>Synopsis</h2>
-            <p>http [options] URIs ...</p><a name="description" id="description"></a>
+            <p>http [options] URIs ...</p><a id="description"></a>
             <h2>Description</h2>
             <p>The <b>http</b> utility uses the Appweb HTTP client library to retrieve documents from HTTP servers. It
             supports HTTP, SSL, authentication and form data and the GET, POST, PUT, DELETE, OPTIONS and TRACE HTTP
-            methods. The <b>http</b> client was primarily designed to test the Appweb server.</p><a name="options" id=
-            "options"></a>
+            methods. The <b>http</b> client was primarily designed to test the Appweb server.</p><a id="options"></a>
             <h2>Options</h2>
             <table class="full" title="options">
                 <thead>
@@ -247,18 +245,17 @@
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript"> 
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl(
-      '000262706376373952077:1hs0lhenihk');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-    customSearchControl.draw('cse-search-form', options);
-  }, true);
-</script>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> 
+      google.load('search', '1', {language : 'en'});
+      google.setOnLoadCallback(function() {
+        var customSearchControl = new google.search.CustomSearchControl(
+          '000262706376373952077:1hs0lhenihk');
+        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+        var options = new google.search.DrawOptions();
+        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        customSearchControl.draw('cse-search-form', options);
+      }, true);
+    </script>
 </body>
 </html>
-<!-- EndDsi -->

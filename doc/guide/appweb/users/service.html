@@ -68,7 +68,7 @@
                 <li><a href="#windows">Windows Instructions</a></li>
             </ul>
             
-            <a name="generic" id="generic"></a>
+            <a id="generic"></a>
             <h2 class="section">Generic Instructions</h2>
             <p>Appweb includes a manager program called <em>appman</em>. This program is used to configure the running 
             of Appweb as service. Appman provides a generic way to install/uninstall, enable/disable, start/stop, and
@@ -98,13 +98,13 @@ appman disable
 appman enable
 appman start
 </pre>
-            <a name="windows" id="windows"></a>
+            <a id="windows"></a>
             <h2 class="section">Windows Instructions</h2>
             <p>On Windows, Appweb is managed by two programs:</p>
             <ul>
                 <li><a href="#appman">The Appweb Manager</a></li>
                 <li><a href="#monitor">The Appweb Monitor</a></li>
-            </ul><a name="appman" id="appman"></a>
+            </ul><a id="appman"></a>
             <p>The Appman manager program is installed as a windows service that starts, 
             manages and restarts Appweb. If Appweb fails, Appman will automatically restart it.</p>
             <p>Windows services run in the background with little interaction with the user. So to provide more
@@ -122,8 +122,7 @@ Start -&gt; Control Panel -&gt; Administrative Tools -&gt; Services
             <p>When started or stopped, the manager will first do the same operation on the real Appweb instance. Pausing
             the manager will have no effect on Appweb, but will pause the manager itself.</p>
             <p>Once installed, you will need to start the service via the Services control applet.</p>
-            <a name="monitor"
-            id="monitor"></a>
+            <a id="monitor"></a>
             <h3>Appweb Monitor</h3>
             <p>The Windows Appweb Monitor is launched when you log in. It a quick and easy way to start, stop, and
             restart Appweb. You can also launch a browser to display the documentation or the Appweb management console
@@ -142,18 +141,17 @@ Start -&gt; Control Panel -&gt; Administrative Tools -&gt; Services
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript"> 
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl(
-      '000262706376373952077:1hs0lhenihk');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-    customSearchControl.draw('cse-search-form', options);
-  }, true);
-</script>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> 
+      google.load('search', '1', {language : 'en'});
+      google.setOnLoadCallback(function() {
+        var customSearchControl = new google.search.CustomSearchControl(
+          '000262706376373952077:1hs0lhenihk');
+        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+        var options = new google.search.DrawOptions();
+        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        customSearchControl.draw('cse-search-form', options);
+      }, true);
+    </script>
 </body>
 </html>
-<!-- EndDsi -->

@@ -63,7 +63,7 @@
             <h1>Appweb&trade; FAQ</h1>
             <p>If you don't find the answers you need here, please submit your question to the online community support
             <a href="http://appwebserver.org/forum/">Forum</a>.</p>
-            <a name="questions"></a>
+            <a id="questions"></a>
             <h2 class="section">Questions</h2>
             <h3>General Questions</h3>
             <ul class="questions">
@@ -89,14 +89,14 @@
                 <li><a href="#minimalFootprint">How small can I make Appweb?</a></li>
                 <li><a href="#cross">How can I cross compile?</a></li>
             </ul>
-            <a name="answers"></a>
+            <a id="answers"></a>
             <h2 class="section">Answers</h2>
-            <p class="question"><a name="XSP" id="XSP"></a>What web framework should I use for my dynamic web
+            <p class="question"><a id="XSP"></a>What web framework should I use for my dynamic web
             application?</p>
             <div class="answer">
                 See the detailed <a href="frameworks.html">Web Framework Comparison</a>
             </div>
-            <p class="question"><a name="runTimeModules" id="runTimeModules"></a>Can I disable features to minimize
+            <p class="question"><a id="runTimeModules"></a>Can I disable features to minimize
             memory footprint at run-time?</p>
             <div class="answer">
                 <p>Yes. Appweb loads request handlers, scripting engines and other functionality via a run-time module
@@ -104,20 +104,20 @@
                 function modules. For example, if you don't require CGI, comment out the <em>LoadModule cgiHandler</em> 
                 directive.</p>
             </div>
-            <p class="question"><a name="upload" id="upload"></a>How can I upload large files?</p>
+            <p class="question"><a id="upload"></a>How can I upload large files?</p>
             <div class="answer">
                 <p>You need to increase the LimitRequestBody limit in the appweb.conf file. This imposes a maximum
                 upload file size. Some samples have a MAX_FILE_SIZE input field in the HTML form. This however, is 
                 just a hint to the browser, and is only processed by some browsers.</p>
             </div>
-            <p class="question"><a name="replacePHP" id="replacePHP"></a>Can I replace the PHP library?</p>
+            <p class="question"><a id="replacePHP"></a>Can I replace the PHP library?</p>
             <div class="answer">
                 <p>Yes, you can replace the Appweb-supplied PHP library with either the library from the standard PHP
                 distribution or a custom PHP library of your own building. The Appweb PHP library is not special. It is
                 a PHP configuration that omits features to create a small PHP library. To replace the PHP library 
                 replace the the file named either: libphp.so, libphp.dylib or php5ts.dll</p>
             </div>
-            <p class="question"><a name="buildPHP" id="buildPHP"></a>How can I rebuild PHP?</p>
+            <p class="question"><a id="buildPHP"></a>How can I rebuild PHP?</p>
             <div class="answer">
                 <p>Building PHP can sometimes be tricky, especially on Windows. We provide snapshots of various
                 packages at https://github.com/embedthis/packages. This URL is a Git repository for PHP, OpenSSL and
@@ -173,14 +173,14 @@ cscript /nologo configure.js \
 ./configure -with-php=/dir/to/php
 </pre>
             </div>
-            <p class="question"><a name="disableFeatures" id="disableFeatures"></a>If I rebuild the source, can I
+            <p class="question"><a id="disableFeatures"></a>If I rebuild the source, can I
             disable features at compile time?</p>
             <div class="answer">
                 <p>Yes. When Appweb is built from source, a single bld.h header controls exactly what features and
                 modules are built into the server. For example, if you don't require HTTP Keep-Alive support, and you
                 wish to minimize memory footprint, you can modify the MPR_FEATURE_HTTP_KEEP_ALIVE definition to be
                 0.</p>
-            </div><a name="trace" id="trace"></a>
+            </div><a id="trace"></a>
             <p class="question">How can I trouble-shoot with trace?</p>
             <div class="answer">
                 <p>Run appweb or winAppweb with the logging switch "-l". The logging switch takes the following
@@ -193,7 +193,7 @@ appweb -l logName[:logLevel][.maxSize]
                 the log file in MB. When the maximum size is exceeded, the log file will be rotated to logName.old and
                 a new log file will be started.</p>
             </div>
-            <p class="question"><a name="cgi" id="cgi"></a> How can I use CGI?</p>
+            <p class="question"><a id="cgi"></a> How can I use CGI?</p>
             <div class="answer">
                 <p>Appweb is configured by default to run CGI programs. If you do need to modify the CGI configuration,
                 the following may help:</p>
@@ -239,7 +239,7 @@ SERVER_SOFTWARE
 SERVER_URL
 </pre>
             </div>
-            <p class="question"><a name="handlers" id="handlers"></a>What is the difference between handlers and
+            <p class="question"><a id="handlers"></a>What is the difference between handlers and
             modules?</p>
             <div class="answer">
                 <p><b>Modules</b> are just for the basic loading mechanism of shared objects (DLLs). However, they also
@@ -247,7 +247,7 @@ SERVER_URL
                 of the developers.</p><b>Handlers</b> are the work-horses for the HTTP server. They actually process
                 the HTTP requests and have full access to the request. They also own its processing.
             </div>
-            <p class="question"><a name="minimalFootprint" id="minimalFootprint"></a>How small can I make Appweb?</p>
+            <p class="question"><a id="minimalFootprint"></a>How small can I make Appweb?</p>
             <div class="answer">
                 <p>Appweb 2 has about 800K of code. On a VxWorks or uClibc based Linux system, you should be able to
                 build Appweb for a 1MB memory footprint. It will be larger if you use OpenSSL and much larger if
@@ -268,7 +268,7 @@ SERVER_URL
                     <li>Use a small C-Library such as uClibc on embedded Linux systems</li>
                 </ul>
             </div>
-            <p class="question"><a name="cross" id="cross"></a>How can I cross compile?</p>
+            <p class="question"><a id="cross"></a>How can I cross compile?</p>
             <div class="answer">
                 <p>The Appweb configure command has switches to specify the <b>build</b> system and the target system
                 that will <b>host</b> Appweb. For example:</p>
@@ -308,18 +308,17 @@ CFLAGS="-I$DIR/include \
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript"> 
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl(
-      '000262706376373952077:1hs0lhenihk');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-    customSearchControl.draw('cse-search-form', options);
-  }, true);
-</script>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> 
+      google.load('search', '1', {language : 'en'});
+      google.setOnLoadCallback(function() {
+        var customSearchControl = new google.search.CustomSearchControl(
+          '000262706376373952077:1hs0lhenihk');
+        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+        var options = new google.search.DrawOptions();
+        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        customSearchControl.draw('cse-search-form', options);
+      }, true);
+    </script>
 </body>
 </html>
-<!-- EndDsi -->

@@ -60,7 +60,6 @@
                 <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
                 <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
                 <li><a href="../../../guide/appweb/users/modules.html">Appweb Modules</a></li>
-                <li><a href="../../../guide/appweb/users/handlers.html">Appweb Handlers</a></li>
                 <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
                 <li><a href="../../../ref/appweb/architecture.html">Appweb Architecture</a></li>
@@ -75,7 +74,7 @@
             as there are several places to locate the cached content and many ways to configure the overall caching
             architecture. This document provides a basic overview of Appweb
             caching and how to configure its caching capabilities.</p> 
-            <a name="why"></a>
+            <a id="why"></a>
             <h2>Why Cache?</h2>
             <p>When a browser issues an HTTP request to a server, that request must be transmitted and received. Then the 
             response must be computed, delivered and finally rendered in the browser. This process may take from fractions of a 
@@ -94,7 +93,7 @@
             client, the network delay can be reduced or eliminated altogether. By caching at the server, the time
             to generate the response can be eliminated.</p>
             
-            <a name="options"></a>
+            <a id="options"></a>
             <h2 class="section">Caching Options</h2>
             <p>When responding to a client request, there are four alternative ways to utilize Appweb caching:</p>
             <p><img class="xbare-screen" src="../../../images/caching/caching-steps.jpg" alt="steps"/></p>
@@ -129,7 +128,7 @@
             the response is eliminated, but the full response data must be sent over the network to the client. </p>
             <P>This kind of caching is best for dynamic web pages that are viewed more often than the data on which they
             depend is updated.</p>
-            <a name="server"></a>
+            <a id="server"></a>
             <h2 class="section">Caching on the Server</h2>
             <p>On the server, there are three paradigms for how and when to update cached responses.</p>
             <ol>
@@ -165,7 +164,7 @@
             running a request handler. This paradigm is effective if the delay in creating a response web page is large.
             In that case, pre-computing the web page in the background means that the client request can be serviced very
             quickly without waiting for the page to be generated.</p>
-            <a name="configuring"></a>
+            <a id="configuring"></a>
             <h2 class="section">Configuring Caching</h2>
             <p>Appweb caching is configured via the <a href="dir/route.html#cache"><em>Cache</em></a> configuration
             directive. This directive specifies: </p>
@@ -221,7 +220,7 @@ Cache server manual /dashboard.esp
             <p>Caching records, like most other configuration file settings, are inherited by inner routes. Consequently, if
             you define a caching record at the default server level, all subsequent routes will inherit that caching
             definition.</p>
-            <a name="performance"></a>
+            <a id="performance"></a>
             <h2 class="section">Performance Considerations</h2>
             <h3>Cache Lifespans</h3>
             <p>When selecting a lifespan for a resource, ask the questions:
@@ -247,7 +246,7 @@ Cache server manual /dashboard.esp
             details about how Appweb is processing the request. It will display the selected route and also trace 
             information about whether cached responses have been found and are suitable for use.</p>
             <pre>appweb --log stdout:4</pre>
-            <a name="criteria"></a>
+            <a id="criteria"></a>
             <h2 class="section">Deciding Criteria</h2>
             <p>In summary, here are some rules of thumb to assist in designing your caching strategy.</p>
             <ul>
@@ -269,18 +268,17 @@ Cache server manual /dashboard.esp
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript"> 
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl(
-      '000262706376373952077:1hs0lhenihk');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-    customSearchControl.draw('cse-search-form', options);
-  }, true);
-</script>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> 
+      google.load('search', '1', {language : 'en'});
+      google.setOnLoadCallback(function() {
+        var customSearchControl = new google.search.CustomSearchControl(
+          '000262706376373952077:1hs0lhenihk');
+        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+        var options = new google.search.DrawOptions();
+        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        customSearchControl.draw('cse-search-form', options);
+      }, true);
+    </script>
 </body>
 </html>
-<!-- EndDsi -->

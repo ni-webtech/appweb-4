@@ -51,7 +51,6 @@
                 <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
                 <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
                 <li><a href="../../../guide/appweb/users/modules.html">Appweb Modules</a></li>
-                <li><a href="../../../guide/appweb/users/handlers.html">Appweb Handlers</a></li>
                 <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
                 <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
@@ -61,7 +60,7 @@
         </div>
         <div class="contentLeft">
             <h1>Multi-Language Support</h1>
-            <a name="overview"></a>
+            <a id="overview"></a>
             <p>Appweb supports the ability to create and manage multi-language web applications. The support includes 
             a language-aware <a href="routing.html">Routing Engine</a> and a set of 
             <a href="configuration.html#directives">configuration file directives</a> to configure and control 
@@ -69,7 +68,7 @@
             <p>When a client sends a request, the HTTP headers typically include an <em>Accept-Language</em> HTTP header that
             specifies the client's language preference for the request. The Appweb routing engine listens for this
             header and will modify the request to select response content of the appropriate language.</p>
-            <a name="documents"></a>
+            <a id="documents"></a>
             <h2 class="section">Language Document Organization</h2>
             <p>There are two organization models supported by Appweb for multi-language applications:</p>
             <ul>
@@ -78,11 +77,11 @@
             </ul>
             <p>Appweb manages these models via the <em>AddLanguageDir</em> and <em>AddLanguageSuffix</em>
             directives.</p>
-            <a name="configuration"></a>
+            <a id="configuration"></a>
             <h2 class="section">Language Configuration Directives</h2>
             <p>Three directives control the language configuration on a per-route basis: 
             <em>AddLanguageDir</em>, <em>AddLanguageSuffix</em> and <em>DefaultLanguage</em>.
-            <a name="isotag"></a>
+            <a id="isotag"></a>
             <h3>ISO Language Tags</h3>
             <p>The AddLanguageDir and AddLanguageSuffix directives add support for a single language and so a typical Appweb
             configuration file will have multiple such directives. These directives specify the language via
@@ -98,9 +97,9 @@
             When a client request is received, the appropriate language directory will be selected by the routing engine
             using the language specified by the client's <em>Accept-Language</em> HTTP header.</p>
 <pre>
-&lt;Route /info/>
+&lt;Route /info/&gt;
     AddLanguageDir en /path/to/english-docs
-&lt;/Route>
+&lt;/Route&gt;
 </pre>
             <h3>AddLanguageSuffix Directive</h3>
             <p>The AddLanguageSuffix directive defines a supported language 
@@ -110,18 +109,18 @@
             using the language suffix. The suffix can be positioned either before or after the document
             extension via the directives "position" argument.</p>
 <pre>
-&lt;Route /info/>
+&lt;Route /info/&gt;
     AddLanguageSuffix en eng before
-&lt;/Route>
+&lt;/Route&gt;
 </pre>
             <p>With this configuration, a request for <em>/index.html</em> will resolve to <em>index.eng.html</em>.</p>
             <h3>DefaultLanguage</h3>
             <p>The DefaultLanguage directive defines the language to use when the the client <em>Accept-Language</em>
             HTTP header is either absent or requests a non-supported language.</p>
 <pre>
-&lt;Route />
+&lt;Route /&gt;
     DefaultLanguage en
-&lt;/Route>
+&lt;/Route&gt;
 </pre>
         </div>
     </div>
@@ -133,18 +132,17 @@
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript"> 
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl(
-      '000262706376373952077:1hs0lhenihk');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-    customSearchControl.draw('cse-search-form', options);
-  }, true);
-</script>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> 
+      google.load('search', '1', {language : 'en'});
+      google.setOnLoadCallback(function() {
+        var customSearchControl = new google.search.CustomSearchControl(
+          '000262706376373952077:1hs0lhenihk');
+        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+        var options = new google.search.DrawOptions();
+        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        customSearchControl.draw('cse-search-form', options);
+      }, true);
+    </script>
 </body>
 </html>
-<!-- EndDsi -->

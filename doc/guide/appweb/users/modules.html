@@ -35,7 +35,7 @@
         <div class="contentRight">
             <h1>Quick Nav</h1>
             <ul class="nav">
-                <li><a href="#appwebModules">Appweb Modules</a></li>
+                <li><a href="#appwebModules">Modules</a></li>
                 <li><a href="#dynamicAndStaticLoading">Dynamic and Static Loading</a></li>
                 <li><a href="#loadModuleDirective">LoadModule Directive</a></li>
             </ul>
@@ -52,7 +52,6 @@
                 <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
                 <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
                 <li><a href="../../../guide/appweb/users/modules.html">Appweb Modules</a></li>
-                <li><a href="../../../guide/appweb/users/handlers.html">Appweb Handlers</a></li>
                 <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
                 <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
@@ -75,7 +74,7 @@
             the core HTTP server is compact, secure, and fast, and still has the ability to grow functionality as
             required.</p>
             
-            <a name="appwebModules" id="appwebModules"></a>
+            <a id="appwebModules"></a>
             <h2>Appweb Modules</h2>
             <p>Appweb delivers the following modules:</p>
             <table title="modules">
@@ -111,14 +110,14 @@
                         <td>Secure Sockets Layer (SSL) module</td>
                     </tr>
                 </tbody>
-            </table><a name="dynamicAndStaticLoading" id="dynamicAndStaticLoading"></a>
+            </table><a id="dynamicAndStaticLoading"></a>
             <h2>Dynamic Loading</h2>
             <p>An Appweb loadable module is a discrete unit of functionality that may be linked into Appweb to enhance
             the core HTTP server. Loadable Modules may be dynamically loaded via shared libraries or DLLs</p>
             <p>If building Appweb from source, modules can also be statically linked when the library initialization
                 entry point is explicitly invoked from the web server main program.</p>
             
-            <a name="loadModuleDirective" id="loadModuleDirective"></a>
+            <a id="loadModuleDirective"></a>
             <h2>LoadModule Directive</h2>
             <p>The Appweb configuration file specifies which modules to load and in what order. As some modules may
             depend on the functionality provided by other modules -- order does matter.</p>
@@ -149,18 +148,17 @@ LoadModulePath "../macosx-x64-debug/bin"
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript"> 
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl(
-      '000262706376373952077:1hs0lhenihk');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-    customSearchControl.draw('cse-search-form', options);
-  }, true);
-</script>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> 
+      google.load('search', '1', {language : 'en'});
+      google.setOnLoadCallback(function() {
+        var customSearchControl = new google.search.CustomSearchControl(
+          '000262706376373952077:1hs0lhenihk');
+        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+        var options = new google.search.DrawOptions();
+        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        customSearchControl.draw('cse-search-form', options);
+      }, true);
+    </script>
 </body>
 </html>
-<!-- EndDsi -->

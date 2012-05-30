@@ -55,7 +55,6 @@
                 <li><a href="../../../guide/appweb/users/security.html">Security Considerations</a></li>
                 <li><a href="../../../guide/appweb/users/ssl.html">SSL</a></li>
                 <li><a href="../../../guide/appweb/users/modules.html">Appweb Modules</a></li>
-                <li><a href="../../../guide/appweb/users/handlers.html">Appweb Handlers</a></li>
                 <li><a href="../../../guide/appweb/users/stages.html">Pipeline Stages</a></li>
                 <li><a href="../../../guide/appweb/users/client.html">HTTP Client</a></li>
                 <li><a href="../../../guide/appweb/users/frameworks.html">Web Frameworks</a></li>
@@ -89,7 +88,7 @@ configuration file into sections &mdash; especially application definitions.
                 <li>For enhanced security, Appweb has a few extra security directives</li>
             </ul>
             <p>By processing directives on a single-pass, Appweb is more efficient, but the order of directives does
-            matter with Appweb.</p><a name="syntax" id="syntax"></a>
+            matter with Appweb.</p><a id="syntax"></a>
             <h2 class="section">Configuration File Syntax</h2>
             <p>Configuration directives are one per line and are case-insensitive for the directive names. Lines
             beginning with a "#" character are comments and are ignored.</p>
@@ -102,7 +101,7 @@ DocumentRoot "/var/web"
 Listen 7777
 LoadModule fileHandler mod_file
 AddHandler fileHandler html
-</pre><a name="blocks" id="blocks"></a>
+</pre><a id="blocks"></a>
             <h2 class="section">Configuration Blocks</h2>
             <p>The configuration file is comprised of several directive groups or blocks:</p>
             <ul>
@@ -145,7 +144,7 @@ NameVirtualHost 206.148.96.56
     ...
 &lt;/VirtualHost&gt;
 </pre>
-            <p>See <a href="vhosts.html">Virtual Hosting</a> for more details.</p><a name="include" id="include"></a>
+            <p>See <a href="vhosts.html">Virtual Hosting</a> for more details.</p><a id="include"></a>
             <h2 class="section">Include Directives</h2>
             <p>The <b>include</b> directive allows other files to be included in the configuration file. The include
             directive can be a single filename or filename with wildcards.</p>
@@ -153,7 +152,7 @@ NameVirtualHost 206.148.96.56
 Include myconfig.conf
 Include conf/applications/*.conf
 </pre>
-            <a name="conditional" id="conditional"></a>
+            <a id="conditional"></a>
             <h2 class="section">Conditional Directives</h2>
             <p>The configuration file supports conditional processing via the <b>&lt;if&gt;</b> directive. The
             <b>if</b> directive tests a symbolic value and if true, it enables parsing the nested directives. If the
@@ -182,14 +181,14 @@ Include conf/applications/*.conf
                         <td>True if the module if enabled, where NAME is the name of the module.</td>
                     </tr>
                 </tbody>
-            </table><a name="order" id="order"></a>
+            </table><a id="order"></a>
             <h2 class="section">Order of Processing</h2>
             <p>The configuration file is parsed in a single top-to-bottom pass. The order of directives is important
             as certain directives depend on others. For example, you must define the ServerRoot before using the
             LoadModule directive. Also, block level directives inherit their configuration from the outer block. 
             For example: a Route block will inherit the outer configuration and may modify that inside the Route block.</p>
             
-            <a name="directives" id="directives"></a>
+            <a id="directives"></a>
             <h2 class="section">Configuration File Directives</h2>
             <p>This is the list of Appweb supported configuration directives.</p>
             <table title="directives" class="full">
@@ -628,18 +627,17 @@ Include conf/applications/*.conf
             All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
 		</p>
 	</div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript"> 
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl(
-      '000262706376373952077:1hs0lhenihk');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.enableSearchboxOnly("http://appwebserver.org/search.html");
-    customSearchControl.draw('cse-search-form', options);
-  }, true);
-</script>
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> 
+      google.load('search', '1', {language : 'en'});
+      google.setOnLoadCallback(function() {
+        var customSearchControl = new google.search.CustomSearchControl(
+          '000262706376373952077:1hs0lhenihk');
+        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+        var options = new google.search.DrawOptions();
+        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        customSearchControl.draw('cse-search-form', options);
+      }, true);
+    </script>
 </body>
 </html>
-<!-- EndDsi -->
