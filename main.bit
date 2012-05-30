@@ -30,11 +30,11 @@ Bit.load({
     ],
 
     settings: {
-		product: 'appweb',
-		title: 'Embedthis Appweb',
+        product: 'appweb',
+        title: 'Embedthis Appweb',
         company: 'Embedthis',
-		version: '4.0.0',
-		buildNumber: 'B2',
+        version: '4.0.0',
+        buildNumber: 'B2',
         http_port: 80,
         ssl_port: 443,
         mdb: true,

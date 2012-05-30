@@ -34,5 +34,5 @@ Bit.load({
             build: "cp('WINDOWS/appwebMonitor.ico', ${BIN})",
             generate: 'cp WINDOWS/appwebMonitor.ico ${BIN}',
         },
-	},
+    },
 })
