@@ -168,7 +168,7 @@ static void startCgi(HttpQueue *q)
     This routine is called for when the outgoing queue is writable.  We don't actually do output here, just poll
     on windows (only) until the command is complete.
  */
-static void processCgi(HttpQueue *q)
+static void writableCgi(HttpQueue *q)
 {
     MprCmd      *cmd;
 
@@ -1063,7 +1063,7 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     handler->open = openCgi; 
     handler->start = startCgi; 
 #if BIT_WIN_LIKE
-    handler->process = processCgi; 
+    handler->writable = writableCgi; 
 #endif
     /*
         Add configuration file directives

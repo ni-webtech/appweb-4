@@ -65,7 +65,7 @@
                 <li>Use the existing Appweb main program and extend Appweb via a loadable module.</li>
                 <li>Use the existing Appweb main program and extend Appweb via the ESP web framework.</li>
                 <li>Link the Appweb HTTP library with your application main program.</li>
-            </ol><a name="loadable" id="loadable"></a>
+            </ol><a id="loadable"></a>
             <h2>Extending via a Loadable Module</h2>
             <p>You can extend the Appweb server program by creating an Appweb loadable module. You do this by creating
             a shared library that contains your application and some Appweb module interface code. This module is then
@@ -81,7 +81,7 @@
             become a HTTP server itself. Embedding the Appweb library is easy and can be done with as little as one
             line of code.</p>
             
-            <a name="appwebProgram" id="appwebProgram"></a>
+            <a id="appwebProgram"></a>
             <h2 class="section">The Appweb Server Program</h2>
             <p>The Appweb product includes a fully-featured HTTP server program that uses the Appweb HTTP library. This
             server (called <b>appweb</b>) is run by default when you install the Appweb binary distribution or run
@@ -95,7 +95,7 @@
                 <li>Monitored and managed by the Appweb manager process</li>
             </ul>
             
-            <a name="module" id="module"></a>
+            <a id="module"></a>
             <h2 class="section">Creating a Module</h2>
             <p>You can extend the Appweb program by creating a loadable module for your application code.</p>
             <p>To initialize your module and register with Appweb, you must create an initialization function that is
@@ -112,8 +112,7 @@ int mprSimpleModuleInit(Http *http, MprModule *module)
     return 0;
 }
 </pre>
-            <p>See <a href="modules.html">Creating Appweb Modules</a> for more details.</p><a name="library" id=
-            "library"></a>
+            <p>See <a href="modules.html">Creating Appweb Modules</a> for more details.</p><a id="library"></a>
             <h2 class="section">Embed the Appweb Library</h2>
             <p>You can link the Appweb HTTP library with your main program to enable it to function as a HTTP
             server itself. This is ideal if your application is large and/or has a complex I/O, eventing or threading

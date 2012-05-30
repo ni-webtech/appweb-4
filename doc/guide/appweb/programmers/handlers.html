@@ -33,8 +33,23 @@
     </div>
     <div class="content">
         <div class="contentRight">
-            
-            MOB - quicknav
+            <h1>Quick Nav</h1>
+            <ul class="nav">
+                <li><a href="#pipeline">Pipeline</a></li>
+                <li><a href="#queues">Queues</a></li>
+                <li><a href="#packets">Packets</a></li>
+                <li><a href="#callbacks">Callbacks</a></li>
+                <li><a href="#flow">Data Flow</a></li>
+                <li><a href="#pipelineLifecycle">Pipeline Life Cycle</a></li>
+                <li><a href="#responses">Generating Responses</a></li>
+                <li><a href="#errors">Generating Errors</a></li>
+                <li><a href="#redirecting">Redirecting</a></li>
+                <li><a href="#nonblocking">Non-Blocking</a></li>
+                <li><a href="#paradigms">Response Paradigms</a></li>
+                <li><a href="#coding">Coding Issues</a></li>
+                <li><a href="#defining">Defining a Handler</a></li>
+                <li><a href="#more">More Info</a></li>
+            </ul>
 <!-- BeginDsi "dsi/progGuideSeeAlso.html" -->
             <h1>See Also</h1>
             <ul class="nav">
@@ -56,7 +71,7 @@
         <div class="contentLeft">
             <h1>Creating Appweb Handlers</h1>
             <p>Appweb responds to client Http requests via request handlers. A request handler is 
-            is responsible for analysing the request and generating the appropriate response content.</p>
+            is responsible for analyzing the request and generating the appropriate response content.</p>
             
             <p>Appweb provides a suite of handlers for various content types and web frameworks. The standard handlers
             supplied with Appweb are: CGI, directory, file, Ejscript, ESP and PHP. You can extend Appweb by
@@ -75,17 +90,19 @@
 &lt;/Route&gt;
 </pre>
             <p>The LoadModule directive causes Appweb to load a shared library containing your handler. The SetHandler
-            directive then defines the handler to serve all requests that begin with <em>/my/</em>.
-            <a name="pipeline" id="pipeline"></a>
+            directive then defines the handler to serve all requests that begin with <em>/my/</em>.</p>
+
+            <a id="pipeline"></a>
             <h2>Request Pipeline</h2>
             <p>When configured for a route, a handler sets at one end of the request pipeline. The pipeline is a full-duplex
             data stream in which request data flows upstream from the client and response data to the client flows
             downstream.</p>
-            <img src="../../../images/pipeline.jpg" />
+            <img src="../../../images/pipeline.jpg" alt="pipeline"/>
             <p>The request pipeline consists of a sequence of processing stages. There is one stage that is the handler,
             zero or more filters and a network connector stage. Each stage has two queues, one for outgoing data and one
-            for incoming. A queue also has two links to refer to the upstream and downstream queues in the pipeline.
+            for incoming. A queue also has two links to refer to the upstream and downstream queues in the pipeline.</p>
            
+            <a id="queues"></a>
             <h3>Queues</h3>
             <p>Queue's provide open, close, put, and service methods. These methods allow a queue instance to 
             manage state and respond to data packets. A queue can respond immediately to an incoming packet by
@@ -94,18 +111,23 @@
             <p>If a queue does not define a put() method, the default put() method will be used which queues data onto the
             service queue. The default incoming put() method joins incoming packets into a single packet on the service
             queue.</p>
-            <h3>Packets</h3>Packets are an instance of the 
+
+            <a id="packets"></a>
+            <h3>Packets</h3>
+            <p>Packets are an instance of the 
             <a href="../../../api/http.html#group___http_packet">HttpPacket</a> structure. HttpPacket instances efficiently
             store data and can be passed through the pipeline without copying. Appweb network connectors are optimized
             to write packets to network connections using scatter/gather techniques so multiple packets can be written
             in one O/S system call.</p>
+
+            <a id="callbacks"></a>
             <h3>Handler Callbacks</h3>
             <p>A handler integrates into the pipeline via its two queues. Furthermore, the handler defines an extended
             set of callback functions that are invoked by the pipeline as the client request progresses through the
-            pipeline lifecycle. These callbacks are:
-            <table>
+            pipeline life cycle. These callbacks are:</p>
+            <table title="callbacks">
                 <thead>
-                <tr><td>Callback</td><td>Purpose</td></tr>
+                <tr><th>Callback</th><th>Purpose</th></tr>
                 </thead>
                 <tbody>
                 <tr><td>match</td><td>Test if the request matches this handler.</td></tr>
@@ -121,9 +143,12 @@
                 <tr><td>close</td><td>Close the request. Corresponds to the queue close callback.</td></tr>
                 </tbody>
             </table>
+
             <p>When the pipeline is constructed for a request, the relevant handler callbacks 
             (open, close, incomingData, outgoingService) callbacks will be copied into the relevant queue callbacks
             (open, close, put, service). The handler callbacks are discussed in more detail below.</p>
+
+            <a id="flow"></a>
             <h3>Handler Data Flow</h3>
             <p>A handler will receive request body data via its <em>incomingData</em> callback on its read queue. The
             callback will be invoked for each packet of data. The end of the input stream is signified by a zero length
@@ -137,13 +162,15 @@
             Alternatively, the handler can create its own packets via <a
                 href="../../../api/http.html#group___http_packet_1gad491733e89bee8b1b64b47fa0e798931">httpCreateDataPacket</a>,
             fill with data and then send downstream by calling <a
-                href="../../../api/http.html#group___http_queue_1ga15c957cd47313affb413d681767a4763">httpPutPackToNext</a>.
+                href="../../../api/http.html#group___http_queue_1ga15c957cd47313affb413d681767a4763">httpPutPackToNext</a>.</p>
             <p>The httpWrite routine will always accept and buffer the data. But it will limit the amount of
             buffering by flushing data as required. Handlers that create their own packets should take create to test if
             the output queue is full. If the output queue is full, the handler should pause generating the response
             and wait until the queue has drained sufficiently. When that occurs, the <em>writable</em> callback will be
             invoked.</p>
-            <h2>Pipeline Lifecycle</h2>
+
+            <a id="pipelineLifecycle"></a>
+            <h2>Pipeline Life Cycle</h2>
             <p>When a request is received from the client, the Appweb Http engine parses the Http request headers and
             then determines the best Appweb <a href="../users/routing.html">route</a> for the request. A route contains
             the full details for how to process a request including the required handler and pipeline configuration.</p>
@@ -169,26 +196,28 @@
             can absorb more data. As such, it may be used to efficiently generate the response in chunks without
             blocking.</p>
             
+            <a id="responses"></a>
             <h2>Generating Responses</h2>
             <p>An HTTP response consists of a status code, a set of HTTP headers and optionally a response body. If a
             status is not set, the successful status of 200 will be used. If not custom headers are defined, then a
           minimal standard set will be generated.</p>
             <h3>Setting Status and Headers</h3>
-            The response status may be set via:
+            <p>The response status may be set via:
                 <a href="../../../api/http.html#group___http_tx_1gab965a17de1c0a823eec176bdf95b2bee">httpSetStatus</a>. 
                 The response headers may be set via:
                 <a href="../../../api/http.html#group___http_tx_1gadc3a395967972fb839f0639f8cd66c61">httpSetHeader</a>.
                 For example:</p>
             <pre>
-HttpConn *conn = q->conn;
+HttpConn *conn = q-&gt;conn;
 httpSetStatus(conn, 200);
 httpSetHeader(conn, "NowIs", "The time is %s", mprGetDate(NULL));
 </pre>
+            <a id="errors"></a>
             <h3>Generating an Error Response</h3>
             <p>If the request has an error, the status and a response message may be set via:
                 <a href="../../../api/http.html#group___http_conn_1ga9f730354501b53a97b7678a91273a3be">httpError</a>.
                 When httpError is called to indicate a request error, the supplied response text is used instead of
-                any partially generated response body and the the connection field <em>conn->error</em> is set. Once
+                any partially generated response body and the the connection field <em>conn-&gt;error</em> is set. Once
                 set, pipeline processing is abbreviated and handler callbacks will not be called anymore. Consequently, if
                 you need to continue handler processing, but want to set a non-zero status return code, do <i>not</i>
                 use httpError. Rather, use httpSetStatus.</p>
@@ -207,12 +236,14 @@ httpError(conn, 200, HTTP_CODE_GONE, "Can't find %s", path);
 <pre>
 httpError(conn, 504, HTTP_ABOR, "Can't continue with the request");
 </pre>
+            <a id="redirecting"></a>
             <h3>Redirecting</h3>
             <p>Sometimes a handler will want to generate a response that will redirect the client to a new URI.
             Use the <a href="api/http.html#group___http_tx_1ga616290c9e8fe95419d3a31f6fbb870b5">httpRedirect</a> call 
             to redirect the client. For example:
             <pre>httpRedirect(conn, HTTP_CODE_MOVED_PERMANENTLY, uri);</pre>
             <h3>Generating Response Body</h3>
+
             <p>The simplest way to generate a response is to use 
             <a href="../../../api/http.html#group___http_queue_1ga5599a178a2bab73929795952231d6e6a">httpWrite</a>. 
             This is effective if the total response content can be buffered in the pipeline and socket without blocking.
@@ -220,16 +251,16 @@ httpError(conn, 504, HTTP_ABOR, "Can't continue with the request");
             automatically flush data as required. When all the data has been written, call:
             <a href="../../../api/http.html#group___http_tx_1ga279ad49e5163402e2afd6caf478bcc70">httpFinalize</a>. This
             finalizes the output response data by sending an empty packet to the network connector which signifies 
-            the completion of the request.</a>
+            the completion of the request.</p>
         <pre>
 httpWrite(conn, "Hello World\n");
 httpFinalize(conn);
 </pre>
+            <a id="nonblocking"></a>
             <h3>Generating Responses without Blocking</h3>
             <p>If a handler must generate a lot of response data, it should take care not to 
-            exceed the maximum queue size (q->max) and to 
-            size packets so as to not exceed the maximum queue packet size (q->packetSize). These
-            advisory maximums are set to maximize efficiency.</p>
+            exceed the maximum queue size (q-&gt;max) and to size packets so as to not exceed the maximum queue packet
+            size (q-&gt;packetSize). These advisory maximums are set to maximize efficiency.</p>
             <p>Here is an example routine to write a block of data downstream, but only send what the queue can
             absorb without blocking.</p>
 <pre>
@@ -237,10 +268,10 @@ static ssize doOutput(HttpQueue *q, cchar *data, ssize len)
 {
     HttpPacket  *packet;
     ssize       count;
-    count = min(len, q->max - q->count);
-    count = min(count, q->packetSize);
+    count = min(len, q-&gt;max - q-&gt;count);
+    count = min(count, q-&gt;packetSize);
     packet = httpCreateDataPacket(count);
-    mprPutBlockToBuf(packet->content, data, len);
+    mprPutBlockToBuf(packet-&gt;content, data, len);
     httpPutForService(q, packet, HTTP_SCHEDULE_QUEUE);
     /* Return the count of bytes actually written */
     return count;
@@ -253,7 +284,7 @@ static ssize doOutput(HttpQueue *q, cchar *data, ssize len)
 static void writable(HttpQueue *q)
 {
     if (finished) {
-        httpFinalize(q->conn);
+        httpFinalize(q-&gt;conn);
     } else {
         httpWriteString(q, getMoreData(q));
     }
@@ -264,11 +295,13 @@ static void writable(HttpQueue *q)
             <p>If a handler puts data onto a service queue, it should call 
             <a href="../../../api/http.html#group___http_rx_1gaf5503f75323ec0c6df1b3ee5615ad496">httpPump</a> to enable
             the pipeline to advance and potentially invoke the handler's <em>writable</em> callback.</p>
-        <h2>Paradigms</h2>
+
+        <a id="paradigms"></a>
+        <h2>Response Paradigms</h2>
         <p>In summary, a handler may use one of several paradigms to implement how it responds to requests.</p>
         <h3>Blocking</h3>
         <p>A handler may generate its entire response in its start(), or ready() callback and will block if required while
-        output drains to the client. In this paradigm, httpWrite is typicall used and Appweb will automatically buffer
+        output drains to the client. In this paradigm, httpWrite is typically used and Appweb will automatically buffer
         the response if required.  If the response is shorter than available buffering (typically 64K), the request
         should not block. After the handler has written all the data, it will return immediately and Appweb will use its event
         mechanism to manage completing the request. For such short requests, this is highly efficient.</p>
@@ -279,8 +312,8 @@ static void writable(HttpQueue *q)
         Otherwise this can lead to a denial-of-service vulnerability.</p>
         <h3>Non-Blocking</h3>
         <p>A more advanced technique is to write data in portions from the writable() callback. The callback will be
-        invoked whenever the pipeline can absorb more data. The handler should test the <em>q->max, q->count</em> and
-        <em>q->packetSize</em> values to determine how much to write before returning from writable(). The httpFinalize
+        invoked whenever the pipeline can absorb more data. The handler should test the <em>q-&gt;max, q-&gt;count</em> and
+        <em>q-&gt;packetSize</em> values to determine how much to write before returning from writable(). The httpFinalize
         routine should be called when the request is complete.</p>
         <h3>Async Generation</h3>
         <p>A handler can asynchronously generate response data outside of the typical handler callbacks. This may be in
@@ -290,7 +323,7 @@ static void writable(HttpQueue *q)
         be done from Appweb events via Appweb dispatchers. To run code from the connection dispatcher, use: 
         <a href="../../../api/mpr.html#group___mpr_event_1ga6154e34c582e39cd64b4505a6afb39c4">mprCreateEvent</a>.
         <pre>
-mprCreateEvent(q->conn->dispatcher, "deviceEvent", 0, doMoreOutput, q, 0);
+mprCreateEvent(q-&gt;conn-&gt;dispatcher, "deviceEvent", 0, doMoreOutput, q, 0);
 </pre>
         <p>This will schedule the function <em>doMoreOutput</em> to run from the connection dispatcher. 
         <p>You may call mprCreateEvent from any thread and the scheduled function will run serialized within the event
@@ -307,13 +340,15 @@ mprCreateEvent(q->conn->dispatcher, "deviceEvent", 0, doMoreOutput, q, 0);
         the connection via: <a
             href="../../../api/http.html#http_8h_1a269af9eeb75763738059d298b48f1032">httpStealConn</a>. Otherwise, a
         handler should check that a connection has not been closed before generating output for a connection. This can
-        be done by checking <em>conn->tx</em> which will be set to NULL when the connection is closed.</p> 
+        be done by checking <em>conn-&gt;tx</em> which will be set to NULL when the connection is closed.</p> 
         <p>Note that the HttpConn object and other request objects will be preseved in memory even after Appweb closes a
         request and connection. This is because calling <em>mprCreateEvent</em> with a queue reference will maintain a
         reference to the queue and connection object and this reference will delay the garbage collector from reclaiming
         the memory for these objects.</p>
         <p>When output is complete, httpFinalize should be called to signal the completion of the request. After writing
         or completing the request, httpPump() should be called to perform pipeline processing on the request.</p>
+
+        <a id="coding"></a>
         <h2>Coding Issues</h2>
         <p>There are a few coding issues to keep in mind when creating handlers. Appweb is a multithreaded, event loop
         server. As such, handlers must cooperate and take care when using resources.</p>
@@ -326,6 +361,8 @@ mprCreateEvent(q->conn->dispatcher, "deviceEvent", 0, doMoreOutput, q, 0);
         they block and are not calling an MPR function that blocks. This ensures that the garbage collector can work and
         collect memory while the worker thread is asleep. Handlers do not need to call mprYield when executing on
         threads that were created outside of the MPR (ie. not MPR worker threads).</p>
+
+        <a id="defining"></a>
         <h2>Defining a Handler</h2>
         <p>To define an Appweb handler, you must do three things:
         <ol>
@@ -345,12 +382,13 @@ int maMyModuleInit(Http *http, MprModule *mp)
     if ((handler = httpCreateHandler(http, "myHandler", 0, mp)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
-    handler->open = openSimple; 
-    handler->close = closeSimple; 
-    handler->start = startSimple; 
+    handler-&gt;open = openSimple; 
+    handler-&gt;close = closeSimple; 
+    handler-&gt;start = startSimple; 
     return 0;
 }
 </pre>
+            <a id="more"></a>
             <h2>More Info</h2>
             <p>See the <a
                 href="https://github.com/embedthis/appweb-4/tree/master/src/samples/c/simpleHandler">simpleHandler for a

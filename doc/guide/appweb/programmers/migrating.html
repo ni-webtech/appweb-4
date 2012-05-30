@@ -64,8 +64,7 @@
         <div class="contentLeft">
             <h1>Migrating to Appweb 4</h1>
             <p>Appweb 4 is a major upgrade from Appweb 3. It incorporates new features and upgrades
-            to existing capabilities. It also changes many APIs and interfaces.</p><a name="compatibility" id=
-            "compatibility"></a>
+            to existing capabilities. It also changes many APIs and interfaces.</p><a id="compatibility"></a>
             <h2 class="section">Compatibility with Appweb 3</h2>
             <p>We make every effort to preserve compatibility, but with Appweb 4, we needed to make some important
             improvements that necessitated breaking compatibility with Appweb 3. Rather than make several ongoing
@@ -73,13 +72,13 @@
             that Appweb 4 quickly becomes a stable platform going forward. Please see our <a href=
                 "../../../product/compatibility.html">Compatibility Policy</a>.</p>
             
-            <a name="support" id="support"></a>
+            <a id="support"></a>
             <h3>Legacy Appweb Support</h3>
             <p>To address the needs of users for whom upgrading to Appweb 3 will take some time, we intend to support
             Appweb 3 till the end of 2013 and to continue to issue updates and upgrades for Appweb 3 during that
             period. Appweb 2 is now officially "end-of-life".</p>
             
-            <a name="changes" id="changes"></a>
+            <a id="changes"></a>
             <h2 class="section">Changes in Appweb 4</h2>
             <p>Appweb 4 provides equivalent or greater functionality to that in Appweb 3. 
             While Appweb 4 may have a different interface or API, the capabilities of Appweb 3 have been continued 
@@ -126,7 +125,7 @@
             opposite approach where memory that must be retained needs to be actively managed to prevent garbage 
             collection. This means that a <em>managed reference</em> must be held for all active memory.
             See <a href="../../../ref/appweb/memory.html">Memory Allocation</a> for more details.</p>
-            <a name="config" id="config"></a>
+            <a id="config"></a>
             <h2 class="section">Migrating Appweb Configuration Files</h2>
             <p>The Appweb 4 configuration file is substantially the same as the Appweb 3. Include directives can now
             contain wild cards and there are several new directives supporting Routing, Multi-language support and the
@@ -138,7 +137,7 @@
             nearly all cases, Location and Directory directives should easily migrate to Route directives.
             <p>See <a href="../users/configuration.html">Configuring Appweb</a> and <a href=
             "../users/configuration.html#directives">Configuration Directives</a> for more details.</p>
-            <a name="modules"></a>
+            <a id="modules"></a>
             <h2 class="section">Migrating Modules and Handlers</h2>
             <p>Appweb 4 modules use modified API signatures to initialize with Appweb.
             In Appweb 4, the MPR module is pre-created and passed into the module.
@@ -162,12 +161,12 @@
                 <li>Native code level performance</li>
                 <li>Compact memory footprint</li>
             </ul>
-            <a name="cgi" id="cgi"></a>
+            <a id="cgi"></a>
             <h2 class="section">Migrating CGI Programs</h2>
             <p>CGI programs should migrate unchanged. The CGI handler in Appweb 4 offers much higher performance by
             using pipes for I/O instead of files.</p>
             
-            <a name="egi" id="egi"></a>
+            <a id="egi"></a>
             <h2 class="section">Migrating EGI Programs</h2>
             <p>The EGI handler has been deprecated and removed. EGI programs should be migrated to use the ESP web
             framework.</p>

@@ -77,7 +77,7 @@
             <p><b>NOTE:</b> Please read <a href="building.html">Building from Source</a> before your read this
             document. It provides valuable background about building from source.</p>
             
-            <a name="newOs" id="newOs"></a>
+            <a id="newOs"></a>
             <h2>Steps in Porting to a new Operating System</h2>
             <ol>
                 <li>
@@ -92,7 +92,7 @@
                     Appweb software already supports and use it as a base to modify. For example, if you are porting to
                     QNX, you may want to use the Linux port as a base.</p>
                     <p>Run configure for this "closest" O/S. You should specify '--without all' to select the minimal
-                    Appweb feature set. This allows you to first focus on the porting essentails.</p>
+                    Appweb feature set. This allows you to first focus on the porting essentials.</p>
                     <p>Next, copy the output products directory. For example:
                     if copying Linux on a 32 bit system, configure will create a linux-x32-debug directory. Copy this to
                     qnx-32-debug.</p>
@@ -169,7 +169,7 @@ appweb -v
             -->
             </ol>
             
-            <a name="workingWithTheTeam" id="workingWithTheTeam"></a>
+            <a id="workingWithTheTeam"></a>
             <h2 class="section">Working with the Appweb Development Team</h2>
             <p>Once you have a basic port running, you should send it back for the team to look over. They can provide
             advice and suggestions. At the first opportunity, your changes may be merged back into the development tree
