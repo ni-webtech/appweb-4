@@ -1272,10 +1272,7 @@ static int mdbSave(Edi *edi)
     mprCloseFile(out);
 
     bak = mprReplacePathExt(path, "bak");
-    if (mprDeletePath(bak) < 0) {
-        mprError("Can't delete %s", bak);
-        return MPR_ERR_CANT_WRITE;
-    }
+    mprDeletePath(bak);
     if (rename(path, bak) < 0) {
         mprError("Can't rename %s to %s", path, bak);
         return MPR_ERR_CANT_WRITE;

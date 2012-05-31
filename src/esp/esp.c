@@ -949,7 +949,7 @@ static bool validTarget(cchar *target)
     MprKey  *kp;
     cchar   *tp;
 
-    if (mprGetHashLength(app->targets) == 0) {
+    if (app->targets == 0 || mprGetHashLength(app->targets) == 0) {
         return 1;
     }
     for (ITERATE_KEYS(app->targets, kp)) {
@@ -1453,13 +1453,14 @@ static void copyEspDir(cchar *fromDir, cchar *toDir)
     char        *from, *to;
     int         next;
 
-    files = mprGetPathFiles(fromDir, MPR_PATH_DESCEND);
+    files = mprGetPathFiles(fromDir, MPR_PATH_DESCEND | MPR_PATH_RELATIVE | MPR_PATH_NODIRS);
     for (next = 0; (dp = mprGetNextItem(files, &next)) != 0 && !app->error; ) {
         if (!checkEspPath(dp->name)) {
             continue;
         }
         from = mprJoinPath(fromDir, dp->name);
         to = mprJoinPath(toDir, dp->name);
+#if UNUSED
         if (dp->isDir) {
             if (!mprPathExists(to, R_OK)) {
                 if (mprMakeDir(to, 0755, -1, -1, 1) < 0) {
@@ -1469,17 +1470,16 @@ static void copyEspDir(cchar *fromDir, cchar *toDir)
                 trace("CREATE",  "Directory: %s", mprGetRelPath(to, 0));
             }
             copyEspDir(from, to);
-        
         } else {
-            if (mprMakeDir(mprGetPathDir(to), 0755, -1, -1, 1) < 0) {
-                fail("Can't make directory %s", mprGetPathDir(to));
-                return;
-            }
-            if (mprPathExists(to, R_OK) && !app->overwrite) {
-                trace("EXISTS",  "File: %s", mprGetRelPath(to, 0));
-            } else {
-                trace("CREATE",  "File: %s", mprGetRelPath(to, 0));
-            }
+#endif
+        if (mprMakeDir(mprGetPathDir(to), 0755, -1, -1, 1) < 0) {
+            fail("Can't make directory %s", mprGetPathDir(to));
+            return;
+        }
+        if (mprPathExists(to, R_OK) && !app->overwrite) {
+            trace("EXISTS",  "File: %s", mprGetRelPath(to, 0));
+        } else {
+            trace("CREATE",  "File: %s", mprGetRelPath(to, 0));
             if (mprCopyPath(from, to, 0644) < 0) {
                 fail("Can't copy file %s to %s", from, mprGetRelPath(to, 0));
                 return;
