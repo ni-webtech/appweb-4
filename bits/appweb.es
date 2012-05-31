@@ -207,7 +207,7 @@ public function packageComboFiles() {
     install(['src/esp/esp.conf'], pkg.join('src/deps/appweb/esp.conf'))
     install(['src/deps/pcre/pcre.c', 'src/deps/pcre/pcre.h'], pkg.join('src/deps/appweb'))
     install(['src/deps/sqlite/sqlite3.c', 'src/deps/sqlite/sqlite3.h'], pkg.join('src/deps/sqlite'))
-    package(bit.dir.pkg.join('src'), ['src', 'combo', 'flat'])
+    package(bit.dir.pkg.join('src'), ['combo', 'flat'])
 }
 
 public function installBinary() {
