@@ -31,7 +31,9 @@ Bit.load({
                     trace('Generate', f)
                     apiwrap(f)
                     f.write(f.readString().replace(/mprBare.html/g, 'mpr.html').
-                                           replace(/httpBare.html/g, 'http.html'))
+                                           replace(/httpBare.html/g, 'http.html').
+                                           replace(/external=\"mpr.dtags\"/g, '').
+                                           replace(/external=\"http.dtags\"/g, ''))
                 }
             ",
         }, 

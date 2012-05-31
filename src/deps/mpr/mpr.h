@@ -1128,6 +1128,7 @@ struct  MprFile;
 struct  MprFileSystem;
 struct  MprHash;
 struct  MprHeap;
+struct  MprList;
 struct  MprKey;
 struct  MprModule;
 struct  MprMutex;

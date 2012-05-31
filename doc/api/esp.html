@@ -14,6 +14,7 @@
     <![endif]-->
     <link href="http://www.google.com/cse/style/look/default.css" type="text/css" rel="stylesheet" />
 </head>
+
 <body>
     <div class="top">
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
@@ -30,17 +31,17 @@
             &gt; <b>ESP</b> 
         </div>
     </div>
+
     <div class="content">
         <div class="contentRight">
             
-            
-<!-- BeginDsi "dsi/see.html" -->
-				<h1>See Also</h1>
-				<ul class="nav">
-					<li><a href="../ref/appweb/index.html">Programmers Reference</a></li>
-					<li><a href="../api/native.html">Native APIs</a></li>
-				</ul>
-<!-- EndDsi -->
+            <!-- BeginDsi "dsi/see.html" -->
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../ref/appweb/index.html">Programmers Reference</a></li>
+                <li><a href="native.html">Native APIs</a></li>
+            </ul>
+            <!-- EndDsi -->
             <h2>Quick Nav</h2>
             <ul>
                 <li><a href="#Components">Components</a></li>
@@ -1008,7 +1009,7 @@ Database provider.
     <tr><td class="param">fmt</td><td>Printf style format string.</td>
     <tr><td class="param">...</td><td>arguments.</td>
     </table></dd></dl>
-    <dl><dt>Returns:</dt><dd><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> instance.</dd></dl>
+    <dl><dt>Returns:</dt><dd><a class="ref" href="#struct_mpr_hash" >MprHash</a> instance.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
   </div>
@@ -1478,7 +1479,7 @@ Database provider.
 Field flags. 
 Flag mask set to EDI_AUTO_INC, EDI_KEY and/or EDI_INDEX.
 </td>
-    <tr><td class="param"><a class="ref" href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" external="mpr.dtags">cchar</a> *</td><td><td>name</td><td>
+    <tr><td class="param"><a class="ref" href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" >cchar</a> *</td><td><td>name</td><td>
 Field name. 
 Sourced from the database column name.
 </td>
@@ -1490,7 +1491,7 @@ Set to one of EDI_TYPE_BINARY, EDI_TYPE_BOOL, EDI_TYPE_DATE EDI_TYPE_FLOAT, EDI_
 Field validity. 
 Set to true if valid.
 </td>
-    <tr><td class="param"><a class="ref" href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" external="mpr.dtags">cchar</a> *</td><td><td>value</td><td>
+    <tr><td class="param"><a class="ref" href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" >cchar</a> *</td><td><td>value</td><td>
 Field data value.
 </td>
     </table></dd></dl>
@@ -1514,7 +1515,7 @@ Number of records in grid.
     <tr><td class="param">EdiRec *</td><td><td>records[MPR_FLEX]</td><td>
 Grid records.
 </td>
-    <tr><td class="param"><a class="ref" href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" external="mpr.dtags">cchar</a> *</td><td><td>tableName</td><td>
+    <tr><td class="param"><a class="ref" href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" >cchar</a> *</td><td><td>tableName</td><td>
 Base table name for grid.
 </td>
     </table></dd></dl>
@@ -1538,13 +1539,13 @@ List of record errors.
     <tr><td class="param">EdiField</td><td><td>fields[MPR_FLEX]</td><td>
 Field records.
 </td>
-    <tr><td class="param"><a class="ref" href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" external="mpr.dtags">cchar</a> *</td><td><td>id</td><td>
+    <tr><td class="param"><a class="ref" href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" >cchar</a> *</td><td><td>id</td><td>
 Record key ID.
 </td>
     <tr><td class="param">int</td><td><td>nfields</td><td>
 Number of fields in record.
 </td>
-    <tr><td class="param"><a class="ref" href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" external="mpr.dtags">cchar</a> *</td><td><td>tableName</td><td>
+    <tr><td class="param"><a class="ref" href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" >cchar</a> *</td><td><td>tableName</td><td>
 Base table name for record.
 </td>
     </table></dd></dl>
@@ -2236,7 +2237,7 @@ This is a smart input control that will call the appropriate input control based
   </div>
   <div class="apiDetail">
 <p>Test if a http request is finalized.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This tests if <a class="ref" href="#group___esp_req_1gac142434246bc5558dfe73a78ded7a7f0">espFinalize</a> or <a class="ref" href="#group___http_tx_1ga279ad49e5163402e2afd6caf478bcc70" external="http.dtags">httpFinalize</a> has been called for a request.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This tests if <a class="ref" href="#group___esp_req_1gac142434246bc5558dfe73a78ded7a7f0">espFinalize</a> or <a class="ref" href="#group___http_tx_1ga279ad49e5163402e2afd6caf478bcc70" >httpFinalize</a> has been called for a request.</dd></dl>
     <dl><dt>Returns:</dt><dd>&quot;true&quot; if the request has been finalized.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
@@ -2334,7 +2335,7 @@ for input fields
     <tr><td class="param">fmt</td><td>Printf style format string.</td>
     <tr><td class="param">...</td><td>arguments.</td>
     </table></dd></dl>
-    <dl><dt>Returns:</dt><dd><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> instance.</dd></dl>
+    <dl><dt>Returns:</dt><dd><a class="ref" href="#struct_mpr_hash" >MprHash</a> instance.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
   </div>
@@ -2405,8 +2406,8 @@ for input fields
   </div>
   <div class="apiDetail">
 <p>Get the request parameter hash table.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This call gets the params hash table for the current request. Route tokens, request query data, and www-url encoded form data are all entered into the params table after decoding. Use <a class="ref" href="#group___mpr_hash_1ga28eaf688ae47d09abd9552fe003cedbb" external="mpr.dtags">mprLookupKey</a> to retrieve data from the table. This routine calls $espGetParams.</dd></dl>
-    <dl><dt>Returns:</dt><dd><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> instance containing the request parameters.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This call gets the params hash table for the current request. Route tokens, request query data, and www-url encoded form data are all entered into the params table after decoding. Use <a class="ref" href="#group___mpr_hash_1ga28eaf688ae47d09abd9552fe003cedbb" >mprLookupKey</a> to retrieve data from the table. This routine calls $espGetParams.</dd></dl>
+    <dl><dt>Returns:</dt><dd><a class="ref" href="#struct_mpr_hash" >MprHash</a> instance containing the request parameters.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___esp_control_1ga46d20e684116990c878ef113b0702972" class="ref">espAlert</a></dd></dl>
   </div>
@@ -3762,13 +3763,13 @@ Extended route info.
     <tr><td class="param"><a class="ref" href="#struct_esp">Esp</a> *</td><td><td>esp</td><td>
 Convenient esp reference.
 </td>
-    <tr><td class="param"><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>flash</td><td>
+    <tr><td class="param"><a class="ref" href="#struct_mpr_hash" >MprHash</a> *</td><td><td>flash</td><td>
 New flash messages.
 </td>
     <tr><td class="param">int</td><td><td>lastDomID</td><td>
 Last generated DOM ID.
 </td>
-    <tr><td class="param"><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>lastFlash</td><td>
+    <tr><td class="param"><a class="ref" href="#struct_mpr_hash" >MprHash</a> *</td><td><td>lastFlash</td><td>
 Flash messages from the last request.
 </td>
     <tr><td class="param">char *</td><td><td>module</td><td>
@@ -4183,7 +4184,7 @@ Path to view.
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object.</td>
     </table></dd></dl>
-    <dl><dt>Returns:</dt><dd>Hash table. See <a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> for how to access the hash table.</dd></dl>
+    <dl><dt>Returns:</dt><dd>Hash table. See <a class="ref" href="#struct_mpr_hash" >MprHash</a> for how to access the hash table.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
   </div>
@@ -4273,12 +4274,12 @@ Path to view.
   </div>
   <div class="apiDetail">
 <p>Get the request parameter hash table.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This call gets the params hash table for the current request. Route tokens, request query data, and www-url encoded form data are all entered into the params table after decoding. Use <a class="ref" href="#group___mpr_hash_1ga28eaf688ae47d09abd9552fe003cedbb" external="mpr.dtags">mprLookupKey</a> to retrieve data from the table.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This call gets the params hash table for the current request. Route tokens, request query data, and www-url encoded form data are all entered into the params table after decoding. Use <a class="ref" href="#group___mpr_hash_1ga28eaf688ae47d09abd9552fe003cedbb" >mprLookupKey</a> to retrieve data from the table.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object.</td>
     </table></dd></dl>
-    <dl><dt>Returns:</dt><dd><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> instance containing the request parameters.</dd></dl>
+    <dl><dt>Returns:</dt><dd><a class="ref" href="#struct_mpr_hash" >MprHash</a> instance containing the request parameters.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
   </div>
@@ -4486,7 +4487,7 @@ Path to view.
   </div>
   <div class="apiDetail">
 <p>Test if a http request is finalized.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This tests if <a class="ref" href="#group___esp_req_1gac142434246bc5558dfe73a78ded7a7f0">espFinalize</a> or <a class="ref" href="#group___http_tx_1ga279ad49e5163402e2afd6caf478bcc70" external="http.dtags">httpFinalize</a> has been called for a request.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This tests if <a class="ref" href="#group___esp_req_1gac142434246bc5558dfe73a78ded7a7f0">espFinalize</a> or <a class="ref" href="#group___http_tx_1ga279ad49e5163402e2afd6caf478bcc70" >httpFinalize</a> has been called for a request.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object.</td>
@@ -4552,7 +4553,7 @@ Path to view.
     <tr><td class="param">fmt</td><td>Printf style format string.</td>
     <tr><td class="param">...</td><td>arguments.</td>
     </table></dd></dl>
-    <dl><dt>Returns:</dt><dd><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> instance.</dd></dl>
+    <dl><dt>Returns:</dt><dd><a class="ref" href="#struct_mpr_hash" >MprHash</a> instance.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     </dd></dl>
   </div>
@@ -5448,7 +5449,7 @@ Directory for databases.
     <tr><td class="param">Edi *</td><td><td>edi</td><td>
 Default database for this route.
 </td>
-    <tr><td class="param"><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>env</td><td>
+    <tr><td class="param"><a class="ref" href="#struct_mpr_hash" >MprHash</a> *</td><td><td>env</td><td>
 Environment variables for route.
 </td>
     <tr><td class="param">int</td><td><td>keepSource</td><td>
@@ -6137,13 +6138,13 @@ Session inactivity timeout (msecs).
 <p>Validation structure.</p>
     <dl><dt>Fields:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param"><a class="ref" href="#mpr_8h_1a5272042f7e0f5c53e2fd4b49ff47d92d" external="mpr.dtags">cvoid</a> *</td><td><td>data</td><td>
+    <tr><td class="param"><a class="ref" href="#mpr_8h_1a5272042f7e0f5c53e2fd4b49ff47d92d" >cvoid</a> *</td><td><td>data</td><td>
 Allocated data that must be marked for GC.
 </td>
-    <tr><td class="param"><a class="ref" href="#mpr_8h_1a5272042f7e0f5c53e2fd4b49ff47d92d" external="mpr.dtags">cvoid</a> *</td><td><td>mdata</td><td>
+    <tr><td class="param"><a class="ref" href="#mpr_8h_1a5272042f7e0f5c53e2fd4b49ff47d92d" >cvoid</a> *</td><td><td>mdata</td><td>
 Non-GC (malloc) data.
 </td>
-    <tr><td class="param"><a class="ref" href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" external="mpr.dtags">cchar</a> *</td><td><td>name</td><td>
+    <tr><td class="param"><a class="ref" href="#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" >cchar</a> *</td><td><td>name</td><td>
 Validation name.
 </td>
     <tr><td class="param"><a class="ref" href="#group___edi_service_1ga3cf21d57a02f250570e2beafc05befd9">EdiValidationProc</a></td><td><td>vfn</td><td>
@@ -6159,28 +6160,28 @@ Validation callback procedure.
 <p>Top level ESP structure.</p>
     <dl><dt>Fields:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param"><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>actions</td><td>
+    <tr><td class="param"><a class="ref" href="#struct_mpr_hash" >MprHash</a> *</td><td><td>actions</td><td>
 Table of actions.
 </td>
     <tr><td class="param">EdiService *</td><td><td>ediService</td><td>
 Database service.
 </td>
-    <tr><td class="param"><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>internalOptions</td><td>
+    <tr><td class="param"><a class="ref" href="#struct_mpr_hash" >MprHash</a> *</td><td><td>internalOptions</td><td>
 Table of internal HTML control options.
 </td>
     <tr><td class="param">int</td><td><td>inUse</td><td>
 Active ESP request counter.
 </td>
-    <tr><td class="param"><a class="ref" href="#struct_mpr_thread_local" external="mpr.dtags">MprThreadLocal</a> *</td><td><td>local</td><td>
+    <tr><td class="param"><a class="ref" href="#struct_mpr_thread_local" >MprThreadLocal</a> *</td><td><td>local</td><td>
 Thread local data.
 </td>
-    <tr><td class="param"><a class="ref" href="#struct_mpr_mutex" external="mpr.dtags">MprMutex</a> *</td><td><td>mutex</td><td>
+    <tr><td class="param"><a class="ref" href="#struct_mpr_mutex" >MprMutex</a> *</td><td><td>mutex</td><td>
 Multithread lock.
 </td>
     <tr><td class="param">MprCache *</td><td><td>sessionCache</td><td>
 Session state cache.
 </td>
-    <tr><td class="param"><a class="ref" href="#struct_mpr_hash" external="mpr.dtags">MprHash</a> *</td><td><td>views</td><td>
+    <tr><td class="param"><a class="ref" href="#struct_mpr_hash" >MprHash</a> *</td><td><td>views</td><td>
 Table of views.
 </td>
     </table></dd></dl>
@@ -6205,14 +6206,13 @@ Action procedure to run to respond to the request.
             </div>
         </div>
 <!-- BeginDsi "dsi/bottom.html" -->
+	</div>
 	<div class="bottom">
-		<p class="footnote"> 
-            <a href="../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2012.
-            All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
-		</p>
+		<p class="footnote"><a href="../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2012. All rights 
+                reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a></p>
 	</div>
     <script src="http://www.google.com/jsapi" type="text/javascript"></script>
-    <script type="text/javascript"> 
+    <script type="text/javascript">
       google.load('search', '1', {language : 'en'});
       google.setOnLoadCallback(function() {
         var customSearchControl = new google.search.CustomSearchControl(
@@ -6225,3 +6225,4 @@ Action procedure to run to respond to the request.
     </script>
 </body>
 </html>
+
