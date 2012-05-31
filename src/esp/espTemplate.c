@@ -537,6 +537,12 @@ char *espBuildScript(HttpRoute *route, cchar *page, cchar *path, cchar *cacheNam
             if ((layoutBuf = espBuildScript(route, layoutPage, layout, NULL, NULL, err)) == 0) {
                 return 0;
             }
+#if BIT_DEBUG
+            if (!scontains(layoutBuf, CONTENT_MARKER, -1)) {
+                *err = sfmt("Layout page is missing content marker: %s", layout);
+                return 0;
+            }
+#endif
             body = sreplace(layoutBuf, CONTENT_MARKER, body);
         }
         if (start && start[slen(start) - 1] != '\n') {
