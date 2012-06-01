@@ -40,10 +40,10 @@ Bit.load({
 
         'validate-doc': {
             action: "
-                let spell = bit.dir.cfg.join('spell')
-                spell.removeAll()
+                let vdir = bit.dir.cfg.join('validate')
+                vdir.removeAll()
                 for each (file in Path('.').glob('**', { exclude: /\\/$|dsi|Base|Bare/ })) {
-                    let out = spell.join(file)
+                    let out = vdir.join(file)
                     out.dirname.makeDir()
                     if (file.extension == 'html') {
                         out.write(file.readString().replace(/<pre>((?!pre>)(?:.|\\s))*pre>/mg, '<pre>DELETED</pre>'))
@@ -51,7 +51,7 @@ Bit.load({
                         out.write(file.readString())
                     }
                 }
-                trace('Prepare', spell)
+                trace('Prepare', vdir)
             ",
         },
 

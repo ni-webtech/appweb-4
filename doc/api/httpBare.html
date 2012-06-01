@@ -1229,7 +1229,7 @@ Ejscript Web Framework handler.
     <tr><td class="param">MprList *</td><td><td>endpoints</td><td>
 Currently configured listening endpoints.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#group___http_conn_1ga2e2bbf16b2266d475a349187e735827d">HttpEnvCallback</a></td><td><td>envCallback</td><td>
+    <tr><td class="param"><a class="ref" href="#group___http_conn_1ga2e2bbf16b2266d475a349187e735827d">HttpEnvCallback</a></td><td><td>envCallback</td><td>
 SetEnv callback.
 </td>
     <tr><td class="param">char *</td><td><td>expiresDate</td><td>
@@ -1241,13 +1241,13 @@ Static file handler.
     <tr><td class="param">MprForkCallback</td><td><td>forkCallback</td><td>
 Callback in child after fork().
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#group___http_auth_1ga5bbf4e68ceb995ae825f8085345ad3c5">HttpGetPassword</a></td><td><td>getPassword</td><td>
+    <tr><td class="param"><a class="ref" href="#group___http_auth_1ga5bbf4e68ceb995ae825f8085345ad3c5">HttpGetPassword</a></td><td><td>getPassword</td><td>
 Lookup password callback.
 </td>
     <tr><td class="param">MprList *</td><td><td>hosts</td><td>
 List of host objects.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#group___http_conn_1ga4d060d366219e2deac858ac50ee5f7f3">HttpListenCallback</a></td><td><td>listenCallback</td><td>
+    <tr><td class="param"><a class="ref" href="#group___http_conn_1ga4d060d366219e2deac858ac50ee5f7f3">HttpListenCallback</a></td><td><td>listenCallback</td><td>
 Invoked when creating listeners.
 </td>
     <tr><td class="param">struct HttpStage *</td><td><td>netConnector</td><td>
@@ -1277,7 +1277,7 @@ Proxy port.
     <tr><td class="param">struct HttpStage *</td><td><td>rangeFilter</td><td>
 Ranged requests filter.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#group___http_conn_1ga92e83045579e22719e2092667dd97bd8">HttpRedirectCallback</a></td><td><td>redirectCallback</td><td>
+    <tr><td class="param"><a class="ref" href="#group___http_conn_1ga92e83045579e22719e2092667dd97bd8">HttpRedirectCallback</a></td><td><td>redirectCallback</td><td>
 Redirect callback.
 </td>
     <tr><td class="param">MprHash *</td><td><td>routeConditions</td><td>
@@ -1319,7 +1319,7 @@ Timestamp timer.
     <tr><td class="param">struct HttpStage *</td><td><td>uploadFilter</td><td>
 Upload filter.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#group___http_auth_1ga2ce91e0f714a88e88910ef1243750d89">HttpValidateCred</a></td><td><td>validateCred</td><td>
+    <tr><td class="param"><a class="ref" href="#group___http_auth_1ga2ce91e0f714a88e88910ef1243750d89">HttpValidateCred</a></td><td><td>validateCred</td><td>
 Validate user credentials callback.
 </td>
     </table></dd></dl>
@@ -1424,7 +1424,7 @@ Validate user credentials callback.
     <dl><dt><b>Description</b>:</dt><dd>This loads the configured SSL provider. SSL providers are configured when the product is built from source.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">http</td><td>Http object created via <a class="ref" BBB href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
+    <tr><td class="param">http</td><td>Http object created via <a class="ref" href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>&quot;Zero&quot; if SSL can be successfully loaded. Otherwise return a negative MPR error code.</dd></dl>
     <dl><dt>See Also:</dt><dd>
@@ -1442,7 +1442,7 @@ Validate user credentials callback.
 <p>Lookup a host by name.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">http</td><td>Http object created via <a class="ref" BBB href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
+    <tr><td class="param">http</td><td>Http object created via <a class="ref" href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
     <tr><td class="param">name</td><td>The name of the host to find.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>The corresponding host object.</dd></dl>
@@ -1462,7 +1462,7 @@ Validate user credentials callback.
     <dl><dt><b>Description</b>:</dt><dd>Lookup the code and return the corresponding text message briefly expaining the status.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">http</td><td>Http object created via <a class="ref" BBB href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
+    <tr><td class="param">http</td><td>Http object created via <a class="ref" href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
     <tr><td class="param">status</td><td>Http status code.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Text message corresponding to the status code.</dd></dl>
@@ -1482,7 +1482,7 @@ Validate user credentials callback.
     <dl><dt><b>Description</b>:</dt><dd>Define a http proxy host to communicate via when accessing the net.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">http</td><td>Http object created via <a class="ref" BBB href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
+    <tr><td class="param">http</td><td>Http object created via <a class="ref" href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
     <tr><td class="param">host</td><td>Proxy host name or IP address.</td>
     <tr><td class="param">port</td><td>Proxy host port number.</td>
     </table></dd></dl>
@@ -1565,7 +1565,7 @@ Hash of user file.
     <dl><dt><b>Description</b>:</dt><dd>This creates the group and adds it to the authentication database.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">group</td><td>Group name to add.</td>
     <tr><td class="param">acl</td><td>Group access control list mask.</td>
     <tr><td class="param">enabled</td><td>Set to true to enable the group.</td>
@@ -1587,7 +1587,7 @@ Hash of user file.
     <dl><dt><b>Description</b>:</dt><dd>This creates the user and adds the user to the authentication database.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">realm</td><td>Authentication realm.</td>
     <tr><td class="param">user</td><td>User name to add.</td>
     <tr><td class="param">password</td><td>User password. The password should not be encrypted. The backend will encrypt as required.</td>
@@ -1610,7 +1610,7 @@ Hash of user file.
     <dl><dt><b>Description</b>:</dt><dd>This creates the users and adds them to the authentication database.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">group</td><td>Group name to add.</td>
     <tr><td class="param">users</td><td>Space or comma separated list of user names.</td>
     </table></dd></dl>
@@ -1631,7 +1631,7 @@ Hash of user file.
     <dl><dt><b>Description</b>:</dt><dd>This creates the user and adds the user to the authentication database.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">gp</td><td>Group object.</td>
     <tr><td class="param">user</td><td>User name string.</td>
     </table></dd></dl>
@@ -1665,7 +1665,7 @@ Hash of user file.
 <p>Create a new group.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">name</td><td>Group name to add.</td>
     <tr><td class="param">acl</td><td>Group access control list mask.</td>
     <tr><td class="param">enabled</td><td>Set to true to enable the group.</td>
@@ -1687,7 +1687,7 @@ Hash of user file.
     <dl><dt><b>Description</b>:</dt><dd>The user is not added to the authentication database.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">name</td><td>User name.</td>
     <tr><td class="param">password</td><td>User password. The password should not be encrypted. The backend will encrypt as required.</td>
     <tr><td class="param">realm</td><td>Authentication realm for this user.</td>
@@ -1709,7 +1709,7 @@ Hash of user file.
 <p>Disable a group.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">group</td><td>Group name to disable.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>&quot;Zero&quot; if successful, otherwise a negative MPR error code.</dd></dl>
@@ -1728,7 +1728,7 @@ Hash of user file.
 <p>Disable a user.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">realm</td><td>Authentication realm for user.</td>
     <tr><td class="param">user</td><td>User name to disable.</td>
     </table></dd></dl>
@@ -1748,7 +1748,7 @@ Hash of user file.
 <p>Enable a group.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">group</td><td>User name to enable.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>&quot;Zero&quot; if successful, otherwise a negative MPR error code.</dd></dl>
@@ -1767,7 +1767,7 @@ Hash of user file.
 <p>Enable a user.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">user</td><td>User name to enable.</td>
     <tr><td class="param">realm</td><td>Authentication realm for user.</td>
     </table></dd></dl>
@@ -1787,7 +1787,7 @@ Hash of user file.
 <p>Get the password for a user from a file-based authentication database.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">realm</td><td>Authentication realm for user.</td>
     <tr><td class="param">user</td><td>User name to examine.</td>
     </table></dd></dl>
@@ -1807,7 +1807,7 @@ Hash of user file.
 <p>Get the group ACL.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">group</td><td>Group name to examine.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>The group access control list. If the group does not exist, an empty ACL is returned.</dd></dl>
@@ -1826,7 +1826,7 @@ Hash of user file.
 <p>Get the user password from a PAM database.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">realm</td><td>Authentication realm.</td>
     <tr><td class="param">user</td><td>User name to examine.</td>
     </table></dd></dl>
@@ -1846,7 +1846,7 @@ Hash of user file.
 <p>Test if an authentication group is enabled.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">group</td><td>Group name to examine.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>True if the group is enabled.</dd></dl>
@@ -1865,7 +1865,7 @@ Hash of user file.
 <p>Test if a user is enabled.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">user</td><td>User name to examine.</td>
     <tr><td class="param">realm</td><td>Authentication realm for user.</td>
     </table></dd></dl>
@@ -1885,7 +1885,7 @@ Hash of user file.
 <p>Parse an access control list.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">acl</td><td>Access control list string.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Access control list mask.</dd></dl>
@@ -1904,7 +1904,7 @@ Hash of user file.
 <p>Read an authentication group file.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">path</td><td>Path name of the group file.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a negative MPR error code.</dd></dl>
@@ -1923,7 +1923,7 @@ Hash of user file.
 <p>Remove an authentication user file.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">path</td><td>Path name of user file.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>&quot;Zero&quot; if successful, otherwise a negative MPR error code.</dd></dl>
@@ -1942,7 +1942,7 @@ Hash of user file.
 <p>Remove a group.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">group</td><td>Group name to remove.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>&quot;Zero&quot; if successful, otherwise a negative MPR error code.</dd></dl>
@@ -1961,7 +1961,7 @@ Hash of user file.
 <p>Remove a user.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">realm</td><td>Authentication realm of user to remove.</td>
     <tr><td class="param">user</td><td>User name to remove.</td>
     </table></dd></dl>
@@ -2000,7 +2000,7 @@ Hash of user file.
 <p>Remove users from a group.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">group</td><td>Group name to modify.</td>
     <tr><td class="param">users</td><td>Comma or space separate list of users to remove.</td>
     </table></dd></dl>
@@ -2020,7 +2020,7 @@ Hash of user file.
 <p>Allow access by a client.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Authorization object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Authorization object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">allow</td><td>Client to allow access. This must be an IP address string.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
@@ -2039,7 +2039,7 @@ Hash of user file.
     <dl><dt><b>Description</b>:</dt><dd>This configures the basic or digest authentication for the authorization object.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Authorization object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Authorization object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___http_auth" class="ref">HttpAuth</a>, <a href="#group___http_auth_1ga5bbf4e68ceb995ae825f8085345ad3c5" class="ref">HttpGetPassword</a>, <a href="#struct_http_group" class="ref">HttpGroup</a>, <a href="#struct_http_user" class="ref">HttpUser</a>, <a href="#group___http_auth_1ga2ce91e0f714a88e88910ef1243750d89" class="ref">HttpValidateCred</a>, <a href="#group___http_auth_1gaf877cc386a86e4c8fd81a203efc6921e" class="ref">httpAddGroup</a>, <a href="#group___http_auth_1ga872a72c969cd2fb33d924d6b4c26e38f" class="ref">httpAddUser</a>, <a href="#group___http_auth_1gab2de031bd49e5605d4567901e3cde1b0" class="ref">httpAddUserToGroup</a>, <a href="#group___http_auth_1ga9a35d18a0a3af75014aff73994d3b0a4" class="ref">httpAddUsersToGroup</a>, <a href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07" class="ref">httpCreateAuth</a>, <a href="#group___http_auth_1ga260229840ddc04ccf251d54c7a312cdc" class="ref">httpCreateGroup</a>, <a href="#group___http_auth_1gac4f458f5ed27de39fc717232bebc9c2f" class="ref">httpCreateUser</a>, <a href="#group___http_auth_1ga792fdaa0dc8231b3d613ef50029aee26" class="ref">httpDisableGroup</a>, <a href="#group___http_auth_1gace85af94e891a86012a71a58684756b8" class="ref">httpDisableUser</a>, <a href="#group___http_auth_1gacbf1e5849472f95d0e02360b34f77f05" class="ref">httpEnableGroup</a>, <a href="#group___http_auth_1ga97d0e19d67e65addc448fd20df3fa792" class="ref">httpEnableUser</a>, <a href="#group___http_auth_1ga8e89eb365b497fa2a2fa600baf02de62" class="ref">httpGetFilePassword</a>, <a href="#group___http_auth_1ga665a0abc5437502359a83efdb658eba3" class="ref">httpGetGroupAcl</a>, <a href="#group___http_auth_1ga675cff39a54b90ea27356e1954fc3d94" class="ref">httpGetPamPassword</a>, <a href="#group___http_auth_1ga4934282cd05644d028f35fc5e38bcdb6" class="ref">httpIsGroupEnabled</a>, <a href="#group___http_auth_1gad69d6f5fbc1be61598af8e64c216cb88" class="ref">httpIsUserEnabled</a>, <a href="#group___http_auth_1ga294d8572a162e42a210273c66a9a2eeb" class="ref">httpParseAcl</a>, <a href="#group___http_auth_1ga563d6a65e3d3c3c5f275e4f1a7a48541" class="ref">httpReadGroupFile</a>, <a href="#group___http_auth_1ga25aef6d69fb5672bcee9a014aa729006" class="ref">httpReadUserFile</a>, <a href="#group___http_auth_1ga2965e5fbaad026ae5718fe6263ca7b3f" class="ref">httpRemoveGroup</a>, <a href="#group___http_auth_1ga31a42865c355bebd86f5fe1cea5a2c62" class="ref">httpRemoveUser</a>, <a href="#group___http_auth_1ga0b4e8d9e09acc1409ed5f14597822529" class="ref">httpRemoveUserFromGroup</a>, <a href="#group___http_auth_1ga343482ad37f86771caa93f70f2e62489" class="ref">httpRemoveUsersFromGroup</a>, <a href="#group___http_auth_1gadd70a294ddb8a46ab57c8461fc60e6ea" class="ref">httpSetAuthDeny</a>, <a href="#group___http_auth_1gaca051ee0de660c150b2fe37572cb8526" class="ref">httpSetAuthOrder</a>, <a href="#group___http_auth_1ga9695c6e6ecdafb77dd70b192edbddcd5" class="ref">httpSetAuthQop</a>, <a href="#group___http_auth_1gaf068156faee2f2be74fe08455a715187" class="ref">httpSetAuthRealm</a>, <a href="#group___http_auth_1ga8715694996cb1d74fafd96e16a5f5c0c" class="ref">httpSetAuthRequiredGroups</a>, <a href="#group___http_auth_1gaffc8805599851f0f5143db772ad1210f" class="ref">httpSetAuthRequiredUsers</a>, <a href="#group___http_auth_1ga9ac890a605979911662e093491fa91e0" class="ref">httpSetAuthUser</a>, <a href="#group___http_auth_1ga957b436a5672ee0dbfecb1f7171a2f20" class="ref">httpSetGroupAcl</a>, <a href="#group___http_auth_1gab7df1e6f6778a7d17697039db8b822f7" class="ref">httpSetRequiredAcl</a>, <a href="#group___http_auth_1ga3034c02c2c1be90a38bffbfb368075f4" class="ref">httpUpdateUserAcls</a>, <a href="#group___http_auth_1gad2d2dba24e204850cc70360db41d63cd" class="ref">httpValidateFileCredentials</a>, <a href="#group___http_auth_1ga26b956e0e688c1c88e7624187cc20357" class="ref">httpValidatePamCredentials</a>, <a href="#group___http_auth_1ga2600d0e353cd1ab7c1c881238b8da4df" class="ref">httpWriteGroupFile</a>, <a href="#group___http_auth_1ga8d3fd1f24cf3a3883e0289143518047c" class="ref">httpWriteUserFile</a></dd></dl>
@@ -2056,7 +2056,7 @@ Hash of user file.
 <p>Deny access by a client.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Authorization object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Authorization object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">deny</td><td>Client to deny access. This must be an IP address string.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
@@ -2074,7 +2074,7 @@ Hash of user file.
 <p>Set the auth allow/deny order.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">order</td><td>Set to HTTP_ALLOW_DENY to run allow checks before deny checks. Set to HTTP_DENY_ALLOW to run deny checks before allow.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
@@ -2093,7 +2093,7 @@ Hash of user file.
     <dl><dt><b>Description</b>:</dt><dd>This configures the basic or digest authentication for the auth object.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">qop</td><td>Quality of service description.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
@@ -2112,7 +2112,7 @@ Hash of user file.
     <dl><dt><b>Description</b>:</dt><dd>This configures the basic or digest authentication for the auth object.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">realm</td><td>Authentication realm.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
@@ -2131,7 +2131,7 @@ Hash of user file.
     <dl><dt><b>Description</b>:</dt><dd>This configures the basic or digest authentication for the auth object.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">groups</td><td>Comma or space separated list of acceptable groups.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
@@ -2150,7 +2150,7 @@ Hash of user file.
     <dl><dt><b>Description</b>:</dt><dd>This configures the basic or digest authentication for the auth object.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">users</td><td>Comma or space separated list of acceptable users.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
@@ -2187,7 +2187,7 @@ Hash of user file.
 <p>Set the group access control list.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">group</td><td>Group name to remove.</td>
     <tr><td class="param">acl</td><td>Group access control list mask.</td>
     </table></dd></dl>
@@ -2207,7 +2207,7 @@ Hash of user file.
 <p>Set the required access control list for the authentication object.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">acl</td><td>New access control list.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
@@ -2226,7 +2226,7 @@ Hash of user file.
     <dl><dt><b>Description</b>:</dt><dd>After modifying the required ACL for the auth object, the ACLs for each user must be updated.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>&quot;Zero&quot; if successful, otherwise a negative MPR error code.</dd></dl>
     <dl><dt>See Also:</dt><dd>
@@ -2244,7 +2244,7 @@ Hash of user file.
 <p>Validate credentials using a file-based authentication database.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">realm</td><td>Authentication realm.</td>
     <tr><td class="param">user</td><td>User name.</td>
     <tr><td class="param">password</td><td>User password.</td>
@@ -2267,7 +2267,7 @@ Hash of user file.
 <p>Validate credentials using a PAM based authentication database.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">realm</td><td>Authentication realm.</td>
     <tr><td class="param">user</td><td>User name.</td>
     <tr><td class="param">password</td><td>User password.</td>
@@ -2290,7 +2290,7 @@ Hash of user file.
 <p>Write out the group authentication database.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">path</td><td>Path name for the group file.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a negative MPR error code.</dd></dl>
@@ -2309,7 +2309,7 @@ Hash of user file.
 <p>Write out the user authentication database.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" BBB href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
+    <tr><td class="param">auth</td><td>Auth object allocated by <a class="ref" href="#group___http_auth_1ga9b67b82baec4f1a4fd9d17d8a25e0d07">httpCreateAuth</a>. Authenticated routes typically store the reference to an auth object.</td>
     <tr><td class="param">path</td><td>Path name for the user file.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>&quot;Zero&quot; if successful, otherwise a negative MPR error code.</dd></dl>
@@ -2541,7 +2541,7 @@ Rre-entrancy prevention for httpProcess().
     <tr><td class="param">HttpPacket *</td><td><td>input</td><td>
 Header packet.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#group___http_conn_1ga90233a1163fa6772c60c86588b01e803">HttpIOCallback</a></td><td><td>ioCallback</td><td>
+    <tr><td class="param"><a class="ref" href="#group___http_conn_1ga90233a1163fa6772c60c86588b01e803">HttpIOCallback</a></td><td><td>ioCallback</td><td>
 I/O event callback.
 </td>
     <tr><td class="param">char *</td><td><td>ip</td><td>
@@ -2562,7 +2562,7 @@ Reference for GC marking.
     <tr><td class="param">MprDispatcher *</td><td><td>newDispatcher</td><td>
 New dispatcher if using a worker thread.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#group___http_conn_1gad5d7822d12ff6e38328fcdd92539fcd9">HttpNotifier</a></td><td><td>notifier</td><td>
+    <tr><td class="param"><a class="ref" href="#group___http_conn_1gad5d7822d12ff6e38328fcdd92539fcd9">HttpNotifier</a></td><td><td>notifier</td><td>
 Connection Http state change notification callback.
 </td>
     <tr><td class="param">MprDispatcher *</td><td><td>oldDispatcher</td><td>
@@ -2746,7 +2746,7 @@ Start of the write pipeline.
     <dl><dt><b>Description</b>:</dt><dd>Most interactions with the Http library are via a connection object. It is used for server-side communications when responding to client requests and it is used to initiate outbound client requests.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">http</td><td>Http object created via <a class="ref" BBB href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
+    <tr><td class="param">http</td><td>Http object created via <a class="ref" href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
     <tr><td class="param">endpoint</td><td>Endpoint object owning the connection.</td>
     <tr><td class="param">dispatcher</td><td>Disptacher to use for I/O events on the connection.</td>
     </table></dd></dl>
@@ -2870,7 +2870,7 @@ Start of the write pipeline.
   </div>
   <div class="apiDetail">
 <p>Enable connection events.</p>
-    <dl><dt><b>Description</b>:</dt><dd>Connection events are automatically disabled upon receipt of an I/O event on a connection. This permits a connection to process the I/O without fear of interruption by another I/O event. At the completion of processing of the I/O request, the connection should be re-enabled via httpEnableConnEvents. This call is made for requests in <a class="ref" BBB href="#group___http_conn_1ga11f9e50765d2cc174c40aa50d378eeaf">httpEvent</a></dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>Connection events are automatically disabled upon receipt of an I/O event on a connection. This permits a connection to process the I/O without fear of interruption by another I/O event. At the completion of processing of the I/O request, the connection should be re-enabled via httpEnableConnEvents. This call is made for requests in <a class="ref" href="#group___http_conn_1ga11f9e50765d2cc174c40aa50d378eeaf">httpEvent</a></dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object created via $httpCreateConn.</td>
@@ -3075,7 +3075,7 @@ Invoke when there is an I/O event on the connection. This is normally invoked au
   </div>
   <div class="apiDetail">
 <p>Match the HttpHost object that should serve this request.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This sets the conn-&gt;host field to the appropriate host. If no suitable host can be found, <a class="ref" BBB href="#group___http_conn_1ga9f730354501b53a97b7678a91273a3be">httpError</a> will be called and conn-&gt;error will be set.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This sets the conn-&gt;host field to the appropriate host. If no suitable host can be found, <a class="ref" href="#group___http_conn_1ga9f730354501b53a97b7678a91273a3be">httpError</a> will be called and conn-&gt;error will be set.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object created via $httpCreateConn.</td>
@@ -3389,7 +3389,7 @@ When set, a &quot;Transfer-Encoding: Chunked&quot; header will be added to the r
     <dl><dt><b>Description</b>:</dt><dd>The notifier callback will be invoked as Http requests are processed.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" BBB href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
+    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
     <tr><td class="param">fn</td><td>Notifier function.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
@@ -3444,7 +3444,7 @@ When set, a &quot;Transfer-Encoding: Chunked&quot; header will be added to the r
   </div>
   <div class="apiDetail">
 <p>Define an I/O callback for connections.</p>
-    <dl><dt><b>Description</b>:</dt><dd>The I/O callback is invoked when I/O events are detected on the connection. The default I/O callback is <a class="ref" BBB href="#group___http_conn_1ga11f9e50765d2cc174c40aa50d378eeaf">httpEvent</a></dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>The I/O callback is invoked when I/O events are detected on the connection. The default I/O callback is <a class="ref" href="#group___http_conn_1ga11f9e50765d2cc174c40aa50d378eeaf">httpEvent</a></dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn object created via $httpCreateConn.</td>
@@ -3707,7 +3707,7 @@ May be null if listening on all interfaces.
     <tr><td class="param">HttpLimits *</td><td><td>limits</td><td>
 Alias for first host, default route resource limits.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#group___http_conn_1gad5d7822d12ff6e38328fcdd92539fcd9">HttpNotifier</a></td><td><td>notifier</td><td>
+    <tr><td class="param"><a class="ref" href="#group___http_conn_1gad5d7822d12ff6e38328fcdd92539fcd9">HttpNotifier</a></td><td><td>notifier</td><td>
 Default connection notifier callback.
 </td>
     <tr><td class="param">int</td><td><td>port</td><td>
@@ -3796,10 +3796,10 @@ I/O wait handler.
   </div>
   <div class="apiDetail">
 <p>Destroy the endpoint.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This destroys the endpoint created by <a class="ref" BBB href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a>. Calling this routine should not normally be necessary as the garbage collector will invoke as required.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This destroys the endpoint created by <a class="ref" href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a>. Calling this routine should not normally be necessary as the garbage collector will invoke as required.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">endpoint</td><td>HttpEndpoint object returned from <a class="ref" BBB href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
+    <tr><td class="param">endpoint</td><td>HttpEndpoint object returned from <a class="ref" href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___http_endpoint" class="ref">HttpEndpoint</a>, <a href="#group___http_endpoint_1ga4ef2065c27222065ba19f343cb9358d6" class="ref">httpAddHostToEndpoint</a>, <a href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c" class="ref">httpCreateEndpoint</a>, <a href="#group___http_endpoint_1ga95038407668d474b404fc8784006c9c2" class="ref">httpHasNamedVirtualHosts</a>, <a href="#group___http_rx_1ga713af86f8914a5cd3ad2a5832b1ffb35" class="ref">httpSetEndpointAddress</a>, <a href="#group___http_conn_1ga5bd47c988eb934173a7ac411ed2e58b0" class="ref">httpSetEndpointNotifier</a>, <a href="#group___http_endpoint_1ga768ffb7411647773b0e6f5b839763795" class="ref">httpSetHasNamedVirtualHosts</a>, <a href="#group___http_endpoint_1ga30fd4014d0b786ee8e705e3a45e42eb6" class="ref">httpStartEndpoint</a>, <a href="#group___http_endpoint_1ga4c1deccf2ac027252158420937d43156" class="ref">httpStopEndpoint</a>, <a href="#group___http_rx_1ga98e8cebcc329b8197b6eb7416afbb2ba" class="ref">httpValidateLimits</a></dd></dl>
@@ -3853,7 +3853,7 @@ I/O wait handler.
     <dl><dt><b>Description</b>:</dt><dd>Opens the endpoint socket and starts listening for connections.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" BBB href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
+    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>&quot;Zero&quot; if successful, otherwise a negative MPR error code.</dd></dl>
     <dl><dt>See Also:</dt><dd>
@@ -3872,7 +3872,7 @@ I/O wait handler.
     <dl><dt><b>Description</b>:</dt><dd>Closes the socket endpoint.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" BBB href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
+    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___http_endpoint" class="ref">HttpEndpoint</a>, <a href="#group___http_endpoint_1ga4ef2065c27222065ba19f343cb9358d6" class="ref">httpAddHostToEndpoint</a>, <a href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c" class="ref">httpCreateEndpoint</a>, <a href="#group___http_endpoint_1ga77fcd662f068f86a06f61526aa87f4db" class="ref">httpDestroyEndpoint</a>, <a href="#group___http_endpoint_1ga95038407668d474b404fc8784006c9c2" class="ref">httpHasNamedVirtualHosts</a>, <a href="#group___http_rx_1ga713af86f8914a5cd3ad2a5832b1ffb35" class="ref">httpSetEndpointAddress</a>, <a href="#group___http_conn_1ga5bd47c988eb934173a7ac411ed2e58b0" class="ref">httpSetEndpointNotifier</a>, <a href="#group___http_endpoint_1ga768ffb7411647773b0e6f5b839763795" class="ref">httpSetHasNamedVirtualHosts</a>, <a href="#group___http_endpoint_1ga30fd4014d0b786ee8e705e3a45e42eb6" class="ref">httpStartEndpoint</a>, <a href="#group___http_rx_1ga98e8cebcc329b8197b6eb7416afbb2ba" class="ref">httpValidateLimits</a></dd></dl>
@@ -4244,7 +4244,7 @@ Data position in entity (file).
     <tr><td class="param">MprOff</td><td><td>esize</td><td>
 Data size in entity (file).
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#group___http_packet_1gab3ccaf14fc20ba8e592a2ea3a54ab900">HttpFillProc</a></td><td><td>fill</td><td>
+    <tr><td class="param"><a class="ref" href="#group___http_packet_1gab3ccaf14fc20ba8e592a2ea3a54ab900">HttpFillProc</a></td><td><td>fill</td><td>
 Callback to fill packet with data.
 </td>
     <tr><td class="param">int</td><td><td>flags</td><td>
@@ -4320,7 +4320,7 @@ Prefix message to be emitted before the content.
   </div>
   <div class="apiDetail">
 <p>Create an entity data packet.</p>
-    <dl><dt><b>Description</b>:</dt><dd>Create an entity packet and set the HTTP_PACKET_DATA flag. Entity packets describe the resource (entity) to send to the client and provide a <a class="ref" BBB href="#group___http_packet_1gab3ccaf14fc20ba8e592a2ea3a54ab900">HttpFillProc</a> procedure used to fill packets with data from the entity.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>Create an entity packet and set the HTTP_PACKET_DATA flag. Entity packets describe the resource (entity) to send to the client and provide a <a class="ref" href="#group___http_packet_1gab3ccaf14fc20ba8e592a2ea3a54ab900">HttpFillProc</a> procedure used to fill packets with data from the entity.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">pos</td><td>Position within the entity for packet data.</td>
@@ -5319,7 +5319,7 @@ Number of workers to use for this route.
  The &quot;directory&quot; rule tests if the condition argument is a directory. The form of the &quot;directory&quot; rule is: &quot;directory pathString&quot;. For example: &quot;directory /stuff/${request:pathInfo}.txt&quot; <br/><br/>
  The &quot;exists&quot; rule tests if the condition argument is present in the file system. The form of the &quot;exists&quot; rule is: &quot;exists pathString&quot;. For example: &quot;exists ${request.filename}.gz&quot;, <br/><br/>
  The match directory tests a regular expression pattern against the rest of the condition arguments. The form of the match rule is: &quot;match RegExp string&quot;. For example: &quot;match https ${request.scheme}&quot;.</td>
-    <tr><td class="param">details</td><td>Condition parameters. See <a class="ref" BBB href="#group___http_route_1ga7a2248e73a4b634e923c4e4faab2e4e7">httpSetRouteTarget</a> for a list of the token values that can be included in the condition rule details.</td>
+    <tr><td class="param">details</td><td>Condition parameters. See <a class="ref" href="#group___http_route_1ga7a2248e73a4b634e923c4e4faab2e4e7">httpSetRouteTarget</a> for a list of the token values that can be included in the condition rule details.</td>
     <tr><td class="param">flags</td><td>Set to HTTP_ROUTE_NOT to negate the condition test.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>&quot;Zero&quot; if successful, otherwise a negative MPR error code.</dd></dl>
@@ -5550,7 +5550,7 @@ Add client cache expiry definitions to the route
     <table class="parameters" title="Parameters">
     <tr><td class="param">parent</td><td>Parent route from which to inherit configuration.</td>
     <tr><td class="param">set</td><td>Route set to select. Use &quot;simple&quot;, &quot;mvc&quot;, &quot;restful&quot; or &quot;none&quot;. <br/><br/>
- The &quot;simple&quot; pack will invoke <a class="ref" BBB href="#group___http_route_1gad9250fc3d08526ea7dc3b7ab9d6970e2">httpAddHomeRoute</a> and <a class="ref" BBB href="#group___http_route_1ga4d72eb7b413175ed98b5726f4f0ad165">httpAddStaticRoute</a> to add &quot;home&quot;, and &quot;static&quot; routes. <br/><br/>
+ The &quot;simple&quot; pack will invoke <a class="ref" href="#group___http_route_1gad9250fc3d08526ea7dc3b7ab9d6970e2">httpAddHomeRoute</a> and <a class="ref" href="#group___http_route_1ga4d72eb7b413175ed98b5726f4f0ad165">httpAddStaticRoute</a> to add &quot;home&quot;, and &quot;static&quot; routes. <br/><br/>
  The &quot;mvc&quot; selection will add the default routes and then add the route: <table class='info'><tr><td>Name</td><td>Method</td><td>Pattern</td><td>Target </td></row><tr><td>default</td><td>*</td><td>^/{controller}(~/{action}~)$</td><td>${controller}-${action} </td></row></table><br/><br/></td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
@@ -5573,7 +5573,7 @@ Add client cache expiry definitions to the route
     <tr><td class="param">name</td><td>Update rule to add. Supported update rules include: &quot;cmd&quot;, &quot;field&quot; and &quot;lang&quot;. <br/><br/>
  The &quot;cmd&quot; rule is used to run external commands. For example: &quot;cmd touch /tmp/filename&quot;. <br/><br/>
  The &quot;param&quot; rule is used to set values in the request param fields. For example: &quot;param priority high&quot;. <br/><br/>
- The &quot;lang&quot; update rule is used internally to implement the various language options. See <a class="ref" BBB href="#group___http_route_1ga7a2248e73a4b634e923c4e4faab2e4e7">httpSetRouteTarget</a> for a list of the token values that can be included in the condition rule details.</td>
+ The &quot;lang&quot; update rule is used internally to implement the various language options. See <a class="ref" href="#group___http_route_1ga7a2248e73a4b634e923c4e4faab2e4e7">httpSetRouteTarget</a> for a list of the token values that can be included in the condition rule details.</td>
     <tr><td class="param">details</td><td>Update rule parameters.</td>
     <tr><td class="param">flags</td><td>Reserved.</td>
     </table></dd></dl>
@@ -5647,7 +5647,7 @@ This can be used for ESP applications. Use the EspDir appweb configuration file 
   </div>
   <div class="apiDetail">
 <p>Create a route suitable for use as an alias.</p>
-    <dl><dt><b>Description</b>:</dt><dd>The parent supplies the owning host for the route. A route is not added to its owning host until it is finalized by calling <a class="ref" BBB href="#group___http_route_1ga49882cc0ce64dd3cc7dbef9105ee8fbd">httpFinalizeRoute</a></dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>The parent supplies the owning host for the route. A route is not added to its owning host until it is finalized by calling <a class="ref" href="#group___http_route_1ga49882cc0ce64dd3cc7dbef9105ee8fbd">httpFinalizeRoute</a></dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">parent</td><td>Parent route to inherit from.</td>
@@ -5978,7 +5978,7 @@ This can be used for ESP applications. Use the EspDir appweb configuration file 
   </div>
   <div class="apiDetail">
 <p>Lookup an error document by HTTP status code.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This looks up error documents configured via <a class="ref" BBB href="#group___http_route_1ga88589290f2ddbebfdf376b86d171c9b9">httpAddRouteErrorDocument</a></dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This looks up error documents configured via <a class="ref" href="#group___http_route_1ga88589290f2ddbebfdf376b86d171c9b9">httpAddRouteErrorDocument</a></dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">route</td><td>Route to modify.</td>
@@ -5999,7 +5999,7 @@ This can be used for ESP applications. Use the EspDir appweb configuration file 
   <div class="apiDetail">
 <p>Make a filename path.</p>
     <dl><dt><b>Description</b>:</dt><dd>This makes a filename by expanding the tokens &quot;${token}&quot; and then normalizing the path and converting to an absolute path name. The supported tokens are: <ul><li>PRODUCT - for the product name </li><li>OS - for the operating system name. E.g. LINUX, MACOSX, VXWORKS, or WIN </li><li>VERSION - for the product version. E.g. 4.0.2 </li><li>LIBDIR - for the library directory. E.g. /usr/lib/appweb  </li><li>DOCUMENT_ROOT - for the default directory containing documents to serve </li><li>SERVER_ROOT - for the directory containing the web server configuration files </li></ul>
-Additional tokens can be defined via <a class="ref" BBB href="#group___http_route_1gaad5f104e4fd9e170e84be5e1b0c8c1ad">httpSetRoutePathVar</a></dd></dl>
+Additional tokens can be defined via <a class="ref" href="#group___http_route_1gaad5f104e4fd9e170e84be5e1b0c8c1ad">httpSetRoutePathVar</a></dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">route</td><td>Route to modify.</td>
@@ -6019,7 +6019,7 @@ Additional tokens can be defined via <a class="ref" BBB href="#group___http_rout
   </div>
   <div class="apiDetail">
 <p>Match a route against the current request.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This tests if a route matches the current request on a connection. This call is automatically called by <a class="ref" BBB href="#group___http_conn_1ga38b4d85fd8306384270ad7385bdd3fe4">httpRouteRequest</a> for incoming requests to a server.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This tests if a route matches the current request on a connection. This call is automatically called by <a class="ref" href="#group___http_conn_1ga38b4d85fd8306384270ad7385bdd3fe4">httpRouteRequest</a> for incoming requests to a server.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object.</td>
@@ -6349,7 +6349,7 @@ Additional tokens can be defined via <a class="ref" BBB href="#group___http_rout
   </div>
   <div class="apiDetail">
 <p>Define a path token variable.</p>
-    <dl><dt><b>Description</b>:</dt><dd>The <a class="ref" BBB href="#group___http_route_1ga9f8966bad2eac58725b4b5a0d2049b62">httpMakePath</a> routine and route conditions, updates, headers, fields and targets will expand tokenized expressions &quot;${token}&quot;. Additional tokens can be defined via this API.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>The <a class="ref" href="#group___http_route_1ga9f8966bad2eac58725b4b5a0d2049b62">httpMakePath</a> routine and route conditions, updates, headers, fields and targets will expand tokenized expressions &quot;${token}&quot;. Additional tokens can be defined via this API.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">route</td><td>Route to modify.</td>
@@ -6450,7 +6450,7 @@ Additional tokens can be defined via <a class="ref" BBB href="#group___http_rout
     <dl><dt><b>Description</b>:</dt><dd>This configures the route pipeline by defining a route target. The route target is interpreted by the selected route handler to process the request. Route targets can contain symbolic tokens that are expanded at run-time with their corresponding values. There are three classes of tokens: <ul><li>System varibles - such as DOCUMENT_ROOT, LIBDIR, PRODUCT, OS, SERVER_ROOT, VERSION. </li><li>Route URI tokens - these are the braced tokens in the route pattern. </li><li>Request fields - these are request state and property values. </li></ul>
 System and URI tokens are of the form: &quot;${token}&quot; where &quot;token&quot; is the name of the variable or URI token. Request fields are of the form: &quot;${family:name=defaultValue}&quot; where the family defines a set of values. If the named field is not present, an optional default value &quot;=defaultValue&quot; will be used instead. These supported request field families are: <ul><li>header - for request HTTP header values </li><li>param - for request params </li><li>query - for request query field values </li><li>request - for request details </li><li>Any URI pattern token </li></ul>
 For example: &quot;run ${header:User-Agent}&quot; to select the client&apos;s browser string passed in the HTTP headers. For example: &quot;run ${field:name}&quot; to select the client&apos;s browser string passed in the HTTP headers. For example: &quot;run ${name}.html&quot; where {name} was a token in the route pattern. For example: &quot;run ${name}.html&quot; where {name} was a token in the route pattern. The supported request key names are: <ul><li>clientAddress - The client IP address </li><li>clientPort - The client port number </li><li>error - Any request or connection error message </li><li>ext - The request extension </li><li>extraPath - The request extra path after the script extension </li><li>filename - The mapped request filename in physical storage </li><li>language - The selected language for the request </li><li>languageDir - The langauge directory </li><li>host - The host name owning the route for the request </li><li>method - The request HTTP method </li><li>originalUri - The original, pre-decoded URI </li><li>pathInfo - The path portion of the URI after the host and port information </li><li>prefix - The route prefix </li><li>query - The request query information </li><li>reference - The request reference fragment. This is the URI portion after &quot;#&quot; </li><li>scheme - The request protocol scheme. E.g. &quot;http&quot; </li><li>scriptName - The request script or application name </li><li>serverAddress - The server IP address </li><li>serverPort - The server port number </li><li>uri - The full request URI. May be modified by routes, handlers and filters </li></ul>
-Also see <a class="ref" BBB href="#group___http_route_1ga9f8966bad2eac58725b4b5a0d2049b62">httpMakePath</a> for additional tokens (DOCUMENT_ROOT, LIBDIR, PRODUCT, OS, SERVER_ROOT, VERSION).</dd></dl>
+Also see <a class="ref" href="#group___http_route_1ga9f8966bad2eac58725b4b5a0d2049b62">httpMakePath</a> for additional tokens (DOCUMENT_ROOT, LIBDIR, PRODUCT, OS, SERVER_ROOT, VERSION).</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">route</td><td>Route to modify.</td>
@@ -6598,7 +6598,7 @@ Values wrapped in quotes will have the outermost quotes trimmed.</dd></dl>
   </div>
   <div class="apiDetail">
 <p>Tokenize a string based on route data.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This is a utility routine to parse a string into tokens given a format specifier. This call is similar to <a class="ref" BBB href="#group___http_route_1gad3c617708c6209cddbad56f16e4d62e9">httpTokenize</a> but uses a va_list argument.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This is a utility routine to parse a string into tokens given a format specifier. This call is similar to <a class="ref" href="#group___http_route_1gad3c617708c6209cddbad56f16e4d62e9">httpTokenize</a> but uses a va_list argument.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">route</td><td>Route to modify.</td>
@@ -6722,7 +6722,7 @@ Input processing.
     <tr><td class="param">HttpRange *</td><td><td>inputRange</td><td>
 Specified range for rx (post) data.
 </td>
-    <tr><td class="param"><a class="ref" BBB href="#struct_http_lang">HttpLang</a> *</td><td><td>lang</td><td>
+    <tr><td class="param"><a class="ref" href="#struct_http_lang">HttpLang</a> *</td><td><td>lang</td><td>
 Selected language.
 </td>
     <tr><td class="param">MprOff</td><td><td>length</td><td>
@@ -7021,10 +7021,10 @@ User-Agent header.
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object.</td>
-    <tr><td class="param">spoken</td><td>Hash table of <a class="ref" BBB href="#struct_http_lang">HttpLang</a> records. This is typically route-&gt;languages.</td>
+    <tr><td class="param">spoken</td><td>Hash table of <a class="ref" href="#struct_http_lang">HttpLang</a> records. This is typically route-&gt;languages.</td>
     <tr><td class="param">defaultLang</td><td>Default language to use if none specified in the request Accept-Language header.</td>
     </table></dd></dl>
-    <dl><dt>Returns:</dt><dd>A <a class="ref" BBB href="#struct_http_lang">HttpLang</a> reference, or null if no language requested or no language found in the spoken table.</dd></dl>
+    <dl><dt>Returns:</dt><dd>A <a class="ref" href="#struct_http_lang">HttpLang</a> reference, or null if no language requested or no language found in the spoken table.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___http_conn" class="ref">HttpConn</a>, <a href="#group___http_rx" class="ref">HttpRx</a>, <a href="#group___http_tx" class="ref">HttpTx</a>, <a href="#group___http_rx_1ga59e938b0437fb2fde01885946058efb6" class="ref">httpContentNotModified</a>, <a href="#group___http_rx_1ga88695d5677cbd4f42889c09fa7d43a65" class="ref">httpCreateCGIParams</a>, <a href="#group___http_rx_1gadafdace3fe2bdbbd5e62b6942af088c5" class="ref">httpGetContentLength</a>, <a href="#group___http_rx_1gab765b374148bc401f8c2b88a92732421" class="ref">httpGetCookies</a>, <a href="#group___http_rx_1ga8972473e3610bed271f76e27d04af473" class="ref">httpGetHeader</a>, <a href="#group___http_rx_1ga3c065c5a2be0bf2ac90ef94f972f2494" class="ref">httpGetHeaderHash</a>, <a href="#group___http_rx_1ga2bfb4c582aa38c8a34c028b5f4547ef1" class="ref">httpGetHeaders</a>, <a href="#group___http_rx_1ga4e52e60e13d1c4b8a67db629068eaa2a" class="ref">httpGetIntParam</a>, <a href="#group___http_rx_1ga0bccc6d844d84b424a2b770c61a4e604" class="ref">httpGetParam</a>, <a href="#group___http_rx_1ga4bfb3ffc672bef6813ac5a555fbb0ba4" class="ref">httpGetParams</a>, <a href="#group___http_rx_1ga1b77e1b5b3f6a24f691f80c0278cecd9" class="ref">httpGetQueryString</a>, <a href="#group___http_rx_1gaf7d28c87e2d92899991228c32eeca10a" class="ref">httpGetStatus</a>, <a href="#group___http_rx_1ga5e5417c28bda8b93d5ea80e5f889a83a" class="ref">httpGetStatusMessage</a>, <a href="#group___http_rx_1ga5bfd6791a6b71fbf6891dd565a41dd5d" class="ref">httpMatchParam</a>, <a href="#group___http_rx_1gad0b2d6713dd793d832e822fa9f9852ff" class="ref">httpRead</a>, <a href="#group___http_rx_1gab7d21bd58ae2f0cb64ae8c9e7c01208b" class="ref">httpReadString</a>, <a href="#group___http_rx_1ga65544de95f88799ed0390fe6d468b2eb" class="ref">httpSetIntParam</a>, <a href="#group___http_rx_1ga818d335c49dd7f45ba3a45aa397c63cb" class="ref">httpSetParam</a>, <a href="#group___http_rx_1gae94616ee8e45c87cb0d2d833ac2cffa6" class="ref">httpSetUri</a>, <a href="#group___http_rx_1ga5a1ddb99bdfc515bed222f18381505ae" class="ref">httpTestParam</a>, <a href="#group___http_rx_1ga0ac0fdda7fc8cf2738b5083e3517707d" class="ref">httpTrimExtraPath</a></dd></dl>
   </div>
@@ -7255,7 +7255,7 @@ This will read all rx body and return a string that the caller should free. This
     <dl><dt><b>Description</b>:</dt><dd>This call defines the endpoint&apos;s IP address and port number. If the endpoint has already been started, this will stop and restart the endpoint. Current requests will not be disturbed. This is useful to modify the endpoints address when using dynamically assigned IP addresses.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" BBB href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
+    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
     <tr><td class="param">ip</td><td>IP address to use for the endpoint. Set to null to listen on all interfaces.</td>
     <tr><td class="param">port</td><td>Listening port number to use for the endpoint.</td>
     </table></dd></dl>
@@ -7487,7 +7487,7 @@ The outgoing pipeline is writable and can accept more response data.
 This is used when creating filters configured to match certain extensions
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">http</td><td>Http object returned from <a class="ref" BBB href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
+    <tr><td class="param">http</td><td>Http object returned from <a class="ref" href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
     <tr><td class="param">stage</td><td>Stage object to clone.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>A new stage object.</dd></dl>
@@ -7507,7 +7507,7 @@ This is used when creating filters configured to match certain extensions
     <dl><dt><b>Description</b>:</dt><dd>Create a new connector. Connectors are the final stage for outgoing data. Their job is to transmit outgoing data to the client.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">http</td><td>Http object returned from <a class="ref" BBB href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
+    <tr><td class="param">http</td><td>Http object returned from <a class="ref" href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
     <tr><td class="param">name</td><td>Name of connector stage.</td>
     <tr><td class="param">flags</td><td>Stage flags mask. These specify what Http request methods will be supported by this stage. Or together any of the following flags: <ul><li>HTTP_STAGE_DELETE - Support DELETE requests </li><li>HTTP_STAGE_GET - Support GET requests </li><li>HTTP_STAGE_HEAD - Support HEAD requests </li><li>HTTP_STAGE_OPTIONS - Support OPTIONS requests </li><li>HTTP_STAGE_POST - Support POST requests </li><li>HTTP_STAGE_PUT - Support PUT requests </li><li>HTTP_STAGE_TRACE - Support TRACE requests </li><li>HTTP_STAGE_ALL - Mask to support all methods </li></ul></td>
     <tr><td class="param">module</td><td>Optional module object for loadable stages.</td>
@@ -7573,7 +7573,7 @@ This is used when creating filters configured to match certain extensions
     <dl><dt><b>Description</b>:</dt><dd>Create a new stage.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">http</td><td>Http object returned from <a class="ref" BBB href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
+    <tr><td class="param">http</td><td>Http object returned from <a class="ref" href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
     <tr><td class="param">name</td><td>Name of connector stage.</td>
     <tr><td class="param">flags</td><td>Stage flags mask. These specify what Http request methods will be supported by this stage. Or together any of the following flags: <ul><li>HTTP_STAGE_HANDLER - Stage is a handler DELETE requests </li><li>HTTP_STAGE_FILTER - Stage is a filter </li><li>HTTP_STAGE_CONNECTOR - Stage is a connector </li><li>HTTP_STAGE_GET - Support GET requests </li><li>HTTP_STAGE_HEAD - Support HEAD requests </li><li>HTTP_STAGE_OPTIONS - Support OPTIONS requests </li><li>HTTP_STAGE_POST - Support POST requests </li><li>HTTP_STAGE_PUT - Support PUT requests </li><li>HTTP_STAGE_TRACE - Support TRACE requests </li><li>HTTP_STAGE_ALL - Mask to support all methods </li></ul></td>
     <tr><td class="param">module</td><td>Optional module object for loadable stages.</td>
@@ -7860,7 +7860,7 @@ Handler methods supported.
   </div>
   <div class="apiDetail">
 <p>Connect to a server and issue Http client request.</p>
-    <dl><dt><b>Description</b>:</dt><dd>Start a new Http request on the http object and return. This routine does not block. After starting the request, you can use <a class="ref" BBB href="#group___http_tx_1ga3403d2b2f33202d649ccd0ef003e1279">httpWait()</a> or httpWForResponse() to wait for the request to achieve a certain state or to complete.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>Start a new Http request on the http object and return. This routine does not block. After starting the request, you can use <a class="ref" href="#group___http_tx_1ga3403d2b2f33202d649ccd0ef003e1279">httpWait()</a> or httpWForResponse() to wait for the request to achieve a certain state or to complete.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object created via $httpCreateConn.</td>
@@ -8040,7 +8040,7 @@ This writes any buffered data
   </div>
   <div class="apiDetail">
 <p>Format an error response body.</p>
-    <dl><dt><b>Description</b>:</dt><dd>Format an error message transmission body to use instead of data generated by the request processing pipeline. The body will be created in HTML or in plain text depending on the value of the request Accept header. This is an internal API and users should use <a class="ref" BBB href="#group___http_conn_1ga9f730354501b53a97b7678a91273a3be">httpError</a> instead.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>Format an error message transmission body to use instead of data generated by the request processing pipeline. The body will be created in HTML or in plain text depending on the value of the request Accept header. This is an internal API and users should use <a class="ref" href="#group___http_conn_1ga9f730354501b53a97b7678a91273a3be">httpError</a> instead.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object created via $httpCreateConn.</td>
@@ -8062,7 +8062,7 @@ This writes any buffered data
   </div>
   <div class="apiDetail">
 <p>Format an alternate response.</p>
-    <dl><dt><b>Description</b>:</dt><dd>Format a response to use instead of data generated by the request processing pipeline. This is similar to <a class="ref" BBB href="#group___http_tx_1ga995a6fe8623518240e9e371ecf1173a8">httpFormatResponse</a></dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>Format a response to use instead of data generated by the request processing pipeline. This is similar to <a class="ref" href="#group___http_tx_1ga995a6fe8623518240e9e371ecf1173a8">httpFormatResponse</a></dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object created via $httpCreateConn.</td>
@@ -8101,7 +8101,7 @@ This writes any buffered data
   </div>
   <div class="apiDetail">
 <p>Test if request has been finalized.</p>
-    <dl><dt><b>Description</b>:</dt><dd>This call tests if all transmit data has been sent and finalized. Handlers call <a class="ref" BBB href="#group___http_tx_1ga279ad49e5163402e2afd6caf478bcc70">httpFinalize</a> to signify the end of transmit data.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>This call tests if all transmit data has been sent and finalized. Handlers call <a class="ref" href="#group___http_tx_1ga279ad49e5163402e2afd6caf478bcc70">httpFinalize</a> to signify the end of transmit data.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object.</td>
@@ -8444,7 +8444,7 @@ Uploaded file size.
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>HttpConn connection object created via $httpCreateConn.</td>
-    <tr><td class="param">id</td><td>Identifier used with <a class="ref" BBB href="#group___http_upload_file_1gae80cebe62ea47eaf3e45d9a09c14bec4">httpAddUploadFile</a> for the file.</td>
+    <tr><td class="param">id</td><td>Identifier used with <a class="ref" href="#group___http_upload_file_1gae80cebe62ea47eaf3e45d9a09c14bec4">httpAddUploadFile</a> for the file.</td>
     </table></dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___http_upload_file_1gae80cebe62ea47eaf3e45d9a09c14bec4" class="ref">httpAddUploadFile</a>, <a href="#group___http_upload_file_1gaf0783c034eabeefdde3e194e7f773711" class="ref">httpRemoveAllUploadedFiles</a></dd></dl>
@@ -8910,7 +8910,7 @@ This adjusts the packet content by the given size. The packet position is increm
 <p>Get the endpoint context object.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" BBB href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
+    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>The endpoint context object defined via httpSetEndpointContext.</dd></dl>
   </div>
@@ -8992,7 +8992,7 @@ This adjusts the packet content by the given size. The packet position is increm
 <p>Get if the endpoint is running in asynchronous mode.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" BBB href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
+    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>True if the endpoint is in async mode.</dd></dl>
   </div>
@@ -9048,7 +9048,7 @@ httpLink(conn, &quot;http://example.com/index.html&quot;, 0);
 <p>Lookup a listening endpoint.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">http</td><td>Http object created via <a class="ref" BBB href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
+    <tr><td class="param">http</td><td>Http object created via <a class="ref" href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
     <tr><td class="param">ip</td><td>Listening IP address to look for.</td>
     <tr><td class="param">port</td><td>Listening port number.</td>
     </table></dd></dl>
@@ -9067,7 +9067,7 @@ httpLink(conn, &quot;http://example.com/index.html&quot;, 0);
     <dl><dt><b>Description</b>:</dt><dd>Lookup a host by name in the set of defined hosts for this endpoint.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" BBB href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
+    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
     <tr><td class="param">name</td><td>Host name to search for.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>An HttpHost object instance or null if the host cannot be found.</dd></dl>
@@ -9148,10 +9148,10 @@ Call the queue open entry point
   </div>
   <div class="apiDetail">
 <p>Secure an endpoint.</p>
-    <dl><dt><b>Description</b>:</dt><dd>Define the SSL parameters for an endpoint. This must be done before starting listening on the endpoint via <a class="ref" BBB href="#group___http_endpoint_1ga30fd4014d0b786ee8e705e3a45e42eb6">httpStartEndpoint</a></dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>Define the SSL parameters for an endpoint. This must be done before starting listening on the endpoint via <a class="ref" href="#group___http_endpoint_1ga30fd4014d0b786ee8e705e3a45e42eb6">httpStartEndpoint</a></dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" BBB href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
+    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
     <tr><td class="param">ssl</td><td>MprSsl object.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>&quot;Zero&quot; if successful, otherwise a negative MPR error code.</dd></dl>
@@ -9166,7 +9166,7 @@ Call the queue open entry point
   </div>
   <div class="apiDetail">
 <p>Secure an endpoint by name.</p>
-    <dl><dt><b>Description</b>:</dt><dd>Define the SSL parameters for an endpoint that is selected by name. This must be done before starting listening on the endpoint via <a class="ref" BBB href="#group___http_endpoint_1ga30fd4014d0b786ee8e705e3a45e42eb6">httpStartEndpoint</a></dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>Define the SSL parameters for an endpoint that is selected by name. This must be done before starting listening on the endpoint via <a class="ref" href="#group___http_endpoint_1ga30fd4014d0b786ee8e705e3a45e42eb6">httpStartEndpoint</a></dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">name</td><td>Endpoint name. The endpoint name is comprised of the IP and port. For example: &quot;127.0.0.1:7777&quot;.</td>
@@ -9201,7 +9201,7 @@ Call the queue open entry point
 <p>Set the http context object.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">http</td><td>Http object created via <a class="ref" BBB href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
+    <tr><td class="param">http</td><td>Http object created via <a class="ref" href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
     <tr><td class="param">context</td><td>New context object.</td>
     </table></dd></dl>
   </div>
@@ -9217,7 +9217,7 @@ Call the queue open entry point
 <p>Control if the endpoint is running in asynchronous mode.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" BBB href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
+    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
     <tr><td class="param">enable</td><td>Set to 1 to enable async mode.</td>
     </table></dd></dl>
   </div>
@@ -9233,7 +9233,7 @@ Call the queue open entry point
 <p>Set the endpoint context object.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" BBB href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
+    <tr><td class="param">endpoint</td><td>HttpEndpoint object created via <a class="ref" href="#group___http_endpoint_1gad5bb2a3a29df9b1191c484a56fcf642c">httpCreateEndpoint</a></td>
     <tr><td class="param">context</td><td>New context object.</td>
     </table></dd></dl>
   </div>
@@ -9266,7 +9266,7 @@ When static content is used for the transmission body, defining the entity lengt
 <p>Set the software description.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">http</td><td>Http object created via <a class="ref" BBB href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
+    <tr><td class="param">http</td><td>Http object created via <a class="ref" href="#group___http_1ga995a8e6f658f5eb6628371f62cf78d66">httpCreate</a></td>
     <tr><td class="param">description</td><td>String describing the Http software. By default, this is set to HTTP_NAME.</td>
     </table></dd></dl>
   </div>
