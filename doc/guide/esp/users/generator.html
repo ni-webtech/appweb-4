@@ -26,7 +26,7 @@
             </div>
         </div>
         <div class="crumbs">
-            <a href="../../../product/index.html">Home</a>
+            <a href="../../../index.html">Home</a>
 <!-- EndDsi -->
              &gt;<a href="index.html">ESP Guide</a>&gt; <b>Application Generator</b>
         </div>
@@ -73,7 +73,7 @@
             controllers, views and web pages.</p>
             <p>The <em>esp</em> program is not just for MVC applications. It can be used to pre-compile stand-alone
             ESP web pages too.</p> 
-            <a name="generating" id="generating"></a>
+            <a id="generating"></a>
             <h2 class="section">Generating Applications</h2>
             <p>To start a new web application, run <em>esp</em> to create the application directory and generate the
             essential application configuration and script files. For example:</p>
@@ -164,7 +164,7 @@ esp generate app blog
                 </tbody>
             </table>
             
-            <a name="controllers" id="controllers"></a>
+            <a id="controllers"></a>
             <h2 class="section">Generating Controllers</h2>
             <p>Controllers are the primary mechanism for responding to client requests. To generate a controller:</p>
             <pre>
@@ -201,7 +201,7 @@ ESP_EXPORT int esp_controller_admin(EspRoute *eroute, MprModule *module)
     return 0;
 }
 </pre>
-            <a name="database" id="database"></a>
+            <a id="database"></a>
             <h2 class="section">Generating Database Tables</h2>
             <p>Database schema can be created and modified via the <em>esp</em> command. 
             This will create a database table with fields of the required types.</p>
@@ -211,7 +211,7 @@ esp generate table NAME [field:type ...]
             <p>If <em>field:type</em> values are supplied, the database will be updated for each specified field of 
             the requested type. The valid database types are: binary, boolean, date,
             datetime, decimal, float, integer, number, string, text, time, timestamp. 
-            <a name="scaffolds" id="scaffolds"></a></p>
+            <a id="scaffolds"></a></p>
             <h2 class="section">Generating Scaffolds</h2>
             <p>Scaffolds enable you to quickly create sections of your application. A scaffold provides CRUD 
             (create, read, update and delete) functionality for a database table. 
@@ -228,7 +228,7 @@ esp generate scaffold NAME [field:type ...]
             and view page that provides add and edit capability. The list action and view, provides the ability to list
             the database table rows and select an entry to edit.</p>
         <!--
-            <a name="migrations" id="migrations"></a>
+            <a id="migrations"></a>
             <h2 class="section">Generating Migrations</h2>
             <p>Database migrations are scripts which modify the database schema or content. You can create database
             migrations by the "<em>esp generate migration</em>" command. This command generates a migration for a
@@ -243,7 +243,7 @@ esp generate migration description MODEL [field:type ...]
             script. If the --reverse switch is specified, then remove column code will be generated. To change the type
             or name of a column, remove then re-add the column. </p>
             
-            <a name="runMigrations" id="runMigrations"></a>
+            <a id="runMigrations"></a>
             <h2 class="section">Running Migrations</h2>
             <p>Migration scripts can be run via the "<em>esp migrate</em>" command. Without other parameters, the
             command will run all migrations that have not yet been applied to the database. You can also use
@@ -253,7 +253,7 @@ esp generate migration description MODEL [field:type ...]
             number at the start of the migration script file name.</p>
         -->
             
-            <a name="compiling" id="compiling"></a>
+            <a id="compiling"></a>
             <h2 class="section">Compiling</h2>
             <p>ESP compiles views and controllers into native machine code libraries. These are automatically
             compiled in response to client requests and are then loaded and run by ESP to serve the relevant 
@@ -319,19 +319,19 @@ esp --arch ppc --host vxworks
             <p>This will compile the application for VxWorks on ppc. Of course, the resulting module cannot be 
             run on the development system if cross-compiling. You may need to modify the esp.conf configuration file
             to add rules for your operating system and CPU architecture or to customize for your application.</p>
-            <a name="running" id="running"></a>
+            <a id="running"></a>
             <h2 class="section">Running</h2>
             <p>To run your application:</p>
             <pre>
 esp run
 </pre>
-            <a name="cleaning" id="cleaning"></a>
+            <a id="cleaning"></a>
             <h2 class="section">Cleaning</h2>
             <p>To clean all generated files under the cache directory:</p>
             <pre>
 esp clean
 </pre>
-            <a name="options" id="options"></a>
+            <a id="options"></a>
             <h2 class="section">Command Options</h2>
             <p>To see the <em>esp</em> command options, run <em>esp</em> with no options. This produces:
             <pre>

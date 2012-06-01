@@ -26,7 +26,7 @@
             </div>
         </div>
         <div class="crumbs">
-            <a href="../../../product/index.html">Home</a>
+            <a href="../../../index.html">Home</a>
 <!-- EndDsi -->
              &gt;<a href="index.html">ESP Guide</a>&gt; <b>Template Pages and Layouts</b>
         </div>
@@ -79,7 +79,7 @@
             tabs, lists, input forms and more. These are integrated with the jQuery client-side library for rich, 
             client side processing and Ajax support.</p>
             
-            <a name="embedded"></a>
+            <a id="embedded"></a>
             <h2 class="section">Embedded C Code </h2>
             <p>ESP templates are essentially HTML pages with embedded "C" code that are parsed into pure "C"
             code and then compiled into native machine code for exceptionally fast execution. </p>
@@ -110,8 +110,8 @@
             is modified, the page is transparently recompiled and re-cached. For production, pages can be pre-compiled,
             and locked-down without recompiling in the field. This updating behavior can be controlled by the 
             <em><a href="../../appweb/users/dir/esp.html#espUpdate">EspUpdate</a></em> configuration directive.</p>
-            <img src="../../../images/esp/template/compile.jpeg" alt="" />
-            <a name="configuration"></a>
+            <img src="../../../images/esp/template/compile.jpeg" alt="compile" />
+            <a id="configuration"></a>
             <h2 class="section">Configuration</h2>
             <p>The <em>appweb.conf</em> configuration file controls how ESP compiles and links template pages into 
             modules. It does this by special ESP configuration directives.</p>
@@ -138,7 +138,7 @@
                     will automatically reload modified modules and transparently recompiled modified ESP source template
                     pages.</li>
             </ul>
-            <a name="layouts"></a>
+            <a id="layouts"></a>
             <h2 class="section">Layouts &mdash; Creating a Consistent Look and Feel</h2>
             <p>Highly usable applications have a consistent structure, menus and appearance so the user can easily 
             navigate that application. Such applications typically consist of many web pages that share a common look
@@ -170,7 +170,7 @@
 </pre>
             <p>Modifications to this page, will be reflected automatically in all content pages.</p>
             
-            <a name="content" id="content"></a>
+            <a id="content"></a>
             <h3>Content Pages</h3>
             <p>A content page defines only the HTML and code that is unique for a specific page. It is merged with a
             layout page by inserting the content and replacing the <em>&lt;%@ content %&gt;</em> tag in the master
@@ -194,7 +194,7 @@
 &lt;/body&gt;
 &lt;/html&gt;
 </pre>
-            <a name="alternateLayout" id="alternateLayout"></a>
+            <a id="alternateLayout"></a>
             <h3>Alternate Layout Pages</h3>
             <p>A content page can request a specific layout page by using the <em>&lt;%@ layout "file"&gt;</em>
             directive.</p>
@@ -206,12 +206,12 @@
             <p>This instructs the templating engine to use the "alternateLayout.esp" file rather than the default
             layout. The default layout page is called "layouts/default.esp". </p>
             
-            <a name="multiple" id="multiple"></a>
+            <a id="multiple"></a>
             <h3>Multiple Layout Pages</h3>
             <p>You are not restricted to a simple two level layout and content page scheme. A layout page can itself
             refer to another layout page to gradually build up the application's look and feel. To do this, the layout
             page needs to include an explicit <em>&lt;%@ layout "file"&gt;</em> directive.</p>
-            <a name="paradigms" id="paradigms"></a>
+            <a id="paradigms"></a>
             <h2 class="section">Application Paradigms</h2>
             <p>ESP supports two primary application paradigms:
             <ul>
@@ -232,7 +232,7 @@
             within the page itself. These applications typically use a "Post-Back" paradigm where a form will post back
             to the same page that was used to render the form.</p>
             
-            <a name="dir" id="dir"></a>
+            <a id="dir"></a>
             <h2 class="section">Directory Structure</h2>
             <p>ESP follows the <a href="http://en.wikipedia.org/wiki/Convention_over_Configuration">Convention
             over Configuration</a> design paradigm where developers only need to specify the unusual parts of their
@@ -267,7 +267,7 @@ esp generate app appName
 views/CONTROLLER-VIEW.esp
 </pre>
             The view name should all be lower case.
-            <a name="directives"></a>
+            <a id="directives"></a>
             <h2 class="section">ESP Page Directives</h2>
             <p>The following directives are provided:</p>
             <table title="directives">
@@ -414,17 +414,17 @@ Today is &lt;%= mprGetDate(0); %&gt;&lt;
             <pre>
 &lt;h2&gt;My name is <b>@#name</b>&lt;/h2&gt;
 </pre>
-        <a name="context"></a>
+        <a id="context"></a>
         <h2 class="section">Request Context </h2>
             <p>The full HTTP request context is provided by a set of objects. These include:
             <ul>
                 <li>Request Params &mdash; Request query and form data</li>
                 <li>Session Data &mdash; Persistent session data saved across requests</li>
-                <li><a href="../../../api/http.html#group___http_conn">Conn</a> &mdash; Connection object. Holds data pertaining to the socket connection.</li>
-                <li><a href="../../../api/http.html#group___http_rx">Rx</a> &mdash; Receive object. Holds data pertaining to this HTTP request.</li>
-                <li><a href="../../../api/http.html#group___http_tx">Tx</a> &mdash; Transmit object. Holds data pertaining to the response for this request.</li>
-                <li><a href="../../../api/http.html#group___http_host">Host</a> &mdash; Host object. Holds data for the host/virtual host serving the request.</li>
-                <li><a href="../../../api/http.html#group___http_route">Route</a> &mdash; Route object. Holds details regarding the route managing the request.</li>
+                <li><a href="../../../api/http.html#group___http_conn">HttpConn</a> &mdash; Connection object. Holds data pertaining to the socket connection.</li>
+                <li><a href="../../../api/http.html#group___http_rx">HttpRx</a> &mdash; Receive object. Holds data pertaining to this HTTP request.</li>
+                <li><a href="../../../api/http.html#group___http_tx">HttpTx</a> &mdash; Transmit object. Holds data pertaining to the response for this request.</li>
+                <li><a href="../../../api/http.html#group___http_host">HttpHost</a> &mdash; Host object. Holds data for the host/virtual host serving the request.</li>
+                <li><a href="../../../api/http.html#group___http_route">HttpRoute</a> &mdash; Route object. Holds details regarding the route managing the request.</li>
                 <li>EspRoute &mdash; Additional ESP specific route state</li>
                 <li>EspReq &mdash; Additional ESP specific request state</li>
             </ul>
@@ -449,7 +449,7 @@ Today is &lt;%= mprGetDate(0); %&gt;&lt;
             <p>See the <a href="../../../api/native.html">Native APIs</a> document for more details about the available
             APIs.</p>
             
-            <a name="compilation" id="compilation"></a>
+            <a id="compilation"></a>
             <h2 class="section">Compilation</h2>
             <p>When developing, ESP will automatically detect changes made to the applications code and will
             intelligently recompile the necessary portions of the application. You can manually force a recompilation
@@ -466,7 +466,7 @@ esp compile
                 <h3>Setting the HTTP Resposne Code</h3>
                 <h3>Adding a HTTP Header</h3>
 -->
-            <a name="debugging" id="debugging"></a>
+            <a id="debugging"></a>
             <h2 class="section">Debugging</h2>
             <p>You can inject debugging code into your views to trace data to the appweb log file or back to the client's
             browser.</p>
@@ -475,7 +475,7 @@ esp compile
             function  will print its arguments to appweb log file. 
             <p>To send trace to the browser, use the <em>render</em> method to write data back to the browser. 
             
-            <a name="controls" id="controls"></a>
+            <a id="controls"></a>
             <h2 class="section">HTML Controls</h2>
             <p>ESP provides a rich set of HTML controls that can be used inside template pages  and controllers to
             generate HTML components. Some of the important controls and functions are:</p>

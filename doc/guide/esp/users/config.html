@@ -26,7 +26,7 @@
             </div>
         </div>
         <div class="crumbs">
-            <a href="../../../product/index.html">Home</a>
+            <a href="../../../index.html">Home</a>
 <!-- EndDsi -->
              &gt;<a href="index.html">ESP Guide</a> &gt;
             <b>Embedded Server Pages</b>
@@ -91,7 +91,7 @@
             <p>The basic ESP configuration takes care of ESP pages and configures Appweb to process <em>*.esp</em> pages
             via the ESP handler. If you need to support ESP MVC applications, there are extra directives to configure
             Appweb routes to support each MVC application.</p>
-            <a name="configuration"></a>
+            <a id="configuration"></a>
             <h2 class="section">Configuration</h2>
             <p>Before ESP can be used, the ESP web framework including the ESP handler must be loaded. ESP is packaged as 
             as an Appweb module called "<em>mod_esp</em>". This is loaded into Appweb via the <em>LoadModule</em>
@@ -107,7 +107,7 @@
             <p>This is all that is needed to service any ESP web page that ends with "<em>.esp</em>". If you want to
             ESP pages with another extension, you can specify extra extensions:</p>
 <pre>AddHandler espHandler *.esp *.myesp</pre>
-            <a name="errors"></a>
+            <a id="errors"></a>
             <h2 class="section">Error Handling</h2>
             <p>If an ESP page has a syntax error or a run-time error, messages will be sent to the Appweb log file.
             This defaults to the file <em>error.log</em>. If appweb is run manually, you can see these message on 
@@ -116,7 +116,7 @@
             directive to appweb.conf.</p>
 <pre>EspShowErrors on</pre>
             <p>This will display errors to the browser in addition to sending the errors to the Appweb log.</p>
-            <a name="dir"></a>
+            <a id="dir"></a>
             <h2>ESP Directories</h2>
             <p>ESP has certain conventions and defaults as to where it locates controllers, pages, layouts and other
             components. If you follow these conventions, you will not need to manually configure ESP's directories.
@@ -145,7 +145,7 @@
             the controllers directory will be set to the <em>controllers</em> sub-directory under the route's 
             document root. When EspApp is used to define an ESP MVC application, the <em>EspDir mvc</em> command is 
             automatically applied.</p>
-            <a name="reload"></a>
+            <a id="reload"></a>
             <h2 class="section">Reloading</h2>
             <p>ESP supports an "edit-and-continue" development style where you can make modifications to ESP controllers
             and pages and when you click reload in your browser, the controller or page will be transparently 
@@ -155,14 +155,14 @@
             the default is to not reload. This default behavior can be modified via the
             <em>EspUpdate</em> directive. Setting the directive to "<em>on</em>" will enable the transparent 
             recompilation and reloading of modified items.</p>
-            <a name="keep"></a>
+            <a id="keep"></a>
             <h2 class="section">Keep Source</h2>
             <p>Sometimes, it is helpful to preserve intermediate "C" source files so that you can debug
             your application at the source code level. When an ESP page is parsed, it is blended with a layout page and
             then an intermediate C source file is generated. This is normally removed after compilation. Setting the
             <em>EspKeepSource</em> directive to "<em>on</em>" will cause ESP to preserve this intermediate source file
             in the <em>cache</em> directory.</p>
-            <a name="mvc"></a>
+            <a id="mvc"></a>
             <h2 class="section">MVC Applications</h2>
             <p>ESP MVC applications typically require a little more configuration, but the ESP defaults make this fairly
             painless.</p>
@@ -184,7 +184,7 @@
             <pre>EspApp /myblog ./blog restful sqlite://blog/blog.sdb</pre>
             <p>With this configuration, Appweb will send all URIs that begin with <em>/myblog</em> to this Blog ESP
             application.</p>
-            <a name="routes"></a>
+            <a id="routes"></a>
             <h2 class="section">Routes</h2>
             <p>So far, we've covered the basics, but Appweb provides very powerful Routing and directives 
             that can be utilized to custom configure ESP applications. The EspApp directive is really a convenience
@@ -241,7 +241,7 @@
                 the <em>login</em> action.</p>
             <p>See the <a href="../../appweb/users/dir/esp.html#espRoute">EspRoute</a> reference
             for details of the directive arguments.</p>
-            <a name="database"></a>
+            <a id="database"></a>
             <h2 class="section">Databases</h2>
             <p>Databases can be specified and pre-opened via the <em>EspDb</em> directive. Pre-opening a
             database connection for an ESP application or route within an application eliminates the run-time delay 
@@ -258,7 +258,7 @@ or
             <p>For SQLite and MDB databases, the database-connection string is the name of the database in the ESP
             <em>db</em> directory. Databases can also be pre-opened via the 
                 <a href="../../appweb/users/dir/esp.html#espApp">EspApp</a> directive.</p>
-            <a name="compilation"></a>
+            <a id="compilation"></a>
             <h2 class="section">Compilation</h2>
             <p>At development time, ESP need to compile ESP controllers and pages into native code.
             ESP supplies a pre-configured set of compilation commands for the major operating systems. These
@@ -285,7 +285,7 @@ EspCompile cc -shared ${DEBUG} -Wall -Wno-unused-result \
             <p>When cross-compiling, invoke the <em>esp</em> command with the "<em>--config</em>" switch to specify a
             separate config file for compiling on the target. Copy the standard <em>esp.conf</em> and modify the compile
             and link targets as required</p>
-            <a name="directives"></a>
+            <a id="directives"></a>
             <h2 class="section">Directives List</h2>
             <p>The following is a list of the various ESP directives and their purpose. Click on the "purpose" text, to
             see the appropriate directive reference.</p>

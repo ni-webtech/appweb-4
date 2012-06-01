@@ -26,7 +26,7 @@
             </div>
         </div>
         <div class="crumbs">
-            <a href="../../product/index.html">Home</a>
+            <a href="../../index.html">Home</a>
 <!-- EndDsi -->
              &gt; <a href="index.html">Programmers Reference</a> &gt; <b>Architecture</b>
         </div>
@@ -59,7 +59,7 @@
         </div>
         <div class="contentLeft">
             <h1>Multithreaded Programming</h1>
-            <a name="overview"></a>
+            <a id="overview"></a>
             <h2>Overview</h2>
             <p>Programming in a multithreaded environment can be difficult. Sometimes programming errors are timing related 
             as multiple threads interact. Multithread locks can become tangled and bugs can be difficult to reproduce. 
@@ -86,7 +86,7 @@
             locks to serialize access to such data, but this is a crude solution and often leads to brittle applications.
             Appweb has a better solution that effectively serializes all activity for a request: per-request 
             event dispatchers.</p>
-            <a name="dispatchers"></a>
+            <a id="dispatchers"></a>
             <h3>Event Dispatchers</h3>
             <p>The Multithreaded Portable Runtime (MPR) used by Appweb has a facility called Event Dispatchers. These
             are event queues on which all I/O and other event activity for a request can be queued and serviced. 
@@ -97,13 +97,13 @@
             eventually service the I/O event. If the request is currently idle, a thread is assigned from the thread 
             pool for the request, and the thread is resumed to service the request's dispatcher queue. This greatly 
             simplifies Appweb as all activity for a request is thus serialized via the dispatcher queue.</p>
-            <a name="multithreaded"></a>
+            <a id="multithreaded"></a>
             <h3>Multithreaded Appweb</h3>
             <p>By using request dispatchers, Appweb serializes all request activity, yet it can support many 
             simultaneous requests due to its multithreaded core. Appweb efficiently utilizes thread resources by using
             a thread pool and not dedicating threads permanently to requests. Threads are temporarily assigned
             only as required by active requests.</p>
-            <a name="modules"></a>
+            <a id="modules"></a>
             <h3>Modules</h3>
             <p>Appweb can be extended by writing loadable modules. Modules can add request handlers, pipeline filters,
             or network connectors. All module code can rely on the fact that request activity will be serialized and
@@ -114,7 +114,7 @@
             and locking primitives are typically not required. ESP code can thus be simple, 
             single-threaded application code.</p>
             
-            <a name="locking"></a>
+            <a id="locking"></a>
             <h3>Locking</h3>
             <p>If you have a requirement for a data structure that will be accessed and manipulated simultaneously
             by multiple threads, the MPR provides a suite of locking primitives. See

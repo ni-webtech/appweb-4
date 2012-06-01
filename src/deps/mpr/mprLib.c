@@ -17735,11 +17735,12 @@ static void defaultLogHandler(int flags, int level, cchar *msg)
     char        *prefix, buf[MPR_MAX_LOG];
     int         mode;
 
+    lock(MPR);
     if ((file = MPR->logFile) == 0) {
+        unlock(MPR);
         return;
     }
     prefix = MPR->name;
-    lock(MPR);
 
     if (MPR->logBackup > 0 && MPR->logSize) {
         //  OPT - slow. Should not check every time

@@ -26,7 +26,7 @@
             </div>
         </div>
         <div class="crumbs">
-            <a href="../../product/index.html">Home</a>
+            <a href="../../index.html">Home</a>
 <!-- EndDsi -->
              &gt; <a href="index.html">Programmers Reference</a> &gt; <b>Architecture</b>
         </div>
@@ -78,7 +78,7 @@
             thousands of requests per second but it does not try to scale out like an enterprise class server for 
             top-tier web sites.
             Rather, it aims to be robust, secure and blazing fast with low and predictable memory utilization.</p>
-            <a name= "deployment" id="deployment"></a>
+            <a id="deployment"></a>
             <h2 class="section">Deployment Models</h2>
             <p>Appweb can be deployed in several ways:</p>
             <ul>
@@ -99,7 +99,7 @@
             reverse proxy dispatches incoming requests to a set of Appweb instances which can effectively host
             ESP, Ejscript or PHP applications.</p>
             
-            <a name="processing" id="processing"></a>
+            <a id="processing"></a>
             <h2 class="section">Processing Architecture</h2>
             <p>Appweb typically runs one, multi-threaded, event driven process. Appweb uses a non-blocking
             event driven architecture and is capable of running many requests simultaneously.</p>
@@ -110,7 +110,7 @@
             architecture minimizes memory usage by reusing threads and provides excellent performance due to the thread
             pool. Further, it scales well, as one thread can service many requests.</p>
             
-            <a name="modules" id="modules"></a>
+            <a id="modules"></a>
             <h2 class="section">Appweb Modules</h2>
             <p>Embeddable web servers have several competing goals:</p>
             <ul>
@@ -207,7 +207,7 @@
                 </tbody>
             </table>
             
-            <a name="httpServer" id="httpServer"></a>
+            <a id="httpServer"></a>
             <h3>Appweb HTTP Server Core</h3>
             <p>The core Appweb HTTP server is one of the relatively smaller components of the Appweb product when
             compared to the dynamic modules that run atop it. The core server provides a set of services for the
@@ -222,7 +222,7 @@
             server can be configured to execute single or multi-threaded. With appropriate sandbox limits, it can serve
             thousands of requests per second if required.</p>
             
-            <a name="configuration" id="configuration"></a>
+            <a id="configuration"></a>
             <h2 class="section">Appweb Configuration</h2>
             <p>Appweb uses an Apache style configuration file. This configuration file is read when Appweb starts and
             it manages every aspect of Appweb's configuration including what ports and addresses to listen to, what
@@ -232,7 +232,7 @@
             declarations and supports the inclusion of other configuration files. Appweb uses a one-pass traversal of the
             configuration file which means that the order of directives matters.</p>
             
-            <a name="requests" id="requests"></a>
+            <a id="requests"></a>
             <h2 class="section">Request Processing</h2><!--
         - Header parsing
         - Request Matching
@@ -353,7 +353,7 @@ AddHandler espHandler myDoc
             <p>Once the route has been selected, the request pipeline is constructed and the request handler is started
             to create the response for the client.</p>
             
-            <a name="pipeline" id="pipeline"></a>
+            <a id="pipeline"></a>
             <h2 class="section">Request Pipeline</h2>
             <p>The Appweb core uses a bidirectional pipeline to process requests and generate responses. This consists
             of a mechanism of queues, packets, buffering and event scheduling. The pipeline architecture is highly
@@ -427,7 +427,7 @@ AddHandler espHandler myDoc
             client. It supports vectored writes to avoid copying data when interleaving with HTTP, range or chunk
             headers.</p>
             
-            <a name="frameworks" id="frameworks"></a>
+            <a id="frameworks"></a>
             <h2 class="section">Web Frameworks</h2>
             <p>Appweb supports loadable modules for the ESP, Ejscript and PHP web frameworks.</p>
             <h3>Embedded Server Pages  Web Framework</h3>
@@ -445,7 +445,7 @@ AddHandler espHandler myDoc
             <p>PHP is a widely-used general-purpose scripting language that is especially suited for Web development
             and can be embedded into HTML. Appweb provides a fast, in-memory handler for the PHP web framework.</p>
             
-            <a name="security" id="security"></a>
+            <a id="security"></a>
             <h2 class="section">Security</h2>
             <p>Appweb provides a suite of measures designed to increase the security of your web server:</p>
             <ul>
@@ -466,7 +466,7 @@ AddHandler espHandler myDoc
             used for a given request. By using well defined sandbox directives, you can help ensure that your
             application and system will not be compromised by malicious requests.</p>
             
-            <a name="mpr" id="mpr"></a>
+            <a id="mpr"></a>
             <h2 class="section">Multithreaded Portable Runtime (MPR)</h2>
             <p>Appweb is built upon a portable runtime layer called the MPR. This layer insulates the rest of the
             product from the underlying platform and allows it to be highly portable to new operating systems or
@@ -490,7 +490,7 @@ AddHandler espHandler myDoc
             opposite approach where memory that must be retained, needs to be actively managed to prevent 
             garbage collection. This means that a managed reference must be held for all active memory. 
             See <a href="memory.html">Memory Allocation</a> for more details.</p>
-            <a name="misc" id="misc"></a>
+            <a id="misc"></a>
             <h2 class="section">Misc Features</h2>
             <h3>IP Networking</h3>
             <p>Appweb fully supports both IPv4 and IPv6 for both server and client operations. You can configure Appweb

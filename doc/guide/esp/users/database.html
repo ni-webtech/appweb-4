@@ -26,7 +26,7 @@
             </div>
         </div>
         <div class="crumbs">
-            <a href="../../../product/index.html">Home</a>
+            <a href="../../../index.html">Home</a>
 <!-- EndDsi -->
              &gt;<a href="index.html">ESP Guide</a>&gt; <b>Embedded Database Interface</b>
         </div>
@@ -77,7 +77,7 @@
             the specifics of the chosen database backend. EDI provides functions for the typical Create, Read, 
             Update and Delete (CRUD) semantics. It also provides functions to manage man manipulate database schema.</p>
  
-            <a name="record" id="record"></a>
+            <a id="record"></a>
             <h2 class="section">Fields, Records and Grids</h2>
             <p>Programs interact with the EDI using EDI Records. When a record is read from the
             database, EDI extracts the database data and copies it into an EdiRec structure. This structure
@@ -95,13 +95,13 @@
             <p>When an EDI API needs to return multiple records an EdiGrid structure is used which contains one or more
             EdiRec structures.</p>
         
-            <a name="columns" id="columns"></a>
+            <a id="columns"></a>
             <h3>Columns to Properties</h3>
             <p>EDI dynamically determines the column names in database tables and creates fields in the EdiRec
             structure at run-time that correspond to each database column. You do not need to configure or specify the 
             fields in your code.</p>
             
-            <a name="tour" id="tour"></a>
+            <a id="tour"></a>
             <h2>Quick Tour of EDI</h2>
             <p>Assume we have a database with a <em>product</em> table that has columns for id, name, description, and
             price.</p>
@@ -152,7 +152,7 @@ ediUpdateRec(db, product);</b>
 <b>ediDeleteRow(db, "product", "1");</b>
 </pre>
             
-            <a name="types" id="types"></a>
+            <a id="types"></a>
             <h2 class="section">Data Types</h2>
             <p>EDI maps database types to the corresponding "C" language data types. The
             following type conversions will occur when reading and writing data to and from the database.</p>
@@ -211,13 +211,13 @@ ediUpdateRec(db, product);</b>
                 </tbody>
             </table>
             
-            <a name="connections" id="connections"></a>
+            <a id="connections"></a>
             <h2 class="section">Database Connections</h2>
             <p>Database connections are one of the few items that are setup by configuration files. The Appweb 
             configuration file: "appweb.conf" defines the database name, username, password, and other
             configuration parameters via the <em>EspDb</em> configuration directive.</p>
             <pre>EspDb mdb://test.mdb</pre>
-            <a name="tables" id="tables"></a>
+            <a id="tables"></a>
             <h2 class="section">Creating Database Tables</h2>
             <p>If creating an MVC application, The <em>esp</em> command can be used to create database tables for you:</p>
             <pre>
@@ -227,12 +227,12 @@ esp generate table [field:type ...]
             EDI database types are: <em>binary</em>, <em>bool</em>, <em>date</em>, <em>float</em>, <em>int</em>, 
             <em>string</em> and <em>text</em>.</p>
             
-            <a name="crud" id="crud"></a>
+            <a id="crud"></a>
             <h2 class="section">Create, Read, Update and Delete (CRUD)</h2>
             <p>It should be easy to do simple things like implementing the basic database operations: create, read,
             update and delete. EDI makes this easy. 
             
-            <a name="create" id="create"></a></p>
+            <a id="create"></a></p>
             <h3>Create a new Record</h3>
             <p>To create a new table record:</p>
             <pre>
@@ -246,7 +246,7 @@ ediUpdateRec(db, product);
 </pre>
             <p>That will create a new product, initialize its properties, and save it to the database.</p>
             
-            <a name="read" id="read"></a>
+            <a id="read"></a>
             <h3>Reading a Record</h3>
             <p>Reading a record from the database is done with the <em>ediRead</em> family of Record static methods. The
             basic <em>ediReadRec</em> method will return a record with a given <em>id</em> field. Other read methods include:
@@ -255,7 +255,7 @@ ediUpdateRec(db, product);
 product = ediReadRec(db, "product", "2");
 product = ediReadRecWhere(db, "product", "price", "&lt;", "5.0");
 </pre>
-            <a name="update" id="update"></a>
+            <a id="update"></a>
             <h3>Updating a Record</h3>
             <p>To update a record, first read it using one of the <em>find</em> methods. Then update any of the object
             properties. Finally, call the <em>save</em> method to save the changes to the database.</p>
@@ -265,14 +265,14 @@ ediSetField(product, "description", "458 Spider");
 <b>ediUpdateRec(db, product);</b>
 </pre>
             
-            <a name="delete" id="delete"></a>
+            <a id="delete"></a>
             <h3>Deleting a Record</h3>
             <p>Records have a static method <em>remove</em> which will remove the record with the given primary key
             id.</p>
             <pre>
 <b>ediDeleteRow(db, "product", "1");</b>
 </pre>
-            <a name="accessing" id="accessing"></a>
+            <a id="accessing"></a>
             <h2 class="section">Accessing Records from Web Pages</h2>
             <p>ESP web pages can access database data via three methods:
             <ul>
@@ -316,7 +316,7 @@ ediSetField(product, "description", "458 Spider");
 <pre>
 &lt;p&gt;Price: <b>@#price</b>&lt;/p&gt;
 </pre>
-            <a name="validation"></a>
+            <a id="validation"></a>
             <h2 class="section">Record Validation</h2>
             <p>EDI can validate fields before saving records to the database. It provides a set of pre-defined 
             validation routines that cover the most common validation needs such as ensuring a field is unique 
@@ -327,7 +327,7 @@ ediSetField(product, "description", "458 Spider");
             that field. The standard ESP view controls intelligently use these error messages to highlight errors 
             in input forms.</p>
             
-            <img src="../../../images/esp/tour/validate.png" class="screen" alt="" />
+            <img src="../../../images/esp/tour/validate.png" class="screen" alt="validate" />
             <h3>Validation Methods</h3>
             <p>Validations are typically defined by the 
             <a href="../../../api/esp.html#group___edi_1ga64cb0410a70843250c9826e8d12e3944"><em>ediAddValidation</em></a> 

@@ -26,7 +26,7 @@
             </div>
         </div>
         <div class="crumbs">
-            <a href="../../product/index.html">Home</a>
+            <a href="../../index.html">Home</a>
 <!-- EndDsi -->
              &gt;<a href="index.html">Installation</a> &gt; <b>Installing Supporting Packages</b>
         </div>
@@ -86,10 +86,10 @@ git clone http://github.com/embedthis/packages
 </pre>
             <p>There is a top level Makefile which will build all the packages and there are individual Makefiles for
             each package. <b>NOTE:</b> Embedthis provides these packages as a service. The Makefiles and packages
-            themselves are not supported.</p><a name="matrixssl" id="matrixssl"></a>
+            themselves are not supported.</p><a id="matrixssl"></a>
             <h2 class="section">MatrixSSL</h2>
             <p><a href="http://www.peersec.com">PeerSec</a> provide the <a href=
-            "http://www.matrixssl.org">MatrixSSL</a> product which can be downloaded from <a href=
+            "http://www.matrixssl.org">MatrixSSL TLS/SSL</a> product which can be downloaded from <a href=
             "http://www.matrixssl.org">www.matrixssl.org</a>. Consult their instructions and build using the standard
             steps.</p>
             <p>Configure Appweb using the --with-matrixssl switch</p>
@@ -98,14 +98,13 @@ git clone http://github.com/embedthis/packages
 </pre>
             <p>You may need to edit the build/packages/matrixssl configuration file to further modify the compiler and
             linker flags and search paths to match your configuration. You may need to define the base directory which
-            can optionally be provided as a switch to the --with-matrixssl switch.</p><a name="openssl" id=
-            "openssl"></a>
+            can optionally be provided as a switch to the --with-matrixssl switch.</p><a id="openssl"></a>
             <h2 class="section">OpenSSL</h2>
             <p>These instructions are suitable for building OpenSSL version 0.9.7d.</p>
             <ul>
                 <li><a href="#openssllinux">OpenSSL 0.9.7d on Linux</a></li>
                 <li><a href="#opensslwindows">OpenSSL 0.9.7d on Windows</a></li>
-            </ul><a name="openssllinux" id="openssllinux"></a>
+            </ul><a id="openssllinux"></a>
             <h3>Building OpenSSL 0.9.7d on Linux for X886</h3>
             <p>Use the following commands to build OpenSSL natively on Linux:</p>
             <pre>
@@ -124,8 +123,7 @@ make build-shared
 ./configure --with-openssl=../../openssl-0.9.7d
 </pre>
             <p>You may need to edit the build/packages/openssl configuration file to further modify the compiler and
-            linker flags and search paths to match your configuration.</p><a name="opensslwindows" id=
-            "opensslwindows"></a>
+            linker flags and search paths to match your configuration.</p><a id="opensslwindows"></a>
             <h3>Building OpenSSL 0.9.7d on Windows for X886</h3>
             <p>The Windows OpenSSL build system uses Perl and nmake. The following commands will build the required
             shared libraries (DLLs) for Appweb to use OpenSSL.</p>
@@ -150,7 +148,7 @@ cp -r inc32/openssl include
 ./configure --with-openssl=../../openssl-0.9.7d
 </pre>
             <p>You may need to edit the build/packages/openssl configuration file to further modify the compiler and
-            linker flags and search paths to match your configuration.</p><a name="uclibc" id="uclibc"></a>
+            linker flags and search paths to match your configuration.</p><a id="uclibc"></a>
             <h2 class="section">uClibc</h2>
             <p>To get the smallest executable possible, there are several alternatives to the standard libc library.
             One of the leading tiny libcs on Linux is uClibc. For general information go to: <a href=
@@ -167,7 +165,7 @@ cp -r inc32/openssl include
 DIR=/usr/local ; \<br />export CC=arm-linux-uclibc-gcc ; \<br />GCC_DIR=`$$CC -print-libgcc-file-name 2&gt;&amp;1 | sed -e 's/\/libgcc.a//'` ; \<br />AR=arm-linux-uclibc-ar \<br />LD=arm-linux-uclibc-ld \<br />RANLIB=arm-linux-uclibc-ranlib \<br />IFLAGS="-I$$DIR/arm-linux-uclibc/include -I$$GCC_DIR/include" \<br />LDFLAGS="-L$$GCC_DIR/lib -L$$DIR/arm-linux-uclibc/lib \<br />    -Wl,--dynamic-linker -Wl,$$DIR/i386-linux/lib/ld-uClibc.so.0" \<br />./configure
 </pre>
             <p>See <a href="../../guide/appweb/source/building.html">Building Appweb from Source</a> for full details
-            on all the available <b>configure</b> switches.</p><a name="uclinux" id="uclinux"></a> <!--
+            on all the available <b>configure</b> switches.</p><a id="uclinux"></a> <!--
             <h2 class="section">uClinux</h2>
             <p>TODO - these instructions are not accurate or current</p>
             <p>A patch for uClinux has been submitted and hopefully will soon be included in the default uClinux

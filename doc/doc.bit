@@ -38,6 +38,31 @@ Bit.load({
             ",
         }, 
 
+        'validate-doc': {
+            action: "
+                let spell = bit.dir.cfg.join('spell')
+                spell.removeAll()
+                for each (file in Path('.').glob('**', { exclude: /\\/$|dsi|Base|Bare/ })) {
+                    let out = spell.join(file)
+                    out.dirname.makeDir()
+                    if (file.extension == 'html') {
+                        out.write(file.readString().replace(/<pre>((?!pre>)(?:.|\\s))*pre>/mg, '<pre>DELETED</pre>'))
+                    } else {
+                        out.write(file.readString())
+                    }
+                }
+                trace('Prepare', spell)
+            ",
+        },
+
+        mob: {
+            action: "
+                s = Path('product/releaseNotes.html').readString()
+                // print('/<pre>((?!pre>)(?:.|\s))*<\\\\/pre>/mg')
+                print(s.replace(/<pre>((?!pre>)(?:.|\\s))*<\\/pre>/mg, '<pre>DELETED</pre>'))
+            ",
+        },
+
         'clean-doc': {
             type: 'clean',
             action: "

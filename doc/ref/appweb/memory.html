@@ -26,7 +26,7 @@
             </div>
         </div>
         <div class="crumbs">
-            <a href="../../product/index.html">Home</a>
+            <a href="../../index.html">Home</a>
 <!-- EndDsi -->
              &gt; <a href="index.html">Programmers Reference</a> &gt; <b>Architecture</b>
         </div>
@@ -62,7 +62,7 @@
         </div>
         <div class="contentLeft">
             <h1>MPR Memory Allocator</h1>
-            <a name="overview"></a>
+            <a id="overview"></a>
             <h2>Overview</h2>
             <p>Appweb provides an application-specific memory allocator to use instead of malloc. This allocator is 
             part of the Multithreaded Portable Runtime (MPR) and is tailored to the needs of embedded applications.
@@ -75,7 +75,7 @@
             as it eliminates most memory leaks. Unlike traditional memory allocation where <em>free</em> must be called
             to release memory, Appweb uses the opposite approach. Memory that must be retained, must be actively managed to 
             prevent garbage collection. This means that a <em>managed reference</em> must be held for all active memory.</p>
-            <a name="allocator"></a>
+            <a id="allocator"></a>
             <h2>Allocator</h2>
             <p>The allocator is optimized for frequent allocations of small blocks (&lt; 4K). It 
             uses a scheme of free queues for fast allocation. Memory allocations are aligned on 16 byte boundaries on 64-bit 
@@ -84,7 +84,7 @@
             <p>Appweb 3 memory API required a memory context argument for all memory allocations. This required many
             APIs to have a memory context as the first parameter. Appweb 4 does not require this and these APIs have
             removed the memory context parameter.</p>
-            <a name="errors"></a>
+            <a id="errors"></a>
             <h2>Error Handling</h2>
             <p> It is difficult for programmers to consistently
             check the result of every API call that can fail due to memory allocation errors. Calls such as strdup and 
@@ -97,7 +97,7 @@
             When memory usage exceeds a pre-configured redline value, the depletion handler is invoked. 
             The application can then determine what action to take. Appweb will restart automatically in such 
             circumstances.</p>
-            <a name="collector"></a>
+            <a id="collector"></a>
             <h2>Garbage Collection</h2>
             <p>The MPR garbage collector will run periodically to reclaim unused memory and potentially return 
             that memory to the
@@ -111,7 +111,7 @@
             hold a managed reference for the block. A managed reference, is a reference to an allocated block that 
             will be marked as active during a collection cycle by the Owning Blocks manager function. Manager functions
             are defined when allocating blocks that will hold managed references.</p>
-            <a name="phases"></a>
+            <a id="phases"></a>
             <h3>Collection Phases</h3>
             <p>The collector reclaims memory in three phases: Wait, Mark and Sweep. The Wait phase waits for all
             threads to yield. This quiesces the system for reliable collection. NOTE: this does not mean that all 
@@ -119,7 +119,7 @@
             in the Appweb HTTP processing engine.</p>
             <p>The Mark phase traverses memory and marks all blocks that are 
             currently being used. The Sweep phase finally reclaims all blocks that are not marked.</p>
-            <a name="marking"></a>
+            <a id="marking"></a>
             <h3>Marking Blocks</h3>
             <p>The Mark phase beings with a set of known root memory blocks. The ultimate root is the Mpr object 
             returned from the <em>mprCreate</em> API. However, other roots can be added at any time 
@@ -129,7 +129,7 @@
             The mprMark function will then invoke the manager for these managed references and so on.
             In this manner, managed memory forms a tree from the roots to the leaves and the mark phase visits every 
             managed block currently in use.</p>
-            <a name="alloc"></a>
+            <a id="alloc"></a>
             <h3>Allocating Memory</h3>
             <p>Managers are defined when allocating a block of memory. For example, this code will allocate a block
             that will contain a managed reference to an allocated string:</p>
@@ -142,7 +142,7 @@ char **block = mprAllocObj(char*, manageBlock);
             and copies the string argument. The mprAllocObj function is used to allocate structures with managers. Use
             mprAllocMem to allocate a block of memory and reserve room for a manager function. Then use mprSetManager to
             define a manager function.</p>
-            <a name="managers"></a>
+            <a id="managers"></a>
             <h3>Managers</h3>
             <p>A manager function is invoked by the collector during each collector Mark phase of the collection cycle.
             The manager is passed a reference to the block and a flags word. The flags are set to either MPR_MANAGE_MARK

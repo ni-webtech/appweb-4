@@ -4,7 +4,7 @@ Welcome to the Appweb -- the fastest little web server.
 
 This document contains details regarding the installation procedure for the binary Embedthis Appweb package.  This package contains pre-built stand-alone web server and an embeddable HTTP library with headers. You can read the documentation for the latest release online at:
 
-http://embedthis.com/products/appweb/doc/product/index.html
+http://embedthis.com/products/appweb/doc/index.html
 
 This software is copyrighted and distributed under license. Please read the LICENSE.TXT for details.
 

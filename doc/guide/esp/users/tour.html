@@ -26,7 +26,7 @@
             </div>
         </div>
         <div class="crumbs">
-            <a href="../../../product/index.html">Home</a>
+            <a href="../../../index.html">Home</a>
 <!-- EndDsi -->
              &gt; <a href="index.html">ESP Guide</a> &gt; <b>Web Framework Tour</b>
         </div>
@@ -68,7 +68,7 @@
             First make sure you have read the <a href="../../appweb/users/quickStart.html">Quick Start</a> and 
             that you have ESP installed on your system so you can type along as you go.</p>
             
-            <a name="starting"></a>
+            <a id="starting"></a>
             <h2 class="section">Starting Appweb</h2>
             <p>When Appweb is installed, it will start automatically and run in the background. You can start and stop
             Appweb via the "<em>appman</em>" command.</p>
@@ -89,13 +89,13 @@ sudo appweb -v
             <p>You must be in the Appweb server root directory containing an <em>appweb.conf</em> configuration file.</p>
             
             
-            <a name="testing"></a>
+            <a id="testing"></a>
             <h2 class="section">Testing Appweb</h2>
             <p>To test Appweb, enter
             <em>localhost/test.esp</em> in your browser. You should see the following page:</p>
             
-            <img src="../../../images/esp/tour/home.png" class="screen" alt="" />
-            <a name="hello" id="hello"></a>
+            <img src="../../../images/esp/tour/home.png" class="screen" alt="home" />
+            <a id="hello"></a>
             <h2 class="section">Hello World</h2>
             <p>The first step in any tour is to create a simple "Hello World" web page. ESP web pages have an <b>.esp</b>
             extension. Create a file called <em>hello.esp</em> under the directory nominated as your <em>DocumentRoot</em> 
@@ -111,7 +111,7 @@ sudo appweb -v
             <p>To view the "Hello" web page in your browser, type in the following url:
             http://localhost/hello.esp.</p>
             <img src="../../../images/esp/tour/hello.png" alt="hello" class= "screen" /> 
-            <a name="dynamic" id="dynamic"></a>
+            <a id="dynamic"></a>
             <h2 class="section">Dynamic Content</h2>
             <p>While that was fun, the output is static and boring, so let's add some dynamic content. You can embed
             "C" language code and ESP function calls  by including them inside a special ESP web page directive that 
@@ -149,7 +149,7 @@ sudo appweb -v
             back where the directive was defined in the page. See the <a href="template.html">Web Pages and Templates</a>
             document for full details about all the ESP web page directives.</p>
             
-            <a name="declarations"></a>
+            <a id="declarations"></a>
             <h2 class="section">Declarations</h2>
             <p>Some compilers (Microsoft CL) do not permit "C" declarations except at the start of a block. When ESP
             compiles an ESP web page, it converts it to "C" code and wraps it inside a function that will be invoked
@@ -162,7 +162,7 @@ sudo appweb -v
 &lt;/%&gt;
 &lt;%  render("%s, the answer is %d", msg, x); %&gt;
 </pre>
-            <a name="params" id="params"></a>
+            <a id="params"></a>
             <h2 class="section">Forms and Request Params</h2>
             <p>When an HTML form is submitted, ESP converts form data and query parameters into ESP request parameters. 
             These can be accessed via the <em>param()</em> function or more conveniently via the literal <em>@@variable</em> 
@@ -179,7 +179,7 @@ sudo appweb -v
 <pre>&lt;p&gt;User Name: <b>&lt;%=%S param("name"); %&gt;</b>&lt;/p&gt;
 &lt;p&gt;User Name: <b>&lt;%= renderSafe(param("name")); %&gt;</b>&lt;/p&gt;
 </pre>
-            <a name="controls" id="controls"></a>
+            <a id="controls"></a>
             <h2 class="section">Web Controls</h2>
             <p>ESP includes a rich library of web control functions that easily generate HTML. These web controls
             are integrated with the <a href="http://jquery.com/">jQuery</a> client-side JavaScript library.
@@ -188,7 +188,7 @@ sudo appweb -v
             This control will create the appropriate HTML to invoke the <em>data.esp</em> page every 1 second to
             get the current time. The web page will transparently update with the data returned by <em>data.esp</em>.</p>
 <pre>&lt;% Time: label("", "{ data-refresh: "data.esp", data-period: 1000 }"); %&gt;</pre>
-            <a name="binding" id="binding"></a>
+            <a id="binding"></a>
             <h3>Database Binding</h3>
             <p>To make it easy to display and update database data, ESP supports "data binding" where a database 
             record can be bound to a request form. Thereafter, the ESP web controls will take data from the record.
@@ -206,7 +206,7 @@ sudo appweb -v
             <p>In this example, the <em>form</em> control <i>binds</i> the <em>userRecord</em>. The input controls
             then retrieve the "name", and "address" fields from the database record and emit the appropriate HTML
             input elements.</p>
-            <a name="sessions" id="sessions"></a>
+            <a id="sessions"></a>
             <h2>Sessions and Flash</h2>
             <p>ESP provides an integrated session store so that state can be shared across requests. Session variables
             can be accessed using the <em>@@variable</em> directive in ESP pages or via the
@@ -219,7 +219,7 @@ sudo appweb -v
             <p>The <em>flash</em> web
             control is used in the next web page to extract flash messages for display.</p>
 <pre>&lt;% <b>flash</b>("all", NULL); %&gt;</pre>
-            <a name="layouts" id="layouts"></a>
+            <a id="layouts"></a>
             <h2>Layouts</h2>
             <p>ESP Layouts provide a powerful and flexible solution for implementing a consistent UI. 
             ESP pages use Layout pages that define the look and feel of an application. Content pages are 
@@ -255,7 +255,7 @@ sudo appweb -v
 &lt;%@ layout "custom-layout.esp" %&gt;
 &lt;h1&gt;Hello Bright World&lt;/h1&gt;
 </pre>
-            <a name="learn" id="learn"></a>
+            <a id="learn"></a>
             <h2 class="section">Learn More ...</h2>
             <p>That concludes a quick tour through some of the capabilities of the ESP web framework.</p>
             <p>To learn more, please read:</p>

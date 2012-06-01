@@ -26,7 +26,7 @@
             </div>
         </div>
         <div class="crumbs">
-            <a href="../../product/index.html">Home</a>
+            <a href="../../index.html">Home</a>
 <!-- EndDsi -->
              &gt;<a href="index.html">Programmer Reference</a>&gt; Web Framework Architecture
         </div>
@@ -84,7 +84,7 @@
                 <li><a href="#mvc">Framework Classes</a> - MVC, Http Request and Ajax view classes</li>
                 <li>Ejscript compiler - Creates and caches application byte code</li>
                 <li>Ejscript Virtual Machine - executes the byte code and formats the response</li>
-            </ul><a name="webServerInterface" id="webServerInterface"></a>
+            </ul><a id="webServerInterface"></a>
             <h2 class="section">Web Server Interface</h2>
             <p>The Ejscript Web Server Interface (or web interface) provides the interface and coupling between
             Ejscript and the web server. It accepts incoming web requests from the web server, routes the request to
@@ -112,7 +112,7 @@
 EjsAppAlias /myAppName/ "/Directory/to/myApp"
 </pre>
             <p>This instructs the web server to send all requests with the URL prefix "myAppName" to Ejscript for
-            routing and processing.</p><a name="formData" id="formData"></a>
+            routing and processing.</p><a id="formData"></a>
             <h3>Form Data</h3>
             <p>The web interface converts incoming post and form data into a format suitable for easy processing by
             Ejscript applications. Traditionally, form data is passed to web applications by environment variables. But
@@ -120,12 +120,11 @@ EjsAppAlias /myAppName/ "/Directory/to/myApp"
             JavaScript.</p>
             <p>Ejscript replaces environment variables with a params[] collection object and it transparently converts
             form data into a nested collection of objects. It automatically converts dot separated form names into
-            objects that are addressable by dot notation.</p><a name="requestState" id="requestState"></a>
+            objects that are addressable by dot notation.</p><a id="requestState"></a>
             <h3>Request State</h3>
             <p>The web interface will construct request, response and host objects that store request state. Ejscript
             avoids the normal overhead in creating and populating these objects by using virtual, lazy construction.
-            Consequently, Ejscript applications incur minimal overhead when accessing request state.</p><a name=
-            "hosting" id="hosting"></a>
+            Consequently, Ejscript applications incur minimal overhead when accessing request state.</p><a id="hosting"></a>
             <h3>Interpreter Hosting</h3>A high performance web server must accept incoming requests, route to the
             appropriate request handler, initialize the handler including necessary interpreters, gather response data,
             transmit to the client and then tear down the handler. And this must be done many times per second, ideally
@@ -137,7 +136,7 @@ EjsAppAlias /myAppName/ "/Directory/to/myApp"
             can start servicing the web request.</p>
             <p>Clone interpreters are not completely isolated. Controlled session state sharing is accomplished by
             sharing session[] and application[] objects.</p>
-            <p><a name="generator" id="generator"></a></p>
+            <p><a id="generator"></a></p>
             <h2 class="section">Application Generator</h2>
             <p>The web framework supports two kinds of Ejscript web applications.</p>
             <ul>
@@ -183,14 +182,14 @@ ejsweb -v compile
 </pre>
             <p>During development time, the web framework uses <b>ejsweb</b> behind the scenes to transparently
             recompile all or portions of the application if the developer modifies any model, view or
-            controller.</p><a name="mvc" id="mvc"></a>
+            controller.</p><a id="mvc"></a>
             <h2 class="section">Model, View, Controller Framework</h2>
             <p>A Model View Controller framework, also known as MVC, is a proven paradigm for organizing web
             applications. The model manages the state of the application including the database. The controller manages
             the application, responding to inputs and invoking the relevant views to generate the user interface.</p>
             <p>Originally developed in the '70s, it has been more recently adapted for web applications and been
             popularized by frameworks such as <a href="http://www.rubyonrails.org">Ruby on Rails</a>. Ejscript uses the
-            same paradigm with a JavaScript and embedded spin.</p><a name="models" id="models"></a>
+            same paradigm with a JavaScript and embedded spin.</p><a id="models"></a>
             <h2 class="section">Models</h2>
             <p>For object-oriented languages such as Ejscript, there is sometimes a mismatch between relational
             database data and the JavaScript objects that are used to represent and manage that data. To solve this
@@ -209,7 +208,7 @@ ejsweb -v compile
             getColumnTitles, getDb, getKeyNme, getNumRows, getTableName, hasAndBelongsToMany, hasMany, remove, save,
             saveUpdate, setKeyName, setTableName, sql and trace.</p>
             <p>The Ejscript ORM currently only provides one database connector for SQLite. It is expected that a future
-            release will add support for other major database engines.</p><a name="views" id="views"></a>
+            release will add support for other major database engines.</p><a id="views"></a>
             <h2 class="section">Views</h2>
             <p>The View part of the Ejscript web framework is responsible for generating the user interface. It
             typically takes an input HTML web page with embedded Ejscript and generates the HTML response to send back
@@ -221,7 +220,7 @@ ejsweb -v compile
                 <li>A rich library of methods to render output</li>
                 <li>A consistent interface to Ajax libraries</li>
                 <li>A suite of view dynamic user controls such as table, chart, tab, tree, ...</li>
-            </ul><a name="viewPipeline" id="viewPipeline"></a>
+            </ul><a id="viewPipeline"></a>
             <h3>View Pipeline</h3>
             <p>The View mechanism consists of a processing pipeline that progressively transforms the web page. Views
             start with a partial HTML view page which typically contains embedded Ejscript. This is parsed by the Web
@@ -231,8 +230,7 @@ ejsweb -v compile
             "../../images/ejsWebView.jpg" alt="View Pipeline" /></p>
             <p>The time-intensive part of this pipeline processing occurs once, at development time. This is comprised
             of the pipeline stages up to and including compilation. The often less costly run-time processing for each
-            request consists of reading the module file and executing it in the VM.</p><a name="parser" id=
-            "parser"></a>
+            request consists of reading the module file and executing it in the VM.</p><a id="parser"></a>
             <h3>Web Page Parser</h3>
             <p>The Web Page Parser is a templating engine and embedded script parser. It understands and processes
             embedded javascript and layout directives to expand the view content pages and create a composite page that
@@ -309,14 +307,13 @@ ejsweb -v compile
             <p>The controls are bindable to data stored in models and many controls can dynamically refresh their
             content using Ajax techniques without redisplaying the entire page.</p>
             <p>Views can also use a library of view methods to generate and manage HTML output and responses. These
-            include: redirect, render, setCookie, setHeader, write, writeHtml and writeRaw.</p><a name="controllers"
-            id="controllers"></a>
+            include: redirect, render, setCookie, setHeader, write, writeHtml and writeRaw.</p><a id="controllers"></a>
             <h2 class="section">Controllers - Responding to Requests</h2>
             <p>The role of the controllers is to manage the application and respond to inputs so controllers form the
             heart of the web application. Controllers are typically bound to various URLs so that user input is routed
             to specific actions within the controls. When a controller receives an incoming Http message, the requested
             action is run. The action will typically mutate the state of the application in some manner and then render
-            a response view to the user.</p><a name="routing" id="routing"></a>
+            a response view to the user.</p><a id="routing"></a>
             <h3>Routing</h3>
             <p>The Ejscript web framework routes incoming URL requests by tokenizing the request URL. The format used
             is:</p>
@@ -327,7 +324,7 @@ ejsweb -v compile
             of an action method within the controller. When such a URL request is received by Ejscript, it routes the
             request to the specified controller and invokes the action method. The routing format is currently fixed
             and not configurable but it is anticipated that user controlled routing will be added in a future
-            release.</p><a name="actions" id="actions"></a>
+            release.</p><a id="actions"></a>
             <h3>Actions</h3>
             <p>When a controller receives a request to service, it is dispatched to the action method specified in the
             URL. The action is a simple function defined with an "action" namespace qualifier. The job of the action
@@ -358,7 +355,7 @@ action function update() {
             state.</p>
             <p>Other methods used by Controller actions include: cache, createSession, destroySession, escapeHtml,
             html, inform, keepAlive, makeUrl, render, renderFile, renderXml, reportError, setCookie, setHeader,
-            setHttpCode, setMimeType, warn and write.</p><a name="deployment" id="deployment"></a>
+            setHttpCode, setMimeType, warn and write.</p><a id="deployment"></a>
             <h2 class="section">Development and Deployment</h2>
             <p>There are two phases of use for Ejscript: Development and Deployment. When developing, developers need
             quick turn-around with rapid test-modify-build cycles. Interpreted languages have a distinct advantage over
