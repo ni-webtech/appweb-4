@@ -1223,6 +1223,7 @@ static void sweep()
             unlockHeap();
             LOG(9, "DEBUG: Unpin %p to %p size %d, used %d", region, 
                 ((char*) region) + region->size, region->size,fastMemSize());
+            mprManageSpinLock(&region->lock, MPR_MANAGE_FREE);
             mprVirtFree(region, region->size);
         } else {
             prior = region;
@@ -17050,7 +17051,6 @@ MprKeyValue *mprCreateKeyPair(cchar *key, cchar *value)
 /***************************** Forward Declarations ***************************/
 
 static void manageLock(MprMutex *lock, int flags);
-static void manageSpinLock(MprSpin *lock, int flags);
 
 /************************************ Code ************************************/
 
@@ -17159,14 +17159,14 @@ MprSpin *mprCreateSpinLock()
 {
     MprSpin    *lock;
 
-    if ((lock = mprAllocObj(MprSpin, manageSpinLock)) == 0) {
+    if ((lock = mprAllocObj(MprSpin, mprManageSpinLock)) == 0) {
         return 0;
     }
     return mprInitSpinLock(lock);
 }
 
 
-static void manageSpinLock(MprSpin *lock, int flags)
+void mprManageSpinLock(MprSpin *lock, int flags)
 {
     if (flags & MPR_MANAGE_FREE) {
         mprAssert(lock);

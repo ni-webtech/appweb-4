@@ -38,6 +38,15 @@ Bit.load({
             ",
         }, 
 
+        tidy: {
+            action: "
+                for each (path in Path('.').glob('**.html', { exclude: /\\/$|dsi|Base|Bare/ })) {
+                    trace('Tidy', path)
+                    Cmd('tidy -q -config tidy.conf ' + path)
+                }
+            ",
+        },
+
         'validate-doc': {
             action: "
                 let vdir = bit.dir.cfg.join('validate')
@@ -52,14 +61,6 @@ Bit.load({
                     }
                 }
                 trace('Prepare', vdir)
-            ",
-        },
-
-        mob: {
-            action: "
-                s = Path('product/releaseNotes.html').readString()
-                // print('/<pre>((?!pre>)(?:.|\s))*<\\\\/pre>/mg')
-                print(s.replace(/<pre>((?!pre>)(?:.|\\s))*<\\/pre>/mg, '<pre>DELETED</pre>'))
             ",
         },
 

@@ -1767,6 +1767,11 @@ extern MprSpin *mprInitSpinLock(MprSpin *lock);
 extern bool mprTrySpinLock(MprSpin *lock);
 
 /*
+    Internal
+ */
+void mprManageSpinLock(MprSpin *lock, int flags);
+
+/*
     For maximum performance, use the spin lock/unlock routines macros
  */
 #if !BIT_DEBUG
