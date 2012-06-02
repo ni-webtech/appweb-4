@@ -18904,12 +18904,13 @@ void mprSetModuleFinalizer(MprModule *module, MprModuleProc stop)
 void mprSetModuleSearchPath(char *searchPath)
 {
     MprModuleService    *ms;
-    cchar               *libdir;
 
     ms = MPR->moduleService;
     if (searchPath == 0) {
-        libdir = mprJoinPath(mprGetPathParent(mprGetAppDir()), BIT_LIB_NAME);
-        ms->searchPath = sjoin(mprGetAppDir(), MPR_SEARCH_SEP, libdir, MPR_SEARCH_SEP, BIT_LIB_PREFIX, NULL);
+#if UNUSED
+        dir = mprJoinPath(mprGetPathParent(mprGetAppDir()), BIT_LIB_NAME);
+#endif
+        ms->searchPath = sjoin(mprGetAppDir(), MPR_SEARCH_SEP, mprGetAppDir(), MPR_SEARCH_SEP, BIT_LIB_PREFIX, NULL);
     } else {
         ms->searchPath = sclone(searchPath);
     }

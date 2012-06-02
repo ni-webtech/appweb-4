@@ -10402,7 +10402,11 @@ static void definePathVars(HttpRoute *route)
     mprAddKey(route->pathTokens, "PRODUCT", sclone(BIT_PRODUCT));
     mprAddKey(route->pathTokens, "OS", sclone(BIT_OS));
     mprAddKey(route->pathTokens, "VERSION", sclone(BIT_VERSION));
+#if UNUSED
     mprAddKey(route->pathTokens, "LIBDIR", mprJoinPath(mprGetPathParent(mprGetAppDir()), mprGetPathBase(BIT_LIB_NAME)));
+#else
+    mprAddKey(route->pathTokens, "LIBDIR", mprGetAppDir());
+#endif
     if (route->host) {
         defineHostVars(route);
     }

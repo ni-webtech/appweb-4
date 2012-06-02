@@ -308,7 +308,7 @@ static int findAppwebConf()
         if (!userPath) {
             app->configFile = mprJoinPath(app->home, "appweb.conf");
             if (!mprPathExists(app->configFile, R_OK)) {
-                app->configFile = mprJoinPath(mprGetAppDir(), sfmt("../%s/%s.conf", BIT_LIB_NAME, mprGetAppName()));
+                app->configFile = mprJoinPath(mprGetAppDir(), sfmt("%s.conf", mprGetAppName()));
             }
         }
         if (!mprPathExists(app->configFile, R_OK)) {

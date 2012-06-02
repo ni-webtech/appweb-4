@@ -349,18 +349,6 @@ int maSetPlatform(cchar *platform)
     }
     appweb->platformDir = dir;
     appweb->platform = platform;
-#if UNUSED
-int nextEndpoint, nextHost, nextRoute;
-HttpRoute *route;
-HttpHost *host;
-    if (!smatch(platform, appweb->localPlatform)) {
-        for (ITERATE_ITEMS(appweb->http->hosts, host, nextHost)) {
-            for (ITERATE_ITEMS(host->routes, route, nextRoute)) {
-                httpSetRoutePathVar(route, "LIBDIR", appweb->platformDir);
-            }
-        }
-    }
-#endif
     return 0;
 }
 
@@ -552,21 +540,6 @@ int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
     return 0;
 }
 
-
-#if UNUSED
-static char *getSearchPath(cchar *dir)
-{
-#if WINDOWS
-        //  bin : .
-        return sfmt("%s" MPR_SEARCH_SEP ".", dir);
-#else
-        //  bin : /usr/lib/appweb/bin : /usr/lib/appweb/lib : lib : . 
-        char *libDir = mprJoinPath(mprGetPathParent(dir), BIT_LIB_NAME);
-        return sfmt("%s" MPR_SEARCH_SEP "%s" MPR_SEARCH_SEP ".", dir,
-            mprSamePath(BIT_BIN_PREFIX, dir) ? BIT_LIB_PREFIX: libDir);
-#endif
-}
-#endif
 
 /*
     @copy   default

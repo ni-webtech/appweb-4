@@ -61,7 +61,7 @@ int maParseConfig(MaServer *server, cchar *path, int flags)
     httpSetHostName(host, "default-server");
     route = httpCreateRoute(host);
     httpSetHostDefaultRoute(host, route);
-    httpSetRoutePathVar(route, "LIBDIR", mprJoinPath(server->appweb->platformDir, BIT_LIB_NAME));
+    httpSetRoutePathVar(route, "LIBDIR", mprJoinPath(server->appweb->platformDir, "bin"));
 
     state = createState(server, host, route);
     state->flags = flags;
@@ -1298,19 +1298,16 @@ static int logRoutesDirective(MaState *state, cchar *key, cchar *value)
  */
 static int loadModulePathDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *sep, *lib, *path;
+    char    *sep, *path;
 
     if (!maTokenize(state, value, "%T", &value)) {
         return MPR_ERR_BAD_SYNTAX;
     }
     /*
-		 Actual search path is:
-		 
-		 USER_SEARCH : exeDir : exeDir/../lib : /usr/lib/appweb/lib
+		 Search path is: USER_SEARCH : exeDir : /usr/lib/appweb/lib
      */
     sep = MPR_SEARCH_SEP;
-    lib = mprJoinPath(mprGetPathParent(mprGetAppDir()), BIT_LIB_NAME);
-    path = sjoin(value, sep, mprGetAppDir(), sep, lib, sep, BIT_LIB_PREFIX, NULL);
+    path = sjoin(value, sep, mprGetAppDir(), sep, BIT_LIB_PREFIX, NULL);
     mprSetModuleSearchPath(path);
     return 0;
 }
@@ -1526,12 +1523,6 @@ static int redirectDirective(MaState *state, cchar *key, cchar *value)
             return MPR_ERR_BAD_SYNTAX;
         }
         status = HTTP_CODE_MOVED_TEMPORARILY;
-#if UNUSED
-    } else if (isdigit((uchar) value[0])) {
-        if (!maTokenize(state, value, "%N %S %S", &status, &uri, &path)) {
-            return MPR_ERR_BAD_SYNTAX;
-        }
-#endif
     } else {
         if (!maTokenize(state, value, "%S %S ?S", &code, &uri, &path)) {
             return MPR_ERR_BAD_SYNTAX;
@@ -1945,12 +1936,6 @@ bool maValidateServer(MaServer *server)
     defaultHost = mprGetFirstItem(http->hosts);
     mprAssert(defaultHost);
 
-#if UNUSED
-    if (mprGetListLength(server->endpoints) == 0) {
-        mprError("Missing listening HttpEndpoint. Must have a Listen directive.");
-        return 0;
-    }
-#endif
     /*
         Add hosts to relevant listen endpoints
      */

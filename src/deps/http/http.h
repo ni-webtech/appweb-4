@@ -3626,7 +3626,7 @@ extern cchar *httpLookupRouteErrorDocument(HttpRoute *route, int status);
             <li>PRODUCT - for the product name</li>
             <li>OS - for the operating system name. E.g. LINUX, MACOSX, VXWORKS, or WIN</li>
             <li>VERSION - for the product version. E.g. 4.0.2</li>
-            <li>LIBDIR - for the library directory. E.g. /usr/lib/appweb </li>
+            <li>LIBDIR - for the shared library directory. E.g. /usr/lib/appweb/bin </li>
             <li>DOCUMENT_ROOT - for the default directory containing documents to serve</li>
             <li>SERVER_ROOT - for the directory containing the web server configuration files</li>
         </ul>  

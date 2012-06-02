@@ -465,7 +465,7 @@ static void initialize()
 {
     readConfig();
     app->currentDir = mprGetCurrentPath();
-    app->libDir = mprJoinPath(mprGetPathParent(mprGetAppDir()), BIT_LIB_NAME);
+    app->libDir = mprGetAppDir();
     app->wwwDir = mprJoinPath(app->libDir, "esp-www");
 }
 
@@ -1599,7 +1599,7 @@ static void findConfigFile()
             fail("Can't open config file %s", app->configFile);
             return;
         }
-        app->configFile = mprJoinPath(mprGetAppDir(), sfmt("../%s/esp-%s.conf", BIT_LIB_NAME, BIT_PRODUCT));
+        app->configFile = mprJoinPath(mprGetAppDir(), sfmt("esp-%s.conf", BIT_PRODUCT));
         if (!mprPathExists(app->configFile, R_OK)) {
             fail("Can't open config file %s", app->configFile);
             return;

@@ -90,7 +90,7 @@ char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, cchar *m
 
             } else if (matchToken(&cp, "${LIBPATH}")) {
                 /* Library directory for Appweb libraries for the target */
-                mprPutStringToBuf(buf, mprJoinPath(appweb->platformDir, BIT_LIB_NAME)); 
+                mprPutStringToBuf(buf, mprJoinPath(appweb->platformDir, "bin")); 
 
             } else if (matchToken(&cp, "${LIBS}")) {
                 /* Required libraries to link. These may have nested ${TOKENS} */
