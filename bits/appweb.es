@@ -161,6 +161,7 @@ public function packageSourceFiles() {
     install('projects', pkg, {
         exclude: /\/Debug\/|\/Release\/|\.ncb|\.mode1v3|\.pbxuser/,
     })
+    install('package', pkg, {})
     package(bit.dir.pkg.join('src'), 'src')
 }
 
