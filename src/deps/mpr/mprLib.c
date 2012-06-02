@@ -18910,7 +18910,7 @@ void mprSetModuleSearchPath(char *searchPath)
 #if UNUSED
         dir = mprJoinPath(mprGetPathParent(mprGetAppDir()), BIT_LIB_NAME);
 #endif
-        ms->searchPath = sjoin(mprGetAppDir(), MPR_SEARCH_SEP, mprGetAppDir(), MPR_SEARCH_SEP, BIT_LIB_PREFIX, NULL);
+        ms->searchPath = sjoin(mprGetAppDir(), MPR_SEARCH_SEP, mprGetAppDir(), MPR_SEARCH_SEP, BIT_BIN_PREFIX, NULL);
     } else {
         ms->searchPath = sclone(searchPath);
     }
