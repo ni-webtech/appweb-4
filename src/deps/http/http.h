@@ -3536,9 +3536,10 @@ extern cchar *httpGetRouteMethods(HttpRoute *route);
     Graduate the limits from the parent route.
     @description This creates a unique limit structure for the route if it is currently inheriting its parents limits.
     @param route Route to modify
+    @param limits Limits to use if graduating.
     @ingroup HttpRoute
  */
-extern HttpLimits *httpGraduateLimits(HttpRoute *route);
+extern HttpLimits *httpGraduateLimits(HttpRoute *route, HttpLimits *limits);
 
 /** 
     Create a URI link. 
@@ -4097,6 +4098,7 @@ extern void httpRemoveUploadFile(HttpConn *conn, cchar *id);
 #define HTTP_CHUNKED            0x400       /**< Content is chunk encoded */
 #define HTTP_ADDED_QUERY_PARAMS 0x800       /**< Query added to params */
 #define HTTP_ADDED_FORM_PARAMS  0x1000      /**< Form body data added to params */
+#define HTTP_LIMITS_OPENED      0x2000      /**< Request limits opened */
 
 /*  
     Incoming chunk encoding states

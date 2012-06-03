@@ -2845,7 +2845,9 @@ void httpDestroyConn(HttpConn *conn)
         mprAssert(conn->http);
         httpRemoveConn(conn->http, conn);
         if (conn->endpoint) {
-            httpValidateLimits(conn->endpoint, HTTP_VALIDATE_CLOSE_REQUEST, conn);
+            if (conn->rx) {
+                httpValidateLimits(conn->endpoint, HTTP_VALIDATE_CLOSE_REQUEST, conn);
+            }
             httpValidateLimits(conn->endpoint, HTTP_VALIDATE_CLOSE_CONN, conn);
         }
         if (HTTP_STATE_PARSED <= conn->state && conn->state < HTTP_STATE_COMPLETE) {
@@ -3764,6 +3766,9 @@ void httpStopEndpoint(HttpEndpoint *endpoint)
 }
 
 
+/*
+    TODO OPT
+ */
 bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn)
 {
     HttpLimits      *limits;
@@ -3811,6 +3816,7 @@ bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn)
         break;
     
     case HTTP_VALIDATE_OPEN_REQUEST:
+        mprAssert(conn->rx);
         if (endpoint->requestCount >= limits->requestMax) {
             unlock(http);
             httpError(conn, HTTP_CODE_SERVICE_UNAVAILABLE, "Server overloaded");
@@ -3818,17 +3824,19 @@ bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn)
             return 0;
         }
         endpoint->requestCount++;
+        conn->rx->flags |= HTTP_LIMITS_OPENED;
         action = "open request";
         dir = HTTP_TRACE_RX;
         break;
 
     case HTTP_VALIDATE_CLOSE_REQUEST:
-        if (conn->rx) {
+        if (conn->rx && conn->rx->flags & HTTP_LIMITS_OPENED) {
             /* Requests incremented only when conn->rx is assigned */
             endpoint->requestCount--;
             mprAssert(endpoint->requestCount >= 0);
             action = "close request";
             dir = HTTP_TRACE_TX;
+            conn->rx->flags &= ~HTTP_LIMITS_OPENED;
         }
         break;
 
@@ -5102,7 +5110,7 @@ static void httpTimer(Http *http, MprEvent *event)
        Check for any inactive connections or expired requests (inactivityTimeout and requestTimeout)
      */
     lock(http);
-    mprLog(6, "httpTimer: %d active connections", mprGetListLength(http->connections));
+    mprLog(0, "httpTimer: %d active connections", mprGetListLength(http->connections));
     for (active = 0, next = 0; (conn = mprGetNextItem(http->connections, &next)) != 0; active++) {
         rx = conn->rx;
         limits = conn->limits;
@@ -10949,10 +10957,13 @@ void httpSetOption(MprHash *options, cchar *field, cchar *value)
 }
 
 
-HttpLimits *httpGraduateLimits(HttpRoute *route)
+HttpLimits *httpGraduateLimits(HttpRoute *route, HttpLimits *limits)
 {
     if (route->parent && route->limits == route->parent->limits) {
-        route->limits = mprMemdup(((Http*) MPR->httpService)->serverLimits, sizeof(HttpLimits));
+        if (limits == 0) {
+            limits = ((Http*) MPR->httpService)->serverLimits;
+        }
+        route->limits = mprMemdup(limits, sizeof(HttpLimits));
     }
     return route->limits;
 }
@@ -11181,10 +11192,7 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
         httpError(conn, HTTP_ABORT | HTTP_CODE_NOT_ACCEPTABLE, "Server terminating");
         return 0;
     }
-    if (conn->endpoint && !httpValidateLimits(conn->endpoint, HTTP_VALIDATE_OPEN_REQUEST, conn)) {
-        return 0;
-    }
-    if (conn->rx == NULL) {
+    if (!conn->rx) {
         conn->rx = httpCreateRx(conn);
         conn->tx = httpCreateTx(conn, NULL);
     }
@@ -11200,7 +11208,7 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
         }
         return 0;
     }
-    len = (int) (end - start);
+    len = end - start;
     mprAddNullToBuf(packet->content);
 
     if (len >= conn->limits->headerSize) {
@@ -11320,7 +11328,9 @@ static void parseMethod(HttpConn *conn)
     method = rx->method;
     methodFlags = 0;
 
+#if UNUSED
     rx->flags &= (HTTP_DELETE | HTTP_GET | HTTP_HEAD | HTTP_POST | HTTP_PUT | HTTP_TRACE | HTTP_UNKNOWN);
+#endif
 
     switch (method[0]) {
     case 'D':
@@ -11379,7 +11389,7 @@ static void parseMethod(HttpConn *conn)
 static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
 {
     HttpRx      *rx;
-    char        *method, *uri, *protocol;
+    char        *uri, *protocol;
     ssize       len;
 
     rx = conn->rx;
@@ -11389,8 +11399,10 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
 #endif
     traceRequest(conn, packet);
 
-    method = getToken(conn, " ");
-    rx->originalMethod = rx->method = method = supper(method);
+    if (!httpValidateLimits(conn->endpoint, HTTP_VALIDATE_OPEN_REQUEST, conn)) {
+        return;
+    }
+    rx->originalMethod = rx->method = supper(getToken(conn, " "));
     parseMethod(conn);
 
     uri = getToken(conn, " ");
