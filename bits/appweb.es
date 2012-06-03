@@ -58,7 +58,7 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
         } else {
             run(['setConfig', '--home', prefixes.config, '--documents', prefixes.web, '--logs', prefixes.log,
                 '--port', settings.http_port, '--ssl', settings.ssl_port, '--user', user, '--group', group,
-                '--cache', prefixes.spool.join('cache'), '--modules', prefixes.lib, conf])
+                '--cache', prefixes.spool.join('cache'), '--modules', prefixes.bin, conf])
         }
 
         bit.dir.cfg.join('appweb.conf.bak').remove()
@@ -74,28 +74,28 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
         permissions: 0755, 
     })
     if (bit.platform.os != 'windows') {
-        install(bit.dir.lib.join('*'), p.lib, {
+        install(bit.dir.bin.join('*'), p.bin, {
             permissions: 0755, 
             exclude: /file-save|www|simple|sample/,
         })
     }
-    install(bit.dir.lib + '/esp.conf', p.lib)
-    install(bit.dir.lib + '/esp-www', p.lib)
-    install(bit.dir.lib + '/esp-appweb.conf', p.lib)
+    install(bit.dir.bin + '/esp.conf', p.bin)
+    install(bit.dir.bin + '/esp-www', p.bin)
+    install(bit.dir.bin + '/esp-appweb.conf', p.bin)
     install(bit.dir.inc.join('*.h'), p.inc)
 
     if (bit.packs.ssl.enable && bit.platform.os == 'linux') {
-        install(bit.dir.lib.join('*.' + bit.ext.shobj + '*'), p.lib, {strip: strip, permissions: 0755})
-        for each (f in p.lib.glob('*.so.*')) {
+        install(bit.dir.bin.join('*.' + bit.ext.shobj + '*'), p.bin, {strip: strip, permissions: 0755})
+        for each (f in p.bin.glob('*.so.*')) {
             let withver = f.basename
             let nover = withver.name.replace(/\.[0-9]*.*/, '.so')
-            let link = p.lib.join(nover)
+            let link = p.bin.join(nover)
             f.remove()
             f.symlink(link.basename)
         }
     }
     if (bit.packs.ejscript.enable) {
-        install(bit.dir.lib.join('ejs*.mod'), p.lib);
+        install(bit.dir.bin.join('ejs*.mod'), p.bin);
     }
     if (!bit.cross) {
         if (bit.platform.os == 'macosx') {
