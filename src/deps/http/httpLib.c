@@ -5110,7 +5110,7 @@ static void httpTimer(Http *http, MprEvent *event)
        Check for any inactive connections or expired requests (inactivityTimeout and requestTimeout)
      */
     lock(http);
-    mprLog(0, "httpTimer: %d active connections", mprGetListLength(http->connections));
+    mprLog(6, "httpTimer: %d active connections", mprGetListLength(http->connections));
     for (active = 0, next = 0; (conn = mprGetNextItem(http->connections, &next)) != 0; active++) {
         rx = conn->rx;
         limits = conn->limits;
