@@ -24,6 +24,7 @@ Appweb can be configured by editing:\
     /etc/appweb/appweb.conf\
 \
 Appweb can be managed by:\
+\
     /usr/local/bin/appman\
 \
 }]]></resource></locale></resources><flags/><extra-files/><item type="file">01contents.xml</item><mod>extraFiles</mod><mod>properties.customizeOption</mod><mod>properties.anywhereDomain</mod><mod>properties.systemDomain</mod></pkmkdoc>
