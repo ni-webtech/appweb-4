@@ -6,7 +6,7 @@ pack('php', 'PHP Web Framework')
 let cfg
 let path = bit.packs.php.path
 if (!path) {
-    let vers = bit.dir.packs.join('php').glob('php-5*').sort().reverse()
+    let vers = bit.dir.packs.join('php').files('php-5*').sort().reverse()
     if (vers.length == 0) {
         throw 'Can\'t find php'
     }
@@ -34,7 +34,7 @@ if (bit.platform.os == 'windows') {
         includes: [ incdir, incdir.join('main'), incdir.join('Zend'), incdir.join('TSRM') ],
         libraries: [ 'php5ts.lib' ],
         linker: [ '-libpath:' + lib.parent ],
-        imports: lib.parent.glob('php5ts.*'),
+        imports: lib.parent.files('php5ts.*'),
     }
 
 } else if (bit.platform.os == 'macosx') {
@@ -49,11 +49,11 @@ if (bit.platform.os == 'windows') {
         includes: [ incdir, incdir.join('main'), incdir.join('Zend'), incdir.join('TSRM') ],
         libraries: [ 'php5' ],
         linker: [ '-L' + lib.parent ],
-        imports: lib.parent.glob('libphp5*.dylib')
+        imports: lib.parent.files('libphp5*.dylib')
     }
 
 } else {
-    let search = [path.join('.libs'), '/usr/lib', '/lib'] + Path('/lib').glob('*-linux-gnu')
+    let search = [path.join('.libs'), '/usr/lib', '/lib'] + Path('/lib').files('*-linux-gnu')
     let lib = probe('libphp5.so', {fullpath: true, search: search}).absolute
     let dir = lib.parent
     search = [path.join('main'), '/usr/include']
@@ -64,7 +64,7 @@ if (bit.platform.os == 'windows') {
         includes: [ incdir, incdir.join('main'), incdir.join('Zend'), incdir.join('TSRM') ],
         libraries: [ 'php5' ],
         linker: [ '-L' + lib.parent ],
-        imports: lib.parent.glob('libphp5*.so*')
+        imports: lib.parent.files('libphp5*.so*')
     }
 }
 

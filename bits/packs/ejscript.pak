@@ -35,7 +35,7 @@ if (path) {
         ejs.makeDir()
         Zlib.uncompress(tgz, tar)
         Tar(tar, {chdir: deps}).extract()
-        let dir = deps.glob('ejs-*').sort().reverse()[0]
+        let dir = deps.files('ejs-*').sort().reverse()[0]
         dir.rename(ejs)
         tgz.remove()
         tar.remove()
@@ -62,16 +62,16 @@ if (Path('src/deps/ejs/ejsLib.c').exists) {
     }
     let search
     if (path) {
-        search = path.glob('*/bin') + path.glob('*/inc')
+        search = path.files('*/bin') + path.files('*/inc')
     } else {
         search = [ bit.dir.packs.join('ejs'), '/usr/lib/ejs/latest/lib', '/usr/include' ]
     }
     let libdir = probe(Path('libejs').joinExt(bit.ext.shobj), {search: search}).absolute
     let incdir = probe('ejs.h', {search: search}).absolute
-    let libraries = libdir.glob('libejs*') + libdir.glob('libmpr*') + libdir.glob('libpcre*') + 
-        libdir.glob('libhttp*') + libdir.glob('ejs*' + bit.ext.shobj) + libdir.glob('libsqlite3*')
-    let imports = libdir.glob('ejs*.mod') + libraries + incdir.glob('ejs*.h') + 
-        incdir.glob('mpr.h') + incdir.glob('http.h') + incdir.glob('pcre.h') + incdir.glob('sqlite3.h')
+    let libraries = libdir.files('libejs*') + libdir.files('libmpr*') + libdir.files('libpcre*') + 
+        libdir.files('libhttp*') + libdir.files('ejs*' + bit.ext.shobj) + libdir.files('libsqlite3*')
+    let imports = libdir.files('ejs*.mod') + libraries + incdir.files('ejs*.h') + 
+        incdir.files('mpr.h') + incdir.files('http.h') + incdir.files('pcre.h') + incdir.files('sqlite3.h')
     cfg = {
         dir: path,
         includes: [ incdir ],

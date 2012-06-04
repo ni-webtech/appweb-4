@@ -86,7 +86,7 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
 
     if (bit.packs.ssl.enable && bit.platform.os == 'linux') {
         install(bit.dir.bin.join('*.' + bit.ext.shobj + '*'), p.bin, {strip: strip, permissions: 0755})
-        for each (f in p.bin.glob('*.so.*')) {
+        for each (f in p.bin.files('*.so.*')) {
             let withver = f.basename
             let nover = withver.name.replace(/\.[0-9]*.*/, '.so')
             let link = p.bin.join(nover)
@@ -127,7 +127,7 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
             install('doc/man/*.1', p.productver.join('doc/man/man1'), {compress: true})
         }
     }
-    let files = contents.glob('**', {exclude: /\/$/, relative: true})
+    let files = contents.files('**', {exclude: /\/$/, relative: true})
     files = files.map(function(f) Path("/" + f))
     p.productver.join('files.log').append(files.join('\n') + '\n')
 
@@ -255,11 +255,11 @@ public function uninstallBinary() {
         }
     }
     fileslog.remove()
-    for each (file in bit.prefixes.log.glob('*.log*')) {
+    for each (file in bit.prefixes.log.files('*.log*')) {
         file.remove()
     }
     for each (prefix in bit.prefixes) {
-        for each (dir in prefix.glob('**', {include: /\/$/}).sort().reverse()) {
+        for each (dir in prefix.files('**', {include: /\/$/}).sort().reverse()) {
             vtrace('Remove', dir)
             dir.remove()
         }
@@ -284,7 +284,7 @@ public function createLinks() {
             link.symlink(bin.join(program + bit.globals.EXE))
             log.push(link)
         }
-        for each (page in bit.prefixes.productver.join('doc/man').glob('**/*.1.gz')) {
+        for each (page in bit.prefixes.productver.join('doc/man').files('**/*.1.gz')) {
             let link = Path('/usr/share/man/man1/' + page.basename)
             link.symlink(page)
             log.push(link)
@@ -300,7 +300,7 @@ public function createLinks() {
 
 function updateLatestLink() {
     let latest = bit.prefixes.product.join('latest')
-    let version = bit.prefixes.product.glob('*', {include: /\d+\.\d+\.\d+/}).sort().pop()
+    let version = bit.prefixes.product.files('*', {include: /\d+\.\d+\.\d+/}).sort().pop()
     if (version) {
         latest.symlink(version.basename)
     } else {
