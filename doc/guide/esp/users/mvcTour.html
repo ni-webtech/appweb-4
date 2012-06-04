@@ -201,12 +201,14 @@ appweb: 1: Started HTTP  service on "*:4000"
 appweb: 1: HTTP services Started at Wed Oct 05 18:08:45 2012 PDT
 appweb: 1: Starting host named: "127.0.0.1:4000"</b>
 </pre>
-            <p>Then enter <b>localhost:4000</b> in your browser. You should see your first application home
-            page.</p><img src="../../../images/esp/tour/home.png" class="screen" alt="home" />
+            <p>Then enter <em>localhost:4000</em> in your browser. You should see your first application home
+            page.</p>
+            
+            <img src="../../../images/esp/tour/home.png" class="screen" alt="home" />
             <a id="hello"></a>
             <h2 class="section">Hello World</h2>
-            <p>The next step is to create a simple "Hello World" web page. ESP web pages have an <b>.esp</b>
-            extension. Create a file called <em>hello.esp</em> under the <b>static</b> directory with the following
+            <p>The next step is to create a simple "Hello World" web page. ESP web pages have an <em>.esp</em>
+            extension. Create a file called <em>hello.esp</em> under the <em>static</em> directory with the following
             content:</p>
             <pre>
 &lt;%@ layout ""%&gt;
@@ -216,9 +218,10 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
 &lt;/body&gt;
 </pre>
             <p>Don't worry about the layout directive for now, that tells ESP not to use a layout page.</p>
-            <p>To view the "Hello" web page in your browser, type in the following url:
-            http://localhost:4000/static/hello.esp.</p>
-            <img src="../../../images/esp/tour/hello.png" alt="hello" class="screen" /> 
+            <p>To view the "Hello" web page, type in the following url:
+            <em>http://localhost:4000/static/hello.esp</em> in your browser.</p>
+            
+            <img src="../../../images/esp/tour/hello.png" alt="hello" class="bare-screen" /> 
             <a id="layouts"></a>
             <h2>Layouts</h2>
             <p>The ESP templating engine can apply a layout page to allow each page so that it inherits its layout and
@@ -228,24 +231,24 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
             we remove the html and body elements as well as the layout page has been defined with those. The new page 
             now has a single line.</p>
             <pre>
-&lt;h1&gt;Hello Bright World&lt;/h1&gt;
+&lt;h1&gt;Hello Bright New World&lt;/h1&gt;
 </pre>
             <p>And the web page now looks like this in your browser:</p>
-            <img src="../../../images/esp/tour/hello-layout.png" alt="hello" class= "screen" /> 
+            <img src="../../../images/esp/tour/hello-layout.png" alt="hello" class= "bare-screen" /> 
             
             <a id="dynamic"></a>
             <h2 class="section">Dynamic Content</h2>
             <p>While that was fun, the output is static and boring, so let's add some dynamic content. You can embed
             "C" language code and ESP function calls  by including them inside a special ESP web page directive that 
             will be executed and converted to HTML before being sent to the client. There are a variety of server-side 
-            ESP web page directives, the one you'll use first is: <b>&lt;%= expression %&gt;</b>.</p>
+            ESP web page directives, the one you'll use first is: <em>&lt;%= expression %&gt;</em>.</p>
             <p>To add the current date and time, modify the hello.esp web page and add the highlighted line:</p>
             <pre>
-&lt;h1&gt;Hello Bright World&lt;/h1&gt;
 &lt;h2&gt;<b>Generated on &lt;%= mprGetDate(0); %&gt;</b>&lt;/h2&gt;
 </pre>
-            <p>Now when you re-run the page, it will display the current date and time:</p><img src=
-            "../../../images/esp/tour/hello-dynamic.png" alt="hello" class="screen" />
+            <p>Now when you re-run the page, it will display the current date and time:</p>
+            
+            <img src="../../../images/esp/tour/hello-dynamic.png" alt="hello" class="bare-screen" />
             <h3>No Restart Require</h3>
             <p>Notice that you did not have to restart the web server, nor did you have to manually recompile the
             application. Rather, ESP transparently recompiled the web page in the background. ESP noticed that the hello.esp
@@ -261,8 +264,8 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
     } 
 %&gt;
 </pre>
-            <p>By using the ESP statement directive <b>&lt;% code %&gt;</b>, you can embed arbitrary "C" language
-            statements in your web page. The <b>render</b> function allows you to write arbitrary data which is patched
+            <p>By using the ESP statement directive <em>&lt;% code %&gt;</em>, you can embed arbitrary "C" language
+            statements in your web page. The <em>render</em> function allows you to write arbitrary data which is patched
             back where the directive was defined in the page. See the <a href="template.html">Views and Layouts</a>
             document for full details about all the ESP web page directives.</p>
             
@@ -270,45 +273,49 @@ appweb: 1: Starting host named: "127.0.0.1:4000"</b>
             <a id="scaffolds"></a>
             <h2 class="scaffolds">Scaffolds</h2>
             <p>Scaffolding is a quick way to generate pieces of your application. The <em>esp</em> command can generate
-            database tables, views and controllers for you. The command below will create a "post" database table
-            with a blog post title and post comment body. The "title" is a string data type and the "body" is a
+            database tables, views and controllers for you. The command below will create a <em>post</em> database table
+            with a blog post title and post comment body. The <em>title</em> is a string data type and the <em>body</em> is a
             multi-line text field.</p>
             <pre>
 <b>home/blog&gt;</b> esp generate scaffold post title:string body:text
-<b>      [CREATE] /private/tmp/blog/controllers/post.c
-      [CREATE] /private/tmp/blog/views/post-list.c
-      [CREATE] /private/tmp/blog/views/post-edit.c
-      [UPDATE] Database schema
-        [TASK] Complete</b>
+<b>   [CREATE] /private/tmp/blog/controllers/post.c
+   [CREATE] /private/tmp/blog/views/post-list.c
+   [CREATE] /private/tmp/blog/views/post-edit.c
+   [UPDATE] Database schema
+   [TASK] Complete</b>
 </pre>
-            <p>This command created a database table called "post" and a post controller with
+            <p>This command created a database table called <em>post</em> and a post controller with
             <em>post-list</em> and <em>post-edit</em> views.</p>
             <p>Now if you set your browser to the URI for the post controller, you will see your post listing screen.
-            <img src="../../../images/esp/tour/post-list.png" alt="postList" class="screen" /> <a id="newPosts"></a></p>
+
+            <img src="../../../images/esp/tour/post-list.png" alt="postList" class="bare-screen" /> 
+            
+            <a id="newPosts"></a></p>
             <h2 class="section">Create New Posts</h2>
             <p>The new post button directs your browser to the <em>/post/init</em> URI. Behind the scenes, Appweb
             parses this URI and and selects the appropriate request route and handler for the request. It 
-            then identifies "post" as the name of the controller and "init" as the name of an action to invoke. 
+            then identifies <em>post</em> as the name of the controller and <em>init</em> as the name of an action to invoke. 
             The controller file <em>controllers/post.c</em> defines the controller action to respond to this
             request.</p>
             <p>The controller file defines functions called actions, that are bound to URIs of the same name. Actions
-            are defined using the <b>espDefineAction</b> API in the initialization function of the controller. When 
+            are defined using the <em>espDefineAction</em> API in the initialization function of the controller. When 
             a request comes for a given action, the corresponding action method is invoked.</p>
             <p>A minimal controller file looks like this:</p>
             <pre>
-#include "esp.h"
+#include "esp-app.h"
 static void hello() { 
     render("Hello World\n");
 }
-ESP_EXPORT int esp_controller_NAME(EspRoute *eroute, MprModule *module) 
+ESP_EXPORT int esp_controller_<b>NAME</b>(EspRoute *eroute, MprModule *module) 
 {
     espDefineAction(eroute, "hello", hello);
     return 0;
 }
 </pre>
+            <p>Where <em>NAME</em> is the name of the controller.</p>
             <h3>Actions</h3>
             <p>The job of the action is to respond to the request and generate the response via views for the
-            client. Here is the <em>create</em> action.</p>
+            client. Here is the <em>create</em> action in the generated <em>post</em> controller.</p>
             <pre>
 static void create() { 
     if (writeRec(createRec("post", params()))) {
@@ -326,23 +333,24 @@ static void create() {
             ESP will automatically invoke a view of the same name. In the case of the <em>list</em> action, the
             <em>views/post-list.esp</em> will be used to generate the response.</p>
             
-            <img src= "../../../images/esp/tour/create.png" alt="createPost" class="screen" />
+            <img src= "../../../images/esp/tour/create.png" alt="createPost" class="bare-screen" />
             <p>Click OK to add the new blog post.</p>
             
             <a id="homePage"></a>
             <h2>Edit the Home Page</h2>
             <p>You can edit the application's home page to add a link to your post listing page. Change
-            <em>web/index.esp</em> to contain just the following:</p>
+            <em>static/index.esp</em> to contain just the following:</p>
             <pre>
-&lt;%@ layout "default" %&gt;
-&lt;h2&gt;&lt;% label("Go to My Blog", "@post/") %&gt;&lt;/h2&gt;
+&lt;h2&gt;&lt;% label("Go to My Blog", "@post/"); %&gt;&lt;/h2&gt;
 </pre>
             <p>The <em>@post/</em> link means redirect to the <em>post</em> controller if the label is clicked.
             Reload the page and you will see:</p>
-            <img src="../../../images/esp/tour/home-link.png" alt="homeLink" class="screen" /> 
+
+            <img src="../../../images/esp/tour/home-link.png" alt="homeLink" class="bare-screen" /> 
             <h2>Code Errors</h2>
             <p>What happens if you make a mistake entering the embedded "C" code in an ESP page. Say you forgot the 
             semicolon in the last example. You will see an error like this in your browser:</p>
+
             <img src="../../../images/esp/tour/error.png" alt="homeLink" class="screen" /> 
             <p>You can suppress these errors by setting <em>EspShowErrors</em> to <em>off</em> in the appweb.conf
             configuration file.</p>
@@ -355,11 +363,11 @@ static void create() {
             view control.</p>
             <pre>
 &lt;div class="top"&gt;
-    &lt;h1&gt;&lt;a href="@@appUrl/"&gt;Blog Application&lt;/a&gt;&lt;/h1&gt;
+    &lt;h1&gt;Blog Application&lt;/h1&gt;
 <b>    &lt;% tabs(makeRec("{ \
        'Blog Posts':  '~/post', \
-       'New Post':    '~/post/create', \
-    }", 0); %&gt;
+       'New Post':    '~/post/init', \
+    }"), 0); %&gt;
 </b>&lt;/div&gt;
 </pre>
             <p>This will create two tab buttons to navigate your application.</p>
@@ -369,7 +377,7 @@ static void create() {
             <pre>
 esp compile
 </pre>
-            <img src="../../../images/esp/tour/tabs.png" alt="tabs" class="screen" /> 
+            <img src="../../../images/esp/tour/tabs.png" alt="tabs" class="bare-screen" /> 
             
             <a id="validations">
             </a>
@@ -401,7 +409,9 @@ ESP_EXPORT int esp_controller_post(EspRoute *eroute, MprModule *module)
             application style sheets.<p>
            
             <p>Other validation types include: checkNumber, checkBoolean, checkDate and checkFormat.
-            You can also define new validation types by calling <em>ejsDefineValidation</em>.
+            You can also define new validation types by calling 
+            <a href="../../../api/esp.html#group___edi_service_1ga889df64bdd239f71c66b4fa920be8f46">ediDefineValidation</a>.
+
             <a id="learn"></a>
             <h2 class="section">Learn More ...</h2>
             <p>That concludes the a quick tour through some of the capabilities of the ESP web framework.</p>

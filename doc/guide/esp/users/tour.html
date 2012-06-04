@@ -97,7 +97,8 @@ sudo appweb -v
             <img src="../../../images/esp/tour/home.png" class="screen" alt="home" />
             <a id="hello"></a>
             <h2 class="section">Hello World</h2>
-            <p>The first step in any tour is to create a simple "Hello World" web page. ESP web pages have an <b>.esp</b>
+            <p>The first step in any tour is to create a simple "Hello World" web page. ESP web pages have an
+            <em>.esp</em>
             extension. Create a file called <em>hello.esp</em> under the directory nominated as your <em>DocumentRoot</em> 
             directory in the <em>appweb.conf</em> configuration file. Create a file with your favorite text editor with 
             the following content:</p>
@@ -108,16 +109,15 @@ sudo appweb -v
 &lt;/body&gt;
 </pre>
             <p>Don't worry about the layout directive for now, that tells ESP not to use a layout page.</p>
-            <p>To view the "Hello" web page in your browser, type in the following url:
-            http://localhost/hello.esp.</p>
-            <img src="../../../images/esp/tour/hello.png" alt="hello" class= "screen" /> 
+            <p>To view the "Hello" web page, type in the following url: <em>http://localhost/hello.esp</em> in your browser.</p>
+            <img src="../../../images/esp/tour/hello.png" alt="hello" class= "bare-screen" /> 
             <a id="dynamic"></a>
             <h2 class="section">Dynamic Content</h2>
             <p>While that was fun, the output is static and boring, so let's add some dynamic content. You can embed
             "C" language code and ESP function calls  by including them inside a special ESP web page directive that 
             will be executed and converted to HTML before being sent to the client. There are a variety of server-side 
             ESP web page directives, the one you'll use first, is: </p>
-            <p><b>&lt;%= expression %&gt;</b>.</p>
+            <p><em>&lt;%= expression %&gt;</em>.</p>
             <p>To add the current date and time, modify the hello.esp web page and add the highlighted line:</p>
             <pre>
 &lt;h1&gt;Hello Bright World&lt;/h1&gt;
@@ -127,8 +127,7 @@ sudo appweb -v
             pressing reload, the new date and time will be displayed.</p>
             
             
-            <img src=
-            "../../../images/esp/tour/hello-dynamic.png" alt="hello" class="screen" />
+            <img src="../../../images/esp/tour/hello-dynamic.png" alt="hello" class="bare-screen" />
             <h4>No Restart Required</h4>
             <p>Notice that you did not have to restart the web server, nor did you have to manually recompile the
             ESP code. Rather, ESP transparently recompiled the web page in the background. ESP noticed that the hello.esp
@@ -139,13 +138,13 @@ sudo appweb -v
 <b>&lt;h3&gt;&lt;% render("Request method is %s", getMethod()); %&gt;&lt;/h3&gt;</b>
 <b>&lt;% 
     int i;
-    for (int i = 0; i &gt; 10; i++) {
+    for (int i = 0; i &lt; 10; i++) {
         render(" Line: %d&lt;/br&gt;\r\n", i);
     } 
 %&gt;</b>
 </pre>
             <p>By using the ESP statement directive <b>&lt;% code %&gt;</b>, you can embed arbitrary "C" language
-            statements in your web page. The <b>render</b> function allows you to write arbitrary data which is patched
+            statements in your web page. The <em>render</em> function allows you to write arbitrary data which is patched
             back where the directive was defined in the page. See the <a href="template.html">Web Pages and Templates</a>
             document for full details about all the ESP web page directives.</p>
             
@@ -157,9 +156,9 @@ sudo appweb -v
             placed in the web page function. To ensure that declarations are emitted at the start of the function block 
             use the <em>^start</em> directive.</p>
 <pre>&lt;%^start
-    char *msg = "hello world"
+    char *msg = "hello world";
     int  x = 42;
-&lt;/%&gt;
+%&gt;
 &lt;%  render("%s, the answer is %d", msg, x); %&gt;
 </pre>
             <a id="params"></a>
@@ -263,7 +262,7 @@ sudo appweb -v
                 <li><a href="../../../index.html">ESP Documentation</a></li>
                 <li><a href="../../../ref/esp/espArchitecture.html">ESP Architecture</a></li>
                 <li><a href="mvc.html">ESP MVC Framework</a></li>
-                <li><a href="mvcTour.html">MVC Tour</a>.
+                <li><a href="mvcTour.html">ESP MVC Tour</a>.
             </ul>
             <p>You may also like to ask questions at the 
             <a href="http://appwebserver.org/forum/">Appweb Support Forum</a>.</p>
