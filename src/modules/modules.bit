@@ -29,7 +29,7 @@ Bit.load({
             ],
         },
         mod_proxy: {
-            enable: true,
+            enable: false,
             type: 'lib',
             sources: [ 'proxyHandler.c' ],
         },

@@ -140,10 +140,6 @@ ${CC} -c -o ${CONFIG}/obj/cgiHandler.o -Wall -fPIC ${LDFLAGS} -mtune=generic ${D
 
 ${CC} -shared -o ${CONFIG}/bin/mod_cgi.so ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/cgiHandler.o ${LIBS} -lappweb -lhttp -lmpr -lpcre -lmprssl
 
-${CC} -c -o ${CONFIG}/obj/proxyHandler.o -Wall -fPIC ${LDFLAGS} -mtune=generic ${DFLAGS} -I${CONFIG}/inc src/modules/proxyHandler.c
-
-${CC} -shared -o ${CONFIG}/bin/mod_proxy.so ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/proxyHandler.o ${LIBS} -lappweb -lhttp -lmpr -lpcre -lmprssl
-
 ${CC} -c -o ${CONFIG}/obj/auth.o -Wall -fPIC ${LDFLAGS} -mtune=generic ${DFLAGS} -I${CONFIG}/inc src/utils/auth.c
 
 ${CC} -o ${CONFIG}/bin/auth ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/auth.o ${LIBS} -lmpr ${LDFLAGS}
