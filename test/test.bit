@@ -16,7 +16,7 @@ Bit.load({
             path: 'cgi-bin/testScript',
             build: "
                 let path = Path('cgi-bin/testScript')
-                path.write('#!' + bit.dir.bin.join('cgiProgram${EXE}'))
+                path.write('#!' + bit.dir.bin.join('cgiProgram${EXE}' + '\n'))
                 path.setAttributes({permissions: 0755})
             ",
             'generate-sh': "echo '#!${BIN}/cgiProgram${EXE}' >cgi-bin/testScript ; chmod +x cgi-bin/testScript",
