@@ -102,20 +102,94 @@ NO WARRANTY
 - END OF TERMS AND CONDITIONS -
 
 
-Third Party Components
----
-
-1) Perl Regular Expressions. Portions of the Perl Regular Expression Library (pcre) are used. These are covered by the PCRE license. The Perl regular expression library is an optional component of the Licensed Software.
-2) SQLite. The SQLite library is included as an optional component of the Licensed Software. It is covered by the SQLite license.
-3) MatrixSSL. The MatrixSSL interface contains some licensed code from PeerSec. MatrixSSL is an optional component.
-4) DTOA (Decimal to Ascii conversion code). This is used in the runtime core. It is licensed by Lucent with a BSD style license.
-5) JQuery and plugins. These optional components may be deployed in client-side browser user interfaces. They are not part of the binary product. JQuery is licensed under an MIT or GPL license. Some plugins have other licenses. 
-6) Hashing algorithm inspired by Paul Hsieh at http://www.azillionmonkeys.com/qed/hash.html.
-
-Contributors have provided other portions of the software that are covered by the Embedthis Contributor license that grants Embedthis sufficient rights to execute this license Agreement.
-
 Trademarks and Copyrights
 ---
 Copyright (c) 2003-2012 Embedthis Software, LLC. All Rights Reserved.
 Embedthis, Appweb, Ejscript and ESP are trademarks of Embedthis Software, LLC. Other brands and their products 
 are trademarks of their respective holders.
+
+
+Third Party Licenses
+---
+
+1) Perl Regular Expressions. The Perl Regular Expression Library (pcre) is covered by the BSD license:
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are met:
+
+        * Redistributions of source code must retain the above copyright notice,
+          this list of conditions and the following disclaimer.
+
+        * Redistributions in binary form must reproduce the above copyright
+          notice, this list of conditions and the following disclaimer in the
+          documentation and/or other materials provided with the distribution.
+
+        * Neither the name of the University of Cambridge nor the name of Google
+          Inc. nor the names of their contributors may be used to endorse or
+          promote products derived from this software without specific prior
+          written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+    ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+    LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+    INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+    CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+    ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+    POSSIBILITY OF SUCH DAMAGE.
+
+2) SQLite. The SQLite library is public domain code. See: http://www.sqlite.org/copyright.html.
+
+3) MatrixSSL Interface licensed under the Embedthis Contributors Agreement:
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+    documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+    rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+    persons to whom the Software is furnished to do so.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+    WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+    COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+4) DTOA License:
+
+    The author of this software is David M. Gay.
+    Copyright (c) 1991, 2000, 2001 by Lucent Technologies.
+
+    Permission to use, copy, modify, and distribute this software for any purpose without fee is hereby granted, 
+    provided that this entire notice is included in all copies of any software which is or includes a copy or 
+    modification of this software and in all copies of the supporting documentation for such software.
+
+    THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR IMPLIED WARRANTY.  IN PARTICULAR, NEITHER THE 
+    AUTHOR NOR LUCENT MAKES ANY REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE MERCHANTABILITY OF THIS 
+    SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
+
+5) JQuery and plugins: MIT license.
+
+    Copyright (c) 2012 John Resig, http://jquery.com/
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this software and 
+    associated documentation files (the "Software"), to deal in the Software without restriction, including
+    without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or 
+    sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to
+    the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all copies or substantial 
+    portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT 
+    LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+    WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+6) Hashing algorithm. Licensed from Paul Hsieh at http://www.azillionmonkeys.com/qed/hash.html licensed under LGPL 2.1 1999.
+
+7) Other contributors have provided portions of the software that are covered by the Embedthis Contributor license that 
+    grants Embedthis sufficient rights to execute this license Agreement.
+
+-END-
