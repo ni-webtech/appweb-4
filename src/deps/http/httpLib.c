@@ -8366,6 +8366,9 @@ void httpRouteRequest(HttpConn *conn)
         httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find suitable route for request");
         return;
     }
+    if (rx->traceLevel >= 0) {
+        mprLog(4, "Select route \"%s\" target \"%s\"", route->name, route->targetRule);
+    }
     rx->route = route;
     conn->limits = route->limits;
 
@@ -8546,9 +8549,6 @@ static int testRoute(HttpConn *conn, HttpRoute *route)
     if ((proc = mprLookupKey(conn->http->routeTargets, route->targetRule)) == 0) {
         httpError(conn, -1, "Can't find route target rule \"%s\"", route->targetRule);
         return HTTP_ROUTE_REJECT;
-    }
-    if (rx->traceLevel >= 0) {
-        mprLog(4, "Select route \"%s\" target \"%s\"", route->name, route->targetRule);
     }
     if ((rc = (*proc)(conn, route, 0)) != HTTP_ROUTE_OK) {
         return rc;
