@@ -25223,7 +25223,7 @@ char *sfmtv(cchar *fmt, va_list arg)
 
 /*
     Compute a hash for a C string
-    (Based on work by Paul Hsieh (c) 2004-2008, see http://www.azillionmonkeys.com/qed/hash.html)
+    Inspired by Paul Hsieh (c) 2004-2008, see http://www.azillionmonkeys.com/qed/hash.html)
  */
 uint shash(cchar *cname, ssize len)
 {

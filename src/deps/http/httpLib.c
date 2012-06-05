@@ -11217,6 +11217,9 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
         return 0;
     }
     if (conn->endpoint) {
+        if (!httpValidateLimits(conn->endpoint, HTTP_VALIDATE_OPEN_REQUEST, conn)) {
+            return 0;
+        }
         parseRequestLine(conn, packet);
     } else {
         parseResponseLine(conn, packet);
@@ -11399,9 +11402,6 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
 #endif
     traceRequest(conn, packet);
 
-    if (!httpValidateLimits(conn->endpoint, HTTP_VALIDATE_OPEN_REQUEST, conn)) {
-        return;
-    }
     rx->originalMethod = rx->method = supper(getToken(conn, " "));
     parseMethod(conn);
 
