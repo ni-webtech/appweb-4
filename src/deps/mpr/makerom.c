@@ -1,7 +1,7 @@
 /**
     makerom.c - Compile source files into C code suitable for embedding in ROM.
   
-    Usage: makerom -p prefix -r romName filelist >rom.c
+    Usage: makerom --prefix prefix --name romName files ... >rom.c
   
     Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
  */
@@ -104,7 +104,7 @@ static int binToC(MprList *files, char *romName, char *prefix)
         if (mprGetPathInfo(filename, &info) == 0 && info.isDir) {
             continue;
         } 
-        if ((file = mprOpenFile(filename, O_RDONLY | O_BINARY, 0666)) < 0) {
+        if ((file = mprOpenFile(filename, O_RDONLY | O_BINARY, 0666)) == 0) {
             mprError("Can't open file %s\n", filename);
             return -1;
         }
