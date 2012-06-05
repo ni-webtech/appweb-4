@@ -121,11 +121,16 @@ static int findFile(HttpConn *conn)
         } else {
             httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", tx->filename);
         }
-    } else if (tx->etag == 0 && info->valid) {
+    } else if (info->valid) {
         /*
-            Set the etag for caching in the client
+            The sendFile connector is optimized on some platforms to use the sendfile() system call.
+            Set the entity length for the sendFile connector to utilize.
          */
-        tx->etag = sfmt("\"%x-%Lx-%Lx\"", info->inode, info->size, info->mtime);
+        httpSetEntityLength(conn, tx->fileInfo.size);
+        if (!tx->etag) {
+            /* Set the etag for caching in the client */
+            tx->etag = sfmt("\"%x-%Lx-%Lx\"", info->inode, info->size, info->mtime);
+        }
     }
     return HTTP_ROUTE_OK;
 }
@@ -156,12 +161,6 @@ static void openFileHandler(HttpQueue *q)
         if (httpContentNotModified(conn)) {
             httpSetStatus(conn, HTTP_CODE_NOT_MODIFIED);
             httpOmitBody(conn);
-        } else {
-            /*
-                The sendFile connector is optimized on some platforms to use the sendfile system call.
-                Set the entity length for the sendFile connector to utilize.
-             */
-            httpSetEntityLength(conn, tx->fileInfo.size);
         }
         if (!tx->fileInfo.isReg && !tx->fileInfo.isLink) {
             httpError(conn, HTTP_CODE_NOT_FOUND, "Can't locate document: %s", rx->uri);
@@ -331,7 +330,7 @@ static void outgoingFileService(HttpQueue *q)
 
     conn = q->conn;
     tx = conn->tx;
-    usingSend = tx->connector == conn->http->sendConnector;
+    usingSend = (tx->connector == conn->http->sendConnector);
 
     for (packet = httpGetPacket(q); packet; packet = httpGetPacket(q)) {
         if (!usingSend && !tx->outputRanges && packet->flags & HTTP_PACKET_DATA) {
