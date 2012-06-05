@@ -184,3 +184,4 @@ test/app/cache/view_*.*
 *.dmp
 start.bit
 *.user
+.keep
