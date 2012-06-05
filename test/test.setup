@@ -43,7 +43,11 @@ if (test.hostOs == "VXWORKS") {
         }
     }
 } else {
-    service = Cmd.locate("appweb").portable + " --log trace.txt:4 --name forAppwebTest --config appweb.conf"
+    let path = Cmd.locate("appweb").portable
+    if (!path.startsWith(App.dir.parent.portable)) {
+        throw "Appweb is located outside of the build tree. Set PATH."
+    }
+    service = path + " --log trace.txt:4 --name forAppwebTest --config appweb.conf"
 }
 
 if (test.phase == "init") {
