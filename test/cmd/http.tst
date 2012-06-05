@@ -15,9 +15,19 @@ if (test.depth > 1) {
         try {
             let cmd = Cmd(command + args)
             if (cmd.status != 0) {
+print("CMD", command + args)
 print("STATUS", cmd.status)
 print("ERROR", cmd.error)
 print("RESPSONSE", cmd.response)
+if (cmd.status != 0) {
+print("PAUSING");
+App.sleep(1000);
+print("STATUS", cmd.status);
+print("SLEEPING");
+App.sleep(99999999);
+} else {
+    print("STATUS IS NOW ZERO");
+}
             }
             assert(cmd.status == 0) 
             return cmd.response
