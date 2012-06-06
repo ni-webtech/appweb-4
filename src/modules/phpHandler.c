@@ -457,13 +457,12 @@ static int readBodyData(char *buffer, uint bufsize TSRMLS_DC)
     if ((content = q->first->content) == 0) {
         return 0;
     }
-    len = (ssize) min(mprGetBufLength(content), (ssize) bufsize - 1);
+    len = (ssize) min(mprGetBufLength(content), (ssize) bufsize);
     if (len > 0) {
         mprMemcpy(buffer, len, mprGetBufStart(content), len);
         mprAdjustBufStart(content, len);
-        buffer[len] = '\0';
     }
-    mprLog(5, "php: read post data %d remaining %d, data %s", len, mprGetBufLength(content), buffer);
+    mprLog(5, "php: read post data len %d remaining %d", len, mprGetBufLength(content));
     return (int) len;
 }
 
