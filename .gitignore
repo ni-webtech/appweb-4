@@ -185,3 +185,4 @@ test/app/cache/view_*.*
 start.bit
 *.user
 .keep
+*-xcode
