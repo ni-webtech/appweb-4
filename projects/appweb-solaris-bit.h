@@ -10,22 +10,22 @@
 #define BIT_NAME "Embedthis Appweb"
 #define BIT_COMPANY "Embedthis"
 #define BIT_APPWEB_PRODUCT 1
-#define BIT_VERSION "4.0.0"
-#define BIT_NUMBER "0"
+#define BIT_VERSION "4.0.1"
+#define BIT_NUMBER "repos"
 #define BIT_MAJOR_VERSION 4
 #define BIT_MINOR_VERSION 0
-#define BIT_PATCH_VERSION 0
-#define BIT_VNUM 400000000
+#define BIT_PATCH_VERSION 1
+#define BIT_VNUM 400000001
 #define BIT_CONFIG_CMD "bit -d -q -platform solaris-x86 -without all -configure . -gen sh,make"
 #define BIT_PROFILE "debug"
 #define BIT_CFG_PREFIX "/etc/appweb"
-#define BIT_BIN_PREFIX "/usr/lib/appweb/4.0.0/bin"
-#define BIT_INC_PREFIX "/usr/lib/appweb/4.0.0/inc"
+#define BIT_BIN_PREFIX "/usr/lib/appweb/4.0.1/bin"
+#define BIT_INC_PREFIX "/usr/lib/appweb/4.0.1/inc"
 #define BIT_LOG_PREFIX "/var/log/appweb"
 #define BIT_PRD_PREFIX "/usr/lib/appweb"
 #define BIT_SPL_PREFIX "/var/spool/appweb"
-#define BIT_SRC_PREFIX "/usr/src/appweb-4.0.0"
-#define BIT_VER_PREFIX "/usr/lib/appweb/4.0.0"
+#define BIT_SRC_PREFIX "/usr/src/appweb-4.0.1"
+#define BIT_VER_PREFIX "/usr/lib/appweb/4.0.1"
 #define BIT_WEB_PREFIX "/var/www/appweb-default"
 #define BIT_EXE ""
 #define BIT_SHLIB ".so"
