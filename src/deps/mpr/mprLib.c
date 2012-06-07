@@ -22324,10 +22324,10 @@ static int closeFile(MprFile *file)
 }
 
 
-static int readFile(MprFile *file, void *buf, uint size)
+static ssize readFile(MprFile *file, void *buf, ssize size)
 {
     MprRomInode     *inode;
-    int             len;
+    ssize           len;
 
     mprAssert(buf);
 
@@ -22343,7 +22343,7 @@ static int readFile(MprFile *file, void *buf, uint size)
 }
 
 
-static int writeFile(MprFile *file, const void *buf, uint size)
+static ssize writeFile(MprFile *file, cvoid *buf, ssize size)
 {
     if (file->fd == 1 || file->fd == 2) {
         return write(file->fd, buf, size);
@@ -22448,7 +22448,6 @@ static MprRomInode *lookup(MprRomFileSystem *rfs, cchar *path)
     if (path == 0) {
         return 0;
     }
-
     /*
         Remove "./" segments
      */
@@ -22461,7 +22460,6 @@ static MprRomInode *lookup(MprRomFileSystem *rfs, cchar *path)
             break;
         }
     }
-
     /*
         Skip over the leading "/"
      */
@@ -22496,9 +22494,6 @@ void manageRomFileSystem(MprRomFileSystem *rfs, int flags)
     if (flags & MPR_MANAGE_MARK) {
 #if !WINCE
         MprFileSystem *fs = (MprFileSystem*) rfs;
-        mprMark(fs->stdError);
-        mprMark(fs->stdInput);
-        mprMark(fs->stdOutput);
         mprMark(fs->separators);
         mprMark(fs->newline);
         mprMark(fs->root);
@@ -22534,7 +22529,31 @@ MprRomFileSystem *mprCreateRomFileSystem(cchar *path)
     fs->seekFile = (MprSeekFileProc) seekFile;
     fs->writeFile = (MprWriteFileProc) writeFile;
 
-#if !WINCE
+    if ((MPR->stdError = mprAllocStruct(MprFile)) == 0) {
+        return NULL;
+    }
+    mprSetName(MPR->stdError, "stderr");
+    MPR->stdError->fd = 2;
+    MPR->stdError->fileSystem = fs;
+    MPR->stdError->mode = O_WRONLY;
+
+    if ((MPR->stdInput = mprAllocStruct(MprFile)) == 0) {
+        return NULL;
+    }
+    mprSetName(MPR->stdInput, "stdin");
+    MPR->stdInput->fd = 0;
+    MPR->stdInput->fileSystem = fs;
+    MPR->stdInput->mode = O_RDONLY;
+
+    if ((MPR->stdOutput = mprAllocStruct(MprFile)) == 0) {
+        return NULL;
+    }
+    mprSetName(MPR->stdOutput, "stdout");
+    MPR->stdOutput->fd = 1;
+    MPR->stdOutput->fileSystem = fs;
+    MPR->stdOutput->mode = O_WRONLY;
+
+#if UNUSED
     fs->stdError = mprAllocZeroed(sizeof(MprFile));
     if (fs->stdError == 0) {
         return NULL;

@@ -810,12 +810,12 @@ static int reportResponse(HttpConn *conn, cchar *url, MprTime elapsed)
         if (app->showHeaders) {
             responseHeaders = httpGetHeaders(conn);
             rx = conn->rx;
-            mprPrintfError("%s %d %s\n", conn->protocol, status, rx->statusMessage);
+            mprPrintf("%s %d %s\n", conn->protocol, status, rx->statusMessage);
             if (responseHeaders) {
-                mprPrintfError("%s\n", responseHeaders);
+                mprPrintf("%s\n", responseHeaders);
             }
         } else if (app->showStatus) {
-            mprPrintfError("%d\n", status);
+            mprPrintf("%d\n", status);
         }
     }
     if (status < 0) {
