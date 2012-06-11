@@ -1334,7 +1334,7 @@ static void generateScaffold(HttpRoute *route, int argc, char **argv)
 static void generate(int argc, char **argv)
 {
     HttpRoute   *route;
-    char        *name, *kind;
+    char        *name, *kind, *dir;
 
     if (argc < 2) {
         usageError();
@@ -1344,6 +1344,11 @@ static void generate(int argc, char **argv)
 
     if (smatch(kind, "app")) {
         name = argv[1];
+        if (smatch(name, ".")) {
+            dir = mprGetCurrentPath();
+            name = mprGetPathBase(dir);
+            chdir(mprGetPathParent(dir));
+        }
         generateApp(createRoute(name), name);
 
     } else if (smatch(kind, "controller")) {
