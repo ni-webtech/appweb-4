@@ -22,9 +22,9 @@ for (i in 64) {
 count = sizes[test.depth] * 1024
 
 function postTest(url: String) {
-    // print("@@@@ Writing " + count * buf.available + " to " + url)
+    // print("@@@@ Writing " + count * buf.length + " to " + url)
     http.post(HTTP + url)
-    // print("Count " + count + " buf " + buf.available + " total " + count * buf.available)
+    // print("Count " + count + " buf " + buf.length + " total " + count * buf.length)
     for (i in count) {
         let n = http.write(buf)
         // print('WROTE', n)
