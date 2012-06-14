@@ -10181,10 +10181,12 @@ bool mprIsCmdRunning(MprCmd *cmd)
 }
 
 
+/* FUTURE - not yet supported */
+
 void mprSetCmdTimeout(MprCmd *cmd, MprTime timeout)
 {
     mprAssert(0);
-#if UNUSED
+#if UNUSED && KEEP
     cmd->timeoutPeriod = timeout;
 #endif
 }
@@ -16966,9 +16968,18 @@ static int growList(MprList *lp, int incr)
 }
 
 
+static int defaultSort(char **q1, char **q2)
+{
+    return scmp(*q1, *q2);
+}
+
+
 void mprSortList(MprList *lp, void *compare)
 {
     lock(lp);
+    if (!compare) {
+        compare = defaultSort;
+    }
     qsort(lp->items, lp->length, sizeof(void*), compare);
     unlock(lp);
 }
@@ -18907,9 +18918,6 @@ void mprSetModuleSearchPath(char *searchPath)
 
     ms = MPR->moduleService;
     if (searchPath == 0) {
-#if UNUSED
-        dir = mprJoinPath(mprGetPathParent(mprGetAppDir()), BIT_LIB_NAME);
-#endif
         ms->searchPath = sjoin(mprGetAppDir(), MPR_SEARCH_SEP, mprGetAppDir(), MPR_SEARCH_SEP, BIT_BIN_PREFIX, NULL);
     } else {
         ms->searchPath = sclone(searchPath);
@@ -19720,7 +19728,7 @@ static MprList *getDirFiles(cchar *path, int flags)
             continue;
         }
         fileName = mprJoinPath(path, dirent->d_name);
-        //  MOB - workaround for if target of symlink does not exist
+        /* workaround for if target of symlink does not exist */
         fileInfo.isLink = 0;
         fileInfo.isDir = 0;
         rc = mprGetPathInfo(fileName, &fileInfo);
@@ -21629,7 +21637,7 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list args)
                 /* Safe string */
 #if BIT_CHAR_LEN > 1
                 if (fmt.flags & SPRINTF_LONG) {
-                    //  MOB - not right MprChar
+                    //  UNICODE - not right MprChar
                     safe = mprEscapeHtml(va_arg(args, MprChar*));
                     outWideString(&fmt, safe, -1);
                 } else
@@ -23319,9 +23327,8 @@ static void standardSignalHandler(void *ignored, MprSignal *sp)
 
 #if MACOSX && BIT_DEBUG
     } else if (sp->signo == SIGSEGV || sp->signo == SIGBUS) {
-        //  MOB - Review
         printf("PAUSED for watson to debug\n");
-        sleep(86400 * 7);
+        sleep(120);
 #endif
 
     } else {
@@ -31463,7 +31470,7 @@ MprChar *amtow(cchar *src, ssize *lenp)
 }
 
 
-//  MOB - need a version that can supply a length
+//  UNICODE - need a version that can supply a length
 char *awtom(MprChar *src, ssize *lenp)
 {
     char    *dest;

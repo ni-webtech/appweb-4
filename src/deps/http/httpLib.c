@@ -3093,9 +3093,9 @@ void httpEvent(HttpConn *conn, MprEvent *event)
         readEvent(conn);
     }
     if (conn->endpoint) {
-        if (conn->error || (conn->keepAliveCount < 0 && conn->state <= HTTP_STATE_CONNECTED)) {
+        if (conn->keepAliveCount < 0 && conn->state <= HTTP_STATE_CONNECTED) {
             /*  
-                Either an unhandled error or an Idle connection.
+                Idle connection.
                 NOTE: compare keepAliveCount with "< 0" so that the client can have one more keep alive request. 
                 It should respond to the "Connection: close" and thus initiate a client-led close. This reduces 
                 TIME_WAIT states on the server. NOTE: after httpDestroyConn, conn structure and memory is still 
@@ -4239,6 +4239,9 @@ static void errorv(HttpConn *conn, int flags, cchar *fmt, va_list args)
     }
     if (flags & HTTP_ABORT) {
         conn->connError = 1;
+        if (rx) {
+            rx->eof = 1;
+        }
     }
     if (flags & HTTP_ABORT || (tx && tx->flags & HTTP_TX_HEADERS_CREATED)) {
         /* 
@@ -4254,9 +4257,6 @@ static void errorv(HttpConn *conn, int flags, cchar *fmt, va_list args)
         return;
     }
     conn->error = 1;
-    if (rx) {
-        rx->eof = 1;
-    }
     formatErrorv(conn, status, fmt, args);
 
     if (conn->endpoint && tx && rx) {
@@ -5136,7 +5136,6 @@ static void httpTimer(Http *http, MprEvent *event)
 
     /*
         Check for unloadable modules
-        MOB - move down into MPR and set stage->flags in an unload callback
      */
     if (mprGetListLength(http->connections) == 0) {
         for (next = 0; (module = mprGetNextItem(MPR->moduleService->modules, &next)) != 0; ) {
@@ -6592,14 +6591,6 @@ static void openPass(HttpQueue *q)
 
 static void readyPass(HttpQueue *q)
 {
-#if UNUSED
-    HttpConn    *conn;
-
-    conn = q->conn;
-    if (!conn->finalized) {
-        httpError(conn, HTTP_CODE_NOT_FOUND, "Can't serve request: %s", conn->rx->uri);
-    }
-#endif
     httpFinalize(q->conn);
 }
 
@@ -6884,7 +6875,7 @@ void httpStartPipeline(HttpConn *conn)
     
     tx = conn->tx;
 
-    //  MOB - how can this ever be already true?
+    //  TODO - how can this ever be already true?
     mprAssert(!tx->started);
     if (tx->started) {
         return;
@@ -10412,11 +10403,7 @@ static void definePathVars(HttpRoute *route)
     mprAddKey(route->pathTokens, "PRODUCT", sclone(BIT_PRODUCT));
     mprAddKey(route->pathTokens, "OS", sclone(BIT_OS));
     mprAddKey(route->pathTokens, "VERSION", sclone(BIT_VERSION));
-#if UNUSED
-    mprAddKey(route->pathTokens, "LIBDIR", mprJoinPath(mprGetPathParent(mprGetAppDir()), mprGetPathBase(BIT_LIB_NAME)));
-#else
     mprAddKey(route->pathTokens, "LIBDIR", mprGetAppDir());
-#endif
     if (route->host) {
         defineHostVars(route);
     }
@@ -11028,11 +11015,11 @@ static char *getToken(HttpConn *conn, cchar *delim);
 static void manageRange(HttpRange *range, int flags);
 static void manageRx(HttpRx *rx, int flags);
 static bool parseAuthenticate(HttpConn *conn, char *authDetails);
-static void parseHeaders(HttpConn *conn, HttpPacket *packet);
+static bool parseHeaders(HttpConn *conn, HttpPacket *packet);
 static bool parseIncoming(HttpConn *conn, HttpPacket *packet);
 static bool parseRange(HttpConn *conn, char *value);
-static void parseRequestLine(HttpConn *conn, HttpPacket *packet);
-static void parseResponseLine(HttpConn *conn, HttpPacket *packet);
+static bool parseRequestLine(HttpConn *conn, HttpPacket *packet);
+static bool parseResponseLine(HttpConn *conn, HttpPacket *packet);
 static bool processCompletion(HttpConn *conn);
 static bool processContent(HttpConn *conn, HttpPacket *packet);
 static void parseMethod(HttpConn *conn);
@@ -11203,6 +11190,10 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
         return 0;
     }
     start = mprGetBufStart(packet->content);
+
+    /*
+        Don't start processing until all the headers have been received (delimited by two blank lines)
+     */
     if ((end = scontains(start, "\r\n\r\n", len)) == 0) {
         if (len >= conn->limits->headerSize) {
             httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE, 
@@ -11219,14 +11210,16 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
         return 0;
     }
     if (conn->endpoint) {
-        if (!httpValidateLimits(conn->endpoint, HTTP_VALIDATE_OPEN_REQUEST, conn)) {
+        /* This will set conn->error if it does not validate - keep going to generate a response */
+        if (!parseRequestLine(conn, packet)) {
             return 0;
         }
-        parseRequestLine(conn, packet);
-    } else {
-        parseResponseLine(conn, packet);
+    } else if (!parseResponseLine(conn, packet)) {
+        return 0;
     }
-    parseHeaders(conn, packet);
+    if (!parseHeaders(conn, packet)) {
+        return 0;
+    }
     if (conn->endpoint) {
         httpMatchHost(conn);
         if (httpSetUri(conn, rx->uri, "") < 0 || rx->pathInfo[0] != '/') {
@@ -11290,7 +11283,6 @@ static void traceRequest(HttpConn *conn, HttpPacket *packet)
 
     content = packet->content;
     ext = 0;
-
     /*
         Find the Uri extension:   "GET /path.ext HTTP/1.1"
      */
@@ -11301,7 +11293,6 @@ static void traceRequest(HttpConn *conn, HttpPacket *packet)
             conn->tx->ext = ext;
         }
     }
-
     /*
         If tracing header, do entire header including first line
      */
@@ -11320,6 +11311,7 @@ static void traceRequest(HttpConn *conn, HttpPacket *packet)
             content->start[len - 2] = '\r';
         }
     }
+    httpValidateLimits(conn->endpoint, HTTP_VALIDATE_OPEN_REQUEST, conn);
 }
 
 
@@ -11332,10 +11324,6 @@ static void parseMethod(HttpConn *conn)
     rx = conn->rx;
     method = rx->method;
     methodFlags = 0;
-
-#if UNUSED
-    rx->flags &= (HTTP_DELETE | HTTP_GET | HTTP_HEAD | HTTP_POST | HTTP_PUT | HTTP_TRACE | HTTP_UNKNOWN);
-#endif
 
     switch (method[0]) {
     case 'D':
@@ -11391,7 +11379,7 @@ static void parseMethod(HttpConn *conn)
     Parse the first line of a http request. Return true if the first line parsed. This is only called once all the headers
     have been read and buffered. Requests look like: METHOD URL HTTP/1.X.
  */
-static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
+static bool parseRequestLine(HttpConn *conn, HttpPacket *packet)
 {
     HttpRx      *rx;
     char        *uri, *protocol;
@@ -11411,9 +11399,11 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     len = slen(uri);
     if (*uri == '\0') {
         httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Bad HTTP request. Empty URI");
+        return 0;
     } else if (len >= conn->limits->uriSize) {
-        httpError(conn, HTTP_CLOSE | HTTP_CODE_REQUEST_URL_TOO_LARGE, 
+        httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_URL_TOO_LARGE, 
             "Bad request. URI too long. Length %d vs limit %d", len, conn->limits->uriSize);
+        return 0;
     }
     protocol = conn->protocol = supper(getToken(conn, "\r\n"));
     if (strcmp(protocol, "HTTP/1.0") == 0) {
@@ -11427,10 +11417,12 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
         conn->protocol = protocol;
     } else {
         conn->protocol = sclone("HTTP/1.1");
-        httpError(conn, HTTP_CLOSE | HTTP_CODE_NOT_ACCEPTABLE, "Unsupported HTTP protocol");
+        httpError(conn, HTTP_ABORT | HTTP_CODE_NOT_ACCEPTABLE, "Unsupported HTTP protocol");
+        return 0;
     }
     rx->originalUri = rx->uri = sclone(uri);
     httpSetState(conn, HTTP_STATE_FIRST);
+    return 1;
 }
 
 
@@ -11438,7 +11430,7 @@ static void parseRequestLine(HttpConn *conn, HttpPacket *packet)
     Parse the first line of a http response. Return true if the first line parsed. This is only called once all the headers
     have been read and buffered. Response status lines look like: HTTP/1.X CODE Message
  */
-static void parseResponseLine(HttpConn *conn, HttpPacket *packet)
+static bool parseResponseLine(HttpConn *conn, HttpPacket *packet)
 {
     HttpRx      *rx;
     HttpTx      *tx;
@@ -11463,11 +11455,13 @@ static void parseResponseLine(HttpConn *conn, HttpPacket *packet)
     if (strcmp(protocol, "HTTP/1.0") == 0) {
         conn->http10 = 1;
     } else if (strcmp(protocol, "HTTP/1.1") != 0) {
-        httpError(conn, HTTP_CLOSE | HTTP_CODE_NOT_ACCEPTABLE, "Unsupported HTTP protocol");
+        httpError(conn, HTTP_ABORT | HTTP_CODE_NOT_ACCEPTABLE, "Unsupported HTTP protocol");
+        return 0;
     }
     status = getToken(conn, " ");
     if (*status == '\0') {
-        httpError(conn, HTTP_CLOSE | HTTP_CODE_NOT_ACCEPTABLE, "Bad response status code");
+        httpError(conn, HTTP_ABORT | HTTP_CODE_NOT_ACCEPTABLE, "Bad response status code");
+        return 0;
     }
     rx->status = atoi(status);
     rx->statusMessage = sclone(getToken(conn, "\r\n"));
@@ -11476,17 +11470,19 @@ static void parseResponseLine(HttpConn *conn, HttpPacket *packet)
     if (len >= conn->limits->uriSize) {
         httpError(conn, HTTP_CLOSE | HTTP_CODE_REQUEST_URL_TOO_LARGE, 
             "Bad response. Status message too long. Length %d vs limit %d", len, conn->limits->uriSize);
+        return 0;
     }
     if (!traced && (level = httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_FIRST, tx->ext)) >= 0) {
         mprLog(level, "%s %d %s", protocol, rx->status, rx->statusMessage);
     }
+    return 1;
 }
 
 
 /*  
     Parse the request headers. Return true if the header parsed.
  */
-static void parseHeaders(HttpConn *conn, HttpPacket *packet)
+static bool parseHeaders(HttpConn *conn, HttpPacket *packet)
 {
     HttpRx      *rx;
     HttpTx      *tx;
@@ -11506,11 +11502,11 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
     for (count = 0; content->start[0] != '\r' && !conn->error; count++) {
         if (count >= limits->headerMax) {
             httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Too many headers");
-            break;
+            return 0;
         }
         if ((key = getToken(conn, ":")) == 0 || *key == '\0') {
             httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Bad header format");
-            break;
+            return 0;
         }
         value = getToken(conn, "\r\n");
         while (isspace((uchar) *value)) {
@@ -11519,6 +11515,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
         LOG(8, "Key %s, value %s", key, value);
         if (strspn(key, "%<>/\\") > 0) {
             httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Bad header key value");
+            return 0;
         }
         if ((oldValue = mprLookupKey(rx->headers, key)) != 0) {
             hvalue = sfmt("%s, %s", oldValue, value);
@@ -11566,13 +11563,13 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
                 rx->length = stoi(value);
                 if (rx->length < 0) {
                     httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Bad content length");
-                    break;
+                    return 0;
                 }
                 if (rx->length >= conn->limits->receiveBodySize) {
                     httpError(conn, HTTP_ABORT | HTTP_CODE_REQUEST_TOO_LARGE,
                         "Request content length %,Ld bytes is too big. Limit %,Ld", 
                         rx->length, conn->limits->receiveBodySize);
-                    break;
+                    return 0;
                 }
                 rx->contentLength = sclone(value);
                 mprAssert(rx->length >= 0);
@@ -11782,6 +11779,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
         Don't stream input if a form or upload. NOTE: Upload needs the Files[] collection.
      */
     rx->streamInput = !(rx->form || rx->upload);
+    rx->eof = (rx->remainingContent == 0);
     if (!keepAlive) {
         conn->keepAliveCount = 0;
     }
@@ -11794,6 +11792,7 @@ static void parseHeaders(HttpConn *conn, HttpPacket *packet)
             mprAdjustBufStart(content, 2);
         }
     }
+    return 1;
 }
 
 
@@ -11943,7 +11942,7 @@ static bool processParsed(HttpConn *conn)
     rx = conn->rx;
     if (!rx->form && conn->endpoint) {
         /*
-            Routes need to be able to access form data, so forms route later after all input is received.
+            Routes need to be able to access form data, so forms will route later after all input is received.
          */
         routeRequest(conn);
     }
@@ -11971,47 +11970,42 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
     tx = conn->tx;
     content = packet->content;
     q = tx->queue[HTTP_QUEUE_RX];
-    mprAssert(httpVerifyQueue(q));
 
     LOG(7, "processContent: packet of %d bytes, remaining %d", mprGetBufLength(content), rx->remainingContent);
-    if ((nbytes = httpFilterChunkData(q, packet)) < 0) {
+    if ((nbytes = httpFilterChunkData(q, packet)) <= 0) {
         return 0;
     }
-    mprAssert(nbytes >= 0);
-
-    if (nbytes > 0) {
-        rx->remainingContent -= nbytes;
-        rx->bytesRead += nbytes;
-        if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_BODY, tx->ext) >= 0) {
-            httpTraceContent(conn, HTTP_TRACE_RX, HTTP_TRACE_BODY, packet, nbytes, rx->bytesRead);
-        }
-        if (rx->bytesRead >= conn->limits->receiveBodySize) {
-            httpError(conn, HTTP_CLOSE | HTTP_CODE_REQUEST_TOO_LARGE, 
-                "Request body of %,Ld bytes is too big. Limit %,Ld", rx->bytesRead, conn->limits->receiveBodySize);
-            return 1;
-        }
-        if (rx->form && rx->length >= conn->limits->receiveFormSize) {
-            httpError(conn, HTTP_CLOSE | HTTP_CODE_REQUEST_TOO_LARGE, 
-                "Request form of %,Ld bytes is too big. Limit %,Ld", rx->bytesRead, conn->limits->receiveFormSize);
-            return 1;
-        }
-        if (packet == rx->headerPacket && nbytes > 0) {
-            packet = httpSplitPacket(packet, 0);
-        }
-        if (httpGetPacketLength(packet) > nbytes) {
-            /*  Split excess data belonging to the next chunk or pipelined request */
-            LOG(7, "processContent: Split packet of %d at %d", httpGetPacketLength(packet), nbytes);
-            conn->input = httpSplitPacket(packet, nbytes);
+    rx->remainingContent -= nbytes;
+    rx->bytesRead += nbytes;
+    if (httpShouldTrace(conn, HTTP_TRACE_RX, HTTP_TRACE_BODY, tx->ext) >= 0) {
+        httpTraceContent(conn, HTTP_TRACE_RX, HTTP_TRACE_BODY, packet, nbytes, rx->bytesRead);
+    }
+    if (rx->bytesRead >= conn->limits->receiveBodySize) {
+        httpError(conn, HTTP_CLOSE | HTTP_CODE_REQUEST_TOO_LARGE, 
+            "Request body of %,Ld bytes is too big. Limit %,Ld", rx->bytesRead, conn->limits->receiveBodySize);
+        return 1;
+    }
+    if (rx->form && rx->length >= conn->limits->receiveFormSize) {
+        httpError(conn, HTTP_CLOSE | HTTP_CODE_REQUEST_TOO_LARGE, 
+            "Request form of %,Ld bytes is too big. Limit %,Ld", rx->bytesRead, conn->limits->receiveFormSize);
+        return 1;
+    }
+    if (packet == rx->headerPacket && nbytes > 0) {
+        packet = httpSplitPacket(packet, 0);
+    }
+    if (httpGetPacketLength(packet) > nbytes) {
+        /*  Split excess data belonging to the next chunk or pipelined request */
+        LOG(7, "processContent: Split packet of %d at %d", httpGetPacketLength(packet), nbytes);
+        conn->input = httpSplitPacket(packet, nbytes);
+    } else {
+        conn->input = 0;
+    }
+    if (!(conn->finalized && conn->endpoint)) {
+        /* If conn->error, then finalized will also be true */
+        if (rx->form) {
+            httpPutForService(q, packet, HTTP_DELAY_SERVICE);
         } else {
-            conn->input = 0;
-        }
-        if (!(conn->finalized && conn->endpoint)) {
-            if (rx->form) {
-                httpPutForService(q, packet, HTTP_DELAY_SERVICE);
-            } else {
-                httpPutPacketToNext(q, packet);
-            }
-            mprAssert(httpVerifyQueue(q));
+            httpPutPacketToNext(q, packet);
         }
     }
     if (rx->remainingContent == 0 && !(rx->flags & HTTP_CHUNKED)) {
@@ -12031,20 +12025,23 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
 
     rx = conn->rx;
 
-    if (packet == 0 || !analyseContent(conn, packet)) {
+    if (!packet || (!rx->eof && !analyseContent(conn, packet))) {
         return 0;
     }
     if (rx->eof) {
         q = conn->tx->queue[HTTP_QUEUE_RX];
-        if (rx->form && conn->endpoint) {
-            routeRequest(conn);
-            while ((packet = httpGetPacket(q)) != 0) {
-                httpPutPacketToNext(q, packet);
+        if (!conn->finalized) {
+            if (rx->form && conn->endpoint) {
+                /* Forms wait for all data before routing */
+                routeRequest(conn);
+                while ((packet = httpGetPacket(q)) != 0) {
+                    httpPutPacketToNext(q, packet);
+                }
             }
-        }
-        httpPutPacketToNext(q, httpCreateEndPacket());
-        if (!rx->streamInput) {
-            httpStartPipeline(conn);
+            httpPutPacketToNext(q, httpCreateEndPacket());
+            if (!rx->streamInput) {
+                httpStartPipeline(conn);
+            }
         }
         httpSetState(conn, HTTP_STATE_READY);
         return conn->workerEvent ? 0 : 1;
@@ -13904,7 +13901,7 @@ void httpFinalize(HttpConn *conn)
     if (conn->state >= HTTP_STATE_CONNECTED && conn->writeq && conn->sock) {
         httpPutForService(conn->writeq, httpCreateEndPacket(), HTTP_SCHEDULE_QUEUE);
         httpServiceQueues(conn);
-        if (conn->state >= HTTP_STATE_READY /* MOB && conn->connectorComplete */ && !conn->inHttpProcess) {
+        if (conn->state >= HTTP_STATE_READY && !conn->inHttpProcess) {
             httpPump(conn, NULL);
         }
         conn->refinalize = 0;

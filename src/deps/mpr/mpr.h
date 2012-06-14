@@ -1285,7 +1285,7 @@ struct  MprXml;
 /* 
     Timeouts
  */
-#if UNUSED
+#if UNUSED && KEEP
 #define MPR_TIMEOUT_CMD         60000       /**< Command Request timeout (60 sec) */
 #define MPR_TIMEOUT_SOCKETS     10000       /**< Socket connection socket timeout */
 #define MPR_TIMEOUT_LOG_STAMP   3600000     /**< Time between log time stamps (1 hr) */
@@ -5212,7 +5212,6 @@ typedef struct MprPath {
  */
 typedef struct MprDirEntry {
     char            *name;              /**< Name of the file */
-    //  MOB - rename modified
     MprTime         lastModified;       /**< Time the file was last modified */
     MprOff          size;               /**< Size of the file */
     bool            isDir;              /**< True if the file is a directory */
@@ -7376,7 +7375,7 @@ typedef struct MprSsl {
     int             verifyServer;       /* Set if the server cert should be verified */
     int             verifyClient;       /* Set if the client cert should be verified */
     int             verifyDepth;        /* Set if the server cert should be verified */
-    int             protocols;          /* MOB */
+    int             protocols;          /* SSL protocols */
     void            *extendedSsl;       /* Extended provider SSL configuration */
 } MprSsl;
 
@@ -7953,7 +7952,7 @@ typedef struct MprCmd {
     cchar           **defaultEnv;       /**< Environment to use if no env passed to mprStartCmd */
     char            *searchPath;        /**< Search path to use to locate the command */
     int             argc;               /**< Count of args in argv */
-#if UNUSED
+#if UNUSED && FUTURE
     MprTime         timestamp;          /**< Timeout timestamp for last I/O  */
     MprTime         timeoutPeriod;      /**< Timeout value */
 #endif

@@ -271,13 +271,6 @@ static int configureMss(MprSsl *ssl)
         mprError("MatrixSSL: SSLv2 unsupported"); 
         return MPR_ERR_CANT_INITIALIZE;
     }
-#if UNUSED
-    //  MOB - what is this
-    if ((mssl->session = mprAllocObj(sslSessionId_t, NULL)) == 0) {
-        return 0;
-    }
-    mprMark(mssl->session);
-#endif
     return 0;
 }
 

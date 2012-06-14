@@ -929,10 +929,6 @@ extern HttpPacket *httpSplitPacket(HttpPacket *packet, ssize offset);
  */
 #define HTTP_QUEUE_OPEN           0x1         /**< Queue's open routine has been called */
 #define HTTP_QUEUE_SUSPENDED      0x2         /**< Queue's service routine is suspended due to flow control */
-#if UNUSED && MOB 
-#define HTTP_QUEUE_DISABLED       0x4         /**< Queue's service routine is disabled. Requires manual enable */
-#define HTTP_QUEUE_FULL           0x8         /**< Queue is full */
-#endif
 #define HTTP_QUEUE_ALL            0x10        /**< Queue has all the data there is and will be */
 #define HTTP_QUEUE_SERVICED       0x20        /**< Queue has been serviced at least once */
 #define HTTP_QUEUE_EOF            0x40        /**< Queue at end of data */
@@ -3009,8 +3005,8 @@ extern ssize httpWriteCached(HttpConn *conn);
 #define HTTP_ROUTE_FREE           0x2       /**< Free Route.mdata back to malloc when route is freed */
 #define HTTP_ROUTE_FREE_PATTERN   0x4       /**< Free Route.patternCompiled back to malloc when route is freed */
 #define HTTP_ROUTE_RAW            0x8       /**< Don't html encode the write data */
-#define HTTP_ROUTE_PUT_DELETE     0x1000    /**< Support PUT|DELETE */
-#define HTTP_ROUTE_GZIP           0x2000    /**< Support gzipped content */
+#define HTTP_ROUTE_PUT_DELETE     0x1000    /**< Support PUT|DELETE on this route */
+#define HTTP_ROUTE_GZIP           0x2000    /**< Support gzipped content on this route */
 #define HTTP_ROUTE_STARTED        0x4000    /**< Route initialized */
 
 /**
