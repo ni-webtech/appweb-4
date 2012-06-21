@@ -19572,7 +19572,7 @@ char *mprGetPathDir(cchar *path)
 
     mprAssert(path);
 
-    if (*path == '\0') {
+    if (path == 0 || *path == '\0') {
         return sclone(path);
     }
 
