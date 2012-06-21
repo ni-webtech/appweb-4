@@ -104,7 +104,7 @@ void mdbInit()
 }
 
 
-static Mdb *mdbCreate(cchar *path, int flags)
+static Mdb *mdbAlloc(cchar *path, int flags)
 {
     Mdb      *mdb;
 
@@ -188,7 +188,7 @@ static Edi *mdbOpen(cchar *source, int flags)
 
     if (flags & EDI_LITERAL) {
         flags |= EDI_NO_SAVE;
-        if ((mdb = mdbCreate("literal", flags)) == 0) {
+        if ((mdb = mdbAlloc("literal", flags)) == 0) {
             return 0;
         }
         if (mdbLoadFromString((Edi*) mdb, source) < 0) {
@@ -196,11 +196,15 @@ static Edi *mdbOpen(cchar *source, int flags)
         }
 
     } else {
-        if (!mprPathExists(source, R_OK) && !(flags & EDI_CREATE)) {
+        if ((mdb = mdbAlloc(source, flags)) == 0) {
             return 0;
         }
-        if ((mdb = mdbCreate(source, flags)) == 0) {
-            return 0;
+        if (!mprPathExists(source, R_OK)) {
+            if (flags & EDI_CREATE) {
+                mdbSave((Edi*) mdb);
+            } else {
+                return 0;
+            }
         }
         if (mdbLoad((Edi*) mdb, source) < 0) {
             return 0;
@@ -237,9 +241,18 @@ static int mdbAddColumn(Edi *edi, cchar *tableName, cchar *columnName, int type,
     }
     col->type = type;
     col->flags = flags;
+    if (flags & EDI_INDEX) {
+        if (table->index) {
+            mprError("Index already specified in table %s, replacing.", tableName);
+        }
+        if ((table->index = mprCreateHash(0, MPR_HASH_STATIC_VALUES)) != 0) {
+            table->indexCol = col;
+        }
+    }
     autoSave(mdb, table);
     unlock(mdb);
     return 0;
+
 }
 
 
@@ -1214,12 +1227,14 @@ static int mdbSave(Edi *edi)
     if ((out = mprOpenFile(npath, O_WRONLY | O_TRUNC | O_CREAT | O_BINARY, 0664)) == 0) {
         return 0;
     }
+    mprWriteFileFmt(out, "{\n");
+
     ntables = mprGetListLength(mdb->tables);
     for (tid = 0; tid < ntables; tid++) {
         table = getTable(mdb, tid);
         schema = table->schema;
         mprAssert(schema);
-        mprWriteFileFmt(out, "{\n    '%s': {\n", table->name);
+        mprWriteFileFmt(out, "    '%s': {\n", table->name);
         mprWriteFileFmt(out, "        hints: {\n            ncols: %d\n        },\n", schema->ncols);
         mprWriteFileString(out, "        schema: {\n");
         /* Skip the id which is always the first column */
@@ -1273,7 +1288,7 @@ static int mdbSave(Edi *edi)
 
     bak = mprReplacePathExt(path, "bak");
     mprDeletePath(bak);
-    if (rename(path, bak) < 0) {
+    if (mprPathExists(path, R_OK) && rename(path, bak) < 0) {
         mprError("Can't rename %s to %s", path, bak);
         return MPR_ERR_CANT_WRITE;
     }
