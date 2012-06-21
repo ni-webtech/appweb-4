@@ -17,7 +17,7 @@ if (App.config.bld_ejscript) {
     buf = new ByteArray
     count = 0
     while (http.read(buf) > 0) {
-        count += buf.available
+        count += buf.length
     }
     if (count != 63201) {
         print("COUNT IS " + count + " code " + http.status)
