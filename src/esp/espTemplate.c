@@ -563,8 +563,8 @@ char *espBuildScript(HttpRoute *route, cchar *page, cchar *path, cchar *cacheNam
             "static void %s(HttpConn *conn) {\n"\
             "%s%s%s"\
             "}\n\n"\
-            "%s int esp_%s(HttpRoute *route, MprModule *module) {\n"\
-            "   espDefineView(route, \"%s\", %s);\n"\
+            "%s int esp_%s(EspRoute *eroute, MprModule *module) {\n"\
+            "   espDefineView(eroute, \"%s\", %s);\n"\
             "   return 0;\n"\
             "}\n",
             path, global, cacheName, start, body, end, ESP_EXPORT_STRING, cacheName, mprGetPortablePath(path), cacheName);
@@ -829,7 +829,8 @@ static cchar *getDebug()
     int         debug;
 
     appweb = MPR->appwebService;
-    debug = sends(appweb->platform, "-debug");
+    //  MOB -- should be able to do release builds from xcode?
+    debug = sends(appweb->platform, "-debug") || sends(appweb->platform, "-xcode");
     if (scontains(appweb->platform, "windows-", -1)) {
         return (debug) ? "-DBIT_DEBUG -Zi -Od" : "-O";
     }

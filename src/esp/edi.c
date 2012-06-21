@@ -733,6 +733,13 @@ void ediDefineValidation(cchar *name, EdiValidationProc vfn)
 }
 
 
+void ediDefineMigration(Edi *edi, EdiMigration forw, EdiMigration back)
+{
+    edi->forw = forw;
+    edi->back = back;
+}
+
+
 static void addValidations()
 {
     EdiService  *es;

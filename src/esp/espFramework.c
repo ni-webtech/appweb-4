@@ -122,18 +122,17 @@ EdiRec *espCreateRec(HttpConn *conn, cchar *tableName, MprHash *params)
 }
 
 
-void espDefineAction(HttpRoute *route, cchar *target, void *actionProc)
+void espDefineAction(EspRoute *eroute, cchar *target, void *actionProc)
 {
     EspAction   *action;
-    EspRoute    *eroute;
+    HttpRoute   *route;
     Esp         *esp;
 
-    mprAssert(route);
+    mprAssert(eroute);
     mprAssert(target && *target);
     mprAssert(actionProc);
 
     esp = MPR->espService;
-    eroute = route->eroute;
     if ((action = mprAllocObj(EspAction, espManageAction)) == 0) {
         return;
     }
@@ -144,9 +143,9 @@ void espDefineAction(HttpRoute *route, cchar *target, void *actionProc)
 }
 
 
-void espDefineBase(HttpRoute *route, EspProc baseProc)
+void espDefineBase(EspRoute *eroute, EspProc baseProc)
 {
-    ((EspRoute*) route->eroute)->controllerBase = baseProc;
+    eroute->controllerBase = baseProc;
 }
 
 
@@ -328,11 +327,8 @@ char *espGetReferrer(HttpConn *conn)
 }
 
 
-Edi *espGetRouteDatabase(HttpRoute *route)
+Edi *espGetRouteDatabase(EspRoute *eroute)
 {
-    EspRoute    *eroute;
-
-    eroute = route->eroute;
     if (eroute == 0 || eroute->edi == 0) {
         return 0;
     }
@@ -927,6 +923,7 @@ void espManageEspRoute(EspRoute *eroute, int flags)
         mprMark(eroute->compile);
         mprMark(eroute->controllersDir);
         mprMark(eroute->dbDir);
+        mprMark(eroute->migrationsDir);
         mprMark(eroute->edi);
         mprMark(eroute->env);
         mprMark(eroute->layoutsDir);

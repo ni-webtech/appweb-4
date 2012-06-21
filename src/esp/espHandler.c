@@ -95,7 +95,6 @@ static void closeEsp(HttpQueue *q)
 }
 
 
-/************************************ Flash ***********************************/
 
 void espClearFlash(HttpConn *conn)
 {
@@ -149,7 +148,6 @@ static void finalizeFlash(HttpConn *conn)
     }
 }
 
-/************************************ Flash ***********************************/
 /*
     Start the request. At this stage, body data may not have been fully received unless 
     the request is a form (POST method and Content-Type is application/x-www-form-urlencoded).
@@ -164,6 +162,7 @@ static void startEsp(HttpQueue *q)
     req = conn->data;
 
     if (req) {
+        //  MOB - what if an error is set here?
         setupFlash(conn);
         if (!runAction(conn)) {
             return;
@@ -217,7 +216,7 @@ static int runAction(HttpConn *conn)
         if (!loadApp(conn, &updated)) {
             return 0;
         }
-    } else if (eroute->update /* UNUSED || !mprLookupModule(req->controllerPath) */) {
+    } else if (eroute->update) {
         /* Trim the drive for VxWorks where simulated host drives only exist on the target */
         source = req->controllerPath;
 #if VXWORKS
@@ -240,7 +239,7 @@ static int runAction(HttpConn *conn)
         }
         if (mprLookupModule(req->controllerPath) == 0) {
             req->entry = getControllerEntry(req->controllerName);
-            if ((mp = mprCreateModule(req->controllerPath, req->module, req->entry, route)) == 0) {
+            if ((mp = mprCreateModule(req->controllerPath, req->module, req->entry, eroute)) == 0) {
                 unlock(req->esp);
                 httpMemoryError(conn);
                 return 0;
@@ -594,6 +593,7 @@ static EspRoute *cloneEspRoute(HttpRoute *route, EspRoute *parent)
     eroute->cacheDir = parent->cacheDir;
     eroute->controllersDir = parent->controllersDir;
     eroute->dbDir = parent->dbDir;
+    eroute->migrationsDir = parent->migrationsDir;
     eroute->layoutsDir = parent->layoutsDir;
     eroute->viewsDir = parent->viewsDir;
     eroute->staticDir = parent->staticDir;
@@ -613,6 +613,7 @@ static void setSimpleDirs(EspRoute *eroute, HttpRoute *route)
     eroute->layoutsDir = dir;
     eroute->controllersDir = dir;
     eroute->dbDir = dir;
+    eroute->migrationsDir = dir;
     eroute->viewsDir = dir;
     eroute->staticDir = dir;
 }
@@ -630,6 +631,9 @@ static void setMvcDirs(EspRoute *eroute, HttpRoute *route)
 
     eroute->dbDir = mprJoinPath(dir, "db");
     httpSetRoutePathVar(route, "DB_DIR", eroute->dbDir);
+
+    eroute->migrationsDir = mprJoinPath(dir, "db/migrations");
+    httpSetRoutePathVar(route, "MIGRATIONS_DIR", eroute->migrationsDir);
 
     eroute->controllersDir = mprJoinPath(dir, "controllers");
     httpSetRoutePathVar(route, "CONTROLLERS_DIR", eroute->controllersDir);
@@ -841,6 +845,7 @@ static int espDbDirective(MaState *state, cchar *key, cchar *value)
     if ((eroute = getEroute(state->route)) == 0) {
         return MPR_ERR_MEMORY;
     }
+    //  MOB - is auto save really wanted?
     flags = EDI_CREATE | EDI_AUTO_SAVE;
     provider = stok(sclone(value), "://", &path);
     if (provider == 0 || path == 0) {
@@ -849,8 +854,10 @@ static int espDbDirective(MaState *state, cchar *key, cchar *value)
     }
     path = mprJoinPath(eroute->dbDir, path);
     if ((eroute->edi = ediOpen(path, provider, flags)) == 0) {
-        mprError("Can't open database %s", path);
-        return MPR_ERR_CANT_OPEN;
+        if (!(state->flags & MA_PARSE_NON_SERVER)) {
+            mprError("Can't open database %s", path);
+            return MPR_ERR_CANT_OPEN;
+        }
     }
     //  MOB - who closes?
     return 0;
@@ -883,6 +890,8 @@ static int espDirDirective(MaState *state, cchar *key, cchar *value)
             eroute->dbDir = path;
         } else if (scmp(name, "layouts") == 0) {
             eroute->layoutsDir = path;
+        } else if (scmp(name, "migrations") == 0) {
+            eroute->migrationsDir = path;
         } else if (scmp(name, "static") == 0) {
             eroute->staticDir = path;
         } else if (scmp(name, "views") == 0) {

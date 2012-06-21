@@ -171,6 +171,7 @@ typedef struct EspRoute {
     char            *cacheDir;              /**< Directory for cached compiled controllers and views */
     char            *controllersDir;        /**< Directory for controllers */
     char            *dbDir;                 /**< Directory for databases */
+    char            *migrationsDir;         /**< Directory for migrations */
     char            *layoutsDir;            /**< Directory for layouts */
     char            *staticDir;             /**< Directory for static web content */
     char            *viewsDir;              /**< Directory for views */
@@ -280,22 +281,22 @@ extern char *espBuildScript(HttpRoute *route, cchar *page, cchar *path, cchar *c
 /**
     Define an action
     @description Actions are C procedures that are invoked when specific URIs are routed to the controller/action pair.
-    @param route Route object
+    @param eroute EspRoute object
     @param targetKey Target key used to select the action in a HttpRoute target. This is typically a URI prefix.
     @param actionProc EspProc callback procedure to invoke when the action is requested.
     @ingroup EspRoute
  */
-extern void espDefineAction(HttpRoute *route, cchar *targetKey, void *actionProc);
+extern void espDefineAction(EspRoute *eroute, cchar *targetKey, void *actionProc);
 
 /**
     Define a base function to invoke for all controller actions.
     @description A base function can be defined that will be called before calling any controller action. This
         emulates a super class constructor.
-    @param route Route object
+    @param eroute EspRoute object
     @param baseProc Function to call just prior to invoking a controller action.
     @ingroup EspRoute
  */
-extern void espDefineBase(HttpRoute *route, EspProc baseProc);
+extern void espDefineBase(EspRoute *eroute, EspProc baseProc);
 
 /**
     Define a view
@@ -773,11 +774,11 @@ char *espGetReferrer(HttpConn *conn);
 
 /**
     Get the default database defined on a route.
-    @param route HttpRoute object
+    @param eroute EspRoute object
     @return Database instance object
     @ingroup EspReq
  */
-Edi *espGetRouteDatabase(HttpRoute *route);
+Edi *espGetRouteDatabase(EspRoute *route);
 
 /**
     Get a unique security token.
@@ -1559,7 +1560,7 @@ extern void espButtonLink(HttpConn *conn, cchar *text, cchar *uri, cchar *option
         sorting by column, dynamic data refreshes, pagination, and clicking on rows.
     TODO. This is incomplete.
     @param conn Http connection object
-    @param grid Data to display. The data is a grid of data. Use ediCreateGrid or ediReadGrid.
+    @param grid Data to display. The data is a grid of data. Use ediMakeGrid or ediReadGrid.
     @param options Extra options. See $EspControl for a list of the standard options.
     @arg columns Object hash of column entries. Each column entry is (in turn) an object hash of options. If unset, 
         all columns are displayed using defaults.
@@ -1683,7 +1684,7 @@ extern void espLabel(HttpConn *conn, cchar *text, cchar *options);
 
 //  MOB - how to get a choices list from a database
 /**
-    Render a dropdown selection list.
+    Render a selection list.
     @param conn Http connection object
     @param field Record field name to provide the default value for the list. The field should be a property of the 
         form current record.  The field name is used to create the HTML input control name.
@@ -1780,7 +1781,7 @@ extern void espStylesheet(HttpConn *conn, cchar *uri, cchar *options);
     @description The table control can display static or dynamic tabular data. The client table control 
         manages sorting by column, dynamic data refreshes, and clicking on rows or cells.
     @param conn Http connection object
-    @param grid Data to display. The data is a grid of data. Use ediCreateGrid or ediReadGrid.
+    @param grid Data to display. The data is a grid of data. Use ediMakeGrid or ediReadGrid.
     @param options Extra options. See $EspControl for a list of the standard options.
     @param options Optional extra options. See $View for a list of the standard options.
     @arg cell Boolean Set to "true" to make click or edit links apply per cell instead of per row. 
@@ -1922,7 +1923,7 @@ extern void buttonLink(cchar *text, cchar *uri, cchar *options);
     @description The chart control can display static or dynamic tabular data. The client chart control manages
         sorting by column, dynamic data refreshes, pagination and clicking on rows.
     TODO. This is incomplete.
-    @param grid Data to display. The data is a grid of data. Use ediCreateGrid or ediReadGrid.
+    @param grid Data to display. The data is a grid of data. Use ediMakeGrid or ediReadGrid.
     @param options Extra options. See $EspControl for a list of the standard options.
     @arg columns Object hash of column entries. Each column entry is in-turn an object hash of options. If unset, 
         all columns are displayed using defaults.
@@ -1997,7 +1998,7 @@ extern void flash(cchar *kinds, cchar *options);
         the request. Abbreviated controls (see $EspAbbrev) use the current record to supply form data fields and values.
         The espForm control can be used without a record. In this case, nested ESP controls may have to provide 
         values via an Options.value field.
-    @param record Record to use by default to supply form field names and values.
+    @param record Record to use by default to supply form field names and values. If NULL, use the default record.
     @param options Extra options. See $EspControl for a list of the standard options.
     @arg hideErrors -- Don't display database record errors. Records retain error diagnostics from the previous
         failed write. Setting this option will prevent the display of such errors.
@@ -2121,7 +2122,7 @@ extern void stylesheet(cchar *uri, cchar *options);
     Render a table.
     @description The table control can display static or dynamic tabular data. The client table control 
         manages sorting by column, dynamic data refreshes and clicking on rows or cells.
-    @param grid Data to display. The data is a grid of data. Use ediCreateGrid or ediReadGrid.
+    @param grid Data to display. The data is a grid of data. Use ediMakeGrid or ediReadGrid.
     @param options Extra options. See $EspControl for a list of the standard options.
     @param options Optional extra options. See $View for a list of the standard options.
     @arg cell Boolean Set to "true" to make click or edit links apply per cell instead of per row. 
@@ -2414,6 +2415,7 @@ extern cchar *getReferrer();
  */
 extern cchar *getSessionVar(cchar *name);
 
+//  MOB - should this be called top?
 /**
     Get a relative URI to the top of the application.
     @description This will return an absolute URI for the top of the application. This will be "/" if there is no

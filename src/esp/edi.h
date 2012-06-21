@@ -90,6 +90,8 @@ extern void ediDefineValidation(cchar *name, EdiValidationProc vfn);
 #define EDI_TYPE_BOOL       2           /**< Boolean true|false value */
 #define EDI_TYPE_DATE       3           /**< Date type */
 #define EDI_TYPE_FLOAT      4           /**< Floating point number */
+
+//  MOB - consistency. TYPE_INTEGER?
 #define EDI_TYPE_INT        5           /**< Integer number */
 #define EDI_TYPE_STRING     6           /**< String */
 #define EDI_TYPE_TEXT       7           /**< Multi-line text */
@@ -160,6 +162,21 @@ typedef struct EdiGrid {
 #define EDI_NOSAVE      0x1             /**< ediOpen flag -- Don't save the database on modifications */
 #endif
 
+typedef int (*EdiMigration)(struct Edi *db);
+
+/**
+    Define migration callbacks
+    @param edi Database handle
+    @param forw Forward migration callback. Of the form:
+        int forw(Edi *edit);
+        A successful return should be zero.
+    @param back Backward migration callback. Of the form:
+        int back(Edi *edit);
+        A successful return should be zero.
+    @ingroup EdiService
+ */
+extern void ediDefineMigration(struct Edi *edi, EdiMigration forw, EdiMigration back);
+
 /**
     Database structure
     @description The Embedded Database Interface (EDI) defines an abstract interface atop various relational 
@@ -168,6 +185,8 @@ typedef struct EdiGrid {
   */
 typedef struct Edi {
     struct EdiProvider *provider;       /**< Database provider */
+    EdiMigration    forw;               /**< Forward migration callback */
+    EdiMigration    back;               /**< Backward migration callback */
     int             flags;              /**< Database flags */
 } Edi;
 
@@ -308,7 +327,7 @@ extern EdiRec *ediCreateRec(Edi *edi, cchar *tableName);
  */
 extern int ediDelete(Edi *edi, cchar *path);
 
-//  MOB - should this be DeleteRec?
+//  MOB - should this be DeleteRec? RemoveRec
 /**
     Delete a row in a database table
     @param edi Database handle
