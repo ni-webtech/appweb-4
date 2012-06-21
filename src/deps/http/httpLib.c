@@ -14187,19 +14187,11 @@ void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar
     } else {
         expires = expiresAtt = "";
     }
-    if (flags & HTTP_COOKIE_SECURE) {
-        secure = "; secure";
-    } else {
-        secure = "";
-    }
-    if (flags & HTTP_COOKIE_HTTP) {
-        httponly = "; httponly";
-    } else {
-        httponly = "";
-    }
     /* 
        Allow multiple cookie headers. Even if the same name. Later definitions take precedence
      */
+    secure = (flags & HTTP_COOKIE_SECURE) ? "; secure" : "";
+    httponly = (flags & HTTP_COOKIE_HTTP) ?  "; httponly" : "";
     httpAppendHeader(conn, "Set-Cookie", 
         sjoin(name, "=", value, "; path=", path, domainAtt, domain, expiresAtt, expires, secure, httponly, NULL));
     httpAppendHeader(conn, "Cache-control", "no-cache=\"set-cookie\"");
