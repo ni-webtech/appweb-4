@@ -378,6 +378,11 @@ static void incomingFile(HttpQueue *q, HttpPacket *packet)
             mprCloseFile(file);
         }
         q->queueData = 0;
+        if (!tx->etag) {
+            /* Set the etag for caching in the client */
+            mprGetPathInfo(tx->filename, &tx->fileInfo);
+            tx->etag = sfmt("\"%x-%Lx-%Lx\"", tx->fileInfo.inode, tx->fileInfo.size, tx->fileInfo.mtime);
+        }
         return;
     }
     buf = packet->content;
@@ -402,12 +407,14 @@ static void handlePutRequest(HttpQueue *q)
     HttpConn    *conn;
     HttpTx      *tx;
     MprFile     *file;
+    MprPath     *info;
     char        *path;
 
     mprAssert(q->pair->queueData == 0);
 
     conn = q->conn;
     tx = conn->tx;
+    info = &tx->fileInfo;
     mprAssert(tx->filename);
     mprAssert(tx->fileInfo.checked);
 
@@ -430,11 +437,11 @@ static void handlePutRequest(HttpQueue *q)
             return;
         }
     }
+    if (!tx->fileInfo.isReg) {
+        httpSetHeader(conn, "Location", conn->rx->uri);
+    }
     httpSetStatus(conn, tx->fileInfo.isReg ? HTTP_CODE_NO_CONTENT : HTTP_CODE_CREATED);
     httpOmitBody(conn);
-#if UNUSED
-    httpSetContentLength(conn, 0);
-#endif
     q->pair->queueData = (void*) file;
 }
 
@@ -459,9 +466,6 @@ static void handleDeleteRequest(HttpQueue *q)
     }
     httpSetStatus(conn, HTTP_CODE_NO_CONTENT);
     httpOmitBody(conn);
-#if UNUSED
-    httpSetContentLength(conn, 0);
-#endif
 }
 
 
