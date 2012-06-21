@@ -3,9 +3,11 @@
  */
 #include "esp.h"
 
+#if UNUSED
 static void common() {
     setParam("page-title", "MVC Title");
 }
+#endif
 
 static void check() { 
     render("Check: OK\r\n");
@@ -43,10 +45,10 @@ static void missing() {
     renderError(HTTP_CODE_INTERNAL_SERVER_ERROR, "Missing action");
 }
 
-ESP_EXPORT int esp_controller_test(HttpRoute *route, MprModule *module) {
-    espDefineAction(route, "test-missing", missing);
-    espDefineAction(route, "test-cmd-check", check);
-    espDefineAction(route, "test-cmd-details", details);
-    espDefineAction(route, "test-cmd-login", login);
+ESP_EXPORT int esp_controller_test(EspRoute *eroute, MprModule *module) {
+    espDefineAction(eroute, "test-missing", missing);
+    espDefineAction(eroute, "test-cmd-check", check);
+    espDefineAction(eroute, "test-cmd-details", details);
+    espDefineAction(eroute, "test-cmd-login", login);
     return 0;
 }
