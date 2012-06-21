@@ -11233,7 +11233,7 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
         rx->parsedUri->port = conn->sock->listenSock->port;
         rx->parsedUri->host = rx->hostHeader ? rx->hostHeader : conn->host->name;
 
-    } else if (!(100 <= rx->status && rx->status < 200)) {
+    } else if (!(100 <= rx->status && rx->status <= 199)) {
         /* Clients have already created their Tx pipeline */
         httpCreateRxPipeline(conn, conn->http->clientRoute);
     }
@@ -11343,9 +11343,6 @@ static void parseMethod(HttpConn *conn)
     case 'H':
         if (strcmp(method, "HEAD") == 0) {
             methodFlags = HTTP_HEAD;
-#if UNUSED
-            httpOmitBody(conn);
-#endif
         }
         break;
 
@@ -14140,7 +14137,7 @@ void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar
         MprTime lifespan, int flags)
 {
     HttpRx      *rx;
-    char        *cp, *expiresAtt, *expires, *domainAtt, *domain, *extra;
+    char        *cp, *expiresAtt, *expires, *domainAtt, *domain, *secure, *httponly;
     int         webkitVersion;
 
     rx = conn->rx;
@@ -14191,17 +14188,20 @@ void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar
         expires = expiresAtt = "";
     }
     if (flags & HTTP_COOKIE_SECURE) {
-        extra = "; secure";
-    } else if (flags & HTTP_COOKIE_HTTP) {
-        extra = "; secure";
+        secure = "; secure";
     } else {
-        extra = ";";
+        secure = "";
+    }
+    if (flags & HTTP_COOKIE_HTTP) {
+        httponly = "; httponly";
+    } else {
+        httponly = "";
     }
     /* 
        Allow multiple cookie headers. Even if the same name. Later definitions take precedence
      */
     httpAppendHeader(conn, "Set-Cookie", 
-        sjoin(name, "=", value, "; path=", path, domainAtt, domain, expiresAtt, expires, extra, NULL));
+        sjoin(name, "=", value, "; path=", path, domainAtt, domain, expiresAtt, expires, secure, httponly, NULL));
     httpAppendHeader(conn, "Cache-control", "no-cache=\"set-cookie\"");
 }
 

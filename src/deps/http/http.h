@@ -4837,8 +4837,10 @@ extern void httpSetContentType(HttpConn *conn, cchar *mimeType);
     @param path URI path to which the cookie applies
     @param domain Domain in which the cookie applies. Must have 2-3 dots.
     @param lifespan Duration for the cookie to persist in msec
-    @param flags Select from HTTP_COOKIE_SECURE for a "secure" cookie, or HTTP_COOKIE_HTTP for a "httponly" cookie.
-        See RFC 2109 for details about secure and httponly cookies.
+    @param flags Cookie options mask. The following options are supported:
+        @li HTTP_COOKIE_SECURE    - Set the 'Secure' attribute on the cookie.
+        @li HTTP_COOKIE_HTTP      - Set the 'HttpOnly' attribute on the cookie.
+        See RFC 6265 for details about the 'Secure' and 'HttpOnly' cookie attributes.
     @ingroup HttpTx
  */
 extern void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *domain, 

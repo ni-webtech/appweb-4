@@ -803,7 +803,7 @@ static int reportResponse(HttpConn *conn, cchar *url, MprTime elapsed)
     if (conn->error) {
         app->success = 0;
     }
-    if (conn->rx && bytesRead > 0) {
+    if (conn->rx) {
         if (!app->noout) {
             mprPrintf("\n");
         }
