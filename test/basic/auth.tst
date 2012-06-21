@@ -40,10 +40,10 @@ if (App.config.bld_cgi && global.test && test.hostOs != "VXWORKS") {
     http.setCredentials("joshua", "pass1")
     http.get(HTTP + "/basic/basic.cgi")
     assert(http.status == 200)
-    assert(http.response.contains("SCRIPT_NAME\": \"/basic/basic.cgi\""))
+    assert(http.response.contains("SCRIPT_NAME=/basic/basic.cgi"))
     assert(!http.response.contains("PATH_INFO"))
     assert(!http.response.contains("PATH_TRANSLATED"))
-    assert(http.response.contains("REMOTE_USER\": \"joshua\""))
+    assert(http.response.contains("REMOTE_USER=joshua"))
 }
 
 //  Digest tests
