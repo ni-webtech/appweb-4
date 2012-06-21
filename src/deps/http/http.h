@@ -4501,7 +4501,7 @@ extern void httpProcessWriteEvent(HttpConn *conn);
 /*  
     Tx flags
  */
-#define HTTP_TX_NO_BODY             0x1     /**< No transmission body, only sent headers */
+#define HTTP_TX_NO_BODY             0x1     /**< No transmission body, only send headers */
 #define HTTP_TX_HEADERS_CREATED     0x2     /**< Response headers have been created */
 #define HTTP_TX_SENDFILE            0x4     /**< Relay output via Send connector */
 
@@ -4522,6 +4522,7 @@ extern void httpProcessWriteEvent(HttpConn *conn);
  */
 typedef struct HttpTx {
     /* Ordered for debugging */
+    //  OPT ordering
     MprOff          bytesWritten;           /**< Bytes written including headers */
     MprOff          entityLength;           /**< Original content length before range subsetting */
     ssize           chunkSize;              /**< Chunk size to use when using transfer encoding. Zero for unchunked. */

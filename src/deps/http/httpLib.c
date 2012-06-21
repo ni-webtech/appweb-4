@@ -2159,26 +2159,27 @@ int httpOpenChunkFilter(Http *http)
 }
 
 
+/*
+    This is called twice: once for TX and once for RX
+ */
 static int matchChunk(HttpConn *conn, HttpRoute *route, int dir)
 {
-    HttpTx  *tx;
-
     if (dir & HTTP_STAGE_TX) {
-        /*
-            Don't match if chunking is explicitly turned off vi a the X_APPWEB_CHUNK_SIZE header which sets the chunk 
-            size to zero. Also remove if the response length is already known.
+        /* 
+            If content length is defined, don't need chunking. Also disable chunking if explicitly turned off vi 
+            the X_APPWEB_CHUNK_SIZE header which may set the chunk size to zero.
          */
-        tx = conn->tx;
-        if (tx->length < 0 && tx->chunkSize != 0) {
-            return HTTP_ROUTE_OK;
+        if (conn->tx->length >= 0 || conn->tx->chunkSize == 0) {
+            return HTTP_ROUTE_REJECT;
         }
-        return HTTP_ROUTE_REJECT;
+        return HTTP_ROUTE_OK;
+    } else {
+        /* 
+            Must always be ready to handle chunked response data. Clients create their incoming pipeline before it is
+            know what the response data looks like (chunked or not).
+         */
+        return HTTP_ROUTE_OK;
     }
-    /* 
-        Must always be ready to handle chunked response data. Clients create their incoming pipeline before it is
-        know what the response data looks like (chunked or not).
-     */
-    return HTTP_ROUTE_OK;
 }
 
 
@@ -2201,6 +2202,9 @@ static void openChunk(HttpQueue *q)
     Chunk spec is: "HEX_COUNT; chunk length DECIMAL_COUNT\r\n". The "; chunk length DECIMAL_COUNT is optional.
     As an optimization, use "\r\nSIZE ...\r\n" as the delimiter so that the CRLF after data does not special consideration.
     Achive this by parseHeaders reversing the input start by 2.
+
+    Return number of bytes available to read.
+    NOTE: may set rx->eof and return 0 bytes on EOF.
  */
 ssize httpFilterChunkData(HttpQueue *q, HttpPacket *packet)
 {
@@ -2291,25 +2295,20 @@ static void outgoingChunkService(HttpQueue *q)
     tx = conn->tx;
 
     if (!(q->flags & HTTP_QUEUE_SERVICED)) {
-        /*  
+        /*
             If we don't know the content length (tx->length < 0) and if the last packet is the end packet. Then
             we have all the data. Thus we can determine the actual content length and can bypass the chunk handler.
          */
         if (tx->length < 0 && (value = mprLookupKey(tx->headers, "Content-Length")) != 0) {
             tx->length = stoi(value);
         }
-        if (tx->length < 0) {
+        if (tx->length < 0 && tx->chunkSize < 0) {
             if (q->last->flags & HTTP_PACKET_END) {
-                if (tx->chunkSize < 0 && tx->length <= 0) {
-                    /*  
-                        Set the response content length and thus disable chunking -- not needed as we know the entity length.
-                     */
-                    tx->length = (int) q->count;
+                if (q->count > 0) {
+                    tx->length = q->count;
                 }
             } else {
-                if (tx->chunkSize < 0) {
-                    tx->chunkSize = min(conn->limits->chunkSize, q->max);
-                }
+                tx->chunkSize = min(conn->limits->chunkSize, q->max);
             }
         }
     }
@@ -7720,6 +7719,9 @@ int httpOpenRangeFilter(Http *http)
 }
 
 
+/*
+    This is called twice: once for TX and once for RX
+ */
 static int matchRange(HttpConn *conn, HttpRoute *route, int dir)
 {
     mprAssert(conn->rx);
@@ -11341,7 +11343,9 @@ static void parseMethod(HttpConn *conn)
     case 'H':
         if (strcmp(method, "HEAD") == 0) {
             methodFlags = HTTP_HEAD;
+#if UNUSED
             httpOmitBody(conn);
+#endif
         }
         break;
 
@@ -11967,12 +11971,20 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
     ssize       nbytes;
 
     rx = conn->rx;
+    if (rx->eof) {
+        return 1;
+    }
+
     tx = conn->tx;
     content = packet->content;
     q = tx->queue[HTTP_QUEUE_RX];
 
     LOG(7, "processContent: packet of %d bytes, remaining %d", mprGetBufLength(content), rx->remainingContent);
     if ((nbytes = httpFilterChunkData(q, packet)) <= 0) {
+        if (rx->chunkState & HTTP_CHUNK_EOF) {
+            rx->eof = 1;
+            return 1;
+        }
         return 0;
     }
     rx->remainingContent -= nbytes;
@@ -12025,7 +12037,10 @@ static bool processContent(HttpConn *conn, HttpPacket *packet)
 
     rx = conn->rx;
 
-    if (!packet || (!rx->eof && !analyseContent(conn, packet))) {
+    if (!packet) {
+        return 0;
+    }
+    if (!analyseContent(conn, packet)) {
         return 0;
     }
     if (rx->eof) {
@@ -14025,6 +14040,7 @@ void httpOmitBody(HttpConn *conn)
 {
     if (conn->tx) {
         conn->tx->flags |= HTTP_TX_NO_BODY;
+        conn->tx->length = -1;
     }
     if (conn->tx->flags & HTTP_TX_HEADERS_CREATED) {
         mprError("Can't set response body if headers have already been created");
@@ -14228,7 +14244,8 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
         if (!(rx->flags & HTTP_HEAD)) {
             httpSetHeaderString(conn, "Transfer-Encoding", "chunked");
         }
-    } else if (tx->length > 0 || conn->endpoint) {
+    } else if (tx->length >= 0) {
+        mprAssert(tx->status != 304 && tx->status != 204 && !(100 <= tx->status && tx->status <= 199));
         httpAddHeader(conn, "Content-Length", "%Ld", tx->length);
     }
     if (tx->outputRanges) {

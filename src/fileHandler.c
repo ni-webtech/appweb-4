@@ -161,6 +161,7 @@ static void openFileHandler(HttpQueue *q)
         if (httpContentNotModified(conn)) {
             httpSetStatus(conn, HTTP_CODE_NOT_MODIFIED);
             httpOmitBody(conn);
+            tx->length = -1;
         }
         if (!tx->fileInfo.isReg && !tx->fileInfo.isLink) {
             httpError(conn, HTTP_CODE_NOT_FOUND, "Can't locate document: %s", rx->uri);
@@ -430,7 +431,10 @@ static void handlePutRequest(HttpQueue *q)
         }
     }
     httpSetStatus(conn, tx->fileInfo.isReg ? HTTP_CODE_NO_CONTENT : HTTP_CODE_CREATED);
+    httpOmitBody(conn);
+#if UNUSED
     httpSetContentLength(conn, 0);
+#endif
     q->pair->queueData = (void*) file;
 }
 
@@ -454,7 +458,10 @@ static void handleDeleteRequest(HttpQueue *q)
         return;
     }
     httpSetStatus(conn, HTTP_CODE_NO_CONTENT);
+    httpOmitBody(conn);
+#if UNUSED
     httpSetContentLength(conn, 0);
+#endif
 }
 
 
