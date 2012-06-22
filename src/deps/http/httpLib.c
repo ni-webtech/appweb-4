@@ -2211,7 +2211,7 @@ ssize httpFilterChunkData(HttpQueue *q, HttpPacket *packet)
     HttpConn    *conn;
     HttpRx      *rx;
     MprBuf      *buf;
-    ssize       chunkSize;
+    ssize       chunkSize, nbytes;
     char        *start, *cp;
     int         bad;
 
@@ -2223,7 +2223,11 @@ ssize httpFilterChunkData(HttpQueue *q, HttpPacket *packet)
 
     switch (rx->chunkState) {
     case HTTP_CHUNK_UNCHUNKED:
-        return (ssize) min(rx->remainingContent, mprGetBufLength(buf));
+        nbytes = mprGetBufLength(buf);
+        if (conn->http10 && nbytes == 0) {
+            rx->eof = 1;
+        }
+        return (ssize) min(rx->remainingContent, nbytes);
 
     case HTTP_CHUNK_DATA:
         mprLog(7, "chunkFilter: data %d bytes, rx->remainingContent %d", httpGetPacketLength(packet), rx->remainingContent);
@@ -2278,7 +2282,7 @@ ssize httpFilterChunkData(HttpQueue *q, HttpPacket *packet)
         return min(chunkSize, mprGetBufLength(buf));
 
     default:
-        mprError("chunkFilter: bad state %d", rx->chunkState);
+        httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Bad chunk state %d", rx->chunkState);
     }
     return 0;
 }
@@ -2310,6 +2314,9 @@ static void outgoingChunkService(HttpQueue *q)
             } else {
                 tx->chunkSize = min(conn->limits->chunkSize, q->max);
             }
+        }
+        if (tx->flags & HTTP_TX_USE_OWN_HEADERS) {
+            tx->chunkSize = -1;
         }
     }
     if (tx->chunkSize <= 0) {
@@ -5160,6 +5167,7 @@ static void httpTimer(Http *http, MprEvent *event)
         mprRemoveEvent(event);
         http->timer = 0;
     }
+    //  OPT - run GC here
     unlock(http);
 }
 
@@ -11195,6 +11203,7 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
 
     /*
         Don't start processing until all the headers have been received (delimited by two blank lines)
+        MOB - should be tolerant and allow '\n\n'
      */
     if ((end = scontains(start, "\r\n\r\n", len)) == 0) {
         if (len >= conn->limits->headerSize) {
@@ -11455,6 +11464,7 @@ static bool parseResponseLine(HttpConn *conn, HttpPacket *packet)
     protocol = conn->protocol = supper(getToken(conn, " "));
     if (strcmp(protocol, "HTTP/1.0") == 0) {
         conn->http10 = 1;
+        rx->remainingContent = MAXINT;
     } else if (strcmp(protocol, "HTTP/1.1") != 0) {
         httpError(conn, HTTP_ABORT | HTTP_CODE_NOT_ACCEPTABLE, "Unsupported HTTP protocol");
         return 0;
@@ -11509,6 +11519,7 @@ static bool parseHeaders(HttpConn *conn, HttpPacket *packet)
             httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Bad header format");
             return 0;
         }
+        //  MOB - should be tolerant and allow '\n'
         value = getToken(conn, "\r\n");
         while (isspace((uchar) *value)) {
             value++;
@@ -11971,18 +11982,13 @@ static bool analyseContent(HttpConn *conn, HttpPacket *packet)
     if (rx->eof) {
         return 1;
     }
-
     tx = conn->tx;
     content = packet->content;
     q = tx->queue[HTTP_QUEUE_RX];
-
     LOG(7, "processContent: packet of %d bytes, remaining %d", mprGetBufLength(content), rx->remainingContent);
+    
     if ((nbytes = httpFilterChunkData(q, packet)) <= 0) {
-        if (rx->chunkState & HTTP_CHUNK_EOF) {
-            rx->eof = 1;
-            return 1;
-        }
-        return 0;
+        return rx->eof ? 1 : 0;
     }
     rx->remainingContent -= nbytes;
     rx->bytesRead += nbytes;
@@ -12484,6 +12490,8 @@ static void addMatchEtag(HttpConn *conn, char *etag)
     non-zero token. The empty string means the delimiter was not found. The delimiter is a string to match and not
     a set of characters. HTTP header header parsing does not work as well using classical strtok parsing as you must
     know when the "/r/n/r/n" body delimiter has been encountered. Strtok will eat such delimiters.
+
+    MOB - OPT
  */
 static char *getToken(HttpConn *conn, cchar *delim)
 {
@@ -13698,9 +13706,7 @@ HttpTx *httpCreateTx(HttpConn *conn, MprHash *headers)
     if (headers) {
         tx->headers = headers;
     } else if ((tx->headers = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS)) != 0) {
-        if (conn->endpoint) {
-            httpAddHeaderString(conn, "Server", conn->http->software);
-        } else {
+        if (!conn->endpoint) {
             httpAddHeaderString(conn, "User-Agent", sclone(HTTP_NAME));
         }
     }
@@ -14218,6 +14224,7 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
     /*
         Mandatory headers that must be defined here use httpSetHeader which overwrites existing values. 
      */
+    httpAddHeaderString(conn, "Server", conn->http->software);
     httpAddHeaderString(conn, "Date", conn->http->currentDate);
 
     if (tx->ext) {
@@ -14314,10 +14321,15 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
     if (tx->flags & HTTP_TX_HEADERS_CREATED) {
         return;
     }    
+    tx->flags |= HTTP_TX_HEADERS_CREATED;
     conn->responded = 1;
     if (conn->headersCallback) {
         /* Must be before headers below */
         (conn->headersCallback)(conn->headersCallbackArg);
+    }
+    if (tx->flags & HTTP_TX_USE_OWN_HEADERS && !conn->error) {
+        conn->keepAliveCount = -1;
+        return;
     }
     setHeaders(conn, packet);
 
@@ -14356,7 +14368,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
     mprPutStringToBuf(buf, "\r\n");
 
     /* 
-       Output headers
+        Output headers
      */
     kp = mprGetFirstKey(conn->tx->headers);
     while (kp) {
@@ -14370,7 +14382,7 @@ void httpWriteHeaders(HttpConn *conn, HttpPacket *packet)
     }
 
     /* 
-       By omitting the "\r\n" delimiter after the headers, chunks can emit "\r\nSize\r\n" as a single chunk delimiter
+        By omitting the "\r\n" delimiter after the headers, chunks can emit "\r\nSize\r\n" as a single chunk delimiter
      */
     if (tx->chunkSize <= 0) {
         mprPutStringToBuf(buf, "\r\n");

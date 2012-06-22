@@ -14,7 +14,7 @@
 #if BIT_FEATURE_CGI
 /************************************ Locals ***********************************/
 
-#define MA_CGI_SEEN_HEADER          0x1
+#define MA_CGI_SEEN_HEADER          0x1     /* Client header has been parsed */
 #define MA_CGI_FLOW_CONTROL         0x2     /* Output to client is flow controlled */
 
 /*********************************** Forwards *********************************/
@@ -132,6 +132,7 @@ static void startCgi(HttpQueue *q)
             (strlen(baseName) > 4 && strcmp(&baseName[strlen(baseName) - 4], "-nph") == 0)) {
         /* Pretend we've seen the header for Non-parsed Header CGI programs */
         cmd->userFlags |= MA_CGI_SEEN_HEADER;
+        tx->flags |= HTTP_TX_USE_OWN_HEADERS;
     }
     /*  
         Build environment variables
@@ -396,7 +397,9 @@ static ssize cgiCallback(MprCmd *cmd, int channel, void *data)
             httpFinalize(conn);
         }
     }
-    if (conn->state < HTTP_STATE_COMPLETE) {
+    if (conn->keepAliveCount < 0 && conn->state <= HTTP_STATE_CONNECTED) {
+        httpDestroyConn(conn);
+    } else if (conn->state < HTTP_STATE_COMPLETE) {
         if (cmd->pid && !(cmd->userFlags & MA_CGI_FLOW_CONTROL)) {
             mprLog(7, "CGI: @@@ enable CGI events for channel %d", channel);
             mprEnableCmdEvents(cmd, channel);
@@ -404,6 +407,7 @@ static ssize cgiCallback(MprCmd *cmd, int channel, void *data)
         if (conn->connectorq->count > 0) {
             httpEnableConnEvents(conn);
         }
+
     } else {
         httpPump(conn, NULL);
     }
