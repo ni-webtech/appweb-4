@@ -35,6 +35,7 @@
         <div class="contentRight">
             <h1>Quick Nav</h1>
             <ul>
+                <li><a href="#r4.1.0">Release 4.1.0</a></li>
                 <li><a href="#r4.0.0">Release 4.0.0</a></li>
                 <li><a href="#r3.3.3">Release 3.3.3</a></li>
                 <li><a href="#r2.4.2">Release 2.4.2</a></li>
@@ -61,17 +62,27 @@
             <p>The Appweb change log details the major features and changes for each release.</p>
             <p>See the Appweb <a href="http://github.com/embedthis/appweb-4/issues">issue database</a> for full 
             details of fixes. </p>
-            <!--
-            <a id="r2.1.0"></a>
-            <h2 class="section">Changes in 2.1.0</h2>
-            <h3>Major Features</h3>
+        
+            <a id="r4.1.0"></a>
+            <h2 class="section">Changes in 4.1.0</h2>
+            <h3>Minor Features</h3>
             <ul>
+                <li>Added ESP migrations</li>
+                <li>Added HttpOnly cookie management in httpSetCookie()</li>
+                <li>Xcode project to use unique output directory</li>
             </ul>
             <h3>Fixes</h3>
             <ul>
-                <li>Fix xcode project to use unique output directory</li>
+                <li>Xcode debug builds to include BIT_DEBUG</li>
+                <li>CGI NPH fixes to not augment CGI headers</li>
+                <li>HTTP/1.0 connection management</li>
+                <li>ESP MDB database JSON format error</li>
+                <li>PUT method response to include Etag and Location</li>
+                <li>Consuming body of failed requests to preserve keep-alive</li>
+                <li>Remove Content-Length in 304 (NotModified) responses</li>
+                <li>Http command --show displaying headers when no body in response</li>
             </ul>
-            -->
+
             <a id="r4.0.0"></a>
             <h2 class="section">Changes in 4.0.0</h2>
             <h3>Major Features</h3>

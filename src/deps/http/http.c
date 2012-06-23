@@ -804,9 +804,11 @@ static int reportResponse(HttpConn *conn, cchar *url, MprTime elapsed)
         app->success = 0;
     }
     if (conn->rx) {
+#if UNUSED
         if (!app->noout) {
             mprPrintf("\n");
         }
+#endif
         if (app->showHeaders) {
             responseHeaders = httpGetHeaders(conn);
             rx = conn->rx;
