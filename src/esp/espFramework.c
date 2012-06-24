@@ -152,16 +152,16 @@ void espDefineBase(EspRoute *eroute, EspProc baseProc)
 /*
     Path should be an app-relative path to the view file (relative-path.esp)
  */
-void espDefineView(HttpRoute *route, cchar *path, void *view)
+void espDefineView(EspRoute *eroute, cchar *path, void *view)
 {
     Esp         *esp;
 
-    mprAssert(route);
+    mprAssert(eroute);
     mprAssert(path && *path);
     mprAssert(view);
 
     esp = MPR->espService;
-	path = mprGetPortablePath(mprJoinPath(route->dir, path));
+	path = mprGetPortablePath(mprJoinPath(eroute->route->dir, path));
     mprAddKey(esp->views, path, view);
 }
 
@@ -244,6 +244,7 @@ cchar *espGetDir(HttpConn *conn)
 }
 
 
+//  MOB - rethink name espGetFlash
 cchar *espGetFlashMessage(HttpConn *conn, cchar *kind)
 {
     EspReq      *req;

@@ -319,7 +319,7 @@ void espRenderView(HttpConn *conn, cchar *name)
         if (!loadApp(conn, &updated)) {
             return;
         }
-    } else if (eroute->update /* UNUSED || !mprLookupModule(req->source) */) {
+    } else if (eroute->update) {
         /* Trim the drive for VxWorks where simulated host drives only exist on the target */
         source = req->source;
 #if VXWORKS
@@ -603,23 +603,6 @@ static EspRoute *cloneEspRoute(HttpRoute *route, EspRoute *parent)
 }
 
 
-#if UNUSED
-static void setSimpleDirs(EspRoute *eroute, HttpRoute *route)
-{
-    char    *dir;
-
-    /* Don't set cache dir here - keep inherited value */
-    dir = route->dir;
-    eroute->layoutsDir = dir;
-    eroute->controllersDir = dir;
-    eroute->dbDir = dir;
-    eroute->migrationsDir = dir;
-    eroute->viewsDir = dir;
-    eroute->staticDir = dir;
-}
-#endif
-
-
 static void setMvcDirs(EspRoute *eroute, HttpRoute *route)
 {
     char    *dir;
@@ -720,15 +703,6 @@ static void setRouteDirs(MaState *state, cchar *kind)
     if ((eroute = getEroute(state->route)) == 0) {
         return;
     }
-#if UNUSED
-    if (smatch(kind, "none")) {
-        setSimpleDirs(eroute, state->route);
-
-    } else if (smatch(kind, "simple")) {
-        setSimpleDirs(eroute, state->route);
-    }
-#endif
-
     if (smatch(kind, "mvc") || smatch(kind, "restful")) {
         setMvcDirs(eroute, state->route);
     }

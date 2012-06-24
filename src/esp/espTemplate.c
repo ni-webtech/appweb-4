@@ -258,11 +258,7 @@ bool espCompile(HttpConn *conn, cchar *source, cchar *module, cchar *cacheName, 
             Use layouts iff there is a source defined on the route. Only MVC/controllers based apps do this.
          */
         if (eroute->layoutsDir) {
-#if UNUSED
-        layout = mprSamePath(eroute->layoutsDir, route->dir) ? 0 : mprJoinPath(eroute->layoutsDir, "default.esp");
-#else
-        layout = mprJoinPath(eroute->layoutsDir, "default.esp");
-#endif
+            layout = mprJoinPath(eroute->layoutsDir, "default.esp");
         }
         if ((script = espBuildScript(route, page, source, cacheName, layout, &err)) == 0) {
             httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't build %s, error %s", source, err);
@@ -849,24 +845,6 @@ static cchar *getLibs(cchar *os)
     }
     return libs;
 }
-
-
-#if UNUSED
-static char *getLibpath(cchar *name)
-{
-    return mprNormalizePath(sfmt("%s/../%s", mprGetAppDir(), name)); 
-    eroute->
-         mprNormalizePath(mprJoinPath(mprGetAppDir(), "../inc")
-    return mprJoin
-#if DEBUG_IDE
-    //  MOB - not right for cross dev
-    return mprGetAppDir();
-#else
-    //  MOB - not right for cross dev
-    return mprNormalizePath(sfmt("%s/../%s", mprGetAppDir(), name)); 
-#endif
-}
-#endif
 
 
 static bool matchToken(cchar **str, cchar *token)

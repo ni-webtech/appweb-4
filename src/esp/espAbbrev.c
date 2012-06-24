@@ -101,7 +101,7 @@ void label(cchar *text, cchar *optionString)
 }
 
 
-void dropdown(cchar *name, cchar *choices, cchar *optionString) 
+void dropdown(cchar *name, EdiGrid *choices, cchar *optionString) 
 {
     espDropdown(getConn(), name, choices, optionString);
 }
@@ -151,6 +151,9 @@ void stylesheet(cchar *uri, cchar *optionString)
 
 void table(EdiGrid *grid, cchar *optionString)
 {
+    if (grid == 0) {
+        grid = getGrid();
+    }
     espTable(getConn(), grid, optionString);
 }
 
@@ -214,18 +217,6 @@ void dontAutoFinalize()
 {
     espSetAutoFinalizing(getConn(), 0);
 }
-
-
-#if UNUSED
-void error(cchar *fmt, ...)
-{
-    va_list     args;
-
-    va_start(args, fmt);
-    espSetFlashv(getConn(), "error", fmt, args);
-    va_end(args);
-}
-#endif
 
 
 void finalize()
@@ -670,17 +661,6 @@ bool updateRec(EdiRec *rec)
     return espUpdateRec(getConn(), rec);
 }
 
-
-#if UNUSED
-void warn(cchar *fmt, ...)
-{
-    va_list     args;
-
-    va_start(args, fmt);
-    espSetFlashv(getConn(), "warn", fmt, args);
-    va_end(args);
-}
-#endif
 
 #endif /* BIT_FEATURE_ESP */
 /*

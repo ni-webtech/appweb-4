@@ -841,11 +841,6 @@ static int runEspCommand(HttpRoute *route, cchar *command, cchar *csource, cchar
     if (err && *err) {
         mprRawLog(0, "%s\n", err);
     }
-#if UNUSED
-    if (err && *err && app->verbose) {
-        mprRawLog(0, "%s\n", err);
-    }
-#endif
     return 0;
 }
 

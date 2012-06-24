@@ -16,9 +16,6 @@ static char *defaultScripts[] = {
     "/js/jquery", 
     "/js/jquery.tablesorter",
     "/js/jquery.simplemodal",
-#if UNUSED && KEEP
-    "/js/jquery.treeview",
-#endif
     "/js/jquery.esp",
     0,
 };
@@ -26,9 +23,6 @@ static char *defaultScripts[] = {
 static char *defaultStylesheets[] = {
     "/layout.css", 
     "/themes/default.css", 
-#if UNUSED && KEEP
-    "/js/treeview.css", 
-#endif
     0,
 };
 
@@ -218,7 +212,8 @@ void espChart(HttpConn *conn, EdiGrid *grid, cchar *optionString)
 
 /*
     checkbox field 
-    checkedValue Value for which the checkbox will be checked. Defaults to true.
+
+    checkedValue -- Value for which the checkbox will be checked. Defaults to true.
     Example:
         checkbox("admin", "true")
  */
@@ -389,22 +384,28 @@ void espLabel(HttpConn *conn, cchar *text, cchar *optionString)
 
 
 /*
-    dropdown("priority", "{ low: 0, med: 1, high: 2 }", NULL)
-    dropdown("priority", "{ low: 0, med: 1, high: 2 }", "value='2'")   //  MOB - without a record
+    dropdown("priority", makeGrid("[{ id: 0, low: 0}, { id: 1, med: 1}, {id: 2, high: 2}]"), NULL)
+
+    Options can provide the defaultValue in a "value" property.
  */
-void espDropdown(HttpConn *conn, cchar *field, cchar *choices, cchar *optionString) 
+void espDropdown(HttpConn *conn, cchar *field, EdiGrid *choices, cchar *optionString) 
 {
     MprHash     *options;
-    MprKey      *kp;
-    cchar       *value, *selected;
+    cchar       *id, *currentValue, *selected, *value;
+    int         r;
 
     //  MOB -- this is not using choices
     options = httpGetOptions(optionString);
-    value = getValue(conn, field, options);
+    currentValue = getValue(conn, field, options);
+    field = httpGetOption(options, "field", "id");
+
     espRender(conn, "<select name='%s'%s>\r\n", field, map(conn, options));
-    for (kp = 0; (kp = mprGetNextKey(options, kp)) != 0; ) {
-        selected = (smatch(kp->data, value)) ? " selected='yes'" : "";
-        espRender(conn, "        <option value='%s'%s>%s</option>\r\n", kp->key, selected, kp->data);
+
+    for (r = 0; r < choices->nrecords; r++) {
+        id = ediGetField(choices->records[r], "id");
+        value = ediGetField(choices->records[r], field);
+        selected = (smatch(value, currentValue)) ? " selected='yes'" : "";
+        espRender(conn, "        <option value='%s'%s>%s</option>\r\n", id, selected, value);
     }
     espRender(conn, "    </select>");
 }
@@ -767,216 +768,6 @@ void espTree(HttpConn *conn, EdiGrid *grid, cchar *optionString)
 }
 
 //  MOB - render a partial view
-
-/************************************ Abbreviated Controls ****************************/ 
-#if MOVED 
-void alert(cchar *text, cchar *optionString)
-{
-    espAlert(eGetConn(), text, optionString);
-}
-
-
-void anchor(cchar *text, cchar *uri, cchar *optionString) 
-{
-    espAnchor(eGetConn(), text, uri, optionString);
-}
-
-
-void button(cchar *name, cchar *value, cchar *optionString)
-{
-    espButton(eGetConn(), name, value, optionString);
-}
-
-
-void buttonLink(cchar *text, cchar *uri, cchar *optionString)
-{
-    espButtonLink(eGetConn(), text, uri, optionString);
-}
-
-
-void chart(EdiGrid *grid, cchar *optionString)
-{
-    espChart(eGetConn(), grid, optionString);
-}
-
-
-void checkbox(cchar *field, cchar *checkedValue, cchar *optionString) 
-{
-    espCheckbox(eGetConn(), field, checkedValue, optionString);
-}
-
-
-void division(cchar *body, cchar *optionString) 
-{
-    espDivision(eGetConn(), body, optionString);
-}
-
-
-void endform() 
-{
-    espEndform(eGetConn());
-}
-
-
-void flash(cchar *kind, cchar *optionString)
-{
-    espFlash(eGetConn(), kind, optionString);
-}
-
-
-void form(void *record, cchar *optionString)
-{
-    HttpConn    *conn;
-
-    conn = eGetConn();
-    if (record == 0) {
-        record = conn->record;
-    }
-    espForm(conn, record, optionString); 
-}
-
-
-void icon(cchar *uri, cchar *optionString)
-{
-    espIcon(eGetConn(), uri, optionString);
-}
-
-
-void image(cchar *src, cchar *optionString)
-{
-    espImage(eGetConn(), src, optionString);
-}
-
-
-void input(cchar *name, cchar *optionString)
-{
-    espInput(eGetConn(), name, optionString);
-}
-
-
-void label(cchar *text, cchar *optionString)
-{
-    espLabel(eGetConn(), text, optionString);
-}
-
-
-void dropdown(cchar *name, cchar *choices, cchar *optionString) 
-{
-    espDropdown(eGetConn(), name, choices, optionString);
-}
-
-
-void mail(cchar *name, cchar *address, cchar *optionString) 
-{
-    espMail(eGetConn(), name, address, optionString);
-}
-
-
-void progress(cchar *data, cchar *optionString)
-{
-    espProgress(eGetConn(), data, optionString);
-}
-
-
-void radio(cchar *name, void *choices, cchar *optionString)
-{
-    espRadio(eGetConn(), name, choices, optionString);
-}
-
-
-void refresh(cchar *on, cchar *off, cchar *optionString)
-{
-    espRefresh(eGetConn(), on, off, optionString);
-}
-
-
-void script(cchar *uri, cchar *optionString)
-{
-    espScript(eGetConn(), uri, optionString);
-}
-
-
-void securityToken()
-{
-    espSecurityToken(eGetConn());
-}
-
-
-void stylesheet(cchar *uri, cchar *optionString) 
-{
-    espStylesheet(eGetConn(), uri, optionString);
-}
-
-
-void table(EdiGrid *grid, cchar *optionString)
-{
-    espTable(eGetConn(), grid, optionString);
-}
-
-
-void tabs(EdiRec *rec, cchar *optionString)
-{
-    espTabs(eGetConn(), rec, optionString);
-}
-
-
-void text(cchar *field, cchar *optionString)
-{
-    espText(eGetConn(), field, optionString);
-}
-
-
-void tree(EdiGrid *grid, cchar *optionString)
-{
-    espTree(eGetConn(), grid, optionString);
-}
-
-#endif
-/************************************ Misc ***********************************/
-
-#if UNUSED
-void error(cchar *fmt, ...)
-{
-    va_list     args;
-
-    va_start(args, fmt);
-    espNoticev(eGetConn(), "error", fmt, args);
-    va_end(args);
-}
-
-
-HttpConn *eGetConn()
-{
-    return espGetConn();
-}
-
-
-cchar *home()
-{
-    return espGetHome(eGetConn());
-}
-
-
-void inform(cchar *fmt, ...)
-{
-    va_list     args;
-
-    va_start(args, fmt);
-    espNoticev(eGetConn(), "inform", fmt, args);
-    va_end(args);
-}
-
-
-void warn(cchar *fmt, ...)
-{
-    va_list     args;
-
-    va_start(args, fmt);
-    espNoticev(eGetConn(), "warn", fmt, args);
-    va_end(args);
-}
-#endif
-
 
 /**************************************** Support *************************************/ 
 

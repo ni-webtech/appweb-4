@@ -301,12 +301,12 @@ extern void espDefineBase(EspRoute *eroute, EspProc baseProc);
 /**
     Define a view
     @description Views are ESP web pages that are executed to return presentation data back to the client.
-    @param route Http route object
+    @param eroute Esp route object
     @param path Path to the ESP view source code.
     @param viewProc EspViewPrococ callback procedure to invoke when the view is requested.
     @ingroup EspRoute
  */
-extern void espDefineView(HttpRoute *route, cchar *path, void *viewProc);
+extern void espDefineView(EspRoute *eroute, cchar *path, void *viewProc);
 
 /**
     Expand a compile or link command template
@@ -1690,12 +1690,12 @@ extern void espLabel(HttpConn *conn, cchar *text, cchar *options);
         form current record.  The field name is used to create the HTML input control name.
         If this call is used without a form control record, the actual data value should be supplied via the 
         options.value property.
-    @param choices Choices to select from. This is a JSON style set of properties. For example:
-        espDropdown(conn, "priority", "{ low: 0, med: 1, high: 2 }", NULL)
+    @param choices Choices to select from. This is a EdiGrid object. For example:
+        espDropdown(conn, "priority", makeGrid("[{ id: 0, low: 0}, { id: 1, med: 1}, {id: 2, high: 2}]"), NULL)
     @param options Extra options. See $EspControl for a list of the standard options.
     @ingroup EspControl
  */
-extern void espDropdown(HttpConn *conn, cchar *field, cchar *choices, cchar *options);
+extern void espDropdown(HttpConn *conn, cchar *field, EdiGrid *choices, cchar *options);
 
 /**
     Render a mail link.
@@ -1786,7 +1786,7 @@ extern void espStylesheet(HttpConn *conn, cchar *uri, cchar *options);
     @param options Optional extra options. See $View for a list of the standard options.
     @arg cell Boolean Set to "true" to make click or edit links apply per cell instead of per row. 
         The default is false.
-    @arg columns (Array|Object) The columns list is an object hash of column objects where each column entry is a
+    @arg columns Object The columns list is an object hash of column objects where each column entry is a
         hash of column options.  Column options:
     <ul>
         <li>align - Will right-align numbers by default</li>
@@ -1964,12 +1964,12 @@ extern void division(cchar *body, cchar *options);
         form current record.  The field name is used to create the HTML input control name.
         If this call is used without a form control record, the actual data value should be supplied via the 
         options.value property.
-    @param choices Choices to select from. This is a JSON style set of properties. For example:
-        espDropdown(conn, "priority", "{ low: 0, med: 1, high: 2 }", NULL)
+    @param choices Choices to select from. This is a EdiGrid object. For example:
+        espDropdown(conn, "priority", makeGrid("[{ id: 0, low: 0}, { id: 1, med: 1}, {id: 2, high: 2}]"), NULL)
     @param options Extra options. See $EspControl for a list of the standard options.
     @ingroup EspAbbrev
  */
-extern void dropdown(cchar *field, cchar *choices, cchar *options);
+extern void dropdown(cchar *field, EdiGrid *choices, cchar *options);
 
 /**
     Signify the end of an HTML form. 
@@ -2127,7 +2127,7 @@ extern void stylesheet(cchar *uri, cchar *options);
     @param options Optional extra options. See $View for a list of the standard options.
     @arg cell Boolean Set to "true" to make click or edit links apply per cell instead of per row. 
         The default is false.
-    @arg columns (Array|Object) The columns list is anobject hash of column objects where each column entry is 
+    @arg columns Object The columns list is an object hash of column objects where each column entry is 
         hash of column options.  Column options:
     <ul>
         <li>align - Will right-align numbers by default</li>
@@ -2252,17 +2252,6 @@ extern void destroySession();
     @ingroup EspAbbrev
  */
 extern void dontAutoFinalize();
-
-#if UNUSED
-/**
-    Set an error flash notification message.
-    @description Flash messages persist for only one request and are a convenient way to pass state information or 
-    feedback messages to the next request. 
-    @param fmt Printf style message format
-    @ingroup EspAbbrev
- */
-extern void error(cchar *fmt, ...);
-#endif
 
 /**
     Finalize the response.
