@@ -39,8 +39,8 @@ static void first() {
     flush();
 }
 
-ESP_EXPORT int esp_controller_demo(EspRoute *eroute, MprModule *module) {
-    HttpRoute   *route;
+ESP_EXPORT int esp_controller_demo(HttpRoute *route, MprModule *module) {
+    EspRoute    *eroute;
     cchar       *schema;
 
     schema = "{ \
@@ -55,7 +55,7 @@ ESP_EXPORT int esp_controller_demo(EspRoute *eroute, MprModule *module) {
             ], \
         }, \
     ";
-    route = eroute->route;
+    eroute = route->eroute;
     eroute->edi = ediOpen(schema, "mdb", EDI_LITERAL);
 
 #if UNUSED
@@ -67,8 +67,8 @@ ESP_EXPORT int esp_controller_demo(EspRoute *eroute, MprModule *module) {
     EdiRec *rec = makeRec("{ id: 1, title: 'Message One', body: 'Line one' }");
 #endif
 
-    espDefineAction(eroute, "demo-list", list);
-    espDefineAction(eroute, "demo-cmd-restart", restart);
-    espDefineAction(eroute, "demo-cmd-first", first);
+    espDefineAction(route, "demo-list", list);
+    espDefineAction(route, "demo-cmd-restart", restart);
+    espDefineAction(route, "demo-cmd-first", first);
     return 0;
 }

@@ -281,32 +281,32 @@ extern char *espBuildScript(HttpRoute *route, cchar *page, cchar *path, cchar *c
 /**
     Define an action
     @description Actions are C procedures that are invoked when specific URIs are routed to the controller/action pair.
-    @param eroute EspRoute object
+    @param route HttpRoute object
     @param targetKey Target key used to select the action in a HttpRoute target. This is typically a URI prefix.
     @param actionProc EspProc callback procedure to invoke when the action is requested.
     @ingroup EspRoute
  */
-extern void espDefineAction(EspRoute *eroute, cchar *targetKey, void *actionProc);
+extern void espDefineAction(HttpRoute *route, cchar *targetKey, void *actionProc);
 
 /**
     Define a base function to invoke for all controller actions.
     @description A base function can be defined that will be called before calling any controller action. This
         emulates a super class constructor.
-    @param eroute EspRoute object
+    @param route HttpRoute object
     @param baseProc Function to call just prior to invoking a controller action.
     @ingroup EspRoute
  */
-extern void espDefineBase(EspRoute *eroute, EspProc baseProc);
+extern void espDefineBase(HttpRoute *route, EspProc baseProc);
 
 /**
     Define a view
     @description Views are ESP web pages that are executed to return presentation data back to the client.
-    @param eroute Esp route object
+    @param route Http route object
     @param path Path to the ESP view source code.
     @param viewProc EspViewPrococ callback procedure to invoke when the view is requested.
     @ingroup EspRoute
  */
-extern void espDefineView(EspRoute *eroute, cchar *path, void *viewProc);
+extern void espDefineView(HttpRoute *route, cchar *path, void *viewProc);
 
 /**
     Expand a compile or link command template
@@ -341,6 +341,8 @@ extern char *espExpandCommand(EspRoute *eroute, cchar *command, cchar *source, c
     Internal
  */
 extern void espManageEspRoute(EspRoute *eroute, int flags);
+extern bool espModuleIsStale(cchar *source, cchar *module, int *recompile);
+extern bool espUnloadModule(cchar *module, MprTime timeout);
 
 /********************************** Session ***********************************/
 /**
@@ -2071,7 +2073,7 @@ extern void progress(cchar *progress, cchar *options);
         If this call is used without a form control record, the actual data value should be supplied via the 
         options.value property.
     @param choices Choices to select from. This is a JSON style set of properties. For example:
-        espRadio(conn, "priority", "{ low: 0, med: 1, high: 2, }", NULL)
+        radio("priority", "{ low: 0, med: 1, high: 2, }", NULL)
     @param options Extra options. See $EspControl for a list of the standard options.
     @ingroup EspAbbrev
  */

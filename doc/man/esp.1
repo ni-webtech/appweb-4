@@ -3,28 +3,34 @@
 esp \- ESP Application Generator for Server-Side Web Applications.
 .SH SYNOPSIS
 .B esp
+[\fI--apply]\fR] 
 [\fI--chdir dir]\fR] 
 [\fI--config configFile]\fR] 
 [\fI--database DB]\fR] 
 [\fI--flat\fR]
+[\fI--keep\fR]
 [\fI--listen [ip:]port\fR]
 [\fI--log logFile:level\fR]
 [\fI--overwrite\fR]
 [\fI--quiet\fR]
+[\fI--platform os-arch-profile\fR]
+[\fI--rebuild\fR]
 [\fI--routeName name\fR]
 [\fI--routePrefix prefix\fR]
 [\fI--verbose\fR]
+[\fI--why\fR]
 commands ...
 .SH ""
 .B Commands:
  esp clean
  esp compile
- esp compile controller name
- esp compile path/*.esp
+ esp compile [pathFilters...]
  esp generate app name
  esp generate controller name [action [, action] ...]
+ esp generate migration description model [field:type [, field:type] ...]
  esp generate scaffold model [field:type [, field:type] ...]
  esp generate table name model [field:type [, field:type] ...]
+ esp migrate [forward|backward|NNN]
  esp run
 .SH DESCRIPTION
 The \fBesp\fR command generates, manages and runs ESP web applications.
@@ -47,15 +53,16 @@ configuration and essential script files. For example:
 This will will create a set of directories which have the following meaning: 
 
 .RS 5
- controllers    - Controller source
  cache          - Cache directory for compiled content
+ controllers    - Controller source
  db             - Databases and scripts
+ db/migrations  - Databases migration modules
  layouts        - Web page layout files
- views          - View source files
  static         - Static web directory
  static/images  - Public images
  static/js      - Client side JavaScripts
  static/themes  - Application HTML themes
+ views          - View source files
 .RE
 .PP
 Most of these directories are initially empty, but may be used over time. ESP follows conventions
@@ -153,9 +160,16 @@ To run your application:
 .SH CLEANING
 To clean all generated module files:
 .RS 5
-
  \fBesp clean\fR
 .RE
+
+.SH MIGRATIONS
+Migration files can be run via the \fBesp migrate\fR command. With no other parameters, the command will run
+all migrations that have not yet been applied to the database. You can also use \fBesp migrate forward\fR to
+apply apply the next unapplied migration. Similarly \fBesp migrate backward\fR will reverse the last applied
+migration. You can also use \fBesp migrate NNN\fR to migrate forward or backward to a specific migration, where NNN
+is the migration sequence number at the start of the migration file name.
+.PP
 .SH COMMANDS
 .PP 
 esp has the following command usage patterns:
@@ -187,6 +201,10 @@ Use the specified database provider. Set to "mdb" or "sqlite".
 \fB\--flat\fR
 Compile the application flat into a single shared library file.
 .TP 6
+\fB\--keep\fR
+Keep intermediate source files in the cache directory. This overrides the 
+EspKeepSource setting in the appweb.conf file.
+.TP 6
 \fB\--listen [ip:]port\fR
 Define the listening endpoint address. This will be used when generating an application. The value
 will be patched into the generated appweb.conf configuration file.
@@ -202,6 +220,15 @@ previously generated files.
 \fB\--quiet\fR
 Suppress diagnostic trace to the console.
 .TP 6
+\fB\--platform os-arch-profile\fR
+Target platform configuration to build for.
+.TP 6
+\fB\--rebuild\fR
+Force a recompile of all items when used with the compile command. 
+.TP 6
+\fB\--reverse\fR
+Reverse the application of migrations.
+.TP 6
 \fB\--routeName name\fR
 This selects the Appweb route by name that will be used for the ESP configuration. The ESP directory names, 
 and compilation commands are determined by the ESP configuration drawn from the specified route. The default is the
@@ -214,6 +241,9 @@ first route with the ESP handler defined in appweb.conf.
 .TP 6
 \fB\--verbose\fR or \fB\-v\fR
 Run in verbose mode and trace actions to the console.
+.TP 6
+\fB\--why\fR or \fB\-w\fR
+Explain why a resource was or was not compiled.
 .PP
 .SH "REPORTING BUGS"
 Report bugs to dev@embedthis.com.

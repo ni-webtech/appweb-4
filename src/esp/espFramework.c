@@ -122,13 +122,13 @@ EdiRec *espCreateRec(HttpConn *conn, cchar *tableName, MprHash *params)
 }
 
 
-void espDefineAction(EspRoute *eroute, cchar *target, void *actionProc)
+void espDefineAction(HttpRoute *route, cchar *target, void *actionProc)
 {
     EspAction   *action;
-    HttpRoute   *route;
+    EspRoute    *eroute;
     Esp         *esp;
 
-    mprAssert(eroute);
+    mprAssert(route);
     mprAssert(target && *target);
     mprAssert(actionProc);
 
@@ -138,13 +138,17 @@ void espDefineAction(EspRoute *eroute, cchar *target, void *actionProc)
     }
     action->actionProc = actionProc;
     if (target) {
+        eroute = route->eroute;
         mprAddKey(esp->actions, mprJoinPath(eroute->controllersDir, target), action);
     }
 }
 
 
-void espDefineBase(EspRoute *eroute, EspProc baseProc)
+void espDefineBase(HttpRoute *route, EspProc baseProc)
 {
+    EspRoute    *eroute;
+
+    eroute = route->eroute;
     eroute->controllerBase = baseProc;
 }
 
@@ -152,16 +156,15 @@ void espDefineBase(EspRoute *eroute, EspProc baseProc)
 /*
     Path should be an app-relative path to the view file (relative-path.esp)
  */
-void espDefineView(EspRoute *eroute, cchar *path, void *view)
+void espDefineView(HttpRoute *route, cchar *path, void *view)
 {
     Esp         *esp;
 
-    mprAssert(eroute);
     mprAssert(path && *path);
     mprAssert(view);
 
     esp = MPR->espService;
-	path = mprGetPortablePath(mprJoinPath(eroute->route->dir, path));
+	path = mprGetPortablePath(mprJoinPath(route->dir, path));
     mprAddKey(esp->views, path, view);
 }
 
@@ -436,6 +439,56 @@ EdiRec *espMakeRec(cchar *contents)
 bool espMatchParam(HttpConn *conn, cchar *var, cchar *value)
 {
     return httpMatchParam(conn, var, value);
+}
+
+
+/*
+    Test if a module has been updated (is stale).
+    This will unload the module if it is stale and loaded 
+ */
+bool espModuleIsStale(cchar *source, cchar *module, int *recompile)
+{
+    MprModule   *mp;
+    MprPath     sinfo, minfo;
+
+    *recompile = 0;
+    mprGetPathInfo(module, &minfo);
+    if (!minfo.valid) {
+        *recompile = 1;
+        if ((mp = mprLookupModule(source)) != 0) {
+            if (!espUnloadModule(source, 0)) {
+                mprError("Can't unload module %s. Connections still open. Continue using old version.", source);
+                return 0;
+            }
+        }
+        return 1;
+    }
+    mprGetPathInfo(source, &sinfo);
+    /*
+        Use >= to ensure we reload. This may cause redundant reloads as mtime has a 1 sec granularity.
+     */
+    if (sinfo.valid && sinfo.mtime >= minfo.mtime) {
+        if ((mp = mprLookupModule(source)) != 0) {
+            if (!espUnloadModule(source, 0)) {
+                mprError("Can't unload module %s. Connections still open. Continue using old version.", source);
+                return 0;
+            }
+        }
+        *recompile = 1;
+        return 1;
+    }
+    if ((mp = mprLookupModule(source)) != 0) {
+        if (minfo.mtime > mp->modified) {
+            /* Module file has been updated */
+            if (!espUnloadModule(source, 0)) {
+                mprError("Can't unload module %s. Connections still open. Continue using old version.", source);
+                return 0;
+            }
+            return 1;
+        }
+    }
+    /* Loaded module is current */
+    return 0;
 }
 
 
@@ -877,6 +930,36 @@ void espShowRequest(HttpConn *conn)
         }
         espRender(conn, "\r\n");
     }
+}
+
+
+/*
+    This is called when unloading a view or controller module
+ */
+bool espUnloadModule(cchar *module, MprTime timeout)
+{
+    MprModule   *mp;
+    MprTime     mark;
+    Esp         *esp;
+
+    /* MOB - should this suspend new requests */
+    if ((mp = mprLookupModule(module)) != 0) {
+        esp = MPR->espService;
+        mark = mprGetTime();
+        do {
+            lock(esp);
+            /* Own request will count as 1 */
+            if (esp->inUse <= 1) {
+                mprUnloadModule(mp);
+                unlock(esp);
+                return 1;
+            }
+            unlock(esp);
+            mprSleep(10);
+            /* Defaults to 10 secs */
+        } while (mprGetRemainingTime(mark, timeout) > 0);
+    }
+    return 0;
 }
 
 

@@ -48,14 +48,16 @@ typedef struct App {
     cchar       *base;                  /* Base filename */
     cchar       *entry;                 /* Module entry point */
 
-    int         apply;                  /* Apply migrations */ 
     int         error;                  /* Any processing error */
     int         flat;                   /* Combine all inputs into one, flat output */ 
+    int         keep;                   /* Keep source */ 
     int         minified;               /* Use minified JS files */
     int         overwrite;              /* Overwrite existing files if required */
     int         quiet;                  /* Don't trace progress */
+    int         rebuild;                /* Force a rebuild */
     int         reverse;                /* Reverse migrations */
     int         verbose;                /* Verbose mode */
+    int         why;                    /* Why rebuild */
 } App;
 
 static App       *app;                  /* Top level application object */
@@ -175,15 +177,15 @@ static void update() { \n\
 ";
 
 static cchar *ScaffoldTemplateFooter = "\
-ESP_EXPORT int esp_controller_${NAME}(EspRoute *eroute, MprModule *module) \n\
+ESP_EXPORT int esp_controller_${NAME}(HttpRoute *route, MprModule *module) \n\
 {\n\
-    espDefineAction(eroute, \"${NAME}-create\", create);\n\
-    espDefineAction(eroute, \"${NAME}-destroy\", destroy);\n\
-    espDefineAction(eroute, \"${NAME}-edit\", edit);\n\
-    espDefineAction(eroute, \"${NAME}-init\", init);\n\
-    espDefineAction(eroute, \"${NAME}-list\", list);\n\
-    espDefineAction(eroute, \"${NAME}-show\", show);\n\
-    espDefineAction(eroute, \"${NAME}-update\", update);\n\
+    espDefineAction(route, \"${NAME}-create\", create);\n\
+    espDefineAction(route, \"${NAME}-destroy\", destroy);\n\
+    espDefineAction(route, \"${NAME}-edit\", edit);\n\
+    espDefineAction(route, \"${NAME}-init\", init);\n\
+    espDefineAction(route, \"${NAME}-list\", list);\n\
+    espDefineAction(route, \"${NAME}-show\", show);\n\
+    espDefineAction(route, \"${NAME}-update\", update);\n\
 ${DEFINE_ACTIONS}    return 0;\n\
 }\n";
 
@@ -276,6 +278,8 @@ static void run(int argc, char **argv);
 static void trace(cchar *tag, cchar *fmt, ...);
 static void usageError();
 static bool validTarget(cchar *target);
+static void vtrace(cchar *tag, cchar *fmt, ...);
+static void why(cchar *path, cchar *fmt, ...);
 
 /*********************************** Code *************************************/
 
@@ -345,6 +349,9 @@ int main(int argc, char **argv)
         } else if (smatch(argp, "flat") || smatch(argp, "f")) {
             app->flat = 1;
 
+        } else if (smatch(argp, "keep") || smatch(argp, "k")) {
+            app->keep = 1;
+
         } else if (smatch(argp, "listen") || smatch(argp, "l")) {
             if (argind >= argc) {
                 usageError();
@@ -375,6 +382,9 @@ int main(int argc, char **argv)
         } else if (smatch(argp, "quiet") || smatch(argp, "q")) {
             app->quiet = 1;
 
+        } else if (smatch(argp, "rebuild") || smatch(argp, "r")) {
+            app->rebuild = 1;
+
         } else if (smatch(argp, "routeName")) {
             if (argind >= argc) {
                 usageError();
@@ -396,6 +406,9 @@ int main(int argc, char **argv)
         } else if (smatch(argp, "version") || smatch(argp, "V")) {
             mprPrintf("%s %s-%s\n", mprGetAppTitle(), BIT_VERSION, BIT_NUMBER);
             exit(0);
+
+        } else if (smatch(argp, "why") || smatch(argp, "w")) {
+            app->why = 1;
 
         } else {
             fail("Unknown switch \"%s\"", argp);
@@ -766,11 +779,13 @@ static void clean(MprList *routes)
         eroute = route->eroute;
         if (eroute->cacheDir) {
             trace("clean", "Route \"%s\" at %s", route->name, route->dir);
-            files = mprGetPathFiles(eroute->cacheDir, 0);
+            files = mprGetPathFiles(eroute->cacheDir, MPR_PATH_RELATIVE);
             for (nextFile = 0; (dp = mprGetNextItem(files, &nextFile)) != 0; ) {
                 path = mprJoinPath(eroute->cacheDir, dp->name);
-                trace("clean", "%s", path);
-                mprDeletePath(path);
+                if (mprPathExists(path, R_OK)) {
+                    trace("clean", "%s", path);
+                    mprDeletePath(path);
+                }
             }
         }
     }
@@ -851,6 +866,7 @@ static void compileFile(HttpRoute *route, cchar *source, int kind)
     cchar       *script, *page, *layout, *data, *prefix;
     char        *err;
     ssize       len;
+    int         recompile;
 
     if (app->error) {
         return;
@@ -866,6 +882,17 @@ static void compileFile(HttpRoute *route, cchar *source, int kind)
     }
     app->cacheName = mprGetMD5WithPrefix(source, slen(source), prefix);
     app->module = mprNormalizePath(sfmt("%s/%s%s", eroute->cacheDir, app->cacheName, BIT_SHOBJ));
+
+    if (app->rebuild) {
+        why(source, "due to forced rebuild");
+    } else if (!espModuleIsStale(source, app->module, &recompile)) {
+        why(source, "is up to date");
+        return;
+    } else if (mprPathExists(app->module, R_OK)) {
+        why(source, "has been modified");
+    } else {
+        why(source, "%s is missing", app->module);
+    }
 
     if (kind & (ESP_CONTROLLER | ESP_MIGRATION)) {
         app->csource = source;
@@ -935,7 +962,7 @@ static void compileFile(HttpRoute *route, cchar *source, int kind)
             mprDeletePath(mprJoinPathExt(mprTrimPathExt(app->module), BIT_OBJ));
 #endif
         }
-        if (!eroute->keepSource && (kind & (ESP_VIEW | ESP_PAGE))) {
+        if (!eroute->keepSource && !app->keep && (kind & (ESP_VIEW | ESP_PAGE))) {
             mprDeletePath(app->csource);
         }
     }
@@ -996,7 +1023,6 @@ static void compile(MprList *routes)
 static bool validTarget(cchar *target)
 {
     MprKey  *kp;
-    cchar   *tp;
 
     if (app->targets == 0 || mprGetHashLength(app->targets) == 0) {
         return 1;
@@ -1240,7 +1266,7 @@ static void generateController(HttpRoute *route, int argc, char **argv)
     defines = sclone("");
     for (i = 1; i < argc; i++) {
         action = argv[i];
-        defines = sjoin(defines, sfmt("    espDefineAction(eroute, \"%s-%s\", %s);\n", name, action, action), NULL);
+        defines = sjoin(defines, sfmt("    espDefineAction(route, \"%s-%s\", %s);\n", name, action, action), NULL);
     }
     tokens = mprDeserialize(sfmt("{ NAME: %s, TITLE: %s, DEFINE_ACTIONS: '%s' }", name, title, defines));
 
@@ -1279,7 +1305,7 @@ static void generateScaffoldController(HttpRoute *route, int argc, char **argv)
         if (mprLookupKey(actions, action)) {
             continue;
         }
-        defines = sjoin(defines, sfmt("    espDefineAction(eroute, \"%s-%s\", %s);\n", name, action, action), NULL);
+        defines = sjoin(defines, sfmt("    espDefineAction(route, \"%s-%s\", %s);\n", name, action, action), NULL);
     }
     tokens = mprDeserialize(sfmt("{ NAME: %s, TITLE: %s, DEFINE_ACTIONS: '%s' }", name, title, defines));
 
@@ -1438,7 +1464,7 @@ static void generateScaffold(HttpRoute *route, int argc, char **argv)
 static void generate(int argc, char **argv)
 {
     HttpRoute   *route;
-    char        *kind, *dir;
+    char        *kind;
 
     if (argc < 2) {
         usageError();
@@ -1496,7 +1522,6 @@ static void migrate(HttpRoute *route, int argc, char **argv)
     MprDirEntry *dp;
     EspRoute    *eroute;
     Edi         *edi;
-    EdiGrid     *migrations;
     EdiRec      *mig;
     cchar       *command, *file;
     int         next, onlyOne, backward, found, i;
@@ -1957,20 +1982,22 @@ static void usageError(Mpr *mpr)
     mprPrintfError("\nESP Usage:\n\n"
     "  %s [options] [commands]\n\n"
     "  Options:\n"
-    "    --apply                    # Apply migrations\n"
     "    --chdir dir                # Change to the named directory first\n"
     "    --config configFile        # Use named config file instead appweb.conf\n"
     "    --database name            # Database provider 'mdb|sqlite' \n"
     "    --flat                     # Compile into a single module\n"
+    "    --keep                     # Keep intermediate source\n"
     "    --listen [ip:]port         # Listen on specified address \n"
     "    --log logFile:level        # Log to file file at verbosity level\n"
     "    --overwrite                # Overwrite existing files \n"
-    "    --reverse                  # Reverse migrations\n"
     "    --quiet                    # Don't emit trace \n"
     "    --platform os-arch-profile # Target platform\n"
+    "    --rebuild                  # Force a rebuild\n"
+    "    --reverse                  # Reverse migrations\n"
     "    --routeName name           # Route name in appweb.conf to use \n"
     "    --routePrefix prefix       # Route prefix in appweb.conf to use \n"
     "    --verbose                  # Emit verbose trace \n"
+    "    --why                      # Why compile or skip\n"
     "\n"
     "  Commands:\n"
     "    esp clean\n"
@@ -2014,6 +2041,34 @@ static void trace(cchar *tag, cchar *fmt, ...)
         msg = sfmtv(fmt, args);
         tag = sfmt("[%s]", tag);
         mprRawLog(0, "%14s %s\n", tag, msg);
+        va_end(args);
+    }
+}
+
+
+static void vtrace(cchar *tag, cchar *fmt, ...)
+{
+    va_list     args;
+    char        *msg;
+
+    if (app->verbose && !app->quiet) {
+        va_start(args, fmt);
+        msg = sfmtv(fmt, args);
+        tag = sfmt("[%s]", tag);
+        mprRawLog(0, "%14s %s\n", tag, msg);
+        va_end(args);
+    }
+}
+
+static void why(cchar *path, cchar *fmt, ...)
+{
+    va_list     args;
+    char        *msg;
+
+    if (app->why) {
+        va_start(args, fmt);
+        msg = sfmtv(fmt, args);
+        mprRawLog(0, "%14s %s %s\n", "[Why]", path, msg);
         va_end(args);
     }
 }

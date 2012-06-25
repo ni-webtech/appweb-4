@@ -28,10 +28,8 @@ static EspRoute *getEroute(HttpRoute *route);
 static int loadApp(HttpConn *conn, int *updated);
 static void manageEsp(Esp *esp, int flags);
 static void manageReq(EspReq *req, int flags);
-static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *recompile);
 static int  runAction(HttpConn *conn);
 static void setRouteDirs(MaState *state, cchar *kind);
-static bool unloadModule(cchar *module, MprTime timeout);
 static int unloadEsp(MprModule *mp);
 static bool viewExists(HttpConn *conn);
 
@@ -68,6 +66,7 @@ static void openEsp(HttpQueue *q)
             }
         }
         if (!eroute) {
+            //  MOB - should be saved for future similar requests (locking too)
             eroute = allocEspRoute(route);
             return;
         }
@@ -230,7 +229,7 @@ static int runAction(HttpConn *conn)
             return 0;
         }
         lock(req->esp);
-        if (moduleIsStale(conn, req->controllerPath, req->module, &recompile)) {
+        if (espModuleIsStale(req->controllerPath, req->module, &recompile)) {
             /*  WARNING: GC yield here */
             if (recompile && !espCompile(conn, req->controllerPath, req->module, req->cacheName, 0)) {
                 unlock(req->esp);
@@ -239,7 +238,7 @@ static int runAction(HttpConn *conn)
         }
         if (mprLookupModule(req->controllerPath) == 0) {
             req->entry = getControllerEntry(req->controllerName);
-            if ((mp = mprCreateModule(req->controllerPath, req->module, req->entry, eroute)) == 0) {
+            if ((mp = mprCreateModule(req->controllerPath, req->module, req->entry, route)) == 0) {
                 unlock(req->esp);
                 httpMemoryError(conn);
                 return 0;
@@ -333,7 +332,7 @@ void espRenderView(HttpConn *conn, cchar *name)
             return;
         }
         lock(req->esp);
-        if (moduleIsStale(conn, req->source, req->module, &recompile)) {
+        if (espModuleIsStale(req->source, req->module, &recompile)) {
             /* WARNING: this will allow GC */
             if (recompile && !espCompile(conn, req->source, req->module, req->cacheName, 1)) {
                 unlock(req->esp);
@@ -407,7 +406,7 @@ static int loadApp(HttpConn *conn, int *updated)
         if (eroute->update) {
             mprGetPathInfo(mp->path, &minfo);
             if (minfo.valid && mp->modified < minfo.mtime) {
-                if (!unloadModule(eroute->appModuleName, 0)) {
+                if (!espUnloadModule(eroute->appModuleName, 0)) {
                     mprError("Can't unload module %s. Connections still open. Continue using old version.", 
                         eroute->appModuleName);
                     /* Can't unload - so keep using old module */
@@ -436,56 +435,6 @@ static int loadApp(HttpConn *conn, int *updated)
 
 
 /*
-    Test if a module has been updated (is stale).
-    This will unload the module if it is stale and loaded 
- */
-static bool moduleIsStale(HttpConn *conn, cchar *source, cchar *module, int *recompile)
-{
-    MprModule   *mp;
-    MprPath     sinfo, minfo;
-
-    *recompile = 0;
-    mprGetPathInfo(module, &minfo);
-    if (!minfo.valid) {
-        *recompile = 1;
-        if ((mp = mprLookupModule(source)) != 0) {
-            if (!unloadModule(source, 0)) {
-                mprError("Can't unload module %s. Connections still open. Continue using old version.", source);
-                return 0;
-            }
-        }
-        return 1;
-    }
-    mprGetPathInfo(source, &sinfo);
-    /*
-        Use >= to ensure we reload. This may cause redundant reloads as mtime has a 1 sec granularity.
-     */
-    if (sinfo.valid && sinfo.mtime >= minfo.mtime) {
-        if ((mp = mprLookupModule(source)) != 0) {
-            if (!unloadModule(source, 0)) {
-                mprError("Can't unload module %s. Connections still open. Continue using old version.", source);
-                return 0;
-            }
-        }
-        *recompile = 1;
-        return 1;
-    }
-    if ((mp = mprLookupModule(source)) != 0) {
-        if (minfo.mtime > mp->modified) {
-            /* Module file has been updated */
-            if (!unloadModule(source, 0)) {
-                mprError("Can't unload module %s. Connections still open. Continue using old version.", source);
-                return 0;
-            }
-            return 1;
-        }
-    }
-    /* Loaded module is current */
-    return 0;
-}
-
-
-/*
     Test if the the required view page exists
  */
 static bool viewExists(HttpConn *conn)
@@ -501,34 +450,6 @@ static bool viewExists(HttpConn *conn)
     
     source = mprJoinPathExt(mprJoinPath(eroute->viewsDir, rx->target), ".esp");
     return mprPathExists(source, R_OK);
-}
-
-
-/*
-    This is called when unloading a view or controller module
- */
-static bool unloadModule(cchar *module, MprTime timeout)
-{
-    MprModule   *mp;
-    MprTime     mark;
-
-    /* MOB - should this suspend new requests */
-    if ((mp = mprLookupModule(module)) != 0) {
-        mark = mprGetTime();
-        do {
-            lock(esp);
-            /* Own request will count as 1 */
-            if (esp->inUse <= 1) {
-                mprUnloadModule(mp);
-                unlock(esp);
-                return 1;
-            }
-            unlock(esp);
-            mprSleep(10);
-            /* Defaults to 10 secs */
-        } while (mprGetRemainingTime(mark, timeout) > 0);
-    }
-    return 0;
 }
 
 

@@ -559,8 +559,8 @@ char *espBuildScript(HttpRoute *route, cchar *page, cchar *path, cchar *cacheNam
             "static void %s(HttpConn *conn) {\n"\
             "%s%s%s"\
             "}\n\n"\
-            "%s int esp_%s(EspRoute *eroute, MprModule *module) {\n"\
-            "   espDefineView(eroute, \"%s\", %s);\n"\
+            "%s int esp_%s(HttpRoute *route, MprModule *module) {\n"\
+            "   espDefineView(route, \"%s\", %s);\n"\
             "   return 0;\n"\
             "}\n",
             path, global, cacheName, start, body, end, ESP_EXPORT_STRING, cacheName, mprGetPortablePath(path), cacheName);

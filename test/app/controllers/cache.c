@@ -57,26 +57,25 @@ static void manual() {
 }
 
 static void update() { 
-    cchar   *data;
-    data = sfmt("{ when: %Ld, uri: '%s', query: '%s' }\r\n", mprGetTicks(), getUri(), getQuery());
+    cchar   *data = sfmt("{ when: %Ld, uri: '%s', query: '%s' }\r\n", mprGetTicks(), getUri(), getQuery());
     espUpdateCache(getConn(), "/cache/manual", data, 86400);
     render("done");
 }
 
-ESP_EXPORT int esp_controller_cache(EspRoute *eroute, MprModule *module) {
+ESP_EXPORT int esp_controller_cache(HttpRoute *route, MprModule *module) {
     HttpRoute   *rp;
 
-    espDefineAction(eroute, "cache-cmd-api", api);
-    espDefineAction(eroute, "cache-cmd-big", big);
-    espDefineAction(eroute, "cache-cmd-medium", medium);
-    espDefineAction(eroute, "cache-cmd-clear", clear);
-    espDefineAction(eroute, "cache-cmd-client", client);
-    espDefineAction(eroute, "cache-cmd-huge", huge);
-    espDefineAction(eroute, "cache-cmd-manual", manual);
-    espDefineAction(eroute, "cache-cmd-update", update);
+    espDefineAction(route, "cache-cmd-api", api);
+    espDefineAction(route, "cache-cmd-big", big);
+    espDefineAction(route, "cache-cmd-medium", medium);
+    espDefineAction(route, "cache-cmd-clear", clear);
+    espDefineAction(route, "cache-cmd-client", client);
+    espDefineAction(route, "cache-cmd-huge", huge);
+    espDefineAction(route, "cache-cmd-manual", manual);
+    espDefineAction(route, "cache-cmd-update", update);
 
     //  This will cache the next request after the first one that triggered the loading of this controller
-    rp = httpLookupRoute(eroute->route->host, "/app/*/default");
+    rp = httpLookupRoute(route->host, "/app/*/default");
     espCache(rp, "/cache/api", 0, 0);
     return 0;
 }
