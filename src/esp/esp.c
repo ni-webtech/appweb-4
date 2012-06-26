@@ -1234,7 +1234,7 @@ static void createMigration(HttpRoute *route, cchar *name, cchar *table, cchar *
     MprHash     *tokens;
     MprList     *files;
     MprDirEntry *dp;
-    cchar       *dir, *seq, *forward, *backward, *data, *path, *def, *field, *fileComment, *tail;
+    cchar       *dir, *seq, *forward, *backward, *data, *path, *def, *field, *tail;
     char        *typeString;
     int         i, type, flags, next;
 
@@ -1318,9 +1318,8 @@ static void generateController(HttpRoute *route, int argc, char **argv)
 static void generateScaffoldController(HttpRoute *route, int argc, char **argv)
 {
     EspRoute    *eroute;
-    MprHash     *tokens, *actions;
-    cchar       *defines, *name, *path, *data, *title, *action;
-    int         i;
+    MprHash     *tokens;
+    cchar       *defines, *name, *path, *data, *title;
 
     if (app->error) {
         return;
@@ -1328,7 +1327,6 @@ static void generateScaffoldController(HttpRoute *route, int argc, char **argv)
     eroute = route->eroute;
     name = sclone(argv[0]);
     title = spascal(name);
-    actions = mprCreateHashFromWords("create destroy edit init list show update");
 
     /*
         Create controller
@@ -1336,6 +1334,7 @@ static void generateScaffoldController(HttpRoute *route, int argc, char **argv)
     path = mprJoinPathExt(mprJoinPath(eroute->controllersDir, name), ".c");
     defines = sclone("");
 #if UNUSED
+    actions = mprCreateHashFromWords("create destroy edit init list show update");
     for (i = 1; i < argc; i++) {
         action = argv[i];
         if (mprLookupKey(actions, action)) {
