@@ -8478,6 +8478,7 @@ typedef struct Mpr {
     MprFile         *stdError;              /**< Standard error file */
     MprFile         *stdInput;              /**< Standard input file */
     MprFile         *stdOutput;             /**< Standard output file */
+    MprTime         start;                  /**< When the MPR started */
     MprTime         exitTimeout;            /**< Request timeout when exiting */
     char            *pathEnv;               /**< Cached PATH env var. Used by MprCmd */
     char            *name;                  /**< Product name */
