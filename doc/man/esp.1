@@ -79,6 +79,31 @@ Esp will also create some files which have the following meaning:
  static/themes/default.css - Default theme CSS file
  static/js/jquery.js       - jQuery client side script
 .RE
+.SH GENERATING MIGRATIONS
+Migrations are generated code modules that manage portions of the database. Migrations are used to create tables, 
+initialize with test data and optionally destroy tables. Migrations are typically generated and then hand-edited to 
+include relevant initialization or test data. Migrations are useful to quickly recreate the database with the required
+tables and data.
+.RS 5
+
+ \fBesp generate migration DESCRIPTION TABLE [field:type ...]\fR
+.RE
+
+The DESCRIPTION is used to name the migration which is created in the \fBdb/migrations\fR directory. A migration 
+is given a unique ordered sequence number and the description is appended to this number. The description is mapped
+where spaces are changed to "_" characters. When migrations are run, they are run in sequence number order.
+.PP
+If field:type values are supplied, the database migration will include code to create a column for each 
+specified field of the requested type. The valid database types are: blob, boolean, date, float, integer, string, 
+and text.
+
+.SH GENERATING TABLES
+To generate a database table without creating a migration:
+.RS 5
+
+ \fBesp generate table TABLE [field:type ...]\fR
+.RE
+
 .SH GENERATING CONTROLLERS
 Controllers are the primary mechanism for responding to client requests. To generate a controller, 
 run:
@@ -91,36 +116,30 @@ This will create a controller of the requested name. It will create a controller
 directory. If action names are requested, the controller source will define an action method for each
 name. If not action names are requested, esp will define a default action named \fBindex\fR.
 You can edit the controller source to meet your needs.
-.SH GENERATING TABLES
-To generate a database table:
-.RS 5
-
- \fBesp generate table NAME [field:type ...]\fR
-.RE
-
-If field:type values are supplied, the database migration will include code to create a column for each 
-specified field of the requested type. The valid database types are: blob, boolean, date, float, integer, string, 
-and text.
 
 .SH GENERATING SCAFFOLDS
 .PP
-A scaffold is a generated controller, database table, and set of views that provides add, edit 
+A scaffold is a generated controller, database migration, and set of views that provides add, edit 
 and list functionality for the database table.
 Scaffolds are useful to quickly generate chunks of the application and prototype web pages and actions for 
 managing a database table.
 To generate a scaffold:
 .RS 5
 
- \fBesp generate scaffold MODEL [field:type ...]\fR
+ \fBesp generate scaffold TABLE [field:type ...]\fR
 .RE
 .PP
 This will create a scaffold for the specified database table and will generate a controller of the same name.
-If field:type values are supplied, the database migration will include code to create a column for each 
-specified field of the requested type. The valid database types are: blob, boolean, date, float, integer, string,
-and text.
-The scaffold will include an edit action and view that provides add and edit capability. The list action and view, 
-provides the ability to list the database table rows and select an entry to edit.
 .PP
+If field:type values are supplied, a database migration will be created with code to create a column for each 
+specified field of the requested type. The valid database types are: blob, boolean, date, float, integer, string,
+and text. The migration will use the name "create_scaffold_TABLE" and will be created under 
+the \fBdb/migrations\fR direcvtory.
+.PP
+The scaffold will include an edit action and view page that provides add and edit capability. The list action and view, 
+provides the ability to list the table rows and select an entry to edit.
+.PP
+
 .SH COMPILING
 Esp compiles controllers and ESP pages native code shared libraries. These are then loaded and
 run by ESP in response to incoming client requests. Code is compiled only once but can be run many times to

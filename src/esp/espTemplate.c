@@ -498,7 +498,7 @@ char *espBuildScript(HttpRoute *route, cchar *page, cchar *path, cchar *cacheNam
             break;
 
         case ESP_TOK_FIELD:
-            /* @#field */
+            /* @#field -- field in the current record */
             token = strim(token, " \t\r\n;", MPR_TRIM_BOTH);
             body = sjoin(body, "  espRender(conn, getField(\"", token, "\"));\n", NULL);
             break;
@@ -509,10 +509,10 @@ char *espBuildScript(HttpRoute *route, cchar *page, cchar *path, cchar *cacheNam
             break;
 
         case ESP_TOK_VAR:
-            /* @@var */
+            /* @@var -- variable in (param || session) */
             token = strim(token, " \t\r\n;", MPR_TRIM_BOTH);
-            /* espRenderParam uses espRenderSafeString */
-            body = sjoin(body, "  espRenderParam(conn, \"", token, "\");\n", NULL);
+            /* espRenderVar renders (param || session). It uses espRenderSafeString */
+            body = sjoin(body, "  espRenderVar(conn, \"", token, "\");\n", NULL);
             break;
 
         default:

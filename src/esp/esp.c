@@ -56,6 +56,7 @@ typedef struct App {
     int         quiet;                  /* Don't trace progress */
     int         rebuild;                /* Force a rebuild */
     int         reverse;                /* Reverse migrations */
+    int         show;                   /* Show compilation commands */
     int         verbose;                /* Verbose mode */
     int         why;                    /* Why rebuild */
 } App;
@@ -64,6 +65,7 @@ static App       *app;                  /* Top level application object */
 static Esp       *esp;                  /* ESP control object */
 static Http      *http;                 /* HTTP service object */
 static MaAppweb  *appweb;               /* Appweb service object */
+static int       nextMigration;         /* Sequence number for next migration */
 
 /*
     CompileFile flags
@@ -222,26 +224,26 @@ static cchar *ScaffoldEditView =  "\
 ";
 
 
-#if UNUSED && KEEP
 static cchar *MigrationTemplate = "\
 /*\n\
     ${COMMENT}\n\
  */\n\
- #include \"esp-app.h\"\n\
+#include \"esp-app.h\"\n\
 \n\
 static int forward(Edi *db) {\n\
-${FORWARD}}\n\
+${FORWARD}    return 0;\n\
+}\n\
 \n\
 static int backward(Edi *db) {\n\
-${BACKWARD}}\n\
+${BACKWARD}    return 0;\n\
+}\n\
 \n\
-ESP_EXPORT int esp_migration_post(Esp *esp, MprModule *module)\n\
+ESP_EXPORT int esp_migration_${NAME}(Edi *db)\n\
 {\n\
-    espDefineMigration(\"${NAME}\", forward, backward);\n\
+    ediDefineMigration(db, forward, backward);\n\
     return 0;\n\
 }\n\
 ";
-#endif
 
 /***************************** Forward Declarations ***************************/
 
@@ -250,9 +252,10 @@ static void compile(MprList *routes);
 static void compileItems(HttpRoute *route);
 static void compileFlat(HttpRoute *route);
 static void copyEspDir(cchar *fromDir, cchar *toDir);
+static void createMigration(HttpRoute *route, cchar *name, cchar *table, cchar *comment, int fieldCount, char **fields);
 static HttpRoute *createRoute(cchar *dir);
 static void fail(cchar *fmt, ...);
-static bool findConfigFile();
+static bool findConfigFile(bool mvc);
 static bool findDefaultConfigFile();
 static MprHash *getTargets(int argc, char **argv);
 static HttpRoute *getMvcRoute();
@@ -264,16 +267,14 @@ static void generateAppDirs(HttpRoute *route);
 static void generateAppFiles(HttpRoute *route);
 static void generateAppConfigFile(HttpRoute *route);
 static void generateAppHeader(HttpRoute *route);
-#if UNUSED
 static void generateMigration(HttpRoute *route, int argc, char **argv);
-#endif
 static void initialize();
 static void makeEspDir(HttpRoute *route, cchar *dir);
 static void makeEspFile(cchar *path, cchar *data, cchar *msg);
 static void manageApp(App *app, int flags);
 static void migrate(HttpRoute *route, int argc, char **argv);
 static void process(int argc, char **argv);
-static bool readConfig();
+static bool readConfig(bool mvc);
 static void run(int argc, char **argv);
 static void trace(cchar *tag, cchar *fmt, ...);
 static void usageError();
@@ -398,6 +399,9 @@ int main(int argc, char **argv)
             } else {
                 app->routePrefix = sclone(argv[++argind]);
             }
+
+        } else if (smatch(argp, "show") || smatch(argp, "s")) {
+            app->show = 1;
 
         } else if (smatch(argp, "verbose") || smatch(argp, "v")) {
             logSpec = "stderr:2";
@@ -677,7 +681,7 @@ static HttpRoute *getMvcRoute()
 }
 
 
-static bool readConfig()
+static bool readConfig(bool mvc)
 {
     HttpStage   *stage;
 
@@ -691,7 +695,7 @@ static bool readConfig()
     if (app->platform) {
         appweb->platform = app->platform;
     }
-    if (!findConfigFile() || app->error) {
+    if (!findConfigFile(mvc) || app->error) {
         return 0;
     }
     if ((app->server = maCreateServer(appweb, "default")) == 0) {
@@ -725,32 +729,34 @@ static void process(int argc, char **argv)
     mprAssert(argc >= 1);
     
     cmd = argv[0];
-    if (argc >= 3 && smatch(cmd, "generate") && smatch(argv[1], "app")) {
-        /* Special case when generating an app. Don't need a config file */
-        generateApp(argv[2]);
-        return;
-    }
-    if (!readConfig()) {
-        return;
-    }
     if (smatch(cmd, "generate")) {
+        if (argc >= 3 && smatch(argv[1], "app")) {
+            /* Special case when generating an app. Don't need a config file */
+            generateApp(argv[2]);
+            return;
+        }
+        readConfig(1);
         generate(argc - 1, &argv[1]);
 
     } else if (smatch(cmd, "migrate")) {
+        readConfig(1);
         route = getMvcRoute();
         migrate(route, argc - 1, &argv[1]);
 
     } else if (smatch(cmd, "clean")) {
+        readConfig(0);
         app->targets = getTargets(argc - 1, &argv[1]);
         app->routes = getRoutes();
         clean(app->routes);
 
     } else if (smatch(cmd, "compile")) {
+        readConfig(0);
         app->targets = getTargets(argc - 1, &argv[1]);
         app->routes = getRoutes();
         compile(app->routes);
 
     } else if (smatch(cmd, "run")) {
+        readConfig(1);
         run(argc - 1, &argv[1]);
 
     } else {
@@ -839,8 +845,9 @@ static int runEspCommand(HttpRoute *route, cchar *command, cchar *csource, cchar
     if (eroute->searchPath) {
         mprSetCmdSearchPath(cmd, eroute->searchPath);
     }
-    mprLog(1, "Run: %s", app->command);
-
+    if (app->show) {
+        trace("Run", app->command);
+    }
     //  WARNING: GC will run here
 	if (mprRunCmd(cmd, app->command, env, &out, &err, -1, 0) != 0) {
 		if (err == 0 || *err == '\0') {
@@ -951,7 +958,7 @@ static void compileFile(HttpRoute *route, cchar *source, int kind)
             return;
         }
         if (eroute->link) {
-            trace("LINK", "%s", app->module);
+            vtrace("Link", "%s", app->module);
             if (runEspCommand(route, eroute->link, app->csource, app->module) < 0) {
                 return;
             }
@@ -1196,50 +1203,78 @@ static void generateApp(cchar *name)
 }
 
 
-#if UNUSED
 /*
-    esp migration description model [field:type [, field:type] ...]
- */
-static void generateMigration(int argc, char **argv)
-{
-    MprHash     *tokens;
-    cchar       *comment, *name, *title, *seq, *forward, *backward, *data, *path, *def, *field, *fileComment;
-    char        *typeString;
-    int         i, type, flags;
+    esp migration description table [field:type [, field:type] ...]
 
+    The description is used to name the migration
+ */
+static void generateMigration(HttpRoute *route, int argc, char **argv)
+{
+    cchar       *stem, *table, *name;
+
+    if (argc < 2) {
+        fail("Bad migration command line");
+    }
     if (app->error) {
         return;
     }
-    name = sclone(argv[0]);
-    title = spascal(name);
-    comment = sfmt("Create Scaffold %s", title);
-    seq = mprGetDate("%Y%m%d%H%M%S");
+    table = sclone(argv[1]);
+    stem = sfmt("Migration %s", argv[0]);
+    /* Migration name used in the filename and in the exported load symbol */
+    name = sreplace(slower(stem), " ", "_");
+    createMigration(route, name, table, stem, argc - 2, &argv[2]);
+}
 
-    forward = sfmt("    ediAddTable(db, \"%s\");\n", name);
-    backward = sfmt("    ediRemoveTable(db, \"%s\");\n", name);
 
-    for (i = 1; i < argc; i++) {
-        field = stok(sclone(argv[i]), ":", &typeString);
+//  MOB - what if table already exists?
+
+static void createMigration(HttpRoute *route, cchar *name, cchar *table, cchar *comment, int fieldCount, char **fields)
+{
+    EspRoute    *eroute;
+    MprHash     *tokens;
+    MprList     *files;
+    MprDirEntry *dp;
+    cchar       *dir, *seq, *forward, *backward, *data, *path, *def, *field, *fileComment, *tail;
+    char        *typeString;
+    int         i, type, flags, next;
+
+    eroute = route->eroute;
+    seq = sfmt("%s%d", mprGetDate("%Y%m%d%H%M%S"), nextMigration);
+    forward = sfmt("    ediAddTable(db, \"%s\");\n", table);
+    backward = sfmt("    ediRemoveTable(db, \"%s\");\n", table);
+
+    for (i = 0; i < fieldCount; i++) {
+        field = stok(sclone(fields[i]), ":", &typeString);
         if ((type = ediParseTypeString(typeString)) < 0) {
             fail("Unknown type '%s' for field '%s'", typeString, field);
             return;
         }
         flags = 0;
-        def = sfmt("    ediAddColumn(db, \"%s\", \"%s\", %d, %d);\n", name, field, type, flags);
+        def = sfmt("    ediAddColumn(db, \"%s\", \"%s\", %d, %d);\n", table, field, type, flags);
         forward = sjoin(forward, def, NULL);
     }
     dir = mprJoinPath(eroute->dbDir, "migrations");
     makeEspDir(route, dir);
 
-    fileComment = sreplace(comment, " ", "_");
-    path = sfmt("%s/%s_%s.c", eroute->migrationsDir, seq, fileComment, ".c");
+    path = sfmt("%s/%s_%s.c", eroute->migrationsDir, seq, name, ".c");
 
-    tokens = mprDeserialize(sfmt("{ NAME: %s, TITLE: %s, COMMENT: '%s', FORWARD: '%s', BACKWARD: '%s' }", 
-        name, title, comment, forward, backward));
+    tokens = mprDeserialize(sfmt("{ NAME: %s, COMMENT: '%s', FORWARD: '%s', BACKWARD: '%s' }", 
+        name, comment, forward, backward));
     data = stemplate(MigrationTemplate, tokens);
+    
+    files = mprGetPathFiles("db/migrations", MPR_PATH_RELATIVE);
+    tail = sfmt("%s.c", name);
+    for (ITERATE_ITEMS(files, dp, next)) {
+        if (sends(dp->name, tail)) {
+            if (!app->overwrite) {
+                fail("A migration with the same description already exists: %s", dp->name);
+                return;
+            }
+            mprDeletePath(mprJoinPath("db/migrations/", dp->name));
+        }
+    }
     makeEspFile(path, data, "Migration");
 }
-#endif
 
 
 /*
@@ -1300,6 +1335,7 @@ static void generateScaffoldController(HttpRoute *route, int argc, char **argv)
      */
     path = mprJoinPathExt(mprJoinPath(eroute->controllersDir, name), ".c");
     defines = sclone("");
+#if UNUSED
     for (i = 1; i < argc; i++) {
         action = argv[i];
         if (mprLookupKey(actions, action)) {
@@ -1307,9 +1343,11 @@ static void generateScaffoldController(HttpRoute *route, int argc, char **argv)
         }
         defines = sjoin(defines, sfmt("    espDefineAction(route, \"%s-%s\", %s);\n", name, action, action), NULL);
     }
+#endif
     tokens = mprDeserialize(sfmt("{ NAME: %s, TITLE: %s, DEFINE_ACTIONS: '%s' }", name, title, defines));
 
     data = stemplate(ScaffoldTemplateHeader, tokens);
+#if UNUSED
     for (i = 1; i < argc; i++) {
         action = argv[i];
         if (mprLookupKey(actions, action)) {
@@ -1317,55 +1355,29 @@ static void generateScaffoldController(HttpRoute *route, int argc, char **argv)
         }
         data = sjoin(data, sfmt("static void %s() {\n}\n\n", action), NULL);
     }
+#endif
     data = sjoin(data, stemplate(ScaffoldTemplateFooter, tokens), NULL);
     makeEspFile(path, data, "Scaffold");
 }
 
 
-#if UNUSED
 /*
-    esp generate migration description model [field:type [, field:type] ...]
+    Called with args: table [field:type [, field:type] ...]
  */
-static void generateScaffoldMigration(int argc, char **argv)
+static void generateScaffoldMigration(HttpRoute *route, int argc, char **argv)
 {
-    MprHash     *tokens;
-    cchar       *comment, *name, *title, *seq, *forward, *backward, *data, *path, *def, *field, *fileComment;
-    char        *typeString;
-    int         i, type, flags;
+    cchar       *comment, *table;
 
+    if (argc < 2) {
+        fail("Bad migration command line");
+    }
     if (app->error) {
         return;
     }
-    name = sclone(argv[0]);
-    title = spascal(name);
-    comment = sfmt("Create Scaffold %s", title);
-    seq = mprGetDate("%Y%m%d%H%M%S");
-
-    forward = sfmt("    ediAddTable(db, \"%s\");\n", name);
-    backward = sfmt("    ediRemoveTable(db, \"%s\");\n", name);
-
-    for (i = 1; i < argc; i++) {
-        field = stok(sclone(argv[i]), ":", &typeString);
-        if ((type = ediParseTypeString(typeString)) < 0) {
-            fail("Unknown type '%s' for field '%s'", typeString, field);
-            return;
-        }
-        flags = 0;
-        def = sfmt("    ediAddColumn(db, \"%s\", \"%s\", %d, %d);\n", name, field, type, flags);
-        forward = sjoin(forward, def, NULL);
-    }
-    dir = mprJoinPath(eroute->dbDir, "migrations");
-    makeEspDir(route, dir);
-
-    fileComment = sreplace(comment, " ", "_");
-    path = sfmt("%s/%s_%s.c", eroute->migrationsDir, seq, fileComment, ".c");
-
-    tokens = mprDeserialize(sfmt("{ NAME: %s, TITLE: %s, COMMENT: '%s', FORWARD: '%s', BACKWARD: '%s' }", 
-        name, title, comment, forward, backward));
-    data = stemplate(MigrationTemplate, tokens);
-    makeEspFile(path, data, "Migration");
+    table = sclone(argv[0]);
+    comment = sfmt("Create Scaffold %s", spascal(table));
+    createMigration(route, sfmt("create_scaffold_%s", table), table, comment, argc - 2, &argv[2]);
 }
-#endif
 
 
 /*
@@ -1419,6 +1431,9 @@ static void generateTable(HttpRoute *route, int argc, char **argv)
 }
 
 
+/*
+    Called with args: name [field:type [, field:type] ...]
+ */
 static void generateScaffoldViews(HttpRoute *route, int argc, char **argv)
 {
     EspRoute    *eroute;
@@ -1443,6 +1458,7 @@ static void generateScaffoldViews(HttpRoute *route, int argc, char **argv)
     makeEspFile(path, data, "Scaffold Index View");
 }
 
+
 /*
     esp generate scaffold NAME [field:type [, field:type] ...]
  */
@@ -1455,9 +1471,10 @@ static void generateScaffold(HttpRoute *route, int argc, char **argv)
     if (app->error) {
         return;
     }
-    generateScaffoldController(route, 1, argv);
+    generateScaffoldMigration(route, argc, argv);
+    generateScaffoldController(route, argc, argv);
     generateScaffoldViews(route, argc, argv);
-    generateTable(route, argc, argv);
+    migrate(route, 0, 0);
 }
 
 
@@ -1476,11 +1493,9 @@ static void generate(int argc, char **argv)
         route = getMvcRoute();
         generateController(route, argc - 1, &argv[1]);
 
-#if UNUSED
     } else if (smatch(kind, "migration")) {
         route = getMvcRoute();
-        generateMigration(route, argc - 1, argv[1]);
-#endif
+        generateMigration(route, argc - 1, &argv[1]);
         
     } else if (smatch(kind, "scaffold")) {
         route = getMvcRoute();
@@ -1548,6 +1563,7 @@ static void migrate(HttpRoute *route, int argc, char **argv)
         //  MOB - must unlink if either of these fail
         //  MOB - should AddTable return the table?
         ediAddTable(edi, ESP_MIGRATIONS);
+        ediAddColumn(edi, ESP_MIGRATIONS, "id", EDI_TYPE_INT, EDI_AUTO_INC | EDI_INDEX | EDI_KEY);
         ediAddColumn(edi, ESP_MIGRATIONS, "version", EDI_TYPE_STRING, 0);
         app->migrations = ediReadTable(edi, ESP_MIGRATIONS);
     }
@@ -1648,7 +1664,6 @@ static void migrate(HttpRoute *route, int argc, char **argv)
                 ediDeleteRow(edi, ESP_MIGRATIONS, ediGetField(mig, "id"));
             } else {
                 mig = ediCreateRec(edi, ESP_MIGRATIONS);
-                //  RC
                 ediSetField(mig, "version", itos(seq));
                 ediUpdateRec(edi, mig);
             }
@@ -1878,7 +1893,7 @@ static void generateAppDb(HttpRoute *route)
 
     [--config dir] : ./appweb.conf : [parent]/appweb.conf : /usr/lib/appweb/VER/bin/esp-appweb.conf
  */
-static bool findConfigFile()
+static bool findConfigFile(bool mvc)
 {
     cchar   *name, *path, *userPath, *nextPath;
 
@@ -1904,15 +1919,15 @@ static bool findConfigFile()
                 break;
             }
         }
-#if UNUSED
-        if (!app->configFile) {
-            app->configFile = mprJoinPath(mprGetAppDir(), sfmt("esp-%s.conf", BIT_PRODUCT));
-            if (!mprPathExists(app->configFile, R_OK)) {
-                fail("Can't open config file %s", app->configFile);
-                return 0;
+        if (!mvc) {
+            if (!app->configFile) {
+                app->configFile = mprJoinPath(mprGetAppDir(), sfmt("esp-%s.conf", BIT_PRODUCT));
+                if (!mprPathExists(app->configFile, R_OK)) {
+                    fail("Can't open config file %s", app->configFile);
+                    return 0;
+                }
             }
         }
-#endif
         if (!app->configFile) {
             fail("Not an ESP application directory. Can't find Appweb config file %s.", name);
             return 0;
@@ -1996,6 +2011,7 @@ static void usageError(Mpr *mpr)
     "    --reverse                  # Reverse migrations\n"
     "    --routeName name           # Route name in appweb.conf to use \n"
     "    --routePrefix prefix       # Route prefix in appweb.conf to use \n"
+    "    --show                     # Show compile commands\n"
     "    --verbose                  # Emit verbose trace \n"
     "    --why                      # Why compile or skip\n"
     "\n"

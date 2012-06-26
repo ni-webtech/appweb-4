@@ -1090,16 +1090,6 @@ extern ssize espRenderError(HttpConn *conn, int status, cchar *fmt, ...);
 extern ssize espRenderFile(HttpConn *conn, cchar *path);
 
 /**
-    Render the value of a request parameter to the client.
-    @description This writes the value of a request parameter after HTML escaping its value.
-    @param conn HttpConn connection object
-    @param name Form variable name
-    @return A count of the bytes actually written
-    @ingroup EspReq
- */
-extern ssize espRenderParam(HttpConn *conn, cchar *name);
-
-/**
     Render a safe string of data to the client.
     @description HTML escape a string and then write the string of data to the client.
         Data packets will be created as required to store the write data. This call may block waiting for the data to
@@ -1121,6 +1111,17 @@ extern ssize espRenderSafeString(HttpConn *conn, cchar *s);
     @ingroup EspReq
  */
 extern ssize espRenderString(HttpConn *conn, cchar *s);
+
+/**
+    Render the value of a request variable to the client.
+    If a request parameter is not found by the given name, consult the session store for a variable the same name.
+    @description This writes the value of a request variable after HTML escaping its value.
+    @param conn HttpConn connection object
+    @param name Form variable name
+    @return A count of the bytes actually written
+    @ingroup EspReq
+ */
+extern ssize espRenderVar(HttpConn *conn, cchar *name);
 
 /**
     Render a view template to the client

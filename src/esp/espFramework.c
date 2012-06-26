@@ -642,17 +642,6 @@ ssize espRenderFile(HttpConn *conn, cchar *path)
 }
 
 
-ssize espRenderParam(HttpConn *conn, cchar *name)
-{
-    cchar   *value;
-
-    if ((value = espGetParam(conn, name, 0)) == 0) {
-        value = espGetSessionVar(conn, name, "");
-    }
-    return espRenderSafeString(conn, value);
-}
-
-
 ssize espRenderSafeString(HttpConn *conn, cchar *s)
 {
     s = mprEscapeHtml(s);
@@ -663,6 +652,20 @@ ssize espRenderSafeString(HttpConn *conn, cchar *s)
 ssize espRenderString(HttpConn *conn, cchar *s)
 {
     return espRenderBlock(conn, s, slen(s));
+}
+
+
+/*
+    Render a request variable. If a param by the given name is not found, consult the session.
+ */
+ssize espRenderVar(HttpConn *conn, cchar *name)
+{
+    cchar   *value;
+
+    if ((value = espGetParam(conn, name, 0)) == 0) {
+        value = espGetSessionVar(conn, name, "");
+    }
+    return espRenderSafeString(conn, value);
 }
 
 
