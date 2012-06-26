@@ -407,14 +407,12 @@ static void handlePutRequest(HttpQueue *q)
     HttpConn    *conn;
     HttpTx      *tx;
     MprFile     *file;
-    MprPath     *info;
     char        *path;
 
     mprAssert(q->pair->queueData == 0);
 
     conn = q->conn;
     tx = conn->tx;
-    info = &tx->fileInfo;
     mprAssert(tx->filename);
     mprAssert(tx->fileInfo.checked);
 
