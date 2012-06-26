@@ -161,7 +161,7 @@ EXPORTS
   espRenderCached
   espRenderError
   espRenderFile
-  espRenderParam
+  espRenderVar
   espRenderSafeString
   espRenderString
   espRenderView
