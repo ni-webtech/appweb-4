@@ -4894,9 +4894,11 @@ void httpDestroy(Http *http)
 {
     if (http->timer) {
         mprRemoveEvent(http->timer);
+        http->timer = 0;
     }
     if (http->timestamp) {
         mprRemoveEvent(http->timestamp);
+        http->timestamp = 0;
     }
     MPR->httpService = NULL;
 }
@@ -5084,12 +5086,14 @@ void httpSetListenCallback(Http *http, HttpListenCallback fn)
 
 /*  
     Start the http timer. This may create multiple timers -- no worry. httpAddConn does its best to only schedule one.
+    Must be called locked.
  */
 static void startTimer(Http *http)
 {
-    updateCurrentDate(http);
-    http->timer = mprCreateTimerEvent(NULL, "httpTimer", HTTP_TIMER_PERIOD, httpTimer, http, 
-        MPR_EVENT_CONTINUOUS | MPR_EVENT_QUICK);
+    if (!http->timer) {
+        http->timer = mprCreateTimerEvent(NULL, "httpTimer", HTTP_TIMER_PERIOD, httpTimer, http, 
+            MPR_EVENT_CONTINUOUS | MPR_EVENT_QUICK);
+    }
 }
 
 
@@ -5183,14 +5187,14 @@ void httpSetTimestamp(MprTime period)
     Http    *http;
 
     http = MPR->httpService;
-    if (http->timestamp) {
-        mprRemoveEvent(http->timestamp);
-    }
     if (period < (10 * MPR_TICKS_PER_SEC)) {
         period = (10 * MPR_TICKS_PER_SEC);
     }
+    if (http->timestamp) {
+        mprRemoveEvent(http->timestamp);
+    }
     if (period > 0) {
-        http->timer = mprCreateTimerEvent(NULL, "httpTimestamp", period, timestamp, NULL, 
+        http->timestamp = mprCreateTimerEvent(NULL, "httpTimestamp", period, timestamp, NULL, 
             MPR_EVENT_CONTINUOUS | MPR_EVENT_QUICK);
     }
 }
@@ -5255,9 +5259,7 @@ void httpAddConn(Http *http, HttpConn *conn)
     conn->started = http->now;
     conn->seqno = http->connCount++;
     updateCurrentDate(http);
-    if (http->timer == 0) {
-        startTimer(http);
-    }
+    startTimer(http);
     unlock(http);
 }
 
