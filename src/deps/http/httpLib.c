@@ -8366,6 +8366,8 @@ void httpRouteRequest(HttpConn *conn)
         }
     }
     if (route == 0 || tx->handler == 0) {
+        /* Ensure this is emitted to the log */
+        mprError("Can't find suitable route for request %s", rx->pathInfo);
         httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR, "Can't find suitable route for request");
         return;
     }
@@ -8455,7 +8457,8 @@ static int matchRequestUri(HttpConn *conn, HttpRoute *route)
         } else if (rx->matchCount <= 0) {
             return HTTP_ROUTE_REJECT;
         }
-    } else {
+    } else if (route->pattern && *route->pattern) {
+        /* Pattern compilation failed */
         return HTTP_ROUTE_REJECT;
     }
     mprLog(6, "Test route methods \"%s\"", route->name);
