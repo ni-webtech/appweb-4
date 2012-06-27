@@ -8455,6 +8455,8 @@ static int matchRequestUri(HttpConn *conn, HttpRoute *route)
         } else if (rx->matchCount <= 0) {
             return HTTP_ROUTE_REJECT;
         }
+    } else {
+        return HTTP_ROUTE_REJECT;
     }
     mprLog(6, "Test route methods \"%s\"", route->name);
     if (route->methods && !mprLookupKey(route->methods, rx->method)) {
@@ -9353,7 +9355,7 @@ static void finalizePattern(HttpRoute *route)
             mprPutCharToBuf(pattern, *cp);
 
         } else if (*cp == '{') {
-            if (cp > route->pattern && cp[-1] == '\\') {
+            if (cp > startPattern&& cp[-1] == '\\') {
                 mprAdjustBufEnd(pattern, -1);
                 mprPutCharToBuf(pattern, *cp);
             } else {
