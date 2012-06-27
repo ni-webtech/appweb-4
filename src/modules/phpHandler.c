@@ -239,7 +239,11 @@ static void readyPhp(HttpQueue *q)
 #else
     file_handle.type = ZEND_HANDLE_FP;
     if ((fp = fopen(tx->filename, "r")) == NULL) {
-        httpError(conn, HTTP_CODE_INTERNAL_SERVER_ERROR,  "PHP can't open script");
+        if (rx->referrer) {
+            httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s from %s", tx->filename, rx->referrer);
+        } else {
+            httpError(conn, HTTP_CODE_NOT_FOUND, "Can't open document: %s", tx->filename);
+        }
         return;
     }
     /*
