@@ -113,7 +113,7 @@ static Mdb *mdbAlloc(cchar *path, int flags)
     }
     mdb->edi.provider = &MdbProvider;
     mdb->edi.flags = flags;
-    mdb->path = sclone(path);
+    mdb->edi.path = sclone(path);
     mdb->mutex = mprCreateLock();
     return mdb;
 }
@@ -122,7 +122,7 @@ static Mdb *mdbAlloc(cchar *path, int flags)
 static void manageMdb(Mdb *mdb, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(mdb->path);
+        mprMark(mdb->edi.path);
         mprMark(mdb->mutex);
         mprMark(mdb->tables);
         /* Don't mark load fields */
@@ -136,8 +136,8 @@ static void mdbClose(Edi *edi)
 {
     Mdb     *mdb;
    
+    /* MOB - should this save? */
     mdb = (Mdb*) edi;
-    mdb->path = 0;
     mdb->tables = 0;
 }
 
@@ -1165,7 +1165,7 @@ static int mdbLoadFromString(Edi *edi, cchar *str)
 
     mdb = (Mdb*) edi;
     mdb->edi.flags |= EDI_SUPPRESS_SAVE;
-    mdb->flags |= MDB_LOADING;
+    mdb->edi.flags |= MDB_LOADING;
     mdb->loadStack = mprCreateList(0, 0);
     pushState(mdb, MDB_LOAD_BEGIN);
 
@@ -1175,7 +1175,7 @@ static int mdbLoadFromString(Edi *edi, cchar *str)
     cb.parseError = parseMdbError;
 
     obj = mprDeserializeCustom(str, cb, mdb);
-    mdb->flags &= ~MDB_LOADING;
+    mdb->edi.flags &= ~MDB_LOADING;
     mdb->edi.flags &= ~EDI_SUPPRESS_SAVE;
     mdb->loadStack = 0;
     if (obj == 0) {
@@ -1209,8 +1209,8 @@ static int mdbSave(Edi *edi)
     MdbTable    *table;
     MdbRow      *row;
     MdbCol      *col;
-    cchar       *value;
-    char        *path, *npath, *bak, *type;
+    cchar       *value, *path;
+    char        *npath, *bak, *type;
     MprFile     *out;
     int         cid, rid, tid, ntables, nrows;
 
@@ -1218,7 +1218,7 @@ static int mdbSave(Edi *edi)
     if (mdb->edi.flags & EDI_NO_SAVE) {
         return MPR_ERR_BAD_STATE;
     }
-    path = mdb->path;
+    path = mdb->edi.path;
     if (path == 0) {
         mprError("No database path specified");
         return MPR_ERR_BAD_ARGS;

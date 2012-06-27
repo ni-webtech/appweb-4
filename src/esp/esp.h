@@ -929,6 +929,7 @@ extern EdiRec *espMakeRec(cchar *content);
  */
 extern bool espMatchParam(HttpConn *conn, cchar *var, cchar *value);
 
+//  MOB - rethink name. Inconsistent vs readTable() and ediReadWhere
 /**
     Read all the records in table from the database.
     @description This reads a table and returns a grid containing the table data.
@@ -2600,6 +2601,7 @@ extern EdiRec *readRecWhere(cchar *tableName, cchar *fieldName, cchar *operation
  */
 extern EdiRec *readRecByKey(cchar *tableName, cchar *key);
 
+//  MOB - inconsistent vs espReadAllRecs
 /**
     Read all the records in table from the database
     @description This reads a table and returns a grid containing the table data.

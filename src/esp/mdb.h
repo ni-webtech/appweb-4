@@ -80,8 +80,6 @@ typedef struct MdbTable {
  */
 typedef struct Mdb {
     Edi             edi;                /**< EDI database interface structure */
-    int             flags;              /**< MDB flags */
-    char            *path;              /**< Currently open database */
     MprMutex        *mutex;             /**< Multithread lock for Schema modifications only */
     MprList         *tables;            /**< List of tables */
 

@@ -266,7 +266,7 @@ int ediLookupField(Edi *edi, cchar *tableName, cchar *fieldName)
 
 Edi *ediOpen(cchar *path, cchar *providerName, int flags)
 {
-    EdiProvider  *provider;
+    EdiProvider     *provider;
 
     if ((provider = lookupProvider(providerName)) == 0) {
         mprError("Can't find EDI provider '%s'", providerName);

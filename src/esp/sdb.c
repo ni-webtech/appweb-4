@@ -24,7 +24,6 @@
 typedef struct Sdb {
     Edi             edi;            /**< */
     sqlite3         *db;
-    char            *path;          /**< Currently open database */
     MprMutex        *mutex;
 } Sdb;
 
@@ -118,7 +117,7 @@ static Sdb *sdbCreate(cchar *path, int flags)
     }
     sdb->edi.flags = flags;
     sdb->edi.provider = &SdbProvider;
-    sdb->path = sclone(path);
+    sdb->edi.path = sclone(path);
     sdb->mutex = mprCreateLock();
     return sdb;
 }
@@ -127,7 +126,7 @@ static Sdb *sdbCreate(cchar *path, int flags)
 static void manageSdb(Sdb *sdb, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(sdb->path);
+        mprMark(sdb->edi.path);
         mprMark(sdb->mutex);
     } else if (flags & MPR_MANAGE_FREE) {
         sdbClose((Edi*) sdb);
@@ -146,7 +145,6 @@ static void sdbClose(Edi *edi)
         sqlite3_close(sdb->db);
         sdb->db = 0;
     }
-    sdb->path = 0;
 }
 
 
@@ -457,7 +455,7 @@ static int query(Edi *edi, cchar *cmd, EdiGrid *gridp)
         *gridp = 0;
     }
     if ((db = sdb->db) == 0) {
-        mprError("Database '%s' is closed", sdb->path);
+        mprError("Database '%s' is closed", sdb->edi.path);
         return MPR_ERR_BAD_STATE;
     }
     if ((result = mprCreateList(0, 0)) == 0) {

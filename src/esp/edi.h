@@ -185,9 +185,10 @@ extern void ediDefineMigration(struct Edi *edi, EdiMigration forw, EdiMigration 
   */
 typedef struct Edi {
     struct EdiProvider *provider;       /**< Database provider */
+    cchar           *path;              /**< Database path */
+    int             flags;              /**< Database flags */
     EdiMigration    forw;               /**< Forward migration callback */
     EdiMigration    back;               /**< Backward migration callback */
-    int             flags;              /**< Database flags */
 } Edi;
 
 /**

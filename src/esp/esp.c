@@ -870,8 +870,8 @@ static int runEspCommand(HttpRoute *route, cchar *command, cchar *csource, cchar
 static void compileFile(HttpRoute *route, cchar *source, int kind)
 {
     EspRoute    *eroute;
-    cchar       *script, *page, *layout, *data, *prefix;
-    char        *err;
+    cchar       *defaultLayout, *script, *page, *layout, *data, *prefix, *lpath;
+    char        *err, *quote;
     ssize       len;
     int         recompile;
 
@@ -879,7 +879,7 @@ static void compileFile(HttpRoute *route, cchar *source, int kind)
         return;
     }
     eroute = route->eroute;
-    layout = 0;
+    defaultLayout = 0;
     if (kind == ESP_CONTROLLER) {
         prefix = "controller_";
     } else if (kind == ESP_MIGRATION) {
@@ -889,12 +889,33 @@ static void compileFile(HttpRoute *route, cchar *source, int kind)
     }
     app->cacheName = mprGetMD5WithPrefix(source, slen(source), prefix);
     app->module = mprNormalizePath(sfmt("%s/%s%s", eroute->cacheDir, app->cacheName, BIT_SHOBJ));
+    defaultLayout = (eroute->layoutsDir) ? mprJoinPath(eroute->layoutsDir, "default.esp") : 0;
 
     if (app->rebuild) {
         why(source, "due to forced rebuild");
     } else if (!espModuleIsStale(source, app->module, &recompile)) {
-        why(source, "is up to date");
-        return;
+        if (kind & ESP_VIEW) {
+            if ((data = mprReadPathContents(source, &len)) == 0) {
+                fail("Can't read %s", source);
+                return;
+            }
+            if ((lpath = scontains(data, "@ layout \"", -1)) != 0) {
+                lpath = strim(&lpath[10], " ", MPR_TRIM_BOTH);
+                if ((quote = schr(lpath, '"')) != 0) {
+                    *quote = '\0';
+                }
+                layout = (eroute->layoutsDir && *lpath) ? mprJoinPath(eroute->layoutsDir, lpath) : 0;
+            } else {
+                layout = defaultLayout;
+            }
+            if (!layout || !espModuleIsStale(layout, app->module, &recompile)) {
+                why(source, "is up to date");
+                return;
+            }
+        } else {
+            why(source, "is up to date");
+            return;
+        }
     } else if (mprPathExists(app->module, R_OK)) {
         why(source, "has been modified");
     } else {
@@ -917,13 +938,12 @@ static void compileFile(HttpRoute *route, cchar *source, int kind)
         }
     }
     if (kind & (ESP_PAGE | ESP_VIEW)) {
-        layout = (eroute->layoutsDir) ? mprJoinPath(eroute->layoutsDir, "default.esp") : 0;
         if ((page = mprReadPathContents(source, &len)) == 0) {
             fail("Can't read %s", source);
             return;
         }
         /* No yield here */
-        if ((script = espBuildScript(route, page, source, app->cacheName, layout, &err)) == 0) {
+        if ((script = espBuildScript(route, page, source, app->cacheName, defaultLayout, &err)) == 0) {
             fail("Can't build %s, error %s", source, err);
             return;
         }
@@ -1537,7 +1557,7 @@ static void migrate(HttpRoute *route, int argc, char **argv)
     EspRoute    *eroute;
     Edi         *edi;
     EdiRec      *mig;
-    cchar       *command, *file;
+    cchar       *command, *file, *path;
     int         next, onlyOne, backward, found, i;
     uint64      seq, targetSeq, lastMigration, v;
 
@@ -1552,6 +1572,13 @@ static void migrate(HttpRoute *route, int argc, char **argv)
     if ((edi = eroute->edi) == 0) {
         fail("Database not open. Check appweb.conf");
         return;
+    }
+    if (app->rebuild) {
+        ediClose(edi);
+        mprDeletePath(edi->path);
+        if ((eroute->edi = ediOpen(edi->path, edi->provider->name, edi->flags | EDI_CREATE)) == 0) {
+            fail("Can't open database %s", path);
+        }
     }
     /*
         Each database has a _EspMigrations table which has a record for each migration applied
