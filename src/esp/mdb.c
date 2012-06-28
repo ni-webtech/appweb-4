@@ -668,7 +668,7 @@ static EdiGrid *mdbReadWhere(Edi *edi, cchar *tableName, cchar *columnName, ccha
     MdbTable    *table;
     MdbCol      *col;
     MdbRow      *row;
-    int         nrows, next, op, r;
+    int         nrows, next, op, r, count;
 
     mprAssert(edi);
     mprAssert(tableName && *tableName);
@@ -699,11 +699,12 @@ static EdiGrid *mdbReadWhere(Edi *edi, cchar *tableName, cchar *columnName, ccha
                 grid->records[0] = createRecFromRow(edi, row);
             }
         } else {
-            for (ITERATE_ITEMS(table->rows, row, next)) {
+            for (count = 0, ITERATE_ITEMS(table->rows, row, next)) {
                 if (!matchRow(col, row->fields[col->cid], op, value)) {
                     continue;
                 }
-                grid->records[next - 1] = createRecFromRow(edi, row);
+                grid->records[count++] = createRecFromRow(edi, row);
+                grid->nrecords = count;
             }
         }
     } else {
