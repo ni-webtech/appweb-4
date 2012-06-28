@@ -400,7 +400,7 @@ void espDropdown(HttpConn *conn, cchar *field, EdiGrid *choices, cchar *optionSt
     field = httpGetOption(options, "field", "id");
 
     espRender(conn, "<select name='%s'%s>\r\n", field, map(conn, options));
-
+    //  MOB -- should handle choices == NULL
     for (r = 0; r < choices->nrecords; r++) {
         id = ediGetField(choices->records[r], "id");
         value = ediGetField(choices->records[r], field);
@@ -432,19 +432,19 @@ void espProgress(HttpConn *conn, cchar *percent, cchar *optionString)
 
 
 /*
-    radio("priority", "low: 0, med: 1, high: 2", NULL)
-    radio("priority", "low: 0, med: 1, high: 2", "value='2'")  //  MOB - without a record
+    radio("priority", "{low: 0, med: 1, high: 2}", NULL)
+    radio("priority", "{low: 0, med: 1, high: 2}", "{value:'2'}")  //  MOB - without a record
  */
-void espRadio(HttpConn *conn, cchar *field, void *choices, cchar *optionString)
+void espRadio(HttpConn *conn, cchar *field, void *choicesString, cchar *optionsString)
 {
     MprKey      *kp;
-    MprHash     *options;
+    MprHash     *choices, *options;
     cchar       *value, *checked;
 
-    //  MOB -- this is not using choices
-    options = httpGetOptions(optionString);
+    choices = httpGetOptions(choicesString);
+    options = httpGetOptions(optionsString);
     value = getValue(conn, field, options);
-    for (kp = 0; (kp = mprGetNextKey(options, kp)) != 0; ) {
+    for (kp = 0; (kp = mprGetNextKey(choices, kp)) != 0; ) {
         checked = (smatch(kp->data, value)) ? " checked" : "";
         espRender(conn, "        %s <input type='radio' name='%s' value='%s'%s%s />\r\n", 
             spascal(kp->key), kp->key, kp->data, checked, map(conn, options));
@@ -467,16 +467,17 @@ void espRefresh(HttpConn *conn, cchar *on, cchar *off, cchar *optionString)
 void espScript(HttpConn *conn, cchar *uri, cchar *optionString)
 {
     EspReq      *req;
-    cchar       *minified, *indent, *newline;
+    cchar       *indent, *newline;
     char        **up;
     MprHash     *options;
+    bool        minified;
    
     options = httpGetOptions(optionString);
     if (uri) {
         espRender(conn, "<script src='%s' type='text/javascript'></script>", httpLink(conn, uri, NULL));
     } else {
         req = conn->data;
-        minified = httpGetOption(options, "minified", 0);
+        minified = smatch(httpGetOption(options, "minified", 0), "true");
         indent = "";
         for (up = defaultScripts; *up; up++) {
             uri = httpLink(conn, sjoin("~/", mprGetPathBase(req->eroute->staticDir), *up, 

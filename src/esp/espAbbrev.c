@@ -119,12 +119,17 @@ void progress(cchar *data, cchar *optionString)
 }
 
 
+/*
+    radio("priority", "{low: 0, med: 1, high: 2}", NULL)
+    radio("priority", "{low: 0, med: 1, high: 2}", "{value:'2'}")  //  MOB - without a record
+ */
 void radio(cchar *name, void *choices, cchar *optionString)
 {
     espRadio(getConn(), name, choices, optionString);
 }
 
 
+//  MOB - add calling sequence comment to all APIs
 void refresh(cchar *on, cchar *off, cchar *optionString)
 {
     espRefresh(getConn(), on, off, optionString);

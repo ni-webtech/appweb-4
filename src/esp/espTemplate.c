@@ -679,7 +679,7 @@ static int getEspToken(EspParse *parse)
 
         case '@':
             if ((next == start) || next[-1] != '\\') {
-                if (next[1] == '@' || next[1] == '*') {
+                if (next[1] == '@' || next[1] == '#') {
                     next += 2;
                     if (mprGetBufLength(parse->token) > 0) {
                         next -= 3;
