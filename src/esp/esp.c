@@ -894,7 +894,7 @@ static void compileFile(HttpRoute *route, cchar *source, int kind)
     if (app->rebuild) {
         why(source, "due to forced rebuild");
     } else if (!espModuleIsStale(source, app->module, &recompile)) {
-        if (kind & ESP_VIEW) {
+        if (kind & (ESP_PAGE | ESP_VIEW)) {
             if ((data = mprReadPathContents(source, &len)) == 0) {
                 fail("Can't read %s", source);
                 return;
