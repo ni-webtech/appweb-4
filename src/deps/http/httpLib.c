@@ -5099,6 +5099,7 @@ static void startTimer(Http *http)
 
 /*  
     The http timer does maintenance activities and will fire per second while there are active requests.
+    This is run in both servers and clients.
     NOTE: Because we lock the http here, connections cannot be deleted while we are modifying the list.
  */
 static void httpTimer(Http *http, MprEvent *event)
@@ -5466,7 +5467,7 @@ static void updateCurrentDate(Http *http)
 
 /************************************ Code ************************************/
 
-void httpSetRouteLog(HttpRoute *route, cchar *path, ssize size, int backup, cchar *format, int flags)
+int httpSetRouteLog(HttpRoute *route, cchar *path, ssize size, int backup, cchar *format, int flags)
 {
     char    *src, *dest;
 
@@ -5490,6 +5491,14 @@ void httpSetRouteLog(HttpRoute *route, cchar *path, ssize size, int backup, ccha
         *dest++ = *src;
     }
     *dest = '\0';
+    if (route->logBackup > 0) {
+        httpBackupRouteLog(route);
+    }
+    route->logFlags &= ~MPR_LOG_ANEW;
+    if (!httpOpenRouteLog(route)) {
+        return MPR_ERR_CANT_OPEN;
+    }
+    return 0;
 }
 
 
@@ -5500,13 +5509,11 @@ void httpBackupRouteLog(HttpRoute *route)
     mprAssert(route->logBackup);
     mprAssert(route->logSize > 100);
 
-    lock(route);
     if (route->parent && route->parent->log == route->log) {
         httpBackupRouteLog(route->parent);
-        route->log = route->parent->log;
-        unlock(route);
         return;
     }
+    lock(route);
     mprGetPathInfo(route->logPath, &info);
     if (info.valid && ((route->logFlags & MPR_LOG_ANEW) || info.size > route->logSize || route->logSize <= 0)) {
         if (route->log) {
@@ -5529,7 +5536,6 @@ MprFile *httpOpenRouteLog(HttpRoute *route)
     mode = O_CREAT | O_WRONLY | O_TEXT;
     if ((file = mprOpenFile(route->logPath, mode, 0664)) == 0) {
         mprError("Can't open log file %s", route->logPath);
-        unlock(MPR);
         return 0;
     }
     route->log = file;

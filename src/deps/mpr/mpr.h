@@ -3449,12 +3449,12 @@ extern void mprAddNullToBuf(MprBuf *buf);
 
 /**
     Adjust the buffer end position
-    @description Adjust the buffer start end position by the specified amount. This is typically used to advance the
+    @description Adjust the buffer end position by the specified amount. This is typically used to advance the
         end position as content is appended to the buffer. Adjusting the start or end position will change the value 
         returned by #mprGetBufLength. If using the mprPutBlock or mprPutChar routines, adjusting the end position is
         done automatically.
     @param buf Buffer created via mprCreateBuf
-    @param count Positive or negative count of bytes to adjust the start position.
+    @param count Positive or negative count of bytes to adjust the end position.
     @ingroup MprBuf
  */
 extern void mprAdjustBufEnd(MprBuf *buf, ssize count);
@@ -3571,6 +3571,7 @@ extern ssize mprGetBufSize(MprBuf *buf);
  */
 extern ssize mprGetBufSpace(MprBuf *buf);
 
+//  MOB - need mprBufToString() which adds a null and returns mprGetBufStart()
 /**
     Get the start of the buffer contents
     @description Get a pointer to the start of the buffer contents. Use #mprGetBufLength to determine the length
@@ -4013,6 +4014,12 @@ extern int mprParseTime(MprTime *time, cchar *dateString, int timezone, struct t
 extern int mprGetTimeZoneOffset(MprTime when);
 
 /*********************************** Lists ************************************/
+/*
+    List flags
+ */
+#define MPR_OBJ_LIST            0x1     /**< Object is a hash */
+#define MPR_LIST_STATIC_VALUES  0x20    /**< Flag for #mprCreateList when values are permanent */
+
 /**
     List data structure.
     @description The MprList is a dynamic, growable list suitable for storing pointers to arbitrary objects.
@@ -4024,12 +4031,13 @@ extern int mprGetTimeZoneOffset(MprTime when);
     @defgroup MprList MprList
  */
 typedef struct MprList {
+    int         flags;                  /**< Control flags */
+    //  MOB - rename size for compat with MprHash
+    int         capacity;               /**< Current list size */ 
+    int         length;                 /**< Current length of the list contents */
+    int         maxSize;                /**< Maximum capacity */
     MprMutex    *mutex;                 /**< Multithread lock */
     void        **items;                /**< List item data */
-    int         length;                 /**< Current length of the list contents */
-    int         capacity;               /**< Current list size */ 
-    int         maxSize;                /**< Maximum capacity */
-    int         flags;                  /**< Control flags */
 } MprList;
 
 /**
@@ -4098,11 +4106,6 @@ extern MprList *mprCloneList(MprList *src);
     @ingroup MprList
  */
 extern int mprCopyListContents(MprList *dest, MprList *src);
-
-/** 
-    Flag for #mprCreateList indicating list values are permanent and should not be marked by GC 
- */
-#define MPR_LIST_STATIC_VALUES  0x1         
 
 /**
     Create a list.
@@ -4580,17 +4583,28 @@ typedef struct MprKey {
 */
 typedef uint (*MprHashProc)(cvoid *name, ssize len);
 
+/*
+    Flags for MprHash
+ */
+#define MPR_OBJ_HASH            0x1     /**< Object is a hash */
+#define MPR_HASH_CASELESS       0x10    /**< Key comparisons ignore case */
+#define MPR_HASH_UNICODE        0x20    /**< Hash keys are unicode strings */
+#define MPR_HASH_STATIC_KEYS    0x40    /**< Keys are permanent - don't dup or mark */
+#define MPR_HASH_STATIC_VALUES  0x80    /**< Values are permanent - don't mark */
+#define MPR_HASH_LIST           0x100   /**< Hash keys are numeric indicies */
+#define MPR_HASH_STATIC_ALL     (MPR_HASH_STATIC_KEYS | MPR_HASH_STATIC_VALUES)
+
 /**
     Hash table control structure
     @see MprHash
  */
 typedef struct MprHash {
+    int             flags;              /**< Hash control flags */
+    int             size;               /**< Size of the buckets array */
+    int             length;             /**< Number of symbols in the table */
     MprKey          **buckets;          /**< Hash collision bucket table */
     MprHashProc     fn;                 /**< Hash function */             
     MprMutex        *mutex;             /**< GC marker sync */
-    int             size;               /**< Size of the buckets array */
-    int             length;             /**< Number of symbols in the table */
-    int             flags;              /**< Hash control flags */
 } MprHash;
 
 /*
@@ -4641,15 +4655,6 @@ extern MprKey *mprAddKeyFmt(MprHash *table, cvoid *key, cchar *fmt, ...);
     @ingroup MprHash
  */
 extern MprHash *mprCloneHash(MprHash *table);
-
-/*
-    Flags for mprCreateHash
- */
-#define MPR_HASH_CASELESS       0x1     /**< Key comparisons ignore case */
-#define MPR_HASH_UNICODE        0x2     /**< Hash keys are unicode strings */
-#define MPR_HASH_STATIC_KEYS    0x4     /**< Keys are permanent - don't dup or mark */
-#define MPR_HASH_STATIC_VALUES  0x8     /**< Values are permanent - don't mark */
-#define MPR_HASH_STATIC_ALL     (MPR_HASH_STATIC_KEYS | MPR_HASH_STATIC_VALUES)
 
 /**
     Create a hash table
@@ -6328,7 +6333,7 @@ extern void mprXmlSetParserHandler(MprXml *xp, MprXmlHandler h);
 #define MPR_JSON_PRETTY     0x1         /**< Serialize output in a more human readable, multiline "pretty" format */
 
 /*
-    Data types for obj property values
+    Data types for obj property values (must fit into MprKey.type)
  */
 #define MPR_JSON_UNKNOWN     0          /**< The type of a property is unknown */
 #define MPR_JSON_STRING      1          /**< The property is a string (char*) */

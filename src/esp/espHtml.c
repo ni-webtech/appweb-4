@@ -394,13 +394,15 @@ void espDropdown(HttpConn *conn, cchar *field, EdiGrid *choices, cchar *optionSt
     cchar       *id, *currentValue, *selected, *value;
     int         r;
 
-    //  MOB -- this is not using choices
+    if (choices == 0) {
+        return;
+    }
     options = httpGetOptions(optionString);
     currentValue = getValue(conn, field, options);
-    field = httpGetOption(options, "field", "id");
-
+    if (field == 0) {
+        field = httpGetOption(options, "field", "id");
+    }
     espRender(conn, "<select name='%s'%s>\r\n", field, map(conn, options));
-    //  MOB -- should handle choices == NULL
     for (r = 0; r < choices->nrecords; r++) {
         id = ediGetField(choices->records[r], "id");
         value = ediGetField(choices->records[r], field);

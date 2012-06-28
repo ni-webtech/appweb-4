@@ -4008,9 +4008,10 @@ extern bool httpTokenizev(HttpRoute *route, cchar *str, cchar *fmt, va_list args
     @param backup Set to true to create a backup of the log file if archiving.
     @param format Log file format
     @param flags Set to MPR_LOG_ANEW to archive the log when the application reboots.
+    @return "Zero" if successful, otherwise a negative MPR error code.
     @ingroup HttpRoute
  */
-extern void httpSetRouteLog(HttpRoute *route, cchar *path, ssize size, int backup, cchar *format, int flags);
+extern int httpSetRouteLog(HttpRoute *route, cchar *path, ssize size, int backup, cchar *format, int flags);
 
 /**
     Write data to the route access log

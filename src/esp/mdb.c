@@ -697,9 +697,11 @@ static EdiGrid *mdbReadWhere(Edi *edi, cchar *tableName, cchar *columnName, ccha
             if ((r = lookupRow(table, value)) != 0) {
                 row = getRow(table, r);
                 grid->records[0] = createRecFromRow(edi, row);
+                grid->nrecords = 1;
             }
         } else {
-            for (count = 0, ITERATE_ITEMS(table->rows, row, next)) {
+            grid->nrecords = count = 0;
+            for (ITERATE_ITEMS(table->rows, row, next)) {
                 if (!matchRow(col, row->fields[col->cid], op, value)) {
                     continue;
                 }

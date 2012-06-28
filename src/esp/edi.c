@@ -504,13 +504,21 @@ static void manageEdiGrid(EdiGrid *grid, int flags)
 EdiGrid *ediMakeGrid(cchar *json)
 {
     MprHash     *obj, *row;
-    MprKey      *kp;
+    MprKey      *rp, *kp;
     EdiGrid     *grid;
     EdiRec      *rec;
+    EdiField    *fp;
+    MprList     *list;
+    cchar       *key;
+    char        rowbuf[16];
     int         r, nrows, nfields;
 
     if ((obj = mprDeserialize(json)) == 0) {
         mprAssert(0);
+        return 0;
+    }
+    if (!(obj->flags & MPR_HASH_LIST)) {
+        mprAssert(obj->flags & MPR_HASH_LIST);
         return 0;
     }
     nrows = mprGetHashLength(obj);
@@ -518,21 +526,49 @@ EdiGrid *ediMakeGrid(cchar *json)
         mprAssert(0);
         return 0;
     }
-    for (r = 0, ITERATE_KEYS(obj, kp)) {
-        if (kp->type != MPR_JSON_OBJ) {
+    if (nrows <= 0) {
+        return grid;
+    }
+#if UNUSED
+    list = mprCreateList(0, 0);
+    for (row = (MprHash*) mprGetFirstKey(obj)->data, ITERATE_KEYS(row, kp)) {
+        mprAddItem(list, kp->key);
+    }
+    mprSortList(list, 0);
+#endif
+    
+    for (r = 0; r < nrows; r++) {
+        itosbuf(rowbuf, sizeof(rowbuf), r, 10);
+        if ((rp = mprLookupKeyEntry(obj, rowbuf)) == 0) {
             continue;
         }
-        row = (MprHash*) kp->data;
+        if (rp->type != MPR_JSON_OBJ) {
+            continue;
+        }
+        row = (MprHash*) rp->data;
+        mprAssert(!(row->flags & MPR_HASH_LIST));
+        
         nfields = mprGetHashLength(row);
         if ((rec = ediCreateBareRec(NULL, "", nfields)) == 0) {
             mprAssert(0);
             return 0;
         }
+        fp = rec->fields;
+        for (ITERATE_KEYS(row, kp)) {
+            if (fp >= &rec->fields[nfields]) {
+                break;
+            }
+            fp->valid = 1;
+            fp->name = kp->key;
+            fp->type = EDI_TYPE_STRING;
+            fp->flags = 0;
+            fp++;
+        }
         if (ediSetFields(rec, row) == 0) {
             mprAssert(0);
             return 0;
         }
-        grid->records[r++] = rec;
+        grid->records[r] = rec;
     }
     return grid;
 }
