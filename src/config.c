@@ -152,7 +152,7 @@ static int parseFileInner(MaState *state, cchar *path)
 #if !BIT_FEATURE_ROMFS
 /*
     AccessLog path
-    AccessLog conf/log.conf size=10K, backup=5, append, anew, format=""
+    AccessLog conf/log.conf size=10K, backup=5, append, anew
  */
 static int accessLogDirective(MaState *state, cchar *key, cchar *value)
 {

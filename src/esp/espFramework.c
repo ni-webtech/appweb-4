@@ -89,7 +89,7 @@ int espCache(HttpRoute *route, cchar *uri, int lifesecs, int flags)
 bool espCheckSecurityToken(HttpConn *conn) 
 {
     HttpRx  *rx;
-    cchar   *securityTokenName, *sessionToken;
+    cchar   *securityToken, *sessionToken;
 
     rx = conn->rx;
     if (!(rx->flags & HTTP_POST)) {
@@ -97,8 +97,11 @@ bool espCheckSecurityToken(HttpConn *conn)
     }
     if (rx->securityToken == 0) {
         sessionToken = rx->securityToken = sclone(espGetSessionVar(conn, ESP_SECURITY_TOKEN_NAME, ""));
-        securityTokenName = espGetParam(conn, ESP_SECURITY_TOKEN_NAME, "");
-        if (!smatch(sessionToken, securityTokenName)) {
+#if UNUSED && KEEP
+        securityTokenName = espGetParam(conn, "SecurityTokenName", "");
+#endif
+        securityToken = espGetParam(conn, ESP_SECURITY_TOKEN_NAME, "");
+        if (!smatch(sessionToken, securityToken)) {
             httpError(conn, HTTP_CODE_NOT_ACCEPTABLE, 
                 "Security token does not match. Potential CSRF attack. Denying request");
             return 0;
@@ -181,6 +184,7 @@ void espFlush(HttpConn *conn)
 }
 
 
+//  MOB - confusing vs ediGetColumns
 MprList *espGetColumns(HttpConn *conn, EdiRec *rec)
 {
     if (rec == 0) {
@@ -518,6 +522,7 @@ EdiRec *espReadRecByKey(HttpConn *conn, cchar *tableName, cchar *key)
 
 EdiGrid *espReadRecsWhere(HttpConn *conn, cchar *tableName, cchar *fieldName, cchar *operation, cchar *value)
 {
+    //  MOB - where else should call espSetGrid
     return espSetGrid(conn, ediReadWhere(espGetDatabase(conn), tableName, fieldName, operation, value));
 }
 
@@ -756,6 +761,9 @@ void espSetFlashv(HttpConn *conn, cchar *kind, cchar *fmt, va_list args)
 }
 
 
+/*
+    Set the default grid for a request
+ */
 EdiGrid *espSetGrid(HttpConn *conn, EdiGrid *grid)
 {
     conn->grid = grid;
@@ -797,6 +805,9 @@ void espSetParam(HttpConn *conn, cchar *var, cchar *value)
 }
 
 
+/*
+    Set the default record for a request
+ */
 EdiRec *espSetRec(HttpConn *conn, EdiRec *rec)
 {
     return conn->record = rec;

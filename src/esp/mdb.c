@@ -713,6 +713,7 @@ static EdiGrid *mdbReadWhere(Edi *edi, cchar *tableName, cchar *columnName, ccha
         for (ITERATE_ITEMS(table->rows, row, next)) {
             grid->records[next - 1] = createRecFromRow(edi, row);
         }
+        grid->nrecords = next;
     }
     unlock(mdb);
     return grid;
@@ -1120,6 +1121,8 @@ static int setMdbValue(MprJson *jp, MprObj *obj, int cid, cchar *name, cchar *va
             mdb->loadTable->keyCol = mdb->loadCol;
         } else if (smatch(name, "autoinc")) {
             mdb->loadCol->flags |= EDI_AUTO_INC;
+        } else if (smatch(name, "foreign")) {
+            mdb->loadCol->flags |= EDI_FOREIGN;
 #if FUTURE && KEEP
         } else if (smatch(name, "notnull")) {
             mdb->loadCol->flags |= EDI_NOT_NULL;
@@ -1254,6 +1257,9 @@ static int mdbSave(Edi *edi)
             if (col->flags & EDI_KEY) {
                 mprWriteFileString(out, ", key: 'true'");
             }
+            if (col->flags & EDI_FOREIGN) {
+                mprWriteFileString(out, ", foreign: 'true'");
+            }
 #if UNUSED
             if (col->flags & EDI_NOT_NULL) {
                 mprWriteFileString(out, ", notnull: 'true'");
@@ -1277,7 +1283,7 @@ static int mdbSave(Edi *edi)
 #if UNUSED
                 field = readField(row, cid);
                 //  MOB OPT - inline toString code here
-                mprWriteFileFmt(out, "'%s', ", ediFormatField(NULL, field));
+                mprWriteFileFmt(out, "'%s', ", ediFormatField(NULL, &field));
 #else
                 mprWriteFileFmt(out, "'%s', ", value);
 #endif

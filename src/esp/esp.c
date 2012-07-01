@@ -1254,14 +1254,17 @@ static void createMigration(HttpRoute *route, cchar *name, cchar *table, cchar *
     MprHash     *tokens;
     MprList     *files;
     MprDirEntry *dp;
-    cchar       *dir, *seq, *forward, *backward, *data, *path, *def, *field, *tail;
+    cchar       *dir, *seq, *forward, *backward, *data, *path, *def, *field, *tail, *typeDefine;
     char        *typeString;
-    int         i, type, flags, next;
+    int         i, type, next;
 
     eroute = route->eroute;
     seq = sfmt("%s%d", mprGetDate("%Y%m%d%H%M%S"), nextMigration);
     forward = sfmt("    ediAddTable(db, \"%s\");\n", table);
     backward = sfmt("    ediRemoveTable(db, \"%s\");\n", table);
+
+    def = sfmt("    ediAddColumn(db, \"%s\", \"id\", EDI_TYPE_INT, EDI_AUTO_INC | EDI_INDEX | EDI_KEY);\n", table);
+    forward = sjoin(forward, def, NULL);
 
     for (i = 0; i < fieldCount; i++) {
         field = stok(sclone(fields[i]), ":", &typeString);
@@ -1269,8 +1272,11 @@ static void createMigration(HttpRoute *route, cchar *name, cchar *table, cchar *
             fail("Unknown type '%s' for field '%s'", typeString, field);
             return;
         }
-        flags = 0;
-        def = sfmt("    ediAddColumn(db, \"%s\", \"%s\", %d, %d);\n", table, field, type, flags);
+        if (smatch(field, "id")) {
+            continue;
+        }
+        typeDefine = sfmt("EDI_TYPE_%s", supper(ediGetTypeString(type)));
+        def = sfmt("    ediAddColumn(db, \"%s\", \"%s\", %s, 0);\n", table, field, typeDefine);
         forward = sjoin(forward, def, NULL);
     }
     dir = mprJoinPath(eroute->dbDir, "migrations");
@@ -1557,7 +1563,7 @@ static void migrate(HttpRoute *route, int argc, char **argv)
     EspRoute    *eroute;
     Edi         *edi;
     EdiRec      *mig;
-    cchar       *command, *file, *path;
+    cchar       *command, *file;
     int         next, onlyOne, backward, found, i;
     uint64      seq, targetSeq, lastMigration, v;
 
@@ -1577,7 +1583,7 @@ static void migrate(HttpRoute *route, int argc, char **argv)
         ediClose(edi);
         mprDeletePath(edi->path);
         if ((eroute->edi = ediOpen(edi->path, edi->provider->name, edi->flags | EDI_CREATE)) == 0) {
-            fail("Can't open database %s", path);
+            fail("Can't open database %s", edi->path);
         }
     }
     /*

@@ -187,3 +187,4 @@ start.bit
 .keep
 *-xcode
 test/web/tmp
+access.log.*

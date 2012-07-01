@@ -164,7 +164,19 @@ MprList *ediGetRecErrors(EdiRec *rec)
 
 MprList *ediGetGridColumns(EdiGrid *grid)
 {
-    return ediGetColumns(grid->edi, grid->tableName);
+    MprList     *cols;
+    EdiRec      *rec;
+    EdiField    *fp;
+
+    if (grid->tableName && grid->tableName) {
+        return ediGetColumns(grid->edi, grid->tableName);
+    }
+    cols = mprCreateList(0, 0);
+    rec = grid->records[0];
+    for (fp = rec->fields; fp < &rec->fields[rec->nfields]; fp++) {
+        mprAddItem(cols, fp->name);
+    }
+    return cols;
 }
 
 
@@ -200,7 +212,7 @@ cchar *ediGetFieldFmt(cchar *fmt, EdiRec *rec, cchar *fieldName)
     if (!field.valid) {
         return "";
     }
-    return ediFormatField(fmt, field);
+    return ediFormatField(fmt, &field);
 }
 
 
@@ -290,7 +302,7 @@ cchar *ediReadField(Edi *edi, cchar *fmt, cchar *tableName, cchar *key, cchar *c
     if (!field.valid) {
         return defaultValue;
     }
-    return ediFormatField(fmt, field);
+    return ediFormatField(fmt, &field);
 }
 
 
@@ -298,6 +310,7 @@ EdiRec *ediReadOneWhere(Edi *edi, cchar *tableName, cchar *fieldName, cchar *ope
 {
     EdiGrid *grid;
     
+    //  MOB - slow to read entire table. Need optimized query in providers
     if ((grid = ediReadWhere(edi, tableName, fieldName, operation, value)) == 0) {
         return 0;
     }
@@ -405,7 +418,7 @@ EdiGrid *ediCreateBareGrid(Edi *edi, cchar *tableName, int nrows)
     mprSetManager(grid, (MprManager) manageEdiGrid);
     grid->nrecords = nrows;
     grid->edi = edi;
-    grid->tableName = sclone(tableName);
+    grid->tableName = tableName? sclone(tableName) : 0;
     return grid;
 }
 
@@ -429,38 +442,162 @@ EdiRec *ediCreateBareRec(Edi *edi, cchar *tableName, int nfields)
 }
 
 
-cchar *ediFormatField(cchar *fmt, EdiField field)
+//  MOB - why does this take a structure and not a reference?
+cchar *ediFormatField(cchar *fmt, EdiField *fp)
 {
     MprTime     when;
 
     if (fmt == 0) {
-        return field.value;
+        return fp->value;
     }
-    switch (field.type) {
+    switch (fp->type) {
     case EDI_TYPE_BINARY:
     case EDI_TYPE_BOOL:
-        return field.value;
+        return fp->value;
 
     case EDI_TYPE_DATE:
-        if (mprParseTime(&when, field.value, MPR_LOCAL_TIMEZONE, 0) == 0) {
+        if (mprParseTime(&when, fp->value, MPR_LOCAL_TIMEZONE, 0) == 0) {
             return mprFormatLocalTime(fmt, when);
         }
-        return field.value;
+        return fp->value;
 
     case EDI_TYPE_FLOAT:
-        return sfmt(fmt, atof(field.value));
+        return sfmt(fmt, atof(fp->value));
 
     case EDI_TYPE_INT:
-        return sfmt("%Ld", stoi(field.value));
+        return sfmt("%Ld", stoi(fp->value));
 
     case EDI_TYPE_STRING:
     case EDI_TYPE_TEXT:
-        return sfmt(fmt, field.value);
+        return sfmt(fmt, fp->value);
 
     default:
-        mprError("Unknown field type %d", field.type);
+        mprError("Unknown field type %d", fp->type);
     }
     return 0;
+}
+
+
+typedef struct Col {
+    EdiGrid     *grid;
+    EdiField    *fp;
+    int         joinField;      /* Foreign key field index */
+    int         field;          /* Field index in the foreign table */
+} Col;
+
+
+static MprList *joinColumns(MprList *cols, EdiGrid *grid, MprHash *grids, int joinField, int follow)
+{
+    EdiGrid     *foreignGrid;
+    EdiRec      *rec;
+    EdiField    *fp;
+    Col         *col;
+    cchar       *tableName;
+    
+    if (grid->nrecords == 0) {
+        return cols;
+    }
+    rec = grid->records[0];
+    for (fp = rec->fields; fp < &rec->fields[rec->nfields]; fp++) {
+        if (fp->flags & EDI_FOREIGN && follow) {
+            tableName = strim(fp->name, "Id", MPR_TRIM_END);
+            if (!(foreignGrid = mprLookupKey(grids, tableName))) {
+                col = mprAllocObj(Col, 0);
+                col->grid = grid;
+                col->field = (int) (fp - rec->fields);
+                col->joinField = joinField;
+                col->fp = fp;
+                mprAddItem(cols, col);
+            } else {
+                cols = joinColumns(cols, foreignGrid, grids, (int) (fp - rec->fields), 0);
+            }
+        } else {
+            if (fp->flags & EDI_KEY && joinField >= 0) {
+                /* Don't include ID fields from joined tables */
+                continue;
+            }
+            col = mprAllocObj(Col, 0);
+            col->grid = grid;
+            col->field = (int) (fp - rec->fields);
+            col->joinField = joinField;
+            col->fp = fp;
+            mprAddItem(cols, col);
+        }
+    }
+    return cols;
+}
+
+
+/*
+    List of grids to join must be null terminated
+ */
+EdiGrid *ediJoin(Edi *edi, ...)
+{
+    EdiGrid     *primary, *grid, *result, *current;
+    EdiRec      *rec;
+    EdiField    *dest, *fp;
+    MprList     *cols;
+    MprHash     *grids;
+    Col         *col;
+    va_list     vgrids;
+    cchar       *keyValue;
+    int         nfields, r, next;
+
+    va_start(vgrids, edi);
+    if ((primary = va_arg(vgrids, EdiGrid*)) == 0) {
+        return 0;
+    }
+    if ((result = ediCreateBareGrid(edi, NULL, 0)) == 0) {
+        return 0;
+    }
+    if (primary->nrecords == 0) {
+        return result;
+    }
+    /*
+        Build list of grids to join
+     */
+    grids = mprCreateHash(0, 0);
+    for (;;) {
+        if ((grid = va_arg(vgrids, EdiGrid*)) == 0) {
+            break;
+        }
+        mprAddKey(grids, grid->tableName, grid);
+    }
+    va_end(vgrids);
+
+    /*
+        Get list of columns for the result. Each col object records the target grid and field index.
+     */
+    cols = joinColumns(mprCreateList(0, 0), primary, grids, -1, 1);
+    nfields = mprGetListLength(cols);
+
+    for (r = 0; r < primary->nrecords; r++) {
+        if ((rec = ediCreateBareRec(edi, NULL, nfields)) == 0) {
+            mprAssert(0);
+            return 0;
+        }
+        result->records[r] = rec;
+        dest = rec->fields;
+        current = 0;
+        for (ITERATE_ITEMS(cols, col, next)) { 
+            if (col->grid == primary) {
+                *dest = primary->records[r]->fields[col->field];
+            } else {
+                if (col->grid != current) {
+                    current = col->grid;
+                    keyValue = primary->records[r]->fields[col->joinField].value;
+                    rec = ediReadOneWhere(edi, col->grid->tableName, "id", "==", keyValue);
+                }
+                mprAssert(rec);
+                fp = &rec->fields[col->field];
+                *dest = *fp;
+                dest->name = sfmt("%s.%s", col->grid->tableName, fp->name);
+            }
+            dest++;
+        }
+    }
+    result->nrecords = r;
+    return result;
 }
 
 
@@ -508,8 +645,6 @@ EdiGrid *ediMakeGrid(cchar *json)
     EdiGrid     *grid;
     EdiRec      *rec;
     EdiField    *fp;
-    MprList     *list;
-    cchar       *key;
     char        rowbuf[16];
     int         r, nrows, nfields;
 

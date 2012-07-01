@@ -98,10 +98,12 @@ extern void ediDefineValidation(cchar *name, EdiValidationProc vfn);
 
 /*
     Field flags
+    MOB _ need a separate flag for EDI_ID
  */
 #define EDI_AUTO_INC        0x1         /**< Field flag -- Automatic increments on new row */
 #define EDI_KEY             0x2         /**< Field flag -- Column is the key */
 #define EDI_INDEX           0x4         /**< Field flag -- Column is indexed */
+#define EDI_FOREIGN         0x8         /**< Field flag -- Column is a foreign key */
  
 /**
     EDI Record field structure
@@ -373,6 +375,15 @@ extern int ediGetColumnSchema(Edi *edi, cchar *tableName, cchar *columnName, int
     @ingroup Edi
  */
 extern MprList *ediGetTables(Edi *edi);
+
+/**
+    Join grids
+    @param edi Database handle
+    @param ... Null terminated list of data grids. These are instances of EdiGrid.
+    @return A joined grid.
+    @ingroup Edi
+ */
+extern EdiGrid *ediJoin(Edi *edi, ...);
 
 /**
     MOB - remove this API
@@ -660,11 +671,11 @@ extern bool ediValidateRec(EdiRec *rec);
 /**
     Format a field value.
     @param fmt Printf style format string
-    @param value Field value
+    @param fp Field whoes value will be formatted
     @return Formatted value string
     @ingroup Edi
  */
-extern cchar *ediFormatField(cchar *fmt, EdiField value);
+extern cchar *ediFormatField(cchar *fmt, EdiField *fp);
 
 /**
     Get a record field
