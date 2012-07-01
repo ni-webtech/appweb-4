@@ -1003,7 +1003,6 @@ int mprCreateOpenSslModule(bool lazy)
     if ((olocks = mprAllocObj(OpenSslLocks, manageOpenSslLocks)) == 0) {
         return MPR_ERR_MEMORY;
     }
-
     /*
         Get some random bytes
      */
@@ -1016,7 +1015,6 @@ int mprCreateOpenSslModule(bool lazy)
     RAND_load_file("/dev/urandom", 256);
     mprLog(6, "OpenSsl: After calling RAND_load_file");
 #endif
-
     /*
         Configure the global locks
      */
@@ -1035,7 +1033,6 @@ int mprCreateOpenSslModule(bool lazy)
 #if !BIT_WIN_LIKE
     OpenSSL_add_all_algorithms();
 #endif
-
     SSL_library_init();
 
     if ((provider = createOpenSslProvider()) == 0) {

@@ -4026,8 +4026,8 @@ extern int mprGetTimeZoneOffset(MprTime when);
     @stability Evolving.
     @see MprList MprListCompareProc mprAddItem mprAddNullItem mprAppendList mprClearList mprCloneList mprCopyList 
         mprCreateKeyPair mprCreateList mprGetFirstItem mprGetItem mprGetLastItem mprGetListCapacity mprGetListLength 
-        mprGetNextItem mprGetPrevItem mprInitList mprInsertItemAtPos mprLookupItem mprPopItem mprPushItem 
-        mprRemoveItem mprRemoveItemAtPos mprRemoveRangeOfItems mprSetItem mprSetListLimits mprSortList 
+        mprGetNextItem mprGetPrevItem mprInitList mprInsertItemAtPos mprLookupItem mprLookupStringItem mprPopItem mprPushItem 
+        mprRemoveItem mprRemoveItemAtPos mprRemoveRangeOfItems mprRemoveStringItem mprSetItem mprSetListLimits mprSortList 
     @defgroup MprList MprList
  */
 typedef struct MprList {
@@ -4216,6 +4216,16 @@ extern int mprInsertItemAtPos(MprList *list, int index, cvoid *item);
 extern int mprLookupItem(MprList *list, cvoid *item);
 
 /**
+    Find a string item and return its index.
+    @description Search for the first matching string in the list and return its index.
+    @param list List pointer returned from mprCreateList.
+    @param item Pointer to value stored in the list.
+    @return Positive list index if found, otherwise a negative MPR error code.
+    @ingroup MprList
+ */
+extern int mprLookupStringItem(MprList *list, cchar *str);
+
+/**
     Remove an item from the list
     @description Search for a specified item and then remove it from the list.
     @param list List pointer returned from mprCreateList.
@@ -4254,6 +4264,16 @@ extern int mprRemoveLastItem(MprList *list);
     @ingroup MprList
  */
 extern int mprRemoveRangeOfItems(MprList *list, int start, int end);
+
+/**
+    Remove a string item from the list
+    @description Search for the first matching string and then remove it from the list.
+    @param list List pointer returned from mprCreateList.
+    @param item Item pointer to remove. 
+    @return Returns the positive index of the removed item, otherwise a negative MPR error code.
+    @ingroup MprList
+ */
+extern int mprRemoveStringItem(MprList *list, cchar *str);
 
 /**
     Set a list item
