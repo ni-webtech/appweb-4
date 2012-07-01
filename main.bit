@@ -34,7 +34,7 @@ Bit.load({
         title: 'Embedthis Appweb',
         company: 'Embedthis',
         version: '4.1.0',
-        buildNumber: 'repos',
+        buildNumber: '0',
         http_port: 80,
         ssl_port: 443,
         mdb: true,
