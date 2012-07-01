@@ -2262,17 +2262,24 @@ ssize httpFilterChunkData(HttpQueue *q, HttpPacket *packet)
             httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Bad chunk specification");
             return 0;
         }
+        if (chunkSize == 0) {
+            /*
+                Last chunk. Consume the final "\r\n".
+             */
+            if ((cp + 2) >= buf->end) {
+                return MPR_ERR_NOT_READY;
+            }
+            cp += 2;
+            bad += (cp[-1] != '\r' || cp[0] != '\n');
+            if (bad) {
+                httpError(conn, HTTP_ABORT | HTTP_CODE_BAD_REQUEST, "Bad final chunk specification");
+                return 0;
+            }
+        }
         mprAdjustBufStart(buf, (cp - start + 1));
         /* Remaining content is set to the next chunk size */
         rx->remainingContent = chunkSize;
         if (chunkSize == 0) {
-            /*
-                We are lenient if the request does not have a trailing "\r\n" after the last chunk
-             */
-            cp = mprGetBufStart(buf);
-            if (mprGetBufLength(buf) == 2 && *cp == '\r' && cp[1] == '\n') {
-                mprAdjustBufStart(buf, 2);
-            }
             rx->chunkState = HTTP_CHUNK_EOF;
             rx->eof = 1;
         } else {

@@ -121,7 +121,7 @@ struct HttpUri;
 #define HTTP_CACHE_LIFESPAN       (86400 * 1000)    /**< Default cache lifespan to 1 day */
 
 #define HTTP_DATE_FORMAT          "%a, %d %b %Y %T GMT"
-#define HTTP_LOG_FORMAT           "%h %l %u %t \"%r\" %>s %b"
+#define HTTP_LOG_FORMAT           "%h %l %u %t \"%r\" %>s %b %n"
 
 /*  
     Hash sizes (primes work best)
