@@ -1,5 +1,5 @@
 #
-#	Makefile - Top level Makefile when using "make" to build.
+#	Makefile - Top level Makefile when using "make" to build. 
 #			   Alternatively, use bit directly.
 #	
 
