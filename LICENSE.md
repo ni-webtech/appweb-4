@@ -189,7 +189,10 @@ Third Party Licenses
 
 6) Hashing algorithm. Licensed from Paul Hsieh at http://www.azillionmonkeys.com/qed/hash.html licensed under LGPL 2.1 1999.
 
-7) Other contributors have provided portions of the software that are covered by the Embedthis Contributor license that 
+7) Qsort routine - (c) Michael Ringgaard. BSD license.
+
+8) Other contributors have provided portions of the software that are covered by the Embedthis Contributor license that 
     grants Embedthis sufficient rights to execute this license Agreement.
+
 
 -END-
