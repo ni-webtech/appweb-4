@@ -118,10 +118,12 @@ MAIN(httpMain, int argc, char **argv, char **envp)
     mprSetMaxWorkers(app->workers);
 
 #if BIT_FEATURE_SSL
+#if UNUSED
     if (!mprLoadSsl(1)) {
         mprError("Can't load SSL");
         exit(1);
     }
+#endif
     if (app->insecure || app->cert) {
         app->ssl = mprCreateSsl();
         mprVerifySslServers(app->ssl, !app->insecure);

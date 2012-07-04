@@ -181,10 +181,9 @@ static void mark();
 static void marker(void *unused, MprThread *tp);
 static void markRoots();
 static void nextGen();
+static int pauseThreads();
 static void sweep();
-static void sweeper(void *unused, MprThread *tp);
-static void synchronize();
-static int syncThreads();
+static void resumeThreads();
 static void triggerGC(int flags);
 
 #if BIT_WIN_LIKE
@@ -297,8 +296,8 @@ Mpr *mprCreateMemService(MprManager manager, int flags)
         SCRIBBLE(spare);
         linkBlock(spare);
     }
-
-    MPR->markerCond = mprCreateCond();
+    heap->markerCond = mprCreateCond();
+    heap->mutex = mprCreateLock();
     heap->roots = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
     mprAddRoot(MPR);
     return MPR;
@@ -336,7 +335,7 @@ void *mprAllocMem(ssize usize, int flags)
     ssize       size;
     int         padWords;
 
-    mprAssert(!MPR->marking);
+    mprAssert(!heap->marking);
     mprAssert(usize >= 0);
 
     padWords = padding[flags & MPR_ALLOC_PAD_MASK];
@@ -994,6 +993,7 @@ void mprStartGCService()
                 mprStartThread(heap->marker);
             }
         }
+#if FUTURE && KEEP
         if (heap->flags & MPR_SWEEP_THREAD) {
             LOG(7, "DEBUG: startMemWorkers: start sweeper");
             heap->hasSweeper = 1;
@@ -1004,6 +1004,7 @@ void mprStartGCService()
                 mprStartThread(heap->sweeper);
             }
         }
+#endif
     }
 }
 
@@ -1017,7 +1018,7 @@ void mprStopGCService()
 
 void mprWakeGCService()
 {
-    mprSignalCond(MPR->markerCond);
+    mprSignalCond(heap->markerCond);
     mprResumeThreads();
 }
 
@@ -1030,7 +1031,7 @@ static void triggerGC(int flags)
         heap->mustYield = 1;
 #endif
         if (heap->flags & MPR_MARK_THREAD) {
-            mprSignalCond(MPR->markerCond);
+            mprSignalCond(heap->markerCond);
         }
     }
 }
@@ -1060,7 +1061,7 @@ void mprRequestGC(int flags)
     synchronization point.  This happens infrequently and is essential to safely move to a new generation.
     All threads must yield to the marker (including sweeper)
  */
-static void synchronize()
+static void resumeThreads()
 {
 #if BIT_MEMORY_STATS
     LOG(7, "GC: MARKED %,d/%,d, SWEPT %,d/%,d, freed %,d, bytesFree %,d (prior %,d), newCount %,d/%,d, " 
@@ -1074,7 +1075,7 @@ static void synchronize()
     if (heap->notifier) {
         (heap->notifier)(MPR_MEM_ATTENTION, 0);
     }
-    if (syncThreads()) {
+    if (pauseThreads()) {
         nextGen();
     } else {
         LOG(7, "DEBUG: Pause for GC sync timed out");
@@ -1102,7 +1103,7 @@ static void mark()
     }
 #else
     heap->mustYield = 1;
-    if (!syncThreads()) {
+    if (!pauseThreads()) {
         LOG(6, "DEBUG: GC synchronization timed out, some threads did not yield.");
         LOG(6, "This is most often caused by a thread doing a long running operation and not first calling mprYield.");
         LOG(6, "If debugging, run the process with -D to enable debug mode.");
@@ -1116,11 +1117,11 @@ static void mark()
     heap->gc = 0;
     checkYielded();
     markRoots();
-    MPR->marking = 0;
+    heap->marking = 0;
     if (!heap->hasSweeper) {
         MPR_MEASURE(7, "GC", "sweep", sweep());
     }
-    synchronize();
+    resumeThreads();
 }
 
 
@@ -1239,6 +1240,8 @@ static void markRoots()
     heap->stats.markVisited = 0;
     heap->stats.marked = 0;
     mprMark(heap->roots);
+    mprMark(heap->mutex);
+    mprMark(heap->markerCond);
 
     heap->rootIndex = 0;
     while ((root = getNextRoot()) != 0) {
@@ -1336,19 +1339,32 @@ void mprRelease(void *ptr)
 
 
 /*
+    If dispatcher is 0, will use MPR->nonBlock if MPR_EVENT_QUICK else MPR->dispatcher
+ */
+void mprCreateOutsideEvent(MprDispatcher *dispatcher, void *proc, void *data)
+{
+    heap->pauseGC++;
+    mprAtomicBarrier();
+    while (heap->mustYield) {
+        mprNap(0);
+    }
+    mprCreateEvent(dispatcher, "relay", 0, proc, data, MPR_EVENT_STATIC_DATA);
+    heap->pauseGC--;
+}
+
+
+/*
     Marker thread main program
  */
 static void marker(void *unused, MprThread *tp)
 {
     LOG(5, "DEBUG: marker thread started");
-    //  TODO -- rename from marker to marking?
-    MPR->marker = 1;
     tp->stickyYield = 1;
     tp->yielded = 1;
 
     while (!mprIsFinished()) {
         if (!heap->mustYield) {
-            mprWaitForCond(MPR->markerCond, -1);
+            mprWaitForCond(heap->markerCond, -1);
             if (mprIsFinished()) {
                 break;
             }
@@ -1356,10 +1372,10 @@ static void marker(void *unused, MprThread *tp)
         MPR_MEASURE(7, "GC", "mark", mark());
     }
     heap->mustYield = 0;
-    MPR->marker = 0;
 }
 
 
+#if UNUSED && KEEP
 /*
     Sweeper thread main program. May be called from the marker thread.
  */
@@ -1367,13 +1383,14 @@ static void sweeper(void *unused, MprThread *tp)
 {
     LOG(5, "DEBUG: sweeper thread started");
 
-    MPR->sweeper = 1;
+    heap->sweeper = 1;
     while (!mprIsStoppingCore()) {
         MPR_MEASURE(7, "GC", "sweep", sweep());
         mprYield(MPR_YIELD_BLOCK);
     }
-    MPR->sweeper = 0;
+    heap->sweeper = 0;
 }
+#endif
 
 
 /*
@@ -1387,8 +1404,11 @@ void mprYield(int flags)
     MprThread           *tp;
 
     ts = MPR->threadService;
-    tp = mprGetCurrentThread();
-
+    if ((tp = mprGetCurrentThread()) == 0) {
+        mprError("Yield called from an unknown thread");
+        /* Called from a non-mpr thread */
+        return;
+    }
     /*
         Must not call mprLog or derviatives here as it will allocate memory and assert
      */
@@ -1397,7 +1417,7 @@ void mprYield(int flags)
         tp->stickyYield = 1;
     }
     mprAssert(tp->yielded);
-    while (tp->yielded && (heap->mustYield || (flags & MPR_YIELD_BLOCK)) && MPR->marker) {
+    while (tp->yielded && (heap->mustYield || (flags & MPR_YIELD_BLOCK)) && heap->marker) {
         if (heap->flags & MPR_MARK_THREAD) {
             mprSignalCond(ts->cond);
         }
@@ -1407,26 +1427,30 @@ void mprYield(int flags)
     if (!tp->stickyYield) {
         tp->yielded = 0;
     }
-    mprAssert(!MPR->marking);
+    mprAssert(!heap->marking);
 }
 
 
 void mprResetYield()
 {
-    MprThread   *tp;
+    MprThreadService    *ts;
+    MprThread           *tp;
 
+    ts = MPR->threadService;
     mprAssert(mprGetCurrentThread());
-
     if ((tp = mprGetCurrentThread()) != 0) {
         tp->stickyYield = 0;
     }
-    lock(MPR);
-    if (MPR->marking) {
-        unlock(MPR);
+    /*
+        May have been sticky yielded and so marking could be active. If so, must yield here regardless.
+     */
+    lock(ts->threads);
+    if (heap->marking) {
+        unlock(ts->threads);
         mprYield(0);
     } else {
         tp->yielded = 0;
-        unlock(MPR);
+        unlock(ts->threads);
     }
 }
 
@@ -1436,7 +1460,7 @@ void mprResetYield()
     NOTE: this functions differently if parallel. If so, then it will abort waiting. If !parallel, it waits for all
     threads to yield.
  */
-static int syncThreads()
+static int pauseThreads()
 {
     MprThreadService    *ts;
     MprThread           *tp;
@@ -1446,48 +1470,46 @@ static int syncThreads()
 #if BIT_DEBUG
     uint64  ticks = mprGetTicks();
 #endif
-
     ts = MPR->threadService;
     timeout = MPR_TIMEOUT_GC_SYNC;
 
-    LOG(7, "syncThreads: wait for threads to yield, timeout %d", timeout);
+    LOG(7, "pauseThreads: wait for threads to yield, timeout %d", timeout);
     mark = mprGetTime();
     if (mprGetDebugMode()) {
         timeout = timeout * 500;
     }
     do {
-        allYielded = 1;
         /*
-             The MPR is locked is to serialize access to MPR->marking. mprResetYield has a race where
-             its thread will have been yielded.
+            Use the thread list lock to serialize access to heap->marking. 
+            NOTE: mprResetYield has a race where its thread will have been yielded.
          */
-        lock(MPR);
-        mprLock(ts->mutex);
-        for (i = 0; i < ts->threads->length; i++) {
-            tp = (MprThread*) mprGetItem(ts->threads, i);
-            if (!tp->yielded) {
-                allYielded = 0;
-                if (mprGetElapsedTime(mark) > 1000) {
-                    LOG(7, "Thread %s is not yielding", tp->name);
+        lock(ts->threads);
+        if (!heap->pauseGC) {
+            allYielded = (heap->pauseGC == 0);
+            for (i = 0; i < ts->threads->length; i++) {
+                tp = (MprThread*) mprGetItem(ts->threads, i);
+                if (!tp->yielded) {
+                    allYielded = 0;
+                    if (mprGetElapsedTime(mark) > 1000) {
+                        LOG(7, "Thread %s is not yielding", tp->name);
+                    }
+                    break;
                 }
+            }
+            if (allYielded) {
+                heap->marking = 1;
+                unlock(ts->threads);
                 break;
             }
         }
-        mprUnlock(ts->mutex);
-
-        if (allYielded) {
-            MPR->marking = 1;
-            unlock(MPR);
-            break;
-        }
-        unlock(MPR);
-        LOG(7, "syncThreads: waiting for threads to yield");
+        unlock(ts->threads);
+        LOG(7, "pauseThreads: waiting for threads to yield");
         mprWaitForCond(ts->cond, 20);
 
     } while (!allYielded && mprGetElapsedTime(mark) < timeout);
 
 #if BIT_DEBUG
-    LOG(7, "TIME: syncThreads elapsed %,d msec, %,d ticks", mprGetElapsedTime(mark), mprGetTicks() - ticks);
+    LOG(7, "TIME: pauseThreads elapsed %,d msec, %,d ticks", mprGetElapsedTime(mark), mprGetTicks() - ticks);
 #endif
     if (allYielded) {
         checkYielded();
@@ -1508,7 +1530,7 @@ void mprResumeThreads()
     ts = MPR->threadService;
     LOG(7, "mprResumeThreadsAfterGC sync");
 
-    mprLock(ts->mutex);
+    lock(ts->threads);
     for (i = 0; i < ts->threads->length; i++) {
         tp = (MprThread*) mprGetItem(ts->threads, i);
         if (tp && tp->yielded) {
@@ -1518,7 +1540,7 @@ void mprResumeThreads()
             mprSignalCond(tp->cond);
         }
     }
-    mprUnlock(ts->mutex);
+    unlock(ts->threads);
 }
 
 
@@ -1585,6 +1607,7 @@ int mprIsDead(cvoid *ptr)
 
 
 /*
+    Revive a block that is scheduled for sweeping.
     WARNING: Caller must be locked so that the sweeper will not free this block. 
  */
 void mprRevive(cvoid *ptr)
@@ -2464,12 +2487,12 @@ static void checkYielded()
     int                 i;
 
     ts = MPR->threadService;
-    mprLock(ts->mutex);
+    lock(ts->threads);
     for (i = 0; i < ts->threads->length; i++) {
         tp = (MprThread*) mprGetItem(ts->threads, i);
         mprAssert(tp->yielded);
     }
-    mprUnlock(ts->mutex);
+    unlock(ts->threads);
 #endif
 }
 
@@ -2715,7 +2738,6 @@ static void manageMpr(Mpr *mpr, int flags)
         mprMark(mpr->dtoaSpin[1]);
         mprMark(mpr->cond);
         mprMark(mpr->emptyString);
-        mprMark(mpr->markerCond);
         mprMark(mpr->argBuf);
     }
 }
@@ -11023,19 +11045,23 @@ int mprWaitForCond(MprCond *cp, MprTime timeout)
     int                 usec;
 #endif
 
+    /*
+        Avoid doing a mprGetTime() if timeout is < 0
+     */
     rc = 0;
-    if (timeout < 0) {
-        timeout = MAXINT;
-    }
-    now = mprGetTime();
-    expire = now + timeout;
-
+    if (timeout >= 0) {
+        now = mprGetTime();
+        expire = now + timeout;
 #if BIT_UNIX_LIKE
-    gettimeofday(&current, NULL);
-    usec = current.tv_usec + ((int) (timeout % 1000)) * 1000;
-    waitTill.tv_sec = current.tv_sec + ((int) (timeout / 1000)) + (usec / 1000000);
-    waitTill.tv_nsec = (usec % 1000000) * 1000;
+        gettimeofday(&current, NULL);
+        usec = current.tv_usec + ((int) (timeout % 1000)) * 1000;
+        waitTill.tv_sec = current.tv_sec + ((int) (timeout / 1000)) + (usec / 1000000);
+        waitTill.tv_nsec = (usec % 1000000) * 1000;
 #endif
+    } else {
+        expire = -1;
+        now = 0;
+    }
     mprLock(cp->mutex);
     if (!cp->triggered) {
         /*
@@ -11071,7 +11097,11 @@ int mprWaitForCond(MprCond *cp, MprTime timeout)
                 NOTE: pthread_cond_timedwait can return 0 (MAC OS X and Linux). The pthread_cond_wait routines will 
                 atomically unlock the mutex before sleeping and will relock on awakening.  
              */
-            rc = pthread_cond_timedwait(&cp->cv, &cp->mutex->cs,  &waitTill);
+            if (now) {
+                rc = pthread_cond_timedwait(&cp->cv, &cp->mutex->cs,  &waitTill);
+            } else {
+                rc = pthread_cond_wait(&cp->cv, &cp->mutex->cs);
+            }
             if (rc == ETIMEDOUT) {
                 rc = MPR_ERR_TIMEOUT;
             } else if (rc == EAGAIN) {
@@ -11082,7 +11112,7 @@ int mprWaitForCond(MprCond *cp, MprTime timeout)
                 rc = MPR_ERR;
             }
 #endif
-        } while (!cp->triggered && rc == 0 && (now = mprGetTime()) < expire);
+        } while (!cp->triggered && rc == 0 && (now && (now = mprGetTime()) < expire));
     }
     if (cp->triggered) {
         cp->triggered = 0;
@@ -15659,37 +15689,45 @@ static MprObj *deserialize(MprJson *jp)
             /*
                 Value: String, "{" or "]"
              */
+            value = 0;
             if (index < 0) {
                 if ((name = parseName(jp)) == 0) {
                     return 0;
                 }
-                if (advanceToken(jp) != ':') {
-                    mprJsonParseError(jp, "Bad separator '%c'", *jp->tok);
-                    return 0;
+                if ((token = advanceToken(jp)) != ':') {
+                    if (token == ',' || token == '}' || token == ']') {
+                        valueType = MPR_JSON_STRING;
+                        value = name;
+                    } else {
+                        mprJsonParseError(jp, "Bad separator '%c'", *jp->tok);
+                        return 0;
+                    }
                 }
                 jp->tok++;
             } else {
                 name = 0;
             }
-            advanceToken(jp);
-            if (jp->callback.checkState && jp->callback.checkState(jp, name) < 0) {
-                return 0;
-            }
-            if (*jp->tok == '{') {
-                value = deserialize(jp);
-                valueType = MPR_JSON_OBJ;
+            if (!value) {
+                advanceToken(jp);
+                if (jp->callback.checkState && jp->callback.checkState(jp, name) < 0) {
+                    return 0;
+                }
+                if (*jp->tok == '{') {
+                    value = deserialize(jp);
+                    valueType = MPR_JSON_OBJ;
 
-            } else if (*jp->tok == '[') {
-                value = deserialize(jp);
-                valueType = MPR_JSON_ARRAY;
+                } else if (*jp->tok == '[') {
+                    value = deserialize(jp);
+                    valueType = MPR_JSON_ARRAY;
 
-            } else {
-                value = parseValue(jp);
-                valueType = MPR_JSON_STRING;
-            }
-            if (value == 0) {
-                /* Error already reported */
-                return 0;
+                } else {
+                    value = parseValue(jp);
+                    valueType = MPR_JSON_STRING;
+                }
+                if (!value) {
+                    /* Error already reported */
+                    return 0;
+                }
             }
             if ((rc = jp->callback.setValue(jp, obj, index, name, value, valueType)) < 0) {
                 return 0;
@@ -17011,19 +17049,19 @@ static int growList(MprList *lp, int incr)
 }
 
 
-static int defaultSort(char **q1, char **q2)
+static int defaultSort(char **q1, char **q2, void *ctx)
 {
     return scmp(*q1, *q2);
 }
 
 
-void mprSortList(MprList *lp, void *compare)
+void mprSortList(MprList *lp, MprSortProc compare, void *ctx)
 {
     lock(lp);
     if (!compare) {
-        compare = defaultSort;
+        compare = (MprSortProc) defaultSort;
     }
-    qsort(lp->items, lp->length, sizeof(void*), compare);
+    mprSort(lp->items, lp->length, sizeof(void*), compare, ctx);
     unlock(lp);
 }
 
@@ -17049,6 +17087,107 @@ MprKeyValue *mprCreateKeyPair(cchar *key, cchar *value)
     return pair;
 }
 
+
+static void swapElt(char *p1, char *p2, ssize size)
+{
+    char    t;
+
+    if (p1 == p2) {
+        return;
+    }
+    while (size--) {
+        t = *p1;
+        *p1++ = *p2;
+        *p2++ = t;
+    }
+}
+
+
+/*
+    Linear sort for small arrays
+ */
+static void linearSort(char *left, char *right, ssize size, MprSortProc compare, void *ctx)
+{
+    char *next, *bound;
+
+    for (; left <= right; right -= size) {
+        bound = left;
+        for (next = left + size; next <= right; next += size) {
+            if (compare(bound, next, ctx) <= 0) {
+                bound = next;
+            }
+        }
+        swapElt(bound, right, size);
+    }
+}
+
+
+/*
+    Like a traditional q-sort but with a context object argument
+ */
+void mprSort(void *array, ssize nelt, ssize esize, MprSortProc compare, void *ctx) 
+{
+    char    *l, *left, *pivot, *r, *right;
+    int     index;
+    struct  SortStack {
+        char    *left;
+        char    *right;
+    } sortStack[64];
+
+    if (nelt <= 1 || esize <= 0) {
+        return;
+    }
+    index = 0;
+    left = array;
+    right = (char*) array + esize * (nelt - 1);
+
+again:
+    if (nelt > 8) {
+        pivot = left + (nelt / 2) * esize;
+        swapElt(pivot, left, esize);
+
+        r = right + esize;
+        l = left;
+
+        while (1) {
+            for (l += esize; l <= right && compare(l, left, ctx) <= 0; l += esize) ;
+            for (r -= esize; r > left && compare(r, left, ctx) >= 0; r -= esize) ;
+            if (r < l) {
+                break;
+            }
+            swapElt(l, r, esize);
+        }
+        swapElt(left, r, esize);
+
+        mprAssert(index < 64);
+        if ((r - left - 1) >= (right - l)) {
+            if ((left + esize) < r) {
+                sortStack[index].left = left;
+                sortStack[index++].right = r - esize;
+            }
+            if (l < right) {
+                left = l;
+                goto again;
+            }
+        } else {
+            if (l < right) {
+                sortStack[index].left = l;
+                sortStack[index++].right = right;
+            }
+            if ((left + esize) < r) {
+                right = r - esize;
+                goto again;
+            }
+        }
+    } else {
+        linearSort(left, right, esize, compare, ctx);
+    }
+    if (--index >= 0) {
+        left = sortStack[index].left;
+        right = sortStack[index].right;
+        goto again;
+    }
+}
 
 /*
     @copy   default
@@ -23453,10 +23592,8 @@ static void standardSignalHandler(void *ignored, MprSignal *sp)
 
 /******************************* Forward Declarations *************************/
 
-static MprSocket *acceptSocket(MprSocket *listen);
 static void closeSocket(MprSocket *sp, bool gracefully);
 static int connectSocket(MprSocket *sp, cchar *ipAddr, int port, int initialFlags);
-static MprSocket *createSocket(MprSsl *ssl);
 static MprSocketProvider *createStandardProvider(MprSocketService *ss);
 static void disconnectSocket(MprSocket *sp);
 static ssize flushSocket(MprSocket *sp);
@@ -23466,6 +23603,7 @@ static int listenSocket(MprSocket *sp, cchar *ip, int port, int initialFlags);
 static void manageSocket(MprSocket *sp, int flags);
 static void manageSocketProvider(MprSocketProvider *provider, int flags);
 static void manageSocketService(MprSocketService *ss, int flags);
+static void manageSsl(MprSsl *ssl, int flags);
 static ssize readSocket(MprSocket *sp, void *buf, ssize bufsize);
 static ssize writeSocket(MprSocket *sp, cvoid *buf, ssize bufsize);
 
@@ -23511,9 +23649,7 @@ MprSocketService *mprCreateSocketService()
     mprSetServerName(serverName);
     mprSetDomainName(domainName);
     mprSetHostName(hostName);
-#if BIT_FEATURE_SSL
     ss->secureSockets = mprCreateList(0, 0);
-#endif
     return ss;
 }
 
@@ -23524,9 +23660,7 @@ static void manageSocketService(MprSocketService *ss, int flags)
         mprMark(ss->standardProvider);
         mprMark(ss->secureProvider);
         mprMark(ss->mutex);
-#if BIT_FEATURE_SSL
         mprMark(ss->secureSockets);
-#endif
     }
 }
 
@@ -23539,10 +23673,7 @@ static MprSocketProvider *createStandardProvider(MprSocketService *ss)
         return 0;
     }
     provider->name = sclone("standard");
-    provider->acceptSocket = acceptSocket;
     provider->closeSocket = closeSocket;
-    provider->connectSocket = connectSocket;
-    provider->createSocket = createSocket;
     provider->disconnectSocket = disconnectSocket;
     provider->flushSocket = flushSocket;
     provider->listenSocket = listenSocket;
@@ -23583,13 +23714,12 @@ int mprSetMaxSocketAccept(int max)
 }
 
 
-/*  
-    Create a new socket
- */
-static MprSocket *createSocket(struct MprSsl *ssl)
+MprSocket *mprCreateSocket()
 {
-    MprSocket       *sp;
+    MprSocketService    *ss;
+    MprSocket           *sp;
 
+    ss = MPR->socketService;
     if ((sp = mprAllocObj(MprSocket, manageSocket)) == 0) {
         return 0;
     }
@@ -23597,8 +23727,8 @@ static MprSocket *createSocket(struct MprSsl *ssl)
     sp->fd = -1;
     sp->flags = 0;
 
-    sp->provider = MPR->socketService->standardProvider;
-    sp->service = MPR->socketService;
+    sp->provider = ss->standardProvider;
+    sp->service = ss;
     sp->mutex = mprCreateLock();
     return sp;
 }
@@ -23624,32 +23754,6 @@ static void manageSocket(MprSocket *sp, int flags)
             mprCloseSocket(sp, 1);
         }
     }
-}
-
-
-MprSocket *mprCreateSocket(struct MprSsl *ssl)
-{
-    MprSocketService    *ss;
-    MprSocket           *sp;
-
-    ss = MPR->socketService;
-
-    if (ssl) {
-#if !BIT_FEATURE_SSL
-        return 0;
-#endif
-        if (ss->secureProvider == NULL || ss->secureProvider->createSocket == NULL) {
-            mprError("Missing socket service provider");
-            return 0;
-        }
-        sp = ss->secureProvider->createSocket(ssl);
-
-    } else {
-        mprAssert(ss->standardProvider->createSocket);
-        sp = ss->standardProvider->createSocket(NULL);
-    }
-    sp->service = ss;
-    return sp;
 }
 
 
@@ -23823,7 +23927,7 @@ int mprConnectSocket(MprSocket *sp, cchar *ip, int port, int flags)
     if (sp->provider == 0) {
         return MPR_ERR_NOT_INITIALIZED;
     }
-    return sp->provider->connectSocket(sp, ip, port, flags);
+    return connectSocket(sp, ip, port, flags);
 }
 
 
@@ -23833,11 +23937,10 @@ static int connectSocket(MprSocket *sp, cchar *ip, int port, int initialFlags)
     MprSocklen          addrlen;
     int                 broadcast, datagram, family, protocol, rc;
 
-    lock(sp);
-
-    resetSocket(sp);
-
     mprLog(6, "openClient: %s:%d, flags %x", ip, port, initialFlags);
+
+    lock(sp);
+    resetSocket(sp);
 
     sp->port = port;
     sp->flags = (initialFlags &
@@ -23858,20 +23961,16 @@ static int connectSocket(MprSocket *sp, cchar *ip, int port, int initialFlags)
         unlock(sp);
         return MPR_ERR_CANT_ACCESS;
     }
-    sp->fd = (int) socket(family, datagram ? SOCK_DGRAM: SOCK_STREAM, protocol);
-    if (sp->fd < 0) {
+    if ((sp->fd = socket(family, datagram ? SOCK_DGRAM: SOCK_STREAM, protocol)) < 0) {
         unlock(sp);
         return MPR_ERR_CANT_OPEN;
     }
-
 #if !BIT_WIN_LIKE && !VXWORKS
-
     /*  
         Children should not inherit this fd
      */
     fcntl(sp->fd, F_SETFD, FD_CLOEXEC);
 #endif
-
     if (broadcast) {
         int flag = 1;
         if (setsockopt(sp->fd, SOL_SOCKET, SO_BROADCAST, (char *) &flag, sizeof(flag)) < 0) {
@@ -23881,7 +23980,6 @@ static int connectSocket(MprSocket *sp, cchar *ip, int port, int initialFlags)
             return MPR_ERR_CANT_INITIALIZE;
         }
     }
-
     if (!datagram) {
         sp->flags |= MPR_SOCKET_CONNECTING;
         do {
@@ -24039,15 +24137,6 @@ static void closeSocket(MprSocket *sp, bool gracefully)
 
 MprSocket *mprAcceptSocket(MprSocket *listen)
 {
-    if (listen->provider) {
-        return listen->provider->acceptSocket(listen);
-    }
-    return 0;
-}
-
-
-static MprSocket *acceptSocket(MprSocket *listen)
-{
     MprSocketService            *ss;
     MprSocket                   *nsp;
     struct sockaddr_storage     addrStorage, saddrStorage;
@@ -24073,7 +24162,7 @@ static MprSocket *acceptSocket(MprSocket *listen)
         }
         return 0;
     }
-    if ((nsp = mprCreateSocket(listen->ssl)) == 0) {
+    if ((nsp = mprCreateSocket()) == 0) {
         closesocket(fd);
         return 0;
     }
@@ -24105,7 +24194,6 @@ static MprSocket *acceptSocket(MprSocket *listen)
     if (nsp->flags & MPR_SOCKET_NODELAY) {
         mprSetSocketNoDelay(nsp, 1);
     }
-
     /*
         Get the remote client address
      */
@@ -24991,6 +25079,146 @@ void mprSetSocketPrebindCallback(MprSocketPrebind callback)
 }
 
 
+static void manageSsl(MprSsl *ssl, int flags) 
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(ssl->key);
+        mprMark(ssl->cert);
+        mprMark(ssl->keyFile);
+        mprMark(ssl->certFile);
+        mprMark(ssl->caFile);
+        mprMark(ssl->caPath);
+        mprMark(ssl->ciphers);
+        mprMark(ssl->pconfig);
+    }
+}
+
+
+/*
+    Create a new SSL context object
+ */
+MprSsl *mprCreateSsl()
+{
+    MprSsl      *ssl;
+
+    if ((ssl = mprAllocObj(MprSsl, manageSsl)) == 0) {
+        return 0;
+    }
+    ssl->ciphers = sclone(MPR_DEFAULT_CIPHER_SUITE);
+    ssl->protocols = MPR_PROTO_TLSV1 | MPR_PROTO_TLSV11;
+    ssl->verifyDepth = 6;
+    ssl->verifyClient = 0;
+    ssl->verifyServer = 1;
+    return ssl;
+}
+
+
+int mprLoadSsl()
+{
+#if BIT_FEATURE_SSL
+    MprSocketService    *ss;
+    MprModule           *mp;
+    cchar               *path;
+
+    ss = MPR->socketService;
+    if (ss->secureProvider) {
+        return 0;
+    }
+    path = mprJoinPath(mprGetAppDir(), "libmprssl");
+    if ((mp = mprCreateModule("sslModule", path, "mprSslInit", NULL)) == 0) {
+        return MPR_ERR_CANT_CREATE;
+    }
+    if (mprLoadModule(mp) < 0) {
+        mprError("Can't load %s", path);
+        return MPR_ERR_CANT_READ;
+    }
+    return 0;
+#else
+    mprError("SSL communications support not included in build");
+    return MPR_ERR_BAD_STATE;
+#endif
+}
+
+
+/*
+    Upgrade a socket to use SSL
+ */
+int mprUpgradeSocket(MprSocket *sp, MprSsl *ssl, int server)
+{
+    MprSocketService    *ss;
+
+    ss  = sp->service;
+    if (!ss->secureProvider) {
+        if (mprLoadSsl() < 0) {
+            return MPR_ERR_CANT_READ;
+        }
+    }
+    if (!ss->secureProvider) {
+        mprError("Can't upgrade socket - missing SSL provider");
+        return MPR_ERR_BAD_STATE;
+    }
+    return ss->secureProvider->upgradeSocket(sp, ssl, server);
+}
+
+
+void mprSetSslCiphers(MprSsl *ssl, cchar *ciphers)
+{
+    mprAssert(ssl);
+    
+    ssl->ciphers = sclone(ciphers);
+}
+
+
+void mprSetSslKeyFile(MprSsl *ssl, cchar *keyFile)
+{
+    mprAssert(ssl);
+    
+    ssl->keyFile = sclone(keyFile);
+}
+
+
+void mprSetSslCertFile(MprSsl *ssl, cchar *certFile)
+{
+    mprAssert(ssl);
+    
+    ssl->certFile = sclone(certFile);
+}
+
+
+void mprSetSslCaFile(MprSsl *ssl, cchar *caFile)
+{
+    mprAssert(ssl);
+    
+    ssl->caFile = sclone(caFile);
+}
+
+
+void mprSetSslCaPath(MprSsl *ssl, cchar *caPath)
+{
+    mprAssert(ssl);
+    
+    ssl->caPath = sclone(caPath);
+}
+
+
+void mprSetSslProtocols(MprSsl *ssl, int protocols)
+{
+    ssl->protocols = protocols;
+}
+
+
+void mprVerifySslClients(MprSsl *ssl, bool on)
+{
+    ssl->verifyClient = on;
+}
+
+
+void mprVerifySslServers(MprSsl *ssl, bool on)
+{
+    ssl->verifyServer = on;
+}
+
+
 /*
     @copy   default
  
@@ -25274,8 +25502,9 @@ char *sfmt(cchar *fmt, ...)
     va_list     ap;
     char        *buf;
 
-    mprAssert(fmt);
-
+    if (fmt == 0) {
+        fmt = "%s";
+    }
     va_start(ap, fmt);
     buf = mprAsprintfv(fmt, ap);
     va_end(ap);
@@ -27119,12 +27348,7 @@ MprThreadService *mprCreateThreadService()
 {
     MprThreadService    *ts;
 
-    ts = mprAllocObj(MprThreadService, manageThreadService);
-    if (ts == 0) {
-        return 0;
-    }
-    //  TODO - not used
-    if ((ts->mutex = mprCreateLock()) == 0) {
+    if ((ts = mprAllocObj(MprThreadService, manageThreadService)) == 0) {
         return 0;
     }
     if ((ts->cond = mprCreateCond()) == 0) {
@@ -27158,7 +27382,6 @@ static void manageThreadService(MprThreadService *ts, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(ts->threads);
         mprMark(ts->mainThread);
-        mprMark(ts->mutex);
         mprMark(ts->cond);
 
     } else if (flags & MPR_MANAGE_FREE) {

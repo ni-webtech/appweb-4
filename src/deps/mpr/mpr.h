@@ -2211,6 +2211,8 @@ typedef struct MprHeap {
     MprMemNotifier   notifier;               /**< Memory allocation failure callback */
     MprSpin          heapLock;               /**< Heap allocation lock */
     MprSpin          rootLock;               /**< Root locking */
+    MprCond          *markerCond;            /**< Marker sleep cond var */
+    MprMutex         *mutex;                 /**< Locking for state changes */
     MprRegion        *regions;               /**< List of memory regions */
     struct MprThread *marker;                /**< Marker thread */
     struct MprThread *sweeper;               /**< Optional sweeper thread */
@@ -2231,11 +2233,13 @@ typedef struct MprHeap {
     int              hasError;               /**< Memory allocation error */
     int              hasSweeper;             /**< Has dedicated sweeper thread */
     int              iteration;              /**< GC iteration counter (debug only) */
+    int              marking;                /**< Actually marking objects now */
     int              mustYield;              /**< Threads must yield for GC which is due */
     int              newCount;               /**< Count of new gen allocations */
     int              earlyYieldQuota;        /**< Quota of new allocations before yielding threads early to cleanup */
     int              newQuota;               /**< Quota of new allocations before idle GC worthwhile */
     int              nextSeqno;              /**< Next sequence number */
+    int              pauseGC;                /**< Pause GC (short) */
     int              pageSize;               /**< System page size */
     int              priorNewCount;          /**< Last sweep new count */
     ssize            priorFree;              /**< Last sweep free memory */
@@ -4219,7 +4223,7 @@ extern int mprLookupItem(MprList *list, cvoid *item);
     Find a string item and return its index.
     @description Search for the first matching string in the list and return its index.
     @param list List pointer returned from mprCreateList.
-    @param item Pointer to value stored in the list.
+    @param str Pointer to string to look for.
     @return Positive list index if found, otherwise a negative MPR error code.
     @ingroup MprList
  */
@@ -4269,7 +4273,7 @@ extern int mprRemoveRangeOfItems(MprList *list, int start, int end);
     Remove a string item from the list
     @description Search for the first matching string and then remove it from the list.
     @param list List pointer returned from mprCreateList.
-    @param item Item pointer to remove. 
+    @param str String value to remove. 
     @return Returns the positive index of the removed item, otherwise a negative MPR error code.
     @ingroup MprList
  */
@@ -4297,14 +4301,19 @@ extern void *mprSetItem(MprList *list, int index, cvoid *item);
  */
 extern int mprSetListLimits(MprList *list, int initialSize, int maxSize);
 
+typedef int (*MprSortProc)(cvoid *p1, cvoid *p2, void *ctx);
+extern void mprSort(void *base, ssize num, ssize width, MprSortProc compare, void *ctx);
+
+
 /**
     Sort a list
     @description Sort a list using the sort ordering dictated by the supplied compare function.
     @param list List pointer returned from mprCreateList.
     @param compare Comparison function. If null, then a default string comparison is used.
+    @param ctx Context to provide to comparison function
     @ingroup MprList
  */
-extern void mprSortList(MprList *list, void *compare);
+extern void mprSortList(MprList *list, MprSortProc compare, void *ctx);
 
 /**
     Key value pairs for use with MprList or MprKey
@@ -5971,7 +5980,7 @@ typedef void (*MprEventProc)(void *data, struct MprEvent *event);
     @see MprDispatcher MprEvent MprEventProc MprEventService mprCreateDispatcher mprCreateEvent mprCreateEventService 
         mprCreateTimerEvent mprDestroyDispatcher mprEnableContinuousEvent mprEnableDispatcher mprGetDispatcher 
         mprQueueEvent mprRemoveEvent mprRescheduleEvent mprRestartContinuousEvent mprServiceEvents 
-        mprSignalDispatcher mprStopContinuousEvent mprWaitForEvent 
+        mprSignalDispatcher mprStopContinuousEvent mprWaitForEvent mprCreateOutsideEvent
     @defgroup MprEvent MprEvent
  */
 typedef struct MprEvent {
@@ -6104,6 +6113,16 @@ extern void mprSignalDispatcher(MprDispatcher *dispatcher);
     @ingroup MprEvent
  */
 extern MprEvent *mprCreateEvent(MprDispatcher *dispatcher, cchar *name, MprTime period, void *proc, void *data, int flags);
+
+/**
+    Create an event outside the MPR
+    @description Create a new event when executing a non-MPR thread
+    @param dispatcher Dispatcher object created via mprCreateDispatcher
+    @param proc Function to invoke when the event is run
+    @param data Data to associate with the event and stored in event->data. The data must be non-MPR memory.
+    @ingroup MprEvent
+ */
+extern void mprCreateOutsideEvent(MprDispatcher *dispatcher, void *proc, void *data);
 
 /*
     Queue a new event for service.
@@ -6357,8 +6376,8 @@ extern void mprXmlSetParserHandler(MprXml *xp, MprXmlHandler h);
  */
 #define MPR_JSON_UNKNOWN     0          /**< The type of a property is unknown */
 #define MPR_JSON_STRING      1          /**< The property is a string (char*) */
-#define MPR_JSON_OBJ         2          /**< The object is an object */
-#define MPR_JSON_ARRAY       3          /**< The object is an array */
+#define MPR_JSON_OBJ         2          /**< The property is an object (MprHash) */
+#define MPR_JSON_ARRAY       3          /**< The property is an array (MprHash with numeric keys) */
 
 struct MprJson;
 
@@ -6463,7 +6482,6 @@ extern void mprJsonParseError(MprJson *jp, cchar *fmt, ...);
 typedef struct MprThreadService {
     MprList         *threads;           /**< List of all threads */
     struct MprThread *mainThread;       /**< Main application Mpr thread id */
-    MprMutex        *mutex;             /**< Multi-thread lock */
     MprCond         *cond;              /**< Multi-thread sync */
     ssize           stackSize;          /**< Default thread stack size */
 } MprThreadService;
@@ -6903,16 +6921,13 @@ typedef struct MprSocketProvider {
     cchar             *name;
     void              *data;
     struct MprSsl     *defaultSsl;
-    struct MprSocket  *(*acceptSocket)(struct MprSocket *sp);
     void              (*closeSocket)(struct MprSocket *socket, bool gracefully);
-    int               (*configureSsl)(struct MprSsl *ssl);
-    int               (*connectSocket)(struct MprSocket *socket, cchar *host, int port, int flags);
-    struct MprSocket  *(*createSocket)(struct MprSsl *ssl);
     void              (*disconnectSocket)(struct MprSocket *socket);
     ssize             (*flushSocket)(struct MprSocket *socket);
     int               (*listenSocket)(struct MprSocket *socket, cchar *host, int port, int flags);
     ssize             (*readSocket)(struct MprSocket *socket, void *buf, ssize len);
     ssize             (*writeSocket)(struct MprSocket *socket, cvoid *buf, ssize len);
+    int               (*upgradeSocket)(struct MprSocket *socket, struct MprSsl *ssl, int server);
 } MprSocketProvider;
 
 /**
@@ -6932,9 +6947,7 @@ typedef struct MprSocketService {
     MprSocketProvider *standardProvider;        /**< Socket provider for non-SSL connections */
     MprSocketProvider *secureProvider;          /**< Socket provider for SSL connections */
     MprSocketPrebind  prebind;                  /**< Prebind callback */
-#if BIT_FEATURE_SSL
     MprList         *secureSockets;             /**< List of secured (matrixssl) sockets */
-#endif
     MprMutex        *mutex;                     /**< Multithread locking */
 } MprSocketService;
 
@@ -7002,7 +7015,7 @@ extern void mprSetSecureProvider(MprSocketProvider *provider);
     by threads from the worker thread pool for scalable, multithreaded applications.
     @stability Evolving
     @see MprSocket MprSocketPrebind MprSocketProc MprSocketProvider MprSocketService mprAddSocketHandler 
-        mprCloseSocket mprConfigureSsl mprConnectSocket mprCreateSocket mprCreateSocketService mprCreateSsl 
+        mprCloseSocket mprConnectSocket mprCreateSocket mprCreateSocketService mprCreateSsl 
         mprDisconnectSocket mprEnableSocketEvents mprFlushSocket mprGetSocketBlockingMode mprGetSocketError 
         mprGetSocketFd mprGetSocketInfo mprGetSocketPort mprHasSecureSockets mprIsSocketEof mprIsSocketSecure 
         mprListenOnSocket mprLoadSsl mprParseIp mprReadSocket mprSendFileToSocket mprSetSecureProvider 
@@ -7040,17 +7053,23 @@ typedef struct MprIOVec {
 
 
 /**
-    Flag for mprCreateSocket to use the default SSL provider
- */ 
-#define MPR_SECURE_CLIENT ((struct MprSsl*) 1)
-
-/**
     Accept an incoming connection
     @param listen Listening server socket
     @returns A new socket connection
     @ingroup MprSocket
  */
 MprSocket *mprAcceptSocket(MprSocket *listen);
+
+//  MOB - move
+/**
+    Upgrade a socket to use SSL/TLS
+    @param sp Socket to upgrade
+    @param ssl SSL configuration to use. Set to NULL to use the default.
+    @param server Set to one for server-side, set to zero for client side.
+    @returns Zero if successful, otherwise a negative MPR error code.
+    @ingroup MprSocket
+ */
+int mprUpgradeSocket(MprSocket *sp, struct MprSsl *ssl, int server);
 
 /**
     Add a wait handler to a socket.
@@ -7099,12 +7118,10 @@ extern int mprConnectSocket(MprSocket *sp, cchar *hostName, int port, int flags)
 /**
     Create a socket
     @description Create a new socket
-    @param ssl An optional SSL context if the socket is to support SSL. Use the #MPR_SECURE_CLIENT define to specify
-        that mprCreateSocket should use the default SSL provider.
     @return A new socket object
     @ingroup MprSocket
  */
-extern MprSocket *mprCreateSocket(struct MprSsl *ssl);
+extern MprSocket *mprCreateSocket();
 
 /**
     Disconnect a socket by closing its underlying file descriptor. This is used to prevent further I/O wait events while
@@ -7322,15 +7339,6 @@ extern void mprSetSocketEof(MprSocket *sp, bool eof);
 extern int mprSetSocketNoDelay(MprSocket *sp, bool on);
 
 /**
-    Set the SSL configuration for a client socket.
-    @description The SSL configuration defines the eligible ciphers and if certificate verification should be used.
-    This call must be made before calling mprConnectSocket
-    @param sp Socket object returned from #mprCreateSocket
-    @param ssl SSL configuration object created via #mprCreateSsl
- */
-extern void mprSetSocketSslConfig(MprSocket *sp, struct MprSsl *ssl);
-
-/**
     Test if the socket has buffered read data.
     @description Use this function to avoid waiting for incoming I/O if data is already buffered.
     @param sp Socket object returned from #mprCreateSocket
@@ -7385,23 +7393,23 @@ typedef struct MprSsl {
     /*
         Server key and certificate configuration
      */
-    char            *key;               /* Key string */
-    char            *cert;              /* Cert string */
-    char            *keyFile;           /* Alternatively, locate the key in a file */
-    char            *certFile;          /* Alternatively, locate the cert in a file */
-    char            *caFile;            /* Client verification cert file or bundle */
-    char            *caPath;            /* Client verification cert directory */
-    char            *ciphers;           /* Candidate ciphers to use */
-    int             configured;         /* Set if this SSL configuration has been processed */
+    char            *key;               /**< Key string */
+    char            *cert;              /**< Cert string */
+    char            *keyFile;           /**< Alternatively, locate the key in a file */
+    char            *certFile;          /**< Alternatively, locate the cert in a file */
+    char            *caFile;            /**< Client verification cert file or bundle */
+    char            *caPath;            /**< Client verification cert directory */
+    char            *ciphers;           /**< Candidate ciphers to use */
+    int             configured;         /**< Set if this SSL configuration has been processed */
+    void            *pconfig;           /**< Extended provider SSL configuration */
 
     /*
         Client configuration
      */
-    int             verifyServer;       /* Set if the server cert should be verified */
-    int             verifyClient;       /* Set if the client cert should be verified */
-    int             verifyDepth;        /* Set if the server cert should be verified */
-    int             protocols;          /* SSL protocols */
-    void            *extendedSsl;       /* Extended provider SSL configuration */
+    int             verifyServer;       /**< Set if the server cert should be verified */
+    int             verifyClient;       /**< Set if the client cert should be verified */
+    int             verifyDepth;        /**< Set if the server cert should be verified */
+    int             protocols;          /**< SSL protocols */
 } MprSsl;
 
 
@@ -7421,22 +7429,9 @@ typedef struct MprSsl {
 
 /**
     Load the SSL module.
-    @param lazy Set to true to delay initialization until SSL is actually used.
     @ingroup MprSocket
  */
-extern MprModule *mprLoadSsl(bool lazy);
-
-/**
-    Configure SSL based on the parsed MprSsl configuration
-    @param ssl MprSsl configuration
-    @ingroup MprSocket
- */
-extern void mprConfigureSsl(struct MprSsl *ssl);
-
-/*
-    Internal
- */
-extern MprModule *mprSslInit(cchar *path);
+extern int mprLoadSsl();
 
 /**
     Create the SSL control structure
@@ -7509,10 +7504,10 @@ extern void mprVerifySslClients(struct MprSsl *ssl, bool on);
 extern void mprVerifySslServers(struct MprSsl *ssl, bool on);
 
 #if BIT_FEATURE_MATRIXSSL
-    extern int mprCreateMatrixSslModule(bool lazy);
+    extern int mprCreateMatrixSslModule();
 #endif
 #if BIT_FEATURE_OPENSSL
-    extern int mprCreateOpenSslModule(bool lazy);
+    extern int mprCreateOpenSslModule();
 #endif
 
 /******************************* Worker Threads *******************************/
@@ -8466,9 +8461,8 @@ extern int mprSetMimeProgram(MprHash *table, cchar *mimeType, cchar *program);
 /*
     MPR flags
  */
-#define MPR_SSL_PROVIDER_LOADED     0x20    /**< SSL provider loaded */
-#define MPR_LOG_APPEND              0x40    /**< Append to existing log files */
-#define MPR_LOG_ANEW                0x80    /**< Start anew on boot (rotate) */
+#define MPR_LOG_APPEND              0x10    /**< Append to existing log files */
+#define MPR_LOG_ANEW                0x20    /**< Start anew on boot (rotate) */
 
 typedef bool (*MprIdleCallback)();
 typedef void (*MprTerminator)(int how, int status);
@@ -8523,10 +8517,7 @@ typedef struct Mpr {
     int             exitStatus;             /**< Proposed program exit status */
     int             flags;                  /**< Misc flags */
     int             hasError;               /**< Mpr has an initialization error */
-    int             marker;                 /**< Marker thread is active */
-    int             marking;                /**< Actually marking objects now */
     int             state;                  /**< Processing state */
-    int             sweeper;                /**< Sweeper thread is active */
 
     bool            cmdlineLogging;         /**< App has specified --log on the command line */
 
@@ -8564,7 +8555,6 @@ typedef struct Mpr {
     MprSpin         *spin;                  /**< Quick thread synchronization */
     MprSpin         *dtoaSpin[2];           /**< Dtoa thread synchronization */
     MprCond         *cond;                  /**< Sync after starting events thread */
-    MprCond         *markerCond;            /**< Marker sleep cond var */
 
     char            *emptyString;           /**< Empty string */
 #if BIT_WIN_LIKE
@@ -8591,13 +8581,11 @@ extern Mpr *mprGetMpr();
 
 #define MPR_DISABLE_GC          0x1         /**< Disable GC */
 #define MPR_MARK_THREAD         0x4         /**< Start a dedicated marker thread for garbage collection */
-#define MPR_SWEEP_THREAD        0x8         /**< Start a dedicated sweeper thread for garbage collection */
+#define MPR_SWEEP_THREAD        0x8         /**< Start a dedicated sweeper thread for garbage collection (unsupported) */
 #define MPR_USER_EVENTS_THREAD  0x10        /**< User will explicitly manage own mprServiceEvents calls */
 #define MPR_NO_WINDOW           0x20        /**< Don't create a windows Window */
 
 #if BIT_TUNE == MPR_TUNE_SPEED
-    // #define MPR_THREAD_PATTERN (MPR_MARK_THREAD | MPR_SWEEP_THREAD)
-    //  Sweep thread not fully debugged
     #define MPR_THREAD_PATTERN (MPR_MARK_THREAD)
 #else
     #define MPR_THREAD_PATTERN (MPR_MARK_THREAD)

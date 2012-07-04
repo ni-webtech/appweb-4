@@ -2436,20 +2436,24 @@ static HttpConn *openConnection(HttpConn *conn, cchar *url, struct MprSsl *ssl)
     uri = httpCreateUri(url, HTTP_COMPLETE_URI);
     conn->tx->parsedUri = uri;
 
+#if UNUSED
     if (uri->secure) {
 #if BIT_FEATURE_SSL
-        if (!http->sslLoaded) {
-            if (!mprLoadSsl(0)) {
+        if (!MPR->socketService->secureProvider) {
+            if (mprLoadSsl() < 0) {
                 mprError("Can't load SSL provider");
                 return 0;
             }
+#if UNUSED
             http->sslLoaded = 1;
+#endif
         }
 #else
         httpError(conn, HTTP_CODE_COMMS_ERROR, "SSL communications support not included in build");
         return 0;
 #endif
     }
+#endif
     if (*url == '/') {
         ip = (http->proxyHost) ? http->proxyHost : http->defaultClientHost;
         port = (http->proxyHost) ? http->proxyPort : http->defaultClientPort;
@@ -2470,11 +2474,11 @@ static HttpConn *openConnection(HttpConn *conn, cchar *url, struct MprSsl *ssl)
     if (conn->sock) {
         return conn;
     }
-    if ((sp = mprCreateSocket((uri->secure) ? MPR_SECURE_CLIENT: NULL)) == 0) {
+    if ((sp = mprCreateSocket()) == 0) {
         httpError(conn, HTTP_CODE_COMMS_ERROR, "Can't create socket for %s", url);
         return 0;
     }
-#if BIT_FEATURE_SSL
+#if UNUSED && BIT_FEATURE_SSL
     if (uri->secure && ssl) {
         mprSetSocketSslConfig(sp, ssl);
     }
@@ -2483,6 +2487,11 @@ static HttpConn *openConnection(HttpConn *conn, cchar *url, struct MprSsl *ssl)
         httpError(conn, HTTP_CODE_COMMS_ERROR, "Can't open socket on %s:%d", ip, port);
         return 0;
     }
+#if BIT_FEATURE_SSL
+    if (uri->secure) {
+        mprUpgradeSocket(sp, ssl, 0);
+    }
+#endif
     conn->sock = sp;
     conn->ip = sclone(ip);
     conn->port = port;
@@ -3096,7 +3105,7 @@ void httpCallEvent(HttpConn *conn, int mask)
  */
 void httpEvent(HttpConn *conn, MprEvent *event)
 {
-    LOG(5, "httpEvent for fd %d, mask %d\n", conn->sock->fd, event->mask);
+    LOG(5, "httpEvent for fd %d, mask %d", conn->sock->fd, event->mask);
     conn->lastActivity = conn->http->now;
 
     if (event->mask & MPR_WRITABLE) {
@@ -3748,7 +3757,7 @@ int httpStartEndpoint(HttpEndpoint *endpoint)
     } else {
         mprSetSocketBlockingMode(endpoint->sock, 1);
     }
-    proto = mprIsSocketSecure(endpoint->sock) ? "HTTPS" : "HTTP ";
+    proto = endpoint->ssl ? "HTTPS" : "HTTP ";
     ip = *endpoint->ip ? endpoint->ip : "*";
     if (mprIsSocketV6(endpoint->sock)) {
         mprLog(2, "Started %s service on \"[%s]:%d\"", proto, ip, endpoint->port);
@@ -3906,6 +3915,9 @@ HttpConn *httpAcceptConn(HttpEndpoint *endpoint, MprEvent *event)
         }
         return 0;
     }
+    if (endpoint->ssl) {
+        mprUpgradeSocket(sock, endpoint->ssl, 1);
+    }
     if (endpoint->waitHandler) {
         /* Re-enable events on the listen socket */
         mprWaitOn(endpoint->waitHandler, MPR_READABLE);
@@ -3926,7 +3938,7 @@ HttpConn *httpAcceptConn(HttpEndpoint *endpoint, MprEvent *event)
     conn->sock = sock;
     conn->port = sock->port;
     conn->ip = sclone(sock->ip);
-    conn->secure = mprIsSocketSecure(sock);
+    conn->secure = (endpoint->ssl != 0);
 
     if (!httpValidateLimits(endpoint, HTTP_VALIDATE_OPEN_CONN, conn)) {
         conn->endpoint = 0;
@@ -5362,6 +5374,7 @@ cchar *httpGetDefaultClientHost(Http *http)
 }
 
 
+#if UNUSED
 int httpLoadSsl(Http *http)
 {
 #if BIT_FEATURE_SSL
@@ -5377,6 +5390,7 @@ int httpLoadSsl(Http *http)
 #endif
     return 0;
 }
+#endif
 
 
 void httpSetDefaultClientPort(Http *http, int port)
@@ -9597,7 +9611,7 @@ void httpFinalizeRoute(HttpRoute *route)
         mprAddItem(route->indicies,  sclone("index.html"));
     }
     httpAddRoute(route->host, route);
-#if BIT_FEATURE_SSL
+#if UNUSED && BIT_FEATURE_SSL
     mprConfigureSsl(route->ssl);
 #endif
 }
@@ -10932,6 +10946,26 @@ MprHash *httpGetOptionHash(MprHash *options, cchar *field)
 }
 
 
+/* 
+    Prepend an option
+ */
+void httpInsertOption(MprHash *options, cchar *field, cchar *value)
+{
+    MprKey      *kp;
+
+    if (options == 0) {
+        mprAssert(options);
+        return;
+    }
+    if ((kp = mprLookupKeyEntry(options, field)) != 0) {
+        kp = mprAddKey(options, field, sjoin(value, " ", kp->data, NULL));
+    } else {
+        kp = mprAddKey(options, field, value);
+    }
+    kp->type = MPR_JSON_STRING;
+}
+
+
 void httpAddOption(MprHash *options, cchar *field, cchar *value)
 {
     MprKey      *kp;
@@ -10956,6 +10990,12 @@ void httpRemoveOption(MprHash *options, cchar *field)
         return;
     }
     mprRemoveKey(options, field);
+}
+
+
+bool httpOption(MprHash *hash, cchar *field, cchar *value, int useDefault)
+{
+    return smatch(value, httpGetOption(hash, field, useDefault ? value : 0));
 }
 
 
@@ -11645,8 +11685,12 @@ static bool parseHeaders(HttpConn *conn, HttpPacket *packet)
 
             } else if (strcasecmp(key, "content-type") == 0) {
                 rx->mimeType = sclone(value);
-                rx->form = (rx->flags & HTTP_POST) && scontains(rx->mimeType, "application/x-www-form-urlencoded", -1);
-                rx->upload = (rx->flags & HTTP_POST) && scontains(rx->mimeType, "multipart/form-data", -1);
+                if (rx->flags & (HTTP_POST | HTTP_PUT)) {
+                    rx->form = scontains(rx->mimeType, "application/x-www-form-urlencoded", -1) != 0;
+                    rx->upload = scontains(rx->mimeType, "multipart/form-data", -1) != 0;
+                } else { 
+                    rx->form = rx->upload = 0;
+                }
 
             } else if (strcasecmp(key, "cookie") == 0) {
                 if (rx->cookie && *rx->cookie) {
@@ -12732,6 +12776,7 @@ char *httpGetExt(HttpConn *conn)
 }
 
 
+//  MOB - can this just use the default
 static int compareLang(char **s1, char **s2)
 {
     return scmp(*s1, *s2);
@@ -12763,7 +12808,7 @@ HttpLang *httpGetLanguage(HttpConn *conn, MprHash *spoken, cchar *defaultLang)
             }
             mprAddItem(list, sfmt("%03d %s", (int) (atof(quality) * 100), language));
         }
-        mprSortList(list, compareLang);
+        mprSortList(list, (MprSortProc) compareLang, 0);
         for (next = 0; (language = mprGetNextItem(list, &next)) != 0; ) {
             if ((lang = mprLookupKey(rx->route->languages, &language[4])) != 0) {
                 rx->lang = lang;
@@ -16132,7 +16177,7 @@ char *httpGetParamsString(HttpConn *conn)
                     len += slen(kp->key) + slen(kp->data) + 2;
                 }
                 if ((buf = mprAlloc(len + 1)) != 0) {
-                    mprSortList(list, sortParam);
+                    mprSortList(list, (MprSortProc) sortParam, 0);
                     cp = buf;
                     for (next = 0; (kp = mprGetNextItem(list, &next)) != 0; ) {
                         strcpy(cp, kp->key); cp += slen(kp->key);

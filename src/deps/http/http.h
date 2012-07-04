@@ -259,7 +259,7 @@ extern void httpSetForkCallback(struct Http *http, MprForkCallback proc, void *a
     @stability Evolving
     @defgroup Http Http
     @see Http HttpConn HttpEndpoint gettGetDateString httpConfigurenamedVirtualEndpoint httpCreate httpCreateSecret 
-        httpDestroy httpGetContext httpGetDateString httpLoadSsl httpLookupEndpoint httpLookupStatus httpLooupHost 
+        httpDestroy httpGetContext httpGetDateString httpLookupEndpoint httpLookupStatus httpLooupHost 
         httpSetContext httpSetDefaultClientHost httpSetDefaultClientPort httpSetDefaultHost httpSetDefaultPort 
         httpSetForkCallback httpSetProxy httpSetSoftware 
  */
@@ -320,7 +320,9 @@ typedef struct Http {
     char            *proxyHost;             /**< Proxy ip address */
     int             proxyPort;              /**< Proxy port */
     int             processCount;           /**< Count of current active external processes */
+#if UNUSED
     int             sslLoaded;              /**< True when the SSL provider has been loaded */
+#endif
 
     /*
         Callbacks
@@ -381,6 +383,7 @@ extern void *httpGetContext(Http *http);
  */
 extern char *httpGetDateString(MprPath *sbuf);
 
+#if UNUSED
 /**
     Load SSL
     @description This loads the configured SSL provider. SSL providers are configured when the product is built
@@ -390,6 +393,7 @@ extern char *httpGetDateString(MprPath *sbuf);
     @ingroup Http
  */
 extern int httpLoadSsl(Http *http);
+#endif
 
 /**
     Set the http context object
@@ -2848,7 +2852,7 @@ extern cchar *httpGetPamPassword(HttpAuth *auth, cchar *realm, cchar *user);
     @param realm Authentication realm
     @param user User name
     @param password User password
-    @param requriedPass Required user password
+    @param requiredPass Required user password
     @param msg Output parameter, error message.
     @return True if the user could be successfully validated
     @ingroup HttpAuth
@@ -5201,6 +5205,9 @@ typedef struct HttpHost {
  */
 extern void httpAddOption(MprHash *options, cchar *field, cchar *value);
 
+//  MOB DOC
+extern void httpInsertOption(MprHash *options, cchar *field, cchar *value);
+
 /**
     Add a route to a host
     @description Add the route to the host list of routes. During request route matching, routes are processed 
@@ -5284,6 +5291,16 @@ extern MprHash *httpGetOptionHash(MprHash *options, cchar *field);
     @return Options table
  */
 extern MprHash *httpGetOptions(cchar *options);
+
+/**
+    Test a field value from an option string. 
+    @param options Option string of the form: "field='value' field='value'..."
+    @param field Field key name
+    @param value Test if the field is set to this value
+    @param useDefault If true and "field" is not found in options, return true
+    @return Allocated value string.
+ */
+extern bool httpOption(MprHash *options, cchar *field, cchar *value, int useDefault);
 
 /**
     Get a path extension 
