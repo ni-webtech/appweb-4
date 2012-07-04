@@ -9,7 +9,7 @@ Bit.load({
             type: 'lib',
             sources: [ 'httpLib.c' ],
             headers: [ '*.h' ],
-            depends: [ 'libmpr', 'libpcre', 'libmprssl'  ],
+            depends: [ 'libmpr', 'libpcre', ],
             scripts: {
                 postblend: "
                     if (bit.settings.hasPam) {
