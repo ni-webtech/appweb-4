@@ -1601,10 +1601,10 @@ static void migrate(HttpRoute *route, int argc, char **argv)
     }
     if (app->migrations->nrecords > 0) {
         mig = app->migrations->records[app->migrations->nrecords - 1];
-        lastMigration = stoi(ediGetField(mig, "version"));
+        lastMigration = stoi(ediGetFieldValue(mig, "version"));
     }
     app->files = mprGetPathFiles("db/migrations", MPR_PATH_NODIRS);
-    mprSortList(app->files, backward ? reverseSortFiles : sortFiles);
+    mprSortList(app->files, (MprSortProc) (backward ? reverseSortFiles : sortFiles), 0);
 
     if (argc > 0) {
         command = argv[0];
@@ -1653,7 +1653,7 @@ static void migrate(HttpRoute *route, int argc, char **argv)
         mig = 0;
         for (i = 0; i < app->migrations->nrecords; i++) {
             mig = app->migrations->records[i];
-            v = stoi(ediGetField(mig, "version"));
+            v = stoi(ediGetFieldValue(mig, "version"));
             if (v == seq) {
                 found = 1;
                 break;
@@ -1693,7 +1693,7 @@ static void migrate(HttpRoute *route, int argc, char **argv)
             }
             if (backward) {
                 mprAssert(mig);
-                ediDeleteRow(edi, ESP_MIGRATIONS, ediGetField(mig, "id"));
+                ediDeleteRow(edi, ESP_MIGRATIONS, ediGetFieldValue(mig, "id"));
             } else {
                 mig = ediCreateRec(edi, ESP_MIGRATIONS);
                 ediSetField(mig, "version", itos(seq));

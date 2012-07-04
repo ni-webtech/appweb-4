@@ -286,7 +286,7 @@ cchar *getDir()
 
 cchar *getField(cchar *field)
 {
-    return ediGetField(getRec(), field);
+    return ediGetFieldValue(getRec(), field);
 }
 
 

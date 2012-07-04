@@ -168,9 +168,12 @@ MprList *ediGetGridColumns(EdiGrid *grid)
     EdiRec      *rec;
     EdiField    *fp;
 
+#if UNUSED
+    // Won't work for pivots
     if (grid->tableName && grid->tableName) {
         return ediGetColumns(grid->edi, grid->tableName);
     }
+#endif
     cols = mprCreateList(0, 0);
     rec = grid->records[0];
     for (fp = rec->fields; fp < &rec->fields[rec->nfields]; fp++) {
@@ -180,7 +183,20 @@ MprList *ediGetGridColumns(EdiGrid *grid)
 }
 
 
-cchar *ediGetField(EdiRec *rec, cchar *fieldName)
+EdiField *ediGetField(EdiRec *rec, cchar *fieldName)
+{
+    EdiField    *fp;
+
+    for (fp = rec->fields; fp < &rec->fields[rec->nfields]; fp++) {
+        if (smatch(fp->name, fieldName)) {
+            return fp;
+        }
+    }
+    return 0;
+}
+
+
+cchar *ediGetFieldValue(EdiRec *rec, cchar *fieldName)
 {
     EdiField    *fp;
 
@@ -442,13 +458,12 @@ EdiRec *ediCreateBareRec(Edi *edi, cchar *tableName, int nfields)
 }
 
 
-//  MOB - why does this take a structure and not a reference?
 cchar *ediFormatField(cchar *fmt, EdiField *fp)
 {
     MprTime     when;
 
     if (fmt == 0) {
-        return fp->value;
+        fmt = "%s";
     }
     switch (fp->type) {
     case EDI_TYPE_BINARY:
@@ -664,48 +679,60 @@ EdiGrid *ediMakeGrid(cchar *json)
     if (nrows <= 0) {
         return grid;
     }
-#if UNUSED
-    list = mprCreateList(0, 0);
-    for (row = (MprHash*) mprGetFirstKey(obj)->data, ITERATE_KEYS(row, kp)) {
-        mprAddItem(list, kp->key);
-    }
-    mprSortList(list, 0);
-#endif
-    
     for (r = 0; r < nrows; r++) {
         itosbuf(rowbuf, sizeof(rowbuf), r, 10);
         if ((rp = mprLookupKeyEntry(obj, rowbuf)) == 0) {
             continue;
         }
-        if (rp->type != MPR_JSON_OBJ) {
-            continue;
-        }
-        row = (MprHash*) rp->data;
-        mprAssert(!(row->flags & MPR_HASH_LIST));
-        
-        nfields = mprGetHashLength(row);
-        if ((rec = ediCreateBareRec(NULL, "", nfields)) == 0) {
-            mprAssert(0);
-            return 0;
-        }
-        fp = rec->fields;
-        for (ITERATE_KEYS(row, kp)) {
-            if (fp >= &rec->fields[nfields]) {
-                break;
+        /* JSON objects are either char* or MprHash */
+        if (rp->type == MPR_JSON_STRING) {
+            nfields = 1;
+            if ((rec = ediCreateBareRec(NULL, "", nfields)) == 0) {
+                return 0;
             }
+            fp = rec->fields;
             fp->valid = 1;
-            fp->name = kp->key;
+            fp->name = sclone("value");
+            fp->value = rp->data;
             fp->type = EDI_TYPE_STRING;
             fp->flags = 0;
-            fp++;
-        }
-        if (ediSetFields(rec, row) == 0) {
-            mprAssert(0);
-            return 0;
+        } else {
+            row = (MprHash*) rp->data;
+            nfields = mprGetHashLength(row);
+            if ((rec = ediCreateBareRec(NULL, "", nfields)) == 0) {
+                return 0;
+            }
+            fp = rec->fields;
+            for (ITERATE_KEYS(row, kp)) {
+                if (fp >= &rec->fields[nfields]) {
+                    break;
+                }
+                fp->valid = 1;
+                fp->name = kp->key;
+                fp->type = EDI_TYPE_STRING;
+                fp->flags = 0;
+                fp++;
+            }
+            if (ediSetFields(rec, row) == 0) {
+                mprAssert(0);
+                return 0;
+            }
         }
         grid->records[r] = rec;
     }
     return grid;
+}
+
+
+MprHash *ediMakeHash(cchar *fmt, ...)
+{
+    MprHash     *obj;
+    va_list     args;
+
+    va_start(args, fmt);
+    obj = mprDeserialize(sfmtv(fmt, args));
+    va_end(args);
+    return obj;
 }
 
 
@@ -765,6 +792,82 @@ int ediParseTypeString(cchar *type)
 }
 
 
+EdiGrid *ediPivotGrid(EdiGrid *grid, int flags)
+{
+    EdiGrid     *result;
+    EdiRec      *rec, *first;
+    EdiField    *src, *fp;
+    cchar       *name;
+    int         r, c, nfields, nrows;
+
+    if (grid->nrecords == 0) {
+        return grid;
+    }
+    name = 0;
+    first = grid->records[0];
+    nrows = first->nfields;
+    nfields = grid->nrecords;
+    if (flags & EDI_PIVOT_FIELD_NAMES) {
+        /* One more field in result */
+        nfields++;
+        name = sclone("name");
+    }
+    result = ediCreateBareGrid(grid->edi, grid->tableName, nrows);
+    
+    for (c = 0; c < nrows; c++) {
+        result->records[c] = rec = ediCreateBareRec(grid->edi, grid->tableName, nfields);
+        fp = rec->fields;
+        if (flags & EDI_PIVOT_FIELD_NAMES) {
+            /* Add the field names as the first column */
+            fp->valid = 1;
+            fp->name = name;
+            fp->value = first->fields[c].name;
+            fp->type = EDI_TYPE_STRING;
+            fp->flags = 0;
+            fp++;
+        }
+        for (r = 0; r < grid->nrecords; r++) {
+            src = &grid->records[r]->fields[c];
+            fp->valid = 1;
+            fp->name = src->name;
+            fp->type = src->type;
+            fp->value = src->value;
+            fp->flags = src->flags;
+            fp++; src++;
+        }
+    }
+    return result;
+}
+
+EdiGrid *ediCloneGrid(EdiGrid *grid)
+{
+    EdiGrid     *result;
+    EdiRec      *rec;
+    EdiField    *src, *dest;
+    int         r, c;
+
+    if (grid->nrecords == 0) {
+        return grid;
+    }
+    result = ediCreateBareGrid(grid->edi, grid->tableName, grid->nrecords);
+    for (r = 0; r < grid->nrecords; r++) {
+        rec = ediCreateBareRec(grid->edi, grid->tableName, grid->records[r]->nfields);
+        result->records[r] = rec;
+        src = grid->records[r]->fields;
+        dest = rec->fields;
+        for (c = 0; c < rec->nfields; c++) {
+            dest->valid = 1;
+            dest->name = src->name;
+            dest->value = src->value;
+            dest->type = src->type;
+            dest->flags = src->flags;
+            dest++; src++;
+        }
+    }
+    return result;
+}
+
+
 EdiRec *ediSetField(EdiRec *rec, cchar *fieldName, cchar *value)
 {
     EdiField    *fp;
@@ -804,15 +907,54 @@ EdiRec *ediSetFields(EdiRec *rec, MprHash *params)
 }
 
 
-MprHash *ediMakeHash(cchar *fmt, ...)
-{
-    MprHash     *obj;
-    va_list     args;
+//  MOB - move
+typedef struct GridSort {
+    int     sortColumn;         /**< Column to sort on */
+    int     sortOrder;          /**< Sort order: ascending == 1, descending == -1 */
+} GridSort;
 
-    va_start(args, fmt);
-    obj = mprDeserialize(sfmtv(fmt, args));
-    va_end(args);
-    return obj;
+static int sortRec(EdiRec **r1, EdiRec **r2, GridSort *gs)
+{
+    EdiField    *f1, *f2;
+
+    f1 = &(*r1)->fields[gs->sortColumn];
+    f2 = &(*r2)->fields[gs->sortColumn];
+    return scmp(f1->value, f2->value) * gs->sortOrder;
+}
+
+
+//  MOB - move
+//  MOB - need ediLookupRecField
+int ediLookupGridField(EdiGrid *grid, cchar *name)
+{
+    EdiRec      *rec;
+    EdiField    *fp;
+
+    if (grid->nrecords == 0) {
+        return MPR_ERR_CANT_FIND;
+    }
+    rec = grid->records[0];
+    for (fp = rec->fields; fp < &rec->fields[rec->nfields]; fp++) {
+        if (smatch(name, fp->name)) {
+            return (int) (fp - rec->fields);
+        }
+    }
+    return MPR_ERR_CANT_FIND;
+}
+
+
+EdiGrid *ediSortGrid(EdiGrid *grid, cchar *sortColumn, int sortOrder)
+{
+    GridSort    gs;
+
+    if (grid->nrecords == 0) {
+        return grid;
+    }
+    grid = ediCloneGrid(grid);
+    gs.sortColumn = ediLookupGridField(grid, sortColumn);
+    gs.sortOrder = sortOrder;
+    mprSort(grid->records, grid->nrecords, sizeof(EdiRec*), (MprSortProc) sortRec, &gs);
+    return grid;
 }
 
 

@@ -780,7 +780,7 @@ char *espGetReferrer(HttpConn *conn);
     @return Database instance object
     @ingroup EspReq
  */
-Edi *espGetRouteDatabase(EspRoute *route);
+Edi *espGetRouteDatabase(EspRoute *eroute);
 
 /**
     Get a unique security token.
@@ -1695,7 +1695,10 @@ extern void espLabel(HttpConn *conn, cchar *text, cchar *options);
         If this call is used without a form control record, the actual data value should be supplied via the 
         options.value property.
     @param choices Choices to select from. This is a EdiGrid object. For example:
-        espDropdown(conn, "priority", makeGrid("[{ id: 0, low: 0}, { id: 1, med: 1}, {id: 2, high: 2}]"), NULL)
+        espDropdown(conn, "priority", makeGrid("[{ id: 0, low: 0}, { id: 1, med: 1}, {id: 2, high: 2}]"), 0)
+        espDropdown(conn, "priority", makeGrid("[{low: 0}, {med: 1}, {high: 2}]"), 0)
+        espDropdown(conn, "priority", makeGrid("[{'low'}, {'med'}, {'high'}]"), 0)
+        espDropdown(conn, "priority", makeGrid("[0, 10, 100]"), 0)
     @param options Extra options. See $EspControl for a list of the standard options.
     @ingroup EspControl
  */
@@ -1732,7 +1735,7 @@ extern void espProgress(HttpConn *conn, cchar *progress, cchar *options);
     @param options Extra options. See $EspControl for a list of the standard options.
     @ingroup EspControl
  */
-extern void espRadio(HttpConn *conn, cchar *field, void *choices, cchar *options);
+extern void espRadio(HttpConn *conn, cchar *field, cchar *choices, cchar *options);
 
 /**
     Control the refresh of web page dynamic elements.
@@ -1969,7 +1972,10 @@ extern void division(cchar *body, cchar *options);
         If this call is used without a form control record, the actual data value should be supplied via the 
         options.value property.
     @param choices Choices to select from. This is a EdiGrid object. For example:
-        espDropdown(conn, "priority", makeGrid("[{ id: 0, low: 0}, { id: 1, med: 1}, {id: 2, high: 2}]"), NULL)
+        espDropdown(conn, "priority", makeGrid("[{ id: 0, low: 0}, { id: 1, med: 1}, {id: 2, high: 2}]"), 0)
+        espDropdown(conn, "priority", makeGrid("[{low: 0}, {med: 1}, {high: 2}]"), 0)
+        espDropdown(conn, "priority", makeGrid("[{'low'}, {'med'}, {'high'}]"), 0)
+        espDropdown(conn, "priority", makeGrid("[0, 10, 100]"), 0)
     @param options Extra options. See $EspControl for a list of the standard options.
     @ingroup EspAbbrev
  */

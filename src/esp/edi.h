@@ -307,6 +307,9 @@ extern int ediChangeColumn(Edi *edi, cchar *tableName, cchar *columnName, int ty
  */
 extern void ediClose(Edi *edi);
 
+//  MOB
+extern EdiGrid *ediCloneGrid(EdiGrid *grid);
+
 /**
     Create a record
     @description This will create a record using the given database tableName to supply the record schema. Use
@@ -677,6 +680,8 @@ extern bool ediValidateRec(EdiRec *rec);
  */
 extern cchar *ediFormatField(cchar *fmt, EdiField *fp);
 
+extern EdiField *ediGetField(EdiRec *rec, cchar *fieldName);
+
 /**
     Get a record field
     @param rec Database record
@@ -684,7 +689,7 @@ extern cchar *ediFormatField(cchar *fmt, EdiField *fp);
     @return An EdiField structure containing the record field value and details.
     @ingroup Edi
  */
-extern cchar *ediGetField(EdiRec *rec, cchar *fieldName);
+extern cchar *ediGetFieldValue(EdiRec *rec, cchar *fieldName);
 
 /**
     Get and format a record field value.
@@ -817,6 +822,25 @@ extern int ediParseTypeString(cchar *type);
     @internal
  */
 extern void ediManageEdiRec(EdiRec *rec, int flags);
+
+/*
+    Flags for ediPivotGrid
+ */
+#define EDI_PIVOT_FIELD_NAMES 0x1       /**< Use field names as first column of data in pivot table */
+    
+/**
+    Pivot a grid swapping rows for columns
+    @param grid Source grid
+    @param flags Control flags. Set to EDI_PIVOT_FIELD_NAMES to use field names as the first column of data.
+    @result New pivoted grid
+    @ingroup EdiGrid
+ */
+extern EdiGrid *ediPivotGrid(EdiGrid *grid, int flags);
+
+/**
+    @internal
+  */
+extern EdiGrid *ediSortGrid(EdiGrid *grid, cchar *sortColumn, int sortOrder);
 
 #if BIT_FEATURE_MDB
 extern void mdbInit();

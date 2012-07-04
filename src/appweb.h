@@ -66,7 +66,7 @@ typedef struct MaAppweb {
 /**
     Add a server
     @description Add a server to the list of appweb managed web servers
-    @param appweb Appweb object created via #maCreateAppweb
+    @param appweb Appweb object created via $maCreateAppweb
     @param server MaServer object
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
     @ingroup Appweb
@@ -76,7 +76,7 @@ extern void maAddServer(MaAppweb *appweb, struct MaServer *server);
 /**
     Apply the changed group
     @description Apply configuration changes and actually change the Appweb group id
-    @param appweb Appweb object created via #maCreateAppweb
+    @param appweb Appweb object created via $maCreateAppweb
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
     @ingroup Appweb
  */
@@ -85,7 +85,7 @@ extern int maApplyChangedGroup(MaAppweb *appweb);
 /**
     Apply the changed user
     @description Apply configuration changes and actually change the Appweb user id
-    @param appweb Appweb object created via #maCreateAppweb
+    @param appweb Appweb object created via $maCreateAppweb
     @ingroup Appweb
  */
 extern int maApplyChangedUser(MaAppweb *appweb);
@@ -100,7 +100,7 @@ extern MaAppweb *maCreateAppweb();
 /**
     Get the user group
     @description Get the user name and ID for appweb
-    @param appweb Appweb object created via #maCreateAppweb
+    @param appweb Appweb object created via $maCreateAppweb
     @ingroup Appweb
  */
 extern void maGetUserGroup(MaAppweb *appweb);
@@ -109,7 +109,7 @@ extern void maGetUserGroup(MaAppweb *appweb);
     Load an appweb module
     @description Load an appweb module. If the module is already loaded, this call will return successfully without
         reloading. Modules can be dynamically loaded or may also be pre-loaded using static linking.
-    @param appweb Appweb object created via #maCreateAppweb
+    @param appweb Appweb object created via $maCreateAppweb
     @param name User name. Must be defined in the system password file.
     @param libname Library path name
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
@@ -120,7 +120,7 @@ extern int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname);
 /**
     Lookup a server
     @description Lookup a server by name and return the MaServer object
-    @param appweb Appweb object created via #maCreateAppweb
+    @param appweb Appweb object created via $maCreateAppweb
     @param name Server name
     @return MaServer object
     @ingroup Appweb
@@ -130,7 +130,6 @@ extern struct MaServer *maLookupServer(MaAppweb *appweb, cchar *name);
 /**
     Test if a directory listing should be rendered for the request.
     @param conn Connection object
-    @param route Matching route object
     @return True if a directory listing is configured to be rendered for this request.
     @ingroup Appweb
     @internal
@@ -139,7 +138,7 @@ extern bool maRenderDirListing(HttpConn *conn);
 
 /**
     Initialize the config file parser.
-    @param appweb Appweb object created via #maCreateAppweb
+    @param appweb Appweb object created via $maCreateAppweb
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
     @ingroup Appweb
     @internal
@@ -158,7 +157,7 @@ extern int maParsePlatform(cchar *platform, cchar **os, cchar **arch, cchar **pr
 
 /**
     Set the default server
-    @param appweb Appweb object created via #maCreateAppweb
+    @param appweb Appweb object created via $maCreateAppweb
     @param server MaServer object
     @ingroup Appweb
  */
@@ -167,7 +166,7 @@ extern void maSetDefaultServer(MaAppweb *appweb, struct MaServer *server);
 /**
     Set the Http Group
     @description Define the group name under which to run the Appweb service
-    @param appweb Appweb object created via #maCreateAppweb
+    @param appweb Appweb object created via $maCreateAppweb
     @param group Group name. Must be defined in the system group file.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
     @ingroup Appweb
@@ -177,7 +176,7 @@ extern int maSetHttpGroup(MaAppweb *appweb, cchar *group);
 /**
     Set the Http User
     @description Define the user name under which to run the Appweb service
-    @param appweb Appweb object created via #maCreateAppweb
+    @param appweb Appweb object created via $maCreateAppweb
     @param user User name. Must be defined in the system password file.
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
     @ingroup Appweb
@@ -187,7 +186,7 @@ extern int maSetHttpUser(MaAppweb *appweb, cchar *user);
 /**
     Start Appweb services
     @description This starts listening for requests on all configured servers.
-    @param appweb Appweb object created via #maCreateAppweb
+    @param appweb Appweb object created via $maCreateAppweb
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
     @ingroup Appweb
  */
@@ -196,7 +195,7 @@ extern int maStartAppweb(MaAppweb *appweb);
 /**
     Stop Appweb services
     @description This stops listening for requests on all configured servers. Shutdown is somewhat graceful.
-    @param appweb Appweb object created via #maCreateAppweb
+    @param appweb Appweb object created via $maCreateAppweb
     @return Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.
     @ingroup Appweb
  */
@@ -263,7 +262,7 @@ extern int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, c
         modules  and performs minimal configuration. To use the server object created, more configuration will be 
         required before starting Http services.
         If you want a one-line embedding of Appweb, use #maRunWebServer or #maRunSimpleWebServer.
-    @param appweb Http object returned from #maCreateAppweb
+    @param appweb Http object returned from $maCreateAppweb
     @param name Name of the web server. This name is used as the initial server name.
     @return MaServer A newly created MaServer object. Use mprFree to free and release.
     @ingroup MaServer
@@ -382,7 +381,7 @@ typedef struct MaState {
 /**
     Directive callback function
     @description Directive callbacks are invoked to parse a directive. Directive callbacks are registered using
-        #maAddDirective.
+        $maAddDirective.
     @param state Current config parse state.
     @param key Directive key name
     @param value Directive key value
@@ -395,9 +394,9 @@ typedef int (MaDirective)(MaState *state, cchar *key, cchar *value);
     Define a new config directive
     @description The appweb configuration file parse is extensible. New directives can be registered by this call. When
         encountered in the config file, the given callback proc will be invoked to parse.
-    @param appweb Appweb object created via #maCreateAppweb
+    @param appweb Appweb object created via $maCreateAppweb
     @param directive Directive name
-    @param proc Directive callback procedure of the type #MaDirective. 
+    @param proc Directive callback procedure of the type $MaDirective. 
     @ingroup Appweb
  */
 extern void maAddDirective(MaAppweb *appweb, cchar *directive, MaDirective proc);
