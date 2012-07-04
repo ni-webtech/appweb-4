@@ -40,13 +40,6 @@
       <arglist>(MprPath *sbuf)</arglist>
     </member>
     <member kind="function">
-      <type>int</type>
-      <name>httpLoadSsl</name>
-      <anchorfile>group___http.html</anchorfile>
-      <anchor>ga32b6dc607dee33e788e2c921314c72df</anchor>
-      <arglist>(Http *http)</arglist>
-    </member>
-    <member kind="function">
       <type>struct HttpHost *</type>
       <name>httpLookupHost</name>
       <anchorfile>group___http.html</anchorfile>
@@ -109,8 +102,8 @@
       <type>HttpUri *</type>
       <name>httpCloneUri</name>
       <anchorfile>group___http_uri.html</anchorfile>
-      <anchor>ga7e0517c28c7131416e3cda283f631927</anchor>
-      <arglist>(HttpUri *base, int complete)</arglist>
+      <anchor>gadd399e69d65d719663f7f9b51933c521</anchor>
+      <arglist>(HttpUri *base, int flags)</arglist>
     </member>
     <member kind="function">
       <type>HttpUri *</type>
@@ -123,22 +116,22 @@
       <type>HttpUri *</type>
       <name>httpCreateUri</name>
       <anchorfile>group___http_uri.html</anchorfile>
-      <anchor>ga4d808598e5cfe9345b34a341d6ae25e0</anchor>
-      <arglist>(cchar *uri, int complete)</arglist>
+      <anchor>ga3def4a0e93965e1fac2c38e6e5272081</anchor>
+      <arglist>(cchar *uri, int flags)</arglist>
     </member>
     <member kind="function">
       <type>HttpUri *</type>
       <name>httpCreateUriFromParts</name>
       <anchorfile>group___http_uri.html</anchorfile>
-      <anchor>ga962086362813acfb62127402e573d3e8</anchor>
-      <arglist>(cchar *scheme, cchar *host, int port, cchar *path, cchar *reference, cchar *query, int complete)</arglist>
+      <anchor>gadcc4702f652977af0efb6abceb17566b</anchor>
+      <arglist>(cchar *scheme, cchar *host, int port, cchar *path, cchar *reference, cchar *query, int flags)</arglist>
     </member>
     <member kind="function">
       <type>char *</type>
       <name>httpFormatUri</name>
       <anchorfile>group___http_uri.html</anchorfile>
-      <anchor>ga7bf1d47da607033c621fab1310a16633</anchor>
-      <arglist>(cchar *scheme, cchar *host, int port, cchar *path, cchar *ref, cchar *query, int complete)</arglist>
+      <anchor>ga1c87f3e7e694435939d05e5a112e56fd</anchor>
+      <arglist>(cchar *scheme, cchar *host, int port, cchar *path, cchar *ref, cchar *query, int flags)</arglist>
     </member>
     <member kind="function">
       <type>HttpUri *</type>
@@ -200,8 +193,8 @@
       <type>char *</type>
       <name>httpUriToString</name>
       <anchorfile>group___http_uri.html</anchorfile>
-      <anchor>ga99987d97a01f4f6a29dceff75cfa31c6</anchor>
-      <arglist>(HttpUri *uri, int complete)</arglist>
+      <anchor>ga9ea785faccf155c6bd3b2650d5245d11</anchor>
+      <arglist>(HttpUri *uri, int flags)</arglist>
     </member>
   </compound>
   <compound kind="group">
@@ -297,9 +290,9 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>httpDiscardData</name>
+      <name>httpDiscardQueueData</name>
       <anchorfile>group___http_queue.html</anchorfile>
-      <anchor>gab1edc4220fc6d43c9f3890a791203d2c</anchor>
+      <anchor>ga344b2dc70ee303361d496d7bc13d0241</anchor>
       <arglist>(HttpQueue *q, bool removePackets)</arglist>
     </member>
     <member kind="function">
@@ -402,6 +395,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>httpResumeQueue</name>
+      <anchorfile>group___http_queue.html</anchorfile>
+      <anchor>gad9b3304f0b755f85d500c072b6812380</anchor>
+      <arglist>(HttpQueue *q)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>httpScheduleQueue</name>
       <anchorfile>group___http_queue.html</anchorfile>
       <anchor>ga3ea3dc316a3c5b968eac6e5b6069ccf5</anchor>
@@ -409,23 +409,16 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>httpSendEndPacket</name>
-      <anchorfile>group___http_queue.html</anchorfile>
-      <anchor>ga78e8c0627028e112f31392ab3b49b64a</anchor>
-      <arglist>(HttpQueue *q)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>httpSendPackets</name>
-      <anchorfile>group___http_queue.html</anchorfile>
-      <anchor>gacbccba013b170c147cb39efea2344f0b</anchor>
-      <arglist>(HttpQueue *q)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
       <name>httpServiceQueue</name>
       <anchorfile>group___http_queue.html</anchorfile>
       <anchor>ga5ed409b0c87172597fa7f928df1e7e77</anchor>
+      <arglist>(HttpQueue *q)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>httpSuspendQueue</name>
+      <anchorfile>group___http_queue.html</anchorfile>
+      <anchor>ga92b2f3b27c956c84e01a671eedec5e0c</anchor>
       <arglist>(HttpQueue *q)</arglist>
     </member>
     <member kind="function">
@@ -532,13 +525,6 @@
       <arglist>(Http *http, cchar *name)</arglist>
     </member>
     <member kind="variable">
-      <type>int(*</type>
-      <name>check</name>
-      <anchorfile>group___http_stage.html</anchorfile>
-      <anchor>ga26fe9d39d4b8c94e5f9bd5bb4de39f4c</anchor>
-      <arglist>)(struct HttpConn *conn, struct HttpRoute *route)</arglist>
-    </member>
-    <member kind="variable">
       <type>void(*</type>
       <name>close</name>
       <anchorfile>group___http_stage.html</anchorfile>
@@ -547,9 +533,9 @@
     </member>
     <member kind="variable">
       <type>void(*</type>
-      <name>incomingData</name>
+      <name>incoming</name>
       <anchorfile>group___http_stage.html</anchorfile>
-      <anchor>ga382fb76a25d300c01959209c0b9906bb</anchor>
+      <anchor>ga616f14c304844c058002841bb99c5a1f</anchor>
       <arglist>)(HttpQueue *q, HttpPacket *packet)</arglist>
     </member>
     <member kind="variable">
@@ -575,9 +561,9 @@
     </member>
     <member kind="variable">
       <type>void(*</type>
-      <name>outgoingData</name>
+      <name>outgoing</name>
       <anchorfile>group___http_stage.html</anchorfile>
-      <anchor>ga034bbf8e92fb2a5b16c909ef4d27052f</anchor>
+      <anchor>gadd94e12e4e2c67441a752e82a3b46a33</anchor>
       <arglist>)(HttpQueue *q, HttpPacket *packet)</arglist>
     </member>
     <member kind="variable">
@@ -589,9 +575,9 @@
     </member>
     <member kind="variable">
       <type>void(*</type>
-      <name>process</name>
+      <name>ready</name>
       <anchorfile>group___http_stage.html</anchorfile>
-      <anchor>gaae9ad8d07973afc2b57350d4614cd0e0</anchor>
+      <anchor>ga08748a8b2dadc3c32f425620491c4827</anchor>
       <arglist>)(HttpQueue *q)</arglist>
     </member>
     <member kind="variable">
@@ -599,6 +585,13 @@
       <name>start</name>
       <anchorfile>group___http_stage.html</anchorfile>
       <anchor>ga70b2d0ce56405eb004cce1b3eff374dc</anchor>
+      <arglist>)(HttpQueue *q)</arglist>
+    </member>
+    <member kind="variable">
+      <type>void(*</type>
+      <name>writable</name>
+      <anchorfile>group___http_stage.html</anchorfile>
+      <anchor>gac45f407201b5738ebe12595701fd5831</anchor>
       <arglist>)(HttpQueue *q)</arglist>
     </member>
   </compound>
@@ -713,10 +706,10 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>httpDiscardTransmitData</name>
+      <name>httpDiscardData</name>
       <anchorfile>group___http_conn.html</anchorfile>
-      <anchor>ga4774437a4633faa3a5e8739c56488963</anchor>
-      <arglist>(HttpConn *conn)</arglist>
+      <anchor>ga95daeb1c8a91b734ed2027592c41f17f</anchor>
+      <arglist>(HttpConn *conn, int dir)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -818,6 +811,13 @@
     </member>
     <member kind="function">
       <type>void</type>
+      <name>httpNotifyWritable</name>
+      <anchorfile>group___http_conn.html</anchorfile>
+      <anchor>ga75b8f09016161d8d6ac5b6c0d34ac3d8</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
       <name>httpPrepClientConn</name>
       <anchorfile>group___http_conn.html</anchorfile>
       <anchor>gae24ec30899bb6b77e4840e6090aa2289</anchor>
@@ -831,10 +831,17 @@
       <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
-      <type>void</type>
-      <name>httpProcessPipeline</name>
+      <type>int</type>
+      <name>httpProcessHandler</name>
       <anchorfile>group___http_conn.html</anchorfile>
-      <anchor>ga20b15c995cff80e798753e43b3ac676e</anchor>
+      <anchor>gad3a31984dfecaec36e9d502aae5b354a</anchor>
+      <arglist>(HttpConn *conn)</arglist>
+    </member>
+    <member kind="function">
+      <type>void</type>
+      <name>httpReadyHandler</name>
+      <anchorfile>group___http_conn.html</anchorfile>
+      <anchor>ga2f25ecba7e7d54268b2a34541c2f247d</anchor>
       <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
@@ -985,6 +992,13 @@
       <arglist>(HttpConn *conn, int requestTimeout, int inactivityTimeout)</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>httpSetTimestamp</name>
+      <anchorfile>group___http_conn.html</anchorfile>
+      <anchor>gac7efa91325e9b336e4c680284c0ac1e5</anchor>
+      <arglist>(MprTime period)</arglist>
+    </member>
+    <member kind="function">
       <type>int</type>
       <name>httpShouldTrace</name>
       <anchorfile>group___http_conn.html</anchorfile>
@@ -996,13 +1010,6 @@
       <name>httpStartPipeline</name>
       <anchorfile>group___http_conn.html</anchorfile>
       <anchor>ga4bc751046420a19e3a2fa04beb93fba0</anchor>
-      <arglist>(HttpConn *conn)</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>httpWritable</name>
-      <anchorfile>group___http_conn.html</anchorfile>
-      <anchor>gaa501324b7558c1bf27a658020fe8ecea</anchor>
       <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
@@ -1123,6 +1130,13 @@
       <anchorfile>group___http_auth.html</anchorfile>
       <anchor>ga665a0abc5437502359a83efdb658eba3</anchor>
       <arglist>(HttpAuth *auth, char *group)</arglist>
+    </member>
+    <member kind="function">
+      <type>cchar *</type>
+      <name>httpGetPamPassword</name>
+      <anchorfile>group___http_auth.html</anchorfile>
+      <anchor>ga675cff39a54b90ea27356e1954fc3d94</anchor>
+      <arglist>(HttpAuth *auth, cchar *realm, cchar *user)</arglist>
     </member>
     <member kind="function">
       <type>bool</type>
@@ -1276,6 +1290,13 @@
       <name>httpValidateFileCredentials</name>
       <anchorfile>group___http_auth.html</anchorfile>
       <anchor>gad2d2dba24e204850cc70360db41d63cd</anchor>
+      <arglist>(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, cchar *requiredPass, char **msg)</arglist>
+    </member>
+    <member kind="function">
+      <type>bool</type>
+      <name>httpValidatePamCredentials</name>
+      <anchorfile>group___http_auth.html</anchorfile>
+      <anchor>ga26b956e0e688c1c88e7624187cc20357</anchor>
       <arglist>(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, cchar *requiredPass, char **msg)</arglist>
     </member>
     <member kind="function">
@@ -1566,8 +1587,8 @@
       <type>HttpLimits *</type>
       <name>httpGraduateLimits</name>
       <anchorfile>group___http_route.html</anchorfile>
-      <anchor>ga07b625bb7737f6f7017c77d6bf631933</anchor>
-      <arglist>(HttpRoute *route)</arglist>
+      <anchor>ga2b82eae86554fe49b2a170c462c56012</anchor>
+      <arglist>(HttpRoute *route, HttpLimits *limits)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -1689,10 +1710,10 @@
       <arglist>(HttpRoute *route, cchar *name)</arglist>
     </member>
     <member kind="function">
-      <type>void</type>
+      <type>int</type>
       <name>httpSetRouteLog</name>
       <anchorfile>group___http_route.html</anchorfile>
-      <anchor>ga0be94600d3fa3ed933b13a79572bc9be</anchor>
+      <anchor>gaab3c7073de79d8dde006efbd71d61e08</anchor>
       <arglist>(HttpRoute *route, cchar *path, ssize size, int backup, cchar *format, int flags)</arglist>
     </member>
     <member kind="function">
@@ -1972,6 +1993,13 @@
       <arglist>(HttpConn *conn, cchar *var, cchar *expected)</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>httpPump</name>
+      <anchorfile>group___http_rx.html</anchorfile>
+      <anchor>gaf5503f75323ec0c6df1b3ee5615ad496</anchor>
+      <arglist>(HttpConn *conn, HttpPacket *packet)</arglist>
+    </member>
+    <member kind="function">
       <type>ssize</type>
       <name>httpRead</name>
       <anchorfile>group___http_rx.html</anchorfile>
@@ -2078,8 +2106,8 @@
       <type>int</type>
       <name>httpConnect</name>
       <anchorfile>group___http_tx.html</anchorfile>
-      <anchor>gaf520605b399089bbe6ff768c3ed0d14f</anchor>
-      <arglist>(HttpConn *conn, cchar *method, cchar *uri)</arglist>
+      <anchor>gadba30be09e4243956f33008bac4ec148</anchor>
+      <arglist>(HttpConn *conn, cchar *method, cchar *uri, struct MprSsl *ssl)</arglist>
     </member>
     <member kind="function">
       <type>HttpTx *</type>
@@ -2237,9 +2265,9 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>httpSetWriteBlocked</name>
+      <name>httpSocketBlocked</name>
       <anchorfile>group___http_tx.html</anchorfile>
-      <anchor>gac8760dad727f97e824e5abdb06d1cd99</anchor>
+      <anchor>ga7440761f7e29c5b5bf026bd83da0f2fb</anchor>
       <arglist>(HttpConn *conn)</arglist>
     </member>
     <member kind="function">
@@ -2340,8 +2368,8 @@
       <type>HttpHost *</type>
       <name>httpCreateHost</name>
       <anchorfile>group___http_host.html</anchorfile>
-      <anchor>ga3e6e98147b766aeff4cbfebe8146998b</anchor>
-      <arglist>()</arglist>
+      <anchor>ga45276b2bd047354e6fcaf9e279cc35cb</anchor>
+      <arglist>(cchar *home)</arglist>
     </member>
     <member kind="function">
       <type>void</type>
@@ -2447,6 +2475,13 @@
       <arglist></arglist>
     </member>
     <member kind="variable">
+      <type>int</type>
+      <name>flags</name>
+      <anchorfile>struct_http_route_op.html</anchorfile>
+      <anchor>a9d6cf056032b41967a93e6e1017b163c</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="variable">
       <type>void *</type>
       <name>mdata</name>
       <anchorfile>struct_http_route_op.html</anchorfile>
@@ -2515,27 +2550,9 @@
     </member>
   </compound>
   <compound kind="dir">
-    <name>staging/src/deps/</name>
-    <path>/Users/mob/git/http/doc/api/http/staging/src/deps/</path>
-    <filename>dir_dcbb7afa551f9189b3b9ab2b5d98a566.html</filename>
-    <dir>staging/src/deps/http/</dir>
-  </compound>
-  <compound kind="dir">
-    <name>staging/src/deps/http/</name>
-    <path>/Users/mob/git/http/doc/api/http/staging/src/deps/http/</path>
-    <filename>dir_45ee343166a7992c3e84cfbc05219179.html</filename>
+    <name>/Users/mob/git/http/src/</name>
+    <path>/Users/mob/git/http/src/</path>
+    <filename>dir_70295d4c3ce2bd5524090c949f8ed5c7.html</filename>
     <file>http.h</file>
-  </compound>
-  <compound kind="dir">
-    <name>staging/src/</name>
-    <path>/Users/mob/git/http/doc/api/http/staging/src/</path>
-    <filename>dir_f5fc229bae484dc7eaf2a07f744a7f15.html</filename>
-    <dir>staging/src/deps/</dir>
-  </compound>
-  <compound kind="dir">
-    <name>staging/</name>
-    <path>/Users/mob/git/http/doc/api/http/staging/</path>
-    <filename>dir_97f53ad87a5208252bba27d2a687365c.html</filename>
-    <dir>staging/src/</dir>
   </compound>
 </tagfile>

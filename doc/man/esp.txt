@@ -243,22 +243,23 @@ OPTIONS
 
        --rebuild
              Force  a  recompile  of all items when used with the compile com-
-             mand.
+             mand.  When used with migrate, this will  recreate  the  database
+             and apply all migrations.
 
        --reverse
              Reverse the application of migrations.
 
        --routeName name
-             This selects the Appweb route by name that will be used  for  the
-             ESP  configuration. The ESP directory names, and compilation com-
-             mands are determined by the  ESP  configuration  drawn  from  the
+             This  selects  the Appweb route by name that will be used for the
+             ESP configuration. The ESP directory names, and compilation  com-
+             mands  are  determined  by  the  ESP configuration drawn from the
              specified route. The default is the first route with the ESP han-
              dler defined in appweb.conf.
 
        --routePrefix prefix
              This selects the Appweb route by prefix that will be used for the
-             ESP  configuration. The ESP directory names, and compilation com-
-             mands are determined by the  ESP  configuration  drawn  from  the
+             ESP configuration. The ESP directory names, and compilation  com-
+             mands  are  determined  by  the  ESP configuration drawn from the
              specified route. The default is the first route with the ESP han-
              dler defined in appweb.conf.
 
@@ -274,7 +275,7 @@ REPORTING BUGS
 
 
 COPYRIGHT
-       Copyright (C) 2004-2012 Embedthis Software.   ESP  is  a  trademark  of
+       Copyright  (C)  2004-2012  Embedthis  Software.   ESP is a trademark of
        Embedthis Software.
 
 

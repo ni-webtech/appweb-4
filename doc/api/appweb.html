@@ -14,6 +14,7 @@
     <![endif]-->
     <link href="http://www.google.com/cse/style/look/default.css" type="text/css" rel="stylesheet" />
 </head>
+
 <body>
     <div class="top">
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
@@ -30,17 +31,17 @@
             &gt; <b>Appweb</b> 
         </div>
     </div>
+
     <div class="content">
         <div class="contentRight">
             
-            
-<!-- BeginDsi "dsi/see.html" -->
-				<h1>See Also</h1>
-				<ul class="nav">
-					<li><a href="../ref/appweb/index.html">Programmers Reference</a></li>
-					<li><a href="../api/native.html">Native APIs</a></li>
-				</ul>
-<!-- EndDsi -->
+            <!-- BeginDsi "dsi/see.html" -->
+            <h2>See Also</h2>
+            <ul>
+                <li><a href="../ref/appweb/index.html">Programmers Reference</a></li>
+                <li><a href="native.html">Native APIs</a></li>
+            </ul>
+            <!-- EndDsi -->
             <h2>Quick Nav</h2>
             <ul>
                 <li><a href="#Components">Components</a></li>
@@ -264,7 +265,7 @@ Unique name for this server.
     <dl><dt><b>Description</b>:</dt><dd>Create new MaServer object. This routine creates a bare MaServer object, loads any required static modules and performs minimal configuration. To use the server object created, more configuration will be required before starting Http services. If you want a one-line embedding of Appweb, use <a class="ref" href="#group___ma_server_1ga4994c273e87409b094418dd7bd370ee4">maRunWebServer</a> or <a class="ref" href="#group___ma_server_1ga88a2bd1d0f26f024e6cb2d693c13e4f7">maRunSimpleWebServer</a></dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">appweb</td><td>Http object returned from #maCreateAppweb.</td>
+    <tr><td class="param">appweb</td><td>Http object returned from $maCreateAppweb.</td>
     <tr><td class="param">name</td><td>Name of the web server. This name is used as the initial server name.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>MaServer A newly created MaServer object. Use mprFree to free and release.</dd></dl>
@@ -385,9 +386,9 @@ Top level state.
     <dl><dt><b>Description</b>:</dt><dd>The appweb configuration file parse is extensible. New directives can be registered by this call. When encountered in the config file, the given callback proc will be invoked to parse.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">appweb</td><td>Appweb object created via #maCreateAppweb.</td>
+    <tr><td class="param">appweb</td><td>Appweb object created via $maCreateAppweb.</td>
     <tr><td class="param">directive</td><td>Directive name.</td>
-    <tr><td class="param">proc</td><td>Directive callback procedure of the type #MaDirective.</td>
+    <tr><td class="param">proc</td><td>Directive callback procedure of the type $MaDirective.</td>
     </table></dd></dl>
   </div>
 </div>
@@ -419,7 +420,7 @@ Top level state.
     <dl><dt><b>Description</b>:</dt><dd>Add a server to the list of appweb managed web servers.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">appweb</td><td>Appweb object created via #maCreateAppweb.</td>
+    <tr><td class="param">appweb</td><td>Appweb object created via $maCreateAppweb.</td>
     <tr><td class="param">server</td><td>MaServer object.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.</dd></dl>
@@ -437,7 +438,7 @@ Top level state.
     <dl><dt><b>Description</b>:</dt><dd>Apply configuration changes and actually change the Appweb group id.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">appweb</td><td>Appweb object created via #maCreateAppweb.</td>
+    <tr><td class="param">appweb</td><td>Appweb object created via $maCreateAppweb.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.</dd></dl>
   </div>
@@ -454,7 +455,7 @@ Top level state.
     <dl><dt><b>Description</b>:</dt><dd>Apply configuration changes and actually change the Appweb user id.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">appweb</td><td>Appweb object created via #maCreateAppweb.</td>
+    <tr><td class="param">appweb</td><td>Appweb object created via $maCreateAppweb.</td>
     </table></dd></dl>
   </div>
 </div>
@@ -502,7 +503,7 @@ Top level state.
     <dl><dt><b>Description</b>:</dt><dd>Get the user name and ID for appweb.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">appweb</td><td>Appweb object created via #maCreateAppweb.</td>
+    <tr><td class="param">appweb</td><td>Appweb object created via $maCreateAppweb.</td>
     </table></dd></dl>
   </div>
 </div>
@@ -518,7 +519,7 @@ Top level state.
     <dl><dt><b>Description</b>:</dt><dd>Load an appweb module. If the module is already loaded, this call will return successfully without reloading. Modules can be dynamically loaded or may also be pre-loaded using static linking.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">appweb</td><td>Appweb object created via #maCreateAppweb.</td>
+    <tr><td class="param">appweb</td><td>Appweb object created via $maCreateAppweb.</td>
     <tr><td class="param">name</td><td>User name. Must be defined in the system password file.</td>
     <tr><td class="param">libname</td><td>Library path name.</td>
     </table></dd></dl>
@@ -537,7 +538,7 @@ Top level state.
     <dl><dt><b>Description</b>:</dt><dd>Lookup a server by name and return the MaServer object.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">appweb</td><td>Appweb object created via #maCreateAppweb.</td>
+    <tr><td class="param">appweb</td><td>Appweb object created via $maCreateAppweb.</td>
     <tr><td class="param">name</td><td>Server name.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>MaServer object.</dd></dl>
@@ -573,7 +574,7 @@ Top level state.
 <p>Initialize the config file parser.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">appweb</td><td>Appweb object created via #maCreateAppweb.</td>
+    <tr><td class="param">appweb</td><td>Appweb object created via $maCreateAppweb.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.</dd></dl>
   </div>
@@ -643,7 +644,6 @@ Top level state.
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">conn</td><td>Connection object.</td>
-    <tr><td class="param">route</td><td>Matching route object.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>True if a directory listing is configured to be rendered for this request.</dd></dl>
   </div>
@@ -677,7 +677,7 @@ Top level state.
 <p>Set the default server.</p>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">appweb</td><td>Appweb object created via #maCreateAppweb.</td>
+    <tr><td class="param">appweb</td><td>Appweb object created via $maCreateAppweb.</td>
     <tr><td class="param">server</td><td>MaServer object.</td>
     </table></dd></dl>
   </div>
@@ -694,7 +694,7 @@ Top level state.
     <dl><dt><b>Description</b>:</dt><dd>Define the group name under which to run the Appweb service.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">appweb</td><td>Appweb object created via #maCreateAppweb.</td>
+    <tr><td class="param">appweb</td><td>Appweb object created via $maCreateAppweb.</td>
     <tr><td class="param">group</td><td>Group name. Must be defined in the system group file.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.</dd></dl>
@@ -712,7 +712,7 @@ Top level state.
     <dl><dt><b>Description</b>:</dt><dd>Define the user name under which to run the Appweb service.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">appweb</td><td>Appweb object created via #maCreateAppweb.</td>
+    <tr><td class="param">appweb</td><td>Appweb object created via $maCreateAppweb.</td>
     <tr><td class="param">user</td><td>User name. Must be defined in the system password file.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.</dd></dl>
@@ -781,7 +781,7 @@ Top level state.
     <dl><dt><b>Description</b>:</dt><dd>This starts listening for requests on all configured servers.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">appweb</td><td>Appweb object created via #maCreateAppweb.</td>
+    <tr><td class="param">appweb</td><td>Appweb object created via $maCreateAppweb.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.</dd></dl>
   </div>
@@ -829,7 +829,7 @@ Top level state.
     <dl><dt><b>Description</b>:</dt><dd>This stops listening for requests on all configured servers. Shutdown is somewhat graceful.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
-    <tr><td class="param">appweb</td><td>Appweb object created via #maCreateAppweb.</td>
+    <tr><td class="param">appweb</td><td>Appweb object created via $maCreateAppweb.</td>
     </table></dd></dl>
     <dl><dt>Returns:</dt><dd>Zero if successful, otherwise a negative Mpr error code. See the Appweb log for diagnostics.</dd></dl>
   </div>
@@ -873,7 +873,7 @@ Top level state.
   </div>
   <div class="apiDetail">
 <p>Directive callback function.</p>
-    <dl><dt><b>Description</b>:</dt><dd>Directive callbacks are invoked to parse a directive. Directive callbacks are registered using #maAddDirective.</dd></dl>
+    <dl><dt><b>Description</b>:</dt><dd>Directive callbacks are invoked to parse a directive. Directive callbacks are registered using $maAddDirective.</dd></dl>
     <dl><dt>Parameters:</dt><dd>
     <table class="parameters" title="Parameters">
     <tr><td class="param">state</td><td>Current config parse state.</td>
@@ -886,14 +886,13 @@ Top level state.
             </div>
         </div>
 <!-- BeginDsi "dsi/bottom.html" -->
+	</div>
 	<div class="bottom">
-		<p class="footnote"> 
-            <a href="../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2012.
-            All rights reserved. Embedthis, ESP, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a>
-		</p>
+		<p class="footnote"><a href="../product/copyright.html" >&copy; Embedthis Software LLC, 2003-2012. All rights 
+                reserved. Embedthis, Ejscript and Appweb are trademarks of Embedthis Software LLC.</a></p>
 	</div>
     <script src="http://www.google.com/jsapi" type="text/javascript"></script>
-    <script type="text/javascript"> 
+    <script type="text/javascript">
       google.load('search', '1', {language : 'en'});
       google.setOnLoadCallback(function() {
         var customSearchControl = new google.search.CustomSearchControl(
@@ -906,3 +905,4 @@ Top level state.
     </script>
 </body>
 </html>
+

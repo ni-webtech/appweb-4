@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Embedthis Appweb 4.0.1 Documentation</title>
+    <title>Embedthis Appweb 4.1.0 Documentation</title>
     <meta name="keywords" content="embedded web server, web server software, embedded HTTP, application web server, 
         embedded server, small web server, HTTP server, library web server, library HTTP, HTTP library" />
     <meta name="description" content="Embedthis Sofware provides commercial and open source embedded web servers for 
@@ -68,8 +68,11 @@
             <h3>Minor Features</h3>
             <ul>
                 <li>Added ESP migrations</li>
+                <li>Upgraded ESP - Smart tables, HTML5 generation</li>
                 <li>Added HttpOnly cookie management in httpSetCookie()</li>
                 <li>Xcode project to use unique output directory</li>
+                <li>Added lazy SSL loading. SSL library only loaded when SSL requests arrive</li>
+                <li>Support prior SSL library configuration</li>
             </ul>
             <h3>Fixes</h3>
             <ul>
@@ -82,7 +85,6 @@
                 <li>Remove Content-Length in 304 (NotModified) responses</li>
                 <li>Http command --show displaying headers when no body in response</li>
             </ul>
-
             <a id="r4.0.0"></a>
             <h2 class="section">Changes in 4.0.0</h2>
             <h3>Major Features</h3>
