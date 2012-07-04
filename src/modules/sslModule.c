@@ -12,6 +12,7 @@
 
 static bool checkSsl(MaState *state)
 {
+#if UNUSED
     static int  hasBeenWarned = 0;
 
     if (!mprHasSecureSockets()) {
@@ -20,6 +21,7 @@ static bool checkSsl(MaState *state)
         }
         return 0;
     }
+#endif
     if (state->route->ssl == 0) {
         state->route->ssl = mprCreateSsl(state->route);
     }
@@ -148,9 +150,11 @@ int maSslModuleInit(Http *http, MprModule *module)
     HttpStage   *stage;
     MaAppweb    *appweb;
 
+#if UNUSED
     if (mprLoadSsl(1) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
+#endif
     if ((stage = httpCreateStage(http, "sslModule", HTTP_STAGE_MODULE, module)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }

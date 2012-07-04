@@ -37,7 +37,7 @@ Bit.load({
             enable: 'bit.packs.ssl.enable',
             type: 'lib',
             sources: [ 'sslModule.c' ],
-            depends: [ 'libmprssl', 'openssl', 'matrixssl' ],
+            __depends: [ 'libmprssl', 'openssl', 'matrixssl' ],
         },
 	},
 })
