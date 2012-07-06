@@ -6920,7 +6920,9 @@ typedef int (*MprSocketProc)(void *data, int mask);
 typedef struct MprSocketProvider {
     cchar             *name;
     void              *data;
+#if UNUSED
     struct MprSsl     *defaultSsl;
+#endif
     void              (*closeSocket)(struct MprSocket *socket, bool gracefully);
     void              (*disconnectSocket)(struct MprSocket *socket);
     ssize             (*flushSocket)(struct MprSocket *socket);
@@ -7004,6 +7006,7 @@ extern void mprSetSecureProvider(MprSocketProvider *provider);
 #define MPR_SOCKET_THREAD       0x400       /**< Process callbacks on a worker thread */
 #define MPR_SOCKET_CLIENT       0x800       /**< Socket is a client */
 #define MPR_SOCKET_PENDING      0x1000      /**< Pending buffered read data */
+#define MPR_SOCKET_TRACED       0x2000      /**< Socket has been traced to the log */
 
 /**
     Socket Service
@@ -7031,6 +7034,7 @@ typedef struct MprSocket {
     MprWaitHandler  *handler;           /**< Wait handler */
     char            *acceptIp;          /**< Server addresss that accepted a new connection (actual interface) */
     char            *ip;                /**< Server listen address or remote client address */
+    char            *errorMsg;          /**< Connection related error messages */
     int             acceptPort;         /**< Server port doing the listening */
     int             port;               /**< Port to listen or connect on */
     int             fd;                 /**< Actual socket file handle */
@@ -7390,25 +7394,18 @@ extern ssize mprWriteSocketVector(MprSocket *sp, MprIOVec *iovec, int count);
 #define MPR_DEFAULT_CLIENT_CERT_PATH    "certs"
 
 typedef struct MprSsl {
-    /*
-        Server key and certificate configuration
-     */
     char            *key;               /**< Key string */
     char            *cert;              /**< Cert string */
     char            *keyFile;           /**< Alternatively, locate the key in a file */
     char            *certFile;          /**< Alternatively, locate the cert in a file */
-    char            *caFile;            /**< Client verification cert file or bundle */
-    char            *caPath;            /**< Client verification cert directory */
+    char            *caFile;            /**< Certificate verification cert file or bundle */
+    char            *caPath;            /**< Certificate verification cert directory */
     char            *ciphers;           /**< Candidate ciphers to use */
     int             configured;         /**< Set if this SSL configuration has been processed */
     void            *pconfig;           /**< Extended provider SSL configuration */
-
-    /*
-        Client configuration
-     */
-    int             verifyServer;       /**< Set if the server cert should be verified */
-    int             verifyClient;       /**< Set if the client cert should be verified */
-    int             verifyDepth;        /**< Set if the server cert should be verified */
+    int             verifyPeer;         /**< Verify the peer verificate */
+    int             verifyIssuer;       /**< Set if the certificate issuer should be also verified */
+    int             verifyDepth;        /**< Set if the cert chain depth should be verified */
     int             protocols;          /**< SSL protocols */
 } MprSsl;
 
@@ -7488,20 +7485,28 @@ extern void mprSetSslCaPath(struct MprSsl *ssl, cchar *caPath);
 extern void mprSetSslProtocols(struct MprSsl *ssl, int protocols);
 
 /**
-    Control the verification of SSL clients
+    Require verification of peer certificates
     @param ssl SSL instance returned from #mprCreateSsl
-    @param on Set to true to enable client SSL verification.
+    @param on Set to true to enable peer SSL certificate verification.
     @ingroup MprSocket
  */
-extern void mprVerifySslClients(struct MprSsl *ssl, bool on);
+extern void mprVerifySslPeer(struct MprSsl *ssl, bool on);
 
 /**
-    Control the verification of SSL servers
+    Control the verification of SSL certificate issuers
     @param ssl SSL instance returned from #mprCreateSsl
-    @param on Set to true to enable server SSL verification.
+    @param on Set to true to enable SSL certificate issuer verification.
     @ingroup MprSocket
  */
-extern void mprVerifySslServers(struct MprSsl *ssl, bool on);
+extern void mprVerifySslIssuer(struct MprSsl *ssl, bool on);
+
+/**
+    Control the depth of SSL SSL certificate verification
+    @param ssl SSL instance returned from #mprCreateSsl
+    @param depth Set to the number of intermediate certificates to verify. Defaults to 1.
+    @ingroup MprSocket
+ */
+extern void mprVerifySslDepth(struct MprSsl *ssl, int depth);
 
 #if BIT_FEATURE_MATRIXSSL
     extern int mprCreateMatrixSslModule();

@@ -12,6 +12,7 @@ if (!Config.SSL) {
     /*
         With keep alive
      */
+    http.verify = false
     for (i in 110) {
         http.get(HTTPS + "/index.html")
         http.reset()
@@ -21,6 +22,7 @@ if (!Config.SSL) {
         With-out keep alive
      */
     for (i in 50) {
+        http.verify = false
         http.get(HTTPS + "/index.html")
         http.close()
     }

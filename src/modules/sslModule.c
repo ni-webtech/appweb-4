@@ -74,6 +74,7 @@ static int sslDirective(MaState *state, cchar *key, cchar *value)
     char    *provider;
     bool    on;
 
+    //  MOB - do something with provider
     if (!maTokenize(state, value, "%B ?S", &on, &provider)) {
         return MPR_ERR_BAD_SYNTAX;
     }
@@ -91,10 +92,10 @@ static int sslVerifyClientDirective(MaState *state, cchar *key, cchar *value)
 {
     checkSsl(state);
     if (scasecmp(value, "require") == 0) {
-        mprVerifySslClients(state->route->ssl, 1);
+        mprVerifySslPeer(state->route->ssl, 1);
 
     } else if (scasecmp(value, "none") == 0) {
-        mprVerifySslClients(state->route->ssl, 0);
+        mprVerifySslPeer(state->route->ssl, 0);
 
     } else {
         mprError("Unknown verify client option");
@@ -102,6 +103,28 @@ static int sslVerifyClientDirective(MaState *state, cchar *key, cchar *value)
     }
     return 0;
 }
+
+
+static int sslVerifyDepthDirective(MaState *state, cchar *key, cchar *value)
+{
+    checkSsl(state);
+    mprVerifySslDepth(state->route->ssl, (int) stoi(value));
+    return 0;
+}
+
+
+static int sslVerifyIssuerDirective(MaState *state, cchar *key, cchar *value)
+{
+    bool    on;
+
+    checkSsl(state);
+    if (!maTokenize(state, value, "%B", &on)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    mprVerifySslIssuer(state->route->ssl, on);
+    return 0;
+}
+
 
 static int sslProtocolDirective(MaState *state, cchar *key, cchar *value)
 {
@@ -150,11 +173,6 @@ int maSslModuleInit(Http *http, MprModule *module)
     HttpStage   *stage;
     MaAppweb    *appweb;
 
-#if UNUSED
-    if (mprLoadSsl(1) == 0) {
-        return MPR_ERR_CANT_CREATE;
-    }
-#endif
     if ((stage = httpCreateStage(http, "sslModule", HTTP_STAGE_MODULE, module)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
@@ -168,6 +186,8 @@ int maSslModuleInit(Http *http, MprModule *module)
     maAddDirective(appweb, "SSLCipherSuite", sslCipherSuiteDirective);
     maAddDirective(appweb, "SSLProtocol", sslProtocolDirective);
     maAddDirective(appweb, "SSLVerifyClient", sslVerifyClientDirective);
+    maAddDirective(appweb, "SSLVerifyDepth", sslVerifyDepthDirective);
+    maAddDirective(appweb, "SSLVerifyIssuer", sslVerifyIssuerDirective);
     return 0;
 }
 #else

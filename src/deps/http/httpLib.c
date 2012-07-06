@@ -2436,24 +2436,6 @@ static HttpConn *openConnection(HttpConn *conn, cchar *url, struct MprSsl *ssl)
     uri = httpCreateUri(url, HTTP_COMPLETE_URI);
     conn->tx->parsedUri = uri;
 
-#if UNUSED
-    if (uri->secure) {
-#if BIT_FEATURE_SSL
-        if (!MPR->socketService->secureProvider) {
-            if (mprLoadSsl() < 0) {
-                mprError("Can't load SSL provider");
-                return 0;
-            }
-#if UNUSED
-            http->sslLoaded = 1;
-#endif
-        }
-#else
-        httpError(conn, HTTP_CODE_COMMS_ERROR, "SSL communications support not included in build");
-        return 0;
-#endif
-    }
-#endif
     if (*url == '/') {
         ip = (http->proxyHost) ? http->proxyHost : http->defaultClientHost;
         port = (http->proxyHost) ? http->proxyPort : http->defaultClientPort;
@@ -2465,7 +2447,8 @@ static HttpConn *openConnection(HttpConn *conn, cchar *url, struct MprSsl *ssl)
         port = (uri->secure) ? 443 : 80;
     }
     if (conn && conn->sock) {
-        if (--conn->keepAliveCount < 0 || port != conn->port || strcmp(ip, conn->ip) != 0) {
+        if (--conn->keepAliveCount < 0 || port != conn->port || strcmp(ip, conn->ip) != 0 || 
+                (uri->secure != (conn->sock->ssl != 0)) || (conn->sock->ssl != ssl)) {
             httpCloseConn(conn);
         } else {
             mprLog(4, "Http: reusing keep-alive socket on: %s:%d", ip, port);
@@ -2478,18 +2461,15 @@ static HttpConn *openConnection(HttpConn *conn, cchar *url, struct MprSsl *ssl)
         httpError(conn, HTTP_CODE_COMMS_ERROR, "Can't create socket for %s", url);
         return 0;
     }
-#if UNUSED && BIT_FEATURE_SSL
-    if (uri->secure && ssl) {
-        mprSetSocketSslConfig(sp, ssl);
-    }
-#endif
     if ((rc = mprConnectSocket(sp, ip, port, 0)) < 0) {
         httpError(conn, HTTP_CODE_COMMS_ERROR, "Can't open socket on %s:%d", ip, port);
         return 0;
     }
 #if BIT_FEATURE_SSL
-    if (uri->secure) {
-        mprUpgradeSocket(sp, ssl, 0);
+    /* Must be done even if using keep alive for repeat SSL requests */
+    if (uri->secure && mprUpgradeSocket(sp, ssl, 0) < 0) {
+        conn->errorMsg = sp->errorMsg;
+        return 0;
     }
 #endif
     conn->sock = sp;
@@ -3105,7 +3085,7 @@ void httpCallEvent(HttpConn *conn, int mask)
  */
 void httpEvent(HttpConn *conn, MprEvent *event)
 {
-    LOG(5, "httpEvent for fd %d, mask %d", conn->sock->fd, event->mask);
+    LOG(6, "httpEvent for fd %d, mask %d", conn->sock->fd, event->mask);
     conn->lastActivity = conn->http->now;
 
     if (event->mask & MPR_WRITABLE) {
@@ -5372,25 +5352,6 @@ cchar *httpGetDefaultClientHost(Http *http)
 {
     return http->defaultClientHost;
 }
-
-
-#if UNUSED
-int httpLoadSsl(Http *http)
-{
-#if BIT_FEATURE_SSL
-    if (!http->sslLoaded) {
-        if (!mprLoadSsl(0)) {
-            mprError("Can't load SSL provider");
-            return MPR_ERR_CANT_LOAD;
-        }
-        http->sslLoaded = 1;
-    }
-#else
-    mprError("SSL communications support not included in build");
-#endif
-    return 0;
-}
-#endif
 
 
 void httpSetDefaultClientPort(Http *http, int port)
@@ -9611,9 +9572,6 @@ void httpFinalizeRoute(HttpRoute *route)
         mprAddItem(route->indicies,  sclone("index.html"));
     }
     httpAddRoute(route->host, route);
-#if UNUSED && BIT_FEATURE_SSL
-    mprConfigureSsl(route->ssl);
-#endif
 }
 
 

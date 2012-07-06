@@ -1,5 +1,5 @@
 /*
-    httpCmd.c -- Http client program
+    http.c -- Http client program
 
     The http program is a client to issue HTTP requests. It is also a test platform for loading and testing web servers. 
 
@@ -37,6 +37,7 @@ typedef struct App {
     Http     *http;              /* Http service object */
     int      iterations;         /* URLs to fetch */
     int      isBinary;           /* Looks like a binary output file */
+    cchar    *key;               /* Private key file */
     char     *host;              /* Host to connect to */
     int      loadThreads;        /* Number of threads to use for URL requests */
     char     *method;            /* HTTP method when URL on cmd line */
@@ -116,22 +117,6 @@ MAIN(httpMain, int argc, char **argv, char **envp)
         return MPR_ERR_BAD_ARGS;
     }
     mprSetMaxWorkers(app->workers);
-
-#if BIT_FEATURE_SSL
-#if UNUSED
-    if (!mprLoadSsl(1)) {
-        mprError("Can't load SSL");
-        exit(1);
-    }
-#endif
-    if (app->insecure || app->cert) {
-        app->ssl = mprCreateSsl();
-        mprVerifySslServers(app->ssl, !app->insecure);
-        if (app->cert) {
-            mprSetSslCertFile(app->ssl, app->cert);
-        }
-    }
-#endif
     if (mprStart() < 0) {
         mprError("Can't start MPR for %s", mprGetAppTitle());
         exit(2);
@@ -174,6 +159,7 @@ static void manageApp(App *app, int flags)
         mprMark(app->bodyData);
         mprMark(app->http);
         mprMark(app->inFile);
+        mprMark(app->key);
         mprMark(app->outFile);
         mprMark(app->outFilename);
         mprMark(app->mutex);
@@ -324,6 +310,13 @@ static bool parseArgs(int argc, char **argv)
                 return 0;
             } else {
                 app->iterations = atoi(argv[++nextArg]);
+            }
+
+        } else if (smatch(argp, "--key")) {
+            if (nextArg >= argc) {
+                return 0;
+            } else {
+                app->key = sclone(argv[++nextArg]);
             }
 
         } else if (smatch(argp, "--log") || smatch(argp, "-l")) {
@@ -498,6 +491,23 @@ static bool parseArgs(int argc, char **argv)
             app->method = "GET";
         }
     }
+#if BIT_FEATURE_SSL
+    if (app->insecure || app->cert) {
+        app->ssl = mprCreateSsl();
+        if (app->insecure) {
+            mprVerifySslPeer(app->ssl, !app->insecure);
+            mprVerifySslIssuer(app->ssl, !app->insecure);
+        }
+        if (app->cert) {
+            if (!app->key) {
+                mprError("Must specify key file");
+                return 0;
+            }
+            mprSetSslCertFile(app->ssl, app->cert);
+            mprSetSslKeyFile(app->ssl, app->key);
+        }
+    }
+#endif
     return 1;
 }
 
@@ -519,6 +529,7 @@ static void showUsage()
         "  --host hostName       # Host name or IP address for unqualified URLs.\n"
         "  --insecure            # Don't validate server certificates when using SSL\n"
         "  --iterations count    # Number of times to fetch the urls (default 1).\n"
+        "  --keyt file           # Private key file.\n"
         "  --log logFile:level   # Log to the file at the verbosity level.\n"
         "  --method KIND         # HTTP request method GET|OPTIONS|POST|PUT|TRACE (default GET).\n"
         "  --nofollow            # Don't automatically follow redirects.\n"
@@ -708,7 +719,7 @@ static int prepRequest(HttpConn *conn, MprList *files, int retry)
 static int sendRequest(HttpConn *conn, cchar *method, cchar *url, MprList *files)
 {
     if (httpConnect(conn, method, url, app->ssl) < 0) {
-        mprError("Can't process request for \"%s\". %s.", url, httpGetError(conn));
+        mprError("Can't process request for \"%s\"\n%s", url, httpGetError(conn));
         return MPR_ERR_CANT_OPEN;
     }
     /*  
@@ -806,11 +817,6 @@ static int reportResponse(HttpConn *conn, cchar *url, MprTime elapsed)
         app->success = 0;
     }
     if (conn->rx) {
-#if UNUSED
-        if (!app->noout) {
-            mprPrintf("\n");
-        }
-#endif
         if (app->showHeaders) {
             responseHeaders = httpGetHeaders(conn);
             rx = conn->rx;

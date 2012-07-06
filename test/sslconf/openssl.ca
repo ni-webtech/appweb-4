@@ -38,10 +38,10 @@ X509_extensions			= rootCaExtensions
 countryName				= US
 stateOrProvinceName		= Washington
 localityName			= Bellevue
-0.organizationName		= Acme Authority Inc.
+0.organizationName		= Example Inc.
 organizationalUnitName	= Production
-commonName				= www.acmeca.com
-emailAddress			= info@acmeca.com
+commonName				= www.example.com
+emailAddress			= admin@example.com
 
 [ rootCaExtensions]
 basicConstraints 		= CA:true
