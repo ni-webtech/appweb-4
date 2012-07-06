@@ -17,6 +17,7 @@ http \- HTTP Client program
 [\fI--host hostName\fR]
 [\fI--insecure\fR]
 [\fI--iterations count\fR]
+[\fI--key file\fR]
 [\fI--log logSpec\fR]
 [\fI--method HTTP_METHOD\fR]
 [\fI--nofollow\fR]
@@ -50,6 +51,7 @@ Output timing results after retrieving URLs.
 .TP
 \fB\--cert file\fR 
 Certificate authority file to validate server certificatess.
+If using --cert, you will need to use --key to specify the private key file.
 .TP
 \fB\--chunk size\fR 
 Request that web server use use transfer encoding for the response and break the response data into 
@@ -87,6 +89,9 @@ Don't validate server certificates when using SSL
 .TP
 \fB\--iterations count\fR 
 Retrieve the URLs iterations times. Useful for load testing. This switch can also be abbreviated as \fB\-i\fR.
+.TP
+\fB\--key file\fR 
+Private key file to use with the certificate file specified via --cert..
 .TP
 \fB\--log logSpec\fR 
 Specify a file to log messages.  The syntax is: \fB"--log logFile[:logLevel]"\fR.

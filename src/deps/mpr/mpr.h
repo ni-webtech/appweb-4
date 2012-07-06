@@ -6918,18 +6918,14 @@ typedef int (*MprSocketProc)(void *data, int mask);
     @ingroup MprSocket
  */
 typedef struct MprSocketProvider {
-    cchar             *name;
-    void              *data;
-#if UNUSED
-    struct MprSsl     *defaultSsl;
-#endif
-    void              (*closeSocket)(struct MprSocket *socket, bool gracefully);
-    void              (*disconnectSocket)(struct MprSocket *socket);
-    ssize             (*flushSocket)(struct MprSocket *socket);
-    int               (*listenSocket)(struct MprSocket *socket, cchar *host, int port, int flags);
-    ssize             (*readSocket)(struct MprSocket *socket, void *buf, ssize len);
-    ssize             (*writeSocket)(struct MprSocket *socket, cvoid *buf, ssize len);
-    int               (*upgradeSocket)(struct MprSocket *socket, struct MprSsl *ssl, int server);
+    void    *data;
+    void    (*closeSocket)(struct MprSocket *socket, bool gracefully);
+    void    (*disconnectSocket)(struct MprSocket *socket);
+    ssize   (*flushSocket)(struct MprSocket *socket);
+    int     (*listenSocket)(struct MprSocket *socket, cchar *host, int port, int flags);
+    ssize   (*readSocket)(struct MprSocket *socket, void *buf, ssize len);
+    ssize   (*writeSocket)(struct MprSocket *socket, cvoid *buf, ssize len);
+    int     (*upgradeSocket)(struct MprSocket *socket, struct MprSsl *ssl, int server);
 } MprSocketProvider;
 
 /**
@@ -6947,8 +6943,9 @@ typedef struct MprSocketService {
     int             maxAccept;                  /**< Maximum number of accepted client socket connections */
     int             numAccept;                  /**< Count of client socket connections */
     MprSocketProvider *standardProvider;        /**< Socket provider for non-SSL connections */
-    MprSocketProvider *secureProvider;          /**< Socket provider for SSL connections */
-    MprSocketPrebind  prebind;                  /**< Prebind callback */
+    char            *defaultProvider;           /**< Default secure provider for SSL connections */
+    MprHash         *providers;                 /**< Secure socket providers */         
+    MprSocketPrebind prebind;                   /**< Prebind callback */
     MprList         *secureSockets;             /**< List of secured (matrixssl) sockets */
     MprMutex        *mutex;                     /**< Multithread locking */
 } MprSocketService;
@@ -6974,11 +6971,12 @@ extern bool mprHasSecureSockets();
 extern int mprSetMaxSocketAccept(int max);
 
 /**
-    Set the provider to be the default secure socket provider
+    Add a secure socket provider for SSL communications
+    @param name Name of the secure socket provider
     @param provider Socket provider object
     @ingroup MprSocket
  */
-extern void mprSetSecureProvider(MprSocketProvider *provider);
+extern void mprAddSocketProvider(cchar *name, MprSocketProvider *provider);
 
 /*
     Socket close flags
@@ -7394,6 +7392,8 @@ extern ssize mprWriteSocketVector(MprSocket *sp, MprIOVec *iovec, int count);
 #define MPR_DEFAULT_CLIENT_CERT_PATH    "certs"
 
 typedef struct MprSsl {
+    char            *providerName;      /**< SSL provider to use - null if default */
+    struct MprSocketProvider *provider; /**< Cached SSL provider to use */
     char            *key;               /**< Key string */
     char            *cert;              /**< Cert string */
     char            *keyFile;           /**< Alternatively, locate the key in a file */
@@ -7483,6 +7483,14 @@ extern void mprSetSslCaPath(struct MprSsl *ssl, cchar *caPath);
     @ingroup MprSocket
  */
 extern void mprSetSslProtocols(struct MprSsl *ssl, int protocols);
+
+/**
+    Set the SSL provider to use
+    @param ssl SSL instance returned from #mprCreateSsl
+    @param provider SSL provider name (openssl | matrixssl)
+    @ingroup MprSocket
+ */
+extern void mprSetSslProvider(MprSsl *ssl, cchar *provider);
 
 /**
     Require verification of peer certificates

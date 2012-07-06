@@ -10318,7 +10318,7 @@ static int blendEnv(MprCmd *cmd, cchar **env, int flags)
     /*
         Windows requires a caseless sort with two trailing nulls
      */
-    mprSortList(cmd->env, sortEnv);
+    mprSortList(cmd->env, sortEnv, 0);
 #endif
     mprAddItem(cmd->env, NULL);
     return 0;
@@ -23601,7 +23601,6 @@ static int getSocketIpAddr(struct sockaddr *addr, int addrlen, char *ip, int siz
 static int ipv6(cchar *ip);
 static int listenSocket(MprSocket *sp, cchar *ip, int port, int initialFlags);
 static void manageSocket(MprSocket *sp, int flags);
-static void manageSocketProvider(MprSocketProvider *provider, int flags);
 static void manageSocketService(MprSocketService *ss, int flags);
 static void manageSsl(MprSsl *ssl, int flags);
 static ssize readSocket(MprSocket *sp, void *buf, ssize bufsize);
@@ -23626,7 +23625,6 @@ MprSocketService *mprCreateSocketService()
     if ((ss->standardProvider = createStandardProvider(ss)) == 0) {
         return 0;
     }
-    ss->secureProvider = NULL;
     if ((ss->mutex = mprCreateLock()) == 0) {
         return 0;
     }
@@ -23658,7 +23656,8 @@ static void manageSocketService(MprSocketService *ss, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(ss->standardProvider);
-        mprMark(ss->secureProvider);
+        mprMark(ss->providers);
+        mprMark(ss->defaultProvider);
         mprMark(ss->mutex);
         mprMark(ss->secureSockets);
     }
@@ -23669,10 +23668,9 @@ static MprSocketProvider *createStandardProvider(MprSocketService *ss)
 {
     MprSocketProvider   *provider;
 
-    if ((provider = mprAllocObj(MprSocketProvider, manageSocketProvider)) == 0) {
+    if ((provider = mprAllocObj(MprSocketProvider, 0)) == 0) {
         return 0;
     }
-    provider->name = sclone("standard");
     provider->closeSocket = closeSocket;
     provider->disconnectSocket = disconnectSocket;
     provider->flushSocket = flushSocket;
@@ -23683,29 +23681,22 @@ static MprSocketProvider *createStandardProvider(MprSocketService *ss)
 }
 
 
-static void manageSocketProvider(MprSocketProvider *provider, int flags)
+void mprAddSocketProvider(cchar *name, MprSocketProvider *provider)
 {
-    if (flags & MPR_MANAGE_MARK) {
-        mprMark(provider->name);
-        mprMark(provider->data);
-#if UNUSED
-        /* MOB - can remove */
-        mprAssert(!provider->defaultSsl);
-        mprMark(provider->defaultSsl);
-#endif
+    MprSocketService    *ss;
+
+    ss = MPR->socketService;
+    
+    if (ss->providers == 0 && (ss->providers = mprCreateHash(0, 0)) == 0) {
+        return;
     }
-}
-
-
-void mprSetSecureProvider(MprSocketProvider *provider)
-{
-    MPR->socketService->secureProvider = provider;
+    mprAddKey(ss->providers, name, provider);
 }
 
 
 bool mprHasSecureSockets()
 {
-    return (MPR->socketService->secureProvider != 0);
+    return (MPR->socketService->providers != 0);
 }
 
 
@@ -25095,6 +25086,8 @@ static void manageSsl(MprSsl *ssl, int flags)
         mprMark(ssl->caPath);
         mprMark(ssl->ciphers);
         mprMark(ssl->pconfig);
+        mprMark(ssl->provider);
+        mprMark(ssl->providerName);
     }
 }
 
@@ -25126,7 +25119,7 @@ int mprLoadSsl()
     cchar               *path;
 
     ss = MPR->socketService;
-    if (ss->secureProvider) {
+    if (ss->providers) {
         return 0;
     }
     path = mprJoinPath(mprGetAppDir(), "libmprssl");
@@ -25135,6 +25128,7 @@ int mprLoadSsl()
     }
     if (mprLoadModule(mp) < 0) {
         mprError("Can't load %s", path);
+        ss->providers = 0;
         return MPR_ERR_CANT_READ;
     }
     return 0;
@@ -25145,24 +25139,50 @@ int mprLoadSsl()
 }
 
 
+static int loadProviders()
+{
+    MprSocketService    *ss;
+
+    ss = MPR->socketService;
+    if (!ss->providers && mprLoadSsl() < 0) {
+        return MPR_ERR_CANT_READ;
+    }
+    if (!ss->providers) {
+        mprError("Can't load SSL provider");
+        return MPR_ERR_CANT_INITIALIZE;
+    }
+    return 0;
+}
+
+
 /*
     Upgrade a socket to use SSL
  */
 int mprUpgradeSocket(MprSocket *sp, MprSsl *ssl, int server)
 {
     MprSocketService    *ss;
+    char                *providerName;
 
     ss  = sp->service;
     mprAssert(sp);
 
-    if (!ss->secureProvider && mprLoadSsl() < 0) {
-        return MPR_ERR_CANT_READ;
+    if (!ssl) {
+        return MPR_ERR_BAD_ARGS;
     }
-    if (!ss->secureProvider) {
-        mprError("Can't upgrade socket - missing SSL provider");
-        return MPR_ERR_BAD_STATE;
+    if (!ssl->provider) {
+        if (loadProviders() < 0) {
+            return MPR_ERR_CANT_INITIALIZE;
+        }
+        providerName = (ssl->providerName) ? ssl->providerName : ss->defaultProvider;
+        if ((ssl->provider = mprLookupKey(ss->providers, providerName)) == 0) {
+            mprError("Can't use SSL, missing SSL provider %s", providerName);
+            return MPR_ERR_CANT_INITIALIZE;
+        }
+        ssl->providerName = providerName;
     }
-    return ss->secureProvider->upgradeSocket(sp, ssl, server);
+    mprLog(5, "Using %s SSL provider", ssl->providerName);
+    sp->provider = ssl->provider;
+    return sp->provider->upgradeSocket(sp, ssl, server);
 }
 
 
@@ -25204,6 +25224,12 @@ void mprSetSslCaPath(MprSsl *ssl, cchar *caPath)
 void mprSetSslProtocols(MprSsl *ssl, int protocols)
 {
     ssl->protocols = protocols;
+}
+
+
+void mprSetSslProvider(MprSsl *ssl, cchar *provider)
+{
+    ssl->providerName = sclone(provider);
 }
 
 

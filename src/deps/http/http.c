@@ -49,6 +49,7 @@ typedef struct App {
     char     *password;          /* Password for authentication */
     int      printable;          /* Make binary output printable */
     char     *protocol;          /* HTTP/1.0, HTTP/1.1 */
+    char     *provider;          /* SSL provider to use */
     char     *ranges;            /* Request ranges */
     MprList  *requestFiles;      /* Request files */
     int      retries;            /* Times to retry a failed request */
@@ -210,7 +211,6 @@ static bool parseArgs(int argc, char **argv)
         if (*argp != '-') {
             break;
         }
-
         if (smatch(argp, "--benchmark") || smatch(argp, "-b")) {
             app->benchmark++;
 
@@ -367,6 +367,13 @@ static bool parseArgs(int argc, char **argv)
                 app->protocol = supper(argv[++nextArg]);
             }
 
+        } else if (smatch(argp, "--provider")) {
+            if (nextArg >= argc) {
+                return 0;
+            } else {
+                app->provider = supper(argv[++nextArg]);
+            }
+
         } else if (smatch(argp, "--put")) {
             app->method = "PUT";
 
@@ -492,8 +499,11 @@ static bool parseArgs(int argc, char **argv)
         }
     }
 #if BIT_FEATURE_SSL
-    if (app->insecure || app->cert) {
+    if (app->insecure || app->cert || app->provider) {
         app->ssl = mprCreateSsl();
+        if (app->provider) {
+            mprSetSslProvider(app->ssl, app->provider);
+        }
         if (app->insecure) {
             mprVerifySslPeer(app->ssl, !app->insecure);
             mprVerifySslIssuer(app->ssl, !app->insecure);

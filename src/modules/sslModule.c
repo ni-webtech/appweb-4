@@ -12,16 +12,6 @@
 
 static bool checkSsl(MaState *state)
 {
-#if UNUSED
-    static int  hasBeenWarned = 0;
-
-    if (!mprHasSecureSockets()) {
-        if (!hasBeenWarned++) {
-            mprError("Missing an SSL Provider");
-        }
-        return 0;
-    }
-#endif
     if (state->route->ssl == 0) {
         state->route->ssl = mprCreateSsl(state->route);
     }
@@ -74,11 +64,12 @@ static int sslDirective(MaState *state, cchar *key, cchar *value)
     char    *provider;
     bool    on;
 
-    //  MOB - do something with provider
     if (!maTokenize(state, value, "%B ?S", &on, &provider)) {
         return MPR_ERR_BAD_SYNTAX;
     }
     if (on) {
+        checkSsl(state);
+        mprSetSslProvider(state->route->ssl, provider);
         if (httpSecureEndpointByName(state->host->name, state->route->ssl) < 0) {
             mprError("No HttpEndpoint at %s to secure", state->host->name);
             return MPR_ERR_BAD_STATE;
