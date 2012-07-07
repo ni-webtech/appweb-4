@@ -990,6 +990,7 @@ static void manageOpenSslProvider(MprSocketProvider *provider, int flags)
                 mprMark(olocks[i]);
             }
         }
+        mprMark(defaultOpenSsl);
 
     } else if (flags & MPR_MANAGE_FREE) {
         olocks = 0;
@@ -1642,22 +1643,21 @@ static DH *get_dh512()
         0xD1,0x12,0x16,0x99,0xBC,0x7E,0x55,0x7C,0xE4,0xC1,0x5D,0x15,
         0xF6,0x45,0xBC,0x73,
     };
-
     static unsigned char dh512_g[] = {
         0x02,
     };
 
     DH *dh;
 
-    if ((dh=DH_new()) == NULL) {
+    if ((dh = DH_new()) == NULL) {
         return(NULL);
     }
-
     dh->p=BN_bin2bn(dh512_p,sizeof(dh512_p),NULL);
     dh->g=BN_bin2bn(dh512_g,sizeof(dh512_g),NULL);
 
     if ((dh->p == NULL) || (dh->g == NULL)) { 
-        DH_free(dh); return(NULL); 
+        DH_free(dh); 
+        return(NULL); 
     }
     return dh;
 }
@@ -1685,9 +1685,11 @@ static DH *get_dh1024()
 
     DH *dh;
 
-    if ((dh=DH_new()) == NULL) return(NULL);
-    dh->p=BN_bin2bn(dh1024_p,sizeof(dh1024_p),NULL);
-    dh->g=BN_bin2bn(dh1024_g,sizeof(dh1024_g),NULL);
+    if ((dh = DH_new()) == NULL) {
+        return(NULL);
+    }
+    dh->p = BN_bin2bn(dh1024_p,sizeof(dh1024_p),NULL);
+    dh->g = BN_bin2bn(dh1024_g,sizeof(dh1024_g),NULL);
     if ((dh->p == NULL) || (dh->g == NULL)) {
         DH_free(dh); 
         return(NULL); 
