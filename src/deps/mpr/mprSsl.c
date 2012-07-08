@@ -146,9 +146,6 @@ static ssize    writeMss(MprSocket *sp, cvoid *buf, ssize len);
 int mprCreateMatrixSslModule()
 {
     MprSocketProvider   *provider;
-    MprSocketService    *ss;
-
-    ss = MPR->socketService;
 
     /*
         Install this module as the SSL provider (can only have one)
@@ -1026,13 +1023,11 @@ static MprSocketProvider *createOpenSslProvider()
  */
 static MprOpenSsl *createOpenSslConfig(MprSsl *ssl, int server)
 {
-    MprSocketService    *ss;
     MprOpenSsl          *ossl;
     SSL_CTX             *context;
     uchar               resume[16];
 
     mprAssert(ssl);
-    ss = MPR->socketService;
 
     if ((ssl->pconfig = mprAllocObj(MprOpenSsl, manageOpenSsl)) == 0) {
         return 0;
@@ -1321,7 +1316,7 @@ static ssize readOss(MprSocket *sp, void *buf, ssize len)
                 continue;
             }
             serror = ERR_get_error();
-            ERR_error_string_n(error, ebuf, sizeof(ebuf) - 1);
+            ERR_error_string_n(serror, ebuf, sizeof(ebuf) - 1);
             mprLog(5, "SSL_read %s", ebuf);
         }
         break;
@@ -1365,7 +1360,7 @@ static ssize readOss(MprSocket *sp, void *buf, ssize len)
         } else if (error != SSL_ERROR_ZERO_RETURN) {
             /* SSL_ERROR_SSL */
             serror = ERR_get_error();
-            ERR_error_string_n(error, ebuf, sizeof(ebuf) - 1);
+            ERR_error_string_n(serror, ebuf, sizeof(ebuf) - 1);
             mprLog(4, "OpenSSL: connection with protocol error: %s", ebuf);
             rc = -1;
             sp->flags |= MPR_SOCKET_EOF;
