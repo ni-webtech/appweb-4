@@ -10318,7 +10318,7 @@ static int blendEnv(MprCmd *cmd, cchar **env, int flags)
     /*
         Windows requires a caseless sort with two trailing nulls
      */
-    mprSortList(cmd->env, sortEnv, 0);
+    mprSortList(cmd->env, (MprSortProc) sortEnv, 0);
 #endif
     mprAddItem(cmd->env, NULL);
     return 0;
@@ -17088,106 +17088,99 @@ MprKeyValue *mprCreateKeyPair(cchar *key, cchar *value)
 }
 
 
-static void swapElt(char *p1, char *p2, ssize size)
+static void swapElt(char *a, char *b, ssize width)
 {
-    char    t;
+    char tmp;
 
-    if (p1 == p2) {
-        return;
-    }
-    while (size--) {
-        t = *p1;
-        *p1++ = *p2;
-        *p2++ = t;
+    if (a != b) {
+        while (width--) {
+            tmp = *a;
+            *a++ = *b;
+            *b++ = tmp;
+        }
     }
 }
 
 
-/*
-    Linear sort for small arrays
- */
-static void linearSort(char *left, char *right, ssize size, MprSortProc compare, void *ctx)
+static void shortsort(char *lo, char *hi, ssize width, MprSortProc comp, void *ctx)
 {
-    char *next, *bound;
+    char    *p, *max;
 
-    for (; left <= right; right -= size) {
-        bound = left;
-        for (next = left + size; next <= right; next += size) {
-            if (compare(bound, next, ctx) <= 0) {
-                bound = next;
+    while (hi > lo) {
+        max = lo;
+        for (p = lo + width; p <= hi; p += width) {
+            if (comp(p, max, ctx) > 0) {
+                max = p;
             }
         }
-        swapElt(bound, right, size);
+        swapElt(max, hi, width);
+        hi -= width;
     }
 }
 
-
-/*
-    Like a traditional q-sort but with a context object argument
- */
-void mprSort(void *array, ssize nelt, ssize esize, MprSortProc compare, void *ctx) 
+void mprSort(void *base, ssize num, ssize width, MprSortProc comp, void *ctx) 
 {
-    char    *l, *left, *pivot, *r, *right;
-    int     index;
-    struct  SortStack {
-        char    *left;
-        char    *right;
-    } sortStack[64];
+    char    *lo, *hi, *mid, *l, *h, *lostk[30], *histk[30];
+    ssize   size;
+    int     stkptr;
 
-    if (nelt <= 1 || esize <= 0) {
+    if (num < 2 || width == 0) {
         return;
     }
-    index = 0;
-    left = array;
-    right = (char*) array + esize * (nelt - 1);
+    stkptr = 0;
+    lo = base;
+    hi = (char *) base + width * (num - 1);
 
-again:
-    if (nelt > 8) {
-        pivot = left + (nelt / 2) * esize;
-        swapElt(pivot, left, esize);
+recurse:
+    size = (int) (hi - lo) / width + 1;
+    if (size <= 8) {
+        shortsort(lo, hi, width, comp, ctx);
+    } else {
+        mid = lo + (size / 2) * width;
+        swapElt(mid, lo, width);
+        l = lo;
+        h = hi + width;
 
-        r = right + esize;
-        l = left;
-
-        while (1) {
-            for (l += esize; l <= right && compare(l, left, ctx) <= 0; l += esize) ;
-            for (r -= esize; r > left && compare(r, left, ctx) >= 0; r -= esize) ;
-            if (r < l) {
-                break;
-            }
-            swapElt(l, r, esize);
+        for (;;) {
+            do { l += width; } while (l <= hi && comp(l, lo, ctx) <= 0);
+            do { h -= width; } while (h > lo && comp(h, lo, ctx) >= 0);
+            if (h < l) break;
+            swapElt(l, h, width);
         }
-        swapElt(left, r, esize);
+        swapElt(lo, h, width);
 
-        mprAssert(index < 64);
-        if ((r - left - 1) >= (right - l)) {
-            if ((left + esize) < r) {
-                sortStack[index].left = left;
-                sortStack[index++].right = r - esize;
+        if (h - 1 - lo >= hi - l) {
+            if (lo + width < h) {
+                lostk[stkptr] = lo;
+                histk[stkptr] = h - width;
+                ++stkptr;
             }
-            if (l < right) {
-                left = l;
-                goto again;
+            if (l < hi) {
+                lo = l;
+                goto recurse;
             }
         } else {
-            if (l < right) {
-                sortStack[index].left = l;
-                sortStack[index++].right = right;
+            if (l < hi) {
+                lostk[stkptr] = l;
+                histk[stkptr] = hi;
+                ++stkptr;
             }
-            if ((left + esize) < r) {
-                right = r - esize;
-                goto again;
+            if (lo + width < h) {
+                hi = h - width;
+                goto recurse;
             }
         }
-    } else {
-        linearSort(left, right, esize, compare, ctx);
     }
-    if (--index >= 0) {
-        left = sortStack[index].left;
-        right = sortStack[index].right;
-        goto again;
+    --stkptr;
+    if (stkptr >= 0) {
+        lo = lostk[stkptr];
+        hi = histk[stkptr];
+        goto recurse;
+    } else {
+        return;
     }
 }
+
 
 /*
     @copy   default
