@@ -835,7 +835,9 @@ static int exitTimeoutDirective(MaState *state, cchar *key, cchar *value)
  */
 static int groupDirective(MaState *state, cchar *key, cchar *value)
 {
-    maSetHttpGroup(state->appweb, value);
+    if (!smatch(value, "_unchanged_")) {
+        maSetHttpGroup(state->appweb, value);
+    }
     return 0;
 }
 
@@ -1883,7 +1885,9 @@ static int uploadAutoDeleteDirective(MaState *state, cchar *key, cchar *value)
  */
 static int userDirective(MaState *state, cchar *key, cchar *value)
 {
-    maSetHttpUser(state->appweb, value);
+    if (!smatch(value, "_unchanged_")) {
+        maSetHttpUser(state->appweb, value);
+    }
     return 0;
 }
 
