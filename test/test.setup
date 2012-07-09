@@ -8,6 +8,7 @@ const HOST      = (test.hostOs == "VXWORKS") ? "192.168.200.1" : "127.0.0.1"
 const HOSTV6    = (test.hostOs == "VXWORKS") ? "192.168.200.1" : "[::1]"
 const HTTP      = "http://"  + HOST   + ":" + conf.replace(/.*Listen *([0-9]+) *# MAIN.*/ms, "$1")
 const SSL       = "https://" + HOST   + ":" + conf.replace(/.*Listen *([0-9]+) *# SSL.*/ms, "$1")
+const MATRIXSSL = "https://" + HOST   + ":" + conf.replace(/.*Listen *([0-9]+) *# MATRIX.*/ms, "$1")
 const NAMED     = "http://"  + HOST   + ":" + conf.replace(/.*Listen *([0-9]+) *# NAMED.*/ms, "$1")
 const VIP       = "http://"  + HOST   + ":" + conf.replace(/.*Listen *([0-9]+) *# IPHOST.*/ms, "$1")
 const IPV6      = "http://"  + HOSTV6 + ":" + conf.replace(/.*Listen *\[::\]:([0-9]+) *# IPV6.*/ms, "$1")
@@ -18,6 +19,7 @@ const PIDFILE   = ".pidfile"
  */
 shareUri("http", HTTP)
 shareUri("ssl", SSL)
+shareUri("matrixssl", MATRIXSSL)
 shareUri("named", NAMED)
 shareUri("virt", VIP)
 if (test.hostOs != "VXWORKS") {
