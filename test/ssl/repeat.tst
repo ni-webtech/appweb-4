@@ -15,6 +15,8 @@ if (!Config.SSL) {
     http.verify = false
     for (i in 110) {
         http.get(HTTPS + "/index.html")
+        assert(http.status == 200)
+        assert(http.response)
         http.reset()
     }
 
@@ -24,6 +26,8 @@ if (!Config.SSL) {
     for (i in 50) {
         http.verify = false
         http.get(HTTPS + "/index.html")
+        assert(http.status == 200)
+        assert(http.response)
         http.close()
     }
 
