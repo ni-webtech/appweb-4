@@ -27,7 +27,7 @@ try {
 
 /* Server should just close the connection without a response */
 response = new ByteArray
-while ((n = s.read(response, -1)) > 0) { }
+while ((n = s.read(response, -1)) > 0) { response.reset() }
 assert(response.toString() == '')
 s.close()
 

@@ -16,6 +16,7 @@ static bool conditionalDefinition(MaState *state, cchar *key);
 static int configError(MaState *state, cchar *key);
 static MaState *createState(MaServer *server, HttpHost *host, HttpRoute *route);
 static char *getDirective(char *line, char **valuep);
+static int getint(cchar *value);
 static int64 getnum(cchar *value);
 static MprTime gettime(cchar *value);
 static char *gettok(char *s, char **tok);
@@ -160,7 +161,7 @@ static int accessLogDirective(MaState *state, cchar *key, cchar *value)
     ssize       size;
     int         flags, backup;
 
-    size = INT_MAX;
+    size = MAXINT;
     backup = 0;
     flags = 0;
     path = 0;
@@ -758,7 +759,7 @@ static int errorLogDirective(MaState *state, cchar *key, cchar *value)
         mprLog(4, "Already logging. Ignoring ErrorLog directive");
         return 0;
     }
-    size = INT_MAX;
+    size = MAXINT;
     stamp = 0;
     level = 0;
     backup = 0;
@@ -952,7 +953,7 @@ static int limitCacheDirective(MaState *state, cchar *key, cchar *value)
 static int limitCacheItemDirective(MaState *state, cchar *key, cchar *value)
 {
     state->limits = httpGraduateLimits(state->route, state->server->limits);
-    state->limits->cacheItemSize = (int) getnum(value);
+    state->limits->cacheItemSize = getint(value);
     return 0;
 }
 
@@ -963,7 +964,7 @@ static int limitCacheItemDirective(MaState *state, cchar *key, cchar *value)
 static int limitChunkDirective(MaState *state, cchar *key, cchar *value)
 {
     state->limits = httpGraduateLimits(state->route, state->server->limits);
-    state->limits->chunkSize = (int) getnum(value);
+    state->limits->chunkSize = getint(value);
     return 0;
 }
 
@@ -974,7 +975,7 @@ static int limitChunkDirective(MaState *state, cchar *key, cchar *value)
 static int limitClientsDirective(MaState *state, cchar *key, cchar *value)
 {
     state->limits = httpGraduateLimits(state->route, state->server->limits);
-    state->limits->clientMax = atoi(value);
+    state->limits->clientMax = getint(value);
     return 0;
 }
 
@@ -1000,7 +1001,7 @@ static int limitMemoryDirective(MaState *state, cchar *key, cchar *value)
 static int limitProcessesDirective(MaState *state, cchar *key, cchar *value)
 {
     state->limits = httpGraduateLimits(state->route, state->server->limits);
-    state->limits->processMax = atoi(value);
+    state->limits->processMax = getint(value);
     return 0;
 }
 
@@ -1011,7 +1012,7 @@ static int limitProcessesDirective(MaState *state, cchar *key, cchar *value)
 static int limitRequestsDirective(MaState *state, cchar *key, cchar *value)
 {
     state->limits = httpGraduateLimits(state->route, state->server->limits);
-    state->limits->requestMax = atoi(value);
+    state->limits->requestMax = getint(value);
     return 0;
 }
 
@@ -1044,7 +1045,7 @@ static int limitRequestFormDirective(MaState *state, cchar *key, cchar *value)
 static int limitRequestHeaderLinesDirective(MaState *state, cchar *key, cchar *value)
 {
     state->limits = httpGraduateLimits(state->route, state->server->limits);
-    state->limits->headerMax = (int) getnum(value);
+    state->limits->headerMax = getint(value);
     return 0;
 }
 
@@ -1055,7 +1056,7 @@ static int limitRequestHeaderLinesDirective(MaState *state, cchar *key, cchar *v
 static int limitRequestHeaderDirective(MaState *state, cchar *key, cchar *value)
 {
     state->limits = httpGraduateLimits(state->route, state->server->limits);
-    state->limits->headerSize = (int) getnum(value);
+    state->limits->headerSize = getint(value);
     return 0;
 }
 
@@ -1076,8 +1077,14 @@ static int limitResponseBodyDirective(MaState *state, cchar *key, cchar *value)
  */
 static int limitStageBufferDirective(MaState *state, cchar *key, cchar *value)
 {
+    int     size;
+
     state->limits = httpGraduateLimits(state->route, state->server->limits);
-    state->limits->stageBufferSize = (int) getnum(value);
+    size = getint(value);
+    if (size > (1024 * 1024)) {
+        size = (1024 * 1024);
+    }
+    state->limits->stageBufferSize = size;
     return 0;
 }
 
@@ -1088,7 +1095,7 @@ static int limitStageBufferDirective(MaState *state, cchar *key, cchar *value)
 static int limitUriDirective(MaState *state, cchar *key, cchar *value)
 {
     state->limits = httpGraduateLimits(state->route, state->server->limits);
-    state->limits->uriSize = (int) getnum(value);
+    state->limits->uriSize = getint(value);
     return 0;
 }
 
@@ -1226,7 +1233,7 @@ static int logDirective(MaState *state, cchar *key, cchar *value)
 
     include = exclude = 0;
     dir = HTTP_TRACE_RX;
-    size = INT_MAX;
+    size = MAXINT;
     
     for (i = 0; i < HTTP_TRACE_MAX_ITEM; i++) {
         levels[i] = 0;
@@ -1340,7 +1347,7 @@ static int loadModuleDirective(MaState *state, cchar *key, cchar *value)
 static int limitKeepAliveDirective(MaState *state, cchar *key, cchar *value)
 {
     state->limits = httpGraduateLimits(state->route, state->server->limits);
-    state->limits->keepAliveMax = (int) stoi(value);
+    state->limits->keepAliveMax = getint(value);
     return 0;
 }
 
@@ -1353,8 +1360,8 @@ static int limitWorkersDirective(MaState *state, cchar *key, cchar *value)
     int     count;
 
     count = atoi(value);
-    if (count <= 1) {
-        mprError("Must have at least one worker");
+    if (count < 1) {
+        count = MAXINT;
     }
     mprSetMaxWorkers(count);
     return 0;
@@ -1794,7 +1801,7 @@ static int templateDirective(MaState *state, cchar *key, cchar *value)
  */
 static int threadStackDirective(MaState *state, cchar *key, cchar *value)
 {
-    mprSetThreadStackSize((int) getnum(value));
+    mprSetThreadStackSize(getint(value));
     return 0;
 }
 
@@ -2201,16 +2208,31 @@ static int64 getnum(cchar *value)
     int64   num;
 
     value = strim(slower(value), " \t", MPR_TRIM_BOTH);
-    if (sends(value, "k") || sends(value, "KB")) {
+    if (sends(value, "kb") || sends(value, "k")) {
         num = stoi(value) * 1024;
-    } else if (sends(value, "mb") || sends(value, "M")) {
+    } else if (sends(value, "mb") || sends(value, "m")) {
         num = stoi(value) * 1024 * 1024;
-    } else if (sends(value, "gb") || sends(value, "G")) {
+    } else if (sends(value, "gb") || sends(value, "g")) {
         num = stoi(value) * 1024 * 1024 * 1024;
     } else {
         num = stoi(value);
     }
+    if (num == 0) {
+        num = MAXINT;
+    }
     return num;
+}
+
+
+static int getint(cchar *value)
+{
+    int64   num;
+
+    num = getnum(value);
+    if (num >= MAXINT) {
+        num = MAXINT;
+    }
+    return (int) num;
 }
 
 
