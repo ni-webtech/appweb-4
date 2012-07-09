@@ -21,6 +21,7 @@ Bit.load({
             ",
             'generate-sh': "echo '#!${BIN}/cgiProgram${EXE}' >cgi-bin/testScript ; chmod +x cgi-bin/testScript",
             depends: ['cgiProgram'],
+            platforms: [ 'local' ],
         },
 
         'test-cache.cgi': {
@@ -39,6 +40,7 @@ Bit.load({
                 echo 'date' >>web/caching/cache.cgi
                 chmod +x web/caching/cache.cgi
             ",
+            platforms: [ 'local' ],
         },
 
         'test-basic.cgi': {
@@ -59,6 +61,7 @@ Bit.load({
                 echo '/usr/bin/env' >>web/basic/basic.cgi
                 chmod +x web/basic/basic.cgi
             ",
+            platforms: [ 'local' ],
         },
 
         'test-cgiProgram': {
@@ -79,6 +82,7 @@ Bit.load({
                 chmod +x cgi-bin/* web/cgiProgram.cgi
             ",
             depends: ['cgiProgram'],
+            platforms: [ 'local' ],
         },
 
         test: {
@@ -104,6 +108,7 @@ Bit.load({
                 }
                 trace('Test', 'Unit tests complete')
             ",
+            platforms: [ 'local' ],
         },
 
         'clean-test': {
