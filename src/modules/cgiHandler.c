@@ -24,7 +24,7 @@ static ssize cgiCallback(MprCmd *cmd, int channel, void *data);
 static int copyVars(cchar **envv, int index, MprHash *vars, cchar *prefix);
 static char *getCgiToken(MprBuf *buf, cchar *delim);
 static bool parseFirstCgiResponse(HttpConn *conn, MprCmd *cmd);
-static bool parseHeader(HttpConn *conn, MprCmd *cmd);
+static bool parseCgiHeaders(HttpConn *conn, MprCmd *cmd);
 static int relayCgiResponse(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf);
 static void writeToCGI(HttpQueue *q);
 static ssize readCgiResponseData(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf);
@@ -523,7 +523,7 @@ static int relayCgiResponse(HttpQueue *q, MprCmd *cmd, int channel, MprBuf *buf)
         cmd->status = 0;
 
     } else {
-        if (!(cmd->userFlags & MA_CGI_SEEN_HEADER) && !parseHeader(conn, cmd)) {
+        if (!(cmd->userFlags & MA_CGI_SEEN_HEADER) && !parseCgiHeaders(conn, cmd)) {
             return -1;
         } 
         if (cmd->userFlags & MA_CGI_SEEN_HEADER && conn->state > HTTP_STATE_BEGIN) {
@@ -575,7 +575,7 @@ static bool parseFirstCgiResponse(HttpConn *conn, MprCmd *cmd)
    
     <html.....
  */
-static bool parseHeader(HttpConn *conn, MprCmd *cmd)
+static bool parseCgiHeaders(HttpConn *conn, MprCmd *cmd)
 {
     HttpTx      *tx;
     MprBuf      *buf;
@@ -620,7 +620,7 @@ static bool parseHeader(HttpConn *conn, MprCmd *cmd)
         }
     }
     if (endHeaders && strchr(mprGetBufStart(buf), ':')) {
-        mprLog(4, "CGI: parseHeader: header\n%s", headers);
+        mprLog(4, "CGI: parseCgiHeaders: header\n%s", headers);
 
         while (mprGetBufLength(buf) > 0 && buf->start[0] && (buf->start[0] != '\r' && buf->start[0] != '\n')) {
             if ((key = getCgiToken(buf, ":")) == 0) {

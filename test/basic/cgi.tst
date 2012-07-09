@@ -8,7 +8,7 @@ let http: Http = new Http
 let dotcgi = (global.test && test.hostOs != "VXWORKS")
 let vxworks = (global.test && test.hostOs == "VXWORKS")
 
-if (App.config.bld_cgi && Path(test.top).join("src/test/web/cgiProgram.cgi").exists) {
+if (App.config.bld_cgi && Path(test.top).join("test/web/cgiProgram.cgi").exists) {
     /* Suport routines */
 
     function contains(pat): Void {
@@ -208,8 +208,7 @@ if (App.config.bld_cgi && Path(test.top).join("src/test/web/cgiProgram.cgi").exi
             http.setHeader("SWITCHES", "-n")
             http.get(HTTP + "/cgi-bin/nph-cgiProgram")
             assert(http.status == 200)
-            assert(http.response.startsWith("HTTP/1.0"))
-            assert(http.response.contains("X-CGI-CustomHeader: Any value at all"))
+            assert(http.header("X-CGI-CustomHeader") == "Any value at all")
         }
     }
 

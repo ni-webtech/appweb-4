@@ -182,7 +182,7 @@ test/cache/view_*.*
 test/app/cache/controller_*.*
 test/app/cache/view_*.*
 *.dmp
-start.bit
+./start.bit
 *.user
 .keep
 *-xcode

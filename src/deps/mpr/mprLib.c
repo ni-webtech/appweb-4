@@ -23950,7 +23950,7 @@ static int connectSocket(MprSocket *sp, cchar *ip, int port, int initialFlags)
         unlock(sp);
         return MPR_ERR_CANT_ACCESS;
     }
-    if ((sp->fd = socket(family, datagram ? SOCK_DGRAM: SOCK_STREAM, protocol)) < 0) {
+    if ((sp->fd = (int) socket(family, datagram ? SOCK_DGRAM: SOCK_STREAM, protocol)) < 0) {
         unlock(sp);
         return MPR_ERR_CANT_OPEN;
     }
