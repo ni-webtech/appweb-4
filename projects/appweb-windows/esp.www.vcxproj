@@ -2,7 +2,7 @@
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{69a85593-92ea-40e5-88e5-92d6e1878e5f}</ProjectGuid>
+    <ProjectGuid>{21e0420d-fc0e-43f9-839a-d9018926d17d}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -96,11 +96,11 @@
 
   <CustomBuildStep>
     <Command>cd ..\..\src\esp
-if exist $(BinDir)\esp-www del /Q $(BinDir)\esp-www
-if not exist $(BinDir)\esp-www md $(BinDir)\esp-www
-xcopy /S /Y www $(BinDir)\esp-www
+if exist ..\..\$(Cfg)\bin\esp-www del /Q ..\..\$(Cfg)\bin\esp-www
+if not exist ..\..\$(Cfg)\bin\esp-www md ..\..\$(Cfg)\bin\esp-www
+xcopy /S /Y www ..\..\$(Cfg)\bin\esp-www
 cd ..\..\projects\appweb-windows</Command>
-    <Outputs>$(BinDir)\esp-www</Outputs>
+    <Outputs>..\..\$(Cfg)\bin\esp-www</Outputs>
   </CustomBuildStep>
   </ItemDefinitionGroup>
 

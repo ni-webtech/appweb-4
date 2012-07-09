@@ -13,7 +13,7 @@
   </ItemDefinitionGroup>
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{66002183-4b43-4751-b3f4-36ad8e08be3c}</ProjectGuid>
+    <ProjectGuid>{1fe48dfa-c53e-45c9-afc2-00f429d7849e}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -130,7 +130,7 @@
 
   <CustomBuildStep>
     <Command>cd ..\..\src
-xcopy /Y /S /D appweb.h $(IncDir)
+xcopy /Y /S /D appweb.h $(IncDir)
 xcopy /Y /S /D customize.h $(IncDir)
 cd ..\projects\appweb-windows</Command>
     <Outputs>$(BinDir)\libappweb.dll</Outputs>
@@ -139,7 +139,7 @@ cd ..\projects\appweb-windows</Command>
 
 <ItemGroup>
   <ProjectReference Include="libhttp.vcxproj">
-  <Project>1afc1b00-a132-4507-8810-d12a6b0c8da7</Project>
+  <Project>6519d0b9-467a-444d-86a1-50896a22f279</Project>
   <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
   </ProjectReference>
 </ItemGroup>

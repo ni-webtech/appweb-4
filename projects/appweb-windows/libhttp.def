@@ -158,6 +158,7 @@ EXPORTS
   httpGetOptionHash
   httpGetOptions
   httpGetPacket
+  httpGetPamPassword
   httpGetParam
   httpGetParams
   httpGetParamsString
@@ -180,6 +181,7 @@ EXPORTS
   httpInitQueue
   httpInitSchedulerQueue
   httpInitTrace
+  httpInsertOption
   httpInsertQueue
   httpIsEndpointAsync
   httpIsEof
@@ -194,7 +196,6 @@ EXPORTS
   httpJoinUri
   httpJoinUriPath
   httpLink
-  httpLoadSsl
   httpLogRequest
   httpLogRoutes
   httpLookupEndpoint
@@ -229,11 +230,12 @@ EXPORTS
   httpOpenRouteLog
   httpOpenSendConnector
   httpOpenUploadFilter
+  httpOption
   httpParseAcl
   httpPrepClientConn
   httpPrepServerConn
-  httpPump
   httpProcessHandler
+  httpPump
   httpPutBackPacket
   httpPutForService
   httpPutPacket
@@ -379,6 +381,7 @@ EXPORTS
   httpUseWorker
   httpValidateFileCredentials
   httpValidateLimits
+  httpValidatePamCredentials
   httpVerifyQueue
   httpWait
   httpWillNextQueueAcceptPacket

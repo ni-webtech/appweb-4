@@ -25,6 +25,7 @@ EXPORTS
   mprAddNullToBuf
   mprAddRoot
   mprAddSocketHandler
+  mprAddSocketProvider
   mprAddStandardSignals
   mprAddTerminator
   mprAddTestGroup
@@ -86,10 +87,12 @@ EXPORTS
   mprCreateModuleService
   mprCreateNotifierService
   mprCreateOsService
+  mprCreateOutsideEvent
   mprCreateSignalService
   mprCreateSocket
   mprCreateSocketService
   mprCreateSpinLock
+  mprCreateSsl
   mprCreateTestService
   mprCreateThread
   mprCreateThreadLocal
@@ -277,6 +280,7 @@ EXPORTS
   mprListenOnSocket
   mprLoadModule
   mprLoadNativeModule
+  mprLoadSsl
   mprLock
   mprLockDtoa
   mprLog
@@ -290,11 +294,13 @@ EXPORTS
   mprLookupMime
   mprLookupModule
   mprLookupModuleData
+  mprLookupStringItem
   mprMakeArgv
   mprMakeDir
   mprMakeLink
   mprMakeTime
   mprMakeUniversalTime
+  mprManageSpinLock
   mprMapMprPriorityToOs
   mprMapOsPriorityToMpr
   mprMapSeparators
@@ -356,6 +362,7 @@ EXPORTS
   mprRemoveRoot
   mprRemoveSignalHandler
   mprRemoveSocketHandler
+  mprRemoveStringItem
   mprRemoveWaitHandler
   mprRenamePath
   mprReplacePathExt
@@ -432,13 +439,19 @@ EXPORTS
   mprSetName
   mprSetPathNewline
   mprSetPathSeparators
-  mprSetSecureProvider
   mprSetServerName
   mprSetSocketBlockingMode
   mprSetSocketEof
   mprSetSocketMessage
   mprSetSocketNoDelay
   mprSetSocketPrebindCallback
+  mprSetSslCaFile
+  mprSetSslCaPath
+  mprSetSslCertFile
+  mprSetSslCiphers
+  mprSetSslKeyFile
+  mprSetSslProtocols
+  mprSetSslProvider
   mprSetThreadData
   mprSetThreadPriority
   mprSetThreadStackSize
@@ -453,6 +466,7 @@ EXPORTS
   mprSignalTestComplete
   mprSleep
   mprSocketHasPendingData
+  mprSort
   mprSortList
   mprSpinLock
   mprSpinUnlock
@@ -491,11 +505,15 @@ EXPORTS
   mprUnloadNativeModule
   mprUnlock
   mprUnlockDtoa
+  mprUpgradeSocket
   mprUriDecode
   mprUriEncode
   mprUserError
   mprUsingDefaultLogHandler
   mprVerifyMem
+  mprVerifySslDepth
+  mprVerifySslIssuer
+  mprVerifySslPeer
   mprVirtAlloc
   mprVirtFree
   mprWaitForCmd

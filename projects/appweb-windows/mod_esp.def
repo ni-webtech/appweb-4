@@ -20,11 +20,13 @@ EXPORTS
   ediAddTable
   ediAddValidation
   ediChangeColumn
+  ediCloneGrid
   ediClose
   ediCreateBareGrid
   ediCreateBareRec
   ediCreateRec
   ediCreateService
+  ediDefineMigration
   ediDefineValidation
   ediDelete
   ediDeleteRow
@@ -35,19 +37,23 @@ EXPORTS
   ediGetFieldFmt
   ediGetFieldSchema
   ediGetFieldType
+  ediGetFieldValue
   ediGetGridColumns
   ediGetRecErrors
   ediGetTableSchema
   ediGetTables
   ediGetTypeString
+  ediJoin
   ediLoad
   ediLookupField
+  ediLookupGridField
   ediMakeGrid
   ediMakeHash
   ediMakeRec
   ediManageEdiRec
   ediOpen
   ediParseTypeString
+  ediPivotGrid
   ediQuery
   ediReadField
   ediReadOneWhere
@@ -62,6 +68,7 @@ EXPORTS
   ediSave
   ediSetField
   ediSetFields
+  ediSortGrid
   ediUpdateField
   ediUpdateRec
   ediValidateRec
@@ -143,6 +150,7 @@ EXPORTS
   espManageAction
   espManageEspRoute
   espMatchParam
+  espModuleIsStale
   espProgress
   espRadio
   espReadRec
@@ -161,9 +169,9 @@ EXPORTS
   espRenderCached
   espRenderError
   espRenderFile
-  espRenderVar
   espRenderSafeString
   espRenderString
+  espRenderVar
   espRenderView
   espScript
   espSecurityToken
@@ -191,6 +199,7 @@ EXPORTS
   espTabs
   espText
   espTree
+  espUnloadModule
   espUpdateCache
   espUpdateField
   espUpdateFields
