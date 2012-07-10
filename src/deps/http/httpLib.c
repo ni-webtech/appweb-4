@@ -3598,10 +3598,6 @@ HttpEndpoint *httpCreateEndpoint(cchar *ip, int port, MprDispatcher *dispatcher)
 
 void httpDestroyEndpoint(HttpEndpoint *endpoint)
 {
-    if (endpoint->waitHandler) {
-        mprRemoveWaitHandler(endpoint->waitHandler);
-        endpoint->waitHandler = 0;
-    }
     destroyEndpointConnections(endpoint);
     if (endpoint->sock) {
         mprCloseSocket(endpoint->sock, 0);
@@ -3617,7 +3613,6 @@ static int manageEndpoint(HttpEndpoint *endpoint, int flags)
         mprMark(endpoint->http);
         mprMark(endpoint->hosts);
         mprMark(endpoint->limits);
-        mprMark(endpoint->waitHandler);
         mprMark(endpoint->clientLoad);
         mprMark(endpoint->ip);
         mprMark(endpoint->context);
@@ -3735,10 +3730,9 @@ int httpStartEndpoint(HttpEndpoint *endpoint)
     if (endpoint->http->listenCallback && (endpoint->http->listenCallback)(endpoint) < 0) {
         return MPR_ERR_CANT_OPEN;
     }
-    if (endpoint->async && endpoint->waitHandler ==  0) {
-        //  MOB TODO -- this really should be in endpoint->listen->handler
-        endpoint->waitHandler = mprCreateWaitHandler(endpoint->sock->fd, MPR_SOCKET_READABLE, endpoint->dispatcher,
-            httpAcceptConn, endpoint, (endpoint->dispatcher) ? 0 : MPR_WAIT_NEW_DISPATCHER);
+    if (endpoint->async && !endpoint->sock->handler) {
+        mprAddSocketHandler(endpoint->sock, MPR_SOCKET_READABLE, endpoint->dispatcher, httpAcceptConn, endpoint, 
+            (endpoint->dispatcher) ? 0 : MPR_WAIT_NEW_DISPATCHER);
     } else {
         mprSetSocketBlockingMode(endpoint->sock, 1);
     }
@@ -3761,12 +3755,7 @@ void httpStopEndpoint(HttpEndpoint *endpoint)
     for (ITERATE_ITEMS(endpoint->hosts, host, next)) {
         httpStopHost(host);
     }
-    if (endpoint->waitHandler) {
-        mprRemoveWaitHandler(endpoint->waitHandler);
-        endpoint->waitHandler = 0;
-    }
     if (endpoint->sock) {
-        mprRemoveSocketHandler(endpoint->sock);
         mprCloseSocket(endpoint->sock, 0);
         endpoint->sock = 0;
     }
@@ -3774,7 +3763,7 @@ void httpStopEndpoint(HttpEndpoint *endpoint)
 
 
 /*
-    TODO OPT
+    OPT
  */
 bool httpValidateLimits(HttpEndpoint *endpoint, int event, HttpConn *conn)
 {
@@ -3895,17 +3884,17 @@ HttpConn *httpAcceptConn(HttpEndpoint *endpoint, MprEvent *event)
         This will block in sync mode until a connection arrives
      */
     if ((sock = mprAcceptSocket(endpoint->sock)) == 0) {
-        if (endpoint->waitHandler) {
-            mprWaitOn(endpoint->waitHandler, MPR_READABLE);
+        if (endpoint->sock->handler) {
+            mprEnableSocketEvents(endpoint->sock, MPR_READABLE);
         }
         return 0;
     }
     if (endpoint->ssl) {
         mprUpgradeSocket(sock, endpoint->ssl, 1);
     }
-    if (endpoint->waitHandler) {
+    if (endpoint->sock->handler) {
         /* Re-enable events on the listen socket */
-        mprWaitOn(endpoint->waitHandler, MPR_READABLE);
+        mprEnableSocketEvents(endpoint->sock, MPR_READABLE);
     }
     dispatcher = event->dispatcher;
 
@@ -5534,7 +5523,7 @@ void httpWriteRouteLog(HttpRoute *route, cchar *buf, ssize len)
 {
     lock(MPR);
     if (route->logBackup > 0) {
-        //  TODO OPT - don't check this on every write
+        //  OPT - don't check this on every write
         httpBackupRouteLog(route);
         if (!route->log && !httpOpenRouteLog(route)) {
             unlock(MPR);
@@ -5600,7 +5589,6 @@ void httpLogRequest(HttpConn *conn)
             break;
 
         case 'h':                           /* Remote host */
-            //  TODO - Should this trigger a reverse DNS?
             mprPutStringToBuf(buf, conn->ip);
             break;
 
@@ -6877,7 +6865,7 @@ void httpStartPipeline(HttpConn *conn)
     
     tx = conn->tx;
 
-    //  TODO - how can this ever be already true?
+    //  MOB - remove - how can this ever be already true?
     mprAssert(!tx->started);
     if (tx->started) {
         return;
@@ -7292,7 +7280,7 @@ void httpInitSchedulerQueue(HttpQueue *q)
 
 /*  
     Insert a queue after the previous element
-    TODO - rename append
+    MOB - rename append
  */
 void httpInsertQueue(HttpQueue *prev, HttpQueue *q)
 {
@@ -7365,7 +7353,7 @@ ssize httpRead(HttpConn *conn, char *buf, ssize size)
             httpWait(conn, 0, MPR_TIMEOUT_NO_BUSY);
         }
     }
-    //  TODO - better place for this?
+    //  MOB - better place for this?
     conn->lastActivity = conn->http->now;
     mprAssert(httpVerifyQueue(q));
 
@@ -9338,7 +9326,6 @@ static void finalizePattern(HttpRoute *route)
     }
     for (cp = startPattern; *cp; cp++) {
         /* Alias for optional, non-capturing pattern:  "(?: PAT )?" */
-        //  MOB - change ~ is confusing with ~ for top of app
         if (*cp == '(' && cp[1] == '~') {
             mprPutStringToBuf(pattern, "(?:");
             cp++;
@@ -12518,7 +12505,7 @@ static void addMatchEtag(HttpConn *conn, char *etag)
     a set of characters. HTTP header header parsing does not work as well using classical strtok parsing as you must
     know when the "/r/n/r/n" body delimiter has been encountered. Strtok will eat such delimiters.
 
-    MOB - OPT
+    OPT
  */
 static char *getToken(HttpConn *conn, cchar *delim)
 {
@@ -13320,7 +13307,7 @@ static void incoming(HttpQueue *q, HttpPacket *packet)
         httpPutPacketToNext(q, packet);
     } else {
         /* This queue is the last queue in the pipeline */
-        //  TODO - should this call WillAccept?
+        //  MOB - should this call WillAccept?
         if (httpGetPacketLength(packet) > 0) {
             httpJoinPacketForService(q, packet, 0);
             HTTP_NOTIFY(q->conn, 0, HTTP_NOTIFY_READABLE);
