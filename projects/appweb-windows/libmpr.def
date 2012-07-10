@@ -87,7 +87,7 @@ EXPORTS
   mprCreateModuleService
   mprCreateNotifierService
   mprCreateOsService
-  mprCreateOutsideEvent
+  mprCreateEventOutside
   mprCreateSignalService
   mprCreateSocket
   mprCreateSocketService

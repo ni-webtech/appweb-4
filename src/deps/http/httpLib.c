@@ -2467,9 +2467,14 @@ static HttpConn *openConnection(HttpConn *conn, cchar *url, struct MprSsl *ssl)
     }
 #if BIT_FEATURE_SSL
     /* Must be done even if using keep alive for repeat SSL requests */
-    if (uri->secure && mprUpgradeSocket(sp, ssl, 0) < 0) {
-        conn->errorMsg = sp->errorMsg;
-        return 0;
+    if (uri->secure) {
+        if (ssl == 0) {
+            ssl = mprCreateSsl();
+        }
+        if (mprUpgradeSocket(sp, ssl, 0) < 0) {
+            conn->errorMsg = sp->errorMsg;
+            return 0;
+        }
     }
 #endif
     conn->sock = sp;

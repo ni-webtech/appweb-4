@@ -371,7 +371,7 @@ static bool parseArgs(int argc, char **argv)
             if (nextArg >= argc) {
                 return 0;
             } else {
-                app->provider = supper(argv[++nextArg]);
+                app->provider = sclone(argv[++nextArg]);
             }
 
         } else if (smatch(argp, "--put")) {

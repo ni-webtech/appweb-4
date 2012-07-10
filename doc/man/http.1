@@ -27,6 +27,7 @@ http \- HTTP Client program
 [\fI--post\fR]
 [\fI--printable\fR]
 [\fI--protocol version\fR]
+[\fI--provider name\fR]
 [\fI--put\fR]
 [\fI--range byteRanges\fR]
 [\fI--retries count\fR]
@@ -122,6 +123,9 @@ Make binary output printable by printing hex digits for each character.
 .TP
 \fB\--protocol HTTP_VERSION\fR 
 Use the specified HTTP protocol. httpVersion should be either '0' for HTTP/1.0 or 1 for HTTP/1.1.
+.TP
+\fB\--provider openssl|matrixssl\fR 
+Select the SSL stack provider. 
 .TP
 \fB\--put\fR 
 Issue a PUT request. This is an alias for --method PUT.

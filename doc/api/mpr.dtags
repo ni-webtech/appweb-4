@@ -2271,6 +2271,13 @@
       <arglist>(MprDispatcher *dispatcher, cchar *name, MprTime period, void *proc, void *data, int flags)</arglist>
     </member>
     <member kind="function">
+      <type>void</type>
+      <name>mprCreateEventOutside</name>
+      <anchorfile>group___mpr_event.html</anchorfile>
+      <anchor>gaaf6699974b0854252b3ea9dc3160d8cf</anchor>
+      <arglist>(MprDispatcher *dispatcher, void *proc, void *data)</arglist>
+    </member>
+    <member kind="function">
       <type>MprFileSystem *</type>
       <name>mprCreateFileSystem</name>
       <anchorfile>group___mpr_file_system.html</anchorfile>
@@ -2353,13 +2360,6 @@
       <anchorfile>group___mpr.html</anchorfile>
       <anchor>ga85bb50d63a783a867786d7df20a1e2ec</anchor>
       <arglist>()</arglist>
-    </member>
-    <member kind="function">
-      <type>void</type>
-      <name>mprCreateOutsideEvent</name>
-      <anchorfile>group___mpr_event.html</anchorfile>
-      <anchor>ga041faeaea5f29bd86d35270f2f408a50</anchor>
-      <arglist>(MprDispatcher *dispatcher, void *proc, void *data)</arglist>
     </member>
     <member kind="function">
       <type>MprRomFileSystem *</type>
@@ -7623,9 +7623,9 @@
     </member>
     <member kind="function">
       <type>void</type>
-      <name>mprCreateOutsideEvent</name>
+      <name>mprCreateEventOutside</name>
       <anchorfile>group___mpr_event.html</anchorfile>
-      <anchor>ga041faeaea5f29bd86d35270f2f408a50</anchor>
+      <anchor>gaaf6699974b0854252b3ea9dc3160d8cf</anchor>
       <arglist>(MprDispatcher *dispatcher, void *proc, void *data)</arglist>
     </member>
     <member kind="function">
