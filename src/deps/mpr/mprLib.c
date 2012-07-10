@@ -1341,7 +1341,7 @@ void mprRelease(void *ptr)
 /*
     If dispatcher is 0, will use MPR->nonBlock if MPR_EVENT_QUICK else MPR->dispatcher
  */
-void mprCreateOutsideEvent(MprDispatcher *dispatcher, void *proc, void *data)
+void mprCreateEventOutside(MprDispatcher *dispatcher, void *proc, void *data)
 {
     heap->pauseGC++;
     mprAtomicBarrier();

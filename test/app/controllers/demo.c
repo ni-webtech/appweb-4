@@ -39,6 +39,17 @@ static void first() {
     flush();
 }
 
+static void outsideProc(void *data, MprEvent *event) {
+    render("Message: %s\n", data);
+    finalize();
+}
+
+static void outside() {
+    /* Normally used by thread outside */
+    mprCreateEventOutside(getConn()->dispatcher, outsideProc, sclone("hello outside"));
+    dontAutoFinalize();
+}
+
 ESP_EXPORT int esp_controller_demo(HttpRoute *route, MprModule *module) {
     EspRoute    *eroute;
     cchar       *schema;
@@ -70,5 +81,6 @@ ESP_EXPORT int esp_controller_demo(HttpRoute *route, MprModule *module) {
     espDefineAction(route, "demo-list", list);
     espDefineAction(route, "demo-cmd-restart", restart);
     espDefineAction(route, "demo-cmd-first", first);
+    espDefineAction(route, "demo-cmd-outside", outside);
     return 0;
 }

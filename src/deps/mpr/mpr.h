@@ -5980,7 +5980,7 @@ typedef void (*MprEventProc)(void *data, struct MprEvent *event);
     @see MprDispatcher MprEvent MprEventProc MprEventService mprCreateDispatcher mprCreateEvent mprCreateEventService 
         mprCreateTimerEvent mprDestroyDispatcher mprEnableContinuousEvent mprEnableDispatcher mprGetDispatcher 
         mprQueueEvent mprRemoveEvent mprRescheduleEvent mprRestartContinuousEvent mprServiceEvents 
-        mprSignalDispatcher mprStopContinuousEvent mprWaitForEvent mprCreateOutsideEvent
+        mprSignalDispatcher mprStopContinuousEvent mprWaitForEvent mprCreateEventOutside
     @defgroup MprEvent MprEvent
  */
 typedef struct MprEvent {
@@ -6122,7 +6122,7 @@ extern MprEvent *mprCreateEvent(MprDispatcher *dispatcher, cchar *name, MprTime 
     @param data Data to associate with the event and stored in event->data. The data must be non-MPR memory.
     @ingroup MprEvent
  */
-extern void mprCreateOutsideEvent(MprDispatcher *dispatcher, void *proc, void *data);
+extern void mprCreateEventOutside(MprDispatcher *dispatcher, void *proc, void *data);
 
 /*
     Queue a new event for service.

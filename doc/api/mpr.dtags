@@ -9782,9 +9782,9 @@
     <filename>struct_mpr_socket_service.html</filename>
     <member kind="variable">
       <type>char *</type>
-      <name>defaultSecureProvider</name>
+      <name>defaultProvider</name>
       <anchorfile>struct_mpr_socket_service.html</anchorfile>
-      <anchor>afb70c8d9d056a593cb72ef2073ad21fe</anchor>
+      <anchor>a6a9e16266207f917b8672ce2d7f4a898</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
@@ -9817,9 +9817,9 @@
     </member>
     <member kind="variable">
       <type>MprHash *</type>
-      <name>secureProviders</name>
+      <name>providers</name>
       <anchorfile>struct_mpr_socket_service.html</anchorfile>
-      <anchor>aa55922fe449df9bf16e1512b135620d3</anchor>
+      <anchor>aef910c34e81c261e0176232ece040d12</anchor>
       <arglist></arglist>
     </member>
     <member kind="variable">
