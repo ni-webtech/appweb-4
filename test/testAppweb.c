@@ -351,7 +351,7 @@ bool matchAnyCase(MprTestGroup *gp, char *key, char *value)
     }
     trim = strim(vp, "\"", MPR_TRIM_BOTH);
 #if BIT_WIN_LIKE
-    if (vp == 0 || scasecmp(trim, value) != 0)
+    if (vp == 0 || scaselesscmp(trim, value) != 0)
 #else
     if (vp == 0 || value == 0 || scmp(trim, value) != 0)
 #endif

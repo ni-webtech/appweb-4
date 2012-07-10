@@ -73,9 +73,14 @@
                 <li>Xcode project to use unique output directory</li>
                 <li>Added lazy SSL loading. SSL library only loaded when SSL requests arrive</li>
                 <li>Support prior SSL library configuration</li>
+                <li>Add mprCreateEventOutside for calling back into Appweb from foreign threads</li>
+                <li>Update MatrixSSL support to the latest version</li>
+                <li>Add SSL unit tests</li>
             </ul>
             <h3>Fixes</h3>
             <ul>
+                <li>Fix documentation version number</li>
+                <li>Refactor scase => scaseless</li>
                 <li>Xcode debug builds to include BIT_DEBUG</li>
                 <li>CGI NPH fixes to not augment CGI headers</li>
                 <li>HTTP/1.0 connection management</li>
