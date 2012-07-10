@@ -696,7 +696,7 @@ static int prepRequest(HttpConn *conn, MprList *files, int retry)
     httpPrepClientConn(conn, retry);
 
     for (next = 0; (header = mprGetNextItem(app->headers, &next)) != 0; ) {
-        if (scasematch(header->key, "User-Agent")) {
+        if (scaselessmatch(header->key, "User-Agent")) {
             httpSetHeader(conn, header->key, header->value);
         } else {
             httpAppendHeader(conn, header->key, header->value);
@@ -1088,7 +1088,7 @@ static char *resolveUrl(HttpConn *conn, cchar *url)
 {
     if (*url == '/') {
         if (app->host) {
-            if (sncasecmp(app->host, "http://", 7) != 0 && sncasecmp(app->host, "https://", 8) != 0) {
+            if (sncaselesscmp(app->host, "http://", 7) != 0 && sncaselesscmp(app->host, "https://", 8) != 0) {
                 return sfmt("http://%s%s", app->host, url);
             } else {
                 return sfmt("%s%s", app->host, url);
@@ -1097,7 +1097,7 @@ static char *resolveUrl(HttpConn *conn, cchar *url)
             return sfmt("http://127.0.0.1%s", url);
         }
     } 
-    if (sncasecmp(url, "http://", 7) != 0 && sncasecmp(url, "https://", 8) != 0) {
+    if (sncaselesscmp(url, "http://", 7) != 0 && sncaselesscmp(url, "https://", 8) != 0) {
         if (*url == ':' && isPort(&url[1])) {
             return sfmt("http://127.0.0.1%s", url);
         } else if (isPort(url)) {
@@ -1160,7 +1160,7 @@ static void showOutput(HttpConn *conn, cchar *buf, ssize count)
 
 static void trace(HttpConn *conn, cchar *url, int fetchCount, cchar *method, int status, MprOff contentLen)
 {
-    if (sncasecmp(url, "http://", 7) != 0) {
+    if (sncaselesscmp(url, "http://", 7) != 0) {
         url += 7;
     }
     if ((fetchCount % 200) == 1) {

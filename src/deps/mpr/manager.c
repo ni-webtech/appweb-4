@@ -489,7 +489,7 @@ static bool process(cchar *operation, bool quiet)
         } else if (upstart) {
             rc = run("/sbin/start %s", name);
             if (!rc) {
-                if (scontains(app->error, "start: Job is already running", -1)) {
+                if (scontains(app->error, "start: Job is already running")) {
                     rc = 0;
                 }
             }

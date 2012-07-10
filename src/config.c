@@ -252,9 +252,9 @@ static int addLanguageSuffixDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_BAD_SYNTAX;
     }
     flags = 0;
-    if (scasematch(position, "after")) {
+    if (scaselessmatch(position, "after")) {
         flags |= HTTP_LANG_AFTER;
-    } else if (scasematch(position, "before")) {
+    } else if (scaselessmatch(position, "before")) {
         flags |= HTTP_LANG_BEFORE;
     }
     httpAddRouteLanguageSuffix(state->route, lang, ext, flags);
@@ -404,10 +404,10 @@ static int authGroupFileDirective(MaState *state, cchar *key, cchar *value)
  */
 static int authMethodDirective(MaState *state, cchar *key, cchar *value)
 {
-    if (scasecmp(value, "run") == 0) {
+    if (scaselesscmp(value, "run") == 0) {
         state->auth->backend = HTTP_AUTH_FILE;
 #if BLD_CC_PAM
-    } else if (scasecmp(value, "pam") == 0) {
+    } else if (scaselesscmp(value, "pam") == 0) {
         state->auth->backend = HTTP_AUTH_PAM;
 #endif
     } else {
@@ -433,11 +433,11 @@ static int authNameDirective(MaState *state, cchar *key, cchar *value)
  */
 static int authTypeDirective(MaState *state, cchar *key, cchar *value)
 {
-    if (scasecmp(value, "Basic") == 0) {
+    if (scaselesscmp(value, "Basic") == 0) {
         state->auth->type = HTTP_AUTH_BASIC;
-    } else if (scasecmp(value, "Digest") == 0) {
+    } else if (scaselesscmp(value, "Digest") == 0) {
         state->auth->type = HTTP_AUTH_DIGEST;
-    } else if (scasecmp(value, "None") == 0) {
+    } else if (scaselesscmp(value, "None") == 0) {
         state->auth->type = 0;
     } else {
         mprError("Unsupported authorization protocol");
@@ -468,7 +468,7 @@ static int authUserFileDirective(MaState *state, cchar *key, cchar *value)
  */
 static int authDigestQopDirective(MaState *state, cchar *key, cchar *value)
 {
-    if (!scasematch(value, "none") && !scasematch(value, "auth") && !scasematch(value, "auth-int")) {
+    if (!scaselessmatch(value, "none") && !scaselessmatch(value, "auth") && !scaselessmatch(value, "auth-int")) {
         return MPR_ERR_BAD_SYNTAX;
     }
     httpSetAuthQop(state->auth, value);
@@ -621,10 +621,10 @@ static int compressDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S", &format)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if (scasematch(format, "gzip")) {
+    if (scaselessmatch(format, "gzip")) {
         httpSetRouteCompression(state->route, HTTP_ROUTE_GZIP);
 
-    } else if (scasematch(format, "none") || scasematch(format, "off")) {
+    } else if (scaselessmatch(format, "none") || scaselessmatch(format, "off")) {
         httpSetRouteCompression(state->route, 0);
     }
     return 0;
@@ -1445,9 +1445,9 @@ static int nameVirtualHostDirective(MaState *state, cchar *key, cchar *value)
  */
 static int orderDirective(MaState *state, cchar *key, cchar *value)
 {
-    if (scasecmp(value, "Allow,Deny") == 0) {
+    if (scaselesscmp(value, "Allow,Deny") == 0) {
         httpSetAuthOrder(state->auth, HTTP_ALLOW_DENY);
-    } else if (scasecmp(value, "Deny,Allow") == 0) {
+    } else if (scaselesscmp(value, "Deny,Allow") == 0) {
         httpSetAuthOrder(state->auth, HTTP_DENY_ALLOW);
     } else {
         return MPR_ERR_BAD_SYNTAX;
@@ -1491,7 +1491,7 @@ static int prefixDirective(MaState *state, cchar *key, cchar *value)
 static int protocolDirective(MaState *state, cchar *key, cchar *value)
 {
     httpSetHostProtocol(state->host, value);
-    if (!scasematch(value, "HTTP/1.0") && !scasematch(value, "HTTP/1.1")) {
+    if (!scaselessmatch(value, "HTTP/1.0") && !scaselessmatch(value, "HTTP/1.1")) {
         mprError("Unknown http protocol %s. Should be HTTP/1.0 or HTTP/1.1", value);
         return MPR_ERR_BAD_SYNTAX;
     }
@@ -1537,13 +1537,13 @@ static int redirectDirective(MaState *state, cchar *key, cchar *value)
         if (!maTokenize(state, value, "%S %S ?S", &code, &uri, &path)) {
             return MPR_ERR_BAD_SYNTAX;
         }
-        if (scasematch(code, "permanent")) {
+        if (scaselessmatch(code, "permanent")) {
             status = 301;
-        } else if (scasematch(code, "temp")) {
+        } else if (scaselessmatch(code, "temp")) {
             status = 302;
-        } else if (scasematch(code, "seeother")) {
+        } else if (scaselessmatch(code, "seeother")) {
             status = 303;
-        } else if (scasematch(code, "gone")) {
+        } else if (scaselessmatch(code, "gone")) {
             status = 410;
         } else if (snumber(code)) {
             status = atoi(code);
@@ -1585,13 +1585,13 @@ static int requireDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S ?*", &type, &rest)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if (scasecmp(type, "acl") == 0) {
+    if (scaselesscmp(type, "acl") == 0) {
         httpSetRequiredAcl(state->auth, httpParseAcl(state->auth, rest));
-    } else if (scasecmp(type, "valid-user") == 0) {
+    } else if (scaselesscmp(type, "valid-user") == 0) {
         httpSetAuthAnyValidUser(state->auth);
-    } else if (scasecmp(type, "user") == 0) {
+    } else if (scaselesscmp(type, "user") == 0) {
         httpSetAuthRequiredUsers(state->auth, rest);
-    } else if (scasecmp(type, "group") == 0) {
+    } else if (scaselesscmp(type, "group") == 0) {
         httpSetAuthRequiredGroups(state->auth, rest);
     } else {
         return configError(state, key);
@@ -1611,10 +1611,10 @@ static int resetDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S", &name)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if (scasematch(name, "routes")) {
+    if (scaselessmatch(name, "routes")) {
         httpResetRoutes(state->host);
 
-    } else if (scasematch(name, "pipeline")) {
+    } else if (scaselessmatch(name, "pipeline")) {
         httpResetRoutePipeline(state->route);
 
     } else {
@@ -2005,46 +2005,46 @@ static bool conditionalDefinition(MaState *state, cchar *key)
     }
     maParsePlatform(state->appweb->platform, &os, &arch, &profile);
 
-    if (scasematch(key, arch)) {
+    if (scaselessmatch(key, arch)) {
         result = 1;
 
-    } else if (scasematch(key, os)) {
+    } else if (scaselessmatch(key, os)) {
         result = 1;
 
-    } else if (scasematch(key, profile)) {
+    } else if (scaselessmatch(key, profile)) {
         result = 1;
 
-    } else if (scasematch(key, state->appweb->platform)) {
+    } else if (scaselessmatch(key, state->appweb->platform)) {
         result = 1;
 
 #if BIT_DEBUG
-    } else if (scasematch(key, "BIT_DEBUG")) {
+    } else if (scaselessmatch(key, "BIT_DEBUG")) {
         result = BIT_DEBUG;
 #endif
 
     } else if (state->appweb->skipModules) {
         /* ESP utility needs to be able to load mod_esp */
-        if (smatch(mprGetAppName(), "esp") && scasematch(key, "ESP_MODULE")) {
+        if (smatch(mprGetAppName(), "esp") && scaselessmatch(key, "ESP_MODULE")) {
             result = BIT_FEATURE_ESP;
         }
 
     } else {
-        if (scasematch(key, "CGI_MODULE")) {
+        if (scaselessmatch(key, "CGI_MODULE")) {
             result = BIT_FEATURE_CGI;
 
-        } else if (scasematch(key, "DIR_MODULE")) {
+        } else if (scaselessmatch(key, "DIR_MODULE")) {
             result = BIT_FEATURE_DIR;
 
-        } else if (scasematch(key, "EJS_MODULE")) {
+        } else if (scaselessmatch(key, "EJS_MODULE")) {
             result = BIT_FEATURE_EJSCRIPT;
 
-        } else if (scasematch(key, "ESP_MODULE")) {
+        } else if (scaselessmatch(key, "ESP_MODULE")) {
             result = BIT_FEATURE_ESP;
 
-        } else if (scasematch(key, "PHP_MODULE")) {
+        } else if (scaselessmatch(key, "PHP_MODULE")) {
             result = BIT_FEATURE_PHP;
 
-        } else if (scasematch(key, "SSL_MODULE")) {
+        } else if (scaselessmatch(key, "SSL_MODULE")) {
             result = BIT_FEATURE_SSL;
         }
     }

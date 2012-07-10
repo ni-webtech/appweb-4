@@ -225,7 +225,7 @@ void espCheckbox(HttpConn *conn, cchar *field, cchar *checkedValue, cchar *optio
    
     options = httpGetOptions(optionString);
     value = getValue(conn, field, options);
-    checked = scasematch(value, checkedValue) ? " checked='yes'" : "";
+    checked = scaselessmatch(value, checkedValue) ? " checked='yes'" : "";
     espRender(conn, "<input name='%s' type='checkbox'%s%s value='%s' />\r\n", 
         field, map(conn, options), checked, checkedValue);
     espRender(conn, "    <input name='%s' type='hidden'%s value='' />", field, map(conn, options));
@@ -294,7 +294,7 @@ void espForm(HttpConn *conn, EdiRec *record, cchar *optionString)
     if ((method = httpGetOption(options, "method", 0)) == 0) {
         method = (recid) ? "PUT" : "POST";
     }
-    if (!scasematch(method, "GET") && !scasematch(method, "POST")) {
+    if (!scaselessmatch(method, "GET") && !scaselessmatch(method, "POST")) {
         /* All methods use POST and tunnel method in data-method */
         httpAddOption(options, "data-method", method);
         method = "POST";

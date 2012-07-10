@@ -899,7 +899,7 @@ static void compileFile(HttpRoute *route, cchar *source, int kind)
                 fail("Can't read %s", source);
                 return;
             }
-            if ((lpath = scontains(data, "@ layout \"", -1)) != 0) {
+            if ((lpath = scontains(data, "@ layout \"")) != 0) {
                 lpath = strim(&lpath[10], " ", MPR_TRIM_BOTH);
                 if ((quote = schr(lpath, '"')) != 0) {
                     *quote = '\0';
@@ -1670,7 +1670,7 @@ static void migrate(HttpRoute *route, int argc, char **argv)
             if (app->error) {
                 return;
             }
-            if ((app->entry = scontains(app->base, "_", -1)) != 0) {
+            if ((app->entry = scontains(app->base, "_")) != 0) {
                 app->entry = mprTrimPathExt(&app->entry[1]);
             } else {
                 app->entry = mprTrimPathExt(app->base);
@@ -1767,17 +1767,17 @@ static void generateAppFiles(HttpRoute *route)
 
 static bool checkEspPath(cchar *path)
 {
-    if (scontains(path, "jquery.", -1)) {
+    if (scontains(path, "jquery.")) {
         if (app->minified) {
-            if (!scontains(path, ".min.js", -1)) {
+            if (!scontains(path, ".min.js")) {
                 return 0;
             }
         } else {
-            if (scontains(path, ".min.js", -1)) {
+            if (scontains(path, ".min.js")) {
                 return 0;
             }
         }
-    } else if (scontains(path, "treeview", -1)) {
+    } else if (scontains(path, "treeview")) {
         return 0;
     }
     return 1;

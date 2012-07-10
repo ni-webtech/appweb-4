@@ -1451,9 +1451,6 @@ static int verifyX509Certificate(int ok, X509_STORE_CTX *xContext)
     if (X509_NAME_oneline(X509_get_subject_name(cert), subject, sizeof(subject) - 1) < 0) {
         ok = 0;
     }
-    /*
-        TODO -- should compare subject name and host name. Need smart compare.
-     */
     if (X509_NAME_oneline(X509_get_issuer_name(xContext->current_cert), issuer, sizeof(issuer) - 1) < 0) {
         ok = 0;
     }

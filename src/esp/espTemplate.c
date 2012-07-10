@@ -534,7 +534,7 @@ char *espBuildScript(HttpRoute *route, cchar *page, cchar *path, cchar *cacheNam
                 return 0;
             }
 #if BIT_DEBUG
-            if (!scontains(layoutBuf, CONTENT_MARKER, -1)) {
+            if (!scontains(layoutBuf, CONTENT_MARKER)) {
                 *err = sfmt("Layout page is missing content marker: %s", layout);
                 return 0;
             }
@@ -786,17 +786,17 @@ static cchar *getCompilerName(cchar *os, cchar *arch)
     if (smatch(os, "vxworks")) {
         if (smatch(arch, "x86") || smatch(arch, "i586") || smatch(arch, "i686") || smatch(arch, "pentium")) {
             name = "ccpentium";
-        } else if (scontains(arch, "86", -1)) {
+        } else if (scontains(arch, "86")) {
             name = "cc386";
-        } else if (scontains(arch, "ppc", -1)) {
+        } else if (scontains(arch, "ppc")) {
             name = "ccppc";
-        } else if (scontains(arch, "xscale", -1) || scontains(arch, "arm", -1)) {
+        } else if (scontains(arch, "xscale") || scontains(arch, "arm")) {
             name = "ccarm";
-        } else if (scontains(arch, "68", -1)) {
+        } else if (scontains(arch, "68")) {
             name = "cc68k";
-        } else if (scontains(arch, "sh", -1)) {
+        } else if (scontains(arch, "sh")) {
             name = "ccsh";
-        } else if (scontains(arch, "mips", -1)) {
+        } else if (scontains(arch, "mips")) {
             name = "ccmips";
         }
     } else if (smatch(os, "macosx")) {
@@ -827,7 +827,7 @@ static cchar *getDebug()
     appweb = MPR->appwebService;
     //  MOB -- should be able to do release builds from xcode?
     debug = sends(appweb->platform, "-debug") || sends(appweb->platform, "-xcode");
-    if (scontains(appweb->platform, "windows-", -1)) {
+    if (scontains(appweb->platform, "windows-")) {
         return (debug) ? "-DBIT_DEBUG -Zi -Od" : "-O";
     }
     return (debug) ? "-DBIT_DEBUG -g" : "-O2";
@@ -916,7 +916,7 @@ static cchar *getCompilerPath(cchar *os, cchar *arch)
      */
     MaAppweb *appweb = MPR->appwebService;
     cchar *path = getVisualStudio();
-    if (scontains(appweb->platform, "-x64-", -1)) {
+    if (scontains(appweb->platform, "-x64-")) {
         int is64BitSystem = smatch(getenv("PROCESSOR_ARCHITECTURE"), "AMD64") || getenv("PROCESSOR_ARCHITEW6432");
         if (is64BitSystem) {
             path = mprJoinPath(path, "VC/bin/amd64/cl.exe");

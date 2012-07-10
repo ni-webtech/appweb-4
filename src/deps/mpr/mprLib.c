@@ -520,7 +520,7 @@ static MprMem *allocMem(ssize required, int flags)
     INC(requests);
 
     /*
-        TODO OPT - could break this locked section up.
+        OPT - could break this locked section up.
         - Can update bit maps conservatively and lockfree
         - Put locks around freeq unqueue
         - use unlinkBlock or linkBlock only. Do locks internally in these routines
@@ -3306,7 +3306,7 @@ void mprSetEnv(cchar *key, cchar *value)
     putenv(cmd);
 #endif
 #endif
-    if (scasematch(key, "PATH")) {
+    if (scaselessmatch(key, "PATH")) {
         MPR->pathEnv = sclone(value);
     }
 }
@@ -8423,8 +8423,6 @@ char *mprGetBufEnd(MprBuf *bp)
 #endif
 
 
-//  TODO - rename mprPutbackCharToBuf as it really can't insert if the buffer is empty
-
 int mprInsertCharToBuf(MprBuf *bp, int c)
 {
     if (bp->start == bp->data) {
@@ -13470,7 +13468,7 @@ char *mprEscapeCmd(cchar *cmd, int escChar)
     op = result;
     while ((c = (uchar) *cmd++) != 0) {
 #if BIT_WIN_LIKE
-        //  TODO - should use fs->newline
+        //  MOB - should use fs->newline
         if ((c == '\r' || c == '\n') && *cmd != '\0') {
             c = ' ';
             continue;
@@ -14943,7 +14941,7 @@ MprFileSystem *mprCreateFileSystem(cchar *path)
     char            *cp;
 
     /*
-        TODO - evolve this to support multiple file systems in a single system
+        FUTURE: evolve this to support multiple file systems in a single system
      */
 #if BIT_FEATURE_ROMFS
     fs = (MprFileSystem*) mprCreateRomFileSystem(path);
@@ -14991,7 +14989,7 @@ void mprAddFileSystem(MprFileSystem *fs)
 {
     mprAssert(fs);
     
-    //  TODO - this does not currently add a file system. It merely replaces the existing.
+    /* NOTE: this does not currently add a file system. It merely replaces the existing file system. */
     MPR->fileSystem = fs;
 }
 
@@ -15445,7 +15443,7 @@ static MprKey *lookupHash(int *bucketIndex, MprKey **prevSp, MprHash *hash, cvoi
         } else 
 #endif
         if (hash->flags & MPR_HASH_CASELESS) {
-            rc = scasecmp(sp->key, key);
+            rc = scaselesscmp(sp->key, key);
         } else {
             rc = strcmp(sp->key, key);
         }
@@ -18460,7 +18458,7 @@ int mcmp(MprChar *s1, cchar *s2)
 }
 
 
-MprChar *mcontains(MprChar *str, cchar *pattern, ssize limit)
+MprChar *mncontains(MprChar *str, cchar *pattern, ssize limit)
 {
     MprChar     *cp, *s1;
     cchar       *s2;
@@ -18489,6 +18487,12 @@ MprChar *mcontains(MprChar *str, cchar *pattern, ssize limit)
         }
     }
     return 0;
+}
+
+
+MprChar *mcontains(MprChar *str, cchar *pattern)
+{
+    return mncontains(str, pattern, -1);
 }
 
 
@@ -20702,7 +20706,7 @@ int mprSamePath(cchar *path1, cchar *path2)
 
     /*
         Convert to absolute (normalized) paths to compare. 
-        TODO - resolve symlinks.
+        MOB - resolve symlinks.
      */
     if (!isFullPath(fs, path1)) {
         path1 = mprGetAbsPath(path1);
@@ -20743,7 +20747,7 @@ int mprSamePathCount(cchar *path1, cchar *path2, ssize len)
 
     /*
         Convert to absolute paths to compare. 
-        TODO - resolve symlinks.
+        MOB - resolve symlinks.
      */
     if (!isFullPath(fs, path1)) {
         path1 = mprGetAbsPath(path1);
@@ -23841,8 +23845,8 @@ static int listenSocket(MprSocket *sp, cchar *ip, int port, int initialFlags)
         unlock(sp);
         return MPR_ERR_CANT_OPEN;
     }
-    /*  TODO NOTE: Datagrams have not been used in a long while. Probably broken */
 
+    /* NOTE: Datagrams have not been used in a long while. Maybe broken */
     if (!datagram) {
         sp->flags |= MPR_SOCKET_LISTENER;
         if (listen(sp->fd, SOMAXCONN) < 0) {
@@ -24659,7 +24663,6 @@ int mprSetSocketBlockingMode(MprSocket *sp, bool on)
     ioctl(sp->fd, FIONBIO, (int) &flag);
 }
 #else
-    //  TODO - check RC
     if (on) {
         fcntl(sp->fd, F_SETFL, fcntl(sp->fd, F_GETFL) & ~O_NONBLOCK);
     } else {
@@ -25399,9 +25402,8 @@ char *scamel(cchar *str)
 
 /*
     Case insensitive string comparison. Limited by length
-    MOB rename sacasecmp
  */
-int scasecmp(cchar *s1, cchar *s2)
+int scaselesscmp(cchar *s1, cchar *s2)
 {
     if (s1 == 0 || s2 == 0) {
         return -1;
@@ -25410,14 +25412,13 @@ int scasecmp(cchar *s1, cchar *s2)
     } else if (s2 == 0) {
         return 1;
     }
-    return sncasecmp(s1, s2, max(slen(s1), slen(s2)));
+    return sncaselesscmp(s1, s2, max(slen(s1), slen(s2)));
 }
 
 
-// MOB rename sacasematch
-bool scasematch(cchar *s1, cchar *s2)
+bool scaselessmatch(cchar *s1, cchar *s2)
 {
-    return scasecmp(s1, s2) == 0;
+    return scaselesscmp(s1, s2) == 0;
 }
 
 
@@ -25430,8 +25431,7 @@ char *schr(cchar *s, int c)
 }
 
 
-//  MOB - this should have no limit and then provide sncontains
-char *scontains(cchar *str, cchar *pattern, ssize limit)
+char *sncontains(cchar *str, cchar *pattern, ssize limit)
 {
     cchar   *cp, *s1, *s2;
     ssize   lim;
@@ -25457,6 +25457,12 @@ char *scontains(cchar *str, cchar *pattern, ssize limit)
         }
     }
     return 0;
+}
+
+
+char *scontains(cchar *str, cchar *pattern)
+{
+    return sncontains(str, pattern, -1);
 }
 
 
@@ -25509,8 +25515,7 @@ int scmp(cchar *s1, cchar *s2)
 }
 
 
-//  MOB should return bool
-int sends(cchar *str, cchar *suffix)
+bool sends(cchar *str, cchar *suffix)
 {
     if (str == 0 || suffix == 0) {
         return 0;
@@ -25728,9 +25733,7 @@ bool smatch(cchar *s1, cchar *s2)
 }
 
 
-// MOB rename snacasecmp
-
-int sncasecmp(cchar *s1, cchar *s2, ssize n)
+int sncaselesscmp(cchar *s1, cchar *s2, ssize n)
 {
     int     rc;
 
@@ -26412,7 +26415,6 @@ int mprParseTestArgs(MprTestService *sp, int argc, char *argv[], MprTestParser e
             sp->echoCmdLine = 1;
 
         } else if (strcmp(argp, "--filter") == 0 || strcmp(argp, "-f") == 0) {
-            //  TODO DEPRECATE
             if (nextArg >= argc) {
                 err++;
             } else {
@@ -27017,7 +27019,7 @@ static bool filterTestGroup(MprTestGroup *gp)
         pattern = mprGetNextItem(testFilter, &next);
         while (pattern) {
             len = min(slen(pattern), slen(gp->fullName));
-            if (sncasecmp(gp->fullName, pattern, len) == 0) {
+            if (sncaselesscmp(gp->fullName, pattern, len) == 0) {
                 break;
             }
             pattern = mprGetNextItem(testFilter, &next);
@@ -27057,7 +27059,7 @@ static bool filterTestCast(MprTestGroup *gp, MprTestCase *tc)
         pattern = mprGetNextItem(testFilter, &next);
         while (pattern) {
             len = min(slen(pattern), slen(fullName));
-            if (sncasecmp(fullName, pattern, len) == 0) {
+            if (sncaselesscmp(fullName, pattern, len) == 0) {
                 break;
             }
             pattern = mprGetNextItem(testFilter, &next);
@@ -27586,7 +27588,6 @@ static void threadProc(MprThread *tp)
  */
 int mprStartThread(MprThread *tp)
 {
-    //  TODO - lock not needed
     lock(tp);
 
 #if BIT_WIN_LIKE
@@ -28993,7 +28994,7 @@ static void decodeTime(struct tm *tp, MprTime when, bool local)
     offset = dst = 0;
 
     if (local) {
-        //  TODO -- cache the results somehow
+        //  OPT -- cache the results somehow
         timeForZoneCalc = when;
         secs = when / MS_PER_SEC;
         if (secs < MIN_TIME || secs > MAX_TIME) {
@@ -30582,7 +30583,7 @@ int mprInitWindow()
 }
 
 
-//  TODO - is this still needed?
+//  MOB - is this still needed?
 /*
     Create a routine to pull in the GCC support routines for double and int64 manipulations for some platforms. Do this
     incase modules reference these routines. Without this, the modules have to reference them. Which leads to multiple 
@@ -31062,7 +31063,7 @@ int wcmp(MprChar *s1, MprChar *s2)
 }
 
 
-MprChar *wcontains(MprChar *str, MprChar *pattern, ssize limit)
+MprChar *wncontains(MprChar *str, MprChar *pattern, ssize limit)
 {
     MprChar     *cp, *s1, *s2;
     ssize       lim;
@@ -31090,6 +31091,12 @@ MprChar *wcontains(MprChar *str, MprChar *pattern, ssize limit)
         }
     }
     return 0;
+}
+
+
+MprChar *wcontains(MprChar *str, MprChar *pattern)
+{
+    return wncontains(str, pattern, -1);
 }
 
 
@@ -31685,7 +31692,7 @@ ssize wtom(char *dest, ssize destCount, MprChar *src, ssize len)
             len = min(slen(src), size - 1);
         }
 #elif BIT_WIN_LIKE
-        //  TODO -- use destCount
+        //  MOB -- use destCount
         len = WideCharToMultiByte(CP_ACP, 0, src, -1, dest, (DWORD) size, NULL, NULL);
 #else
         len = wcstombs(dest, src, size);
@@ -31855,7 +31862,6 @@ static int isValidUtf8(cuchar *src, int len)
 }
 
 
-//  TODO - CLEAN
 static int offsets[6] = { 0x00000000UL, 0x00003080UL, 0x000E2080UL, 0x03C82080UL, 0xFA082080UL, 0x82082080UL };
 
 ssize xmtow(MprChar *dest, ssize destMax, cchar *src, ssize len) 
@@ -31915,7 +31921,6 @@ ssize xmtow(MprChar *dest, ssize destMax, cchar *src, ssize len)
     return count;
 }
 
-//  TODO - CLEAN
 static cuchar marks[7] = { 0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC };
 
 /*
@@ -32313,13 +32318,13 @@ static cchar *getHive(cchar *keyPath, HKEY *hive)
     if (cp == 0 || *cp == '\0') {
         return 0;
     }
-    if (!scasecmp(key, "HKEY_LOCAL_MACHINE") || !scasecmp(key, "HKLM")) {
+    if (!scaselesscmp(key, "HKEY_LOCAL_MACHINE") || !scaselesscmp(key, "HKLM")) {
         *hive = HKEY_LOCAL_MACHINE;
-    } else if (!scasecmp(key, "HKEY_CURRENT_USER") || !scasecmp(key, "HKCU")) {
+    } else if (!scaselesscmp(key, "HKEY_CURRENT_USER") || !scaselesscmp(key, "HKCU")) {
         *hive = HKEY_CURRENT_USER;
-    } else if (!scasecmp(key, "HKEY_USERS")) {
+    } else if (!scaselesscmp(key, "HKEY_USERS")) {
         *hive = HKEY_USERS;
-    } else if (!scasecmp(key, "HKEY_CLASSES_ROOT")) {
+    } else if (!scaselesscmp(key, "HKEY_CLASSES_ROOT")) {
         *hive = HKEY_CLASSES_ROOT;
     } else {
         return 0;
@@ -33335,7 +33340,6 @@ HINSTANCE WINAPI LoadLibraryA(LPCSTR path)
 
 void mprWriteToOsLog(cchar *message, int flags, int level)
 {
-    //  TODO
 }
 
 #else

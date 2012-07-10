@@ -553,12 +553,13 @@ EXPORTS
   mprYield
   print
   scamel
-  scasecmp
-  scasematch
+  scaselesscmp
+  scaselessmatch
   schr
   sclone
   scmp
   scontains
+  sncontains
   scopy
   sends
   sfmt
@@ -570,7 +571,7 @@ EXPORTS
   slen
   slower
   smatch
-  sncasecmp
+  sncaselesscmp
   snclone
   sncmp
   sncopy

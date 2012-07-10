@@ -82,10 +82,10 @@ static int sslDirective(MaState *state, cchar *key, cchar *value)
 static int sslVerifyClientDirective(MaState *state, cchar *key, cchar *value)
 {
     checkSsl(state);
-    if (scasecmp(value, "require") == 0) {
+    if (scaselesscmp(value, "require") == 0) {
         mprVerifySslPeer(state->route->ssl, 1);
 
-    } else if (scasecmp(value, "none") == 0) {
+    } else if (scaselesscmp(value, "none") == 0) {
         mprVerifySslPeer(state->route->ssl, 0);
 
     } else {
@@ -133,19 +133,19 @@ static int sslProtocolDirective(MaState *state, cchar *key, cchar *value)
         } else if (*word == '+') {
             word++;
         }
-        if (scasecmp(word, "SSLv2") == 0) {
+        if (scaselesscmp(word, "SSLv2") == 0) {
             protoMask &= ~(MPR_PROTO_SSLV2 & ~mask);
             protoMask |= (MPR_PROTO_SSLV2 & mask);
 
-        } else if (scasecmp(word, "SSLv3") == 0) {
+        } else if (scaselesscmp(word, "SSLv3") == 0) {
             protoMask &= ~(MPR_PROTO_SSLV3 & ~mask);
             protoMask |= (MPR_PROTO_SSLV3 & mask);
 
-        } else if (scasecmp(word, "TLSv1") == 0) {
+        } else if (scaselesscmp(word, "TLSv1") == 0) {
             protoMask &= ~(MPR_PROTO_TLSV1 & ~mask);
             protoMask |= (MPR_PROTO_TLSV1 & mask);
 
-        } else if (scasecmp(word, "ALL") == 0) {
+        } else if (scaselesscmp(word, "ALL") == 0) {
             protoMask &= ~(MPR_PROTO_ALL & ~mask);
             protoMask |= (MPR_PROTO_ALL & mask);
         }

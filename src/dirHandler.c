@@ -190,7 +190,7 @@ static void sortList(HttpConn *conn, MprList *list)
     }
     count = mprGetListLength(list);
     items = (MprDirEntry**) list->items;
-    if (scasematch(dir->sortField, "Name")) {
+    if (scaselessmatch(dir->sortField, "Name")) {
         for (i = 1; i < count; i++) {
             for (j = 0; j < i; j++) {
                 rc = strcmp(items[i]->name, items[j]->name);
@@ -210,7 +210,7 @@ static void sortList(HttpConn *conn, MprList *list)
             }
         }
 
-    } else if (scasematch(dir->sortField, "Size")) {
+    } else if (scaselessmatch(dir->sortField, "Size")) {
         for (i = 1; i < count; i++) {
             for (j = 0; j < i; j++) {
                 rc = (items[i]->size < items[j]->size) ? -1 : 1;
@@ -230,7 +230,7 @@ static void sortList(HttpConn *conn, MprList *list)
             }
         }
 
-    } else if (scasematch(dir->sortField, "Date")) {
+    } else if (scaselessmatch(dir->sortField, "Date")) {
         for (i = 1; i < count; i++) {
             for (j = 0; j < i; j++) {
                 rc = (items[i]->lastModified < items[j]->lastModified) ? -1: 1;
@@ -551,7 +551,7 @@ static int indexOrderDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_BAD_SYNTAX;
     }
     dir->sortField = 0;
-    if (scasematch(option, "ascending")) {
+    if (scaselessmatch(option, "ascending")) {
         dir->sortOrder = 1;
     } else {
         dir->sortOrder = -1;
@@ -574,11 +574,11 @@ static int indexOptionsDirective(MaState *state, cchar *key, cchar *value)
     dir = getDirObj(state);
     option = stok(sclone(value), " \t", &tok);
     while (option) {
-        if (scasematch(option, "FancyIndexing")) {
+        if (scaselessmatch(option, "FancyIndexing")) {
             dir->fancyIndexing = 1;
-        } else if (scasematch(option, "HTMLTable")) {
+        } else if (scaselessmatch(option, "HTMLTable")) {
             dir->fancyIndexing = 2;
-        } else if (scasematch(option, "FoldersFirst")) {
+        } else if (scaselessmatch(option, "FoldersFirst")) {
             dir->foldersFirst = 1;
         }
         option = stok(tok, " \t", &tok);
@@ -598,7 +598,7 @@ static int optionsDirective(MaState *state, cchar *key, cchar *value)
     dir = getDirObj(state);
     option = stok(sclone(value), " \t", &tok);
     while (option) {
-        if (scasematch(option, "Indexes")) {
+        if (scaselessmatch(option, "Indexes")) {
             dir->enabled = 1;
         }
         option = stok(tok, " \t", &tok);

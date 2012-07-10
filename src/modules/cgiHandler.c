@@ -953,7 +953,7 @@ static char *getCgiToken(MprBuf *buf, cchar *delim)
         return "";
     }
     token = mprGetBufStart(buf);
-    nextToken = scontains(mprGetBufStart(buf), delim, len);
+    nextToken = sncontains(mprGetBufStart(buf), delim, len);
     if (nextToken) {
         *nextToken = '\0';
         len = (int) strlen(delim);

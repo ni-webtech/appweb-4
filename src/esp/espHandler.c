@@ -808,12 +808,12 @@ static void defineVisualStudioEnv(MaState *state)
 
     appweb = MPR->appwebService;
 
-    if (scontains(getenv("LIB"), "Visual Studio", -1) &&
-        scontains(getenv("INCLUDE"), "Visual Studio", -1) &&
-        scontains(getenv("PATH"), "Visual Studio", -1)) {
+    if (scontains(getenv("LIB"), "Visual Studio") &&
+        scontains(getenv("INCLUDE"), "Visual Studio") &&
+        scontains(getenv("PATH"), "Visual Studio")) {
         return;
     }
-    if (scontains(appweb->platform, "-x64-", -1)) {
+    if (scontains(appweb->platform, "-x64-")) {
         is64BitSystem = smatch(getenv("PROCESSOR_ARCHITECTURE"), "AMD64") || getenv("PROCESSOR_ARCHITEW6432");
         if (is64BitSystem) {
             espEnvDirective(state, "EspEnv", "LIB \"${WINSDK}\\LIB\\x64;${VS}\\VC\\lib\\amd64\"");
@@ -851,12 +851,12 @@ static int espEnvDirective(MaState *state, cchar *key, cchar *value)
         eroute->env = mprCreateHash(-1, 0);
     }
     evalue = espExpandCommand(eroute, evalue, "", "");
-    if (scasematch(ekey, "VisualStudio")) {
+    if (scaselessmatch(ekey, "VisualStudio")) {
         defineVisualStudioEnv(state);
     } else {
         mprAddKey(eroute->env, ekey, evalue);
     }
-    if (scasematch(ekey, "PATH")) {
+    if (scaselessmatch(ekey, "PATH")) {
         if (eroute->searchPath) {
             eroute->searchPath = sclone(evalue);
         } else {
