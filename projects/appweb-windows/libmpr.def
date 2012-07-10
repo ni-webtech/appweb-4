@@ -72,6 +72,7 @@ EXPORTS
   mprCreateDiskFileSystem
   mprCreateDispatcher
   mprCreateEvent
+  mprCreateEventOutside
   mprCreateEventQueue
   mprCreateEventService
   mprCreateFileSystem
@@ -87,7 +88,6 @@ EXPORTS
   mprCreateModuleService
   mprCreateNotifierService
   mprCreateOsService
-  mprCreateEventOutside
   mprCreateSignalService
   mprCreateSocket
   mprCreateSocketService
@@ -559,7 +559,6 @@ EXPORTS
   sclone
   scmp
   scontains
-  sncontains
   scopy
   sends
   sfmt
@@ -574,6 +573,7 @@ EXPORTS
   sncaselesscmp
   snclone
   sncmp
+  sncontains
   sncopy
   snumber
   spascal

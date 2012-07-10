@@ -188,3 +188,4 @@ test/app/cache/view_*.*
 test/web/tmp
 access.log.*
 /start.bit
+*-vsdebug
