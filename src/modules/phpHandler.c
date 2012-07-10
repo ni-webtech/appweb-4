@@ -209,7 +209,6 @@ static void readyPhp(HttpQueue *q)
 
         /*
             Workaround on MAC OS X where the SIGPROF is given to the wrong thread
-            MOB - need to implement a local timeout here via the host timeout. Then invoke zend_bailout.
          */
         PG(max_input_time) = -1;
         EG(timeout_seconds) = 0;
