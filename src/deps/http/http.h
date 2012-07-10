@@ -569,17 +569,6 @@ typedef struct HttpUri {
 #define HTTP_COMPLETE_URI       0x1     /**< Complete all missing URI fields */
 #define HTTP_COMPLETE_URI_PATH  0x2     /**< Complete missing URI path */
 
-
-/** 
-    Create and initialize a URI.
-    @description Parse a uri and return a tokenized HttpUri structure.
-    @param uri Uri string to parse
-    @param flags Set to HTTP_COMPLETE_URI to add missing components. ie. Add scheme, host and port if not supplied. 
-    @return A newly allocated HttpUri structure. 
-    @ingroup HttpUri
- */
-extern HttpUri *httpCreateUri(cchar *uri, int flags);
-
 /**
     Clone a URI
     @description This call copies the base URI and optionally completes missing fields in the URI
@@ -590,21 +579,26 @@ extern HttpUri *httpCreateUri(cchar *uri, int flags);
  */
 extern HttpUri *httpCloneUri(HttpUri *base, int flags);
 
+/**
+    Complete the given URI
+    @description Complete the URI supplying missing URI components from the other URI. This modifies the supplied URI and
+        does not allocate or create a new URI.
+    @param uri URI to complete
+    @param other Other URI to supply the missing components
+    @return The supplied URI.
+    @ingroup HttpUri
+  */
+extern HttpUri *httpCompleteUri(HttpUri *uri, HttpUri *other);
+
 /** 
-    Format a URI
-    @description Format a URI string using the input components.
-    @param scheme Protocol string for the uri. Example: "http"
-    @param host Host or IP address
-    @param port TCP/IP port number
-    @param path URL path
-    @param ref URL reference fragment
-    @param query Additiona query parameters.
+    Create and initialize a URI.
+    @description Parse a uri and return a tokenized HttpUri structure.
+    @param uri Uri string to parse
     @param flags Set to HTTP_COMPLETE_URI to add missing components. ie. Add scheme, host and port if not supplied. 
-    @return A newly allocated uri string
+    @return A newly allocated HttpUri structure. 
     @ingroup HttpUri
  */
-extern char *httpFormatUri(cchar *scheme, cchar *host, int port, cchar *path, cchar *ref, cchar *query, 
-        int flags);
+extern HttpUri *httpCreateUri(cchar *uri, int flags);
 
 /**
     Create a URI from parts
@@ -624,41 +618,19 @@ extern HttpUri *httpCreateUriFromParts(cchar *scheme, cchar *host, int port, cch
         cchar *query, int flags);
 
 /** 
-    Get the mime type for an extension.
-    This call will return the mime type from a limited internal set of mime types for the given path or extension.
-    @param ext Path or extension to examine
-    @returns Mime type. This is a static string.
-    @ingroup HttpUri
- */
-extern cchar *httpLookupMimeType(cchar *ext);
-
-/** 
-    Convert a Uri to a string.
-    @description Convert the given Uri to a string, optionally completing missing parts such as the host, port and path.
-    @param uri A Uri object created via httpCreateUri 
+    Format a URI
+    @description Format a URI string using the input components.
+    @param scheme Protocol string for the uri. Example: "http"
+    @param host Host or IP address
+    @param port TCP/IP port number
+    @param path URL path
+    @param ref URL reference fragment
+    @param query Additiona query parameters.
     @param flags Set to HTTP_COMPLETE_URI to add missing components. ie. Add scheme, host and port if not supplied. 
-    @return A newly allocated uri string. 
+    @return A newly allocated uri string
     @ingroup HttpUri
  */
-extern char *httpUriToString(HttpUri *uri, int flags);
-
-/** 
-    Normalize a URI
-    @description Validate and canonicalize a URI path. This removes redundant "./" sequences and simplifies "../dir" 
-        references. 
-    @param uri Uri path string to normalize. This is the URI path portion without scheme, host and port components.
-    @return A new validated uri string. 
-    @ingroup HttpUri
- */
-extern char *httpNormalizeUriPath(cchar *uri);
-
-/**
-    Normalize a URI
-    @description Validate and canonicalize a URI. This invokes httpNormalizeUriPath to normalize the URI path.
-    @param uri URI object to normalize
-    @ingroup HttpUri
- */
-extern void httpNormalizeUri(HttpUri *uri);
+extern char *httpFormatUri(cchar *scheme, cchar *host, int port, cchar *path, cchar *ref, cchar *query, int flags);
 
 /**
     Join URIs
@@ -680,16 +652,32 @@ extern HttpUri *httpJoinUri(HttpUri *base, int argc, HttpUri **others);
  */
 extern HttpUri *httpJoinUriPath(HttpUri *result, HttpUri *base, HttpUri *other);
 
-/**
-    Complete the given URI
-    @description Complete the URI supplying missing URI components from the other URI. This modifies the supplied URI and
-        does not allocate or create a new URI.
-    @param uri URI to complete
-    @param other Other URI to supply the missing components
-    @return The supplied URI.
+/** 
+    Get the mime type for an extension.
+    This call will return the mime type from a limited internal set of mime types for the given path or extension.
+    @param ext Path or extension to examine
+    @returns Mime type. This is a static string.
     @ingroup HttpUri
-  */
-extern HttpUri *httpCompleteUri(HttpUri *uri, HttpUri *other);
+ */
+extern cchar *httpLookupMimeType(cchar *ext);
+
+/**
+    Normalize a URI
+    @description Validate and canonicalize a URI. This invokes httpNormalizeUriPath to normalize the URI path.
+    @param uri URI object to normalize
+    @ingroup HttpUri
+ */
+extern void httpNormalizeUri(HttpUri *uri);
+
+/** 
+    Normalize a URI
+    @description Validate and canonicalize a URI path. This removes redundant "./" sequences and simplifies "../dir" 
+        references. 
+    @param uri Uri path string to normalize. This is the URI path portion without scheme, host and port components.
+    @return A new validated uri string. 
+    @ingroup HttpUri
+ */
+extern char *httpNormalizeUriPath(cchar *uri);
 
 /**
     Get a relative URI from the base to the target
@@ -704,6 +692,15 @@ extern HttpUri *httpCompleteUri(HttpUri *uri, HttpUri *other);
 extern HttpUri *httpGetRelativeUri(HttpUri *base, HttpUri *target, int clone);
 
 /**
+    Make a URI local
+    @description This routine removes the scheme, host and port portions of a URI
+    @param uri URI to modify
+    @return The given URI. 
+    @ingroup HttpUri
+ */
+extern HttpUri *httpMakeUriLocal(HttpUri *uri);
+
+/**
     Resolve URIs relative to a base
     @param base Base URI to begin with
     @param argc Count of URIs in the others array
@@ -713,14 +710,15 @@ extern HttpUri *httpGetRelativeUri(HttpUri *base, HttpUri *target, int clone);
   */
 extern HttpUri *httpResolveUri(HttpUri *base, int argc, HttpUri **others, bool local);
 
-/**
-    Make a URI local
-    @description This routine removes the scheme, host and port portions of a URI
-    @param uri URI to modify
-    @return The given URI. 
+/** 
+    Convert a Uri to a string.
+    @description Convert the given Uri to a string, optionally completing missing parts such as the host, port and path.
+    @param uri A Uri object created via httpCreateUri 
+    @param flags Set to HTTP_COMPLETE_URI to add missing components. ie. Add scheme, host and port if not supplied. 
+    @return A newly allocated uri string. 
     @ingroup HttpUri
  */
-extern HttpUri *httpMakeUriLocal(HttpUri *uri);
+extern char *httpUriToString(HttpUri *uri, int flags);
 
 /************************************* Range **********************************/
 /** 
@@ -4961,7 +4959,9 @@ typedef struct HttpEndpoint {
     Http            *http;                  /**< Http service object */
     MprList         *hosts;                 /**< List of host objects */
     HttpLimits      *limits;                /**< Alias for first host, default route resource limits */
+#if UNUSED
     MprWaitHandler  *waitHandler;           /**< I/O wait handler */
+#endif
     MprHash         *clientLoad;            /**< Table of active client IPs and connection counts */
     char            *ip;                    /**< Listen IP address. May be null if listening on all interfaces. */
     int             port;                   /**< Listen port */
@@ -5198,17 +5198,6 @@ typedef struct HttpHost {
 } HttpHost;
 
 /**
-    Add an option to the options table
-    @param options Option table returned from httpGetOptions
-    @param field Field key name
-    @param value Value to use for the field
- */
-extern void httpAddOption(MprHash *options, cchar *field, cchar *value);
-
-//  MOB DOC
-extern void httpInsertOption(MprHash *options, cchar *field, cchar *value);
-
-/**
     Add a route to a host
     @description Add the route to the host list of routes. During request route matching, routes are processed 
     in order, so it is important to define routes in the order in which you wish to match them.
@@ -5265,44 +5254,6 @@ HttpRoute *httpDefineRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar
 extern HttpRoute *httpGetHostDefaultRoute(HttpHost *host);
 
 /**
-    Extract a field value from an option string. 
-    @param options Option string of the form: "field='value' field='value'..."
-    @param field Field key name
-    @param defaultValue Value to use if "field" is not found in options
-    @return Allocated value string.
- */
-extern cchar *httpGetOption(MprHash *options, cchar *field, cchar *defaultValue);
-
-/**
-    Get an option value that is itself an object (hash)
-    @description This returns an option value that is an instance of MprHash. When deserializing a JSON option string which
-    contains multiple levels, this routine can be used to extract lower option container values. 
-    @param options Options object to examine.
-    @param field Property to return.
-    @return An MprHash instance for the given field. This will contain option sub-properties.
-    @ingroup HttpRoute
- */
-extern MprHash *httpGetOptionHash(MprHash *options, cchar *field);
-
-/**
-    Convert an options string into an options table
-    @param options Option string of the form: "{field:'value', field:'value'}"
-        This is a sub-set of the JSON syntax. Arrays are not supported.
-    @return Options table
- */
-extern MprHash *httpGetOptions(cchar *options);
-
-/**
-    Test a field value from an option string. 
-    @param options Option string of the form: "field='value' field='value'..."
-    @param field Field key name
-    @param value Test if the field is set to this value
-    @param useDefault If true and "field" is not found in options, return true
-    @return Allocated value string.
- */
-extern bool httpOption(MprHash *options, cchar *field, cchar *value, int useDefault);
-
-/**
     Get a path extension 
     @param path File pathname to examine
     @return The path extension sans "."
@@ -5326,15 +5277,6 @@ extern void httpLogRoutes(HttpHost *host, bool full);
     @param name Route name to find. If null or empty, look for "default"
  */
 extern HttpRoute *httpLookupRoute(HttpHost *host, cchar *name);
-
-/**
-    Remove an option
-    @description Remove a property from an options hash
-    @param options Options table returned from httpGetOptions
-    @param field Property field to remove
-    @ingroup HttpRoute
- */
-extern void httpRemoveOption(MprHash *options, cchar *field);
 
 /**
     Reset the list of routes for the host
@@ -5395,6 +5337,77 @@ extern void httpSetHostName(HttpHost *host, cchar *name);
  */
 extern void httpSetHostProtocol(HttpHost *host, cchar *protocol);
 
+/*
+    Internal
+ */
+extern int httpStartHost(HttpHost *host);
+extern void httpStopHost(HttpHost *host);
+
+/************************************ Misc *****************************************/
+/**
+    Add an option to the options table
+    @param options Option table returned from httpGetOptions
+    @param field Field key name
+    @param value Value to use for the field
+ */
+extern void httpAddOption(MprHash *options, cchar *field, cchar *value);
+
+/**
+    Add an option to the options table. 
+    @description If the field already exists, the added value is inserted prior to the existing value.
+    @param options Option table returned from httpGetOptions
+    @param field Field key name
+    @param value Value to use for the field
+*/
+extern void httpInsertOption(MprHash *options, cchar *field, cchar *value);
+
+/**
+    Extract a field value from an option string. 
+    @param options Option string of the form: "field='value' field='value'..."
+    @param field Field key name
+    @param defaultValue Value to use if "field" is not found in options
+    @return Allocated value string.
+ */
+extern cchar *httpGetOption(MprHash *options, cchar *field, cchar *defaultValue);
+
+/**
+    Get an option value that is itself an object (hash)
+    @description This returns an option value that is an instance of MprHash. When deserializing a JSON option string which
+    contains multiple levels, this routine can be used to extract lower option container values. 
+    @param options Options object to examine.
+    @param field Property to return.
+    @return An MprHash instance for the given field. This will contain option sub-properties.
+    @ingroup HttpRoute
+ */
+extern MprHash *httpGetOptionHash(MprHash *options, cchar *field);
+
+/**
+    Convert an options string into an options table
+    @param options Option string of the form: "{field:'value', field:'value'}"
+        This is a sub-set of the JSON syntax. Arrays are not supported.
+    @return Options table
+ */
+extern MprHash *httpGetOptions(cchar *options);
+
+/**
+    Test a field value from an option string. 
+    @param options Option string of the form: "field='value' field='value'..."
+    @param field Field key name
+    @param value Test if the field is set to this value
+    @param useDefault If true and "field" is not found in options, return true
+    @return Allocated value string.
+ */
+extern bool httpOption(MprHash *options, cchar *field, cchar *value, int useDefault);
+
+/**
+    Remove an option
+    @description Remove a property from an options hash
+    @param options Options table returned from httpGetOptions
+    @param field Property field to remove
+    @ingroup HttpRoute
+ */
+extern void httpRemoveOption(MprHash *options, cchar *field);
+
 /**
     Set an option
     @description Set a property in an options hash
@@ -5404,12 +5417,6 @@ extern void httpSetHostProtocol(HttpHost *host, cchar *protocol);
     @ingroup HttpRoute
  */
 extern void httpSetOption(MprHash *options, cchar *field, cchar *value);
-
-/*
-    Internal
- */
-extern int httpStartHost(HttpHost *host);
-extern void httpStopHost(HttpHost *host);
 
 #ifdef __cplusplus
 } /* extern C */
