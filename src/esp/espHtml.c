@@ -607,7 +607,6 @@ static int findCol(MprHash *columns, cchar *columnName)
 static void filterCols(EdiGrid *grid, MprHash *options, MprHash *colOptions)
 {
     MprList     *gridCols;
-    MprKey      *kp;
     MprHash     *cp;
     EdiRec      *rec;
     EdiField    f;
