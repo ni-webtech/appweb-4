@@ -477,9 +477,11 @@ cchar *ediFormatField(cchar *fmt, EdiField *fp)
         return fp->value;
 
     case EDI_TYPE_FLOAT:
+        //  MOB - why? already a string
         return sfmt(fmt, atof(fp->value));
 
     case EDI_TYPE_INT:
+        //  MOB - why? already a string
         return sfmt("%Ld", stoi(fp->value));
 
     case EDI_TYPE_STRING:
@@ -907,7 +909,6 @@ EdiRec *ediSetFields(EdiRec *rec, MprHash *params)
 }
 
 
-//  MOB - move
 typedef struct GridSort {
     int     sortColumn;         /**< Column to sort on */
     int     sortOrder;          /**< Sort order: ascending == 1, descending == -1 */
@@ -923,7 +924,6 @@ static int sortRec(EdiRec **r1, EdiRec **r2, GridSort *gs)
 }
 
 
-//  MOB - move
 //  MOB - need ediLookupRecField
 int ediLookupGridField(EdiGrid *grid, cchar *name)
 {

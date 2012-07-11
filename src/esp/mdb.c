@@ -468,6 +468,12 @@ static int mdbGetColumnSchema(Edi *edi, cchar *tableName, cchar *columnName, int
     MdbCol      *col;
 
     mdb = (Mdb*) edi;
+    if (type) {
+        *type = -1;
+    }
+    if (cid) {
+        *cid = -1;
+    }
     lock(mdb);
     if ((table = lookupTable(mdb, tableName)) == 0) {
         unlock(mdb);

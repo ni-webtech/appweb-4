@@ -82,6 +82,7 @@ static char *internalOptions[] = {
 //  MOB - not implemented. Change to format
     "formatter",                    /* general: Printf style format string to apply to data */
 
+    "header",                       /* table(): Column options header */
     "hidden",                       /* text(): Field should be hidden */
     "hideErrors",                   /* form(): Hide record validation errors */
     "insecure",                     /* form(): Don't generate a CSRF security token */
@@ -92,6 +93,7 @@ static char *internalOptions[] = {
     "keyFormat",                    /* General: How keys are handled for click events: "params" | "path" | "query" */
 "kind",
     "minified",                     /* script(): Use minified script variants */
+    "name",                         /* table(): Column options name */
 "params",                           /* general: Parms to pass on click events */
 "pass",
     "password",                     /* text(): Text input is a password */
@@ -349,11 +351,10 @@ void espInput(HttpConn *conn, cchar *fieldName, cchar *optionString)
 
     req = conn->data;
     rec = req->record;
-    ediGetColumnSchema(rec->edi, rec->tableName, fieldName, &type, &flags, NULL);
-
+    if (ediGetColumnSchema(rec->edi, rec->tableName, fieldName, &type, &flags, NULL) < 0) {
+        type = -1;
+    }
     switch (type) {
-    case EDI_TYPE_BINARY:
-        break;
     case EDI_TYPE_BOOL:
         espRadio(conn, fieldName, "{off: 0, on: 1}", optionString);
         break;
@@ -379,8 +380,9 @@ void espInput(HttpConn *conn, cchar *fieldName, cchar *optionString)
         }
         textInner(conn, fieldName, options);
         break;
+    case EDI_TYPE_BINARY:
     default:
-        httpError(conn, 0, "Unknown field type %d", type);
+        httpError(conn, 0, "espInput: unknown field type %d", type);
         espText(conn, fieldName, optionString);
         break;
     }
@@ -602,9 +604,11 @@ static int findCol(MprHash *columns, cchar *columnName)
 /*
     Grid is modified. Columns are removed and sorted as required.
  */
-static void filterCols(EdiGrid *grid, MprHash *options, MprHash *columns)
+static void filterCols(EdiGrid *grid, MprHash *options, MprHash *colOptions)
 {
     MprList     *gridCols;
+    MprKey      *kp;
+    MprHash     *cp;
     EdiRec      *rec;
     EdiField    f;
     cchar       *columnName;
@@ -612,16 +616,22 @@ static void filterCols(EdiGrid *grid, MprHash *options, MprHash *columns)
     int         ncols, r, desired, c, index;
 
     gridCols = ediGetGridColumns(grid);
-    if (columns) {
-        if (!(columns->flags & MPR_HASH_LIST)) {
+    if (colOptions) {
+        if (!(colOptions->flags & MPR_HASH_LIST)) {
             mprError("Grid columns must be an array");
             return;
         }
-        ncols = mprGetListLength(gridCols);
+        /*
+            Sort grid record columns into the order specified by the column options
+         */
+        ncols = mprGetHashLength(colOptions);
         for (c = 0; c < ncols; c++) {
-            itosbuf(key, sizeof(key), c, 10);
-            columnName = mprLookupKey(columns, key);
-            desired = mprLookupStringItem(gridCols, columnName);
+            cp = mprLookupKey(colOptions, itosbuf(key, sizeof(key), c, 10));
+            columnName = mprLookupKey(cp, "name");
+            if ((desired = mprLookupStringItem(gridCols, columnName)) < 0) {
+                mprError("Column not found %s in grid", columnName);
+                continue;
+            }
             for (r = 0; r < grid->nrecords; r++) {
                 rec = grid->records[r];
                 rec->nfields = ncols;
@@ -632,6 +642,7 @@ static void filterCols(EdiGrid *grid, MprHash *options, MprHash *columns)
                 }
             }
         }
+        
     } else {
         /*
             showId: Remove ID
@@ -665,11 +676,12 @@ static void filterCols(EdiGrid *grid, MprHash *options, MprHash *columns)
  */
 void espTable(HttpConn *conn, EdiGrid *grid, cchar *optionString)
 {
-    MprHash     *columns, *options, *colOptions, *rowOptions;
+    MprHash     *options, *colOptions, *rowOptions, *co;
     MprList     *cols;
     EdiRec      *rec;
     EdiField    *fp;
-    cchar       *title, *width, *o, *header, *value, *sortColumn;
+    cchar       *title, *width, *o, *header, *value, *sortColumn, *columnName;
+    char        index[8];
     int         c, r, ncols, sortOrder, pivot;
    
     mprAssert(grid);
@@ -685,8 +697,8 @@ void espTable(HttpConn *conn, EdiGrid *grid, cchar *optionString)
         espRender(conn, "<p>No Data</p>\r\n");
         return;
     }
-    columns = httpGetOptionHash(options, "columns");
-    filterCols(grid, options, columns);
+    colOptions = httpGetOptionHash(options, "columns");
+    filterCols(grid, options, colOptions);
 
     if ((pivot = httpOption(options, "pivot", "true", 0)) != 0) {
         grid = ediPivotGrid(grid, 1);
@@ -714,8 +726,8 @@ void espTable(HttpConn *conn, EdiGrid *grid, cchar *optionString)
             mprAssert(c <= rec->nfields);
             fp = &rec->fields[c];
             width = ((o = httpGetOption(options, "width", 0)) != 0) ? sfmt(" width='%s'", o) : "";
-            colOptions = (MprHash*) httpGetOption(columns, fp->name, 0);
-            header = httpGetOption(colOptions, "header", spascal(fp->name));
+            co = (MprHash*) httpGetOption(colOptions, fp->name, 0);
+            header = httpGetOption(co, "header", spascal(fp->name));
             espRender(conn, "            <th%s>%s</th>\r\n", width, header);
         }
         espRender(conn, "        </tr>\r\n    </thead>\r\n");
@@ -734,33 +746,45 @@ void espTable(HttpConn *conn, EdiGrid *grid, cchar *optionString)
         for (c = 0; c < ncols; c++) {
             fp = &rec->fields[c];
             if (pivot && c == 0) {
-                value = ediFormatField(0, fp);
-                colOptions = (MprHash*) httpGetOption(columns, value, 0);
-                if ((value = httpGetOption(colOptions, "header", 0)) == 0) {
-                    value = formatValue(fp, colOptions);
-                }
+                co = mprLookupKey(colOptions, itosbuf(index, sizeof(index), r, 10));
+                columnName = mprLookupKey(co, "header");
             } else {
-                colOptions = (MprHash*) httpGetOption(columns, fp->name, 0);            
+                co = (MprHash*) httpGetOption(colOptions, fp->name, 0);
+                columnName = 0;
             }
-            if (httpGetOption(colOptions, "align", 0) == 0) {
-                if (fp->type == EDI_TYPE_INT || fp->type == EDI_TYPE_FLOAT) {
-                    if (!colOptions) {
-                        colOptions = mprCreateHash(0, 0);
-                    }
-                    httpInsertOption(colOptions, "align", "right");
-                }
-            }
+#if UNUSED
+            value = ediFormatField(0, fp);
             if (pivot && c == 0) {
-                if (httpOption(colOptions, "edit", "true", 1)) {
-                    espRender(conn, "            <td%s>", map(conn, colOptions));
-                    espInput(conn, fp->value, 0);
-                    espRender(conn, "</td>\r\n", value);
-                } else {
-                    espRender(conn, "            <td%s>%s</td>\r\n", map(conn, colOptions), value);
+                co = (MprHash*) httpGetOption(colOptions, value, 0);
+                if ((value = httpGetOption(co, "header", 0)) == 0) {
+                    value = formatValue(fp, co);
                 }
             } else {
-                value = formatValue(fp, colOptions);
-                espRender(conn, "            <td%s>%s</td>\r\n", map(conn, colOptions), value);
+                co = (MprHash*) httpGetOption(colOptions, fp->name, 0);
+            }
+#endif
+            if (httpGetOption(co, "align", 0) == 0) { // MOB OPT
+                if (fp->type == EDI_TYPE_INT || fp->type == EDI_TYPE_FLOAT) {
+                    if (!co) {
+                        co = mprCreateHash(0, 0);
+                    }
+                    httpInsertOption(co, "align", "right");
+                }
+            }
+            if (pivot) {
+                if (c == 0) {
+                    espRender(conn, "            <td%s>%s</td><td>", map(conn, co), columnName);
+                } else {
+                    if (httpOption(co, "edit", "true", 1)) {
+                        espInput(conn, fp->name, 0);
+                        espRender(conn, "</td>\r\n");
+                    } else {
+                        espRender(conn, "            <td%s>%s</td>\r\n", map(conn, co), fp->value);
+                    }                
+                }
+            } else {
+                value = formatValue(fp, co);
+                espRender(conn, "            <td%s>%s</td>\r\n", map(conn, co), value);
             }
         }
     }

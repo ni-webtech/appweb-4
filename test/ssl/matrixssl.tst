@@ -19,6 +19,7 @@ if (!Config.SSL) {
         assert(http.response)
         http.reset()
     }
+    http.close()
 
     /*
         With-out keep alive
