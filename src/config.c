@@ -1308,16 +1308,38 @@ static int logRoutesDirective(MaState *state, cchar *key, cchar *value)
  */
 static int loadModulePathDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *sep, *path;
+    char    *sep, *path, *list, *dir, *tok;
 
     if (!maTokenize(state, value, "%T", &value)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    /*
-		 Search path is: USER_SEARCH : exeDir : /usr/lib/appweb/lib
-     */
+
     sep = MPR_SEARCH_SEP;
-    path = sjoin(value, sep, mprGetAppDir(), sep, BIT_BIN_PREFIX, NULL);
+    list = sclone(value);
+
+    /*
+        User search paths are resolved relative to the server home. Make this
+        translation for each directory in the search path list.
+     */
+    path = NULL;
+    tok = 0;
+    dir = stok(list, sep, &tok);
+    while (dir && *dir) {
+        dir = httpMakePath(state->route, dir);
+
+        if (!path) {
+            path = dir;
+        } else {
+            path = sjoin(path, sep, dir, NULL);
+        }
+
+        dir = stok(0, sep, &tok);
+    }
+
+    /*
+        Search path is: USER_SEARCH : exeDir : /usr/lib/appweb/lib
+     */
+    path = sjoin(path, sep, mprGetAppDir(), sep, BIT_BIN_PREFIX, NULL);
     mprSetModuleSearchPath(path);
     return 0;
 }
