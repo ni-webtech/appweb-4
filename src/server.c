@@ -525,7 +525,7 @@ int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
     } else {
         path = sclone(libname);
     }
-    if ((module = mprLookupModule(path)) != 0) {
+    if ((module = mprLookupModule(name)) != 0) {
         mprLog(MPR_CONFIG, "Activating module (Builtin) %s", name);
         return 0;
     }
