@@ -1484,8 +1484,8 @@ static int pauseThreads()
             NOTE: mprResetYield has a race where its thread will have been yielded.
          */
         lock(ts->threads);
+        allYielded = 0;
         if (!heap->pauseGC) {
-            allYielded = (heap->pauseGC == 0);
             for (i = 0; i < ts->threads->length; i++) {
                 tp = (MprThread*) mprGetItem(ts->threads, i);
                 if (!tp->yielded) {
@@ -1505,7 +1505,6 @@ static int pauseThreads()
         unlock(ts->threads);
         LOG(7, "pauseThreads: waiting for threads to yield");
         mprWaitForCond(ts->cond, 20);
-
     } while (!allYielded && mprGetElapsedTime(mark) < timeout);
 
 #if BIT_DEBUG
@@ -23908,7 +23907,10 @@ void mprRemoveSocketHandler(MprSocket *sp)
 
 void mprEnableSocketEvents(MprSocket *sp, int mask)
 {
-    mprWaitOn(sp->handler, mask);
+    mprAssert(sp->handler);
+    if (sp->handler) {
+        mprWaitOn(sp->handler, mask);
+    }
 }
 
 

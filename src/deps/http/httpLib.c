@@ -10863,7 +10863,7 @@ MprHash *httpGetOptions(cchar *options)
 }
 
 
-cchar *httpGetOption(MprHash *options, cchar *field, cchar *defaultValue)
+void *httpGetOption(MprHash *options, cchar *field, cchar *defaultValue)
 {
     MprKey      *kp;
     cchar       *value;
@@ -10875,7 +10875,7 @@ cchar *httpGetOption(MprHash *options, cchar *field, cchar *defaultValue)
     } else {
         value = kp->data;
     }
-    return value;
+    return (void*) value;
 }
 
 
