@@ -129,7 +129,7 @@ static int findFile(HttpConn *conn)
         httpSetEntityLength(conn, tx->fileInfo.size);
         if (!tx->etag) {
             /* Set the etag for caching in the client */
-            tx->etag = sfmt("\"%x-%Lx-%Lx\"", info->inode, info->size, info->mtime);
+            tx->etag = sfmt("\"%Lx-%Lx-%Lx\"", info->inode, info->size, info->mtime);
         }
     }
     return HTTP_ROUTE_OK;
@@ -381,7 +381,7 @@ static void incomingFile(HttpQueue *q, HttpPacket *packet)
         if (!tx->etag) {
             /* Set the etag for caching in the client */
             mprGetPathInfo(tx->filename, &tx->fileInfo);
-            tx->etag = sfmt("\"%x-%Lx-%Lx\"", tx->fileInfo.inode, tx->fileInfo.size, tx->fileInfo.mtime);
+            tx->etag = sfmt("\"%Lx-%Lx-%Lx\"", tx->fileInfo.inode, tx->fileInfo.size, tx->fileInfo.mtime);
         }
         return;
     }

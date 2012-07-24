@@ -8612,7 +8612,7 @@ void httpMapFile(HttpConn *conn, HttpRoute *route)
     info = &tx->fileInfo;
     mprGetPathInfo(tx->filename, info);
     if (info->valid) {
-        tx->etag = sfmt("\"%x-%Lx-%Lx\"", info->inode, info->size, info->mtime);
+        tx->etag = sfmt("\"%Lx-%Lx-%Lx\"", info->inode, info->size, info->mtime);
     }
     LOG(7, "mapFile uri \"%s\", filename: \"%s\", extension: \"%s\"", rx->uri, tx->filename, tx->ext);
 }
