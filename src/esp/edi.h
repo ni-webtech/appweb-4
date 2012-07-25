@@ -134,6 +134,9 @@ typedef struct EdiRec {
     EdiField        fields[MPR_FLEX];   /**< Field records */
 } EdiRec;
 
+
+#define EDI_GRID_READ_ONLY  0x1         /**< Grid contains pure database records, must not be modified */
+
 /**
     Grid structure
     @description A grid is a tabular (grid) of rows and records.
@@ -144,6 +147,7 @@ typedef struct EdiGrid {
     struct Edi      *edi;               /**< Database handle */
     cchar           *tableName;         /**< Base table name for grid */
     int             nrecords;           /**< Number of records in grid */
+    int             flags;              /**< Grid flags */
     EdiRec          *records[MPR_FLEX]; /**< Grid records */
 } EdiGrid;
 
@@ -823,10 +827,12 @@ extern int ediParseTypeString(cchar *type);
  */
 extern void ediManageEdiRec(EdiRec *rec, int flags);
 
+#if UNUSED
 /*
     Flags for ediPivotGrid
  */
 #define EDI_PIVOT_FIELD_NAMES 0x1       /**< Use field names as first column of data in pivot table */
+#endif
     
 /**
     Pivot a grid swapping rows for columns

@@ -705,6 +705,7 @@ EdiGrid *ediMakeGrid(cchar *json)
                 return 0;
             }
             fp = rec->fields;
+            //  MOB - need helper to create a field.
             for (ITERATE_KEYS(row, kp)) {
                 if (fp >= &rec->fields[nfields]) {
                     break;
@@ -794,31 +795,35 @@ int ediParseTypeString(cchar *type)
 }
 
 
+/*
+    Swap rows for columns. The key field for each record is set to the prior column name.
+ */
 EdiGrid *ediPivotGrid(EdiGrid *grid, int flags)
 {
     EdiGrid     *result;
     EdiRec      *rec, *first;
     EdiField    *src, *fp;
-    cchar       *name;
     int         r, c, nfields, nrows;
 
     if (grid->nrecords == 0) {
         return grid;
     }
-    name = 0;
     first = grid->records[0];
     nrows = first->nfields;
     nfields = grid->nrecords;
+#if UNUSED
     if (flags & EDI_PIVOT_FIELD_NAMES) {
         /* One more field in result */
         nfields++;
         name = sclone("name");
     }
+#endif
     result = ediCreateBareGrid(grid->edi, grid->tableName, nrows);
     
     for (c = 0; c < nrows; c++) {
         result->records[c] = rec = ediCreateBareRec(grid->edi, grid->tableName, nfields);
         fp = rec->fields;
+#if UNUSED
         if (flags & EDI_PIVOT_FIELD_NAMES) {
             /* Add the field names as the first column */
             fp->valid = 1;
@@ -828,6 +833,8 @@ EdiGrid *ediPivotGrid(EdiGrid *grid, int flags)
             fp->flags = 0;
             fp++;
         }
+#endif
+        rec->id = first->fields[c].name;
         for (r = 0; r < grid->nrecords; r++) {
             src = &grid->records[r]->fields[c];
             fp->valid = 1;

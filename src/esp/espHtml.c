@@ -228,8 +228,7 @@ void espCheckbox(HttpConn *conn, cchar *field, cchar *checkedValue, cchar *optio
     options = httpGetOptions(optionString);
     value = getValue(conn, field, options);
     checked = scaselessmatch(value, checkedValue) ? " checked='yes'" : "";
-    espRender(conn, "<input name='%s' type='checkbox'%s%s value='%s' />\r\n", 
-        field, map(conn, options), checked, checkedValue);
+    espRender(conn, "<input name='%s' type='checkbox'%s%s value='%s' />\r\n", field, map(conn, options), checked, checkedValue);
     espRender(conn, "    <input name='%s' type='hidden'%s value='' />", field, map(conn, options));
 }
 
@@ -612,9 +611,10 @@ static void filterCols(EdiGrid *grid, MprHash *options, MprHash *colOptions)
     EdiField    f;
     cchar       *columnName;
     char        key[8];
-    int         ncols, r, desired, c, index;
+    int         ncols, r, fnum, currentPos, c, index, *desired, *location, pos, t;
 
     gridCols = ediGetGridColumns(grid);
+
     if (colOptions) {
         if (!(colOptions->flags & MPR_HASH_LIST)) {
             mprError("Grid columns must be an array");
@@ -623,28 +623,46 @@ static void filterCols(EdiGrid *grid, MprHash *options, MprHash *colOptions)
         /*
             Sort grid record columns into the order specified by the column options
          */
+        ncols = grid->records[0]->nfields;
+        location = mprAlloc(sizeof(int) * ncols);
+        for (c = 0; c < ncols; c++) {
+            location[c] = c;
+        }
         ncols = mprGetHashLength(colOptions);
+        desired = mprAlloc(sizeof(int) * ncols);
         for (c = 0; c < ncols; c++) {
             cp = mprLookupKey(colOptions, itosbuf(key, sizeof(key), c, 10));
-            columnName = mprLookupKey(cp, "name");
-            if ((desired = mprLookupStringItem(gridCols, columnName)) < 0) {
-                mprError("Column not found %s in grid", columnName);
-                continue;
+            if ((columnName = mprLookupKey(cp, "name")) == 0) {
+                mprError("Can't locate \"name\" field for column in table");
+                return;
             }
+            pos = mprLookupStringItem(gridCols, columnName);
+            mprAssert(pos >= 0);
+            desired[c] = pos;
+            location[c] = c;
+        }
+        for (c = 0; c < ncols; c++) {
             for (r = 0; r < grid->nrecords; r++) {
                 rec = grid->records[r];
                 rec->nfields = ncols;
-                if (desired != c) {
-                    f = rec->fields[c];
-                    rec->fields[c] = rec->fields[desired];
-                    rec->fields[desired] = f;
+                fnum = desired[c];
+                if (fnum < 0) {
+                    continue;
                 }
+                currentPos = location[fnum];
+
+                f = rec->fields[c];
+                rec->fields[c] = rec->fields[currentPos];
+                rec->fields[currentPos] = f;
             }
+            t = location[c];
+            location[c] = location[fnum];
+            location[fnum] = t;
         }
         
     } else {
         /*
-            showId: Remove ID
+            If showId is false, remove the "id" column
          */
         if (httpOption(options, "showId", "false", 0) && (index = mprLookupStringItem(gridCols, "id")) >= 0) {
             for (r = 0; r < grid->nrecords; r++) {
@@ -655,6 +673,50 @@ static void filterCols(EdiGrid *grid, MprHash *options, MprHash *colOptions)
             }
         }
     }
+}
+
+
+static char *hashToString(MprHash *hash, cchar *sep)
+{
+    MprBuf  *buf;
+    cchar   *data;
+    char    key[8];
+    int     i, len;
+
+    len = mprGetHashLength(hash);
+    buf = mprCreateBuf(0, 0);
+    mprPutCharToBuf(buf, '{');
+    for (i = 0; i < len; ) {
+        data = mprLookupKey(hash, itosbuf(key, sizeof(key), i, 10));
+        mprPutStringToBuf(buf, data);
+        if (++i < len) {
+            mprPutStringToBuf(buf, sep ? sep : ",");
+        }
+    }
+    mprPutCharToBuf(buf, '}');
+    mprAddNullToBuf(buf);
+    return mprGetBufStart(buf);
+}
+
+
+static EdiGrid *hashToGrid(MprHash *hash)
+{
+    EdiGrid *grid;
+    EdiRec  *rec;
+    cchar   *data;
+    char    key[8];
+    int     i, len;
+
+    len = mprGetHashLength(hash);
+    grid = ediCreateBareGrid(NULL, "grid", len);
+    for (i = 0; i < len; i++) {
+        data = mprLookupKey(hash, itosbuf(key, sizeof(key), i, 10));
+        grid->records[i] = rec = ediCreateBareRec(NULL, "grid", 1);
+        rec->fields[0].name = sclone("value");
+        rec->fields[0].type = EDI_TYPE_STRING;
+        rec->fields[0].value = data;
+    }
+    return grid;
 }
 
 
@@ -672,35 +734,154 @@ static void filterCols(EdiGrid *grid, MprHash *options, MprHash *colOptions)
         ]");
         table(readTable("users"));
         table(makeGrid("[{'name': 'peter', age: 23 }, {'name': 'mary', age: 22}]")
+        table(grid, "{ \
+            columns: [ \
+                { name: 'speed',         header: 'Speed', dropdown: [100, 1000, 40000] }, \
+                { name: 'adminMode',     header: 'Admin Mode', radio: ['Up', 'Down'] }, \
+                { name: 'state',         header: 'State', radio: ['Enabled', 'Disabled'] }, \
+                { name: 'autoNegotiate', header: 'Auto Negotiate', checkbox: ['enabled'] }, \
+                { name: 'type',          header: 'Type' }, \
+            ], \
+            edit: true, \
+            pivot: true, \
+            showHeader: false, \
+            class: '-esp-pivot', \
+        }");
+
  */
-void espTable(HttpConn *conn, EdiGrid *grid, cchar *optionString)
+static void pivotTable(HttpConn *conn, EdiGrid *grid, MprHash *options)
 {
-    MprHash     *options, *colOptions, *rowOptions, *co;
+    MprHash     *colOptions, *rowOptions, *thisCol, *dropdown, *radio;
     MprList     *cols;
     EdiRec      *rec;
     EdiField    *fp;
-    cchar       *title, *width, *o, *header, *value, *sortColumn, *columnName;
+    cchar       *title, *width, *o, *header, *name, *checkbox;
     char        index[8];
-    int         c, r, ncols, sortOrder, pivot;
+    int         c, r, ncols;
+   
+    mprAssert(grid);
+    if (grid->nrecords == 0) {
+        espRender(conn, "<p>No Data</p>\r\n");
+        return;
+    }
+    colOptions = httpGetOptionHash(options, "columns");
+    cols = ediGetGridColumns(grid);
+    ncols = mprGetListLength(cols);
+    rowOptions = mprCreateHash(0, 0);
+    httpSetOption(rowOptions, "data-click", httpGetOption(options, "data-click", 0));
+    httpInsertOption(options, "class", "-esp-pivot");
+    httpInsertOption(options, "class", "-esp-table");
+    espRender(conn, "<table%s>\r\n", map(conn, options));
+
+    /*
+        Table header
+     */
+//  MOB -- debug if pivot
+    if (httpOption(options, "showHeader", "true", 1)) {
+        espRender(conn, "    <thead>\r\n");
+        if ((title = httpGetOption(options, "title", 0)) != 0) {
+            espRender(conn, "        <tr class='-esp-table-title'><td colspan='%s'>%s</td></tr>\r\n", 
+                mprGetListLength(cols), title);
+        }
+        espRender(conn, "        <tr class='-esp-table-header'>\r\n");
+        rec = grid->records[0];
+        for (r = 0; r < ncols; r++) {
+            mprAssert(r <= grid->nrecords);
+            width = ((o = httpGetOption(options, "width", 0)) != 0) ? sfmt(" width='%s'", o) : "";
+            thisCol = mprLookupKey(colOptions, itosbuf(index, sizeof(index), r, 10));
+            header = httpGetOption(thisCol, "header", spascal(rec->id));
+            espRender(conn, "            <th%s>%s</th>\r\n", width, header);
+        }
+        espRender(conn, "        </tr>\r\n    </thead>\r\n");
+    }
+    espRender(conn, "    <tbody>\r\n");
+
+    /*
+        Table body data
+        TODO OPT
+        MOB implement rowOptions: edit, key, params, remote
+     */
+    for (r = 0; r < grid->nrecords; r++) {
+        rec = grid->records[r];
+        httpSetOption(rowOptions, "id", rec->id);
+        espRender(conn, "        <tr%s>\r\n", map(conn, rowOptions));
+        for (c = 0; c < ncols; c++) {
+            fp = &rec->fields[c];
+            thisCol = mprLookupKey(colOptions, itosbuf(index, sizeof(index), r, 10));
+            if (httpGetOption(thisCol, "align", 0) == 0) { // MOB OPT
+                if (fp->type == EDI_TYPE_INT || fp->type == EDI_TYPE_FLOAT) {
+                    if (!thisCol) {
+                        thisCol = mprCreateHash(0, 0);
+                    }
+                    httpInsertOption(thisCol, "align", "right");
+                }
+            }
+            if (c == 0) {
+                /* 
+                    Render column name
+                 */
+                name = httpGetOption(thisCol, "header", spascal(rec->id));
+                //  MOB - need httpGetOptionAsGrid, httpGetOptionAsString
+                //  MOB - converting back via hashToString is very inefficient. Perhaps inline Dropdown, Radio and checkbox here
+                if (httpOption(options, "edit", "true", 0) && httpOption(thisCol, "edit", "true", 1)) {
+                    espRender(conn, "            <td%s>%s</td><td>", map(conn, thisCol), name);
+                    if ((dropdown = httpGetOption(thisCol, "dropdown", 0)) != 0) {
+                        espDropdown(conn, fp->name, hashToGrid(dropdown), 0);
+                    } else if ((radio = httpGetOption(thisCol, "radio", 0)) != 0) {
+                        espRadio(conn, fp->name, hashToString(radio, 0), 0);
+                    } else if ((checkbox = httpGetOption(thisCol, "checkbox", 0)) != 0) {
+                        /* MOB - but need to type check. What if checkbox is not a string? */
+                        espCheckbox(conn, fp->name, checkbox, 0);
+                    } else {
+                        espInput(conn, fp->name, 0);
+                    }
+                    espRender(conn, "</td>\r\n");
+                } else {
+                    espRender(conn, "            <td%s>%s</td><td>%s</td>\r\n", map(conn, thisCol), name, fp->value);
+                }                
+            } else {
+                espRender(conn, "            <td%s>%s</td>\r\n", map(conn, thisCol), fp->value);
+            }
+        }
+    }
+    espRender(conn, "        </tr>\r\n");
+    espRender(conn, "    </tbody>\r\n</table>\r\n");
+}
+
+
+void espTable(HttpConn *conn, EdiGrid *grid, cchar *optionString)
+{
+    MprHash     *options, *colOptions, *rowOptions, *thisCol;
+    MprList     *cols;
+    EdiRec      *rec;
+    EdiField    *fp;
+    cchar       *title, *width, *o, *header, *value, *sortColumn;
+    char        index[8];
+    int         c, r, ncols, sortOrder;
    
     mprAssert(grid);
     if (grid == 0) {
         return;
     }
     options = httpGetOptions(optionString);
-    if ((sortColumn = httpGetOption(options, "sort", 0)) != 0) {
-        sortOrder = httpOption(options, "sortOrder", "ascending", 1);
-        ediSortGrid(grid, sortColumn, sortOrder);
-    }
     if (grid->nrecords == 0) {
         espRender(conn, "<p>No Data</p>\r\n");
         return;
     }
+    if (grid->flags & EDI_GRID_READ_ONLY) {
+        grid = ediCloneGrid(grid);
+    }
+    if ((sortColumn = httpGetOption(options, "sort", 0)) != 0) {
+        sortOrder = httpOption(options, "sortOrder", "ascending", 1);
+        ediSortGrid(grid, sortColumn, sortOrder);
+    }
     colOptions = httpGetOptionHash(options, "columns");
+
+    //  MOB - this modifies the grid. Need to ensure it is not a database grid.
     filterCols(grid, options, colOptions);
 
-    if ((pivot = httpOption(options, "pivot", "true", 0)) != 0) {
-        grid = ediPivotGrid(grid, 1);
+    if (httpOption(options, "pivot", "true", 0) != 0) {
+        return pivotTable(conn, ediPivotGrid(grid, 1), options);
     }
     cols = ediGetGridColumns(grid);
     ncols = mprGetListLength(cols);
@@ -725,8 +906,8 @@ void espTable(HttpConn *conn, EdiGrid *grid, cchar *optionString)
             mprAssert(c <= rec->nfields);
             fp = &rec->fields[c];
             width = ((o = httpGetOption(options, "width", 0)) != 0) ? sfmt(" width='%s'", o) : "";
-            co = (MprHash*) httpGetOption(colOptions, fp->name, 0);
-            header = httpGetOption(co, "header", spascal(fp->name));
+            thisCol = mprLookupKey(colOptions, itosbuf(index, sizeof(index), c, 10));
+            header = httpGetOption(thisCol, "header", spascal(fp->name));
             espRender(conn, "            <th%s>%s</th>\r\n", width, header);
         }
         espRender(conn, "        </tr>\r\n    </thead>\r\n");
@@ -744,50 +925,21 @@ void espTable(HttpConn *conn, EdiGrid *grid, cchar *optionString)
         espRender(conn, "        <tr%s>\r\n", map(conn, rowOptions));
         for (c = 0; c < ncols; c++) {
             fp = &rec->fields[c];
-            if (pivot && c == 0) {
-                co = mprLookupKey(colOptions, itosbuf(index, sizeof(index), r, 10));
-                columnName = mprLookupKey(co, "header");
-            } else {
-                co = (MprHash*) httpGetOption(colOptions, fp->name, 0);
-                columnName = 0;
-            }
-#if UNUSED
-            value = ediFormatField(0, fp);
-            if (pivot && c == 0) {
-                co = (MprHash*) httpGetOption(colOptions, value, 0);
-                if ((value = httpGetOption(co, "header", 0)) == 0) {
-                    value = formatValue(fp, co);
-                }
-            } else {
-                co = (MprHash*) httpGetOption(colOptions, fp->name, 0);
-            }
-#endif
-            if (httpGetOption(co, "align", 0) == 0) { // MOB OPT
+            thisCol = mprLookupKey(colOptions, itosbuf(index, sizeof(index), c, 10));
+
+            if (httpGetOption(thisCol, "align", 0) == 0) { // MOB OPT
                 if (fp->type == EDI_TYPE_INT || fp->type == EDI_TYPE_FLOAT) {
-                    if (!co) {
-                        co = mprCreateHash(0, 0);
+                    if (!thisCol) {
+                        thisCol = mprCreateHash(0, 0);
                     }
-                    httpInsertOption(co, "align", "right");
+                    httpInsertOption(thisCol, "align", "right");
                 }
             }
-            if (pivot) {
-                if (c == 0) {
-                    espRender(conn, "            <td%s>%s</td><td>", map(conn, co), columnName);
-                } else {
-                    if (httpOption(co, "edit", "true", 1)) {
-                        espInput(conn, fp->name, 0);
-                        espRender(conn, "</td>\r\n");
-                    } else {
-                        espRender(conn, "            <td%s>%s</td>\r\n", map(conn, co), fp->value);
-                    }                
-                }
-            } else {
-                value = formatValue(fp, co);
-                espRender(conn, "            <td%s>%s</td>\r\n", map(conn, co), value);
-            }
+            value = formatValue(fp, thisCol);
+            espRender(conn, "            <td%s>%s</td>\r\n", map(conn, thisCol), value);
         }
+        espRender(conn, "        </tr>\r\n");
     }
-    espRender(conn, "        </tr>\r\n");
     espRender(conn, "    </tbody>\r\n</table>\r\n");
 }
 

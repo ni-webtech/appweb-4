@@ -448,15 +448,19 @@ static MprList *mdbGetColumns(Edi *edi, cchar *tableName)
 }
 
 
+/*
+    Make a field. WARNING: the value is not cloned
+ */
 static EdiField makeFieldFromRow(MdbRow *row, MdbCol *col)
 {
     EdiField    f;
 
-    f.valid = 1;
+    /* Note: the value is not cloned */
     f.value = row->fields[col->cid];
     f.type = col->type;
     f.name = col->name;
     f.flags = col->flags;
+    f.valid = 1;
     return f;
 }
 
@@ -690,6 +694,7 @@ static EdiGrid *mdbReadWhere(Edi *edi, cchar *tableName, cchar *columnName, ccha
         unlock(mdb);
         return 0;
     }
+    grid->flags = EDI_GRID_READ_ONLY;
     if (columnName) {
         if ((col = lookupColumn(table, columnName)) == 0) {
             unlock(mdb);
