@@ -129,7 +129,7 @@ static int findFile(HttpConn *conn)
         httpSetEntityLength(conn, tx->fileInfo.size);
         if (!tx->etag) {
             /* Set the etag for caching in the client */
-            tx->etag = sfmt("\"%Lx-%Lx-%Lx\"", info->inode, info->size, info->mtime);
+            tx->etag = sfmt("\"%Lx-%Lx-%Lx\"", (int64) info->inode, (int64) info->size, (int64) info->mtime);
         }
     }
     return HTTP_ROUTE_OK;
