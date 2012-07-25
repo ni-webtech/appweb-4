@@ -520,14 +520,14 @@ int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
         mprLog(1, "The %s module is now builtin. No need to use LoadModule", name);
         return 0;
     }
+    if ((module = mprLookupModule(name)) != 0) {
+        mprLog(MPR_CONFIG, "Activating module (Builtin) %s", name);
+        return 0;
+    }
     if (libname == 0) {
         path = sjoin("mod_", name, BIT_SHOBJ, NULL);
     } else {
         path = sclone(libname);
-    }
-    if ((module = mprLookupModule(name)) != 0) {
-        mprLog(MPR_CONFIG, "Activating module (Builtin) %s", name);
-        return 0;
     }
     mprSprintf(entryPoint, sizeof(entryPoint), "ma%sInit", name);
     entryPoint[2] = toupper((uchar) entryPoint[2]);
