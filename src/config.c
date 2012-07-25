@@ -1314,7 +1314,7 @@ static int loadModulePathDirective(MaState *state, cchar *key, cchar *value)
         return MPR_ERR_BAD_SYNTAX;
     }
     /*
-		 Search path is: USER_SEARCH : exeDir : /usr/lib/appweb/lib
+		 Search path is: USER_SEARCH : exeDir : /usr/lib/appweb/bin
      */
     sep = MPR_SEARCH_SEP;
     path = sjoin(value, sep, mprGetAppDir(), sep, BIT_BIN_PREFIX, NULL);
