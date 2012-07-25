@@ -230,6 +230,7 @@ typedef struct MaServer {
     Http            *http;                  /**< Http service object (copy of appweb->http) */
     HttpLimits      *limits;                /**< Limits for this server */
     MprList         *endpoints;             /**< List of HttpEndpoints */
+    HttpHost        *defaultHost;           /**< Default host for this server */
     char            *home;                  /**< Server root */
 } MaServer;
 

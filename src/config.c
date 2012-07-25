@@ -60,6 +60,7 @@ int maParseConfig(MaServer *server, cchar *path, int flags)
      */
     host = httpCreateHost(mprGetPathDir(path));
     httpSetHostName(host, "default-server");
+    server->defaultHost = host;
     route = httpCreateRoute(host);
     httpSetHostDefaultRoute(host, route);
     httpSetRoutePathVar(route, "LIBDIR", mprJoinPath(server->appweb->platformDir, "bin"));
@@ -1945,7 +1946,7 @@ bool maValidateServer(MaServer *server)
 
     appweb = server->appweb;
     http = appweb->http;
-    defaultHost = mprGetFirstItem(http->hosts);
+    defaultHost = server->defaultHost;
     mprAssert(defaultHost);
 
     /*
