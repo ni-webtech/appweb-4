@@ -1484,8 +1484,8 @@ static int pauseThreads()
             NOTE: mprResetYield has a race where its thread will have been yielded.
          */
         lock(ts->threads);
-        allYielded = 0;
         if (!heap->pauseGC) {
+            allYielded = 1;
             for (i = 0; i < ts->threads->length; i++) {
                 tp = (MprThread*) mprGetItem(ts->threads, i);
                 if (!tp->yielded) {
@@ -1501,10 +1501,13 @@ static int pauseThreads()
                 unlock(ts->threads);
                 break;
             }
+        } else {
+            allYielded = 0;
         }
         unlock(ts->threads);
         LOG(7, "pauseThreads: waiting for threads to yield");
         mprWaitForCond(ts->cond, 20);
+
     } while (!allYielded && mprGetElapsedTime(mark) < timeout);
 
 #if BIT_DEBUG
@@ -25227,7 +25230,7 @@ void mprSetSslProtocols(MprSsl *ssl, int protocols)
 
 void mprSetSslProvider(MprSsl *ssl, cchar *provider)
 {
-    ssl->providerName = sclone(provider);
+    ssl->providerName = (provider && *provider) ? sclone(provider) : 0;
 }
 
 
