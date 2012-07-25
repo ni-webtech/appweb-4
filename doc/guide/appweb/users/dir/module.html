@@ -158,9 +158,10 @@
                         <td class="pivot">Notes</td>
                         <td>
                             <p>The LoadModulePath directive causes subsequent LoadModule directives to search for their
-                            modules in the paths nominate by the LoadModulePath directive, if those paths are do not
+                            modules in the paths nominate by the LoadModulePath directive, if the module paths do not
                             contain directory paths. On Unix like systems, the path separator is ":". On windows, the
-                            path separator is ";"</p>
+                            path separator is ";". Relative paths in this directive are resolved relative to the server
+                            root directory. The default path is:</p><p><em>appweb-executable-directory:/usr/lib/appweb/bin</em>.</p>
                         </td>
                     </tr>
                 </tbody>
