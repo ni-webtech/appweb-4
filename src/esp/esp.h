@@ -77,8 +77,9 @@ extern "C" {
 #endif
 #endif /* UNUSED */
 
-//  MOB - move to bit.h
+#if UNUSED && MOVED
 #define BIT_VISUAL_STUDIO_VERSION "10.0"
+#endif
 
 /********************************** Defines ***********************************/
 /**
