@@ -1671,7 +1671,7 @@
 		004E6C37004F3D0E00000001 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0430;
+				LastUpgradeCheck = 0440;
 				ORGANIZATIONNAME = Embedthis;
 			};
 			buildConfigurationList = 004E6C37004F3D0E00000002 /* Build configuration list for PBXProject "appweb-macosx" */;
@@ -2508,6 +2508,7 @@
 		004E6C37004F3D0E000001A3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					BIT_DEBUG,
 					"$(inherited)",
@@ -2519,6 +2520,7 @@
 		004E6C37004F3D0E000001A4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				PRODUCT_NAME = libmpr;
 			};
 			name = Release;
@@ -2526,6 +2528,7 @@
 		004E6C37004F3D0E000001A5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					POSIX,
 					MATRIX_USE_FILE_SYSTEM,
@@ -2556,6 +2559,7 @@
 		004E6C37004F3D0E000001A6 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					POSIX,
 					MATRIX_USE_FILE_SYSTEM,
@@ -2621,6 +2625,7 @@
 		004E6C37004F3D0E000001AB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"PCRE_CHAR=char",
 					BIT_DEBUG,
@@ -2633,6 +2638,7 @@
 		004E6C37004F3D0E000001AC /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"PCRE_CHAR=char",
 					"$(inherited)",
@@ -2644,6 +2650,7 @@
 		004E6C37004F3D0E000001AD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					BIT_DEBUG,
 					"$(inherited)",
@@ -2659,6 +2666,7 @@
 		004E6C37004F3D0E000001AE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				OTHER_LDFLAGS = (
 					"-lpam",
 					"$(inherited)",
@@ -2696,6 +2704,7 @@
 		004E6C37004F3D0E000001B1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					BIT_DEBUG,
 					"$(inherited)",
@@ -2708,6 +2717,7 @@
 		004E6C37004F3D0E000001B2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
 				PRODUCT_NAME = libsqlite3;
 			};
@@ -2734,6 +2744,7 @@
 		004E6C37004F3D0E000001B5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					BIT_DEBUG,
 					"$(inherited)",
@@ -2749,6 +2760,7 @@
 		004E6C37004F3D0E000001B6 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				OTHER_LDFLAGS = (
 					"-lpam",
 					"$(inherited)",
@@ -2760,6 +2772,7 @@
 		004E6C37004F3D0E000001B7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					BIT_DEBUG,
 					"$(inherited)",
@@ -2775,6 +2788,7 @@
 		004E6C37004F3D0E000001B8 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				OTHER_LDFLAGS = (
 					"-lpam",
 					"$(inherited)",
@@ -2812,6 +2826,7 @@
 		004E6C37004F3D0E000001BB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					BIT_DEBUG,
 					"$(inherited)",
@@ -2823,6 +2838,7 @@
 		004E6C37004F3D0E000001BC /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				PRODUCT_NAME = esp.conf;
 			};
 			name = Release;
@@ -2830,6 +2846,7 @@
 		004E6C37004F3D0E000001BD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					BIT_DEBUG,
 					"$(inherited)",
@@ -2841,6 +2858,7 @@
 		004E6C37004F3D0E000001BE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				PRODUCT_NAME = esp.www;
 			};
 			name = Release;
@@ -2848,6 +2866,7 @@
 		004E6C37004F3D0E000001BF /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					BIT_DEBUG,
 					"$(inherited)",
@@ -2859,6 +2878,7 @@
 		004E6C37004F3D0E000001C0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				PRODUCT_NAME = "esp-appweb.conf";
 			};
 			name = Release;
@@ -2866,6 +2886,7 @@
 		004E6C37004F3D0E000001C1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					BIT_DEBUG,
 					"$(inherited)",
@@ -2881,6 +2902,7 @@
 		004E6C37004F3D0E000001C2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				OTHER_LDFLAGS = (
 					"-lpam",
 					"$(inherited)",
@@ -2892,6 +2914,7 @@
 		004E6C37004F3D0E000001C3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					BIT_DEBUG,
 					"$(inherited)",
@@ -2916,6 +2939,7 @@
 		004E6C37004F3D0E000001C4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				HEADER_SEARCH_PATHS = (
 					"../../packages-macosx-x64/php/php-5.3.8",
 					"../../packages-macosx-x64/php/php-5.3.8/main",
@@ -2936,6 +2960,7 @@
 		004E6C37004F3D0E000001C5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					BIT_DEBUG,
 					"$(inherited)",
@@ -2951,6 +2976,7 @@
 		004E6C37004F3D0E000001C6 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				OTHER_LDFLAGS = (
 					"-lpam",
 					"$(inherited)",
@@ -3068,6 +3094,7 @@
 		004E6C37004F3D0E000001D1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					BIT_DEBUG,
 					"$(inherited)",
@@ -3079,6 +3106,7 @@
 		004E6C37004F3D0E000001D2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				PRODUCT_NAME = "test-testScript";
 			};
 			name = Release;
@@ -3086,6 +3114,7 @@
 		004E6C37004F3D0E000001D3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					BIT_DEBUG,
 					"$(inherited)",
@@ -3097,6 +3126,7 @@
 		004E6C37004F3D0E000001D4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				PRODUCT_NAME = "test-cache.cgi";
 			};
 			name = Release;
@@ -3104,6 +3134,7 @@
 		004E6C37004F3D0E000001D5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					BIT_DEBUG,
 					"$(inherited)",
@@ -3115,6 +3146,7 @@
 		004E6C37004F3D0E000001D6 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				PRODUCT_NAME = "test-basic.cgi";
 			};
 			name = Release;
@@ -3122,6 +3154,7 @@
 		004E6C37004F3D0E000001D7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					BIT_DEBUG,
 					"$(inherited)",
@@ -3133,6 +3166,7 @@
 		004E6C37004F3D0E000001D8 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				PRODUCT_NAME = "test-cgiProgram";
 			};
 			name = Release;
@@ -3140,6 +3174,7 @@
 		004E6C37004F3D0E000001D9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					BIT_DEBUG,
 					"$(inherited)",
@@ -3151,6 +3186,7 @@
 		004E6C37004F3D0E000001DA /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				PRODUCT_NAME = All;
 			};
 			name = Release;
@@ -3158,6 +3194,7 @@
 		004E6C37004F3D0E000001DB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					BIT_DEBUG,
 					"$(inherited)",
@@ -3169,6 +3206,7 @@
 		004E6C37004F3D0E000001DC /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				PRODUCT_NAME = Prep;
 			};
 			name = Release;
