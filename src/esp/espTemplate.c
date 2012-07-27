@@ -891,15 +891,15 @@ static cchar *getVisualStudio()
 {
 #if WINDOWS
     cchar   *path;
+    int     v;
 
-    //  MOB - check this key. Does 'Visual Studio' have a space?
-    path = mprReadRegistry("HKLM\\SOFTWARE\\Microsoft\\VisualStudio\\" BIT_VISUAL_STUDIO_VERSION, "ShellFolder");
-    if (!path) {
-        path = mprReadRegistry("HKCU\\SOFTWARE\\Microsoft\\VisualStudio\\" BIT_VISUAL_STUDIO_VERSION "_Config", 
-            "ShellFolder");
-        if (!path) {
-            path = "${VS}";
+    for (v = 13; v >= 8; v--) {
+        if ((path = mprReadRegistry("HKLM\\SOFTWARE\\Microsoft\\VisualStudio\\SxS\\VC7", sfmt("%d.0", v))) != 0) {
+            break;
         }
+    }
+    if (!path) {
+        path = "${VS}";
     }
     return strim(path, "\\", MPR_TRIM_END);
 #else
