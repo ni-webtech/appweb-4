@@ -40,7 +40,7 @@ end;
 //
 procedure AddPath(keyName: String; dir: String);
 var
-	newPath, oldPath, hive, key: String;
+	newPath, oldPath, key: String;
 	paths:		TArrayOfString;
 	i:			Integer;
 	regHive:	Integer;

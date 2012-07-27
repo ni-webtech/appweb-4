@@ -32,8 +32,6 @@ all: prep \
         $(CONFIG)/bin/esp-www \
         $(CONFIG)/bin/esp-appweb.conf \
         $(CONFIG)/bin/mod_cgi.dylib \
-        $(CONFIG)/bin/mod_php.dylib \
-        $(CONFIG)/bin/mod_ssl.dylib \
         $(CONFIG)/bin/auth \
         $(CONFIG)/bin/cgiProgram \
         $(CONFIG)/bin/setConfig \
@@ -71,8 +69,6 @@ clean:
 	rm -rf $(CONFIG)/bin/esp-www
 	rm -rf $(CONFIG)/bin/esp-appweb.conf
 	rm -rf $(CONFIG)/bin/mod_cgi.dylib
-	rm -rf $(CONFIG)/bin/mod_php.dylib
-	rm -rf $(CONFIG)/bin/mod_ssl.dylib
 	rm -rf $(CONFIG)/bin/auth
 	rm -rf $(CONFIG)/bin/cgiProgram
 	rm -rf $(CONFIG)/bin/setConfig
@@ -143,12 +139,12 @@ $(CONFIG)/obj/mprSsl.o: \
         src/deps/mpr/mprSsl.c \
         $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/mpr.h
-	$(CC) -c -o $(CONFIG)/obj/mprSsl.o -arch x86_64 $(CFLAGS) $(DFLAGS) -DPOSIX -DMATRIX_USE_FILE_SYSTEM -I$(CONFIG)/inc -I../packages-macosx-x64/openssl/openssl-1.0.1b/include -I../packages-macosx-x64/matrixssl/matrixssl-3-3-open/matrixssl -I../packages-macosx-x64/matrixssl/matrixssl-3-3-open src/deps/mpr/mprSsl.c
+	$(CC) -c -o $(CONFIG)/obj/mprSsl.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/mpr/mprSsl.c
 
 $(CONFIG)/bin/libmprssl.dylib:  \
         $(CONFIG)/bin/libmpr.dylib \
         $(CONFIG)/obj/mprSsl.o
-	$(CC) -dynamiclib -o $(CONFIG)/bin/libmprssl.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.1.0 -current_version 4.1.0 -compatibility_version 4.1.0 -current_version 4.1.0 $(LIBPATHS) -L../packages-macosx-x64/openssl/openssl-1.0.1b -L../packages-macosx-x64/matrixssl/matrixssl-3-3-open -install_name @rpath/libmprssl.dylib $(CONFIG)/obj/mprSsl.o $(LIBS) -lmpr -lssl -lcrypto -lmatrixssl
+	$(CC) -dynamiclib -o $(CONFIG)/bin/libmprssl.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.1.0 -current_version 4.1.0 -compatibility_version 4.1.0 -current_version 4.1.0 $(LIBPATHS) -install_name @rpath/libmprssl.dylib $(CONFIG)/obj/mprSsl.o $(LIBS) -lmpr
 
 $(CONFIG)/obj/manager.o: \
         src/deps/mpr/manager.c \
@@ -437,28 +433,6 @@ $(CONFIG)/bin/mod_cgi.dylib:  \
         $(CONFIG)/obj/cgiHandler.o
 	$(CC) -dynamiclib -o $(CONFIG)/bin/mod_cgi.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.1.0 -current_version 4.1.0 -compatibility_version 4.1.0 -current_version 4.1.0 $(LIBPATHS) -install_name @rpath/mod_cgi.dylib $(CONFIG)/obj/cgiHandler.o $(LIBS) -lappweb -lhttp -lpam -lmpr -lpcre
 
-$(CONFIG)/obj/phpHandler.o: \
-        src/modules/phpHandler.c \
-        $(CONFIG)/inc/bit.h \
-        $(CONFIG)/inc/appweb.h
-	$(CC) -c -o $(CONFIG)/obj/phpHandler.o -arch x86_64 -Wno-deprecated-declarations -g -Wno-unused-result $(DFLAGS) -I$(CONFIG)/inc -I../packages-macosx-x64/php/php-5.3.8 -I../packages-macosx-x64/php/php-5.3.8/main -I../packages-macosx-x64/php/php-5.3.8/Zend -I../packages-macosx-x64/php/php-5.3.8/TSRM src/modules/phpHandler.c
-
-$(CONFIG)/bin/mod_php.dylib:  \
-        $(CONFIG)/bin/libappweb.dylib \
-        $(CONFIG)/obj/phpHandler.o
-	$(CC) -dynamiclib -o $(CONFIG)/bin/mod_php.dylib -arch x86_64 $(LDFLAGS) -L/Users/mob/git/packages-macosx-x64/php/php-5.3.8/.libs -compatibility_version 4.1.0 -current_version 4.1.0 -compatibility_version 4.1.0 -current_version 4.1.0 $(LIBPATHS) -install_name @rpath/mod_php.dylib $(CONFIG)/obj/phpHandler.o $(LIBS) -lphp5 -lappweb -lhttp -lpam -lmpr -lpcre
-
-$(CONFIG)/obj/sslModule.o: \
-        src/modules/sslModule.c \
-        $(CONFIG)/inc/bit.h \
-        $(CONFIG)/inc/appweb.h
-	$(CC) -c -o $(CONFIG)/obj/sslModule.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/modules/sslModule.c
-
-$(CONFIG)/bin/mod_ssl.dylib:  \
-        $(CONFIG)/bin/libappweb.dylib \
-        $(CONFIG)/obj/sslModule.o
-	$(CC) -dynamiclib -o $(CONFIG)/bin/mod_ssl.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.1.0 -current_version 4.1.0 -compatibility_version 4.1.0 -current_version 4.1.0 $(LIBPATHS) -install_name @rpath/mod_ssl.dylib $(CONFIG)/obj/sslModule.o $(LIBS) -lappweb -lhttp -lpam -lmpr -lpcre
-
 $(CONFIG)/obj/auth.o: \
         src/utils/auth.c \
         $(CONFIG)/inc/bit.h \
@@ -550,6 +524,7 @@ test/web/basic/basic.cgi:
 		echo "#!`type -p sh`" >web/basic/basic.cgi ;\
 	echo '' >>web/basic/basic.cgi ;\
 	echo 'echo Content-Type: text/plain' >>web/basic/basic.cgi ;\
+	echo 'echo' >>web/basic/basic.cgi ;\
 	echo '/usr/bin/env' >>web/basic/basic.cgi ;\
 	chmod +x web/basic/basic.cgi ;\
 		cd - >/dev/null 

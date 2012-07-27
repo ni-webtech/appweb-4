@@ -2,7 +2,7 @@
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{53c73d66-e520-46ab-a9ec-57ecb5d11f3f}</ProjectGuid>
+    <ProjectGuid>{cf329c0c-d3ea-47bf-a0d5-fa54bd24017a}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -96,10 +96,10 @@
 
   <CustomBuildStep>
     <Command>cd ..\..\src\esp
-if exist ..\..\$(Cfg)\bin\esp-appweb.conf del /Q ..\..\$(Cfg)\bin\esp-appweb.conf
-copy /Y esp-appweb.conf ..\..\$(Cfg)\bin\esp-appweb.conf
+if exist $(BinDir)\esp-appweb.conf del /Q $(BinDir)\esp-appweb.conf
+copy /Y esp-appweb.conf $(BinDir)\esp-appweb.conf
 cd ..\..\projects\appweb-windows</Command>
-    <Outputs>..\..\$(Cfg)\bin\esp-appweb.conf</Outputs>
+    <Outputs>$(BinDir)\esp-appweb.conf</Outputs>
   </CustomBuildStep>
   </ItemDefinitionGroup>
 

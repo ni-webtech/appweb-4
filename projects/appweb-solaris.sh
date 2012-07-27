@@ -185,6 +185,7 @@ cd test >/dev/null ;\
 echo "#!`type -p sh`" >web/basic/basic.cgi ;\
 echo '' >>web/basic/basic.cgi ;\
 echo 'echo Content-Type: text/plain' >>web/basic/basic.cgi ;\
+echo 'echo' >>web/basic/basic.cgi ;\
 echo '/usr/bin/env' >>web/basic/basic.cgi ;\
 chmod +x web/basic/basic.cgi ;\
 cd - >/dev/null 

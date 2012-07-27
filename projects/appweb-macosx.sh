@@ -30,9 +30,9 @@ ${CC} -c -o ${CONFIG}/obj/mprLib.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${CONFIG}/
 
 ${CC} -dynamiclib -o ${CONFIG}/bin/libmpr.dylib -arch x86_64 ${LDFLAGS} -compatibility_version 4.1.0 -current_version 4.1.0 ${LIBPATHS} -install_name @rpath/libmpr.dylib ${CONFIG}/obj/mprLib.o ${LIBS}
 
-${CC} -c -o ${CONFIG}/obj/mprSsl.o -arch x86_64 ${CFLAGS} ${DFLAGS} -DPOSIX -DMATRIX_USE_FILE_SYSTEM -I${CONFIG}/inc -I../packages-macosx-x64/openssl/openssl-1.0.1b/include -I../packages-macosx-x64/matrixssl/matrixssl-3-3-open/matrixssl -I../packages-macosx-x64/matrixssl/matrixssl-3-3-open src/deps/mpr/mprSsl.c
+${CC} -c -o ${CONFIG}/obj/mprSsl.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/deps/mpr/mprSsl.c
 
-${CC} -dynamiclib -o ${CONFIG}/bin/libmprssl.dylib -arch x86_64 ${LDFLAGS} -compatibility_version 4.1.0 -current_version 4.1.0 ${LIBPATHS} -L../packages-macosx-x64/openssl/openssl-1.0.1b -L../packages-macosx-x64/matrixssl/matrixssl-3-3-open -install_name @rpath/libmprssl.dylib ${CONFIG}/obj/mprSsl.o ${LIBS} -lmpr -lssl -lcrypto -lmatrixssl
+${CC} -dynamiclib -o ${CONFIG}/bin/libmprssl.dylib -arch x86_64 ${LDFLAGS} -compatibility_version 4.1.0 -current_version 4.1.0 ${LIBPATHS} -install_name @rpath/libmprssl.dylib ${CONFIG}/obj/mprSsl.o ${LIBS} -lmpr
 
 ${CC} -c -o ${CONFIG}/obj/manager.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/deps/mpr/manager.c
 
@@ -140,14 +140,6 @@ ${CC} -c -o ${CONFIG}/obj/cgiHandler.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${CONF
 
 ${CC} -dynamiclib -o ${CONFIG}/bin/mod_cgi.dylib -arch x86_64 ${LDFLAGS} -compatibility_version 4.1.0 -current_version 4.1.0 ${LIBPATHS} -install_name @rpath/mod_cgi.dylib ${CONFIG}/obj/cgiHandler.o ${LIBS} -lappweb -lhttp -lpam -lmpr -lpcre
 
-${CC} -c -o ${CONFIG}/obj/phpHandler.o -arch x86_64 -Wno-deprecated-declarations -g -Wno-unused-result ${DFLAGS} -I${CONFIG}/inc -I../packages-macosx-x64/php/php-5.3.8 -I../packages-macosx-x64/php/php-5.3.8/main -I../packages-macosx-x64/php/php-5.3.8/Zend -I../packages-macosx-x64/php/php-5.3.8/TSRM src/modules/phpHandler.c
-
-${CC} -dynamiclib -o ${CONFIG}/bin/mod_php.dylib -arch x86_64 ${LDFLAGS} -L/Users/mob/git/packages-macosx-x64/php/php-5.3.8/.libs -compatibility_version 4.1.0 -current_version 4.1.0 ${LIBPATHS} -install_name @rpath/mod_php.dylib ${CONFIG}/obj/phpHandler.o ${LIBS} -lphp5 -lappweb -lhttp -lpam -lmpr -lpcre
-
-${CC} -c -o ${CONFIG}/obj/sslModule.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/modules/sslModule.c
-
-${CC} -dynamiclib -o ${CONFIG}/bin/mod_ssl.dylib -arch x86_64 ${LDFLAGS} -compatibility_version 4.1.0 -current_version 4.1.0 ${LIBPATHS} -install_name @rpath/mod_ssl.dylib ${CONFIG}/obj/sslModule.o ${LIBS} -lappweb -lhttp -lpam -lmpr -lpcre
-
 ${CC} -c -o ${CONFIG}/obj/auth.o -arch x86_64 ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/utils/auth.c
 
 ${CC} -o ${CONFIG}/bin/auth -arch x86_64 ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/auth.o ${LIBS} -lmpr
@@ -193,6 +185,7 @@ cd test >/dev/null ;\
 echo "#!`type -p sh`" >web/basic/basic.cgi ;\
 echo '' >>web/basic/basic.cgi ;\
 echo 'echo Content-Type: text/plain' >>web/basic/basic.cgi ;\
+echo 'echo' >>web/basic/basic.cgi ;\
 echo '/usr/bin/env' >>web/basic/basic.cgi ;\
 chmod +x web/basic/basic.cgi ;\
 cd - >/dev/null 

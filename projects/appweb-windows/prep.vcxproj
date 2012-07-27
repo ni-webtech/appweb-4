@@ -2,7 +2,7 @@
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{2635930b-573c-41f9-b764-6cc4fc250808}</ProjectGuid>
+    <ProjectGuid>{6589cc4a-746d-4282-9076-57cb05f6cae4}</ProjectGuid>
     <RootNamespace />
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
@@ -95,10 +95,10 @@
   </Link>
 
   <CustomBuildStep>
-    <Command>if not exist "$(ObjDir)" md "$(ObjDir)"
-if not exist "$(BinDir)" md "$(BinDir)"
-if not exist "$(IncDir)" md "$(IncDir)"
-if not exist "$(IncDir)\bit.h" copy "..\appweb-windows-bit.h" "$(IncDir)\bit.h"
+    <Command>if not exist "$(ObjDir)" md "$(ObjDir)"
+if not exist "$(BinDir)" md "$(BinDir)"
+if not exist "$(IncDir)" md "$(IncDir)"
+if not exist "$(IncDir)\bit.h" copy "..\appweb-windows-bit.h" "$(IncDir)\bit.h"
 if not exist "$(BinDir)\libmpr.def" xcopy /Y /S *.def "$(BinDir)"</Command>
     <Outputs>..\..\always</Outputs>
   </CustomBuildStep>
