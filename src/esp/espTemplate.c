@@ -892,16 +892,16 @@ static cchar *getVisualStudio()
 #if WINDOWS
     cchar   *path;
     int     v;
-
     for (v = 13; v >= 8; v--) {
-        if ((path = mprReadRegistry("HKLM\\SOFTWARE\\Microsoft\\VisualStudio\\SxS\\VC7", sfmt("%d.0", v))) != 0) {
+        if ((path = mprReadRegistry(ESP_VSKEY, sfmt("%d.0", v))) != 0) {
+            path = strim(path, "\\", MPR_TRIM_END);
             break;
         }
     }
     if (!path) {
         path = "${VS}";
     }
-    return strim(path, "\\", MPR_TRIM_END);
+    return path;
 #else
     return "";
 #endif

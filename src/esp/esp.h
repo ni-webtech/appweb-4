@@ -77,9 +77,12 @@ extern "C" {
 #endif
 #endif /* UNUSED */
 
-#if UNUSED && MOVED
-#define BIT_VISUAL_STUDIO_VERSION "10.0"
+#if MPR_64_BIT
+    #define ESP_VSKEY "HKLM\\SOFTWARE\\Wow6432Node\\Microsoft\\VisualStudio\\SxS\\VS7"
+#else
+    #define ESP_VSKEY "HKLM\\SOFTWARE\\Microsoft\\VisualStudio\\SxS\\VS7"
 #endif
+
 
 /********************************** Defines ***********************************/
 /**
