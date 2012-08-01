@@ -6,9 +6,6 @@
 
 /********************************** Includes **********************************/
 
-/* Work-around for MAC OSX Xcode bug */
-#undef BIT_FEATURE_LEGACY_API
-
 /* Suppress windows posix errors */
 #undef      _CRT_SECURE_NO_WARNINGS
 #define     _CRT_SECURE_NO_WARNINGS 1

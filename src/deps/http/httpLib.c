@@ -1382,7 +1382,7 @@ int httpWriteGroupFile(HttpAuth *auth, char *path)
 
 
 
-#if BIT_CC_PAM
+#if BIT_HAS_PAM
  #include    <security/pam_appl.h>
 
 /********************************* Defines ************************************/
@@ -1476,7 +1476,7 @@ bool httpValidatePamCredentials(HttpAuth *auth, cchar *realm, cchar *user, cchar
 {
     return 0;
 }
-#endif /* BIT_CC_PAM */
+#endif /* BIT_HAS_PAM */
 
 /*
     @copy   default
@@ -2465,7 +2465,7 @@ static HttpConn *openConnection(HttpConn *conn, cchar *url, struct MprSsl *ssl)
         httpError(conn, HTTP_CODE_COMMS_ERROR, "Can't open socket on %s:%d", ip, port);
         return 0;
     }
-#if BIT_FEATURE_SSL
+#if BIT_PACK_SSL
     /* Must be done even if using keep alive for repeat SSL requests */
     if (uri->secure) {
         if (ssl == 0) {
@@ -4023,7 +4023,7 @@ void httpSetEndpointNotifier(HttpEndpoint *endpoint, HttpNotifier notifier)
 
 int httpSecureEndpoint(HttpEndpoint *endpoint, struct MprSsl *ssl)
 {
-#if BIT_FEATURE_SSL
+#if BIT_PACK_SSL
     endpoint->ssl = ssl;
     return 0;
 #else
@@ -6565,14 +6565,15 @@ void httpHandleOptionsTrace(HttpConn *conn)
             (flags & HTTP_STAGE_PUT) ? ",PUT" : "",
             (flags & HTTP_STAGE_DELETE) ? ",DELETE" : "");
         httpOmitBody(conn);
+        httpSetContentLength(conn, 0);
         httpFinalize(conn);
     }
 }
 
 
-static void openPass(HttpQueue *q)
+static void startPass(HttpQueue *q)
 {
-    mprLog(5, "Open passHandler");
+    mprLog(5, "Start passHandler");
     if (q->conn->rx->flags & (HTTP_OPTIONS | HTTP_TRACE)) {
         httpHandleOptionsTrace(q->conn);
     }
@@ -6593,7 +6594,7 @@ int httpOpenPassHandler(Http *http)
         return MPR_ERR_CANT_CREATE;
     }
     http->passHandler = stage;
-    stage->open = openPass;
+    stage->start = startPass;
     stage->ready = readyPass;
 
     /*
@@ -6602,7 +6603,7 @@ int httpOpenPassHandler(Http *http)
     if ((stage = httpCreateHandler(http, "errorHandler", HTTP_STAGE_ALL, NULL)) == 0) {
         return MPR_ERR_CANT_CREATE;
     }
-    stage->open = openPass;
+    stage->start = startPass;
     stage->ready = readyPass;
     return 0;
 }
@@ -6824,7 +6825,7 @@ void httpSetPipelineHandler(HttpConn *conn, HttpStage *handler)
 
 void httpSetSendConnector(HttpConn *conn, cchar *path)
 {
-#if !BIT_FEATURE_ROMFS
+#if !BIT_ROM
     HttpTx      *tx;
 
     tx = conn->tx;
@@ -8285,7 +8286,7 @@ HttpRoute *httpCreateAliasRoute(HttpRoute *parent, cchar *pattern, cchar *path, 
 
 int httpStartRoute(HttpRoute *route)
 {
-#if !BIT_FEATURE_ROMFS
+#if !BIT_ROM
     if (!(route->flags & HTTP_ROUTE_STARTED)) {
         route->flags |= HTTP_ROUTE_STARTED;
         if (route->logPath && (!route->parent || route->logPath != route->parent->logPath)) {
@@ -11253,7 +11254,9 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
         rx->parsedUri->host = rx->hostHeader ? rx->hostHeader : conn->host->name;
 
     } else if (!(100 <= rx->status && rx->status <= 199)) {
-        /* Clients have already created their Tx pipeline */
+        /* 
+            Ignore Expect status responses. NOTE: Clients have already created their Tx pipeline.
+         */
         httpCreateRxPipeline(conn, conn->http->clientRoute);
     }
     httpSetState(conn, HTTP_STATE_PARSED);
@@ -12862,7 +12865,7 @@ void httpTrimExtraPath(HttpConn *conn)
 
 
 /**************************** Forward Declarations ****************************/
-#if !BIT_FEATURE_ROMFS
+#if !BIT_ROM
 
 static void addPacketForSend(HttpQueue *q, HttpPacket *packet);
 static void adjustSendVec(HttpQueue *q, MprOff written);
@@ -13195,7 +13198,7 @@ int httpOpenSendConnector(Http *http) { return 0; }
 void httpSendOpen(HttpQueue *q) {}
 void httpSendOutgoingService(HttpQueue *q) {}
 
-#endif /* !BIT_FEATURE_ROMFS */
+#endif /* !BIT_ROM */
 /*
     @copy   default
     

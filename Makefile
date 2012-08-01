@@ -1,6 +1,6 @@
 #
 #	Makefile - Top level Makefile when using "make" to build. 
-#			   Alternatively, use bit directly.
+#			   Alternatively, use "bit" to build.
 #	
 
 OS      := $(shell uname | sed 's/CYGWIN.*/windows/;s/Darwin/macosx/' | tr '[A-Z]' '[a-z]')

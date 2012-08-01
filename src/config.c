@@ -151,7 +151,7 @@ static int parseFileInner(MaState *state, cchar *path)
 }
 
 
-#if !BIT_FEATURE_ROMFS
+#if !BIT_ROM
 /*
     AccessLog path
     AccessLog conf/log.conf size=10K, backup=5, append, anew
@@ -2026,27 +2026,27 @@ static bool conditionalDefinition(MaState *state, cchar *key)
     } else if (state->appweb->skipModules) {
         /* ESP utility needs to be able to load mod_esp */
         if (smatch(mprGetAppName(), "esp") && scaselessmatch(key, "ESP_MODULE")) {
-            result = BIT_FEATURE_ESP;
+            result = BIT_PACK_ESP;
         }
 
     } else {
         if (scaselessmatch(key, "CGI_MODULE")) {
-            result = BIT_FEATURE_CGI;
+            result = BIT_PACK_CGI;
 
         } else if (scaselessmatch(key, "DIR_MODULE")) {
-            result = BIT_FEATURE_DIR;
+            result = BIT_PACK_DIR;
 
         } else if (scaselessmatch(key, "EJS_MODULE")) {
-            result = BIT_FEATURE_EJSCRIPT;
+            result = BIT_PACK_EJSCRIPT;
 
         } else if (scaselessmatch(key, "ESP_MODULE")) {
-            result = BIT_FEATURE_ESP;
+            result = BIT_PACK_ESP;
 
         } else if (scaselessmatch(key, "PHP_MODULE")) {
-            result = BIT_FEATURE_PHP;
+            result = BIT_PACK_PHP;
 
         } else if (scaselessmatch(key, "SSL_MODULE")) {
-            result = BIT_FEATURE_SSL;
+            result = BIT_PACK_SSL;
         }
     }
     return (not) ? !result : result;
@@ -2435,7 +2435,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "<VirtualHost", virtualHostDirective);
     maAddDirective(appweb, "</VirtualHost", closeDirective);
 
-#if !BIT_FEATURE_ROMFS
+#if !BIT_ROM
     maAddDirective(appweb, "AccessLog", accessLogDirective);
 #endif
 

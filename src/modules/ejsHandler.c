@@ -7,7 +7,7 @@
 
 #include    "appweb.h"
 
-#if BIT_FEATURE_EJSCRIPT
+#if BIT_PACK_EJSCRIPT
     #include    "ejs.h"
 
 /************************************* Data ***********************************/
@@ -148,14 +148,14 @@ int maEjsHandlerInit(Http *http, MprModule *module)
     maAddDirective(appweb, "EjsWorkers", ejsWorkersDirective);
     return 0;
 }
-#else /* BIT_FEATURE_EJSCRIPT */
+#else /* BIT_PACK_EJSCRIPT */
 
 int maEjsHandlerInit(Http *http, MprModule *module)
 {
     mprNop(0);
     return 0;
 }
-#endif /* BIT_FEATURE_EJSCRIPT */
+#endif /* BIT_PACK_EJSCRIPT */
 
 /*
     @copy   default

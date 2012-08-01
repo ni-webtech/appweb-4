@@ -39,8 +39,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef _PCRE_H
 #define _PCRE_H
 
-#ifndef BIT_FEATURE_PCRE
-    #define BIT_FEATURE_PCRE 1
+#ifndef BIT_PACK_PCRE
+    #define BIT_PACK_PCRE 1
 #endif
 
 /* The current PCRE version information. */

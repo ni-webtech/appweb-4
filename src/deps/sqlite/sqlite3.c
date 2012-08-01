@@ -8,7 +8,7 @@
 
 #include "bit.h"
 
-#if BIT_FEATURE_SQLITE || BIT_SQLITE_PRODUCT
+#if BIT_PACK_SQLITE || BIT_SQLITE_PRODUCT
 
 #if EMBEDTHIS_MODIFICATION 
 
@@ -107094,4 +107094,4 @@ SQLITE_PRIVATE void sqlite3Fts3IcuTokenizerModule(
 #endif /* !defined(SQLITE_CORE) || defined(SQLITE_ENABLE_FTS3) */
 
 /************** End of fts3_icu.c ********************************************/
-#endif /* BIT_FEATURE_SQLITE */
+#endif /* BIT_PACK_SQLITE */

@@ -25,7 +25,7 @@
 
 /******************************* Local Defines ********************************/
 
-#if BIT_CC_MMU 
+#if BIT_HAS_MMU 
     #define VALLOC 1                /* Use virtual memory allocations */
 #else
     #define VALLOC 0
@@ -2620,7 +2620,7 @@ Mpr *mprCreate(int argc, char **argv, int flags)
     mpr->exitStrategy = MPR_EXIT_NORMAL;
     mpr->emptyString = sclone("");
     mpr->exitTimeout = MPR_TIMEOUT_STOP;
-    mpr->title = sclone(BIT_NAME);
+    mpr->title = sclone(BIT_TITLE);
     mpr->version = sclone(BIT_VERSION);
     mpr->idleCallback = mprServicesAreIdle;
     mpr->mimeTypes = mprCreateMimeTypes(NULL);
@@ -3553,10 +3553,10 @@ void mprNop(void *ptr) {}
 #if EMBEDTHIS || 1
  #include    "bit.h"
 #endif
-#ifndef BIT_FEATURE_FLOAT
-    #define BIT_FEATURE_FLOAT 1
+#ifndef BIT_FLOAT
+    #define BIT_FLOAT 1
 #endif
-#if BIT_FEATURE_FLOAT
+#if BIT_FLOAT
 
 #if EMBEDTHIS || 1
 
@@ -7650,7 +7650,7 @@ dtoa
 }
 #endif
 /* EMBEDTHIS */
-#endif /* BIT_FEATURE_FLOAT */
+#endif /* BIT_FLOAT */
 
 /************************************************************************/
 /*
@@ -7970,7 +7970,7 @@ void mprAtomicBarrier()
         OSMemoryBarrier();
     #elif BIT_WIN_LIKE
         MemoryBarrier();
-    #elif BIT_CC_SYNC
+    #elif BIT_HAS_SYNC
         __sync_synchronize();
     #elif __GNUC__ && (BIT_CPU_ARCH == MPR_CPU_X86 || BIT_CPU_ARCH == MPR_CPU_X64)
         asm volatile ("mfence" : : : "memory");
@@ -7999,9 +7999,9 @@ int mprAtomicCas(void * volatile *addr, void *expected, cvoid *value)
             prev = InterlockedCompareExchangePointer(addr, (void*) value, expected);
             return expected == prev;
         }
-    #elif BIT_CC_SYNC_CAS
+    #elif BIT_HAS_SYNC_CAS
         return __sync_bool_compare_and_swap(addr, expected, value);
-    #elif VXWORKS && _VX_ATOMIC_INIT && !MPR_64BIT
+    #elif VXWORKS && _VX_ATOMIC_INIT && !BIT_64
         /* vxCas operates with integer values */
         return vxCas((atomic_t*) addr, (atomicVal_t) expected, (atomicVal_t) value);
     #elif BIT_CPU_ARCH == MPR_CPU_X86
@@ -8065,7 +8065,7 @@ void mprAtomicAdd64(volatile int64 *ptr, int value)
 {
 #if MACOSX
     OSAtomicAdd64(value, ptr);
-#elif BIT_WIN_LIKE && MPR_64_BIT
+#elif BIT_WIN_LIKE && BIT_64
     InterlockedExchangeAdd64(ptr, value);
 #elif BIT_UNIX_LIKE && FUTURE
     asm volatile ("lock; xaddl %0,%1"
@@ -11575,7 +11575,6 @@ char *mprGetMD5WithPrefix(cchar *buf, ssize length, cchar *prefix)
         *r++ = hex[hash[i] & 0xF];
     }
     *r = '\0';
-
     len = (prefix) ? slen(prefix) : 0;
     str = mprAlloc(sizeof(result) + len);
     if (str) {
@@ -11863,7 +11862,7 @@ static void decode(uint *output, uchar *input, uint len)
 
 
 
-#if !BIT_FEATURE_ROMFS
+#if !BIT_ROM
 /*********************************** Defines **********************************/
 
 #if WINDOWS
@@ -11946,7 +11945,7 @@ static void manageDiskFile(MprFile *file, int flags)
         mprMark(file->path);
         mprMark(file->fileSystem);
         mprMark(file->buf);
-#if BIT_FEATURE_ROMFS
+#if BIT_ROM
         mprMark(file->inode);
 #endif
 
@@ -12399,7 +12398,7 @@ MprDiskFileSystem *mprCreateDiskFileSystem(cchar *path)
 #endif
     return dfs;
 }
-#endif /* !BIT_FEATURE_ROMFS */
+#endif /* !BIT_ROM */
 
 
 /*
@@ -14945,7 +14944,7 @@ MprFileSystem *mprCreateFileSystem(cchar *path)
     /*
         FUTURE: evolve this to support multiple file systems in a single system
      */
-#if BIT_FEATURE_ROMFS
+#if BIT_ROM
     fs = (MprFileSystem*) mprCreateRomFileSystem(path);
 #else
     fs = (MprFileSystem*) mprCreateDiskFileSystem(path);
@@ -17714,7 +17713,7 @@ void mprLogHeader()
 {
     mprLog(MPR_CONFIG, "Configuration for %s", mprGetAppTitle());
     mprLog(MPR_CONFIG, "---------------------------------------------");
-    mprLog(MPR_CONFIG, "Version:            %s-%s", BIT_VERSION, BIT_NUMBER);
+    mprLog(MPR_CONFIG, "Version:            %s-%s", BIT_VERSION, BIT_BUILD_NUMBER);
     mprLog(MPR_CONFIG, "BuildType:          %s", BIT_DEBUG ? "Debug" : "Release");
     mprLog(MPR_CONFIG, "CPU:                %s", BIT_CPU);
     mprLog(MPR_CONFIG, "OS:                 %s", BIT_OS);
@@ -17882,7 +17881,7 @@ void mprStaticError(cchar *fmt, ...)
 
 void mprAssertError(cchar *loc, cchar *msg)
 {
-#if BIT_FEATURE_ASSERT
+#if BIT_ASSERT
     char    buf[MPR_MAX_LOG];
 
     if (loc) {
@@ -19117,7 +19116,7 @@ cchar *mprGetModuleSearchPath()
  */
 int mprLoadModule(MprModule *mp)
 {
-#if BIT_CC_DYN_LOAD
+#if BIT_HAS_DYN_LOAD
     mprAssert(mp);
 
     if (mprLoadNativeModule(mp) < 0) {
@@ -19138,7 +19137,7 @@ int mprUnloadModule(MprModule *mp)
     if (mprStopModule(mp) < 0) {
         return MPR_ERR_NOT_READY;
     }
-#if BIT_CC_DYN_LOAD
+#if BIT_HAS_DYN_LOAD
     if (mp->handle) {
         if (mprUnloadNativeModule(mp) != 0) {
             mprError("Can't unload module %s", mp->name);
@@ -19151,7 +19150,7 @@ int mprUnloadModule(MprModule *mp)
 }
 
 
-#if BIT_CC_DYN_LOAD
+#if BIT_HAS_DYN_LOAD
 /*
     Return true if the shared library in "file" can be found. Return the actual path in *path. The filename
     may not have a shared library extension which is typical so calling code can be cross platform.
@@ -19184,7 +19183,7 @@ static char *probe(cchar *filename)
  */
 char *mprSearchForModule(cchar *filename)
 {
-#if BIT_CC_DYN_LOAD
+#if BIT_HAS_DYN_LOAD
     char    *path, *f, *searchPath, *dir, *tok;
 
     filename = mprNormalizePath(filename);
@@ -19211,7 +19210,7 @@ char *mprSearchForModule(cchar *filename)
         }
         dir = stok(0, MPR_SEARCH_SEP, &tok);
     }
-#endif /* BIT_CC_DYN_LOAD */
+#endif /* BIT_HAS_DYN_LOAD */
     return 0;
 }
 
@@ -19462,7 +19461,7 @@ char *mprGetAbsPath(cchar *path)
     if (path == 0 || *path == '\0') {
         path = ".";
     }
-#if BIT_FEATURE_ROMFS
+#if BIT_ROM
     return mprNormalizePath(path);
 #elif CYGWIN
     {
@@ -20240,7 +20239,7 @@ char *mprGetWinPath(cchar *path)
     if (path == 0 || *path == '\0') {
         path = ".";
     }
-#if BIT_FEATURE_ROMFS
+#if BIT_ROM
     result = mprNormalizePath(path);
 #elif CYGWIN
 {
@@ -21486,7 +21485,7 @@ static void outString(Format *fmt, cchar *str, ssize len);
 #if BIT_CHAR_LEN > 1
 static void outWideString(Format *fmt, MprChar *str, ssize len);
 #endif
-#if BIT_FEATURE_FLOAT
+#if BIT_FLOAT
 static void outFloat(Format *fmt, char specChar, double value);
 #endif
 
@@ -21782,13 +21781,13 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list args)
         case STATE_TYPE:
             switch (c) {
             case 'e':
-#if BIT_FEATURE_FLOAT
+#if BIT_FLOAT
             case 'g':
             case 'f':
                 fmt.radix = 10;
                 outFloat(&fmt, c, (double) va_arg(args, double));
                 break;
-#endif /* BIT_FEATURE_FLOAT */
+#endif /* BIT_FLOAT */
 
             case 'c':
                 BPUT(&fmt, (char) va_arg(args, int));
@@ -21891,7 +21890,7 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list args)
 
             case 'X':
                 fmt.flags |= SPRINTF_UPPER_CASE;
-#if MPR_64_BIT
+#if BIT_64
                 fmt.flags &= ~(SPRINTF_SHORT|SPRINTF_LONG);
                 fmt.flags |= SPRINTF_INT64;
 #else
@@ -21948,7 +21947,7 @@ static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list args)
                 break;
 
             case 'p':       /* Pointer */
-#if MPR_64_BIT
+#if BIT_64
                 uValue = (uint64) va_arg(args, void*);
 #else
                 uValue = (uint) PTOI(va_arg(args, void*));
@@ -22126,7 +22125,7 @@ static void outNum(Format *fmt, cchar *prefix, uint64 value)
 }
 
 
-#if BIT_FEATURE_FLOAT
+#if BIT_FLOAT
 static void outFloat(Format *fmt, char specChar, double value)
 {
     char    result[MPR_MAX_STRING], *cp;
@@ -22352,7 +22351,7 @@ char *mprDtoa(double value, int ndigits, int mode, int flags)
     }
     return sclone(mprGetBufStart(buf));
 }
-#endif /* BIT_FEATURE_FLOAT */
+#endif /* BIT_FLOAT */
 
 
 /*
@@ -22467,7 +22466,7 @@ int print(cchar *fmt, ...)
 
 
 
-#if BIT_FEATURE_ROMFS 
+#if BIT_ROM 
 /****************************** Forward Declarations **************************/
 
 static void manageRomFile(MprFile *file, int flags);
@@ -22771,9 +22770,9 @@ MprRomFileSystem *mprCreateRomFileSystem(cchar *path)
 }
 
 
-#else /* BIT_FEATURE_ROMFS */
+#else /* BIT_ROM */
 void stubRomfs() {}
-#endif /* BIT_FEATURE_ROMFS */
+#endif /* BIT_ROM */
 
 /*
     @copy   default
@@ -24442,7 +24441,7 @@ ssize mprWriteSocketVector(MprSocket *sp, MprIOVec *iovec, int count)
 }
 
 
-#if !BIT_FEATURE_ROMFS
+#if !BIT_ROM
 #if !LINUX || __UCLIBC__
 static ssize localSendfile(MprSocket *sp, MprFile *file, MprOff offset, ssize len)
 {
@@ -24567,7 +24566,7 @@ MprOff mprSendFileToSocket(MprSocket *sock, MprFile *file, MprOff offset, MprOff
     }
     return written;
 }
-#endif /* !BIT_FEATURE_ROMFS */
+#endif /* !BIT_ROM */
 
 
 static ssize flushSocket(MprSocket *sp)
@@ -25114,7 +25113,7 @@ MprSsl *mprCreateSsl()
 
 int mprLoadSsl()
 {
-#if BIT_FEATURE_SSL
+#if BIT_PACK_SSL
     MprSocketService    *ss;
     MprModule           *mp;
     cchar               *path;
@@ -26534,7 +26533,7 @@ int mprParseTestArgs(MprTestService *sp, int argc, char *argv[], MprTestParser e
         return MPR_ERR_BAD_ARGS;
     }
     if (outputVersion) {
-        mprPrintfError("%s: Version: %s\n", BIT_NAME, BIT_VERSION);
+        mprPrintfError("%s: Version: %s\n", BIT_TITLE, BIT_VERSION);
         return MPR_ERR_BAD_ARGS;
     }
     sp->argc = argc;
@@ -30244,7 +30243,7 @@ int mprGetRandomBytes(char *buf, ssize length, bool block)
 }
 
 
-#if BIT_CC_DYN_LOAD
+#if BIT_HAS_DYN_LOAD
 int mprLoadNativeModule(MprModule *mp)
 {
     MprModuleEntry  fn;
@@ -30275,7 +30274,7 @@ int mprLoadNativeModule(MprModule *mp)
         mp->path = at;
         mprGetPathInfo(mp->path, &info);
         mp->modified = info.mtime;
-        mprLog(2, "Loading native module %s", mp->path);
+        mprLog(2, "Loading native module %s", mprGetPathBase(mp->path));
         if ((handle = dlopen(mp->path, RTLD_LAZY | RTLD_GLOBAL)) == 0) {
             mprError("Can't load module %s\nReason: \"%s\"", mp->path, dlerror());
             return MPR_ERR_CANT_OPEN;

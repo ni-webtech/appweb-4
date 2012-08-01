@@ -8,7 +8,7 @@
 
 #include    "appweb.h"
 
-#if BIT_FEATURE_PHP
+#if BIT_PACK_PHP
 
 #if BIT_WIN_LIKE
     /*
@@ -103,7 +103,7 @@ static int  writeHeader(sapi_header_struct *sapiHeader, sapi_headers_struct *sap
  */
 static sapi_module_struct phpSapiBlock = {
     BIT_PRODUCT,                    /* Sapi name */
-    BIT_NAME,                       /* Full name */
+    BIT_TITLE,                      /* Full name */
     startup,                        /* Start routine */
     php_module_shutdown_wrapper,    /* Stop routine  */
     0,                              /* Activate */
@@ -489,8 +489,8 @@ static int initializePhp(Http *http)
 
     mprLog(2, "php: initialize php library");
     appweb = httpGetContext(http);
-#ifdef BIT_FEATURE_PHP_INI
-    phpSapiBlock.php_ini_path_override = BIT_FEATURE_PHP_INI;
+#ifdef BIT_PACK_PHP_INI
+    phpSapiBlock.php_ini_path_override = BIT_PACK_PHP_INI;
 #else
     phpSapiBlock.php_ini_path_override = appweb->defaultServer->home;
 #endif
@@ -562,14 +562,14 @@ int maPhpHandlerInit(Http *http, MprModule *module)
     return 0;
 }
 
-#else /* BIT_FEATURE_PHP */
+#else /* BIT_PACK_PHP */
 
 int maPhpHandlerInit(Http *http, MprModule *module)
 {
     mprNop(0);
     return 0;
 }
-#endif /* BIT_FEATURE_PHP */
+#endif /* BIT_PACK_PHP */
 
 /*
     @copy   default

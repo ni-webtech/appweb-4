@@ -62,7 +62,7 @@ static void manageAppweb(MaAppweb *appweb, int flags)
 
 static void openHandlers(Http *http)
 {
-#if BIT_FEATURE_DIR
+#if BIT_PACK_DIR
     maOpenDirHandler(http);
 #endif
     maOpenFileHandler(http);
@@ -204,7 +204,7 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *d
         route = mprGetFirstItem(host->routes);
         mprAssert(route);
 
-#if BIT_FEATURE_CGI
+#if BIT_PACK_CGI
         maLoadModule(appweb, "cgiHandler", "mod_cgi");
         if (httpLookupStage(http, "cgiHandler")) {
             httpAddRouteHandler(route, "cgiHandler", "cgi cgi-nph bat cmd pl py");
@@ -221,19 +221,19 @@ int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, cchar *d
             }
         }
 #endif
-#if BIT_FEATURE_ESP
+#if BIT_PACK_ESP
         maLoadModule(appweb, "espHandler", "mod_esp");
         if (httpLookupStage(http, "espHandler")) {
             httpAddRouteHandler(route, "espHandler", "esp");
         }
 #endif
-#if BIT_FEATURE_EJSCRIPT
+#if BIT_PACK_EJSCRIPT
         maLoadModule(appweb, "ejsHandler", "mod_ejs");
         if (httpLookupStage(http, "ejsHandler")) {
             httpAddRouteHandler(route, "ejsHandler", "ejs");
         }
 #endif
-#if BIT_FEATURE_PHP
+#if BIT_PACK_PHP
         maLoadModule(appweb, "phpHandler", "mod_php");
         if (httpLookupStage(http, "phpHandler")) {
             httpAddRouteHandler(route, "phpHandler", "php");
@@ -357,7 +357,7 @@ int maSetPlatform(cchar *platform)
  */
 void maSetServerHome(MaServer *server, cchar *path)
 {
-    if (path == 0 || BIT_FEATURE_ROMFS) {
+    if (path == 0 || BIT_ROM) {
         path = ".";
     }
 #if !VXWORKS

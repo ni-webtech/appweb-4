@@ -1,13 +1,13 @@
-Embedthis Appweb GPL License Agreement
+Embedthis Appweb Licensing
 ===
 
-This software is licensed according to the provisions of GNU GENERAL PUBLIC LICENSE below. 
+This software is distributed under commercial and open source licenses. You may use the GPLv2 License below License or
+you may acquire a commercial license from Embedthis Software. You agree to be fully bound by the terms of either
+license. The GPLv2 License does NOT generally permit incorporating this software into non-open source programs. If you
+are unable to comply with the GPLv2, you must acquire a commercial license to use this software.
 
-Commercial license are also available for those who require them.  The Embedthis Commercial License, allows you to provide commercial software licenses for products containing Embedthis software. This is for individuals or organizations that do not want to release their source code as open source / free software as governed by the GPL license below. For more information on licensing, please see:
-
-http://embedthis.com/downloads/licensing.html
-
-Some components of the sofware are licensed from third parties. See the end of this document for a list of licensed third party software.
+Commercial licenses for this software and support services are available from Embedthis Software at:
+    http://embedthis.com/licensing/index.html
 
 GNU GENERAL PUBLIC LICENSE, Version 2, June 1991.
 ===

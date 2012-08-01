@@ -8,7 +8,7 @@
 
 #include    "esp.h"
 
-#if BIT_FEATURE_ESP
+#if BIT_PACK_ESP
 /******************************* Abbreviated Controls *************************/ 
 
 void alert(cchar *text, cchar *optionString)
@@ -667,7 +667,7 @@ bool updateRec(EdiRec *rec)
 }
 
 
-#endif /* BIT_FEATURE_ESP */
+#endif /* BIT_PACK_ESP */
 /*
     @copy   default
     

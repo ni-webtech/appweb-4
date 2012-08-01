@@ -11,7 +11,7 @@
 
 #include    "appweb.h"
 
-#if BIT_FEATURE_CGI
+#if BIT_PACK_CGI
 /************************************ Locals ***********************************/
 
 #define MA_CGI_SEEN_HEADER          0x1     /* Client header has been parsed */
@@ -1078,14 +1078,14 @@ int maCgiHandlerInit(Http *http, MprModule *module)
     return 0;
 }
 
-#else /* BIT_FEATURE_CGI */
+#else /* BIT_PACK_CGI */
 
 int maCgiHandlerInit(Http *http, MprModule *module)
 {
     mprNop(0);
     return 0;
 }
-#endif /* BIT_FEATURE_CGI */
+#endif /* BIT_PACK_CGI */
 
 /*
     @copy   default

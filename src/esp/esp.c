@@ -8,7 +8,7 @@
 
 #include    "esp.h"
 
-#if BIT_FEATURE_ESP
+#if BIT_PACK_ESP
 /********************************** Locals ************************************/
 /*
     Global application object. Provides the top level roots of all data objects for the GC.
@@ -408,7 +408,7 @@ int main(int argc, char **argv)
             app->verbose = 1;
 
         } else if (smatch(argp, "version") || smatch(argp, "V")) {
-            mprPrintf("%s %s-%s\n", mprGetAppTitle(), BIT_VERSION, BIT_NUMBER);
+            mprPrintf("%s %s-%s\n", mprGetAppTitle(), BIT_VERSION, BIT_BUILD_NUMBER);
             exit(0);
 
         } else if (smatch(argp, "why") || smatch(argp, "w")) {
@@ -2121,7 +2121,7 @@ static void why(cchar *path, cchar *fmt, ...)
     }
 }
 
-#endif /* BIT_FEATURE_ESP */
+#endif /* BIT_PACK_ESP */
 
 /*
     @copy   default

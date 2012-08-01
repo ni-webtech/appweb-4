@@ -9,7 +9,7 @@
 #include    "esp.h"
 #include    "edi.h"
 
-#if BIT_FEATURE_ESP
+#if BIT_PACK_ESP
 /************************************* Local **********************************/
 
 static char *defaultScripts[] = {
@@ -27,18 +27,14 @@ static char *defaultStylesheets[] = {
 };
 
 #if MOB
-    Actions
-        - P
-        - Have internal mappings san-data to add "data-"
-        - Define all options and document
-        - Rename "app" into "mapp" and have test pages
-        - Create unit tests
+    - Which internal options need to have data- appended and then passed to client.
 
     Principles
         - All unknown options are passed through to the client
         - Internal options are filtered or mapped to data-*
         - Remote only takes a "true" value
-    - Support flash as modal, transparent box. See "sales" app.
+
+    - Support flash as modal, transparent box
     - Support "feedback" transparent overlay
 
     Kinds of click requests:
@@ -76,7 +72,7 @@ static char *internalOptions[] = {
     "controller",                   /* general: Controller to use for click events */
     "escape",                       /* general: Html escape the data */
     "feedback",                     /* general: User feedback overlay after a clickable event */
-//  MOB
+//  MOB - left aligned field seem to not be used
 "field",
 
 //  MOB - not implemented. Change to format
@@ -117,7 +113,7 @@ static char *internalOptions[] = {
 };
 
 #if DOC_ONLY
-//  MOB - what are these
+//  MOB - what to do with these?
 static char *htmlOptions[] = {
     "background",
     "class",
@@ -135,6 +131,7 @@ static char *htmlOptions[] = {
 //  MOB - what are thse
 //  MOB -check against jquery.esp.js
 static char *dataOptions[] = {
+    //  MOB - Comment each one 
     "data-apply",
     "data-click",
     "data-click-method",
@@ -304,8 +301,12 @@ void espForm(HttpConn *conn, EdiRec *record, cchar *optionString)
         action = (recid) ? "@update" : "@create";
     }
     uri = httpLink(conn, action, NULL);
-    espRender(conn, "<form method='%s'  action='%s'%s >\r\n", method, uri, map(conn, options));
-
+    //  MOB - refactor
+    if (smatch(httpGetOption(options, "remote", 0), "true")) {
+        espRender(conn, "<form method='%s' data-remote='%s'%s >\r\n", method, uri, map(conn, options));
+    } else {
+        espRender(conn, "<form method='%s'  action='%s'%s >\r\n", method, uri, map(conn, options));
+    }
     if (recid) {
         espRender(conn, "    <input name='recid' type='hidden' value='%s' />\r\n", recid);
     }
@@ -1093,9 +1094,7 @@ MprHash *makeParams(cchar *fmt, ...)
 
 
 /*
-    Map options to an attribute string. Remove all internal control specific options and transparently handles
-    URI link options.
-
+    Map options to an attribute string. Remove all internal control specific options and transparently handle URI link options.
     WARNING: this returns a non-cloned reference and relies on no GC yield until the returned value is used or cloned.
     This is done as an optimization to reduce memeory allocations.
  */
@@ -1126,7 +1125,6 @@ static cchar *map(HttpConn *conn, MprHash *options)
                 Support link template resolution for these options
              */
             if (smatch(kp->key, "data-click") || smatch(kp->key, "data-remote") || smatch(kp->key, "data-refresh")) {
-//@edit
                 value = httpLink(conn, value, options);
                 if ((params = httpGetOptionHash(options, "params")) != 0) {
                     pstr = (char*) "";
@@ -1162,7 +1160,7 @@ void espInitHtmlOptions(Esp *esp)
 }
 
 
-#endif /* BIT_FEATURE_ESP */
+#endif /* BIT_PACK_ESP */
 /*
     @copy   default
     

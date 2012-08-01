@@ -11,7 +11,7 @@
 
 #include    "appweb.h"
 
-#if BIT_FEATURE_ESP
+#if BIT_PACK_ESP
 
 #ifdef __cplusplus
 extern "C" {
@@ -848,11 +848,11 @@ extern EdiGrid *ediPivotGrid(EdiGrid *grid, int flags);
   */
 extern EdiGrid *ediSortGrid(EdiGrid *grid, cchar *sortColumn, int sortOrder);
 
-#if BIT_FEATURE_MDB
+#if BIT_MDB
 extern void mdbInit();
 #endif
 
-#if BIT_FEATURE_SDB
+#if BIT_SDB
 extern void sdbInit();
 #endif
 
@@ -860,7 +860,7 @@ extern void sdbInit();
 } /* extern C */
 #endif
 
-#endif /* BIT_FEATURE_ESP */
+#endif /* BIT_PACK_ESP */
 #endif /* _h_EDI */
 
 /*

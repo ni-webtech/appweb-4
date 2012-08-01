@@ -796,7 +796,7 @@ static int makeDaemon()
 
 #define HEART_BEAT_PERIOD   (10 * 1000) /* Default heart beat period (10 sec) */
 #define RESTART_MAX         (15)        /* Max restarts per hour */
-#define SERVICE_DESCRIPTION ("Manages " BIT_NAME)
+#define SERVICE_DESCRIPTION ("Manages " BIT_TITLE)
 
 typedef struct App {
     HWND         hwnd;               /* Application window handle */
@@ -877,7 +877,7 @@ int APIENTRY WinMain(HINSTANCE inst, HINSTANCE junk, char *args, int junk2)
 
     setAppDefaults();
 
-    mprSetAppName(BIT_PRODUCT "Manager", BIT_NAME "Manager", BIT_VERSION);
+    mprSetAppName(BIT_PRODUCT "Manager", BIT_TITLE " Manager", BIT_VERSION);
     app->appName = mprGetAppName();
     app->appTitle = mprGetAppTitle(mpr);
     mprSetLogHandler(logHandler);
@@ -1556,7 +1556,7 @@ static void setAppDefaults()
     app->serviceProgram = sjoin(mprGetAppDir(), "\\", BIT_PRODUCT, ".exe", NULL);
     app->serviceName = sclone(BIT_COMPANY "-" BIT_PRODUCT);
     app->serviceHome = NULL;
-    app->serviceTitle = sclone(BIT_NAME);
+    app->serviceTitle = sclone(BIT_TITLE);
     app->serviceStopped = 0;
 }
 
@@ -1601,7 +1601,7 @@ static void gracefulShutdown(MprTime timeout)
 {
     HWND    hwnd;
 
-    hwnd = FindWindow(BIT_PRODUCT, BIT_NAME);
+    hwnd = FindWindow(BIT_PRODUCT, BIT_TITLE);
     if (hwnd) {
         PostMessage(hwnd, WM_QUIT, 0, 0L);
 
@@ -1611,7 +1611,7 @@ static void gracefulShutdown(MprTime timeout)
         while (timeout > 0 && hwnd) {
             mprSleep(100);
             timeout -= 100;
-            hwnd = FindWindow(BIT_PRODUCT, BIT_NAME);
+            hwnd = FindWindow(BIT_PRODUCT, BIT_TITLE);
             if (hwnd == 0) {
                 return;
             }

@@ -9,7 +9,7 @@
 #include    "edi.h"
 #include    "pcre.h"
 
-#if BIT_FEATURE_ESP
+#if BIT_PACK_ESP
 /************************************* Local **********************************/
 
 static void addValidations();
@@ -1080,7 +1080,7 @@ static void addValidations()
 }
 
 
-#endif /* BIT_FEATURE_ESP */
+#endif /* BIT_PACK_ESP */
 /*
     @copy   default
     

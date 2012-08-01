@@ -11,7 +11,7 @@
 
 #include    "appweb.h"
 
-#if BIT_FEATURE_ESP
+#if BIT_PACK_ESP
 
 #include    "edi.h"
 
@@ -59,7 +59,7 @@ extern "C" {
 /*
     Default SSL library switches
  */
-#if BIT_FEATURE_SSL
+#if BIT_PACK_SSL
     #if WINDOWS
         #define ESP_SSL_LIBS " \"${LIBPATH}\\libmprssl.lib\""
     #else
@@ -2987,7 +2987,7 @@ extern void warn(cchar *fmt, ...);
 #ifdef __cplusplus
 } /* extern C */
 #endif
-#endif /* BIT_FEATURE_ESP */
+#endif /* BIT_PACK_ESP */
 #endif /* _h_ESP */
 
 /*

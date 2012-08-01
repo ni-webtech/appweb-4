@@ -87,7 +87,7 @@ MAIN(appweb, int argc, char **argv, char **envp)
     if ((mpr = mprCreate(argc, argv, MPR_USER_EVENTS_THREAD)) == NULL) {
         exit(1);
     }
-    mprSetAppName(BIT_PRODUCT, BIT_NAME, BIT_VERSION);
+    mprSetAppName(BIT_PRODUCT, BIT_TITLE, BIT_VERSION);
 
     if ((app = mprAllocObj(AppwebApp, manageApp)) == NULL) {
         exit(2);
@@ -95,7 +95,7 @@ MAIN(appweb, int argc, char **argv, char **envp)
     mprAddRoot(app);
     mprAddStandardSignals();
 
-#if BIT_FEATURE_ROMFS
+#if BIT_ROM
     extern MprRomInode romFiles[];
     mprSetRomFileSystem(romFiles);
 #endif
@@ -172,7 +172,7 @@ MAIN(appweb, int argc, char **argv, char **envp)
             verbose++;
 
         } else if (smatch(argp, "--version") || smatch(argp, "-V")) {
-            mprPrintf("%s %s-%s\n", mprGetAppTitle(), BIT_VERSION, BIT_NUMBER);
+            mprPrintf("%s %s-%s\n", mprGetAppTitle(), BIT_VERSION, BIT_BUILD_NUMBER);
             exit(0);
 
         } else {
@@ -327,20 +327,20 @@ static void usageError(Mpr *mpr)
     name = mprGetAppName();
 
     mprPrintfError("\n%s Usage:\n\n"
-    "  %s [options] [IPaddress][:port] [documents]\n\n"
-    "  Options:\n"
-    "    --config configFile    # Use named config file instead appweb.conf\n"
-    "    --chroot directory     # Change root directory to run more securely (Unix)\n"
-    "    --debugger             # Disable timeouts to make debugging easier\n"
-    "    --exe path             # Set path to Appweb executable on Vxworks\n"
-    "    --home directory       # Change to directory to run\n"
-    "    --log logFile:level    # Log to file file at verbosity level\n"
-    "    --name uniqueName      # Unique name for this instance\n"
-    "    --threads maxThreads   # Set maximum worker threads\n"
-    "    --verbose              # Same as --log stderr:2\n"
-    "    --version              # Output version information\n\n"
-    "  Without IPaddress, %s will read the appweb.conf configuration file.\n\n",
-        mprGetAppTitle(), name, name, name, name);
+        "  %s [options] [IPaddress][:port] [documents]\n\n"
+        "  Options:\n"
+        "    --config configFile    # Use named config file instead appweb.conf\n"
+        "    --chroot directory     # Change root directory to run more securely (Unix)\n"
+        "    --debugger             # Disable timeouts to make debugging easier\n"
+        "    --exe path             # Set path to Appweb executable on Vxworks\n"
+        "    --home directory       # Change to directory to run\n"
+        "    --log logFile:level    # Log to file file at verbosity level\n"
+        "    --name uniqueName      # Unique name for this instance\n"
+        "    --threads maxThreads   # Set maximum worker threads\n"
+        "    --verbose              # Same as --log stderr:2\n"
+        "    --version              # Output version information\n\n"
+        "  Without IPaddress, %s will read the appweb.conf configuration file.\n\n",
+        mprGetAppTitle(), name, name);
     exit(10);
 }
 

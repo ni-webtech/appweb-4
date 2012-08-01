@@ -8,7 +8,7 @@
 
 #include    "esp.h"
 
-#if BIT_FEATURE_ESP
+#if BIT_PACK_ESP
 
 /************************************ Defines *********************************/
 /*
@@ -933,7 +933,7 @@ static cchar *getCompilerPath(cchar *os, cchar *arch)
 #endif
 }
 
-#endif /* BIT_FEATURE_ESP */
+#endif /* BIT_PACK_ESP */
 /*
     @copy   default
     

@@ -8,7 +8,7 @@
 
 #include    "esp.h"
 
-#if BIT_FEATURE_ESP
+#if BIT_PACK_ESP
 
 /************************************* Code ***********************************/
 /*  
@@ -1033,7 +1033,7 @@ void espManageEspRoute(EspRoute *eroute, int flags)
 }
 
 
-#endif /* BIT_FEATURE_ESP */
+#endif /* BIT_PACK_ESP */
 /*
     @copy   default
     

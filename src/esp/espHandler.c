@@ -8,7 +8,7 @@
 
 #include    "appweb.h"
 
-#if BIT_FEATURE_ESP
+#if BIT_PACK_ESP
 #include    "esp.h"
 #include    "edi.h"
 
@@ -1062,6 +1062,8 @@ int maEspHandlerInit(Http *http, MprModule *module)
     if ((esp->internalOptions = mprCreateHash(-1, MPR_HASH_STATIC_VALUES)) == 0) {
         return 0;
     }
+    espInitHtmlOptions(esp);
+
     if ((esp->views = mprCreateHash(-1, MPR_HASH_STATIC_VALUES)) == 0) {
         return 0;
     }
@@ -1093,11 +1095,11 @@ int maEspHandlerInit(Http *http, MprModule *module)
     if ((esp->ediService = ediCreateService()) == 0) {
         return 0;
     }
-#if BIT_FEATURE_MDB
+#if BIT_MDB
     /* Memory database */
     mdbInit();
 #endif
-#if BIT_FEATURE_SDB
+#if BIT_SDB
     /* Sqlite */
     sdbInit();
 #endif
@@ -1118,7 +1120,7 @@ static int unloadEsp(MprModule *mp)
     return 0;
 }
 
-#else /* BIT_FEATURE_ESP */
+#else /* BIT_PACK_ESP */
 
 int maEspHandlerInit(Http *http, MprModule *mp)
 {
@@ -1126,7 +1128,7 @@ int maEspHandlerInit(Http *http, MprModule *mp)
     return 0;
 }
 
-#endif /* BIT_FEATURE_ESP */
+#endif /* BIT_PACK_ESP */
 /*
     @copy   default
     

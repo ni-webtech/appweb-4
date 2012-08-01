@@ -442,7 +442,7 @@ static bool parseArgs(int argc, char **argv)
             mprPrintfError("%s %s\n"
                 "Copyright (C) Embedthis Software 2003-2012\n"
                 "Copyright (C) Michael O'Brien 2003-2012\n",
-               BIT_NAME, BIT_VERSION);
+               BIT_TITLE, BIT_VERSION);
             exit(0);
 
         } else if (smatch(argp, "--workerTheads") || smatch(argp, "-w")) {
@@ -498,7 +498,7 @@ static bool parseArgs(int argc, char **argv)
             app->method = "GET";
         }
     }
-#if BIT_FEATURE_SSL
+#if BIT_PACK_SSL
     if (app->insecure || app->cert || app->provider) {
         app->ssl = mprCreateSsl();
         if (app->provider) {

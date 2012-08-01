@@ -318,7 +318,7 @@ functions whose names all begin with "_pcre_". */
     #define _VSB_CONFIG_FILE "vsbConfig.h"
 #endif
 
-#if BIT_FEATURE_PCRE
+#if BIT_PACK_PCRE
 /* Define DEBUG to get debugging output on stdout. */
 
 #if VXWORKS
@@ -1493,7 +1493,7 @@ extern BOOL         _pcre_xclass(int, const uschar *);
 #endif
 
 /* End of pcre_internal.h */
-#endif /* BIT_FEATURE_PCRE */
+#endif /* BIT_PACK_PCRE */
 
 /************************************************************************/
 /*
@@ -1507,7 +1507,7 @@ extern BOOL         _pcre_xclass(int, const uschar *);
 
 #include "bit.h"
 
-#if BIT_FEATURE_PCRE
+#if BIT_PACK_PCRE
 
 #ifndef _UCP_H
 #define _UCP_H
@@ -1638,7 +1638,7 @@ enum {
 #endif
 
 /* End of ucp.h */
-#endif /* BIT_FEATURE_PCRE */
+#endif /* BIT_PACK_PCRE */
 
 /************************************************************************/
 /*
@@ -1655,7 +1655,7 @@ enum {
 
 #include "bit.h"
 
-#if BIT_FEATURE_PCRE
+#if BIT_PACK_PCRE
 
 /* Internal header file defining the layout of the bits in each pair of 32-bit
 words that form a data item in the table. */
@@ -1739,7 +1739,7 @@ When searching the data, proceed as follows:
     (2).
 */
 
-#endif /* BIT_FEATURE_PCRE */
+#endif /* BIT_PACK_PCRE */
 #endif /* _UCPINTERNAL_H */
 
 /* End of ucpinternal.h */
@@ -1756,7 +1756,7 @@ This version was made from the Unicode 5.0.0 tables. */
 
 #include "bit.h"
 
-#if BIT_FEATURE_PCRE
+#if BIT_PACK_PCRE
 
 static const cnode ucp_table[] = {
   { 0x09800000, 0x0000001f },
@@ -4843,7 +4843,7 @@ static const cnode ucp_table[] = {
   { 0x09900000, 0x0c00fffd },
 };
 
-#endif /* BIT_FEATURE_PCRE */
+#endif /* BIT_PACK_PCRE */
 
 
 /************************************************************************/
@@ -4877,7 +4877,7 @@ unit might reference this" and so it will always be supplied to the linker. */
 #include "bit.h"
 
 
-#if BIT_FEATURE_PCRE
+#if BIT_PACK_PCRE
 
 
 
@@ -5051,7 +5051,7 @@ graph, print, punct, and cntrl. Other classes are built from combinations. */
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};/* 248-255 */
 
 /* End of pcre_chartables.c */
-#endif /* BIT_FEATURE_PCRE */
+#endif /* BIT_PACK_PCRE */
 
 /************************************************************************/
 /*
@@ -5106,7 +5106,7 @@ supporting internal functions that are not used by other modules. */
 #include "bit.h"
 
 
-#if BIT_FEATURE_PCRE
+#if BIT_PACK_PCRE
 
 /* EMBEDTHIS */
 #undef NLBLOCK
@@ -11497,7 +11497,7 @@ return (pcre *)re;
 }
 
 /* End of pcre_compile.c */
-#endif /* BIT_FEATURE_PCRE */
+#endif /* BIT_PACK_PCRE */
 
 /************************************************************************/
 /*
@@ -11552,7 +11552,7 @@ possible. There are also some static supporting functions. */
 #include "bit.h"
 
 
-#if BIT_FEATURE_PCRE
+#if BIT_PACK_PCRE
 
 #undef NLBLOCK
 #define NLBLOCK md             /* Block containing newline information */
@@ -16489,7 +16489,7 @@ else
 }
 
 /* End of pcre_exec.c */
-#endif /* BIT_FEATURE_PCRE */
+#endif /* BIT_PACK_PCRE */
 
 /************************************************************************/
 /*
@@ -16548,7 +16548,7 @@ differently, and global variables are not used (see pcre.in). */
 #include "bit.h"
 
 
-#if BIT_FEATURE_PCRE
+#if BIT_PACK_PCRE
 
 
 #ifndef VPCOMPAT
@@ -16560,7 +16560,7 @@ PCRE_EXP_DATA_DEFN int   (*pcre_callout)(pcre_callout_block *) = NULL;
 #endif
 
 /* End of pcre_globals.c */
-#endif /* BIT_FEATURE_PCRE */
+#endif /* BIT_PACK_PCRE */
 
 /************************************************************************/
 /*
@@ -16620,7 +16620,7 @@ http://unicode.org/unicode/reports/tr18/. */
 #include "bit.h"
 
 
-#if BIT_FEATURE_PCRE
+#if BIT_PACK_PCRE
 
 
 
@@ -16732,7 +16732,7 @@ else switch(c)
 }
 
 /* End of pcre_newline.c */
-#endif /* BIT_FEATURE_PCRE */
+#endif /* BIT_PACK_PCRE */
 
 /************************************************************************/
 /*
@@ -16786,7 +16786,7 @@ character value into a UTF8 string. */
 #include "bit.h"
 
 
-#if BIT_FEATURE_PCRE
+#if BIT_PACK_PCRE
 
 
 
@@ -16825,7 +16825,7 @@ return 0;   /* Keep compiler happy; this function won't ever be */
 }
 
 /* End of pcre_ord2utf8.c */
-#endif /* BIT_FEATURE_PCRE */
+#endif /* BIT_PACK_PCRE */
 
 /************************************************************************/
 /*
@@ -16882,7 +16882,7 @@ clashes with the library. */
 #include "bit.h"
 
 
-#if BIT_FEATURE_PCRE
+#if BIT_PACK_PCRE
 
 
 
@@ -17151,7 +17151,7 @@ const int _pcre_utt_size = sizeof(_pcre_utt)/sizeof(ucp_type_table);
 #endif  /* SUPPORT_UTF8 */
 
 /* End of pcre_tables.c */
-#endif /* BIT_FEATURE_PCRE */
+#endif /* BIT_PACK_PCRE */
 
 /************************************************************************/
 /*
@@ -17207,7 +17207,7 @@ auxiliary local function to flip the appropriate bytes. */
 #include "bit.h"
 
 
-#if BIT_FEATURE_PCRE
+#if BIT_PACK_PCRE
 
 
 
@@ -17296,7 +17296,7 @@ return internal_re;
 }
 
 /* End of pcre_tryflipped.c */
-#endif /* BIT_FEATURE_PCRE */
+#endif /* BIT_PACK_PCRE */
 
 /************************************************************************/
 /*
@@ -17350,7 +17350,7 @@ properties. */
 #include "bit.h"
 
 
-#if BIT_FEATURE_PCRE
+#if BIT_PACK_PCRE
 
 
 
@@ -17483,7 +17483,7 @@ return (offset == 0)? NOTACHAR : c + offset;
 
 
 /* End of pcre_ucp_searchfuncs.c */
-#endif /* BIT_FEATURE_PCRE */
+#endif /* BIT_PACK_PCRE */
 
 /************************************************************************/
 /*
@@ -17538,7 +17538,7 @@ strings. */
 #include "bit.h"
 
 
-#if BIT_FEATURE_PCRE
+#if BIT_PACK_PCRE
 
 
 
@@ -17653,7 +17653,7 @@ return -1;
 }
 
 /* End of pcre_valid_utf8.c */
-#endif /* BIT_FEATURE_PCRE */
+#endif /* BIT_PACK_PCRE */
 
 /************************************************************************/
 /*
@@ -17709,7 +17709,7 @@ pcre_exec() and pcre_def_exec(). */
 #include "bit.h"
 
 
-#if BIT_FEATURE_PCRE
+#if BIT_PACK_PCRE
 
 
 
@@ -17809,4 +17809,4 @@ return negated;   /* char did not match */
 }
 
 /* End of pcre_xclass.c */
-#endif /* BIT_FEATURE_PCRE */
+#endif /* BIT_PACK_PCRE */

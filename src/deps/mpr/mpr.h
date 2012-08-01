@@ -36,18 +36,18 @@
 #ifndef BIT_DEBUG
     #define BIT_DEBUG 0
 #endif
-#ifndef BIT_FEATURE_ASSERT
+#ifndef BIT_ASSERT
     #if BIT_DEBUG
-        #define BIT_FEATURE_ASSERT 1
+        #define BIT_ASSERT 1
     #else
-        #define BIT_FEATURE_ASSERT 0
+        #define BIT_ASSERT 0
     #endif
 #endif
-#ifndef BIT_FEATURE_FLOAT
-    #define BIT_FEATURE_FLOAT 1
+#ifndef BIT_FLOAT
+    #define BIT_FLOAT 1
 #endif
-#ifndef BIT_FEATURE_ROMFS
-    #define BIT_FEATURE_ROMFS 0
+#ifndef BIT_ROM
+    #define BIT_ROM 0
 #endif
 #ifndef BIT_TUNE
     #define BIT_TUNE MPR_TUNE_SIZE
@@ -98,6 +98,7 @@
 /*
     Operating system defines. Use compiler standard defintions to sleuth. 
     Works for all except VxWorks which does not define any special symbol.
+    NOTE: Support for SCOV Unix, LynxOS and UnixWare is deprecated.
  */
 #if defined(__APPLE__)
     #define BIT_OS "macosx"
@@ -119,6 +120,21 @@
     #define WINDOWS 1
     #define BIT_UNIX_LIKE 0
     #define BIT_WIN_LIKE 1
+#elif defined(__OS2__)
+    #define BIT_OS "os2"
+    #define OS2 0
+    #define BIT_UNIX_LIKE 0
+    #define BIT_WIN_LIKE 0
+#elif defined(MSDOS) || defined(__DOS__)
+    #define BIT_OS "msdos"
+    #define WINDOWS 0
+    #define BIT_UNIX_LIKE 0
+    #define BIT_WIN_LIKE 0
+#elif defined(__NETWARE_386__)
+    #define BIT_OS "netware"
+    #define NETWARE 0
+    #define BIT_UNIX_LIKE 0
+    #define BIT_WIN_LIKE 0
 #elif defined(__bsdi__)
     #define BIT_OS "bsdi"
     #define BSDI 1
@@ -128,6 +144,11 @@
     #define BIT_OS "netbsd"
     #define NETBSD 1
     #define BIT_UNIX_LIKE 1
+    #define BIT_WIN_LIKE 0
+#elif defined(__QNX__)
+    #define BIT_OS "qnx"
+    #define QNX 0
+    #define BIT_UNIX_LIKE 0
     #define BIT_WIN_LIKE 0
 #elif defined(__hpux)
     #define BIT_OS "hpux"
@@ -159,10 +180,10 @@
 /********************************* O/S Includes *******************************/
 
 #if __WORDSIZE == 64 || __amd64 || __x86_64 || __x86_64__ || _WIN64
-    #define MPR_64_BIT 1
-    #define MPR_BITS 64
+    #define BIT_64 1
+    #define BIT_WORDSIZE 64
 #else
-    #define MPR_BITS 32
+    #define BIT_WORDSIZE 32
 #endif
 
 /*
@@ -184,7 +205,7 @@
  */
 #if LINUX
     #define _GNU_SOURCE 1
-    #if !MPR_64_BIT
+    #if !BIT_64
         #define _LARGEFILE64_SOURCE 1
         #define _FILE_OFFSET_BITS 64
     #endif
@@ -246,7 +267,7 @@
     #include    <fcntl.h>
     #include    <errno.h>
 
-#if BIT_FEATURE_FLOAT
+#if BIT_FLOAT
     #include    <float.h>
     #define __USE_ISOC99 1
     #include    <math.h>
@@ -382,12 +403,6 @@
     #include    <symSync.h>
     #include    <vxAtomicLib.h>
 #endif
-#endif
-
-/************************************** Defaults ******************************/
-
-#ifndef BIT_FEATURE_ROMFS
-    #define BIT_FEATURE_ROMFS 0
 #endif
 
 /************************************** Defines *******************************/
@@ -585,7 +600,7 @@ typedef int64 MprTime;
     #define BITS(type)      (BITSPERBYTE * (int) sizeof(type))
 #endif
 
-#if BIT_FEATURE_FLOAT
+#if BIT_FLOAT
     #ifndef MAXFLOAT
         #if BIT_WIN_LIKE
             #define MAXFLOAT        DBL_MAX
@@ -623,7 +638,7 @@ typedef int64 MprTime;
 
 #if SIZE_T_MAX
     #define MAXSIZE     SIZE_T_MAX
-#elif MPR_64_BIT
+#elif BIT_64
     #define MAXSIZE     INT64(0xffffffffffffffff)
 #else
     #define MAXSIZE     MAXINT
@@ -631,7 +646,7 @@ typedef int64 MprTime;
 
 #if SSIZE_T_MAX
     #define MAXSSIZE     SSIZE_T_MAX
-#elif MPR_64_BIT
+#elif BIT_64
     #define MAXSSIZE     INT64(0x7fffffffffffffff)
 #else
     #define MAXSSIZE     MAXINT
@@ -646,7 +661,7 @@ typedef int64 MprTime;
 /*
     Word size and conversions between integer and pointer.
  */
-#if MPR_64_BIT
+#if BIT_64
     #define ITOP(i)     ((void*) ((int64) i))
     #define PTOI(i)     ((int) ((int64) i))
     #define LTOP(i)     ((void*) ((int64) i))
@@ -704,7 +719,7 @@ typedef int64 MprTime;
     #define BIT_HAS_SPINLOCK    1
 #endif
 
-#if BIT_CC_DOUBLE_BRACES
+#if BIT_HAS_DOUBLE_BRACES
     #define  NULL_INIT    {{0}}
 #else
     #define  NULL_INIT    {0}
@@ -1154,7 +1169,7 @@ struct  MprXml;
 #define MPR_TUNE_BALANCED   2       /**< Tune balancing speed and size */
 #define MPR_TUNE_SPEED      3       /**< Tune for speed, program will use memory more aggressively */
 
-#if BIT_CC_MMU
+#if BIT_HAS_MMU
     /* 
         If the system supports virtual memory, then stack size should use system default. Only used pages will
         actually consume memory 
@@ -1526,7 +1541,7 @@ struct  MprXml;
 
 #if BIT_UNIX_LIKE
     typedef pthread_t   MprOsThread;
-#elif MPR_64_BIT
+#elif BIT_64
     typedef int64       MprOsThread;
 #else
     typedef int         MprOsThread;
@@ -1553,7 +1568,7 @@ struct  MprXml;
  */
 extern void mprBreakpoint();
 
-#if BIT_FEATURE_ASSERT
+#if BIT_ASSERT
     #define mprAssert(C)    if (C) ; else mprAssertError(MPR_LOC, #C)
 #else
     #define mprAssert(C)    if (1) ; else
@@ -1931,7 +1946,7 @@ extern void *mprAtomicExchange(void * volatile *target, cvoid *value);
     Alignment bit sizes for the allocator. Blocks are aligned on 4 byte boundaries for 32 bits systems and 8 byte 
     boundaries for 64 bit systems and those systems that require doubles to be 8 byte aligned.
  */
-#if !MPR_64_BIT && !(MPR_CPU_MIPS)
+#if !BIT_64 && !(MPR_CPU_MIPS)
     #define MPR_ALIGN               4
     #define MPR_ALIGN_SHIFT         2
 #else
@@ -1942,7 +1957,7 @@ extern void *mprAtomicExchange(void * volatile *target, cvoid *value);
 /*
     Maximum bits available for expressing a memory size. On 32-bit systems, this is 0.5GB or 0x20000000.
  */
-#define MPR_SIZE_BITS               (MPR_BITS - 3)
+#define MPR_SIZE_BITS               (BIT_WORDSIZE - 3)
 
 /*
     MprMem.prior field bits. Layout for 32 bits. This field must only be accessed (read|write) while locked.
@@ -1961,8 +1976,8 @@ extern void *mprAtomicExchange(void * volatile *target, cvoid *value);
 */
 #define MPR_SHIFT_MARK          0
 #define MPR_SHIFT_SIZE          0
-#define MPR_SHIFT_FREE          (MPR_BITS - 3)
-#define MPR_SHIFT_GEN           (MPR_BITS - 2)
+#define MPR_SHIFT_FREE          (BIT_WORDSIZE - 3)
+#define MPR_SHIFT_GEN           (BIT_WORDSIZE - 2)
 #define MPR_MASK_MARK           (0x3)
 #define MPR_MASK_GEN            (((size_t) 0x3) << MPR_SHIFT_GEN)
 #define MPR_MASK_FREE           (((size_t) 0x1) << MPR_SHIFT_FREE)
@@ -3352,7 +3367,7 @@ extern char *mprAsprintf(cchar *fmt, ...);
 extern char *mprAsprintfv(cchar *fmt, va_list arg);
 
 /********************************* Floating Point *****************************/
-#if BIT_FEATURE_FLOAT
+#if BIT_FLOAT
 /**
     Floating Point Services
     @stability Evolving
@@ -3408,7 +3423,7 @@ extern int mprIsZero(double value);
  */
 extern int mprIsNan(double value);
 
-#endif /* BIT_FEATURE_FLOAT */
+#endif /* BIT_FLOAT */
 /********************************* Buffering **********************************/
 /**
     Buffer refill callback function
@@ -4846,7 +4861,7 @@ typedef struct MprFileSystem {
 } MprFileSystem;
 
 
-#if BIT_FEATURE_ROMFS
+#if BIT_ROM
 /**
     A RomInode is created for each file in the Rom file system.
     @ingroup FileSystem
@@ -4864,7 +4879,7 @@ typedef struct MprRomFileSystem {
     MprRomInode     *romInodes;
     int             rootLen;
 } MprRomFileSystem;
-#else /* !BIT_FEATURE_ROMFS */
+#else /* !BIT_ROM */
 
 typedef MprFileSystem MprDiskFileSystem;
 #endif
@@ -4882,7 +4897,7 @@ typedef MprFileSystem MprDiskFileSystem;
 extern MprFileSystem *mprCreateFileSystem(cchar *path);
 
 
-#if BIT_FEATURE_ROMFS
+#if BIT_ROM
 /**
     Create and initialize the ROM FileSystem. 
     @description This is an internal routine called by the MPR during initialization.
@@ -4967,7 +4982,7 @@ typedef struct MprFile {
     int             perms;              /**< File permissions */
     int             fd;                 /**< File handle */
     int             attached;           /**< Attached to existing descriptor */
-#if BIT_FEATURE_ROMFS
+#if BIT_ROM
     MprRomInode     *inode;             /**< Reference to ROM file */
 #endif
 } MprFile;
@@ -5870,7 +5885,7 @@ extern cchar *mprGetModuleSearchPath();
  */
 extern int mprLoadModule(MprModule *mp);
 
-#if BIT_CC_DYN_LOAD || DOXYGEN
+#if BIT_HAS_DYN_LOAD || DOXYGEN
 /**
     Load a native module
     @param mp Module object created via $mprCreateModule.
@@ -7289,7 +7304,7 @@ extern ssize mprReadSocket(MprSocket *sp, void *buf, ssize size);
  */
 extern void mprRemoveSocketHandler(MprSocket *sp);
 
-#if !BIT_FEATURE_ROMFS
+#if !BIT_ROM
 /**
     Send a file to a socket
     @description Write the contents of a file to a socket. If the socket is in non-blocking mode (the default), the write
@@ -7527,10 +7542,10 @@ extern void mprVerifySslIssuer(struct MprSsl *ssl, bool on);
  */
 extern void mprVerifySslDepth(struct MprSsl *ssl, int depth);
 
-#if BIT_FEATURE_MATRIXSSL
+#if BIT_PACK_MATRIXSSL
     extern int mprCreateMatrixSslModule();
 #endif
-#if BIT_FEATURE_OPENSSL
+#if BIT_PACK_OPENSSL
     extern int mprCreateOpenSslModule();
 #endif
 

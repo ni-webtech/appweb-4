@@ -439,7 +439,7 @@ static void outputFooter(HttpQueue *q)
         httpWrite(q, "</ul>\r\n");
     }
     sock = conn->sock->listenSock;
-    httpWrite(q, "<address>%s %s at %s Port %d</address>\r\n", BIT_NAME, BIT_VERSION, sock->ip, sock->port);
+    httpWrite(q, "<address>%s %s at %s Port %d</address>\r\n", BIT_TITLE, BIT_VERSION, sock->ip, sock->port);
     httpWrite(q, "</body></html>\r\n");
 }
 

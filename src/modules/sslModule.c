@@ -7,7 +7,7 @@
 
 #include    "appweb.h"
 
-#if BIT_FEATURE_SSL
+#if BIT_PACK_SSL
 /*********************************** Code *************************************/
 
 static bool checkSsl(MaState *state)
@@ -187,7 +187,7 @@ int maSslModuleInit(Http *http, MprModule *mp)
 {
     return 0;
 }
-#endif /* BIT_FEATURE_SSL */
+#endif /* BIT_PACK_SSL */
 
 /*
     @copy   default
