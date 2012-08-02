@@ -11593,10 +11593,6 @@ char *mprGetMD5WithPrefix(cchar *buf, ssize length, cchar *prefix)
 static void initMD5(MD5CONTEXT *context)
 {
     context->count[0] = context->count[1] = 0;
-
-    /*
-        Load constants
-     */
     context->state[0] = 0x67452301;
     context->state[1] = 0xefcdab89;
     context->state[2] = 0x98badcfe;
@@ -11623,7 +11619,6 @@ static void update(MD5CONTEXT *context, uchar *input, uint inputLen)
     if (inputLen >= partLen) {
         memcpy((uchar*) &context->buffer[index], (uchar*) input, partLen);
         transform(context->state, context->buffer);
-
         for (i = partLen; i + 63 < inputLen; i += 64) {
             transform(context->state, &input[i]);
         }
@@ -12007,7 +12002,7 @@ static MprOff seekFile(MprFile *file, int seekType, MprOff distance)
     }
 #if BIT_WIN_LIKE
     return (MprOff) _lseeki64(file->fd, (int64) distance, seekType);
-#elif HAS_OFF64
+#elif BIT_HAS_OFF64
     return (MprOff) lseek64(file->fd, (off64_t) distance, seekType);
 #else
     return (MprOff) lseek(file->fd, (off_t) distance, seekType);
@@ -17795,7 +17790,6 @@ void mprError(cchar *fmt, ...)
     va_start(args, fmt);
     mprSprintfv(buf, sizeof(buf), fmt, args);
     va_end(args);
-    
     logOutput(MPR_ERROR_MSG | MPR_ERROR_SRC, 0, buf);
     mprBreakpoint();
 }
@@ -17809,7 +17803,6 @@ void mprWarn(cchar *fmt, ...)
     va_start(args, fmt);
     mprSprintfv(buf, sizeof(buf), fmt, args);
     va_end(args);
-    
     logOutput(MPR_ERROR_MSG | MPR_WARN_SRC, 0, buf);
     mprBreakpoint();
 }
@@ -17839,7 +17832,6 @@ void mprUserError(cchar *fmt, ...)
     va_start(args, fmt);
     mprSprintfv(buf, sizeof(buf), fmt, args);
     va_end(args);
-    
     logOutput(MPR_USER_MSG | MPR_ERROR_SRC, 0, buf);
 }
 
@@ -17852,7 +17844,6 @@ void mprFatalError(cchar *fmt, ...)
     va_start(args, fmt);
     mprSprintfv(buf, sizeof(buf), fmt, args);
     va_end(args);
-    
     logOutput(MPR_USER_MSG | MPR_FATAL_SRC, 0, buf);
     exit(2);
 }
@@ -23113,6 +23104,7 @@ static void readPipe(MprWaitService *ws)
 {
     char        buf[128];
 
+    //  MOB - refactor
 #if VXWORKS
     int len = sizeof(ws->breakAddress);
     (void) recvfrom(ws->breakSock, buf, (int) sizeof(buf), 0, (struct sockaddr*) &ws->breakAddress, (int*) &len);
@@ -24521,7 +24513,7 @@ MprOff mprSendFileToSocket(MprSocket *sock, MprFile *file, MprOff offset, MprOff
         }
 
         if (!done && toWriteFile > 0 && file->fd >= 0) {
-#if LINUX && !__UCLIBC__ && !HAS_OFF64
+#if LINUX && !__UCLIBC__ && !BIT_HAS_OFF64
             off_t off = (off_t) offset;
 #endif
             while (!done && toWriteFile > 0) {
@@ -24530,7 +24522,7 @@ MprOff mprSendFileToSocket(MprSocket *sock, MprFile *file, MprOff offset, MprOff
                     mprYield(MPR_YIELD_STICKY);
                 }
 #if LINUX && !__UCLIBC__
-    #if HAS_OFF64
+    #if BIT_HAS_OFF64
                 rc = sendfile64(sock->fd, file->fd, &offset, nbytes);
     #else
                 rc = sendfile(sock->fd, file->fd, &off, nbytes);

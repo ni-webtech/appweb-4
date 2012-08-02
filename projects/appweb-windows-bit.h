@@ -6,18 +6,31 @@
     time configuration is performed.
  */
 
-#define BIT_PRODUCT "appweb"
-#define BIT_NAME "Embedthis Appweb"
+/* Settings */
+#define BIT_AUTH "file"
+#define BIT_BUILD_NUMBER "0"
 #define BIT_COMPANY "Embedthis"
-#define BIT_APPWEB_PRODUCT 1
+#define BIT_DEPTH 1
+#define BIT_HAS_DYN_LOAD 1
+#define BIT_HAS_LIB_EDIT 0
+#define BIT_HAS_MMU 1
+#define BIT_HAS_UNNAMED_UNIONS 1
+#define BIT_HTTP_PORT 80
+#define BIT_MANAGER "appman"
+#define BIT_MDB 1
+#define BIT_MINIMAL "doxygen,dsi,ejs,man,man2html,pmaker,ssl,ejscript,php,matrixssl,openssl"
+#define BIT_OPTIONAL "cgi,dir,doxygen,dsi,ejs,ejscript,esp,man,man2html,openssl,matrixssl,pmaker,php,sqlite,ssl,utest,zip"
+#define BIT_PACKS "bits/packs"
+#define BIT_PLATFORMS "local"
+#define BIT_PRODUCT "appweb"
+#define BIT_REQUIRED "winsdk,compiler,link,dumpbin,rc,pcre"
+#define BIT_SDB 0
+#define BIT_SSL_PORT 443
+#define BIT_SYNC "http,mpr,pcre,sqlite"
+#define BIT_TITLE "Embedthis Appweb"
 #define BIT_VERSION "4.1.0"
-#define BIT_NUMBER "0"
-#define BIT_MAJOR_VERSION 4
-#define BIT_MINOR_VERSION 1
-#define BIT_PATCH_VERSION 0
-#define BIT_VNUM 400010000
-#define BIT_CONFIG_CMD "bit -d -q -platform windows-x86 -without all -profile vs -configure . -gen vs"
-#define BIT_PROFILE "vs"
+
+/* Prefixes */
 #define BIT_CFG_PREFIX "C:/Program Files (x86)/Embedthis Appweb"
 #define BIT_BIN_PREFIX "C:/Program Files (x86)/Embedthis Appweb/bin"
 #define BIT_INC_PREFIX "C:/Program Files (x86)/Embedthis Appweb/inc"
@@ -27,47 +40,47 @@
 #define BIT_SRC_PREFIX "C:/Program Files (x86)/Embedthis Appweb/src"
 #define BIT_VER_PREFIX "C:/Program Files (x86)/Embedthis Appweb"
 #define BIT_WEB_PREFIX "C:/Program Files (x86)/Embedthis Appweb/web"
+
+/* Suffixes */
 #define BIT_EXE ".exe"
 #define BIT_SHLIB ".lib"
 #define BIT_SHOBJ ".dll"
 #define BIT_LIB ".a"
 #define BIT_OBJ ".obj"
-#define BIT_FEATURE_MDB 1
-#define BIT_FEATURE_SDB 0
-#define BIT_MANAGER "appman"
-#define BIT_CC_DOUBLE_BRACES 0
-#define BIT_CC_DYN_LOAD 1
-#define BIT_CC_EDITLINE 0
-#define BIT_CC_MMU 1
-#define BIT_CC_MTUNE 0
-#define BIT_CC_PAM 0
-#define BIT_CC_STACK_PROTECTOR 0
-#define BIT_CC_SYNC 0
-#define BIT_CC_SYNC_CAS 0
-#define BIT_CC_UNNAMED_UNIONS 1
-#define BIT_CC_WARN_64TO32 0
-#define BIT_CC_WARN_UNUSED 0
-#define BIT_FEATURE_HTTP 1
-#define BIT_FEATURE_DOXYGEN 0
-#define BIT_FEATURE_DSI 0
-#define BIT_FEATURE_EJS 0
-#define BIT_FEATURE_MAN 0
-#define BIT_FEATURE_MAN2HTML 0
-#define BIT_FEATURE_PHP 0
-#define BIT_FEATURE_PMAKER 0
-#define BIT_FEATURE_SSL 0
-#define BIT_FEATURE_EJSCRIPT 0
-#define BIT_FEATURE_MATRIXSSL 0
-#define BIT_FEATURE_OPENSSL 0
-#define BIT_FEATURE_WINSDK 1
-#define BIT_FEATURE_CC 1
-#define BIT_FEATURE_LINK 1
-#define BIT_FEATURE_DUMPBIN 0
-#define BIT_FEATURE_RC 1
-#define BIT_FEATURE_PCRE 1
-#define BIT_FEATURE_CGI 1
-#define BIT_FEATURE_DIR 1
-#define BIT_FEATURE_ESP 1
-#define BIT_FEATURE_SQLITE 1
-#define BIT_FEATURE_UTEST 1
-#define BIT_FEATURE_ZIP 1
+
+/* Profile */
+#define BIT_APPWEB_PRODUCT 1
+#define BIT_PROFILE "vs"
+#define BIT_CONFIG_CMD "bit -d -q -platform windows-x86 -without all -profile vs -configure . -gen vs"
+
+/* Miscellaneous */
+#define BIT_MAJOR_VERSION 4
+#define BIT_MINOR_VERSION 1
+#define BIT_PATCH_VERSION 0
+#define BIT_VNUM 400010000
+
+/* Packs */
+#define BIT_PACK_CGI 1
+#define BIT_PACK_CC 1
+#define BIT_PACK_DIR 1
+#define BIT_PACK_DOXYGEN 0
+#define BIT_PACK_DSI 0
+#define BIT_PACK_DUMPBIN 0
+#define BIT_PACK_EJS 0
+#define BIT_PACK_EJSCRIPT 0
+#define BIT_PACK_ESP 1
+#define BIT_PACK_HTTP 1
+#define BIT_PACK_LINK 1
+#define BIT_PACK_MAN 0
+#define BIT_PACK_MAN2HTML 0
+#define BIT_PACK_MATRIXSSL 0
+#define BIT_PACK_OPENSSL 0
+#define BIT_PACK_PCRE 1
+#define BIT_PACK_PHP 0
+#define BIT_PACK_PMAKER 0
+#define BIT_PACK_RC 1
+#define BIT_PACK_SQLITE 1
+#define BIT_PACK_SSL 0
+#define BIT_PACK_UTEST 1
+#define BIT_PACK_WINSDK 1
+#define BIT_PACK_ZIP 1

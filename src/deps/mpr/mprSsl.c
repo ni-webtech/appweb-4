@@ -8,7 +8,7 @@
 
 /************************************************************************/
 /*
-    Start of file "src/mprMatrixssl.c"
+    Start of file "src/mprMatrixSsl.c"
  */
 /************************************************************************/
 
@@ -22,16 +22,17 @@
 
 #include    "bit.h"
 
-#if BIT_PACK_MATRIXSSL
-#if WINDOWS
+#if BIT_FEATURE_MATRIXSSL
+/*
+    Matrixssl defines int32, uint32, int64 and uint64, but does not provide HAS_XXX to disable. 
+    So must include matrixsslApi.h first and then workaround. 
+ */
+#if WIN32
  #include   <winsock2.h>
  #include   <windows.h>
 #endif
  #include    "matrixsslApi.h"
 
-/*
-    Matrixssl defines int32, uint32, int64 and uint64. Disable these in the mpr
- */
 #define     HAS_INT32 1
 #define     HAS_UINT32 1
 #define     HAS_INT64 1
@@ -739,7 +740,7 @@ static ssize flushMss(MprSocket *sp)
 #else
 
 int mprCreateMatrixSslModule() { return -1; }
-#endif /* BIT_PACK_MATRIXSSL */
+#endif /* BIT_FEATURE_MATRIXSSL */
 
 /*
     @copy   default
@@ -965,6 +966,7 @@ static void manageOpenSsl(MprOpenSsl *ossl, int flags)
                 ossl->dhKey1024 = 0;
             }
         }
+        //  MOB - only do if this code did the initialization: ssl_library_cleanup();
     }
 }
 

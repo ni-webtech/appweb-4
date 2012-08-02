@@ -2224,7 +2224,7 @@ ssize httpFilterChunkData(HttpQueue *q, HttpPacket *packet)
     switch (rx->chunkState) {
     case HTTP_CHUNK_UNCHUNKED:
         nbytes = mprGetBufLength(buf);
-        if (conn->http10 && nbytes == 0) {
+        if (conn->http10 && nbytes == 0 && mprIsSocketEof(conn->sock)) {
             rx->eof = 1;
         }
         return (ssize) min(rx->remainingContent, nbytes);
