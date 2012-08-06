@@ -1124,69 +1124,8 @@ static int listenDirective(MaState *state, cchar *key, cchar *value)
     HttpEndpoint    *endpoint;
     char            *ip;
     int             port;
-    
-#if UNUSED
-    int colonCount;
-    char *cp, *vp;
-    ssize           len;
-    
-    vp = sclone(value);
-    if (isdigit((uchar) *vp) && strchr(vp, '.') == 0 && strchr(vp, ':') == 0) {
-        /*
-            Port only, listen on all interfaces (ipv4 + ipv6)
-         */
-        port = (int) stoi(vp);
-        if (port <= 0 || port > 65535) {
-            mprError("Bad listen port number %d", port);
-            return MPR_ERR_BAD_SYNTAX;
-        }
-        ip = 0;
 
-    } else {
-        colonCount = 0;
-        for (cp = vp; ((*cp != '\0') && (colonCount < 2)) ; cp++) {
-            if (*cp == ':') {
-                colonCount++;
-            }
-        }
-        /*
-            Hostname with possible port number. Port number parsed if address enclosed in "[]"
-         */
-        if (colonCount > 1) {
-            /* ipv6 */
-            ip = vp;
-            if (*vp == '[' && (cp = strrchr(cp, ':')) != 0) {
-                *cp++ = '\0';
-                port = (int) stoi(cp);
-            } else {
-                port = HTTP_DEFAULT_PORT;
-            }
-
-        } else {
-            /* ipv4 */
-            ip = vp;
-            if ((cp = strrchr(vp, ':')) != 0) {
-                *cp++ = '\0';
-                port = (int) stoi(cp);
-
-            } else {
-                port = HTTP_DEFAULT_PORT;
-            }
-            if (*ip == '[') {
-                ip++;
-            }
-            len = slen(ip);
-            if (ip[len - 1] == ']') {
-                ip[len - 1] = '\0';
-            }
-        }
-        if (ip && *ip == '*') {
-            ip = 0;
-        }
-    }
-#else
     mprParseSocketAddress(value, &ip, &port, HTTP_DEFAULT_PORT);
-#endif
     if (port == 0) {
         mprError("Bad or missing port %d in Listen directive", port);
         return -1;
@@ -1917,6 +1856,7 @@ static int virtualHostDirective(MaState *state, cchar *key, cchar *value)
             Other routes are not inherited due to the reset routes below
          */
         state->route = httpCreateInheritedRoute(httpGetHostDefaultRoute(state->host));
+        state->route->ssl = 0;
         state->host = httpCloneHost(state->host);
         httpResetRoutes(state->host);
         httpSetRouteHost(state->route, state->host);
