@@ -5,37 +5,43 @@ The fast, little web server for embedded applications.
 
 Licensing
 ---
-Appweb is dual-licensed under a GPLv2 license and commercial licenses are offered by Embedthis Software.
-See http://appwebserver.org/downloads/licensing.html for licensing details.
+See LICENSE.md for details.
 
 ### To Read Documentation:
 
   See http://appwebserver.org/products/appweb/doc/product/index.html
 
+### Prerequisites:
+    Ejscript (http://www.ejscript.org/downloads/ejs/download.ejs) for the Bit and Utest tools to configure and build.
+
 ### To Build:
 
     ./configure
+    bit
+
+    Alternatively to build without Ejscript:
+
     make
 
 Images are built into */bin. The build configuration is saved in */inc/bit.h.
 
 ### To Test:
 
-    make test
+    bit test
 
 ### To Run:
 
-    sudo make -C src/server run
+    bit run
 
 This will run appweb in the src/server directory using the src/server/appweb.conf configuration file.
 
 ### To Install:
 
-    make install
+    bit install
 
 ### To Create Packages:
 
-    make package
+    bit package
 
 Resources
 ---
