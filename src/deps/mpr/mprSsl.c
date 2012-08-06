@@ -22,7 +22,7 @@
 
 #include    "bit.h"
 
-#if BIT_FEATURE_MATRIXSSL
+#if BIT_PACK_MATRIXSSL
 /*
     Matrixssl defines int32, uint32, int64 and uint64, but does not provide HAS_XXX to disable. 
     So must include matrixsslApi.h first and then workaround. 
@@ -740,7 +740,7 @@ static ssize flushMss(MprSocket *sp)
 #else
 
 int mprCreateMatrixSslModule() { return -1; }
-#endif /* BIT_FEATURE_MATRIXSSL */
+#endif /* BIT_PACK_MATRIXSSL */
 
 /*
     @copy   default

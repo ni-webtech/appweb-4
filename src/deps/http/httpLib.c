@@ -14268,22 +14268,17 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
     if (tx->etag) {
         httpAddHeader(conn, "ETag", "%s", tx->etag);
     }
-    if (tx->chunkSize > 0) {
-        mprAssert(tx->status != 304 && tx->status != 204 && !(100 <= tx->status && tx->status <= 199) && 
-            !(rx->flags & HTTP_HEAD));
-        if (!(rx->flags & HTTP_HEAD)) {
-            httpSetHeaderString(conn, "Transfer-Encoding", "chunked");
-        }
-    } else if (tx->status == 304 || tx->status == 204 || (100 <= tx->status && tx->status <= 199) || 
-            !(rx->flags & HTTP_HEAD)) {
+    /* 
+        HTTP spec says that 1XX, 204, 304 or HEAD requests must not have a Content-Length. Enforce that here.
+     */
+    if ((100 <= tx->status && tx->status <= 199) || tx->status == 204 || tx->status == 304 || (rx->flags & HTTP_HEAD)) {
+        httpOmitBody(conn);
+    } else if (tx->chunkSize > 0) {
+        httpSetHeaderString(conn, "Transfer-Encoding", "chunked");
+    } else if (conn->endpoint || tx->length > 0) {
+        /* Server or client with body */
         httpAddHeader(conn, "Content-Length", "%Ld", tx->length > 0 ? tx->length : 0);
     }
-#if UNUSED
-    } else if (tx->length >= 0) {
-        mprAssert(tx->status != 304 && tx->status != 204 && !(100 <= tx->status && tx->status <= 199));
-        httpAddHeader(conn, "Content-Length", "%Ld", tx->length);
-    }
-#endif
     if (tx->outputRanges) {
         if (tx->outputRanges->next == 0) {
             range = tx->outputRanges;
