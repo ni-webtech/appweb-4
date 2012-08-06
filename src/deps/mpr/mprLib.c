@@ -11865,6 +11865,13 @@ static void decode(uint *output, uchar *input, uint len)
     Open/Delete retries to circumvent windows pending delete problems
  */
 #define RETRIES 40
+
+/*
+    Windows only permits owner bits
+ */
+#define MASK_PERMS(perms)    perms & 0600
+#else
+#define MASK_PERMS(perms)    perms
 #endif
 
 /********************************** Forwards **********************************/
@@ -11882,13 +11889,13 @@ static int cygOpen(MprFileSystem *fs, cchar *path, int omode, int perms)
 {
     int     fd;
 
-    fd = open(path, omode, perms);
+    fd = open(path, omode, MASK_PERMS(perms));
 #if WINDOWS
     if (fd < 0) {
         if (*path == '/') {
             path = sjoin(fs->cygwin, path, NULL);
         }
-        fd = open(path, omode, perms);
+        fd = open(path, omode, MASK_PERMS(perms));
     }
 #endif
     return fd;
@@ -11905,7 +11912,7 @@ static MprFile *openFile(MprFileSystem *fs, cchar *path, int omode, int perms)
         return NULL;
     }
     file->path = sclone(path);
-    file->fd = open(path, omode, perms);
+    file->fd = open(path, omode, MASK_PERMS(perms));
     if (file->fd < 0) {
 #if WINDOWS
         /*
@@ -11914,7 +11921,7 @@ static MprFile *openFile(MprFileSystem *fs, cchar *path, int omode, int perms)
         int i, err = GetLastError();
         if (err == ERROR_ACCESS_DENIED) {
             for (i = 0; i < RETRIES; i++) {
-                file->fd = open(path, omode, perms);
+                file->fd = open(path, omode, MASK_PERMS(perms));
                 if (file->fd >= 0) {
                     break;
                 }
@@ -24966,33 +24973,36 @@ static int ipv6(cchar *ip)
  */
 int mprParseSocketAddress(cchar *ipAddrPort, char **pip, int *pport, int defaultPort)
 {
-    char    *ip;
-    char    *cp;
+    char    *ip, *cp;
 
     ip = 0;
     if (defaultPort < 0) {
         defaultPort = 80;
     }
-    if ((cp = strstr(ipAddrPort, "://")) != 0) {
-        ipAddrPort = &cp[3];
+    ip = sclone(ipAddrPort);
+    if ((cp = strchr(ip, ' ')) != 0) {
+        *cp++ = '\0';
     }
-    if (ipv6(ipAddrPort)) {
+    if ((cp = strstr(ip, "://")) != 0) {
+        ip = &cp[3];
+    }
+    if (ipv6(ip)) {
         /*  
             IPv6. If port is present, it will follow a closing bracket ']'
          */
-        if ((cp = strchr(ipAddrPort, ']')) != 0) {
+        if ((cp = strchr(ip, ']')) != 0) {
             cp++;
             if ((*cp) && (*cp == ':')) {
                 *pport = (*++cp == '*') ? -1 : atoi(cp);
 
                 /* Set ipAddr to ipv6 address without brackets */
-                ip = sclone(ipAddrPort+1);
+                ip = sclone(ip + 1);
                 cp = strchr(ip, ']');
                 *cp = '\0';
 
             } else {
                 /* Handles [a:b:c:d:e:f:g:h:i] case (no port)- should not occur */
-                ip = sclone(ipAddrPort + 1);
+                ip = sclone(ip + 1);
                 if ((cp = strchr(ip, ']')) != 0) {
                     *cp = '\0';
                 }
@@ -25004,8 +25014,6 @@ int mprParseSocketAddress(cchar *ipAddrPort, char **pip, int *pport, int default
             }
         } else {
             /* Handles a:b:c:d:e:f:g:h:i case (no port) */
-            ip = sclone(ipAddrPort);
-
             /* No port present, use callers default */
             *pport = defaultPort;
         }
@@ -25014,7 +25022,6 @@ int mprParseSocketAddress(cchar *ipAddrPort, char **pip, int *pport, int default
         /*  
             ipv4 
          */
-        ip = sclone(ipAddrPort);
         if ((cp = strchr(ip, ':')) != 0) {
             *cp++ = '\0';
             if (*cp == '*') {
@@ -25025,6 +25032,12 @@ int mprParseSocketAddress(cchar *ipAddrPort, char **pip, int *pport, int default
             if (*ip == '*') {
                 ip = 0;
             }
+
+        } else if (strchr(ip, '.')) {
+            if ((cp = strchr(ip, ' ')) != 0) {
+                *cp++ = '\0';
+            }
+            *pport = defaultPort;
 
         } else {
             if (isdigit((uchar) *ip)) {
@@ -25055,6 +25068,7 @@ bool mprIsSocketV6(MprSocket *sp)
 }
 
 
+//  MOB - inconsistent with mprIsSocketV6
 bool mprIsIPv6(cchar *ip)
 {
     return ip && ipv6(ip);
@@ -25099,6 +25113,23 @@ MprSsl *mprCreateSsl()
     ssl->verifyIssuer = 1;
     ssl->verifyDepth = 1;
     ssl->verifyPeer = -11;
+    return ssl;
+}
+
+
+/*
+    Clone a SSL context object
+ */
+MprSsl *mprCloneSsl(MprSsl *src)
+{
+    MprSsl      *ssl;
+
+    if ((ssl = mprAllocObj(MprSsl, manageSsl)) == 0) {
+        return 0;
+    }
+    if (src) {
+        *ssl = *src;
+    }
     return ssl;
 }
 

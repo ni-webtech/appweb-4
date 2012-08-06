@@ -2563,6 +2563,7 @@ static int setClientHeaders(HttpConn *conn)
     } else {
         httpAddHeaderString(conn, "Host", conn->ip);
     }
+#if UNUSED
     if (strcmp(conn->protocol, "HTTP/1.1") == 0) {
         /* If zero, we ask the client to close one request early. This helps with client led closes */
         if (conn->keepAliveCount > 0) {
@@ -2570,12 +2571,18 @@ static int setClientHeaders(HttpConn *conn)
         } else {
             httpSetHeaderString(conn, "Connection", "close");
         }
-
     } else {
         /* Set to zero to let the client initiate the close */
         conn->keepAliveCount = 0;
         httpSetHeaderString(conn, "Connection", "close");
     }
+#else
+    if (conn->keepAliveCount > 0) {
+        httpSetHeaderString(conn, "Connection", "Keep-Alive");
+    } else {
+        httpSetHeaderString(conn, "Connection", "close");
+    }
+#endif
     return 0;
 }
 
@@ -3442,9 +3449,11 @@ void httpSetProtocol(HttpConn *conn, cchar *protocol)
 {
     if (conn->state < HTTP_STATE_CONNECTED) {
         conn->protocol = sclone(protocol);
-        if (strcmp(protocol, "HTTP/1.0") == 0) {
+#if UNUSED
+        if (strcmp(conn->protocol, "HTTP/1.0") == 0) {
             conn->keepAliveCount = -1;
         }
+#endif
     }
 }
 
@@ -3890,7 +3899,10 @@ HttpConn *httpAcceptConn(HttpEndpoint *endpoint, MprEvent *event)
         return 0;
     }
     if (endpoint->ssl) {
-        mprUpgradeSocket(sock, endpoint->ssl, 1);
+        if (mprUpgradeSocket(sock, endpoint->ssl, 1) < 0) {
+            mprCloseSocket(sock, 0);
+            return 0;
+        }
     }
     if (endpoint->sock->handler) {
         /* Re-enable events on the listen socket */
@@ -10788,7 +10800,7 @@ bool httpTokenizev(HttpRoute *route, cchar *line, cchar *fmt, va_list args)
             Extra unparsed text
          */
         for (; tok < end && isspace((uchar) *tok); tok++) ;
-        if (*tok) {
+        if (*tok && *tok != '#') {
             mprError("Extra unparsed text: \"%s\"", tok);
             return 0;
         }
@@ -14257,13 +14269,21 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
         httpAddHeader(conn, "ETag", "%s", tx->etag);
     }
     if (tx->chunkSize > 0) {
+        mprAssert(tx->status != 304 && tx->status != 204 && !(100 <= tx->status && tx->status <= 199) && 
+            !(rx->flags & HTTP_HEAD));
         if (!(rx->flags & HTTP_HEAD)) {
             httpSetHeaderString(conn, "Transfer-Encoding", "chunked");
         }
+    } else if (tx->status == 304 || tx->status == 204 || (100 <= tx->status && tx->status <= 199) || 
+            !(rx->flags & HTTP_HEAD)) {
+        httpAddHeader(conn, "Content-Length", "%Ld", tx->length > 0 ? tx->length : 0);
+    }
+#if UNUSED
     } else if (tx->length >= 0) {
         mprAssert(tx->status != 304 && tx->status != 204 && !(100 <= tx->status && tx->status <= 199));
         httpAddHeader(conn, "Content-Length", "%Ld", tx->length);
     }
+#endif
     if (tx->outputRanges) {
         if (tx->outputRanges->next == 0) {
             range = tx->outputRanges;

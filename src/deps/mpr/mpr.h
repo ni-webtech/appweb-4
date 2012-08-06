@@ -7044,7 +7044,7 @@ extern void mprAddSocketProvider(cchar *name, MprSocketProvider *provider);
     by threads from the worker thread pool for scalable, multithreaded applications.
     @stability Evolving
     @see MprSocket MprSocketPrebind MprSocketProc MprSocketProvider MprSocketService mprAddSocketHandler 
-        mprCloseSocket mprConnectSocket mprCreateSocket mprCreateSocketService mprCreateSsl 
+        mprCloseSocket mprConnectSocket mprCreateSocket mprCreateSocketService mprCreateSsl mprCloneSsl
         mprDisconnectSocket mprEnableSocketEvents mprFlushSocket mprGetSocketBlockingMode mprGetSocketError 
         mprGetSocketFd mprGetSocketInfo mprGetSocketPort mprHasSecureSockets mprIsSocketEof mprIsSocketSecure 
         mprListenOnSocket mprLoadSsl mprParseIp mprReadSocket mprSendFileToSocket mprSetSecureProvider 
@@ -7463,6 +7463,13 @@ extern int mprLoadSsl();
     @ingroup MprSocket
  */
 extern struct MprSsl *mprCreateSsl();
+
+/**
+    Create the a new SSL control structure based on an existing structure
+    @param src Structure to clone
+    @ingroup MprSocket
+ */
+extern struct MprSsl *mprCloneSsl(MprSsl *src);
 
 /**
     Set the ciphers to use for SSL
