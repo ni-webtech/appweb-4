@@ -27,5 +27,5 @@ if (App.config.bld_dir) {
     */
 
 } else {
-    test.skip("PHP not enabled")
+    test.skip("directory listings not enabled")
 }
