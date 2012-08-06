@@ -24984,7 +24984,7 @@ int mprParseSocketAddress(cchar *ipAddrPort, char **pip, int *pport, int default
         *cp++ = '\0';
     }
     if ((cp = strstr(ip, "://")) != 0) {
-        ip = &cp[3];
+        ip = sclone(&cp[3]);
     }
     if (ipv6(ip)) {
         /*  
