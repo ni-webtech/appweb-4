@@ -12,8 +12,14 @@
 
 static bool checkSsl(MaState *state)
 {
+    MprSsl      *prior;
+
     if (state->route->ssl == 0) {
-        state->route->ssl = mprCreateSsl(state->route);
+        if (state->route->parent && state->route->parent->ssl) {
+            state->route->ssl = mprCloneSsl(state->route->parent->ssl);
+        } else {
+            state->route->ssl = mprCreateSsl(state->route);
+        }
     }
     return 1;
 }
