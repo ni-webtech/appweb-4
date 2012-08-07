@@ -17649,6 +17649,7 @@ void mprBreakpoint()
         static int  paused = 1;
         int         i;
         printf("Paused to permit debugger to attach - will awake in 2 minutes\n");
+        fflush(stdout);
         for (i = 0; i < 120 && paused; i++) {
             mprNap(1000);
         }
@@ -17872,6 +17873,7 @@ void mprStaticError(cchar *fmt, ...)
     if (write(2, (char*) "\n", 1) < 0) {}
 #elif BIT_WIN_LIKE
     if (fprintf(stderr, "%s\n", buf) < 0) {}
+    fflush(stderr);
 #endif
     mprBreakpoint();
 }
