@@ -32,3 +32,9 @@ assert(http.header("Allow") == "OPTIONS,GET,HEAD,POST,PUT,DELETE")
 //  Trace - should be disabled
 http.connect("TRACE", HTTP + "/index.html")
 assert(http.status == 406)
+
+//  Head 
+http.connect("HEAD", HTTP + "/index.html")
+assert(http.status == 200)
+assert(http.header("Content-Length") > 0)
+assert(http.response == "")
