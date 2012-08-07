@@ -57,7 +57,7 @@ static int      findInstance();
 static int      initWindow();
 static void     logHandler(int flags, int level, cchar *msg);
 static void     manageApp(App *app, int flags);
-static long     msgProc(HWND hwnd, uint msg, uint wp, long lp);
+static long     msgProc(HWND hwnd, UINT msg, UINT wp, LPARAM lp);
 static int      openMonitorIcon();
 static uint     queryService();
 static int      runBrowser(char *page);
@@ -277,7 +277,7 @@ BOOL CALLBACK dialogProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 }
 
 
-static long msgProc(HWND hwnd, uint msg, uint wp, long lp)
+static long msgProc(HWND hwnd, UINT msg, UINT wp, LPARAM lp)
 {
     MprThread   *tp;
     char        buf[MPR_MAX_FNAME];
@@ -415,10 +415,10 @@ static int monitorEvent(HWND hwnd, WPARAM wp, LPARAM lp)
     POINT           p, pos;
     HWND            h;
     char            textBuf[48];
-    uint            msg;
+    LPARAM          msg;
     int             state;
 
-    msg = (uint) lp;
+    msg = lp;
 
     /*
         Show the menu on single right click

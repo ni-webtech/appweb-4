@@ -7673,7 +7673,7 @@ dtoa
 #if MPR_EVENT_ASYNC
 /***************************** Forward Declarations ***************************/
 
-static LRESULT msgProc(HWND hwnd, uint msg, uint wp, long lp);
+static LRESULT msgProc(HWND hwnd, UINT msg, UINT wp, LPARAM lp);
 
 /************************************ Code ************************************/
 
@@ -7870,7 +7870,7 @@ int mprInitWindow()
 /*
     Windows message processing loop for wakeup and socket messages
  */
-static LRESULT msgProc(HWND hwnd, uint msg, uint wp, long lp)
+static LRESULT msgProc(HWND hwnd, UINT msg, UINT wp, LPARAM lp)
 {
     MprWaitService      *ws;
     int                 sock, winMask;
