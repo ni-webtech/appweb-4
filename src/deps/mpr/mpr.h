@@ -6710,7 +6710,7 @@ extern MprThreadLocal *mprCreateThreadLocal();
 #define MPR_WRITE_PIPE         1            /* Write side of breakPipe */
 
 #if BIT_WIN_LIKE
-typedef long (*MprMsgCallback)(HWND hwnd, uint msg, uint wp, long lp);
+typedef long (*MprMsgCallback)(HWND hwnd, UINT msg, UINT wp, LPARAM lp);
 #endif
 
 /**

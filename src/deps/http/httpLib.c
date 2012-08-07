@@ -14279,7 +14279,7 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
         httpSetHeaderString(conn, "Transfer-Encoding", "chunked");
     } else if (conn->endpoint) {
         /* Server must not emit a content length header for 1XX, 204 and 304 status */
-        if (!(100 <= tx->status && tx->status <= 199) || tx->status == 204 || tx->status == 304) {
+        if (!((100 <= tx->status && tx->status <= 199) || tx->status == 204 || tx->status == 304)) {
             httpAddHeader(conn, "Content-Length", "%Ld", length);
         }
     } else if (tx->length > 0) {
