@@ -14244,8 +14244,8 @@ static void setHeaders(HttpConn *conn, HttpPacket *packet)
     HttpTx      *tx;
     HttpRoute   *route;
     HttpRange   *range;
+    MprOff      length;
     cchar       *mimeType;
-    ssize       length;
 
     mprAssert(packet->flags == HTTP_PACKET_HEADER);
 
