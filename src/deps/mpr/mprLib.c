@@ -20184,6 +20184,9 @@ char *mprGetRelPath(cchar *destArg, cchar *originArg)
 }
 
 
+/*
+    Get a temporary file name. The file is created in the system temp location.
+ */
 char *mprGetTempPath(cchar *tempDir)
 {
     MprFile         *file;
@@ -20212,7 +20215,6 @@ char *mprGetTempPath(cchar *tempDir)
     now = ((int) mprGetTime() & 0xFFFF) % 64000;
     file = 0;
     path = 0;
-
     for (i = 0; i < 128; i++) {
         path = sfmt("%s/MPR_%d_%d_%d.tmp", dir, getpid(), now, ++tempSeed);
         file = mprOpenFile(path, O_CREAT | O_EXCL | O_BINARY, 0664);
