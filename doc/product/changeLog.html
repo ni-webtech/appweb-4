@@ -76,6 +76,8 @@
                 <li>Add mprCreateEventOutside for calling back into Appweb from foreign threads</li>
                 <li>Update MatrixSSL support to the latest version</li>
                 <li>Add SSL unit tests</li>
+                <li>Add support for Windows 8</li>
+                <li>Add support for Visual Studio 2012</li>
             </ul>
             <h3>Fixes</h3>
             <ul>
@@ -87,8 +89,16 @@
                 <li>ESP MDB database JSON format error</li>
                 <li>PUT method response to include Etag and Location</li>
                 <li>Consuming body of failed requests to preserve keep-alive</li>
-                <li>Remove Content-Length in 304 (NotModified) responses</li>
+                <li>Remove Content-Length handling in responses</li>
                 <li>Http command --show displaying headers when no body in response</li>
+                <li>Fix SSL inheritance in appweb.conf for virtual hosts</li>
+                <li>If-Match header handling for case sensitivity</li>
+                <li>Cookie handling for SSL</li>
+                <li>Chunk parsing for trailing \r\n</li>
+                <li>Option request handling</li>
+                <li>Directory listings path names to be relative paths</li>
+                <li>Etag header handling of 64 bit values</li>
+                <li>Module loading by module name instead of module path</li>
             </ul>
             <a id="r4.0.0"></a>
             <h2 class="section">Changes in 4.0.0</h2>
