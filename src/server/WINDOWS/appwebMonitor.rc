@@ -7,10 +7,6 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include <sal_supp.h>
-#include <specstrings_supp.h>
-#undef __useHeader
-#undef __on_failure
 #include "windows.h"
 
 /////////////////////////////////////////////////////////////////////////////
