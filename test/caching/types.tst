@@ -22,6 +22,7 @@ function cached(uri): Boolean {
 }
 
 //  The php request should be cached and the esp should not
+//  The route is configured to cache: Cache server types="application/x-php"
 if (App.config.bld_php) {
     assert(cached("/types/cache.php"))
 }

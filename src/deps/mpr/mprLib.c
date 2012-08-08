@@ -18428,7 +18428,7 @@ cchar *mprLookupMime(MprHash *table, cchar *ext)
         table = MPR->mimeTypes;
     }
     if ((mt = mprLookupKey(table, ext)) == 0) {
-        return "application/octet-stream";
+        return 0;
     }
     return mt->type;
 }

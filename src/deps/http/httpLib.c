@@ -1768,10 +1768,11 @@ static HttpCache *lookupCacheControl(HttpConn *conn)
             continue;
         }
         if (cache->types) {
-            if ((mimeType = (char*) mprLookupMime(rx->route->mimeTypes, tx->ext)) != 0) {
-                if (!mprLookupKey(cache->types, mimeType)) {
-                    continue;
-                }
+            if ((mimeType = (char*) mprLookupMime(rx->route->mimeTypes, tx->ext)) == 0) {
+                continue;
+            }
+            if (!mprLookupKey(cache->types, mimeType)) {
+                continue;
             }
         }
         /* All match */
