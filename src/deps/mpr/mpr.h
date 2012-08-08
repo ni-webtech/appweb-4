@@ -6148,9 +6148,10 @@ extern MprEvent *mprCreateEvent(MprDispatcher *dispatcher, cchar *name, MprTime 
     @param dispatcher Dispatcher object created via mprCreateDispatcher
     @param proc Function to invoke when the event is run
     @param data Data to associate with the event and stored in event->data. The data must be non-MPR memory.
+    @return Returns zero if successful, otherwise a negative MPR error code.
     @ingroup MprEvent
  */
-extern void mprCreateEventOutside(MprDispatcher *dispatcher, void *proc, void *data);
+extern int mprCreateEventOutside(MprDispatcher *dispatcher, void *proc, void *data);
 
 /*
     Queue a new event for service.

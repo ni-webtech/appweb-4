@@ -14,34 +14,39 @@ let tar = deps.join('ejs.tar')
 
 if (path) {
     if (path.startsWith('http:')) {
-        /*
-            Auto download ejs
-        let http = Http
-        let fp = File(tfile, 'w')
-        trace('Download', 'Ejscript from: ' + path)
-        http.get(path)
-        buf = new ByteArray
-        while (http.read(buf) > 0) {
-            fp.write(buf)
-        }
-        fp.close()
-        if (http.status != 200) {
-            throw "Cannot download Ejscript from " + path
-        }
-        http.close()
-         */
-        trace('Prepare', 'Ejscript distribution')
-        ejs.removeAll()
-        ejs.makeDir()
-        Zlib.uncompress(tgz, tar)
-        Tar(tar, {chdir: deps}).extract()
-        let dir = deps.files('ejs-*').sort().reverse()[0]
-        dir.rename(ejs)
-        tgz.remove()
-        tar.remove()
-        for each (n in ['Makefile', 'bit.h', 'deps.c', 'ejsmod.c', 'pcre.c', 'pcre.h', 'product.bit', 
-            'sqlite3.c', 'sqlite3.h', 'start.bit']) {
-            ejs.join(n).remove()
+        try {
+                /*
+                    Auto download ejs
+                 */
+                let http:Http = new Http
+                trace('Download', 'Ejscript from: ' + path)
+                http.get(path cast String)
+                buf = new ByteArray
+                let fp = File(tgz, 'w')
+                while (http.read(buf) > 0) {
+                    fp.write(buf)
+                }
+                fp.close()
+                if (http.status != 200) {
+                    throw "Cannot download Ejscript from " + path
+                }
+                http.close()
+                trace('Prepare', 'Ejscript distribution')
+                ejs.removeAll()
+                ejs.makeDir()
+                Zlib.uncompress(tgz, tar)
+                Tar(tar, {chdir: deps}).extract()
+                let dir = deps.files('ejs-*').sort().reverse()[0]
+                dir.rename(ejs)
+                tgz.remove()
+                tar.remove()
+                for each (n in ['Makefile', 'bit.h', 'deps.c', 'ejsmod.c', 'pcre.c', 'pcre.h', 'product.bit', 
+                    'sqlite3.c', 'sqlite3.h', 'start.bit']) {
+                    ejs.join(n).remove()
+                }
+                trace('Done', 'Ejscript distribution')
+        } catch (e) {
+            trace('Prepare', 'Failed: ' + e)
         }
     }
 }

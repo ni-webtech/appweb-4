@@ -1341,15 +1341,21 @@ void mprRelease(void *ptr)
 /*
     If dispatcher is 0, will use MPR->nonBlock if MPR_EVENT_QUICK else MPR->dispatcher
  */
-void mprCreateEventOutside(MprDispatcher *dispatcher, void *proc, void *data)
+int mprCreateEventOutside(MprDispatcher *dispatcher, void *proc, void *data)
 {
+    MprEvent    *event;
+
     heap->pauseGC++;
     mprAtomicBarrier();
     while (heap->mustYield) {
         mprNap(0);
     }
-    mprCreateEvent(dispatcher, "relay", 0, proc, data, MPR_EVENT_STATIC_DATA);
+    event = mprCreateEvent(dispatcher, "relay", 0, proc, data, MPR_EVENT_STATIC_DATA);
     heap->pauseGC--;
+    if (!event) {
+        return MPR_ERR_CANT_CREATE;
+    }
+    return 0;
 }
 
 
@@ -18421,8 +18427,8 @@ cchar *mprLookupMime(MprHash *table, cchar *ext)
     if (table == 0) {
         table = MPR->mimeTypes;
     }
-    if ((mt = mprLookupKey(table, ext)) == 0) {;
-        return "text/html";
+    if ((mt = mprLookupKey(table, ext)) == 0) {
+        return "application/octet-stream";
     }
     return mt->type;
 }
