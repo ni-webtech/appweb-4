@@ -2,9 +2,9 @@
 #   appweb-windows.sh -- Build It Shell Script to build Embedthis Appweb
 #
 
-export PATH="$(SDK)/Bin:$(VS)/VC/Bin:$(VS)/Common7/IDE:$(VS)/Common7/Tools:$(VS)/SDK/v3.5/bin:$(VS)/VC/VCPackages;$(PATH)"
-export INCLUDE="$(INCLUDE);$(SDK)/INCLUDE:$(VS)/VC/INCLUDE"
-export LIB="$(LIB);$(SDK)/lib:$(VS)/VC/lib"
+export PATH="$(SDK):$(VS)/VC/Bin:$(VS)/Common7/IDE:$(VS)/Common7/Tools:$(VS)/SDK/v3.5/bin:$(VS)/VC/VCPackages;$(PATH)"
+export INCLUDE="$(INCLUDE);$(SDK)/Include:$(VS)/VC/INCLUDE"
+export LIB="$(LIB);$(SDK)/Lib:$(VS)/VC/lib"
 
 ARCH="x86"
 ARCH="$(shell uname -m | sed 's/i.86/x86/;s/x86_64/x64/')"
