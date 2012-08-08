@@ -6,7 +6,7 @@ This document contains details regarding the installation procedure for the bina
 
 http://embedthis.com/products/appweb/doc/index.html
 
-This software is copyrighted and distributed under license. Please read the LICENSE.TXT for details.
+This software is copyrighted and distributed under license. Please read the LICENSE.md for details.
 
 
 Table of Contents
@@ -145,7 +145,7 @@ If you wish to rebuild the Appweb product from the distributed source code, plea
 
 License and Copyright Information
 
-This software is supplied under license. Both a GNU and commercial license are available. Please read LICENSE.TXT for details. This documentation and the software described in this document may be used and copied only in accordance with the terms of the accompanying license agreement. Product and technical information in this document is subject to change without notice and does not represent a commitment on the part of Embedthis Software LLC.
+This software is supplied under license. Both a GNU and commercial license are available. Please read LICENSE.md for details. This documentation and the software described in this document may be used and copied only in accordance with the terms of the accompanying license agreement. Product and technical information in this document is subject to change without notice and does not represent a commitment on the part of Embedthis Software LLC.
 
 Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
 
