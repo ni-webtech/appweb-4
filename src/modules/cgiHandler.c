@@ -764,8 +764,7 @@ static void buildArgs(HttpConn *conn, MprCmd *cmd, int *argcp, cchar ***argvp)
         
     } else if (bangScript) {
         /*
-            Script used "#!/program". NOTE: this may be overridden by a mime
-            Action directive.
+            Script used "#!/program". NOTE: this may be overridden by a mime Action directive.
          */
         argc++;     /* Adding bangScript arg */
 
