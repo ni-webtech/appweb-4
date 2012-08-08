@@ -77,7 +77,7 @@ extern "C" {
 #endif
 #endif /* UNUSED */
 
-#if MPR_64_BIT
+#if BIT_64
     #define ESP_VSKEY "HKLM\\SOFTWARE\\Wow6432Node\\Microsoft\\VisualStudio\\SxS\\VS7"
 #else
     #define ESP_VSKEY "HKLM\\SOFTWARE\\Microsoft\\VisualStudio\\SxS\\VS7"
