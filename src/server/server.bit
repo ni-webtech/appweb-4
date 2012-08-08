@@ -21,18 +21,18 @@ Bit.load({
             type: 'exe',
             rule: 'gui'
             depends: [ 'libappweb' ],
-            sources: [ 'WINDOWS/appwebMonitor.c' ],
+            sources: [ 'windows/appwebMonitor.c' ],
             headers: [ ],
             libraries: [ 'shell32.lib' ],
-            resources: [ 'WINDOWS/appwebMonitor.rc' ],
+            resources: [ 'windows/appwebMonitor.rc' ],
         },
 
         'appwebMonitor.ico': {
             enable: bit.platform.like == 'windows',
             type: 'file',
-            files: [ 'WINDOWS/appwebMonitor.ico' ],
-            build: "cp('WINDOWS/appwebMonitor.ico', ${BIN})",
-            generate: 'cp WINDOWS/appwebMonitor.ico ${BIN}',
+            files: [ 'windows/appwebMonitor.ico' ],
+            build: "cp('windows/appwebMonitor.ico', ${BIN})",
+            generate: 'cp windows/appwebMonitor.ico ${BIN}',
         },
     },
 })
