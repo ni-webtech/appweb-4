@@ -5,7 +5,7 @@
 const HTTP = App.config.uris.http || "127.0.0.1:4100"
 let http: Http = new Http
 
-if (App.config.bld_ejscript) {
+if (App.config.bit_ejscript) {
     http.get(HTTP + "/form.ejs?a&b&c")
     assert(http.status == 200)
     assert(http.response.contains('"a": ""'))

@@ -6,7 +6,7 @@
 let nc
 try { nc = Cmd.sh("which nc"); } catch {}
 
-if (App.test.depth > 0 && nc && Config.OS != "windows" && App.config.bld_ejscript) {
+if (App.test.depth > 0 && nc && Config.OS != "windows" && App.config.bit_ejscript) {
     const HTTP = Uri(App.config.uris.http || "127.0.0.1:4100")
     let ip = HTTP.host
     let port = HTTP.port

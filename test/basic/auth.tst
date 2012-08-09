@@ -32,7 +32,7 @@ http.setCredentials("mary", "pass2")
 http.get(HTTP + "/basic/user/user.html")
 assert(http.status == 401)
 
-if (App.config.bld_cgi && global.test && test.hostOs != "VXWORKS") {
+if (App.config.bit_cgi && global.test && test.hostOs != "VXWORKS") {
     /* Requires /bin/sh */
     http.setCredentials(null, null)
     http.get(HTTP + "/basic/basic.cgi")

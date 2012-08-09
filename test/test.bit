@@ -115,7 +115,7 @@ Bit.load({
             action: "
                 run('appweb -v', {noio: true})
             ",
-        }
+        },
 
         'clean-test': {
             type: 'clean',                                                                                 

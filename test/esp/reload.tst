@@ -5,7 +5,7 @@
 const HTTP = App.config.uris.http || "127.0.0.1:4100"
 let http: Http = new Http
 
-if (App.config.bld_debug && !test.cross) {
+if (App.config.bit_debug && !test.cross) {
     //  First get
     let path = new Path("../web/reload.esp")
     path.write('<html><body><% espRender(conn, "First", -1); %></body></html>')

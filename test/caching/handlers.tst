@@ -21,16 +21,16 @@ function testCache(uri) {
     http.close()
 }
 
-if (App.config.bld_php) {
+if (App.config.bit_php) {
     testCache("/combined/cache.php")
 }
-if (App.config.bld_esp) {
+if (App.config.bit_esp) {
     testCache("/combined/cache.esp")
 }
-if (App.config.bld_ejscript) {
+if (App.config.bit_ejscript) {
     testCache("/combined/cache.ejs")
 }
-if (App.config.bld_cgi) {
+if (App.config.bit_cgi) {
     testCache("/combined/cache.cgi")
 }
 

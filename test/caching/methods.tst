@@ -29,7 +29,7 @@ function cached(method, uri): Boolean {
     return (resp.number == first)
 }
 
-if (App.config.bld_esp) {
+if (App.config.bit_esp) {
     //  The POST requst should be cached and the GET not
     assert(cached("POST", "/methods/cache.esp"))
     assert(!cached("GET", "/methods/cache.esp"))
