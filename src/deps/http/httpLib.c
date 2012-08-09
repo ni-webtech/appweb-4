@@ -11490,7 +11490,9 @@ static bool parseResponseLine(HttpConn *conn, HttpPacket *packet)
     protocol = conn->protocol = supper(getToken(conn, " "));
     if (strcmp(protocol, "HTTP/1.0") == 0) {
         conn->http10 = 1;
-        rx->remainingContent = MAXINT;
+        if (!scaselessmatch(tx->method, "HEAD")) {
+            rx->remainingContent = MAXINT;
+        }
     } else if (strcmp(protocol, "HTTP/1.1") != 0) {
         httpError(conn, HTTP_ABORT | HTTP_CODE_NOT_ACCEPTABLE, "Unsupported HTTP protocol");
         return 0;
@@ -11663,6 +11665,21 @@ static bool parseHeaders(HttpConn *conn, HttpPacket *packet)
                     rx->cookie = sjoin(rx->cookie, "; ", value, NULL);
                 } else {
                     rx->cookie = sclone(value);
+                }
+            }
+            break;
+
+        case 'e':
+            if (strcasecmp(key, "expect") == 0) {
+                /*
+                    Handle 100-continue for HTTP/1.1 clients only. This is the only expectation that is currently supported.
+                 */
+                if (!conn->http10) {
+                    if (strcasecmp(value, "100-continue") != 0) {
+                        httpError(conn, HTTP_CODE_EXPECTATION_FAILED, "Expect header value \"%s\" is unsupported", value);
+                    } else {
+                        rx->flags |= HTTP_EXPECT_CONTINUE;
+                    }
                 }
             }
             break;
@@ -11975,6 +11992,24 @@ static bool parseAuthenticate(HttpConn *conn, char *authDetails)
 
 
 /*
+    Sends an 100 Continue response to the client. This bypasses the transmission pipeline, writing directly to the socket.
+ */
+static int sendContinue(HttpConn *conn)
+{
+    cchar      *response;
+
+    mprAssert(conn);
+    mprAssert(conn->sock);
+
+    /* Write the response to the socket and flush. */
+    response = sfmt("%s 100 Continue\r\n\r\n", conn->protocol);
+    mprWriteSocket(conn->sock, response, slen(response));
+    mprFlushSocket(conn->sock);
+    return 0;
+}
+
+
+/*
     Called once the HTTP request/response headers have been parsed
  */
 static bool processParsed(HttpConn *conn)
@@ -11990,6 +12025,15 @@ static bool processParsed(HttpConn *conn)
     }
     if (rx->streamInput) {
         httpStartPipeline(conn);
+    }
+    /*
+        Send a 100 (Continue) response if the client has requested it. If the connection has an error, that takes
+        precedence and 100 Continue will not be sent. Also, if the connector has already written bytes to the socket, we
+        do not send 100 Continue to avoid corrupting the response.
+     */
+    if ((rx->flags & HTTP_EXPECT_CONTINUE) && !conn->error && !conn->tx->bytesWritten) {
+        sendContinue(conn);
+        rx->flags &= ~HTTP_EXPECT_CONTINUE;
     }
     httpSetState(conn, HTTP_STATE_CONTENT);
     if (conn->workerEvent && conn->tx->started && rx->eof) {
