@@ -5780,7 +5780,6 @@ static void netOutgoingService(HttpQueue *q)
     tx = conn->tx;
     conn->lastActivity = conn->http->now;
     mprAssert(conn->sock);
-    mprAssert(!conn->connectorComplete);
     
     if (!conn->sock || conn->connectorComplete) {
         return;
@@ -15613,15 +15612,6 @@ HttpUri *httpGetRelativeUri(HttpUri *base, HttpUri *target, int clone)
             }
         }
     }
-
-    /*
-        Add one more segment if the last segment matches. Handle trailing separators.
-     */
-#if OLD
-    if ((*bp == '/' || *bp == '\0') && (*tp == '/' || *tp == '\0')) {
-        commonSegments++;
-    }
-#endif
     if (*startDiff == '/') {
         startDiff++;
     }

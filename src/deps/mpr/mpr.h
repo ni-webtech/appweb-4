@@ -573,9 +573,6 @@
  */
 typedef int64 MprOff;
 
-/*
-    Socklen_t
- */
 #if DOXYGEN
     typedef int MprSocklen;
 #elif VXWORKS
@@ -987,10 +984,6 @@ extern "C" {
      */
     extern int pthread_mutexattr_gettype (__const pthread_mutexattr_t *__restrict
         __attr, int *__restrict __kind) __THROW;
-    /* 
-        Set the mutex kind attribute in *ATTR to KIND (either PTHREAD_MUTEX_NORMAL,
-        PTHREAD_MUTEX_RECURSIVE, PTHREAD_MUTEX_ERRORCHECK, or PTHREAD_MUTEX_DEFAULT).  
-     */
     extern int pthread_mutexattr_settype (pthread_mutexattr_t *__attr, int __kind) __THROW;
     extern char **environ;
 #endif

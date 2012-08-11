@@ -1042,8 +1042,6 @@ static MprOpenSsl *createOpenSslConfig(MprSsl *ssl, int server)
         mprError("OpenSSL: Unable to create SSL context"); 
         return 0;
     }
-    ossl->context = context;
-
     SSL_CTX_set_app_data(context, (void*) ssl);
     SSL_CTX_sess_set_cache_size(context, 512);
     RAND_bytes(resume, sizeof(resume));
@@ -1128,6 +1126,7 @@ static MprOpenSsl *createOpenSslConfig(MprSsl *ssl, int server)
         Ensure we generate a new private key for each connection
      */
     SSL_CTX_set_options(context, SSL_OP_SINGLE_DH_USE);
+    ossl->context = context;
     return ossl;
 }
 

@@ -25908,6 +25908,7 @@ ssize sncopy(char *dest, ssize destMax, cchar *src, ssize count)
     mprAssert(0 <= count && count < MAXINT);
     mprAssert(0 < destMax && destMax < MAXINT);
 
+    //  OPT need snlen(src, count);
     len = slen(src);
     len = min(len, count);
     if (destMax <= len) {
