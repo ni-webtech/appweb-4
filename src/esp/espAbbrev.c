@@ -202,18 +202,18 @@ EdiRec *createRec(cchar *tableName, MprHash *params)
 
 void createSession()
 {
-    espCreateSession(getConn());
+    httpCreateSession(getConn());
 }
 
 
 void destroySession()
 {
-    EspSession  *sp;
+    HttpSession *sp;
     HttpConn    *conn;
 
     conn = getConn();
-    if ((sp = espGetSession(conn, 0)) != 0) {
-        espDestroySession(sp);
+    if ((sp = httpGetSession(conn, 0)) != 0) {
+        httpDestroySession(sp);
     }
 }
 
@@ -328,7 +328,7 @@ cchar *getReferrer()
 
 cchar *getSessionVar(cchar *key)
 {
-    return espGetSessionVar(getConn(), key, "");
+    return httpGetSessionVar(getConn(), key, "");
 }
 
 
@@ -422,7 +422,7 @@ cchar *makeUri(cchar *target)
 
 cchar *param(cchar *key)
 {
-    return espGetParam(getConn(), key, NULL);
+    return espGetParam(getConn(), key, "");
 }
 
 
@@ -621,7 +621,7 @@ EdiRec *setRec(EdiRec *rec)
 
 void setSessionVar(cchar *key, cchar *value)
 {
-    espSetSessionVar(getConn(), key, value);
+    httpSetSessionVar(getConn(), key, value);
 }
 
 
@@ -670,31 +670,15 @@ bool updateRec(EdiRec *rec)
 #endif /* BIT_PACK_ESP */
 /*
     @copy   default
-    
+
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
-    
+
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.md distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://embedthis.com 
-    
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
     Local variables:
     tab-width: 4
     c-basic-offset: 4

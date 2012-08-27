@@ -17,6 +17,7 @@
 /********************************* Includes ***********************************/
 
 #include    "appweb.h"
+#include    "esp.h"
 
 /********************************** Locals ************************************/
 /*
@@ -215,6 +216,15 @@ MAIN(appweb, int argc, char **argv, char **envp)
     if (initializeAppweb(ip, port) < 0) {
         return MPR_ERR_CANT_INITIALIZE;
     }
+    
+#if UNUSED
+    void testProc(HttpConn *conn);
+    void testESP();
+    HttpRoute *parent = httpLookupRoute(0, "/mob/");
+    espBindProc(parent, "/mob/aaa", testESP);
+    httpBindRoute(0, "/abc", testProc);
+    httpDefineProc("/proc/logout", testProc);
+#endif
     if (maStartAppweb(app->appweb) < 0) {
         mprUserError("Can't start HTTP service, exiting.");
         exit(9);
@@ -231,6 +241,20 @@ MAIN(appweb, int argc, char **argv, char **envp)
     mprDestroy(MPR_EXIT_DEFAULT);
     return status;
 }
+
+
+#if UNUSED
+void testProc(HttpConn *conn)
+{
+    httpError(conn, 200, "DONE");
+}
+
+void testESP()
+{
+    HttpConn *conn = getConn();
+    httpError(conn, 200, "DONE");
+}
+#endif
 
 
 static void manageApp(AppwebApp *app, int flags)
@@ -482,28 +506,12 @@ double  __dummy_appweb_floating_point_resolution(double a, double b, int64 c, in
     @copy   default
 
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
     by the terms of either license. Consult the LICENSE.md distributed with
-    this software for full details.
-
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://embedthis.com/downloads/gplLicense.html
-
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://embedthis.com
+    this software for full details and other copyrights.
 
     Local variables:
     tab-width: 4

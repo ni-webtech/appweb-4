@@ -141,10 +141,10 @@
 
   <CustomBuildStep>
     <Command>cd ..\..\src\esp
-xcopy /Y /S /D edi.h $(IncDir)
-xcopy /Y /S /D esp-app.h $(IncDir)
-xcopy /Y /S /D esp.h $(IncDir)
-xcopy /Y /S /D mdb.h $(IncDir)
+copy /Y edi.h $(IncDir)
+copy /Y esp-app.h $(IncDir)
+copy /Y esp.h $(IncDir)
+copy /Y mdb.h $(IncDir)
 cd ..\..\projects\appweb-windows</Command>
     <Outputs>$(BinDir)\mod_esp.dll</Outputs>
   </CustomBuildStep>

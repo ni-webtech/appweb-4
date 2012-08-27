@@ -121,7 +121,7 @@
 
   <CustomBuildStep>
     <Command>cd ..\..\src\deps\pcre
-xcopy /Y /S /D pcre.h $(IncDir)
+copy /Y pcre.h $(IncDir)
 cd ..\..\..\projects\appweb-windows</Command>
     <Outputs>$(BinDir)\libpcre.dll</Outputs>
   </CustomBuildStep>

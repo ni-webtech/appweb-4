@@ -14,7 +14,8 @@
 /************************************************************************/
 
 /*
-    auth.c - Generic authorization code
+    auth.c - Authorization and access management
+
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
 
@@ -24,18 +25,174 @@
 
 /********************************* Forwards ***********************************/
 
+static void computeAbilities(HttpAuth *auth, MprHash *abilities, cchar *ability);
 static void manageAuth(HttpAuth *auth, int flags);
+static void manageRole(HttpRole *role, int flags);
+static void manageUser(HttpUser *user, int flags);
+static void postLogin(HttpConn *conn);
+static bool verifyUser(HttpConn *conn);
 
 /*********************************** Code *************************************/
 
+void httpInitAuth(Http *http)
+{
+    httpAddAuthType(http, "basic", httpBasicLogin, httpBasicParse, httpBasicSetHeaders);
+    httpAddAuthType(http, "digest", httpDigestLogin, httpDigestParse, httpDigestSetHeaders);
+    httpAddAuthType(http, "post", postLogin, NULL, NULL);
+
+#if BIT_HAS_PAM && BIT_PAM
+    /*
+        Pam must be actively selected duringin configuration
+     */
+    httpAddAuthStore(http, "pam", httpPamVerifyUser);
+#endif
+    httpAddAuthStore(http, "internal", verifyUser);
+}
+
+
+int httpCheckAuth(HttpConn *conn)
+{
+    Http        *http;
+    HttpRx      *rx;
+    HttpAuth    *auth;
+    HttpRoute   *route;
+    HttpSession *session;
+    cchar       *version;
+    bool        cached;
+
+    rx = conn->rx;
+    http = conn->http;
+    route = rx->route;
+    auth = route->auth;
+
+    mprAssert(auth);
+
+    if ((auth->flags & HTTP_SECURE) && !conn->secure) {
+        httpError(conn, HTTP_CODE_BAD_REQUEST, "Access denied. Secure access required.");
+        return 0;
+    }
+    if (!auth->type || (auth->flags & HTTP_AUTO_LOGIN)) {
+        /* Authentication not required */
+        return 1;
+    }
+    mprAssert(!conn->user);
+
+    cached = 0;
+    if (rx->cookie && (session = httpGetSession(conn, 0)) != 0) {
+        /*
+            Retrieve authentication state from the session storage. Faster than re-authenticating.
+         */
+        if ((conn->username = (char*) httpGetSessionVar(conn, HTTP_SESSION_USERNAME, 0)) != 0) {
+            version = httpGetSessionVar(conn, HTTP_SESSION_AUTHVER, 0);
+            if (stoi(version) == auth->version) {
+                mprLog(5, "Using cached authentication data for user %s", conn->username);
+                cached = 1;
+            }
+        }
+    }
+    if (!cached) {
+        if (conn->authType && !smatch(conn->authType, auth->type->name)) {
+            httpError(conn, HTTP_CODE_BAD_REQUEST, "Access denied. Wrong authentication protocol type.");
+            return 0;
+        }
+        if (rx->authDetails && (auth->type->parseAuth)(conn) < 0) {
+            mprAssert(conn->error);
+            return 0;
+        }
+        if (!conn->username) {
+            (auth->type->askLogin)(conn);
+            return 0;
+        }
+        if (!(auth->store->verifyUser)(conn)) {
+            (auth->type->askLogin)(conn);
+            return 0;
+        }
+        /*
+            Store authentication state and user in session storage
+         */
+        if ((session = httpCreateSession(conn)) != 0) {
+            httpSetSessionVar(conn, HTTP_SESSION_AUTHVER, itos(auth->version));
+            httpSetSessionVar(conn, HTTP_SESSION_USERNAME, conn->username);
+        }
+    }
+    if (auth->permittedUsers && !mprLookupKey(auth->permittedUsers, conn->username)) {
+        mprLog(2, "User \"%s\" is not specified as a permitted user to access %s", conn->username, conn->rx->pathInfo);
+        httpError(conn, HTTP_CODE_FORBIDDEN, "Access denied. User is not authorized for access.");
+        return 0;
+    }
+    conn->authenticated = httpCanUser(conn, auth->requiredAbilities);
+    return conn->authenticated;
+}
+
+
+bool httpCanUser(HttpConn *conn, MprHash *requiredAbilities)
+{
+    HttpAuth    *auth;
+    MprKey      *kp;
+
+    auth = conn->rx->route->auth;
+    if (!auth->requiredAbilities) {
+        /* No abilities are required */
+        return 1;
+    }
+    if (!conn->username) {
+        /* User not authenticated */
+        return 0;
+    }
+    if (!conn->user) {
+        if (auth->users == 0 || (conn->user = mprLookupKey(auth->users, conn->username)) == 0) {
+            mprLog(2, "Can't find user %s", conn->username);
+            return 0;
+        }
+    }
+    for (ITERATE_KEYS(requiredAbilities, kp)) {
+        if (!mprLookupKey(conn->user->abilities, kp->key)) {
+            mprLog(2, "User \"%s\" does not possess the required ability: \"%s\" to access %s", 
+                conn->username, kp->key, conn->rx->pathInfo);
+            return 0;
+        }
+    }
+    return 1;
+}
+
+
+bool httpLogin(HttpConn *conn, cchar *username, cchar *password)
+{
+    HttpAuth    *auth;
+    HttpSession *session;
+
+    auth = conn->rx->route->auth;
+    if (!username || !*username) {
+        mprLog(5, "httpLogin missing username");
+        return 0;
+    }
+    conn->username = sclone(username);
+    conn->password = mprGetMD5(sfmt("%s:%s:%s", conn->username, auth->realm, password));
+    if (!(auth->store->verifyUser)(conn)) {
+        return 0;
+    }
+    if ((session = httpCreateSession(conn)) != 0) {
+        httpSetSessionVar(conn, HTTP_SESSION_AUTHVER, itos(auth->version));
+        httpSetSessionVar(conn, HTTP_SESSION_USERNAME, conn->username);
+    }
+    return 1;
+}
+
+
+bool httpIsAuthenticated(HttpConn *conn)
+{
+    return conn->authenticated;
+}
+
+
 HttpAuth *httpCreateAuth()
 {
-    HttpAuth      *auth;
-
+    HttpAuth    *auth;
+    
     if ((auth = mprAllocObj(HttpAuth, manageAuth)) == 0) {
         return 0;
     }
-    auth->backend = HTTP_AUTH_FILE;
+    httpSetAuthStore(auth, "internal");
     return auth;
 }
 
@@ -48,29 +205,22 @@ HttpAuth *httpCreateInheritedAuth(HttpAuth *parent)
         return 0;
     }
     if (parent) {
-        if (parent->allow) {
-            auth->allow = mprCloneHash(parent->allow);
-        }
-        if (parent->deny) {
-            auth->deny = mprCloneHash(parent->deny);
-        }
-        auth->anyValidUser = parent->anyValidUser;
+        //  OPT. Structure assignment
+        auth->allow = parent->allow;
+        auth->deny = parent->deny;
         auth->type = parent->type;
-        auth->backend = parent->backend;
+        auth->store = parent->store;
         auth->flags = parent->flags;
-        auth->order = parent->order;
         auth->qop = parent->qop;
-        auth->requiredRealm = parent->requiredRealm;
-        auth->requiredUsers = parent->requiredUsers;
-        auth->requiredGroups = parent->requiredGroups;
-
-        auth->userFile = parent->userFile;
-        auth->groupFile = parent->groupFile;
+        auth->realm = parent->realm;
+        auth->permittedUsers = parent->permittedUsers;
+        auth->requiredAbilities = parent->requiredAbilities;
         auth->users = parent->users;
-        auth->groups = parent->groups;
-
-    } else{
-        auth->backend = HTTP_AUTH_FILE;
+        auth->roles = parent->roles;
+        auth->version = parent->version;
+        auth->loggedIn = parent->loggedIn;
+        auth->loginPage = parent->loginPage;
+        auth->parent = parent;
     }
     return auth;
 }
@@ -81,817 +231,363 @@ static void manageAuth(HttpAuth *auth, int flags)
     if (flags & MPR_MANAGE_MARK) {
         mprMark(auth->allow);
         mprMark(auth->deny);
-        mprMark(auth->requiredRealm);
-        mprMark(auth->requiredGroups);
-        mprMark(auth->requiredUsers);
+        mprMark(auth->loggedIn);
+        mprMark(auth->loginPage);
+        mprMark(auth->permittedUsers);
         mprMark(auth->qop);
-        mprMark(auth->userFile);
-        mprMark(auth->groupFile);
+        mprMark(auth->realm);
+        mprMark(auth->requiredAbilities);
+        mprMark(auth->store);
+        mprMark(auth->type);
         mprMark(auth->users);
-        mprMark(auth->groups);
+        mprMark(auth->roles);
     }
+}
+
+
+static void manageAuthType(HttpAuthType *type, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(type->name);
+    }
+}
+
+
+int httpAddAuthType(Http *http, cchar *name, HttpAskLogin askLogin, HttpParseAuth parseAuth, HttpSetAuth setAuth)
+{
+    HttpAuthType    *type;
+
+    if ((type = mprAllocObj(HttpAuthType, manageAuthType)) == 0) {
+        return MPR_ERR_CANT_CREATE;
+    }
+    type->name = sclone(name);
+    type->askLogin = askLogin;
+    type->parseAuth = parseAuth;
+    type->setAuth = setAuth;
+
+    if (mprAddKey(http->authTypes, name, type) == 0) {
+        return MPR_ERR_CANT_CREATE;
+    }
+    return 0;
+}
+
+
+static void manageAuthStore(HttpAuthStore *store, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(store->name);
+    }
+}
+
+
+/*
+    Add a password store backend
+ */
+int httpAddAuthStore(Http *http, cchar *name, HttpVerifyUser verifyUser)
+{
+    HttpAuthStore    *store;
+
+    if ((store = mprAllocObj(HttpAuthStore, manageAuthStore)) == 0) {
+        return MPR_ERR_CANT_CREATE;
+    }
+    store->name = sclone(name);
+    store->verifyUser = verifyUser;
+    if (mprAddKey(http->authStores, name, store) == 0) {
+        return MPR_ERR_CANT_CREATE;
+    }
+    return 0;
 }
 
 
 void httpSetAuthAllow(HttpAuth *auth, cchar *allow)
 {
-    if (auth->allow == 0) {
+    if (auth->allow == 0 || (auth->parent && auth->parent->allow == auth->allow)) {
         auth->allow = mprCreateHash(-1, MPR_HASH_STATIC_VALUES);
     }
-    mprAddKey(auth->allow, sclone(allow), "");
+    mprAddKey(auth->allow, sclone(allow), auth);
 }
 
 
 void httpSetAuthAnyValidUser(HttpAuth *auth)
 {
-    auth->anyValidUser = 1;
-    auth->flags |= HTTP_AUTH_REQUIRED;
+    auth->permittedUsers = 0;
+}
+
+
+void httpSetAuthAutoLogin(HttpAuth *auth, bool on)
+{
+    auth->flags &= ~HTTP_AUTO_LOGIN;
+    auth->flags |= on ? HTTP_AUTO_LOGIN : 0;
+}
+
+
+void httpSetAuthRequiredAbilities(HttpAuth *auth, cchar *abilities)
+{
+    char    *ability, *tok;
+
+    auth->requiredAbilities = mprCreateHash(0, 0);
+    for (ability = stok(sclone(abilities), " \t,", &tok); abilities; abilities = stok(NULL, " \t,", &tok)) {
+        computeAbilities(auth, auth->requiredAbilities, ability);
+    }
 }
 
 
 void httpSetAuthDeny(HttpAuth *auth, cchar *client)
 {
-    if (auth->deny == 0) {
+    if (auth->deny == 0 || (auth->parent && auth->parent->deny == auth->deny)) {
         auth->deny = mprCreateHash(-1, MPR_HASH_STATIC_VALUES);
     }
-    mprAddKey(auth->deny, sclone(client), "");
+    mprAddKey(auth->deny, sclone(client), auth);
 }
 
 
 void httpSetAuthOrder(HttpAuth *auth, int order)
 {
-    auth->order = order;
+    auth->flags &= (HTTP_ALLOW_DENY | HTTP_DENY_ALLOW);
+    auth->flags |= (order & (HTTP_ALLOW_DENY | HTTP_DENY_ALLOW));
+}
+
+
+/*
+    Internal login service routine. Called in response to a post request.
+ */
+static void loginServiceProc(HttpConn *conn)
+{
+    HttpAuth    *auth;
+    cchar       *username, *password, *referrer, *uri;
+
+    auth = conn->rx->route->auth;
+    username = httpGetParam(conn, "username", 0);
+    password = httpGetParam(conn, "password", 0);
+
+    if (httpLogin(conn, username, password)) {
+        if (sstarts(auth->loggedIn, "referrer")) {
+            if ((referrer = httpGetSessionVar(conn, "referrer", 0)) != 0) {
+                /*
+                    Preserve protocol scheme from existing connection
+                 */
+                HttpUri *where = httpCreateUri(referrer, 0);
+                httpCompleteUri(where, conn->rx->parsedUri);
+                referrer = httpUriToString(where, 0);
+                httpRedirect(conn, HTTP_CODE_MOVED_TEMPORARILY, referrer);
+            } else {
+                //  MOB - can we do something simpler?
+                if ((uri = schr(referrer, ':')) != 0) {
+                    httpRedirect(conn, HTTP_CODE_MOVED_TEMPORARILY, ++uri);
+                } else {
+                    httpRedirect(conn, HTTP_CODE_MOVED_TEMPORARILY, httpLink(conn, "~", 0));
+                }
+            }
+        } else {
+            httpRedirect(conn, HTTP_CODE_MOVED_TEMPORARILY, auth->loggedIn);
+        }
+    } else {
+        httpRedirect(conn, HTTP_CODE_MOVED_TEMPORARILY, auth->loginPage);
+    }
+}
+
+
+static void logoutServiceProc(HttpConn *conn)
+{
+    HttpAuth    *auth;
+
+    auth = conn->rx->route->auth;
+    httpRemoveSessionVar(conn, HTTP_SESSION_USERNAME);
+    httpRedirect(conn, HTTP_CODE_MOVED_TEMPORARILY, auth->loginPage);
+}
+
+
+void httpSetAuthPost(HttpRoute *parent, cchar *loginPage, cchar *loginService, cchar *logoutService, cchar *loggedIn)
+{
+    HttpAuth    *auth;
+    HttpRoute   *route;
+
+    auth = parent->auth;
+    auth->loginPage = sclone(loginPage);
+    if (loggedIn) {
+        auth->loggedIn = sclone(loggedIn);
+    }
+    /*
+        Create a route without auth for the loginPage
+     */
+    if ((route = httpCreateInheritedRoute(parent)) != 0) {
+        httpSetRoutePattern(route, loginPage, 0);
+        route->auth->type = 0;
+        httpFinalizeRoute(route);
+    }
+    if (loginService && *loginService) {
+        route = httpBindRoute(parent, loginService, loginServiceProc);
+        route->auth->type = 0;
+    }
+    if (logoutService && *logoutService) {
+        route = httpBindRoute(parent, logoutService, logoutServiceProc);
+        route->auth->type = 0;
+    }
 }
 
 
 void httpSetAuthQop(HttpAuth *auth, cchar *qop)
 {
-    if (strcmp(qop, "auth") == 0 || strcmp(qop, "auth-int") == 0) {
-        auth->qop = sclone(qop);
-    } else {
-        auth->qop = mprEmptyString();
-    }
+    auth->qop = sclone(qop);
 }
 
 
 void httpSetAuthRealm(HttpAuth *auth, cchar *realm)
 {
-    auth->requiredRealm = sclone(realm);
+    auth->realm = sclone(realm);
+    auth->version = ((Http*) MPR->httpService)->nextAuth++;
 }
 
 
-void httpSetAuthRequiredGroups(HttpAuth *auth, cchar *groups)
+void httpSetAuthPermittedUsers(HttpAuth *auth, cchar *users)
 {
-    auth->requiredGroups = sclone(groups);
-    auth->flags |= HTTP_AUTH_REQUIRED;
-    auth->anyValidUser = 0;
+    char    *user, *tok;
+
+    auth->permittedUsers = mprCreateHash(0, 0);
+    for (user = stok(sclone(users), " \t,", &tok); users; users = stok(NULL, " \t,", &tok)) {
+        mprAddKey(auth->permittedUsers, user, user);
+    }
 }
 
 
-void httpSetAuthRequiredUsers(HttpAuth *auth, cchar *users)
+void httpSetAuthSecure(HttpAuth *auth, int enable)
 {
-    auth->requiredUsers = sclone(users);
-    auth->flags |= HTTP_AUTH_REQUIRED;
-    auth->anyValidUser = 0;
+
+    auth->flags &= ~HTTP_SECURE;
+    if (enable) {
+        auth->flags |= HTTP_SECURE;
+    }
 }
 
 
-void httpSetAuthUser(HttpConn *conn, cchar *user)
+int httpSetAuthStore(HttpAuth *auth, cchar *store)
 {
-    conn->authUser = sclone(user);
-}
+    Http    *http;
 
-
-/*  
-    Validate the user credentials with the designated authorization backend method.
- */
-static bool validateCred(HttpAuth *auth, cchar *realm, char *user, cchar *password, cchar *requiredPass, char **msg)
-{
-    if (auth->backend == HTTP_AUTH_FILE) {
-        return httpValidateFileCredentials(auth, realm, user, password, requiredPass, msg);
-    } else if (auth->backend == HTTP_AUTH_PAM) {
-        return httpValidatePamCredentials(auth, realm, user, password, NULL, msg);
-    } else {
-        *msg = "Required authorization backend method is not enabled or configured";
+    http = MPR->httpService;
+    if ((auth->store = mprLookupKey(http->authStores, store)) == 0) {
+        return MPR_ERR_CANT_FIND;
     }
-    return 0;
-}
-
-
-/*  
-    Get the password (if the designated authorization backend method will give it to us)
- */
-static cchar *getPassword(HttpAuth *auth, cchar *realm, cchar *user)
-{
-    if (auth->backend == HTTP_AUTH_FILE) {
-        return httpGetFilePassword(auth, realm, user);
-    } else if (auth->backend == HTTP_AUTH_PAM) {
-        return httpGetPamPassword(auth, realm, user);
-    }
-    return 0;
-}
-
-
-void httpInitAuth(Http *http)
-{
-    http->validateCred = validateCred;
-    http->getPassword = getPassword;
-}
-
-
-/*
-    @copy   default
-    
-    Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
-    
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.md distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://embedthis.com 
-    
-    Local variables:
-    tab-width: 4
-    c-basic-offset: 4
-    End:
-    vim: sw=4 ts=4 expandtab
-
-    @end
- */
-
-/************************************************************************/
-/*
-    Start of file "src/authCheck.c"
- */
-/************************************************************************/
-
-/*
-    authCheck.c - Authorization checking for basic and digest authentication.
-    Copyright (c) All Rights Reserved. See details at the end of the file.
- */
-
-/********************************* Includes ***********************************/
-
-
-
-/********************************** Defines ***********************************/
-/*
-    Per-request authorization data
- */
-typedef struct AuthData 
-{
-    char            *password;          /* User password or digest */
-    char            *userName;
-    char            *cnonce;
-    char            *nc;
-    char            *nonce;
-    char            *opaque;
-    char            *qop;
-    char            *realm;
-    char            *uri;
-} AuthData;
-
-/********************************** Forwards **********************************/
-
-static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *realm, cchar *uri, 
-    cchar *nonce, cchar *qop, cchar *nc, cchar *cnonce, cchar *method);
-static char *createDigestNonce(HttpConn *conn, cchar *secret, cchar *realm);
-static void decodeBasicAuth(HttpConn *conn, AuthData *ad);
-static int  decodeDigestDetails(HttpConn *conn, AuthData *ad);
-static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *msg, char *logMsg);
-static int parseDigestNonce(char *nonce, cchar **secret, cchar **realm, MprTime *when);
-
-/*********************************** Code *************************************/
-
-int httpCheckAuth(HttpConn *conn)
-{
-    Http        *http;
-    HttpRx      *rx;
-    HttpAuth    *auth;
-    HttpRoute   *route;
-    AuthData    *ad;
-    MprTime     when;
-    cchar       *requiredPassword;
-    char        *msg, *requiredDigest;
-    cchar       *secret, *realm;
-    int         actualAuthType;
-
-    rx = conn->rx;
-    http = conn->http;
-    route = rx->route;
-    auth = route->auth;
-
-    if (!conn->endpoint || auth == 0 || auth->type == 0) {
-        return 0;
-    }
-    if ((ad = mprAllocStruct(AuthData)) == 0) {
-        return 0;
-    }
-    if (rx->authDetails == 0) {
-        formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, Missing authorization details.", 0);
-        return HTTP_ROUTE_OK;
-    }
-    if (scaselesscmp(rx->authType, "basic") == 0) {
-        decodeBasicAuth(conn, ad);
-        actualAuthType = HTTP_AUTH_BASIC;
-
-    } else if (scaselesscmp(rx->authType, "digest") == 0) {
-        if (decodeDigestDetails(conn, ad) < 0) {
-            httpError(conn, 400, "Bad authorization header");
-            return HTTP_ROUTE_OK;
-        }
-        actualAuthType = HTTP_AUTH_DIGEST;
-    } else {
-        actualAuthType = HTTP_AUTH_UNKNOWN;
-    }
-    mprLog(4, "matchAuth: type %d, url %s\nDetails %s\n", auth->type, rx->pathInfo, rx->authDetails);
-
-    if (ad->userName == 0) {
-        formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, Missing user name", 0);
-        return HTTP_ROUTE_OK;
-    }
-    if (auth->type != actualAuthType) {
-        formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, Wrong authentication protocol", 0);
-        return HTTP_ROUTE_OK;
-    }
-    /*  
-        Some backend methods can't return the password and will simply do everything in validateCred. 
-        In this case, they and will return "". That is okay.
-     */
-    if ((requiredPassword = (http->getPassword)(auth, auth->requiredRealm, ad->userName)) == 0) {
-        formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied, authentication error", "User not defined");
-        return 1;
-    }
-    if (auth->type == HTTP_AUTH_DIGEST) {
-        if (scmp(ad->qop, auth->qop) != 0) {
-            formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access Denied. Protection quality does not match", 0);
-            return HTTP_ROUTE_OK;
-        }
-        calcDigest(&requiredDigest, 0, requiredPassword, ad->realm, ad->uri, ad->nonce, ad->qop, ad->nc, 
-            ad->cnonce, rx->method);
-        requiredPassword = requiredDigest;
-
-        /*
-            Validate the nonce value - prevents replay attacks
-         */
-        when = 0; secret = 0; realm = 0;
-        parseDigestNonce(ad->nonce, &secret, &realm, &when);
-        if (scmp(secret, http->secret) != 0 || scmp(realm, auth->requiredRealm) != 0) {
-            formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access denied, authentication error", "Nonce mismatch");
-        } else if ((when + (5 * 60 * MPR_TICKS_PER_SEC)) < http->now) {
-            formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access denied, authentication error", "Nonce is stale");
-        }
-    }
-    if (!(http->validateCred)(auth, auth->requiredRealm, ad->userName, ad->password, requiredPassword, &msg)) {
-        formatAuthResponse(conn, auth, HTTP_CODE_UNAUTHORIZED, "Access denied, incorrect username/password", msg);
-    }
-    rx->authenticated = 1;
-    return HTTP_ROUTE_OK;
-}
-
-
-/*  
-    Decode basic authorization details
- */
-static void decodeBasicAuth(HttpConn *conn, AuthData *ad)
-{
-    HttpRx  *rx;
-    char    *decoded, *cp;
-
-    rx = conn->rx;
-    if ((decoded = mprDecode64(rx->authDetails)) == 0) {
-        return;
-    }
-    if ((cp = strchr(decoded, ':')) != 0) {
-        *cp++ = '\0';
-    }
-    if (cp) {
-        ad->userName = sclone(decoded);
-        ad->password = sclone(cp);
-
-    } else {
-        ad->userName = mprEmptyString();
-        ad->password = mprEmptyString();
-    }
-    httpSetAuthUser(conn, ad->userName);
-}
-
-
-/*  
-    Decode the digest authentication details.
- */
-static int decodeDigestDetails(HttpConn *conn, AuthData *ad)
-{
-    HttpRx      *rx;
-    char        *value, *tok, *key, *dp, *sp;
-    int         seenComma;
-
-    rx = conn->rx;
-    key = sclone(rx->authDetails);
-
-    while (*key) {
-        while (*key && isspace((uchar) *key)) {
-            key++;
-        }
-        tok = key;
-        while (*tok && !isspace((uchar) *tok) && *tok != ',' && *tok != '=') {
-            tok++;
-        }
-        *tok++ = '\0';
-
-        while (isspace((uchar) *tok)) {
-            tok++;
-        }
-        seenComma = 0;
-        if (*tok == '\"') {
-            value = ++tok;
-            while (*tok != '\"' && *tok != '\0') {
-                tok++;
-            }
-        } else {
-            value = tok;
-            while (*tok != ',' && *tok != '\0') {
-                tok++;
-            }
-            seenComma++;
-        }
-        *tok++ = '\0';
-
-        /*
-            Handle back-quoting
-         */
-        if (strchr(value, '\\')) {
-            for (dp = sp = value; *sp; sp++) {
-                if (*sp == '\\') {
-                    sp++;
-                }
-                *dp++ = *sp++;
-            }
-            *dp = '\0';
-        }
-
-        /*
-            user, response, oqaque, uri, realm, nonce, nc, cnonce, qop
-         */
-        switch (tolower((uchar) *key)) {
-        case 'a':
-            if (scaselesscmp(key, "algorithm") == 0) {
-                break;
-            } else if (scaselesscmp(key, "auth-param") == 0) {
-                break;
-            }
-            break;
-
-        case 'c':
-            if (scaselesscmp(key, "cnonce") == 0) {
-                ad->cnonce = sclone(value);
-            }
-            break;
-
-        case 'd':
-            if (scaselesscmp(key, "domain") == 0) {
-                break;
-            }
-            break;
-
-        case 'n':
-            if (scaselesscmp(key, "nc") == 0) {
-                ad->nc = sclone(value);
-            } else if (scaselesscmp(key, "nonce") == 0) {
-                ad->nonce = sclone(value);
-            }
-            break;
-
-        case 'o':
-            if (scaselesscmp(key, "opaque") == 0) {
-                ad->opaque = sclone(value);
-            }
-            break;
-
-        case 'q':
-            if (scaselesscmp(key, "qop") == 0) {
-                ad->qop = sclone(value);
-            }
-            break;
-
-        case 'r':
-            if (scaselesscmp(key, "realm") == 0) {
-                ad->realm = sclone(value);
-            } else if (scaselesscmp(key, "response") == 0) {
-                /* Store the response digest in the password field */
-                ad->password = sclone(value);
-            }
-            break;
-
-        case 's':
-            if (scaselesscmp(key, "stale") == 0) {
-                break;
-            }
-        
-        case 'u':
-            if (scaselesscmp(key, "uri") == 0) {
-                ad->uri = sclone(value);
-            } else if (scaselesscmp(key, "username") == 0 || scaselesscmp(key, "user") == 0) {
-                ad->userName = sclone(value);
-            }
-            break;
-
-        default:
-            /*  Just ignore keywords we don't understand */
-            ;
-        }
-        key = tok;
-        if (!seenComma) {
-            while (*key && *key != ',') {
-                key++;
-            }
-            if (*key) {
-                key++;
-            }
-        }
-    }
-    if (ad->userName == 0 || ad->realm == 0 || ad->nonce == 0 || ad->uri == 0 || ad->password == 0) {
+#if BIT_HAS_PAM && BIT_PAM
+    if (smatch(store, "pam") && smatch(auth->type->name, "digest")) {
+        mprError("Can't use PAM password stores with digest authentication");
         return MPR_ERR_BAD_ARGS;
     }
-    if (ad->qop && (ad->cnonce == 0 || ad->nc == 0)) {
+#else
+    if (smatch(store, "pam")) {
+        mprError("PAM is not supported in the current configuration");
         return MPR_ERR_BAD_ARGS;
     }
-    if (ad->qop == 0) {
-        ad->qop = mprEmptyString();
-    }
-    httpSetAuthUser(conn, ad->userName);
+#endif
+    auth->version = ((Http*) MPR->httpService)->nextAuth++;
     return 0;
 }
 
 
-/*  
-    Format an authentication response. This is typically a 401 response code.
- */
-static void formatAuthResponse(HttpConn *conn, HttpAuth *auth, int code, char *msg, char *logMsg)
+int httpSetAuthType(HttpAuth *auth, cchar *type, cchar *details)
 {
-    char    *qopClass, *nonce;
+    Http    *http;
 
-    if (logMsg == 0) {
-        logMsg = msg;
+    http = MPR->httpService;
+    if ((auth->type = mprLookupKey(http->authTypes, type)) == 0) {
+        mprError("Can't find auth type %s", type);
+        return MPR_ERR_CANT_FIND;
     }
-    mprLog(3, "Auth response: code %d, %s", code, logMsg);
-
-    if (auth->type == HTTP_AUTH_BASIC) {
-        httpSetHeader(conn, "WWW-Authenticate", "Basic realm=\"%s\"", auth->requiredRealm);
-
-    } else if (auth->type == HTTP_AUTH_DIGEST) {
-        qopClass = auth->qop;
-        nonce = createDigestNonce(conn, conn->http->secret, auth->requiredRealm);
-        mprAssert(conn->host);
-
-        if (scmp(qopClass, "auth") == 0) {
-            httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", domain=\"%s\", "
-                "qop=\"auth\", nonce=\"%s\", opaque=\"%s\", algorithm=\"MD5\", stale=\"FALSE\"", 
-                auth->requiredRealm, conn->host->name, nonce, "");
-
-        } else if (scmp(qopClass, "auth-int") == 0) {
-            httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", domain=\"%s\", "
-                "qop=\"auth\", nonce=\"%s\", opaque=\"%s\", algorithm=\"MD5\", stale=\"FALSE\"", 
-                auth->requiredRealm, conn->host->name, nonce, "");
-
-        } else {
-            httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", nonce=\"%s\"", auth->requiredRealm, nonce);
-        }
-    }
-    httpSetContentType(conn, "text/plain");
-    httpError(conn, code, "Authentication Error: %s", msg);
-    httpSetPipelineHandler(conn, conn->http->passHandler);
-}
-
-
-/*
-    Create a nonce value for digest authentication (RFC 2617)
- */ 
-static char *createDigestNonce(HttpConn *conn, cchar *secret, cchar *realm)
-{
-    MprTime      now;
-    char         nonce[256];
-    static int64 next = 0;
-
-    mprAssert(realm && *realm);
-
-    now = conn->http->now;
-    mprSprintf(nonce, sizeof(nonce), "%s:%s:%Lx:%Lx", secret, realm, now, next++);
-    return mprEncode64(nonce);
-}
-
-
-static int parseDigestNonce(char *nonce, cchar **secret, cchar **realm, MprTime *when)
-{
-    char    *tok, *decoded, *whenStr;
-
-    if ((decoded = mprDecode64(nonce)) == 0) {
-        return MPR_ERR_CANT_READ;
-    }
-    *secret = stok(decoded, ":", &tok);
-    *realm = stok(NULL, ":", &tok);
-    whenStr = stok(NULL, ":", &tok);
-    *when = (MprTime) stoiradix(whenStr, 16, NULL); 
+    auth->version = ((Http*) MPR->httpService)->nextAuth++;
     return 0;
 }
 
 
-/*
-    Get a Digest value using the MD5 algorithm -- See RFC 2617 to understand this code.
- */ 
-static int calcDigest(char **digest, cchar *userName, cchar *password, cchar *realm, cchar *uri, 
-    cchar *nonce, cchar *qop, cchar *nc, cchar *cnonce, cchar *method)
+HttpAuthType *httpLookupAuthType(cchar *type)
 {
-    char    a1Buf[256], a2Buf[256], digestBuf[256];
-    char    *ha1, *ha2;
+    Http    *http;
 
-    mprAssert(qop);
-
-    /*
-        Compute HA1. If userName == 0, then the password is already expected to be in the HA1 format 
-        (MD5(userName:realm:password).
-     */
-    if (userName == 0) {
-        ha1 = sclone(password);
-    } else {
-        mprSprintf(a1Buf, sizeof(a1Buf), "%s:%s:%s", userName, realm, password);
-        ha1 = mprGetMD5(a1Buf);
-    }
-
-    /*
-        HA2
-     */ 
-    mprSprintf(a2Buf, sizeof(a2Buf), "%s:%s", method, uri);
-    ha2 = mprGetMD5(a2Buf);
-
-    /*
-        H(HA1:nonce:HA2)
-     */
-    if (scmp(qop, "auth") == 0) {
-        mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2);
-
-    } else if (scmp(qop, "auth-int") == 0) {
-        mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2);
-
-    } else {
-        mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s", ha1, nonce, ha2);
-    }
-    *digest = mprGetMD5(digestBuf);
-    return 0;
+    http = MPR->httpService;
+    return mprLookupKey(http->authTypes, type);
 }
 
 
-
-/*
-    @copy   default
-    
-    Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
-    
-    This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.md distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://embedthis.com 
-    
-    Local variables:
-    tab-width: 4
-    c-basic-offset: 4
-    End:
-    vim: sw=4 ts=4 expandtab
-
-    @end
- */
-
-/************************************************************************/
-/*
-    Start of file "src/authFile.c"
- */
-/************************************************************************/
-
-/*
-    authFile.c - File based authorization using password files.
-
-    Copyright (c) All Rights Reserved. See details at the end of the file.
- */
-
-/********************************* Includes ***********************************/
-
-
-
-/********************************** Forwards **********************************/
-
-static bool isUserValid(HttpAuth *auth, cchar *realm, cchar *user);
-static void manageGroup(HttpGroup *group, int flags);
-static void manageUser(HttpUser *user, int flags);
-
-/*********************************** Code *************************************/
-
-cchar *httpGetFilePassword(HttpAuth *auth, cchar *realm, cchar *user)
+HttpRole *httpCreateRole(HttpAuth *auth, cchar *name, cchar *abilities)
 {
-    HttpUser    *up;
-    char        *key;
+    HttpRole    *role;
+    char        *ability, *tok;
 
-    up = 0;
-    key = sjoin(realm, ":", user, NULL);
-    if (auth->users) {
-        up = (HttpUser*) mprLookupKey(auth->users, key);
-    }
-    if (up == 0) {
+    if ((role = mprAllocObj(HttpRole, manageRole)) == 0) {
         return 0;
     }
-    return up->password;
+    role->name = sclone(name);
+    role->abilities = mprCreateHash(0, 0);
+    for (ability = stok(sclone(abilities), " \t", &tok); ability; ability = stok(NULL, " \t", &tok)) {
+        mprAddKey(role->abilities, ability, role);
+    }
+    return role;
 }
 
 
-bool httpValidateFileCredentials(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, cchar *requiredPassword, 
-    char **msg)
-{
-    char    passbuf[HTTP_MAX_PASS * 2], *hashedPassword;
-
-    hashedPassword = 0;
-    
-    if (auth->type == HTTP_AUTH_BASIC) {
-        mprSprintf(passbuf, sizeof(passbuf), "%s:%s:%s", user, realm, password);
-        hashedPassword = mprGetMD5(passbuf);
-        password = hashedPassword;
-    }
-    if (!isUserValid(auth, realm, user)) {
-        *msg = "Access Denied, Unknown User.";
-        return 0;
-    }
-    if (strcmp(password, requiredPassword)) {
-        *msg = "Access Denied, Wrong Password.";
-        return 0;
-    }
-    return 1;
-}
-
-
-/*
-    Determine if this user is specified as being eligible for this realm. We examine the requiredUsers and requiredGroups.
- */
-static bool isUserValid(HttpAuth *auth, cchar *realm, cchar *user)
-{
-    HttpGroup       *gp;
-    HttpUser        *up;
-    char            *key, *requiredUser, *requiredUsers, *requiredGroups, *group, *name, *tok, *gtok;
-    int             next;
-
-    if (auth->anyValidUser) {
-        key = sjoin(realm, ":", user, NULL);
-        if (auth->users == 0) {
-            return 0;
-        }
-        return mprLookupKey(auth->users, key) != 0;
-    }
-
-    if (auth->requiredUsers) {
-        requiredUsers = sclone(auth->requiredUsers);
-        tok = NULL;
-        requiredUser = stok(requiredUsers, " \t", &tok);
-        while (requiredUser) {
-            if (strcmp(user, requiredUser) == 0) {
-                return 1;
-            }
-            requiredUser = stok(NULL, " \t", &tok);
-        }
-    }
-
-    if (auth->requiredGroups) {
-        gtok = NULL;
-        requiredGroups = sclone(auth->requiredGroups);
-        /*
-            For each group, check all the users in the group.
-         */
-        group = stok(requiredGroups, " \t", &gtok);
-        while (group) {
-            if (auth->groups == 0) {
-                gp = 0;
-            } else {
-                gp = (HttpGroup*) mprLookupKey(auth->groups, group);
-            }
-            if (gp == 0) {
-                mprError("Can't find group %s", group);
-                group = stok(NULL, " \t", &gtok);
-                continue;
-            }
-            for (next = 0; (name = mprGetNextItem(gp->users, &next)) != 0; ) {
-                if (strcmp(user, name) == 0) {
-                    return 1;
-                }
-            }
-            group = stok(NULL, " \t", &gtok);
-        }
-    }
-    if (auth->requiredAcl != 0) {
-        key = sjoin(realm, ":", user, NULL);
-        up = (HttpUser*) mprLookupKey(auth->users, key);
-        if (up) {
-            mprLog(6, "UserRealm \"%s\" has ACL %lx, Required ACL %lx", key, up->acl, auth->requiredAcl);
-            if (up->acl & auth->requiredAcl) {
-                return 1;
-            }
-        }
-    }
-    return 0;
-}
-
-
-HttpGroup *httpCreateGroup(HttpAuth *auth, cchar *name, HttpAcl acl, bool enabled)
-{
-    HttpGroup     *gp;
-
-    if ((gp = mprAllocObj(HttpGroup, manageGroup)) == 0) {
-        return 0;
-    }
-    gp->acl = acl;
-    gp->name = sclone(name);
-    gp->enabled = enabled;
-    gp->users = mprCreateList(0, 0);
-    return gp;
-}
-
-
-static void manageGroup(HttpGroup *group, int flags)
+static void manageRole(HttpRole *role, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
-        mprMark(group->name);
-        mprMark(group->users);
+        mprMark(role->name);
+        mprMark(role->abilities);
     }
 }
 
 
-int httpAddGroup(HttpAuth *auth, cchar *group, HttpAcl acl, bool enabled)
+int httpAddRole(HttpAuth *auth, cchar *name, cchar *abilities)
 {
-    HttpGroup     *gp;
+    HttpRole    *role;
 
-    mprAssert(auth);
-    mprAssert(group && *group);
+    if (auth->roles == 0) {
+        auth->roles = mprCreateHash(0, 0);
+        auth->version = ((Http*) MPR->httpService)->nextAuth++;
 
-    gp = httpCreateGroup(auth, group, acl, enabled);
-    if (gp == 0) {
-        return MPR_ERR_MEMORY;
+    } else if (auth->parent && auth->parent->roles == auth->roles) {
+        /* Inherit parent roles */
+        auth->roles = mprCloneHash(auth->parent->roles);
+        auth->version = ((Http*) MPR->httpService)->nextAuth++;
     }
-    /*
-        Create the index on demand
-     */
-    if (auth->groups == 0) {
-        auth->groups = mprCreateHash(-1, 0);
-    }
-    if (mprLookupKey(auth->groups, group)) {
+    if (mprLookupKey(auth->roles, name)) {
         return MPR_ERR_ALREADY_EXISTS;
     }
-    if (mprAddKey(auth->groups, group, gp) == 0) {
+    if ((role = httpCreateRole(auth, name, abilities)) == 0) {
         return MPR_ERR_MEMORY;
     }
+    if (mprAddKey(auth->roles, name, role) == 0) {
+        return MPR_ERR_MEMORY;
+    }
+    mprLog(5, "Role \"%s\" has abilities: %s", role->name, abilities);
     return 0;
 }
 
 
-HttpUser *httpCreateUser(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, bool enabled)
+int httpRemoveRole(HttpAuth *auth, cchar *role)
 {
-    HttpUser      *up;
+    if (auth->roles == 0 || !mprLookupKey(auth->roles, role)) {
+        return MPR_ERR_CANT_ACCESS;
+    }
+    mprRemoveKey(auth->roles, role);
+    return 0;
+}
 
-    if ((up = mprAllocObj(HttpUser, manageUser)) == 0) {
+
+HttpUser *httpCreateUser(HttpAuth *auth, cchar *name, cchar *password, cchar *abilities)
+{
+    HttpUser    *user;
+    char        *ability, *tok;
+
+    if ((user = mprAllocObj(HttpUser, manageUser)) == 0) {
         return 0;
     }
-    up->name = sclone(user);
-    up->realm = sclone(realm);
-    up->password = sclone(password);
-    up->enabled = enabled;
-    return up;
+    user->name = sclone(name);
+    user->password = sclone(password);
+    if (abilities) {
+        user->abilities = mprCreateHash(0, 0);
+        for (ability = stok(sclone(abilities), " \t,", &tok); ability; ability = stok(NULL, " \t,", &tok)) {
+            mprAddKey(user->abilities, ability, user);
+        }
+        httpComputeUserAbilities(auth, user);
+    }
+    return user;
 }
 
 
@@ -899,380 +595,153 @@ static void manageUser(HttpUser *user, int flags)
 {
     if (flags & MPR_MANAGE_MARK) {
         mprMark(user->password);
-        mprMark(user->realm);
         mprMark(user->name);
+        mprMark(user->abilities);
     }
 }
 
 
-int httpAddUser(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, bool enabled)
+int httpAddUser(HttpAuth *auth, cchar *name, cchar *password, cchar *abilities)
 {
-    HttpUser  *up;
+    HttpUser    *user;
 
-    char    *key;
-
-    up = httpCreateUser(auth, realm, user, password, enabled);
-    if (up == 0) {
-        return MPR_ERR_MEMORY;
-    }
     if (auth->users == 0) {
         auth->users = mprCreateHash(-1, 0);
+        auth->version = ((Http*) MPR->httpService)->nextAuth++;
+
+    } else if (auth->parent && auth->parent->users == auth->users) {
+        auth->users = mprCloneHash(auth->parent->users);
+        auth->version = ((Http*) MPR->httpService)->nextAuth++;
     }
-    key = sjoin(realm, ":", user, NULL);
-    if (mprLookupKey(auth->users, key)) {
+    if (mprLookupKey(auth->users, name)) {
         return MPR_ERR_ALREADY_EXISTS;
     }
-    if (mprAddKey(auth->users, key, up) == 0) {
+    if ((user = httpCreateUser(auth, name, password, abilities)) == 0) {
+        return MPR_ERR_MEMORY;
+    }
+    if (mprAddKey(auth->users, name, user) == 0) {
         return MPR_ERR_MEMORY;
     }
     return 0;
 }
 
 
-int httpAddUserToGroup(HttpAuth *auth, HttpGroup *gp, cchar *user)
+int httpRemoveUser(HttpAuth *auth, cchar *user)
 {
-    char        *name;
-    int         next;
-
-    for (next = 0; (name = mprGetNextItem(gp->users, &next)) != 0; ) {
-        if (strcmp(name, user) == 0) {
-            return MPR_ERR_ALREADY_EXISTS;
-        }
-    }
-    mprAddItem(gp->users, sclone(user));
-    return 0;
-}
-
-
-int httpAddUsersToGroup(HttpAuth *auth, cchar *group, cchar *userList)
-{
-    HttpGroup   *gp;
-    char        *user, *users, *tok;
-
-    gp = 0;
-
-    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupKey(auth->groups, group)) == 0) {
+    if (auth->users == 0 || !mprLookupKey(auth->users, user)) {
         return MPR_ERR_CANT_ACCESS;
     }
-    tok = NULL;
-    users = sclone(userList);
-    user = stok(users, " ,\t", &tok);
-    while (user) {
-        /* Ignore already exists errors */
-        httpAddUserToGroup(auth, gp, user);
-        user = stok(NULL, " \t", &tok);
-    }
+    mprRemoveKey(auth->users, user);
     return 0;
-}
-
-
-int httpDisableGroup(HttpAuth *auth, cchar *group)
-{
-    HttpGroup     *gp;
-
-    gp = 0;
-
-    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupKey(auth->groups, group)) == 0) {
-        return MPR_ERR_CANT_ACCESS;
-    }
-    gp->enabled = 0;
-    return 0;
-}
-
-
-int httpDisableUser(HttpAuth *auth, cchar *realm, cchar *user)
-{
-    HttpUser      *up;
-    char        *key;
-
-    up = 0;
-    key = sjoin(realm, ":", user, NULL);
-    if (auth->users == 0 || (up = (HttpUser*) mprLookupKey(auth->users, key)) == 0) {
-        return MPR_ERR_CANT_ACCESS;
-    }
-    up->enabled = 0;
-    return 0;
-}
-
-
-int httpEnableGroup(HttpAuth *auth, cchar *group)
-{
-    HttpGroup     *gp;
-
-    gp = 0;
-    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupKey(auth->groups, group)) == 0) {
-        return MPR_ERR_CANT_ACCESS;
-    }
-    gp->enabled = 1;
-    return 0;
-}
-
-
-int httpEnableUser(HttpAuth *auth, cchar *realm, cchar *user)
-{
-    HttpUser      *up;
-    char        *key;
-
-    up = 0;
-    key = sjoin(realm, ":", user, NULL);    
-    if (auth->users == 0 || (up = (HttpUser*) mprLookupKey(auth->users, key)) == 0) {
-        return MPR_ERR_CANT_ACCESS;
-    }
-    up->enabled = 1;
-    return 0;
-}
-
-
-HttpAcl httpGetGroupAcl(HttpAuth *auth, char *group)
-{
-    HttpGroup     *gp;
-
-    gp = 0;
-    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupKey(auth->groups, group)) == 0) {
-        return MPR_ERR_CANT_ACCESS;
-    }
-    return gp->acl;
-}
-
-
-bool httpIsGroupEnabled(HttpAuth *auth, cchar *group)
-{
-    HttpGroup     *gp;
-
-    gp = 0;
-    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupKey(auth->groups, group)) == 0) {
-        return 0;
-    }
-    return gp->enabled;
-}
-
-
-bool httpIsUserEnabled(HttpAuth *auth, cchar *realm, cchar *user)
-{
-    HttpUser  *up;
-    char    *key;
-
-    up = 0;
-    key = sjoin(realm, ":", user, NULL);
-    if (auth->users == 0 || (up = (HttpUser*) mprLookupKey(auth->users, key)) == 0) {
-        return 0;
-    }
-    return up->enabled;
 }
 
 
 /*
-    ACLs are simple hex numbers
+    Compute the set of user abilities. User ability strings can be either roles or abilities. Expand roles into
+    the equivalent set of abilities.
  */
-//  TODO - better to convert to user, role, capability
-HttpAcl httpParseAcl(HttpAuth *auth, cchar *aclStr)
+static void computeAbilities(HttpAuth *auth, MprHash *abilities, cchar *ability)
 {
-    HttpAcl acl = 0;
-    int     c;
+    MprKey      *ap;
+    HttpRole    *role;
 
-    if (aclStr) {
-        if (aclStr[0] == '0' && aclStr[1] == 'x') {
-            aclStr += 2;
-        }
-        for (; isxdigit((int) *aclStr); aclStr++) {
-            c = tolower((uchar) *aclStr);
-            if ('0' <= c && c <= '9') {
-                acl = (acl * 16) + c - '0';
-            } else {
-                acl = (acl * 16) + c - 'a' + 10;
+    if ((role = mprLookupKey(auth->roles, ability)) != 0) {
+        /* Interpret as a role */
+        for (ITERATE_KEYS(role->abilities, ap)) {
+            if (!mprLookupKey(abilities, ap->key)) {
+                mprAddKey(abilities, ap->key, MPR->emptyString);
             }
         }
+    } else {
+        /* Not found: Interpret as an ability */
+        mprAddKey(abilities, ability, MPR->emptyString);
     }
-    return acl;
 }
 
 
 /*
-    Update the total ACL for each user. We do this by oring all the ACLs for each group the user is a member of. 
-    For fast access, this union ACL is stored in the HttpUser object
+    Compute the set of user abilities. User ability strings can be either roles or abilities. Expand roles into
+    the equivalent set of abilities.
  */
-void httpUpdateUserAcls(HttpAuth *auth)
+void httpComputeUserAbilities(HttpAuth *auth, HttpUser *user)
 {
-    MprKey      *groupHash, *userHash;
+    MprHash     *abilities;
+    MprKey      *ap;
+    MprBuf      *buf;
+
+    abilities = mprCreateHash(0, 0);
+    for (ITERATE_KEYS(user->abilities, ap)) {
+        computeAbilities(auth, abilities, ap->key);
+    }
+    user->abilities = abilities;
+#if BIT_DEBUG
+    buf = mprCreateBuf(0, 0);
+    for (ITERATE_KEYS(user->abilities, ap)) {
+        mprPutFmtToBuf(buf, "%s ", ap->key);
+    }
+    mprAddNullToBuf(buf);
+    mprLog(5, "User \"%s\" has abilities: %s", user->name, mprGetBufStart(buf));
+#endif
+}
+
+
+void httpComputeAllUserAbilities(HttpAuth *auth)
+{
+    MprKey      *kp;
     HttpUser    *user;
-    HttpGroup   *gp;
-    
-    /*
-        Reset the ACL for each user
-     */
-    if (auth->users != 0) {
-        for (userHash = 0; (userHash = mprGetNextKey(auth->users, userHash)) != 0; ) {
-            ((HttpUser*) userHash->data)->acl = 0;
-        }
-    }
 
-    /*
-        Get the union of all ACLs defined for a user over all groups that the user is a member of.
-     */
-    if (auth->groups != 0 && auth->users != 0) {
-        for (groupHash = 0; (groupHash = mprGetNextKey(auth->groups, groupHash)) != 0; ) {
-            gp = ((HttpGroup*) groupHash->data);
-            for (userHash = 0; (userHash = mprGetNextKey(auth->users, userHash)) != 0; ) {
-                user = ((HttpUser*) userHash->data);
-                if (strcmp(user->name, user->name) == 0) {
-                    user->acl = user->acl | gp->acl;
-                    break;
-                }
-            }
-        }
+    for (ITERATE_KEY_DATA(auth->users, kp, user)) {
+        httpComputeUserAbilities(auth, user);
     }
 }
 
 
-int httpRemoveGroup(HttpAuth *auth, cchar *group)
+/*
+    Verify the user password based on the internal users set. This is used when not using PAM or custom verification.
+ */
+static bool verifyUser(HttpConn *conn)
 {
-    if (auth->groups == 0 || !mprLookupKey(auth->groups, group)) {
-        return MPR_ERR_CANT_ACCESS;
+    HttpRx      *rx;
+    HttpAuth    *auth;
+    bool        success;
+
+    rx = conn->rx;
+    auth = rx->route->auth;
+    if (!conn->user) {
+        conn->user = mprLookupKey(auth->users, conn->username);
     }
-    mprRemoveKey(auth->groups, group);
-    return 0;
+    if (!conn->user) {
+        mprLog(5, "verifyUser: Unknown user \"%s\" for route %s", conn->username, rx->route->name);
+        return 0;
+    }
+    if (rx->passDigest) {
+        /* Digest authentication computes a digest using the password as one ingredient */
+        return smatch(conn->password, rx->passDigest);
+    }
+    if ((success = smatch(conn->password, conn->user->password)) != 0) {
+        mprLog(5, "verifyUser: User \"%s\" verified for route %s", conn->username, rx->route->name);
+    } else {
+        mprLog(5, "Password for user \"%s\" failed to verify for route %s", conn->username, rx->route->name);
+    }
+    return success;
 }
 
 
-int httpRemoveUser(HttpAuth *auth, cchar *realm, cchar *user)
+/*
+    Post authentication callback to ask the user to login via a web form
+ */
+static void postLogin(HttpConn *conn)
 {
-    char    *key;
-
-    key = sjoin(realm, ":", user, NULL);
-    if (auth->users == 0 || !mprLookupKey(auth->users, key)) {
-        return MPR_ERR_CANT_ACCESS;
-    }
-    mprRemoveKey(auth->users, key);
-    return 0;
+    httpRedirect(conn, HTTP_CODE_MOVED_TEMPORARILY, conn->rx->route->auth->loginPage);
 }
 
 
-//  MOB - inconsistent. This takes a "group" string. httpRemoveUserFromGroup takes a "gp"
-int httpRemoveUsersFromGroup(HttpAuth *auth, cchar *group, cchar *userList)
-{
-    HttpGroup   *gp;
-    char        *user, *users, *tok;
-
-    gp = 0;
-    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupKey(auth->groups, group)) == 0) {
-        return MPR_ERR_CANT_ACCESS;
-    }
-    tok = NULL;
-    users = sclone(userList);
-    user = stok(users, " \t", &tok);
-    while (user) {
-        httpRemoveUserFromGroup(gp, user);
-        user = stok(NULL, " \t", &tok);
-    }
-    return 0;
-}
-
-
-int httpSetGroupAcl(HttpAuth *auth, cchar *group, HttpAcl acl)
-{
-    HttpGroup     *gp;
-
-    gp = 0;
-    if (auth->groups == 0 || (gp = (HttpGroup*) mprLookupKey(auth->groups, group)) == 0) {
-        return MPR_ERR_CANT_ACCESS;
-    }
-    gp->acl = acl;
-    return 0;
-}
-
-
-void httpSetRequiredAcl(HttpAuth *auth, HttpAcl acl)
-{
-    auth->requiredAcl = acl;
-}
-
-
-int httpRemoveUserFromGroup(HttpGroup *gp, cchar *user)
-{
-    char    *name;
-    int     next;
-
-    for (next = 0; (name = mprGetNextItem(gp->users, &next)) != 0; ) {
-        if (strcmp(name, user) == 0) {
-            mprRemoveItem(gp->users, name);
-            return 0;
-        }
-    }
-    return MPR_ERR_CANT_ACCESS;
-}
-
-
-int httpReadGroupFile(HttpAuth *auth, char *path)
-{
-    MprFile     *file;
-    HttpAcl     acl;
-    char        *buf;
-    char        *users, *group, *enabled, *aclSpec, *tok, *cp;
-
-    auth->groupFile = sclone(path);
-
-    if ((file = mprOpenFile(path, O_RDONLY | O_TEXT, 0444)) == 0) {
-        return MPR_ERR_CANT_OPEN;
-    }
-    while ((buf = mprReadLine(file, MPR_BUFSIZE, NULL)) != NULL) {
-        enabled = stok(buf, " :\t", &tok);
-        for (cp = enabled; cp && isspace((uchar) *cp); cp++) { }
-        if (cp == 0 || *cp == '\0' || *cp == '#') {
-            continue;
-        }
-        aclSpec = stok(NULL, " :\t", &tok);
-        group = stok(NULL, " :\t", &tok);
-        users = stok(NULL, "\r\n", &tok);
-
-        acl = httpParseAcl(auth, aclSpec);
-        httpAddGroup(auth, group, acl, (*enabled == '0') ? 0 : 1);
-        httpAddUsersToGroup(auth, group, users);
-    }
-    httpUpdateUserAcls(auth);
-    mprCloseFile(file);
-    return 0;
-}
-
-
-int httpReadUserFile(HttpAuth *auth, char *path)
-{
-    MprFile     *file;
-    char        *buf;
-    char        *enabled, *user, *password, *realm, *tok, *cp;
-
-    auth->userFile = sclone(path);
-
-    if ((file = mprOpenFile(path, O_RDONLY | O_TEXT, 0444)) == 0) {
-        return MPR_ERR_CANT_OPEN;
-    }
-    while ((buf = mprReadLine(file, MPR_BUFSIZE, NULL)) != NULL) {
-        enabled = stok(buf, " :\t", &tok);
-        for (cp = enabled; cp && isspace((uchar) *cp); cp++) { }
-        if (cp == 0 || *cp == '\0' || *cp == '#') {
-            continue;
-        }
-        user = stok(NULL, ":", &tok);
-        realm = stok(NULL, ":", &tok);
-        password = stok(NULL, " \t\r\n", &tok);
-
-        user = strim(user, " \t", MPR_TRIM_BOTH);
-        realm = strim(realm, " \t", MPR_TRIM_BOTH);
-        password = strim(password, " \t", MPR_TRIM_BOTH);
-
-        httpAddUser(auth, realm, user, password, (*enabled == '0' ? 0 : 1));
-    }
-    httpUpdateUserAcls(auth);
-    mprCloseFile(file);
-    return 0;
-}
-
-
-int httpWriteUserFile(HttpAuth *auth, char *path)
+int httpWriteAuthFile(HttpAuth *auth, char *path)
 {
     MprFile         *file;
     MprKey          *kp;
-    HttpUser        *up;
-    char            buf[HTTP_MAX_PASS * 2];
+    HttpRole        *role;
+    HttpUser        *user;
     char            *tempFile;
 
     tempFile = mprGetTempPath(NULL);
@@ -1280,12 +749,14 @@ int httpWriteUserFile(HttpAuth *auth, char *path)
         mprError("Can't open %s", tempFile);
         return MPR_ERR_CANT_OPEN;
     }
-    kp = mprGetNextKey(auth->users, 0);
-    while (kp) {
-        up = (HttpUser*) kp->data;
-        mprSprintf(buf, sizeof(buf), "%d: %s: %s: %s\n", up->enabled, up->name, up->realm, up->password);
-        mprWriteFile(file, buf, (int) strlen(buf));
-        kp = mprGetNextKey(auth->users, kp);
+    mprWriteFileFmt(file, "#\n#   %s - Authorization data\n#\n\n", mprGetPathBase(path));
+
+    for (ITERATE_KEY_DATA(auth->roles, kp, role)) {
+        mprWriteFileFmt(file, "Role %s %s\n", kp->key, role->abilities);
+    }
+    mprPutFileChar(file, '\n');
+    for (ITERATE_KEY_DATA(auth->users, kp, user)) {
+        mprWriteFileFmt(file, "User %s %s\n", user->password, user->abilities);
     }
     mprCloseFile(file);
     unlink(path);
@@ -1296,67 +767,18 @@ int httpWriteUserFile(HttpAuth *auth, char *path)
     return 0;
 }
 
-
-int httpWriteGroupFile(HttpAuth *auth, char *path)
-{
-    MprKey          *kp;
-    MprFile         *file;
-    HttpGroup       *gp;
-    char            buf[MPR_MAX_STRING], *tempFile, *name;
-    int             next;
-
-    tempFile = mprGetTempPath(NULL);
-    if ((file = mprOpenFile(tempFile, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0444)) == 0) {
-        mprError("Can't open %s", tempFile);
-        return MPR_ERR_CANT_OPEN;
-    }
-    kp = mprGetNextKey(auth->groups, 0);
-    while (kp) {
-        gp = (HttpGroup*) kp->data;
-        mprSprintf(buf, sizeof(buf), "%d: %x: %s: ", gp->enabled, gp->acl, gp->name);
-        mprWriteFile(file, buf, strlen(buf));
-        for (next = 0; (name = mprGetNextItem(gp->users, &next)) != 0; ) {
-            mprWriteFile(file, name, strlen(name));
-        }
-        mprWriteFile(file, "\n", 1);
-        kp = mprGetNextKey(auth->groups, kp);
-    }
-    mprCloseFile(file);
-    unlink(path);
-    if (rename(tempFile, path) < 0) {
-        mprError("Can't create new %s", path);
-        return MPR_ERR_CANT_WRITE;
-    }
-    return 0;
-}
 
 /*
     @copy   default
-    
+
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
-    
+
     This software is distributed under commercial and open source licenses.
-    You httpy use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.md distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://embedthis.com 
-    
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
     Local variables:
     tab-width: 4
     c-basic-offset: 4
@@ -1368,12 +790,12 @@ int httpWriteGroupFile(HttpAuth *auth, char *path)
 
 /************************************************************************/
 /*
-    Start of file "src/authPam.c"
+    Start of file "src/basic.c"
  */
 /************************************************************************/
 
 /*
-    authPam.c - Authorization using PAM (Pluggable Authorization Module)
+    basic.c - Basic Authorization 
 
     Copyright (c) All Rights Reserved. See details at the end of the file.
  */
@@ -1382,129 +804,64 @@ int httpWriteGroupFile(HttpAuth *auth, char *path)
 
 
 
-#if BIT_HAS_PAM
- #include    <security/pam_appl.h>
-
-/********************************* Defines ************************************/
-
-typedef struct {
-    char    *name;
-    char    *password;
-} UserInfo;
-
-/********************************* Forwards ***********************************/
-
-static int pamChat(int msgCount, const struct pam_message **msg, struct pam_response **resp, void *data);
-
 /*********************************** Code *************************************/
-
-cchar *httpGetPamPassword(HttpAuth *auth, cchar *realm, cchar *user)
-{
-    /*  
-        Can't return the password.
-     */
-    return "";
-}
-
-
-bool httpValidatePamCredentials(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, cchar *requiredPass, char **msg)
-{
-    pam_handle_t        *pamh;
-    UserInfo            info;
-    struct pam_conv     conv = { pamChat, &info };
-    int                 res;
-   
-    info.name = (char*) user;
-    info.password = (char*) password;
-    pamh = NULL;
-        
-    if ((res = pam_start("login", user, &conv, &pamh)) != PAM_SUCCESS) {
-        return 0;
-    }
-    if ((res = pam_authenticate(pamh, 0)) != PAM_SUCCESS) {
-        return 0;
-    }
-    pam_end(pamh, PAM_SUCCESS);
-    return 1;
-}
-
-
-/*  
-    Callback invoked by the pam_authenticate function
+/*
+    Parse the client 'Authorization' header and the server 'Www-Authenticate' header
  */
-static int pamChat(int msgCount, const struct pam_message **msg, struct pam_response **resp, void *data) 
+int httpBasicParse(HttpConn *conn)
 {
-    UserInfo                *info;
-    struct pam_response     *reply;
-    int                     i;
-    
-    i = 0;
-    reply = 0;
-    info = (UserInfo*) data;
+    HttpRx  *rx;
+    char    *decoded, *cp;
 
-    if (resp == 0 || msg == 0 || info == 0) {
-        return PAM_CONV_ERR;
-    }
-    if ((reply = malloc(msgCount * sizeof(struct pam_response))) == 0) {
-        return PAM_CONV_ERR;
-    }
-    for (i = 0; i < msgCount; i++) {
-        reply[i].resp_retcode = 0;
-        reply[i].resp = 0;
-        
-        switch (msg[i]->msg_style) {
-        case PAM_PROMPT_ECHO_ON:
-            reply[i].resp = strdup(info->name);
-            break;
-
-        case PAM_PROMPT_ECHO_OFF:
-            reply[i].resp = strdup(info->password);
-            break;
-
-        default:
-            return PAM_CONV_ERR;
+    if (conn->endpoint) {
+        rx = conn->rx;
+        if ((decoded = mprDecode64(rx->authDetails)) == 0) {
+            return MPR_ERR_BAD_FORMAT;
         }
+        if ((cp = strchr(decoded, ':')) != 0) {
+            *cp++ = '\0';
+        }
+        conn->username = sclone(decoded);
+        //  MOB - should not need realm?
+        conn->password = mprGetMD5(sfmt("%s:%s:%s", conn->username, conn->rx->route->auth->realm, cp));
     }
-    *resp = reply;
-    return PAM_SUCCESS;
-}
-
-
-#else
-cchar *httpGetPamPassword(HttpAuth *auth, cchar *realm, cchar *user) { return 0; }
-bool httpValidatePamCredentials(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, cchar *requiredPass, char **msg)
-{
     return 0;
 }
-#endif /* BIT_HAS_PAM */
+
+
+/*
+    Respond to the request by asking for a client login
+ */
+void httpBasicLogin(HttpConn *conn)
+{
+    HttpAuth    *auth;
+
+    auth = conn->rx->route->auth;
+    httpSetHeader(conn, "WWW-Authenticate", "Basic realm=\"%s\"", auth->realm);
+    httpError(conn, HTTP_CODE_UNAUTHORIZED, "Access Denied. Login required");
+}
+
+
+/*
+    Add the client 'Authorization' header for authenticated requests
+ */
+void httpBasicSetHeaders(HttpConn *conn)
+{
+    httpAddHeader(conn, "Authorization", "basic %s", mprEncode64(sfmt("%s:%s", conn->username, conn->password)));
+}
+
 
 /*
     @copy   default
-    
+
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
-    
+
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.md distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://embedthis.com 
-    
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
     Local variables:
     tab-width: 4
     c-basic-offset: 4
@@ -2083,31 +1440,15 @@ static cchar *setHeadersFromCache(HttpConn *conn, cchar *content)
 
 /*
     @copy   default
-    
+
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
-    
+
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.md distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://embedthis.com 
-    
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
     Local variables:
     tab-width: 4
     c-basic-offset: 4
@@ -2371,31 +1712,15 @@ static void setChunkPrefix(HttpQueue *q, HttpPacket *packet)
 
 /*
     @copy   default
-    
+
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
-    
+
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.md distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://embedthis.com 
-    
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
     Local variables:
     tab-width: 4
     c-basic-offset: 4
@@ -2497,93 +1822,24 @@ static HttpConn *openConnection(HttpConn *conn, cchar *url, struct MprSsl *ssl)
  */
 static int setClientHeaders(HttpConn *conn)
 {
-    Http        *http;
-    HttpTx      *tx;
-    HttpUri     *parsedUri;
-    char        *encoded;
+    HttpAuthType    *authType;
 
     mprAssert(conn);
 
-    http = conn->http;
-    tx = conn->tx;
-    parsedUri = tx->parsedUri;
-    if (conn->authType && strcmp(conn->authType, "basic") == 0) {
-        char    abuf[MPR_MAX_STRING];
-        mprSprintf(abuf, sizeof(abuf), "%s:%s", conn->authUser, conn->authPassword);
-        encoded = mprEncode64(abuf);
-        httpAddHeader(conn, "Authorization", "basic %s", encoded);
-        conn->sentCredentials = 1;
-
-    } else if (conn->authType && strcmp(conn->authType, "digest") == 0) {
-        char    a1Buf[256], a2Buf[256], digestBuf[256];
-        char    *ha1, *ha2, *digest, *qop;
-        if (http->secret == 0 && httpCreateSecret(http) < 0) {
-            mprLog(MPR_ERROR, "Http: Can't create secret for digest authentication");
-            return MPR_ERR_CANT_CREATE;
-        }
-        conn->authCnonce = sfmt("%s:%s:%x", http->secret, conn->authRealm, (int) http->now);
-
-        mprSprintf(a1Buf, sizeof(a1Buf), "%s:%s:%s", conn->authUser, conn->authRealm, conn->authPassword);
-        ha1 = mprGetMD5(a1Buf);
-        mprSprintf(a2Buf, sizeof(a2Buf), "%s:%s", tx->method, parsedUri->path);
-        ha2 = mprGetMD5(a2Buf);
-        qop = (conn->authQop) ? conn->authQop : (char*) "";
-
-        conn->authNc++;
-        if (scaselesscmp(conn->authQop, "auth") == 0) {
-            mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%08x:%s:%s:%s",
-                ha1, conn->authNonce, conn->authNc, conn->authCnonce, conn->authQop, ha2);
-        } else if (scaselesscmp(conn->authQop, "auth-int") == 0) {
-            mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%08x:%s:%s:%s",
-                ha1, conn->authNonce, conn->authNc, conn->authCnonce, conn->authQop, ha2);
-        } else {
-            qop = "";
-            mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s", ha1, conn->authNonce, ha2);
-        }
-        digest = mprGetMD5(digestBuf);
-
-        if (*qop == '\0') {
-            httpAddHeader(conn, "Authorization", "Digest username=\"%s\", realm=\"%s\", nonce=\"%s\", "
-                "uri=\"%s\", response=\"%s\"",
-                conn->authUser, conn->authRealm, conn->authNonce, parsedUri->path, digest);
-
-        } else if (strcmp(qop, "auth") == 0) {
-            httpAddHeader(conn, "Authorization", "Digest username=\"%s\", realm=\"%s\", domain=\"%s\", "
-                "algorithm=\"MD5\", qop=\"%s\", cnonce=\"%s\", nc=\"%08x\", nonce=\"%s\", opaque=\"%s\", "
-                "stale=\"FALSE\", uri=\"%s\", response=\"%s\"",
-                conn->authUser, conn->authRealm, conn->authDomain, conn->authQop, conn->authCnonce, conn->authNc,
-                conn->authNonce, conn->authOpaque, parsedUri->path, digest);
-
-        } else if (strcmp(qop, "auth-int") == 0) {
-            ;
-        }
-        conn->sentCredentials = 1;
+    if (conn->authType && (authType = httpLookupAuthType(conn->authType)) != 0) {
+        (authType->setAuth)(conn);
+        conn->setCredentials = 1;
     }
     if (conn->port != 80) {
         httpAddHeader(conn, "Host", "%s:%d", conn->ip, conn->port);
     } else {
         httpAddHeaderString(conn, "Host", conn->ip);
     }
-#if UNUSED
-    if (strcmp(conn->protocol, "HTTP/1.1") == 0) {
-        /* If zero, we ask the client to close one request early. This helps with client led closes */
-        if (conn->keepAliveCount > 0) {
-            httpSetHeaderString(conn, "Connection", "Keep-Alive");
-        } else {
-            httpSetHeaderString(conn, "Connection", "close");
-        }
-    } else {
-        /* Set to zero to let the client initiate the close */
-        conn->keepAliveCount = 0;
-        httpSetHeaderString(conn, "Connection", "close");
-    }
-#else
     if (conn->keepAliveCount > 0) {
         httpSetHeaderString(conn, "Connection", "Keep-Alive");
     } else {
         httpSetHeaderString(conn, "Connection", "close");
     }
-#endif
     return 0;
 }
 
@@ -2606,7 +1862,7 @@ int httpConnect(HttpConn *conn, cchar *method, cchar *url, struct MprSsl *ssl)
     }
     mprAssert(conn->state == HTTP_STATE_BEGIN);
     httpSetState(conn, HTTP_STATE_CONNECTED);
-    conn->sentCredentials = 0;
+    conn->setCredentials = 0;
     conn->tx->method = supper(method);
 
 #if BIT_DEBUG
@@ -2629,7 +1885,8 @@ int httpConnect(HttpConn *conn, cchar *method, cchar *url, struct MprSsl *ssl)
  */
 bool httpNeedRetry(HttpConn *conn, char **url)
 {
-    HttpRx      *rx;
+    HttpAuthType    *authType;
+    HttpRx          *rx;
 
     mprAssert(conn->rx);
 
@@ -2640,11 +1897,14 @@ bool httpNeedRetry(HttpConn *conn, char **url)
         return 0;
     }
     if (rx->status == HTTP_CODE_UNAUTHORIZED) {
-        if (conn->authUser == 0) {
+        if (conn->username == 0) {
             httpFormatError(conn, rx->status, "Authentication required");
-        } else if (conn->sentCredentials) {
+        } else if (conn->setCredentials) {
             httpFormatError(conn, rx->status, "Authentication failed");
         } else {
+            if (conn->authType && (authType = httpLookupAuthType(conn->authType)) != 0) {
+                (authType->parseAuth)(conn);
+            }
             return 1;
         }
     } else if (HTTP_CODE_MOVED_PERMANENTLY <= rx->status && rx->status <= HTTP_CODE_MOVED_TEMPORARILY && 
@@ -2743,28 +2003,12 @@ ssize httpWriteUploadData(HttpConn *conn, MprList *fileData, MprList *formData)
     @copy   default
 
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
     by the terms of either license. Consult the LICENSE.md distributed with
-    this software for full details.
-
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://embedthis.com/downloads/gplLicense.html
-
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://embedthis.com
+    this software for full details and other copyrights.
 
     Local variables:
     tab-width: 4
@@ -2799,7 +2043,7 @@ static void writeEvent(HttpConn *conn);
 
 /*********************************** Code *************************************/
 /*
-    Create a new connection object.
+    Create a new connection object
  */
 HttpConn *httpCreateConn(Http *http, HttpEndpoint *endpoint, MprDispatcher *dispatcher)
 {
@@ -2923,17 +2167,13 @@ static void manageConn(HttpConn *conn, int flags)
         mprMark(conn->protocol);
         httpManageTrace(&conn->trace[0], flags);
         httpManageTrace(&conn->trace[1], flags);
-
-        mprMark(conn->authCnonce);
-        mprMark(conn->authDomain);
-        mprMark(conn->authNonce);
-        mprMark(conn->authOpaque);
-        mprMark(conn->authRealm);
-        mprMark(conn->authQop);
-        mprMark(conn->authType);
-        mprMark(conn->authUser);
-        mprMark(conn->authPassword);
         mprMark(conn->headersCallbackArg);
+
+        //  MOB - move password, authType into authData!
+        mprMark(conn->authType);
+        mprMark(conn->authData);
+        mprMark(conn->username);
+        mprMark(conn->password);
 
     } else if (flags & MPR_MANAGE_FREE) {
         httpDestroyConn(conn);
@@ -2999,16 +2239,30 @@ static void commonPrep(HttpConn *conn)
     if (conn->timeoutEvent) {
         mprRemoveEvent(conn->timeoutEvent);
     }
+    conn->lastActivity = conn->http->now;
     conn->canProceed = 1;
     conn->error = 0;
     conn->connError = 0;
     conn->errorMsg = 0;
     conn->state = 0;
+
+    //  MOB - better if these were in HttpTx
     conn->responded = 0;
     conn->finalized = 0;
     conn->refinalize = 0;
     conn->connectorComplete = 0;
-    conn->lastActivity = conn->http->now;
+
+    //  MOB - better if these were in HttpRx
+    conn->authenticated = 0;
+    conn->setCredentials = 0;
+
+    if (conn->endpoint) {
+        conn->authType = 0;
+        conn->username = 0;
+        conn->password = 0;
+        conn->user = 0;
+        conn->authData = 0;
+    }
     httpSetState(conn, HTTP_STATE_BEGIN);
     httpInitSchedulerQueue(conn->serviceq);
     unlock(http);
@@ -3364,17 +2618,10 @@ void *httpGetConnHost(HttpConn *conn)
 
 void httpResetCredentials(HttpConn *conn)
 {
+    //  MOB - check
     conn->authType = 0;
-    conn->authDomain = 0;
-    conn->authCnonce = 0;
-    conn->authNonce = 0;
-    conn->authOpaque = 0;
-    conn->authPassword = 0;
-    conn->authRealm = 0;
-    conn->authQop = 0;
-    conn->authType = 0;
-    conn->authUser = 0;
-    
+    conn->username = 0;
+    conn->password = 0;
     httpRemoveHeader(conn, "Authorization");
 }
 
@@ -3391,15 +2638,15 @@ void httpSetConnNotifier(HttpConn *conn, HttpNotifier notifier)
 }
 
 
-void httpSetCredentials(HttpConn *conn, cchar *user, cchar *password)
+void httpSetCredentials(HttpConn *conn, cchar *username, cchar *password)
 {
     httpResetCredentials(conn);
-    conn->authUser = sclone(user);
-    if (password == NULL && strchr(user, ':') != 0) {
-        conn->authUser = stok(conn->authUser, ":", &conn->authPassword);
-        conn->authPassword = sclone(conn->authPassword);
+    conn->username = sclone(username);
+    if (password == NULL && strchr(username, ':') != 0) {
+        conn->username = stok(conn->username, ":", &conn->password);
+        conn->password = sclone(conn->password);
     } else {
-        conn->authPassword = sclone(password);
+        conn->password = sclone(password);
     }
 }
 
@@ -3528,29 +2775,406 @@ void httpNotifyWritable(HttpConn *conn)
     @copy   default
 
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
     by the terms of either license. Consult the LICENSE.md distributed with
-    this software for full details.
+    this software for full details and other copyrights.
 
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://embedthis.com/downloads/gplLicense.html
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
 
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    @end
+ */
 
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://embedthis.com
- 
+/************************************************************************/
+/*
+    Start of file "src/digest.c"
+ */
+/************************************************************************/
+
+/*
+    digest.c - Digest Authorization
+
+    Copyright (c) All Rights Reserved. See details at the end of the file.
+ */
+
+/********************************* Includes ***********************************/
+
+
+
+/********************************** Defines ***********************************/
+/*
+    Per-request digest authorization data
+ */
+typedef struct DigestData 
+{
+    char    *algorithm;
+    char    *cnonce;
+    char    *domain;
+    char    *nc;
+    char    *nonce;
+    char    *opaque;
+    char    *qop;
+    char    *realm;
+    char    *stale;
+    char    *uri;
+} DigestData;
+
+/********************************** Forwards **********************************/
+
+static char *calcDigest(HttpConn *conn, DigestData *dp);
+static char *createDigestNonce(HttpConn *conn, cchar *secret, cchar *realm);
+static void manageDigestData(DigestData *dp, int flags);
+static int parseDigestNonce(char *nonce, cchar **secret, cchar **realm, MprTime *when);
+
+/*********************************** Code *************************************/
+/*
+    Parse the client 'Authorization' header and the server 'Www-Authenticate' header
+ */
+int httpDigestParse(HttpConn *conn)
+{
+    HttpRx      *rx;
+    DigestData  *dp;
+    MprTime     when;
+    char        *value, *tok, *key, *cp, *sp;
+    cchar       *secret, *realm;
+    int         seenComma;
+
+    dp = conn->authData = mprAllocObj(DigestData, manageDigestData);
+    rx = conn->rx;
+    key = sclone(rx->authDetails);
+
+    while (*key) {
+        while (*key && isspace((uchar) *key)) {
+            key++;
+        }
+        tok = key;
+        while (*tok && !isspace((uchar) *tok) && *tok != ',' && *tok != '=') {
+            tok++;
+        }
+        *tok++ = '\0';
+
+        while (isspace((uchar) *tok)) {
+            tok++;
+        }
+        seenComma = 0;
+        if (*tok == '\"') {
+            value = ++tok;
+            while (*tok != '\"' && *tok != '\0') {
+                tok++;
+            }
+        } else {
+            value = tok;
+            while (*tok != ',' && *tok != '\0') {
+                tok++;
+            }
+            seenComma++;
+        }
+        *tok++ = '\0';
+
+        /*
+            Handle back-quoting
+         */
+        if (strchr(value, '\\')) {
+            for (cp = sp = value; *sp; sp++) {
+                if (*sp == '\\') {
+                    sp++;
+                }
+                *cp++ = *sp++;
+            }
+            *cp = '\0';
+        }
+
+        /*
+            user, response, oqaque, uri, realm, nonce, nc, cnonce, qop
+         */
+        switch (tolower((uchar) *key)) {
+        case 'a':
+            if (scaselesscmp(key, "algorithm") == 0) {
+                dp->algorithm = sclone(value);
+                break;
+            } else if (scaselesscmp(key, "auth-param") == 0) {
+                break;
+            }
+            break;
+
+        case 'c':
+            if (scaselesscmp(key, "cnonce") == 0) {
+                dp->cnonce = sclone(value);
+            }
+            break;
+
+        case 'd':
+            if (scaselesscmp(key, "domain") == 0) {
+                dp->domain = sclone(value);
+                break;
+            }
+            break;
+
+        case 'n':
+            if (scaselesscmp(key, "nc") == 0) {
+                dp->nc = sclone(value);
+            } else if (scaselesscmp(key, "nonce") == 0) {
+                dp->nonce = sclone(value);
+            }
+            break;
+
+        case 'o':
+            if (scaselesscmp(key, "opaque") == 0) {
+                dp->opaque = sclone(value);
+            }
+            break;
+
+        case 'q':
+            if (scaselesscmp(key, "qop") == 0) {
+                dp->qop = sclone(value);
+            }
+            break;
+
+        case 'r':
+            if (scaselesscmp(key, "realm") == 0) {
+                dp->realm = sclone(value);
+            } else if (scaselesscmp(key, "response") == 0) {
+                /* Store the response digest in the password field */
+                conn->password = sclone(value);
+            }
+            break;
+
+        case 's':
+            if (scaselesscmp(key, "stale") == 0) {
+                break;
+            }
+        
+        case 'u':
+            if (scaselesscmp(key, "uri") == 0) {
+                dp->uri = sclone(value);
+            } else if (scaselesscmp(key, "username") == 0 || scaselesscmp(key, "user") == 0) {
+                conn->username = sclone(value);
+            }
+            break;
+
+        default:
+            /*  Just ignore keywords we don't understand */
+            ;
+        }
+        key = tok;
+        if (!seenComma) {
+            while (*key && *key != ',') {
+                key++;
+            }
+            if (*key) {
+                key++;
+            }
+        }
+    }
+    if (conn->username == 0 || conn->password == 0) {
+        return MPR_ERR_BAD_FORMAT;
+    }
+    if (dp->realm == 0 || dp->nonce == 0 || dp->uri == 0) {
+        return MPR_ERR_BAD_FORMAT;
+    }
+    if (dp->qop && (dp->cnonce == 0 || dp->nc == 0)) {
+        return MPR_ERR_BAD_FORMAT;
+    }
+    if (conn->endpoint) {
+        parseDigestNonce(dp->nonce, &secret, &realm, &when);
+        if (!smatch(secret, secret)) {
+            //  How should this be reported
+            mprLog(2, "Access denied: Nonce mismatch\n");
+            return MPR_ERR_BAD_STATE;
+
+        } else if (!smatch(realm, rx->route->auth->realm)) {
+            mprLog(2, "Access denied: Realm mismatch\n");
+            return MPR_ERR_BAD_STATE;
+
+        } else if (dp->qop && !smatch(dp->qop, "auth")) {
+            mprLog(2, "Access denied: Bad qop\n");
+            return MPR_ERR_BAD_STATE;
+
+        } else if ((when + (5 * 60)) < time(0)) {
+            mprLog(2, "Access denied: Nonce is stale\n");
+            return MPR_ERR_BAD_STATE;
+        }
+        rx->passDigest = calcDigest(conn, dp);
+    } else {
+        if (dp->domain == 0 || dp->opaque == 0 || dp->algorithm == 0 || dp->stale == 0) {
+            return MPR_ERR_BAD_FORMAT;
+        }
+    }
+    return 0;
+}
+
+
+static void manageDigestData(DigestData *dp, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(dp->algorithm);
+        mprMark(dp->cnonce);
+        mprMark(dp->domain);
+        mprMark(dp->nc);
+        mprMark(dp->nonce);
+        mprMark(dp->opaque);
+        mprMark(dp->qop);
+        mprMark(dp->realm);
+        mprMark(dp->stale);
+        mprMark(dp->uri);
+    }
+}
+
+
+/*
+    Respond to the request by asking for a client login
+ */
+void httpDigestLogin(HttpConn *conn)
+{
+    HttpAuth    *auth;
+    char        *nonce, *opaque;
+
+    auth = conn->rx->route->auth;
+    nonce = createDigestNonce(conn, conn->http->secret, auth->realm);
+    /* Opaque is unused, set to anything */
+    opaque = "799d5";
+
+    if (smatch(auth->qop, "none")) {
+        httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", nonce=\"%s\"", auth->realm, nonce);
+    } else {
+        /* Value of null defaults to "auth" */
+        httpSetHeader(conn, "WWW-Authenticate", "Digest realm=\"%s\", domain=\"%s\", "
+            "qop=\"auth\", nonce=\"%s\", opaque=\"%s\", algorithm=\"MD5\", stale=\"FALSE\"", 
+            auth->realm, conn->host->name, nonce, opaque);
+    }
+    httpSetContentType(conn, "text/plain");
+    httpError(conn, HTTP_CODE_UNAUTHORIZED, "Access Denied. Login required");
+}
+
+
+/*
+    Add the client 'Authorization' header for authenticated requests
+ */
+void httpDigestSetHeaders(HttpConn *conn)
+{ 
+    Http        *http;
+    HttpTx      *tx;
+    DigestData  *dp;
+    char        a1Buf[256], a2Buf[256], digestBuf[256];
+    char        *ha1, *ha2, *digest, *cnonce;
+
+    http = conn->http;
+    tx = conn->tx;
+    dp = conn->authData;
+
+    cnonce = sfmt("%s:%s:%x", http->secret, dp->realm, (int) http->now);
+    mprSprintf(a1Buf, sizeof(a1Buf), "%s:%s:%s", conn->username, dp->realm, conn->password);
+    ha1 = mprGetMD5(a1Buf);
+    mprSprintf(a2Buf, sizeof(a2Buf), "%s:%s", tx->method, tx->parsedUri->path);
+    ha2 = mprGetMD5(a2Buf);
+#if UNUSED
+    //  MOB - why incremented?
+    dp->nc++;
+#endif
+    if (smatch(dp->qop, "auth")) {
+        mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%08x:%s:%s:%s", ha1, dp->nonce, dp->nc, cnonce, dp->qop, ha2);
+        digest = mprGetMD5(digestBuf);
+        httpAddHeader(conn, "Authorization", "Digest username=\"%s\", realm=\"%s\", domain=\"%s\", "
+            "algorithm=\"MD5\", qop=\"%s\", cnonce=\"%s\", nc=\"%08x\", nonce=\"%s\", opaque=\"%s\", "
+            "stale=\"FALSE\", uri=\"%s\", response=\"%s\"", conn->username, dp->realm, dp->domain, dp->qop, 
+            cnonce, dp->nc, dp->nonce, dp->opaque, tx->parsedUri->path, digest);
+    } else {
+        mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s", ha1, dp->nonce, ha2);
+        digest = mprGetMD5(digestBuf);
+        httpAddHeader(conn, "Authorization", "Digest username=\"%s\", realm=\"%s\", nonce=\"%s\", "
+            "uri=\"%s\", response=\"%s\"", conn->username, dp->realm, dp->nonce, tx->parsedUri->path, digest);
+    }
+}
+
+
+/*
+    Create a nonce value for digest authentication (RFC 2617)
+ */ 
+static char *createDigestNonce(HttpConn *conn, cchar *secret, cchar *realm)
+{
+    MprTime      now;
+    char         nonce[256];
+    static int64 next = 0;
+
+    mprAssert(realm && *realm);
+
+    now = conn->http->now;
+    mprSprintf(nonce, sizeof(nonce), "%s:%s:%Lx:%Lx", secret, realm, now, next++);
+    return mprEncode64(nonce);
+}
+
+
+static int parseDigestNonce(char *nonce, cchar **secret, cchar **realm, MprTime *when)
+{
+    char    *tok, *decoded, *whenStr;
+
+    if ((decoded = mprDecode64(nonce)) == 0) {
+        return MPR_ERR_CANT_READ;
+    }
+    *secret = stok(decoded, ":", &tok);
+    *realm = stok(NULL, ":", &tok);
+    whenStr = stok(NULL, ":", &tok);
+    *when = (MprTime) stoiradix(whenStr, 16, NULL); 
+    return 0;
+}
+
+
+/*
+    Get a Digest value using the MD5 algorithm -- See RFC 2617 to understand this code.
+ */ 
+static char *calcDigest(HttpConn *conn, DigestData *dp)
+{
+    HttpAuth    *auth;
+    char        abuf[256], digestBuf[256], *ha1, *ha2;
+
+    auth = conn->rx->route->auth;
+    if (!conn->user) {
+        conn->user = mprLookupKey(auth->users, conn->username);
+    }
+    mprAssert(conn->user && conn->user->password);
+    if (conn->user == 0 || conn->user->password == 0) {
+        return 0;
+    }
+
+    /*
+        Compute HA1. Password is already expected to be in the HA1 format MD5(username:realm:password).
+     */
+    ha1 = sclone(conn->user->password);
+
+    /*
+        HA2
+     */ 
+    mprSprintf(abuf, sizeof(abuf), "%s:%s", conn->rx->method, dp->uri);
+    ha2 = mprGetMD5(abuf);
+
+    /*
+        H(HA1:nonce:HA2)
+     */
+    if (scmp(dp->qop, "auth") == 0) {
+        mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s:%s:%s:%s", ha1, dp->nonce, dp->nc, dp->cnonce, dp->qop, ha2);
+    } else {
+        mprSprintf(digestBuf, sizeof(digestBuf), "%s:%s:%s", ha1, dp->nonce, ha2);
+    }
+    return mprGetMD5(digestBuf);
+}
+
+/*
+    @copy   default
+
+    Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
+
+    This software is distributed under commercial and open source licenses.
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
     Local variables:
     tab-width: 4
     c-basic-offset: 4
@@ -4143,31 +3767,15 @@ int httpConfigureNamedVirtualEndpoints(Http *http, cchar *ip, int port)
 
 /*
     @copy   default
-    
+
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
-    
+
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.md distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://embedthis.com 
-    
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
     Local variables:
     tab-width: 4
     c-basic-offset: 4
@@ -4349,29 +3957,13 @@ void httpMemoryError(HttpConn *conn)
     @copy   default
 
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
     by the terms of either license. Consult the LICENSE.md distributed with
-    this software for full details.
+    this software for full details and other copyrights.
 
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://embedthis.com/downloads/gplLicense.html
-
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://embedthis.com
- 
     Local variables:
     tab-width: 4
     c-basic-offset: 4
@@ -4399,6 +3991,10 @@ void httpMemoryError(HttpConn *conn)
 /********************************* Includes ***********************************/
 
 
+
+/*********************************** Locals ***********************************/
+
+static HttpHost *defaultHost;
 
 /********************************** Forwards **********************************/
 
@@ -4592,6 +4188,7 @@ void httpSetHostIpAddr(HttpHost *host, cchar *ip, int port)
     host->ip = sclone(ip);
     host->port = port;
 
+    //  MOB - refactor this. Need a Host.name for trace and Host.name for using in redirections based on ServerName
     if (!host->name) {
         if (ip) {
             if (port > 0) {
@@ -4621,7 +4218,7 @@ void httpSetHostProtocol(HttpHost *host, cchar *protocol)
 
 int httpAddRoute(HttpHost *host, HttpRoute *route)
 {
-    HttpRoute   *prev, *item;
+    HttpRoute   *prev, *item, *lastRoute;
     int         i, thisRoute;
 
     mprAssert(route);
@@ -4630,7 +4227,12 @@ int httpAddRoute(HttpHost *host, HttpRoute *route)
         host->routes = mprCloneList(host->parent->routes);
     }
     if (mprLookupItem(host->routes, route) < 0) {
-        thisRoute = mprAddItem(host->routes, route);
+        if ((lastRoute = mprGetLastItem(host->routes)) && lastRoute->pattern[0] == '\0') {
+            /* Insert before default route */
+            thisRoute = mprInsertItemAtPos(host->routes, mprGetListLength(host->routes) - 1, route);
+        } else {
+            thisRoute = mprAddItem(host->routes, route);
+        }
         if (thisRoute > 0) {
             prev = mprGetItem(host->routes, thisRoute - 1);
             if (!smatch(prev->startSegment, route->startSegment)) {
@@ -4659,6 +4261,9 @@ HttpRoute *httpLookupRoute(HttpHost *host, cchar *name)
     if (name == 0 || *name == '\0') {
         name = "default";
     }
+    if (!host && (host = httpGetDefaultHost()) == 0) {
+        return 0;
+    }
     for (next = 0; (route = mprGetNextItem(host->routes, &next)) != 0; ) {
         mprAssert(route->name);
         if (smatch(route->name, name)) {
@@ -4680,32 +4285,40 @@ void httpSetHostDefaultRoute(HttpHost *host, HttpRoute *route)
     host->defaultRoute = route;
 }
 
+
+void httpSetDefaultHost(HttpHost *host)
+{
+    defaultHost = host;
+}
+
+
+HttpHost *httpGetDefaultHost()
+{
+    return defaultHost;
+}
+
+
+HttpRoute *httpGetDefaultRoute(HttpHost *host)
+{
+    if (host) {
+        return host->defaultRoute;
+    } else if (defaultHost) {
+        return defaultHost->defaultRoute;
+    }
+    return 0;
+}
+
+
 /*
     @copy   default
 
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
     by the terms of either license. Consult the LICENSE.md distributed with
-    this software for full details.
-
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://embedthis.com/downloads/gplLicense.html
-
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://embedthis.com
+    this software for full details and other copyrights.
 
     Local variables:
     tab-width: 4
@@ -4820,9 +4433,12 @@ Http *httpCreate()
     http->hosts = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
     http->endpoints = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
     http->connections = mprCreateList(-1, MPR_LIST_STATIC_VALUES);
+    http->authTypes = mprCreateHash(-1, MPR_HASH_CASELESS | MPR_HASH_UNIQUE);
+    http->authStores = mprCreateHash(-1, MPR_HASH_CASELESS | MPR_HASH_UNIQUE);
     http->defaultClientHost = sclone("127.0.0.1");
     http->defaultClientPort = 80;
     http->booted = mprGetTime();
+    http->sessionCache = mprCreateCache(MPR_CACHE_SHARED);
 
     updateCurrentDate(http);
     http->statusCodes = mprCreateHash(41, MPR_HASH_STATIC_VALUES | MPR_HASH_STATIC_KEYS);
@@ -4838,6 +4454,7 @@ Http *httpCreate()
     httpOpenUploadFilter(http);
     httpOpenCacheHandler(http);
     httpOpenPassHandler(http);
+    httpOpenProcHandler(http);
 
     http->clientLimits = httpCreateLimits(0);
     http->serverLimits = httpCreateLimits(1);
@@ -4864,6 +4481,7 @@ static void manageHttp(Http *http, int flags)
         mprMark(http->routeTargets);
         mprMark(http->routeConditions);
         mprMark(http->routeUpdates);
+        mprMark(http->sessionCache);
         /* Don't mark convenience stage references as they will be in http->stages */
         
         mprMark(http->clientLimits);
@@ -4881,6 +4499,8 @@ static void manageHttp(Http *http, int flags)
         mprMark(http->defaultClientHost);
         mprMark(http->protocol);
         mprMark(http->proxyHost);
+        mprMark(http->authTypes);
+        mprMark(http->authStores);
 
         /*
             Endpoints keep connections alive until a timeout. Keep marking even if no other references.
@@ -4993,6 +4613,7 @@ void httpInitLimits(HttpLimits *limits, bool serverSide)
     limits->receiveBodySize = HTTP_MAX_RECEIVE_BODY;
     limits->processMax = HTTP_MAX_REQUESTS;
     limits->requestMax = HTTP_MAX_REQUESTS;
+    limits->sessionMax = HTTP_MAX_SESSIONS;
     limits->stageBufferSize = HTTP_MAX_STAGE_BUFFER;
     limits->transmissionBodySize = HTTP_MAX_TX_BODY;
     limits->uploadSize = HTTP_MAX_UPLOAD;
@@ -5406,28 +5027,12 @@ static void updateCurrentDate(Http *http)
     @copy   default
 
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
     by the terms of either license. Consult the LICENSE.md distributed with
-    this software for full details.
-
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://embedthis.com/downloads/gplLicense.html
-
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://embedthis.com
+    this software for full details and other copyrights.
 
     Local variables:
     tab-width: 4
@@ -5629,7 +5234,7 @@ void httpLogRequest(HttpConn *conn)
             break;
 
         case 'u':                           /* Remote username */
-            mprPutStringToBuf(buf, conn->authUser ? conn->authUser : "-");
+            mprPutStringToBuf(buf, conn->username ? conn->username : "-");
             break;
 
         case '{':                           /* Header line */
@@ -5676,31 +5281,15 @@ void httpLogRequest(HttpConn *conn)
 
 /*
     @copy   default
-    
+
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
-    
+
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.md distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://embedthis.com 
-    
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
     Local variables:
     tab-width: 4
     c-basic-offset: 4
@@ -6025,28 +5614,12 @@ static void adjustNetVec(HttpQueue *q, ssize written)
     @copy   default
 
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
     by the terms of either license. Consult the LICENSE.md distributed with
-    this software for full details.
-
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://embedthis.com/downloads/gplLicense.html
-
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://embedthis.com
+    this software for full details and other copyrights.
 
     Local variables:
     tab-width: 4
@@ -6488,31 +6061,144 @@ HttpPacket *httpSplitPacket(HttpPacket *orig, ssize offset)
 
 /*
     @copy   default
-    
+
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
-    
+
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.md distributed with 
-    this software for full details.
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+
+/************************************************************************/
+/*
+    Start of file "src/pam.c"
+ */
+/************************************************************************/
+
+/*
+    authPam.c - Authorization using PAM (Pluggable Authorization Module)
+
+    Copyright (c) All Rights Reserved. See details at the end of the file.
+ */
+
+/********************************* Includes ***********************************/
+
+
+
+#if BIT_HAS_PAM && BIT_PAM
+ #include    <security/pam_appl.h>
+
+/********************************* Defines ************************************/
+
+typedef struct {
+    char    *name;
+    char    *password;
+} UserInfo;
+
+/********************************* Forwards ***********************************/
+
+static int pamChat(int msgCount, const struct pam_message **msg, struct pam_response **resp, void *data);
+
+/*********************************** Code *************************************/
+
+bool httpPamVerifyUser(HttpConn *conn)
+{
+    pam_handle_t        *pamh;
+    UserInfo            info;
+    struct pam_conv     conv = { pamChat, &info };
+    struct group        *gp;
+    int                 res;
+   
+    mprAssert(conn->username);
+    mprAssert(conn->password);
+
+    info.name = (char*) conn->username;
+    info.password = (char*) conn->password;
+    pamh = NULL;
+        
+    if ((res = pam_start("login", conn->username, &conv, &pamh)) != PAM_SUCCESS) {
+        return 0;
+    }
+    if ((res = pam_authenticate(pamh, 0)) != PAM_SUCCESS) {
+        return 0;
+    }
+    pam_end(pamh, PAM_SUCCESS);
+
+    if (!conn->user) {
+        conn->user = mprLookupKey(conn->rx->route->auth->users, conn->username);
+    }
+    if (!conn->user && (gp = getgrgid(getgid())) != 0) {
+        /* Create a temporary user with an ability set to the group */
+        conn->user = httpCreateUser(conn->rx->route->auth, conn->username, 0, gp->gr_name);
+    }
+    return 1;
+}
+
+
+/*  
+    Callback invoked by the pam_authenticate function
+ */
+static int pamChat(int msgCount, const struct pam_message **msg, struct pam_response **resp, void *data) 
+{
+    UserInfo                *info;
+    struct pam_response     *reply;
+    int                     i;
     
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://embedthis.com 
-    
+    i = 0;
+    reply = 0;
+    info = (UserInfo*) data;
+
+    if (resp == 0 || msg == 0 || info == 0) {
+        return PAM_CONV_ERR;
+    }
+    //  MOB - who frees this?
+    if ((reply = malloc(msgCount * sizeof(struct pam_response))) == 0) {
+        return PAM_CONV_ERR;
+    }
+    for (i = 0; i < msgCount; i++) {
+        reply[i].resp_retcode = 0;
+        reply[i].resp = 0;
+        
+        switch (msg[i]->msg_style) {
+        case PAM_PROMPT_ECHO_ON:
+            reply[i].resp = strdup(info->name);
+            break;
+
+        case PAM_PROMPT_ECHO_OFF:
+            //  MOB - what is this doing?
+            reply[i].resp = strdup(info->password);
+            break;
+
+        default:
+            return PAM_CONV_ERR;
+        }
+    }
+    *resp = reply;
+    return PAM_SUCCESS;
+}
+#endif /* BIT_HAS_PAM */
+
+/*
+    @copy   default
+
+    Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
+
+    This software is distributed under commercial and open source licenses.
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
     Local variables:
     tab-width: 4
     c-basic-offset: 4
@@ -6598,6 +6284,15 @@ static void readyPass(HttpQueue *q)
 }
 
 
+static void readyError(HttpQueue *q)
+{
+    if (!q->conn->error) {
+        httpError(q->conn, HTTP_CODE_SERVICE_UNAVAILABLE, "The requested resource is not available");
+    }
+    httpFinalize(q->conn);
+}
+
+
 int httpOpenPassHandler(Http *http)
 {
     HttpStage     *stage;
@@ -6616,7 +6311,7 @@ int httpOpenPassHandler(Http *http)
         return MPR_ERR_CANT_CREATE;
     }
     stage->start = startPass;
-    stage->ready = readyPass;
+    stage->ready = readyError;
     return 0;
 }
 
@@ -6625,28 +6320,12 @@ int httpOpenPassHandler(Http *http)
     @copy   default
 
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
     by the terms of either license. Consult the LICENSE.md distributed with
-    this software for full details.
-
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://embedthis.com/downloads/gplLicense.html
-
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://embedthis.com
+    this software for full details and other copyrights.
 
     Local variables:
     tab-width: 4
@@ -6877,12 +6556,6 @@ void httpStartPipeline(HttpConn *conn)
     HttpRx      *rx;
     
     tx = conn->tx;
-
-    //  MOB - remove - how can this ever be already true?
-    mprAssert(!tx->started);
-    if (tx->started) {
-        return;
-    }
     tx->started = 1;
     rx = conn->rx;
     if (rx->needInputPipeline) {
@@ -7006,28 +6679,97 @@ static bool matchFilter(HttpConn *conn, HttpStage *filter, HttpRoute *route, int
     @copy   default
 
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
     by the terms of either license. Consult the LICENSE.md distributed with
-    this software for full details.
+    this software for full details and other copyrights.
 
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://embedthis.com/downloads/gplLicense.html
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
 
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    @end
+ */
 
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://embedthis.com
+/************************************************************************/
+/*
+    Start of file "src/procHandler.c"
+ */
+/************************************************************************/
+
+/*
+    procHandler.c -- Procedure callback handler
+
+    This handler maps URIs to procction names that have been registered via httpDefineProc.
+
+    Copyright (c) All Rights Reserved. See copyright notice at the bottom of the file.
+ */
+
+/********************************* Includes ***********************************/
+
+
+
+/*********************************** Code *************************************/
+
+static void startProc(HttpQueue *q)
+{
+    HttpConn    *conn;
+    HttpProc     proc;
+    cchar       *name;
+
+    mprLog(5, "Start procHandler");
+    conn = q->conn;
+    name = conn->rx->pathInfo;
+    if ((proc = mprLookupKey(conn->tx->handler->stageData, name)) == 0) {
+        mprError("Can't find procction callback %s", name);
+    } else {
+        (*proc)(conn);
+    }
+}
+
+
+void httpDefineProc(cchar *name, HttpProc proc)
+{
+    HttpStage   *stage;
+
+    if ((stage = httpLookupStage(MPR->httpService, "procHandler")) == 0) {
+        mprError("Can't find procHandler");
+        return;
+    }
+    mprAddKey(stage->stageData, name, proc);
+}
+
+
+int httpOpenProcHandler(Http *http)
+{
+    HttpStage     *stage;
+
+    if ((stage = httpCreateHandler(http, "procHandler", HTTP_STAGE_ALL, NULL)) == 0) {
+        return MPR_ERR_CANT_CREATE;
+    }
+    http->procHandler = stage;
+    if ((stage->stageData = mprCreateHash(0, MPR_HASH_STATIC_VALUES)) == 0) {
+        return MPR_ERR_MEMORY;
+    }
+    stage->start = startProc;
+    return 0;
+}
+
+
+/*
+    @copy   default
+
+    Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
+
+    This software is distributed under commercial and open source licenses.
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
 
     Local variables:
     tab-width: 4
@@ -7084,7 +6826,7 @@ HttpQueue *httpCreateQueue(HttpConn *conn, HttpStage *stage, int dir, HttpQueue 
     httpInitSchedulerQueue(q);
     httpAssignQueue(q, stage, dir);
     if (prev) {
-        httpInsertQueue(prev, q);
+        httpAppendQueue(prev, q);
     }
     return q;
 }
@@ -7146,16 +6888,18 @@ void httpInitQueue(HttpConn *conn, HttpQueue *q, cchar *name)
 }
 
 
+#if UNUSED &&KEEP
 /*  
     Insert a queue after the previous element
  */
-void httpAppendQueue(HttpQueue *head, HttpQueue *q)
+void httpAppendQueueToHead(HttpQueue *head, HttpQueue *q)
 {
     q->nextQ = head;
     q->prevQ = head->prevQ;
     head->prevQ->nextQ = q;
     head->prevQ = q;
 }
+#endif
 
 
 void httpSuspendQueue(HttpQueue *q)
@@ -7292,10 +7036,9 @@ void httpInitSchedulerQueue(HttpQueue *q)
 
 
 /*  
-    Insert a queue after the previous element
-    MOB - rename append
+    Append a queue after the previous element
  */
-void httpInsertQueue(HttpQueue *prev, HttpQueue *q)
+void httpAppendQueue(HttpQueue *prev, HttpQueue *q)
 {
     q->nextQ = prev->nextQ;
     q->prevQ = prev;
@@ -7645,31 +7388,15 @@ bool httpVerifyQueue(HttpQueue *q)
 
 /*
     @copy   default
-    
+
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
-    
+
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.md distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://embedthis.com 
-    
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
     Local variables:
     tab-width: 4
     c-basic-offset: 4
@@ -7966,31 +7693,15 @@ static bool fixRangeLength(HttpConn *conn)
 
 /*
     @copy   default
-    
+
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
-    
+
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.md distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://embedthis.com 
-    
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
     Local variables:
     tab-width: 4
     c-basic-offset: 4
@@ -8084,7 +7795,7 @@ HttpRoute *httpCreateRoute(HttpHost *host)
     route->inputStages = mprCreateList(-1, 0);
     route->lifespan = HTTP_CACHE_LIFESPAN;
     route->outputStages = mprCreateList(-1, 0);
-    route->pathTokens = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
+    route->vars = mprCreateHash(HTTP_SMALL_HASH_SIZE, MPR_HASH_CASELESS);
     route->pattern = MPR->emptyString;
     route->targetRule = sclone("run");
     route->autoDelete = 1;
@@ -8112,10 +7823,13 @@ HttpRoute *httpCreateInheritedRoute(HttpRoute *parent)
 {
     HttpRoute  *route;
 
-    mprAssert(parent);
+    if (!parent && (parent = httpGetDefaultRoute(0)) == 0) {
+        return 0;
+    }
     if ((route = mprAllocObj(HttpRoute, manageRoute)) == 0) {
         return 0;
     }
+    //  OPT. Structure assigment then overwrite.
     route->parent = parent;
     route->auth = httpCreateInheritedAuth(parent->auth);
     route->autoDelete = parent->autoDelete;
@@ -8143,7 +7857,7 @@ HttpRoute *httpCreateInheritedRoute(HttpRoute *parent)
     route->outputStages = parent->outputStages;
     route->params = parent->params;
     route->parent = parent;
-    route->pathTokens = parent->pathTokens;
+    route->vars = parent->vars;
     route->pattern = parent->pattern;
     route->patternCompiled = parent->patternCompiled;
     route->optimizedPattern = parent->optimizedPattern;
@@ -8204,7 +7918,7 @@ static void manageRoute(HttpRoute *route, int flags)
         mprMark(route->connector);
         mprMark(route->data);
         mprMark(route->eroute);
-        mprMark(route->pathTokens);
+        mprMark(route->vars);
         mprMark(route->languages);
         mprMark(route->inputStages);
         mprMark(route->outputStages);
@@ -8292,6 +8006,26 @@ HttpRoute *httpCreateAliasRoute(HttpRoute *parent, cchar *pattern, cchar *path, 
         httpSetRouteDir(route, path);
     }
     route->responseStatus = status;
+    return route;
+}
+
+
+/*
+    This routine binds a new route to a URI. It creates a handler, route and binds a callback to that route. 
+ */
+HttpRoute *httpBindRoute(HttpRoute *parent, cchar *pattern, HttpProc proc)
+{
+    HttpRoute   *route;
+
+    if (!pattern || !proc) {
+        return 0;
+    }
+    if ((route = httpCreateInheritedRoute(parent)) != 0) {
+        route->handler = route->http->procHandler;
+        httpSetRoutePattern(route, pattern, 0);
+        httpDefineProc(pattern, proc);
+        httpFinalizeRoute(route);
+    }
     return route;
 }
 
@@ -9063,7 +8797,7 @@ void httpSetRouteDir(HttpRoute *route, cchar *path)
     mprAssert(path && *path);
     
     route->dir = httpMakePath(route, path);
-    httpSetRoutePathVar(route, "DOCUMENT_ROOT", route->dir);
+    httpSetRouteVar(route, "DOCUMENT_ROOT", route->dir);
 }
 
 
@@ -9747,18 +9481,17 @@ char *httpTemplate(HttpConn *conn, cchar *tplate, MprHash *options)
 }
 
 
-//  MOB - rename SetRouteVar
-void httpSetRoutePathVar(HttpRoute *route, cchar *key, cchar *value)
+void httpSetRouteVar(HttpRoute *route, cchar *key, cchar *value)
 {
     mprAssert(route);
     mprAssert(key);
     mprAssert(value);
 
-    GRADUATE_HASH(route, pathTokens);
+    GRADUATE_HASH(route, vars);
     if (schr(value, '$')) {
-        value = stemplate(value, route->pathTokens);
+        value = stemplate(value, route->vars);
     }
-    mprAddKey(route->pathTokens, key, sclone(value));
+    mprAddKey(route->vars, key, sclone(value));
 }
 
 
@@ -9773,7 +9506,7 @@ char *httpMakePath(HttpRoute *route, cchar *file)
     mprAssert(route);
     mprAssert(file);
 
-    if ((path = stemplate(file, route->pathTokens)) == 0) {
+    if ((path = stemplate(file, route->vars)) == 0) {
         return 0;
     }
     if (mprIsPathRel(path) && route->host) {
@@ -9878,7 +9611,7 @@ static int allowDenyCondition(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
     }
     allow = 0;
     deny = 0;
-    if (auth->order == HTTP_ALLOW_DENY) {
+    if (auth->flags & HTTP_ALLOW_DENY) {
         if (auth->allow && mprLookupKey(auth->allow, conn->ip)) {
             allow++;
         } else {
@@ -9915,10 +9648,14 @@ static int authCondition(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
     mprAssert(conn);
     mprAssert(route);
 
-    if (route->auth == 0 || route->auth->type == 0) {
+    if (!route->auth) {
         return HTTP_ROUTE_OK;
     }
-    return httpCheckAuth(conn);
+    if (!httpCheckAuth(conn)) {
+        /* Request has been denied and fully handled */
+        return HTTP_ROUTE_OK;
+    }
+    return HTTP_ROUTE_OK;
 }
 
 
@@ -10114,6 +9851,7 @@ static int redirectTarget(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
         httpRedirect(conn, route->responseStatus, target);
         return HTTP_ROUTE_OK;
     }
+    //  MOB - OPT Use httpCompleteUri?
     prior = rx->parsedUri;
     dest = httpCreateUri(route->target, 0);
     scheme = dest->scheme ? dest->scheme : prior->scheme;
@@ -10160,8 +9898,7 @@ static int writeTarget(HttpConn *conn, HttpRoute *route, HttpRouteOp *op)
 
 /************************************************** Route Convenience ****************************************************/
 
-HttpRoute *httpDefineRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, 
-        cchar *source)
+HttpRoute *httpDefineRoute(HttpRoute *parent, cchar *name, cchar *methods, cchar *pattern, cchar *target, cchar *source)
 {
     HttpRoute   *route;
 
@@ -10268,7 +10005,7 @@ void httpAddStaticRoute(HttpRoute *parent)
     prefix = parent->prefix ? parent->prefix : "";
     source = parent->sourceName;
     name = qualifyName(parent, NULL, "home");
-    path = stemplate("${STATIC_DIR}/index.esp", parent->pathTokens);
+    path = stemplate("${STATIC_DIR}/index.esp", parent->vars);
     pattern = sfmt("^%s%s", prefix, "(/)*$");
     httpDefineRoute(parent, name, "GET,POST,PUT", pattern, path, source);
 }
@@ -10282,7 +10019,7 @@ void httpAddHomeRoute(HttpRoute *parent)
     source = parent->sourceName;
 
     name = qualifyName(parent, NULL, "static");
-    path = stemplate("${STATIC_DIR}/$1", parent->pathTokens);
+    path = stemplate("${STATIC_DIR}/$1", parent->vars);
     pattern = sfmt("^%s%s", prefix, "/static/(.*)");
     httpDefineRoute(parent, name, "GET", pattern, path, source);
 }
@@ -10407,10 +10144,10 @@ static void definePathVars(HttpRoute *route)
 {
     mprAssert(route);
 
-    mprAddKey(route->pathTokens, "PRODUCT", sclone(BIT_PRODUCT));
-    mprAddKey(route->pathTokens, "OS", sclone(BIT_OS));
-    mprAddKey(route->pathTokens, "VERSION", sclone(BIT_VERSION));
-    mprAddKey(route->pathTokens, "LIBDIR", mprGetAppDir());
+    mprAddKey(route->vars, "PRODUCT", sclone(BIT_PRODUCT));
+    mprAddKey(route->vars, "OS", sclone(BIT_OS));
+    mprAddKey(route->vars, "VERSION", sclone(BIT_VERSION));
+    mprAddKey(route->vars, "LIBDIR", mprGetAppDir());
     if (route->host) {
         defineHostVars(route);
     }
@@ -10420,8 +10157,10 @@ static void definePathVars(HttpRoute *route)
 static void defineHostVars(HttpRoute *route) 
 {
     mprAssert(route);
-    mprAddKey(route->pathTokens, "DOCUMENT_ROOT", route->dir);
-    mprAddKey(route->pathTokens, "SERVER_ROOT", route->host->home);
+    mprAddKey(route->vars, "DOCUMENT_ROOT", route->dir);
+    mprAddKey(route->vars, "SERVER_ROOT", route->host->home);
+    mprAddKey(route->vars, "SERVER_NAME", route->host->name);
+    mprAddKey(route->vars, "SERVER_PORT", itos(route->host->port));
 }
 
 
@@ -10523,6 +10262,7 @@ static char *expandRequestTokens(HttpConn *conn, char *str)
                 mprPutStringToBuf(buf, lang ? lang->path : defaultValue);
 
             } else if (smatch(value, "host")) {
+                /* Includes port if present */
                 mprPutStringToBuf(buf, rx->parsedUri->host);
 
             } else if (smatch(value, "method")) {
@@ -10554,6 +10294,7 @@ static char *expandRequestTokens(HttpConn *conn, char *str)
                 mprPutStringToBuf(buf, rx->scriptName);
 
             } else if (smatch(value, "serverAddress")) {
+                /* Pure IP address, no port. See "serverPort" */
                 mprPutStringToBuf(buf, conn->sock->acceptIp);
 
             } else if (smatch(value, "serverPort")) {
@@ -10573,6 +10314,12 @@ static char *expandRequestTokens(HttpConn *conn, char *str)
     }
     mprAddNullToBuf(buf);
     return sclone(mprGetBufStart(buf));
+}
+
+
+char *httpExpandRouteVars(HttpConn *conn, cchar *str)
+{
+    return expandRequestTokens(conn, stemplate(str, conn->rx->route->vars));
 }
 
 
@@ -10778,7 +10525,7 @@ bool httpTokenizev(HttpRoute *route, cchar *line, cchar *fmt, va_list args)
                 break;
             case 'T':
                 value = strim(tok, "\"", MPR_TRIM_BOTH);
-                *va_arg(args, char**) = stemplate(value, route->pathTokens);
+                *va_arg(args, char**) = stemplate(value, route->vars);
                 break;
             case 'W':
                 list = va_arg(args, MprList*);
@@ -10992,31 +10739,15 @@ HttpLimits *httpGraduateLimits(HttpRoute *route, HttpLimits *limits)
 
 /*
     @copy   default
-    
+
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
-    
+
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.md distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://embedthis.com 
-    
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
     Local variables:
     tab-width: 4
     c-basic-offset: 4
@@ -11047,7 +10778,6 @@ static void addMatchEtag(HttpConn *conn, char *etag);
 static char *getToken(HttpConn *conn, cchar *delim);
 static void manageRange(HttpRange *range, int flags);
 static void manageRx(HttpRx *rx, int flags);
-static bool parseAuthenticate(HttpConn *conn, char *authDetails);
 static bool parseHeaders(HttpConn *conn, HttpPacket *packet);
 static bool parseIncoming(HttpConn *conn, HttpPacket *packet);
 static bool parseRange(HttpConn *conn, char *value);
@@ -11116,14 +10846,12 @@ static void manageRx(HttpRx *rx, int flags)
         mprMark(rx->redirect);
         mprMark(rx->referrer);
         mprMark(rx->securityToken);
+        mprMark(rx->session);
         mprMark(rx->userAgent);
         mprMark(rx->params);
         mprMark(rx->svars);
         mprMark(rx->inputRange);
-        mprMark(rx->authAlgorithm);
-        mprMark(rx->authDetails);
-        mprMark(rx->authStale);
-        mprMark(rx->authType);
+        mprMark(rx->passDigest);
         mprMark(rx->files);
         mprMark(rx->uploadDir);
         mprMark(rx->paramString);
@@ -11263,7 +10991,12 @@ static bool parseIncoming(HttpConn *conn, HttpPacket *packet)
             rx->parsedUri->scheme = sclone("https");
         }
         rx->parsedUri->port = conn->sock->listenSock->port;
+
+        //  MOB - refactor what conn->host is set to
         rx->parsedUri->host = rx->hostHeader ? rx->hostHeader : conn->host->name;
+        if (!rx->parsedUri->host) {
+           rx->parsedUri->host = (conn->host->name[0] == '*') ? conn->sock->acceptIp : conn->host->name;
+        }
 
     } else if (!(100 <= rx->status && rx->status <= 199)) {
         /* 
@@ -11526,7 +11259,7 @@ static bool parseHeaders(HttpConn *conn, HttpPacket *packet)
     HttpTx      *tx;
     HttpLimits  *limits;
     MprBuf      *content;
-    char        *key, *value, *tok, *hvalue;
+    char        *cp, *key, *value, *tok, *hvalue;
     cchar       *oldValue;
     int         count, keepAlive;
 
@@ -11567,7 +11300,7 @@ static bool parseHeaders(HttpConn *conn, HttpPacket *packet)
         case 'a':
             if (strcasecmp(key, "authorization") == 0) {
                 value = sclone(value);
-                rx->authType = stok(value, " \t", &tok);
+                conn->authType = slower(stok(value, " \t", &tok));
                 rx->authDetails = sclone(tok);
 
             } else if (strcasecmp(key, "accept-charset") == 0) {
@@ -11819,16 +11552,13 @@ static bool parseHeaders(HttpConn *conn, HttpPacket *packet)
 
         case 'w':
             if (strcasecmp(key, "www-authenticate") == 0) {
-                conn->authType = value;
+                cp = value;
                 while (*value && !isspace((uchar) *value)) {
                     value++;
                 }
                 *value++ = '\0';
-                conn->authType = slower(conn->authType);
-                if (!parseAuthenticate(conn, value)) {
-                    httpError(conn, HTTP_CODE_BAD_REQUEST, "Bad Authentication header");
-                    break;
-                }
+                conn->authType = slower(cp);
+                rx->authDetails = sclone(value);
             }
             break;
         }
@@ -11848,142 +11578,6 @@ static bool parseHeaders(HttpConn *conn, HttpPacket *packet)
          */
         if (httpGetPacketLength(packet) >= 2) {
             mprAdjustBufStart(content, 2);
-        }
-    }
-    return 1;
-}
-
-
-/*  
-    Parse an authentication response (client side only)
- */
-static bool parseAuthenticate(HttpConn *conn, char *authDetails)
-{
-    HttpRx  *rx;
-    char    *value, *tok, *key, *dp, *sp;
-    int     seenComma;
-
-    rx = conn->rx;
-    key = (char*) authDetails;
-
-    while (*key) {
-        while (*key && isspace((uchar) *key)) {
-            key++;
-        }
-        tok = key;
-        while (*tok && !isspace((uchar) *tok) && *tok != ',' && *tok != '=') {
-            tok++;
-        }
-        *tok++ = '\0';
-
-        while (isspace((uchar) *tok)) {
-            tok++;
-        }
-        seenComma = 0;
-        if (*tok == '\"') {
-            value = ++tok;
-            while (*tok != '\"' && *tok != '\0') {
-                tok++;
-            }
-        } else {
-            value = tok;
-            while (*tok != ',' && *tok != '\0') {
-                tok++;
-            }
-            seenComma++;
-        }
-        *tok++ = '\0';
-
-        /*
-            Handle back-quoting
-         */
-        if (strchr(value, '\\')) {
-            for (dp = sp = value; *sp; sp++) {
-                if (*sp == '\\') {
-                    sp++;
-                }
-                *dp++ = *sp++;
-            }
-            *dp = '\0';
-        }
-
-        /*
-            algorithm, domain, nonce, oqaque, realm, qop, stale
-            We don't strdup any of the values as the headers are persistently saved.
-         */
-        switch (tolower((uchar) *key)) {
-        case 'a':
-            if (scaselesscmp(key, "algorithm") == 0) {
-                rx->authAlgorithm = sclone(value);
-                break;
-            }
-            break;
-
-        case 'd':
-            if (scaselesscmp(key, "domain") == 0) {
-                conn->authDomain = sclone(value);
-                break;
-            }
-            break;
-
-        case 'n':
-            if (scaselesscmp(key, "nonce") == 0) {
-                conn->authNonce = sclone(value);
-                conn->authNc = 0;
-            }
-            break;
-
-        case 'o':
-            if (scaselesscmp(key, "opaque") == 0) {
-                conn->authOpaque = sclone(value);
-            }
-            break;
-
-        case 'q':
-            if (scaselesscmp(key, "qop") == 0) {
-                conn->authQop = sclone(value);
-            }
-            break;
-
-        case 'r':
-            if (scaselesscmp(key, "realm") == 0) {
-                conn->authRealm = sclone(value);
-            }
-            break;
-
-        case 's':
-            if (scaselesscmp(key, "stale") == 0) {
-                rx->authStale = sclone(value);
-                break;
-            }
-
-        default:
-            /*  For upward compatibility --  ignore keywords we don't understand */
-            ;
-        }
-        key = tok;
-        if (!seenComma) {
-            while (*key && *key != ',') {
-                key++;
-            }
-            if (*key) {
-                key++;
-            }
-        }
-    }
-    if (strcmp(rx->conn->authType, "basic") == 0) {
-        if (conn->authRealm == 0) {
-            return 0;
-        }
-        return 1;
-    }
-    /* Digest */
-    if (conn->authRealm == 0 || conn->authNonce == 0) {
-        return 0;
-    }
-    if (conn->authQop) {
-        if (conn->authDomain == 0 || conn->authOpaque == 0 || rx->authAlgorithm == 0 || rx->authStale == 0) {
-            return 0;
         }
     }
     return 1;
@@ -12487,7 +12081,8 @@ int httpWait(HttpConn *conn, int state, MprTime timeout)
     if (conn->input && httpGetPacketLength(conn->input) > 0) {
         httpPump(conn, conn->input);
     }
-    if (conn->error) {
+    mprAssert(conn->sock);
+    if (conn->error || !conn->sock) {
         return MPR_ERR_BAD_STATE;
     }
     mark = mprGetTime();
@@ -12868,28 +12463,12 @@ void httpTrimExtraPath(HttpConn *conn)
     @copy   default
 
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
     by the terms of either license. Consult the LICENSE.md distributed with
-    this software for full details.
-
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://embedthis.com/downloads/gplLicense.html
-
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://embedthis.com
+    this software for full details and other copyrights.
 
     Local variables:
     tab-width: 4
@@ -13253,35 +12832,279 @@ static void adjustSendVec(HttpQueue *q, MprOff written)
 int httpOpenSendConnector(Http *http) { return 0; }
 void httpSendOpen(HttpQueue *q) {}
 void httpSendOutgoingService(HttpQueue *q) {}
-
 #endif /* !BIT_ROM */
+
 /*
     @copy   default
-    
+
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
-    
+
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.md distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://embedthis.com 
-    
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
+    Local variables:
+    tab-width: 4
+    c-basic-offset: 4
+    End:
+    vim: sw=4 ts=4 expandtab
+
+    @end
+ */
+
+/************************************************************************/
+/*
+    Start of file "src/session.c"
+ */
+/************************************************************************/
+
+/**
+    httpSession.c - Session data storage
+
+    Copyright (c) All Rights Reserved. See details at the end of the file.
+ */
+
+/********************************** Includes **********************************/
+
+
+
+/********************************** Forwards  *********************************/
+
+static char *makeKey(HttpSession *sp, cchar *key);
+static char *makeSessionID(HttpConn *conn);
+static void manageSession(HttpSession *sp, int flags);
+
+/************************************* Code ***********************************/
+
+HttpSession *httpAllocSession(HttpConn *conn, cchar *id, MprTime lifespan)
+{
+    Http        *http;
+    HttpSession *sp;
+
+    mprAssert(conn);
+    http = conn->http;
+
+    lock(http);
+    if (http->sessionCount >= conn->limits->sessionMax) {
+        unlock(http);
+        return 0;
+    }
+    http->sessionCount++;
+    unlock(http);
+
+    if ((sp = mprAllocObj(HttpSession, manageSession)) == 0) {
+        return 0;
+    }
+    mprSetName(sp, "session");
+    sp->lifespan = lifespan;
+    if (id == 0) {
+        id = makeSessionID(conn);
+    }
+    sp->id = sclone(id);
+    sp->cache = conn->http->sessionCache;
+#if FUTURE
+    sp->cache= mprCreateCache(0);
+#endif
+    return sp;
+}
+
+
+void httpDestroySession(HttpSession *sp)
+{
+    Http    *http;
+
+    http = MPR->httpService;
+
+    mprAssert(sp);
+    lock(http);
+    http->sessionCount--;
+    mprAssert(http->sessionCount >= 0);
+    unlock(http);
+    sp->id = 0;
+}
+
+
+static void manageSession(HttpSession *sp, int flags)
+{
+    if (flags & MPR_MANAGE_MARK) {
+        mprMark(sp->id);
+        mprMark(sp->cache);
+    }
+}
+
+
+HttpSession *httpCreateSession(HttpConn *conn)
+{
+    return httpGetSession(conn, 1);
+}
+
+
+HttpSession *httpGetSession(HttpConn *conn, int create)
+{
+    HttpRx      *rx;
+    char        *id;
+
+    mprAssert(conn);
+    rx = conn->rx;
+    mprAssert(rx);
+    if (rx->session || !conn) {
+        return rx->session;
+    }
+    id = httpGetSessionID(conn);
+    if (id || create) {
+        rx->session = httpAllocSession(conn, id, conn->limits->sessionTimeout);
+        if (rx->session && !id) {
+            httpSetCookie(conn, HTTP_SESSION_COOKIE, rx->session->id, "/", NULL, 0, conn->secure);
+        }
+    }
+    return rx->session;
+}
+
+
+MprHash *httpGetSessionObj(HttpConn *conn, cchar *key)
+{
+    cchar   *str;
+
+    if ((str = httpGetSessionVar(conn, key, 0)) != 0 && *str) {
+        mprAssert(*str == '{');
+        return mprDeserialize(str);
+    }
+    return 0;
+}
+
+
+cchar *httpGetSessionVar(HttpConn *conn, cchar *key, cchar *defaultValue)
+{
+    HttpSession  *sp;
+    cchar       *result;
+
+    mprAssert(conn);
+    mprAssert(key && *key);
+
+    result = 0;
+    if ((sp = httpGetSession(conn, 0)) != 0) {
+        result = mprReadCache(sp->cache, makeKey(sp, key), 0, 0);
+    }
+    return result ? result : defaultValue;
+}
+
+
+int httpSetSessionObj(HttpConn *conn, cchar *key, MprHash *obj)
+{
+    httpSetSessionVar(conn, key, mprSerialize(obj, 0));
+    return 0;
+}
+
+
+int httpSetSessionVar(HttpConn *conn, cchar *key, cchar *value)
+{
+    HttpSession  *sp;
+
+    mprAssert(conn);
+    mprAssert(key && *key);
+    mprAssert(value);
+
+    if ((sp = httpGetSession(conn, 1)) == 0) {
+        return 0;
+    }
+    if (mprWriteCache(sp->cache, makeKey(sp, key), value, 0, sp->lifespan, 0, MPR_CACHE_SET) == 0) {
+        return MPR_ERR_CANT_WRITE;
+    }
+    return 0;
+}
+
+
+int httpRemoveSessionVar(HttpConn *conn, cchar *key)
+{
+    HttpSession  *sp;
+
+    mprAssert(conn);
+    mprAssert(key && *key);
+
+    if ((sp = httpGetSession(conn, 1)) == 0) {
+        return 0;
+    }
+    return mprRemoveCache(sp->cache, makeKey(sp, key)) ? 0 : MPR_ERR_CANT_FIND;
+}
+
+
+char *httpGetSessionID(HttpConn *conn)
+{
+    HttpRx  *rx;
+    cchar   *cookies, *cookie;
+    char    *cp, *value;
+    int     quoted;
+
+    mprAssert(conn);
+    rx = conn->rx;
+    mprAssert(rx);
+
+    if (rx->session) {
+        return rx->session->id;
+    }
+    if (rx->sessionProbed) {
+        return 0;
+    }
+    rx->sessionProbed = 1;
+    cookies = httpGetCookies(conn);
+    for (cookie = cookies; cookie && (value = strstr(cookie, HTTP_SESSION_COOKIE)) != 0; cookie = value) {
+        value += strlen(HTTP_SESSION_COOKIE);
+        while (isspace((uchar) *value) || *value == '=') {
+            value++;
+        }
+        quoted = 0;
+        if (*value == '"') {
+            value++;
+            quoted++;
+        }
+        for (cp = value; *cp; cp++) {
+            if (quoted) {
+                if (*cp == '"' && cp[-1] != '\\') {
+                    break;
+                }
+            } else {
+                if ((*cp == ',' || *cp == ';') && cp[-1] != '\\') {
+                    break;
+                }
+            }
+        }
+        return snclone(value, cp - value);
+    }
+    return 0;
+}
+
+
+static char *makeSessionID(HttpConn *conn)
+{
+    char        idBuf[64];
+    static int  nextSession = 0;
+
+    mprAssert(conn);
+
+    /* Thread race here on nextSession++ not critical */
+    mprSprintf(idBuf, sizeof(idBuf), "%08x%08x%d", PTOI(conn->data) + PTOI(conn), (int) mprGetTime(), nextSession++);
+    return mprGetMD5WithPrefix(idBuf, sizeof(idBuf), "::http.session::");
+}
+
+
+static char *makeKey(HttpSession *sp, cchar *key)
+{
+    return sfmt("session-%s-%s", sp->id, key);
+}
+
+/*
+    @copy   default
+
+    Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
+
+    This software is distributed under commercial and open source licenses.
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
     Local variables:
     tab-width: 4
     c-basic-offset: 4
@@ -13475,31 +13298,15 @@ HttpStage *httpCreateConnector(Http *http, cchar *name, int flags, MprModule *mo
 
 /*
     @copy   default
-    
+
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
-    
+
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.md distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://embedthis.com 
-    
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
     Local variables:
     tab-width: 4
     c-basic-offset: 4
@@ -13706,29 +13513,13 @@ void httpTraceContent(HttpConn *conn, int dir, int item, HttpPacket *packet, ssi
     @copy   default
 
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
     by the terms of either license. Consult the LICENSE.md distributed with
-    this software for full details.
+    this software for full details and other copyrights.
 
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://embedthis.com/downloads/gplLicense.html
-
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://embedthis.com
- 
     Local variables:
     tab-width: 4
     c-basic-offset: 4
@@ -14142,12 +13933,14 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
     int         port;
 
     mprAssert(targetUri);
-
-    mprLog(3, "redirect %d %s", status, targetUri);
-
     rx = conn->rx;
     tx = conn->tx;
     tx->status = status;
+
+    if (schr(targetUri, '$')) {
+        targetUri = httpExpandRouteVars(conn, targetUri);
+    }
+    mprLog(3, "redirect %d %s", status, targetUri);
     msg = httpLookupStatus(conn->http, status);
 
     if (300 <= status && status <= 399) {
@@ -14155,7 +13948,10 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
             targetUri = "/";
         }
         target = httpCreateUri(targetUri, 0);
-
+        if (!target->host) {
+            target->host = rx->parsedUri->host;
+            targetUri = httpUriToString(target, 0);
+        }
         if (conn->http->redirectCallback) {
             targetUri = (conn->http->redirectCallback)(conn, &status, target);
         }
@@ -14213,53 +14009,28 @@ void httpSetContentLength(HttpConn *conn, MprOff length)
     httpSetHeader(conn, "Content-Length", "%Ld", tx->length);
 }
 
-
-void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *cookieDomain, 
-        MprTime lifespan, int flags)
+void httpSetCookie(HttpConn *conn, cchar *name, cchar *value, cchar *path, cchar *cookieDomain, MprTime lifespan, int flags)
 {
     HttpRx      *rx;
     char        *cp, *expiresAtt, *expires, *domainAtt, *domain, *secure, *httponly;
-    int         webkitVersion;
 
     rx = conn->rx;
     if (path == 0) {
         path = "/";
     }
-    /* 
-        Fix for Safari >= 3.2.1 with Bonjour addresses with a trailing ".". Safari discards cookies without a domain 
-        specifier or with a domain that includes a trailing ".". Solution: include an explicit domain and trim the 
-        trailing ".".
-      
-        User-Agent: Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_5_6; en-us) 
-             AppleWebKit/530.0+ (KHTML, like Gecko) Version/3.1.2 Safari/525.20.1
-    */
-    webkitVersion = 0;
-    if (cookieDomain == 0 && rx->userAgent && strstr(rx->userAgent, "AppleWebKit") != 0) {
-        if ((cp = strstr(rx->userAgent, "Version/")) != NULL && strlen(cp) >= 13) {
-            cp = &cp[8];
-            webkitVersion = (cp[0] - '0') * 100 + (cp[2] - '0') * 10 + (cp[4] - '0');
-        }
-    }
     domain = (char*) cookieDomain;
-    if (webkitVersion >= 312) {
+    if (!domain) {
         domain = sclone(rx->hostHeader);
         if ((cp = strchr(domain, ':')) != 0) {
             *cp = '\0';
         }
         if (*domain && domain[strlen(domain) - 1] == '.') {
             domain[strlen(domain) - 1] = '\0';
-        } else {
-            domain = 0;
         }
     }
-    if (domain) {
-        if (*domain != '.') {
-            domain = sjoin(".", domain, NULL);
-        }
-        domainAtt = "; domain=";
-    } else {
-        domainAtt = "";
-        domain = "";
+    domainAtt = domain ? "; domain=" : "";
+    if (domain && !strchr(domain, '.')) {
+        domain = sjoin(".", domain, NULL);
     }
     if (lifespan > 0) {
         expiresAtt = "; expires=";
@@ -14497,28 +14268,12 @@ bool httpFileExists(HttpConn *conn)
     @copy   default
 
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
     by the terms of either license. Consult the LICENSE.md distributed with
-    this software for full details.
-
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://embedthis.com/downloads/gplLicense.html
-
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://embedthis.com
+    this software for full details and other copyrights.
 
     Local variables:
     tab-width: 4
@@ -15149,31 +14904,15 @@ static char *getBoundary(void *buf, ssize bufLen, void *boundary, ssize boundary
 
 /*
     @copy   default
-    
+
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
-    
+
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.md distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://embedthis.com 
-    
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
     Local variables:
     tab-width: 4
     c-basic-offset: 4
@@ -15884,28 +15623,12 @@ static void trimPathToDirname(HttpUri *uri)
     @copy   default
 
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
     by the terms of either license. Consult the LICENSE.md distributed with
-    this software for full details.
-
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://embedthis.com/downloads/gplLicense.html
-
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://embedthis.com
+    this software for full details and other copyrights.
 
     Local variables:
     tab-width: 4
@@ -15956,8 +15679,8 @@ void httpCreateCGIParams(HttpConn *conn)
     host = conn->host;
     sock = conn->sock;
 
-    mprAddKey(svars, "AUTH_TYPE", rx->authType);
-    mprAddKey(svars, "AUTH_USER", conn->authUser);
+    mprAddKey(svars, "AUTH_TYPE", conn->authType);
+    mprAddKey(svars, "AUTH_USER", conn->username);
     mprAddKey(svars, "AUTH_ACL", MPR->emptyString);
     mprAddKey(svars, "CONTENT_LENGTH", rx->contentLength);
     mprAddKey(svars, "CONTENT_TYPE", rx->mimeType);
@@ -15966,7 +15689,9 @@ void httpCreateCGIParams(HttpConn *conn)
     mprAddKey(svars, "QUERY_STRING", rx->parsedUri->query);
     mprAddKey(svars, "REMOTE_ADDR", conn->ip);
     mprAddKeyFmt(svars, "REMOTE_PORT", "%d", conn->port);
-    mprAddKey(svars, "REMOTE_USER", conn->authUser);
+
+    /* Set to the same as AUTH_USER */
+    mprAddKey(svars, "REMOTE_USER", conn->username);
     mprAddKey(svars, "REQUEST_METHOD", rx->method);
     mprAddKey(svars, "REQUEST_TRANSPORT", sclone((char*) ((conn->secure) ? "https" : "http")));
     mprAddKey(svars, "SERVER_ADDR", sock->acceptIp);
@@ -16278,31 +16003,15 @@ void httpRemoveAllUploadedFiles(HttpConn *conn)
 
 /*
     @copy   default
-    
+
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
-    
+
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.md distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://embedthis.com 
-    
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
     Local variables:
     tab-width: 4
     c-basic-offset: 4

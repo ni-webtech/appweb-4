@@ -32,6 +32,7 @@ all: prep \
         $(CONFIG)/bin/esp-www \
         $(CONFIG)/bin/esp-appweb.conf \
         $(CONFIG)/bin/mod_cgi.dylib \
+        $(CONFIG)/bin/mod_ssl.dylib \
         $(CONFIG)/bin/auth \
         $(CONFIG)/bin/cgiProgram \
         $(CONFIG)/bin/setConfig \
@@ -39,7 +40,7 @@ all: prep \
         $(CONFIG)/bin/testAppweb \
         test/cgi-bin/testScript \
         test/web/caching/cache.cgi \
-        test/web/basic/basic.cgi \
+        test/web/auth/basic/basic.cgi \
         test/cgi-bin/cgiProgram
 
 .PHONY: prep
@@ -69,6 +70,7 @@ clean:
 	rm -rf $(CONFIG)/bin/esp-www
 	rm -rf $(CONFIG)/bin/esp-appweb.conf
 	rm -rf $(CONFIG)/bin/mod_cgi.dylib
+	rm -rf $(CONFIG)/bin/mod_ssl.dylib
 	rm -rf $(CONFIG)/bin/auth
 	rm -rf $(CONFIG)/bin/cgiProgram
 	rm -rf $(CONFIG)/bin/setConfig
@@ -76,7 +78,7 @@ clean:
 	rm -rf $(CONFIG)/bin/testAppweb
 	rm -rf test/cgi-bin/testScript
 	rm -rf test/web/caching/cache.cgi
-	rm -rf test/web/basic/basic.cgi
+	rm -rf test/web/auth/basic/basic.cgi
 	rm -rf test/cgi-bin/cgiProgram
 	rm -rf $(CONFIG)/obj/mprLib.o
 	rm -rf $(CONFIG)/obj/mprSsl.o
@@ -139,12 +141,12 @@ $(CONFIG)/obj/mprSsl.o: \
         src/deps/mpr/mprSsl.c \
         $(CONFIG)/inc/bit.h \
         $(CONFIG)/inc/mpr.h
-	$(CC) -c -o $(CONFIG)/obj/mprSsl.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/mpr/mprSsl.c
+	$(CC) -c -o $(CONFIG)/obj/mprSsl.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc -I../packages-macosx-x64/openssl/openssl-1.0.1b/include src/deps/mpr/mprSsl.c
 
 $(CONFIG)/bin/libmprssl.dylib:  \
         $(CONFIG)/bin/libmpr.dylib \
         $(CONFIG)/obj/mprSsl.o
-	$(CC) -dynamiclib -o $(CONFIG)/bin/libmprssl.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.1.0 -current_version 4.1.0 -compatibility_version 4.1.0 -current_version 4.1.0 $(LIBPATHS) -install_name @rpath/libmprssl.dylib $(CONFIG)/obj/mprSsl.o $(LIBS) -lmpr
+	$(CC) -dynamiclib -o $(CONFIG)/bin/libmprssl.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.1.0 -current_version 4.1.0 -compatibility_version 4.1.0 -current_version 4.1.0 $(LIBPATHS) -L../packages-macosx-x64/openssl/openssl-1.0.1b -install_name @rpath/libmprssl.dylib $(CONFIG)/obj/mprSsl.o $(LIBS) -lmpr -lssl -lcrypto
 
 $(CONFIG)/obj/manager.o: \
         src/deps/mpr/manager.c \
@@ -433,6 +435,17 @@ $(CONFIG)/bin/mod_cgi.dylib:  \
         $(CONFIG)/obj/cgiHandler.o
 	$(CC) -dynamiclib -o $(CONFIG)/bin/mod_cgi.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.1.0 -current_version 4.1.0 -compatibility_version 4.1.0 -current_version 4.1.0 $(LIBPATHS) -install_name @rpath/mod_cgi.dylib $(CONFIG)/obj/cgiHandler.o $(LIBS) -lappweb -lhttp -lpam -lmpr -lpcre
 
+$(CONFIG)/obj/sslModule.o: \
+        src/modules/sslModule.c \
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/appweb.h
+	$(CC) -c -o $(CONFIG)/obj/sslModule.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/modules/sslModule.c
+
+$(CONFIG)/bin/mod_ssl.dylib:  \
+        $(CONFIG)/bin/libappweb.dylib \
+        $(CONFIG)/obj/sslModule.o
+	$(CC) -dynamiclib -o $(CONFIG)/bin/mod_ssl.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.1.0 -current_version 4.1.0 -compatibility_version 4.1.0 -current_version 4.1.0 $(LIBPATHS) -install_name @rpath/mod_ssl.dylib $(CONFIG)/obj/sslModule.o $(LIBS) -lappweb -lhttp -lpam -lmpr -lpcre
+
 $(CONFIG)/obj/auth.o: \
         src/utils/auth.c \
         $(CONFIG)/inc/bit.h \
@@ -471,7 +484,8 @@ $(CONFIG)/inc/appwebMonitor.h:
 $(CONFIG)/obj/appweb.o: \
         src/server/appweb.c \
         $(CONFIG)/inc/bit.h \
-        $(CONFIG)/inc/appweb.h
+        $(CONFIG)/inc/appweb.h \
+        $(CONFIG)/inc/esp.h
 	$(CC) -c -o $(CONFIG)/obj/appweb.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/server/appweb.c
 
 $(CONFIG)/bin/appweb:  \
@@ -519,14 +533,14 @@ test/web/caching/cache.cgi:
 	chmod +x web/caching/cache.cgi ;\
 		cd - >/dev/null 
 
-test/web/basic/basic.cgi: 
+test/web/auth/basic/basic.cgi: 
 	cd test >/dev/null ;\
-		echo "#!`type -p sh`" >web/basic/basic.cgi ;\
-	echo '' >>web/basic/basic.cgi ;\
-	echo 'echo Content-Type: text/plain' >>web/basic/basic.cgi ;\
-	echo 'echo' >>web/basic/basic.cgi ;\
-	echo '/usr/bin/env' >>web/basic/basic.cgi ;\
-	chmod +x web/basic/basic.cgi ;\
+		echo "#!`type -p sh`" >web/auth/basic/basic.cgi ;\
+	echo '' >>web/auth/basic/basic.cgi ;\
+	echo 'echo Content-Type: text/plain' >>web/auth/basic/basic.cgi ;\
+	echo 'echo' >>web/auth/basic/basic.cgi ;\
+	echo '/usr/bin/env' >>web/auth/basic/basic.cgi ;\
+	chmod +x web/auth/basic/basic.cgi ;\
 		cd - >/dev/null 
 
 test/cgi-bin/cgiProgram:  \

@@ -41,11 +41,13 @@ Bit.load({
         sdb: false,
         manager: 'appman',
         auth: 'file',
+        pam: true,
         packs: [ 'bits/packs' ]
         /* Must build locally to build tools */
         platforms: [ 'local' ],
         sync: ['http', 'mpr', 'pcre', 'sqlite'],
-        minimal: ['doxygen', 'dsi', 'ejs', 'man', 'man2html', 'pmaker', 'ssl', 'ejscript', 'php', 'matrixssl', 'openssl' ],
+        _minimal: ['doxygen', 'dsi', 'ejs', 'man', 'man2html', 'pmaker', 'ssl', 'ejscript', 'php', 'matrixssl', 'openssl' ],
+        minimal: ['doxygen', 'dsi', 'ejs', 'man', 'man2html', 'pmaker', 'ejscript', 'php', 'matrixssl', ],
         '+required': [ 'pcre'],
         '+optional': [ 'cgi', 'dir', 'doxygen', 'dsi', 'ejs', 'ejscript', 'esp', 'man', 'man2html', 'openssl', 
             'matrixssl', 'pmaker', 'php', 'sqlite', 'ssl', 'utest', 'zip' ],

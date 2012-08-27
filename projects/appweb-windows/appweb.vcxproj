@@ -115,7 +115,7 @@
 
   <CustomBuildStep>
     <Command>cd ..\..\src\server
-xcopy /Y /S /D appwebMonitor.h $(IncDir)
+copy /Y appwebMonitor.h $(IncDir)
 cd ..\..\projects\appweb-windows</Command>
     <Outputs>$(BinDir)\appweb.exe</Outputs>
   </CustomBuildStep>

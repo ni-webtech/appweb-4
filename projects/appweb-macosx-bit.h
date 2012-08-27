@@ -7,6 +7,7 @@
  */
 
 /* Settings */
+#define BIT__MINIMAL "doxygen,dsi,ejs,man,man2html,pmaker,ssl,ejscript,php,matrixssl,openssl"
 #define BIT_AUTH "file"
 #define BIT_BUILD_NUMBER "0"
 #define BIT_COMPANY "Embedthis"
@@ -24,9 +25,10 @@
 #define BIT_HTTP_PORT 80
 #define BIT_MANAGER "appman"
 #define BIT_MDB 1
-#define BIT_MINIMAL "doxygen,dsi,ejs,man,man2html,pmaker,ssl,ejscript,php,matrixssl,openssl"
+#define BIT_MINIMAL "doxygen,dsi,ejs,man,man2html,pmaker,ejscript,php,matrixssl"
 #define BIT_OPTIONAL "cgi,dir,doxygen,dsi,ejs,ejscript,esp,man,man2html,openssl,matrixssl,pmaker,php,sqlite,ssl,utest,zip"
 #define BIT_PACKS "bits/packs"
+#define BIT_PAM 1
 #define BIT_PLATFORMS "local"
 #define BIT_PRODUCT "appweb"
 #define BIT_REQUIRED "compiler,link,pcre"
@@ -81,11 +83,11 @@
 #define BIT_PACK_MAN 0
 #define BIT_PACK_MAN2HTML 0
 #define BIT_PACK_MATRIXSSL 0
-#define BIT_PACK_OPENSSL 0
+#define BIT_PACK_OPENSSL 1
 #define BIT_PACK_PCRE 1
 #define BIT_PACK_PHP 0
 #define BIT_PACK_PMAKER 0
 #define BIT_PACK_SQLITE 1
-#define BIT_PACK_SSL 0
+#define BIT_PACK_SSL 1
 #define BIT_PACK_UTEST 1
 #define BIT_PACK_ZIP 1

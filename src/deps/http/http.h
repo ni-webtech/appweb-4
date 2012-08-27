@@ -21,17 +21,18 @@ extern "C" {
 struct Http;
 struct HttpAuth;
 struct HttpConn;
-struct HttpRoute;
+struct HttpEndpoint;
 struct HttpHost;
-struct HttpPacket;
 struct HttpLimits;
+struct HttpPacket;
 struct HttpQueue;
+struct HttpRoute;
 struct HttpRx;
-struct HttpEndpoint;
+struct HttpSession;
 struct HttpStage;
-struct HttpEndpoint;
 struct HttpTx;
 struct HttpUri;
+struct HttpUser;
 #endif
 
 /********************************** Tunables **********************************/
@@ -56,6 +57,7 @@ struct HttpUri;
     #define HTTP_MAX_RECEIVE_BODY      (128 * 1024 * 1024)  /**< Maximum incoming body size */
     #define HTTP_MAX_REQUESTS          20                   /**< Maximum concurrent requests */
     #define HTTP_MAX_CLIENTS           10                   /**< Maximum concurrent client endpoints */
+//  MOB - implement
     #define HTTP_MAX_SESSIONS          100                  /**< Maximum concurrent sessions */
     #define HTTP_MAX_STAGE_BUFFER      (32 * 1024)          /**< Maximum buffer for any stage */
     #define HTTP_CLIENTS_HASH          (131)                /**< Hash table for client IP addresses */
@@ -188,29 +190,6 @@ struct HttpUri;
 #define HTTP_CLOSE                          0x20000 /* Close the conn at the completion of the request */
 
 /**
-    Lookup password callback
-    @param auth HttpAuth object
-    @param realm Http authentication realm
-    @param user User name for whom to retrieve the password
-    @return The user password 
-    @ingroup HttpAuth
- */
-typedef cchar *(*HttpGetPassword)(struct HttpAuth *auth, cchar *realm, cchar *user);
-
-/**
-    Validate user credentials callback
-    @param auth HttpAuth object
-    @param realm Http authentication realm
-    @param user User name for whom to retrieve the password
-    @param pass User password
-    @param required Authentication "required" field. Set to "user", "group" or "valid".
-    @param msg Output parameter to contain any appropriate error message
-    @return True if the user credentials can be validated and accepted
-    @ingroup HttpAuth
- */
-typedef bool (*HttpValidateCred)(struct HttpAuth *auth, cchar *realm, char *user, cchar *pass, cchar *required, char **msg);
-
-/**
     Connection Http state change notification callback
     @param conn HttpConn connection object created via $httpCreateConn
     @param state Http state
@@ -260,19 +239,23 @@ extern void httpSetForkCallback(struct Http *http, MprForkCallback proc, void *a
     @defgroup Http Http
     @see Http HttpConn HttpEndpoint gettGetDateString httpConfigurenamedVirtualEndpoint httpCreate httpCreateSecret 
         httpDestroy httpGetContext httpGetDateString httpLookupEndpoint httpLookupStatus httpLooupHost 
-        httpSetContext httpSetDefaultClientHost httpSetDefaultClientPort httpSetDefaultHost httpSetDefaultPort 
-        httpSetForkCallback httpSetProxy httpSetSoftware 
+        httpSetContext httpSetDefaultClientHost httpSetDefaultClientPort httpSetDefaultPort httpSetForkCallback 
+        httpSetProxy httpSetSoftware 
  */
 typedef struct Http {
     MprList         *endpoints;             /**< Currently configured listening endpoints */
     MprList         *hosts;                 /**< List of host objects */
     MprList         *connections;           /**< Currently open connection requests */
     MprHash         *stages;                /**< Possible stages in connection pipelines */
+    MprCache        *sessionCache;          /**< Session state cache */
     MprHash         *statusCodes;           /**< Http status codes */
 
     MprHash         *routeTargets;          /**< Http route target functions */
     MprHash         *routeConditions;       /**< Http route condition functions */
     MprHash         *routeUpdates;          /**< Http route update functions */
+
+    MprHash         *authTypes;             /**< Available authentication protocol types */
+    MprHash         *authStores;            /**< Available password stores */
 
     /*  
         Some standard pipeline stages
@@ -289,6 +272,7 @@ typedef struct Http {
     struct HttpStage *ejsHandler;           /**< Ejscript Web Framework handler */
     struct HttpStage *fileHandler;          /**< Static file handler */
     struct HttpStage *passHandler;          /**< Pass through handler */
+    struct HttpStage *procHandler;          /**< Proc handler */
     struct HttpStage *phpHandler;           /**< PHP through handler */
     struct HttpStage *uploadFilter;         /**< Upload filter */
 
@@ -301,12 +285,13 @@ typedef struct Http {
     MprTime         booted;                 /**< Time the server started */
     MprTime         now;                    /**< When was the currentDate last computed */
     MprMutex        *mutex;
-    HttpGetPassword getPassword;            /**< Lookup password callback */
-    HttpValidateCred validateCred;          /**< Validate user credentials callback */
+
     char            *software;              /**< Software name and version */
     void            *forkData;
 
-    int             connCount;              /**< Count of connections for Conn.seqno */
+    int             nextAuth;               /**< Auth object version vector */
+    int             connCount;              /**< Count of connections */
+    int             sessionCount;           /**< Count of sessions */
     void            *context;               /**< Embedding context */
     MprTime         currentTime;            /**< When currentDate was last calculated */
     char            *currentDate;           /**< Date string for HTTP response headers */
@@ -320,9 +305,6 @@ typedef struct Http {
     char            *proxyHost;             /**< Proxy ip address */
     int             proxyPort;              /**< Proxy port */
     int             processCount;           /**< Count of current active external processes */
-#if UNUSED
-    int             sslLoaded;              /**< True when the SSL provider has been loaded */
-#endif
 
     /*
         Callbacks
@@ -382,18 +364,6 @@ extern void *httpGetContext(Http *http);
     @ingroup Http
  */
 extern char *httpGetDateString(MprPath *sbuf);
-
-#if UNUSED
-/**
-    Load SSL
-    @description This loads the configured SSL provider. SSL providers are configured when the product is built
-        from source.
-    @param http Http object created via #httpCreate
-    @return "Zero" if SSL can be successfully loaded. Otherwise return a negative MPR error code.
-    @ingroup Http
- */
-extern int httpLoadSsl(Http *http);
-#endif
 
 /**
     Set the http context object
@@ -499,6 +469,7 @@ typedef struct HttpLimits {
     int     keepAliveMax;           /**< Maximum number of Keep-Alive requests to perform per socket */
     int     requestMax;             /**< Maximum number of simultaneous concurrent requests */
     int     processMax;             /**< Maximum number of processes (CGI) */
+    int     sessionMax;             /**< Maximum number of sessions */
 
     MprTime inactivityTimeout;      /**< Default timeout for keep-alive and idle requests (msec) */
     MprTime requestTimeout;         /**< Default time a request can take (msec) */
@@ -1304,7 +1275,7 @@ extern HttpQueue *httpCreateQueue(struct HttpConn *conn, struct HttpStage *stage
 extern HttpQueue *httpGetNextQueueForService(HttpQueue *q);
 extern void httpInitQueue(struct HttpConn *conn, HttpQueue *q, cchar *name);
 extern void httpInitSchedulerQueue(HttpQueue *q);
-extern void httpInsertQueue(HttpQueue *prev, HttpQueue *q);
+extern void httpAppendQueue(HttpQueue *prev, HttpQueue *q);
 extern void httpMarkQueueHead(HttpQueue *q);
 extern void httpAssignQueue(HttpQueue *q, struct HttpStage *stage, int dir);
 
@@ -1623,6 +1594,7 @@ extern int httpOpenSendConnector(Http *http);
 extern int httpOpenChunkFilter(Http *http);
 extern int httpOpenCacheHandler(Http *http);
 extern int httpOpenPassHandler(Http *http);
+extern int httpOpenProcHandler(Http *http);
 extern int httpOpenRangeFilter(Http *http);
 extern int httpOpenUploadFilter(Http *http);
 extern void httpSendOpen(HttpQueue *q);
@@ -1819,19 +1791,15 @@ typedef struct HttpConn {
     HttpTrace       trace[2];               /**< Tracing for [rx|tx] */
 
     /*  
-        Authentication for client requests
+        Authentication
      */
-    char            *authCnonce;            /**< Digest authentication cnonce value */
-    char            *authDomain;            /**< Authentication domain */
-    char            *authNonce;             /**< Nonce value used in digest authentication */
-    int             authNc;                 /**< Digest authentication nc value */
-    char            *authOpaque;            /**< Opaque value used to calculate digest session */
-    char            *authRealm;             /**< Authentication realm */
-    char            *authQop;               /**< Digest authentication qop value */
-    char            *authType;              /**< Basic or Digest */
-    char            *authUser;              /**< User name credentials for authorized client requests */
-    char            *authPassword;          /**< Password credentials for authorized client requests */
-    int             sentCredentials;        /**< Sent authorization credentials */
+    int             authenticated;          /**< Request has been authenticated */
+    int             setCredentials;         /**< Authorization headers set from credentials */
+    char            *authType;              /**< Type of authentication: set to basic, digest, post or a custom name */
+    void            *authData;              /**< Authorization state data */
+    char            *username;              /**< Supplied user name */
+    char            *password;              /**< Supplied password (may be encrypted depending on auth protocol) */
+    struct HttpUser *user;                  /**< Authorized User record for access checking */
 
     HttpIOCallback  ioCallback;             /**< I/O event callback */
     HttpHeadersCallback headersCallback;    /**< Callback to fill headers */
@@ -2300,32 +2268,92 @@ extern void httpUseWorker(HttpConn *conn, MprDispatcher *dispatcher, MprEvent *e
 
 /********************************** HttpAuth *********************************/
 /*  
-    Deny/Allow order
+    Auth Flags 
  */
-#define HTTP_ALLOW_DENY             1           /**< Run allow checks before deny checks */
-#define HTTP_DENY_ALLOW             2           /**< Run deny checks before allow checks */
-#define HTTP_ACL_ALL               -1           /* All bits set */
+#define HTTP_ALLOW_DENY     0x1           /**< Run allow checks before deny checks */
+#define HTTP_DENY_ALLOW     0x2           /**< Run deny checks before allow checks */
+#define HTTP_SECURE         0x4           /**< Must be over a SSL connection */
+#define HTTP_AUTO_LOGIN     0x8           /**< Auto login for debug */
 
-/*  
-    Authentication types
+/**
+    AuthType callback to generate a response requesting the user login
+    @param conn HttpConn connection object 
+    @ingroup HttpAuth
  */
-#define HTTP_AUTH_UNKNOWN           0           /**< Authentication method is unknown */
-#define HTTP_AUTH_BASIC             1           /**< Basic HTTP authentication (clear text) */
-#define HTTP_AUTH_DIGEST            2           /**< Digest authentication */
+typedef void (*HttpAskLogin)(HttpConn *conn);
 
-/*  
-    Auth Flags
+/**
+    AuthType callback to parse the HTTP 'Authorize (client) and 'www-authenticate' (server) headers
+    @param conn HttpConn connection object 
+    @return Zero if successful, otherwise a negative MPR error code
+    @ingroup HttpAuth
  */
-#define HTTP_AUTH_REQUIRED          0x1         /**< Route requires authentication */
+typedef int (*HttpParseAuth)(HttpConn *conn);
 
-/*  
-    Authentication methods
+/**
+    AuthType callback Set the necessary HTTP authorization headers for a client request
+    @param conn HttpConn connection object 
+    @ingroup HttpAuth
  */
-#define HTTP_AUTH_FILE              1           /**< File-based authentication */
-#define HTTP_AUTH_PAM               2           /**< Plugable authentication module scheme (Unix) */
+typedef void (*HttpSetAuth)(HttpConn *conn);
 
-typedef long HttpAcl;                           /**< Authentication Access control mask */
+/**
+    AuthStore callback Verify the user credentials callback
+    @param conn HttpConn connection object 
+    @return True if the user credentials can validate
+    @ingroup HttpAuth
+ */
+typedef bool (*HttpVerifyUser)(HttpConn *conn);
 
+
+/*
+    Authentication Protocol. Supported protocols  are: basic, digest, form.
+ */
+typedef struct HttpAuthType {
+    char            *name;          /**< Authentication protocol name: 'basic', 'digest', 'post' */
+    HttpAskLogin    askLogin;       /**< Callback to generate a login client response */
+    HttpParseAuth   parseAuth;      /**< Callback to parse the authentication HTTP headers */
+    HttpSetAuth     setAuth;        /**< Callback to set authentication HTTP response headers */
+} HttpAuthType;
+
+
+/*
+    Password backend store. Support stores are: pam, file
+ */
+typedef struct HttpAuthStore {
+    char            *name;          /**< Authentication password store name: 'pam', 'file' */
+    HttpVerifyUser  verifyUser;
+} HttpAuthStore;
+
+extern int httpAddAuthType(Http *http, cchar *name, HttpAskLogin askLogin, HttpParseAuth parse, HttpSetAuth cred);
+
+extern int httpAddAuthStore(Http *http, cchar *name, HttpVerifyUser verifyUser);
+
+/** 
+    User Authorization
+    File-based authorization backend
+    @stability Evolving
+    @ingroup HttpAuth
+    @see HttpAuth
+ */
+typedef struct HttpUser {
+    char            *name;                  /**< User name */
+    char            *password;              /**< User password */
+    MprHash         *abilities;             /**< User abilities */
+} HttpUser;
+
+/** 
+    Authorization Roles
+    @stability Evolving
+    @ingroup HttpAuth
+    @see HttpAuth
+ */
+typedef struct  HttpRole {
+    char            *name;                  /**< Role name */
+    MprHash         *abilities;             /**< Role's abilities */
+} HttpRole;
+
+//  MOB - check all @see
 /** 
     Authorization
     @description HttpAuth is the foundation authorization object and is used by HttpRoute.
@@ -2333,40 +2361,66 @@ typedef long HttpAcl;                           /**< Authentication Access contr
     access to a given resource.
     @stability Evolving
     @defgroup HttpAuth HttpAuth
-    @see HttpAuth HttpGetPassword HttpGroup HttpUser HttpValidateCred httpAddGroup httpAddUser httpAddUserToGroup 
-        httpAddUsersToGroup httpCreateAuth httpCreateGroup httpCreateUser httpDisableGroup httpDisableUser 
-        httpEnableGroup httpEnableUser httpGetFilePassword httpGetGroupAcl httpGetPamPassword httpIsGroupEnabled 
-        httpIsUserEnabled httpParseAcl httpReadGroupFile httpReadUserFile httpRemoveGroup httpRemoveUser 
-        httpRemoveUserFromGroup httpRemoveUsersFromGroup httpSetAuthAnyValidUser httpSetAuthDeny httpSetAuthOrder 
-        httpSetAuthQop httpSetAuthRealm httpSetAuthRequiredGroups httpSetAuthRequiredUsers httpSetAuthUser 
-        httpSetGroupAcl httpSetRequiredAcl httpUpdateUserAcls httpValidateFileCredentials httpValidatePamCredentials 
-        httpWriteGroupFile httpWriteUserFile 
+    @see HttpAuth HttpGetPassword HttpUser HttpVerifyUser httpAddUser httpCreateAuth httpCreateUser httpRemoveUser 
+        httpSetAuthAnyValidUser httpSetAuthDeny httpSetAuthOrder httpSetAuthPost httpSetAuthQop httpSetAuthRealm
+        httpSetAuthPermittedUsers 
  */
 typedef struct HttpAuth {
-    bool            anyValidUser;           /**< If any valid user will do */
-    int             type;                   /**< Kind of authorization */
+    struct HttpAuth *parent;                /**< Parent auth */
+    char            *realm;                 /**< Realm of access */
+    int             flags;                  /**< Authorization flags */
+    int             version;                /**< Inherited from parent and incremented on changes */
 
     MprHash         *allow;                 /**< Clients to allow */
     MprHash         *deny;                  /**< Clients to deny */
-    char            *requiredRealm;         /**< Realm to use for access */
-    char            *requiredGroups;        /**< Authorization group for access */
-    char            *requiredUsers;         /**< User name for access */
-    HttpAcl         requiredAcl;            /**< ACL for access */
+    MprHash         *users;                 /**< Hash of users */
+    MprHash         *roles;                 /**< Hash of roles */
 
-    int             backend;                /**< Authorization method (PAM | FILE) */
-    int             flags;                  /**< Authorization flags */
-    int             order;                  /**< Order deny/allow, allow/deny */
-    char            *qop;                   /**< Digest Qop */
+    MprHash         *requiredAbilities;     /**< Set of required abilities (all are required) */
+    MprHash         *permittedUsers;        /**< User name for access */
 
-    /*  
-        State for file-based authorization
-     */
-    char            *userFile;              /**< User name authorization file */
-    char            *groupFile;             /**< Group authorization file  */
-    MprHash         *users;                 /**< Hash of user file  */
-    MprHash         *groups;                /**< Hash of group file  */
+    char            *loginPage;             /**< Web page for user login for 'post' type */
+    char            *loggedIn;              /**< Target URI after logging in */
+    char            *qop;                   /**< Quality of service */
+
+    HttpAuthType    *type;                  /**< Authorization protocol type (basic|digest|form|custom)*/
+    HttpAuthStore   *store;                 /**< Authorization password backend (pam|file|ldap|custom)*/
+
 } HttpAuth;
 
+
+/**
+    Add a role
+    @description This creates the role with given abilities. Ability words can also be other roles.
+    @param auth Auth object allocated by #httpCreateAuth.
+    @param role Role name to add
+    @param abilities Space separated list of abilities.
+    @return Zero if successful, otherwise a negative MPR error code
+    @ingroup HttpAuth
+ */
+extern int httpAddRole(HttpAuth *auth, cchar *role, cchar *abilities);
+
+/**
+    Add a user
+    @description This creates the user and adds the user to the authentication database.
+    @param auth Auth object allocated by #httpCreateAuth.
+    @param realm Authentication realm
+    @param user User name to add
+    @param password User password. The password should not be encrypted. The backend will encrypt as required.
+    @param abilities Space separated list of abilities.
+    @return Zero if successful, otherwise a negative MPR error code
+    @ingroup HttpAuth
+ */
+extern int httpAddUser(HttpAuth *auth, cchar *user, cchar *password, cchar *abilities);
+
+/**
+    Test if a user has the required abilities
+    @param conn HttpConn connection object created via $httpCreateConn object.
+    @param requiredAbilities Hash of the required abilities 
+    @return True if the user has all the required abilities
+    @ingroup HttpAuth
+ */
+extern bool httpCanUser(HttpConn *conn, MprHash *requiredAbilities);
 
 /**
     Create an authentication object
@@ -2377,487 +2431,188 @@ typedef struct HttpAuth {
 extern HttpAuth *httpCreateAuth();
 
 /**
-    Allow access by a client
-    @param auth Authorization object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param allow Client to allow access. This must be an IP address string.
-    @ingroup HttpAuth
-    @internal
- */
-extern void httpSetAuthAllow(HttpAuth *auth, cchar *allow);
-
-/**
-    Allow access by any valid user
-    @description This configures the basic or digest authentication for the authorization object
-    @param auth Authorization object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @ingroup HttpAuth
-    @internal
- */
-extern void httpSetAuthAnyValidUser(HttpAuth *auth);
-
-/**
-    Deny access by a client
-    @param auth Authorization object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param deny Client to deny access. This must be an IP address string.
-    @ingroup HttpAuth
-    @internal
- */
-extern void httpSetAuthDeny(HttpAuth *auth, cchar *deny);
-
-/**
-    Set the auth allow/deny order
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param order Set to HTTP_ALLOW_DENY to run allow checks before deny checks. Set to HTTP_DENY_ALLOW to run deny
-        checks before allow.
-    @ingroup HttpAuth
-    @internal
- */
-extern void httpSetAuthOrder(HttpAuth *auth, int order);
-
-/**
-    Set the required quality of service for digest authentication
-    @description This configures the basic or digest authentication for the auth object
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param qop Quality of service description.
-    @ingroup HttpAuth
-    @internal
- */
-extern void httpSetAuthQop(HttpAuth *auth, cchar *qop);
-
-/**
-    Set the required realm for basic or digest authentication
-    @description This configures the basic or digest authentication for the auth object
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param realm Authentication realm
-    @ingroup HttpAuth
-    @internal
- */
-extern void httpSetAuthRealm(HttpAuth *auth, cchar *realm);
-
-/**
-    Define the set of required groups for basic or digest authentication
-    @description This configures the basic or digest authentication for the auth object
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param groups Comma or space separated list of acceptable groups.
-    @ingroup HttpAuth
-    @internal
- */
-extern void httpSetAuthRequiredGroups(HttpAuth *auth, cchar *groups);
-
-/**
-    Define the set of required users for basic or digest authentication
-    @description This configures the basic or digest authentication for the auth object
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param users Comma or space separated list of acceptable users.
-    @ingroup HttpAuth
-    @internal
- */
-extern void httpSetAuthRequiredUsers(HttpAuth *auth, cchar *users);
-
-/**
-    Set the required user for basic or digest authentication
-    @description This call is made by the standard authentication when basic or digest authentication is employed.
-    @param conn HttpConn connection object created via $httpCreateConn
-        auth object.
-    @param user User name to set 
-    @ingroup HttpAuth
-    @internal
- */
-extern void httpSetAuthUser(HttpConn *conn, cchar *user);
-
-/*
-    Internal
- */
-extern void httpInitAuth(Http *http);
-extern int httpCheckAuth(HttpConn *conn);
-extern HttpAuth *httpCreateInheritedAuth(HttpAuth *parent);
-
-
-/** 
-    User Authorization
-    File-based authorization backend
-    @stability Evolving
-    @ingroup HttpAuth
-    @see HttpAuth
- */
-typedef struct HttpUser {
-    bool            enabled;                /**< User is enabled */
-    HttpAcl         acl;                    /**< Access control list. Union (or) of all group Acls */
-    char            *password;              /**< User password */
-    char            *realm;                 /**< Authentication realm */
-    char            *name;                  /**< User name */
-} HttpUser;
-
-/** 
-    Group Authorization
-    @stability Evolving
-    @ingroup HttpAuth
-    @see HttpAuth
- */
-typedef struct  HttpGroup {
-    bool            enabled;                /**< Group is enabled */
-    HttpAcl         acl;                    /**< Group access control list */
-    char            *name;                  /**< Group name */
-    MprList         *users;                 /**< List of users */
-} HttpGroup;
-
-/**
-    Add a group
-    @description This creates the group and adds it to the authentication database.
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param group Group name to add
-    @param acl Group access control list mask
-    @param enabled Set to true to enable the group
-    @return "Zero" if successful, otherwise a negative MPR error code
-    @ingroup HttpAuth
-    @internal
- */
-extern int httpAddGroup(HttpAuth *auth, cchar *group, HttpAcl acl, bool enabled);
-
-/**
-    Add a user
-    @description This creates the user and adds the user to the authentication database.
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param realm Authentication realm
-    @param user User name to add
-    @param password User password. The password should not be encrypted. The backend will encrypt as required.
-    @param enabled Set to true to enable the user
+    Create a new role
+    @description The role is not added to the authentication database
+    @param auth Auth object allocated by #httpCreateAuth.
+    @param name Role name 
+    @param abilities Space separated list of abilities.
     @return Zero if successful, otherwise a negative MPR error code
     @ingroup HttpAuth
-    @internal
  */
-extern int httpAddUser(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, bool enabled);
-
-/**
-    Add a user to a group
-    @description This creates the user and adds the user to the authentication database.
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param gp Group object
-    @param user User name string
-    @return "Zero" if successful, otherwise a negative MPR error code
-    @ingroup HttpAuth
-    @internal
- */
-extern int httpAddUserToGroup(HttpAuth *auth, HttpGroup *gp, cchar *user);
-
-/**
-    Add users to a group
-    @description This creates the users and adds them to the authentication database.
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param group Group name to add
-    @param users Space or comma separated list of user names
-    @return Zero if successful, otherwise a negative MPR error code
-    @ingroup HttpAuth
-    @internal
- */
-extern int httpAddUsersToGroup(HttpAuth *auth, cchar *group, cchar *users);
-
-/**
-    Create a new group
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param name Group name to add
-    @param acl Group access control list mask
-    @param enabled Set to true to enable the group
-    @return "Zero" if successful, otherwise a negative MPR error code
-    @ingroup HttpAuth
-    @internal
- */
-extern HttpGroup *httpCreateGroup(HttpAuth *auth, cchar *name, HttpAcl acl, bool enabled);
+HttpRole *httpCreateRole(HttpAuth *auth, cchar *name, cchar *abilities);
 
 /**
     Create a new user
     @description The user is not added to the authentication database
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
+    @param auth Auth object allocated by #httpCreateAuth.
     @param name User name 
     @param password User password. The password should not be encrypted. The backend will encrypt as required.
-    @param realm Authentication realm for this user
-    @param enabled Set to true to enable the user
-    @return Zero if successful, otherwise a negative MPR error code
-    @ingroup HttpAuth
-    @internal
- */
-extern HttpUser *httpCreateUser(HttpAuth *auth, cchar *name, cchar *password, cchar *realm, bool enabled);
-
-/**
-    Disable a group
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param group Group name to disable
-    @return "Zero" if successful, otherwise a negative MPR error code
-    @ingroup HttpAuth
-    @internal
- */
-extern int httpDisableGroup(HttpAuth *auth, cchar *group);
-
-/**
-    Disable a user
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param realm Authentication realm for user
-    @param user User name to disable
+    @param abilities Space separated list of abilities.
     @return Zero if successful, otherwise a negative MPR error code
     @ingroup HttpAuth
  */
-extern int httpDisableUser(HttpAuth *auth, cchar *realm, cchar *user);
+extern HttpUser *httpCreateUser(HttpAuth *auth, cchar *name, cchar *password, cchar *abilities);
+
+//MOB DOC
+extern bool httpIsAuthenticated(HttpConn *conn);
+extern bool httpLogin(HttpConn *conn, cchar *username, cchar *password);
+
 
 /**
-    Enable a group
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param group User name to enable
-    @return "Zero" if successful, otherwise a negative MPR error code
-    @ingroup HttpAuth
-    @internal
- */
-extern int httpEnableGroup(HttpAuth *auth, cchar *group);
-
-/**
-    Enable a user
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param user User name to enable
-    @param realm Authentication realm for user
-    @return Zero if successful, otherwise a negative MPR error code
-    @ingroup HttpAuth
-    @internal
- */
-extern int httpEnableUser(HttpAuth *auth, cchar *realm, cchar *user);
-
-/**
-    Get the group ACL
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param group Group name to examine
-    @return The group access control list. If the group does not exist, an empty ACL is returned.
-    @ingroup HttpAuth
-    @internal
- */
-extern HttpAcl httpGetGroupAcl(HttpAuth *auth, char *group);
-
-/**
-    Get the password for a user from a file-based authentication database
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param realm Authentication realm for user
-    @param user User name to examine
-    @return Password string to verify
-    @ingroup HttpAuth
-    @internal
- */
-extern cchar *httpGetFilePassword(HttpAuth *auth, cchar *realm, cchar *user);
-
-/**
-    Test if an authentication group is enabled.
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param group Group name to examine
-    @return True if the group is enabled
-    @ingroup HttpAuth
-    @internal
- */
-extern bool httpIsGroupEnabled(HttpAuth *auth, cchar *group);
-
-/**
-    Test if a user is enabled.
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param user User name to examine
-    @param realm Authentication realm for user
-    @return True if the group is enabled
-    @ingroup HttpAuth
-    @internal
- */
-extern bool httpIsUserEnabled(HttpAuth *auth, cchar *realm, cchar *user);
-
-/**
-    Parse an access control list
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param acl Access control list string
-    @return Access control list mask
-    @ingroup HttpAuth
-    @internal 
- */
-extern HttpAcl httpParseAcl(HttpAuth *auth, cchar *acl);
-
-/**
-    Remove a group
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param group Group name to remove
-    @return "Zero" if successful, otherwise a negative MPR error code
-    @ingroup HttpAuth
-    @internal 
- */
-extern int httpRemoveGroup(HttpAuth *auth, cchar *group);
-
-/**
-    Read an authentication group file
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param path Path name of the group file
+    Remove a role
+    @param auth Auth object allocated by #httpCreateAuth.
+    @param role Role name to remove
     @return Zero if successful, otherwise a negative MPR error code
     @ingroup HttpAuth
     @internal 
  */
-extern int httpReadGroupFile(HttpAuth *auth, char *path);
-
-/**
-    Remove an authentication user file
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param path Path name of user file
-    @return "Zero" if successful, otherwise a negative MPR error code
-    @ingroup HttpAuth
-    @internal 
- */
-extern int httpReadUserFile(HttpAuth *auth, char *path);
+extern int httpRemoveRole(HttpAuth *auth, cchar *role);
 
 /**
     Remove a user
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param realm Authentication realm of user to remove
+    @param auth Auth object allocated by #httpCreateAuth.
     @param user User name to remove
     @return Zero if successful, otherwise a negative MPR error code
     @ingroup HttpAuth
     @internal 
  */
-extern int httpRemoveUser(HttpAuth *auth, cchar *realm, cchar *user);
+extern int httpRemoveUser(HttpAuth *auth, cchar *user);
 
 /**
-    Remove user from a group
-    @param gp Group object
-    @param user User name to remove from the group
-    @return "Zero" if successful, otherwise a negative MPR error code
+    Allow access by a client IP IP address
+    @param auth Authorization object allocated by #httpCreateAuth.
+    @param ip Client IP address to allow.
     @ingroup HttpAuth
-    @internal 
  */
-extern int httpRemoveUserFromGroup(HttpGroup *gp, cchar *user);
+extern void httpSetAuthAllow(HttpAuth *auth, cchar *ip);
 
 /**
-    Remove users from a group
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param group Group name to modify
-    @param users Comma or space separate list of users to remove
-    @return Zero if successful, otherwise a negative MPR error code
+    Allow access by any valid user
+    @description This configures the basic or digest authentication for the authorization object
+    @param auth Authorization object allocated by #httpCreateAuth.
     @ingroup HttpAuth
-    @internal 
  */
-extern int httpRemoveUsersFromGroup(HttpAuth *auth, cchar *group, cchar *users);
+extern void httpSetAuthAnyValidUser(HttpAuth *auth);
+
+//  MOB
+extern void httpSetAuthAutoLogin(HttpAuth *auth, bool on);
+
 
 /**
-    Set the group access control list
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param group Group name to remove
-    @param acl Group access control list mask
-    @return "Zero" if successful, otherwise a negative MPR error code
+    Deny access by a client IP address
+    @param auth Authorization object allocated by #httpCreateAuth.
+    @param ip Client IP address to deny. This must be an IP address string.
     @ingroup HttpAuth
-    @internal 
  */
-extern int httpSetGroupAcl(HttpAuth *auth, cchar *group, HttpAcl acl);
+extern void httpSetAuthDeny(HttpAuth *auth, cchar *ip);
 
 /**
-    Set the required access control list for the authentication object
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param acl New access control list
+    Define a URI to use for "post" AuthType logins
+    @param auth Authorization object allocated by #httpCreateAuth.
+    @param uri URI to which to redirect the client for login.
     @ingroup HttpAuth
-    @internal 
  */
-extern void httpSetRequiredAcl(HttpAuth *auth, HttpAcl acl);
+extern void httpSetAuthLoginUri(HttpAuth *auth, cchar *uri);
 
 /**
-    Update the user access control list
-    @description After modifying the required ACL for the auth object, the ACLs for each user must be updated.
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @return "Zero" if successful, otherwise a negative MPR error code
+    Set the auth allow/deny order
+    @param auth Auth object allocated by #httpCreateAuth.
+    @param order Set to HTTP_ALLOW_DENY to run allow checks before deny checks. Set to HTTP_DENY_ALLOW to run deny
+        checks before allow.
     @ingroup HttpAuth
-    @internal 
  */
-extern void httpUpdateUserAcls(HttpAuth *auth);
+extern void httpSetAuthOrder(HttpAuth *auth, int order);
 
 /**
-    Write out the group authentication database
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param path Path name for the group file
-    @return Zero if successful, otherwise a negative MPR error code
+    Define the set of permitted users 
+    @param auth Auth object allocated by #httpCreateAuth.
+    @param users Space separated list of acceptable users.
     @ingroup HttpAuth
-    @internal 
  */
-extern int httpWriteGroupFile(HttpAuth *auth, char *path);
+extern void httpSetAuthPermittedUsers(HttpAuth *auth, cchar *users);
 
 /**
-    Write out the user authentication database
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param path Path name for the user file
-    @return "Zero" if successful, otherwise a negative MPR error code
+    Set the required quality of service for digest authentication
+    @description This configures the basic or digest authentication for the auth object
+    @param auth Auth object allocated by #httpCreateAuth.
+    @param qop Quality of service description.
     @ingroup HttpAuth
-    @internal 
  */
-extern int httpWriteUserFile(HttpAuth *auth, char *path);
+extern void httpSetAuthQop(HttpAuth *auth, cchar *qop);
 
 /**
-    Validate credentials using a file-based authentication database
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
+    Set the required realm for basic or digest authentication
+    @description This configures the authentication realm. The realm is displayed to the user in the browser login
+        dialog box.
+    @param auth Auth object allocated by #httpCreateAuth.
     @param realm Authentication realm
-    @param user User name
-    @param password User password
-    @param requiredPass Required user password
-    @param msg Output parameter, error message.
-    @return True if the user could be successfully validated
     @ingroup HttpAuth
-    @internal 
  */
-extern bool httpValidateFileCredentials(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, 
-    cchar *requiredPass, char **msg);
+extern void httpSetAuthRealm(HttpAuth *auth, cchar *realm);
 
 /**
-    Get the user password from a PAM database
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param realm Authentication realm
-    @param user User name to examine
-    @return The user password. This will be in encrypted form.
+    Set the required abilities for access
+    @param auth Auth object allocated by #httpCreateAuth.
+    @param abilities Spaces separated list of all the required abilities.
     @ingroup HttpAuth
-    @internal 
  */
-extern cchar *httpGetPamPassword(HttpAuth *auth, cchar *realm, cchar *user);
+extern void httpSetAuthRequiredAbilities(HttpAuth *auth, cchar *abilities);
 
 /**
-    Validate credentials using a PAM based authentication database
-    @param auth Auth object allocated by #httpCreateAuth. Authenticated routes typically store the reference to an
-        auth object.
-    @param realm Authentication realm
-    @param user User name
-    @param password User password
-    @param requiredPass Required user password
-    @param msg Output parameter, error message.
-    @return True if the user could be successfully validated
+    Control if SSL communications is required
+    @param auth Auth object allocated by #httpCreateAuth.
+    @param enable Set to TRUE to enable SSL communications.
+    @ingroup HttpAuth
+ */
+extern void httpSetAuthSecure(HttpAuth *auth, int enable);
+
+/**
+    Set the authentication password store to use
+    @param auth Auth object allocated by #httpCreateAuth.
+    @param store Password store to use. Select from: 'pam', 'internal'
+    @ingroup HttpAuth
+ */
+extern int httpSetAuthStore(HttpAuth *auth, cchar *store);
+
+/**
+    Set the authentication protocol to use
+    @param auth Auth object allocated by #httpCreateAuth.
+    @param proto Protocol name to use. Select from: 'basic', 'digest', 'post'
+    @param details Extra protocol details.
+    @ingroup HttpAuth
+ */
+extern int httpSetAuthType(HttpAuth *auth, cchar *proto, cchar *details);
+
+/**
+    Save the authorization database file
+    AuthFile schema:
+        User name password abilities...
+        Role name abilities...
+    @param auth Auth object allocated by #httpCreateAuth.
+    @param path Path name of file
+    @return "Zero" if successful, otherwise a negative MPR error code
     @ingroup HttpAuth
     @internal 
  */
-extern bool httpValidatePamCredentials(HttpAuth *auth, cchar *realm, cchar *user, cchar *password, 
-    cchar *requiredPass, char **msg);
+extern int httpWriteAuthFile(HttpAuth *auth, char *path);
+
+/*
+    Internal
+ */
+extern void httpBasicLogin(HttpConn *conn);
+extern int httpBasicParse(HttpConn *conn);
+extern void httpBasicSetHeaders(HttpConn *conn);
+extern void httpDigestLogin(HttpConn *conn);
+extern int httpDigestParse(HttpConn *conn);
+extern void httpDigestSetHeaders(HttpConn *conn);
+extern bool httpPamVerifyUser(HttpConn *conn);
+extern bool httpInternalVerifyUser(HttpConn *conn);
+extern void httpComputeAllUserAbilities(HttpAuth *auth);
+extern void httpComputeUserAbilities(HttpAuth *auth, HttpUser *user);
+extern void httpInitAuth(Http *http);
+extern int httpCheckAuth(HttpConn *conn);
+extern HttpAuth *httpCreateInheritedAuth(HttpAuth *parent);
+extern HttpAuthType *httpLookupAuthType(cchar *type);
 
 /********************************** HttpLang  ********************************/
 
@@ -2952,10 +2707,10 @@ typedef struct HttpCache {
         default to the route lifespan.
     @param serverLifespan Lifespan of server cache items in milliseconds. If not set to positive integer, the lifespan will
         default to the route lifespan.
-    @param flags Cache control flags. Select ESP_CACHE_MANUAL to enable manual mode. In manual mode, cached content
+    @param flags Cache control flags. Select HTTP_CACHE_MANUAL to enable manual mode. In manual mode, cached content
         will not be automatically sent. Use $httpWriteCached in the request handler to write previously cached content.
         \n\n
-        Select ESP_CACHE_CLIENT to enable client-side caching. In this mode a "Cache-Control" Http header will be 
+        Select HTTP_CACHE_CLIENT to enable client-side caching. In this mode a "Cache-Control" Http header will be 
         sent to the client with the caching "max-age". WARNING: the client will not send any request for this URI
         until the max-age timeout has expired.
         \n\n
@@ -3023,7 +2778,7 @@ extern ssize httpWriteCached(HttpConn *conn);
         httpGetRouteDir httpLink httpLookupRouteErrorDocument httpMakePath httpMatchRoute httpResetRoutePipeline 
         httpSetRouteAuth httpSetRouteAutoDelete httpSetRouteCompression httpSetRouteConnector httpSetRouteData 
         httpSetRouteDefaultLanguage httpSetRouteDir httpSetRouteFlags httpSetRouteHandler httpSetRouteHost 
-        httpSetRouteIndex httpSetRouteMethods httpSetRouteName httpSetRoutePathVar httpSetRoutePattern 
+        httpSetRouteIndex httpSetRouteMethods httpSetRouteName httpSetRouteVar httpSetRoutePattern 
         httpSetRoutePrefix httpSetRouteScript httpSetRouteSource httpSetRouteTarget httpSetRouteWorkers httpTemplate 
         httpSetTrace httpSetTraceFilter httpTokenize httpTokenizev 
  */
@@ -3063,7 +2818,7 @@ typedef struct HttpRoute {
     MprList         *handlersWithMatch;     /**< List of handlers with match routines */
     HttpStage       *connector;             /**< Network connector to use */
     MprHash         *data;                  /**< Hash of extra data configuration */
-    MprHash         *pathTokens;            /**< Path $token refrerences */
+    MprHash         *vars;                  /**< Route variables. Used to expand Path ${token} refrerences */
     MprHash         *languages;             /**< Languages supported */
     MprList         *inputStages;           /**< Input stages */
     MprList         *outputStages;          /**< Output stages */
@@ -3405,6 +3160,12 @@ extern void httpAddStaticRoute(HttpRoute *parent);
  */
 extern void httpBackupRouteLog(HttpRoute *route);
 
+//  MOB
+//  MOB DOC - Add section for HttpProc
+typedef void (*HttpProc)(HttpConn *conn);
+extern void httpDefineProc(cchar *name, HttpProc fun);
+extern HttpRoute *httpBindRoute(HttpRoute *parent, cchar *pattern, HttpProc proc);
+
 /**
     Clear the pipeline stages for the route
     @description This resets the configured pipeline stages for the route.
@@ -3629,7 +3390,7 @@ extern cchar *httpLookupRouteErrorDocument(HttpRoute *route, int status);
             <li>DOCUMENT_ROOT - for the default directory containing documents to serve</li>
             <li>SERVER_ROOT - for the directory containing the web server configuration files</li>
         </ul>  
-        Additional tokens can be defined via #httpSetRoutePathVar.
+        Additional tokens can be defined via #httpSetRouteVar.
     @param route Route to modify
     @param path Path name to examine
     @return An absolute file name.
@@ -3795,7 +3556,7 @@ extern void httpSetRouteName(HttpRoute *route, cchar *name);
     @param value Value of the token
     @ingroup HttpRoute
  */
-extern void httpSetRoutePathVar(HttpRoute *route, cchar *token, cchar *value);
+extern void httpSetRouteVar(HttpRoute *route, cchar *token, cchar *value);
 
 /**
     Set the route pattern
@@ -4032,6 +3793,117 @@ extern void httpLogRequest(HttpConn *conn);
 extern MprFile *httpOpenRouteLog(HttpRoute *route);
 extern int httpStartRoute(HttpRoute *route);
 extern void httpStopRoute(HttpRoute *route);
+extern void httpSetAuthPost(HttpRoute *route, cchar *loginPage, cchar *loginService, cchar *logoutService, cchar *loggedIn);
+extern char *httpExpandRouteVars(HttpConn *conn, cchar *str);
+
+/*********************************** Session ***************************************/
+
+#define HTTP_SESSION_COOKIE     "-http-session-"    /**< Session cookie name */
+#define HTTP_SESSION_USERNAME   "_:USERNAME:_"      /**< Username variable */
+#define HTTP_SESSION_AUTHVER    "_:VERSION:_"       /**< Auth version number */
+
+/**
+    Session state object
+    @defgroup HttpSession HttpSession
+    @see
+ */
+typedef struct HttpSession {
+    char            *id;                        /**< Session ID key */
+    MprCache        *cache;                     /**< Cache store reference */
+    MprTime         lifespan;                   /**< Session inactivity timeout (msecs) */
+} HttpSession;
+
+/**
+    Allocate a new session state object.
+    @description
+    @param conn Http connection object
+    @param id Unique session state ID
+    @param lifhttpan Session lifhttpan in ticks
+    @return A session state object
+    @ingroup HttpSession
+ */
+extern HttpSession *httpAllocSession(HttpConn *conn, cchar *id, MprTime lifhttpan);
+
+/**
+    Create a session object.
+    @description This call creates a session object if one does not already exist.
+        Session state stores persist across individual HTTP requests.
+    @param conn Http connection object
+    @return A session state object
+    @ingroup HttpSession
+ */
+extern HttpSession *httpCreateSession(HttpConn *conn);
+
+/**
+    Destroy a session state object.
+    @description
+    @param sp Session state object allocated with #httpAllocSession
+    @ingroup HttpSession
+ */
+extern void httpDestroySession(HttpSession *sp);
+
+/**
+    Get a session state object.
+    @description
+    @param conn Http connection object
+    @param create Set to "true" to create a session state object if one does not already exist for this client
+    @return A session state object
+    @ingroup HttpSession
+ */
+extern HttpSession *httpGetSession(HttpConn *conn, int create);
+
+/**
+    Get an object from the session state store.
+    @description Retrieve an object from the session state store by deserializing all properties.
+    @param conn Http connection object
+    @param key Session state key
+    @ingroup HttpSession
+ */
+extern MprHash *httpGetSessionObj(HttpConn *conn, cchar *key);
+
+/**
+    Get a session state variable.
+    @description
+    @param conn Http connection object
+    @param name Variable name to get
+    @param defaultValue If the variable does not exist, return the defaultValue.
+    @return The variable value or defaultValue if it does not exist.
+    @ingroup HttpSession
+ */
+extern cchar *httpGetSessionVar(HttpConn *conn, cchar *name, cchar *defaultValue);
+
+//  MOB
+extern int httpRemoveSessionVar(HttpConn *conn, cchar *key);
+
+/**
+    Set a session variable.
+    @description
+    @param conn Http connection object
+    @param name Variable name to set
+    @param value Variable value to use
+    @return A session state object
+    @ingroup HttpSession
+ */
+extern int httpSetSessionVar(HttpConn *conn, cchar *name, cchar *value);
+
+/**
+    Get the session ID.
+    @description
+    @param conn Http connection object
+    @return The session ID string
+    @ingroup HttpSession
+ */
+extern char *httpGetSessionID(HttpConn *conn);
+
+/**
+    Set an object into the session state store.
+    @description Store an object in the session state store by serializing all properties.
+    @param conn Http connection object
+    @param key Session state key
+    @param value Object to serialize
+    @ingroup HttpSession
+ */
+extern int httpSetSessionObj(HttpConn *conn, cchar *key, MprHash *value);
 
 /********************************** HttpUploadFile *********************************/
 /**
@@ -4134,6 +4006,8 @@ typedef struct HttpRx {
 
     HttpConn        *conn;                  /**< Connection object */
     HttpRoute       *route;                 /**< Route for request */
+    HttpSession     *session;               /**< Session for request */
+    int             sessionProbed;          /**< Session has been resolved */
 
     MprList         *etags;                 /**< Document etag to uniquely identify the document version */
     HttpPacket      *headerPacket;          /**< HTTP headers */
@@ -4167,6 +4041,7 @@ typedef struct HttpRx {
     char            *acceptCharset;         /**< Accept-Charset header */
     char            *acceptEncoding;        /**< Accept-Encoding header */
     char            *acceptLanguage;        /**< Accept-Language header */
+    char            *authDetails;           /**< Header details: authorization|www-authenticate provided by peer */
     char            *cookie;                /**< Cookie header */
     char            *connection;            /**< Connection header */
     char            *contentLength;         /**< Content length string value */
@@ -4184,15 +4059,7 @@ typedef struct HttpRx {
     MprHash         *params;                /**< Request params (Query and post data variables) */
     MprHash         *svars;                 /**< Server variables */
     HttpRange       *inputRange;            /**< Specified range for rx (post) data */
-
-    /*  
-        Auth details
-     */
-    int             authenticated;          /**< Request has been authenticated */
-    char            *authAlgorithm;
-    char            *authDetails;
-    char            *authStale;             
-    char            *authType;              /**< Authorization type (basic|digest) (ENV: AUTH_TYPE) */
+    char            *passDigest;            /**< User password digest for authentication */
 
     /*  
         Upload details
@@ -5293,6 +5160,10 @@ extern void httpResetRoutes(HttpHost *host);
     @ingroup HttpRoute
  */
 extern void httpSetHostDefaultRoute(HttpHost *host, HttpRoute *route);
+//  MOB
+extern void httpSetDefaultHost(HttpHost *host);
+extern HttpHost *httpGetDefaultHost();
+extern HttpRoute *httpGetDefaultRoute(HttpHost *host);
 
 /**
     Set the home directory for a host
@@ -5429,25 +5300,10 @@ extern void httpSetOption(MprHash *options, cchar *field, cchar *value);
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
     by the terms of either license. Consult the LICENSE.md distributed with
-    this software for full details.
-
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http: *embedthis.com/downloads/gplLicense.html
-
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http: *embedthis.com
+    this software for full details and other copyrights.
 
     Local variables:
     tab-width: 4
@@ -5457,4 +5313,3 @@ extern void httpSetOption(MprHash *options, cchar *field, cchar *value);
 
     @end
  */
-

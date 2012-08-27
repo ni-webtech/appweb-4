@@ -39,7 +39,7 @@ all: prep \
         $(CONFIG)/bin/testAppweb \
         test/cgi-bin/testScript \
         test/web/caching/cache.cgi \
-        test/web/basic/basic.cgi \
+        test/web/auth/basic/basic.cgi \
         test/cgi-bin/cgiProgram
 
 .PHONY: prep
@@ -76,7 +76,7 @@ clean:
 	rm -rf $(CONFIG)/bin/testAppweb
 	rm -rf test/cgi-bin/testScript
 	rm -rf test/web/caching/cache.cgi
-	rm -rf test/web/basic/basic.cgi
+	rm -rf test/web/auth/basic/basic.cgi
 	rm -rf test/cgi-bin/cgiProgram
 	rm -rf $(CONFIG)/obj/mprLib.o
 	rm -rf $(CONFIG)/obj/mprSsl.o
@@ -478,14 +478,14 @@ test/web/caching/cache.cgi:
 	chmod +x web/caching/cache.cgi ;\
 		cd - >/dev/null 
 
-test/web/basic/basic.cgi: 
+test/web/auth/basic/basic.cgi: 
 	cd test >/dev/null ;\
-		echo "#!`type -p sh`" >web/basic/basic.cgi ;\
-	echo '' >>web/basic/basic.cgi ;\
-	echo 'echo Content-Type: text/plain' >>web/basic/basic.cgi ;\
-	echo 'echo' >>web/basic/basic.cgi ;\
-	echo '/usr/bin/env' >>web/basic/basic.cgi ;\
-	chmod +x web/basic/basic.cgi ;\
+		echo "#!`type -p sh`" >web/auth/basic/basic.cgi ;\
+	echo '' >>web/auth/basic/basic.cgi ;\
+	echo 'echo Content-Type: text/plain' >>web/auth/basic/basic.cgi ;\
+	echo 'echo' >>web/auth/basic/basic.cgi ;\
+	echo '/usr/bin/env' >>web/auth/basic/basic.cgi ;\
+	chmod +x web/auth/basic/basic.cgi ;\
 		cd - >/dev/null 
 
 test/cgi-bin/cgiProgram:  \

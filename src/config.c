@@ -59,11 +59,15 @@ int maParseConfig(MaServer *server, cchar *path, int flags)
         NOTE: the route is not added to the host until the finalization below
      */
     host = httpCreateHost(mprGetPathDir(path));
+#if UNUSED
     httpSetHostName(host, "default-server");
+#endif
     server->defaultHost = host;
+    httpSetDefaultHost(host);
+
     route = httpCreateRoute(host);
     httpSetHostDefaultRoute(host, route);
-    httpSetRoutePathVar(route, "LIBDIR", mprJoinPath(server->appweb->platformDir, "bin"));
+    httpSetRouteVar(route, "LIBDIR", mprJoinPath(server->appweb->platformDir, "bin"));
     route->limits = server->limits;
 
     state = createState(server, host, route);
@@ -275,7 +279,7 @@ static int addLanguageDirDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S %S", &lang, &path)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if ((path = stemplate(path, route->pathTokens)) == 0) {
+    if ((path = stemplate(path, route->vars)) == 0) {
         return MPR_ERR_BAD_SYNTAX;
     }
     if (mprIsPathRel(path)) {
@@ -388,28 +392,21 @@ static int allowDirective(MaState *state, cchar *key, cchar *value)
  */
 static int authGroupFileDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *path;
-
-    path = mprJoinPath(state->configDir, value);
-    path = httpMakePath(state->route, path);
-    if (httpReadGroupFile(state->auth, path) < 0) {
-        mprError("Can't open AuthGroupFile %s", path);
-        return MPR_ERR_BAD_SYNTAX;
-    }
+    mprError("The AuthGroupFile directive is deprecated. Use new User/Group directives instead.");
     return 0;
 }
 
 
 /*
-    AuthMethod pam|file
+    AuthStore pam|internal
  */
-static int authMethodDirective(MaState *state, cchar *key, cchar *value)
+static int authStoreDirective(MaState *state, cchar *key, cchar *value)
 {
-    if (scaselesscmp(value, "run") == 0) {
-        state->auth->backend = HTTP_AUTH_FILE;
-#if BLD_CC_PAM
+    if (scaselesscmp(value, "internal") == 0) {
+        httpSetAuthStore(state->auth, "internal");
+#if BIT_HAS_PAM && BIT_PAM
     } else if (scaselesscmp(value, "pam") == 0) {
-        state->auth->backend = HTTP_AUTH_PAM;
+        httpSetAuthStore(state->auth, "pam");
 #endif
     } else {
         return configError(state, key);
@@ -419,30 +416,34 @@ static int authMethodDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    AuthName realm
+    AuthRealm name
  */
-static int authNameDirective(MaState *state, cchar *key, cchar *value)
+static int authRealmDirective(MaState *state, cchar *key, cchar *value)
 {
-    value = strim(value, "\"'", MPR_TRIM_BOTH);
-    httpSetAuthRealm(state->auth, value);
+    httpSetAuthRealm(state->auth, strim(value, "\"'", MPR_TRIM_BOTH));
     return 0;
 }
 
 
 /*
-    AuthType basic|digest|none
+    AuthType basic|digest|custom
+    AuthType post login-form [login-service logout-service logged-in]
  */
 static int authTypeDirective(MaState *state, cchar *key, cchar *value)
 {
-    if (scaselesscmp(value, "Basic") == 0) {
-        state->auth->type = HTTP_AUTH_BASIC;
-    } else if (scaselesscmp(value, "Digest") == 0) {
-        state->auth->type = HTTP_AUTH_DIGEST;
-    } else if (scaselesscmp(value, "None") == 0) {
-        state->auth->type = 0;
-    } else {
-        mprError("Unsupported authorization protocol");
+    char    *type, *details, *loginPage, *loginService, *logoutService, *loggedIn;
+
+    if (!maTokenize(state, value, "%S ?*", &type, &details)) {
         return MPR_ERR_BAD_SYNTAX;
+    }
+    if (httpSetAuthType(state->auth, type, details) < 0) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    if (smatch(type, "post")) {
+        if (!maTokenize(state, details, "%S ?S ?S ?S", &loginPage, &loginService, &logoutService, &loggedIn)) {
+            return MPR_ERR_BAD_SYNTAX;
+        }
+        httpSetAuthPost(state->route, loginPage, loginService, logoutService, loggedIn);
     }
     return addCondition(state, "auth", 0, 0);
 }
@@ -453,23 +454,33 @@ static int authTypeDirective(MaState *state, cchar *key, cchar *value)
  */
 static int authUserFileDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *path;
-    path = mprJoinPath(state->configDir, value);
-    path = httpMakePath(state->route, path);
-    if (httpReadUserFile(state->auth, path) < 0) {
-        mprError("Can't open AuthUserFile %s", path);
-        return MPR_ERR_BAD_SYNTAX;
-    }
+    mprError("The AuthGroupFile directive is deprecated. Use new User/Group directives instead.");
     return 0;
 }
 
 
 /*
-    AuthDigestQop none|auth|auth-int
+    AuthAutoLogin on|off
+ */
+static int authAutoLogin(MaState *state, cchar *key, cchar *value)
+{
+    bool    on;
+
+    if (!maTokenize(state, value, "%B", &on)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    httpSetAuthAutoLogin(state->auth, on);
+    return 0;
+}
+
+
+/*
+    AuthDigestQop none|auth
+    Note: auth-int is unsupported
  */
 static int authDigestQopDirective(MaState *state, cchar *key, cchar *value)
 {
-    if (!scaselessmatch(value, "none") && !scaselessmatch(value, "auth") && !scaselessmatch(value, "auth-int")) {
+    if (!scaselessmatch(value, "none") && !scaselessmatch(value, "auth")) {
         return MPR_ERR_BAD_SYNTAX;
     }
     httpSetAuthQop(state->auth, value);
@@ -833,9 +844,9 @@ static int exitTimeoutDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    Group groupName
+    GroupAccount groupName
  */
-static int groupDirective(MaState *state, cchar *key, cchar *value)
+static int groupAccountDirective(MaState *state, cchar *key, cchar *value)
 {
     if (!smatch(value, "_unchanged_")) {
         maSetHttpGroup(state->appweb, value);
@@ -1460,7 +1471,7 @@ static int putMethodDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    Redirect [status|permanent|temp|seeother|gone] prefix path
+    Redirect [status|permanent|temp|seeother|gone] from to
  */
 static int redirectDirective(MaState *state, cchar *key, cchar *value)
 {
@@ -1516,7 +1527,7 @@ static int requestTimeoutDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    Require acl|valid-user|user|group details
+    Require ability|role|user|valid-user names...
  */
 static int requireDirective(MaState *state, cchar *key, cchar *value)
 {
@@ -1525,14 +1536,24 @@ static int requireDirective(MaState *state, cchar *key, cchar *value)
     if (!maTokenize(state, value, "%S ?*", &type, &rest)) {
         return MPR_ERR_BAD_SYNTAX;
     }
-    if (scaselesscmp(type, "acl") == 0) {
-        httpSetRequiredAcl(state->auth, httpParseAcl(state->auth, rest));
+    if (scaselesscmp(type, "ability") == 0) {
+        httpSetAuthRequiredAbilities(state->auth, rest);
+
+    /* Support require group for legacy support */
+    } else if (scaselesscmp(type, "group") == 0 || scaselesscmp(type, "role") == 0) {
+        httpSetAuthRequiredAbilities(state->auth, rest);
+
+    } else if (scaselesscmp(type, "secure") == 0) {
+        httpSetAuthSecure(state->auth, 1);
+
+    } else if (scaselesscmp(type, "user") == 0) {
+        httpSetAuthPermittedUsers(state->auth, rest);
+
     } else if (scaselesscmp(type, "valid-user") == 0) {
         httpSetAuthAnyValidUser(state->auth);
-    } else if (scaselesscmp(type, "user") == 0) {
-        httpSetAuthRequiredUsers(state->auth, rest);
-    } else if (scaselesscmp(type, "group") == 0) {
-        httpSetAuthRequiredGroups(state->auth, rest);
+
+    } else if (scaselesscmp(type, "acl") == 0) {
+        mprError("The Require acl directive is deprecated. Use Require ability instead.");
     } else {
         return configError(state, key);
     }
@@ -1571,6 +1592,24 @@ static int resetDirective(MaState *state, cchar *key, cchar *value)
 static int resetPipelineDirective(MaState *state, cchar *key, cchar *value)
 {
     httpResetRoutePipeline(state->route);
+    return 0;
+}
+
+
+/*
+    Role name abilities...
+ */
+static int roleDirective(MaState *state, cchar *key, cchar *value)
+{
+    char    *name, *abilities;
+
+    if (!maTokenize(state, value, "%S ?*", &name, &abilities)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    if (httpAddRole(state->auth, name, abilities) < 0) {
+        mprError("Can't add role %s", name);
+        return MPR_ERR_BAD_SYNTAX;
+    }
     return 0;
 }
 
@@ -1641,7 +1680,7 @@ static int serverRootDirective(MaState *state, cchar *key, cchar *value)
     }
     maSetServerHome(state->server, path);
     httpSetHostHome(state->host, path);
-    httpSetRoutePathVar(state->route, "SERVER_ROOT", path);
+    httpSetRouteVar(state->route, "SERVER_ROOT", path);
     mprLog(MPR_CONFIG, "Server Root \"%s\"", path);
     return 0;
 }
@@ -1653,6 +1692,21 @@ static int serverRootDirective(MaState *state, cchar *key, cchar *value)
 static int sessionTimeoutDirective(MaState *state, cchar *key, cchar *value)
 {
     state->limits->sessionTimeout = gettime(value);
+    return 0;
+}
+
+
+/*
+    Set var value
+ */
+static int setDirective(MaState *state, cchar *key, cchar *value)
+{
+    char    *var;
+
+    if (!maTokenize(state, value, "%S %S", &var, &value)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    httpSetRouteVar(state->route, var, value);
     return 0;
 }
 
@@ -1828,9 +1882,27 @@ static int uploadAutoDeleteDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    User username
+    User name password abilities...
  */
 static int userDirective(MaState *state, cchar *key, cchar *value)
+{
+    char    *name, *password, *abilities;
+
+    if (!maTokenize(state, value, "%S %S ?*", &name, &password, &abilities)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    if (httpAddUser(state->auth, name, password, abilities) < 0) {
+        mprError("Can't add user %s", name);
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    return 0;
+}
+
+
+/*
+    UserAccount username
+ */
+static int userAccountDirective(MaState *state, cchar *key, cchar *value)
 {
     if (!smatch(value, "_unchanged_")) {
         maSetHttpUser(state->appweb, value);
@@ -2279,12 +2351,11 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "AddType", addTypeDirective);
     maAddDirective(appweb, "Alias", aliasDirective);
     maAddDirective(appweb, "Allow", allowDirective);
-    maAddDirective(appweb, "AuthGroupFile", authGroupFileDirective);
-    maAddDirective(appweb, "AuthMethod", authMethodDirective);
-    maAddDirective(appweb, "AuthName", authNameDirective);
-    maAddDirective(appweb, "AuthType", authTypeDirective);
-    maAddDirective(appweb, "AuthUserFile", authUserFileDirective);
+    maAddDirective(appweb, "AuthAutoLogin", authAutoLogin);
     maAddDirective(appweb, "AuthDigestQop", authDigestQopDirective);
+    maAddDirective(appweb, "AuthType", authTypeDirective);
+    maAddDirective(appweb, "AuthRealm", authRealmDirective);
+    maAddDirective(appweb, "AuthStore", authStoreDirective);
     maAddDirective(appweb, "Cache", cacheDirective);
     maAddDirective(appweb, "Chroot", chrootDirective);
     maAddDirective(appweb, "Compress", compressDirective);
@@ -2299,7 +2370,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "ErrorDocument", errorDocumentDirective);
     maAddDirective(appweb, "ErrorLog", errorLogDirective);
     maAddDirective(appweb, "ExitTimeout", exitTimeoutDirective);
-    maAddDirective(appweb, "Group", groupDirective);
+    maAddDirective(appweb, "GroupAccount", groupAccountDirective);
     maAddDirective(appweb, "Header", headerDirective);
     maAddDirective(appweb, "<If", ifDirective);
     maAddDirective(appweb, "</If", closeDirective);
@@ -2346,14 +2417,14 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "RequestTimeout", requestTimeoutDirective);
     maAddDirective(appweb, "Require", requireDirective);
     maAddDirective(appweb, "Reset", resetDirective);
+    maAddDirective(appweb, "Role", roleDirective);
 
-    /* Deprecated: ResetPipeline - use Reset */
-    maAddDirective(appweb, "ResetPipeline", resetPipelineDirective);
     maAddDirective(appweb, "<Route", routeDirective);
     maAddDirective(appweb, "</Route", closeDirective);
     maAddDirective(appweb, "ServerName", serverNameDirective);
     maAddDirective(appweb, "ServerRoot", serverRootDirective);
     maAddDirective(appweb, "SessionTimeout", sessionTimeoutDirective);
+    maAddDirective(appweb, "Set", setDirective);
     maAddDirective(appweb, "SetConnector", setConnectorDirective);
     maAddDirective(appweb, "SetHandler", setHandlerDirective);
     maAddDirective(appweb, "Source", sourceDirective);
@@ -2371,6 +2442,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "UploadAutoDelete", uploadAutoDeleteDirective);
     maAddDirective(appweb, "UploadDir", uploadDirDirective);
     maAddDirective(appweb, "User", userDirective);
+    maAddDirective(appweb, "UserAccount", userAccountDirective);
 
     maAddDirective(appweb, "<VirtualHost", virtualHostDirective);
     maAddDirective(appweb, "</VirtualHost", closeDirective);
@@ -2380,10 +2452,17 @@ int maParseInit(MaAppweb *appweb)
 #endif
 
 #if DEPRECATED || 1
+    /* Use AuthStore */
+    maAddDirective(appweb, "AuthMethod", authStoreDirective);
+    maAddDirective(appweb, "AuthGroupFile", authGroupFileDirective);
+    maAddDirective(appweb, "AuthUserFile", authUserFileDirective);
+    /* Use AuthRealm */
+    maAddDirective(appweb, "AuthName", authRealmDirective);
     /* Use eprecated use LimitKeepAlive */
     maAddDirective(appweb, "MaxKeepAliveRequests", limitKeepAliveDirective);
     /* Use LimitUri */
     maAddDirective(appweb, "LimitUrl", limitUriDirective);
+    maAddDirective(appweb, "ResetPipeline", resetPipelineDirective);
     /* Use StartWorkers */
     maAddDirective(appweb, "StartThreads", startWorkersDirective);
     /* Use requestTimeout */
@@ -2410,28 +2489,12 @@ int maParseInit(MaAppweb *appweb)
     @copy   default
 
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
     by the terms of either license. Consult the LICENSE.md distributed with
-    this software for full details.
-
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://embedthis.com/downloads/gplLicense.html
-
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://embedthis.com
+    this software for full details and other copyrights.
 
     Local variables:
     tab-width: 4

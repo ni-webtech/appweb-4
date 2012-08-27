@@ -27,7 +27,6 @@ typedef struct App {
     int      continueOnErrors;   /* Continue testing even if an error occurs. Default is to stop */
     int      success;            /* Total success flag */
     int      fetchCount;         /* Total count of fetches */
-    int      insecure;           /* Don't validate server certs */
     MprFile  *inFile;            /* Input file for post/put data */
     MprList  *files;             /* Upload files */
     MprList  *formData;          /* Form body data */
@@ -64,6 +63,7 @@ typedef struct App {
     int      timeout;            /* Timeout in msecs for a non-responsive server */
     int      upload;             /* Upload using multipart mime */
     char     *username;          /* User name for authentication of requests */
+    int      validate;           /* Validate server certs */
     int      verbose;            /* Trace progress */
     int      workers;            /* Worker threads. >0 if multi-threaded */
     int      zeroOnErrors;       /* Exit zero status for any valid HTTP response code  */
@@ -302,9 +302,6 @@ static bool parseArgs(int argc, char **argv)
                 }
             }
 
-        } else if (smatch(argp, "--insecure")) {
-            app->insecure++;
-
         } else if (smatch(argp, "--iterations") || smatch(argp, "-i")) {
             if (nextArg >= argc) {
                 return 0;
@@ -435,6 +432,9 @@ static bool parseArgs(int argc, char **argv)
                 app->username = argv[++nextArg];
             }
 
+        } else if (smatch(argp, "--validate")) {
+            app->validate++;
+
         } else if (smatch(argp, "--verbose") || smatch(argp, "-v")) {
             app->verbose++;
 
@@ -499,14 +499,10 @@ static bool parseArgs(int argc, char **argv)
         }
     }
 #if BIT_PACK_SSL
-    if (app->insecure || app->cert || app->provider) {
+    if (app->validate || app->cert || app->provider) {
         app->ssl = mprCreateSsl();
         if (app->provider) {
             mprSetSslProvider(app->ssl, app->provider);
-        }
-        if (app->insecure) {
-            mprVerifySslPeer(app->ssl, !app->insecure);
-            mprVerifySslIssuer(app->ssl, !app->insecure);
         }
         if (app->cert) {
             if (!app->key) {
@@ -516,6 +512,8 @@ static bool parseArgs(int argc, char **argv)
             mprSetSslCertFile(app->ssl, app->cert);
             mprSetSslKeyFile(app->ssl, app->key);
         }
+        mprVerifySslPeer(app->ssl, app->validate);
+        mprVerifySslIssuer(app->ssl, app->validate);
     }
 #endif
     return 1;
@@ -537,7 +535,6 @@ static void showUsage()
         "  --form string         # Form data. Must already be form-www-urlencoded.\n"
         "  --header 'key: value' # Add a custom request header.\n"
         "  --host hostName       # Host name or IP address for unqualified URLs.\n"
-        "  --insecure            # Don't validate server certificates when using SSL\n"
         "  --iterations count    # Number of times to fetch the urls (default 1).\n"
         "  --keyt file           # Private key file.\n"
         "  --log logFile:level   # Log to the file at the verbosity level.\n"
@@ -560,6 +557,7 @@ static void showUsage()
         "  --timeout secs        # Request timeout period in seconds.\n"
         "  --upload              # Use multipart mime upload.\n"
         "  --user name           # User name for authentication.\n"
+        "  --validate            # Validate server certificates when using SSL\n"
         "  --verbose             # Verbose operation. Trace progress.\n"
         "  --workers count       # Set maximum worker threads.\n"
         "  --zero                # Exit with zero status for any valid HTTP response\n"
@@ -728,6 +726,13 @@ static int prepRequest(HttpConn *conn, MprList *files, int retry)
 
 static int sendRequest(HttpConn *conn, cchar *method, cchar *url, MprList *files)
 {
+#if UNUSED
+    if (scontains(url, "https") && !app->ssl) {
+        app->ssl = mprCreateSsl();
+        mprVerifySslPeer(app->ssl, app->validate);
+        mprVerifySslIssuer(app->ssl, app->validate);
+    }
+#endif
     if (httpConnect(conn, method, url, app->ssl) < 0) {
         mprError("Can't process request for \"%s\"\n%s", url, httpGetError(conn));
         return MPR_ERR_CANT_OPEN;
@@ -790,7 +795,7 @@ static int issueRequest(HttpConn *conn, cchar *url, MprList *files)
         }
         if ((rx = conn->rx) != 0) {
             if (rx->status == HTTP_CODE_REQUEST_TOO_LARGE || rx->status == HTTP_CODE_REQUEST_URL_TOO_LARGE ||
-                (rx->status == HTTP_CODE_UNAUTHORIZED && conn->authUser == 0)) {
+                (rx->status == HTTP_CODE_UNAUTHORIZED && conn->username == 0)) {
                 /* No point retrying */
                 break;
             }
@@ -1249,31 +1254,15 @@ int _exit() {
 
 /*
     @copy   default
-    
+
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
-    
+
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.md distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://embedthis.com 
-    
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
     Local variables:
     tab-width: 4
     c-basic-offset: 4

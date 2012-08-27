@@ -15,7 +15,6 @@ http \- HTTP Client program
 [\fI--form string\fR]
 [\fI--header 'key: value'\fR]
 [\fI--host hostName\fR]
-[\fI--insecure\fR]
 [\fI--iterations count\fR]
 [\fI--key file\fR]
 [\fI--log logSpec\fR]
@@ -39,6 +38,7 @@ http \- HTTP Client program
 [\fI--timeout seconds\fR]
 [\fI--upload\fR]
 [\fI--user name\fR]
+[\fI--validate\fR]
 [\fI--verbose\fR]
 [\fI--workers count\fR]
 [\fI--zero\fR] 
@@ -84,9 +84,6 @@ Add a custom header to send with the request. Multiple --header switches can be 
 \fB\--host name\fR 
 Prepend all URLs with the specified host. For example if '-h www.myHost.com:8888" were used with the URL "/index.html", 
 then http will retrieve http://www.myHost.com:8888.
-.TP
-\fB\--insecure\fR 
-Don't validate server certificates when using SSL
 .TP
 \fB\--iterations count\fR 
 Retrieve the URLs iterations times. Useful for load testing. This switch can also be abbreviated as \fB\-i\fR.
@@ -174,6 +171,9 @@ for --method POST with files on the command line.
 Specify a user name to send with the request. If a password is not specified via --password, the program will 
 prompt for a password (which will not be echoed). The username and password will be sent with the request
 according to the authentication protocol required by the requested web server and requested document.
+.TP
+\fB\--validate\fR 
+Validate server certificates when using SSL
 .TP
 \fB\--verbose\fR 
 Verbose mode. Trace activity to stdout. Can by specified multiple times for more verbose tracing.  

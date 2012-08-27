@@ -12,9 +12,10 @@ assert(http.response.contains("Please Login"))
 let securityToken = http.header("X-Security-Token")
 let cookie = http.header("Set-Cookie")
 if (cookie) {
-    cookie = cookie.match(/(-esp-session-=.*);/)[1]
+    cookie = cookie.match(/(-http-session-=.*);/)[1]
 }
-assert(cookie && cookie.contains("-esp-session-="))
+
+assert(cookie && cookie.contains("-http-session-="))
 // print("STATUS", http.status)
 // dump("\nPRIOR HEADERS", http.headers)
 // print("PRIOR RESPONSE: \"" + http.response + "\"")

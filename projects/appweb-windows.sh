@@ -2,7 +2,7 @@
 #   appweb-windows.sh -- Build It Shell Script to build Embedthis Appweb
 #
 
-export PATH="$(SDK):$(VS)/VC/Bin:$(VS)/Common7/IDE:$(VS)/Common7/Tools:$(VS)/SDK/v3.5/bin:$(VS)/VC/VCPackages;$(PATH)"
+export PATH="$(SDK)/Bin:$(VS)/VC/Bin:$(VS)/Common7/IDE:$(VS)/Common7/Tools:$(VS)/SDK/v3.5/bin:$(VS)/VC/VCPackages;$(PATH)"
 export INCLUDE="$(INCLUDE);$(SDK)/Include:$(VS)/VC/INCLUDE"
 export LIB="$(LIB);$(SDK)/Lib:$(VS)/VC/lib"
 
@@ -163,14 +163,14 @@ cp -r src/server/appwebMonitor.h ${CONFIG}/inc/appwebMonitor.h
 
 "${LD}" -out:${CONFIG}/bin/appweb.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/appweb.obj ${LIBS} libappweb.lib libhttp.lib libmpr.lib libpcre.lib
 
-"rc.exe" -nologo -Fo ${CONFIG}/obj/appwebMonitor.res src/server/WINDOWS/appwebMonitor.rc
+"rc.exe" -nologo -Fo ${CONFIG}/obj/appwebMonitor.res src/server/windows/appwebMonitor.rc
 
-"${CC}" -c -Fo${CONFIG}/obj/appwebMonitor.obj -Fd${CONFIG}/obj/appwebMonitor.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/server/WINDOWS/appwebMonitor.c
+"${CC}" -c -Fo${CONFIG}/obj/appwebMonitor.obj -Fd${CONFIG}/obj/appwebMonitor.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/server/windows/appwebMonitor.c
 
 "${LD}" -out:${CONFIG}/bin/appwebMonitor.exe -entry:WinMainCRTStartup -subsystem:Windows ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/appwebMonitor.res ${CONFIG}/obj/appwebMonitor.obj shell32.lib libappweb.lib ws2_32.lib advapi32.lib user32.lib kernel32.lib oldnames.lib msvcrt.lib libhttp.lib libmpr.lib libpcre.lib
 
 rm -rf ${CONFIG}/bin/appwebMonitor.ico
-cp -r src/server/WINDOWS/appwebMonitor.ico ${CONFIG}/bin/appwebMonitor.ico
+cp -r src/server/windows/appwebMonitor.ico ${CONFIG}/bin/appwebMonitor.ico
 
 rm -rf ${CONFIG}/inc/testAppweb.h
 cp -r test/testAppweb.h ${CONFIG}/inc/testAppweb.h
@@ -195,12 +195,12 @@ chmod +x web/caching/cache.cgi ;\
 cd - >/dev/null 
 
 cd test >/dev/null ;\
-echo "#!`type -p sh`" >web/basic/basic.cgi ;\
-echo '' >>web/basic/basic.cgi ;\
-echo 'echo Content-Type: text/plain' >>web/basic/basic.cgi ;\
-echo 'echo' >>web/basic/basic.cgi ;\
-echo '/usr/bin/env' >>web/basic/basic.cgi ;\
-chmod +x web/basic/basic.cgi ;\
+echo "#!`type -p sh`" >web/auth/basic/basic.cgi ;\
+echo '' >>web/auth/basic/basic.cgi ;\
+echo 'echo Content-Type: text/plain' >>web/auth/basic/basic.cgi ;\
+echo 'echo' >>web/auth/basic/basic.cgi ;\
+echo '/usr/bin/env' >>web/auth/basic/basic.cgi ;\
+chmod +x web/auth/basic/basic.cgi ;\
 cd - >/dev/null 
 
 cd test >/dev/null ;\
@@ -211,7 +211,7 @@ cp ../${CONFIG}/bin/cgiProgram web/cgiProgram.cgi ;\
 chmod +x cgi-bin/* web/cgiProgram.cgi ;\
 cd - >/dev/null 
 
-"${CC}" -c -Fo${CONFIG}/obj/removeFiles.obj -Fd${CONFIG}/obj/removeFiles.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc package/WINDOWS/removeFiles.c
+"${CC}" -c -Fo${CONFIG}/obj/removeFiles.obj -Fd${CONFIG}/obj/removeFiles.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc package/windows/removeFiles.c
 
 "${LD}" -out:${CONFIG}/bin/removeFiles.exe -entry:WinMainCRTStartup -subsystem:Windows ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/removeFiles.obj ${LIBS} libmpr.lib
 

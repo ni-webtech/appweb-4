@@ -121,7 +121,7 @@
 
   <CustomBuildStep>
     <Command>cd ..\..\src\deps\mpr
-xcopy /Y /S /D mpr.h $(IncDir)
+copy /Y mpr.h $(IncDir)
 cd ..\..\..\projects\appweb-windows</Command>
     <Outputs>$(BinDir)\libmpr.dll</Outputs>
   </CustomBuildStep>

@@ -130,8 +130,8 @@
 
   <CustomBuildStep>
     <Command>cd ..\..\src
-xcopy /Y /S /D appweb.h $(IncDir)
-xcopy /Y /S /D customize.h $(IncDir)
+copy /Y appweb.h $(IncDir)
+copy /Y customize.h $(IncDir)
 cd ..\projects\appweb-windows</Command>
     <Outputs>$(BinDir)\libappweb.dll</Outputs>
   </CustomBuildStep>

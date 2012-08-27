@@ -182,12 +182,12 @@ chmod +x web/caching/cache.cgi ;\
 cd - >/dev/null 
 
 cd test >/dev/null ;\
-echo "#!`type -p sh`" >web/basic/basic.cgi ;\
-echo '' >>web/basic/basic.cgi ;\
-echo 'echo Content-Type: text/plain' >>web/basic/basic.cgi ;\
-echo 'echo' >>web/basic/basic.cgi ;\
-echo '/usr/bin/env' >>web/basic/basic.cgi ;\
-chmod +x web/basic/basic.cgi ;\
+echo "#!`type -p sh`" >web/auth/basic/basic.cgi ;\
+echo '' >>web/auth/basic/basic.cgi ;\
+echo 'echo Content-Type: text/plain' >>web/auth/basic/basic.cgi ;\
+echo 'echo' >>web/auth/basic/basic.cgi ;\
+echo '/usr/bin/env' >>web/auth/basic/basic.cgi ;\
+chmod +x web/auth/basic/basic.cgi ;\
 cd - >/dev/null 
 
 cd test >/dev/null ;\

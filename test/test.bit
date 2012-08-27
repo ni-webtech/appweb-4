@@ -44,9 +44,9 @@ Bit.load({
         },
 
         'test-basic.cgi': {
-            path: 'web/basic/basic.cgi',
+            path: 'web/auth/basic/basic.cgi',
             build: "
-                let path = Path('web/basic/basic.cgi')
+                let path = Path('web/auth/basic/basic.cgi')
                 path.write('#!' + App.exeDir.join('ejs') + '\n' + 
                     'print(\"HTTP/1.0 200 OK\nContent-Type: text/plain\n\n\")\n' +
                     'for (let [key,value] in App.env) print(key + \"=\" + value)\n' +
@@ -54,12 +54,12 @@ Bit.load({
                 path.setAttributes({permissions: 0755})
             ",
             'generate-sh': "\
-                echo \"#!`type -p sh`\" >web/basic/basic.cgi
-                echo '' >>web/basic/basic.cgi
-                echo 'echo Content-Type: text/plain' >>web/basic/basic.cgi
-                echo 'echo' >>web/basic/basic.cgi
-                echo '/usr/bin/env' >>web/basic/basic.cgi
-                chmod +x web/basic/basic.cgi
+                echo \"#!`type -p sh`\" >web/auth/basic/basic.cgi
+                echo '' >>web/auth/basic/basic.cgi
+                echo 'echo Content-Type: text/plain' >>web/auth/basic/basic.cgi
+                echo 'echo' >>web/auth/basic/basic.cgi
+                echo '/usr/bin/env' >>web/auth/basic/basic.cgi
+                chmod +x web/auth/basic/basic.cgi
             ",
             platforms: [ 'local' ],
         },
@@ -126,7 +126,7 @@ Bit.load({
                 Path('cache/.keep').write()
                 Path('app/cache/.keep').write()
                 Path('web/caching/cache.cgi').remove()
-                Path('web/basic/basic.cgi').remove()
+                Path('web/auth/basic/basic.cgi').remove()
             "                                                                                              
         },  
     },

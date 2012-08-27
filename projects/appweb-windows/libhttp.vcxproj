@@ -121,7 +121,7 @@
 
   <CustomBuildStep>
     <Command>cd ..\..\src\deps\http
-xcopy /Y /S /D http.h $(IncDir)
+copy /Y http.h $(IncDir)
 cd ..\..\..\projects\appweb-windows</Command>
     <Outputs>$(BinDir)\libhttp.dll</Outputs>
   </CustomBuildStep>

@@ -3307,6 +3307,7 @@ extern ssize mprPrintf(cchar *fmt, ...);
  */
 extern ssize mprFprintf(struct MprFile *file, cchar *fmt, ...);
 
+//  MOB - need a short name: fmt()?
 /**
     Format a string into a statically allocated buffer.
     @description This call format a string using printf style formatting arguments. A trailing null will 
@@ -3320,6 +3321,7 @@ extern ssize mprFprintf(struct MprFile *file, cchar *fmt, ...);
  */
 extern char *mprSprintf(char *buf, ssize maxSize, cchar *fmt, ...);
 
+//  MOB - need a short name: fmtv()?
 /**
     Format a string into a statically allocated buffer.
     @description This call format a string using printf style formatting arguments. A trailing null will 
@@ -3333,6 +3335,7 @@ extern char *mprSprintf(char *buf, ssize maxSize, cchar *fmt, ...);
  */
 extern char *mprSprintfv(char *buf, ssize maxSize, cchar *fmt, va_list args);
 
+//  DEPRECATED
 /**
     Format a string into an allocated buffer.
     @description This call will dynamically allocate a buffer up to the specified maximum size and will format the 
@@ -3347,6 +3350,7 @@ extern char *mprSprintfv(char *buf, ssize maxSize, cchar *fmt, va_list args);
  */
 extern char *mprAsprintf(cchar *fmt, ...);
 
+//  DEPRECATED
 /**
     Allocate a buffer of sufficient length to hold the formatted string.
     @description This call will dynamically allocate a buffer up to the specified maximum size and will format 
@@ -4642,6 +4646,7 @@ typedef uint (*MprHashProc)(cvoid *name, ssize len);
 #define MPR_HASH_STATIC_KEYS    0x40    /**< Keys are permanent - don't dup or mark */
 #define MPR_HASH_STATIC_VALUES  0x80    /**< Values are permanent - don't mark */
 #define MPR_HASH_LIST           0x100   /**< Hash keys are numeric indicies */
+#define MPR_HASH_UNIQUE         0x200   /**< Add to existing will fail */
 #define MPR_HASH_STATIC_ALL     (MPR_HASH_STATIC_KEYS | MPR_HASH_STATIC_VALUES)
 
 /**
@@ -4660,7 +4665,9 @@ typedef struct MprHash {
 /*
     Macros
  */
-#define ITERATE_KEYS(table, item) item = 0; table && (item = mprGetNextKey(table, item)) != 0; 
+#define ITERATE_KEYS(table, key) key = 0; table && (key = mprGetNextKey(table, key)) != 0; 
+#define ITERATE_KEY_DATA(table, key, item) \
+        key = 0; table && (key = mprGetNextKey(table, key)) != 0 && ((item = (void*) ((key)->data)) != 0 || 1);
 
 /**
     Add a duplicate symbol value into the hash table
@@ -9375,28 +9382,12 @@ typedef struct MprTestFailure {
     @copy   default
 
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
 
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire
-    a commercial license from Embedthis Software. You agree to be fully bound
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
     by the terms of either license. Consult the LICENSE.md distributed with
-    this software for full details.
-
-    This software is open source; you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation; either version 2 of the License, or (at your
-    option) any later version. See the GNU General Public License for more
-    details at: http://embedthis.com/downloads/gplLicense.html
-
-    This program is distributed WITHOUT ANY WARRANTY; without even the
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-    This GPL license does NOT permit incorporating this software into
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses
-    for this software and support services are available from Embedthis
-    Software at http://embedthis.com
+    this software for full details and other copyrights.
 
     Local variables:
     tab-width: 4

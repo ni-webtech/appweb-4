@@ -109,12 +109,12 @@ static void setupFlash(HttpConn *conn)
     EspReq      *req;
 
     req = conn->data;
-    if (espGetSession(conn, 0)) {
-        req->flash = espGetSessionObj(conn, ESP_FLASH_VAR);
+    if (httpGetSession(conn, 0)) {
+        req->flash = httpGetSessionObj(conn, ESP_FLASH_VAR);
         req->lastFlash = 0;
         if (req->flash) {
             mprAssert(req->flash->fn);
-            espSetSessionVar(conn, ESP_FLASH_VAR, "");
+            httpSetSessionVar(conn, ESP_FLASH_VAR, "");
             req->lastFlash = mprCloneHash(req->flash);
         } else {
             req->flash = 0;
@@ -142,7 +142,7 @@ static void finalizeFlash(HttpConn *conn)
             }
         }
         if (mprGetHashLength(req->flash) > 0) {
-            espSetSessionObj(conn, ESP_FLASH_VAR, req->flash);
+            httpSetSessionObj(conn, ESP_FLASH_VAR, req->flash);
         }
     }
 }
@@ -531,25 +531,25 @@ static void setMvcDirs(EspRoute *eroute, HttpRoute *route)
     dir = route->dir;
 
     eroute->cacheDir = mprJoinPath(dir, "cache");
-    httpSetRoutePathVar(route, "CACHE_DIR", eroute->cacheDir);
+    httpSetRouteVar(route, "CACHE_DIR", eroute->cacheDir);
 
     eroute->dbDir = mprJoinPath(dir, "db");
-    httpSetRoutePathVar(route, "DB_DIR", eroute->dbDir);
+    httpSetRouteVar(route, "DB_DIR", eroute->dbDir);
 
     eroute->migrationsDir = mprJoinPath(dir, "db/migrations");
-    httpSetRoutePathVar(route, "MIGRATIONS_DIR", eroute->migrationsDir);
+    httpSetRouteVar(route, "MIGRATIONS_DIR", eroute->migrationsDir);
 
     eroute->controllersDir = mprJoinPath(dir, "controllers");
-    httpSetRoutePathVar(route, "CONTROLLERS_DIR", eroute->controllersDir);
+    httpSetRouteVar(route, "CONTROLLERS_DIR", eroute->controllersDir);
 
     eroute->layoutsDir  = mprJoinPath(dir, "layouts");
-    httpSetRoutePathVar(route, "LAYOUTS_DIR", eroute->layoutsDir);
+    httpSetRouteVar(route, "LAYOUTS_DIR", eroute->layoutsDir);
 
     eroute->staticDir = mprJoinPath(dir, "static");
-    httpSetRoutePathVar(route, "STATIC_DIR", eroute->staticDir);
+    httpSetRouteVar(route, "STATIC_DIR", eroute->staticDir);
 
     eroute->viewsDir = mprJoinPath(dir, "views");
-    httpSetRoutePathVar(route, "VIEWS_DIR", eroute->viewsDir);
+    httpSetRouteVar(route, "VIEWS_DIR", eroute->viewsDir);
 }
 
 
@@ -570,9 +570,11 @@ static void manageReq(EspReq *req, int flags)
         mprMark(req->module);
         mprMark(req->record);
         mprMark(req->route);
-        mprMark(req->session);
         mprMark(req->source);
         mprMark(req->view);
+#if UNUSED
+        mprMark(req->session);
+#endif
     }
 }
 
@@ -588,7 +590,9 @@ static void manageEsp(Esp *esp, int flags)
         mprMark(esp->internalOptions);
         mprMark(esp->local);
         mprMark(esp->mutex);
+#if UNUSED
         mprMark(esp->sessionCache);
+#endif
         mprMark(esp->views);
     }
 }
@@ -660,7 +664,7 @@ static int appDirective(MaState *state, cchar *key, cchar *value)
         mprError("Script name should start with a \"/\"");
         appName = sjoin("/", appName, NULL);
     }
-    appName = stemplate(appName, route->pathTokens);
+    appName = stemplate(appName, route->vars);
     if (appName == 0 || *appName == '\0' || scmp(appName, "/") == 0) {
         appName = MPR->emptyString;
     } else {
@@ -776,7 +780,7 @@ static int espDirDirective(MaState *state, cchar *key, cchar *value)
     if (scmp(name, "mvc") == 0) {
         setMvcDirs(eroute, state->route);
     } else {
-        path = stemplate(mprJoinPath(state->host->home, path), state->route->pathTokens);
+        path = stemplate(mprJoinPath(state->host->home, path), state->route->vars);
         if (scmp(name, "cache") == 0) {
             eroute->cacheDir = path;
         } else if (scmp(name, "controllers") == 0) {
@@ -792,7 +796,7 @@ static int espDirDirective(MaState *state, cchar *key, cchar *value)
         } else if (scmp(name, "views") == 0) {
             eroute->viewsDir = path;
         }
-        httpSetRoutePathVar(state->route, name, path);
+        httpSetRouteVar(state->route, name, path);
     }
     return 0;
 }
@@ -968,10 +972,29 @@ static int espRouteDirective(MaState *state, cchar *key, cchar *value)
 {
     char    *name, *methods, *pattern, *target, *source;
 
-    if (!maTokenize(state, value, "%S %S %S %S %S", &name, &methods, &pattern, &target, &source)) {
+    if (!maTokenize(state, value, "%S %S %S %S ?S", &name, &methods, &pattern, &target, &source)) {
         return MPR_ERR_BAD_SYNTAX;
     }
     httpDefineRoute(state->route, name, methods, pattern, target, source);
+    return 0;
+}
+
+
+int espBindProc(HttpRoute *parent, cchar *pattern, void *proc)
+{
+    EspRoute    *eroute;
+    HttpRoute   *route;
+
+    if ((route = httpDefineRoute(parent, pattern, "ALL", pattern, "$&", "unused")) == 0) {
+        return MPR_ERR_CANT_CREATE;
+    }
+    httpSetRouteHandler(route, "espHandler");
+
+    if ((eroute = getEroute(route)) == 0) {
+        return MPR_ERR_MEMORY;
+    }
+    eroute->update = 0;
+    espDefineAction(route, pattern, proc);
     return 0;
 }
 
@@ -1070,9 +1093,11 @@ int maEspHandlerInit(Http *http, MprModule *module)
     if ((esp->actions = mprCreateHash(-1, 0)) == 0) {
         return 0;
     }
+#if UNUSED
     if ((esp->sessionCache = mprCreateCache(MPR_CACHE_SHARED)) == 0) {
         return MPR_ERR_MEMORY;
     }
+#endif
 
     /*
         Add configuration file directives
@@ -1131,31 +1156,15 @@ int maEspHandlerInit(Http *http, MprModule *mp)
 #endif /* BIT_PACK_ESP */
 /*
     @copy   default
-    
+
     Copyright (c) Embedthis Software LLC, 2003-2012. All Rights Reserved.
-    Copyright (c) Michael O'Brien, 1993-2012. All Rights Reserved.
-    
+
     This software is distributed under commercial and open source licenses.
-    You may use the GPL open source license described below or you may acquire 
-    a commercial license from Embedthis Software. You agree to be fully bound 
-    by the terms of either license. Consult the LICENSE.md distributed with 
-    this software for full details.
-    
-    This software is open source; you can redistribute it and/or modify it 
-    under the terms of the GNU General Public License as published by the 
-    Free Software Foundation; either version 2 of the License, or (at your 
-    option) any later version. See the GNU General Public License for more 
-    details at: http://embedthis.com/downloads/gplLicense.html
-    
-    This program is distributed WITHOUT ANY WARRANTY; without even the 
-    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-    
-    This GPL license does NOT permit incorporating this software into 
-    proprietary programs. If you are unable to comply with the GPL, you must
-    acquire a commercial license to use this software. Commercial licenses 
-    for this software and support services are available from Embedthis 
-    Software at http://embedthis.com 
-    
+    You may use the Embedthis Open Source license or you may acquire a 
+    commercial license from Embedthis Software. You agree to be fully bound
+    by the terms of either license. Consult the LICENSE.md distributed with
+    this software for full details and other copyrights.
+
     Local variables:
     tab-width: 4
     c-basic-offset: 4

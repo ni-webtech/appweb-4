@@ -32,23 +32,6 @@ extern "C" {
 #define ESP_LIFESPAN        (3600 * MPR_TICKS_PER_SEC)  /**< Default generated content cache lifespan */
 
 #if UNUSED
-/*
-    Default compiler settings for ${DEBUG} and ${LIBS} tokens in EspCompile and EspLink
- */
-#if BIT_DEBUG
-    #if WINDOWS
-        #define ESP_DEBUG "-Zi -Od"
-    #else
-        #define ESP_DEBUG "-g"
-    #endif
-#else
-    #if WINDOWS
-        #define ESP_DEBUG "-O"
-    #else
-        #define ESP_DEBUG "-O2"
-    #endif
-#endif
-
 #if WINDOWS
     #define ESP_CORE_LIBS "\"${LIBPATH}\\mod_esp${SHLIB}\" \"${LIBPATH}\\libappweb.lib\" \
         \"${LIBPATH}\\libhttp.lib\" \"${LIBPATH}\\libmpr.lib\""
@@ -92,7 +75,9 @@ extern "C" {
 typedef void (*EspProc)(HttpConn *conn);
 
 #define CONTENT_MARKER  "${_ESP_CONTENT_MARKER_}"       /* Layout content marker */
+#if UNUSED
 #define ESP_SESSION     "-esp-session-"                 /* ESP session cookie name */
+#endif
 
 #if BIT_WIN_LIKE
     #define ESP_EXPORT __declspec(dllexport)
@@ -144,7 +129,9 @@ typedef struct Esp {
     MprHash         *views;                 /**< Table of views */
     MprHash         *internalOptions;       /**< Table of internal HTML control options  */
     MprThreadLocal  *local;                 /**< Thread local data */
+#if UNUSED
     MprCache        *sessionCache;          /**< Session state cache */
+#endif
     MprMutex        *mutex;                 /**< Multithread lock */
     EdiService      *ediService;            /**< Database service */
     int             inUse;                  /**< Active ESP request counter */
@@ -292,6 +279,10 @@ extern char *espBuildScript(HttpRoute *route, cchar *page, cchar *path, cchar *c
  */
 extern void espDefineAction(HttpRoute *route, cchar *targetKey, void *actionProc);
 
+//  MOB
+extern int espBindProc(HttpRoute *parent, cchar *pattern, void *proc);
+
+
 /**
     Define a base function to invoke for all controller actions.
     @description A base function can be defined that will be called before calling any controller action. This
@@ -349,6 +340,7 @@ extern bool espModuleIsStale(cchar *source, cchar *module, int *recompile);
 extern bool espUnloadModule(cchar *module, MprTime timeout);
 
 /********************************** Session ***********************************/
+#if UNUSED
 /**
     ESP session state object
     @defgroup EspSession EspSession
@@ -449,6 +441,8 @@ extern int espSetSessionObj(HttpConn *conn, cchar *key, MprHash *value);
  */
 extern MprHash *espGetSessionObj(HttpConn *conn, cchar *key);
 
+#endif /* UNUSED */
+
 /********************************** Requests **********************************/
 /**
     View procedure callback.
@@ -478,7 +472,9 @@ void espManageAction(EspAction *ap, int flags);
 typedef struct EspReq {
     HttpRoute       *route;                 /**< Route reference */
     EspRoute        *eroute;                /**< Extended route info */
+#if UNUSED
     EspSession      *session;               /**< Session data object */
+#endif
     EspAction       *action;                /**< Action to invoke */
     Esp             *esp;                   /**< Convenient esp reference */
     MprHash         *flash;                 /**< New flash messages */
@@ -2971,18 +2967,6 @@ extern bool updateRec(EdiRec *rec);
     @ingroup EspAbbrev
  */
 extern cchar *uri(cchar *target);
-
-#if UNUSED
-/**
-    Set a flash notification message.
-    @description Flash messages persist for only one request and are a convenient way to pass state information or 
-        feedback messages to the next request. 
-    This routine calls $espWarn.
-    @param fmt Printf style message format
-    @ingroup EspAbbrev
- */
-extern void warn(cchar *fmt, ...);
-#endif
 
 #ifdef __cplusplus
 } /* extern C */

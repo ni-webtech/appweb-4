@@ -121,7 +121,7 @@
 
   <CustomBuildStep>
     <Command>cd ..\..\src\deps\sqlite
-xcopy /Y /S /D sqlite3.h $(IncDir)
+copy /Y sqlite3.h $(IncDir)
 cd ..\..\..\projects\appweb-windows</Command>
     <Outputs>$(BinDir)\libsqlite3.dll</Outputs>
   </CustomBuildStep>

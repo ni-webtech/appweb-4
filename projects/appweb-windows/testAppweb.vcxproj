@@ -116,7 +116,7 @@
 
   <CustomBuildStep>
     <Command>cd ..\..\test
-xcopy /Y /S /D testAppweb.h $(IncDir)
+copy /Y testAppweb.h $(IncDir)
 cd ..\projects\appweb-windows</Command>
     <Outputs>$(BinDir)\testAppweb.exe</Outputs>
   </CustomBuildStep>
