@@ -52,7 +52,6 @@ void httpInitAuth(Http *http)
 
 int httpCheckAuth(HttpConn *conn)
 {
-    Http        *http;
     HttpRx      *rx;
     HttpAuth    *auth;
     HttpRoute   *route;
@@ -61,7 +60,6 @@ int httpCheckAuth(HttpConn *conn)
     bool        cached;
 
     rx = conn->rx;
-    http = conn->http;
     route = rx->route;
     auth = route->auth;
 
@@ -167,7 +165,12 @@ bool httpLogin(HttpConn *conn, cchar *username, cchar *password)
         return 0;
     }
     conn->username = sclone(username);
+#if UNUSED
     conn->password = mprGetMD5(sfmt("%s:%s:%s", conn->username, auth->realm, password));
+#else
+    conn->password = sclone(password);
+    conn->encoded = 0;
+#endif
     if (!(auth->store->verifyUser)(conn)) {
         return 0;
     }
@@ -707,6 +710,10 @@ static bool verifyUser(HttpConn *conn)
 
     rx = conn->rx;
     auth = rx->route->auth;
+    if (!conn->encoded) {
+        conn->password = mprGetMD5(sfmt("%s:%s:%s", conn->username, auth->realm, conn->password));
+        conn->encoded = 1;
+    }
     if (!conn->user) {
         conn->user = mprLookupKey(auth->users, conn->username);
     }
@@ -822,8 +829,11 @@ int httpBasicParse(HttpConn *conn)
             *cp++ = '\0';
         }
         conn->username = sclone(decoded);
-        //  MOB - should not need realm?
+        conn->password = sclone(cp);
+        conn->encoded = 0;
+#if UNUSED
         conn->password = mprGetMD5(sfmt("%s:%s:%s", conn->username, conn->rx->route->auth->realm, cp));
+#endif
     }
     return 0;
 }
@@ -2262,6 +2272,7 @@ static void commonPrep(HttpConn *conn)
         conn->password = 0;
         conn->user = 0;
         conn->authData = 0;
+        conn->encoded = 0;
     }
     httpSetState(conn, HTTP_STATE_BEGIN);
     httpInitSchedulerQueue(conn->serviceq);
@@ -2940,8 +2951,9 @@ int httpDigestParse(HttpConn *conn)
             if (scaselesscmp(key, "realm") == 0) {
                 dp->realm = sclone(value);
             } else if (scaselesscmp(key, "response") == 0) {
-                /* Store the response digest in the password field */
+                /* Store the response digest in the password field. This is MD5(user:realm:password) */
                 conn->password = sclone(value);
+                conn->encoded = 1;
             }
             break;
 
@@ -6161,8 +6173,7 @@ static int pamChat(int msgCount, const struct pam_message **msg, struct pam_resp
     if (resp == 0 || msg == 0 || info == 0) {
         return PAM_CONV_ERR;
     }
-    //  MOB - who frees this?
-    if ((reply = malloc(msgCount * sizeof(struct pam_response))) == 0) {
+    if ((reply = calloc(msgCount, sizeof(struct pam_response))) == 0) {
         return PAM_CONV_ERR;
     }
     for (i = 0; i < msgCount; i++) {
@@ -6175,7 +6186,7 @@ static int pamChat(int msgCount, const struct pam_message **msg, struct pam_resp
             break;
 
         case PAM_PROMPT_ECHO_OFF:
-            //  MOB - what is this doing?
+            /* Retrieve the user password and pass onto pam */
             reply[i].resp = strdup(info->password);
             break;
 

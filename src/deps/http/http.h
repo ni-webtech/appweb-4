@@ -1799,6 +1799,7 @@ typedef struct HttpConn {
     void            *authData;              /**< Authorization state data */
     char            *username;              /**< Supplied user name */
     char            *password;              /**< Supplied password (may be encrypted depending on auth protocol) */
+    int             encoded;                /**< True if the password is MD5(username:realm:password) */
     struct HttpUser *user;                  /**< Authorized User record for access checking */
 
     HttpIOCallback  ioCallback;             /**< I/O event callback */
