@@ -404,9 +404,12 @@ static int authStoreDirective(MaState *state, cchar *key, cchar *value)
 {
     if (scaselesscmp(value, "internal") == 0) {
         httpSetAuthStore(state->auth, "internal");
-#if BIT_HAS_PAM && BIT_PAM
     } else if (scaselesscmp(value, "pam") == 0) {
+#if BIT_HAS_PAM && BIT_PAM
         httpSetAuthStore(state->auth, "pam");
+#else
+        mprError("The pam AuthStore is not supported on this platform");
+        return configError(state, key);
 #endif
     } else {
         return configError(state, key);
@@ -1361,17 +1364,12 @@ static int methodsDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-   Update param var value
-   Update cmd commandLine
+    MinWorkers count
  */
-static int updateDirective(MaState *state, cchar *key, cchar *value)
+static int minWorkersDirective(MaState *state, cchar *key, cchar *value)
 {
-    char    *name, *rest;
-
-    if (!maTokenize(state, value, "%S %*", &name, &rest)) {
-        return MPR_ERR_BAD_SYNTAX;
-    }
-    return addUpdate(state, name, rest, 0);
+    mprSetMinWorkers((int) stoi(value));
+    return 0;
 }
 
 
@@ -1753,16 +1751,6 @@ static int sourceDirective(MaState *state, cchar *key, cchar *value)
 
 
 /*
-    StartWorkers count
- */
-static int startWorkersDirective(MaState *state, cchar *key, cchar *value)
-{
-    mprSetMinWorkers((int) stoi(value));
-    return 0;
-}
-
-
-/*
     Target close [immediate]
     Target redirect [status] URI            # Redirect to a new URI and re-route
     Target run ${DOCUMENT_ROOT}/${request:uri}
@@ -1856,6 +1844,21 @@ static int unloadModuleDirective(MaState *state, cchar *key, cchar *value)
         module->timeout = gettime(timeout);
     }
     return 0;
+}
+
+
+/*
+   Update param var value
+   Update cmd commandLine
+ */
+static int updateDirective(MaState *state, cchar *key, cchar *value)
+{
+    char    *name, *rest;
+
+    if (!maTokenize(state, value, "%S %*", &name, &rest)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+    return addUpdate(state, name, rest, 0);
 }
 
 
@@ -2429,7 +2432,7 @@ int maParseInit(MaAppweb *appweb)
     maAddDirective(appweb, "SetHandler", setHandlerDirective);
     maAddDirective(appweb, "Source", sourceDirective);
 
-    maAddDirective(appweb, "StartWorkers", startWorkersDirective);
+    maAddDirective(appweb, "MinWorkers", minWorkersDirective);
     maAddDirective(appweb, "Target", targetDirective);
     maAddDirective(appweb, "Template", templateDirective);
 
@@ -2463,8 +2466,9 @@ int maParseInit(MaAppweb *appweb)
     /* Use LimitUri */
     maAddDirective(appweb, "LimitUrl", limitUriDirective);
     maAddDirective(appweb, "ResetPipeline", resetPipelineDirective);
-    /* Use StartWorkers */
-    maAddDirective(appweb, "StartThreads", startWorkersDirective);
+    /* Use MinWorkers */
+    maAddDirective(appweb, "StartWorkers", minWorkersDirective);
+    maAddDirective(appweb, "StartThreads", minWorkersDirective);
     /* Use requestTimeout */
     maAddDirective(appweb, "Timeout", requestTimeoutDirective);
     maAddDirective(appweb, "ThreadLimit", limitWorkersDirective);

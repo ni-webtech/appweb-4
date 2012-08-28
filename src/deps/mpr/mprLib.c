@@ -26859,7 +26859,7 @@ static int setLogging(char *logSpec)
 
 /*************************** Forward Declarations ****************************/
 
-static int changeState(MprWorker *worker, int state);
+static void changeState(MprWorker *worker, int state);
 static MprWorker *createWorker(MprWorkerService *ws, ssize stackSize);
 static int getNextThreadNum(MprWorkerService *ws);
 static void manageThreadService(MprThreadService *ts, int flags);
@@ -27525,27 +27525,6 @@ MprWorker *mprGetCurrentWorker()
 }
 
 
-#if UNUSED && FUTURE && KEEP
-/*
-    Set the worker as dedicated to the current task
- */
-void mprDedicateWorker(MprWorker *worker)
-{
-    mprLock(worker->workerService->mutex);
-    worker->flags |= MPR_WORKER_DEDICATED;
-    mprUnlock(worker->workerService->mutex);
-}
-
-
-void mprReleaseWorker(MprWorker *worker)
-{
-    mprLock(worker->workerService->mutex);
-    worker->flags &= ~MPR_WORKER_DEDICATED;
-    mprUnlock(worker->workerService->mutex);
-}
-#endif
-
-
 void mprActivateWorker(MprWorker *worker, MprWorkerProc proc, void *data)
 {
     MprWorkerService    *ws;
@@ -27555,9 +27534,6 @@ void mprActivateWorker(MprWorker *worker, MprWorkerProc proc, void *data)
     mprLock(ws->mutex);
     worker->proc = proc;
     worker->data = data;
-#if UNUSED && FUTURE && KEEP
-    mprAssert(worker->flags & MPR_WORKER_DEDICATED);
-#endif
     changeState(worker, MPR_WORKER_BUSY);
     mprUnlock(ws->mutex);
 }
@@ -27579,14 +27555,6 @@ int mprAvailableWorkers()
     count = mprGetListLength(ws->idleThreads) + (ws->maxThreads - ws->numThreads);
     mprUnlock(ws->mutex);
     return count;
-
-#if FUTURE && UNUSED && KEEP
-    for (next = 0; (worker = (MprWorker*) mprGetNextItem(ws->idleThreads, &next)) != 0; ) {
-        if (!(worker->flags & MPR_WORKER_DEDICATED)) {
-            count++;
-        }
-    }
-#endif
 }
 
 
@@ -27603,15 +27571,7 @@ int mprStartWorker(MprWorkerProc proc, void *data)
         another thread to the worker. Must account for workers we've already created but have not yet gone to work 
         and inserted themselves in the idle/busy queues.
      */
-#if UNUSED
-    for (next = 0; (worker = (MprWorker*) mprGetNextItem(ws->idleThreads, &next)) != 0; ) {
-        if (!(worker->flags & MPR_WORKER_DEDICATED)) {
-            break;
-        }
-    }
-#else
     worker = mprGetFirstItem(ws->idleThreads);
-#endif
     if (worker) {
         worker->proc = proc;
         worker->data = data;
@@ -27799,14 +27759,17 @@ static void workerMain(MprWorker *worker, MprThread *tp)
 }
 
 
-static int changeState(MprWorker *worker, int state)
+static void changeState(MprWorker *worker, int state)
 {
     MprWorkerService    *ws;
     MprList             *lp;
     int                 wake;
 
     mprAssert(worker->state != state);
-
+    if (state == worker->state) {
+        mprLog(4, "changeState already in desired state %d", state);
+        return;
+    }
     wake = 0;
     lp = 0;
     ws = worker->workerService;
@@ -27818,13 +27781,7 @@ static int changeState(MprWorker *worker, int state)
         break;
 
     case MPR_WORKER_IDLE:
-#if UNUSED && FUTURE && KEEP
-        if (!(worker->flags & MPR_WORKER_DEDICATED)) {
-#endif
-            lp = ws->idleThreads;
-#if UNUSED && FUTURE && KEEP
-        }
-#endif
+        lp = ws->idleThreads;
         wake = 1;
         break;
         
@@ -27845,13 +27802,7 @@ static int changeState(MprWorker *worker, int state)
         break;
 
     case MPR_WORKER_IDLE:
-#if UNUSED && FUTURE && KEEP
-        if (!(worker->flags & MPR_WORKER_DEDICATED)) {
-#endif
-            lp = ws->idleThreads;
-#if UNUSED && FUTURE && KEEP
-        }
-#endif
+        lp = ws->idleThreads;
         mprWakePendingDispatchers();
         break;
 
@@ -27866,14 +27817,13 @@ static int changeState(MprWorker *worker, int state)
         if (mprAddItem(lp, worker) < 0) {
             mprUnlock(ws->mutex);
             mprAssert(!MPR_ERR_MEMORY);
-            return MPR_ERR_MEMORY;
+            return;
         }
     }
     mprUnlock(ws->mutex);
     if (wake) {
         mprSignalCond(worker->idleCond); 
     }
-    return 0;
 }
 
 

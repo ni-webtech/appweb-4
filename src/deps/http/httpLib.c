@@ -6117,6 +6117,12 @@ typedef struct {
     char    *password;
 } UserInfo;
 
+#if MACOSX
+    typedef int Gid;
+#else
+    typedef gid_t Gid;
+#endif
+
 /********************************* Forwards ***********************************/
 
 static int pamChat(int msgCount, const struct pam_message **msg, struct pam_response **resp, void *data);
@@ -6139,11 +6145,11 @@ bool httpPamVerifyUser(HttpConn *conn)
     info.name = (char*) conn->username;
     info.password = (char*) conn->password;
     pamh = NULL;
-        
-    if ((res = pam_start("login", conn->username, &conv, &pamh)) != PAM_SUCCESS) {
+    if ((res = pam_start("login", info.name, &conv, &pamh)) != PAM_SUCCESS) {
         return 0;
     }
-    if ((res = pam_authenticate(pamh, PAM_SILENT | PAM_DISALLOW_NULL_AUTHTOK)) != PAM_SUCCESS) {
+    if ((res = pam_authenticate(pamh, PAM_DISALLOW_NULL_AUTHTOK)) != PAM_SUCCESS) {
+        pam_end(pamh, PAM_SUCCESS);
         return 0;
     }
     pam_end(pamh, PAM_SUCCESS);
@@ -6151,14 +6157,13 @@ bool httpPamVerifyUser(HttpConn *conn)
     if (!conn->user) {
         conn->user = mprLookupKey(conn->rx->route->auth->users, conn->username);
     }
-#if BIT_HAS_PAM && BIT_PAM
     if (!conn->user) {
-        gid_t   groups[32];
+        Gid     groups[32];
         int     ngroups;
         /* 
             Create a temporary user with a abilities set to the groups 
          */
-        ngroups = sizeof(groups) / sizeof(gid_t);
+        ngroups = sizeof(groups) / sizeof(Gid);
         if ((i = getgrouplist(conn->username, 99999, groups, &ngroups)) >= 0) {
             abilities = mprCreateBuf(0, 0);
             for (i = 0; i < ngroups; i++) {
@@ -6171,10 +6176,8 @@ bool httpPamVerifyUser(HttpConn *conn)
             conn->user = httpCreateUser(conn->rx->route->auth, conn->username, 0, mprGetBufStart(abilities));
         }
     }
-#endif
     return 1;
 }
-
 
 /*  
     Callback invoked by the pam_authenticate function
@@ -6210,6 +6213,7 @@ static int pamChat(int msgCount, const struct pam_message **msg, struct pam_resp
             break;
 
         default:
+            free(reply);
             return PAM_CONV_ERR;
         }
     }
