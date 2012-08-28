@@ -6130,7 +6130,6 @@ bool httpPamVerifyUser(HttpConn *conn)
     UserInfo            info;
     struct pam_conv     conv = { pamChat, &info };
     struct group        *gp;
-    int                 groups[32];
     int                 res, i;
    
     mprAssert(conn->username);
@@ -6144,7 +6143,7 @@ bool httpPamVerifyUser(HttpConn *conn)
     if ((res = pam_start("login", conn->username, &conv, &pamh)) != PAM_SUCCESS) {
         return 0;
     }
-    if ((res = pam_authenticate(pamh, 0)) != PAM_SUCCESS) {
+    if ((res = pam_authenticate(pamh, PAM_SILENT | PAM_DISALLOW_NULL_AUTHTOK)) != PAM_SUCCESS) {
         return 0;
     }
     pam_end(pamh, PAM_SUCCESS);
@@ -6152,29 +6151,27 @@ bool httpPamVerifyUser(HttpConn *conn)
     if (!conn->user) {
         conn->user = mprLookupKey(conn->rx->route->auth->users, conn->username);
     }
+#if BIT_HAS_PAM && BIT_PAM
     if (!conn->user) {
+        gid_t   groups[32];
+        int     ngroups;
         /* 
             Create a temporary user with a abilities set to the groups 
          */
-#if UNUSED
-    GETGROUPS_T         groups[32];
-        extern int getugroups();
-        if ((count = getugroups(sizeof(groups) / sizeof(GETGROUPS_T), groups, conn->username, -1)) > 0) {
-#else
-
-        int ngroups = sizeof(groups) / sizeof(int);
-        if ((i = getgrouplist(conn->username, -1, groups, &ngroups)) >= 0) {
-#endif
+        ngroups = sizeof(groups) / sizeof(gid_t);
+        if ((i = getgrouplist(conn->username, 99999, groups, &ngroups)) >= 0) {
             abilities = mprCreateBuf(0, 0);
             for (i = 0; i < ngroups; i++) {
                 if ((gp = getgrgid(groups[i])) != 0) {
                     mprPutFmtToBuf(abilities, "%s ", gp->gr_name);
                 }
-                mprAddNullToBuf(abilities);
-                conn->user = httpCreateUser(conn->rx->route->auth, conn->username, 0, mprGetBufStart(abilities));
             }
+            mprAddNullToBuf(abilities);
+            mprLog(5, "Create temp user \"%s\" with abilities: %s", conn->username, mprGetBufStart(abilities));
+            conn->user = httpCreateUser(conn->rx->route->auth, conn->username, 0, mprGetBufStart(abilities));
         }
     }
+#endif
     return 1;
 }
 
