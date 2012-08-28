@@ -469,7 +469,7 @@ int httpSetAuthStore(HttpAuth *auth, cchar *store)
         return MPR_ERR_CANT_FIND;
     }
 #if BIT_HAS_PAM && BIT_PAM
-    if (smatch(store, "pam") && smatch(auth->type->name, "digest")) {
+    if (smatch(store, "pam") && auth->type && smatch(auth->type->name, "digest")) {
         mprError("Can't use PAM password stores with digest authentication");
         return MPR_ERR_BAD_ARGS;
     }
@@ -13950,10 +13950,14 @@ void httpRedirect(HttpConn *conn, int status, cchar *targetUri)
         target = httpCreateUri(targetUri, 0);
         if (!target->host) {
             target->host = rx->parsedUri->host;
-            targetUri = httpUriToString(target, 0);
+        }
+        if (!target->scheme) {
+            target->scheme = rx->parsedUri->scheme;
         }
         if (conn->http->redirectCallback) {
             targetUri = (conn->http->redirectCallback)(conn, &status, target);
+        } else {
+            targetUri = httpUriToString(target, 0);
         }
         if (strstr(targetUri, "://") == 0) {
             prev = rx->parsedUri;

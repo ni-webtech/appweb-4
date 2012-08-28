@@ -1,7 +1,6 @@
 <html><head><title>login.esp</title></head>
 <body>
     <p>Please log in</p>
-<% mprLog(0, "REFERRER IS %s\n", getReferrer()); %>
     <% setSessionVar("referrer", getReferrer()); %>
     <form name="details" method="post" action="/auth/post/login">
         Username <input type="text" name="username" value='<%= param("username") %>'><br/>
