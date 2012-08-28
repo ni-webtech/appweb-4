@@ -6125,14 +6125,17 @@ static int pamChat(int msgCount, const struct pam_message **msg, struct pam_resp
 
 bool httpPamVerifyUser(HttpConn *conn)
 {
+    MprBuf              *abilities;
     pam_handle_t        *pamh;
     UserInfo            info;
     struct pam_conv     conv = { pamChat, &info };
     struct group        *gp;
-    int                 res;
+    int                 groups[32];
+    int                 res, i;
    
     mprAssert(conn->username);
     mprAssert(conn->password);
+    mprAssert(!conn->encoded);
 
     info.name = (char*) conn->username;
     info.password = (char*) conn->password;
@@ -6149,9 +6152,28 @@ bool httpPamVerifyUser(HttpConn *conn)
     if (!conn->user) {
         conn->user = mprLookupKey(conn->rx->route->auth->users, conn->username);
     }
-    if (!conn->user && (gp = getgrgid(getgid())) != 0) {
-        /* Create a temporary user with an ability set to the group */
-        conn->user = httpCreateUser(conn->rx->route->auth, conn->username, 0, gp->gr_name);
+    if (!conn->user) {
+        /* 
+            Create a temporary user with a abilities set to the groups 
+         */
+#if UNUSED
+    GETGROUPS_T         groups[32];
+        extern int getugroups();
+        if ((count = getugroups(sizeof(groups) / sizeof(GETGROUPS_T), groups, conn->username, -1)) > 0) {
+#else
+
+        int ngroups = sizeof(groups) / sizeof(int);
+        if ((i = getgrouplist(conn->username, -1, groups, &ngroups)) >= 0) {
+#endif
+            abilities = mprCreateBuf(0, 0);
+            for (i = 0; i < ngroups; i++) {
+                if ((gp = getgrgid(groups[i])) != 0) {
+                    mprPutFmtToBuf(abilities, "%s ", gp->gr_name);
+                }
+                mprAddNullToBuf(abilities);
+                conn->user = httpCreateUser(conn->rx->route->auth, conn->username, 0, mprGetBufStart(abilities));
+            }
+        }
     }
     return 1;
 }
