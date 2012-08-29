@@ -56,6 +56,7 @@ if (Path('src/deps/ejs/ejsLib.c').exists) {
     /*  Internal ejs distribution */
     let dir = bit.dir.src.join('src/deps/ejs')
     cfg = {
+        path: dir,
         dir: dir,
         includes: [ dir ],
         libraries: [ 'mpr', 'http', 'pcre' ]
@@ -78,6 +79,7 @@ if (Path('src/deps/ejs/ejsLib.c').exists) {
     let imports = libdir.files('ejs*.mod') + libraries + incdir.files('ejs*.h') + 
         incdir.files('mpr.h') + incdir.files('http.h') + incdir.files('pcre.h') + incdir.files('sqlite3.h')
     cfg = {
+        path: path,
         dir: path,
         includes: [ incdir ],
         libraries: [ 'ejs', 'mpr', 'mprssl', 'http', 'pcre' ],
