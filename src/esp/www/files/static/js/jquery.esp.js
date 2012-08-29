@@ -101,8 +101,7 @@
         var result = {};
         $.each(elt[0].attributes, function(index, att) {
             if (att.name.indexOf("data-") == 0) {
-                //  MOB -- why bother removing data-
-                result[att.name.substring(5)] = att.value;
+                result[att.name] = att.value;
             }
         });
         return result;
@@ -184,6 +183,25 @@
         }
         elt.data("esp-options", o);
         return this;
+    }
+
+    function anim(effects) {
+        e = $(this);
+        if (effects == "highlight") {
+            e.fadeTo(0, 0.5);
+            e.fadeTo(500, 1);
+        } else if (effects == "fadein") {
+            e.fadeTo(0, 0);
+            e.fadeTo(1000, 1);
+        } else if (effects == "fadeout") {
+            e.fadeTo(0, 1);
+            e.fadeTo(1000, 0);
+        } else if (effects == "bold") {
+            /* MOB Broken */
+            e.css("font-weight", 100);
+            // e.animate({"opacity": 0.1, "font-weight": 900}, 1000);
+            e.animate({"font-weight": 900}, 1000);
+        }
     }
 
     /*
@@ -283,11 +301,11 @@
             var o = $.extend({}, options, elt.data("esp-options") || {}, getDataAttributes(elt));
             elt.data("esp-options", o);
             if (o.updating) {
-                var method = o["refresh-method"] || "GET";
+                var method = o["data-method"] || "GET";
 
                 //  MOB - consider firing events - elt.trigger('http:complete', http);
                 $.ajax({
-                    url: o.refresh,
+                    url: o['data-refresh'],
                     type: method,
                     success: function (data, status, http) { 
                         if (http.status == 200) {
@@ -301,14 +319,14 @@
                     complete: function() {
                         setTimeout(function(elt) { 
                             update.call(elt, o); 
-                        }, o["refresh-period"], elt);
+                        }, o["data-period"], elt);
                     },
                     error: function (http, msg, elt) { 
                         log("Error updating control: " + msg); 
                     }
                 });
             } else {
-                setTimeout(function(elt) { update.call(elt, o);}, o["refresh-period"], elt);
+                setTimeout(function(elt) { update.call(elt, o);}, o["data-period"], elt);
             }
             if (!o.bound) {
                 $(document).bind('keyup.refresh', function (event) {
@@ -326,7 +344,7 @@
          */
         var elt = $(this);
         var refreshCfg = $.extend({}, defaults, options || {});
-        var period = getDataAttributes(elt)["refresh-period"];
+        var period = getDataAttributes(elt)["data-period"];
         setTimeout(function(elt) { 
             update.call(elt, refreshCfg); 
         }, period, elt);
@@ -473,6 +491,21 @@
             toggleUpdating.call(this);
         });
         toggleRefreshControl();
+        return false;
+    });
+
+    /*
+        Rounded corners, shadow
+
+        data-feedback="message"
+        data-feedback-style="override-style""
+        data-feedback-effect="highlight"
+        
+     */
+    $('[data-feedback] a').live('click', function (e) {
+        e = $('<div><p>' + msg + '</p></div>').addClass('esp-feedback');
+        e.center();
+        e.anim("highlight");
         return false;
     });
 
