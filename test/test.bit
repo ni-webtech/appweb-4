@@ -85,6 +85,14 @@ Bit.load({
             platforms: [ 'local' ],
         },
 
+        'test.js': {
+            path: 'web/js',
+            build: "
+                trace('Copy', 'ESP JS files')
+                cp('../src/esp/www/files/static/js', 'web/js')
+            ",
+        },
+
         test: {
             action: "
                 let ro = {noio: true}
@@ -137,6 +145,7 @@ Bit.load({
                 rm('cache/*')
                 rm('app/cache/*')
                 rm('junk/**')
+                rm('web/js')
                 Path('cache/.keep').write()
                 Path('app/cache/.keep').write()
                 Path('web/caching/cache.cgi').remove()

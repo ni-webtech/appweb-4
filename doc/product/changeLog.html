@@ -70,23 +70,24 @@
                 <li>Enhanced role-based authentication management for granular access control.</li>
                 <li>Web based form authentication and custom authentication support</li>
                 <li>Customizable back-end password stores.</li>
-                <li>auth/httpPassword program renamed to authpass for clarity</li>
-                <li>AuthMethod renamed to AuthStore for clarity (old directive preserved for compatibility)</li>
-                <li>AuthName renamed to AuthRealm for clarity (old directive preserved for compatibility)</li>
                 <li>Require ability "token" directive to specify required route abilities for access</li>
                 <li>Session state management and automatic cookie management. Optimizes authentication via session
                 storage of credentials. </li> 
+                <li>Other associated authentication changes include:
+                    <ul>
+                        <li>auth/httpPassword program renamed to authpass for clarity</li>
+                        <li>AuthMethod renamed to AuthStore for clarity (old directive preserved for compatibility)</li>
+                        <li>AuthName renamed to AuthRealm for clarity (old directive preserved for compatibility)</li>
+                    </ul>
             </ul>
             <h3>Minor Features</h3>
             <ul>
                 <li>Added ESP migrations</li>
                 <li>Upgraded ESP - Smart tables, HTML5 generation</li>
                 <li>Added HttpOnly cookie management in httpSetCookie()</li>
-                <li>Xcode project to use unique output directory</li>
                 <li>Added lazy SSL loading. SSL library only loaded when SSL requests arrive</li>
                 <li>Support prior SSL library configuration</li>
                 <li>Add mprCreateEventOutside for calling back into Appweb from foreign threads</li>
-                <li>Update MatrixSSL support to the latest version</li>
                 <li>Add SSL unit tests</li>
                 <li>Add support for Windows 8</li>
                 <li>Add support for Visual Studio 2012</li>
@@ -111,7 +112,10 @@
                 <li>Directory listings path names to be relative paths</li>
                 <li>Etag header handling of 64 bit values</li>
                 <li>Module loading by module name instead of module path</li>
+                <li>Xcode project to use unique output directory</li>
+                <li>Update MatrixSSL support to the latest version</li>
             </ul>
+
             <a id="r4.0.0"></a>
             <h2 class="section">Changes in 4.0.0</h2>
             <h3>Major Features</h3>
