@@ -270,7 +270,15 @@ extern int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, c
  */
 extern MaServer *maCreateServer(MaAppweb *appweb, cchar *name);
 
-//  MOB
+/** 
+    Get the default authentication object for the server
+    @description The server has a default host, which in turn has a default route. Each route has an authentication
+        object to control access to server resources. This call retrieves that authentication object for use with the
+        HttpAuth APIs.
+    @param server MaServer object
+    @return HttpAuth object
+    @ingroup MaServer
+ */
 HttpAuth *maGetDefaultAuth(MaServer *server);
 
 /**

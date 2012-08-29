@@ -8676,7 +8676,7 @@ extern void mprDestroy(int how);
     @return An empty string
     @ingroup Mpr
  */
-extern char* mprEmptyString();
+extern char *mprEmptyString();
 
 /**
     Get the application directory

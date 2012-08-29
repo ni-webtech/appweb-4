@@ -767,6 +767,13 @@
     </member>
     <member kind="define">
       <type>#define</type>
+      <name>MPR_HASH_UNIQUE</name>
+      <anchorfile>mpr_8h.html</anchorfile>
+      <anchor>ab63883c0a9cddb7697ef649141d0553c</anchor>
+      <arglist></arglist>
+    </member>
+    <member kind="define">
+      <type>#define</type>
       <name>MPR_HTTP_DATE</name>
       <anchorfile>mpr_8h.html</anchorfile>
       <anchor>a4de2c3f94ca0f0e9806af2ed5b645829</anchor>
@@ -2166,6 +2173,13 @@
       <arglist>(MprList *src)</arglist>
     </member>
     <member kind="function">
+      <type>struct MprSsl *</type>
+      <name>mprCloneSsl</name>
+      <anchorfile>group___mpr_socket.html</anchorfile>
+      <anchor>ga1542af34e1a866b23c7c19eb44fece34</anchor>
+      <arglist>(MprSsl *src)</arglist>
+    </member>
+    <member kind="function">
       <type>void</type>
       <name>mprCloseCmdFd</name>
       <anchorfile>group___mpr_cmd.html</anchorfile>
@@ -2271,10 +2285,10 @@
       <arglist>(MprDispatcher *dispatcher, cchar *name, MprTime period, void *proc, void *data, int flags)</arglist>
     </member>
     <member kind="function">
-      <type>void</type>
+      <type>int</type>
       <name>mprCreateEventOutside</name>
       <anchorfile>group___mpr_event.html</anchorfile>
-      <anchor>gaaf6699974b0854252b3ea9dc3160d8cf</anchor>
+      <anchor>ga657761883a278d7b8e3f597c31f31a9c</anchor>
       <arglist>(MprDispatcher *dispatcher, void *proc, void *data)</arglist>
     </member>
     <member kind="function">
@@ -5303,16 +5317,16 @@
     </member>
     <member kind="function">
       <type>int</type>
-      <name>scasecmp</name>
+      <name>scaselesscmp</name>
       <anchorfile>group___mpr_string.html</anchorfile>
-      <anchor>gac0a146492e745c3406087beb673a63a3</anchor>
+      <anchor>gaf9cb27956141ddc4724cca9903fa69b2</anchor>
       <arglist>(cchar *s1, cchar *s2)</arglist>
     </member>
     <member kind="function">
       <type>bool</type>
-      <name>scasematch</name>
+      <name>scaselessmatch</name>
       <anchorfile>group___mpr_string.html</anchorfile>
-      <anchor>gad8d06beb6115f6fb5eb992424ed5a3ab</anchor>
+      <anchor>ga021eac46fe21719fb1f9c9d257f64280</anchor>
       <arglist>(cchar *s1, cchar *s2)</arglist>
     </member>
     <member kind="function">
@@ -5340,8 +5354,8 @@
       <type>char *</type>
       <name>scontains</name>
       <anchorfile>group___mpr_string.html</anchorfile>
-      <anchor>ga79b460442c5d5e907a04b1e77d2ff9e4</anchor>
-      <arglist>(cchar *str, cchar *pattern, ssize limit)</arglist>
+      <anchor>ga3e0b725c7dc165d8e468928ddc1a4462</anchor>
+      <arglist>(cchar *str, cchar *pattern)</arglist>
     </member>
     <member kind="function">
       <type>ssize</type>
@@ -5351,10 +5365,10 @@
       <arglist>(char *dest, ssize destMax, cchar *src)</arglist>
     </member>
     <member kind="function">
-      <type>int</type>
+      <type>bool</type>
       <name>sends</name>
       <anchorfile>group___mpr_string.html</anchorfile>
-      <anchor>gac13036fa6e354ced672de4989efb894d</anchor>
+      <anchor>ga2bec6f1bdddf77d00badb855098b9ec6</anchor>
       <arglist>(cchar *str, cchar *suffix)</arglist>
     </member>
     <member kind="function">
@@ -5422,9 +5436,9 @@
     </member>
     <member kind="function">
       <type>int</type>
-      <name>sncasecmp</name>
+      <name>sncaselesscmp</name>
       <anchorfile>group___mpr_string.html</anchorfile>
-      <anchor>gae254b45feeafd5e5fbc0601f5a8e3376</anchor>
+      <anchor>ga30d6259caa94ed51abd25be83c0c4972</anchor>
       <arglist>(cchar *s1, cchar *s2, ssize len)</arglist>
     </member>
     <member kind="function">
@@ -5440,6 +5454,13 @@
       <anchorfile>group___mpr_string.html</anchorfile>
       <anchor>ga5217429e3f1dd3731530fe287bd893a7</anchor>
       <arglist>(cchar *s1, cchar *s2, ssize len)</arglist>
+    </member>
+    <member kind="function">
+      <type>char *</type>
+      <name>sncontains</name>
+      <anchorfile>group___mpr_string.html</anchorfile>
+      <anchor>ga264efcf6cbe5b0258e4947b9d1fce573</anchor>
+      <arglist>(cchar *str, cchar *pattern, ssize limit)</arglist>
     </member>
     <member kind="function">
       <type>ssize</type>
@@ -6138,16 +6159,16 @@
     </member>
     <member kind="function">
       <type>int</type>
-      <name>scasecmp</name>
+      <name>scaselesscmp</name>
       <anchorfile>group___mpr_string.html</anchorfile>
-      <anchor>gac0a146492e745c3406087beb673a63a3</anchor>
+      <anchor>gaf9cb27956141ddc4724cca9903fa69b2</anchor>
       <arglist>(cchar *s1, cchar *s2)</arglist>
     </member>
     <member kind="function">
       <type>bool</type>
-      <name>scasematch</name>
+      <name>scaselessmatch</name>
       <anchorfile>group___mpr_string.html</anchorfile>
-      <anchor>gad8d06beb6115f6fb5eb992424ed5a3ab</anchor>
+      <anchor>ga021eac46fe21719fb1f9c9d257f64280</anchor>
       <arglist>(cchar *s1, cchar *s2)</arglist>
     </member>
     <member kind="function">
@@ -6168,8 +6189,8 @@
       <type>char *</type>
       <name>scontains</name>
       <anchorfile>group___mpr_string.html</anchorfile>
-      <anchor>ga79b460442c5d5e907a04b1e77d2ff9e4</anchor>
-      <arglist>(cchar *str, cchar *pattern, ssize limit)</arglist>
+      <anchor>ga3e0b725c7dc165d8e468928ddc1a4462</anchor>
+      <arglist>(cchar *str, cchar *pattern)</arglist>
     </member>
     <member kind="function">
       <type>ssize</type>
@@ -6179,10 +6200,10 @@
       <arglist>(char *dest, ssize destMax, cchar *src)</arglist>
     </member>
     <member kind="function">
-      <type>int</type>
+      <type>bool</type>
       <name>sends</name>
       <anchorfile>group___mpr_string.html</anchorfile>
-      <anchor>gac13036fa6e354ced672de4989efb894d</anchor>
+      <anchor>ga2bec6f1bdddf77d00badb855098b9ec6</anchor>
       <arglist>(cchar *str, cchar *suffix)</arglist>
     </member>
     <member kind="function">
@@ -6250,9 +6271,9 @@
     </member>
     <member kind="function">
       <type>int</type>
-      <name>sncasecmp</name>
+      <name>sncaselesscmp</name>
       <anchorfile>group___mpr_string.html</anchorfile>
-      <anchor>gae254b45feeafd5e5fbc0601f5a8e3376</anchor>
+      <anchor>ga30d6259caa94ed51abd25be83c0c4972</anchor>
       <arglist>(cchar *s1, cchar *s2, ssize len)</arglist>
     </member>
     <member kind="function">
@@ -6261,6 +6282,13 @@
       <anchorfile>group___mpr_string.html</anchorfile>
       <anchor>ga5217429e3f1dd3731530fe287bd893a7</anchor>
       <arglist>(cchar *s1, cchar *s2, ssize len)</arglist>
+    </member>
+    <member kind="function">
+      <type>char *</type>
+      <name>sncontains</name>
+      <anchorfile>group___mpr_string.html</anchorfile>
+      <anchor>ga264efcf6cbe5b0258e4947b9d1fce573</anchor>
+      <arglist>(cchar *str, cchar *pattern, ssize limit)</arglist>
     </member>
     <member kind="function">
       <type>ssize</type>
@@ -7622,10 +7650,10 @@
       <arglist>(MprDispatcher *dispatcher, cchar *name, MprTime period, void *proc, void *data, int flags)</arglist>
     </member>
     <member kind="function">
-      <type>void</type>
+      <type>int</type>
       <name>mprCreateEventOutside</name>
       <anchorfile>group___mpr_event.html</anchorfile>
-      <anchor>gaaf6699974b0854252b3ea9dc3160d8cf</anchor>
+      <anchor>ga657761883a278d7b8e3f597c31f31a9c</anchor>
       <arglist>(MprDispatcher *dispatcher, void *proc, void *data)</arglist>
     </member>
     <member kind="function">
@@ -7937,6 +7965,13 @@
       <anchorfile>group___mpr_socket.html</anchorfile>
       <anchor>ga48875519d20f48a69a66b233d411f62f</anchor>
       <arglist>(cchar *name, MprSocketProvider *provider)</arglist>
+    </member>
+    <member kind="function">
+      <type>struct MprSsl *</type>
+      <name>mprCloneSsl</name>
+      <anchorfile>group___mpr_socket.html</anchorfile>
+      <anchor>ga1542af34e1a866b23c7c19eb44fece34</anchor>
+      <arglist>(MprSsl *src)</arglist>
     </member>
     <member kind="function">
       <type>void</type>

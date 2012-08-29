@@ -24,6 +24,13 @@
       <arglist>(MaAppweb *appweb, cchar *name)</arglist>
     </member>
     <member kind="function">
+      <type>HttpAuth *</type>
+      <name>maGetDefaultAuth</name>
+      <anchorfile>group___ma_server.html</anchorfile>
+      <anchor>gaa0bedf682051dbf71477308356bf8f06</anchor>
+      <arglist>(MaServer *server)</arglist>
+    </member>
+    <member kind="function">
       <type>int</type>
       <name>maRunSimpleWebServer</name>
       <anchorfile>group___ma_server.html</anchorfile>

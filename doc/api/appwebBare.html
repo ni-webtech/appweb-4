@@ -22,6 +22,7 @@
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#group___ma_server_1ga95cc0d8c3f161d0a9d4a2a4925e50158" class="nameRef">maConfigureServer</a>(<a href="#group___ma_server" class="ref">MaServer</a> *server, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *configFile, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *home, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *documents, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *ip, int port)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Configure a web server.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___ma_appweb" class="ref">MaAppweb*</a></td><td><a href="#appweb_8h_1a3c5d11ffcda01cb1d75ae24faa39cdee" class="nameRef">maCreateAppweb</a>()</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create the Appweb object.</td></tr>
 <tr class="apiDef"><td class="apiType"><a href="#group___ma_server" class="ref">MaServer*</a></td><td><a href="#group___ma_server_1gad21a5a81aa006217ecc220da1198ff7f" class="nameRef">maCreateServer</a>(<a href="#group___ma_appweb" class="ref">MaAppweb</a> *appweb, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Create a MaServer object.</td></tr>
+<tr class="apiDef"><td class="apiType"><a href="httpBare.html#group___http_auth" class="ref">HttpAuth*</a></td><td><a href="#group___ma_server_1gaa0bedf682051dbf71477308356bf8f06" class="nameRef">maGetDefaultAuth</a>(<a href="#group___ma_server" class="ref">MaServer</a> *server)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get the default authentication object for the server.</td></tr>
 <tr class="apiDef"><td class="apiType">void</td><td><a href="#appweb_8h_1aeea4a201c9a8cca9521cd006436b8570" class="nameRef">maGetUserGroup</a>(<a href="#group___ma_appweb" class="ref">MaAppweb</a> *appweb)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Get the user group.</td></tr>
 <tr class="apiDef"><td class="apiType">int</td><td><a href="#appweb_8h_1aba2d0d4cfa73dbc028719098908eaa89" class="nameRef">maLoadModule</a>(<a href="#group___ma_appweb" class="ref">MaAppweb</a> *appweb, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *libname)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Load an appweb module.</td></tr>
 <tr class="apiDef"><td class="apiType">struct MaServer*</td><td><a href="#appweb_8h_1af5f955fddd686c69147a13fe34f57a9b" class="nameRef">maLookupServer</a>(<a href="#group___ma_appweb" class="ref">MaAppweb</a> *appweb, <a href="mprBare.html#mpr_8h_1a0f128c3e0c83721af0220c00554e9c4e" class="ref">cchar</a> *name)</td></tr><tr class="apiBrief"><td>&nbsp;</td><td>Lookup a server.</td></tr>
@@ -221,6 +222,25 @@ Unique name for this server.
     <dl><dt>Returns:</dt><dd>MaServer A newly created MaServer object. Use mprFree to free and release.</dd></dl>
     <dl><dt>See Also:</dt><dd>
     <a href="#group___ma_server" class="ref">MaServer</a>, <a href="#group___ma_server_1ga95cc0d8c3f161d0a9d4a2a4925e50158" class="ref">maConfigureServer</a>, <a href="#group___ma_server_1ga88a2bd1d0f26f024e6cb2d693c13e4f7" class="ref">maRunSimpleWebServer</a>, <a href="#group___ma_server_1ga4994c273e87409b094418dd7bd370ee4" class="ref">maRunWebServer</a></dd></dl>
+  </div>
+</div>
+<a name="group___ma_server_1gaa0bedf682051dbf71477308356bf8f06"></a>
+<div class="api">
+  <div class="prototype">
+    <a href="httpBare.html#group___http_auth" class="ref">HttpAuth</a> *
+    maGetDefaultAuth
+(<a href="#group___ma_server" class="ref">MaServer</a> *server)
+  </div>
+  <div class="apiDetail">
+<p>Get the default authentication object for the server.</p>
+    <dl><dt><b>Description</b>:</dt><dd>The server has a default host, which in turn has a default route. Each route has an authentication object to control access to server resources. This call retrieves that authentication object for use with the HttpAuth APIs.</dd></dl>
+    <dl><dt>Parameters:</dt><dd>
+    <table class="parameters" title="Parameters">
+    <tr><td class="param">server</td><td>MaServer object.</td>
+    </table></dd></dl>
+    <dl><dt>Returns:</dt><dd>HttpAuth object.</dd></dl>
+    <dl><dt>See Also:</dt><dd>
+    <a href="#group___ma_server" class="ref">MaServer</a>, <a href="#group___ma_server_1ga95cc0d8c3f161d0a9d4a2a4925e50158" class="ref">maConfigureServer</a>, <a href="#group___ma_server_1gad21a5a81aa006217ecc220da1198ff7f" class="ref">maCreateServer</a>, <a href="#group___ma_server_1ga88a2bd1d0f26f024e6cb2d693c13e4f7" class="ref">maRunSimpleWebServer</a>, <a href="#group___ma_server_1ga4994c273e87409b094418dd7bd370ee4" class="ref">maRunWebServer</a></dd></dl>
   </div>
 </div>
 <a name="group___ma_server_1ga88a2bd1d0f26f024e6cb2d693c13e4f7"></a>

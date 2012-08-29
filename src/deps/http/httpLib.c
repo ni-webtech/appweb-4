@@ -419,11 +419,11 @@ void httpSetAuthPost(HttpRoute *parent, cchar *loginPage, cchar *loginService, c
         httpFinalizeRoute(route);
     }
     if (loginService && *loginService) {
-        route = httpBindRoute(parent, loginService, loginServiceProc);
+        route = httpCreateProcRoute(parent, loginService, loginServiceProc);
         route->auth->type = 0;
     }
     if (logoutService && *logoutService) {
-        route = httpBindRoute(parent, logoutService, logoutServiceProc);
+        route = httpCreateProcRoute(parent, logoutService, logoutServiceProc);
         route->auth->type = 0;
     }
 }
@@ -736,48 +736,6 @@ static bool verifyUser(HttpConn *conn)
 static void postLogin(HttpConn *conn)
 {
     httpRedirect(conn, HTTP_CODE_MOVED_TEMPORARILY, conn->rx->route->auth->loginPage);
-}
-
-
-int httpWriteAuthFile(HttpAuth *auth, char *path)
-{
-    MprFile         *file;
-    MprKey          *kp, *ap;
-    HttpRole        *role;
-    HttpUser        *user;
-    char            *tempFile;
-
-    tempFile = mprGetTempPath(NULL);
-    if ((file = mprOpenFile(tempFile, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0444)) == 0) {
-        mprError("Can't open %s", tempFile);
-        return MPR_ERR_CANT_OPEN;
-    }
-    mprWriteFileFmt(file, "#\n#   %s - Authorization data\n#\n\n", mprGetPathBase(path));
-
-    for (ITERATE_KEY_DATA(auth->roles, kp, role)) {
-        mprWriteFileFmt(file, "Role %s", kp->key);
-        for (ITERATE_KEYS(role->abilities, ap)) {
-            mprWriteFileFmt(file, " %s", ap->key);
-        }
-        mprPutFileChar(file, '\n');
-    }
-    mprPutFileChar(file, '\n');
-    for (ITERATE_KEY_DATA(auth->users, kp, user)) {
-        mprWriteFileFmt(file, "User %s %s %s", user->name, user->password, user->roles);
-#if UNUSED
-        for (ITERATE_KEYS(user->abilities, ap)) {
-            mprWriteFileFmt(file, " %s", ap->key);
-        }
-#endif
-        mprPutFileChar(file, '\n');
-    }
-    mprCloseFile(file);
-    unlink(path);
-    if (rename(tempFile, path) < 0) {
-        mprError("Can't create new %s", path);
-        return MPR_ERR_CANT_WRITE;
-    }
-    return 0;
 }
 
 
@@ -8055,7 +8013,7 @@ HttpRoute *httpCreateAliasRoute(HttpRoute *parent, cchar *pattern, cchar *path, 
 /*
     This routine binds a new route to a URI. It creates a handler, route and binds a callback to that route. 
  */
-HttpRoute *httpBindRoute(HttpRoute *parent, cchar *pattern, HttpProc proc)
+HttpRoute *httpCreateProcRoute(HttpRoute *parent, cchar *pattern, HttpProc proc)
 {
     HttpRoute   *route;
 

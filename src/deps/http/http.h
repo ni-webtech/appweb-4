@@ -57,7 +57,6 @@ struct HttpUser;
     #define HTTP_MAX_RECEIVE_BODY      (128 * 1024 * 1024)  /**< Maximum incoming body size */
     #define HTTP_MAX_REQUESTS          20                   /**< Maximum concurrent requests */
     #define HTTP_MAX_CLIENTS           10                   /**< Maximum concurrent client endpoints */
-//  MOB - implement
     #define HTTP_MAX_SESSIONS          100                  /**< Maximum concurrent sessions */
     #define HTTP_MAX_STAGE_BUFFER      (32 * 1024)          /**< Maximum buffer for any stage */
     #define HTTP_CLIENTS_HASH          (131)                /**< Hash table for client IP addresses */
@@ -2269,7 +2268,7 @@ extern void httpUseWorker(HttpConn *conn, MprDispatcher *dispatcher, MprEvent *e
 
 /********************************** HttpAuth *********************************/
 /*  
-    Auth Flags 
+    Authorization flags for HttpAuth.flags
  */
 #define HTTP_ALLOW_DENY     0x1           /**< Run allow checks before deny checks */
 #define HTTP_DENY_ALLOW     0x2           /**< Run deny checks before allow checks */
@@ -2278,13 +2277,14 @@ extern void httpUseWorker(HttpConn *conn, MprDispatcher *dispatcher, MprEvent *e
 
 /**
     AuthType callback to generate a response requesting the user login
+    This should call httpError if such a response cannot be generated.
     @param conn HttpConn connection object 
     @ingroup HttpAuth
  */
 typedef void (*HttpAskLogin)(HttpConn *conn);
 
 /**
-    AuthType callback to parse the HTTP 'Authorize (client) and 'www-authenticate' (server) headers
+    AuthType callback to parse the HTTP 'Authorize' (client) and 'www-authenticate' (server) headers
     @param conn HttpConn connection object 
     @return Zero if successful, otherwise a negative MPR error code
     @ingroup HttpAuth
@@ -2292,14 +2292,14 @@ typedef void (*HttpAskLogin)(HttpConn *conn);
 typedef int (*HttpParseAuth)(HttpConn *conn);
 
 /**
-    AuthType callback Set the necessary HTTP authorization headers for a client request
+    AuthType callback to set the necessary HTTP authorization headers for a client request
     @param conn HttpConn connection object 
     @ingroup HttpAuth
  */
 typedef void (*HttpSetAuth)(HttpConn *conn);
 
 /**
-    AuthStore callback Verify the user credentials callback
+    AuthStore callback Verify the user credentials
     @param conn HttpConn connection object 
     @return True if the user credentials can validate
     @ingroup HttpAuth
@@ -2312,27 +2312,22 @@ typedef bool (*HttpVerifyUser)(HttpConn *conn);
  */
 typedef struct HttpAuthType {
     char            *name;          /**< Authentication protocol name: 'basic', 'digest', 'post' */
-    HttpAskLogin    askLogin;       /**< Callback to generate a login client response */
-    HttpParseAuth   parseAuth;      /**< Callback to parse the authentication HTTP headers */
-    HttpSetAuth     setAuth;        /**< Callback to set authentication HTTP response headers */
+    HttpAskLogin    askLogin;       /**< Callback to generate a client login response */
+    HttpParseAuth   parseAuth;      /**< Callback to parse the HTTP authentication headers */
+    HttpSetAuth     setAuth;        /**< Callback to set the HTTP response authentication headers */
 } HttpAuthType;
 
 
 /*
-    Password backend store. Support stores are: pam, file
+    Password backend store. Support stores are: pam, internal
  */
 typedef struct HttpAuthStore {
-    char            *name;          /**< Authentication password store name: 'pam', 'file' */
+    char            *name;          /**< Authentication password store name: 'pam', 'internal' */
     HttpVerifyUser  verifyUser;
 } HttpAuthStore;
 
-extern int httpAddAuthType(Http *http, cchar *name, HttpAskLogin askLogin, HttpParseAuth parse, HttpSetAuth cred);
-
-extern int httpAddAuthStore(Http *http, cchar *name, HttpVerifyUser verifyUser);
-
 /** 
-    User Authorization
-    File-based authorization backend
+    User Authorization. A user has a name, password and a set of roles. These roles define a set of abilities.
     @stability Evolving
     @ingroup HttpAuth
     @see HttpAuth
@@ -2345,7 +2340,7 @@ typedef struct HttpUser {
 } HttpUser;
 
 /** 
-    Authorization Roles
+    Authorization Roles. Roles are named sets of abilities.
     @stability Evolving
     @ingroup HttpAuth
     @see HttpAuth
@@ -2355,7 +2350,6 @@ typedef struct  HttpRole {
     MprHash         *abilities;             /**< Role's abilities */
 } HttpRole;
 
-//  MOB - check all @see
 /** 
     Authorization
     @description HttpAuth is the foundation authorization object and is used by HttpRoute.
@@ -2363,33 +2357,56 @@ typedef struct  HttpRole {
     access to a given resource.
     @stability Evolving
     @defgroup HttpAuth HttpAuth
-    @see HttpAuth HttpGetPassword HttpUser HttpVerifyUser httpAddUser httpCreateAuth httpCreateUser httpRemoveUser 
-        httpSetAuthAnyValidUser httpSetAuthDeny httpSetAuthOrder httpSetAuthPost httpSetAuthQop httpSetAuthRealm
-        httpSetAuthPermittedUsers 
+    @see HttpAskLogin HttpAuth HttpAuthStore HttpAuthType HttpParseAuth HttpRole HttpSetAuth HttpVerifyUser HttpUser
+        HttpVerifyUser httpAddAuthType httpAddAuthStore httpAddRole httpAddUser httpCanUser httpCheckAuth
+        httpComputeAllUserAbilities httpComputeUserAbilities httpCreateRole httpCreateAuth httpCreateRole httpCreateUser
+        httpIsAuthenticated httpLogin httpRemoveRole httpRemoveUser httpSetAuthAllow httpSetAuthAnyValidUser
+        httpSetAuthAutoLogin httpSetAuthDeny httpSetAuthOrder httpSetAuthPermittedUsers httpSetAuthPost httpSetAuthQop
+        httpSetAuthRealm httpSetAuthRequiredAbilities httpSetAuthSecure httpSetAuthStore httpSetAuthType
+
  */
 typedef struct HttpAuth {
     struct HttpAuth *parent;                /**< Parent auth */
     char            *realm;                 /**< Realm of access */
     int             flags;                  /**< Authorization flags */
     int             version;                /**< Inherited from parent and incremented on changes */
-
     MprHash         *allow;                 /**< Clients to allow */
     MprHash         *deny;                  /**< Clients to deny */
     MprHash         *users;                 /**< Hash of users */
     MprHash         *roles;                 /**< Hash of roles */
-
     MprHash         *requiredAbilities;     /**< Set of required abilities (all are required) */
     MprHash         *permittedUsers;        /**< User name for access */
-
     char            *loginPage;             /**< Web page for user login for 'post' type */
     char            *loggedIn;              /**< Target URI after logging in */
     char            *qop;                   /**< Quality of service */
-
     HttpAuthType    *type;                  /**< Authorization protocol type (basic|digest|form|custom)*/
     HttpAuthStore   *store;                 /**< Authorization password backend (pam|file|ldap|custom)*/
-
 } HttpAuth;
 
+
+/**
+    Add an authorization type. The standard types are 'basic', 'digest' and 'post'.
+    @description This creates an AuthType object with the defined name and callbacks.
+    @param http Http service object.
+    @param name Unique authorization type name
+    @param askLogin Callback to generate a client login response
+    @param parse Callback to parse the HTTP authentication headers
+    @param setAuth Callback to set the HTTP response authentication headers
+    @return Zero if successful, otherwise a negative MPR error code
+    @ingroup HttpAuth
+ */
+extern int httpAddAuthType(Http *http, cchar *name, HttpAskLogin askLogin, HttpParseAuth parse, HttpSetAuth setAuth);
+
+/**
+    Add an authorization store for password validation. The standard types are 'pam' and 'internal'
+    @description This creates an AuthType object with the defined name and callbacks.
+    @param http Http service object.
+    @param name Unique authorization type name
+    @param verifyUser Callback to verify the username and password contained in the HttpConn object passed to the callback.
+    @return Zero if successful, otherwise a negative MPR error code
+    @ingroup HttpAuth
+ */
+extern int httpAddAuthStore(Http *http, cchar *name, HttpVerifyUser verifyUser);
 
 /**
     Add a role
@@ -2406,7 +2423,6 @@ extern int httpAddRole(HttpAuth *auth, cchar *role, cchar *abilities);
     Add a user
     @description This creates the user and adds the user to the authentication database.
     @param auth Auth object allocated by #httpCreateAuth.
-    @param realm Authentication realm
     @param user User name to add
     @param password User password. The password should not be encrypted. The backend will encrypt as required.
     @param abilities Space separated list of abilities.
@@ -2423,6 +2439,9 @@ extern int httpAddUser(HttpAuth *auth, cchar *user, cchar *password, cchar *abil
     @ingroup HttpAuth
  */
 extern bool httpCanUser(HttpConn *conn, MprHash *requiredAbilities);
+
+extern void httpComputeAllUserAbilities(HttpAuth *auth);
+extern void httpComputeUserAbilities(HttpAuth *auth, HttpUser *user);
 
 /**
     Create an authentication object
@@ -2455,10 +2474,27 @@ HttpRole *httpCreateRole(HttpAuth *auth, cchar *name, cchar *abilities);
  */
 extern HttpUser *httpCreateUser(HttpAuth *auth, cchar *name, cchar *password, cchar *abilities);
 
-//MOB DOC
+/**
+    Test if the user is authenticated
+    @param conn HttpConn connection object 
+    @return True if the username and password have been authenticated and the user has the abilities required
+        to access the requested resource document.
+    @ingroup HttpAuth
+ */
 extern bool httpIsAuthenticated(HttpConn *conn);
-extern bool httpLogin(HttpConn *conn, cchar *username, cchar *password);
 
+/**
+    Log the user in. 
+    @description This will verify the supplied username and password. If the user is successfully logged in, 
+    the user identity will be stored in session state for fast authentication on subsequent requests.
+    Note: this does not verify any user abilities.
+    @param conn HttpConn connection object 
+    @param username User name to authenticate
+    @param password Password for the user
+    @return True if the username and password have been authenticated.
+    @ingroup HttpAuth
+ */
+extern bool httpLogin(HttpConn *conn, cchar *username, cchar *password);
 
 /**
     Remove a role
@@ -2496,9 +2532,14 @@ extern void httpSetAuthAllow(HttpAuth *auth, cchar *ip);
  */
 extern void httpSetAuthAnyValidUser(HttpAuth *auth);
 
-//  MOB
+/**
+    Enable auto login
+    @description If auto-login is enabled, access will be granted to all resources.
+    @param auth Auth object allocated by #httpCreateAuth.
+    @param on Set to true to enable auto login.
+    @ingroup HttpAuth
+ */
 extern void httpSetAuthAutoLogin(HttpAuth *auth, bool on);
-
 
 /**
     Deny access by a client IP address
@@ -2507,14 +2548,6 @@ extern void httpSetAuthAutoLogin(HttpAuth *auth, bool on);
     @ingroup HttpAuth
  */
 extern void httpSetAuthDeny(HttpAuth *auth, cchar *ip);
-
-/**
-    Define a URI to use for "post" AuthType logins
-    @param auth Authorization object allocated by #httpCreateAuth.
-    @param uri URI to which to redirect the client for login.
-    @ingroup HttpAuth
- */
-extern void httpSetAuthLoginUri(HttpAuth *auth, cchar *uri);
 
 /**
     Set the auth allow/deny order
@@ -2532,6 +2565,21 @@ extern void httpSetAuthOrder(HttpAuth *auth, int order);
     @ingroup HttpAuth
  */
 extern void httpSetAuthPermittedUsers(HttpAuth *auth, cchar *users);
+
+/**
+    Define the callbabcks for the 'post' authentication type.
+    @description This creates a new route for the login page.
+    @param parent Parent route from which to inherit when creating a route for the login page.
+    @param loginPage Web page URI for the user to enter username and password.
+    @param loginService URI to use for the internal login service. To use your own login URI, set to this the empty string. 
+    @param logoutService URI to use to log the user out. To use your won logout URI, set this to the empty string.
+    @param loggedIn The client is redirected to this URI once logged in. Use a "referrer:" prefix to the URI to 
+        redirect the user to the referring URI before the loginPage. If the referrer cannot be determined, the base
+        URI is utilized.
+    @ingroup HttpAuth
+ */
+extern void httpSetAuthPost(struct HttpRoute *parent, cchar *loginPage, cchar *loginService, cchar *logoutService, 
+    cchar *loggedIn);
 
 /**
     Set the required quality of service for digest authentication
@@ -2585,18 +2633,6 @@ extern int httpSetAuthStore(HttpAuth *auth, cchar *store);
  */
 extern int httpSetAuthType(HttpAuth *auth, cchar *proto, cchar *details);
 
-/**
-    Save the authorization database file
-    AuthFile schema:
-        User name password abilities...
-        Role name abilities...
-    @param auth Auth object allocated by #httpCreateAuth.
-    @param path Path name of file
-    @return "Zero" if successful, otherwise a negative MPR error code
-    @ingroup HttpAuth
-    @internal 
- */
-extern int httpWriteAuthFile(HttpAuth *auth, char *path);
 
 /*
     Internal
@@ -2609,10 +2645,10 @@ extern int httpDigestParse(HttpConn *conn);
 extern void httpDigestSetHeaders(HttpConn *conn);
 extern bool httpPamVerifyUser(HttpConn *conn);
 extern bool httpInternalVerifyUser(HttpConn *conn);
+extern int httpCheckAuth(HttpConn *conn);
 extern void httpComputeAllUserAbilities(HttpAuth *auth);
 extern void httpComputeUserAbilities(HttpAuth *auth, HttpUser *user);
 extern void httpInitAuth(Http *http);
-extern int httpCheckAuth(HttpConn *conn);
 extern HttpAuth *httpCreateInheritedAuth(HttpAuth *parent);
 extern HttpAuthType *httpLookupAuthType(cchar *type);
 
@@ -2755,6 +2791,25 @@ extern ssize httpUpdateCache(HttpConn *conn, cchar *uri, cchar *data, MprTime li
     @ingroup HttpCache
   */
 extern ssize httpWriteCached(HttpConn *conn);
+
+/******************************** Proc Handler *************************************/
+/**
+    Proc handler callback procedure 
+    @description The Procedure Handler provides a simple mechanism to bind "C" callback functions with URIs.
+    @param conn HttpConn connection object created via $httpCreateConn
+    @defgroup HttpConn HttpConn
+ */
+typedef void (*HttpProc)(HttpConn *conn);
+
+/**
+    Define a function procedure to invoke when the specified URI is requested.
+    @description This creates the role with given abilities. Ability words can also be other roles.
+    @param uri URI to bind with. When this URI is requested, the callback will be invoked if the procHandler is 
+        configured for the request route.
+    @param fun Callback function procedure
+    @ingroup HttpProc
+ */
+extern void httpDefineProc(cchar *uri, HttpProc fun);
 
 /********************************** HttpRoute  *********************************/
 /*
@@ -3162,12 +3217,6 @@ extern void httpAddStaticRoute(HttpRoute *parent);
  */
 extern void httpBackupRouteLog(HttpRoute *route);
 
-//  MOB
-//  MOB DOC - Add section for HttpProc
-typedef void (*HttpProc)(HttpConn *conn);
-extern void httpDefineProc(cchar *name, HttpProc fun);
-extern HttpRoute *httpBindRoute(HttpRoute *parent, cchar *pattern, HttpProc proc);
-
 /**
     Clear the pipeline stages for the route
     @description This resets the configured pipeline stages for the route.
@@ -3217,6 +3266,18 @@ extern HttpRoute *httpCreateDefaultRoute(struct HttpHost *host);
     @ingroup HttpRoute
  */
 extern HttpRoute *httpCreateInheritedRoute(HttpRoute *route);
+
+/**
+    Create a route for use with the Proc Handler
+    @description This call creates a route inheriting from a parent route. The new route is configured for use with the
+        procHandler and the given callback procedure.
+    @param parent Parent route from which to inherit
+    @param pattern Pattern to match URIs 
+    @param proc Callback procedure to invoke
+    @return Newly created route
+    @ingroup HttpRoute
+ */
+extern HttpRoute *httpCreateProcRoute(HttpRoute *parent, cchar *pattern, HttpProc proc);
 
 /**
     Create a route for a host
@@ -3795,7 +3856,6 @@ extern void httpLogRequest(HttpConn *conn);
 extern MprFile *httpOpenRouteLog(HttpRoute *route);
 extern int httpStartRoute(HttpRoute *route);
 extern void httpStopRoute(HttpRoute *route);
-extern void httpSetAuthPost(HttpRoute *route, cchar *loginPage, cchar *loginService, cchar *logoutService, cchar *loggedIn);
 extern char *httpExpandRouteVars(HttpConn *conn, cchar *str);
 
 /*********************************** Session ***************************************/
@@ -5159,12 +5219,30 @@ extern void httpResetRoutes(HttpHost *host);
         respond to client requests.
     @param host Host to examine.
     @param route Route to define as the default
-    @ingroup HttpRoute
+    @ingroup HttpHost
  */
 extern void httpSetHostDefaultRoute(HttpHost *host, HttpRoute *route);
-//  MOB
+
+/**
+    Set the default host for all servers.
+    @param host Host to define as the default host
+    @ingroup HttpHost
+ */
 extern void httpSetDefaultHost(HttpHost *host);
+
+/**
+    Get the default host defined via httpSetDefaultHost
+    @return The defaul thost object
+    @ingroup HttpHost
+ */
 extern HttpHost *httpGetDefaultHost();
+
+/**
+    Get the default route for a host
+    @param host Host object
+    @return The default route for the host
+    @ingroup HttpRoute
+ */
 extern HttpRoute *httpGetDefaultRoute(HttpHost *host);
 
 /**
