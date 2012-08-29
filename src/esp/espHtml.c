@@ -60,6 +60,7 @@ static char *defaultStylesheets[] = {
     MOB - How is data for click, remote, refresh etc handled
     MOB - which of these should be data-*
     MOB - could make these pairs and map from one to the other
+//  MOB - should use "apply" or "data-apply"
 */
 static char *internalOptions[] = {
     "action",                       /* Controller/Action to invoke */
@@ -130,6 +131,7 @@ static char *htmlOptions[] = {
 
 //  MOB - what are thse
 //  MOB -check against jquery.esp.js
+
 static char *dataOptions[] = {
     //  MOB - Comment each one 
     "data-apply",
@@ -1112,8 +1114,8 @@ static cchar *map(HttpConn *conn, MprHash *options)
         return MPR->emptyString;
     }
     req = conn->data;
-    if (httpGetOption(options, "data-refresh", 0) && httpGetOption(options, "id", 0)) {
-        httpAddOption(options, "id", sfmt("id_%s", req->lastDomID++));
+    if (httpGetOption(options, "data-refresh", 0) && !httpGetOption(options, "id", 0)) {
+        httpAddOption(options, "id", sfmt("id_%d", req->lastDomID++));
     }
     esp = MPR->espService;
     buf = mprCreateBuf(-1, -1);
